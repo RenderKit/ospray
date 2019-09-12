@@ -30,20 +30,24 @@ namespace ospray {
 
   void Isosurfaces::commit()
   {
-    isovaluesData = getParamData("isovalue", nullptr);
-    if (!isovaluesData) {
-      throw std::runtime_error(
-          "isosurface geometry must have 'isovalue' data array");
+    isovaluesData = getParamDataT<float>("isovalue", true);
+
+    volume = (VolumetricModel *)getParamObject("volume");
+
+    if (isovaluesData->stride() != sizeof(float)) {
+      // get rid of stride
+      auto data = new Data(OSP_FLOAT, vec3ui(isovaluesData->size(), 1, 1));
+      data->copy(*isovaluesData, vec3ui(0));
+      isovaluesData = &(data->as<float>());
+      data->refDec();
     }
 
-    volume       = (VolumetricModel *)getParamObject("volume", nullptr);
-    numIsovalues = isovaluesData->size();
-    isovalues = (float *)isovaluesData->data();
+    postCreationInfo();
   }
 
   size_t Isosurfaces::numPrimitives() const
   {
-    return numIsovalues;
+    return isovaluesData->size();
   }
 
   LiveGeometry Isosurfaces::createEmbreeGeometry()
@@ -55,10 +59,10 @@ namespace ospray {
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 
     ispc::Isosurfaces_set(retval.ispcEquivalent,
-                          retval.embreeGeometry,
-                          numIsovalues,
-                          isovalues,
-                          volume->getIE());
+        retval.embreeGeometry,
+        isovaluesData->size(),
+        isovaluesData->data(),
+        volume->getIE());
 
     return retval;
   }

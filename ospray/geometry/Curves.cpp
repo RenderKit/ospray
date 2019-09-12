@@ -51,30 +51,8 @@ namespace ospray {
 
   void Curves::commit()
   {
-    vertexData = getParamData("vertex.position", nullptr);
-    if (!vertexData) {
-      throw std::runtime_error(
-          "curves geometry must have 'vertex.position' array");
-    }
-
-    if (vertexData->type != OSP_VEC4F) {
-      throw std::runtime_error(
-          "curves geometry 'vertex.position' array must have element type "
-          "OSP_VEC4F");
-    }
-
-    normalData  = getParamData("vertex.normal", nullptr);
-    tangentData = getParamData("vertex.tangent", nullptr);
-
-    indexData = getParamData("index", nullptr);
-    if (!indexData) {
-      throw std::runtime_error("curves must have 'index' array");
-    }
-
-    if (indexData->type != OSP_INT) {
-      throw std::runtime_error(
-          "curves geometry 'index' array must have element type OSP_INT");
-    }
+    vertexData = getParamDataT<vec4f>("vertex.position", true);
+    indexData = getParamDataT<uint32_t>("index", true);
 
     curveType = (OSPCurveType)getParam<int>("type", OSP_UNKNOWN_CURVE_TYPE);
     if (curveType == OSP_UNKNOWN_CURVE_TYPE)
@@ -84,30 +62,17 @@ namespace ospray {
     if (curveBasis == OSP_UNKNOWN_CURVE_BASIS)
       throw std::runtime_error("curves geometry has invalid 'basis'");
 
-    if (curveType == OSP_RIBBON && !normalData) {
-      throw std::runtime_error(
-          "curves geometry with ribbon type must have 'normal' array");
-    }
+    normalData = curveType == OSP_RIBBON
+        ? getParamDataT<vec3f>("vertex.normal", true)
+        : nullptr;
 
-    if (curveBasis == OSP_LINEAR && curveType != OSP_FLAT) {
-      throw std::runtime_error(
-          "curves geometry with linear basis must be flat type");
-    }
+    tangentData = curveBasis == OSP_HERMITE
+        ? getParamDataT<vec3f>("vertex.tangent", true)
+        : nullptr;
 
-    if (curveBasis == OSP_HERMITE && !tangentData) {
+    if (curveBasis == OSP_LINEAR && curveType != OSP_FLAT)
       throw std::runtime_error(
-          "curves geometry with hermite basis must have 'tangent' array");
-    }
-
-    if (normalData && normalData->type != OSP_VEC3F) {
-      throw std::runtime_error(
-          "curves geometry 'normal' array must have element type OSP_VEC3F");
-    }
-
-    if (tangentData && tangentData->type != OSP_VEC3F) {
-      throw std::runtime_error(
-          "curves geometry 'tangent' array must have element type OSP_VEC3F");
-    }
+          "curves geometry with linear basis must be of flat type");
 
     embreeCurveType = curveMap[std::make_pair(curveType, curveBasis)];
 
@@ -121,53 +86,18 @@ namespace ospray {
 
   LiveGeometry Curves::createEmbreeGeometry()
   {
+    auto embreeGeo = rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
+
+    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_VERTEX, vertexData);
+    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexData);
+    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_NORMAL, normalData);
+    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_TANGENT, tangentData);
+
+    rtcCommitGeometry(embreeGeo);
+
     LiveGeometry retval;
-
-    retval.embreeGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
+    retval.embreeGeometry = embreeGeo;
     retval.ispcEquivalent = ispc::Curves_create(this);
-
-    rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-        RTC_BUFFER_TYPE_VERTEX,
-        0,
-        RTC_FORMAT_FLOAT4,
-        vertexData->data(),
-        0,
-        sizeof(vec4f),
-        vertexData->size());
-
-    rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-        RTC_BUFFER_TYPE_INDEX,
-        0,
-        RTC_FORMAT_UINT,
-        indexData->data(),
-        0,
-        sizeof(int),
-        indexData->size());
-
-    if (normalData) {
-      rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-          RTC_BUFFER_TYPE_NORMAL,
-          0,
-          RTC_FORMAT_FLOAT3,
-          normalData->data(),
-          0,
-          sizeof(vec3f),
-          normalData->size());
-    }
-
-    if (tangentData) {
-      rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-          RTC_BUFFER_TYPE_TANGENT,
-          0,
-          RTC_FORMAT_FLOAT3,
-          tangentData->data(),
-          0,
-          sizeof(vec3f),
-          tangentData->size());
-    }
-
-    rtcCommitGeometry(retval.embreeGeometry);
 
     ispc::Curves_set(retval.ispcEquivalent,
         (ispc::RTCGeometryType)embreeCurveType,

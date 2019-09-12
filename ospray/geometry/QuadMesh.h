@@ -37,23 +37,11 @@ namespace ospray {
    protected:
     bool huge_mesh{false};
 
-    size_t numQuads{0};
-    size_t numVerts{0};
-
-    size_t numCompsInVtx{0};
-    size_t numCompsInNor{0};
-
-    int *index;       //!< mesh's quad index array
-    float *vertex;    //!< mesh's vertex array
-    float *normal;    //!< mesh's vertex normal array
-    vec4f *color;     //!< mesh's vertex color array
-    vec2f *texcoord;  //!< mesh's vertex texcoord array
-
-    Ref<Data> indexData;    /*!< quad indices (A,B,C,materialID) */
-    Ref<Data> vertexData;   /*!< vertex position (vec3fa) */
-    Ref<Data> normalData;   /*!< vertex normal array (vec3fa) */
-    Ref<Data> colorData;    /*!< vertex color array (vec3fa) */
-    Ref<Data> texcoordData; /*!< vertex texcoord array (vec2f) */
+    Ref<const DataT<vec3f>> vertexData;
+    Ref<const DataT<vec3f>> normalData;
+    Ref<const Data> colorData;
+    Ref<const DataT<vec2f>> texcoordData;
+    Ref<const DataT<vec4ui>> indexData;
   };
 
 }  // namespace ospray

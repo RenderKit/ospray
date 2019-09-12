@@ -113,7 +113,7 @@ int main(int argc, const char **argv) {
   mesh.set("vertex.color", data);
   data.release();
 
-  data = ospray::cpp::Data(2, OSP_VEC3I, index);
+  data = ospray::cpp::Data(2, OSP_VEC3UI, index);
   data.commit();
   mesh.set("index", data);
   data.release();

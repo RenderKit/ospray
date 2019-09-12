@@ -755,7 +755,7 @@ triangle mesh recognizes the following parameters:
   vec3f[]            vertex.normal    [data] array of vertex normals
   vec4f[] / vec3f[]  vertex.color     [data] array of vertex colors (RGBA/RGB)
   vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
-  vec3i[]            index            [data] array of triangle indices (into the vertex array(s))
+  vec3ui[]           index            [data] array of triangle indices (into the vertex array(s))
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a triangle mesh geometry.
 
@@ -774,7 +774,7 @@ following parameters:
   vec3f[]            vertex.normal    [data] array of vertex normals
   vec4f[] / vec3f[]  vertex.color     [data] array of vertex colors (RGBA/RGB)
   vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
-  vec4i[]            index            [data] array of quad indices (into the vertex array(s))
+  vec4ui[]           index            [data] array of quad indices (into the vertex array(s))
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a quad mesh geometry.
 
@@ -800,7 +800,7 @@ the following parameters:
 
   float           level                      5 global level of tessellation, default is 5
 
-  uint[]/vec4i[]  index                   NULL [data] array of indices (into the vertex array(s))
+  uint[]          index                   NULL [data] array of indices (into the vertex array(s))
 
   float[]         index.level             NULL [data] array of per-edge levels of tessellation,
                                                overrides global level
@@ -820,7 +820,7 @@ the following parameters:
 
 The `vertex` and `index` arrays are mandatory to create a valid
 subdivision surface. If no `face` array is present then a pure quad
-mesh is assumed (and indices must be of type `vec4i`).
+mesh is assumed (the number of indices must be a multiple of 4).
 Optionally supported are edge and vertex creases.
 
 ### Spheres
@@ -976,7 +976,7 @@ this geometry are listed in the table below.
   vec3f[]            vertex.tangent  [data] array of curve tangents (only for
                                      "hermite" curves)
 
-  int32[]            index           [data] array of indices to the first vertex
+  uint32[]           index           [data] array of indices to the first vertex
                                      or tangent of a curve segment
 
   int                type            `OSPCurveType` for rendering the curve.

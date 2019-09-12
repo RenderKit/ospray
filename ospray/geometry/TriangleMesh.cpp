@@ -31,33 +31,11 @@ namespace ospray {
 
   void TriangleMesh::commit()
   {
-    Geometry::commit();
-
-    vertexData   = getParamData("vertex.position");
-    normalData   = getParamData("vertex.normal");
+    vertexData = getParamDataT<vec3f>("vertex.position", true);
+    normalData = getParamDataT<vec3f>("vertex.normal");
     colorData    = getParamData("vertex.color");
-    texcoordData = getParamData("vertex.texcoord");
-    indexData    = getParamData("index");
-
-    if (!vertexData) {
-      throw std::runtime_error(
-          "triangle mesh geometry must have 'vertex.position' array");
-    }
-
-    if (!indexData) {
-      throw std::runtime_error(
-          "triangle mesh geometry must have 'index' array");
-    }
-
-    if (colorData && colorData->type != OSP_VEC4F &&
-        colorData->type != OSP_VEC3F) {
-      std::stringstream ss;
-      ss << "triangle mesh geometry 'vertex.color' array has invalid element "
-            "type "
-         << stringForType(colorData->type)
-         << ". Must be one of: OSP_VEC4F, OSP_VEC3F";
-      throw std::runtime_error(ss.str());
-    }
+    texcoordData = getParamDataT<vec2f>("vertex.texcoord");
+    indexData = getParamDataT<vec3ui>("index", true);
 
     // check whether we need 64-bit addressing
     huge_mesh = false;
@@ -72,138 +50,46 @@ namespace ospray {
     if (texcoordData && texcoordData->numBytes > INT32_MAX)
       huge_mesh = true;
 
-    this->index = (int *)indexData->data();
-    this->vertex = (float *)vertexData->data();
-    this->normal = normalData ? (float *)normalData->data() : nullptr;
-    this->color = colorData ? (vec4f *)colorData->data() : nullptr;
-    this->texcoord = texcoordData ? (vec2f *)texcoordData->data() : nullptr;
-
-    numTris  = -1;
-    numVerts = -1;
-
-    numCompsInTri = 0;
-    numCompsInVtx = 0;
-    numCompsInNor = 0;
-
-    switch (indexData->type) {
-    case OSP_INT:
-    case OSP_UINT:
-      numTris       = indexData->size() / 3;
-      numCompsInTri = 3;
-      break;
-    case OSP_VEC3I:
-    case OSP_VEC3UI:
-      numTris       = indexData->size();
-      numCompsInTri = 3;
-      break;
-    case OSP_VEC4UI:
-    case OSP_VEC4I:
-      numTris       = indexData->size();
-      numCompsInTri = 4;
-      break;
-    default: {
-      std::stringstream ss;
-      ss << "triangle mesh 'index' array has invalid element type "
-         << stringForType(indexData->type)
-         << ". Must be one of: OSP_INT, OSP_UINT, OSP_VEC3I, OSP_VEC3UI, "
-            "OSP_VEC4I, OSP_VEC4UI";
-      throw std::runtime_error(ss.str());
-    }
-    }
-
-    switch (vertexData->type) {
-    case OSP_FLOAT:
-      numVerts      = vertexData->size() / 4;
-      numCompsInVtx = 4;
-      break;
-    case OSP_VEC3F:
-      numVerts      = vertexData->size();
-      numCompsInVtx = 3;
-      break;
-    case OSP_VEC4F:
-      numVerts      = vertexData->size();
-      numCompsInVtx = 4;
-      break;
-    default: {
-      std::stringstream ss;
-      ss << "triangle mesh 'vertex.position' array has invalid element type "
-         << stringForType(vertexData->type)
-         << ". Must be one of: OSP_FLOAT, OSPVEC3F, OSP_VEC4F";
-      throw std::runtime_error(ss.str());
-    }
-    }
-
-    if (normalData) {
-      switch (normalData->type) {
-      case OSP_VEC3F:
-        numCompsInNor = 3;
-        break;
-      case OSP_FLOAT:
-        numCompsInNor = 4;
-        break;
-      default: {
-        std::stringstream ss;
-        ss << "triangle mesh 'vertex.normal' array has invalid element type "
-           << stringForType(normalData->type)
-           << ". Must be one of: OSP_FLOAT, OSPVEC3F";
-        throw std::runtime_error(ss.str());
-      }
-      }
-    }
 
     postCreationInfo(vertexData->size());
   }
 
   size_t TriangleMesh::numPrimitives() const
   {
-    return indexData ? indexData->size() / 3 : 0;
+    return indexData ? indexData->size() : 0;
   }
 
   LiveGeometry TriangleMesh::createEmbreeGeometry()
   {
-    LiveGeometry retval;
-
-    retval.ispcEquivalent = ispc::TriangleMesh_create(this);
-    retval.embreeGeometry =
+    auto embreeGeo =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_TRIANGLE);
 
-    rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-        RTC_BUFFER_TYPE_INDEX,
-        0,
-        RTC_FORMAT_UINT3,
-        indexData->data(),
-        0,
-        numCompsInTri * sizeof(int),
-        numTris);
+    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_VERTEX, vertexData);
+    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexData);
 
-    rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-        RTC_BUFFER_TYPE_VERTEX,
-        0,
-        RTC_FORMAT_FLOAT3,
-        vertexData->data(),
-        0,
-        numCompsInVtx * sizeof(int),
-        numVerts);
+    rtcCommitGeometry(embreeGeo);
 
-    rtcCommitGeometry(retval.embreeGeometry);
+    LiveGeometry retval;
+    retval.embreeGeometry = embreeGeo;
+
+    retval.ispcEquivalent = ispc::TriangleMesh_create(this);
 
     ispc::TriangleMesh_set(retval.ispcEquivalent,
-                           numTris,
-                           numCompsInTri,
-                           numCompsInVtx,
-                           numCompsInNor,
-                           (int *)index,
-                           (float *)vertex,
-                           (float *)normal,
-                           (ispc::vec4f *)color,
-                           (ispc::vec2f *)texcoord,
-                           colorData && colorData->type == OSP_VEC4F,
-                           huge_mesh);
+        indexData->size(),
+        indexData->stride() / 4,
+        vertexData->stride() / 4,
+        normalData ? normalData->stride() / 4 : 0,
+        (int *)indexData->data(),
+        (float *)vertexData->data(),
+        normalData ? (float *)normalData->data() : nullptr,
+        colorData ? (ispc::vec4f *)colorData->data() : nullptr,
+        texcoordData ? (ispc::vec2f *)texcoordData->data() : nullptr,
+        colorData && colorData->type == OSP_VEC4F,
+        huge_mesh);
 
     return retval;
   }
 
   OSP_REGISTER_GEOMETRY(TriangleMesh, triangles);
-  OSP_REGISTER_GEOMETRY(TriangleMesh, trianglemesh);
 
 }  // namespace ospray

@@ -29,6 +29,8 @@
 namespace ospray {
 
   struct Data;
+  template <typename T, int DIM>
+  struct DataT;
 
   struct OSPRAY_SDK_INTERFACE ManagedObject
       : public memory::RefCount,
@@ -53,6 +55,9 @@ namespace ospray {
                                   ManagedObject *valIfNotFound = nullptr);
 
     Data *getParamData(const char *name, Data *valIfNotFound = nullptr);
+
+    template <typename T, int DIM = 1>
+    const DataT<T, DIM> *getParamDataT(const char *name, bool required = false);
 
     vec4f getParam4f(const char *name, vec4f valIfNotFound);
     vec3f getParam3f(const char *name, vec3f valIfNotFound);

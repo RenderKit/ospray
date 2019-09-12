@@ -241,7 +241,7 @@ namespace ospray {
 
       OSPData quadVerts   = ospNewData(17 * 4, OSP_VEC3F, vertices);
       OSPData quadColors  = ospNewData(17 * 4, OSP_VEC4F, colors);
-      OSPData quadIndices = ospNewData(17, OSP_VEC4I, indices);
+      OSPData quadIndices = ospNewData(17, OSP_VEC4UI, indices);
 
       ospCommit(quadVerts);
       ospCommit(quadColors);

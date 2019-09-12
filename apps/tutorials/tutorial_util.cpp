@@ -159,7 +159,7 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
   OSPData colorData =
       ospNewData(vertices.size(), OSP_VEC4F, colorVector.data());
   OSPData indexData =
-      ospNewData(quadIndices.size(), OSP_VEC4I, quadIndices.data());
+      ospNewData(quadIndices.size(), OSP_VEC4UI, quadIndices.data());
 
   // set vertex / index data on the geometry
   ospSetData(planeGeometry, "vertex.position", positionData);

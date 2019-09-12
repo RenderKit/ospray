@@ -115,7 +115,7 @@ int main(int argc, const char **argv) {
   ospSetData(mesh, "vertex.color", data);
   ospRelease(data);
 
-  data = ospNewSharedData1D(index, OSP_VEC3I, 2);
+  data = ospNewSharedData1D(index, OSP_VEC3UI, 2);
   ospCommit(data);
   ospSetData(mesh, "index", data);
   ospRelease(data);

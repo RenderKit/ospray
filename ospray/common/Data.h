@@ -45,6 +45,12 @@ namespace ospray {
     template <typename T, int DIM = 1>
     const DataT<T, DIM> &as() const;
 
+    template <typename T, int DIM>
+    typename std::enable_if<std::is_pointer<T>::value, bool>::type is() const;
+
+    template <typename T, int DIM>
+    typename std::enable_if<!std::is_pointer<T>::value, bool>::type is() const;
+
     size_t numBytes; // XXX temp
 
    protected:
@@ -61,14 +67,6 @@ namespace ospray {
 
    private:
     void init(); // init dimensions and byteStride
-
-    template <typename T, int DIM>
-    typename std::enable_if<std::is_pointer<T>::value, bool>::type isValid()
-        const;
-
-    template <typename T, int DIM>
-    typename std::enable_if<!std::is_pointer<T>::value, bool>::type isValid()
-        const;
   };
 
   OSPTYPEFOR_SPECIALIZATION(Data *, OSP_DATA);
@@ -229,8 +227,8 @@ namespace ospray {
   }
 
   template <typename T, int DIM>
-  typename std::enable_if<std::is_pointer<T>::value, bool>::type Data::isValid()
-      const
+  inline typename std::enable_if<std::is_pointer<T>::value, bool>::type
+  Data::is() const
   {
     auto toType = OSPTypeFor<T>::value;
     return (type == toType || (toType == OSP_OBJECT && isObjectType(type)))
@@ -238,17 +236,17 @@ namespace ospray {
   }
 
   template <typename T, int DIM>
-  typename std::enable_if<!std::is_pointer<T>::value, bool>::type
-  Data::isValid() const
+  inline typename std::enable_if<!std::is_pointer<T>::value, bool>::type
+  Data::is() const
   {
     // can iterate with higher dimensionality
     return type == OSPTypeFor<T>::value && dimensions <= DIM;
   }
 
   template <typename T, int DIM>
-  const DataT<T, DIM> &Data::as() const
+  inline const DataT<T, DIM> &Data::as() const
   {
-    if (isValid<T, DIM>())
+    if (is<T, DIM>())
       return (DataT<T, DIM> &)*this;
     else {
       std::stringstream ss;
@@ -256,6 +254,29 @@ namespace ospray {
          << stringForType(OSPTypeFor<T>::value) << "[" << DIM
          << "], actual: " << stringForType(type) << "[" << dimensions << "].";
       throw std::runtime_error(ss.str());
+    }
+  }
+
+  template <typename T, int DIM>
+  inline const DataT<T, DIM> *ManagedObject::getParamDataT(
+      const char *name, bool required)
+  {
+    auto data = getParamData(name);
+
+    if (data && data->is<T, DIM>())
+      return &(data->as<T, DIM>());
+    else {
+      if (required)
+        throw std::runtime_error(toString() + " must have '" + name
+            + "' array with element type "
+            + stringForType(OSPTypeFor<T>::value));
+      else {
+        if (data)
+          postStatusMsg(1) << toString() << " ignoring '" << name
+                           << "' array with wrong element type (should be "
+                           << stringForType(OSPTypeFor<T>::value) << ")";
+        return nullptr;
+      }
     }
   }
 

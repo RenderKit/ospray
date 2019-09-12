@@ -198,7 +198,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospSetData(mesh, "vertex.color", data);
   ospRelease(data);
 
-  data = ospNewSharedData1D(index, OSP_VEC3I, 2);
+  data = ospNewSharedData1D(index, OSP_VEC3UI, 2);
   ospCommit(data);
   ospSetData(mesh, "index", data);
   ospRelease(data);
@@ -299,7 +299,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospSetData(mesh, "vertex.color", data);
   ospRelease(data);
 
-  data = ospNewSharedData1D(index, OSP_VEC3I, 2);
+  data = ospNewSharedData1D(index, OSP_VEC3UI, 2);
   ospCommit(data);
   ospSetData(mesh, "index", data);
   ospRelease(data);

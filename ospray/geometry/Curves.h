@@ -33,12 +33,10 @@ namespace ospray {
     LiveGeometry createEmbreeGeometry() override;
 
    protected:
-    // Data members //
-
-    Ref<Data> vertexData;   //!< refcounted data array for vertex data
-    Ref<Data> indexData;    //!< refcounted data array for segment data
-    Ref<Data> normalData;   //!< refcounted data array for normal data
-    Ref<Data> tangentData;  //!< refcounted data array for tangent data
+    Ref<const DataT<vec4f>> vertexData;
+    Ref<const DataT<uint32_t>> indexData;
+    Ref<const DataT<vec3f>> normalData;
+    Ref<const DataT<vec3f>> tangentData;
 
     RTCGeometryType embreeCurveType;
 

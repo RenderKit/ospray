@@ -56,7 +56,7 @@ namespace {
     ospCommit(data);
     ospSetData(mesh, "vertex.color", data);
     ospRelease(data);
-    data = ospNewData(indices.size(), OSP_VEC3I, indices.data());
+    data = ospNewData(indices.size(), OSP_VEC3UI, indices.data());
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(mesh, "index", data);

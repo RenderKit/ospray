@@ -126,7 +126,7 @@ namespace ospray {
       ospRelease(vertexCreaseWeightsData);
 
       OSPData edgeCreaseIndicesData = ospNewData(
-          edgeCreaseIndices.size(), OSP_VEC2I, edgeCreaseIndices.data());
+          edgeCreaseIndices.size(), OSP_VEC2UI, edgeCreaseIndices.data());
       ospSetData(geometry, "edgeCrease.index", edgeCreaseIndicesData);
       ospRelease(edgeCreaseIndicesData);
 

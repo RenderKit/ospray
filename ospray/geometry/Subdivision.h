@@ -37,21 +37,16 @@ namespace ospray {
    protected:
     float level{0.f};
 
-    Ref<Data> vertexData;
-    Ref<Data> indexData;
-    Ref<Data> facesData;
-    Ref<Data> edge_crease_indicesData;
-    Ref<Data> edge_crease_weightsData;
-    Ref<Data> vertex_crease_indicesData;
-    Ref<Data> vertex_crease_weightsData;
-    Ref<Data> colorsData;
-    Ref<Data> texcoordData;
-    Ref<Data> indexLevelData;
-
-    size_t numFaces{0};
-    uint32_t *faces{nullptr};
-
-    std::vector<uint32_t> generatedFacesData;
+    Ref<const DataT<vec3f>> vertexData;
+    Ref<const DataT<vec4f>> colorsData;
+    Ref<const DataT<vec2f>> texcoordData;
+    Ref<const DataT<uint32_t>> indexData;
+    Ref<const DataT<float>> indexLevelData;
+    Ref<const DataT<uint32_t>> facesData;
+    Ref<const DataT<vec2ui>> edge_crease_indicesData;
+    Ref<const DataT<float>> edge_crease_weightsData;
+    Ref<const DataT<uint32_t>> vertex_crease_indicesData;
+    Ref<const DataT<float>> vertex_crease_weightsData;
   };
 
 }  // namespace ospray

@@ -25,6 +25,7 @@ struct Subdivision
 {
   Geometry super;
   RTCGeometry geom;
+  int64 flagMask; // which attributes are missing and cannot be interpolated
 };
 
 static void Subdivision_postIntersect(const Geometry *uniform _self,
@@ -34,6 +35,8 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
 {
   Subdivision *uniform self = (Subdivision * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
+
+  flags &= self->flagMask;
 
   if (flags & DG_NS) {
     vec3f dPdu, dPdv;
@@ -83,6 +86,7 @@ void Subdivision_Constructor(
   Geometry_Constructor(&mesh->super, cppEquivalent, Subdivision_postIntersect);
 
   mesh->geom = NULL;
+  mesh->flagMask = 0;
 }
 
 export void *uniform Subdivision_create(void *uniform cppEquivalent)
@@ -92,8 +96,16 @@ export void *uniform Subdivision_create(void *uniform cppEquivalent)
   return mesh;
 }
 
-export void *uniform Subdivision_set(void *uniform _mesh, RTCGeometry geom)
+export void *uniform Subdivision_set(void *uniform _mesh,
+    RTCGeometry geom,
+    uniform bool haveColor,
+    uniform bool haveTC)
 {
   uniform Subdivision *uniform mesh = (uniform Subdivision * uniform) _mesh;
   mesh->geom = geom;
+  mesh->flagMask = -1;
+  if (!haveColor)
+    mesh->flagMask &= ~DG_COLOR;
+  if (!haveTC)
+    mesh->flagMask &= ~DG_TEXCOORD;
 }

@@ -124,7 +124,7 @@ OSPGeometry PlaneGeometry(const vec4f& color, const AffineSpace3f& M)
   OSPData positionData = ospNewData(positions.size(), OSP_VEC3F, positions.data());
   OSPData normalData   = ospNewData(normals.size(),   OSP_VEC3F, normals.data());
   OSPData colorData    = ospNewData(colors.size(),    OSP_VEC4F, colors.data());
-  OSPData indexData    = ospNewData(indices.size(),   OSP_VEC4I, indices.data());
+  OSPData indexData = ospNewData(indices.size(), OSP_VEC4UI, indices.data());
 
   OSPGeometry ospGeometry = ospNewGeometry("quads");
 

@@ -509,7 +509,7 @@ namespace OSPRayTestScenes {
     ospCommit(data);
     ospSetData(wallsMesh, "vertex.color", data);
     ospRelease(data);
-    data = ospNewData(10, OSP_VEC3I, wallsIndices);
+    data = ospNewData(10, OSP_VEC3UI, wallsIndices);
     ospCommit(data);
     ospSetData(wallsMesh, "index", data);
     ospRelease(data);
@@ -540,7 +540,7 @@ namespace OSPRayTestScenes {
     ospCommit(data);
     ospSetData(lightSquare, "vertex.position", data);
     ospRelease(data);
-    data = ospNewData(2, OSP_VEC3I, lightIndices);
+    data = ospNewData(2, OSP_VEC3UI, lightIndices);
     ospSetData(lightSquare, "index", data);
     ospRelease(data);
     OSPMaterial lightMaterial =
@@ -571,7 +571,7 @@ namespace OSPRayTestScenes {
     ospCommit(data);
     ospSetData(cuboid, "vertex.position", data);
     ospRelease(data);
-    data = ospNewData(12, OSP_VEC3I, cuboidIndices);
+    data = ospNewData(12, OSP_VEC3UI, cuboidIndices);
     ospCommit(data);
     ospSetData(cuboid, "index", data);
     ospRelease(data);
@@ -917,7 +917,7 @@ namespace OSPRayTestScenes {
     ASSERT_TRUE(data);
     ospCommit(data);
     ospSetData(mirrors, "vertex.position", data);
-    data = ospNewData(4, OSP_VEC3I, mirrorsIndices);
+    data = ospNewData(4, OSP_VEC3UI, mirrorsIndices);
     ASSERT_TRUE(data);
     ospSetData(mirrors, "index", data);
     OSPMaterial mirrorsMaterial =

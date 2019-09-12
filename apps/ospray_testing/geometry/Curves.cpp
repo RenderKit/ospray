@@ -118,7 +118,8 @@ namespace ospray {
       embreeTutorialCurve(points, indices, colors, geom);
 
       OSPData pointsData  = ospNewData(points.size(), OSP_VEC4F, points.data());
-      OSPData indicesData = ospNewData(indices.size(), OSP_INT, indices.data());
+      OSPData indicesData =
+          ospNewData(indices.size(), OSP_UINT, indices.data());
       OSPData colorsData  = ospNewData(colors.size(), OSP_VEC4F, colors.data());
       ospSetData(geom, "vertex.position", pointsData);
       ospSetData(geom, "index", indicesData);
