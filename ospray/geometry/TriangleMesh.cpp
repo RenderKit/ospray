@@ -151,8 +151,7 @@ namespace ospray {
       }
     }
 
-    postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris, "
-                     << numVerts << " vertices)\n";
+    postCreationInfo(vertexData->size());
   }
 
   size_t TriangleMesh::numPrimitives() const

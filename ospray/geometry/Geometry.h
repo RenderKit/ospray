@@ -43,6 +43,8 @@ namespace ospray {
 
     virtual LiveGeometry createEmbreeGeometry() = 0;
 
+    void postCreationInfo(size_t numVerts = 0) const;
+
     // Object factory //
 
     static Geometry *createInstance(const char *type);

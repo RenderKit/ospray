@@ -63,8 +63,6 @@ namespace ospray {
           "OSP_VEC4F");
     }
 
-    const auto numVertices = vertexData->size();
-
     normalData  = getParamData("vertex.normal", nullptr);
     tangentData = getParamData("vertex.tangent", nullptr);
 
@@ -77,8 +75,6 @@ namespace ospray {
       throw std::runtime_error(
           "curves geometry 'index' array must have element type OSP_INT");
     }
-
-    const auto numSegments = indexData->size();
 
     curveType = (OSPCurveType)getParam<int>("type", OSP_UNKNOWN_CURVE_TYPE);
     if (curveType == OSP_UNKNOWN_CURVE_TYPE)
@@ -113,11 +109,9 @@ namespace ospray {
           "curves geometry 'tangent' array must have element type OSP_VEC3F");
     }
 
-    postStatusMsg(2) << "#osp: creating curves geometry, "
-                     << "#verts=" << numVertices << ", "
-                     << "#segments=" << numSegments;
-
     embreeCurveType = curveMap[std::make_pair(curveType, curveBasis)];
+
+    postCreationInfo(vertexData->size());
   }
 
   size_t Curves::numPrimitives() const

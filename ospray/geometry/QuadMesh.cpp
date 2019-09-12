@@ -133,8 +133,7 @@ namespace ospray {
       }
     }
 
-    postStatusMsg(2) << "  created quad mesh (" << numQuads << " quads, "
-                     << numVerts << " vertices)\n";
+    postCreationInfo(vertexData->size());
   }
 
   size_t QuadMesh::numPrimitives() const

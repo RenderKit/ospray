@@ -46,8 +46,6 @@ namespace ospray {
     }
 
     numSpheres = sphereData->numBytes / bytesPerSphere;
-    postStatusMsg(2) << "#osp: creating 'spheres' geometry, #spheres = "
-                     << numSpheres;
 
     if (numSpheres >= (1ULL << 30)) {
       throw std::runtime_error(
@@ -62,6 +60,8 @@ namespace ospray {
     huge_mesh = false;
     if (texcoordData && texcoordData->numBytes > INT32_MAX)
       huge_mesh = true;
+
+    postCreationInfo();
   }
 
   size_t Spheres::numPrimitives() const

@@ -43,8 +43,7 @@ namespace ospray {
 
     numCylinders = cylinderData->numBytes / bytesPerCylinder;
 
-    postStatusMsg(2) << "#osp: creating 'cylinders' geometry, #cylinders = "
-                     << numCylinders;
+    postCreationInfo();
   }
 
   size_t Cylinders::numPrimitives() const

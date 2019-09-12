@@ -131,10 +131,7 @@ namespace ospray {
 
     numVertices = useCurve ? vertexCurve.size() : vertexData->size();
 
-    postStatusMsg(2) << "#osp: creating streamlines geometry, "
-                     << "#verts=" << numVertices << ", "
-                     << "#segments=" << numSegments << ", "
-                     << "as curve: " << useCurve;
+    postCreationInfo(vertexData->size());
   }
 
   size_t StreamLines::numPrimitives() const

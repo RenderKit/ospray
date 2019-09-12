@@ -36,4 +36,13 @@ namespace ospray {
     return createInstanceHelper<Geometry, OSP_GEOMETRY>(type);
   }
 
+  void Geometry::postCreationInfo(size_t numVerts) const
+  {
+    std::stringstream ss;
+    ss << toString() << " created: #primitives=" << numPrimitives();
+    if (numVerts > 0)
+      ss << ", #vertices=" << numVerts;
+    postStatusMsg(2) << ss.str();
+  }
+
 }  // namespace ospray

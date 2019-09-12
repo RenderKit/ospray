@@ -106,8 +106,7 @@ namespace ospray {
           "OSP_VEC2F");
     }
 
-    postStatusMsg(2) << "  created subdivision (" << numFaces << " faces "
-                     << ", " << vertexData->size() << " vertices)\n";
+    postCreationInfo(vertexData->size());
   }
 
   size_t Subdivision::numPrimitives() const
