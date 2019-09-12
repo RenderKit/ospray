@@ -70,7 +70,7 @@ export void *uniform BilinearPatches_create(void *uniform cppEquivalent)
      because we use embree to do the traversal for us (see
      BilinearPatches_set()) below */
   Geometry_Constructor(
-      &self->super, cppEquivalent, BilinearPatches_postIntersect, NULL);
+      &self->super, cppEquivalent, BilinearPatches_postIntersect);
   return self;
 }
 

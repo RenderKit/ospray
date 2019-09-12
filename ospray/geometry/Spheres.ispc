@@ -227,8 +227,7 @@ void Spheres_getAreas(const Geometry *const uniform _self,
 export void *uniform Spheres_create(void *uniform cppEquivalent)
 {
   uniform Spheres *uniform self = uniform new uniform Spheres;
-  Geometry_Constructor(
-      &self->super, cppEquivalent, Spheres_postIntersect, NULL);
+  Geometry_Constructor(&self->super, cppEquivalent, Spheres_postIntersect);
   return self;
 }
 

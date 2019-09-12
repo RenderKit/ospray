@@ -242,8 +242,7 @@ namespace ospray {
 
     rtcCommitGeometry(retval.embreeGeometry);
 
-    ispc::Subdivision_set(
-        retval.ispcEquivalent, retval.embreeGeometry, (ispc::vec2f *)texcoord);
+    ispc::Subdivision_set(retval.ispcEquivalent, retval.embreeGeometry);
 
     return retval;
   }

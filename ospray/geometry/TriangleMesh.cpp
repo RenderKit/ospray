@@ -188,7 +188,6 @@ namespace ospray {
     rtcCommitGeometry(retval.embreeGeometry);
 
     ispc::TriangleMesh_set(retval.ispcEquivalent,
-                           retval.embreeGeometry,
                            numTris,
                            numCompsInTri,
                            numCompsInVtx,

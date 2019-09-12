@@ -24,7 +24,6 @@
 struct Subdivision
 {
   Geometry super;
-  vec2f *texcoord;
   RTCGeometry geom;
 };
 
@@ -35,7 +34,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
 {
   Subdivision *uniform self = (Subdivision * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
-  // get normals
+
   if (flags & DG_NS) {
     vec3f dPdu, dPdv;
     rtcInterpolateV1(self->geom,
@@ -50,7 +49,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
                      3);
     dg.Ns = cross(dPdu, dPdv);
   }
-  // get colors
+
   if (flags & DG_COLOR) {
     rtcInterpolateV1(self->geom,
                      ray.primID,
@@ -63,8 +62,8 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
                      NULL,
                      4);
   }
-  // get texcoords
-  if (flags & DG_TEXCOORD && self->texcoord) {
+
+  if (flags & DG_TEXCOORD) {
     rtcInterpolateV1(self->geom,
                      ray.primID,
                      ray.u,
@@ -78,29 +77,23 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
   }
 }
 
-void Subdivision_Constructor(uniform Subdivision *uniform mesh,
-                             void *uniform cppEquivalent,
-                             RTCGeometry geom,
-                             uniform vec2f *uniform texcoord)
+void Subdivision_Constructor(
+    uniform Subdivision *uniform mesh, void *uniform cppEquivalent)
 {
-  Geometry_Constructor(
-      &mesh->super, cppEquivalent, Subdivision_postIntersect, geom);
+  Geometry_Constructor(&mesh->super, cppEquivalent, Subdivision_postIntersect);
 
-  mesh->geom     = geom;
-  mesh->texcoord = texcoord;
+  mesh->geom = NULL;
 }
 
 export void *uniform Subdivision_create(void *uniform cppEquivalent)
 {
   Subdivision *uniform mesh = uniform new Subdivision;
-  Subdivision_Constructor(mesh, cppEquivalent, NULL, NULL);
+  Subdivision_Constructor(mesh, cppEquivalent);
   return mesh;
 }
 
-export void *uniform Subdivision_set(void *uniform _mesh,
-                                     RTCGeometry geom,
-                                     uniform vec2f *uniform texcoord)
+export void *uniform Subdivision_set(void *uniform _mesh, RTCGeometry geom)
 {
   uniform Subdivision *uniform mesh = (uniform Subdivision * uniform) _mesh;
-  Subdivision_Constructor(mesh, mesh->super.cppEquivalent, geom, texcoord);
+  mesh->geom = geom;
 }

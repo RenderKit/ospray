@@ -170,7 +170,6 @@ namespace ospray {
     rtcCommitGeometry(retval.embreeGeometry);
 
     ispc::QuadMesh_set(retval.ispcEquivalent,
-                       retval.embreeGeometry,
                        numQuads,
                        numCompsInVtx,
                        numCompsInNor,

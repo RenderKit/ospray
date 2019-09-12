@@ -217,8 +217,7 @@ void Cylinders_getAreas(const Geometry *const uniform _self,
 export void *uniform Cylinders_create(void *uniform cppEquivalent)
 {
   uniform Cylinders *uniform geom = uniform new uniform Cylinders;
-  Geometry_Constructor(
-      &geom->super, cppEquivalent, Cylinders_postIntersect, NULL);
+  Geometry_Constructor(&geom->super, cppEquivalent, Cylinders_postIntersect);
   return geom;
 }
 

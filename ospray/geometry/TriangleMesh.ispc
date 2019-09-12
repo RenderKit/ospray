@@ -164,7 +164,6 @@ void TriangleMesh_getAreas(const Geometry *const uniform _self,
 //! constructor for ispc-side TriangleMesh object
 void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               void *uniform cppEquivalent,
-                              RTCGeometry geom,
                               uniform int32 numTriangles,
                               uniform int32 idxSize,
                               uniform int32 vtxSize,
@@ -177,8 +176,7 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               uniform bool has_alpha,
                               uniform bool huge_mesh)
 {
-  Geometry_Constructor(
-      &mesh->super, cppEquivalent, TriangleMesh_postIntersect, geom);
+  Geometry_Constructor(&mesh->super, cppEquivalent, TriangleMesh_postIntersect);
   mesh->super.getAreas      = TriangleMesh_getAreas;
   mesh->super.sampleArea    = TriangleMesh_sampleArea;
   mesh->super.numPrimitives = numTriangles;
@@ -200,7 +198,6 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
   TriangleMesh *uniform mesh = uniform new TriangleMesh;
   TriangleMesh_Constructor(mesh,
                            cppEquivalent,
-                           NULL,
                            0,
                            0,
                            0,
@@ -216,7 +213,6 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 }
 
 export void *uniform TriangleMesh_set(void *uniform _mesh,
-                                      RTCGeometry geom,
                                       uniform int32 numTriangles,
                                       uniform int32 idxSize,
                                       uniform int32 vtxSize,
@@ -232,7 +228,6 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh * uniform) _mesh;
   TriangleMesh_Constructor(mesh,
                            mesh->super.cppEquivalent,
-                           geom,
                            numTriangles,
                            idxSize,
                            vtxSize,

@@ -222,7 +222,6 @@ void QuadMesh_getAreas(const Geometry *const uniform _self,
 //! constructor for ispc-side QuadMesh object
 void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
                           void *uniform cppEquivalent,
-                          RTCGeometry geom,
                           uniform int32 numQuads,
                           uniform int32 vtxSize,
                           uniform int32 norSize,
@@ -234,8 +233,7 @@ void QuadMesh_Constructor(uniform QuadMesh *uniform mesh,
                           uniform bool has_alpha,
                           uniform bool huge_mesh)
 {
-  Geometry_Constructor(
-      &mesh->super, cppEquivalent, QuadMesh_postIntersect, geom);
+  Geometry_Constructor(&mesh->super, cppEquivalent, QuadMesh_postIntersect);
   mesh->super.getAreas      = QuadMesh_getAreas;
   mesh->super.sampleArea    = QuadMesh_sampleArea;
   mesh->super.numPrimitives = numQuads;
@@ -255,7 +253,6 @@ export void *uniform QuadMesh_create(void *uniform cppEquivalent)
   QuadMesh *uniform mesh = uniform new QuadMesh;
   QuadMesh_Constructor(mesh,
                        cppEquivalent,
-                       NULL,
                        0,
                        0,
                        0,
@@ -270,7 +267,6 @@ export void *uniform QuadMesh_create(void *uniform cppEquivalent)
 }
 
 export void *uniform QuadMesh_set(void *uniform _mesh,
-                                  RTCGeometry geom,
                                   uniform int32 numQuads,
                                   uniform int32 vtxSize,
                                   uniform int32 norSize,
@@ -285,7 +281,6 @@ export void *uniform QuadMesh_set(void *uniform _mesh,
   uniform QuadMesh *uniform mesh = (uniform QuadMesh * uniform) _mesh;
   QuadMesh_Constructor(mesh,
                        mesh->super.cppEquivalent,
-                       geom,
                        numQuads,
                        vtxSize,
                        norSize,

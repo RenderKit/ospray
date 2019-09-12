@@ -38,7 +38,7 @@ static void Curves_postIntersect(const Geometry *uniform self,
 export void *uniform Curves_create(void *uniform cppEquivalent)
 {
   Curves *uniform geom = uniform new Curves;
-  Geometry_Constructor(&geom->super, cppEquivalent, Curves_postIntersect, NULL);
+  Geometry_Constructor(&geom->super, cppEquivalent, Curves_postIntersect);
   return geom;
 }
 

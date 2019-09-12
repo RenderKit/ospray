@@ -211,8 +211,7 @@ void StreamLines_getAreas(const Geometry *const uniform _self,
 export void *uniform StreamLines_create(void *uniform cppEquivalent)
 {
   StreamLines *uniform geom = uniform new StreamLines;
-  Geometry_Constructor(
-      &geom->super, cppEquivalent, StreamLines_postIntersect, NULL);
+  Geometry_Constructor(&geom->super, cppEquivalent, StreamLines_postIntersect);
   return geom;
 }
 

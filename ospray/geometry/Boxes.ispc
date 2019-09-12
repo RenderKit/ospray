@@ -111,7 +111,7 @@ export void *uniform Boxes_create(void *uniform cppEquivalent)
 {
   uniform Boxes *uniform boxes = uniform new uniform Boxes;
 
-  Geometry_Constructor(&boxes->super, cppEquivalent, Boxes_postIntersect, NULL);
+  Geometry_Constructor(&boxes->super, cppEquivalent, Boxes_postIntersect);
 
   return boxes;
 }

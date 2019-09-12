@@ -18,10 +18,8 @@
 
 //! constructor for ispc-side Geometry object
 static void Geometry_Constructor(uniform Geometry *uniform geometry,
-                                 void *uniform cppEquivalent,
-                                 uniform Geometry_postIntersectFct
-                                     postIntersect,
-                                 RTCGeometry geom)
+    void *uniform cppEquivalent,
+    uniform Geometry_postIntersectFct postIntersect)
 {
   geometry->cppEquivalent = cppEquivalent;
   geometry->numPrimitives = 0;
