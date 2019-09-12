@@ -44,7 +44,7 @@ namespace ospray {
       ospCommit(directionalLight);
       lights.push_back(directionalLight);
 
-      auto lightsData = ospNewData(lights.size(), OSP_OBJECT, lights.data());
+      auto lightsData = ospNewData(lights.size(), OSP_LIGHT, lights.data());
 
       ospRelease(ambientLight);
       ospRelease(directionalLight);

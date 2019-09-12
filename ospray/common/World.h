@@ -46,4 +46,6 @@ namespace ospray {
     RTCScene embreeSceneHandleVolumes{nullptr};
   };
 
+  OSPTYPEFOR_SPECIALIZATION(World *, OSP_WORLD);
+
 }  // namespace ospray

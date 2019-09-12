@@ -132,7 +132,7 @@ namespace OSPRayTestScenes {
   void Base::AddModel(OSPGeometricModel model, affine3f xfm)
   {
     ospCommit(model);
-    OSPData data = ospNewData(1, OSP_OBJECT, &model);
+    OSPData data = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
 
     OSPGroup group = ospNewGroup();
     ospSetData(group, "geometry", data);
@@ -152,7 +152,7 @@ namespace OSPRayTestScenes {
   void Base::AddModel(OSPVolumetricModel model, affine3f xfm)
   {
     ospCommit(model);
-    OSPData data = ospNewData(1, OSP_OBJECT, &model);
+    OSPData data = ospNewData(1, OSP_VOLUMETRIC_MODEL, &model);
 
     OSPGroup group = ospNewGroup();
     ospSetData(group, "volume", data);
@@ -181,7 +181,7 @@ namespace OSPRayTestScenes {
 
     if (!instances.empty()) {
       OSPData insts =
-          ospNewData(instances.size(), OSP_OBJECT, instances.data());
+          ospNewData(instances.size(), OSP_INSTANCE, instances.data());
       ospSetObject(world, "instance", insts);
       ospRelease(insts);
     }
@@ -601,7 +601,8 @@ namespace OSPRayTestScenes {
     for (auto &m : models)
       ospCommit(m);
 
-    OSPData models_data = ospNewData(models.size(), OSP_OBJECT, models.data());
+    OSPData models_data =
+        ospNewData(models.size(), OSP_GEOMETRIC_MODEL, models.data());
     ospSetData(group, "geometry", models_data);
     ospCommit(group);
     ospRelease(models_data);

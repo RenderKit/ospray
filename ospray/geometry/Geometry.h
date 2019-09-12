@@ -48,6 +48,8 @@ namespace ospray {
     static Geometry *createInstance(const char *type);
   };
 
+  OSPTYPEFOR_SPECIALIZATION(Geometry *, OSP_GEOMETRY);
+
 #define OSP_REGISTER_GEOMETRY(InternalClass, external_name) \
   OSP_REGISTER_OBJECT(                                      \
       ::ospray::Geometry, geometry, InternalClass, external_name)

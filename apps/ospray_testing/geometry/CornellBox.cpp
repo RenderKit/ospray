@@ -269,7 +269,8 @@ namespace ospray {
 
       // put the model into a group (collection of models)
       OSPGroup group          = ospNewGroup();
-      OSPData geometricModels = ospNewData(1, OSP_OBJECT, &quadMeshModel);
+      OSPData geometricModels =
+          ospNewData(1, OSP_GEOMETRIC_MODEL, &quadMeshModel);
       ospSetData(group, "geometry", geometricModels);
 
       ospCommit(group);
@@ -281,7 +282,7 @@ namespace ospray {
 
       // put the instance in the world
       OSPWorld world    = ospNewWorld();
-      OSPData instances = ospNewData(1, OSP_OBJECT, &instance);
+      OSPData instances = ospNewData(1, OSP_INSTANCE, &instance);
       ospSetData(world, "instance", instances);
       ospCommit(world);
       ospRelease(instances);

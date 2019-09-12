@@ -312,7 +312,8 @@ int main(int argc, const char **argv)
   for (auto instance : instances)
     ospCommit(instance);
 
-  OSPData instance_data = ospNewData(instances.size(), OSP_OBJECT, instances.data());
+  OSPData instance_data =
+      ospNewData(instances.size(), OSP_INSTANCE, instances.data());
   ospSetData(world, "instance", instance_data);
   ospRelease(instance_data);
   
@@ -351,14 +352,16 @@ int main(int argc, const char **argv)
     if (showVolume) {
       for (size_t i = 0; i < volumetricGroups.size(); ++i)
       {
-        OSPData volumes = ospNewData(1, OSP_OBJECT, &volumetricModels[i]);
+        OSPData volumes =
+            ospNewData(1, OSP_VOLUMETRIC_MODEL, &volumetricModels[i]);
         ospSetObject(volumetricGroups[i], "volume", volumes);
         ospRelease(volumes);
       }
     }
     
     if (showGeometry) {
-      OSPData geometries = ospNewData(geometricModels.size(), OSP_OBJECT, geometricModels.data());
+      OSPData geometries = ospNewData(
+          geometricModels.size(), OSP_GEOMETRIC_MODEL, geometricModels.data());
       ospSetObject(group_geometry, "geometry", geometries);
       ospRelease(geometries);
     }

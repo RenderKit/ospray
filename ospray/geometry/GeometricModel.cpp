@@ -39,7 +39,7 @@ namespace ospray {
   void GeometricModel::setMaterial()
 
   {
-    auto *data = new Data(&material.ptr, OSP_OBJECT, vec3ui(1), vec3l(0));
+    auto *data = new Data(&material.ptr, OSP_MATERIAL, vec3ui(1), vec3l(0));
     setMaterialList(data);
     data->refDec();
   }

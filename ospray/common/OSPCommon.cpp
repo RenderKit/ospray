@@ -287,11 +287,12 @@ namespace ospray {
     case OSP_LINEAR3F:          return "linear3f";
     case OSP_AFFINE2F:          return "affine2f";
     case OSP_AFFINE3F:          return "affine3f";
-    case OSP_UNKNOWN:           break;
+    case OSP_UNKNOWN:
+      return "unknown";
     }
 
     std::stringstream error;
-    error << __FILE__ << ":" << __LINE__ << ": unknown OSPDataType "
+    error << __FILE__ << ":" << __LINE__ << ": undefined OSPDataType "
           << (int)type;
     throw std::runtime_error(error.str());
   }

@@ -128,7 +128,7 @@ int main(int argc, const char **argv) {
   // put the model into a group (collection of models)
   ospray::cpp::Group group;
   auto modelHandle = model.handle();
-  data = ospray::cpp::Data(1, OSP_OBJECT, &modelHandle);
+  data = ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle);
   group.set("geometry", data);
   model.release();
   data.release();
@@ -142,7 +142,7 @@ int main(int argc, const char **argv) {
   // put the instance in the world
   ospray::cpp::World world;
   auto instanceHandle = instance.handle();
-  data = ospray::cpp::Data(1, OSP_OBJECT, &instanceHandle);
+  data = ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle);
   world.set("instance", data);
   instance.release();
   data.release();

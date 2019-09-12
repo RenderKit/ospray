@@ -32,4 +32,6 @@ namespace ospray {
     virtual float getProgress()     = 0;
   };
 
+  OSPTYPEFOR_SPECIALIZATION(Future *, OSP_FUTURE);
+
 }  // namespace ospray

@@ -56,7 +56,7 @@ int main(int argc, const char **argv)
   ospCommit(volumeModel);
 
   OSPGroup group = ospNewGroup();
-  OSPData volumes = ospNewData(1, OSP_OBJECT, &volumeModel);
+  OSPData volumes = ospNewData(1, OSP_VOLUMETRIC_MODEL, &volumeModel);
   ospSetData(group, "volume", volumes);
   ospRelease(volumes);
   ospCommit(group);
@@ -65,7 +65,7 @@ int main(int argc, const char **argv)
   ospCommit(instance);
 
   // create a data array of all instances for the world
-  OSPData volumeInstances = ospNewData(1, OSP_OBJECT, &instance);
+  OSPData volumeInstances = ospNewData(1, OSP_INSTANCE, &instance);
   ospSetData(world, "instance", volumeInstances);
   ospRelease(volumeInstances);
 

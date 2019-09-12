@@ -129,4 +129,7 @@ namespace ospray {
     std::vector<std::unique_ptr<LiveImageOp>> imageOps;
     size_t firstFrameOperation = -1;
   };
+
+  OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);
+
 }  // namespace ospray

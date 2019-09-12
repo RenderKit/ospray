@@ -54,7 +54,7 @@ int main(int argc, const char **argv)
 
   // Add the plane and cylinders instances to the world
   OSPData geomInstances =
-      ospNewData(instanceHandles.size(), OSP_OBJECT, instanceHandles.data());
+      ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
 
   ospSetData(world, "instance", geomInstances);
   ospRelease(geomInstances);

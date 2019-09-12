@@ -43,11 +43,7 @@ namespace ospray {
     void copy(const Data &source, const vec3ui &destinationIndex);
 
     template <typename T, int DIM = 1>
-    typename std::enable_if<std::is_pointer<T>::value, DataT<T, DIM> &>::type
-    as() const;
-    template <typename T, int DIM = 1>
-    typename std::enable_if<!std::is_pointer<T>::value, DataT<T, DIM> &>::type
-    as() const;
+    const DataT<T, DIM> &as() const;
 
     size_t numBytes; // XXX temp
 
@@ -67,8 +63,15 @@ namespace ospray {
     void init(); // init dimensions and byteStride
 
     template <typename T, int DIM>
-    DataT<T, DIM> &checkType(OSPDataType toType, bool fallback = false) const;
+    typename std::enable_if<std::is_pointer<T>::value, bool>::type isValid()
+        const;
+
+    template <typename T, int DIM>
+    typename std::enable_if<!std::is_pointer<T>::value, bool>::type isValid()
+        const;
   };
+
+  OSPTYPEFOR_SPECIALIZATION(Data *, OSP_DATA);
 
   std::vector<void *> createArrayOfIE(Data &data);
 
@@ -226,36 +229,34 @@ namespace ospray {
   }
 
   template <typename T, int DIM>
-  DataT<T, DIM> &Data::checkType(OSPDataType toType, bool fallback) const
+  typename std::enable_if<std::is_pointer<T>::value, bool>::type Data::isValid()
+      const
+  {
+    auto toType = OSPTypeFor<T>::value;
+    return (type == toType || (toType == OSP_OBJECT && isObjectType(type)))
+        && dimensions <= DIM; // can iterate with higher dimensionality
+  }
+
+  template <typename T, int DIM>
+  typename std::enable_if<!std::is_pointer<T>::value, bool>::type
+  Data::isValid() const
   {
     // can iterate with higher dimensionality
-    if ((type == toType || fallback) && dimensions <= DIM)
+    return type == OSPTypeFor<T>::value && dimensions <= DIM;
+  }
+
+  template <typename T, int DIM>
+  const DataT<T, DIM> &Data::as() const
+  {
+    if (isValid<T, DIM>())
       return (DataT<T, DIM> &)*this;
     else {
       std::stringstream ss;
       ss << "Incompatible type or dimension for DataT; requested type[dim]: "
-         << stringForType(toType) << "[" << DIM
+         << stringForType(OSPTypeFor<T>::value) << "[" << DIM
          << "], actual: " << stringForType(type) << "[" << dimensions << "].";
       throw std::runtime_error(ss.str());
     }
-  }
-
-  template <typename T, int DIM>
-  typename std::enable_if<std::is_pointer<T>::value, DataT<T, DIM> &>::type
-  Data::as() const
-  {
-    // XXX need OSPTypeFor for ospray::Objects
-    //auto toType = OSPTypeFor<typename std::remove_pointer<T>::type>::value;
-    auto toType = OSP_OBJECT;
-    return checkType<T, DIM>(
-        toType, toType == OSP_OBJECT && isObjectType(type));
-  }
-
-  template <typename T, int DIM>
-  typename std::enable_if<!std::is_pointer<T>::value, DataT<T, DIM> &>::type
-  Data::as() const
-  {
-    return checkType<T, DIM>(OSPTypeFor<T>::value);
   }
 
 }  // namespace ospray

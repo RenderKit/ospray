@@ -184,7 +184,7 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
 
   OSPGroup group = ospNewGroup();
 
-  OSPData models = ospNewData(1, OSP_OBJECT, &model);
+  OSPData models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
   ospSetData(group, "geometry", models);
   ospCommit(group);
 

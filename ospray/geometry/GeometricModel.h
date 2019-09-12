@@ -57,6 +57,8 @@ namespace ospray {
     friend struct Renderer;
   };
 
+  OSPTYPEFOR_SPECIALIZATION(GeometricModel *, OSP_GEOMETRIC_MODEL);
+
   // Inlined members //////////////////////////////////////////////////////////
 
   inline Geometry &GeometricModel::geometry()

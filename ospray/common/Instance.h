@@ -42,6 +42,8 @@ namespace ospray {
     Ref<Group> group;
   };
 
+  OSPTYPEFOR_SPECIALIZATION(Instance *, OSP_INSTANCE);
+
   // Inlined definitions //////////////////////////////////////////////////////
 
   inline affine3f Instance::xfm()

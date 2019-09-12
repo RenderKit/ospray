@@ -34,7 +34,7 @@ namespace ospray {
       ospSetVec3f(ambientLight, "color", 1.f, 1.f, 1.f);
       ospCommit(ambientLight);
 
-      auto lightsData = ospNewData(1, OSP_OBJECT, &ambientLight);
+      auto lightsData = ospNewData(1, OSP_LIGHT, &ambientLight);
       ospRelease(ambientLight);
 
       return lightsData;

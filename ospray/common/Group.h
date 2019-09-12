@@ -55,6 +55,8 @@ namespace ospray {
     RTCScene sceneVolumes{nullptr};
   };
 
+  OSPTYPEFOR_SPECIALIZATION(Group *, OSP_GROUP);
+
   // Inlined members /////////////////////////////////////////////////////////
 
   inline OptionalScene Group::embreeGeometryScene()

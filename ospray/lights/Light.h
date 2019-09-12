@@ -39,6 +39,8 @@ namespace ospray {
     bool isVisible;  //!< either directly in camera, or via a straight path
   };
 
+  OSPTYPEFOR_SPECIALIZATION(Light *, OSP_LIGHT);
+
 #define OSP_REGISTER_LIGHT(InternalClass, external_name) \
   OSP_REGISTER_OBJECT(::ospray::Light, light, InternalClass, external_name)
 

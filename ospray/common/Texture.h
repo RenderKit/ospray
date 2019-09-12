@@ -29,4 +29,6 @@ namespace ospray {
     /*! Every derived class should override this! */
     virtual std::string toString() const { return "ospray::Texture"; }
   };
+
+  OSPTYPEFOR_SPECIALIZATION(Texture *, OSP_TEXTURE);
 }

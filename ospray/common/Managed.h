@@ -74,6 +74,8 @@ namespace ospray {
     OSPDataType managedObjectType{OSP_UNKNOWN};
   };
 
+  OSPTYPEFOR_SPECIALIZATION(ManagedObject *, OSP_OBJECT);
+
   // Inlined ManagedObject definitions ////////////////////////////////////////
 
   inline void *ManagedObject::getIE() const

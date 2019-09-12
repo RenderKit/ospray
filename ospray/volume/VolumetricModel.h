@@ -41,4 +41,6 @@ namespace ospray {
     Ref<Volume> volume;
   };
 
+  OSPTYPEFOR_SPECIALIZATION(VolumetricModel *, OSP_VOLUMETRIC_MODEL);
+
 }  // namespace ospray

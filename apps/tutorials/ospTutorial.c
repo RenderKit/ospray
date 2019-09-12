@@ -129,7 +129,7 @@ int main(int argc, const char **argv) {
 
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
-  OSPData geometricModels = ospNewSharedData1D(&model, OSP_OBJECT, 1);
+  OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
   ospSetData(group, "geometry", geometricModels);
   ospCommit(group);
   ospRelease(model);
@@ -142,7 +142,7 @@ int main(int argc, const char **argv) {
 
   // put the instance in the world
   OSPWorld world = ospNewWorld();
-  OSPData instances = ospNewSharedData1D(&instance, OSP_OBJECT, 1);
+  OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
   ospSetData(world, "instance", instances);
   ospCommit(world);
   ospRelease(instance);

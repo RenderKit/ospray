@@ -40,6 +40,8 @@ namespace ospray {
     static TransferFunction *createInstance(const std::string &type);
   };
 
+  OSPTYPEFOR_SPECIALIZATION(TransferFunction *, OSP_TRANSFER_FUNCTION);
+
 /*! \brief Define a function to create an instance of the InternalClass
   associated with external_name.
 

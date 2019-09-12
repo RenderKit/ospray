@@ -98,6 +98,8 @@ namespace ospray {
     Ref<Texture2D> maxDepthTexture;
   };
 
+  OSPTYPEFOR_SPECIALIZATION(Renderer *, OSP_RENDERER);
+
   /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name"
 

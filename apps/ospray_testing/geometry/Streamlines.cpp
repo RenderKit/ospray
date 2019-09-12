@@ -98,7 +98,7 @@ namespace ospray {
       ospCommit(slModel);
 
       OSPGroup group = ospNewGroup();
-      auto models    = ospNewData(1, OSP_OBJECT, &slModel);
+      auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &slModel);
       ospSetData(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);

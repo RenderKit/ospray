@@ -135,7 +135,7 @@ namespace ospray {
       ospRelease(mat);
 
       OSPGroup group = ospNewGroup();
-      auto models    = ospNewData(1, OSP_OBJECT, &model);
+      auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
       ospSetData(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);

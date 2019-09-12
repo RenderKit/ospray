@@ -76,7 +76,7 @@ int main(int argc, const char **argv)
   OSPInstance instance = ospNewInstance(group);
   ospCommit(instance);
 
-  OSPData instances = ospNewData(1, OSP_OBJECT, &instance);
+  OSPData instances = ospNewData(1, OSP_INSTANCE, &instance);
   ospSetData(world, "instance", instances);
   ospRelease(instances);
   ospRelease(instance);
@@ -145,11 +145,11 @@ int main(int argc, const char **argv)
     ospSetObject(isoGeometry, "volume", testVolume);
 
     if (isoSurface) {
-      OSPData geomModels = ospNewData(1, OSP_OBJECT, &model);
+      OSPData geomModels = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
       ospSetObject(group, "geometry", geomModels);
       ospRelease(geomModels);
     } else {
-      OSPData volModels = ospNewData(1, OSP_OBJECT, &testVolume);
+      OSPData volModels = ospNewData(1, OSP_VOLUMETRIC_MODEL, &testVolume);
       ospSetObject(group, "volume", volModels);
       ospRelease(volModels);
     }

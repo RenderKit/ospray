@@ -142,7 +142,7 @@ namespace ospray {
       ospCommit(cylindersModel);
 
       OSPGroup group = ospNewGroup();
-      auto models    = ospNewData(1, OSP_OBJECT, &cylindersModel);
+      auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &cylindersModel);
       ospSetData(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);

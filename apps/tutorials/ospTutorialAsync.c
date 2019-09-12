@@ -213,7 +213,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
-  OSPData models = ospNewSharedData1D(&model, OSP_OBJECT, 1);
+  OSPData models = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
   ospSetObject(group, "geometry", models);
   ospCommit(group);
   ospRelease(model);
@@ -227,7 +227,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // put the instance in the world
   *world = ospNewWorld();
-  OSPData instances = ospNewSharedData1D(&instance, OSP_OBJECT, 1);
+  OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
   ospSetObject(*world, "instance", instances);
   ospCommit(*world);
   ospRelease(instance);
@@ -314,7 +314,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
-  OSPData models = ospNewSharedData1D(&model, OSP_OBJECT, 1);
+  OSPData models = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
   ospSetObject(group, "geometry", models);
   ospCommit(group);
   ospRelease(model);
@@ -328,7 +328,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // put the instance in the world
   *world = ospNewWorld();
-  OSPData instances = ospNewSharedData1D(&instance, OSP_OBJECT, 1);
+  OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
   ospSetObject(*world, "instance", instances);
   ospCommit(*world);
   ospRelease(instances);

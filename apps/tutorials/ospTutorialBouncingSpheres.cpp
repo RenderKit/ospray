@@ -135,7 +135,7 @@ void createWorld()
   // add in spheres geometry (100 of them)
   g_spheresModel = createRandomSpheresGeometry(100);
 
-  OSPData spheresModels = ospNewData(1, OSP_OBJECT, &g_spheresModel);
+  OSPData spheresModels = ospNewData(1, OSP_GEOMETRIC_MODEL, &g_spheresModel);
   ospSetData(g_spheresGroup, "geometry", spheresModels);
   ospCommit(g_spheresGroup);
 
@@ -149,7 +149,7 @@ void createWorld()
   instanceHandles.push_back(plane);
 
   OSPData instances =
-      ospNewData(instanceHandles.size(), OSP_OBJECT, instanceHandles.data());
+      ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
   ospSetData(g_world, "instance", instances);
   ospRelease(instances);
   ospRelease(spheresInstance);

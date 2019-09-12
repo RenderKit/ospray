@@ -146,7 +146,7 @@ int main(int argc, const char **argv)
   OSPInstance instance = ospNewInstance(group);
   ospCommit(instance);
 
-  OSPData instances = ospNewData(1, OSP_OBJECT, &instance);
+  OSPData instances = ospNewData(1, OSP_INSTANCE, &instance);
   ospSetData(world, "instance", instances);
   ospRelease(instances);
 
@@ -185,7 +185,7 @@ int main(int argc, const char **argv)
 
 
     if (showVolume) {
-      OSPData volumes = ospNewData(1, OSP_OBJECT, &volumeModel);
+      OSPData volumes = ospNewData(1, OSP_VOLUMETRIC_MODEL, &volumeModel);
       ospSetObject(group, "volume", volumes);
       ospRelease(volumes);
     }
@@ -201,8 +201,9 @@ int main(int argc, const char **argv)
             geometryModelHandles.push_back(setSliceVolumeModel(volumeModel, sliceModel));
       }
 
-      OSPData geoms = ospNewData(
-          geometryModelHandles.size(), OSP_OBJECT, geometryModelHandles.data());
+      OSPData geoms = ospNewData(geometryModelHandles.size(),
+          OSP_GEOMETRIC_MODEL,
+          geometryModelHandles.data());
       ospSetObject(group, "geometry", geoms);
       ospRelease(geoms);
     }

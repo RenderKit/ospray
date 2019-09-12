@@ -76,6 +76,8 @@ namespace ospray {
                                     const char *material_type);
   };
 
+  OSPTYPEFOR_SPECIALIZATION(Material *, OSP_MATERIAL);
+
 #define OSP_REGISTER_MATERIAL(renderer_name, InternalClass, external_name)     \
   OSP_REGISTER_OBJECT(::ospray::Material, material, \
                       InternalClass, renderer_name##__##external_name)
