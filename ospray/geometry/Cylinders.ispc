@@ -20,6 +20,7 @@
 #include "geometry/Geometry.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
+#include "common/Intersect.ih"
 
 struct CylinderTexCoord
 {
@@ -90,50 +91,21 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
   const uniform vec3f v0 = *((vec3f * uniform)(cylinderPtr + self->offset_v0));
   const uniform vec3f v1 = *((vec3f * uniform)(cylinderPtr + self->offset_v1));
 
-  const vec3f d         = ray->dir;
-  const uniform vec3f s = v1 - v0;  // axis
-  const vec3f sxd       = cross(s, d);
-  const float a         = dot(sxd, sxd);  // (s x d)^2
-  if (a == 0.f)
-    return;
-
-  const vec3f f   = v0 - ray->org;
-  const vec3f sxf = cross(s, f);
-  const float ra  = 1.0f / a;
-  const float ts =
-      dot(sxd, sxf) * ra;       // (s x d)(s x f) / (s x d)^2, in ray-space
-  const vec3f fp = f - ts * d;  // f' = v0 - closest point to axis
-
-  const uniform float s2 = dot(s, s);                  // s^2
-  const vec3f perp       = cross(s, fp);               // s x f'
-  const float c = sqr(radius) * s2 - dot(perp, perp);  //  r^2 s^2 - (s x f')^2
-  if (c < 0.f)
-    return;
-
-  float td          = sqrt(c * ra);
-  const float t_in  = ts - td;
-  const float t_out = ts + td;
-
-  // clip to cylinder caps
-  const float sf  = dot(s, f);
-  const float sd  = dot(s, d);
-  const float rsd = rcp(sd);
-  const float tA  = sf * rsd;
-  const float tB  = tA + s2 * rsd;
-  // rsd (and thus tA and tB) can be NaN if the ray is perfectly perpendicular
-  // to the cylinder; filter NaNs by having ray t as 2nd argument to min/max
-  const float tmin = max(min(tA, tB), ray->t0);
-  const float tmax = min(max(tA, tB), ray->t);
+  IntersectionValues isect = intersectCylinder(ray->org, ray->dir, v0, v1, radius);
 
   bool hit = false;
-  // avoid short-circuiting &&
-  if (and(tmin < t_in, t_in <= tmax)) {
+  if(and(and(isect.t_in.t_value > ray->t0, isect.t_in.t_value <= ray->t), isect.t_in.hit))
+  {
     hit = true;
-    td *= -1.f;
-    ray->t = t_in;
-  } else if (and(tmin < t_out, t_out <= tmax)) {
-    hit    = true;
-    ray->t = t_out;
+    ray->t = isect.t_in.t_value;
+    ray->u  = isect.t_in.u;
+    ray->Ng = isect.t_in.N;
+  } else if(and(and(isect.t_out.t_value > ray->t0, isect.t_out.t_value <= ray->t), isect.t_out.hit))
+  {
+    hit = true;
+    ray->t = isect.t_out.t_value;
+    ray->u  = isect.t_out.u;
+    ray->Ng = isect.t_out.N;
   }
 
   if (hit) {
@@ -146,10 +118,6 @@ void Cylinders_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
       ray->instID = args->context->instID[0];
       ray->primID = primID;
       ray->geomID = self->super.geomID;
-      // cannot easily be moved to postIntersect
-      // we need hit in object-space, in postIntersect it is in world-space
-      ray->u  = (ray->t * sd - sf) * rcp(s2);
-      ray->Ng = td * d - fp - ray->u * s;
     }
   }
 }

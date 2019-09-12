@@ -20,6 +20,7 @@
 #include "geometry/Geometry.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
+#include "common/Intersect.ih"
 
 struct Boxes
 {
@@ -50,11 +51,23 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   uniform int primID = args->primID;
 
   box3f *uniform box = &self->boxes[primID];
-  vec2f t;
-  intersectBox(ray->org, ray->dir, *box, t.x, t.y);
 
-  const bool hit = t.x < t.y && ((t.x > ray->t0 && t.x < ray->t) ||
-                                 (t.y > ray->t0 && t.y < ray->t));
+  IntersectionValues isect = intersectBox(ray->org, ray->dir, *box);
+
+  bool hit = false;
+  if(isect.t_in.t_value < isect.t_out.t_value) {
+    if (and(and(isect.t_in.t_value > ray->t0, isect.t_in.t_value < ray->t),
+            isect.t_in.hit)) {
+      hit = true;
+      ray->Ng = isect.t_in.N;
+      ray->t  = isect.t_in.t_value;
+    } else if (and(and(isect.t_out.t_value > ray->t0, isect.t_out.t_value < ray->t),
+                   isect.t_out.hit)) {
+      hit = true;
+      ray->Ng = isect.t_out.N;
+      ray->t  = isect.t_out.t_value;
+    }
+  }
 
   if (hit) {
     cif(isOcclusionTest)
@@ -66,18 +79,6 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
       ray->instID = args->context->instID[0];
       ray->geomID = self->super.geomID;
       ray->primID = primID;
-      ray->t      = t.x < ray->t0 ? t.y : t.x;
-
-      // Calculate geometry normal
-      const vec3f c = (box->lower + box->upper) * 0.5;
-      const vec3f d = (box->lower - box->upper) * 0.5;
-      const vec3f p = (ray->org + (ray->t * ray->dir)) - c;
-
-      const uniform float bias = 1.f + 1e-3f;
-
-      ray->Ng = safe_normalize(make_vec3f((int)(p.x / abs(d.x) * bias),
-                                          (int)(p.y / abs(d.y) * bias),
-                                          (int)(p.z / abs(d.z) * bias)));
     }
   }
 }

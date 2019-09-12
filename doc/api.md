@@ -1256,10 +1256,11 @@ tracer]). For instance, the apparent size of the sun is about 0.53°.
 #### Point Light / Sphere Light
 
 The sphere light (or the special case point light) is a light emitting
-uniformly in all directions. It is created by passing the type string
-"`sphere`" to `ospNewLight`. In addition to the [general
-parameters](#lights) understood by all lights the sphere light supports
-the following special parameters:
+uniformly in all directions from the surface towards the outside.
+It does not emit any light towards the inside of the sphere.
+It is created by passing the type string "`sphere`" to `ospNewLight`.
+In addition to the [generalparameters](#lights) understood by all lights
+the sphere light supports the following special parameters:
 
   Type      Name      Description
   --------- --------- -----------------------------------------------

@@ -21,6 +21,7 @@
 #include "math/box.ih"
 #include "math/sampling.ih"
 #include "math/vec.ih"
+#include "common/Intersect.ih"
 
 struct StreamLines
 {
@@ -44,77 +45,6 @@ unmasked void StreamLines_bounds(const RTCBoundsFunctionArguments *uniform args)
   *out = make_box3fa(min(A, B) - self->radius, max(A, B) + self->radius);
 }
 
-// robust ray-sphere intersection
-inline void intersectSphere(varying Ray &ray,
-                            const uniform vec3f &center,
-                            float &t_in,
-                            float &t_out,
-                            const uniform float r)
-{
-  const float rd2        = 1.0f / dot(ray.dir, ray.dir);  // 1/a
-  const vec3f CO         = center - ray.org;
-  const float projCO     = dot(CO, ray.dir) * rd2;  // in ray-space
-  const vec3f perp       = CO - projCO * ray.dir;
-  const float l2         = dot(perp, perp);
-  const uniform float r2 = sqr(r);
-  if (l2 > r2)
-    return;
-
-  const float td        = sqrt((r2 - l2) * rd2);
-  const float sph_t_in  = projCO - td;
-  const float sph_t_out = projCO + td;
-
-  t_in  = min(t_in, sph_t_in);
-  t_out = max(t_out, sph_t_out);
-}
-
-// robust ray-cylinder intersection
-inline void intersectCylinder(varying Ray &ray,
-                              const uniform vec3f &v0,
-                              const uniform vec3f &v1,
-                              float &t_in,
-                              float &t_out,
-                              const uniform float r)
-{
-  const vec3f d         = ray.dir;
-  const uniform vec3f s = v1 - v0;  // axis
-  const vec3f sxd       = cross(s, d);
-  const float a         = dot(sxd, sxd);  // (s x d)^2
-  if (a == 0.f)
-    return;
-
-  const vec3f f   = v0 - ray.org;
-  const vec3f sxf = cross(s, f);
-  const float ra  = 1.0f / a;
-  const float ts =
-      dot(sxd, sxf) * ra;       // (s x d)(s x f) / (s x d)^2, in ray-space
-  const vec3f fp = f - ts * d;  // f' = v0 - closest point to axis
-
-  const uniform float s2 = dot(s, s);             // s^2
-  const vec3f perp       = cross(s, fp);          // s x f'
-  const float c = sqr(r) * s2 - dot(perp, perp);  //  r^2 s^2 - (s x f')^2
-  if (c < 0.f)
-    return;
-
-  float td         = sqrt(c * ra);
-  const float tin  = ts - td;
-  const float tout = ts + td;
-
-  // clip to cylinder caps
-  const float rsd = rcp(dot(s, d));
-  const float tA  = dot(s, f) * rsd;
-  const float tB  = tA + s2 * rsd;
-  // rsd (and thus tA and tB) can be NaN if the ray is perfectly perpendicular
-  // to the cylinder; filter NaNs by having tin/tout as 2nd argument to min/max
-  const float cyl_t_in  = max(min(tA, tB), tin);
-  const float cyl_t_out = min(max(tA, tB), tout);
-
-  if (cyl_t_in < cyl_t_out) {
-    t_in  = cyl_t_in;
-    t_out = cyl_t_out;
-  }
-}
-
 unmasked void StreamLines_intersect_kernel(
     const struct RTCIntersectFunctionNArguments *uniform args,
     const uniform bool occlusionTest)
@@ -134,21 +64,24 @@ unmasked void StreamLines_intersect_kernel(
   const uniform vec3f A    = make_vec3f(self->vertex[idx]);
   const uniform vec3f B    = make_vec3f(self->vertex[idx + 1]);
 
-  float t_in = inf, t_out = -inf;
-  intersectCylinder(*ray, A, B, t_in, t_out, self->radius);
-  intersectSphere(*ray, A, t_in, t_out, self->radius);
-  intersectSphere(*ray, B, t_in, t_out, self->radius);
+
+  IntersectionValues isect = intersectCapsule(ray->org, ray->dir, A, B, self->radius);
 
   bool hit = false;
-  if (t_in < t_out) {
-    if (t_in > ray->t0 && t_in < ray->t) {
-      ray->t = t_in;
-      hit    = true;
-    } else if (t_out > ray->t0 && t_out < ray->t) {
-      ray->t = t_out;
-      hit    = true;
-    }
+  if(and(and(isect.t_in.t_value > ray->t0, isect.t_in.t_value < ray->t), isect.t_in.hit))
+  {
+    hit = true;
+    ray->t = isect.t_in.t_value;
+    ray->u = isect.t_in.u;
+    ray->Ng = isect.t_in.N;
+  } else if(and(and(isect.t_out.t_value > ray->t0, isect.t_out.t_value < ray->t), isect.t_out.hit))
+  {
+    hit = true;
+    ray->t = isect.t_out.t_value;
+    ray->u = isect.t_out.u;
+    ray->Ng = isect.t_out.N;
   }
+
 
   if (hit) {
     if (occlusionTest) {
@@ -157,15 +90,6 @@ unmasked void StreamLines_intersect_kernel(
       ray->primID = primID;
       ray->geomID = self->super.geomID;
       ray->instID = args->context->instID[0];
-
-      const vec3f P = ray->org + ray->t * ray->dir;
-      float s       = dot(P - A, B - A) * rcpf(dot(B - A, B - A));
-      s             = min(max(s, 0.f), 1.f);
-
-      const vec3f PonAxis = A + s * (B - A);
-
-      ray->u  = s;
-      ray->Ng = normalize(P - PonAxis);
     }
   }
 }

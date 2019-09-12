@@ -48,21 +48,24 @@ unmasked void Volume_intersect_kernel(
 
   box3f *uniform box = &self->boundingBox;
 
-  vec2f t;
-  intersectBox(ray->org, ray->dir, *box, t.x, t.y);
-  const bool hit = t.x < t.y && (t.x < ray->t && t.y > ray->t0);
+  IntersectionValues isect = intersectBox(ray->org, ray->dir, *box);
+
+  const bool hit = isect.t_in.t_value < isect.t_out.t_value &&
+          ((isect.t_in.t_value > ray->t0 && isect.t_in.t_value < ray->t) ||
+           (isect.t_out.t_value > ray->t0 && isect.t_out.t_value < ray->t));
 
   if (hit) {
     ray->instID = args->context->instID[0];
     ray->geomID = self->volumeID;
     ray->primID = 0;
 
-    vInterval->interval.lower = t.x;
-    vInterval->interval.upper = t.y;
     vInterval->primID = 0;
     vInterval->geomID = self->volumeID;
     vInterval->instID = args->context->instID[0];
     vIntervals->numVolumeIntervals++;
+    vInterval->interval.lower = isect.t_in.t_value;
+    vInterval->interval.upper = isect.t_out.t_value;
+
   }
 }
 

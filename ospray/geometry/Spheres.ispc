@@ -23,6 +23,7 @@
 #include "math/sampling.ih"
 #include "math/vec.ih"
 #include "ospray/OSPEnums.h"
+#include "common/Intersect.ih"
 
 struct Spheres
 {
@@ -95,7 +96,6 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
 
   // this assumes that the args->rayhit is actually a pointer to a varying ray!
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
-
   uint8 *uniform spherePtr =
       self->data + self->stride * ((uniform int64)primID);
   uniform float radius = self->radius;
@@ -104,45 +104,21 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
   }
   uniform vec3f center = *((vec3f * uniform)(spherePtr + self->offset_center));
 
-  const vec3f d   = ray->dir;
-  const float rd2 = 1.0f / dot(d, d);  // 1/a
-  const vec3f CO  = center - ray->org;
-  // transformation to avoid missing a small sphere which is far away:
-  // the standard c=CO^2-r^2 would quickly loose term r due to float arithmetic
-  const float projCO     = dot(CO, d) * rd2;  // in ray-space
-  const vec3f perp       = CO - projCO * d;
-  const float l2         = dot(perp, perp);
-  const uniform float r2 = sqr(radius);
-  if (l2 > r2)
-    return;
-
-  float td          = sqrt((r2 - l2) * rd2);
-  const float t_in  = projCO - td;
-  const float t_out = projCO + td;
-  // above solutions are problematic if rays starts close to the sphere
-  // (due to catastrophic cancellation, because then |projCO| ~ td)
-  // the usual recommendation is to choose the one solution with same sign:
-  //   const float t1 = projCO + floatbits(signbits(projCO)|intbits(td));
-  // and compute the other solution via t1*t2=c/a:
-  //   const float t2 = (dot(CO, CO) - r2) / t1 * rd2;
-  // this is more precise, but still problematic in particular for large
-  // spheres, because |CO| ~ r; slightly better alternative, but costly sqrt:
-  //   const float f = sqrt(dot(CO, CO));
-  //   const float t2 = (f - radius) * (f + radius) / t1 * rd2;
-  // the only variant I found that has high enough precision to avoid
-  // self-intersections of 2ndary rays is to (re-)compute most terms (CO, dot,
-  // r2, t2) with doubles; large spheres are a rare usecase for OSPRay, thus we
-  // use instead as a workaround an additional, radius-dependent epsilon
+  IntersectionValues isect = intersectSphere(ray->org, ray->dir, center, radius);
 
   bool hit = false;
-  // avoid short-circuiting &&
-  if (and(ray->t0 < t_in, t_in <= ray->t)) {
+  if(and(and(isect.t_in.t_value > ray->t0, isect.t_in.t_value <= ray->t),
+         isect.t_in.hit))
+  {
     hit = true;
-    td *= -1.f;
-    ray->t = t_in;
-  } else if (and(ray->t0 < t_out, t_out <= ray->t)) {
-    hit    = true;
-    ray->t = t_out;
+    ray->t = isect.t_in.t_value;
+    ray->Ng = isect.t_in.N;
+  } else if(and(and(isect.t_out.t_value > ray->t0, isect.t_out.t_value <= ray->t),
+                isect.t_out.hit))
+  {
+    hit = true;
+    ray->t = isect.t_out.t_value;
+    ray->Ng = isect.t_out.N;
   }
 
   if (hit) {
@@ -155,9 +131,6 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
       ray->primID = primID;
       ray->geomID = self->super.geomID;
       ray->instID = args->context->instID[0];
-      // cannot easily be moved to postIntersect
-      // we need hit in object space, in postIntersect it is in world-space
-      ray->Ng = td * d - perp;
     }
   }
 }
