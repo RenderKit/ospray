@@ -66,7 +66,6 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
   pathState.disableNEE = false; 
   pathState.disableFWD = false;
 #endif
-  pathState.homogeneousApprox = false;
   pathState.straightPath = true; // path from camera did not change direction, for alpha and backplate
   pathState.auxFree = true; // normal & albedo buffer were not yet written to
   pathState.depth = 0;

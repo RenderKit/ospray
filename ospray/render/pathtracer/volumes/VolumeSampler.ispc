@@ -176,36 +176,20 @@ float volumeSampleFreePath(const PathState& pathState,
           float dist = inf;
           float extinctionCoefficient;
           vec3f albedo;
-          if (pathState.homogeneousApprox)
-          {
-            float density = inst->densityScale;
-            dist = vInterval.interval.lower;
-            float xi = RandomSampler_getFloat(randomSampler);
-            const float dt = - log(1.f - xi) / density;
-            dist += dt;
-            if (dist > vInterval.interval.upper)
-              dist = inf;
-            
-            sampledExtinctionCoefficient = 1.f;
-            sampledAlbedo = make_vec3f(1.f);
-          }
-          else 
-          {
-            Ray transformedVolumeRay = volumeRay;
-            transformRay(transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
+          Ray transformedVolumeRay = volumeRay;
+          transformRay(transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
 #if USE_INTERVAL_ITERATOR
-            dist = delta_tracking_interval(
+          dist = delta_tracking_interval(
 #else
-            dist = delta_tracking(
+          dist = delta_tracking(
 #endif
-                                  inst,
-                                  vInterval,
-                                  randomSampler,
-                                  transformedVolumeRay.org,
-                                  transformedVolumeRay.dir,
-                                  extinctionCoefficient,
-                                  albedo);
-          }
+                                inst,
+                                vInterval,
+                                randomSampler,
+                                transformedVolumeRay.org,
+                                transformedVolumeRay.dir,
+                                extinctionCoefficient,
+                                albedo);
           if (dist < min_dist && dist < inf) {
             min_dist = dist;
             *sampledInstance = inst;
@@ -243,27 +227,23 @@ float volumeTransmittance(const PathState& pathState,
         vInterval.interval.upper = noHit(ray) ? vInterval.interval.upper : min(vInterval.interval.upper, ray.t);
         if (hasInterval(vInterval))
         {
-          if (pathState.homogeneousApprox) {
-            transmittance = transmittance * exp(-(vInterval.interval.upper - vInterval.interval.lower)*inst->densityScale);
-          } else {
-            Ray transformedVolumeRay = volumeRay;
-            transformRay(transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
-            float extinctionCoefficient;
-            vec3f albedo;
+          Ray transformedVolumeRay = volumeRay;
+          transformRay(transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
+          float extinctionCoefficient;
+          vec3f albedo;
 #if USE_INTERVAL_ITERATOR
-            const float dist = delta_tracking_interval(
+          const float dist = delta_tracking_interval(
 #else
-            const float dist = delta_tracking(
+          const float dist = delta_tracking(
 #endif
-                inst,
-                vInterval,
-                randomSampler,
-                transformedVolumeRay.org,
-                transformedVolumeRay.dir,
-                extinctionCoefficient,
-                albedo);
-            transmittance = transmittance * ((dist < vInterval.interval.upper) ? 0.f : 1.f);
-          }
+              inst,
+              vInterval,
+              randomSampler,
+              transformedVolumeRay.org,
+              transformedVolumeRay.dir,
+              extinctionCoefficient,
+              albedo);
+          transmittance = transmittance * ((dist < vInterval.interval.upper) ? 0.f : 1.f);
         }
       }
     }

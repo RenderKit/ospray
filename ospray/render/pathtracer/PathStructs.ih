@@ -67,7 +67,6 @@ struct PathState
   bool debug;
   bool disableNEE;          // turn off NEE contribution for debugging purposes
   bool disableFWD;          // turn off FWD contribution for debugging purposes
-  bool homogeneousApprox;   // handle volume as homogeneous in its bbox for debugging purposes
   bool straightPath;        // path from camera did not change direction, for alpha and backplate
   bool auxFree;             // normal & albedo buffer were not yet written to
   uniform uint32 depth;

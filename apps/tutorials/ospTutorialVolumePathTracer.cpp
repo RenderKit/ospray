@@ -170,6 +170,11 @@ OSPVolumetricModel CreateProceduralVolumetricModel(
         for (int x = 0; x < dims.x; ++x) {
           vec3f p = vec3f(x+0.5f, y+0.5f, z+0.5f)/dims;
           if (D(p)) voxels[dims.x * dims.y * z + dims.x * y + x] = 0.5f + 0.5f * PerlinNoise::noise(p, 12);
+
+          // constant volume:
+          //voxels[dims.x * dims.y * z + dims.x * y + x] = 1.0f;
+          //if (x == 0 && y == 0 && z == 0)
+          //  voxels[dims.x * dims.y * z + dims.x * y + x] = 0.0f;
         }
       }
     });
@@ -259,6 +264,15 @@ int main(int argc, const char **argv)
   };
 
   std::vector<OSPVolumetricModel> volumetricModels;
+  //volumetricModels.emplace_back(CreateProceduralVolumetricModel(
+  //  [&](vec3f p) { 
+  //    vec3f X = 2.f * p - vec3f(1.f); 
+  //    return length((1.4f + 0.4 * turbulence(p, 12.f, 12)) * X) < 1.f;
+  //  },
+  //  {vec3f(1.0f, 1.0f, 1.0f), vec3f(1.0f, 1.0f, 1.0f)},
+  //  {0.f, 1.f},
+  //  densityScale,
+  //  anisotropy));
   volumetricModels.emplace_back(CreateProceduralVolumetricModel(
     [&](vec3f p) {
       vec3f X = 2.f * p - vec3f(1.f);
@@ -307,8 +321,10 @@ int main(int argc, const char **argv)
 
   std::vector<OSPInstance> instances;
   instances.emplace_back(CreateInstance(group_geometry, one));
-  instances.emplace_back(CreateInstance(volumetricGroups[0], AffineSpace3f::translate(vec3f(0.f, -0.5f, 0.f)) * AffineSpace3f::scale(vec3f(1.25f))));
-  instances.emplace_back(CreateInstance(volumetricGroups[1], AffineSpace3f::translate(vec3f(0.f, -0.5f, 0.f)) * AffineSpace3f::scale(vec3f(2.5))));
+  if (volumetricGroups.size() > 0)
+    instances.emplace_back(CreateInstance(volumetricGroups[0], AffineSpace3f::translate(vec3f(0.f, -0.5f, 0.f)) * AffineSpace3f::scale(vec3f(1.25f))));
+  if (volumetricGroups.size() > 1)
+    instances.emplace_back(CreateInstance(volumetricGroups[1], AffineSpace3f::translate(vec3f(0.f, -0.5f, 0.f)) * AffineSpace3f::scale(vec3f(2.5))));
   for (auto instance : instances)
     ospCommit(instance);
 
