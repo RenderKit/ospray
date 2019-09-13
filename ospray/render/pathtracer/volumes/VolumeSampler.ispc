@@ -59,12 +59,7 @@ float volumeSampleFreePath(const PathState& pathState,
                            float& sampledExtinctionCoefficient,
                            vec3f& sampledAlbedo)
 {
-  Ray volumeRay;
-  volumeRay.org  = ray.org;
-  volumeRay.dir  = ray.dir;
-  volumeRay.time = ray.time;
-  volumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
-  volumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
+  Ray volumeRay = ray;
   VolumeIntervals volumeIntervals;
   traceVolumeRay(world, volumeRay, volumeIntervals);
   const bool haveVolumeHit = volumeIntervals.numVolumeIntervals > 0;
@@ -97,12 +92,7 @@ float volumeSampleFreePath(const PathState& pathState,
           }
           else 
           {
-            Ray transformedVolumeRay;
-            transformedVolumeRay.org  = volumeRay.org;
-            transformedVolumeRay.dir  = volumeRay.dir;
-            transformedVolumeRay.time = volumeRay.time;
-            transformedVolumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
-            transformedVolumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
+            Ray transformedVolumeRay = volumeRay;
             transformRay(transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
             dist = delta_tracking(inst,
                                   vInterval,
@@ -131,12 +121,7 @@ float volumeTransmittance(const PathState& pathState,
                           varying LDSampler* uniform ldSampler,
                           varying RandomSampler* uniform randomSampler)
 {
-  Ray volumeRay;
-  volumeRay.org  = ray.org;
-  volumeRay.dir  = ray.dir;
-  volumeRay.time = ray.time;
-  volumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
-  volumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
+  Ray volumeRay = ray;
   VolumeIntervals volumeIntervals;
   traceVolumeRay(world, volumeRay, volumeIntervals);
   const bool haveVolumeHit = volumeIntervals.numVolumeIntervals > 0;
@@ -157,12 +142,7 @@ float volumeTransmittance(const PathState& pathState,
           if (pathState.homogeneousApprox) {
             transmittance = transmittance * exp(-(vInterval.interval.upper - vInterval.interval.lower)*inst->densityScale);
           } else {
-            Ray transformedVolumeRay;
-            transformedVolumeRay.org  = volumeRay.org;
-            transformedVolumeRay.dir  = volumeRay.dir;
-            transformedVolumeRay.time = volumeRay.time;
-            transformedVolumeRay.t0   = 0;   // don't clip to ray [t0, t] yet, otherwise we might not get volume intersections 
-            transformedVolumeRay.t    = inf; // (e.g. if ray(t0) and ray(t) are both inside the volume's bounding box)
+            Ray transformedVolumeRay = volumeRay;
             transformRay(transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
             float extinctionCoefficient;
             vec3f albedo;
