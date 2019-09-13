@@ -78,7 +78,6 @@ float volumeSampleFreePath(const PathState& pathState,
       VolumetricModel *varying instance = volumeIntervals.intervals[i].volumetricModel;
       foreach_unique(inst in instance)
       {
-        if (all(__mask == 0)) continue;
         vInterval.interval.lower = max(0.f, vInterval.interval.lower);
         vInterval.interval.upper = noHit(ray) ? vInterval.interval.upper : min(vInterval.interval.upper, ray.t);
         if (hasInterval(vInterval))
