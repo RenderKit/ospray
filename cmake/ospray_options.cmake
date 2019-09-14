@@ -20,7 +20,8 @@
 
 include(GNUInstallDirs)
 
-set(OSPRAY_CMAKECONFIG_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
+set(OSPRAY_CMAKECONFIG_DIR
+    "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
 
 set(EMBREE_VERSION_REQUIRED 3.2.0)
 
@@ -28,22 +29,28 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
-if (WIN32)
-  # avoid problematic min/max defines of windows.h
-  add_definitions(-DNOMINMAX)
-endif()
+ospray_configure_build_type()
+ospray_configure_compiler()
+
+###########################################################
+# OSPRay's dependencies
+###########################################################
+
+# ospcommon
+find_package(ospcommon REQUIRED)
+
+# embree
+ospray_find_embree(${EMBREE_VERSION_REQUIRED})
+ospray_verify_embree_features()
+ospray_determine_embree_isa_support()
+ospray_create_embree_target()
 
 ###########################################################
 # OSPRay specific build options and configuration selection
 ###########################################################
 
-ospray_configure_build_type()
-ospray_configure_compiler()
-
-find_package(ospcommon REQUIRED)
-
-# Must be before ISA config and package
-include(configure_embree)
+# Configure OSPRay ISA last after we've detected what we got w/ Embree
+ospray_configure_ispc_isa()
 
 option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 
@@ -57,9 +64,9 @@ option(OSPRAY_ENABLE_TARGET_CLANGFORMAT
        "Enable 'format' target, requires clang-format too")
 mark_as_advanced(OSPRAY_ENABLE_TARGET_CLANGFORMAT)
 
-####################################################################
-# Create binary packages; before any install() invocation/definition
-####################################################################
+#####################################################################
+# Binary package options, before any install() invocation/definition
+#####################################################################
 
 option(OSPRAY_ZIP_MODE "Use tarball/zip CPack generator instead of RPM" ON)
 mark_as_advanced(OSPRAY_ZIP_MODE)
@@ -67,5 +74,3 @@ mark_as_advanced(OSPRAY_ZIP_MODE)
 option(OSPRAY_INSTALL_DEPENDENCIES
        "Install OSPRay dependencies in binary packages and install")
 mark_as_advanced(OSPRAY_INSTALL_DEPENDENCIES)
-
-include(package)

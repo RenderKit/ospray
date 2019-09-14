@@ -16,7 +16,7 @@
 
 set(OSPRAY_DEFAULT_COMPONENT modules)
 
-include_directories_ispc(
+ispc_include_directories(
   ${PROJECT_BINARY_DIR}
   ${CMAKE_SOURCE_DIR}/ospray/include
   ${CMAKE_SOURCE_DIR}/ospray

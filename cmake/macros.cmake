@@ -19,15 +19,6 @@ macro(print var)
   message("${var} = ${${var}}")
 endmacro()
 
-## Macro to print a warning message that only appears once ##
-macro(ospray_warn_once IDENTIFIER MESSAGE)
-  set(INTERNAL_WARNING "OSPRAY_WARNED_${IDENTIFIER}")
-  if(NOT ${INTERNAL_WARNING})
-    message(WARNING ${MESSAGE})
-    set(${INTERNAL_WARNING} ON CACHE INTERNAL "Warned about '${MESSAGE}'")
-  endif()
-endmacro()
-
 ## Get a list of subdirectories (single level) under a given directory
 macro(get_subdirectories result curdir)
   file(GLOB children RELATIVE ${curdir} ${curdir}/*)
@@ -93,14 +84,6 @@ macro(ospray_configure_ispc_isa)
   set(OSPRAY_BUILD_ISA "ALL" CACHE STRING
       "Target ISA (SSE4, AVX, AVX2, AVX512KNL, AVX512SKX, or ALL)")
   string(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
-
-  option(OSPRAY_BUILD_ISA_SCALAR
-         "Include 'SCALAR' target (WARNING: may not work!)" OFF)
-  mark_as_advanced(OSPRAY_BUILD_ISA_SCALAR)
-
-  if (OSPRAY_BUILD_ISA_SCALAR)
-    set(OSPRAY_SUPPORTED_ISAS SCALAR)
-  endif()
 
   if(EMBREE_ISA_SUPPORTS_SSE4)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} SSE4)
@@ -189,21 +172,6 @@ macro(ospray_configure_ispc_isa)
 endmacro()
 
 ## Target creation macros ##
-
-macro(ospray_add_library name type)
-  set(ISPC_SOURCES "")
-  set(OTHER_SOURCES "")
-  foreach(src ${ARGN})
-    get_filename_component(ext ${src} EXT)
-    if (ext STREQUAL ".ispc")
-      set(ISPC_SOURCES ${ISPC_SOURCES} ${src})
-    else()
-      set(OTHER_SOURCES ${OTHER_SOURCES} ${src})
-    endif ()
-  endforeach()
-  ospray_ispc_compile(${ISPC_SOURCES})
-  add_library(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
-endmacro()
 
 macro(ospray_install_library name component)
   install(TARGETS ${name}
@@ -304,7 +272,7 @@ endfunction()
 macro(ospray_create_library LIBRARY_NAME)
   ospray_split_create_args(LIBRARY ${ARGN})
 
-  ospray_add_library(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
+  ispc_add_library(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
   target_link_libraries(${LIBRARY_NAME} ${LIBRARY_LIBS})
   ospray_set_library_version(${LIBRARY_NAME})
   if(${LIBRARY_EXCLUDE_FROM_ALL})

@@ -82,26 +82,29 @@ endif()
 
 get_filename_component(ISPC_DIR ${ISPC_EXECUTABLE} PATH)
 
+# ##################################################################
+# Macro to specify global-scope ISPC include directories
+# ##################################################################
 
-# ##################################################################
-# add macro include_directories_ISPC() that allows to specify search
-# paths for ISPC sources
-# ##################################################################
 set(ISPC_INCLUDE_DIR "")
-macro (include_directories_ISPC)
+macro (ispc_include_directories)
   set(ISPC_INCLUDE_DIR ${ISPC_INCLUDE_DIR} ${ARGN})
 endmacro ()
 
 # ##################################################################
-# add macro ADD_DEFINITIONS_ISPC() that allows to specify
-# ISPC pre-processor definitions
+# Macro to specify global-scope ISPC definitions
 # ##################################################################
+
 set(ISPC_DEFINITIONS "")
-macro (ADD_DEFINITIONS_ISPC)
+macro (ispc_add_definitions)
   set(ISPC_DEFINITIONS ${ISPC_DEFINITIONS} ${ARGN})
 endmacro ()
 
-macro (OSPRAY_ISPC_COMPILE)
+# ##################################################################
+# Macro to compile ISPC source into an object file for linking
+# ##################################################################
+
+macro (ispc_compile)
   set(ISPC_ADDITIONAL_ARGS "")
   set(ISPC_TARGETS ${OSPRAY_ISPC_TARGET_LIST})
 
@@ -211,4 +214,23 @@ macro (OSPRAY_ISPC_COMPILE)
 
     set(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
   endforeach()
+endmacro()
+
+# ##################################################################
+# Macro to divide C/C++ and ISPC source and make a library target
+# ##################################################################
+
+macro(ispc_add_library name type)
+  set(ISPC_SOURCES "")
+  set(OTHER_SOURCES "")
+  foreach(src ${ARGN})
+    get_filename_component(ext ${src} EXT)
+    if (ext STREQUAL ".ispc")
+      set(ISPC_SOURCES ${ISPC_SOURCES} ${src})
+    else()
+      set(OTHER_SOURCES ${OTHER_SOURCES} ${src})
+    endif ()
+  endforeach()
+  ispc_compile(${ISPC_SOURCES})
+  add_library(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
 endmacro()

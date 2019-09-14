@@ -329,7 +329,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   ## Build the module ##
 
-  include_directories_ispc(
+  ispc_include_directories(
     ${CMAKE_SOURCE_DIR}/ospray/include
     ${CMAKE_SOURCE_DIR}/ospray
     ${CMAKE_SOURCE_DIR}

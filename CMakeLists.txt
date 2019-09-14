@@ -29,6 +29,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED   ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # configure directories for components we are going to include
@@ -45,6 +46,7 @@ set(CMAKE_MODULE_PATH
 include(macros)
 include(ospray_macros)
 include(ospray_options)
+include(package)
 include(ispc)
 
 if (OSPRAY_INSTALL_DEPENDENCIES)

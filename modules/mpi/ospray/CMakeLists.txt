@@ -22,7 +22,7 @@ mark_as_advanced(OSP_MPI_COMPRESSION_THRESHOLD)
 
 ## Build the MPI module ##
 
-include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR})
+ispc_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 ospray_create_library(ospray_module_mpi
   MPIOffloadDevice.cpp
