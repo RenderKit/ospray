@@ -42,6 +42,9 @@ ispc_add_library(ospray_module_mpi SHARED
 
 ospray_install_library(ospray_module_mpi COMPONENT mpi)
 
+set_target_properties(ospray_module_mpi
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+
 target_link_libraries(ospray_module_mpi
   PRIVATE
     snappy
@@ -65,6 +68,10 @@ target_compile_definitions(ospray_module_mpi PUBLIC
 
 add_executable(ospray_mpi_worker mpi_offload_worker_main.cpp)
 target_link_libraries(ospray_mpi_worker PRIVATE ospray_module_ispc)
+if (WIN32)
+  set_target_properties(ospray_mpi_worker
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+endif()
 install(TARGETS ospray_mpi_worker
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   COMPONENT mpi

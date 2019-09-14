@@ -32,6 +32,9 @@ if (OSPRAY_MODULE_DENOISER)
     ospray_module_ispc
   )
 
+  set_target_properties(ospray_module_denoiser
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+
   install(TARGETS ospray_module_denoiser
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     COMPONENT mpi

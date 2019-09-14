@@ -44,6 +44,9 @@ target_link_libraries(ospray_testing PUBLIC ospray PRIVATE ospcommon::ospcommon)
 
 ospray_install_library(ospray_testing COMPONENT apps)
 
+set_target_properties(ospray_testing
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+
 target_include_directories(ospray_testing
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>

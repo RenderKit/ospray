@@ -273,6 +273,8 @@ endif()
 add_library(ospray SHARED ${OSPRAY_SOURCES})
 target_link_libraries(ospray PRIVATE ospcommon::ospcommon)
 ospray_install_library(ospray COMPONENT lib)
+set_target_properties(ospray
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 
 target_include_directories(ospray
   PUBLIC
@@ -351,6 +353,10 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
+
+  set_target_properties(ospray_module_ispc
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+
 endif()
 
 ##############################################################

@@ -208,13 +208,6 @@ macro(ospray_install_library name component)
   )
 endmacro()
 
-## Target versioning macro ##
-
-macro(ospray_set_library_version name)
-  set_target_properties(${name}
-    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-endmacro()
-
 ## Compiler configuration macros ##
 
 macro(ospray_configure_compiler)

@@ -24,6 +24,9 @@ add_library(ospray_mpi_common SHARED
 
 ospray_install_library(ospray_mpi_common COMPONENT mpi)
 
+set_target_properties(ospray_mpi_common
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+
 target_link_libraries(ospray_mpi_common
   PRIVATE
     snappy
