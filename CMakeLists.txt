@@ -43,7 +43,6 @@ set(CMAKE_MODULE_PATH
 # CMake modules and macro files
 ##############################################################
 
-include(macros)
 include(ospray_macros)
 include(ospray_options)
 include(package)
