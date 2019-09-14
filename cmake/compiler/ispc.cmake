@@ -15,7 +15,7 @@
 ## ======================================================================== ##
 
 # ISPC versions to look for, in decending order (newest first)
-set(ISPC_VERSION_WORKING "1.10.0" "1.9.2" "1.9.1")
+set(ISPC_VERSION_WORKING "1.12.0" "1.10.0" "1.9.2" "1.9.1")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 if (NOT ISPC_EXECUTABLE)
@@ -69,6 +69,10 @@ if(NOT ISPC_VERSION)
   set(ISPC_VERSION ${ISPC_VERSION} CACHE STRING "ISPC Version")
   mark_as_advanced(ISPC_VERSION)
   mark_as_advanced(ISPC_EXECUTABLE)
+endif()
+
+if ("${ISPC_VERSION}" STREQUAL "1.11.0")
+  message(FATAL_ERROR "ISPC v1.11.0 is incompatible with OSPRay.")
 endif()
 
 set(OSPRAY_ISPC_ADDRESSING 32 CACHE STRING "32 vs 64 bit addressing in ispc")
