@@ -16,9 +16,9 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-include(cmake/ospray_version.cmake)
-
-project(OSPRay VERSION ${OSPRAY_VERSION} LANGUAGES C CXX)
+##############################################################
+# Language setup
+##############################################################
 
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
@@ -32,16 +32,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# configure directories for components we are going to include
-set(CMAKE_MODULE_PATH
-  ${CMAKE_MODULE_PATH}
-  ${PROJECT_SOURCE_DIR}/cmake
-  ${PROJECT_SOURCE_DIR}/cmake/compiler
-)
+##############################################################
+# Establish project
+##############################################################
+
+include(cmake/ospray_version.cmake)
+
+project(OSPRay VERSION ${OSPRAY_VERSION} LANGUAGES C CXX)
 
 ##############################################################
 # CMake modules and macro files
 ##############################################################
+
+list(APPEND CMAKE_MODULE_PATH
+  ${PROJECT_SOURCE_DIR}/cmake
+  ${PROJECT_SOURCE_DIR}/cmake/compiler
+)
 
 include(ospray_macros)
 include(ospray_options)
@@ -51,6 +57,10 @@ include(ispc)
 if (OSPRAY_INSTALL_DEPENDENCIES)
   include(ospray_redistribute_deps)
 endif()
+
+##############################################################
+# Add library and executable targets
+##############################################################
 
 ## Main OSPRay library ##
 add_subdirectory(ospray)
