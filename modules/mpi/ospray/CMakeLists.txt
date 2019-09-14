@@ -24,7 +24,7 @@ mark_as_advanced(OSP_MPI_COMPRESSION_THRESHOLD)
 
 ispc_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-ospray_create_library(ospray_module_mpi
+ispc_add_library(ospray_module_mpi SHARED
   MPIOffloadDevice.cpp
   MPIOffloadWorker.cpp
 
@@ -39,6 +39,8 @@ ospray_create_library(ospray_module_mpi
 
   render/MPILoadBalancer.cpp
 )
+
+ospray_install_library(ospray_module_mpi COMPONENT mpi)
 
 target_link_libraries(ospray_module_mpi
   PRIVATE

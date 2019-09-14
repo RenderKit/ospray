@@ -14,14 +14,15 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_create_library(ospray_mpi_common
+add_library(ospray_mpi_common SHARED
     MPICommon.cpp
     MPIBcastFabric.cpp
     Collectives.cpp
     maml/maml.cpp
     maml/Context.cpp
-  COMPONENT mpi
 )
+
+ospray_install_library(ospray_mpi_common COMPONENT mpi)
 
 target_link_libraries(ospray_mpi_common
   PRIVATE

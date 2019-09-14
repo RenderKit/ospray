@@ -33,12 +33,14 @@ target_link_libraries(ospTutorialAsync PRIVATE ospray)
 
 ## Create a static library of all common tutorial bits ##
 
-ospray_create_library(tutorial_common STATIC
+add_library(tutorial_common STATIC
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
   tutorial_util.cpp
   imgui/imgui_impl_glfw_gl3.cpp
 )
+
+ospray_install_library(tutorial_common COMPONENT apps)
 
 target_link_libraries(tutorial_common PUBLIC
   ospcommon::ospcommon

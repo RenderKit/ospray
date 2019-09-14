@@ -253,35 +253,6 @@ function(ospray_split_create_args PREFIX)
   set(${PREFIX}_COMPONENT ${MY_COMPONENT} PARENT_SCOPE)
 endfunction()
 
-## Convenience macro for creating OSPRay libraries ##
-# Usage
-#
-#   ospray_create_library(<name> source1 [source2 ...]
-#                         [LINK lib1 [lib2 ...]]
-#                         [EXCLUDE_FROM_ALL]
-#                         [COMPONENT component])
-#
-# will create and install shared library <name> from 'sources' with
-# version OSPRAY_[SO]VERSION and optionally link against 'libs'.
-# When EXCLUDE_FROM_ALL is given the library will not be installed and
-# only be build when it is an explicit dependency.
-# Per default the application will be installed in component
-# OSPRAY_DEFAULT_COMPONENT which can be overridden individually with
-# COMPONENT.
-
-macro(ospray_create_library LIBRARY_NAME)
-  ospray_split_create_args(LIBRARY ${ARGN})
-
-  ispc_add_library(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
-  target_link_libraries(${LIBRARY_NAME} ${LIBRARY_LIBS})
-  ospray_set_library_version(${LIBRARY_NAME})
-  if(${LIBRARY_EXCLUDE_FROM_ALL})
-    set_target_properties(${LIBRARY_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-  else()
-    ospray_install_library(${LIBRARY_NAME} ${LIBRARY_COMPONENT})
-  endif()
-endmacro()
-
 ## Convenience macro for creating OSPRay applications ##
 # Usage
 #
@@ -302,18 +273,13 @@ macro(ospray_create_application APP_NAME)
   ospray_split_create_args(APP ${ARGN})
 
   add_executable(${APP_NAME} ${APP_SOURCES})
-  target_link_libraries(${APP_NAME} ${APP_LIBS})
   if (WIN32)
     set_target_properties(${APP_NAME} PROPERTIES VERSION ${OSPRAY_VERSION})
   endif()
-  if(${APP_EXCLUDE_FROM_ALL})
-    set_target_properties(${APP_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-  else()
-    install(TARGETS ${APP_NAME}
-      DESTINATION ${CMAKE_INSTALL_BINDIR}
-      COMPONENT ${APP_COMPONENT}
-    )
-  endif()
+  install(TARGETS ${APP_NAME}
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT ${APP_COMPONENT}
+  )
 endmacro()
 
 ## Compiler configuration macros ##

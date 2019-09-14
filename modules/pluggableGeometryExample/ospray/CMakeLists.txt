@@ -38,7 +38,7 @@
 # b) contain a (extern C linkage) initializatoin routine named
 #    void ospray_init_module_<moduleName>()
 #
-ospray_create_library(ospray_module_bilinear_patches
+ispc_add_library(ospray_module_bilinear_patches SHARED
   # the cpp file that contains all the plugin code - parsing
   # parameters in ospCommit(), creating and registering the object,
   # building accel structures, etc

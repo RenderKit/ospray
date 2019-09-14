@@ -270,12 +270,9 @@ if (WIN32)
   list(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_ispc.def)
 endif()
 
-ospray_create_library(ospray
-  ${OSPRAY_SOURCES}
-COMPONENT lib
-)
-
+add_library(ospray SHARED ${OSPRAY_SOURCES})
 target_link_libraries(ospray PRIVATE ospcommon::ospcommon)
+ospray_install_library(ospray COMPONENT lib)
 
 target_include_directories(ospray
   PUBLIC
@@ -337,10 +334,9 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ${EMBREE_INCLUDE_DIRS}
   )
 
-  ospray_create_library(ospray_module_ispc
-    ${OSPRAY_ISPC_DEVICE_SOURCES}
-  COMPONENT lib
-  )
+  ispc_add_library(ospray_module_ispc SHARED ${OSPRAY_ISPC_DEVICE_SOURCES})
+
+  ospray_install_library(ospray_module_ispc COMPONENT lib)
 
   target_link_libraries(ospray_module_ispc
   PUBLIC
