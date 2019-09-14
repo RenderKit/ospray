@@ -16,8 +16,8 @@
 
 #include "MPIOffloadDevice.h"
 // ospray
+#include "common/Future.h"
 #include "common/Messaging.h"
-#include "common/QueryableTask.h"
 // ospcommon
 #include "ospcommon/utility/getEnvVar.h"
 // maml
@@ -679,28 +679,28 @@ namespace ospray {
     int MPIOffloadDevice::isReady(OSPFuture _task, OSPSyncEvent event)
     {
       auto handle = (ObjectHandle &)_task;
-      auto *task  = (QueryableTask *)handle.lookup();
+      auto *task  = (Future *)handle.lookup();
       return task->isFinished(event);
     }
 
     void MPIOffloadDevice::wait(OSPFuture _task, OSPSyncEvent event)
     {
       auto handle = (ObjectHandle &)_task;
-      auto *task  = (QueryableTask *)handle.lookup();
+      auto *task  = (Future *)handle.lookup();
       task->wait(event);
     }
 
     void MPIOffloadDevice::cancel(OSPFuture _task)
     {
       auto handle = (ObjectHandle &)_task;
-      auto *task  = (QueryableTask *)handle.lookup();
+      auto *task  = (Future *)handle.lookup();
       return task->cancel();
     }
 
     float MPIOffloadDevice::getProgress(OSPFuture _task)
     {
       auto handle = (ObjectHandle &)_task;
-      auto *task  = (QueryableTask *)handle.lookup();
+      auto *task  = (Future *)handle.lookup();
       return task->getProgress();
     }
 

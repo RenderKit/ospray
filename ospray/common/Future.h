@@ -20,10 +20,10 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE QueryableTask : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE Future : public ManagedObject
   {
-    QueryableTask()           = default;
-    ~QueryableTask() override = default;
+    Future()           = default;
+    ~Future() override = default;
 
     virtual bool isFinished(OSPSyncEvent = OSP_TASK_FINISHED) = 0;
 
