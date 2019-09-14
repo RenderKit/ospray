@@ -329,6 +329,10 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
   endif()
 
   set(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
+
+  if ("${EMBREE_VERSION}" STREQUAL "3.6.0")
+    message(FATAL_ERROR "Embree v3.6.0 is incompatible with OSPRay.")
+  endif()
 endmacro()
 
 macro(ospray_determine_embree_isa_support)
