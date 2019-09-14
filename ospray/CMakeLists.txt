@@ -336,7 +336,9 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ${EMBREE_INCLUDE_DIRS}
   )
 
-  ispc_add_library(ospray_module_ispc SHARED ${OSPRAY_ISPC_DEVICE_SOURCES})
+  add_library(ospray_module_ispc SHARED)
+
+  ispc_target_add_sources(ospray_module_ispc ${OSPRAY_ISPC_DEVICE_SOURCES})
 
   ospray_install_library(ospray_module_ispc COMPONENT lib)
 

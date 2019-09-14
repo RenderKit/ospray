@@ -155,8 +155,6 @@ macro (ispc_compile)
     set(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=disable-assertions)
   endif()
 
-  set(ISPC_OBJECTS "")
-
   foreach(src ${ARGN})
     get_filename_component(fname ${src} NAME_WE)
     get_filename_component(dir ${src} PATH)
@@ -216,25 +214,47 @@ macro (ispc_compile)
       COMMENT "Building ISPC object ${outdir}/${fname}.dev${ISPC_TARGET_EXT}"
     )
 
-    set(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
+    list(APPEND ISPC_OBJECTS ${results})
   endforeach()
 endmacro()
 
 # ##################################################################
-# Macro to divide C/C++ and ISPC source and make a library target
+# Macro to add both C/C++ and ISPC sources to a given target
 # ##################################################################
 
-macro(ispc_add_library name type)
+function(ispc_target_add_sources name)
+  ## Split-out C/C++ from ISPC files ##
+
   set(ISPC_SOURCES "")
   set(OTHER_SOURCES "")
+
   foreach(src ${ARGN})
     get_filename_component(ext ${src} EXT)
     if (ext STREQUAL ".ispc")
       set(ISPC_SOURCES ${ISPC_SOURCES} ${src})
     else()
       set(OTHER_SOURCES ${OTHER_SOURCES} ${src})
-    endif ()
+    endif()
   endforeach()
+
+  ## Get existing target definitions and include dirs ##
+
+  # NOTE(jda) - This needs work: BUILD_INTERFACE vs. INSTALL_INTERFACE isn't
+  #             handled automatically.
+
+  #get_property(TARGET_DEFINITIONS TARGET ${name} PROPERTY COMPILE_DEFINITIONS)
+  #get_property(TARGET_INCLUDES TARGET ${name} PROPERTY INCLUDE_DIRECTORIES)
+
+  #set(ISPC_DEFINITIONS ${TARGET_DEFINITIONS})
+  #set(ISPC_INCLUDE_DIR ${TARGET_INCLUDES})
+
+  ## Compile ISPC files ##
+
   ispc_compile(${ISPC_SOURCES})
-  add_library(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
-endmacro()
+
+  ## Set final sources on target ##
+
+  get_property(TARGET_SOURCES TARGET ${name} PROPERTY SOURCES)
+  list(APPEND TARGET_SOURCES ${ISPC_OBJECTS} ${OTHER_SOURCES})
+  set_target_properties(${name} PROPERTIES SOURCES "${TARGET_SOURCES}")
+endfunction()
