@@ -18,8 +18,6 @@ option(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
 
 if (OSPRAY_MODULE_MPI)
 
-  set(OSPRAY_DEFAULT_COMPONENT mpi)
-
   include(mpi_setup.cmake)
 
   add_subdirectory(mpiCommon)

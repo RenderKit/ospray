@@ -63,5 +63,9 @@ target_compile_definitions(ospray_module_mpi PUBLIC
 
 ## Build the worker executable ##
 
-ospray_create_application(ospray_mpi_worker mpi_offload_worker_main.cpp)
+add_executable(ospray_mpi_worker mpi_offload_worker_main.cpp)
 target_link_libraries(ospray_mpi_worker PRIVATE ospray_module_ispc)
+install(TARGETS ospray_mpi_worker
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT mpi
+)
