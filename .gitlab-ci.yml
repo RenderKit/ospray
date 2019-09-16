@@ -85,7 +85,6 @@ build-arch-gcc-warnings:
   <<: *build_job_docker
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
-  allow_failure: true
 
 build-arch-clang-warnings:
   <<: *build_job_docker
@@ -93,7 +92,6 @@ build-arch-clang-warnings:
     - export CC=clang
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
-  allow_failure: true
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker
