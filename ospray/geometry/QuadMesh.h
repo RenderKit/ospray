@@ -35,8 +35,6 @@ namespace ospray {
     LiveGeometry createEmbreeGeometry() override;
 
    protected:
-    bool huge_mesh{false};
-
     Ref<const DataT<vec3f>> vertexData;
     Ref<const DataT<vec3f>> normalData;
     Ref<const Data> colorData;

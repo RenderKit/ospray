@@ -29,8 +29,8 @@ namespace ospray {
   {
     if (sharedData == nullptr)
       throw std::runtime_error("OSPData: shared buffer is NULL");
-    init();
     addr = (char *)sharedData;
+    init();
 
     if (isObjectType(type))
       for (auto &&child : as<ManagedObject *, 3>())
@@ -41,9 +41,9 @@ namespace ospray {
   Data::Data(OSPDataType type, const vec3ui &numItems)
       : shared(false), type(type), numItems(numItems), byteStride(0)
   {
-    init();
     addr = (char *)alignedMalloc(
         size() * sizeOf(type) + 16); // XXX padding needed?
+    init();
     if (isObjectType(type)) // XXX initialize always? or never?
       memset(addr, 0, size() * sizeOf(type));
   }
@@ -59,13 +59,16 @@ namespace ospray {
       alignedFree(addr);
   }
 
+  ispc::Data1D Data::empytData1D;
+
   void Data::init()
   {
     numBytes = size() * sizeOf(type);
     managedObjectType = OSP_DATA;
     if (reduce_min(numItems) == 0)
       throw std::out_of_range("OSPData: all numItems must be positive");
-    dimensions = (numItems.x > 1) + (numItems.y > 1) + (numItems.z > 1);
+    dimensions =
+        std::max(1, (numItems.x > 1) + (numItems.y > 1) + (numItems.z > 1));
     // compute strides if requested
     if (byteStride.x == 0)
       byteStride.x = sizeOf(type);
@@ -73,6 +76,24 @@ namespace ospray {
       byteStride.y = numItems.x * sizeOf(type);
     if (byteStride.z == 0)
       byteStride.z = numItems.x * numItems.y * sizeOf(type);
+
+    // precompute dominant axis and set at ispc-side proxy
+    if (dimensions != 1)
+      return;
+
+    ispc.byteStride = byteStride.x;
+    ispc.numItems = numItems.x;
+    if (numItems.y > 1) {
+      ispc.byteStride = byteStride.y;
+      ispc.numItems = numItems.y;
+    } else if (numItems.z > 1) {
+      ispc.byteStride = byteStride.z;
+      ispc.numItems = numItems.z;
+    }
+    // finalize ispc-side
+    ispc.addr = reinterpret_cast<decltype(ispc.addr)>(addr);
+    ispc.huge = ispc.byteStride * ispc.numItems
+        > std::numeric_limits<std::int32_t>::max();
   }
 
   void Data::copy(const Data &source, const vec3ui &destinationIndex)

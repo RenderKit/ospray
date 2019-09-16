@@ -1,0 +1,89 @@
+// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "../math/LinearSpace.ih"
+
+struct Data1D
+{
+  uint8 *addr;
+  int64 byteStride;
+  uint32 numItems;
+  bool huge; // 64bit address calculation neccessary
+};
+
+inline void Data1D_Constructor(Data1D *uniform self)
+{
+  self->addr = NULL;
+  self->byteStride = 0;
+  self->numItems = 0;
+  self->huge = false;
+}
+
+// ok to pass-by-value, will be inlined and optimized
+inline uniform bool valid(const uniform Data1D data)
+{
+  return data.addr != NULL;
+}
+
+// special 64-bit safe code:
+#define BITS 20
+
+// ok to pass-by-value, will be inlined and optimized
+#define __define_get(T)                                                        \
+  inline T get_##T(const uniform Data1D data, const varying int index)         \
+  {                                                                            \
+    if (data.huge) {                                                           \
+      T v;                                                                     \
+      const int index_lo = index & ((1 << BITS) - 1);                          \
+      const int index_hi = index - index_lo;                                   \
+      const int scaledIndexLo = index_lo * data.byteStride;                    \
+      foreach_unique (hi in index_hi) {                                        \
+        /* uniform offset for upper bits */                                    \
+        const uniform uint64 scaledIndexHi = (uint64)(hi)*data.byteStride;     \
+        /* properly shifted base address (shifted by 64-bits) */               \
+        const uint8 *uniform base_hi = data.addr + scaledIndexHi;              \
+        v = *((const T *)(base_hi + scaledIndexLo));                           \
+      }                                                                        \
+      return v;                                                                \
+    } else                                                                     \
+      return *((const T *)(data.addr + data.byteStride * index));              \
+  }                                                                            \
+  inline uniform T get_##T(const uniform Data1D data, const uniform int index) \
+  {                                                                            \
+    return *((const T *)(data.addr + data.byteStride * index));                \
+  }
+
+__define_get(int32);
+__define_get(vec2i);
+__define_get(vec3i);
+__define_get(vec4i);
+
+__define_get(uint32);
+__define_get(vec2ui);
+__define_get(vec3ui);
+__define_get(vec4ui);
+
+__define_get(float);
+__define_get(vec2f);
+__define_get(vec3f);
+__define_get(vec4f);
+
+__define_get(linear3f);
+
+#undef __define_get
+#undef BITS

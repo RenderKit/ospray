@@ -19,6 +19,20 @@
 #include <iterator>
 #include "./Managed.h"
 
+// including "Data_ispc.h" breaks app code using SDK headers
+#ifndef __ISPC_STRUCT_Data1D__
+#define __ISPC_STRUCT_Data1D__
+namespace ispc {
+  struct Data1D
+  {
+    uint8_t *addr;
+    int64_t byteStride;
+    uint32_t numItems;
+    bool huge;
+  };
+} // namespace ispc
+#endif
+
 namespace ospray {
 
   template <typename T, int DIM = 1>
@@ -63,7 +77,12 @@ namespace ospray {
 
    protected:
     vec3l byteStride;
+
+   public:
     int dimensions{0};
+
+    ispc::Data1D ispc;
+    static ispc::Data1D empytData1D; // dummy, zero-initialized
 
    private:
     void init(); // init dimensions and byteStride
@@ -181,16 +200,16 @@ namespace ospray {
 
     Iter1D<T> begin() const
     {
-      return Iter1D<T>(addr, byteStride.x);
+      return Iter1D<T>(addr, ispc.byteStride);
     }
     Iter1D<T> end() const
     {
-      return Iter1D<T>(addr + byteStride.x * numItems.x, byteStride.x);
+      return Iter1D<T>(addr + ispc.byteStride * ispc.numItems, ispc.byteStride);
     }
 
     T &operator[](int64_t idx)
     {
-      return *reinterpret_cast<T *>(addr + byteStride.x * idx);
+      return *reinterpret_cast<T *>(addr + ispc.byteStride * idx);
     }
     const T &operator[](int64_t idx) const
     {
@@ -204,11 +223,23 @@ namespace ospray {
 
     int64_t stride() const
     {
-      return byteStride.x;
+      return ispc.byteStride;
     }
   };
 
   // Inlined definitions //////////////////////////////////////////////////////
+
+  inline const ispc::Data1D *ispc(Ref<const Data> &dataRef)
+  {
+    return dataRef && dataRef->dimensions == 1 ? &dataRef->ispc
+                                               : &Data::empytData1D;
+  }
+
+  template <typename T>
+  const ispc::Data1D *ispc(Ref<const DataT<T, 1>> &dataRef)
+  {
+    return dataRef ? &dataRef->ispc : &Data::empytData1D;
+  }
 
   inline size_t Data::size() const
   {

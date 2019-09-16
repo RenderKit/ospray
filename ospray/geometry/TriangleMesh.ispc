@@ -16,25 +16,21 @@
 
 // ospray
 #include "Geometry.ih"
+#include "common/Data.ih"
 #include "common/World.ih"
-#include "common/safe_gather.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 
 struct TriangleMesh
 {
-  Geometry super;         //!< inherited geometry fields
-  int32 idxSize;          //!< stride of triangle indices, in int32 elements
-  int32 vtxSize;          //!< stride of vertex positions, in float32 elements
-  int32 norSize;          //!< stride of normals, in float32 elements
-  int *index;             //!< mesh's triangle index array
-  float *vertex;          //!< mesh's vertex position array
-  float *normal;          //!< mesh's vertex normal array
-  vec4f *color;           //!< mesh's vertex color array
-  vec2f *texcoord;        //!< mesh's texture coordinate array
-  int32 geom_materialID;  // per-object material ID
+  Geometry super;
+  Data1D index;
+  Data1D vertex;
+  Data1D normal;
+  Data1D color;
+  Data1D texcoord;
+  int64 flagMask; // which attributes are missing and cannot be interpolated
   bool has_alpha;         // 4th color component is valid
-  bool huge_mesh;         // need 64-bit addressing
 };
 
 static void TriangleMesh_postIntersect(const Geometry *uniform _self,
@@ -44,68 +40,57 @@ static void TriangleMesh_postIntersect(const Geometry *uniform _self,
 {
   const TriangleMesh *uniform self = (const TriangleMesh *uniform)_self;
   dg.Ng = dg.Ns                = ray.Ng;
-  const uniform bool huge_mesh = self->huge_mesh;
-  const vec3i index =
-      gather_vec3i(huge_mesh, self->index, self->idxSize, ray.primID);
+  const vec3i index = get_vec3i(self->index, ray.primID);
   vec3f bary = make_vec3f(1.0f - ray.u - ray.v, ray.u, ray.v);
 
-  if (flags & DG_NS && self->normal) {
-    const uniform float *uniform normal = self->normal;
-    const uniform int32 norSize         = self->norSize;
-    const vec3f a = gather_vec3f(huge_mesh, normal, norSize, index.x);
-    const vec3f b = gather_vec3f(huge_mesh, normal, norSize, index.y);
-    const vec3f c = gather_vec3f(huge_mesh, normal, norSize, index.z);
+  flags &= self->flagMask;
+
+  cif (flags & DG_NS) {
+    const vec3f a = get_vec3f(self->normal, index.x);
+    const vec3f b = get_vec3f(self->normal, index.y);
+    const vec3f c = get_vec3f(self->normal, index.z);
     dg.Ns         = interpolate(bary, a, b, c);
   }
 
-  if (flags & DG_COLOR && self->color) {
-    const uniform vec4f *uniform color = self->color;
-    const vec4f a = gather_vec4f(huge_mesh, color, index.x);
-    const vec4f b = gather_vec4f(huge_mesh, color, index.y);
-    const vec4f c = gather_vec4f(huge_mesh, color, index.z);
+  cif (flags & DG_COLOR) {
+    const vec4f a = get_vec4f(self->color, index.x);
+    const vec4f b = get_vec4f(self->color, index.y);
+    const vec4f c = get_vec4f(self->color, index.z);
     dg.color      = interpolate(bary, a, b, c);
     if (!self->has_alpha)
       dg.color.w = 1.f;
   }
 
-  if (flags & DG_TEXCOORD && self->texcoord) {
-    const uniform vec2f *uniform texcoord = self->texcoord;
-    const vec2f a = gather_vec2f(huge_mesh, texcoord, index.x);
-    const vec2f b = gather_vec2f(huge_mesh, texcoord, index.y);
-    const vec2f c = gather_vec2f(huge_mesh, texcoord, index.z);
-    dg.st         = interpolate(bary, a, b, c);
-  }
-
-  if (flags & DG_TANGENTS) {
-    uniform bool fallback = true;
-    if (self->texcoord) {
-      const uniform vec2f *uniform texcoord = self->texcoord;
-      const vec2f a     = gather_vec2f(huge_mesh, texcoord, index.x);
-      const vec2f b     = gather_vec2f(huge_mesh, texcoord, index.y);
-      const vec2f c     = gather_vec2f(huge_mesh, texcoord, index.z);
+  const uniform bool compute_texcoord = flags & DG_TEXCOORD;
+  bool compute_tangents = flags & DG_TANGENTS;
+  cif (and(or(compute_texcoord, compute_tangents), valid(self->texcoord))) {
+    const vec2f a = get_vec2f(self->texcoord, index.x);
+    const vec2f b = get_vec2f(self->texcoord, index.y);
+    const vec2f c = get_vec2f(self->texcoord, index.z);
+    cif (compute_texcoord)
+      dg.st = interpolate(bary, a, b, c);
+    cif (compute_tangents) {
       const vec2f dst02 = a - c;
       const vec2f dst12 = b - c;
       const float det   = dst02.x * dst12.y - dst02.y * dst12.x;
 
       if (det != 0.f) {
         const float invDet                  = rcp(det);
-        const uniform float *uniform vertex = self->vertex;
-        const uniform int32 vtxSize         = self->vtxSize;
-        const vec3f a    = gather_vec3f(huge_mesh, vertex, vtxSize, index.x);
-        const vec3f b    = gather_vec3f(huge_mesh, vertex, vtxSize, index.y);
-        const vec3f c    = gather_vec3f(huge_mesh, vertex, vtxSize, index.z);
+        const vec3f a = get_vec3f(self->vertex, index.x);
+        const vec3f b = get_vec3f(self->vertex, index.y);
+        const vec3f c = get_vec3f(self->vertex, index.z);
         const vec3f dp02 = a - c;
         const vec3f dp12 = b - c;
         dg.dPds          = (dst12.y * dp02 - dst02.y * dp12) * invDet;
         dg.dPdt          = (dst02.x * dp12 - dst12.x * dp02) * invDet;
-        fallback         = false;
+        compute_tangents = false;
       }
     }
-    if (fallback) {
-      linear3f f = frame(dg.Ng);
-      dg.dPds    = f.vx;
-      dg.dPdt    = f.vy;
-    }
+  }
+  if (compute_tangents) {
+    linear3f f = frame(dg.Ng);
+    dg.dPds = f.vx;
+    dg.dPdt = f.vy;
   }
 }
 
@@ -119,14 +104,10 @@ SampleAreaRes TriangleMesh_sampleArea(const Geometry *uniform const _self,
   SampleAreaRes res;
 
   // gather vertices
-  const uniform bool huge_mesh = self->huge_mesh;
-  const vec3i index =
-      gather_vec3i(huge_mesh, self->index, self->idxSize, primID);
-  const uniform float *uniform vertex = self->vertex;
-  const uniform int32 vtxSize         = self->vtxSize;
-  const vec3f a = gather_vec3f(huge_mesh, vertex, vtxSize, index.x);
-  const vec3f b = gather_vec3f(huge_mesh, vertex, vtxSize, index.y);
-  const vec3f c = gather_vec3f(huge_mesh, vertex, vtxSize, index.z);
+  const vec3i index = get_vec3i(self->index, primID);
+  const vec3f a = get_vec3f(self->vertex, index.x);
+  const vec3f b = get_vec3f(self->vertex, index.y);
+  const vec3f c = get_vec3f(self->vertex, index.z);
 
   const vec3f localPos = uniformSampleTriangle(a, b, c, s);
   res.pos              = xfmPoint(xfm, localPos);
@@ -146,97 +127,60 @@ void TriangleMesh_getAreas(const Geometry *const uniform _self,
 {
   const TriangleMesh *const uniform self = (const TriangleMesh *uniform)_self;
 
-  const uniform int32 idxSize       = self->idxSize;
-  const float *const uniform vertex = self->vertex;
-  const uniform int64 vtxSize       = self->vtxSize;
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
   for (uniform int32 i = 0; i < numPrims; i++) {
-    int *uniform index     = self->index + primIDs[i] * idxSize;
-    const uniform vec3f a  = *((vec3f *)(vertex + vtxSize * *index));
-    const uniform vec3f b  = *((vec3f *)(vertex + vtxSize * *(index + 1)));
-    const uniform vec3f c  = *((vec3f *)(vertex + vtxSize * *(index + 2)));
+    const uniform vec3i index = get_vec3i(self->index, primIDs[i]);
+    const uniform vec3f a = get_vec3f(self->vertex, index.x);
+    const uniform vec3f b = get_vec3f(self->vertex, index.y);
+    const uniform vec3f c = get_vec3f(self->vertex, index.z);
     const uniform vec3f e1 = xfmVector(xfm, a - c);
     const uniform vec3f e2 = xfmVector(xfm, b - c);
     areas[i]               = 0.5f * length(cross(e1, e2));
   }
 }
 
-//! constructor for ispc-side TriangleMesh object
-void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
-                              void *uniform cppEquivalent,
-                              uniform int32 numTriangles,
-                              uniform int32 idxSize,
-                              uniform int32 vtxSize,
-                              uniform int32 norSize,
-                              uniform int *uniform index,
-                              uniform float *uniform vertex,
-                              uniform float *uniform normal,
-                              uniform vec4f *uniform color,
-                              uniform vec2f *uniform texcoord,
-                              uniform bool has_alpha,
-                              uniform bool huge_mesh)
+void TriangleMesh_Constructor(
+    TriangleMesh *uniform self, void *uniform cppEquivalent)
 {
-  Geometry_Constructor(&mesh->super, cppEquivalent, TriangleMesh_postIntersect);
-  mesh->super.getAreas      = TriangleMesh_getAreas;
-  mesh->super.sampleArea    = TriangleMesh_sampleArea;
-  mesh->super.numPrimitives = numTriangles;
-
-  mesh->index     = index;
-  mesh->vertex    = vertex;
-  mesh->normal    = normal;
-  mesh->color     = color;
-  mesh->texcoord  = texcoord;
-  mesh->idxSize   = idxSize;
-  mesh->vtxSize   = vtxSize;
-  mesh->norSize   = norSize;
-  mesh->has_alpha = has_alpha;
-  mesh->huge_mesh = huge_mesh;
+  Geometry_Constructor(&self->super, cppEquivalent, TriangleMesh_postIntersect);
+  self->super.getAreas = TriangleMesh_getAreas;
+  self->super.sampleArea = TriangleMesh_sampleArea;
+  Data1D_Constructor(&self->index);
+  Data1D_Constructor(&self->vertex);
+  Data1D_Constructor(&self->normal);
+  Data1D_Constructor(&self->color);
+  Data1D_Constructor(&self->texcoord);
 }
 
 export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
-  TriangleMesh *uniform mesh = uniform new TriangleMesh;
-  TriangleMesh_Constructor(mesh,
-                           cppEquivalent,
-                           0,
-                           0,
-                           0,
-                           0,
-                           NULL,
-                           NULL,
-                           NULL,
-                           NULL,
-                           NULL,
-                           true,
-                           false);
-  return mesh;
+  TriangleMesh *uniform self = uniform new TriangleMesh;
+  TriangleMesh_Constructor(self, cppEquivalent);
+  return self;
 }
 
-export void *uniform TriangleMesh_set(void *uniform _mesh,
-                                      uniform int32 numTriangles,
-                                      uniform int32 idxSize,
-                                      uniform int32 vtxSize,
-                                      uniform int32 norSize,
-                                      uniform int *uniform index,
-                                      uniform float *uniform vertex,
-                                      uniform float *uniform normal,
-                                      uniform vec4f *uniform color,
-                                      uniform vec2f *uniform texcoord,
-                                      uniform bool has_alpha,
-                                      uniform bool huge_mesh)
+export void *uniform TriangleMesh_set(void *uniform _self,
+    const Data1D *uniform index,
+    const Data1D *uniform vertex,
+    const Data1D *uniform normal,
+    const Data1D *uniform color,
+    const Data1D *uniform texcoord,
+    uniform bool has_alpha)
 {
-  uniform TriangleMesh *uniform mesh = (uniform TriangleMesh * uniform) _mesh;
-  TriangleMesh_Constructor(mesh,
-                           mesh->super.cppEquivalent,
-                           numTriangles,
-                           idxSize,
-                           vtxSize,
-                           norSize,
-                           index,
-                           vertex,
-                           normal,
-                           color,
-                           texcoord,
-                           has_alpha,
-                           huge_mesh);
+  TriangleMesh *uniform self = (TriangleMesh * uniform) _self;
+  self->index = *index;
+  self->vertex = *vertex;
+  self->normal = *normal;
+  self->color = *color;
+  self->texcoord = *texcoord;
+  self->has_alpha = has_alpha;
+  self->super.numPrimitives = index->numItems;
+
+  self->flagMask = -1;
+  cif (!valid(self->normal))
+    self->flagMask &= ~DG_NS;
+  cif (!valid(self->color))
+    self->flagMask &= ~DG_COLOR;
+  cif (!valid(self->texcoord))
+    self->flagMask &= ~DG_TEXCOORD;
 }

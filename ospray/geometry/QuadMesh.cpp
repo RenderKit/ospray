@@ -37,19 +37,6 @@ namespace ospray {
     texcoordData = getParamDataT<vec2f>("vertex.texcoord");
     indexData = getParamDataT<vec4ui>("index", true);
 
-    // check whether we need 64-bit addressing
-    huge_mesh = false;
-    if (indexData->numBytes > INT32_MAX)
-      huge_mesh = true;
-    if (vertexData->numBytes > INT32_MAX)
-      huge_mesh = true;
-    if (normalData && normalData->numBytes > INT32_MAX)
-      huge_mesh = true;
-    if (colorData && colorData->numBytes > INT32_MAX)
-      huge_mesh = true;
-    if (texcoordData && texcoordData->numBytes > INT32_MAX)
-      huge_mesh = true;
-
     postCreationInfo(vertexData->size());
   }
 
@@ -74,16 +61,12 @@ namespace ospray {
     retval.ispcEquivalent = ispc::QuadMesh_create(this);
 
     ispc::QuadMesh_set(retval.ispcEquivalent,
-        indexData->size(),
-        vertexData->stride() / 4,
-        normalData ? normalData->stride() / 4 : 0,
-        (ispc::vec4i *)indexData->data(),
-        (float *)vertexData->data(),
-        normalData ? (float *)normalData->data() : nullptr,
-        colorData ? (ispc::vec4f *)colorData->data() : nullptr,
-        texcoordData ? (ispc::vec2f *)texcoordData->data() : nullptr,
-        colorData && colorData->type == OSP_VEC4F,
-        huge_mesh);
+        ispc(indexData),
+        ispc(vertexData),
+        ispc(normalData),
+        ispc(colorData),
+        ispc(texcoordData),
+        colorData && colorData->type == OSP_VEC4F);
 
     return retval;
   }

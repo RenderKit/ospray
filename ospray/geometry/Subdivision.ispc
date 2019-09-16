@@ -17,7 +17,6 @@
 // ospray
 #include "Geometry.ih"
 #include "common/World.ih"
-#include "common/safe_gather.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 
@@ -38,7 +37,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
 
   flags &= self->flagMask;
 
-  if (flags & DG_NS) {
+  cif (flags & DG_NS) {
     vec3f dPdu, dPdv;
     rtcInterpolateV1(self->geom,
                      ray.primID,
@@ -53,7 +52,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
     dg.Ns = cross(dPdu, dPdv);
   }
 
-  if (flags & DG_COLOR) {
+  cif (flags & DG_COLOR) {
     rtcInterpolateV1(self->geom,
                      ray.primID,
                      ray.u,
@@ -66,7 +65,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
                      4);
   }
 
-  if (flags & DG_TEXCOORD) {
+  cif (flags & DG_TEXCOORD) {
     rtcInterpolateV1(self->geom,
                      ray.primID,
                      ray.u,
