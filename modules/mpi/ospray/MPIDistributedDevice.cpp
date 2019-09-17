@@ -476,25 +476,25 @@ namespace ospray {
 
     int MPIDistributedDevice::isReady(OSPFuture _task, OSPSyncEvent event)
     {
-      auto *task = (QueryableTask *)_task;
+      auto *task = (Future *)_task;
       return task->isFinished(event);
     }
 
     void MPIDistributedDevice::wait(OSPFuture _task, OSPSyncEvent event)
     {
-      auto *task = (QueryableTask *)_task;
+      auto *task = (Future *)_task;
       task->wait(event);
     }
 
     void MPIDistributedDevice::cancel(OSPFuture _task)
     {
-      auto *task = (QueryableTask *)_task;
+      auto *task = (Future *)_task;
       return task->cancel();
     }
 
     float MPIDistributedDevice::getProgress(OSPFuture _task)
     {
-      auto *task = (QueryableTask *)_task;
+      auto *task = (Future *)_task;
       return task->getProgress();
     }
 

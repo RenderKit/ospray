@@ -20,9 +20,10 @@ if (OSPRAY_MODULE_MPI)
 
   include(mpi_setup.cmake)
 
-  add_subdirectory(external)
-  add_subdirectory(ospray)
   add_subdirectory(common)
+  add_subdirectory(external/pico_bench)
+  add_subdirectory(external/snappy EXCLUDE_FROM_ALL)
+  add_subdirectory(ospray)
 
   ##############################################################
   # Tutorials

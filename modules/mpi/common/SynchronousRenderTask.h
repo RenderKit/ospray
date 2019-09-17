@@ -19,7 +19,7 @@
 // ospcommon
 #include "ospcommon/tasking/AsyncTask.h"
 // ospray
-#include "common/QueryableTask.h"
+#include "common/Future.h"
 #include "fb/FrameBuffer.h"
 
 namespace ospray {
@@ -27,7 +27,7 @@ namespace ospray {
 
     //! Dummy task to satisfy the public API OSPFuture requirements, but
     //  assumes the frame is already rendered.
-    struct SynchronousRenderTask : public QueryableTask
+    struct SynchronousRenderTask : public Future
     {
       SynchronousRenderTask(FrameBuffer *);
       ~SynchronousRenderTask() override = default;

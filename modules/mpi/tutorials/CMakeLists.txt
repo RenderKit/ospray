@@ -14,7 +14,17 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_DEFAULT_COMPONENT apps)
+macro(ospray_create_mpi_tutorial tutorial_name)
+  add_executable(${tutorial_name} ${ARGN})
+  target_link_libraries(${tutorial_name} PRIVATE mpi_tutorial_common)
+  if (WIN32)
+    set_target_properties(${tutorial_name} PROPERTIES VERSION ${OSPRAY_VERSION})
+  endif()
+  install(TARGETS ${tutorial_name}
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT apps
+  )
+endmacro()
 
 find_package(MPI REQUIRED)
 
@@ -52,93 +62,43 @@ target_include_directories(ospMPIDistributedTutorialAsync PRIVATE
 
 set(OSPRAY_TUTORIALS_DIR "${OSPRay_SOURCE_DIR}/apps/tutorials")
 
-ospray_create_application(ospMPIDistributedTutorialSpheres
+add_library(mpi_tutorial_common STATIC
+  GLFWDistribOSPRayWindow.cpp
+  ${OSPRAY_TUTORIALS_DIR}/ArcballCamera.cpp
+  ${OSPRAY_TUTORIALS_DIR}/imgui/imgui_impl_glfw_gl3.cpp
+  ${OSPRAY_TUTORIALS_DIR}/tutorial_util.cpp
+)
+
+ospray_install_library(mpi_tutorial_common COMPONENT apps)
+
+target_link_libraries(mpi_tutorial_common PUBLIC
+  ospcommon::ospcommon
+  ospray
+  ospray_testing
+  ospray_imgui
+  glfw
+  ${OPENGL_LIBRARIES}
+  ${MPI_CXX_LIBRARIES}
+)
+
+target_include_directories(mpi_tutorial_common PUBLIC
+  $<BUILD_INTERFACE:${OSPRAY_TUTORIALS_DIR}>
+  $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>
+)
+
+ospray_create_mpi_tutorial(ospMPIDistributedTutorialSpheres
   ospMPIDistributedTutorialSpheres.cpp
-  GLFWDistribOSPRayWindow.cpp
-  ${OSPRAY_TUTORIALS_DIR}/ArcballCamera.cpp
-  ${OSPRAY_TUTORIALS_DIR}/imgui/imgui_impl_glfw_gl3.cpp
 )
 
-target_link_libraries(ospMPIDistributedTutorialSpheres
-PRIVATE
-  ospray
-  ospray_testing
-  ospcommon::ospcommon
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
-  ${MPI_CXX_LIBRARIES}
-)
-
-target_include_directories(ospMPIDistributedTutorialSpheres PRIVATE
-  $<BUILD_INTERFACE:${OSPRAY_TUTORIALS_DIR}>
-  $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
-
-ospray_create_application(ospMPIDistributedTutorialStructuredVolume
+ospray_create_mpi_tutorial(ospMPIDistributedTutorialStructuredVolume
   ospMPIDistributedTutorialStructuredVolume.cpp
-  GLFWDistribOSPRayWindow.cpp
-  ${OSPRAY_TUTORIALS_DIR}/ArcballCamera.cpp
-  ${OSPRAY_TUTORIALS_DIR}/imgui/imgui_impl_glfw_gl3.cpp
 )
 
-target_link_libraries(ospMPIDistributedTutorialStructuredVolume
-PRIVATE
-  ospray
-  ospray_testing
-  ospcommon::ospcommon
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
-  ${MPI_CXX_LIBRARIES}
-)
-
-target_include_directories(ospMPIDistributedTutorialStructuredVolume PRIVATE
-  $<BUILD_INTERFACE:${OSPRAY_TUTORIALS_DIR}>
-  $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
-
-ospray_create_application(ospMPIDistributedTutorialPartiallyReplicatedData
+ospray_create_mpi_tutorial(ospMPIDistributedTutorialPartiallyReplicatedData
   ospMPIDistributedTutorialPartiallyReplicatedData.cpp
-  GLFWDistribOSPRayWindow.cpp
-  ${OSPRAY_TUTORIALS_DIR}/ArcballCamera.cpp
-  ${OSPRAY_TUTORIALS_DIR}/imgui/imgui_impl_glfw_gl3.cpp
 )
 
-target_link_libraries(ospMPIDistributedTutorialPartiallyReplicatedData
-PRIVATE
-  ospray
-  ospray_testing
-  ospcommon::ospcommon
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
-  ${MPI_CXX_LIBRARIES}
-)
-
-target_include_directories(ospMPIDistributedTutorialPartiallyReplicatedData
-  PRIVATE
-  $<BUILD_INTERFACE:${OSPRAY_TUTORIALS_DIR}>
-  $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
-
-
-ospray_create_application(ospMPIDistributedTutorialReplicatedData
+ospray_create_mpi_tutorial(ospMPIDistributedTutorialReplicatedData
   ospMPIDistributedTutorialReplicatedData.cpp
-  GLFWDistribOSPRayWindow.cpp
-  ${OSPRAY_TUTORIALS_DIR}/ArcballCamera.cpp
-  ${OSPRAY_TUTORIALS_DIR}/imgui/imgui_impl_glfw_gl3.cpp
 )
 
-target_link_libraries(ospMPIDistributedTutorialReplicatedData
-PRIVATE
-  ospray
-  ospray_testing
-  ospcommon::ospcommon
-  ospray_imgui
-  glfw
-  ${OPENGL_LIBRARIES}
-  ${MPI_CXX_LIBRARIES}
-)
-
-target_include_directories(ospMPIDistributedTutorialReplicatedData
-  PRIVATE
-  $<BUILD_INTERFACE:${OSPRAY_TUTORIALS_DIR}>
-  $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)

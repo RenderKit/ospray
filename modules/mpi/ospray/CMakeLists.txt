@@ -22,9 +22,11 @@ mark_as_advanced(OSP_MPI_COMPRESSION_THRESHOLD)
 
 ## Build the MPI module ##
 
-include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR})
+ispc_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-ospray_create_library(ospray_module_mpi
+add_library(ospray_module_mpi SHARED)
+
+ispc_target_add_sources(ospray_module_mpi
   MPIOffloadDevice.cpp
   MPIOffloadWorker.cpp
   MPIDistributedDevice.cpp
@@ -50,6 +52,11 @@ ospray_create_library(ospray_module_mpi
   render/distributed/AlphaCompositeTileOperation.cpp
 )
 
+ospray_install_library(ospray_module_mpi COMPONENT mpi)
+
+set_target_properties(ospray_module_mpi
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+
 target_link_libraries(ospray_module_mpi
   PRIVATE
     snappy
@@ -72,5 +79,15 @@ target_compile_definitions(ospray_module_mpi PUBLIC
 
 ## Build the worker executable ##
 
-ospray_create_application(ospray_mpi_worker mpi_offload_worker_main.cpp)
+add_executable(ospray_mpi_worker mpi_offload_worker_main.cpp)
 target_link_libraries(ospray_mpi_worker PRIVATE ospray_module_ispc)
+if (WIN32)
+  set_target_properties(ospray_mpi_worker
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+endif()
+
+install(TARGETS ospray_mpi_worker
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT mpi
+)
+
