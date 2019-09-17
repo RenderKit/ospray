@@ -28,7 +28,8 @@ namespace ospray {
       colorBufferFormat(_colorBufferFormat),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
       hasAccumBuffer(channels & OSP_FB_ACCUM),
-      hasVarianceBuffer(channels & OSP_FB_VARIANCE && channels & OSP_FB_ACCUM),
+      hasVarianceBuffer((channels & OSP_FB_VARIANCE)
+                        && (channels & OSP_FB_ACCUM)),
       hasNormalBuffer(channels & OSP_FB_NORMAL),
       hasAlbedoBuffer(channels & OSP_FB_ALBEDO),
       frameID(-1)
@@ -134,6 +135,26 @@ namespace ospray {
             "image operation pipeline");
       }
     }
+  }
+
+  bool FrameBuffer::hasAccumBuf() const
+  {
+    return hasAccumBuffer;
+  }
+
+  bool FrameBuffer::hasVarianceBuf() const
+  {
+    return hasVarianceBuffer;
+  }
+
+  bool FrameBuffer::hasNormalBuf() const
+  {
+    return hasNormalBuffer;
+  }
+
+  bool FrameBuffer::hasAlbedoBuf() const
+  {
+    return hasAlbedoBuffer;
   }
 
 } // ::ospray

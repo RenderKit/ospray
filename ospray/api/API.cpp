@@ -94,6 +94,7 @@ static inline Device *createMpiDevice(const std::string &_type)
     device = Device::createDevice(_type.c_str());
   } catch (const std::runtime_error &) {
     try {
+      ospLoadModule("ispc");
       ospLoadModule("mpi");
       device = Device::createDevice(_type.c_str());
     } catch (const std::runtime_error &err) {
@@ -212,44 +213,23 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
         continue;
       }
 
-      if (av == "--osp:mpi-launch") {
-        if (i + 2 > *_ac)
-          throw std::runtime_error("--osp:mpi-launch expects an argument");
-        currentDevice.reset(createMpiDevice("mpi_offload"));
-        currentDevice->setParam<std::string>("mpiMode", "mpi-launch");
-        currentDevice->setParam<std::string>("launchCommand", _av[i + 1]);
-        removeArgs(*_ac, _av, i, 2);
-        --i;
-        continue;
-      }
-
-      const char *listenArgName = "--osp:mpi-listen";
-      if (!strncmp(_av[i], listenArgName, strlen(listenArgName))) {
-        const char *fileNameToStorePortIn = nullptr;
-        if (strlen(_av[i]) > strlen(listenArgName)) {
-          fileNameToStorePortIn = strdup(_av[i] + strlen(listenArgName) + 1);
-        }
+      if (av == "--osp:mpi-listen") {
         removeArgs(*_ac, _av, i, 1);
-
         currentDevice.reset(createMpiDevice("mpi_offload"));
         currentDevice->setParam<std::string>("mpiMode", "mpi-listen");
-        currentDevice->setParam<std::string>(
-            "fileNameToStorePortIn",
-            fileNameToStorePortIn ? fileNameToStorePortIn : "");
         --i;
         continue;
       }
 
-      const char *connectArgName = "--osp:mpi-connect";
-      if (!strncmp(_av[i], connectArgName, strlen(connectArgName))) {
-        std::string portName = _av[i + 1];
+      if (av == "--osp:mpi-connect") {
+        std::string host = _av[i + 1];
         removeArgs(*_ac, _av, i, 2);
 
         if (!currentDevice)
           currentDevice.reset(createMpiDevice("mpi_offload"));
 
         currentDevice->setParam<std::string>("mpiMode", "mpi-connect");
-        currentDevice->setParam<std::string>("portName", portName);
+        currentDevice->setParam<std::string>("host", host);
         --i;
         continue;
       }
