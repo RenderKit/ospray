@@ -1,0 +1,64 @@
+// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "ospray/camera/Camera.ih"
+#include "ospray/render/Renderer.ih"
+#include "ospray/fb/FrameBuffer.ih"
+#include "ospray/fb/Tile.ih"
+#include "common/DistributedWorld.ih"
+
+struct DistributedRenderer;
+
+typedef unmasked void (*DR_ComputeRegionVisibility)(DistributedRenderer *uniform self,
+                                                    FrameBuffer *uniform fb,
+                                                    Camera *uniform camera,
+                                                    DistributedWorld *uniform world,
+                                                    bool *uniform regionVisible,
+                                                    void *uniform perFrameData,
+                                                    uniform Tile &tile,
+                                                    uniform int taskIndex);
+
+typedef void (*DR_RenderRegionSampleFct)(DistributedRenderer *uniform self,
+                                         FrameBuffer *uniform fb,
+                                         DistributedWorld *uniform world,
+                                         const Region *uniform region,
+                                         const vec2f &regionInterval,
+                                         void *uniform perFrameData,
+                                         varying ScreenSample &sample);
+
+typedef unmasked void (*DR_RenderRegionTileFct)(DistributedRenderer *uniform self,
+                                                FrameBuffer *uniform fb,
+                                                Camera *uniform camera,
+                                                DistributedWorld *uniform world,
+                                                const Region *uniform region,
+                                                void *uniform perFrameData,
+                                                uniform Tile &tile,
+                                                uniform int taskIndex);
+
+struct DistributedRenderer
+{
+  Renderer super;
+
+  DR_ComputeRegionVisibility computeRegionVisibility;
+  DR_RenderRegionSampleFct   renderRegionSample;
+  DR_RenderRegionTileFct     renderRegionToTile;
+};
+
+void DistributedRenderer_Constructor(uniform DistributedRenderer *uniform self,
+                                     void *uniform cppE);
+
