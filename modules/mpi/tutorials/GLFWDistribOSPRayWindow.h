@@ -20,13 +20,14 @@
 #include <functional>
 #include "ArcballCamera.h"
 // ospcommon
+#include "ospcommon/containers/TransactionalBuffer.h"
 #include "ospcommon/math/box.h"
 #include "ospcommon/math/vec.h"
-#include "ospcommon/containers/TransactionalBuffer.h"
 // ospray
 #include "ospray/ospray.h"
 
-struct WindowState {
+struct WindowState
+{
   bool quit;
   bool cameraChanged;
   bool fbSizeChanged;
@@ -43,9 +44,9 @@ class GLFWDistribOSPRayWindow
 {
  public:
   GLFWDistribOSPRayWindow(const ospcommon::math::vec2i &windowSize,
-                   const ospcommon::math::box3f &worldBounds,
-                   OSPWorld world,
-                   OSPRenderer renderer);
+                          const ospcommon::math::box3f &worldBounds,
+                          OSPWorld world,
+                          OSPRenderer renderer);
 
   ~GLFWDistribOSPRayWindow();
 
@@ -80,7 +81,7 @@ class GLFWDistribOSPRayWindow
   OSPWorld world       = nullptr;
   OSPRenderer renderer = nullptr;
 
-  int mpiRank = -1;
+  int mpiRank      = -1;
   int mpiWorldSize = -1;
 
   // GLFW window instance

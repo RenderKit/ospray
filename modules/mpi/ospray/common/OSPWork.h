@@ -16,24 +16,24 @@
 
 #pragma once
 
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include <ospray/ospray.h>
-#include "common/ObjectHandle.h"
 #include "MPICommon.h"
+#include "common/ObjectHandle.h"
 
 #include "ospcommon/networking/DataStreaming.h"
-#include "ospcommon/utility/ArrayView.h"
 #include "ospcommon/networking/Fabric.h"
+#include "ospcommon/utility/ArrayView.h"
 
 #include "camera/Camera.h"
 #include "common/Instance.h"
 #include "common/World.h"
+#include "fb/ImageOp.h"
 #include "geometry/Geometry.h"
 #include "lights/Light.h"
 #include "render/Renderer.h"
-#include "fb/ImageOp.h"
 #include "transferFunction/TransferFunction.h"
 #include "volume/Volume.h"
 
@@ -43,7 +43,8 @@ namespace ospray {
 
       using namespace ospcommon;
 
-      enum TAG {
+      enum TAG
+      {
         NONE,
         NEW_RENDERER,
         NEW_WORLD,
@@ -99,26 +100,30 @@ namespace ospray {
         FINALIZE
       };
 
-      struct FrameBufferInfo {
-        vec2i size = vec2i(0, 0);
-        OSPFrameBufferFormat format = OSP_FB_NONE; 
-        uint32_t channels = 0;
+      struct FrameBufferInfo
+      {
+        vec2i size                  = vec2i(0, 0);
+        OSPFrameBufferFormat format = OSP_FB_NONE;
+        uint32_t channels           = 0;
 
         FrameBufferInfo() = default;
-        FrameBufferInfo(const vec2i &size, OSPFrameBufferFormat format,
+        FrameBufferInfo(const vec2i &size,
+                        OSPFrameBufferFormat format,
                         uint32_t channels);
 
         size_t pixelSize(uint32_t channel) const;
         size_t getNumPixels() const;
       };
 
-      struct OSPState {
+      struct OSPState
+      {
         std::unordered_map<int64_t, OSPObject> objects;
 
         std::unordered_map<int64_t, FrameBufferInfo> framebuffers;
 
-        template<typename T>
-        T getObject(int64_t handle) {
+        template <typename T>
+        T getObject(int64_t handle)
+        {
           return reinterpret_cast<T>(objects[handle]);
         }
       };
@@ -128,8 +133,7 @@ namespace ospray {
                         networking::BufferReader &cmdBuf,
                         networking::Fabric &fabric);
 
-      const char* tagName(work::TAG t);
-    }
-  }
-}
-
+      const char *tagName(work::TAG t);
+    }  // namespace work
+  }    // namespace mpi
+}  // namespace ospray

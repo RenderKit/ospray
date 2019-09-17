@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "common/MPICommon.h"
-#include "common/SocketBcastFabric.h"
 #include "api/Device.h"
+#include "common/MPICommon.h"
 #include "common/Managed.h"
 #include "common/OSPWork.h"
+#include "common/SocketBcastFabric.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
 
@@ -217,7 +217,9 @@ namespace ospray {
       void initializeDevice();
 
       template <typename T>
-      void setParam(ObjectHandle obj, const char *param, const T &val,
+      void setParam(ObjectHandle obj,
+                    const char *param,
+                    const T &val,
                     const work::TAG tag);
 
       void sendWork(
@@ -230,8 +232,7 @@ namespace ospray {
       /*! @{ read and write stream for the work commands */
       std::unique_ptr<ospcommon::networking::Fabric> fabric;
 
-      using FrameBufferMapping =
-        std::unique_ptr<utility::OwnedArray<uint8_t>>;
+      using FrameBufferMapping = std::unique_ptr<utility::OwnedArray<uint8_t>>;
 
       std::unordered_map<int64_t, FrameBufferMapping> framebufferMappings;
 

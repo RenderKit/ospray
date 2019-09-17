@@ -41,7 +41,8 @@ using namespace ospcommon::math;
 
 // Generate the rank's local spheres within its assigned grid cell, and
 // return the bounds of this grid cell
-OSPInstance makeLocalSpheres(const int mpiRank, const int mpiWorldSize,
+OSPInstance makeLocalSpheres(const int mpiRank,
+                             const int mpiWorldSize,
                              box3f &bounds);
 
 int main(int argc, char **argv)
@@ -84,11 +85,10 @@ int main(int argc, char **argv)
   // all ranks specify the same rendering parameters, with the exception of
   // the data to be rendered, which is distributed among the ranks
   box3f regionBounds;
-  OSPInstance spheres = makeLocalSpheres(mpiRank, mpiWorldSize,
-                                                 regionBounds);
+  OSPInstance spheres = makeLocalSpheres(mpiRank, mpiWorldSize, regionBounds);
 
   // create the "world" model which will contain all of our geometries
-  OSPWorld world = ospNewWorld();
+  OSPWorld world            = ospNewWorld();
   OSPData geometryInstances = ospNewData(1, OSP_OBJECT, &spheres, 0);
   ospSetObject(world, "instance", geometryInstances);
   ospRelease(spheres);
@@ -195,7 +195,8 @@ vec3i computeGrid(int num)
   return grid;
 }
 
-OSPInstance makeLocalSpheres(const int mpiRank, const int mpiWorldSize,
+OSPInstance makeLocalSpheres(const int mpiRank,
+                             const int mpiWorldSize,
                              box3f &bounds)
 {
   struct Sphere

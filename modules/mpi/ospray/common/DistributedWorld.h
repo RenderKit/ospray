@@ -19,10 +19,10 @@
 #include <unordered_map>
 
 #include "camera/Camera.h"
-#include "common/World.h"
-#include "ospcommon/math/box.h"
-#include "embree3/rtcore.h"
 #include "common/MPICommon.h"
+#include "common/World.h"
+#include "embree3/rtcore.h"
+#include "ospcommon/math/box.h"
 
 namespace ospray {
   namespace mpi {
@@ -81,7 +81,7 @@ namespace ospray {
       // compositing.
       virtual void commit() override;
 
-    private:
+     private:
       /* Perform the region bounds exchange among the ranks to build the
        * distributed view of the world
        */
@@ -90,18 +90,17 @@ namespace ospray {
       // The communicator to use for collectives in the world
       mpicommon::Group mpiGroup;
 
-    public:
+     public:
       Ref<Data> localRegions;
       std::vector<ospcommon::math::box3f> myRegions;
-      // The global list of unique regions across all nodes, (including this one),
-      // sorted by region id.
+      // The global list of unique regions across all nodes, (including this
+      // one), sorted by region id.
       std::vector<Region> allRegions;
       std::vector<size_t> myRegionIds;
       // The ranks which own each region
       std::unordered_map<int, std::set<size_t>> regionOwners;
     };
-  } // ::ospray::mpi
-} // ::ospray
+  }  // namespace mpi
+}  // namespace ospray
 
-std::ostream& operator<<(std::ostream &os, const ospray::mpi::Region &r);
-
+std::ostream &operator<<(std::ostream &os, const ospray::mpi::Region &r);

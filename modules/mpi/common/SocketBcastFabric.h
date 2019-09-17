@@ -16,18 +16,18 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <vector>
-#include "ospcommon/containers/TransactionalBuffer.h"
-#include "ospcommon/tasking/AsyncLoop.h"
-#include "ospcommon/networking/Socket.h"
-#include "ospcommon/networking/Fabric.h"
 #include "MPICommon.h"
+#include "ospcommon/containers/TransactionalBuffer.h"
+#include "ospcommon/networking/Fabric.h"
+#include "ospcommon/networking/Socket.h"
+#include "ospcommon/tasking/AsyncLoop.h"
 
 namespace mpicommon {
- 
+
   /*! A writer which broadcasts from one rank to the others over sockets */
   struct OSPRAY_MPI_INTERFACE SocketWriterFabric : public networking::Fabric
   {
@@ -36,10 +36,11 @@ namespace mpicommon {
     SocketWriterFabric(const std::string &hostname, const uint16_t port);
     ~SocketWriterFabric() override;
 
-    SocketWriterFabric(const SocketWriterFabric&) = delete;
-    SocketWriterFabric& operator=(const SocketWriterFabric&) = delete;
+    SocketWriterFabric(const SocketWriterFabric &) = delete;
+    SocketWriterFabric &operator=(const SocketWriterFabric &) = delete;
 
-    void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
+    void sendBcast(
+        std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
 
     void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
 
@@ -48,10 +49,11 @@ namespace mpicommon {
 
     void recv(utility::AbstractArray<uint8_t> &buf, int rank) override;
 
-  private:
+   private:
     void sendThreadLoop();
 
-    struct Message {
+    struct Message
+    {
       std::shared_ptr<utility::AbstractArray<uint8_t>> buf;
       // -1 for all ranks, or a rank id for a single rank
       int ranks;
@@ -75,10 +77,11 @@ namespace mpicommon {
     SocketReaderFabric(const Group &parentGroup, const uint16_t port);
     ~SocketReaderFabric();
 
-    SocketReaderFabric(const SocketReaderFabric&) = delete;
-    SocketReaderFabric& operator=(const SocketReaderFabric&) = delete;
+    SocketReaderFabric(const SocketReaderFabric &) = delete;
+    SocketReaderFabric &operator=(const SocketReaderFabric &) = delete;
 
-    void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
+    void sendBcast(
+        std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
 
     void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
 
@@ -87,13 +90,14 @@ namespace mpicommon {
 
     void recv(utility::AbstractArray<uint8_t> &buf, int rank) override;
 
-  private:
+   private:
     void sendThreadLoop();
 
     Group group;
     ospcommon::socket_t socket;
     std::unique_ptr<ospcommon::tasking::AsyncLoop> sendThread;
-    ospcommon::containers::TransactionalBuffer<std::shared_ptr<utility::AbstractArray<uint8_t>>> outbox;
+    ospcommon::containers::TransactionalBuffer<
+        std::shared_ptr<utility::AbstractArray<uint8_t>>>
+        outbox;
   };
-}
-
+}  // namespace mpicommon

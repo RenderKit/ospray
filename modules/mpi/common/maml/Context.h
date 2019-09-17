@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "maml.h"
-#include "common/Collectives.h"
-#include "ospcommon/tasking/AsyncLoop.h"
-#include "ospcommon/containers/TransactionalBuffer.h"
 #include <future>
 #include <map>
 #include <mutex>
 #include <vector>
+#include "common/Collectives.h"
+#include "maml.h"
+#include "ospcommon/containers/TransactionalBuffer.h"
+#include "ospcommon/tasking/AsyncLoop.h"
 
 namespace maml {
 

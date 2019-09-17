@@ -14,15 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <cstdlib>
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <chrono>
-#include <thread>
-#include "ospcommon/networking/Socket.h"
-#include "Collectives.h"
 #include "SocketBcastFabric.h"
+#include <chrono>
+#include <cstdint>
+#include <cstdlib>
+#include <string>
+#include <thread>
+#include <vector>
+#include "Collectives.h"
+#include "ospcommon/networking/Socket.h"
 
 namespace mpicommon {
 
@@ -31,9 +31,9 @@ namespace mpicommon {
 
   SocketWriterFabric::Message::Message(
       std::shared_ptr<utility::AbstractArray<uint8_t>> &buf, int ranks)
-    : buf(buf),
-    ranks(ranks)
-  {}
+      : buf(buf), ranks(ranks)
+  {
+  }
 
   /* The socket bcast fabric setup initially listens on the readers, which
    * the writer connects to. The writer then sends back info about the port
@@ -55,15 +55,14 @@ namespace mpicommon {
       try {
         infoServer = ospcommon::connect(hostname.c_str(), port);
       } catch (const std::runtime_error &e) {
-        std::cerr << "Failed to connect to "
-                  << hostname << ":" << port << "\n";
+        std::cerr << "Failed to connect to " << hostname << ":" << port << "\n";
         throw e;
       }
 
       ospcommon::read(infoServer, &numClients, sizeof(uint32_t));
 
       const uint16_t listenPort = getListenPort(listenSock);
-      const std::string myIP = getIP(infoServer);
+      const std::string myIP    = getIP(infoServer);
 
       ospcommon::write(infoServer, &listenPort, sizeof(uint16_t));
       const uint64_t ipLen = myIP.size();
@@ -73,17 +72,15 @@ namespace mpicommon {
 
     sockets.resize(numClients, OSP_INVALID_SOCKET);
     size_t numConnected = 0;
-    do
-    {
+    do {
       // TODO Will: Check the behavior of the backlog with a large number
       // of incoming connections
-      socket_t c = ospcommon::accept(listenSock);
+      socket_t c          = ospcommon::accept(listenSock);
       uint32_t clientRank = 0;
       ospcommon::read(c, &clientRank, sizeof(uint32_t));
       sockets[clientRank] = c;
       ++numConnected;
-    }
-    while (numConnected < numClients);
+    } while (numConnected < numClients);
 
     ospcommon::close(listenSock);
 
@@ -94,13 +91,13 @@ namespace mpicommon {
   SocketWriterFabric::~SocketWriterFabric()
   {
     sendThread->stop();
-    for (auto &s : sockets)
-    {
+    for (auto &s : sockets) {
       ospcommon::close(s);
     }
   }
 
-  void SocketWriterFabric::sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf)
+  void SocketWriterFabric::sendBcast(
+      std::shared_ptr<utility::AbstractArray<uint8_t>> buf)
   {
     outbox.push_back(Message(buf, -1));
   }
@@ -110,8 +107,8 @@ namespace mpicommon {
     throw std::runtime_error("Cannot recvBcast on socket writer!");
   }
 
-  void SocketWriterFabric::send(std::shared_ptr<utility::AbstractArray<uint8_t>> buf,
-                                int rank)
+  void SocketWriterFabric::send(
+      std::shared_ptr<utility::AbstractArray<uint8_t>> buf, int rank)
   {
     outbox.push_back(Message(buf, rank));
   }
@@ -124,37 +121,32 @@ namespace mpicommon {
   void SocketWriterFabric::sendThreadLoop()
   {
     auto msg = outbox.consume();
-    for (auto &m : msg)
-    {
-      if (m.ranks == -1)
-      {
-        for (auto &s : sockets)
-        {
+    for (auto &m : msg) {
+      if (m.ranks == -1) {
+        for (auto &s : sockets) {
           ospcommon::write(s, m.buf->data(), m.buf->size());
         }
-      }
-      else
-      {
+      } else {
         ospcommon::write(sockets[m.ranks], m.buf->data(), m.buf->size());
       }
     }
   }
 
   SocketReaderFabric::SocketReaderFabric(const Group &parentGroup,
-                                       const uint16_t port)
-    : group(parentGroup.dup())
+                                         const uint16_t port)
+      : group(parentGroup.dup())
   {
     // Rank 0 of the readers listens on the port for the writer to connect,
     // and receives its host and port info to broadcast out to the other clients
     uint16_t bcastWriterPort = 0;
     std::string bcastWriterHost;
-    if (group.rank == 0)
-    {
+    if (group.rank == 0) {
       socket_t listenSock = ospcommon::listen(port);
 
       if (port == 0) {
         std::cout << "#osp: Listening on port " << getListenPort(listenSock)
-          << "\n" << std::flush;
+                  << "\n"
+                  << std::flush;
       }
 
       socket_t client = ospcommon::accept(listenSock);
@@ -162,7 +154,6 @@ namespace mpicommon {
       // Send back the number of clients
       uint32_t numClients = group.size;
       ospcommon::write(client, &numClients, sizeof(uint32_t));
-
 
       ospcommon::read(client, &bcastWriterPort, sizeof(uint16_t));
       uint64_t clientStrLen = 0;
@@ -174,8 +165,7 @@ namespace mpicommon {
     bcast(&bcastWriterPort, sizeof(uint16_t), MPI_BYTE, 0, group.comm).wait();
     uint64_t bcastStrLen = bcastWriterHost.size();
     bcast(&bcastStrLen, sizeof(uint64_t), MPI_BYTE, 0, group.comm).wait();
-    if (group.rank != 0)
-    {
+    if (group.rank != 0) {
       bcastWriterHost = std::string(bcastStrLen, ' ');
     }
     bcast(&bcastWriterHost[0], bcastStrLen, MPI_BYTE, 0, group.comm).wait();
@@ -193,13 +183,13 @@ namespace mpicommon {
   SocketReaderFabric::~SocketReaderFabric()
   {
     sendThread->stop();
-    if (socket != ospcommon::OSP_INVALID_SOCKET)
-    {
+    if (socket != ospcommon::OSP_INVALID_SOCKET) {
       ospcommon::close(socket);
     }
   }
 
-  void SocketReaderFabric::sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf)
+  void SocketReaderFabric::sendBcast(
+      std::shared_ptr<utility::AbstractArray<uint8_t>> buf)
   {
     throw std::runtime_error("Reader fabric can't send bcast!");
   }
@@ -209,8 +199,8 @@ namespace mpicommon {
     ospcommon::read(socket, buf.data(), buf.size());
   }
 
-  void SocketReaderFabric::send(std::shared_ptr<utility::AbstractArray<uint8_t>> buf,
-                                int rank)
+  void SocketReaderFabric::send(
+      std::shared_ptr<utility::AbstractArray<uint8_t>> buf, int rank)
   {
     if (rank != 0)
       throw std::runtime_error("Reader fabric can only send to bcast root");
@@ -229,10 +219,8 @@ namespace mpicommon {
   void SocketReaderFabric::sendThreadLoop()
   {
     auto msg = outbox.consume();
-    for (auto &m : msg)
-    {
+    for (auto &m : msg) {
       ospcommon::write(socket, m->data(), m->size());
     }
   }
-}
-
+}  // namespace mpicommon

@@ -25,31 +25,28 @@
 namespace mpicommon {
 
   MPIFabric::MPIFabric(const Group &parentGroup, int bcastRoot)
-      : group(parentGroup.dup()),
-      bcastRoot(bcastRoot)
+      : group(parentGroup.dup()), bcastRoot(bcastRoot)
   {
-    if (!group.valid())
-    {
-      throw std::runtime_error("#osp:mpi: trying to set up an MPI fabric "
-                               "with an invalid MPI communicator");
+    if (!group.valid()) {
+      throw std::runtime_error(
+          "#osp:mpi: trying to set up an MPI fabric "
+          "with an invalid MPI communicator");
     }
 
     int isInter = 0;
     MPI_CALL(Comm_test_inter(group.comm, &isInter));
-    if (isInter && bcastRoot != MPI_ROOT)
-    {
-      throw std::runtime_error("Invalid MPIFabric group config "
-                               "on an MPI intercomm group");
+    if (isInter && bcastRoot != MPI_ROOT) {
+      throw std::runtime_error(
+          "Invalid MPIFabric group config "
+          "on an MPI intercomm group");
     }
   }
 
-  void MPIFabric::sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf)
+  void MPIFabric::sendBcast(
+      std::shared_ptr<utility::AbstractArray<uint8_t>> buf)
   {
-    auto future = mpicommon::bcast(buf->data(),
-                                   buf->size(),
-                                   MPI_BYTE,
-                                   bcastRoot,
-                                   group.comm);
+    auto future = mpicommon::bcast(
+        buf->data(), buf->size(), MPI_BYTE, bcastRoot, group.comm);
 
     pendingSends.emplace_back(
         ospcommon::make_unique<PendingSend>(std::move(future), buf));
@@ -59,11 +56,8 @@ namespace mpicommon {
 
   void MPIFabric::recvBcast(utility::AbstractArray<uint8_t> &buf)
   {
-    mpicommon::bcast(buf.data(),
-                     buf.size(),
-                     MPI_BYTE,
-                     bcastRoot,
-                     group.comm).wait();
+    mpicommon::bcast(buf.data(), buf.size(), MPI_BYTE, bcastRoot, group.comm)
+        .wait();
 
     checkPendingSends();
   }
@@ -71,12 +65,8 @@ namespace mpicommon {
   void MPIFabric::send(std::shared_ptr<utility::AbstractArray<uint8_t>> buf,
                        int rank)
   {
-    auto future = mpicommon::send(buf->data(),
-                                  buf->size(),
-                                  MPI_BYTE,
-                                  rank,
-                                  0,
-                                  group.comm);
+    auto future = mpicommon::send(
+        buf->data(), buf->size(), MPI_BYTE, rank, 0, group.comm);
 
     pendingSends.emplace_back(
         ospcommon::make_unique<PendingSend>(std::move(future), buf));
@@ -86,12 +76,8 @@ namespace mpicommon {
 
   void MPIFabric::recv(utility::AbstractArray<uint8_t> &buf, int rank)
   {
-    mpicommon::recv(buf.data(),
-                    buf.size(),
-                    MPI_BYTE,
-                    rank,
-                    0,
-                    group.comm).wait();
+    mpicommon::recv(buf.data(), buf.size(), MPI_BYTE, rank, 0, group.comm)
+        .wait();
 
     checkPendingSends();
   }
@@ -99,19 +85,21 @@ namespace mpicommon {
   void MPIFabric::checkPendingSends()
   {
     if (!pendingSends.empty()) {
-      auto done = std::partition(pendingSends.begin(), pendingSends.end(),
+      auto done = std::partition(
+          pendingSends.begin(),
+          pendingSends.end(),
           [](const std::unique_ptr<PendingSend> &ps) {
-            return ps->future.wait_for(std::chrono::milliseconds(0))
-                   != std::future_status::ready;
+            return ps->future.wait_for(std::chrono::milliseconds(0)) !=
+                   std::future_status::ready;
           });
       pendingSends.erase(done, pendingSends.end());
     }
   }
 
-  MPIFabric::PendingSend::PendingSend(std::future<void*> future,
-                                      std::shared_ptr<utility::AbstractArray<uint8_t>> &buf)
-    : future(std::move(future)),
-    buf(buf)
-  {}
-}
-
+  MPIFabric::PendingSend::PendingSend(
+      std::future<void *> future,
+      std::shared_ptr<utility::AbstractArray<uint8_t>> &buf)
+      : future(std::move(future)), buf(buf)
+  {
+  }
+}  // namespace mpicommon

@@ -56,8 +56,8 @@ namespace ospray {
         if (REPL_DETAILED_LOGGING) {
           auto job_name = utility::getEnvVar<std::string>("OSPRAY_JOB_NAME")
                               .value_or("log");
-          std::string statsLogFile = job_name + std::string("-rank")
-            + std::to_string(worldRank()) + ".txt";
+          std::string statsLogFile = job_name + std::string("-rank") +
+                                     std::to_string(worldRank()) + ".txt";
           statsLog =
               ospcommon::make_unique<std::ofstream>(statsLogFile.c_str());
         }
@@ -72,7 +72,7 @@ namespace ospray {
 
       float Master::renderFrame(FrameBuffer *fb,
                                 Renderer *renderer,
-                                Camera * camera,
+                                Camera *camera,
                                 World * /*world*/)
       {
         DistributedFrameBuffer *dfb =
@@ -331,7 +331,7 @@ namespace ospray {
           task.tileId       = tileId;
           task.accumId      = dfb->accumID(tileId);
           const auto tileNr = tileId.y * numTiles.x + tileId.x;
-          auto nr = dfb->ownerIDFromTileID(tileNr);
+          auto nr           = dfb->ownerIDFromTileID(tileNr);
           preferredTiles[nr].push_back(task);
 
           if (++it == activeTiles.end())
@@ -341,7 +341,7 @@ namespace ospray {
 
       float Master::renderFrame(FrameBuffer *fb,
                                 Renderer *renderer,
-                                Camera * camera,
+                                Camera *camera,
                                 World * /*world*/)
       {
         dfb = dynamic_cast<DistributedFrameBuffer *>(fb);

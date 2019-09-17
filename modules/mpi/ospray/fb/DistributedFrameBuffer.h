@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include <memory>
 #include <condition_variable>
+#include <memory>
+#include "../common/Messaging.h"
+#include "DistributedFrameBuffer_TileMessages.h"
 #include "ospcommon/containers/AlignedVector.h"
 #include "ospray/fb/LocalFB.h"
 #include "ospray/render/Renderer.h"
-#include "../common/Messaging.h"
-#include "DistributedFrameBuffer_TileMessages.h"
 
 namespace ospray {
   struct TileDesc;
@@ -33,10 +33,10 @@ namespace ospray {
   {
     mpicommon::Group group;
 
-    public:
-      DistributedTileError(const vec2i &numTiles, mpicommon::Group group);
-      // broadcast tileErrorBuffer to all workers in this group
-      void sync();
+   public:
+    DistributedTileError(const vec2i &numTiles, mpicommon::Group group);
+    // broadcast tileErrorBuffer to all workers in this group
+    void sync();
   };
 
   struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
@@ -86,7 +86,7 @@ namespace ospray {
     void setTileOperation(std::shared_ptr<TileOperation> tileOp,
                           const Renderer *renderer);
     std::shared_ptr<TileOperation> getTileOperation();
-    const Renderer* getLastRenderer() const;
+    const Renderer *getLastRenderer() const;
 
     // ==================================================================
     // interface for maml messaging, enables communication between
@@ -108,14 +108,12 @@ namespace ospray {
 
     void reportTimings(std::ostream &os);
 
-  private:
-
+   private:
     using RealMilliseconds = std::chrono::duration<double, std::milli>;
     std::vector<RealMilliseconds> queueTimes;
     std::vector<RealMilliseconds> workTimes;
-    RealMilliseconds finalGatherTime, masterTileWriteTime,
-                     waitFrameFinishTime, compressTime, decompressTime,
-                     preGatherDuration;
+    RealMilliseconds finalGatherTime, masterTileWriteTime, waitFrameFinishTime,
+        compressTime, decompressTime, preGatherDuration;
     double compressedPercent;
     std::mutex statsMutex;
 
@@ -210,11 +208,11 @@ namespace ospray {
         this rank has finished of the ones it's responsible for completing */
     size_t globalTilesCompletedThisFrame;
 
-
     /*! The number of tiles the master is expecting to receive from each rank */
     std::vector<size_t> numTilesExpected;
 
-    /* protected numTilesCompletedThisFrame to ensure atomic update and compare */
+    /* protected numTilesCompletedThisFrame to ensure atomic update and compare
+     */
     std::mutex numTilesMutex;
 
     /*! vector of info for *all* tiles. Each logical tile in the
@@ -226,7 +224,7 @@ namespace ospray {
     std::vector<std::shared_ptr<LiveTileOperation>> myTiles;
 
     std::shared_ptr<TileOperation> tileOperation = nullptr;
-    const Renderer *lastRenderer = nullptr;
+    const Renderer *lastRenderer                 = nullptr;
 
     /*! mutex used to protect all threading-sensitive data in this
         object */
@@ -253,4 +251,4 @@ namespace ospray {
     std::vector<float> tileErrors;
   };
 
-} // ::ospray
+}  // namespace ospray

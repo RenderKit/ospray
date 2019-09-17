@@ -23,14 +23,11 @@
 namespace ospray {
   struct AlphaCompositeTileOperation : public TileOperation
   {
-    std::shared_ptr<LiveTileOperation>
-    makeTile(DistributedFrameBuffer *dfb,
-             const vec2i &tileBegin,
-             size_t tileID,
-             size_t ownerID) override;
+    std::shared_ptr<LiveTileOperation> makeTile(DistributedFrameBuffer *dfb,
+                                                const vec2i &tileBegin,
+                                                size_t tileID,
+                                                size_t ownerID) override;
 
     std::string toString() const;
   };
-}
-
-
+}  // namespace ospray

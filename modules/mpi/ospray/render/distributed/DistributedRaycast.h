@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include <memory>
 #include <fstream>
+#include <memory>
 // ospray
-#include "common/MPICommon.h"
+#include "../../common/DistributedWorld.h"
 #include "DistributedRenderer.h"
 #include "camera/PerspectiveCamera.h"
-#include "../../common/DistributedWorld.h"
+#include "common/MPICommon.h"
 
 namespace ospray {
   namespace mpi {
@@ -49,13 +49,12 @@ namespace ospray {
 
       std::shared_ptr<TileOperation> tileOperation() override;
 
-    private:
+     private:
       // The communicator to use for collectives in the renderer
       mpicommon::Group mpiGroup;
 
       std::unique_ptr<std::ofstream> statsLog;
     };
 
-  } // ::ospray::mpi
-} // ::ospray
-
+  }  // namespace mpi
+}  // namespace ospray

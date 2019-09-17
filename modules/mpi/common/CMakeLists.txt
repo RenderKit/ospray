@@ -47,19 +47,3 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   PATTERN *.h
 )
 
-# ------------------------------------------------------------------
-# tests and examples
-# ------------------------------------------------------------------
-
-ospray_create_test(mamlTest
-  maml/apps/mamlTest.cpp
-LINK
-  ospray_mpi_common
-)
-
-ospray_create_test(mamlTestMessageSwarm
-  maml/apps/testMessageSwarm.cpp
-LINK
-  ospray_mpi_common
-)
-

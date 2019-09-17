@@ -14,7 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-
 /* This is a small example tutorial how to use OSPRay and the
  * MPIDistributedDevice in a data-parallel application.
  * Each rank must specify the same render parameters, however the data
@@ -33,15 +32,15 @@
  * The output image should show a sequence of quads, from dark to light blue
  */
 
+#include <errno.h>
 #include <mpi.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <errno.h>
 #ifdef _WIN32
-#  define NOMINMAX
-#  include <malloc.h>
+#define NOMINMAX
+#include <malloc.h>
 #else
-#  include <alloca.h>
+#include <alloca.h>
 #endif
 
 #include "ospray/ospray_cpp.h"
@@ -50,71 +49,88 @@ using namespace ospcommon;
 using namespace math;
 
 // helper function to write the rendered image as PPM file
-void writePPM(const char *fileName,
-              const vec2i &size,
-              const uint32_t *pixel)
+void writePPM(const char *fileName, const vec2i &size, const uint32_t *pixel)
 {
   FILE *file = fopen(fileName, "wb");
-  if(file == nullptr) {
+  if (file == nullptr) {
     fprintf(stderr, "fopen('%s', 'wb') failed: %d", fileName, errno);
     return;
   }
   fprintf(file, "P6\n%i %i\n255\n", size.x, size.y);
-  unsigned char *out = (unsigned char *)alloca(3*size.x);
+  unsigned char *out = (unsigned char *)alloca(3 * size.x);
   for (int y = 0; y < size.y; y++) {
-    const unsigned char *in = (const unsigned char *)&pixel[(size.y-1-y)*size.x];
+    const unsigned char *in =
+        (const unsigned char *)&pixel[(size.y - 1 - y) * size.x];
     for (int x = 0; x < size.x; x++) {
-      out[3*x + 0] = in[4*x + 0];
-      out[3*x + 1] = in[4*x + 1];
-      out[3*x + 2] = in[4*x + 2];
+      out[3 * x + 0] = in[4 * x + 0];
+      out[3 * x + 1] = in[4 * x + 1];
+      out[3 * x + 2] = in[4 * x + 2];
     }
-    fwrite(out, 3*size.x, sizeof(char), file);
+    fwrite(out, 3 * size.x, sizeof(char), file);
   }
   fprintf(file, "\n");
   fclose(file);
 }
 
-
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   int mpiThreadCapability = 0;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpiThreadCapability);
-  if (mpiThreadCapability != MPI_THREAD_MULTIPLE
-      && mpiThreadCapability != MPI_THREAD_SERIALIZED)
-  {
-    fprintf(stderr, "OSPRay requires the MPI runtime to support thread "
+  if (mpiThreadCapability != MPI_THREAD_MULTIPLE &&
+      mpiThreadCapability != MPI_THREAD_SERIALIZED) {
+    fprintf(stderr,
+            "OSPRay requires the MPI runtime to support thread "
             "multiple or thread serialized.\n");
     return 1;
   }
 
-  int mpiRank = 0;
+  int mpiRank      = 0;
   int mpiWorldSize = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpiWorldSize);
 
   // image size
   vec2i imgSize;
-  imgSize.x = 1024; // width
-  imgSize.y = 768; // height
+  imgSize.x = 1024;  // width
+  imgSize.y = 768;   // height
 
   // camera
-  vec3f cam_pos{(mpiWorldSize + 1.f) / 2.f, 0.5f,
-                           mpiWorldSize * 0.5f};
+  vec3f cam_pos{(mpiWorldSize + 1.f) / 2.f, 0.5f, mpiWorldSize * 0.5f};
   vec3f cam_up{0.f, 1.f, 0.f};
   vec3f cam_view{0.f, 0.f, 1.f};
 
   // all ranks specify the same rendering parameters, with the exception of
   // the data to be rendered, which is distributed among the ranks
   // triangle mesh data
-  float vertex[] = { mpiRank, 0.0f, 3.5f,
-                     mpiRank, 1.0f, 3.0f,
-                     1.0f * (mpiRank + 1.f), 0.0f, 3.0f,
-                     1.0f * (mpiRank + 1.f), 1.0f, 2.5f };
-  float color[] =  { 0.0f, 0.0f, (mpiRank + 1.f) / mpiWorldSize, 1.0f,
-                     0.0f, 0.0f, (mpiRank + 1.f) / mpiWorldSize, 1.0f,
-                     0.0f, 0.0f, (mpiRank + 1.f) / mpiWorldSize, 1.0f,
-                     0.0f, 0.0f, (mpiRank + 1.f) / mpiWorldSize, 1.0f };
-  int32_t index[] = { 0, 1, 2,
-                      1, 2, 3 };
+  float vertex[]  = {mpiRank,
+                    0.0f,
+                    3.5f,
+                    mpiRank,
+                    1.0f,
+                    3.0f,
+                    1.0f * (mpiRank + 1.f),
+                    0.0f,
+                    3.0f,
+                    1.0f * (mpiRank + 1.f),
+                    1.0f,
+                    2.5f};
+  float color[]   = {0.0f,
+                   0.0f,
+                   (mpiRank + 1.f) / mpiWorldSize,
+                   1.0f,
+                   0.0f,
+                   0.0f,
+                   (mpiRank + 1.f) / mpiWorldSize,
+                   1.0f,
+                   0.0f,
+                   0.0f,
+                   (mpiRank + 1.f) / mpiWorldSize,
+                   1.0f,
+                   0.0f,
+                   0.0f,
+                   (mpiRank + 1.f) / mpiWorldSize,
+                   1.0f};
+  int32_t index[] = {0, 1, 2, 1, 2, 3};
 
   // load the MPI module, and select the MPI distributed device. Here we
   // do not call ospInit, as we want to explicitly pick the distributed
@@ -129,43 +145,49 @@ int main(int argc, char **argv) {
 
   // create and setup camera
   ospray::cpp::Camera camera("perspective");
-  camera.set("aspect", imgSize.x/(float)imgSize.y);
+  camera.set("aspect", imgSize.x / (float)imgSize.y);
   camera.set("pos", cam_pos);
   camera.set("dir", cam_view);
-  camera.set("up",  cam_up);
-  camera.commit(); // commit each object to indicate modifications are done
+  camera.set("up", cam_up);
+  camera.commit();  // commit each object to indicate modifications are done
 
   // create and setup model and mesh
   ospray::cpp::Geometry mesh("triangles");
-  ospray::cpp::Data data(4, OSP_VEC3F, vertex); // OSP_FLOAT3 format is also supported for vertex positions
+  ospray::cpp::Data data(
+      4,
+      OSP_VEC3F,
+      vertex);  // OSP_FLOAT3 format is also supported for vertex positions
   data.commit();
   mesh.set("vertex.position", data);
-  data.release(); // we are done using this handle
+  data.release();  // we are done using this handle
 
   data = ospray::cpp::Data(4, OSP_VEC4F, color);
   data.commit();
   mesh.set("vertex.color", data);
-  data.release(); // we are done using this handle
+  data.release();  // we are done using this handle
 
-  data = ospray::cpp::Data(2, OSP_VEC3I, index); // OSP_INT4 format is also supported for triangle indices
+  data = ospray::cpp::Data(
+      2,
+      OSP_VEC3I,
+      index);  // OSP_INT4 format is also supported for triangle indices
   data.commit();
   mesh.set("index", data);
-  data.release(); // we are done using this handle
+  data.release();  // we are done using this handle
 
   mesh.commit();
 
   // put the mesh into a model
   ospray::cpp::GeometricModel model(mesh);
   model.commit();
-  mesh.release(); // we are done using this handle
+  mesh.release();  // we are done using this handle
 
   // put the model into a group (collection of models)
   ospray::cpp::Group group;
   auto modelHandle = model.handle();
-  data = ospray::cpp::Data(1, OSP_OBJECT, &modelHandle);
+  data             = ospray::cpp::Data(1, OSP_OBJECT, &modelHandle);
   group.set("geometry", data);
-  model.release(); // we are done using this handle
-  data.release(); // we are done using this handle
+  model.release();  // we are done using this handle
+  data.release();   // we are done using this handle
   group.commit();
 
   // put the group into an instance (give the group a world transform)
@@ -175,15 +197,14 @@ int main(int argc, char **argv) {
 
   ospray::cpp::World world;
   auto instanceHandle = instance.handle();
-  data = ospray::cpp::Data(1, OSP_OBJECT, &instanceHandle);
+  data                = ospray::cpp::Data(1, OSP_OBJECT, &instanceHandle);
   world.set("instance", data);
-  instance.release(); // we are done using this handle
-  data.release(); // we are done using this handle
+  instance.release();  // we are done using this handle
+  data.release();      // we are done using this handle
 
   // Specify the region of the world this rank owns
-  float regionBounds[] = { mpiRank, 0.f, 2.5f,
-                           1.f * (mpiRank + 1.f), 1.f, 3.5f };
-  data = ospray::cpp::Data(1, OSP_BOX3F, regionBounds, 0);
+  float regionBounds[] = {mpiRank, 0.f, 2.5f, 1.f * (mpiRank + 1.f), 1.f, 3.5f};
+  data                 = ospray::cpp::Data(1, OSP_BOX3F, regionBounds, 0);
   data.commit();
   world.set("regions", data);
   data.release();
@@ -202,13 +223,13 @@ int main(int argc, char **argv) {
   lights.commit();
 
   // complete setup of renderer
-  renderer.set("bgColor", 1.0f); // white, transparent
+  renderer.set("bgColor", 1.0f);  // white, transparent
   renderer.set("lights", lights);
   renderer.commit();
 
-
   // create and setup framebuffer
-  ospray::cpp::FrameBuffer framebuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+  ospray::cpp::FrameBuffer framebuffer(
+      imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
   framebuffer.clear();
 
   // render one frame
@@ -216,17 +237,18 @@ int main(int argc, char **argv) {
 
   // on rank 0, access framebuffer and write its content as PPM file
   if (mpiRank == 0) {
-    uint32_t* fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
+    uint32_t *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
     writePPM("firstFrameCpp.ppm", imgSize, fb);
     framebuffer.unmap(fb);
   }
 
-  // render 10 more frames, which are accumulated to result in a better converged image
+  // render 10 more frames, which are accumulated to result in a better
+  // converged image
   for (int frames = 0; frames < 10; frames++)
     framebuffer.renderFrame(renderer, camera, world);
 
   if (mpiRank == 0) {
-    uint32_t *fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
+    uint32_t *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
     writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
     framebuffer.unmap(fb);
   }
@@ -245,4 +267,3 @@ int main(int argc, char **argv) {
 
   return 0;
 }
-

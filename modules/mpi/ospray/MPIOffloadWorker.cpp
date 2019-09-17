@@ -27,20 +27,20 @@
 #include "camera/Camera.h"
 #include "common/Data.h"
 #include "common/Library.h"
+#include "common/MPIBcastFabric.h"
+#include "common/MPICommon.h"
+#include "common/OSPWork.h"
+#include "common/SocketBcastFabric.h"
 #include "common/World.h"
+#include "fb/DistributedFrameBuffer.h"
 #include "fb/LocalFB.h"
 #include "geometry/TriangleMesh.h"
 #include "lights/Light.h"
-#include "common/MPIBcastFabric.h"
-#include "common/SocketBcastFabric.h"
-#include "common/MPICommon.h"
 #include "ospcommon/utility/getEnvVar.h"
 #include "render/Renderer.h"
 #include "texture/Texture2D.h"
 #include "transferFunction/TransferFunction.h"
 #include "volume/Volume.h"
-#include "fb/DistributedFrameBuffer.h"
-#include "common/OSPWork.h"
 
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 4096
@@ -86,11 +86,11 @@ namespace ospray {
       work::OSPState ospState;
 
       uint64_t commandSize = 0;
-      utility::ArrayView<uint8_t> cmdView(reinterpret_cast<uint8_t*>(&commandSize),
-                                          sizeof(uint64_t));
+      utility::ArrayView<uint8_t> cmdView(
+          reinterpret_cast<uint8_t *>(&commandSize), sizeof(uint64_t));
 
-      std::shared_ptr<utility::OwnedArray<uint8_t>> recvBuffer
-        = std::make_shared<utility::OwnedArray<uint8_t>>();
+      std::shared_ptr<utility::OwnedArray<uint8_t>> recvBuffer =
+          std::make_shared<utility::OwnedArray<uint8_t>>();
 
       while (1) {
         fabric->recvBcast(cmdView);
@@ -103,16 +103,15 @@ namespace ospray {
         reader >> workTag;
 
         postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "#osp.mpi.worker: processing work " << workTag
-          << ": " << work::tagName(workTag);
+            << "#osp.mpi.worker: processing work " << workTag << ": "
+            << work::tagName(workTag);
 
         dispatchWork(workTag, ospState, reader, *fabric);
 
         postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "#osp.mpi.worker: completed work " << workTag
-          << ": " << work::tagName(workTag);
+            << "#osp.mpi.worker: completed work " << workTag << ": "
+            << work::tagName(workTag);
       }
     }
-  }
-}
-
+  }  // namespace mpi
+}  // namespace ospray

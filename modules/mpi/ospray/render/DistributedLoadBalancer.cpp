@@ -14,15 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <map>
+#include "DistributedLoadBalancer.h"
 #include <algorithm>
-#include "common/MPICommon.h"
-#include "camera/PerspectiveCamera.h"
+#include <map>
 #include "../fb/DistributedFrameBuffer.h"
+#include "WriteMultipleTileOperation.h"
+#include "camera/PerspectiveCamera.h"
+#include "common/MPICommon.h"
 #include "distributed/DistributedRenderer.h"
 #include "ospcommon/tasking/parallel_for.h"
-#include "WriteMultipleTileOperation.h"
-#include "DistributedLoadBalancer.h"
 
 namespace ospray {
   namespace mpi {
@@ -38,30 +38,27 @@ namespace ospray {
         auto *dfb = dynamic_cast<DistributedFrameBuffer *>(_fb);
 
         auto *world = dynamic_cast<DistributedWorld *>(_world);
-        if (!world)
-        {
+        if (!world) {
           throw std::runtime_error(
               "Distributed Load Balancer only supports DistributedWorld!");
         }
 
-        auto *renderer = dynamic_cast<DistributedRenderer*>(_renderer);
-        if (!renderer)
-        {
+        auto *renderer = dynamic_cast<DistributedRenderer *>(_renderer);
+        if (!renderer) {
           if (world->allRegions.size() == 1)
             return renderFrameReplicated(dfb, _renderer, camera, world);
 
-          throw std::runtime_error("Distributed rendering requires a "
+          throw std::runtime_error(
+              "Distributed rendering requires a "
               "distributed renderer!");
         }
 
-        if (!reinterpret_cast<PerspectiveCamera *>(camera))
-        {
+        if (!reinterpret_cast<PerspectiveCamera *>(camera)) {
           throw std::runtime_error(
               "DistributedRaycastRender only supports PerspectiveCamera");
         }
 
-        if (dfb->getLastRenderer() != renderer)
-        {
+        if (dfb->getLastRenderer() != renderer) {
           dfb->setTileOperation(renderer->tileOperation(), renderer);
         }
 
@@ -69,7 +66,7 @@ namespace ospray {
 
         void *perFrameData = renderer->beginFrame(dfb, world);
 
-        const auto fbSize = dfb->getNumPixels();
+        const auto fbSize       = dfb->getNumPixels();
         const size_t numRegions = world->allRegions.size();
 
         // Do a prepass and project each region's box to the screen to see
@@ -79,12 +76,12 @@ namespace ospray {
                                                          RegionScreenBounds());
         for (size_t i = 0; i < projectedRegions.size(); ++i) {
           const auto &r = world->allRegions[i];
-          auto &proj = projectedRegions[i];
+          auto &proj    = projectedRegions[i];
           if (!r.bounds.empty()) {
             proj = r.project(camera);
-            // Note that these bounds are very conservative, the bounds we compute
-            // below are much tighter, and better. We just use the depth from the
-            // projection to sort the tiles later
+            // Note that these bounds are very conservative, the bounds we
+            // compute below are much tighter, and better. We just use the depth
+            // from the projection to sort the tiles later
             proj.bounds.lower *= fbSize;
             proj.bounds.upper *= fbSize;
             regionOrdering.insert(std::make_pair(proj.depth, i));
@@ -115,7 +112,8 @@ namespace ospray {
             continue;
           }
           // TODO: Should we push back by a few pixels as well just in case
-          // for the random sampling? May need to spill +/- a pixel? I'm not sure
+          // for the random sampling? May need to spill +/- a pixel? I'm not
+          // sure
           const vec2i minTile(projection.bounds.lower.x / TILE_SIZE,
                               projection.bounds.lower.y / TILE_SIZE);
           const vec2i numTiles = dfb->getNumTiles();
@@ -166,8 +164,8 @@ namespace ospray {
           // Filter any tiles which are finished due to reaching the
           // error threshold. This should let TBB better allocate threads only
           // to tiles that actually need work.
-          end = std::partition(tilesForFrame.begin(), tilesForFrame.end(),
-              [&](const int &i) {
+          end = std::partition(
+              tilesForFrame.begin(), tilesForFrame.end(), [&](const int &i) {
                 const uint32_t tile_y = i / dfb->getNumTiles().x;
                 const uint32_t tile_x = i - tile_y * dfb->getNumTiles().x;
                 const vec2i tileID(tile_x, tile_y);
@@ -180,9 +178,10 @@ namespace ospray {
         tasking::parallel_for(tilesForFrame.size(), [&](size_t taskIndex) {
           const int tileIndex = tilesForFrame[taskIndex];
 
-          const uint32_t numTiles_x = static_cast<uint32_t>(dfb->getNumTiles().x);
-          const uint32_t tile_y     = tileIndex / numTiles_x;
-          const uint32_t tile_x     = tileIndex - tile_y * numTiles_x;
+          const uint32_t numTiles_x =
+              static_cast<uint32_t>(dfb->getNumTiles().x);
+          const uint32_t tile_y = tileIndex / numTiles_x;
+          const uint32_t tile_x = tileIndex - tile_y * numTiles_x;
           const vec2i tileID(tile_x, tile_y);
           const int32 accumID  = dfb->accumID(tileID);
           const bool tileOwner = (tileIndex % workerSize()) == workerRank();
@@ -201,24 +200,24 @@ namespace ospray {
           // The first renderTile doesn't actually do any rendering, and instead
           // just computes which tiles the region projects to, giving us the
           // exact bounds of the region's projection onto the image
-          tasking::parallel_for(static_cast<size_t>(NUM_JOBS), [&](size_t tIdx) {
-            renderer->computeRegionVisibility(dfb,
-                                              camera,
-                                              world,
-                                              regionVisible,
-                                              perFrameData,
-                                              bgtile,
-                                              tIdx);
-          });
+          tasking::parallel_for(
+              static_cast<size_t>(NUM_JOBS), [&](size_t tIdx) {
+                renderer->computeRegionVisibility(dfb,
+                                                  camera,
+                                                  world,
+                                                  regionVisible,
+                                                  perFrameData,
+                                                  bgtile,
+                                                  tIdx);
+              });
 
           // If we own the tile send the background color and the count of
           // children for the number of regions projecting to it that will be
           // sent.
           if (tileOwner) {
             bgtile.generation = 0;
-            bgtile.children   = std::count(regionVisible,
-                                           regionVisible + numRegions,
-                                           true);
+            bgtile.children =
+                std::count(regionVisible, regionVisible + numRegions, true);
             dfb->setTile(bgtile);
           }
 
@@ -291,15 +290,11 @@ namespace ospray {
                                                Camera *camera,
                                                DistributedWorld *world)
       {
-
         std::shared_ptr<TileOperation> tileOperation = nullptr;
-        if (fb->getLastRenderer() != renderer)
-        {
+        if (fb->getLastRenderer() != renderer) {
           tileOperation = std::make_shared<WriteMultipleTileOperation>();
           fb->setTileOperation(tileOperation, renderer);
-        }
-        else
-        {
+        } else {
           tileOperation = fb->getTileOperation();
         }
 
@@ -352,15 +347,12 @@ namespace ospray {
 
         fb->endFrame(renderer->errorThreshold, camera);
         return fb->getVariance();
-
       }
 
       std::string Distributed::toString() const
       {
-        return "ospray::mpi::staticLoadBalancer::Distributed"; 
+        return "ospray::mpi::staticLoadBalancer::Distributed";
       }
-    }
-  }
-}
-
-
+    }  // namespace staticLoadBalancer
+  }    // namespace mpi
+}  // namespace ospray

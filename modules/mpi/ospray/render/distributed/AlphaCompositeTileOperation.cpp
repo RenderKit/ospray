@@ -14,10 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "AlphaCompositeTileOperation.h"
 #include <memory>
 #include "../../fb/DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_ispc.h"
-#include "AlphaCompositeTileOperation.h"
 
 namespace ospray {
 
@@ -56,23 +56,24 @@ namespace ospray {
   };
 
   LiveAlphaCompositeTile::LiveAlphaCompositeTile(DistributedFrameBuffer *dfb,
-                                               const vec2i &begin,
-                                               size_t tileID,
-                                               size_t ownerID)
-    : LiveTileOperation(dfb, begin, tileID, ownerID)
-  {}
+                                                 const vec2i &begin,
+                                                 size_t tileID,
+                                                 size_t ownerID)
+      : LiveTileOperation(dfb, begin, tileID, ownerID)
+  {
+  }
 
   void LiveAlphaCompositeTile::newFrame()
   {
     std::lock_guard<std::mutex> lock(mutex);
-    currentGeneration = 0;
-    expectedInNextGeneration = 0;
+    currentGeneration          = 0;
+    expectedInNextGeneration   = 0;
     missingInCurrentGeneration = 1;
 
     if (!bufferedTiles.empty()) {
       handleError(OSP_INVALID_OPERATION,
-                  std::to_string(mpicommon::workerRank())
-                  + " is starting with buffered tiles!");
+                  std::to_string(mpicommon::workerRank()) +
+                      " is starting with buffered tiles!");
     }
   }
 
@@ -97,7 +98,7 @@ namespace ospray {
       while (missingInCurrentGeneration == 0 && expectedInNextGeneration > 0) {
         currentGeneration++;
         missingInCurrentGeneration = expectedInNextGeneration;
-        expectedInNextGeneration = 0;
+        expectedInNextGeneration   = 0;
 
         for (uint32_t i = 0; i < bufferedTiles.size(); i++) {
           const BufferedTile *bt = bufferedTiles[i].get();
@@ -118,22 +119,24 @@ namespace ospray {
 
     if (missingInCurrentGeneration == 0) {
       // Sort for back-to-front blending
-      std::sort(bufferedTiles.begin(), bufferedTiles.end(),
-        [](const std::unique_ptr<BufferedTile> &a,
-           const std::unique_ptr<BufferedTile> &b)
-        {
-          return a->tile.sortOrder > b->tile.sortOrder;
-        });
+      std::sort(bufferedTiles.begin(),
+                bufferedTiles.end(),
+                [](const std::unique_ptr<BufferedTile> &a,
+                   const std::unique_ptr<BufferedTile> &b) {
+                  return a->tile.sortOrder > b->tile.sortOrder;
+                });
 
-      Tile **tileArray = STACK_BUFFER(Tile*, bufferedTiles.size());
-      std::transform(bufferedTiles.begin(), bufferedTiles.end(), tileArray,
-        [](std::unique_ptr<BufferedTile> &t) { return &t->tile; });
+      Tile **tileArray = STACK_BUFFER(Tile *, bufferedTiles.size());
+      std::transform(bufferedTiles.begin(),
+                     bufferedTiles.end(),
+                     tileArray,
+                     [](std::unique_ptr<BufferedTile> &t) { return &t->tile; });
 
       ispc::DFB_sortAndBlendFragments((ispc::VaryingTile **)tileArray,
                                       bufferedTiles.size());
 
-      finished.region = tile.region;
-      finished.fbSize = tile.fbSize;
+      finished.region     = tile.region;
+      finished.fbSize     = tile.fbSize;
       finished.rcp_fbSize = tile.rcp_fbSize;
       accumulate(bufferedTiles[0]->tile);
       bufferedTiles.clear();
@@ -146,23 +149,21 @@ namespace ospray {
   {
     std::stringstream str;
     str << "negative missing on " << mpicommon::workerRank()
-      << ", missing = " << missingInCurrentGeneration
-      << ", expectedInNex = " << expectedInNextGeneration
-      << ", current generation = " << currentGeneration
-      << ", tile = " << tile;
+        << ", missing = " << missingInCurrentGeneration
+        << ", expectedInNex = " << expectedInNextGeneration
+        << ", current generation = " << currentGeneration
+        << ", tile = " << tile;
     handleError(OSP_INVALID_OPERATION, str.str());
   }
 
-  std::shared_ptr<LiveTileOperation>
-  AlphaCompositeTileOperation::makeTile(DistributedFrameBuffer *dfb,
-                                        const vec2i &tileBegin,
-                                        size_t tileID,
-                                        size_t ownerID)
+  std::shared_ptr<LiveTileOperation> AlphaCompositeTileOperation::makeTile(
+      DistributedFrameBuffer *dfb,
+      const vec2i &tileBegin,
+      size_t tileID,
+      size_t ownerID)
   {
-    return std::make_shared<LiveAlphaCompositeTile>(dfb,
-                                                   tileBegin,
-                                                   tileID,
-                                                   ownerID);
+    return std::make_shared<LiveAlphaCompositeTile>(
+        dfb, tileBegin, tileID, ownerID);
   }
 
   std::string AlphaCompositeTileOperation::toString() const
@@ -170,5 +171,4 @@ namespace ospray {
     return "ospray::AlphaCompositeTileOperation";
   }
 
-}
-
+}  // namespace ospray

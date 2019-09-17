@@ -15,9 +15,9 @@
 // ======================================================================== //
 
 #include "GLFWDistribOSPRayWindow.h"
+#include <mpi.h>
 #include <iostream>
 #include <stdexcept>
-#include <mpi.h>
 
 #include <imgui.h>
 #include "imgui/imgui_impl_glfw_gl3.h"
@@ -29,13 +29,14 @@ GLFWDistribOSPRayWindow *GLFWDistribOSPRayWindow::activeWindow = nullptr;
 static bool g_quitNextFrame = false;
 
 WindowState::WindowState()
-  : quit(false), cameraChanged(false), fbSizeChanged(false), spp(1)
-{}
+    : quit(false), cameraChanged(false), fbSizeChanged(false), spp(1)
+{
+}
 
 GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
-                                   const box3f &worldBounds,
-                                   OSPWorld world,
-                                   OSPRenderer renderer)
+                                                 const box3f &worldBounds,
+                                                 OSPWorld world,
+                                                 OSPRenderer renderer)
     : windowSize(windowSize),
       worldBounds(worldBounds),
       world(world),
@@ -46,7 +47,8 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
 
   if (mpiRank == 0) {
     if (activeWindow != nullptr) {
-      throw std::runtime_error("Cannot create more than one GLFWDistribOSPRayWindow!");
+      throw std::runtime_error(
+          "Cannot create more than one GLFWDistribOSPRayWindow!");
     }
 
     activeWindow = this;
@@ -57,8 +59,8 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
     }
 
     // create GLFW window
-    glfwWindow = glfwCreateWindow(windowSize.x, windowSize.y,
-                                  "OSPRay Tutorial", NULL, NULL);
+    glfwWindow = glfwCreateWindow(
+        windowSize.x, windowSize.y, "OSPRay Tutorial", NULL, NULL);
 
     if (!glfwWindow) {
       glfwTerminate();
@@ -141,13 +143,14 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
   ospCommit(renderer);
 
   windowState.windowSize = windowSize;
-  windowState.eyePos = arcballCamera->eyePos();
-  windowState.lookDir = arcballCamera->lookDir();
-  windowState.upDir = arcballCamera->upDir();
+  windowState.eyePos     = arcballCamera->eyePos();
+  windowState.lookDir    = arcballCamera->lookDir();
+  windowState.upDir      = arcballCamera->upDir();
 
   if (mpiRank == 0) {
     // trigger window reshape events with current window size
-    glfwGetFramebufferSize(glfwWindow, &this->windowSize.x, &this->windowSize.y);
+    glfwGetFramebufferSize(
+        glfwWindow, &this->windowSize.x, &this->windowSize.y);
     reshape(this->windowSize);
   }
 }
@@ -188,7 +191,8 @@ void GLFWDistribOSPRayWindow::registerDisplayCallback(
   displayCallback = callback;
 }
 
-void GLFWDistribOSPRayWindow::registerImGuiCallback(std::function<void()> callback)
+void GLFWDistribOSPRayWindow::registerImGuiCallback(
+    std::function<void()> callback)
 {
   uiCallback = callback;
 }
@@ -201,7 +205,8 @@ void GLFWDistribOSPRayWindow::mainLoop()
       break;
     }
 
-    // TODO: Actually render asynchronously, if we have MPI thread multiple support
+    // TODO: Actually render asynchronously, if we have MPI thread multiple
+    // support
     startNewOSPRayFrame();
     waitOnOSPRayFrame();
 
@@ -228,8 +233,8 @@ void GLFWDistribOSPRayWindow::mainLoop()
 
 void GLFWDistribOSPRayWindow::reshape(const vec2i &newWindowSize)
 {
-  windowSize = newWindowSize;
-  windowState.windowSize = windowSize;
+  windowSize                = newWindowSize;
+  windowState.windowSize    = windowSize;
   windowState.fbSizeChanged = true;
 
   // update camera
@@ -263,9 +268,8 @@ void GLFWDistribOSPRayWindow::motion(const vec2f &position)
       const vec2f mouseFrom(
           clamp(prev.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
           clamp(prev.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
-      const vec2f mouseTo(
-          clamp(mouse.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
-          clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
+      const vec2f mouseTo(clamp(mouse.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
+                          clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
       arcballCamera->rotate(mouseFrom, mouseTo);
     } else if (rightDown) {
       arcballCamera->zoom(mouse.y - prev.y);
@@ -275,9 +279,9 @@ void GLFWDistribOSPRayWindow::motion(const vec2f &position)
 
     if (cameraChanged) {
       windowState.cameraChanged = true;
-      windowState.eyePos = arcballCamera->eyePos();
-      windowState.lookDir = arcballCamera->lookDir();
-      windowState.upDir = arcballCamera->upDir();
+      windowState.eyePos        = arcballCamera->eyePos();
+      windowState.lookDir       = arcballCamera->lookDir();
+      windowState.upDir         = arcballCamera->upDir();
     }
   }
 
@@ -330,7 +334,7 @@ void GLFWDistribOSPRayWindow::display()
 
     // Start new frame and reset frame timing interval start
     displayStart = std::chrono::high_resolution_clock::now();
-    firstFrame = false;
+    firstFrame   = false;
   }
 
   // clear current OpenGL color buffer
@@ -366,7 +370,7 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
   }
 
   bool fbNeedsClear = false;
-  auto handles = objectsToCommit.consume();
+  auto handles      = objectsToCommit.consume();
   if (!handles.empty()) {
     for (auto &h : handles)
       ospCommit(h);
@@ -376,15 +380,14 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
 
   if (windowState.fbSizeChanged) {
     windowState.fbSizeChanged = false;
-    windowSize = windowState.windowSize;
+    windowSize                = windowState.windowSize;
     // release the current frame buffer, if it exists
     if (framebuffer) {
       ospRelease(framebuffer);
     }
 
-    framebuffer = ospNewFrameBuffer(windowSize.x, windowSize.y,
-                                    OSP_FB_SRGBA,
-                                    OSP_FB_COLOR | OSP_FB_ACCUM);
+    framebuffer = ospNewFrameBuffer(
+        windowSize.x, windowSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
     ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
     ospCommit(camera);
     fbNeedsClear = true;

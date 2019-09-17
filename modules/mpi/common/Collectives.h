@@ -19,8 +19,8 @@
 #include <mpi.h>
 #include <future>
 #include <memory>
-#include "ospcommon/utility/ArrayView.h"
 #include "MPICommon.h"
+#include "ospcommon/utility/ArrayView.h"
 
 namespace mpicommon {
   // Convenient wrappers over the collectives //
@@ -29,11 +29,8 @@ namespace mpicommon {
    * for completion. The caller owns the passed buffer, and must keep it
    * valid until the future completes.
    */
-  std::future<void *> OSPRAY_MPI_INTERFACE bcast(void *buffer,
-                                                 int count,
-                                                 MPI_Datatype datatype,
-                                                 int root,
-                                                 MPI_Comm comm);
+  std::future<void *> OSPRAY_MPI_INTERFACE bcast(
+      void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
   // TODO: Maybe we can just send a unique ptr or move only types
   // NOTE: std::future dtor blocks, so for async sending we need to hang

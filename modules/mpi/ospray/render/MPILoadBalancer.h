@@ -22,11 +22,11 @@
 #include "mpiCommon/MPICommon.h"
 // mpi module
 #include "../common/Messaging.h"
+#include "camera/Camera.h"
+#include "common/World.h"
 #include "components/mpiCommon/MPICommon.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "render/LoadBalancer.h"
-#include "camera/Camera.h"
-#include "common/World.h"
 
 namespace ospray {
   namespace mpi {

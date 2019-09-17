@@ -20,10 +20,10 @@
 #include <map>
 #include <utility>
 #include "common/Data.h"
-#include "ospcommon/tasking/parallel_for.h"
-#include "ospcommon/utility/getEnvVar.h"
 #include "lights/AmbientLight.h"
 #include "lights/Light.h"
+#include "ospcommon/tasking/parallel_for.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 #include "../../common/DistributedWorld.h"
 #include "../../common/Profiling.h"
@@ -43,7 +43,7 @@ namespace ospray {
     // DistributedRaycastRenderer definitions /////////////////////////////////
 
     DistributedRaycastRenderer::DistributedRaycastRenderer()
-      : mpiGroup(mpicommon::worker.dup())
+        : mpiGroup(mpicommon::worker.dup())
     {
       ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
 
@@ -53,10 +53,9 @@ namespace ospray {
 
       if (DETAILED_LOGGING) {
         auto job_name =
-          utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
-        std::string statsLogFile =
-          job_name + std::string("-rank") + std::to_string(mpiGroup.rank)
-          + ".txt";
+            utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
+        std::string statsLogFile = job_name + std::string("-rank") +
+                                   std::to_string(mpiGroup.rank) + ".txt";
         statsLog = ospcommon::make_unique<std::ofstream>(statsLogFile.c_str());
       }
     }
@@ -92,4 +91,3 @@ namespace ospray {
 
   }  // namespace mpi
 }  // namespace ospray
-

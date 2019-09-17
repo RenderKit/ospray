@@ -17,10 +17,10 @@
 #pragma once
 
 #ifndef _WIN32
-#include <sys/times.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <sys/resource.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/types.h>
 #include <unistd.h>
 #endif
 
@@ -30,7 +30,8 @@
 namespace ospray {
   namespace mpi {
 
-    struct ProfilingPoint {
+    struct ProfilingPoint
+    {
 #ifndef _WIN32
       rusage usage;
 #endif
@@ -39,8 +40,8 @@ namespace ospray {
       ProfilingPoint();
     };
 
-    void logProfilingData(std::ostream &os, const ProfilingPoint &start,
+    void logProfilingData(std::ostream &os,
+                          const ProfilingPoint &start,
                           const ProfilingPoint &end);
-  }
-}
-
+  }  // namespace mpi
+}  // namespace ospray

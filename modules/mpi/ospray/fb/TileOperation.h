@@ -47,11 +47,11 @@ namespace ospray {
     /* The makeTile method is called to make the live tile operation for each
      * live tile owned by the rank.
      */
-    virtual std::shared_ptr<LiveTileOperation>
-    makeTile(DistributedFrameBuffer *dfb,
-           const vec2i &tileBegin,
-           size_t tileID,
-           size_t ownerID) = 0;
+    virtual std::shared_ptr<LiveTileOperation> makeTile(
+        DistributedFrameBuffer *dfb,
+        const vec2i &tileBegin,
+        size_t tileID,
+        size_t ownerID) = 0;
 
     virtual std::string toString() const = 0;
   };
@@ -61,17 +61,18 @@ namespace ospray {
    */
   struct TileDesc
   {
-    TileDesc(const vec2i &begin,
-             size_t tileID,
-             size_t ownerID);
+    TileDesc(const vec2i &begin, size_t tileID, size_t ownerID);
 
     virtual ~TileDesc() = default;
 
     /*! returns whether this tile is one of this particular
         node's tiles */
-    virtual bool mine() const { return false; }
+    virtual bool mine() const
+    {
+      return false;
+    }
 
-    vec2i  begin;
+    vec2i begin;
     size_t tileID, ownerID;
   };
 
@@ -91,7 +92,10 @@ namespace ospray {
     // Called at the beginning of each frame
     virtual void newFrame() = 0;
 
-    bool mine() const override { return true; }
+    bool mine() const override
+    {
+      return true;
+    }
 
     /* Called for each ospray::Tile rendered locally or received over the
      * network for this image tile.
@@ -132,8 +136,7 @@ namespace ospray {
 
     //! the rbga32-converted colors
     // TODO: dynamically allocate to save memory when only uint32 / I8 colors
-    vec4f __aligned(64) color[TILE_SIZE*TILE_SIZE];
+    vec4f __aligned(64) color[TILE_SIZE * TILE_SIZE];
   };
 
-}
-
+}  // namespace ospray

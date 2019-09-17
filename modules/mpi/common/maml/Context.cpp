@@ -231,11 +231,8 @@ namespace maml {
       }
 
       int numDone = 0;
-      MPI_CALL(Testsome(totalMessages,
-                        mergedRequests,
-                        &numDone,
-                        done,
-                        MPI_STATUSES_IGNORE));
+      MPI_CALL(Testsome(
+          totalMessages, mergedRequests, &numDone, done, MPI_STATUSES_IGNORE));
       auto completed = high_resolution_clock::now();
 
       for (int i = 0; i < numDone; ++i) {

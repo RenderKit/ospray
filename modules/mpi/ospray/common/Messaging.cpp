@@ -46,15 +46,13 @@ namespace ospray {
         mpicommon::Group group;
 
        private:
-        std::unordered_map<int, MessageHandler*> objectListeners;
+        std::unordered_map<int, MessageHandler *> objectListeners;
       };
 
       // Inlined ObjectMessageHandler definitions /////////////////////////////
 
       inline void ObjectMessageHandler::registerMessageListener(
-        int handleObjID,
-        MessageHandler *listener
-      )
+          int handleObjID, MessageHandler *listener)
       {
         if (objectListeners.find(handleObjID) != objectListeners.end())
           postStatusMsg() << "WARNING: overwriting an existing listener!";
@@ -68,22 +66,22 @@ namespace ospray {
       }
 
       inline void ObjectMessageHandler::incoming(
-        const std::shared_ptr<Message> &message
-      )
+          const std::shared_ptr<Message> &message)
       {
         auto obj = objectListeners.find(message->tag);
         if (obj != objectListeners.end()) {
           obj->second->incoming(message);
         } else {
           postStatusMsg() << "WARNING: No destination for incoming message "
-            << "with tag " << message->tag << ", size = " << message->size;
+                          << "with tag " << message->tag
+                          << ", size = " << message->size;
         }
       }
 
       // Singleton instance (hidden) and helper creation function /////////////
 
       static DeletedUniquePtr<ObjectMessageHandler> handler = nullptr;
-      static bool handlerValid = false;
+      static bool handlerValid                              = false;
 
       // MessageHandler definitions ///////////////////////////////////////////
 
@@ -105,20 +103,18 @@ namespace ospray {
           throw std::runtime_error("Error: Object Messaging was already init");
 
         Group group = parentGroup.dup();
-        handler =
-            make_deleted_unique<ObjectMessageHandler>(
-              [](ObjectMessageHandler *_handler){
-                handlerValid = false; delete _handler;
-              }
-            );
+        handler     = make_deleted_unique<ObjectMessageHandler>(
+            [](ObjectMessageHandler *_handler) {
+              handlerValid = false;
+              delete _handler;
+            });
         handler->group = group;
 
         maml::registerHandlerFor(group.comm, handler.get());
         handlerValid = true;
       }
 
-      void registerMessageListener(int handleObjID,
-                                   MessageHandler *listener)
+      void registerMessageListener(int handleObjID, MessageHandler *listener)
       {
         if (!handlerValid)
           throw std::runtime_error("ObjectMessageHandler was not created!");
@@ -136,16 +132,18 @@ namespace ospray {
       {
         // TODO WILL: Supporting thread serialized is a pain and I don't
         // think it's necessary
-        //maml::start();
+        // maml::start();
       }
 
-      void sendTo(int globalRank, ObjectHandle object,
+      void sendTo(int globalRank,
+                  ObjectHandle object,
                   std::shared_ptr<Message> msg)
       {
 #ifdef DEBUG
         if (!handlerValid)
-          throw std::runtime_error("ObjMessageHandler must be created before"
-                                   " sending object messages");
+          throw std::runtime_error(
+              "ObjMessageHandler must be created before"
+              " sending object messages");
 #endif
         msg->tag = object.objID();
         maml::sendTo(handler->group.comm, globalRank, msg);
@@ -158,9 +156,9 @@ namespace ospray {
 
       void disableAsyncMessaging()
       {
-        //maml::stop();
+        // maml::stop();
       }
 
-    } // ::ospray::mpi::messaging
-  } // ::ospray::mpi
-} // ::ospray
+    }  // namespace messaging
+  }    // namespace mpi
+}  // namespace ospray

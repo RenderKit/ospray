@@ -14,15 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common/World.ih"
 #include "DistributedWorld.ih"
+#include "common/World.ih"
 
 export void *uniform DistributedWorld_create(void *uniform cppE)
 {
   uniform DistributedWorld *uniform world =
-    uniform new uniform DistributedWorld;
-  world->super.cppEquivalent     = cppE;
-  world->super.instances = NULL;
+      uniform new uniform DistributedWorld;
+  world->super.cppEquivalent = cppE;
+  world->super.instances     = NULL;
 
   world->super.embreeSceneHandleGeometries = NULL;
   world->super.embreeSceneHandleVolumes    = NULL;
@@ -34,8 +34,7 @@ export void DistributedWorld_set(void *uniform _world,
                                  uniform int numRegions)
 {
   uniform DistributedWorld *uniform world =
-    (uniform DistributedWorld * uniform) _world;
-  world->regions = (uniform Region *uniform)_regions;
+      (uniform DistributedWorld * uniform) _world;
+  world->regions    = (uniform Region * uniform) _regions;
   world->numRegions = numRegions;
 }
-

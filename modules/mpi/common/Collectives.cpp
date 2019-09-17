@@ -14,27 +14,23 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "Collectives.h"
+#include <algorithm>
+#include <cmath>
 #include <memory>
 #include <numeric>
-#include <cmath>
-#include <algorithm>
-#include "Collectives.h"
 #include "maml/maml.h"
 
 namespace mpicommon {
   using namespace ospcommon;
 
-  std::future<void *> bcast(void *buf,
-                            int count,
-                            MPI_Datatype datatype,
-                            int root,
-                            MPI_Comm comm)
+  std::future<void *> bcast(
+      void *buf, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
   {
     int typeSize = 0;
     MPI_Type_size(datatype, &typeSize);
-    auto view =
-      std::make_shared<utility::ArrayView<uint8_t>>(static_cast<uint8_t*>(buf),
-                                                    count * typeSize);
+    auto view = std::make_shared<utility::ArrayView<uint8_t>>(
+        static_cast<uint8_t *>(buf), count * typeSize);
     auto col = std::make_shared<Bcast>(view, count, datatype, root, comm);
     maml::queueCollective(col);
     return col->future();
@@ -196,7 +192,7 @@ namespace mpicommon {
   {
     // 1GB as the max bcast size
     const static int MAX_BCAST_SIZE = 1e9;
-    int remaining = count;
+    int remaining                   = count;
     // TODO: This is Rust's slice::chunks iterator
     uint8_t *iter = buffer->begin();
     do {
@@ -212,19 +208,17 @@ namespace mpicommon {
 
   bool Bcast::finished()
   {
-    const int ndone = std::accumulate(requests.begin(), requests.end(), 0,
-        [](const int &n, MPI_Request &r) {
+    const int ndone = std::accumulate(
+        requests.begin(), requests.end(), 0, [](const int &n, MPI_Request &r) {
           int d = 0;
           MPI_CALL(Test(&r, &d, MPI_STATUS_IGNORE));
-          if (d)
-          {
+          if (d) {
             return n + 1;
           }
           return n;
         });
 
-    if (ndone == requests.size())
-    {
+    if (ndone == requests.size()) {
       onFinish();
     }
     return ndone == requests.size();
@@ -232,7 +226,7 @@ namespace mpicommon {
 
   void Bcast::onFinish()
   {
-    result.set_value(static_cast<void*>(buffer->data()));
+    result.set_value(static_cast<void *>(buffer->data()));
   }
 
   Gather::Gather(const void *sendBuffer,

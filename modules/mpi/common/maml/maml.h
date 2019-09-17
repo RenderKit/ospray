@@ -59,7 +59,7 @@ namespace maml {
   /*! register a new incoing-message handler. if any message comes in
       on the given communicator we'll call this handler */
   OSPRAY_MPI_INTERFACE void registerHandlerFor(MPI_Comm comm,
-                                                MessageHandler *handler);
+                                               MessageHandler *handler);
 
   /*! start the service; from this point on maml is free to use MPI
       calls to send/receive messages; if your MPI library is not
@@ -97,8 +97,8 @@ namespace maml {
       arriving on this node, yet!!!
   */
   OSPRAY_MPI_INTERFACE void sendTo(MPI_Comm comm,
-                                    int rank,
-                                    std::shared_ptr<Message> msg);
+                                   int rank,
+                                   std::shared_ptr<Message> msg);
 
   /*! Schedule a collective to be run on the messaging layer */
   OSPRAY_MPI_INTERFACE void queueCollective(std::shared_ptr<Collective> col);

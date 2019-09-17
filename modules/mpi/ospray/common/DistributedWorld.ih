@@ -31,4 +31,3 @@ struct DistributedWorld
   uniform Region *uniform regions;
   uniform int numRegions;
 };
-

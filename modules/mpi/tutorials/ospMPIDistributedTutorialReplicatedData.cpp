@@ -23,10 +23,10 @@
  * perspective.
  */
 
+#include <mpi.h>
 #include <iterator>
 #include <memory>
 #include <random>
-#include <mpi.h>
 #include "GLFWDistribOSPRayWindow.h"
 
 #include "ospray_testing.h"
@@ -140,7 +140,8 @@ int main(int argc, char **argv)
   return 0;
 }
 
-OSPTestingGeometry createSpheres(int mpiRank) {
+OSPTestingGeometry createSpheres(int mpiRank)
+{
   struct Sphere
   {
     vec3f center;
@@ -188,17 +189,15 @@ OSPTestingGeometry createSpheres(int mpiRank) {
 
   // create a data object with all the sphere information
   OSPData spheresData =
-    ospNewData(numSpheres * sizeof(Sphere), OSP_UCHAR, spheres.data());
+      ospNewData(numSpheres * sizeof(Sphere), OSP_UCHAR, spheres.data());
 
   // create the sphere geometry, and assign attributes
   OSPGeometry spheresGeometry = ospNewGeometry("spheres");
 
   ospSetData(spheresGeometry, "sphere", spheresData);
   ospSetInt(spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
-  ospSetInt(
-      spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
-  ospSetInt(
-      spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
+  ospSetInt(spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
+  ospSetInt(spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
 
   // commit the spheres geometry
   ospCommit(spheresGeometry);
@@ -211,7 +210,7 @@ OSPTestingGeometry createSpheres(int mpiRank) {
 
   // create glass material and assign to geometry
   OSPMaterial glassMaterial =
-    ospNewMaterial(renderer_type.c_str(), "ThinGlass");
+      ospNewMaterial(renderer_type.c_str(), "ThinGlass");
   ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
   ospCommit(glassMaterial);
 

@@ -20,32 +20,32 @@
 #endif
 
 #ifdef OPEN_MPI
-#include <thread>
 #include <sched.h>
+#include <thread>
 #endif
 
+#include "MPIOffloadDevice.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
 #include "common/Library.h"
+#include "common/MPIBcastFabric.h"
+#include "common/MPICommon.h"
+#include "common/OSPWork.h"
+#include "common/SocketBcastFabric.h"
 #include "common/Util.h"
 #include "common/World.h"
+#include "fb/DistributedFrameBuffer.h"
 #include "fb/LocalFB.h"
 #include "geometry/TriangleMesh.h"
-#include "common/MPIBcastFabric.h"
-#include "common/SocketBcastFabric.h"
-#include "common/MPICommon.h"
 #include "ospcommon/networking/DataStreaming.h"
+#include "ospcommon/networking/Socket.h"
 #include "ospcommon/utility/ArrayView.h"
 #include "ospcommon/utility/OwnedArray.h"
-#include "ospcommon/networking/Socket.h"
 #include "ospcommon/utility/getEnvVar.h"
+#include "render/DistributedLoadBalancer.h"
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
 #include "volume/Volume.h"
-#include "fb/DistributedFrameBuffer.h"
-#include "render/DistributedLoadBalancer.h"
-#include "common/OSPWork.h"
-#include "MPIOffloadDevice.h"
 
 namespace ospray {
   namespace mpi {
@@ -53,7 +53,8 @@ namespace ospray {
     using namespace mpicommon;
     using namespace ospcommon;
 
-    void parseHost(const std::string &hostport, std::string &host, int &port) {
+    void parseHost(const std::string &hostport, std::string &host, int &port)
+    {
       auto fnd = hostport.find(':');
       if (fnd == std::string::npos) {
         throw std::runtime_error("failed to parse host: " + hostport);
@@ -202,7 +203,7 @@ namespace ospray {
 
       if (world.rank == 0) {
         postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "#o: Initialize OSPRay MPI in 'Listen for Client' Mode\n";
+            << "#o: Initialize OSPRay MPI in 'Listen for Client' Mode\n";
       }
       worker.comm = world.comm;
       worker.makeIntraComm();
@@ -218,7 +219,7 @@ namespace ospray {
     {
       // TODO: This test needs to be corrected for handlign offload w/ sockets
       // in connect/accept mode.
-      if (dynamic_cast<MPIFabric*>(fabric.get()) && world.rank == 0) {
+      if (dynamic_cast<MPIFabric *>(fabric.get()) && world.rank == 0) {
         postStatusMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
 
         networking::BufferWriter writer;
@@ -253,19 +254,19 @@ namespace ospray {
         std::string hostPort = getParam<std::string>("host", "");
 
         if (hostPort.empty()) {
-          throw std::runtime_error("Error: mpi-connect requires a host:port "
-                                   "argument to connect to");
+          throw std::runtime_error(
+              "Error: mpi-connect requires a host:port "
+              "argument to connect to");
         }
         std::string host;
         int port = 0;
         parseHost(hostPort, host, port);
         postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "MPIOffloadDevice connecting to " << host << ":" << port << "\n";
+            << "MPIOffloadDevice connecting to " << host << ":" << port << "\n";
         fabric = make_unique<SocketWriterFabric>(host, port);
       } else {
         throw std::runtime_error("Invalid MPI mode!");
       }
-
 
       // The collectives don't get compressed through the optional
       // compression path in MAML, so we can leave this off.
@@ -282,7 +283,7 @@ namespace ospray {
       if (!initialized)
         initializeDevice();
 
-      // TODO: These params should be shipped over to the workers
+        // TODO: These params should be shipped over to the workers
 #if 0
       auto OSPRAY_DYNAMIC_LOADBALANCER =
           utility::getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
@@ -297,10 +298,10 @@ namespace ospray {
           getParam<int>("preAllocatedTiles", 4));
 #endif
 
-      //writeStream = mpiFabric.get();
-      //writeStream->flush();
-      //writeStream =
-          //make_unique<networking::BufferedWriteStream>(*mpiFabric, bufferSize);
+      // writeStream = mpiFabric.get();
+      // writeStream->flush();
+      // writeStream =
+      // make_unique<networking::BufferedWriteStream>(*mpiFabric, bufferSize);
 
       /*
       work::SetLoadBalancer slbWork(
@@ -332,33 +333,27 @@ namespace ospray {
                                       const void *init,
                                       int flags)
     {
-      if (init == nullptr)
-      {
-        WarnOnce warn("Making uninitialized OSPData on MPIOffloadDevice, "
-                      "this is likely an error");
+      if (init == nullptr) {
+        WarnOnce warn(
+            "Making uninitialized OSPData on MPIOffloadDevice, "
+            "this is likely an error");
       }
 
       ObjectHandle handle = allocateHandle();
 
       networking::BufferWriter writer;
-      writer << work::NEW_DATA << handle.i64 << nitems
-             << format << flags;
+      writer << work::NEW_DATA << handle.i64 << nitems << format << flags;
       sendWork(writer.buffer);
 
       std::shared_ptr<utility::AbstractArray<uint8_t>> dataView;
-      if (flags & OSP_DATA_SHARED_BUFFER)
-      {
-        dataView =
-          std::make_shared<utility::ArrayView<uint8_t>>(
-              const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(init)),
-              sizeOf(format) * nitems);
-      }
-      else
-      {
-        dataView =
-          std::make_shared<utility::OwnedArray<uint8_t>>(
-              const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(init)),
-              sizeOf(format) * nitems);
+      if (flags & OSP_DATA_SHARED_BUFFER) {
+        dataView = std::make_shared<utility::ArrayView<uint8_t>>(
+            const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(init)),
+            sizeOf(format) * nitems);
+      } else {
+        dataView = std::make_shared<utility::OwnedArray<uint8_t>>(
+            const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(init)),
+            sizeOf(format) * nitems);
       }
 
       fabric->sendBcast(dataView);
@@ -397,8 +392,7 @@ namespace ospray {
       ObjectHandle handle = allocateHandle();
 
       networking::BufferWriter writer;
-      writer << work::NEW_GEOMETRY << handle.i64
-             << std::string(type);
+      writer << work::NEW_GEOMETRY << handle.i64 << std::string(type);
       sendWork(writer.buffer);
 
       return (OSPGeometry)(int64)handle;
@@ -409,8 +403,7 @@ namespace ospray {
       ObjectHandle handle = allocateHandle();
 
       networking::BufferWriter writer;
-      writer << work::NEW_VOLUME << handle.i64
-             << std::string(type);
+      writer << work::NEW_VOLUME << handle.i64 << std::string(type);
       sendWork(writer.buffer);
 
       return (OSPVolume)(int64)handle;
@@ -420,10 +413,9 @@ namespace ospray {
     {
       ObjectHandle handle = allocateHandle();
 
-      ObjectHandle geomHandle = (ObjectHandle&)geom;
+      ObjectHandle geomHandle = (ObjectHandle &)geom;
       networking::BufferWriter writer;
-      writer << work::NEW_GEOMETRIC_MODEL << handle.i64
-             << geomHandle.i64;
+      writer << work::NEW_GEOMETRIC_MODEL << handle.i64 << geomHandle.i64;
       sendWork(writer.buffer);
 
       return (OSPGeometricModel)(int64)handle;
@@ -433,10 +425,9 @@ namespace ospray {
     {
       ObjectHandle handle = allocateHandle();
 
-      ObjectHandle volHandle = (ObjectHandle&)volume;
+      ObjectHandle volHandle = (ObjectHandle &)volume;
       networking::BufferWriter writer;
-      writer << work::NEW_VOLUMETRIC_MODEL << handle.i64
-             << volHandle.i64;
+      writer << work::NEW_VOLUMETRIC_MODEL << handle.i64 << volHandle.i64;
       sendWork(writer.buffer);
 
       return (OSPVolumetricModel)(int64)handle;
@@ -452,8 +443,8 @@ namespace ospray {
       ObjectHandle handle = allocateHandle();
 
       networking::BufferWriter writer;
-      writer << work::NEW_MATERIAL << handle.i64
-             << std::string(renderer_type) << std::string(material_type);
+      writer << work::NEW_MATERIAL << handle.i64 << std::string(renderer_type)
+             << std::string(material_type);
       sendWork(writer.buffer);
 
       return (OSPMaterial)(int64)handle;
@@ -464,8 +455,7 @@ namespace ospray {
       ObjectHandle handle = allocateHandle();
 
       networking::BufferWriter writer;
-      writer << work::NEW_TRANSFER_FUNCTION << handle.i64
-             << std::string(type);
+      writer << work::NEW_TRANSFER_FUNCTION << handle.i64 << std::string(type);
       sendWork(writer.buffer);
 
       return (OSPTransferFunction)(int64)handle;
@@ -476,8 +466,7 @@ namespace ospray {
       ObjectHandle handle = allocateHandle();
 
       networking::BufferWriter writer;
-      writer << work::NEW_TEXTURE << handle.i64
-             << std::string(type);
+      writer << work::NEW_TEXTURE << handle.i64 << std::string(type);
       sendWork(writer.buffer);
 
       return (OSPTexture)(int64)handle;
@@ -500,8 +489,8 @@ namespace ospray {
 
     OSPInstance MPIOffloadDevice::newInstance(OSPGroup group)
     {
-      ObjectHandle handle = allocateHandle();
-      ObjectHandle groupHandle = (ObjectHandle&)group;
+      ObjectHandle handle      = allocateHandle();
+      ObjectHandle groupHandle = (ObjectHandle &)group;
 
       networking::BufferWriter writer;
       writer << work::NEW_INSTANCE << handle.i64 << groupHandle.i64;
@@ -533,7 +522,9 @@ namespace ospray {
                                      const char *bufName,
                                      const char *s)
     {
-      setParam<std::string>((ObjectHandle&)_object, bufName, std::string(s),
+      setParam<std::string>((ObjectHandle &)_object,
+                            bufName,
+                            std::string(s),
                             work::SET_PARAM_STRING);
     }
 
@@ -541,160 +532,158 @@ namespace ospray {
                                      const char *bufName,
                                      OSPObject _value)
     {
-      setParam<OSPObject>((ObjectHandle&)_target, bufName, _value,
-                          work::SET_PARAM_OBJECT);
+      setParam<OSPObject>(
+          (ObjectHandle &)_target, bufName, _value, work::SET_PARAM_OBJECT);
     }
 
     void MPIOffloadDevice::setBool(OSPObject _object,
                                    const char *bufName,
                                    const bool b)
     {
-      setParam<bool>((ObjectHandle&)_object, bufName, b,
-                     work::SET_PARAM_BOOL);
+      setParam<bool>((ObjectHandle &)_object, bufName, b, work::SET_PARAM_BOOL);
     }
 
     void MPIOffloadDevice::setFloat(OSPObject _object,
                                     const char *bufName,
                                     const float f)
     {
-      setParam<float>((ObjectHandle&)_object, bufName, f,
-                      work::SET_PARAM_FLOAT);
+      setParam<float>(
+          (ObjectHandle &)_object, bufName, f, work::SET_PARAM_FLOAT);
     }
 
     void MPIOffloadDevice::setInt(OSPObject _object,
                                   const char *bufName,
                                   const int i)
     {
-      setParam<int>((ObjectHandle&)_object, bufName, i,
-                    work::SET_PARAM_INT);
+      setParam<int>((ObjectHandle &)_object, bufName, i, work::SET_PARAM_INT);
     }
 
     void MPIOffloadDevice::setVec2f(OSPObject _object,
                                     const char *bufName,
                                     const vec2f &v)
     {
-      setParam<vec2f>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_VEC2F);
+      setParam<vec2f>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC2F);
     }
 
     void MPIOffloadDevice::setVec2i(OSPObject _object,
                                     const char *bufName,
                                     const vec2i &v)
     {
-      setParam<vec2i>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_VEC2I);
+      setParam<vec2i>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC2I);
     }
 
     void MPIOffloadDevice::setVec3f(OSPObject _object,
                                     const char *bufName,
                                     const vec3f &v)
     {
-      setParam<vec3f>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_VEC3F);
+      setParam<vec3f>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC3F);
     }
 
     void MPIOffloadDevice::setVec3i(OSPObject _object,
                                     const char *bufName,
                                     const vec3i &v)
     {
-      setParam<vec3i>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_VEC3I);
+      setParam<vec3i>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC3I);
     }
 
     void MPIOffloadDevice::setVec4f(OSPObject _object,
                                     const char *bufName,
                                     const vec4f &v)
     {
-      setParam<vec4f>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_VEC4F);
+      setParam<vec4f>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC4F);
     }
 
     void MPIOffloadDevice::setVec4i(OSPObject _object,
                                     const char *bufName,
                                     const vec4i &v)
     {
-      setParam<vec4i>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_VEC4I);
+      setParam<vec4i>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC4I);
     }
 
     void MPIOffloadDevice::setBox1f(OSPObject _object,
                                     const char *bufName,
                                     const box1f &v)
     {
-      setParam<box1f>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_BOX1F);
+      setParam<box1f>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX1F);
     }
 
     void MPIOffloadDevice::setBox1i(OSPObject _object,
                                     const char *bufName,
                                     const box1i &v)
     {
-      setParam<box1i>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_BOX1I);
+      setParam<box1i>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX1I);
     }
 
     void MPIOffloadDevice::setBox2f(OSPObject _object,
                                     const char *bufName,
                                     const box2f &v)
     {
-      setParam<box2f>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_BOX2F);
+      setParam<box2f>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX2F);
     }
 
     void MPIOffloadDevice::setBox2i(OSPObject _object,
                                     const char *bufName,
                                     const box2i &v)
     {
-      setParam<box2i>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_BOX2I);
+      setParam<box2i>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX2I);
     }
 
     void MPIOffloadDevice::setBox3f(OSPObject _object,
                                     const char *bufName,
                                     const box3f &v)
     {
-      setParam<box3f>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_BOX3F);
+      setParam<box3f>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX3F);
     }
 
     void MPIOffloadDevice::setBox3i(OSPObject _object,
                                     const char *bufName,
                                     const box3i &v)
     {
-      setParam<box3i>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_BOX3I);
+      setParam<box3i>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX3I);
     }
 
     void MPIOffloadDevice::setBox4f(OSPObject _object,
                                     const char *bufName,
                                     const box4f &v)
     {
-      setParam<box4f>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_BOX4F);
+      setParam<box4f>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX4F);
     }
 
     void MPIOffloadDevice::setBox4i(OSPObject _object,
                                     const char *bufName,
                                     const box4i &v)
     {
-      setParam<box4i>((ObjectHandle&)_object, bufName, v,
-                      work::SET_PARAM_BOX4I);
+      setParam<box4i>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX4I);
     }
 
     void MPIOffloadDevice::setLinear3f(OSPObject _object,
                                        const char *bufName,
                                        const linear3f &v)
     {
-      setParam<linear3f>((ObjectHandle&)_object, bufName, v,
-                         work::SET_PARAM_LINEAR3F);
+      setParam<linear3f>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_LINEAR3F);
     }
 
     void MPIOffloadDevice::setAffine3f(OSPObject _object,
                                        const char *bufName,
                                        const affine3f &v)
     {
-      setParam<affine3f>((ObjectHandle&)_object, bufName, v,
-                         work::SET_PARAM_AFFINE3F);
+      setParam<affine3f>(
+          (ObjectHandle &)_object, bufName, v, work::SET_PARAM_AFFINE3F);
     }
 
     void MPIOffloadDevice::setVoidPtr(OSPObject _object,
@@ -725,8 +714,7 @@ namespace ospray {
       const ObjectHandle handle = (const ObjectHandle &)_object;
 
       networking::BufferWriter writer;
-      writer << work::REMOVE_PARAM << handle.i64
-             << std::string(name);
+      writer << work::REMOVE_PARAM << handle.i64 << std::string(name);
       sendWork(writer.buffer);
     }
 
@@ -753,8 +741,8 @@ namespace ospray {
       ObjectHandle handle = allocateHandle();
 
       networking::BufferWriter writer;
-      writer << work::CREATE_FRAMEBUFFER << handle.i64
-             << size << (uint32_t)format << channels;
+      writer << work::CREATE_FRAMEBUFFER << handle.i64 << size
+             << (uint32_t)format << channels;
       sendWork(writer.buffer);
       return (OSPFrameBuffer)(int64)handle;
     }
@@ -778,11 +766,10 @@ namespace ospray {
       networking::BufferWriter writer;
       writer << work::MAP_FRAMEBUFFER << handle.i64 << (uint32_t)channel;
       sendWork(writer.buffer);
-      
+
       uint64_t nbytes = 0;
-      auto bytesView =
-        ArrayView<uint8_t>(reinterpret_cast<uint8_t*>(&nbytes),
-                           sizeof(nbytes));
+      auto bytesView  = ArrayView<uint8_t>(reinterpret_cast<uint8_t *>(&nbytes),
+                                          sizeof(nbytes));
 
       fabric->recv(bytesView, rootWorkerRank());
 
@@ -790,19 +777,17 @@ namespace ospray {
       mapping->resize(nbytes, 0);
       fabric->recv(*mapping, rootWorkerRank());
 
-      void *ptr = mapping->data();
+      void *ptr                       = mapping->data();
       framebufferMappings[handle.i64] = std::move(mapping);
 
       return ptr;
     }
 
-    void MPIOffloadDevice::frameBufferUnmap(const void *,
-                                            OSPFrameBuffer _fb)
+    void MPIOffloadDevice::frameBufferUnmap(const void *, OSPFrameBuffer _fb)
     {
       ObjectHandle handle = (ObjectHandle &)_fb;
-      auto fnd = framebufferMappings.find(handle.i64);
-      if (fnd != framebufferMappings.end())
-      {
+      auto fnd            = framebufferMappings.find(handle.i64);
+      if (fnd != framebufferMappings.end()) {
         framebufferMappings.erase(fnd);
       }
     }
@@ -815,11 +800,10 @@ namespace ospray {
       networking::BufferWriter writer;
       writer << work::GET_VARIANCE << handle.i64;
       sendWork(writer.buffer);
-      
+
       float variance = 0;
-      auto view =
-        ArrayView<uint8_t>(reinterpret_cast<uint8_t*>(&variance),
-                           sizeof(variance));
+      auto view = ArrayView<uint8_t>(reinterpret_cast<uint8_t *>(&variance),
+                                     sizeof(variance));
 
       fabric->recv(view, rootWorkerRank());
       return variance;
@@ -842,8 +826,7 @@ namespace ospray {
       ObjectHandle handle = allocateHandle();
 
       networking::BufferWriter writer;
-      writer << work::NEW_RENDERER << handle.i64
-             << std::string(type);
+      writer << work::NEW_RENDERER << handle.i64 << std::string(type);
       sendWork(writer.buffer);
       return (OSPRenderer)(int64)handle;
     }
@@ -864,28 +847,27 @@ namespace ospray {
                                                  OSPCamera _camera,
                                                  OSPWorld _world)
     {
-      ObjectHandle futureHandle = allocateHandle();
-      const ObjectHandle fbHandle = (ObjectHandle&)_fb;
-      const ObjectHandle rendererHandle = (ObjectHandle&)_renderer;
-      const ObjectHandle cameraHandle = (ObjectHandle&)_camera;
-      const ObjectHandle worldHandle = (ObjectHandle&)_world;
+      ObjectHandle futureHandle         = allocateHandle();
+      const ObjectHandle fbHandle       = (ObjectHandle &)_fb;
+      const ObjectHandle rendererHandle = (ObjectHandle &)_renderer;
+      const ObjectHandle cameraHandle   = (ObjectHandle &)_camera;
+      const ObjectHandle worldHandle    = (ObjectHandle &)_world;
 
       networking::BufferWriter writer;
-      writer << work::RENDER_FRAME_ASYNC << fbHandle
-             << rendererHandle << cameraHandle << worldHandle
-             << futureHandle;
+      writer << work::RENDER_FRAME_ASYNC << fbHandle << rendererHandle
+             << cameraHandle << worldHandle << futureHandle;
       sendWork(writer.buffer);
       return (OSPFuture)(int64)futureHandle;
     }
 
     int MPIOffloadDevice::isReady(OSPFuture _task, OSPSyncEvent event)
     {
-      const ObjectHandle handle = (ObjectHandle&)_task;
+      const ObjectHandle handle = (ObjectHandle &)_task;
       networking::BufferWriter writer;
       writer << work::FUTURE_IS_READY << handle.i64 << (uint32_t)event;
       sendWork(writer.buffer);
       int result = 0;
-      utility::ArrayView<uint8_t> view(reinterpret_cast<uint8_t*>(&result),
+      utility::ArrayView<uint8_t> view(reinterpret_cast<uint8_t *>(&result),
                                        sizeof(result));
       fabric->recv(view, rootWorkerRank());
       return result;
@@ -893,19 +875,19 @@ namespace ospray {
 
     void MPIOffloadDevice::wait(OSPFuture _task, OSPSyncEvent event)
     {
-      const ObjectHandle handle = (ObjectHandle&)_task;
+      const ObjectHandle handle = (ObjectHandle &)_task;
       networking::BufferWriter writer;
       writer << work::FUTURE_WAIT << handle.i64 << (uint32_t)event;
       sendWork(writer.buffer);
       int result = 0;
-      utility::ArrayView<uint8_t> view(reinterpret_cast<uint8_t*>(&result),
+      utility::ArrayView<uint8_t> view(reinterpret_cast<uint8_t *>(&result),
                                        sizeof(result));
       fabric->recv(view, rootWorkerRank());
     }
 
     void MPIOffloadDevice::cancel(OSPFuture _task)
     {
-      const ObjectHandle handle = (ObjectHandle&)_task;
+      const ObjectHandle handle = (ObjectHandle &)_task;
       networking::BufferWriter writer;
       writer << work::FUTURE_CANCEL << handle.i64;
       sendWork(writer.buffer);
@@ -913,12 +895,12 @@ namespace ospray {
 
     float MPIOffloadDevice::getProgress(OSPFuture _task)
     {
-      const ObjectHandle handle = (ObjectHandle&)_task;
+      const ObjectHandle handle = (ObjectHandle &)_task;
       networking::BufferWriter writer;
       writer << work::FUTURE_GET_PROGRESS << handle.i64;
       sendWork(writer.buffer);
       float result = 0;
-      utility::ArrayView<uint8_t> view(reinterpret_cast<uint8_t*>(&result),
+      utility::ArrayView<uint8_t> view(reinterpret_cast<uint8_t *>(&result),
                                        sizeof(result));
       fabric->recv(view, rootWorkerRank());
       return result;
@@ -930,24 +912,25 @@ namespace ospray {
                                          OSPWorld world,
                                          const vec2f &screenPos)
     {
-      const ObjectHandle fbHandle = (ObjectHandle&)fb;
-      const ObjectHandle rendererHandle = (ObjectHandle&)renderer;
-      const ObjectHandle cameraHandle = (ObjectHandle&)camera;
-      const ObjectHandle worldHandle = (ObjectHandle&)world;
+      const ObjectHandle fbHandle       = (ObjectHandle &)fb;
+      const ObjectHandle rendererHandle = (ObjectHandle &)renderer;
+      const ObjectHandle cameraHandle   = (ObjectHandle &)camera;
+      const ObjectHandle worldHandle    = (ObjectHandle &)world;
 
       networking::BufferWriter writer;
-      writer << work::PICK << fbHandle
-             << rendererHandle << cameraHandle << worldHandle << screenPos;
+      writer << work::PICK << fbHandle << rendererHandle << cameraHandle
+             << worldHandle << screenPos;
       sendWork(writer.buffer);
 
       OSPPickResult result = {0};
-      utility::ArrayView<uint8_t> view(reinterpret_cast<uint8_t*>(&result),
+      utility::ArrayView<uint8_t> view(reinterpret_cast<uint8_t *>(&result),
                                        sizeof(OSPPickResult));
       fabric->recv(view, rootWorkerRank());
       return result;
     }
 
-    void MPIOffloadDevice::sendWork(std::shared_ptr<utility::AbstractArray<uint8_t>> work)
+    void MPIOffloadDevice::sendWork(
+        std::shared_ptr<utility::AbstractArray<uint8_t>> work)
     {
       networking::BufferWriter header;
       header << (uint64_t)work->size();
@@ -958,10 +941,11 @@ namespace ospray {
 
     int MPIOffloadDevice::rootWorkerRank() const
     {
-      if (dynamic_cast<SocketWriterFabric*>(fabric.get()))
+      if (dynamic_cast<SocketWriterFabric *>(fabric.get()))
         return 0;
 
-      // TODO: we may also want to support MPI intercomm setups w/ comm accept/connect?
+      // TODO: we may also want to support MPI intercomm setups w/ comm
+      // accept/connect?
       return 1;
     }
 
@@ -973,6 +957,5 @@ namespace ospray {
     OSP_REGISTER_DEVICE(MPIOffloadDevice, mpi_offload);
     OSP_REGISTER_DEVICE(MPIOffloadDevice, mpi);
 
-  }
-}
-
+  }  // namespace mpi
+}  // namespace ospray

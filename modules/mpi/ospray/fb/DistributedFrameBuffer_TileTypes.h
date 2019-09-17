@@ -31,18 +31,19 @@ namespace ospray {
     alloc'ed in TILE_SIZE pixels */
   struct TileDesc
   {
-    TileDesc(const vec2i &begin,
-             size_t tileID,
-             size_t ownerID);
+    TileDesc(const vec2i &begin, size_t tileID, size_t ownerID);
 
     virtual ~TileDesc() = default;
 
     /*! returns whether this tile is one of this particular
         node's tiles */
-    virtual bool mine() const { return false; }
+    virtual bool mine() const
+    {
+      return false;
+    }
 
-    vec2i   begin;
-    size_t  tileID, ownerID;
+    vec2i begin;
+    size_t tileID, ownerID;
   };
 
   // -------------------------------------------------------
@@ -65,50 +66,54 @@ namespace ospray {
 
     /*! returns whether this tile is one of this particular
         node's tiles */
-    bool mine() const override { return true; }
+    bool mine() const override
+    {
+      return true;
+    }
 
     /*! called exactly once for each ospray::Tile that needs to get
         written into / composited into this dfb tile */
     virtual void process(const ospray::Tile &tile) = 0;
 
     // WILL debugging
-    virtual bool isComplete() const { return false; }
+    virtual bool isComplete() const
+    {
+      return false;
+    }
 
     void accumulate(const ospray::Tile &tile);
 
     DistributedFrameBuffer *dfb;
-    float error; // estimated variance of this tile
+    float error;  // estimated variance of this tile
     // TODO: dynamically allocate to save memory when no ACCUM or VARIANCE
     // even more TODO: Tile contains much more data (e.g. AUX), but using only
     // the color buffer here ==> much wasted memory
-    ospray::Tile __aligned(64) accum; // also hold accumulated normal&albedo
+    ospray::Tile __aligned(64) accum;  // also hold accumulated normal&albedo
     ospray::Tile __aligned(64) variance;
     /* iw: TODO - have to change this. right now, to be able to give
        the 'postaccum' pixel op a readily normalized tile we have to
        create a local copy (the tile stores only the accum value,
        and we cannot change this) */
     // also holds normalized normal&albedo in AOS format
-    ospray::Tile  __aligned(64) final;
+    ospray::Tile __aligned(64) final;
 
     //! the rbga32-converted colors
     // TODO: dynamically allocate to save memory when only uint32 / I8 colors
-    vec4f __aligned(64) color[TILE_SIZE*TILE_SIZE];
+    vec4f __aligned(64) color[TILE_SIZE * TILE_SIZE];
   };
-
 
   // -------------------------------------------------------
   /*! specialized tile for plain sort-first rendering, but where the same tile
       region could be computed multiple times (with different accumId). */
   struct WriteMultipleTile : public TileData
   {
-    WriteMultipleTile(DistributedFrameBuffer *dfb
-        , const vec2i &begin
-        , size_t tileID
-        , size_t ownerID
-        )
-      : TileData(dfb, begin, tileID, ownerID)
-        , writeOnceTile(true)
-    {}
+    WriteMultipleTile(DistributedFrameBuffer *dfb,
+                      const vec2i &begin,
+                      size_t tileID,
+                      size_t ownerID)
+        : TileData(dfb, begin, tileID, ownerID), writeOnceTile(true)
+    {
+    }
 
     void newFrame() override;
 
@@ -130,8 +135,11 @@ namespace ospray {
   /*! specialized tile for doing Z-compositing. */
   struct ZCompositeTile : public TileData
   {
-    ZCompositeTile(DistributedFrameBuffer *dfb, const vec2i &begin,
-                   size_t tileID, size_t ownerID, size_t numWorkers);
+    ZCompositeTile(DistributedFrameBuffer *dfb,
+                   const vec2i &begin,
+                   size_t tileID,
+                   size_t ownerID,
+                   size_t numWorkers);
 
     /*! called exactly once at the beginning of each frame */
     void newFrame() override;
@@ -171,7 +179,10 @@ namespace ospray {
         written into / composited into this dfb tile */
     void process(const ospray::Tile &tile) override;
 
-    bool isComplete() const override { return missingInCurrentGeneration == 0; }
+    bool isComplete() const override
+    {
+      return missingInCurrentGeneration == 0;
+    }
 
     struct BufferedTile
     {
@@ -184,7 +195,7 @@ namespace ospray {
       float sortOrder;
     };
 
-  private:
+   private:
     std::vector<BufferedTile *> bufferedTile;
     int currentGeneration;
     int expectedInNextGeneration;
@@ -194,4 +205,4 @@ namespace ospray {
     void reportCompositingError(const vec2i &tile);
   };
 
-} // namespace ospray
+}  // namespace ospray

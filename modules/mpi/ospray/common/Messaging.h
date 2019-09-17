@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "common/MPICommon.h"
 #include "common/MPIBcastFabric.h"
+#include "common/MPICommon.h"
 #include "maml/maml.h"
 #include "ospray/common/ObjectHandle.h"
 
@@ -34,8 +34,7 @@ namespace ospray {
         MessageHandler(ObjectHandle handle);
         virtual ~MessageHandler();
 
-      protected:
-
+       protected:
         ObjectHandle myId;
       };
 
@@ -56,11 +55,12 @@ namespace ospray {
 
       bool asyncMessagingEnabled();
 
-      void sendTo(int globalRank, ObjectHandle object,
+      void sendTo(int globalRank,
+                  ObjectHandle object,
                   std::shared_ptr<mpicommon::Message> msg);
 
       void disableAsyncMessaging();
 
-    } // ::ospray::mpi::messaging
-  } // ::ospray::mpi
-} // ::ospray
+    }  // namespace messaging
+  }    // namespace mpi
+}  // namespace ospray

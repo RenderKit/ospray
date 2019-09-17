@@ -113,7 +113,7 @@ int main(int argc, char **argv)
   ospCommit(brick.model);
 
   // create the "world" model which will contain all of our geometries
-  OSPWorld world = ospNewWorld();
+  OSPWorld world    = ospNewWorld();
   OSPData instances = ospNewData(1, OSP_OBJECT, &brick.instance);
   ospSetData(world, "instance", instances);
   ospRelease(instances);
@@ -239,8 +239,8 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   // generate the volume data to just be filled with this rank's id
   const size_t nVoxels = brickGhostDims.x * brickGhostDims.y * brickGhostDims.z;
   std::vector<char> volumeData(nVoxels, static_cast<char>(mpiRank));
-  OSPData ospVolumeData = ospNewData(volumeData.size(), OSP_UCHAR,
-                                     volumeData.data());
+  OSPData ospVolumeData =
+      ospNewData(volumeData.size(), OSP_UCHAR, volumeData.data());
   ospSetObject(brick.brick, "voxelData", ospVolumeData);
 
   // Set the clipping box of the volume to clip off the ghost voxels
@@ -250,7 +250,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
 
   brick.model = ospNewVolumetricModel(brick.brick);
 
-  brick.group = ospNewGroup();
+  brick.group     = ospNewGroup();
   OSPData volumes = ospNewData(1, OSP_OBJECT, &brick.model);
   ospSetObject(brick.group, "volume", volumes);
   ospCommit(brick.group);
@@ -261,4 +261,3 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
 
   return brick;
 }
-

@@ -14,24 +14,24 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "MPIDistributedDevice.h"
 #include "api/ISPCDevice.h"
-#include "common/Group.h"
-#include "common/Instance.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
-#include "lights/Light.h"
-#include "transferFunction/TransferFunction.h"
-#include "geometry/GeometricModel.h"
-#include "volume/VolumetricModel.h"
-#include "ospcommon/tasking/tasking_system_init.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "common/DistributedWorld.h"
+#include "common/Group.h"
+#include "common/Instance.h"
 #include "common/MPICommon.h"
-#include "MPIDistributedDevice.h"
 #include "common/SynchronousRenderTask.h"
 #include "fb/DistributedFrameBuffer.h"
+#include "geometry/GeometricModel.h"
+#include "lights/Light.h"
+#include "ospcommon/tasking/tasking_system_init.h"
+#include "ospcommon/utility/getEnvVar.h"
 #include "render/DistributedLoadBalancer.h"
-#include "common/DistributedWorld.h"
 #include "render/distributed/DistributedRaycast.h"
+#include "transferFunction/TransferFunction.h"
+#include "volume/VolumetricModel.h"
 
 namespace ospray {
   namespace mpi {
@@ -118,7 +118,8 @@ namespace ospray {
             mpicommon::workerSize() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
         // TODO WILL: This will be a problem with the offload/distrib device
-        // combination where maml/messaging gets init with the wrong communicator
+        // combination where maml/messaging gets init with the wrong
+        // communicator
         maml::init(enableCompression);
         messaging::init(mpicommon::worker);
         maml::start();
@@ -134,8 +135,7 @@ namespace ospray {
         const uint32 channels)
     {
       ObjectHandle handle;
-      auto *instance =
-          new DistributedFrameBuffer(size, handle, mode, channels);
+      auto *instance = new DistributedFrameBuffer(size, handle, mode, channels);
       handle.assign(instance);
       return (OSPFrameBuffer)(int64)handle;
     }
@@ -372,16 +372,16 @@ namespace ospray {
     }
 
     void MPIDistributedDevice::setLinear3f(OSPObject _object,
-                                          const char *bufName,
-                                          const linear3f &v)
+                                           const char *bufName,
+                                           const linear3f &v)
     {
       auto *object = lookupObject<ManagedObject>(_object);
       object->setParam(bufName, v);
     }
 
     void MPIDistributedDevice::setAffine3f(OSPObject _object,
-                                          const char *bufName,
-                                          const affine3f &v)
+                                           const char *bufName,
+                                           const affine3f &v)
     {
       auto *object = lookupObject<ManagedObject>(_object);
       object->setParam(bufName, v);
@@ -533,4 +533,3 @@ extern "C" void ospray_init_module_mpi_distributed()
 {
   std::cout << "Loading MPI Distributed Device module\n";
 }
-

@@ -18,9 +18,9 @@
 
 #include "../common/DistributedWorld.h"
 #include "../fb/DistributedFrameBuffer.h"
-#include "render/LoadBalancer.h"
 #include "camera/Camera.h"
 #include "common/World.h"
+#include "render/LoadBalancer.h"
 
 namespace ospray {
   namespace mpi {
@@ -47,7 +47,6 @@ namespace ospray {
         std::string toString() const override;
       };
 
-    }
-  }
-}
-
+    }  // namespace staticLoadBalancer
+  }    // namespace mpi
+}  // namespace ospray

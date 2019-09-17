@@ -19,4 +19,3 @@
 // TODO WILL: Seems like we should have dllexport for all the other structs
 // and functions in the MPI module as well? Why aren't they tagged?
 extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi() {}
-

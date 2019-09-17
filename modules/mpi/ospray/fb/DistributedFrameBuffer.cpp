@@ -14,20 +14,20 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <thread>
-#include <snappy.h>
 #include "DistributedFrameBuffer.h"
-#include "TileOperation.h"
+#include <snappy.h>
+#include <thread>
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "DistributedFrameBuffer_ispc.h"
+#include "TileOperation.h"
 
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/tasking/schedule.h"
 #include "pico_bench.h"
 
-#include "common/MPICommon.h"
-#include "common/Collectives.h"
 #include "api/Device.h"
+#include "common/Collectives.h"
+#include "common/MPICommon.h"
 
 using std::cout;
 using std::endl;
@@ -43,8 +43,9 @@ namespace ospray {
 
   DistributedTileError::DistributedTileError(const vec2i &numTiles,
                                              mpicommon::Group group)
-    : TileError(numTiles), group(group)
-  {}
+      : TileError(numTiles), group(group)
+  {
+  }
 
   void DistributedTileError::sync()
   {
@@ -60,18 +61,18 @@ namespace ospray {
                               ObjectHandle myId,
                               ColorBufferFormat colorBufferFormat,
                               const uint32 channels)
-    // TODO WILL: The DFB should use a separate identifier than myID
-    // since large scenes can push this ID beyond the max value we can use
-    // for MPI Tag (i.e., Moana). The IDs for the message handler should not
-    // be set from the object handle but pulled from some other ID pool
-    // specific to those objects using the messaging layer
-    : MessageHandler(myId),
-      FrameBuffer(numPixels, colorBufferFormat, channels),
-      mpiGroup(mpicommon::worker.dup()),
-      tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0), mpiGroup),
-      localFBonMaster(nullptr),
-      frameIsActive(false),
-      frameIsDone(false)
+      // TODO WILL: The DFB should use a separate identifier than myID
+      // since large scenes can push this ID beyond the max value we can use
+      // for MPI Tag (i.e., Moana). The IDs for the message handler should not
+      // be set from the object handle but pulled from some other ID pool
+      // specific to those objects using the messaging layer
+      : MessageHandler(myId),
+        FrameBuffer(numPixels, colorBufferFormat, channels),
+        mpiGroup(mpicommon::worker.dup()),
+        tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0), mpiGroup),
+        localFBonMaster(nullptr),
+        frameIsActive(false),
+        frameIsDone(false)
   {
     this->ispcEquivalent = ispc::DFB_create(this);
     ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
@@ -81,10 +82,10 @@ namespace ospray {
     tileAccumID.resize(getTotalTiles(), 0);
 
     if (mpicommon::IamTheMaster() && colorBufferFormat != OSP_FB_NONE) {
-      localFBonMaster
-        = ospcommon::make_unique<LocalFrameBuffer>(numPixels,
-            colorBufferFormat,
-            channels & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE));
+      localFBonMaster = ospcommon::make_unique<LocalFrameBuffer>(
+          numPixels,
+          colorBufferFormat,
+          channels & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE));
     }
   }
 
@@ -92,23 +93,20 @@ namespace ospray {
   {
     FrameBuffer::commit();
     tileOperation = nullptr;
-    lastRenderer = nullptr;
+    lastRenderer  = nullptr;
     allTiles.clear();
     myTiles.clear();
 
     imageOps.clear();
     if (imageOpData) {
-      FrameBufferView fbv(localFBonMaster ? localFBonMaster.get()
-                                            : static_cast<FrameBuffer *>(this),
-                          colorBufferFormat,
-                          localFBonMaster ? localFBonMaster->colorBuffer
-                                            : nullptr,
-                          localFBonMaster ? localFBonMaster->depthBuffer
-                                            : nullptr,
-                          localFBonMaster ? localFBonMaster->normalBuffer
-                                            : nullptr,
-                          localFBonMaster ? localFBonMaster->albedoBuffer
-                                            : nullptr);
+      FrameBufferView fbv(
+          localFBonMaster ? localFBonMaster.get()
+                          : static_cast<FrameBuffer *>(this),
+          colorBufferFormat,
+          localFBonMaster ? localFBonMaster->colorBuffer : nullptr,
+          localFBonMaster ? localFBonMaster->depthBuffer : nullptr,
+          localFBonMaster ? localFBonMaster->normalBuffer : nullptr,
+          localFBonMaster ? localFBonMaster->albedoBuffer : nullptr);
 
       std::for_each(imageOpData->begin<ImageOp *>(),
                     imageOpData->end<ImageOp *>(),
@@ -128,10 +126,8 @@ namespace ospray {
 
     nextTileWrite = 0;
     if (colorBufferFormat != OSP_FB_NONE) {
-      const size_t finalTileSize = masterMsgSize(colorBufferFormat,
-                                                 hasDepthBuffer,
-                                                 hasNormalBuffer,
-                                                 hasAlbedoBuffer);
+      const size_t finalTileSize = masterMsgSize(
+          colorBufferFormat, hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer);
       tileGatherBuffer.resize(myTiles.size() * finalTileSize, 0);
       std::fill(tileGatherBuffer.begin(), tileGatherBuffer.end(), 0);
     }
@@ -141,13 +137,15 @@ namespace ospray {
       std::lock_guard<std::mutex> numTilesLock(numTilesMutex);
 
       if (frameIsActive) {
-        throw std::runtime_error("Attempt to start frame on already started frame!");
+        throw std::runtime_error(
+            "Attempt to start frame on already started frame!");
       }
 
-      std::for_each(imageOps.begin(), imageOps.end(),
+      std::for_each(imageOps.begin(),
+                    imageOps.end(),
                     [](std::unique_ptr<LiveImageOp> &p) { p->beginFrame(); });
 
-      lastProgressReport = std::chrono::high_resolution_clock::now();
+      lastProgressReport     = std::chrono::high_resolution_clock::now();
       renderingProgressTiles = 0;
 
       tileErrorRegion.sync();
@@ -169,7 +167,7 @@ namespace ospray {
       }
 
       globalTilesCompletedThisFrame = 0;
-      numTilesCompletedThisFrame = 0;
+      numTilesCompletedThisFrame    = 0;
       for (int t = 0; t < getTotalTiles(); t++) {
         const uint32_t nx = static_cast<uint32_t>(getNumTiles().x);
         const uint32_t ty = t / nx;
@@ -202,17 +200,18 @@ namespace ospray {
     renderingProgressTiles += numTiles;
 
     auto now = std::chrono::high_resolution_clock::now();
-    auto timeSinceUpdate = duration_cast<milliseconds>(now - lastProgressReport);
+    auto timeSinceUpdate =
+        duration_cast<milliseconds>(now - lastProgressReport);
     if (timeSinceUpdate.count() >= 1000) {
       auto msg = std::make_shared<mpicommon::Message>(sizeof(ProgressMessage));
-      ProgressMessage *msgData = reinterpret_cast<ProgressMessage*>(msg->data);
-      msgData->command = PROGRESS_MESSAGE;
-      msgData->numCompleted = renderingProgressTiles;
-      msgData->frameID = frameID;
+      ProgressMessage *msgData = reinterpret_cast<ProgressMessage *>(msg->data);
+      msgData->command         = PROGRESS_MESSAGE;
+      msgData->numCompleted    = renderingProgressTiles;
+      msgData->frameID         = frameID;
       mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
 
       renderingProgressTiles = 0;
-      lastProgressReport = now;
+      lastProgressReport     = now;
     }
 
     return numTilesCompletedThisFrame == myTiles.size();
@@ -225,12 +224,10 @@ namespace ospray {
 
   void DFB::createTiles()
   {
-    size_t tileID = 0;
+    size_t tileID   = 0;
     vec2i numPixels = getNumPixels();
-    for (int y = 0; y < numPixels.y; y += TILE_SIZE)
-    {
-      for (int x = 0; x < numPixels.x; x += TILE_SIZE, tileID++)
-      {
+    for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
+      for (int x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
         const size_t ownerID = ownerIDFromTileID(tileID);
         const vec2i tileStart(x, y);
         if (ownerID == size_t(mpicommon::workerRank())) {
@@ -238,9 +235,8 @@ namespace ospray {
           myTiles.push_back(td);
           allTiles.push_back(td);
         } else {
-          allTiles.push_back(std::make_shared<TileDesc>(tileStart,
-                                                        tileID,
-                                                        ownerID));
+          allTiles.push_back(
+              std::make_shared<TileDesc>(tileStart, tileID, ownerID));
         }
       }
     }
@@ -252,7 +248,7 @@ namespace ospray {
     // TODO WILL: Is this really the best way to avoid re-attaching all the
     // tiles each frame? Maybe take a string identifying it and find the
     // obj. creation method instead?
-    if (tileOperation && lastRenderer == renderer) 
+    if (tileOperation && lastRenderer == renderer)
       return;
 
     tileOperation = tileOp;
@@ -269,7 +265,7 @@ namespace ospray {
     return tileOperation;
   }
 
-  const Renderer* DFB::getLastRenderer() const
+  const Renderer *DFB::getLastRenderer() const
   {
     return lastRenderer;
   }
@@ -277,8 +273,9 @@ namespace ospray {
   const void *DFB::mapBuffer(OSPFrameBufferChannel channel)
   {
     if (!localFBonMaster) {
-      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' a frame "
-                      "buffer that doesn't have a host-side correspondence");
+      throw std::runtime_error(
+          "#osp:mpi:dfb: tried to 'ospMap()' a frame "
+          "buffer that doesn't have a host-side correspondence");
     }
     return localFBonMaster->mapBuffer(channel);
   }
@@ -286,9 +283,10 @@ namespace ospray {
   void DFB::unmap(const void *mappedMem)
   {
     if (!localFBonMaster) {
-      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospUnmap()' a frame "
-                               "buffer that doesn't have a host-side color "
-                               "buffer");
+      throw std::runtime_error(
+          "#osp:mpi:dfb: tried to 'ospUnmap()' a frame "
+          "buffer that doesn't have a host-side color "
+          "buffer");
     }
     localFBonMaster->unmap(mappedMem);
   }
@@ -300,17 +298,17 @@ namespace ospray {
 
     auto startWaitFrame = high_resolution_clock::now();
     std::unique_lock<std::mutex> lock(mutex);
-    frameDoneCond.wait(lock, [&]{
-      return frameIsDone;
-    });
+    frameDoneCond.wait(lock, [&] { return frameIsDone; });
 
     int renderingCancelled = frameCancelled();
-    mpicommon::bcast(&renderingCancelled, 1, MPI_INT, masterRank(),
-                     mpiGroup.comm).wait();
+    mpicommon::bcast(
+        &renderingCancelled, 1, MPI_INT, masterRank(), mpiGroup.comm)
+        .wait();
     frameIsActive = false;
 
     auto endWaitFrame = high_resolution_clock::now();
-    waitFrameFinishTime = duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
+    waitFrameFinishTime =
+        duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
 
     // Report that we're 100% done and do a final check for cancellation
     reportProgress(1.0f);
@@ -332,8 +330,8 @@ namespace ospray {
     ospray::Tile tile;
     unpackWriteTileMessage(msg, tile, hasNormalBuffer || hasAlbedoBuffer);
 
-    auto *tileDesc = this->getTileDescFor(tile.region.lower);
-    LiveTileOperation *td = (LiveTileOperation*)tileDesc;
+    auto *tileDesc        = this->getTileDescFor(tile.region.lower);
+    LiveTileOperation *td = (LiveTileOperation *)tileDesc;
     td->process(tile);
   }
 
@@ -341,7 +339,7 @@ namespace ospray {
   void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
   {
     if (hasVarianceBuffer) {
-      const vec2i tileID = msg->coords/TILE_SIZE;
+      const vec2i tileID = msg->coords / TILE_SIZE;
       if (msg->error < (float)inf)
         tileErrorRegion.update(tileID, msg->error);
     }
@@ -350,14 +348,14 @@ namespace ospray {
 
     MasterTileMessage_FB_Depth<ColorT> *depth = nullptr;
     if (hasDepthBuffer && msg->command & MASTER_TILE_HAS_DEPTH) {
-      depth = reinterpret_cast<MasterTileMessage_FB_Depth<ColorT>*>(msg);
+      depth = reinterpret_cast<MasterTileMessage_FB_Depth<ColorT> *>(msg);
     }
 
     MasterTileMessage_FB_Depth_Aux<ColorT> *aux = nullptr;
     if (msg->command & MASTER_TILE_HAS_AUX)
-      aux = reinterpret_cast<MasterTileMessage_FB_Depth_Aux<ColorT>*>(msg);
+      aux = reinterpret_cast<MasterTileMessage_FB_Depth_Aux<ColorT> *>(msg);
 
-    ColorT *color = reinterpret_cast<ColorT*>(localFBonMaster->colorBuffer);
+    ColorT *color = reinterpret_cast<ColorT *>(localFBonMaster->colorBuffer);
     for (int iy = 0; iy < TILE_SIZE; iy++) {
       int iiy = iy + msg->coords.y;
       if (iiy >= numPixels.y) {
@@ -372,16 +370,16 @@ namespace ospray {
 
         color[iix + iiy * numPixels.x] = msg->color[ix + iy * TILE_SIZE];
         if (depth) {
-          localFBonMaster->depthBuffer[iix + iiy * numPixels.x]
-            = depth->depth[ix + iy * TILE_SIZE];
+          localFBonMaster->depthBuffer[iix + iiy * numPixels.x] =
+              depth->depth[ix + iy * TILE_SIZE];
         }
         if (aux) {
           if (hasNormalBuffer)
             localFBonMaster->normalBuffer[iix + iiy * numPixels.x] =
-              aux->normal[ix + iy * TILE_SIZE];
+                aux->normal[ix + iy * TILE_SIZE];
           if (hasAlbedoBuffer)
             localFBonMaster->albedoBuffer[iix + iiy * numPixels.x] =
-              aux->albedo[ix + iy * TILE_SIZE];
+                aux->albedo[ix + iy * TILE_SIZE];
         }
       }
     }
@@ -390,14 +388,15 @@ namespace ospray {
   void DFB::tileIsFinished(LiveTileOperation *tile)
   {
     if (!imageOps.empty()) {
-      std::for_each(imageOps.begin(), imageOps.begin() + firstFrameOperation,
-                    [&](std::unique_ptr<LiveImageOp> &iop) { 
-                      #if 0
+      std::for_each(imageOps.begin(),
+                    imageOps.begin() + firstFrameOperation,
+                    [&](std::unique_ptr<LiveImageOp> &iop) {
+#if 0
                       PixelOp *pop = dynamic_cast<PixelOp *>(iop);
                       if (pop) {
                         //p->postAccum(this, tile);
                       }
-                      #endif
+#endif
                       LiveTileOp *top = dynamic_cast<LiveTileOp *>(iop.get());
                       if (top) {
                         top->process(tile->finished);
@@ -412,36 +411,39 @@ namespace ospray {
     if (colorBufferFormat != OSP_FB_NONE) {
       auto DFB_writeTile = &ispc::DFB_writeTile_RGBA32F;
       switch (colorBufferFormat) {
-        case OSP_FB_RGBA8:
-          DFB_writeTile = &ispc::DFB_writeTile_RGBA8;
-          break;
-        case OSP_FB_SRGBA:
-          DFB_writeTile = &ispc::DFB_writeTile_SRGBA;
-          break;
-        default:
-          break;
+      case OSP_FB_RGBA8:
+        DFB_writeTile = &ispc::DFB_writeTile_RGBA8;
+        break;
+      case OSP_FB_SRGBA:
+        DFB_writeTile = &ispc::DFB_writeTile_SRGBA;
+        break;
+      default:
+        break;
       }
-      DFB_writeTile((ispc::VaryingTile*)&tile->finished, &tile->color);
+      DFB_writeTile((ispc::VaryingTile *)&tile->finished, &tile->color);
     }
 
-    auto msg = [&]{
-      MasterTileMessageBuilder msg(colorBufferFormat, hasDepthBuffer,
-                                   hasNormalBuffer, hasAlbedoBuffer,
-                                   tile->begin, tile->error);
+    auto msg = [&] {
+      MasterTileMessageBuilder msg(colorBufferFormat,
+                                   hasDepthBuffer,
+                                   hasNormalBuffer,
+                                   hasAlbedoBuffer,
+                                   tile->begin,
+                                   tile->error);
       msg.setColor(tile->color);
       msg.setDepth(tile->finished.z);
-      msg.setNormal((vec3f*)tile->finished.nx);
-      msg.setAlbedo((vec3f*)tile->finished.ar);
+      msg.setNormal((vec3f *)tile->finished.nx);
+      msg.setAlbedo((vec3f *)tile->finished.ar);
       return msg;
     };
 
     // TODO still send normal & albedo
     if (colorBufferFormat == OSP_FB_NONE) {
       std::lock_guard<std::mutex> lock(tileErrorsMutex);
-      tileIDs.push_back(tile->begin/TILE_SIZE);
+      tileIDs.push_back(tile->begin / TILE_SIZE);
       tileErrors.push_back(tile->error);
     } else {
-      auto tileMsg = msg().message;
+      auto tileMsg   = msg().message;
       const size_t n = nextTileWrite.fetch_add(tileMsg->size);
       std::memcpy(&tileGatherBuffer[n], tileMsg->data, tileMsg->size);
     }
@@ -454,7 +456,8 @@ namespace ospray {
   void DFB::updateProgress(ProgressMessage *msg)
   {
     globalTilesCompletedThisFrame += msg->numCompleted;
-    const float progress = globalTilesCompletedThisFrame / (float)getTotalTiles();
+    const float progress =
+        globalTilesCompletedThisFrame / (float)getTotalTiles();
     reportProgress(progress);
     if (frameCancelled()) {
       sendCancelRenderingMessage();
@@ -466,14 +469,14 @@ namespace ospray {
     return myTiles.size();
   }
 
-  TileDesc* DFB::getTileDescFor(const vec2i &coords) const
+  TileDesc *DFB::getTileDescFor(const vec2i &coords) const
   {
     return allTiles[getTileIDof(coords)].get();
   }
 
   size_t DFB::getTileIDof(const vec2i &c) const
   {
-    return (c.x/TILE_SIZE) + (c.y/TILE_SIZE)*numTiles.x;
+    return (c.x / TILE_SIZE) + (c.y / TILE_SIZE) * numTiles.x;
   }
 
   std::string DFB::toString() const
@@ -483,7 +486,7 @@ namespace ospray {
 
   void DFB::incoming(const std::shared_ptr<mpicommon::Message> &message)
   {
-    auto *msg = (TileMessage*)message->data;
+    auto *msg = (TileMessage *)message->data;
     /*
     if (msg->command & CANCEL_RENDERING) {
       std::cout << "Rank " << mpicommon::globalRank()
@@ -505,34 +508,38 @@ namespace ospray {
       if (!frameIsActive) {
         // TODO will: probably remove, but test this for now.
         PING;
-        throw std::runtime_error("Somehow recieved a tile message when frame inactive!?");
+        throw std::runtime_error(
+            "Somehow recieved a tile message when frame inactive!?");
       }
     }
 
     scheduleProcessing(message);
   }
 
-  void DFB::scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message)
+  void DFB::scheduleProcessing(
+      const std::shared_ptr<mpicommon::Message> &message)
   {
     auto queuedTask = high_resolution_clock::now();
     tasking::schedule([=]() {
       auto startedTask = high_resolution_clock::now();
-      auto *msg = (TileMessage*)message->data;
+      auto *msg        = (TileMessage *)message->data;
       if (msg->command & MASTER_WRITE_TILE_I8) {
         throw std::runtime_error("#dfb: master msg should not be scheduled!");
       } else if (msg->command & MASTER_WRITE_TILE_F32) {
         throw std::runtime_error("#dfb: master msg should not be scheduled!");
       } else if (msg->command & WORKER_WRITE_TILE) {
-        this->processMessage((WriteTileMessage*)msg);
+        this->processMessage((WriteTileMessage *)msg);
       } else if (msg->command & PROGRESS_MESSAGE) {
-        updateProgress((ProgressMessage*)msg);
+        updateProgress((ProgressMessage *)msg);
       } else {
         throw std::runtime_error("#dfb: unknown tile type processed!");
       }
 
       auto finishedTask = high_resolution_clock::now();
-      auto queueTime = duration_cast<duration<double, std::milli>>(startedTask - queuedTask);
-      auto computeTime = duration_cast<duration<double, std::milli>>(finishedTask - startedTask);
+      auto queueTime =
+          duration_cast<duration<double, std::milli>>(startedTask - queuedTask);
+      auto computeTime = duration_cast<duration<double, std::milli>>(
+          finishedTask - startedTask);
 
       std::lock_guard<std::mutex> lock(statsMutex);
       queueTimes.push_back(queueTime);
@@ -547,12 +554,11 @@ namespace ospray {
 
     auto preGatherComputeStart = high_resolution_clock::now();
 
-    const size_t tileSize = masterMsgSize(colorBufferFormat, hasDepthBuffer,
-                                          hasNormalBuffer, hasAlbedoBuffer);
+    const size_t tileSize = masterMsgSize(
+        colorBufferFormat, hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer);
 
-    const size_t totalTilesExpected = std::accumulate(numTilesExpected.begin(),
-                                                      numTilesExpected.end(),
-                                                      0);
+    const size_t totalTilesExpected =
+        std::accumulate(numTilesExpected.begin(), numTilesExpected.end(), 0);
     std::vector<int> tileBytesExpected(workerSize(), 0);
     std::vector<int> processOffsets(workerSize(), 0);
     if (IamTheMaster()) {
@@ -572,21 +578,25 @@ namespace ospray {
     }
 
     const size_t renderedTileBytes = nextTileWrite.load();
-    size_t compressedSize = 0;
+    size_t compressedSize          = 0;
     if (renderedTileBytes > 0) {
       auto startCompr = high_resolution_clock::now();
-      compressedSize = snappy::MaxCompressedLength(renderedTileBytes);
+      compressedSize  = snappy::MaxCompressedLength(renderedTileBytes);
       compressedBuf.resize(compressedSize, 0);
-      snappy::RawCompress(tileGatherBuffer.data(), renderedTileBytes,
-          compressedBuf.data(), &compressedSize);
+      snappy::RawCompress(tileGatherBuffer.data(),
+                          renderedTileBytes,
+                          compressedBuf.data(),
+                          &compressedSize);
       auto endCompr = high_resolution_clock::now();
 
       compressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
-      compressedPercent = 100.0 * (static_cast<double>(compressedSize) / renderedTileBytes);
+      compressedPercent =
+          100.0 * (static_cast<double>(compressedSize) / renderedTileBytes);
     }
 
     auto startGather = high_resolution_clock::now();
-    preGatherDuration = duration_cast<RealMilliseconds>(startGather - preGatherComputeStart);
+    preGatherDuration =
+        duration_cast<RealMilliseconds>(startGather - preGatherComputeStart);
 
     // We've got to use an int since Gatherv only takes int counts.
     // However, it's pretty unlikely we'll reach the point where someone
@@ -594,9 +604,15 @@ namespace ospray {
     const int sendCompressedSize = static_cast<int>(compressedSize);
     // Get info about how many bytes each proc is sending us
     std::vector<int> gatherSizes(workerSize(), 0);
-    gather(&sendCompressedSize, 1, MPI_INT,
-           gatherSizes.data(), 1, MPI_INT,
-           masterRank(), mpiGroup.comm).wait();
+    gather(&sendCompressedSize,
+           1,
+           MPI_INT,
+           gatherSizes.data(),
+           1,
+           MPI_INT,
+           masterRank(),
+           mpiGroup.comm)
+        .wait();
 
     std::vector<int> compressedOffsets(workerSize(), 0);
     int offset = 0;
@@ -606,9 +622,16 @@ namespace ospray {
     }
 
     compressedResults.resize(offset, 0);
-    gatherv(compressedBuf.data(), sendCompressedSize, MPI_BYTE,
-            compressedResults.data(), gatherSizes, compressedOffsets,
-            MPI_BYTE, masterRank(), mpiGroup.comm).wait();
+    gatherv(compressedBuf.data(),
+            sendCompressedSize,
+            MPI_BYTE,
+            compressedResults.data(),
+            gatherSizes,
+            compressedOffsets,
+            MPI_BYTE,
+            masterRank(),
+            mpiGroup.comm)
+        .wait();
 
     auto endGather = high_resolution_clock::now();
 
@@ -617,11 +640,11 @@ namespace ospray {
       // already know how much data each is sending us and where to write it.
       auto startCompr = high_resolution_clock::now();
       tasking::parallel_for(workerSize(), [&](int i) {
-          snappy::RawUncompress(&compressedResults[compressedOffsets[i]],
-                                gatherSizes[i],
-                                &tileGatherResult[processOffsets[i]]);
+        snappy::RawUncompress(&compressedResults[compressedOffsets[i]],
+                              gatherSizes[i],
+                              &tileGatherResult[processOffsets[i]]);
       });
-      auto endCompr = high_resolution_clock::now();
+      auto endCompr  = high_resolution_clock::now();
       decompressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
     }
     finalGatherTime = duration_cast<RealMilliseconds>(endGather - startGather);
@@ -629,17 +652,19 @@ namespace ospray {
     if (IamTheMaster()) {
       auto startMasterWrite = high_resolution_clock::now();
       tasking::parallel_for(totalTilesExpected, [&](size_t tile) {
-        auto *msg = reinterpret_cast<TileMessage*>(&tileGatherResult[tile * tileSize]);
+        auto *msg =
+            reinterpret_cast<TileMessage *>(&tileGatherResult[tile * tileSize]);
         if (msg->command & MASTER_WRITE_TILE_I8) {
-          this->processMessage((MasterTileMessage_RGBA_I8*)msg);
+          this->processMessage((MasterTileMessage_RGBA_I8 *)msg);
         } else if (msg->command & MASTER_WRITE_TILE_F32) {
-          this->processMessage((MasterTileMessage_RGBA_F32*)msg);
+          this->processMessage((MasterTileMessage_RGBA_F32 *)msg);
         } else {
           throw std::runtime_error("#dfb: non-master tile in final gather!");
         }
       });
       auto endMasterWrite = high_resolution_clock::now();
-      masterTileWriteTime = duration_cast<RealMilliseconds>(endMasterWrite - startMasterWrite);
+      masterTileWriteTime =
+          duration_cast<RealMilliseconds>(endMasterWrite - startMasterWrite);
     }
   }
 
@@ -650,9 +675,15 @@ namespace ospray {
 
     std::vector<int> tilesFromRank(workerSize(), 0);
     const int myTileCount = tileIDs.size();
-    gather(&myTileCount, 1, MPI_INT,
-           tilesFromRank.data(), 1, MPI_INT,
-           masterRank(), mpiGroup.comm).wait();
+    gather(&myTileCount,
+           1,
+           MPI_INT,
+           tilesFromRank.data(),
+           1,
+           MPI_INT,
+           masterRank(),
+           mpiGroup.comm)
+        .wait();
 
     std::vector<char> tileGatherResult;
     std::vector<int> tileBytesExpected(workerSize(), 0);
@@ -661,7 +692,7 @@ namespace ospray {
     if (IamTheMaster()) {
       size_t recvOffset = 0;
       for (int i = 0; i < workerSize(); ++i) {
-        processOffsets[i] = recvOffset;
+        processOffsets[i]    = recvOffset;
         tileBytesExpected[i] = tilesFromRank[i] * tileInfoSize;
         recvOffset += tileBytesExpected[i];
       }
@@ -669,21 +700,30 @@ namespace ospray {
     }
 
     std::vector<char> sendBuffer(myTileCount * tileInfoSize);
-    std::memcpy(sendBuffer.data(), tileIDs.data(), tileIDs.size() * sizeof(vec2i));
+    std::memcpy(
+        sendBuffer.data(), tileIDs.data(), tileIDs.size() * sizeof(vec2i));
     std::memcpy(sendBuffer.data() + tileIDs.size() * sizeof(vec2i),
-                tileErrors.data(), tileErrors.size() * sizeof(float));
+                tileErrors.data(),
+                tileErrors.size() * sizeof(float));
 
-    gatherv(sendBuffer.data(), sendBuffer.size(), MPI_BYTE,
-            tileGatherResult.data(), tileBytesExpected, processOffsets,
-            MPI_BYTE, masterRank(), mpiGroup.comm).wait();
+    gatherv(sendBuffer.data(),
+            sendBuffer.size(),
+            MPI_BYTE,
+            tileGatherResult.data(),
+            tileBytesExpected,
+            processOffsets,
+            MPI_BYTE,
+            masterRank(),
+            mpiGroup.comm)
+        .wait();
 
     if (IamTheMaster()) {
       tasking::parallel_for(workerSize(), [&](int rank) {
-        const vec2i *tileID =
-          reinterpret_cast<vec2i*>(tileGatherResult.data() + processOffsets[rank]);
-        const float *error =
-          reinterpret_cast<float*>(tileGatherResult.data() + processOffsets[rank]
-                                   + tilesFromRank[rank] * sizeof(vec2i));
+        const vec2i *tileID = reinterpret_cast<vec2i *>(
+            tileGatherResult.data() + processOffsets[rank]);
+        const float *error = reinterpret_cast<float *>(
+            tileGatherResult.data() + processOffsets[rank] +
+            tilesFromRank[rank] * sizeof(vec2i));
         for (int i = 0; i < tilesFromRank[rank]; ++i) {
           if (error[i] < (float)inf) {
             tileErrorRegion.update(tileID[i], error[i]);
@@ -720,7 +760,7 @@ namespace ospray {
   void DFB::closeCurrentFrame()
   {
     std::lock_guard<std::mutex> lock(mutex);
-    frameIsDone   = true;
+    frameIsDone = true;
     frameDoneCond.notify_all();
   }
 
@@ -740,14 +780,14 @@ namespace ospray {
       if (!frameIsActive)
         throw std::runtime_error("#dfb: cannot setTile if frame is inactive!");
 
-      LiveTileOperation *td = (LiveTileOperation*)tileDesc;
+      LiveTileOperation *td = (LiveTileOperation *)tileDesc;
       td->process(tile);
     }
   }
 
   void DFB::clear()
   {
-    frameID = -1; // we increment at the start of the frame
+    frameID = -1;  // we increment at the start of the frame
     std::fill(tileAccumID.begin(), tileAccumID.end(), 0);
 
     if (hasAccumBuffer) {
@@ -774,7 +814,8 @@ namespace ospray {
     // but in the offload device the master process doesn't get any OSPData
     // or pixel ops or etc. created, just the handles. So it doesn't even
     // know about the frame operation to run
-    if (localFBonMaster && !imageOps.empty() && firstFrameOperation < imageOps.size()) {
+    if (localFBonMaster && !imageOps.empty() &&
+        firstFrameOperation < imageOps.size()) {
       std::for_each(imageOps.begin() + firstFrameOperation,
                     imageOps.end(),
                     [&](std::unique_ptr<LiveImageOp> &iop) {
@@ -784,7 +825,8 @@ namespace ospray {
                     });
     }
 
-    std::for_each(imageOps.begin(), imageOps.end(),
+    std::for_each(imageOps.begin(),
+                  imageOps.end(),
                   [](std::unique_ptr<LiveImageOp> &p) { p->endFrame(); });
 
     // only refine on master
@@ -793,7 +835,9 @@ namespace ospray {
     }
 
     if (hasAccumBuffer) {
-      std::transform(tileAccumID.begin(), tileAccumID.end(), tileAccumID.begin(),
+      std::transform(tileAccumID.begin(),
+                     tileAccumID.end(),
+                     tileAccumID.begin(),
                      [](const uint32_t &x) { return x + 1; });
     }
 
@@ -821,27 +865,27 @@ namespace ospray {
 
     double localWaitTime = finalGatherTime.count();
     os << "Gather time: " << localWaitTime << "ms\n"
-      << "Waiting for frame: " << waitFrameFinishTime.count() << "ms\n"
-      << "Compress time: " << compressTime.count() << "ms\n"
-      << "Compressed buffer size: " << compressedPercent << "%\n"
-      << "Pre-gather compute time: " << preGatherDuration.count() << "ms\n";
+       << "Waiting for frame: " << waitFrameFinishTime.count() << "ms\n"
+       << "Compress time: " << compressTime.count() << "ms\n"
+       << "Compressed buffer size: " << compressedPercent << "%\n"
+       << "Pre-gather compute time: " << preGatherDuration.count() << "ms\n";
 
     double maxWaitTime, minWaitTime;
-    auto maxReduce = mpicommon::reduce(&localWaitTime, &maxWaitTime, 1,
-                                       MPI_DOUBLE, MPI_MAX, 0, mpiGroup.comm);
-    auto minReduce = mpicommon::reduce(&localWaitTime, &minWaitTime, 1,
-                                       MPI_DOUBLE, MPI_MIN, 0, mpiGroup.comm);
+    auto maxReduce = mpicommon::reduce(
+        &localWaitTime, &maxWaitTime, 1, MPI_DOUBLE, MPI_MAX, 0, mpiGroup.comm);
+    auto minReduce = mpicommon::reduce(
+        &localWaitTime, &minWaitTime, 1, MPI_DOUBLE, MPI_MIN, 0, mpiGroup.comm);
     maxReduce.wait();
     minReduce.wait();
 
     if (mpiGroup.rank == 0) {
       os << "Max gather time: " << maxWaitTime << "ms\n"
-        << "Min gather time: " << minWaitTime << "ms\n"
-        << "Master tile write loop time: " << masterTileWriteTime.count() << "ms\n"
-        << "Decompress time: " << decompressTime.count() << "ms\n";
+         << "Min gather time: " << minWaitTime << "ms\n"
+         << "Master tile write loop time: " << masterTileWriteTime.count()
+         << "ms\n"
+         << "Decompress time: " << decompressTime.count() << "ms\n";
     }
 #endif
   }
 
-} // ::ospray
-
+}  // namespace ospray

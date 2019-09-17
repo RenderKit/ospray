@@ -14,15 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <iterator>
-#include <algorithm>
-#include "api/ISPCDevice.h"
 #include "DistributedWorld.h"
-#include "MPICommon.h"
-#include "Messaging.h"
-#include "common/Data.h"
+#include <algorithm>
+#include <iterator>
 #include "DistributedWorld.h"
 #include "DistributedWorld_ispc.h"
+#include "MPICommon.h"
+#include "Messaging.h"
+#include "api/ISPCDevice.h"
+#include "common/Data.h"
 
 namespace ospray {
   namespace mpi {
@@ -42,9 +42,7 @@ namespace ospray {
       }
     }
 
-    Region::Region(const box3f &bounds, int id)
-      : bounds(bounds), id(id)
-    {}
+    Region::Region(const box3f &bounds, int id) : bounds(bounds), id(id) {}
 
     RegionScreenBounds Region::project(const Camera *camera) const
     {
@@ -69,20 +67,21 @@ namespace ospray {
       return screen;
     }
 
-    bool Region::operator==(const Region &b) const {
+    bool Region::operator==(const Region &b) const
+    {
       // TODO: Do we want users to specify the ID explitly? Or should we just
       // assume that two objects with the same bounds have the same id?
       return id == b.id;
     }
 
-    bool Region::operator<(const Region &b) const {
+    bool Region::operator<(const Region &b) const
+    {
       return id < b.id;
     }
 
-    DistributedWorld::DistributedWorld()
-      : mpiGroup(mpicommon::worker.dup())
+    DistributedWorld::DistributedWorld() : mpiGroup(mpicommon::worker.dup())
     {
-      managedObjectType = OSP_WORLD;
+      managedObjectType    = OSP_WORLD;
       this->ispcEquivalent = ispc::DistributedWorld_create(this);
     }
 
@@ -99,11 +98,13 @@ namespace ospray {
 
       localRegions = getParamData("regions");
       if (localRegions) {
-        std::copy(localRegions->begin<box3f>(), localRegions->end<box3f>(),
+        std::copy(localRegions->begin<box3f>(),
+                  localRegions->end<box3f>(),
                   std::back_inserter(myRegions));
       } else {
         // Assume we're going to treat everything on this node as a one region,
-        // either for data-parallel rendering or to switch to replicated rendering
+        // either for data-parallel rendering or to switch to replicated
+        // rendering
         box3f localBounds;
         if (embreeSceneHandleGeometries) {
           box4f b;
@@ -142,18 +143,18 @@ namespace ospray {
         if (i == mpiGroup.rank) {
           int nRegions = myRegions.size();
 
-          auto sizeBcast = mpicommon::bcast(&nRegions, 1, MPI_INT, i,
-                                            mpiGroup.comm);
+          auto sizeBcast =
+              mpicommon::bcast(&nRegions, 1, MPI_INT, i, mpiGroup.comm);
 
-          int nBytes = nRegions * sizeof(box3f);
-          auto regionBcast = mpicommon::bcast(myRegions.data(), nBytes,
-                                              MPI_BYTE, i, mpiGroup.comm);
+          int nBytes       = nRegions * sizeof(box3f);
+          auto regionBcast = mpicommon::bcast(
+              myRegions.data(), nBytes, MPI_BYTE, i, mpiGroup.comm);
 
           for (const auto &b : myRegions) {
-            auto fnd = std::find_if(allRegions.begin(), allRegions.end(),
-                                    [&](const Region &r) {
-                                      return r.bounds == b;
-                                    });
+            auto fnd = std::find_if(
+                allRegions.begin(), allRegions.end(), [&](const Region &r) {
+                  return r.bounds == b;
+                });
             int id = -1;
             if (fnd == allRegions.end()) {
               id = allRegions.size();
@@ -177,15 +178,14 @@ namespace ospray {
           std::vector<box3f> recv;
           recv.resize(nRegions);
           int nBytes = nRegions * sizeof(box3f);
-          mpicommon::bcast(recv.data(), nBytes, MPI_BYTE, i,
-                           mpiGroup.comm).wait();
-
+          mpicommon::bcast(recv.data(), nBytes, MPI_BYTE, i, mpiGroup.comm)
+              .wait();
 
           for (const auto &b : recv) {
-            auto fnd = std::find_if(allRegions.begin(), allRegions.end(),
-                                    [&](const Region &r) {
-                                      return r.bounds == b;
-                                    });
+            auto fnd = std::find_if(
+                allRegions.begin(), allRegions.end(), [&](const Region &r) {
+                  return r.bounds == b;
+                });
             int id = -1;
             if (fnd == allRegions.end()) {
               id = allRegions.size();
@@ -197,7 +197,7 @@ namespace ospray {
           }
         }
       }
-      
+
 #ifndef __APPLE__
       // TODO WILL: Remove this eventually? It may be useful for users to debug
       // their code when setting regions. Maybe fix build on Apple? Why did
@@ -205,8 +205,8 @@ namespace ospray {
       if (logLevel() >= 3) {
         for (int i = 0; i < mpiGroup.size; ++i) {
           if (i == mpiGroup.rank) {
-            postStatusMsg(1) << "Rank " << mpiGroup.rank
-                             << ": All regions in world {";
+            postStatusMsg(1)
+                << "Rank " << mpiGroup.rank << ": All regions in world {";
             for (const auto &b : allRegions) {
               postStatusMsg(1) << "\t" << b << ",";
             }
@@ -228,8 +228,8 @@ namespace ospray {
 #endif
     }
 
-  } // ::ospray::mpi
-} // ::ospray
+  }  // namespace mpi
+}  // namespace ospray
 
 using namespace ospray::mpi;
 
@@ -238,4 +238,3 @@ std::ostream &operator<<(std::ostream &os, const Region &r)
   os << "Region { id = " << r.id << ", bounds = " << r.bounds << " }";
   return os;
 }
-

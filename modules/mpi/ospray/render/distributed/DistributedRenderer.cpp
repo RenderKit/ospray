@@ -19,14 +19,15 @@
 
 namespace ospray {
   namespace mpi {
-        
-    void DistributedRenderer::computeRegionVisibility(DistributedFrameBuffer *fb,
-                                                      Camera *camera,
-                                                      DistributedWorld *world,
-                                                      bool *regionVisible,
-                                                      void *perFrameData,
-                                                      Tile &tile,
-                                                      size_t jobID) const
+
+    void DistributedRenderer::computeRegionVisibility(
+        DistributedFrameBuffer *fb,
+        Camera *camera,
+        DistributedWorld *world,
+        bool *regionVisible,
+        void *perFrameData,
+        Tile &tile,
+        size_t jobID) const
     {
       // TODO this needs an exported function
       ispc::DistributedRenderer_computeRegionVisibility(getIE(),
@@ -58,6 +59,5 @@ namespace ospray {
                                                    jobID);
     }
 
-  }
-}
-
+  }  // namespace mpi
+}  // namespace ospray

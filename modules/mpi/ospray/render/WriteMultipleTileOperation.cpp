@@ -14,9 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "WriteMultipleTileOperation.h"
 #include "../fb/DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_ispc.h"
-#include "WriteMultipleTileOperation.h"
 
 namespace ospray {
   using namespace ospcommon;
@@ -38,39 +38,40 @@ namespace ospray {
     void process(const ospray::Tile &tile) override;
 
    private:
-    int maxAccumID = 0;
-    size_t instances = 1;
+    int maxAccumID     = 0;
+    size_t instances   = 1;
     bool writeOnceTile = true;
     // defer accumulation to get correct variance estimate
     ospray::Tile bufferedTile;
-    bool tileBuffered = false;
+    bool tileBuffered                  = false;
     WriteMultipleTileOperation *parent = nullptr;
     // serialize when multiple instances of this tile arrive at the same time
     std::mutex mutex;
   };
 
-  LiveWriteMultipleTile::LiveWriteMultipleTile(DistributedFrameBuffer *dfb,
-                                               const vec2i &begin,
-                                               size_t tileID,
-                                               size_t ownerID,
-                                               WriteMultipleTileOperation *parent)
-    : LiveTileOperation(dfb, begin, tileID, ownerID),
-    parent(parent)
-  {}
+  LiveWriteMultipleTile::LiveWriteMultipleTile(
+      DistributedFrameBuffer *dfb,
+      const vec2i &begin,
+      size_t tileID,
+      size_t ownerID,
+      WriteMultipleTileOperation *parent)
+      : LiveTileOperation(dfb, begin, tileID, ownerID), parent(parent)
+  {
+  }
 
   void LiveWriteMultipleTile::newFrame()
   {
-    maxAccumID = 0;
-    instances = parent->tileInstances[tileID];
+    maxAccumID    = 0;
+    instances     = parent->tileInstances[tileID];
     writeOnceTile = instances <= 1;
-    tileBuffered = false;
+    tileBuffered  = false;
   }
 
   void LiveWriteMultipleTile::process(const ospray::Tile &tile)
   {
     if (writeOnceTile) {
-      finished.region = tile.region;
-      finished.fbSize = tile.fbSize;
+      finished.region     = tile.region;
+      finished.fbSize     = tile.fbSize;
       finished.rcp_fbSize = tile.rcp_fbSize;
       accumulate(tile);
       tileIsFinished();
@@ -79,8 +80,8 @@ namespace ospray {
 
     bool done = false;
     if (tile.accumID == 0) {
-      finished.region = tile.region;
-      finished.fbSize = tile.fbSize;
+      finished.region     = tile.region;
+      finished.fbSize     = tile.fbSize;
       finished.rcp_fbSize = tile.rcp_fbSize;
 
       const auto bytes = tile.region.size().y * (TILE_SIZE * sizeof(float));
@@ -95,15 +96,14 @@ namespace ospray {
         memcpy(&bufferedTile, &tile, sizeof(ospray::Tile));
         tileBuffered = true;
       } else {
-        ispc::DFB_accumulateTileSimple((const ispc::VaryingTile*)&tile,
-                                       (ispc::VaryingTile*)&accum,
-                                       (ispc::VaryingTile*)&variance);
+        ispc::DFB_accumulateTileSimple((const ispc::VaryingTile *)&tile,
+                                       (ispc::VaryingTile *)&accum,
+                                       (ispc::VaryingTile *)&variance);
 
-        if (dfb->hasNormalBuf() || dfb->hasAlbedoBuf())
-        {
-          ispc::DFB_accumulateAuxTile((const ispc::VaryingTile*)&tile,
-                                      (ispc::Tile*)&finished,
-                                      (ispc::VaryingTile*)&accum);
+        if (dfb->hasNormalBuf() || dfb->hasAlbedoBuf()) {
+          ispc::DFB_accumulateAuxTile((const ispc::VaryingTile *)&tile,
+                                      (ispc::Tile *)&finished,
+                                      (ispc::VaryingTile *)&accum);
         }
       }
       done = --instances == 0;
@@ -117,10 +117,10 @@ namespace ospray {
         // estimate variance now, when accum buffer is also one (the buffered)
         // tile short
         const float prevErr =
-          DFB_computeErrorForTile((ispc::vec2i&)sz,
-                                  (ispc::VaryingTile*)&accum,
-                                  (ispc::VaryingTile*)&variance,
-                                  maxAccumID - 1);
+            DFB_computeErrorForTile((ispc::vec2i &)sz,
+                                    (ispc::VaryingTile *)&accum,
+                                    (ispc::VaryingTile *)&variance,
+                                    maxAccumID - 1);
         // use maxAccumID for correct normalization
         // this is OK, because both accumIDs are even
         bufferedTile.accumID = maxAccumID;
@@ -131,23 +131,22 @@ namespace ospray {
         bufferedTile.accumID = maxAccumID;
         // but original bufferedTile.accumID is always even and thus won't be
         // accumulated into variance buffer
-        DFB_accumulateTile((const ispc::VaryingTile*)&bufferedTile,
-                           (ispc::VaryingTile*)&finished,
-                           (ispc::VaryingTile*)&accum,
-                           (ispc::VaryingTile*)&variance,
+        DFB_accumulateTile((const ispc::VaryingTile *)&bufferedTile,
+                           (ispc::VaryingTile *)&finished,
+                           (ispc::VaryingTile *)&accum,
+                           (ispc::VaryingTile *)&variance,
                            dfb->hasAccumBuf(),
                            // disable accumulation of variance
                            false);
-        if (dfb->hasNormalBuf() || dfb->hasAlbedoBuf())
-        {
-          ispc::DFB_accumulateAuxTile((const ispc::VaryingTile*)&bufferedTile,
-                                      (ispc::Tile*)&finished,
-                                      (ispc::VaryingTile*)&accum);
+        if (dfb->hasNormalBuf() || dfb->hasAlbedoBuf()) {
+          ispc::DFB_accumulateAuxTile((const ispc::VaryingTile *)&bufferedTile,
+                                      (ispc::Tile *)&finished,
+                                      (ispc::VaryingTile *)&accum);
         }
         // but still need to update the error
-        error = DFB_computeErrorForTile((ispc::vec2i&)sz,
-                                        (ispc::VaryingTile*)&accum,
-                                        (ispc::VaryingTile*)&variance,
+        error = DFB_computeErrorForTile((ispc::vec2i &)sz,
+                                        (ispc::VaryingTile *)&accum,
+                                        (ispc::VaryingTile *)&variance,
                                         maxAccumID);
       }
 
@@ -161,17 +160,14 @@ namespace ospray {
     tileInstances.resize(dfb->getTotalTiles(), 1);
   }
 
-  std::shared_ptr<LiveTileOperation>
-  WriteMultipleTileOperation::makeTile(DistributedFrameBuffer *dfb,
-                                       const vec2i &tileBegin,
-                                       size_t tileID,
-                                       size_t ownerID)
+  std::shared_ptr<LiveTileOperation> WriteMultipleTileOperation::makeTile(
+      DistributedFrameBuffer *dfb,
+      const vec2i &tileBegin,
+      size_t tileID,
+      size_t ownerID)
   {
-    return std::make_shared<LiveWriteMultipleTile>(dfb,
-                                                   tileBegin,
-                                                   tileID,
-                                                   ownerID,
-                                                   this);
+    return std::make_shared<LiveWriteMultipleTile>(
+        dfb, tileBegin, tileID, ownerID, this);
   }
 
   std::string WriteMultipleTileOperation::toString() const
@@ -181,8 +177,9 @@ namespace ospray {
 
   void WriteMultipleTileOperation::syncTileInstances()
   {
-    mpicommon::bcast(tileInstances.data(), tileInstances.size(), MPI_INT, 0,
-                     mpiGroup.comm).wait();
+    mpicommon::bcast(
+        tileInstances.data(), tileInstances.size(), MPI_INT, 0, mpiGroup.comm)
+        .wait();
   }
 
-}
+}  // namespace ospray

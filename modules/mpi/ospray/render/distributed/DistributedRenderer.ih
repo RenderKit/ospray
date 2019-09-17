@@ -16,22 +16,23 @@
 
 #pragma once
 
+#include "common/DistributedWorld.ih"
 #include "ospray/camera/Camera.ih"
-#include "ospray/render/Renderer.ih"
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/fb/Tile.ih"
-#include "common/DistributedWorld.ih"
+#include "ospray/render/Renderer.ih"
 
 struct DistributedRenderer;
 
-typedef unmasked void (*DR_ComputeRegionVisibility)(DistributedRenderer *uniform self,
-                                                    FrameBuffer *uniform fb,
-                                                    Camera *uniform camera,
-                                                    DistributedWorld *uniform world,
-                                                    bool *uniform regionVisible,
-                                                    void *uniform perFrameData,
-                                                    uniform Tile &tile,
-                                                    uniform int taskIndex);
+typedef unmasked void (*DR_ComputeRegionVisibility)(
+    DistributedRenderer *uniform self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    DistributedWorld *uniform world,
+    bool *uniform regionVisible,
+    void *uniform perFrameData,
+    uniform Tile &tile,
+    uniform int taskIndex);
 
 typedef void (*DR_RenderRegionSampleFct)(DistributedRenderer *uniform self,
                                          FrameBuffer *uniform fb,
@@ -41,7 +42,8 @@ typedef void (*DR_RenderRegionSampleFct)(DistributedRenderer *uniform self,
                                          void *uniform perFrameData,
                                          varying ScreenSample &sample);
 
-typedef unmasked void (*DR_RenderRegionTileFct)(DistributedRenderer *uniform self,
+typedef unmasked void (*DR_RenderRegionTileFct)(DistributedRenderer *uniform
+                                                    self,
                                                 FrameBuffer *uniform fb,
                                                 Camera *uniform camera,
                                                 DistributedWorld *uniform world,
@@ -55,10 +57,9 @@ struct DistributedRenderer
   Renderer super;
 
   DR_ComputeRegionVisibility computeRegionVisibility;
-  DR_RenderRegionSampleFct   renderRegionSample;
-  DR_RenderRegionTileFct     renderRegionToTile;
+  DR_RenderRegionSampleFct renderRegionSample;
+  DR_RenderRegionTileFct renderRegionToTile;
 };
 
 void DistributedRenderer_Constructor(uniform DistributedRenderer *uniform self,
                                      void *uniform cppE);
-

@@ -14,23 +14,23 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "DistributedRenderer.ih"
+#include "common/DistributedWorld.ih"
 #include "ospray/camera/Camera.ih"
-#include "ospray/render/Renderer.ih"
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/fb/Tile.ih"
+#include "ospray/render/Renderer.ih"
 #include "ospray/render/util.ih"
-#include "common/DistributedWorld.ih"
-#include "DistributedRenderer.ih"
 
-unmasked void
-DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
-                                   FrameBuffer *uniform fb,
-                                   Camera *uniform camera,
-                                   DistributedWorld *uniform world,
-                                   bool *uniform regionVisible,
-                                   void *uniform perFrameData,
-                                   uniform Tile &tile,
-                                   uniform int taskIndex)
+unmasked void DR_default_computeRegionVisibility(
+    DistributedRenderer *uniform self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    DistributedWorld *uniform world,
+    bool *uniform regionVisible,
+    void *uniform perFrameData,
+    uniform Tile &tile,
+    uniform int taskIndex)
 {
   // TODO: merge the copy-paste here somewhat?
   const uniform int32 spp = self->super.spp;
@@ -45,8 +45,7 @@ DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
   const uniform int end           = begin + RENDERTILE_PIXELS_PER_JOB;
   const uniform int startSampleID = max(tile.accumID, 0) * spp;
 
-  for (uniform uint32 i = begin; i < end; i += programCount)
-  {
+  for (uniform uint32 i = begin; i < end; i += programCount) {
     const uint32 index      = i + programIndex;
     screenSample.sampleID.x = tile.region.lower.x + z_order.xs[index];
     screenSample.sampleID.y = tile.region.lower.y + z_order.ys[index];
@@ -58,8 +57,7 @@ DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
     float tMax = inf;
     // set ray t value for early ray termination if we have a maximum depth
     // texture
-    if (self->super.maxDepthTexture)
-    {
+    if (self->super.maxDepthTexture) {
       // always sample center of pixel
       vec2f depthTexCoord;
       depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
@@ -74,8 +72,7 @@ DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
 
     // TODO: Does spp still show some block boundary artifacts? Check
     // and maybe just support spp = 1 in DR
-    for (uniform uint32 s = 0; s < spp; s++)
-    {
+    for (uniform uint32 s = 0; s < spp; s++) {
       const float pixel_du    = precomputedHalton2(startSampleID + s);
       const float pixel_dv    = precomputedHalton3(startSampleID + s);
       screenSample.sampleID.z = startSampleID + s;
@@ -92,23 +89,21 @@ DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
-      for (uniform int r = 0; r < world->numRegions; ++r)
-      {
-        cif (!regionVisible[r] && !isEmpty(world->regions[r].bounds))
+      for (uniform int r = 0; r < world->numRegions; ++r) {
+        cif(!regionVisible[r] && !isEmpty(world->regions[r].bounds))
         {
           float t0, t1;
           intersectBox(screenSample.ray, world->regions[r].bounds, t0, t1);
-          if (t0 < t1 && t0 >= screenSample.ray.t0 && t0 <= screenSample.ray.t)
-          {
+          if (t0 < t1 && t0 >= screenSample.ray.t0 &&
+              t0 <= screenSample.ray.t) {
             regionVisible[r] = true;
           }
         }
       }
     }
 
-    screenSample.rgb    = make_vec3f(self->super.bgColor.x,
-                                     self->super.bgColor.y,
-                                     self->super.bgColor.z);
+    screenSample.rgb = make_vec3f(
+        self->super.bgColor.x, self->super.bgColor.y, self->super.bgColor.z);
     screenSample.alpha  = self->super.bgColor.z;
     screenSample.normal = make_vec3f(0.f);
     screenSample.albedo = make_vec3f(0.f);
@@ -131,15 +126,14 @@ void DR_default_renderRegionSample(DistributedRenderer *uniform self,
                         (sample.sampleID.z << 28));
 }
 
-unmasked void
-DR_default_renderRegionToTile(DistributedRenderer *uniform self,
-                              FrameBuffer *uniform fb,
-                              Camera *uniform camera,
-                              DistributedWorld *uniform world,
-                              const Region *uniform region,
-                              void *uniform perFrameData,
-                              uniform Tile &tile,
-                              uniform int taskIndex)
+unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
+                                            FrameBuffer *uniform fb,
+                                            Camera *uniform camera,
+                                            DistributedWorld *uniform world,
+                                            const Region *uniform region,
+                                            void *uniform perFrameData,
+                                            uniform Tile &tile,
+                                            uniform int taskIndex)
 {
   const uniform int32 spp = self->super.spp;
 
@@ -204,16 +198,16 @@ DR_default_renderRegionToTile(DistributedRenderer *uniform self,
       // I ran into before w/ modifying the t0/t of the ray and not hitting
       // some of the boxes?
       float regionEnter = screenSample.ray.t0;
-      float regionExit = screenSample.ray.t;
+      float regionExit  = screenSample.ray.t;
       intersectBox(screenSample.ray, region->bounds, regionEnter, regionExit);
 
       if (regionExit > regionEnter) {
-        // TODO: It seems like this should be fine to do to setup a ray segment to
-        // trace, but when I do this I don't hit the front faces, or if I set this
-        // to 0 it seems I only hit the front of the box? Or get some odd intervals
-        // or hits back?
-        //sample.ray.t0 = max(regionEnter - 0.1f, 0.f);
-        //sample.ray.t = regionEnter + 0.1f;
+        // TODO: It seems like this should be fine to do to setup a ray segment
+        // to trace, but when I do this I don't hit the front faces, or if I set
+        // this to 0 it seems I only hit the front of the box? Or get some odd
+        // intervals or hits back?
+        // sample.ray.t0 = max(regionEnter - 0.1f, 0.f);
+        // sample.ray.t = regionEnter + 0.1f;
         self->renderRegionSample(self,
                                  fb,
                                  world,
@@ -247,45 +241,45 @@ void DistributedRenderer_Constructor(uniform DistributedRenderer *uniform self,
   self->renderRegionToTile      = DR_default_renderRegionToTile;
 }
 
-export void
-DistributedRenderer_computeRegionVisibility(void *uniform _self,
-                                            void *uniform fb,
-                                            void *uniform camera,
-                                            void *uniform world,
-                                            bool *uniform regionVisible,
-                                            void *uniform perFrameData,
-                                            uniform Tile &tile,
-                                            uniform int taskIndex)
+export void DistributedRenderer_computeRegionVisibility(
+    void *uniform _self,
+    void *uniform fb,
+    void *uniform camera,
+    void *uniform world,
+    bool *uniform regionVisible,
+    void *uniform perFrameData,
+    uniform Tile &tile,
+    uniform int taskIndex)
 {
-  DistributedRenderer *uniform self = (uniform DistributedRenderer *uniform)_self;
+  DistributedRenderer *uniform self =
+      (uniform DistributedRenderer * uniform) _self;
   self->computeRegionVisibility(self,
-                                (FrameBuffer *uniform)fb,
-                                (Camera *uniform)camera,
-                                (DistributedWorld *uniform)world,
+                                (FrameBuffer * uniform) fb,
+                                (Camera * uniform) camera,
+                                (DistributedWorld * uniform) world,
                                 regionVisible,
                                 perFrameData,
                                 tile,
                                 taskIndex);
 }
 
-export void
-DistributedRenderer_renderRegionToTile(void *uniform _self,
-                                       void *uniform fb,
-                                       void *uniform camera,
-                                       void *uniform world,
-                                       const void *uniform region,
-                                       void *uniform perFrameData,
-                                       uniform Tile &tile,
-                                       uniform int taskIndex)
+export void DistributedRenderer_renderRegionToTile(void *uniform _self,
+                                                   void *uniform fb,
+                                                   void *uniform camera,
+                                                   void *uniform world,
+                                                   const void *uniform region,
+                                                   void *uniform perFrameData,
+                                                   uniform Tile &tile,
+                                                   uniform int taskIndex)
 {
-  DistributedRenderer *uniform self = (uniform DistributedRenderer *uniform)_self;
+  DistributedRenderer *uniform self =
+      (uniform DistributedRenderer * uniform) _self;
   self->renderRegionToTile(self,
-                           (FrameBuffer *uniform)fb,
-                           (Camera *uniform)camera,
-                           (DistributedWorld *uniform)world,
+                           (FrameBuffer * uniform) fb,
+                           (Camera * uniform) camera,
+                           (DistributedWorld * uniform) world,
                            (const Region *uniform)region,
                            perFrameData,
                            tile,
                            taskIndex);
 }
-

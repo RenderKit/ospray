@@ -16,20 +16,20 @@
 
 #pragma once
 
-#include "render/Renderer.h"
-#include "camera/Camera.h"
 #include "../../common/DistributedWorld.h"
 #include "../../fb/DistributedFrameBuffer.h"
 #include "../../fb/TileOperation.h"
+#include "camera/Camera.h"
+#include "render/Renderer.h"
 
 namespace ospray {
   namespace mpi {
 
     struct RegionInfo
     {
-      int    numRegions = 0;
-      Region *regions = nullptr;
-      bool   *regionVisible = nullptr;
+      int numRegions      = 0;
+      Region *regions     = nullptr;
+      bool *regionVisible = nullptr;
     };
 
     struct DistributedRenderer : public Renderer
@@ -42,7 +42,6 @@ namespace ospray {
                                    Tile &tile,
                                    size_t jobID) const;
 
-
       void renderRegionToTile(DistributedFrameBuffer *fb,
                               Camera *camera,
                               DistributedWorld *world,
@@ -53,6 +52,5 @@ namespace ospray {
 
       virtual std::shared_ptr<TileOperation> tileOperation() = 0;
     };
-  }
-}
-
+  }  // namespace mpi
+}  // namespace ospray

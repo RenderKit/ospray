@@ -16,18 +16,18 @@
 
 #pragma once
 
-#include "common/MPICommon.h"
 #include "api/Device.h"
+#include "common/MPICommon.h"
 #include "common/Managed.h"
 
 namespace ospray {
   namespace mpi {
 
     template <typename OSPRAY_TYPE>
-    inline OSPRAY_TYPE& lookupDistributedObject(OSPObject obj)
+    inline OSPRAY_TYPE &lookupDistributedObject(OSPObject obj)
     {
-      auto &handle = reinterpret_cast<ObjectHandle&>(obj);
-      auto *object = (OSPRAY_TYPE*)handle.lookup();
+      auto &handle = reinterpret_cast<ObjectHandle &>(obj);
+      auto *object = (OSPRAY_TYPE *)handle.lookup();
 
       if (!object)
         throw std::runtime_error("#dmpi: ObjectHandle doesn't exist!");
@@ -36,13 +36,13 @@ namespace ospray {
     }
 
     template <typename OSPRAY_TYPE>
-    inline OSPRAY_TYPE* lookupObject(OSPObject obj)
+    inline OSPRAY_TYPE *lookupObject(OSPObject obj)
     {
-      auto &handle = reinterpret_cast<ObjectHandle&>(obj);
+      auto &handle = reinterpret_cast<ObjectHandle &>(obj);
       if (handle.defined()) {
-        return (OSPRAY_TYPE*)handle.lookup();
+        return (OSPRAY_TYPE *)handle.lookup();
       } else {
-        return (OSPRAY_TYPE*)obj;
+        return (OSPRAY_TYPE *)obj;
       }
     }
 
@@ -58,10 +58,9 @@ namespace ospray {
       // Device Implementation ////////////////////////////////////////////////
 
       /*! create a new frame buffer */
-      OSPFrameBuffer
-      frameBufferCreate(const vec2i &size,
-                        const OSPFrameBufferFormat mode,
-                        const uint32 channels) override;
+      OSPFrameBuffer frameBufferCreate(const vec2i &size,
+                                       const OSPFrameBufferFormat mode,
+                                       const uint32 channels) override;
 
       /*! create a new transfer function object (out of list of
         registered transfer function types) */
@@ -95,8 +94,10 @@ namespace ospray {
       void commit(OSPObject object) override;
 
       /*! create a new data buffer */
-      OSPData newData(size_t nitems, OSPDataType format,
-                      const void *init, int flags) override;
+      OSPData newData(size_t nitems,
+                      OSPDataType format,
+                      const void *init,
+                      int flags) override;
 
       /*! assign (named) string parameter to an object */
       void setString(OSPObject object,
@@ -255,13 +256,10 @@ namespace ospray {
       /*! create a new Texture object */
       OSPTexture newTexture(const char *type) override;
 
-    private:
-
-      bool initialized {false};
-      bool shouldFinalizeMPI {false};
+     private:
+      bool initialized{false};
+      bool shouldFinalizeMPI{false};
     };
 
-  } // ::ospray::mpi
-} // ::ospray
-
-
+  }  // namespace mpi
+}  // namespace ospray

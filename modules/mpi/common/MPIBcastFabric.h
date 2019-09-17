@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include <memory>
 #include <future>
-#include "ospcommon/utility/AbstractArray.h"
+#include <memory>
 #include "ospcommon/networking/DataStreaming.h"
 #include "ospcommon/networking/Fabric.h"
+#include "ospcommon/utility/AbstractArray.h"
 
 #include "MPICommon.h"
 
@@ -50,7 +50,8 @@ namespace mpicommon {
 
     virtual ~MPIFabric() override = default;
 
-    void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
+    void sendBcast(
+        std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
 
     void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
 
@@ -65,19 +66,19 @@ namespace mpicommon {
     Group group;
     int bcastRoot;
 
-    struct PendingSend {
-      std::future<void*> future;
+    struct PendingSend
+    {
+      std::future<void *> future;
       std::shared_ptr<utility::AbstractArray<uint8_t>> buf = nullptr;
 
       PendingSend() = default;
-      PendingSend(std::future<void*> future,
+      PendingSend(std::future<void *> future,
                   std::shared_ptr<utility::AbstractArray<uint8_t>> &buf);
 
       PendingSend(const PendingSend &) = delete;
-      PendingSend& operator=(const PendingSend &) = delete;
+      PendingSend &operator=(const PendingSend &) = delete;
     };
 
     std::vector<std::unique_ptr<PendingSend>> pendingSends;
   };
-}
-
+}  // namespace mpicommon
