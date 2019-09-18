@@ -18,7 +18,11 @@
 rm -rf img
 mkdir img
 
-regression_tests/ospray_test_suite --dump-img --baseline-dir=regression_tests/baseline/
+export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH=`pwd`/build/install/lib:$DYLD_LIBRARY_PATH
+export PATH=`pwd`/build/install/bin:$PATH
+
+ospray_test_suite --dump-img --baseline-dir=img/
 FAILED=$(echo $?)
 
 exit $FAILED

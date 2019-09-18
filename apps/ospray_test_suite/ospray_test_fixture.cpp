@@ -1099,7 +1099,9 @@ namespace OSPRayTestScenes {
 
   DepthCompositeVolume::DepthCompositeVolume()
   {
-    rendererType = GetParam();
+    auto params  = GetParam();
+    rendererType = std::get<0>(params);
+    bgColor      = std::get<1>(params);
   }
 
   void DepthCompositeVolume::SetUp()
@@ -1161,6 +1163,7 @@ namespace OSPRayTestScenes {
     ospRelease(ospData);
 
     ospSetObject(renderer, "maxDepthTexture", depthTex);
+    ospSetVec4fv(renderer, "bgColor", &bgColor.x);
     ospRelease(depthTex);
 
     OSPLight ambient = ospNewLight("ambient");

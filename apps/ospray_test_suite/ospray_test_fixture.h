@@ -255,9 +255,10 @@ namespace OSPRayTestScenes {
   };
 
   // Test a texture colored by a volume.  Creates a sphere colored by the torus
-  // volume It's parametrized with type of the renderer.
-  class DepthCompositeVolume : public Base,
-                               public ::testing::TestWithParam<const char *>
+  // volume It's parametrized with type of the renderer and background color
+  class DepthCompositeVolume
+      : public Base,
+        public ::testing::TestWithParam<std::tuple<const char *, vec4f>>
   {
    public:
     DepthCompositeVolume();
@@ -265,6 +266,7 @@ namespace OSPRayTestScenes {
 
    private:
     std::vector<float> volumetricData;
+    vec4f bgColor;
   };
 
   // Fixture for tests rendering a Subdivision mesh. It's parametrized with type

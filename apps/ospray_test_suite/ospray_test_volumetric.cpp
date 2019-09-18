@@ -61,4 +61,10 @@ TEST_P(DepthCompositeVolume, simple)
 
 INSTANTIATE_TEST_CASE_P(Renderers,
                         DepthCompositeVolume,
-                        ::testing::Values("scivis"));
+                        ::testing::Combine(::testing::Values("scivis"),
+                                           ::testing::Values(vec4f(0.f),
+                                                             vec4f(1.f),
+                                                             vec4f(0.f, 0.f,
+                                                                   0.f, 1.f),
+                                                             vec4f(1.f, 0.f,
+                                                                   0.f, 0.5f))));
