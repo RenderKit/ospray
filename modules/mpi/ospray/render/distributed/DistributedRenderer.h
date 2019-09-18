@@ -23,34 +23,34 @@
 #include "render/Renderer.h"
 
 namespace ospray {
-  namespace mpi {
+namespace mpi {
 
-    struct RegionInfo
-    {
-      int numRegions      = 0;
-      Region *regions     = nullptr;
-      bool *regionVisible = nullptr;
-    };
+struct RegionInfo
+{
+  int numRegions = 0;
+  Region *regions = nullptr;
+  bool *regionVisible = nullptr;
+};
 
-    struct DistributedRenderer : public Renderer
-    {
-      void computeRegionVisibility(DistributedFrameBuffer *fb,
-                                   Camera *camera,
-                                   DistributedWorld *world,
-                                   bool *regionVisible,
-                                   void *perFrameData,
-                                   Tile &tile,
-                                   size_t jobID) const;
+struct DistributedRenderer : public Renderer
+{
+  void computeRegionVisibility(DistributedFrameBuffer *fb,
+      Camera *camera,
+      DistributedWorld *world,
+      bool *regionVisible,
+      void *perFrameData,
+      Tile &tile,
+      size_t jobID) const;
 
-      void renderRegionToTile(DistributedFrameBuffer *fb,
-                              Camera *camera,
-                              DistributedWorld *world,
-                              const Region &region,
-                              void *perFrameData,
-                              Tile &tile,
-                              size_t jobID) const;
+  void renderRegionToTile(DistributedFrameBuffer *fb,
+      Camera *camera,
+      DistributedWorld *world,
+      const Region &region,
+      void *perFrameData,
+      Tile &tile,
+      size_t jobID) const;
 
-      virtual std::shared_ptr<TileOperation> tileOperation() = 0;
-    };
-  }  // namespace mpi
-}  // namespace ospray
+  virtual std::shared_ptr<TileOperation> tileOperation() = 0;
+};
+} // namespace mpi
+} // namespace ospray

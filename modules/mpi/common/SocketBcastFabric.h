@@ -28,76 +28,74 @@
 
 namespace mpicommon {
 
-  /*! A writer which broadcasts from one rank to the others over sockets */
-  struct OSPRAY_MPI_INTERFACE SocketWriterFabric : public networking::Fabric
+/*! A writer which broadcasts from one rank to the others over sockets */
+struct OSPRAY_MPI_INTERFACE SocketWriterFabric : public networking::Fabric
+{
+  /*! Connect to the clients who will received the broadcasts by querying
+   * the client rank info from the info server at host:port */
+  SocketWriterFabric(const std::string &hostname, const uint16_t port);
+  ~SocketWriterFabric() override;
+
+  SocketWriterFabric(const SocketWriterFabric &) = delete;
+  SocketWriterFabric &operator=(const SocketWriterFabric &) = delete;
+
+  void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
+
+  void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
+
+  void send(
+      std::shared_ptr<utility::AbstractArray<uint8_t>> buf, int rank) override;
+
+  void recv(utility::AbstractArray<uint8_t> &buf, int rank) override;
+
+ private:
+  void sendThreadLoop();
+
+  struct Message
   {
-    /*! Connect to the clients who will received the broadcasts by querying
-     * the client rank info from the info server at host:port */
-    SocketWriterFabric(const std::string &hostname, const uint16_t port);
-    ~SocketWriterFabric() override;
+    std::shared_ptr<utility::AbstractArray<uint8_t>> buf;
+    // -1 for all ranks, or a rank id for a single rank
+    int ranks;
 
-    SocketWriterFabric(const SocketWriterFabric &) = delete;
-    SocketWriterFabric &operator=(const SocketWriterFabric &) = delete;
-
-    void sendBcast(
-        std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
-
-    void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
-
-    void send(std::shared_ptr<utility::AbstractArray<uint8_t>> buf,
-              int rank) override;
-
-    void recv(utility::AbstractArray<uint8_t> &buf, int rank) override;
-
-   private:
-    void sendThreadLoop();
-
-    struct Message
-    {
-      std::shared_ptr<utility::AbstractArray<uint8_t>> buf;
-      // -1 for all ranks, or a rank id for a single rank
-      int ranks;
-
-      Message(std::shared_ptr<utility::AbstractArray<uint8_t>> &buf, int ranks);
-    };
-
-    std::vector<ospcommon::socket_t> sockets;
-    std::unique_ptr<ospcommon::tasking::AsyncLoop> sendThread;
-    ospcommon::containers::TransactionalBuffer<Message> outbox;
+    Message(std::shared_ptr<utility::AbstractArray<uint8_t>> &buf, int ranks);
   };
 
-  /*! A reader which reads data broadcast out from a root process
-   * over sockets */
-  struct OSPRAY_MPI_INTERFACE SocketReaderFabric : public networking::Fabric
-  {
-    /*! Setup the connection by listening for an incoming
-      connection on the desired port. The MPI group is used on the
-      recieving end to set up the info server so we can send back
-      the root's info to the other ranks */
-    SocketReaderFabric(const Group &parentGroup, const uint16_t port);
-    ~SocketReaderFabric();
+  std::vector<ospcommon::socket_t> sockets;
+  std::unique_ptr<ospcommon::tasking::AsyncLoop> sendThread;
+  ospcommon::containers::TransactionalBuffer<Message> outbox;
+};
 
-    SocketReaderFabric(const SocketReaderFabric &) = delete;
-    SocketReaderFabric &operator=(const SocketReaderFabric &) = delete;
+/*! A reader which reads data broadcast out from a root process
+ * over sockets */
+struct OSPRAY_MPI_INTERFACE SocketReaderFabric : public networking::Fabric
+{
+  /*! Setup the connection by listening for an incoming
+    connection on the desired port. The MPI group is used on the
+    recieving end to set up the info server so we can send back
+    the root's info to the other ranks */
+  SocketReaderFabric(const Group &parentGroup, const uint16_t port);
+  ~SocketReaderFabric();
 
-    void sendBcast(
-        std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
+  SocketReaderFabric(const SocketReaderFabric &) = delete;
+  SocketReaderFabric &operator=(const SocketReaderFabric &) = delete;
 
-    void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
+  void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
 
-    void send(std::shared_ptr<utility::AbstractArray<uint8_t>> buf,
-              int rank) override;
+  void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
 
-    void recv(utility::AbstractArray<uint8_t> &buf, int rank) override;
+  void send(
+      std::shared_ptr<utility::AbstractArray<uint8_t>> buf, int rank) override;
 
-   private:
-    void sendThreadLoop();
+  void recv(utility::AbstractArray<uint8_t> &buf, int rank) override;
 
-    Group group;
-    ospcommon::socket_t socket;
-    std::unique_ptr<ospcommon::tasking::AsyncLoop> sendThread;
-    ospcommon::containers::TransactionalBuffer<
-        std::shared_ptr<utility::AbstractArray<uint8_t>>>
-        outbox;
-  };
-}  // namespace mpicommon
+ private:
+  void sendThreadLoop();
+
+  Group group;
+  ospcommon::socket_t socket;
+  std::unique_ptr<ospcommon::tasking::AsyncLoop> sendThread;
+  ospcommon::containers::TransactionalBuffer<
+      std::shared_ptr<utility::AbstractArray<uint8_t>>>
+      outbox;
+};
+} // namespace mpicommon

@@ -23,50 +23,48 @@
 #include "fb/FrameBuffer.h"
 
 namespace ospray {
-  namespace mpi {
+namespace mpi {
 
-    //! Dummy task to satisfy the public API OSPFuture requirements, but
-    //  assumes the frame is already rendered.
-    struct SynchronousRenderTask : public Future
-    {
-      SynchronousRenderTask(FrameBuffer *);
-      ~SynchronousRenderTask() override = default;
+//! Dummy task to satisfy the public API OSPFuture requirements, but
+//  assumes the frame is already rendered.
+struct SynchronousRenderTask : public Future
+{
+  SynchronousRenderTask(FrameBuffer *);
+  ~SynchronousRenderTask() override = default;
 
-      bool isFinished(OSPSyncEvent event) override;
-      void wait(OSPSyncEvent event) override;
-      void cancel() override;
-      float getProgress() override;
+  bool isFinished(OSPSyncEvent event) override;
+  void wait(OSPSyncEvent event) override;
+  void cancel() override;
+  float getProgress() override;
 
-     private:
-      Ref<FrameBuffer> fb;
-    };
+ private:
+  Ref<FrameBuffer> fb;
+};
 
-    // Inlined definitions ////////////////////////////////////////////////////
+// Inlined definitions ////////////////////////////////////////////////////
 
-    inline SynchronousRenderTask::SynchronousRenderTask(FrameBuffer *_fb)
-        : fb(_fb)
-    {
-    }
+inline SynchronousRenderTask::SynchronousRenderTask(FrameBuffer *_fb) : fb(_fb)
+{}
 
-    inline bool SynchronousRenderTask::isFinished(OSPSyncEvent /*event*/)
-    {
-      return true;
-    }
+inline bool SynchronousRenderTask::isFinished(OSPSyncEvent /*event*/)
+{
+  return true;
+}
 
-    inline void SynchronousRenderTask::wait(OSPSyncEvent)
-    {
-      // no-op
-    }
+inline void SynchronousRenderTask::wait(OSPSyncEvent)
+{
+  // no-op
+}
 
-    inline void SynchronousRenderTask::cancel()
-    {
-      // no-op
-    }
+inline void SynchronousRenderTask::cancel()
+{
+  // no-op
+}
 
-    inline float SynchronousRenderTask::getProgress()
-    {
-      return 1.f;
-    }
+inline float SynchronousRenderTask::getProgress()
+{
+  return 1.f;
+}
 
-  }  // namespace mpi
-}  // namespace ospray
+} // namespace mpi
+} // namespace ospray

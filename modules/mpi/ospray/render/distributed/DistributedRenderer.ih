@@ -35,22 +35,22 @@ typedef unmasked void (*DR_ComputeRegionVisibility)(
     uniform int taskIndex);
 
 typedef void (*DR_RenderRegionSampleFct)(DistributedRenderer *uniform self,
-                                         FrameBuffer *uniform fb,
-                                         DistributedWorld *uniform world,
-                                         const Region *uniform region,
-                                         const vec2f &regionInterval,
-                                         void *uniform perFrameData,
-                                         varying ScreenSample &sample);
+    FrameBuffer *uniform fb,
+    DistributedWorld *uniform world,
+    const Region *uniform region,
+    const vec2f &regionInterval,
+    void *uniform perFrameData,
+    varying ScreenSample &sample);
 
-typedef unmasked void (*DR_RenderRegionTileFct)(DistributedRenderer *uniform
-                                                    self,
-                                                FrameBuffer *uniform fb,
-                                                Camera *uniform camera,
-                                                DistributedWorld *uniform world,
-                                                const Region *uniform region,
-                                                void *uniform perFrameData,
-                                                uniform Tile &tile,
-                                                uniform int taskIndex);
+typedef unmasked void (*DR_RenderRegionTileFct)(
+    DistributedRenderer *uniform self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    DistributedWorld *uniform world,
+    const Region *uniform region,
+    void *uniform perFrameData,
+    uniform Tile &tile,
+    uniform int taskIndex);
 
 struct DistributedRenderer
 {
@@ -61,5 +61,5 @@ struct DistributedRenderer
   DR_RenderRegionTileFct renderRegionToTile;
 };
 
-void DistributedRenderer_Constructor(uniform DistributedRenderer *uniform self,
-                                     void *uniform cppE);
+void DistributedRenderer_Constructor(
+    uniform DistributedRenderer *uniform self, void *uniform cppE);

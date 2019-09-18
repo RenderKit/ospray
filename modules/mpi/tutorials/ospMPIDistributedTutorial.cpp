@@ -76,23 +76,23 @@ int main(int argc, char **argv)
 {
   int mpiThreadCapability = 0;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpiThreadCapability);
-  if (mpiThreadCapability != MPI_THREAD_MULTIPLE &&
-      mpiThreadCapability != MPI_THREAD_SERIALIZED) {
+  if (mpiThreadCapability != MPI_THREAD_MULTIPLE
+      && mpiThreadCapability != MPI_THREAD_SERIALIZED) {
     fprintf(stderr,
-            "OSPRay requires the MPI runtime to support thread "
-            "multiple or thread serialized.\n");
+        "OSPRay requires the MPI runtime to support thread "
+        "multiple or thread serialized.\n");
     return 1;
   }
 
-  int mpiRank      = 0;
+  int mpiRank = 0;
   int mpiWorldSize = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpiWorldSize);
 
   // image size
   vec2i imgSize;
-  imgSize.x = 1024;  // width
-  imgSize.y = 768;   // height
+  imgSize.x = 1024; // width
+  imgSize.y = 768; // height
 
   // camera
   vec3f cam_pos{(mpiWorldSize + 1.f) / 2.f, 0.5f, mpiWorldSize * 0.5f};
@@ -102,34 +102,34 @@ int main(int argc, char **argv)
   // all ranks specify the same rendering parameters, with the exception of
   // the data to be rendered, which is distributed among the ranks
   // triangle mesh data
-  float vertex[]  = {mpiRank,
-                    0.0f,
-                    3.5f,
-                    mpiRank,
-                    1.0f,
-                    3.0f,
-                    1.0f * (mpiRank + 1.f),
-                    0.0f,
-                    3.0f,
-                    1.0f * (mpiRank + 1.f),
-                    1.0f,
-                    2.5f};
-  float color[]   = {0.0f,
-                   0.0f,
-                   (mpiRank + 1.f) / mpiWorldSize,
-                   1.0f,
-                   0.0f,
-                   0.0f,
-                   (mpiRank + 1.f) / mpiWorldSize,
-                   1.0f,
-                   0.0f,
-                   0.0f,
-                   (mpiRank + 1.f) / mpiWorldSize,
-                   1.0f,
-                   0.0f,
-                   0.0f,
-                   (mpiRank + 1.f) / mpiWorldSize,
-                   1.0f};
+  float vertex[] = {mpiRank,
+      0.0f,
+      3.5f,
+      mpiRank,
+      1.0f,
+      3.0f,
+      1.0f * (mpiRank + 1.f),
+      0.0f,
+      3.0f,
+      1.0f * (mpiRank + 1.f),
+      1.0f,
+      2.5f};
+  float color[] = {0.0f,
+      0.0f,
+      (mpiRank + 1.f) / mpiWorldSize,
+      1.0f,
+      0.0f,
+      0.0f,
+      (mpiRank + 1.f) / mpiWorldSize,
+      1.0f,
+      0.0f,
+      0.0f,
+      (mpiRank + 1.f) / mpiWorldSize,
+      1.0f,
+      0.0f,
+      0.0f,
+      (mpiRank + 1.f) / mpiWorldSize,
+      1.0f};
   int32_t index[] = {0, 1, 2, 1, 2, 3};
 
   // load the MPI module, and select the MPI distributed device. Here we
@@ -149,45 +149,43 @@ int main(int argc, char **argv)
   camera.set("pos", cam_pos);
   camera.set("dir", cam_view);
   camera.set("up", cam_up);
-  camera.commit();  // commit each object to indicate modifications are done
+  camera.commit(); // commit each object to indicate modifications are done
 
   // create and setup model and mesh
   ospray::cpp::Geometry mesh("triangles");
-  ospray::cpp::Data data(
-      4,
+  ospray::cpp::Data data(4,
       OSP_VEC3F,
-      vertex);  // OSP_FLOAT3 format is also supported for vertex positions
+      vertex); // OSP_FLOAT3 format is also supported for vertex positions
   data.commit();
   mesh.set("vertex.position", data);
-  data.release();  // we are done using this handle
+  data.release(); // we are done using this handle
 
   data = ospray::cpp::Data(4, OSP_VEC4F, color);
   data.commit();
   mesh.set("vertex.color", data);
-  data.release();  // we are done using this handle
+  data.release(); // we are done using this handle
 
-  data = ospray::cpp::Data(
-      2,
+  data = ospray::cpp::Data(2,
       OSP_VEC3I,
-      index);  // OSP_INT4 format is also supported for triangle indices
+      index); // OSP_INT4 format is also supported for triangle indices
   data.commit();
   mesh.set("index", data);
-  data.release();  // we are done using this handle
+  data.release(); // we are done using this handle
 
   mesh.commit();
 
   // put the mesh into a model
   ospray::cpp::GeometricModel model(mesh);
   model.commit();
-  mesh.release();  // we are done using this handle
+  mesh.release(); // we are done using this handle
 
   // put the model into a group (collection of models)
   ospray::cpp::Group group;
   auto modelHandle = model.handle();
-  data             = ospray::cpp::Data(1, OSP_OBJECT, &modelHandle);
+  data = ospray::cpp::Data(1, OSP_OBJECT, &modelHandle);
   group.set("geometry", data);
-  model.release();  // we are done using this handle
-  data.release();   // we are done using this handle
+  model.release(); // we are done using this handle
+  data.release(); // we are done using this handle
   group.commit();
 
   // put the group into an instance (give the group a world transform)
@@ -197,14 +195,14 @@ int main(int argc, char **argv)
 
   ospray::cpp::World world;
   auto instanceHandle = instance.handle();
-  data                = ospray::cpp::Data(1, OSP_OBJECT, &instanceHandle);
+  data = ospray::cpp::Data(1, OSP_OBJECT, &instanceHandle);
   world.set("instance", data);
-  instance.release();  // we are done using this handle
-  data.release();      // we are done using this handle
+  instance.release(); // we are done using this handle
+  data.release(); // we are done using this handle
 
   // Specify the region of the world this rank owns
   float regionBounds[] = {mpiRank, 0.f, 2.5f, 1.f * (mpiRank + 1.f), 1.f, 3.5f};
-  data                 = ospray::cpp::Data(1, OSP_BOX3F, regionBounds, 0);
+  data = ospray::cpp::Data(1, OSP_BOX3F, regionBounds, 0);
   data.commit();
   world.set("regions", data);
   data.release();
@@ -223,7 +221,7 @@ int main(int argc, char **argv)
   lights.commit();
 
   // complete setup of renderer
-  renderer.set("bgColor", 1.0f);  // white, transparent
+  renderer.set("bgColor", 1.0f); // white, transparent
   renderer.set("lights", lights);
   renderer.commit();
 

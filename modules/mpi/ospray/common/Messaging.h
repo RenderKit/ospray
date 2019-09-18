@@ -22,45 +22,45 @@
 #include "ospray/common/ObjectHandle.h"
 
 namespace ospray {
-  namespace mpi {
-    namespace messaging {
+namespace mpi {
+namespace messaging {
 
-      // message handling base ////////////////////////////////////////////////
+// message handling base ////////////////////////////////////////////////
 
-      struct MessageHandler : public maml::MessageHandler
-      {
-        //! NOTE: automatically register/de-registers itself
+struct MessageHandler : public maml::MessageHandler
+{
+  //! NOTE: automatically register/de-registers itself
 
-        MessageHandler(ObjectHandle handle);
-        virtual ~MessageHandler();
+  MessageHandler(ObjectHandle handle);
+  virtual ~MessageHandler();
 
-       protected:
-        ObjectHandle myId;
-      };
+ protected:
+  ObjectHandle myId;
+};
 
-      // async point messaging interface //////////////////////////////////////
+// async point messaging interface //////////////////////////////////////
 
-      /* Register the object message handler and dispatcher to run all object
-       * fire & forget messaging on the specified group. The internal
-       * communicator used will be a dup'd from this group, to avoid
-       * conflicting with other messaging.
-       */
-      void init(mpicommon::Group parentGroup);
+/* Register the object message handler and dispatcher to run all object
+ * fire & forget messaging on the specified group. The internal
+ * communicator used will be a dup'd from this group, to avoid
+ * conflicting with other messaging.
+ */
+void init(mpicommon::Group parentGroup);
 
-      void registerMessageListener(int handleObjID, MessageHandler *listener);
+void registerMessageListener(int handleObjID, MessageHandler *listener);
 
-      void removeMessageListener(int handleObjID);
+void removeMessageListener(int handleObjID);
 
-      void enableAsyncMessaging();
+void enableAsyncMessaging();
 
-      bool asyncMessagingEnabled();
+bool asyncMessagingEnabled();
 
-      void sendTo(int globalRank,
-                  ObjectHandle object,
-                  std::shared_ptr<mpicommon::Message> msg);
+void sendTo(int globalRank,
+    ObjectHandle object,
+    std::shared_ptr<mpicommon::Message> msg);
 
-      void disableAsyncMessaging();
+void disableAsyncMessaging();
 
-    }  // namespace messaging
-  }    // namespace mpi
-}  // namespace ospray
+} // namespace messaging
+} // namespace mpi
+} // namespace ospray

@@ -25,8 +25,8 @@ int main(int ac, char **av)
 {
   std::string mtlName = "alphaTestCubes.mtl";
   std::string objName = "alphaTestCubes.obj";
-  FILE *mtl           = fopen(mtlName.c_str(), "w");
-  FILE *obj           = fopen(objName.c_str(), "w");
+  FILE *mtl = fopen(mtlName.c_str(), "w");
+  FILE *obj = fopen(objName.c_str(), "w");
 
   fprintf(obj, "mtllib %s\n\n", mtlName.c_str());
 
@@ -61,45 +61,45 @@ int main(int ac, char **av)
         fprintf(obj, "usemtl material%i\n", cubeID);
 
         fprintf(obj,
-                "v %f %f %f\n",
-                bounds.lower.x,
-                bounds.lower.y,
-                bounds.lower.z);
+            "v %f %f %f\n",
+            bounds.lower.x,
+            bounds.lower.y,
+            bounds.lower.z);
         fprintf(obj,
-                "v %f %f %f\n",
-                bounds.lower.x,
-                bounds.lower.y,
-                bounds.upper.z);
+            "v %f %f %f\n",
+            bounds.lower.x,
+            bounds.lower.y,
+            bounds.upper.z);
         fprintf(obj,
-                "v %f %f %f\n",
-                bounds.lower.x,
-                bounds.upper.y,
-                bounds.lower.z);
+            "v %f %f %f\n",
+            bounds.lower.x,
+            bounds.upper.y,
+            bounds.lower.z);
         fprintf(obj,
-                "v %f %f %f\n",
-                bounds.lower.x,
-                bounds.upper.y,
-                bounds.upper.z);
+            "v %f %f %f\n",
+            bounds.lower.x,
+            bounds.upper.y,
+            bounds.upper.z);
         fprintf(obj,
-                "v %f %f %f\n",
-                bounds.upper.x,
-                bounds.lower.y,
-                bounds.lower.z);
+            "v %f %f %f\n",
+            bounds.upper.x,
+            bounds.lower.y,
+            bounds.lower.z);
         fprintf(obj,
-                "v %f %f %f\n",
-                bounds.upper.x,
-                bounds.lower.y,
-                bounds.upper.z);
+            "v %f %f %f\n",
+            bounds.upper.x,
+            bounds.lower.y,
+            bounds.upper.z);
         fprintf(obj,
-                "v %f %f %f\n",
-                bounds.upper.x,
-                bounds.upper.y,
-                bounds.lower.z);
+            "v %f %f %f\n",
+            bounds.upper.x,
+            bounds.upper.y,
+            bounds.lower.z);
         fprintf(obj,
-                "v %f %f %f\n",
-                bounds.upper.x,
-                bounds.upper.y,
-                bounds.upper.z);
+            "v %f %f %f\n",
+            bounds.upper.x,
+            bounds.upper.y,
+            bounds.upper.z);
 
         // front
         fprintf(obj, "f %i %i %i %i\n", V(0), V(1), V(3), V(2));
@@ -118,6 +118,6 @@ int main(int ac, char **av)
   fclose(obj);
 
   printf("test cubes obj/mtl files written to %s/%s\n",
-         objName.c_str(),
-         mtlName.c_str());
+      objName.c_str(),
+      mtlName.c_str());
 }

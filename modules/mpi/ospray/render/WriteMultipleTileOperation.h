@@ -23,20 +23,20 @@
 #include "ospcommon/containers/AlignedVector.h"
 
 namespace ospray {
-  struct WriteMultipleTileOperation : public TileOperation
-  {
-    void attach(DistributedFrameBuffer *dfb) override;
+struct WriteMultipleTileOperation : public TileOperation
+{
+  void attach(DistributedFrameBuffer *dfb) override;
 
-    std::shared_ptr<LiveTileOperation> makeTile(DistributedFrameBuffer *dfb,
-                                                const vec2i &tileBegin,
-                                                size_t tileID,
-                                                size_t ownerID) override;
+  std::shared_ptr<LiveTileOperation> makeTile(DistributedFrameBuffer *dfb,
+      const vec2i &tileBegin,
+      size_t tileID,
+      size_t ownerID) override;
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-    void syncTileInstances();
+  void syncTileInstances();
 
-    ospcommon::containers::AlignedVector<uint32_t> tileInstances;
-    mpicommon::Group mpiGroup;
-  };
-}  // namespace ospray
+  ospcommon::containers::AlignedVector<uint32_t> tileInstances;
+  mpicommon::Group mpiGroup;
+};
+} // namespace ospray

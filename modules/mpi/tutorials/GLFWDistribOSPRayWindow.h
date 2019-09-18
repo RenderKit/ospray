@@ -44,9 +44,9 @@ class GLFWDistribOSPRayWindow
 {
  public:
   GLFWDistribOSPRayWindow(const ospcommon::math::vec2i &windowSize,
-                          const ospcommon::math::box3f &worldBounds,
-                          OSPWorld world,
-                          OSPRenderer renderer);
+      const ospcommon::math::box3f &worldBounds,
+      OSPWorld world,
+      OSPRenderer renderer);
 
   ~GLFWDistribOSPRayWindow();
 
@@ -78,10 +78,10 @@ class GLFWDistribOSPRayWindow
 
   ospcommon::math::vec2i windowSize;
   ospcommon::math::box3f worldBounds;
-  OSPWorld world       = nullptr;
+  OSPWorld world = nullptr;
   OSPRenderer renderer = nullptr;
 
-  int mpiRank      = -1;
+  int mpiRank = -1;
   int mpiWorldSize = -1;
 
   // GLFW window instance
@@ -91,9 +91,9 @@ class GLFWDistribOSPRayWindow
   std::unique_ptr<ArcballCamera> arcballCamera;
 
   // OSPRay objects managed by this class
-  OSPCamera camera           = nullptr;
+  OSPCamera camera = nullptr;
   OSPFrameBuffer framebuffer = nullptr;
-  OSPFuture currentFrame     = nullptr;
+  OSPFuture currentFrame = nullptr;
 
   // List of OSPRay handles to commit before the next frame
   ospcommon::containers::TransactionalBuffer<OSPObject> objectsToCommit;

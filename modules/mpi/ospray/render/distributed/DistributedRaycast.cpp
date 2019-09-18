@@ -34,60 +34,60 @@
 #include "DistributedRaycast_ispc.h"
 
 namespace ospray {
-  namespace mpi {
-    using namespace std::chrono;
-    using namespace mpicommon;
+namespace mpi {
+using namespace std::chrono;
+using namespace mpicommon;
 
-    static bool DETAILED_LOGGING = false;
+static bool DETAILED_LOGGING = false;
 
-    // DistributedRaycastRenderer definitions /////////////////////////////////
+// DistributedRaycastRenderer definitions /////////////////////////////////
 
-    DistributedRaycastRenderer::DistributedRaycastRenderer()
-        : mpiGroup(mpicommon::worker.dup())
-    {
-      ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
+DistributedRaycastRenderer::DistributedRaycastRenderer()
+    : mpiGroup(mpicommon::worker.dup())
+{
+  ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
 
-      auto logging = utility::getEnvVar<std::string>("OSPRAY_DP_API_TRACING")
-                         .value_or("0");
-      DETAILED_LOGGING = std::stoi(logging) != 0;
+  auto logging =
+      utility::getEnvVar<std::string>("OSPRAY_DP_API_TRACING").value_or("0");
+  DETAILED_LOGGING = std::stoi(logging) != 0;
 
-      if (DETAILED_LOGGING) {
-        auto job_name =
-            utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
-        std::string statsLogFile = job_name + std::string("-rank") +
-                                   std::to_string(mpiGroup.rank) + ".txt";
-        statsLog = ospcommon::make_unique<std::ofstream>(statsLogFile.c_str());
-      }
-    }
+  if (DETAILED_LOGGING) {
+    auto job_name =
+        utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
+    std::string statsLogFile = job_name + std::string("-rank")
+        + std::to_string(mpiGroup.rank) + ".txt";
+    statsLog = ospcommon::make_unique<std::ofstream>(statsLogFile.c_str());
+  }
+}
 
-    DistributedRaycastRenderer::~DistributedRaycastRenderer()
-    {
-      if (DETAILED_LOGGING) {
-        *statsLog << "\n" << std::flush;
-      }
-    }
+DistributedRaycastRenderer::~DistributedRaycastRenderer()
+{
+  if (DETAILED_LOGGING) {
+    *statsLog << "\n" << std::flush;
+  }
+}
 
-    void DistributedRaycastRenderer::commit()
-    {
-      Renderer::commit();
+void DistributedRaycastRenderer::commit()
+{
+  Renderer::commit();
 
-      ispc::DistributedRaycastRenderer_set(getIE(),
-                                           getParam1i("aoSamples", 0),
-                                           getParam1f("aoRadius", 1e20f),
-                                           getParam1i("shadowsEnabled", 0));
-    }
+  ispc::DistributedRaycastRenderer_set(getIE(),
+      getParam1i("aoSamples", 0),
+      getParam1f("aoRadius", 1e20f),
+      getParam1i("shadowsEnabled", 0));
+}
 
-    std::shared_ptr<TileOperation> DistributedRaycastRenderer::tileOperation()
-    {
-      return std::make_shared<AlphaCompositeTileOperation>();
-    }
+std::shared_ptr<TileOperation> DistributedRaycastRenderer::tileOperation()
+{
+  return std::make_shared<AlphaCompositeTileOperation>();
+}
 
-    std::string DistributedRaycastRenderer::toString() const
-    {
-      return "ospray::mpi::DistributedRaycastRenderer";
-    }
+std::string DistributedRaycastRenderer::toString() const
+{
+  return "ospray::mpi::DistributedRaycastRenderer";
+}
 
-    OSP_REGISTER_RENDERER(DistributedRaycastRenderer, mpi_raycast);
+OSP_REGISTER_RENDERER(DistributedRaycastRenderer, mpi_raycast);
 
-  }  // namespace mpi
-}  // namespace ospray
+} // namespace mpi
+} // namespace ospray

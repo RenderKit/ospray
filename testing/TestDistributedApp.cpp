@@ -17,52 +17,52 @@
 #include <mpi.h>
 #include <ospray/ospray.h>
 
-#define Assert(cond, err) \
-  if (!(cond))            \
+#define Assert(cond, err)                                                      \
+  if (!(cond))                                                                 \
     throw std::runtime_error(err);
 
 namespace ospray {
 
-  /*! global camera, handle is valid across all ranks */
-  OSPCamera camera = NULL;
-  /*! global renderer, handle is valid across all ranks */
-  OSPRenderer renderer = NULL;
-  /*! global frame buffer, handle is valid across all ranks */
-  OSPFrameBuffer fb = NULL;
-  /*! global model, handle is valid across all ranks */
-  OSPWorld model = NULL;
+/*! global camera, handle is valid across all ranks */
+OSPCamera camera = NULL;
+/*! global renderer, handle is valid across all ranks */
+OSPRenderer renderer = NULL;
+/*! global frame buffer, handle is valid across all ranks */
+OSPFrameBuffer fb = NULL;
+/*! global model, handle is valid across all ranks */
+OSPWorld model = NULL;
 
-  void testDistributedApp_main(int &ac, char **&av)
-  {
-    ospdMpiInit(&ac, &av, OSPD_Z_COMPOSITE);
+void testDistributedApp_main(int &ac, char **&av)
+{
+  ospdMpiInit(&ac, &av, OSPD_Z_COMPOSITE);
 
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    printf("#ospdapp: starting test app for osp distributed mode, rank %i/%i\n",
-           rank,
-           size);
-    MPI_Barrier(MPI_COMM_WORLD);
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  printf("#ospdapp: starting test app for osp distributed mode, rank %i/%i\n",
+      rank,
+      size);
+  MPI_Barrier(MPI_COMM_WORLD);
 
-    ospdApiMode(OSPD_ALL);
-    model = ospNewWorld();
-    Assert(model, "error creating model");
+  ospdApiMode(OSPD_ALL);
+  model = ospNewWorld();
+  Assert(model, "error creating model");
 
-    camera = ospNewCamera("perspective");
-    Assert(camera, "error creating camera");
+  camera = ospNewCamera("perspective");
+  Assert(camera, "error creating camera");
 
-    renderer = ospNewRenderer("obj");
-    Assert(renderer, "error creating renderer");
+  renderer = ospNewRenderer("obj");
+  Assert(renderer, "error creating renderer");
 
-    ospdApiMode(OSPD_RANK);
+  ospdApiMode(OSPD_RANK);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf("---------------------- SHUTTING DOWN ----------------------\n");
-    fflush(0);
-    MPI_Barrier(MPI_COMM_WORLD);
-    ospdMpiShutdown();
-  }
-}  // namespace ospray
+  MPI_Barrier(MPI_COMM_WORLD);
+  printf("---------------------- SHUTTING DOWN ----------------------\n");
+  fflush(0);
+  MPI_Barrier(MPI_COMM_WORLD);
+  ospdMpiShutdown();
+}
+} // namespace ospray
 
 int main(int ac, char **av)
 {

@@ -47,71 +47,71 @@
 #endif
 
 namespace ospray {
-  namespace mpi {
+namespace mpi {
 
-    using namespace mpicommon;
+using namespace mpicommon;
 
-    /*! it's up to the proper init
-      routine to decide which processes call this function and which
-      ones don't. This function will not return.
+/*! it's up to the proper init
+  routine to decide which processes call this function and which
+  ones don't. This function will not return.
 
-      TODO: The worker should now actually just act as an OSPRay user app
-      which is using the distributed device, but just receives commands
-      from the user's code.
+  TODO: The worker should now actually just act as an OSPRay user app
+  which is using the distributed device, but just receives commands
+  from the user's code.
 
-      \internal We assume that mpi::worker and mpi::app have already been set up
-    */
-    void runWorker(bool useMPIFabric)
-    {
-      // Keep a reference to the offload device we came from to keep it alive
-      auto offloadDevice = ospray::api::Device::current;
+  \internal We assume that mpi::worker and mpi::app have already been set up
+*/
+void runWorker(bool useMPIFabric)
+{
+  // Keep a reference to the offload device we came from to keep it alive
+  auto offloadDevice = ospray::api::Device::current;
 
-      OSPDevice distribDevice = ospNewDevice("mpi_distributed");
-      ospDeviceSetVoidPtr(distribDevice, "worldCommunicator", &worker.comm);
-      ospDeviceCommit(distribDevice);
-      ospSetCurrentDevice(distribDevice);
+  OSPDevice distribDevice = ospNewDevice("mpi_distributed");
+  ospDeviceSetVoidPtr(distribDevice, "worldCommunicator", &worker.comm);
+  ospDeviceCommit(distribDevice);
+  ospSetCurrentDevice(distribDevice);
 
-      char hostname[HOST_NAME_MAX];
-      gethostname(hostname, HOST_NAME_MAX);
-      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "#w: running MPI worker process " << workerRank() << "/"
-          << workerSize() << " on pid " << getpid() << "@" << hostname;
+  char hostname[HOST_NAME_MAX];
+  gethostname(hostname, HOST_NAME_MAX);
+  postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+      << "#w: running MPI worker process " << workerRank() << "/"
+      << workerSize() << " on pid " << getpid() << "@" << hostname;
 
-      std::unique_ptr<networking::Fabric> fabric;
-      if (useMPIFabric)
-        fabric = make_unique<MPIFabric>(mpicommon::world, 0);
-      else
-        fabric = make_unique<SocketReaderFabric>(mpicommon::world, 0);
+  std::unique_ptr<networking::Fabric> fabric;
+  if (useMPIFabric)
+    fabric = make_unique<MPIFabric>(mpicommon::world, 0);
+  else
+    fabric = make_unique<SocketReaderFabric>(mpicommon::world, 0);
 
-      work::OSPState ospState;
+  work::OSPState ospState;
 
-      uint64_t commandSize = 0;
-      utility::ArrayView<uint8_t> cmdView(
-          reinterpret_cast<uint8_t *>(&commandSize), sizeof(uint64_t));
+  uint64_t commandSize = 0;
+  utility::ArrayView<uint8_t> cmdView(
+      reinterpret_cast<uint8_t *>(&commandSize), sizeof(uint64_t));
 
-      std::shared_ptr<utility::OwnedArray<uint8_t>> recvBuffer =
-          std::make_shared<utility::OwnedArray<uint8_t>>();
+  std::shared_ptr<utility::OwnedArray<uint8_t>> recvBuffer =
+      std::make_shared<utility::OwnedArray<uint8_t>>();
 
-      while (1) {
-        fabric->recvBcast(cmdView);
+  while (1) {
+    fabric->recvBcast(cmdView);
 
-        recvBuffer->resize(commandSize, 0);
-        fabric->recvBcast(*recvBuffer);
+    recvBuffer->resize(commandSize, 0);
+    fabric->recvBcast(*recvBuffer);
 
-        networking::BufferReader reader(recvBuffer);
-        work::TAG workTag = work::NONE;
-        reader >> workTag;
+    networking::BufferReader reader(recvBuffer);
+    work::TAG workTag = work::NONE;
+    reader >> workTag;
 
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#osp.mpi.worker: processing work " << workTag << ": "
-            << work::tagName(workTag);
+    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        << "#osp.mpi.worker: processing work " << workTag << ": "
+        << work::tagName(workTag);
 
-        dispatchWork(workTag, ospState, reader, *fabric);
+    dispatchWork(workTag, ospState, reader, *fabric);
 
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#osp.mpi.worker: completed work " << workTag << ": "
-            << work::tagName(workTag);
-      }
-    }
-  }  // namespace mpi
-}  // namespace ospray
+    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        << "#osp.mpi.worker: completed work " << workTag << ": "
+        << work::tagName(workTag);
+  }
+}
+} // namespace mpi
+} // namespace ospray

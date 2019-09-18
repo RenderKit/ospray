@@ -28,20 +28,19 @@
 #include <ostream>
 
 namespace ospray {
-  namespace mpi {
+namespace mpi {
 
-    struct ProfilingPoint
-    {
+struct ProfilingPoint
+{
 #ifndef _WIN32
-      rusage usage;
+  rusage usage;
 #endif
-      std::chrono::high_resolution_clock::time_point time;
+  std::chrono::high_resolution_clock::time_point time;
 
-      ProfilingPoint();
-    };
+  ProfilingPoint();
+};
 
-    void logProfilingData(std::ostream &os,
-                          const ProfilingPoint &start,
-                          const ProfilingPoint &end);
-  }  // namespace mpi
-}  // namespace ospray
+void logProfilingData(
+    std::ostream &os, const ProfilingPoint &start, const ProfilingPoint &end);
+} // namespace mpi
+} // namespace ospray

@@ -36,22 +36,22 @@ unmasked void DR_default_computeRegionVisibility(
   const uniform int32 spp = self->super.spp;
 
   ScreenSample screenSample;
-  screenSample.z     = inf;
+  screenSample.z = inf;
   screenSample.alpha = 0.f;
 
   CameraSample cameraSample;
 
-  const uniform int begin         = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end           = begin + RENDERTILE_PIXELS_PER_JOB;
+  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
+  const uniform int end = begin + RENDERTILE_PIXELS_PER_JOB;
   const uniform int startSampleID = max(tile.accumID, 0) * spp;
 
   for (uniform uint32 i = begin; i < end; i += programCount) {
-    const uint32 index      = i + programIndex;
+    const uint32 index = i + programIndex;
     screenSample.sampleID.x = tile.region.lower.x + z_order.xs[index];
     screenSample.sampleID.y = tile.region.lower.y + z_order.ys[index];
 
-    if ((screenSample.sampleID.x >= fb->size.x) ||
-        (screenSample.sampleID.y >= fb->size.y))
+    if ((screenSample.sampleID.x >= fb->size.x)
+        || (screenSample.sampleID.y >= fb->size.y))
       continue;
 
     float tMax = inf;
@@ -73,8 +73,8 @@ unmasked void DR_default_computeRegionVisibility(
     // TODO: Does spp still show some block boundary artifacts? Check
     // and maybe just support spp = 1 in DR
     for (uniform uint32 s = 0; s < spp; s++) {
-      const float pixel_du    = precomputedHalton2(startSampleID + s);
-      const float pixel_dv    = precomputedHalton3(startSampleID + s);
+      const float pixel_du = precomputedHalton2(startSampleID + s);
+      const float pixel_dv = precomputedHalton3(startSampleID + s);
       screenSample.sampleID.z = startSampleID + s;
 
       cameraSample.screen.x =
@@ -90,12 +90,11 @@ unmasked void DR_default_computeRegionVisibility(
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
       for (uniform int r = 0; r < world->numRegions; ++r) {
-        cif(!regionVisible[r] && !isEmpty(world->regions[r].bounds))
-        {
+        cif (!regionVisible[r] && !isEmpty(world->regions[r].bounds)) {
           float t0, t1;
           intersectBox(screenSample.ray, world->regions[r].bounds, t0, t1);
-          if (t0 < t1 && t0 >= screenSample.ray.t0 &&
-              t0 <= screenSample.ray.t) {
+          if (t0 < t1 && t0 >= screenSample.ray.t0
+              && t0 <= screenSample.ray.t) {
             regionVisible[r] = true;
           }
         }
@@ -104,7 +103,7 @@ unmasked void DR_default_computeRegionVisibility(
 
     screenSample.rgb = make_vec3f(
         self->super.bgColor.x, self->super.bgColor.y, self->super.bgColor.z);
-    screenSample.alpha  = self->super.bgColor.z;
+    screenSample.alpha = self->super.bgColor.z;
     screenSample.normal = make_vec3f(0.f);
     screenSample.albedo = make_vec3f(0.f);
     setTile(tile, pixel, screenSample);
@@ -112,48 +111,47 @@ unmasked void DR_default_computeRegionVisibility(
 }
 
 void DR_default_renderRegionSample(DistributedRenderer *uniform self,
-                                   FrameBuffer *uniform fb,
-                                   DistributedWorld *uniform world,
-                                   const Region *uniform region,
-                                   const vec2f &regionInterval,
-                                   void *uniform perFrameData,
-                                   varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    DistributedWorld *uniform world,
+    const Region *uniform region,
+    const vec2f &regionInterval,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
-  sample.z     = inf;
+  sample.z = inf;
   sample.alpha = 1.f;
-  sample.rgb =
-      make_random_color((sample.sampleID.x << 0) + (sample.sampleID.y << 14) +
-                        (sample.sampleID.z << 28));
+  sample.rgb = make_random_color((sample.sampleID.x << 0)
+      + (sample.sampleID.y << 14) + (sample.sampleID.z << 28));
 }
 
 unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
-                                            FrameBuffer *uniform fb,
-                                            Camera *uniform camera,
-                                            DistributedWorld *uniform world,
-                                            const Region *uniform region,
-                                            void *uniform perFrameData,
-                                            uniform Tile &tile,
-                                            uniform int taskIndex)
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    DistributedWorld *uniform world,
+    const Region *uniform region,
+    void *uniform perFrameData,
+    uniform Tile &tile,
+    uniform int taskIndex)
 {
   const uniform int32 spp = self->super.spp;
 
   ScreenSample screenSample;
-  screenSample.z     = inf;
+  screenSample.z = inf;
   screenSample.alpha = 0.f;
 
   CameraSample cameraSample;
 
-  const uniform int begin         = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end           = begin + RENDERTILE_PIXELS_PER_JOB;
+  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
+  const uniform int end = begin + RENDERTILE_PIXELS_PER_JOB;
   const uniform int startSampleID = max(tile.accumID, 0) * spp;
 
   for (uniform uint32 i = begin; i < end; i += programCount) {
-    const uint32 index      = i + programIndex;
+    const uint32 index = i + programIndex;
     screenSample.sampleID.x = tile.region.lower.x + z_order.xs[index];
     screenSample.sampleID.y = tile.region.lower.y + z_order.ys[index];
 
-    if ((screenSample.sampleID.x >= fb->size.x) ||
-        (screenSample.sampleID.y >= fb->size.y))
+    if ((screenSample.sampleID.x >= fb->size.x)
+        || (screenSample.sampleID.y >= fb->size.y))
       continue;
 
     float tMax = inf;
@@ -169,8 +167,8 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
       initDgFromTexCoord(lookup, depthTexCoord);
       tMax = min(get1f(self->super.maxDepthTexture, lookup), inf);
     }
-    vec3f col    = make_vec3f(0.f);
-    float alpha  = 0.f;
+    vec3f col = make_vec3f(0.f);
+    float alpha = 0.f;
     vec3f normal = make_vec3f(0.f);
     vec3f albedo = make_vec3f(0.f);
 
@@ -178,8 +176,8 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
 
     // TODO: same note on spp > 1 issues
     for (uniform uint32 s = 0; s < spp; s++) {
-      const float pixel_du    = precomputedHalton2(startSampleID + s);
-      const float pixel_dv    = precomputedHalton3(startSampleID + s);
+      const float pixel_du = precomputedHalton2(startSampleID + s);
+      const float pixel_dv = precomputedHalton3(startSampleID + s);
       screenSample.sampleID.z = startSampleID + s;
 
       cameraSample.screen.x =
@@ -198,7 +196,7 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
       // I ran into before w/ modifying the t0/t of the ray and not hitting
       // some of the boxes?
       float regionEnter = screenSample.ray.t0;
-      float regionExit  = screenSample.ray.t;
+      float regionExit = screenSample.ray.t;
       intersectBox(screenSample.ray, region->bounds, regionEnter, regionExit);
 
       if (regionExit > regionEnter) {
@@ -209,12 +207,12 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
         // sample.ray.t0 = max(regionEnter - 0.1f, 0.f);
         // sample.ray.t = regionEnter + 0.1f;
         self->renderRegionSample(self,
-                                 fb,
-                                 world,
-                                 region,
-                                 make_vec2f(regionEnter, regionExit),
-                                 perFrameData,
-                                 screenSample);
+            fb,
+            world,
+            region,
+            make_vec2f(regionEnter, regionExit),
+            perFrameData,
+            screenSample);
 
         col = col + screenSample.rgb;
         alpha += screenSample.alpha;
@@ -222,27 +220,26 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
         albedo = albedo + screenSample.albedo;
       }
     }
-    const float rspp    = rcpf(spp);
-    screenSample.rgb    = col * rspp;
-    screenSample.alpha  = alpha * rspp;
+    const float rspp = rcpf(spp);
+    screenSample.rgb = col * rspp;
+    screenSample.alpha = alpha * rspp;
     screenSample.normal = normal * rspp;
     screenSample.albedo = albedo * rspp;
     setTile(tile, pixel, screenSample);
   }
 }
 
-void DistributedRenderer_Constructor(uniform DistributedRenderer *uniform self,
-                                     void *uniform cppE)
+void DistributedRenderer_Constructor(
+    uniform DistributedRenderer *uniform self, void *uniform cppE)
 {
   Renderer_Constructor(&self->super, cppE, 1);
 
   self->computeRegionVisibility = DR_default_computeRegionVisibility;
-  self->renderRegionSample      = DR_default_renderRegionSample;
-  self->renderRegionToTile      = DR_default_renderRegionToTile;
+  self->renderRegionSample = DR_default_renderRegionSample;
+  self->renderRegionToTile = DR_default_renderRegionToTile;
 }
 
-export void DistributedRenderer_computeRegionVisibility(
-    void *uniform _self,
+export void DistributedRenderer_computeRegionVisibility(void *uniform _self,
     void *uniform fb,
     void *uniform camera,
     void *uniform world,
@@ -254,32 +251,32 @@ export void DistributedRenderer_computeRegionVisibility(
   DistributedRenderer *uniform self =
       (uniform DistributedRenderer * uniform) _self;
   self->computeRegionVisibility(self,
-                                (FrameBuffer * uniform) fb,
-                                (Camera * uniform) camera,
-                                (DistributedWorld * uniform) world,
-                                regionVisible,
-                                perFrameData,
-                                tile,
-                                taskIndex);
+      (FrameBuffer * uniform) fb,
+      (Camera * uniform) camera,
+      (DistributedWorld * uniform) world,
+      regionVisible,
+      perFrameData,
+      tile,
+      taskIndex);
 }
 
 export void DistributedRenderer_renderRegionToTile(void *uniform _self,
-                                                   void *uniform fb,
-                                                   void *uniform camera,
-                                                   void *uniform world,
-                                                   const void *uniform region,
-                                                   void *uniform perFrameData,
-                                                   uniform Tile &tile,
-                                                   uniform int taskIndex)
+    void *uniform fb,
+    void *uniform camera,
+    void *uniform world,
+    const void *uniform region,
+    void *uniform perFrameData,
+    uniform Tile &tile,
+    uniform int taskIndex)
 {
   DistributedRenderer *uniform self =
       (uniform DistributedRenderer * uniform) _self;
   self->renderRegionToTile(self,
-                           (FrameBuffer * uniform) fb,
-                           (Camera * uniform) camera,
-                           (DistributedWorld * uniform) world,
-                           (const Region *uniform)region,
-                           perFrameData,
-                           tile,
-                           taskIndex);
+      (FrameBuffer * uniform) fb,
+      (Camera * uniform) camera,
+      (DistributedWorld * uniform) world,
+      (const Region *uniform)region,
+      perFrameData,
+      tile,
+      taskIndex);
 }

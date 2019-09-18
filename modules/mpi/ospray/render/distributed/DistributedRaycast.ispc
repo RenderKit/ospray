@@ -49,19 +49,17 @@ struct RegionInfo
 // The distributed raycast renderer uses its own volume interval integration
 // because we want to apply the jitter before offsetting our step size to stay
 // inside the region, not after.
-vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
-                                  const VolumeInterval &interval,
-                                  Ray &ray)
+vec4f DRR_integrateVolumeInterval(
+    const ScreenSample &sample, const VolumeInterval &interval, Ray &ray)
 {
   VolumetricModel *varying volModel = interval.volumetricModel;
 
-  vec3f color   = make_vec3f(0.f);
-  float alpha   = 0.f;
+  vec3f color = make_vec3f(0.f);
+  float alpha = 0.f;
   float pSample = -1.f;
 
-  foreach_unique(vm in volModel)
-  {
-    Volume *uniform volume       = vm->volume;
+  foreach_unique (vm in volModel) {
+    Volume *uniform volume = vm->volume;
     TransferFunction *uniform tf = vm->transferFunction;
 
     // TODO: It's annoying the volume doesn't take and step an interval, then
@@ -93,13 +91,13 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
 }
 
 inline float computeAO(const DistributedRaycastRenderer *uniform self,
-                       const FrameBuffer *uniform fb,
-                       const World *uniform world,
-                       const varying vec3i &sampleID,
-                       const varying DifferentialGeometry &dg)
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
+    const varying vec3i &sampleID,
+    const varying DifferentialGeometry &dg)
 {
   const uniform int &sampleCnt = self->aoSamples;
-  const uniform int accumID    = reduce_max(sampleID.z) * sampleCnt;
+  const uniform int accumID = reduce_max(sampleID.z) * sampleCnt;
 
   // init TEA RNG //
   RandomTEA rng_state;
@@ -112,12 +110,12 @@ inline float computeAO(const DistributedRaycastRenderer *uniform self,
   const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec2f halton       = HaltonSequence_get2D(sampleCnt * accumID + i);
-    const vec2f r            = CranleyPattersonRotation(halton, rot);
+    const vec2f halton = HaltonSequence_get2D(sampleCnt * accumID + i);
+    const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
-    const vec3f ao_dir       = localToWorld * local_ao_dir;
+    const vec3f ao_dir = localToWorld * local_ao_dir;
 
-    if (dot(ao_dir, dg.Ns) < 0.05f) {  // check below surface
+    if (dot(ao_dir, dg.Ns) < 0.05f) { // check below surface
       hits++;
       continue;
     }
@@ -134,31 +132,30 @@ inline float computeAO(const DistributedRaycastRenderer *uniform self,
 }
 
 vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
-                       const FrameBuffer *uniform fb,
-                       const DistributedWorld *uniform world,
-                       const vec3i &sampleID,
-                       const Ray &ray,
-                       const DifferentialGeometry &dg)
+    const FrameBuffer *uniform fb,
+    const DistributedWorld *uniform world,
+    const vec3i &sampleID,
+    const Ray &ray,
+    const DifferentialGeometry &dg)
 {
   // TODO: DRR should have its own support for OBJ material and lighting model
 
-  vec3f surfaceColor        = make_vec3f(dg.color);
-  float opacity             = 1.f;
+  vec3f surfaceColor = make_vec3f(dg.color);
+  float opacity = 1.f;
   const SciVisMaterial *mat = (const SciVisMaterial *)dg.material;
   if (mat) {
-    foreach_unique(m in mat)
-    {
+    foreach_unique (m in mat) {
       surfaceColor = m->Kd;
-      opacity      = m->d;
+      opacity = m->d;
     }
   }
 
   // Just eyelight for now...
   const float eyeLightIntensity = absf(dot(dg.Ns, ray.dir));
-  vec3f color                   = surfaceColor * eyeLightIntensity;
+  vec3f color = surfaceColor * eyeLightIntensity;
   if (self->aoSamples > 0) {
     float ao = computeAO(self, fb, &world->super, sampleID, dg);
-    color    = color * ao;
+    color = color * ao;
   }
   return make_vec4f(color, opacity);
 
@@ -211,17 +208,17 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
 }
 
 void DRR_renderRegionSample(DistributedRenderer *uniform _self,
-                            FrameBuffer *uniform fb,
-                            DistributedWorld *uniform world,
-                            const Region *uniform region,
-                            const vec2f &regionInterval,
-                            void *uniform perFrameData,
-                            varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    DistributedWorld *uniform world,
+    const Region *uniform region,
+    const vec2f &regionInterval,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DistributedRaycastRenderer *uniform self =
       (DistributedRaycastRenderer * uniform) _self;
 
-  Ray &geomRay  = sample.ray;
+  Ray &geomRay = sample.ray;
   Ray volumeRay = sample.ray;
 
   VolumeInterval volumeInterval;
@@ -233,13 +230,12 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
   // TODO: Doesn't seem like much jittering happens with the volume integration
   vec4f outputColor = make_vec4f(0.f);
   while (outputColor.w < 0.99f) {
-    const bool haveGeometryHit = hadHit(geomRay) &&
-                                 geomRay.t >= regionInterval.x &&
-                                 geomRay.t <= regionInterval.y;
+    const bool haveGeometryHit = hadHit(geomRay)
+        && geomRay.t >= regionInterval.x && geomRay.t <= regionInterval.y;
 
     const bool haveVolumeHit = hasInterval(volumeInterval);
 
-    const bool bothHit   = haveGeometryHit && haveVolumeHit;
+    const bool bothHit = haveGeometryHit && haveVolumeHit;
     const bool eitherHit = haveGeometryHit || haveVolumeHit;
 
     const bool volumeFirst = volumeInterval.interval.lower < geomRay.t;
@@ -248,7 +244,7 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
       break;
     }
 
-    vec4f volumeColor  = make_vec4f(0.f);
+    vec4f volumeColor = make_vec4f(0.f);
     vec4f surfaceColor = make_vec4f(0.f);
     DifferentialGeometry dg;
     if (haveGeometryHit) {
@@ -276,8 +272,8 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
       volumeInterval.interval.lower = floor(t0 / dt) * dt;
 
       float jitter = precomputedHalton2(sample.sampleID.z);
-      int ix       = sample.sampleID.x % 4;
-      int iy       = sample.sampleID.y % 4;
+      int ix = sample.sampleID.x % 4;
+      int iy = sample.sampleID.y % 4;
 
       int patternID = ix + 4 * iy;
       jitter += precomputedHalton3(patternID);
@@ -294,8 +290,8 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
       // some edge/border artifacts
 
       setRay(volumeRay,
-             volumeInterval.interval.lower,
-             volumeInterval.interval.upper);
+          volumeInterval.interval.lower,
+          volumeInterval.interval.upper);
       volumeColor =
           DRR_integrateVolumeInterval(sample, volumeInterval, volumeRay);
     }
@@ -325,7 +321,7 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
     traceRay(&world->super, geomRay);
     traceVolumeRay(&world->super, volumeRay, volumeInterval);
   }
-  sample.rgb   = make_vec3f(outputColor);
+  sample.rgb = make_vec3f(outputColor);
   sample.alpha = outputColor.w;
 }
 
@@ -338,21 +334,21 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE)
 
   DistributedRenderer_Constructor(&self->super, cppE);
   self->super.renderRegionSample = DRR_renderRegionSample;
-  self->aoSamples                = 0;
-  self->shadowsEnabled           = false;
+  self->aoSamples = 0;
+  self->shadowsEnabled = false;
 
   return self;
 }
 
 export void DistributedRaycastRenderer_set(void *uniform _self,
-                                           const uniform int aoSamples,
-                                           const uniform float aoRadius,
-                                           const uniform bool shadowsEnabled)
+    const uniform int aoSamples,
+    const uniform float aoRadius,
+    const uniform bool shadowsEnabled)
 {
   DistributedRaycastRenderer *uniform self =
       (DistributedRaycastRenderer * uniform) _self;
 
-  self->aoSamples      = aoSamples;
-  self->aoRadius       = aoRadius;
+  self->aoSamples = aoSamples;
+  self->aoRadius = aoRadius;
   self->shadowsEnabled = shadowsEnabled;
 }

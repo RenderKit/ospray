@@ -60,15 +60,15 @@ int main(int argc, char **argv)
 {
   int mpiThreadCapability = 0;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpiThreadCapability);
-  if (mpiThreadCapability != MPI_THREAD_MULTIPLE &&
-      mpiThreadCapability != MPI_THREAD_SERIALIZED) {
+  if (mpiThreadCapability != MPI_THREAD_MULTIPLE
+      && mpiThreadCapability != MPI_THREAD_SERIALIZED) {
     fprintf(stderr,
-            "OSPRay requires the MPI runtime to support thread "
-            "multiple or thread serialized.\n");
+        "OSPRay requires the MPI runtime to support thread "
+        "multiple or thread serialized.\n");
     return 1;
   }
 
-  int mpiRank      = 0;
+  int mpiRank = 0;
   int mpiWorldSize = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpiWorldSize);
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
   ospCommit(brick.model);
 
   // create the "world" model which will contain all of our geometries
-  OSPWorld world    = ospNewWorld();
+  OSPWorld world = ospNewWorld();
   OSPData instances = ospNewData(1, OSP_OBJECT, &brick.instance);
   ospSetData(world, "instance", instances);
   ospRelease(instances);
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
       std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
           vec2i{1024, 768}, worldBounds, world, renderer));
 
-  int spp        = 1;
+  int spp = 1;
   int currentSpp = 1;
   if (mpiRank == 0) {
     glfwOSPRayWindow->registerImGuiCallback(
@@ -186,7 +186,7 @@ bool computeDivisor(int x, int &divisor)
 vec3i computeGrid(int num)
 {
   vec3i grid(1);
-  int axis    = 0;
+  int axis = 0;
   int divisor = 0;
   while (computeDivisor(num, divisor)) {
     grid[axis] *= divisor;
@@ -203,14 +203,14 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
 {
   const vec3i grid = computeGrid(mpiWorldSize);
   const vec3i brickId(mpiRank % grid.x,
-                      (mpiRank / grid.x) % grid.y,
-                      mpiRank / (grid.x * grid.y));
+      (mpiRank / grid.x) % grid.y,
+      mpiRank / (grid.x * grid.y));
   // The bricks are 64^3 + 1 layer of ghost voxels on each axis
   const vec3i brickVolumeDims = vec3i(32);
-  const vec3i brickGhostDims  = vec3i(brickVolumeDims + 2);
+  const vec3i brickGhostDims = vec3i(brickVolumeDims + 2);
 
   // The grid is over the [0, grid * brickVolumeDims] box
-  worldBounds            = box3f(vec3f(0.f), vec3f(grid * brickVolumeDims));
+  worldBounds = box3f(vec3f(0.f), vec3f(grid * brickVolumeDims));
   const vec3f brickLower = brickId * brickVolumeDims;
   const vec3f brickUpper = brickId * brickVolumeDims + brickVolumeDims;
 
@@ -243,7 +243,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
 
   brick.model = ospNewVolumetricModel(brick.brick);
 
-  brick.group     = ospNewGroup();
+  brick.group = ospNewGroup();
   OSPData volumes = ospNewData(1, OSP_OBJECT, &brick.model);
   ospSetObject(brick.group, "volume", volumes);
   ospCommit(brick.group);

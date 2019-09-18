@@ -30,13 +30,12 @@ static bool g_quitNextFrame = false;
 
 WindowState::WindowState()
     : quit(false), cameraChanged(false), fbSizeChanged(false), spp(1)
-{
-}
+{}
 
 GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
-                                                 const box3f &worldBounds,
-                                                 OSPWorld world,
-                                                 OSPRenderer renderer)
+    const box3f &worldBounds,
+    OSPWorld world,
+    OSPRenderer renderer)
     : windowSize(windowSize),
       worldBounds(worldBounds),
       world(world),
@@ -96,19 +95,19 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
       }
     });
 
-    glfwSetKeyCallback(glfwWindow,
-                       [](GLFWwindow *, int key, int, int action, int) {
-                         if (action == GLFW_PRESS) {
-                           switch (key) {
-                           case GLFW_KEY_G:
-                             activeWindow->showUi = !(activeWindow->showUi);
-                             break;
-                           case GLFW_KEY_Q:
-                             g_quitNextFrame = true;
-                             break;
-                           }
-                         }
-                       });
+    glfwSetKeyCallback(
+        glfwWindow, [](GLFWwindow *, int key, int, int action, int) {
+          if (action == GLFW_PRESS) {
+            switch (key) {
+            case GLFW_KEY_G:
+              activeWindow->showUi = !(activeWindow->showUi);
+              break;
+            case GLFW_KEY_Q:
+              g_quitNextFrame = true;
+              break;
+            }
+          }
+        });
   }
 
   // OSPRay setup
@@ -122,20 +121,20 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
   ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
 
   ospSetVec3f(camera,
-              "position",
-              arcballCamera->eyePos().x,
-              arcballCamera->eyePos().y,
-              arcballCamera->eyePos().z);
+      "position",
+      arcballCamera->eyePos().x,
+      arcballCamera->eyePos().y,
+      arcballCamera->eyePos().z);
   ospSetVec3f(camera,
-              "direction",
-              arcballCamera->lookDir().x,
-              arcballCamera->lookDir().y,
-              arcballCamera->lookDir().z);
+      "direction",
+      arcballCamera->lookDir().x,
+      arcballCamera->lookDir().y,
+      arcballCamera->lookDir().z);
   ospSetVec3f(camera,
-              "up",
-              arcballCamera->upDir().x,
-              arcballCamera->upDir().y,
-              arcballCamera->upDir().z);
+      "up",
+      arcballCamera->upDir().x,
+      arcballCamera->upDir().y,
+      arcballCamera->upDir().z);
 
   ospCommit(camera);
 
@@ -143,9 +142,9 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
   ospCommit(renderer);
 
   windowState.windowSize = windowSize;
-  windowState.eyePos     = arcballCamera->eyePos();
-  windowState.lookDir    = arcballCamera->lookDir();
-  windowState.upDir      = arcballCamera->upDir();
+  windowState.eyePos = arcballCamera->eyePos();
+  windowState.lookDir = arcballCamera->lookDir();
+  windowState.upDir = arcballCamera->upDir();
 
   if (mpiRank == 0) {
     // trigger window reshape events with current window size
@@ -233,8 +232,8 @@ void GLFWDistribOSPRayWindow::mainLoop()
 
 void GLFWDistribOSPRayWindow::reshape(const vec2i &newWindowSize)
 {
-  windowSize                = newWindowSize;
-  windowState.windowSize    = windowSize;
+  windowSize = newWindowSize;
+  windowState.windowSize = windowSize;
   windowState.fbSizeChanged = true;
 
   // update camera
@@ -265,11 +264,10 @@ void GLFWDistribOSPRayWindow::motion(const vec2f &position)
     bool cameraChanged = leftDown || rightDown || middleDown;
 
     if (leftDown) {
-      const vec2f mouseFrom(
-          clamp(prev.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
+      const vec2f mouseFrom(clamp(prev.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
           clamp(prev.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
       const vec2f mouseTo(clamp(mouse.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
-                          clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
+          clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
       arcballCamera->rotate(mouseFrom, mouseTo);
     } else if (rightDown) {
       arcballCamera->zoom(mouse.y - prev.y);
@@ -279,9 +277,9 @@ void GLFWDistribOSPRayWindow::motion(const vec2f &position)
 
     if (cameraChanged) {
       windowState.cameraChanged = true;
-      windowState.eyePos        = arcballCamera->eyePos();
-      windowState.lookDir       = arcballCamera->lookDir();
-      windowState.upDir         = arcballCamera->upDir();
+      windowState.eyePos = arcballCamera->eyePos();
+      windowState.lookDir = arcballCamera->lookDir();
+      windowState.upDir = arcballCamera->upDir();
     }
   }
 
@@ -309,8 +307,8 @@ void GLFWDistribOSPRayWindow::display()
     // display frame rate in window title
     auto displayEnd = std::chrono::high_resolution_clock::now();
     auto durationMilliseconds =
-        std::chrono::duration_cast<std::chrono::milliseconds>(displayEnd -
-                                                              displayStart);
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            displayEnd - displayStart);
 
     latestFPS = 1000.f / float(durationMilliseconds.count());
 
@@ -321,20 +319,20 @@ void GLFWDistribOSPRayWindow::display()
 
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA,
-                 windowSize.x,
-                 windowSize.y,
-                 0,
-                 GL_RGBA,
-                 GL_UNSIGNED_BYTE,
-                 fb);
+        0,
+        GL_RGBA,
+        windowSize.x,
+        windowSize.y,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        fb);
 
     ospUnmapFrameBuffer(fb, framebuffer);
 
     // Start new frame and reset frame timing interval start
     displayStart = std::chrono::high_resolution_clock::now();
-    firstFrame   = false;
+    firstFrame = false;
   }
 
   // clear current OpenGL color buffer
@@ -370,7 +368,7 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
   }
 
   bool fbNeedsClear = false;
-  auto handles      = objectsToCommit.consume();
+  auto handles = objectsToCommit.consume();
   if (!handles.empty()) {
     for (auto &h : handles)
       ospCommit(h);
@@ -380,7 +378,7 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
 
   if (windowState.fbSizeChanged) {
     windowState.fbSizeChanged = false;
-    windowSize                = windowState.windowSize;
+    windowSize = windowState.windowSize;
     // release the current frame buffer, if it exists
     if (framebuffer) {
       ospRelease(framebuffer);
@@ -395,20 +393,20 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
   if (windowState.cameraChanged) {
     windowState.cameraChanged = false;
     ospSetVec3f(camera,
-                "position",
-                windowState.eyePos.x,
-                windowState.eyePos.y,
-                windowState.eyePos.z);
+        "position",
+        windowState.eyePos.x,
+        windowState.eyePos.y,
+        windowState.eyePos.z);
     ospSetVec3f(camera,
-                "direction",
-                windowState.lookDir.x,
-                windowState.lookDir.y,
-                windowState.lookDir.z);
+        "direction",
+        windowState.lookDir.x,
+        windowState.lookDir.y,
+        windowState.lookDir.z);
     ospSetVec3f(camera,
-                "up",
-                windowState.upDir.x,
-                windowState.upDir.y,
-                windowState.upDir.z);
+        "up",
+        windowState.upDir.x,
+        windowState.upDir.y,
+        windowState.upDir.z);
     ospCommit(camera);
     fbNeedsClear = true;
   }
@@ -443,12 +441,12 @@ void GLFWDistribOSPRayWindow::updateTitleBar()
     std::string progBar;
     progBar.resize(barWidth + 2);
     auto start = progBar.begin() + 1;
-    auto end   = start + progress * barWidth;
+    auto end = start + progress * barWidth;
     std::fill(start, end, '=');
     std::fill(end, progBar.end(), '_');
-    *end            = '>';
+    *end = '>';
     progBar.front() = '[';
-    progBar.back()  = ']';
+    progBar.back() = ']';
     windowTitle << progBar;
   }
 

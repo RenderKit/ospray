@@ -41,8 +41,8 @@ static std::string renderer_type = "pathtracer";
 // NOTE: We use our own here because both ranks need to have the same random
 // seed used when generating the spheres
 OSPTestingGeometry createSpheres(int mpiRank);
-OSPInstance createGroundPlane(std::string renderer_type,
-                              float planeExtent = 1.5f);
+OSPInstance createGroundPlane(
+    std::string renderer_type, float planeExtent = 1.5f);
 
 int main(int argc, char **argv)
 {
@@ -54,15 +54,15 @@ int main(int argc, char **argv)
 
   int mpiThreadCapability = 0;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpiThreadCapability);
-  if (mpiThreadCapability != MPI_THREAD_MULTIPLE &&
-      mpiThreadCapability != MPI_THREAD_SERIALIZED) {
+  if (mpiThreadCapability != MPI_THREAD_MULTIPLE
+      && mpiThreadCapability != MPI_THREAD_SERIALIZED) {
     fprintf(stderr,
-            "OSPRay requires the MPI runtime to support thread "
-            "multiple or thread serialized.\n");
+        "OSPRay requires the MPI runtime to support thread "
+        "multiple or thread serialized.\n");
     return 1;
   }
 
-  int mpiRank      = 0;
+  int mpiRank = 0;
   int mpiWorldSize = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpiWorldSize);
@@ -224,7 +224,7 @@ OSPTestingGeometry createSpheres(int mpiRank)
   ospCommit(model);
 
   OSPGroup group = ospNewGroup();
-  auto models    = ospNewData(1, OSP_OBJECT, &model);
+  auto models = ospNewData(1, OSP_OBJECT, &model);
   ospSetData(group, "geometry", models);
   ospCommit(group);
   ospRelease(models);
@@ -234,10 +234,10 @@ OSPTestingGeometry createSpheres(int mpiRank)
 
   OSPTestingGeometry retval;
   retval.geometry = spheresGeometry;
-  retval.model    = model;
-  retval.group    = group;
+  retval.model = model;
+  retval.group = group;
   retval.instance = instance;
-  retval.bounds   = reinterpret_cast<osp_box3f &>(bounds);
+  retval.bounds = reinterpret_cast<osp_box3f &>(bounds);
 
   return retval;
 }
@@ -267,7 +267,7 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
   // ground plane
   int startingIndex = vertices.size();
 
-  const vec3f up   = vec3f{0.f, 1.f, 0.f};
+  const vec3f up = vec3f{0.f, 1.f, 0.f};
   const vec4f gray = vec4f{0.9f, 0.9f, 0.9f, 0.75f};
 
   vertices.push_back(Vertex{vec3f{-planeExtent, -1.f, -planeExtent}, up, gray});
@@ -279,9 +279,9 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
       startingIndex, startingIndex + 1, startingIndex + 2, startingIndex + 3});
 
   // stripes on ground plane
-  const float stripeWidth  = 0.025f;
+  const float stripeWidth = 0.025f;
   const float paddedExtent = planeExtent + stripeWidth;
-  const size_t numStripes  = 10;
+  const size_t numStripes = 10;
 
   const vec4f stripeColor = vec4f{1.0f, 0.1f, 0.1f, 1.f};
 
@@ -306,9 +306,9 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
         vec3f{-paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
 
     quadIndices.push_back(QuadIndex{startingIndex,
-                                    startingIndex + 1,
-                                    startingIndex + 2,
-                                    startingIndex + 3});
+        startingIndex + 1,
+        startingIndex + 2,
+        startingIndex + 3});
 
     // z-direction stripes
     startingIndex = vertices.size();
@@ -323,9 +323,9 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
         vec3f{coord - stripeWidth, yLevel, paddedExtent}, up, stripeColor});
 
     quadIndices.push_back(QuadIndex{startingIndex,
-                                    startingIndex + 1,
-                                    startingIndex + 2,
-                                    startingIndex + 3});
+        startingIndex + 1,
+        startingIndex + 2,
+        startingIndex + 3});
   }
 
   // create OSPRay data objects
@@ -334,17 +334,17 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
   std::vector<vec4f> colorVector;
 
   std::transform(vertices.begin(),
-                 vertices.end(),
-                 std::back_inserter(positionVector),
-                 [](Vertex const &v) { return v.position; });
+      vertices.end(),
+      std::back_inserter(positionVector),
+      [](Vertex const &v) { return v.position; });
   std::transform(vertices.begin(),
-                 vertices.end(),
-                 std::back_inserter(normalVector),
-                 [](Vertex const &v) { return v.normal; });
+      vertices.end(),
+      std::back_inserter(normalVector),
+      [](Vertex const &v) { return v.normal; });
   std::transform(vertices.begin(),
-                 vertices.end(),
-                 std::back_inserter(colorVector),
-                 [](Vertex const &v) { return v.color; });
+      vertices.end(),
+      std::back_inserter(colorVector),
+      [](Vertex const &v) { return v.color; });
 
   OSPData positionData =
       ospNewData(vertices.size(), OSP_VEC3F, positionVector.data());
