@@ -48,14 +48,9 @@ unmasked void Volume_intersect_kernel(
 
   box3f *uniform box = &self->boundingBox;
 
-  bool insideBox = (ray->org.x > box->lower.x && ray->org.x <= box->upper.x)
-                && (ray->org.y > box->lower.y && ray->org.y <= box->upper.y)
-                && (ray->org.z > box->lower.z && ray->org.z <= box->upper.z);
-
   vec2f t;
   intersectBox(ray->org, ray->dir, *box, t.x, t.y);
-  const bool hit = insideBox || (t.x < t.y && ((t.x > ray->t0 && t.x < ray->t) ||
-                                (t.y > ray->t0 && t.y < ray->t)));
+  const bool hit = t.x < t.y && (t.x < ray->t && t.y > ray->t0);
 
   if (hit) {
     ray->instID = args->context->instID[0];
