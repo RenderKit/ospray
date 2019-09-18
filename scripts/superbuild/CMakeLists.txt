@@ -69,7 +69,6 @@ option(BUILD_GLFW "Build glfw for OSPRay examples or use one in existing environ
 option(BUILD_DEPENDENCIES_ONLY "Don't build OSPRay itself, only its dependencies" OFF)
 option(BUILD_OSPRAY_CI_TESTS "Enable OSPRay's tests." OFF)
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
-option(BUILD_OSPRAY_MPI "Enable OSPRay's MPI module (requires MPI pre-installed)" OFF)
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
@@ -139,7 +138,6 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DOSPRAY_ENABLE_TESTING=${BUILD_OSPRAY_CI_TESTS}
       -DOSPRAY_MODULE_BILINEAR_PATCH=${BUILD_OSPRAY_CI_TESTS}
       -DOSPRAY_MODULE_DENOISER=${BUILD_OIDN}
-      -DOSPRAY_MODULE_MPI=${BUILD_OSPRAY_MPI}
       -DOSPRAY_STRICT_BUILD=${BUILD_OSPRAY_CI_EXTRAS}
       -DOSPRAY_WARN_AS_ERRORS=${BUILD_OSPRAY_CI_EXTRAS}
       -DOpenImageDenoise_DIR:PATH=${OIDN_PATH}

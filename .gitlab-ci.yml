@@ -84,14 +84,14 @@ build-arch-clang:
 build-arch-gcc-warnings:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
 
 build-arch-clang-warnings:
   <<: *build_job_docker
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker
@@ -158,11 +158,6 @@ build-debug:
   <<: *build_job_docker
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug
-
-build-mpi:
-  <<: *build_job_docker
-  script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MPI=ON
 
 build-osx-clang:
   <<: *build_job_shell
@@ -356,7 +351,6 @@ release-linux-icc:
   tags:
     - icc
     - centos6
-    - mpi
   artifacts:
     paths:
       - build_release/*.gz
@@ -372,7 +366,6 @@ release-osx-clang:
   tags:
     - clang
     - osx
-    - mpi
   artifacts:
     paths:
       - build_release/*.gz
@@ -386,7 +379,6 @@ release-windows:
   tags:
     - msvc
     - win7
-    - mpi
   artifacts:
     paths:
       - build_release\ospray*.zip
