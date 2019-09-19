@@ -282,5 +282,33 @@ namespace OSPRayTestScenes {
    private:
     std::string materialType;
   };
+  
+  // Fixture class that renders a simple heterogeneous volume using the 
+  // pathtracer. It is parametrized with albedo, anisotropy and density scale.
+  class HeterogeneousVolume
+      : public Base,
+        public ::testing::TestWithParam<std::tuple<
+          vec3f, // albedo
+          float, // anisotropy
+          float, // densityScale
+          vec3f, // color of ambient light
+          bool,  // enable distant light
+          bool,  // enable geometry
+          bool,  // constant volume
+          int>>  // samples per pixel
+  {
+   protected:
+    vec3f albedo;
+    float anisotropy;
+    float densityScale;
+    vec3f ambientColor;
+    bool enableDistantLight;
+    bool enableGeometry;
+    bool constantVolume;
+
+   public:
+    HeterogeneousVolume();
+    virtual void SetUp();
+  };
 
 }  // namespace OSPRayTestScenes

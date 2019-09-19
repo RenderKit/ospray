@@ -1275,5 +1275,292 @@ namespace OSPRayTestScenes {
     ospCommit(directional);
     AddLight(directional);
   }
+  
+  /* heavily based on Perlin's Java reference implementation of
+  * the improved perlin noise paper from Siggraph 2002 from here
+  * https://mrl.nyu.edu/~perlin/noise/
+  **/
+  class PerlinNoise 
+  {
+    struct PerlinNoiseData
+    {
+      PerlinNoiseData()
+      {
+        const int permutation[256] = { 
+          151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,
+          37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,
+          57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,
+          166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245, 40,244,
+          102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,200,196,135,130,
+          116,188,159,86,164,100,109,198,173,186,3,64,52,217,226,250,124,123,5,202, 38,147,
+          118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189, 28, 42,223,183,170,213,
+          119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,129,22,39,253,19,98,108,
+          110,79,113,224,232,178,185,112,104,218,246,97,228,251, 34,242,193,238,210,144,12,
+          191,179,162,241,81,51,145,235,249,14,239,107, 49,192,214, 31,181,199,106,157,184,
+          84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,67, 29, 24, 72,243,
+          141,128,195,78,66,215,61,156,180
+        };
+        for (int i=0; i < 256 ; i++) p[256+i] = p[i] = permutation[i];
+      }
+      inline int operator[](size_t idx) const { return p[idx]; }
+      int p[512];
+    };
 
+    static PerlinNoiseData p;
+    static inline float smooth(float t) { return t * t * t * (t * (t * 6.f - 15.f) + 10.f); }
+    static inline float lerp  (float t, float a, float b) { return a + t * (b - a); }
+    static inline float grad(int hash, float x, float y, float z) {
+      const int h   = hash & 15;      
+      const float u = h < 8 ? x : y;
+      const float v = h < 4 ? y : h == 12 || h == 14 ? x : z;
+      return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
+    }
+
+  public:
+    static float noise(vec3f q, float frequency = 8.f)
+    {
+      float x = q.x * frequency;
+      float y = q.y * frequency;
+      float z = q.z * frequency;
+      const int X = (int)floor(x) & 255;
+      const int Y = (int)floor(y) & 255; 
+      const int Z = (int)floor(z) & 255;
+      x -= floor(x);
+      y -= floor(y);
+      z -= floor(z);
+      const float u = smooth(x);
+      const float v = smooth(y);
+      const float w = smooth(z);
+      const int  A = p[X] + Y;
+      const int  B = p[X + 1] + Y;
+      const int AA = p[A] + Z;
+      const int BA = p[B] + Z;
+      const int BB = p[B + 1] + Z; 
+      const int AB = p[A + 1] + Z;
+
+      return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z), 
+                                    grad(p[BA], x - 1, y, z)),
+                            lerp(u, grad(p[AB], x, y - 1, z),  
+                                    grad(p[BB], x - 1, y - 1, z))),
+                    lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1),  
+                                    grad(p[BA + 1], x - 1, y, z - 1)),
+                            lerp(u, grad(p[AB + 1], x, y - 1, z - 1),
+                                    grad(p[BB + 1], x - 1, y - 1, z - 1))));
+    }
+  };
+  PerlinNoise::PerlinNoiseData PerlinNoise::p;
+
+  HeterogeneousVolume::HeterogeneousVolume()
+  {
+    rendererType = "pathtracer";
+
+    auto params = GetParam();
+
+    albedo             = std::get<0>(params);
+    anisotropy         = std::get<1>(params);
+    densityScale       = std::get<2>(params);
+    ambientColor       = std::get<3>(params);
+    enableDistantLight = std::get<4>(params);
+    enableGeometry     = std::get<5>(params);
+    constantVolume     = std::get<6>(params);
+    samplesPerPixel    = std::get<7>(params);
+
+    imgSize = imgSize / 2.f;
+    Base::SetImageTool();
+  }
+
+  void HeterogeneousVolume::SetUp()
+  {
+    Base::SetUp();
+
+    if (!constantVolume)
+      densityScale *= 10.f;
+    
+    const float theta = 1.f/2.f*M_PI - M_PI/6;
+    const float phi   = 3.f/2.f*M_PI - M_PI/6;
+    const float r = 5.f;
+    vec3f p = r * vec3f(
+      sin(theta)*cos(phi), 
+      cos(theta), 
+      sin(theta)*sin(phi));
+    vec3f v = vec3f(0.f, -0.2f, 0.f) - p;
+
+    ospSetVec3fv(camera, "position", &p.x);
+    ospSetVec3fv(camera, "direction", &v.x);
+    ospSetVec3f(camera, "up", 0.f, 1.f, 0.f);
+    
+    // create volume
+    vec3l dims;
+    if (constantVolume)
+      dims = vec3l(8, 8, 8);
+    else
+      dims = vec3l(64, 64, 64);
+    
+    const float spacing = 3.f/(reduce_max(dims)-1);
+    OSPVolume volume = ospNewVolume("vkl_structured_volume");
+
+    auto turbulence = [](const vec3f& p, float base_freqency, int octaves)
+    {
+      float value = 0.f;
+      float scale = 1.f;
+      for (int o = 0; o < octaves; ++o)
+      {
+        value += PerlinNoise::noise(scale*p, base_freqency)/scale;
+        scale *= 2.f;
+      }
+      return value;
+    };
+
+    // generate volume data
+    auto numVoxels = dims.product();
+    std::vector<float> voxels(numVoxels, 0);
+    for (int z = 0; z < dims.z; ++z)
+    for (int y = 0; y < dims.y; ++y)
+    for (int x = 0; x < dims.x; ++x)
+    {
+      if (constantVolume)
+        voxels[dims.x * dims.y * z + dims.x * y + x] = 1.0f;
+      else
+      {
+        vec3f p = vec3f(x+0.5f, y+0.5f, z+0.5f)/dims;
+        vec3f X = 2.f * p - vec3f(1.f); 
+        if (length((1.4f + 0.4 * turbulence(p, 12.f, 12)) * X) < 1.f) 
+          voxels[dims.x * dims.y * z + dims.x * y + x] = 0.5f + 0.5f * PerlinNoise::noise(p, 12);
+      }
+    }
+    voxels[0] = 0.0f;
+
+    OSPData voxelData = ospNewData(numVoxels, OSP_FLOAT, voxels.data());
+    ospSetObject(volume, "voxelData", voxelData);
+    ospRelease(voxelData);
+
+    ospSetInt(volume, "voxelType", OSP_FLOAT);
+    ospSetVec3i(volume, "dimensions", dims.x, dims.y, dims.z);
+    ospSetVec3f(volume, "gridOrigin", -1.5f, -1.5f, -1.5f);
+    ospSetVec3f(volume, "gridSpacing", spacing, spacing, spacing);
+    ospCommit(volume);
+
+    // create transfer function
+    OSPTransferFunction tfn = ospNewTransferFunction("piecewise_linear");
+    ospSetVec2f(tfn, "valueRange", 0.0f, 1.0f);
+    OSPData tfColorData = ospNewData(1, OSP_VEC3F, &albedo);
+    ospSetData(tfn, "color", tfColorData);
+    ospRelease(tfColorData);
+    std::vector<float> opacities = { 0.f, 1.f };
+    OSPData tfOpacityData = ospNewData(opacities.size(), OSP_FLOAT, opacities.data());
+    ospSetData(tfn, "opacity", tfOpacityData);
+    ospRelease(tfOpacityData);
+    ospCommit(tfn);
+    OSPVolumetricModel volumetricModel = ospNewVolumetricModel(volume);
+    ospSetFloat(volumetricModel,  "densityScale",     densityScale);
+    ospSetFloat(volumetricModel,  "anisotropy",       anisotropy);
+    ospSetObject(volumetricModel, "transferFunction", tfn);
+    ospCommit(volumetricModel);
+    ospRelease(tfn);
+    ospRelease(volume);
+
+    std::vector<OSPGeometricModel> models;
+    std::vector<vec3f> planeVertices = { 
+      vec3f(-8.f, -2.5f, -8.f),
+      vec3f(+8.f, -2.5f, -8.f),
+      vec3f(+8.f, -2.5f, +8.f),
+      vec3f(-8.f, -2.5f, +8.f) };
+    
+    std::vector<vec4i> planeIndices = { vec4i(0, 1, 2, 3) };
+
+    OSPGeometry mesh  = ospNewGeometry("quads");
+    OSPData data           = ospNewData(planeVertices.size(), OSP_VEC3F, planeVertices.data());
+    ospCommit(data);
+    ospSetData(mesh, "vertex.position", data);
+    ospRelease(data);
+    data = ospNewData(planeIndices.size(), OSP_VEC4I, planeIndices.data());
+    ospCommit(data);
+    ospSetData(mesh, "index", data);
+    ospRelease(data);
+    ospCommit(mesh);
+
+    OSPGeometricModel model = ospNewGeometricModel(mesh);
+    ospRelease(mesh);
+    OSPMaterial material = ospNewMaterial("pathtracer", "OBJMaterial");
+    ospCommit(material);
+    ospSetObject(model, "material", material);
+    ospRelease(material);
+    if (enableGeometry)
+      models.push_back(model);
+
+    for (auto &m : models)
+      ospCommit(m);
+    ospCommit(volumetricModel);
+
+    OSPData modelsData = ospNewData(models.size(), OSP_OBJECT, models.data());
+    OSPData volumeData = ospNewData(1, OSP_OBJECT, &volumetricModel);
+
+    OSPGroup modelsGroup = ospNewGroup();
+    OSPGroup volumeGroup = ospNewGroup();
+    ospSetData(modelsGroup, "geometry", modelsData);
+    ospSetData(volumeGroup, "volume", volumeData);
+
+    ospCommit(modelsGroup);
+    ospCommit(volumeGroup);
+
+    ospRelease(modelsData);
+    ospRelease(volumeData);
+
+    OSPInstance modelsInstance = ospNewInstance(modelsGroup);
+    ospCommit(modelsInstance);
+    ospRelease(modelsGroup);
+    AddInstance(modelsInstance);
+ 
+    OSPInstance volumeInstance = ospNewInstance(volumeGroup);
+    if (!constantVolume) {
+      AffineSpace3f xfm = AffineSpace3f::scale(vec3f(1.25f));
+      ospSetAffine3fv(volumeInstance, "xfm", &xfm.l.vx.x);
+    }
+    ospCommit(volumeInstance);
+    ospRelease(volumeGroup);
+    AddInstance(volumeInstance);
+
+    //vec4f backgroundColor(0.03f, 0.07f, 0.23f);
+    vec4f backgroundColor(ambientColor, 1.f);
+
+    std::vector<OSPLight> lightHandles;
+    OSPLight ambientLight = ospNewLight("ambient");
+    ospSetFloat(ambientLight, "intensity", 1.f);
+    ospSetVec3fv(ambientLight, "color", &ambientColor.x);
+    ospCommit(ambientLight);
+    lightHandles.push_back(ambientLight);
+    
+    OSPLight distantLight = ospNewLight("distant");
+    ospSetFloat(distantLight, "intensity", 2.6f);
+    ospSetVec3f(distantLight, "color", 1.0f, 0.96f, 0.88f);
+    ospSetFloat(distantLight, "angularDiameter", 1.f);
+    ospSetVec3f(distantLight, "direction", -0.5826f, -0.7660f, -0.2717f);
+    ospCommit(distantLight);
+    if (enableDistantLight)
+      lightHandles.push_back(distantLight);
+
+    OSPData lights = ospNewData(lightHandles.size(), OSP_LIGHT, lightHandles.data(), 0);
+    ospCommit(lights);
+    ospSetData(renderer, "light", lights);
+    ospRelease(lights);
+    
+    OSPData texelData = ospNewData(1, OSP_VEC3F, &ambientColor.x);
+
+    OSPTexture backplateTexture = ospNewTexture("texture2d");
+    ospSetVec2i(backplateTexture, "size", 1, 1);
+    ospSetInt(backplateTexture, "type", OSP_TEXTURE_RGB32F);
+    ospSetInt(backplateTexture, "flags", OSP_TEXTURE_FILTER_NEAREST);
+    ospSetData(backplateTexture, "data", texelData);
+    ospCommit(backplateTexture);
+
+    ospRelease(texelData);
+
+    ospSetObject(renderer, "backplate", backplateTexture);
+    ospRelease(backplateTexture);
+
+    // NOTE(jda) - still need to set the world on the renderer for geom lights
+    ospSetObject(renderer, "world", world);
+    ospSetInt(renderer, "maxDepth", std::max(20, samplesPerPixel));
+    ospSetInt(renderer, "spp", samplesPerPixel);
+  }
 }  // namespace OSPRayTestScenes
