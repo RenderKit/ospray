@@ -48,12 +48,10 @@ namespace ospray {
       std::random_device rd;
       std::default_random_engine rng(rd());
       std::uniform_real_distribution<float> radDist(0.5f, 1.5f);
-      std::uniform_real_distribution<float> stepDist(0.0001f, 0.01f);
+      std::uniform_real_distribution<float> stepDist(0.001f, 0.1f);
       std::uniform_int_distribution<int> sDist(0, 360);
       std::uniform_int_distribution<int> dDist(360, 720);
       std::uniform_real_distribution<float> freqDist(0.5f, 1.5f);
-
-      int offset = 0;
 
       // create multiple lines
       int numLines = 100;
@@ -69,22 +67,21 @@ namespace ospray {
         vec4f c(r, 1 - r, 1 - r / 2, 1.f);
 
         // spiral up with changing radius of curvature
-        for (int d = dStart; d < dStart + dEnd; d++, h += hStep) {
+        for (int d = dStart; d < dStart + dEnd; d += 10, h += hStep) {
+          if (d != dStart)
+            indices.push_back(points.size() - 1);
+
           vec3f p;
           p.x = radius * std::sin(d * M_PI / 180.f);
           p.y = h - 2;
           p.z = radius * std::cos(d * M_PI / 180.f);
 
           points.push_back(p);
-          radii.push_back(0.01f * std::sin(f * (d * M_PI / 180.f)) + 0.01f);
+          radii.push_back(0.015f * std::sin(f * (d * M_PI / 180.f)) + 0.01f);
           colors.push_back(c);
 
-          radius -= 0.005f;
-
-          if (d < dEnd - 1)
-            indices.push_back(offset + d);
+          radius -= 0.05f;
         }
-        offset += dEnd;
       }
 
       OSPData pointsData = ospNewData(points.size(), OSP_VEC3F, points.data());
@@ -99,7 +96,6 @@ namespace ospray {
       ospCommit(slGeom);
 
       ospRelease(pointsData);
-      ospRelease(radiusData);
       ospRelease(indicesData);
       ospRelease(colorsData);
 
@@ -121,6 +117,7 @@ namespace ospray {
       ospCommit(instance);
 
       OSPTestingGeometry retval;
+      retval.auxData = radiusData;
       retval.geometry = slGeom;
       retval.model    = slModel;
       retval.group    = group;

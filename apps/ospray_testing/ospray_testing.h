@@ -40,6 +40,7 @@ typedef struct { osp_vec3f lower, upper; } osp_box3f;
 
 typedef struct
 {
+  OSPData auxData;
   OSPGeometry geometry;
   OSPGeometricModel model;
   OSPGroup group;

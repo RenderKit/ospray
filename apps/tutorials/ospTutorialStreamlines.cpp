@@ -57,8 +57,9 @@ int main(int argc, const char **argv)
 
   ospCommit(renderer);
 
-  // enable/disable smoothing on streamlines
-  bool smooth = true;
+  // enable/disable smoothing/radius on streamlines
+  bool smooth = false;
+  bool radius = true;
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
@@ -71,13 +72,23 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     bool update = false;
 
-    if (ImGui::Checkbox("smooth", &smooth))
+    if (ImGui::Checkbox("per-vertex radius", &radius)) {
       update = true;
+      if (radius)
+        ospSetData(streamlines.geometry, "vertex.radius", streamlines.auxData);
+      else
+        ospRemoveParam(streamlines.geometry, "vertex.radius");
+    }
+
+    if (!radius && ImGui::Checkbox("smooth", &smooth)) {
+      update = true;
+      ospSetBool(streamlines.geometry, "smooth", smooth);
+    }
 
     if (update) {
-      ospSetBool(streamlines.geometry, "smooth", smooth);
       glfwOSPRayWindow->addObjectToCommit(streamlines.geometry);
       glfwOSPRayWindow->addObjectToCommit(streamlines.model);
+      glfwOSPRayWindow->addObjectToCommit(streamlines.group);
       glfwOSPRayWindow->addObjectToCommit(world);
     }
   });
