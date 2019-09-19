@@ -149,12 +149,13 @@ void samplePath(const PathContext& pathContext,
     // backplate handling
     if (pathVertex.type == ENVIRONMENT && pathState.straightPath) 
     {
-      sample.alpha = 1.0f - luminance(pathState.throughput);
       if ((bool)pathContext.context->backplate) {
         DifferentialGeometry lookup;
         initDgFromTexCoord(lookup, clamp2edge(pathContext.context->backplate, *pathContext.pixel));
         pathState.contribution = pathState.contribution + pathState.throughput * get3f(pathContext.context->backplate, lookup);
       }
+      else
+        sample.alpha = 1.0f - luminance(pathState.throughput);
     }    
 
     if ((!pathState.disableFWD || pathState.depth == 0) && pathVertex.type != VOLUME) {
