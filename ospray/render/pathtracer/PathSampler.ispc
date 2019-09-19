@@ -29,6 +29,7 @@
 #include "render/pathtracer/materials/Medium.ih"
 #include "render/pathtracer/materials/Material.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
+#include "common/Intersect.ih"
 
 inline void postIntersect(const PathContext& pathContext,
                           const PathState& pathState, 
@@ -104,8 +105,11 @@ void samplePath(const PathContext& pathContext,
   ShadingContext_Constructor(&ctx);
 
   if (pathContext.context->shadowCatcher)
-    pathState.shadowCatcherDist = intersectPlane(ray, pathContext.context->shadowCatcherPlane);
-
+  {
+    IntersectionValues isect = intersectPlane(ray.org, ray.dir, pathContext.context->shadowCatcherPlane);
+    if(isect.t_in.hit )
+      pathState.shadowCatcherDist = isect.t_in.t_value;
+  }
   do {
     if (pathState.shadowCatcherDist > ray.t0) // valid hit can hide other geometry
       ray.t = min(pathState.shadowCatcherDist, ray.t);
