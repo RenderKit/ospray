@@ -66,7 +66,7 @@ Light_SampleRes PointLight_sample(const uniform Light* uniform super,
       const float c = localDir.z;
       res.dist = c*res.dist - sqrt_safe(sqr(self->radius) - (1.f - c*c) * dist2);
       // scale radiance by actual distance
-      res.weight = self->power * rcp(dist2);
+      res.weight = self->power * rcp(sqr(res.dist));
     } else {
         // emit only from the surface to the outside
         res.weight = make_vec3f(0.f);
@@ -91,18 +91,11 @@ Light_EvalRes PointLight_eval(const uniform Light* uniform super,
 
   if (and(self->radius > 0.f, sqrt(sinTheta2) > 0.005f)) {
     IntersectionValues isect = intersectSphere(dg.P, dir, self->position, self->radius);
-    bool hit = false;
-    float dist;
     if(and(and(isect.t_in.t_value > minDist, isect.t_in.t_value < maxDist), isect.t_in.hit))
     {
-      hit = true;
-      dist = isect.t_in.t_value;
-    }
-
-    if (hit) {
       const float cosTheta = sqrt(1.f - sinTheta2);
       res.pdf = uniformSampleConePDF(cosTheta);
-      const float invdist = rcp(dist);
+      const float invdist = rcp(isect.t_in.t_value);
       res.radiance = self->power * res.pdf * sqr(invdist);
     }
   }
