@@ -108,7 +108,7 @@ namespace ospray {
       break;
     default:
       throw std::runtime_error("amr volume 'voxelType' is invalid type " +
-                               stringForType(voxelType) +
+                               stringFor(voxelType) +
                                ". Must be one of: OSP_UCHAR, OSP_SHORT, "
                                "OSP_USHORT, OSP_FLOAT, OSP_DOUBLE");
     }

@@ -42,6 +42,7 @@ struct Sphere
 // every frame
 static std::vector<Sphere> g_spheres;
 static std::vector<vec4f> g_colors;
+static OSPData g_positionData;
 static OSPGeometry g_spheresGeometry;
 static OSPGeometricModel g_spheresModel;
 static OSPGroup g_spheresGroup;
@@ -87,18 +88,24 @@ OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
 {
   g_spheres = generateRandomSpheres(numSpheres);
 
-  // create a data object with all the sphere information
-  OSPData spheresData =
-      ospNewData(numSpheres * sizeof(Sphere), OSP_UCHAR, g_spheres.data());
+  // create a data objects with all the sphere information
+  g_positionData =
+      ospNewSharedData((char *)g_spheres.data() + offsetof(Sphere, center),
+          OSP_VEC3F,
+          numSpheres,
+          sizeof(Sphere));
+  OSPData radiusData =
+      ospNewSharedData((char *)g_spheres.data() + offsetof(Sphere, radius),
+          OSP_FLOAT,
+          numSpheres,
+          sizeof(Sphere));
 
   // create the sphere geometry, and assign attributes
   g_spheresGeometry = ospNewGeometry("spheres");
   g_spheresModel    = ospNewGeometricModel(g_spheresGeometry);
 
-  ospSetData(g_spheresGeometry, "sphere", spheresData);
-  ospSetInt(g_spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
-  ospSetInt(g_spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
-  ospSetInt(g_spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
+  ospSetData(g_spheresGeometry, "sphere.position", g_positionData);
+  ospSetData(g_spheresGeometry, "sphere.radius", radiusData);
 
   OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, g_colors.data());
 
@@ -117,7 +124,7 @@ OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
   ospCommit(g_spheresModel);
 
   // release handles we no longer need
-  ospRelease(spheresData);
+  ospRelease(radiusData);
   ospRelease(colorData);
   ospRelease(glassMaterial);
 
@@ -207,15 +214,9 @@ void updateSpheresCoordinates()
 
 void updateSpheresGeometry()
 {
-  // create new spheres data for the updated center coordinates, and assign to
-  // geometry
-  OSPData spheresData = ospNewData(
-      g_spheres.size() * sizeof(Sphere), OSP_UCHAR, g_spheres.data());
-
-  ospSetData(g_spheresGeometry, "sphere", spheresData);
-
-  // release handles we no longer need
-  ospRelease(spheresData);
+  // communicate that center coordinates got changed
+  ospCommit(g_positionData);
+  ospCommit(g_spheresGeometry);
 }
 
 // updates the bouncing spheres' coordinates, geometry, and world
@@ -265,6 +266,7 @@ int main(int argc, const char **argv)
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
 
+  ospRelease(g_positionData);
   ospRelease(g_spheresGeometry);
   ospRelease(g_spheresModel);
   ospRelease(g_spheresGroup);

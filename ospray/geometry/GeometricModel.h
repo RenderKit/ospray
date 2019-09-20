@@ -35,23 +35,16 @@ namespace ospray {
     void setGeomIE(void *geomIE, int geomID);
 
    private:
-    // Helper functions //
-
     void setMaterial();
-    void setMaterialList(Data *matListData);
-
-    // Data //
+    void setMaterialList(const DataT<Material *> *);
 
     Ref<Geometry> geom;
-
-    Ref<Data> prim_materialIDData; /*!< data array for per-prim material ID
-                                      (uint32) */
-    Ref<Data> colorData;
+    Ref<const DataT<uint32_t>> prim_materialIDData;
+    Ref<const DataT<vec4f>> colorData;
     Material **materialList{nullptr};  //!< per-primitive material list
     Ref<Material> material;
-    Ref<Data> materialListData;  //!< data array for per-prim materials
-    std::vector<void *>
-        ispcMaterialPtrs;  //!< pointers to ISPC equivalent materials
+    Ref<const DataT<Material *>> materialListData;
+    std::vector<void *> ispcMaterialPtrs;
 
     friend struct PathTracer;  // TODO: fix this!
     friend struct Renderer;

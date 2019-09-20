@@ -134,15 +134,15 @@ typedef enum
   OSP_TEXTURE_FORMAT_INVALID = 255,
 } OSPTextureFormat;
 
-// Flags that can be set on `texture2d` type OSPTexture; can be OR'ed together
+// Filter modes that can be set on 'texture2d' type OSPTexture
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t
 #endif
 {
-  OSP_TEXTURE_SHARED_BUFFER = (1<<0),
-  OSP_TEXTURE_FILTER_NEAREST = (1<<1) //< use nearest-neighbor interpolation rather than the default bilinear interpolation
-} OSPTextureCreationFlags;
+  OSP_TEXTURE_FILTER_BILINEAR = 0, // default bilinear interpolation
+  OSP_TEXTURE_FILTER_NEAREST // use nearest-neighbor interpolation
+} OSPTextureFilter;
 
 
 // Error codes returned by various API and callback functions

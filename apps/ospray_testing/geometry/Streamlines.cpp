@@ -40,7 +40,8 @@ namespace ospray {
         const std::string &renderer_type) const
     {
       auto slGeom = ospNewGeometry("streamlines");
-      std::vector<vec4f> points;
+      std::vector<vec3f> points;
+      std::vector<float> radii;
       std::vector<int> indices;
       std::vector<vec4f> colors;
 
@@ -69,13 +70,13 @@ namespace ospray {
 
         // spiral up with changing radius of curvature
         for (int d = dStart; d < dStart + dEnd; d++, h += hStep) {
-          vec4f p;
+          vec3f p;
           p.x = radius * std::sin(d * M_PI / 180.f);
           p.y = h - 2;
           p.z = radius * std::cos(d * M_PI / 180.f);
-          p.w = 0.01f * std::sin(f * (d * M_PI / 180.f)) + 0.01f;
 
           points.push_back(p);
+          radii.push_back(0.01f * std::sin(f * (d * M_PI / 180.f)) + 0.01f);
           colors.push_back(c);
 
           radius -= 0.005f;
@@ -86,13 +87,21 @@ namespace ospray {
         offset += dEnd;
       }
 
-      OSPData pointsData  = ospNewData(points.size(), OSP_VEC4F, points.data());
-      OSPData indicesData = ospNewData(indices.size(), OSP_INT, indices.data());
+      OSPData pointsData = ospNewData(points.size(), OSP_VEC3F, points.data());
+      OSPData radiusData = ospNewData(radii.size(), OSP_FLOAT, radii.data());
+      OSPData indicesData =
+          ospNewData(indices.size(), OSP_UINT, indices.data());
       OSPData colorsData  = ospNewData(colors.size(), OSP_VEC4F, colors.data());
       ospSetData(slGeom, "vertex.position", pointsData);
+      ospSetData(slGeom, "vertex.radius", radiusData);
       ospSetData(slGeom, "index", indicesData);
       ospSetData(slGeom, "vertex.color", colorsData);
       ospCommit(slGeom);
+
+      ospRelease(pointsData);
+      ospRelease(radiusData);
+      ospRelease(indicesData);
+      ospRelease(colorsData);
 
       auto slModel = ospNewGeometricModel(slGeom);
       ospCommit(slModel);

@@ -15,17 +15,18 @@
 // ======================================================================== //
 
 // ospray
+#include "common/Data.ih"
+#include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
-#include "common/Intersect.ih"
 
 struct Boxes
 {
   Geometry super;
-  box3f *boxes;
+  Data1D boxes;
 };
 
 unmasked void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
@@ -35,7 +36,7 @@ unmasked void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
 
-  *out = make_box3fa(self->boxes[primID]);
+  *out = make_box3fa(get_box3f(self->boxes, primID));
 }
 
 void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
@@ -50,23 +51,21 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
 
   uniform int primID = args->primID;
 
-  box3f *uniform box = &self->boxes[primID];
-
-  IntersectionValues isect = intersectBox(ray->org, ray->dir, *box);
+  uniform box3f box = get_box3f(self->boxes, primID);
+  IntersectionValues isect = intersectBox(ray->org, ray->dir, box);
 
   bool hit = false;
-  if(isect.t_in.t_value < isect.t_out.t_value) {
-    if (and(and(isect.t_in.t_value > ray->t0, isect.t_in.t_value < ray->t),
-            isect.t_in.hit)) {
-      hit = true;
-      ray->Ng = isect.t_in.N;
-      ray->t  = isect.t_in.t_value;
-    } else if (and(and(isect.t_out.t_value > ray->t0, isect.t_out.t_value < ray->t),
-                   isect.t_out.hit)) {
-      hit = true;
-      ray->Ng = isect.t_out.N;
-      ray->t  = isect.t_out.t_value;
-    }
+  if (and(and(isect.t_in.t_value > ray->t0, isect.t_in.t_value <= ray->t),
+          isect.t_in.hit)) {
+    hit = true;
+    ray->Ng = isect.t_in.N;
+    ray->t = isect.t_in.t_value;
+  } else if (and(and(isect.t_out.t_value > ray->t0,
+                     isect.t_out.t_value <= ray->t),
+                 isect.t_out.hit)) {
+    hit = true;
+    ray->Ng = isect.t_out.N;
+    ray->t = isect.t_out.t_value;
   }
 
   if (hit) {
@@ -90,9 +89,9 @@ unmasked void Boxes_intersect(
 }
 
 unmasked void Boxes_occluded(
-    const struct RTCIntersectFunctionNArguments *uniform args)
+    const struct RTCOccludedFunctionNArguments *uniform args)
 {
-  Boxes_intersect_kernel(args, true);
+  Boxes_intersect_kernel((RTCIntersectFunctionNArguments * uniform) args, true);
 }
 
 static void Boxes_postIntersect(const Geometry *uniform geometry,
@@ -100,41 +99,31 @@ static void Boxes_postIntersect(const Geometry *uniform geometry,
                                 const varying Ray &ray,
                                 uniform int64 flags)
 {
-  uniform Boxes *uniform self = (uniform Boxes * uniform) geometry;
-
   dg.Ng = dg.Ns = ray.Ng;
-
-  dg.epsilon = 1e-3f;  // TODO: make this smarter...
 }
 
 export void *uniform Boxes_create(void *uniform cppEquivalent)
 {
-  uniform Boxes *uniform boxes = uniform new uniform Boxes;
+  Boxes *uniform self = uniform new Boxes;
 
-  Geometry_Constructor(&boxes->super, cppEquivalent, Boxes_postIntersect);
+  Geometry_Constructor(&self->super, cppEquivalent, Boxes_postIntersect);
+  Data1D_Constructor(&self->boxes);
 
-  return boxes;
+  return self;
 }
 
 export void *uniform Boxes_set(void *uniform _self,
-                               void *uniform _embreeGeometry,
-                               int32 uniform numBoxes,
-                               void *uniform boxes)
+    void *uniform _embreeGeometry,
+    const Data1D *uniform boxes)
 {
   Boxes *uniform self = (Boxes * uniform) _self;
 
-  self->super.numPrimitives = numBoxes;
-  self->boxes               = (box3f * uniform) boxes;
+  self->boxes = *boxes;
+  self->super.numPrimitives = boxes->numItems;
 
-  RTCGeometry geom = (RTCGeometry)_embreeGeometry;
-
-  rtcSetGeometryUserData(geom, self);
-  rtcSetGeometryUserPrimitiveCount(geom, numBoxes);
-  rtcSetGeometryBoundsFunction(
-      geom, (uniform RTCBoundsFunction)&Boxes_bounds, self);
-  rtcSetGeometryIntersectFunction(
-      geom, (uniform RTCIntersectFunctionN)&Boxes_intersect);
-  rtcSetGeometryOccludedFunction(geom,
-                                 (uniform RTCOccludedFunctionN)&Boxes_occluded);
-  rtcCommitGeometry(geom);
+  Geometry_setEmbreeUserGeometry(&self->super,
+      (RTCGeometry)_embreeGeometry,
+      Boxes_bounds,
+      Boxes_intersect,
+      Boxes_occluded);
 }

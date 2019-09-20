@@ -33,73 +33,36 @@ namespace ospray {
 
   void StreamLines::commit()
   {
-    useCurve     = getParam1b("smooth", false);
-    globalRadius = getParam1f("radius", 0.01f);
-    utility::DataView<const float> radius(&globalRadius, 0);
+    vertexData = getParamDataT<vec3f>("vertex.position", true);
+    indexData = getParamDataT<uint32_t>("index", true);
 
-    indexData = getParamData("index", nullptr);
+    useCurve = getParam1b("smooth", false);
+    radius = getParam1f("radius", 0.01f);
+    utility::DataView<const float> radiusView(&radius, 0);
 
-    if (!indexData)
-      throw std::runtime_error("streamlines geometry must have 'index' array");
+    colorData = getParamDataT<vec4f>("vertex.color");
+    radiusData = getParamDataT<float>("vertex.radius");
 
-    if (indexData->type != OSP_INT) {
-      throw std::runtime_error(
-          "streamlines geometry 'index' array must have element type OSP_INT");
-    }
-
-    index = (uint32 *)indexData->data();
-    numSegments = indexData->size();
-
-    vertexData = getParamData("vertex.position");
-
-    if (!vertexData) {
-      throw std::runtime_error(
-          "streamlines geometry must have 'vertex.position' array");
-    }
-
-    if (vertexData->type != OSP_VEC4F && vertexData->type != OSP_VEC3F) {
-      std::stringstream ss;
-      ss << "streamlines geometry 'vertex.position' array has invalid type "
-         << stringForType(vertexData->type)
-         << ". Must be one of: OSP_VEC3F, OSP_VEC4F";
-      throw std::runtime_error(ss.str());
-    }
-
-    utility::DataView<const vec3f> vertex(vertexData->data(), sizeof(vec3f));
-
-    if (vertexData->type == OSP_VEC4F) {
-      radius.reset((const float *)vertexData->data() + 3, sizeof(vec4f));
-      vertex.reset(vertexData->data(), sizeof(vec4f));
-      useCurve = true;
-    }
-
-    colorData = getParamData("vertex.color");
-
-    if (colorData && colorData->type != OSP_VEC4F) {
-      throw std::runtime_error(
-          "streamlines geometry 'vertex.color' array must have element type "
-          "OSP_VEC4F");
-    }
-
-    radiusData = getParamData("vertex.radius");
-
-    if (radiusData && radiusData->type == OSP_FLOAT) {
-      radius.reset((const float *)radiusData->data());
+    if (radiusData) {
+      radiusView.reset(radiusData->data(), radiusData->stride());
       useCurve = true;
     }
 
     if (useCurve) {
+      const auto numSegments = indexData->size();
       vertexCurve.clear();
       indexCurve.resize(numSegments);
       bool middleSegment = false;
       vec3f tangent;
+      const auto &vertex = *vertexData;
+      const auto &index = *indexData;
       for (uint32_t i = 0; i < numSegments; i++) {
         const uint32 idx          = index[i];
         const vec3f start         = vertex[idx];
         const vec3f end           = vertex[idx + 1];
         const float lengthSegment = length(start - end);
-        const float startRadius   = radius[idx];
-        const float endRadius     = radius[idx + 1];
+        const float startRadius = radiusView[idx];
+        const float endRadius = radiusView[idx + 1];
 
         indexCurve[i] = vertexCurve.size();
         if (middleSegment) {
@@ -127,64 +90,45 @@ namespace ospray {
           vertexCurve.push_back(vec4f(cap, 0.f));
         }
       }
+    } else {
+      vertexCurve.clear();
+      indexCurve.clear();
     }
 
-    numVertices = useCurve ? vertexCurve.size() : vertexData->size();
-
-    postCreationInfo(vertexData->size());
+    postCreationInfo(useCurve ? vertexCurve.size() : vertexData->size());
   }
 
   size_t StreamLines::numPrimitives() const
   {
-    return numSegments;
+    return indexData ? indexData->size() : 0;
   }
 
   LiveGeometry StreamLines::createEmbreeGeometry()
   {
-    LiveGeometry retval;
+    auto embreeGeo = rtcNewGeometry(ispc_embreeDevice(),
+        useCurve ? RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE
+                 : RTC_GEOMETRY_TYPE_USER);
 
+    LiveGeometry retval;
+    retval.embreeGeometry = embreeGeo;
     retval.ispcEquivalent = ispc::StreamLines_create(this);
-    retval.embreeGeometry =
-        rtcNewGeometry(ispc_embreeDevice(),
-                       useCurve ? RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE
-                                : RTC_GEOMETRY_TYPE_USER);
 
     if (useCurve) {
-      rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                                 RTC_BUFFER_TYPE_VERTEX,
-                                 0,
-                                 RTC_FORMAT_FLOAT4,
-                                 vertexCurve.data(),
-                                 0,
-                                 sizeof(vec4f),
-                                 numVertices);
+      setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexCurve);
+      setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_VERTEX, vertexCurve);
 
-      rtcSetSharedGeometryBuffer(retval.embreeGeometry,
-                                 RTC_BUFFER_TYPE_INDEX,
-                                 0,
-                                 RTC_FORMAT_UINT,
-                                 indexCurve.data(),
-                                 0,
-                                 sizeof(int),
-                                 numSegments);
-
-      ispc::StreamLines_setCurve(retval.ispcEquivalent,
-          vertexCurve.size(),
-          numSegments,
-          index,
-          colorData ? (ispc::vec4f *)colorData->data() : nullptr);
+      ispc::StreamLines_setCurve(
+          retval.ispcEquivalent, ispc(indexData), ispc(colorData));
     } else {
       ispc::StreamLines_set(retval.ispcEquivalent,
           retval.embreeGeometry,
-          globalRadius,
-          (const ispc::vec3f *)vertexData->data(),
-          numVertices,
-          index,
-          numSegments,
-          colorData ? (ispc::vec4f *)colorData->data() : nullptr);
+          radius,
+          ispc(indexData),
+          ispc(vertexData),
+          ispc(colorData));
     }
 
-    rtcCommitGeometry(retval.embreeGeometry);
+    rtcCommitGeometry(embreeGeo);
 
     return retval;
   }

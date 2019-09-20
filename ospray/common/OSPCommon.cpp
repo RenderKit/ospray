@@ -125,7 +125,8 @@ namespace ospray {
     }
   }
 
-  size_t sizeOf(const OSPDataType type) {
+  size_t sizeOf(OSPDataType type)
+  {
     switch (type) {
     case OSP_VOID_PTR:
     case OSP_OBJECT:
@@ -188,7 +189,7 @@ namespace ospray {
     case OSP_LINEAR3F:  return sizeof(linear3f);
     case OSP_AFFINE2F:  return sizeof(affine2f);
     case OSP_AFFINE3F:  return sizeof(affine3f);
-    case OSP_UNKNOWN:   break;
+    case OSP_UNKNOWN:   return 0;
     }
 
     std::stringstream error;
@@ -197,7 +198,7 @@ namespace ospray {
     throw std::runtime_error(error.str());
   }
 
-  OSPDataType typeForString(const char *string)
+  OSPDataType typeOf(const char *string)
   {
     if (string == nullptr)             return(OSP_UNKNOWN);
     if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
@@ -223,7 +224,7 @@ namespace ospray {
     return(OSP_UNKNOWN);
   }
 
-  std::string stringForType(OSPDataType type)
+  std::string stringFor(OSPDataType type)
   {
     switch (type) {
     case OSP_VOID_PTR:          return "void_ptr";
@@ -297,9 +298,44 @@ namespace ospray {
     throw std::runtime_error(error.str());
   }
 
-  size_t sizeOf(const OSPTextureFormat type)
+  std::string stringFor(OSPTextureFormat format)
   {
-    switch (type) {
+    switch (format) {
+    case OSP_TEXTURE_RGBA8:
+      return "rgba8";
+    case OSP_TEXTURE_SRGBA:
+      return "srgba";
+    case OSP_TEXTURE_RGBA32F:
+      return "rgba32f";
+    case OSP_TEXTURE_RGB8:
+      return "rgb8";
+    case OSP_TEXTURE_SRGB:
+      return "srgb";
+    case OSP_TEXTURE_RGB32F:
+      return "rgb32f";
+    case OSP_TEXTURE_R8:
+      return "r8";
+    case OSP_TEXTURE_L8:
+      return "l8";
+    case OSP_TEXTURE_RA8:
+      return "ra8";
+    case OSP_TEXTURE_LA8:
+      return "la8";
+    case OSP_TEXTURE_R32F:
+      return "r32f";
+    case OSP_TEXTURE_FORMAT_INVALID:
+      return "invalid";
+    }
+
+    std::stringstream error;
+    error << __FILE__ << ":" << __LINE__ << ": undefined OSPTextureFormat "
+          << (int)format;
+    throw std::runtime_error(error.str());
+  }
+
+  size_t sizeOf(OSPTextureFormat format)
+  {
+    switch (format) {
       case OSP_TEXTURE_RGBA8:
       case OSP_TEXTURE_SRGBA:          return sizeof(uint32);
       case OSP_TEXTURE_RGBA32F:        return sizeof(vec4f);
@@ -311,12 +347,12 @@ namespace ospray {
       case OSP_TEXTURE_RA8:
       case OSP_TEXTURE_LA8:            return sizeof(vec2uc);
       case OSP_TEXTURE_R32F:           return sizeof(float);
-      case OSP_TEXTURE_FORMAT_INVALID: break;
+      case OSP_TEXTURE_FORMAT_INVALID: return 0;
     }
 
     std::stringstream error;
     error << __FILE__ << ":" << __LINE__ << ": unknown OSPTextureFormat "
-          << (int)type;
+          << (int)format;
     throw std::runtime_error(error.str());
   }
 

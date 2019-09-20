@@ -40,8 +40,8 @@ namespace ospray {
 
     RTCGeometryType embreeCurveType;
 
-    OSPCurveType curveType;
-    OSPCurveBasis curveBasis;
+    OSPCurveType curveType{OSP_UNKNOWN_CURVE_TYPE};
+    OSPCurveBasis curveBasis{OSP_UNKNOWN_CURVE_BASIS};
   };
 
 }  // namespace ospray

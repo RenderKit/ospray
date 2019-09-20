@@ -37,7 +37,7 @@ namespace ospray {
    protected:
     // Data members //
 
-    Ref<Data> boxData;
+    Ref<const DataT<box3f>> boxData;
 
     size_t numBoxes{0};
 

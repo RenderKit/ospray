@@ -34,16 +34,12 @@ namespace ospray {
     LiveGeometry createEmbreeGeometry() override;
 
    protected:
-    float radius;  //!< default radius, if no per-cylinder radius was specified.
-
-    size_t numCylinders;
-    size_t bytesPerCylinder;  //!< num bytes per cylinder
-    int64 offset_v0;
-    int64 offset_v1;
-    int64 offset_radius;
-
-    Ref<Data> cylinderData;
-    Ref<Data> texcoordData;
+    float radius{0.01}; // default radius, if no per-cylinder radius
+    Ref<const DataT<vec3f>> vertex0Data;
+    Ref<const DataT<vec3f>> vertex1Data;
+    Ref<const DataT<float>> radiusData;
+    Ref<const DataT<vec2f>> texcoord0Data;
+    Ref<const DataT<vec2f>> texcoord1Data;
   };
 
 }  // namespace ospray

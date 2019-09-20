@@ -54,6 +54,7 @@ namespace ospray {
     size_t size() const;
     char *data() const;
     char *data(const vec3ui &idx) const;
+    bool compact() const; // all strides are natural
     void copy(const Data &source, const vec3ui &destinationIndex);
 
     template <typename T, int DIM = 1>
@@ -64,8 +65,6 @@ namespace ospray {
 
     template <typename T, int DIM>
     typename std::enable_if<!std::is_pointer<T>::value, bool>::type is() const;
-
-    size_t numBytes; // XXX temp
 
    protected:
     char *addr{nullptr};
@@ -282,8 +281,8 @@ namespace ospray {
     else {
       std::stringstream ss;
       ss << "Incompatible type or dimension for DataT; requested type[dim]: "
-         << stringForType(OSPTypeFor<T>::value) << "[" << DIM
-         << "], actual: " << stringForType(type) << "[" << dimensions << "].";
+         << stringFor(OSPTypeFor<T>::value) << "[" << DIM
+         << "], actual: " << stringFor(type) << "[" << dimensions << "].";
       throw std::runtime_error(ss.str());
     }
   }
@@ -299,16 +298,15 @@ namespace ospray {
     else {
       if (required)
         throw std::runtime_error(toString() + " must have '" + name
-            + "' array with element type "
-            + stringForType(OSPTypeFor<T>::value));
+            + "' array with element type " + stringFor(OSPTypeFor<T>::value));
       else {
         if (data)
           postStatusMsg(1) << toString() << " ignoring '" << name
                            << "' array with wrong element type (should be "
-                           << stringForType(OSPTypeFor<T>::value) << ")";
+                           << stringFor(OSPTypeFor<T>::value) << ")";
         return nullptr;
       }
     }
   }
 
-}  // namespace ospray
+} // namespace ospray

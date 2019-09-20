@@ -28,45 +28,38 @@ namespace ospray {
 
   void Texture2D::commit()
   {
-    auto size = getParam<vec2i>("size", vec2i(-1, -1));
+    texData = getParamData("data");
 
-    if (size.x < 0 || size.y < 0) {
-      std::stringstream ss;
-      ss << "2D texture 'size' must be positive, but is " << size;
-      throw std::runtime_error(ss.str());
+    if (!texData || texData->numItems.z > 1)
+      throw std::runtime_error(toString()
+          + " must have 2D 'data' array using the first two dimensions.");
+
+    const vec2i size = vec2i(texData->numItems.x, texData->numItems.y);
+    if (!texData->compact()) {
+      postStatusMsg(1)
+          << toString()
+          << " does currently not support strides, copying texture data.";
+
+      auto data = new Data(texData->type, texData->numItems);
+      data->copy(*texData, vec3ui(0));
+      texData = data;
+      data->refDec();
     }
 
-    auto texData = getParamData("data", nullptr);
+    format = static_cast<OSPTextureFormat>(
+        getParam1i("format", OSP_TEXTURE_FORMAT_INVALID));
+    filter = static_cast<OSPTextureFilter>(
+        getParam1i("filter", OSP_TEXTURE_FILTER_BILINEAR));
 
-    if (!texData->data()) {
-      throw std::runtime_error(
-          "2D texture must have 'data' array of texel data");
-    }
-
-    type  = static_cast<OSPTextureFormat>(
-      getParam1i("type", OSP_TEXTURE_FORMAT_INVALID)
-    );
-    flags = getParam1i("flags", 0);
-
-    const size_t numBytesExpected = sizeOf(type) * size.x * size.y;
-
-    if (numBytesExpected != texData->numBytes) {
-      std::stringstream ss;
-      ss << "2D texture 'size' (" << numBytesExpected
-         << ") does not match provided 'data' array size (" << texData->numBytes
-         << ")";
-      throw std::runtime_error(ss.str());
-    }
+    if (sizeOf(format) != sizeOf(texData->type))
+      throw std::runtime_error(toString() + ": 'format'='" + stringFor(format)
+          + "' does not match type of 'data'='" + stringFor(texData->type)
+          + "'!");
 
     this->ispcEquivalent = ispc::Texture2D_create(
-        (ispc::vec2i &)size, texData->data(), type, flags);
+        (ispc::vec2i &)size, texData->data(), format, filter);
   }
 
   OSP_REGISTER_TEXTURE(Texture2D, texture2d);
-  OSP_REGISTER_TEXTURE(Texture2D, texture2D);
-  OSP_REGISTER_TEXTURE(Texture2D, image2d);
-  OSP_REGISTER_TEXTURE(Texture2D, image2D);
-  OSP_REGISTER_TEXTURE(Texture2D, 2d);
-  OSP_REGISTER_TEXTURE(Texture2D, 2D);
 
 } // ::ospray

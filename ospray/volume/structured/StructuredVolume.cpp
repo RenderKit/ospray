@@ -31,7 +31,7 @@ namespace ospray {
 
   std::string StructuredVolume::toString() const
   {
-    return ("ospray::StructuredVolume<" + stringForType(voxelType) + ">");
+    return ("ospray::StructuredVolume<" + stringFor(voxelType) + ">");
   }
 
   void StructuredVolume::commit()

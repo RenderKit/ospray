@@ -67,99 +67,100 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
     int w;
   };
 
-  std::vector<Vertex> vertices;
-  std::vector<QuadIndex> quadIndices;
+  static std::vector<Vertex> vertices;
+  static std::vector<QuadIndex> quadIndices;
 
-  // ground plane
-  int startingIndex = vertices.size();
+  if (quadIndices.empty()) { // generate data on first use
 
-  const vec3f up   = vec3f{0.f, 1.f, 0.f};
-  const vec4f gray = vec4f{0.9f, 0.9f, 0.9f, 0.75f};
+    // ground plane
+    int startingIndex = vertices.size();
 
-  vertices.push_back(Vertex{vec3f{-planeExtent, -1.f, -planeExtent}, up, gray});
-  vertices.push_back(Vertex{vec3f{planeExtent, -1.f, -planeExtent}, up, gray});
-  vertices.push_back(Vertex{vec3f{planeExtent, -1.f, planeExtent}, up, gray});
-  vertices.push_back(Vertex{vec3f{-planeExtent, -1.f, planeExtent}, up, gray});
+    const vec3f up = vec3f{0.f, 1.f, 0.f};
+    const vec4f gray = vec4f{0.9f, 0.9f, 0.9f, 0.75f};
 
-  quadIndices.push_back(QuadIndex{
-      startingIndex, startingIndex + 1, startingIndex + 2, startingIndex + 3});
-
-  // stripes on ground plane
-  const float stripeWidth  = 0.025f;
-  const float paddedExtent = planeExtent + stripeWidth;
-  const size_t numStripes  = 10;
-
-  const vec4f stripeColor = vec4f{1.0f, 0.1f, 0.1f, 1.f};
-
-  for (size_t i = 0; i < numStripes; i++) {
-    // the center coordinate of the stripe, either in the x or z direction
-    const float coord =
-        -planeExtent + float(i) / float(numStripes - 1) * 2.f * planeExtent;
-
-    // offset the stripes by an epsilon above the ground plane
-    const float yLevel = -1.f + 1e-3f;
-
-    // x-direction stripes
-    startingIndex = vertices.size();
-
-    vertices.push_back(Vertex{
-        vec3f{-paddedExtent, yLevel, coord - stripeWidth}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{paddedExtent, yLevel, coord - stripeWidth}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{-paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
+    vertices.push_back(
+        Vertex{vec3f{-planeExtent, -1.f, -planeExtent}, up, gray});
+    vertices.push_back(
+        Vertex{vec3f{planeExtent, -1.f, -planeExtent}, up, gray});
+    vertices.push_back(Vertex{vec3f{planeExtent, -1.f, planeExtent}, up, gray});
+    vertices.push_back(
+        Vertex{vec3f{-planeExtent, -1.f, planeExtent}, up, gray});
 
     quadIndices.push_back(QuadIndex{startingIndex,
-                                    startingIndex + 1,
-                                    startingIndex + 2,
-                                    startingIndex + 3});
+        startingIndex + 1,
+        startingIndex + 2,
+        startingIndex + 3});
 
-    // z-direction stripes
-    startingIndex = vertices.size();
+    // stripes on ground plane
+    const float stripeWidth = 0.025f;
+    const float paddedExtent = planeExtent + stripeWidth;
+    const size_t numStripes = 10;
 
-    vertices.push_back(Vertex{
-        vec3f{coord - stripeWidth, yLevel, -paddedExtent}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{coord + stripeWidth, yLevel, -paddedExtent}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{coord + stripeWidth, yLevel, paddedExtent}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{coord - stripeWidth, yLevel, paddedExtent}, up, stripeColor});
+    const vec4f stripeColor = vec4f{1.0f, 0.1f, 0.1f, 1.f};
 
-    quadIndices.push_back(QuadIndex{startingIndex,
-                                    startingIndex + 1,
-                                    startingIndex + 2,
-                                    startingIndex + 3});
+    for (size_t i = 0; i < numStripes; i++) {
+      // the center coordinate of the stripe, either in the x or z direction
+      const float coord =
+          -planeExtent + float(i) / float(numStripes - 1) * 2.f * planeExtent;
+
+      // offset the stripes by an epsilon above the ground plane
+      const float yLevel = -1.f + 1e-3f;
+
+      // x-direction stripes
+      startingIndex = vertices.size();
+
+      vertices.push_back(Vertex{
+          vec3f{-paddedExtent, yLevel, coord - stripeWidth}, up, stripeColor});
+      vertices.push_back(Vertex{
+          vec3f{paddedExtent, yLevel, coord - stripeWidth}, up, stripeColor});
+      vertices.push_back(Vertex{
+          vec3f{paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
+      vertices.push_back(Vertex{
+          vec3f{-paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
+
+      quadIndices.push_back(QuadIndex{startingIndex,
+          startingIndex + 1,
+          startingIndex + 2,
+          startingIndex + 3});
+
+      // z-direction stripes
+      startingIndex = vertices.size();
+
+      vertices.push_back(Vertex{
+          vec3f{coord - stripeWidth, yLevel, -paddedExtent}, up, stripeColor});
+      vertices.push_back(Vertex{
+          vec3f{coord + stripeWidth, yLevel, -paddedExtent}, up, stripeColor});
+      vertices.push_back(Vertex{
+          vec3f{coord + stripeWidth, yLevel, paddedExtent}, up, stripeColor});
+      vertices.push_back(Vertex{
+          vec3f{coord - stripeWidth, yLevel, paddedExtent}, up, stripeColor});
+
+      quadIndices.push_back(QuadIndex{startingIndex,
+          startingIndex + 1,
+          startingIndex + 2,
+          startingIndex + 3});
+    }
   }
 
   // create OSPRay data objects
-  std::vector<vec3f> positionVector;
-  std::vector<vec3f> normalVector;
-  std::vector<vec4f> colorVector;
-
-  std::transform(vertices.begin(),
-                 vertices.end(),
-                 std::back_inserter(positionVector),
-                 [](Vertex const &v) { return v.position; });
-  std::transform(vertices.begin(),
-                 vertices.end(),
-                 std::back_inserter(normalVector),
-                 [](Vertex const &v) { return v.normal; });
-  std::transform(vertices.begin(),
-                 vertices.end(),
-                 std::back_inserter(colorVector),
-                 [](Vertex const &v) { return v.color; });
-
   OSPData positionData =
-      ospNewData(vertices.size(), OSP_VEC3F, positionVector.data());
+      ospNewSharedData((char *)vertices.data() + offsetof(Vertex, position),
+          OSP_VEC3F,
+          vertices.size(),
+          sizeof(Vertex));
   OSPData normalData =
-      ospNewData(vertices.size(), OSP_VEC3F, normalVector.data());
+      ospNewSharedData((char *)vertices.data() + offsetof(Vertex, normal),
+          OSP_VEC3F,
+          vertices.size(),
+          sizeof(Vertex));
   OSPData colorData =
-      ospNewData(vertices.size(), OSP_VEC4F, colorVector.data());
+      ospNewSharedData((char *)vertices.data() + offsetof(Vertex, color),
+          OSP_VEC4F,
+          vertices.size(),
+          sizeof(Vertex));
+
   OSPData indexData =
-      ospNewData(quadIndices.size(), OSP_VEC4UI, quadIndices.data());
+      ospNewSharedData(quadIndices.data(), OSP_VEC4UI, quadIndices.size());
 
   // set vertex / index data on the geometry
   ospSetData(planeGeometry, "vertex.position", positionData);

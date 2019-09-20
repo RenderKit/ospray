@@ -67,8 +67,8 @@ namespace ospray {
       int numCylinders = numPatches.x * numPatches.y * numCylindersPerPatch;
 
       // populate the cylinders
-      std::vector<Cylinder> cylinders(numCylinders);
-      std::vector<vec4f> colors(numCylinders);
+      static std::vector<Cylinder> cylinders(numCylinders);
+      std::vector<vec4f> colors(numCylinders); // TODO put in Cylinder as well
 
       for (int pz = 0; pz < numPatches.y; pz++) {
         for (int px = 0; px < numPatches.x; px++) {
@@ -100,21 +100,29 @@ namespace ospray {
         c.w = 1.0f;
       }
 
-      // create a data object with all the cylinder information
-      OSPData cylindersData = ospNewData(
-          numCylinders * sizeof(Cylinder), OSP_UCHAR, cylinders.data());
+      // create a data objects with all the cylinder information
+      OSPData startVertexData = ospNewSharedData(
+          (char *)cylinders.data() + offsetof(Cylinder, startVertex),
+          OSP_VEC3F,
+          numCylinders,
+          sizeof(Cylinder));
+      OSPData endVertexData = ospNewSharedData(
+          (char *)cylinders.data() + offsetof(Cylinder, endVertex),
+          OSP_VEC3F,
+          numCylinders,
+          sizeof(Cylinder));
+      OSPData radiusData = ospNewSharedData(
+          (char *)cylinders.data() + offsetof(Cylinder, radius),
+          OSP_FLOAT,
+          numCylinders,
+          sizeof(Cylinder));
 
       // create the cylinder geometry, and assign attributes
       OSPGeometry cylindersGeometry = ospNewGeometry("cylinders");
 
-      ospSetData(cylindersGeometry, "cylinder", cylindersData);
-      ospSetInt(cylindersGeometry, "bytes_per_cylinder", int(sizeof(Cylinder)));
-      ospSetInt(
-          cylindersGeometry, "offset_v0", int(offsetof(Cylinder, startVertex)));
-      ospSetInt(
-          cylindersGeometry, "offset_v1", int(offsetof(Cylinder, endVertex)));
-      ospSetInt(
-          cylindersGeometry, "offset_radius", int(offsetof(Cylinder, radius)));
+      ospSetData(cylindersGeometry, "cylinder.position0", startVertexData);
+      ospSetData(cylindersGeometry, "cylinder.position1", endVertexData);
+      ospSetData(cylindersGeometry, "cylinder.radius", radiusData);
 
       // commit the cylinders geometry
       ospCommit(cylindersGeometry);
@@ -135,7 +143,9 @@ namespace ospray {
       ospSetObject(cylindersModel, "material", objMaterial);
 
       // release handles we no longer need
-      ospRelease(cylindersData);
+      ospRelease(startVertexData);
+      ospRelease(endVertexData);
+      ospRelease(radiusData);
       ospRelease(cylindersColor);
       ospRelease(objMaterial);
 

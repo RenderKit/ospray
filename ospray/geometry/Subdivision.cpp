@@ -51,7 +51,7 @@ namespace ospray {
     if (!facesData) {
       if (indexData->size() % 4 != 0)
         throw std::runtime_error(toString()
-            + ": if no `face` array is present then a pure quad mesh is assumed (the number of indices must be a multiple of 4)");
+            + ": if no 'face' array is present then a pure quad mesh is assumed (the number of indices must be a multiple of 4)");
 
       auto data = new Data(OSP_UINT, vec3ui(indexData->size() / 4, 1, 1));
       facesData = &(data->as<uint32_t>());

@@ -16,17 +16,16 @@
 
 #include "Geometry.ih"
 
-//! constructor for ispc-side Geometry object
-static void Geometry_Constructor(uniform Geometry *uniform geometry,
+static void Geometry_Constructor(Geometry *uniform self,
     void *uniform cppEquivalent,
     uniform Geometry_postIntersectFct postIntersect)
 {
-  geometry->cppEquivalent = cppEquivalent;
-  geometry->numPrimitives = 0;
-  geometry->geomID        = -1;
-  geometry->postIntersect = postIntersect;
-  geometry->sampleArea    = NULL;
-  geometry->getAreas      = NULL;
+  self->cppEquivalent = cppEquivalent;
+  self->numPrimitives = 0;
+  self->geomID = -1;
+  self->postIntersect = postIntersect;
+  self->sampleArea = NULL;
+  self->getAreas = NULL;
 }
 
 export void Geometry_set_geomID(void *uniform _self, uniform int32 geomID)

@@ -93,6 +93,20 @@ struct Geometry
   int32 geomID;
 };
 
+inline void Geometry_setEmbreeUserGeometry(Geometry *uniform self,
+    RTCGeometry geom,
+    uniform RTCBoundsFunction bounds,
+    uniform RTCIntersectFunctionN intersect,
+    uniform RTCOccludedFunctionN occluded)
+{
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryUserPrimitiveCount(geom, self->numPrimitives);
+  rtcSetGeometryBoundsFunction(geom, bounds, self);
+  rtcSetGeometryIntersectFunction(geom, intersect);
+  rtcSetGeometryOccludedFunction(geom, occluded);
+  rtcCommitGeometry(geom);
+}
+
 //! constructor for ispc-side Geometry object
 extern void Geometry_Constructor(Geometry *uniform geometry,
     void *uniform cppEquivalent,

@@ -166,7 +166,7 @@ namespace ospray {
     default: {
       throw std::runtime_error(
           "unstructured volume 'index' array has invalid type " +
-          stringForType(indexData->type) +
+          stringFor(indexData->type) +
           ". Must be one of: OSP_INT, OSP_UINT, OSP_VEC4I, OSP_VEC4UI, "
           "OSP_LONG, OSP_ULONG");
     }
@@ -193,7 +193,7 @@ namespace ospray {
       default: {
         throw std::runtime_error(
             "unstructured volume 'cell' array has invalid type " +
-            stringForType(cellData->type) +
+            stringFor(cellData->type) +
             ". Must be one of: OSP_INT, OSP_UINT, OSP_VEC4I, OSP_VEC4UI, "
             "OSP_LONG, OSP_ULONG");
       }

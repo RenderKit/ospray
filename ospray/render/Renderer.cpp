@@ -41,8 +41,8 @@ namespace ospray {
     maxDepthTexture = (Texture2D *)getParamObject("maxDepthTexture", nullptr);
 
     if (maxDepthTexture) {
-      if (maxDepthTexture->type != OSP_TEXTURE_R32F ||
-          !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)) {
+      if (maxDepthTexture->format != OSP_TEXTURE_R32F
+          || maxDepthTexture->filter != OSP_TEXTURE_FILTER_NEAREST) {
         static WarnOnce warning(
             "maxDepthTexture provided to the renderer "
             "needs to be of type OSP_TEXTURE_R32F and have "

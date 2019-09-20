@@ -31,7 +31,7 @@ namespace ospray {
 
     // Function pointers corresponding to each subtype.
     static std::map<std::string, creationFunctionPointer> symbolRegistry;
-    const auto type_string = stringForType(OSP_TYPE);
+    const auto type_string = stringFor(OSP_TYPE);
 
     // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {

@@ -30,29 +30,14 @@ namespace ospray {
 
   void Boxes::commit()
   {
-    boxData = getParamData("box");
+    boxData = getParamDataT<box3f>("box", true);
 
-    if (!boxData)
-      throw std::runtime_error("boxes geometry must have 'box' data array");
-
-    if (boxData->type == OSP_BOX3F)
-      numBoxes = boxData->size();
-    else if (boxData->type == OSP_VEC3F)
-      numBoxes = boxData->size() / 2;
-    else if (boxData->type == OSP_FLOAT)
-      numBoxes = boxData->size() / 6;
-    else {
-      std::stringstream ss;
-      ss << "boxes geometry 'box' array has invalid element type "
-         << stringForType(boxData->type)
-         << ". Must be one of: OSP_BOX3F, OSP_VEC3F, OSP_FLOAT";
-      throw std::runtime_error(ss.str());
-    }
+    postCreationInfo();
   }
 
   size_t Boxes::numPrimitives() const
   {
-    return numBoxes;
+    return boxData ? boxData->size() : 0;
   }
 
   LiveGeometry Boxes::createEmbreeGeometry()
@@ -63,15 +48,12 @@ namespace ospray {
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
     retval.ispcEquivalent = ispc::Boxes_create(this);
 
-    ispc::Boxes_set(retval.ispcEquivalent,
-        retval.embreeGeometry,
-        numBoxes,
-        boxData->data());
+    ispc::Boxes_set(
+        retval.ispcEquivalent, retval.embreeGeometry, ispc(boxData));
 
     return retval;
   }
 
-  OSP_REGISTER_GEOMETRY(Boxes, box);
   OSP_REGISTER_GEOMETRY(Boxes, boxes);
 
 }  // namespace ospray

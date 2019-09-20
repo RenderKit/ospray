@@ -519,7 +519,7 @@ summarized in the table below.
   vec3i  dimensions               number of voxels in each
                                   dimension $(x, y, z)$
 
-  int     voxelType               `OSPDataType` of each voxel,
+  int    voxelType                `OSPDataType` of each voxel,
                                   currently supported are:
 
                                   `OSP_UCHAR`
@@ -833,30 +833,20 @@ representations in the application this geometry allows a flexible way
 of specifying the data of center position and radius within a [data]
 array:
 
-  ------------ ----------------- ----------------------- ---------------------------------------
-  Type         Name                              Default Description
-  ------------ ----------------- ----------------------- ---------------------------------------
-  float        radius                               0.01  radius of all spheres
-                                                          (if `offset_radius` is not used)
+  -------- ---------------- --------  ---------------------------------------
+  Type     Name              Default  Description
+  -------- ---------------- --------  ---------------------------------------
+  vec3f[]  sphere.position            [data] array of center positions
 
-  OSPData      spheres                              NULL  memory holding the spatial [data] of
-                                                          all spheres
+  float[]  sphere.radius        NULL  optional [data] array of the per-sphere
+                                      radius
 
-  int          bytes_per_sphere                       16  size (in bytes) of each sphere within
-                                                          the `spheres` array
+  vec2f[]  sphere.texcoord      NULL  optional [data] array of texture
+                                      coordinates (constant per sphere)
 
-  int          offset_center                           0  offset (in bytes) of each sphere's
-                                                          "vec3f center" position (in
-                                                          object-space) within the `spheres`
-                                                          array
-
-  int          offset_radius                          -1  offset (in bytes) of each sphere's
-                                                          "float radius" within the `spheres`
-                                                          array (`-1` means disabled and use `radius`)
-
-  vec2f[]      texcoord                             NULL  [data] array of texture coordinates,
-                                                          coordinate is constant for each sphere
-  ---------- ----------------- -------------------------  ---------------------------------------
+  float    radius               0.01  default radius for all spheres
+                                      (if `sphere.radius` is not set)
+  -------- ---------------- --------  ---------------------------------------
   : Parameters defining a spheres geometry.
 
 ### Cylinders
@@ -870,37 +860,25 @@ of specifying the data of offsets for start position, end position and
 radius within a [data] array. All parameters are listed in the table
 below.
 
-  ---------- ------------------- --------  -------------------------------------
-  Type       Name                 Default  Description
-  ---------- ------------------- --------  -------------------------------------
-  float      radius                  0.01  radius of all cylinders
-                                           (if `offset_radius` is not used)
+  -------- ------------------- --------  -------------------------------------
+  Type     Name                 Default  Description
+  -------- ------------------- --------  -------------------------------------
+  vec3f[]  cylinder.position0            [data] array of center positions
 
-  OSPData    cylinders               NULL  memory holding the spatial [data] of
-                                           all cylinders
+  vec3f[]  cylinder.position1            [data] array of center positions
 
-  int        bytes_per_cylinder        24  size (in bytes) of each cylinder
-                                           within the `cylinders` array
+  float[]  cylinder.radius         NULL  optional [data] array of the
+                                         per-cylinder radius
 
-  int        offset_v0                  0  offset (in bytes) of each cylinder's
-                                           "vec3f v0" position (the start
-                                           vertex, in object-space) within the
-                                           `cylinders` array
+  vec2f[]  cylinder.texcoord0      NULL  optional [data] array of texture
+                                         coordinates at position0
 
-  int        offset_v1                 12  offset (in bytes) of each cylinder's
-                                           "vec3f v1" position (the end vertex,
-                                           in object-space) within the
-                                           `cylinders` array
+  vec2f[]  cylinder.texcoord1      NULL  optional [data] array of texture
+                                         coordinates at position0
 
-  int        offset_radius             -1  offset (in bytes) of each cylinder's
-                                           "float radius" within the `cylinders`
-                                           array (`-1` means disabled and use
-                                           `radius` instead)
-
-  OSPData    texcoord                NULL  [data] array of texture coordinates,
-                                           in pairs (each a vec2f at vertex v0
-                                           and v1)
-  ---------- ------------------- --------  -------------------------------------
+  float    radius                  0.01  default radius for all cylinders
+                                         (if `cylinder.radius` is not used)
+  -------- ------------------- --------  -------------------------------------
   : Parameters defining a cylinders geometry.
 
 For texturing each cylinder is seen as a 1D primitive, i.e., a line
@@ -925,11 +903,11 @@ table below.
   bool               smooth          enable curve interpolation, default off
                                      (always on if per-vertex radius is used)
 
-  int32[]            index           [data] array of indices to the first vertex
+  uint32[]           index           [data] array of indices to the first vertex
                                      of a link
 
-  vec3f[] / vec4f[]  vertex.position [data] array of all vertex position (and
-                                     optional radius) for *all* streamlines
+  vec3f[]            vertex.position [data] array of all vertex position for
+                                     *all* streamlines
 
   vec4f[]            vertex.color    [data] array of corresponding vertex
                                      colors (RGBA)
@@ -939,15 +917,15 @@ table below.
   : Parameters defining a streamlines geometry.
 
 Each streamline is specified by a set of (aligned) control points in
-`vertex.position`. If `smooth` is disabled and a constant `radius` is used for
-all streamlines then all vertices belonging to the same logical streamline are
-connected via [cylinders], with additional [spheres] at each vertex to create a
-continuous, closed surface. Otherwise, streamlines are represented as Bézier
-curves, smoothly interpolating the vertices. This mode supports per-vertex
-varying radii (either given in `vertex.radius`, or in the 4th component of a
-*vec4f* `vertex`), but is slower and consumes more memory. Additionally, the
-radius needs to be smaller than the curvature radius of the Bézier curve at
-each location on the curve.
+`vertex.position`. If `smooth` is disabled and a constant `radius` is
+used for all streamlines then all vertices belonging to the same logical
+streamline are connected via [cylinders], with additional [spheres] at
+each vertex to create a continuous, closed surface. Otherwise,
+streamlines are represented as Bézier curves, smoothly interpolating the
+vertices. This mode supports per-vertex varying radii (given in
+`vertex.radius`), but is slower and consumes more memory. Additionally,
+the radius needs to be smaller than the curvature radius of the Bézier
+curve at each location on the curve.
 
 A streamlines geometry can contain multiple disjoint streamlines, each
 streamline is specified as a list of segments (or links) referenced via
@@ -1171,7 +1149,7 @@ all renderers are
 
   OSPTexture     maxDepthTexture           NULL  screen-sized float [texture]
                                                  with maximum far distance per pixel
-                                                 (use texture type 'texture2d')
+                                                 (use texture type `texture2d`)
   -------------- ------------------ -----------  -----------------------------------------
   : Parameters understood by all renderers.
 
@@ -1850,20 +1828,16 @@ texture.
 
 #### Texture2D
 
-The `texture2D` texture type implements an image-based texture, where its
+The `texture2d` texture type implements an image-based texture, where its
 parameters are as follows
 
   Type    Name         Description
   ------- ------------ ----------------------------------
-  vec2i   size         size of the textures
-  int     type         `OSPTextureFormat` for the texture
-  int     flags        special attribute flags for this
-                       texture, currently only responds
-                       to `OSP_TEXTURE_FILTER_NEAREST` or
-                       no flags
-  OSPData data         the actual texel data
+  int     format       `OSPTextureFormat` for the texture
+  int     filter       default `OSP_TEXTURE_FILTER_BILINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
+  OSPData data         the actual texel [data]
   ------- ------------ ----------------------------------
-  : Parameters of `texture2D` texture type
+  : Parameters of `texture2d` texture type.
 
 The supported texture formats for `texture2d` are:
 
@@ -1881,7 +1855,7 @@ The supported texture formats for `texture2d` are:
   OSP_TEXTURE_LA8     8\ bit [0–255] gamma encoded luminance, and linear alpha
   OSP_TEXTURE_R32F    32\ bit float single component
   ------------------- ----------------------------------------------------------
-  : Supported texture formats by `texture2D`, i.e., valid constants
+  : Supported texture formats by `texture2d`, i.e., valid constants
   of type `OSPTextureFormat`.
 
 The texel data addressed by `source` starts with the texels in the lower
@@ -1904,7 +1878,7 @@ value in the volume). Its parameters are as follows
   --------- ------------ -------------------------------------------
   OSPVolume volume       volume used to generate color lookups
   --------- ------------ -------------------------------------------
-  : Parameters of `volume` texture type
+  : Parameters of `volume` texture type.
 
 TextureVolume can be used for implementing slicing of volumes with any
 geometry type. It enables coloring of the slicing geometry with a

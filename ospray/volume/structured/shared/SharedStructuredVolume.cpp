@@ -24,7 +24,7 @@ namespace ospray {
 
   std::string SharedStructuredVolume::toString() const
   {
-    return("ospray::SharedStructuredVolume<" + stringForType(voxelType) + ">");
+    return ("ospray::SharedStructuredVolume<" + stringFor(voxelType) + ">");
   }
 
   void SharedStructuredVolume::commit()

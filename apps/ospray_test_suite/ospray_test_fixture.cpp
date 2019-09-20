@@ -349,40 +349,54 @@ namespace OSPRayTestScenes {
     OSPGeometry inst_sphere = ospNewGeometry("spheres");
 
     float sph_center_r[]{-0.5f * radius,
-                         -0.3f * radius,
-                         cent,
-                         radius,
-                         0.8f * radius,
-                         -0.3f * radius,
-                         cent,
-                         0.9f * radius,
-                         0.8f * radius,
-                         1.5f * radius,
-                         cent,
-                         0.9f * radius,
-                         0.0f,
-                         -10001.3f * radius,
-                         cent,
-                         10000.f * radius,
-                         0.f,
-                         0.f,
-                         0.f,
-                         90.f * radius};
-    auto data = ospNewData(4, OSP_VEC4F, sph_center_r);
-    ospCommit(data);
-    ospSetData(sphere, "sphere", data);
-    ospRelease(data);
-
-    data = ospNewData(1, OSP_VEC4F, sph_center_r + 4 * 4);
-    ospCommit(data);
-    ospSetData(inst_sphere, "sphere", data);
-    ospRelease(data);
-
-    ospSetInt(sphere, "offset_radius", 12);
+        -0.3f * radius,
+        cent,
+        radius,
+        0.8f * radius,
+        -0.3f * radius,
+        cent,
+        0.9f * radius,
+        0.8f * radius,
+        1.5f * radius,
+        cent,
+        0.9f * radius,
+        0.0f,
+        -10001.3f * radius,
+        cent,
+        10000.f * radius,
+        0.f,
+        0.f,
+        0.f,
+        90.f * radius};
+    OSPData positionSrc = ospNewSharedData(sph_center_r, OSP_VEC3F, 4, 16);
+    OSPData positionData = ospNewData(OSP_VEC3F, 4);
+    ospCopyData(positionSrc, positionData);
+    ospRelease(positionSrc);
+    OSPData radiusSrc = ospNewSharedData(sph_center_r + 3, OSP_FLOAT, 4, 16);
+    OSPData radiusData = ospNewData(OSP_FLOAT, 4);
+    ospCopyData(radiusSrc, radiusData);
+    ospRelease(radiusSrc);
+    ospCommit(positionData);
+    ospCommit(radiusData);
+    ospSetData(sphere, "sphere.position", positionData);
+    ospSetData(sphere, "sphere.radius", radiusData);
     ospCommit(sphere);
+    ospRelease(positionData);
+    ospRelease(radiusData);
 
-    ospSetInt(inst_sphere, "offset_radius", 12);
+    positionSrc = ospNewSharedData(sph_center_r + 16, OSP_VEC3F, 1);
+    positionData = ospNewData(OSP_VEC3F, 1);
+    ospCopyData(positionSrc, positionData);
+    ospRelease(positionSrc);
+    radiusSrc = ospNewSharedData(sph_center_r + 19, OSP_FLOAT, 1);
+    radiusData = ospNewData(OSP_FLOAT, 1);
+    ospCopyData(radiusSrc, radiusData);
+    ospRelease(radiusSrc);
+    ospSetData(inst_sphere, "sphere.position", positionData);
+    ospSetData(inst_sphere, "sphere.radius", radiusData);
     ospCommit(inst_sphere);
+    ospRelease(positionData);
+    ospRelease(radiusData);
 
     OSPGeometricModel model1 = ospNewGeometricModel(sphere);
     ospRelease(sphere);
@@ -583,11 +597,11 @@ namespace OSPRayTestScenes {
     ospRelease(cuboidMaterial);
     models.push_back(model);
 
-    float sphereVertex[] = {-0.3f, -0.55f, 2.5f, 0.0f};
+    float sphereVertex[] = {-0.3f, -0.55f, 2.5f};
     OSPGeometry sphere   = ospNewGeometry("spheres");
-    data                 = ospNewData(1, OSP_VEC4F, sphereVertex);
+    data = ospNewData(1, OSP_VEC3F, sphereVertex);
     ospCommit(data);
-    ospSetData(sphere, "sphere", data);
+    ospSetData(sphere, "sphere.position", data);
     ospRelease(data);
     ospSetFloat(sphere, "radius", 0.45f);
     ospCommit(sphere);
@@ -782,7 +796,6 @@ namespace OSPRayTestScenes {
     ospCommit(volumetricModel);
 
     OSPGeometry isosurface = ospNewGeometry("isosurfaces");
-    PRINT(isosurface);
     ospSetObject(isosurface, "volume", volumetricModel);
     float isovalues[2]    = {-7000.f, 0.f};
     OSPData isovaluesData = ospNewData(2, OSP_FLOAT, isovalues);
@@ -935,13 +948,13 @@ namespace OSPRayTestScenes {
     ospSetObject(model, "material", mirrorsMaterial);
     AddModel(model);
 
-    float sphereCenters[] = {1.f, 0.f, 7.f, 0.f};
+    float sphereCenters[] = {1.f, 0.f, 7.f};
     OSPGeometry light     = ospNewGeometry("spheres");
     ASSERT_TRUE(light);
     ospSetFloat(light, "radius", 1.f);
-    data = ospNewData(1, OSP_VEC4F, sphereCenters);
+    data = ospNewData(1, OSP_VEC3F, sphereCenters);
     ASSERT_TRUE(data);
-    ospSetData(light, "sphere", data);
+    ospSetData(light, "sphere.position", data);
     ospCommit(light);
 
     model = ospNewGeometricModel(light);
@@ -993,7 +1006,7 @@ namespace OSPRayTestScenes {
     ASSERT_TRUE(data);
     ospSetData(streamlines, "vertex.position", data);
     ospRelease(data);
-    data = ospNewData(15, OSP_INT, index);
+    data = ospNewData(15, OSP_UINT, index);
     ASSERT_TRUE(data);
     ospSetData(streamlines, "index", data);
     ospRelease(data);
@@ -1062,11 +1075,11 @@ namespace OSPRayTestScenes {
     ospRelease(tex);
     ospCommit(sphereMaterial);
 
-    float sphereVertex[] = {0.f, 0.f, 0.f, 0.0f};
+    float sphereVertex[] = {0.f, 0.f, 0.f};
     OSPGeometry sphere   = ospNewGeometry("spheres");
-    auto data            = ospNewData(1, OSP_VEC4F, sphereVertex);
+    auto data = ospNewData(1, OSP_VEC3F, sphereVertex);
     ospCommit(data);
-    ospSetData(sphere, "sphere", data);
+    ospSetData(sphere, "sphere.position", data);
     ospRelease(data);
     ospSetFloat(sphere, "radius", 0.51f);
     ospCommit(sphere);
@@ -1123,8 +1136,9 @@ namespace OSPRayTestScenes {
 
     AddModel(model);
 
-    OSPTexture depthTex = ospNewTexture("texture2D");
-    std::vector<float> data(imgSize.x * imgSize.y);
+    OSPTexture depthTex = ospNewTexture("texture2d");
+    static std::vector<float> data;
+    data.resize(imgSize.x * imgSize.y);
     for (int y = 0; y < imgSize.y; y++) {
       for (int x = 0; x < imgSize.x; x++) {
         const size_t index = imgSize.x * y + x;
@@ -1137,11 +1151,11 @@ namespace OSPRayTestScenes {
         }
       }
     }
-    auto ospData = ospNewData(imgSize.x * imgSize.y, OSP_FLOAT, data.data());
+    auto ospData =
+        ospNewSharedData(data.data(), OSP_FLOAT, imgSize.x, 0, imgSize.y);
     ospCommit(ospData);
-    ospSetInt(depthTex, "type", (int)OSP_TEXTURE_R32F);
-    ospSetInt(depthTex, "flags", OSP_TEXTURE_FILTER_NEAREST);
-    ospSetVec2i(depthTex, "size", imgSize.x, imgSize.y);
+    ospSetInt(depthTex, "format", OSP_TEXTURE_R32F);
+    ospSetInt(depthTex, "filter", OSP_TEXTURE_FILTER_NEAREST);
     ospSetObject(depthTex, "data", ospData);
     ospCommit(depthTex);
     ospRelease(ospData);

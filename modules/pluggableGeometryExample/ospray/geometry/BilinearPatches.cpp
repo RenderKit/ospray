@@ -47,7 +47,7 @@ namespace ospray {
 
     size_t BilinearPatches::numPrimitives() const
     {
-      return patchesData->numBytes / sizeof(Patch);
+      return patchesData->size() * sizeOf(patchesData->type) / sizeof(Patch);
     }
 
     LiveGeometry BilinearPatches::createEmbreeGeometry()

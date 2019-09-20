@@ -117,25 +117,22 @@ namespace ospray {
     OSPRAY_CORE_INTERFACE void free64(void *ptr);
   }
 
-  /*! Convert a type string to an OSPDataType. */
-  OSPRAY_CORE_INTERFACE OSPDataType typeForString(const char *string);
-  /*! Convert a type string to an OSPDataType. */
-  inline OSPDataType typeForString(const std::string &s)
-  { return typeForString(s.c_str()); }
+  OSPRAY_CORE_INTERFACE OSPDataType typeOf(const char *string);
+  inline OSPDataType typeOf(const std::string &s)
+  {
+    return typeOf(s.c_str());
+  }
 
-  /*! Convert a type string to an OSPDataType. */
-  OSPRAY_CORE_INTERFACE std::string stringForType(OSPDataType type);
+  OSPRAY_CORE_INTERFACE std::string stringFor(OSPDataType);
+  OSPRAY_CORE_INTERFACE std::string stringFor(OSPTextureFormat);
 
   inline bool isObjectType(OSPDataType type)
   {
     return type & OSP_OBJECT;
   }
 
-  /*! size of OSPDataType */
-  OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPDataType);
-
-  /*! size of OSPTextureFormat */
-  OSPRAY_CORE_INTERFACE size_t sizeOf(const OSPTextureFormat);
+  OSPRAY_CORE_INTERFACE size_t sizeOf(OSPDataType);
+  OSPRAY_CORE_INTERFACE size_t sizeOf(OSPTextureFormat);
 
   OSPRAY_CORE_INTERFACE OSPError loadLocalModule(const std::string &name);
 

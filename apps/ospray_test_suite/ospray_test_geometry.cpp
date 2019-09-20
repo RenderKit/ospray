@@ -69,15 +69,20 @@ namespace {
   OSPGeometry getCylinder()
   {
     // cylinder vertex data
-    std::array<vec3f, 2> vertex = {vec3f(0.0f, -1.0f, 3.0f),
-                                   vec3f(0.0f, 1.0f, 3.0f)};
+    vec3f vertex{0.0f, -1.0f, 3.0f};
     // create and setup model and cylinder
     OSPGeometry cylinder = ospNewGeometry("cylinders");
     EXPECT_TRUE(cylinder);
-    OSPData data = ospNewData(vertex.size(), OSP_VEC3F, vertex.data());
+    OSPData data = ospNewData(1, OSP_VEC3F, &vertex);
     EXPECT_TRUE(data);
     ospCommit(data);
-    ospSetData(cylinder, "cylinder", data);
+    ospSetData(cylinder, "cylinder.position0", data);
+    ospRelease(data);
+    vertex.y = 1.f;
+    data = ospNewData(1, OSP_VEC3F, &vertex);
+    EXPECT_TRUE(data);
+    ospCommit(data);
+    ospSetData(cylinder, "cylinder.position1", data);
     ospRelease(data);
     ospSetFloat(cylinder, "radius", 1.0f);
     ospCommit(cylinder);
@@ -88,15 +93,15 @@ namespace {
   OSPGeometry getSphere()
   {
     // sphere vertex data
-    vec4f vertex(0.0f, 0.0f, 3.0f, 0.0f);
+    vec3f vertex(0.0f, 0.0f, 3.0f);
     vec4f color(1.0f, 0.0f, 0.0f, 1.0f);
     // create and setup model and sphere
     OSPGeometry sphere = ospNewGeometry("spheres");
     EXPECT_TRUE(sphere);
-    OSPData data = ospNewData(1, OSP_VEC4F, &vertex);
+    OSPData data = ospNewData(1, OSP_VEC3F, &vertex);
     EXPECT_TRUE(data);
     ospCommit(data);
-    ospSetData(sphere, "sphere", data);
+    ospSetData(sphere, "sphere.position", data);
     ospRelease(data);
     data = ospNewData(1, OSP_VEC4F, &color);
     EXPECT_TRUE(data);
@@ -144,7 +149,7 @@ namespace {
     ospCommit(data);
     ospSetData(streamlines, "vertex.color", data);
     ospRelease(data);
-    data = ospNewData(2, OSP_INT, index);
+    data = ospNewData(2, OSP_UINT, index);
     EXPECT_TRUE(data);
     ospCommit(data);
     ospSetData(streamlines, "index", data);

@@ -202,29 +202,25 @@ inline IntersectionValues intersectBox(const vec3f &rayOrg,
 {
   IntersectionValues isect;
 
-  // Calculate geometry normal
-  const vec3f c = (box.lower + box.upper) * 0.5;
-  const vec3f d = (box.lower - box.upper) * 0.5;
-  const uniform float bias = 1.f + 1e-3f;
-
   const vec3f mins = (box.lower - rayOrg) * rcp_safe(rayDir);
   const vec3f maxs = (box.upper - rayOrg) * rcp_safe(rayDir);
 
   isect.t_in.t_value = reduce_max(min(mins, maxs));
-  isect.t_in.hit = true;
   isect.t_out.t_value = reduce_min(max(mins, maxs));
-  isect.t_out.hit = true;
+  isect.t_in.hit = isect.t_in.t_value < isect.t_out.t_value;
+  isect.t_out.hit = isect.t_in.hit;
 
-  const vec3f p_in = (rayOrg + (isect.t_in.t_value * rayDir)) - c;
-  const vec3f p_out = (rayOrg + (isect.t_out.t_value * rayDir)) - c;
+  if (isect.t_in.hit) {
+    // Calculate geometry normal
+    const vec3f c = rayOrg - (box.lower + box.upper) * 0.5f;
+    const vec3f d = rcp(box_size(box) * 0.4999f); // include bias
 
-  isect.t_in.N = safe_normalize(make_vec3f((int)(p_in.x / abs(d.x) * bias),
-                                      (int)(p_in.y / abs(d.y) * bias),
-                                      (int)(p_in.z / abs(d.z) * bias)));
+    const vec3f p_in = c + isect.t_in.t_value * rayDir;
+    const vec3f p_out = c + isect.t_out.t_value * rayDir;
 
-  isect.t_out.N = safe_normalize(make_vec3f((int)(p_out.x / abs(d.x) * bias),
-                                      (int)(p_out.y / abs(d.y) * bias),
-                                      (int)(p_out.z / abs(d.z) * bias)));
+    isect.t_in.N = make_vec3f(make_vec3i(p_in * d));
+    isect.t_out.N = make_vec3f(make_vec3i(p_out * d));
+  }
   return isect;
 
 }

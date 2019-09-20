@@ -34,24 +34,10 @@ namespace ospray {
     LiveGeometry createEmbreeGeometry() override;
 
    protected:
-    /*! default radius, if no per-sphere radius was specified. */
-    float radius;
-    int32 materialID;
-
-    size_t numSpheres;
-    size_t bytesPerSphere;  //!< num bytes per sphere
-    int64 offset_center;
-    int64 offset_radius;
-
-    Ref<Data> sphereData;
-    Ref<Data> texcoordData;
-
-    /*! The color format of the colorData array, one of:
-        OSP_VEC3F, OSP_VEC3FA, OSP_VEC4F or OSP_UCHAR4 */
-    OSPDataType colorFormat;
-
-    bool huge_mesh{false};
+    float radius{0.01}; // default radius, if no per-sphere radius
+    Ref<const DataT<vec3f>> vertexData;
+    Ref<const DataT<float>> radiusData;
+    Ref<const DataT<vec2f>> texcoordData;
   };
-  /*! @} */
 
 }  // namespace ospray

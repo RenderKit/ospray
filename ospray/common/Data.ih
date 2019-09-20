@@ -17,6 +17,7 @@
 #pragma once
 
 #include "../math/LinearSpace.ih"
+#include "../math/box.ih"
 
 struct Data1D
 {
@@ -82,6 +83,11 @@ __define_get(float);
 __define_get(vec2f);
 __define_get(vec3f);
 __define_get(vec4f);
+
+__define_get(box1f);
+__define_get(box2f);
+__define_get(box3f);
+__define_get(box4f);
 
 __define_get(linear3f);
 

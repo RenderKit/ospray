@@ -63,7 +63,6 @@ namespace ospray {
 
   void Data::init()
   {
-    numBytes = size() * sizeOf(type);
     managedObjectType = OSP_DATA;
     if (reduce_min(numItems) == 0)
       throw std::out_of_range("OSPData: all numItems must be positive");
@@ -96,11 +95,18 @@ namespace ospray {
         > std::numeric_limits<std::int32_t>::max();
   }
 
+  bool Data::compact() const
+  {
+    return data() + sizeOf(type) * (size() - 1) == data(numItems - 1);
+  }
+
   void Data::copy(const Data &source, const vec3ui &destinationIndex)
   {
     if (type != source.type
-        && !(isObjectType(type) && isObjectType(source.type)))
-      throw std::runtime_error("OSPData::copy: types must match");
+        && !(type == OSP_OBJECT && isObjectType(source.type)))
+      throw std::runtime_error(toString()
+          + "::copy: types must match (cannot copy '" + stringFor(source.type)
+          + "' into '" + stringFor(type) + "')");
     if (shared && !source.shared)
       throw std::runtime_error(
           "OSPData::copy: cannot copy opaque (non-shared) data into shared data");
@@ -150,4 +156,4 @@ namespace ospray {
 
     return retval;
   }
-} // ::ospray
+} // namespace ospray
