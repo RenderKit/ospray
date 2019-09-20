@@ -72,19 +72,46 @@ inline void traceVolumeRay(const World *uniform world,
 {
   initVolumeInterval(interval);
 
+  VolumeIntervals intervals;
+  initVolumeIntervals(intervals);
+  
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
-  context.userPtr = &interval;
+  context.userPtr = &intervals;
   rtcIntersectV(world->embreeSceneHandleVolumes,
                 &context.ectx,
                 (varying RTCRayHit * uniform) & ray);
 
-  if (hasInterval(interval)) {
-    foreach_unique(instID in ray.instID)
+  if (hasInterval(intervals.intervals[0]))
+  {
+    Instance * instance = *(world->instances + intervals.intervals[0].instID);
+    interval.volumetricModel = instance->group->volumetricModels[intervals.intervals[0].geomID];
+    interval.xfm             = instance->xfm;
+    interval.interval.lower  = intervals.intervals[0].interval.lower;
+    interval.interval.upper  = intervals.intervals[0].interval.upper;
+  }
+}
+
+inline void traceVolumeRay(const World *uniform world,
+                           varying Ray &ray,
+                           VolumeIntervals &intervals)
+{
+  initVolumeIntervals(intervals);
+
+  uniform EmbreeIntersectionContext context;
+  rtcInitIntersectContext(&context.ectx);
+  context.userPtr = &intervals;
+  rtcIntersectV(world->embreeSceneHandleVolumes,
+                &context.ectx,
+                (varying RTCRayHit * uniform) & ray);
+
+  if (intervals.numVolumeIntervals > 0) 
+  {
+    for (int i = 0; i < intervals.numVolumeIntervals; ++i)
     {
-      Instance *uniform instance = *(world->instances + instID);
-      interval.volumetricModel = instance->group->volumetricModels[ray.geomID];
-      interval.xfm             = instance->xfm;
+      Instance * instance = *(world->instances + intervals.intervals[i].instID);
+      intervals.intervals[i].volumetricModel = instance->group->volumetricModels[intervals.intervals[i].geomID];
+      intervals.intervals[i].xfm             = instance->xfm;
     }
   }
 }

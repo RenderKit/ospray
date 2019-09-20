@@ -95,7 +95,6 @@ rm -rf *
 # set release and RPM settings
 cmake \
 -D OSPRAY_BUILD_ISA=ALL \
--D OSPRAY_MODULE_MPI=ON \
 -D TBB_ROOT=$DEP_DIR/$DEP_TBB \
 -D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC_DIR/ispc \
 -D OSPRAY_ZIP_MODE=OFF \

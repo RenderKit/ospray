@@ -54,6 +54,9 @@ class GLFWOSPRayWindow
 
   void mainLoop();
 
+  void updateCamera();
+  void commitCamera();
+
   void addObjectToCommit(OSPObject obj);
 
   std::unique_ptr<ArcballCamera> &getArcballCamera()

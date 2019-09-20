@@ -133,13 +133,13 @@ namespace ospray {
       }
     }
 
-    postStatusMsg(2) << "  created quad mesh (" << numQuads << " quads "
-                     << ", " << numVerts << " vertices)\n";
+    postStatusMsg(2) << "  created quad mesh (" << numQuads << " quads, "
+                     << numVerts << " vertices)\n";
   }
 
   size_t QuadMesh::numPrimitives() const
   {
-    return indexData ? indexData->numItems / 4 : 0;
+    return numQuads;
   }
 
   LiveGeometry QuadMesh::createEmbreeGeometry()

@@ -19,7 +19,7 @@
 // ospcommon
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
-#include "common/OSPCommon.h"
+#include "../common/OSPCommon.h"
 // std
 #include <functional>
 
@@ -39,6 +39,9 @@ namespace ospray {
       virtual ~Device() override = default;
 
       static Device *createDevice(const char *type);
+
+      /*! gets a device property */
+      virtual int64_t getProperty(const OSPDeviceProperty prop);
 
       /////////////////////////////////////////////////////////////////////////
       // Main virtual interface to accepting API calls
@@ -259,6 +262,7 @@ namespace ospray {
       OSPError lastErrorCode = OSP_NO_ERROR;
       std::string lastErrorMsg =
           "no error";  // no braced initializer for MSVC12
+
 
      private:
       bool committed{false};

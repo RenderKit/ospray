@@ -24,9 +24,9 @@
 #include "common/Material.h"
 #include "common/Util.h"
 #include "common/World.h"
+#include "fb/ImageOp.h"
 #include "fb/LocalFB.h"
 #include "geometry/GeometricModel.h"
-#include "fb/ImageOp.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
 #include "render/RenderTask.h"
@@ -503,25 +503,25 @@ namespace ospray {
 
     int ISPCDevice::isReady(OSPFuture _task, OSPSyncEvent event)
     {
-      auto *task = (QueryableTask *)_task;
+      auto *task = (Future *)_task;
       return task->isFinished(event);
     }
 
     void ISPCDevice::wait(OSPFuture _task, OSPSyncEvent event)
     {
-      auto *task = (QueryableTask *)_task;
+      auto *task = (Future *)_task;
       task->wait(event);
     }
 
     void ISPCDevice::cancel(OSPFuture _task)
     {
-      auto *task = (QueryableTask *)_task;
+      auto *task = (Future *)_task;
       return task->cancel();
     }
 
     float ISPCDevice::getProgress(OSPFuture _task)
     {
-      auto *task = (QueryableTask *)_task;
+      auto *task = (Future *)_task;
       return task->getProgress();
     }
 

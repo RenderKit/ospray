@@ -40,11 +40,10 @@ struct VolumetricModel
 
   box3f boundingBox;
 
-  Material* uniform material;
-  
   //! Volume parameters understood by the pathtracer
-  vec3f albedo;     // sigma_s/sigma_t = mu_s / mu_t
-  float sigma_t;    // extinction cross section = (sigma_s + sigma_a)
+  float densityScale;
+  float maximumDensity; // maximum opacity value of the transfer function over the whole value range
+  float anisotropy;     // the anisotropy of the volume's phase function (Heyney-Greenstein)
 };
 
 inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
@@ -56,8 +55,6 @@ inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
   //geom->postIntersect(geom, dg, ray, flags);
 
   dg.areaPDF = 0.f;
-  dg.materialID = 0;
-  dg.material = self->material;
   dg.color = make_vec4f(0.f);
 }
 

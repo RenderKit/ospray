@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_DEFAULT_COMPONENT apps)
-
 add_subdirectory(external)
 add_subdirectory(ospray_testing)
 add_subdirectory(tutorials)

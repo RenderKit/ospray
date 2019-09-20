@@ -17,7 +17,8 @@
 #pragma once
 
 // ospray stuff
-#include "Managed.h"
+#include "./Managed.h"
+#include "./Data.h"
 // stl
 #include <vector>
 // embree

@@ -30,6 +30,8 @@ before you can build OSPRay you need the following prerequisites:
     `~/Projects/ispc-v1.9.2-linux`]
     Alternatively set the CMake variable `ISPC_EXECUTABLE` to the
     location of the ISPC compiler.
+
+    NOTE: OSPRay is incompatible with ISPC v1.11.0.
 -   Per default OSPRay uses the Intel® [Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
     system, which we recommend for performance and flexibility reasons.
@@ -37,8 +39,11 @@ before you can build OSPRay you need the following prerequisites:
     `OpenMP`, `Internal`, or `Cilk` (icc only).
 -   OSPRay also heavily uses Intel [Embree], installing version 3.2 or
     newer is required. If Embree is not found by CMake its location can
-    be hinted with the variable `embree_DIR`. NOTE: Windows users should
-    use Embree v3.2.2 or later.
+    be hinted with the variable `embree_DIR`.
+
+    NOTE: Windows users should use Embree v3.2.2 or later.
+
+    NOTE: OSPRay is incompatible with Embree v3.6.0.
 -   If available OSPRay's [Example Viewer] can be compiled with support
     for Intel [Open Image Denoise] by enabling
     `OSPRAY_APPS_ENABLE_DENOISER`. You may need to hint the location of

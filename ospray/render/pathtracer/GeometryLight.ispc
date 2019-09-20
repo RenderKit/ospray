@@ -14,11 +14,34 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "render/pathtracer/GeometryLight.ih"
+#include "render/pathtracer/PathStructs.ih"
+#include "render/pathtracer/PathTracerUtil.ih"
+
+#include "render/pathtracer/materials/Material.ih"
+
 #include "geometry/GeometricModel.ih"
 #include "lights/Light.ih"
 #include "math/AffineSpace.ih"
 #include "math/Distribution1D.ih"
-#include "render/pathtracer/materials/Material.ih"
+
+vec3f evaluateGeometryLights(const PathState& pathState, 
+                             const PathVertex& lastVertex, 
+                             const PathVertex& pathVertex, 
+                             Ray& ray)
+{
+  vec3f L = make_vec3f(0.f);
+  uniform PathTraceMaterial* material = (uniform PathTraceMaterial*)pathVertex.dg.material;
+  foreach_unique(m in material) {
+    if (m != NULL && reduce_max(m->emission) > 0.f) {
+      // convert pdf wrt. area to pdf wrt. solid angle
+      const float cosd = dot(pathVertex.dg.Ng, ray.dir);
+      const float lePdf = pathVertex.dg.areaPDF * sqr(ray.t) / abs(cosd);
+      L = L + pathState.throughput * m->emission * misHeuristic(pathState, lastVertex.pdf_w, lePdf);
+    }
+  }
+  return L;
+}
 
 /* The GeometryLight is a proxy object fulfilling the Light.ih API.
    It is generated internally for each emitting geometry modelance to facilitate

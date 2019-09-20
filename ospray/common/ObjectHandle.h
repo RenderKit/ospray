@@ -18,8 +18,8 @@
 
 /*! \todo move to api - it's also used in coi, and not mpi specific */
 
-#include "common/Managed.h"
-#include "common/OSPCommon.h"
+#include "./Managed.h"
+#include "./OSPCommon.h"
 
 namespace ospray {
 

@@ -6,6 +6,7 @@ Version History
 -   Removal of Slices geometry. Instead, any geometry with volume
     texture can be used for slicing (see tutorial
     `ospTutorialStructuredVolume` for reference)
+-   Addition of version query support for the API
 
 ### Changes in v1.8.5:
 

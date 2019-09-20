@@ -86,6 +86,11 @@ namespace ospray {
     void cancelFrame();
     bool frameCancelled() const;
 
+    bool hasAccumBuf() const;
+    bool hasVarianceBuf() const;
+    bool hasNormalBuf() const;
+    bool hasAlbedoBuf() const;
+
    protected:
     /*! Find the index of the first frameoperation included in
      * the imageop pipeline

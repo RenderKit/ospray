@@ -148,6 +148,19 @@ to OSPRay API calls, where users can set/change parameters and recommit
 the device. If changes are made to the device that is already set as the
 current device, it does not need to be set as current again.
 
+To get device-specific properties, the following function can be called:
+
+    int64_t ospDeviceGetProperty(OSPDevice, OSPDeviceProperty);
+
+It returns an integer value of the queried property and the following
+properties can be provided as parameter:
+
+    OSP_DEVICE_VERSION
+    OSP_DEVICE_VERSION_MAJOR
+    OSP_DEVICE_VERSION_MINOR
+    OSP_DEVICE_VERSION_PATCH
+    OSP_DEVICE_SO_VERSION
+
 ### Environment Variables
 
 Finally, OSPRay's generic device parameters can be overridden via

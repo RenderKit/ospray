@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "Managed.h"
+#include "./Managed.h"
 
 namespace ospray {
   /*! \brief implements the basic abstraction for anything that is a 'texture'.

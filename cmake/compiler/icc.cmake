@@ -21,11 +21,6 @@ if (OSPRAY_STRICT_BUILD)
 endif()
 
 set(CMAKE_CXX_FLAGS "${OSPRAY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG          "-DDEBUG  -g")
-set(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG -O3")
-# on Windows use "-fp:fast" instead of "-fp-model fast"
-#set(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG    -O3 -no-ansi-alias -restrict -fp-model fast -fimf-precision=low -no-prec-div -no-prec-sqrt -fma -no-inline-max-total-size -inline-factor=200 ")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}")
 
 if (APPLE)
   set(CMAKE_SHARED_LINKER_FLAGS "-dynamiclib ${CMAKE_SHARED_LINKER_FLAGS_INIT}")

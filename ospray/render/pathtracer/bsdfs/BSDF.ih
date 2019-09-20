@@ -16,52 +16,36 @@
 
 #pragma once
 
+#include "render/pathtracer/Scattering.ih"
+
 #include "math/vec.ih"
 // utilities used by (almost all) implementations
 #include "math/sampling.ih"
 #include "math/random.ih"
 #include "Optics.ih"
 
-#define BSDF_SPECULAR_REFLECTION   (1<<0)  /*!< perfect specular light reflection   */
-#define BSDF_GLOSSY_REFLECTION     (1<<1)  /*!< glossy light reflection             */
-#define BSDF_DIFFUSE_REFLECTION    (1<<2)  /*!< diffuse light reflection            */
-#define BSDF_SPECULAR_TRANSMISSION (1<<3)  /*!< perfect specular light transmission */
-#define BSDF_GLOSSY_TRANSMISSION   (1<<4)  /*!< glossy light transmission           */
-#define BSDF_DIFFUSE_TRANSMISSION  (1<<5)  /*!< diffuse light transmission          */
+// keep interface of BSDFs the same
+typedef Scattering_EvalRes BSDF_EvalRes;
+typedef Scattering_SampleRes BSDF_SampleRes;
+typedef Scattering_Type BSDF_Type;
 
-/*! diffuse reflections and transmissions */
-#define BSDF_DIFFUSE      (BSDF_DIFFUSE_REFLECTION   | BSDF_DIFFUSE_TRANSMISSION)
+#define BSDF_SPECULAR_REFLECTION   SCATTERING_SPECULAR_REFLECTION
+#define BSDF_GLOSSY_REFLECTION     SCATTERING_GLOSSY_REFLECTION
+#define BSDF_DIFFUSE_REFLECTION    SCATTERING_DIFFUSE_REFLECTION
+#define BSDF_SPECULAR_TRANSMISSION SCATTERING_SPECULAR_TRANSMISSION
+#define BSDF_GLOSSY_TRANSMISSION   SCATTERING_GLOSSY_TRANSMISSION
+#define BSDF_DIFFUSE_TRANSMISSION  SCATTERING_DIFFUSE_TRANSMISSION
+#define BSDF_DIFFUSE               SCATTERING_DIFFUSE      
+#define BSDF_GLOSSY                SCATTERING_GLOSSY       
+#define BSDF_SPECULAR              SCATTERING_SPECULAR     
+#define BSDF_REFLECTION            SCATTERING_REFLECTION   
+#define BSDF_TRANSMISSION          SCATTERING_TRANSMISSION 
+#define BSDF_SMOOTH                SCATTERING_SMOOTH       
+#define BSDF_NONE                  SCATTERING_NONE         
+#define BSDF_ALL                   SCATTERING_ALL          
 
-/*! glossy reflections and transmissions */
-#define BSDF_GLOSSY       (BSDF_GLOSSY_REFLECTION    | BSDF_GLOSSY_TRANSMISSION)
-
-/*! perfect specular reflections and transmissions */
-#define BSDF_SPECULAR     (BSDF_SPECULAR_REFLECTION  | BSDF_SPECULAR_TRANSMISSION)
-
-/*! all possible reflections */
-#define BSDF_REFLECTION   (BSDF_DIFFUSE_REFLECTION   | BSDF_GLOSSY_REFLECTION   | BSDF_SPECULAR_REFLECTION)
-
-/*! all possible transmissions */
-#define BSDF_TRANSMISSION (BSDF_DIFFUSE_TRANSMISSION | BSDF_GLOSSY_TRANSMISSION | BSDF_SPECULAR_TRANSMISSION)
-
-/*! all non-dirac types */
-#define BSDF_SMOOTH       (BSDF_DIFFUSE | BSDF_GLOSSY)
-
-/*! no component set */
-#define BSDF_NONE         0
-
-/*! all components set */
-#define BSDF_ALL          (BSDF_REFLECTION | BSDF_TRANSMISSION)
 
 struct BSDF;
-
-typedef uint32 BSDF_Type;
-
-struct BSDF_EvalRes
-{
-  vec3f value; //!< radiance multiplied by dot(wi,N)
-  float pdf;
-};
 
 inline BSDF_EvalRes make_BSDF_EvalRes_zero()
 {
@@ -71,27 +55,15 @@ inline BSDF_EvalRes make_BSDF_EvalRes_zero()
   return res;
 }
 
-typedef BSDF_EvalRes (*BSDF_EvalFunc)(const varying BSDF* uniform self,
-                                      const vec3f& wo, const vec3f& wi);
-
-// Note: the pdf of Dirac delta distributions is represented with inf. This is
-// possible, because in weight we already cancel the Dirac delta (but still
-// account for a changed pdf by e.g. discrete events such as component
-// selection).
-struct BSDF_SampleRes
-{
-  vec3f weight; //!< radiance multiplied by dot(wi,N)/pdf
-  vec3f wi;
-  float pdf;
-  BSDF_Type type;
-};
-
 inline BSDF_SampleRes make_BSDF_SampleRes_zero()
 {
   BSDF_SampleRes res;
   res.weight = make_vec3f(0.0f);
   return res;
 }
+
+typedef BSDF_EvalRes (*BSDF_EvalFunc)(const varying BSDF* uniform self,
+                                      const vec3f& wo, const vec3f& wi);
 
 typedef BSDF_SampleRes (*BSDF_SampleFunc)(const varying BSDF* uniform self,
                                           const vec3f& wo, const vec2f& s, float ss);

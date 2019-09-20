@@ -16,7 +16,7 @@
 
 ospray_disable_compiler_warnings()
 
-ospray_create_application(ospray_test_suite
+add_executable(ospray_test_suite
   ospray_environment.cpp
   ospray_test_fixture.cpp
   ospray_test_geometry.cpp
@@ -31,4 +31,9 @@ PRIVATE
   gtest_main
   ospray
 	stb_image
+)
+
+install(TARGETS ospray_test_suite
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
 )

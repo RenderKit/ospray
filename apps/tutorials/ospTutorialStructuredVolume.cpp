@@ -37,21 +37,17 @@ static void setIsoValue(OSPGeometry geometry, float value)
 static void setSliceGeometry(OSPGeometry sliceGeometry, float sliceExtent, float slicePosition)
 {
   std::vector<vec3f> vertices;
-  std::vector<int> sliceIndices;
+  vec4ui indices{0, 1, 2, 3};
 
   vertices.push_back(vec3f{-slicePosition, -sliceExtent, -sliceExtent});
   vertices.push_back(vec3f{-slicePosition, sliceExtent, -sliceExtent});
   vertices.push_back(vec3f{-slicePosition, sliceExtent, sliceExtent});
   vertices.push_back(vec3f{-slicePosition, -sliceExtent, sliceExtent});
 
-  int indices = vertices.size();
-  for (int i = 0; i < indices ; ++i) {
-    sliceIndices.push_back(i);
-  }
   OSPData positionData =
       ospNewData(vertices.size(), OSP_VEC3F, vertices.data());
-  OSPData indexData =
-      ospNewData(sliceIndices.size(), OSP_VEC4I, sliceIndices.data());
+
+  OSPData indexData = ospNewData(1, OSP_VEC4UI, &indices);
 
   ospSetData(sliceGeometry, "vertex.position", positionData);
   ospSetData(sliceGeometry, "index", indexData);

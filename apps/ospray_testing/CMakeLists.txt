@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_create_library(ospray_testing
+add_library(ospray_testing SHARED
   ospray_testing.cpp
 
   geometry/Boxes.cpp
@@ -41,6 +41,11 @@ ospray_create_library(ospray_testing
 )
 
 target_link_libraries(ospray_testing PUBLIC ospray PRIVATE ospcommon::ospcommon)
+
+ospray_install_library(ospray_testing COMPONENT apps)
+
+set_target_properties(ospray_testing
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 
 target_include_directories(ospray_testing
   PUBLIC

@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// This header is shared with ISPC
-
 #pragma once
 
 #ifndef NULL
@@ -63,45 +61,46 @@
 namespace osp {
   struct Device;
   struct ManagedObject    {};
-  struct FrameBuffer      : public ManagedObject {};
-  struct Renderer         : public ManagedObject {};
   struct Camera           : public ManagedObject {};
   struct Data             : public ManagedObject {};
+  struct FrameBuffer      : public ManagedObject {};
   struct Future           : public ManagedObject {};
-  struct Group            : public ManagedObject {};
-  struct Geometry         : public ManagedObject {};
   struct GeometricModel   : public ManagedObject {};
+  struct Geometry         : public ManagedObject {};
+  struct Group            : public ManagedObject {};
+  struct ImageOp          : public ManagedObject {};
+  struct Instance         : public ManagedObject {};
+  struct Light            : public ManagedObject {};
   struct Material         : public ManagedObject {};
+  struct Renderer         : public ManagedObject {};
+  struct Texture          : public ManagedObject {};
+  struct TransferFunction : public ManagedObject {};
   struct Volume           : public ManagedObject {};
   struct VolumetricModel  : public ManagedObject {};
-  struct TransferFunction : public ManagedObject {};
-  struct Texture          : public ManagedObject {};
-  struct Light            : public ManagedObject {};
-  struct Instance         : public ManagedObject {};
-  struct ImageOp          : public ManagedObject {};
   struct World            : public ManagedObject {};
 }
 
 typedef osp::Device            *OSPDevice;
-typedef osp::FrameBuffer       *OSPFrameBuffer;
-typedef osp::Renderer          *OSPRenderer;
 typedef osp::Camera            *OSPCamera;
 typedef osp::Data              *OSPData;
+typedef osp::FrameBuffer       *OSPFrameBuffer;
 typedef osp::Future            *OSPFuture;
-typedef osp::Group             *OSPGroup;
-typedef osp::Geometry          *OSPGeometry;
 typedef osp::GeometricModel    *OSPGeometricModel;
-typedef osp::Material          *OSPMaterial;
+typedef osp::Geometry          *OSPGeometry;
+typedef osp::Group             *OSPGroup;
+typedef osp::ImageOp           *OSPImageOp;
+typedef osp::Instance          *OSPInstance;
 typedef osp::Light             *OSPLight;
+typedef osp::ManagedObject     *OSPObject;
+typedef osp::Material          *OSPMaterial;
+typedef osp::Renderer          *OSPRenderer;
+typedef osp::Texture           *OSPTexture;
+typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Volume            *OSPVolume;
 typedef osp::VolumetricModel   *OSPVolumetricModel;
-typedef osp::TransferFunction  *OSPTransferFunction;
-typedef osp::Texture           *OSPTexture;
-typedef osp::ManagedObject     *OSPObject;
-typedef osp::Instance          *OSPInstance;
-typedef osp::ImageOp           *OSPImageOp;
 typedef osp::World             *OSPWorld;
 #else
+typedef void *OSPDevice;
 typedef void _OSPManagedObject;
 
 /* Abstract object types. in C99, those are all the same because C99
@@ -109,25 +108,24 @@ typedef void _OSPManagedObject;
    OSPGeometry can still be passed to a function that expects a
    OSPObject, etc. */
 typedef _OSPManagedObject *OSPManagedObject,
-  *OSPDevice,
-  *OSPRenderer,
   *OSPCamera,
-  *OSPFrameBuffer,
-  *OSPInstance,
-  *OSPWorld,
   *OSPData,
-  *OSPGroup,
-  *OSPGeometry,
+  *OSPFrameBuffer,
+  *OSPFuture,
   *OSPGeometricModel,
-  *OSPMaterial,
+  *OSPGeometry,
+  *OSPGroup,
+  *OSPImageOp,
+  *OSPInstance,
   *OSPLight,
+  *OSPMaterial,
+  *OSPObject,
+  *OSPRenderer,
+  *OSPTexture,
+  *OSPTransferFunction,
   *OSPVolume,
   *OSPVolumetricModel,
-  *OSPTransferFunction,
-  *OSPTexture,
-  *OSPObject,
-  *OSPImageOp,
-  *OSPFuture;
+  *OSPWorld;
 #endif
 
 #ifdef __cplusplus
@@ -143,6 +141,9 @@ extern "C" {
      returns OSPError value to report any errors during initialization */
   OSPRAY_INTERFACE OSPError ospInit(int *argc, const char **argv);
 
+  // returns the OSPRay Version in use by the device
+  OSPRAY_INTERFACE int64_t ospDeviceGetProperty(OSPDevice, OSPDeviceProperty);
+
   // Shutdown the OSPRay engine...effectively deletes whatever device is currently set.
   OSPRAY_INTERFACE void ospShutdown();
 
@@ -150,7 +151,7 @@ extern "C" {
   OSPRAY_INTERFACE OSPDevice ospNewDevice(const char *deviceType OSP_DEFAULT_VAL("default"));
 
   // Set current device the API responds to
-  OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice device);
+  OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice);
 
   // Get the currently set device
   OSPRAY_INTERFACE OSPDevice ospGetCurrentDevice();
@@ -195,15 +196,15 @@ extern "C" {
 
   // Renderable Objects ///////////////////////////////////////////////////////
 
-  OSPRAY_INTERFACE OSPLight ospNewLight(const char *light_type);
+  OSPRAY_INTERFACE OSPLight ospNewLight(const char *type);
 
   OSPRAY_INTERFACE OSPCamera ospNewCamera(const char *type);
 
   OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
   OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
 
-  OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(OSPGeometry geom);
-  OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
+  OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(OSPGeometry);
+  OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(OSPVolume);
 
   // Model Meta-Data //////////////////////////////////////////////////////////
 
@@ -333,10 +334,10 @@ extern "C" {
   } OSPPickResult;
 
   OSPRAY_INTERFACE void ospPick(OSPPickResult *result,
-                                OSPFrameBuffer fb,
-                                OSPRenderer renderer,
-                                OSPCamera camera,
-                                OSPWorld world,
+                                OSPFrameBuffer,
+                                OSPRenderer,
+                                OSPCamera,
+                                OSPWorld,
                                 float screenPos_x,
                                 float screenPos_y);
 

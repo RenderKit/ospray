@@ -16,15 +16,20 @@
 
 ospray_disable_compiler_warnings()
 
-ospray_create_library(ospray_imgui
+add_library(ospray_imgui SHARED
   imgui.cpp
   imgui_draw.cpp
   imgui_demo.cpp
   imguifilesystem/imguifilesystem.cpp
-LINK
+)
+
+target_link_libraries(ospray_imgui
+PUBLIC
   ${OPENGL_LIBRARIES}
   ospcommon::ospcommon
 )
+
+ospray_install_library(ospray_imgui COMPONENT apps)
 
 target_include_directories(
   ospray_imgui

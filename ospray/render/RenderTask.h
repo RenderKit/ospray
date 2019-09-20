@@ -19,12 +19,12 @@
 // ospcommon
 #include "ospcommon/tasking/AsyncTask.h"
 // ospray
-#include "common/QueryableTask.h"
-#include "fb/FrameBuffer.h"
+#include "../common/Future.h"
+#include "../fb/FrameBuffer.h"
 
 namespace ospray {
 
-  struct RenderTask : public QueryableTask, public tasking::AsyncTask<float>
+  struct RenderTask : public Future, public tasking::AsyncTask<float>
   {
     RenderTask(FrameBuffer *, std::function<float()> fcn);
     ~RenderTask() override = default;

@@ -30,9 +30,9 @@ if(OSPRAY_WARN_AS_ERRORS)
 endif()
 
 set(CMAKE_CXX_FLAGS "${OSPRAY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG          "-DDEBUG  -g     -Wstrict-aliasing=1")
-set(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG    -O3 -Wstrict-aliasing=1 -ffast-math -fno-finite-math-only ")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-DNDEBUG -g -O3 -Wstrict-aliasing=1 -ffast-math -fno-finite-math-only ")
+
+set(CMAKE_CXX_FLAGS_RELEASE        "-ffast-math -fno-finite-math-only ${CMAKE_CXX_FLAGS_RELEASE}")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-ffast-math -fno-finite-math-only ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 
 if (APPLE)
   set(CMAKE_CXX_FLAGS "-mmacosx-version-min=10.9 ${CMAKE_CXX_FLAGS}") # we only use MacOSX 10.9 features

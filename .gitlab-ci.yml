@@ -84,16 +84,14 @@ build-arch-clang:
 build-arch-gcc-warnings:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
-  allow_failure: true
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
 
 build-arch-clang-warnings:
   <<: *build_job_docker
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OSPRAY_MPI=ON
-  allow_failure: true
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker
@@ -161,11 +159,6 @@ build-debug:
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug
 
-build-mpi:
-  <<: *build_job_docker
-  script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MPI=ON
-
 build-osx-clang:
   <<: *build_job_shell
   script:
@@ -177,7 +170,7 @@ build-osx-clang:
 build-windows-msvc14:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140" "ON"
+    - scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
   tags:
     - msvc14
     - win7
@@ -189,7 +182,7 @@ build-windows-msvc14:
 build-windows-msvc15:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.bat "Visual Studio 15 2017 Win64" "v141" "OFF"
+    - scripts\build_gitlab\win.bat "Visual Studio 15 2017 Win64" "v141"
   tags:
     - msvc15
     - win7
@@ -201,7 +194,7 @@ build-windows-msvc15:
 build-windows-icc:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0" "ON"
+    - scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0"
   tags:
     - icc18
     - win7
@@ -358,7 +351,6 @@ release-linux-icc:
   tags:
     - icc
     - centos6
-    - mpi
   artifacts:
     paths:
       - build_release/*.gz
@@ -374,7 +366,6 @@ release-osx-clang:
   tags:
     - clang
     - osx
-    - mpi
   artifacts:
     paths:
       - build_release/*.gz
@@ -388,7 +379,6 @@ release-windows:
   tags:
     - msvc
     - win7
-    - mpi
   artifacts:
     paths:
       - build_release\ospray*.zip

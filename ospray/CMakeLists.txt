@@ -154,8 +154,14 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
+  render/pathtracer/PathSampler.ispc
   render/pathtracer/GeometryLight.ispc
+  render/pathtracer/VirtualLight.ispc
+  render/pathtracer/TransparentShadow.ispc
+  render/pathtracer/ShadowCatcher.ispc
+  render/pathtracer/NextEventEstimation.ispc
   render/pathtracer/bsdfs/MicrofacetAlbedoTables.ispc
+  render/pathtracer/volumes/VolumeSampler.ispc
   render/pathtracer/materials/Material.ispc
   render/pathtracer/materials/OBJ.ispc
   render/pathtracer/materials/OBJ.cpp
@@ -181,8 +187,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/pathtracer/materials/Luminous.cpp
   render/pathtracer/materials/Mix.ispc
   render/pathtracer/materials/Mix.cpp
-  render/pathtracer/materials/Volumetric.ispc
-  render/pathtracer/materials/Volumetric.cpp
 
   texture/Texture.cpp
   texture/Texture2D.cpp
@@ -270,12 +274,11 @@ if (WIN32)
   list(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_ispc.def)
 endif()
 
-ospray_create_library(ospray
-  ${OSPRAY_SOURCES}
-COMPONENT lib
-)
-
+add_library(ospray SHARED ${OSPRAY_SOURCES})
 target_link_libraries(ospray PRIVATE ospcommon::ospcommon)
+ospray_install_library(ospray COMPONENT lib)
+set_target_properties(ospray
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 
 target_include_directories(ospray
   PUBLIC
@@ -329,7 +332,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   ## Build the module ##
 
-  include_directories_ispc(
+  ispc_include_directories(
     ${CMAKE_SOURCE_DIR}/ospray/include
     ${CMAKE_SOURCE_DIR}/ospray
     ${CMAKE_SOURCE_DIR}
@@ -337,10 +340,11 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ${EMBREE_INCLUDE_DIRS}
   )
 
-  ospray_create_library(ospray_module_ispc
-    ${OSPRAY_ISPC_DEVICE_SOURCES}
-  COMPONENT lib
-  )
+  add_library(ospray_module_ispc SHARED)
+
+  ispc_target_add_sources(ospray_module_ispc ${OSPRAY_ISPC_DEVICE_SOURCES})
+
+  ospray_install_library(ospray_module_ispc COMPONENT lib)
 
   target_link_libraries(ospray_module_ispc
   PUBLIC
@@ -355,6 +359,10 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
+
+  set_target_properties(ospray_module_ispc
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+
 endif()
 
 ##############################################################
