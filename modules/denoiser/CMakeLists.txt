@@ -21,6 +21,8 @@ if (OSPRAY_MODULE_DENOISER)
   include(GenerateExportHeader)
   find_package(OpenImageDenoise 1.0 REQUIRED)
 
+  include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
   add_library(ospray_module_denoiser SHARED DenoiseFrameOp.cpp)
 
   generate_export_header(ospray_module_denoiser)
