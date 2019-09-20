@@ -50,11 +50,10 @@ unmasked void Volume_intersect_kernel(
 
   IntersectionValues isect = intersectBox(ray->org, ray->dir, *box);
 
-  const bool hit = isect.t_in.t_value < isect.t_out.t_value &&
-          ((isect.t_in.t_value > ray->t0 && isect.t_in.t_value < ray->t) ||
-           (isect.t_out.t_value > ray->t0 && isect.t_out.t_value < ray->t));
+  const float t_min = max(ray->t0, isect.t_in.t_value);
+  const float t_max = min(ray->t, isect.t_out.t_value);
 
-  if (hit) {
+  if (t_min < t_max) {
     ray->instID = args->context->instID[0];
     ray->geomID = self->volumeID;
     ray->primID = 0;
@@ -63,9 +62,8 @@ unmasked void Volume_intersect_kernel(
     vInterval->geomID = self->volumeID;
     vInterval->instID = args->context->instID[0];
     vIntervals->numVolumeIntervals++;
-    vInterval->interval.lower = isect.t_in.t_value;
-    vInterval->interval.upper = isect.t_out.t_value;
-
+    vInterval->interval.lower = t_min;
+    vInterval->interval.upper = t_max;
   }
 }
 
