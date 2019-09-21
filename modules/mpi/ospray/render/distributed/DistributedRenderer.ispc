@@ -21,6 +21,7 @@
 #include "ospray/fb/Tile.ih"
 #include "ospray/render/Renderer.ih"
 #include "ospray/render/util.ih"
+#include "ospray/common/Intersect.ih"
 
 unmasked void DR_default_computeRegionVisibility(
     DistributedRenderer *uniform self,
@@ -91,12 +92,13 @@ unmasked void DR_default_computeRegionVisibility(
 
       for (uniform int r = 0; r < world->numRegions; ++r) {
         cif (!regionVisible[r] && !isEmpty(world->regions[r].bounds)) {
-          float t0, t1;
-          intersectBox(screenSample.ray, world->regions[r].bounds, t0, t1);
-          if (t0 < t1 && t0 >= screenSample.ray.t0
-              && t0 <= screenSample.ray.t) {
-            regionVisible[r] = true;
-          }
+          IntersectionValues isect = intersectBox(screenSample.ray.org, screenSample.ray.dir, world->regions[r].bounds);
+	        if(isect.t_in.t_value < isect.t_out.t_value) {
+    	      if (and(and(isect.t_in.t_value > screenSample.ray.t0, isect.t_in.t_value < screenSample.ray.t), 
+              isect.t_in.hit)) {
+                regionVisible[r] = true;
+	            }
+            }
         }
       }
     }
