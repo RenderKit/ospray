@@ -18,8 +18,8 @@
 
 #include "common/MPIBcastFabric.h"
 #include "common/MPICommon.h"
+#include "common/ObjectHandle.h"
 #include "maml/maml.h"
-#include "ospray/common/ObjectHandle.h"
 
 namespace ospray {
 namespace mpi {

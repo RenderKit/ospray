@@ -19,6 +19,7 @@
 #include "api/Device.h"
 #include "common/MPICommon.h"
 #include "common/Managed.h"
+#include "common/ObjectHandle.h"
 
 namespace ospray {
 namespace mpi {
