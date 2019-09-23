@@ -17,13 +17,15 @@
 // ospray
 #include "Data.h"
 #include "ospray/ospray.h"
+// ospcommon
+#include "ospcommon/utility/multidim_index_sequence.h"
 
 namespace ospray {
 
   Data::Data(const void *sharedData,
-      OSPDataType type,
-      const vec3ui &numItems,
-      const vec3l &byteStride)
+             OSPDataType type,
+             const vec3ui &numItems,
+             const vec3l &byteStride)
       : shared(true), type(type), numItems(numItems), byteStride(byteStride)
 
   {
@@ -43,10 +45,10 @@ namespace ospray {
   Data::Data(OSPDataType type, const vec3ui &numItems)
       : shared(false), type(type), numItems(numItems), byteStride(0)
   {
-    addr = (char *)alignedMalloc(
-        size() * sizeOf(type) + 16); // XXX padding needed?
+    addr = (char *)alignedMalloc(size() * sizeOf(type) +
+                                 16);  // XXX padding needed?
     init();
-    if (isObjectType(type)) // XXX initialize always? or never?
+    if (isObjectType(type))  // XXX initialize always? or never?
       memset(addr, 0, size() * sizeOf(type));
   }
 
@@ -85,18 +87,18 @@ namespace ospray {
       return;
 
     ispc.byteStride = byteStride.x;
-    ispc.numItems = numItems.x;
+    ispc.numItems   = numItems.x;
     if (numItems.y > 1) {
       ispc.byteStride = byteStride.y;
-      ispc.numItems = numItems.y;
+      ispc.numItems   = numItems.y;
     } else if (numItems.z > 1) {
       ispc.byteStride = byteStride.z;
-      ispc.numItems = numItems.z;
+      ispc.numItems   = numItems.z;
     }
     // finalize ispc-side
     ispc.addr = reinterpret_cast<decltype(ispc.addr)>(addr);
-    ispc.huge = ispc.byteStride * ispc.numItems
-        > std::numeric_limits<std::int32_t>::max();
+    ispc.huge = ispc.byteStride * ispc.numItems >
+                std::numeric_limits<std::int32_t>::max();
   }
 
   bool Data::compact() const
@@ -106,42 +108,48 @@ namespace ospray {
 
   void Data::copy(const Data &source, const vec3ui &destinationIndex)
   {
-    if (type != source.type
-        && !(type == OSP_OBJECT && isObjectType(source.type)))
-      throw std::runtime_error(toString()
-          + "::copy: types must match (cannot copy '" + stringFor(source.type)
-          + "' into '" + stringFor(type) + "')");
-    if (shared && !source.shared)
+    if (type != source.type &&
+        !(type == OSP_OBJECT && isObjectType(source.type))) {
       throw std::runtime_error(
-          "OSPData::copy: cannot copy opaque (non-shared) data into shared data");
-    if (anyLessThan(numItems, destinationIndex + source.numItems))
+          toString() + "::copy: types must match (cannot copy '" +
+          stringFor(source.type) + "' into '" + stringFor(type) + "')");
+    }
+
+    if (shared && !source.shared) {
+      throw std::runtime_error(
+          "OSPData::copy: cannot copy opaque (non-shared) data into shared "
+          "data");
+    }
+
+    if (anyLessThan(numItems, destinationIndex + source.numItems)) {
       throw std::out_of_range(
           "OSPData::copy: source does not fit into destination");
+    }
 
-    if (byteStride == source.byteStride
-        && data(destinationIndex) == source.data()) {
+    if (byteStride == source.byteStride &&
+        data(destinationIndex) == source.data()) {
       // NoOP, no need to copy identical region
       // TODO markDirty(destinationIndex, destinationIndex + source.numItems);
       return;
     }
 
-    vec3ui srcIdx;
-    for (srcIdx.z = 0; srcIdx.z < source.numItems.z; srcIdx.z++)
-      for (srcIdx.y = 0; srcIdx.y < source.numItems.y; srcIdx.y++)
-        for (srcIdx.x = 0; srcIdx.x < source.numItems.x; srcIdx.x++) {
-          char *dst = data(srcIdx + destinationIndex);
-          const char *src = source.data(srcIdx);
-          if (isObjectType(type)) {
-            const ManagedObject **srcO = (const ManagedObject **)src;
-            if (*srcO)
-              (*srcO)->refInc();
-            const ManagedObject **dstO = (const ManagedObject **)dst;
-            if (*dstO)
-              (*dstO)->refDec();
-            *dstO = *srcO;
-          } else
-            memcpy(dst, src, sizeOf(type));
-        }
+    index_sequence_3D srcIndices(source.numItems);
+
+    for (auto srcIdx : srcIndices) {
+      char *dst       = data(srcIdx + destinationIndex);
+      const char *src = source.data(srcIdx);
+      if (isObjectType(type)) {
+        const ManagedObject **srcO = (const ManagedObject **)src;
+        if (*srcO)
+          (*srcO)->refInc();
+        const ManagedObject **dstO = (const ManagedObject **)dst;
+        if (*dstO)
+          (*dstO)->refDec();
+        *dstO = *srcO;
+      } else {
+        memcpy(dst, src, sizeOf(type));
+      }
+    }
   }
 
   std::string Data::toString() const
@@ -149,4 +157,4 @@ namespace ospray {
     return "ospray::Data";
   }
 
-} // namespace ospray
+}  // namespace ospray
