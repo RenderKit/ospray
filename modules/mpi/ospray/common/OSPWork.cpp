@@ -307,6 +307,7 @@ void release(
   }
 
   // TODO: What to do about freeing data?
+  // Dependent on https://gitlab.com/sdvis/ospray/issues/479
   auto d = state.data.find(handle);
   if (d != state.data.end()) {
     // state.data.erase(d);
