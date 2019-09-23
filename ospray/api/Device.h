@@ -54,15 +54,15 @@ namespace ospray {
       // OSPRay Data Arrays ///////////////////////////////////////////////////
 
       virtual OSPData newSharedData(const void *sharedData,
-          OSPDataType,
-          const vec3i &numItems,
-          const vec3l &byteStride) = 0;
+                                    OSPDataType,
+                                    const vec3i &numItems,
+                                    const vec3l &byteStride) = 0;
 
       virtual OSPData newData(OSPDataType, const vec3i &numItems) = 0;
 
       virtual void copyData(const OSPData source,
-          OSPData destination,
-          const vec3i &DestinationIndex) = 0;
+                            OSPData destination,
+                            const vec3i &DestinationIndex) = 0;
 
       // Renderable Objects ///////////////////////////////////////////////////
 
@@ -87,7 +87,7 @@ namespace ospray {
 
       // Instancing ///////////////////////////////////////////////////////////
 
-      virtual OSPGroup newGroup() = 0;
+      virtual OSPGroup newGroup()                     = 0;
       virtual OSPInstance newInstance(OSPGroup group) = 0;
 
       // Top-level Worlds /////////////////////////////////////////////////////
@@ -196,7 +196,7 @@ namespace ospray {
                                                const OSPFrameBufferFormat mode,
                                                const uint32 channels) = 0;
 
-      virtual OSPImageOp newImageOp(const char *type) = 0;
+      virtual OSPImageOperation newImageOp(const char *type) = 0;
 
       virtual const void *frameBufferMap(OSPFrameBuffer fb,
                                          const OSPFrameBufferChannel) = 0;
@@ -268,7 +268,6 @@ namespace ospray {
       OSPError lastErrorCode = OSP_NO_ERROR;
       std::string lastErrorMsg =
           "no error";  // no braced initializer for MSVC12
-
 
      private:
       bool committed{false};

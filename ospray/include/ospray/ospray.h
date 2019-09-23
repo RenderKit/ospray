@@ -68,7 +68,7 @@ namespace osp {
   struct GeometricModel   : public ManagedObject {};
   struct Geometry         : public ManagedObject {};
   struct Group            : public ManagedObject {};
-  struct ImageOp          : public ManagedObject {};
+  struct ImageOperation   : public ManagedObject {};
   struct Instance         : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct Material         : public ManagedObject {};
@@ -88,7 +88,7 @@ typedef osp::Future            *OSPFuture;
 typedef osp::GeometricModel    *OSPGeometricModel;
 typedef osp::Geometry          *OSPGeometry;
 typedef osp::Group             *OSPGroup;
-typedef osp::ImageOp           *OSPImageOp;
+typedef osp::ImageOperation    *OSPImageOperation;
 typedef osp::Instance          *OSPInstance;
 typedef osp::Light             *OSPLight;
 typedef osp::ManagedObject     *OSPObject;
@@ -115,7 +115,7 @@ typedef _OSPManagedObject *OSPManagedObject,
   *OSPGeometricModel,
   *OSPGeometry,
   *OSPGroup,
-  *OSPImageOp,
+  *OSPImageOperation,
   *OSPInstance,
   *OSPLight,
   *OSPMaterial,
@@ -305,7 +305,7 @@ extern "C" {
 
   //! create a new pixel op of given type
   /*! return 'NULL' if that type is not known */
-  OSPRAY_INTERFACE OSPImageOp ospNewImageOp(const char *type);
+  OSPRAY_INTERFACE OSPImageOperation ospNewImageOp(const char *type);
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,

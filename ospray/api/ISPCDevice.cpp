@@ -108,9 +108,9 @@ namespace ospray {
     ///////////////////////////////////////////////////////////////////////////
 
     OSPData ISPCDevice::newSharedData(const void *sharedData,
-        OSPDataType type,
-        const vec3i &numItems,
-        const vec3l &byteStride)
+                                      OSPDataType type,
+                                      const vec3i &numItems,
+                                      const vec3l &byteStride)
     {
       return (OSPData) new Data(sharedData, type, numItems, byteStride);
     }
@@ -121,8 +121,8 @@ namespace ospray {
     }
 
     void ISPCDevice::copyData(const OSPData source,
-        OSPData destination,
-        const vec3i &destinationIndex)
+                              OSPData destination,
+                              const vec3i &destinationIndex)
     {
       Data *dst = (Data *)destination;
       dst->copy(*(Data *)source, destinationIndex);
@@ -432,9 +432,9 @@ namespace ospray {
       return (OSPFrameBuffer)fb;
     }
 
-    OSPImageOp ISPCDevice::newImageOp(const char *type)
+    OSPImageOperation ISPCDevice::newImageOp(const char *type)
     {
-      return (OSPImageOp)ImageOp::createInstance(type);
+      return (OSPImageOperation)ImageOp::createInstance(type);
     }
 
     const void *ISPCDevice::frameBufferMap(OSPFrameBuffer _fb,

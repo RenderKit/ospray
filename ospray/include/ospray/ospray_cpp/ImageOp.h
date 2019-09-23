@@ -20,33 +20,32 @@
 
 namespace ospray {
   namespace cpp {
-    class ImageOp : public ManagedObject_T<OSPImageOp>
-    {
-      public:
 
-        ImageOp() = default;
-        ImageOp(const std::string &type);
-        ImageOp(const ImageOp &copy);
-        ImageOp(OSPImageOp existing);
+    class ImageOperation : public ManagedObject_T<OSPImageOperation>
+    {
+     public:
+      ImageOperation() = default;
+      ImageOperation(const std::string &type);
+      ImageOperation(const ImageOperation &copy);
+      ImageOperation(OSPImageOperation existing);
     };
 
-    // Inlined function definitions ///////////////////////////////////////////////
+    // Inlined function definitions ///////////////////////////////////////////
 
-    inline ImageOp::ImageOp(const std::string &type)
+    inline ImageOperation::ImageOperation(const std::string &type)
     {
       ospObject = ospNewImageOp(type.c_str());
     }
 
-    inline ImageOp::ImageOp(const ImageOp &copy) :
-      ManagedObject_T<OSPImageOp>(copy.handle())
+    inline ImageOperation::ImageOperation(const ImageOperation &copy)
+        : ManagedObject_T<OSPImageOperation>(copy.handle())
     {
     }
 
-    inline ImageOp::ImageOp(OSPImageOp existing) :
-      ManagedObject_T<OSPImageOp>(existing)
+    inline ImageOperation::ImageOperation(OSPImageOperation existing)
+        : ManagedObject_T<OSPImageOperation>(existing)
     {
     }
 
-
-  }// namespace cpp
-}// namespace ospray
+  }  // namespace cpp
+}  // namespace ospray

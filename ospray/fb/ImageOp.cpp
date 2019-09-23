@@ -24,7 +24,7 @@ namespace ospray {
 
   ImageOp *ImageOp::createInstance(const char *type)
   {
-    return createInstanceHelper<ImageOp, OSP_IMAGE_OP>(type);
+    return createInstanceHelper<ImageOp, OSP_IMAGE_OPERATION>(type);
   }
 
   std::string ImageOp::toString() const

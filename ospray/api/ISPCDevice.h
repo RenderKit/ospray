@@ -48,15 +48,15 @@ namespace ospray {
       // OSPRay Data Arrays ///////////////////////////////////////////////////
 
       OSPData newSharedData(const void *sharedData,
-          OSPDataType,
-          const vec3i &numItems,
-          const vec3l &byteStride) override;
+                            OSPDataType,
+                            const vec3i &numItems,
+                            const vec3l &byteStride) override;
 
       OSPData newData(OSPDataType, const vec3i &numItems) override;
 
       void copyData(const OSPData source,
-          OSPData destination,
-          const vec3i &DestinationIndex) override;
+                    OSPData destination,
+                    const vec3i &DestinationIndex) override;
 
       // Renderable Objects ///////////////////////////////////////////////////
 
@@ -186,7 +186,7 @@ namespace ospray {
                                        const OSPFrameBufferFormat mode,
                                        const uint32 channels) override;
 
-      OSPImageOp newImageOp(const char *type) override;
+      OSPImageOperation newImageOp(const char *type) override;
 
       const void *frameBufferMap(OSPFrameBuffer fb,
                                  const OSPFrameBufferChannel) override;

@@ -68,7 +68,7 @@ int main(int argc, const char **argv)
 
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
-  //ospSetInt(renderer, "aoSamples", 0);
+  // ospSetInt(renderer, "aoSamples", 0);
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetData(renderer, "light", lightsData);
@@ -76,32 +76,30 @@ int main(int argc, const char **argv)
 
   ospCommit(renderer);
 
-
-
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly. We'll want albedo and normals for
   // the denoising op
-  const uint32_t fbChannels = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM
-                              | OSP_FB_ALBEDO | OSP_FB_NORMAL;
-  auto glfwOSPRayWindow =
-      std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer,
-          OSP_FB_RGBA32F, fbChannels));
-
-
-
+  const uint32_t fbChannels = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM |
+                              OSP_FB_ALBEDO | OSP_FB_NORMAL;
+  auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
+      new GLFWOSPRayWindow(vec2i{1024, 768},
+                           box3f(vec3f(-1.f), vec3f(1.f)),
+                           world,
+                           renderer,
+                           OSP_FB_RGBA32F,
+                           fbChannels));
 
   // Create a ImageOp pipeline to apply to the image
-  OSPImageOp toneMap = ospNewImageOp("tonemapper");
+  OSPImageOperation toneMap = ospNewImageOp("tonemapper");
   ospCommit(toneMap);
 
   // The colortweak pixel op will make the image more blue
-  OSPImageOp colorTweak = ospNewImageOp("tile_debug");
+  OSPImageOperation colorTweak = ospNewImageOp("tile_debug");
   ospSetVec3f(colorTweak, "addColor", 0.0, 0.0, 0.2);
   ospCommit(colorTweak);
   std::vector<OSPObject> pixelOps = {toneMap, colorTweak};
 
-  OSPImageOp frameOpTest = ospNewImageOp("frame_ssao");
+  OSPImageOperation frameOpTest = ospNewImageOp("frame_ssao");
 
   ospSetInt(frameOpTest, "ksize", 64);
 
@@ -109,20 +107,17 @@ int main(int argc, const char **argv)
   std::vector<OSPObject> frameOps = {frameOpTest};
 
   // UI for the tweaking the pixel pipeline
-  std::vector<bool> enabledOps   = {true, true, true};
-  std::vector<vec3f> debugColors = {
-    vec3f(-1.f), vec3f(0, 0, 0.2)
-  };
+  std::vector<bool> enabledOps          = {true, true, true};
+  std::vector<vec3f> debugColors        = {vec3f(-1.f), vec3f(0, 0, 0.2)};
   std::vector<std::string> frameOpNames = {"ssao"};
 
   std::vector<OSPObject> pixelPipeline = {toneMap, colorTweak, frameOpTest};
-  OSPData pixelOpData =
-      ospNewData(pixelPipeline.size(), OSP_IMAGE_OP, pixelPipeline.data());
+  OSPData pixelOpData                  = ospNewData(
+      pixelPipeline.size(), OSP_IMAGE_OPERATION, pixelPipeline.data());
   ospCommit(pixelOpData);
 
-
   glfwOSPRayWindow->setImageOps(pixelOpData);
-  //glfwOSPRayWindow->setFrameOpsToUpdate(frameOps, frameOpNames);
+  // glfwOSPRayWindow->setFrameOpsToUpdate(frameOps, frameOpNames);
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     bool pipelineUpdated = false;
@@ -156,7 +151,7 @@ int main(int argc, const char **argv)
     }
 
     if (ImGui::Button("Add Debug PixelOp")) {
-      OSPImageOp op = ospNewImageOp("tile_debug");
+      OSPImageOperation op = ospNewImageOp("tile_debug");
       ospSetVec3f(op, "addColor", 0.0, 0.0, 0.0);
       ospCommit(op);
 
@@ -167,7 +162,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
     if (ImGui::Button("Add Tonemap ImageOp")) {
-      OSPImageOp op = ospNewImageOp("tonemapper");
+      OSPImageOperation op = ospNewImageOp("tonemapper");
       ospCommit(op);
 
       pixelOps.push_back(op);
@@ -195,26 +190,25 @@ int main(int argc, const char **argv)
       ImGui::Text("Frame Op: %s", frameOpNames[i].c_str());
       bool enabled = enabledOps[i + pixelOps.size()];
       if (ImGui::Checkbox("Enabled", &enabled)) {
-        enabledOps[i + pixelOps.size()]   = enabled;
-        pipelineUpdated                   = true;
+        enabledOps[i + pixelOps.size()] = enabled;
+        pipelineUpdated                 = true;
       }
 
-
-      if(!frameOpNames[i].compare("ssao")){
+      if (!frameOpNames[i].compare("ssao")) {
         static float strength = 0.2f, radius = 0.3f, checkRadius = 1.f;
-        if (ImGui::SliderFloat("strength", &strength, 0.f, 1.f) ) {
+        if (ImGui::SliderFloat("strength", &strength, 0.f, 1.f)) {
           ospSetFloat(frameOps[i], "strength", strength);
-          pipelineUpdated                   = true;
+          pipelineUpdated = true;
           glfwOSPRayWindow->addObjectToCommit(frameOps[i]);
         }
-        if (ImGui::SliderFloat("kernel radius", &radius, 0.f, 2.f) ) {
+        if (ImGui::SliderFloat("kernel radius", &radius, 0.f, 2.f)) {
           ospSetFloat(frameOps[i], "radius", radius);
-          pipelineUpdated                   = true;
+          pipelineUpdated = true;
           glfwOSPRayWindow->addObjectToCommit(frameOps[i]);
         }
-        if (ImGui::SliderFloat("max ao distance", &checkRadius, 0.f, 2.f) ) {
+        if (ImGui::SliderFloat("max ao distance", &checkRadius, 0.f, 2.f)) {
           ospSetFloat(frameOps[i], "checkRadius", checkRadius);
-          pipelineUpdated                   = true;
+          pipelineUpdated = true;
           glfwOSPRayWindow->addObjectToCommit(frameOps[i]);
         }
       }
@@ -223,7 +217,7 @@ int main(int argc, const char **argv)
     }
 
     if (ImGui::Button("Add Debug FrameOp")) {
-      OSPImageOp op = ospNewImageOp("frame_debug");
+      OSPImageOperation op = ospNewImageOp("frame_debug");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -233,7 +227,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
     if (ImGui::Button("Add Blur FrameOp")) {
-      OSPImageOp op = ospNewImageOp("frame_blur");
+      OSPImageOperation op = ospNewImageOp("frame_blur");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -243,7 +237,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
     if (ImGui::Button("Add Depth FrameOp")) {
-      OSPImageOp op = ospNewImageOp("frame_depth");
+      OSPImageOperation op = ospNewImageOp("frame_depth");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -253,7 +247,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
     if (ImGui::Button("Add SSAO FrameOp")) {
-      OSPImageOp op = ospNewImageOp("frame_ssao");
+      OSPImageOperation op = ospNewImageOp("frame_ssao");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -264,7 +258,7 @@ int main(int argc, const char **argv)
     }
 
     if (denoiseModuleLoaded && ImGui::Button("Add Denoise FrameOp")) {
-      OSPImageOp op = ospNewImageOp("frame_denoise");
+      OSPImageOperation op = ospNewImageOp("frame_denoise");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -295,7 +289,8 @@ int main(int argc, const char **argv)
           enabled.push_back(frameOps[i]);
       }
 
-      pixelOpData = ospNewData(enabled.size(), OSP_IMAGE_OP, enabled.data());
+      pixelOpData =
+          ospNewData(enabled.size(), OSP_IMAGE_OPERATION, enabled.data());
       ospCommit(pixelOpData);
       glfwOSPRayWindow->setImageOps(pixelOpData);
     }

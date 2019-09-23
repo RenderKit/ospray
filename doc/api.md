@@ -395,7 +395,7 @@ be represented in OSPRay; valid constants are listed in the table below.
   OSP_GEOMETRY           geometry object reference
   OSP_VOLUME             volume object reference
   OSP_TRANSFER_FUNCTION  transfer function object reference
-  OSP_PIXEL_OP           pixel operation object reference
+  OSP_IMAGE_OPERATION    image operation object reference
   OSP_STRING             C-style zero-terminated character string
   OSP_CHAR               8\ bit signed character scalar
   OSP_UCHAR              8\ bit unsigned character scalar
@@ -677,7 +677,7 @@ id_m$.
 
                                                      `OSP_FAST` (rendering inaccuracies may appear
                                                      if hex is not parallelepiped)
-                                                     
+
                                                      `OSP_ITERATIVE`
 
   bool                 precomputedNormals      true  whether to accelerate by precomputing,
@@ -2158,10 +2158,10 @@ The framebuffer takes a list of pixel operations to be applied to the image
 in sequence as an `OSPData`. The pixel operations will be run in the order
 they are in the array.
 
-  Type          Name            Description
-  ------------- --------------- ---------------------------------------
-  OSPImageOp[]  imageOperation  ordered sequence of image operations
-  ------------- --------------- ---------------------------------------
+  Type                 Name            Description
+  -------------------- --------------- ---------------------------------------
+  OSPImageOperation[]  imageOperation  ordered sequence of image operations
+  -------------------- --------------- ---------------------------------------
   : Parameters accepted by the framebuffer.
 
 

@@ -59,7 +59,7 @@ namespace ospray {
     static ImageOp *createInstance(const char *type);
   };
 
-  OSPTYPEFOR_SPECIALIZATION(ImageOp *, OSP_IMAGE_OP);
+  OSPTYPEFOR_SPECIALIZATION(ImageOp *, OSP_IMAGE_OPERATION);
 
   struct OSPRAY_SDK_INTERFACE TileOp : public ImageOp
   {

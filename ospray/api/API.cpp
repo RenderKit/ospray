@@ -99,7 +99,8 @@ static inline Device *createMpiDevice(const std::string &_type)
       device = Device::createDevice(_type.c_str());
     } catch (const std::runtime_error &err) {
       std::stringstream error_msg;
-      error_msg << "Cannot create a device of type '" << _type << "'! Make sure "
+      error_msg << "Cannot create a device of type '" << _type
+                << "'! Make sure "
                 << "you have enabled the OSPRAY_MODULE_MPI CMake "
                 << "variable in your build of OSPRay.\n";
       error_msg << "(Reason device creation failed: " << err.what() << ')';
@@ -258,7 +259,8 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(OSP_INVALID_OPERATION)
 
-extern "C" int64_t ospDeviceGetProperty(OSPDevice _device, OSPDeviceProperty _deviceProperty) OSPRAY_CATCH_BEGIN
+extern "C" int64_t ospDeviceGetProperty(
+    OSPDevice _device, OSPDeviceProperty _deviceProperty) OSPRAY_CATCH_BEGIN
 {
   auto *device = (Device *)_device;
   return device->getProperty(_deviceProperty);
@@ -345,8 +347,8 @@ extern "C" void ospDeviceSetVoidPtr(OSPDevice _object,
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospDeviceSetStatusFunc(OSPDevice _object, OSPStatusFunc callback)
-    OSPRAY_CATCH_BEGIN
+extern "C" void ospDeviceSetStatusFunc(
+    OSPDevice _object, OSPStatusFunc callback) OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(_object);
 
@@ -415,16 +417,17 @@ OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
 ///////////////////////////////////////////////////////////////////////////////
 
 extern "C" OSPData ospNewSharedData(const void *sharedData,
-    OSPDataType type,
-    uint32_t numItems1,
-    int64_t byteStride1,
-    uint32_t numItems2,
-    int64_t byteStride2,
-    uint32_t numItems3,
-    int64_t byteStride3) OSPRAY_CATCH_BEGIN
+                                    OSPDataType type,
+                                    uint32_t numItems1,
+                                    int64_t byteStride1,
+                                    uint32_t numItems2,
+                                    int64_t byteStride2,
+                                    uint32_t numItems3,
+                                    int64_t byteStride3) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  OSPData data = currentDevice().newSharedData(sharedData,
+  OSPData data = currentDevice().newSharedData(
+      sharedData,
       type,
       ospray::vec3ui(numItems1, numItems2, numItems3),
       ospray::vec3l(byteStride1, byteStride2, byteStride3));
@@ -433,9 +436,9 @@ extern "C" OSPData ospNewSharedData(const void *sharedData,
 OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPData ospNewData(OSPDataType type,
-    uint32_t numItems1,
-    uint32_t numItems2,
-    uint32_t numItems3) OSPRAY_CATCH_BEGIN
+                              uint32_t numItems1,
+                              uint32_t numItems2,
+                              uint32_t numItems3) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   OSPData data = currentDevice().newData(
@@ -445,10 +448,10 @@ extern "C" OSPData ospNewData(OSPDataType type,
 OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospCopyData(const OSPData source,
-    OSPData destination,
-    uint32_t dstIdx1,
-    uint32_t dstIdx2,
-    uint32_t dstIdx3) OSPRAY_CATCH_BEGIN
+                            OSPData destination,
+                            uint32_t dstIdx1,
+                            uint32_t dstIdx2,
+                            uint32_t dstIdx3) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   currentDevice().copyData(
@@ -1115,7 +1118,7 @@ extern "C" OSPFrameBuffer ospNewFrameBuffer(int size_x,
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPImageOp ospNewImageOp(const char *_type) OSPRAY_CATCH_BEGIN
+extern "C" OSPImageOperation ospNewImageOp(const char *_type) OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_STRING(_type);
 
@@ -1128,7 +1131,7 @@ extern "C" OSPImageOp ospNewImageOp(const char *_type) OSPRAY_CATCH_BEGIN
       c = '_';
     type[i] = c;
   }
-  OSPImageOp op = currentDevice().newImageOp(type);
+  OSPImageOperation op = currentDevice().newImageOp(type);
   return op;
 }
 OSPRAY_CATCH_END(nullptr)
