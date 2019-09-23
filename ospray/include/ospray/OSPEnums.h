@@ -264,9 +264,9 @@ typedef enum
 : uint8_t
 #endif
 {
-    OSP_AMR_CURRENT,
-    OSP_AMR_FINEST,
-    OSP_AMR_OCTANT
+  OSP_AMR_CURRENT,
+  OSP_AMR_FINEST,
+  OSP_AMR_OCTANT
 } OSPAMRMethod;
 
 // UnstructuredVolume interpolation methods
@@ -275,6 +275,6 @@ typedef enum
 : uint8_t
 #endif
 {
-    OSP_FAST,
-    OSP_ITERATIVE,
+  OSP_FAST,
+  OSP_ITERATIVE,
 } OSPUnstructuredMethod;
