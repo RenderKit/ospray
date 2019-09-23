@@ -189,7 +189,6 @@ extern "C" {
 
   // OSPRay Data Arrays ///////////////////////////////////////////////////////
 
-  // TODO alignment reqs of *sharedData?
   OSPRAY_INTERFACE OSPData ospNewSharedData(const void *sharedData,
       OSPDataType,
       uint32_t numItems1,
@@ -209,67 +208,6 @@ extern "C" {
       uint32_t destinationIndex1 OSP_DEFAULT_VAL(0),
       uint32_t destinationIndex2 OSP_DEFAULT_VAL(0),
       uint32_t destinationIndex3 OSP_DEFAULT_VAL(0));
-
-  // for convenience with C99
-  static inline OSPData ospNewSharedData1D(
-      const void *sharedData, OSPDataType type, uint32_t numItems)
-  {
-    return ospNewSharedData(sharedData, type, numItems, 0, 1, 0, 1, 0);
-  }
-  static inline OSPData ospNewSharedData1DStride(const void *sharedData,
-      OSPDataType type,
-      uint32_t numItems,
-      int64_t byteStride)
-  {
-    return ospNewSharedData(sharedData, type, numItems, byteStride, 1, 0, 1, 0);
-  }
-  static inline OSPData ospNewSharedData2D(const void *sharedData,
-      OSPDataType type,
-      uint32_t numItems1,
-      uint32_t numItems2)
-  {
-    return ospNewSharedData(sharedData, type, numItems1, 0, numItems2, 0, 1, 0);
-  }
-  static inline OSPData ospNewSharedData2DStride(const void *sharedData,
-      OSPDataType type,
-      uint32_t numItems1,
-      int64_t byteStride1,
-      uint32_t numItems2,
-      int64_t byteStride2)
-  {
-    return ospNewSharedData(
-        sharedData, type, numItems1, byteStride1, numItems2, byteStride2, 1, 0);
-  }
-  static inline OSPData ospNewSharedData3D(const void *sharedData,
-      OSPDataType type,
-      uint32_t numItems1,
-      uint32_t numItems2,
-      uint32_t numItems3)
-  {
-    return ospNewSharedData(
-        sharedData, type, numItems1, 0, numItems2, 0, numItems3, 0);
-  }
-  static inline OSPData ospNewData1D(OSPDataType type, uint32_t numItems)
-  {
-    return ospNewData(type, numItems, 1, 1);
-  }
-  static inline OSPData ospNewData2D(
-      OSPDataType type, uint32_t numItems1, uint32_t numItems2)
-  {
-    return ospNewData(type, numItems1, numItems2, 1);
-  }
-  static inline void ospCopyData1D(
-      const OSPData source, OSPData destination, uint32_t destinationIndex)
-  {
-    ospCopyData(source, destination, destinationIndex, 0, 0);
-  }
-  static inline void ospCopyData2D(const OSPData source,
-      OSPData destination,
-      uint32_t destinationIndex1,
-      uint32_t destinationIndex2)
-  {
-    ospCopyData(source, destination, destinationIndex1, destinationIndex2, 0);
-  }
 
   // Renderable Objects ///////////////////////////////////////////////////////
 
@@ -420,22 +358,6 @@ extern "C" {
 
 #ifdef __cplusplus
 } // extern "C"
-
-// XXX temporary, to maintain backwards compatibility
-static inline OSPData ospNewData(size_t numItems,
-    OSPDataType type,
-    const void *source,
-    uint32_t dataCreationFlags = 0)
-{
-  if (dataCreationFlags)
-    return ospNewSharedData(source, type, numItems);
-  else {
-    auto src = ospNewSharedData(source, type, numItems);
-    auto dst = ospNewData(type, numItems);
-    ospCopyData(src, dst);
-    ospRelease(src);
-    return dst;
-  }
-}
-
 #endif
+
+#include "detail/ospray_util.h"
