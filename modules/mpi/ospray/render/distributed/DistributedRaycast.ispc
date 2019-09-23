@@ -56,7 +56,6 @@ vec4f DRR_integrateVolumeInterval(
 
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
-  float pSample = -1.f;
 
   foreach_unique (vm in volModel) {
     Volume *uniform volume = vm->volume;
@@ -68,19 +67,14 @@ vec4f DRR_integrateVolumeInterval(
       const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
 
       if (!isnan(sample)) {
-        vec3f sampleColor = tf->getIntegratedColorForValue(tf, pSample, sample);
-        float sampleAlpha =
-            tf->getIntegratedOpacityForValue(tf, pSample, sample);
+        vec4f sampleColorOpacity = tf->get(tf, sample);
 
-        pSample = sample;
+        const float clampedOpacity =
+          clamp(sampleColorOpacity.w / vm->samplingRate);
 
-        const float clampedOpacity = clamp(sampleAlpha / vm->samplingRate);
-
-        sampleColor = sampleColor * clampedOpacity;
-        sampleAlpha = clampedOpacity;
-
-        color = color + ((1.f - alpha) * sampleColor);
-        alpha = alpha + ((1.f - alpha) * sampleAlpha);
+        color = color
+          + ((1.f - alpha) * clampedOpacity * make_vec3f(sampleColorOpacity));
+        alpha = alpha + ((1.f - alpha) * clampedOpacity);
       }
 
       volume->stepRay(volume, tf, ray, vm->samplingRate);
