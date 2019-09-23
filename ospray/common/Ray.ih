@@ -107,35 +107,15 @@ inline void setRay(Ray &ray, const float t0, const float t1)
 
 inline void transformRay(Ray &ray, const uniform AffineSpace3f &xfm)
 {
-  // numbers in original coordinate
-  const vec3f t0 = ray.org + ray.t0 * ray.dir;
-  const vec3f t  = ray.org + ray.t * ray.dir;
-  // numbers for transformed ray
-  // -- direction
-  ray.org             = xfmPoint(xfm, ray.org);
-  ray.dir             = xfmVector(xfm, ray.dir);
-  const vec3f rcp_dir = rcp(ray.dir);
-  // -- starting and ending positions
-  ray.t0 = reduce_max((xfmPoint(xfm, t0) - ray.org) * rcp_dir);
-  ray.t  = reduce_min((xfmPoint(xfm, t) - ray.org) * rcp_dir);
-  // -- Ng
+  ray.org = xfmPoint(xfm, ray.org);
+  ray.dir = xfmVector(xfm, ray.dir);
   ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
 }
 
 inline void transformRay(Ray &ray, AffineSpace3f xfm)
 {
-  // numbers in original coordinate
-  const vec3f t0 = ray.org + ray.t0 * ray.dir;
-  const vec3f t  = ray.org + ray.t * ray.dir;
-  // numbers for transformed ray
-  // -- direction
-  ray.org             = xfmPoint(xfm, ray.org);
-  ray.dir             = xfmVector(xfm, ray.dir);
-  const vec3f rcp_dir = rcp(ray.dir);
-  // -- starting and ending positions
-  ray.t0 = reduce_max((xfmPoint(xfm, t0) - ray.org) * rcp_dir);
-  ray.t  = reduce_min((xfmPoint(xfm, t) - ray.org) * rcp_dir);
-  // -- Ng
+  ray.org = xfmPoint(xfm, ray.org);
+  ray.dir = xfmVector(xfm, ray.dir);
   ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
 }
 
