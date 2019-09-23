@@ -32,10 +32,12 @@ namespace ospray {
     addr = (char *)sharedData;
     init();
 
-    if (isObjectType(type))
-      for (auto &&child : as<ManagedObject *, 3>())
+    if (isObjectType(type)) {
+      for (auto &&child : as<ManagedObject *, 3>()) {
         if (child)
           child->refInc();
+      }
+    }
   }
 
   Data::Data(OSPDataType type, const vec3ui &numItems)
@@ -50,10 +52,12 @@ namespace ospray {
 
   Data::~Data()
   {
-    if (isObjectType(type))
-      for (auto &&child : as<ManagedObject *, 3>())
+    if (isObjectType(type)) {
+      for (auto &&child : as<ManagedObject *, 3>()) {
         if (child)
           child->refDec();
+      }
+    }
 
     if (!shared)
       alignedFree(addr);
