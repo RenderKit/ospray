@@ -23,7 +23,7 @@
 #include "ospray/common/Ray.ih"
 #include "ospray/geometry/Geometry.ih"
 #include "ospray/math/AffineSpace.ih"
-#include "ospray/transferFunction/LinearTransferFunction.ih"
+#include "volume/transferFunction/LinearTransferFunction.ih"
 
 // ------------------------------------------------------------------
 //! The current level at the given sample location in world coordinates.

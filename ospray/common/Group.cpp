@@ -16,8 +16,6 @@
 
 // ospray
 #include "Group.h"
-#include "../geometry/GeometricModel.h"
-#include "../volume/VolumetricModel.h"
 // ispc exports
 #include "Group_ispc.h"
 
@@ -28,12 +26,11 @@ namespace ospray {
   // Embree helper functions //////////////////////////////////////////////////
 
   template <typename T>
-  inline std::vector<void *> createEmbreeScene(RTCScene &scene,
-                                               Data &objects,
-                                               int embreeFlags)
+  inline std::vector<void *> createEmbreeScene(
+      RTCScene &scene, const DataT<T *> &objects, int embreeFlags)
   {
     std::vector<void *> ptrsToIE;
-    for (auto &&obj : objects.as<T *>()) {
+    for (auto &&obj : objects) {
       Geometry &geom    = obj->geometry();
       auto liveGeometry = geom.createEmbreeGeometry();
 
@@ -51,11 +48,10 @@ namespace ospray {
   }
 
   template <>
-  inline std::vector<void *> createEmbreeScene<VolumetricModel>(RTCScene &scene,
-                                                                Data &objects,
-                                                                int embreeFlags)
+  inline std::vector<void *> createEmbreeScene<VolumetricModel>(
+      RTCScene &scene, const DataT<VolumetricModel *> &objects, int embreeFlags)
   {
-    for (auto &&obj : objects.as<VolumetricModel *>()) {
+    for (auto &&obj : objects) {
       auto geomID = rtcAttachGeometry(scene, obj->embreeGeometryHandle());
       obj->setGeomID(geomID);
     }
@@ -102,8 +98,24 @@ namespace ospray {
 
   void Group::commit()
   {
-    geometricModels  = (Data *)getParamObject("geometry");
-    volumetricModels = (Data *)getParamObject("volume");
+    geometricModels = getParamDataT<GeometricModel *>("geometry");
+    volumetricModels = getParamDataT<VolumetricModel *>("volume");
+
+    // get rid of stride for now
+    if (geometricModels && !geometricModels->compact()) {
+      auto data =
+          new Data(OSP_GEOMETRIC_MODEL, vec3ui(geometricModels->size(), 1, 1));
+      data->copy(*geometricModels, vec3ui(0));
+      geometricModels = &(data->as<GeometricModel *>());
+      data->refDec();
+    }
+    if (volumetricModels && !volumetricModels->compact()) {
+      auto data = new Data(
+          OSP_VOLUMETRIC_MODEL, vec3ui(volumetricModels->size(), 1, 1));
+      data->copy(*volumetricModels, vec3ui(0));
+      volumetricModels = &(data->as<VolumetricModel *>());
+      data->refDec();
+    }
 
     size_t numGeometries = geometricModels ? geometricModels->size() : 0;
     size_t numVolumes    = volumetricModels ? volumetricModels->size() : 0;

@@ -99,7 +99,7 @@ namespace ospray {
       FrameBufferView fbv(this, colorBufferFormat, colorBuffer, depthBuffer,
                           normalBuffer, albedoBuffer);
 
-      for (auto &&obj : imageOpData->as<ImageOp *>())
+      for (auto &&obj : *imageOpData)
         imageOps.push_back(obj->attach(fbv));
 
       findFirstFrameOperation();

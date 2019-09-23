@@ -40,10 +40,12 @@ float delta_tracking(
     xi = RandomSampler_getFloat(randomSampler);
     vec3f p = o + t * w;
     const float sample = vModel->volume->sample(vModel->volume, p);
-    mu_t = vModel->densityScale * VolumetricModel_getOpacity(vModel, sample);
+    const vec4f color =
+        vModel->transferFunction->get(vModel->transferFunction, sample);
+    mu_t = vModel->densityScale * color.w;
     if (xi < mu_t / mu_max)
     {
-      albedo = VolumetricModel_getColor(vModel, sample);
+      albedo = make_vec3f(color);
       return t;
     }
   }

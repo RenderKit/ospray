@@ -17,8 +17,9 @@
 #pragma once
 
 // ospray stuff
-#include "./Managed.h"
 #include "./Data.h"
+#include "./Managed.h"
+#include "Instance.h"
 // stl
 #include <vector>
 // embree
@@ -36,7 +37,7 @@ namespace ospray {
 
     // Data members //
 
-    Ref<Data> instances;
+    Ref<const DataT<Instance *>> instances;
     std::vector<void*> instanceIEs;
     int numGeometries{0};
     int numVolumes{0};

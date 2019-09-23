@@ -125,7 +125,7 @@ namespace ospray {
 
     std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
-    Ref<Data> imageOpData;
+    Ref<const DataT<ImageOp *>> imageOpData;
     std::vector<std::unique_ptr<LiveImageOp>> imageOps;
     size_t firstFrameOperation = -1;
   };

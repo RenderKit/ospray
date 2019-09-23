@@ -18,7 +18,7 @@
 #include "GridAccelerator.ih"
 #include "StructuredVolume.ih"
 #include "math/box.ih"
-#include "transferFunction/TransferFunction.ih"
+#include "volume/transferFunction/TransferFunction.ih"
 
 //! Bit count used to represent the brick width.
 #define BRICK_WIDTH_BITCOUNT (4)
@@ -297,7 +297,7 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
 
     if (!isnan(cellRange.x)) {
       // Get the maximum opacity in the volumetric value range.
-      float maximumOpacity = tfn->getMaxOpacityInRange(tfn, cellRange);
+      float maximumOpacity = 1.0; // tfn->getMaxOpacityInRange(tfn, cellRange);
 
       // Return the hit point if the grid cell is not fully transparent.
       if (maximumOpacity > 0.0f)

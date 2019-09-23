@@ -29,8 +29,6 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
 
-  float pSample = -1.f;
-
   // Ray offset for this sample, as a fraction of the nominal step size.
   float jitter = precomputedHalton2(sample.sampleID.z);
   int ix       = sample.sampleID.x % 4;
@@ -53,19 +51,13 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
       const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
 
       if (!isnan(sample)) {
-        vec3f sampleColor = tf->getIntegratedColorForValue(tf, pSample, sample);
-        float sampleAlpha =
-            tf->getIntegratedOpacityForValue(tf, pSample, sample);
+        vec4f sampleColorOpacity = tf->get(tf, sample);
 
-        pSample = sample;
-
-        const float clampedOpacity = clamp(sampleAlpha / m->samplingRate);
-
-        sampleColor = sampleColor * clampedOpacity;
-        sampleAlpha = clampedOpacity;
-
-        color = color + ((1.f - alpha) * sampleColor);
-        alpha = alpha + ((1.f - alpha) * sampleAlpha);
+        const float clampedOpacity =
+            clamp(sampleColorOpacity.w / m->samplingRate);
+        color = color
+            + ((1.f - alpha) * clampedOpacity * make_vec3f(sampleColorOpacity));
+        alpha = alpha + ((1.f - alpha) * clampedOpacity);
       }
 
       volume->stepRay(volume, tf, ray, m->samplingRate);

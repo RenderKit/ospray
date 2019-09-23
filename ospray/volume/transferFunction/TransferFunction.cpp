@@ -14,34 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 // ospray
-#include "common/Data.h"
-#include "transferFunction/TransferFunction.h"
+#include "TransferFunction.h"
+#include "TransferFunction_ispc.h"
+#include "common/Util.h"
 
 namespace ospray {
 
-  /*! \brief A concrete implementation of the TransferFunction class for
-    piecewise linear transfer functions.
-  */
-  struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
+  void TransferFunction::commit()
   {
-    LinearTransferFunction();
-    virtual ~LinearTransferFunction() override;
+    vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));
+    ispc::TransferFunction_set(ispcEquivalent, (const ispc::box1f &)valueRange);
+  }
 
-    virtual void commit() override;
+  std::string TransferFunction::toString() const
+  {
+    return "ospray::TransferFunction";
+  }
 
-    virtual std::string toString() const override;
+  TransferFunction *TransferFunction::createInstance(const std::string &type)
+  {
+    return createInstanceHelper<TransferFunction, OSP_TRANSFER_FUNCTION>(type);
+  }
 
-  private:
-
-    //! Data array that stores the color map.
-    Ref<Data> colorValues;
-
-    //! Data array that stores the opacity map.
-    Ref<Data> opacityValues;
-  };
-
-} // ::ospray
-
+} // namespace ospray

@@ -17,8 +17,10 @@
 #pragma once
 
 // ospray stuff
-#include "./Managed.h"
+#include "../geometry/GeometricModel.h"
+#include "../volume/VolumetricModel.h"
 #include "./Data.h"
+#include "./Managed.h"
 // stl
 #include <vector>
 // embree
@@ -43,11 +45,11 @@ namespace ospray {
 
     // Data members //
 
-    Ref<Data> geometricModels;
+    Ref<const DataT<GeometricModel *>> geometricModels;
     std::vector<void *> geometryIEs;  // NOTE: needs to be freed!
     std::vector<void *> geometricModelIEs;
 
-    Ref<Data> volumetricModels;
+    Ref<const DataT<VolumetricModel *>> volumetricModels;
     std::vector<void *> volumeIEs;  // NOTE: needs to be freed!
     std::vector<void *> volumetricModelIEs;
 

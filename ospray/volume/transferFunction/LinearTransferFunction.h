@@ -14,59 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#pragma once
+
 // ospray
-#include "Isosurfaces.h"
+#include "TransferFunction.h"
 #include "common/Data.h"
-#include "common/World.h"
-// ispc-generated files
-#include "Isosurfaces_ispc.h"
 
 namespace ospray {
 
-  std::string Isosurfaces::toString() const
+  // piecewise linear transfer function
+  struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
   {
-    return "ospray::Isosurfaces";
-  }
+    LinearTransferFunction();
+    virtual ~LinearTransferFunction() override = default;
 
-  void Isosurfaces::commit()
-  {
-    isovaluesData = getParamDataT<float>("isovalue", true);
+    virtual void commit() override;
 
-    volume = (VolumetricModel *)getParamObject("volume");
+    virtual std::string toString() const override;
 
-    if (!isovaluesData->compact()) {
-      // get rid of stride
-      auto data = new Data(OSP_FLOAT, vec3ui(isovaluesData->size(), 1, 1));
-      data->copy(*isovaluesData, vec3ui(0));
-      isovaluesData = &(data->as<float>());
-      data->refDec();
-    }
+   private:
+    Ref<const DataT<vec3f>> colorValues;
+    Ref<const DataT<float>> opacityValues;
+  };
 
-    postCreationInfo();
-  }
-
-  size_t Isosurfaces::numPrimitives() const
-  {
-    return isovaluesData->size();
-  }
-
-  LiveGeometry Isosurfaces::createEmbreeGeometry()
-  {
-    LiveGeometry retval;
-
-    retval.ispcEquivalent = ispc::Isosurfaces_create(this);
-    retval.embreeGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-
-    ispc::Isosurfaces_set(retval.ispcEquivalent,
-        retval.embreeGeometry,
-        isovaluesData->size(),
-        isovaluesData->data(),
-        volume->getIE());
-
-    return retval;
-  }
-
-  OSP_REGISTER_GEOMETRY(Isosurfaces, isosurfaces);
-
-}  // namespace ospray
+} // namespace ospray

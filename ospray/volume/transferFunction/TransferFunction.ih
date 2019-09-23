@@ -14,14 +14,24 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "transferFunction/TransferFunction.ih"
+#pragma once
 
-export void TransferFunction_setValueRange(void *uniform pointer, 
-                                           const uniform vec2f &value) 
+#include "common/OSPCommon.ih"
+#include "math/box.ih"
+#include "math/vec.ih"
+
+typedef vec4f (*TransferFunction_getFct)(const void *uniform self, float value);
+
+struct TransferFunction
 {
-  // Cast to the actual type.
-  TransferFunction *uniform transferFunction = (TransferFunction *uniform) pointer;
+  range1f valueRange;
 
-  // Set the transfer function value range.
-  transferFunction->valueRange = value;
+  TransferFunction_getFct get;
+};
+
+inline void TransferFunction_Constructor(
+    TransferFunction *uniform self, uniform TransferFunction_getFct get)
+{
+  self->valueRange = make_box1f(0.0f, 1.0f);
+  self->get = get;
 }

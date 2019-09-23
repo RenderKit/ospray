@@ -48,20 +48,18 @@ namespace ospray {
 
   void PathTracer::generateGeometryLights(const World &world)
   {
-    auto *instances = world.instances.ptr;
-
-    if (!instances)
+    if (!world.instances)
       return;
 
-    for (auto &&instance : instances->as<Instance *>()) {
-      auto *geometries = instance->group->geometricModels.ptr;
+    for (auto &&instance : *world.instances) {
+      auto geometries = instance->group->geometricModels;
 
       if (!geometries)
         return;
 
       affine3f xfm = instance->xfm();
 
-      for (auto &&model : geometries->as<GeometricModel *>()) {
+      for (auto &&model : *geometries) {
         if (model->materialList) {
           // check whether the modelmetry has any emissive materials
           bool hasEmissive = false;

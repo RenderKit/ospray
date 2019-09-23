@@ -16,7 +16,6 @@
 
 // ospray
 #include "World.h"
-#include "Instance.h"
 #include "api/ISPCDevice.h"
 // ispc exports
 #include "World_ispc.h"
@@ -31,16 +30,16 @@ namespace ospray {
   // Embree helper functions ///////////////////////////////////////////////////
 
   static std::pair<int, int> createEmbreeScenes(RTCScene &geometryScene,
-                                                RTCScene &volumeScene,
-                                                Data &instances,
-                                                int embreeFlags)
+      RTCScene &volumeScene,
+      const DataT<Instance *> &instances,
+      int embreeFlags)
   {
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
     int numGeomInstances   = 0;
     int numVolumeInstances = 0;
 
-    for (auto &&inst : instances.as<Instance *>()) {
+    for (auto &&inst : instances) {
       auto instGeometryScene = inst->group->embreeGeometryScene();
       auto instVolumeScene   = inst->group->embreeVolumeScene();
 
@@ -112,7 +111,16 @@ namespace ospray {
     freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
     freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
 
-    instances = (Data *)getParamObject("instance");
+    instances = getParamDataT<Instance *>("instance");
+
+    // get rid of stride for now
+    if (instances && !instances->compact()) {
+      auto data =
+          new Data(OSP_GEOMETRIC_MODEL, vec3ui(instances->size(), 1, 1));
+      data->copy(*instances, vec3ui(0));
+      instances = &(data->as<Instance *>());
+      data->refDec();
+    }
 
     auto numInstances = instances ? instances->size() : 0;
 

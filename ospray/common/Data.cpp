@@ -145,15 +145,4 @@ namespace ospray {
     return "ospray::Data";
   }
 
-  // Helper functions /////////////////////////////////////////////////////////
-
-  std::vector<void *> createArrayOfIE(Data &data)
-  {
-    std::vector<void *> retval;
-
-    for (auto &&obj : data.as<ManagedObject *>())
-      retval.push_back(obj->getIE());
-
-    return retval;
-  }
 } // namespace ospray

@@ -17,7 +17,7 @@
 #include "AMRVolume.h"
 // ospray
 #include "common/Data.h"
-#include "transferFunction/TransferFunction.h"
+#include "volume/transferFunction/TransferFunction.h"
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/utility/getEnvVar.h"

@@ -341,8 +341,6 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
   ray.t0 = vInterval.interval.lower;
   ray.t  = vInterval.interval.upper;
 
-  float pSample = -1.f;
-
   // Ray offset for this sample, as a fraction of the nominal step size.
   float jitter = precomputedHalton2(sample.sampleID.z);
   int ix       = sample.sampleID.x % 4;
@@ -365,19 +363,13 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
       const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
 
       if (!isnan(sample)) {
-        vec3f sampleColor = tf->getIntegratedColorForValue(tf, pSample, sample);
-        float sampleAlpha =
-            tf->getIntegratedOpacityForValue(tf, pSample, sample);
+        vec4f sampleColorOpacity = tf->get(tf, sample);
 
-        pSample = sample;
-
-        const float clampedOpacity = clamp(sampleAlpha / m->samplingRate);
-
-        sampleColor = sampleColor * clampedOpacity;
-        sampleAlpha = clampedOpacity;
-
-        color = color + ((1.f - sampleAlpha) * sampleColor);
-        alpha = alpha + ((1.f - sampleAlpha) * sampleAlpha);
+        const float clampedOpacity =
+            clamp(sampleColorOpacity.w / m->samplingRate);
+        color = color
+            + ((1.f - alpha) * clampedOpacity * make_vec3f(sampleColorOpacity));
+        alpha = alpha + ((1.f - alpha) * clampedOpacity);
       }
 
       if (alpha >= 0.99f)

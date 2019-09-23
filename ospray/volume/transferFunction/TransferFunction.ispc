@@ -14,28 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "TransferFunction.ih"
 
-#include "../transferFunction/TransferFunction.ih"
+export void TransferFunction_set(
+    void *uniform _self, const uniform range1f &range)
+{
+  TransferFunction *uniform self = (TransferFunction * uniform) _self;
 
-#define PRECOMPUTED_OPACITY_SUBRANGE_COUNT 32
-
-struct LinearTransferFunction {
-
-  //! Pointers to functions common to all TransferFunction subtypes (must be the first field of the struct).
-  TransferFunction super;
-
-  //! Transfer function opacity values and count.
-  uniform float *uniform opacityValues;  
-  uniform int            opacityValueCount;
-  uniform float* uniform opacityPITable;
-
-  //! Transfer function color values and count.
-  uniform vec3f *uniform colorValues;  
-  uniform int            colorValueCount;  
-  uniform vec3f *uniform colorPITable;
-
-  //! A 2D array that contains precomputed minimum and maximum opacity values for a transfer function.
-  vec2f minMaxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT][PRECOMPUTED_OPACITY_SUBRANGE_COUNT];
-
-};
+  self->valueRange = range;
+}

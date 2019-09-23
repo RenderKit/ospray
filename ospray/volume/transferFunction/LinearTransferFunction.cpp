@@ -14,48 +14,25 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "transferFunction/LinearTransferFunction.h"
+#include "LinearTransferFunction.h"
 #include "LinearTransferFunction_ispc.h"
 
 namespace ospray {
 
   LinearTransferFunction::LinearTransferFunction()
   {
-    ispcEquivalent = ispc::LinearTransferFunction_createInstance();
-  }
-
-  LinearTransferFunction::~LinearTransferFunction()
-  {
-    if (ispcEquivalent)
-      ispc::LinearTransferFunction_freeMemory(ispcEquivalent);
+    ispcEquivalent = ispc::LinearTransferFunction_create();
   }
 
   void LinearTransferFunction::commit()
   {
-    // Retrieve the color and opacity values.
-    colorValues   = getParamData("color", nullptr);
-    opacityValues = getParamData("opacity", nullptr);
-    ispc::LinearTransferFunction_setPreIntegration(
-        ispcEquivalent, getParam1b("preIntegration", false));
-
-    // Set the color values.
-    if (colorValues) {
-      ispc::LinearTransferFunction_setColorValues(ispcEquivalent,
-          colorValues->size(),
-          (ispc::vec3f *)colorValues->data());
-    }
-
-    // Set the opacity values.
-    if (opacityValues) {
-      ispc::LinearTransferFunction_setOpacityValues(ispcEquivalent,
-          opacityValues->size(),
-          (float *)opacityValues->data());
-    }
-
-    if (getParam1b("preIntegration", false) && colorValues && opacityValues)
-      ispc::LinearTransferFunction_precomputePreIntegratedValues(ispcEquivalent);
-
     TransferFunction::commit();
+
+    colorValues = getParamDataT<vec3f>("color");
+    opacityValues = getParamDataT<float>("opacity");
+
+    ispc::LinearTransferFunction_set(
+        ispcEquivalent, ispc(colorValues), ispc(opacityValues));
   }
 
   std::string LinearTransferFunction::toString() const
@@ -63,8 +40,6 @@ namespace ospray {
     return "ospray::LinearTransferFunction";
   }
 
-  // A piecewise linear transfer function.
   OSP_REGISTER_TRANSFER_FUNCTION(LinearTransferFunction, piecewise_linear);
 
-} // ::ospray
-
+} // namespace ospray

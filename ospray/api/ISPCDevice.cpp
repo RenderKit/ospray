@@ -33,8 +33,8 @@
 #include "render/Renderer.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
-#include "transferFunction/TransferFunction.h"
 #include "volume/VolumetricModel.h"
+#include "volume/transferFunction/TransferFunction.h"
 // stl
 #include <algorithm>
 

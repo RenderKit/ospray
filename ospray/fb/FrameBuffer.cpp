@@ -40,7 +40,7 @@ namespace ospray {
 
   void FrameBuffer::commit()
   {
-    imageOpData = getParamData("imageOperation");
+    imageOpData = getParamDataT<ImageOp *>("imageOperation");
   }
 
   vec2i FrameBuffer::getTileSize() const

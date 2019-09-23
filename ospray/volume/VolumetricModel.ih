@@ -57,19 +57,3 @@ inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
   dg.areaPDF = 0.f;
   dg.color = make_vec4f(0.f);
 }
-
-// Helper functions ///////////////////////////////////////////////////////////
-
-inline vec3f VolumetricModel_getColor(const VolumetricModel *uniform volume,
-                                     const float sample)
-{
-  return volume->transferFunction->getColorForValue(volume->transferFunction,
-                                                    sample);
-}
-
-inline float VolumetricModel_getOpacity(const VolumetricModel *uniform volume,
-                                       const float sample)
-{
-  return volume->transferFunction->getOpacityForValue(volume->transferFunction,
-                                                      sample);
-}

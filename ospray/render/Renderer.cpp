@@ -128,9 +128,9 @@ namespace ospray {
                         res.hasHit);
 
     if (res.hasHit) {
-      auto *instance = world->instances->as<Instance *>()[instID];
+      auto *instance = (*world->instances)[instID];
       auto *group    = instance->group.ptr;
-      auto *model = group->geometricModels->as<GeometricModel *>()[geomID];
+      auto *model = (*group->geometricModels)[geomID];
 
       res.instance = (OSPInstance)instance;
       res.model    = (OSPGeometricModel)model;

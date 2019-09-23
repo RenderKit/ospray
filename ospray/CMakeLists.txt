@@ -195,15 +195,16 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   texture/TextureVolume.cpp
   texture/TextureVolume.ispc
 
-  transferFunction/LinearTransferFunction.ispc
-  transferFunction/LinearTransferFunction.cpp
-  transferFunction/TransferFunction.ispc
-  transferFunction/TransferFunction.cpp
-
   volume/Volume.ispc
   volume/Volume.cpp
   volume/VolumetricModel.ispc
   volume/VolumetricModel.cpp
+
+  volume/transferFunction/LinearTransferFunction.ispc
+  volume/transferFunction/LinearTransferFunction.cpp
+  volume/transferFunction/TransferFunction.ispc
+  volume/transferFunction/TransferFunction.cpp
+
 
   volume/structured/GridAccelerator.ispc
   volume/structured/StructuredVolume.ispc

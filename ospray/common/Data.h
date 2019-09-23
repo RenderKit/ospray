@@ -89,8 +89,6 @@ namespace ospray {
 
   OSPTYPEFOR_SPECIALIZATION(Data *, OSP_DATA);
 
-  std::vector<void *> createArrayOfIE(Data &data);
-
   template <typename T>
   class Iter : public std::iterator<std::forward_iterator_tag, T>
   {
@@ -146,17 +144,21 @@ namespace ospray {
       ++(*this);
       return retv;
     }
-    bool operator==(Iter1D &other) const
+    bool operator==(const Iter1D &other) const
     {
       return addr == other.addr;
     }
-    bool operator!=(Iter1D &other) const
+    bool operator!=(const Iter1D &other) const
     {
       return addr != other.addr;
     }
     T &operator*() const
     {
       return *reinterpret_cast<T *>(addr);
+    }
+    T *operator->() const
+    {
+      return reinterpret_cast<T *>(addr);
     }
   };
 
@@ -309,4 +311,16 @@ namespace ospray {
     }
   }
 
+  template <typename T, int DIM>
+  inline typename std::enable_if<std::is_base_of<ManagedObject, T>::value,
+      std::vector<void *>>::type
+  createArrayOfIE(const DataT<T *, DIM> &data)
+  {
+    std::vector<void *> retval;
+
+    for (auto &&obj : data)
+      retval.push_back(obj->getIE());
+
+    return retval;
+  }
 } // namespace ospray

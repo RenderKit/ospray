@@ -130,9 +130,7 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
 
   if (flags & DG_COLOR) {
     TransferFunction *uniform xf = self->volumetricModel->transferFunction;
-    const vec3f sampleColor =
-        xf->getColorForValue(xf, self->isovalues[ray.primID]);
-    dg.color = make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.f);
+    dg.color = xf->get(xf, self->isovalues[ray.primID]);
   }
 }
 
