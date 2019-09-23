@@ -225,6 +225,11 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
 
   traceRay(&world->super, geomRay);
   traceVolumeRay(&world->super, volumeRay, volumeInterval);
+  volumeInterval.interval.lower = max(volumeInterval.interval.lower,
+                                      regionInterval.x);
+  volumeInterval.interval.upper = min(volumeInterval.interval.upper,
+                                      regionInterval.y);
+
   sample.z = min(geomRay.t, volumeInterval.interval.lower);
 
   // TODO: Doesn't seem like much jittering happens with the volume integration
