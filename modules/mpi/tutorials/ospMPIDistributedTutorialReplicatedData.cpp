@@ -103,7 +103,7 @@ int main(int argc, char **argv)
   instanceHandles.push_back(planeInstance);
 
   OSPData geomInstances =
-      ospNewData(instanceHandles.size(), OSP_OBJECT, instanceHandles.data());
+      ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
 
   ospSetData(world, "instance", geomInstances);
   ospRelease(geomInstances);
@@ -187,17 +187,33 @@ OSPTestingGeometry createSpheres(int mpiRank)
     c.w = colorDistribution(gen);
   }
 
-  // create a data object with all the sphere information
-  OSPData spheresData =
-      ospNewData(numSpheres * sizeof(Sphere), OSP_UCHAR, spheres.data());
+  // Make the shared data views and copy in the data
+  OSPData positionData;
+  {
+    OSPData d =
+        ospNewSharedData(spheres.data(), OSP_VEC3F, numSpheres, sizeof(Sphere));
+    positionData = ospNewData1D(OSP_VEC3F, numSpheres);
+    ospCopyData1D(d, positionData, 0);
+    ospRelease(d);
+  }
+
+  OSPData radiusData;
+  {
+    OSPData d = ospNewSharedData(
+        reinterpret_cast<uint8_t *>(spheres.data()) + sizeof(vec3f),
+        OSP_FLOAT,
+        numSpheres,
+        sizeof(Sphere));
+    radiusData = ospNewData1D(OSP_FLOAT, numSpheres);
+    ospCopyData1D(d, radiusData, 0);
+    ospRelease(d);
+  }
 
   // create the sphere geometry, and assign attributes
   OSPGeometry spheresGeometry = ospNewGeometry("spheres");
 
-  ospSetData(spheresGeometry, "sphere", spheresData);
-  ospSetInt(spheresGeometry, "bytes_per_sphere", int(sizeof(Sphere)));
-  ospSetInt(spheresGeometry, "offset_center", int(offsetof(Sphere, center)));
-  ospSetInt(spheresGeometry, "offset_radius", int(offsetof(Sphere, radius)));
+  ospSetData(spheresGeometry, "sphere.position", positionData);
+  ospSetData(spheresGeometry, "sphere.radius", radiusData);
 
   // commit the spheres geometry
   ospCommit(spheresGeometry);
@@ -217,14 +233,15 @@ OSPTestingGeometry createSpheres(int mpiRank)
   ospSetObject(model, "material", glassMaterial);
 
   // release handles we no longer need
-  ospRelease(spheresData);
+  ospRelease(positionData);
+  ospRelease(radiusData);
   ospRelease(colorData);
   ospRelease(glassMaterial);
 
   ospCommit(model);
 
   OSPGroup group = ospNewGroup();
-  auto models = ospNewData(1, OSP_OBJECT, &model);
+  auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
   ospSetData(group, "geometry", models);
   ospCommit(group);
   ospRelease(models);
@@ -353,7 +370,7 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
   OSPData colorData =
       ospNewData(vertices.size(), OSP_VEC4F, colorVector.data());
   OSPData indexData =
-      ospNewData(quadIndices.size(), OSP_VEC4I, quadIndices.data());
+      ospNewData(quadIndices.size(), OSP_VEC4UI, quadIndices.data());
 
   // set vertex / index data on the geometry
   ospSetData(planeGeometry, "vertex.position", positionData);
@@ -378,7 +395,7 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
 
   OSPGroup group = ospNewGroup();
 
-  OSPData models = ospNewData(1, OSP_OBJECT, &model);
+  OSPData models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
   ospSetData(group, "geometry", models);
   ospCommit(group);
 

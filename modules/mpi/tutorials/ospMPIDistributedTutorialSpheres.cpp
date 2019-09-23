@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 
   // create the "world" model which will contain all of our geometries
   OSPWorld world = ospNewWorld();
-  OSPData geometryInstances = ospNewData(1, OSP_OBJECT, &spheres, 0);
+  OSPData geometryInstances = ospNewData(1, OSP_INSTANCE, &spheres, 0);
   ospSetObject(world, "instance", geometryInstances);
   ospRelease(spheres);
   ospRelease(geometryInstances);
@@ -197,13 +197,8 @@ vec3i computeGrid(int num)
 OSPInstance makeLocalSpheres(
     const int mpiRank, const int mpiWorldSize, box3f &bounds)
 {
-  struct Sphere
-  {
-    vec3f org;
-  };
-
   const float sphereRadius = 0.1;
-  std::vector<Sphere> spheres(50);
+  std::vector<vec3f> spheres(50);
 
   // To simulate loading a shared dataset all ranks generate the same
   // sphere data.
@@ -233,13 +228,12 @@ OSPInstance makeLocalSpheres(
       brickLower.z + sphereRadius, brickUpper.z - sphereRadius);
 
   for (auto &s : spheres) {
-    s.org.x = distX(rng);
-    s.org.y = distY(rng);
-    s.org.z = distZ(rng);
+    s.x = distX(rng);
+    s.y = distY(rng);
+    s.z = distZ(rng);
   }
 
-  OSPData sphereData =
-      ospNewData(spheres.size() * sizeof(Sphere), OSP_UCHAR, spheres.data());
+  OSPData sphereData = ospNewData(spheres.size(), OSP_VEC3F, spheres.data());
 
   vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
   OSPMaterial material = ospNewMaterial("scivis", "SciVisMaterial");
@@ -248,9 +242,8 @@ OSPInstance makeLocalSpheres(
   ospCommit(material);
 
   OSPGeometry sphereGeom = ospNewGeometry("spheres");
-  ospSetInt(sphereGeom, "bytes_per_sphere", int(sizeof(Sphere)));
   ospSetFloat(sphereGeom, "radius", sphereRadius);
-  ospSetData(sphereGeom, "sphere", sphereData);
+  ospSetData(sphereGeom, "sphere.position", sphereData);
   ospCommit(sphereGeom);
 
   OSPGeometricModel model = ospNewGeometricModel(sphereGeom);
@@ -258,7 +251,7 @@ OSPInstance makeLocalSpheres(
   ospCommit(model);
 
   OSPGroup group = ospNewGroup();
-  auto models = ospNewData(1, OSP_OBJECT, &model);
+  auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
   ospSetData(group, "geometry", models);
   ospCommit(group);
   ospRelease(models);

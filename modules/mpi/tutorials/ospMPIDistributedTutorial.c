@@ -124,24 +124,24 @@ int main(int argc, char **argv) {
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");
   ospSetFloat(camera, "aspect", imgSizeX/(float)imgSizeY);
-  ospSetVec3fv(camera, "pos", cam_pos);
-  ospSetVec3fv(camera, "dir", cam_view);
+  ospSetVec3fv(camera, "position", cam_pos);
+  ospSetVec3fv(camera, "direction", cam_view);
   ospSetVec3fv(camera, "up",  cam_up);
   ospCommit(camera); // commit each object to indicate modifications are done
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
-  OSPData data = ospNewData(4, OSP_VEC3F, vertex, 0); // OSP_VEC3F format is also supported for vertex positions
+  OSPData data = ospNewSharedData1D(vertex, OSP_VEC3F, 4);
   ospCommit(data);
   ospSetData(mesh, "vertex.position", data);
   ospRelease(data); // we are done using this handle
 
-  data = ospNewData(4, OSP_VEC4F, color, 0);
+  data = ospNewSharedData1D(color, OSP_VEC4F, 4);
   ospCommit(data);
   ospSetData(mesh, "vertex.color", data);
   ospRelease(data); // we are done using this handle
 
-  data = ospNewData(2, OSP_VEC3I, index, 0); // OSP_VEC4I format is also supported for triangle indices
+  data = ospNewSharedData1D(index, OSP_VEC3UI, 2);
   ospCommit(data);
   ospSetData(mesh, "index", data);
   ospRelease(data); // we are done using this handle
@@ -151,11 +151,11 @@ int main(int argc, char **argv) {
   // put the mesh into a model
   OSPGeometricModel model = ospNewGeometricModel(mesh);
   ospCommit(model);
-  ospRelease(mesh); // we are done using this handle
+  ospRelease(mesh);
 
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
-  OSPData geometricModels = ospNewData(1, OSP_OBJECT, &model, 0);
+  OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
   ospSetData(group, "geometry", geometricModels);
   ospCommit(group);
   ospRelease(model);
@@ -168,13 +168,16 @@ int main(int argc, char **argv) {
 
   // put the instance in the world
   OSPWorld world = ospNewWorld();
-  OSPData instances = ospNewData(1, OSP_OBJECT, &instance, 0);
+  OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
   ospSetData(world, "instance", instances);
+  ospRelease(instance);
+  ospRelease(instances);
+
   // In the distributed device we set a clipping region to clip to the data
   // owned uniquely by this rank which it should be rendering
   float regionBounds[] = { mpiRank, 0.f, 2.5f,
                            1.f * (mpiRank + 1.f), 1.f, 3.5f };
-  data = ospNewData(1, OSP_BOX3F, regionBounds, 0);
+  data = ospNewSharedData1D(regionBounds, OSP_BOX3F, 1);
   ospCommit(data);
   ospSetData(world, "regions", data);
   ospRelease(data);
@@ -188,12 +191,12 @@ int main(int argc, char **argv) {
   // TODO: Who gets the lights now?
   OSPLight light = ospNewLight("ambient");
   ospCommit(light);
-  OSPData lights = ospNewData(1, OSP_LIGHT, &light, 0);
+  OSPData lights = ospNewSharedData1D(&light, OSP_LIGHT, 1);
   ospCommit(lights);
 
   // complete setup of renderer
   ospSetFloat(renderer, "bgColor", 1.0f); // white, transparent
-  ospSetObject(renderer, "lights", lights);
+  ospSetObject(renderer, "light", lights);
   ospCommit(renderer);
 
   // create and setup framebuffer

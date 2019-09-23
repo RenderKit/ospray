@@ -146,8 +146,8 @@ int main(int argc, char **argv)
   // create and setup camera
   ospray::cpp::Camera camera("perspective");
   camera.set("aspect", imgSize.x / (float)imgSize.y);
-  camera.set("pos", cam_pos);
-  camera.set("dir", cam_view);
+  camera.set("position", cam_pos);
+  camera.set("direction", cam_view);
   camera.set("up", cam_up);
   camera.commit(); // commit each object to indicate modifications are done
 
@@ -165,9 +165,7 @@ int main(int argc, char **argv)
   mesh.set("vertex.color", data);
   data.release(); // we are done using this handle
 
-  data = ospray::cpp::Data(2,
-      OSP_VEC3I,
-      index); // OSP_INT4 format is also supported for triangle indices
+  data = ospray::cpp::Data(2, OSP_VEC3UI, index);
   data.commit();
   mesh.set("index", data);
   data.release(); // we are done using this handle
@@ -182,7 +180,7 @@ int main(int argc, char **argv)
   // put the model into a group (collection of models)
   ospray::cpp::Group group;
   auto modelHandle = model.handle();
-  data = ospray::cpp::Data(1, OSP_OBJECT, &modelHandle);
+  data = ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle);
   group.set("geometry", data);
   model.release(); // we are done using this handle
   data.release(); // we are done using this handle
@@ -195,7 +193,7 @@ int main(int argc, char **argv)
 
   ospray::cpp::World world;
   auto instanceHandle = instance.handle();
-  data = ospray::cpp::Data(1, OSP_OBJECT, &instanceHandle);
+  data = ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle);
   world.set("instance", data);
   instance.release(); // we are done using this handle
   data.release(); // we are done using this handle
@@ -222,7 +220,7 @@ int main(int argc, char **argv)
 
   // complete setup of renderer
   renderer.set("bgColor", 1.0f); // white, transparent
-  renderer.set("lights", lights);
+  renderer.set("light", lights);
   renderer.commit();
 
   // create and setup framebuffer

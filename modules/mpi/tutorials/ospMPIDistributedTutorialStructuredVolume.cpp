@@ -107,7 +107,7 @@ int main(int argc, char **argv)
 
   // create the "world" model which will contain all of our geometries
   OSPWorld world = ospNewWorld();
-  OSPData instances = ospNewData(1, OSP_OBJECT, &brick.instance);
+  OSPData instances = ospNewData(1, OSP_INSTANCE, &brick.instance);
   ospSetData(world, "instance", instances);
   ospRelease(instances);
 
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
   ospCommit(ambientLight);
   OSPData lightData = ospNewData(1, OSP_LIGHT, &ambientLight, 0);
   ospCommit(lightData);
-  ospSetObject(renderer, "lights", lightData);
+  ospSetObject(renderer, "light", lightData);
   ospRelease(lightData);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
@@ -244,7 +244,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   brick.model = ospNewVolumetricModel(brick.brick);
 
   brick.group = ospNewGroup();
-  OSPData volumes = ospNewData(1, OSP_OBJECT, &brick.model);
+  OSPData volumes = ospNewData(1, OSP_VOLUMETRIC_MODEL, &brick.model);
   ospSetObject(brick.group, "volume", volumes);
   ospCommit(brick.group);
   ospRelease(volumes);
