@@ -75,6 +75,8 @@ namespace ospray {
     {
       Device::commit();
 
+      TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
+
       if (!embreeDevice) {
         // -------------------------------------------------------
         // initialize embree. (we need to do this here rather than in
@@ -87,11 +89,9 @@ namespace ospray {
         if (erc != RTC_ERROR_NONE) {
           // why did the error function not get called !?
           postStatusMsg() << "#osp:init: embree internal error number " << erc;
-          assert(erc == RTC_ERROR_NONE);
+          throw std::runtime_error("failed to initialize Embree");
         }
       }
-
-      TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
     }
 
     ///////////////////////////////////////////////////////////////////////////
