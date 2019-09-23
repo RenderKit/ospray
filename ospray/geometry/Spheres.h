@@ -38,6 +38,7 @@ namespace ospray {
     Ref<const DataT<vec3f>> vertexData;
     Ref<const DataT<float>> radiusData;
     Ref<const DataT<vec2f>> texcoordData;
+    std::vector<std::string> knownParams{"sphere.position", "sphere.radius", "sphere.texcoord"};
   };
 
 }  // namespace ospray

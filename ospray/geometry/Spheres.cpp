@@ -37,6 +37,14 @@ namespace ospray {
     radiusData = getParamDataT<float>("sphere.radius");
     texcoordData = getParamDataT<vec2f>("sphere.texcoord");
 
+    for (auto p = params_begin(); p != params_end(); ++p) {
+      if (std::find(knownParams.begin(), knownParams.end(), (**p).name) ==
+          knownParams.end()) {
+        postStatusMsg(1) << "#ospray: unconsumed parameter '" << (**p).name
+                         << "' detected";
+      }
+    }
+
     postCreationInfo();
   }
 
