@@ -19,6 +19,7 @@ add_library(ospray_mpi_common SHARED
     MPIBcastFabric.cpp
     MPICommon.cpp
     SocketBcastFabric.cpp
+    ObjectHandle.cpp
     maml/maml.cpp
     maml/Context.cpp
 )
@@ -38,6 +39,9 @@ target_link_libraries(ospray_mpi_common
 
 target_include_directories(ospray_mpi_common
   PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+    $<BUILD_INTERFACE:${OSPRay_BINARY_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon>
