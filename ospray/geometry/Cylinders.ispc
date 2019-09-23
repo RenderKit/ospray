@@ -93,30 +93,28 @@ void Cylinders_intersect_kernel(
   uniform vec3f v0 = get_vec3f(self->vertex0, primID);
   uniform vec3f v1 = get_vec3f(self->vertex1, primID);
 
-  IntersectionValues isect = intersectCylinder(ray->org, ray->dir, v0, v1, radius);
+  const Intersections isect =
+      intersectCylinder(ray->org, ray->dir, v0, v1, radius);
 
   bool hit = false;
-  if(and(and(isect.t_in.t_value > ray->t0, isect.t_in.t_value <= ray->t), isect.t_in.hit))
-  {
+  if (and(and(isect.entry.t > ray->t0, isect.entry.t <= ray->t),
+          isect.entry.hit)) {
     hit = true;
-    ray->t = isect.t_in.t_value;
-    ray->u  = isect.t_in.u;
-    ray->Ng = isect.t_in.N;
-  } else if(and(and(isect.t_out.t_value > ray->t0, isect.t_out.t_value <= ray->t), isect.t_out.hit))
-  {
+    ray->t = isect.entry.t;
+    ray->u = isect.entry.u;
+    ray->Ng = isect.entry.N;
+  } else if (and(and(isect.exit.t > ray->t0, isect.exit.t <= ray->t),
+                 isect.exit.hit)) {
     hit = true;
-    ray->t = isect.t_out.t_value;
-    ray->u  = isect.t_out.u;
-    ray->Ng = isect.t_out.N;
+    ray->t = isect.exit.t;
+    ray->u = isect.exit.u;
+    ray->Ng = isect.exit.N;
   }
 
   if (hit) {
-    cif(isOcclusionTest)
-    {
+    if (isOcclusionTest) {
       ray->t = neg_inf;
-    }
-    else
-    {
+    } else {
       ray->instID = args->context->instID[0];
       ray->primID = primID;
       ray->geomID = self->super.geomID;

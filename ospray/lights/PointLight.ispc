@@ -90,12 +90,13 @@ Light_EvalRes PointLight_eval(const uniform Light* uniform super,
   const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
 
   if (and(self->radius > 0.f, sqrt(sinTheta2) > 0.005f)) {
-    IntersectionValues isect = intersectSphere(dg.P, dir, self->position, self->radius);
-    if(and(and(isect.t_in.t_value > minDist, isect.t_in.t_value < maxDist), isect.t_in.hit))
-    {
+    const Intersections isect =
+        intersectSphere(dg.P, dir, self->position, self->radius);
+    if (and(and(isect.entry.t > minDist, isect.entry.t < maxDist),
+            isect.entry.hit)) {
       const float cosTheta = sqrt(1.f - sinTheta2);
       res.pdf = uniformSampleConePDF(cosTheta);
-      const float invdist = rcp(isect.t_in.t_value);
+      const float invdist = rcp(isect.entry.t);
       res.radiance = self->power * res.pdf * sqr(invdist);
     }
   }

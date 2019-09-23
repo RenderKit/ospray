@@ -19,7 +19,6 @@
 #include "common/Ray.ih"
 #include "math/AffineSpace.ih"
 #include "math/box.ih"
-#include "common/Intersect.ih"
 
 struct TransferFunction;
 

@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "common/Intersect.ih"
 #include "volume/Volume.ih"
 
 unmasked void Volume_embreeBounds(
@@ -48,10 +49,10 @@ unmasked void Volume_intersect_kernel(
 
   box3f *uniform box = &self->boundingBox;
 
-  IntersectionValues isect = intersectBox(ray->org, ray->dir, *box);
+  const Intersections isect = intersectBox(ray->org, ray->dir, *box);
 
-  const float t_min = max(ray->t0, isect.t_in.t_value);
-  const float t_max = min(ray->t, isect.t_out.t_value);
+  const float t_min = max(ray->t0, isect.entry.t);
+  const float t_max = min(ray->t, isect.exit.t);
 
   if (t_min < t_max) {
     ray->instID = args->context->instID[0];

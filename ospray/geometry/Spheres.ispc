@@ -83,21 +83,20 @@ void Spheres_intersect_kernel(
                                              : self->global_radius;
   uniform vec3f center = get_vec3f(self->vertex, primID);
 
-  IntersectionValues isect = intersectSphere(ray->org, ray->dir, center, radius);
+  const Intersections isect =
+      intersectSphere(ray->org, ray->dir, center, radius);
 
   bool hit = false;
-  if(and(and(isect.t_in.t_value > ray->t0, isect.t_in.t_value <= ray->t),
-         isect.t_in.hit))
-  {
+  if (and(and(isect.entry.t > ray->t0, isect.entry.t <= ray->t),
+          isect.entry.hit)) {
     hit = true;
-    ray->t = isect.t_in.t_value;
-    ray->Ng = isect.t_in.N;
-  } else if(and(and(isect.t_out.t_value > ray->t0, isect.t_out.t_value <= ray->t),
-                isect.t_out.hit))
-  {
+    ray->t = isect.entry.t;
+    ray->Ng = isect.entry.N;
+  } else if (and(and(isect.exit.t > ray->t0, isect.exit.t <= ray->t),
+                 isect.exit.hit)) {
     hit = true;
-    ray->t = isect.t_out.t_value;
-    ray->Ng = isect.t_out.N;
+    ray->t = isect.exit.t;
+    ray->Ng = isect.exit.N;
   }
 
   if (hit) {

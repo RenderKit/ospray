@@ -52,20 +52,19 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   uniform int primID = args->primID;
 
   uniform box3f box = get_box3f(self->boxes, primID);
-  IntersectionValues isect = intersectBox(ray->org, ray->dir, box);
+  const Intersections isect = intersectBox(ray->org, ray->dir, box);
 
   bool hit = false;
-  if (and(and(isect.t_in.t_value > ray->t0, isect.t_in.t_value <= ray->t),
-          isect.t_in.hit)) {
+  if (and(and(isect.entry.t > ray->t0, isect.entry.t <= ray->t),
+          isect.entry.hit)) {
     hit = true;
-    ray->Ng = isect.t_in.N;
-    ray->t = isect.t_in.t_value;
-  } else if (and(and(isect.t_out.t_value > ray->t0,
-                     isect.t_out.t_value <= ray->t),
-                 isect.t_out.hit)) {
+    ray->Ng = isect.entry.N;
+    ray->t = isect.entry.t;
+  } else if (and(and(isect.exit.t > ray->t0, isect.exit.t <= ray->t),
+                 isect.exit.hit)) {
     hit = true;
-    ray->Ng = isect.t_out.N;
-    ray->t = isect.t_out.t_value;
+    ray->Ng = isect.exit.N;
+    ray->t = isect.exit.t;
   }
 
   if (hit) {

@@ -106,9 +106,10 @@ void samplePath(const PathContext& pathContext,
 
   if (pathContext.context->shadowCatcher)
   {
-    IntersectionValues isect = intersectPlane(ray.org, ray.dir, pathContext.context->shadowCatcherPlane);
-    if(isect.t_in.hit )
-      pathState.shadowCatcherDist = isect.t_in.t_value;
+    const Hit hit = intersectPlane(
+        ray.org, ray.dir, pathContext.context->shadowCatcherPlane);
+    if (hit.hit)
+      pathState.shadowCatcherDist = hit.t;
   }
   do {
     if (pathState.shadowCatcherDist > ray.t0) // valid hit can hide other geometry

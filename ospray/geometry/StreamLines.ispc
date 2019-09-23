@@ -80,23 +80,23 @@ unmasked void StreamLines_intersect_kernel(
   const uniform vec3f A = get_vec3f(self->vertex, index);
   const uniform vec3f B = get_vec3f(self->vertex, index + 1);
 
-  IntersectionValues isect = intersectCapsule(ray->org, ray->dir, A, B, self->radius);
+  const Intersections isect =
+      intersectCapsule(ray->org, ray->dir, A, B, self->radius);
 
   bool hit = false;
-  if(and(and(isect.t_in.t_value > ray->t0, isect.t_in.t_value < ray->t), isect.t_in.hit))
-  {
+  if (and(and(isect.entry.t > ray->t0, isect.entry.t < ray->t),
+          isect.entry.hit)) {
     hit = true;
-    ray->t = isect.t_in.t_value;
-    ray->u = isect.t_in.u;
-    ray->Ng = isect.t_in.N;
-  } else if(and(and(isect.t_out.t_value > ray->t0, isect.t_out.t_value < ray->t), isect.t_out.hit))
-  {
+    ray->t = isect.entry.t;
+    ray->u = isect.entry.u;
+    ray->Ng = isect.entry.N;
+  } else if (and(and(isect.exit.t > ray->t0, isect.exit.t < ray->t),
+                 isect.exit.hit)) {
     hit = true;
-    ray->t = isect.t_out.t_value;
-    ray->u = isect.t_out.u;
-    ray->Ng = isect.t_out.N;
+    ray->t = isect.exit.t;
+    ray->u = isect.exit.u;
+    ray->Ng = isect.exit.N;
   }
-
 
   if (hit) {
     if (occlusionTest) {
