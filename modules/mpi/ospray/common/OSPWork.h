@@ -57,7 +57,9 @@ enum TAG
   NEW_IMAGE_OP,
   NEW_MATERIAL,
   NEW_LIGHT,
+  NEW_SHARED_DATA,
   NEW_DATA,
+  COPY_DATA,
   NEW_TEXTURE,
   NEW_GROUP,
   NEW_INSTANCE,
@@ -119,6 +121,10 @@ struct OSPState
   std::unordered_map<int64_t, OSPObject> objects;
 
   std::unordered_map<int64_t, FrameBufferInfo> framebuffers;
+
+  std::unordered_map<int64_t,
+      std::unique_ptr<ospcommon::utility::OwnedArray<uint8_t>>>
+      data;
 
   template <typename T>
   T getObject(int64_t handle)

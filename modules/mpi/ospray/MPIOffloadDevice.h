@@ -44,11 +44,6 @@ struct MPIOffloadDevice : public api::Device
 
   int loadModule(const char *name) override;
 
-  // OSPRay Data Arrays ///////////////////////////////////////////////////
-
-  OSPData newData(
-      size_t nitems, OSPDataType format, const void *init, int flags) override;
-
   // Renderable Objects ///////////////////////////////////////////////////
 
   OSPLight newLight(const char *type) override;
@@ -76,6 +71,19 @@ struct MPIOffloadDevice : public api::Device
   // Top-level Worlds /////////////////////////////////////////////////////
 
   OSPWorld newWorld() override;
+
+  // OSPRay Data Arrays ///////////////////////////////////////////////////
+
+  OSPData newSharedData(const void *sharedData,
+      OSPDataType,
+      const vec3i &numItems,
+      const vec3l &byteStride) override;
+
+  OSPData newData(OSPDataType, const vec3i &numItems) override;
+
+  void copyData(const OSPData source,
+      OSPData destination,
+      const vec3i &DestinationIndex) override;
 
   // Object Parameters ////////////////////////////////////////////////////
 

@@ -325,41 +325,6 @@ int MPIOffloadDevice::loadModule(const char *name)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// OSPRay Data Arrays /////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-
-OSPData MPIOffloadDevice::newData(
-    size_t nitems, OSPDataType format, const void *init, int flags)
-{
-  if (init == nullptr) {
-    WarnOnce warn(
-        "Making uninitialized OSPData on MPIOffloadDevice, "
-        "this is likely an error");
-  }
-
-  ObjectHandle handle = allocateHandle();
-
-  networking::BufferWriter writer;
-  writer << work::NEW_DATA << handle.i64 << nitems << format << flags;
-  sendWork(writer.buffer);
-
-  std::shared_ptr<utility::AbstractArray<uint8_t>> dataView;
-  if (flags & OSP_DATA_SHARED_BUFFER) {
-    dataView = std::make_shared<utility::ArrayView<uint8_t>>(
-        const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(init)),
-        sizeOf(format) * nitems);
-  } else {
-    dataView = std::make_shared<utility::OwnedArray<uint8_t>>(
-        const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(init)),
-        sizeOf(format) * nitems);
-  }
-
-  fabric->sendBcast(dataView);
-
-  return (OSPData)(int64)handle;
-}
-
-///////////////////////////////////////////////////////////////////////////
 // Renderable Objects /////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
@@ -510,6 +475,73 @@ OSPWorld MPIOffloadDevice::newWorld()
   sendWork(writer.buffer);
 
   return (OSPWorld)(int64)handle;
+}
+
+///////////////////////////////////////////////////////////////////////////
+// OSPRay Data Arrays /////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
+    OSPDataType format,
+    const vec3i &numItems,
+    const vec3l &byteStride)
+{
+  ObjectHandle handle = allocateHandle();
+
+  networking::BufferWriter writer;
+  writer << work::NEW_SHARED_DATA << handle.i64 << format << numItems
+         << byteStride;
+  sendWork(writer.buffer);
+
+  vec3l stride = byteStride;
+  if (stride.x == 0) {
+    stride.x = sizeOf(format);
+  }
+  if (stride.y == 0) {
+    stride.y = numItems.x * sizeOf(format);
+  }
+  if (stride.z == 0) {
+    stride.z = numItems.x * numItems.y * sizeOf(format);
+  }
+
+  size_t nbytes = numItems.x * stride.x;
+  if (numItems.y > 1) {
+    nbytes += numItems.y * stride.y;
+  }
+  if (numItems.z > 1) {
+    nbytes += numItems.z * stride.z;
+  }
+
+  std::shared_ptr<utility::AbstractArray<uint8_t>> dataView =
+      std::make_shared<utility::ArrayView<uint8_t>>(
+          const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
+          nbytes);
+
+  fabric->sendBcast(dataView);
+
+  return (OSPData)(int64)handle;
+}
+
+OSPData MPIOffloadDevice::newData(OSPDataType format, const vec3i &numItems)
+{
+  ObjectHandle handle = allocateHandle();
+
+  networking::BufferWriter writer;
+  writer << work::NEW_DATA << handle.i64 << format << numItems;
+  sendWork(writer.buffer);
+
+  return (OSPData)(int64)handle;
+}
+
+void MPIOffloadDevice::copyData(
+    const OSPData source, OSPData destination, const vec3i &destinationIndex)
+{
+  networking::BufferWriter writer;
+  const ObjectHandle sourceHandle = (const ObjectHandle &)source;
+  ObjectHandle destinationHandle = (ObjectHandle &)destination;
+  writer << work::COPY_DATA << sourceHandle.i64 << destinationHandle.i64
+         << destinationIndex;
+  sendWork(writer.buffer);
 }
 
 ///////////////////////////////////////////////////////////////////////////

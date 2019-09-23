@@ -27,8 +27,8 @@ ispc_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(ospray_module_mpi SHARED)
 
 ispc_target_add_sources(ospray_module_mpi
-  #MPIOffloadDevice.cpp
-  #MPIOffloadWorker.cpp
+  MPIOffloadDevice.cpp
+  MPIOffloadWorker.cpp
   MPIDistributedDevice.cpp
   ModuleInit.cpp
   common/DistributedWorld.cpp

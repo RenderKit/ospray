@@ -26,6 +26,7 @@
 #include "geometry/GeometricModel.h"
 #include "ospcommon/utility/ArrayView.h"
 #include "ospcommon/utility/OwnedArray.h"
+#include "ospcommon/utility/multidim_index_sequence.h"
 #include "render/RenderTask.h"
 #include "texture/Texture.h"
 #include "volume/VolumetricModel.h"
@@ -168,34 +169,93 @@ void newLight(
   state.objects[handle] = ospNewLight(type.c_str());
 }
 
-void newData(OSPState &state,
+void newSharedData(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &fabric)
 {
   using namespace utility;
 
   int64_t handle = 0;
-  size_t nitems = 0;
   OSPDataType format;
-  int flags = 0;
-  cmdBuf >> handle >> nitems >> format >> flags;
+  vec3i numItems = 0;
+  vec3l byteStride;
+  cmdBuf >> handle >> format >> numItems >> byteStride;
+
+  vec3l stride = byteStride;
+  if (stride.x == 0) {
+    stride.x = sizeOf(format);
+  }
+  if (stride.y == 0) {
+    stride.y = numItems.x * sizeOf(format);
+  }
+  if (stride.z == 0) {
+    stride.z = numItems.x * numItems.y * sizeOf(format);
+  }
+
+  size_t nbytes = numItems.x * stride.x;
+  if (numItems.y > 1) {
+    nbytes += numItems.y * stride.y;
+  }
+  if (numItems.z > 1) {
+    nbytes += numItems.z * stride.z;
+  }
 
   auto view = ospcommon::make_unique<OwnedArray<uint8_t>>();
-  view->resize(sizeOf(format) * nitems, 0);
+  view->resize(nbytes, 0);
   fabric.recvBcast(*view);
 
   // If the data type is managed we need to convert the handles
   // back into pointers
   if (mpicommon::isManagedObject(format)) {
-    int64_t *handles = reinterpret_cast<int64_t *>(view->data());
-    OSPObject *objs = reinterpret_cast<OSPObject *>(view->data());
-    for (size_t i = 0; i < nitems; ++i)
-      objs[i] = state.objects[handles[i]];
+    ospcommon::index_sequence_3D indices(numItems);
+    for (auto idx : indices) {
+      const size_t i = idx.x * stride.x + idx.y * stride.y + idx.z * stride.z;
+      uint8_t *addr = view->data() + i;
+      int64_t *handle = reinterpret_cast<int64_t *>(addr);
+      OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
+      *obj = state.objects[*handle];
+    }
   }
 
-  flags = flags & !OSP_DATA_SHARED_BUFFER;
+  state.objects[handle] = ospNewSharedData(view->data(),
+      format,
+      numItems.x,
+      byteStride.x,
+      numItems.y,
+      byteStride.y,
+      numItems.z,
+      byteStride.z);
 
-  state.objects[handle] = ospNewData(nitems, format, view->data(), flags);
+  state.data[handle] = std::move(view);
+}
+
+void newData(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric)
+{
+  int64_t handle = 0;
+  OSPDataType format;
+  vec3i numItems = 0;
+  cmdBuf >> handle >> format >> numItems;
+
+  state.objects[handle] =
+      ospNewData(format, numItems.x, numItems.y, numItems.z);
+}
+
+void copyData(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric)
+{
+  int64_t sourceHandle = 0;
+  int64_t destinationHandle = 0;
+  vec3i destinationIndex = 0;
+  cmdBuf >> sourceHandle >> destinationHandle >> destinationIndex;
+
+  ospCopyData(state.getObject<OSPData>(sourceHandle),
+      state.getObject<OSPData>(destinationHandle),
+      destinationIndex.x,
+      destinationIndex.y,
+      destinationIndex.z);
 }
 
 void newTexture(
@@ -244,6 +304,12 @@ void release(
   auto f = state.framebuffers.find(handle);
   if (f != state.framebuffers.end()) {
     state.framebuffers.erase(f);
+  }
+
+  // TODO: What to do about freeing data?
+  auto d = state.data.find(handle);
+  if (d != state.data.end()) {
+    // state.data.erase(d);
   }
 }
 
@@ -710,8 +776,14 @@ void dispatchWork(TAG t,
   case NEW_LIGHT:
     newLight(state, cmdBuf, fabric);
     break;
+  case NEW_SHARED_DATA:
+    newSharedData(state, cmdBuf, fabric);
+    break;
   case NEW_DATA:
     newData(state, cmdBuf, fabric);
+    break;
+  case COPY_DATA:
+    copyData(state, cmdBuf, fabric);
     break;
   case NEW_TEXTURE:
     newTexture(state, cmdBuf, fabric);
@@ -865,8 +937,12 @@ const char *tagName(work::TAG t)
     return "NEW_MATERIAL";
   case NEW_LIGHT:
     return "NEW_LIGHT";
+  case NEW_SHARED_DATA:
+    return "NEW_SHARED_DATA";
   case NEW_DATA:
     return "NEW_DATA";
+  case COPY_DATA:
+    return "COPY_DATA";
   case NEW_TEXTURE:
     return "NEW_TEXTURE";
   case NEW_GROUP:
