@@ -91,14 +91,16 @@ unmasked void DR_default_computeRegionVisibility(
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
       for (uniform int r = 0; r < world->numRegions; ++r) {
-        cif (!regionVisible[r] && !isEmpty(world->regions[r].bounds)) {
-          IntersectionValues isect = intersectBox(screenSample.ray.org, screenSample.ray.dir, world->regions[r].bounds);
-	        if(isect.t_in.t_value < isect.t_out.t_value) {
-    	      if (and(and(isect.t_in.t_value > screenSample.ray.t0, isect.t_in.t_value < screenSample.ray.t), 
-              isect.t_in.hit)) {
-                regionVisible[r] = true;
-	            }
-            }
+        if (!regionVisible[r] && !isEmpty(world->regions[r].bounds)) {
+          IntersectionValues isect = intersectBox(screenSample.ray.org,
+                                                  screenSample.ray.dir,
+                                                  world->regions[r].bounds);
+          if (isect.t_in.t_value < isect.t_out.t_value
+              && isect.t_out.t_value >= screenSample.ray.t0
+              && isect.t_in.t_value <= screenSample.ray.t)
+          {
+            regionVisible[r] = true;
+          }
         }
       }
     }
@@ -194,20 +196,18 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
-      // TODO: Am I going to run into the same region enter/exit issues
-      // I ran into before w/ modifying the t0/t of the ray and not hitting
-      // some of the boxes?
-      float regionEnter = screenSample.ray.t0;
-      float regionExit = screenSample.ray.t;
-      intersectBox(screenSample.ray, region->bounds, regionEnter, regionExit);
+      // TODO: We could store and use the region t intervals from when
+      // we did the visibility test?
+      IntersectionValues isect = intersectBox(screenSample.ray.org,
+                                              screenSample.ray.dir,
+                                              region->bounds);
 
-      if (regionExit > regionEnter) {
-        // TODO: It seems like this should be fine to do to setup a ray segment
-        // to trace, but when I do this I don't hit the front faces, or if I set
-        // this to 0 it seems I only hit the front of the box? Or get some odd
-        // intervals or hits back?
-        // sample.ray.t0 = max(regionEnter - 0.1f, 0.f);
-        // sample.ray.t = regionEnter + 0.1f;
+      if (isect.t_in.t_value < isect.t_out.t_value
+          && isect.t_out.t_value >= screenSample.ray.t0
+          && isect.t_in.t_value <= screenSample.ray.t)
+      {
+        const float regionEnter = max(isect.t_in.t_value, screenSample.ray.t0);
+        const float regionExit = min(isect.t_out.t_value, screenSample.ray.t);
         self->renderRegionSample(self,
             fb,
             world,
