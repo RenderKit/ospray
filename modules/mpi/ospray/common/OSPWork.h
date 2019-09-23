@@ -34,8 +34,8 @@
 #include "geometry/Geometry.h"
 #include "lights/Light.h"
 #include "render/Renderer.h"
-#include "transferFunction/TransferFunction.h"
 #include "volume/Volume.h"
+#include "volume/transferFunction/TransferFunction.h"
 
 namespace ospray {
 namespace mpi {

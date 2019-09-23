@@ -30,8 +30,8 @@
 #include "ospcommon/utility/getEnvVar.h"
 #include "render/DistributedLoadBalancer.h"
 #include "render/distributed/DistributedRaycast.h"
-#include "transferFunction/TransferFunction.h"
 #include "volume/VolumetricModel.h"
+#include "volume/transferFunction/TransferFunction.h"
 
 namespace ospray {
 namespace mpi {

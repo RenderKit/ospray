@@ -24,23 +24,12 @@
 #include <algorithm>
 #include <unordered_map>
 #include "api/ISPCDevice.h"
-#include "camera/Camera.h"
-#include "common/Data.h"
 #include "common/Library.h"
 #include "common/MPIBcastFabric.h"
 #include "common/MPICommon.h"
 #include "common/OSPWork.h"
 #include "common/SocketBcastFabric.h"
-#include "common/World.h"
-#include "fb/DistributedFrameBuffer.h"
-#include "fb/LocalFB.h"
-#include "geometry/TriangleMesh.h"
-#include "lights/Light.h"
 #include "ospcommon/utility/getEnvVar.h"
-#include "render/Renderer.h"
-#include "texture/Texture2D.h"
-#include "transferFunction/TransferFunction.h"
-#include "volume/Volume.h"
 
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 4096
