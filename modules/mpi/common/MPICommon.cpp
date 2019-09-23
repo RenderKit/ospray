@@ -160,4 +160,9 @@ bool init(int *ac, const char **av, bool useCommWorld)
   return !initialized;
 }
 
+bool isManagedObject(OSPDataType type)
+{
+  return type & OSP_OBJECT;
+}
+
 } // namespace mpicommon

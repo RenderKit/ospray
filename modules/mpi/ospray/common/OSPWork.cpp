@@ -184,9 +184,9 @@ void newData(OSPState &state,
   view->resize(sizeOf(format) * nitems, 0);
   fabric.recvBcast(*view);
 
-  // TODO if the data type is managed we need to convert the handles
+  // If the data type is managed we need to convert the handles
   // back into pointers
-  if (isManagedObject(format)) {
+  if (mpicommon::isManagedObject(format)) {
     int64_t *handles = reinterpret_cast<int64_t *>(view->data());
     OSPObject *objs = reinterpret_cast<OSPObject *>(view->data());
     for (size_t i = 0; i < nitems; ++i)

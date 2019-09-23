@@ -105,12 +105,10 @@ void DFB::commit()
         localFBonMaster ? localFBonMaster->normalBuffer : nullptr,
         localFBonMaster ? localFBonMaster->albedoBuffer : nullptr);
 
-    std::for_each(imageOpData->begin<ImageOp *>(),
-        imageOpData->end<ImageOp *>(),
-        [&](ImageOp *i) {
-          if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
-            imageOps.push_back(i->attach(fbv));
-        });
+    std::for_each(imageOpData->begin(), imageOpData->end(), [&](ImageOp *i) {
+      if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
+        imageOps.push_back(i->attach(fbv));
+    });
 
     findFirstFrameOperation();
   }

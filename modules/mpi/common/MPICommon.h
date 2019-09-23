@@ -24,6 +24,7 @@
 #include <mpi.h>
 
 #include "ospcommon/common.h"
+#include "ospray/OSPEnums.h"
 
 #ifdef _WIN32
 #ifdef ospray_mpi_common_EXPORTS
@@ -180,6 +181,8 @@ OSPRAY_MPI_INTERFACE extern Group worker;
 // should be set as the world group used for communication. If false,
 // it is up to the caller to configure the world group correctly.
 OSPRAY_MPI_INTERFACE bool init(int *ac, const char **av, bool useCommWorld);
+
+OSPRAY_MPI_INTERFACE bool isManagedObject(OSPDataType type);
 
 inline int workerRank()
 {

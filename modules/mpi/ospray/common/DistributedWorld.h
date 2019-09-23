@@ -91,7 +91,7 @@ struct DistributedWorld : public World
   mpicommon::Group mpiGroup;
 
  public:
-  Ref<Data> localRegions;
+  Ref<const DataT<box3f>> localRegions;
   std::vector<ospcommon::math::box3f> myRegions;
   // The global list of unique regions across all nodes, (including this
   // one), sorted by region id.

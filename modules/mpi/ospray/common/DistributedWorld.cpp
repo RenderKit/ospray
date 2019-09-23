@@ -96,10 +96,10 @@ void DistributedWorld::commit()
 
   myRegions.clear();
 
-  localRegions = getParamData("regions");
+  localRegions = getParamDataT<box3f>("regions");
   if (localRegions) {
-    std::copy(localRegions->begin<box3f>(),
-        localRegions->end<box3f>(),
+    std::copy(localRegions->begin(),
+        localRegions->end(),
         std::back_inserter(myRegions));
   } else {
     // Assume we're going to treat everything on this node as a one region,

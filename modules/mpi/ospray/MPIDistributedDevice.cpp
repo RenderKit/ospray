@@ -186,11 +186,24 @@ void MPIDistributedDevice::commit(OSPObject _object)
   object->commit();
 }
 
-OSPData MPIDistributedDevice::newData(
-    size_t nitems, OSPDataType format, const void *init, int flags)
+OSPData MPIDistributedDevice::newSharedData(const void *sharedData,
+    OSPDataType type,
+    const vec3i &numItems,
+    const vec3l &byteStride)
 {
-  auto *instance = new Data(nitems, format, init, flags);
-  return (OSPData)instance;
+  return (OSPData) new Data(sharedData, type, numItems, byteStride);
+}
+
+OSPData MPIDistributedDevice::newData(OSPDataType type, const vec3i &numItems)
+{
+  return (OSPData) new Data(type, numItems);
+}
+
+void MPIDistributedDevice::copyData(
+    const OSPData source, OSPData destination, const vec3i &destinationIndex)
+{
+  Data *dst = (Data *)destination;
+  dst->copy(*(Data *)source, destinationIndex);
 }
 
 void MPIDistributedDevice::setVoidPtr(
