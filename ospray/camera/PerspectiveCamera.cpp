@@ -104,8 +104,6 @@ namespace ospray {
         , stereoMode == OSP_STEREO_SIDE_BY_SIDE
         , (const ispc::vec3f&)ipd_offset
         );
-
-    checkUnconsumed();
   }
 
   ProjectedPoint PerspectiveCamera::projectPoint(const vec3f &p) const {

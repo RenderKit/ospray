@@ -37,7 +37,6 @@ namespace ospray {
     radiusData = getParamDataT<float>("sphere.radius");
     texcoordData = getParamDataT<vec2f>("sphere.texcoord");
 
-    checkUnconsumed();
     postCreationInfo();
   }
 
