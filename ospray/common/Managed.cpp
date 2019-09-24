@@ -44,13 +44,11 @@ namespace ospray {
     return "ospray::ManagedObject";
   }
 
-  void ManagedObject::checkUnconsumed(
-      const std::vector<std::string> knownParams)
+  void ManagedObject::checkUnconsumed()
   {
     for (auto p = params_begin(); p != params_end(); ++p) {
-      if (std::find(knownParams.begin(), knownParams.end(), (**p).name) ==
-          knownParams.end())
-        postStatusMsg() << "Encountered unconsumed parameter '" << (**p).name
+      if (!(*p)->query)
+        postStatusMsg() << "Encountered unconsumed parameter '" << (*p)->name
                         << "'";
     }
   }

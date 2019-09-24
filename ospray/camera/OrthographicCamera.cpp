@@ -56,6 +56,8 @@ namespace ospray {
                                  (const ispc::vec3f&)pos_00,
                                  (const ispc::vec3f&)pos_du,
                                  (const ispc::vec3f&)pos_dv);
+
+    checkUnconsumed();
   }
 
   OSP_REGISTER_CAMERA(OrthographicCamera, orthographic);
