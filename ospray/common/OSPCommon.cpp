@@ -237,7 +237,7 @@ namespace ospray {
     case OSP_GEOMETRIC_MODEL:   return "geometric_model";
     case OSP_GEOMETRY:          return "geometry";
     case OSP_GROUP:             return "group";
-    case OSP_IMAGE_OPERATION:   return "image_op";
+    case OSP_IMAGE_OPERATION:   return "image_operation";
     case OSP_INSTANCE:          return "instance";
     case OSP_LIGHT:             return "light";
     case OSP_MATERIAL:          return "material";
