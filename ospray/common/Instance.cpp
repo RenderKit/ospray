@@ -41,7 +41,7 @@ namespace ospray {
 
   void Instance::commit()
   {
-    instanceXfm = getParamAffine3f("xfm", affine3f(one));
+    instanceXfm = getParam<affine3f>("xfm", affine3f(one));
     rcpXfm      = rcp(instanceXfm);
 
     ispc::Instance_set(getIE(),
