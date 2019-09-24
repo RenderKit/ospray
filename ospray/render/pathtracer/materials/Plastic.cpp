@@ -36,8 +36,8 @@ namespace ospray {
       virtual void commit() override
       {
         const vec3f pigmentColor = getParam<vec3f>("pigmentColor",vec3f(1.f));
-        const float eta          = getParam1f("eta",1.4f);
-        const float roughness    = getParam1f("roughness",0.01f);
+        const float eta          = getParam<float>("eta",1.4f);
+        const float roughness    = getParam<float>("roughness",0.01f);
 
         ispc::PathTracer_Plastic_set
           (getIE(), (const ispc::vec3f&)pigmentColor,eta,roughness);

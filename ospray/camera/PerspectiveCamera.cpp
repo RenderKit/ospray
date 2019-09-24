@@ -36,14 +36,14 @@ namespace ospray {
     // ------------------------------------------------------------------
     // first, "parse" the additional expected parameters
     // ------------------------------------------------------------------
-    fovy = getParam1f("fovy", 60.f);
-    aspect = getParam1f("aspect", 1.f);
-    apertureRadius = getParam1f("apertureRadius", 0.f);
-    focusDistance = getParam1f("focusDistance", 1.f);
+    fovy = getParam<float>("fovy", 60.f);
+    aspect = getParam<float>("aspect", 1.f);
+    apertureRadius = getParam<float>("apertureRadius", 0.f);
+    focusDistance = getParam<float>("focusDistance", 1.f);
     architectural = getParam1b("architectural", false);
     stereoMode = (OSPStereoMode)getParam<int>("stereoMode", OSP_STEREO_NONE);
     // the default 63.5mm represents the average human IPD
-    interpupillaryDistance = getParam1f("interpupillaryDistance", 0.0635f);
+    interpupillaryDistance = getParam<float>("interpupillaryDistance", 0.0635f);
 
     // ------------------------------------------------------------------
     // now, update the local precomputed values

@@ -87,7 +87,7 @@ namespace ospray {
     const vec2f scale = getParam<vec2f>((texname+"scale").c_str(), vec2f(1.f));
     xform *= affine2f::scale(rcp(scale));
 
-    const float rotation = deg2rad(getParam1f((texname+"rotation").c_str(),
+    const float rotation = deg2rad(getParam<float>((texname+"rotation").c_str(),
                                               0.f));
     xform *= affine2f::rotate(-rotation);
 
@@ -108,7 +108,7 @@ namespace ospray {
     param.map = (Texture2D*)getParamObject(mapName.c_str());
     param.xform = getTextureTransform(mapName.c_str());
     param.rot = param.xform.l.orthogonal().transposed();
-    param.factor = getParam1f(name, param.map ? 1.f : valIfNotFound);
+    param.factor = getParam<float>(name, param.map ? 1.f : valIfNotFound);
     return param;
   }
 

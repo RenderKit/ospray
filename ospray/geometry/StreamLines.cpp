@@ -37,7 +37,7 @@ namespace ospray {
     indexData = getParamDataT<uint32_t>("index", true);
 
     useCurve = getParam1b("smooth", false);
-    radius = getParam1f("radius", 0.01f);
+    radius = getParam<float>("radius", 0.01f);
     utility::DataView<const float> radiusView(&radius, 0);
 
     colorData = getParamDataT<vec4f>("vertex.color");

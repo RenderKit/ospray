@@ -35,7 +35,7 @@ namespace ospray {
     colorsData = getParamDataT<vec4f>("vertex.color");
     texcoordData = getParamDataT<vec2f>("vertex.texcoord");
 
-    level = getParam1f("level", 5.f);
+    level = getParam<float>("level", 5.f);
 
     indexData = getParamDataT<uint32_t>("index", true);
     indexLevelData = getParamDataT<float>("index.level");

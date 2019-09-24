@@ -103,10 +103,10 @@ namespace ospray {
 
   void SSAOFrameOp::commit()
   {
-    ssaoStrength   = getParam1f("strength", 1.f);
+    ssaoStrength   = getParam<float>("strength", 1.f);
     windowSize     = getParam<vec2f>("windowSize", vec2f(-1.f));
-    radius         = getParam1f("radius", 0.3f);
-    checkRadius    = getParam1f("checkRadius", 1.f);
+    radius         = getParam<float>("radius", 0.3f);
+    checkRadius    = getParam<float>("checkRadius", 1.f);
     int kernelSize = getParam1i("ksize", 64);
 
     // generate kernel with random sample distribution

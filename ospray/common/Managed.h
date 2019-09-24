@@ -60,7 +60,6 @@ namespace ospray {
 
     vec3i getParam3i(const char *name, vec3i valIfNotFound);
     int32 getParam1i(const char *name, int32 valIfNotFound);
-    float getParam1f(const char *name, float valIfNotFound);
     bool getParam1b(const char *name, bool valIfNotFound);
 
     affine3f getParamAffine3f(const char *name, affine3f valIfNotFound);

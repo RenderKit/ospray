@@ -46,10 +46,10 @@ namespace ospray {
         affine2f xform_Bump = getTextureTransform("map_Bump") * getTextureTransform("map_bump") * getTextureTransform("normalMap") * getTextureTransform("BumpMap");
         linear2f rot_Bump   = xform_Bump.l.orthogonal().transposed();
 
-        const float d = getParam1f("d", getParam1f("alpha", 1.f));
+        const float d = getParam<float>("d", getParam<float>("alpha", 1.f));
         vec3f Kd = getParam<vec3f>("Kd", getParam<vec3f>("kd", getParam<vec3f>("color", vec3f(0.8f))));
         vec3f Ks = getParam<vec3f>("Ks", getParam<vec3f>("ks", vec3f(0.f)));
-        const float Ns = getParam1f("Ns", getParam1f("ns", 10.f));
+        const float Ns = getParam<float>("Ns", getParam<float>("ns", 10.f));
         vec3f Tf = getParam<vec3f>("Tf", getParam<vec3f>("tf", vec3f(0.0f)));
 
         const float color_total = reduce_max(Kd + Ks + Tf);

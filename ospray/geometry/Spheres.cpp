@@ -32,7 +32,7 @@ namespace ospray {
 
   void Spheres::commit()
   {
-    radius = getParam1f("radius", 0.01f);
+    radius = getParam<float>("radius", 0.01f);
     vertexData = getParamDataT<vec3f>("sphere.position", true);
     radiusData = getParamDataT<float>("sphere.radius");
     texcoordData = getParamDataT<vec2f>("sphere.texcoord");

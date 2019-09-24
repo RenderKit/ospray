@@ -382,7 +382,7 @@ namespace ospray {
     float d            = std::min(std::min(dx, dy), dz);
     float samplingStep = d * 0.01f;
 
-    return getParam1f("samplingStep", samplingStep);
+    return getParam<float>("samplingStep", samplingStep);
   }
 
   OSP_REGISTER_VOLUME(UnstructuredVolume, unstructured_volume);

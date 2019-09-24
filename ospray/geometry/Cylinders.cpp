@@ -30,7 +30,7 @@ namespace ospray {
 
   void Cylinders::commit()
   {
-    radius           = getParam1f("radius", 0.01f);
+    radius           = getParam<float>("radius", 0.01f);
     vertex0Data = getParamDataT<vec3f>("cylinder.position0", true);
     vertex1Data = getParamDataT<vec3f>("cylinder.position1", true);
     if (vertex0Data->size() != vertex1Data->size())

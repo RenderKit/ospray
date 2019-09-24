@@ -36,8 +36,8 @@ namespace ospray {
     // ------------------------------------------------------------------
     // first, "parse" the additional expected parameters
     // ------------------------------------------------------------------
-    height = getParam1f("height", 1.f); // imgPlane_size_y
-    aspect = getParam1f("aspect", 1.f);
+    height = getParam<float>("height", 1.f); // imgPlane_size_y
+    aspect = getParam<float>("aspect", 1.f);
 
     // ------------------------------------------------------------------
     // now, update the local precomputed values

@@ -24,7 +24,7 @@ namespace ospray {
   void Light::commit()
   {
     color     = getParam<vec3f>("color", vec3f(1.f));
-    intensity = getParam1f("intensity", 1.f);
+    intensity = getParam<float>("intensity", 1.f);
     isVisible = getParam1b("visible", true);
 
     ispc::Light_set(getIE(), (ispc::vec3f &)color, intensity, isVisible);

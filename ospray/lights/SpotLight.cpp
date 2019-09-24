@@ -34,9 +34,9 @@ namespace ospray {
     Light::commit();
     position      = getParam<vec3f>("position", vec3f(0.f));
     direction     = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
-    openingAngle  = getParam1f("openingAngle", 180.f);
-    penumbraAngle = getParam1f("penumbraAngle", 5.f);
-    radius        = getParam1f("radius", 0.f);
+    openingAngle  = getParam<float>("openingAngle", 180.f);
+    penumbraAngle = getParam<float>("penumbraAngle", 5.f);
+    radius        = getParam<float>("radius", 0.f);
 
     // check ranges and pre-compute parameters
     direction     = normalize(direction);

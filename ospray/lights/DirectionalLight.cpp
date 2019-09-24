@@ -33,7 +33,7 @@ namespace ospray {
   {
     Light::commit();
     direction = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
-    angularDiameter = getParam1f("angularDiameter", .0f);
+    angularDiameter = getParam<float>("angularDiameter", .0f);
 
     // the ispc::DirLight expects direction towards light source
     direction = -normalize(direction);

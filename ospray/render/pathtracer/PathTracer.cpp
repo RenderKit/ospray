@@ -121,7 +121,7 @@ namespace ospray {
     void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
     const int32 rouletteDepth = getParam1i("rouletteDepth", 5);
-    const float maxRadiance   = getParam1f("maxContribution", inf);
+    const float maxRadiance   = getParam<float>("maxContribution", inf);
     Texture2D *backplate = (Texture2D *)getParamObject("backplate", nullptr);
     vec4f shadowCatcherPlane =
         getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));

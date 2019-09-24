@@ -35,8 +35,8 @@ namespace ospray {
   {
     spp                         = std::max(1, getParam1i("spp", 1));
     const int32 maxDepth        = std::max(0, getParam1i("maxDepth", 20));
-    const float minContribution = getParam1f("minContribution", 0.001f);
-    errorThreshold              = getParam1f("varianceThreshold", 0.f);
+    const float minContribution = getParam<float>("minContribution", 0.001f);
+    errorThreshold              = getParam<float>("varianceThreshold", 0.f);
 
     maxDepthTexture = (Texture2D *)getParamObject("maxDepthTexture", nullptr);
 
@@ -50,7 +50,7 @@ namespace ospray {
       }
     }
 
-    vec3f bgColor3 = getParam<vec3f>("bgColor", vec3f(getParam1f("bgColor", 0.f)));
+    vec3f bgColor3 = getParam<vec3f>("bgColor", vec3f(getParam<float>("bgColor", 0.f)));
     bgColor        = getParam<vec4f>("bgColor", vec4f(bgColor3, 0.f));
 
     if (getIE()) {

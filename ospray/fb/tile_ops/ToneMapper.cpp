@@ -53,7 +53,7 @@ namespace ospray {
   {
     ImageOp::commit();
 
-    exposure = getParam1f("exposure", 1.f);
+    exposure = getParam<float>("exposure", 1.f);
     // Default parameters fitted to the ACES 1.0 grayscale curve
     // (RRT.a1.0.3 + ODT.Academy.Rec709_100nits_dim.a1.0.3)
     // We included exposure adjustment to match 18% middle gray
@@ -64,13 +64,13 @@ namespace ospray {
     const float aces_midOut   = 0.18f;
     const float aces_hdrMax   = 11.0785f;
 
-    a = max(getParam1f("contrast", aces_contrast), 0.0001f);
-    d = clamp(getParam1f("shoulder", aces_shoulder), 0.0001f, 1.f);
+    a = max(getParam<float>("contrast", aces_contrast), 0.0001f);
+    d = clamp(getParam<float>("shoulder", aces_shoulder), 0.0001f, 1.f);
 
-    float m = clamp(getParam1f("midIn", aces_midIn), 0.0001f, 1.f);
-    float n = clamp(getParam1f("midOut", aces_midOut), 0.0001f, 1.f);
+    float m = clamp(getParam<float>("midIn", aces_midIn), 0.0001f, 1.f);
+    float n = clamp(getParam<float>("midOut", aces_midOut), 0.0001f, 1.f);
 
-    float w   = max(getParam1f("hdrMax", aces_hdrMax), 1.f);
+    float w   = max(getParam<float>("hdrMax", aces_hdrMax), 1.f);
     acesColor = getParam1b("acesColor", true);
 
     // Solve b and c
