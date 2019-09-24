@@ -47,9 +47,9 @@ namespace ospray {
     }
 
     format = static_cast<OSPTextureFormat>(
-        getParam1i("format", OSP_TEXTURE_FORMAT_INVALID));
+        getParam<int>("format", OSP_TEXTURE_FORMAT_INVALID));
     filter = static_cast<OSPTextureFilter>(
-        getParam1i("filter", OSP_TEXTURE_FILTER_BILINEAR));
+        getParam<int>("filter", OSP_TEXTURE_FILTER_BILINEAR));
 
     if (sizeOf(format) != sizeOf(texData->type))
       throw std::runtime_error(toString() + ": 'format'='" + stringFor(format)

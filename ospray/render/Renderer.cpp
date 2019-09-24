@@ -33,8 +33,8 @@ namespace ospray {
 
   void Renderer::commit()
   {
-    spp                         = std::max(1, getParam1i("spp", 1));
-    const int32 maxDepth        = std::max(0, getParam1i("maxDepth", 20));
+    spp                         = std::max(1, getParam<int>("spp", 1));
+    const int32 maxDepth        = std::max(0, getParam<int>("maxDepth", 20));
     const float minContribution = getParam<float>("minContribution", 0.001f);
     errorThreshold              = getParam<float>("varianceThreshold", 0.f);
 

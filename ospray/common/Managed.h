@@ -58,7 +58,6 @@ namespace ospray {
     template <typename T, int DIM = 1>
     const DataT<T, DIM> *getParamDataT(const char *name, bool required = false);
 
-    int32 getParam1i(const char *name, int32 valIfNotFound);
     bool getParam1b(const char *name, bool valIfNotFound);
 
     affine3f getParamAffine3f(const char *name, affine3f valIfNotFound);

@@ -107,7 +107,7 @@ namespace ospray {
     windowSize     = getParam<vec2f>("windowSize", vec2f(-1.f));
     radius         = getParam<float>("radius", 0.3f);
     checkRadius    = getParam<float>("checkRadius", 1.f);
-    int kernelSize = getParam1i("ksize", 64);
+    int kernelSize = getParam<int>("ksize", 64);
 
     // generate kernel with random sample distribution
     kernel.resize(kernelSize);

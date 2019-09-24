@@ -47,7 +47,7 @@ namespace ospray {
   {
     Renderer::commit();
     ispc::SciVis_set(getIE(),
-                     getParam1i("aoSamples", aoSamples),
+                     getParam<int>("aoSamples", aoSamples),
                      getParam<float>("aoRadius", 1e20f),
                      getParam<float>("aoIntensity", 1.f));
   }
