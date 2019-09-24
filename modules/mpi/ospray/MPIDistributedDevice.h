@@ -78,7 +78,7 @@ struct MPIDistributedDevice : public api::Device
   void frameBufferUnmap(const void *mapped, OSPFrameBuffer fb) override;
 
   /*! create a new pixelOp object (out of list of registered pixelOps) */
-  OSPImageOp newImageOp(const char *type) override;
+  OSPImageOperation newImageOp(const char *type) override;
 
   void resetAccumulation(OSPFrameBuffer _fb) override;
 

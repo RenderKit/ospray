@@ -145,7 +145,7 @@ struct MPIOffloadDevice : public api::Device
       const OSPFrameBufferFormat mode,
       const uint32 channels) override;
 
-  OSPImageOp newImageOp(const char *type) override;
+  OSPImageOperation newImageOp(const char *type) override;
 
   const void *frameBufferMap(
       OSPFrameBuffer fb, const OSPFrameBufferChannel) override;

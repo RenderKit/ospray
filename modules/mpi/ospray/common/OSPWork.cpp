@@ -142,13 +142,13 @@ void newTransferFunction(
   state.objects[handle] = ospNewTransferFunction(type.c_str());
 }
 
-void newImageOp(
+void newImageOperation(
     OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
   int64_t handle = 0;
   std::string type;
   cmdBuf >> handle >> type;
-  state.objects[handle] = ospNewImageOp(type.c_str());
+  state.objects[handle] = ospNewImageOperation(type.c_str());
 }
 
 void newMaterial(
@@ -768,8 +768,8 @@ void dispatchWork(TAG t,
   case NEW_TRANSFER_FUNCTION:
     newTransferFunction(state, cmdBuf, fabric);
     break;
-  case NEW_IMAGE_OP:
-    newImageOp(state, cmdBuf, fabric);
+  case NEW_IMAGE_OPERATION:
+    newImageOperation(state, cmdBuf, fabric);
     break;
   case NEW_MATERIAL:
     newMaterial(state, cmdBuf, fabric);
@@ -932,8 +932,8 @@ const char *tagName(work::TAG t)
     return "NEW_CAMERA";
   case NEW_TRANSFER_FUNCTION:
     return "NEW_TRANSFER_FUNCTION";
-  case NEW_IMAGE_OP:
-    return "NEW_IMAGE_OP";
+  case NEW_IMAGE_OPERATION:
+    return "NEW_IMAGE_OPERATION";
   case NEW_MATERIAL:
     return "NEW_MATERIAL";
   case NEW_LIGHT:

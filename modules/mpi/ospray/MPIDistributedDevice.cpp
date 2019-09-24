@@ -372,9 +372,9 @@ void MPIDistributedDevice::setAffine3f(
   object->setParam(bufName, v);
 }
 
-OSPImageOp MPIDistributedDevice::newImageOp(const char *type)
+OSPImageOperation MPIDistributedDevice::newImageOp(const char *type)
 {
-  return createLocalObject<ImageOp, OSPImageOp>(type);
+  return createLocalObject<ImageOp, OSPImageOperation>(type);
 }
 
 OSPRenderer MPIDistributedDevice::newRenderer(const char *type)

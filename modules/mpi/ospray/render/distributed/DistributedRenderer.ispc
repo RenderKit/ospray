@@ -92,12 +92,12 @@ unmasked void DR_default_computeRegionVisibility(
 
       for (uniform int r = 0; r < world->numRegions; ++r) {
         if (!regionVisible[r] && !isEmpty(world->regions[r].bounds)) {
-          IntersectionValues isect = intersectBox(screenSample.ray.org,
-                                                  screenSample.ray.dir,
-                                                  world->regions[r].bounds);
-          if (isect.t_in.t_value < isect.t_out.t_value
-              && isect.t_out.t_value >= screenSample.ray.t0
-              && isect.t_in.t_value <= screenSample.ray.t)
+          Intersections isect = intersectBox(screenSample.ray.org,
+                                             screenSample.ray.dir,
+                                             world->regions[r].bounds);
+          if (isect.entry.t < isect.exit.t
+              && isect.exit.t >= screenSample.ray.t0
+              && isect.entry.t <= screenSample.ray.t)
           {
             regionVisible[r] = true;
           }
@@ -198,16 +198,16 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
 
       // TODO: We could store and use the region t intervals from when
       // we did the visibility test?
-      IntersectionValues isect = intersectBox(screenSample.ray.org,
-                                              screenSample.ray.dir,
-                                              region->bounds);
+      Intersections isect = intersectBox(screenSample.ray.org,
+                                         screenSample.ray.dir,
+                                         region->bounds);
 
-      if (isect.t_in.t_value < isect.t_out.t_value
-          && isect.t_out.t_value >= screenSample.ray.t0
-          && isect.t_in.t_value <= screenSample.ray.t)
+      if (isect.entry.t < isect.exit.t
+          && isect.exit.t >= screenSample.ray.t0
+          && isect.entry.t <= screenSample.ray.t)
       {
-        const float regionEnter = max(isect.t_in.t_value, screenSample.ray.t0);
-        const float regionExit = min(isect.t_out.t_value, screenSample.ray.t);
+        const float regionEnter = max(isect.entry.t, screenSample.ray.t0);
+        const float regionExit = min(isect.exit.t, screenSample.ray.t);
         self->renderRegionSample(self,
             fb,
             world,

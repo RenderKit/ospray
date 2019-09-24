@@ -736,14 +736,14 @@ OSPFrameBuffer MPIOffloadDevice::frameBufferCreate(
   return (OSPFrameBuffer)(int64)handle;
 }
 
-OSPImageOp MPIOffloadDevice::newImageOp(const char *type)
+OSPImageOperation MPIOffloadDevice::newImageOp(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
   networking::BufferWriter writer;
-  writer << work::NEW_IMAGE_OP << handle.i64 << std::string(type);
+  writer << work::NEW_IMAGE_OPERATION << handle.i64 << std::string(type);
   sendWork(writer.buffer);
-  return (OSPImageOp)(int64)handle;
+  return (OSPImageOperation)(int64)handle;
 }
 
 const void *MPIOffloadDevice::frameBufferMap(
