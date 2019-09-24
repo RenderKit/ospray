@@ -93,8 +93,8 @@ namespace ospray {
 
     xform *= affine2f::translate(vec2f(-0.5f));
 
-    const vec4f transf = getParam4f((texname+"transform").c_str(),
-                                    vec4f(1.f, 0.f, 0.f, 1.f));
+    const vec4f transf = getParam<vec4f>((texname+"transform").c_str(),
+                                         vec4f(1.f, 0.f, 0.f, 1.f));
     const linear2f transform = (const linear2f&)transf;
     xform *= affine2f(transform);
 

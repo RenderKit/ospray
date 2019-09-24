@@ -58,7 +58,6 @@ namespace ospray {
     template <typename T, int DIM = 1>
     const DataT<T, DIM> *getParamDataT(const char *name, bool required = false);
 
-    vec4f getParam4f(const char *name, vec4f valIfNotFound);
     vec3f getParam3f(const char *name, vec3f valIfNotFound);
     vec3i getParam3i(const char *name, vec3i valIfNotFound);
     vec2f getParam2f(const char *name, vec2f valIfNotFound);
