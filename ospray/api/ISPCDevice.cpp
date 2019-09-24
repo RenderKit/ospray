@@ -37,6 +37,8 @@
 #include "volume/transferFunction/TransferFunction.h"
 // stl
 #include <algorithm>
+#include <functional>
+#include <map>
 
 extern "C" RTCDevice ispc_embreeDevice()
 {
@@ -45,6 +47,94 @@ extern "C" RTCDevice ispc_embreeDevice()
 
 namespace ospray {
   namespace api {
+
+    using SetParamFcn = void(OSPObject, const char *, const void *);
+
+    template <typename T>
+    static void setParamOnObject(OSPObject _obj, const char *p, const T &v)
+    {
+      auto *obj = (ManagedObject *)_obj;
+      obj->setParam(p, v);
+    }
+
+#define declare_param_setter(TYPE)                                           \
+  {                                                                          \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) { \
+      setParamOnObject(o, p, *(TYPE *)v);                                    \
+    }                                                                        \
+  }
+
+#define declare_param_setter_object(TYPE)                                    \
+  {                                                                          \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) { \
+      ManagedObject *obj = *(TYPE *)v;                                       \
+      setParamOnObject(o, p, obj);                                           \
+    }                                                                        \
+  }
+
+    static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
+        declare_param_setter(Device *),
+        declare_param_setter(void *),
+        declare_param_setter(bool),
+        declare_param_setter_object(ManagedObject *),
+        declare_param_setter_object(Camera *),
+        declare_param_setter_object(Data *),
+        declare_param_setter_object(FrameBuffer *),
+        declare_param_setter_object(Future *),
+        declare_param_setter_object(GeometricModel *),
+        declare_param_setter_object(Group *),
+        declare_param_setter_object(ImageOp *),
+        declare_param_setter_object(Instance *),
+        declare_param_setter_object(Light *),
+        declare_param_setter_object(Material *),
+        declare_param_setter_object(Renderer *),
+        declare_param_setter_object(Texture *),
+        declare_param_setter_object(TransferFunction *),
+        declare_param_setter_object(Volume *),
+        declare_param_setter_object(VolumetricModel *),
+        declare_param_setter_object(World *),
+        declare_param_setter(char *),
+        declare_param_setter(char),
+        declare_param_setter(unsigned char),
+        declare_param_setter(vec2uc),
+        declare_param_setter(vec3uc),
+        declare_param_setter(vec4uc),
+        declare_param_setter(short),
+        declare_param_setter(int),
+        declare_param_setter(vec2i),
+        declare_param_setter(vec3i),
+        declare_param_setter(vec4i),
+        declare_param_setter(unsigned int),
+        declare_param_setter(vec2ui),
+        declare_param_setter(vec3ui),
+        declare_param_setter(vec4ui),
+        declare_param_setter(long),
+        declare_param_setter(vec2l),
+        declare_param_setter(vec3l),
+        declare_param_setter(vec4l),
+        declare_param_setter(unsigned long),
+        declare_param_setter(vec2ul),
+        declare_param_setter(vec3ul),
+        declare_param_setter(vec4ul),
+        declare_param_setter(float),
+        declare_param_setter(vec2f),
+        declare_param_setter(vec3f),
+        declare_param_setter(vec4f),
+        declare_param_setter(double),
+        declare_param_setter(box1i),
+        declare_param_setter(box2i),
+        declare_param_setter(box3i),
+        declare_param_setter(box4i),
+        declare_param_setter(box1f),
+        declare_param_setter(box2f),
+        declare_param_setter(box3f),
+        declare_param_setter(box4f),
+        declare_param_setter(linear2f),
+        declare_param_setter(linear3f),
+        declare_param_setter(affine2f),
+        declare_param_setter(affine3f)};
+
+#undef declare_param_setter
 
     RTCDevice ISPCDevice::embreeDevice = nullptr;
 
@@ -213,195 +303,26 @@ namespace ospray {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // Object Parameters //////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    void ISPCDevice::setString(OSPObject _object,
-                               const char *bufName,
-                               const char *s)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam<std::string>(bufName, s);
-    }
-
-    void ISPCDevice::setObject(OSPObject _target,
-                               const char *bufName,
-                               OSPObject _value)
-    {
-      ManagedObject *target = (ManagedObject *)_target;
-      ManagedObject *value  = (ManagedObject *)_value;
-      target->setParam(bufName, value);
-    }
-
-    void ISPCDevice::setBool(OSPObject _object,
-                             const char *bufName,
-                             const bool b)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, b);
-    }
-
-    void ISPCDevice::setFloat(OSPObject _object,
-                              const char *bufName,
-                              const float f)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, f);
-    }
-
-    void ISPCDevice::setInt(OSPObject _object, const char *bufName, const int f)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, f);
-    }
-
-    void ISPCDevice::setVec2f(OSPObject _object,
-                              const char *bufName,
-                              const vec2f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setVec2i(OSPObject _object,
-                              const char *bufName,
-                              const vec2i &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setVec3f(OSPObject _object,
-                              const char *bufName,
-                              const vec3f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setVec3i(OSPObject _object,
-                              const char *bufName,
-                              const vec3i &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setVec4f(OSPObject _object,
-                              const char *bufName,
-                              const vec4f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setVec4i(OSPObject _object,
-                              const char *bufName,
-                              const vec4i &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setBox1f(OSPObject _object,
-                              const char *bufName,
-                              const box1f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setBox1i(OSPObject _object,
-                              const char *bufName,
-                              const box1i &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setBox2f(OSPObject _object,
-                              const char *bufName,
-                              const box2f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setBox2i(OSPObject _object,
-                              const char *bufName,
-                              const box2i &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setBox3f(OSPObject _object,
-                              const char *bufName,
-                              const box3f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setBox3i(OSPObject _object,
-                              const char *bufName,
-                              const box3i &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setBox4f(OSPObject _object,
-                              const char *bufName,
-                              const box4f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setBox4i(OSPObject _object,
-                              const char *bufName,
-                              const box4i &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setLinear3f(OSPObject _object,
-                                 const char *bufName,
-                                 const linear3f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setAffine3f(OSPObject _object,
-                                 const char *bufName,
-                                 const affine3f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    void ISPCDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
     // Object + Parameter Lifetime Management /////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    void ISPCDevice::commit(OSPObject _object)
+    void ISPCDevice::setObjectParam(OSPObject object,
+                                    const char *name,
+                                    OSPDataType type,
+                                    const void *mem)
     {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->commit();
-      object->checkUnused();
-      object->resetAllParamQueryStatus();
+      if (type == OSP_UNKNOWN)
+        throw std::runtime_error("cannot set OSP_UNKNOWN parameter type");
+
+      if (type == OSP_BYTE || type == OSP_RAW) {
+        setParamOnObject(object, name, *(const byte_t *)mem);
+        return;
+      }
+
+      setParamFcns[type](object, name, mem);
     }
 
-    void ISPCDevice::removeParam(OSPObject _object, const char *name)
+    void ISPCDevice::removeObjectParam(OSPObject _object, const char *name)
     {
       ManagedObject *object = (ManagedObject *)_object;
       ManagedObject *existing =
@@ -409,6 +330,14 @@ namespace ospray {
       if (existing)
         existing->refDec();
       object->removeParam(name);
+    }
+
+    void ISPCDevice::commit(OSPObject _object)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->commit();
+      object->checkUnused();
+      object->resetAllParamQueryStatus();
     }
 
     void ISPCDevice::release(OSPObject _obj)

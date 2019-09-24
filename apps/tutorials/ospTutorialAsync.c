@@ -181,9 +181,9 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   // create and setup camera
   *camera = ospNewCamera("perspective");
   ospSetFloat(*camera, "aspect", imgSize.x/(float)imgSize.y);
-  ospSetVec3fv(*camera, "pos", cam_pos);
-  ospSetVec3fv(*camera, "dir", cam_view);
-  ospSetVec3fv(*camera, "up",  cam_up);
+  ospSetParam(*camera, "pos", OSP_VEC3F, cam_pos);
+  ospSetParam(*camera, "dir", OSP_VEC3F, cam_view);
+  ospSetParam(*camera, "up", OSP_VEC3F, cam_up);
   ospCommit(*camera); // commit each object to indicate modifications are done
 
   // create and setup model and mesh
@@ -282,9 +282,9 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   // create and setup camera
   *camera = ospNewCamera("perspective");
   ospSetFloat(*camera, "aspect", imgSize.x/(float)imgSize.y);
-  ospSetVec3fv(*camera, "pos", cam_pos);
-  ospSetVec3fv(*camera, "dir", cam_view);
-  ospSetVec3fv(*camera, "up",  cam_up);
+  ospSetParam(*camera, "pos", OSP_VEC3F, cam_pos);
+  ospSetParam(*camera, "dir", OSP_VEC3F, cam_view);
+  ospSetParam(*camera, "up", OSP_VEC3F, cam_up);
   ospCommit(*camera); // commit each object to indicate modifications are done
 
   // create and setup model and mesh

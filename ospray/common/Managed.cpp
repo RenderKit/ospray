@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "Managed.h"
+#include "Data.h"
 #include "OSPCommon_ispc.h"
 
 namespace ospray {
@@ -24,20 +25,17 @@ namespace ospray {
     ispc::delete_uniform(ispcEquivalent);
     ispcEquivalent = nullptr;
 
-    std::for_each(params_begin(),
-                  params_end(),
-                  [&](std::shared_ptr<Param> &p) {
-                    auto &param = *p;
-                    if (param.data.is<OSP_PTR>()) {
-                      auto *obj = param.data.get<OSP_PTR>();
-                      if (obj != nullptr) obj->refDec();
-                    }
-                  });
+    std::for_each(params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
+      auto &param = *p;
+      if (param.data.is<OSP_PTR>()) {
+        auto *obj = param.data.get<OSP_PTR>();
+        if (obj != nullptr)
+          obj->refDec();
+      }
+    });
   }
 
-  void ManagedObject::commit()
-  {
-  }
+  void ManagedObject::commit() {}
 
   std::string ManagedObject::toString() const
   {
@@ -52,14 +50,20 @@ namespace ospray {
     }
   }
 
-#define define_getparam(T,ABB)                                      \
-  T ManagedObject::getParam##ABB(const char *name, T valIfNotFound) \
-  {                                                                 \
-    return getParam<T>(name, valIfNotFound);                        \
+  ManagedObject *ManagedObject::getParamObject(const char *name,
+                                               ManagedObject *valIfNotFound)
+  {
+    return getParam<ManagedObject *>(name, valIfNotFound);
   }
 
-  define_getparam(ManagedObject *, Object)
+  Data *ManagedObject::getParamData(const char *name, Data *valIfNotFound)
+  {
+    auto *obj = getParam<Data *>(name, valIfNotFound);
 
-#undef define_getparam
+    if (obj == nullptr)
+      obj = (Data *)getParamObject(name, (ManagedObject *)valIfNotFound);
 
-} // ::ospray
+    return obj;
+  }
+
+}  // namespace ospray

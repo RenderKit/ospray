@@ -37,13 +37,13 @@ static std::string renderer_type = "pathtracer";
  * the improved perlin noise paper from Siggraph 2002 from here
  * https://mrl.nyu.edu/~perlin/noise/
 **/
-class PerlinNoise 
+class PerlinNoise
 {
   struct PerlinNoiseData
   {
     PerlinNoiseData()
     {
-      const int permutation[256] = { 
+      const int permutation[256] = {
         151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,
         37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,
         57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,
@@ -67,7 +67,7 @@ class PerlinNoise
   static inline float smooth(float t) { return t * t * t * (t * (t * 6.f - 15.f) + 10.f); }
   static inline float lerp  (float t, float a, float b) { return a + t * (b - a); }
   static inline float grad(int hash, float x, float y, float z) {
-    const int h   = hash & 15;      
+    const int h   = hash & 15;
     const float u = h < 8 ? x : y;
     const float v = h < 4 ? y : h == 12 || h == 14 ? x : z;
     return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
@@ -80,7 +80,7 @@ public:
     float y = q.y * frequency;
     float z = q.z * frequency;
     const int X = (int)floor(x) & 255;
-    const int Y = (int)floor(y) & 255; 
+    const int Y = (int)floor(y) & 255;
     const int Z = (int)floor(z) & 255;
     x -= floor(x);
     y -= floor(y);
@@ -92,14 +92,14 @@ public:
     const int  B = p[X + 1] + Y;
     const int AA = p[A] + Z;
     const int BA = p[B] + Z;
-    const int BB = p[B + 1] + Z; 
+    const int BB = p[B + 1] + Z;
     const int AB = p[A + 1] + Z;
 
-    return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z), 
+    return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z),
                                    grad(p[BA], x - 1, y, z)),
-                           lerp(u, grad(p[AB], x, y - 1, z),  
+                           lerp(u, grad(p[AB], x, y - 1, z),
                                    grad(p[BB], x - 1, y - 1, z))),
-                   lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1),  
+                   lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1),
                                    grad(p[BA + 1], x - 1, y, z - 1)),
                            lerp(u, grad(p[AB + 1], x, y - 1, z - 1),
                                    grad(p[BB + 1], x - 1, y - 1, z - 1))));
@@ -110,11 +110,11 @@ PerlinNoise::PerlinNoiseData PerlinNoise::p;
 OSPGeometry PlaneGeometry(const vec4f& color, const AffineSpace3f& M)
 {
   const vec3f normal = xfmNormal(M, vec3f(0.f, 1.f, 0.f));
-  std::vector<vec3f> positions { 
-    xfmPoint(M, vec3f(-1.f, 0.f, -1.f)), 
-    xfmPoint(M, vec3f(+1.f, 0.f, -1.f)), 
-    xfmPoint(M, vec3f(+1.f, 0.f, +1.f)), 
-    xfmPoint(M, vec3f(-1.f, 0.f, +1.f)), 
+  std::vector<vec3f> positions {
+    xfmPoint(M, vec3f(-1.f, 0.f, -1.f)),
+    xfmPoint(M, vec3f(+1.f, 0.f, -1.f)),
+    xfmPoint(M, vec3f(+1.f, 0.f, +1.f)),
+    xfmPoint(M, vec3f(-1.f, 0.f, +1.f)),
   };
   std::vector<vec3f> normals { normal, normal, normal, normal };
   std::vector<vec4f> colors  { color, color, color, color };
@@ -152,8 +152,8 @@ OSPGeometry BoxGeometry(const box3f& box)
 }
 
 OSPVolumetricModel CreateProceduralVolumetricModel(
-  std::function<bool(vec3f p)> D, 
-  std::vector<vec3f> colors, 
+  std::function<bool(vec3f p)> D,
+  std::vector<vec3f> colors,
   std::vector<float> opacities,
   float densityScale,
   float anisotropy)
@@ -224,7 +224,7 @@ OSPGeometricModel CreateGeometricModel(OSPGeometry geo, const vec3f& kd)
 OSPInstance CreateInstance(OSPGroup group, const AffineSpace3f& xfm)
 {
   OSPInstance instance = ospNewInstance(group);
-  ospSetAffine3fv(instance, "xfm", &xfm.l.vx.x);
+  ospSetParam(instance, "xfm", OSP_AFFINE3F, &xfm.l.vx.x);
   return instance;
 }
 
@@ -237,7 +237,7 @@ int main(int argc, const char **argv)
     if (arg == "-r" || arg == "--renderer")
       renderer_type = argv[++i];
   }
-    
+
   float densityScale = 10.0f;
   float anisotropy = 0.0f;
 
@@ -252,7 +252,7 @@ int main(int argc, const char **argv)
     }
     return value;
   };
-  
+
   auto torus = [](vec3f X, float R, float r) -> bool {
     const float tmp = sqrtf(X.x * X.x + X.z * X.z) - R;
     return tmp*tmp + X.y*X.y - r*r < 0.f;
@@ -260,8 +260,8 @@ int main(int argc, const char **argv)
 
   std::vector<OSPVolumetricModel> volumetricModels;
   volumetricModels.emplace_back(CreateProceduralVolumetricModel(
-    [&](vec3f p) { 
-      vec3f X = 2.f * p - vec3f(1.f); 
+    [&](vec3f p) {
+      vec3f X = 2.f * p - vec3f(1.f);
       return length((1.4f + 0.4 * turbulence(p, 12.f, 12)) * X) < 1.f;
     },
     {vec3f(0.f, 0.0f, 0.f), vec3f(1.f, 0.f, 0.f), vec3f(0.f, 1.f, 1.f), vec3f(1.f, 1.f, 1.f)},
@@ -269,15 +269,15 @@ int main(int argc, const char **argv)
     densityScale,
     anisotropy));
   volumetricModels.emplace_back(CreateProceduralVolumetricModel(
-    [&](vec3f p) { 
-      vec3f X = 2.f * p - vec3f(1.f); 
+    [&](vec3f p) {
+      vec3f X = 2.f * p - vec3f(1.f);
       return torus((1.4f + 0.4 * turbulence(p, 12.f, 12)) * X, 0.75f, 0.175f);
     },
     {vec3f(0.0, 0.0, 0.0), vec3f(1.0, 0.65, 0.0), vec3f(0.12, 0.6, 1.0), vec3f(1.0, 1.0, 1.0)},
     {0.f, 0.33f, 0.66f, 1.f},
     densityScale,
     anisotropy));
-  
+
   for (auto volumetricModel : volumetricModels) {
     ospCommit(volumetricModel);
   }
@@ -316,7 +316,7 @@ int main(int argc, const char **argv)
       ospNewData(instances.size(), OSP_INSTANCE, instances.data());
   ospSetData(world, "instance", instance_data);
   ospRelease(instance_data);
-  
+
   // create OSPRay renderer
   int maxDepth = 1024;
   int rouletteDepth = 32;
@@ -343,7 +343,7 @@ int main(int argc, const char **argv)
   bool showGeometry = false;
   bool enableQuadLight = true;
   bool enableAmbientLight = false;
-  auto updateScene = [&]() 
+  auto updateScene = [&]()
   {
     ospRemoveParam(group_geometry, "geometry");
     for (auto group : volumetricGroups)
@@ -358,7 +358,7 @@ int main(int argc, const char **argv)
         ospRelease(volumes);
       }
     }
-    
+
     if (showGeometry) {
       OSPData geometries = ospNewData(
           geometricModels.size(), OSP_GEOMETRIC_MODEL, geometricModels.data());
@@ -404,7 +404,7 @@ int main(int argc, const char **argv)
       ospSetInt(renderer, "maxDepth", maxDepth);
       glfwOSPRayWindow->addObjectToCommit(renderer);
     }
-    
+
     if (ImGui::SliderInt("rouletteDepth", &rouletteDepth, 0, 1024)) {
       commitWorld = true;
       ospSetInt(renderer, "rouletteDepth", rouletteDepth);
@@ -421,7 +421,7 @@ int main(int argc, const char **argv)
       updateWorld = true;
 
     commitWorld = updateWorld;
-    
+
     if (ImGui::SliderFloat("densityScale", &densityScale, 0.f, 50.f)) {
       commitWorld = true;
       for (auto vModel : volumetricModels)
@@ -430,7 +430,7 @@ int main(int argc, const char **argv)
         glfwOSPRayWindow->addObjectToCommit(vModel);
       }
     }
-    
+
     if (ImGui::SliderFloat("anisotropy", &anisotropy, -1.f, 1.f)) {
       commitWorld = true;
       for (auto vModel : volumetricModels)

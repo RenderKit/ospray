@@ -94,102 +94,19 @@ namespace ospray {
 
       virtual OSPWorld newWorld() = 0;
 
-      // Object Parameters ////////////////////////////////////////////////////
-
-      virtual void setString(OSPObject object,
-                             const char *bufName,
-                             const char *s) = 0;
-
-      virtual void setObject(OSPObject object,
-                             const char *bufName,
-                             OSPObject obj) = 0;
-
-      virtual void setBool(OSPObject object,
-                           const char *bufName,
-                           const bool f) = 0;
-
-      virtual void setFloat(OSPObject object,
-                            const char *bufName,
-                            const float f) = 0;
-
-      virtual void setInt(OSPObject object,
-                          const char *bufName,
-                          const int f) = 0;
-
-      virtual void setVec2f(OSPObject object,
-                            const char *bufName,
-                            const vec2f &v) = 0;
-
-      virtual void setVec2i(OSPObject object,
-                            const char *bufName,
-                            const vec2i &v) = 0;
-
-      virtual void setVec3f(OSPObject object,
-                            const char *bufName,
-                            const vec3f &v) = 0;
-
-      virtual void setVec3i(OSPObject object,
-                            const char *bufName,
-                            const vec3i &v) = 0;
-
-      virtual void setVec4f(OSPObject object,
-                            const char *bufName,
-                            const vec4f &v) = 0;
-
-      virtual void setVec4i(OSPObject object,
-                            const char *bufName,
-                            const vec4i &v) = 0;
-
-      virtual void setBox1f(OSPObject object,
-                            const char *bufName,
-                            const box1f &v) = 0;
-
-      virtual void setBox1i(OSPObject object,
-                            const char *bufName,
-                            const box1i &v) = 0;
-
-      virtual void setBox2f(OSPObject object,
-                            const char *bufName,
-                            const box2f &v) = 0;
-
-      virtual void setBox2i(OSPObject object,
-                            const char *bufName,
-                            const box2i &v) = 0;
-
-      virtual void setBox3f(OSPObject object,
-                            const char *bufName,
-                            const box3f &v) = 0;
-
-      virtual void setBox3i(OSPObject object,
-                            const char *bufName,
-                            const box3i &v) = 0;
-
-      virtual void setBox4f(OSPObject object,
-                            const char *bufName,
-                            const box4f &v) = 0;
-
-      virtual void setBox4i(OSPObject object,
-                            const char *bufName,
-                            const box4i &v) = 0;
-
-      virtual void setLinear3f(OSPObject object,
-                               const char *bufName,
-                               const linear3f &v) = 0;
-
-      virtual void setAffine3f(OSPObject object,
-                               const char *bufName,
-                               const affine3f &v) = 0;
-
-      virtual void setVoidPtr(OSPObject object,
-                              const char *bufName,
-                              void *v) = 0;
-
       // Object + Parameter Lifetime Management ///////////////////////////////
 
-      virtual void commit(OSPObject object)                        = 0;
-      virtual void removeParam(OSPObject object, const char *name) = 0;
-      virtual void release(OSPObject _obj)                         = 0;
-      virtual void retain(OSPObject _obj)                          = 0;
+      virtual void setObjectParam(OSPObject object,
+                                  const char *name,
+                                  OSPDataType type,
+                                  const void *mem) = 0;
+
+      virtual void removeObjectParam(OSPObject object, const char *name) = 0;
+
+      virtual void commit(OSPObject object) = 0;
+
+      virtual void release(OSPObject _obj) = 0;
+      virtual void retain(OSPObject _obj)  = 0;
 
       // FrameBuffer Manipulation /////////////////////////////////////////////
 
@@ -296,4 +213,7 @@ namespace ospray {
       ::ospray::api::Device, device, InternalClass, external_name)
 
   }  // namespace api
+
+  OSPTYPEFOR_SPECIALIZATION(api::Device *, OSP_DEVICE);
+
 }  // namespace ospray

@@ -239,61 +239,13 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPWorld ospNewWorld();
 
-  // Object Parameters ////////////////////////////////////////////////////////
-
-  OSPRAY_INTERFACE void ospSetString(OSPObject, const char *id, const char *s);
-
-  OSPRAY_INTERFACE void ospSetObject(OSPObject, const char *id, OSPObject other);
-  OSPRAY_INTERFACE void ospSetData(OSPObject, const char *id, OSPData);
-
-  OSPRAY_INTERFACE void ospSetBool(OSPObject, const char *id, int x);
-  OSPRAY_INTERFACE void ospSetFloat(OSPObject, const char *id, float x);
-  OSPRAY_INTERFACE void ospSetInt(OSPObject, const char *id, int x);
-
-  OSPRAY_INTERFACE void ospSetVec2f(OSPObject, const char *id, float x, float y);
-  OSPRAY_INTERFACE void ospSetVec2fv(OSPObject, const char *id, const float *xy);
-  OSPRAY_INTERFACE void ospSetVec2i(OSPObject, const char *id, int x, int y);
-  OSPRAY_INTERFACE void ospSetVec2iv(OSPObject, const char *id, const int *xy);
-
-  OSPRAY_INTERFACE void ospSetVec3f(OSPObject, const char *id, float x, float y, float z);
-  OSPRAY_INTERFACE void ospSetVec3fv(OSPObject, const char *id, const float *xyz);
-  OSPRAY_INTERFACE void ospSetVec3i(OSPObject, const char *id, int x, int y, int z);
-  OSPRAY_INTERFACE void ospSetVec3iv(OSPObject, const char *id, const int *xyz);
-
-  OSPRAY_INTERFACE void ospSetVec4f(OSPObject, const char *id, float x, float y, float z, float w);
-  OSPRAY_INTERFACE void ospSetVec4fv(OSPObject, const char *id, const float *xyzw);
-  OSPRAY_INTERFACE void ospSetVec4i(OSPObject, const char *id, int x, int y, int z, int w);
-  OSPRAY_INTERFACE void ospSetVec4iv(OSPObject, const char *id, const int *xyzw);
-
-  OSPRAY_INTERFACE void ospSetBox1f(OSPObject, const char *id, float lower_x, float upper_x);
-  OSPRAY_INTERFACE void ospSetBox1fv(OSPObject, const char *id, const float *lower_x_upper_x);
-  OSPRAY_INTERFACE void ospSetBox1i(OSPObject, const char *id, int lower_x, int upper_x);
-  OSPRAY_INTERFACE void ospSetBox1iv(OSPObject, const char *id, const int *lower_x_upper_x);
-
-  OSPRAY_INTERFACE void ospSetBox2f(OSPObject, const char *id, float lower_x, float lower_y, float upper_x, float upper_y);
-  OSPRAY_INTERFACE void ospSetBox2fv(OSPObject, const char *id, const float *lower_xy_upper_xy);
-  OSPRAY_INTERFACE void ospSetBox2i(OSPObject, const char *id, int lower_x, int lower_y, int upper_x, int upper_y);
-  OSPRAY_INTERFACE void ospSetBox2iv(OSPObject, const char *id, const int *lower_xy_upper_xy);
-
-  OSPRAY_INTERFACE void ospSetBox3f(OSPObject, const char *id, float lower_x, float lower_y, float lower_z, float upper_x, float upper_y, float upper_z);
-  OSPRAY_INTERFACE void ospSetBox3fv(OSPObject, const char *id, const float *lower_xyz_upper_xyz);
-  OSPRAY_INTERFACE void ospSetBox3i(OSPObject, const char *id, int lower_x, int lower_y, int lower_z, int upper_x, int upper_y, int upper_z);
-  OSPRAY_INTERFACE void ospSetBox3iv(OSPObject, const char *id, const int *lower_xyz_upper_xyz);
-
-  OSPRAY_INTERFACE void ospSetBox4f(OSPObject, const char *id, float lower_x, float lower_y, float lower_z, float lower_w, float upper_x, float upper_y, float upper_z, float upper_w);
-  OSPRAY_INTERFACE void ospSetBox4fv(OSPObject, const char *id, const float *lower_xyzw_upper_xyzw);
-  OSPRAY_INTERFACE void ospSetBox4i(OSPObject, const char *id, int lower_x, int lower_y, int lower_z, int lower_w, int upper_x, int upper_y, int upper_z, int upper_w);
-  OSPRAY_INTERFACE void ospSetBox4iv(OSPObject, const char *id, const int *lower_xyzw_upper_xyzw);
-
-  OSPRAY_INTERFACE void ospSetLinear3fv(OSPObject, const char *id, const float *v);
-  OSPRAY_INTERFACE void ospSetAffine3fv(OSPObject, const char *id, const float *v);
-
-  OSPRAY_INTERFACE void ospSetVoidPtr(OSPObject, const char *id, void *v);
-
   // Object + Parameter Lifetime Management ///////////////////////////////////
 
+  OSPRAY_INTERFACE void ospSetParam(OSPObject, const char *id, OSPDataType, const void *mem);
   OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);
+
   OSPRAY_INTERFACE void ospCommit(OSPObject);
+
   OSPRAY_INTERFACE void ospRelease(OSPObject);
   OSPRAY_INTERFACE void ospRetain(OSPObject);
 

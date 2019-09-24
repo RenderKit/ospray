@@ -81,15 +81,6 @@ namespace ospray {
     return ParameterizedObject::getParam<T>(name, valIfNotFound);
   }
 
-  inline Data *ManagedObject::getParamData(const char *name,
-                                           Data *valIfNotFound)
-  {
-    ManagedObject *obj = getParamObject(name, (ManagedObject *)valIfNotFound);
-    if (!obj || obj->managedObjectType != OSP_DATA)
-      return valIfNotFound;
-    return (Data *)obj;
-  }
-
 }  // namespace ospray
 
 // Specializations for ISPCDevice /////////////////////////////////////////////

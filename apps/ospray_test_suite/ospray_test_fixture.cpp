@@ -139,7 +139,7 @@ namespace OSPRayTestScenes {
     ospCommit(group);
 
     OSPInstance instance = ospNewInstance(group);
-    ospSetAffine3fv(instance, "xfm", (float*)&xfm);
+    ospSetParam(instance, "xfm", OSP_AFFINE3F, &xfm);
     ospCommit(instance);
     ospRelease(group);
 
@@ -159,7 +159,7 @@ namespace OSPRayTestScenes {
     ospCommit(group);
 
     OSPInstance instance = ospNewInstance(group);
-    ospSetAffine3fv(instance, "xfm", (float*)&xfm);
+    ospSetParam(instance, "xfm", OSP_AFFINE3F, &xfm);
     ospCommit(instance);
     ospRelease(group);
 
@@ -223,9 +223,9 @@ namespace OSPRayTestScenes {
     camera = ospNewCamera("perspective");
 
     ospSetFloat(camera, "aspect", imgSize.x / (float)imgSize.y);
-    ospSetVec3fv(camera, "position", cam_pos);
-    ospSetVec3fv(camera, "direction", cam_view);
-    ospSetVec3fv(camera, "up", cam_up);
+    ospSetParam(camera, "position", OSP_VEC3F, cam_pos);
+    ospSetParam(camera, "direction", OSP_VEC3F, cam_view);
+    ospSetParam(camera, "up", OSP_VEC3F, cam_up);
   }
 
   void Base::SetWorld()
@@ -667,9 +667,9 @@ namespace OSPRayTestScenes {
     float cam_pos[]  = {-0.5f, -1.f, 0.2f};
     float cam_up[]   = {0.f, 0.f, -1.f};
     float cam_view[] = {0.5f, 1.f, 0.f};
-    ospSetVec3fv(camera, "position", cam_pos);
-    ospSetVec3fv(camera, "direction", cam_view);
-    ospSetVec3fv(camera, "up", cam_up);
+    ospSetParam(camera, "position", OSP_VEC3F, cam_pos);
+    ospSetParam(camera, "direction", OSP_VEC3F, cam_view);
+    ospSetParam(camera, "up", OSP_VEC3F, cam_up);
 
     int size = 1 << level;
 
@@ -768,9 +768,9 @@ namespace OSPRayTestScenes {
     float cam_pos[]  = {-0.7f, -1.4f, 0.f};
     float cam_up[]   = {0.f, 0.f, -1.f};
     float cam_view[] = {0.5f, 1.f, 0.f};
-    ospSetVec3fv(camera, "position", cam_pos);
-    ospSetVec3fv(camera, "direction", cam_view);
-    ospSetVec3fv(camera, "up", cam_up);
+    ospSetParam(camera, "position", OSP_VEC3F, cam_pos);
+    ospSetParam(camera, "direction", OSP_VEC3F, cam_view);
+    ospSetParam(camera, "up", OSP_VEC3F, cam_up);
 
     OSPVolume torus = CreateTorus(volumetricData, 256);
     ospCommit(torus);
@@ -822,9 +822,9 @@ namespace OSPRayTestScenes {
     float cam_pos[]  = {-0.7f, -1.4f, 0.f};
     float cam_up[]   = {0.f, 0.f, -1.f};
     float cam_view[] = {0.5f, 1.f, 0.f};
-    ospSetVec3fv(camera, "position", cam_pos);
-    ospSetVec3fv(camera, "direction", cam_view);
-    ospSetVec3fv(camera, "up", cam_up);
+    ospSetParam(camera, "position", OSP_VEC3F, cam_pos);
+    ospSetParam(camera, "direction", OSP_VEC3F, cam_view);
+    ospSetParam(camera, "up", OSP_VEC3F, cam_up);
 
     int size = 100;
 
@@ -986,9 +986,9 @@ namespace OSPRayTestScenes {
     float cam_pos[]  = {-7.f, 2.f, 0.7f};
     float cam_view[] = {7.f, -2.f, -0.7f};
     float cam_up[]   = {0.f, 0.f, 1.f};
-    ospSetVec3fv(camera, "position", cam_pos);
-    ospSetVec3fv(camera, "direction", cam_view);
-    ospSetVec3fv(camera, "up", cam_up);
+    ospSetParam(camera, "position", OSP_VEC3F, cam_pos);
+    ospSetParam(camera, "direction", OSP_VEC3F, cam_view);
+    ospSetParam(camera, "up", OSP_VEC3F, cam_up);
 
     float vertex[] = {
       -2.f, 2.f,  -2.f,  2.f,  2.f,  -2.f,  2.f,  -2.f, -2.f,
@@ -1039,9 +1039,9 @@ namespace OSPRayTestScenes {
     float cam_pos[]  = {-0.7f, -1.4f, 0.f};
     float cam_up[]   = {0.f, 0.f, -1.f};
     float cam_view[] = {0.5f, 1.f, 0.f};
-    ospSetVec3fv(camera, "position", cam_pos);
-    ospSetVec3fv(camera, "direction", cam_view);
-    ospSetVec3fv(camera, "up", cam_up);
+    ospSetParam(camera, "position", OSP_VEC3F, cam_pos);
+    ospSetParam(camera, "direction", OSP_VEC3F, cam_view);
+    ospSetParam(camera, "up", OSP_VEC3F, cam_up);
 
     OSPVolume torus = CreateTorus(volumetricData, 256);
     ospCommit(torus);
@@ -1111,9 +1111,9 @@ namespace OSPRayTestScenes {
     const float cam_pos[]  = {0.f, 0.f, 1.0f};
     const float cam_up[]   = {0.f, 1.f, 0.f};
     const float cam_view[] = {0.0f, 0.f, -1.f};
-    ospSetVec3fv(camera, "position", cam_pos);
-    ospSetVec3fv(camera, "direction", cam_view);
-    ospSetVec3fv(camera, "up", cam_up);
+    ospSetParam(camera, "position", OSP_VEC3F, cam_pos);
+    ospSetParam(camera, "direction", OSP_VEC3F, cam_view);
+    ospSetParam(camera, "up", OSP_VEC3F, cam_up);
 
     OSPVolume torus = CreateTorus(volumetricData, 256);
     ospCommit(torus);
@@ -1163,7 +1163,7 @@ namespace OSPRayTestScenes {
     ospRelease(ospData);
 
     ospSetObject(renderer, "maxDepthTexture", depthTex);
-    ospSetVec4fv(renderer, "bgColor", &bgColor.x);
+    ospSetParam(renderer, "bgColor", OSP_VEC4F, &bgColor.x);
     ospRelease(depthTex);
 
     OSPLight ambient = ospNewLight("ambient");
@@ -1264,9 +1264,9 @@ namespace OSPRayTestScenes {
     float cam_pos[]  = {-1.5f, 2.f, 1.7f};
     float cam_view[] = {1.5f, -2.f, -1.7f};
     float cam_up[]   = {0.f, 1.f, 0.f};
-    ospSetVec3fv(camera, "position", cam_pos);
-    ospSetVec3fv(camera, "direction", cam_view);
-    ospSetVec3fv(camera, "up", cam_up);
+    ospSetParam(camera, "position", OSP_VEC3F, cam_pos);
+    ospSetParam(camera, "direction", OSP_VEC3F, cam_view);
+    ospSetParam(camera, "up", OSP_VEC3F, cam_up);
 
     OSPLight directional = ospNewLight("directional");
     ASSERT_TRUE(directional);

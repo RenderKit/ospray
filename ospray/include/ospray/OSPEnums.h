@@ -43,6 +43,9 @@ typedef enum
   // Void pointer type.
   OSP_VOID_PTR = 200,
 
+  // Booleans, same size as OSP_INT.
+  OSP_BOOL = 250,
+
   // highest bit to represent objects/handles
   OSP_OBJECT = 0x8000000,
 

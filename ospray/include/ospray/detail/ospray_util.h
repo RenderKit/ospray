@@ -20,6 +20,8 @@
 extern "C" {
 #endif
 
+  // OSPData helpers //////////////////////////////////////////////////////////
+
   static inline OSPData ospNewSharedData1D(
       const void *sharedData, OSPDataType type, uint32_t numItems)
   {
@@ -86,6 +88,74 @@ extern "C" {
       uint32_t destinationIndex2)
   {
     ospCopyData(source, destination, destinationIndex1, destinationIndex2, 0);
+  }
+
+  // Parameter helpers ////////////////////////////////////////////////////////
+
+  static inline void ospSetBool(OSPObject o, const char *id, int x)
+  {
+    ospSetParam(o, id, OSP_BOOL, &x);
+  }
+
+  static inline void ospSetFloat(OSPObject o, const char *id, float x)
+  {
+    ospSetParam(o, id, OSP_FLOAT, &x);
+  }
+
+  static inline void ospSetInt(OSPObject o, const char *id, int x)
+  {
+    ospSetParam(o, id, OSP_INT, &x);
+  }
+
+  static inline void ospSetString(OSPObject o, const char *id, const char *s)
+  {
+    ospSetParam(o, id, OSP_STRING, &s);
+  }
+
+  static inline void ospSetObject(OSPObject o, const char *id, OSPObject other)
+  {
+    ospSetParam(o, id, OSP_OBJECT, &other);
+  }
+
+  static inline void ospSetData(OSPObject o, const char *id, OSPData data)
+  {
+    ospSetParam(o, id, OSP_DATA, &data);
+  }
+
+  static inline void ospSetVec2f(OSPObject o , const char *id, float x, float y)
+  {
+    float v[] = {x, y};
+    ospSetParam(o, id, OSP_VEC2F, v);
+  }
+
+  static inline void ospSetVec2i(OSPObject o , const char *id, int x, int y)
+  {
+    int v[] = {x, y};
+    ospSetParam(o, id, OSP_VEC2I, v);
+  }
+
+  static inline void ospSetVec3f(OSPObject o , const char *id, float x, float y, float z)
+  {
+    float v[] = {x, y, z};
+    ospSetParam(o, id, OSP_VEC3F, v);
+  }
+
+  static inline void ospSetVec3i(OSPObject o , const char *id, int x, int y, int z)
+  {
+    int v[] = {x, y, z};
+    ospSetParam(o, id, OSP_VEC3I, v);
+  }
+
+  static inline void ospSetVec4f(OSPObject o , const char *id, float x, float y, float z, float w)
+  {
+    float v[] = {x, y, z, w};
+    ospSetParam(o, id, OSP_VEC4F, v);
+  }
+
+  static inline void ospSetVec4i(OSPObject o , const char *id, int x, int y, int z, int w)
+  {
+    int v[] = {x, y, z, w};
+    ospSetParam(o, id, OSP_VEC4I, v);
   }
 
 #ifdef __cplusplus

@@ -88,96 +88,17 @@ namespace ospray {
 
       OSPWorld newWorld() override;
 
-      // Object Parameters ////////////////////////////////////////////////////
-
-      void setString(OSPObject object,
-                     const char *bufName,
-                     const char *s) override;
-
-      void setObject(OSPObject object,
-                     const char *bufName,
-                     OSPObject obj) override;
-
-      void setBool(OSPObject object,
-                   const char *bufName,
-                   const bool f) override;
-
-      void setFloat(OSPObject object,
-                    const char *bufName,
-                    const float f) override;
-
-      void setInt(OSPObject object, const char *bufName, const int f) override;
-
-      void setVec2f(OSPObject object,
-                    const char *bufName,
-                    const vec2f &v) override;
-
-      void setVec2i(OSPObject object,
-                    const char *bufName,
-                    const vec2i &v) override;
-
-      void setVec3f(OSPObject object,
-                    const char *bufName,
-                    const vec3f &v) override;
-
-      void setVec3i(OSPObject object,
-                    const char *bufName,
-                    const vec3i &v) override;
-
-      void setVec4f(OSPObject object,
-                    const char *bufName,
-                    const vec4f &v) override;
-
-      void setVec4i(OSPObject object,
-                    const char *bufName,
-                    const vec4i &v) override;
-
-      void setBox1f(OSPObject object,
-                    const char *bufName,
-                    const box1f &v) override;
-
-      void setBox1i(OSPObject object,
-                    const char *bufName,
-                    const box1i &v) override;
-
-      void setBox2f(OSPObject object,
-                    const char *bufName,
-                    const box2f &v) override;
-
-      void setBox2i(OSPObject object,
-                    const char *bufName,
-                    const box2i &v) override;
-
-      void setBox3f(OSPObject object,
-                    const char *bufName,
-                    const box3f &v) override;
-
-      void setBox3i(OSPObject object,
-                    const char *bufName,
-                    const box3i &v) override;
-
-      void setBox4f(OSPObject object,
-                    const char *bufName,
-                    const box4f &v) override;
-
-      void setBox4i(OSPObject object,
-                    const char *bufName,
-                    const box4i &v) override;
-
-      void setLinear3f(OSPObject object,
-                       const char *bufName,
-                       const linear3f &v) override;
-
-      void setAffine3f(OSPObject object,
-                       const char *bufName,
-                       const affine3f &v) override;
-
-      void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
-
       // Object + Parameter Lifetime Management ///////////////////////////////
 
+      void setObjectParam(OSPObject object,
+                          const char *name,
+                          OSPDataType type,
+                          const void *mem) override;
+
+      void removeObjectParam(OSPObject object, const char *name) override;
+
       void commit(OSPObject object) override;
-      void removeParam(OSPObject object, const char *name) override;
+
       void release(OSPObject _obj) override;
       void retain(OSPObject _obj) override;
 

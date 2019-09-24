@@ -149,6 +149,7 @@ namespace ospray {
     case OSP_VOLUMETRIC_MODEL:
     case OSP_WORLD:
     case OSP_STRING:    return sizeof(void *);
+    case OSP_BOOL:      return sizeof(bool);
     case OSP_CHAR:      return sizeof(int8);
     case OSP_UCHAR:     return sizeof(uint8);
     case OSP_VEC2UC:    return sizeof(vec2uc);
@@ -201,6 +202,7 @@ namespace ospray {
   OSPDataType typeOf(const char *string)
   {
     if (string == nullptr)             return(OSP_UNKNOWN);
+    if (strcmp(string, "bool"  ) == 0) return(OSP_BOOL);
     if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
     if (strcmp(string, "double") == 0) return(OSP_DOUBLE);
     if (strcmp(string, "float" ) == 0) return(OSP_FLOAT);
@@ -248,6 +250,7 @@ namespace ospray {
     case OSP_VOLUMETRIC_MODEL:  return "volumetric_model";
     case OSP_WORLD:             return "world";
     case OSP_STRING:            return "string";
+    case OSP_BOOL:              return "bool";
     case OSP_CHAR:              return "char";
     case OSP_UCHAR:             return "uchar";
     case OSP_VEC2UC:            return "vec2uc";

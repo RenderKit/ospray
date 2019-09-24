@@ -92,9 +92,9 @@ int main(int argc, const char **argv) {
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");
   ospSetFloat(camera, "aspect", imgSize_x/(float)imgSize_y);
-  ospSetVec3fv(camera, "position", cam_pos);
-  ospSetVec3fv(camera, "direction", cam_view);
-  ospSetVec3fv(camera, "up",  cam_up);
+  ospSetParam(camera, "position", OSP_VEC3F, cam_pos);
+  ospSetParam(camera, "direction", OSP_VEC3F, cam_view);
+  ospSetParam(camera, "up", OSP_VEC3F, cam_up);
   ospCommit(camera); // commit each object to indicate modifications are done
 
 
