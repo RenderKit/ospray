@@ -411,10 +411,14 @@ namespace ospray {
 
     void ISPCDevice::release(OSPObject _obj)
     {
-      if (!_obj)
-        return;
       ManagedObject *obj = (ManagedObject *)_obj;
       obj->refDec();
+    }
+
+    void ISPCDevice::retain(OSPObject _obj)
+    {
+      ManagedObject *obj = (ManagedObject *)_obj;
+      obj->refInc();
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -189,6 +189,7 @@ namespace ospray {
       virtual void commit(OSPObject object)                        = 0;
       virtual void removeParam(OSPObject object, const char *name) = 0;
       virtual void release(OSPObject _obj)                         = 0;
+      virtual void retain(OSPObject _obj)                          = 0;
 
       // FrameBuffer Manipulation /////////////////////////////////////////////
 

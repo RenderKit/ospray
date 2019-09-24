@@ -179,6 +179,7 @@ namespace ospray {
       void commit(OSPObject object) override;
       void removeParam(OSPObject object, const char *name) override;
       void release(OSPObject _obj) override;
+      void retain(OSPObject _obj) override;
 
       // FrameBuffer Manipulation /////////////////////////////////////////////
 

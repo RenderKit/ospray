@@ -295,6 +295,7 @@ extern "C" {
   OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);
   OSPRAY_INTERFACE void ospCommit(OSPObject);
   OSPRAY_INTERFACE void ospRelease(OSPObject);
+  OSPRAY_INTERFACE void ospRetain(OSPObject);
 
   // FrameBuffer Manipulation /////////////////////////////////////////////////
 
