@@ -93,88 +93,91 @@ int main(int argc, const char **argv) {
   if (init_error != OSP_NO_ERROR)
     return init_error;
 
-  // create and setup camera
-  ospray::cpp::Camera camera("perspective");
-  camera.set("aspect", imgSize.x/(float)imgSize.y);
-  camera.set("position", cam_pos);
-  camera.set("direction", cam_view);
-  camera.set("up",  cam_up);
-  camera.commit(); // commit each object to indicate modifications are done
+  // use scoped lifetimes of wrappers to release everything before ospShutdown()
+  {
+    // create and setup camera
+    ospray::cpp::Camera camera("perspective");
+    camera.set("aspect", imgSize.x/(float)imgSize.y);
+    camera.set("position", cam_pos);
+    camera.set("direction", cam_view);
+    camera.set("up",  cam_up);
+    camera.commit(); // commit each object to indicate modifications are done
 
-  // create and setup model and mesh
-  ospray::cpp::Geometry mesh("triangles");
-  ospray::cpp::Data data(4, OSP_VEC3F, vertex);
-  data.commit();
-  mesh.set("vertex.position", data);
+    // create and setup model and mesh
+    ospray::cpp::Geometry mesh("triangles");
+    ospray::cpp::Data data(4, OSP_VEC3F, vertex);
+    data.commit();
+    mesh.set("vertex.position", data);
 
-  data = ospray::cpp::Data(4, OSP_VEC4F, color);
-  data.commit();
-  mesh.set("vertex.color", data);
+    data = ospray::cpp::Data(4, OSP_VEC4F, color);
+    data.commit();
+    mesh.set("vertex.color", data);
 
-  data = ospray::cpp::Data(2, OSP_VEC3UI, index);
-  data.commit();
-  mesh.set("index", data);
+    data = ospray::cpp::Data(2, OSP_VEC3UI, index);
+    data.commit();
+    mesh.set("index", data);
 
-  mesh.commit();
+    mesh.commit();
 
-  // put the mesh into a model
-  ospray::cpp::GeometricModel model(mesh);
-  model.commit();
+    // put the mesh into a model
+    ospray::cpp::GeometricModel model(mesh);
+    model.commit();
 
-  // put the model into a group (collection of models)
-  ospray::cpp::Group group;
-  auto modelHandle = model.handle();
-  data = ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle);
-  group.set("geometry", data);
-  group.commit();
+    // put the model into a group (collection of models)
+    ospray::cpp::Group group;
+    auto modelHandle = model.handle();
+    data = ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle);
+    group.set("geometry", data);
+    group.commit();
 
-  // put the group into an instance (give the group a world transform)
-  ospray::cpp::Instance instance(group);
-  instance.commit();
+    // put the group into an instance (give the group a world transform)
+    ospray::cpp::Instance instance(group);
+    instance.commit();
 
-  // put the instance in the world
-  ospray::cpp::World world;
-  auto instanceHandle = instance.handle();
-  data = ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle);
-  world.set("instance", data);
-  world.commit();
+    // put the instance in the world
+    ospray::cpp::World world;
+    auto instanceHandle = instance.handle();
+    data = ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle);
+    world.set("instance", data);
+    world.commit();
 
-  // create renderer
-  ospray::cpp::Renderer renderer("scivis"); // choose Scientific Visualization renderer
+    // create renderer
+    ospray::cpp::Renderer renderer("scivis"); // choose Scientific Visualization renderer
 
-  // create and setup light for Ambient Occlusion
-  ospray::cpp::Light light("ambient");
-  light.commit();
-  auto lightHandle = light.handle();
-  ospray::cpp::Data lights(1, OSP_LIGHT, &lightHandle);
-  lights.commit();
+    // create and setup light for Ambient Occlusion
+    ospray::cpp::Light light("ambient");
+    light.commit();
+    auto lightHandle = light.handle();
+    ospray::cpp::Data lights(1, OSP_LIGHT, &lightHandle);
+    lights.commit();
 
-  // complete setup of renderer
-  renderer.set("aoSamples", 1);
-  renderer.set("bgColor", 1.0f); // white, transparent
-  renderer.set("light", lights);
-  renderer.commit();
+    // complete setup of renderer
+    renderer.set("aoSamples", 1);
+    renderer.set("bgColor", 1.0f); // white, transparent
+    renderer.set("light", lights);
+    renderer.commit();
 
-  // create and setup framebuffer
-  ospray::cpp::FrameBuffer framebuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
-  framebuffer.clear();
+    // create and setup framebuffer
+    ospray::cpp::FrameBuffer framebuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+    framebuffer.clear();
 
-  // render one frame
-  framebuffer.renderFrame(renderer, camera, world);
-
-  // access framebuffer and write its content as PPM file
-  uint32_t* fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
-  writePPM("firstFrameCpp.ppm", imgSize, fb);
-  framebuffer.unmap(fb);
-
-
-  // render 10 more frames, which are accumulated to result in a better converged image
-  for (int frames = 0; frames < 10; frames++)
+    // render one frame
     framebuffer.renderFrame(renderer, camera, world);
 
-  fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
-  writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
-  framebuffer.unmap(fb);
+    // access framebuffer and write its content as PPM file
+    uint32_t* fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
+    writePPM("firstFrameCpp.ppm", imgSize, fb);
+    framebuffer.unmap(fb);
+
+
+    // render 10 more frames, which are accumulated to result in a better converged image
+    for (int frames = 0; frames < 10; frames++)
+      framebuffer.renderFrame(renderer, camera, world);
+
+    fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
+    writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
+    framebuffer.unmap(fb);
+  }
 
   ospShutdown();
 
