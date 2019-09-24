@@ -39,7 +39,7 @@ namespace ospray {
     Volume::commit();
 
     this->gridOrigin = getParam<vec3f>("gridOrigin", vec3f(0.f));
-    this->dimensions = getParam3i("dimensions", vec3i(0));
+    this->dimensions = getParam<vec3i>("dimensions", vec3i(0));
 
     if (reduce_min(this->dimensions) <= 0)
       throw std::runtime_error("structured volume 'dimensions' invalid");

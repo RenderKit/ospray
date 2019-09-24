@@ -47,7 +47,7 @@ namespace ospray {
     }
 
     // Get the volume dimensions.
-    vec3i dimensions = getParam3i("dimensions", vec3i(0));
+    vec3i dimensions = getParam<vec3i>("dimensions", vec3i(0));
     if(reduce_min(dimensions) <= 0) {
       throw std::runtime_error(
           "shared structured volume 'dimensions' has a zero or negative "
