@@ -58,7 +58,7 @@ namespace ospray {
 
   void SaveTiles::commit()
   {
-    prefix   = getParamString("prefix", "");
+    prefix   = getParam<std::string>("prefix", "");
     addColor = getParam<vec3f>("addColor", vec3f(0.f));
   }
 
