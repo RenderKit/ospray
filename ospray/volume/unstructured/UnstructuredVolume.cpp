@@ -95,7 +95,7 @@ namespace ospray {
 
     ispc::UnstructuredVolume_disableCellGradient(ispcEquivalent);
 
-    if (getParam1b("precomputedNormals", false)) {
+    if (getParam<bool>("precomputedNormals", false)) {
       if (faceNormals.empty()) {
         calculateFaceNormals();
         ispc::UnstructuredVolume_setFaceNormals(

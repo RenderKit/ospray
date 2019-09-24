@@ -40,7 +40,7 @@ namespace ospray {
     aspect = getParam<float>("aspect", 1.f);
     apertureRadius = getParam<float>("apertureRadius", 0.f);
     focusDistance = getParam<float>("focusDistance", 1.f);
-    architectural = getParam1b("architectural", false);
+    architectural = getParam<bool>("architectural", false);
     stereoMode = (OSPStereoMode)getParam<int>("stereoMode", OSP_STEREO_NONE);
     // the default 63.5mm represents the average human IPD
     interpupillaryDistance = getParam<float>("interpupillaryDistance", 0.0635f);

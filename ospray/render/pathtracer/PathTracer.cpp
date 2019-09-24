@@ -105,7 +105,7 @@ namespace ospray {
     lightArray.clear();
     geometryLights = 0;
 
-    const bool useGeometryLights = getParam1b("geometryLights", true);
+    const bool useGeometryLights = getParam<bool>("geometryLights", true);
 
     if (world && useGeometryLights) {
       generateGeometryLights(*world);

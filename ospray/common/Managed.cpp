@@ -54,8 +54,6 @@ namespace ospray {
   define_getparam(std::string,     String)
   define_getparam(void*,           VoidPtr)
 
-  define_getparam(bool,   1b)
-
   define_getparam(affine3f, Affine3f)
 
 #undef define_getparam

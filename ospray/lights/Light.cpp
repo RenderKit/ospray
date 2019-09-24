@@ -25,7 +25,7 @@ namespace ospray {
   {
     color     = getParam<vec3f>("color", vec3f(1.f));
     intensity = getParam<float>("intensity", 1.f);
-    isVisible = getParam1b("visible", true);
+    isVisible = getParam<bool>("visible", true);
 
     ispc::Light_set(getIE(), (ispc::vec3f &)color, intensity, isVisible);
   }

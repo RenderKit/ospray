@@ -71,7 +71,7 @@ namespace ospray {
     float n = clamp(getParam<float>("midOut", aces_midOut), 0.0001f, 1.f);
 
     float w   = max(getParam<float>("hdrMax", aces_hdrMax), 1.f);
-    acesColor = getParam1b("acesColor", true);
+    acesColor = getParam<bool>("acesColor", true);
 
     // Solve b and c
     b = -((powf(m, -a * d) *
