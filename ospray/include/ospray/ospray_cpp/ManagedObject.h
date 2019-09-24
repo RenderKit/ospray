@@ -107,7 +107,7 @@ namespace ospray {
       //! Get the underlying generic OSPObject handle
       virtual OSPObject object() const = 0;
 
-      virtual ~ManagedObject() {}
+      virtual ~ManagedObject() = default;
     };
 
     //! \todo auto-commit mode
@@ -174,8 +174,6 @@ namespace ospray {
 
       void commit() const override;
 
-      void release() override;
-
       OSPObject object() const override;
 
       //! Get the underlying specific OSP* handle
@@ -207,6 +205,7 @@ namespace ospray {
     template <typename OSP_TYPE>
     inline ManagedObject_T<OSP_TYPE>::~ManagedObject_T()
     {
+      ospRelease(ospObject);
     }
 
     template <typename OSP_TYPE>
@@ -445,13 +444,6 @@ namespace ospray {
     inline void ManagedObject_T<OSP_TYPE>::commit() const
     {
       ospCommit(ospObject);
-    }
-
-    template <typename OSP_TYPE>
-    inline void ManagedObject_T<OSP_TYPE>::release()
-    {
-      ospRelease(ospObject);
-      ospObject = nullptr;
     }
 
     template <typename OSP_TYPE>

@@ -39,6 +39,7 @@ namespace ospray {
     inline Camera::Camera(const Camera &copy)
         : ManagedObject_T<OSPCamera>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline Camera::Camera(OSPCamera existing)
