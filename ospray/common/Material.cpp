@@ -78,13 +78,13 @@ namespace ospray {
     std::string texname(_texname);
     texname += ".";
 
-    const vec2f translation = getParam2f((texname+"translation").c_str(),
+    const vec2f translation = getParam<vec2f>((texname+"translation").c_str(),
                                          vec2f(0.f));
     affine2f xform = affine2f::translate(-translation);
 
     xform *= affine2f::translate(vec2f(0.5f));
 
-    const vec2f scale = getParam2f((texname+"scale").c_str(), vec2f(1.f));
+    const vec2f scale = getParam<vec2f>((texname+"scale").c_str(), vec2f(1.f));
     xform *= affine2f::scale(rcp(scale));
 
     const float rotation = deg2rad(getParam1f((texname+"rotation").c_str(),

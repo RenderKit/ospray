@@ -52,7 +52,7 @@ namespace ospray {
                                (const ispc::vec3f &)this->gridSpacing);
 
     if (!finished) {
-      voxelRange = getParam2f("voxelRange", vec2f(FLT_MAX, -FLT_MAX));
+      voxelRange = getParam<vec2f>("voxelRange", vec2f(FLT_MAX, -FLT_MAX));
 
       buildAccelerator();
 

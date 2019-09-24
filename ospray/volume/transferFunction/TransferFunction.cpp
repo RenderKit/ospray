@@ -23,7 +23,7 @@ namespace ospray {
 
   void TransferFunction::commit()
   {
-    vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));
+    vec2f valueRange = getParam<vec2f>("valueRange", vec2f(0.0f, 1.0f));
     ispc::TransferFunction_set(ispcEquivalent, (const ispc::box1f &)valueRange);
   }
 

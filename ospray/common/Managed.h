@@ -59,7 +59,6 @@ namespace ospray {
     const DataT<T, DIM> *getParamDataT(const char *name, bool required = false);
 
     vec3i getParam3i(const char *name, vec3i valIfNotFound);
-    vec2f getParam2f(const char *name, vec2f valIfNotFound);
     int32 getParam1i(const char *name, int32 valIfNotFound);
     float getParam1f(const char *name, float valIfNotFound);
     bool getParam1b(const char *name, bool valIfNotFound);

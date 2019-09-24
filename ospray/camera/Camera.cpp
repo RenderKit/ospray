@@ -44,8 +44,8 @@ namespace ospray {
     up       = getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f));
     nearClip = getParam1f("nearClip", 1e-6f);
 
-    imageStart = getParam2f("imageStart", vec2f(0.f));
-    imageEnd   = getParam2f("imageEnd", vec2f(1.f));
+    imageStart = getParam<vec2f>("imageStart", vec2f(0.f));
+    imageEnd   = getParam<vec2f>("imageEnd", vec2f(1.f));
 
     shutterOpen  = getParam1f("shutterOpen", 0.0f);
     shutterClose = getParam1f("shutterClose", 0.0f);

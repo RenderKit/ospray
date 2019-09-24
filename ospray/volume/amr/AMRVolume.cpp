@@ -47,7 +47,7 @@ namespace ospray {
   {
     Volume::commit();
 
-    voxelRange = getParam2f("voxelRange", vec2f(FLT_MAX, -FLT_MAX));
+    voxelRange = getParam<vec2f>("voxelRange", vec2f(FLT_MAX, -FLT_MAX));
 
     amrMethod = getParam<OSPAMRMethod>("method", OSP_AMR_CURRENT);
 
