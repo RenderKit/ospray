@@ -38,12 +38,12 @@ namespace ospray {
         const float etaOutside = getParam1f("etaOutside", 1.f);
 
         const vec3f& attenuationColorInside =
-          getParam3f("attenuationColorInside",
-          getParam3f("attenuationColor",
-          getParam3f("color", vec3f(1.f))));
+          getParam<vec3f>("attenuationColorInside",
+          getParam<vec3f>("attenuationColor",
+          getParam<vec3f>("color", vec3f(1.f))));
 
         const vec3f& attenuationColorOutside =
-          getParam3f("attenuationColorOutside", vec3f(1.f));
+          getParam<vec3f>("attenuationColorOutside", vec3f(1.f));
 
         const float attenuationDistance =
           getParam1f("attenuationDistance", getParam1f("distance", 1.0f));

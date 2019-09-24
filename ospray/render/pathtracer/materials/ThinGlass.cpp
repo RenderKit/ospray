@@ -38,9 +38,9 @@ namespace ospray {
       {
         const float eta = getParam1f("eta", 1.5f);
         const vec3f& attenuationColor =
-          getParam3f("attenuationColor",
-              getParam3f("transmission",
-                getParam3f("color", vec3f(1.f))));
+          getParam<vec3f>("attenuationColor",
+              getParam<vec3f>("transmission",
+                getParam<vec3f>("color", vec3f(1.f))));
         const float attenuationDistance =
           getParam1f("attenuationDistance", 1.f);
         const float thickness = getParam1f("thickness", 1.f);

@@ -35,10 +35,10 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        vec3f reflectance              = getParam3f("reflectance",
+        vec3f reflectance              = getParam<vec3f>("reflectance",
                                                     vec3f(.4f,0.f,0.f));
         float backScattering           = getParam1f("backScattering",.5f);
-        vec3f horizonScatteringColor   = getParam3f("horizonScatteringColor",
+        vec3f horizonScatteringColor   = getParam<vec3f>("horizonScatteringColor",
                                                     vec3f(.75f,.1f,.1f));
         float horizonScatteringFallOff = getParam1f("horizonScatteringFallOff",10);
 

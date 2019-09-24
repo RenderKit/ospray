@@ -35,7 +35,7 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        const vec3f pigmentColor = getParam3f("pigmentColor",vec3f(1.f));
+        const vec3f pigmentColor = getParam<vec3f>("pigmentColor",vec3f(1.f));
         const float eta          = getParam1f("eta",1.4f);
         const float roughness    = getParam1f("roughness",0.01f);
 

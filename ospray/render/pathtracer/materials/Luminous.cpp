@@ -37,7 +37,7 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        const vec3f radiance = getParam3f("color", vec3f(1.f)) *
+        const vec3f radiance = getParam<vec3f>("color", vec3f(1.f)) *
                                getParam1f("intensity", 1.f);
         const float transparency = getParam1f("transparency", 0.f);
 

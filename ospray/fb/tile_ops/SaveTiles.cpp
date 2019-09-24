@@ -59,7 +59,7 @@ namespace ospray {
   void SaveTiles::commit()
   {
     prefix   = getParamString("prefix", "");
-    addColor = getParam3f("addColor", vec3f(0.f));
+    addColor = getParam<vec3f>("addColor", vec3f(0.f));
   }
 
   std::unique_ptr<LiveImageOp> SaveTiles::attach(FrameBufferView &fbView)

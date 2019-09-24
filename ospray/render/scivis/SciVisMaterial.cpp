@@ -42,7 +42,7 @@ namespace ospray {
 
   void SciVisMaterial::commit()
   {
-    Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
+    Kd = getParam<vec3f>("color", getParam<vec3f>("kd", getParam<vec3f>("Kd", vec3f(.8f))));
     d  = getParam1f("d", 1.f);
     map_Kd = (Texture2D *)getParamObject("map_Kd", getParamObject("map_kd"));
     ispc::SciVisMaterial_set(getIE(),

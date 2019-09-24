@@ -38,8 +38,8 @@ namespace ospray {
   void HDRILight::commit()
   {
     Light::commit();
-    up = getParam3f("up", vec3f(0.f, 1.f, 0.f));
-    dir = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
+    up = getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f));
+    dir = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
     map  = (Texture2D*)getParamObject("map", nullptr);
 
     linear3f frame;

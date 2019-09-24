@@ -66,8 +66,8 @@ namespace ospray {
         }
 
         // default to Aluminium, used when ior not given
-        const vec3f& eta = getParam3f("eta", vec3f(RGB_AL_ETA));
-        const vec3f& k = getParam3f("k", vec3f(RGB_AL_K));
+        const vec3f& eta = getParam<vec3f>("eta", vec3f(RGB_AL_ETA));
+        const vec3f& k = getParam<vec3f>("k", vec3f(RGB_AL_K));
 
 
         const float roughness = getParam1f("roughness", 0.1f);

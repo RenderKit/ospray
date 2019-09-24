@@ -50,7 +50,7 @@ namespace ospray {
       }
     }
 
-    vec3f bgColor3 = getParam3f("bgColor", vec3f(getParam1f("bgColor", 0.f)));
+    vec3f bgColor3 = getParam<vec3f>("bgColor", vec3f(getParam1f("bgColor", 0.f)));
     bgColor        = getParam<vec4f>("bgColor", vec4f(bgColor3, 0.f));
 
     if (getIE()) {

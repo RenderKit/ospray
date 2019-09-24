@@ -50,7 +50,7 @@ namespace ospray {
     voxelRange = getParam2f("voxelRange", vec2f(FLT_MAX, -FLT_MAX));
 
     amrMethod = getParam<OSPAMRMethod>("method", OSP_AMR_CURRENT);
-    
+
     if(amrMethod == OSP_AMR_CURRENT)
       ispc::AMR_install_current(getIE());
     else if(amrMethod == OSP_AMR_FINEST)
@@ -90,8 +90,8 @@ namespace ospray {
 
     bounds = accel->worldBounds;
 
-    const vec3f gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
-    const vec3f gridOrigin  = getParam3f("gridOrigin", vec3f(0.f));
+    const vec3f gridSpacing = getParam<vec3f>("gridSpacing", vec3f(1.f));
+    const vec3f gridOrigin  = getParam<vec3f>("gridOrigin", vec3f(0.f));
 
     voxelType = (OSPDataType)getParam<int>("voxelType", OSP_UNKNOWN);
 

@@ -38,14 +38,14 @@ namespace ospray {
   {
     Volume::commit();
 
-    this->gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
+    this->gridOrigin = getParam<vec3f>("gridOrigin", vec3f(0.f));
     this->dimensions = getParam3i("dimensions", vec3i(0));
 
     if (reduce_min(this->dimensions) <= 0)
       throw std::runtime_error("structured volume 'dimensions' invalid");
 
-    this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
-    this->scaleFactor = getParam3f("scaleFactor", vec3f(-1.f));
+    this->gridSpacing = getParam<vec3f>("gridSpacing", vec3f(1.f));
+    this->scaleFactor = getParam<vec3f>("scaleFactor", vec3f(-1.f));
 
     ispc::StructuredVolume_set(getIE(),
                                (const ispc::vec3f &)this->gridOrigin,
@@ -69,7 +69,7 @@ namespace ospray {
                                      vec3i &regionSize,
                                      vec3i &regionCoords)
   {
-    this->scaleFactor = getParam3f("scaleFactor", vec3f(-1.f));
+    this->scaleFactor = getParam<vec3f>("scaleFactor", vec3f(-1.f));
     const bool upsampling =
         scaleFactor.x > 0 && scaleFactor.y > 0 && scaleFactor.z > 0;
     vec3i scaledRegionSize   = vec3i(scaleFactor * vec3f(regionSize));

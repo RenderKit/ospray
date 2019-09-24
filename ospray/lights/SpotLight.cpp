@@ -32,8 +32,8 @@ namespace ospray {
   void SpotLight::commit()
   {
     Light::commit();
-    position      = getParam3f("position", vec3f(0.f));
-    direction     = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
+    position      = getParam<vec3f>("position", vec3f(0.f));
+    direction     = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
     openingAngle  = getParam1f("openingAngle", 180.f);
     penumbraAngle = getParam1f("penumbraAngle", 5.f);
     radius        = getParam1f("radius", 0.f);

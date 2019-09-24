@@ -34,14 +34,14 @@ namespace ospray {
 
       virtual void commit() override
       {
-        const vec3f& color = getParam3f("baseColor",
-            getParam3f("color", vec3f(0.8f)));
+        const vec3f& color = getParam<vec3f>("baseColor",
+            getParam<vec3f>("color", vec3f(0.8f)));
         Texture2D *map_color = (Texture2D*)getParamObject("map_baseColor",
             getParamObject("map_color"));
         affine2f xform_color = getTextureTransform("map_baseColor")
           * getTextureTransform("map_color");
         const float flakeAmount = getParam1f("flakeAmount", 0.3f);
-        const vec3f& flakeColor = getParam3f("flakeColor", vec3f(RGB_AL_COLOR));
+        const vec3f& flakeColor = getParam<vec3f>("flakeColor", vec3f(RGB_AL_COLOR));
         const float flakeSpread = getParam1f("flakeSpread", 0.5f);
         const float eta = getParam1f("eta",  1.5f);
 

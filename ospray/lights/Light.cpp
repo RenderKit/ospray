@@ -23,7 +23,7 @@ namespace ospray {
 
   void Light::commit()
   {
-    color     = getParam3f("color", vec3f(1.f));
+    color     = getParam<vec3f>("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
     isVisible = getParam1b("visible", true);
 

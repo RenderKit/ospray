@@ -119,7 +119,7 @@ namespace ospray {
     param.map = (Texture2D*)getParamObject(mapName.c_str());
     param.xform = getTextureTransform(mapName.c_str());
     param.rot = param.xform.l.orthogonal().transposed();
-    param.factor = getParam3f(name, param.map ? vec3f(1.f) : valIfNotFound);
+    param.factor = getParam<vec3f>(name, param.map ? vec3f(1.f) : valIfNotFound);
     return param;
   }
 
