@@ -397,6 +397,7 @@ namespace ospray {
     {
       ManagedObject *object = (ManagedObject *)_object;
       object->commit();
+      object->checkUnconsumed();
     }
 
     void ISPCDevice::removeParam(OSPObject _object, const char *name)
