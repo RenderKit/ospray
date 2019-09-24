@@ -40,8 +40,6 @@ namespace ospray {
 
       ~FrameBuffer();
 
-      void renderFrame();
-
       float renderFrame(const Renderer &renderer,
                         const Camera &camera,
                         const World &world) const;

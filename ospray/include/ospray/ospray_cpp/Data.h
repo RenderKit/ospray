@@ -24,28 +24,18 @@ namespace ospray {
     class Data : public ManagedObject_T<OSPData>
     {
      public:
-      Data(size_t numItems,
-           OSPDataType format,
-           const void *init = nullptr,
-           int flags        = 0);
-      Data(const Data &copy);
+      Data(size_t numItems, OSPDataType format, const void *init = nullptr);
       Data(OSPData existing);
     };
 
     // Inlined function definitions ///////////////////////////////////////////
 
-    inline Data::Data(size_t numItems,
-                      OSPDataType format,
-                      const void *init,
-                      int flags)
+    inline Data::Data(size_t numItems, OSPDataType format, const void *init)
     {
-      ospObject = ospNewData(numItems, format, init, flags);
-    }
-
-    inline Data::Data(const Data &copy)
-        : ManagedObject_T<OSPData>(copy.handle())
-    {
-      ospRetain(copy.handle());
+      ospObject = ospNewData(format, numItems);
+      auto tmp  = ospNewSharedData(init, format, numItems);
+      ospCopyData(tmp, ospObject);
+      ospRelease(tmp);
     }
 
     inline Data::Data(OSPData existing) : ManagedObject_T<OSPData>(existing) {}

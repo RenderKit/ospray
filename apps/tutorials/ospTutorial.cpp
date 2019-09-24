@@ -87,7 +87,6 @@ int main(int argc, const char **argv) {
   int32_t index[] = { 0, 1, 2,
                       1, 2, 3 };
 
-
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters, e.g. "--osp:debug"
   OSPError init_error = ospInit(&argc, argv);
   if (init_error != OSP_NO_ERROR)
@@ -105,16 +104,12 @@ int main(int argc, const char **argv) {
 
     // create and setup model and mesh
     ospray::cpp::Geometry mesh("triangles");
+
     ospray::cpp::Data data(4, OSP_VEC3F, vertex);
-    data.commit();
     mesh.set("vertex.position", data);
-
     data = ospray::cpp::Data(4, OSP_VEC4F, color);
-    data.commit();
     mesh.set("vertex.color", data);
-
     data = ospray::cpp::Data(2, OSP_VEC3UI, index);
-    data.commit();
     mesh.set("index", data);
 
     mesh.commit();
@@ -158,7 +153,7 @@ int main(int argc, const char **argv) {
     renderer.commit();
 
     // create and setup framebuffer
-    ospray::cpp::FrameBuffer framebuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+    ospray::cpp::FrameBuffer framebuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
     framebuffer.clear();
 
     // render one frame
@@ -168,7 +163,6 @@ int main(int argc, const char **argv) {
     uint32_t* fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
     writePPM("firstFrameCpp.ppm", imgSize, fb);
     framebuffer.unmap(fb);
-
 
     // render 10 more frames, which are accumulated to result in a better converged image
     for (int frames = 0; frames < 10; frames++)
