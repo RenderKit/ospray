@@ -58,7 +58,6 @@ namespace ospray {
     template <typename T, int DIM = 1>
     const DataT<T, DIM> *getParamDataT(const char *name, bool required = false);
 
-    void *getParamVoidPtr(const char *name, void *valIfNotFound);
     std::string getParamString(const char *name,
                                std::string valIfNotFound = "");
 

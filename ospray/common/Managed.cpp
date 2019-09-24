@@ -52,7 +52,6 @@ namespace ospray {
 
   define_getparam(ManagedObject *, Object)
   define_getparam(std::string,     String)
-  define_getparam(void*,           VoidPtr)
 
 #undef define_getparam
 
