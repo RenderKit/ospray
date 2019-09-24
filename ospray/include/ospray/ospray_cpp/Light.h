@@ -39,6 +39,7 @@ namespace ospray {
     inline Light::Light(const Light &copy)
         : ManagedObject_T<OSPLight>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline Light::Light(OSPLight existing) : ManagedObject_T<OSPLight>(existing)

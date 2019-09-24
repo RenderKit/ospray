@@ -68,6 +68,7 @@ namespace ospray {
     inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
         : ManagedObject_T<OSPFrameBuffer>(copy.handle()), owner(false)
     {
+      ospRetain(copy.handle());
     }
 
     inline FrameBuffer::FrameBuffer(FrameBuffer &&move)
@@ -85,6 +86,7 @@ namespace ospray {
     {
       free();
       ospObject = copy.ospObject;
+      ospRetain(copy.handle());
       return *this;
     }
 

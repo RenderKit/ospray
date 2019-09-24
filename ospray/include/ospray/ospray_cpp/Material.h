@@ -41,6 +41,7 @@ namespace ospray {
     inline Material::Material(const Material &copy)
         : ManagedObject_T<OSPMaterial>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline Material::Material(OSPMaterial existing)

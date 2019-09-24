@@ -101,9 +101,6 @@ namespace ospray {
       //! Commit to ospray
       virtual void commit() const = 0;
 
-      //! Release the handle, sets the held handle instance to 'nullptr'
-      virtual void release() = 0;
-
       //! Get the underlying generic OSPObject handle
       virtual OSPObject object() const = 0;
 

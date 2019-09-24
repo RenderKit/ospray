@@ -40,6 +40,7 @@ namespace ospray {
     inline Geometry::Geometry(const Geometry &copy) :
       ManagedObject_T<OSPGeometry>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline Geometry::Geometry(OSPGeometry existing) :

@@ -50,6 +50,7 @@ namespace ospray {
     inline VolumetricModel::VolumetricModel(const VolumetricModel &copy)
         : ManagedObject_T<OSPVolumetricModel>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline VolumetricModel::VolumetricModel(OSPVolumetricModel existing)

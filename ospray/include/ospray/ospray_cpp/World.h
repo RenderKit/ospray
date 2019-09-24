@@ -40,6 +40,7 @@ namespace ospray {
     inline World::World(const World &copy)
         : ManagedObject_T<OSPWorld>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline World::World(OSPWorld existing) : ManagedObject_T<OSPWorld>(existing)

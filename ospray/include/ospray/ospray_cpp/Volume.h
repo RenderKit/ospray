@@ -41,6 +41,7 @@ namespace ospray {
     inline Volume::Volume(const Volume &copy)
         : ManagedObject_T<OSPVolume>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline Volume::Volume(OSPVolume existing)

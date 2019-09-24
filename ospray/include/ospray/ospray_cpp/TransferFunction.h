@@ -42,6 +42,7 @@ namespace ospray {
     inline TransferFunction::TransferFunction(const TransferFunction &copy)
         : ManagedObject_T<OSPTransferFunction>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline TransferFunction::TransferFunction(OSPTransferFunction existing)

@@ -39,6 +39,7 @@ namespace ospray {
     inline Group::Group(const Group &copy)
         : ManagedObject_T<OSPGroup>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline Group::Group(OSPGroup existing)

@@ -40,6 +40,7 @@ namespace ospray {
     inline ImageOperation::ImageOperation(const ImageOperation &copy)
         : ManagedObject_T<OSPImageOperation>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline ImageOperation::ImageOperation(OSPImageOperation existing)

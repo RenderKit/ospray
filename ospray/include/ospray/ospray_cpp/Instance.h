@@ -43,6 +43,7 @@ namespace ospray {
     inline Instance::Instance(const Instance &copy)
         : ManagedObject_T<OSPInstance>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline Instance::Instance(OSPInstance existing)

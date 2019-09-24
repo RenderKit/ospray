@@ -33,6 +33,7 @@ namespace ospray {
     inline Texture::Texture(const Texture &copy)
         : ManagedObject_T<OSPTexture>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline Texture::Texture(OSPTexture existing)

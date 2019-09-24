@@ -45,6 +45,7 @@ namespace ospray {
     inline Data::Data(const Data &copy)
         : ManagedObject_T<OSPData>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline Data::Data(OSPData existing) : ManagedObject_T<OSPData>(existing) {}

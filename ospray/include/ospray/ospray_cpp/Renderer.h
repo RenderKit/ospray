@@ -42,6 +42,7 @@ namespace ospray {
     inline Renderer::Renderer(const Renderer &copy)
         : ManagedObject_T<OSPRenderer>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline Renderer::Renderer(OSPRenderer existing)

@@ -50,6 +50,7 @@ namespace ospray {
     inline GeometricModel::GeometricModel(const GeometricModel &copy)
         : ManagedObject_T<OSPGeometricModel>(copy.handle())
     {
+      ospRetain(copy.handle());
     }
 
     inline GeometricModel::GeometricModel(OSPGeometricModel existing)
