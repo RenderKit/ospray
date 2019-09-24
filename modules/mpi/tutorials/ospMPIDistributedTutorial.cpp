@@ -143,119 +143,104 @@ int main(int argc, char **argv)
   ospDeviceCommit(mpiDevice);
   ospSetCurrentDevice(mpiDevice);
 
-  // create and setup camera
-  ospray::cpp::Camera camera("perspective");
-  camera.set("aspect", imgSize.x / (float)imgSize.y);
-  camera.set("position", cam_pos);
-  camera.set("direction", cam_view);
-  camera.set("up", cam_up);
-  camera.commit(); // commit each object to indicate modifications are done
+  // use scoped lifetimes of wrappers to release everything before ospShutdown()
+  {
+    // create and setup camera
+    ospray::cpp::Camera camera("perspective");
+    camera.set("aspect", imgSize.x / (float)imgSize.y);
+    camera.set("position", cam_pos);
+    camera.set("direction", cam_view);
+    camera.set("up", cam_up);
+    camera.commit(); // commit each object to indicate modifications are done
 
-  // create and setup model and mesh
-  ospray::cpp::Geometry mesh("triangles");
-  ospray::cpp::Data data(4,
-      OSP_VEC3F,
-      vertex); // OSP_FLOAT3 format is also supported for vertex positions
-  data.commit();
-  mesh.set("vertex.position", data);
-  data.release(); // we are done using this handle
+    // create and setup model and mesh
+    ospray::cpp::Geometry mesh("triangles");
+    ospray::cpp::Data data(4,
+        OSP_VEC3F,
+        vertex); // OSP_FLOAT3 format is also supported for vertex positions
+    data.commit();
+    mesh.set("vertex.position", data);
 
-  data = ospray::cpp::Data(4, OSP_VEC4F, color);
-  data.commit();
-  mesh.set("vertex.color", data);
-  data.release(); // we are done using this handle
+    data = ospray::cpp::Data(4, OSP_VEC4F, color);
+    data.commit();
+    mesh.set("vertex.color", data);
 
-  data = ospray::cpp::Data(2, OSP_VEC3UI, index);
-  data.commit();
-  mesh.set("index", data);
-  data.release(); // we are done using this handle
+    data = ospray::cpp::Data(2, OSP_VEC3UI, index);
+    data.commit();
+    mesh.set("index", data);
 
-  mesh.commit();
+    mesh.commit();
 
-  // put the mesh into a model
-  ospray::cpp::GeometricModel model(mesh);
-  model.commit();
-  mesh.release(); // we are done using this handle
+    // put the mesh into a model
+    ospray::cpp::GeometricModel model(mesh);
+    model.commit();
 
-  // put the model into a group (collection of models)
-  ospray::cpp::Group group;
-  auto modelHandle = model.handle();
-  data = ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle);
-  group.set("geometry", data);
-  model.release(); // we are done using this handle
-  data.release(); // we are done using this handle
-  group.commit();
+    // put the model into a group (collection of models)
+    ospray::cpp::Group group;
+    auto modelHandle = model.handle();
+    data = ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle);
+    group.set("geometry", data);
+    group.commit();
 
-  // put the group into an instance (give the group a world transform)
-  ospray::cpp::Instance instance(group);
-  instance.commit();
-  group.release();
+    // put the group into an instance (give the group a world transform)
+    ospray::cpp::Instance instance(group);
+    instance.commit();
 
-  ospray::cpp::World world;
-  auto instanceHandle = instance.handle();
-  data = ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle);
-  world.set("instance", data);
-  instance.release(); // we are done using this handle
-  data.release(); // we are done using this handle
+    ospray::cpp::World world;
+    auto instanceHandle = instance.handle();
+    data = ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle);
+    world.set("instance", data);
 
-  // Specify the region of the world this rank owns
-  float regionBounds[] = {mpiRank, 0.f, 2.5f, 1.f * (mpiRank + 1.f), 1.f, 3.5f};
-  data = ospray::cpp::Data(1, OSP_BOX3F, regionBounds, 0);
-  data.commit();
-  world.set("regions", data);
-  data.release();
+    // Specify the region of the world this rank owns
+    float regionBounds[] = {mpiRank, 0.f, 2.5f, 1.f * (mpiRank + 1.f), 1.f, 3.5f};
+    data = ospray::cpp::Data(1, OSP_BOX3F, regionBounds);
+    data.commit();
+    world.set("regions", data);
 
-  world.commit();
+    world.commit();
 
-  // create the mpi_raycast renderer (requred for distributed rendering)
-  ospray::cpp::Renderer renderer("mpi_raycast");
+    // create the mpi_raycast renderer (requred for distributed rendering)
+    ospray::cpp::Renderer renderer("mpi_raycast");
 
-  // create and setup light for Ambient Occlusion
-  // TODO: Who gets the lights now?
-  ospray::cpp::Light light("ambient");
-  light.commit();
-  auto lightHandle = light.handle();
-  ospray::cpp::Data lights(1, OSP_LIGHT, &lightHandle);
-  lights.commit();
+    // create and setup light for Ambient Occlusion
+    // TODO: Who gets the lights now?
+    ospray::cpp::Light light("ambient");
+    light.commit();
+    auto lightHandle = light.handle();
+    ospray::cpp::Data lights(1, OSP_LIGHT, &lightHandle);
+    lights.commit();
 
-  // complete setup of renderer
-  renderer.set("bgColor", 1.0f); // white, transparent
-  renderer.set("light", lights);
-  renderer.commit();
+    // complete setup of renderer
+    renderer.set("bgColor", 1.0f); // white, transparent
+    renderer.set("light", lights);
+    renderer.commit();
 
-  // create and setup framebuffer
-  ospray::cpp::FrameBuffer framebuffer(
-      imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
-  framebuffer.clear();
+    // create and setup framebuffer
+    ospray::cpp::FrameBuffer framebuffer(
+        imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+    framebuffer.clear();
 
-  // render one frame
-  framebuffer.renderFrame(renderer, camera, world);
-
-  // on rank 0, access framebuffer and write its content as PPM file
-  if (mpiRank == 0) {
-    uint32_t *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
-    writePPM("firstFrameCpp.ppm", imgSize, fb);
-    framebuffer.unmap(fb);
-  }
-
-  // render 10 more frames, which are accumulated to result in a better
-  // converged image
-  for (int frames = 0; frames < 10; frames++)
+    // render one frame
     framebuffer.renderFrame(renderer, camera, world);
 
-  if (mpiRank == 0) {
-    uint32_t *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
-    writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
-    framebuffer.unmap(fb);
-  }
+    // on rank 0, access framebuffer and write its content as PPM file
+    if (mpiRank == 0) {
+      uint32_t *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
+      writePPM("firstFrameCpp.ppm", imgSize, fb);
+      framebuffer.unmap(fb);
+    }
 
-  // final cleanups
-  renderer.release();
-  camera.release();
-  lights.release();
-  light.release();
-  framebuffer.release();
-  world.release();
+    // render 10 more frames, which are accumulated to result in a better
+    // converged image
+    for (int frames = 0; frames < 10; frames++)
+      framebuffer.renderFrame(renderer, camera, world);
+
+    if (mpiRank == 0) {
+      uint32_t *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
+      writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
+      framebuffer.unmap(fb);
+    }
+  }
 
   ospShutdown();
 

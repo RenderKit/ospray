@@ -720,6 +720,15 @@ void MPIOffloadDevice::release(OSPObject _object)
   // TODO: On the head node we should also clear this handle
 }
 
+void MPIOffloadDevice::retain(OSPObject _obj)
+{
+  const ObjectHandle handle = (const ObjectHandle &)_obj;
+
+  networking::BufferWriter writer;
+  writer << work::RETAIN << handle.i64;
+  sendWork(writer.buffer);
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // FrameBuffer Manipulation ///////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////

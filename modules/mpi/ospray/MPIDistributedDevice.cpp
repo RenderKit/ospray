@@ -180,12 +180,6 @@ OSPWorld MPIDistributedDevice::newWorld()
   return (OSPWorld)(int64)(handle);
 }
 
-void MPIDistributedDevice::commit(OSPObject _object)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->commit();
-}
-
 OSPData MPIDistributedDevice::newSharedData(const void *sharedData,
     OSPDataType type,
     const vec3i &numItems,
@@ -211,12 +205,6 @@ void MPIDistributedDevice::setVoidPtr(
 {
   auto *object = lookupObject<ManagedObject>(_object);
   object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::removeParam(OSPObject _object, const char *name)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->removeParam(name);
 }
 
 void MPIDistributedDevice::setString(
@@ -488,18 +476,37 @@ float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)
   return fb.getVariance();
 }
 
+void MPIDistributedDevice::commit(OSPObject _object)
+{
+  auto *object = lookupObject<ManagedObject>(_object);
+  object->commit();
+}
+
+void MPIDistributedDevice::removeParam(OSPObject _object, const char *name)
+{
+  auto *object = lookupObject<ManagedObject>(_object);
+  object->removeParam(name);
+}
+
 void MPIDistributedDevice::release(OSPObject _obj)
 {
   if (!_obj)
     return;
 
   auto &handle = reinterpret_cast<ObjectHandle &>(_obj);
-  if (handle.defined()) {
+  auto *object = lookupObject<ManagedObject>(_obj);
+  if (object->useCount() == 1 && handle.defined()) {
     handle.freeObject();
   } else {
     auto *obj = (ManagedObject *)_obj;
     obj->refDec();
   }
+}
+
+void MPIDistributedDevice::retain(OSPObject _obj)
+{
+  auto *object = lookupObject<ManagedObject>(_obj);
+  object->refInc();
 }
 
 OSPTexture MPIDistributedDevice::newTexture(const char *type)

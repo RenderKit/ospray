@@ -226,6 +226,10 @@ void newSharedData(OSPState &state,
       numItems.z,
       byteStride.z);
 
+  // Offload device keeps +1 ref for tracking the lifetime of the data
+  // buffer shared with OSPRay
+  ospRetain(state.objects[handle]);
+
   state.data[handle] = std::move(view);
 }
 
@@ -306,12 +310,27 @@ void release(
     state.framebuffers.erase(f);
   }
 
-  // TODO: What to do about freeing data?
-  // Dependent on https://gitlab.com/sdvis/ospray/issues/479
-  auto d = state.data.find(handle);
-  if (d != state.data.end()) {
-    // state.data.erase(d);
+  // Pass through the data and see if any have been completely free'd
+  // i.e., no object depends on them anymore either.
+  for (auto it = state.data.begin(); it != state.data.end();) {
+    OSPObject obj = state.objects[it->first];
+    ManagedObject *m = reinterpret_cast<ManagedObject *>(obj);
+    if (m->useCount() == 1) {
+      ospRelease(state.objects[it->first]);
+      it = state.data.erase(it);
+    } else {
+      ++it;
+    }
   }
+}
+
+void retain(
+    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
+{
+  int64_t handle = 0;
+  cmdBuf >> handle;
+
+  ospRetain(state.objects[handle]);
 }
 
 void loadModule(
@@ -801,6 +820,9 @@ void dispatchWork(TAG t,
   case RELEASE:
     release(state, cmdBuf, fabric);
     break;
+  case RETAIN:
+    retain(state, cmdBuf, fabric);
+    break;
   case LOAD_MODULE:
     loadModule(state, cmdBuf, fabric);
     break;
@@ -954,6 +976,8 @@ const char *tagName(work::TAG t)
     return "COMMIT";
   case RELEASE:
     return "RELEASE";
+  case RETAIN:
+    return "RETAIN";
   case LOAD_MODULE:
     return "LOAD_MODULE";
   case CREATE_FRAMEBUFFER:

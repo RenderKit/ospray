@@ -91,9 +91,6 @@ struct MPIDistributedDevice : public api::Device
 
   OSPWorld newWorld() override;
 
-  /*! commit the given object's outstanding changes */
-  void commit(OSPObject object) override;
-
   // OSPRay Data Arrays ///////////////////////////////////////////////////
 
   OSPData newSharedData(const void *sharedData,
@@ -166,8 +163,6 @@ struct MPIDistributedDevice : public api::Device
       rendering!  */
   void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
-  void removeParam(OSPObject object, const char *name) override;
-
   /*! create a new renderer object (out of list of registered renderers) */
   OSPRenderer newRenderer(const char *type) override;
 
@@ -207,17 +202,12 @@ struct MPIDistributedDevice : public api::Device
   /*! load module */
   int loadModule(const char *name) override;
 
-  //! release (i.e., reduce refcount of) given object
-  /*! note that all objects in ospray are refcounted, so one cannot
-    explicitly "delete" any object. instead, each object is created
-    with a refcount of 1, and this refcount will be
-    increased/decreased every time another object refers to this
-    object resp releases its hold on it override; if the refcount is 0 the
-    object will automatically get deleted. For example, you can
-    create a new material, assign it to a geometry, and immediately
-    after this assignation release its refcount override; the material will
-    stay 'alive' as long as the given geometry requires it. */
+  // Object + Parameter Lifetime Management ///////////////////////////////
+
+  void commit(OSPObject object) override;
+  void removeParam(OSPObject object, const char *name) override;
   void release(OSPObject _obj) override;
+  void retain(OSPObject _obj) override;
 
   /*! create a new Texture object */
   OSPTexture newTexture(const char *type) override;
