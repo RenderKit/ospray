@@ -44,7 +44,7 @@ namespace ospray {
     return "ospray::ManagedObject";
   }
 
-  void ManagedObject::checkUnconsumed()
+  void ManagedObject::checkUnused()
   {
     for (auto p = params_begin(); p != params_end(); ++p) {
       if (!(*p)->query)

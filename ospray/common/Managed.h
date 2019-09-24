@@ -58,7 +58,7 @@ namespace ospray {
     template <typename T, int DIM = 1>
     const DataT<T, DIM> *getParamDataT(const char *name, bool required = false);
 
-    void checkUnconsumed();
+    void checkUnused();
 
     // Data members //
 
