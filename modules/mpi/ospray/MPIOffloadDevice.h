@@ -195,6 +195,9 @@ struct MPIOffloadDevice : public api::Device
 
   std::unordered_map<int64_t, FrameBufferMapping> framebufferMappings;
 
+  std::unordered_map<int64_t, std::shared_ptr<utility::AbstractArray<uint8_t>>>
+      sharedData;
+
   bool initialized{false};
 };
 

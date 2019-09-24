@@ -517,6 +517,8 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
           const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
           nbytes);
 
+  this->sharedData[handle.i64] = dataView;
+
   fabric->sendBcast(dataView);
 
   return (OSPData)(int64)handle;
@@ -698,6 +700,12 @@ void MPIOffloadDevice::commit(OSPObject _object)
   networking::BufferWriter writer;
   writer << work::COMMIT << handle.i64;
   sendWork(writer.buffer);
+
+  // If it's a shared data we need to send the updated data to the workers
+  auto d = sharedData.find(handle.i64);
+  if (d != sharedData.end()) {
+    fabric->sendBcast(d->second);
+  }
 }
 
 void MPIOffloadDevice::removeParam(OSPObject _object, const char *name)
@@ -716,8 +724,6 @@ void MPIOffloadDevice::release(OSPObject _object)
   networking::BufferWriter writer;
   writer << work::RELEASE << handle.i64;
   sendWork(writer.buffer);
-
-  // TODO: On the head node we should also clear this handle
 }
 
 void MPIOffloadDevice::retain(OSPObject _obj)

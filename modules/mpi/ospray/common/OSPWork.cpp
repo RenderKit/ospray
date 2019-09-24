@@ -289,11 +289,19 @@ void newInstance(
       ospNewInstance(state.getObject<OSPGroup>(groupHandle));
 }
 
-void commit(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
+void commit(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric)
 {
   int64_t handle = 0;
   cmdBuf >> handle;
+
+  // If it's a data being committed, we need to recieve the updated data
+  auto d = state.data.find(handle);
+  if (d != state.data.end()) {
+    fabric.recvBcast(*d->second);
+  }
+
   ospCommit(state.objects[handle]);
 }
 
