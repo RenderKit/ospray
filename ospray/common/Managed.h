@@ -58,6 +58,8 @@ namespace ospray {
     template <typename T, int DIM = 1>
     const DataT<T, DIM> *getParamDataT(const char *name, bool required = false);
 
+    void checkUnconsumed(const std::vector<std::string> knownParams);
+
     // Data members //
 
     void *ispcEquivalent{nullptr};
