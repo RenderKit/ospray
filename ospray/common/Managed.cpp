@@ -48,8 +48,7 @@ namespace ospray {
   {
     for (auto p = params_begin(); p != params_end(); ++p) {
       if (!(*p)->query)
-        postStatusMsg() << "Encountered unconsumed parameter '" << (*p)->name
-                        << "'";
+        postStatusMsg() << "Found unused parameter '" << (*p)->name << "'";
     }
   }
 
