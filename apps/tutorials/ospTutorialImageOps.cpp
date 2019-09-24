@@ -90,16 +90,16 @@ int main(int argc, const char **argv)
                            fbChannels));
 
   // Create a ImageOp pipeline to apply to the image
-  OSPImageOperation toneMap = ospNewImageOp("tonemapper");
+  OSPImageOperation toneMap = ospNewImageOperation("tonemapper");
   ospCommit(toneMap);
 
   // The colortweak pixel op will make the image more blue
-  OSPImageOperation colorTweak = ospNewImageOp("tile_debug");
+  OSPImageOperation colorTweak = ospNewImageOperation("tile_debug");
   ospSetVec3f(colorTweak, "addColor", 0.0, 0.0, 0.2);
   ospCommit(colorTweak);
   std::vector<OSPObject> pixelOps = {toneMap, colorTweak};
 
-  OSPImageOperation frameOpTest = ospNewImageOp("frame_ssao");
+  OSPImageOperation frameOpTest = ospNewImageOperation("frame_ssao");
 
   ospSetInt(frameOpTest, "ksize", 64);
 
@@ -151,7 +151,7 @@ int main(int argc, const char **argv)
     }
 
     if (ImGui::Button("Add Debug PixelOp")) {
-      OSPImageOperation op = ospNewImageOp("tile_debug");
+      OSPImageOperation op = ospNewImageOperation("tile_debug");
       ospSetVec3f(op, "addColor", 0.0, 0.0, 0.0);
       ospCommit(op);
 
@@ -162,7 +162,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
     if (ImGui::Button("Add Tonemap ImageOp")) {
-      OSPImageOperation op = ospNewImageOp("tonemapper");
+      OSPImageOperation op = ospNewImageOperation("tonemapper");
       ospCommit(op);
 
       pixelOps.push_back(op);
@@ -217,7 +217,7 @@ int main(int argc, const char **argv)
     }
 
     if (ImGui::Button("Add Debug FrameOp")) {
-      OSPImageOperation op = ospNewImageOp("frame_debug");
+      OSPImageOperation op = ospNewImageOperation("frame_debug");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -227,7 +227,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
     if (ImGui::Button("Add Blur FrameOp")) {
-      OSPImageOperation op = ospNewImageOp("frame_blur");
+      OSPImageOperation op = ospNewImageOperation("frame_blur");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -237,7 +237,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
     if (ImGui::Button("Add Depth FrameOp")) {
-      OSPImageOperation op = ospNewImageOp("frame_depth");
+      OSPImageOperation op = ospNewImageOperation("frame_depth");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -247,7 +247,7 @@ int main(int argc, const char **argv)
       pipelineUpdated = true;
     }
     if (ImGui::Button("Add SSAO FrameOp")) {
-      OSPImageOperation op = ospNewImageOp("frame_ssao");
+      OSPImageOperation op = ospNewImageOperation("frame_ssao");
       ospCommit(op);
 
       frameOps.push_back(op);
@@ -258,7 +258,7 @@ int main(int argc, const char **argv)
     }
 
     if (denoiseModuleLoaded && ImGui::Button("Add Denoise FrameOp")) {
-      OSPImageOperation op = ospNewImageOp("frame_denoise");
+      OSPImageOperation op = ospNewImageOperation("frame_denoise");
       ospCommit(op);
 
       frameOps.push_back(op);

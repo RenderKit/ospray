@@ -305,7 +305,7 @@ extern "C" {
 
   //! create a new pixel op of given type
   /*! return 'NULL' if that type is not known */
-  OSPRAY_INTERFACE OSPImageOperation ospNewImageOp(const char *type);
+  OSPRAY_INTERFACE OSPImageOperation ospNewImageOperation(const char *type);
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,

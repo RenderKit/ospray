@@ -1118,7 +1118,8 @@ extern "C" OSPFrameBuffer ospNewFrameBuffer(int size_x,
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPImageOperation ospNewImageOp(const char *_type) OSPRAY_CATCH_BEGIN
+extern "C" OSPImageOperation ospNewImageOperation(const char *_type)
+    OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_STRING(_type);
 

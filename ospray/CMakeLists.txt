@@ -36,7 +36,7 @@ set(OSPRAY_SOURCES
   include/ospray/ospray_cpp/Light.h
   include/ospray/ospray_cpp/ManagedObject.h
   include/ospray/ospray_cpp/Material.h
-  include/ospray/ospray_cpp/ImageOp.h
+  include/ospray/ospray_cpp/ImageOperation.h
   include/ospray/ospray_cpp/Renderer.h
   include/ospray/ospray_cpp/Texture.h
   include/ospray/ospray_cpp/TransferFunction.h

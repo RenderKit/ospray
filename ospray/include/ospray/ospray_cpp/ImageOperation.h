@@ -34,7 +34,7 @@ namespace ospray {
 
     inline ImageOperation::ImageOperation(const std::string &type)
     {
-      ospObject = ospNewImageOp(type.c_str());
+      ospObject = ospNewImageOperation(type.c_str());
     }
 
     inline ImageOperation::ImageOperation(const ImageOperation &copy)
