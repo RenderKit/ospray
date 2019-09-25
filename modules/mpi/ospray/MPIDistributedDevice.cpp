@@ -22,13 +22,13 @@
 #include "common/Group.h"
 #include "common/Instance.h"
 #include "common/MPICommon.h"
-#include "common/SynchronousRenderTask.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 #include "ospcommon/tasking/tasking_system_init.h"
 #include "ospcommon/utility/getEnvVar.h"
 #include "render/DistributedLoadBalancer.h"
+#include "render/RenderTask.h"
 #include "render/distributed/DistributedRaycast.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
@@ -142,22 +142,22 @@ const void *MPIDistributedDevice::frameBufferMap(
   if (!mpicommon::IamTheMaster())
     throw std::runtime_error("Can only map framebuffer on the master!");
 
-  auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
+  auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
 
-  return fb.mapBuffer(channel);
+  return fb->mapBuffer(channel);
 }
 
 void MPIDistributedDevice::frameBufferUnmap(
     const void *mapped, OSPFrameBuffer _fb)
 {
-  auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
-  fb.unmap(mapped);
+  auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
+  fb->unmap(mapped);
 }
 
 void MPIDistributedDevice::resetAccumulation(OSPFrameBuffer _fb)
 {
-  auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
-  fb.clear();
+  auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
+  fb->clear();
 }
 
 OSPGroup MPIDistributedDevice::newGroup()
@@ -422,12 +422,10 @@ float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
     OSPWorld _world)
 {
   mpicommon::barrier(mpicommon::worker.comm).wait();
-  auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
-  auto &renderer = lookupDistributedObject<Renderer>(_renderer);
-  auto &camera = *lookupObject<Camera>(_camera);
-  auto &world = *lookupObject<DistributedWorld>(_world);
-  auto result = renderer.renderFrame(&fb, &camera, &world);
-  return result;
+  auto f = renderFrameAsync(_fb, _renderer, _camera, _world);
+  wait(f, OSP_FRAME_FINISHED);
+  release(f);
+  return getVariance(_fb);
 }
 
 OSPFuture MPIDistributedDevice::renderFrameAsync(OSPFrameBuffer _fb,
@@ -436,13 +434,29 @@ OSPFuture MPIDistributedDevice::renderFrameAsync(OSPFrameBuffer _fb,
     OSPWorld _world)
 {
   mpicommon::barrier(mpicommon::worker.comm).wait();
-  auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
-  auto &renderer = lookupDistributedObject<Renderer>(_renderer);
-  auto &camera = *lookupObject<Camera>(_camera);
-  auto &world = *lookupObject<DistributedWorld>(_world);
-  renderer.renderFrame(&fb, &camera, &world);
+  auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
+  auto *renderer = lookupDistributedObject<Renderer>(_renderer);
+  auto *camera = lookupObject<Camera>(_camera);
+  auto *world = lookupObject<DistributedWorld>(_world);
 
-  auto *f = new SynchronousRenderTask(&fb);
+  fb->setCompletedEvent(OSP_NONE_FINISHED);
+
+  fb->refInc();
+  renderer->refInc();
+  camera->refInc();
+  world->refInc();
+
+  auto *f = new RenderTask(fb, [=]() {
+    float result = renderer->renderFrame(fb, camera, world);
+
+    fb->refDec();
+    renderer->refDec();
+    camera->refDec();
+    world->refDec();
+
+    return result;
+  });
+
   return (OSPFuture)f;
 }
 
@@ -472,8 +486,8 @@ float MPIDistributedDevice::getProgress(OSPFuture _task)
 
 float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)
 {
-  auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
-  return fb.getVariance();
+  auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
+  return fb->getVariance();
 }
 
 void MPIDistributedDevice::commit(OSPObject _object)

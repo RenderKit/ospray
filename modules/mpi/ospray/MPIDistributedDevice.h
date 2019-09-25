@@ -25,7 +25,7 @@ namespace ospray {
 namespace mpi {
 
 template <typename OSPRAY_TYPE>
-inline OSPRAY_TYPE &lookupDistributedObject(OSPObject obj)
+inline OSPRAY_TYPE *lookupDistributedObject(OSPObject obj)
 {
   auto &handle = reinterpret_cast<ObjectHandle &>(obj);
   auto *object = (OSPRAY_TYPE *)handle.lookup();
@@ -33,7 +33,7 @@ inline OSPRAY_TYPE &lookupDistributedObject(OSPObject obj)
   if (!object)
     throw std::runtime_error("#dmpi: ObjectHandle doesn't exist!");
 
-  return *object;
+  return object;
 }
 
 template <typename OSPRAY_TYPE>
