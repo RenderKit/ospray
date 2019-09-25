@@ -323,7 +323,6 @@ extern "C" void ospDeviceSetParam(OSPDevice _object,
     break;
   default:
     throw std::runtime_error("parameter type not handled for OSPDevice!");
-    break;
   };
 }
 OSPRAY_CATCH_END()
