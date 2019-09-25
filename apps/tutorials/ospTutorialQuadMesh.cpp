@@ -89,9 +89,6 @@ int main(int argc, const char **argv)
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
 
-  // cleanup remaining objects
-  ospRelease(renderer);
-
   // cleanly shut OSPRay down
   ospShutdown();
 
