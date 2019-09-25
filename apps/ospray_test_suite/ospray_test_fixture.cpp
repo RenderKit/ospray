@@ -1458,58 +1458,13 @@ namespace OSPRayTestScenes {
     ospCommit(volumetricModel);
     ospRelease(tfn);
     ospRelease(volume);
-
-    std::vector<OSPGeometricModel> models;
-    std::vector<vec3f> planeVertices = { 
-      vec3f(-8.f, -2.5f, -8.f),
-      vec3f(+8.f, -2.5f, -8.f),
-      vec3f(+8.f, -2.5f, +8.f),
-      vec3f(-8.f, -2.5f, +8.f) };
-    
-    std::vector<vec4i> planeIndices = { vec4i(0, 1, 2, 3) };
-
-    OSPGeometry mesh  = ospNewGeometry("quads");
-    OSPData data           = ospNewData(planeVertices.size(), OSP_VEC3F, planeVertices.data());
-    ospCommit(data);
-    ospSetData(mesh, "vertex.position", data);
-    ospRelease(data);
-    data = ospNewData(planeIndices.size(), OSP_VEC4I, planeIndices.data());
-    ospCommit(data);
-    ospSetData(mesh, "index", data);
-    ospRelease(data);
-    ospCommit(mesh);
-
-    OSPGeometricModel model = ospNewGeometricModel(mesh);
-    ospRelease(mesh);
-    OSPMaterial material = ospNewMaterial("pathtracer", "OBJMaterial");
-    ospCommit(material);
-    ospSetObject(model, "material", material);
-    ospRelease(material);
-    if (enableGeometry)
-      models.push_back(model);
-
-    for (auto &m : models)
-      ospCommit(m);
     ospCommit(volumetricModel);
 
-    OSPData modelsData = ospNewData(models.size(), OSP_OBJECT, models.data());
-    OSPData volumeData = ospNewData(1, OSP_OBJECT, &volumetricModel);
-
-    OSPGroup modelsGroup = ospNewGroup();
+    OSPData volumeData = ospNewData(1, OSP_VOLUMETRIC_MODEL, &volumetricModel);
     OSPGroup volumeGroup = ospNewGroup();
-    ospSetData(modelsGroup, "geometry", modelsData);
     ospSetData(volumeGroup, "volume", volumeData);
-
-    ospCommit(modelsGroup);
     ospCommit(volumeGroup);
-
-    ospRelease(modelsData);
     ospRelease(volumeData);
-
-    OSPInstance modelsInstance = ospNewInstance(modelsGroup);
-    ospCommit(modelsInstance);
-    ospRelease(modelsGroup);
-    AddInstance(modelsInstance);
  
     OSPInstance volumeInstance = ospNewInstance(volumeGroup);
     if (!constantVolume) {
@@ -1519,6 +1474,47 @@ namespace OSPRayTestScenes {
     ospCommit(volumeInstance);
     ospRelease(volumeGroup);
     AddInstance(volumeInstance);
+
+    if (enableGeometry)
+    {
+      std::vector<OSPGeometricModel> models;
+      std::vector<vec3f> planeVertices = { 
+        vec3f(-8.f, -2.5f, -8.f),
+        vec3f(+8.f, -2.5f, -8.f),
+        vec3f(+8.f, -2.5f, +8.f),
+        vec3f(-8.f, -2.5f, +8.f) };
+      std::vector<vec4i> planeIndices = { vec4i(0, 1, 2, 3) };
+
+      OSPData positionData = ospNewData(planeVertices.size(), OSP_VEC3F,  planeVertices.data());
+      OSPData indexData    = ospNewData(planeIndices.size(),  OSP_VEC4UI, planeIndices.data());
+      OSPGeometry mesh  = ospNewGeometry("quads");
+      ospSetData(mesh, "vertex.position", positionData);
+      ospSetData(mesh, "index",           indexData);
+      ospCommit(mesh);
+
+      OSPGeometricModel model = ospNewGeometricModel(mesh);
+      ospRelease(mesh);
+      OSPMaterial material = ospNewMaterial("pathtracer", "OBJMaterial");
+      ospCommit(material);
+      ospSetObject(model, "material", material);
+      ospRelease(material);
+      if (enableGeometry)
+        models.push_back(model);
+
+      for (auto &m : models)
+        ospCommit(m);
+
+      OSPData modelsData = ospNewData(models.size(), OSP_GEOMETRIC_MODEL, models.data());
+      OSPGroup modelsGroup = ospNewGroup();
+      ospSetData(modelsGroup, "geometry", modelsData);
+      ospCommit(modelsGroup);
+      ospRelease(modelsData);
+      OSPInstance modelsInstance = ospNewInstance(modelsGroup);
+      ospCommit(modelsInstance);
+      ospRelease(modelsGroup);
+      AddInstance(modelsInstance);
+    }
+
 
     //vec4f backgroundColor(0.03f, 0.07f, 0.23f);
     vec4f backgroundColor(ambientColor, 1.f);
@@ -1548,8 +1544,8 @@ namespace OSPRayTestScenes {
 
     OSPTexture backplateTexture = ospNewTexture("texture2d");
     ospSetVec2i(backplateTexture, "size", 1, 1);
-    ospSetInt(backplateTexture, "type", OSP_TEXTURE_RGB32F);
-    ospSetInt(backplateTexture, "flags", OSP_TEXTURE_FILTER_NEAREST);
+    ospSetInt(backplateTexture, "format", OSP_TEXTURE_RGB32F);
+    ospSetInt(backplateTexture, "filter", OSP_TEXTURE_FILTER_NEAREST);
     ospSetData(backplateTexture, "data", texelData);
     ospCommit(backplateTexture);
 
