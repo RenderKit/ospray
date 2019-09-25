@@ -17,7 +17,7 @@ Previously, the workflow was to create an object, fill it with the necessary
 parameters, and then place the object into an `OSPModel` via, for example,
 `ospAddGeometry`. An example is shown below using the C API.
 
-```
+```cpp
 OSPGeometry mesh = ospNewGeometry("triangles");
 // set parameters on mesh
 ospCommit(mesh);
@@ -37,7 +37,7 @@ objects.
 The new workflow is shown below. Note that calls to `ospRelease()` have been
 removed for brevity.
 
-```
+```cpp
 // create a geometry
 OSPGeometry mesh = ospNewGeometry("triangles");
 // set parameters on mesh
