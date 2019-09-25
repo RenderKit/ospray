@@ -134,6 +134,7 @@ identifying an option to an enumerated value. The available options for these
 values are listed.
 
 <table>
+<!-- ALOK: need to identify parameters that are enums now -->
   <tr>
     <th>Object</th> <th>Old parameter name</th> <th>New parameter name</th>
   </tr>
@@ -143,4 +144,50 @@ values are listed.
   <tr>
     <td>dir</td> <td>direction</td>
   </tr>
+  <tr>
+    <td>Boxes</td> <td>boxes</td> <td>box</td>
+  </tr>
+  <tr>
+    <td rowspan="3">Curves</td> <td>vertex</td> <td>vertex.position</td>
+  </tr>
+  <tr>
+    <td>curveBasis</td> <td>basis</td>
+  </tr>
+  <tr>
+    <td>curveType</td> <td>type</td>
+  </tr>
+  <tr>
+    <td>Isosurfaces</td> <td>isovalues</td> <td>isovalue</td>
+  </tr>
+  <tr>
+    <td>QuadMesh</td> <td>vertex</td> <td>vertex.position</td>
+  </tr>
+  <tr>
+    <td>Slices</td> <td>planes</td> <td>plane</td>
+  </tr>
+  <tr>
+    <td>StreamLines</td> <td>vertex</td> <td>vertex.position</td>
+  </tr>
+  <tr>
+    <td>Subdivision</td> <td>vertex</td> <td>vertex.position</td>
+  </tr>
+  <tr>
+    <td>TriangleMesh</td> <td>vertex</td> <td>vertex.position</td>
+  </tr>
+  <tr>
+    <td>Light</td> <td>isVisible</td> <td>visible</td>
+  </tr>
+  <tr>
+    <td rowspan="2">PathTracer</td> <td>useGeometryLights</td> <td>geometryLights</td>
+  </tr>
+  <tr>
+    <td>lights</td> <td>light</td>
+  </tr>
+  <tr>
+    <td rowspan="2">LinearTransferFunction</td> <td>colors</td> <td>color</td>
+  </tr>
+  <tr>
+    <td>opacities</td> <td>opacity</td>
+  </tr>
+<!-- ALOK: leaving Volume stuff out for now until VKL merged -->
 </table>
