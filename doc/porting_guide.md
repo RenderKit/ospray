@@ -117,3 +117,30 @@ to all geometries and/or volumes in its group.
 `OSPWorld` is the final container for all `OSPInstance` objects. It can contain
 one or more instances.  The world is passed along with a renderer, camera, and
 framebuffer to `ospRenderFrame` to generate an image.
+
+## Updated Public Parameter Names
+
+OSPRay 2.0.0 has updated public parameter names (the strings used in
+`ospSetData`, for example) to a more consistent naming convention.  OSPRay now
+will print a warning (visible if debug logs are enabled) if a parameter
+provided by the user is not used by an object. This can help catch cases where
+applications are using parameter names from OSPRay 1.8.5 or mistyped names.
+Some objects have required parameters. In these cases, OSPRay will terminate
+with an error message indicating which object and which parameter.
+
+Below is a table of updated objects, their old parameter names, and the updated
+equivalent names. In some cases, parameters have changed from taking a string
+identifying an option to an enumerated value. The available options for these
+values are listed.
+
+<table>
+  <tr>
+    <th>Object</th> <th>Old parameter name</th> <th>New parameter name</th>
+  </tr>
+  <tr>
+    <td rowspan="2">Camera</td> <td>pos</td> <td>position</td>
+  </tr>
+  <tr>
+    <td>dir</td> <td>direction</td>
+  </tr>
+</table>
