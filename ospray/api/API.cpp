@@ -299,51 +299,42 @@ extern "C" OSPDevice ospGetCurrentDevice() OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" void ospDeviceSetString(OSPDevice _object,
-                                   const char *id,
-                                   const char *s) OSPRAY_CATCH_BEGIN
+extern "C" void ospDeviceSetParam(OSPDevice _object,
+                                  const char *id,
+                                  OSPDataType type,
+                                  const void *mem) OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(_object);
   THROW_IF_NULL_STRING(id);
-
   Device *object = (Device *)_object;
-  object->setParam<std::string>(id, s);
+
+  switch (type) {
+  case OSP_STRING:
+    object->setParam<std::string>(id, std::string((const char *)mem));
+    break;
+  case OSP_INT:
+    object->setParam<int>(id, *(int *)mem);
+    break;
+  case OSP_BOOL:
+    object->setParam<bool>(id, *(int *)mem);
+    break;
+  case OSP_VOID_PTR:
+    object->setParam<void*>(id, *(void **)mem);
+    break;
+  default:
+    throw std::runtime_error("parameter type not handled for OSPDevice!");
+    break;
+  };
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospDeviceSetBool(OSPDevice _object,
-                                 const char *id,
-                                 int x) OSPRAY_CATCH_BEGIN
+extern "C" void ospDeviceRemoveParam(OSPDevice _object,
+                                     const char *id) OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(_object);
   THROW_IF_NULL_STRING(id);
-
   Device *object = (Device *)_object;
-  object->setParam(id, static_cast<bool>(x));
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospDeviceSetInt(OSPDevice _object,
-                                const char *id,
-                                int x) OSPRAY_CATCH_BEGIN
-{
-  THROW_IF_NULL_OBJECT(_object);
-  THROW_IF_NULL_STRING(id);
-
-  Device *object = (Device *)_object;
-  object->setParam(id, x);
-}
-OSPRAY_CATCH_END()
-
-extern "C" void ospDeviceSetVoidPtr(OSPDevice _object,
-                                    const char *id,
-                                    void *v) OSPRAY_CATCH_BEGIN
-{
-  THROW_IF_NULL_OBJECT(_object);
-  THROW_IF_NULL_STRING(id);
-
-  Device *object = (Device *)_object;
-  object->setParam(id, v);
+  object->removeParam(id);
 }
 OSPRAY_CATCH_END()
 

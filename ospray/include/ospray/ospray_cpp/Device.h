@@ -59,22 +59,23 @@ namespace ospray {
 
     inline void Device::set(const std::string &name, const std::string &v) const
     {
-      ospDeviceSetString(ospHandle, name.c_str(), v.c_str());
+      auto *s = v.c_str();
+      ospDeviceSetParam(ospHandle, name.c_str(), OSP_STRING, &s);
     }
 
     inline void Device::set(const std::string &name, bool v) const
     {
-      ospDeviceSetBool(ospHandle, name.c_str(), v);
+      ospDeviceSetParam(ospHandle, name.c_str(), OSP_BOOL, &v);
     }
 
     inline void Device::set(const std::string &name, int v) const
     {
-      ospDeviceSetInt(ospHandle, name.c_str(), v);
+      ospDeviceSetParam(ospHandle, name.c_str(), OSP_INT, &v);
     }
 
     inline void Device::set(const std::string &name, void *v) const
     {
-      ospDeviceSetVoidPtr(ospHandle, name.c_str(), v);
+      ospDeviceSetParam(ospHandle, name.c_str(), OSP_VOID_PTR, &v);
     }
 
     inline void Device::commit() const

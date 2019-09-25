@@ -156,10 +156,8 @@ extern "C" {
   // Get the currently set device
   OSPRAY_INTERFACE OSPDevice ospGetCurrentDevice();
 
-  OSPRAY_INTERFACE void ospDeviceSetString(OSPDevice, const char *id, const char *s);
-  OSPRAY_INTERFACE void ospDeviceSetBool(OSPDevice, const char *id, int x);
-  OSPRAY_INTERFACE void ospDeviceSetInt(OSPDevice, const char *id, int x);
-  OSPRAY_INTERFACE void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *v);
+  OSPRAY_INTERFACE void ospDeviceSetParam(OSPDevice, const char *id, OSPDataType, const void *mem);
+  OSPRAY_INTERFACE void ospDeviceRemoveParam(OSPDevice, const char *id);
 
   // Status message callback function type
   typedef void (*OSPStatusFunc)(const char* messageText);
