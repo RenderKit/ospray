@@ -32,13 +32,9 @@ namespace ospray {
                   OSPFrameBufferFormat format = OSP_FB_SRGBA,
                   int channels                = OSP_FB_COLOR);
       FrameBuffer(const FrameBuffer &copy);
-      FrameBuffer(FrameBuffer &&move);
       FrameBuffer(OSPFrameBuffer existing);
 
       FrameBuffer &operator=(const FrameBuffer &copy);
-      FrameBuffer &operator=(FrameBuffer &&move);
-
-      ~FrameBuffer();
 
       float renderFrame(const Renderer &renderer,
                         const Camera &camera,
@@ -47,11 +43,6 @@ namespace ospray {
       void *map(OSPFrameBufferChannel channel) const;
       void unmap(void *ptr) const;
       void clear() const;
-
-     private:
-      void free() const;
-
-      bool owner = true;
     };
 
     // Inlined function definitions ///////////////////////////////////////////
@@ -64,15 +55,9 @@ namespace ospray {
     }
 
     inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
-        : ManagedObject_T<OSPFrameBuffer>(copy.handle()), owner(false)
+        : ManagedObject_T<OSPFrameBuffer>(copy.handle())
     {
       ospRetain(copy.handle());
-    }
-
-    inline FrameBuffer::FrameBuffer(FrameBuffer &&move)
-        : ManagedObject_T<OSPFrameBuffer>(move.handle())
-    {
-      move.ospObject = nullptr;
     }
 
     inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing)
@@ -82,23 +67,9 @@ namespace ospray {
 
     inline FrameBuffer &FrameBuffer::operator=(const FrameBuffer &copy)
     {
-      free();
       ospObject = copy.ospObject;
       ospRetain(copy.handle());
       return *this;
-    }
-
-    inline FrameBuffer &FrameBuffer::operator=(FrameBuffer &&move)
-    {
-      free();
-      ospObject      = move.ospObject;
-      move.ospObject = nullptr;
-      return *this;
-    }
-
-    inline FrameBuffer::~FrameBuffer()
-    {
-      free();
     }
 
     inline float FrameBuffer::renderFrame(const Renderer &renderer,
@@ -122,13 +93,6 @@ namespace ospray {
     inline void FrameBuffer::clear() const
     {
       ospResetAccumulation(handle());
-    }
-
-    inline void FrameBuffer::free() const
-    {
-      if (owner && handle()) {
-        ospRelease(handle());
-      }
     }
 
   }  // namespace cpp
