@@ -90,7 +90,7 @@ int main(int argc, char **argv)
   int imgSizeY = 768; // height
 
   // camera
-  float cam_pos[] = {(mpiWorldSize + 1.f) / 2.f, 0.5f, mpiWorldSize * 0.5f};
+  float cam_pos[] = {(mpiWorldSize + 1.f) / 2.f, 0.5f, -mpiWorldSize * 0.5f};
   float cam_up[] = {0.f, 1.f, 0.f};
   float cam_view[] = {0.0f, 0.f, 1.f};
 
