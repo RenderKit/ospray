@@ -49,7 +49,7 @@ namespace ospray {
         Data *data = (Data *)param.data.get<ManagedObject *>();
         if (data->type == OSP_FLOAT) {
           VKLData vklData = vklNewData(
-              data->numItems, VKL_FLOAT, data->data, VKL_DATA_SHARED_BUFFER);
+              data->numItems.product(), VKL_FLOAT, data->data(), VKL_DATA_SHARED_BUFFER);
           vklSetData(vklVolume, param.name.c_str(), vklData);
           vklRelease(vklData);
         } else {

@@ -31,7 +31,8 @@ float delta_tracking(
   float& mu_t,   // sampled extinction coefficint
   vec3f& albedo) // sampled albedo (color)
 {
-  const float mu_max = vModel->densityScale * VolumetricModel_getOpacity(vModel, vModel->maximumDensity);
+  const vec4f color_max = vModel->transferFunction->get(vModel->transferFunction, vModel->maximumDensity);
+  const float mu_max = vModel->densityScale * color_max.w;
   float t = vInterval.interval.lower;
   while (true)
   {
@@ -44,7 +45,7 @@ float delta_tracking(
     xi = RandomSampler_getFloat(randomSampler);
     vec3f p = o + t * w;
     //const float sample = vModel->volume->sample(vModel->volume, p);
-    const float sample = sample = vklComputeSampleV(vModel->volume->vklVolume, (const varying vkl_vec3f *uniform) &p);
+    const float sample = vklComputeSampleV(vModel->volume->vklVolume, (const varying vkl_vec3f *uniform) &p);
     const vec4f color = vModel->transferFunction->get(vModel->transferFunction, sample);
     mu_t = vModel->densityScale * color.w;
     if (xi < mu_t / mu_max)
@@ -84,12 +85,13 @@ float delta_tracking_interval_homogeneous(
     t = interval.tRange.lower;
 
     const float sample = 0.5f * (interval.valueRange.upper + interval.valueRange.lower);
-    mu_t = vModel->densityScale * VolumetricModel_getOpacity(vModel, sample);
+    const vec4f color = vModel->transferFunction->get(vModel->transferFunction, sample);
+    mu_t = vModel->densityScale * color.w;
     const float xi = RandomSampler_getFloat(randomSampler);
     const float dt = - log(1.f - xi) / mu_t;
     t = t + dt;
     if (t <= interval.tRange.upper) {
-      albedo = VolumetricModel_getColor(vModel, sample);
+      albedo = make_vec3f(color);
       return t;
     }
   }
@@ -122,7 +124,8 @@ float delta_tracking_interval(
 
     box1f subInterval = make_box1f(interval.tRange.lower, interval.tRange.upper);
     t = interval.tRange.lower;
-    const float mu_max = vModel->densityScale * VolumetricModel_getOpacity(vModel, interval.valueRange.upper);
+    const vec4f color_max = vModel->transferFunction->get(vModel->transferFunction, interval.valueRange.upper);
+    const float mu_max = vModel->densityScale * color_max.w;
 
     while (true)
     {
@@ -135,10 +138,11 @@ float delta_tracking_interval(
       xi = RandomSampler_getFloat(randomSampler);
       vec3f p = o + t * w;
       const float sample = vklComputeSampleV(vModel->volume->vklVolume, (const varying vkl_vec3f *uniform) &p);
-      mu_t = vModel->densityScale * VolumetricModel_getOpacity(vModel, sample);
+      const vec4f color = vModel->transferFunction->get(vModel->transferFunction, sample);
+      mu_t = vModel->densityScale * color.w;
       if (xi < mu_t / mu_max)
       {
-        albedo = VolumetricModel_getColor(vModel, sample);
+        albedo = make_vec3f(color);
         return t;
       }
     }
