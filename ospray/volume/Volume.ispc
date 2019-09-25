@@ -81,6 +81,8 @@ void Volume_Constructor(Volume *uniform self, void *uniform cppEquivalent)
   self->volumeID = -1;
 
   self->vklVolume = 0;
+
+  self->vklValueSelector = 0;
 }
 
 export void Volume_getBoundingBox(uniform box3f *uniform ret,
@@ -125,4 +127,10 @@ export void Volume_set_vklVolume(void *uniform _self, void *uniform vklVolume, b
   Volume *uniform self = (Volume *uniform)_self;
   self->vklVolume = (VKLVolume) vklVolume;
   self->boundingBox = *bounds;
+}
+
+export void Volume_set_vklValueSelector(void *uniform _self, void *uniform vklValueSelector)
+{
+  Volume *uniform self = (Volume *uniform)_self;
+  self->vklValueSelector = (VKLValueSelector) vklValueSelector;
 }

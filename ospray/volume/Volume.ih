@@ -20,6 +20,7 @@
 #include "math/AffineSpace.ih"
 #include "math/box.ih"
 #include "openvkl/volume.isph"
+#include "openvkl/value_selector.isph"
 
 struct TransferFunction;
 
@@ -40,6 +41,7 @@ struct Volume
   int32 volumeID;
 
   VKLVolume vklVolume;
+  VKLValueSelector vklValueSelector;
 
   //! The value at the given sample location in world coordinates.
   varying float (*sample)(const void *uniform _self,

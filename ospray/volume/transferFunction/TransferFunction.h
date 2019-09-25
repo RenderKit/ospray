@@ -38,6 +38,10 @@ namespace ospray {
 
     //! Create a transfer function of the given type.
     static TransferFunction *createInstance(const std::string &type);
+
+    range1f valueRange;
+    virtual std::vector<range1f> getPositiveOpacityValueRanges() const = 0;
+    virtual std::vector<range1i> getPositiveOpacityIndexRanges() const = 0;
   };
 
   OSPTYPEFOR_SPECIALIZATION(TransferFunction *, OSP_TRANSFER_FUNCTION);

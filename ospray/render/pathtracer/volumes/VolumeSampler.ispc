@@ -21,6 +21,7 @@
 #include "openvkl/openvkl.isph"
 
 #define USE_INTERVAL_ITERATOR 1
+#define USE_VALUE_SELECTOR 1
 
 float delta_tracking(
   VolumetricModel *uniform vModel,
@@ -72,14 +73,21 @@ float delta_tracking_interval_homogeneous(
                            (varying vkl_vec3f *)&o,
                            (varying vkl_vec3f *)&w,
                            (varying vkl_range1f *)&vInterval.interval,
-                           0);
+#if USE_VALUE_SELECTOR==1
+                           vModel->volume->vklValueSelector
+#else 
+                           0
+#endif
+                           );
   
   float t = 0.f;
   VKLInterval interval;
   while (vklIterateIntervalV(&intervalIterator, &interval))
   {
+#if USE_VALUE_SELECTOR != 1
     if (interval.valueRange.upper <= 0.f)
       continue;
+#endif
 
     box1f subInterval = make_box1f(interval.tRange.lower, interval.tRange.upper);
     t = interval.tRange.lower;
@@ -113,14 +121,21 @@ float delta_tracking_interval(
                            (varying vkl_vec3f *)&o,
                            (varying vkl_vec3f *)&w,
                            (varying vkl_range1f *)&vInterval.interval,
-                           0);
+#if USE_VALUE_SELECTOR == 1
+                           vModel->volume->vklValueSelector
+#else
+                           0
+#endif
+                           );
   
   float t = 0.f;
   VKLInterval interval;
   while (vklIterateIntervalV(&intervalIterator, &interval))
   {
+#if USE_VALUE_SELECTOR != 1
     if (interval.valueRange.upper <= 0.f)
       continue;
+#endif
 
     box1f subInterval = make_box1f(interval.tRange.lower, interval.tRange.upper);
     t = interval.tRange.lower;

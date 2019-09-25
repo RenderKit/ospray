@@ -31,6 +31,9 @@ namespace ospray {
     virtual void commit() override;
 
     virtual std::string toString() const override;
+    
+    virtual std::vector<range1f> getPositiveOpacityValueRanges() const override;
+    virtual std::vector<range1i> getPositiveOpacityIndexRanges() const override;
 
    private:
     Ref<const DataT<vec3f>> colorValues;
