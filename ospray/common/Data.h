@@ -36,7 +36,7 @@ namespace ispc {
 namespace ospray {
 
   template <typename T, int DIM = 1>
-  struct OSPRAY_SDK_INTERFACE DataT;
+  struct DataT;
 
   /*! \brief defines a data array (aka "buffer") type that contains
       'n' items of a given type */
@@ -163,7 +163,7 @@ namespace ospray {
   };
 
   template <typename T, int DIM>
-  struct OSPRAY_SDK_INTERFACE DataT : public Data
+  struct DataT : public Data
   {
     static_assert(DIM == 2 || DIM == 3, "only 1D, 2D or 3D DataT supported");
     using value_type = T;
@@ -194,7 +194,7 @@ namespace ospray {
   };
 
   template <typename T>
-  struct OSPRAY_SDK_INTERFACE DataT<T, 1> : public Data
+  struct DataT<T, 1> : public Data
   {
     using value_type = T;
     using interator = Iter1D<T>;
