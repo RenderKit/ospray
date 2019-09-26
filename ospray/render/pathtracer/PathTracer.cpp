@@ -112,10 +112,9 @@ namespace ospray {
       geometryLights = lightArray.size();
     }
 
-    lightData = (Data *)getParamData("light");
-    if (lightData) {
-      for (uint32_t i = 0; i < lightData->size(); i++)
-        lightArray.push_back(((Light **)lightData->data())[i]->getIE());
+    if (world->lights) {
+      for (auto &&obj : world->lights)
+        lightArray.push_back(obj->getIE());
     }
 
     void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];

@@ -150,16 +150,13 @@ int main(int argc, const char **argv)
   ospSetData(world, "instance", instances);
   ospRelease(instances);
 
-  // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
-
   OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "light", lightsData);
+  ospSetData(world, "light", lightsData);
   ospRelease(lightsData);
 
+  // create OSPRay renderer
+  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
   ospSetInt(renderer, "aoSamples", 1);
-
-  ospCommit(renderer);
 
   // create slice geometry
   float sliceExtent = 1.f;

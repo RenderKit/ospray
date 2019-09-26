@@ -373,7 +373,7 @@ int main(int argc, const char **argv)
     light_handles.push_back(ambientLight);
 
     OSPData lights = ospNewData(light_handles.size(), OSP_LIGHT, light_handles.data(), 0);
-    ospSetData(renderer, "light", lights);
+    ospSetData(world, "light", lights);
     ospCommit(lights);
     ospRelease(lights);
   };

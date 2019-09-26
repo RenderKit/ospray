@@ -40,6 +40,8 @@ namespace ospray {
     // Data members //
 
     Ref<const DataT<Instance *>> instances;
+    Ref<const DataT<Light *>> lights;
+
     std::vector<void*> instanceIEs;
     int numGeometries{0};
     int numVolumes{0};

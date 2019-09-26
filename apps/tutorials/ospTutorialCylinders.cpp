@@ -72,8 +72,6 @@ int main(int argc, const char **argv)
   ospSetData(renderer, "light", lightsData);
   ospRelease(lightsData);
 
-  ospCommit(renderer);
-
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow =

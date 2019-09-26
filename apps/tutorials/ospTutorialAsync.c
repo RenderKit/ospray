@@ -229,12 +229,6 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   *world = ospNewWorld();
   OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
   ospSetObject(*world, "instance", instances);
-  ospCommit(*world);
-  ospRelease(instance);
-  ospRelease(instances);
-
-  // create renderer
-  *renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
 
   // create and setup light for Ambient Occlusion
   static OSPLight light;
@@ -242,11 +236,19 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospCommit(light);
   OSPData lights = ospNewSharedData1D(&light, OSP_LIGHT, 1);
   ospCommit(lights);
+  ospSetObject(*world, "light", lights);
+
+  ospCommit(*world);
+  ospRelease(instance);
+  ospRelease(instances);
+
+  // create renderer
+  *renderer =
+      ospNewRenderer("scivis"); // choose Scientific Visualization renderer
 
   // complete setup of renderer
   ospSetInt(*renderer, "aoSamples", 1);
   ospSetFloat(*renderer, "bgColor", 1.0f); // white, transparent
-  ospSetObject(*renderer, "light", lights);
   ospCommit(*renderer);
 
   ospRelease(light);
@@ -330,12 +332,6 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   *world = ospNewWorld();
   OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
   ospSetObject(*world, "instance", instances);
-  ospCommit(*world);
-  ospRelease(instances);
-  ospRelease(instance);
-
-  // create renderer
-  *renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
 
   // create and setup light for Ambient Occlusion
   static OSPLight light;
@@ -343,11 +339,19 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospCommit(light);
   OSPData lights = ospNewSharedData1D(&light, OSP_LIGHT, 1);
   ospCommit(lights);
+  ospSetObject(*world, "light", lights);
+
+  ospCommit(*world);
+  ospRelease(instances);
+  ospRelease(instance);
+
+  // create renderer
+  *renderer =
+      ospNewRenderer("scivis"); // choose Scientific Visualization renderer
 
   // complete setup of renderer
   ospSetInt(*renderer, "aoSamples", 4);
   ospSetFloat(*renderer, "bgColor", 0.2f); // gray, transparent
-  ospSetObject(*renderer, "light", lights);
   ospCommit(*renderer);
 
   ospRelease(light);

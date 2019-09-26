@@ -162,22 +162,11 @@ void createWorld()
   ospRelease(spheresInstance);
   ospRelease(plane);
 
-  ospCommit(g_world);
-}
-
-OSPRenderer createRenderer()
-{
-  // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
-
   OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "light", lightsData);
+  ospSetData(g_world, "light", lightsData);
   ospRelease(lightsData);
 
-  // commit the renderer
-  ospCommit(renderer);
-
-  return renderer;
+  ospCommit(g_world);
 }
 
 // updates the bouncing spheres coordinates based on simple gravity model
@@ -250,7 +239,7 @@ int main(int argc, const char **argv)
   createWorld();
 
   // create OSPRay renderer
-  OSPRenderer renderer = createRenderer();
+  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly

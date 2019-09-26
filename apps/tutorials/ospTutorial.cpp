@@ -128,20 +128,21 @@ int main(int argc, const char **argv)
     ospray::cpp::World world;
     auto instanceHandle = instance.handle();
     world.set("instance", ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle));
-    world.commit();
-
-    // create renderer, choose Scientific Visualization renderer
-    ospray::cpp::Renderer renderer("scivis");
 
     // create and setup light for Ambient Occlusion
     ospray::cpp::Light light("ambient");
     light.commit();
     auto lightHandle = light.handle();
 
+    world.set("light", ospray::cpp::Data(1, OSP_LIGHT, &lightHandle));
+    world.commit();
+
+    // create renderer, choose Scientific Visualization renderer
+    ospray::cpp::Renderer renderer("scivis");
+
     // complete setup of renderer
     renderer.set("aoSamples", 1);
     renderer.set("bgColor", 1.0f);  // white, transparent
-    renderer.set("light", ospray::cpp::Data(1, OSP_LIGHT, &lightHandle));
     renderer.commit();
 
     // create and setup framebuffer

@@ -81,6 +81,11 @@ int main(int argc, const char **argv)
   ospRelease(instances);
   ospRelease(instance);
 
+  // create and set lights
+  OSPData lightsData = ospTestingNewLights("ambient_and_directional");
+  ospSetData(world, "light", lightsData);
+  ospRelease(lightsData);
+
   // create all volume variances [sharedVertices][valuesPerCell]
   OSPVolumetricModel allVolumes[2][2];
   allVolumes[0][0] = createVolumeWithTF("simple_unstructured_volume_00", "jet");
@@ -116,15 +121,6 @@ int main(int argc, const char **argv)
 
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
-
-  // create and set lights
-  OSPData lightsData = ospTestingNewLights("ambient_and_directional");
-  ospSetData(renderer, "light", lightsData);
-  ospRelease(lightsData);
-
-  // apply changes to the renderer
-  ospCommit(renderer);
-
   // Scene updates //
 
   bool sharedVertices = false;

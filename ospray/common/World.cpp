@@ -112,6 +112,7 @@ namespace ospray {
     freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
 
     instances = getParamDataT<Instance *>("instance");
+    lights = getParamDataT<Light *>("light");
 
     // get rid of stride for now
     if (instances && !instances->compact()) {

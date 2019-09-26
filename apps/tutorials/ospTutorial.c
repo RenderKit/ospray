@@ -150,6 +150,14 @@ int main(int argc, const char **argv) {
   OSPWorld world = ospNewWorld();
   OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
   ospSetData(world, "instance", instances);
+
+  // create and setup light for Ambient Occlusion
+  OSPLight light = ospNewLight("ambient");
+  ospCommit(light);
+  OSPData lights = ospNewSharedData1D(&light, OSP_LIGHT, 1);
+  ospCommit(lights);
+  ospSetObject(world, "light", lights);
+
   ospCommit(world);
   ospRelease(instance);
   ospRelease(instances);
@@ -165,18 +173,12 @@ int main(int argc, const char **argv) {
   printf("setting up renderer...");
 
   // create renderer
-  OSPRenderer renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
-
-  // create and setup light for Ambient Occlusion
-  OSPLight light = ospNewLight("ambient");
-  ospCommit(light);
-  OSPData lights = ospNewSharedData1D(&light, OSP_LIGHT, 1);
-  ospCommit(lights);
+  OSPRenderer renderer =
+      ospNewRenderer("scivis"); // choose Scientific Visualization renderer
 
   // complete setup of renderer
   ospSetInt(renderer, "aoSamples", 1);
   ospSetFloat(renderer, "bgColor", 1.0f); // white, transparent
-  ospSetObject(renderer, "light", lights);
   ospCommit(renderer);
 
   // create and setup framebuffer

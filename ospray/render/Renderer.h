@@ -23,9 +23,6 @@
 
 namespace ospray {
 
-  struct Material;
-  struct Light;
-
   /*! \brief abstract base class for all ospray renderers.
 
     \detailed Tthis base renderer abstraction only knows about

@@ -69,18 +69,14 @@ int main(int argc, const char **argv)
   ospSetData(world, "instance", volumeInstances);
   ospRelease(volumeInstances);
 
+  OSPData lightsData = ospTestingNewLights("ambient_only");
+  ospSetData(world, "light", lightsData);
+  ospCommit(world);
+
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
-  OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "light", lightsData);
-
-  ospCommit(renderer);
-
   bounds = reinterpret_cast<box3f &>(testData.bounds);
-
-  // commit the world
-  ospCommit(world);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly

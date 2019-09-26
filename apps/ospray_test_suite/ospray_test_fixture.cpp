@@ -237,7 +237,7 @@ namespace OSPRayTestScenes {
   {
     if (!lightsList.empty()) {
       lights = ospNewData(lightsList.size(), OSP_LIGHT, lightsList.data());
-      ospSetObject(renderer, "light", lights);
+      ospSetObject(world, "light", lights);
       ospRelease(lights);
     }
   }

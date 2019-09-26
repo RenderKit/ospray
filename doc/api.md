@@ -1075,9 +1075,8 @@ a transform. To create and instance call
 
 ### World
 
-Worlds are a container of scene data represented by [instances]. A world is
-associated with a single logical acceleration structure. To create an (empty)
-world call
+Worlds are a container of scene data represented by [instances]. To
+create an (empty) world call
 
     OSPWorld ospNewWorld();
 
@@ -1098,7 +1097,12 @@ feature/performance trade-offs.
   ------------- ---------------- --------  -------------------------------------
   Type          Name              Default  Description
   ------------- ---------------- --------  -------------------------------------
-  OSPData       instance             NULL  data array of OSPInstance scene objs
+  OSPInstance[] instance             NULL  [data] array with handles of the
+                                           [instances]
+
+  OSPLight[]    light                NULL  [data] array with handles of the
+                                           [lights]
+
 
   bool          dynamicScene        false  use RTC_SCENE_DYNAMIC flag (faster
                                            BVH build, slower ray traversal),
@@ -1114,7 +1118,7 @@ feature/performance trade-offs.
                                            intersection code paths (slightly
                                            slower)
   ------------- ---------------- --------  -------------------------------------
-  : Parameters understood by Worlds
+  : Parameters understood by worlds.
 
 
 Renderer
@@ -1133,8 +1137,6 @@ all renderers are
   -------------- ------------------ -----------  -----------------------------------------
   Type          Name                    Default  Description
   -------------- ------------------ -----------  -----------------------------------------
-  OSPLight[]     lights                          [data] array with handles of the [lights]
-
   int            spp                          1  samples per pixel
 
   int            maxDepth                    20  maximum ray recursion depth

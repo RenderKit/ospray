@@ -57,11 +57,6 @@ int main(int argc, const char **argv)
   for (auto inst : instanceHandles)
     ospRelease(inst);
 
-  ospCommit(world);
-
-  // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
-
   // Set up area light in the ceiling
   OSPLight light = ospNewLight("quad");
   ospSetVec3f(light, "color", 0.78f, 0.551f, 0.183f);
@@ -73,12 +68,15 @@ int main(int argc, const char **argv)
   ospCommit(light);
   OSPData lights = ospNewData(1, OSP_LIGHT, &light);
   ospCommit(lights);
-  ospSetData(renderer, "light", lights);
+  ospSetData(world, "light", lights);
 
-  // finalize the renderer
-  ospCommit(renderer);
+  ospCommit(world);
+
   ospRelease(light);
   ospRelease(lights);
+
+  // create OSPRay renderer
+  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
