@@ -32,6 +32,11 @@ if (OSPRAY_MODULE_DENOISER)
     ospray_module_ispc
   )
 
+  target_include_directories(ospray_module_denoiser
+  PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
   set_target_properties(ospray_module_denoiser
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 

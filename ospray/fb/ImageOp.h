@@ -106,6 +106,6 @@ namespace ospray {
       of this imageop.
   */
 #define OSP_REGISTER_IMAGE_OP(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(ImageOp, image_op, InternalClass, external_name)
+  OSP_REGISTER_OBJECT(ImageOp, image_operation, InternalClass, external_name)
 
 }  // namespace ospray

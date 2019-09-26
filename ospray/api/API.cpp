@@ -319,7 +319,7 @@ extern "C" void ospDeviceSetParam(OSPDevice _object,
     object->setParam<bool>(id, *(int *)mem);
     break;
   case OSP_VOID_PTR:
-    object->setParam<void*>(id, *(void **)mem);
+    object->setParam<void*>(id, *(void **)&mem);
     break;
   default:
     throw std::runtime_error("parameter type not handled for OSPDevice!");
