@@ -99,43 +99,46 @@ namespace ospray {
   {
     Renderer::commit();
 
-    world = (World *)getParamObject("world");
+    const int32 rouletteDepth = getParam<int>("rouletteDepth", 5);
+    const float maxRadiance = getParam<float>("maxContribution", inf);
+    Texture2D *backplate = (Texture2D *)getParamObject("backplate", nullptr);
+    vec4f shadowCatcherPlane =
+        getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
+    useGeometryLights = getParam<bool>("geometryLights", true);
+
+    ispc::PathTracer_set(getIE(),
+        rouletteDepth,
+        maxRadiance,
+        backplate ? backplate->getIE() : nullptr,
+        (ispc::vec4f &)shadowCatcherPlane);
+  }
+
+  void *PathTracer::beginFrame(FrameBuffer *, World *world)
+  {
+    if (!world)
+      return nullptr;
 
     destroyGeometryLights();
     lightArray.clear();
     geometryLights = 0;
 
-    const bool useGeometryLights = getParam<bool>("geometryLights", true);
-
-    if (world && useGeometryLights) {
+    if (useGeometryLights) {
       generateGeometryLights(*world);
       geometryLights = lightArray.size();
     }
 
     if (world->lights) {
-      for (auto &&obj : world->lights)
+      for (auto &&obj : *world->lights)
         lightArray.push_back(obj->getIE());
     }
 
     void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
-    const int32 rouletteDepth = getParam<int>("rouletteDepth", 5);
-    const float maxRadiance   = getParam<float>("maxContribution", inf);
-    Texture2D *backplate = (Texture2D *)getParamObject("backplate", nullptr);
-    vec4f shadowCatcherPlane =
-        getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
-
-    ispc::PathTracer_set(getIE(),
-                         rouletteDepth,
-                         maxRadiance,
-                         backplate ? backplate->getIE() : nullptr,
-                         (ispc::vec4f &)shadowCatcherPlane,
-                         lightPtr,
-                         lightArray.size(),
-                         geometryLights);
+    ispc::PathTracer_setLights(
+        getIE(), lightPtr, lightArray.size(), geometryLights);
+    return nullptr;
   }
 
   OSP_REGISTER_RENDERER(PathTracer, pathtracer);
-  OSP_REGISTER_RENDERER(PathTracer, pt);
 
 }  // namespace ospray

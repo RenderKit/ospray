@@ -27,15 +27,14 @@ namespace ospray {
     virtual ~PathTracer() override;
     virtual std::string toString() const override;
     virtual void commit() override;
+    virtual void *beginFrame(FrameBuffer *, World *) override;
 
     void generateGeometryLights(const World &);
     void destroyGeometryLights();
 
     std::vector<void*> lightArray; // the 'IE's of the XXXLights
     size_t geometryLights {0}; // number of GeometryLights at beginning of lightArray
-    Ref<Data> lightData;
-
-    Ref<World> world;
+    bool useGeometryLights{true};
   };
 
 }// ::ospray

@@ -223,9 +223,6 @@ export void PathTracer_set(void *uniform _self
     , const uniform float maxRadiance
     , void *uniform backplate
     , const uniform vec4f &shadowCatcherPlane
-    , void **uniform lights
-    , const uniform uint32 numLights
-    , const uniform uint32 numGeoLights
     )
 {
   PathTracer *uniform self = (PathTracer *uniform)_self;
@@ -239,6 +236,14 @@ export void PathTracer_set(void *uniform _self
   self->shadowCatcher = l > 0.f;
   const uniform float rl = rcp(l);
   self->shadowCatcherPlane = make_vec4f(normal*rl, shadowCatcherPlane.w*rl);
+}
+
+export void PathTracer_setLights(void *uniform _self,
+    void **uniform lights,
+    const uniform uint32 numLights,
+    const uniform uint32 numGeoLights)
+{
+  PathTracer *uniform self = (PathTracer * uniform) _self;
 
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
@@ -251,7 +256,8 @@ export void* uniform PathTracer_create(void *uniform cppE)
   Renderer_Constructor(&self->super, cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  PathTracer_set(self, 5, inf, NULL, make_vec4f(0.f), NULL, 0, 0);
+  PathTracer_set(self, 5, inf, NULL, make_vec4f(0.f));
+  PathTracer_setLights(self, NULL, 0, 0);
 
   precomputeMicrofacetAlbedoTables();
   precomputeZOrder();

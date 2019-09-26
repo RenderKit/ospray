@@ -20,6 +20,7 @@
 #include "./Data.h"
 #include "./Managed.h"
 #include "Instance.h"
+#include "lights/Light.h"
 // stl
 #include <vector>
 // embree
