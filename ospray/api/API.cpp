@@ -576,10 +576,11 @@ extern "C" OSPWorld ospNewWorld() OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" OSPBounds ospGetWorldBounds(OSPWorld world) OSPRAY_CATCH_BEGIN
+extern "C" OSPBounds ospGetBounds(OSPObject obj) OSPRAY_CATCH_BEGIN
 {
+  THROW_IF_NULL_OBJECT(obj);
   ASSERT_DEVICE();
-  box3f bounds = currentDevice().getWorldBounds(world);
+  box3f bounds = currentDevice().getBounds(obj);
   return (OSPBounds&)bounds;
 }
 OSPRAY_CATCH_END({})

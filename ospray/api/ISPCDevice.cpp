@@ -302,10 +302,10 @@ namespace ospray {
       return (OSPWorld) new World;
     }
 
-    box3f ISPCDevice::getWorldBounds(OSPWorld _world)
+    box3f ISPCDevice::getBounds(OSPObject _obj)
     {
-      auto *world = (World*)_world;
-      return world->getBounds();
+      auto *obj = (ManagedObject*)_obj;
+      return obj->getBounds();
     }
 
     ///////////////////////////////////////////////////////////////////////////

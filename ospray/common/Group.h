@@ -40,6 +40,8 @@ namespace ospray {
     std::string toString() const override;
     void commit() override;
 
+    box3f getBounds() const override;
+
     OptionalScene embreeGeometryScene();
     OptionalScene embreeVolumeScene();
 

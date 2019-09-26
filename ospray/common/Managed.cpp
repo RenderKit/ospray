@@ -50,6 +50,11 @@ namespace ospray {
     }
   }
 
+  box3f ManagedObject::getBounds() const
+  {
+    return box3f(empty);
+  }
+
   ManagedObject *ManagedObject::getParamObject(const char *name,
                                                ManagedObject *valIfNotFound)
   {

@@ -92,8 +92,8 @@ namespace ospray {
 
       // Top-level Worlds /////////////////////////////////////////////////////
 
-      virtual OSPWorld newWorld()            = 0;
-      virtual box3f getWorldBounds(OSPWorld) = 0;
+      virtual OSPWorld newWorld()        = 0;
+      virtual box3f getBounds(OSPObject) = 0;
 
       // Object + Parameter Lifetime Management ///////////////////////////////
 

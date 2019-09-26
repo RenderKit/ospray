@@ -32,6 +32,8 @@ namespace ospray {
 
     void commit() override;
 
+    box3f getBounds() const override;
+
     affine3f xfm();
 
     // Data //

@@ -243,7 +243,7 @@ extern "C" {
     float upper[3];
   } OSPBounds;
 
-  OSPRAY_INTERFACE OSPBounds ospGetWorldBounds(OSPWorld);
+  OSPRAY_INTERFACE OSPBounds ospGetBounds(OSPObject);
 
   // Object + Parameter Lifetime Management ///////////////////////////////////
 

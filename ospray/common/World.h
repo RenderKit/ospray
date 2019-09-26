@@ -35,7 +35,7 @@ namespace ospray {
     std::string toString() const override;
     void commit() override;
 
-    box3f getBounds() const;
+    box3f getBounds() const override;
 
     // Data members //
 

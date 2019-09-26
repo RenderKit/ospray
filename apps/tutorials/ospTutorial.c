@@ -83,11 +83,15 @@ int main(int argc, const char **argv) {
   int32_t index[] = { 0, 1, 2,
                       1, 2, 3 };
 
+  printf("initialize OSPRay...");
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters, e.g. "--osp:debug"
   OSPError init_error = ospInit(&argc, argv);
   if (init_error != OSP_NO_ERROR)
     return init_error;
+
+  printf("done!\n");
+  printf("setting up camera...");
 
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");
@@ -97,6 +101,8 @@ int main(int argc, const char **argv) {
   ospSetParam(camera, "up", OSP_VEC3F, cam_up);
   ospCommit(camera); // commit each object to indicate modifications are done
 
+  printf("done!\n");
+  printf("setting up scene...");
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
@@ -148,6 +154,16 @@ int main(int argc, const char **argv) {
   ospRelease(instance);
   ospRelease(instances);
 
+  printf("done!\n");
+
+  // print out world bounds
+  OSPBounds worldBounds = ospGetBounds(world);
+  printf("\nworld bounds: ({%f, %f, %f}, {%f, %f, %f}\n\n",
+         worldBounds.lower[0], worldBounds.lower[1], worldBounds.lower[2],
+         worldBounds.upper[0], worldBounds.upper[1], worldBounds.upper[2]);
+
+  printf("setting up renderer...");
+
   // create renderer
   OSPRenderer renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
 
@@ -167,6 +183,8 @@ int main(int argc, const char **argv) {
   OSPFrameBuffer framebuffer = ospNewFrameBuffer(imgSize_x, imgSize_y, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
   ospResetAccumulation(framebuffer);
 
+  printf("rendering initial frame to firstFrame.ppm...");
+
   // render one frame
   ospRenderFrame(framebuffer, renderer, camera, world);
 
@@ -174,6 +192,9 @@ int main(int argc, const char **argv) {
   const uint32_t * fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
   writePPM("firstFrame.ppm", imgSize_x, imgSize_y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
+
+  printf("done!\n");
+  printf("rendering 10 accumulated frames to accumulatedFrame.ppm...");
 
   // render 10 more frames, which are accumulated to result in a better converged image
   for (int frames = 0; frames < 10; frames++)
@@ -183,6 +204,9 @@ int main(int argc, const char **argv) {
   writePPM("accumulatedFrame.ppm", imgSize_x, imgSize_y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
+  printf("done!\n");
+  printf("\ncleaning up objects...");
+
   // final cleanups
   ospRelease(renderer);
   ospRelease(camera);
@@ -190,6 +214,8 @@ int main(int argc, const char **argv) {
   ospRelease(light);
   ospRelease(framebuffer);
   ospRelease(world);
+
+  printf("done!\n");
 
   ospShutdown();
 

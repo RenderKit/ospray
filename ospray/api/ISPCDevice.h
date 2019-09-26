@@ -87,7 +87,7 @@ namespace ospray {
       // Top-level Worlds /////////////////////////////////////////////////////
 
       OSPWorld newWorld() override;
-      box3f getWorldBounds(OSPWorld) override;
+      box3f getBounds(OSPObject) override;
 
       // Object + Parameter Lifetime Management ///////////////////////////////
 

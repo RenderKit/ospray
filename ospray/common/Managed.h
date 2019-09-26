@@ -60,6 +60,8 @@ namespace ospray {
 
     void checkUnused();
 
+    virtual box3f getBounds() const;
+
     // Data members //
 
     void *ispcEquivalent{nullptr};

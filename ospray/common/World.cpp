@@ -171,6 +171,9 @@ namespace ospray {
     rtcGetSceneBounds(embreeSceneHandleGeometries, (RTCBounds *)&bounds);
     sceneBounds.extend(box3f(vec3f(bounds.lower[0]), vec3f(bounds.upper[0])));
 
+    rtcGetSceneBounds(embreeSceneHandleVolumes, (RTCBounds *)&bounds);
+    sceneBounds.extend(box3f(vec3f(bounds.lower[0]), vec3f(bounds.upper[0])));
+
     return sceneBounds;
   }
 
