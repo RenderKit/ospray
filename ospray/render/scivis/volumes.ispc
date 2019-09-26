@@ -48,7 +48,7 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
     TransferFunction *uniform tf = m->transferFunction;
 
     while (ray.t0 <= ray.t && alpha < 0.99f) {
-      const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
+      const float sample = Volume_getSample(volume, ray.org + ray.t0 * ray.dir);
 
       if (!isnan(sample)) {
         vec4f sampleColorOpacity = tf->get(tf, sample);
@@ -60,7 +60,11 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
         alpha = alpha + ((1.f - alpha) * clampedOpacity);
       }
 
+#if 0
       volume->stepRay(volume, tf, ray, m->samplingRate);
+#else
+      ray.t0 += 0.05;
+#endif
     }
   }
 

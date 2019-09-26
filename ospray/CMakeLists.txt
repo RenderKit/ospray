@@ -208,29 +208,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   volume/transferFunction/LinearTransferFunction.cpp
   volume/transferFunction/TransferFunction.ispc
   volume/transferFunction/TransferFunction.cpp
-
-
-  volume/structured/GridAccelerator.ispc
-  volume/structured/StructuredVolume.ispc
-  volume/structured/StructuredVolume.cpp
-
-  volume/structured/shared/SharedStructuredVolume.ispc
-  volume/structured/shared/SharedStructuredVolume.cpp
-
-  volume/unstructured/MinMaxBVH2.cpp
-  volume/unstructured/MinMaxBVH2.ispc
-  volume/unstructured/UnstructuredVolume.cpp
-  volume/unstructured/UnstructuredVolume.ispc
-
-  volume/amr/AMRAccel.cpp
-  volume/amr/AMRData.cpp
-  volume/amr/AMRVolume.ispc
-  volume/amr/AMRVolume.cpp
-  volume/amr/CellRef.ispc
-  volume/amr/DualCell.ispc
-  volume/amr/method_current.ispc
-  volume/amr/method_finest.ispc
-  volume/amr/method_octant.ispc
 )
 
 # -------------------------------------------------------
@@ -334,6 +311,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
     INTERFACE_INCLUDE_DIRECTORIES)
+
   ispc_include_directories(
     ${CMAKE_SOURCE_DIR}/ospray/include
     ${CMAKE_SOURCE_DIR}/ospray

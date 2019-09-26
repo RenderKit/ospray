@@ -41,9 +41,10 @@ unmasked void Volume_intersect_kernel(
 
   varying VolumeIntervals *uniform vIntervals =
       (varying VolumeIntervals * uniform) ctx->userPtr;
-  
+
   varying VolumeInterval *varying vInterval =
-      (varying VolumeInterval * varying) (vIntervals->intervals + vIntervals->numVolumeIntervals);
+      (varying VolumeInterval * varying)(vIntervals->intervals +
+                                         vIntervals->numVolumeIntervals);
 
   uniform int primID = args->primID;
 
@@ -93,8 +94,7 @@ export void Volume_getBoundingBox(uniform box3f *uniform ret,
   *ret = self->boundingBox;
 }
 
-export void Volume_set(void *uniform _self,
-                       void *uniform _embreeGeometry)
+export void Volume_set(void *uniform _self, void *uniform _embreeGeometry)
 {
   Volume *uniform self = (Volume * uniform) _self;
 
@@ -111,26 +111,30 @@ export void Volume_set(void *uniform _self,
 
 export void Volume_set_geomID(void *uniform _self, uniform int32 geomID)
 {
-  Volume *uniform self = (Volume *uniform)_self;
-  self->volumeID = geomID;
+  Volume *uniform self = (Volume * uniform) _self;
+  self->volumeID       = geomID;
 }
 
-export void *uniform Volume_createInstance_vklVolume(void *uniform cppEquivalent)
+export void *uniform
+Volume_createInstance_vklVolume(void *uniform cppEquivalent)
 {
   Volume *uniform self = uniform new Volume;
   Volume_Constructor(self, cppEquivalent);
   return self;
 }
 
-export void Volume_set_vklVolume(void *uniform _self, void *uniform vklVolume, box3f *uniform bounds)
+export void Volume_set_vklVolume(void *uniform _self,
+                                 void *uniform vklVolume,
+                                 box3f *uniform bounds)
 {
-  Volume *uniform self = (Volume *uniform)_self;
-  self->vklVolume = (VKLVolume) vklVolume;
-  self->boundingBox = *bounds;
+  Volume *uniform self = (Volume * uniform) _self;
+  self->vklVolume      = (VKLVolume)vklVolume;
+  self->boundingBox    = *bounds;
 }
 
-export void Volume_set_vklValueSelector(void *uniform _self, void *uniform vklValueSelector)
+export void Volume_set_vklValueSelector(void *uniform _self,
+                                        void *uniform vklValueSelector)
 {
-  Volume *uniform self = (Volume *uniform)_self;
-  self->vklValueSelector = (VKLValueSelector) vklValueSelector;
+  Volume *uniform self   = (Volume * uniform) _self;
+  self->vklValueSelector = (VKLValueSelector)vklValueSelector;
 }

@@ -29,7 +29,7 @@
 struct RaycastRenderer
 {
   /*! the base "Renderer" we are derived from */
-  uniform Renderer super;
+  Renderer super;
 };
 
 /*! a simple test-frame renderer that doesn't even trace a ray, just
@@ -360,7 +360,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
     TransferFunction *uniform tf = m->transferFunction;
 
     while (ray.t0 <= ray.t) {
-      const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
+      const float sample = Volume_getSample(volume, ray.org + ray.t0 * ray.dir);
 
       if (!isnan(sample)) {
         vec4f sampleColorOpacity = tf->get(tf, sample);
@@ -375,7 +375,11 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
       if (alpha >= 0.99f)
         break;
 
+#if 0
       volume->stepRay(volume, tf, ray, m->samplingRate);
+#else
+      ray.t0 += 0.05;
+#endif
     }
   }
 }

@@ -27,7 +27,7 @@ namespace ospray {
   void VKLSharedStructuredVolume::commit()
   {
     ispcEquivalent = ispc::Volume_createInstance_vklVolume(this);
-    vklVolume = vklNewVolume("structured_regular");
+    vklVolume      = vklNewVolume("structured_regular");
 
     // pass all supported parameters through to VKL volume object
     std::for_each(params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
@@ -35,21 +35,23 @@ namespace ospray {
 
       if (param.data.is<vec3f>()) {
         vklSetVec3f(vklVolume,
-                 param.name.c_str(),
-                 param.data.get<vec3f>().x,
-                 param.data.get<vec3f>().y,
-                 param.data.get<vec3f>().z);
+                    param.name.c_str(),
+                    param.data.get<vec3f>().x,
+                    param.data.get<vec3f>().y,
+                    param.data.get<vec3f>().z);
       } else if (param.data.is<vec3i>()) {
         vklSetVec3i(vklVolume,
-                 param.name.c_str(),
-                 param.data.get<vec3i>().x,
-                 param.data.get<vec3i>().y,
-                 param.data.get<vec3i>().z);
+                    param.name.c_str(),
+                    param.data.get<vec3i>().x,
+                    param.data.get<vec3i>().y,
+                    param.data.get<vec3i>().z);
       } else if (param.data.is<ManagedObject *>()) {
         Data *data = (Data *)param.data.get<ManagedObject *>();
         if (data->type == OSP_FLOAT) {
-          VKLData vklData = vklNewData(
-              data->numItems.product(), VKL_FLOAT, data->data(), VKL_DATA_SHARED_BUFFER);
+          VKLData vklData = vklNewData(data->numItems.product(),
+                                       VKL_FLOAT,
+                                       data->data(),
+                                       VKL_DATA_SHARED_BUFFER);
           vklSetData(vklVolume, param.name.c_str(), vklData);
           vklRelease(vklData);
         } else {
@@ -64,11 +66,13 @@ namespace ospray {
       }
     });
     vklCommit(vklVolume);
-    (vkl_box3f&) bounds = vklGetBoundingBox(vklVolume);
+    (vkl_box3f &)bounds = vklGetBoundingBox(vklVolume);
     Volume::commit();
-    ispc::Volume_set_vklVolume(ispcEquivalent, vklVolume, (ispc::box3f*)&bounds);
+    ispc::Volume_set_vklVolume(
+        ispcEquivalent, vklVolume, (ispc::box3f *)&bounds);
   }
 
   OSP_REGISTER_VOLUME(VKLSharedStructuredVolume, vkl_structured_volume);
+  OSP_REGISTER_VOLUME(VKLSharedStructuredVolume, shared_structured_volume);
 
 }  // namespace ospray

@@ -117,7 +117,7 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
   Volume *uniform volume    = self->volumetricModel->volume;
 
   if (flags & DG_NS) {
-    dg.Ns = volume->computeGradient(volume, dg.P);
+    dg.Ns = Volume_getGradient(volume, dg.P);
     if (dot(dg.Ns, dg.Ns) < 1e-6f)
       dg.Ns = neg(ray.dir);  // make_vec3f(1.f,0.f,0.f);
   }
