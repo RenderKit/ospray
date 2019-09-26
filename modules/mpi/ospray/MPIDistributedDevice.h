@@ -90,6 +90,7 @@ struct MPIDistributedDevice : public api::Device
   // Top-level Worlds /////////////////////////////////////////////////////
 
   OSPWorld newWorld() override;
+  box3f getBounds(OSPObject) override;
 
   // OSPRay Data Arrays ///////////////////////////////////////////////////
 
@@ -103,65 +104,6 @@ struct MPIDistributedDevice : public api::Device
   void copyData(const OSPData source,
       OSPData destination,
       const vec3i &DestinationIndex) override;
-
-  /*! assign (named) string parameter to an object */
-  void setString(OSPObject object, const char *bufName, const char *s) override;
-
-  /*! assign (named) data item as a parameter to an object */
-  void setObject(
-      OSPObject target, const char *bufName, OSPObject value) override;
-
-  /*! assign (named) float parameter to an object */
-  void setBool(OSPObject object, const char *bufName, const bool b) override;
-
-  /*! assign (named) float parameter to an object */
-  void setFloat(OSPObject object, const char *bufName, const float f) override;
-
-  /*! assign (named) vec2f parameter to an object */
-  void setVec2f(OSPObject object, const char *bufName, const vec2f &v) override;
-
-  /*! assign (named) vec3f parameter to an object */
-  void setVec3f(OSPObject object, const char *bufName, const vec3f &v) override;
-
-  /*! assign (named) vec4f parameter to an object */
-  void setVec4f(OSPObject object, const char *bufName, const vec4f &v) override;
-
-  /*! assign (named) int parameter to an object */
-  void setInt(OSPObject object, const char *bufName, const int f) override;
-
-  /*! assign (named) vec2i parameter to an object */
-  void setVec2i(OSPObject object, const char *bufName, const vec2i &v) override;
-
-  /*! assign (named) vec3i parameter to an object */
-  void setVec3i(OSPObject object, const char *bufName, const vec3i &v) override;
-
-  void setVec4i(OSPObject object, const char *bufName, const vec4i &v) override;
-
-  void setBox1f(OSPObject object, const char *bufName, const box1f &v) override;
-
-  void setBox1i(OSPObject object, const char *bufName, const box1i &v) override;
-
-  void setBox2f(OSPObject object, const char *bufName, const box2f &v) override;
-
-  void setBox2i(OSPObject object, const char *bufName, const box2i &v) override;
-
-  void setBox3f(OSPObject object, const char *bufName, const box3f &v) override;
-
-  void setBox3i(OSPObject object, const char *bufName, const box3i &v) override;
-
-  void setBox4f(OSPObject object, const char *bufName, const box4f &v) override;
-
-  void setBox4i(OSPObject object, const char *bufName, const box4i &v) override;
-
-  void setLinear3f(
-      OSPObject object, const char *bufName, const linear3f &v) override;
-
-  void setAffine3f(
-      OSPObject object, const char *bufName, const affine3f &v) override;
-
-  /*! add untyped void pointer to object - this will *ONLY* work in local
-      rendering!  */
-  void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
   /*! create a new renderer object (out of list of registered renderers) */
   OSPRenderer newRenderer(const char *type) override;
@@ -204,8 +146,14 @@ struct MPIDistributedDevice : public api::Device
 
   // Object + Parameter Lifetime Management ///////////////////////////////
 
+  void setObjectParam(OSPObject object,
+      const char *name,
+      OSPDataType type,
+      const void *mem) override;
+
+  void removeObjectParam(OSPObject object, const char *name) override;
+
   void commit(OSPObject object) override;
-  void removeParam(OSPObject object, const char *name) override;
   void release(OSPObject _obj) override;
   void retain(OSPObject _obj) override;
 

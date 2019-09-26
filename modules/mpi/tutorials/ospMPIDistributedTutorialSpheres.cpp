@@ -234,11 +234,11 @@ OSPInstance makeLocalSpheres(
   }
 
   OSPData sphereData = ospNewData(spheres.size(), OSP_VEC3F, spheres.data());
+  ospCommit(sphereData);
 
   vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
   OSPMaterial material = ospNewMaterial("scivis", "SciVisMaterial");
-  ospSetVec3fv(material, "Kd", &color.x);
-  ospSetVec3f(material, "Ks", 1.f, 1.f, 1.f);
+  ospSetParam(material, "Kd", OSP_VEC3F, &color.x);
   ospCommit(material);
 
   OSPGeometry sphereGeom = ospNewGeometry("spheres");

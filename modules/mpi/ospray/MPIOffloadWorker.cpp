@@ -56,7 +56,8 @@ void runWorker(bool useMPIFabric)
   auto offloadDevice = ospray::api::Device::current;
 
   OSPDevice distribDevice = ospNewDevice("mpi_distributed");
-  ospDeviceSetVoidPtr(distribDevice, "worldCommunicator", &worker.comm);
+  ospDeviceSetParam(
+      distribDevice, "worldCommunicator", OSP_VOID_PTR, &worker.comm);
   ospDeviceCommit(distribDevice);
   ospSetCurrentDevice(distribDevice);
 

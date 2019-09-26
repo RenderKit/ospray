@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "MPIDistributedDevice.h"
+#include <map>
 #include "api/ISPCDevice.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
@@ -37,6 +38,96 @@ namespace ospray {
 namespace mpi {
 
 // Helper functions ///////////////////////////////////////////////////////
+
+using SetParamFcn = void(OSPObject, const char *, const void *);
+
+template <typename T>
+static void setParamOnObject(OSPObject _obj, const char *p, const T &v)
+{
+  auto *obj = lookupObject<ManagedObject>(_obj);
+  obj->setParam(p, v);
+}
+
+#define declare_param_setter(TYPE)                                             \
+  {                                                                            \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) {   \
+      setParamOnObject(o, p, *(TYPE *)v);                                      \
+    }                                                                          \
+  }
+
+#define declare_param_setter_object(TYPE)                                      \
+  {                                                                            \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) {   \
+      auto *obj = lookupObject<ManagedObject>(                                 \
+          *reinterpret_cast<const OSPObject *>(v));                            \
+      setParamOnObject(o, p, obj);                                             \
+    }                                                                          \
+  }
+
+static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
+    declare_param_setter(api::Device *),
+    declare_param_setter(void *),
+    declare_param_setter(bool),
+    declare_param_setter_object(ManagedObject *),
+    declare_param_setter_object(Camera *),
+    declare_param_setter_object(Data *),
+    declare_param_setter_object(FrameBuffer *),
+    declare_param_setter_object(Future *),
+    declare_param_setter_object(GeometricModel *),
+    declare_param_setter_object(Group *),
+    declare_param_setter_object(ImageOp *),
+    declare_param_setter_object(Instance *),
+    declare_param_setter_object(Light *),
+    declare_param_setter_object(Material *),
+    declare_param_setter_object(Renderer *),
+    declare_param_setter_object(Texture *),
+    declare_param_setter_object(TransferFunction *),
+    declare_param_setter_object(Volume *),
+    declare_param_setter_object(VolumetricModel *),
+    declare_param_setter_object(World *),
+    declare_param_setter(char *),
+    declare_param_setter(char),
+    declare_param_setter(unsigned char),
+    declare_param_setter(vec2uc),
+    declare_param_setter(vec3uc),
+    declare_param_setter(vec4uc),
+    declare_param_setter(short),
+    declare_param_setter(unsigned short),
+    declare_param_setter(int),
+    declare_param_setter(vec2i),
+    declare_param_setter(vec3i),
+    declare_param_setter(vec4i),
+    declare_param_setter(unsigned int),
+    declare_param_setter(vec2ui),
+    declare_param_setter(vec3ui),
+    declare_param_setter(vec4ui),
+    declare_param_setter(long),
+    declare_param_setter(vec2l),
+    declare_param_setter(vec3l),
+    declare_param_setter(vec4l),
+    declare_param_setter(unsigned long),
+    declare_param_setter(vec2ul),
+    declare_param_setter(vec3ul),
+    declare_param_setter(vec4ul),
+    declare_param_setter(float),
+    declare_param_setter(vec2f),
+    declare_param_setter(vec3f),
+    declare_param_setter(vec4f),
+    declare_param_setter(double),
+    declare_param_setter(box1i),
+    declare_param_setter(box2i),
+    declare_param_setter(box3i),
+    declare_param_setter(box4i),
+    declare_param_setter(box1f),
+    declare_param_setter(box2f),
+    declare_param_setter(box3f),
+    declare_param_setter(box4f),
+    declare_param_setter(linear2f),
+    declare_param_setter(linear3f),
+    declare_param_setter(affine2f),
+    declare_param_setter(affine3f)};
+
+#undef declare_param_setter
 
 template <typename OSPRAY_TYPE, typename API_TYPE>
 inline API_TYPE createLocalObject(const char *type)
@@ -180,6 +271,12 @@ OSPWorld MPIDistributedDevice::newWorld()
   return (OSPWorld)(int64)(handle);
 }
 
+box3f MPIDistributedDevice::getBounds(OSPObject _obj)
+{
+  auto *obj = lookupObject<ManagedObject>(_obj);
+  return obj->getBounds();
+}
+
 OSPData MPIDistributedDevice::newSharedData(const void *sharedData,
     OSPDataType type,
     const vec3i &numItems,
@@ -200,164 +297,9 @@ void MPIDistributedDevice::copyData(
   dst->copy(*(Data *)source, destinationIndex);
 }
 
-void MPIDistributedDevice::setVoidPtr(
-    OSPObject _object, const char *bufName, void *v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setString(
-    OSPObject _object, const char *bufName, const char *s)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam<std::string>(bufName, s);
-}
-
 int MPIDistributedDevice::loadModule(const char *name)
 {
   return loadLocalModule(name);
-}
-
-void MPIDistributedDevice::setBool(
-    OSPObject _object, const char *bufName, const bool b)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, b);
-}
-
-void MPIDistributedDevice::setFloat(
-    OSPObject _object, const char *bufName, const float f)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, f);
-}
-
-void MPIDistributedDevice::setInt(
-    OSPObject _object, const char *bufName, const int i)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, i);
-}
-
-void MPIDistributedDevice::setVec2f(
-    OSPObject _object, const char *bufName, const vec2f &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setVec3f(
-    OSPObject _object, const char *bufName, const vec3f &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setVec4f(
-    OSPObject _object, const char *bufName, const vec4f &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setVec2i(
-    OSPObject _object, const char *bufName, const vec2i &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setVec3i(
-    OSPObject _object, const char *bufName, const vec3i &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setVec4i(
-    OSPObject _object, const char *bufName, const vec4i &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setObject(
-    OSPObject _object, const char *bufName, OSPObject _value)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  auto *value = lookupObject<ManagedObject>(_value);
-  object->setParam(bufName, value);
-}
-
-void MPIDistributedDevice::setBox1f(
-    OSPObject _object, const char *bufName, const box1f &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setBox1i(
-    OSPObject _object, const char *bufName, const box1i &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setBox2f(
-    OSPObject _object, const char *bufName, const box2f &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setBox2i(
-    OSPObject _object, const char *bufName, const box2i &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setBox3f(
-    OSPObject _object, const char *bufName, const box3f &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setBox3i(
-    OSPObject _object, const char *bufName, const box3i &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setBox4f(
-    OSPObject _object, const char *bufName, const box4f &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setBox4i(
-    OSPObject _object, const char *bufName, const box4i &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setLinear3f(
-    OSPObject _object, const char *bufName, const linear3f &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
-}
-
-void MPIDistributedDevice::setAffine3f(
-    OSPObject _object, const char *bufName, const affine3f &v)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->setParam(bufName, v);
 }
 
 OSPImageOperation MPIDistributedDevice::newImageOp(const char *type)
@@ -490,16 +432,35 @@ float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)
   return fb->getVariance();
 }
 
+void MPIDistributedDevice::setObjectParam(
+    OSPObject object, const char *name, OSPDataType type, const void *mem)
+{
+  if (type == OSP_UNKNOWN)
+    throw std::runtime_error("cannot set OSP_UNKNOWN parameter type");
+
+  if (type == OSP_BYTE || type == OSP_RAW) {
+    setParamOnObject(object, name, *(const byte_t *)mem);
+    return;
+  }
+
+  setParamFcns[type](object, name, mem);
+}
+
+void MPIDistributedDevice::removeObjectParam(
+    OSPObject _object, const char *name)
+{
+  auto *object = lookupObject<ManagedObject>(_object);
+  auto *existing = object->getParam<ManagedObject *>(name, nullptr);
+  if (existing) {
+    existing->refDec();
+  }
+  object->removeParam(name);
+}
+
 void MPIDistributedDevice::commit(OSPObject _object)
 {
   auto *object = lookupObject<ManagedObject>(_object);
   object->commit();
-}
-
-void MPIDistributedDevice::removeParam(OSPObject _object, const char *name)
-{
-  auto *object = lookupObject<ManagedObject>(_object);
-  object->removeParam(name);
 }
 
 void MPIDistributedDevice::release(OSPObject _obj)
