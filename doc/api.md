@@ -712,8 +712,7 @@ to `ospNewTransferFunction` and it is controlled by these parameters:
   : Parameters accepted by the linear transfer function.
 
 
-VolumetricModels
------------------
+### VolumetricModels
 
 Volumes in OSPRay are given volume rendering apperance information through
 VolumetricModels. To create a volume instance, call
@@ -1009,8 +1008,7 @@ function].
   ---------- ---------- ------------------------------------------------------
   : Parameters defining an isosurfaces geometry.
 
-GeometricModels
------------------
+### GeometricModels
 
 Geometries are matched with surface appearance information through
 GeometricModels. These take a geometry, which defines the surface
@@ -1035,8 +1033,172 @@ material information. To create a geometry instance, call
   : Parameters understood by GeometricModel.
 
 
-Groups
------------------
+Lights
+-----
+
+To create a new light source of given type `type` use
+
+    OSPLight ospNewLight(const char *type);
+
+The call returns `NULL` if that type of light is not known by the
+renderer, or else an `OSPLight` handle to the created light source.
+All light sources[^1] accept the following parameters:
+
+  Type      Name        Default  Description
+  --------- ---------- --------  ---------------------------------------
+  vec3f     color         white  color of the light
+  float     intensity         1  intensity of the light (a factor)
+  bool      visible        true  whether the light can be directly seen
+  --------- ---------- --------  ---------------------------------------
+  : Parameters accepted by all lights.
+
+The following light types are supported by most OSPRay renderers.
+
+[^1]: The [HDRI light] is an exception, it knows about `intensity`, but
+not about `color`.
+
+### Directional Light / Distant Light
+
+The distant light (or traditionally the directional light) is thought to
+be far away (outside of the scene), thus its light arrives (almost)
+as parallel rays. It is created by passing the type string "`distant`"
+to `ospNewLight`. In addition to the [general parameters](#lights)
+understood by all lights the distant light supports the following special
+parameters:
+
+  Type      Name             Description
+  --------- ---------------- ---------------------------------------------
+  vec3f     direction        main emission direction of the distant light
+  float     angularDiameter  apparent size (angle in degree) of the light
+  --------- ---------------- ---------------------------------------------
+  : Special parameters accepted by the distant light.
+
+Setting the angular diameter to a value greater than zero will result in
+soft shadows when the renderer uses stochastic sampling (like the [path
+tracer]). For instance, the apparent size of the sun is about 0.53°.
+
+### Point Light / Sphere Light
+
+The sphere light (or the special case point light) is a light emitting
+uniformly in all directions from the surface towards the outside.
+It does not emit any light towards the inside of the sphere.
+It is created by passing the type string "`sphere`" to `ospNewLight`.
+In addition to the [generalparameters](#lights) understood by all lights
+the sphere light supports the following special parameters:
+
+  Type      Name      Description
+  --------- --------- -----------------------------------------------
+  vec3f     position  the center of the sphere light, in world-space
+  float     radius    the size of the sphere light
+  --------- --------- -----------------------------------------------
+  : Special parameters accepted by the sphere light.
+
+Setting the radius to a value greater than zero will result in soft
+shadows when the renderer uses stochastic sampling (like the [path
+tracer]).
+
+### Spotlight
+
+The spotlight is a light emitting into a cone of directions. It is
+created by passing the type string "`spot`" to `ospNewLight`. In
+addition to the [general parameters](#lights) understood by all lights
+the spotlight supports the special parameters listed in the table.
+
+  ------ ------------- ----------- ----------------------------------------------
+  Type   Name          Default     Description
+  ------ ------------- ----------- ----------------------------------------------
+  vec3f  position      $(0, 0, 0)$ the center of the spotlight, in world-space
+
+  vec3f  direction     $(0, 0, 1)$ main emission direction of the spot
+
+  float  openingAngle          180 full opening angle (in degree) of the spot;
+                                   outside of this cone is no illumination
+
+  float  penumbraAngle           5 size (angle in degree) of the "penumbra", the
+                                   region between the rim (of the illumination
+                                   cone) and full intensity of the spot; should
+                                   be smaller than half of `openingAngle`
+
+  float  radius                  0 the size of the spotlight, the radius of a
+                                   disk with normal `direction`
+  ------ ------------- ----------- ----------------------------------------------
+  : Special parameters accepted by the spotlight.
+
+![Angles used by the spotlight.][imgSpotLight]
+
+Setting the radius to a value greater than zero will result in soft
+shadows when the renderer uses stochastic sampling (like the [path
+tracer]).
+
+### Quad Light
+
+The quad^[actually a parallelogram] light is a planar, procedural area light source emitting
+uniformly on one side into the half-space. It is created by passing the
+type string "`quad`" to `ospNewLight`. In addition to the [general
+parameters](#lights) understood by all lights the quad light supports
+the following special parameters:
+
+  Type   Name      Description
+  ------ --------- -----------------------------------------------------
+  vec3f  position  world-space position of one vertex of the quad light
+  vec3f  edge1     vector to one adjacent vertex
+  vec3f  edge2     vector to the other adjacent vertex
+  ------ --------- -----------------------------------------------------
+  : Special parameters accepted by the quad light.
+
+![Defining a quad light which emits toward the reader.][imgQuadLight]
+
+The emission side is determined by the cross product of `edge1`×`edge2`.
+Note that only renderers that use stochastic sampling (like the path
+tracer) will compute soft shadows from the quad light. Other renderers
+will just sample the center of the quad light, which results in hard
+shadows.
+
+### HDRI Light
+
+The HDRI light is a textured light source surrounding the scene and
+illuminating it from infinity. It is created by passing the type string
+"`hdri`" to `ospNewLight`. In addition to the [parameter
+`intensity`](#lights) the HDRI light supports the following special
+parameters:
+
+  ------------ --------- --------------------------------------------------
+  Type         Name      Description
+  ------------ --------- --------------------------------------------------
+  vec3f        up        up direction of the light in world-space
+
+  vec3f        direction direction to which the center of the texture will
+                         be mapped to (analog to [panoramic camera])
+
+  OSPTexture   map       environment map in latitude / longitude format
+  ------------ --------- --------------------------------------------------
+  : Special parameters accepted by the HDRI light.
+
+![Orientation and Mapping of an HDRI Light.][imgHDRILight]
+
+Note that the currently only the [path tracer] supports the HDRI light.
+
+### Ambient Light
+
+The ambient light surrounds the scene and illuminates it from infinity
+with constant radiance (determined by combining the [parameters `color`
+and `intensity`](#lights)). It is created by passing the type string
+"`ambient`" to `ospNewLight`.
+
+Note that the [SciVis renderer] uses ambient lights to control the color
+and intensity of the computed ambient occlusion (AO).
+
+### Emissive Objects
+
+The [path tracer] will consider illumination by [geometries] which have
+a light emitting material assigned (for example the [Luminous]
+material).
+
+
+
+Scene Object Hierarchy
+----------------------
+### Groups
 
 Groups in OSPRay represent collections of GeometricModels and
 VolumetricModels which share a common local-space coordinate system. To create
@@ -1044,20 +1206,31 @@ a group call
 
     OSPGroup ospNewGroup();
 
-  ------------------ --------------- ---------- --------------------------------------
-  Type               Name               Default Description
-  ------------------ --------------- ---------- --------------------------------------
-  OSPData            geometry              NULL data array of OSPGeometricModel
-                                                geometry objects in the scene
+  ------------------ --------------- ----------  --------------------------------------
+  Type               Name               Default  Description
+  ------------------ --------------- ----------  --------------------------------------
+  OSPData            geometry              NULL  [data] array of [GeometricModels]
 
-  OSPData            volume                NULL data array of OSPVolumetricModel
-                                                volume objects in the scene
+  OSPData            volume                NULL  [data] array of [VolumetricModels]
+
+  bool               dynamicScene         false  use RTC_SCENE_DYNAMIC flag (faster
+                                                 BVH build, slower ray traversal),
+                                                 otherwise uses RTC_SCENE_STATIC flag
+                                                 (faster ray traversal, slightly
+                                                 slower BVH build)
+
+  bool               compactMode          false  tell Embree to use a more compact BVH
+                                                 in memory by trading ray traversal
+                                                 performance
+
+  bool               robustMode           false  tell Embree to enable more robust ray
+                                                 intersection code paths (slightly
+                                                 slower)
   ------------------ --------------- ---------- ---------------------------------------
-  : Parameters understood by Group
+  : Parameters understood by groups.
 
 
-Instances
------------------
+### Instances
 
 Instances in OSPRay represent a single group's placement into the world via
 a transform. To create and instance call
@@ -1070,7 +1243,7 @@ a transform. To create and instance call
   affine3f           xfm             (identity) world-space transform for all attached
                                                 geometries and volumes
   ------------------ --------------- ---------- ---------------------------------------
-  : Parameters understood by Instance
+  : Parameters understood by instances.
 
 
 ### World
@@ -1236,166 +1409,6 @@ supports the following special parameters:
 
 The path tracer requires that [materials] are assigned to [geometries],
 otherwise surfaces are treated as completely black.
-
-### Lights
-
-To create a new light source of given type `type` use
-
-    OSPLight ospNewLight(const char *type);
-
-The call returns `NULL` if that type of light is not known by the
-renderer, or else an `OSPLight` handle to the created light source.
-All light sources[^1] accept the following parameters:
-
-  Type      Name        Default  Description
-  --------- ---------- --------  ---------------------------------------
-  vec3f     color         white  color of the light
-  float     intensity         1  intensity of the light (a factor)
-  bool      visible        true  whether the light can be directly seen
-  --------- ---------- --------  ---------------------------------------
-  : Parameters accepted by all lights.
-
-The following light types are supported by most OSPRay renderers.
-
-[^1]: The [HDRI light] is an exception, it knows about `intensity`, but
-not about `color`.
-
-#### Directional Light / Distant Light
-
-The distant light (or traditionally the directional light) is thought to
-be far away (outside of the scene), thus its light arrives (almost)
-as parallel rays. It is created by passing the type string "`distant`"
-to `ospNewLight`. In addition to the [general parameters](#lights)
-understood by all lights the distant light supports the following special
-parameters:
-
-  Type      Name             Description
-  --------- ---------------- ---------------------------------------------
-  vec3f     direction        main emission direction of the distant light
-  float     angularDiameter  apparent size (angle in degree) of the light
-  --------- ---------------- ---------------------------------------------
-  : Special parameters accepted by the distant light.
-
-Setting the angular diameter to a value greater than zero will result in
-soft shadows when the renderer uses stochastic sampling (like the [path
-tracer]). For instance, the apparent size of the sun is about 0.53°.
-
-#### Point Light / Sphere Light
-
-The sphere light (or the special case point light) is a light emitting
-uniformly in all directions from the surface towards the outside.
-It does not emit any light towards the inside of the sphere.
-It is created by passing the type string "`sphere`" to `ospNewLight`.
-In addition to the [generalparameters](#lights) understood by all lights
-the sphere light supports the following special parameters:
-
-  Type      Name      Description
-  --------- --------- -----------------------------------------------
-  vec3f     position  the center of the sphere light, in world-space
-  float     radius    the size of the sphere light
-  --------- --------- -----------------------------------------------
-  : Special parameters accepted by the sphere light.
-
-Setting the radius to a value greater than zero will result in soft
-shadows when the renderer uses stochastic sampling (like the [path
-tracer]).
-
-#### Spotlight
-
-The spotlight is a light emitting into a cone of directions. It is
-created by passing the type string "`spot`" to `ospNewLight`. In
-addition to the [general parameters](#lights) understood by all lights
-the spotlight supports the special parameters listed in the table.
-
-  ------ ------------- ----------- ----------------------------------------------
-  Type   Name          Default     Description
-  ------ ------------- ----------- ----------------------------------------------
-  vec3f  position      $(0, 0, 0)$ the center of the spotlight, in world-space
-
-  vec3f  direction     $(0, 0, 1)$ main emission direction of the spot
-
-  float  openingAngle          180 full opening angle (in degree) of the spot;
-                                   outside of this cone is no illumination
-
-  float  penumbraAngle           5 size (angle in degree) of the "penumbra", the
-                                   region between the rim (of the illumination
-                                   cone) and full intensity of the spot; should
-                                   be smaller than half of `openingAngle`
-
-  float  radius                  0 the size of the spotlight, the radius of a
-                                   disk with normal `direction`
-  ------ ------------- ----------- ----------------------------------------------
-  : Special parameters accepted by the spotlight.
-
-![Angles used by the spotlight.][imgSpotLight]
-
-Setting the radius to a value greater than zero will result in soft
-shadows when the renderer uses stochastic sampling (like the [path
-tracer]).
-
-#### Quad Light
-
-The quad^[actually a parallelogram] light is a planar, procedural area light source emitting
-uniformly on one side into the half-space. It is created by passing the
-type string "`quad`" to `ospNewLight`. In addition to the [general
-parameters](#lights) understood by all lights the quad light supports
-the following special parameters:
-
-  Type   Name      Description
-  ------ --------- -----------------------------------------------------
-  vec3f  position  world-space position of one vertex of the quad light
-  vec3f  edge1     vector to one adjacent vertex
-  vec3f  edge2     vector to the other adjacent vertex
-  ------ --------- -----------------------------------------------------
-  : Special parameters accepted by the quad light.
-
-![Defining a quad light which emits toward the reader.][imgQuadLight]
-
-The emission side is determined by the cross product of `edge1`×`edge2`.
-Note that only renderers that use stochastic sampling (like the path
-tracer) will compute soft shadows from the quad light. Other renderers
-will just sample the center of the quad light, which results in hard
-shadows.
-
-#### HDRI Light
-
-The HDRI light is a textured light source surrounding the scene and
-illuminating it from infinity. It is created by passing the type string
-"`hdri`" to `ospNewLight`. In addition to the [parameter
-`intensity`](#lights) the HDRI light supports the following special
-parameters:
-
-  ------------ --------- --------------------------------------------------
-  Type         Name      Description
-  ------------ --------- --------------------------------------------------
-  vec3f        up        up direction of the light in world-space
-
-  vec3f        direction direction to which the center of the texture will
-                         be mapped to (analog to [panoramic camera])
-
-  OSPTexture   map       environment map in latitude / longitude format
-  ------------ --------- --------------------------------------------------
-  : Special parameters accepted by the HDRI light.
-
-![Orientation and Mapping of an HDRI Light.][imgHDRILight]
-
-Note that the currently only the [path tracer] supports the HDRI light.
-
-#### Ambient Light
-
-The ambient light surrounds the scene and illuminates it from infinity
-with constant radiance (determined by combining the [parameters `color`
-and `intensity`](#lights)). It is created by passing the type string
-"`ambient`" to `ospNewLight`.
-
-Note that the [SciVis renderer] uses ambient lights to control the color
-and intensity of the computed ambient occlusion (AO).
-
-#### Emissive Objects
-
-The [path tracer] will consider illumination by [geometries] which have
-a light emitting material assigned (for example the [Luminous]
-material).
 
 ### Materials
 
