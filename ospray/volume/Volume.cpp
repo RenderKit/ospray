@@ -27,98 +27,9 @@
 
 namespace ospray {
 
-  //////////////////////////////////////////////
-  // helper for converting OSP to VKL data types
-  std::unordered_map<OSPDataType, VKLDataType> OspToVklDataType =
-  {
-    { OSP_CHAR,   VKL_CHAR   },
-    { OSP_UCHAR , VKL_UCHAR  },
-    { OSP_VEC2UC, VKL_UCHAR2 },
-    { OSP_VEC3UC, VKL_UCHAR3 },
-    { OSP_VEC4UC, VKL_UCHAR4 },
-    { OSP_SHORT , VKL_SHORT  },
-    { OSP_USHORT, VKL_USHORT },
-    { OSP_INT,    VKL_INT    },
-    { OSP_VEC2I,  VKL_INT2   },
-    { OSP_VEC3I,  VKL_INT3   },
-    { OSP_VEC4I,  VKL_INT4   },
-    { OSP_UINT,   VKL_UINT   },
-    { OSP_VEC2UI, VKL_UINT2  },
-    { OSP_VEC3UI, VKL_UINT3  },
-    { OSP_VEC4UI, VKL_UINT4  },
-    { OSP_LONG,   VKL_LONG   },
-    { OSP_VEC2L,  VKL_LONG2  },
-    { OSP_VEC3L,  VKL_LONG3  },
-    { OSP_VEC4L,  VKL_LONG4  },
-    { OSP_ULONG,  VKL_ULONG  },
-    { OSP_VEC2UL, VKL_ULONG2 },
-    { OSP_VEC3UL, VKL_ULONG3 },
-    { OSP_VEC4UL, VKL_ULONG4 },
-    { OSP_FLOAT,  VKL_FLOAT  },
-    { OSP_VEC2F,  VKL_FLOAT2 },
-    { OSP_VEC3F,  VKL_FLOAT3 },
-    { OSP_VEC4F,  VKL_FLOAT4 },
-    { OSP_DOUBLE, VKL_DOUBLE },
-    { OSP_BOX1I,  VKL_BOX1I  },
-    { OSP_BOX2I,  VKL_BOX2I  },
-    { OSP_BOX3I,  VKL_BOX3I  },
-    { OSP_BOX4I,  VKL_BOX4I  },
-    { OSP_BOX1F,  VKL_BOX1F  },
-    { OSP_BOX2F,  VKL_BOX2F  },
-    { OSP_BOX3F,  VKL_BOX3F  },
-    { OSP_BOX4F,  VKL_BOX4F  },
-    { OSP_DATA,   VKL_DATA   }
-  };
+  // Helper for converting OSP to VKL data types //////////////////////////////
 
-  inline VKLDataType getVKLDataType(OSPDataType ospDataType)
-  {
-    auto vklDataType = OspToVklDataType.find(ospDataType);
-    if (vklDataType == OspToVklDataType.end()) {
-      std::cerr << "unknown data type " << ospDataType << std::endl;
-      return VKL_UNKNOWN;
-    }
-    return vklDataType->second;
-  }
-  //////////////////////////////////////////////
-
-  Volume::Volume()
-  {
-    managedObjectType = OSP_VOLUME;
-  }
-
-  Volume::~Volume()
-  {
-    if (embreeGeometry)
-      rtcReleaseGeometry(embreeGeometry);
-  }
-
-  std::string Volume::toString() const
-  {
-    return "ospray::Volume";
-  }
-
-  Volume *Volume::createInstance(const std::string &type)
-  {
-    return createInstanceHelper<Volume, OSP_VOLUME>(type);
-  }
-
-  void Volume::commit()
-  {
-    createEmbreeGeometry();
-
-    ispc::Volume_set(ispcEquivalent, embreeGeometry);
-  }
-
-  void Volume::createEmbreeGeometry()
-  {
-    if (embreeGeometry)
-      rtcReleaseGeometry(embreeGeometry);
-
-    embreeGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-  }
-
-  inline VKLDataType getVKLDataType(OSPDataType dataType)
+  static VKLDataType getVKLDataType(OSPDataType dataType)
   {
     switch (dataType)
     {
@@ -159,11 +70,49 @@ namespace ospray {
       case OSP_BOX3F:  return VKL_BOX3F;
       case OSP_BOX4F:  return VKL_BOX4F;
       case OSP_DATA:   return VKL_DATA;
-      defaut:
+      default:
         std::cerr << "[Volume] unknown data type " << dataType << std::endl;
         return VKL_UNKNOWN;
     }
-    return VKL_UNKNOWN;
+  }
+
+  // Volume defintions ////////////////////////////////////////////////////////
+
+  Volume::Volume()
+  {
+    managedObjectType = OSP_VOLUME;
+  }
+
+  Volume::~Volume()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+  }
+
+  std::string Volume::toString() const
+  {
+    return "ospray::Volume";
+  }
+
+  Volume *Volume::createInstance(const std::string &type)
+  {
+    return createInstanceHelper<Volume, OSP_VOLUME>(type);
+  }
+
+  void Volume::commit()
+  {
+    createEmbreeGeometry();
+
+    ispc::Volume_set(ispcEquivalent, embreeGeometry);
+  }
+
+  void Volume::createEmbreeGeometry()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+
+    embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
   }
 
   void Volume::handleParams()
