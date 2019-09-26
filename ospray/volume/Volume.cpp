@@ -23,7 +23,63 @@
 
 #include "openvkl/openvkl.h"
 
+#include <unordered_map>
+
 namespace ospray {
+
+  //////////////////////////////////////////////
+  // helper for converting OSP to VKL data types
+  std::unordered_map<OSPDataType, VKLDataType> OspToVklDataType =
+  {
+    { OSP_CHAR,   VKL_CHAR   },
+    { OSP_UCHAR , VKL_UCHAR  },
+    { OSP_VEC2UC, VKL_UCHAR2 },
+    { OSP_VEC3UC, VKL_UCHAR3 },
+    { OSP_VEC4UC, VKL_UCHAR4 },
+    { OSP_SHORT , VKL_SHORT  },
+    { OSP_USHORT, VKL_USHORT },
+    { OSP_INT,    VKL_INT    },
+    { OSP_VEC2I,  VKL_INT2   },
+    { OSP_VEC3I,  VKL_INT3   },
+    { OSP_VEC4I,  VKL_INT4   },
+    { OSP_UINT,   VKL_UINT   },
+    { OSP_VEC2UI, VKL_UINT2  },
+    { OSP_VEC3UI, VKL_UINT3  },
+    { OSP_VEC4UI, VKL_UINT4  },
+    { OSP_LONG,   VKL_LONG   },
+    { OSP_VEC2L,  VKL_LONG2  },
+    { OSP_VEC3L,  VKL_LONG3  },
+    { OSP_VEC4L,  VKL_LONG4  },
+    { OSP_ULONG,  VKL_ULONG  },
+    { OSP_VEC2UL, VKL_ULONG2 },
+    { OSP_VEC3UL, VKL_ULONG3 },
+    { OSP_VEC4UL, VKL_ULONG4 },
+    { OSP_FLOAT,  VKL_FLOAT  },
+    { OSP_VEC2F,  VKL_FLOAT2 },
+    { OSP_VEC3F,  VKL_FLOAT3 },
+    { OSP_VEC4F,  VKL_FLOAT4 },
+    { OSP_DOUBLE, VKL_DOUBLE },
+    { OSP_BOX1I,  VKL_BOX1I  },
+    { OSP_BOX2I,  VKL_BOX2I  },
+    { OSP_BOX3I,  VKL_BOX3I  },
+    { OSP_BOX4I,  VKL_BOX4I  },
+    { OSP_BOX1F,  VKL_BOX1F  },
+    { OSP_BOX2F,  VKL_BOX2F  },
+    { OSP_BOX3F,  VKL_BOX3F  },
+    { OSP_BOX4F,  VKL_BOX4F  },
+    { OSP_DATA,   VKL_DATA   }
+  };
+
+  inline VKLDataType getVKLDataType(OSPDataType ospDataType)
+  {
+    auto vklDataType = OspToVklDataType.find(ospDataType);
+    if (vklDataType == OspToVklDataType.end()) {
+      std::cerr << "unknown data type " << ospDataType << std::endl;
+      return VKL_UNKNOWN;
+    }
+    return vklDataType->second;
+  }
+  //////////////////////////////////////////////
 
   Volume::Volume()
   {
@@ -164,12 +220,10 @@ namespace ospray {
           {
             Data* ospData = ((Data**)data->data())[i];
             VKLDataType vklDataType = getVKLDataType(ospData->type);
-            if (dataType == VKL_UNKNOWN) {
-              std::cerr << "[Volume] unknown data type in data array"
-                        << param.name << std::endl;
-              return;
-            }
-            VKLData vklData = vklNewData(ospData->size(), vklDataType, ospData->data(), VKL_DATA_SHARED_BUFFER);
+            VKLData vklData = vklNewData(ospData->size(),
+                                         vklDataType,
+                                         ospData->data(),
+                                         VKL_DATA_SHARED_BUFFER);
             blockData.push_back(vklData);
           }
           VKLData vklData = vklNewData(blockData.size(),
