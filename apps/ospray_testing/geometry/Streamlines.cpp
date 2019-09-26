@@ -88,25 +88,23 @@ namespace ospray {
       OSPData radiusData = ospNewData(radii.size(), OSP_FLOAT, radii.data());
       OSPData indicesData =
           ospNewData(indices.size(), OSP_UINT, indices.data());
-      OSPData colorsData  = ospNewData(colors.size(), OSP_VEC4F, colors.data());
-      ospSetObject(slGeom, "vertex.position", pointsData);
-      ospSetObject(slGeom, "vertex.radius", radiusData);
-      ospSetObject(slGeom, "index", indicesData);
-      ospSetObject(slGeom, "vertex.color", colorsData);
+      OSPData colorsData = ospNewData(colors.size(), OSP_VEC4F, colors.data());
+      ospSetData(slGeom, "vertex.position", pointsData);
+      ospSetData(slGeom, "vertex.radius", radiusData);
+      ospSetData(slGeom, "index", indicesData);
+      ospSetData(slGeom, "vertex.color", colorsData);
       ospCommit(slGeom);
 
       ospRelease(pointsData);
       ospRelease(indicesData);
       ospRelease(colorsData);
 
-      auto slModel = ospNewGeometricModel(slGeom);
-      ospCommit(slModel);
+      auto model = ospNewGeometricModel(slGeom);
+      ospCommit(model);
 
       OSPGroup group = ospNewGroup();
-      auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &slModel);
-      ospSetObject(group, "geometry", models);
+      ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
       ospCommit(group);
-      ospRelease(models);
 
       box3f bounds = empty;
 
@@ -117,9 +115,9 @@ namespace ospray {
       ospCommit(instance);
 
       OSPTestingGeometry retval;
-      retval.auxData = radiusData;
+      retval.auxData  = radiusData;
       retval.geometry = slGeom;
-      retval.model    = slModel;
+      retval.model    = model;
       retval.group    = group;
       retval.instance = instance;
 

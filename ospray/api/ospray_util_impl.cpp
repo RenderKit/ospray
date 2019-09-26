@@ -158,6 +158,16 @@ void ospSetVec4i(OSPObject o, const char *id, int x, int y, int z, int w)
   ospSetParam(o, id, OSP_VEC4I, v);
 }
 
+void ospSetObjectAsData(OSPObject o,
+                        const char *n,
+                        OSPDataType type,
+                        OSPObject p)
+{
+  OSPData data = ospNewData(1, type, &p);
+  ospSetData(o, n, data);
+  ospRelease(data);
+}
+
 // Rendering helpers //////////////////////////////////////////////////////////
 
 float ospRenderFrameBlocking(OSPFrameBuffer fb,

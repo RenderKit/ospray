@@ -135,11 +135,9 @@ int main(int argc, const char **argv) {
 
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
-  OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
-  ospSetObject(group, "geometry", geometricModels);
+  ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
   ospCommit(group);
   ospRelease(model);
-  ospRelease(geometricModels);
 
   // put the group into an instance (give the group a world transform)
   OSPInstance instance = ospNewInstance(group);
@@ -148,19 +146,16 @@ int main(int argc, const char **argv) {
 
   // put the instance in the world
   OSPWorld world = ospNewWorld();
-  OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
-  ospSetObject(world, "instance", instances);
+  ospSetObjectAsData(world, "instance", OSP_INSTANCE, instance);
+  ospRelease(instance);
 
   // create and setup light for Ambient Occlusion
   OSPLight light = ospNewLight("ambient");
   ospCommit(light);
-  OSPData lights = ospNewSharedData1D(&light, OSP_LIGHT, 1);
-  ospCommit(lights);
-  ospSetObject(world, "light", lights);
+  ospSetObjectAsData(world, "light", OSP_LIGHT, light);
+  ospRelease(light);
 
   ospCommit(world);
-  ospRelease(instance);
-  ospRelease(instances);
 
   printf("done!\n");
 
@@ -212,8 +207,6 @@ int main(int argc, const char **argv) {
   // final cleanups
   ospRelease(renderer);
   ospRelease(camera);
-  ospRelease(lights);
-  ospRelease(light);
   ospRelease(framebuffer);
   ospRelease(world);
 

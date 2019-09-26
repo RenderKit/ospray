@@ -86,6 +86,11 @@ OSPRAY_INTERFACE void ospSetVec3i(OSPObject, const char *n, int x, int y, int z)
 OSPRAY_INTERFACE void ospSetVec4i(OSPObject, const char *n, int x, int y, int z, int w);
 // clang-format on
 
+OSPRAY_INTERFACE void ospSetObjectAsData(OSPObject,
+                                         const char *n,
+                                         OSPDataType type,
+                                         OSPObject obj);
+
 // Rendering helpers //////////////////////////////////////////////////////////
 
 OSPRAY_INTERFACE float ospRenderFrameBlocking(OSPFrameBuffer,
