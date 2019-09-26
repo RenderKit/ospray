@@ -17,7 +17,7 @@
 #pragma once
 
 #include <gtest/gtest.h>
-#include <ospray/ospray.h>
+#include <ospray/ospray_util.h>
 #include <string>
 #include <vector>
 

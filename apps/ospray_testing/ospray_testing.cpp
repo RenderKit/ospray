@@ -24,6 +24,8 @@
 // ospcommon
 #include "ospcommon/math/box.h"
 #include "ospcommon/utility/OnScopeExit.h"
+// ospray
+#include "ospray/ospray_util.h"
 
 using namespace ospcommon;
 using namespace ospcommon::math;

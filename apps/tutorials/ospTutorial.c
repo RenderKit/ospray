@@ -32,7 +32,7 @@
 #else
 #  include <alloca.h>
 #endif
-#include "ospray/ospray.h"
+#include "ospray/ospray_util.h"
 
 // helper function to write the rendered image as PPM file
 void writePPM(const char *fileName,

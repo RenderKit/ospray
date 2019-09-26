@@ -21,11 +21,13 @@
 set(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
+  api/ospray_util_impl.cpp
 
   common/ospray.rc
   common/OSPCommon.cpp
 
   include/ospray/ospray.h
+  include/ospray/ospray_util.h
   include/ospray/OSPEnums.h
 
   include/ospray/ospray_cpp.h
@@ -251,31 +253,6 @@ endforeach()
 # Build the ospray library
 ##############################################################
 
-if (WIN32)
-  list(APPEND OSPRAY_LIBS ws2_32)
-
-  # -------------------------------------------------------
-  # export ISPC SDK symbols on Windows ##
-  # -------------------------------------------------------
-
-  file(READ def_header.txt OSPRAY_DEF)
-  file(READ ispc_symbols.txt OSPRAY_ISPC_SYMBOLS_IN)
-
-  foreach(isa ${OSPRAY_ISPC_TARGET_LIST})
-    string(REPLACE "-i32x16" "" isa ${isa}) # strip avx512(knl|skx)-i32x16
-    # add isa suffix
-    string(REPLACE "," ${isa} OSPRAY_ISPC_SYMBOLS ${OSPRAY_ISPC_SYMBOLS_IN})
-    string(APPEND OSPRAY_DEF ${OSPRAY_ISPC_SYMBOLS})
-  endforeach()
-
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in "${OSPRAY_DEF}")
-
-  # changes ospray.def only if content changed, avoids unnecessary re-linking
-  configure_file(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in ospray_module_ispc.def COPYONLY)
-
-  list(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_ispc.def)
-endif()
-
 add_library(ospray SHARED ${OSPRAY_SOURCES})
 target_link_libraries(ospray PRIVATE ospcommon::ospcommon)
 ospray_install_library(ospray COMPONENT lib)
@@ -290,10 +267,6 @@ target_include_directories(ospray
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-add_library(ospray_sdk INTERFACE)
-target_link_libraries(ospray_sdk INTERFACE ospray ospcommon::ospcommon)
-ospray_install_library(ospray_sdk COMPONENT devel)
-
 ##############################################################
 # Build ISPC device
 ##############################################################
@@ -302,6 +275,27 @@ option(OSPRAY_BUILD_ISPC_DEVICE "Build ISPC Device" ON)
 mark_as_advanced(OSPRAY_BUILD_ISPC_DEVICE)
 
 if(OSPRAY_BUILD_ISPC_DEVICE)
+
+  ## Windows-specifc ISPC symbol exports ##
+
+  if (WIN32)
+    file(READ def_header.txt OSPRAY_DEF)
+    file(READ ispc_symbols.txt OSPRAY_ISPC_SYMBOLS_IN)
+
+    foreach(isa ${OSPRAY_ISPC_TARGET_LIST})
+      string(REPLACE "-i32x16" "" isa ${isa}) # strip avx512(knl|skx)-i32x16
+      # add isa suffix
+      string(REPLACE "," ${isa} OSPRAY_ISPC_SYMBOLS ${OSPRAY_ISPC_SYMBOLS_IN})
+      string(APPEND OSPRAY_DEF ${OSPRAY_ISPC_SYMBOLS})
+    endforeach()
+
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in "${OSPRAY_DEF}")
+
+    # changes ospray.def only if content changed, avoids unnecessary re-linking
+    configure_file(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in ospray_module_ispc.def COPYONLY)
+
+    list(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_ispc.def)
+  endif()
 
   ## ISPC Device-specific options ##
 
@@ -350,7 +344,8 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   target_link_libraries(ospray_module_ispc
   PUBLIC
-    ospray_sdk
+    ospray
+    ospcommon::ospcommon
     $<BUILD_INTERFACE:embree>
   )
 
@@ -366,6 +361,17 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 
 endif()
+
+##############################################################
+# Additional interface targets
+##############################################################
+
+add_library(ospray_sdk INTERFACE)
+target_link_libraries(ospray_sdk
+INTERFACE
+  ospray_module_ispc ospcommon::ospcommon
+)
+ospray_install_library(ospray_sdk COMPONENT devel)
 
 ##############################################################
 # Configure find_package files

@@ -319,5 +319,3 @@ extern "C" {
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-#include "detail/ospray_util.h"

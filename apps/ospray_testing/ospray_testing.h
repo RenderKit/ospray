@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <ospray/ospray.h>
+#include "ospray/ospray_util.h"
 
 #ifdef _WIN32
 #ifdef ospray_testing_EXPORTS

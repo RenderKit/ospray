@@ -19,7 +19,7 @@
 #include <string>
 #include <type_traits>
 
-#include <ospray/ospray.h>
+#include "ospray/ospray_util.h"
 
 #include "ospcommon/math/AffineSpace.h"
 #include "ospcommon/math/vec.h"

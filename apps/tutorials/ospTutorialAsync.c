@@ -33,7 +33,7 @@
 #else
 #  include <alloca.h>
 #endif
-#include "ospray/ospray.h"
+#include "ospray/ospray_util.h"
 
 typedef struct { int x, y; } vec2i;
 

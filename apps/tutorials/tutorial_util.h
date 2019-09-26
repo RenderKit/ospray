@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray
-#include "ospray/ospray.h"
+#include "ospray/ospray_util.h"
 // ospcommon
 #include "ospcommon/math/box.h"
 #include "ospcommon/math/vec.h"
