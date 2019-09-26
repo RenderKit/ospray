@@ -45,4 +45,6 @@ namespace ospray {
     postStatusMsg(2) << ss.str();
   }
 
+  OSPTYPEFOR_DEFINITION(Geometry *);
+
 }  // namespace ospray

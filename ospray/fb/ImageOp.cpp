@@ -36,4 +36,6 @@ namespace ospray {
 
   LiveFrameOp::LiveFrameOp(FrameBufferView &_fbView) : LiveImageOp(_fbView) {}
 
+  OSPTYPEFOR_DEFINITION(ImageOp *);
+
 }  // namespace ospray

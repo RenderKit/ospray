@@ -29,4 +29,6 @@ namespace ospray {
     return createInstanceHelper<Texture, OSP_TEXTURE>(type);
   }
 
+  OSPTYPEFOR_DEFINITION(Texture *);
+
 } // ::ospray

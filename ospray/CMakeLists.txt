@@ -53,6 +53,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   common/Data.ih
   common/Data.cpp
+  common/Future.cpp
   common/Group.cpp
   common/Group.ispc
   common/Instance.cpp

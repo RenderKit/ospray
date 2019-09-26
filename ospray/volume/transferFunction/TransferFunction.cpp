@@ -37,4 +37,6 @@ namespace ospray {
     return createInstanceHelper<TransferFunction, OSP_TRANSFER_FUNCTION>(type);
   }
 
+  OSPTYPEFOR_DEFINITION(TransferFunction *);
+
 } // namespace ospray

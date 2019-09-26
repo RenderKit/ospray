@@ -157,4 +157,6 @@ namespace ospray {
     return "ospray::Data";
   }
 
+  OSPTYPEFOR_DEFINITION(Data *);
+
 }  // namespace ospray

@@ -52,8 +52,7 @@ namespace ospray {
 
   OSPTYPEFOR_SPECIALIZATION(Geometry *, OSP_GEOMETRY);
 
-  // convenience wrappers to set Embree buffer
-  // /////////////////////////////////////////
+  // convenience wrappers to set Embree buffer ////////////////////////////////
 
   template <typename T>
   struct RTCFormatFor

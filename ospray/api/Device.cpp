@@ -188,4 +188,7 @@ namespace ospray {
       }
     }
   } // ::ospray::api
+
+  OSPTYPEFOR_DEFINITION(api::Device *);
+
 } // ::ospray

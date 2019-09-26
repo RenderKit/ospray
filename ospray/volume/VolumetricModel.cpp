@@ -73,4 +73,6 @@ namespace ospray {
     ispc::Volume_set_geomID(volume->getIE(), geomID);
   }
 
+  OSPTYPEFOR_DEFINITION(VolumetricModel *);
+
 }  // namespace ospray

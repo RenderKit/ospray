@@ -40,4 +40,6 @@ namespace ospray {
     return createInstanceHelper<Light, OSP_LIGHT>(type);
   }
 
-}
+  OSPTYPEFOR_DEFINITION(Light *);
+
+} // namespace ospray

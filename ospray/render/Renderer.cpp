@@ -140,4 +140,6 @@ namespace ospray {
     return res;
   }
 
+  OSPTYPEFOR_DEFINITION(Renderer *);
+
 }  // namespace ospray

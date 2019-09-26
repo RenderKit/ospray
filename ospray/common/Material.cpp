@@ -123,4 +123,6 @@ namespace ospray {
     return param;
   }
 
+  OSPTYPEFOR_DEFINITION(Material*);
+
 } // ::ospray

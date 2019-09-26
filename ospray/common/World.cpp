@@ -178,4 +178,6 @@ namespace ospray {
     return sceneBounds;
   }
 
+  OSPTYPEFOR_DEFINITION(World *);
+
 }  // namespace ospray

@@ -54,4 +54,6 @@ namespace ospray {
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
   }
 
+  OSPTYPEFOR_DEFINITION(Volume *);
+
 }  // namespace ospray

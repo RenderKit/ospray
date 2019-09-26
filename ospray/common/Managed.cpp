@@ -72,4 +72,6 @@ namespace ospray {
     return obj;
   }
 
+  OSPTYPEFOR_DEFINITION(ManagedObject *);
+
 }  // namespace ospray

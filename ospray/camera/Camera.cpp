@@ -70,4 +70,6 @@ namespace ospray {
     NOT_IMPLEMENTED;
   }
 
+  OSPTYPEFOR_DEFINITION(Camera *);
+
 }  // namespace ospray

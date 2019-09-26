@@ -183,4 +183,6 @@ namespace ospray {
     return sceneBounds;
   }
 
+  OSPTYPEFOR_DEFINITION(Group *);
+
 }  // namespace ospray

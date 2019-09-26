@@ -160,4 +160,6 @@ namespace ospray {
     return hasAlbedoBuffer;
   }
 
+  OSPTYPEFOR_DEFINITION(FrameBuffer *);
+
 } // ::ospray

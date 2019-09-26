@@ -101,4 +101,6 @@ namespace ospray {
     ispc::GeometricModel_setGeomIE(getIE(), geomIE);
   }
 
+  OSPTYPEFOR_DEFINITION(GeometricModel *);
+
 }  // namespace ospray
