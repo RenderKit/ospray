@@ -188,7 +188,7 @@ int main(int argc, const char **argv) {
   printf("rendering initial frame to firstFrame.ppm...");
 
   // render one frame
-  ospRenderFrame(framebuffer, renderer, camera, world);
+  ospRenderFrameBlocking(framebuffer, renderer, camera, world);
 
   // access framebuffer and write its content as PPM file
   const uint32_t * fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
@@ -200,7 +200,7 @@ int main(int argc, const char **argv) {
 
   // render 10 more frames, which are accumulated to result in a better converged image
   for (int frames = 0; frames < 10; frames++)
-    ospRenderFrame(framebuffer, renderer, camera, world);
+    ospRenderFrameBlocking(framebuffer, renderer, camera, world);
 
   fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
   writePPM("accumulatedFrame.ppm", imgSize_x, imgSize_y, fb);

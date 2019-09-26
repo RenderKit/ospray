@@ -124,15 +124,10 @@ namespace ospray {
 
       OSPRenderer newRenderer(const char *type) override;
 
-      float renderFrame(OSPFrameBuffer,
-                        OSPRenderer,
-                        OSPCamera,
-                        OSPWorld) override;
-
-      OSPFuture renderFrameAsync(OSPFrameBuffer,
-                                 OSPRenderer,
-                                 OSPCamera,
-                                 OSPWorld) override;
+      OSPFuture renderFrame(OSPFrameBuffer,
+                            OSPRenderer,
+                            OSPCamera,
+                            OSPWorld) override;
 
       int isReady(OSPFuture, OSPSyncEvent) override;
       void wait(OSPFuture, OSPSyncEvent) override;

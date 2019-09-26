@@ -280,7 +280,7 @@ namespace OSPRayTestScenes {
   void Base::RenderFrame()
   {
     for (int frame = 0; frame < frames; ++frame)
-      ospRenderFrame(framebuffer, renderer, camera, world);
+      ospRenderFrameBlocking(framebuffer, renderer, camera, world);
   }
 
   SingleObject::SingleObject()

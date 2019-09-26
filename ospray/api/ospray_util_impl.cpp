@@ -158,6 +158,18 @@ void ospSetVec4i(OSPObject o, const char *id, int x, int y, int z, int w)
   ospSetParam(o, id, OSP_VEC4I, v);
 }
 
+// Rendering helpers //////////////////////////////////////////////////////////
+
+float ospRenderFrameBlocking(OSPFrameBuffer fb,
+                             OSPRenderer renderer,
+                             OSPCamera camera,
+                             OSPWorld world)
+{
+  OSPFuture f = ospRenderFrame(fb, renderer, camera, world);
+  ospRelease(f);
+  return ospGetVariance(fb);
+}
+
 }  // extern "C"
 
 // XXX temporary, to maintain backwards compatibility

@@ -94,8 +94,8 @@ int main(int argc, const char **argv) {
   OSPFuture futures[2] = {0};
   // render one frame for each scene
   for (int i = 0; i < 2; ++i) {
-    futures[i] = ospRenderFrameAsync(framebuffers[i], renderers[i],
-                                     cameras[i], worlds[i]);
+    futures[i] = ospRenderFrame(framebuffers[i], renderers[i],
+                                cameras[i], worlds[i]);
   }
 
   for (int i = 0; i < 2; ++i) {
@@ -123,8 +123,8 @@ int main(int argc, const char **argv) {
   // render 10 more frames, which are accumulated to result in a better converged image
   for (int frames = 0; frames < 10; frames++) {
     for (int i = 0; i < 2; ++i) {
-      futures[i] = ospRenderFrameAsync(framebuffers[i], renderers[i],
-                                       cameras[i], worlds[i]);
+      futures[i] = ospRenderFrame(framebuffers[i], renderers[i],
+                                  cameras[i], worlds[i]);
     }
     for (int i = 0; i < 2; ++i) {
       ospWait(futures[i], OSP_FRAME_FINISHED);

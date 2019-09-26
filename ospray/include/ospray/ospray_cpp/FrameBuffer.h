@@ -76,7 +76,7 @@ namespace ospray {
                                           const Camera &camera,
                                           const World &world) const
     {
-      return ospRenderFrame(
+      return ospRenderFrameBlocking(
           handle(), renderer.handle(), camera.handle(), world.handle());
     }
 

@@ -130,15 +130,10 @@ namespace ospray {
 
       virtual OSPRenderer newRenderer(const char *type) = 0;
 
-      virtual float renderFrame(OSPFrameBuffer,
-                                OSPRenderer,
-                                OSPCamera,
-                                OSPWorld) = 0;
-
-      virtual OSPFuture renderFrameAsync(OSPFrameBuffer,
-                                         OSPRenderer,
-                                         OSPCamera,
-                                         OSPWorld) = 0;
+      virtual OSPFuture renderFrame(OSPFrameBuffer,
+                                    OSPRenderer,
+                                    OSPCamera,
+                                    OSPWorld) = 0;
 
       virtual int isReady(OSPFuture, OSPSyncEvent) = 0;
       virtual void wait(OSPFuture, OSPSyncEvent)   = 0;

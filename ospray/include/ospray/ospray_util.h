@@ -24,63 +24,74 @@ extern "C" {
 
 // OSPData helpers //////////////////////////////////////////////////////////
 
-OSPData ospNewSharedData1D(const void *sharedData,
-                           OSPDataType type,
-                           uint32_t numItems);
+OSPRAY_INTERFACE OSPData ospNewSharedData1D(const void *sharedData,
+                                            OSPDataType type,
+                                            uint32_t numItems);
 
-OSPData ospNewSharedData1DStride(const void *sharedData,
-                                 OSPDataType type,
-                                 uint32_t numItems,
-                                 int64_t byteStride);
+OSPRAY_INTERFACE OSPData ospNewSharedData1DStride(const void *sharedData,
+                                                  OSPDataType type,
+                                                  uint32_t numItems,
+                                                  int64_t byteStride);
 
-OSPData ospNewSharedData2D(const void *sharedData,
-                           OSPDataType type,
-                           uint32_t numItems1,
-                           uint32_t numItems2);
+OSPRAY_INTERFACE OSPData ospNewSharedData2D(const void *sharedData,
+                                            OSPDataType type,
+                                            uint32_t numItems1,
+                                            uint32_t numItems2);
 
-OSPData ospNewSharedData2DStride(const void *sharedData,
-                                 OSPDataType type,
-                                 uint32_t numItems1,
-                                 int64_t byteStride1,
-                                 uint32_t numItems2,
-                                 int64_t byteStride2);
+OSPRAY_INTERFACE OSPData ospNewSharedData2DStride(const void *sharedData,
+                                                  OSPDataType type,
+                                                  uint32_t numItems1,
+                                                  int64_t byteStride1,
+                                                  uint32_t numItems2,
+                                                  int64_t byteStride2);
 
-OSPData ospNewSharedData3D(const void *sharedData,
-                           OSPDataType type,
-                           uint32_t numItems1,
-                           uint32_t numItems2,
-                           uint32_t numItems3);
+OSPRAY_INTERFACE OSPData ospNewSharedData3D(const void *sharedData,
+                                            OSPDataType type,
+                                            uint32_t numItems1,
+                                            uint32_t numItems2,
+                                            uint32_t numItems3);
 
-OSPData ospNewData1D(OSPDataType type, uint32_t numItems);
+OSPRAY_INTERFACE OSPData ospNewData1D(OSPDataType type, uint32_t numItems);
 
-OSPData ospNewData2D(OSPDataType type, uint32_t numItems1, uint32_t numItems2);
+OSPRAY_INTERFACE OSPData ospNewData2D(OSPDataType type,
+                                      uint32_t numItems1,
+                                      uint32_t numItems2);
 
-void ospCopyData1D(const OSPData source,
-                   OSPData destination,
-                   uint32_t destinationIndex);
+OSPRAY_INTERFACE void ospCopyData1D(const OSPData source,
+                                    OSPData destination,
+                                    uint32_t destinationIndex);
 
-void ospCopyData2D(const OSPData source,
-                   OSPData destination,
-                   uint32_t destinationIndex1,
-                   uint32_t destinationIndex2);
+OSPRAY_INTERFACE void ospCopyData2D(const OSPData source,
+                                    OSPData destination,
+                                    uint32_t destinationIndex1,
+                                    uint32_t destinationIndex2);
 
 // Parameter helpers //////////////////////////////////////////////////////////
 
-void ospSetString(OSPObject, const char *n, const char *s);
-void ospSetObject(OSPObject, const char *n, OSPObject obj);
-void ospSetData(OSPObject, const char *n, OSPData data);
+OSPRAY_INTERFACE void ospSetString(OSPObject, const char *n, const char *s);
+OSPRAY_INTERFACE void ospSetObject(OSPObject, const char *n, OSPObject obj);
+OSPRAY_INTERFACE void ospSetData(OSPObject, const char *n, OSPData data);
 
-void ospSetBool(OSPObject, const char *n, int x);
-void ospSetFloat(OSPObject, const char *n, float x);
-void ospSetInt(OSPObject, const char *n, int x);
+OSPRAY_INTERFACE void ospSetBool(OSPObject, const char *n, int x);
+OSPRAY_INTERFACE void ospSetFloat(OSPObject, const char *n, float x);
+OSPRAY_INTERFACE void ospSetInt(OSPObject, const char *n, int x);
 
-void ospSetVec2f(OSPObject, const char *n, float x, float y);
-void ospSetVec3f(OSPObject, const char *n, float x, float y, float z);
-void ospSetVec4f(OSPObject, const char *n, float x, float y, float z, float w);
+// clang-format off
+OSPRAY_INTERFACE void ospSetVec2f(OSPObject, const char *n, float x, float y);
+OSPRAY_INTERFACE void ospSetVec3f(OSPObject, const char *n, float x, float y, float z);
+OSPRAY_INTERFACE void ospSetVec4f(OSPObject, const char *n, float x, float y, float z, float w);
 
-void ospSetVec2i(OSPObject, const char *n, int x, int y);
-void ospSetVec3i(OSPObject, const char *n, int x, int y, int z);
-void ospSetVec4i(OSPObject, const char *n, int x, int y, int z, int w);
+OSPRAY_INTERFACE void ospSetVec2i(OSPObject, const char *n, int x, int y);
+OSPRAY_INTERFACE void ospSetVec3i(OSPObject, const char *n, int x, int y, int z);
+OSPRAY_INTERFACE void ospSetVec4i(OSPObject, const char *n, int x, int y, int z, int w);
+// clang-format on
+
+// Rendering helpers //////////////////////////////////////////////////////////
+
+OSPRAY_INTERFACE float ospRenderFrameBlocking(OSPFrameBuffer,
+                                              OSPRenderer,
+                                              OSPCamera,
+                                              OSPWorld);
 
 #ifdef __cplusplus
 }  // extern "C"
