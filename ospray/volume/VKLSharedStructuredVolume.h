@@ -27,8 +27,6 @@ namespace ospray {
     virtual ~VKLSharedStructuredVolume() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
-
-    VKLVolume vklVolume = nullptr;
   };
 
 }  // namespace ospray

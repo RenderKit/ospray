@@ -579,7 +579,7 @@ within them.
   vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
                                                     world-space
 
-  string         voxelType               undefined  data type of each voxel,
+  int            voxelType               undefined  data type of each voxel,
                                                     currently supported are:
 
                                                     `OSP_UCHAR`
@@ -651,7 +651,7 @@ id_m$.
                                                      each cell are prefixed with the number
                                                      of vertices
 
-  uint32[] / uint64[]  cell                          [data] array of locations (into the
+  uint32[] / uint64[]  cell.index                    [data] array of locations (into the
                                                      index array), specifying the first index
                                                      of each cell
 

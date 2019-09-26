@@ -14,20 +14,21 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "VKLSharedStructuredVolume.h"
+#include "VKLAMRVolume.h"
 #include "common/Data.h"
 
 namespace ospray {
 
-  std::string VKLSharedStructuredVolume::toString() const
+  std::string VKLAMRVolume::toString() const
   {
-    return "ospray::volume::VKLSharedStructuredVolume";
+    return "ospray::volume::VKLAMRVolume";
   }
 
-  void VKLSharedStructuredVolume::commit()
+
+  void VKLAMRVolume::commit()
   {
     ispcEquivalent = ispc::Volume_createInstance_vklVolume(this);
-    vklVolume      = vklNewVolume("structured_regular");
+    vklVolume      = vklNewVolume("amr");
 
     handleParams();
 
@@ -38,7 +39,7 @@ namespace ospray {
         ispcEquivalent, vklVolume, (ispc::box3f *)&bounds);
   }
 
-  OSP_REGISTER_VOLUME(VKLSharedStructuredVolume, vkl_structured_volume);
-  OSP_REGISTER_VOLUME(VKLSharedStructuredVolume, shared_structured_volume);
+  OSP_REGISTER_VOLUME(VKLAMRVolume, vkl_amr_volume);
+  OSP_REGISTER_VOLUME(VKLAMRVolume, amr_volume);
 
 }  // namespace ospray

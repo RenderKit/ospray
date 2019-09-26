@@ -203,6 +203,10 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   volume/VolumetricModel.cpp
   volume/VKLSharedStructuredVolume.h
   volume/VKLSharedStructuredVolume.cpp
+  volume/VKLUnstructuredVolume.h
+  volume/VKLUnstructuredVolume.cpp
+  volume/VKLAMRVolume.h
+  volume/VKLAMRVolume.cpp
 
   volume/transferFunction/LinearTransferFunction.ispc
   volume/transferFunction/LinearTransferFunction.cpp
