@@ -1275,18 +1275,18 @@ namespace OSPRayTestScenes {
     ospCommit(directional);
     AddLight(directional);
   }
-  
+
   /* heavily based on Perlin's Java reference implementation of
   * the improved perlin noise paper from Siggraph 2002 from here
   * https://mrl.nyu.edu/~perlin/noise/
   **/
-  class PerlinNoise 
+  class PerlinNoise
   {
     struct PerlinNoiseData
     {
       PerlinNoiseData()
       {
-        const int permutation[256] = { 
+        const int permutation[256] = {
           151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,
           37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,
           57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,
@@ -1310,7 +1310,7 @@ namespace OSPRayTestScenes {
     static inline float smooth(float t) { return t * t * t * (t * (t * 6.f - 15.f) + 10.f); }
     static inline float lerp  (float t, float a, float b) { return a + t * (b - a); }
     static inline float grad(int hash, float x, float y, float z) {
-      const int h   = hash & 15;      
+      const int h   = hash & 15;
       const float u = h < 8 ? x : y;
       const float v = h < 4 ? y : h == 12 || h == 14 ? x : z;
       return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
@@ -1323,7 +1323,7 @@ namespace OSPRayTestScenes {
       float y = q.y * frequency;
       float z = q.z * frequency;
       const int X = (int)floor(x) & 255;
-      const int Y = (int)floor(y) & 255; 
+      const int Y = (int)floor(y) & 255;
       const int Z = (int)floor(z) & 255;
       x -= floor(x);
       y -= floor(y);
@@ -1335,14 +1335,14 @@ namespace OSPRayTestScenes {
       const int  B = p[X + 1] + Y;
       const int AA = p[A] + Z;
       const int BA = p[B] + Z;
-      const int BB = p[B + 1] + Z; 
+      const int BB = p[B + 1] + Z;
       const int AB = p[A + 1] + Z;
 
-      return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z), 
+      return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z),
                                     grad(p[BA], x - 1, y, z)),
-                            lerp(u, grad(p[AB], x, y - 1, z),  
+                            lerp(u, grad(p[AB], x, y - 1, z),
                                     grad(p[BB], x - 1, y - 1, z))),
-                    lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1),  
+                    lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1),
                                     grad(p[BA + 1], x - 1, y, z - 1)),
                             lerp(u, grad(p[AB + 1], x, y - 1, z - 1),
                                     grad(p[BB + 1], x - 1, y - 1, z - 1))));
@@ -1375,27 +1375,27 @@ namespace OSPRayTestScenes {
 
     if (!constantVolume)
       densityScale *= 10.f;
-    
+
     const float theta = 1.f/2.f*M_PI - M_PI/6;
     const float phi   = 3.f/2.f*M_PI - M_PI/6;
     const float r = 5.f;
     vec3f p = r * vec3f(
-      sin(theta)*cos(phi), 
-      cos(theta), 
+      sin(theta)*cos(phi),
+      cos(theta),
       sin(theta)*sin(phi));
     vec3f v = vec3f(0.f, -0.2f, 0.f) - p;
 
-    ospSetVec3fv(camera, "position", &p.x);
-    ospSetVec3fv(camera, "direction", &v.x);
+    ospSetParam(camera, "position", OSP_VEC3F, &p.x);
+    ospSetParam(camera, "direction", OSP_VEC3F, &v.x);
     ospSetVec3f(camera, "up", 0.f, 1.f, 0.f);
-    
+
     // create volume
     vec3l dims;
     if (constantVolume)
       dims = vec3l(8, 8, 8);
     else
       dims = vec3l(64, 64, 64);
-    
+
     const float spacing = 3.f/(reduce_max(dims)-1);
     OSPVolume volume = ospNewVolume("vkl_structured_volume");
 
@@ -1423,8 +1423,8 @@ namespace OSPRayTestScenes {
       else
       {
         vec3f p = vec3f(x+0.5f, y+0.5f, z+0.5f)/dims;
-        vec3f X = 2.f * p - vec3f(1.f); 
-        if (length((1.4f + 0.4 * turbulence(p, 12.f, 12)) * X) < 1.f) 
+        vec3f X = 2.f * p - vec3f(1.f);
+        if (length((1.4f + 0.4 * turbulence(p, 12.f, 12)) * X) < 1.f)
           voxels[dims.x * dims.y * z + dims.x * y + x] = 0.5f + 0.5f * PerlinNoise::noise(p, 12);
       }
     }
@@ -1465,11 +1465,11 @@ namespace OSPRayTestScenes {
     ospSetData(volumeGroup, "volume", volumeData);
     ospCommit(volumeGroup);
     ospRelease(volumeData);
- 
+
     OSPInstance volumeInstance = ospNewInstance(volumeGroup);
     if (!constantVolume) {
       AffineSpace3f xfm = AffineSpace3f::scale(vec3f(1.25f));
-      ospSetAffine3fv(volumeInstance, "xfm", &xfm.l.vx.x);
+      ospSetParam(volumeInstance, "xfm", OSP_AFFINE3F, &xfm.l.vx.x);
     }
     ospCommit(volumeInstance);
     ospRelease(volumeGroup);
@@ -1478,7 +1478,7 @@ namespace OSPRayTestScenes {
     if (enableGeometry)
     {
       std::vector<OSPGeometricModel> models;
-      std::vector<vec3f> planeVertices = { 
+      std::vector<vec3f> planeVertices = {
         vec3f(-8.f, -2.5f, -8.f),
         vec3f(+8.f, -2.5f, -8.f),
         vec3f(+8.f, -2.5f, +8.f),
@@ -1522,10 +1522,10 @@ namespace OSPRayTestScenes {
     std::vector<OSPLight> lightHandles;
     OSPLight ambientLight = ospNewLight("ambient");
     ospSetFloat(ambientLight, "intensity", 1.f);
-    ospSetVec3fv(ambientLight, "color", &ambientColor.x);
+    ospSetParam(ambientLight, "color", OSP_VEC3F, &ambientColor.x);
     ospCommit(ambientLight);
     lightHandles.push_back(ambientLight);
-    
+
     OSPLight distantLight = ospNewLight("distant");
     ospSetFloat(distantLight, "intensity", 2.6f);
     ospSetVec3f(distantLight, "color", 1.0f, 0.96f, 0.88f);
@@ -1539,7 +1539,7 @@ namespace OSPRayTestScenes {
     ospCommit(lights);
     ospSetData(renderer, "light", lights);
     ospRelease(lights);
-    
+
     OSPData texelData = ospNewData(1, OSP_VEC3F, &ambientColor.x);
 
     OSPTexture backplateTexture = ospNewTexture("texture2d");
