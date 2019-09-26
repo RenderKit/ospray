@@ -49,7 +49,7 @@ namespace ospray {
 
     const DataT<float> &opacities = *opacityValues;
 
-    for (int i = 0; i < opacities.size(); i++) {
+    for (int i = 0; i < int(opacities.size()); i++) {
       if (opacities[i] > 0.f && !rangeActive) {
         rangeActive    = true;
         interval.lower = i;
@@ -86,19 +86,19 @@ namespace ospray {
     // convert index ranges to value ranges
     // note that a positive opacity value has a span of +/-1 due to the linear
     // interpolation, and returned index ranges are [min, max) intervals
-    for (int i = 0; i < indexRanges.size(); i++) {
+    for (int i = 0; i < int(indexRanges.size()); i++) {
       int minValueIndex = indexRanges[i].lower - 1;
       int maxValueIndex = indexRanges[i].upper;
 
       range1f range(neg_inf, inf);
 
       if (minValueIndex >= 0) {
-        range.lower = valueRange.lower 
+        range.lower = valueRange.lower
                  + minValueIndex * valueRange.size() / (opacities.size() - 1.f);
       }
 
-      if (maxValueIndex < opacities.size()) {
-        range.upper = valueRange.lower 
+      if (maxValueIndex < int(opacities.size())) {
+        range.upper = valueRange.lower
                     + maxValueIndex * valueRange.size() / (opacities.size() - 1.f);
       }
 
