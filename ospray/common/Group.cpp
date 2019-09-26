@@ -89,6 +89,8 @@ namespace ospray {
   {
     freeAndNullifyEmbreeScene(sceneGeometries);
     freeAndNullifyEmbreeScene(sceneVolumes);
+    freeIEPtrs(geometryIEs);
+    freeIEPtrs(volumeIEs);
   }
 
   std::string Group::toString() const

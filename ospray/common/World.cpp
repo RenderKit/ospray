@@ -54,6 +54,8 @@ namespace ospray {
 
         rtcAttachGeometry(geometryScene, eInst);
 
+        rtcReleaseGeometry(eInst);
+
         numGeomInstances++;
       }
 
@@ -65,6 +67,8 @@ namespace ospray {
         rtcCommitGeometry(eInst);
 
         rtcAttachGeometry(volumeScene, eInst);
+
+        rtcReleaseGeometry(eInst);
 
         numVolumeInstances++;
       }
