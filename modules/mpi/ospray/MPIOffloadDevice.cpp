@@ -477,10 +477,19 @@ OSPWorld MPIOffloadDevice::newWorld()
   return (OSPWorld)(int64)handle;
 }
 
-box3f MPIOffloadDevice::getBounds(OSPObject)
+box3f MPIOffloadDevice::getBounds(OSPObject _obj)
 {
-  std::cout << " WILL TODO\n";
-  throw std::runtime_error("will todo");
+  const ObjectHandle obj = (ObjectHandle &)_obj;
+
+  networking::BufferWriter writer;
+  writer << work::GET_BOUNDS << obj;
+  sendWork(writer.buffer);
+
+  box3f result;
+  utility::ArrayView<uint8_t> view(
+      reinterpret_cast<uint8_t *>(&result), sizeof(box3f));
+  fabric->recv(view, rootWorkerRank());
+  return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////

@@ -665,6 +665,23 @@ void pick(OSPState &state,
   }
 }
 
+void getBounds(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric)
+{
+  int64_t handle = 0;
+  cmdBuf >> handle;
+
+  OSPBounds res = ospGetBounds(state.objects[handle]);
+
+  if (mpicommon::worker.rank == 0) {
+    using namespace utility;
+    auto view = std::make_shared<OwnedArray<uint8_t>>(
+        reinterpret_cast<uint8_t *>(&res), sizeof(OSPBounds));
+    fabric.send(view, 0);
+  }
+}
+
 void futureIsReady(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &fabric)
@@ -829,6 +846,9 @@ void dispatchWork(TAG t,
   case PICK:
     pick(state, cmdBuf, fabric);
     break;
+  case GET_BOUNDS:
+    getBounds(state, cmdBuf, fabric);
+    break;
   case FUTURE_IS_READY:
     futureIsReady(state, cmdBuf, fabric);
     break;
@@ -914,6 +934,8 @@ const char *tagName(work::TAG t)
     return "SET_LOAD_BALANCER";
   case PICK:
     return "PICK";
+  case GET_BOUNDS:
+    return "GET_BOUNDS";
   case FUTURE_IS_READY:
     return "FUTURE_IS_READY";
   case FUTURE_WAIT:
