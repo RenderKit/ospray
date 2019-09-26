@@ -216,7 +216,7 @@ namespace ospray {
 
         if (dataType == VKL_DATA) {
           std::vector<VKLData> blockData;
-          for (int i = 0; i < data->size(); ++i)
+          for (size_t i = 0; i < data->size(); ++i)
           {
             Data* ospData = ((Data**)data->data())[i];
             VKLDataType vklDataType = getVKLDataType(ospData->type);
