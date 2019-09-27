@@ -132,58 +132,148 @@ values are listed.
 <table>
 <!-- ALOK: need to identify parameters that are enums now -->
   <tr>
-    <th>Object</th> <th>Old parameter name</th> <th>New parameter name</th>
+    <th>Object</th> <th>Old parameter name</th> <th>New parameter name</th> <th>Enum values (if applicable)</th>
   </tr>
+
   <tr>
     <td rowspan="2">Camera</td> <td>pos</td> <td>position</td>
   </tr>
   <tr>
     <td>dir</td> <td>direction</td>
   </tr>
+
+  <tr>
+    <td rowspan="4">PerspectiveCamera</td> <td rowspan="4">stereoMode</td> <td rowspan="4">stereoMode</td> <td>OSP_STEREO_NONE (default)</td>
+  </tr>
+  <tr>
+    <td>OSP_STEREO_LEFT</td>
+  </tr>
+  <tr>
+    <td>OSP_STEREO_RIGHT</td>
+  </tr>
+  <tr>
+    <td>OSP_STEREO_SIDE_BY_SIDE</td>
+  </tr>
+
   <tr>
     <td>Boxes</td> <td>boxes</td> <td>box</td>
   </tr>
+
   <tr>
-    <td rowspan="3">Curves</td> <td>vertex</td> <td>vertex.position</td>
+    <td rowspan="8">Curves</td> <td>vertex</td> <td>vertex.position</td>
   </tr>
   <tr>
-    <td>curveBasis</td> <td>basis</td>
+    <td rowspan="4">curveBasis</td> <td rowspan="4">basis</td> <td>OSP_LINEAR</td>
   </tr>
   <tr>
-    <td>curveType</td> <td>type</td>
+    <td>OSP_BEZIER</td>
   </tr>
+  <tr>
+    <td>OSP_BSPLINE</td>
+  </tr>
+  <tr>
+    <td>OSP_HERMITE</td>
+  </tr>
+  <tr>
+    <td rowspan="3">curveType</td> <td rowspan="3">type</td> <td>OSP_ROUND</td>
+  </tr>
+  <tr>
+    <td>OSP_FLAT</td>
+  </tr>
+  <tr>
+    <td>OSP_RIBBON</td>
+  </tr>
+
   <tr>
     <td>Isosurfaces</td> <td>isovalues</td> <td>isovalue</td>
   </tr>
+
   <tr>
     <td>QuadMesh</td> <td>vertex</td> <td>vertex.position</td>
   </tr>
+
   <tr>
     <td>Slices</td> <td>planes</td> <td>plane</td>
   </tr>
+
   <tr>
     <td>StreamLines</td> <td>vertex</td> <td>vertex.position</td>
   </tr>
+
   <tr>
     <td>Subdivision</td> <td>vertex</td> <td>vertex.position</td>
   </tr>
+
   <tr>
     <td>TriangleMesh</td> <td>vertex</td> <td>vertex.position</td>
   </tr>
+
   <tr>
     <td>Light</td> <td>isVisible</td> <td>visible</td>
   </tr>
+
   <tr>
     <td rowspan="2">PathTracer</td> <td>useGeometryLights</td> <td>geometryLights</td>
   </tr>
   <tr>
     <td>lights</td> <td>light</td>
   </tr>
+
   <tr>
     <td rowspan="2">LinearTransferFunction</td> <td>colors</td> <td>color</td>
   </tr>
   <tr>
     <td>opacities</td> <td>opacity</td>
   </tr>
-<!-- ALOK: leaving Volume stuff out for now until VKL merged -->
+
+  <tr>
+    <td rowspan="7">AMRVolume</td> <td rowspan="3">amrMethod</td> <td rowspan="3">method</td> <td>OSP_AMR_CURRENT (default)</td>
+  </tr>
+  <tr>
+    <td>OSP_AMR_FINEST</td>
+  </tr>
+  <tr>
+    <td>OSP_AMR_OCTANT</td>
+  </tr>
+  <tr>
+    <td>blockBounds</td> <td>block.bounds</td>
+  </tr>
+  <tr>
+    <td>refinementLevels</td> <td>block.level</td>
+  </tr>
+  <tr>
+    <td>cellWidths</td> <td>block.cellWidth</td>
+  </tr>
+  <tr>
+    <td>blockData</td> <td>block.data</td>
+  </tr>
+
+  <tr>
+    <td rowspan="5">StructuredVolume</td> <td rowspan="5">voxelType</td> <td rowspan="5">voxelType</td> <td>OSP_UCHAR</td>
+  </tr>
+  <tr>
+    <td>OSP_SHORT</td>
+  </tr>
+  <tr>
+    <td>OSP_USHORT</td>
+  </tr>
+  <tr>
+    <td>OSP_FLOAT</td>
+  </tr>
+  <tr>
+    <td>OSP_DOUBLE</td>
+  </tr>
+
+  <tr>
+    <td rowspan="3">UnstructuredVolume</td> <td>vertex</td> <td>vertex.position</td>
+  </tr>
+  <tr>
+    <td rowspan="2">hexMethod</td> <td rowspan="2">hexMethod</td> <td>OSP_FAST</td>
+  </tr>
+  <tr>
+    <td>OSP_ITERATIVE</td>
+  </tr>
 </table>
+
+OSPRay will print warnings for parameters that were not used by the object.
+This should aid in the transition to the new parameter names.
