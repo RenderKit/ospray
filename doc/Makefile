@@ -114,7 +114,7 @@ www/pvospray.html: pvospray.md
 www/displaywall.html: displaywall.md
 www/fiu_comparison.html: fiu_comparison.md
 www/legal.html: legal.md
-www/documentation.html: documentation.md tmp/api_html.md mpi.md tmp/scenegraph_html.md examples.md
+www/documentation.html: documentation.md tmp/api_html.md mpi.md examples.md
 
 
 ### images
@@ -160,7 +160,7 @@ convert_nbsp_width = sed -e 's@\\ @ @g' -e 's/" style="width:/" width="/g' -e "
 tmp/api.md: api.md tmp/links.md tmp/images_web.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md overview.md gitter.md compilation.md documentation.md tmp/api.md mpi.md scenegraph.md examples.md tmp/links.md tmp/images_web.md
+../README.md: tmp/readme_head.md overview.md gitter.md compilation.md documentation.md tmp/api.md mpi.md examples.md tmp/links.md tmp/images_web.md
 	$(PANDOC) $+ -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
 
 ### pdf
@@ -174,7 +174,7 @@ tmp/%.tex: filter-latex.py %.md tmp/links.md tmp/images_local_pdf.md
 tmp/api.tex: filter-latex.py api.md tmp/links.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=cpp
 
-tmp/scenegraph.tex: filter-latex.py scenegraph.md tmp/links.md tmp/images_local_pdf.md
+tmp/scenegraph.tex: filter-latex.py tmp/links.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=cpp
 
 ../readme.pdf: readme.tex $(tmptexfiles) $(wildcard ospray-doc/intel-spec.cls) preamble.tex tmp/version $(pdfimages)
