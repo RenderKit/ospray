@@ -136,10 +136,10 @@ values are listed.
   </tr>
 
   <tr>
-    <td rowspan="2">Camera</td> <td>pos</td> <td>position</td>
+    <td rowspan="2">Camera</td> <td>pos</td> <td>position</td> <td></td>
   </tr>
   <tr>
-    <td>dir</td> <td>direction</td>
+    <td>dir</td> <td>direction</td> <td></td>
   </tr>
 
   <tr>
@@ -156,11 +156,11 @@ values are listed.
   </tr>
 
   <tr>
-    <td>Boxes</td> <td>boxes</td> <td>box</td>
+    <td>Boxes</td> <td>boxes</td> <td>box</td> <td></td>
   </tr>
 
   <tr>
-    <td rowspan="8">Curves</td> <td>vertex</td> <td>vertex.position</td>
+    <td rowspan="8">Curves</td> <td>vertex</td> <td>vertex.position</td> <td></td>
   </tr>
   <tr>
     <td rowspan="4">curveBasis</td> <td rowspan="4">basis</td> <td>OSP_LINEAR</td>
@@ -185,45 +185,45 @@ values are listed.
   </tr>
 
   <tr>
-    <td>Isosurfaces</td> <td>isovalues</td> <td>isovalue</td>
+    <td>Isosurfaces</td> <td>isovalues</td> <td>isovalue</td> <td></td>
   </tr>
 
   <tr>
-    <td>QuadMesh</td> <td>vertex</td> <td>vertex.position</td>
+    <td>QuadMesh</td> <td>vertex</td> <td>vertex.position</td> <td></td>
   </tr>
 
   <tr>
-    <td>Slices</td> <td>planes</td> <td>plane</td>
+    <td>Slices</td> <td>planes</td> <td>plane</td> <td></td>
   </tr>
 
   <tr>
-    <td>StreamLines</td> <td>vertex</td> <td>vertex.position</td>
+    <td>StreamLines</td> <td>vertex</td> <td>vertex.position</td> <td></td>
   </tr>
 
   <tr>
-    <td>Subdivision</td> <td>vertex</td> <td>vertex.position</td>
+    <td>Subdivision</td> <td>vertex</td> <td>vertex.position</td> <td></td>
   </tr>
 
   <tr>
-    <td>TriangleMesh</td> <td>vertex</td> <td>vertex.position</td>
+    <td>TriangleMesh</td> <td>vertex</td> <td>vertex.position</td> <td></td>
   </tr>
 
   <tr>
-    <td>Light</td> <td>isVisible</td> <td>visible</td>
+    <td>Light</td> <td>isVisible</td> <td>visible</td> <td></td>
   </tr>
 
   <tr>
-    <td rowspan="2">PathTracer</td> <td>useGeometryLights</td> <td>geometryLights</td>
+    <td rowspan="2">PathTracer</td> <td>useGeometryLights</td> <td>geometryLights</td> <td></td>
   </tr>
   <tr>
-    <td>lights</td> <td>light</td>
+    <td>lights</td> <td>light</td> <td></td>
   </tr>
 
   <tr>
-    <td rowspan="2">LinearTransferFunction</td> <td>colors</td> <td>color</td>
+    <td rowspan="2">LinearTransferFunction</td> <td>colors</td> <td>color</td> <td></td>
   </tr>
   <tr>
-    <td>opacities</td> <td>opacity</td>
+    <td>opacities</td> <td>opacity</td> <td></td>
   </tr>
 
   <tr>
@@ -236,16 +236,16 @@ values are listed.
     <td>OSP_AMR_OCTANT</td>
   </tr>
   <tr>
-    <td>blockBounds</td> <td>block.bounds</td>
+    <td>blockBounds</td> <td>block.bounds</td> <td></td>
   </tr>
   <tr>
-    <td>refinementLevels</td> <td>block.level</td>
+    <td>refinementLevels</td> <td>block.level</td> <td></td>
   </tr>
   <tr>
-    <td>cellWidths</td> <td>block.cellWidth</td>
+    <td>cellWidths</td> <td>block.cellWidth</td> <td></td>
   </tr>
   <tr>
-    <td>blockData</td> <td>block.data</td>
+    <td>blockData</td> <td>block.data</td> <td></td>
   </tr>
 
   <tr>
@@ -265,7 +265,7 @@ values are listed.
   </tr>
 
   <tr>
-    <td rowspan="3">UnstructuredVolume</td> <td>vertex</td> <td>vertex.position</td>
+    <td rowspan="3">UnstructuredVolume</td> <td>vertex</td> <td>vertex.position</td> <td></td>
   </tr>
   <tr>
     <td rowspan="2">hexMethod</td> <td rowspan="2">hexMethod</td> <td>OSP_FAST</td>
