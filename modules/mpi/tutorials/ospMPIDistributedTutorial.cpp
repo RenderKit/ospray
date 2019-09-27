@@ -95,7 +95,7 @@ int main(int argc, char **argv)
   imgSize.y = 768; // height
 
   // camera
-  vec3f cam_pos{(mpiWorldSize + 1.f) / 2.f, 0.5f, mpiWorldSize * 0.5f};
+  vec3f cam_pos{(mpiWorldSize + 1.f) / 2.f, 0.5f, -mpiWorldSize * 0.5f};
   vec3f cam_up{0.f, 1.f, 0.f};
   vec3f cam_view{0.f, 0.f, 1.f};
 

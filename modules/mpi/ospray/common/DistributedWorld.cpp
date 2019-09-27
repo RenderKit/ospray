@@ -85,6 +85,15 @@ DistributedWorld::DistributedWorld() : mpiGroup(mpicommon::worker.dup())
   this->ispcEquivalent = ispc::DistributedWorld_create(this);
 }
 
+box3f DistributedWorld::getBounds() const
+{
+  box3f bounds;
+  for (const auto &r : allRegions) {
+    bounds.extend(r.bounds);
+  }
+  return bounds;
+}
+
 std::string DistributedWorld::toString() const
 {
   return "ospray::mpi::DistributedWorld";

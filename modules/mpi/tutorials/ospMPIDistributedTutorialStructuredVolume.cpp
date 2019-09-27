@@ -224,10 +224,10 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   brick.brick = ospNewVolume("shared_structured_volume");
 
   ospSetInt(brick.brick, "voxelType", OSP_UCHAR);
-  ospSetVec3iv(brick.brick, "dimensions", &brickGhostDims.x);
+  ospSetParam(brick.brick, "dimensions", OSP_VEC3I, &brickGhostDims.x);
   // we use the grid origin to place this brick in the right position inside
   // the global volume
-  ospSetVec3fv(brick.brick, "gridOrigin", &brick.ghostBounds.lower.x);
+  ospSetParam(brick.brick, "gridOrigin", OSP_VEC3F, &brick.ghostBounds.lower.x);
 
   // generate the volume data to just be filled with this rank's id
   const size_t nVoxels = brickGhostDims.x * brickGhostDims.y * brickGhostDims.z;
@@ -237,8 +237,10 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   ospSetObject(brick.brick, "voxelData", ospVolumeData);
 
   // Set the clipping box of the volume to clip off the ghost voxels
-  ospSetVec3fv(brick.brick, "volumeClippingBoxLower", &brick.bounds.lower.x);
-  ospSetVec3fv(brick.brick, "volumeClippingBoxUpper", &brick.bounds.upper.x);
+  ospSetParam(
+      brick.brick, "volumeClippingBoxLower", OSP_VEC3F, &brick.bounds.lower.x);
+  ospSetParam(
+      brick.brick, "volumeClippingBoxUpper", OSP_VEC3F, &brick.bounds.upper.x);
   ospCommit(brick.brick);
 
   brick.model = ospNewVolumetricModel(brick.brick);

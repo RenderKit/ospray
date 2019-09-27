@@ -477,6 +477,21 @@ OSPWorld MPIOffloadDevice::newWorld()
   return (OSPWorld)(int64)handle;
 }
 
+box3f MPIOffloadDevice::getBounds(OSPObject _obj)
+{
+  const ObjectHandle obj = (ObjectHandle &)_obj;
+
+  networking::BufferWriter writer;
+  writer << work::GET_BOUNDS << obj;
+  sendWork(writer.buffer);
+
+  box3f result;
+  utility::ArrayView<uint8_t> view(
+      reinterpret_cast<uint8_t *>(&result), sizeof(box3f));
+  fabric->recv(view, rootWorkerRank());
+  return result;
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // OSPRay Data Arrays /////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
@@ -547,151 +562,175 @@ void MPIOffloadDevice::copyData(
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// Object Parameters //////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-
-void MPIOffloadDevice::setString(
-    OSPObject _object, const char *bufName, const char *s)
-{
-  setParam<std::string>(
-      (ObjectHandle &)_object, bufName, std::string(s), work::SET_PARAM_STRING);
-}
-
-void MPIOffloadDevice::setObject(
-    OSPObject _target, const char *bufName, OSPObject _value)
-{
-  setParam<OSPObject>(
-      (ObjectHandle &)_target, bufName, _value, work::SET_PARAM_OBJECT);
-}
-
-void MPIOffloadDevice::setBool(
-    OSPObject _object, const char *bufName, const bool b)
-{
-  setParam<bool>((ObjectHandle &)_object, bufName, b, work::SET_PARAM_BOOL);
-}
-
-void MPIOffloadDevice::setFloat(
-    OSPObject _object, const char *bufName, const float f)
-{
-  setParam<float>((ObjectHandle &)_object, bufName, f, work::SET_PARAM_FLOAT);
-}
-
-void MPIOffloadDevice::setInt(
-    OSPObject _object, const char *bufName, const int i)
-{
-  setParam<int>((ObjectHandle &)_object, bufName, i, work::SET_PARAM_INT);
-}
-
-void MPIOffloadDevice::setVec2f(
-    OSPObject _object, const char *bufName, const vec2f &v)
-{
-  setParam<vec2f>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC2F);
-}
-
-void MPIOffloadDevice::setVec2i(
-    OSPObject _object, const char *bufName, const vec2i &v)
-{
-  setParam<vec2i>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC2I);
-}
-
-void MPIOffloadDevice::setVec3f(
-    OSPObject _object, const char *bufName, const vec3f &v)
-{
-  setParam<vec3f>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC3F);
-}
-
-void MPIOffloadDevice::setVec3i(
-    OSPObject _object, const char *bufName, const vec3i &v)
-{
-  setParam<vec3i>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC3I);
-}
-
-void MPIOffloadDevice::setVec4f(
-    OSPObject _object, const char *bufName, const vec4f &v)
-{
-  setParam<vec4f>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC4F);
-}
-
-void MPIOffloadDevice::setVec4i(
-    OSPObject _object, const char *bufName, const vec4i &v)
-{
-  setParam<vec4i>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_VEC4I);
-}
-
-void MPIOffloadDevice::setBox1f(
-    OSPObject _object, const char *bufName, const box1f &v)
-{
-  setParam<box1f>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX1F);
-}
-
-void MPIOffloadDevice::setBox1i(
-    OSPObject _object, const char *bufName, const box1i &v)
-{
-  setParam<box1i>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX1I);
-}
-
-void MPIOffloadDevice::setBox2f(
-    OSPObject _object, const char *bufName, const box2f &v)
-{
-  setParam<box2f>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX2F);
-}
-
-void MPIOffloadDevice::setBox2i(
-    OSPObject _object, const char *bufName, const box2i &v)
-{
-  setParam<box2i>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX2I);
-}
-
-void MPIOffloadDevice::setBox3f(
-    OSPObject _object, const char *bufName, const box3f &v)
-{
-  setParam<box3f>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX3F);
-}
-
-void MPIOffloadDevice::setBox3i(
-    OSPObject _object, const char *bufName, const box3i &v)
-{
-  setParam<box3i>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX3I);
-}
-
-void MPIOffloadDevice::setBox4f(
-    OSPObject _object, const char *bufName, const box4f &v)
-{
-  setParam<box4f>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX4F);
-}
-
-void MPIOffloadDevice::setBox4i(
-    OSPObject _object, const char *bufName, const box4i &v)
-{
-  setParam<box4i>((ObjectHandle &)_object, bufName, v, work::SET_PARAM_BOX4I);
-}
-
-void MPIOffloadDevice::setLinear3f(
-    OSPObject _object, const char *bufName, const linear3f &v)
-{
-  setParam<linear3f>(
-      (ObjectHandle &)_object, bufName, v, work::SET_PARAM_LINEAR3F);
-}
-
-void MPIOffloadDevice::setAffine3f(
-    OSPObject _object, const char *bufName, const affine3f &v)
-{
-  setParam<affine3f>(
-      (ObjectHandle &)_object, bufName, v, work::SET_PARAM_AFFINE3F);
-}
-
-void MPIOffloadDevice::setVoidPtr(
-    OSPObject _object, const char *bufName, void *v)
-{
-  UNUSED(_object, bufName, v);
-  throw std::runtime_error(
-      "setting a void pointer as parameter to an "
-      "object is not valid in MPIOffload");
-}
-
-///////////////////////////////////////////////////////////////////////////
 // Object + Parameter Lifetime Management /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
+
+void MPIOffloadDevice::setObjectParam(
+    OSPObject object, const char *name, OSPDataType type, const void *mem)
+{
+  ObjectHandle handle = (ObjectHandle &)object;
+  switch (type) {
+  // All OSP_OBJECT fall through the same style of setting param since it's just
+  // a handle
+  case OSP_DEVICE:
+  case OSP_OBJECT:
+  case OSP_CAMERA:
+  case OSP_DATA:
+  case OSP_FRAMEBUFFER:
+  case OSP_FUTURE:
+  case OSP_GEOMETRIC_MODEL:
+  case OSP_GEOMETRY:
+  case OSP_GROUP:
+  case OSP_IMAGE_OPERATION:
+  case OSP_INSTANCE:
+  case OSP_LIGHT:
+  case OSP_MATERIAL:
+  case OSP_RENDERER:
+  case OSP_TEXTURE:
+  case OSP_TRANSFER_FUNCTION:
+  case OSP_VOLUME:
+  case OSP_VOLUMETRIC_MODEL:
+  case OSP_WORLD:
+    setParam<ObjectHandle>(handle, name, mem, type);
+    break;
+  case OSP_BOOL:
+    setParam<bool>(handle, name, mem, type);
+    break;
+  case OSP_STRING:
+    setParam<std::string>(handle, name, mem, type);
+    break;
+  case OSP_CHAR:
+  case OSP_BYTE:
+    setParam<char>(handle, name, mem, type);
+    break;
+  case OSP_VEC2UC:
+    setParam<vec2uc>(handle, name, mem, type);
+    break;
+  case OSP_VEC3UC:
+    setParam<vec3uc>(handle, name, mem, type);
+    break;
+  case OSP_VEC4UC:
+    setParam<vec4uc>(handle, name, mem, type);
+    break;
+  case OSP_SHORT:
+    setParam<int16_t>(handle, name, mem, type);
+    break;
+    // Will note: looks like ushort is missing in ispcdevice
+  case OSP_USHORT:
+    setParam<uint16_t>(handle, name, mem, type);
+    break;
+  case OSP_INT:
+    setParam<int>(handle, name, mem, type);
+    break;
+  case OSP_VEC2I:
+    setParam<vec2i>(handle, name, mem, type);
+    break;
+  case OSP_VEC3I:
+    setParam<vec3i>(handle, name, mem, type);
+    break;
+  case OSP_VEC4I:
+    setParam<vec4i>(handle, name, mem, type);
+    break;
+  case OSP_UINT:
+    setParam<unsigned int>(handle, name, mem, type);
+    break;
+  case OSP_VEC2UI:
+    setParam<vec2ui>(handle, name, mem, type);
+    break;
+  case OSP_VEC3UI:
+    setParam<vec3ui>(handle, name, mem, type);
+    break;
+  case OSP_VEC4UI:
+    setParam<vec4ui>(handle, name, mem, type);
+    break;
+  case OSP_LONG:
+    setParam<long>(handle, name, mem, type);
+    break;
+  case OSP_VEC2L:
+    setParam<vec2l>(handle, name, mem, type);
+    break;
+  case OSP_VEC3L:
+    setParam<vec3l>(handle, name, mem, type);
+    break;
+  case OSP_VEC4L:
+    setParam<vec4l>(handle, name, mem, type);
+    break;
+  case OSP_ULONG:
+    setParam<unsigned long>(handle, name, mem, type);
+    break;
+  case OSP_VEC2UL:
+    setParam<vec2ul>(handle, name, mem, type);
+    break;
+  case OSP_VEC3UL:
+    setParam<vec3ul>(handle, name, mem, type);
+    break;
+  case OSP_VEC4UL:
+    setParam<vec4ul>(handle, name, mem, type);
+    break;
+  case OSP_FLOAT:
+    setParam<float>(handle, name, mem, type);
+    break;
+  case OSP_VEC2F:
+    setParam<vec2f>(handle, name, mem, type);
+    break;
+  case OSP_VEC3F:
+    setParam<vec3f>(handle, name, mem, type);
+    break;
+  case OSP_VEC4F:
+    setParam<vec4f>(handle, name, mem, type);
+    break;
+  case OSP_DOUBLE:
+    setParam<double>(handle, name, mem, type);
+    break;
+  case OSP_BOX1I:
+    setParam<box1i>(handle, name, mem, type);
+    break;
+  case OSP_BOX2I:
+    setParam<box2i>(handle, name, mem, type);
+    break;
+  case OSP_BOX3I:
+    setParam<box3i>(handle, name, mem, type);
+    break;
+  case OSP_BOX4I:
+    setParam<box4i>(handle, name, mem, type);
+    break;
+  case OSP_BOX1F:
+    setParam<box1f>(handle, name, mem, type);
+    break;
+  case OSP_BOX2F:
+    setParam<box2f>(handle, name, mem, type);
+    break;
+  case OSP_BOX3F:
+    setParam<box3f>(handle, name, mem, type);
+    break;
+  case OSP_BOX4F:
+    setParam<box4f>(handle, name, mem, type);
+    break;
+  case OSP_LINEAR2F:
+    setParam<linear2f>(handle, name, mem, type);
+    break;
+  case OSP_LINEAR3F:
+    setParam<linear3f>(handle, name, mem, type);
+    break;
+  case OSP_AFFINE2F:
+    setParam<affine2f>(handle, name, mem, type);
+    break;
+  case OSP_AFFINE3F:
+    setParam<affine3f>(handle, name, mem, type);
+    break;
+  default:
+    throw std::runtime_error("Unrecognized param type!");
+  }
+}
+
+void MPIOffloadDevice::removeObjectParam(OSPObject object, const char *name)
+{
+  const ObjectHandle handle = (const ObjectHandle &)object;
+
+  networking::BufferWriter writer;
+  writer << work::REMOVE_PARAM << handle.i64 << std::string(name);
+  sendWork(writer.buffer);
+}
 
 void MPIOffloadDevice::commit(OSPObject _object)
 {
@@ -706,15 +745,6 @@ void MPIOffloadDevice::commit(OSPObject _object)
   if (d != sharedData.end()) {
     fabric->sendBcast(d->second);
   }
-}
-
-void MPIOffloadDevice::removeParam(OSPObject _object, const char *name)
-{
-  const ObjectHandle handle = (const ObjectHandle &)_object;
-
-  networking::BufferWriter writer;
-  writer << work::REMOVE_PARAM << handle.i64 << std::string(name);
-  sendWork(writer.buffer);
 }
 
 void MPIOffloadDevice::release(OSPObject _object)

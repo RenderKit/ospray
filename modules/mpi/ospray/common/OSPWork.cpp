@@ -440,215 +440,183 @@ void renderFrameAsync(
           state.getObject<OSPWorld>(worldHandle));
 }
 
-void setParamObject(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
+template <typename T>
+void setParam(networking::BufferReader &cmdBuf,
+    OSPObject obj,
+    const std::string &param,
+    OSPDataType type)
 {
-  int64_t handle = 0;
-  std::string param;
-  int64_t val = 0;
-  cmdBuf >> handle >> param >> val;
-  ospSetObject(state.objects[handle], param.c_str(), state.objects[val]);
+  T val;
+  cmdBuf >> val;
+  ospSetParam(obj, param.c_str(), type, &val);
 }
 
-void setParamString(
+void setParam(
     OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
   int64_t handle = 0;
   std::string param;
-  std::string val;
-  cmdBuf >> handle >> param >> val;
-  ospSetString(state.objects[handle], param.c_str(), val.c_str());
-}
+  OSPDataType type;
+  cmdBuf >> handle >> param >> type;
 
-void setParamInt(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  int32_t val;
-  cmdBuf >> handle >> param >> val;
-  ospSetInt(state.objects[handle], param.c_str(), val);
-}
-
-void setParamBool(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  bool val;
-  cmdBuf >> handle >> param >> val;
-  ospSetBool(state.objects[handle], param.c_str(), val);
-}
-
-void setParamFloat(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  float val;
-  cmdBuf >> handle >> param >> val;
-  ospSetFloat(state.objects[handle], param.c_str(), val);
-}
-
-void setParamVec2f(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  vec2f val;
-  cmdBuf >> handle >> param >> val;
-  ospSetVec2fv(state.objects[handle], param.c_str(), &val.x);
-}
-
-void setParamVec2i(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  vec2i val;
-  cmdBuf >> handle >> param >> val;
-  ospSetVec2iv(state.objects[handle], param.c_str(), &val.x);
-}
-
-void setParamVec3f(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  vec3f val;
-  cmdBuf >> handle >> param >> val;
-  ospSetVec3fv(state.objects[handle], param.c_str(), &val.x);
-}
-
-void setParamVec3i(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  vec3i val;
-  cmdBuf >> handle >> param >> val;
-  ospSetVec3iv(state.objects[handle], param.c_str(), &val.x);
-}
-
-void setParamVec4f(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  vec4f val;
-  cmdBuf >> handle >> param >> val;
-  ospSetVec4fv(state.objects[handle], param.c_str(), &val.x);
-}
-
-void setParamVec4i(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  vec4i val;
-  cmdBuf >> handle >> param >> val;
-  ospSetVec4iv(state.objects[handle], param.c_str(), &val.x);
-}
-
-void setParamBox1f(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  box1f val;
-  cmdBuf >> handle >> param >> val;
-  ospSetBox1fv(state.objects[handle], param.c_str(), &val.lower);
-}
-
-void setParamBox1i(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  box1i val;
-  cmdBuf >> handle >> param >> val;
-  ospSetBox1iv(state.objects[handle], param.c_str(), &val.lower);
-}
-
-void setParamBox2f(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  box2f val;
-  cmdBuf >> handle >> param >> val;
-  ospSetBox2fv(state.objects[handle], param.c_str(), &val.lower.x);
-}
-
-void setParamBox2i(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  box2i val;
-  cmdBuf >> handle >> param >> val;
-  ospSetBox2iv(state.objects[handle], param.c_str(), &val.lower.x);
-}
-
-void setParamBox3f(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  box3f val;
-  cmdBuf >> handle >> param >> val;
-  ospSetBox3fv(state.objects[handle], param.c_str(), &val.lower.x);
-}
-
-void setParamBox3i(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  box3i val;
-  cmdBuf >> handle >> param >> val;
-  ospSetBox3iv(state.objects[handle], param.c_str(), &val.lower.x);
-}
-
-void setParamBox4f(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  box4f val;
-  cmdBuf >> handle >> param >> val;
-  ospSetBox4fv(state.objects[handle], param.c_str(), &val.lower.x);
-}
-
-void setParamBox4i(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  box4i val;
-  cmdBuf >> handle >> param >> val;
-  ospSetBox4iv(state.objects[handle], param.c_str(), &val.lower.x);
-}
-
-void setParamLinear3f(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  linear3f val;
-  cmdBuf >> handle >> param >> val;
-  ospSetLinear3fv(state.objects[handle], param.c_str(), &val.vx.x);
-}
-
-void setParamAffine3f(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  int64_t handle = 0;
-  std::string param;
-  affine3f val;
-  cmdBuf >> handle >> param >> val;
-  ospSetAffine3fv(
-      state.objects[handle], param.c_str(), reinterpret_cast<float *>(&val));
+  switch (type) {
+  // All OSP_OBJECT fall through the same style of setting param since it's just
+  // a handle
+  case OSP_DEVICE:
+  case OSP_OBJECT:
+  case OSP_CAMERA:
+  case OSP_DATA:
+  case OSP_FRAMEBUFFER:
+  case OSP_FUTURE:
+  case OSP_GEOMETRIC_MODEL:
+  case OSP_GEOMETRY:
+  case OSP_GROUP:
+  case OSP_IMAGE_OPERATION:
+  case OSP_INSTANCE:
+  case OSP_LIGHT:
+  case OSP_MATERIAL:
+  case OSP_RENDERER:
+  case OSP_TEXTURE:
+  case OSP_TRANSFER_FUNCTION:
+  case OSP_VOLUME:
+  case OSP_VOLUMETRIC_MODEL:
+  case OSP_WORLD: {
+    int64_t val = 0;
+    cmdBuf >> val;
+    ospSetParam(
+        state.objects[handle], param.c_str(), type, &state.objects[val]);
+    break;
+  }
+  case OSP_STRING: {
+    std::string val = 0;
+    cmdBuf >> val;
+    ospSetParam(state.objects[handle], param.c_str(), type, val.c_str());
+    break;
+  }
+  case OSP_BOOL:
+    setParam<bool>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_CHAR:
+  case OSP_BYTE:
+    setParam<char>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC2UC:
+    setParam<vec2uc>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC3UC:
+    setParam<vec3uc>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC4UC:
+    setParam<vec4uc>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_SHORT:
+    setParam<short>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_USHORT:
+    setParam<unsigned short>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_INT:
+    setParam<int>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC2I:
+    setParam<vec2i>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC3I:
+    setParam<vec3i>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC4I:
+    setParam<vec4i>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_UINT:
+    setParam<unsigned int>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC2UI:
+    setParam<vec2ui>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC3UI:
+    setParam<vec3ui>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC4UI:
+    setParam<vec4ui>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_LONG:
+    setParam<long>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC2L:
+    setParam<vec2l>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC3L:
+    setParam<vec3l>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC4L:
+    setParam<vec4l>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_ULONG:
+    setParam<unsigned long>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC2UL:
+    setParam<vec2ul>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC3UL:
+    setParam<vec3ul>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC4UL:
+    setParam<vec4ul>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_FLOAT:
+    setParam<float>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC2F:
+    setParam<vec2f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC3F:
+    setParam<vec3f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_VEC4F:
+    setParam<vec4f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_DOUBLE:
+    setParam<double>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_BOX1I:
+    setParam<box1i>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_BOX2I:
+    setParam<box2i>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_BOX3I:
+    setParam<box3i>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_BOX4I:
+    setParam<box4i>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_BOX1F:
+    setParam<box1f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_BOX2F:
+    setParam<box2f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_BOX3F:
+    setParam<box3f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_BOX4F:
+    setParam<box4f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_LINEAR2F:
+    setParam<linear2f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_LINEAR3F:
+    setParam<linear3f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_AFFINE2F:
+    setParam<affine2f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  case OSP_AFFINE3F:
+    setParam<affine3f>(cmdBuf, state.objects[handle], param, type);
+    break;
+  default:
+    throw std::runtime_error("Unrecognized param type!");
+  }
 }
 
 void removeParam(
@@ -693,6 +661,23 @@ void pick(OSPState &state,
     using namespace utility;
     auto view = std::make_shared<OwnedArray<uint8_t>>(
         reinterpret_cast<uint8_t *>(&res), sizeof(OSPPickResult));
+    fabric.send(view, 0);
+  }
+}
+
+void getBounds(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric)
+{
+  int64_t handle = 0;
+  cmdBuf >> handle;
+
+  OSPBounds res = ospGetBounds(state.objects[handle]);
+
+  if (mpicommon::worker.rank == 0) {
+    using namespace utility;
+    auto view = std::make_shared<OwnedArray<uint8_t>>(
+        reinterpret_cast<uint8_t *>(&res), sizeof(OSPBounds));
     fabric.send(view, 0);
   }
 }
@@ -849,68 +834,8 @@ void dispatchWork(TAG t,
   case RENDER_FRAME_ASYNC:
     renderFrameAsync(state, cmdBuf, fabric);
     break;
-  case SET_PARAM_OBJECT:
-    setParamObject(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_STRING:
-    setParamString(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_INT:
-    setParamInt(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_BOOL:
-    setParamBool(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_FLOAT:
-    setParamFloat(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_VEC2F:
-    setParamVec2f(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_VEC2I:
-    setParamVec2i(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_VEC3F:
-    setParamVec3f(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_VEC3I:
-    setParamVec3i(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_VEC4F:
-    setParamVec4f(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_VEC4I:
-    setParamVec4i(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_BOX1F:
-    setParamBox1f(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_BOX1I:
-    setParamBox1i(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_BOX2F:
-    setParamBox2f(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_BOX2I:
-    setParamBox2i(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_BOX3F:
-    setParamBox3f(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_BOX3I:
-    setParamBox3i(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_BOX4F:
-    setParamBox4f(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_BOX4I:
-    setParamBox4i(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_LINEAR3F:
-    setParamLinear3f(state, cmdBuf, fabric);
-    break;
-  case SET_PARAM_AFFINE3F:
-    setParamAffine3f(state, cmdBuf, fabric);
+  case SET_PARAM:
+    setParam(state, cmdBuf, fabric);
     break;
   case REMOVE_PARAM:
     removeParam(state, cmdBuf, fabric);
@@ -920,6 +845,9 @@ void dispatchWork(TAG t,
     break;
   case PICK:
     pick(state, cmdBuf, fabric);
+    break;
+  case GET_BOUNDS:
+    getBounds(state, cmdBuf, fabric);
     break;
   case FUTURE_IS_READY:
     futureIsReady(state, cmdBuf, fabric);
@@ -998,54 +926,16 @@ const char *tagName(work::TAG t)
     return "RESET_ACCUMULATION";
   case RENDER_FRAME_ASYNC:
     return "RENDER_FRAME_ASYNC";
-  case SET_PARAM_OBJECT:
-    return "SET_PARAM_OBJECT";
-  case SET_PARAM_STRING:
-    return "SET_PARAM_STRING";
-  case SET_PARAM_INT:
-    return "SET_PARAM_INT";
-  case SET_PARAM_BOOL:
-    return "SET_PARAM_BOOL";
-  case SET_PARAM_FLOAT:
-    return "SET_PARAM_FLOAT";
-  case SET_PARAM_VEC2F:
-    return "SET_PARAM_VEC2F";
-  case SET_PARAM_VEC2I:
-    return "SET_PARAM_VEC2I";
-  case SET_PARAM_VEC3F:
-    return "SET_PARAM_VEC3F";
-  case SET_PARAM_VEC3I:
-    return "SET_PARAM_VEC3I";
-  case SET_PARAM_VEC4F:
-    return "SET_PARAM_VEC4F";
-  case SET_PARAM_VEC4I:
-    return "SET_PARAM_VEC4I";
-  case SET_PARAM_BOX1F:
-    return "SET_PARAM_BOX1F";
-  case SET_PARAM_BOX1I:
-    return "SET_PARAM_BOX1I";
-  case SET_PARAM_BOX2F:
-    return "SET_PARAM_BOX2F";
-  case SET_PARAM_BOX2I:
-    return "SET_PARAM_BOX2I";
-  case SET_PARAM_BOX3F:
-    return "SET_PARAM_BOX3F";
-  case SET_PARAM_BOX3I:
-    return "SET_PARAM_BOX3I";
-  case SET_PARAM_BOX4F:
-    return "SET_PARAM_BOX4F";
-  case SET_PARAM_BOX4I:
-    return "SET_PARAM_BOX4I";
-  case SET_PARAM_LINEAR3F:
-    return "SET_PARAM_LINEAR3F";
-  case SET_PARAM_AFFINE3F:
-    return "SET_PARAM_AFFINE3F";
+  case SET_PARAM:
+    return "SET_PARAM";
   case REMOVE_PARAM:
     return "REMOVE_PARAM";
   case SET_LOAD_BALANCER:
     return "SET_LOAD_BALANCER";
   case PICK:
     return "PICK";
+  case GET_BOUNDS:
+    return "GET_BOUNDS";
   case FUTURE_IS_READY:
     return "FUTURE_IS_READY";
   case FUTURE_WAIT:

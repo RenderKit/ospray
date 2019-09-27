@@ -74,6 +74,8 @@ struct DistributedWorld : public World
   DistributedWorld();
   virtual ~DistributedWorld() override = default;
 
+  box3f getBounds() const override;
+
   virtual std::string toString() const override;
 
   // commit synchronizes the distributed models between processes
