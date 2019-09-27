@@ -70,7 +70,6 @@ OSPRAY_INTERFACE void ospCopyData2D(const OSPData source,
 
 OSPRAY_INTERFACE void ospSetString(OSPObject, const char *n, const char *s);
 OSPRAY_INTERFACE void ospSetObject(OSPObject, const char *n, OSPObject obj);
-OSPRAY_INTERFACE void ospSetData(OSPObject, const char *n, OSPData data);
 
 OSPRAY_INTERFACE void ospSetBool(OSPObject, const char *n, int x);
 OSPRAY_INTERFACE void ospSetFloat(OSPObject, const char *n, float x);

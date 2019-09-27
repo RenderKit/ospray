@@ -101,11 +101,6 @@ void ospSetObject(OSPObject o, const char *id, OSPObject other)
   ospSetParam(o, id, OSP_OBJECT, &other);
 }
 
-void ospSetData(OSPObject o, const char *id, OSPData data)
-{
-  ospSetParam(o, id, OSP_DATA, &data);
-}
-
 void ospSetBool(OSPObject o, const char *id, int x)
 {
   ospSetParam(o, id, OSP_BOOL, &x);
@@ -164,7 +159,7 @@ void ospSetObjectAsData(OSPObject o,
                         OSPObject p)
 {
   OSPData data = ospNewData(1, type, &p);
-  ospSetData(o, n, data);
+  ospSetObject(o, n, data);
   ospRelease(data);
 }
 
