@@ -245,7 +245,7 @@ void MPIOffloadDevice::initializeDevice()
   if (mode == "mpi") {
     createMPI_RanksBecomeWorkers(&_ac, _av);
     // Only the master returns from this call
-    fabric = make_unique<MPIFabric>(world, 0);
+    fabric = ospcommon::make_unique<MPIFabric>(world, 0);
     maml::init(false);
     maml::start();
   } else if (mode == "mpi-listen") {
@@ -263,7 +263,7 @@ void MPIOffloadDevice::initializeDevice()
     parseHost(hostPort, host, port);
     postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
         << "MPIOffloadDevice connecting to " << host << ":" << port << "\n";
-    fabric = make_unique<SocketWriterFabric>(host, port);
+    fabric = ospcommon::make_unique<SocketWriterFabric>(host, port);
   } else {
     throw std::runtime_error("Invalid MPI mode!");
   }
