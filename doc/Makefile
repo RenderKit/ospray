@@ -183,7 +183,7 @@ tmp/scenegraph.tex: filter-latex.py scenegraph.md tmp/links.md tmp/images_local_
 	newmd5s=`md5sum $$auxf 2> /dev/null`;\
 	until [[ $$md5s == $$newmd5s ]]; do \
 		md5s=$$newmd5s;\
-		xelatex -output-directory=tmp $<;\
+		xelatex -halt-on-error -output-directory=tmp $< || exit 2;\
 		newmd5s=`md5sum $$auxf`;\
 	done
 	cp tmp/$(basename $<).pdf $@
