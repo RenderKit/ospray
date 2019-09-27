@@ -265,8 +265,8 @@ int main(int argc, const char **argv)
 
   std::vector<OSPVolumetricModel> volumetricModels;
   //volumetricModels.emplace_back(CreateProceduralVolumetricModel(
-  //  [&](vec3f p) { 
-  //    vec3f X = 2.f * p - vec3f(1.f); 
+  //  [&](vec3f p) {
+  //    vec3f X = 2.f * p - vec3f(1.f);
   //    return length((1.4f + 0.4 * turbulence(p, 12.f, 12)) * X) < 1.f;
   //  },
   //  {vec3f(1.0f, 1.0f, 1.0f), vec3f(1.0f, 1.0f, 1.0f)},
@@ -334,7 +334,7 @@ int main(int argc, const char **argv)
   ospRelease(instance_data);
 
   // create OSPRay renderer
-  int maxDepth = 32;
+  int maxDepth = 5;
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
   ospSetInt(renderer, "maxDepth", maxDepth);
   ospSetInt(renderer, "rouletteDepth", 32);
