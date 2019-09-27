@@ -1444,11 +1444,11 @@ namespace OSPRayTestScenes {
     OSPTransferFunction tfn = ospNewTransferFunction("piecewise_linear");
     ospSetVec2f(tfn, "valueRange", 0.0f, 1.0f);
     OSPData tfColorData = ospNewData(1, OSP_VEC3F, &albedo);
-    ospSetData(tfn, "color", tfColorData);
+    ospSetObject(tfn, "color", tfColorData);
     ospRelease(tfColorData);
     std::vector<float> opacities = { 0.f, 1.f };
     OSPData tfOpacityData = ospNewData(opacities.size(), OSP_FLOAT, opacities.data());
-    ospSetData(tfn, "opacity", tfOpacityData);
+    ospSetObject(tfn, "opacity", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(tfn);
     OSPVolumetricModel volumetricModel = ospNewVolumetricModel(volume);
@@ -1462,7 +1462,7 @@ namespace OSPRayTestScenes {
 
     OSPData volumeData = ospNewData(1, OSP_VOLUMETRIC_MODEL, &volumetricModel);
     OSPGroup volumeGroup = ospNewGroup();
-    ospSetData(volumeGroup, "volume", volumeData);
+    ospSetObject(volumeGroup, "volume", volumeData);
     ospCommit(volumeGroup);
     ospRelease(volumeData);
 
@@ -1488,8 +1488,8 @@ namespace OSPRayTestScenes {
       OSPData positionData = ospNewData(planeVertices.size(), OSP_VEC3F,  planeVertices.data());
       OSPData indexData    = ospNewData(planeIndices.size(),  OSP_VEC4UI, planeIndices.data());
       OSPGeometry mesh  = ospNewGeometry("quads");
-      ospSetData(mesh, "vertex.position", positionData);
-      ospSetData(mesh, "index",           indexData);
+      ospSetObject(mesh, "vertex.position", positionData);
+      ospSetObject(mesh, "index",           indexData);
       ospCommit(mesh);
 
       OSPGeometricModel model = ospNewGeometricModel(mesh);
@@ -1506,7 +1506,7 @@ namespace OSPRayTestScenes {
 
       OSPData modelsData = ospNewData(models.size(), OSP_GEOMETRIC_MODEL, models.data());
       OSPGroup modelsGroup = ospNewGroup();
-      ospSetData(modelsGroup, "geometry", modelsData);
+      ospSetObject(modelsGroup, "geometry", modelsData);
       ospCommit(modelsGroup);
       ospRelease(modelsData);
       OSPInstance modelsInstance = ospNewInstance(modelsGroup);
@@ -1537,7 +1537,7 @@ namespace OSPRayTestScenes {
 
     OSPData lights = ospNewData(lightHandles.size(), OSP_LIGHT, lightHandles.data(), 0);
     ospCommit(lights);
-    ospSetData(renderer, "light", lights);
+    ospSetObject(renderer, "light", lights);
     ospRelease(lights);
 
     OSPData texelData = ospNewData(1, OSP_VEC3F, &ambientColor.x);
@@ -1546,7 +1546,7 @@ namespace OSPRayTestScenes {
     ospSetVec2i(backplateTexture, "size", 1, 1);
     ospSetInt(backplateTexture, "format", OSP_TEXTURE_RGB32F);
     ospSetInt(backplateTexture, "filter", OSP_TEXTURE_FILTER_NEAREST);
-    ospSetData(backplateTexture, "data", texelData);
+    ospSetObject(backplateTexture, "data", texelData);
     ospCommit(backplateTexture);
 
     ospRelease(texelData);
