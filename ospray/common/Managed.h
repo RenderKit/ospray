@@ -53,8 +53,6 @@ namespace ospray {
     ManagedObject *getParamObject(const char *name,
                                   ManagedObject *valIfNotFound = nullptr);
 
-    Data *getParamData(const char *name, Data *valIfNotFound = nullptr);
-
     template <typename T, int DIM = 1>
     const DataT<T, DIM> *getParamDataT(const char *name, bool required = false);
 
@@ -81,6 +79,18 @@ namespace ospray {
   inline T ManagedObject::getParam(const char *name, T valIfNotFound)
   {
     return ParameterizedObject::getParam<T>(name, valIfNotFound);
+  }
+
+  template <>
+  inline Data *ManagedObject::getParam<Data *>(
+      const char *name, Data *valIfNotFound)
+  {
+    auto *obj = ParameterizedObject::getParam<ManagedObject *>(
+        name, (ManagedObject *)valIfNotFound);
+    if (obj && obj->managedObjectType == OSP_DATA)
+      return (Data *)obj;
+    else
+      return valIfNotFound;
   }
 
 }  // namespace ospray

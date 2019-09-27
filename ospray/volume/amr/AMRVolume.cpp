@@ -61,19 +61,19 @@ namespace ospray {
     if (data != nullptr)  // TODO: support data updates
       return;
 
-    blockBoundsData = getParamData("block.bounds");
+    blockBoundsData = getParam<Data*>("block.bounds");
     if (blockBoundsData.ptr == nullptr)
       throw std::runtime_error("amr volume must have 'block.bounds' array");
 
-    refinementLevelsData = getParamData("block.level");
+    refinementLevelsData = getParam<Data*>("block.level");
     if (refinementLevelsData.ptr == nullptr)
       throw std::runtime_error("amr volume must have 'block.level' array");
 
-    cellWidthsData = getParamData("block.cellWidth");
+    cellWidthsData = getParam<Data*>("block.cellWidth");
     if (cellWidthsData.ptr == nullptr)
       throw std::runtime_error("amr volume must have 'block.cellWidth' array");
 
-    blockDataData = getParamData("block.data");
+    blockDataData = getParam<Data*>("block.data");
     if (blockDataData.ptr == nullptr)
       throw std::runtime_error("amr volume must have 'block.data' array");
 

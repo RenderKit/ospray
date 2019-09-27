@@ -38,11 +38,13 @@ namespace ospray {
       control points */
     void BilinearPatches::commit()
     {
-      this->patchesData = getParamData("vertices");
+      this->patchesData = getParamDataT<vec3f>("vertices", true);
 
-      // sanity check if a patches data was actually set!
-      if (!patchesData)
-        throw std::runtime_error("no data provided to BilinearPatches!");
+      if (!patchesData && !patchesData->compact())
+        throw std::runtime_error(
+            "BilinearPatches needs compact 'vertices' data!");
+
+      postCreationInfo(patchesData->size());
     }
 
     size_t BilinearPatches::numPrimitives() const

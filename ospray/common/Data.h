@@ -293,7 +293,7 @@ namespace ospray {
   inline const DataT<T, DIM> *ManagedObject::getParamDataT(
       const char *name, bool required)
   {
-    auto data = getParamData(name);
+    auto data = getParam<Data*>(name);
 
     if (data && data->is<T, DIM>())
       return &(data->as<T, DIM>());

@@ -27,7 +27,6 @@ namespace ospray {
 
     virtual std::string toString() const override;
 
-    /*! \brief creates a Texture2D object with the given parameter */
     static Texture *createInstance(const char *type);
   };
 

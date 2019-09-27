@@ -62,15 +62,6 @@ namespace ospray {
     return getParam<ManagedObject *>(name, valIfNotFound);
   }
 
-  Data *ManagedObject::getParamData(const char *name, Data *valIfNotFound)
-  {
-    auto *obj = getParam<Data *>(name, valIfNotFound);
-
-    if (obj == nullptr)
-      obj = (Data *)getParamObject(name, (ManagedObject *)valIfNotFound);
-
-    return obj;
-  }
 
   OSPTYPEFOR_DEFINITION(ManagedObject *);
 

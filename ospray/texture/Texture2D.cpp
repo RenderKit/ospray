@@ -28,7 +28,7 @@ namespace ospray {
 
   void Texture2D::commit()
   {
-    texData = getParamData("data");
+    texData = getParam<Data *>("data");
 
     if (!texData || texData->numItems.z > 1)
       throw std::runtime_error(toString()

@@ -83,7 +83,7 @@ namespace ospray {
           example we do not particularly care about whether this comes
           as a plain array of floats (with 12 floats per patch), or as
           a array of vec3fs. */
-      Ref<Data> patchesData;
+      Ref<const DataT<vec3f>> patchesData;
     };
 
   }  // namespace blp

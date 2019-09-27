@@ -33,7 +33,7 @@ namespace ospray {
   {
     vertexData = getParamDataT<vec3f>("vertex.position", true);
     normalData = getParamDataT<vec3f>("vertex.normal");
-    colorData    = getParamData("vertex.color");
+    colorData = getParam<Data *>("vertex.color");
     texcoordData = getParamDataT<vec2f>("vertex.texcoord");
     indexData = getParamDataT<vec3ui>("index", true);
 
