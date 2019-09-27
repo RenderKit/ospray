@@ -27,16 +27,14 @@
  * will share data, so 0 & 1 will share data, 2 & 3, and so on.
  */
 
+#include <imgui.h>
+#include <mpi.h>
+#include <ospray/ospray_util.h>
 #include <iterator>
 #include <memory>
 #include <random>
-
-#include <mpi.h>
 #include "GLFWDistribOSPRayWindow.h"
-
 #include "ospray_testing.h"
-
-#include <imgui.h>
 
 using namespace ospcommon;
 using namespace ospcommon::math;
@@ -115,7 +113,7 @@ int main(int argc, char **argv)
   // create the "world" model which will contain all of our geometries
   OSPWorld world = ospNewWorld();
   OSPData instances = ospNewData(1, OSP_INSTANCE, &brick.instance);
-  ospSetData(world, "instance", instances);
+  ospSetObject(world, "instance", instances);
   ospRelease(instances);
 
   OSPData regionData = ospNewData(1, OSP_BOX3F, &brick.bounds, 0);

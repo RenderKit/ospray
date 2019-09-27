@@ -125,10 +125,7 @@ struct MPIDistributedDevice : public api::Device
 
   OSPVolumetricModel newVolumetricModel(OSPVolume volume) override;
 
-  /*! call a renderer to render a frame buffer */
-  float renderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld) override;
-
-  OSPFuture renderFrameAsync(
+  OSPFuture renderFrame(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld) override;
 
   int isReady(OSPFuture, OSPSyncEvent) override;

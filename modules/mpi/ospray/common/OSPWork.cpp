@@ -423,7 +423,7 @@ void resetAccumulation(
   ospResetAccumulation(state.getObject<OSPFrameBuffer>(handle));
 }
 
-void renderFrameAsync(
+void renderFrame(
     OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
   int64_t futureHandle = 0;
@@ -434,7 +434,7 @@ void renderFrameAsync(
   cmdBuf >> fbHandle >> rendererHandle >> cameraHandle >> worldHandle
       >> futureHandle;
   state.objects[futureHandle] =
-      ospRenderFrameAsync(state.getObject<OSPFrameBuffer>(fbHandle),
+      ospRenderFrame(state.getObject<OSPFrameBuffer>(fbHandle),
           state.getObject<OSPRenderer>(rendererHandle),
           state.getObject<OSPCamera>(cameraHandle),
           state.getObject<OSPWorld>(worldHandle));
@@ -831,8 +831,8 @@ void dispatchWork(TAG t,
   case RESET_ACCUMULATION:
     resetAccumulation(state, cmdBuf, fabric);
     break;
-  case RENDER_FRAME_ASYNC:
-    renderFrameAsync(state, cmdBuf, fabric);
+  case RENDER_FRAME:
+    renderFrame(state, cmdBuf, fabric);
     break;
   case SET_PARAM:
     setParam(state, cmdBuf, fabric);
@@ -924,8 +924,8 @@ const char *tagName(work::TAG t)
     return "GET_VARIANCE";
   case RESET_ACCUMULATION:
     return "RESET_ACCUMULATION";
-  case RENDER_FRAME_ASYNC:
-    return "RENDER_FRAME_ASYNC";
+  case RENDER_FRAME:
+    return "RENDER_FRAME";
   case SET_PARAM:
     return "SET_PARAM";
   case REMOVE_PARAM:

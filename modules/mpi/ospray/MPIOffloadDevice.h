@@ -120,9 +120,7 @@ struct MPIOffloadDevice : public api::Device
 
   OSPRenderer newRenderer(const char *type) override;
 
-  float renderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld) override;
-
-  OSPFuture renderFrameAsync(
+  OSPFuture renderFrame(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld) override;
 
   int isReady(OSPFuture, OSPSyncEvent) override;

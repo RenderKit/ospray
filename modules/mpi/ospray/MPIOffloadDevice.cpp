@@ -865,18 +865,7 @@ OSPRenderer MPIOffloadDevice::newRenderer(const char *type)
   return (OSPRenderer)(int64)handle;
 }
 
-float MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
-    OSPRenderer _renderer,
-    OSPCamera _camera,
-    OSPWorld _world)
-{
-  OSPFuture _future = renderFrameAsync(_fb, _renderer, _camera, _world);
-  wait(_future, OSP_FRAME_FINISHED);
-  release(_future);
-  return getVariance(_fb);
-}
-
-OSPFuture MPIOffloadDevice::renderFrameAsync(OSPFrameBuffer _fb,
+OSPFuture MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
     OSPRenderer _renderer,
     OSPCamera _camera,
     OSPWorld _world)
@@ -888,7 +877,7 @@ OSPFuture MPIOffloadDevice::renderFrameAsync(OSPFrameBuffer _fb,
   const ObjectHandle worldHandle = (ObjectHandle &)_world;
 
   networking::BufferWriter writer;
-  writer << work::RENDER_FRAME_ASYNC << fbHandle << rendererHandle
+  writer << work::RENDER_FRAME << fbHandle << rendererHandle
          << cameraHandle << worldHandle << futureHandle;
   sendWork(writer.buffer);
   return (OSPFuture)(int64)futureHandle;

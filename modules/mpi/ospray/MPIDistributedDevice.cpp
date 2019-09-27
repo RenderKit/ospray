@@ -358,19 +358,7 @@ OSPLight MPIDistributedDevice::newLight(const char *type)
   return createLocalObject<Light, OSPLight>(type);
 }
 
-float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
-    OSPRenderer _renderer,
-    OSPCamera _camera,
-    OSPWorld _world)
-{
-  mpicommon::barrier(mpicommon::worker.comm).wait();
-  auto f = renderFrameAsync(_fb, _renderer, _camera, _world);
-  wait(f, OSP_FRAME_FINISHED);
-  release(f);
-  return getVariance(_fb);
-}
-
-OSPFuture MPIDistributedDevice::renderFrameAsync(OSPFrameBuffer _fb,
+OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
     OSPRenderer _renderer,
     OSPCamera _camera,
     OSPWorld _world)

@@ -24,17 +24,14 @@
  * id, to identify it as a piece of data owned uniquely by the process
  */
 
+#include <imgui.h>
+#include <mpi.h>
 #include <array>
 #include <iterator>
 #include <memory>
 #include <random>
-
-#include <mpi.h>
 #include "GLFWDistribOSPRayWindow.h"
-
 #include "ospray_testing.h"
-
-#include <imgui.h>
 
 using namespace ospcommon;
 using namespace ospcommon::math;
@@ -243,7 +240,7 @@ OSPInstance makeLocalSpheres(
 
   OSPGeometry sphereGeom = ospNewGeometry("spheres");
   ospSetFloat(sphereGeom, "radius", sphereRadius);
-  ospSetData(sphereGeom, "sphere.position", sphereData);
+  ospSetObject(sphereGeom, "sphere.position", sphereData);
   ospCommit(sphereGeom);
 
   OSPGeometricModel model = ospNewGeometricModel(sphereGeom);
@@ -252,7 +249,7 @@ OSPInstance makeLocalSpheres(
 
   OSPGroup group = ospNewGroup();
   auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
-  ospSetData(group, "geometry", models);
+  ospSetObject(group, "geometry", models);
   ospCommit(group);
   ospRelease(models);
 

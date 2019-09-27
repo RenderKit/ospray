@@ -41,7 +41,8 @@
 #else
 #include <alloca.h>
 #endif
-#include "ospray/ospray.h"
+#include <ospray/ospray.h>
+#include <ospray/ospray_util.h>
 
 // helper function to write the rendered image as PPM file
 void writePPM(
@@ -152,17 +153,17 @@ int main(int argc, char **argv)
   OSPGeometry mesh = ospNewGeometry("triangles");
   OSPData data = ospNewSharedData1D(vertex, OSP_VEC3F, 4);
   ospCommit(data);
-  ospSetData(mesh, "vertex.position", data);
+  ospSetObject(mesh, "vertex.position", data);
   ospRelease(data); // we are done using this handle
 
   data = ospNewSharedData1D(color, OSP_VEC4F, 4);
   ospCommit(data);
-  ospSetData(mesh, "vertex.color", data);
+  ospSetObject(mesh, "vertex.color", data);
   ospRelease(data); // we are done using this handle
 
   data = ospNewSharedData1D(index, OSP_VEC3UI, 2);
   ospCommit(data);
-  ospSetData(mesh, "index", data);
+  ospSetObject(mesh, "index", data);
   ospRelease(data); // we are done using this handle
 
   ospCommit(mesh);
@@ -175,7 +176,7 @@ int main(int argc, char **argv)
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
   OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
-  ospSetData(group, "geometry", geometricModels);
+  ospSetObject(group, "geometry", geometricModels);
   ospCommit(group);
   ospRelease(model);
   ospRelease(geometricModels);
@@ -188,7 +189,7 @@ int main(int argc, char **argv)
   // put the instance in the world
   OSPWorld world = ospNewWorld();
   OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
-  ospSetData(world, "instance", instances);
+  ospSetObject(world, "instance", instances);
   ospRelease(instance);
   ospRelease(instances);
 
@@ -197,7 +198,7 @@ int main(int argc, char **argv)
   float regionBounds[] = {mpiRank, 0.f, 2.5f, 1.f * (mpiRank + 1.f), 1.f, 3.5f};
   data = ospNewSharedData1D(regionBounds, OSP_BOX3F, 1);
   ospCommit(data);
-  ospSetData(world, "regions", data);
+  ospSetObject(world, "regions", data);
   ospRelease(data);
 
   ospCommit(world);
@@ -225,7 +226,7 @@ int main(int argc, char **argv)
   ospResetAccumulation(framebuffer);
 
   // render one frame
-  OSPFuture result = ospRenderFrameAsync(framebuffer, renderer, camera, world);
+  OSPFuture result = ospRenderFrame(framebuffer, renderer, camera, world);
   int isFinished = ospIsReady(result, OSP_TASK_FINISHED);
   printf("status of 'result' is %i\n", isFinished);
   printf("waiting on frame to finish...\n");
@@ -245,7 +246,7 @@ int main(int argc, char **argv)
   // render 10 more frames, which are accumulated to result in a better
   // converged image
   for (int frames = 0; frames < 10; frames++)
-    ospRenderFrame(framebuffer, renderer, camera, world);
+    ospRenderFrameBlocking(framebuffer, renderer, camera, world);
 
   if (mpiRank == 0) {
     const uint32_t *fb =

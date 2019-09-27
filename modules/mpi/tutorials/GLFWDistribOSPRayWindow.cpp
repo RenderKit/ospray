@@ -15,11 +15,11 @@
 // ======================================================================== //
 
 #include "GLFWDistribOSPRayWindow.h"
+#include <imgui.h>
 #include <mpi.h>
+#include <ospray/ospray_util.h>
 #include <iostream>
 #include <stdexcept>
-
-#include <imgui.h>
 #include "imgui/imgui_impl_glfw_gl3.h"
 
 using namespace ospcommon::math;
@@ -415,7 +415,7 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
     ospResetAccumulation(framebuffer);
   }
 
-  currentFrame = ospRenderFrameAsync(framebuffer, renderer, camera, world);
+  currentFrame = ospRenderFrame(framebuffer, renderer, camera, world);
 }
 
 void GLFWDistribOSPRayWindow::waitOnOSPRayFrame()

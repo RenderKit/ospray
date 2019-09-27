@@ -147,10 +147,10 @@ int main(int argc, char **argv)
   {
     // create and setup camera
     ospray::cpp::Camera camera("perspective");
-    camera.set("aspect", imgSize.x / (float)imgSize.y);
-    camera.set("position", cam_pos);
-    camera.set("direction", cam_view);
-    camera.set("up", cam_up);
+    camera.setParam("aspect", imgSize.x / (float)imgSize.y);
+    camera.setParam("position", cam_pos);
+    camera.setParam("direction", cam_view);
+    camera.setParam("up", cam_up);
     camera.commit(); // commit each object to indicate modifications are done
 
     // create and setup model and mesh
@@ -159,15 +159,15 @@ int main(int argc, char **argv)
         OSP_VEC3F,
         vertex); // OSP_FLOAT3 format is also supported for vertex positions
     data.commit();
-    mesh.set("vertex.position", data);
+    mesh.setParam("vertex.position", data);
 
     data = ospray::cpp::Data(4, OSP_VEC4F, color);
     data.commit();
-    mesh.set("vertex.color", data);
+    mesh.setParam("vertex.color", data);
 
     data = ospray::cpp::Data(2, OSP_VEC3UI, index);
     data.commit();
-    mesh.set("index", data);
+    mesh.setParam("index", data);
 
     mesh.commit();
 
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
     ospray::cpp::Group group;
     auto modelHandle = model.handle();
     data = ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle);
-    group.set("geometry", data);
+    group.setParam("geometry", data);
     group.commit();
 
     // put the group into an instance (give the group a world transform)
@@ -189,13 +189,13 @@ int main(int argc, char **argv)
     ospray::cpp::World world;
     auto instanceHandle = instance.handle();
     data = ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle);
-    world.set("instance", data);
+    world.setParam("instance", data);
 
     // Specify the region of the world this rank owns
     float regionBounds[] = {mpiRank, 0.f, 2.5f, 1.f * (mpiRank + 1.f), 1.f, 3.5f};
     data = ospray::cpp::Data(1, OSP_BOX3F, regionBounds);
     data.commit();
-    world.set("regions", data);
+    world.setParam("regions", data);
 
     world.commit();
 
@@ -211,8 +211,8 @@ int main(int argc, char **argv)
     lights.commit();
 
     // complete setup of renderer
-    renderer.set("bgColor", 1.0f); // white, transparent
-    renderer.set("light", lights);
+    renderer.setParam("bgColor", 1.0f); // white, transparent
+    renderer.setParam("light", lights);
     renderer.commit();
 
     // create and setup framebuffer

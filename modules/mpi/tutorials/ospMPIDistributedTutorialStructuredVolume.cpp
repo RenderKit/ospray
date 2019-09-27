@@ -24,16 +24,13 @@
  * id, to identify it as a piece of data owned uniquely by the process
  */
 
+#include <imgui.h>
+#include <mpi.h>
 #include <iterator>
 #include <memory>
 #include <random>
-
-#include <mpi.h>
 #include "GLFWDistribOSPRayWindow.h"
-
 #include "ospray_testing.h"
-
-#include <imgui.h>
 
 using namespace ospcommon;
 using namespace ospcommon::math;
@@ -108,7 +105,7 @@ int main(int argc, char **argv)
   // create the "world" model which will contain all of our geometries
   OSPWorld world = ospNewWorld();
   OSPData instances = ospNewData(1, OSP_INSTANCE, &brick.instance);
-  ospSetData(world, "instance", instances);
+  ospSetObject(world, "instance", instances);
   ospRelease(instances);
 
   OSPData regionData = ospNewData(1, OSP_BOX3F, &brick.bounds, 0);

@@ -23,15 +23,14 @@
  * perspective.
  */
 
+#include <imgui.h>
 #include <mpi.h>
+#include <ospray/ospray_util.h>
 #include <iterator>
 #include <memory>
 #include <random>
 #include "GLFWDistribOSPRayWindow.h"
-
 #include "ospray_testing.h"
-
-#include <imgui.h>
 
 using namespace ospcommon;
 using namespace ospcommon::math;
@@ -105,22 +104,21 @@ int main(int argc, char **argv)
   OSPData geomInstances =
       ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
 
-  ospSetData(world, "instance", geomInstances);
+  ospSetObject(world, "instance", geomInstances);
   ospRelease(geomInstances);
 
   for (auto inst : instanceHandles)
     ospRelease(inst);
+
+  OSPData lightsData = ospTestingNewLights("ambient_only");
+  ospSetObject(world, "light", lightsData);
+  ospRelease(lightsData);
 
   // commit the world
   ospCommit(world);
 
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
-
-  OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "light", lightsData);
-  ospRelease(lightsData);
-
   ospCommit(renderer);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
@@ -212,8 +210,8 @@ OSPTestingGeometry createSpheres(int mpiRank)
   // create the sphere geometry, and assign attributes
   OSPGeometry spheresGeometry = ospNewGeometry("spheres");
 
-  ospSetData(spheresGeometry, "sphere.position", positionData);
-  ospSetData(spheresGeometry, "sphere.radius", radiusData);
+  ospSetObject(spheresGeometry, "sphere.position", positionData);
+  ospSetObject(spheresGeometry, "sphere.radius", radiusData);
 
   // commit the spheres geometry
   ospCommit(spheresGeometry);
@@ -222,7 +220,7 @@ OSPTestingGeometry createSpheres(int mpiRank)
 
   OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, colors.data());
 
-  ospSetData(model, "prim.color", colorData);
+  ospSetObject(model, "prim.color", colorData);
 
   // create glass material and assign to geometry
   OSPMaterial glassMaterial =
@@ -242,7 +240,7 @@ OSPTestingGeometry createSpheres(int mpiRank)
 
   OSPGroup group = ospNewGroup();
   auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
-  ospSetData(group, "geometry", models);
+  ospSetObject(group, "geometry", models);
   ospCommit(group);
   ospRelease(models);
 
@@ -373,10 +371,10 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
       ospNewData(quadIndices.size(), OSP_VEC4UI, quadIndices.data());
 
   // set vertex / index data on the geometry
-  ospSetData(planeGeometry, "vertex.position", positionData);
-  ospSetData(planeGeometry, "vertex.normal", normalData);
-  ospSetData(planeGeometry, "vertex.color", colorData);
-  ospSetData(planeGeometry, "index", indexData);
+  ospSetObject(planeGeometry, "vertex.position", positionData);
+  ospSetObject(planeGeometry, "vertex.normal", normalData);
+  ospSetObject(planeGeometry, "vertex.color", colorData);
+  ospSetObject(planeGeometry, "index", indexData);
 
   // finally, commit the geometry
   ospCommit(planeGeometry);
@@ -396,7 +394,7 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
   OSPGroup group = ospNewGroup();
 
   OSPData models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
-  ospSetData(group, "geometry", models);
+  ospSetObject(group, "geometry", models);
   ospCommit(group);
 
   OSPInstance instance = ospNewInstance(group);
