@@ -1,4 +1,4 @@
-Building OSPRay from Source
+Building and Finding OSPRay
 ===========================
 
 The latest OSPRay sources are always available at the [OSPRay GitHub
@@ -164,8 +164,8 @@ example applications use
     cmake --build . --config Release --target ospray -- /m
 
 
-Finding an OSPRay install with CMake
-====================================
+Finding an OSPRay Install with CMake
+------------------------------------
 
 Client applications using OSPRay can find it with CMake's
 `find_package()` command. For example,

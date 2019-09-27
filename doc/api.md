@@ -320,9 +320,6 @@ adding various types of parameters with name `id` to a given object:
     // add an object handle parameter to another object
     void ospSetObject(OSPObject, const char *id, OSPObject object);
 
-    // add an untyped pointer -- this will *ONLY* work in local rendering!
-    void ospSetVoidPtr(OSPObject, const char *id, void *v);
-
     // add scalar and vector integer and float parameters
     void ospSetBool (OSPObject, const char *id, int x);
     void ospSetFloat (OSPObject, const char *id, float x);
@@ -382,7 +379,6 @@ be represented in OSPRay; valid constants are listed in the table below.
   Type/Name              Description
   ---------------------- -----------------------------------------------
   OSP_DEVICE             API device object reference
-  OSP_VOID_PTR           void pointer
   OSP_DATA               data reference
   OSP_OBJECT             generic object reference
   OSP_CAMERA             camera object reference
@@ -1196,8 +1192,8 @@ material).
 
 
 
-Scene Object Hierarchy
-----------------------
+Scene Hierarchy
+---------------
 ### Groups
 
 Groups in OSPRay represent collections of GeometricModels and
