@@ -60,8 +60,7 @@ option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the ex
 set(BUILD_EMBREE_VERSION "3.6.1" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
-set(BUILD_OPENVKL_BRANCH "devel" CACHE STRING "Which branch of OpenVKL to build?")
-set(BUILD_OPENVKL_VERSION "0.1.0" CACHE STRING "Which version of OpenVKL to build?")
+set(BUILD_OPENVKL_VERSION "0.7.0" CACHE STRING "Which version of OpenVKL to build?")
 
 option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
 set(BUILD_OIDN_VERSION "1.0.0" CACHE STRING "Which version of OpenImageDenoise to build?")

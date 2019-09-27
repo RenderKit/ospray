@@ -309,7 +309,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     COMPONENT devel
   )
 
-  find_package(openvkl REQUIRED)
+  find_package(openvkl 0.7.0 REQUIRED)
 
   ## Build the module ##
 
