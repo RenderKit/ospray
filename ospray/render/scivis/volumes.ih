@@ -19,6 +19,9 @@
 #include "SciVis.ih"
 #include "volume/VolumetricModel.ih"
 
+struct LDSampler;
+
 vec4f integrateVolumeInterval(const ScreenSample &sample,
                               const VolumeInterval &interval,
-                              Ray &ray);
+                              Ray &ray,
+                              varying LDSampler* uniform ldSampler);

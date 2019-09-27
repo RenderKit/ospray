@@ -22,27 +22,17 @@
 
 #include "openvkl/openvkl.isph"
 
-#define USE_VALUE_SELECTOR 1
-
 vec4f integrateVolumeInterval(const ScreenSample &sample,
                               const VolumeInterval &interval,
-                              Ray &ray)
+                              Ray &ray,
+                              varying LDSampler* uniform ldSampler)
 {
   VolumetricModel *varying model = interval.volumetricModel;
 
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
 
-  // Ray offset for this sample, as a fraction of the nominal step size.
-  float jitter = precomputedHalton2(sample.sampleID.z);
-  int ix       = sample.sampleID.x % 4;
-  int iy       = sample.sampleID.y % 4;
-
-  int patternID = ix + 4 * iy;
-  jitter += precomputedHalton3(patternID);
-
-  if (jitter > 1.f)
-    jitter -= 1.f;
+  const float jitter = LDSampler_getFloat(ldSampler, 0);
 
   foreach_unique(m in model)
   {     
@@ -68,7 +58,7 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
           min(interval.tRange.lower + nominalSamplingDt, interval.tRange.upper));
  
       while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
-        ray.t0  = 0.5f * (subInterval.lower + subInterval.upper) + jitter;
+        ray.t0  = subInterval.lower + jitter * (subInterval.upper - subInterval.lower);
         const float dt = subInterval.upper - subInterval.lower;
 
         // Get volume sample

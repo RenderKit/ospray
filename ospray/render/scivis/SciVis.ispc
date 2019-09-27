@@ -19,6 +19,7 @@
 #include "SciVis.ih"
 #include "surfaces.ih"
 #include "volumes.ih"
+#include "math/random.ih"
 
 void SciVis_renderSample(Renderer *uniform _self,
                          FrameBuffer *uniform fb,
@@ -27,6 +28,10 @@ void SciVis_renderSample(Renderer *uniform _self,
                          varying ScreenSample &sample)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
+
+  LDSampler ldSamplerObj;
+  varying LDSampler* uniform ldSampler = &ldSamplerObj;
+  LDSampler_init(ldSampler, sample.sampleID.x + fb->size.x * sample.sampleID.y, sample.sampleID.z);
 
   const uniform vec4f &bgColor = self->super.bgColor;
 
@@ -90,7 +95,7 @@ void SciVis_renderSample(Renderer *uniform _self,
              volumeInterval.interval.lower,
              volumeInterval.interval.upper);
 
-      volumeColor = integrateVolumeInterval(sample, volumeInterval, volumeRay);
+      volumeColor = integrateVolumeInterval(sample, volumeInterval, volumeRay, ldSampler);
     }
 
     vec4f blendedColor = make_vec4f(0.f);
