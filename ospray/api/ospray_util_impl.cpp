@@ -171,6 +171,7 @@ float ospRenderFrameBlocking(OSPFrameBuffer fb,
                              OSPWorld world)
 {
   OSPFuture f = ospRenderFrame(fb, renderer, camera, world);
+  ospWait(f, OSP_TASK_FINISHED);
   ospRelease(f);
   return ospGetVariance(fb);
 }
