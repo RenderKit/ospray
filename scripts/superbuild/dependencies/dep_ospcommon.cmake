@@ -29,7 +29,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  URL "https://github.com/ospray/ospcommon/archive/master.zip"
+  URL "https://github.com/ospray/ospcommon/archive/v${BUILD_OSPCOMMON_VERSION}.zip"
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
@@ -45,7 +45,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   BUILD_ALWAYS OFF
 )
 
-set(OSPCOMMON_PATH "${COMPONENT_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/ospcommon")
+set(OSPCOMMON_PATH "${COMPONENT_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/ospcommon-${BUILD_OSPCOMMON_VERSION}")
 
 if (BUILD_TBB_FROM_SOURCE)
   ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
