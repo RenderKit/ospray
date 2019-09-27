@@ -78,6 +78,6 @@ class OSPRAY_MPI_INTERFACE MPIFabric : public networking::Fabric
     PendingSend &operator=(const PendingSend &) = delete;
   };
 
-  std::vector<std::unique_ptr<PendingSend>> pendingSends;
+  std::vector<std::shared_ptr<PendingSend>> pendingSends;
 };
 } // namespace mpicommon

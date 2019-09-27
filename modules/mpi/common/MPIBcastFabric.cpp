@@ -48,7 +48,7 @@ void MPIFabric::sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf)
       buf->data(), buf->size(), MPI_BYTE, bcastRoot, group.comm);
 
   pendingSends.emplace_back(
-      ospcommon::make_unique<PendingSend>(std::move(future), buf));
+      std::make_shared<PendingSend>(std::move(future), buf));
 
   checkPendingSends();
 }
@@ -68,7 +68,7 @@ void MPIFabric::send(
       mpicommon::send(buf->data(), buf->size(), MPI_BYTE, rank, 0, group.comm);
 
   pendingSends.emplace_back(
-      ospcommon::make_unique<PendingSend>(std::move(future), buf));
+      std::make_shared<PendingSend>(std::move(future), buf));
 
   checkPendingSends();
 }
@@ -85,7 +85,7 @@ void MPIFabric::checkPendingSends()
   if (!pendingSends.empty()) {
     auto done = std::partition(pendingSends.begin(),
         pendingSends.end(),
-        [](const std::unique_ptr<PendingSend> &ps) {
+        [](const std::shared_ptr<PendingSend> &ps) {
           return ps->future.wait_for(std::chrono::milliseconds(0))
               != std::future_status::ready;
         });

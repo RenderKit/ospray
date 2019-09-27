@@ -47,9 +47,8 @@ DistributedRaycastRenderer::DistributedRaycastRenderer()
 {
   ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
 
-  auto logging =
-      utility::getEnvVar<std::string>("OSPRAY_DP_API_TRACING").value_or("0");
-  DETAILED_LOGGING = std::stoi(logging) != 0;
+  DETAILED_LOGGING =
+      utility::getEnvVar<int>("OSPRAY_DP_API_TRACING").value_or(0);
 
   if (DETAILED_LOGGING) {
     auto job_name =

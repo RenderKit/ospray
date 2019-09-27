@@ -40,8 +40,7 @@ std::unique_ptr<Context> Context::singleton;
 
 Context::Context(bool enableCompression) : compressMessages(enableCompression)
 {
-  auto logging = getEnvVar<std::string>("OSPRAY_DP_API_TRACING").value_or("0");
-  DETAILED_LOGGING = std::stoi(logging) != 0;
+  DETAILED_LOGGING = getEnvVar<int>("OSPRAY_DP_API_TRACING").value_or(0);
 }
 
 Context::~Context()

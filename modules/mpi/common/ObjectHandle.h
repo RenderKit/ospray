@@ -18,6 +18,7 @@
 
 #include "common/Managed.h"
 #include "common/OSPCommon.h"
+#include "MPICommon.h"
 
 namespace ospray {
 
@@ -36,7 +37,7 @@ struct ManagedObject;
   as if they were pointers (and thus, 'null' objects are
   consistent between local and mpi rendering)
 */
-union OSPRAY_SDK_INTERFACE ObjectHandle
+union OSPRAY_MPI_INTERFACE ObjectHandle
 {
   void free();
 
@@ -79,7 +80,7 @@ union OSPRAY_SDK_INTERFACE ObjectHandle
   int64 i64;
 };
 
-OSPRAY_SDK_INTERFACE extern const ObjectHandle nullHandle;
+OSPRAY_MPI_INTERFACE extern const ObjectHandle nullHandle;
 
 // Inlined operator definitions /////////////////////////////////////////////
 
