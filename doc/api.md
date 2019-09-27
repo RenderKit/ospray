@@ -308,32 +308,20 @@ object will automatically get deleted. Passing `NULL` is not an error.
 ### Parameters
 
 Parameters allow to configure the behavior of and to pass data to
-objects. However, objects do _not_ have an explicit interface for
+objects.  However, objects do _not_ have an explicit interface for
 reasons of high flexibility and a more stable compile-time API. Instead,
 parameters are passed separately to objects in an arbitrary order, and
-unknown parameters will simply be ignored. The following functions allow
-adding various types of parameters with name `id` to a given object:
+unknown parameters will simply be ignored, though a warning message will
+be printed. The following function allows adding various types of
+parameters with name `id` to a given object:
 
-    // add a C-string (zero-terminated char *) parameter
-    void ospSetString(OSPObject, const char *id, const char *s);
+    void ospSetParam(OSPObject, const char *id, const void *mem);
 
-    // add an object handle parameter to another object
-    void ospSetObject(OSPObject, const char *id, OSPObject object);
-
-    // add scalar and vector integer and float parameters
-    void ospSetBool (OSPObject, const char *id, int x);
-    void ospSetFloat (OSPObject, const char *id, float x);
-    void ospSetInt (OSPObject, const char *id, int x);
-    void ospSetVec2f (OSPObject, const char *id, float x, float y);
-    void ospSetVec2fv(OSPObject, const char *id, const float *xy);
-    void ospSetVec2i (OSPObject, const char *id, int x, int y);
-    void ospSetVec2iv(OSPObject, const char *id, const int *xy);
-    void ospSetVec3f (OSPObject, const char *id, float x, float y, float z);
-    void ospSetVec3fv(OSPObject, const char *id, const float *xyz);
-    void ospSetVec3i (OSPObject, const char *id, int x, int y, int z);
-    void ospSetVec3iv(OSPObject, const char *id, const int *xyz);
-    void ospSetVec4f (OSPObject, const char *id, float x, float y, float z, float w);
-    void ospSetVec4fv(OSPObject, const char *id, const float *xyzw);
+The valid parameter names for all `OSPObject`s are discussed below. Note
+that `mem` must always be a pointer to the object, otherwise accidental
+type casting can occur. There also exist variants of `ospSetParam` for
+specific types, such as `ospSetInt` and `ospSetVec3f` in the [OSPRay
+utility library](util.md).
 
 Users can also remove parameters that have been explicitly set via an
 ospSet call. Any parameters which have been removed will go back to
