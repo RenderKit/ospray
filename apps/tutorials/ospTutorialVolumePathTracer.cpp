@@ -318,11 +318,10 @@ int main(int argc, const char **argv)
   ospRelease(instance_data);
 
   // create OSPRay renderer
-  int maxDepth = 1024;
-  int rouletteDepth = 32;
+  int maxDepth = 32;
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
   ospSetInt(renderer, "maxDepth", maxDepth);
-  ospSetInt(renderer, "rouletteDepth", rouletteDepth);
+  ospSetInt(renderer, "rouletteDepth", 32);
   ospSetFloat(renderer, "minContribution", 0.f);
 
   std::vector<OSPLight> light_handles;
@@ -340,6 +339,8 @@ int main(int argc, const char **argv)
   ospCommit(ambientLight);
 
   bool showVolume = true;
+  bool showSphere = true;
+  bool showTorus  = false;
   bool showGeometry = false;
   bool enableQuadLight = true;
   bool enableAmbientLight = false;
@@ -352,6 +353,9 @@ int main(int argc, const char **argv)
     if (showVolume) {
       for (size_t i = 0; i < volumetricGroups.size(); ++i)
       {
+        if ((!showTorus && i == 1) || (!showSphere && i == 0))
+          continue;
+
         OSPData volumes =
             ospNewData(1, OSP_VOLUMETRIC_MODEL, &volumetricModels[i]);
         ospSetObject(volumetricGroups[i], "volume", volumes);
@@ -399,19 +403,17 @@ int main(int argc, const char **argv)
     bool updateWorld = false;
     bool commitWorld = false;
 
-    if (ImGui::SliderInt("maxDepth", &maxDepth, 0, 1024)) {
+    if (ImGui::SliderInt("maxDepth", &maxDepth, 0, 128)) {
       commitWorld = true;
       ospSetInt(renderer, "maxDepth", maxDepth);
       glfwOSPRayWindow->addObjectToCommit(renderer);
     }
 
-    if (ImGui::SliderInt("rouletteDepth", &rouletteDepth, 0, 1024)) {
-      commitWorld = true;
-      ospSetInt(renderer, "rouletteDepth", rouletteDepth);
-      glfwOSPRayWindow->addObjectToCommit(renderer);
-    }
-
-    if (ImGui::Checkbox("Show Volume", &showVolume))
+    if (ImGui::Checkbox("Show Volumes", &showVolume))
+      updateWorld = true;
+    if (ImGui::Checkbox("Show Sphere", &showSphere))
+      updateWorld = true;
+    if (ImGui::Checkbox("Show Torus", &showTorus))
       updateWorld = true;
     if (ImGui::Checkbox("Show Geometry", &showGeometry))
       updateWorld = true;
