@@ -110,7 +110,7 @@ int main(int argc, const char **argv)
   auto sliceVolumeModel = ospNewVolumetricModel(volume);
   ospSetObject(volumeModel, "transferFunction", tfn);
   ospSetObject(sliceVolumeModel, "transferFunction", stfn);
-  ospSetFloat(volumeModel, "samplingRate", 0.5f);
+  ospSetFloat(volumeModel, "samplingRate", 0.015f);
   ospCommit(volumeModel);
   ospCommit(sliceVolumeModel);
 
@@ -253,7 +253,7 @@ int main(int argc, const char **argv)
     ImGui::Separator();
     ImGui::NewLine();
 
-    static float samplingRate = 0.5f;
+    static float samplingRate = 0.015f;
     if (ImGui::SliderFloat("sampling rate", &samplingRate, 1e-3f, 4.f)) {
       commitWorld = true;
       ospSetFloat(volumeModel, "samplingRate", samplingRate);

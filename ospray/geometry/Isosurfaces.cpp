@@ -42,7 +42,7 @@ namespace ospray {
   {
     isovaluesData = getParamDataT<float>("isovalue", true);
 
-    volume = (VolumetricModel *)getParamObject("volume");
+    model = (VolumetricModel *)getParamObject("volume");
 
     if (!isovaluesData->compact()) {
       // get rid of stride
@@ -73,7 +73,7 @@ namespace ospray {
       valueSelector = nullptr;
     }
 
-    valueSelector = vklNewValueSelector(volume->getVolume()->vklVolume);
+    valueSelector = vklNewValueSelector(model->getVolume()->vklVolume);
 
     if (isovaluesData->size() > 0) {
       vklValueSelectorSetValues(
@@ -86,7 +86,7 @@ namespace ospray {
                           retval.embreeGeometry,
                           isovaluesData->size(),
                           isovaluesData->data(),
-                          volume->getIE(),
+                          model->getIE(),
                           valueSelector);
 
     return retval;

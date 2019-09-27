@@ -38,7 +38,7 @@ namespace ospray {
     // Data members //
 
     Ref<const DataT<float>> isovaluesData;
-    Ref<VolumetricModel> volume;
+    Ref<VolumetricModel> model;
     VKLValueSelector valueSelector{nullptr};
   };
 

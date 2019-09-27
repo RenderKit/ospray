@@ -57,25 +57,6 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
 
   Volume *uniform volume = self->volumetricModel->volume;
 
-  float hit_t;
-  vec3f hit_Ng;
-
-  /* iw - just to explain the following code sequence: in embree3, the
-     'occluded' function no longer guarantees that we have a 'full'
-     ospray ray to intersect (the ospray ray is what emrbee calls a
-     rayhit, the concatenation of ray _and_ hitpoint!), but that
-     voluem->intersectIsoSurface code seems to assume that this is
-     always a full ospray::Ray. So, just to make sure that this code
-     always has a valid "full" ray to work with I'm creating a temp
-     one here, and then, when writing results back, make sure that we
-     not write any hit information unless it's not an occlusoin
-     test */
-  Ray tmpRay;
-
-  // NOTE(jda) - SUPER nasty pointer aliasing bug here. If we don't use setRay()
-  //             here,
-  setRay(tmpRay, ray->org, ray->dir, ray->t0, ray->t);
-
   uniform VKLHitIterator iterator;
   vkl_range1f tRange;
   tRange.lower = ray->t0;
