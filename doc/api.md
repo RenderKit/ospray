@@ -724,6 +724,13 @@ VolumetricModels. To create a volume instance, call
   float                samplingRate                 0.125 sampling rate of the volume (this
                                                           is the minimum step size for
                                                           adaptive sampling)
+
+  float                densityScale                   1.0 used to make volumes uniformly thinner
+                                                          or thicker ([path tracer] only)
+
+  float                anisotropy                     0.0 anisotropy of the (Henyey-Greenstein)
+                                                          phase function in [-1, 1]. Default:
+                                                          Isotropic scattering. ([path tracer] only)
   -------------------- ------------------------ --------- ---------------------------------------
   : Parameters understood by VolumetricModel.
 
@@ -1406,6 +1413,10 @@ supports the following special parameters:
 
 The path tracer requires that [materials] are assigned to [geometries],
 otherwise surfaces are treated as completely black.
+
+The path tracer supports [volumes](#volumes) with multiple scattering. The scattering
+albedo can be specified using the [transfer function]. Extinction is assumed
+to be spectrally constant.
 
 ### Materials
 
