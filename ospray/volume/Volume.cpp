@@ -164,21 +164,20 @@ namespace ospray {
         }
 
         if (dataType == VKL_DATA) {
-          std::vector<VKLData> blockData;
-          for (size_t i = 0; i < data->size(); ++i)
+          const DataT<Data*>* blockData = getParamDataT<Data*>(param.name.c_str(), true);
+          std::vector<VKLData> vklBlockData;
+          for (auto iter = blockData->begin(); iter != blockData->end(); ++iter)
           {
-            Data* ospData = ((Data**)data->data())[i];
-            VKLDataType vklDataType = getVKLDataType(ospData->type);
-            VKLData vklData = vklNewData(ospData->size(),
-                                         vklDataType,
-                                         ospData->data(),
-                                         VKL_DATA_SHARED_BUFFER);
-            blockData.push_back(vklData);
+            const Data* data = *iter;
+            VKLData vklData = vklNewData(data->size(),
+                                        getVKLDataType(data->type),
+                                        data->data(),
+                                        VKL_DATA_SHARED_BUFFER);
+            vklBlockData.push_back(vklData);
           }
-          VKLData vklData = vklNewData(blockData.size(),
+          VKLData vklData = vklNewData(vklBlockData.size(),
                                        VKL_DATA,
-                                       blockData.data(),
-                                       VKL_DATA_SHARED_BUFFER);
+                                       vklBlockData.data());
           vklSetData(vklVolume, param.name.c_str(), vklData);
           vklRelease(vklData);
         }

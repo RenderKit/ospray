@@ -195,30 +195,27 @@ namespace ospray {
 
       for (const std::vector<float> &bd : blockDataVectors) {
         OSPData data =
-            ospNewData(bd.size(), OSP_FLOAT, bd.data(), OSP_DATA_SHARED_BUFFER);
+            ospNewData(bd.size(), OSP_FLOAT, bd.data());
         blockData.push_back(data);
       }
 
       OSPData blockDataData = ospNewData(
-          blockData.size(), OSP_DATA, blockData.data(), OSP_DATA_SHARED_BUFFER);
+          blockData.size(), OSP_DATA, blockData.data());
       ospCommit(blockDataData);
 
       OSPData blockBoundsData = ospNewData(blockBounds.size(),
                                            OSP_BOX3I,
-                                           blockBounds.data(),
-                                           OSP_DATA_SHARED_BUFFER);
+                                           blockBounds.data());
       ospCommit(blockBoundsData);
 
       OSPData refinementLevelsData = ospNewData(refinementLevels.size(),
                                                 OSP_INT,
-                                                refinementLevels.data(),
-                                                OSP_DATA_SHARED_BUFFER);
+                                                refinementLevels.data());
       ospCommit(refinementLevelsData);
 
       OSPData cellWidthsData = ospNewData(cellWidths.size(),
                                           OSP_FLOAT,
-                                          cellWidths.data(),
-                                          OSP_DATA_SHARED_BUFFER);
+                                          cellWidths.data());
       ospCommit(cellWidthsData);
 
       // create an AMR volume and assign attributes
