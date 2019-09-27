@@ -137,6 +137,9 @@ namespace ospray {
       auto *group    = instance->group.ptr;
       auto *model = (*group->geometricModels)[geomID];
 
+      instance->refInc();
+      model->refInc();
+
       res.instance = (OSPInstance)instance;
       res.model    = (OSPGeometricModel)model;
       res.primID   = static_cast<uint32_t>(primID);

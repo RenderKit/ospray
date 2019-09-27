@@ -22,6 +22,7 @@
 #include "ospray_cpp/Data.h"
 #include "ospray_cpp/Device.h"
 #include "ospray_cpp/FrameBuffer.h"
+#include "ospray_cpp/Future.h"
 #include "ospray_cpp/GeometricModel.h"
 #include "ospray_cpp/Group.h"
 #include "ospray_cpp/Instance.h"

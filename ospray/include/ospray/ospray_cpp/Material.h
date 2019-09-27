@@ -24,10 +24,9 @@ namespace ospray {
     class Material : public ManagedObject_T<OSPMaterial>
     {
      public:
-      Material() = default;
       Material(const std::string &renderer_type, const std::string &mat_type);
       Material(const Material &copy);
-      Material(OSPMaterial existing);
+      Material(OSPMaterial existing = nullptr);
     };
 
     // Inlined function definitions ///////////////////////////////////////////

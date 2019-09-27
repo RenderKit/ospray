@@ -25,7 +25,7 @@ namespace ospray {
     {
      public:
       Texture(const Texture &copy);
-      Texture(OSPTexture existing);
+      Texture(OSPTexture existing = nullptr);
     };
 
     // Inlined function definitions ///////////////////////////////////////////

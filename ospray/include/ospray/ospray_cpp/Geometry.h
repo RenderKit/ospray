@@ -24,10 +24,9 @@ namespace ospray {
     class Geometry : public ManagedObject_T<OSPGeometry>
     {
     public:
-
       Geometry(const std::string &type);
       Geometry(const Geometry &copy);
-      Geometry(OSPGeometry existing);
+      Geometry(OSPGeometry existing = nullptr);
     };
 
     // Inlined function definitions ///////////////////////////////////////////

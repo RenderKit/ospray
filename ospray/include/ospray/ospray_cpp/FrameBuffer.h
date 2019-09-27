@@ -16,11 +16,24 @@
 
 #pragma once
 
+#include "Camera.h"
+#include "Future.h"
+#include "GeometricModel.h"
+#include "Instance.h"
 #include "Renderer.h"
 #include "World.h"
 
 namespace ospray {
   namespace cpp {
+
+    struct PickResult
+    {
+      bool hasHit{false};
+      vec3f worldPosition;
+      Instance instance{(OSPInstance)nullptr};
+      GeometricModel model{(OSPGeometricModel)nullptr};
+      uint32_t primID{0};
+    };
 
     class FrameBuffer : public ManagedObject_T<OSPFrameBuffer>
     {
@@ -36,9 +49,14 @@ namespace ospray {
 
       FrameBuffer &operator=(const FrameBuffer &copy);
 
-      float renderFrame(const Renderer &renderer,
-                        const Camera &camera,
-                        const World &world) const;
+      Future renderFrame(const Renderer &renderer,
+                         const Camera &camera,
+                         const World &world) const;
+
+      PickResult pick(const Renderer &renderer,
+                      const Camera &camera,
+                      const World &world,
+                      const vec2f &screenPos) const;
 
       void *map(OSPFrameBufferChannel channel) const;
       void unmap(void *ptr) const;
@@ -72,12 +90,39 @@ namespace ospray {
       return *this;
     }
 
-    inline float FrameBuffer::renderFrame(const Renderer &renderer,
-                                          const Camera &camera,
-                                          const World &world) const
+    inline Future FrameBuffer::renderFrame(const Renderer &renderer,
+                                           const Camera &camera,
+                                           const World &world) const
     {
-      return ospRenderFrameBlocking(
+      return ospRenderFrame(
           handle(), renderer.handle(), camera.handle(), world.handle());
+    }
+
+    inline PickResult FrameBuffer::pick(const Renderer &renderer,
+                                        const Camera &camera,
+                                        const World &world,
+                                        const vec2f &screenPos) const
+    {
+      PickResult res;
+
+      OSPPickResult pick;
+      ospPick((OSPPickResult *)&pick,
+              handle(),
+              renderer.handle(),
+              camera.handle(),
+              world.handle(),
+              screenPos.x,
+              screenPos.y);
+
+      if (pick.hasHit) {
+        res.hasHit        = true;
+        res.worldPosition = vec3f(pick.worldPosition);
+        res.instance      = Instance(pick.instance);
+        res.model         = GeometricModel(pick.model);
+        res.primID        = pick.primID;
+      }
+
+      return res;
     }
 
     inline void *FrameBuffer::map(OSPFrameBufferChannel channel) const

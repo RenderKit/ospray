@@ -27,12 +27,8 @@ namespace ospray {
      public:
       GeometricModel(const Geometry &geom);
       GeometricModel(OSPGeometry geom);
-
       GeometricModel(const GeometricModel &copy);
-      GeometricModel(OSPGeometricModel existing);
-
-      void setMaterial(Material &m) const;
-      void setMaterial(OSPMaterial m) const;
+      GeometricModel(OSPGeometricModel existing = nullptr);
     };
 
     // Inlined function definitions ///////////////////////////////////////////
@@ -56,16 +52,6 @@ namespace ospray {
     inline GeometricModel::GeometricModel(OSPGeometricModel existing)
         : ManagedObject_T<OSPGeometricModel>(existing)
     {
-    }
-
-    inline void GeometricModel::setMaterial(Material &m) const
-    {
-      setMaterial(m.handle());
-    }
-
-    inline void GeometricModel::setMaterial(OSPMaterial m) const
-    {
-      ospSetObject(handle(), "material", m);
     }
 
   }  // namespace cpp

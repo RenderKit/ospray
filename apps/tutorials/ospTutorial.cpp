@@ -96,17 +96,17 @@ int main(int argc, const char **argv)
   {
     // create and setup camera
     ospray::cpp::Camera camera("perspective");
-    camera.set("aspect", imgSize.x / (float)imgSize.y);
-    camera.set("position", cam_pos);
-    camera.set("direction", cam_view);
-    camera.set("up", cam_up);
+    camera.setParam("aspect", imgSize.x / (float)imgSize.y);
+    camera.setParam("position", cam_pos);
+    camera.setParam("direction", cam_view);
+    camera.setParam("up", cam_up);
     camera.commit();  // commit each object to indicate modifications are done
 
     // create and setup model and mesh
     ospray::cpp::Geometry mesh("triangles");
-    mesh.set("vertex.position", ospray::cpp::Data(4, OSP_VEC3F, vertex));
-    mesh.set("vertex.color", ospray::cpp::Data(4, OSP_VEC4F, color));
-    mesh.set("index", ospray::cpp::Data(2, OSP_VEC3UI, index));
+    mesh.setParam("vertex.position", ospray::cpp::Data(4, OSP_VEC3F, vertex));
+    mesh.setParam("vertex.color", ospray::cpp::Data(4, OSP_VEC4F, color));
+    mesh.setParam("index", ospray::cpp::Data(2, OSP_VEC3UI, index));
     mesh.commit();
 
     // put the mesh into a model
@@ -116,8 +116,8 @@ int main(int argc, const char **argv)
     // put the model into a group (collection of models)
     ospray::cpp::Group group;
     auto modelHandle = model.handle();
-    group.set("geometry",
-              ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle));
+    group.setParam("geometry",
+                   ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle));
     group.commit();
 
     // put the group into an instance (give the group a world transform)
@@ -127,22 +127,23 @@ int main(int argc, const char **argv)
     // put the instance in the world
     ospray::cpp::World world;
     auto instanceHandle = instance.handle();
-    world.set("instance", ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle));
+    world.setParam("instance",
+                   ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle));
 
     // create and setup light for Ambient Occlusion
     ospray::cpp::Light light("ambient");
     light.commit();
     auto lightHandle = light.handle();
 
-    world.set("light", ospray::cpp::Data(1, OSP_LIGHT, &lightHandle));
+    world.setParam("light", ospray::cpp::Data(1, OSP_LIGHT, &lightHandle));
     world.commit();
 
     // create renderer, choose Scientific Visualization renderer
     ospray::cpp::Renderer renderer("scivis");
 
     // complete setup of renderer
-    renderer.set("aoSamples", 1);
-    renderer.set("bgColor", 1.0f);  // white, transparent
+    renderer.setParam("aoSamples", 1);
+    renderer.setParam("bgColor", 1.0f);  // white, transparent
     renderer.commit();
 
     // create and setup framebuffer
@@ -166,6 +167,15 @@ int main(int argc, const char **argv)
     fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
     writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
     framebuffer.unmap(fb);
+
+    ospray::cpp::PickResult res =
+        framebuffer.pick(renderer, camera, world, vec2f(0.5f));
+
+    if (res.hasHit) {
+      std::cout << "Picked geometry [inst: " << res.instance.handle()
+                << ", model: " << res.model.handle() << ", prim: " << res.primID
+                << "]" << std::endl;
+    }
   }
 
   ospShutdown();

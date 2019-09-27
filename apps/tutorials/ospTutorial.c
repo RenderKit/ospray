@@ -202,7 +202,20 @@ int main(int argc, const char **argv) {
   ospUnmapFrameBuffer(fb, framebuffer);
 
   printf("done!\n");
+
+  OSPPickResult p;
+  ospPick(&p, framebuffer, renderer, camera, world, 0.5f, 0.5f);
+
+  printf("\nospPick() center of screen --> [inst: %p, model: %p, prim: %u]\n",
+         p.instance,
+         p.model,
+         p.primID);
+
   printf("\ncleaning up objects...");
+
+  // cleanup pick handles (because p.hasHit was 'true')
+  ospRelease(p.instance);
+  ospRelease(p.model);
 
   // final cleanups
   ospRelease(renderer);

@@ -24,10 +24,9 @@ namespace ospray {
     class ImageOperation : public ManagedObject_T<OSPImageOperation>
     {
      public:
-      ImageOperation() = default;
       ImageOperation(const std::string &type);
       ImageOperation(const ImageOperation &copy);
-      ImageOperation(OSPImageOperation existing);
+      ImageOperation(OSPImageOperation existing = nullptr);
     };
 
     // Inlined function definitions ///////////////////////////////////////////

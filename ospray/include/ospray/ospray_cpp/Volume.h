@@ -28,7 +28,7 @@ namespace ospray {
      public:
       Volume(const std::string &type);
       Volume(const Volume &copy);
-      Volume(OSPVolume existing);
+      Volume(OSPVolume existing = nullptr);
     };
 
     // Inlined function definitions ///////////////////////////////////////////

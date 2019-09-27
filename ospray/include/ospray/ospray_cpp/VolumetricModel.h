@@ -27,12 +27,8 @@ namespace ospray {
      public:
       VolumetricModel(const Volume &geom);
       VolumetricModel(OSPVolume geom);
-
       VolumetricModel(const VolumetricModel &copy);
-      VolumetricModel(OSPVolumetricModel existing);
-
-      void setTransferFunction(TransferFunction &m) const;
-      void setTransferFunction(OSPTransferFunction m) const;
+      VolumetricModel(OSPVolumetricModel existing = nullptr);
     };
 
     // Inlined function definitions ///////////////////////////////////////////
@@ -56,17 +52,6 @@ namespace ospray {
     inline VolumetricModel::VolumetricModel(OSPVolumetricModel existing)
         : ManagedObject_T<OSPVolumetricModel>(existing)
     {
-    }
-
-    inline void VolumetricModel::setTransferFunction(TransferFunction &m) const
-    {
-      setTransferFunction(m.handle());
-    }
-
-    inline void VolumetricModel::setTransferFunction(
-        OSPTransferFunction m) const
-    {
-      set("transferFunction", m);
     }
 
   }  // namespace cpp

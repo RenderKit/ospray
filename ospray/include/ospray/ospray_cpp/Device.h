@@ -29,7 +29,7 @@ namespace ospray {
      public:
       Device(const std::string &type = "default");
       Device(const Device &copy);
-      Device(OSPDevice existing);
+      Device(OSPDevice existing = nullptr);
 
       void set(const std::string &name, const std::string &v) const;
       void set(const std::string &name, bool v) const;

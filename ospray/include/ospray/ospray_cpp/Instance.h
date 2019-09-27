@@ -26,9 +26,8 @@ namespace ospray {
      public:
       Instance(Group &group);
       Instance(OSPGroup group);
-
       Instance(const Instance &copy);
-      Instance(OSPInstance existing);
+      Instance(OSPInstance existing = nullptr);
     };
 
     // Inlined function definitions ///////////////////////////////////////////

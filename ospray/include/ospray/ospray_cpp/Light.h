@@ -26,7 +26,7 @@ namespace ospray {
      public:
       Light(const std::string &light_type);
       Light(const Light &copy);
-      Light(OSPLight existing);
+      Light(OSPLight existing = nullptr);
     };
 
     // Inlined function definitions ///////////////////////////////////////////
