@@ -101,8 +101,9 @@ OSPRAY_INTERFACE float ospRenderFrameBlocking(OSPFrameBuffer,
 }  // extern "C"
 
 // XXX temporary, to maintain backwards compatibility
-OSPData ospNewData(size_t numItems,
-                   OSPDataType type,
-                   const void *source,
-                   uint32_t dataCreationFlags OSP_DEFAULT_VAL(0));
+OSPRAY_INTERFACE OSPData
+ospNewData(size_t numItems,
+           OSPDataType type,
+           const void *source,
+           uint32_t dataCreationFlags OSP_DEFAULT_VAL(0));
 #endif
