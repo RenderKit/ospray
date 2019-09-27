@@ -22,6 +22,11 @@
 
 namespace ospray {
 
+  Volume::Volume()
+  {
+    managedObjectType = OSP_VOLUME;
+  }
+
   Volume::~Volume()
   {
     if (embreeGeometry)

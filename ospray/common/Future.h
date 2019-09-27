@@ -22,8 +22,10 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE Future : public ManagedObject
   {
-    Future()           = default;
+    Future();
     ~Future() override = default;
+
+    std::string toString() const override;
 
     virtual bool isFinished(OSPSyncEvent = OSP_TASK_FINISHED) = 0;
 

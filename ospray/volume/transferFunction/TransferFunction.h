@@ -31,7 +31,7 @@ namespace ospray {
   */
   struct OSPRAY_SDK_INTERFACE TransferFunction : public ManagedObject
   {
-    TransferFunction() = default;
+    TransferFunction();
     virtual ~TransferFunction() override = default;
     virtual void commit() override;
     virtual std::string toString() const override;

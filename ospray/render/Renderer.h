@@ -32,7 +32,7 @@ namespace ospray {
    */
   struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
   {
-    Renderer()                   = default;
+    Renderer();
     virtual ~Renderer() override = default;
 
     /*! \brief creates an abstract renderer class of given type

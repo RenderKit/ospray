@@ -25,6 +25,7 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   {
+    Volume();
     virtual ~Volume() override;
 
     virtual std::string toString() const override;

@@ -21,6 +21,11 @@
 
 namespace ospray {
 
+  TransferFunction::TransferFunction()
+  {
+    managedObjectType = OSP_TRANSFER_FUNCTION;
+  }
+
   void TransferFunction::commit()
   {
     vec2f valueRange = getParam<vec2f>("valueRange", vec2f(0.0f, 1.0f));

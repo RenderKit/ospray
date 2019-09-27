@@ -25,6 +25,8 @@ namespace ospray {
 
   VolumetricModel::VolumetricModel(Volume *_volume)
   {
+    managedObjectType = OSP_VOLUMETRIC_MODEL;
+
     if (_volume == nullptr)
       throw std::runtime_error("volumetric model received null volume");
 

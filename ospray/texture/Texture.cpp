@@ -19,6 +19,11 @@
 
 namespace ospray {
 
+  Texture::Texture()
+  {
+    managedObjectType = OSP_TEXTURE;
+  }
+
   std::string Texture::toString() const
   {
     return "ospray::Texture";

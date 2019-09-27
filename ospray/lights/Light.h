@@ -23,6 +23,7 @@ namespace ospray {
   //! Base class for Light objects
   struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
   {
+    Light();
     virtual ~Light() override = default;
 
     //! Create a light of the given type

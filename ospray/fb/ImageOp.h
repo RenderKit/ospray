@@ -45,6 +45,7 @@ namespace ospray {
   */
   struct OSPRAY_SDK_INTERFACE ImageOp : public ManagedObject
   {
+    ImageOp();
     virtual ~ImageOp() override = default;
 
     virtual std::string toString() const override;

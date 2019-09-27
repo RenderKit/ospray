@@ -65,7 +65,7 @@ namespace ospray {
     // Data members //
 
     void *ispcEquivalent{nullptr};
-    OSPDataType managedObjectType{OSP_UNKNOWN};
+    OSPDataType managedObjectType{OSP_OBJECT};
   };
 
   OSPTYPEFOR_SPECIALIZATION(ManagedObject *, OSP_OBJECT);

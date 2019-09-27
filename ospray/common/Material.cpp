@@ -22,6 +22,11 @@ namespace ospray {
 
   // Helper functions /////////////////////////////////////////////////////////
 
+  Material::Material()
+  {
+    managedObjectType = OSP_MATERIAL;
+  }
+
   static Material* tryToCreateMaterial(const std::string &renderer_type,
                                        const std::string &material_type)
   {

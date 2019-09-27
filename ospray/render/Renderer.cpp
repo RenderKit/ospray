@@ -26,6 +26,11 @@
 
 namespace ospray {
 
+  Renderer::Renderer()
+  {
+    managedObjectType = OSP_RENDERER;
+  }
+
   std::string Renderer::toString() const
   {
     return "ospray::Renderer";

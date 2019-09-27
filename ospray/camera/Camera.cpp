@@ -26,6 +26,11 @@ namespace ospray {
   {
   }
 
+  Camera::Camera()
+  {
+    managedObjectType = OSP_CAMERA;
+  }
+
   Camera *Camera::createInstance(const char *type)
   {
     return createInstanceHelper<Camera, OSP_CAMERA>(type);
