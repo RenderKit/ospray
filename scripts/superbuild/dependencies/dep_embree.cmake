@@ -48,15 +48,13 @@ if (BUILD_EMBREE_FROM_SOURCE)
     BUILD_ALWAYS OFF
   )
 
-  if (NOT WIN32)
-    set(EMBREE_PATH "${EMBREE_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/embree-${BUILD_EMBREE_VERSION}")
-  endif()
+  set(EMBREE_PATH "${EMBREE_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/embree-${BUILD_EMBREE_VERSION}")
 
-    ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
-    configure
-      $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:tbb>
-      $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
-    )
+  ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
+  configure
+    $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:tbb>
+    $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
+  )
 
 else()
   if (APPLE)
