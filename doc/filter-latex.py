@@ -22,7 +22,7 @@ def tbl_alignment(a, w):
     }
     s = '';
     for i in range(len(a)):
-        s += 'X[%.3f,' % -w[i] + aligns[a[i]['t']] + ']'
+        s += 'X[%d,' % int(100*w[i]) + aligns[a[i]['t']] + ']'
     return s;
 
 def tbl_headers(s):
@@ -58,7 +58,7 @@ def do_filter(k, v, f, m):
         return [latex(r'\begin{table'+wd+'}[!h]'),
                 tbl_caption(v[0]),
                 latex(ha),
-                latex(r'\begin{tabu} spread 0pt {' + tbl_alignment(v[1], w) + '}'),
+                latex(r'\begin{tabu}{' + tbl_alignment(v[1], w) + '}'),
                 latex(r'\toprule'),
                 tbl_headers(v[3]),
                 latex(r'\midrule'),
