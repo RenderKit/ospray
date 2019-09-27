@@ -37,6 +37,9 @@ struct VolumetricModel
 
   //! Color and opacity transfer function.
   TransferFunction *transferFunction;
+  
+  //! value selector
+  VKLValueSelector vklValueSelector;
 
   box3f boundingBox;
 

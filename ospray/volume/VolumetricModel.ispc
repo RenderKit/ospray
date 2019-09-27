@@ -48,3 +48,10 @@ export void VolumetricModel_set(void *uniform _self,
   self->maximumDensity   = maximumDensity;
   self->anisotropy       = anisotropy;
 }
+
+export void VolumetricModel_set_valueSelector(void *uniform _self,
+                                              void *uniform valueSelector)
+{
+  VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
+  self->vklValueSelector = (VKLValueSelector)valueSelector;
+}

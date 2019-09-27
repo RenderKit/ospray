@@ -57,7 +57,7 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
                              (varying vkl_range1f *)&interval.interval,
                              //&tRange,
 #if USE_VALUE_SELECTOR==1
-                             volume->vklValueSelector
+                             m->vklValueSelector
 #else
                              0
 #endif

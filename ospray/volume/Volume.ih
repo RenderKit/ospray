@@ -42,7 +42,6 @@ struct Volume
   int32 volumeID;
 
   VKLVolume vklVolume;
-  VKLValueSelector vklValueSelector;
 
   //! Find the next isosurface hit point in the volume for ray casting based
   //! renderers.

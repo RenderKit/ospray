@@ -74,7 +74,7 @@ float delta_tracking_interval_homogeneous(
                            (varying vkl_vec3f *)&w,
                            (varying vkl_range1f *)&vInterval.interval,
 #if USE_VALUE_SELECTOR==1
-                           vModel->volume->vklValueSelector
+                           vModel->vklValueSelector
 #else 
                            0
 #endif
@@ -122,7 +122,7 @@ float delta_tracking_interval(
                            (varying vkl_vec3f *)&w,
                            (varying vkl_range1f *)&vInterval.interval,
 #if USE_VALUE_SELECTOR == 1
-                           vModel->volume->vklValueSelector
+                           vModel->vklValueSelector
 #else
                            0
 #endif

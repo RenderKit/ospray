@@ -52,33 +52,20 @@ namespace ospray {
       throw std::runtime_error("volumetric model must have 'transferFunction'");
 
     // create value selector using transfer function and pass to volume
-    VKLSharedStructuredVolume* vklVolume = dynamic_cast<VKLSharedStructuredVolume*>(&*volume);
-    if (vklVolume)
+    if (volume->vklVolume)
     {
       if (vklValueSelector) {
         vklRelease(vklValueSelector);
         vklValueSelector = nullptr;
       }
 
-      vklValueSelector = vklNewValueSelector(vklVolume->vklVolume);
-
-      // set value selector value ranges based on transfer function positive
-      // opacity intervals
+      vklValueSelector = vklNewValueSelector(volume->vklVolume);
       std::vector<range1f> valueRanges = transferFunction->getPositiveOpacityValueRanges();
-
       vklValueSelectorSetRanges(vklValueSelector,
                                 valueRanges.size(),
                                 (const vkl_range1f *)valueRanges.data());
-
-      // TODO: What to do about iso values?
-      //// if we have isovalues, set these values on the value selector
-      //if (isovalues.size() > 0) {
-      //  vklValueSelectorSetValues(
-      //      valueSelector, isovalues.size(), isovalues.data());
-      //}
-
       vklCommit(vklValueSelector);
-      ispc::Volume_set_vklValueSelector(volume->getIE(), vklValueSelector);
+      ispc::VolumetricModel_set_valueSelector(ispcEquivalent, vklValueSelector);
     }
       
     // Finish getting/setting other appearance information //
