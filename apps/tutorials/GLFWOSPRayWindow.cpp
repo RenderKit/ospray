@@ -31,11 +31,11 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
                                    OSPRenderer renderer,
                                    OSPFrameBufferFormat fbFormat,
                                    uint32_t fbChannels)
-  : worldBounds(worldBounds),
-    world(world),
-    renderer(renderer),
-    fbFormat(fbFormat),
-    fbChannels(fbChannels)
+    : worldBounds(worldBounds),
+      world(world),
+      renderer(renderer),
+      fbFormat(fbFormat),
+      fbChannels(fbChannels)
 {
   if (activeWindow != nullptr) {
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -106,9 +106,8 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
         if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS) {
           auto mouse      = activeWindow->previousMouse;
           auto windowSize = activeWindow->windowSize;
-          const vec2f pos(
-              mouse.x / static_cast<float>(windowSize.x),
-              1.f - mouse.y / static_cast<float>(windowSize.y));
+          const vec2f pos(mouse.x / static_cast<float>(windowSize.x),
+                          1.f - mouse.y / static_cast<float>(windowSize.y));
 
           OSPPickResult res;
           ospPick(
@@ -127,7 +126,6 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
   // create the arcball camera model
   arcballCamera = std::unique_ptr<ArcballCamera>(
       new ArcballCamera(worldBounds, windowSize));
-
 
   // create camera
   camera = ospNewCamera("perspective");
@@ -222,10 +220,8 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   }
 
   // create new frame buffer
-  framebuffer = ospNewFrameBuffer(windowSize.x,
-                                  windowSize.y,
-                                  fbFormat,
-                                  fbChannels);
+  framebuffer =
+      ospNewFrameBuffer(windowSize.x, windowSize.y, fbFormat, fbChannels);
 
   if (imageOps) {
     ospSetObject(framebuffer, "imageOperation", imageOps);
@@ -290,9 +286,8 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
       const vec2f mouseFrom(
           clamp(prev.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
           clamp(prev.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
-      const vec2f mouseTo(
-          clamp(mouse.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
-          clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
+      const vec2f mouseTo(clamp(mouse.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
+                          clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
       arcballCamera->rotate(mouseFrom, mouseTo);
     } else if (rightDown) {
       arcballCamera->zoom(mouse.y - prev.y);
@@ -359,7 +354,7 @@ void GLFWOSPRayWindow::display()
 
     const GLint glFormat = showAlbedo ? GL_RGB : GL_RGBA;
     const GLenum glType =
-      showAlbedo || fbFormat == OSP_FB_RGBA32F ? GL_FLOAT : GL_UNSIGNED_BYTE;
+        showAlbedo || fbFormat == OSP_FB_RGBA32F ? GL_FLOAT : GL_UNSIGNED_BYTE;
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
                  0,

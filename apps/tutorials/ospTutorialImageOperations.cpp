@@ -49,6 +49,7 @@ int main(int argc, const char **argv)
   instanceHandles.push_back(spheres.instance);
   ospRelease(spheres.geometry);
   ospRelease(spheres.model);
+  ospRelease(spheres.group);
 
   // add in a ground plane geometry
   OSPInstance plane = createGroundPlane(renderer_type);
@@ -115,7 +116,6 @@ int main(int argc, const char **argv)
   ospCommit(pixelOpData);
 
   glfwOSPRayWindow->setImageOps(pixelOpData);
-  // glfwOSPRayWindow->setFrameOpsToUpdate(frameOps, frameOpNames);
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     bool pipelineUpdated = false;

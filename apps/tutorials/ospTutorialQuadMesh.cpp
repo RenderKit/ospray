@@ -47,6 +47,7 @@ int main(int argc, const char **argv)
   instanceHandles.push_back(boxes.instance);
   ospRelease(boxes.geometry);
   ospRelease(boxes.model);
+  ospRelease(boxes.group);
 
   OSPData geomInstances =
       ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());

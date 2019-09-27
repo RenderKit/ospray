@@ -152,6 +152,10 @@ namespace ospray {
 
       std::memcpy(&retval.bounds, &bounds, sizeof(bounds));
 
+      ospRelease(pointsData);
+      ospRelease(indicesData);
+      ospRelease(colorsData);
+
       return retval;
     }
 

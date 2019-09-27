@@ -140,14 +140,6 @@ namespace ospray {
       ospCommit(objMaterial);
 
       ospSetObject(model, "material", objMaterial);
-
-      // release handles we no longer need
-      ospRelease(startVertexData);
-      ospRelease(endVertexData);
-      ospRelease(radiusData);
-      ospRelease(cylindersColor);
-      ospRelease(objMaterial);
-
       ospCommit(model);
 
       OSPGroup group = ospNewGroup();
@@ -165,6 +157,13 @@ namespace ospray {
       retval.instance = cylindersInstance;
 
       std::memcpy(&retval.bounds, &bounds, sizeof(bounds));
+
+      // release handles we no longer need
+      ospRelease(startVertexData);
+      ospRelease(endVertexData);
+      ospRelease(radiusData);
+      ospRelease(cylindersColor);
+      ospRelease(objMaterial);
 
       return retval;
     }

@@ -39,23 +39,16 @@ int main(int argc, const char **argv)
   // create the world which will contain all of our geometries
   OSPWorld world = ospNewWorld();
 
-  std::vector<OSPInstance> instanceHandles;
-
   // add in boxes geometry
   OSPTestingGeometry boxes =
       ospTestingNewGeometry("boxes", renderer_type.c_str());
-  instanceHandles.push_back(boxes.instance);
+
+  ospSetObjectAsData(world, "instance", OSP_INSTANCE, boxes.instance);
+
   ospRelease(boxes.geometry);
   ospRelease(boxes.model);
-
-  OSPData geomInstances =
-      ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
-
-  ospSetObject(world, "instance", geomInstances);
-  ospRelease(geomInstances);
-
-  for (auto inst : instanceHandles)
-    ospRelease(inst);
+  ospRelease(boxes.group);
+  ospRelease(boxes.instance);
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetObject(world, "light", lightsData);

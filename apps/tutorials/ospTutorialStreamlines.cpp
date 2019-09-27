@@ -33,19 +33,11 @@ int main(int argc, const char **argv)
   // create the world
   OSPWorld world = ospNewWorld();
 
-  std::vector<OSPInstance> instanceHandles;
-
   // generate streamlies
   OSPTestingGeometry streamlines =
       ospTestingNewGeometry("streamlines", renderer_type.c_str());
-  instanceHandles.push_back(streamlines.instance);
-  ospRelease(streamlines.model);
 
-  OSPData geomInstances =
-      ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
-
-  ospSetObject(world, "instance", geomInstances);
-  ospRelease(geomInstances);
+  ospSetObjectAsData(world, "instance", OSP_INSTANCE, streamlines.instance);
 
   OSPData lightsData = ospTestingNewLights("ambient_and_directional");
   ospSetObject(world, "light", lightsData);
@@ -93,6 +85,10 @@ int main(int argc, const char **argv)
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
+
+  ospRelease(streamlines.geometry);
+  ospRelease(streamlines.model);
+  ospRelease(streamlines.group);
 
   // cleanly shut OSPRay down
   ospShutdown();

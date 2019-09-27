@@ -40,6 +40,8 @@ int main(int argc, const char **argv)
       ospTestingNewGeometry("curves", renderer_type.c_str());
   instanceHandles.push_back(curves.instance);
   ospRelease(curves.model);
+  ospRelease(curves.geometry);
+  ospRelease(curves.group);
 
   OSPInstance plane = createGroundPlane(renderer_type, 2.5f);
   instanceHandles.push_back(plane);
@@ -49,6 +51,8 @@ int main(int argc, const char **argv)
 
   ospSetObject(world, "instance", geomInstances);
   ospRelease(geomInstances);
+  ospRelease(plane);
+  ospRelease(curves.instance);
 
   OSPData lightsData = ospTestingNewLights("ambient_and_directional");
   ospSetObject(world, "light", lightsData);

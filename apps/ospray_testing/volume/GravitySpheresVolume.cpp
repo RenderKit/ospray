@@ -135,6 +135,7 @@ namespace ospray {
       // set the volume data
       OSPData voxelData = ospNewData(voxels.size(), OSP_FLOAT, voxels.data());
       ospSetObject(volume, "voxelData", voxelData);
+      ospRelease(voxelData);
 
       // create OSPRay objects and return results
 

@@ -45,8 +45,6 @@ int main(int argc, const char **argv)
   OSPTestingGeometry subdivisionGeometry =
       ospTestingNewGeometry("subdivision_cube", renderer_type.c_str());
   instanceHandles.push_back(subdivisionGeometry.instance);
-  ospRelease(subdivisionGeometry.geometry);
-  ospRelease(subdivisionGeometry.model);
 
   // add in a ground plane geometry
   OSPInstance plane = createGroundPlane(renderer_type);
@@ -136,6 +134,10 @@ int main(int argc, const char **argv)
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
+
+  ospRelease(subdivisionGeometry.geometry);
+  ospRelease(subdivisionGeometry.model);
+  ospRelease(subdivisionGeometry.group);
 
   // cleanly shut OSPRay down
   ospShutdown();

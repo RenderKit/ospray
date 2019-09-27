@@ -45,8 +45,7 @@ int main(int argc, const char **argv)
   instanceHandles.push_back(cylinders.instance);
   ospRelease(cylinders.geometry);
   ospRelease(cylinders.model);
-
-  instanceHandles.push_back(cylinders.instance);
+  ospRelease(cylinders.group);
 
   // add in a ground plane geometry
   OSPInstance planeInstance = createGroundPlane(renderer_type, 2.0f);
