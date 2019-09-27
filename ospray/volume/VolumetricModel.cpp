@@ -76,7 +76,6 @@ namespace ospray {
                               transferFunction->getIE(),
                               (const ispc::box3f &)volumeBounds,
                               getParam<float>("densityScale", 1.f),
-                              getParam<float>("maximumDensity", 1.f),
                               getParam<float>("anisotropy", 0.f));
   }
 

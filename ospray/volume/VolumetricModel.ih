@@ -45,7 +45,6 @@ struct VolumetricModel
 
   //! Volume parameters understood by the pathtracer
   float densityScale;
-  float maximumDensity; // maximum opacity value of the transfer function over the whole value range
   float anisotropy;     // the anisotropy of the volume's phase function (Heyney-Greenstein)
 };
 

@@ -35,7 +35,6 @@ export void VolumetricModel_set(void *uniform _self,
                                 void *uniform transferFunction,
                                 const uniform box3f &bounds,
                                 uniform float densityScale,
-                                uniform float maximumDensity,
                                 uniform float anisotropy)
 {
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
@@ -45,7 +44,6 @@ export void VolumetricModel_set(void *uniform _self,
   self->transferFunction = (TransferFunction * uniform) transferFunction;
   self->boundingBox      = bounds;
   self->densityScale     = densityScale;
-  self->maximumDensity   = maximumDensity;
   self->anisotropy       = anisotropy;
 }
 
