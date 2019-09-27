@@ -55,22 +55,10 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
                              (varying vkl_vec3f *)&ray.org,
                              (varying vkl_vec3f *)&ray.dir,
                              (varying vkl_range1f *)&interval.interval,
-                             //&tRange,
-#if USE_VALUE_SELECTOR==1
-                             m->vklValueSelector
-#else
-                             0
-#endif
-                             );
+                             m->vklValueSelector);
 
     VKLInterval interval;
     while (vklIterateIntervalV(&intervalIterator, &interval) && alpha < 0.99f) {
-
-#if USE_VALUE_SELECTOR != 1
-      if (interval.valueRange.upper <= 0.f)
-        continue;
-#endif
-
       const float nominalSamplingDt = interval.nominalDeltaT / m->samplingRate;
 
       // initial sub interval, based on our renderer-defined sampling rate
