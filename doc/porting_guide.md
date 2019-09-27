@@ -17,16 +17,14 @@ Previously, the workflow was to create an object, fill it with the necessary
 parameters, and then place the object into an `OSPModel` via, for example,
 `ospAddGeometry`. An example is shown below using the C API.
 
-```cpp
-OSPGeometry mesh = ospNewGeometry("triangles");
-// set parameters on mesh
-ospCommit(mesh);
+    OSPGeometry mesh = ospNewGeometry("triangles");
+    // set parameters on mesh
+    ospCommit(mesh);
 
-OSPModel world = ospNewModel();
-ospAddGeometry(world, mesh);
-ospRelease(mesh);
-ospCommit(world);
-```
+    OSPModel world = ospNewModel();
+    ospAddGeometry(world, mesh);
+    ospRelease(mesh);
+    ospCommit(world);
 
 In OSPRay 2.0.0, there is now an `OSPWorld`, which effectively replaces the old
 `OSPModel`.  In addition, there are now 3 new objects that exist "in between"
@@ -37,32 +35,30 @@ objects.
 The new workflow is shown below. Note that calls to `ospRelease()` have been
 removed for brevity.
 
-```cpp
-// create a geometry
-OSPGeometry mesh = ospNewGeometry("triangles");
-// set parameters on mesh
-ospCommit(mesh);
+    // create a geometry
+    OSPGeometry mesh = ospNewGeometry("triangles");
+    // set parameters on mesh
+    ospCommit(mesh);
 
-// put the geometry in a geometric model
-OSPGeometricModel model = ospNewGeometricModel(mesh);
-ospCommit(model);
+    // put the geometry in a geometric model
+    OSPGeometricModel model = ospNewGeometricModel(mesh);
+    ospCommit(model);
 
-// put the geometric model(s) in a group
-OSPGroup group = ospNewGroup();
-OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
-ospSetData(group, "geometry", geometricModels);
-ospCommit(group);
+    // put the geometric model(s) in a group
+    OSPGroup group = ospNewGroup();
+    OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
+    ospSetData(group, "geometry", geometricModels);
+    ospCommit(group);
 
-// put the group in an instance
-OSPInstance = ospNewInstance(group);
-ospCommit(instance);
+    // put the group in an instance
+    OSPInstance = ospNewInstance(group);
+    ospCommit(instance);
 
-// put the instance in the world
-OSPWorld world = ospNewWorld();
-OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
-ospSetData(world, "instance", instances);
-ospCommit(world);
-```
+    // put the instance in the world
+    OSPWorld world = ospNewWorld();
+    OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
+    ospSetData(world, "instance", instances);
+    ospCommit(world);
 
 While this looks more complex at first, the new hierarchy structure
 provides more fine control over transformations and instances.
