@@ -69,7 +69,7 @@ vec4f integrateVolumeInterval(const ScreenSample &sample,
           vec4f sampleColorOpacity = tf->get(tf, sample);
  
           const float clampedOpacity =
-             clamp(sampleColorOpacity.w / m->samplingRate);
+             clamp(sampleColorOpacity.w * dt);
           color = color
               + ((1.f - alpha) * clampedOpacity * make_vec3f(sampleColorOpacity));
           alpha = alpha + ((1.f - alpha) * clampedOpacity);
