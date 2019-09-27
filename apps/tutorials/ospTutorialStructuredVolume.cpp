@@ -30,7 +30,7 @@ static void setIsoValue(OSPGeometry geometry, float value)
 {
   // create and set a single iso value
   OSPData isoValuesData = ospNewData(1, OSP_FLOAT, &value);
-  ospSetData(geometry, "isovalue", isoValuesData);
+  ospSetObject(geometry, "isovalue", isoValuesData);
   ospRelease(isoValuesData);
 }
 
@@ -49,8 +49,8 @@ static void setSliceGeometry(OSPGeometry sliceGeometry, float sliceExtent, float
 
   OSPData indexData = ospNewData(1, OSP_VEC4UI, &indices);
 
-  ospSetData(sliceGeometry, "vertex.position", positionData);
-  ospSetData(sliceGeometry, "index", indexData);
+  ospSetObject(sliceGeometry, "vertex.position", positionData);
+  ospSetObject(sliceGeometry, "index", indexData);
 
   ospRelease(positionData);
   ospRelease(indexData);
@@ -147,11 +147,11 @@ int main(int argc, const char **argv)
   ospCommit(instance);
 
   OSPData instances = ospNewData(1, OSP_INSTANCE, &instance);
-  ospSetData(world, "instance", instances);
+  ospSetObject(world, "instance", instances);
   ospRelease(instances);
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(world, "light", lightsData);
+  ospSetObject(world, "light", lightsData);
   ospRelease(lightsData);
 
   // create OSPRay renderer

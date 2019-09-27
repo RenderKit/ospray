@@ -263,14 +263,14 @@ namespace ospray {
       });
 
       // set data objects for volume object
-      ospSetData(volume, "vertex.position", verticesData);
+      ospSetObject(volume, "vertex.position", verticesData);
       if (!valuesPerCell)
-        ospSetData(volume, "vertex.value", vertexValuesData);
-      ospSetData(volume, "index", indicesData);
-      ospSetData(volume, "cell", cellsData);
-      ospSetData(volume, "cell.type", cellTypesData);
+        ospSetObject(volume, "vertex.value", vertexValuesData);
+      ospSetObject(volume, "index", indicesData);
+      ospSetObject(volume, "cell", cellsData);
+      ospSetObject(volume, "cell.type", cellTypesData);
       if (valuesPerCell)
-        ospSetData(volume, "cell.value", cellValuesData);
+        ospSetObject(volume, "cell.value", cellValuesData);
 
       // release handlers that go out of scope here
       ospRelease(verticesData);

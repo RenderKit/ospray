@@ -89,10 +89,10 @@ namespace ospray {
       OSPData indicesData =
           ospNewData(indices.size(), OSP_UINT, indices.data());
       OSPData colorsData  = ospNewData(colors.size(), OSP_VEC4F, colors.data());
-      ospSetData(slGeom, "vertex.position", pointsData);
-      ospSetData(slGeom, "vertex.radius", radiusData);
-      ospSetData(slGeom, "index", indicesData);
-      ospSetData(slGeom, "vertex.color", colorsData);
+      ospSetObject(slGeom, "vertex.position", pointsData);
+      ospSetObject(slGeom, "vertex.radius", radiusData);
+      ospSetObject(slGeom, "index", indicesData);
+      ospSetObject(slGeom, "vertex.color", colorsData);
       ospCommit(slGeom);
 
       ospRelease(pointsData);
@@ -104,7 +104,7 @@ namespace ospray {
 
       OSPGroup group = ospNewGroup();
       auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &slModel);
-      ospSetData(group, "geometry", models);
+      ospSetObject(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);
 

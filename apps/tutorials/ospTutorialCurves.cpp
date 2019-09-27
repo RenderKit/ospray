@@ -47,11 +47,11 @@ int main(int argc, const char **argv)
   OSPData geomInstances =
       ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
 
-  ospSetData(world, "instance", geomInstances);
+  ospSetObject(world, "instance", geomInstances);
   ospRelease(geomInstances);
 
   OSPData lightsData = ospTestingNewLights("ambient_and_directional");
-  ospSetData(world, "light", lightsData);
+  ospSetObject(world, "light", lightsData);
   ospRelease(lightsData);
 
   ospCommit(world);

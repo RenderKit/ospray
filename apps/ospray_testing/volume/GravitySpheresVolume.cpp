@@ -224,10 +224,10 @@ namespace ospray {
       OSPVolume volume = ospNewVolume("amr_volume");
 
       ospSetInt(volume, "voxelType", OSP_FLOAT);
-      ospSetData(volume, "block.data", blockDataData);
-      ospSetData(volume, "block.bounds", blockBoundsData);
-      ospSetData(volume, "block.level", refinementLevelsData);
-      ospSetData(volume, "block.cellWidth", cellWidthsData);
+      ospSetObject(volume, "block.data", blockDataData);
+      ospSetObject(volume, "block.bounds", blockBoundsData);
+      ospSetObject(volume, "block.level", refinementLevelsData);
+      ospSetObject(volume, "block.cellWidth", cellWidthsData);
 
       ospCommit(volume);
 

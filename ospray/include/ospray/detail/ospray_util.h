@@ -117,11 +117,6 @@ extern "C" {
     ospSetParam(o, id, OSP_OBJECT, &other);
   }
 
-  static inline void ospSetData(OSPObject o, const char *id, OSPData data)
-  {
-    ospSetParam(o, id, OSP_DATA, &data);
-  }
-
   static inline void ospSetVec2f(OSPObject o , const char *id, float x, float y)
   {
     float v[] = {x, y};

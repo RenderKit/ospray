@@ -55,14 +55,14 @@ int main(int argc, const char **argv)
   OSPData geomInstances =
       ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
 
-  ospSetData(world, "instance", geomInstances);
+  ospSetObject(world, "instance", geomInstances);
   ospRelease(geomInstances);
 
   for (auto inst : instanceHandles)
     ospRelease(inst);
 
   OSPData lightsData = ospTestingNewLights("ambient_and_directional");
-  ospSetData(world, "light", lightsData);
+  ospSetObject(world, "light", lightsData);
   ospRelease(lightsData);
 
   // commit the world
@@ -100,7 +100,7 @@ int main(int argc, const char **argv)
       OSPData vertexCreaseWeightsData = ospNewData(
           vertexCreaseWeights.size(), OSP_FLOAT, vertexCreaseWeights.data());
 
-      ospSetData(subdivisionGeometry.geometry,
+      ospSetObject(subdivisionGeometry.geometry,
                  "vertexCrease.weight",
                  vertexCreaseWeightsData);
       ospRelease(vertexCreaseWeightsData);
@@ -123,7 +123,7 @@ int main(int argc, const char **argv)
       OSPData edgeCreaseWeightsData = ospNewData(
           edgeCreaseWeights.size(), OSP_FLOAT, edgeCreaseWeights.data());
 
-      ospSetData(subdivisionGeometry.geometry,
+      ospSetObject(subdivisionGeometry.geometry,
                  "edgeCrease.weight",
                  edgeCreaseWeightsData);
       ospRelease(edgeCreaseWeightsData);

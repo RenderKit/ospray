@@ -247,9 +247,9 @@ namespace ospray {
       ospCommit(quadColors);
       ospCommit(quadIndices);
 
-      ospSetData(quadMesh, "vertex.position", quadVerts);
-      ospSetData(quadMesh, "vertex.color", quadColors);
-      ospSetData(quadMesh, "index", quadIndices);
+      ospSetObject(quadMesh, "vertex.position", quadVerts);
+      ospSetObject(quadMesh, "vertex.color", quadColors);
+      ospSetObject(quadMesh, "index", quadIndices);
 
       ospCommit(quadMesh);
       ospRelease(quadVerts);
@@ -271,7 +271,7 @@ namespace ospray {
       OSPGroup group          = ospNewGroup();
       OSPData geometricModels =
           ospNewData(1, OSP_GEOMETRIC_MODEL, &quadMeshModel);
-      ospSetData(group, "geometry", geometricModels);
+      ospSetObject(group, "geometry", geometricModels);
 
       ospCommit(group);
       ospRelease(geometricModels);
@@ -283,7 +283,7 @@ namespace ospray {
       // put the instance in the world
       OSPWorld world    = ospNewWorld();
       OSPData instances = ospNewData(1, OSP_INSTANCE, &instance);
-      ospSetData(world, "instance", instances);
+      ospSetObject(world, "instance", instances);
       ospCommit(world);
       ospRelease(instances);
 

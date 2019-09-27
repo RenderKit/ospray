@@ -94,8 +94,8 @@ namespace ospray {
       // create the sphere geometry, and assign attributes
       OSPGeometry spheresGeometry = ospNewGeometry("spheres");
 
-      ospSetData(spheresGeometry, "sphere.position", positionData);
-      ospSetData(spheresGeometry, "sphere.radius", radiusData);
+      ospSetObject(spheresGeometry, "sphere.position", positionData);
+      ospSetObject(spheresGeometry, "sphere.radius", radiusData);
 
       // commit the spheres geometry
       ospCommit(spheresGeometry);
@@ -104,7 +104,7 @@ namespace ospray {
 
       OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, colors.data());
 
-      ospSetData(model, "prim.color", colorData);
+      ospSetObject(model, "prim.color", colorData);
 
       // create glass material and assign to geometry
       OSPMaterial glassMaterial =
@@ -124,7 +124,7 @@ namespace ospray {
 
       OSPGroup group = ospNewGroup();
       auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
-      ospSetData(group, "geometry", models);
+      ospSetObject(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);
 

@@ -56,7 +56,7 @@ int main(int argc, const char **argv)
   OSPData geomInstances =
       ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
 
-  ospSetData(world, "instance", geomInstances);
+  ospSetObject(world, "instance", geomInstances);
   ospRelease(geomInstances);
 
   for (auto inst : instanceHandles)
@@ -69,7 +69,7 @@ int main(int argc, const char **argv)
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "light", lightsData);
+  ospSetObject(renderer, "light", lightsData);
   ospRelease(lightsData);
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay

@@ -51,7 +51,7 @@ int main(int argc, const char **argv)
   OSPData geomInstances =
       ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
 
-  ospSetData(world, "instance", geomInstances);
+  ospSetObject(world, "instance", geomInstances);
   ospRelease(geomInstances);
 
   for (auto inst : instanceHandles)
@@ -68,7 +68,7 @@ int main(int argc, const char **argv)
   ospCommit(light);
   OSPData lights = ospNewData(1, OSP_LIGHT, &light);
   ospCommit(lights);
-  ospSetData(world, "light", lights);
+  ospSetObject(world, "light", lights);
 
   ospCommit(world);
 

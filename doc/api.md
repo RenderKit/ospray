@@ -450,9 +450,10 @@ shared with OSPData by the application (created with
     matching strides), which can be used by application to mark that region
     as dirty (instead of the whole `OSPData`)
 
-To add a data array as parameter named `id` to another object call
+To add a data array as parameter named `id` to another object call also
+use
 
-    void ospSetData(OSPObject, const char *id, OSPData);
+    void ospSetObject(OSPObject, const char *id, OSPData);
 
 
 Volumes

@@ -113,17 +113,17 @@ int main(int argc, const char **argv) {
   // ospCopyData1D(data, managed, 0);
 
   ospCommit(data);
-  ospSetData(mesh, "vertex.position", data);
+  ospSetObject(mesh, "vertex.position", data);
   ospRelease(data); // we are done using this handle
 
   data = ospNewSharedData1D(color, OSP_VEC4F, 4);
   ospCommit(data);
-  ospSetData(mesh, "vertex.color", data);
+  ospSetObject(mesh, "vertex.color", data);
   ospRelease(data);
 
   data = ospNewSharedData1D(index, OSP_VEC3UI, 2);
   ospCommit(data);
-  ospSetData(mesh, "index", data);
+  ospSetObject(mesh, "index", data);
   ospRelease(data);
 
   ospCommit(mesh);
@@ -136,7 +136,7 @@ int main(int argc, const char **argv) {
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
   OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
-  ospSetData(group, "geometry", geometricModels);
+  ospSetObject(group, "geometry", geometricModels);
   ospCommit(group);
   ospRelease(model);
   ospRelease(geometricModels);
@@ -149,7 +149,7 @@ int main(int argc, const char **argv) {
   // put the instance in the world
   OSPWorld world = ospNewWorld();
   OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
-  ospSetData(world, "instance", instances);
+  ospSetObject(world, "instance", instances);
 
   // create and setup light for Ambient Occlusion
   OSPLight light = ospNewLight("ambient");

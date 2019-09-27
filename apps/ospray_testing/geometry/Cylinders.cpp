@@ -120,9 +120,9 @@ namespace ospray {
       // create the cylinder geometry, and assign attributes
       OSPGeometry cylindersGeometry = ospNewGeometry("cylinders");
 
-      ospSetData(cylindersGeometry, "cylinder.position0", startVertexData);
-      ospSetData(cylindersGeometry, "cylinder.position1", endVertexData);
-      ospSetData(cylindersGeometry, "cylinder.radius", radiusData);
+      ospSetObject(cylindersGeometry, "cylinder.position0", startVertexData);
+      ospSetObject(cylindersGeometry, "cylinder.position1", endVertexData);
+      ospSetObject(cylindersGeometry, "cylinder.radius", radiusData);
 
       // commit the cylinders geometry
       ospCommit(cylindersGeometry);
@@ -132,7 +132,7 @@ namespace ospray {
           ospNewGeometricModel(cylindersGeometry);
       OSPData cylindersColor =
           ospNewData(numCylinders, OSP_VEC4F, colors.data());
-      ospSetData(cylindersModel, "prim.color", cylindersColor);
+      ospSetObject(cylindersModel, "prim.color", cylindersColor);
 
       // create obj material and assign to cylinders model
       OSPMaterial objMaterial =
@@ -153,7 +153,7 @@ namespace ospray {
 
       OSPGroup group = ospNewGroup();
       auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &cylindersModel);
-      ospSetData(group, "geometry", models);
+      ospSetObject(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);
 

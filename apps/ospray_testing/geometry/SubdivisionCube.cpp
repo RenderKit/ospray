@@ -99,40 +99,40 @@ namespace ospray {
 
       OSPData verticesData =
           ospNewData(vertices.size(), OSP_VEC3F, vertices.data());
-      ospSetData(geometry, "vertex.position", verticesData);
+      ospSetObject(geometry, "vertex.position", verticesData);
       ospRelease(verticesData);
 
       OSPData colorsData = ospNewData(colors.size(), OSP_VEC4F, colors.data());
-      ospSetData(geometry, "vertex.color", colorsData);
+      ospSetObject(geometry, "vertex.color", colorsData);
       ospRelease(colorsData);
 
       OSPData facesData = ospNewData(faces.size(), OSP_UINT, faces.data());
-      ospSetData(geometry, "face", facesData);
+      ospSetObject(geometry, "face", facesData);
       ospRelease(facesData);
 
       OSPData indicesData =
           ospNewData(indices.size(), OSP_UINT, indices.data());
-      ospSetData(geometry, "index", indicesData);
+      ospSetObject(geometry, "index", indicesData);
       ospRelease(indicesData);
 
       OSPData vertexCreaseIndicesData = ospNewData(
           vertexCreaseIndices.size(), OSP_UINT, vertexCreaseIndices.data());
-      ospSetData(geometry, "vertexCrease.index", vertexCreaseIndicesData);
+      ospSetObject(geometry, "vertexCrease.index", vertexCreaseIndicesData);
       ospRelease(vertexCreaseIndicesData);
 
       OSPData vertexCreaseWeightsData = ospNewData(
           vertexCreaseWeights.size(), OSP_FLOAT, vertexCreaseWeights.data());
-      ospSetData(geometry, "vertexCrease.weight", vertexCreaseWeightsData);
+      ospSetObject(geometry, "vertexCrease.weight", vertexCreaseWeightsData);
       ospRelease(vertexCreaseWeightsData);
 
       OSPData edgeCreaseIndicesData = ospNewData(
           edgeCreaseIndices.size(), OSP_VEC2UI, edgeCreaseIndices.data());
-      ospSetData(geometry, "edgeCrease.index", edgeCreaseIndicesData);
+      ospSetObject(geometry, "edgeCrease.index", edgeCreaseIndicesData);
       ospRelease(edgeCreaseIndicesData);
 
       OSPData edgeCreaseWeightsData = ospNewData(
           edgeCreaseWeights.size(), OSP_FLOAT, edgeCreaseWeights.data());
-      ospSetData(geometry, "edgeCrease.weight", edgeCreaseWeightsData);
+      ospSetObject(geometry, "edgeCrease.weight", edgeCreaseWeightsData);
       ospRelease(edgeCreaseWeightsData);
 
       ospSetFloat(geometry, "level", level);
@@ -153,7 +153,7 @@ namespace ospray {
 
       OSPGroup group = ospNewGroup();
       auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
-      ospSetData(group, "geometry", models);
+      ospSetObject(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);
 

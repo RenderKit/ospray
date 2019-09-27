@@ -44,11 +44,11 @@ int main(int argc, const char **argv)
   OSPData geomInstances =
       ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
 
-  ospSetData(world, "instance", geomInstances);
+  ospSetObject(world, "instance", geomInstances);
   ospRelease(geomInstances);
 
   OSPData lightsData = ospTestingNewLights("ambient_and_directional");
-  ospSetData(world, "light", lightsData);
+  ospSetObject(world, "light", lightsData);
   ospRelease(lightsData);
 
   ospCommit(world);
@@ -73,7 +73,7 @@ int main(int argc, const char **argv)
     if (ImGui::Checkbox("per-vertex radius", &radius)) {
       update = true;
       if (radius)
-        ospSetData(streamlines.geometry, "vertex.radius", streamlines.auxData);
+        ospSetObject(streamlines.geometry, "vertex.radius", streamlines.auxData);
       else
         ospRemoveParam(streamlines.geometry, "vertex.radius");
     }

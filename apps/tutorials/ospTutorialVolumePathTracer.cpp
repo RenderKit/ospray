@@ -128,10 +128,10 @@ OSPGeometry PlaneGeometry(const vec4f& color, const AffineSpace3f& M)
 
   OSPGeometry ospGeometry = ospNewGeometry("quads");
 
-  ospSetData(ospGeometry, "vertex.position", positionData);
-  ospSetData(ospGeometry, "vertex.normal",   normalData);
-  ospSetData(ospGeometry, "vertex.color",    colorData);
-  ospSetData(ospGeometry, "index",           indexData);
+  ospSetObject(ospGeometry, "vertex.position", positionData);
+  ospSetObject(ospGeometry, "vertex.normal",   normalData);
+  ospSetObject(ospGeometry, "vertex.color",    colorData);
+  ospSetObject(ospGeometry, "index",           indexData);
 
   ospCommit(ospGeometry);
 
@@ -145,7 +145,7 @@ OSPGeometry BoxGeometry(const box3f& box)
 {
   auto ospGeometry = ospNewGeometry("boxes");
   auto ospData = ospNewData(1, OSP_BOX3F, &box);
-  ospSetData(ospGeometry, "box", ospData);
+  ospSetObject(ospGeometry, "box", ospData);
   ospRelease(ospData);
   ospCommit(ospGeometry);
   return ospGeometry;
@@ -194,10 +194,10 @@ OSPVolumetricModel CreateProceduralVolumetricModel(
     OSPTransferFunction tfn = ospNewTransferFunction("piecewise_linear");
     ospSetVec2f(tfn, "valueRange", voxelRange.lower, voxelRange.upper);
     OSPData tfColorData = ospNewData(colors.size(), OSP_VEC3F, colors.data());
-    ospSetData(tfn, "color", tfColorData);
+    ospSetObject(tfn, "color", tfColorData);
     ospRelease(tfColorData);
     OSPData tfOpacityData = ospNewData(opacities.size(), OSP_FLOAT, opacities.data());
-    ospSetData(tfn, "opacity", tfOpacityData);
+    ospSetObject(tfn, "opacity", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(tfn);
     auto volumeModel = ospNewVolumetricModel(volume);
@@ -314,7 +314,7 @@ int main(int argc, const char **argv)
 
   OSPData instance_data =
       ospNewData(instances.size(), OSP_INSTANCE, instances.data());
-  ospSetData(world, "instance", instance_data);
+  ospSetObject(world, "instance", instance_data);
   ospRelease(instance_data);
 
   // create OSPRay renderer
@@ -373,7 +373,7 @@ int main(int argc, const char **argv)
     light_handles.push_back(ambientLight);
 
     OSPData lights = ospNewData(light_handles.size(), OSP_LIGHT, light_handles.data(), 0);
-    ospSetData(world, "light", lights);
+    ospSetObject(world, "light", lights);
     ospCommit(lights);
     ospRelease(lights);
   };

@@ -190,17 +190,17 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   OSPGeometry mesh = ospNewGeometry("triangles");
   OSPData data = ospNewSharedData1D(vertex, OSP_VEC3F, 4);
   ospCommit(data);
-  ospSetData(mesh, "vertex.position", data);
+  ospSetObject(mesh, "vertex.position", data);
   ospRelease(data); // we are done using this handle
 
   data = ospNewSharedData1D(color, OSP_VEC4F, 4);
   ospCommit(data);
-  ospSetData(mesh, "vertex.color", data);
+  ospSetObject(mesh, "vertex.color", data);
   ospRelease(data);
 
   data = ospNewSharedData1D(index, OSP_VEC3UI, 2);
   ospCommit(data);
-  ospSetData(mesh, "index", data);
+  ospSetObject(mesh, "index", data);
   ospRelease(data);
 
   ospCommit(mesh);
@@ -293,17 +293,17 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   OSPGeometry mesh = ospNewGeometry("triangles");
   OSPData data = ospNewSharedData1D(vertex, OSP_VEC3F, 4);
   ospCommit(data);
-  ospSetData(mesh, "vertex.position", data);
+  ospSetObject(mesh, "vertex.position", data);
   ospRelease(data);
 
   data = ospNewSharedData1D(color, OSP_VEC4F, 4);
   ospCommit(data);
-  ospSetData(mesh, "vertex.color", data);
+  ospSetObject(mesh, "vertex.color", data);
   ospRelease(data);
 
   data = ospNewSharedData1D(index, OSP_VEC3UI, 2);
   ospCommit(data);
-  ospSetData(mesh, "index", data);
+  ospSetObject(mesh, "index", data);
   ospRelease(data);
 
   ospCommit(mesh);

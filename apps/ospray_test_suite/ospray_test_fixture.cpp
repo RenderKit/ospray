@@ -53,7 +53,7 @@ namespace OSPRayTestScenes {
                                     OSP_FLOAT,
                                     volumetricData.data(),
                                     OSP_DATA_SHARED_BUFFER);
-    ospSetData(torus, "voxelData", voxelsData);
+    ospSetObject(torus, "voxelData", voxelsData);
     ospRelease(voxelsData);
     ospSetVec3i(torus, "dimensions", size, size, size);
     ospSetInt(torus, "voxelType", OSP_FLOAT);
@@ -135,7 +135,7 @@ namespace OSPRayTestScenes {
     OSPData data = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
 
     OSPGroup group = ospNewGroup();
-    ospSetData(group, "geometry", data);
+    ospSetObject(group, "geometry", data);
     ospCommit(group);
 
     OSPInstance instance = ospNewInstance(group);
@@ -155,7 +155,7 @@ namespace OSPRayTestScenes {
     OSPData data = ospNewData(1, OSP_VOLUMETRIC_MODEL, &model);
 
     OSPGroup group = ospNewGroup();
-    ospSetData(group, "volume", data);
+    ospSetObject(group, "volume", data);
     ospCommit(group);
 
     OSPInstance instance = ospNewInstance(group);
@@ -378,8 +378,8 @@ namespace OSPRayTestScenes {
     ospRelease(radiusSrc);
     ospCommit(positionData);
     ospCommit(radiusData);
-    ospSetData(sphere, "sphere.position", positionData);
-    ospSetData(sphere, "sphere.radius", radiusData);
+    ospSetObject(sphere, "sphere.position", positionData);
+    ospSetObject(sphere, "sphere.radius", radiusData);
     ospCommit(sphere);
     ospRelease(positionData);
     ospRelease(radiusData);
@@ -392,8 +392,8 @@ namespace OSPRayTestScenes {
     radiusData = ospNewData(OSP_FLOAT, 1);
     ospCopyData(radiusSrc, radiusData);
     ospRelease(radiusSrc);
-    ospSetData(inst_sphere, "sphere.position", positionData);
-    ospSetData(inst_sphere, "sphere.radius", radiusData);
+    ospSetObject(inst_sphere, "sphere.position", positionData);
+    ospSetObject(inst_sphere, "sphere.radius", radiusData);
     ospCommit(inst_sphere);
     ospRelease(positionData);
     ospRelease(radiusData);
@@ -517,15 +517,15 @@ namespace OSPRayTestScenes {
     OSPGeometry wallsMesh  = ospNewGeometry("triangles");
     OSPData data           = ospNewData(16, OSP_VEC3F, wallsVertices);
     ospCommit(data);
-    ospSetData(wallsMesh, "vertex.position", data);
+    ospSetObject(wallsMesh, "vertex.position", data);
     ospRelease(data);
     data = ospNewData(16, OSP_VEC4F, wallsColors);
     ospCommit(data);
-    ospSetData(wallsMesh, "vertex.color", data);
+    ospSetObject(wallsMesh, "vertex.color", data);
     ospRelease(data);
     data = ospNewData(10, OSP_VEC3UI, wallsIndices);
     ospCommit(data);
-    ospSetData(wallsMesh, "index", data);
+    ospSetObject(wallsMesh, "index", data);
     ospRelease(data);
     ospCommit(wallsMesh);
 
@@ -552,10 +552,10 @@ namespace OSPRayTestScenes {
     OSPGeometry lightSquare = ospNewGeometry("triangles");
     data                    = ospNewData(4, OSP_VEC3F, lightVertices);
     ospCommit(data);
-    ospSetData(lightSquare, "vertex.position", data);
+    ospSetObject(lightSquare, "vertex.position", data);
     ospRelease(data);
     data = ospNewData(2, OSP_VEC3UI, lightIndices);
-    ospSetData(lightSquare, "index", data);
+    ospSetObject(lightSquare, "index", data);
     ospRelease(data);
     OSPMaterial lightMaterial =
         ospNewMaterial(rendererType.c_str(), "Luminous");
@@ -583,11 +583,11 @@ namespace OSPRayTestScenes {
     data               = ospNewData(8, OSP_VEC3F, cuboidVertices);
 
     ospCommit(data);
-    ospSetData(cuboid, "vertex.position", data);
+    ospSetObject(cuboid, "vertex.position", data);
     ospRelease(data);
     data = ospNewData(12, OSP_VEC3UI, cuboidIndices);
     ospCommit(data);
-    ospSetData(cuboid, "index", data);
+    ospSetObject(cuboid, "index", data);
     ospRelease(data);
     ospCommit(cuboid);
 
@@ -601,7 +601,7 @@ namespace OSPRayTestScenes {
     OSPGeometry sphere   = ospNewGeometry("spheres");
     data = ospNewData(1, OSP_VEC3F, sphereVertex);
     ospCommit(data);
-    ospSetData(sphere, "sphere.position", data);
+    ospSetObject(sphere, "sphere.position", data);
     ospRelease(data);
     ospSetFloat(sphere, "radius", 0.45f);
     ospCommit(sphere);
@@ -617,7 +617,7 @@ namespace OSPRayTestScenes {
 
     OSPData models_data =
         ospNewData(models.size(), OSP_GEOMETRIC_MODEL, models.data());
-    ospSetData(group, "geometry", models_data);
+    ospSetObject(group, "geometry", models_data);
     ospCommit(group);
     ospRelease(models_data);
 
@@ -702,7 +702,7 @@ namespace OSPRayTestScenes {
     OSPVolume pyramid = ospNewVolume("shared_structured_volume");
     OSPData voxelsData =
         ospNewData(size * size * size, OSP_UCHAR, volumetricData.data());
-    ospSetData(pyramid, "voxelData", voxelsData);
+    ospSetObject(pyramid, "voxelData", voxelsData);
     ospRelease(voxelsData);
     ospSetVec3i(pyramid, "dimensions", size, size, size);
     ospSetInt(pyramid, "voxelType", OSP_UCHAR);
@@ -720,10 +720,10 @@ namespace OSPRayTestScenes {
     float colors[]      = {1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f};
     float opacites[]    = {0.f, 1.0f};
     OSPData tfColorData = ospNewData(2, OSP_VEC3F, colors);
-    ospSetData(transferFun, "color", tfColorData);
+    ospSetObject(transferFun, "color", tfColorData);
     ospRelease(tfColorData);
     OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
-    ospSetData(transferFun, "opacity", tfOpacityData);
+    ospSetObject(transferFun, "opacity", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
     ospSetObject(model, "transferFunction", transferFun);
@@ -734,7 +734,7 @@ namespace OSPRayTestScenes {
       ospSetObject(isosurface, "volume", model);
       float isovalue        = 0.f;
       OSPData isovaluesData = ospNewData(1, OSP_FLOAT, &isovalue);
-      ospSetData(isosurface, "isovalue", isovaluesData);
+      ospSetObject(isosurface, "isovalue", isovaluesData);
       ospRelease(isovaluesData);
 
       ospCommit(isosurface);
@@ -784,10 +784,10 @@ namespace OSPRayTestScenes {
     float colors[]      = {1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
     float opacites[]    = {1.0f, 1.0f};
     OSPData tfColorData = ospNewData(2, OSP_VEC3F, colors);
-    ospSetData(transferFun, "color", tfColorData);
+    ospSetObject(transferFun, "color", tfColorData);
     ospRelease(tfColorData);
     OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
-    ospSetData(transferFun, "opacity", tfOpacityData);
+    ospSetObject(transferFun, "opacity", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
     ospSetObject(volumetricModel, "transferFunction", transferFun);
@@ -799,7 +799,7 @@ namespace OSPRayTestScenes {
     ospSetObject(isosurface, "volume", volumetricModel);
     float isovalues[2]    = {-7000.f, 0.f};
     OSPData isovaluesData = ospNewData(2, OSP_FLOAT, isovalues);
-    ospSetData(isosurface, "isovalue", isovaluesData);
+    ospSetObject(isosurface, "isovalue", isovaluesData);
     ospRelease(isovaluesData);
     ospCommit(isosurface);
 
@@ -850,7 +850,7 @@ namespace OSPRayTestScenes {
                                     volumetricData.data(),
                                     OSP_DATA_SHARED_BUFFER);
     ASSERT_TRUE(voxelsData);
-    ospSetData(blob, "voxelData", voxelsData);
+    ospSetObject(blob, "voxelData", voxelsData);
     ospSetVec3i(blob, "dimensions", size, size, size);
     ospSetInt(blob, "voxelType", OSP_FLOAT);
     ospSetVec2f(blob, "voxelRange", 0.f, 3.f);
@@ -868,10 +868,10 @@ namespace OSPRayTestScenes {
     float opacites[]    = {0.0f, 1.0f};
     OSPData tfColorData = ospNewData(2, OSP_VEC3F, colors);
     ASSERT_TRUE(tfColorData);
-    ospSetData(transferFun, "color", tfColorData);
+    ospSetObject(transferFun, "color", tfColorData);
     OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
     ASSERT_TRUE(tfOpacityData);
-    ospSetData(transferFun, "opacity", tfOpacityData);
+    ospSetObject(transferFun, "opacity", tfOpacityData);
     ospCommit(transferFun);
 
     ospSetObject(volumetricModel, "transferFunction", transferFun);
@@ -884,7 +884,7 @@ namespace OSPRayTestScenes {
         1.f, 1.f, 1.f, 0.5f, 1.f, 1.f, 1.f, 0.f, 1.f, 1.f, 1.f, -0.5f};
     OSPData planesData = ospNewData(3, OSP_VEC4F, planes);
     ASSERT_TRUE(planesData);
-    ospSetData(slice, "plane", planesData);
+    ospSetObject(slice, "plane", planesData);
     ospSetObject(slice, "volume", volumetricModel);
     ospCommit(slice);
     ospRelease(volumetricModel);
@@ -929,10 +929,10 @@ namespace OSPRayTestScenes {
     data = ospNewData(8, OSP_VEC3F, mirrorsVertices);
     ASSERT_TRUE(data);
     ospCommit(data);
-    ospSetData(mirrors, "vertex.position", data);
+    ospSetObject(mirrors, "vertex.position", data);
     data = ospNewData(4, OSP_VEC3UI, mirrorsIndices);
     ASSERT_TRUE(data);
-    ospSetData(mirrors, "index", data);
+    ospSetObject(mirrors, "index", data);
     OSPMaterial mirrorsMaterial =
         ospNewMaterial(rendererType.c_str(), "OBJMaterial");
     ASSERT_TRUE(mirrorsMaterial);
@@ -954,7 +954,7 @@ namespace OSPRayTestScenes {
     ospSetFloat(light, "radius", 1.f);
     data = ospNewData(1, OSP_VEC3F, sphereCenters);
     ASSERT_TRUE(data);
-    ospSetData(light, "sphere.position", data);
+    ospSetObject(light, "sphere.position", data);
     ospCommit(light);
 
     model = ospNewGeometricModel(light);
@@ -1004,11 +1004,11 @@ namespace OSPRayTestScenes {
     ASSERT_TRUE(streamlines);
     OSPData data = ospNewData(16, OSP_VEC3F, vertex);
     ASSERT_TRUE(data);
-    ospSetData(streamlines, "vertex.position", data);
+    ospSetObject(streamlines, "vertex.position", data);
     ospRelease(data);
     data = ospNewData(15, OSP_UINT, index);
     ASSERT_TRUE(data);
-    ospSetData(streamlines, "index", data);
+    ospSetObject(streamlines, "index", data);
     ospRelease(data);
     ospSetFloat(streamlines, "radius", radius);
     ospCommit(streamlines);
@@ -1055,10 +1055,10 @@ namespace OSPRayTestScenes {
     float colors[]      = {1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
     float opacites[]    = {1.0f, 1.0f};
     OSPData tfColorData = ospNewData(2, OSP_VEC3F, colors);
-    ospSetData(transferFun, "color", tfColorData);
+    ospSetObject(transferFun, "color", tfColorData);
     ospRelease(tfColorData);
     OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
-    ospSetData(transferFun, "opacity", tfOpacityData);
+    ospSetObject(transferFun, "opacity", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
     ospSetObject(volumetricModel, "transferFunction", transferFun);
@@ -1079,7 +1079,7 @@ namespace OSPRayTestScenes {
     OSPGeometry sphere   = ospNewGeometry("spheres");
     auto data = ospNewData(1, OSP_VEC3F, sphereVertex);
     ospCommit(data);
-    ospSetData(sphere, "sphere.position", data);
+    ospSetObject(sphere, "sphere.position", data);
     ospRelease(data);
     ospSetFloat(sphere, "radius", 0.51f);
     ospCommit(sphere);
@@ -1127,10 +1127,10 @@ namespace OSPRayTestScenes {
     const float colors[]   = {1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
     const float opacites[] = {0.05f, 0.1f};
     OSPData tfColorData    = ospNewData(2, OSP_VEC3F, colors);
-    ospSetData(transferFun, "color", tfColorData);
+    ospSetObject(transferFun, "color", tfColorData);
     ospRelease(tfColorData);
     OSPData tfOpacityData = ospNewData(2, OSP_FLOAT, opacites);
-    ospSetData(transferFun, "opacity", tfOpacityData);
+    ospSetObject(transferFun, "opacity", tfOpacityData);
     ospRelease(tfOpacityData);
     ospCommit(transferFun);
     ospSetObject(model, "transferFunction", transferFun);
@@ -1224,31 +1224,31 @@ namespace OSPRayTestScenes {
 
     auto subd     = ospNewGeometry("subdivision");
     auto vertices = ospNewData(8, OSP_VEC3F, cube_vertices);
-    ospSetData(subd, "vertex.position", vertices);
+    ospSetObject(subd, "vertex.position", vertices);
     ospRelease(vertices);
     auto indices = ospNewData(numIndices, OSP_UINT, cube_indices);
-    ospSetData(subd, "index", indices);
+    ospSetObject(subd, "index", indices);
     auto faces = ospNewData(numFaces, OSP_UINT, cube_faces);
-    ospSetData(subd, "face", faces);
+    ospSetObject(subd, "face", faces);
     ospRelease(faces);
     auto edge_crease_indices =
         ospNewData(12, OSP_VEC2UI, cube_edge_crease_indices);
-    ospSetData(subd, "edgeCrease.index", edge_crease_indices);
+    ospSetObject(subd, "edgeCrease.index", edge_crease_indices);
     ospRelease(edge_crease_indices);
     auto edge_crease_weights =
         ospNewData(12, OSP_FLOAT, cube_edge_crease_weights);
-    ospSetData(subd, "edgeCrease.weight", edge_crease_weights);
+    ospSetObject(subd, "edgeCrease.weight", edge_crease_weights);
     ospRelease(edge_crease_weights);
     auto vertex_crease_indices =
         ospNewData(8, OSP_UINT, cube_vertex_crease_indices);
-    ospSetData(subd, "vertexCrease.index", vertex_crease_indices);
+    ospSetObject(subd, "vertexCrease.index", vertex_crease_indices);
     ospRelease(vertex_crease_indices);
     auto vertex_crease_weights =
         ospNewData(8, OSP_FLOAT, cube_vertex_crease_weights);
-    ospSetData(subd, "vertexCrease.weight", vertex_crease_weights);
+    ospSetObject(subd, "vertexCrease.weight", vertex_crease_weights);
     ospRelease(vertex_crease_weights);
     auto colors = ospNewData(8, OSP_VEC4F, cube_colors);
-    ospSetData(subd, "vertex.color", colors);
+    ospSetObject(subd, "vertex.color", colors);
     ospRelease(colors);
     ospSetFloat(subd, "level", 128.0f);
 

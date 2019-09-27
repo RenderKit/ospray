@@ -121,8 +121,8 @@ namespace ospray {
       OSPData indicesData =
           ospNewData(indices.size(), OSP_UINT, indices.data());
       OSPData colorsData  = ospNewData(colors.size(), OSP_VEC4F, colors.data());
-      ospSetData(geom, "vertex.position", pointsData);
-      ospSetData(geom, "index", indicesData);
+      ospSetObject(geom, "vertex.position", pointsData);
+      ospSetObject(geom, "index", indicesData);
       ospCommit(geom);
 
       OSPMaterial mat = ospNewMaterial(renderer_type.c_str(), "ThinGlass");
@@ -137,7 +137,7 @@ namespace ospray {
 
       OSPGroup group = ospNewGroup();
       auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
-      ospSetData(group, "geometry", models);
+      ospSetObject(group, "geometry", models);
       ospCommit(group);
       ospRelease(models);
 
