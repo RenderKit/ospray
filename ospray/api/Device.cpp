@@ -125,6 +125,8 @@ namespace ospray {
       if (debugMode) {
         logLevel   = 2;
         numThreads = 1;
+        installStatusMsgFunc(*this, std::cout);
+        installErrorMsgFunc(*this, std::cerr);
       }
 
       threadAffinity = AUTO_DETECT;
