@@ -18,10 +18,20 @@
 #include "Isosurfaces.h"
 #include "common/Data.h"
 #include "common/World.h"
+// openvkl
+#include "openvkl/openvkl.h"
 // ispc-generated files
 #include "Isosurfaces_ispc.h"
 
 namespace ospray {
+
+  Isosurfaces::~Isosurfaces()
+  {
+    if (valueSelector) {
+      vklRelease(valueSelector);
+      valueSelector = nullptr;
+    }
+  }
 
   std::string Isosurfaces::toString() const
   {
@@ -58,11 +68,26 @@ namespace ospray {
     retval.embreeGeometry =
         rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 
+    if (valueSelector) {
+      vklRelease(valueSelector);
+      valueSelector = nullptr;
+    }
+
+    valueSelector = vklNewValueSelector(volume->getVolume()->vklVolume);
+
+    if (isovaluesData->size() > 0) {
+      vklValueSelectorSetValues(
+          valueSelector, isovaluesData->size(), isovaluesData->data());
+    }
+
+    vklCommit(valueSelector);
+
     ispc::Isosurfaces_set(retval.ispcEquivalent,
-        retval.embreeGeometry,
-        isovaluesData->size(),
-        isovaluesData->data(),
-        volume->getIE());
+                          retval.embreeGeometry,
+                          isovaluesData->size(),
+                          isovaluesData->data(),
+                          volume->getIE(),
+                          valueSelector);
 
     return retval;
   }

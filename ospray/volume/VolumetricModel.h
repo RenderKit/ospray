@@ -36,6 +36,8 @@ namespace ospray {
 
     box3f bounds() const;
 
+    Ref<Volume> getVolume() const;
+
     void setGeomID(int geomID);
 
    private:

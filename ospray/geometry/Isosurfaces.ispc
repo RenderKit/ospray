@@ -20,6 +20,7 @@
 #include "geometry/Geometry.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
+#include "openvkl/iterator.isph"
 #include "volume/Volume.ih"
 
 struct Isosurfaces
@@ -27,6 +28,7 @@ struct Isosurfaces
   Geometry super;  //!< inherited geometry fields
   float *isovalues;
   VolumetricModel *volumetricModel;
+  VKLValueSelector valueSelector;
 };
 
 unmasked void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
@@ -74,18 +76,29 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
   //             here,
   setRay(tmpRay, ray->org, ray->dir, ray->t0, ray->t);
 
-  volume->intersectIsosurface(
-      volume, self->isovalues, self->super.numPrimitives, 0, tmpRay);
+  uniform VKLHitIterator iterator;
+  vkl_range1f tRange;
+  tRange.lower = ray->t0;
+  tRange.upper = ray->t;
+  vklInitHitIteratorV(&iterator,
+                      self->volumetricModel->volume->vklVolume,
+                      (varying vkl_vec3f *)&ray->org,
+                      (varying vkl_vec3f *)&ray->dir,
+                      &tRange,
+                      self->valueSelector);
+  VKLHit hit;
+  bool gotHit = vklIterateHitV(&iterator, &hit);
 
-  if (hadHit(tmpRay)) {
+  if (gotHit) {
     if (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
       ray->geomID = self->super.geomID;
-      ray->primID = tmpRay.primID;
-      ray->t      = tmpRay.t;
-      ray->u      = tmpRay.u;  // transport epsilon to postIntersect
+      ray->primID = 0;  // ??? which primID?
+      ray->t      = hit.t;
+      ray->u =
+          1e-3;  // ??? which epsilon?  // transport epsilon to postIntersect
 
       // NOTE(jda) - Initialize ray.Ng with something, even if it's wrong
       //             (better than garbage). Real normals are computed if DG_NS
@@ -146,14 +159,17 @@ export void *uniform Isosurfaces_set(void *uniform _self,
                                      void *uniform _embreeGeometry,
                                      int32 uniform numIsovalues,
                                      uniform float *uniform isovalues,
-                                     void *uniform _volume)
+                                     void *uniform _volume,
+                                     void *uniform _valueSelector)
 {
   Isosurfaces *uniform self       = (Isosurfaces * uniform) _self;
   VolumetricModel *uniform volume = (VolumetricModel * uniform) _volume;
+  VKLValueSelector valueSelector  = (VKLValueSelector)_valueSelector;
 
   self->isovalues           = isovalues;
   self->volumetricModel     = volume;
   self->super.numPrimitives = 1; // for embree it is just one prim
+  self->valueSelector       = valueSelector;
 
   Geometry_setEmbreeUserGeometry(&self->super,
       (RTCGeometry)_embreeGeometry,

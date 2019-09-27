@@ -24,7 +24,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
   {
     Isosurfaces() = default;
-    virtual ~Isosurfaces() override = default;
+    virtual ~Isosurfaces() override;
 
     virtual std::string toString() const override;
 
@@ -39,6 +39,7 @@ namespace ospray {
 
     Ref<const DataT<float>> isovaluesData;
     Ref<VolumetricModel> volume;
+    VKLValueSelector valueSelector{nullptr};
   };
 
 }  // namespace ospray

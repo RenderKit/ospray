@@ -89,6 +89,11 @@ namespace ospray {
     return volumeBounds;
   }
 
+  Ref<Volume> VolumetricModel::getVolume() const
+  {
+    return volume;
+  }
+
   void VolumetricModel::setGeomID(int geomID)
   {
     ispc::Volume_set_geomID(volume->getIE(), geomID);
