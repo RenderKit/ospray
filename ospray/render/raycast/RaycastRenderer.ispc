@@ -15,11 +15,14 @@
 // ======================================================================== //
 
 // ospray
+#include "math/random.ih"
 #include "camera/PerspectiveCamera.ih"
 #include "fb/FrameBuffer.ih"
 #include "render/Renderer.ih"
 #include "render/util.ih"
 #include "volume/VolumetricModel.ih"
+
+#include "openvkl/openvkl.isph"
 
 /*! \brief a simple, primary-ray-only ray cast render that
 
@@ -321,6 +324,10 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
                                          varying ScreenSample &sample)
 {
   RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  
+  LDSampler ldSamplerObj;
+  varying LDSampler* uniform ldSampler = &ldSamplerObj;
+  LDSampler_init(ldSampler, sample.sampleID.x + fb->size.x * sample.sampleID.y, sample.sampleID.z);
 
   vec3f &color = sample.rgb;
   float &alpha = sample.alpha;
@@ -341,45 +348,54 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
   ray.t0 = vInterval.interval.lower;
   ray.t  = vInterval.interval.upper;
 
-  // Ray offset for this sample, as a fraction of the nominal step size.
-  float jitter = precomputedHalton2(sample.sampleID.z);
-  int ix       = sample.sampleID.x % 4;
-  int iy       = sample.sampleID.y % 4;
-
-  int patternID = ix + 4 * iy;
-  jitter += precomputedHalton3(patternID);
-
-  if (jitter > 1.f)
-    jitter -= 1.f;
-
-  ray.t0 += jitter;
+  const float jitter = LDSampler_getFloat(ldSampler, 0);
 
   foreach_unique(m in model)
-  {
+  {     
     Volume *uniform volume       = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
-    while (ray.t0 <= ray.t) {
-      const float sample = Volume_getSample(volume, ray.org + ray.t0 * ray.dir);
+    uniform VKLIntervalIterator intervalIterator;
+    vklInitIntervalIteratorV(&intervalIterator,
+                             volume->vklVolume,
+                             (varying vkl_vec3f *)&ray.org,
+                             (varying vkl_vec3f *)&ray.dir,
+                             (varying vkl_range1f *)&vInterval.interval,
+                             m->vklValueSelector);
 
-      if (!isnan(sample)) {
-        vec4f sampleColorOpacity = tf->get(tf, sample);
+    VKLInterval interval;
+    while (vklIterateIntervalV(&intervalIterator, &interval) && alpha < 0.99f) {
+      const float nominalSamplingDt = interval.nominalDeltaT / m->samplingRate;
 
-        const float clampedOpacity =
-            clamp(sampleColorOpacity.w / m->samplingRate);
-        color = color
-            + ((1.f - alpha) * clampedOpacity * make_vec3f(sampleColorOpacity));
-        alpha = alpha + ((1.f - alpha) * clampedOpacity);
+      // initial sub interval, based on our renderer-defined sampling rate
+      // and the volume's nominal dt
+      box1f subInterval = make_box1f(
+          interval.tRange.lower,
+          min(interval.tRange.lower + nominalSamplingDt, interval.tRange.upper));
+ 
+      while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
+        ray.t0  = subInterval.lower + jitter * (subInterval.upper - subInterval.lower);
+        const float dt = subInterval.upper - subInterval.lower;
+
+        // Get volume sample
+        vec3f p = ray.org + ray.t0 * ray.dir;
+        const float sample = vklComputeSampleV(volume->vklVolume, (const varying vkl_vec3f *uniform) &p);
+
+        if (!isnan(sample)) {
+          vec4f sampleColorOpacity = tf->get(tf, sample);
+ 
+          const float clampedOpacity =
+             clamp(sampleColorOpacity.w * dt);
+          color = color
+              + ((1.f - alpha) * clampedOpacity * make_vec3f(sampleColorOpacity));
+          alpha = alpha + ((1.f - alpha) * clampedOpacity);
+        }
+
+        // compute next sub interval
+        subInterval.lower = subInterval.upper;
+        subInterval.upper =
+            min(subInterval.lower + nominalSamplingDt, interval.tRange.upper);
       }
-
-      if (alpha >= 0.99f)
-        break;
-
-#if 0
-      volume->stepRay(volume, tf, ray, m->samplingRate);
-#else
-      ray.t0 += 0.05;
-#endif
     }
   }
 }
