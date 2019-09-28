@@ -22,7 +22,7 @@ variables:
   tags:
     - docker
     - modules
-  image: ospray/docker-images:centos6-mod
+  image: ospray/docker-images:centos7-mod
   script:
     - scripts/build_gitlab/linux.sh
 
@@ -115,34 +115,19 @@ build-ubuntu1804-gcc:
       - build/install
     expire_in: 3 day
 
-build-centos6-gcc:
+build-centos7-icc:
   <<: *build_job_docker_modules
   script:
     - module load cmake
-    - module load gcc/4.8.2
-    - export CC=gcc
-    - export CXX=g++
-    - scripts/build_gitlab/linux.sh
-  artifacts:
-    paths:
-      - build/install
-    expire_in: 3 day
-
-build-centos6-icc:
-  <<: *build_job_docker_modules
-  script:
-    - module load cmake
-    - module load gcc/4.8.2
     - module load intel
     - export CC=icc
     - export CXX=icpc
     - scripts/build_gitlab/linux.sh
 
-build-centos6-icc15:
+build-centos7-icc15:
   <<: *build_job_docker_modules
   script:
     - module load cmake
-    - module load gcc/4.8.2
     - module load intel/2015
     - export CC=icc
     - export CXX=icpc
@@ -227,18 +212,6 @@ test-centos7-gcc:
   image: ospray/docker-images:centos7
   dependencies:
     - build-centos7-gcc
-
-test-centos6-gcc:
-  <<: *test_job
-  image: ospray/docker-images:centos6-mod
-  dependencies:
-    - build-centos6-gcc
-  script:
-    - module load cmake
-    - module load gcc/4.8.2
-    - scripts/tests/run_tests.sh
-  tags:
-    - modules
 
 test-ubuntu1804-gcc:
   <<: *test_job
@@ -339,11 +312,10 @@ web:
 
 release-linux-icc:
   <<: *release_job
-  image: ospray/docker-images:centos6-mod
+  image: ospray/docker-images:centos7-mod
   script:
     - module load cmake
     - module load ispc
-    - module load gcc/4.8.2
     - module load intel
     - export CC=icc
     - export CXX=icpc
