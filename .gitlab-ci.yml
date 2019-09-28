@@ -173,10 +173,10 @@ build-windows-msvc15:
   tags:
     - msvc15
     - win7
-  artifacts:
-    paths:
-      - build/install
-    expire_in: 3 day
+#  artifacts:
+#    paths:
+#      - build/install
+#    expire_in: 3 day
 
 build-windows-icc:
   <<: *build_job_shell
