@@ -267,7 +267,7 @@ namespace ospray {
       if (!valuesPerCell)
         ospSetObject(volume, "vertex.value", vertexValuesData);
       ospSetObject(volume, "index", indicesData);
-      ospSetObject(volume, "cell", cellsData);
+      ospSetObject(volume, "cell.index", cellsData);
       ospSetObject(volume, "cell.type", cellTypesData);
       if (valuesPerCell)
         ospSetObject(volume, "cell.value", cellValuesData);

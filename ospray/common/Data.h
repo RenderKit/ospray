@@ -74,7 +74,7 @@ namespace ospray {
     OSPDataType type{OSP_UNKNOWN};
     vec3ui numItems;
 
-   public:
+   protected:
     vec3l byteStride;
 
    public:
