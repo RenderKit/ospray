@@ -42,6 +42,8 @@
 // openvkl
 #include "openvkl/openvkl.h"
 
+#include "ISPCDevice_ispc.h"
+
 extern "C" RTCDevice ispc_embreeDevice()
 {
   return ospray::api::ISPCDevice::embreeDevice;
@@ -186,7 +188,25 @@ namespace ospray {
       }
 
       vklLoadModule("ispc_driver");
-      VKLDriver driver = vklNewDriver("ispc");
+
+      VKLDriver driver = nullptr;
+
+      int ispc_width = ispc::ISPCDevice_programCount();
+      switch(ispc_width) {
+        case 4:
+          driver = vklNewDriver("ispc_4");
+          break;
+        case 8:
+          driver = vklNewDriver("ispc_8");
+          break;
+        case 16:
+          driver = vklNewDriver("ispc_16");
+          break;
+        default:
+          driver = vklNewDriver("ispc");
+          break;
+      }
+
       vklCommitDriver(driver);
       vklSetCurrentDriver(driver);
     }

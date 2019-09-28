@@ -52,6 +52,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   api/ISPCDevice.h
   api/ISPCDevice.cpp
+  api/ISPCDevice.ispc
 
   common/Data.ih
   common/Data.cpp
