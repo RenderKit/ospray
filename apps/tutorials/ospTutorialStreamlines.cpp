@@ -55,7 +55,7 @@ int main(int argc, const char **argv)
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-2.f), vec3f(2.f)), world, renderer));
+          vec2i{1024, 768}, boundsOf(world), world, renderer));
 
   // ImGui
 

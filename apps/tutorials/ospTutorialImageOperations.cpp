@@ -82,7 +82,7 @@ int main(int argc, const char **argv)
                               OSP_FB_ALBEDO | OSP_FB_NORMAL;
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
       new GLFWOSPRayWindow(vec2i{1024, 768},
-                           box3f(vec3f(-1.f), vec3f(1.f)),
+                           boundsOf(world),
                            world,
                            renderer,
                            OSP_FB_RGBA32F,

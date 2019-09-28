@@ -33,8 +33,6 @@ static const std::string renderer_type = "scivis";
 static std::vector<float *> brickPtrs;  // holds actual data
 static std::vector<OSPData> brickData;  // holds actual data as OSPData
 static range1f valueRange;
-static box3f bounds;
-
 int main(int argc, const char **argv)
 {
   initializeOSPRay(argc, argv);
@@ -76,12 +74,10 @@ int main(int argc, const char **argv)
   // create OSPRay renderer
   OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
 
-  bounds = reinterpret_cast<box3f &>(testData.bounds);
-
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
-      new GLFWOSPRayWindow(vec2i{1024, 768}, bounds, world, renderer));
+      new GLFWOSPRayWindow(vec2i{1024, 768}, boundsOf(world), world, renderer));
 
   // ImGui
 

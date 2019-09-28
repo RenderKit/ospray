@@ -204,3 +204,9 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
 
   return instance;
 }
+
+box3f boundsOf(OSPObject obj)
+{
+  auto b = ospGetBounds(obj);
+  return box3f(vec3f(b.lower[0]), vec3f(b.upper[0]));
+}

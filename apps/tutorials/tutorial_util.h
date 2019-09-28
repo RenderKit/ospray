@@ -29,3 +29,5 @@ void initializeOSPRay(int argc, const char **argv, bool errorsFatal = true);
 
 OSPInstance createGroundPlane(std::string renderer_type,
                               float planeExtent = 1.5f);
+
+box3f boundsOf(OSPObject);

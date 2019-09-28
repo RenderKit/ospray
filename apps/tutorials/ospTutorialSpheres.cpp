@@ -76,7 +76,7 @@ int main(int argc, const char **argv)
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWOSPRayWindow>(new GLFWOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
+          vec2i{1024, 768}, boundsOf(world), world, renderer));
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
