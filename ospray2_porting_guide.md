@@ -7,7 +7,13 @@ This guide is intended as an introduction to the new features and the concepts
 behind them, and as a guide to porting applications using OSPRay 1.8.x to
 2.0.0.
 
-## New Object Hierarchy
+# <span style="color:red">**TODO**</span>
+- c++ wrappers not have to worry about release/retain
+- snippet from ospTutorial.c vs .cpp
+
+## Objects
+
+### New Object Hierarchy
 
 OSPRay objects, such as `OSPGeometry` and `OSPVolume`, have a new hierarchy
 that affords more control over geometry and volume transformation and
@@ -47,7 +53,7 @@ removed for brevity.
     // put the geometric model(s) in a group
     OSPGroup group = ospNewGroup();
     OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
-    ospSetData(group, "geometry", geometricModels);
+    ospSetObject(group, "geometry", geometricModels);
     ospCommit(group);
 
     // put the group in an instance
@@ -57,19 +63,20 @@ removed for brevity.
     // put the instance in the world
     OSPWorld world = ospNewWorld();
     OSPData instances = ospNewSharedData1D(&instance, OSP_INSTANCE, 1);
-    ospSetData(world, "instance", instances);
+    ospSetObject(world, "instance", instances);
     ospCommit(world);
+
 
 While this looks more complex at first, the new hierarchy structure
 provides more fine control over transformations and instances.
 
-### `OSPGeometry` and `OSPVolume`
+#### OSPGeometry and OSPVolume
 
 `OSPGeometry` and `OSPVolume` contain actual data in an OSPRay container. For
 example, a triangle mesh geometry contains vertex positions and normals, among
 other parameters.
 
-### `OSPGeometricModel` and `OSPVolumetricModel`
+#### OSPGeometricModel and OSPVolumetricModel
 
 `OSPGeometricModel` and `OSPVolumetricModel` contain appearance information
 about the geometry or volume that they hold. They have a one-to-one
@@ -86,7 +93,7 @@ primitive material IDs (i.e. indexes into the list of materials if it is used).
 
 `OSPVolumetricModel`s can hold transfer functions.
 
-### `OSPGroup`
+#### OSPGroup
 
 `OSPGroup` objects contain zero or more `OSPGeometricModel` and
 `OSPVolumetricModel` objects.  They can hold geometries and volumes
@@ -95,7 +102,7 @@ simultaneously.
 This is useful to collect together any objects that are logically grouped
 together in the scene.
 
-### `OSPInstance`
+#### OSPInstance
 
 `OSPInstance` contains transformation information on an `OSPGroup` object. It
 has a one-to-one relationship with `OSPGroup`.
@@ -108,16 +115,47 @@ transformations.
 `OSPInstance` objects can hold an affine transformation matrix that is applied
 to all geometries and/or volumes in its group.
 
-### `OSPWorld`
+#### OSPWorld
 
-`OSPWorld` is the final container for all `OSPInstance` objects. It can contain
-one or more instances.  The world is passed along with a renderer, camera, and
-framebuffer to `ospRenderFrame` to generate an image.
+`OSPWorld` is the final container for all `OSPInstance` and `OSPLight` objects.
+It can contain one or more instances and lights.  The world is passed along with
+a renderer, camera, and framebuffer to `ospRenderFrame` to generate an image.
+
+### Object Usage Simplification
+<!-- XXX BMC: Only true if issue !418 is merged into the release -->
+
+To simplify setting data onto an object; wherever an array of `type[]` is
+expected, it is now permissible to pass a single data item of `type`, as well.
+This permits the user to assign a single item without first creating a data
+object containing that item.
+
+For example:
+
+    OSPGroup group = ospNewGroup();
+    OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
+    ospSetObject(group, "geometry", geometricModels);
+
+simply becomes:
+
+    OSPGroup group = ospNewGroup();
+    ospSetObject(group, "geometry", model);
+
+### OSPDataType type checking
+
+Where it was previously accepted to create data of generic type `OSP_OBJECT` to
+represent a list of any object type, the `OSPDataType` must now match the
+object(s) it contains.
+
+### void ospRetain(OSPObject)
+
+To allow the user greater control over the lifetime of objects, a new API
+`ospRetain` has been introduced.  This call increments an object's reference
+count, and can delay automatic deletion.
 
 ## Updated Public Parameter Names
 
 OSPRay 2.0.0 has updated public parameter names (the strings used in
-`ospSetData`, for example) to a more consistent naming convention.  OSPRay now
+`ospSetParam`) to a more consistent naming convention.  OSPRay now
 will print a warning (visible if debug logs are enabled) if a parameter
 provided by the user is not used by an object. This can help catch cases where
 applications are using parameter names from OSPRay 1.8.5 or mistyped names.
@@ -275,5 +313,81 @@ values are listed.
   </tr>
 </table>
 
-OSPRay will print warnings for parameters that were not used by the object.
-This should aid in the transition to the new parameter names.
+* **OSPRay will print warnings for parameters that were not used by the object, 
+which should aid in the transition to the new parameter names.  To use this
+feature, enable OSPRay debug (see api documentation) and search the output log
+for "found unused parameter" messages.**
+
+## ospRenderFrame
+
+`ospRenderFrame` has changed in two ways.  The signature has changed from:
+
+    float ospRenderFrame(OSPFrameBuffer, OSPRenderer,
+                         const uint32_t frameBufferChannels = OSP_FB_COLOR);
+
+to
+
+    OSPFuture ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
+
+And, notably, it is no longer blocking.  Two new calls `ospIsReady`, and
+`ospWait` are available to manage synchronization.
+
+## Utility Library
+
+The core OSPRay API has been simplified by removing many of the type
+specializations from the data and parameter set calls.  Additionally, as
+mentioned above, `ospRenderFrame` is now asynchronous.
+
+As a convenience, a lightweight utility library has been provided to help users
+port from the previous versions.
+
+### OSPData and Parameter helpers
+
+A single `ospSetParam` API replaces the entire `ospSet*` interface.  The utility
+library provides wrappers to the familiar calls listed below:
+
+    ospSetString(OSPObject, const char *n, const char *s);
+    ospSetObject(OSPObject, const char *n, OSPObject obj);
+
+    ospSetBool(OSPObject, const char *n, int x);
+    ospSetFloat(OSPObject, const char *n, float x);
+    ospSetInt(OSPObject, const char *n, int x);
+
+    ospSetVec2f(OSPObject, const char *n, float x, float y);
+    ospSetVec3f(OSPObject, const char *n, float x, float y, float z);
+    ospSetVec4f(OSPObject, const char *n, float x, float y, float z, float w);
+
+    ospSetVec2i(OSPObject, const char *n, int x, int y);
+    ospSetVec3i(OSPObject, const char *n, int x, int y, int z);
+    ospSetVec4i(OSPObject, const char *n, int x, int y, int z, int w);
+
+    ospSetObjectAsData(OSPObject, const char *n, OSPDataType type, OSPObject obj);
+
+Convenience wrappers have also been provided to specialize `ospNewData`, and the
+new `ospNewSharedData` and `ospCopyData` APIs.
+
+    ospNewSharedData1D(const void *sharedData, OSPDataType type, uint32_t numItems);
+    ospNewSharedData1DStride(const void *sharedData, OSPDataType type, uint32_t numItems, int64_t byteStride);
+    ospNewSharedData2D(const void *sharedData, OSPDataType type, uint32_t numItems1, uint32_t numItems2);
+    ospNewSharedData2DStride(const void *sharedData, OSPDataType type, uint32_t numItems1, int64_t byteStride1, uint32_t numItems2, int64_t byteStride2);
+    ospNewSharedData3D(const void *sharedData, OSPDataType type, uint32_t numItems1, uint32_t numItems2, uint32_t numItems3);
+
+    ospNewData1D(OSPDataType type, uint32_t numItems);
+    ospNewData2D(OSPDataType type, uint32_t numItems1, uint32_t numItems2);
+
+    ospCopyData1D(const OSPData source, OSPData destination, uint32_t destinationIndex);
+    ospCopyData2D(const OSPData source, OSPData destination, uint32_t destinationIndex1, uint32_t destinationIndex2);
+
+
+### Rendering helpers
+
+While `ospRenderFrame` is now asynchronous, some users will prefer the original
+blocking behavior that returns a frame variance.  The utility library provides a
+wrapper to this functionality:
+
+    float ospRenderFrameBlocking(OSPFrameBuffer fb,
+                                 OSPRenderer renderer,
+                                 OSPCamera camera,
+                                 OSPWorld world)
+
+
