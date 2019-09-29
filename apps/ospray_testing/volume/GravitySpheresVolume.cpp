@@ -112,7 +112,7 @@ namespace ospray {
     OSPTestingVolume GravitySpheresVolume::createVolume() const
     {
       // create a structured volume and assign attributes
-      OSPVolume volume = ospNewVolume("shared_structured_volume");
+      OSPVolume volume = ospNewVolume("structured_volume");
 
       ospSetVec3i(volume,
                "dimensions",

@@ -38,7 +38,6 @@ namespace ospray {
         ispcEquivalent, vklVolume, (ispc::box3f *)&bounds);
   }
 
-  OSP_REGISTER_VOLUME(VKLSharedStructuredVolume, vkl_structured_volume);
-  OSP_REGISTER_VOLUME(VKLSharedStructuredVolume, shared_structured_volume);
+  OSP_REGISTER_VOLUME(VKLSharedStructuredVolume, structured_volume);
 
 }  // namespace ospray
