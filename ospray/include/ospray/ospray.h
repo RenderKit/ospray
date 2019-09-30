@@ -134,9 +134,9 @@ extern "C" {
 
   // OSPRay Initialization ////////////////////////////////////////////////////
 
-  /* Initialize the OSPRay engine (for single-node user application) using
-     commandline arguments...equivalent to doing ospNewDevice() followed by
-     ospSetCurrentDevice()
+  /* Initialize OSPRay using commandline arguments.
+
+     equivalent to doing ospNewDevice() followed by ospSetCurrentDevice()
 
      returns OSPError value to report any errors during initialization */
   OSPRAY_INTERFACE OSPError ospInit(int *argc, const char **argv);
@@ -243,16 +243,21 @@ extern "C" {
     float upper[3];
   } OSPBounds;
 
+  // Return bounds if the object is able (OSPWorld, OSPInstance, and OSPGroup)
   OSPRAY_INTERFACE OSPBounds ospGetBounds(OSPObject);
 
   // Object + Parameter Lifetime Management ///////////////////////////////////
 
+  // Set a parameter, where 'mem' points the address of the type specified
   OSPRAY_INTERFACE void ospSetParam(OSPObject, const char *id, OSPDataType, const void *mem);
   OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);
 
+  // Make parameters which have been set visible to the object
   OSPRAY_INTERFACE void ospCommit(OSPObject);
 
+  // Reduce the application-side object ref count by 1
   OSPRAY_INTERFACE void ospRelease(OSPObject);
+  // Increace the application-side object ref count by 1
   OSPRAY_INTERFACE void ospRetain(OSPObject);
 
   // FrameBuffer Manipulation /////////////////////////////////////////////////
@@ -262,15 +267,13 @@ extern "C" {
                                                     OSPFrameBufferFormat format OSP_DEFAULT_VAL(OSP_FB_SRGBA),
                                                     uint32_t frameBufferChannels OSP_DEFAULT_VAL(OSP_FB_COLOR));
 
-  //! create a new pixel op of given type
-  /*! return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPImageOperation ospNewImageOperation(const char *type);
 
-  /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
+  // Pointer access (read-only) to the memory of the given frame buffer channel
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer,
                                                  OSPFrameBufferChannel OSP_DEFAULT_VAL(OSP_FB_COLOR));
 
-  // Unmap a previously mapped frame buffer
+  // Unmap a previously mapped frame buffer pointer
   OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer);
 
   // Get variance from last rendered frame
@@ -283,7 +286,7 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);
 
-  // Render a frame
+  // Render a frame (non-blocking), return a future to the task executed by OSPRay
   OSPRAY_INTERFACE OSPFuture ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 
   // Ask if all events tracked by an OSPFuture handle have been completed
