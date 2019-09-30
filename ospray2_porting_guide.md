@@ -7,10 +7,6 @@ This guide is intended as an introduction to the new features and the concepts
 behind them, and as a guide to porting applications using OSPRay 1.8.x to
 2.0.0.
 
-# <span style="color:red">**TODO**</span>
-- c++ wrappers not have to worry about release/retain
-- snippet from ospTutorial.c vs .cpp
-
 ## Objects
 
 ### New Object Hierarchy
@@ -120,25 +116,6 @@ to all geometries and/or volumes in its group.
 `OSPWorld` is the final container for all `OSPInstance` and `OSPLight` objects.
 It can contain one or more instances and lights.  The world is passed along with
 a renderer, camera, and framebuffer to `ospRenderFrame` to generate an image.
-
-### Object Usage Simplification
-<!-- XXX BMC: Only true if issue !418 is merged into the release -->
-
-To simplify setting data onto an object; wherever an array of `type[]` is
-expected, it is now permissible to pass a single data item of `type`, as well.
-This permits the user to assign a single item without first creating a data
-object containing that item.
-
-For example:
-
-    OSPGroup group = ospNewGroup();
-    OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
-    ospSetObject(group, "geometry", geometricModels);
-
-simply becomes:
-
-    OSPGroup group = ospNewGroup();
-    ospSetObject(group, "geometry", model);
 
 ### OSPDataType type checking
 
@@ -378,6 +355,22 @@ new `ospNewSharedData` and `ospCopyData` APIs.
     ospCopyData1D(const OSPData source, OSPData destination, uint32_t destinationIndex);
     ospCopyData2D(const OSPData source, OSPData destination, uint32_t destinationIndex1, uint32_t destinationIndex2);
 
+### Object Usage Simplification
+
+To simplify setting data onto an object, if there is only a single data item,
+the wrapper `ospSetObjectAsData` permits the user to assign this item without
+first creating a data object containing that item.
+
+For example:
+
+    OSPGroup group = ospNewGroup();
+    OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
+    ospSetObject(group, "geometry", geometricModels);
+
+simply becomes:
+
+    OSPGroup group = ospNewGroup();
+    ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
 
 ### Rendering helpers
 
