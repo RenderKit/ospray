@@ -336,8 +336,8 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
   PUBLIC
     ospray
     ospcommon::ospcommon
-    $<BUILD_INTERFACE:embree>
-    $<BUILD_INTERFACE:openvkl::openvkl>
+    embree
+    openvkl::openvkl_module_ispc_driver
   )
 
   target_include_directories(ospray_module_ispc

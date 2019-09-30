@@ -301,7 +301,7 @@ endfunction()
 
 macro(ospray_create_embree_target)
   if (NOT TARGET embree)
-    add_library(embree INTERFACE)
+    add_library(embree INTERFACE IMPORTED)
 
     target_include_directories(embree
     INTERFACE
