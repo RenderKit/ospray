@@ -54,7 +54,9 @@ namespace ospray {
 
         rtcAttachGeometry(geometryScene, eInst);
 
+#if 0 // NOTE(jda) - there seems to still be an Embree ref-count issue here
         rtcReleaseGeometry(eInst);
+#endif
 
         numGeomInstances++;
       }
@@ -68,7 +70,9 @@ namespace ospray {
 
         rtcAttachGeometry(volumeScene, eInst);
 
+#if 0 // NOTE(jda) - there seems to still be an Embree ref-count issue here
         rtcReleaseGeometry(eInst);
+#endif
 
         numVolumeInstances++;
       }
