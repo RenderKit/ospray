@@ -74,6 +74,7 @@ __define_get(vec2i);
 __define_get(vec3i);
 __define_get(vec4i);
 
+__define_get(uint8);
 __define_get(uint32);
 __define_get(vec2ui);
 __define_get(vec3ui);

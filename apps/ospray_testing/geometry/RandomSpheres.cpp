@@ -104,7 +104,7 @@ namespace ospray {
 
       OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, colors.data());
 
-      ospSetObject(model, "prim.color", colorData);
+      ospSetObject(model, "color", colorData);
 
       // create glass material and assign to geometry
       OSPMaterial glassMaterial =
@@ -112,15 +112,15 @@ namespace ospray {
       ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
       ospCommit(glassMaterial);
 
-      ospSetObject(model, "material", glassMaterial);
+      ospSetObjectAsData(model, "material", OSP_MATERIAL, glassMaterial);
+
+      ospCommit(model);
 
       // release handles we no longer need
       ospRelease(positionData);
       ospRelease(radiusData);
       ospRelease(colorData);
       ospRelease(glassMaterial);
-
-      ospCommit(model);
 
       OSPGroup group = ospNewGroup();
       ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);

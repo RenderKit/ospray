@@ -99,17 +99,20 @@ namespace ospray {
       ospRelease(indicesData);
       ospRelease(colorsData);
 
+      OSPMaterial slMat = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
+      ospCommit(slMat);
+
       auto model = ospNewGeometricModel(slGeom);
+      ospSetObjectAsData(slGeom, "material", OSP_MATERIAL, slMat);
       ospCommit(model);
+
+      ospRelease(slMat);
 
       OSPGroup group = ospNewGroup();
       ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
       ospCommit(group);
 
       box3f bounds = empty;
-
-      OSPMaterial slMat = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
-      ospCommit(slMat);
 
       OSPInstance instance = ospNewInstance(group);
       ospCommit(instance);

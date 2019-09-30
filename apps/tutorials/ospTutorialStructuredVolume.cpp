@@ -65,7 +65,7 @@ static OSPGeometricModel setSliceVolumeModel(OSPVolumetricModel volumeModel,
   ospCommit(sliceTex);
   ospSetObject(sliceMaterial, "map_Kd", sliceTex);
   ospCommit(sliceMaterial);
-  ospSetObject(sliceModel, "material", sliceMaterial);
+  ospSetObjectAsData(sliceModel, "material", OSP_MATERIAL, sliceMaterial);
   ospCommit(sliceModel);
 
   ospRelease(sliceTex);

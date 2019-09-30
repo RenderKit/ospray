@@ -17,21 +17,32 @@
 #pragma once
 
 #include "Geometry.ih"
+#include "common/Data.ih"
 #include "math/AffineSpace.ih"
 
 struct GeometricModel
 {
   Geometry *geom;  //!< instanced Geometry
 
-  vec4f *primitiveColors;
-
-  uint32 *prim_materialID;  // per-primitive material ID
+  Data1D color;
+  Data1D index;
 
   int32 numMaterials;
-  Material **materialList;
+  Material **material;
 
   float areaPDF;
 };
+inline Material *GeometricModel_getMaterial(
+    const GeometricModel *uniform self, int32 primID)
+{
+  if (!self->material)
+    return NULL;
+
+  if (valid(self->index))
+    primID = get_uint8(self->index, min(primID, self->index.numItems - 1));
+
+  return self->material[min(primID, self->numMaterials - 1)];
+}
 
 inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
                                          varying DifferentialGeometry &dg,
@@ -44,15 +55,13 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
 
   dg.areaPDF = self->areaPDF;
 
-  if (flags & DG_COLOR && self->primitiveColors)
-    dg.color = self->primitiveColors[ray.primID];
+  uint32 idx = ray.primID;
+  if (valid(self->index))
+    idx = get_uint8(self->index, min(ray.primID, self->index.numItems - 1));
 
-  dg.materialID = -1;
-  if (self->prim_materialID)
-    dg.materialID = self->prim_materialID[ray.primID];
-  else if (self->numMaterials > 1)
-    dg.materialID = ray.primID;
+  if (flags & DG_COLOR && valid(self->color))
+    dg.color =
+        get_vec4f(self->color, min(idx, self->color.numItems - 1));
 
-  if (self->materialList)
-    dg.material = self->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+  dg.material = GeometricModel_getMaterial(self, ray.primID);
 }

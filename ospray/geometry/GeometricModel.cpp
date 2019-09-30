@@ -26,10 +26,7 @@ namespace ospray {
   {
     managedObjectType = OSP_GEOMETRIC_MODEL;
     geom = _geometry;
-
     this->ispcEquivalent = ispc::GeometricModel_create(this);
-
-    setMaterialList(nullptr);
   }
 
   std::string GeometricModel::toString() const
@@ -37,63 +34,48 @@ namespace ospray {
     return "ospray::GeometricModel";
   }
 
-  void GeometricModel::setMaterial()
-  {
-    auto *data = new Data(&material.ptr, OSP_MATERIAL, vec3ui(1), vec3l(0));
-    setMaterialList(&(data->as<Material *>()));
-    data->refDec();
-  }
-
-  void GeometricModel::setMaterialList(const DataT<Material *> *matListData)
-  {
-    if (!matListData || matListData->size() == 0) {
-      ispc::GeometricModel_setMaterialList(this->getIE(), 0, nullptr);
-      return;
-    }
-
-    materialListData = matListData;
-    materialList = materialListData->data();
-    const int numMaterials = materialListData->size();
-    ispcMaterialPtrs.resize(numMaterials);
-    for (int i = 0; i < numMaterials; i++)
-      ispcMaterialPtrs[i] = materialList[i]->getIE();
-
-    ispc::GeometricModel_setMaterialList(
-        this->getIE(), numMaterials, ispcMaterialPtrs.data());
-  }
-
   void GeometricModel::commit()
   {
-    colorData = getParamDataT<vec4f>("prim.color");
+    materialData = getParamDataT<Material *>("material");
+    colorData = getParamDataT<vec4f>("color");
+    indexData = getParamDataT<uint8_t>("index");
 
-    if (colorData && colorData->size() != geom->numPrimitives()) {
+    size_t maxItems = geom->numPrimitives();
+    size_t minItems = 0; // without index, a single material / color is OK
+    if (indexData && indexData->size() < maxItems) {
       postStatusMsg(1)
           << toString()
-          << " number of colors does not match number of primitives, ignoring 'prim.color'";
-      colorData = nullptr;
+          << " not enough 'index' elements for geometry, clamping";
+    }
+    if (indexData) {
+      maxItems = 256; // conservative, should actually go over the index
+      minItems = 1;
     }
 
-    prim_materialIDData = getParamDataT<uint32_t>("prim.materialID");
-    auto materialListDataPtr = getParamDataT<Material *>("materialList");
-
-    if (prim_materialIDData
-        && prim_materialIDData->size() != geom->numPrimitives()) {
+    if (materialData && materialData->size() > minItems
+        && materialData->size() < maxItems) {
       postStatusMsg(1)
           << toString()
-          << " number of primitive material IDs does not match number of primitives, ignoring 'prim.materialID'";
-      prim_materialIDData = nullptr;
+          << " potentially not enough 'material' elements for geometry, clamping";
     }
 
-    material = (Material *)getParamObject("material");
+    if (colorData && colorData->size() > minItems
+        && colorData->size() < maxItems) {
+      postStatusMsg(1)
+          << toString()
+          << " potentially not enough 'color' elements for geometry, clamping";
+    }
 
-    if (materialListDataPtr && prim_materialIDData)
-      setMaterialList(materialListDataPtr);
-    else if (material)
-      setMaterial();
+    if (materialData)
+      ispcMaterialPtrs = createArrayOfIE(*materialData);
+    else
+      ispcMaterialPtrs.clear();
 
     ispc::GeometricModel_set(getIE(),
-        colorData ? colorData->data() : nullptr,
-        prim_materialIDData ? prim_materialIDData->data() : nullptr);
+        ispc(colorData),
+        ispc(indexData),
+        ispcMaterialPtrs.size(),
+        ispcMaterialPtrs.data());
   }
 
   void GeometricModel::setGeomIE(void *geomIE, int geomID)

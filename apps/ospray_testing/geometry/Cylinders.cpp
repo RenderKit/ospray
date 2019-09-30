@@ -131,7 +131,7 @@ namespace ospray {
       OSPGeometricModel model = ospNewGeometricModel(cylindersGeometry);
       OSPData cylindersColor =
           ospNewData(numCylinders, OSP_VEC4F, colors.data());
-      ospSetObject(model, "prim.color", cylindersColor);
+      ospSetObject(model, "color", cylindersColor);
 
       // create obj material and assign to cylinders model
       OSPMaterial objMaterial =
@@ -139,7 +139,7 @@ namespace ospray {
       // ospSetVec3f(objMaterial, "Ks", 0.8f, 0.8f, 0.8f);
       ospCommit(objMaterial);
 
-      ospSetObject(model, "material", objMaterial);
+      ospSetObjectAsData(model, "material", OSP_MATERIAL, objMaterial);
       ospCommit(model);
 
       OSPGroup group = ospNewGroup();

@@ -221,7 +221,7 @@ OSPGeometricModel CreateGeometricModel(OSPGeometry geo, const vec3f& kd)
     OSPMaterial objMaterial = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
     ospSetVec3f(objMaterial, "Kd", kd.x, kd.y, kd.z);
     ospCommit(objMaterial);
-    ospSetObject(geometricModel, "material", objMaterial);
+    ospSetObjectAsData(geometricModel, "material", OSP_MATERIAL, objMaterial);
     ospRelease(objMaterial);
     return geometricModel;
 }

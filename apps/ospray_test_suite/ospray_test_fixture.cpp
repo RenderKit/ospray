@@ -407,8 +407,8 @@ namespace OSPRayTestScenes {
         ospNewMaterial(rendererType.c_str(), "default");
     ospSetFloat(sphereMaterial, "d", 1.0f);
     ospCommit(sphereMaterial);
-    ospSetObject(model1, "material", sphereMaterial);
-    ospSetObject(model2, "material", sphereMaterial);
+    ospSetObjectAsData(model1, "material", OSP_MATERIAL, sphereMaterial);
+    ospSetObjectAsData(model2, "material", OSP_MATERIAL, sphereMaterial);
     ospRelease(sphereMaterial);
 
     affine3f xfm(vec3f(0.01, 0, 0),
@@ -532,7 +532,7 @@ namespace OSPRayTestScenes {
     OSPGeometricModel model = ospNewGeometricModel(wallsMesh);
     ospRelease(wallsMesh);
     OSPMaterial wallsMaterial = GetMaterial("OBJMaterial");
-    ospSetObject(model, "material", wallsMaterial);
+    ospSetObjectAsData(model, "material", OSP_MATERIAL, wallsMaterial);
     ospRelease(wallsMaterial);
     models.push_back(model);
 
@@ -566,7 +566,7 @@ namespace OSPRayTestScenes {
 
     model = ospNewGeometricModel(lightSquare);
     ospRelease(lightSquare);
-    ospSetObject(model, "material", lightMaterial);
+    ospSetObjectAsData(model, "material", OSP_MATERIAL, lightMaterial);
     ospRelease(lightMaterial);
     models.push_back(model);
 
@@ -593,7 +593,7 @@ namespace OSPRayTestScenes {
 
     model = ospNewGeometricModel(cuboid);
     ospRelease(cuboid);
-    ospSetObject(model, "material", cuboidMaterial);
+    ospSetObjectAsData(model, "material", OSP_MATERIAL, cuboidMaterial);
     ospRelease(cuboidMaterial);
     models.push_back(model);
 
@@ -608,7 +608,7 @@ namespace OSPRayTestScenes {
 
     model = ospNewGeometricModel(sphere);
     ospRelease(sphere);
-    ospSetObject(model, "material", sphereMaterial);
+    ospSetObjectAsData(model, "material", OSP_MATERIAL, sphereMaterial);
     ospRelease(sphereMaterial);
     models.push_back(model);
 
@@ -945,7 +945,7 @@ namespace OSPRayTestScenes {
     ospCommit(mirrors);
 
     OSPGeometricModel model = ospNewGeometricModel(mirrors);
-    ospSetObject(model, "material", mirrorsMaterial);
+    ospSetObjectAsData(model, "material", OSP_MATERIAL, mirrorsMaterial);
     AddModel(model);
 
     float sphereCenters[] = {1.f, 0.f, 7.f};
@@ -958,8 +958,10 @@ namespace OSPRayTestScenes {
     ospCommit(light);
 
     model = ospNewGeometricModel(light);
-    ospSetObject(
-        model, "material", ospNewMaterial(rendererType.c_str(), "Luminous"));
+
+    OSPMaterial mat = ospNewMaterial(rendererType.c_str(), "Luminous")
+    ospSetObjectAsData(model, "material", OSP_MATERIAL, mat);
+    ospRelease(mat);
     AddModel(model);
 
     OSPLight ambient = ospNewLight("ambient");
@@ -1016,7 +1018,7 @@ namespace OSPRayTestScenes {
     OSPGeometricModel model = ospNewGeometricModel(streamlines);
     ospRelease(streamlines);
     OSPMaterial material = CreateMaterial(materialType);
-    ospSetObject(model, "material", material);
+    ospSetObjectAsData(model, "material", OSP_MATERIAL, material);
     ospRelease(material);
     AddModel(model);
 
@@ -1086,7 +1088,7 @@ namespace OSPRayTestScenes {
 
     OSPGeometricModel model = ospNewGeometricModel(sphere);
     ospRelease(sphere);
-    ospSetObject(model, "material", sphereMaterial);
+    ospSetObjectAsData(model, "material", OSP_MATERIAL, sphereMaterial);
     ospRelease(sphereMaterial);
     AddModel(model);
 
@@ -1257,7 +1259,7 @@ namespace OSPRayTestScenes {
     OSPGeometricModel model = ospNewGeometricModel(subd);
     ospRelease(subd);
     OSPMaterial material = CreateMaterial(materialType);
-    ospSetObject(model, "material", material);
+    ospSetObjectAsData(model, "material", OSP_MATERIAL, material);
     ospRelease(material);
     AddModel(model);
 
@@ -1496,7 +1498,7 @@ namespace OSPRayTestScenes {
       ospRelease(mesh);
       OSPMaterial material = ospNewMaterial("pathtracer", "OBJMaterial");
       ospCommit(material);
-      ospSetObject(model, "material", material);
+      ospSetObjectAsData(model, "material", OSP_MATERIAL, material);
       ospRelease(material);
       if (enableGeometry)
         models.push_back(model);

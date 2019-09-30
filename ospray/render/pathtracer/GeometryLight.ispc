@@ -98,9 +98,8 @@ Light_SampleRes GeometryLight_sample(const uniform Light *uniform super,
   res.pdf          = self->pdf * sqr(dist) / abs(cosd);
 
   // get radiance
-  const int32 matID = dg.materialID;
   PathTraceMaterial *mat =
-      (PathTraceMaterial *)model->materialList[matID < 0 ? 0 : matID];
+      (PathTraceMaterial *)GeometricModel_getMaterial(model, primID);
   const vec3f radiance = mat->emission;
 
   res.weight = radiance * rcp(res.pdf);
@@ -146,9 +145,8 @@ export void *uniform GeometryLight_create(void *uniform _model,
   self->primIDs = uniform new uniform int32[geo->numPrimitives];
   uniform int32 numEmissivePrims = 0;
   foreach (primID = 0 ... geo->numPrimitives) {
-    int matIdx = model->numMaterials > 1 ? primID : 0;
-
-    PathTraceMaterial *mat = (PathTraceMaterial *)model->materialList[matIdx];
+    PathTraceMaterial *mat =
+        (PathTraceMaterial *)GeometricModel_getMaterial(model, primID);
     const vec3f emission   = mat->emission;
     if (reduce_max(emission) > 0.f) {
       int offset = exclusive_scan_add(1);

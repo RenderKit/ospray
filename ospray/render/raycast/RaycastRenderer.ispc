@@ -200,8 +200,7 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(
   else {
     DifferentialGeometry dg;
     dg.color = make_vec4f(0.f);
-    postIntersect(
-        world, dg, sample.ray, DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
+    postIntersect(world, dg, sample.ray, DG_COLOR | DG_NG | DG_NS);
     sample.rgb = make_vec3f(dg.color) *
                  abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
   }

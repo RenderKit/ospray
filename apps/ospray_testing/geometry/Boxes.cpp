@@ -77,7 +77,7 @@ namespace ospray {
       auto colorData =
           ospNewData(numBoxes.total_indices(), OSP_VEC4F, color.data());
 
-      ospSetObject(model, "prim.color", colorData);
+      ospSetObject(model, "color", colorData);
       ospRelease(colorData);
 
       // create OBJ material and assign to geometry
@@ -85,7 +85,7 @@ namespace ospray {
           ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
       ospCommit(objMaterial);
 
-      ospSetObject(model, "material", objMaterial);
+      ospSetObjectAsData(model, "material", OSP_MATERIAL, objMaterial);
       ospRelease(objMaterial);
 
       ospCommit(model);

@@ -31,10 +31,9 @@ inline void computeDG(const World *uniform world,
                       DifferentialGeometry &dg)
 {
   postIntersect(world,
-                dg,
-                ray,
-                DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_MATERIALID |
-                    DG_COLOR | DG_TEXCOORD);
+      dg,
+      ray,
+      DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TEXCOORD);
 }
 
 SSI computeShading(const SciVis *uniform self,

@@ -130,8 +130,8 @@ namespace ospray {
       ospCommit(mat);
 
       auto model = ospNewGeometricModel(geom);
-      ospSetObject(model, "material", mat);
-      ospSetObject(model, "prim.color", colorsData);
+      ospSetObjectAsData(model, "material", OSP_MATERIAL, mat);
+      ospSetObject(model, "color", colorsData);
       ospCommit(model);
       ospRelease(mat);
 

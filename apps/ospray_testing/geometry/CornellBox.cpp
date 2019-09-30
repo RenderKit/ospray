@@ -263,7 +263,8 @@ namespace ospray {
 
       // Put the mesh and material into a model
       OSPGeometricModel quadMeshModel = ospNewGeometricModel(quadMesh);
-      ospSetObject(quadMeshModel, "material", quadMeshMaterial);
+      ospSetObjectAsData(
+          quadMeshModel, "material", OSP_MATERIAL, quadMeshMaterial);
       ospCommit(quadMeshModel);
       ospRelease(quadMeshMaterial);
 

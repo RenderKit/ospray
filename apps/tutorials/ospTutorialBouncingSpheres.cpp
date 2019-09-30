@@ -109,7 +109,7 @@ OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
 
   OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, g_colors.data());
 
-  ospSetObject(g_spheresModel, "prim.color", colorData);
+  ospSetObject(g_spheresModel, "color", colorData);
 
   // create glass material and assign to geometry
   OSPMaterial glassMaterial =
@@ -117,7 +117,7 @@ OSPGeometricModel createRandomSpheresGeometry(size_t numSpheres)
   ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
   ospCommit(glassMaterial);
 
-  ospSetObject(g_spheresModel, "material", glassMaterial);
+  ospSetObjectAsData(g_spheresModel, "material", OSP_MATERIAL, glassMaterial);
 
   // commit the spheres geometry
   ospCommit(g_spheresGeometry);

@@ -28,8 +28,6 @@ typedef enum
   DG_NORMALIZE   = (1 << 1), /*!< normalize normals */
   DG_NG          = (1 << 2), /*!< need geometry normal Ng */
   DG_NS          = (1 << 3), /*!< need shading normal Ns */
-  DG_MATERIALID  = (1 << 4), /*!< return materialID if
-                                  "prim.materialID" array present*/
   DG_COLOR    = (1 << 5), /*!< hack for now - need interpolated vertex color */
   DG_TEXCOORD = (1 << 6), /*!< calculate texture coords st */
   DG_TANGENTS = (1 << 7), /*!< calculate tangents, i.e. the partial
@@ -57,9 +55,6 @@ struct DifferentialGeometry
                   defaults to vec4f(1.f) if queried but not present in geometry
                   */
   int32 primID; /*!< hit primitive (-1 if no hit) */
-  int32 materialID; /*!< hack for now - the materialID as stored in
-                      "prim.materialID" array (-1 if that value isn't
-                      specified) */
 
   float areaPDF;
 

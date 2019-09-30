@@ -60,8 +60,8 @@ namespace ospray {
       affine3f xfm = instance->xfm();
 
       for (auto &&model : *geometries) {
-        if (model->materialList) {
-          // check whether the modelmetry has any emissive materials
+        if (model->materialData) {
+          // check whether the model has any emissive materials
           bool hasEmissive = false;
           for (auto mat : model->ispcMaterialPtrs) {
             if (mat && ispc::PathTraceMaterial_isEmissive(mat)) {

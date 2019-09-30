@@ -35,15 +35,10 @@ namespace ospray {
     void setGeomIE(void *geomIE, int geomID);
 
    private:
-    void setMaterial();
-    void setMaterialList(const DataT<Material *> *);
-
     Ref<Geometry> geom;
-    Ref<const DataT<uint32_t>> prim_materialIDData;
+    Ref<const DataT<Material *>> materialData;
     Ref<const DataT<vec4f>> colorData;
-    Material **materialList{nullptr};  //!< per-primitive material list
-    Ref<Material> material;
-    Ref<const DataT<Material *>> materialListData;
+    Ref<const DataT<uint8_t>> indexData;
     std::vector<void *> ispcMaterialPtrs;
 
     friend struct PathTracer;  // TODO: fix this!

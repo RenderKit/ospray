@@ -48,10 +48,6 @@ static void BilinearPatches_postIntersect(const Geometry *uniform geometry,
   const BilinearPatches *uniform self =
       (const BilinearPatches *uniform)geometry;
   dg.Ng = dg.Ns = normalize(ray.Ng);
-
-  if (flags & DG_MATERIALID) {
-    dg.materialID = 0;
-  }
 }
 
 /*! create a new ispc equivalent for the C++ class (cppEquivalent

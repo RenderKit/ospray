@@ -1032,28 +1032,30 @@ function].
 Geometries are matched with surface appearance information through
 GeometricModels. These take a geometry, which defines the surface
 representation, and applies either full-object or per-primitive color
-and material information. To create a geometry instance, call
+and material information. To create a geometric model, call
 
     OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
-  ------------------ ----------------- --------- --------------------------------------
-  Type               Name                Default Description
-  ------------------ ----------------- --------- --------------------------------------
-  vec4f[]            prim.color             NULL [data] array of per-primitive colors
+Color and material are fetched with the primitive ID of the hit (clamped to the
+valid range, thus a single color or material is fine), or mapped first via the
+`index` array (if present). All paramters are optional, however, some renderers
+(notably the [path tracer]) require a material to be set.
 
-  uint32[]           prim.materialID        NULL [data] array of per-primitive material IDs
+  -------------- ---------- ----------------------------------------------------
+  Type           Name       Description
+  -------------- ---------- ----------------------------------------------------
+  OSPMaterial[]  material   [data] array of (per-primitive) materials
 
-  OSPMaterial[]      materialList           NULL [data] array of materials, indexed by
-                                                 `prim.materialID`
+  vec4f[]        color      optional [data] array of (per-primitive) colors
 
-  OSPMaterial        material               NULL default material used if `prim.materialID`
-                                                 is not present
-  ------------------ ----------------- --------- ---------------------------------------
+  uint8[]        index      optional [data] array of per-primitive indices into
+                            `color` and `material`
+  -------------- ---------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
 
 Lights
------
+------
 
 To create a new light source of given type `type` use
 

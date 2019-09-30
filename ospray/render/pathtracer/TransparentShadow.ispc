@@ -40,7 +40,6 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 
     DifferentialGeometry dg;
     postIntersect(world, dg, shadowRay,
-      DG_MATERIALID |
       DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR);
 
     uniform PathTraceMaterial *material = (uniform PathTraceMaterial*)dg.material;

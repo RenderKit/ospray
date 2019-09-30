@@ -179,7 +179,7 @@ OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
   OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
   ospCommit(material);
 
-  ospSetObject(model, "material", material);
+  ospSetObjectAsData(model, "material", OSP_MATERIAL, material);
 
   ospCommit(model);
 
