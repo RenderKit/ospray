@@ -1,11 +1,51 @@
 # OSPRay 2.0.0 Porting Guide
 
 OSPRay 2.0.0 introduces a number of new features and updates, as well as some
-API changes.
+API changes. This guide is intended as an introduction to the new features
+and the concepts behind them, and as a guide to porting applications using
+OSPRay 1.8.x to 2.0.0.
 
-This guide is intended as an introduction to the new features and the concepts
-behind them, and as a guide to porting applications using OSPRay 1.8.x to
-2.0.0.
+## Parameters
+
+### Setting parameters
+
+OSPRay traded having a limited number of parameter types (with a unique
+function signature for each type) by instead having a single generic
+function that takes any type found in the `OSPDataType` enum. The new
+function signature is as follows:
+
+    void ospSetParam(OSPObject, const char *name, OSPDataType type, const void *mem)
+
+This function takes the address of the value being set, where care
+should be taken when setting pointer-based types. For example, consider
+the following C-array:
+
+    float myValues[] = {0.f, 1.f, 2.f}
+
+If the application wants to set these values as an OSP_VEC3F, note that
+the `const void *mem` parameter to `ospSetParam` should point to what is
+the address of what would be a `vec3f`. Thus either of the following are
+valid:
+
+    void ospSetParam(object, "some_parameter", OSP_VEC3F, &myValues[0]);
+
+or
+
+    void ospSetParam(object, "some_parameter", OSP_VEC3F, myValues);
+
+The second variant relies on implicit casting from `float[]` to
+`float *`, which will point to the address of the first value. This then
+gets casted to a `vec3f` to be set on the target `object`.
+
+Some of the `ospSet*` functions were preserved as utility wrapper
+functions outlined later in this document (and can be found in
+`ospray_util.h`).
+
+### OSPDataType type checking
+
+Where it was previously accepted to create data of generic type `OSP_OBJECT` to
+represent a list of any object type, the `OSPDataType` must now match the
+object(s) it contains.
 
 ## Objects
 
@@ -42,7 +82,7 @@ removed for brevity.
     // set parameters on mesh
     ospCommit(mesh);
 
-    // put the geometry in a geometric model
+    // put the geometry in a model (a geometry can exist in more than one model)
     OSPGeometricModel model = ospNewGeometricModel(mesh);
     ospCommit(model);
 
@@ -52,7 +92,7 @@ removed for brevity.
     ospSetObject(group, "geometry", geometricModels);
     ospCommit(group);
 
-    // put the group in an instance
+    // put the group in an instance (a group can be instanced more than once)
     OSPInstance = ospNewInstance(group);
     ospCommit(instance);
 
@@ -64,24 +104,29 @@ removed for brevity.
 
 
 While this looks more complex at first, the new hierarchy structure
-provides more fine control over transformations and instances.
+provides more fine control over appearance information and instance
+transformations.
+
+In OSPRay v1.x, geometries and volumes contained both structural and
+appearance information which limited their reuse in other objets. For
+example, the volume's transfer function can now be different between
+an isosurface, slice, and rendered volume all in the same scene without
+duplicating the actual volume itself.
 
 #### OSPGeometry and OSPVolume
 
-`OSPGeometry` and `OSPVolume` contain actual data in an OSPRay container. For
-example, a triangle mesh geometry contains vertex positions and normals, among
-other parameters.
+`OSPGeometry` and `OSPVolume` contain the physical data represented by
+the object. For geometries, this is the intersectable surface. For
+volumes, it is the scalar field to be sampled.
 
 #### OSPGeometricModel and OSPVolumetricModel
 
 `OSPGeometricModel` and `OSPVolumetricModel` contain appearance information
-about the geometry or volume that they hold. They have a one-to-one
-relationship with `OSPGeometry` and `OSPVolume` objects.
-
-This means that each `OSPGeometricModel` contains exactly one `OSPGeometry`.
-However, a single `OSPGeometry` may be put into multiple `OSPGeometricModel`
-objects. This could be used to create multiple copies of a geometry with
-different materials, for example.
+about the geometry or volume that they hold. They have a one-to-N
+relationship with `OSPGeometry` and `OSPVolume` objects (i.e. a geometry
+or volume can exist in more than one model), but commonly
+exist as one-to-one. This could be used to create multiple copies of a
+geometry with different materials, for example.
 
 `OSPGeometricModel`s can hold primitive color information (e.g. the color used
 for each sphere in a `Spheres` geometry), a material or list of materials, and
@@ -103,25 +148,19 @@ together in the scene.
 `OSPInstance` contains transformation information on an `OSPGroup` object. It
 has a one-to-one relationship with `OSPGroup`.
 
-This means that each `OSPInstance` contains exactly one `OSPGroup`. However, a
-single `OSPGroup` may be placed into multiple `OSPInstace` objects. This allows
-for _instancing_ of multiple objects throughout the scene, each with different
-transformations.
+This means that each `OSPInstance` contains exactly one `OSPGroup`. Similar
+to models and groups, a single `OSPGroup` may be placed into multiple
+`OSPInstace` objects. This allows for _instancing_ of multiple objects
+throughout the scene, each with different transformations.
 
-`OSPInstance` objects can hold an affine transformation matrix that is applied
-to all geometries and/or volumes in its group.
+`OSPInstance` objects holds an affine transformation matrix that is applied
+to all objects in its group.
 
 #### OSPWorld
 
 `OSPWorld` is the final container for all `OSPInstance` and `OSPLight` objects.
 It can contain one or more instances and lights.  The world is passed along with
 a renderer, camera, and framebuffer to `ospRenderFrame` to generate an image.
-
-### OSPDataType type checking
-
-Where it was previously accepted to create data of generic type `OSP_OBJECT` to
-represent a list of any object type, the `OSPDataType` must now match the
-object(s) it contains.
 
 ### void ospRetain(OSPObject)
 
@@ -290,7 +329,7 @@ values are listed.
   </tr>
 </table>
 
-* **OSPRay will print warnings for parameters that were not used by the object, 
+* **OSPRay will print warnings for parameters that were not used by the object,
 which should aid in the transition to the new parameter names.  To use this
 feature, enable OSPRay debug (see api documentation) and search the output log
 for "found unused parameter" messages.**
@@ -311,17 +350,18 @@ And, notably, it is no longer blocking.  Two new calls `ospIsReady`, and
 
 ## Utility Library
 
-The core OSPRay API has been simplified by removing many of the type
-specializations from the data and parameter set calls.  Additionally, as
-mentioned above, `ospRenderFrame` is now asynchronous.
-
 As a convenience, a lightweight utility library has been provided to help users
-port from the previous versions.
+port from the previous versions and reduce boilerplate code. This set of
+additional API calls are all implemented in terms of the core API found
+in `ospray.h`, where they can be found in `ospray_util.h`. Their definitions
+are compiled into `libospray` (the `ospray::ospray` CMake target) and
+are compatible with any valid device implementation.
 
 ### OSPData and Parameter helpers
 
-A single `ospSetParam` API replaces the entire `ospSet*` interface.  The utility
-library provides wrappers to the familiar calls listed below:
+The core OSPRay API has been simplified by removing many of the type
+specializations from the data and parameter set calls. The utility library
+provides wrappers to the familiar calls listed below:
 
     ospSetString(OSPObject, const char *n, const char *s);
     ospSetObject(OSPObject, const char *n, OSPObject obj);
@@ -363,24 +403,22 @@ first creating a data object containing that item.
 
 For example:
 
-    OSPGroup group = ospNewGroup();
     OSPData geometricModels = ospNewSharedData1D(&model, OSP_GEOMETRIC_MODEL, 1);
     ospSetObject(group, "geometry", geometricModels);
+    ospRelease(geometricModels);
 
 simply becomes:
 
-    OSPGroup group = ospNewGroup();
     ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
 
 ### Rendering helpers
 
-While `ospRenderFrame` is now asynchronous, some users will prefer the original
-blocking behavior that returns a frame variance.  The utility library provides a
-wrapper to this functionality:
+While `ospRenderFrame` is now asynchronous, some users will prefer the
+original blocking behavior that returns the frame variance. The utility
+library provides a wrapper to this functionality:
 
     float ospRenderFrameBlocking(OSPFrameBuffer fb,
                                  OSPRenderer renderer,
                                  OSPCamera camera,
                                  OSPWorld world)
-
 
