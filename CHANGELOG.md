@@ -55,6 +55,16 @@ Version History
 -   Expansion of information returned by `ospPick`
 -   Addition of API to query version information at runtime
 
+-   Known issues:
+    -   Open VKL must be built with a compatible set of ISAs with OSPRay
+        due to a known issue with VKL iterator types. This is easiest
+        to address by using `OSPRAY_BUILD_ISA` and `OPENVKL_BUILD_ISA`
+        with the ISA of the target machine. This will be addressed for
+        the official v2.0 release.
+    -   The old variant of `ospNewData` was temporarily retained in
+        `ospray_util.h` for C++ applications and will be removed for the
+        official v2.0 release
+
 ### Changes in v1.8.5:
 
 -   Fix float precision cornercase (`NaN`s) in sphere light sampling
