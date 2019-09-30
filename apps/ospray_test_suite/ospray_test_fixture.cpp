@@ -57,7 +57,6 @@ namespace OSPRayTestScenes {
     ospRelease(voxelsData);
     ospSetVec3i(torus, "dimensions", size, size, size);
     ospSetInt(torus, "voxelType", OSP_FLOAT);
-    ospSetVec2f(torus, "voxelRange", -10000.f, 10000.f);
     ospSetVec3f(torus, "gridOrigin", -0.5f, -0.5f, -0.5f);
     ospSetVec3f(torus, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
     return torus;
@@ -126,6 +125,7 @@ namespace OSPRayTestScenes {
 
   void Base::AddLight(OSPLight light)
   {
+    ospCommit(light);
     lightsList.push_back(light);
   }
 
@@ -301,13 +301,11 @@ namespace OSPRayTestScenes {
     ospSetFloat(distant, "intensity", 1.0f);
     ospSetVec3f(distant, "direction", 1.0f, 1.0f, 1.0f);
     ospSetFloat(distant, "angularDiameter", 1.0f);
-    ospCommit(distant);
     AddLight(distant);
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
     ospSetFloat(ambient, "intensity", 0.2f);
-    ospCommit(ambient);
     AddLight(ambient);
   }
 
@@ -425,13 +423,11 @@ namespace OSPRayTestScenes {
     ospSetVec3f(distant, "direction", 0.3f, -4.0f, 0.8f);
     ospSetVec3f(distant, "color", 1.0f, 0.5f, 0.5f);
     ospSetFloat(distant, "angularDiameter", 1.0f);
-    ospCommit(distant);
     AddLight(distant);
 
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
     ospSetFloat(ambient, "intensity", 0.1f);
-    ospCommit(ambient);
     AddLight(ambient);
   }
 
@@ -706,7 +702,6 @@ namespace OSPRayTestScenes {
     ospRelease(voxelsData);
     ospSetVec3i(pyramid, "dimensions", size, size, size);
     ospSetInt(pyramid, "voxelType", OSP_UCHAR);
-    ospSetVec2f(pyramid, "voxelRange", 0, 255);
     ospSetVec3f(pyramid, "gridOrigin", -0.5f, -0.5f, -0.5f);
     ospSetVec3f(pyramid, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
     ospCommit(pyramid);
@@ -752,7 +747,6 @@ namespace OSPRayTestScenes {
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
     ospSetFloat(ambient, "intensity", 0.5f);
-    ospCommit(ambient);
     AddLight(ambient);
   }
 
@@ -809,7 +803,6 @@ namespace OSPRayTestScenes {
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
     ospSetFloat(ambient, "intensity", 0.5f);
-    ospCommit(ambient);
     AddLight(ambient);
   }
 
@@ -853,7 +846,6 @@ namespace OSPRayTestScenes {
     ospSetObject(blob, "voxelData", voxelsData);
     ospSetVec3i(blob, "dimensions", size, size, size);
     ospSetInt(blob, "voxelType", OSP_FLOAT);
-    ospSetVec2f(blob, "voxelRange", 0.f, 3.f);
     ospSetVec3f(blob, "gridOrigin", -0.5f, -0.5f, -0.5f);
     ospSetVec3f(blob, "gridSpacing", 1.f / size, 1.f / size, 1.f / size);
     ospCommit(blob);
@@ -895,7 +887,6 @@ namespace OSPRayTestScenes {
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient);
     ospSetFloat(ambient, "intensity", 0.5f);
-    ospCommit(ambient);
     AddLight(ambient);
   }
 
@@ -967,7 +958,6 @@ namespace OSPRayTestScenes {
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient);
     ospSetFloat(ambient, "intensity", 0.01f);
-    ospCommit(ambient);
     AddLight(ambient);
   }
 
@@ -1025,7 +1015,6 @@ namespace OSPRayTestScenes {
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient);
     ospSetFloat(ambient, "intensity", 0.5f);
-    ospCommit(ambient);
     AddLight(ambient);
   }
 
@@ -1095,7 +1084,6 @@ namespace OSPRayTestScenes {
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
     ospSetFloat(ambient, "intensity", 0.5f);
-    ospCommit(ambient);
     AddLight(ambient);
   }
 
@@ -1171,7 +1159,6 @@ namespace OSPRayTestScenes {
     OSPLight ambient = ospNewLight("ambient");
     ASSERT_TRUE(ambient) << "Failed to create lights";
     ospSetFloat(ambient, "intensity", 0.5f);
-    ospCommit(ambient);
     AddLight(ambient);
   }
 
@@ -1274,7 +1261,6 @@ namespace OSPRayTestScenes {
     ASSERT_TRUE(directional);
     ospSetFloat(directional, "intensity", 0.5f);
     ospSetVec3f(directional, "direction", -.2f, -.3f, -.4f);
-    ospCommit(directional);
     AddLight(directional);
   }
 
@@ -1521,26 +1507,18 @@ namespace OSPRayTestScenes {
     //vec4f backgroundColor(0.03f, 0.07f, 0.23f);
     vec4f backgroundColor(ambientColor, 1.f);
 
-    std::vector<OSPLight> lightHandles;
     OSPLight ambientLight = ospNewLight("ambient");
     ospSetFloat(ambientLight, "intensity", 1.f);
     ospSetParam(ambientLight, "color", OSP_VEC3F, &ambientColor.x);
-    ospCommit(ambientLight);
-    lightHandles.push_back(ambientLight);
+    AddLight(ambientLight);
 
     OSPLight distantLight = ospNewLight("distant");
     ospSetFloat(distantLight, "intensity", 2.6f);
     ospSetVec3f(distantLight, "color", 1.0f, 0.96f, 0.88f);
     ospSetFloat(distantLight, "angularDiameter", 1.f);
     ospSetVec3f(distantLight, "direction", -0.5826f, -0.7660f, -0.2717f);
-    ospCommit(distantLight);
     if (enableDistantLight)
-      lightHandles.push_back(distantLight);
-
-    OSPData lights = ospNewData(lightHandles.size(), OSP_LIGHT, lightHandles.data(), 0);
-    ospCommit(lights);
-    ospSetObject(renderer, "light", lights);
-    ospRelease(lights);
+      AddLight(distantLight);
 
     OSPData texelData = ospNewData(1, OSP_VEC3F, &ambientColor.x);
 
@@ -1556,8 +1534,6 @@ namespace OSPRayTestScenes {
     ospSetObject(renderer, "backplate", backplateTexture);
     ospRelease(backplateTexture);
 
-    // NOTE(jda) - still need to set the world on the renderer for geom lights
-    ospSetObject(renderer, "world", world);
     ospSetInt(renderer, "maxDepth", std::max(20, samplesPerPixel));
     ospSetInt(renderer, "spp", samplesPerPixel);
   }

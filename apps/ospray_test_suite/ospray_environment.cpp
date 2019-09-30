@@ -20,7 +20,7 @@ OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
     : dumpImg(false),
       rendererType("scivis"),
       deviceType("default"),
-      baselineDir("regression_tests/baseline"),
+      baselineDir("regression_test_baseline"),
       failedDir("failed")
 {
   ParsArgs(argc, argv);
