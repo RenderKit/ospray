@@ -17,9 +17,11 @@
 #pragma once
 
 #include <gtest/gtest.h>
-#include <ospray/ospray_util.h>
+
 #include <string>
 #include <vector>
+
+#include "ospray/ospray_util.h"
 
 #include "ospcommon/math/vec.h"
 using namespace ospcommon::math;

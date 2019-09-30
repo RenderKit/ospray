@@ -24,7 +24,6 @@
 #include <vector>
 
 #include <gtest/gtest.h>
-#include <ospray/ospray.h>
 
 #include "ospray_environment.h"
 #include "ospray_test_tools.h"
@@ -282,8 +281,8 @@ namespace OSPRayTestScenes {
    private:
     std::string materialType;
   };
-  
-  // Fixture class that renders a simple heterogeneous volume using the 
+
+  // Fixture class that renders a simple heterogeneous volume using the
   // pathtracer. It is parametrized with albedo, anisotropy and density scale.
   class HeterogeneousVolume
       : public Base,

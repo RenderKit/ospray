@@ -959,7 +959,7 @@ namespace OSPRayTestScenes {
 
     model = ospNewGeometricModel(light);
 
-    OSPMaterial mat = ospNewMaterial(rendererType.c_str(), "Luminous")
+    OSPMaterial mat = ospNewMaterial(rendererType.c_str(), "Luminous");
     ospSetObjectAsData(model, "material", OSP_MATERIAL, mat);
     ospRelease(mat);
     AddModel(model);

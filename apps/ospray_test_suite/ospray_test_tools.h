@@ -21,12 +21,11 @@
 #include <cmath>
 #include <cstring>
 #include <fstream>
+#include <limits>
 #include <string>
 #include <vector>
 
 #include <gtest/gtest.h>
-#include <ospray/ospray.h>
-#include <limits>
 
 #include "ospray_environment.h"
 
