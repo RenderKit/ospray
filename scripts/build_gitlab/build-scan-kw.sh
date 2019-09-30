@@ -62,7 +62,7 @@ export glfw3_DIR=`pwd`/../install
 export embree_DIR=`pwd`/../install
 export openvkl_DIR=`pwd`/../install
 
-cmake -DISPC_EXECUTABLE=`pwd`/../install/ispc/bin/ispc ../..
+cmake -DISPC_EXECUTABLE=`pwd`/../install/bin/ispc ../..
 
 # build
 $KW_CLIENT_PATH/bin/kwinject make -j `nproc`
