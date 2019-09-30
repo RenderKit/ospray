@@ -33,6 +33,8 @@
 #include "render/distributed/DistributedRaycast.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
+#include "openvkl/openvkl.h"
+#include "ISPCDevice_ispc.h"
 
 namespace ospray {
 namespace mpi {
@@ -198,6 +200,30 @@ void MPIDistributedDevice::commit()
       postStatusMsg() << "#osp:init: embree internal error number " << erc;
       assert(erc == RTC_ERROR_NONE);
     }
+
+    vklLoadModule("ispc_driver");
+
+    VKLDriver driver = nullptr;
+
+    int ispc_width = ispc::ISPCDevice_programCount();
+    switch (ispc_width) {
+    case 4:
+      driver = vklNewDriver("ispc_4");
+      break;
+    case 8:
+      driver = vklNewDriver("ispc_8");
+      break;
+    case 16:
+      driver = vklNewDriver("ispc_16");
+      break;
+    default:
+      driver = vklNewDriver("ispc");
+      break;
+    }
+
+    vklCommitDriver(driver);
+    vklSetCurrentDriver(driver);
+
     initialized = true;
 
     auto OSPRAY_FORCE_COMPRESSION =

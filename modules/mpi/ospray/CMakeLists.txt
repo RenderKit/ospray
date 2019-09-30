@@ -22,7 +22,14 @@ mark_as_advanced(OSP_MPI_COMPRESSION_THRESHOLD)
 
 ## Build the MPI module ##
 
-ispc_include_directories(${CMAKE_CURRENT_BINARY_DIR})
+find_package(openvkl 0.7.0 REQUIRED)
+
+get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
+  INTERFACE_INCLUDE_DIRECTORIES)
+
+ispc_include_directories(
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${OPENVKL_INCLUDE_DIRS})
 
 add_library(ospray_module_mpi SHARED)
 
@@ -71,6 +78,7 @@ target_include_directories(ospray_module_mpi
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
   PRIVATE
+    ${PROJECT_BINARY_DIR}/ospray/
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 

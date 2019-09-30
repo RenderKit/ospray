@@ -218,7 +218,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   // on the actual data
   brick.ghostBounds = box3f(brickLower - vec3f(1.f), brickUpper + vec3f(1.f));
 
-  brick.brick = ospNewVolume("shared_structured_volume");
+  brick.brick = ospNewVolume("structured_volume");
 
   ospSetInt(brick.brick, "voxelType", OSP_UCHAR);
   ospSetParam(brick.brick, "dimensions", OSP_VEC3I, &brickGhostDims.x);

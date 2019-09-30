@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "openvkl/openvkl.isph"
 #include "../../common/DistributedWorld.ih"
 #include "DistributedRenderer.ih"
 #include "common/Instance.ih"
@@ -61,23 +62,47 @@ vec4f DRR_integrateVolumeInterval(
     Volume *uniform volume = vm->volume;
     TransferFunction *uniform tf = vm->transferFunction;
 
-    // TODO: It's annoying the volume doesn't take and step an interval, then
-    // we wouldn't need to modify the ray at all here
-    while (ray.t0 <= ray.t && alpha < 0.99f) {
-      const float sample = volume->sample(volume, ray.org + ray.t0 * ray.dir);
+    uniform VKLIntervalIterator intervalIterator;
+    vklInitIntervalIteratorV(&intervalIterator,
+                             volume->vklVolume,
+                             (varying vkl_vec3f *)&ray.org,
+                             (varying vkl_vec3f *)&ray.dir,
+                             (varying vkl_range1f *)&interval.interval,
+                             vm->vklValueSelector);
 
-      if (!isnan(sample)) {
-        vec4f sampleColorOpacity = tf->get(tf, sample);
+    VKLInterval interval;
+    while (vklIterateIntervalV(&intervalIterator, &interval) && alpha < 0.99f) {
+      const float nominalSamplingDt = interval.nominalDeltaT / vm->samplingRate;
 
-        const float clampedOpacity =
-          clamp(sampleColorOpacity.w / vm->samplingRate);
+      // initial sub interval, based on our renderer-defined sampling rate
+      // and the volume's nominal dt
+      box1f subInterval = make_box1f(
+          interval.tRange.lower,
+          min(interval.tRange.lower + nominalSamplingDt, interval.tRange.upper));
+ 
+      while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
+        ray.t0  = subInterval.lower + (subInterval.upper - subInterval.lower);
+        const float dt = subInterval.upper - subInterval.lower;
 
-        color = color
-          + ((1.f - alpha) * clampedOpacity * make_vec3f(sampleColorOpacity));
-        alpha = alpha + ((1.f - alpha) * clampedOpacity);
+        // Get volume sample
+        vec3f p = ray.org + ray.t0 * ray.dir;
+        const float sample = vklComputeSampleV(volume->vklVolume, (const varying vkl_vec3f *uniform) &p);
+
+        if (!isnan(sample)) {
+          vec4f sampleColorOpacity = tf->get(tf, sample);
+ 
+          const float clampedOpacity =
+             clamp(sampleColorOpacity.w * dt);
+          color = color
+              + ((1.f - alpha) * clampedOpacity * make_vec3f(sampleColorOpacity));
+          alpha = alpha + ((1.f - alpha) * clampedOpacity);
+        }
+
+        // compute next sub interval
+        subInterval.lower = subInterval.upper;
+        subInterval.upper =
+            min(subInterval.lower + nominalSamplingDt, interval.tRange.upper);
       }
-
-      volume->stepRay(volume, tf, ray, vm->samplingRate);
     }
   }
 
