@@ -238,7 +238,7 @@ endforeach()
 ##############################################################
 
 add_library(ospray SHARED ${OSPRAY_SOURCES})
-target_link_libraries(ospray PRIVATE ospcommon::ospcommon)
+target_link_libraries(ospray PUBLIC $<BUILD_INTERFACE:ospcommon::ospcommon>)
 ospray_install_library(ospray COMPONENT lib)
 set_target_properties(ospray
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})

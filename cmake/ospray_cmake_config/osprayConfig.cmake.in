@@ -158,7 +158,12 @@ list(APPEND OSPRAY_INCLUDE_DIRS ${EMBREE_INCLUDE_DIRS})
 
 # ospcommon
 if (NOT TARGET ospcommon::ospcommon)
-  find_dependency(ospcommon)
+  find_dependency(ospcommon 1.0.1)
+endif()
+
+# openvkl
+if (NOT TARGET openvkl::openvkl)
+  find_dependency(openvkl 0.7.0)
 endif()
 
 # Restore state
@@ -181,8 +186,10 @@ set(OSPRAY_TESTING_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_testing${LIBRARY_SUFFIX}
 include(${CMAKE_CURRENT_LIST_DIR}/ospray_Exports.cmake)
 
 # Add missing targets to libraries
+set_target_properties(ospray::ospray PROPERTIES
+  INTERFACE_LINK_LIBRARIES "ospcommon::ospcommon")
 set_target_properties(ospray::ospray_module_ispc PROPERTIES
-  INTERFACE_LINK_LIBRARIES "ospcommon::ospcommon;embree")
+  INTERFACE_LINK_LIBRARIES "ospray::ospray;openvkl::openvkl;embree")
 
 # Set expected OSPRAY_LIBRARIES variable for FindPackage().
 set(OSPRAY_LIBRARIES ospray::ospray)
