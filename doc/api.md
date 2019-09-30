@@ -531,22 +531,25 @@ table below.
 
 ### Adaptive Mesh Refinement (AMR) Volume
 
-AMR volumes are specified as a list of blocks, which are levels of
-refinement in potentially overlapping regions. There can be any number
-of refinement levels and any number of blocks at any level of
-refinement. An AMR volume type is created by passing the type string
-"`amr_volume`" to `ospNewVolume`.
+AMR volumes are specified as a list of blocks, which exist at levels of
+refinement in potentially overlapping regions.  Blocks exist in a tree
+structure, with coarser refinement level blocks containing finer blocks.  The
+cell width is equal for all blocks at the same refinement level, though blocks
+at a coarser level have a larger cell width than finer levels.
 
-Blocks are defined by four parameters: their bounds, the refinement level
-in which they reside, their cell width, and the scalar data contained
-within them.
+There can be any number of refinement levels and any number of blocks at any
+level of refinement. An AMR volume type is created by passing the type string
+`"amr_volume"` to `ospNewVolume`.
+
+Blocks are defined by four parameters: their bounds, the refinement level in
+which they reside, the cell widths for each refinement level, and the scalar
+data contained within each block.
+
+Note that cell widths are defined _per refinement level_, not per block.
 
   -------------- --------------- -----------------  -----------------------------------
   Type           Name                      Default  Description
   -------------- --------------- -----------------  -----------------------------------
-  range2f        voxelRange              $(∞, -∞)$  minimum and maximum of the scalar
-                                                    values
-
   `OSPAMRMethod` method          `OSP_AMR_CURRENT`  `OSPAMRMethod` sampling method.
                                                     Supported methods are:
 
@@ -571,25 +574,39 @@ within them.
 
   vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
                                                     world-space
-
-  int            voxelType               undefined  data type of each voxel,
-                                                    currently supported are:
-
-                                                    `OSP_UCHAR`
-
-                                                    `OSP_SHORT`
-
-                                                    `OSP_USHORT`
-
-                                                    `OSP_FLOAT`
-
-                                                    `OSP_DOUBLE`
   -------------- --------------- -----------------  -----------------------------------
   : Additional configuration parameters for AMR volumes.
 
-Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
-like the structured volume equivalent, but they only modify the root
-(coarsest level) of refinement.
+Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just like
+the structured volume equivalent, but they only modify the root (coarsest level)
+of refinement.
+
+In particular, OSPRay's AMR implementation was designed to cover
+Berger-Colella [1] and Chombo [2] AMR data.  The `method` parameter above
+determines the interpolation method used when sampling the volume.
+
+* `OSP_AMR_CURRENT` finds the finest refinement level at that cell and
+  interpolates through this "current" level
+* `OSP_AMR_FINEST` will interpolate at the closest existing cell in the
+  volume-wide finest refinement level regardless of the sample cell's level
+* `OSP_AMR_OCTANT` interpolates through all available refinement levels at that
+  cell. This method avoids discontinuities at refinement level boundaries at
+  the cost of performance
+
+Details and more information can be found in the publication for the
+implementation [3].
+
+1. M. J. Berger, and P. Colella. "Local adaptive mesh refinement for
+   shock hydrodynamics." Journal of Computational Physics 82.1 (1989): 64-84.
+   DOI: 10.1016/0021-9991(89)90035-1
+2. M. Adams, P. Colella, D. T. Graves, J.N. Johnson, N.D. Keen, T. J. Ligocki.
+   D. F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz, T.D. Sternberg
+   and B. Van Straalen, Chombo Software Package for AMR Applications - Design
+   Document,  Lawrence Berkeley National Laboratory Technical Report
+   LBNL-6616E.
+3. I. Wald, C. Brownlee, W. Usher, and A. Knoll. CPU volume rendering of
+   adaptive mesh refinement data. SIGGRAPH Asia 2017 Symposium on Visualization
+   on - SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305
 
 ### Unstructured Volumes
 
