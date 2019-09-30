@@ -48,7 +48,7 @@ namespace OSPRayTestScenes {
       }
     }
 
-    OSPVolume torus    = ospNewVolume("shared_structured_volume");
+    OSPVolume torus    = ospNewVolume("structured_volume");
     OSPData voxelsData = ospNewData(size * size * size,
                                     OSP_FLOAT,
                                     volumetricData.data(),
@@ -699,7 +699,7 @@ namespace OSPRayTestScenes {
       }
     }
 
-    OSPVolume pyramid = ospNewVolume("shared_structured_volume");
+    OSPVolume pyramid = ospNewVolume("structured_volume");
     OSPData voxelsData =
         ospNewData(size * size * size, OSP_UCHAR, volumetricData.data());
     ospSetObject(pyramid, "voxelData", voxelsData);
@@ -843,7 +843,7 @@ namespace OSPRayTestScenes {
       }
     }
 
-    OSPVolume blob = ospNewVolume("shared_structured_volume");
+    OSPVolume blob = ospNewVolume("structured_volume");
     ASSERT_TRUE(blob);
     OSPData voxelsData = ospNewData(size * size * size,
                                     OSP_FLOAT,
@@ -1397,7 +1397,7 @@ namespace OSPRayTestScenes {
       dims = vec3l(64, 64, 64);
 
     const float spacing = 3.f/(reduce_max(dims)-1);
-    OSPVolume volume = ospNewVolume("vkl_structured_volume");
+    OSPVolume volume = ospNewVolume("structured_volume");
 
     auto turbulence = [](const vec3f& p, float base_freqency, int octaves)
     {

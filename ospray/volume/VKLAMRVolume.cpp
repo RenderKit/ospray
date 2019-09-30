@@ -39,7 +39,6 @@ namespace ospray {
         ispcEquivalent, vklVolume, (ispc::box3f *)&bounds);
   }
 
-  OSP_REGISTER_VOLUME(VKLAMRVolume, vkl_amr_volume);
   OSP_REGISTER_VOLUME(VKLAMRVolume, amr_volume);
 
 }  // namespace ospray

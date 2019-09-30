@@ -160,7 +160,7 @@ OSPVolumetricModel CreateProceduralVolumetricModel(
 {
     vec3l dims{128, 128, 128}; // should be at least 2
     const float spacing = 3.f/(reduce_max(dims)-1);
-    OSPVolume volume = ospNewVolume("vkl_structured_volume");
+    OSPVolume volume = ospNewVolume("structured_volume");
 
     // generate volume data
     auto numVoxels = dims.product();
