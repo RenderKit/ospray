@@ -1605,8 +1605,9 @@ listed in the table below.
   -------------------------------------------------------------------------------------------
   : Parameters of the Principled material.
 
-All parameters can be textured by passing a [texture] handle, suffixed with "`Map`"
-(e.g., "`baseColorMap`"); [texture transformations] are supported as well.
+All parameters can be textured by passing a [texture] handle, prefixed
+with "`map_`" (e.g., "`map_baseColor`"). [texture transformations] are
+supported as well.
 
 ![Rendering of a Principled coated brushed metal material with textured
 anisotropic rotation and a dust layer (sheen) on top.][imgMaterialPrincipled]
@@ -1660,8 +1661,9 @@ in the table below.
   -------------------------------------------------------------------------------------------
   : Parameters of the CarPaint material.
 
-All parameters can be textured by passing a [texture] handle, suffixed with "`Map`"
-(e.g., "`baseColorMap`"); [texture transformations] are supported as well.
+All parameters can be textured by passing a [texture] handle, prefixed
+with "`map_`" (e.g., "`map_baseColor`"). [texture transformations] are
+supported as well.
 
 ![Rendering of a pearlescent CarPaint material.][imgMaterialCarPaint]
 
