@@ -301,7 +301,8 @@ endfunction()
 
 macro(ospray_create_embree_target)
   if (NOT TARGET embree)
-    add_library(embree INTERFACE IMPORTED)
+    add_library(embree INTERFACE) # NOTE(jda) - Cannot be IMPORTED due to CMake
+                                  #             issues found on Ubuntu.
 
     target_include_directories(embree
     INTERFACE
