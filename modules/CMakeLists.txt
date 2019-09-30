@@ -14,13 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ispc_include_directories(
-  ${PROJECT_BINARY_DIR}
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_SOURCE_DIR}
-  ${EMBREE_INCLUDE_DIRS}
-)
+get_target_property(OSPRAY_ISPC_MODULE_INCLUDE_DIRS ospray_module_ispc
+  INTERFACE_INCLUDE_DIRECTORIES)
+
+ispc_include_directories(${OSPRAY_ISPC_MODULE_INCLUDE_DIRS})
 
 file(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/ *)
 foreach(plugin ${plugins})

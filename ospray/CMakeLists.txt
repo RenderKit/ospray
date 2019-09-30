@@ -344,6 +344,11 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
       $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+      # NOTE(jda) - the following includes are missing despite PUBLIC linking
+      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
+      $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
+      #######################################################################
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
