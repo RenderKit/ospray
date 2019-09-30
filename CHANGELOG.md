@@ -32,6 +32,8 @@ Version History
 -   Introduction of new Intel® Open Volume Kernel Library (Open VKL)
     for greatly enhanced volume sampling and rendering features and
     performance
+-   Added direct support for Intel® Open Image Denoise as an optional
+    module, which adds a `denoiser` type to `ospNewImageOperation`
 -   New CMake superbuild available to build both OSPRay's dependencies
     and OSPRay itself
     -   Found in `scripts/superbuild`
