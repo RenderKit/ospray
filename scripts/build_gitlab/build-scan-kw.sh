@@ -48,7 +48,7 @@ cmake --version
 cmake -L \
   -DBUILD_DEPENDENCIES_ONLY=ON \
   -DCMAKE_INSTALL_LIBDIR=lib \
-  -DINSTALL_IN_SEPARATE_DIRECTORIES=ON \
+  -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   "$@" ../scripts/superbuild
 
 cmake --build .
@@ -56,9 +56,11 @@ cmake --build .
 mkdir ospray_build
 cd ospray_build
 
-export OSPCOMMON_TBB_ROOT=`pwd`/../install/tbb
-export ospcommon_DIR=`pwd`/../install/ospcommon
-export glfw3_DIR=`pwd`/../install/glfw
+export OSPCOMMON_TBB_ROOT=`pwd`/../install
+export ospcommon_DIR=`pwd`/../install
+export glfw3_DIR=`pwd`/../install
+export embree_DIR=`pwd`/../install
+export openvkl_DIR=`pwd`/../install
 
 cmake -DISPC_EXECUTABLE=`pwd`/../install/ispc/bin/ispc ../..
 
