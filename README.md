@@ -2859,7 +2859,7 @@ table below.
 : Parameters of the Principled material.
 
 All parameters can be textured by passing a [texture](#texture) handle,
-suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
+prefixed with “`map_`” (e.g., “`map_baseColor`”). [texture
 transformations](#texture2d-transformations) are supported as well.
 
 <figure>
@@ -2994,7 +2994,7 @@ CarPaint material, pass the type string “`CarPaint`” to
 : Parameters of the CarPaint material.
 
 All parameters can be textured by passing a [texture](#texture) handle,
-suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
+prefixed with “`map_`” (e.g., “`map_baseColor`”). [texture
 transformations](#texture2d-transformations) are supported as well.
 
 <figure>

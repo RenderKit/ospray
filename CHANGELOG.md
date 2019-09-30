@@ -1,7 +1,7 @@
 Version History
 ---------------
 
-### Changes in v2.0.0 (alpha):
+### Changes in v2.0.0-alpha:
 
 -   New major revision of OSPRay brings API breaking improvements over
     v1.x. See `doc/ospray2_porting_guide.md` for a deeper description of
