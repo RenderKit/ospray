@@ -66,6 +66,11 @@ Version History
     -   The old variant of `ospNewData` was temporarily retained in
         `ospray_util.h` for C++ applications and will be removed for the
         official v2.0 release
+    -   ISPC v1.11.0 and Embree v3.6.0 are both incompatible with OSPRay
+        and should be avoided (OSPRay should catch this during CMake
+        configure)
+    -   This is a source-only release, binaries will be made available
+        for the official v2.0.0 release
 
 ### Changes in v1.8.5:
 
