@@ -57,7 +57,7 @@ Building and Finding OSPRay
 
 The latest OSPRay sources are always available at the [OSPRay GitHub
 repository](http://github.com/ospray/ospray). The default `master`
-branch should always point to the latest tested bugfix release.
+branch should always point to the latest bugfix release.
 
 Prerequisites
 -------------
@@ -70,11 +70,12 @@ before you can build OSPRay you need the following prerequisites:
         git clone https://github.com/ospray/ospray.git
 
 -   To build OSPRay you need [CMake](http://www.cmake.org), any form of
-    C++11 compiler (we recommend using GCC, but also support Clang and
-    the [Intel® C++ Compiler
+    C++11 compiler (we recommend using GCC, but also support Clang,
+    MSVC, and [Intel® C++ Compiler
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
-    Linux development tools. To build the example viewers, you should
-    also have some version of OpenGL.
+    Linux development tools. To build the interactive tutorials, you
+    should also have some version of OpenGL and GLFW.
+
 -   Additionally you require a copy of the [Intel® SPMD Program Compiler
     (ISPC)](http://ispc.github.io), version 1.9.1 or later. Please
     obtain a release of ISPC from the [ISPC downloads
@@ -84,11 +85,18 @@ before you can build OSPRay you need the following prerequisites:
     `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 
     NOTE: OSPRay is incompatible with ISPC v1.11.0.
--   Per default OSPRay uses the Intel® [Threading Building
+
+-   OSPRay builds on top of a small C++ utility library called
+    `ospcommon`. The library provides abstractions for tasking, aligned
+    memory allocation, vector math types, among others. For users who
+    also need to build `ospcommon` (found
+    [here](https://www.github.com/ospray/ospcommmon)), we recommend the
+    default the Intel® [Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
-    system, which we recommend for performance and flexibility reasons.
-    Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to
-    `OpenMP`, `Internal`, or `Cilk` (icc only).
+    system for performance and flexibility reasons. Alternatively you
+    can set CMake variable `OSPCOMMON_TASKING_SYSTEM` to `OpenMP` or
+    `Internal`.
+
 -   OSPRay also heavily uses Intel [Embree](https://embree.github.io/),
     installing version 3.2 or newer is required. If Embree is not found
     by CMake its location can be hinted with the variable `embree_DIR`.
@@ -96,11 +104,17 @@ before you can build OSPRay you need the following prerequisites:
     NOTE: Windows users should use Embree v3.2.2 or later.
 
     NOTE: OSPRay is incompatible with Embree v3.6.0.
--   If available OSPRay’s [Example Viewer](#example-viewer) can be
-    compiled with support for Intel [Open Image
-    Denoise](http://www.openimagedenoise.org/) by enabling
-    `OSPRAY_APPS_ENABLE_DENOISER`. You may need to hint the location of
-    the library with the CMake variable `OpenImageDenoise_DIR`.
+
+-   OSPRay also heavily uses Intel \[Open VKL\], installing version
+    0.7.0 or newer is required. If Open VKL is not found by CMake its
+    location can be hinted with the variable `openvkl_DIR`.
+
+-   OSPRay also provides an optional module that adds support for Intel
+    [Open Image Denoise](http://www.openimagedenoise.org/), which is
+    enabled by `OSPRAY_MODULE_DENOISER`. When loaded, this module
+    enables the `denosier` image operation. You may need to hint the
+    location of the library with the CMake variable
+    `OpenImageDenoise_DIR`.
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be
@@ -127,10 +141,59 @@ Under Windows please directly use the appropriate installers for
 [ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
 version) and [Embree](https://github.com/embree/embree/releases/).
 
-Compiling OSPRay on Linux and Mac OS X
---------------------------------------
+CMake Superbuild
+----------------
 
-Assume the above requisites are all fulfilled, building OSPRay through
+For convenience, OSPRay provides a CMake Superbuild script which will
+pull down OSPRay’s dependencies and build OSPRay itself. By default, the
+result is an install directory, with each dependency in its own
+directory.
+
+Run with:
+
+``` {.bash}
+mkdir build
+cd build
+cmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
+cmake --build .
+```
+
+The resulting `install` directory (or the one set with
+`CMAKE_INSTALL_PREFIX`) will have everything in it, with one
+subdirectory per dependency.
+
+CMake options to note (all have sensible defaults):
+
+-   `CMAKE_INSTALL_PREFIX` will be the root directory where everything
+    gets installed.
+-   `BUILD_JOBS` sets the number given to `make -j` for parallel builds.
+-   `INSTALL_IN_SEPARATE_DIRECTORIES` toggles installation of all
+    libraries in separate or the same directory.
+-   `BUILD_EMBREE_FROM_SOURCE` set to OFF will download a pre-built
+    version of Embree.
+-   `BUILD_OIDN_FROM_SOURCE` set to OFF will download a pre-built
+    version of OpenImageDenoise.
+-   `BUILD_OIDN_VERSION` determines which verison of OpenImageDenoise to
+    pull down.
+
+For the full set of options, run:
+
+``` {.bash}
+ccmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
+```
+
+or
+
+``` {.bash}
+cmake-gui [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
+```
+
+Standard CMake build
+--------------------
+
+### Compiling OSPRay on Linux and Mac OS X
+
+Assuming the above requisites are all fulfilled, building OSPRay through
 CMake is easy:
 
 -   Create a build directory, and go into it
@@ -164,13 +227,12 @@ CMake is easy:
 
         make
 
--   You should now have `libospray.so` as well as a set of example
-    application. You can test your version of OSPRay using any of the
-    examples on the [OSPRay Demos and
+-   You should now have `libospray.[so,dylib]` as well as a set of
+    example application. You can test your version of OSPRay using any
+    of the examples on the [OSPRay Demos and
     Examples](https://www.ospray.org/demos.html) page.
 
-Compiling OSPRay on Windows
----------------------------
+### Compiling OSPRay on Windows
 
 On Windows using the CMake GUI (`cmake-gui.exe`) is the most convenient
 way to configure OSPRay and to create the Visual Studio solution files:
@@ -186,7 +248,7 @@ way to configure OSPRay and to create the Visual Studio solution files:
 -   If the configuration fails because some dependencies could not be
     found then follow the instructions given in the error message, e.g.,
     set the variable `embree_DIR` to the folder where Embree was
-    installed.
+    installed and `openvkl_DIR` to where Open VKL was installed.
 
 -   Optionally change the default build options, and then click
     “Generate” to create the solution and project files in the build
@@ -220,7 +282,7 @@ Finding an OSPRay Install with CMake
 Client applications using OSPRay can find it with CMake’s
 `find_package()` command. For example,
 
-    find_package(ospray 1.8.0 REQUIRED)
+    find_package(ospray 2.0.0 REQUIRED)
 
 finds OSPRay via OSPRay’s configuration file `osprayConfig.cmake`[^2].
 Once found, the following is all that is required to use OSPRay:
@@ -235,19 +297,19 @@ Advanced users may want to link to additional targets which are exported
 in OSPRay’s CMake config, which includes all installed modules. All
 targets built with OSPRay are exported in the `ospray::` namespace,
 therefore all targets locally used in the OSPRay source tree can be
-accessed from an install. For example, `ospray_common` can be consumed
-directly via the `ospray::ospray_common` target. All targets have their
-libraries, includes, and definitions attached to them for public
-consumption (please [report bugs](#ospray-support-and-contact) if this
-is broken!).
+accessed from an install. For example, `ospray_module_ispc` can be
+consumed directly via the `ospray::ospray_module_ispc` target. All
+targets have their libraries, includes, and definitions attached to them
+for public consumption (please [report
+bugs](#ospray-support-and-contact) if this is broken!).
 
 Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -275,8 +337,9 @@ Initialization and Shutdown
 
 To use the API, OSPRay must be initialized with a “device”. A device is
 the object which implements the API. Creating and initializing a device
-can be done in either of two ways: command line arguments or manually
-instantiating a device.
+can be done in either of two ways: command line arguments using
+`ospInit` or manually instantiating a device and setting parameters on
+it.
 
 ### Command Line Arguments
 
@@ -368,21 +431,20 @@ prefixed by convention with “`--osp:`”) are understood:
 ### Manual Device Instantiation
 
 The second method of initialization is to explicitly create the device
-yourself, and possibly set parameters. This method looks almost
-identical to how other [objects](#objects) are created and used by
-OSPRay (described in later sections). The first step is to create the
-device with
+and possibly set parameters. This method looks almost identical to how
+other [objects](#objects) are created and used by OSPRay (described in
+later sections). The first step is to create the device with
 
 ``` {.cpp}
 OSPDevice ospNewDevice(const char *type);
 ```
 
 where the `type` string maps to a specific device implementation. OSPRay
-always provides the “`default`” device, which maps to a local CPU
-rendering device. If it is enabled in the build, you can also use
-“`mpi`” to access the MPI multi-node rendering device (see [Parallel
-Rendering with MPI](#parallel-rendering-with-mpi) section for more
-information). Once a device is created, you can call
+always provides the “`default`” device, which maps to a fast, local CPU
+implementation. Other devices can also be added through additional
+modules, such as distributed MPI device implementations.
+
+Once a device is created, you can call
 
 ``` {.cpp}
 void ospDeviceSet1i(OSPDevice, const char *id, int val);
@@ -471,7 +533,10 @@ to OSPRay API calls, where users can set/change parameters and recommit
 the device. If changes are made to the device that is already set as the
 current device, it does not need to be set as current again.
 
-To get device-specific properties, the following function can be called:
+OSPRay allows applications to query runtime properties of a device in
+order to do enhanced validation of what device was loaded at runtime.
+The following function can be used to get these device-specific
+properties (attiributes about the device, not paramter values)
 
 ``` {.cpp}
 int64_t ospDeviceGetProperty(OSPDevice, OSPDeviceProperty);
@@ -490,10 +555,10 @@ OSP_DEVICE_SO_VERSION
 
 ### Environment Variables
 
-Finally, OSPRay’s generic device parameters can be overridden via
-environment variables for easy changes to OSPRay’s behavior without
-needing to change the application (variables are prefixed by convention
-with “`OSPRAY_`”):
+OSPRay’s generic device parameters can be overridden via environment
+variables for easy changes to OSPRay’s behavior without needing to
+change the application (variables are prefixed by convention with
+“`OSPRAY_`”):
 
 <table style="width:97%;">
 <caption>Environment variables interpreted by OSPRay.</caption>
@@ -544,6 +609,9 @@ with “`OSPRAY_`”):
 </table>
 
 : Environment variables interpreted by OSPRay.
+
+Note that these environment variables take precedence over values
+specified through `ospInit` or manually set parameters.
 
 ### Error Handling and Status Messages
 
@@ -612,9 +680,9 @@ an actual function pointer.
 
 ### Loading OSPRay Extensions at Runtime
 
-OSPRay’s functionality can be extended via plugins, which are
-implemented in shared libraries. To load plugin `name` from
-`libospray_module_<name>.so` (on Linux and Mac OS X) or
+OSPRay’s functionality can be extended via plugins (which we call
+“modules”), which are implemented in shared libraries. To load module
+`name` from `libospray_module_<name>.so` (on Linux and Mac OS X) or
 `ospray_module_<name>.dll` (on Windows) use
 
 ``` {.cpp}
@@ -642,7 +710,7 @@ Objects
 -------
 
 All entities of OSPRay (the renderer, volumes, geometries, lights,
-cameras, …) are a specialization of `OSPObject` and share common
+cameras, …) are a logical specialization of `OSPObject` and share common
 mechanism to deal with parameters and lifetime.
 
 An important aspect of object parameters is that parameters do not get
@@ -661,11 +729,9 @@ camera) it is perfectly valid to do so, as long as the changed
 parameters are recommitted.
 
 The commit semantic allow for batching up multiple small changes, and
-specifies exactly when changes to objects will occur. This is important
-to ensure performance and consistency for devices crossing a PCI bus, or
-across a network. In our MPI implementation, for example, we can easily
-guarantee consistency among different nodes by MPI barrier’ing on every
-commit.
+specifies exactly when changes to objects will occur. This can impact
+performance and consistency for devices crossing a PCI bus or across a
+network.
 
 Note that OSPRay uses reference counting to manage the lifetime of all
 objects, so one cannot explicitly “delete” any object. Instead, to
@@ -679,43 +745,48 @@ void ospRelease(OSPObject);
 This decreases its reference count and if the count reaches `0` the
 object will automatically get deleted. Passing `NULL` is not an error.
 
+Sometimes applications may want to have more than one reference to an
+object, where it is desirable for the application to increment the
+reference count of an object. This is done with
+
+``` {.cpp}
+void ospRetain(OSPObject);
+```
+
+It is important to note that this is only necessary if the application
+wants to call `ospRelease` on an object more than once: objects which
+contain other objects as parameters internally increment/decrement ref
+counts and should not be explicitly done by the application.
+
 ### Parameters
 
 Parameters allow to configure the behavior of and to pass data to
 objects. However, objects do *not* have an explicit interface for
 reasons of high flexibility and a more stable compile-time API. Instead,
 parameters are passed separately to objects in an arbitrary order, and
-unknown parameters will simply be ignored. The following functions allow
-adding various types of parameters with name `id` to a given object:
+unknown parameters will simply be ignored (though a warning message will
+be posted). The following function allows adding various types of
+parameters with name `id` to a given object:
 
 ``` {.cpp}
-// add a C-string (zero-terminated char *) parameter
-void ospSetString(OSPObject, const char *id, const char *s);
-
-// add an object handle parameter to another object
-void ospSetObject(OSPObject, const char *id, OSPObject object);
-
-// add scalar and vector integer and float parameters
-void ospSetBool (OSPObject, const char *id, int x);
-void ospSetFloat (OSPObject, const char *id, float x);
-void ospSetInt (OSPObject, const char *id, int x);
-void ospSetVec2f (OSPObject, const char *id, float x, float y);
-void ospSetVec2fv(OSPObject, const char *id, const float *xy);
-void ospSetVec2i (OSPObject, const char *id, int x, int y);
-void ospSetVec2iv(OSPObject, const char *id, const int *xy);
-void ospSetVec3f (OSPObject, const char *id, float x, float y, float z);
-void ospSetVec3fv(OSPObject, const char *id, const float *xyz);
-void ospSetVec3i (OSPObject, const char *id, int x, int y, int z);
-void ospSetVec3iv(OSPObject, const char *id, const int *xyz);
-void ospSetVec4f (OSPObject, const char *id, float x, float y, float z, float w);
-void ospSetVec4fv(OSPObject, const char *id, const float *xyzw);
+void ospSetParam(OSPObject, const char *id, OSPDataType type, const void *mem);
 ```
 
-Users can also remove parameters that have been explicitly set via an
-ospSet call. Any parameters which have been removed will go back to
+The valid parameter names for all `OSPObject`s and what types are valid
+are discussed in future sections.
+
+Note that `mem` must always be a pointer *to* the object, otherwise
+accidental type casting can occur. This is especially true for pointer
+types (`OSP_VOID_PTR` and `OSPObject` handles), as they will implicitly
+cast to `void *`, but be incorrectly interpreted. To help with some of
+these issues, there also exist variants of `ospSetParam` for specific
+types, such as `ospSetInt` and `ospSetVec3f` in the [OSPRay utility
+library](util.md) (found in `ospray_util.h`).
+
+Users can also remove parameters that have been explicitly set from
+`ospSetParam`. Any parameters which have been removed will go back to
 their default value during the next commit unless a new parameter was
-set after the parameter was removed. The following API function removes
-the named parameter from the given object:
+set after the parameter was removed. To remove a parameter, use
 
 ``` {.cpp}
 void ospRemoveParam(OSPObject, const char *id);
@@ -723,10 +794,21 @@ void ospRemoveParam(OSPObject, const char *id);
 
 ### Data
 
-There is also the possibility to aggregate many values of the same type
-into an array, which then itself can be used as a parameter to objects.
-The preferable way to create such a new data array supports sharing the
-memory with the application
+OSPRay consumes data arrays from the application using a specific object
+type, `OSPData`. There are several components to describing a data
+array: element type, 1/2/3 dimensional striding, and whether the array
+is shared with the application or copied into opaque, OSPRay-owned
+memory.
+
+Shared data arrays require that the application’s array memory outlives
+the lifetime of the created `OSPData`, as OSPRay is referring to
+application memory. Where this is not preferable, applications use
+opaque arrays to allow the `OSPData` to own the lifetime of the array
+memory. However, opaque arrays dictate the cost of copying data into it,
+which should be kept in mind.
+
+Thus the most efficient way to specify a data array from the application
+is to created a shared data array, which is done with
 
 ``` {.cpp}
 OSPData ospNewSharedData(const void *sharedData,
@@ -742,19 +824,20 @@ OSPData ospNewSharedData(const void *sharedData,
 The call returns an `OSPData` handle to the created array. The calling
 program guarantees that the `sharedData` pointer will remain valid for
 the duration that this data array is being used. The number of elements
-`numItems` must be positive, thus there cannot be an empty data object.
-The data is arranged in three dimensions, with specializations to two or
-one dimension (if some `numItems` are 1). The distance between
-consecutive elements (per dimension) is given in bytes with `byteStride`
-and can also be negative. If `byteStride` is zero it will be determined
+`numItems` must be positive (there cannot be an empty data object). The
+data is arranged in three dimensions, with specializations to two or one
+dimension (if some `numItems` are 1). The distance between consecutive
+elements (per dimension) is given in bytes with `byteStride` and can
+also be negative. If `byteStride` is zero it will be determined
 automatically (e.g., as `sizeof(type)`). Strides do not need to be
 ordered, i.e., `byteStride2` can be smaller than `byteStride1`, which is
 equivalent to a transpose. However, if the stride should be calculated,
 then an ordering like `byteStride1 < byteStride2` is assumed to
 disambiguate.
 
-The enum type `OSPDataType` describes the different data types that can
-be represented in OSPRay; valid constants are listed in the table below.
+The enum type `OSPDataType` describes the different element types that
+can be represented in OSPRay; valid constants are listed in the table
+below.
 
 | Type/Name               | Description                                                       |
 |:------------------------|:------------------------------------------------------------------|
@@ -792,6 +875,7 @@ be represented in OSPRay; valid constants are listed in the table below.
 | OSP\_BOX\[1234\]F       | 32 bit single precision floating-point box (lower + upper bounds) |
 | OSP\_LINEAR\[234\]F     | 32 bit single precision floating-point linear transform           |
 | OSP\_AFFINE\[234\]F     | 32 bit single precision floating-point affine transform           |
+| OSP\_VOID\_PTR          | raw memory address (only found in module extensions)              |
 
 : Valid named constants for `OSPDataType`.
 
@@ -820,7 +904,7 @@ which will copy the whole[^3] content of the `source` array into
 must be valid inside the destination, i.e., in all dimensions,
 `destinationIndex + sourceSize <= destinationSize`. The affected region
 `[destinationIndex, destinationIndex + sourceSize)` is marked as dirty,
-which may be used by OSPRay to only processe or update that sub-region
+which may be used by OSPRay to only process or update that sub-region
 (e.g., updating an acceleration structure). If the destination array is
 shared with OSPData by the application (created with
 `ospNewSharedData`), then
@@ -829,7 +913,7 @@ shared with OSPData by the application (created with
     be used to read opaque data)
 -   if source and destination memory overlaps (aliasing), then behaviour
     is undefined
--   exept if source and destination regions are identical (including
+-   except if source and destination regions are identical (including
     matching strides), which can be used by application to mark that
     region as dirty (instead of the whole `OSPData`)
 
@@ -852,47 +936,21 @@ OSPVolume ospNewVolume(const char *type);
 ```
 
 The call returns `NULL` if that type of volume is not known by OSPRay,
-or else an `OSPVolume` handle.
+or else a valid `OSPVolume` handle.
 
 ### Structured Volume
 
 Structured volumes only need to store the values of the samples, because
 their addresses in memory can be easily computed from a 3D position. A
-common type of structured volumes are regular grids. OSPRay supports two
-variants that differ in how the volumetric data for the regular grids is
-specified.
+common type of structured volumes are regular grids.
 
-The first variant shares the voxel data with the application. Such a
-volume type is created by passing the type string
-“`shared_structured_volume`” to `ospNewVolume`. The voxel data is laid
-out in memory in xyz-order[^4] and provided to the volume via a
-[data](#data) buffer parameter named “`voxelData`”.
+Structured volumes are created by passing the `structured_volume` type
+string to `ospNewVolume`. Structured volumes are represented through an
+`OSPData` array (which may or may not be shared with the application),
+where the voxel data is laid out in memory in xyz-order[^4]
 
-The second regular grid variant is optimized for rendering performance:
-data locality in memory is increased by arranging the voxel data in
-smaller blocks. This volume type is created by passing the type string
-“`block_bricked_volume`” to `ospNewVolume`. Because of this
-rearrangement of voxel data it cannot be shared the with the application
-anymore, but has to be transferred to OSPRay via
-
-``` {.cpp}
-OSPError ospSetRegion(OSPVolume, void *source,
-                      const int *regionCoords, // single vec3i
-                      const int *regionSize // single vec3i
-                      );
-```
-
-The voxel data pointed to by `source` is copied into the given volume
-starting at position `regionCoords`, must be of size `regionSize` and be
-placed in memory in xyz-order. Note that OSPRay distinguishes between
-volume data and volume parameters. This function must be called only
-after all volume parameters (in particular `dimensions` and `voxelType`,
-see below) have been set and *before* `ospCommit(volume)` is called. If
-necessary then memory for the volume is allocated on the first call to
-this function.
-
-The common parameters understood by both structured volume variants are
-summarized in the table below.
+The parameters understood by structured volumes are summarized in the
+table below.
 
 <table style="width:97%;">
 <caption>Additional configuration parameters for structured volumes.</caption>
@@ -912,60 +970,54 @@ summarized in the table below.
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">vec2f</td>
-<td style="text-align: left;">voxelRange</td>
-<td style="text-align: right;"><span class="math inline">(∞,  − ∞)</span></td>
-<td style="text-align: left;">minimum and maximum of the scalar values</td>
-</tr>
-<tr class="even">
 <td style="text-align: left;">vec3i</td>
 <td style="text-align: left;">dimensions</td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;">number of voxels in each dimension <span class="math inline">(<em>x</em>, <em>y</em>, <em>z</em>)</span></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">int</td>
 <td style="text-align: left;">voxelType</td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;"><code>OSPDataType</code> of each voxel, currently supported are:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;"><code>OSP_UCHAR</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;"><code>OSP_SHORT</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;"><code>OSP_USHORT</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;"><code>OSP_FLOAT</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;"><code>OSP_DOUBLE</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">gridOrigin</td>
 <td style="text-align: right;"><span class="math inline">(0, 0, 0)</span></td>
 <td style="text-align: left;">origin of the grid in world-space</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">gridSpacing</td>
 <td style="text-align: right;"><span class="math inline">(1, 1, 1)</span></td>
@@ -978,15 +1030,22 @@ summarized in the table below.
 
 ### Adaptive Mesh Refinement (AMR) Volume
 
-AMR volumes are specified as a list of blocks, which are levels of
-refinement in potentially overlapping regions. There can be any number
-of refinement levels and any number of blocks at any level of
-refinement. An AMR volume type is created by passing the type string
-“`amr_volume`” to `ospNewVolume`.
+AMR volumes are specified as a list of blocks, which exist at levels of
+refinement in potentially overlapping regions. Blocks exist in a tree
+structure, with coarser refinement level blocks containing finer blocks.
+The cell width is equal for all blocks at the same refinement level,
+though blocks at a coarser level have a larger cell width than finer
+levels.
+
+There can be any number of refinement levels and any number of blocks at
+any level of refinement. An AMR volume type is created by passing the
+type string `"amr_volume"` to `ospNewVolume`.
 
 Blocks are defined by four parameters: their bounds, the refinement
-level in which they reside, their cell width, and the scalar data
-contained within them.
+level in which they reside, the cell widths for each refinement level,
+and the scalar data contained within each block.
+
+Note that cell widths are defined *per refinement level*, not per block.
 
 <table style="width:98%;">
 <caption>Additional configuration parameters for AMR volumes.</caption>
@@ -1006,106 +1065,64 @@ contained within them.
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">range2f</td>
-<td style="text-align: left;">voxelRange</td>
-<td style="text-align: right;"><span class="math inline">(∞,  − ∞)</span></td>
-<td style="text-align: left;">minimum and maximum of the scalar values</td>
-</tr>
-<tr class="even">
 <td style="text-align: left;"><code>OSPAMRMethod</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: right;"><code>OSP_AMR_CURRENT</code></td>
 <td style="text-align: left;"><code>OSPAMRMethod</code> sampling method. Supported methods are:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;"><code>OSP_AMR_CURRENT</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;"><code>OSP_AMR_FINEST</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: right;"></td>
 <td style="text-align: left;"><code>OSP_AMR_OCTANT</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">box3f[]</td>
 <td style="text-align: left;">block.bounds</td>
 <td style="text-align: right;">NULL</td>
 <td style="text-align: left;"><a href="#data">data</a> array of bounds for each AMR block</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">int[]</td>
 <td style="text-align: left;">block.level</td>
 <td style="text-align: right;">NULL</td>
 <td style="text-align: left;">array of each block’s refinement level</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">float[]</td>
 <td style="text-align: left;">block.cellWidth</td>
 <td style="text-align: right;">NULL</td>
 <td style="text-align: left;">array of each block’s cell width</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">OSPData[]</td>
 <td style="text-align: left;">block.data</td>
 <td style="text-align: right;">NULL</td>
 <td style="text-align: left;"><a href="#data">data</a> array of OSPData containing the actual scalar voxel data</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">gridOrigin</td>
 <td style="text-align: right;"><span class="math inline">(0, 0, 0)</span></td>
 <td style="text-align: left;">origin of the grid in world-space</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">vec3f</td>
 <td style="text-align: left;">gridSpacing</td>
 <td style="text-align: right;"><span class="math inline">(1, 1, 1)</span></td>
 <td style="text-align: left;">size of the grid cells in world-space</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">voxelType</td>
-<td style="text-align: right;">undefined</td>
-<td style="text-align: left;">data type of each voxel, currently supported are:</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;"><code>OSP_UCHAR</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;"><code>OSP_SHORT</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;"><code>OSP_USHORT</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;"><code>OSP_FLOAT</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;"><code>OSP_DOUBLE</code></td>
 </tr>
 </tbody>
 </table>
@@ -1115,6 +1132,34 @@ contained within them.
 Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
 like the structured volume equivalent, but they only modify the root
 (coarsest level) of refinement.
+
+In particular, OSPRay’s AMR implementation was designed to cover
+Berger-Colella \[1\] and Chombo \[2\] AMR data. The `method` parameter
+above determines the interpolation method used when sampling the volume.
+
+-   `OSP_AMR_CURRENT` finds the finest refinement level at that cell and
+    interpolates through this “current” level
+-   `OSP_AMR_FINEST` will interpolate at the closest existing cell in
+    the volume-wide finest refinement level regardless of the sample
+    cell’s level
+-   `OSP_AMR_OCTANT` interpolates through all available refinement
+    levels at that cell. This method avoids discontinuities at
+    refinement level boundaries at the cost of performance
+
+Details and more information can be found in the publication for the
+implementation \[3\].
+
+1.  M. J. Berger, and P. Colella. “Local adaptive mesh refinement for
+    shock hydrodynamics.” Journal of Computational Physics 82.1 (1989):
+    64-84. DOI: 10.1016/0021-9991(89)90035-1
+2.  M. Adams, P. Colella, D. T. Graves, J.N. Johnson, N.D. Keen, T. J.
+    Ligocki. D. F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz,
+    T.D. Sternberg and B. Van Straalen, Chombo Software Package for AMR
+    Applications - Design Document, Lawrence Berkeley National
+    Laboratory Technical Report LBNL-6616E.
+3.  I. Wald, C. Brownlee, W. Usher, and A. Knoll. CPU volume rendering
+    of adaptive mesh refinement data. SIGGRAPH Asia 2017 Symposium on
+    Visualization on - SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305
 
 ### Unstructured Volumes
 
@@ -1198,7 +1243,7 @@ $n, id_1, ..., id_n, m, id_1, ..., id_m$.
 </tr>
 <tr class="odd">
 <td style="text-align: left;">uint32[] / uint64[]</td>
-<td style="text-align: left;">cell</td>
+<td style="text-align: left;">cell.index</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"><a href="#data">data</a> array of locations (into the index array), specifying the first index of each cell</td>
 </tr>
@@ -1279,8 +1324,9 @@ OSPTransferFunction ospNewTransferFunction(const char *type);
 
 The call returns `NULL` if that type of transfer functions is not known
 by OSPRay, or else an `OSPTransferFunction` handle to the created
-transfer function. That handle can be assigned to a volume as parameter
-“`transferFunction`” using `ospSetObject`.
+transfer function. That handle can be assigned to a volumetric model
+(described below) as parameter “`transferFunction`” using
+`ospSetObject`.
 
 One type of transfer function that is supported by OSPRay is the linear
 transfer function, which interpolates between given equidistant colors
@@ -1297,8 +1343,11 @@ to `ospNewTransferFunction` and it is controlled by these parameters:
 
 ### VolumetricModels
 
-Volumes in OSPRay are given volume rendering apperance information
-through VolumetricModels. To create a volume instance, call
+Volumes in OSPRay are given volume rendering appearance information
+through VolumetricModels. This decouples the physical representation of
+the volume (and possible acceleration structures it contains) to
+rendering-specific parameters (where more than one set may exist
+concurrently). To create a volume instance, call
 
 ``` {.cpp}
 OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
@@ -1332,6 +1381,18 @@ OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
 <td style="text-align: left;">samplingRate</td>
 <td style="text-align: left;">0.125</td>
 <td style="text-align: left;">sampling rate of the volume (this is the minimum step size for adaptive sampling)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">densityScale</td>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">used to make volumes uniformly thinner or thicker (<a href="#path-tracer">path tracer</a> only)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">float</td>
+<td style="text-align: left;">anisotropy</td>
+<td style="text-align: left;">0.0</td>
+<td style="text-align: left;">anisotropy of the (Henyey-Greenstein) phase function in [-1, 1]. Default: Isotropic scattering. (<a href="#path-tracer">path tracer</a> only)</td>
 </tr>
 </tbody>
 </table>
@@ -1800,10 +1861,9 @@ OSPRay can directly render axis-aligned bounding boxes without the need
 to convert them to quads or triangles. To do so create a boxes geometry
 by calling `ospNewGeometry` with type string “`boxes`”.
 
-| Type      | Name | Description                                              |
-|:----------|:-----|:---------------------------------------------------------|
-| box3f\[\] | box  | [data](#data) array of boxes. Note this can be specified |
-|           |      | as OSP\_BOX3F, (2 \* OSP\_VEC3F), or (6 \* OSP\_FLOAT)   |
+| Type      | Name | Description                  |
+|:----------|:-----|:-----------------------------|
+| box3f\[\] | box  | [data](#data) array of boxes |
 
 : Parameters defining a boxes geometry.
 
@@ -1827,52 +1887,47 @@ function](#transfer-function).
 Geometries are matched with surface appearance information through
 GeometricModels. These take a geometry, which defines the surface
 representation, and applies either full-object or per-primitive color
-and material information. To create a geometry instance, call
+and material information. To create a geometric model, call
 
 ``` {.cpp}
 OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 ```
 
-<table style="width:98%;">
+Color and material are fetched with the primitive ID of the hit (clamped
+to the valid range, thus a single color or material is fine), or mapped
+first via the `index` array (if present). All paramters are optional,
+however, some renderers (notably the [path tracer](#path-tracer))
+require a material to be set.
+
+<table style="width:97%;">
 <caption>Parameters understood by GeometricModel.</caption>
 <colgroup>
-<col style="width: 22%" />
-<col style="width: 22%" />
-<col style="width: 12%" />
-<col style="width: 40%" />
+<col style="width: 23%" />
+<col style="width: 14%" />
+<col style="width: 60%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Type</th>
 <th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
 <th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">vec4f[]</td>
-<td style="text-align: left;">prim.color</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;"><a href="#data">data</a> array of per-primitive colors</td>
+<td style="text-align: left;">OSPMaterial[]</td>
+<td style="text-align: left;">material</td>
+<td style="text-align: left;"><a href="#data">data</a> array of (per-primitive) materials</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">uint32[]</td>
-<td style="text-align: left;">prim.materialID</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;"><a href="#data">data</a> array of per-primitive material IDs</td>
+<td style="text-align: left;">vec4f[]</td>
+<td style="text-align: left;">color</td>
+<td style="text-align: left;">optional <a href="#data">data</a> array of (per-primitive) colors</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">OSPMaterial[]</td>
-<td style="text-align: left;">materialList</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;"><a href="#data">data</a> array of materials, indexed by <code>prim.materialID</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">OSPMaterial</td>
-<td style="text-align: left;">material</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;">default material used if <code>prim.materialID</code> is not present</td>
+<td style="text-align: left;">uint8[]</td>
+<td style="text-align: left;">index</td>
+<td style="text-align: left;">optional <a href="#data">data</a> array of per-primitive indices into <code>color</code> and <code>material</code></td>
 </tr>
 </tbody>
 </table>
@@ -1929,7 +1984,7 @@ The sphere light (or the special case point light) is a light emitting
 uniformly in all directions from the surface towards the outside. It
 does not emit any light towards the inside of the sphere. It is created
 by passing the type string “`sphere`” to `ospNewLight`. In addition to
-the [generalparameters](#lights) understood by all lights the sphere
+the [general parameters](#lights) understood by all lights the sphere
 light supports the following special parameters:
 
 | Type  | Name     | Description                                    |
@@ -2112,6 +2167,10 @@ create a group call
 OSPGroup ospNewGroup();
 ```
 
+Groups take arrays of geometric models and volumetric models, but they
+are optional. In other words, there is no need to create empty arrays if
+there are no geometries or volumes in the group.
+
 <table style="width:98%;">
 <caption>Parameters understood by groups.</caption>
 <colgroup>
@@ -2164,6 +2223,11 @@ OSPGroup ospNewGroup();
 
 : Parameters understood by groups.
 
+Note that groups only need to re re-committed if a geometry or volume
+changes (surface/scalar field representation). Appearance information on
+`OSPGeometricModel` and `OSPVolumetricModel` can be changed freely, as
+internal acceleration structures do not need to be reconstructed.
+
 ### Instances
 
 Instances in OSPRay represent a single group’s placement into the world
@@ -2210,21 +2274,23 @@ Worlds are a container of scene data represented by
 OSPWorld ospNewWorld();
 ```
 
-The call returns an `OSPWorld` handle to the created world. Objects are
-placed in the world by existing in either the `geometries` or `volumes`
-data array parameters. Either array of objects is optional: in other
-words, there is no need to create empty arrays if there are no
-geometries or volumes to be rendered.
+Objects are placed in the world through an array of instances. Similar
+to \[group\], the array of instances is optional: there is no need to
+create empty arrays if there are no instances (though there will be
+nothing to render).
 
 Applications can query the world (axis-aligned) bounding box after the
-world has been commited. To get this information, call
+world has been committed. To get this information, call
 
 ``` {.cpp}
-OSPBounds ospGetWorldBounds(OSPWorld);
+OSPBounds ospGetBounds(OSPObject);
 ```
 
+This call can also take `OSPGroup` and `OSPInstance` as well: all other
+object types will return an empty bounding box.
+
 Finally, Worlds can be configured with parameters for making various
-feature/performance trade-offs.
+feature/performance trade-offs (similar to groups).
 
 <table style="width:97%;">
 <caption>Parameters understood by worlds.</caption>
@@ -2278,8 +2344,8 @@ feature/performance trade-offs.
 
 : Parameters understood by worlds.
 
-Renderer
---------
+Renderers
+---------
 
 A renderer is the central object for rendering in OSPRay. Different
 renderers implement different features and support different materials.
@@ -2376,10 +2442,9 @@ objects rendered by OSPRay.
 
 The SciVis renderer is a fast ray tracer for scientific visualization
 which supports volume rendering and ambient occlusion (AO). It is
-created by passing the type string “`scivis`” or “`raytracer`” to
-`ospNewRenderer`. In addition to the [general parameters](#renderer)
-understood by all renderers the SciVis renderer supports the following
-special parameters:
+created by passing the type string “`scivis`” to `ospNewRenderer`. In
+addition to the [general parameters](#renderer) understood by all
+renderers, the SciVis renderer supports the following parameters:
 
 <table style="width:97%;">
 <caption>Special parameters understood by the SciVis renderer.</caption>
@@ -2420,11 +2485,6 @@ special parameters:
 </table>
 
 : Special parameters understood by the SciVis renderer.
-
-Note that the intensity (and color) of AO is deduced from an [ambient
-light](#ambient-light) in the `lights` array.[^7] If `aoSamples` is zero
-(the default) then ambient lights cause ambient illumination (without
-occlusion).
 
 ### Path Tracer
 
@@ -2490,6 +2550,11 @@ The path tracer requires that [materials](#materials) are assigned to
 [geometries](#geometries), otherwise surfaces are treated as completely
 black.
 
+The path tracer supports [volumes](#volumes) with multiple scattering.
+The scattering albedo can be specified using the [transfer
+function](#transfer-function). Extinction is assumed to be spectrally
+constant.
+
 ### Materials
 
 Materials describe how light interacts with surfaces, they give objects
@@ -2544,32 +2609,36 @@ white room would hardly be discernible, as can be seen in the figure
 below).
 
 <figure>
-<img src="https://ospray.github.io/images/diffuse_rooms.png" alt="Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels." width="80.0%" /><figcaption>Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels.</figcaption>
+<img src="https://ospray.github.io/images/diffuse_rooms.png" width="80.0%" alt="" /><figcaption>Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels.</figcaption>
 </figure>
 
-If present, the color component of [geometries](#geometries) is
-also used for the diffuse color `Kd` and the alpha component is also
-used for the opacity `d`.
+
+
+If present, the color component of [geometries](#geometries) is also
+used for the diffuse color `Kd` and the alpha component is also used for
+the opacity `d`.
 
 Note that currently only the path tracer implements colored transparency
 with `Tf`.
 
 Normal mapping can simulate small geometric features via the texture
-`map_Bump`. The normals $n$ in the normal map are wrt. the local
-tangential shading coordinate system and are encoded as $½(n+1)$, thus a
-texel $(0.5, 0.5, 1)$[^8] represents the unperturbed shading normal
-$(0, 0, 1)$. Because of this encoding an sRGB gamma [texture](#texture)
-format is ignored and normals are always fetched as linear from a normal
-map. Note that the orientation of normal maps is important for a
-visually consistent look: by convention OSPRay uses a coordinate system
-with the origin in the lower left corner; thus a convexity will look
-green toward the top of the texture image (see also the example image of
-a normal map). If this is not the case flip the normal map vertically or
-invert its green channel.
+`map_Bump`. The normals $n$ in the normal map are with respect to the
+local tangential shading coordinate system and are encoded as $½(n+1)$,
+thus a texel $(0.5, 0.5, 1)$[^7] represents the unperturbed shading
+normal $(0, 0, 1)$. Because of this encoding an sRGB gamma
+[texture](#texture) format is ignored and normals are always fetched as
+linear from a normal map. Note that the orientation of normal maps is
+important for a visually consistent look: by convention OSPRay uses a
+coordinate system with the origin in the lower left corner; thus a
+convexity will look green toward the top of the texture image (see also
+the example image of a normal map). If this is not the case flip the
+normal map vertically or invert its green channel.
 
 <figure>
-<img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." width="60.0%" /><figcaption>Normal map representing an exalted square pyramidal frustum.</figcaption>
+<img src="https://ospray.github.io/images/normalmap_frustum.png" width="60.0%" alt="" /><figcaption>Normal map representing an exalted square pyramidal frustum.</figcaption>
 </figure>
+
+
 
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with “`map_`”. The fetched texels
@@ -2582,8 +2651,10 @@ linear format (and only the first component is used). Additionally, all
 textures support [texture transformations](#texture2d-transformations).
 
 <figure>
-<img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" /><figcaption>Rendering of a OBJ material with wood textures.</figcaption>
+<img src="https://ospray.github.io/images/material_OBJ.jpg" width="60.0%" alt="" /><figcaption>Rendering of a OBJ material with wood textures.</figcaption>
 </figure>
+
+
 
 #### Principled
 
@@ -2792,8 +2863,10 @@ suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
 transformations](#texture2d-transformations) are supported as well.
 
 <figure>
-<img src="https://ospray.github.io/images/material_Principled.jpg" alt="Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top." width="60.0%" /><figcaption>Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top.</figcaption>
+<img src="https://ospray.github.io/images/material_Principled.jpg" width="60.0%" alt="" /><figcaption>Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top.</figcaption>
 </figure>
+
+
 
 #### CarPaint
 
@@ -2925,8 +2998,10 @@ suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
 transformations](#texture2d-transformations) are supported as well.
 
 <figure>
-<img src="https://ospray.github.io/images/material_CarPaint.jpg" alt="Rendering of a pearlescent CarPaint material." width="60.0%" /><figcaption>Rendering of a pearlescent CarPaint material.</figcaption>
+<img src="https://ospray.github.io/images/material_CarPaint.jpg" width="60.0%" alt="" /><figcaption>Rendering of a pearlescent CarPaint material.</figcaption>
 </figure>
+
+
 
 #### Metal
 
@@ -2984,7 +3059,7 @@ parameters are
 The main appearance (mostly the color) of the Metal material is
 controlled by the physical parameters `eta` and `k`, the
 wavelength-dependent, complex index of refraction. These coefficients
-are quite counterintuitive but can be found in [published
+are quite counter-intuitive but can be found in [published
 measurements](https://refractiveindex.info/). For accuracy the index of
 refraction can be given as an array of spectral samples in `ior`, each
 sample a triplet of wavelength (in nm), eta, and k, ordered
@@ -3011,8 +3086,10 @@ transformations](#texture2d-transformations) are supported as well) to
 create notable edging effects.
 
 <figure>
-<img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" /><figcaption>Rendering of golden Metal material with textured roughness.</figcaption>
+<img src="https://ospray.github.io/images/material_Metal.jpg" width="60.0%" alt="" /><figcaption>Rendering of golden Metal material with textured roughness.</figcaption>
 </figure>
+
+
 
 #### Alloy
 
@@ -3040,8 +3117,10 @@ a [texture](#texture) handle, prefixed with “`map_`”; [texture
 transformations](#texture2d-transformations) are supported as well.
 
 <figure>
-<img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" /><figcaption>Rendering of a fictional Alloy material with textured color.</figcaption>
+<img src="https://ospray.github.io/images/material_Alloy.jpg" width="60.0%" alt="" /><figcaption>Rendering of a fictional Alloy material with textured color.</figcaption>
 </figure>
+
+
 
 #### Glass
 
@@ -3058,14 +3137,16 @@ pass the type string “`Glass`” to `ospNewMaterial`. Its parameters are
 
 : Parameters of the Glass material.
 
-For convenience, the rather counterintuitive physical attenuation
+For convenience, the rather counter-intuitive physical attenuation
 coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
 trough a glass of thickness `attenuationDistance`.
 
 <figure>
-<img src="https://ospray.github.io/images/material_Glass.jpg" alt="Rendering of a Glass material with orange attenuation." width="60.0%" /><figcaption>Rendering of a Glass material with orange attenuation.</figcaption>
+<img src="https://ospray.github.io/images/material_Glass.jpg" width="60.0%" alt="" /><figcaption>Rendering of a Glass material with orange attenuation.</figcaption>
 </figure>
+
+
 
 #### ThinGlass
 
@@ -3099,12 +3180,16 @@ thickness and allows for easy exchange of parameters with the (real)
 attenuation and thus the material appearance.
 
 <figure>
-<img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" /><figcaption>Rendering of a ThinGlass material with red attenuation.</figcaption>
+<img src="https://ospray.github.io/images/material_ThinGlass.jpg" width="60.0%" alt="" /><figcaption>Rendering of a ThinGlass material with red attenuation.</figcaption>
 </figure>
 
+
+
 <figure>
-<img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." width="60.0%" /><figcaption>Example image of a colored window made with textured attenuation of the ThinGlass material.</figcaption>
+<img src="https://ospray.github.io/images/ColoredWindow.jpg" width="60.0%" alt="" /><figcaption>Example image of a colored window made with textured attenuation of the ThinGlass material.</figcaption>
 </figure>
+
+
 
 #### MetallicPaint
 
@@ -3136,8 +3221,10 @@ that the effect of the metallic flakes is currently only computed on
 average, thus individual flakes are not visible.
 
 <figure>
-<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" /><figcaption>Rendering of a MetallicPaint material.</figcaption>
+<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" width="60.0%" alt="" /><figcaption>Rendering of a MetallicPaint material.</figcaption>
 </figure>
+
+
 
 #### Luminous
 
@@ -3157,8 +3244,10 @@ parameters of lights: [`color` and `intensity`](#lights).
 : Parameters accepted by the Luminous material.
 
 <figure>
-<img src="https://ospray.github.io/images/material_Luminous.jpg" alt="Rendering of a yellow Luminous material." width="60.0%" /><figcaption>Rendering of a yellow Luminous material.</figcaption>
+<img src="https://ospray.github.io/images/material_Luminous.jpg" width="60.0%" alt="" /><figcaption>Rendering of a yellow Luminous material.</figcaption>
 </figure>
+
+
 
 ### Texture
 
@@ -3291,7 +3380,7 @@ realize overscan or film gate, or to emulate a shifted sensor.
 
 #### Perspective Camera
 
-The perspective camera implements a simple thinlens camera for
+The perspective camera implements a simple thin lens camera for
 perspective rendering, supporting optionally depth of field and stereo
 rendering, but no motion blur. It is created by passing the type string
 “`perspective`” to `ospNewCamera`. In addition to the [general
@@ -3369,16 +3458,22 @@ buildings, the whole façade appears sharp, as can be seen in the example
 images below.
 
 <figure>
-<img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." width="60.0%" /><figcaption>Example image created with the perspective camera, featuring depth of field.</figcaption>
+<img src="https://ospray.github.io/images/camera_perspective.jpg" width="60.0%" alt="" /><figcaption>Example image created with the perspective camera, featuring depth of field.</figcaption>
 </figure>
 
-<figure>
-<img src="https://ospray.github.io/images/camera_architectural.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." width="60.0%" /><figcaption>Enabling the <code>architectural</code> flag corrects the perspective projection distortion, resulting in parallel vertical edges.</figcaption>
-</figure>
+
 
 <figure>
-<img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." width="90.0%" /><figcaption>Example 3D stereo image using <code>stereoMode</code> side-by-side.</figcaption>
+<img src="https://ospray.github.io/images/camera_architectural.jpg" width="60.0%" alt="" /><figcaption>Enabling the <code>architectural</code> flag corrects the perspective projection distortion, resulting in parallel vertical edges.</figcaption>
 </figure>
+
+
+
+<figure>
+<img src="https://ospray.github.io/images/camera_stereo.jpg" width="90.0%" alt="" /><figcaption>Example 3D stereo image using <code>stereoMode</code> side-by-side.</figcaption>
+</figure>
+
+
 
 #### Orthographic Camera
 
@@ -3403,8 +3498,10 @@ and `imageEnd`, and both methods can be combined. In any case, the
 `aspect` ratio needs to be set accordingly to get an undistorted image.
 
 <figure>
-<img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." width="60.0%" /><figcaption>Example image created with the orthographic camera.</figcaption>
+<img src="https://ospray.github.io/images/camera_orthographic.jpg" width="60.0%" alt="" /><figcaption>Example image created with the orthographic camera.</figcaption>
 </figure>
+
+
 
 #### Panoramic Camera
 
@@ -3416,8 +3513,10 @@ of 2:1. A panoramic camera is created by passing the type string
 by using the [general parameters](#cameras) understood by all cameras.
 
 <figure>
-<img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." width="90.0%" /><figcaption>Latitude / longitude map created with the panoramic camera.</figcaption>
+<img src="https://ospray.github.io/images/camera_panoramic.jpg" width="90.0%" alt="" /><figcaption>Latitude / longitude map created with the panoramic camera.</figcaption>
 </figure>
+
+
 
 ### Picking
 
@@ -3670,13 +3769,10 @@ exposure bias to match 18% middle gray.
 Rendering
 ---------
 
-### Synchronous Rendering
+### Asynchronous Rendering
 
-To render a frame into the given framebuffer with the given renderer use
-
-``` {.cpp}
-float ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
-```
+Rendering is by default asynchronous (non-blocking), and is done by
+combining a frame buffer, renderer, camera, and world.
 
 What to render and how to render it depends on the renderer’s
 parameters. If the framebuffer supports accumulation (i.e., it was
@@ -3688,21 +3784,18 @@ otherwise `inf` is returned. The estimated variance can be used by the
 application as a quality indicator and thus to decide whether to stop or
 to continue progressive rendering.
 
-### Asynchronous Rendering
-
-Rendering can also be done asynchronously, with a similar interface to
-the above synchronous version. To start an asynchronous render, use
+To start an render task, use
 
 ``` {.cpp}
-OSPFuture ospRenderFrameAsync(OSPFrameBuffer,
-                              OSPRenderer,
-                              OSPCamera,
-                              OSPWorld);
+OSPFuture ospRenderFrame(OSPFrameBuffer,
+                         OSPRenderer,
+                         OSPCamera,
+                         OSPWorld);
 ```
 
-This version returns an `OSPFuture` handle, which can be used to
-synchronize with, cancel, or query for progress of the running task.
-When `ospRenderFrameAsync` is called, there is no guarantee when the
+This returns an `OSPFuture` handle, which can be used to synchronize
+with the application, cancel, or query for progress of the running task.
+When `ospRenderFrame` is called, there is no guarantee when the
 associated task will begin execution.
 
 Progress of a running frame can be queried with the following API
@@ -3776,12 +3869,34 @@ As the given running task runs (as tracked by the `OSPFuture`),
 applications can query a boolean \[0,1\] result if the passed event has
 been completed.
 
-### Asynchronous Rendering and ospCommit()
+### Asynchronously Rendering and ospCommit()
 
-The use of either `ospRenderFrame` or `ospRenderFrameAsync` requires
-that all objects in the scene being rendererd have been committed before
-rendering occurs. If a call to `ospCommit()` happens while a frame is
-rendered, the result is undefined behavior and should be avoided.
+The use of either `ospRenderFrame` or `ospRenderFrame` requires that all
+objects in the scene being rendered have been committed before rendering
+occurs. If a call to `ospCommit()` happens while a frame is rendered,
+the result is undefined behavior and should be avoided.
+
+### Synchronous Rendering
+
+For convenience in certain use cases, `ospray_util.h` provides a
+synchronous version of `ospRenderFrame`:
+
+``` {.cpp}
+float ospRenderFrameBlocking(OSPFrameBuffer,
+                             OSPRenderer,
+                             OSPCamera,
+                             OSPWorld);
+```
+
+This version is the equivalent of:
+
+``` {.cpp}
+- `ospRenderFrame`
+- `ospWait(f, OSP_TASK_FINISHED)`
+- return `ospGetVariance(fb)`
+```
+
+This version is closest to `ospRenderFrame` from OSPRay v1.x.
 
 Parallel Rendering with MPI
 ===========================
@@ -4087,13 +4202,18 @@ Simple Tutorial
 ---------------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.c`[^9]. On Linux build it in the build directory
-with
+at `apps/tutorials/ospTutorial.c`[^8].
+
+An example of building `ospTutorial.c` with CMake can be found in
+`apps/tutorials/ospTutorialFindospray/`.
+
+To build the tutorial on Linux, build it in a build directory with
 
     gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. \
     ./libospray.so -Wl,-rpath,. -o ospTutorial
 
-On Windows build it in the “build\_directory\\\$Configuration” with
+On Windows build it can be build manually in a
+“build\_directory\\\$Configuration” directory with
 
     cl ..\..\apps\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
 
@@ -4115,176 +4235,7 @@ Mini-App Tutorials
 
 OSPRay also ships various mini-apps to showcase OSPRay features. These
 apps are all prefixed with `ospTutorial` and can be found in the
-`tutorials/` directory of the OSPRay source tree. Current tutorials
-include:
-
--   structured volumes
--   unstructured volumes
--   spheres
--   animated spheres
--   subdivision surfaces
-
-More apps will be created in future releases to further demonstrate
-other interesting OSPRay features.
-
-Example Viewer
---------------
-
-![Screenshot of using ospExampleViewer with a scene
-graph.](https://ospray.github.io/images/exampleViewer.jpg)
-
-OSPRay includes an exemplary viewer application `ospExampleViewer`,
-showcasing most features of OSPRay which can be run as
-`./ospExampleViewer [options] <filename>`. The Example Viewer uses the
-ImGui library for user interface controls and is based on a prototype
-OSPRay [scene graph](#scene-graph) interface where nodes can be viewed
-and edited interactively. Updates to scene graph nodes update OSPRay
-state automatically through the scene graph viewer which is enabled by
-pressing ‘g’.
-
-### Exploring the Scene
-
-The GUI shows the entire state of the program under the root scene graph
-node. Expanding nodes down to explore and edit the scene is possible,
-for example a material parameter may be found under
-renderer→world→mesh→material→Kd. Updates to values will be automatically
-propagated to the next render. Individual nodes can be easily found
-using the “Find Node” section, which will find nodes with a given name
-based on the input string. Scene objects can also be selected with the
-mouse by shift-left clicking in the viewer.
-
-Click on nodes to expand their children, whose values can be set by
-dragging or double clicking and typing in values. You can also add new
-nodes where appropriate: for example, when “lights” is expanded right
-clicking on “lights” and selecting create new node and typing in a light
-type, such as “PointLight”, will add it to the scene. Similarly, right
-clicking on “world” and creating an “Importer” node will add a new scene
-importer from a file. Changing the filename to an appropriate file will
-load the scene and propagate the resulting state. Exporting and
-importing the scene graph is only partially supported at the moment
-through “ospsg” files. Currently, any nodes with Data members will break
-this functionality, however right clicking and selecting export on the
-camera or lights nodes for instance will save out their respective state
-which can be imported on the command line. The Example Viewer also
-functions as an OSPRay state debugger – invalid values will be shown in
-red up the hierarchy and will not change the viewer until corrected.
-
-### Volume Rendering
-
-Volumes are loaded into the viewer just as a mesh is. Volume appearance
-is modified according to the transfer function, which will show up in a
-popup window on the GUI after pressing ‘g’. Click and drag across the
-transfer function to set opacity values, and selecting near the bottom
-of the editable transfer function widget sets the opacity to zero. The
-colors themselves can only be modified by selecting from the dropdown
-menu ‘ColorMap’ or importing and exporting json colors. The range that
-the transfer function operates on can be modified on the scene graph
-viewer.
-
-### Controls
-
--   ‘g’ - toggle scene graph display
--   ‘q’ - quit
--   Left click and drag to rotate
--   Right click and drag or mouse wheel to zoom in and out.
--   Mouse-Wheel click will pan the camera.
--   Control-Left clicking on an object will select a model and all of
-    its children which will be displayed in the
--   Shift-Left click on an object will zoom into that part of the scene
-    and set the focal distance.
-
-### Command Line Options
-
--   Running `./ospExampleViewer -help` will bring up a list of command
-    line options. These options allow you to load files, run animations,
-    modify any scene graph state, and many other functions. See the
-    [demos](#demos) page for examples.
--   Supported file importers currently include: `obj`, `ply`, `x3d`,
-    `vtu`, `osp`, `ospsg`, `xml` (rivl), `points`, `xyz`.
-
-### Denoiser
-
-When the example viewer is built with OpenImageDenoise, the denoiser is
-automatically enabled when running the application. It can be toggled
-on/off at runtime via the `useDenoiser` GUI parameter found under the
-framebuffer in the scene graph.
-
-Distributed Viewer
-------------------
-
-The application `ospDistribViewerDemo` demonstrates how to write a
-distributed SciVis style interactive renderer using the distributed MPI
-device. Note that because OSPRay uses sort-last compositing it is up to
-the user to ensure that the data distribution across the nodes is
-suitable. Specifically, each nodes’ data must be convex and disjoint.
-This renderer supports multiple volumes and geometries per node. To
-ensure they are composited correctly you specify a list of bounding
-regions to the model, within these regions can be arbitrary
-volumes/geometries and each rank can have as many regions as needed. As
-long as the regions are disjoint/convex the data will be rendered
-correctly. In this demo we either generate a volume, or load a RAW
-volume file if one is passed on the command line.
-
-### Loading a RAW Volume
-
-To load a RAW volume you must specify the filename (`-f <file>`), the
-data type (`-dtype <dtype>`), the dimensions (`-dims <x> <y> <z>`) and
-the value range for the transfer function (`-range <min> <max>`). For
-example, to run on the [CSAFE data set from the demos
-page](http://www.ospray.org/demos.html#csafe-heptane-gas-dataset) you
-would pass the following arguments:
-
-    mpirun -np <n> ./ospDistribViewerDemo \
-        -f <path to csafe>/csafe-heptane-302-volume.raw \
-        -dtype uchar -dims 302 302 302 -range 0 255
-
-The volume file will then be chunked up into an `x×y×z` grid such that
-$n = xyz$. See `loadVolume` in
-[gensv/generateSciVis.cpp](https://github.com/ospray/ospray/blob/devel/modules/mpi/apps/gensv/generateSciVis.cpp#L213)
-for an example of how to properly load a volume distributed across ranks
-with correct specification of brick positions and ghost voxels for
-interpolation at boundaries. If no volume file data is passed a volume
-will be generated instead, in that case see `makeVolume`.
-
-### Geometry
-
-The viewer can also display some randomly generated sphere geometry if
-you pass `-spheres <n>` where `n` is the number of spheres to generate
-per-node. These spheres will be generated inside the bounding box of the
-region’s volume data.
-
-In the case that you have geometry crossing the boundary of nodes and
-are replicating it on both nodes to render (ghost zones, etc.) the
-region will be used by the renderer to clip rays against allowing to
-split the object between the two nodes, with each rendering half. This
-will keep the regions rendered by each rank disjoint and thus avoid any
-artifacts. For example, if a sphere center is on the border between two
-nodes, each would render half the sphere and the halves would be
-composited to produce the final complete sphere in the image.
-
-### App-initialized MPI
-
-Passing the `-appMPI` flag will have the application initialize MPI
-instead of letting OSPRay do it internally when creating the MPI
-distributed device. In this case OSPRay will not finalize MPI when
-cleaning up the device, allowing the application to use OSPRay for some
-work, shut it down and recreate everything later if needed for
-additional computation, without accidentally shutting down its MPI
-communication.
-
-### Interactive Viewer
-
-Rank 0 will open an interactive window with GLFW and display the
-rendered image. When the application state needs to update (e.g., camera
-or transfer function changes), this information is broadcasted out to
-the other nodes to update their scene data.
-
-Demos
------
-
-Several ready-to-run demos, models and data sets for OSPRay can be found
-at the [OSPRay Demos and Examples](https://www.ospray.org/demos.html)
-page.
+`apps/tutorials/` directory of the OSPRay source tree.
 
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
     be searched in `~/Projects/ispc-v1.9.2-linux`
@@ -4306,11 +4257,8 @@ page.
 
 [^6]: actually a parallelogram
 
-[^7]: If there are multiple ambient lights then their contribution is
-    added
+[^7]: respectively $(127, 127, 255)$ for 8 bit textures
 
-[^8]: respectively $(127, 127, 255)$ for 8 bit textures
-
-[^9]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
+[^8]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
     C99 API via `include/ospray/ospray_cpp.h` is available at
-    `apps/ospTutorial.cpp`.
+    `apps/tutorials/ospTutorial.cpp`.
