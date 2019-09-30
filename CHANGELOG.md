@@ -1,12 +1,59 @@
 Version History
 ---------------
 
-### Changes in v2.0.0:
+### Changes in v2.0.0 (alpha):
 
--   Removal of Slices geometry. Instead, any geometry with volume
+-   New major revision of OSPRay brings API breaking improvements over
+    v1.x. See `doc/ospray2_porting_guide.md` for a deeper description of
+    migrating from v1.x to v2.0 and `doc/api.md` for the latest API
+    documentation
+    -   `ospRenderFrame` now takes all participating objects as
+        function parameters instead of setting some as renderer params
+    -   `ospRenderFrame` is now asynchronous, where the task is managed
+        through a returned `OSPFuture` handle
+    -   The heirarchy of objets in a scene are now more granular to
+        aid in scene construction flexibility and reduce potential
+        object duplication
+    -   Type-specific parameter setting functions have been consolidated
+        into a single `ospSetParam` API call
+    -   C++ wrappers found in `ospray_cpp.h` now automatically track
+        handle lifetimes, therefore applications using them do not need
+        to use `ospRelease` (or the new `ospRetain`) with them: see
+        usage example in `apps/tutorials/ospTutorial.cpp`
+    -   Unused parameters are reported as status messages when
+        `logLevel` is >= 1 (most easily set by enabling OSPRay debug on
+        initialization)
+-   New utility library which adds functions to help with new API
+    migration and reduction of boilerplate code
+    -   Use `ospray_util.h` to access these additional functions
+    -   All utility functions are implemented in terms of the core API
+        found in `ospray.h`, therefore they are compatible with any
+        device backend
+-   Introduction of new Intel® Open Volume Kernel Library (Open VKL)
+    for greatly enhanced volume sampling and rendering features and
+    performance
+-   New CMake superbuild available to build both OSPRay's dependencies
+    and OSPRay itself
+    -   Found in `scripts/superbuild`
+    -   See documentation for more details and example usage
+-   The `ospcommon` library now lives as a stand alone repository and
+    is required to build OSPRay
+-   New support for volumes in the `pathtracer`
+    -   Several parameters are available for performance/quality
+        trade-offs for both photo-realistic and scientific visualization
+        use cases
+-   Simplification of the `scivis` renderer
+    -   Fixed AO lighting and simple ray marched volume rendering for
+        ease of use and performance
+-   New API call for querying the bounds of objects (`OSPWorld`,
+    `OSPInstance`, and `OSPGroup`)
+-   Lights now exist as a parameter to the world instead of the renderer
+-   Removal of `slices` geometry. Instead, any geometry with volume
     texture can be used for slicing (see tutorial
-    `ospTutorialStructuredVolume` for reference)
--   Addition of version query support for the API
+    `ospTutorialStructuredVolume` for example)
+-   Introduction of new `boxes` geometry type
+-   Expansion of information returned by `ospPick`
+-   Addition of API to query version information at runtime
 
 ### Changes in v1.8.5:
 
