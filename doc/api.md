@@ -14,7 +14,7 @@ Initialization and Shutdown
 To use the API, OSPRay must be initialized with a "device". A
 device is the object which implements the API. Creating and initializing
 a device can be done in either of two ways: command line arguments using
-`ospInit` or manually instantiating a device and setting paramters on
+`ospInit` or manually instantiating a device and setting parameters on
 it.
 
 ### Command Line Arguments
@@ -310,7 +310,7 @@ object will automatically get deleted. Passing `NULL` is not an error.
 
 Sometimes applications may want to have more than one reference to an
 object, where it is desirable for the application to increment the
-refcount of an object. This is done with
+reference count of an object. This is done with
 
     void ospRetain(OSPObject);
 
@@ -359,7 +359,7 @@ OSPRay-owned memory.
 
 Shared data arrays require that the application's array memory outlives
 the lifetime of the created `OSPData`, as OSPRay is referring to
-application memory. Where this is not preferrable, applications use
+application memory. Where this is not preferable, applications use
 opaque arrays to allow the `OSPData` to own the lifetime of the array
 memory. However, opaque arrays dictate the cost of copying data into it,
 which should be kept in mind.
@@ -456,7 +456,7 @@ by the size of the source array] content of the `source` array into
 must be valid inside the destination, i.e., in all dimensions,
 `destinationIndex + sourceSize <= destinationSize`. The affected region
 `[destinationIndex, destinationIndex + sourceSize)` is marked as dirty,
-which may be used by OSPRay to only processe or update that sub-region
+which may be used by OSPRay to only process or update that sub-region
 (e.g., updating an acceleration structure). If the destination array is
 shared with OSPData by the application (created with
 `ospNewSharedData`), then
@@ -465,7 +465,7 @@ shared with OSPData by the application (created with
     be used to read opaque data)
   - if source and destination memory overlaps (aliasing), then behaviour
     is undefined
-  - exept if source and destination regions are identical (including
+  - except if source and destination regions are identical (including
     matching strides), which can be used by application to mark that
     region as dirty (instead of the whole `OSPData`)
 
@@ -724,10 +724,10 @@ to `ospNewTransferFunction` and it is controlled by these parameters:
 
 ### VolumetricModels
 
-Volumes in OSPRay are given volume rendering apperance information
+Volumes in OSPRay are given volume rendering appearance information
 through VolumetricModels. This decouples the physical representation of
 the volume (and possible acceleration structures it contains) to
-rendering-specific paramters (where more than one set may exist
+rendering-specific parameters (where more than one set may exist
 concurrently). To create a volume instance, call
 
     OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
@@ -1102,7 +1102,7 @@ The sphere light (or the special case point light) is a light emitting
 uniformly in all directions from the surface towards the outside.
 It does not emit any light towards the inside of the sphere.
 It is created by passing the type string "`sphere`" to `ospNewLight`.
-In addition to the [generalparameters](#lights) understood by all lights
+In addition to the [general parameters](#lights) understood by all lights
 the sphere light supports the following special parameters:
 
   Type      Name      Description
@@ -1286,7 +1286,7 @@ empty arrays if there are no instances (though there will be nothing to
 render).
 
 Applications can query the world (axis-aligned) bounding box after the
-world has been commited. To get this information, call
+world has been committed. To get this information, call
 
     OSPBounds ospGetBounds(OSPObject);
 
@@ -1496,7 +1496,7 @@ Note that currently only the path tracer implements colored transparency
 with `Tf`.
 
 Normal mapping can simulate small geometric features via the texture
-`map_Bump`. The normals $n$ in the normal map are wrt. the local
+`map_Bump`. The normals $n$ in the normal map are with respect to the local
 tangential shading coordinate system and are encoded as $½(n+1)$, thus a
 texel $(0.5, 0.5, 1)$^[respectively $(127, 127, 255)$ for 8\ bit
 textures] represents the unperturbed shading normal $(0, 0, 1)$. Because
@@ -1688,7 +1688,7 @@ type string "`Metal`" to `ospNewMaterial`. Its parameters are
 The main appearance (mostly the color) of the Metal material is
 controlled by the physical parameters `eta` and `k`, the
 wavelength-dependent, complex index of refraction. These coefficients
-are quite counterintuitive but can be found in [published
+are quite counter-intuitive but can be found in [published
 measurements](https://refractiveindex.info/). For accuracy the index of
 refraction can be given as an array of spectral samples in `ior`, each
 sample a triplet of wavelength (in nm), eta, and k, ordered
@@ -1759,7 +1759,7 @@ the type string "`Glass`" to `ospNewMaterial`. Its parameters are
   ------ -------------------- --------  -----------------------------------
   : Parameters of the Glass material.
 
-For convenience, the rather counterintuitive physical attenuation
+For convenience, the rather counter-intuitive physical attenuation
 coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
 trough a glass of thickness `attenuationDistance`.
@@ -1981,7 +1981,7 @@ shifted sensor.
 
 #### Perspective Camera
 
-The perspective camera implements a simple thinlens camera for
+The perspective camera implements a simple thin lens camera for
 perspective rendering, supporting optionally depth of field and stereo
 rendering, but no motion blur. It is created by passing the type string
 "`perspective`" to `ospNewCamera`. In addition to the [general
@@ -2344,7 +2344,7 @@ been completed.
 ### Asynchronously Rendering and ospCommit()
 
 The use of either `ospRenderFrame` or `ospRenderFrame` requires
-that all objects in the scene being rendererd have been committed before
+that all objects in the scene being rendered have been committed before
 rendering occurs. If a call to `ospCommit()` happens while a frame is
 rendered, the result is undefined behavior and should be avoided.
 
