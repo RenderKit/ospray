@@ -1,9 +1,9 @@
-# OSPRay 2.0.0 Porting Guide
+# OSPRay v2.0.0 Porting Guide
 
-OSPRay 2.0.0 introduces a number of new features and updates, as well as some
+OSPRay v2.0.0 introduces a number of new features and updates, as well as some
 API changes. This guide is intended as an introduction to the new features
 and the concepts behind them, and as a guide to porting applications using
-OSPRay 1.8.x to 2.0.0.
+OSPRay v1.8.x to v2.0.0.
 
 ## Parameters
 
@@ -68,7 +68,7 @@ parameters, and then place the object into an `OSPModel` via, for example,
     ospRelease(mesh);
     ospCommit(world);
 
-In OSPRay 2.0.0, there is now an `OSPWorld`, which effectively replaces the old
+In OSPRay v2.0.0, there is now an `OSPWorld`, which effectively replaces the old
 `OSPModel`.  In addition, there are now 3 new objects that exist "in between"
 the geometry and the world: `OSPGeometricModel`, `OSPGroup`, and `OSPInstance`.
 There is also an `OSPVolumetricModel` equivalent for working with `OSPVolume`
@@ -107,7 +107,7 @@ While this looks more complex at first, the new hierarchy structure
 provides more fine control over appearance information and instance
 transformations.
 
-In OSPRay 1.x, geometries and volumes contained both structural and
+In OSPRay v1.x, geometries and volumes contained both structural and
 appearance information which limited their reuse in other objets. For
 example, the volume's transfer function can now be different between
 an isosurface, slice, and rendered volume all in the same scene without
@@ -170,11 +170,11 @@ count, and can delay automatic deletion.
 
 ## Updated Public Parameter Names
 
-OSPRay 2.0.0 has updated public parameter names (the strings used in
+OSPRay v2.0.0 has updated public parameter names (the strings used in
 `ospSetParam`) to a more consistent naming convention.  OSPRay now
 will print a warning (visible if debug logs are enabled) if a parameter
 provided by the user is not used by an object. This can help catch cases where
-applications are using parameter names from OSPRay 1.8.5 or mistyped names.
+applications are using parameter names from OSPRay v1.8.5 or mistyped names.
 Some objects have required parameters. In these cases, OSPRay will terminate
 with an error message indicating which object and which parameter.
 
@@ -380,7 +380,7 @@ provides wrappers to the familiar calls listed below:
 
     ospSetObjectAsData(OSPObject, const char *n, OSPDataType type, OSPObject obj);
 
-OSPRay 1.x calls to `ospSetData` have been replaced with `ospSetObject`. 
+OSPRay v1.x calls to `ospSetData` have been replaced with `ospSetObject`. 
 Convenience wrappers have also been provided to specialize `ospNewData`, and the
 new `ospNewSharedData` and `ospCopyData` APIs.
 
