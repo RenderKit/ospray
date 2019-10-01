@@ -107,7 +107,7 @@ While this looks more complex at first, the new hierarchy structure
 provides more fine control over appearance information and instance
 transformations.
 
-In OSPRay v1.x, geometries and volumes contained both structural and
+In OSPRay 1.x, geometries and volumes contained both structural and
 appearance information which limited their reuse in other objets. For
 example, the volume's transfer function can now be different between
 an isosurface, slice, and rendered volume all in the same scene without
@@ -380,6 +380,7 @@ provides wrappers to the familiar calls listed below:
 
     ospSetObjectAsData(OSPObject, const char *n, OSPDataType type, OSPObject obj);
 
+OSPRay 1.x calls to `ospSetData` have been replaced with `ospSetObject`. 
 Convenience wrappers have also been provided to specialize `ospNewData`, and the
 new `ospNewSharedData` and `ospCopyData` APIs.
 
