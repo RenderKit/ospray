@@ -264,3 +264,16 @@ typedef enum
   OSP_AMR_FINEST,
   OSP_AMR_OCTANT
 } OSPAMRMethod;
+
+// Subdivision modes
+typedef enum
+# if __cplusplus >= 201103L
+: uint8_t
+#endif
+{
+  OSP_SUBDIVISION_NO_BOUNDARY,
+  OSP_SUBDIVISION_SMOOTH_BOUNDARY,
+  OSP_SUBDIVISION_PIN_CORNERS,
+  OSP_SUBDIVISION_PIN_BOUNDARY,
+  OSP_SUBDIVISION_PIN_ALL
+} OSPSubdivisionMode;
