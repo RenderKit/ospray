@@ -28,7 +28,10 @@ get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
   INTERFACE_INCLUDE_DIRECTORIES)
 
 ispc_include_directories(
+  ${CMAKE_SOURCE_DIR}/ospray/include
+  ${CMAKE_SOURCE_DIR}/ospray
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${EMBREE_INCLUDE_DIRS}
   ${OPENVKL_INCLUDE_DIRS})
 
 add_library(ospray_module_mpi SHARED)
