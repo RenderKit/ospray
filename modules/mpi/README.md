@@ -1,14 +1,144 @@
 OSPRay MPI Module
-======
+=================
 
 This is release v2.0.0 (alpha) of Intel® OSPRay's MPI Module. For changes and new
 features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
 for more information.
 
-MPI Module Overview
-===============
+OSPRay MPI Module Overview
+==========================
+
+Intel OSPRay is an **o**pen source, **s**calable, and **p**ortable
+**ray** tracing engine for high-performance, high-fidelity visualization
+on Intel Architecture CPUs. OSPRay is part of the [Intel oneAPI
+Rendering Toolkit](https://software.intel.com/en-us/rendering-framework)
+and is released under the permissive [Apache 2.0
+license](http://www.apache.org/licenses/LICENSE-2.0).
+
+The purpose of the MPI module for OSPRay is to provide distributed rendering
+capabilities for OSPRay. The module enables image- and data-parallel rendering
+across HPC clusters using MPI, allowing applications to transparently distribute
+rendering work, or to render data sets which are too large to fit in memory on
+a single machine.
+
+OSPRay internally builds on top of [Intel
+Embree](https://embree.github.io/) and [ISPC (Intel SPMD Program
+Compiler)](https://ispc.github.io/), and fully exploits modern
+instruction sets like Intel SSE4, AVX, AVX2, and AVX-512 to achieve high
+rendering performance, thus a CPU with support for at least SSE4.1 is
+required to run OSPRay.
+The MPI module requires an MPI library which supports at least
+`MPI_THREAD_SERIALIZED`.
 
 
 OSPRay Support and Contact
 --------------------------
+OSPRay is under active development, and though we do our best to
+guarantee stable release versions a certain number of bugs,
+as-yet-missing features, inconsistencies, or any other issues are still
+possible. Should you find any such issues please report them immediately
+via [OSPRay's GitHub Issue
+Tracker](https://github.com/ospray/OSPRay/issues) (or, if you should
+happen to have a fix for it, you can also send us a pull request).
+For bugs specific to the MPI module and distributed rendering, please report
+them to the [MPI Module's GitHub Issue Tracker](https://github.com/ospray/module_mpi/issues)
+For missing features please contact us via email at
+<a href="mailto:ospray@googlegroups.com" class="email">ospray@googlegroups.com</a>.
+
+For recent news, updates, and announcements, please see our complete
+[news/updates](https://www.ospray.org/news.html) page.
+
+Join our [mailing
+list](https://groups.google.com/forum/#!forum/ospray-announce/join) to
+receive release announcements and major news regarding OSPRay.
+
+[![Join the chat at
+https://gitter.im/ospray/ospray](https://ospray.github.io/images/gitter_badge.svg)](https://gitter.im/ospray/ospray?utm_source=badge&utm_medium=badge&utm_content=badge)
+
+Building the MPI Module
+=======================
+
+The latest MPI module sources are always available at the [MPI Module GitHub
+repository](https://github.com/ospray/module_mpi). The default `master`
+branch should always point to the latest bugfix release.
+
+Prerequisites
+-------------
+
+OSPRay v2.0.0 (alpha) is required, and can be built from source following the
+instructions on the [OSPRay GitHub Repository](http://github.com/ospray/ospray).
+After getting the OSPRay source code clone this module into the `modules/`
+subdirectory of OSPRay, and enable the MPI module by setting
+`OSPRAY_MODULE_MPI=ON` in CMake. When building OSPRay with
+`OSPRAY_ENABLE_APPS=ON` the MPI module's [tutorial apps](tutorials/) will be built,
+which demonstrate the various features of the module.
+
+
+Documentation
+=============
+
+The MPI module provides two OSPRay devices to allow applications to leverage
+distributed rendering capabilities. The `mpi_offload` device provides transparent
+image-parallel rendering, where the same OSPRay application written for local
+rendering can be replicated across multiple nodes to distribute the rendering
+work. The `mpi_distributed` device allows MPI distributed
+applications to use OSPRay for distributed rendering, where each rank can
+render and independent piece of a global data set, or hybrid rendering where
+ranks partially or completely share data.
+
+
+MPI Offload Rendering
+---------------------
+
+The `mpi_offload` device can be used to distribute image rendering tasks across
+a cluster without requiring modifications to the application itself. Existing
+applications using OSPRay for local rendering can be passed the `--osp:mpi` flag
+to indicate that the `mpi_offload` device should be used for image-parallel
+rendering. For example, the `ospTutorialBoxes` application can be run as:
+
+```
+mpirun -n <N> ./ospTutorialBoxes --osp:mpi
+```
+
+and will automatically distribute the image rendering tasks among the
+corresponding `N` nodes. Note that in this configuration rank 0 will act as
+a master/application rank, and will run the user application code but not
+perform rendering locally. Thus a minimum of 2 ranks are required, one master
+to run the application and one worker to perform the rendering. Running with
+3 ranks for example would now distribute half the image rendering work to rank 1
+and half to rank 2.
+
+If more control is required over the placement of ranks to nodes, or you want
+to run a worker rank on the master node as well you can run the application
+and the `ospray_mpi_worker` program through MPI's MPMD mode:
+
+```
+mpirun -n 1 ./ospTutorialBoxes --osp:mpi : -n <N> ./ospray_mpi_worker
+```
+
+Finally, you can also run the workers in a server mode on a remote machine
+and connect your application to them over a socket. This allows remote
+rendering on a large cluster while displaying on a local machine (e.g., a laptop)
+where the two devices may not be able to connect over MPI. First, launch
+the workers in `mpi-listen` mode:
+
+```
+mpirun -n <N> ./ospray_mpi_worker --osp:mpi-listen
+```
+
+The workers will print out a port number to connect to, e.g.,
+`#osp: Listening on port #####` You can then run your application in the
+`mpi-connect` mode, and pass the host name of the first worker rank and this
+port number:
+
+```
+./ospTutorialBoxes --osp:mpi-connect <worker rank 0 host>:<port>
+```
+
+MPI Distributed Rendering
+-------------------------
+
+While MPI Offload rendering is used to transparently distribute rendering work
+without requiring modification to the application, MPI Distributed rendering
+is targetted at use of OSPRay within MPI-parallel applications.
 
