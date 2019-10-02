@@ -527,8 +527,18 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
     nbytes += numItems.z * stride.z;
   }
 
+  /*
   std::shared_ptr<utility::AbstractArray<uint8_t>> dataView =
       std::make_shared<utility::ArrayView<uint8_t>>(
+          const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
+          nbytes);
+          */
+  // TODO NOTE: For backwards compatabiliy we can't assume the data will
+  // actually be kept alive because of how the newData wrapper util is
+  // implemented. What we'd want to do in the future is compact when given a
+  // strided data, but share when given a native sized data.
+  std::shared_ptr<utility::AbstractArray<uint8_t>> dataView =
+      std::make_shared<utility::OwnedArray<uint8_t>>(
           const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
           nbytes);
 
@@ -877,8 +887,8 @@ OSPFuture MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
   const ObjectHandle worldHandle = (ObjectHandle &)_world;
 
   networking::BufferWriter writer;
-  writer << work::RENDER_FRAME << fbHandle << rendererHandle
-         << cameraHandle << worldHandle << futureHandle;
+  writer << work::RENDER_FRAME << fbHandle << rendererHandle << cameraHandle
+         << worldHandle << futureHandle;
   sendWork(writer.buffer);
   return (OSPFuture)(int64)futureHandle;
 }
