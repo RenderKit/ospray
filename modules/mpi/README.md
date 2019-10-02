@@ -140,5 +140,78 @@ MPI Distributed Rendering
 
 While MPI Offload rendering is used to transparently distribute rendering work
 without requiring modification to the application, MPI Distributed rendering
-is targetted at use of OSPRay within MPI-parallel applications.
+is targetted at use of OSPRay within MPI-parallel applications. The MPI
+distributed device can be selected by loading the `mpi` module, and manually
+creating and using an instance of the `mpi_distributed` device.
+
+```c
+ospLoadModule("mpi");
+
+OSPDevice mpiDevice = ospNewDevice("mpi_distributed");
+ospDeviceCommit(mpiDevice);
+ospSetCurrentDevice(mpiDevice);
+```
+
+Your application can either initialize MPI before-hand, ensuring that
+`MPI_THREAD_SERIALIZED` or higher is supported, or allow the device to
+initialize MPI on commit. When using the distributed device each rank can
+specify independent local data using the OSPRay API, as if rendering locally.
+However, when calling `ospRenderFrameAsync` the ranks will work collectively
+to render the data. The distributed device supports both image-parallel,
+where the data is replicated, and data-parallel, where the data is distributed,
+rendering modes.
+
+### Image Parallel Rendering in the MPI Distributed Device
+
+If all ranks specify the exact same data, the distributed device can be used
+for image-parallel rendering. This works identical to the offload device,
+except that the MPI-aware application is able to load data in parallel on each
+rank rather than loading on the master and shipping data out to the workers.
+When a parallel file system is available, this can improve data load times.
+Image-parallel rendering is selected by specifying the same data on each rank,
+and using any of the existing local renderers (e.g., scivis, pathtracer).
+See [ospMPIDistributedTutorialReplicatedData](tutorials/ospMPIDistributedTutorialReplicatedData.cpp)
+for an example.
+
+### Data Parallel Rendering in the MPI Distributed Device
+
+The MPI Distributed device also supports data-parallel rendering with sort-last
+compositing. Each rank can specify a different piece of data, as long as the
+bounding boxes of each rank's data are non-overlapping. The rest of the
+scene setup is similar to local rendering; however, for distributed rendering
+only the `mpi_raycast` renderer is supported. This renderer implements a subset
+of the `scivis` rendering features which are suitable for implementation in
+a distributed environment.
+
+By default the aggregate bounding box of the instances in the local world will
+be used as the bounds of that rank's data. However, when using ghost zones for
+volume interpolation, geometry or ambient occlusion, each rank's data can
+overlap. To clip these non-owned overlap regions out a set of `regions` can
+pass as a parameter to the `OSPWorld` being rendered. Each rank can specify
+one or more non-overlapping `box3f`'s which bound the portions of its local
+data which it is reponsible for rendering.
+See the [ospMPIDistributedTutorialStructuredVolume](tutorials/ospMPIDistributedTutorialStructuredVolume)
+for an example.
+
+Finally, the MPI distributed device also supports hybrid-parallel rendering,
+where multiple ranks can share a single piece of data. For each shared piece
+of data the rendering work will be assigned image-parallel among the ranks.
+Partially-shared regions are determined by finding those ranks specifying data
+with the same bounds (or `regions`) and merging them. See the
+[ospMPIDistributedTutorialPartiallyReplicatedData](tutorials/ospMPIDistributedTutorialPartiallyReplicatedData)
+for an example.
+
+
+Interaction With User Modules
+----------------------------
+
+The MPI Offload rendering mode trivially supports user modules, with the caveat
+that attempting to share data directly with the application (e.g., passing a `void*`
+or other tricks to the module) will not work in a distributed environment.
+Instead, use the `ospNewSharedData` API to share data from the application with
+OSPRay, which will in turn be copied over the network to the workers.
+
+The MPI Distributed device also supports user modules, as all that is required
+for compositing the distributed data are the bounds of each rank's local data.
+
 
