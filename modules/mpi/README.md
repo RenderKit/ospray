@@ -190,7 +190,7 @@ overlap. To clip these non-owned overlap regions out a set of `regions` can
 pass as a parameter to the `OSPWorld` being rendered. Each rank can specify
 one or more non-overlapping `box3f`'s which bound the portions of its local
 data which it is reponsible for rendering.
-See the [ospMPIDistributedTutorialStructuredVolume](tutorials/ospMPIDistributedTutorialStructuredVolume)
+See the [ospMPIDistributedTutorialStructuredVolume](tutorials/ospMPIDistributedTutorialStructuredVolume.cpp)
 for an example.
 
 Finally, the MPI distributed device also supports hybrid-parallel rendering,
@@ -198,7 +198,7 @@ where multiple ranks can share a single piece of data. For each shared piece
 of data the rendering work will be assigned image-parallel among the ranks.
 Partially-shared regions are determined by finding those ranks specifying data
 with the same bounds (or `regions`) and merging them. See the
-[ospMPIDistributedTutorialPartiallyReplicatedData](tutorials/ospMPIDistributedTutorialPartiallyReplicatedData)
+[ospMPIDistributedTutorialPartiallyReplicatedData](tutorials/ospMPIDistributedTutorialPartiallyReplicatedData.cpp)
 for an example.
 
 
