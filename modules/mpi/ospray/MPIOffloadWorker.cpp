@@ -62,7 +62,7 @@ void runWorker(bool useMPIFabric)
   ospDeviceCommit(distribDevice);
   ospSetCurrentDevice(distribDevice);
 
-  char hostname[HOST_NAME_MAX];
+  char hostname[HOST_NAME_MAX] = {0};
   gethostname(hostname, HOST_NAME_MAX);
   postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
       << "#w: running MPI worker process " << workerRank() << "/"
