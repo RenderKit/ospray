@@ -166,16 +166,13 @@ communicator will participate in rendering.
 
 | Type  | Name              | Default             | Description                |
 |:------|:------------------|--------------------:|:---------------------------|
-| void* | worldCommunicator |    MPI\_COMM\_WORLD | The MPI communicator which |
-|       |                   |                     | the OSPRay workers should  |
-|       |                   |                     | treat as their world       |
+| void* | worldCommunicator |    MPI\_COMM\_WORLD | The MPI communicator which the OSPRay workers should treat as their world
 
 : Parameters specific to the distributed `mpi_distributed` Device.
 
 | Type         | Name    | Default| Description                                |
 |:-------------|:--------|-------:|:-------------------------------------------|
-| OSPBox3f\[\] | regions |    NULL| A list of bounding boxes which bound the   |
-|              |         |        | owned local data to be rendered by the rank|
+| OSPBox3f\[\] | regions |    NULL| A list of bounding boxes which bound the owned local data to be rendered by the rank |
 
 : Parameters specific to the distributed `OSPWorld`.
 
@@ -183,10 +180,7 @@ communicator will participate in rendering.
 | Type         | Name    | Default| Description                                |
 |:-------------|:--------|-------:|:-------------------------------------------|
 | aoSamples    | int     |      0 | The number of AO samples to take per-pixel |
-| aoRadius     | float   |   1e20f| The AO ray length to use. Note that if the |
-|              |         |        | AO ray would have crossed a rank boundary  |
-|              |         |        | and ghost geometry is not available, there |
-|              |         |        | will be visible artifacts in the shading.  |
+| aoRadius     | float   |   1e20f| The AO ray length to use. Note that if the AO ray would have crossed a rank boundary and ghost geometry is not available, there  will be visible artifacts in the shading. |
 
 : Parameters specific to the `mpi_raycast` renderer.
 
