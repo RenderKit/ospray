@@ -159,7 +159,37 @@ specify independent local data using the OSPRay API, as if rendering locally.
 However, when calling `ospRenderFrameAsync` the ranks will work collectively
 to render the data. The distributed device supports both image-parallel,
 where the data is replicated, and data-parallel, where the data is distributed,
-rendering modes.
+rendering modes. The `mpi_distributed` device will by default use each rank in
+`MPI_COMM_WORLD` as a render worker; however, it can also take a specific MPI
+communicator to use as the world communicator. Only those ranks in the specified
+communicator will participate in rendering.
+
+| Type  | Name              | Default             | Description                |
+|:------|:------------------|--------------------:|:---------------------------|
+| void* | worldCommunicator |    MPI\_COMM\_WORLD | The MPI communicator which |
+|       |                   |                     | the OSPRay workers should  |
+|       |                   |                     | treat as their world       |
+
+: Parameters specific to the distributed `mpi_distributed` Device.
+
+| Type         | Name    | Default| Description                                |
+|:-------------|:--------|-------:|:-------------------------------------------|
+| OSPBox3f\[\] | regions |    NULL| A list of bounding boxes which bound the   |
+|              |         |        | owned local data to be rendered by the rank|
+
+: Parameters specific to the distributed `OSPWorld`.
+
+
+| Type         | Name    | Default| Description                                |
+|:-------------|:--------|-------:|:-------------------------------------------|
+| aoSamples    | int     |      0 | The number of AO samples to take per-pixel |
+| aoRadius     | float   |   1e20f| The AO ray length to use. Note that if the |
+|              |         |        | AO ray would have crossed a rank boundary  |
+|              |         |        | and ghost geometry is not available, there |
+|              |         |        | will be visible artifacts in the shading.  |
+
+: Parameters specific to the `mpi_raycast` renderer.
+
 
 ### Image Parallel Rendering in the MPI Distributed Device
 
