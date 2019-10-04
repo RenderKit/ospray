@@ -47,7 +47,7 @@ namespace ospray {
 
     // Device definitions /////////////////////////////////////////////////////
 
-    std::shared_ptr<Device> Device::current;
+    memory::IntrusivePtr<Device> Device::current;
     uint32_t Device::logLevel = 0;
 
     Device *Device::createDevice(const char *type)
@@ -149,7 +149,7 @@ namespace ospray {
 
     bool deviceIsSet()
     {
-      return Device::current.get() != nullptr;
+      return Device::current.ptr != nullptr;
     }
 
     Device &currentDevice()

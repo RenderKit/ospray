@@ -17,6 +17,7 @@
 #pragma once
 
 // ospcommon
+#include "ospcommon/memory/IntrusivePtr.h"
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "../common/OSPCommon.h"
@@ -30,10 +31,11 @@ namespace ospray {
   namespace api {
 
     /*! abstract base class of all 'devices' that implement the ospray API */
-    struct OSPRAY_CORE_INTERFACE Device : public utility::ParameterizedObject
+    struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
+                                          public utility::ParameterizedObject
     {
       /*! singleton that points to currently active device */
-      static std::shared_ptr<Device> current;
+      static memory::IntrusivePtr<Device> current;
 
       Device()                   = default;
       virtual ~Device() override = default;

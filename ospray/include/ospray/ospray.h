@@ -180,6 +180,10 @@ extern "C" {
   // Commit parameters on a given device
   OSPRAY_INTERFACE void ospDeviceCommit(OSPDevice);
 
+  // OSPDevice handle lifetimes
+  OSPRAY_INTERFACE void ospDeviceRelease(OSPDevice);
+  OSPRAY_INTERFACE void ospDeviceRetain(OSPDevice);
+
   /* Load module 'name' from shard lib libospray_module_<name>.so
 
      returns OSPError value to report any errors during initialization */
