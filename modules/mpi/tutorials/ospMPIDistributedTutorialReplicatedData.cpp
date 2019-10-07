@@ -31,6 +31,7 @@
 #include <random>
 #include "GLFWDistribOSPRayWindow.h"
 #include "ospray_testing.h"
+#include "tutorial_util.h"
 
 using namespace ospcommon;
 using namespace ospcommon::math;
@@ -40,8 +41,6 @@ static std::string renderer_type = "pathtracer";
 // NOTE: We use our own here because both ranks need to have the same random
 // seed used when generating the spheres
 OSPTestingGeometry createSpheres(int mpiRank);
-OSPInstance createGroundPlane(
-    std::string renderer_type, float planeExtent = 1.5f);
 
 int main(int argc, char **argv)
 {
@@ -165,7 +164,7 @@ OSPTestingGeometry createSpheres(int mpiRank)
 
   // populate the spheres
   box3f bounds;
-  std::vector<Sphere> spheres(numSpheres);
+  static std::vector<Sphere> spheres(numSpheres);
   std::vector<vec4f> colors(numSpheres);
 
   for (auto &s : spheres) {
@@ -185,27 +184,17 @@ OSPTestingGeometry createSpheres(int mpiRank)
     c.w = colorDistribution(gen);
   }
 
-  // Make the shared data views and copy in the data
-  OSPData positionData;
-  {
-    OSPData d =
-        ospNewSharedData(spheres.data(), OSP_VEC3F, numSpheres, sizeof(Sphere));
-    positionData = ospNewData1D(OSP_VEC3F, numSpheres);
-    ospCopyData1D(d, positionData, 0);
-    ospRelease(d);
-  }
-
-  OSPData radiusData;
-  {
-    OSPData d = ospNewSharedData(
-        reinterpret_cast<uint8_t *>(spheres.data()) + sizeof(vec3f),
-        OSP_FLOAT,
-        numSpheres,
-        sizeof(Sphere));
-    radiusData = ospNewData1D(OSP_FLOAT, numSpheres);
-    ospCopyData1D(d, radiusData, 0);
-    ospRelease(d);
-  }
+  // create a data object with all the sphere information
+  OSPData positionData =
+      ospNewSharedData((char *)spheres.data() + offsetof(Sphere, center),
+          OSP_VEC3F,
+          numSpheres,
+          sizeof(Sphere));
+  OSPData radiusData =
+      ospNewSharedData((char *)spheres.data() + offsetof(Sphere, radius),
+          OSP_FLOAT,
+          numSpheres,
+          sizeof(Sphere));
 
   // create the sphere geometry, and assign attributes
   OSPGeometry spheresGeometry = ospNewGeometry("spheres");
@@ -220,7 +209,7 @@ OSPTestingGeometry createSpheres(int mpiRank)
 
   OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, colors.data());
 
-  ospSetObject(model, "prim.color", colorData);
+  ospSetObject(model, "color", colorData);
 
   // create glass material and assign to geometry
   OSPMaterial glassMaterial =
@@ -228,7 +217,9 @@ OSPTestingGeometry createSpheres(int mpiRank)
   ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
   ospCommit(glassMaterial);
 
-  ospSetObject(model, "material", glassMaterial);
+  ospSetObjectAsData(model, "material", OSP_MATERIAL, glassMaterial);
+
+  ospCommit(model);
 
   // release handles we no longer need
   ospRelease(positionData);
@@ -236,13 +227,9 @@ OSPTestingGeometry createSpheres(int mpiRank)
   ospRelease(colorData);
   ospRelease(glassMaterial);
 
-  ospCommit(model);
-
   OSPGroup group = ospNewGroup();
-  auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
-  ospSetObject(group, "geometry", models);
+  ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
   ospCommit(group);
-  ospRelease(models);
 
   OSPInstance instance = ospNewInstance(group);
   ospCommit(instance);
@@ -252,163 +239,7 @@ OSPTestingGeometry createSpheres(int mpiRank)
   retval.model = model;
   retval.group = group;
   retval.instance = instance;
-  retval.bounds = reinterpret_cast<osp_box3f &>(bounds);
 
+  std::memcpy(&retval.bounds, &bounds, sizeof(bounds));
   return retval;
-}
-
-OSPInstance createGroundPlane(std::string renderer_type, float planeExtent)
-{
-  OSPGeometry planeGeometry = ospNewGeometry("quads");
-
-  struct Vertex
-  {
-    vec3f position;
-    vec3f normal;
-    vec4f color;
-  };
-
-  struct QuadIndex
-  {
-    int x;
-    int y;
-    int z;
-    int w;
-  };
-
-  std::vector<Vertex> vertices;
-  std::vector<QuadIndex> quadIndices;
-
-  // ground plane
-  int startingIndex = vertices.size();
-
-  const vec3f up = vec3f{0.f, 1.f, 0.f};
-  const vec4f gray = vec4f{0.9f, 0.9f, 0.9f, 0.75f};
-
-  vertices.push_back(Vertex{vec3f{-planeExtent, -1.f, -planeExtent}, up, gray});
-  vertices.push_back(Vertex{vec3f{planeExtent, -1.f, -planeExtent}, up, gray});
-  vertices.push_back(Vertex{vec3f{planeExtent, -1.f, planeExtent}, up, gray});
-  vertices.push_back(Vertex{vec3f{-planeExtent, -1.f, planeExtent}, up, gray});
-
-  quadIndices.push_back(QuadIndex{
-      startingIndex, startingIndex + 1, startingIndex + 2, startingIndex + 3});
-
-  // stripes on ground plane
-  const float stripeWidth = 0.025f;
-  const float paddedExtent = planeExtent + stripeWidth;
-  const size_t numStripes = 10;
-
-  const vec4f stripeColor = vec4f{1.0f, 0.1f, 0.1f, 1.f};
-
-  for (size_t i = 0; i < numStripes; i++) {
-    // the center coordinate of the stripe, either in the x or z direction
-    const float coord =
-        -planeExtent + float(i) / float(numStripes - 1) * 2.f * planeExtent;
-
-    // offset the stripes by an epsilon above the ground plane
-    const float yLevel = -1.f + 1e-3f;
-
-    // x-direction stripes
-    startingIndex = vertices.size();
-
-    vertices.push_back(Vertex{
-        vec3f{-paddedExtent, yLevel, coord - stripeWidth}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{paddedExtent, yLevel, coord - stripeWidth}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{-paddedExtent, yLevel, coord + stripeWidth}, up, stripeColor});
-
-    quadIndices.push_back(QuadIndex{startingIndex,
-        startingIndex + 1,
-        startingIndex + 2,
-        startingIndex + 3});
-
-    // z-direction stripes
-    startingIndex = vertices.size();
-
-    vertices.push_back(Vertex{
-        vec3f{coord - stripeWidth, yLevel, -paddedExtent}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{coord + stripeWidth, yLevel, -paddedExtent}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{coord + stripeWidth, yLevel, paddedExtent}, up, stripeColor});
-    vertices.push_back(Vertex{
-        vec3f{coord - stripeWidth, yLevel, paddedExtent}, up, stripeColor});
-
-    quadIndices.push_back(QuadIndex{startingIndex,
-        startingIndex + 1,
-        startingIndex + 2,
-        startingIndex + 3});
-  }
-
-  // create OSPRay data objects
-  std::vector<vec3f> positionVector;
-  std::vector<vec3f> normalVector;
-  std::vector<vec4f> colorVector;
-
-  std::transform(vertices.begin(),
-      vertices.end(),
-      std::back_inserter(positionVector),
-      [](Vertex const &v) { return v.position; });
-  std::transform(vertices.begin(),
-      vertices.end(),
-      std::back_inserter(normalVector),
-      [](Vertex const &v) { return v.normal; });
-  std::transform(vertices.begin(),
-      vertices.end(),
-      std::back_inserter(colorVector),
-      [](Vertex const &v) { return v.color; });
-
-  OSPData positionData =
-      ospNewData(vertices.size(), OSP_VEC3F, positionVector.data());
-  OSPData normalData =
-      ospNewData(vertices.size(), OSP_VEC3F, normalVector.data());
-  OSPData colorData =
-      ospNewData(vertices.size(), OSP_VEC4F, colorVector.data());
-  OSPData indexData =
-      ospNewData(quadIndices.size(), OSP_VEC4UI, quadIndices.data());
-
-  // set vertex / index data on the geometry
-  ospSetObject(planeGeometry, "vertex.position", positionData);
-  ospSetObject(planeGeometry, "vertex.normal", normalData);
-  ospSetObject(planeGeometry, "vertex.color", colorData);
-  ospSetObject(planeGeometry, "index", indexData);
-
-  // finally, commit the geometry
-  ospCommit(planeGeometry);
-
-  OSPGeometricModel model = ospNewGeometricModel(planeGeometry);
-
-  ospRelease(planeGeometry);
-
-  // create and assign a material to the geometry
-  OSPMaterial material = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
-  ospCommit(material);
-
-  ospSetObject(model, "material", material);
-
-  ospCommit(model);
-
-  OSPGroup group = ospNewGroup();
-
-  OSPData models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
-  ospSetObject(group, "geometry", models);
-  ospCommit(group);
-
-  OSPInstance instance = ospNewInstance(group);
-  ospCommit(instance);
-  ospRelease(group);
-
-  // release handles we no longer need
-  ospRelease(positionData);
-  ospRelease(normalData);
-  ospRelease(colorData);
-  ospRelease(indexData);
-  ospRelease(material);
-  ospRelease(model);
-  ospRelease(models);
-
-  return instance;
 }
