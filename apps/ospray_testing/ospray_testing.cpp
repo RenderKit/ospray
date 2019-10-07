@@ -114,3 +114,42 @@ extern "C" OSPData ospTestingNewLights(const char *lighting_set_name)
   else
     return nullptr;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// New C++ interface /////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+namespace ospray {
+  namespace testing {
+
+    SceneBuilderHandle newBuilder(const std::string &type)
+    {
+      auto *creator = testing::objectFactory<testing::detail::Builder>(
+          "testing_builder", type);
+
+      utility::OnScopeExit cleanup([=]() { delete creator; });
+
+      if (creator != nullptr)
+        return creator->createBuilder();
+      else
+        return nullptr;
+    }
+
+    cpp::Group generateGroup(SceneBuilderHandle)
+    {
+      return {};
+    }
+
+    cpp::World generateWorld(SceneBuilderHandle)
+    {
+      return {};
+    }
+
+    void releaseBuilder(SceneBuilderHandle _b)
+    {
+      auto *b = (detail::Builder *)_b;
+      b->refDec();
+    }
+
+  }  // namespace testing
+}  // namespace ospray

@@ -16,7 +16,11 @@
 
 #pragma once
 
+#include "ospray/ospray_cpp.h"
 #include "ospray/ospray_util.h"
+// ospcommon
+#include "ospcommon/math/box.h"
+#include "ospcommon/math/vec.h"
 
 #ifdef _WIN32
 #ifdef ospray_testing_EXPORTS
@@ -30,13 +34,11 @@
 #define OSPRAY_TESTING_DLLEXPORT
 #endif
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
-typedef struct { float x, y; }             osp_vec2f;
-typedef struct { float x, y, z; }          osp_vec3f;
-typedef struct { osp_vec3f lower, upper; } osp_box3f;
+using osp_vec2f = ospcommon::math::vec2f;
+using osp_vec3f = ospcommon::math::vec3f;
+using osp_box3f = ospcommon::math::box3f;
 
 typedef struct
 {
@@ -62,9 +64,8 @@ OSPRenderer ospTestingNewRenderer(const char *type OSP_DEFAULT_VAL("scivis"));
 /* Create an OSPRay geometry (from a registered name), with the given renderer
  * type to create materials */
 OSPRAY_TESTING_INTERFACE
-OSPTestingGeometry ospTestingNewGeometry(const char *geom_type,
-                                         const char *renderer_type
-                                             OSP_DEFAULT_VAL("scivis"));
+OSPTestingGeometry ospTestingNewGeometry(
+    const char *geom_type, const char *renderer_type OSP_DEFAULT_VAL("scivis"));
 
 /* Create an OSPRay geometry (from a registered name) */
 OSPRAY_TESTING_INTERFACE
@@ -73,8 +74,7 @@ OSPTestingVolume ospTestingNewVolume(const char *volume_type);
 /* Create an OSPRay geometry (from a registered name) */
 OSPRAY_TESTING_INTERFACE
 OSPTransferFunction ospTestingNewTransferFunction(
-    osp_vec2f voxelRange,
-    const char *tf_name OSP_DEFAULT_VAL("grayscale"));
+    osp_vec2f voxelRange, const char *tf_name OSP_DEFAULT_VAL("grayscale"));
 
 /* Create an OSPRay perspective camera which looks at the center of the given
  * bounding box
@@ -89,6 +89,36 @@ OSPRAY_TESTING_INTERFACE
 OSPData ospTestingNewLights(
     const char *lighting_set_name OSP_DEFAULT_VAL("ambient_only"));
 
-#ifdef __cplusplus
 }  // extern "C"
-#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// New C++ interface /////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+namespace ospray {
+  namespace testing {
+
+    using namespace ospcommon;
+    using namespace ospcommon::math;
+
+    using SceneBuilderHandle = void *;
+
+    OSPRAY_TESTING_INTERFACE
+    SceneBuilderHandle newBuilder(const std::string &type);
+
+    template <typename T>
+    void setParam(SceneBuilderHandle b, const std::string &type, const T &val);
+
+    OSPRAY_TESTING_INTERFACE
+    cpp::Group generateGroup(SceneBuilderHandle b);
+
+    OSPRAY_TESTING_INTERFACE
+    cpp::World generateWorld(SceneBuilderHandle b);
+
+    OSPRAY_TESTING_INTERFACE
+    void release(SceneBuilderHandle b);
+
+  }  // namespace testing
+}  // namespace ospray
+
+#include "detail/ospray_testing.inl"

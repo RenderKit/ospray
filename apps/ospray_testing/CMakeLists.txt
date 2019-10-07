@@ -40,7 +40,7 @@ add_library(ospray_testing SHARED
   ../utility/rawToAMR.cpp
 )
 
-target_link_libraries(ospray_testing PUBLIC ospray PRIVATE ospcommon::ospcommon)
+target_link_libraries(ospray_testing PUBLIC ospray ospcommon::ospcommon)
 
 ospray_install_library(ospray_testing COMPONENT apps)
 
