@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+include(GenerateExportHeader)
+
 add_library(ospray_testing SHARED
   ospray_testing.cpp
 
@@ -38,7 +40,11 @@ add_library(ospray_testing SHARED
   volume/SimpleUnstructuredVolume.cpp
 
   ../utility/rawToAMR.cpp
+
+  builder/GravitySpheresVolume.cpp
 )
+
+generate_export_header(ospray_testing)
 
 target_link_libraries(ospray_testing PUBLIC ospray ospcommon::ospcommon)
 
@@ -49,6 +55,7 @@ set_target_properties(ospray_testing
 
 target_include_directories(ospray_testing
   PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/ospray_testing>
 )

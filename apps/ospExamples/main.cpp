@@ -14,7 +14,72 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-int main()
+// ospray_testing
+#include "ospray_testing.h"
+// stl
+#include <iostream>
+
+#include "GLFWOSPRayWindow.h"
+
+using namespace ospray;
+
+void initializeOSPRay(int argc, const char **argv, bool errorsFatal = true)
 {
+  // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
+  // e.g. "--osp:debug"
+  OSPError initError = ospInit(&argc, argv);
+
+  if (initError != OSP_NO_ERROR)
+    throw std::runtime_error("OSPRay not initialized correctly!");
+
+  OSPDevice device = ospGetCurrentDevice();
+  if (!device)
+    throw std::runtime_error("OSPRay device could not be fetched!");
+
+  // set an error callback to catch any OSPRay errors and exit the application
+  if (errorsFatal) {
+    ospDeviceSetErrorFunc(device, [](OSPError error, const char *errorDetails) {
+      std::cerr << "OSPRay error: " << errorDetails << std::endl;
+      exit(error);
+    });
+  } else {
+    ospDeviceSetErrorFunc(device, [](OSPError, const char *errorDetails) {
+      std::cerr << "OSPRay error: " << errorDetails << std::endl;
+    });
+  }
+}
+
+int main(int argc, const char *argv[])
+{
+  initializeOSPRay(argc, argv);
+
+  auto builder = ospray::testing::newBuilder("gravity_spheres_volume");
+  auto world   = ospray::testing::buildWorld(builder);
+
+#if 0
+  ospray::cpp::Renderer renderer("scivis");
+  renderer.commit();
+#else
+  auto renderer = ospNewRenderer("scivis");
+  ospCommit(renderer);
+#endif
+
+  // create a GLFW OSPRay window: this object will create and manage the OSPRay
+  // frame buffer and camera directly
+  auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
+      new GLFWOSPRayWindow(vec2i(1024, 768),
+                           world.getBounds(),
+                           world.handle(),
+#if 0
+                           renderer.handle()));
+#else
+                                                             renderer));
+#endif
+
+  // start the GLFW main loop, which will continuously render
+  glfwOSPRayWindow->mainLoop();
+
+  ospShutdown();
+
   return 0;
 }

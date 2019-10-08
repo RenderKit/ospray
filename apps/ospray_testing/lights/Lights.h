@@ -31,11 +31,11 @@ namespace ospray {
   }  // namespace testing
 }  // namespace ospray
 
-#define OSP_REGISTER_TESTING_LIGHTS(InternalClassName, Name)                 \
-  extern "C" OSPRAY_TESTING_DLLEXPORT                                        \
-  ospray::testing::Lights *ospray_create_testing_lights__##Name()            \
-  {                                                                          \
-    return new InternalClassName;                                            \
-  }                                                                          \
-  /* Extra declaration to avoid "extra ;" pedantic warnings */               \
+#define OSP_REGISTER_TESTING_LIGHTS(InternalClassName, Name)   \
+  extern "C" OSPRAY_TESTING_EXPORT ospray::testing::Lights     \
+      *ospray_create_testing_lights__##Name()                  \
+  {                                                            \
+    return new InternalClassName;                              \
+  }                                                            \
+  /* Extra declaration to avoid "extra ;" pedantic warnings */ \
   ospray::testing::Lights *ospray_create_testing_lights__##Name()

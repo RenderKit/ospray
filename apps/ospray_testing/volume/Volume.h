@@ -34,11 +34,11 @@ namespace ospray {
   }  // namespace testing
 }  // namespace ospray
 
-#define OSP_REGISTER_TESTING_VOLUME(InternalClassName, Name)                 \
-  extern "C" OSPRAY_TESTING_DLLEXPORT                                        \
-  ospray::testing::Volume *ospray_create_testing_volume__##Name()            \
-  {                                                                          \
-    return new InternalClassName;                                            \
-  }                                                                          \
-  /* Extra declaration to avoid "extra ;" pedantic warnings */               \
+#define OSP_REGISTER_TESTING_VOLUME(InternalClassName, Name)   \
+  extern "C" OSPRAY_TESTING_EXPORT ospray::testing::Volume     \
+      *ospray_create_testing_volume__##Name()                  \
+  {                                                            \
+    return new InternalClassName;                              \
+  }                                                            \
+  /* Extra declaration to avoid "extra ;" pedantic warnings */ \
   ospray::testing::Volume *ospray_create_testing_volume__##Name()

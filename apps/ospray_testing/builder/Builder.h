@@ -16,32 +16,40 @@
 
 #pragma once
 
-#include "../ospray_testing.h"
+// ospray
+#include "ospray/ospray_cpp.h"
 // ospcommon
 #include "ospcommon/memory/IntrusivePtr.h"
 #include "ospcommon/utility/ParameterizedObject.h"
 
+#include "ospray_testing_export.h"
+
 namespace ospray {
   namespace testing {
     namespace detail {
+
+      using namespace ospcommon;
 
       struct Builder : public memory::RefCountedObject,
                        public utility::ParameterizedObject
       {
         virtual ~Builder() = default;
 
-        virtual SceneBuilderHandle createBuilder() const = 0;
+        virtual void commit() {}
+
+        virtual cpp::Group buildGroup() const = 0;
+        virtual cpp::World buildWorld() const = 0;
       };
 
     }  // namespace detail
   }    // namespace testing
 }  // namespace ospray
 
-#define OSP_REGISTER_TESTING_BUILDER(InternalClassName, Name)          \
-  extern "C" OSPRAY_TESTING_DLLEXPORT ospray::testing::detail::Builder \
-      *ospray_create_testing_builder__##Name()                         \
-  {                                                                    \
-    return new InternalClassName;                                      \
-  }                                                                    \
-  /* Extra declaration to avoid "extra ;" pedantic warnings */         \
+#define OSP_REGISTER_TESTING_BUILDER(InternalClassName, Name)       \
+  extern "C" OSPRAY_TESTING_EXPORT ospray::testing::detail::Builder \
+      *ospray_create_testing_builder__##Name()                      \
+  {                                                                 \
+    return new InternalClassName;                                   \
+  }                                                                 \
+  /* Extra declaration to avoid "extra ;" pedantic warnings */      \
   ospray::testing::detail::Builder *ospray_create_testing_builder__##Name()

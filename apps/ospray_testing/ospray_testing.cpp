@@ -124,28 +124,23 @@ namespace ospray {
 
     SceneBuilderHandle newBuilder(const std::string &type)
     {
-      auto *creator = testing::objectFactory<testing::detail::Builder>(
-          "testing_builder", type);
-
-      utility::OnScopeExit cleanup([=]() { delete creator; });
-
-      if (creator != nullptr)
-        return creator->createBuilder();
-      else
-        return nullptr;
+      auto *b = objectFactory<detail::Builder>("testing_builder", type);
+      return (SceneBuilderHandle)b;
     }
 
-    cpp::Group generateGroup(SceneBuilderHandle)
+    cpp::Group buildGroup(SceneBuilderHandle _b)
     {
-      return {};
+      auto *b = (detail::Builder *)_b;
+      return b->buildGroup();
     }
 
-    cpp::World generateWorld(SceneBuilderHandle)
+    cpp::World buildWorld(SceneBuilderHandle _b)
     {
-      return {};
+      auto *b = (detail::Builder *)_b;
+      return b->buildWorld();
     }
 
-    void releaseBuilder(SceneBuilderHandle _b)
+    void release(SceneBuilderHandle _b)
     {
       auto *b = (detail::Builder *)_b;
       b->refDec();
