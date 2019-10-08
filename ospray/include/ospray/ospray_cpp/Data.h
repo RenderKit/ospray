@@ -21,7 +21,7 @@
 namespace ospray {
   namespace cpp {
 
-    class Data : public ManagedObject_T<OSPData>
+    class Data : public ManagedObject<OSPData>
     {
      public:
       Data(size_t numItems,
@@ -30,6 +30,9 @@ namespace ospray {
            bool isShared    = false);
       Data(OSPData existing = nullptr);
     };
+
+    static_assert(sizeof(Data) == sizeof(OSPData),
+                  "cpp::Data can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -48,7 +51,7 @@ namespace ospray {
       }
     }
 
-    inline Data::Data(OSPData existing) : ManagedObject_T<OSPData>(existing) {}
+    inline Data::Data(OSPData existing) : ManagedObject<OSPData>(existing) {}
 
   }  // namespace cpp
 }  // namespace ospray

@@ -22,7 +22,7 @@
 namespace ospray {
   namespace cpp {
 
-    class GeometricModel : public ManagedObject_T<OSPGeometricModel>
+    class GeometricModel : public ManagedObject<OSPGeometricModel>
     {
      public:
       GeometricModel(const Geometry &geom);
@@ -30,6 +30,9 @@ namespace ospray {
       GeometricModel(const GeometricModel &copy);
       GeometricModel(OSPGeometricModel existing = nullptr);
     };
+
+    static_assert(sizeof(GeometricModel) == sizeof(OSPGeometricModel),
+                  "cpp::GeometricModel can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -44,13 +47,13 @@ namespace ospray {
     }
 
     inline GeometricModel::GeometricModel(const GeometricModel &copy)
-        : ManagedObject_T<OSPGeometricModel>(copy.handle())
+        : ManagedObject<OSPGeometricModel>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline GeometricModel::GeometricModel(OSPGeometricModel existing)
-        : ManagedObject_T<OSPGeometricModel>(existing)
+        : ManagedObject<OSPGeometricModel>(existing)
     {
     }
 

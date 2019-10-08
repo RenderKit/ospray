@@ -21,13 +21,16 @@
 namespace ospray {
   namespace cpp    {
 
-    class Geometry : public ManagedObject_T<OSPGeometry>
+    class Geometry : public ManagedObject<OSPGeometry>
     {
     public:
       Geometry(const std::string &type);
       Geometry(const Geometry &copy);
       Geometry(OSPGeometry existing = nullptr);
     };
+
+    static_assert(sizeof(Geometry) == sizeof(OSPGeometry),
+                  "cpp::Geometry can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -37,13 +40,13 @@ namespace ospray {
     }
 
     inline Geometry::Geometry(const Geometry &copy) :
-      ManagedObject_T<OSPGeometry>(copy.handle())
+      ManagedObject<OSPGeometry>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Geometry::Geometry(OSPGeometry existing) :
-      ManagedObject_T<OSPGeometry>(existing)
+      ManagedObject<OSPGeometry>(existing)
     {
     }
 

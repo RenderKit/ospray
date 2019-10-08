@@ -35,7 +35,7 @@ namespace ospray {
       uint32_t primID{0};
     };
 
-    class FrameBuffer : public ManagedObject_T<OSPFrameBuffer>
+    class FrameBuffer : public ManagedObject<OSPFrameBuffer>
     {
      public:
       FrameBuffer() =
@@ -63,6 +63,9 @@ namespace ospray {
       void clear() const;
     };
 
+    static_assert(sizeof(FrameBuffer) == sizeof(OSPFrameBuffer),
+                  "cpp::FrameBuffer can't have data members!");
+
     // Inlined function definitions ///////////////////////////////////////////
 
     inline FrameBuffer::FrameBuffer(const vec2i &size,
@@ -73,13 +76,13 @@ namespace ospray {
     }
 
     inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
-        : ManagedObject_T<OSPFrameBuffer>(copy.handle())
+        : ManagedObject<OSPFrameBuffer>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing)
-        : ManagedObject_T<OSPFrameBuffer>(existing)
+        : ManagedObject<OSPFrameBuffer>(existing)
     {
     }
 

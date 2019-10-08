@@ -21,13 +21,16 @@
 namespace ospray {
   namespace cpp {
 
-    class Material : public ManagedObject_T<OSPMaterial>
+    class Material : public ManagedObject<OSPMaterial>
     {
      public:
       Material(const std::string &renderer_type, const std::string &mat_type);
       Material(const Material &copy);
       Material(OSPMaterial existing = nullptr);
     };
+
+    static_assert(sizeof(Material) == sizeof(OSPMaterial),
+                  "cpp::Material can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -38,13 +41,13 @@ namespace ospray {
     }
 
     inline Material::Material(const Material &copy)
-        : ManagedObject_T<OSPMaterial>(copy.handle())
+        : ManagedObject<OSPMaterial>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Material::Material(OSPMaterial existing)
-        : ManagedObject_T<OSPMaterial>(existing)
+        : ManagedObject<OSPMaterial>(existing)
     {
     }
 

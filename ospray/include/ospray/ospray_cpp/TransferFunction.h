@@ -21,13 +21,16 @@
 namespace ospray {
   namespace cpp {
 
-    class TransferFunction : public ManagedObject_T<OSPTransferFunction>
+    class TransferFunction : public ManagedObject<OSPTransferFunction>
     {
      public:
       TransferFunction(const std::string &type);
       TransferFunction(const TransferFunction &copy);
       TransferFunction(OSPTransferFunction existing = nullptr);
     };
+
+    static_assert(sizeof(TransferFunction) == sizeof(OSPTransferFunction),
+                  "cpp::TransferFunction can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -37,13 +40,13 @@ namespace ospray {
     }
 
     inline TransferFunction::TransferFunction(const TransferFunction &copy)
-        : ManagedObject_T<OSPTransferFunction>(copy.handle())
+        : ManagedObject<OSPTransferFunction>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline TransferFunction::TransferFunction(OSPTransferFunction existing)
-        : ManagedObject_T<OSPTransferFunction>(existing)
+        : ManagedObject<OSPTransferFunction>(existing)
     {
     }
 

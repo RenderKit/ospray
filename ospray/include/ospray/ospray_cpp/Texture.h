@@ -21,23 +21,26 @@
 namespace ospray {
   namespace cpp {
 
-    class Texture : public ManagedObject_T<OSPTexture>
+    class Texture : public ManagedObject<OSPTexture>
     {
      public:
       Texture(const Texture &copy);
       Texture(OSPTexture existing = nullptr);
     };
 
+    static_assert(sizeof(Texture) == sizeof(OSPTexture),
+                  "cpp::Texture can't have data members!");
+
     // Inlined function definitions ///////////////////////////////////////////
 
     inline Texture::Texture(const Texture &copy)
-        : ManagedObject_T<OSPTexture>(copy.handle())
+        : ManagedObject<OSPTexture>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Texture::Texture(OSPTexture existing)
-        : ManagedObject_T<OSPTexture>(existing)
+        : ManagedObject<OSPTexture>(existing)
     {
     }
 

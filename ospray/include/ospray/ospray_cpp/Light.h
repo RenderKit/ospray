@@ -21,13 +21,16 @@
 namespace ospray {
   namespace cpp {
 
-    class Light : public ManagedObject_T<OSPLight>
+    class Light : public ManagedObject<OSPLight>
     {
      public:
       Light(const std::string &light_type);
       Light(const Light &copy);
       Light(OSPLight existing = nullptr);
     };
+
+    static_assert(sizeof(Light) == sizeof(OSPLight),
+                  "cpp::Light can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -37,12 +40,12 @@ namespace ospray {
     }
 
     inline Light::Light(const Light &copy)
-        : ManagedObject_T<OSPLight>(copy.handle())
+        : ManagedObject<OSPLight>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
-    inline Light::Light(OSPLight existing) : ManagedObject_T<OSPLight>(existing)
+    inline Light::Light(OSPLight existing) : ManagedObject<OSPLight>(existing)
     {
     }
 

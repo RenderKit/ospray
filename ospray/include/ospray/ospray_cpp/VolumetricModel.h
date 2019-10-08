@@ -22,7 +22,7 @@
 namespace ospray {
   namespace cpp {
 
-    class VolumetricModel : public ManagedObject_T<OSPVolumetricModel>
+    class VolumetricModel : public ManagedObject<OSPVolumetricModel>
     {
      public:
       VolumetricModel(const Volume &geom);
@@ -30,6 +30,9 @@ namespace ospray {
       VolumetricModel(const VolumetricModel &copy);
       VolumetricModel(OSPVolumetricModel existing = nullptr);
     };
+
+    static_assert(sizeof(VolumetricModel) == sizeof(OSPVolumetricModel),
+                  "cpp::VolumetricModel can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -44,13 +47,13 @@ namespace ospray {
     }
 
     inline VolumetricModel::VolumetricModel(const VolumetricModel &copy)
-        : ManagedObject_T<OSPVolumetricModel>(copy.handle())
+        : ManagedObject<OSPVolumetricModel>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline VolumetricModel::VolumetricModel(OSPVolumetricModel existing)
-        : ManagedObject_T<OSPVolumetricModel>(existing)
+        : ManagedObject<OSPVolumetricModel>(existing)
     {
     }
 

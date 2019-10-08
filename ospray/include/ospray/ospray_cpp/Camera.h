@@ -21,13 +21,16 @@
 namespace ospray {
   namespace cpp {
 
-    class Camera : public ManagedObject_T<OSPCamera>
+    class Camera : public ManagedObject<OSPCamera>
     {
      public:
       Camera(const std::string &type);
       Camera(const Camera &copy);
       Camera(OSPCamera existing = nullptr);
     };
+
+    static_assert(sizeof(Camera) == sizeof(OSPCamera),
+                  "cpp::Camera can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -37,13 +40,13 @@ namespace ospray {
     }
 
     inline Camera::Camera(const Camera &copy)
-        : ManagedObject_T<OSPCamera>(copy.handle())
+        : ManagedObject<OSPCamera>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Camera::Camera(OSPCamera existing)
-        : ManagedObject_T<OSPCamera>(existing)
+        : ManagedObject<OSPCamera>(existing)
     {
     }
 

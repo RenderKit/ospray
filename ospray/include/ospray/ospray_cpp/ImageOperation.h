@@ -21,13 +21,16 @@
 namespace ospray {
   namespace cpp {
 
-    class ImageOperation : public ManagedObject_T<OSPImageOperation>
+    class ImageOperation : public ManagedObject<OSPImageOperation>
     {
      public:
       ImageOperation(const std::string &type);
       ImageOperation(const ImageOperation &copy);
       ImageOperation(OSPImageOperation existing = nullptr);
     };
+
+    static_assert(sizeof(ImageOperation) == sizeof(OSPImageOperation),
+                  "cpp::ImageOperation can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -37,13 +40,13 @@ namespace ospray {
     }
 
     inline ImageOperation::ImageOperation(const ImageOperation &copy)
-        : ManagedObject_T<OSPImageOperation>(copy.handle())
+        : ManagedObject<OSPImageOperation>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline ImageOperation::ImageOperation(OSPImageOperation existing)
-        : ManagedObject_T<OSPImageOperation>(existing)
+        : ManagedObject<OSPImageOperation>(existing)
     {
     }
 
