@@ -128,10 +128,6 @@ namespace ospray {
       // generate volume values
       std::vector<float> voxels = generateVoxels();
 
-      vec3i regionStart{0, 0, 0};
-      vec3i regionEnd{
-          int(volumeDimension), int(volumeDimension), int(volumeDimension)};
-
       // set the volume data
       OSPData voxelData = ospNewData(voxels.size(), OSP_FLOAT, voxels.data());
       ospSetObject(volume, "voxelData", voxelData);

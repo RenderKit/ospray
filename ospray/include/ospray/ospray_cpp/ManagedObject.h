@@ -343,7 +343,7 @@ namespace ospray {
     box3f ManagedObject<OSP_TYPE>::getBounds() const
     {
       auto b = ospGetBounds(ospObject);
-      return box3f(b.lower);
+      return box3f(vec3f(b.lower), vec3f(b.upper));
     }
 
     template <typename OSP_TYPE>

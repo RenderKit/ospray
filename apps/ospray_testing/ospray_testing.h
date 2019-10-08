@@ -106,6 +106,9 @@ namespace ospray {
     cpp::World buildWorld(SceneBuilderHandle b);
 
     OSPRAY_TESTING_EXPORT
+    void commit(SceneBuilderHandle b);
+
+    OSPRAY_TESTING_EXPORT
     void release(SceneBuilderHandle b);
 
   }  // namespace testing

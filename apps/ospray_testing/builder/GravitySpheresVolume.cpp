@@ -33,10 +33,10 @@ namespace ospray {
 
     using VoxelArray = std::vector<float>;
 
-    struct GravitySpheresVolume : public detail::Builder
+    struct GravitySpheres : public detail::Builder
     {
-      GravitySpheresVolume()           = default;
-      ~GravitySpheresVolume() override = default;
+      GravitySpheres()           = default;
+      ~GravitySpheres() override = default;
 
       void commit() override;
 
@@ -58,7 +58,7 @@ namespace ospray {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    void GravitySpheresVolume::commit()
+    void GravitySpheres::commit()
     {
       Builder::commit();
 
@@ -67,30 +67,30 @@ namespace ospray {
       createAsAMR      = getParam<bool>("asAMR", false);
     }
 
-    cpp::Group GravitySpheresVolume::buildGroup() const
+    cpp::Group GravitySpheres::buildGroup() const
     {
-      auto voxels = generateVoxels();
-      auto minmax = std::minmax_element(voxels.begin(), voxels.end());
+      auto voxels     = generateVoxels();
+      auto voxelRange = vec2f(0.f, 10.f);
 
       cpp::Volume volume = createAsAMR ? createAMRVolume(voxels)
                                        : createStructuredVolume(voxels);
 
       cpp::VolumetricModel model(volume);
-      cpp::TransferFunction tf = ospTestingNewTransferFunction(
-          vec2f(*minmax.first, *minmax.second), "jet");
+      cpp::TransferFunction tf =
+          ospTestingNewTransferFunction(voxelRange, "jet");
       tf.commit();
       model.setParam("transferFunction", tf);
       model.commit();
 
       cpp::Group group;
 
-      group.setParam("volume", cpp::Data(1, OSP_GEOMETRIC_MODEL, &model));
+      group.setParam("volume", cpp::Data(1, OSP_VOLUMETRIC_MODEL, &model));
       group.commit();
 
       return group;
     }
 
-    cpp::World GravitySpheresVolume::buildWorld() const
+    cpp::World GravitySpheres::buildWorld() const
     {
       cpp::World world;
 
@@ -105,7 +105,7 @@ namespace ospray {
       return world;
     }
 
-    std::vector<float> GravitySpheresVolume::generateVoxels() const
+    std::vector<float> GravitySpheres::generateVoxels() const
     {
       struct Point
       {
@@ -169,7 +169,7 @@ namespace ospray {
       return voxels;
     }
 
-    cpp::Volume GravitySpheresVolume::createStructuredVolume(
+    cpp::Volume GravitySpheres::createStructuredVolume(
         const VoxelArray &voxels) const
     {
       cpp::Volume volume("structured_volume");
@@ -185,8 +185,7 @@ namespace ospray {
       return volume;
     }
 
-    cpp::Volume GravitySpheresVolume::createAMRVolume(
-        const VoxelArray &voxels) const
+    cpp::Volume GravitySpheres::createAMRVolume(const VoxelArray &voxels) const
     {
       const int numLevels       = 2;
       const int blockSize       = 16;
@@ -246,7 +245,7 @@ namespace ospray {
       return volume;
     }
 
-    OSP_REGISTER_TESTING_BUILDER(GravitySpheresVolume, gravity_spheres_volume);
+    OSP_REGISTER_TESTING_BUILDER(GravitySpheres, gravity_spheres_volume);
 
   }  // namespace testing
 }  // namespace ospray

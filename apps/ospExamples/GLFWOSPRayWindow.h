@@ -20,21 +20,21 @@
 // glfw
 #include "GLFW/glfw3.h"
 // ospray
-#include "ospray/ospray_util.h"
+#include "ospray/ospray_cpp.h"
 // ospcommon
 #include "ospcommon/containers/TransactionalBuffer.h"
 // std
 #include <functional>
 
 using namespace ospcommon::math;
+using namespace ospray;
 
 class GLFWOSPRayWindow
 {
  public:
   GLFWOSPRayWindow(const vec2i &windowSize,
-                   const box3f &worldBounds,
-                   OSPWorld world,
-                   OSPRenderer renderer,
+                   cpp::World world,
+                   cpp::Renderer renderer,
                    OSPFrameBufferFormat fbFormat = OSP_FB_SRGBA,
                    uint32_t fbChannels           = OSP_FB_COLOR | OSP_FB_DEPTH |
                                          OSP_FB_ACCUM | OSP_FB_ALBEDO);
@@ -42,9 +42,6 @@ class GLFWOSPRayWindow
   ~GLFWOSPRayWindow();
 
   static GLFWOSPRayWindow *getActiveWindow();
-
-  OSPWorld getWorld();
-  void setWorld(OSPWorld newWorld);
 
   void setImageOps(OSPData ops);
 
@@ -57,17 +54,13 @@ class GLFWOSPRayWindow
 
   void mainLoop();
 
+ protected:
+
   void updateCamera();
   void commitCamera();
 
   void addObjectToCommit(OSPObject obj);
 
-  std::unique_ptr<ArcballCamera> &getArcballCamera()
-  {
-    return arcballCamera;
-  }
-
- protected:
   void reshape(const vec2i &newWindowSize);
   void motion(const vec2f &position);
   void display();
@@ -80,8 +73,8 @@ class GLFWOSPRayWindow
   vec2i windowSize;
   vec2f previousMouse{-1.f};
   box3f worldBounds;
-  OSPWorld world       = nullptr;
-  OSPRenderer renderer = nullptr;
+  cpp::World world;
+  cpp::Renderer renderer;
 
   bool showAlbedo{false};
   OSPFrameBufferFormat fbFormat;

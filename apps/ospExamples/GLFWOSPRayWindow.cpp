@@ -26,12 +26,11 @@ GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 static bool g_quitNextFrame = false;
 
 GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
-                                   const box3f &worldBounds,
-                                   OSPWorld world,
-                                   OSPRenderer renderer,
+                                   cpp::World world,
+                                   cpp::Renderer renderer,
                                    OSPFrameBufferFormat fbFormat,
                                    uint32_t fbChannels)
-    : worldBounds(worldBounds),
+    : worldBounds(world.getBounds()),
       world(world),
       renderer(renderer),
       fbFormat(fbFormat),
@@ -110,8 +109,13 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
                           1.f - mouse.y / static_cast<float>(windowSize.y));
 
           OSPPickResult res;
-          ospPick(
-              &res, w.framebuffer, w.renderer, w.camera, w.world, pos.x, pos.y);
+          ospPick(&res,
+                  w.framebuffer,
+                  w.renderer.handle(),
+                  w.camera,
+                  w.world.handle(),
+                  pos.x,
+                  pos.y);
 
           if (res.hasHit) {
             std::cout << "Picked geometry [inst: " << res.instance
@@ -134,7 +138,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
   commitCamera();
 
   // finally, commit the renderer
-  ospCommit(renderer);
+  renderer.commit();
 
   // trigger window reshape events with current window size
   glfwGetFramebufferSize(glfwWindow, &this->windowSize.x, &this->windowSize.y);
@@ -151,16 +155,6 @@ GLFWOSPRayWindow::~GLFWOSPRayWindow()
 GLFWOSPRayWindow *GLFWOSPRayWindow::getActiveWindow()
 {
   return activeWindow;
-}
-
-OSPWorld GLFWOSPRayWindow::getWorld()
-{
-  return world;
-}
-
-void GLFWOSPRayWindow::setWorld(OSPWorld newWorld)
-{
-  world = newWorld;
 }
 
 void GLFWOSPRayWindow::setImageOps(OSPData ops)
@@ -206,8 +200,6 @@ void GLFWOSPRayWindow::mainLoop()
 
   ospRelease(camera);
   ospRelease(framebuffer);
-  ospRelease(world);
-  ospRelease(renderer);
 }
 
 void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
@@ -315,8 +307,8 @@ void GLFWOSPRayWindow::display()
 
     static int spp = 1;
     if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-      ospSetInt(renderer, "spp", spp);
-      addObjectToCommit(renderer);
+      renderer.setParam("spp", spp);
+      addObjectToCommit(renderer.handle());
     }
 
     ImGui::Checkbox("show albedo", &showAlbedo);
@@ -414,7 +406,8 @@ void GLFWOSPRayWindow::startNewOSPRayFrame()
   if (currentFrame != nullptr)
     ospRelease(currentFrame);
 
-  currentFrame = ospRenderFrame(framebuffer, renderer, camera, world);
+  currentFrame =
+      ospRenderFrame(framebuffer, renderer.handle(), camera, world.handle());
 }
 
 void GLFWOSPRayWindow::waitOnOSPRayFrame()

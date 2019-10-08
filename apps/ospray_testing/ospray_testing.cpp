@@ -140,6 +140,12 @@ namespace ospray {
       return b->buildWorld();
     }
 
+    void commit(SceneBuilderHandle _b)
+    {
+      auto *b = (detail::Builder *)_b;
+      b->commit();
+    }
+
     void release(SceneBuilderHandle _b)
     {
       auto *b = (detail::Builder *)_b;
