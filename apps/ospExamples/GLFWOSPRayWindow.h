@@ -43,10 +43,6 @@ class GLFWOSPRayWindow
 
   static GLFWOSPRayWindow *getActiveWindow();
 
-  void setImageOps(OSPData ops);
-
-  void resetAccumulation();
-
   void registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)> callback);
 
@@ -55,9 +51,7 @@ class GLFWOSPRayWindow
   void mainLoop();
 
  protected:
-
   void updateCamera();
-  void commitCamera();
 
   void addObjectToCommit(OSPObject obj);
 
@@ -87,10 +81,9 @@ class GLFWOSPRayWindow
   std::unique_ptr<ArcballCamera> arcballCamera;
 
   // OSPRay objects managed by this class
-  OSPCamera camera           = nullptr;
-  OSPFrameBuffer framebuffer = nullptr;
-  OSPFuture currentFrame     = nullptr;
-  OSPData imageOps           = nullptr;
+  cpp::Camera camera;
+  cpp::FrameBuffer framebuffer;
+  cpp::Future currentFrame;
 
   // List of OSPRay handles to commit before the next frame
   ospcommon::containers::TransactionalBuffer<OSPObject> objectsToCommit;

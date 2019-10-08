@@ -49,6 +49,8 @@ namespace ospray {
 
       FrameBuffer &operator=(const FrameBuffer &copy);
 
+      void resetAccumulation() const;
+
       Future renderFrame(const Renderer &renderer,
                          const Camera &camera,
                          const World &world) const;
@@ -91,6 +93,11 @@ namespace ospray {
       ospObject = copy.ospObject;
       ospRetain(copy.handle());
       return *this;
+    }
+
+    inline void FrameBuffer::resetAccumulation() const
+    {
+      ospResetAccumulation(handle());
     }
 
     inline Future FrameBuffer::renderFrame(const Renderer &renderer,

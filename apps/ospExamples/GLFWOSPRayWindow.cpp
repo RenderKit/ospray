@@ -108,14 +108,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
           const vec2f pos(mouse.x / static_cast<float>(windowSize.x),
                           1.f - mouse.y / static_cast<float>(windowSize.y));
 
-          OSPPickResult res;
-          ospPick(&res,
-                  w.framebuffer,
-                  w.renderer.handle(),
-                  w.camera,
-                  w.world.handle(),
-                  pos.x,
-                  pos.y);
+          auto res = w.framebuffer.pick(w.renderer, w.camera, w.world, pos);
 
           if (res.hasHit) {
             std::cout << "Picked geometry [inst: " << res.instance
@@ -132,10 +125,9 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
       new ArcballCamera(worldBounds, windowSize));
 
   // create camera
-  camera = ospNewCamera("perspective");
-  ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
+  camera = cpp::Camera("perspective");
   updateCamera();
-  commitCamera();
+  camera.commit();
 
   // finally, commit the renderer
   renderer.commit();
@@ -155,18 +147,6 @@ GLFWOSPRayWindow::~GLFWOSPRayWindow()
 GLFWOSPRayWindow *GLFWOSPRayWindow::getActiveWindow()
 {
   return activeWindow;
-}
-
-void GLFWOSPRayWindow::setImageOps(OSPData ops)
-{
-  imageOps = ops;
-  ospSetObject(framebuffer, "imageOperation", imageOps);
-  addObjectToCommit(framebuffer);
-}
-
-void GLFWOSPRayWindow::resetAccumulation()
-{
-  ospResetAccumulation(framebuffer);
 }
 
 void GLFWOSPRayWindow::registerDisplayCallback(
@@ -195,31 +175,15 @@ void GLFWOSPRayWindow::mainLoop()
   }
 
   waitOnOSPRayFrame();
-  if (currentFrame != nullptr)
-    ospRelease(currentFrame);
-
-  ospRelease(camera);
-  ospRelease(framebuffer);
 }
 
 void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
 {
   windowSize = newWindowSize;
 
-  // release the current frame buffer, if it exists
-  if (framebuffer) {
-    ospRelease(framebuffer);
-  }
-
   // create new frame buffer
-  framebuffer =
-      ospNewFrameBuffer(windowSize.x, windowSize.y, fbFormat, fbChannels);
-
-  if (imageOps) {
-    ospSetObject(framebuffer, "imageOperation", imageOps);
-  }
-
-  ospCommit(framebuffer);
+  framebuffer = cpp::FrameBuffer(windowSize, fbFormat, fbChannels);
+  framebuffer.commit();
 
   // reset OpenGL viewport and orthographic projection
   glViewport(0, 0, windowSize.x, windowSize.y);
@@ -231,33 +195,16 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   // update camera
   arcballCamera->updateWindowSize(windowSize);
 
-  ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
-  ospCommit(camera);
+  camera.setParam("aspect", windowSize.x / float(windowSize.y));
+  camera.commit();
 }
 
 void GLFWOSPRayWindow::updateCamera()
 {
-  ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
-  ospSetVec3f(camera,
-              "position",
-              arcballCamera->eyePos().x,
-              arcballCamera->eyePos().y,
-              arcballCamera->eyePos().z);
-  ospSetVec3f(camera,
-              "direction",
-              arcballCamera->lookDir().x,
-              arcballCamera->lookDir().y,
-              arcballCamera->lookDir().z);
-  ospSetVec3f(camera,
-              "up",
-              arcballCamera->upDir().x,
-              arcballCamera->upDir().y,
-              arcballCamera->upDir().z);
-}
-
-void GLFWOSPRayWindow::commitCamera()
-{
-  ospCommit(camera);
+  camera.setParam("aspect", windowSize.x / float(windowSize.y));
+  camera.setParam("position", arcballCamera->eyePos());
+  camera.setParam("direction", arcballCamera->lookDir());
+  camera.setParam("up", arcballCamera->upDir());
 }
 
 void GLFWOSPRayWindow::motion(const vec2f &position)
@@ -289,7 +236,7 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
 
     if (cameraChanged) {
       updateCamera();
-      addObjectToCommit(camera);
+      addObjectToCommit(camera.handle());
     }
   }
 
@@ -327,7 +274,7 @@ void GLFWOSPRayWindow::display()
   updateTitleBar();
 
   static bool firstFrame = true;
-  if (firstFrame || ospIsReady(currentFrame)) {
+  if (firstFrame || currentFrame.isReady()) {
     // display frame rate in window title
     auto displayEnd = std::chrono::high_resolution_clock::now();
     auto durationMilliseconds =
@@ -341,8 +288,7 @@ void GLFWOSPRayWindow::display()
 
     waitOnOSPRayFrame();
 
-    auto *fb = ospMapFrameBuffer(framebuffer,
-                                 showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
+    auto *fb = framebuffer.map(showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
 
     const GLint glFormat = showAlbedo ? GL_RGB : GL_RGBA;
     const GLenum glType =
@@ -358,13 +304,13 @@ void GLFWOSPRayWindow::display()
                  glType,
                  fb);
 
-    ospUnmapFrameBuffer(fb, framebuffer);
+    framebuffer.unmap(fb);
 
     auto handles = objectsToCommit.consume();
     if (!handles.empty()) {
       for (auto &h : handles)
         ospCommit(h);
-      ospResetAccumulation(framebuffer);
+      framebuffer.resetAccumulation();
     }
 
     // Start new frame and reset frame timing interval start
@@ -403,18 +349,12 @@ void GLFWOSPRayWindow::display()
 
 void GLFWOSPRayWindow::startNewOSPRayFrame()
 {
-  if (currentFrame != nullptr)
-    ospRelease(currentFrame);
-
-  currentFrame =
-      ospRenderFrame(framebuffer, renderer.handle(), camera, world.handle());
+  currentFrame = framebuffer.renderFrame(renderer, camera, world);
 }
 
 void GLFWOSPRayWindow::waitOnOSPRayFrame()
 {
-  if (currentFrame != nullptr) {
-    ospWait(currentFrame, OSP_FRAME_FINISHED);
-  }
+  currentFrame.wait();
 }
 
 void GLFWOSPRayWindow::addObjectToCommit(OSPObject obj)
@@ -427,7 +367,7 @@ void GLFWOSPRayWindow::updateTitleBar()
   std::stringstream windowTitle;
   windowTitle << "OSPRay: " << std::setprecision(3) << latestFPS << " fps";
   if (latestFPS < 2.f) {
-    float progress = ospGetProgress(currentFrame);
+    float progress = currentFrame.progress();
     windowTitle << " | ";
     int barWidth = 20;
     std::string progBar;
