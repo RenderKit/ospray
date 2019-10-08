@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2019 Intel Corporation                                    ##
+## Copyright 2018-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,14 +14,23 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_subdirectory(external)
-add_subdirectory(ospray_testing)
-add_subdirectory(tutorials)
-add_subdirectory(utility)
+# prefer libGL over libOpenGl for better compatibility with SWR
+set(OpenGL_GL_PREFERENCE "LEGACY")
+find_package(OpenGL 2 REQUIRED)
+find_package(glfw3 REQUIRED)
 
-if (OSPRAY_ENABLE_TESTING)
-  add_subdirectory(ospray_test_suite)
-endif()
+add_executable(ospExamples
+  ArcballCamera.cpp
+  GLFWOSPRayWindow.cpp
+  imgui_impl_glfw_gl3.cpp
+  main.cpp
+)
 
-add_subdirectory(ospTutorial)
-add_subdirectory(ospExamples)
+target_link_libraries(ospExamples PRIVATE
+  ospcommon::ospcommon
+  ospray
+  ospray_testing
+  ospray_imgui
+  glfw
+  ${OPENGL_LIBRARIES}
+)

@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2019 Intel Corporation                                    ##
+## Copyright 2018-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,14 +14,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_subdirectory(external)
-add_subdirectory(ospray_testing)
-add_subdirectory(tutorials)
-add_subdirectory(utility)
+# build ospTutorial, for demonstration and API testing
+add_executable(ospTutorial ospTutorial.c)
+target_link_libraries(ospTutorial PRIVATE ospray)
 
-if (OSPRAY_ENABLE_TESTING)
-  add_subdirectory(ospray_test_suite)
-endif()
+# C++ version
+add_executable(ospTutorialCpp ospTutorial.cpp)
+target_link_libraries(ospTutorialCpp PRIVATE ospray)
 
-add_subdirectory(ospTutorial)
-add_subdirectory(ospExamples)
+# async version
+add_executable(ospTutorialAsync ospTutorialAsync.c)
+target_link_libraries(ospTutorialAsync PRIVATE ospray)

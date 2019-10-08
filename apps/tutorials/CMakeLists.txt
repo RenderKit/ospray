@@ -31,16 +31,6 @@ set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(OpenGL 2 REQUIRED)
 find_package(glfw3 REQUIRED)
 
-# build ospTutorial, for demonstration and API testing
-add_executable(ospTutorial ospTutorial.c)
-target_link_libraries(ospTutorial PRIVATE ospray)
-# C++ version
-add_executable(ospTutorialCpp ospTutorial.cpp)
-target_link_libraries(ospTutorialCpp PRIVATE ospray_sdk)
-# async version
-add_executable(ospTutorialAsync ospTutorialAsync.c)
-target_link_libraries(ospTutorialAsync PRIVATE ospray)
-
 ## Create a static library of all common tutorial bits ##
 
 add_library(tutorial_common STATIC
