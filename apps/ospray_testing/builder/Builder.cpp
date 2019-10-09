@@ -14,46 +14,32 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-// ospray
-#include "ospray/ospray_cpp.h"
-// ospcommon
-#include "ospcommon/memory/IntrusivePtr.h"
-#include "ospcommon/utility/ParameterizedObject.h"
-
-#include "ospray_testing_export.h"
+#include "Builder.h"
 
 namespace ospray {
   namespace testing {
     namespace detail {
 
-      using namespace ospcommon;
-
-      struct Builder : public memory::RefCountedObject,
-                       public utility::ParameterizedObject
+      void Builder::commit()
       {
-        virtual ~Builder() = default;
+        rendererType = getParam<std::string>("rendererType", "scivis");
+      }
 
-        virtual void commit();
+      cpp::World Builder::buildWorld() const
+      {
+        cpp::World world;
 
-        virtual cpp::Group buildGroup() const = 0;
-        virtual cpp::World buildWorld() const;
+        auto group = buildGroup();
 
-      protected:
+        cpp::Instance inst(group);
+        inst.commit();
 
-        std::string rendererType{"scivis"};
-      };
+        world.setParam("instance", cpp::Data(1, OSP_INSTANCE, &inst));
+        world.commit();
+
+        return world;
+      }
 
     }  // namespace detail
   }    // namespace testing
 }  // namespace ospray
-
-#define OSP_REGISTER_TESTING_BUILDER(InternalClassName, Name)       \
-  extern "C" OSPRAY_TESTING_EXPORT ospray::testing::detail::Builder \
-      *ospray_create_testing_builder__##Name()                      \
-  {                                                                 \
-    return new InternalClassName;                                   \
-  }                                                                 \
-  /* Extra declaration to avoid "extra ;" pedantic warnings */      \
-  ospray::testing::detail::Builder *ospray_create_testing_builder__##Name()

@@ -41,7 +41,9 @@ add_library(ospray_testing SHARED
 
   ../utility/rawToAMR.cpp
 
+  builder/Builder.cpp
   builder/GravitySpheresVolume.cpp
+  builder/RandomSpheres.cpp
 )
 
 generate_export_header(ospray_testing)

@@ -49,18 +49,22 @@ void initializeOSPRay(int argc, const char **argv, bool errorsFatal = true)
   }
 }
 
+static std::string rendererType = "scivis";
+
 int main(int argc, const char *argv[])
 {
   initializeOSPRay(argc, argv);
 
   {
-    auto builder = testing::newBuilder("gravity_spheres_volume");
+    //auto builder = testing::newBuilder("gravity_spheres_volume");
+    auto builder = testing::newBuilder("random_spheres");
+    testing::setParam(builder, "rendererType", rendererType);
     testing::commit(builder);
 
     auto world = testing::buildWorld(builder);
     testing::release(builder);
 
-    cpp::Renderer renderer("scivis");
+    cpp::Renderer renderer(rendererType);
     renderer.commit();
 
     // create a GLFW OSPRay window: this object will create and manage the

@@ -41,7 +41,6 @@ namespace ospray {
       void commit() override;
 
       cpp::Group buildGroup() const override;
-      cpp::World buildWorld() const override;
 
      private:
       VoxelArray generateVoxels() const;
@@ -88,21 +87,6 @@ namespace ospray {
       group.commit();
 
       return group;
-    }
-
-    cpp::World GravitySpheres::buildWorld() const
-    {
-      cpp::World world;
-
-      auto group = buildGroup();
-
-      cpp::Instance inst(group);
-      inst.commit();
-
-      world.setParam("instance", cpp::Data(1, OSP_INSTANCE, &inst));
-      world.commit();
-
-      return world;
     }
 
     std::vector<float> GravitySpheres::generateVoxels() const
