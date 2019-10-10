@@ -52,6 +52,8 @@ namespace ospray {
       vec3i volumeDimensions{128};
       int numPoints{10};
       bool createAsAMR{false};
+      bool withIsosurface{false};
+      float isovalue{2.5f};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -63,6 +65,8 @@ namespace ospray {
       volumeDimensions = getParam<vec3i>("volumeDimensions", vec3i(128));
       numPoints        = getParam<int>("numPoints", 10);
       createAsAMR      = getParam<bool>("asAMR", false);
+      withIsosurface   = getParam<bool>("withIsosurface", false);
+      isovalue         = getParam<float>("isovalue", 2.5f);
     }
 
     cpp::Group GravitySpheres::buildGroup() const
@@ -83,6 +87,24 @@ namespace ospray {
       cpp::Group group;
 
       group.setParam("volume", cpp::Data(model));
+
+      if (withIsosurface) {
+        cpp::Geometry isoGeom("isosurfaces");
+        isoGeom.setParam("isovalue", cpp::Data(1, OSP_FLOAT, &isovalue));
+        isoGeom.setParam("volume", model);
+        isoGeom.commit();
+
+        cpp::Material mat(rendererType, "OBJMaterial");
+        mat.setParam("Ks", vec3f(0.2f));
+        mat.commit();
+
+        cpp::GeometricModel isoModel(isoGeom);
+        isoModel.setParam("material", cpp::Data(mat));
+        isoModel.commit();
+
+        group.setParam("geometry", cpp::Data(isoModel));
+      }
+
       group.commit();
 
       return group;

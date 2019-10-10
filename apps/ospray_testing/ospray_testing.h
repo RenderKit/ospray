@@ -51,12 +51,6 @@ typedef struct
 OSPRAY_TESTING_EXPORT
 OSPRenderer ospTestingNewRenderer(const char *type OSP_DEFAULT_VAL("scivis"));
 
-/* Create an OSPRay geometry (from a registered name), with the given renderer
- * type to create materials */
-OSPRAY_TESTING_EXPORT
-OSPTestingGeometry ospTestingNewGeometry(
-    const char *geom_type, const char *renderer_type OSP_DEFAULT_VAL("scivis"));
-
 /* Create an OSPRay geometry (from a registered name) */
 OSPRAY_TESTING_EXPORT
 OSPTestingVolume ospTestingNewVolume(const char *volume_type);

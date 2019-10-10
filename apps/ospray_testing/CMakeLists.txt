@@ -27,8 +27,6 @@ add_library(ospray_testing SHARED
   transferFunction/RGB.cpp
   transferFunction/TransferFunction.cpp
 
-  volume/GravitySpheresVolume.cpp
-  volume/SimpleStructuredVolume.cpp
   volume/SimpleUnstructuredVolume.cpp
 
   ../utility/rawToAMR.cpp
