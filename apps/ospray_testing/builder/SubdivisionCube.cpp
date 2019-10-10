@@ -14,33 +14,26 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Geometry.h"
-// ospcommon
-#include "ospcommon/math/box.h"
+#include "Builder.h"
+#include "ospray_testing.h"
 
 using namespace ospcommon::math;
-
-#include <vector>
 
 namespace ospray {
   namespace testing {
 
-    struct SubdivisionCube : public Geometry
+    struct SubdivisionCube : public detail::Builder
     {
       SubdivisionCube()           = default;
       ~SubdivisionCube() override = default;
 
-      OSPTestingGeometry createGeometry(
-          const std::string &renderer_type) const override;
+      cpp::Group buildGroup() const override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTestingGeometry SubdivisionCube::createGeometry(
-        const std::string &renderer_type) const
+    cpp::Group SubdivisionCube::buildGroup() const
     {
-      box3f bounds(-1.f, 1.f);
-
       // vertices of a cube
       std::vector<vec3f> vertices = {{-1.0f, -1.0f, -1.0f},
                                      {1.0f, -1.0f, -1.0f},
@@ -95,81 +88,65 @@ namespace ospray {
       float level = 5.f;
 
       // create the OSPRay geometry and set all parameters
-      OSPGeometry geometry = ospNewGeometry("subdivision");
+      cpp::Geometry geometry("subdivision");
 
-      OSPData verticesData =
-          ospNewData(vertices.size(), OSP_VEC3F, vertices.data());
-      ospSetObject(geometry, "vertex.position", verticesData);
-      ospRelease(verticesData);
+      geometry.setParam("vertex.position",
+                        cpp::Data(vertices.size(), OSP_VEC3F, vertices.data()));
 
-      OSPData colorsData = ospNewData(colors.size(), OSP_VEC4F, colors.data());
-      ospSetObject(geometry, "vertex.color", colorsData);
-      ospRelease(colorsData);
+      geometry.setParam("vertex.color",
+                        cpp::Data(colors.size(), OSP_VEC4F, colors.data()));
 
-      OSPData facesData = ospNewData(faces.size(), OSP_UINT, faces.data());
-      ospSetObject(geometry, "face", facesData);
-      ospRelease(facesData);
+      geometry.setParam("face",
+                        cpp::Data(faces.size(), OSP_UINT, faces.data()));
 
-      OSPData indicesData =
-          ospNewData(indices.size(), OSP_UINT, indices.data());
-      ospSetObject(geometry, "index", indicesData);
-      ospRelease(indicesData);
+      geometry.setParam("index",
+                        cpp::Data(indices.size(), OSP_UINT, indices.data()));
 
-      OSPData vertexCreaseIndicesData = ospNewData(
-          vertexCreaseIndices.size(), OSP_UINT, vertexCreaseIndices.data());
-      ospSetObject(geometry, "vertexCrease.index", vertexCreaseIndicesData);
-      ospRelease(vertexCreaseIndicesData);
+      geometry.setParam("vertexCrease.index",
+                        cpp::Data(vertexCreaseIndices.size(),
+                                  OSP_UINT,
+                                  vertexCreaseIndices.data()));
 
-      OSPData vertexCreaseWeightsData = ospNewData(
-          vertexCreaseWeights.size(), OSP_FLOAT, vertexCreaseWeights.data());
-      ospSetObject(geometry, "vertexCrease.weight", vertexCreaseWeightsData);
-      ospRelease(vertexCreaseWeightsData);
+      geometry.setParam("vertexCrease.weight",
+                        cpp::Data(vertexCreaseWeights.size(),
+                                  OSP_FLOAT,
+                                  vertexCreaseWeights.data()));
 
-      OSPData edgeCreaseIndicesData = ospNewData(
-          edgeCreaseIndices.size(), OSP_VEC2UI, edgeCreaseIndices.data());
-      ospSetObject(geometry, "edgeCrease.index", edgeCreaseIndicesData);
-      ospRelease(edgeCreaseIndicesData);
+      geometry.setParam(
+          "edgeCrease.index",
+          cpp::Data(
+              edgeCreaseIndices.size(), OSP_VEC2UI, edgeCreaseIndices.data()));
 
-      OSPData edgeCreaseWeightsData = ospNewData(
-          edgeCreaseWeights.size(), OSP_FLOAT, edgeCreaseWeights.data());
-      ospSetObject(geometry, "edgeCrease.weight", edgeCreaseWeightsData);
-      ospRelease(edgeCreaseWeightsData);
+      geometry.setParam(
+          "edgeCrease.weight",
+          cpp::Data(
+              edgeCreaseWeights.size(), OSP_FLOAT, edgeCreaseWeights.data()));
 
-      ospSetFloat(geometry, "level", level);
+      geometry.setParam("level", level);
 
-      OSPGeometricModel model = ospNewGeometricModel(geometry);
+      geometry.commit();
+
+      cpp::GeometricModel model(geometry);
 
       // create OBJ material and assign to geometry
-      OSPMaterial objMaterial =
-          ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
-      ospSetVec3f(objMaterial, "Ks", 0.5f, 0.5f, 0.5f);
-      ospCommit(objMaterial);
+      cpp::Material material(rendererType, "OBJMaterial");
+      material.setParam("Ks", vec3f(0.5f, 0.5f, 0.5f));
+      material.commit();
 
-      ospSetObjectAsData(model, "material", OSP_MATERIAL, objMaterial);
-      ospRelease(objMaterial);
+      model.setParam("material", cpp::Data(material));
+      material.commit();
 
-      ospCommit(geometry);
-      ospCommit(model);
+      model.commit();
 
-      OSPGroup group = ospNewGroup();
-      ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
-      ospCommit(group);
+      cpp::Group group;
 
-      OSPInstance instance = ospNewInstance(group);
-      ospCommit(instance);
+      group.setParam("geometry", cpp::Data(model));
+      group.commit();
 
-      OSPTestingGeometry retval;
-      retval.geometry = geometry;
-      retval.model    = model;
-      retval.group    = group;
-      retval.instance = instance;
-
-      std::memcpy(&retval.bounds, &bounds, sizeof(bounds));
-
-      return retval;
+      return group;
     }
 
-    OSP_REGISTER_TESTING_GEOMETRY(SubdivisionCube, subdivision_cube);
+    OSP_REGISTER_TESTING_BUILDER(SubdivisionCube, subdivision_cube);
 
   }  // namespace testing
 }  // namespace ospray

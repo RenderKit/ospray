@@ -19,8 +19,6 @@ include(GenerateExportHeader)
 add_library(ospray_testing SHARED
   ospray_testing.cpp
 
-  geometry/SubdivisionCube.cpp
-
   lights/AmbientOnly.cpp
   lights/AmbientAndDirectional.cpp
 
@@ -43,6 +41,7 @@ add_library(ospray_testing SHARED
   builder/GravitySpheresVolume.cpp
   builder/RandomSpheres.cpp
   builder/Streamlines.cpp
+  builder/SubdivisionCube.cpp
 )
 
 generate_export_header(ospray_testing)
