@@ -61,7 +61,8 @@ int main(int argc, const char *argv[])
     // auto builder = testing::newBuilder("cornell_box");
     // auto builder = testing::newBuilder("boxes");
     // auto builder = testing::newBuilder("curves");
-    auto builder = testing::newBuilder("streamlines");
+    // auto builder = testing::newBuilder("streamlines");
+    auto builder = testing::newBuilder("cylinders");
     testing::setParam(builder, "rendererType", rendererType);
     testing::commit(builder);
 
