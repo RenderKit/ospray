@@ -20,7 +20,6 @@
 #include <random>
 #include <vector>
 // ospcommon
-#include "ospcommon/math/box.h"
 #include "ospcommon/tasking/parallel_for.h"
 // apps/utility
 #include "../../utility/rawToAMR.h"

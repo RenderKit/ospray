@@ -19,7 +19,6 @@
 // stl
 #include <random>
 // ospcommon
-#include "ospcommon/math/box.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
 
 using namespace ospcommon::math;
