@@ -21,7 +21,6 @@ add_library(ospray_testing SHARED
 
   geometry/Curves.cpp
   geometry/Cylinders.cpp
-  geometry/RandomSpheres.cpp
   geometry/Streamlines.cpp
   geometry/SubdivisionCube.cpp
 

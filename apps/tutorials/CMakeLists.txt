@@ -66,8 +66,6 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 
 ## Build the actual tutorials ##
 
-ospray_create_tutorial(ospTutorialBoxes ospTutorialBoxes.cpp)
-ospray_create_tutorial(ospTutorialSpheres ospTutorialSpheres.cpp)
 ospray_create_tutorial(ospTutorialBouncingSpheres ospTutorialBouncingSpheres.cpp)
 ospray_create_tutorial(ospTutorialSubdivision ospTutorialSubdivision.cpp)
 ospray_create_tutorial(ospTutorialStructuredVolume ospTutorialStructuredVolume.cpp)
