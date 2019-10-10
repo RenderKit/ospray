@@ -14,40 +14,39 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Geometry.h"
+#include "Builder.h"
+#include "ospray_testing.h"
+// stl
+#include <random>
 // ospcommon
 #include "ospcommon/math/box.h"
-
-#include <cmath>
-#include <random>
-#include <vector>
 
 using namespace ospcommon::math;
 
 namespace ospray {
   namespace testing {
 
-    struct TestCurves : public Geometry
+    struct Curves : public detail::Builder
     {
-      TestCurves()           = default;
-      ~TestCurves() override = default;
+      Curves()           = default;
+      ~Curves() override = default;
 
+      cpp::Group buildGroup() const override;
+
+     private:
       void kleinBottle(std::vector<vec4f> &points,
                        std::vector<int> &indices,
-                       std::vector<vec4f> &colors,
-                       OSPGeometry &geom) const;
+                       std::vector<vec4f> &colors) const;
       void embreeTutorialCurve(std::vector<vec4f> &points,
                                std::vector<int> &indices,
-                               std::vector<vec4f> &colors,
-                               OSPGeometry &geom) const;
-      OSPTestingGeometry createGeometry(
-          const std::string &renderer_type) const override;
+                               std::vector<vec4f> &colors) const;
     };
 
-    void TestCurves::kleinBottle(std::vector<vec4f> &points,
-                                 std::vector<int> &indices,
-                                 std::vector<vec4f> &colors,
-                                 OSPGeometry &geom) const
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    void Curves::kleinBottle(std::vector<vec4f> &points,
+                             std::vector<int> &indices,
+                             std::vector<vec4f> &colors) const
     {
       // spout
       points.push_back(vec4f(0.0f, 0.0f, 0.0f, 0.1f));
@@ -69,16 +68,12 @@ namespace ospray {
         indices.push_back(i);
         colors.push_back(vec4f(1.0f, 0.0f, 0.0f, 0.0f));
       }
-
-      ospSetInt(geom, "type", OSP_ROUND);
-      ospSetInt(geom, "basis", OSP_BSPLINE);
     }
 
     // from Embree's curve_geometry tutorial
-    void TestCurves::embreeTutorialCurve(std::vector<vec4f> &points,
-                                         std::vector<int> &indices,
-                                         std::vector<vec4f> &colors,
-                                         OSPGeometry &geom) const
+    void Curves::embreeTutorialCurve(std::vector<vec4f> &points,
+                                     std::vector<int> &indices,
+                                     std::vector<vec4f> &colors) const
     {
       points.push_back(vec4f(-1.0f, 0.0f, -2.f, 0.2f));
       points.push_back(vec4f(0.0f, -1.0f, 0.0f, 0.2f));
@@ -103,63 +98,50 @@ namespace ospray {
       colors.push_back(vec4f(0.0f, 1.0f, 1.0f, 0.0f));
       colors.push_back(vec4f(0.0f, 0.0f, 1.0f, 0.0f));
       colors.push_back(vec4f(1.0f, 0.0f, 1.0f, 0.0f));
-
-      ospSetInt(geom, "type", OSP_ROUND);
-      ospSetInt(geom, "basis", OSP_BSPLINE);
     }
 
-    OSPTestingGeometry TestCurves::createGeometry(
-        const std::string &renderer_type) const
+    cpp::Group Curves::buildGroup() const
     {
-      auto geom = ospNewGeometry("curves");
+      cpp::Geometry geom("curves");
+
+      geom.setParam("type", int(OSP_ROUND));
+      geom.setParam("basis", int(OSP_BSPLINE));
+
       std::vector<vec4f> points;
       std::vector<int> indices;
       std::vector<vec4f> colors;
-      embreeTutorialCurve(points, indices, colors, geom);
 
-      OSPData pointsData  = ospNewData(points.size(), OSP_VEC4F, points.data());
-      OSPData indicesData =
-          ospNewData(indices.size(), OSP_UINT, indices.data());
-      OSPData colorsData  = ospNewData(colors.size(), OSP_VEC4F, colors.data());
-      ospSetObject(geom, "vertex.position", pointsData);
-      ospSetObject(geom, "index", indicesData);
-      ospCommit(geom);
+#if 0
+      kleinBottle(points, indices, colors);
+#else
+      embreeTutorialCurve(points, indices, colors);
+#endif
 
-      OSPMaterial mat = ospNewMaterial(renderer_type.c_str(), "ThinGlass");
-      ospSetFloat(mat, "attenuationDistance", 0.2f);
-      ospCommit(mat);
+      geom.setParam("vertex.position",
+                    cpp::Data(points.size(), OSP_VEC4F, points.data()));
+      geom.setParam("index",
+                    cpp::Data(indices.size(), OSP_UINT, indices.data()));
+      geom.commit();
 
-      auto model = ospNewGeometricModel(geom);
-      ospSetObjectAsData(model, "material", OSP_MATERIAL, mat);
-      ospSetObject(model, "color", colorsData);
-      ospCommit(model);
-      ospRelease(mat);
+      cpp::Material mat(rendererType, "ThinGlass");
+      mat.setParam("attenuationDistance", 0.2f);
+      mat.commit();
 
-      OSPGroup group = ospNewGroup();
-      ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
-      ospCommit(group);
+      cpp::GeometricModel model(geom);
+      model.setParam("material", cpp::Data(mat));
+      model.setParam("color",
+                     cpp::Data(colors.size(), OSP_VEC4F, colors.data()));
+      model.commit();
 
-      box3f bounds = empty;
+      cpp::Group group;
 
-      OSPInstance instance = ospNewInstance(group);
-      ospCommit(instance);
+      group.setParam("geometry", cpp::Data(model));
+      group.commit();
 
-      OSPTestingGeometry retval;
-      retval.geometry = geom;
-      retval.model    = model;
-      retval.group    = group;
-      retval.instance = instance;
-
-      std::memcpy(&retval.bounds, &bounds, sizeof(bounds));
-
-      ospRelease(pointsData);
-      ospRelease(indicesData);
-      ospRelease(colorsData);
-
-      return retval;
+      return group;
     }
 
-    OSP_REGISTER_TESTING_GEOMETRY(TestCurves, curves);
+    OSP_REGISTER_TESTING_BUILDER(Curves, curves);
 
   }  // namespace testing
 }  // namespace ospray

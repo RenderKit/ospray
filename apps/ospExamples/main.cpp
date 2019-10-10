@@ -56,10 +56,11 @@ int main(int argc, const char *argv[])
   initializeOSPRay(argc, argv);
 
   {
-    //auto builder = testing::newBuilder("gravity_spheres_volume");
-    //auto builder = testing::newBuilder("random_spheres");
-    //auto builder = testing::newBuilder("cornell_box");
-    auto builder = testing::newBuilder("boxes");
+    // auto builder = testing::newBuilder("gravity_spheres_volume");
+    // auto builder = testing::newBuilder("random_spheres");
+    // auto builder = testing::newBuilder("cornell_box");
+    // auto builder = testing::newBuilder("boxes");
+    auto builder = testing::newBuilder("curves");
     testing::setParam(builder, "rendererType", rendererType);
     testing::commit(builder);
 
