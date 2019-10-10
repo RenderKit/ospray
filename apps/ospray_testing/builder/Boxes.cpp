@@ -14,43 +14,51 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Geometry.h"
+#include "Builder.h"
+#include "ospray_testing.h"
+// stl
+#include <random>
 // ospcommon
 #include "ospcommon/math/box.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
 
-#include <vector>
-
-using namespace ospcommon;
 using namespace ospcommon::math;
 
 namespace ospray {
   namespace testing {
 
-    struct Boxes : public Geometry
+    struct Boxes : public detail::Builder
     {
       Boxes()           = default;
       ~Boxes() override = default;
 
-      OSPTestingGeometry createGeometry(
-          const std::string &renderer_type) const override;
+      void commit() override;
+
+      cpp::Group buildGroup() const override;
+
+     private:
+      vec3i dimensions{4};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTestingGeometry Boxes::createGeometry(
-        const std::string &renderer_type) const
+    void Boxes::commit()
     {
-      auto boxGeometry = ospNewGeometry("boxes");
-      auto model       = ospNewGeometricModel(boxGeometry);
+      Builder::commit();
 
-      const int dim = 4;
+      dimensions = getParam<vec3i>("dimensions", vec3i(4));
+    }
 
-      index_sequence_3D numBoxes({dim, dim, dim});
+    cpp::Group Boxes::buildGroup() const
+    {
+      cpp::Geometry boxGeometry("boxes");
+
+      index_sequence_3D numBoxes(dimensions);
 
       std::vector<box3f> boxes;
       std::vector<vec4f> color;
-      box3f bounds;
+
+      auto dim = reduce_max(dimensions);
 
       for (auto i : numBoxes) {
         auto i_f = static_cast<vec3f>(i);
@@ -59,55 +67,35 @@ namespace ospray {
         auto upper = lower + (0.75f * 5.f);
         boxes.emplace_back(lower, upper);
 
-        bounds.extend(lower);
-        bounds.extend(upper);
-
         auto box_color = (0.8f * i_f / dim) + 0.2f;
         color.emplace_back(box_color.x, box_color.y, box_color.z, 1.f);
       }
 
-      auto boxData =
-          ospNewData(numBoxes.total_indices(), OSP_BOX3F, boxes.data());
+      boxGeometry.setParam(
+          "box", cpp::Data(numBoxes.total_indices(), OSP_BOX3F, boxes.data()));
+      boxGeometry.commit();
 
-      ospSetObject(boxGeometry, "box", boxData);
-      ospRelease(boxData);
+      cpp::GeometricModel model(boxGeometry);
 
-      ospCommit(boxGeometry);
+      model.setParam(
+          "color",
+          cpp::Data(numBoxes.total_indices(), OSP_VEC4F, color.data()));
 
-      auto colorData =
-          ospNewData(numBoxes.total_indices(), OSP_VEC4F, color.data());
+      cpp::Material material(rendererType, "OBJMaterial");
+      material.commit();
 
-      ospSetObject(model, "color", colorData);
-      ospRelease(colorData);
+      model.setParam("material", cpp::Data(material));
+      model.commit();
 
-      // create OBJ material and assign to geometry
-      OSPMaterial objMaterial =
-          ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
-      ospCommit(objMaterial);
+      cpp::Group group;
 
-      ospSetObjectAsData(model, "material", OSP_MATERIAL, objMaterial);
-      ospRelease(objMaterial);
+      group.setParam("geometry", cpp::Data(model));
+      group.commit();
 
-      ospCommit(model);
-
-      OSPGroup group = ospNewGroup();
-      ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
-      ospCommit(group);
-
-      OSPInstance instance = ospNewInstance(group);
-      ospCommit(instance);
-
-      OSPTestingGeometry retval;
-      retval.geometry = boxGeometry;
-      retval.model    = model;
-      retval.group    = group;
-      retval.instance = instance;
-      retval.bounds   = reinterpret_cast<osp_box3f &>(bounds);
-
-      return retval;
+      return group;
     }
 
-    OSP_REGISTER_TESTING_GEOMETRY(Boxes, boxes);
+    OSP_REGISTER_TESTING_BUILDER(Boxes, boxes);
 
   }  // namespace testing
 }  // namespace ospray
