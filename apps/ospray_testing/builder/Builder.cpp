@@ -35,7 +35,11 @@ namespace ospray {
         inst.commit();
 
         world.setParam("instance", cpp::Data(inst));
-        world.commit();
+
+        cpp::Light light("ambient");
+        light.commit();
+
+        world.setParam("light", cpp::Data(light));
 
         return world;
       }

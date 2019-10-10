@@ -49,7 +49,7 @@ void initializeOSPRay(int argc, const char **argv, bool errorsFatal = true)
   }
 }
 
-static std::string rendererType = "scivis";
+static std::string rendererType = "pathtracer";
 
 int main(int argc, const char *argv[])
 {
@@ -57,12 +57,15 @@ int main(int argc, const char *argv[])
 
   {
     //auto builder = testing::newBuilder("gravity_spheres_volume");
-    auto builder = testing::newBuilder("random_spheres");
+    //auto builder = testing::newBuilder("random_spheres");
+    auto builder = testing::newBuilder("cornell_box");
     testing::setParam(builder, "rendererType", rendererType);
     testing::commit(builder);
 
     auto world = testing::buildWorld(builder);
     testing::release(builder);
+
+    world.commit();
 
     cpp::Renderer renderer(rendererType);
     renderer.commit();

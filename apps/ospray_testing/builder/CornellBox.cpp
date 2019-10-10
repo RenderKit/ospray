@@ -14,29 +14,29 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Geometry.h"
+#include "Builder.h"
+#include "ospray_testing.h"
+// stl
+#include <random>
 // ospcommon
 #include "ospcommon/math/box.h"
 
-#include <vector>
-
-using namespace ospcommon;
 using namespace ospcommon::math;
 
 namespace ospray {
   namespace testing {
 
-    struct CornellBox : public Geometry
+    struct CornellBox : public detail::Builder
     {
       CornellBox()           = default;
       ~CornellBox() override = default;
 
-      OSPTestingGeometry createGeometry(
-          const std::string &renderer_type) const override;
+      cpp::Group buildGroup() const override;
+      cpp::World buildWorld() const override;
     };
 
     // quad mesh data
-    static vec3f vertices[] = {
+    static std::vector<vec3f> vertices = {
         // Floor
         {1.00f, -1.00f, -1.00f},
         {-1.00f, -1.00f, -1.00f},
@@ -123,7 +123,7 @@ namespace ospray {
         {0.14f, -1.00f, 0.67f},
         {0.71f, -1.00f, 0.49f}};
 
-    static vec4i indices[] = {
+    static std::vector<vec4i> indices = {
         {0, 1, 2, 3},      // Floor
         {4, 5, 6, 7},      // Ceiling
         {8, 9, 10, 11},    // Backwall
@@ -143,7 +143,7 @@ namespace ospray {
         {64, 65, 66, 67}   // TallBox Bottom Face
     };
 
-    static vec4f colors[] = {
+    static std::vector<vec4f> colors = {
         // Floor
         {0.725f, 0.710f, 0.68f, 1.0f},
         {0.725f, 0.710f, 0.68f, 1.0f},
@@ -232,63 +232,55 @@ namespace ospray {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTestingGeometry CornellBox::createGeometry(
-        const std::string &renderer_type) const
+    cpp::Group CornellBox::buildGroup() const
     {
-      box3f bounds(vec3f(-1.0f), vec3f(1.0f));
+      cpp::Geometry quadMesh("quads");
 
-      OSPGeometry quadMesh = ospNewGeometry("quads");
-
-      OSPData quadVerts   = ospNewData(17 * 4, OSP_VEC3F, vertices);
-      OSPData quadColors  = ospNewData(17 * 4, OSP_VEC4F, colors);
-      OSPData quadIndices = ospNewData(17, OSP_VEC4UI, indices);
-
-      ospCommit(quadVerts);
-      ospCommit(quadColors);
-      ospCommit(quadIndices);
-
-      ospSetObject(quadMesh, "vertex.position", quadVerts);
-      ospSetObject(quadMesh, "vertex.color", quadColors);
-      ospSetObject(quadMesh, "index", quadIndices);
-
-      ospCommit(quadMesh);
-      ospRelease(quadVerts);
-      ospRelease(quadColors);
-      ospRelease(quadIndices);
+      quadMesh.setParam("vertex.position",
+                        cpp::Data(vertices.size(), OSP_VEC3F, vertices.data()));
+      quadMesh.setParam("vertex.color",
+                        cpp::Data(colors.size(), OSP_VEC4F, colors.data()));
+      quadMesh.setParam("index",
+                        cpp::Data(indices.size(), OSP_VEC4UI, indices.data()));
+      quadMesh.commit();
 
       // create and setup a material
-      OSPMaterial quadMeshMaterial =
-          ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
-      ospCommit(quadMeshMaterial);
+      cpp::Material quadMeshMaterial(rendererType, "OBJMaterial");
+      quadMeshMaterial.commit();
 
       // Put the mesh and material into a model
-      OSPGeometricModel quadMeshModel = ospNewGeometricModel(quadMesh);
-      ospSetObjectAsData(
-          quadMeshModel, "material", OSP_MATERIAL, quadMeshMaterial);
-      ospCommit(quadMeshModel);
-      ospRelease(quadMeshMaterial);
+      cpp::GeometricModel model(quadMesh);
+      model.setParam("material", cpp::Data(quadMeshMaterial));
+      model.commit();
 
-      // put the model into a group (collection of models)
-      OSPGroup group = ospNewGroup();
-      ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, quadMeshModel);
-      ospCommit(group);
+      cpp::Group group;
 
-      // put the group into an instance (give the group a world transform)
-      OSPInstance instance = ospNewInstance(group);
-      ospCommit(instance);
+      group.setParam("geometry", cpp::Data(model));
+      group.commit();
 
-      OSPTestingGeometry retval;
-      retval.geometry = quadMesh;
-      retval.model    = quadMeshModel;
-      retval.group    = group;
-      retval.instance = instance;
-
-      std::memcpy(&retval.bounds, &bounds, sizeof(bounds));
-
-      return retval;
+      return group;
     }
 
-    OSP_REGISTER_TESTING_GEOMETRY(CornellBox, cornell_box);
+    cpp::World CornellBox::buildWorld() const
+    {
+      auto world = Builder::buildWorld();
+
+      cpp::Light light("quad");
+
+      light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
+      light.setParam("intensity", 47.f);
+      light.setParam("position", vec3f(-0.23f, 0.98f, -0.16f));
+      light.setParam("edge1", vec3f(0.47f, 0.0f, 0.0f));
+      light.setParam("edge2", vec3f(0.0f, 0.0f, 0.38f));
+
+      light.commit();
+
+      world.setParam("light", cpp::Data(light));
+
+      return world;
+    }
+
+    OSP_REGISTER_TESTING_BUILDER(CornellBox, cornell_box);
 
   }  // namespace testing
 }  // namespace ospray

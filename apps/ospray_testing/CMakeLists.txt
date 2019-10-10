@@ -20,7 +20,6 @@ add_library(ospray_testing SHARED
   ospray_testing.cpp
 
   geometry/Boxes.cpp
-  geometry/CornellBox.cpp
   geometry/Curves.cpp
   geometry/Cylinders.cpp
   geometry/RandomSpheres.cpp
@@ -42,6 +41,7 @@ add_library(ospray_testing SHARED
   ../utility/rawToAMR.cpp
 
   builder/Builder.cpp
+  builder/CornellBox.cpp
   builder/GravitySpheresVolume.cpp
   builder/RandomSpheres.cpp
 )
