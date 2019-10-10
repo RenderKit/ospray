@@ -83,7 +83,7 @@ namespace ospray {
 
       cpp::Group group;
 
-      group.setParam("volume", cpp::Data(1, OSP_VOLUMETRIC_MODEL, &model));
+      group.setParam("volume", cpp::Data(model));
       group.commit();
 
       return group;
@@ -180,7 +180,7 @@ namespace ospray {
       std::vector<int> refinementLevels;
       std::vector<float> cellWidths;
       std::vector<std::vector<float>> blockDataVectors;
-      std::vector<OSPData> blockData;
+      std::vector<cpp::Data> blockData;
 
       // convert the structured volume to AMR
       ospray::amr::makeAMR(voxels,
@@ -194,37 +194,26 @@ namespace ospray {
                            cellWidths,
                            blockDataVectors);
 
-      for (const std::vector<float> &bd : blockDataVectors) {
-        OSPData data = ospNewData(bd.size(), OSP_FLOAT, bd.data());
-        blockData.push_back(data);
-      }
-
-      OSPData blockDataData =
-          ospNewData(blockData.size(), OSP_DATA, blockData.data());
-      ospCommit(blockDataData);
-
-      OSPData blockBoundsData =
-          ospNewData(blockBounds.size(), OSP_BOX3I, blockBounds.data());
-      ospCommit(blockBoundsData);
-
-      OSPData refinementLevelsData =
-          ospNewData(refinementLevels.size(), OSP_INT, refinementLevels.data());
-      ospCommit(refinementLevelsData);
-
-      OSPData cellWidthsData =
-          ospNewData(cellWidths.size(), OSP_FLOAT, cellWidths.data());
-      ospCommit(cellWidthsData);
+      for (const std::vector<float> &bd : blockDataVectors)
+        blockData.emplace_back(bd.size(), OSP_FLOAT, bd.data());
 
       // create an AMR volume and assign attributes
-      OSPVolume volume = ospNewVolume("amr_volume");
+      cpp::Volume volume("amr_volume");
 
-      ospSetInt(volume, "voxelType", OSP_FLOAT);
-      ospSetObject(volume, "block.data", blockDataData);
-      ospSetObject(volume, "block.bounds", blockBoundsData);
-      ospSetObject(volume, "block.level", refinementLevelsData);
-      ospSetObject(volume, "block.cellWidth", cellWidthsData);
+      volume.setParam("voxelType", int(OSP_FLOAT));
+      volume.setParam("block.data",
+                      cpp::Data(blockData.size(), OSP_DATA, blockData.data()));
+      volume.setParam(
+          "block.bounds",
+          cpp::Data(blockBounds.size(), OSP_BOX3I, blockBounds.data()));
+      volume.setParam(
+          "block.level",
+          cpp::Data(refinementLevels.size(), OSP_INT, refinementLevels.data()));
+      volume.setParam(
+          "block.cellWidth",
+          cpp::Data(cellWidths.size(), OSP_FLOAT, cellWidths.data()));
 
-      ospCommit(volume);
+      volume.commit();
 
       return volume;
     }

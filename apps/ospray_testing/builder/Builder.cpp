@@ -34,7 +34,7 @@ namespace ospray {
         cpp::Instance inst(group);
         inst.commit();
 
-        world.setParam("instance", cpp::Data(1, OSP_INSTANCE, &inst));
+        world.setParam("instance", cpp::Data(inst));
         world.commit();
 
         return world;
