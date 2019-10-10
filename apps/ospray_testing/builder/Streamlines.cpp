@@ -14,32 +14,32 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Geometry.h"
+#include "Builder.h"
+#include "ospray_testing.h"
+// stl
+#include <random>
 // ospcommon
 #include "ospcommon/math/box.h"
-
-#include <cmath>
-#include <random>
-#include <vector>
 
 using namespace ospcommon::math;
 
 namespace ospray {
   namespace testing {
 
-    struct TestStreamlines : public Geometry
+    struct Streamlines : public detail::Builder
     {
-      TestStreamlines()           = default;
-      ~TestStreamlines() override = default;
+      Streamlines()           = default;
+      ~Streamlines() override = default;
 
-      OSPTestingGeometry createGeometry(
-          const std::string &renderer_type) const override;
+      cpp::Group buildGroup() const override;
     };
 
-    OSPTestingGeometry TestStreamlines::createGeometry(
-        const std::string &renderer_type) const
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    cpp::Group Streamlines::buildGroup() const
     {
-      auto slGeom = ospNewGeometry("streamlines");
+      cpp::Geometry slGeom("streamlines");
+
       std::vector<vec3f> points;
       std::vector<float> radii;
       std::vector<int> indices;
@@ -84,52 +84,32 @@ namespace ospray {
         }
       }
 
-      OSPData pointsData = ospNewData(points.size(), OSP_VEC3F, points.data());
-      OSPData radiusData = ospNewData(radii.size(), OSP_FLOAT, radii.data());
-      OSPData indicesData =
-          ospNewData(indices.size(), OSP_UINT, indices.data());
-      OSPData colorsData = ospNewData(colors.size(), OSP_VEC4F, colors.data());
-      ospSetObject(slGeom, "vertex.position", pointsData);
-      ospSetObject(slGeom, "vertex.radius", radiusData);
-      ospSetObject(slGeom, "index", indicesData);
-      ospSetObject(slGeom, "vertex.color", colorsData);
-      ospCommit(slGeom);
+      slGeom.setParam("vertex.position",
+                      cpp::Data(points.size(), OSP_VEC3F, points.data()));
+      slGeom.setParam("vertex.radius",
+                      cpp::Data(radii.size(), OSP_FLOAT, radii.data()));
+      slGeom.setParam("index",
+                      cpp::Data(indices.size(), OSP_UINT, indices.data()));
+      slGeom.setParam("vertex.color",
+                      cpp::Data(colors.size(), OSP_VEC4F, colors.data()));
+      slGeom.commit();
 
-      ospRelease(pointsData);
-      ospRelease(indicesData);
-      ospRelease(colorsData);
+      cpp::Material slMat(rendererType, "OBJMaterial");
+      slMat.commit();
 
-      OSPMaterial slMat = ospNewMaterial(renderer_type.c_str(), "OBJMaterial");
-      ospCommit(slMat);
+      cpp::GeometricModel model(slGeom);
+      model.setParam("material", cpp::Data(slMat));
+      model.commit();
 
-      auto model = ospNewGeometricModel(slGeom);
-      ospSetObjectAsData(slGeom, "material", OSP_MATERIAL, slMat);
-      ospCommit(model);
+      cpp::Group group;
 
-      ospRelease(slMat);
+      group.setParam("geometry", cpp::Data(model));
+      group.commit();
 
-      OSPGroup group = ospNewGroup();
-      ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
-      ospCommit(group);
-
-      box3f bounds = empty;
-
-      OSPInstance instance = ospNewInstance(group);
-      ospCommit(instance);
-
-      OSPTestingGeometry retval;
-      retval.auxData  = radiusData;
-      retval.geometry = slGeom;
-      retval.model    = model;
-      retval.group    = group;
-      retval.instance = instance;
-
-      std::memcpy(&retval.bounds, &bounds, sizeof(bounds));
-
-      return retval;
+      return group;
     }
 
-    OSP_REGISTER_TESTING_GEOMETRY(TestStreamlines, streamlines);
+    OSP_REGISTER_TESTING_BUILDER(Streamlines, streamlines);
 
   }  // namespace testing
 }  // namespace ospray
