@@ -52,11 +52,9 @@ namespace ospray {
 
     cpp::Group Spheres::buildGroup() const
     {
-      struct Sphere
-      {
-        vec3f center;
-        float radius;
-      };
+      std::vector<vec3f> s_center(numSpheres);
+      std::vector<float> s_radius(numSpheres);
+      std::vector<vec4f> s_colors(numSpheres);
 
       // create random number distributions for sphere center, radius, and color
       std::random_device rd;
@@ -67,74 +65,50 @@ namespace ospray {
       std::uniform_real_distribution<float> colorDistribution(0.5f, 1.f);
 
       // populate the spheres
-      box3f bounds;
-      static std::vector<Sphere> spheres(numSpheres);
-      std::vector<vec4f> colors(numSpheres);
 
-      for (auto &s : spheres) {
-        s.center.x = centerDistribution(gen);
-        s.center.y = centerDistribution(gen);
-        s.center.z = centerDistribution(gen);
-
-        s.radius = radiusDistribution(gen);
-
-        bounds.extend(box3f(s.center - s.radius, s.center + s.radius));
+      for (auto &center : s_center) {
+        center.x = centerDistribution(gen);
+        center.y = centerDistribution(gen);
+        center.z = centerDistribution(gen);
       }
 
-      for (auto &c : colors) {
+      for (auto &radius : s_radius)
+        radius = radiusDistribution(gen);
+
+      for (auto &c : s_colors) {
         c.x = colorDistribution(gen);
         c.y = colorDistribution(gen);
         c.z = colorDistribution(gen);
         c.w = colorDistribution(gen);
       }
 
-      // create a data object with all the sphere information
-      OSPData positionData =
-          ospNewSharedData((char *)spheres.data() + offsetof(Sphere, center),
-                           OSP_VEC3F,
-                           numSpheres,
-                           sizeof(Sphere));
-      OSPData radiusData =
-          ospNewSharedData((char *)spheres.data() + offsetof(Sphere, radius),
-                           OSP_FLOAT,
-                           numSpheres,
-                           sizeof(Sphere));
-
       // create the sphere geometry, and assign attributes
-      OSPGeometry spheresGeometry = ospNewGeometry("spheres");
+      cpp::Geometry spheresGeometry("spheres");
 
-      ospSetObject(spheresGeometry, "sphere.position", positionData);
-      ospSetObject(spheresGeometry, "sphere.radius", radiusData);
+      spheresGeometry.setParam(
+          "sphere.position",
+          cpp::Data(s_center.size(), OSP_VEC3F, s_center.data()));
+      spheresGeometry.setParam(
+          "sphere.radius",
+          cpp::Data(s_radius.size(), OSP_FLOAT, s_radius.data()));
+      spheresGeometry.commit();
 
-      // commit the spheres geometry
-      ospCommit(spheresGeometry);
+      cpp::GeometricModel model(spheresGeometry);
 
-      OSPGeometricModel model = ospNewGeometricModel(spheresGeometry);
-
-      OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, colors.data());
-
-      ospSetObject(model, "color", colorData);
+      model.setParam("color",
+                     cpp::Data(numSpheres, OSP_VEC4F, s_colors.data()));
 
       // create glass material and assign to geometry
-      OSPMaterial glassMaterial =
-          ospNewMaterial(rendererType.c_str(), "ThinGlass");
-      ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
-      ospCommit(glassMaterial);
+      cpp::Material glassMaterial(rendererType.c_str(), "ThinGlass");
+      glassMaterial.setParam("attenuationDistance", 0.2f);
+      glassMaterial.commit();
 
-      ospSetObjectAsData(model, "material", OSP_MATERIAL, glassMaterial);
-
-      ospCommit(model);
-
-      // release handles we no longer need
-      ospRelease(positionData);
-      ospRelease(radiusData);
-      ospRelease(colorData);
-      ospRelease(glassMaterial);
+      model.setParam("material", cpp::Data(glassMaterial));
+      model.commit();
 
       cpp::Group group;
 
-      ospSetObjectAsData(
-          group.handle(), "geometry", OSP_GEOMETRIC_MODEL, model);
+      group.setParam("geometry", cpp::Data(model));
       group.commit();
 
       return group;
