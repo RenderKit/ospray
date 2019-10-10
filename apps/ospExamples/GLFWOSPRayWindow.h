@@ -50,10 +50,10 @@ class GLFWOSPRayWindow
 
   void mainLoop();
 
+  void addObjectToCommit(OSPObject obj);
+
  protected:
   void updateCamera();
-
-  void addObjectToCommit(OSPObject obj);
 
   void reshape(const vec2i &newWindowSize);
   void motion(const vec2f &position);

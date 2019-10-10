@@ -69,4 +69,3 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
 ospray_create_tutorial(ospTutorialStructuredVolume ospTutorialStructuredVolume.cpp)
 ospray_create_tutorial(ospTutorialUnstructuredVolume ospTutorialUnstructuredVolume.cpp)
 ospray_create_tutorial(ospTutorialImageOperations ospTutorialImageOperations.cpp)
-ospray_create_tutorial(ospTutorialVolumePathTracer ospTutorialVolumePathTracer.cpp)
