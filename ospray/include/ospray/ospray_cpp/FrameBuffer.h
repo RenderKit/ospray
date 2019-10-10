@@ -35,7 +35,7 @@ namespace ospray {
       uint32_t primID{0};
     };
 
-    class FrameBuffer : public ManagedObject<OSPFrameBuffer>
+    class FrameBuffer : public ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>
     {
      public:
       FrameBuffer() =
@@ -78,13 +78,13 @@ namespace ospray {
     }
 
     inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
-        : ManagedObject<OSPFrameBuffer>(copy.handle())
+        : ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing)
-        : ManagedObject<OSPFrameBuffer>(existing)
+        : ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>(existing)
     {
     }
 

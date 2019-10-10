@@ -21,7 +21,7 @@
 namespace ospray {
   namespace cpp {
 
-    class Group : public ManagedObject<OSPGroup>
+    class Group : public ManagedObject<OSPGroup, OSP_GROUP>
     {
      public:
       Group();
@@ -40,13 +40,13 @@ namespace ospray {
     }
 
     inline Group::Group(const Group &copy)
-        : ManagedObject<OSPGroup>(copy.handle())
+        : ManagedObject<OSPGroup, OSP_GROUP>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Group::Group(OSPGroup existing)
-        : ManagedObject<OSPGroup>(existing)
+        : ManagedObject<OSPGroup, OSP_GROUP>(existing)
     {
     }
 

@@ -22,7 +22,8 @@
 namespace ospray {
   namespace cpp {
 
-    class GeometricModel : public ManagedObject<OSPGeometricModel>
+    class GeometricModel
+        : public ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>
     {
      public:
       GeometricModel(const Geometry &geom);
@@ -47,13 +48,13 @@ namespace ospray {
     }
 
     inline GeometricModel::GeometricModel(const GeometricModel &copy)
-        : ManagedObject<OSPGeometricModel>(copy.handle())
+        : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline GeometricModel::GeometricModel(OSPGeometricModel existing)
-        : ManagedObject<OSPGeometricModel>(existing)
+        : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(existing)
     {
     }
 

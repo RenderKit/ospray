@@ -21,7 +21,7 @@
 namespace ospray {
   namespace cpp {
 
-    class Texture : public ManagedObject<OSPTexture>
+    class Texture : public ManagedObject<OSPTexture, OSP_TEXTURE>
     {
      public:
       Texture(const Texture &copy);
@@ -34,13 +34,13 @@ namespace ospray {
     // Inlined function definitions ///////////////////////////////////////////
 
     inline Texture::Texture(const Texture &copy)
-        : ManagedObject<OSPTexture>(copy.handle())
+        : ManagedObject<OSPTexture, OSP_TEXTURE>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Texture::Texture(OSPTexture existing)
-        : ManagedObject<OSPTexture>(existing)
+        : ManagedObject<OSPTexture, OSP_TEXTURE>(existing)
     {
     }
 

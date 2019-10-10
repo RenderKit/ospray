@@ -21,7 +21,7 @@
 namespace ospray {
   namespace cpp {
 
-    class Instance : public ManagedObject<OSPInstance>
+    class Instance : public ManagedObject<OSPInstance, OSP_INSTANCE>
     {
      public:
       Instance(Group &group);
@@ -43,13 +43,13 @@ namespace ospray {
     }
 
     inline Instance::Instance(const Instance &copy)
-        : ManagedObject<OSPInstance>(copy.handle())
+        : ManagedObject<OSPInstance, OSP_INSTANCE>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Instance::Instance(OSPInstance existing)
-        : ManagedObject<OSPInstance>(existing)
+        : ManagedObject<OSPInstance, OSP_INSTANCE>(existing)
     {
     }
 

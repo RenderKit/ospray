@@ -21,7 +21,7 @@
 namespace ospray {
   namespace cpp {
 
-    class Camera : public ManagedObject<OSPCamera>
+    class Camera : public ManagedObject<OSPCamera, OSP_CAMERA>
     {
      public:
       Camera(const std::string &type);
@@ -40,13 +40,13 @@ namespace ospray {
     }
 
     inline Camera::Camera(const Camera &copy)
-        : ManagedObject<OSPCamera>(copy.handle())
+        : ManagedObject<OSPCamera, OSP_CAMERA>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Camera::Camera(OSPCamera existing)
-        : ManagedObject<OSPCamera>(existing)
+        : ManagedObject<OSPCamera, OSP_CAMERA>(existing)
     {
     }
 

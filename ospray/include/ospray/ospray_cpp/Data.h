@@ -21,13 +21,15 @@
 namespace ospray {
   namespace cpp {
 
-    class Data : public ManagedObject<OSPData>
+    class Data : public ManagedObject<OSPData, OSP_DATA>
     {
      public:
       Data(size_t numItems,
            OSPDataType format,
            const void *init = nullptr,
            bool isShared    = false);
+      template <typename T, OSPDataType TY>
+      Data(ManagedObject<T, TY> obj);
       Data(OSPData existing = nullptr);
     };
 
@@ -51,7 +53,15 @@ namespace ospray {
       }
     }
 
-    inline Data::Data(OSPData existing) : ManagedObject<OSPData>(existing) {}
+    template <typename T, OSPDataType TY>
+    inline Data::Data(ManagedObject<T, TY> obj) : Data(1, TY, &obj)
+    {
+    }
+
+    inline Data::Data(OSPData existing)
+        : ManagedObject<OSPData, OSP_DATA>(existing)
+    {
+    }
 
   }  // namespace cpp
 }  // namespace ospray

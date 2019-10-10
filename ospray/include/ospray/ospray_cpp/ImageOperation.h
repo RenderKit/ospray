@@ -21,7 +21,8 @@
 namespace ospray {
   namespace cpp {
 
-    class ImageOperation : public ManagedObject<OSPImageOperation>
+    class ImageOperation
+        : public ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>
     {
      public:
       ImageOperation(const std::string &type);
@@ -40,13 +41,13 @@ namespace ospray {
     }
 
     inline ImageOperation::ImageOperation(const ImageOperation &copy)
-        : ManagedObject<OSPImageOperation>(copy.handle())
+        : ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline ImageOperation::ImageOperation(OSPImageOperation existing)
-        : ManagedObject<OSPImageOperation>(existing)
+        : ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>(existing)
     {
     }
 

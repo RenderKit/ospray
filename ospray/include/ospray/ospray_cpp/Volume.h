@@ -23,7 +23,7 @@
 namespace ospray {
   namespace cpp {
 
-    class Volume : public ManagedObject<OSPVolume>
+    class Volume : public ManagedObject<OSPVolume, OSP_VOLUME>
     {
      public:
       Volume(const std::string &type);
@@ -42,13 +42,13 @@ namespace ospray {
     }
 
     inline Volume::Volume(const Volume &copy)
-        : ManagedObject<OSPVolume>(copy.handle())
+        : ManagedObject<OSPVolume, OSP_VOLUME>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Volume::Volume(OSPVolume existing)
-        : ManagedObject<OSPVolume>(existing)
+        : ManagedObject<OSPVolume, OSP_VOLUME>(existing)
     {
     }
   }  // namespace cpp

@@ -21,7 +21,7 @@
 namespace ospray {
   namespace cpp {
 
-    class Future : public ManagedObject<OSPFuture>
+    class Future : public ManagedObject<OSPFuture, OSP_FUTURE>
     {
      public:
       Future(const Future &copy);
@@ -39,13 +39,13 @@ namespace ospray {
     // Inlined function definitions ///////////////////////////////////////////
 
     inline Future::Future(const Future &copy)
-        : ManagedObject<OSPFuture>(copy.handle())
+        : ManagedObject<OSPFuture, OSP_FUTURE>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Future::Future(OSPFuture existing)
-        : ManagedObject<OSPFuture>(existing)
+        : ManagedObject<OSPFuture, OSP_FUTURE>(existing)
     {
     }
 

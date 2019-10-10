@@ -22,7 +22,8 @@
 namespace ospray {
   namespace cpp {
 
-    class VolumetricModel : public ManagedObject<OSPVolumetricModel>
+    class VolumetricModel
+        : public ManagedObject<OSPVolumetricModel, OSP_VOLUMETRIC_MODEL>
     {
      public:
       VolumetricModel(const Volume &geom);
@@ -47,13 +48,13 @@ namespace ospray {
     }
 
     inline VolumetricModel::VolumetricModel(const VolumetricModel &copy)
-        : ManagedObject<OSPVolumetricModel>(copy.handle())
+        : ManagedObject<OSPVolumetricModel, OSP_VOLUMETRIC_MODEL>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline VolumetricModel::VolumetricModel(OSPVolumetricModel existing)
-        : ManagedObject<OSPVolumetricModel>(existing)
+        : ManagedObject<OSPVolumetricModel, OSP_VOLUMETRIC_MODEL>(existing)
     {
     }
 

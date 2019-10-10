@@ -21,7 +21,7 @@
 namespace ospray {
   namespace cpp    {
 
-    class Geometry : public ManagedObject<OSPGeometry>
+    class Geometry : public ManagedObject<OSPGeometry, OSP_GEOMETRY>
     {
     public:
       Geometry(const std::string &type);
@@ -40,13 +40,13 @@ namespace ospray {
     }
 
     inline Geometry::Geometry(const Geometry &copy) :
-      ManagedObject<OSPGeometry>(copy.handle())
+      ManagedObject<OSPGeometry, OSP_GEOMETRY>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Geometry::Geometry(OSPGeometry existing) :
-      ManagedObject<OSPGeometry>(existing)
+      ManagedObject<OSPGeometry, OSP_GEOMETRY>(existing)
     {
     }
 

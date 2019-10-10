@@ -22,7 +22,7 @@
 namespace ospray {
   namespace cpp {
 
-    class World : public ManagedObject<OSPWorld>
+    class World : public ManagedObject<OSPWorld, OSP_WORLD>
     {
      public:
       World();
@@ -41,12 +41,13 @@ namespace ospray {
     }
 
     inline World::World(const World &copy)
-        : ManagedObject<OSPWorld>(copy.handle())
+        : ManagedObject<OSPWorld, OSP_WORLD>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
-    inline World::World(OSPWorld existing) : ManagedObject<OSPWorld>(existing)
+    inline World::World(OSPWorld existing)
+        : ManagedObject<OSPWorld, OSP_WORLD>(existing)
     {
     }
 

@@ -21,7 +21,7 @@
 namespace ospray {
   namespace cpp {
 
-    class Light : public ManagedObject<OSPLight>
+    class Light : public ManagedObject<OSPLight, OSP_LIGHT>
     {
      public:
       Light(const std::string &light_type);
@@ -40,12 +40,13 @@ namespace ospray {
     }
 
     inline Light::Light(const Light &copy)
-        : ManagedObject<OSPLight>(copy.handle())
+        : ManagedObject<OSPLight, OSP_LIGHT>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
-    inline Light::Light(OSPLight existing) : ManagedObject<OSPLight>(existing)
+    inline Light::Light(OSPLight existing)
+        : ManagedObject<OSPLight, OSP_LIGHT>(existing)
     {
     }
 
