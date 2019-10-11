@@ -25,6 +25,7 @@ add_library(ospray_testing SHARED
   builders/Curves.cpp
   builders/Cylinders.cpp
   builders/GravitySpheresVolume.cpp
+  builders/PerlinNoiseVolumes.cpp
   builders/RandomSpheres.cpp
   builders/Streamlines.cpp
   builders/SubdivisionCube.cpp
