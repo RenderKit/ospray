@@ -14,80 +14,43 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Volume.h"
+#include "Builder.h"
+#include "ospray_testing.h"
 // stl
-#include <vector>
-// ospcommon
-#include "ospcommon/math/box.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include <random>
 
-using namespace ospcommon;
 using namespace ospcommon::math;
 
 namespace ospray {
   namespace testing {
 
-    struct SimpleUnStructuredVolume : public Volume
+    struct UnstructuredVolume : public detail::Builder
     {
-      SimpleUnStructuredVolume()           = default;
-      ~SimpleUnStructuredVolume() override = default;
+      UnstructuredVolume()           = default;
+      ~UnstructuredVolume() override = default;
 
-      OSPTestingVolume createVolumeCommon(bool sharedVertices,
-                                          bool valuesPerCell) const;
-    };
+      void commit() override;
 
-    struct SimpleUnStructuredVolume00 : public SimpleUnStructuredVolume
-    {
-      SimpleUnStructuredVolume00()           = default;
-      ~SimpleUnStructuredVolume00() override = default;
+      cpp::Group buildGroup() const override;
 
-      OSPTestingVolume createVolume() const override
-      {
-        return createVolumeCommon(false, false);
-      }
-    };
+    private:
 
-    struct SimpleUnStructuredVolume01 : public SimpleUnStructuredVolume
-    {
-      SimpleUnStructuredVolume01()           = default;
-      ~SimpleUnStructuredVolume01() override = default;
-
-      OSPTestingVolume createVolume() const override
-      {
-        return createVolumeCommon(false, true);
-      }
-    };
-
-    struct SimpleUnStructuredVolume10 : public SimpleUnStructuredVolume
-    {
-      SimpleUnStructuredVolume10()           = default;
-      ~SimpleUnStructuredVolume10() override = default;
-
-      OSPTestingVolume createVolume() const override
-      {
-        return createVolumeCommon(true, false);
-      }
-    };
-
-    struct SimpleUnStructuredVolume11 : public SimpleUnStructuredVolume
-    {
-      SimpleUnStructuredVolume11()           = default;
-      ~SimpleUnStructuredVolume11() override = default;
-
-      OSPTestingVolume createVolume() const override
-      {
-        return createVolumeCommon(true, true);
-      }
+      bool sharedVertices{true};
+      bool valuesPerCell{false};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTestingVolume SimpleUnStructuredVolume::createVolumeCommon(
-        bool sharedVertices, bool valuesPerCell) const
+    void UnstructuredVolume::commit()
     {
-      // create an unstructured volume object
-      OSPVolume volume = ospNewVolume("unstructured_volume");
+      Builder::commit();
 
+      sharedVertices = getParam<bool>("sharedVertices", true);
+      valuesPerCell  = getParam<bool>("cellCenteredValues", false);
+    }
+
+    cpp::Group UnstructuredVolume::buildGroup() const
+    {
       // define hexahedron parameters
       const float hSize = .4f;
       const float hX = -.5f, hY = -.5f, hZ = 0.f;
@@ -243,63 +206,48 @@ namespace ospray {
       // define per-cell values
       std::vector<float> cellValues = {0.1f, .3f, .7f, 1.f};
 
-      // create data objects
-      OSPData verticesData =
-          ospNewData(vertices.size(), OSP_VEC3F, vertices.data());
-      OSPData vertexValuesData =
-          ospNewData(vertexValues.size(), OSP_FLOAT, vertexValues.data());
-      OSPData indicesData =
-          ospNewData(indices.size(), OSP_UINT, indices.data());
-      OSPData cellsData = ospNewData(cells.size(), OSP_UINT, cells.data());
-      OSPData cellTypesData =
-          ospNewData(cellTypes.size(), OSP_UCHAR, cellTypes.data());
-      OSPData cellValuesData =
-          ospNewData(cellValues.size(), OSP_FLOAT, cellValues.data());
-
-      // calculate bounds
-      box3f bounds;
-      std::for_each(vertices.begin(), vertices.end(), [&](vec3f &v) {
-        bounds.extend(v);
-      });
+      cpp::Volume volume("unstructured_volume");
 
       // set data objects for volume object
-      ospSetObject(volume, "vertex.position", verticesData);
-      if (!valuesPerCell)
-        ospSetObject(volume, "vertex.value", vertexValuesData);
-      ospSetObject(volume, "index", indicesData);
-      ospSetObject(volume, "cell.index", cellsData);
-      ospSetObject(volume, "cell.type", cellTypesData);
-      if (valuesPerCell)
-        ospSetObject(volume, "cell.value", cellValuesData);
+      volume.setParam("vertex.position",
+                      cpp::Data(vertices.size(), OSP_VEC3F, vertices.data()));
 
-      // release handlers that go out of scope here
-      ospRelease(verticesData);
-      ospRelease(vertexValuesData);
-      ospRelease(indicesData);
-      ospRelease(cellsData);
-      ospRelease(cellTypesData);
-      ospRelease(cellValuesData);
+      if (valuesPerCell) {
+        volume.setParam(
+            "cell.value",
+            cpp::Data(cellValues.size(), OSP_FLOAT, cellValues.data()));
+      } else {
+        volume.setParam(
+            "vertex.value",
+            cpp::Data(vertexValues.size(), OSP_FLOAT, vertexValues.data()));
+      }
 
-      // create OSPRay objects and return results
-      OSPTestingVolume retval;
-      retval.volume     = volume;
-      retval.voxelRange = osp_vec2f{0.f, 1.f};
-      retval.bounds     = reinterpret_cast<const osp_box3f &>(bounds);
+      volume.setParam("index",
+                      cpp::Data(indices.size(), OSP_UINT, indices.data()));
+      volume.setParam("cell.index",
+                      cpp::Data(cells.size(), OSP_UINT, cells.data()));
+      volume.setParam("cell.type",
+                      cpp::Data(cellTypes.size(), OSP_UCHAR, cellTypes.data()));
 
-      ospCommit(volume);
+      volume.commit();
 
-      return retval;
+      cpp::TransferFunction tf =
+        ospTestingNewTransferFunction({0.f, 1.f}, "jet");
+      tf.commit();
+
+      cpp::VolumetricModel model(volume);
+      model.setParam("transferFunction", tf);
+      model.commit();
+
+      cpp::Group group;
+
+      group.setParam("volume", cpp::Data(model));
+      group.commit();
+
+      return group;
     }
 
-    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume00,
-                                unstructured_volume);
-    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume00,
-                                simple_unstructured_volume_00);
-    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume01,
-                                simple_unstructured_volume_01);
-    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume10,
-                                simple_unstructured_volume_10);
-    OSP_REGISTER_TESTING_VOLUME(SimpleUnStructuredVolume11,
-                                simple_unstructured_volume_11);
+    OSP_REGISTER_TESTING_BUILDER(UnstructuredVolume, unstructured_volume);
+
   }  // namespace testing
 }  // namespace ospray

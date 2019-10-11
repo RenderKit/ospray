@@ -18,9 +18,6 @@
 
 #include "ospray/ospray_cpp.h"
 #include "ospray/ospray_util.h"
-// ospcommon
-#include "ospcommon/math/box.h"
-#include "ospcommon/math/vec.h"
 
 #include "ospray_testing_export.h"
 
@@ -30,48 +27,10 @@ using osp_vec2f = ospcommon::math::vec2f;
 using osp_vec3f = ospcommon::math::vec3f;
 using osp_box3f = ospcommon::math::box3f;
 
-typedef struct
-{
-  OSPData auxData;
-  OSPGeometry geometry;
-  OSPGeometricModel model;
-  OSPGroup group;
-  OSPInstance instance;
-  osp_box3f bounds;
-} OSPTestingGeometry;
-
-typedef struct
-{
-  OSPVolume volume;
-  osp_box3f bounds;
-  osp_vec2f voxelRange;
-} OSPTestingVolume;
-
-/* Create an OSPRay renderer with sensible defaults for testing */
-OSPRAY_TESTING_EXPORT
-OSPRenderer ospTestingNewRenderer(const char *type OSP_DEFAULT_VAL("scivis"));
-
-/* Create an OSPRay geometry (from a registered name) */
-OSPRAY_TESTING_EXPORT
-OSPTestingVolume ospTestingNewVolume(const char *volume_type);
-
 /* Create an OSPRay geometry (from a registered name) */
 OSPRAY_TESTING_EXPORT
 OSPTransferFunction ospTestingNewTransferFunction(
     osp_vec2f voxelRange, const char *tf_name OSP_DEFAULT_VAL("grayscale"));
-
-/* Create an OSPRay perspective camera which looks at the center of the given
- * bounding box
- *
- * NOTE: this only sets 'dir', 'pos', and 'up'
- */
-OSPRAY_TESTING_EXPORT
-OSPCamera ospTestingNewDefaultCamera(osp_box3f bounds);
-
-/* Create a list of lights, using a given preset name */
-OSPRAY_TESTING_EXPORT
-OSPData ospTestingNewLights(
-    const char *lighting_set_name OSP_DEFAULT_VAL("ambient_only"));
 
 }  // extern "C"
 

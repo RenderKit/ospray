@@ -38,7 +38,8 @@ int main(int argc, const char *argv[])
     // auto builder = testing::newBuilder("curves");
     // auto builder = testing::newBuilder("streamlines");
     // auto builder = testing::newBuilder("cylinders");
-    auto builder = testing::newBuilder("subdivision_cube");
+    // auto builder = testing::newBuilder("subdivision_cube");
+    auto builder = testing::newBuilder("unstructured_volume");
     testing::setParam(builder, "rendererType", rendererType);
     testing::commit(builder);
 

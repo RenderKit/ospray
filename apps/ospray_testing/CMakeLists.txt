@@ -19,15 +19,10 @@ include(GenerateExportHeader)
 add_library(ospray_testing SHARED
   ospray_testing.cpp
 
-  lights/AmbientOnly.cpp
-  lights/AmbientAndDirectional.cpp
-
   transferFunction/Grayscale.cpp
   transferFunction/Jet.cpp
   transferFunction/RGB.cpp
   transferFunction/TransferFunction.cpp
-
-  volume/SimpleUnstructuredVolume.cpp
 
   ../utility/rawToAMR.cpp
 
@@ -40,6 +35,7 @@ add_library(ospray_testing SHARED
   builder/RandomSpheres.cpp
   builder/Streamlines.cpp
   builder/SubdivisionCube.cpp
+  builder/UnstructuredVolume.cpp
 )
 
 generate_export_header(ospray_testing)

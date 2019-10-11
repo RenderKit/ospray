@@ -17,9 +17,7 @@
 // ospray_testing
 #include "ospray_testing.h"
 #include "detail/objectFactory.h"
-#include "lights/Lights.h"
 #include "transferFunction/TransferFunction.h"
-#include "volume/Volume.h"
 // ospcommon
 #include "ospcommon/math/box.h"
 #include "ospcommon/utility/OnScopeExit.h"
@@ -28,25 +26,6 @@
 
 using namespace ospcommon;
 using namespace ospcommon::math;
-
-extern "C" OSPRenderer ospTestingNewRenderer(const char *type)
-{
-  auto renderer = ospNewRenderer(type);
-  return renderer;
-}
-
-extern "C" OSPTestingVolume ospTestingNewVolume(const char *volume_type)
-{
-  auto volumeCreator = ospray::testing::objectFactory<ospray::testing::Volume>(
-      "testing_volume", volume_type);
-
-  utility::OnScopeExit cleanup([=]() { delete volumeCreator; });
-
-  if (volumeCreator != nullptr)
-    return volumeCreator->createVolume();
-  else
-    return {};
-}
 
 extern "C" OSPTransferFunction ospTestingNewTransferFunction(osp_vec2f range,
                                                              const char *name)
@@ -61,42 +40,6 @@ extern "C" OSPTransferFunction ospTestingNewTransferFunction(osp_vec2f range,
     return tfnCreator->createTransferFunction(range);
   else
     return {};
-}
-
-extern "C" OSPCamera ospTestingNewDefaultCamera(osp_box3f _bounds)
-{
-  auto camera = ospNewCamera("perspective");
-
-  auto &upper = _bounds.upper;
-  auto &lower = _bounds.lower;
-  box3f bounds(vec3f(lower.x, lower.y, lower.z),
-               vec3f(upper.x, upper.y, upper.z));
-  vec3f diag = bounds.size();
-
-  auto gaze = center(bounds);
-  auto pos  = gaze - vec3f(0.85f * length(diag), 0.f, 0.f);
-  auto up   = vec3f(0.f, 1.f, 0.f);
-  auto dir  = normalize(gaze - pos);
-
-  ospSetVec3f(camera, "position", pos.x, pos.y, pos.z);
-  ospSetVec3f(camera, "direction", dir.x, dir.y, dir.z);
-  ospSetVec3f(camera, "up", up.x, up.y, up.z);
-  ospCommit(camera);
-
-  return camera;
-}
-
-extern "C" OSPData ospTestingNewLights(const char *lighting_set_name)
-{
-  auto *lightsCreator = ospray::testing::objectFactory<ospray::testing::Lights>(
-      "testing_lights", lighting_set_name);
-
-  utility::OnScopeExit cleanup([=]() { delete lightsCreator; });
-
-  if (lightsCreator != nullptr)
-    return lightsCreator->createLights();
-  else
-    return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////////
