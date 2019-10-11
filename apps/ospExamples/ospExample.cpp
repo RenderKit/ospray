@@ -25,21 +25,22 @@
 using namespace ospray;
 
 static std::string rendererType = "pathtracer";
+static std::string builderType  = "boxes";
 
 int main(int argc, const char *argv[])
 {
   initializeOSPRay(argc, argv);
 
+  for (int i = 1; i < argc; ++i) {
+    std::string arg = argv[i];
+    if (arg == "-r" || arg == "--renderer")
+      rendererType = argv[++i];
+    if (arg == "-s" || arg == "--scene")
+      builderType = argv[++i];
+  }
+
   {
-    // auto builder = testing::newBuilder("gravity_spheres_volume");
-    // auto builder = testing::newBuilder("random_spheres");
-    // auto builder = testing::newBuilder("cornell_box");
-    // auto builder = testing::newBuilder("boxes");
-    // auto builder = testing::newBuilder("curves");
-    // auto builder = testing::newBuilder("streamlines");
-    // auto builder = testing::newBuilder("cylinders");
-    // auto builder = testing::newBuilder("subdivision_cube");
-    auto builder = testing::newBuilder("unstructured_volume");
+    auto builder = testing::newBuilder(builderType);
     testing::setParam(builder, "rendererType", rendererType);
     testing::commit(builder);
 
