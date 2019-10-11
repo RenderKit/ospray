@@ -45,9 +45,15 @@ namespace ospray {
         cpp::TransferFunction makeTransferFunction(
             const vec2f &valueRange) const;
 
+        cpp::GeometricModel makeGroundPlane(float planeExtent) const;
+
+        // Data //
+
         std::string rendererType{"scivis"};
         std::string tfColorMap{"jet"};
         std::string tfOpacityMap{"linear"};
+
+        bool addPlane{true};
       };
 
     }  // namespace detail

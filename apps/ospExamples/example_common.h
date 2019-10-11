@@ -18,14 +18,34 @@
 
 // ospray
 #include "ospray/ospray_util.h"
-// ospcommon
-#include "ospcommon/math/box.h"
-#include "ospcommon/math/vec.h"
-using namespace ospcommon::math;
 // std
-#include <string>
+#include <iostream>
+#include <stdexcept>
 
-void initializeOSPRay(int argc, const char **argv, bool errorsFatal = true);
+inline void initializeOSPRay(int argc,
+                             const char **argv,
+                             bool errorsFatal = true)
+{
+  // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
+  // e.g. "--osp:debug"
+  OSPError initError = ospInit(&argc, argv);
 
-OSPInstance createGroundPlane(std::string renderer_type,
-                              float planeExtent = 1.5f);
+  if (initError != OSP_NO_ERROR)
+    throw std::runtime_error("OSPRay not initialized correctly!");
+
+  OSPDevice device = ospGetCurrentDevice();
+  if (!device)
+    throw std::runtime_error("OSPRay device could not be fetched!");
+
+  // set an error callback to catch any OSPRay errors and exit the application
+  if (errorsFatal) {
+    ospDeviceSetErrorFunc(device, [](OSPError error, const char *errorDetails) {
+      std::cerr << "OSPRay error: " << errorDetails << std::endl;
+      exit(error);
+    });
+  } else {
+    ospDeviceSetErrorFunc(device, [](OSPError, const char *errorDetails) {
+      std::cerr << "OSPRay error: " << errorDetails << std::endl;
+    });
+  }
+}

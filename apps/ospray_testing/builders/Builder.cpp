@@ -36,7 +36,28 @@ namespace ospray {
         cpp::Instance inst(group);
         inst.commit();
 
-        world.setParam("instance", cpp::Data(inst));
+        std::vector<cpp::Instance> instances;
+        instances.push_back(inst);
+
+        if (addPlane) {
+          auto bounds = group.getBounds();
+
+          auto extents = 0.8f * length(bounds.center() - bounds.lower);
+
+          cpp::GeometricModel plane = makeGroundPlane(extents);
+          cpp::Group planeGroup;
+          planeGroup.setParam("geometry", cpp::Data(plane));
+          planeGroup.commit();
+
+          cpp::Instance planeInst(planeGroup);
+          planeInst.commit();
+
+          instances.push_back(planeInst);
+        }
+
+        world.setParam(
+            "instance",
+            cpp::Data(instances.size(), OSP_INSTANCE, instances.data()));
 
         cpp::Light light("ambient");
         light.commit();
@@ -85,6 +106,128 @@ namespace ospray {
         transferFunction.commit();
 
         return transferFunction;
+      }
+
+      cpp::GeometricModel Builder::makeGroundPlane(float planeExtent) const
+      {
+        cpp::Geometry planeGeometry("quads");
+
+        std::vector<vec3f> v_position;
+        std::vector<vec3f> v_normal;
+        std::vector<vec4f> v_color;
+        std::vector<vec4ui> indices;
+
+        unsigned int startingIndex = 0;
+
+        const vec3f up   = vec3f{0.f, 1.f, 0.f};
+        const vec4f gray = vec4f{0.9f, 0.9f, 0.9f, 0.75f};
+
+        v_position.emplace_back(-planeExtent, -1.f, -planeExtent);
+        v_position.emplace_back(planeExtent, -1.f, -planeExtent);
+        v_position.emplace_back(planeExtent, -1.f, planeExtent);
+        v_position.emplace_back(-planeExtent, -1.f, planeExtent);
+
+        v_normal.push_back(up);
+        v_normal.push_back(up);
+        v_normal.push_back(up);
+        v_normal.push_back(up);
+
+        v_color.push_back(gray);
+        v_color.push_back(gray);
+        v_color.push_back(gray);
+        v_color.push_back(gray);
+
+        indices.emplace_back(startingIndex,
+                             startingIndex + 1,
+                             startingIndex + 2,
+                             startingIndex + 3);
+
+        // stripes on ground plane
+        const float stripeWidth  = 0.025f;
+        const float paddedExtent = planeExtent + stripeWidth;
+        const size_t numStripes  = 10;
+
+        const vec4f stripeColor = vec4f{1.0f, 0.1f, 0.1f, 1.f};
+
+        for (size_t i = 0; i < numStripes; i++) {
+          // the center coordinate of the stripe, either in the x or z
+          // direction
+          const float coord = -planeExtent + float(i) / float(numStripes - 1) *
+                                                 2.f * planeExtent;
+
+          // offset the stripes by an epsilon above the ground plane
+          const float yLevel = -1.f + 1e-3f;
+
+          // x-direction stripes
+          startingIndex = v_position.size();
+
+          v_position.emplace_back(-paddedExtent, yLevel, coord - stripeWidth);
+          v_position.emplace_back(paddedExtent, yLevel, coord - stripeWidth);
+          v_position.emplace_back(paddedExtent, yLevel, coord + stripeWidth);
+          v_position.emplace_back(-paddedExtent, yLevel, coord + stripeWidth);
+
+          v_normal.push_back(up);
+          v_normal.push_back(up);
+          v_normal.push_back(up);
+          v_normal.push_back(up);
+
+          v_color.push_back(stripeColor);
+          v_color.push_back(stripeColor);
+          v_color.push_back(stripeColor);
+          v_color.push_back(stripeColor);
+
+          indices.emplace_back(startingIndex,
+                               startingIndex + 1,
+                               startingIndex + 2,
+                               startingIndex + 3);
+
+          // z-direction stripes
+          startingIndex = v_position.size();
+
+          v_position.emplace_back(coord - stripeWidth, yLevel, -paddedExtent);
+          v_position.emplace_back(coord + stripeWidth, yLevel, -paddedExtent);
+          v_position.emplace_back(coord + stripeWidth, yLevel, paddedExtent);
+          v_position.emplace_back(coord - stripeWidth, yLevel, paddedExtent);
+
+          v_normal.push_back(up);
+          v_normal.push_back(up);
+          v_normal.push_back(up);
+          v_normal.push_back(up);
+
+          v_color.push_back(stripeColor);
+          v_color.push_back(stripeColor);
+          v_color.push_back(stripeColor);
+          v_color.push_back(stripeColor);
+
+          indices.emplace_back(startingIndex,
+                               startingIndex + 1,
+                               startingIndex + 2,
+                               startingIndex + 3);
+        }
+
+        planeGeometry.setParam(
+            "vertex.position",
+            cpp::Data(v_position.size(), OSP_VEC3F, v_position.data()));
+        planeGeometry.setParam(
+            "vertex.normal",
+            cpp::Data(v_normal.size(), OSP_VEC3F, v_normal.data()));
+        planeGeometry.setParam(
+            "vertex.color",
+            cpp::Data(v_color.size(), OSP_VEC4F, v_color.data()));
+        planeGeometry.setParam(
+            "index", cpp::Data(indices.size(), OSP_VEC4UI, indices.data()));
+
+        planeGeometry.commit();
+
+        cpp::GeometricModel model(planeGeometry);
+
+        cpp::Material material(rendererType, "OBJMaterial");
+        material.commit();
+
+        model.setParam("material", cpp::Data(material));
+        model.commit();
+
+        return model;
       }
 
     }  // namespace detail

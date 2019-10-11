@@ -29,6 +29,8 @@ namespace ospray {
       CornellBox()           = default;
       ~CornellBox() override = default;
 
+      void commit() override;
+
       cpp::Group buildGroup() const override;
       cpp::World buildWorld() const override;
     };
@@ -229,6 +231,11 @@ namespace ospray {
         {0.725f, 0.710f, 0.68f, 1.0f}};
 
     // Inlined definitions ////////////////////////////////////////////////////
+
+    void CornellBox::commit()
+    {
+      addPlane = false;
+    }
 
     cpp::Group CornellBox::buildGroup() const
     {

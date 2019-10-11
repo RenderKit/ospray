@@ -25,7 +25,7 @@
 
 #include "ospray_testing.h"
 
-#include "example_util.h"
+#include "example_common.h"
 
 #include <imgui.h>
 

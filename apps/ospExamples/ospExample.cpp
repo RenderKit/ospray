@@ -19,7 +19,7 @@
 // stl
 #include <iostream>
 
-#include "example_util.h"
+#include "example_common.h"
 #include "GLFWOSPRayWindow.h"
 
 using namespace ospray;

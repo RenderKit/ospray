@@ -44,6 +44,8 @@ namespace ospray {
       Builder::commit();
 
       dimensions = getParam<vec3i>("dimensions", vec3i(4));
+
+      addPlane = false;
     }
 
     cpp::Group Boxes::buildGroup() const

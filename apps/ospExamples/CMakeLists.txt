@@ -21,7 +21,6 @@ find_package(glfw3 REQUIRED)
 
 add_executable(ospExamples
   ArcballCamera.cpp
-  example_util.cpp
   GLFWOSPRayWindow.cpp
   imgui_impl_glfw_gl3.cpp
   ospExample.cpp
@@ -38,7 +37,6 @@ target_link_libraries(ospExamples PRIVATE
 
 add_executable(ospExampleVolumePT
   ArcballCamera.cpp
-  example_util.cpp
   GLFWOSPRayWindow.cpp
   imgui_impl_glfw_gl3.cpp
   ospExampleVolumePT.cpp

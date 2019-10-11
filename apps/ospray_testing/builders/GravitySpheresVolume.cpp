@@ -67,6 +67,8 @@ namespace ospray {
       createAsAMR      = getParam<bool>("asAMR", false);
       withIsosurface   = getParam<bool>("withIsosurface", false);
       isovalue         = getParam<float>("isovalue", 2.5f);
+
+      addPlane = false;
     }
 
     cpp::Group GravitySpheres::buildGroup() const
