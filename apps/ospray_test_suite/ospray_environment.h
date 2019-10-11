@@ -70,3 +70,20 @@ class OSPRayEnvironment : public ::testing::Environment
   std::string GetStrArgValue(std::string *arg) const;
   int GetNumArgValue(std::string *arg) const;
 };
+
+// XXX temporary, to maintain backwards compatibility
+inline OSPData ospNewData(size_t numItems,
+                          OSPDataType type,
+                          const void *source,
+                          uint32_t dataCreationFlags = 0)
+{
+  if (dataCreationFlags)
+    return ospNewSharedData(source, type, numItems);
+  else {
+    OSPData src = ospNewSharedData(source, type, numItems);
+    OSPData dst = ospNewData(type, numItems);
+    ospCopyData(src, dst);
+    ospRelease(src);
+    return dst;
+  }
+}

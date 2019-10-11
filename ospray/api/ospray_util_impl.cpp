@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "ospray/ospray_util.h"
+#include "ospray/ospray_cpp.h"
 
 extern "C" {
 
@@ -158,9 +159,8 @@ void ospSetObjectAsData(OSPObject o,
                         OSPDataType type,
                         OSPObject p)
 {
-  OSPData data = ospNewData(1, type, &p);
-  ospSetObject(o, n, data);
-  ospRelease(data);
+  ospray::cpp::Data data(1, type, &p);
+  ospSetObject(o, n, data.handle());
 }
 
 // Rendering helpers //////////////////////////////////////////////////////////
@@ -177,20 +177,3 @@ float ospRenderFrameBlocking(OSPFrameBuffer fb,
 }
 
 }  // extern "C"
-
-// XXX temporary, to maintain backwards compatibility
-OSPData ospNewData(size_t numItems,
-                   OSPDataType type,
-                   const void *source,
-                   uint32_t dataCreationFlags)
-{
-  if (dataCreationFlags)
-    return ospNewSharedData(source, type, numItems);
-  else {
-    OSPData src = ospNewSharedData(source, type, numItems);
-    OSPData dst = ospNewData(type, numItems);
-    ospCopyData(src, dst);
-    ospRelease(src);
-    return dst;
-  }
-}
