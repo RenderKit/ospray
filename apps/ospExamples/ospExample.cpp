@@ -25,7 +25,7 @@
 using namespace ospray;
 
 static std::string rendererType = "pathtracer";
-static std::string builderType  = "boxes";
+static std::string builderType  = "perlin_noise_volumes";
 
 int main(int argc, const char *argv[])
 {
