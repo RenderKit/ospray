@@ -78,10 +78,7 @@ namespace ospray {
                                        : createStructuredVolume(voxels);
 
       cpp::VolumetricModel model(volume);
-      cpp::TransferFunction tf =
-          ospTestingNewTransferFunction(voxelRange, "jet");
-      tf.commit();
-      model.setParam("transferFunction", tf);
+      model.setParam("transferFunction", makeTransferFunction(voxelRange));
       model.commit();
 
       cpp::Group group;

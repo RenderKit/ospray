@@ -17,34 +17,9 @@
 // ospray_testing
 #include "ospray_testing.h"
 #include "detail/objectFactory.h"
-#include "transferFunction/TransferFunction.h"
-// ospcommon
-#include "ospcommon/math/box.h"
-#include "ospcommon/utility/OnScopeExit.h"
-// ospray
-#include "ospray/ospray_util.h"
 
 using namespace ospcommon;
 using namespace ospcommon::math;
-
-extern "C" OSPTransferFunction ospTestingNewTransferFunction(osp_vec2f range,
-                                                             const char *name)
-{
-  auto tfnCreator =
-      ospray::testing::objectFactory<ospray::testing::TransferFunction>(
-          "testing_transfer_function", name);
-
-  utility::OnScopeExit cleanup([=]() { delete tfnCreator; });
-
-  if (tfnCreator != nullptr)
-    return tfnCreator->createTransferFunction(range);
-  else
-    return {};
-}
-
-//////////////////////////////////////////////////////////////////////////////
-// New C++ interface /////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
 
 namespace ospray {
   namespace testing {

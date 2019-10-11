@@ -19,23 +19,18 @@ include(GenerateExportHeader)
 add_library(ospray_testing SHARED
   ospray_testing.cpp
 
-  transferFunction/Grayscale.cpp
-  transferFunction/Jet.cpp
-  transferFunction/RGB.cpp
-  transferFunction/TransferFunction.cpp
+  builders/Boxes.cpp
+  builders/Builder.cpp
+  builders/CornellBox.cpp
+  builders/Curves.cpp
+  builders/Cylinders.cpp
+  builders/GravitySpheresVolume.cpp
+  builders/RandomSpheres.cpp
+  builders/Streamlines.cpp
+  builders/SubdivisionCube.cpp
+  builders/UnstructuredVolume.cpp
 
   ../utility/rawToAMR.cpp
-
-  builder/Boxes.cpp
-  builder/Builder.cpp
-  builder/CornellBox.cpp
-  builder/Curves.cpp
-  builder/Cylinders.cpp
-  builder/GravitySpheresVolume.cpp
-  builder/RandomSpheres.cpp
-  builder/Streamlines.cpp
-  builder/SubdivisionCube.cpp
-  builder/UnstructuredVolume.cpp
 )
 
 generate_export_header(ospray_testing)
@@ -59,4 +54,5 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   COMPONENT devel
   FILES_MATCHING
   PATTERN *.h
+  PATTERN *.inl
 )

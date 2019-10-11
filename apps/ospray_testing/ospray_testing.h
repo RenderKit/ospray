@@ -21,23 +21,6 @@
 
 #include "ospray_testing_export.h"
 
-extern "C" {
-
-using osp_vec2f = ospcommon::math::vec2f;
-using osp_vec3f = ospcommon::math::vec3f;
-using osp_box3f = ospcommon::math::box3f;
-
-/* Create an OSPRay geometry (from a registered name) */
-OSPRAY_TESTING_EXPORT
-OSPTransferFunction ospTestingNewTransferFunction(
-    osp_vec2f voxelRange, const char *tf_name OSP_DEFAULT_VAL("grayscale"));
-
-}  // extern "C"
-
-//////////////////////////////////////////////////////////////////////////////
-// New C++ interface /////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
 namespace ospray {
   namespace testing {
 

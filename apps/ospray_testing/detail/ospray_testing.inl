@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "../builder/Builder.h"
+#include "../builders/Builder.h"
 
 namespace ospray {
   namespace testing {

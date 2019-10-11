@@ -29,6 +29,7 @@ namespace ospray {
     namespace detail {
 
       using namespace ospcommon;
+      using namespace ospcommon::math;
 
       struct Builder : public memory::RefCountedObject,
                        public utility::ParameterizedObject
@@ -40,9 +41,13 @@ namespace ospray {
         virtual cpp::Group buildGroup() const = 0;
         virtual cpp::World buildWorld() const;
 
-      protected:
+       protected:
+        cpp::TransferFunction makeTransferFunction(
+            const vec2f &valueRange) const;
 
         std::string rendererType{"scivis"};
+        std::string tfColorMap{"jet"};
+        std::string tfOpacityMap{"linear"};
       };
 
     }  // namespace detail

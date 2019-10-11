@@ -16,8 +16,6 @@
 
 #include "Builder.h"
 #include "ospray_testing.h"
-// stl
-#include <random>
 // ospcommon
 #include "ospcommon/utility/multidim_index_sequence.h"
 

@@ -33,8 +33,7 @@ namespace ospray {
 
       cpp::Group buildGroup() const override;
 
-    private:
-
+     private:
       bool sharedVertices{true};
       bool valuesPerCell{false};
     };
@@ -231,12 +230,8 @@ namespace ospray {
 
       volume.commit();
 
-      cpp::TransferFunction tf =
-        ospTestingNewTransferFunction({0.f, 1.f}, "jet");
-      tf.commit();
-
       cpp::VolumetricModel model(volume);
-      model.setParam("transferFunction", tf);
+      model.setParam("transferFunction", makeTransferFunction({0.f, 1.f}));
       model.commit();
 
       cpp::Group group;
