@@ -19,13 +19,36 @@
 // stl
 #include <iostream>
 
-#include "example_common.h"
 #include "GLFWOSPRayWindow.h"
+#include "example_common.h"
 
 using namespace ospray;
 
 static std::string rendererType = "pathtracer";
 static std::string builderType  = "perlin_noise_volumes";
+
+void printHelp()
+{
+  std::cout <<
+      R"description(
+usage: ./ospExamples [-h | --help] [[-s | --scene] scene] [[r | --renderer] renderer_type]
+
+scenes:
+
+  boxes
+  cornell_box
+  curves
+  cylinders
+  empty
+  gravity_spheres_volume
+  perlin_noise_volumes
+  random_spheres
+  streamlines
+  subdivision_cube
+  unstructured_volume
+
+  )description";
+}
 
 int main(int argc, const char *argv[])
 {
@@ -33,10 +56,14 @@ int main(int argc, const char *argv[])
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
-    if (arg == "-r" || arg == "--renderer")
+    if (arg == "-h" || arg == "--help") {
+      printHelp();
+      return 0;
+    } else if (arg == "-r" || arg == "--renderer") {
       rendererType = argv[++i];
-    if (arg == "-s" || arg == "--scene")
+    } else if (arg == "-s" || arg == "--scene") {
       builderType = argv[++i];
+    }
   }
 
   {
