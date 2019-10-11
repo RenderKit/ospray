@@ -39,7 +39,7 @@ namespace ospray {
      private:
       bool addSphereVolume{true};
       bool addTorusVolume{false};
-      bool addGeometry{false};
+      bool addBoxes{false};
 
       bool addAreaLight{true};
       bool addAmbientLight{false};
@@ -150,37 +150,6 @@ namespace ospray {
 
     // Helper functions //
 
-    cpp::Geometry makePlaneGeometry(const vec4f &color, const AffineSpace3f &M)
-    {
-      const vec3f normal = xfmNormal(M, vec3f(0.f, 1.f, 0.f));
-      std::vector<vec3f> positions{
-          xfmPoint(M, vec3f(-1.f, 0.f, -1.f)),
-          xfmPoint(M, vec3f(+1.f, 0.f, -1.f)),
-          xfmPoint(M, vec3f(+1.f, 0.f, +1.f)),
-          xfmPoint(M, vec3f(-1.f, 0.f, +1.f)),
-      };
-      std::vector<vec3f> normals{normal, normal, normal, normal};
-      std::vector<vec4f> colors{color, color, color, color};
-      std::vector<vec4i> indices{vec4i(0, 1, 2, 3)};
-
-      cpp::Geometry ospGeometry("quads");
-
-      ospGeometry.setParam(
-          "vertex.position",
-          cpp::Data(positions.size(), OSP_VEC3F, positions.data()));
-      ospGeometry.setParam(
-          "vertex.normal",
-          cpp::Data(normals.size(), OSP_VEC3F, normals.data()));
-      ospGeometry.setParam("vertex.color",
-                           cpp::Data(colors.size(), OSP_VEC4F, colors.data()));
-      ospGeometry.setParam(
-          "index", cpp::Data(indices.size(), OSP_VEC4UI, indices.data()));
-
-      ospGeometry.commit();
-
-      return ospGeometry;
-    }
-
     cpp::Geometry makeBoxGeometry(const box3f &box)
     {
       cpp::Geometry ospGeometry("boxes");
@@ -268,15 +237,13 @@ namespace ospray {
 
       addSphereVolume = getParam<bool>("addSphereVolume", true);
       addTorusVolume  = getParam<bool>("addTorusVolume", false);
-      addGeometry     = getParam<bool>("addGeometry", true);
+      addBoxes        = getParam<bool>("addBoxes", false);
 
       addAreaLight    = getParam<bool>("addAreaLight", true);
-      addAmbientLight = getParam<bool>("addAmbientLight", false);
+      addAmbientLight = getParam<bool>("addAmbientLight", true);
 
       densityScale = getParam<float>("densityScale", 10.f);
       anisotropy   = getParam<float>("anisotropy", 0.f);
-
-      addPlane = false;
     }
 
     cpp::Group PerlinNoiseVolumes::buildGroup() const
@@ -320,7 +287,7 @@ namespace ospray {
             [&](vec3f p) {
               vec3f X = 2.f * p - vec3f(1.f);
               return torus(
-                  (1.4f + 0.4 * turbulence(p, 12.f, 12)) * X, 0.75f, 0.175f);
+                  (1.4f + 0.4 * turbulence(p, 12.f, 12)) * X, 1.0f, 0.375f);
             },
             {vec3f(0.0, 0.0, 0.0),
              vec3f(1.0, 0.65, 0.0),
@@ -336,22 +303,16 @@ namespace ospray {
 
       std::vector<cpp::GeometricModel> geometricModels;
 
-      if (addGeometry) {
+      if (addBoxes) {
         auto box1 = makeBoxGeometry(
             box3f(vec3f(-1.5f, -1.f, -0.75f), vec3f(-0.5f, 0.f, 0.25f)));
         auto box2 = makeBoxGeometry(
             box3f(vec3f(0.0f, -1.5f, 0.f), vec3f(2.f, 1.5f, 2.f)));
-        auto plane =
-            makePlaneGeometry(vec4f(vec3f(1.0f), 1.f),
-                              AffineSpace3f::translate(vec3f(0.f, -2.5f, 0.f)) *
-                                  AffineSpace3f::scale(vec3f(10.f, 1.f, 10.f)));
 
         geometricModels.emplace_back(
             createGeometricModel(box1, rendererType, vec3f(0.2f, 0.2f, 0.2f)));
         geometricModels.emplace_back(
             createGeometricModel(box2, rendererType, vec3f(0.2f, 0.2f, 0.2f)));
-        geometricModels.emplace_back(
-            createGeometricModel(plane, rendererType, vec3f(0.2f, 0.2f, 0.2f)));
       }
 
       for (auto geometricModel : geometricModels)
