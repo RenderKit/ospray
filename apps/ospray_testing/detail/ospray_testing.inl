@@ -14,49 +14,19 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "Geometry.h"
-#include "Material.h"
+#include "../builders/Builder.h"
 
 namespace ospray {
-  namespace cpp {
+  namespace testing {
 
-    class GeometricModel
-        : public ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>
+    template <typename T>
+    inline void setParam(SceneBuilderHandle _b,
+                         const std::string &type,
+                         const T &val)
     {
-     public:
-      GeometricModel(const Geometry &geom);
-      GeometricModel(OSPGeometry geom);
-      GeometricModel(const GeometricModel &copy);
-      GeometricModel(OSPGeometricModel existing = nullptr);
-    };
-
-    static_assert(sizeof(GeometricModel) == sizeof(OSPGeometricModel),
-                  "cpp::GeometricModel can't have data members!");
-
-    // Inlined function definitions ///////////////////////////////////////////
-
-    inline GeometricModel::GeometricModel(const Geometry &geom)
-        : GeometricModel(geom.handle())
-    {
+      auto *b = (detail::Builder *)_b;
+      b->setParam(type, val);
     }
 
-    inline GeometricModel::GeometricModel(OSPGeometry existing)
-    {
-      ospObject = ospNewGeometricModel(existing);
-    }
-
-    inline GeometricModel::GeometricModel(const GeometricModel &copy)
-        : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(copy.handle())
-    {
-      ospRetain(copy.handle());
-    }
-
-    inline GeometricModel::GeometricModel(OSPGeometricModel existing)
-        : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(existing)
-    {
-    }
-
-  }  // namespace cpp
+  }  // namespace testing
 }  // namespace ospray

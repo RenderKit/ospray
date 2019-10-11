@@ -21,12 +21,11 @@
 namespace ospray {
   namespace cpp {
 
-    class Future : public ManagedObject_T<OSPFuture>
+    class Future : public ManagedObject<OSPFuture, OSP_FUTURE>
     {
      public:
       Future(const Future &copy);
       Future(OSPFuture existing = nullptr);
-      ~Future() override;
 
       bool isReady(OSPSyncEvent = OSP_TASK_FINISHED);
       void wait(OSPSyncEvent = OSP_TASK_FINISHED);
@@ -34,22 +33,20 @@ namespace ospray {
       float progress();
     };
 
+    static_assert(sizeof(Future) == sizeof(OSPFuture),
+                  "cpp::Future can't have data members!");
+
     // Inlined function definitions ///////////////////////////////////////////
 
     inline Future::Future(const Future &copy)
-        : ManagedObject_T<OSPFuture>(copy.handle())
+        : ManagedObject<OSPFuture, OSP_FUTURE>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Future::Future(OSPFuture existing)
-        : ManagedObject_T<OSPFuture>(existing)
+        : ManagedObject<OSPFuture, OSP_FUTURE>(existing)
     {
-    }
-
-    inline Future::~Future()
-    {
-      wait();
     }
 
     inline bool Future::isReady(OSPSyncEvent e)

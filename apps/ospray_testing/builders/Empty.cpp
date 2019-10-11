@@ -14,49 +14,40 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "Builder.h"
+#include "ospray_testing.h"
 
-#include "Geometry.h"
-#include "Material.h"
+using namespace ospcommon::math;
 
 namespace ospray {
-  namespace cpp {
+  namespace testing {
 
-    class GeometricModel
-        : public ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>
+    struct Empty : public detail::Builder
     {
-     public:
-      GeometricModel(const Geometry &geom);
-      GeometricModel(OSPGeometry geom);
-      GeometricModel(const GeometricModel &copy);
-      GeometricModel(OSPGeometricModel existing = nullptr);
+      Empty()           = default;
+      ~Empty() override = default;
+
+      void commit() override;
+
+      cpp::Group buildGroup() const override;
     };
 
-    static_assert(sizeof(GeometricModel) == sizeof(OSPGeometricModel),
-                  "cpp::GeometricModel can't have data members!");
+    // Inlined definitions ////////////////////////////////////////////////////
 
-    // Inlined function definitions ///////////////////////////////////////////
-
-    inline GeometricModel::GeometricModel(const Geometry &geom)
-        : GeometricModel(geom.handle())
+    void Empty::commit()
     {
+      Builder::commit();
+      addPlane = false;
     }
 
-    inline GeometricModel::GeometricModel(OSPGeometry existing)
+    cpp::Group Empty::buildGroup() const
     {
-      ospObject = ospNewGeometricModel(existing);
+      cpp::Group group;
+      group.commit();
+      return group;
     }
 
-    inline GeometricModel::GeometricModel(const GeometricModel &copy)
-        : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(copy.handle())
-    {
-      ospRetain(copy.handle());
-    }
+    OSP_REGISTER_TESTING_BUILDER(Empty, empty);
 
-    inline GeometricModel::GeometricModel(OSPGeometricModel existing)
-        : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(existing)
-    {
-    }
-
-  }  // namespace cpp
+  }  // namespace testing
 }  // namespace ospray

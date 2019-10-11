@@ -22,13 +22,16 @@
 namespace ospray {
   namespace cpp {
 
-    class World : public ManagedObject_T<OSPWorld>
+    class World : public ManagedObject<OSPWorld, OSP_WORLD>
     {
      public:
       World();
       World(const World &copy);
       World(OSPWorld existing);
     };
+
+    static_assert(sizeof(World) == sizeof(OSPWorld),
+                  "cpp::World can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -38,12 +41,13 @@ namespace ospray {
     }
 
     inline World::World(const World &copy)
-        : ManagedObject_T<OSPWorld>(copy.handle())
+        : ManagedObject<OSPWorld, OSP_WORLD>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
-    inline World::World(OSPWorld existing) : ManagedObject_T<OSPWorld>(existing)
+    inline World::World(OSPWorld existing)
+        : ManagedObject<OSPWorld, OSP_WORLD>(existing)
     {
     }
 

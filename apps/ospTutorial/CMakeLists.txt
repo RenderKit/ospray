@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2019 Intel Corporation                                    ##
+## Copyright 2018-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,38 +14,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-include(GenerateExportHeader)
+# build ospTutorial, for demonstration and API testing
+add_executable(ospTutorial ospTutorial.c)
+target_link_libraries(ospTutorial PRIVATE ospray)
 
-add_library(ospray_testing SHARED
-  ospray_testing.cpp
+# C++ version
+add_executable(ospTutorialCpp ospTutorial.cpp)
+target_link_libraries(ospTutorialCpp PRIVATE ospray)
 
-  builders/Boxes.cpp
-  builders/Builder.cpp
-  builders/CornellBox.cpp
-  builders/Curves.cpp
-  builders/Cylinders.cpp
-  builders/Empty.cpp
-  builders/GravitySpheresVolume.cpp
-  builders/PerlinNoiseVolumes.cpp
-  builders/RandomSpheres.cpp
-  builders/Streamlines.cpp
-  builders/SubdivisionCube.cpp
-  builders/UnstructuredVolume.cpp
-
-  ../utility/rawToAMR.cpp
-)
-
-generate_export_header(ospray_testing)
-
-target_link_libraries(ospray_testing PUBLIC ospray ospcommon::ospcommon)
-
-ospray_install_library(ospray_testing COMPONENT apps)
-
-set_target_properties(ospray_testing
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-
-target_include_directories(ospray_testing
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-)
+# async version
+add_executable(ospTutorialAsync ospTutorialAsync.c)
+target_link_libraries(ospTutorialAsync PRIVATE ospray)

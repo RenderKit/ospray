@@ -16,79 +16,37 @@
 
 #pragma once
 
-#include "ospray/ospray_util.h"
+#include "ospray/ospray_cpp.h"
 
-#ifdef _WIN32
-#ifdef ospray_testing_EXPORTS
-#define OSPRAY_TESTING_INTERFACE __declspec(dllexport)
-#else
-#define OSPRAY_TESTING_INTERFACE __declspec(dllimport)
-#endif
-#define OSPRAY_TESTING_DLLEXPORT __declspec(dllexport)
-#else
-#define OSPRAY_TESTING_INTERFACE
-#define OSPRAY_TESTING_DLLEXPORT
-#endif
+#include "ospray_testing_export.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace ospray {
+  namespace testing {
 
-typedef struct { float x, y; }             osp_vec2f;
-typedef struct { float x, y, z; }          osp_vec3f;
-typedef struct { osp_vec3f lower, upper; } osp_box3f;
+    using namespace ospcommon;
+    using namespace ospcommon::math;
 
-typedef struct
-{
-  OSPData auxData;
-  OSPGeometry geometry;
-  OSPGeometricModel model;
-  OSPGroup group;
-  OSPInstance instance;
-  osp_box3f bounds;
-} OSPTestingGeometry;
+    using SceneBuilderHandle = void *;
 
-typedef struct
-{
-  OSPVolume volume;
-  osp_box3f bounds;
-  osp_vec2f voxelRange;
-} OSPTestingVolume;
+    OSPRAY_TESTING_EXPORT
+    SceneBuilderHandle newBuilder(const std::string &type);
 
-/* Create an OSPRay renderer with sensible defaults for testing */
-OSPRAY_TESTING_INTERFACE
-OSPRenderer ospTestingNewRenderer(const char *type OSP_DEFAULT_VAL("scivis"));
+    template <typename T>
+    void setParam(SceneBuilderHandle b, const std::string &type, const T &val);
 
-/* Create an OSPRay geometry (from a registered name), with the given renderer
- * type to create materials */
-OSPRAY_TESTING_INTERFACE
-OSPTestingGeometry ospTestingNewGeometry(const char *geom_type,
-                                         const char *renderer_type
-                                             OSP_DEFAULT_VAL("scivis"));
+    OSPRAY_TESTING_EXPORT
+    cpp::Group buildGroup(SceneBuilderHandle b);
 
-/* Create an OSPRay geometry (from a registered name) */
-OSPRAY_TESTING_INTERFACE
-OSPTestingVolume ospTestingNewVolume(const char *volume_type);
+    OSPRAY_TESTING_EXPORT
+    cpp::World buildWorld(SceneBuilderHandle b);
 
-/* Create an OSPRay geometry (from a registered name) */
-OSPRAY_TESTING_INTERFACE
-OSPTransferFunction ospTestingNewTransferFunction(
-    osp_vec2f voxelRange,
-    const char *tf_name OSP_DEFAULT_VAL("grayscale"));
+    OSPRAY_TESTING_EXPORT
+    void commit(SceneBuilderHandle b);
 
-/* Create an OSPRay perspective camera which looks at the center of the given
- * bounding box
- *
- * NOTE: this only sets 'dir', 'pos', and 'up'
- */
-OSPRAY_TESTING_INTERFACE
-OSPCamera ospTestingNewDefaultCamera(osp_box3f bounds);
+    OSPRAY_TESTING_EXPORT
+    void release(SceneBuilderHandle b);
 
-/* Create a list of lights, using a given preset name */
-OSPRAY_TESTING_INTERFACE
-OSPData ospTestingNewLights(
-    const char *lighting_set_name OSP_DEFAULT_VAL("ambient_only"));
+  }  // namespace testing
+}  // namespace ospray
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif
+#include "detail/ospray_testing.inl"

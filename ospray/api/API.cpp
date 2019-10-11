@@ -86,31 +86,6 @@ inline std::string getPidString()
 
 using namespace ospray;
 
-static inline Device *createMpiDevice(const std::string &_type)
-{
-  Device *device = nullptr;
-
-  try {
-    device = Device::createDevice(_type.c_str());
-  } catch (const std::runtime_error &) {
-    try {
-      ospLoadModule("ispc");
-      ospLoadModule("mpi");
-      device = Device::createDevice(_type.c_str());
-    } catch (const std::runtime_error &err) {
-      std::stringstream error_msg;
-      error_msg << "Cannot create a device of type '" << _type
-                << "'! Make sure "
-                << "you have enabled the OSPRAY_MODULE_MPI CMake "
-                << "variable in your build of OSPRay.\n";
-      error_msg << "(Reason device creation failed: " << err.what() << ')';
-      throw std::runtime_error(error_msg.str());
-    }
-  }
-
-  return device;
-}
-
 static inline void loadModulesFromEnvironmentVar()
 {
   auto OSPRAY_LOAD_MODULES =
@@ -137,37 +112,9 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
 
   loadModulesFromEnvironmentVar();
 
-  auto OSP_MPI_LAUNCH = utility::getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
-
-  if (OSP_MPI_LAUNCH) {
-    postStatusMsg(
-        "#osp: launching ospray mpi ring - "
-        "make sure that mpd is running");
-
-    currentDevice.reset(createMpiDevice("mpi_offload"));
-    currentDevice->setParam<std::string>("mpiMode", "mpi-launch");
-    currentDevice->setParam<std::string>("launchCommand",
-                                         OSP_MPI_LAUNCH.value());
-  }
-
   if (_ac && _av) {
     for (int i = 1; i < *_ac; i++) {
       std::string av(_av[i]);
-
-      if (av == "--osp:coi") {
-        handleError(OSP_INVALID_ARGUMENT,
-                    "OSPRay's COI device is no longer supported!");
-        return OSP_INVALID_ARGUMENT;
-      }
-
-      if (av == "--osp:stream") {
-        removeArgs(*_ac, _av, i, 1);
-        loadLocalModule("stream");
-        currentDevice.reset(Device::createDevice("stream"));
-
-        --i;
-        continue;
-      }
 
       auto moduleSwitch = av.substr(0, 13);
       if (moduleSwitch == "--osp:module:") {
@@ -186,7 +133,7 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
         auto deviceName = av.substr(13);
 
         try {
-          currentDevice.reset(Device::createDevice(deviceName.c_str()));
+          currentDevice = Device::createDevice(deviceName.c_str());
         } catch (const std::runtime_error &) {
           throw std::runtime_error("Failed to create device of type '" +
                                    deviceName +
@@ -194,43 +141,6 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
                                    "device name wrong or didn't link the "
                                    "library which defines the device?");
         }
-        --i;
-        continue;
-      }
-
-      if (av == "--osp:mpi" || av == "--osp:mpi-offload") {
-        removeArgs(*_ac, _av, i, 1);
-        if (!currentDevice)
-          currentDevice.reset(createMpiDevice("mpi_offload"));
-        --i;
-        continue;
-      }
-
-      if (av == "--osp:mpi-distributed") {
-        removeArgs(*_ac, _av, i, 1);
-        if (!currentDevice)
-          currentDevice.reset(createMpiDevice("mpi_distributed"));
-        --i;
-        continue;
-      }
-
-      if (av == "--osp:mpi-listen") {
-        removeArgs(*_ac, _av, i, 1);
-        currentDevice.reset(createMpiDevice("mpi_offload"));
-        currentDevice->setParam<std::string>("mpiMode", "mpi-listen");
-        --i;
-        continue;
-      }
-
-      if (av == "--osp:mpi-connect") {
-        std::string host = _av[i + 1];
-        removeArgs(*_ac, _av, i, 2);
-
-        if (!currentDevice)
-          currentDevice.reset(createMpiDevice("mpi_offload"));
-
-        currentDevice->setParam<std::string>("mpiMode", "mpi-connect");
-        currentDevice->setParam<std::string>("host", host);
         --i;
         continue;
       }
@@ -244,16 +154,17 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
 
     if (OSPRAY_DEFAULT_DEVICE) {
       auto device_name = OSPRAY_DEFAULT_DEVICE.value();
-      currentDevice.reset(Device::createDevice(device_name.c_str()));
+      currentDevice = Device::createDevice(device_name.c_str());
     } else {
       ospLoadModule("ispc");
-      currentDevice.reset(Device::createDevice("default"));
+      currentDevice = Device::createDevice("default");
     }
   }
 
   ospray::initFromCommandLine(_ac, &_av);
 
   currentDevice->commit();
+  currentDevice->refDec();
 
   return OSP_NO_ERROR;
 }
@@ -269,7 +180,7 @@ OSPRAY_CATCH_END(0)
 
 extern "C" void ospShutdown() OSPRAY_CATCH_BEGIN
 {
-  Device::current.reset();
+  Device::current = nullptr;
   LibraryRepository::cleanupInstance();
 }
 OSPRAY_CATCH_END()
@@ -289,13 +200,13 @@ extern "C" void ospSetCurrentDevice(OSPDevice _device) OSPRAY_CATCH_BEGIN
     throw std::runtime_error("You must commit the device before using it!");
   }
 
-  Device::current.reset(device);
+  Device::current = device;
 }
 OSPRAY_CATCH_END()
 
 extern "C" OSPDevice ospGetCurrentDevice() OSPRAY_CATCH_BEGIN
 {
-  return (OSPDevice)Device::current.get();
+  return (OSPDevice)Device::current.ptr;
 }
 OSPRAY_CATCH_END(nullptr)
 
@@ -389,6 +300,24 @@ extern "C" void ospDeviceCommit(OSPDevice _object) OSPRAY_CATCH_BEGIN
 
   auto *object = (Device *)_object;
   object->commit();
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospDeviceRelease(OSPDevice _object) OSPRAY_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(_object);
+
+  auto *object = (Device *)_object;
+  object->refDec();
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospDeviceRetain(OSPDevice _object) OSPRAY_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(_object);
+
+  auto *object = (Device *)_object;
+  object->refInc();
 }
 OSPRAY_CATCH_END()
 

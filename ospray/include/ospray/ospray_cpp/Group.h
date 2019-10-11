@@ -21,13 +21,16 @@
 namespace ospray {
   namespace cpp {
 
-    class Group : public ManagedObject_T<OSPGroup>
+    class Group : public ManagedObject<OSPGroup, OSP_GROUP>
     {
      public:
       Group();
       Group(const Group &copy);
       Group(OSPGroup existing);
     };
+
+    static_assert(sizeof(Group) == sizeof(OSPGroup),
+                  "cpp::Group can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -37,13 +40,13 @@ namespace ospray {
     }
 
     inline Group::Group(const Group &copy)
-        : ManagedObject_T<OSPGroup>(copy.handle())
+        : ManagedObject<OSPGroup, OSP_GROUP>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Group::Group(OSPGroup existing)
-        : ManagedObject_T<OSPGroup>(existing)
+        : ManagedObject<OSPGroup, OSP_GROUP>(existing)
     {
     }
 

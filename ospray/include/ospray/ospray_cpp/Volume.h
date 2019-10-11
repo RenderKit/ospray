@@ -23,13 +23,16 @@
 namespace ospray {
   namespace cpp {
 
-    class Volume : public ManagedObject_T<OSPVolume>
+    class Volume : public ManagedObject<OSPVolume, OSP_VOLUME>
     {
      public:
       Volume(const std::string &type);
       Volume(const Volume &copy);
       Volume(OSPVolume existing = nullptr);
     };
+
+    static_assert(sizeof(Volume) == sizeof(OSPVolume),
+                  "cpp::Volume can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
@@ -39,13 +42,13 @@ namespace ospray {
     }
 
     inline Volume::Volume(const Volume &copy)
-        : ManagedObject_T<OSPVolume>(copy.handle())
+        : ManagedObject<OSPVolume, OSP_VOLUME>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline Volume::Volume(OSPVolume existing)
-        : ManagedObject_T<OSPVolume>(existing)
+        : ManagedObject<OSPVolume, OSP_VOLUME>(existing)
     {
     }
   }  // namespace cpp

@@ -51,8 +51,7 @@ namespace OSPRayTestScenes {
     OSPVolume torus    = ospNewVolume("structured_volume");
     OSPData voxelsData = ospNewData(size * size * size,
                                     OSP_FLOAT,
-                                    volumetricData.data(),
-                                    OSP_DATA_SHARED_BUFFER);
+                                    volumetricData.data());
     ospSetObject(torus, "voxelData", voxelsData);
     ospRelease(voxelsData);
     ospSetVec3i(torus, "dimensions", size, size, size);
@@ -840,8 +839,7 @@ namespace OSPRayTestScenes {
     ASSERT_TRUE(blob);
     OSPData voxelsData = ospNewData(size * size * size,
                                     OSP_FLOAT,
-                                    volumetricData.data(),
-                                    OSP_DATA_SHARED_BUFFER);
+                                    volumetricData.data());
     ASSERT_TRUE(voxelsData);
     ospSetObject(blob, "voxelData", voxelsData);
     ospSetVec3i(blob, "dimensions", size, size, size);

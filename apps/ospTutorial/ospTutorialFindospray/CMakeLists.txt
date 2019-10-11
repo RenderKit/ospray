@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2019 Intel Corporation                                    ##
+## Copyright 2019 Intel Corporation                                         ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,38 +14,24 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-include(GenerateExportHeader)
+# NOTE: This CMakeLists.txt is intended to be used to exercise an OSPRay
+#       install and demonstrate how external applications can build against
+#       OSPRay using CMake.
+#
+#       Once you have done a 'make install' of an existing OSPRay
+#       build (will install to CMAKE_INSTALL_PREFIX), create a separate build
+#       directory and invoke CMake on this directory. If you have 'ospray_DIR'
+#       setup correctly to point to where you just installed OSPRay, then this
+#       should build the ospTutorial app from that install and NOT use your
+#       local build.
 
-add_library(ospray_testing SHARED
-  ospray_testing.cpp
+cmake_minimum_required(VERSION 3.1)
 
-  builders/Boxes.cpp
-  builders/Builder.cpp
-  builders/CornellBox.cpp
-  builders/Curves.cpp
-  builders/Cylinders.cpp
-  builders/Empty.cpp
-  builders/GravitySpheresVolume.cpp
-  builders/PerlinNoiseVolumes.cpp
-  builders/RandomSpheres.cpp
-  builders/Streamlines.cpp
-  builders/SubdivisionCube.cpp
-  builders/UnstructuredVolume.cpp
+project(ospTutorialFindospray LANGUAGES C)
 
-  ../utility/rawToAMR.cpp
-)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
-generate_export_header(ospray_testing)
+find_package(ospray 2.0.0 REQUIRED)
 
-target_link_libraries(ospray_testing PUBLIC ospray ospcommon::ospcommon)
-
-ospray_install_library(ospray_testing COMPONENT apps)
-
-set_target_properties(ospray_testing
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-
-target_include_directories(ospray_testing
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-)
+add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/../ospTutorial.c)
+target_link_libraries(${PROJECT_NAME} ospray::ospray)

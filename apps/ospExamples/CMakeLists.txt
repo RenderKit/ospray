@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2019 Intel Corporation                                    ##
+## Copyright 2018-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,38 +14,23 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-include(GenerateExportHeader)
+# prefer libGL over libOpenGl for better compatibility with SWR
+set(OpenGL_GL_PREFERENCE "LEGACY")
+find_package(OpenGL 2 REQUIRED)
+find_package(glfw3 REQUIRED)
 
-add_library(ospray_testing SHARED
-  ospray_testing.cpp
-
-  builders/Boxes.cpp
-  builders/Builder.cpp
-  builders/CornellBox.cpp
-  builders/Curves.cpp
-  builders/Cylinders.cpp
-  builders/Empty.cpp
-  builders/GravitySpheresVolume.cpp
-  builders/PerlinNoiseVolumes.cpp
-  builders/RandomSpheres.cpp
-  builders/Streamlines.cpp
-  builders/SubdivisionCube.cpp
-  builders/UnstructuredVolume.cpp
-
-  ../utility/rawToAMR.cpp
+add_executable(ospExamples
+  ArcballCamera.cpp
+  GLFWOSPRayWindow.cpp
+  imgui_impl_glfw_gl3.cpp
+  ospExample.cpp
 )
 
-generate_export_header(ospray_testing)
-
-target_link_libraries(ospray_testing PUBLIC ospray ospcommon::ospcommon)
-
-ospray_install_library(ospray_testing COMPONENT apps)
-
-set_target_properties(ospray_testing
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-
-target_include_directories(ospray_testing
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+target_link_libraries(ospExamples PRIVATE
+  ospcommon::ospcommon
+  ospray
+  ospray_testing
+  ospray_imgui
+  glfw
+  ${OPENGL_LIBRARIES}
 )

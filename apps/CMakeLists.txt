@@ -16,9 +16,11 @@
 
 add_subdirectory(external)
 add_subdirectory(ospray_testing)
-add_subdirectory(tutorials)
 add_subdirectory(utility)
 
 if (OSPRAY_ENABLE_TESTING)
   add_subdirectory(ospray_test_suite)
 endif()
+
+add_subdirectory(ospTutorial)
+add_subdirectory(ospExamples)

@@ -35,7 +35,7 @@ namespace ospray {
       uint32_t primID{0};
     };
 
-    class FrameBuffer : public ManagedObject_T<OSPFrameBuffer>
+    class FrameBuffer : public ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>
     {
      public:
       FrameBuffer() =
@@ -48,6 +48,8 @@ namespace ospray {
       FrameBuffer(OSPFrameBuffer existing);
 
       FrameBuffer &operator=(const FrameBuffer &copy);
+
+      void resetAccumulation() const;
 
       Future renderFrame(const Renderer &renderer,
                          const Camera &camera,
@@ -63,6 +65,9 @@ namespace ospray {
       void clear() const;
     };
 
+    static_assert(sizeof(FrameBuffer) == sizeof(OSPFrameBuffer),
+                  "cpp::FrameBuffer can't have data members!");
+
     // Inlined function definitions ///////////////////////////////////////////
 
     inline FrameBuffer::FrameBuffer(const vec2i &size,
@@ -73,13 +78,13 @@ namespace ospray {
     }
 
     inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
-        : ManagedObject_T<OSPFrameBuffer>(copy.handle())
+        : ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
     inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing)
-        : ManagedObject_T<OSPFrameBuffer>(existing)
+        : ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>(existing)
     {
     }
 
@@ -88,6 +93,11 @@ namespace ospray {
       ospObject = copy.ospObject;
       ospRetain(copy.handle());
       return *this;
+    }
+
+    inline void FrameBuffer::resetAccumulation() const
+    {
+      ospResetAccumulation(handle());
     }
 
     inline Future FrameBuffer::renderFrame(const Renderer &renderer,
