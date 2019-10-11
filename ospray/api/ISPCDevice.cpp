@@ -187,6 +187,8 @@ namespace ospray {
         }
       }
 
+      vklLoadModule("ispc_driver");
+
       VKLDriver driver = nullptr;
 
       int ispc_width = ispc::ISPCDevice_programCount();
