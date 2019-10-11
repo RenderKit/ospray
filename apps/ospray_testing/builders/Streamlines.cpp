@@ -29,10 +29,24 @@ namespace ospray {
       Streamlines()           = default;
       ~Streamlines() override = default;
 
+      void commit() override;
+
       cpp::Group buildGroup() const override;
+
+     private:
+      bool smooth{false};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
+
+    void Streamlines::commit()
+    {
+      Builder::commit();
+
+      smooth = getParam<bool>("smooth", false);
+
+      addPlane = false;
+    }
 
     cpp::Group Streamlines::buildGroup() const
     {
@@ -90,6 +104,7 @@ namespace ospray {
                       cpp::Data(indices.size(), OSP_UINT, indices.data()));
       slGeom.setParam("vertex.color",
                       cpp::Data(colors.size(), OSP_VEC4F, colors.data()));
+      slGeom.setParam("smooth", smooth);
       slGeom.commit();
 
       cpp::Material slMat(rendererType, "OBJMaterial");
