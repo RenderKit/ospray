@@ -34,3 +34,8 @@ target_link_libraries(ospExamples PRIVATE
   glfw
   ${OPENGL_LIBRARIES}
 )
+
+install(TARGETS ospExamples
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

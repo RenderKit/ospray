@@ -39,8 +39,6 @@ generate_export_header(ospray_testing)
 
 target_link_libraries(ospray_testing PUBLIC ospray ospcommon::ospcommon)
 
-ospray_install_library(ospray_testing COMPONENT apps)
-
 set_target_properties(ospray_testing
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 
@@ -48,4 +46,22 @@ target_include_directories(ospray_testing
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/ospray_testing>
+)
+
+## Install library/headers ##
+
+ospray_install_library(ospray_testing COMPONENT apps)
+
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+  COMPONENT devel
+  FILES_MATCHING
+  PATTERN *.h
+  PATTERN *.inl
+)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ospray_testing_export.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/ospray_testing
+  COMPONENT devel
 )
