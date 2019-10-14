@@ -54,7 +54,7 @@ namespace ospray {
 
       std::vector<vec3f> points;
       std::vector<float> radii;
-      std::vector<int> indices;
+      std::vector<unsigned int> indices;
       std::vector<vec4f> colors;
 
       std::random_device rd;
@@ -96,14 +96,10 @@ namespace ospray {
         }
       }
 
-      slGeom.setParam("vertex.position",
-                      cpp::Data(points.size(), OSP_VEC3F, points.data()));
-      slGeom.setParam("vertex.radius",
-                      cpp::Data(radii.size(), OSP_FLOAT, radii.data()));
-      slGeom.setParam("index",
-                      cpp::Data(indices.size(), OSP_UINT, indices.data()));
-      slGeom.setParam("vertex.color",
-                      cpp::Data(colors.size(), OSP_VEC4F, colors.data()));
+      slGeom.setParam("vertex.position", cpp::Data(points));
+      slGeom.setParam("vertex.radius", cpp::Data(radii));
+      slGeom.setParam("index", cpp::Data(indices));
+      slGeom.setParam("vertex.color", cpp::Data(colors));
       slGeom.setParam("smooth", smooth);
       slGeom.commit();
 

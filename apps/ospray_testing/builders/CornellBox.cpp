@@ -123,7 +123,7 @@ namespace ospray {
         {0.14f, -1.00f, 0.67f},
         {0.71f, -1.00f, 0.49f}};
 
-    static std::vector<vec4i> indices = {
+    static std::vector<vec4ui> indices = {
         {0, 1, 2, 3},      // Floor
         {4, 5, 6, 7},      // Ceiling
         {8, 9, 10, 11},    // Backwall
@@ -241,12 +241,9 @@ namespace ospray {
     {
       cpp::Geometry quadMesh("quads");
 
-      quadMesh.setParam("vertex.position",
-                        cpp::Data(vertices.size(), OSP_VEC3F, vertices.data()));
-      quadMesh.setParam("vertex.color",
-                        cpp::Data(colors.size(), OSP_VEC4F, colors.data()));
-      quadMesh.setParam("index",
-                        cpp::Data(indices.size(), OSP_VEC4UI, indices.data()));
+      quadMesh.setParam("vertex.position", cpp::Data(vertices));
+      quadMesh.setParam("vertex.color", cpp::Data(colors));
+      quadMesh.setParam("index", cpp::Data(indices));
       quadMesh.commit();
 
       // create and setup a material

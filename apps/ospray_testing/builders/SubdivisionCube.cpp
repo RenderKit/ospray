@@ -90,40 +90,15 @@ namespace ospray {
       // create the OSPRay geometry and set all parameters
       cpp::Geometry geometry("subdivision");
 
-      geometry.setParam("vertex.position",
-                        cpp::Data(vertices.size(), OSP_VEC3F, vertices.data()));
-
-      geometry.setParam("vertex.color",
-                        cpp::Data(colors.size(), OSP_VEC4F, colors.data()));
-
-      geometry.setParam("face",
-                        cpp::Data(faces.size(), OSP_UINT, faces.data()));
-
-      geometry.setParam("index",
-                        cpp::Data(indices.size(), OSP_UINT, indices.data()));
-
-      geometry.setParam("vertexCrease.index",
-                        cpp::Data(vertexCreaseIndices.size(),
-                                  OSP_UINT,
-                                  vertexCreaseIndices.data()));
-
-      geometry.setParam("vertexCrease.weight",
-                        cpp::Data(vertexCreaseWeights.size(),
-                                  OSP_FLOAT,
-                                  vertexCreaseWeights.data()));
-
-      geometry.setParam(
-          "edgeCrease.index",
-          cpp::Data(
-              edgeCreaseIndices.size(), OSP_VEC2UI, edgeCreaseIndices.data()));
-
-      geometry.setParam(
-          "edgeCrease.weight",
-          cpp::Data(
-              edgeCreaseWeights.size(), OSP_FLOAT, edgeCreaseWeights.data()));
-
+      geometry.setParam("vertex.position", cpp::Data(vertices));
+      geometry.setParam("vertex.color", cpp::Data(colors));
+      geometry.setParam("face", cpp::Data(faces));
+      geometry.setParam("index", cpp::Data(indices));
+      geometry.setParam("vertexCrease.index", cpp::Data(vertexCreaseIndices));
+      geometry.setParam("vertexCrease.weight", cpp::Data(vertexCreaseWeights));
+      geometry.setParam("edgeCrease.index", cpp::Data(edgeCreaseIndices));
+      geometry.setParam("edgeCrease.weight", cpp::Data(edgeCreaseWeights));
       geometry.setParam("level", level);
-
       geometry.commit();
 
       cpp::GeometricModel model(geometry);

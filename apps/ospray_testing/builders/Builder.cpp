@@ -205,17 +205,10 @@ namespace ospray {
                                startingIndex + 3);
         }
 
-        planeGeometry.setParam(
-            "vertex.position",
-            cpp::Data(v_position.size(), OSP_VEC3F, v_position.data()));
-        planeGeometry.setParam(
-            "vertex.normal",
-            cpp::Data(v_normal.size(), OSP_VEC3F, v_normal.data()));
-        planeGeometry.setParam(
-            "vertex.color",
-            cpp::Data(v_color.size(), OSP_VEC4F, v_color.data()));
-        planeGeometry.setParam(
-            "index", cpp::Data(indices.size(), OSP_VEC4UI, indices.data()));
+        planeGeometry.setParam("vertex.position", cpp::Data(v_position));
+        planeGeometry.setParam("vertex.normal", cpp::Data(v_normal));
+        planeGeometry.setParam("vertex.color", cpp::Data(v_color));
+        planeGeometry.setParam("index", cpp::Data(indices));
 
         planeGeometry.commit();
 

@@ -190,8 +190,7 @@ namespace ospray {
           voxelRange.extend(v);
       });
 
-      volume.setParam("voxelData",
-                      cpp::Data(numVoxels, OSP_FLOAT, voxels.data()));
+      volume.setParam("voxelData", cpp::Data(voxels));
       volume.setParam("voxelType", int(OSP_FLOAT));
       volume.setParam("dimensions", vec3i(dims));
       volume.setParam("gridOrigin", vec3f(-1.5f, -1.5f, -1.5f));
@@ -200,9 +199,8 @@ namespace ospray {
 
       cpp::TransferFunction tfn("piecewise_linear");
       tfn.setParam("valueRange", voxelRange.toVec2());
-      tfn.setParam("color", cpp::Data(colors.size(), OSP_VEC3F, colors.data()));
-      tfn.setParam("opacity",
-                   cpp::Data(opacities.size(), OSP_FLOAT, opacities.data()));
+      tfn.setParam("color", cpp::Data(colors));
+      tfn.setParam("opacity", cpp::Data(opacities));
       tfn.commit();
 
       cpp::VolumetricModel volumeModel(volume);
@@ -318,19 +316,11 @@ namespace ospray {
       for (auto geometricModel : geometricModels)
         geometricModel.commit();
 
-      if (!volumetricModels.empty()) {
-        group.setParam("volume",
-                       cpp::Data(volumetricModels.size(),
-                                 OSP_VOLUMETRIC_MODEL,
-                                 volumetricModels.data()));
-      }
+      if (!volumetricModels.empty())
+        group.setParam("volume", cpp::Data(volumetricModels));
 
-      if (!geometricModels.empty()) {
-        group.setParam("geometry",
-                       cpp::Data(geometricModels.size(),
-                                 OSP_GEOMETRIC_MODEL,
-                                 geometricModels.data()));
-      }
+      if (!geometricModels.empty())
+        group.setParam("geometry", cpp::Data(geometricModels));
 
       group.commit();
 
@@ -363,11 +353,8 @@ namespace ospray {
 
       if (lightHandles.empty())
         world.removeParam("light");
-      else {
-        world.setParam(
-            "light",
-            cpp::Data(lightHandles.size(), OSP_LIGHT, lightHandles.data()));
-      }
+      else
+        world.setParam("light", cpp::Data(lightHandles));
 
       return world;
     }

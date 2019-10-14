@@ -113,23 +113,17 @@ namespace ospray {
       // create the cylinder geometry, and assign attributes
       cpp::Geometry cylindersGeometry("cylinders");
 
-      cylindersGeometry.setParam(
-          "cylinder.position0",
-          cpp::Data(c_startVertex.size(), OSP_VEC3F, c_startVertex.data()));
-      cylindersGeometry.setParam(
-          "cylinder.position1",
-          cpp::Data(c_endVertex.size(), OSP_VEC3F, c_endVertex.data()));
-      cylindersGeometry.setParam(
-          "cylinder.radius",
-          cpp::Data(c_radius.size(), OSP_VEC3F, c_radius.data()));
+      cylindersGeometry.setParam("cylinder.position0",
+                                 cpp::Data(c_startVertex));
+      cylindersGeometry.setParam("cylinder.position1", cpp::Data(c_endVertex));
+      cylindersGeometry.setParam("cylinder.radius", cpp::Data(c_radius));
 
       // commit the cylinders geometry
       cylindersGeometry.commit();
 
       // Add the color data to the cylinders
       cpp::GeometricModel model(cylindersGeometry);
-      model.setParam("color",
-                     cpp::Data(c_colors.size(), OSP_VEC4F, c_colors.data()));
+      model.setParam("color", cpp::Data(c_colors));
 
       // create obj material and assign to cylinders model
       cpp::Material material(rendererType, "OBJMaterial");

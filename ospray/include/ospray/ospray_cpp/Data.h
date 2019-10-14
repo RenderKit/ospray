@@ -17,6 +17,10 @@
 #pragma once
 
 #include "ManagedObject.h"
+#include "Traits.h"
+// stl
+#include <array>
+#include <vector>
 
 namespace ospray {
   namespace cpp {
@@ -24,12 +28,28 @@ namespace ospray {
     class Data : public ManagedObject<OSPData, OSP_DATA>
     {
      public:
+      // Generic construction from an existing array
+
       Data(size_t numItems,
            OSPDataType format,
            const void *init = nullptr,
            bool isShared    = false);
+
+      // Adapters to work with existing STL containers
+
+      template <typename T, std::size_t N>
+      Data(const std::array<T, N> &arr, bool isShared = false);
+
+      template <typename T, typename ALLOC_T>
+      Data(const std::vector<T, ALLOC_T> &arr, bool isShared = false);
+
+      // Set a single object as a 1-item data array of handles
+
       template <typename T, OSPDataType TY>
       Data(ManagedObject<T, TY> obj);
+
+      // Construct from an existing OSPData handle (Data then owns lifetime)
+
       Data(OSPData existing = nullptr);
     };
 
@@ -51,6 +71,18 @@ namespace ospray {
         ospCopyData(tmp, ospObject);
         ospRelease(tmp);
       }
+    }
+
+    template <typename T, std::size_t N>
+    inline Data::Data(const std::array<T, N> &arr, bool isShared)
+        : Data(N, OSPTypeFor<T>::value, arr.data(), isShared)
+    {
+    }
+
+    template <typename T, typename ALLOC_T>
+    inline Data::Data(const std::vector<T, ALLOC_T> &arr, bool isShared)
+        : Data(arr.size(), OSPTypeFor<T>::value, arr.data(), isShared)
+    {
     }
 
     template <typename T, OSPDataType TY>
