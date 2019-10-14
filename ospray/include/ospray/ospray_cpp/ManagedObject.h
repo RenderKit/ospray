@@ -85,6 +85,8 @@ namespace ospray {
       void setParam(const std::string &name,
                     const ManagedObject<OT, OTY> &v) const;
 
+      void setParam(const std::string &name, OSPDataType, const void *) const;
+
       void removeParam(const std::string &name) const;
 
       box3f getBounds() const;
@@ -332,6 +334,14 @@ namespace ospray {
         const std::string &name, const ManagedObject<OT, OTY> &v) const
     {
       ospSetObject(ospObject, name.c_str(), v.object());
+    }
+
+    template <typename HANDLE_T, OSPDataType TYPE>
+    void ManagedObject<HANDLE_T, TYPE>::setParam(const std::string &name,
+                                                 OSPDataType type,
+                                                 const void *mem) const
+    {
+      ospSetParam(ospObject, name.c_str(), type, mem);
     }
 
     template <typename HANDLE_T, OSPDataType TYPE>
