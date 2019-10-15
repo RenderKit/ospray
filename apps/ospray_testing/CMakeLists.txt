@@ -32,6 +32,9 @@ add_library(ospray_testing SHARED
   builders/SubdivisionCube.cpp
   builders/UnstructuredVolume.cpp
 
+  # regression test scenes
+  builders/test_pt_metal_roughness.cpp
+
   ../utility/rawToAMR.cpp
 )
 
