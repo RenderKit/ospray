@@ -52,4 +52,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::World, OSP_WORLD);
+
 }  // namespace ospray

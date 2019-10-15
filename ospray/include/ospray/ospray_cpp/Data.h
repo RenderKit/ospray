@@ -96,4 +96,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Data, OSP_DATA);
+
 }  // namespace ospray

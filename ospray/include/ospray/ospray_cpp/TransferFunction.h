@@ -53,4 +53,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::TransferFunction, OSP_TRANSFER_FUNCTION);
+
 }  // namespace ospray

@@ -151,4 +151,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::FrameBuffer, OSP_FRAMEBUFFER);
+
 }  // namespace ospray

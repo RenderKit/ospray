@@ -14,45 +14,28 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "ManagedObject.h"
+#include "../common/OSPCommon.h"
+// ospray::cpp
+#include "ospray/ospray_cpp.h"
 
 namespace ospray {
-  namespace cpp {
 
-    class ImageOperation
-        : public ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>
-    {
-     public:
-      ImageOperation(const std::string &type);
-      ImageOperation(const ImageOperation &copy);
-      ImageOperation(OSPImageOperation existing = nullptr);
-    };
-
-    static_assert(sizeof(ImageOperation) == sizeof(OSPImageOperation),
-                  "cpp::ImageOperation can't have data members!");
-
-    // Inlined function definitions ///////////////////////////////////////////
-
-    inline ImageOperation::ImageOperation(const std::string &type)
-    {
-      ospObject = ospNewImageOperation(type.c_str());
-    }
-
-    inline ImageOperation::ImageOperation(const ImageOperation &copy)
-        : ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>(copy.handle())
-    {
-      ospRetain(copy.handle());
-    }
-
-    inline ImageOperation::ImageOperation(OSPImageOperation existing)
-        : ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>(existing)
-    {
-    }
-
-  }  // namespace cpp
-
-  OSPTYPEFOR_SPECIALIZATION(cpp::ImageOperation, OSP_IMAGE_OPERATION);
+  OSPTYPEFOR_DEFINITION(cpp::Camera);
+  OSPTYPEFOR_DEFINITION(cpp::Data);
+  OSPTYPEFOR_DEFINITION(cpp::FrameBuffer);
+  OSPTYPEFOR_DEFINITION(cpp::Future);
+  OSPTYPEFOR_DEFINITION(cpp::GeometricModel);
+  OSPTYPEFOR_DEFINITION(cpp::Geometry);
+  OSPTYPEFOR_DEFINITION(cpp::Group);
+  OSPTYPEFOR_DEFINITION(cpp::ImageOperation);
+  OSPTYPEFOR_DEFINITION(cpp::Instance);
+  OSPTYPEFOR_DEFINITION(cpp::Light);
+  OSPTYPEFOR_DEFINITION(cpp::Material);
+  OSPTYPEFOR_DEFINITION(cpp::Renderer);
+  OSPTYPEFOR_DEFINITION(cpp::Texture);
+  OSPTYPEFOR_DEFINITION(cpp::TransferFunction);
+  OSPTYPEFOR_DEFINITION(cpp::Volume);
+  OSPTYPEFOR_DEFINITION(cpp::VolumetricModel);
+  OSPTYPEFOR_DEFINITION(cpp::World);
 
 }  // namespace ospray

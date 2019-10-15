@@ -59,4 +59,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::GeometricModel, OSP_GEOMETRIC_MODEL);
+
 }  // namespace ospray

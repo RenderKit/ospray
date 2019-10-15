@@ -51,4 +51,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Renderer, OSP_RENDERER);
+
 }  // namespace ospray

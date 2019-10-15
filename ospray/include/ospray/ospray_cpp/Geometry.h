@@ -19,11 +19,11 @@
 #include "ManagedObject.h"
 
 namespace ospray {
-  namespace cpp    {
+  namespace cpp {
 
     class Geometry : public ManagedObject<OSPGeometry, OSP_GEOMETRY>
     {
-    public:
+     public:
       Geometry(const std::string &type);
       Geometry(const Geometry &copy);
       Geometry(OSPGeometry existing = nullptr);
@@ -39,16 +39,19 @@ namespace ospray {
       ospObject = ospNewGeometry(type.c_str());
     }
 
-    inline Geometry::Geometry(const Geometry &copy) :
-      ManagedObject<OSPGeometry, OSP_GEOMETRY>(copy.handle())
+    inline Geometry::Geometry(const Geometry &copy)
+        : ManagedObject<OSPGeometry, OSP_GEOMETRY>(copy.handle())
     {
       ospRetain(copy.handle());
     }
 
-    inline Geometry::Geometry(OSPGeometry existing) :
-      ManagedObject<OSPGeometry, OSP_GEOMETRY>(existing)
+    inline Geometry::Geometry(OSPGeometry existing)
+        : ManagedObject<OSPGeometry, OSP_GEOMETRY>(existing)
     {
     }
 
-  }// namespace cpp
-}// namespace ospray
+  }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Geometry, OSP_GEOMETRY);
+
+}  // namespace ospray

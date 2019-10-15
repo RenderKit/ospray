@@ -51,4 +51,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Camera, OSP_CAMERA);
+
 }  // namespace ospray

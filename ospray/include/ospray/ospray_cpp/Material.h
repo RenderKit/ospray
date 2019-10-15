@@ -52,4 +52,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Material, OSP_MATERIAL);
+
 }  // namespace ospray

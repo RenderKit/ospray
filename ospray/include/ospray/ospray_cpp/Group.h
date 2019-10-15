@@ -51,4 +51,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Group, OSP_GROUP);
+
 }  // namespace ospray

@@ -16,13 +16,16 @@
 
 #pragma once
 
+// stl
 #include <string>
 #include <type_traits>
-
+// ospray
 #include "ospray/ospray_util.h"
-
+// ospcommon
 #include "ospcommon/math/AffineSpace.h"
 #include "ospcommon/math/vec.h"
+// ospray::cpp
+#include "Traits.h"
 
 namespace ospray {
   namespace cpp {
