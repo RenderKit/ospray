@@ -128,6 +128,11 @@ namespace ospray {
     inline void ManagedObject<HANDLE_T, TYPE>::setParam(const std::string &name,
                                                         const T &v) const
     {
+      static_assert(OSPTypeFor<T>::value != OSP_UNKNOWN,
+                    "Only types corresponding to OSPDataType values can be set "
+                    "as parameters on OSPRay objects. NOTE: Math types (vec, "
+                    "box, linear, affine) are "
+                    "expected to come from ospcommon::math.");
       ospSetParam(ospObject, name.c_str(), OSPTypeFor<T>::value, &v);
     }
 

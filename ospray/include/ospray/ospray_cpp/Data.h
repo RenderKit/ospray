@@ -77,12 +77,22 @@ namespace ospray {
     inline Data::Data(const std::array<T, N> &arr, bool isShared)
         : Data(N, OSPTypeFor<T>::value, arr.data(), isShared)
     {
+      static_assert(
+          OSPTypeFor<T>::value != OSP_UNKNOWN,
+          "Only types corresponding to OSPDataType values can be set "
+          "as elements in OSPRay Data arrays. NOTE: Math types (vec, "
+          "box, linear, affine) are expected to come from ospcommon::math.");
     }
 
     template <typename T, typename ALLOC_T>
     inline Data::Data(const std::vector<T, ALLOC_T> &arr, bool isShared)
         : Data(arr.size(), OSPTypeFor<T>::value, arr.data(), isShared)
     {
+      static_assert(
+          OSPTypeFor<T>::value != OSP_UNKNOWN,
+          "Only types corresponding to OSPDataType values can be set "
+          "as elements in OSPRay Data arrays. NOTE: Math types (vec, "
+          "box, linear, affine) are expected to come from ospcommon::math.");
     }
 
     template <typename T, OSPDataType TY>
