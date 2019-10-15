@@ -55,9 +55,7 @@ namespace ospray {
           instances.push_back(planeInst);
         }
 
-        world.setParam(
-            "instance",
-            cpp::Data(instances.size(), OSP_INSTANCE, instances.data()));
+        world.setParam("instance", cpp::Data(instances));
 
         cpp::Light light("ambient");
         light.commit();
@@ -97,11 +95,8 @@ namespace ospray {
           opacities.emplace_back(1.f);
         }
 
-        transferFunction.setParam(
-            "color", cpp::Data(colors.size(), OSP_VEC3F, colors.data()));
-        transferFunction.setParam(
-            "opacity",
-            cpp::Data(opacities.size(), OSP_FLOAT, opacities.data()));
+        transferFunction.setParam("color", cpp::Data(colors));
+        transferFunction.setParam("opacity", cpp::Data(opacities));
         transferFunction.setParam("valueRange", valueRange);
         transferFunction.commit();
 

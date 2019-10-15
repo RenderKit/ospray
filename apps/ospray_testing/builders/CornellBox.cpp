@@ -234,6 +234,7 @@ namespace ospray {
 
     void CornellBox::commit()
     {
+      Builder::commit();
       addPlane = false;
     }
 
