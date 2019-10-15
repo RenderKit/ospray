@@ -45,4 +45,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Texture, OSP_TEXTURE);
+
 }  // namespace ospray

@@ -70,4 +70,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Future, OSP_FUTURE);
+
 }  // namespace ospray

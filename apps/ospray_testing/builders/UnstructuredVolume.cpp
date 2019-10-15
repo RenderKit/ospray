@@ -208,25 +208,16 @@ namespace ospray {
       cpp::Volume volume("unstructured_volume");
 
       // set data objects for volume object
-      volume.setParam("vertex.position",
-                      cpp::Data(vertices.size(), OSP_VEC3F, vertices.data()));
+      volume.setParam("vertex.position", cpp::Data(vertices));
 
-      if (valuesPerCell) {
-        volume.setParam(
-            "cell.value",
-            cpp::Data(cellValues.size(), OSP_FLOAT, cellValues.data()));
-      } else {
-        volume.setParam(
-            "vertex.value",
-            cpp::Data(vertexValues.size(), OSP_FLOAT, vertexValues.data()));
-      }
+      if (valuesPerCell)
+        volume.setParam("cell.value", cpp::Data(cellValues));
+      else
+        volume.setParam("vertex.value", cpp::Data(vertexValues));
 
-      volume.setParam("index",
-                      cpp::Data(indices.size(), OSP_UINT, indices.data()));
-      volume.setParam("cell.index",
-                      cpp::Data(cells.size(), OSP_UINT, cells.data()));
-      volume.setParam("cell.type",
-                      cpp::Data(cellTypes.size(), OSP_UCHAR, cellTypes.data()));
+      volume.setParam("index", cpp::Data(indices));
+      volume.setParam("cell.index", cpp::Data(cells));
+      volume.setParam("cell.type", cpp::Data(cellTypes));
 
       volume.commit();
 

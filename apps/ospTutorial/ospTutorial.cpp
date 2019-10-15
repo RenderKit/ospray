@@ -33,6 +33,8 @@
 #include <alloca.h>
 #endif
 
+#include <vector>
+
 #include "ospray/ospray_cpp.h"
 
 using namespace ospcommon::math;
@@ -74,17 +76,17 @@ int main(int argc, const char **argv)
   vec3f cam_view{0.1f, 0.f, 1.f};
 
   // triangle mesh data
-  vec3f vertex[] = {vec3f(-1.0f, -1.0f, 3.0f),
-                    vec3f(-1.0f, 1.0f, 3.0f),
-                    vec3f(1.0f, -1.0f, 3.0f),
-                    vec3f(0.1f, 0.1f, 0.3f)};
+  std::vector<vec3f> vertex = {vec3f(-1.0f, -1.0f, 3.0f),
+                               vec3f(-1.0f, 1.0f, 3.0f),
+                               vec3f(1.0f, -1.0f, 3.0f),
+                               vec3f(0.1f, 0.1f, 0.3f)};
 
-  vec4f color[] = {vec4f(0.9f, 0.5f, 0.5f, 1.0f),
-                   vec4f(0.8f, 0.8f, 0.8f, 1.0f),
-                   vec4f(0.8f, 0.8f, 0.8f, 1.0f),
-                   vec4f(0.5f, 0.9f, 0.5f, 1.0f)};
+  std::vector<vec4f> color = {vec4f(0.9f, 0.5f, 0.5f, 1.0f),
+                              vec4f(0.8f, 0.8f, 0.8f, 1.0f),
+                              vec4f(0.8f, 0.8f, 0.8f, 1.0f),
+                              vec4f(0.5f, 0.9f, 0.5f, 1.0f)};
 
-  vec3ui index[] = {vec3ui(0, 1, 2), vec3ui(1, 2, 3)};
+  std::vector<vec3ui> index = {vec3ui(0, 1, 2), vec3ui(1, 2, 3)};
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
   // e.g. "--osp:debug"
@@ -104,9 +106,9 @@ int main(int argc, const char **argv)
 
     // create and setup model and mesh
     ospray::cpp::Geometry mesh("triangles");
-    mesh.setParam("vertex.position", ospray::cpp::Data(4, OSP_VEC3F, vertex));
-    mesh.setParam("vertex.color", ospray::cpp::Data(4, OSP_VEC4F, color));
-    mesh.setParam("index", ospray::cpp::Data(2, OSP_VEC3UI, index));
+    mesh.setParam("vertex.position", ospray::cpp::Data(vertex));
+    mesh.setParam("vertex.color", ospray::cpp::Data(color));
+    mesh.setParam("index", ospray::cpp::Data(index));
     mesh.commit();
 
     // put the mesh into a model
@@ -115,9 +117,7 @@ int main(int argc, const char **argv)
 
     // put the model into a group (collection of models)
     ospray::cpp::Group group;
-    auto modelHandle = model.handle();
-    group.setParam("geometry",
-                   ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle));
+    group.setParam("geometry", ospray::cpp::Data(model));
     group.commit();
 
     // put the group into an instance (give the group a world transform)
@@ -126,16 +126,13 @@ int main(int argc, const char **argv)
 
     // put the instance in the world
     ospray::cpp::World world;
-    auto instanceHandle = instance.handle();
-    world.setParam("instance",
-                   ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle));
+    world.setParam("instance", ospray::cpp::Data(instance));
 
     // create and setup light for Ambient Occlusion
     ospray::cpp::Light light("ambient");
     light.commit();
-    auto lightHandle = light.handle();
 
-    world.setParam("light", ospray::cpp::Data(1, OSP_LIGHT, &lightHandle));
+    world.setParam("light", ospray::cpp::Data(light));
     world.commit();
 
     // create renderer, choose Scientific Visualization renderer

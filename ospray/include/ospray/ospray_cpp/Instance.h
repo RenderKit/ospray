@@ -54,4 +54,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Instance, OSP_INSTANCE);
+
 }  // namespace ospray

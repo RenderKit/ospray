@@ -104,4 +104,7 @@ namespace ospray {
     }
 
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Device, OSP_DEVICE);
+
 }  // namespace ospray

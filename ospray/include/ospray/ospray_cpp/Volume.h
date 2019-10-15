@@ -52,4 +52,7 @@ namespace ospray {
     {
     }
   }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Volume, OSP_VOLUME);
+
 }  // namespace ospray

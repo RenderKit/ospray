@@ -55,9 +55,7 @@ namespace ospray {
           instances.push_back(planeInst);
         }
 
-        world.setParam(
-            "instance",
-            cpp::Data(instances.size(), OSP_INSTANCE, instances.data()));
+        world.setParam("instance", cpp::Data(instances));
 
         cpp::Light light("ambient");
         light.commit();
@@ -97,11 +95,8 @@ namespace ospray {
           opacities.emplace_back(1.f);
         }
 
-        transferFunction.setParam(
-            "color", cpp::Data(colors.size(), OSP_VEC3F, colors.data()));
-        transferFunction.setParam(
-            "opacity",
-            cpp::Data(opacities.size(), OSP_FLOAT, opacities.data()));
+        transferFunction.setParam("color", cpp::Data(colors));
+        transferFunction.setParam("opacity", cpp::Data(opacities));
         transferFunction.setParam("valueRange", valueRange);
         transferFunction.commit();
 
@@ -205,17 +200,10 @@ namespace ospray {
                                startingIndex + 3);
         }
 
-        planeGeometry.setParam(
-            "vertex.position",
-            cpp::Data(v_position.size(), OSP_VEC3F, v_position.data()));
-        planeGeometry.setParam(
-            "vertex.normal",
-            cpp::Data(v_normal.size(), OSP_VEC3F, v_normal.data()));
-        planeGeometry.setParam(
-            "vertex.color",
-            cpp::Data(v_color.size(), OSP_VEC4F, v_color.data()));
-        planeGeometry.setParam(
-            "index", cpp::Data(indices.size(), OSP_VEC4UI, indices.data()));
+        planeGeometry.setParam("vertex.position", cpp::Data(v_position));
+        planeGeometry.setParam("vertex.normal", cpp::Data(v_normal));
+        planeGeometry.setParam("vertex.color", cpp::Data(v_color));
+        planeGeometry.setParam("index", cpp::Data(indices));
 
         planeGeometry.commit();
 

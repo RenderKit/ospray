@@ -182,8 +182,7 @@ namespace ospray {
       volume.setParam("voxelType", int(OSP_FLOAT));
       volume.setParam("gridOrigin", vec3f(-1.f, -1.f, -1.f));
       volume.setParam("gridSpacing", vec3f(2.f / reduce_max(volumeDimensions)));
-      volume.setParam("voxelData",
-                      cpp::Data(voxels.size(), OSP_FLOAT, voxels.data()));
+      volume.setParam("voxelData", cpp::Data(voxels));
 
       volume.commit();
       return volume;
@@ -221,17 +220,10 @@ namespace ospray {
       cpp::Volume volume("amr_volume");
 
       volume.setParam("voxelType", int(OSP_FLOAT));
-      volume.setParam("block.data",
-                      cpp::Data(blockData.size(), OSP_DATA, blockData.data()));
-      volume.setParam(
-          "block.bounds",
-          cpp::Data(blockBounds.size(), OSP_BOX3I, blockBounds.data()));
-      volume.setParam(
-          "block.level",
-          cpp::Data(refinementLevels.size(), OSP_INT, refinementLevels.data()));
-      volume.setParam(
-          "block.cellWidth",
-          cpp::Data(cellWidths.size(), OSP_FLOAT, cellWidths.data()));
+      volume.setParam("block.data", cpp::Data(blockData));
+      volume.setParam("block.bounds", cpp::Data(blockBounds));
+      volume.setParam("block.level", cpp::Data(refinementLevels));
+      volume.setParam("block.cellWidth", cpp::Data(cellWidths));
 
       volume.commit();
 

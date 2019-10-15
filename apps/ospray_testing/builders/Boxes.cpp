@@ -70,15 +70,12 @@ namespace ospray {
         color.emplace_back(box_color.x, box_color.y, box_color.z, 1.f);
       }
 
-      boxGeometry.setParam(
-          "box", cpp::Data(numBoxes.total_indices(), OSP_BOX3F, boxes.data()));
+      boxGeometry.setParam("box", cpp::Data(boxes));
       boxGeometry.commit();
 
       cpp::GeometricModel model(boxGeometry);
 
-      model.setParam(
-          "color",
-          cpp::Data(numBoxes.total_indices(), OSP_VEC4F, color.data()));
+      model.setParam("color", cpp::Data(color));
 
       cpp::Material material(rendererType, "OBJMaterial");
       material.commit();

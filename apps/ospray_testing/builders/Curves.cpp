@@ -33,17 +33,17 @@ namespace ospray {
 
      private:
       void kleinBottle(std::vector<vec4f> &points,
-                       std::vector<int> &indices,
+                       std::vector<unsigned int> &indices,
                        std::vector<vec4f> &colors) const;
       void embreeTutorialCurve(std::vector<vec4f> &points,
-                               std::vector<int> &indices,
+                               std::vector<unsigned int> &indices,
                                std::vector<vec4f> &colors) const;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     void Curves::kleinBottle(std::vector<vec4f> &points,
-                             std::vector<int> &indices,
+                             std::vector<unsigned int> &indices,
                              std::vector<vec4f> &colors) const
     {
       // spout
@@ -70,7 +70,7 @@ namespace ospray {
 
     // from Embree's curve_geometry tutorial
     void Curves::embreeTutorialCurve(std::vector<vec4f> &points,
-                                     std::vector<int> &indices,
+                                     std::vector<unsigned int> &indices,
                                      std::vector<vec4f> &colors) const
     {
       points.push_back(vec4f(-1.0f, 0.0f, -2.f, 0.2f));
@@ -106,7 +106,7 @@ namespace ospray {
       geom.setParam("basis", int(OSP_BSPLINE));
 
       std::vector<vec4f> points;
-      std::vector<int> indices;
+      std::vector<unsigned int> indices;
       std::vector<vec4f> colors;
 
 #if 0
@@ -115,10 +115,8 @@ namespace ospray {
       embreeTutorialCurve(points, indices, colors);
 #endif
 
-      geom.setParam("vertex.position",
-                    cpp::Data(points.size(), OSP_VEC4F, points.data()));
-      geom.setParam("index",
-                    cpp::Data(indices.size(), OSP_UINT, indices.data()));
+      geom.setParam("vertex.position", cpp::Data(points));
+      geom.setParam("index", cpp::Data(indices));
       geom.commit();
 
       cpp::Material mat(rendererType, "ThinGlass");
@@ -127,8 +125,7 @@ namespace ospray {
 
       cpp::GeometricModel model(geom);
       model.setParam("material", cpp::Data(mat));
-      model.setParam("color",
-                     cpp::Data(colors.size(), OSP_VEC4F, colors.data()));
+      model.setParam("color", cpp::Data(colors));
       model.commit();
 
       cpp::Group group;

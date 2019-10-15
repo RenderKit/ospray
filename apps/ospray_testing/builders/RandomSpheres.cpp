@@ -83,18 +83,13 @@ namespace ospray {
       // create the sphere geometry, and assign attributes
       cpp::Geometry spheresGeometry("spheres");
 
-      spheresGeometry.setParam(
-          "sphere.position",
-          cpp::Data(s_center.size(), OSP_VEC3F, s_center.data()));
-      spheresGeometry.setParam(
-          "sphere.radius",
-          cpp::Data(s_radius.size(), OSP_FLOAT, s_radius.data()));
+      spheresGeometry.setParam("sphere.position", cpp::Data(s_center));
+      spheresGeometry.setParam("sphere.radius", cpp::Data(s_radius));
       spheresGeometry.commit();
 
       cpp::GeometricModel model(spheresGeometry);
 
-      model.setParam("color",
-                     cpp::Data(numSpheres, OSP_VEC4F, s_colors.data()));
+      model.setParam("color", cpp::Data(s_colors));
 
       // create glass material and assign to geometry
       cpp::Material glassMaterial(rendererType.c_str(), "ThinGlass");
