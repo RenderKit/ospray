@@ -58,8 +58,6 @@ namespace ospray {
 
       void commit() const;
 
-      OSPObject object() const;
-
       //! Get the underlying specific OSP* handle
       HANDLE_T handle() const;
 
@@ -159,12 +157,6 @@ namespace ospray {
     inline void ManagedObject<HANDLE_T, TYPE>::commit() const
     {
       ospCommit(ospObject);
-    }
-
-    template <typename HANDLE_T, OSPDataType TYPE>
-    OSPObject ManagedObject<HANDLE_T, TYPE>::object() const
-    {
-      return (OSPObject)ospObject;
     }
 
     template <typename HANDLE_T, OSPDataType TYPE>
