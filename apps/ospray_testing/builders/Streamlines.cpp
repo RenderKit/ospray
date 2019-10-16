@@ -57,8 +57,7 @@ namespace ospray {
       std::vector<unsigned int> indices;
       std::vector<vec4f> colors;
 
-      std::random_device rd;
-      std::default_random_engine rng(rd());
+      std::default_random_engine rng(randomSeed);
       std::uniform_real_distribution<float> radDist(0.5f, 1.5f);
       std::uniform_real_distribution<float> stepDist(0.001f, 0.1f);
       std::uniform_int_distribution<int> sDist(0, 360);

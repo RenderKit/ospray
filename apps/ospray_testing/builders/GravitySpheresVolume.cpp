@@ -118,8 +118,7 @@ namespace ospray {
       };
 
       // create random number distributions for point center and weight
-      std::random_device rd;
-      std::mt19937 gen(rd());
+      std::mt19937 gen(randomSeed);
 
       std::uniform_real_distribution<float> centerDistribution(-1.f, 1.f);
       std::uniform_real_distribution<float> weightDistribution(0.1f, 0.3f);
