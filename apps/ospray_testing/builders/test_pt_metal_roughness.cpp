@@ -121,9 +121,6 @@ namespace ospray {
                                               float(i) / 4));
       }
 
-      cpp::Material material(rendererType, "Metal");
-      material.commit();
-
       model.setParam("material", cpp::Data(materials));
       model.setParam("index", cpp::Data(index));
       model.commit();

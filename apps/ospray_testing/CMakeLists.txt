@@ -34,6 +34,7 @@ add_library(ospray_testing SHARED
 
   # regression test scenes
   builders/test_pt_glass.cpp
+  builders/test_pt_luminous.cpp
   builders/test_pt_metal_roughness.cpp
 
   ../utility/rawToAMR.cpp
