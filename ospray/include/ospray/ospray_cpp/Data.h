@@ -43,10 +43,10 @@ namespace ospray {
       template <typename T, typename ALLOC_T>
       Data(const std::vector<T, ALLOC_T> &arr, bool isShared = false);
 
-      // Set a single object as a 1-item data array of handles
+      // Set a single object as a 1-item data array
 
-      template <typename T, OSPDataType TY>
-      Data(ManagedObject<T, TY> obj);
+      template <typename T>
+      Data(const T &obj);
 
       // Construct from an existing OSPData handle (Data then owns lifetime)
 
@@ -95,9 +95,14 @@ namespace ospray {
           "box, linear, affine) are expected to come from ospcommon::math.");
     }
 
-    template <typename T, OSPDataType TY>
-    inline Data::Data(ManagedObject<T, TY> obj) : Data(1, TY, &obj)
+    template <typename T>
+    inline Data::Data(const T &obj) : Data(1, OSPTypeFor<T>::value, &obj)
     {
+      static_assert(
+          OSPTypeFor<T>::value != OSP_UNKNOWN,
+          "Only types corresponding to OSPDataType values can be set "
+          "as elements in OSPRay Data arrays. NOTE: Math types (vec, "
+          "box, linear, affine) are expected to come from ospcommon::math.");
     }
 
     inline Data::Data(OSPData existing)
