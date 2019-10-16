@@ -36,6 +36,7 @@ add_library(ospray_testing SHARED
   builders/test_pt_glass.cpp
   builders/test_pt_luminous.cpp
   builders/test_pt_metal_roughness.cpp
+  builders/test_pt_metallic_flakes.cpp
 
   ../utility/rawToAMR.cpp
 )
