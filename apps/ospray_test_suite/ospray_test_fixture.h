@@ -98,28 +98,6 @@ namespace OSPRayTestScenes {
     void RenderFrame();
   };
 
-  // Fixture class for tests parametrized with renderer type and material type,
-  // intended for rendering scenes with a single object.
-  class SingleObject
-      : public Base,
-        public ::testing::TestWithParam<std::tuple<const char *, const char *>>
-  {
-   protected:
-    std::string materialType;
-    OSPMaterial material{nullptr};
-
-   public:
-    SingleObject();
-    virtual void SetUp();
-    OSPMaterial GetMaterial() const
-    {
-      return material;
-    }
-
-   protected:
-    void SetMaterial();
-  };
-
   // Fixture class to test cornercases of intersection precision and epsilon
   // handling; parametrized with renderer, sphere radius, distance factor, and
   // whether the sphere is in origin
@@ -141,47 +119,6 @@ namespace OSPRayTestScenes {
     bool move_cam;
   };
 
-  // Fixture class that renders a fixed scene depicting a Cornell Box with a
-  // cuboid and a sphere. It is parametrized with two types of materials.
-  class Box
-      : public Base,
-        public ::testing::TestWithParam<std::tuple<const char *, const char *>>
-  {
-   protected:
-    std::string cuboidMaterialType;
-    std::string sphereMaterialType;
-    OSPMaterial cuboidMaterial{nullptr};
-    OSPMaterial sphereMaterial{nullptr};
-
-   public:
-    Box();
-    virtual void SetUp();
-
-   protected:
-    void SetMaterials();
-    OSPMaterial GetMaterial(std::string);
-  };
-
-  // Fixture class that renders a Sierpinski tetrahedron using volumes or
-  // isosurfaces. It is parametrized with renderer type, boolean value that
-  // controls whether volumes of isosurfaces should be used (false and true
-  // respectively) and number of steps taken to generate the fractal.
-  class Sierpinski
-      : public Base,
-        public ::testing::TestWithParam<std::tuple<const char *, bool, int>>
-  {
-   protected:
-    int level;
-    bool renderIsosurface;
-
-   public:
-    Sierpinski();
-    virtual void SetUp();
-
-   private:
-    std::vector<unsigned char> volumetricData;
-  };
-
   // Fixture class used for tests that generates two isosurfaces, one in shape
   // of a torus. It's parametrized with type of the renderer.
   class Torus : public Base, public ::testing::TestWithParam<const char *>
@@ -198,46 +135,11 @@ namespace OSPRayTestScenes {
   class SlicedCube : public Base, public ::testing::Test
   {
    public:
-    SlicedCube();
+    SlicedCube() = default;
     virtual void SetUp();
 
    private:
     std::vector<float> volumetricData;
-  };
-
-  // Fixture class for testing materials of type "OBJMaterial". The rendered
-  // scene is composed of two quads and a luminous sphere. Parameters of this
-  // tests are passed to a new "OBJMaterial" material as "Kd", "Ks", "Ns", "d"
-  // and "Tf" and said material is used by the quads.
-  class MTLMirrors : public Base,
-                     public ::testing::TestWithParam<
-                         std::tuple<vec3f, vec3f, float, float, vec3f>>
-  {
-   public:
-    MTLMirrors();
-    virtual void SetUp();
-
-   private:
-    vec3f Kd;
-    vec3f Ks;
-    float Ns;
-    float d;
-    vec3f Tf;
-  };
-
-  // Fixture for tests rendering few connected cylinder segments. It's
-  // parametrized with type of material used and radius of the segments.
-  class Pipes : public Base,
-                public ::testing::TestWithParam<
-                    std::tuple<const char *, const char *, float>>
-  {
-   public:
-    Pipes();
-    virtual void SetUp();
-
-   private:
-    float radius;
-    std::string materialType;
   };
 
   // Test a texture colored by a volume.  Creates a sphere colored by the torus
@@ -284,17 +186,16 @@ namespace OSPRayTestScenes {
 
   // Fixture class that renders a simple heterogeneous volume using the
   // pathtracer. It is parametrized with albedo, anisotropy and density scale.
-  class HeterogeneousVolume
-      : public Base,
-        public ::testing::TestWithParam<std::tuple<
-          vec3f, // albedo
-          float, // anisotropy
-          float, // densityScale
-          vec3f, // color of ambient light
-          bool,  // enable distant light
-          bool,  // enable geometry
-          bool,  // constant volume
-          int>>  // samples per pixel
+  class HeterogeneousVolume : public Base,
+                              public ::testing::TestWithParam<
+                                  std::tuple<vec3f,  // albedo
+                                             float,  // anisotropy
+                                             float,  // densityScale
+                                             vec3f,  // color of ambient light
+                                             bool,   // enable distant light
+                                             bool,   // enable geometry
+                                             bool,   // constant volume
+                                             int>>   // samples per pixel
   {
    protected:
     vec3f albedo;

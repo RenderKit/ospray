@@ -76,7 +76,7 @@ class OSPImageTools
   OSPImageTools(vec2i imgSize,
                 std::string testName,
                 OSPFrameBufferFormat frameBufferFormat);
-  ~OSPImageTools();
+  ~OSPImageTools() = default;
 
   // helper method to saved rendered file
   OsprayStatus saveTestImage(const void *pixel);

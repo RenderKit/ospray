@@ -42,8 +42,6 @@ OSPImageTools::OSPImageTools(vec2i imgSize,
   }
 }
 
-OSPImageTools::~OSPImageTools() {}
-
 OsprayStatus OSPImageTools::writePPM(std::string fileName,
                                      const uint32_t *pixel)
 {

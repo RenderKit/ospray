@@ -17,27 +17,15 @@
 #include "ospray_test_fixture.h"
 
 using OSPRayTestScenes::DepthCompositeVolume;
-using OSPRayTestScenes::Sierpinski;
+using OSPRayTestScenes::HeterogeneousVolume;
+using OSPRayTestScenes::SlicedCube;
 using OSPRayTestScenes::TextureVolume;
 using OSPRayTestScenes::Torus;
-using OSPRayTestScenes::HeterogeneousVolume;
 
-TEST_P(Sierpinski, simple)
+TEST_F(SlicedCube, simple)
 {
   PerformRenderTest();
 }
-
-INSTANTIATE_TEST_CASE_P(Volumetric,
-                        Sierpinski,
-                        ::testing::Combine(::testing::Values("scivis"),
-                                           ::testing::Values(false),
-                                           ::testing::Values(4, 6, 9)));
-
-INSTANTIATE_TEST_CASE_P(Isosurfaces,
-                        Sierpinski,
-                        ::testing::Combine(::testing::Values("scivis"),
-                                           ::testing::Values(true),
-                                           ::testing::Values(5, 7, 9)));
 
 TEST_P(Torus, simple)
 {
@@ -51,70 +39,73 @@ TEST_P(TextureVolume, simple)
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(Renderers,
-                        TextureVolume,
-                        ::testing::Values("scivis"));
+INSTANTIATE_TEST_CASE_P(Renderers, TextureVolume, ::testing::Values("scivis"));
 
 TEST_P(DepthCompositeVolume, simple)
 {
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(Renderers,
-                        DepthCompositeVolume,
-                        ::testing::Combine(::testing::Values("scivis"),
-                                           ::testing::Values(vec4f(0.f),
-                                                             vec4f(1.f),
-                                                             vec4f(0.f, 0.f,
-                                                                   0.f, 1.f),
-                                                             vec4f(1.f, 0.f,
-                                                                   0.f, 0.5f))));
+INSTANTIATE_TEST_CASE_P(
+    Renderers,
+    DepthCompositeVolume,
+    ::testing::Combine(::testing::Values("scivis"),
+                       ::testing::Values(vec4f(0.f),
+                                         vec4f(1.f),
+                                         vec4f(0.f, 0.f, 0.f, 1.f),
+                                         vec4f(1.f, 0.f, 0.f, 0.5f))));
 
 TEST_P(HeterogeneousVolume, simple)
 {
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(VaryingDensity,
-                        HeterogeneousVolume,
-                        ::testing::Combine(::testing::Values(vec3f({1.0f, 1.0f, 1.0f})),
-                                           ::testing::Values(0.f),
-                                           ::testing::Values(0.2f, 25.f),
-                                           ::testing::Values(vec3f({0.03, 0.07, 0.23})),
-                                           ::testing::Values(true),
-                                           ::testing::Values(true),
-                                           ::testing::Values(true, false),
-                                           ::testing::Values(16)));
+INSTANTIATE_TEST_CASE_P(
+    VaryingDensity,
+    HeterogeneousVolume,
+    ::testing::Combine(::testing::Values(vec3f({1.0f, 1.0f, 1.0f})),
+                       ::testing::Values(0.f),
+                       ::testing::Values(0.2f, 25.f),
+                       ::testing::Values(vec3f({0.03, 0.07, 0.23})),
+                       ::testing::Values(true),
+                       ::testing::Values(true),
+                       ::testing::Values(true, false),
+                       ::testing::Values(16)));
 
-INSTANTIATE_TEST_CASE_P(VaryingAlbedo,
-                        HeterogeneousVolume,
-                        ::testing::Combine(::testing::Values(vec3f({0.0f, 0.0f, 0.0f}), vec3f({0.5f, 0.5f, 0.5f}), vec3f({0.8f, 0.2f, 0.8f})),
-                                           ::testing::Values(0.f),
-                                           ::testing::Values(1.f),
-                                           ::testing::Values(vec3f({0.03, 0.07, 0.23})),
-                                           ::testing::Values(true),
-                                           ::testing::Values(true),
-                                           ::testing::Values(true, false),
-                                           ::testing::Values(16)));
+INSTANTIATE_TEST_CASE_P(
+    VaryingAlbedo,
+    HeterogeneousVolume,
+    ::testing::Combine(::testing::Values(vec3f({0.0f, 0.0f, 0.0f}),
+                                         vec3f({0.5f, 0.5f, 0.5f}),
+                                         vec3f({0.8f, 0.2f, 0.8f})),
+                       ::testing::Values(0.f),
+                       ::testing::Values(1.f),
+                       ::testing::Values(vec3f({0.03, 0.07, 0.23})),
+                       ::testing::Values(true),
+                       ::testing::Values(true),
+                       ::testing::Values(true, false),
+                       ::testing::Values(16)));
 
-INSTANTIATE_TEST_CASE_P(VaryingAnisotropy,
-                        HeterogeneousVolume,
-                        ::testing::Combine(::testing::Values(vec3f({1.0f, 1.0f, 1.0f})),
-                                           ::testing::Values(-1.f, -0.5, 0.5f, 1.f),
-                                           ::testing::Values(1.f),
-                                           ::testing::Values(vec3f({0.03, 0.07, 0.23})),
-                                           ::testing::Values(true),
-                                           ::testing::Values(true),
-                                           ::testing::Values(true),
-                                           ::testing::Values(16)));
+INSTANTIATE_TEST_CASE_P(
+    VaryingAnisotropy,
+    HeterogeneousVolume,
+    ::testing::Combine(::testing::Values(vec3f({1.0f, 1.0f, 1.0f})),
+                       ::testing::Values(-1.f, -0.5, 0.5f, 1.f),
+                       ::testing::Values(1.f),
+                       ::testing::Values(vec3f({0.03, 0.07, 0.23})),
+                       ::testing::Values(true),
+                       ::testing::Values(true),
+                       ::testing::Values(true),
+                       ::testing::Values(16)));
 
-INSTANTIATE_TEST_CASE_P(WhiteFurnaceTest,
-                        HeterogeneousVolume,
-                        ::testing::Combine(::testing::Values(vec3f({1.0f, 1.0f, 1.0f})),
-                                           ::testing::Values(0.f),
-                                           ::testing::Values(1.f),
-                                           ::testing::Values(vec3f({1.0, 1.0, 1.0})),
-                                           ::testing::Values(false),
-                                           ::testing::Values(false),
-                                           ::testing::Values(true, false),
-                                           ::testing::Values(256)));
+INSTANTIATE_TEST_CASE_P(
+    WhiteFurnaceTest,
+    HeterogeneousVolume,
+    ::testing::Combine(::testing::Values(vec3f({1.0f, 1.0f, 1.0f})),
+                       ::testing::Values(0.f),
+                       ::testing::Values(1.f),
+                       ::testing::Values(vec3f({1.0, 1.0, 1.0})),
+                       ::testing::Values(false),
+                       ::testing::Values(false),
+                       ::testing::Values(true, false),
+                       ::testing::Values(256)));

@@ -21,7 +21,6 @@ add_executable(ospray_test_suite
   ospray_test_fixture.cpp
   ospray_test_geometry.cpp
   ospray_test_suite_main.cpp
-  ospray_test_materials.cpp
   ospray_test_tools.cpp
   ospray_test_volumetric.cpp
 )
