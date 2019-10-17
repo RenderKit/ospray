@@ -16,16 +16,16 @@
 
 ospray_disable_compiler_warnings()
 
-add_executable(ospray_test_suite
-  ospray_environment.cpp
-  ospray_test_fixture.cpp
-  ospray_test_geometry.cpp
-  ospray_test_suite_main.cpp
-  ospray_test_tools.cpp
-  ospray_test_volumetric.cpp
+add_executable(ospTestSuite
+  environment.cpp
+  test_fixture.cpp
+  test_geometry.cpp
+  test_tools.cpp
+  test_volumetric.cpp
+  ospTestSuite.cpp
 )
 
-target_link_libraries(ospray_test_suite
+target_link_libraries(ospTestSuite
 PRIVATE
   ospcommon::ospcommon
   gtest_main
@@ -33,7 +33,7 @@ PRIVATE
 	stb_image
 )
 
-install(TARGETS ospray_test_suite
+install(TARGETS ospTestSuite
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   COMPONENT apps
 )

@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray_test_fixture.h"
+#include "test_fixture.h"
 
 extern OSPRayEnvironment *ospEnv;
 

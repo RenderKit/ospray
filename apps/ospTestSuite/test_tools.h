@@ -27,7 +27,7 @@
 
 #include <gtest/gtest.h>
 
-#include "ospray_environment.h"
+#include "environment.h"
 
 #include "stb_image.h"
 #include "stb_image_write.h"

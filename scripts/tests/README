@@ -10,7 +10,7 @@ to this directory as ${OSPRAY_BUILD_DIR}.
 
 images should download automatically when OSPRAY_TESTING is on.  Only
 generate new images for a test that has changed.  To generate new images for a specific
-test run ./regression_tests/ospray_test_suite --gtest_filter="*TESTNAME*" --dump-img
+test run ./regression_tests/ospTestSuite --gtest_filter="*TESTNAME*" --dump-img
 which will create images in a folder called baseline.
 
 In ${OSPRAY_BUILD_DIR}, run the "generate_baseline.sh" script:
@@ -27,9 +27,9 @@ This will run all tests and compare their results with baseline
 images generated in step 2.
 
 4.  To run an individual test
-./regression_tests/ospray_test_suite --gtest_list_tests
+./regression_tests/ospTestSuite --gtest_list_tests
 this will output a list of test names
-./regression_tests/ospray_test_suite --gest_filter="*NAME*"
+./regression_tests/ospTestSuite --gest_filter="*NAME*"
 will run a single test
 
 To add or update generated test images to ospray, use the included update_test_baseline.sh script and then send

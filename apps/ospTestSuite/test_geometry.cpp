@@ -14,8 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <array>
-#include "ospray_test_fixture.h"
+#include "test_fixture.h"
 
 using OSPRayTestScenes::Base;
 using OSPRayTestScenes::SpherePrecision;

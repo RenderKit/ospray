@@ -17,7 +17,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 
-#include "ospray_test_tools.h"
+#include "test_tools.h"
 
 extern OSPRayEnvironment *ospEnv;
 

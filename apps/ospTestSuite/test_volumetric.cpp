@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray_test_fixture.h"
+#include "test_fixture.h"
 
 using OSPRayTestScenes::DepthCompositeVolume;
 using OSPRayTestScenes::HeterogeneousVolume;

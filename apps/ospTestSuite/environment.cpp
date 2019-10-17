@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray_environment.h"
+#include "environment.h"
 
 OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
     : dumpImg(false),

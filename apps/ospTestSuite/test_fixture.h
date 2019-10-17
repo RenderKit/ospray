@@ -25,8 +25,8 @@
 
 #include <gtest/gtest.h>
 
-#include "ospray_environment.h"
-#include "ospray_test_tools.h"
+#include "environment.h"
+#include "test_tools.h"
 
 #include "ospcommon/math/AffineSpace.h"
 

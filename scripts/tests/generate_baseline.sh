@@ -22,7 +22,7 @@ export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH=`pwd`/build/install/lib:$DYLD_LIBRARY_PATH
 export PATH=`pwd`/build/install/bin:$PATH
 
-ospray_test_suite --dump-img --baseline-dir=img/
+ospTestSuite --dump-img --baseline-dir=img/
 FAILED=$(echo $?)
 
 exit $FAILED
