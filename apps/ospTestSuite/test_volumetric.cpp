@@ -18,14 +18,8 @@
 
 using OSPRayTestScenes::DepthCompositeVolume;
 using OSPRayTestScenes::HeterogeneousVolume;
-using OSPRayTestScenes::SlicedCube;
 using OSPRayTestScenes::TextureVolume;
 using OSPRayTestScenes::Torus;
-
-TEST_F(SlicedCube, simple)
-{
-  PerformRenderTest();
-}
 
 TEST_P(Torus, simple)
 {

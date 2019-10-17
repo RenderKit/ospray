@@ -131,17 +131,6 @@ namespace OSPRayTestScenes {
     std::vector<float> volumetricData;
   };
 
-  // Fixture for test that renders three cuts of a cubic volume.
-  class SlicedCube : public Base, public ::testing::Test
-  {
-   public:
-    SlicedCube() = default;
-    virtual void SetUp();
-
-   private:
-    std::vector<float> volumetricData;
-  };
-
   // Test a texture colored by a volume.  Creates a sphere colored by the torus
   // volume It's parametrized with type of the renderer.
   class TextureVolume : public Base,
