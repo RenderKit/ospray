@@ -32,46 +32,24 @@
 
 namespace OSPRayTestScenes {
 
-  using ospcommon::math::affine3f;
-  using ospcommon::math::one;
-
   // Base class for all test fixtures.
   // Deriving classes can call CreateEmptyScene() to set up model, renderer,
   // camera etc. Behaviour of this method can be changed by modifying fields
   // rendererType, frames and samplesPerPixel beforehand.
   class Base
   {
-   protected:
-    vec2i imgSize;
-    std::string testName;
-    std::string rendererType;
-    int frames;
-    int samplesPerPixel;
-
-    OSPFrameBuffer framebuffer{nullptr};
-    OSPRenderer renderer{nullptr};
-    OSPCamera camera{nullptr};
-    OSPWorld world{nullptr};
-    OSPData lights{nullptr};
-    OSPFrameBufferFormat frameBufferFormat = OSP_FB_SRGBA;
-
-    std::unique_ptr<OSPImageTools> imageTool;
-    std::vector<OSPLight> lightsList;
-
-    std::vector<OSPInstance> instances;
-
    public:
     Base();
-    virtual ~Base();
+    virtual ~Base() = default;
 
     virtual void SetUp();
     Base &operator=(const Base &) = delete;
     Base(const Base &)            = delete;
 
-    void AddLight(OSPLight new_light);
-    void AddModel(OSPGeometricModel model, affine3f xfm = one);
-    void AddModel(OSPVolumetricModel model, affine3f xfm = one);
-    void AddInstance(OSPInstance instance);
+    void AddLight(cpp::Light new_light);
+    void AddModel(cpp::GeometricModel model, affine3f xfm = one);
+    void AddModel(cpp::VolumetricModel model, affine3f xfm = one);
+    void AddInstance(cpp::Instance instance);
 
     void PerformRenderTest();
 
@@ -86,16 +64,28 @@ namespace OSPRayTestScenes {
 
    protected:
     void CreateEmptyScene();
-    void SetCamera();
-    void SetWorld();
     void SetLights();
-    void SetRenderer();
-    void SetFramebuffer();
-    void SetImageTool();
-
-    OSPMaterial CreateMaterial(std::string type);
 
     void RenderFrame();
+
+    // Data //
+
+    vec2i imgSize;
+    std::string testName;
+    std::string rendererType;
+    int frames;
+    int samplesPerPixel;
+
+    cpp::FrameBuffer framebuffer{nullptr};
+    cpp::Renderer renderer{nullptr};
+    cpp::Camera camera{nullptr};
+    cpp::World world{nullptr};
+    OSPFrameBufferFormat frameBufferFormat = OSP_FB_SRGBA;
+
+    std::unique_ptr<OSPImageTools> imageTool;
+    std::vector<cpp::Light> lightsList;
+
+    std::vector<cpp::Instance> instances;
   };
 
   // Fixture class to test cornercases of intersection precision and epsilon
@@ -111,7 +101,7 @@ namespace OSPRayTestScenes {
   {
    public:
     SpherePrecision();
-    virtual void SetUp();
+    void SetUp() override;
 
    protected:
     float dist;
@@ -125,10 +115,7 @@ namespace OSPRayTestScenes {
   {
    public:
     Torus();
-    virtual void SetUp();
-
-   private:
-    std::vector<float> volumetricData;
+    void SetUp() override;
   };
 
   // Test a texture colored by a volume.  Creates a sphere colored by the torus
@@ -138,10 +125,7 @@ namespace OSPRayTestScenes {
   {
    public:
     TextureVolume();
-    virtual void SetUp();
-
-   private:
-    std::vector<float> volumetricData;
+    void SetUp() override;
   };
 
   // Test a texture colored by a volume.  Creates a sphere colored by the torus
@@ -152,25 +136,10 @@ namespace OSPRayTestScenes {
   {
    public:
     DepthCompositeVolume();
-    virtual void SetUp();
+    void SetUp() override;
 
    private:
-    std::vector<float> volumetricData;
     vec4f bgColor;
-  };
-
-  // Fixture for tests rendering a Subdivision mesh. It's parametrized with type
-  // of material used.
-  class Subdivision
-      : public Base,
-        public ::testing::TestWithParam<std::tuple<const char *, const char *>>
-  {
-   public:
-    Subdivision();
-    virtual void SetUp();
-
-   private:
-    std::string materialType;
   };
 
   // Fixture class that renders a simple heterogeneous volume using the
@@ -186,6 +155,10 @@ namespace OSPRayTestScenes {
                                              bool,   // constant volume
                                              int>>   // samples per pixel
   {
+   public:
+    HeterogeneousVolume();
+    void SetUp() override;
+
    protected:
     vec3f albedo;
     float anisotropy;
@@ -194,10 +167,6 @@ namespace OSPRayTestScenes {
     bool enableDistantLight;
     bool enableGeometry;
     bool constantVolume;
-
-   public:
-    HeterogeneousVolume();
-    virtual void SetUp();
   };
 
 }  // namespace OSPRayTestScenes

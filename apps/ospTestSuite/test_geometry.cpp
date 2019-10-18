@@ -16,9 +16,7 @@
 
 #include "test_fixture.h"
 
-using OSPRayTestScenes::Base;
 using OSPRayTestScenes::SpherePrecision;
-using OSPRayTestScenes::Subdivision;
 
 using namespace ospcommon;
 
