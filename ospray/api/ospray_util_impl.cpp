@@ -159,7 +159,7 @@ void ospSetObjectAsData(OSPObject o,
                         OSPDataType type,
                         OSPObject p)
 {
-  ospray::cpp::Data data(1, type, &p);
+  ospray::cpp::Data data(p);
   ospSetObject(o, n, data.handle());
 }
 

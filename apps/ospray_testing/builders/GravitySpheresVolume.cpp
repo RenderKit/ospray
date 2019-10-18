@@ -89,7 +89,7 @@ namespace ospray {
 
       if (withIsosurface) {
         cpp::Geometry isoGeom("isosurfaces");
-        isoGeom.setParam("isovalue", cpp::Data(1, OSP_FLOAT, &isovalue));
+        isoGeom.setParam("isovalue", cpp::Data(isovalue));
         isoGeom.setParam("volume", model);
         isoGeom.commit();
 
