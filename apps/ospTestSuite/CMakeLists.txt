@@ -1,6 +1,5 @@
-#!/bin/bash
 ## ======================================================================== ##
-## Copyright 2016-2019 Intel Corporation                                    ##
+## Copyright 2017-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -15,14 +14,28 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-rm -rf img
-mkdir img
+ospray_disable_compiler_warnings()
 
-export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
-export DYLD_LIBRARY_PATH=`pwd`/build/install/lib:$DYLD_LIBRARY_PATH
-export PATH=`pwd`/build/install/bin:$PATH
+add_executable(ospTestSuite
+  environment.cpp
+  test_fixture.cpp
+  test_geometry.cpp
+  test_tools.cpp
+  test_volumetric.cpp
+  ospTestSuite.cpp
 
-ospTestSuite --dump-img --baseline-dir=img/
-FAILED=$(echo $?)
+  ArcballCamera.cpp
+)
 
-exit $FAILED
+target_link_libraries(ospTestSuite
+PRIVATE
+  ospcommon::ospcommon
+  ospray_testing
+  gtest_main
+	stb_image
+)
+
+install(TARGETS ospTestSuite
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

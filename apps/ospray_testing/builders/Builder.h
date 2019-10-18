@@ -54,6 +54,8 @@ namespace ospray {
         std::string tfOpacityMap{"linear"};
 
         bool addPlane{true};
+
+        unsigned int randomSeed{0};
       };
 
     }  // namespace detail

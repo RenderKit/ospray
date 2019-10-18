@@ -156,10 +156,10 @@ void ospSetVec4i(OSPObject o, const char *id, int x, int y, int z, int w)
 
 void ospSetObjectAsData(OSPObject o,
                         const char *n,
-                        OSPDataType type,
+                        OSPDataType /*type*/,
                         OSPObject p)
 {
-  ospray::cpp::Data data(1, type, &p);
+  ospray::cpp::Data data(p);
   ospSetObject(o, n, data.handle());
 }
 

@@ -19,7 +19,7 @@ add_subdirectory(ospray_testing)
 add_subdirectory(utility)
 
 if (OSPRAY_ENABLE_TESTING)
-  add_subdirectory(ospray_test_suite)
+  add_subdirectory(ospTestSuite)
 endif()
 
 add_subdirectory(ospTutorial)

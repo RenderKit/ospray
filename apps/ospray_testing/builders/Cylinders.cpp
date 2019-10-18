@@ -58,8 +58,7 @@ namespace ospray {
         float radius;
       };
 
-      std::random_device rd;
-      std::mt19937 gen(rd());
+      std::mt19937 gen(randomSeed);
 
       std::uniform_real_distribution<float> startDelta(-0.015625f, 0.015625f);
       std::uniform_real_distribution<float> endDelta(-0.125f, 0.125f);

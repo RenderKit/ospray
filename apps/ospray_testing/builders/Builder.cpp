@@ -25,6 +25,7 @@ namespace ospray {
         rendererType = getParam<std::string>("rendererType", "scivis");
         tfColorMap   = getParam<std::string>("tf.colorMap", "jet");
         tfOpacityMap = getParam<std::string>("tf.opacityMap", "linear");
+        randomSeed   = getParam<unsigned int>("randomSeed", 0);
       }
 
       cpp::World Builder::buildWorld() const

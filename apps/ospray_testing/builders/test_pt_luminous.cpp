@@ -14,44 +14,58 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "Builder.h"
+#include "ospray_testing.h"
 
-#include "ManagedObject.h"
+using namespace ospcommon::math;
 
 namespace ospray {
-  namespace cpp {
+  namespace testing {
 
-    class Texture : public ManagedObject<OSPTexture, OSP_TEXTURE>
+    struct PtLuminous : public detail::Builder
     {
-     public:
-      Texture(const std::string &type);
-      Texture(const Texture &copy);
-      Texture(OSPTexture existing = nullptr);
+      PtLuminous()           = default;
+      ~PtLuminous() override = default;
+
+      cpp::Group buildGroup() const override;
+      cpp::World buildWorld() const override;
     };
 
-    static_assert(sizeof(Texture) == sizeof(OSPTexture),
-                  "cpp::Texture can't have data members!");
+    // Inlined definitions ////////////////////////////////////////////////////
 
-    // Inlined function definitions ///////////////////////////////////////////
-
-    inline Texture::Texture(const std::string &type)
+    cpp::Group PtLuminous::buildGroup() const
     {
-      ospObject = ospNewTexture(type.c_str());
+      cpp::Geometry sphereGeometry("spheres");
+
+      sphereGeometry.setParam("sphere.position", cpp::Data(vec3f(0.f)));
+      sphereGeometry.setParam("radius", 1.f);
+      sphereGeometry.commit();
+
+      cpp::GeometricModel model(sphereGeometry);
+
+      cpp::Material material(rendererType, "Luminous");
+      material.setParam("color", vec3f(0.7f, 0.7f, 1.f));
+      material.commit();
+
+      model.setParam("material", cpp::Data(material));
+      model.commit();
+
+      cpp::Group group;
+
+      group.setParam("geometry", cpp::Data(model));
+      group.commit();
+
+      return group;
     }
 
-    inline Texture::Texture(const Texture &copy)
-        : ManagedObject<OSPTexture, OSP_TEXTURE>(copy.handle())
+    cpp::World PtLuminous::buildWorld() const
     {
-      ospRetain(copy.handle());
+      auto world = Builder::buildWorld();
+      world.removeParam("light");
+      return world;
     }
 
-    inline Texture::Texture(OSPTexture existing)
-        : ManagedObject<OSPTexture, OSP_TEXTURE>(existing)
-    {
-    }
+    OSP_REGISTER_TESTING_BUILDER(PtLuminous, test_pt_luminous);
 
-  }  // namespace cpp
-
-  OSPTYPEFOR_SPECIALIZATION(cpp::Texture, OSP_TEXTURE);
-
+  }  // namespace testing
 }  // namespace ospray

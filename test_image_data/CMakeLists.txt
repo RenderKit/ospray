@@ -16,7 +16,7 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-project(ospray_test_suite)
+project(ospray_test_data)
 
 # Baseline images for tests and benchmarks
 include(ExternalData)
