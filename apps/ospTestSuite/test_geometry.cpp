@@ -51,3 +51,13 @@ INSTANTIATE_TEST_CASE_P(
                                          "subdivision_cube",
                                          "gravity_spheres_isosurface"),
                        ::testing::Values("scivis", "pathtracer")));
+
+INSTANTIATE_TEST_CASE_P(
+    TestScenesPtMaterials,
+    FromOsprayTesting,
+    ::testing::Combine(::testing::Values("test_pt_glass",
+                                         "test_pt_luminous",
+                                         "test_pt_metal_roughness",
+                                         "test_pt_metallic_flakes",
+                                         "test_pt_obj"),
+                       ::testing::Values("pathtracer")));
