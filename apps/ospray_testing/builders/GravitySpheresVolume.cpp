@@ -34,7 +34,9 @@ namespace ospray {
 
     struct GravitySpheres : public detail::Builder
     {
-      GravitySpheres()           = default;
+      GravitySpheres(bool addVolume     = true,
+                     bool asAMR         = false,
+                     bool addIsosurface = false);
       ~GravitySpheres() override = default;
 
       void commit() override;
@@ -51,6 +53,7 @@ namespace ospray {
 
       vec3i volumeDimensions{128};
       int numPoints{10};
+      bool withVolume{true};
       bool createAsAMR{false};
       bool withIsosurface{false};
       float isovalue{2.5f};
@@ -58,14 +61,24 @@ namespace ospray {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
+    GravitySpheres::GravitySpheres(bool addVolume,
+                                   bool asAMR,
+                                   bool addIsosurface)
+        : withVolume(addVolume),
+          createAsAMR(asAMR),
+          withIsosurface(addIsosurface)
+    {
+    }
+
     void GravitySpheres::commit()
     {
       Builder::commit();
 
       volumeDimensions = getParam<vec3i>("volumeDimensions", vec3i(128));
       numPoints        = getParam<int>("numPoints", 10);
-      createAsAMR      = getParam<bool>("asAMR", false);
-      withIsosurface   = getParam<bool>("withIsosurface", false);
+      withVolume       = getParam<bool>("withVolume", withVolume);
+      createAsAMR      = getParam<bool>("asAMR", createAsAMR);
+      withIsosurface   = getParam<bool>("withIsosurface", withIsosurface);
       isovalue         = getParam<float>("isovalue", 2.5f);
 
       addPlane = false;
@@ -85,7 +98,8 @@ namespace ospray {
 
       cpp::Group group;
 
-      group.setParam("volume", cpp::Data(model));
+      if (withVolume)
+        group.setParam("volume", cpp::Data(model));
 
       if (withIsosurface) {
         cpp::Geometry isoGeom("isosurfaces");
@@ -230,6 +244,12 @@ namespace ospray {
     }
 
     OSP_REGISTER_TESTING_BUILDER(GravitySpheres, gravity_spheres_volume);
+
+    OSP_REGISTER_TESTING_BUILDER(GravitySpheres(true, true, false),
+                                 gravity_spheres_amr);
+
+    OSP_REGISTER_TESTING_BUILDER(GravitySpheres(false, false, true),
+                                 gravity_spheres_isosurface);
 
   }  // namespace testing
 }  // namespace ospray

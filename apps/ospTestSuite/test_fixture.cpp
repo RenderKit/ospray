@@ -15,6 +15,9 @@
 // ======================================================================== //
 
 #include "test_fixture.h"
+#include "ArcballCamera.h"
+// ospray_testing
+#include "ospray_testing.h"
 
 extern OSPRayEnvironment *ospEnv;
 
@@ -273,54 +276,6 @@ namespace OSPRayTestScenes {
     AddLight(ambient);
   }
 
-  Torus::Torus()
-  {
-    rendererType = GetParam();
-  }
-
-  void Torus::SetUp()
-  {
-    Base::SetUp();
-
-    camera.setParam("position", vec3f(-0.7f, -1.4f, 0.f));
-    camera.setParam("direction", vec3f(0.5f, 1.f, 0.f));
-    camera.setParam("up", vec3f(0.f, 0.f, -1.f));
-
-    cpp::Volume torus = CreateTorus(256);
-    torus.commit();
-
-    cpp::VolumetricModel volumetricModel(torus);
-
-    cpp::TransferFunction transferFun("piecewise_linear");
-    transferFun.setParam("valueRange", vec2f(-10000.f, 10000.f));
-
-    std::vector<vec3f> colors = {vec3f(1.0f, 0.0f, 0.0f),
-                                 vec3f(0.0f, 1.0f, 0.0f)};
-
-    std::vector<float> opacities = {1.0f, 1.0f};
-
-    transferFun.setParam("color", cpp::Data(colors));
-    transferFun.setParam("opacity", cpp::Data(opacities));
-    transferFun.commit();
-
-    volumetricModel.setParam("transferFunction", transferFun);
-    volumetricModel.commit();
-
-    cpp::Geometry isosurface("isosurfaces");
-    isosurface.setParam("volume", volumetricModel);
-
-    std::vector<float> isovalues = {-7000.f, 0.f};
-    isosurface.setParam("isovalue", cpp::Data(isovalues));
-    isosurface.commit();
-
-    cpp::GeometricModel model(isosurface);
-    AddModel(model);
-
-    cpp::Light ambient = ospNewLight("ambient");
-    ambient.setParam("intensity", 0.5f);
-    AddLight(ambient);
-  }
-
   TextureVolume::TextureVolume()
   {
     rendererType = GetParam();
@@ -442,258 +397,36 @@ namespace OSPRayTestScenes {
     AddLight(ambient);
   }
 
-  /* heavily based on Perlin's Java reference implementation of
-   * the improved perlin noise paper from Siggraph 2002 from here
-   * https://mrl.nyu.edu/~perlin/noise/
-   **/
-  class PerlinNoise
+  FromOsprayTesting::FromOsprayTesting()
   {
-    struct PerlinNoiseData
-    {
-      PerlinNoiseData()
-      {
-        const int permutation[256] = {
-            151, 160, 137, 91,  90,  15,  131, 13,  201, 95,  96,  53,  194,
-            233, 7,   225, 140, 36,  103, 30,  69,  142, 8,   99,  37,  240,
-            21,  10,  23,  190, 6,   148, 247, 120, 234, 75,  0,   26,  197,
-            62,  94,  252, 219, 203, 117, 35,  11,  32,  57,  177, 33,  88,
-            237, 149, 56,  87,  174, 20,  125, 136, 171, 168, 68,  175, 74,
-            165, 71,  134, 139, 48,  27,  166, 77,  146, 158, 231, 83,  111,
-            229, 122, 60,  211, 133, 230, 220, 105, 92,  41,  55,  46,  245,
-            40,  244, 102, 143, 54,  65,  25,  63,  161, 1,   216, 80,  73,
-            209, 76,  132, 187, 208, 89,  18,  169, 200, 196, 135, 130, 116,
-            188, 159, 86,  164, 100, 109, 198, 173, 186, 3,   64,  52,  217,
-            226, 250, 124, 123, 5,   202, 38,  147, 118, 126, 255, 82,  85,
-            212, 207, 206, 59,  227, 47,  16,  58,  17,  182, 189, 28,  42,
-            223, 183, 170, 213, 119, 248, 152, 2,   44,  154, 163, 70,  221,
-            153, 101, 155, 167, 43,  172, 9,   129, 22,  39,  253, 19,  98,
-            108, 110, 79,  113, 224, 232, 178, 185, 112, 104, 218, 246, 97,
-            228, 251, 34,  242, 193, 238, 210, 144, 12,  191, 179, 162, 241,
-            81,  51,  145, 235, 249, 14,  239, 107, 49,  192, 214, 31,  181,
-            199, 106, 157, 184, 84,  204, 176, 115, 121, 50,  45,  127, 4,
-            150, 254, 138, 236, 205, 93,  222, 114, 67,  29,  24,  72,  243,
-            141, 128, 195, 78,  66,  215, 61,  156, 180};
-        for (int i = 0; i < 256; i++)
-          p[256 + i] = p[i] = permutation[i];
-      }
-      inline int operator[](size_t idx) const
-      {
-        return p[idx];
-      }
-      int p[512];
-    };
-
-    static PerlinNoiseData p;
-    static inline float smooth(float t)
-    {
-      return t * t * t * (t * (t * 6.f - 15.f) + 10.f);
-    }
-    static inline float lerp(float t, float a, float b)
-    {
-      return a + t * (b - a);
-    }
-    static inline float grad(int hash, float x, float y, float z)
-    {
-      const int h   = hash & 15;
-      const float u = h < 8 ? x : y;
-      const float v = h < 4 ? y : h == 12 || h == 14 ? x : z;
-      return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
-    }
-
-   public:
-    static float noise(vec3f q, float frequency = 8.f)
-    {
-      float x     = q.x * frequency;
-      float y     = q.y * frequency;
-      float z     = q.z * frequency;
-      const int X = (int)floor(x) & 255;
-      const int Y = (int)floor(y) & 255;
-      const int Z = (int)floor(z) & 255;
-      x -= floor(x);
-      y -= floor(y);
-      z -= floor(z);
-      const float u = smooth(x);
-      const float v = smooth(y);
-      const float w = smooth(z);
-      const int A   = p[X] + Y;
-      const int B   = p[X + 1] + Y;
-      const int AA  = p[A] + Z;
-      const int BA  = p[B] + Z;
-      const int BB  = p[B + 1] + Z;
-      const int AB  = p[A + 1] + Z;
-
-      return lerp(
-          w,
-          lerp(v,
-               lerp(u, grad(p[AA], x, y, z), grad(p[BA], x - 1, y, z)),
-               lerp(u, grad(p[AB], x, y - 1, z), grad(p[BB], x - 1, y - 1, z))),
-          lerp(v,
-               lerp(u,
-                    grad(p[AA + 1], x, y, z - 1),
-                    grad(p[BA + 1], x - 1, y, z - 1)),
-               lerp(u,
-                    grad(p[AB + 1], x, y - 1, z - 1),
-                    grad(p[BB + 1], x - 1, y - 1, z - 1))));
-    }
-  };
-  PerlinNoise::PerlinNoiseData PerlinNoise::p;
-
-  HeterogeneousVolume::HeterogeneousVolume()
-  {
-    rendererType = "pathtracer";
-
     auto params = GetParam();
 
-    albedo             = std::get<0>(params);
-    anisotropy         = std::get<1>(params);
-    densityScale       = std::get<2>(params);
-    ambientColor       = std::get<3>(params);
-    enableDistantLight = std::get<4>(params);
-    enableGeometry     = std::get<5>(params);
-    constantVolume     = std::get<6>(params);
-    samplesPerPixel    = std::get<7>(params);
-
-    imgSize = imgSize / 2.f;
+    sceneName    = std::get<0>(params);
+    rendererType = std::get<1>(params);
   }
 
-  void HeterogeneousVolume::SetUp()
+  void FromOsprayTesting::SetUp()
   {
     Base::SetUp();
 
-    if (!constantVolume)
-      densityScale *= 10.f;
+    instances.clear();
 
-    const float theta = 1.f / 2.f * M_PI - M_PI / 6;
-    const float phi   = 3.f / 2.f * M_PI - M_PI / 6;
-    const float r     = 5.f;
-    vec3f p =
-        r * vec3f(sin(theta) * cos(phi), cos(theta), sin(theta) * sin(phi));
-    vec3f v = vec3f(0.f, -0.2f, 0.f) - p;
+    auto builder = ospray::testing::newBuilder(sceneName);
+    ospray::testing::setParam(builder, "rendererType", rendererType);
+    ospray::testing::commit(builder);
 
-    camera.setParam("position", p);
-    camera.setParam("direction", v);
-    camera.setParam("up", vec3f(0.f, 1.f, 0.f));
+    world = ospray::testing::buildWorld(builder);
+    ospray::testing::release(builder);
 
-    // create volume
-    vec3l dims;
-    if (constantVolume)
-      dims = vec3l(8, 8, 8);
-    else
-      dims = vec3l(64, 64, 64);
+    world.commit();
 
-    const float spacing = 3.f / (reduce_max(dims) - 1);
-    cpp::Volume volume("structured_volume");
+    auto worldBounds = world.getBounds();
 
-    auto turbulence = [](const vec3f &p, float base_freqency, int octaves) {
-      float value = 0.f;
-      float scale = 1.f;
-      for (int o = 0; o < octaves; ++o) {
-        value += PerlinNoise::noise(scale * p, base_freqency) / scale;
-        scale *= 2.f;
-      }
-      return value;
-    };
+    ArcballCamera arcballCamera(worldBounds, imgSize);
 
-    // generate volume data
-    auto numVoxels = dims.product();
-    std::vector<float> voxels(numVoxels, 0);
-    for (int z = 0; z < dims.z; ++z)
-      for (int y = 0; y < dims.y; ++y)
-        for (int x = 0; x < dims.x; ++x) {
-          if (constantVolume)
-            voxels[dims.x * dims.y * z + dims.x * y + x] = 1.0f;
-          else {
-            vec3f p = vec3f(x + 0.5f, y + 0.5f, z + 0.5f) / dims;
-            vec3f X = 2.f * p - vec3f(1.f);
-            if (length((1.4f + 0.4 * turbulence(p, 12.f, 12)) * X) < 1.f)
-              voxels[dims.x * dims.y * z + dims.x * y + x] =
-                  0.5f + 0.5f * PerlinNoise::noise(p, 12);
-          }
-        }
-    voxels[0] = 0.0f;
-
-    volume.setParam("voxelData", cpp::Data(voxels));
-    volume.setParam<int>("voxelType", OSP_FLOAT);
-    volume.setParam<vec3i>("dimensions", dims);
-    volume.setParam("gridOrigin", vec3f(-1.f));
-    volume.setParam("gridSpacing", vec3f(spacing));
-    volume.commit();
-
-    cpp::TransferFunction transferFun("piecewise_linear");
-    transferFun.setParam("valueRange", vec2f(0.f, 1.f));
-
-    std::vector<float> opacities = {1.0f, 1.0f};
-
-    transferFun.setParam("color", cpp::Data(albedo));
-    transferFun.setParam("opacity", cpp::Data(opacities));
-    transferFun.commit();
-
-    cpp::VolumetricModel volumetricModel(volume);
-    volumetricModel.setParam("densityScale", densityScale);
-    volumetricModel.setParam("anisotropy", anisotropy);
-    volumetricModel.setParam("transferFunction", transferFun);
-    volumetricModel.commit();
-
-    cpp::Group volumeGroup;
-    volumeGroup.setParam("volume", cpp::Data(volumetricModel));
-    volumeGroup.commit();
-
-    cpp::Instance volumeInstance(volumeGroup);
-    if (!constantVolume)
-      volumeInstance.setParam("xfm", AffineSpace3f::scale(vec3f(1.25f)));
-    AddInstance(volumeInstance);
-
-    if (enableGeometry) {
-      std::vector<vec3f> planeVertices = {vec3f(-8.f, -2.5f, -8.f),
-                                          vec3f(+8.f, -2.5f, -8.f),
-                                          vec3f(+8.f, -2.5f, +8.f),
-                                          vec3f(-8.f, -2.5f, +8.f)};
-
-      cpp::Geometry mesh("quads");
-      mesh.setParam("vertex.position", cpp::Data(planeVertices));
-      mesh.setParam("index", cpp::Data(vec4ui(0, 1, 2, 3)));
-      mesh.commit();
-
-      cpp::GeometricModel model(mesh);
-      cpp::Material material("pathtracer", "OBJMaterial");
-      material.commit();
-
-      model.setParam("material", cpp::Data(material));
-      model.commit();
-
-      cpp::Group modelsGroup;
-      modelsGroup.setParam("geometry", cpp::Data(model));
-      modelsGroup.commit();
-
-      AddInstance(cpp::Instance(modelsGroup));
-    }
-
-    vec4f backgroundColor(ambientColor, 1.f);
-
-    cpp::Light ambientLight("ambient");
-    ambientLight.setParam("intensity", 1.f);
-    ambientLight.setParam("color", ambientColor);
-    AddLight(ambientLight);
-
-    if (enableDistantLight) {
-      cpp::Light distantLight("distant");
-      distantLight.setParam("intensity", 2.6f);
-      distantLight.setParam("color", vec3f(1.0f, 0.96f, 0.88f));
-      distantLight.setParam("angularDiameter", 1.f);
-      distantLight.setParam("direction", vec3f(-0.5826f, -0.7660f, -0.2717f));
-      AddLight(distantLight);
-    }
-
-    cpp::Texture backplateTexture("texture2d");
-    backplateTexture.setParam("size", vec2i(1));
-    backplateTexture.setParam<int>("format", OSP_TEXTURE_RGB32F);
-    backplateTexture.setParam<int>("filter", OSP_TEXTURE_FILTER_NEAREST);
-    backplateTexture.setParam("data", cpp::Data(ambientColor));
-    backplateTexture.commit();
-
-    renderer.setParam("backplate", backplateTexture);
-
-    renderer.setParam("maxDepth", std::max(20, samplesPerPixel));
-    renderer.setParam("spp", samplesPerPixel);
+    camera.setParam("position", arcballCamera.eyePos());
+    camera.setParam("direction", arcballCamera.lookDir());
+    camera.setParam("up", arcballCamera.upDir());
   }
+
 }  // namespace OSPRayTestScenes

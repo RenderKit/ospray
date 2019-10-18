@@ -91,7 +91,6 @@ namespace OSPRayTestScenes {
   // Fixture class to test cornercases of intersection precision and epsilon
   // handling; parametrized with renderer, sphere radius, distance factor, and
   // whether the sphere is in origin
-  // TODO generalize for other geometries as well, reusing SingleObject
   class SpherePrecision
       : public Base,
         public ::testing::TestWithParam<std::tuple<float /*radius*/,
@@ -107,15 +106,6 @@ namespace OSPRayTestScenes {
     float dist;
     float radius;
     bool move_cam;
-  };
-
-  // Fixture class used for tests that generates two isosurfaces, one in shape
-  // of a torus. It's parametrized with type of the renderer.
-  class Torus : public Base, public ::testing::TestWithParam<const char *>
-  {
-   public:
-    Torus();
-    void SetUp() override;
   };
 
   // Test a texture colored by a volume.  Creates a sphere colored by the torus
@@ -142,31 +132,19 @@ namespace OSPRayTestScenes {
     vec4f bgColor;
   };
 
-  // Fixture class that renders a simple heterogeneous volume using the
-  // pathtracer. It is parametrized with albedo, anisotropy and density scale.
-  class HeterogeneousVolume : public Base,
-                              public ::testing::TestWithParam<
-                                  std::tuple<vec3f,  // albedo
-                                             float,  // anisotropy
-                                             float,  // densityScale
-                                             vec3f,  // color of ambient light
-                                             bool,   // enable distant light
-                                             bool,   // enable geometry
-                                             bool,   // constant volume
-                                             int>>   // samples per pixel
+  // Fixture class used for tests that uses 'ospray_testing' scenes
+  class FromOsprayTesting
+      : public Base,
+        public ::testing::TestWithParam<std::tuple<const char *,   // scene name
+                                                   const char *>>  // renderer
+                                                                   // type
   {
    public:
-    HeterogeneousVolume();
+    FromOsprayTesting();
     void SetUp() override;
 
-   protected:
-    vec3f albedo;
-    float anisotropy;
-    float densityScale;
-    vec3f ambientColor;
-    bool enableDistantLight;
-    bool enableGeometry;
-    bool constantVolume;
+   private:
+    std::string sceneName;
   };
 
 }  // namespace OSPRayTestScenes

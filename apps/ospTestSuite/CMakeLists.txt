@@ -23,13 +23,15 @@ add_executable(ospTestSuite
   test_tools.cpp
   test_volumetric.cpp
   ospTestSuite.cpp
+
+  ArcballCamera.cpp
 )
 
 target_link_libraries(ospTestSuite
 PRIVATE
   ospcommon::ospcommon
+  ospray_testing
   gtest_main
-  ospray
 	stb_image
 )
 

@@ -14,40 +14,41 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "test_fixture.h"
+#pragma once
 
-using OSPRayTestScenes::FromOsprayTesting;
-using OSPRayTestScenes::SpherePrecision;
+#include "ospcommon/math/AffineSpace.h"
 
-using namespace ospcommon;
-
-TEST_P(SpherePrecision, sphere)
+class ArcballCamera
 {
-  PerformRenderTest();
-}
+ public:
+  ArcballCamera(const ospcommon::math::box3f &worldBounds,
+                const ospcommon::math::vec2i &windowSize);
 
-INSTANTIATE_TEST_CASE_P(
-    Intersection,
-    SpherePrecision,
-    ::testing::Combine(::testing::Values(0.001f, 3.e5f),
-                       ::testing::Values(3.f, 8000.0f, 2.e5f),
-                       ::testing::Values(true, false),
-                       ::testing::Values("scivis", "pathtracer")));
+  // All mouse positions passed should be in [-1, 1] normalized screen coords
+  void rotate(const ospcommon::math::vec2f &from,
+              const ospcommon::math::vec2f &to);
+  void zoom(float amount);
+  void pan(const ospcommon::math::vec2f &delta);
 
-TEST_P(FromOsprayTesting, test_scenes)
-{
-  PerformRenderTest();
-}
+  ospcommon::math::vec3f eyePos() const;
+  ospcommon::math::vec3f center() const;
+  ospcommon::math::vec3f lookDir() const;
+  ospcommon::math::vec3f upDir() const;
 
-INSTANTIATE_TEST_CASE_P(
-    TestScenesGeometry,
-    FromOsprayTesting,
-    ::testing::Combine(::testing::Values("cornell_box",
-                                         "curves",
-                                         "cylinders",
-                                         "empty",
-                                         "random_spheres",
-                                         "streamlines",
-                                         "subdivision_cube",
-                                         "gravity_spheres_isosurface"),
-                       ::testing::Values("scivis", "pathtracer")));
+
+  void setRotation(ospcommon::math::quaternionf);
+
+  void updateWindowSize(const ospcommon::math::vec2i &windowSize);
+
+ protected:
+  void updateCamera();
+
+  // Project the point in [-1, 1] screen space onto the arcball sphere
+  ospcommon::math::quaternionf screenToArcball(
+      const ospcommon::math::vec2f &p);
+
+  float zoomSpeed;
+  ospcommon::math::vec2f invWindowSize;
+  ospcommon::math::AffineSpace3f centerTranslation, translation, invCamera;
+  ospcommon::math::quaternionf rotation;
+};
