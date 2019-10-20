@@ -30,24 +30,51 @@
 #include <memory>
 #include <random>
 #include "GLFWDistribOSPRayWindow.h"
+#include "example_common.h"
 #include "ospray_testing.h"
-#include "tutorial_util.h"
 
+using namespace ospray;
 using namespace ospcommon;
 using namespace ospcommon::math;
 
-static std::string renderer_type = "pathtracer";
+static std::string rendererType = "pathtracer";
+static std::string builderType = "perlin_noise_volumes";
 
-// NOTE: We use our own here because both ranks need to have the same random
-// seed used when generating the spheres
-OSPTestingGeometry createSpheres(int mpiRank);
+void printHelp()
+{
+  std::cout <<
+      R"description(
+usage: ./ospExamples [-h | --help] [[-s | --scene] scene] [[r | --renderer] renderer_type]
+
+scenes:
+
+  boxes
+  cornell_box
+  curves
+  cylinders
+  empty
+  gravity_spheres_volume
+  perlin_noise_volumes
+  random_spheres
+  streamlines
+  subdivision_cube
+  unstructured_volume
+
+  )description";
+}
 
 int main(int argc, char **argv)
 {
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
-    if (arg == "-r" || arg == "--renderer")
-      renderer_type = argv[++i];
+    if (arg == "-h" || arg == "--help") {
+      printHelp();
+      return 0;
+    } else if (arg == "-r" || arg == "--renderer") {
+      rendererType = argv[++i];
+    } else if (arg == "-s" || arg == "--scene") {
+      builderType = argv[++i];
+    }
   }
 
   int mpiThreadCapability = 0;
@@ -85,50 +112,30 @@ int main(int argc, char **argv)
         exit(error);
       });
 
-  // create the world which will contain all of our geometries
-  OSPWorld world = ospNewWorld();
+  {
+    auto builder = testing::newBuilder(builderType);
+    testing::setParam(builder, "rendererType", rendererType);
+    testing::commit(builder);
 
-  std::vector<OSPInstance> instanceHandles;
+    auto world = testing::buildWorld(builder);
+    testing::release(builder);
 
-  // add in spheres geometry
-  OSPTestingGeometry spheres = createSpheres(mpiRank);
-  instanceHandles.push_back(spheres.instance);
-  ospRelease(spheres.geometry);
+    world.commit();
 
-  // add in a ground plane geometry
-  OSPInstance planeInstance = createGroundPlane(renderer_type);
-  ospCommit(planeInstance);
-  instanceHandles.push_back(planeInstance);
+    cpp::Renderer renderer(rendererType);
+    renderer.commit();
 
-  OSPData geomInstances =
-      ospNewData(instanceHandles.size(), OSP_INSTANCE, instanceHandles.data());
+    // create a GLFW OSPRay window: this object will create and manage the
+    // OSPRay frame buffer and camera directly
+    auto glfwOSPRayWindow = std::unique_ptr<GLFWDistribOSPRayWindow>(
+        new GLFWDistribOSPRayWindow(vec2i{1024, 768},
+            box3f(vec3f(-1.f), vec3f(1.f)),
+            world.handle(),
+            renderer.handle()));
 
-  ospSetObject(world, "instance", geomInstances);
-  ospRelease(geomInstances);
-
-  for (auto inst : instanceHandles)
-    ospRelease(inst);
-
-  OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetObject(world, "light", lightsData);
-  ospRelease(lightsData);
-
-  // commit the world
-  ospCommit(world);
-
-  // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer(renderer_type.c_str());
-  ospCommit(renderer);
-
-  // create a GLFW OSPRay window: this object will create and manage the OSPRay
-  // frame buffer and camera directly
-  auto glfwOSPRayWindow =
-      std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
-
-  // start the GLFW main loop, which will continuously render
-  glfwOSPRayWindow->mainLoop();
-
+    // start the GLFW main loop, which will continuously render
+    glfwOSPRayWindow->mainLoop();
+  }
   // cleanly shut OSPRay down
   ospShutdown();
 
@@ -137,109 +144,3 @@ int main(int argc, char **argv)
   return 0;
 }
 
-OSPTestingGeometry createSpheres(int mpiRank)
-{
-  struct Sphere
-  {
-    vec3f center;
-    float radius;
-  };
-
-  const int numSpheres = 100;
-
-  // create random number distributions for sphere center, radius, and color
-  int seed = 0;
-  if (mpiRank == 0) {
-    std::random_device rd;
-    seed = rd();
-    MPI_Bcast(&seed, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  } else {
-    MPI_Bcast(&seed, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  }
-  std::mt19937 gen(seed);
-
-  std::uniform_real_distribution<float> centerDistribution(-1.f, 1.f);
-  std::uniform_real_distribution<float> radiusDistribution(0.05f, 0.15f);
-  std::uniform_real_distribution<float> colorDistribution(0.5f, 1.f);
-
-  // populate the spheres
-  box3f bounds;
-  static std::vector<Sphere> spheres(numSpheres);
-  std::vector<vec4f> colors(numSpheres);
-
-  for (auto &s : spheres) {
-    s.center.x = centerDistribution(gen);
-    s.center.y = centerDistribution(gen);
-    s.center.z = centerDistribution(gen);
-
-    s.radius = radiusDistribution(gen);
-
-    bounds.extend(box3f(s.center - s.radius, s.center + s.radius));
-  }
-
-  for (auto &c : colors) {
-    c.x = colorDistribution(gen);
-    c.y = colorDistribution(gen);
-    c.z = colorDistribution(gen);
-    c.w = colorDistribution(gen);
-  }
-
-  // create a data object with all the sphere information
-  OSPData positionData =
-      ospNewSharedData((char *)spheres.data() + offsetof(Sphere, center),
-          OSP_VEC3F,
-          numSpheres,
-          sizeof(Sphere));
-  OSPData radiusData =
-      ospNewSharedData((char *)spheres.data() + offsetof(Sphere, radius),
-          OSP_FLOAT,
-          numSpheres,
-          sizeof(Sphere));
-
-  // create the sphere geometry, and assign attributes
-  OSPGeometry spheresGeometry = ospNewGeometry("spheres");
-
-  ospSetObject(spheresGeometry, "sphere.position", positionData);
-  ospSetObject(spheresGeometry, "sphere.radius", radiusData);
-
-  // commit the spheres geometry
-  ospCommit(spheresGeometry);
-
-  OSPGeometricModel model = ospNewGeometricModel(spheresGeometry);
-
-  OSPData colorData = ospNewData(numSpheres, OSP_VEC4F, colors.data());
-
-  ospSetObject(model, "color", colorData);
-
-  // create glass material and assign to geometry
-  OSPMaterial glassMaterial =
-      ospNewMaterial(renderer_type.c_str(), "ThinGlass");
-  ospSetFloat(glassMaterial, "attenuationDistance", 0.2f);
-  ospCommit(glassMaterial);
-
-  ospSetObjectAsData(model, "material", OSP_MATERIAL, glassMaterial);
-
-  ospCommit(model);
-
-  // release handles we no longer need
-  ospRelease(positionData);
-  ospRelease(radiusData);
-  ospRelease(colorData);
-  ospRelease(glassMaterial);
-
-  OSPGroup group = ospNewGroup();
-  ospSetObjectAsData(group, "geometry", OSP_GEOMETRIC_MODEL, model);
-  ospCommit(group);
-
-  OSPInstance instance = ospNewInstance(group);
-  ospCommit(instance);
-
-  OSPTestingGeometry retval;
-  retval.geometry = spheresGeometry;
-  retval.model = model;
-  retval.group = group;
-  retval.instance = instance;
-
-  std::memcpy(&retval.bounds, &bounds, sizeof(bounds));
-  return retval;
-}

@@ -60,13 +60,12 @@ target_link_libraries(ospMPIDistributedTutorialAsync PRIVATE
 target_include_directories(ospMPIDistributedTutorialAsync PRIVATE
   $<BUILD_INTERFACE:${MPI_C_INCLUDE_PATH}>)
 
-set(OSPRAY_TUTORIALS_DIR "${OSPRay_SOURCE_DIR}/apps/tutorials")
+set(OSPRAY_EXAMPLE_DIR "${OSPRay_SOURCE_DIR}/apps/ospExamples")
 
 add_library(mpi_tutorial_common STATIC
   GLFWDistribOSPRayWindow.cpp
-  ${OSPRAY_TUTORIALS_DIR}/ArcballCamera.cpp
-  ${OSPRAY_TUTORIALS_DIR}/imgui/imgui_impl_glfw_gl3.cpp
-  ${OSPRAY_TUTORIALS_DIR}/tutorial_util.cpp
+  ${OSPRAY_EXAMPLE_DIR}/ArcballCamera.cpp
+  ${OSPRAY_EXAMPLE_DIR}/imgui_impl_glfw_gl3.cpp
 )
 
 ospray_install_library(mpi_tutorial_common COMPONENT apps)
@@ -82,7 +81,7 @@ target_link_libraries(mpi_tutorial_common PUBLIC
 )
 
 target_include_directories(mpi_tutorial_common PUBLIC
-  $<BUILD_INTERFACE:${OSPRAY_TUTORIALS_DIR}>
+  $<BUILD_INTERFACE:${OSPRAY_EXAMPLE_DIR}>
   $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>
 )
 

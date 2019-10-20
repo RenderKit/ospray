@@ -20,7 +20,7 @@
 #include <ospray/ospray_util.h>
 #include <iostream>
 #include <stdexcept>
-#include "imgui/imgui_impl_glfw_gl3.h"
+#include "imgui_impl_glfw_gl3.h"
 
 using namespace ospcommon::math;
 

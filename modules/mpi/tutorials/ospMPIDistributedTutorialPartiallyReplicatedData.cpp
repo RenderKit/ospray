@@ -29,6 +29,7 @@
 
 #include <imgui.h>
 #include <mpi.h>
+#include <ospray/ospray_cpp.h>
 #include <ospray/ospray_util.h>
 #include <iterator>
 #include <memory>
@@ -36,16 +37,17 @@
 #include "GLFWDistribOSPRayWindow.h"
 #include "ospray_testing.h"
 
+using namespace ospray;
 using namespace ospcommon;
 using namespace ospcommon::math;
 
 struct VolumeBrick
 {
   // the volume data itself
-  OSPVolume brick;
-  OSPVolumetricModel model;
-  OSPGroup group;
-  OSPInstance instance;
+  cpp::Volume brick;
+  cpp::VolumetricModel model;
+  cpp::Group group;
+  cpp::Instance instance;
   // the bounds of the owned portion of data
   box3f bounds;
   // the full bounds of the owned portion + ghost voxels
@@ -102,43 +104,50 @@ int main(int argc, char **argv)
   // the data to be rendered, which is distributed among the ranks
   VolumeBrick brick = makeLocalVolume(mpiRank / 2, sharedWorldSize);
 
+  cpp::TransferFunction tfn("piecewise_linear");
   // color the bricks by their rank, we pad the range out a bit to keep
   // any brick from being completely transparent
-  OSPTransferFunction tfn = ospTestingNewTransferFunction(
-      osp_vec2f{-0.5f, static_cast<float>(sharedWorldSize)}, "jet");
-  ospSetObject(brick.model, "transferFunction", tfn);
-  ospSetFloat(brick.model, "samplingRate", 0.5f);
-  ospCommit(brick.model);
+  {
+    std::vector<vec3f> colors = {vec3f(0.f, 0.f, 1.f), vec3f(1.f, 0.f, 0.f)};
+    std::vector<float> opacities = {0.f, 1.f};
+
+    OSPData colorsData =
+        ospNewSharedData(colors.data(), OSP_VEC3F, colors.size());
+    OSPData opacitiesData =
+        ospNewSharedData(opacities.data(), OSP_FLOAT, opacities.size());
+    tfn.setParam("color", cpp::Data(colors));
+    tfn.setParam("opacity", cpp::Data(opacities));
+    vec2f valueRange = vec2f(0, mpiWorldSize);
+    tfn.setParam("valueRange", valueRange);
+    tfn.commit();
+  }
+
+  brick.model.setParam("transferFunction", tfn);
+  brick.model.setParam("samplingRate", 0.5f);
+  brick.model.commit();
 
   // create the "world" model which will contain all of our geometries
-  OSPWorld world = ospNewWorld();
-  OSPData instances = ospNewData(1, OSP_INSTANCE, &brick.instance);
-  ospSetObject(world, "instance", instances);
-  ospRelease(instances);
+  cpp::World world;
+  cpp::Data instances(1, &brick.instance, true);
+  world.setParam("instance", instances);
 
-  OSPData regionData = ospNewData(1, OSP_BOX3F, &brick.bounds, 0);
-  ospCommit(regionData);
-  ospSetObject(world, "regions", regionData);
-  ospRelease(regionData);
-
-  ospCommit(world);
+  cpp::Data regionData(1, OSP_BOX3F, &brick.bounds, true);
+  world.setParam("regions", regionData);
+  world.commit();
 
   // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("mpi_raycast");
+  cpp::Renderer renderer("mpi_raycast");
 
   // create and setup an ambient light
-  OSPLight ambientLight = ospNewLight("ambient");
-  ospCommit(ambientLight);
-  OSPData lightData = ospNewData(1, OSP_LIGHT, &ambientLight, 0);
-  ospCommit(lightData);
-  ospSetObject(renderer, "light", lightData);
-  ospRelease(lightData);
+  cpp::Light ambientLight("ambient");
+  ambientLight.commit();
+  renderer.setParam("light", cpp::Data(&ambientLight, 1));
 
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow =
       std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
-          vec2i{1024, 768}, worldBounds, world, renderer));
+          vec2i{1024, 768}, worldBounds, world.handle(), renderer.handle()));
 
   int spp = 1;
   int currentSpp = 1;
@@ -153,7 +162,7 @@ int main(int argc, char **argv)
     MPI_Bcast(&spp, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if (spp != currentSpp) {
       currentSpp = spp;
-      ospSetInt(renderer, "spp", spp);
+      renderer.setParam("spp", spp);
       win->addObjectToCommit(renderer);
     }
   });
@@ -161,9 +170,7 @@ int main(int argc, char **argv)
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
 
-  // cleanup remaining objects
-  ospRelease(world);
-  ospRelease(renderer);
+  // TODO: need to close scope earlier to cleanup ospray objects
 
   // cleanly shut OSPRay down
   ospShutdown();
@@ -238,7 +245,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   const size_t nVoxels = brickGhostDims.x * brickGhostDims.y * brickGhostDims.z;
   std::vector<char> volumeData(nVoxels, static_cast<char>(mpiRank));
   OSPData ospVolumeData =
-      ospNewData(volumeData.size(), OSP_UCHAR, volumeData.data());
+      ospNewSharedData(volumeData.data(), OSP_UCHAR, volumeData.size());
   ospSetObject(brick.brick, "voxelData", ospVolumeData);
 
   // Set the clipping box of the volume to clip off the ghost voxels
@@ -251,7 +258,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   brick.model = ospNewVolumetricModel(brick.brick);
 
   brick.group = ospNewGroup();
-  OSPData volumes = ospNewData(1, OSP_VOLUMETRIC_MODEL, &brick.model);
+  OSPData volumes = ospNewSharedData(&brick.model, OSP_VOLUMETRIC_MODEL, 1);
   ospSetObject(brick.group, "volume", volumes);
   ospCommit(brick.group);
   ospRelease(volumes);

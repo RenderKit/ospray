@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 
   // create the "world" model which will contain all of our geometries
   OSPWorld world = ospNewWorld();
-  OSPData geometryInstances = ospNewData(1, OSP_INSTANCE, &spheres, 0);
+  OSPData geometryInstances = ospNewSharedData(&spheres, OSP_INSTANCE, 1);
   ospSetObject(world, "instance", geometryInstances);
   ospRelease(spheres);
   ospRelease(geometryInstances);
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
    * within the bounds, and we don't have ghost data or portions of speres
    * to clip off. Thus we actually don't need to set regions at all in
    * this tutorial
-  OSPData regionData = ospNewData(1, OSP_BOX3F, &regionBounds, 0);
+  OSPData regionData = ospNewSharedData(&regionBounds, OSP_BOX3F, 1);
   ospCommit(regionData);
   ospSetObject(world, "regions", regionData);
   ospRelease(regionData);
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
   ospSetVec3f(lights[1], "direction", -1.f, -1.f, 0.5f);
   ospCommit(lights[1]);
 
-  OSPData lightData = ospNewData(lights.size(), OSP_LIGHT, lights.data(), 0);
+  OSPData lightData = ospNewSharedData(lights.data(), OSP_LIGHT, lights.size());
   ospCommit(lightData);
   // TODO: Who takes the lights params?
   ospSetObject(renderer, "lights", lightData);
@@ -230,7 +230,7 @@ OSPInstance makeLocalSpheres(
     s.z = distZ(rng);
   }
 
-  OSPData sphereData = ospNewData(spheres.size(), OSP_VEC3F, spheres.data());
+  OSPData sphereData = ospNewSharedData(spheres.data(), OSP_VEC3F, spheres.size());
   ospCommit(sphereData);
 
   vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
@@ -248,7 +248,7 @@ OSPInstance makeLocalSpheres(
   ospCommit(model);
 
   OSPGroup group = ospNewGroup();
-  auto models = ospNewData(1, OSP_GEOMETRIC_MODEL, &model);
+  auto models = ospNewSharedData(&model, OSP_GEOMETRIC_MODEL, 1);
   ospSetObject(group, "geometry", models);
   ospCommit(group);
   ospRelease(models);
