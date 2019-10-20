@@ -33,12 +33,13 @@
 #include "GLFWDistribOSPRayWindow.h"
 #include "ospray_testing.h"
 
+using namespace ospray;
 using namespace ospcommon;
 using namespace ospcommon::math;
 
 // Generate the rank's local spheres within its assigned grid cell, and
 // return the bounds of this grid cell
-OSPInstance makeLocalSpheres(
+cpp::Instance makeLocalSpheres(
     const int mpiRank, const int mpiWorldSize, box3f &bounds);
 
 int main(int argc, char **argv)
@@ -78,79 +79,69 @@ int main(int argc, char **argv)
         exit(error);
       });
 
-  // all ranks specify the same rendering parameters, with the exception of
-  // the data to be rendered, which is distributed among the ranks
-  box3f regionBounds;
-  OSPInstance spheres = makeLocalSpheres(mpiRank, mpiWorldSize, regionBounds);
+  {
+    // all ranks specify the same rendering parameters, with the exception of
+    // the data to be rendered, which is distributed among the ranks
+    box3f regionBounds;
+    cpp::Instance spheres =
+        makeLocalSpheres(mpiRank, mpiWorldSize, regionBounds);
 
-  // create the "world" model which will contain all of our geometries
-  OSPWorld world = ospNewWorld();
-  OSPData geometryInstances = ospNewSharedData(&spheres, OSP_INSTANCE, 1);
-  ospSetObject(world, "instance", geometryInstances);
-  ospRelease(spheres);
-  ospRelease(geometryInstances);
+    // create the "world" model which will contain all of our geometries
+    cpp::World world;
+    world.setParam("instance", cpp::Data(spheres));
 
-  /*
-   * Note: We've taken care that all the generated spheres are completely
-   * within the bounds, and we don't have ghost data or portions of speres
-   * to clip off. Thus we actually don't need to set regions at all in
-   * this tutorial
-  OSPData regionData = ospNewSharedData(&regionBounds, OSP_BOX3F, 1);
-  ospCommit(regionData);
-  ospSetObject(world, "regions", regionData);
-  ospRelease(regionData);
-  */
+    /*
+     * Note: We've taken care that all the generated spheres are completely
+     * within the bounds, and we don't have ghost data or portions of speres
+     * to clip off. Thus we actually don't need to set regions at all in
+     * this tutorial. Example:
+     * world.setParam("regions", cpp::Data(regionBounds));
+     */
 
-  ospCommit(world);
+    world.commit();
 
-  // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("mpi_raycast");
+    // create OSPRay renderer
+    cpp::Renderer renderer("mpi_raycast");
 
-  // create and setup an ambient light
-  std::array<OSPLight, 2> lights = {
-      ospNewLight("ambient"), ospNewLight("distant")};
-  ospCommit(lights[0]);
+    // create and setup an ambient light
+    std::array<cpp::Light, 2> lights = {
+        cpp::Light("ambient"), cpp::Light("distant")};
+    lights[0].commit();
 
-  ospSetVec3f(lights[1], "direction", -1.f, -1.f, 0.5f);
-  ospCommit(lights[1]);
+    lights[1].setParam("direction", vec3f(-1.f, -1.f, 0.5f));
+    lights[1].commit();
 
-  OSPData lightData = ospNewSharedData(lights.data(), OSP_LIGHT, lights.size());
-  ospCommit(lightData);
-  // TODO: Who takes the lights params?
-  ospSetObject(renderer, "lights", lightData);
-  ospSetInt(renderer, "aoSamples", 1);
-  ospRelease(lightData);
+    renderer.setParam("lights", cpp::Data(lights));
+    renderer.setParam("aoSamples", 1);
 
-  // create a GLFW OSPRay window: this object will create and manage the OSPRay
-  // frame buffer and camera directly
-  auto glfwOSPRayWindow =
-      std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
-          vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
+    // create a GLFW OSPRay window: this object will create and manage the
+    // OSPRay frame buffer and camera directly
+    auto glfwOSPRayWindow =
+        std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
+            vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
-  int spp = 1;
-  int currentSpp = 1;
-  if (mpiRank == 0) {
-    glfwOSPRayWindow->registerImGuiCallback(
-        [&]() { ImGui::SliderInt("spp", &spp, 1, 64); });
-  }
-
-  glfwOSPRayWindow->registerDisplayCallback([&](GLFWDistribOSPRayWindow *win) {
-    // Send the UI changes out to the other ranks so we can synchronize
-    // how many samples per-pixel we're taking
-    MPI_Bcast(&spp, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (spp != currentSpp) {
-      currentSpp = spp;
-      ospSetInt(renderer, "spp", spp);
-      win->addObjectToCommit(renderer);
+    int spp = 1;
+    int currentSpp = 1;
+    if (mpiRank == 0) {
+      glfwOSPRayWindow->registerImGuiCallback(
+          [&]() { ImGui::SliderInt("spp", &spp, 1, 64); });
     }
-  });
 
-  // start the GLFW main loop, which will continuously render
-  glfwOSPRayWindow->mainLoop();
+    glfwOSPRayWindow->registerDisplayCallback(
+        [&](GLFWDistribOSPRayWindow *win) {
+          // Send the UI changes out to the other ranks so we can synchronize
+          // how many samples per-pixel we're taking
+          MPI_Bcast(&spp, 1, MPI_INT, 0, MPI_COMM_WORLD);
+          if (spp != currentSpp) {
+            currentSpp = spp;
+            renderer.setParam("spp", spp);
+            win->addObjectToCommit(renderer.handle());
+          }
+        });
 
-  // cleanup remaining objects
-  ospRelease(world);
-  ospRelease(renderer);
+    // start the GLFW main loop, which will continuously render
+    glfwOSPRayWindow->mainLoop();
+  }
 
   // cleanly shut OSPRay down
   ospShutdown();
@@ -191,7 +182,7 @@ vec3i computeGrid(int num)
   return grid;
 }
 
-OSPInstance makeLocalSpheres(
+cpp::Instance makeLocalSpheres(
     const int mpiRank, const int mpiWorldSize, box3f &bounds)
 {
   const float sphereRadius = 0.1;
@@ -230,35 +221,26 @@ OSPInstance makeLocalSpheres(
     s.z = distZ(rng);
   }
 
-  OSPData sphereData = ospNewSharedData(spheres.data(), OSP_VEC3F, spheres.size());
-  ospCommit(sphereData);
+  cpp::Geometry sphereGeom("spheres");
+  sphereGeom.setParam("radius", sphereRadius);
+  sphereGeom.setParam("sphere.position", cpp::Data(spheres));
+  sphereGeom.commit();
 
   vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
-  OSPMaterial material = ospNewMaterial("scivis", "SciVisMaterial");
-  ospSetParam(material, "Kd", OSP_VEC3F, &color.x);
-  ospCommit(material);
+  cpp::Material material("scivis", "SciVisMaterial");
+  material.setParam("Kd", color);
+  material.commit();
 
-  OSPGeometry sphereGeom = ospNewGeometry("spheres");
-  ospSetFloat(sphereGeom, "radius", sphereRadius);
-  ospSetObject(sphereGeom, "sphere.position", sphereData);
-  ospCommit(sphereGeom);
+  cpp::GeometricModel model(sphereGeom);
+  model.setParam("material", material);
+  model.commit();
 
-  OSPGeometricModel model = ospNewGeometricModel(sphereGeom);
-  ospSetObject(model, "material", material);
-  ospCommit(model);
+  cpp::Group group;
+  group.setParam("geometry", cpp::Data(model));
+  group.commit();
 
-  OSPGroup group = ospNewGroup();
-  auto models = ospNewSharedData(&model, OSP_GEOMETRIC_MODEL, 1);
-  ospSetObject(group, "geometry", models);
-  ospCommit(group);
-  ospRelease(models);
-
-  OSPInstance instance = ospNewInstance(group);
-  ospCommit(instance);
-
-  ospRelease(material);
-  ospRelease(sphereData);
-  ospRelease(sphereGeom);
+  cpp::Instance instance(group);
+  instance.commit();
 
   return instance;
 }

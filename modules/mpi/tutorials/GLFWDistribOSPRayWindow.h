@@ -25,6 +25,7 @@
 #include "ospcommon/math/vec.h"
 // ospray
 #include "ospray/ospray.h"
+#include "ospray/ospray_cpp.h"
 
 struct WindowState
 {
@@ -45,15 +46,15 @@ class GLFWDistribOSPRayWindow
  public:
   GLFWDistribOSPRayWindow(const ospcommon::math::vec2i &windowSize,
       const ospcommon::math::box3f &worldBounds,
-      OSPWorld world,
-      OSPRenderer renderer);
+      ospray::cpp::World world,
+      ospray::cpp::Renderer renderer);
 
   ~GLFWDistribOSPRayWindow();
 
   static GLFWDistribOSPRayWindow *getActiveWindow();
 
-  OSPWorld getWorld();
-  void setWorld(OSPWorld newWorld);
+  ospray::cpp::World getWorld();
+  void setWorld(ospray::cpp::World newWorld);
 
   void resetAccumulation();
 
@@ -78,8 +79,8 @@ class GLFWDistribOSPRayWindow
 
   ospcommon::math::vec2i windowSize;
   ospcommon::math::box3f worldBounds;
-  OSPWorld world = nullptr;
-  OSPRenderer renderer = nullptr;
+  ospray::cpp::World world = nullptr;
+  ospray::cpp::Renderer renderer = nullptr;
 
   int mpiRank = -1;
   int mpiWorldSize = -1;
@@ -91,9 +92,9 @@ class GLFWDistribOSPRayWindow
   std::unique_ptr<ArcballCamera> arcballCamera;
 
   // OSPRay objects managed by this class
-  OSPCamera camera = nullptr;
-  OSPFrameBuffer framebuffer = nullptr;
-  OSPFuture currentFrame = nullptr;
+  ospray::cpp::Camera camera = nullptr;
+  ospray::cpp::FrameBuffer framebuffer = nullptr;
+  ospray::cpp::Future currentFrame = nullptr;
 
   // List of OSPRay handles to commit before the next frame
   ospcommon::containers::TransactionalBuffer<OSPObject> objectsToCommit;

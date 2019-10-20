@@ -22,6 +22,7 @@
 #include <stdexcept>
 #include "imgui_impl_glfw_gl3.h"
 
+using namespace ospray;
 using namespace ospcommon::math;
 
 GLFWDistribOSPRayWindow *GLFWDistribOSPRayWindow::activeWindow = nullptr;
@@ -34,8 +35,8 @@ WindowState::WindowState()
 
 GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
     const box3f &worldBounds,
-    OSPWorld world,
-    OSPRenderer renderer)
+    cpp::World world,
+    cpp::Renderer renderer)
     : windowSize(windowSize),
       worldBounds(worldBounds),
       world(world),
@@ -117,29 +118,14 @@ GLFWDistribOSPRayWindow::GLFWDistribOSPRayWindow(const vec2i &windowSize,
       new ArcballCamera(worldBounds, windowSize));
 
   // create camera
-  camera = ospNewCamera("perspective");
-  ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
+  camera = cpp::Camera("perspective");
+  camera.setParam("aspect", windowSize.x / float(windowSize.y));
+  camera.setParam("position", arcballCamera->eyePos());
+  camera.setParam("direction", arcballCamera->lookDir());
+  camera.setParam("up", arcballCamera->upDir());
+  camera.commit();
 
-  ospSetVec3f(camera,
-      "position",
-      arcballCamera->eyePos().x,
-      arcballCamera->eyePos().y,
-      arcballCamera->eyePos().z);
-  ospSetVec3f(camera,
-      "direction",
-      arcballCamera->lookDir().x,
-      arcballCamera->lookDir().y,
-      arcballCamera->lookDir().z);
-  ospSetVec3f(camera,
-      "up",
-      arcballCamera->upDir().x,
-      arcballCamera->upDir().y,
-      arcballCamera->upDir().z);
-
-  ospCommit(camera);
-
-  // finally, commit the renderer
-  ospCommit(renderer);
+  renderer.commit();
 
   windowState.windowSize = windowSize;
   windowState.eyePos = arcballCamera->eyePos();
@@ -168,20 +154,20 @@ GLFWDistribOSPRayWindow *GLFWDistribOSPRayWindow::getActiveWindow()
   return activeWindow;
 }
 
-OSPWorld GLFWDistribOSPRayWindow::getWorld()
+cpp::World GLFWDistribOSPRayWindow::getWorld()
 {
   return world;
 }
 
-void GLFWDistribOSPRayWindow::setWorld(OSPWorld newWorld)
+void GLFWDistribOSPRayWindow::setWorld(cpp::World newWorld)
 {
   world = newWorld;
-  addObjectToCommit(world);
+  addObjectToCommit(world.handle());
 }
 
 void GLFWDistribOSPRayWindow::resetAccumulation()
 {
-  ospResetAccumulation(framebuffer);
+  framebuffer.resetAccumulation();
 }
 
 void GLFWDistribOSPRayWindow::registerDisplayCallback(
@@ -223,10 +209,6 @@ void GLFWDistribOSPRayWindow::mainLoop()
       glfwPollEvents();
       windowState.quit = glfwWindowShouldClose(glfwWindow) || g_quitNextFrame;
     }
-  }
-
-  if (currentFrame != nullptr) {
-    ospRelease(currentFrame);
   }
 }
 
@@ -303,7 +285,7 @@ void GLFWDistribOSPRayWindow::display()
   updateTitleBar();
 
   static bool firstFrame = true;
-  if (firstFrame || ospIsReady(currentFrame)) {
+  if (firstFrame || currentFrame.isReady()) {
     // display frame rate in window title
     auto displayEnd = std::chrono::high_resolution_clock::now();
     auto durationMilliseconds =
@@ -315,7 +297,7 @@ void GLFWDistribOSPRayWindow::display()
     // map OSPRay frame buffer, update OpenGL texture with its contents, then
     // unmap
 
-    uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
+    uint32_t *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
 
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
@@ -328,7 +310,7 @@ void GLFWDistribOSPRayWindow::display()
         GL_UNSIGNED_BYTE,
         fb);
 
-    ospUnmapFrameBuffer(fb, framebuffer);
+    framebuffer.unmap(fb);
 
     // Start new frame and reset frame timing interval start
     displayStart = std::chrono::high_resolution_clock::now();
@@ -363,10 +345,6 @@ void GLFWDistribOSPRayWindow::display()
 
 void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
 {
-  if (currentFrame != nullptr) {
-    ospRelease(currentFrame);
-  }
-
   bool fbNeedsClear = false;
   auto handles = objectsToCommit.consume();
   if (!handles.empty()) {
@@ -379,49 +357,34 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
   if (windowState.fbSizeChanged) {
     windowState.fbSizeChanged = false;
     windowSize = windowState.windowSize;
-    // release the current frame buffer, if it exists
-    if (framebuffer) {
-      ospRelease(framebuffer);
-    }
 
-    framebuffer = ospNewFrameBuffer(
-        windowSize.x, windowSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
-    ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
-    ospCommit(camera);
+    framebuffer =
+        cpp::FrameBuffer(windowSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+    camera.setParam("aspect", windowSize.x / float(windowSize.y));
+    camera.commit();
     fbNeedsClear = true;
   }
   if (windowState.cameraChanged) {
     windowState.cameraChanged = false;
-    ospSetVec3f(camera,
-        "position",
-        windowState.eyePos.x,
-        windowState.eyePos.y,
-        windowState.eyePos.z);
-    ospSetVec3f(camera,
-        "direction",
-        windowState.lookDir.x,
-        windowState.lookDir.y,
-        windowState.lookDir.z);
-    ospSetVec3f(camera,
-        "up",
-        windowState.upDir.x,
-        windowState.upDir.y,
-        windowState.upDir.z);
-    ospCommit(camera);
+    camera.setParam("aspect", windowSize.x / float(windowSize.y));
+    camera.setParam("position", arcballCamera->eyePos());
+    camera.setParam("direction", arcballCamera->lookDir());
+    camera.setParam("up", arcballCamera->upDir());
+    camera.commit();
     fbNeedsClear = true;
   }
 
   if (fbNeedsClear) {
-    ospResetAccumulation(framebuffer);
+    framebuffer.resetAccumulation();
   }
 
-  currentFrame = ospRenderFrame(framebuffer, renderer, camera, world);
+  currentFrame = framebuffer.renderFrame(renderer, camera, world);
 }
 
 void GLFWDistribOSPRayWindow::waitOnOSPRayFrame()
 {
-  if (currentFrame != nullptr) {
-    ospWait(currentFrame, OSP_FRAME_FINISHED);
+  if (currentFrame.handle() != nullptr) {
+    currentFrame.wait(OSP_FRAME_FINISHED);
   }
 }
 
@@ -435,7 +398,7 @@ void GLFWDistribOSPRayWindow::updateTitleBar()
   std::stringstream windowTitle;
   windowTitle << "OSPRay: " << std::setprecision(3) << latestFPS << " fps";
   if (latestFPS < 2.f) {
-    float progress = ospGetProgress(currentFrame);
+    float progress = currentFrame.progress();
     windowTitle << " | ";
     int barWidth = 20;
     std::string progBar;
