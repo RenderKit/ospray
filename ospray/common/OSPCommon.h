@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include "OSPConfig.h"
-
 #ifdef _WIN32
 // ----------- windows only -----------
 typedef unsigned long long id_t;
