@@ -497,7 +497,6 @@ void MPIDistributedDevice::release(OSPObject _obj)
 
 void MPIDistributedDevice::retain(OSPObject _obj)
 {
-  auto &h = (ObjectHandle&)_obj;
   auto *object = lookupObject<ManagedObject>(_obj);
   object->refInc();
 }
