@@ -140,10 +140,9 @@ int main(int argc, char **argv)
 
     // start the GLFW main loop, which will continuously render
     glfwOSPRayWindow->mainLoop();
-
-    // cleanly shut OSPRay down
-    ospShutdown();
   }
+  // cleanly shut OSPRay down
+  ospShutdown();
 
   MPI_Finalize();
 
