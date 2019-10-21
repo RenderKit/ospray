@@ -227,7 +227,7 @@ cpp::Instance makeLocalSpheres(
   sphereGeom.commit();
 
   vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
-  cpp::Material material("scivis", "SciVisMaterial");
+  cpp::Material material("scivis", "default");
   material.setParam("Kd", color);
   material.commit();
 

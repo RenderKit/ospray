@@ -367,9 +367,9 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
   if (windowState.cameraChanged) {
     windowState.cameraChanged = false;
     camera.setParam("aspect", windowSize.x / float(windowSize.y));
-    camera.setParam("position", arcballCamera->eyePos());
-    camera.setParam("direction", arcballCamera->lookDir());
-    camera.setParam("up", arcballCamera->upDir());
+    camera.setParam("position", windowState.eyePos);
+    camera.setParam("direction", windowState.lookDir);
+    camera.setParam("up", windowState.upDir);
     camera.commit();
     fbNeedsClear = true;
   }

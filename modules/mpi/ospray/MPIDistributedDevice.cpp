@@ -484,16 +484,20 @@ void MPIDistributedDevice::release(OSPObject _obj)
 
   auto &handle = reinterpret_cast<ObjectHandle &>(_obj);
   auto *object = lookupObject<ManagedObject>(_obj);
-  if (object->useCount() == 1 && handle.defined()) {
+  // TODO: dig some more here, it seems like I should be releasing when the
+  // use count == 1, since it will be 0 after decrementing? Do we actually
+  // have double-frees which are happening in the app?
+  if (object->useCount() == 0 && handle.defined()) {
     handle.freeObject();
   } else {
-    auto *obj = (ManagedObject *)_obj;
+    auto *obj = (ManagedObject *)object;
     obj->refDec();
   }
 }
 
 void MPIDistributedDevice::retain(OSPObject _obj)
 {
+  auto &h = (ObjectHandle&)_obj;
   auto *object = lookupObject<ManagedObject>(_obj);
   object->refInc();
 }

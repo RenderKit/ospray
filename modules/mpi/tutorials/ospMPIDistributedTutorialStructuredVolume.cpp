@@ -205,7 +205,6 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
 
   brick.brick = cpp::Volume("structured_volume");
 
-  brick.brick.setParam("voxelType", int(OSP_UCHAR));
   brick.brick.setParam("dimensions", brickGhostDims);
 
   // we use the grid origin to place this brick in the right position inside
@@ -214,7 +213,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
 
   // generate the volume data to just be filled with this rank's id
   const size_t nVoxels = brickGhostDims.x * brickGhostDims.y * brickGhostDims.z;
-  std::vector<char> volumeData(nVoxels, static_cast<char>(mpiRank));
+  std::vector<uint8_t> volumeData(nVoxels, static_cast<uint8_t>(mpiRank));
   brick.brick.setParam("voxelData", cpp::Data(volumeData));
 
   // Set the clipping box of the volume to clip off the ghost voxels
@@ -225,7 +224,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   brick.model = cpp::VolumetricModel(brick.brick);
   cpp::TransferFunction tfn("piecewise_linear");
   std::vector<vec3f> colors = {vec3f(0.f, 0.f, 1.f), vec3f(1.f, 0.f, 0.f)};
-  std::vector<float> opacities = {0.f, 1.f};
+  std::vector<float> opacities = {0.05f, 1.f};
 
   tfn.setParam("color", cpp::Data(colors));
   tfn.setParam("opacity", cpp::Data(opacities));
