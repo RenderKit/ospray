@@ -26,4 +26,4 @@ include(ispc)
 
 message(STATUS "Using found OSPRay ISA targets: ${OSPRAY_ISPC_TARGET_LIST}")
 
-include_directories_ispc(${OSPRAY_INCLUDE_DIRS})
+ispc_include_directories(${OSPRAY_INCLUDE_DIRS})
