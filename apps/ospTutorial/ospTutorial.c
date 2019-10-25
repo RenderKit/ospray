@@ -128,10 +128,15 @@ int main(int argc, const char **argv) {
 
   ospCommit(mesh);
 
+  OSPMaterial mat = ospNewMaterial("pathtracer", "OBJMaterial");
+  ospCommit(mat);
+
   // put the mesh into a model
   OSPGeometricModel model = ospNewGeometricModel(mesh);
+  ospSetObjectAsData(model, "material", OSP_MATERIAL, mat);
   ospCommit(model);
   ospRelease(mesh);
+  ospRelease(mat);
 
   // put the model into a group (collection of models)
   OSPGroup group = ospNewGroup();
@@ -169,7 +174,7 @@ int main(int argc, const char **argv) {
 
   // create renderer
   OSPRenderer renderer =
-      ospNewRenderer("scivis"); // choose Scientific Visualization renderer
+      ospNewRenderer("pathtracer"); // choose path tracing renderer
 
   // complete setup of renderer
   ospSetInt(renderer, "aoSamples", 1);
