@@ -86,7 +86,8 @@ namespace ospray {
     template <typename HANDLE_T, OSPDataType TYPE>
     inline ManagedObject<HANDLE_T, TYPE>::~ManagedObject()
     {
-      ospRelease(ospObject);
+      if (ospObject)
+        ospRelease(ospObject);
     }
 
     template <typename HANDLE_T, OSPDataType TYPE>
