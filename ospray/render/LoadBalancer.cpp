@@ -30,11 +30,14 @@ namespace ospray {
                                             Camera *camera,
                                             World *world)
   {
-    void *perFrameData = renderer->beginFrame(fb, world);
-    bool cancel        = false;
+    bool cancel = false;
     std::atomic<int> pixelsDone{0};
+
     const auto fbSize     = fb->getNumPixels();
     const float rcpPixels = 1.0f / (fbSize.x * fbSize.y);
+
+    fb->beginFrame();
+    void *perFrameData = renderer->beginFrame(fb, world);
 
     tasking::parallel_for(fb->getTotalTiles(), [&](int taskIndex) {
       if (cancel)
@@ -70,11 +73,11 @@ namespace ospray {
         cancel = true;
     });
 
-    fb->setCompletedEvent(OSP_WORLD_RENDERED);
-
     renderer->endFrame(fb, perFrameData);
 
+    fb->setCompletedEvent(OSP_WORLD_RENDERED);
     fb->endFrame(renderer->errorThreshold, camera);
+    fb->setCompletedEvent(OSP_FRAME_FINISHED);
 
     return fb->getVariance();
   }

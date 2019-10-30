@@ -75,18 +75,10 @@ typedef unmasked void (*Renderer_RenderTileFct)(Renderer *uniform self,
                                                 uniform Tile &tile,
                                                 uniform int taskIndex);
 
-typedef unmasked void *uniform (*Renderer_BeginFrameFct)(
-    Renderer *uniform self, const World *uniform world);
-
-typedef unmasked void (*Renderer_EndFrameFct)(uniform Renderer *uniform self,
-                                              void *uniform perFrameData);
-
 struct Renderer
 {
   Renderer_RenderSampleFct renderSample;
   Renderer_RenderTileFct renderTile;
-  Renderer_BeginFrameFct beginFrame;
-  Renderer_EndFrameFct endFrame;
 
   void *cppEquivalent;
 

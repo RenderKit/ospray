@@ -89,18 +89,6 @@ namespace ospray {
                               jobID);
   }
 
-  void *Renderer::beginFrame(FrameBuffer *fb, World *world)
-  {
-    fb->beginFrame();
-    return ispc::Renderer_beginFrame(getIE(), world->getIE());
-  }
-
-  void Renderer::endFrame(FrameBuffer *fb, void *perFrameData)
-  {
-    fb->setCompletedEvent(OSP_FRAME_FINISHED);
-    ispc::Renderer_endFrame(getIE(), perFrameData);
-  }
-
   float Renderer::renderFrame(FrameBuffer *fb, Camera *camera, World *world)
   {
     return TiledLoadBalancer::instance->renderFrame(fb, this, camera, world);
