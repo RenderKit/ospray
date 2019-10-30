@@ -29,15 +29,19 @@
 using namespace ospcommon::math;
 using namespace ospray;
 
+enum class OSPRayRendererType
+{
+  SCIVIS,
+  PATHTRACER,
+  OTHER
+};
+
 class GLFWOSPRayWindow
 {
  public:
   GLFWOSPRayWindow(const vec2i &windowSize,
                    cpp::World world,
-                   cpp::Renderer renderer,
-                   OSPFrameBufferFormat fbFormat = OSP_FB_SRGBA,
-                   uint32_t fbChannels           = OSP_FB_COLOR | OSP_FB_DEPTH |
-                                         OSP_FB_ACCUM | OSP_FB_ALBEDO);
+                   const std::string &renderer_type);
 
   ~GLFWOSPRayWindow();
 
@@ -66,13 +70,8 @@ class GLFWOSPRayWindow
 
   vec2i windowSize;
   vec2f previousMouse{-1.f};
-  box3f worldBounds;
-  cpp::World world;
-  cpp::Renderer renderer;
 
   bool showAlbedo{false};
-  OSPFrameBufferFormat fbFormat;
-  uint32_t fbChannels;
 
   // GLFW window instance
   GLFWwindow *glfwWindow = nullptr;
@@ -81,9 +80,13 @@ class GLFWOSPRayWindow
   std::unique_ptr<ArcballCamera> arcballCamera;
 
   // OSPRay objects managed by this class
-  cpp::Camera camera;
+  cpp::Renderer renderer;
+  cpp::Camera camera{"perspective"};
+  cpp::World world;
   cpp::FrameBuffer framebuffer;
   cpp::Future currentFrame;
+
+  OSPRayRendererType rendererType{OSPRayRendererType::SCIVIS};
 
   // List of OSPRay handles to commit before the next frame
   ospcommon::containers::TransactionalBuffer<OSPObject> objectsToCommit;

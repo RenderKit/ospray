@@ -76,13 +76,10 @@ int main(int argc, const char *argv[])
 
     world.commit();
 
-    cpp::Renderer renderer(rendererType);
-    renderer.commit();
-
     // create a GLFW OSPRay window: this object will create and manage the
     // OSPRay frame buffer and camera directly
     auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
-        new GLFWOSPRayWindow(vec2i(1024, 768), world, renderer));
+        new GLFWOSPRayWindow(vec2i(1024, 768), world, rendererType));
 
     // start the GLFW main loop, which will continuously render
     glfwOSPRayWindow->mainLoop();

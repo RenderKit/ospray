@@ -27,14 +27,8 @@ static bool g_quitNextFrame = false;
 
 GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
                                    cpp::World world,
-                                   cpp::Renderer renderer,
-                                   OSPFrameBufferFormat fbFormat,
-                                   uint32_t fbChannels)
-    : worldBounds(world.getBounds()),
-      world(world),
-      renderer(renderer),
-      fbFormat(fbFormat),
-      fbChannels(fbChannels)
+                                   const std::string &renderer_type)
+    : renderer(renderer_type), world(world)
 {
   if (activeWindow != nullptr) {
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -118,14 +112,20 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
         }
       });
 
+  if (renderer_type == "scivis")
+    rendererType = OSPRayRendererType::SCIVIS;
+  else if (renderer_type == "pathtracer")
+    rendererType = OSPRayRendererType::PATHTRACER;
+  else
+    rendererType = OSPRayRendererType::OTHER;
+
   // OSPRay setup //
 
   // create the arcball camera model
   arcballCamera = std::unique_ptr<ArcballCamera>(
-      new ArcballCamera(worldBounds, windowSize));
+      new ArcballCamera(world.getBounds(), windowSize));
 
-  // create camera
-  camera = cpp::Camera("perspective");
+  // init camera
   updateCamera();
   camera.commit();
 
@@ -182,7 +182,10 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   windowSize = newWindowSize;
 
   // create new frame buffer
-  framebuffer = cpp::FrameBuffer(windowSize, fbFormat, fbChannels);
+  framebuffer = cpp::FrameBuffer(
+      windowSize,
+      OSP_FB_SRGBA,
+      OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO);
   framebuffer.commit();
 
   // reset OpenGL viewport and orthographic projection
@@ -252,18 +255,59 @@ void GLFWOSPRayWindow::display()
     ImGui::Begin(
         "Tutorial Controls (press 'g' to hide / show)", nullptr, flags);
 
+    ImGui::Checkbox("show albedo", &showAlbedo);
+
+    ImGui::Separator();
+
     static int spp = 1;
     if (ImGui::SliderInt("spp", &spp, 1, 64)) {
       renderer.setParam("spp", spp);
       addObjectToCommit(renderer.handle());
     }
 
-    ImGui::Checkbox("show albedo", &showAlbedo);
+    if (rendererType == OSPRayRendererType::PATHTRACER) {
+      static int maxDepth = 20;
+      if (ImGui::SliderInt("maxDepth", &maxDepth, 1, 64)) {
+        renderer.setParam("maxDepth", maxDepth);
+        addObjectToCommit(renderer.handle());
+      }
+
+      static int rouletteDepth = 1;
+      if (ImGui::SliderInt("rouletteDepth", &rouletteDepth, 1, 64)) {
+        renderer.setParam("rouletteDepth", rouletteDepth);
+        addObjectToCommit(renderer.handle());
+      }
+
+      static float minContribution = 0.001f;
+      if (ImGui::SliderFloat("minContribution", &minContribution, 0.f, 1.f)) {
+        renderer.setParam("minContribution", minContribution);
+        addObjectToCommit(renderer.handle());
+      }
+    } else if (rendererType == OSPRayRendererType::SCIVIS) {
+      static vec3f bgColor(0.f);
+      if (ImGui::ColorEdit3("bgColor", bgColor)) {
+        renderer.setParam("bgColor", bgColor);
+        addObjectToCommit(renderer.handle());
+      }
+
+      static int aoSamples = 1;
+      if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
+        renderer.setParam("aoSamples", aoSamples);
+        addObjectToCommit(renderer.handle());
+      }
+
+      static float aoIntensity = 1.f;
+      if (ImGui::SliderFloat("aoIntensity", &aoIntensity, 0.f, 1.f)) {
+        renderer.setParam("aoIntensity", aoIntensity);
+        addObjectToCommit(renderer.handle());
+      }
+    }
 
     if (uiCallback) {
       ImGui::Separator();
       uiCallback();
     }
+
     ImGui::End();
   }
 
@@ -291,8 +335,7 @@ void GLFWOSPRayWindow::display()
     auto *fb = framebuffer.map(showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
 
     const GLint glFormat = showAlbedo ? GL_RGB : GL_RGBA;
-    const GLenum glType =
-        showAlbedo || fbFormat == OSP_FB_RGBA32F ? GL_FLOAT : GL_UNSIGNED_BYTE;
+    const GLenum glType  = showAlbedo ? GL_FLOAT : GL_UNSIGNED_BYTE;
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
                  0,
