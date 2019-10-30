@@ -238,6 +238,10 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
     }
 
     if (cameraChanged) {
+      if (cancelFrameOnInteraction) {
+        currentFrame.cancel();
+        waitOnOSPRayFrame();
+      }
       updateCamera();
       addObjectToCommit(camera.handle());
     }
@@ -255,6 +259,7 @@ void GLFWOSPRayWindow::display()
     ImGui::Begin(
         "Tutorial Controls (press 'g' to hide / show)", nullptr, flags);
 
+    ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);
     ImGui::Checkbox("show albedo", &showAlbedo);
 
     ImGui::Separator();

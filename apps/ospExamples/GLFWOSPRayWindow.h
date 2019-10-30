@@ -72,6 +72,7 @@ class GLFWOSPRayWindow
   vec2f previousMouse{-1.f};
 
   bool showAlbedo{false};
+  bool cancelFrameOnInteraction{false};
 
   // GLFW window instance
   GLFWwindow *glfwWindow = nullptr;
