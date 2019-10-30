@@ -44,6 +44,11 @@ namespace ospray {
 
     model = (VolumetricModel *)getParamObject("volume");
 
+    if (!model) {
+      throw std::runtime_error(
+          "the 'volume' parameter must be set for isosurfaces");
+    }
+
     if (!isovaluesData->compact()) {
       // get rid of stride
       auto data = new Data(OSP_FLOAT, vec3ui(isovaluesData->size(), 1, 1));
