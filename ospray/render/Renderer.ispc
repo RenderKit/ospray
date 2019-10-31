@@ -33,17 +33,6 @@ void Renderer_default_renderSample(Renderer *uniform self,
                         (sample.sampleID.z << 28));
 }
 
-static unmasked void *uniform
-Renderer_default_beginFrame(Renderer *uniform self, const World *uniform world)
-{
-  return NULL;
-}
-
-static unmasked void Renderer_default_endFrame(Renderer *uniform self,
-                                               void *uniform perFrameData)
-{
-}
-
 unmasked void Renderer_default_renderTile(Renderer *uniform self,
                                           FrameBuffer *uniform fb,
                                           Camera *uniform camera,
@@ -137,8 +126,6 @@ void Renderer_Constructor(uniform Renderer *uniform self, void *uniform cppE)
   self->cppEquivalent = cppE;
   self->renderSample  = Renderer_default_renderSample;
   self->renderTile    = Renderer_default_renderTile;
-  self->beginFrame    = Renderer_default_beginFrame;
-  self->endFrame      = Renderer_default_endFrame;
   Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), NULL);
   precomputedHalton_create();
 }
@@ -166,20 +153,6 @@ export void Renderer_renderTile(void *uniform _self,
   Camera *uniform camera  = (Camera * uniform) _camera;
   World *uniform world    = (World * uniform) _world;
   self->renderTile(self, fb, camera, world, perFrameData, tile, jobID);
-}
-
-export void *uniform Renderer_beginFrame(void *uniform _self,
-                                         void *uniform _world)
-{
-  Renderer *uniform self = (Renderer * uniform) _self;
-  World *uniform world   = (World * uniform) _world;
-  return self->beginFrame(self, world);
-}
-
-export void Renderer_endFrame(void *uniform _self, void *uniform perFrameData)
-{
-  uniform Renderer *uniform self = (uniform Renderer * uniform) _self;
-  self->endFrame(self, perFrameData);
 }
 
 export void Renderer_set(void *uniform _self,
