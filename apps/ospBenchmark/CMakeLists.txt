@@ -17,6 +17,10 @@
 add_executable(ospBenchmark
   ArcballCamera.cpp
   ospBenchmark.cpp
+  BaseFixture.cpp
+
+  benchmarks/CornellBoxSpp.cpp
+  benchmarks/GravitySpheresVolume.cpp
 )
 
 target_link_libraries(ospBenchmark PRIVATE
