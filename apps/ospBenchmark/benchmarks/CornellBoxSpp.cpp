@@ -23,6 +23,9 @@ class CornellBox : public BaseFixture
   CornellBox()
       : BaseFixture(USE_SCIVIS ? "scivis" : "pathtracer", "cornell_box")
   {
+    outputFilename = "CornellBox";
+    outputFilename += "_spp_" + std::to_string(SPP);
+    outputFilename += "_" + rendererType;
   }
 
   void SetRendererParameters(cpp::Renderer r)

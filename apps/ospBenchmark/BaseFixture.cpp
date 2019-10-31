@@ -15,6 +15,10 @@
 // ======================================================================== //
 
 #include "BaseFixture.h"
+// ospcommon
+#include "ospcommon/utility/SaveImage.h"
+
+std::string BaseFixture::dumpFinalImageDir;
 
 BaseFixture::BaseFixture(std::string r, std::string s)
     : rendererType(r), scene(s)
@@ -55,17 +59,20 @@ void BaseFixture::SetUp(::benchmark::State &)
 
 void BaseFixture::TearDown(::benchmark::State &)
 {
+  if (!dumpFinalImageDir.empty() && !outputFilename.empty()) {
+    framebuffer.resetAccumulation();
+    framebuffer.renderFrame(renderer, camera, world);
+
+    auto *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
+    utility::writePPM(dumpFinalImageDir + "/" + outputFilename + ".ppm",
+                      imgSize.x,
+                      imgSize.y,
+                      fb);
+    framebuffer.unmap(fb);
+  }
+
   framebuffer = nullptr;
   renderer    = nullptr;
   camera      = nullptr;
   world       = nullptr;
 }
-
-#if 1
-void BaseFixture::BenchmarkCase(::benchmark::State &state)
-{
-  for (auto _ : state) {
-    framebuffer.renderFrame(renderer, camera, world);
-  }
-}
-#endif

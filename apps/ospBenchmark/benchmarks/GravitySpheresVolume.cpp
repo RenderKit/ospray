@@ -24,6 +24,9 @@ class GravitySpheres : public BaseFixture
       : BaseFixture(USE_SCIVIS ? "scivis" : "pathtracer",
                     "gravity_spheres_volume")
   {
+    outputFilename = "GravitySpheres";
+    outputFilename += "_dim_" + std::to_string(DIM);
+    outputFilename += "_" + rendererType;
   }
 
   void SetBuilderParameters(testing::SceneBuilderHandle scene) override

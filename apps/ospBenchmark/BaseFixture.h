@@ -34,12 +34,14 @@ class BaseFixture : public ::benchmark::Fixture
   void SetUp(::benchmark::State &) override;
   void TearDown(::benchmark::State &) override;
 
-  void BenchmarkCase(::benchmark::State &state) override;
-
   virtual void SetBuilderParameters(testing::SceneBuilderHandle) {}
   virtual void SetRendererParameters(cpp::Renderer) {}
 
+  static std::string dumpFinalImageDir;
+
  protected:
+  std::string outputFilename;
+
   vec2i imgSize{1024, 768};
   std::string rendererType;
   std::string scene;

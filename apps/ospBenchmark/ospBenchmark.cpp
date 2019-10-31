@@ -15,6 +15,8 @@
 // ======================================================================== //
 
 #include "BaseFixture.h"
+// ospcommon
+#include "ospcommon/utility/getEnvVar.h"
 
 // Test init/shutdown cycle time //////////////////////////////////////////////
 
@@ -40,6 +42,9 @@ BENCHMARK(ospInit_ospShutdown)->Unit(benchmark::kMillisecond);
 int main(int argc, char **argv)
 {
   ospInit();
+
+  auto DIR = utility::getEnvVar<std::string>("OSPRAY_BENCHMARK_IMG_DIR");
+  BaseFixture::dumpFinalImageDir = DIR.value_or("");
 
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))
