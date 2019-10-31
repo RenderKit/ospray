@@ -30,6 +30,7 @@
 #include "render/RenderTask.h"
 #include "texture/Texture.h"
 #include "volume/VolumetricModel.h"
+#include "ospray/MPIDistributedDevice.h"
 
 namespace ospray {
 namespace mpi {
@@ -310,13 +311,20 @@ void release(
 {
   int64_t handle = 0;
   cmdBuf >> handle;
-
   ospRelease(state.objects[handle]);
 
-  auto f = state.framebuffers.find(handle);
-  if (f != state.framebuffers.end()) {
-    state.framebuffers.erase(f);
+  // Pass through the framebuffers and see if any have been completely free'd
+  for (auto it = state.framebuffers.begin(); it != state.framebuffers.end();) {
+    OSPObject obj = state.objects[it->first];
+    ManagedObject *m = lookupDistributedObject<ManagedObject>(obj);
+    if (m->useCount() == 1) {
+      ospRelease(state.objects[it->first]);
+      it = state.framebuffers.erase(it);
+    } else {
+      ++it;
+    }
   }
+
 
   // Pass through the data and see if any have been completely free'd
   // i.e., no object depends on them anymore either.
@@ -337,7 +345,6 @@ void retain(
 {
   int64_t handle = 0;
   cmdBuf >> handle;
-
   ospRetain(state.objects[handle]);
 }
 
@@ -361,6 +368,9 @@ void createFramebuffer(
       ospNewFrameBuffer(size.x, size.y, (OSPFrameBufferFormat)format, channels);
   state.framebuffers[handle] =
       FrameBufferInfo(size, (OSPFrameBufferFormat)format, channels);
+
+  // Offload device keeps +1 ref for tracking the lifetime of the framebuffer
+  ospRetain(state.objects[handle]);
 }
 
 void mapFramebuffer(OSPState &state,
