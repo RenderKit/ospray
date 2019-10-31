@@ -46,10 +46,10 @@ class BaseFixture : public ::benchmark::Fixture
   std::string rendererType;
   std::string scene;
 
-  cpp::FrameBuffer framebuffer;
-  cpp::Renderer renderer;
-  cpp::Camera camera;
-  cpp::World world;
+  cpp::FrameBuffer framebuffer{nullptr};
+  cpp::Renderer renderer{nullptr};
+  cpp::Camera camera{nullptr};
+  cpp::World world{nullptr};
 };
 
 #define OSPRAY_DEFINE_BENCHMARK(FixtureName)            \
