@@ -24,14 +24,8 @@
 int main(int argc, const char **av)
 {
   std::vector<const char *> args(av, av + argc);
-
-  auto fnd = std::find_if(args.begin(), args.end(), [](const char *c) {
-    return std::strcmp(c, "--osp:mpi") == 0
-        || std::strcmp(c, "--osp:mpi-listen") == 0;
-  });
-
-  if (fnd == args.end())
-    args.push_back("--osp:mpi");
+  args.push_back("--osp:module:mpi");
+  args.push_back("--osp:device:mpi");
 
   argc = args.size();
   ospInit(&argc, args.data());

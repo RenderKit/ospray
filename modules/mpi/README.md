@@ -92,12 +92,14 @@ MPI Offload Rendering
 
 The `mpi_offload` device can be used to distribute image rendering tasks across
 a cluster without requiring modifications to the application itself. Existing
-applications using OSPRay for local rendering can be passed the `--osp:mpi` flag
-to indicate that the `mpi_offload` device should be used for image-parallel
-rendering. For example, the `ospTutorialBoxes` application can be run as:
+applications using OSPRay for local rendering simply be passed command line
+arguments to load the module and indicate that the `mpi_offload` device should
+be used for image-parallel rendering. To load the module, pass
+`--osp:module:mpi`, to select the MPIOffloadDevice, pass `--osp:device:mpi`.
+For example, the `ospExamples` application can be run as:
 
 ```
-mpirun -n <N> ./ospTutorialBoxes --osp:mpi
+mpirun -n <N> ./ospExamples --osp:module:mpi --osp:device:mpi
 ```
 
 and will automatically distribute the image rendering tasks among the
@@ -110,10 +112,13 @@ and half to rank 2.
 
 If more control is required over the placement of ranks to nodes, or you want
 to run a worker rank on the master node as well you can run the application
-and the `ospray_mpi_worker` program through MPI's MPMD mode:
+and the `ospray_mpi_worker` program through MPI's MPMD mode. The
+`ospray_mpi_worker` will load the MPI module and select the offload device
+by default.
 
 ```
-mpirun -n 1 ./ospTutorialBoxes --osp:mpi : -n <N> ./ospray_mpi_worker
+mpirun -n 1 ./ospTutorialBoxes --osp:module:mpi --osp:device:mpi \
+  : -n <N> ./ospray_mpi_worker
 ```
 
 Finally, you can also run the workers in a server mode on a remote machine
@@ -123,16 +128,18 @@ where the two devices may not be able to connect over MPI. First, launch
 the workers in `mpi-listen` mode:
 
 ```
-mpirun -n <N> ./ospray_mpi_worker --osp:mpi-listen
+mpirun -n <N> ./ospray_mpi_worker --osp:deviceparam mpiMode mpi-listen
 ```
 
 The workers will print out a port number to connect to, e.g.,
 `#osp: Listening on port #####` You can then run your application in the
 `mpi-connect` mode, and pass the host name of the first worker rank and this
-port number:
+port number to the device:
 
 ```
-./ospTutorialBoxes --osp:mpi-connect <worker rank 0 host>:<port>
+./ospTutorialBoxes --osp:module:mpi --osp:device:mpi \
+  --osp:deviceparam mpiMode mpi-connect \
+  --osp:deviceparam host "<worker rank 0 host>:<port>"
 ```
 
 MPI Distributed Rendering
