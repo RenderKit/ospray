@@ -118,6 +118,15 @@ namespace ospray {
             postStatusMsg("<n> argument required for --osp:setaffinity!");
             removeArgs(ac,av,i,1);
           }
+        } else if (parm == "--osp:deviceparam") {
+          if (i + 2 < ac) {
+            device->setParam(av[i + 1], std::string(av[i + 2]));
+            removeArgs(ac, av, i, 3);
+          } else {
+            postStatusMsg("<param name> <param val> arguments required for "
+                          "--osp:deviceparam!");
+            removeArgs(ac,av,i,1);
+          }
         } else {
           ++i;
         }
