@@ -2,7 +2,7 @@
 // Copyright 2018-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
+// you may not use this file excepathtracer in compliance with the License.         //
 // You may obtain a copy of the License at                                  //
 //                                                                          //
 //     http://www.apache.org/licenses/LICENSE-2.0                           //
@@ -35,26 +35,26 @@ class GravitySpheres : public BaseFixture
   }
 };
 
-using GravitySpheres_dim_32_sv  = GravitySpheres<32, true>;
-using GravitySpheres_dim_64_sv  = GravitySpheres<64, true>;
-using GravitySpheres_dim_128_sv = GravitySpheres<128, true>;
-using GravitySpheres_dim_256_sv = GravitySpheres<256, true>;
-using GravitySpheres_dim_512_sv = GravitySpheres<512, true>;
+using GravitySpheres_dim_32_scivis  = GravitySpheres<32, true>;
+using GravitySpheres_dim_64_scivis  = GravitySpheres<64, true>;
+using GravitySpheres_dim_128_scivis = GravitySpheres<128, true>;
+using GravitySpheres_dim_256_scivis = GravitySpheres<256, true>;
+using GravitySpheres_dim_512_scivis = GravitySpheres<512, true>;
 
-OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_32_sv);
-OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_64_sv);
-OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_128_sv);
-OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_256_sv);
-OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_512_sv);
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_32_scivis);
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_64_scivis);
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_128_scivis);
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_256_scivis);
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_512_scivis);
 
-using GravitySpheres_dim_32_pt  = GravitySpheres<32, false>;
-using GravitySpheres_dim_64_pt  = GravitySpheres<64, false>;
-using GravitySpheres_dim_128_pt = GravitySpheres<128, false>;
-using GravitySpheres_dim_256_pt = GravitySpheres<256, false>;
-using GravitySpheres_dim_512_pt = GravitySpheres<512, false>;
+using GravitySpheres_dim_32_pathtracer  = GravitySpheres<32, false>;
+using GravitySpheres_dim_64_pathtracer  = GravitySpheres<64, false>;
+using GravitySpheres_dim_128_pathtracer = GravitySpheres<128, false>;
+using GravitySpheres_dim_256_pathtracer = GravitySpheres<256, false>;
+using GravitySpheres_dim_512_pathtracer = GravitySpheres<512, false>;
 
-OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_32_pt);
-OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_64_pt);
-OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_128_pt);
-OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_256_pt);
-OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_512_pt);
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_32_pathtracer);
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_64_pathtracer);
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_128_pathtracer);
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_256_pathtracer);
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres_dim_512_pathtracer);

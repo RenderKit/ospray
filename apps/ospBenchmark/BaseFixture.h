@@ -53,7 +53,7 @@ class BaseFixture : public ::benchmark::Fixture
 };
 
 #define OSPRAY_DEFINE_BENCHMARK(FixtureName)            \
-  BENCHMARK_DEFINE_F(FixtureName, 1)                    \
+  BENCHMARK_DEFINE_F(FixtureName, )                     \
   (benchmark::State & st)                               \
   {                                                     \
     for (auto _ : st) {                                 \
@@ -61,4 +61,4 @@ class BaseFixture : public ::benchmark::Fixture
     }                                                   \
   }                                                     \
                                                         \
-  BENCHMARK_REGISTER_F(FixtureName, 1)->Unit(benchmark::kMillisecond);
+  BENCHMARK_REGISTER_F(FixtureName, )->Unit(benchmark::kMillisecond);
