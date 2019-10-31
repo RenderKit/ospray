@@ -24,7 +24,7 @@ using namespace ospray;
 using namespace ospcommon;
 using namespace ospcommon::math;
 
-// Test init/shutdown cylcle time //
+// Test init/shutdown cycle time //////////////////////////////////////////////
 
 static void ospInit_ospShutdown(benchmark::State &state)
 {
@@ -42,76 +42,79 @@ BENCHMARK(ospInit_ospShutdown)->Unit(benchmark::kMillisecond);
 
 // Test rendering scenes from 'ospray_testing' ////////////////////////////////
 
-struct RenderingObjects
+class BaseBenchmark : public ::benchmark::Fixture
 {
-  cpp::FrameBuffer f;
-  cpp::Renderer r;
-  cpp::Camera c;
-  cpp::World w;
+ public:
+  BaseBenchmark(std::string r, std::string s) : rendererType(r), scene(s) {}
+
+  void SetUp(::benchmark::State &) override
+  {
+    framebuffer = cpp::FrameBuffer(
+        imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
+    framebuffer.resetAccumulation();
+
+    auto builder = testing::newBuilder(scene);
+    testing::setParam(builder, "rendererType", rendererType);
+    testing::commit(builder);
+
+    world = testing::buildWorld(builder);
+    testing::release(builder);
+
+    world.commit();
+
+    auto worldBounds = world.getBounds();
+
+    ArcballCamera arcballCamera(worldBounds, imgSize);
+
+    camera = cpp::Camera("perspective");
+    camera.setParam("aspect", imgSize.x / (float)imgSize.y);
+    camera.setParam("position", arcballCamera.eyePos());
+    camera.setParam("direction", arcballCamera.lookDir());
+    camera.setParam("up", arcballCamera.upDir());
+    camera.commit();
+
+    renderer = cpp::Renderer(rendererType);
+    renderer.commit();
+  }
+
+  void BenchmarkCase(::benchmark::State &state) override
+  {
+    for (auto _ : state) {
+      framebuffer.renderFrame(renderer, camera, world);
+    }
+  }
+
+ protected:
+  vec2i imgSize{1024, 768};
+  std::string rendererType;
+  std::string scene;
+
+  cpp::FrameBuffer framebuffer;
+  cpp::Renderer renderer;
+  cpp::Camera camera;
+  cpp::World world;
 };
 
-static RenderingObjects construct_test(std::string rendererType,
-                                       std::string scene,
-                                       vec2i imgSize = vec2i(1024, 768))
+class GravitySpheres : public BaseBenchmark
 {
-  // Frame buffer //
+ public:
+  GravitySpheres() : BaseBenchmark("pathtracer", "gravity_spheres_volume") {}
+};
 
-  cpp::FrameBuffer fb(
-      imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
-  fb.resetAccumulation();
-
-  // Scene //
-
-  auto builder = testing::newBuilder(scene);
-  testing::setParam(builder, "rendererType", rendererType);
-  testing::commit(builder);
-
-  auto world = testing::buildWorld(builder);
-  testing::release(builder);
-
-  world.commit();
-
-  auto worldBounds = world.getBounds();
-
-  // Camera //
-
-  ArcballCamera arcballCamera(worldBounds, imgSize);
-
-  cpp::Camera camera("perspective");
-  camera.setParam("aspect", imgSize.x / (float)imgSize.y);
-  camera.setParam("position", arcballCamera.eyePos());
-  camera.setParam("direction", arcballCamera.lookDir());
-  camera.setParam("up", arcballCamera.upDir());
-  camera.commit();
-
-  // Renderer //
-
-  cpp::Renderer renderer(rendererType);
-  renderer.commit();
-
-  return {fb, renderer, camera, world};
-}
-
-void gravity_spheres_scivis(benchmark::State &state)
+BENCHMARK_DEFINE_F(GravitySpheres, gravity_spheres_pathtracer)
+(benchmark::State &st)
 {
-  auto objs = construct_test("scivis", "gravity_spheres_volume");
-
-  for (auto _ : state) {
-    objs.f.renderFrame(objs.r, objs.c, objs.w);
+  for (auto _ : st) {
+    framebuffer.renderFrame(renderer, camera, world);
   }
 }
 
-void gravity_spheres_pathtracer(benchmark::State &state)
-{
-  auto objs = construct_test("pathtracer", "gravity_spheres_volume");
+BENCHMARK_REGISTER_F(GravitySpheres, gravity_spheres_pathtracer)
+    ->Unit(benchmark::kMillisecond);
 
-  for (auto _ : state) {
-    objs.f.renderFrame(objs.r, objs.c, objs.w);
-  }
-}
-
-BENCHMARK(gravity_spheres_scivis)->Unit(benchmark::kMillisecond);
-BENCHMARK(gravity_spheres_pathtracer)->Unit(benchmark::kMillisecond);
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
