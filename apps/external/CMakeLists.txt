@@ -20,9 +20,8 @@ endif()
 
 ospray_disable_compiler_warnings()
 
-if (OSPRAY_ENABLE_TESTING)
-  include(cmake/configure_gtest.cmake)
-endif()
+include(configure_benchmark.cmake)
+include(configure_gtest.cmake)
 
 add_subdirectory(imgui)
 add_subdirectory(stb_image)

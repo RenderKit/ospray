@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2019 Intel Corporation                                    ##
+## Copyright 2018-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,8 +14,19 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-# Support libs/apps
-subdirs(external ospray_testing utility)
+add_executable(ospBenchmark
+  ArcballCamera.cpp
+  ospBenchmark.cpp
+)
 
-# Main applications
-subdirs(ospTutorial ospExamples ospTestSuite ospBenchmark)
+target_link_libraries(ospBenchmark PRIVATE
+  ospcommon::ospcommon
+  ospray
+  ospray_testing
+  benchmark
+)
+
+install(TARGETS ospBenchmark
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)
