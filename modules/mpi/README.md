@@ -139,7 +139,7 @@ port number to the device:
 ```
 ./ospTutorialBoxes --osp:module:mpi --osp:device:mpi \
   --osp:deviceparam mpiMode mpi-connect \
-  --osp:deviceparam host "<worker rank 0 host>:<port>"
+  --osp:deviceparam host <worker rank 0 host>:<port>
 ```
 
 MPI Distributed Rendering
