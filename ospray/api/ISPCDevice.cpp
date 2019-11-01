@@ -41,6 +41,8 @@
 #include <map>
 // openvkl
 #include "openvkl/openvkl.h"
+// ospcommon
+#include "ospcommon/tasking/tasking_system_init.h"
 
 #include "ISPCDevice_ispc.h"
 
@@ -170,6 +172,8 @@ namespace ospray {
       Device::commit();
 
       TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
+
+      tasking::initTaskingSystem(numThreads, true);
 
       if (!embreeDevice) {
         // -------------------------------------------------------

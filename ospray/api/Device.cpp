@@ -162,9 +162,7 @@ namespace ospray {
       std::stringstream embreeConfig;
 
       if (device.debugMode)
-        embreeConfig << " threads=1,verbose=2";
-      else if(device.numThreads > 0)
-        embreeConfig << " threads=" << device.numThreads;
+        embreeConfig << " verbose=2";
 
       if (device.threadAffinity == api::Device::AFFINITIZE)
         embreeConfig << ",set_affinity=1";
