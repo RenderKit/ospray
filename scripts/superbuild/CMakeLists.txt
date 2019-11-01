@@ -51,6 +51,8 @@ else()
   set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
 endif()
 
+option(ALWAYS_REBUILD "Force every project to always be rebuilt?" OFF)
+
 option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
 
 set(BUILD_OSPCOMMON_VERSION "1.0.1" CACHE STRING "Which version of ospcommon to build?")
