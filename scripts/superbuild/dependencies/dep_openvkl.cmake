@@ -27,7 +27,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  URL "https://github.com/openvkl/openvkl/archive/v${BUILD_OPENVKL_VERSION}.zip"
+  URL "https://github.com/openvkl/openvkl/archive/${BUILD_OPENVKL_VERSION}.zip"
   CMAKE_ARGS
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
