@@ -21,8 +21,6 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
 endif()
 
-set(EMBREE_PATH "${COMPONENT_PATH}")
-
 if (BUILD_EMBREE_FROM_SOURCE)
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}
@@ -30,8 +28,9 @@ if (BUILD_EMBREE_FROM_SOURCE)
     STAMP_DIR ${COMPONENT_NAME}/stamp
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
-    URL "https://github.com/embree/embree/archive/v${BUILD_EMBREE_VERSION}.zip"
+    URL "https://github.com/embree/embree/archive/${BUILD_EMBREE_VERSION}.zip"
     CMAKE_ARGS
+      -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
       -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
@@ -45,24 +44,24 @@ if (BUILD_EMBREE_FROM_SOURCE)
       -DCMAKE_BUILD_TYPE=Release
       -DBUILD_TESTING=OFF
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
-    BUILD_ALWAYS OFF
+    BUILD_ALWAYS ${ALWAYS_REBUILD}
   )
-
-  set(EMBREE_PATH "${EMBREE_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/embree-${BUILD_EMBREE_VERSION}")
 
   ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
   configure
-    $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:tbb>
+    ospcommon
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
   )
 
 else()
+  string(REPLACE "v" "" EMBREE_VERSION_NUMBER ${BUILD_EMBREE_VERSION})
+
   if (APPLE)
-    set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${BUILD_EMBREE_VERSION}/embree-${BUILD_EMBREE_VERSION}.x86_64.macosx.tar.gz")
+    set(EMBREE_URL "https://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.tar.gz")
   elseif (WIN32)
-    set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${BUILD_EMBREE_VERSION}/embree-${BUILD_EMBREE_VERSION}.x64.vc14.windows.zip")
+    set(EMBREE_URL "https://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x64.vc14.windows.zip")
   else()
-    set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${BUILD_EMBREE_VERSION}/embree-${BUILD_EMBREE_VERSION}.x86_64.linux.tar.gz")
+    set(EMBREE_URL "https://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.linux.tar.gz")
   endif()
 
   ExternalProject_Add(${COMPONENT_NAME}
@@ -79,4 +78,7 @@ else()
       ${COMPONENT_PATH}
     BUILD_ALWAYS OFF
   )
+
 endif()
+
+list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})

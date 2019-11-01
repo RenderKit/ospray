@@ -37,7 +37,7 @@ ospray_configure_compiler()
 ###########################################################
 
 # ospcommon
-find_package(ospcommon REQUIRED)
+find_package(ospcommon 1.1.0 REQUIRED)
 
 # embree
 ospray_find_embree(${EMBREE_VERSION_REQUIRED})
