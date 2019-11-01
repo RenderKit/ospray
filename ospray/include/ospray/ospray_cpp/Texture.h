@@ -24,6 +24,7 @@ namespace ospray {
     class Texture : public ManagedObject<OSPTexture, OSP_TEXTURE>
     {
      public:
+      Texture(const std::string &type);
       Texture(const Texture &copy);
       Texture(OSPTexture existing = nullptr);
     };
@@ -32,6 +33,11 @@ namespace ospray {
                   "cpp::Texture can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
+
+    inline Texture::Texture(const std::string &type)
+    {
+      ospObject = ospNewTexture(type.c_str());
+    }
 
     inline Texture::Texture(const Texture &copy)
         : ManagedObject<OSPTexture, OSP_TEXTURE>(copy.handle())

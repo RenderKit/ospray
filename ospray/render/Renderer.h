@@ -110,4 +110,15 @@ namespace ospray {
   OSP_REGISTER_OBJECT(                                      \
       ::ospray::Renderer, renderer, InternalClass, external_name)
 
+  // Inlined definitions //////////////////////////////////////////////////////
+
+  inline void *Renderer::beginFrame(FrameBuffer *, World *)
+  {
+    return nullptr;
+  }
+
+  inline void Renderer::endFrame(FrameBuffer *, void *)
+  {
+  }
+
 }  // namespace ospray

@@ -14,13 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_subdirectory(external)
-add_subdirectory(ospray_testing)
-add_subdirectory(utility)
+# Support libs/apps
+subdirs(external ospray_testing utility)
 
-if (OSPRAY_ENABLE_TESTING)
-  add_subdirectory(ospray_test_suite)
-endif()
-
-add_subdirectory(ospTutorial)
-add_subdirectory(ospExamples)
+# Main applications
+subdirs(ospTutorial ospExamples ospTestSuite ospBenchmark)

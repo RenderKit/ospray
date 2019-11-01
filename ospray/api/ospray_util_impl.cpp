@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/ospray_util.h"
 #include "ospray/ospray_cpp.h"
+#include "ospray/ospray_util.h"
 
 extern "C" {
 
@@ -159,8 +159,12 @@ void ospSetObjectAsData(OSPObject o,
                         OSPDataType type,
                         OSPObject p)
 {
-  ospray::cpp::Data data(1, type, &p);
-  ospSetObject(o, n, data.handle());
+  OSPData tmp  = ospNewSharedData(&p, type, 1);
+  OSPData data = ospNewData(type, 1);
+  ospCopyData(tmp, data);
+  ospSetParam(o, n, OSP_DATA, &data);
+  ospRelease(tmp);
+  ospRelease(data);
 }
 
 // Rendering helpers //////////////////////////////////////////////////////////

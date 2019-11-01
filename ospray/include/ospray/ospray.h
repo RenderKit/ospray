@@ -139,7 +139,8 @@ extern "C" {
      equivalent to doing ospNewDevice() followed by ospSetCurrentDevice()
 
      returns OSPError value to report any errors during initialization */
-  OSPRAY_INTERFACE OSPError ospInit(int *argc, const char **argv);
+  OSPRAY_INTERFACE OSPError ospInit(int *argc OSP_DEFAULT_VAL(NULL),
+                                    const char **argv OSP_DEFAULT_VAL(NULL));
 
   // returns the OSPRay Version in use by the device
   OSPRAY_INTERFACE int64_t ospDeviceGetProperty(OSPDevice, OSPDeviceProperty);

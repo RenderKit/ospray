@@ -55,8 +55,7 @@ namespace ospray {
       std::vector<vec4f> s_colors(numSpheres);
 
       // create random number distributions for sphere center, radius, and color
-      std::random_device rd;
-      std::mt19937 gen(rd());
+      std::mt19937 gen(randomSeed);
 
       std::uniform_real_distribution<float> centerDistribution(-1.f, 1.f);
       std::uniform_real_distribution<float> radiusDistribution(0.05f, 0.15f);
