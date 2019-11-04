@@ -14,9 +14,4 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_executable(ospConvertRawToAMR ospConvertRawToAMR.cpp)
-target_link_libraries(ospConvertRawToAMR PRIVATE raw_to_amr)
-install(TARGETS ospConvertRawToAMR
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
-)
+subdirs(arcball_camera external ospray_testing raw_to_amr)

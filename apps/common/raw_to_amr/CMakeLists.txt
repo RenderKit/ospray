@@ -14,9 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_executable(ospConvertRawToAMR ospConvertRawToAMR.cpp)
-target_link_libraries(ospConvertRawToAMR PRIVATE raw_to_amr)
-install(TARGETS ospConvertRawToAMR
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
-)
+add_library(raw_to_amr STATIC rawToAMR.cpp)
+target_link_libraries(raw_to_amr PUBLIC ospcommon::ospcommon)
+target_include_directories(raw_to_amr INTERFACE ${CMAKE_CURRENT_LIST_DIR})

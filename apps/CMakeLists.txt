@@ -15,7 +15,7 @@
 ## ======================================================================== ##
 
 # Support libs/apps
-subdirs(external ospray_testing utility)
+add_subdirectory(common)
 
 # Main applications
-subdirs(ospTutorial ospExamples ospTestSuite ospBenchmark)
+subdirs(ospTutorial ospExamples ospTestSuite ospBenchmark utility)

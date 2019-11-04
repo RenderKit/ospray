@@ -15,7 +15,6 @@
 ## ======================================================================== ##
 
 add_executable(ospBenchmark
-  ArcballCamera.cpp
   ospBenchmark.cpp
   BaseFixture.cpp
 
@@ -23,11 +22,11 @@ add_executable(ospBenchmark
   benchmarks/GravitySpheresVolume.cpp
 )
 
-target_link_libraries(ospBenchmark PRIVATE
-  ospcommon::ospcommon
-  ospray
-  ospray_testing
+target_link_libraries(ospBenchmark
+PRIVATE
+  arcball_camera
   benchmark
+  ospray_testing
 )
 
 install(TARGETS ospBenchmark

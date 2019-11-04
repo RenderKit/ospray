@@ -14,9 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_executable(ospConvertRawToAMR ospConvertRawToAMR.cpp)
-target_link_libraries(ospConvertRawToAMR PRIVATE raw_to_amr)
-install(TARGETS ospConvertRawToAMR
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
-)
+add_library(arcball_camera STATIC ArcballCamera.cpp)
+target_link_libraries(arcball_camera PUBLIC ospcommon::ospcommon)
+target_include_directories(arcball_camera INTERFACE ${CMAKE_CURRENT_LIST_DIR})

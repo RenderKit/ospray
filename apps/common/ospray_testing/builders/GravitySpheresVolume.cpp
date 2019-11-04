@@ -21,8 +21,8 @@
 #include <vector>
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
-// apps/utility
-#include "../../utility/rawToAMR.h"
+// raw_to_amr
+#include "rawToAMR.h"
 
 using namespace ospcommon;
 using namespace ospcommon::math;
