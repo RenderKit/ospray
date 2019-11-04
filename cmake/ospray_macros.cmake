@@ -33,6 +33,16 @@ macro(get_subdirectories result curdir)
   set(${result} ${dirlist})
 endmacro()
 
+## Get all subdirectories and call add_subdirectory() if it has a CMakeLists.txt
+macro(add_all_subdirectories)
+  file(GLOB dirs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/ *)
+  foreach(dir ${dirs})
+    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/CMakeLists.txt)
+      add_subdirectory(${dir})
+    endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/CMakeLists.txt)
+  endforeach(dir ${dirs})
+endmacro()
+
 ## Setup CMAKE_BUILD_TYPE to have a default + cycle between options in UI
 macro(ospray_configure_build_type)
   set(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")

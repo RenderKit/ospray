@@ -14,4 +14,4 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-subdirs(arcball_camera external ospray_testing raw_to_amr)
+add_all_subdirectories()

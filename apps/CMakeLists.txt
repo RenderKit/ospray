@@ -14,8 +14,4 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-# Support libs/apps
-add_subdirectory(common)
-
-# Main applications
-subdirs(ospTutorial ospExamples ospTestSuite ospBenchmark utility)
+add_all_subdirectories()
