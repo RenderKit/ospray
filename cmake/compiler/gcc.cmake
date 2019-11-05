@@ -14,8 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_CXX_FLAGS
-    "-fPIC -fno-strict-aliasing -Wno-narrowing -Wno-unknown-pragmas")
+set(OSPRAY_CXX_FLAGS "-fno-strict-aliasing -Wno-narrowing -Wno-unknown-pragmas")
 
 if(OSPRAY_STRICT_BUILD)
   # Should try to fix and remove...

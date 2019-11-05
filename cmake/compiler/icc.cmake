@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_CXX_FLAGS "-fPIC -fno-strict-aliasing -no-ansi-alias -DNOMINMAX -Wno-unknown-pragmas")
+set(OSPRAY_CXX_FLAGS "-fno-strict-aliasing -no-ansi-alias -Wno-unknown-pragmas")
 
 if (OSPRAY_STRICT_BUILD)
   set(OSPRAY_CXX_FLAGS "-Wall ${OSPRAY_CXX_FLAGS}")
