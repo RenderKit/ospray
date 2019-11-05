@@ -52,18 +52,6 @@ prefixed by convention with "`--osp:`") are understood:
   `--osp:module:<name>`      load a module during initialization; equivalent to
                              calling `ospLoadModule(name)`
 
-  `--osp:mpi`                enables MPI mode for parallel rendering with the
-                             `mpi_offload` device, to be used in conjunction with
-                             `mpirun`; this will automatically load the "mpi"
-                             module if it is not yet loaded or linked
-
-  `--osp:mpi-offload`        same as `--osp:mpi`
-
-  `--osp:mpi-distributed`    same as `--osp:mpi`, but will create an
-                             `mpi_distributed` device instead; Note that this
-                             will likely require application changes to work
-                             properly
-
   `--osp:logoutput <dst>`    convenience for setting where status messages go;
                              valid values for `dst` are `cerr` and `cout`
 
