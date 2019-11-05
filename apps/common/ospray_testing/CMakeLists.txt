@@ -31,6 +31,7 @@ add_library(ospray_testing SHARED
   builders/Streamlines.cpp
   builders/SubdivisionCube.cpp
   builders/UnstructuredVolume.cpp
+  builders/OldCurves.cpp
 
   # regression test scenes
   builders/test_pt_glass.cpp

@@ -16,10 +16,12 @@
 
 #include "Builder.h"
 #include "ospray_testing.h"
+#include <iostream>
 // stl
 #include <random>
 
 using namespace ospcommon::math;
+using namespace std;
 
 namespace ospray {
   namespace testing {
@@ -29,93 +31,86 @@ namespace ospray {
       Curves()           = default;
       ~Curves() override = default;
 
+      void commit() override;
+
       cpp::Group buildGroup() const override;
 
-     private:
-      void kleinBottle(std::vector<vec4f> &points,
-                       std::vector<unsigned int> &indices,
-                       std::vector<vec4f> &colors) const;
-      void embreeTutorialCurve(std::vector<vec4f> &points,
-                               std::vector<unsigned int> &indices,
-                               std::vector<vec4f> &colors) const;
+      cpp::World buildWorld() const override;
+
+      std::string curveBasis;
     };
 
-    // Inlined definitions ////////////////////////////////////////////////////
+    static std::vector<vec4f> points = {
+      {-1.0f, 0.0f, -2.f, 0.2f},
+      {0.0f, -1.0f, 0.0f, 0.2f},
+      {1.0f, 0.0f, 2.f, 0.2f},
+      {-1.0f, 0.0f, 2.f, 0.2f},
+      {0.0f, 1.0f, 0.0f, 0.6f},
+      {1.0f, 0.0f, -2.f, 0.2f},
+      {-1.0f, 0.0f, -2.f, 0.2f},
+      {0.0f, -1.0f, 0.0f, 0.2f},
+      {1.0f, 0.0f, 2.f, 0.2f}
+    };
+    static std::vector<vec3f> points3f = {
+      {-1.0f, 0.0f, -2.f},
+      {0.0f, -1.0f, 0.0f},
+      {1.0f, 0.0f, 2.f},
+      {-1.0f, 0.0f, 2.f},
+      {0.0f, 1.0f, 0.0f},
+      {1.0f, 0.0f, -2.f},
+      {-1.0f, 0.0f, -2.f},
+      {0.0f, -1.0f, 0.0f},
+      {1.0f, 0.0f, 2.f}
+    };
+    static std::vector<vec4f> colors = {
+      {1.0f, 0.0f, 0.0f, 0.0f},
+      {1.0f, 1.0f, 0.0f, 0.0f},
+      {0.0f, 1.0f, 0.0f, 0.0f},
+      {0.0f, 1.0f, 1.0f, 0.0f},
+      {0.0f, 0.0f, 1.0f, 0.0f},
+      {1.0f, 0.0f, 1.0f, 0.0f},
+      {0.0f, 1.0f, 1.0f, 0.0f},
+      {0.0f, 0.0f, 1.0f, 0.0f},
+      {1.0f, 0.0f, 1.0f, 0.0f}
+    };
+    static std::vector<unsigned int> indices = {0, 1, 2, 3, 4, 5};
 
-    void Curves::kleinBottle(std::vector<vec4f> &points,
-                             std::vector<unsigned int> &indices,
-                             std::vector<vec4f> &colors) const
+    void Curves::commit()
     {
-      // spout
-      points.push_back(vec4f(0.0f, 0.0f, 0.0f, 0.1f));
-      points.push_back(vec4f(0.0f, 1.5f, 0.0f, 0.05f));
-      points.push_back(vec4f(-.3f, 1.65f, 0.0f, 0.05f));
-      points.push_back(vec4f(-.6f, 1.5f, 0.0f, 0.1f));
-      // handle
-      points.push_back(vec4f(-.3f, 0.0f, 0.0f, 0.1f));
-      // base
-      points.push_back(vec4f(0.0f, -.5f, 0.0f, 0.3f));
-      points.push_back(vec4f(0.0f, -.65f, 0.0f, 0.3f));
-      points.push_back(vec4f(0.0f, 0.0f, 0.0f, 0.3f));
-      points.push_back(vec4f(0.0f, 0.0f, 0.0f, 0.3f));
-      // neck
-      points.push_back(vec4f(0.0f, 1.5f, 0.0f, 0.05));
-      points.push_back(vec4f(-.3f, 1.65f, 0.0f, 0.05f));
+      Builder::commit();
 
-      for (int i = 0; i < 8; i++) {
-        indices.push_back(i);
-        colors.push_back(vec4f(1.0f, 0.0f, 0.0f, 0.0f));
-      }
-    }
-
-    // from Embree's curve_geometry tutorial
-    void Curves::embreeTutorialCurve(std::vector<vec4f> &points,
-                                     std::vector<unsigned int> &indices,
-                                     std::vector<vec4f> &colors) const
-    {
-      points.push_back(vec4f(-1.0f, 0.0f, -2.f, 0.2f));
-      points.push_back(vec4f(0.0f, -1.0f, 0.0f, 0.2f));
-      points.push_back(vec4f(1.0f, 0.0f, 2.f, 0.2f));
-      points.push_back(vec4f(-1.0f, 0.0f, 2.f, 0.2f));
-      points.push_back(vec4f(0.0f, 1.0f, 0.0f, 0.6f));
-      points.push_back(vec4f(1.0f, 0.0f, -2.f, 0.2f));
-      points.push_back(vec4f(-1.0f, 0.0f, -2.f, 0.2f));
-      points.push_back(vec4f(0.0f, -1.0f, 0.0f, 0.2f));
-      points.push_back(vec4f(1.0f, 0.0f, 2.f, 0.2f));
-
-      indices.push_back(0);
-      indices.push_back(1);
-      indices.push_back(2);
-      indices.push_back(3);
-      indices.push_back(4);
-      indices.push_back(5);
-
-      colors.push_back(vec4f(1.0f, 0.0f, 0.0f, 0.0f));
-      colors.push_back(vec4f(1.0f, 1.0f, 0.0f, 0.0f));
-      colors.push_back(vec4f(0.0f, 1.0f, 0.0f, 0.0f));
-      colors.push_back(vec4f(0.0f, 1.0f, 1.0f, 0.0f));
-      colors.push_back(vec4f(0.0f, 0.0f, 1.0f, 0.0f));
-      colors.push_back(vec4f(1.0f, 0.0f, 1.0f, 0.0f));
+      curveBasis = getParam<std::string>("curveBasis", "bspline");
     }
 
     cpp::Group Curves::buildGroup() const
     {
+      std::vector<cpp::GeometricModel> geometricModels;
+      
       cpp::Geometry geom("curves");
 
-      geom.setParam("type", int(OSP_ROUND));
-      geom.setParam("basis", int(OSP_BSPLINE));
-
-      std::vector<vec4f> points;
-      std::vector<unsigned int> indices;
-      std::vector<vec4f> colors;
-
-#if 0
-      kleinBottle(points, indices, colors);
-#else
-      embreeTutorialCurve(points, indices, colors);
-#endif
-
-      geom.setParam("vertex.position", cpp::Data(points));
+      if(curveBasis == "hermite") {
+        geom.setParam("type", int(OSP_ROUND));
+        geom.setParam("basis", int(OSP_HERMITE));
+        std::vector<vec4f> tangents;
+        for(auto iter = points.begin(); iter != points.end() - 1; ++iter) {
+          const vec4f pointTangent = *(iter+1) - *iter;
+          tangents.push_back(pointTangent);
+        }
+        geom.setParam("vertex.position", cpp::Data(points));
+        geom.setParam("vertex.tangent", cpp::Data(tangents));
+      } else if (curveBasis == "catmull-rom") {
+        geom.setParam("type", int(OSP_ROUND));
+        geom.setParam("basis", int(OSP_CATMULL_ROM));
+        geom.setParam("vertex.position", cpp::Data(points));
+      } else if (curveBasis == "streamlines") {
+        geom.setParam("radius", 0.1f);
+        geom.setParam("vertex.position", cpp::Data(points));
+      } else {
+        geom.setParam("type", int(OSP_ROUND));
+        geom.setParam("basis", int(OSP_BSPLINE));
+        geom.setParam("vertex.position", cpp::Data(points));
+     }
+      geom.setParam("vertex.color", cpp::Data(colors));
       geom.setParam("index", cpp::Data(indices));
       geom.commit();
 
@@ -125,7 +120,6 @@ namespace ospray {
 
       cpp::GeometricModel model(geom);
       model.setParam("material", cpp::Data(mat));
-      model.setParam("color", cpp::Data(colors));
       model.commit();
 
       cpp::Group group;
@@ -134,6 +128,24 @@ namespace ospray {
       group.commit();
 
       return group;
+    }
+
+    cpp::World Curves::buildWorld() const {
+    
+      cpp::World world;
+      auto group = buildGroup();
+
+      cpp::Instance inst(group);
+      inst.commit();
+
+      world.setParam("instance", cpp::Data(inst));
+
+      cpp::Light light("ambient");
+      light.commit();
+
+      world.setParam("light", cpp::Data(light));
+
+      return world;
     }
 
     OSP_REGISTER_TESTING_BUILDER(Curves, curves);

@@ -35,7 +35,13 @@ static const std::vector<std::string> g_scenes = {"boxes",
                                                   "random_spheres",
                                                   "streamlines",
                                                   "subdivision_cube",
-                                                  "unstructured_volume"};
+                                                  "unstructured_volume",
+                                                  "oldCurves"};
+
+static const std::vector<std::string> g_curveBasis = {"bspline",
+                                                      "hermite",
+                                                      "catmull-rom",
+                                                      "streamlines"};
 
 static const std::vector<std::string> g_renderers = {
     "scivis", "pathtracer", "raycast"};
@@ -45,6 +51,13 @@ bool sceneUI_callback(void *, int index, const char **out_text)
   *out_text = g_scenes[index].c_str();
   return true;
 }
+
+bool curveBasisUI_callback(void *, int index, const char **out_text)
+{
+  *out_text = g_curveBasis[index].c_str();
+  return true;
+}
+
 
 bool rendererUI_callback(void *, int index, const char **out_text)
 {
@@ -397,6 +410,18 @@ void GLFWOSPRayWindow::buildUI()
     refreshScene(true);
   }
 
+  if(scene == "curves") {
+    static int whichCurveBasis = 0;
+    if (ImGui::Combo("curveBasis##whichCurveBasis",
+                     &whichCurveBasis,
+                     curveBasisUI_callback,
+                     nullptr,
+                     g_curveBasis.size())) {
+      curveBasis = g_curveBasis[whichCurveBasis];
+      refreshScene(true);
+    }
+  }
+
   static int whichRenderer = 0;
   if (ImGui::Combo("renderer##whichRenderer",
                    &whichRenderer,
@@ -484,6 +509,9 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
 {
   auto builder = testing::newBuilder(scene);
   testing::setParam(builder, "rendererType", rendererTypeStr);
+  if(scene == "curves") {
+    testing::setParam(builder, "curveBasis", curveBasis);
+  }
   testing::commit(builder);
 
   world = testing::buildWorld(builder);

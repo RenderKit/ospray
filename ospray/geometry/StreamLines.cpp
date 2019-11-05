@@ -133,6 +133,6 @@ namespace ospray {
     return retval;
   }
 
-  OSP_REGISTER_GEOMETRY(StreamLines, streamlines);
+  OSP_REGISTER_GEOMETRY(StreamLines, dfg);
 
 }  // namespace ospray

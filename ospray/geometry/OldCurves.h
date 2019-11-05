@@ -20,10 +20,10 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE Curves : public Geometry
+  struct OSPRAY_SDK_INTERFACE OldCurves : public Geometry
   {
-    Curves() = default;
-    virtual ~Curves() override = default;
+    OldCurves() = default;
+    virtual ~OldCurves() override = default;
     virtual std::string toString() const override;
 
     virtual void commit() override;
@@ -33,19 +33,15 @@ namespace ospray {
     LiveGeometry createEmbreeGeometry() override;
 
    protected:
-    Ref<const Data> vertexData;
+    Ref<const DataT<vec4f>> vertexData;
     Ref<const DataT<uint32_t>> indexData;
     Ref<const DataT<vec3f>> normalData;
-    Ref<const DataT<vec4f>> tangentData;
-    Ref<const DataT<vec4f>> colorData;
-    
-    float radius{0.01};
+    Ref<const DataT<vec3f>> tangentData;
 
     RTCGeometryType embreeCurveType;
 
     OSPCurveType curveType{OSP_UNKNOWN_CURVE_TYPE};
     OSPCurveBasis curveBasis{OSP_UNKNOWN_CURVE_BASIS};
-
   };
 
 }  // namespace ospray

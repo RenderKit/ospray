@@ -90,6 +90,8 @@ class GLFWOSPRayWindow
 
   std::string scene{"boxes"};
 
+  std::string curveBasis{"bspline"};
+
   OSPRayRendererType rendererType{OSPRayRendererType::SCIVIS};
   std::string rendererTypeStr{"scivis"};
 

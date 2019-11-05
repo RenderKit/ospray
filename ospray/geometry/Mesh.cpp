@@ -15,62 +15,80 @@
 // ======================================================================== //
 
 // ospray
-#include "TriangleMesh.h"
+#include "Mesh.h"
 #include "../include/ospray/ospray.h"
 #include "common/World.h"
 // ispc exports
 #include <cmath>
-#include "TriangleMesh_ispc.h"
+#include "Mesh_ispc.h"
 
 namespace ospray {
 
-  std::string TriangleMesh::toString() const
+  std::string Mesh::toString() const
   {
-    return "ospray::TriangleMesh";
+    return "ospray::Mesh";
   }
 
-  void TriangleMesh::commit()
+  void Mesh::commit()
   {
     vertexData = getParamDataT<vec3f>("vertex.position", true);
     normalData = getParamDataT<vec3f>("vertex.normal");
     colorData = getParam<Data *>("vertex.color");
     texcoordData = getParamDataT<vec2f>("vertex.texcoord");
-    indexData = getParamDataT<vec3ui>("index", true);
-
+    indexData = getParam<Data *>("index");
     postCreationInfo(vertexData->size());
   }
 
-  size_t TriangleMesh::numPrimitives() const
+  size_t Mesh::numPrimitives() const
   {
     return indexData ? indexData->size() : 0;
   }
 
-  LiveGeometry TriangleMesh::createEmbreeGeometry()
+  LiveGeometry Mesh::createEmbreeGeometry()
   {
-    auto embreeGeo =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_TRIANGLE);
-
+    RTCGeometry embreeGeo;
+    if (indexData->type == OSP_VEC3UI) {
+        embreeGeo = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_TRIANGLE);
+        rtcSetSharedGeometryBuffer(embreeGeo,
+            RTC_BUFFER_TYPE_INDEX,
+            0,
+            RTC_FORMAT_UINT3,
+            indexData->data(),
+            0,
+            sizeof(vec3ui),
+            indexData->size());
+    } else {
+        embreeGeo = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_QUAD);
+        rtcSetSharedGeometryBuffer(embreeGeo,
+            RTC_BUFFER_TYPE_INDEX,
+            0,
+            RTC_FORMAT_UINT4,
+            indexData->data(),
+            0,
+            sizeof(vec4ui),
+            indexData->size());
+    }
     setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_VERTEX, vertexData);
-    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexData);
-
     rtcCommitGeometry(embreeGeo);
 
     LiveGeometry retval;
     retval.embreeGeometry = embreeGeo;
 
-    retval.ispcEquivalent = ispc::TriangleMesh_create(this);
+    retval.ispcEquivalent = ispc::Mesh_create(this);
 
-    ispc::TriangleMesh_set(retval.ispcEquivalent,
+    ispc::Mesh_set(retval.ispcEquivalent,
         ispc(indexData),
         ispc(vertexData),
         ispc(normalData),
         ispc(colorData),
         ispc(texcoordData),
-        colorData && colorData->type == OSP_VEC4F);
+        colorData && colorData->type == OSP_VEC4F,
+        indexData->type == OSP_VEC3UI);
 
     return retval;
   }
 
-  OSP_REGISTER_GEOMETRY(TriangleMesh, xyz);
+  OSP_REGISTER_GEOMETRY(Mesh, quads);
+  OSP_REGISTER_GEOMETRY(Mesh, triangles);
 
 }  // namespace ospray

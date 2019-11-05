@@ -17,12 +17,12 @@
 #undef NDEBUG
 
 // ospray
-#include "Curves.h"
+#include "OldCurves.h"
 #include "common/Data.h"
 #include "common/World.h"
 // ispc-generated files
-#include "Curves_ispc.h"
-#include "ospcommon/utility/DataView.h"
+#include "OldCurves_ispc.h"
+
 #include <map>
 
 namespace ospray {
@@ -42,112 +42,70 @@ namespace ospray {
 
           {{OSP_ROUND,  OSP_HERMITE}, RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE},
           {{OSP_FLAT,   OSP_HERMITE}, RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE},
-          {{OSP_RIBBON, OSP_HERMITE}, RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE},
-          
-          {{OSP_ROUND,  OSP_CATMULL_ROM}, RTC_GEOMETRY_TYPE_ROUND_CATMULL_ROM_CURVE},
-          {{OSP_FLAT,   OSP_CATMULL_ROM}, RTC_GEOMETRY_TYPE_FLAT_CATMULL_ROM_CURVE},
-          {{OSP_RIBBON, OSP_CATMULL_ROM}, RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE}};
+          {{OSP_RIBBON, OSP_HERMITE}, RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE}};
 
-  std::string Curves::toString() const
+  std::string OldCurves::toString() const
   {
-    return "ospray::Curves";
+    return "ospray::OldCurves";
   }
 
-  void Curves::commit()
+  void OldCurves::commit()
   {
-    vertexData = getParam<Data *>("vertex.position");
-
-    colorData = getParamDataT<vec4f>("vertex.color");
-
+    vertexData = getParamDataT<vec4f>("vertex.position", true);
     indexData = getParamDataT<uint32_t>("index", true);
 
     curveType = (OSPCurveType)getParam<int>("type", OSP_UNKNOWN_CURVE_TYPE);
-    if (curveType == OSP_UNKNOWN_CURVE_TYPE && !radius) 
+    if (curveType == OSP_UNKNOWN_CURVE_TYPE)
       throw std::runtime_error("curves geometry has invalid 'type'");
 
     curveBasis = (OSPCurveBasis)getParam<int>("basis", OSP_UNKNOWN_CURVE_BASIS);
-    if (curveBasis == OSP_UNKNOWN_CURVE_BASIS && !radius)
+    if (curveBasis == OSP_UNKNOWN_CURVE_BASIS)
       throw std::runtime_error("curves geometry has invalid 'basis'");
 
-    radius = getParam<float>("radius");
-
-    if((radius && curveType != OSP_UNKNOWN_CURVE_TYPE) 
-      || (radius && curveBasis != OSP_UNKNOWN_CURVE_BASIS)) 
-      throw std::runtime_error("curves with constant radius do not support custom curveBasis or curveType");
-
     normalData = curveType == OSP_RIBBON
-        ? getParamDataT<vec3f>("vertex.normal", true) 
+        ? getParamDataT<vec3f>("vertex.normal", true)
         : nullptr;
 
     tangentData = curveBasis == OSP_HERMITE
-        ? getParamDataT<vec4f>("vertex.tangent", true) 
-        : nullptr;   
+        ? getParamDataT<vec3f>("vertex.tangent", true)
+        : nullptr;
+
+    if (curveBasis == OSP_LINEAR && curveType != OSP_FLAT)
+      throw std::runtime_error(
+          "curves geometry with linear basis must be of flat type");
 
     embreeCurveType = curveMap[std::make_pair(curveType, curveBasis)];
 
     postCreationInfo(vertexData->size());
   }
 
-  size_t Curves::numPrimitives() const
+  size_t OldCurves::numPrimitives() const
   {
-    return indexData ? indexData->size() : 0;
+    return indexData->size();
   }
 
-  LiveGeometry Curves::createEmbreeGeometry()
+  LiveGeometry OldCurves::createEmbreeGeometry()
   {
-    auto embreeGeo = rtcNewGeometry(ispc_embreeDevice(),
-        radius ? RTC_GEOMETRY_TYPE_USER :
-        embreeCurveType); 
+    auto embreeGeo = rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
+
+    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_VERTEX, vertexData);
+    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexData);
+    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_NORMAL, normalData);
+    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_TANGENT, tangentData);
+
+    rtcCommitGeometry(embreeGeo);
 
     LiveGeometry retval;
     retval.embreeGeometry = embreeGeo;
+    retval.ispcEquivalent = ispc::OldCurves_create(this);
 
-    if (radius) {
-      retval.ispcEquivalent = ispc::CurvesUserGeometry_create(this);
-      ispc::CurvesUserGeometry_set(retval.ispcEquivalent,
-          retval.embreeGeometry,
-          radius,
-          ispc(indexData),
-          ispc(vertexData),
-          ispc(colorData));
-    } else {
-        rtcSetSharedGeometryBuffer(embreeGeo,
-            RTC_BUFFER_TYPE_VERTEX,
-            0,
-            RTC_FORMAT_FLOAT4,
-            vertexData->data(),
-            0,
-            sizeof(vec4f),
-            vertexData->size());
-        setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexData);   
-        setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_NORMAL, normalData);
-        if(embreeCurveType == 40) {
-           rtcSetSharedGeometryBuffer(embreeGeo,
-            RTC_BUFFER_TYPE_TANGENT,
-            0,
-            RTC_FORMAT_FLOAT4,
-            tangentData->data(),
-            0,
-            sizeof(vec4f),
-            tangentData->size());
-            }
-        if (colorData) {
-            rtcSetGeometryVertexAttributeCount(embreeGeo, 1);
-            setEmbreeGeometryBuffer(
-            embreeGeo, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, colorData);}
-        retval.ispcEquivalent = ispc::Curves_create(this);
-        ispc::Curves_set(retval.ispcEquivalent,
-          retval.embreeGeometry,
-          colorData,
-          indexData->size());
-    }
-
-    rtcCommitGeometry(embreeGeo);
+    ispc::OldCurves_set(retval.ispcEquivalent,
+        (ispc::RTCGeometryType)embreeCurveType,
+        indexData->size());
 
     return retval;
   }
 
-  OSP_REGISTER_GEOMETRY(Curves, curves);
-  OSP_REGISTER_GEOMETRY(Curves, streamlines);
+  OSP_REGISTER_GEOMETRY(OldCurves, oldCurves);
 
 }  // namespace ospray

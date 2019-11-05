@@ -119,6 +119,10 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/Cylinders.ispc
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
+  geometry/OldCurves.cpp
+  geometry/OldCurves.ispc
+  geometry/Mesh.cpp 
+  geometry/Mesh.ispc
 
   lights/Light.ispc
   lights/Light.cpp

@@ -71,6 +71,6 @@ namespace ospray {
     return retval;
   }
 
-  OSP_REGISTER_GEOMETRY(QuadMesh, quads);
+  OSP_REGISTER_GEOMETRY(QuadMesh, pqr);
 
 }  // namespace ospray
