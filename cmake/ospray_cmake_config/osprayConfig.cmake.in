@@ -79,22 +79,13 @@ set(OSPRAY_ROOT ${CURRENT_ROOT_INSTALL_DIR})
 # Set the include directories for OSPRay (itself).
 set(OSPRAY_INCLUDE_DIR "${OSPRAY_ROOT}/include")
 if (NOT EXISTS ${OSPRAY_INCLUDE_DIR}/ospray/version.h)
-  OSPRAY_REPORT_NOT_FOUND(
+  ospray_report_not_found(
     "OSPRay install root:  ${OSPRAY_ROOT}, "
     "determined from relative path from osprayConfg.cmake install location:  "
     "${CURRENT_CONFIG_INSTALL_DIR}, does not contain OSPRay headers. "
     "Either the install directory was deleted, or the install tree was only "
     "partially relocated outside of CMake after OSPRay was built.")
 endif()
-
-# Append the include directories for all (potentially optional) dependencies
-# with which OSPRay was compiled, the libraries themselves come in via
-# osprayTargets-<release/debug>.cmake as link libraries for ospray target.
-set(OSPRAY_INCLUDE_DIRS
-  ${OSPRAY_INCLUDE_DIR}
-  ${OSPRAY_INCLUDE_DIR}/ospray
-  ${OSPRAY_INCLUDE_DIR}/ospray/SDK
-)
 
 ###############################################################################
 # OSPRay build configuration
@@ -115,12 +106,13 @@ set(OSPRAY_COMPILER_MSVC  @OSPRAY_COMPILER_MSVC@)
 
 set(OSPRAY_ISPC_TARGET_LIST    @OSPRAY_ISPC_TARGET_LIST@)
 set(OSPRAY_ISPC_ADDRESSING     @OSPRAY_ISPC_ADDRESSING@)
-set(OSPRAY_MPI_ENABLED         @OSPRAY_MODULE_MPI@)
 
 set(OSPRAY_TILE_SIZE      @OSPRAY_TILE_SIZE@)
 set(OSPRAY_PIXELS_PER_JOB @OSPRAY_PIXELS_PER_JOB@)
 
-set(EMBREE_VERSION_REQUIRED @EMBREE_VERSION_REQUIRED@)
+set(OSPCOMMON_VERSION_REQUIRED @OSPCOMMON_VERSION_REQUIRED@)
+set(EMBREE_VERSION_REQUIRED    @EMBREE_VERSION_REQUIRED@)
+set(OPENVKL_VERSION_REQUIRED   @OPENVKL_VERSION_REQUIRED@)
 
 ###############################################################################
 # OSPRay dependencies
@@ -154,16 +146,14 @@ endif()
 
 ospray_create_embree_target()
 
-list(APPEND OSPRAY_INCLUDE_DIRS ${EMBREE_INCLUDE_DIRS})
-
 # ospcommon
 if (NOT TARGET ospcommon::ospcommon)
-  find_dependency(ospcommon 1.0.1)
+  find_dependency(ospcommon ${OSPCOMMON_VERSION_REQUIRED})
 endif()
 
 # openvkl
 if (NOT TARGET openvkl::openvkl)
-  find_dependency(openvkl 0.7.0)
+  find_dependency(openvkl ${OPENVKL_VERSION_REQUIRED})
 endif()
 
 # Restore state
@@ -175,13 +165,6 @@ set(CURRENT_ROOT_INSTALL_DIR   ${OSPRAY_CURRENT_ROOT_INSTALL_DIR})
 ###############################################################################
 # Finish OSPRay
 
-# Remove duplicate entries from OSPRAY_INCLUDE_DIRS
-list(REMOVE_DUPLICATES OSPRAY_INCLUDE_DIRS)
-
-set(OSPRAY_LIBRARY ${LIBRARY_PATH_PREFIX}ospray${LIBRARY_SUFFIX})
-set(OSPRAY_ISPC_DEVICE_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_module_ispc${LIBRARY_SUFFIX})
-set(OSPRAY_TESTING_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_testing${LIBRARY_SUFFIX})
-
 # Include target exports
 include(${CMAKE_CURRENT_LIST_DIR}/ospray_Exports.cmake)
 
@@ -190,13 +173,6 @@ set_target_properties(ospray::ospray PROPERTIES
   INTERFACE_LINK_LIBRARIES "ospcommon::ospcommon")
 set_target_properties(ospray::ospray_module_ispc PROPERTIES
   INTERFACE_LINK_LIBRARIES "ospray::ospray;openvkl::openvkl;embree")
-
-# Set expected OSPRAY_LIBRARIES variable for FindPackage().
-set(OSPRAY_LIBRARIES ospray::ospray)
-
-if(OSPRAY_MPI_ENABLED)
-  set(OSPRAY_MPI_LIBRARIES ospray::ospray_mpi_common ospray::ospray_mpi_maml)
-endif()
 
 # Reset CMake module path to its state when this script was called.
 set(CMAKE_MODULE_PATH ${OSPRAY_CALLERS_CMAKE_MODULE_PATH})
@@ -209,5 +185,4 @@ set(OSPRAY_USE_FILE ${OSPRAY_CMAKE_ROOT}/osprayUse.cmake)
 # OSPRAY_REPORT_NOT_FOUND() aborts, so if we made it this far,
 # we have found ospray and all required dependencies.
 include(FindPackageMessage)
-find_package_MESSAGE(ospray "Found OSPRay: ${OSPRAY_LIBRARY}"
-  "[${OSPRAY_INCLUDE_DIRS}]")
+find_package_MESSAGE(ospray "Found OSPRay: ${OSPRAY_ROOT}" "[${OSPRAY_ROOT}]")
