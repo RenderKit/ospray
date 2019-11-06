@@ -335,7 +335,7 @@ macro(ospray_create_embree_target)
 
     target_link_libraries(embree
     INTERFACE
-      $<BUILD_INTERFACE:${EMBREE_LIBRARIES}>
+      $<BUILD_INTERFACE:${EMBREE_LIBRARY}>
     )
   endif()
 endmacro()
@@ -352,8 +352,6 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
   else()
     message(STATUS "Found Embree v${EMBREE_VERSION}: ${EMBREE_LIBRARY}")
   endif()
-
-  set(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
 
   if ("${EMBREE_VERSION}" STREQUAL "3.6.0")
     message(FATAL_ERROR "Embree v3.6.0 is incompatible with OSPRay.")
