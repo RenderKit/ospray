@@ -134,26 +134,30 @@ endif()
 # Include macros for finding embree
 include(ospray_macros)
 
-# Embree
 if (OSPRAY_INSTALL_DEPENDENCIES)
-  # Embree installed with OSPRay
-  file(GLOB_RECURSE EMBREE_LIBRARY ${LIBRARY_PATH_PREFIX}embree*)
+  # Dependencies installed with OSPRay
+  file(GLOB_RECURSE EMBREE_LIBRARY    ${LIBRARY_PATH_PREFIX}embree*)
+  file(GLOB_RECURSE OSPCOMMON_LIBRARY ${LIBRARY_PATH_PREFIX}ospcommon*)
+  file(GLOB_RECURSE OPENVKL_LIBRARY   ${LIBRARY_PATH_PREFIX}openvkl*)
 else()
-  # Find existing Embree on the machine
-  ospray_find_embree(${EMBREE_VERSION_REQUIRED})
-  ospray_verify_embree_features()
-endif()
+  # Find existing Dependencies on the machine
+  if (NOT TARGET embree)
+    ospray_find_embree(${EMBREE_VERSION_REQUIRED})
+    ospray_verify_embree_features()
+    ospray_create_embree_target()
+  endif()
 
-ospray_create_embree_target()
+  if (NOT TARGET ospcommon::ospcommon)
+   find_dependency(ospcommon ${OSPCOMMON_VERSION_REQUIRED})
+  endif()
 
-# ospcommon
-if (NOT TARGET ospcommon::ospcommon)
-  find_dependency(ospcommon ${OSPCOMMON_VERSION_REQUIRED})
-endif()
+  if (NOT TARGET openvkl::openvkl)
+   find_dependency(openvkl ${OPENVKL_VERSION_REQUIRED})
+  endif()
 
-# openvkl
-if (NOT TARGET openvkl::openvkl)
-  find_dependency(openvkl ${OPENVKL_VERSION_REQUIRED})
+  set(EMBREE_LIBRARY embree)
+  set(OSPCOMMON_LIBRARY ospcommon::ospcommon)
+  set(OPENVKL_LIBRARY openvkl::openvkl)
 endif()
 
 # Restore state
@@ -170,9 +174,9 @@ include(${CMAKE_CURRENT_LIST_DIR}/ospray_Exports.cmake)
 
 # Add missing targets to libraries
 set_target_properties(ospray::ospray PROPERTIES
-  INTERFACE_LINK_LIBRARIES "ospcommon::ospcommon")
+  INTERFACE_LINK_LIBRARIES "${OSPCOMMON_LIBRARY}")
 set_target_properties(ospray::ospray_module_ispc PROPERTIES
-  INTERFACE_LINK_LIBRARIES "ospray::ospray;openvkl::openvkl;embree")
+  INTERFACE_LINK_LIBRARIES "ospray::ospray;${OPENVKL_LIBRARY};${EMBREE_LIBRARY}")
 
 # Reset CMake module path to its state when this script was called.
 set(CMAKE_MODULE_PATH ${OSPRAY_CALLERS_CMAKE_MODULE_PATH})
