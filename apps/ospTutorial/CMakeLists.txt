@@ -25,3 +25,8 @@ target_link_libraries(ospTutorialCpp PRIVATE ospray)
 # async version
 add_executable(ospTutorialAsync ospTutorialAsync.c)
 target_link_libraries(ospTutorialAsync PRIVATE ospray)
+
+install(TARGETS ospTutorial ospTutorialCpp ospTutorialAsync
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)
