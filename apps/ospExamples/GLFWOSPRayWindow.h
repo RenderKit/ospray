@@ -39,9 +39,7 @@ enum class OSPRayRendererType
 class GLFWOSPRayWindow
 {
  public:
-  GLFWOSPRayWindow(const vec2i &windowSize,
-                   cpp::World world,
-                   const std::string &renderer_type);
+  GLFWOSPRayWindow(const vec2i &windowSize);
 
   ~GLFWOSPRayWindow();
 
@@ -65,6 +63,9 @@ class GLFWOSPRayWindow
   void startNewOSPRayFrame();
   void waitOnOSPRayFrame();
   void updateTitleBar();
+  void buildUI();
+  void commitOutstandingHandles();
+  void refreshScene(bool resetCamera = false);
 
   static GLFWOSPRayWindow *activeWindow;
 
@@ -87,7 +88,10 @@ class GLFWOSPRayWindow
   cpp::FrameBuffer framebuffer;
   cpp::Future currentFrame;
 
+  std::string scene{"boxes"};
+
   OSPRayRendererType rendererType{OSPRayRendererType::SCIVIS};
+  std::string rendererTypeStr{"scivis"};
 
   // List of OSPRay handles to commit before the next frame
   ospcommon::containers::TransactionalBuffer<OSPObject> objectsToCommit;

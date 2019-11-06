@@ -15,20 +15,48 @@
 // ======================================================================== //
 
 #include "GLFWOSPRayWindow.h"
+#include "imgui_impl_glfw_gl3.h"
+// ospray_testing
+#include "ospray_testing.h"
+// imgui
+#include "imgui.h"
+// std
 #include <iostream>
 #include <stdexcept>
 
-#include <imgui.h>
-#include "imgui_impl_glfw_gl3.h"
+static bool g_quitNextFrame = false;
+
+static const std::vector<std::string> g_scenes = {"boxes",
+                                                  "cornell_box",
+                                                  "curves",
+                                                  "cylinders",
+                                                  "gravity_spheres_volume",
+                                                  "perlin_noise_volumes",
+                                                  "random_spheres",
+                                                  "streamlines",
+                                                  "subdivision_cube",
+                                                  "unstructured_volume"};
+
+static const std::vector<std::string> g_renderers = {
+    "scivis", "pathtracer", "raycast"};
+
+bool sceneUI_callback(void *, int index, const char **out_text)
+{
+  *out_text = g_scenes[index].c_str();
+  return true;
+}
+
+bool rendererUI_callback(void *, int index, const char **out_text)
+{
+  *out_text = g_renderers[index].c_str();
+  return true;
+}
+
+// GLFWOSPRayWindow definitions ///////////////////////////////////////////////
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
-static bool g_quitNextFrame = false;
-
-GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
-                                   cpp::World world,
-                                   const std::string &renderer_type)
-    : renderer(renderer_type), world(world)
+GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize)
 {
   if (activeWindow != nullptr) {
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -112,29 +140,15 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
         }
       });
 
-  if (renderer_type == "scivis")
-    rendererType = OSPRayRendererType::SCIVIS;
-  else if (renderer_type == "pathtracer")
-    rendererType = OSPRayRendererType::PATHTRACER;
-  else
-    rendererType = OSPRayRendererType::OTHER;
-
   // OSPRay setup //
 
-  // create the arcball camera model
-  arcballCamera = std::unique_ptr<ArcballCamera>(
-      new ArcballCamera(world.getBounds(), windowSize));
-
-  // init camera
-  updateCamera();
-  camera.commit();
-
-  // finally, commit the renderer
-  renderer.commit();
+  refreshScene(true);
 
   // trigger window reshape events with current window size
   glfwGetFramebufferSize(glfwWindow, &this->windowSize.x, &this->windowSize.y);
   reshape(this->windowSize);
+
+  commitOutstandingHandles();
 }
 
 GLFWOSPRayWindow::~GLFWOSPRayWindow()
@@ -254,71 +268,11 @@ void GLFWOSPRayWindow::display()
 {
   static auto displayStart = std::chrono::high_resolution_clock::now();
 
-  if (showUi) {
-    ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
-    ImGui::Begin(
-        "Tutorial Controls (press 'g' to hide / show)", nullptr, flags);
+  if (showUi)
+    buildUI();
 
-    ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);
-    ImGui::Checkbox("show albedo", &showAlbedo);
-
-    ImGui::Separator();
-
-    static int spp = 1;
-    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-      renderer.setParam("spp", spp);
-      addObjectToCommit(renderer.handle());
-    }
-
-    if (rendererType == OSPRayRendererType::PATHTRACER) {
-      static int maxDepth = 20;
-      if (ImGui::SliderInt("maxDepth", &maxDepth, 1, 64)) {
-        renderer.setParam("maxDepth", maxDepth);
-        addObjectToCommit(renderer.handle());
-      }
-
-      static int rouletteDepth = 1;
-      if (ImGui::SliderInt("rouletteDepth", &rouletteDepth, 1, 64)) {
-        renderer.setParam("rouletteDepth", rouletteDepth);
-        addObjectToCommit(renderer.handle());
-      }
-
-      static float minContribution = 0.001f;
-      if (ImGui::SliderFloat("minContribution", &minContribution, 0.f, 1.f)) {
-        renderer.setParam("minContribution", minContribution);
-        addObjectToCommit(renderer.handle());
-      }
-    } else if (rendererType == OSPRayRendererType::SCIVIS) {
-      static vec3f bgColor(0.f);
-      if (ImGui::ColorEdit3("bgColor", bgColor)) {
-        renderer.setParam("bgColor", bgColor);
-        addObjectToCommit(renderer.handle());
-      }
-
-      static int aoSamples = 1;
-      if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
-        renderer.setParam("aoSamples", aoSamples);
-        addObjectToCommit(renderer.handle());
-      }
-
-      static float aoIntensity = 1.f;
-      if (ImGui::SliderFloat("aoIntensity", &aoIntensity, 0.f, 1.f)) {
-        renderer.setParam("aoIntensity", aoIntensity);
-        addObjectToCommit(renderer.handle());
-      }
-    }
-
-    if (uiCallback) {
-      ImGui::Separator();
-      uiCallback();
-    }
-
-    ImGui::End();
-  }
-
-  if (displayCallback) {
+  if (displayCallback)
     displayCallback(this);
-  }
 
   updateTitleBar();
 
@@ -354,12 +308,7 @@ void GLFWOSPRayWindow::display()
 
     framebuffer.unmap(fb);
 
-    auto handles = objectsToCommit.consume();
-    if (!handles.empty()) {
-      for (auto &h : handles)
-        ospCommit(h);
-      framebuffer.resetAccumulation();
-    }
+    commitOutstandingHandles();
 
     // Start new frame and reset frame timing interval start
     displayStart = std::chrono::high_resolution_clock::now();
@@ -431,4 +380,126 @@ void GLFWOSPRayWindow::updateTitleBar()
   }
 
   glfwSetWindowTitle(glfwWindow, windowTitle.str().c_str());
+}
+
+void GLFWOSPRayWindow::buildUI()
+{
+  ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
+  ImGui::Begin("press 'g' to hide/show UI", nullptr, flags);
+
+  static int whichScene = 0;
+  if (ImGui::Combo("scene##whichScene",
+                   &whichScene,
+                   sceneUI_callback,
+                   nullptr,
+                   g_scenes.size())) {
+    scene = g_scenes[whichScene];
+    refreshScene(true);
+  }
+
+  static int whichRenderer = 0;
+  if (ImGui::Combo("renderer##whichRenderer",
+                   &whichRenderer,
+                   rendererUI_callback,
+                   nullptr,
+                   g_renderers.size())) {
+    rendererTypeStr = g_renderers[whichRenderer];
+    if (rendererTypeStr == "scivis")
+      rendererType = OSPRayRendererType::SCIVIS;
+    else if (rendererTypeStr == "pathtracer")
+      rendererType = OSPRayRendererType::PATHTRACER;
+    else
+      rendererType = OSPRayRendererType::OTHER;
+    refreshScene();
+  }
+
+  ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);
+  ImGui::Checkbox("show albedo", &showAlbedo);
+
+  ImGui::Separator();
+
+  static int spp = 1;
+  if (ImGui::SliderInt("spp", &spp, 1, 64)) {
+    renderer.setParam("spp", spp);
+    addObjectToCommit(renderer.handle());
+  }
+
+  if (rendererType == OSPRayRendererType::PATHTRACER) {
+    static int maxDepth = 20;
+    if (ImGui::SliderInt("maxDepth", &maxDepth, 1, 64)) {
+      renderer.setParam("maxDepth", maxDepth);
+      addObjectToCommit(renderer.handle());
+    }
+
+    static int rouletteDepth = 1;
+    if (ImGui::SliderInt("rouletteDepth", &rouletteDepth, 1, 64)) {
+      renderer.setParam("rouletteDepth", rouletteDepth);
+      addObjectToCommit(renderer.handle());
+    }
+
+    static float minContribution = 0.001f;
+    if (ImGui::SliderFloat("minContribution", &minContribution, 0.f, 1.f)) {
+      renderer.setParam("minContribution", minContribution);
+      addObjectToCommit(renderer.handle());
+    }
+  } else if (rendererType == OSPRayRendererType::SCIVIS) {
+    static vec3f bgColor(0.f);
+    if (ImGui::ColorEdit3("bgColor", bgColor)) {
+      renderer.setParam("bgColor", bgColor);
+      addObjectToCommit(renderer.handle());
+    }
+
+    static int aoSamples = 1;
+    if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
+      renderer.setParam("aoSamples", aoSamples);
+      addObjectToCommit(renderer.handle());
+    }
+
+    static float aoIntensity = 1.f;
+    if (ImGui::SliderFloat("aoIntensity", &aoIntensity, 0.f, 1.f)) {
+      renderer.setParam("aoIntensity", aoIntensity);
+      addObjectToCommit(renderer.handle());
+    }
+  }
+
+  if (uiCallback) {
+    ImGui::Separator();
+    uiCallback();
+  }
+
+  ImGui::End();
+}
+
+void GLFWOSPRayWindow::commitOutstandingHandles()
+{
+  auto handles = objectsToCommit.consume();
+  if (!handles.empty()) {
+    for (auto &h : handles)
+      ospCommit(h);
+    framebuffer.resetAccumulation();
+  }
+}
+
+void GLFWOSPRayWindow::refreshScene(bool resetCamera)
+{
+  auto builder = testing::newBuilder(scene);
+  testing::setParam(builder, "rendererType", rendererTypeStr);
+  testing::commit(builder);
+
+  world = testing::buildWorld(builder);
+  testing::release(builder);
+
+  world.commit();
+
+  renderer = cpp::Renderer(rendererTypeStr);
+  addObjectToCommit(renderer.handle());
+
+  if (resetCamera) {
+    // create the arcball camera model
+    arcballCamera.reset(new ArcballCamera(world.getBounds(), windowSize));
+
+    // init camera
+    updateCamera();
+    camera.commit();
+  }
 }
