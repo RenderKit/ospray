@@ -21,10 +21,7 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
 endif()
 
-set(OIDN_PATH "${COMPONENT_PATH}")
-if (NOT WIN32)
-  set(OIDN_PATH "${OIDN_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/OpenImageDenoise")
-endif()
+list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
 
 if (BUILD_OIDN_FROM_SOURCE)
   ExternalProject_Add(${COMPONENT_NAME}
@@ -33,10 +30,9 @@ if (BUILD_OIDN_FROM_SOURCE)
     STAMP_DIR ${COMPONENT_NAME}/stamp
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
-    GIT_REPOSITORY https://github.com/OpenImageDenoise/oidn
-    GIT_TAG v${BUILD_OIDN_VERSION}
-    GIT_SHALLOW ON
+    URL "https://github.com/OpenImageDenoise/oidn/archive/${BUILD_OIDN_VERSION}.zip"
     CMAKE_ARGS
+      -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
       -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
@@ -47,19 +43,21 @@ if (BUILD_OIDN_FROM_SOURCE)
       -DCMAKE_BUILD_TYPE=Release
       -DTBB_ROOT=${TBB_PATH}
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
-    BUILD_ALWAYS OFF
+    BUILD_ALWAYS ${ALWAYS_REBUILD}
   )
 
   if (BUILD_TBB_FROM_SOURCE)
     ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
   endif()
 else()
+  string(REPLACE "v" "" OIDN_VERSION_NUMBER ${BUILD_OIDN_VERSION})
+
   if (APPLE)
-    set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/v${BUILD_OIDN_VERSION}/oidn-${BUILD_OIDN_VERSION}.x86_64.macos.tar.gz")
+    set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x86_64.macos.tar.gz")
   elseif (WIN32)
-    set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/v${BUILD_OIDN_VERSION}/oidn-${BUILD_OIDN_VERSION}.x64.vc14.windows.zip")
+    set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x64.vc14.windows.zip")
   else()
-    set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/v${BUILD_OIDN_VERSION}/oidn-${BUILD_OIDN_VERSION}.x86_64.linux.tar.gz")
+    set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x86_64.linux.tar.gz")
   endif()
 
   ExternalProject_Add(${COMPONENT_NAME}

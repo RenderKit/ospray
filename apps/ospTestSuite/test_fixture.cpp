@@ -98,7 +98,7 @@ namespace OSPRayTestScenes {
 
   void Base::SetUp()
   {
-    ASSERT_NO_FATAL_FAILURE(CreateEmptyScene());
+    CreateEmptyScene();
   }
 
   void Base::AddLight(cpp::Light light)

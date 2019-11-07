@@ -311,12 +311,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     COMPONENT devel
   )
 
-  find_package(openvkl 0.7.0 REQUIRED)
-
   ## Build the module ##
-
-  get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
-    INTERFACE_INCLUDE_DIRECTORIES)
 
   ispc_include_directories(
     ${CMAKE_SOURCE_DIR}/ospray/include

@@ -14,8 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_CXX_FLAGS
-    "-fPIC -fno-strict-aliasing -Wno-narrowing -Wno-unknown-pragmas")
+set(OSPRAY_CXX_FLAGS "-fno-strict-aliasing -Wno-narrowing -Wno-unknown-pragmas")
 
 if(OSPRAY_STRICT_BUILD)
   # Should try to fix and remove...
@@ -30,9 +29,6 @@ if(OSPRAY_WARN_AS_ERRORS)
 endif()
 
 set(CMAKE_CXX_FLAGS "${OSPRAY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
-
-set(CMAKE_CXX_FLAGS_RELEASE        "-ffast-math -fno-finite-math-only ${CMAKE_CXX_FLAGS_RELEASE}")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-ffast-math -fno-finite-math-only ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 
 if (APPLE)
   set(CMAKE_CXX_FLAGS "-mmacosx-version-min=10.9 ${CMAKE_CXX_FLAGS}") # we only use MacOSX 10.9 features

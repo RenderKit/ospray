@@ -23,7 +23,9 @@ include(GNUInstallDirs)
 set(OSPRAY_CMAKECONFIG_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
 
+set(OSPCOMMON_VERSION_REQUIRED 1.1.0)
 set(EMBREE_VERSION_REQUIRED 3.2.0)
+set(OPENVKL_VERSION_REQUIRED 0.7.0)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
@@ -37,13 +39,18 @@ ospray_configure_compiler()
 ###########################################################
 
 # ospcommon
-find_package(ospcommon REQUIRED)
+find_package(ospcommon ${OSPCOMMON_VERSION_REQUIRED} REQUIRED)
 
-# embree
+# Embree
 ospray_find_embree(${EMBREE_VERSION_REQUIRED})
 ospray_verify_embree_features()
 ospray_determine_embree_isa_support()
 ospray_create_embree_target()
+
+# Open VKL
+find_package(openvkl ${OPENVKL_VERSION_REQUIRED} REQUIRED)
+get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
+    INTERFACE_INCLUDE_DIRECTORIES)
 
 ###########################################################
 # OSPRay specific build options and configuration selection

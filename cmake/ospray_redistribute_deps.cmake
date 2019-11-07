@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-macro(OSPRAY_INSTALL_NAMELINK NAME TARGET_NAME)
+macro(ospray_install_namelink NAME TARGET_NAME)
   set(BASE_LIB_NAME lib${NAME})
   set(LIB_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
   execute_process(COMMAND "${CMAKE_COMMAND}" -E create_symlink
@@ -77,6 +77,17 @@ if (OSPRAY_TASKING_TBB)
   endif()
 endif()
 
+macro(ospray_add_dependent_lib TARGET_NAME)
+  get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
+  list(GET CONFIGURATIONS 0 CONFIGURATION)
+  get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
+  list(APPEND DEPENDENT_LIBS ${LIBRARY})
+endmacro()
+
+ospray_add_dependent_lib(ospcommon::ospcommon)
+ospray_add_dependent_lib(openvkl::openvkl)
+ospray_add_dependent_lib(openvkl::openvkl_module_ispc_driver)
+
 if (WIN32)
   get_filename_component(EMBREE_LIB_DIR ${EMBREE_LIBRARY} PATH)
   set(EMBREE_DLL_HINTS
@@ -87,10 +98,12 @@ if (WIN32)
   )
   find_file(EMBREE_DLL embree3.dll HINTS ${EMBREE_DLL_HINTS})
   mark_as_advanced(EMBREE_DLL)
-  install(PROGRAMS ${EMBREE_DLL}
+  list(APPEND DEPENDENT_LIBS ${EMBREE_DLL})
+  install(PROGRAMS ${DEPENDENT_LIBS}
           DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
 else()
-  install(PROGRAMS ${EMBREE_LIBRARY}
+  list(APPEND DEPENDENT_LIBS ${EMBREE_LIBRARY})
+  install(PROGRAMS ${DEPENDENT_LIBS}
           DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
   if (NOT APPLE)
     get_filename_component(EMBREE_LIBNAME ${EMBREE_LIBRARY} NAME)

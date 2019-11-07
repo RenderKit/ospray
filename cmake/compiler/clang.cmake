@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(OSPRAY_CXX_FLAGS "-fPIC -fno-strict-aliasing -Wno-narrowing")
+set(OSPRAY_CXX_FLAGS "-fno-strict-aliasing -Wno-narrowing")
 
 if(OSPRAY_STRICT_BUILD)
   # OK to turn off.

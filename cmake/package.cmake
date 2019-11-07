@@ -89,9 +89,6 @@ set(CPACK_COMPONENT_DEVEL_DESCRIPTION "Header files for C and C++ required to de
 set(CPACK_COMPONENT_APPS_DISPLAY_NAME "Applications")
 set(CPACK_COMPONENT_APPS_DESCRIPTION "Example and viewer applications and tutorials demonstrating how to use OSPRay.")
 
-set(CPACK_COMPONENT_MPI_DISPLAY_NAME "MPI Module")
-set(CPACK_COMPONENT_MPI_DESCRIPTION "OSPRay module for MPI-based distributed rendering.")
-
 set(CPACK_COMPONENT_REDIST_DISPLAY_NAME "Redistributables")
 set(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, imgui) that may or may not be already installed on your system.")
 
@@ -101,7 +98,6 @@ set(CPACK_COMPONENT_TEST_DESCRIPTION "Tools for testing the correctness of vario
 # dependencies between components
 set(CPACK_COMPONENT_DEVEL_DEPENDS lib)
 set(CPACK_COMPONENT_APPS_DEPENDS lib)
-set(CPACK_COMPONENT_MPI_DEPENDS lib)
 set(CPACK_COMPONENT_LIB_REQUIRED ON) # always install the libs
 set(CPACK_COMPONENT_TEST_DEPENDS lib)
 
@@ -128,7 +124,7 @@ if (WIN32) # Windows specific settings
     set(CPACK_WIX_ROOT_FEATURE_DESCRIPTION "OSPRay is an open source, scalable, and portable ray tracing engine for high-performance, high-fidelity visualization.")
     set(CPACK_WIX_PROPERTY_ARPURLINFOABOUT http://www.ospray.org/)
     set(CPACK_PACKAGE_NAME "OSPRay v${OSPRAY_VERSION}")
-    set(CPACK_COMPONENTS_ALL lib devel apps mpi redist)
+    set(CPACK_COMPONENTS_ALL lib devel apps redist)
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "Intel\\\\OSPRay v${OSPRAY_VERSION_MAJOR}")
     math(EXPR OSPRAY_VERSION_NUMBER "10000*${OSPRAY_VERSION_MAJOR} + 100*${OSPRAY_VERSION_MINOR} + ${OSPRAY_VERSION_PATCH}")
     set(CPACK_WIX_PRODUCT_GUID "9D64D525-2603-4E8C-9108-845A146${OSPRAY_VERSION_NUMBER}")
@@ -163,7 +159,7 @@ else() # Linux specific settings
     set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64.linux")
   else()
     set(CPACK_GENERATOR RPM)
-    set(CPACK_COMPONENTS_ALL lib devel apps mpi)
+    set(CPACK_COMPONENTS_ALL lib devel apps)
     if (OSPRAY_ENABLE_TESTING)
       list(APPEND CPACK_COMPONENTS_ALL test)
     endif()
@@ -180,7 +176,6 @@ else() # Linux specific settings
       set(CPACK_RPM_lib_PACKAGE_REQUIRES ${OSPLIB_REQS})
       set(CPACK_RPM_apps_PACKAGE_REQUIRES "ospray-lib >= ${OSPRAY_VERSION}")
       set(CPACK_RPM_devel_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}, ispc >= ${ISPC_VERSION_REQUIRED}")
-      set(CPACK_RPM_mpi_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}")
       set(CPACK_RPM_test_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}")
     endif()
 
@@ -207,8 +202,6 @@ else() # Linux specific settings
     file(WRITE ${SCRIPT_FILE_LDCONFIG} "/sbin/ldconfig")
     set(CPACK_RPM_lib_POST_INSTALL_SCRIPT_FILE ${SCRIPT_FILE_LDCONFIG})
     set(CPACK_RPM_lib_POST_UNINSTALL_SCRIPT_FILE ${SCRIPT_FILE_LDCONFIG})
-    set(CPACK_RPM_mpi_POST_INSTALL_SCRIPT_FILE ${SCRIPT_FILE_LDCONFIG})
-    set(CPACK_RPM_mpi_POST_UNINSTALL_SCRIPT_FILE ${SCRIPT_FILE_LDCONFIG})
     set(CPACK_RPM_apps_POST_INSTALL_SCRIPT_FILE ${SCRIPT_FILE_LDCONFIG})
     set(CPACK_RPM_apps_POST_UNINSTALL_SCRIPT_FILE ${SCRIPT_FILE_LDCONFIG})
   endif()

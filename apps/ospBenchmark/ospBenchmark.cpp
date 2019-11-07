@@ -41,7 +41,7 @@ BENCHMARK(ospInit_ospShutdown)->Unit(benchmark::kMillisecond);
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  ospInit();
+  ospInit(&argc, (const char **)argv);
 
   auto DIR = utility::getEnvVar<std::string>("OSPRAY_BENCHMARK_IMG_DIR");
   BaseFixture::dumpFinalImageDir = DIR.value_or("");
