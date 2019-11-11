@@ -40,7 +40,6 @@ export void VolumetricModel_set(void *uniform _self,
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
 
   self->samplingRate     = samplingRate;
-  self->samplingStep     = self->volume->samplingStep;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
   self->boundingBox      = bounds;
   self->densityScale     = densityScale;

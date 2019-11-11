@@ -72,16 +72,9 @@ unmasked void Volume_intersect_kernel(
 void Volume_Constructor(Volume *uniform self, void *uniform cppEquivalent)
 {
   self->cppEquivalent = cppEquivalent;
-
-  // default sampling step; should be set to correct value by derived volume.
-  self->samplingStep = 1.f;
-
-  // default bounding box; should be set to correct value by derived volume.
-  self->boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
-
-  self->volumeID = -1;
-
-  self->vklVolume = 0;
+  self->boundingBox   = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
+  self->volumeID      = -1;
+  self->vklVolume     = NULL;
 }
 
 export void Volume_getBoundingBox(uniform box3f *uniform ret,
@@ -129,4 +122,3 @@ export void Volume_set_vklVolume(void *uniform _self,
   self->vklVolume      = (VKLVolume)vklVolume;
   self->boundingBox    = *bounds;
 }
-
