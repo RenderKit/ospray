@@ -133,7 +133,7 @@ int main(int argc, const char **argv) {
 
   // put the mesh into a model
   OSPGeometricModel model = ospNewGeometricModel(mesh);
-  ospSetObjectAsData(model, "material", OSP_MATERIAL, mat);
+  ospSetObject(model, "material", mat);
   ospCommit(model);
   ospRelease(mesh);
   ospRelease(mat);

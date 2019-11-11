@@ -213,7 +213,7 @@ namespace ospray {
         cpp::Material material(rendererType, "OBJMaterial");
         material.commit();
 
-        model.setParam("material", cpp::Data(material));
+        model.setParam("material", material);
         model.commit();
 
         return model;

@@ -255,8 +255,8 @@ namespace OSPRayTestScenes {
     sphereMaterial.setParam("d", 1.0f);
     sphereMaterial.commit();
 
-    model1.setParam("material", cpp::Data(sphereMaterial));
-    model2.setParam("material", cpp::Data(sphereMaterial));
+    model1.setParam("material", sphereMaterial);
+    model2.setParam("material", sphereMaterial);
 
     affine3f xfm(vec3f(0.01, 0, 0),
                  vec3f(0, 0.01, 0),
@@ -325,7 +325,7 @@ namespace OSPRayTestScenes {
     sphere.commit();
 
     cpp::GeometricModel model(sphere);
-    model.setParam("material", cpp::Data(sphereMaterial));
+    model.setParam("material", sphereMaterial);
     AddModel(model);
 
     cpp::Light ambient("ambient");

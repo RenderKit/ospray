@@ -222,7 +222,7 @@ namespace ospray {
       objMaterial.setParam("Kd", kd);
       objMaterial.commit();
 
-      geometricModel.setParam("material", cpp::Data(objMaterial));
+      geometricModel.setParam("material", objMaterial);
 
       return geometricModel;
     }

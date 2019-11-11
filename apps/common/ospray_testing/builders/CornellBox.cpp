@@ -253,7 +253,7 @@ namespace ospray {
 
       // Put the mesh and material into a model
       cpp::GeometricModel model(quadMesh);
-      model.setParam("material", cpp::Data(quadMeshMaterial));
+      model.setParam("material", quadMeshMaterial);
       model.commit();
 
       cpp::Group group;

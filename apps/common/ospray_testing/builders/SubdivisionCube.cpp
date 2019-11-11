@@ -108,7 +108,7 @@ namespace ospray {
       material.setParam("Ks", vec3f(0.5f, 0.5f, 0.5f));
       material.commit();
 
-      model.setParam("material", cpp::Data(material));
+      model.setParam("material", material);
       material.commit();
 
       model.commit();

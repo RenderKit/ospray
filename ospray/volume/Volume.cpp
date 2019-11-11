@@ -165,11 +165,10 @@ namespace ospray {
         }
 
         if (dataType == VKL_DATA) {
-          const DataT<Data*>* blockData = getParamDataT<Data*>(param.name.c_str(), true);
+          const Ref<const DataT<Data*>> blockData = getParamDataT<Data*>(param.name.c_str(), true);
           std::vector<VKLData> vklBlockData;
-          for (auto iter = blockData->begin(); iter != blockData->end(); ++iter)
+          for (auto &&data : *blockData)
           {
-            const Data* data = *iter;
             VKLData vklData = vklNewData(data->size(),
                                         getVKLDataType(data->type),
                                         data->data(),

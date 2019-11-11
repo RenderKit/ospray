@@ -95,7 +95,7 @@ namespace ospray {
       glassMaterial.setParam("attenuationDistance", 0.2f);
       glassMaterial.commit();
 
-      model.setParam("material", cpp::Data(glassMaterial));
+      model.setParam("material", glassMaterial);
       model.commit();
 
       cpp::Group group;

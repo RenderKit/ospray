@@ -957,6 +957,8 @@ valid range, thus a single color or material is fine), or mapped first via the
   -------------- --------------------- ----------------------------------------------------
   Type           Name                  Description
   -------------- --------------------- ----------------------------------------------------
+  OSPMaterial    material              optional material applied to the geometry
+
   OSPMaterial[]  material              [data] array of (per-primitive) materials
 
   vec4f[]        color                 optional [data] array of (per-primitive) colors

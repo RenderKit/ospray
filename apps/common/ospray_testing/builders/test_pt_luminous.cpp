@@ -47,7 +47,7 @@ namespace ospray {
       material.setParam("color", vec3f(0.7f, 0.7f, 1.f));
       material.commit();
 
-      model.setParam("material", cpp::Data(material));
+      model.setParam("material", material);
       model.commit();
 
       cpp::Group group;

@@ -112,7 +112,7 @@ namespace ospray {
         mat.commit();
 
         cpp::GeometricModel isoModel(isoGeom);
-        isoModel.setParam("material", cpp::Data(mat));
+        isoModel.setParam("material", mat);
         isoModel.commit();
 
         group.setParam("geometry", cpp::Data(isoModel));

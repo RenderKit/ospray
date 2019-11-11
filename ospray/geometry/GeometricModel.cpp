@@ -36,7 +36,7 @@ namespace ospray {
 
   void GeometricModel::commit()
   {
-    materialData = getParamDataT<Material *>("material");
+    materialData = getParamDataT<Material *>("material", false, true);
     colorData    = getParamDataT<vec4f>("color");
     indexData    = getParamDataT<uint8_t>("index");
 
