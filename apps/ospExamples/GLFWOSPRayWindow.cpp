@@ -501,6 +501,12 @@ void GLFWOSPRayWindow::buildUI()
       renderer.setParam("aoIntensity", aoIntensity);
       addObjectToCommit(renderer.handle());
     }
+
+    static float samplingRate = 0.125f;
+    if (ImGui::SliderFloat("volumeSamplingRate", &samplingRate, 0.001f, 1.f)) {
+      renderer.setParam("volumeSamplingRate", samplingRate);
+      addObjectToCommit(renderer.handle());
+    }
   }
 
   if (uiCallback) {

@@ -71,7 +71,6 @@ namespace ospray {
     volumeBounds = volume->bounds;
 
     ispc::VolumetricModel_set(ispcEquivalent,
-                              getParam<float>("samplingRate", 0.125f),
                               transferFunction->getIE(),
                               (const ispc::box3f &)volumeBounds,
                               getParam<float>("densityScale", 1.f),

@@ -28,9 +28,6 @@ struct VolumetricModel
 {
   Volume *volume;  //!< instanced Volume
 
-  //! Recommended sampling rate for the renderer.
-  float samplingRate;
-
   //! Color and opacity transfer function.
   TransferFunction *transferFunction;
 

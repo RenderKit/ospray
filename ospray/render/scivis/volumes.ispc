@@ -33,6 +33,7 @@ struct VolumeContext
   float distance;
   vec4f sample;
   uint32 ready;
+  uniform float samplingRate;
 };
 
 static void sampleVolume(VolumeContext &vc,
@@ -54,7 +55,7 @@ static void sampleVolume(VolumeContext &vc,
         vc.interval = interv;
 
         // Calculate a new sub-interval
-        const float nominalSamplingDt = interv.nominalDeltaT / m->samplingRate;
+        const float nominalSamplingDt = interv.nominalDeltaT / vc.samplingRate;
         vc.subInterval.lower          = interv.tRange.lower;
         vc.subInterval.upper =
             min(interv.tRange.lower + nominalSamplingDt, interv.tRange.upper);
@@ -79,7 +80,7 @@ static void sampleVolume(VolumeContext &vc,
                                   (const varying vkl_vec3f *uniform) & p);
 
     // Go to the next sub-interval
-    const float nominalSamplingDt = vc.interval.nominalDeltaT / m->samplingRate;
+    const float nominalSamplingDt = vc.interval.nominalDeltaT / vc.samplingRate;
     vc.subInterval.lower          = vc.subInterval.upper;
     vc.subInterval.upper =
         min(vc.subInterval.lower + nominalSamplingDt, vc.interval.tRange.upper);
@@ -138,7 +139,8 @@ static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
 
 vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
                                Ray &ray,
-                               varying LDSampler *uniform ldSampler)
+                               varying LDSampler *uniform ldSampler,
+                               const uniform float samplingRate)
 {
   // Uniform array of VKL iterators
   varying VKLIntervalIterator intervalIterators[NUM_VOLUME_INTERVALS_MAX];
@@ -164,13 +166,13 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
 
     // Set volume context initial values
     VolumeContext &vc = volumeContexts[i];
-
-    vc.org         = transformedRay.org;
-    vc.dir         = transformedRay.dir;
-    vc.jitter      = jitter;
-    vc.subInterval = make_box1f(0.f, 0.f);
-    vc.distance    = inf;
-    vc.ready       = 0;
+    vc.org            = transformedRay.org;
+    vc.dir            = transformedRay.dir;
+    vc.jitter         = jitter;
+    vc.subInterval    = make_box1f(0.f, 0.f);
+    vc.distance       = inf;
+    vc.ready          = 0;
+    vc.samplingRate   = samplingRate;
 
     // There might be different volumetric models used across vector lanes
     // so we must iterate over them
@@ -206,7 +208,8 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
 
     // Alpha blend sampled color
     const float clampedOpacity = clamp(sampledColorOpacity.w);
-    color                      = color +
+
+    color = color +
             ((1.f - alpha) * clampedOpacity * make_vec3f(sampledColorOpacity));
     alpha = alpha + ((1.f - alpha) * clampedOpacity);
   }

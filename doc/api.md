@@ -722,10 +722,6 @@ concurrently). To create a volume instance, call
   -------------------- ----------------------- ---------- --------------------------------------
   OSPTransferFunction  transferFunction                   [transfer function] to use
 
-  float                samplingRate                 0.125 sampling rate of the volume (this
-                                                          is the minimum step size for
-                                                          adaptive sampling)
-
   float                densityScale                   1.0 used to make volumes uniformly thinner
                                                           or thicker ([path tracer] only)
 
@@ -1329,6 +1325,8 @@ renderers, the SciVis renderer supports the following parameters:
                                                      for ambient occlusion
 
   float         aoIntensity                       1  ambient occlusion strength
+
+  float         volumeSamplingRate            0.125  sampling rate of the volume
   ------------- ---------------------- ------------  ----------------------------
   : Special parameters understood by the SciVis renderer.
 

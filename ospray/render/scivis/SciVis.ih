@@ -26,4 +26,5 @@ struct SciVis
   float aoRadius;
   float aoIntensity;
   Texture2D* uniform backplate;
+  float volumeSamplingRate;
 };

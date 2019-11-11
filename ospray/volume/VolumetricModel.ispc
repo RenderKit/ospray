@@ -31,7 +31,6 @@ export void *uniform VolumetricModel_create(void *uniform cppE,
 }
 
 export void VolumetricModel_set(void *uniform _self,
-                                uniform float samplingRate,
                                 void *uniform transferFunction,
                                 const uniform box3f &bounds,
                                 uniform float densityScale,
@@ -39,7 +38,6 @@ export void VolumetricModel_set(void *uniform _self,
 {
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
 
-  self->samplingRate     = samplingRate;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
   self->boundingBox      = bounds;
   self->densityScale     = densityScale;
@@ -50,5 +48,5 @@ export void VolumetricModel_set_valueSelector(void *uniform _self,
                                               void *uniform valueSelector)
 {
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
-  self->vklValueSelector = (VKLValueSelector)valueSelector;
+  self->vklValueSelector        = (VKLValueSelector)valueSelector;
 }
