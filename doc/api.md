@@ -930,14 +930,15 @@ geometry by calling `ospNewGeometry` with type string "`boxes`".
 OSPRay can directly render multiple isosurfaces of a volume without
 first tessellating them. To do so create an isosurfaces geometry by
 calling `ospNewGeometry` with type string "`isosurfaces`". Each
-isosurface will be colored according to the provided volume's [transfer
-function].
+isosurface will be colored according to the [transfer function] assigned
+to the `volume`.
 
-  Type       Name       Description
-  ---------- ---------- ------------------------------------------------------
-  float[]    isovalue   [data] array of isovalues
-  OSPVolume  volume     handle of the [volume] to be isosurfaced
-  ---------- ---------- ------------------------------------------------------
+  Type               Name      Description
+  ------------------ --------- --------------------------------------------------
+  float              isovalue  single isovalues
+  float[]            isovalue  [data] array of isovalues
+  OSPVolumetricModel volume    handle of the [VolumetricModels] to be isosurfaced
+  ------------------ --------- --------------------------------------------------
   : Parameters defining an isosurfaces geometry.
 
 ### GeometricModels
@@ -1153,27 +1154,27 @@ Groups take arrays of geometric models and volumetric models, but they
 are optional. In other words, there is no need to create empty arrays if
 there are no geometries or volumes in the group.
 
-  ------------------ --------------- ----------  --------------------------------------
-  Type               Name               Default  Description
-  ------------------ --------------- ----------  --------------------------------------
-  OSPData            geometry              NULL  [data] array of [GeometricModels]
+  -------------------- --------------- ----------  --------------------------------------
+  Type                 Name               Default  Description
+  -------------------- --------------- ----------  --------------------------------------
+  OSPGeometricModel[]  geometry              NULL  [data] array of [GeometricModels]
 
-  OSPData            volume                NULL  [data] array of [VolumetricModels]
+  OSPVolumetricModel[] volume                NULL  [data] array of [VolumetricModels]
 
-  bool               dynamicScene         false  use RTC_SCENE_DYNAMIC flag (faster
-                                                 BVH build, slower ray traversal),
-                                                 otherwise uses RTC_SCENE_STATIC flag
-                                                 (faster ray traversal, slightly
-                                                 slower BVH build)
+  bool                 dynamicScene         false  use RTC_SCENE_DYNAMIC flag (faster
+                                                   BVH build, slower ray traversal),
+                                                   otherwise uses RTC_SCENE_STATIC flag
+                                                   (faster ray traversal, slightly
+                                                   slower BVH build)
 
-  bool               compactMode          false  tell Embree to use a more compact BVH
-                                                 in memory by trading ray traversal
-                                                 performance
+  bool                 compactMode          false  tell Embree to use a more compact BVH
+                                                   in memory by trading ray traversal
+                                                   performance
 
-  bool               robustMode           false  tell Embree to enable more robust ray
-                                                 intersection code paths (slightly
-                                                 slower)
-  ------------------ --------------- ---------- ---------------------------------------
+  bool                 robustMode           false  tell Embree to enable more robust ray
+                                                   intersection code paths (slightly
+                                                   slower)
+  -------------------- --------------- ---------- ---------------------------------------
   : Parameters understood by groups.
 
 Note that groups only need to re re-committed if a geometry or volume

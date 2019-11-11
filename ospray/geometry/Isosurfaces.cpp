@@ -40,7 +40,7 @@ namespace ospray {
 
   void Isosurfaces::commit()
   {
-    isovaluesData = getParamDataT<float>("isovalue", true);
+    isovaluesData = getParamDataT<float>("isovalue", true, true);
 
     model = (VolumetricModel *)getParamObject("volume");
 
