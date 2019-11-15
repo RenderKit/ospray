@@ -46,29 +46,18 @@ namespace ospray {
 
   LiveGeometry Mesh::createEmbreeGeometry()
   {
-    RTCGeometry embreeGeo;
-    if (indexData->type == OSP_VEC3UI) {
-        embreeGeo = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_TRIANGLE);
-        rtcSetSharedGeometryBuffer(embreeGeo,
-            RTC_BUFFER_TYPE_INDEX,
-            0,
-            RTC_FORMAT_UINT3,
-            indexData->data(),
-            0,
-            sizeof(vec3ui),
-            indexData->size());
-    } else {
-        embreeGeo = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_QUAD);
-        rtcSetSharedGeometryBuffer(embreeGeo,
-            RTC_BUFFER_TYPE_INDEX,
-            0,
-            RTC_FORMAT_UINT4,
-            indexData->data(),
-            0,
-            sizeof(vec4ui),
-            indexData->size());
-    }
+    const bool isTri = indexData->type == OSP_VEC3UI;
+    auto embreeGeo = rtcNewGeometry(ispc_embreeDevice(),
+        isTri ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
     setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_VERTEX, vertexData);
+    rtcSetSharedGeometryBuffer(embreeGeo,
+        RTC_BUFFER_TYPE_INDEX,
+        0,
+        isTri ? RTC_FORMAT_UINT3 : RTC_FORMAT_UINT4,
+        indexData->data(),
+        0,
+        sizeof(vec3ui),
+        indexData->size());
     rtcCommitGeometry(embreeGeo);
 
     LiveGeometry retval;
@@ -83,7 +72,7 @@ namespace ospray {
         ispc(colorData),
         ispc(texcoordData),
         colorData && colorData->type == OSP_VEC4F,
-        indexData->type == OSP_VEC3UI);
+        isTri);
 
     return retval;
   }

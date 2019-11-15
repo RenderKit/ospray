@@ -138,8 +138,6 @@ SampleAreaRes QuadMesh_sampleArea(const Geometry *uniform const _self,
   const vec3f a = get_vec3f(self->vertex, index.x);
   const vec3f b = get_vec3f(self->vertex, index.y);
   const vec3f c = get_vec3f(self->vertex, index.z);
-  const vec3f d = get_vec3f(self->vertex, index.w);
-
   const vec3f e1 = xfmVector(xfm, a - c);
   const vec3f e2 = xfmVector(xfm, b - c);
   const vec3f m1 = cross(e1, e2);
@@ -151,6 +149,8 @@ SampleAreaRes QuadMesh_sampleArea(const Geometry *uniform const _self,
   vec2f sp   = s;
 
   if (index.z != index.w) {
+    const vec3f d = get_vec3f(self->vertex, index.w);
+
     // painfully slow: re-calculate areas to decide which triangle to sample
     const vec3f e3 = xfmVector(xfm, d - b);
     const vec3f m2 = cross(e3, e2);

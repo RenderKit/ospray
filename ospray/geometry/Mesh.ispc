@@ -46,15 +46,28 @@ __define_quad_interpolate(vec2f);
 __define_quad_interpolate(vec3f);
 __define_quad_interpolate(vec4f);
 
-static void QuadMesh_postIntersect(const Mesh *uniform self,
+static void QuadMesh_postIntersect(const Geometry *uniform _self,
                                    varying DifferentialGeometry &dg,
                                    const varying Ray &ray,
                                    uniform int64 flags)
 {
+  Mesh *uniform self = (Mesh * uniform) _self;
+  dg.Ng = dg.Ns                = ray.Ng;
   const vec4i index = get_vec4i(self->index, ray.primID);
   const float u     = ray.u;
   const float v     = ray.v;
-  const vec4f uv = make_vec4f((1 - v) * (1 - u), (1 - v) * u, v * u, v * (1 - u));
+  vec4f uv;
+#if 1  // bilinear for quads
+  if (index.z == index.w)
+    uv = make_vec4f(1.f - u - v, u, v, 0.f);
+  else
+    uv = make_vec4f((1 - v) * (1 - u), (1 - v) * u, v * u, v * (1 - u));
+#else  // always as triangles
+  if (u + v < 1.0f)
+    uv = make_vec4f(1.f - u - v, u, 0.f, v);
+  else
+    uv = make_vec4f(0.f, 1.f - v, u + v - 1.f, 1.f - u);
+#endif
 
   flags &= self->flagMask;
 
@@ -111,14 +124,14 @@ static void QuadMesh_postIntersect(const Mesh *uniform self,
   }
 }
 
-static void TriangleMesh_PostIntersect(const Mesh *uniform self,
+static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
                                        varying DifferentialGeometry &dg,
                                        const varying Ray &ray,
                                        uniform int64 flags) {
+  Mesh *uniform self = (Mesh * uniform) _self;
+  dg.Ng = dg.Ns                = ray.Ng;
   const vec3i index = get_vec3i(self->index, ray.primID);
-  const float u     = ray.u;
-  const float v     = ray.v;
-  const vec3f uv = make_vec3f(1.0f - u - v, u, v);
+  const vec3f uv = make_vec3f(1.0f - ray.u - ray.v, ray.u, ray.v);
 
   flags &= self->flagMask;
 
@@ -171,20 +184,6 @@ static void TriangleMesh_PostIntersect(const Mesh *uniform self,
   }
 }
 
-static void Mesh_postIntersect(const Geometry *uniform _self,
-                                       varying DifferentialGeometry &dg,
-                                       const varying Ray &ray,
-                                       uniform int64 flags)
-{
-  const Mesh *uniform self = (const Mesh *uniform)_self;
-  dg.Ng = dg.Ns                = ray.Ng;
-  if(self->is_triangleMesh) 
-    TriangleMesh_PostIntersect(self, dg, ray, flags);
-  else 
-    QuadMesh_postIntersect(self, dg, ray, flags);
-}
-
-
 SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
                                       const int32 primID,
                                       const uniform affine3f &xfm,
@@ -193,38 +192,47 @@ SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
 {
   const Mesh *const uniform self = (const Mesh *uniform)_self;
   SampleAreaRes res;
-  const vec4i index = get_vec4i(self->index, primID);
+  vec4i index4;
+  if (self->is_triangleMesh) {
+    const vec3i index3 = get_vec3i(self->index, primID);
+    index4 = make_vec4i(index3.x, index3.y, index3.z, index3.z);
+  } else
+   index4 = get_vec4i(self->index, primID);
+  const vec4i index = index4;
+
   const vec3f a = get_vec3f(self->vertex, index.x);
   const vec3f b = get_vec3f(self->vertex, index.y);
   const vec3f c = get_vec3f(self->vertex, index.z);
+  const vec3f e1 = xfmVector(xfm, a - c);
+  const vec3f e2 = xfmVector(xfm, b - c);
+  const vec3f m1 = cross(e1, e2);
+
+  res.normal = m1;
   vec3f v0   = a;
   vec3f v1   = b;
   vec3f v2   = c;
   vec2f sp   = s;
-  const vec3f e1 = xfmVector(xfm, a - c);
-  const vec3f e2 = xfmVector(xfm, b - c);
-  if(self->is_triangleMesh) {
-    res.normal     = cross(e1, e2);
-  } else {
-      const vec3f d = get_vec3f(self->vertex, index.w);
-      const vec3f m1 = cross(e1, e2);
-      // painfully slow: re-calculate areas to decide which triangle to sample
-      const vec3f e3 = xfmVector(xfm, d - b);
-      const vec3f m2 = cross(e3, e2);
-      const float a1 = length(m1);
-      const float a2 = length(m2);
-      const float p1 = a1 * rcp(a1 + a2);
 
-     if (s.x < p1) {
+  if (index.z != index.w) {
+    const vec3f d = get_vec3f(self->vertex, index.w);
+    // painfully slow: re-calculate areas to decide which triangle to sample
+    const vec3f e3 = xfmVector(xfm, d - b);
+    const vec3f m2 = cross(e3, e2);
+    const float a1 = length(m1);
+    const float a2 = length(m2);
+    const float p1 = a1 * rcp(a1 + a2);
+
+    if (s.x < p1) {
       sp.x *= rcp(p1);                          // reproject
-      } else {                                    // sample second tri
-        sp.x       = (s.x - p1) * rcp(1.f - p1);  // reproject
-        v0         = d;
-        v1         = c;
-        v2         = b;
-        res.normal = m2;
-      }
+    } else {                                    // sample second tri
+      sp.x       = (s.x - p1) * rcp(1.f - p1);  // reproject
+      v0         = d;
+      v1         = c;
+      v2         = b;
+      res.normal = m2;
+    }
   }
+
   const vec3f localPos = uniformSampleTriangle(v0, v1, v2, sp);
   res.normal           = normalize(res.normal);
   res.pos              = xfmPoint(xfm, localPos);
@@ -240,33 +248,34 @@ void Mesh_getAreas(const Geometry *const uniform _self,
   const Mesh *const uniform self = (const Mesh *uniform)_self;
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
   for (uniform int32 i = 0; i < numPrims; i++) {
-    const uniform vec4i index = get_vec4i(self->index, primIDs[i]);
-      const uniform vec3f a = get_vec3f(self->vertex, index.x);
-      const uniform vec3f b = get_vec3f(self->vertex, index.y);
-      const uniform vec3f c = get_vec3f(self->vertex, index.z);
-      const uniform vec3f e1 = xfmVector(xfm, a - c);
-      const uniform vec3f e2 = xfmVector(xfm, b - c);
-    if(self->is_triangleMesh) {
-      areas[i]               = 0.5f * length(cross(e1, e2));
-    } else {
+    const uniform vec4i index = self->is_triangleMesh ?
+      make_vec4i(get_vec3i(self->index, primIDs[i])) :
+      get_vec4i(self->index, primIDs[i]);
+    const uniform vec3f a = get_vec3f(self->vertex, index.x);
+    const uniform vec3f b = get_vec3f(self->vertex, index.y);
+    const uniform vec3f c = get_vec3f(self->vertex, index.z);
+    const uniform vec3f e1 = xfmVector(xfm, a - c);
+    const uniform vec3f e2 = xfmVector(xfm, b - c);
+    areas[i]               = 0.5f * length(cross(e1, e2));
+    if(!self->is_triangleMesh) {
       const uniform vec3f d = get_vec3f(self->vertex, index.w);
       const uniform vec3f e3 = xfmVector(xfm, d - b);
-      areas[i]               = 0.5f * (length(cross(e1, e2)) + length(cross(e2, e3)));
+      areas[i] += 0.5f * length(cross(e2, e3));
+    }
   }
- }
 }
 
-  void Mesh_Constructor(Mesh *uniform self, void *uniform cppEquivalent)
-  {
-    Geometry_Constructor(&self->super, cppEquivalent, Mesh_postIntersect);
-    self->super.getAreas = Mesh_getAreas;
-    self->super.sampleArea = Mesh_sampleArea;
-    Data1D_Constructor(&self->index);
-    Data1D_Constructor(&self->vertex);
-    Data1D_Constructor(&self->normal);
-    Data1D_Constructor(&self->color);
-    Data1D_Constructor(&self->texcoord);
-  }
+void Mesh_Constructor(Mesh *uniform self, void *uniform cppEquivalent)
+{
+  Geometry_Constructor(&self->super, cppEquivalent, NULL);
+  self->super.getAreas = Mesh_getAreas;
+  self->super.sampleArea = Mesh_sampleArea;
+  Data1D_Constructor(&self->index);
+  Data1D_Constructor(&self->vertex);
+  Data1D_Constructor(&self->normal);
+  Data1D_Constructor(&self->color);
+  Data1D_Constructor(&self->texcoord);
+}
 
 export void *uniform Mesh_create(void *uniform cppEquivalent)
 {
@@ -293,6 +302,9 @@ export void *uniform Mesh_set(void *uniform _self,
   self->has_alpha = has_alpha;
   self->super.numPrimitives = index->numItems;
   self->is_triangleMesh = is_triangleMesh;
+  self->super.postIntersect = self->is_triangleMesh ?
+    TriangleMesh_PostIntersect :
+    QuadMesh_postIntersect;
 
   self->flagMask = -1;
   cif (!valid(self->normal))
