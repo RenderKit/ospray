@@ -21,14 +21,14 @@
 #include "common/Data.h"
 #include "common/World.h"
 // ispc-generated files
+#include <map>
 #include "Curves_ispc.h"
 #include "ospcommon/utility/DataView.h"
-#include <map>
 
 namespace ospray {
   static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
       curveMap = {
-          {{OSP_ROUND,  OSP_LINEAR},  (RTCGeometryType)-1},
+          {{OSP_ROUND,  OSP_LINEAR},  RTC_GEOMETRY_TYPE_USER},
           {{OSP_FLAT,   OSP_LINEAR},  RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE},
           {{OSP_RIBBON, OSP_LINEAR},  (RTCGeometryType)-1},
 
@@ -55,33 +55,44 @@ namespace ospray {
 
   void Curves::commit()
   {
-    vertexData = getParam<Data *>("vertex.position");
+    indexData = getParamDataT<uint32_t>("index", true);
+    normalData = nullptr;
+    tangentData = nullptr;
+    vertexData = getParamDataT<vec3f>("vertex.position");
+
+    if (vertexData) { // round, linear curves with constant radius
+      radius = getParam<float>("radius", 0.01f);
+      curveType = (OSPCurveType)getParam<int>("type", OSP_ROUND);
+      curveBasis = (OSPCurveBasis)getParam<int>("basis", OSP_LINEAR);
+      if (curveMap[std::make_pair(curveType, curveBasis)]
+          != RTC_GEOMETRY_TYPE_USER)
+        throw std::runtime_error(
+            "constant-radius curves need to be of type OSP_ROUND and have basis OSP_LINEAR");
+    } else { // embree curves
+      vertexData = getParamDataT<vec4f>("vertex.position", true);
+      radius = 0.0f;
+
+      curveType = (OSPCurveType)getParam<int>("type", OSP_UNKNOWN_CURVE_TYPE);
+      if (curveType == OSP_UNKNOWN_CURVE_TYPE)
+        throw std::runtime_error("curves geometry has invalid 'type'");
+
+      curveBasis =
+          (OSPCurveBasis)getParam<int>("basis", OSP_UNKNOWN_CURVE_BASIS);
+      if (curveBasis == OSP_UNKNOWN_CURVE_BASIS)
+        throw std::runtime_error("curves geometry has invalid 'basis'");
+
+      if (curveBasis == OSP_LINEAR && curveType != OSP_FLAT)
+        throw std::runtime_error(
+            "curves geometry with linear basis must be of flat type or have constant radius");
+
+      if (curveType == OSP_RIBBON)
+        normalData = getParamDataT<vec3f>("vertex.normal", true);
+
+      if (curveBasis == OSP_HERMITE)
+        tangentData = getParamDataT<vec4f>("vertex.tangent", true);
+    }
 
     colorData = getParamDataT<vec4f>("vertex.color");
-
-    indexData = getParamDataT<uint32_t>("index", true);
-
-    curveType = (OSPCurveType)getParam<int>("type", OSP_UNKNOWN_CURVE_TYPE);
-    if (curveType == OSP_UNKNOWN_CURVE_TYPE && !radius) 
-      throw std::runtime_error("curves geometry has invalid 'type'");
-
-    curveBasis = (OSPCurveBasis)getParam<int>("basis", OSP_UNKNOWN_CURVE_BASIS);
-    if (curveBasis == OSP_UNKNOWN_CURVE_BASIS && !radius)
-      throw std::runtime_error("curves geometry has invalid 'basis'");
-
-    radius = getParam<float>("radius");
-
-    if((radius && curveType != OSP_UNKNOWN_CURVE_TYPE) 
-      || (radius && curveBasis != OSP_UNKNOWN_CURVE_BASIS)) 
-      throw std::runtime_error("curves with constant radius do not support custom curveBasis or curveType");
-
-    normalData = curveType == OSP_RIBBON
-        ? getParamDataT<vec3f>("vertex.normal", true) 
-        : nullptr;
-
-    tangentData = curveBasis == OSP_HERMITE
-        ? getParamDataT<vec4f>("vertex.tangent", true) 
-        : nullptr;   
 
     embreeCurveType = curveMap[std::make_pair(curveType, curveBasis)];
 
@@ -90,53 +101,36 @@ namespace ospray {
 
   size_t Curves::numPrimitives() const
   {
-    return indexData ? indexData->size() : 0;
+    return indexData->size();
   }
 
   LiveGeometry Curves::createEmbreeGeometry()
   {
-    auto embreeGeo = rtcNewGeometry(ispc_embreeDevice(),
-        radius ? RTC_GEOMETRY_TYPE_USER :
-        embreeCurveType); 
+    auto embreeGeo = rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
 
     LiveGeometry retval;
     retval.embreeGeometry = embreeGeo;
+    retval.ispcEquivalent = ispc::Curves_create(this);
 
-    if (radius) {
-      retval.ispcEquivalent = ispc::CurvesUserGeometry_create(this);
-      ispc::CurvesUserGeometry_set(retval.ispcEquivalent,
+    if (embreeCurveType == RTC_GEOMETRY_TYPE_USER) {
+      ispc::Curves_setUserGeometry(retval.ispcEquivalent,
           retval.embreeGeometry,
           radius,
           ispc(indexData),
           ispc(vertexData),
           ispc(colorData));
     } else {
-        rtcSetSharedGeometryBuffer(embreeGeo,
-            RTC_BUFFER_TYPE_VERTEX,
-            0,
-            RTC_FORMAT_FLOAT4,
-            vertexData->data(),
-            0,
-            sizeof(vec4f),
-            vertexData->size());
-        setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexData);   
-        setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_NORMAL, normalData);
-        if(embreeCurveType == 40) {
-           rtcSetSharedGeometryBuffer(embreeGeo,
-            RTC_BUFFER_TYPE_TANGENT,
-            0,
-            RTC_FORMAT_FLOAT4,
-            tangentData->data(),
-            0,
-            sizeof(vec4f),
-            tangentData->size());
-            }
-        if (colorData) {
-            rtcSetGeometryVertexAttributeCount(embreeGeo, 1);
-            setEmbreeGeometryBuffer(
-            embreeGeo, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, colorData);}
-        retval.ispcEquivalent = ispc::Curves_create(this);
-        ispc::Curves_set(retval.ispcEquivalent,
+      Ref<const DataT<vec4f>> vertex4f(&vertexData->as<vec4f>());
+      setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_VERTEX, vertex4f);
+      setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexData);
+      setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_NORMAL, normalData);
+      setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_TANGENT, tangentData);
+      if (colorData) {
+        rtcSetGeometryVertexAttributeCount(embreeGeo, 1);
+        setEmbreeGeometryBuffer(
+            embreeGeo, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, colorData);
+      }
+      ispc::Curves_set(retval.ispcEquivalent,
           retval.embreeGeometry,
           colorData,
           indexData->size());

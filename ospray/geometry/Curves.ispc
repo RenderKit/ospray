@@ -15,9 +15,10 @@
 // ======================================================================== //
 
 // ospray
+#include "common/Data.ih"
+#include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
-#include "common/Intersect.ih"
 #include "geometry/Geometry.ih"
 #include "math/box.ih"
 #include "math/sampling.ih"
@@ -42,7 +43,7 @@ static void Curves_postIntersect(const Geometry *uniform _self,
   Curves *uniform self = (Curves * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   flags &= self->flagMask;
-    cif (flags & DG_COLOR) {
+  cif (flags & DG_COLOR) {
     rtcInterpolateV1(self->geom,
                      ray.primID,
                      ray.u,
@@ -229,27 +230,20 @@ void Curves_getAreas(const Geometry *const uniform _self,
   }
 }
 
-void CurvesUserGeometry_Constructor(
+void Curves_Constructor(
     Curves *uniform self, void *uniform cppEquivalent)
 {
-  Geometry_Constructor(&self->super, cppEquivalent, CurvesUserGeometry_postIntersect);
+  Geometry_Constructor(&self->super, cppEquivalent, NULL);
   Data1D_Constructor(&self->index);
   Data1D_Constructor(&self->vertex);
   Data1D_Constructor(&self->color);
 }
 
-export void *uniform CurvesUserGeometry_create(void *uniform cppEquivalent)
-{
-  Curves *uniform self = uniform new Curves;
-  CurvesUserGeometry_Constructor(self, cppEquivalent);
-  return self;
-}
-
 export void *uniform Curves_create(void *uniform cppEquivalent)
 {
-  Curves *uniform geom = uniform new Curves;
-  Geometry_Constructor(&geom->super, cppEquivalent, Curves_postIntersect);
-  return geom;
+  Curves *uniform self = uniform new Curves;
+  Curves_Constructor(self, cppEquivalent);
+  return self;
 }
 
 export void *uniform Curves_set(void *uniform _self,
@@ -260,11 +254,18 @@ export void *uniform Curves_set(void *uniform _self,
   Curves *uniform self = (Curves * uniform) _self;
   self->geom = geom;
   self->flagMask = -1;
-   if (!haveColor)
+  if (!haveColor)
     self->flagMask &= ~DG_COLOR;
+
+  self->super.numPrimitives = numSegments;
+  self->super.postIntersect = Curves_postIntersect;
+
+  // TODO implement area sampling of OldCurves for geometry lights
+  self->super.getAreas   = NULL;
+  self->super.sampleArea = NULL;
 }
 
-export void *uniform CurvesUserGeometry_set(void *uniform _self,
+export void *uniform Curves_setUserGeometry(void *uniform _self,
                                 void *uniform _embreeGeometry,
                                 float uniform radius,
                                 const Data1D *uniform index,
@@ -280,6 +281,7 @@ export void *uniform CurvesUserGeometry_set(void *uniform _self,
 
   self->super.getAreas      = Curves_getAreas;
   self->super.sampleArea    = Curves_sampleArea;
+  self->super.postIntersect = CurvesUserGeometry_postIntersect;
   self->super.numPrimitives = index->numItems;
 
   Geometry_setEmbreeUserGeometry(&self->super,
@@ -290,5 +292,4 @@ export void *uniform CurvesUserGeometry_set(void *uniform _self,
 
   // XXX different representation for area sampling, see above
   self->super.numPrimitives += vertex->numItems;
-
 }
