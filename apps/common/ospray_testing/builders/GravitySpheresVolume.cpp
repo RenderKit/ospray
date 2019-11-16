@@ -163,8 +163,8 @@ namespace ospray {
         for (int j = 0; j < volumeDimensions.y; j++) {
           for (int i = 0; i < volumeDimensions.x; i++) {
             // index in array
-            size_t index = k * volumeDimensions.z * volumeDimensions.y +
-                           j * volumeDimensions.x + i;
+            size_t index = size_t(k) * volumeDimensions.z * volumeDimensions.y +
+                           size_t(j) * volumeDimensions.x + size_t(i);
 
             // compute volume value
             float value = 0.f;
@@ -195,7 +195,8 @@ namespace ospray {
       volume.setParam("voxelType", int(OSP_FLOAT));
       volume.setParam("gridOrigin", vec3f(-1.f, -1.f, -1.f));
       volume.setParam("gridSpacing", vec3f(2.f / reduce_max(volumeDimensions)));
-      volume.setParam("voxelData", cpp::Data(voxels));
+      volume.setParam("voxelData",
+                      cpp::Data(volumeDimensions, {0}, voxels.data()));
 
       volume.commit();
       return volume;
