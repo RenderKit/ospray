@@ -35,13 +35,15 @@ namespace ospray {
     normalData = getParamDataT<vec3f>("vertex.normal");
     colorData = getParam<Data *>("vertex.color");
     texcoordData = getParamDataT<vec2f>("vertex.texcoord");
-    indexData = getParam<Data *>("index");
+    indexData = getParamDataT<vec3ui>("index");
+      if (!indexData)
+        indexData = getParamDataT<vec4ui>("index", true);
     postCreationInfo(vertexData->size());
   }
 
   size_t Mesh::numPrimitives() const
   {
-    return indexData ? indexData->size() : 0;
+    return indexData->size();
   }
 
   LiveGeometry Mesh::createEmbreeGeometry()
@@ -56,7 +58,7 @@ namespace ospray {
         isTri ? RTC_FORMAT_UINT3 : RTC_FORMAT_UINT4,
         indexData->data(),
         0,
-        sizeof(vec3ui),
+        isTri ? sizeof(vec3ui) : sizeof(vec4ui),
         indexData->size());
     rtcCommitGeometry(embreeGeo);
 
@@ -75,6 +77,7 @@ namespace ospray {
         isTri);
 
     return retval;
+
   }
 
   OSP_REGISTER_GEOMETRY(Mesh, quads);

@@ -58,7 +58,7 @@ namespace ospray {
     indexData = getParamDataT<uint32_t>("index", true);
     normalData = nullptr;
     tangentData = nullptr;
-    vertexData = getParamDataT<vec3f>("vertex.position");
+    vertexData = getParam<Data *>("vertex.position", nullptr);
 
     if (vertexData) { // round, linear curves with constant radius
       radius = getParam<float>("radius", 0.01f);
@@ -69,7 +69,7 @@ namespace ospray {
         throw std::runtime_error(
             "constant-radius curves need to be of type OSP_ROUND and have basis OSP_LINEAR");
     } else { // embree curves
-      vertexData = getParamDataT<vec4f>("vertex.position", true);
+      vertexData = getParamDataT<vec4f>("vertex.position_radius", true);
       radius = 0.0f;
 
       curveType = (OSPCurveType)getParam<int>("type", OSP_UNKNOWN_CURVE_TYPE);

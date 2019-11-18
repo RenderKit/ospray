@@ -51,17 +51,6 @@ namespace ospray {
       {0.0f, -1.0f, 0.0f, 0.2f},
       {1.0f, 0.0f, 2.f, 0.2f}
     };
-    static std::vector<vec3f> points3f = {
-      {-1.0f, 0.0f, -2.f},
-      {0.0f, -1.0f, 0.0f},
-      {1.0f, 0.0f, 2.f},
-      {-1.0f, 0.0f, 2.f},
-      {0.0f, 1.0f, 0.0f},
-      {1.0f, 0.0f, -2.f},
-      {-1.0f, 0.0f, -2.f},
-      {0.0f, -1.0f, 0.0f},
-      {1.0f, 0.0f, 2.f}
-    };
     static std::vector<vec4f> colors = {
       {1.0f, 0.0f, 0.0f, 0.0f},
       {1.0f, 1.0f, 0.0f, 0.0f},
@@ -96,19 +85,19 @@ namespace ospray {
           const vec4f pointTangent = *(iter+1) - *iter;
           tangents.push_back(pointTangent);
         }
-        geom.setParam("vertex.position", cpp::Data(points));
+        geom.setParam("vertex.position_radius", cpp::Data(points));
         geom.setParam("vertex.tangent", cpp::Data(tangents));
       } else if (curveBasis == "catmull-rom") {
         geom.setParam("type", int(OSP_ROUND));
         geom.setParam("basis", int(OSP_CATMULL_ROM));
-        geom.setParam("vertex.position", cpp::Data(points));
-      } else if (curveBasis == "streamlines") {
+        geom.setParam("vertex.position_radius", cpp::Data(points));
+      } else if (curveBasis == "linear") {
         geom.setParam("radius", 0.1f);
         geom.setParam("vertex.position", cpp::Data(points));
       } else {
         geom.setParam("type", int(OSP_ROUND));
         geom.setParam("basis", int(OSP_BSPLINE));
-        geom.setParam("vertex.position", cpp::Data(points));
+        geom.setParam("vertex.position_radius", cpp::Data(points));
      }
       geom.setParam("vertex.color", cpp::Data(colors));
       geom.setParam("index", cpp::Data(indices));

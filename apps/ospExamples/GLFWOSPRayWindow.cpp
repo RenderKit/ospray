@@ -41,7 +41,7 @@ static const std::vector<std::string> g_scenes = {"boxes",
 static const std::vector<std::string> g_curveBasis = {"bspline",
                                                       "hermite",
                                                       "catmull-rom",
-                                                      "streamlines"};
+                                                      "linear"};
 
 static const std::vector<std::string> g_renderers = {
     "scivis", "pathtracer", "raycast"};

@@ -73,7 +73,7 @@ namespace ospray {
 
         float r = (720 - dEnd) / 360.f;
         vec3f c(r, 1 - r, 1 - r / 2);
-        cout << c << endl;
+
         // spiral up with changing radius of curvature
         for (int d = dStart; d < dStart + dEnd; d += 10, h += hStep) {
           vec3f p, q;
@@ -133,7 +133,7 @@ namespace ospray {
         }      
       }
 
-      slGeom.setParam("vertex.position", cpp::Data(points));
+      slGeom.setParam("vertex.position_radius", cpp::Data(points));
       slGeom.setParam("index", cpp::Data(indices));
       slGeom.setParam("vertex.color", cpp::Data(colors));
       slGeom.setParam("type", int(OSP_ROUND));
