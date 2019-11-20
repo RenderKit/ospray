@@ -21,7 +21,6 @@
 #include <random>
 
 using namespace ospcommon::math;
-using namespace std;
 
 namespace ospray {
   namespace testing {
@@ -93,7 +92,7 @@ namespace ospray {
         geom.setParam("vertex.position_radius", cpp::Data(points));
       } else if (curveBasis == "linear") {
         geom.setParam("radius", 0.1f);
-        geom.setParam("vertex.position", cpp::Data(points));
+        geom.setParam("vertex.position", cpp::Data(points.size(), sizeof(vec4f), (vec3f*)points.data()));
       } else {
         geom.setParam("type", int(OSP_ROUND));
         geom.setParam("basis", int(OSP_BSPLINE));

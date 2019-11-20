@@ -53,7 +53,7 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
 {
   Mesh *uniform self = (Mesh * uniform) _self;
   dg.Ng = dg.Ns                = ray.Ng;
-  const vec4i index = get_vec4i(self->index, ray.primID);
+  const vec4ui index = get_vec4ui(self->index, ray.primID);
   const float u     = ray.u;
   const float v     = ray.v;
   vec4f uv;
@@ -130,7 +130,7 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
                                        uniform int64 flags) {
   Mesh *uniform self = (Mesh * uniform) _self;
   dg.Ng = dg.Ns                = ray.Ng;
-  const vec3i index = get_vec3i(self->index, ray.primID);
+  const vec3ui index = get_vec3ui(self->index, ray.primID);
   const vec3f uv = make_vec3f(1.0f - ray.u - ray.v, ray.u, ray.v);
 
   flags &= self->flagMask;
@@ -192,13 +192,13 @@ SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
 {
   const Mesh *const uniform self = (const Mesh *uniform)_self;
   SampleAreaRes res;
-  vec4i index4;
+  vec4ui index4;
   if (self->is_triangleMesh) {
-    const vec3i index3 = get_vec3i(self->index, primID);
-    index4 = make_vec4i(index3.x, index3.y, index3.z, index3.z);
+    const vec3ui index3 = get_vec3ui(self->index, primID);
+    index4 = make_vec4ui(index3.x, index3.y, index3.z, index3.z);
   } else
-   index4 = get_vec4i(self->index, primID);
-  const vec4i index = index4;
+   index4 = get_vec4ui(self->index, primID);
+  const vec4ui index = index4;
 
   const vec3f a = get_vec3f(self->vertex, index.x);
   const vec3f b = get_vec3f(self->vertex, index.y);
@@ -248,9 +248,9 @@ void Mesh_getAreas(const Geometry *const uniform _self,
   const Mesh *const uniform self = (const Mesh *uniform)_self;
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
   for (uniform int32 i = 0; i < numPrims; i++) {
-    const uniform vec4i index = self->is_triangleMesh ?
-      make_vec4i(get_vec3i(self->index, primIDs[i])) :
-      get_vec4i(self->index, primIDs[i]);
+    const uniform vec4ui index = self->is_triangleMesh ?
+      make_vec4ui(get_vec3ui(self->index, primIDs[i])) :
+      get_vec4ui(self->index, primIDs[i]);
     const uniform vec3f a = get_vec3f(self->vertex, index.x);
     const uniform vec3f b = get_vec3f(self->vertex, index.y);
     const uniform vec3f c = get_vec3f(self->vertex, index.z);

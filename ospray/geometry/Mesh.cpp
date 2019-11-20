@@ -80,7 +80,6 @@ namespace ospray {
 
   }
 
-  OSP_REGISTER_GEOMETRY(Mesh, quads);
-  OSP_REGISTER_GEOMETRY(Mesh, triangles);
+  OSP_REGISTER_GEOMETRY(Mesh, mesh);
 
 }  // namespace ospray

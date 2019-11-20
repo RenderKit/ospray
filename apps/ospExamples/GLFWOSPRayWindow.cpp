@@ -29,14 +29,12 @@ static bool g_quitNextFrame = false;
 static const std::vector<std::string> g_scenes = {"boxes",
                                                   "cornell_box",
                                                   "curves",
-                                                  "cylinders",
                                                   "gravity_spheres_volume",
                                                   "perlin_noise_volumes",
                                                   "random_spheres",
                                                   "streamlines",
                                                   "subdivision_cube",
-                                                  "unstructured_volume",
-                                                  "oldCurves"};
+                                                  "unstructured_volume"};
 
 static const std::vector<std::string> g_curveBasis = {"bspline",
                                                       "hermite",

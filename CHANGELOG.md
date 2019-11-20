@@ -1,7 +1,7 @@
 Version History
 ---------------
 
-### Changes in v2.0.0-alpha:
+### Changes in v2.0.0:
 
 -   New major revision of OSPRay brings API breaking improvements over
     v1.x. See `doc/ospray2_porting_guide.md` for a deeper description of
@@ -56,7 +56,15 @@ Version History
 -   Introduction of new `boxes` geometry type
 -   Expansion of information returned by `ospPick`
 -   Addition of API to query version information at runtime
-
+-   Removal of `cylinders` and `streamlines` geometry.
+-   Curves now supports both, per vertex varying radii as in `vec4f[] vertex.position_radius`       and constant radius for the geometry with `float radius`. 
+    It uses OSP_ROUND type and OSP_LINEAR basis by default to create the connected 
+    segments of constant radius. For per vertex varying radii curves it uses embree curves.
+-   Add new embree curve type `CATMULL_ROM` for curves.
+-   Triangle meshes and Quad meshes superseded by `mesh` geometry. 
+    Hence the removal of triangle and quad meshes. 
+-   Removal of `cylinders` (grass) tutorial.
+-   `streamlines` of streamlines tutorial now connected `CATMULL_ROM` curves. 
 -   Known issues:
     -   Open VKL must be built with a compatible set of ISAs with OSPRay
         due to a known issue with VKL iterator types. This is easiest

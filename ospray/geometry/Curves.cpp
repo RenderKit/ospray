@@ -58,7 +58,8 @@ namespace ospray {
     indexData = getParamDataT<uint32_t>("index", true);
     normalData = nullptr;
     tangentData = nullptr;
-    vertexData = getParam<Data *>("vertex.position", nullptr);
+    vertexData = getParamDataT<vec3f>("vertex.position");
+    texcoordData = getParamDataT<vec2f>("vertex.texcoord");
 
     if (vertexData) { // round, linear curves with constant radius
       radius = getParam<float>("radius", 0.01f);
@@ -118,7 +119,8 @@ namespace ospray {
           radius,
           ispc(indexData),
           ispc(vertexData),
-          ispc(colorData));
+          ispc(colorData),
+          ispc(texcoordData));
     } else {
       Ref<const DataT<vec4f>> vertex4f(&vertexData->as<vec4f>());
       setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_VERTEX, vertex4f);
@@ -130,9 +132,15 @@ namespace ospray {
         setEmbreeGeometryBuffer(
             embreeGeo, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, colorData);
       }
+      if (texcoordData) {
+      rtcSetGeometryVertexAttributeCount(embreeGeo, 2);
+      setEmbreeGeometryBuffer(
+          embreeGeo, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, texcoordData, 1);
+      }
       ispc::Curves_set(retval.ispcEquivalent,
           retval.embreeGeometry,
           colorData,
+          texcoordData,
           indexData->size());
     }
 
@@ -142,6 +150,5 @@ namespace ospray {
   }
 
   OSP_REGISTER_GEOMETRY(Curves, curves);
-  OSP_REGISTER_GEOMETRY(Curves, streamlines);
 
 }  // namespace ospray

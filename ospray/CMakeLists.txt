@@ -103,24 +103,14 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/GeometricModel.cpp
   geometry/Boxes.ispc
   geometry/Boxes.cpp
-  geometry/TriangleMesh.ispc
-  geometry/TriangleMesh.cpp
   geometry/Subdivision.ispc
   geometry/Subdivision.cpp
-  geometry/QuadMesh.ispc
-  geometry/QuadMesh.cpp
   geometry/Curves.cpp
   geometry/Curves.ispc
-  geometry/StreamLines.cpp
-  geometry/StreamLines.ispc
   geometry/Spheres.cpp
   geometry/Spheres.ispc
-  geometry/Cylinders.cpp
-  geometry/Cylinders.ispc
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
-  geometry/OldCurves.cpp
-  geometry/OldCurves.ispc
   geometry/Mesh.cpp 
   geometry/Mesh.ispc
 

@@ -38,6 +38,7 @@ namespace ospray {
     Ref<const DataT<vec3f>> normalData;
     Ref<const DataT<vec4f>> tangentData;
     Ref<const DataT<vec4f>> colorData;
+    Ref<const DataT<vec2f>> texcoordData;
     
     float radius{0.01};
 

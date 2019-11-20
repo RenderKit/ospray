@@ -48,7 +48,7 @@ namespace ospray {
 
     cpp::Group Streamlines::buildGroup() const
     {
-      cpp::Geometry slGeom("streamlines");
+      cpp::Geometry slGeom("curves");
 
       std::vector<vec4f> points;
       std::vector<unsigned int> indices;
@@ -79,37 +79,27 @@ namespace ospray {
           vec3f p, q;
           float startRadius, endRadius;
 
-          if (d == dStart) {
             p.x = radius * std::sin(d * M_PI / 180.f);
             p.y = h - 2;
             p.z = radius * std::cos(d * M_PI / 180.f);
-            startRadius = 0.015f * std::sin(f * d * M_PI/180) + 0.01f;
+            startRadius = 0.015f * std::sin(f * d * M_PI/180) + 0.02f;
 
             q.x = (radius - 0.05f) * std::sin((d+10) * M_PI / 180.f);
             q.y = h + hStep- 2;
             q.z = (radius - 0.05f) * std::cos((d+10) * M_PI / 180.f);
-            endRadius =  0.015f * std::sin(f * (d+10) * M_PI/180) + 0.01f;
-
+            endRadius =  0.015f * std::sin(f * (d+10) * M_PI/180) + 0.02f;
+          if (d == dStart) {
             const vec3f rim = lerp(1.f + endRadius / length(q - p), q, p);
-            const vec3f cap = lerp(1.f + startRadius/ length(p - rim), p, rim);
+            const vec3f cap = lerp(1.f + startRadius/ length(rim - p), p, rim);
             points.push_back(vec4f(cap, 0.f));
             points.push_back(vec4f(rim, 0.f));
             points.push_back(vec4f(p, startRadius));
             points.push_back(vec4f(q, endRadius));
             indices.push_back(points.size() - 4);
-
+            colors.push_back(vec4f(c, 1.f));
+            colors.push_back(vec4f(c, 1.f));
           } else if (d +10 < dStart + dEnd && d + 20 > dStart + dEnd) {    
-            p.x = radius * std::sin(d * M_PI / 180.f);
-            p.y = h - 2;
-            p.z = radius * std::cos(d * M_PI / 180.f);
-            startRadius = 0.015f * std::sin(f * (d * M_PI / 180.f)) + 0.015f;
-
-            q.x = (radius - 0.05f) * std::sin((d+10) * M_PI / 180.f);
-            q.y = h + hStep- 2;
-            q.z = (radius - 0.05f) * std::cos((d+10) * M_PI / 180.f);
-            endRadius = 0.015f * std::sin(f * ((d+10) * M_PI / 180.f)) + 0.015f;
-
-            const vec3f rim = lerp(1.f + startRadius / length(q - p), p, q);
+            const vec3f rim = lerp(1.f + startRadius / length(p - q), p, q);
             const vec3f cap = lerp(1.f + endRadius / length(rim - q), q, rim);
             points.push_back(vec4f(p, startRadius));
             points.push_back(vec4f(q, endRadius));
@@ -119,12 +109,9 @@ namespace ospray {
             indices.push_back(points.size() - 6);
             indices.push_back(points.size() - 5);
             indices.push_back(points.size() - 4);
-
+            colors.push_back(vec4f(c, 1.f));
+            colors.push_back(vec4f(c, 1.f));
           } else if ((d != dStart && d != dStart + 10) && d + 20 < dStart + dEnd ){
-            p.x = radius * std::sin(d * M_PI / 180.f);
-            p.y = h - 2;
-            p.z = radius * std::cos(d * M_PI / 180.f);
-            startRadius = 0.015f * std::sin(f * (d * M_PI / 180.f)) + 0.015f;
             points.push_back(vec4f(p, startRadius));
             indices.push_back(points.size() - 4);
           }

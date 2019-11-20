@@ -750,11 +750,10 @@ To create a new geometry object of given type `type` use
 The call returns `NULL` if that type of geometry is not known by OSPRay,
 or else an `OSPGeometry` handle.
 
-### Triangle Mesh
+### Mesh
 
-A traditional triangle mesh (indexed face set) geometry is created by
-calling `ospNewGeometry` with type string "`triangles`". Once created, a
-triangle mesh recognizes the following parameters:
+A mesh consiting of either triangles or quads is created by calling `ospNewGeometry` with type string "`mesh`".
+Once created, a mesh recognizes the following parameters:
 
   Type               Name             Description
   ------------------ ---------------- -------------------------------------------------
@@ -763,32 +762,11 @@ triangle mesh recognizes the following parameters:
   vec4f[] / vec3f[]  vertex.color     [data] array of vertex colors (RGBA/RGB)
   vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
   vec3ui[]           index            [data] array of triangle indices (into the vertex array(s))
+  vec4ui[]           index            [data] array of quad indices (into the vertex array(s))
   ------------------ ---------------- -------------------------------------------------
   : Parameters defining a triangle mesh geometry.
 
-The `vertex.position` and `index` arrays are mandatory to create a valid triangle
-mesh.
-
-### Quad Mesh
-
-A mesh consisting of quads is created by calling `ospNewGeometry` with
-type string "`quads`". Once created, a quad mesh recognizes the
-following parameters:
-
-  Type               Name             Description
-  ------------------ ---------------- -------------------------------------------------
-  vec3f[]            vertex.position  [data] array of vertex positions
-  vec3f[]            vertex.normal    [data] array of vertex normals
-  vec4f[] / vec3f[]  vertex.color     [data] array of vertex colors (RGBA/RGB)
-  vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
-  vec4ui[]           index            [data] array of quad indices (into the vertex array(s))
-  ------------------ ---------------- -------------------------------------------------
-  : Parameters defining a quad mesh geometry.
-
-The `vertex.position` and `index` arrays are mandatory to create a valid quad
-mesh. A quad is internally handled as a pair of two triangles, thus
-mixing triangles and quad is supported by encoding a triangle as a quad
-with the last two vertex indices being identical (`w=z`).
+The data type of index arrays differentiates between the underlying geometry, traingles are used for a `vec3ui` type and quads for `vec4ui` type. A quad is internally handled as a pair of two triangles, with the last two vertex indices not being identical (`w != z`). The `vertex.position` and `index` arrays are mandatory to create a valid mesh. 
 
 ### Subdivision
 
@@ -856,137 +834,65 @@ array:
   -------- ---------------- --------  ---------------------------------------
   : Parameters defining a spheres geometry.
 
-### Cylinders
-
-A geometry consisting of individual cylinders, each of which can have an
-own radius, is created by calling `ospNewGeometry` with type string
-"`cylinders`". The cylinders will not be tessellated but rendered
-procedurally and are thus perfectly round. To allow a variety of cylinder
-representations in the application this geometry allows a flexible way
-of specifying the data of offsets for start position, end position and
-radius within a [data] array. All parameters are listed in the table
-below.
-
-  -------- ------------------- --------  -------------------------------------
-  Type     Name                 Default  Description
-  -------- ------------------- --------  -------------------------------------
-  vec3f[]  cylinder.position0            [data] array of center positions
-
-  vec3f[]  cylinder.position1            [data] array of center positions
-
-  float[]  cylinder.radius         NULL  optional [data] array of the
-                                         per-cylinder radius
-
-  vec2f[]  cylinder.texcoord0      NULL  optional [data] array of texture
-                                         coordinates at position0
-
-  vec2f[]  cylinder.texcoord1      NULL  optional [data] array of texture
-                                         coordinates at position0
-
-  float    radius                  0.01  default radius for all cylinders
-                                         (if `cylinder.radius` is not used)
-  -------- ------------------- --------  -------------------------------------
-  : Parameters defining a cylinders geometry.
-
-For texturing each cylinder is seen as a 1D primitive, i.e., a line
-segment: the 2D texture coordinates at its vertices v0 and v1 are
-linearly interpolated.
-
-### Streamlines
-
-A geometry consisting of multiple streamlines is created by calling
-`ospNewGeometry` with type string "`streamlines`". The streamlines are
-internally assembled either from connected (and rounded) cylinder
-segments, or represented as Bézier curves; they are thus always
-perfectly round. The parameters defining this geometry are listed in the
-table below.
-
-  ------------------ --------------- --------------------------------------------
-  Type               Name            Description
-  ------------------ --------------- --------------------------------------------
-  float              radius          global radius of all streamlines (if
-                                     per-vertex radius is not used), default 0.01
-
-  bool               smooth          enable curve interpolation, default off
-                                     (always on if per-vertex radius is used)
-
-  uint32[]           index           [data] array of indices to the first vertex
-                                     of a link
-
-  vec3f[]            vertex.position [data] array of all vertex position for
-                                     *all* streamlines
-
-  vec4f[]            vertex.color    [data] array of corresponding vertex
-                                     colors (RGBA)
-
-  float[]            vertex.radius   [data] array of corresponding vertex radius
-  ------------------ --------------- --------------------------------------------
-  : Parameters defining a streamlines geometry.
-
-Each streamline is specified by a set of (aligned) control points in
-`vertex.position`. If `smooth` is disabled and a constant `radius` is
-used for all streamlines then all vertices belonging to the same logical
-streamline are connected via [cylinders], with additional [spheres] at
-each vertex to create a continuous, closed surface. Otherwise,
-streamlines are represented as Bézier curves, smoothly interpolating the
-vertices. This mode supports per-vertex varying radii (given in
-`vertex.radius`), but is slower and consumes more memory. Additionally,
-the radius needs to be smaller than the curvature radius of the Bézier
-curve at each location on the curve.
-
-A streamlines geometry can contain multiple disjoint streamlines, each
-streamline is specified as a list of segments (or links) referenced via
-`index`: each entry `e` of the `index` array points the first vertex of a link
-(`vertex.position[index[e]]`) and the second vertex of the link is implicitly
-the directly following one (`vertex.position[index[e]+1]`).  For example, two
-streamlines of vertices `(A-B-C-D)` and `(E-F-G)`, respectively, would
-internally correspond to five links (`A-B`, `B-C`, `C-D`, `E-F`, and `F-G`),
-and would be specified via an array of vertices `[A,B,C,D,E,F,G]`, plus an
-array of link indices `[0,1,2,4,5]`.
-
 ### Curves
 
 A geometry consisting of multiple curves is created by calling
 `ospNewGeometry` with type string "`curves`".  The parameters defining
 this geometry are listed in the table below.
 
-  ------------------ --------------- -------------------------------------------
-  Type               Name            Description
-  ------------------ --------------- -------------------------------------------
-  vec4f[]            vertex.position [data] array of vertex position and radius
+  ------------------ ---------------        -------------------------------------------
+  Type               Name                   Description
+  ------------------ ---------------        -------------------------------------------
+  vec4f[]            vertex.position_radius [data] array of vertex position and radius
 
-  vec3f[]            vertex.normal   [data] array of curve normals (only for
-                                     "ribbon" curves)
+  vec3f[]            vertex.position        [data] array of vertex position
 
-  vec3f[]            vertex.tangent  [data] array of curve tangents (only for
-                                     "hermite" curves)
+  float              radius                 global radius of all curves (if
+                                            per-vertex radius is not used), default 0.01
+  
+  vec2f[]            vertex.texcoord        [data] array of vertex texture coordinates
 
-  uint32[]           index           [data] array of indices to the first vertex
-                                     or tangent of a curve segment
+  vec4f[]            vertex.color           [data] array of corresponding vertex
+                                            colors (RGBA)
 
-  int                type            `OSPCurveType` for rendering the curve.
-                                     Supported types are:
+  vec3f[]            vertex.normal          [data] array of curve normals (only for
+                                            "ribbon" curves)
 
-                                     `OSP_FLAT`
+  vec3f[]            vertex.tangent         [data] array of curve tangents (only for
+                                            "hermite" curves)
 
-                                     `OSP_ROUND`
+  uint32[]           index                  [data] array of indices to the first vertex
+                                            or tangent of a curve segment
 
-                                     `OSP_RIBBON`
+  int                type                   `OSPCurveType` for rendering the curve.
+                                            Supported types are:
 
-  int                basis           `OSPCurveBasis` for defining the curve.
-                                     Supported bases are:
+                                            `OSP_FLAT`
 
-                                     `OSP_LINEAR`
+                                            `OSP_ROUND`
 
-                                     `OSP_BEZIER`
+                                            `OSP_RIBBON`
 
-                                     `OSP_BSPLINE`
+  int                basis                  `OSPCurveBasis` for defining the curve.
+                                             Supported bases are:
 
-                                     `OSP_HERMITE`
-  ------------------ --------------- -------------------------------------------
+                                            `OSP_LINEAR`
+
+                                            `OSP_BEZIER`
+
+                                            `OSP_BSPLINE`
+
+                                            `OSP_HERMITE`
+
+                                            `OSP_CATMULL_ROM`
+  ------------------ ---------------        -------------------------------------------
   : Parameters defining a curves geometry.
 
-See Embree documentation for discussion of curve types and data formatting.
+Depending upon the specified data type of vertex positions, the curves can be either represented internally as embree curves or assembled from rounded and linearly-connected segments.
+
+Positions in `vertex.position_radius` format supports per-vertex varying radii with data type `vec4f[]` and instantiate embree curves internally for the relevant type/basis mapping (See Embree documentation for discussion of curve types and data formatting). 
+If a constant `radius` is used and positions are specified in a `vec3f[]` type of `vertex.position` format, then type/basis defaults to OSP_ROUND and OSP_LINEAR (this is the fastest and most memory efficient mode). Implementation is with round linear segements where each segment corresponds to a link between two vertices.
+
 
 ### Boxes
 

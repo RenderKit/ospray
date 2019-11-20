@@ -30,6 +30,7 @@ struct Curves
   Data1D index;
   Data1D vertex;
   Data1D color;
+  Data1D texcoord;
   float radius;
   int64 flagMask;
   RTCGeometry geom;
@@ -55,6 +56,18 @@ static void Curves_postIntersect(const Geometry *uniform _self,
                      NULL,
                      4);
   }
+  cif (flags & DG_TEXCOORD) {
+    rtcInterpolateV1(self->geom,
+                     ray.primID,
+                     ray.u,
+                     ray.v,
+                     RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
+                     1,
+                     &dg.st.x,
+                     NULL,
+                     NULL,
+                     2);
+  }
 }
 
 static void CurvesUserGeometry_postIntersect(const Geometry *uniform self,
@@ -71,7 +84,15 @@ static void CurvesUserGeometry_postIntersect(const Geometry *uniform self,
     const uint32 index = get_int32(self->index, ray.primID);
     const vec4f col0 = get_vec4f(self->color, index);
     const vec4f col1 = get_vec4f(self->color, index + 1);
-    dg.color = lerp(ray.u, col0, col1);
+    dg.color = lerp(ray.u, col0, col1);   
+    // PRINT(ray.u);
+  }
+
+  cif (and(flags & DG_TEXCOORD, valid(self->texcoord))) {
+    const uint32 index = get_int32(self->index, ray.primID);
+    const vec2f tc0 = get_vec2f(self->texcoord, index);
+    const vec2f tc1 = get_vec2f(self->texcoord, index + 1);
+    dg.st = lerp(ray.u, tc0, tc1);
   }
 }
 
@@ -237,6 +258,7 @@ void Curves_Constructor(
   Data1D_Constructor(&self->index);
   Data1D_Constructor(&self->vertex);
   Data1D_Constructor(&self->color);
+  Data1D_Constructor(&self->texcoord);
 }
 
 export void *uniform Curves_create(void *uniform cppEquivalent)
@@ -249,6 +271,7 @@ export void *uniform Curves_create(void *uniform cppEquivalent)
 export void *uniform Curves_set(void *uniform _self,
                                 RTCGeometry geom,
                                 uniform bool haveColor,
+                                uniform bool haveTexture,
                                 int32 uniform numSegments)
 {
   Curves *uniform self = (Curves * uniform) _self;
@@ -256,6 +279,8 @@ export void *uniform Curves_set(void *uniform _self,
   self->flagMask = -1;
   if (!haveColor)
     self->flagMask &= ~DG_COLOR;
+  if (!haveTexture)
+    self->flagMask &= ~DG_TEXCOORD;
 
   self->super.numPrimitives = numSegments;
   self->super.postIntersect = Curves_postIntersect;
@@ -270,7 +295,8 @@ export void *uniform Curves_setUserGeometry(void *uniform _self,
                                 float uniform radius,
                                 const Data1D *uniform index,
                                 const Data1D *uniform vertex,
-                                const Data1D *uniform color)
+                                const Data1D *uniform color,
+                                const Data1D *uniform texcoord)
 {
   Curves *uniform self = (Curves * uniform) _self;
 
@@ -278,6 +304,7 @@ export void *uniform Curves_setUserGeometry(void *uniform _self,
   self->index = *index;
   self->vertex = *vertex;
   self->color = *color;
+  self->texcoord = *texcoord;
 
   self->super.getAreas      = Curves_getAreas;
   self->super.sampleArea    = Curves_sampleArea;
