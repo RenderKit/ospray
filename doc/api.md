@@ -752,21 +752,29 @@ or else an `OSPGeometry` handle.
 
 ### Mesh
 
-A mesh consiting of either triangles or quads is created by calling `ospNewGeometry` with type string "`mesh`".
-Once created, a mesh recognizes the following parameters:
+A mesh consiting of either triangles or quads is created by calling
+`ospNewGeometry` with type string "`mesh`". Once created, a mesh
+recognizes the following parameters:
 
-  Type               Name             Description
-  ------------------ ---------------- -------------------------------------------------
-  vec3f[]            vertex.position  [data] array of vertex positions
-  vec3f[]            vertex.normal    [data] array of vertex normals
-  vec4f[] / vec3f[]  vertex.color     [data] array of vertex colors (RGBA/RGB)
-  vec2f[]            vertex.texcoord  [data] array of vertex texture coordinates
-  vec3ui[]           index            [data] array of triangle indices (into the vertex array(s))
-  vec4ui[]           index            [data] array of quad indices (into the vertex array(s))
-  ------------------ ---------------- -------------------------------------------------
-  : Parameters defining a triangle mesh geometry.
+  Type                 Name             Description
+  -------------------- ---------------- -------------------------------------------------
+  vec3f[]              vertex.position  [data] array of vertex positions
+  vec3f[]              vertex.normal    [data] array of vertex normals
+  vec4f[] / vec3f[]    vertex.color     [data] array of vertex colors (RGBA/RGB)
+  vec2f[]              vertex.texcoord  [data] array of vertex texture coordinates
+  vec3ui[] / vec4ui[]  index            [data] array of (either triangle or quad) indices (into the vertex array(s))
+  -------------------- ---------------- -------------------------------------------------
+  : Parameters defining a mesh geometry.
 
-The data type of index arrays differentiates between the underlying geometry, traingles are used for a `vec3ui` type and quads for `vec4ui` type. A quad is internally handled as a pair of two triangles, with the last two vertex indices not being identical (`w != z`). The `vertex.position` and `index` arrays are mandatory to create a valid mesh. 
+The data type of index arrays differentiates between the underlying
+geometry, triangles are used for a index with `vec3ui` type and quads
+for `vec4ui` type. Quads are internally handled as a pair of two
+triangles, thus mixing triangles and quads is supported by encoding some
+triangle as a quad with the last two vertex indices being identical
+(`w=z`).
+
+The `vertex.position` and `index` arrays are mandatory to create a valid
+mesh. 
 
 ### Subdivision
 
@@ -840,17 +848,18 @@ A geometry consisting of multiple curves is created by calling
 `ospNewGeometry` with type string "`curves`".  The parameters defining
 this geometry are listed in the table below.
 
-  ------------------ ---------------        -------------------------------------------
+  ------------------ ---------------------- -------------------------------------------
   Type               Name                   Description
-  ------------------ ---------------        -------------------------------------------
-  vec4f[]            vertex.position_radius [data] array of vertex position and radius
+  ------------------ ---------------------- -------------------------------------------
+  vec4f[]            vertex.position_radius [data] array of vertex position and
+                                            per-vertex radius
 
   vec3f[]            vertex.position        [data] array of vertex position
 
   float              radius                 global radius of all curves (if
                                             per-vertex radius is not used), default 0.01
   
-  vec2f[]            vertex.texcoord        [data] array of vertex texture coordinates
+  vec2f[]            vertex.texcoord        [data] array of per-vertex texture coordinates
 
   vec4f[]            vertex.color           [data] array of corresponding vertex
                                             colors (RGBA)
@@ -885,13 +894,23 @@ this geometry are listed in the table below.
                                             `OSP_HERMITE`
 
                                             `OSP_CATMULL_ROM`
-  ------------------ ---------------        -------------------------------------------
+  ------------------ ---------------------- -------------------------------------------
   : Parameters defining a curves geometry.
 
-Depending upon the specified data type of vertex positions, the curves can be either represented internally as embree curves or assembled from rounded and linearly-connected segments.
+Depending upon the specified data type of vertex positions, the curves
+will be implemented Embree curves or assembled from rounded and
+linearly-connected segments.
 
-Positions in `vertex.position_radius` format supports per-vertex varying radii with data type `vec4f[]` and instantiate embree curves internally for the relevant type/basis mapping (See Embree documentation for discussion of curve types and data formatting). 
-If a constant `radius` is used and positions are specified in a `vec3f[]` type of `vertex.position` format, then type/basis defaults to OSP_ROUND and OSP_LINEAR (this is the fastest and most memory efficient mode). Implementation is with round linear segements where each segment corresponds to a link between two vertices.
+Positions in `vertex.position_radius` format supports per-vertex varying
+radii with data type `vec4f[]` and instantiate Embree curves internally
+for the relevant type/basis mapping (See Embree documentation for
+discussion of curve types and data formatting). 
+
+If a constant `radius` is used and positions are specified in a
+`vec3f[]` type of `vertex.position` format, then type/basis defaults to
+`OSP_ROUND` and `OSP_LINEAR` (this is the fastest and most memory
+efficient mode). Implementation is with round linear segements where
+each segment corresponds to a link between two vertices.
 
 
 ### Boxes

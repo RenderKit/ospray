@@ -57,14 +57,16 @@ Version History
 -   Expansion of information returned by `ospPick`
 -   Addition of API to query version information at runtime
 -   Removal of `cylinders` and `streamlines` geometry.
--   Curves now supports both, per vertex varying radii as in `vec4f[] vertex.position_radius`       and constant radius for the geometry with `float radius`. 
-    It uses OSP_ROUND type and OSP_LINEAR basis by default to create the connected 
-    segments of constant radius. For per vertex varying radii curves it uses embree curves.
--   Add new embree curve type `CATMULL_ROM` for curves.
--   Triangle meshes and Quad meshes superseded by `mesh` geometry. 
-    Hence the removal of triangle and quad meshes. 
+-   Curves now supports both, per vertex varying radii as in `vec4f[]
+    vertex.position_radius` and constant radius for the geometry with
+    `float radius`. It uses `OSP_ROUND` type and `OSP_LINEAR` basis by
+    default to create the connected segments of constant radius. For per
+    vertex varying radii curves it uses embree curves.
+-   Add new embree curve type `OSP_CATMULL_ROM` for curves.
+-   Triangle meshes and Quad meshes superseded by `mesh` geometry.
 -   Removal of `cylinders` (grass) tutorial.
--   `streamlines` of streamlines tutorial now connected `CATMULL_ROM` curves. 
+-   `streamlines` of streamlines tutorial now connected
+    `OSP_CATMULL_ROM` curves.
 -   Known issues:
     -   Open VKL must be built with a compatible set of ISAs with OSPRay
         due to a known issue with VKL iterator types. This is easiest

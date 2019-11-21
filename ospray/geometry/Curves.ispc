@@ -85,7 +85,6 @@ static void CurvesUserGeometry_postIntersect(const Geometry *uniform self,
     const vec4f col0 = get_vec4f(self->color, index);
     const vec4f col1 = get_vec4f(self->color, index + 1);
     dg.color = lerp(ray.u, col0, col1);   
-    // PRINT(ray.u);
   }
 
   cif (and(flags & DG_TEXCOORD, valid(self->texcoord))) {
