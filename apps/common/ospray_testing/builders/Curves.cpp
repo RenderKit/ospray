@@ -34,8 +34,6 @@ namespace ospray {
 
       cpp::Group buildGroup() const override;
 
-      cpp::World buildWorld() const override;
-
       std::string curveBasis;
     };
 
@@ -50,17 +48,6 @@ namespace ospray {
       {0.0f, -1.0f, 0.0f, 0.2f},
       {1.0f, 0.0f, 2.f, 0.2f}
     };
-    static std::vector<vec4f> colors = {
-      {1.0f, 0.0f, 0.0f, 0.0f},
-      {1.0f, 1.0f, 0.0f, 0.0f},
-      {0.0f, 1.0f, 0.0f, 0.0f},
-      {0.0f, 1.0f, 1.0f, 0.0f},
-      {0.0f, 0.0f, 1.0f, 0.0f},
-      {1.0f, 0.0f, 1.0f, 0.0f},
-      {0.0f, 1.0f, 1.0f, 0.0f},
-      {0.0f, 0.0f, 1.0f, 0.0f},
-      {1.0f, 0.0f, 1.0f, 0.0f}
-    };
     static std::vector<unsigned int> indices = {0, 1, 2, 3, 4, 5};
 
     void Curves::commit()
@@ -73,6 +60,9 @@ namespace ospray {
     cpp::Group Curves::buildGroup() const
     {
       std::vector<cpp::GeometricModel> geometricModels;
+      std::mt19937 gen(randomSeed);
+      std::uniform_real_distribution<float> colorDistribution(0.1f, 1.0f);
+      std::vector<vec4f> s_colors(points.size());
       
       cpp::Geometry geom("curves");
 
@@ -98,12 +88,21 @@ namespace ospray {
         geom.setParam("basis", int(OSP_BSPLINE));
         geom.setParam("vertex.position_radius", cpp::Data(points));
      }
-      geom.setParam("vertex.color", cpp::Data(colors));
+
+      for (auto &c : s_colors) {
+        c.x = colorDistribution(gen);
+        c.y = colorDistribution(gen);
+        c.z = colorDistribution(gen);
+        c.w = colorDistribution(gen);
+      }
+
+      geom.setParam("vertex.color", cpp::Data(s_colors));
+      
       geom.setParam("index", cpp::Data(indices));
       geom.commit();
 
       cpp::Material mat(rendererType, "ThinGlass");
-      mat.setParam("attenuationDistance", 0.2f);
+      mat.setParam("attenuationDistance", 1.0f);
       mat.commit();
 
       cpp::GeometricModel model(geom);
@@ -116,24 +115,6 @@ namespace ospray {
       group.commit();
 
       return group;
-    }
-
-    cpp::World Curves::buildWorld() const {
-    
-      cpp::World world;
-      auto group = buildGroup();
-
-      cpp::Instance inst(group);
-      inst.commit();
-
-      world.setParam("instance", cpp::Data(inst));
-
-      cpp::Light light("ambient");
-      light.commit();
-
-      world.setParam("light", cpp::Data(light));
-
-      return world;
     }
 
     OSP_REGISTER_TESTING_BUILDER(Curves, curves);

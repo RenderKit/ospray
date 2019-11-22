@@ -44,12 +44,11 @@ INSTANTIATE_TEST_CASE_P(
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("cornell_box",
                                          "curves",
-                                         "cylinders",
+                                         "gravity_spheres_isosurface",
                                          "empty",
                                          "random_spheres",
                                          "streamlines",
-                                         "subdivision_cube",
-                                         "gravity_spheres_isosurface"),
+                                         "subdivision_cube"),
                        ::testing::Values("scivis", "pathtracer")));
 
 INSTANTIATE_TEST_CASE_P(
