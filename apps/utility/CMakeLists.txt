@@ -14,6 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+if (NOT OSPRAY_APPS_TESTING)
+  return()
+endif()
+
 add_executable(ospConvertRawToAMR ospConvertRawToAMR.cpp)
 target_link_libraries(ospConvertRawToAMR PRIVATE raw_to_amr)
 install(TARGETS ospConvertRawToAMR

@@ -14,6 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+if (NOT OSPRAY_APPS_EXAMPLES)
+  return()
+endif()
+
 # build ospTutorial, for demonstration and API testing
 add_executable(ospTutorial ospTutorial.c)
 target_link_libraries(ospTutorial PRIVATE ospray)

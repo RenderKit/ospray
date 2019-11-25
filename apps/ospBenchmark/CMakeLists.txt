@@ -14,6 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+if (NOT OSPRAY_APPS_TESTING)
+  return()
+endif()
+
 add_executable(ospBenchmark
   ospBenchmark.cpp
   BaseFixture.cpp

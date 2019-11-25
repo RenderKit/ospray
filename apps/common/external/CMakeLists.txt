@@ -14,14 +14,15 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-if (NOT WIN32)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-endif()
-
 ospray_disable_compiler_warnings()
 
-include(configure_benchmark.cmake)
-include(configure_gtest.cmake)
+if (OSPRAY_APPS_TESTING)
+  include(configure_benchmark.cmake)
+  include(configure_gtest.cmake)
+endif()
 
-add_subdirectory(imgui)
+if (OSPRAY_APPS_EXAMPLES)
+  add_subdirectory(imgui)
+endif()
+
 add_subdirectory(stb_image)
