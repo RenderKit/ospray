@@ -18,7 +18,6 @@
 #include "ospray_testing.h"
 // stl
 #include <random>
-using namespace std;
 using namespace ospcommon::math;
 
 namespace ospray {
@@ -32,9 +31,6 @@ namespace ospray {
       void commit() override;
 
       cpp::Group buildGroup() const override;
-
-     private:
-      bool smooth{false};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -72,7 +68,7 @@ namespace ospray {
         float f      = freqDist(rng);
 
         float r = (720 - dEnd) / 360.f;
-        vec3f c(r, 1 - r, 1 - r / 2);
+        vec4f c(r, 1 - r, 1 - r / 2, 1.f);
 
         // spiral up with changing radius of curvature
         for (int d = dStart; d < dStart + dEnd; d += 10, h += hStep) {
@@ -96,8 +92,8 @@ namespace ospray {
             points.push_back(vec4f(p, startRadius));
             points.push_back(vec4f(q, endRadius));
             indices.push_back(points.size() - 4);
-            colors.push_back(vec4f(c, 1.f));
-            colors.push_back(vec4f(c, 1.f));
+            colors.push_back(c);
+            colors.push_back(c);
           } else if (d +10 < dStart + dEnd && d + 20 > dStart + dEnd) {    
             const vec3f rim = lerp(1.f + startRadius / length(p - q), p, q);
             const vec3f cap = lerp(1.f + endRadius / length(rim - q), q, rim);
@@ -109,13 +105,13 @@ namespace ospray {
             indices.push_back(points.size() - 6);
             indices.push_back(points.size() - 5);
             indices.push_back(points.size() - 4);
-            colors.push_back(vec4f(c, 1.f));
-            colors.push_back(vec4f(c, 1.f));
+            colors.push_back(c);
+            colors.push_back(c);
           } else if ((d != dStart && d != dStart + 10) && d + 20 < dStart + dEnd ){
             points.push_back(vec4f(p, startRadius));
             indices.push_back(points.size() - 4);
           }
-          colors.push_back(vec4f(c, 1.f));
+          colors.push_back(c);
           radius -= 0.05f;
         }      
       }
