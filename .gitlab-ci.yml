@@ -50,8 +50,8 @@ variables:
     - scripts/tests/run_tests.sh
   artifacts:
     paths:
-      - $CI_PROJECT_DIR/build/tests.xml
-      - $CI_PROJECT_DIR/build/failed
+      - $CI_PROJECT_DIR/build_regression_tests/tests.xml
+      - $CI_PROJECT_DIR/build_regression_tests/failed
     expire_in: 1 week
     when: always
 

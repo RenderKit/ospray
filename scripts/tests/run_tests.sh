@@ -30,6 +30,5 @@ rm -rf failed
 mkdir failed
 
 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
-FAILED=$(echo $?)
 
-exit $FAILED
+exit $?
