@@ -13,17 +13,16 @@ def inlatex(s):
 def tbl_caption(s):
     return pf.Para([inlatex(r'\caption{')] + s + [inlatex(r'}')])
 
-def tbl_alignment(a, w):
+def tbl_alignment(a):
     aligns = {
         "AlignDefault": 'l',
         "AlignLeft": 'l',
         "AlignCenter": 'c',
         "AlignRight": 'r',
     }
-    s = '';
-    for i in range(len(a)):
-        s += 'X[%d,' % int(100*w[i]) + aligns[a[i]['t']] + ']'
-    return s;
+    s = ''.join(map(lambda al: aligns[al['t']], a[:-1]))
+    s += 'X[1,'+aligns[a[-1]['t']]+']'
+    return s
 
 def tbl_headers(s):
     result = s[0][0]['c'][:]
@@ -58,7 +57,7 @@ def do_filter(k, v, f, m):
         return [latex(r'\begin{table'+wd+'}[!h]'),
                 tbl_caption(v[0]),
                 latex(ha),
-                latex(r'\begin{tabu}{' + tbl_alignment(v[1], w) + '}'),
+                latex(r'\begin{tabu}{' + tbl_alignment(v[1]) + '}'),
                 latex(r'\toprule'),
                 tbl_headers(v[3]),
                 latex(r'\midrule'),
