@@ -23,7 +23,6 @@ add_library(ospray_testing SHARED
   builders/Builder.cpp
   builders/CornellBox.cpp
   builders/Curves.cpp
-  builders/Cylinders.cpp
   builders/Empty.cpp
   builders/GravitySpheresVolume.cpp
   builders/PerlinNoiseVolumes.cpp
@@ -38,13 +37,17 @@ add_library(ospray_testing SHARED
   builders/test_pt_metal_roughness.cpp
   builders/test_pt_metallic_flakes.cpp
   builders/test_pt_obj.cpp
-
-  ../utility/rawToAMR.cpp
 )
 
 generate_export_header(ospray_testing)
 
-target_link_libraries(ospray_testing PUBLIC ospray ospcommon::ospcommon)
+target_link_libraries(ospray_testing
+PUBLIC
+  ospray
+  ospcommon::ospcommon
+PRIVATE
+  raw_to_amr
+)
 
 set_target_properties(ospray_testing
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})

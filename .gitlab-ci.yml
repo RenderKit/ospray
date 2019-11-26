@@ -1,7 +1,7 @@
 stages:
   - build
-  - test-src
   - test-build
+  - test-src
   - deploy
 
 variables:
@@ -46,25 +46,22 @@ variables:
   stage: test-build
   tags:
     - docker
-  script:
-    - scripts/tests/run_tests.sh
   artifacts:
     paths:
-      - $CI_PROJECT_DIR/build/tests.xml
-      - $CI_PROJECT_DIR/build/failed
+      - build_regression_tests/tests.xml
+      - build_regression_tests/failed
     expire_in: 1 week
     when: always
+
+.job_template: &test_job_unix
+  <<: *test_job
+  script:
+    - scripts/tests/run_tests.sh
 
 .job_template: &test_job_windows
   <<: *test_job
   script:
     - scripts\tests\run_tests.ps1
-  artifacts:
-    paths:
-      - tests.xml
-      - failed
-    expire_in: 1 week
-    when: always
 
 
 ### BUILD JOBS ###
@@ -206,13 +203,13 @@ build-scan-kw:
 ### TEST JOBS ###
 
 test-centos7-gcc:
-  <<: *test_job
+  <<: *test_job_unix
   image: ospray/docker-images:centos7
   dependencies:
     - build-centos7-gcc
 
 test-ubuntu1804-gcc:
-  <<: *test_job
+  <<: *test_job_unix
   image: ospray/docker-images:ubuntu18.04
   script:
     - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/ scripts/tests/run_tests.sh
@@ -220,7 +217,7 @@ test-ubuntu1804-gcc:
     - build-ubuntu1804-gcc
 
 test-ubuntu1604-gcc:
-  <<: *test_job
+  <<: *test_job_unix
   image: ospray/docker-images:ubuntu16.04
   script:
     - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/ scripts/tests/run_tests.sh

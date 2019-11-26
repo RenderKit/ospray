@@ -29,3 +29,5 @@ cmake -L `
 ../scripts/superbuild
 
 cmake --build . --config Release --target ALL_BUILD
+
+exit $LASTEXITCODE

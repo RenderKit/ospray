@@ -121,6 +121,7 @@ namespace ospray {
     std::for_each(params_begin(), params_end(), [&](std::shared_ptr<Param> &p)
     {
       auto &param = *p;
+      param.query = true;
 
       if (param.data.is<bool>()) {
         vklSetBool(vklVolume,
@@ -191,9 +192,7 @@ namespace ospray {
           vklRelease(vklData);
         }
       } else {
-        std::cerr << "[Volume] ignoring unsupported "
-                     "parameter type: "
-                  << param.name << std::endl;
+        param.query = false;
       }
     });
   }

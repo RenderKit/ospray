@@ -33,15 +33,20 @@ namespace ospray {
     LiveGeometry createEmbreeGeometry() override;
 
    protected:
-    Ref<const DataT<vec4f>> vertexData;
+    Ref<const Data> vertexData;
     Ref<const DataT<uint32_t>> indexData;
     Ref<const DataT<vec3f>> normalData;
-    Ref<const DataT<vec3f>> tangentData;
+    Ref<const DataT<vec4f>> tangentData;
+    Ref<const DataT<vec4f>> colorData;
+    Ref<const DataT<vec2f>> texcoordData;
+    
+    float radius{0.01};
 
     RTCGeometryType embreeCurveType;
 
     OSPCurveType curveType{OSP_UNKNOWN_CURVE_TYPE};
     OSPCurveBasis curveBasis{OSP_UNKNOWN_CURVE_BASIS};
+
   };
 
 }  // namespace ospray

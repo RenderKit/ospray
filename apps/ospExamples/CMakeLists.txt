@@ -14,21 +14,24 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+if (NOT OSPRAY_APPS_EXAMPLES)
+  return()
+endif()
+
 # prefer libGL over libOpenGl for better compatibility with SWR
 set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(OpenGL 2 REQUIRED)
 find_package(glfw3 REQUIRED)
 
 add_executable(ospExamples
-  ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
   imgui_impl_glfw_gl3.cpp
   ospExample.cpp
 )
 
-target_link_libraries(ospExamples PRIVATE
-  ospcommon::ospcommon
-  ospray
+target_link_libraries(ospExamples
+PRIVATE
+  arcball_camera
   ospray_testing
   ospray_imgui
   glfw

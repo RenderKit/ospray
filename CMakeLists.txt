@@ -32,6 +32,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 ##############################################################
 # Establish project
 ##############################################################
@@ -76,7 +78,7 @@ if (OSPRAY_ENABLE_MODULES)
 endif()
 
 ## Testing ##
-if (OSPRAY_ENABLE_TESTING)
+if (OSPRAY_APPS_TESTING)
   add_subdirectory(test_image_data)
 endif()
 

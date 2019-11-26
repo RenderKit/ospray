@@ -14,6 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+if (NOT OSPRAY_APPS_EXAMPLES)
+  return()
+endif()
+
 # build ospTutorial, for demonstration and API testing
 add_executable(ospTutorial ospTutorial.c)
 target_link_libraries(ospTutorial PRIVATE ospray)
@@ -25,3 +29,8 @@ target_link_libraries(ospTutorialCpp PRIVATE ospray)
 # async version
 add_executable(ospTutorialAsync ospTutorialAsync.c)
 target_link_libraries(ospTutorialAsync PRIVATE ospray)
+
+install(TARGETS ospTutorial ospTutorialCpp ospTutorialAsync
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

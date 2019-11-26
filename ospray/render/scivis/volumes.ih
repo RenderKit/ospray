@@ -21,7 +21,6 @@
 
 struct LDSampler;
 
-vec4f integrateVolumeInterval(const ScreenSample &sample,
-                              const VolumeInterval &interval,
-                              Ray &ray,
-                              varying LDSampler* uniform ldSampler);
+vec4f integrateVolumeIntervals(const VolumeIntervals &intervals,
+                               Ray &ray,
+                               varying LDSampler *uniform ldSampler);

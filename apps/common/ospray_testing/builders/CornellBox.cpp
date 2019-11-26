@@ -240,7 +240,7 @@ namespace ospray {
 
     cpp::Group CornellBox::buildGroup() const
     {
-      cpp::Geometry quadMesh("quads");
+      cpp::Geometry quadMesh("mesh");
 
       quadMesh.setParam("vertex.position", cpp::Data(vertices));
       quadMesh.setParam("vertex.color", cpp::Data(colors));

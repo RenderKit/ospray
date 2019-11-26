@@ -21,7 +21,7 @@
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 
-struct QuadMesh
+struct Mesh
 {
   Geometry super;
   Data1D index;
@@ -30,7 +30,8 @@ struct QuadMesh
   Data1D color;
   Data1D texcoord;
   int64 flagMask; // which attributes are missing and cannot be interpolated
-  bool has_alpha;           // 4th color component is valid
+  bool has_alpha; // 4th color component is valid
+  bool is_triangleMesh;
 };
 
 // Create quad_interpolate for vec2f, vec3f, and vec4f types
@@ -50,9 +51,9 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
                                    const varying Ray &ray,
                                    uniform int64 flags)
 {
-  QuadMesh *uniform self = (QuadMesh * uniform) _self;
+  Mesh *uniform self = (Mesh * uniform) _self;
   dg.Ng = dg.Ns                = ray.Ng;
-  const vec4i index = get_vec4i(self->index, ray.primID);
+  const vec4ui index = get_vec4ui(self->index, ray.primID);
   const float u     = ray.u;
   const float v     = ray.v;
   vec4f uv;
@@ -123,23 +124,85 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
   }
 }
 
-SampleAreaRes QuadMesh_sampleArea(const Geometry *uniform const _self,
-                                  const int32 primID,
-                                  const uniform affine3f &xfm,
-                                  const uniform affine3f &,
-                                  const vec2f &s)
-{
-  const QuadMesh *const uniform self = (const QuadMesh *uniform)_self;
-  SampleAreaRes res;
+static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
+                                       varying DifferentialGeometry &dg,
+                                       const varying Ray &ray,
+                                       uniform int64 flags) {
+  Mesh *uniform self = (Mesh * uniform) _self;
+  dg.Ng = dg.Ns                = ray.Ng;
+  const vec3ui index = get_vec3ui(self->index, ray.primID);
+  const vec3f uv = make_vec3f(1.0f - ray.u - ray.v, ray.u, ray.v);
 
-  // gather vertices
-  const vec4i index = get_vec4i(self->index, primID);
-  // triangles a b c and d c b
+  flags &= self->flagMask;
+
+  cif (flags & DG_NS) {
+    const vec3f a = get_vec3f(self->normal, index.x);
+    const vec3f b = get_vec3f(self->normal, index.y);
+    const vec3f c = get_vec3f(self->normal, index.z);
+    dg.Ns         = interpolate(uv, a, b, c);
+  }
+
+  cif (flags & DG_COLOR) {
+    const vec4f a = get_vec4f(self->color, index.x);
+    const vec4f b = get_vec4f(self->color, index.y);
+    const vec4f c = get_vec4f(self->color, index.z);
+    dg.color      = interpolate(uv, a, b, c);
+    if (!self->has_alpha)
+      dg.color.w = 1.f;
+  }
+
+  const uniform bool compute_texcoord = flags & DG_TEXCOORD;
+  bool compute_tangents = flags & DG_TANGENTS;
+  cif (and(or(compute_texcoord, compute_tangents), valid(self->texcoord))) {
+    const vec2f a = get_vec2f(self->texcoord, index.x);
+    const vec2f b = get_vec2f(self->texcoord, index.y);
+    const vec2f c = get_vec2f(self->texcoord, index.z);
+    cif (compute_texcoord)
+      dg.st = interpolate(uv, a, b, c);
+    cif (compute_tangents) {
+      const vec2f dst02 = a - c;
+      const vec2f dst12 = b - c;
+      const float det   = dst02.x * dst12.y - dst02.y * dst12.x;
+
+      if (det != 0.f) {
+        const float invDet                  = rcp(det);
+        const vec3f a = get_vec3f(self->vertex, index.x);
+        const vec3f b = get_vec3f(self->vertex, index.y);
+        const vec3f c = get_vec3f(self->vertex, index.z);
+        const vec3f dp02 = a - c;
+        const vec3f dp12 = b - c;
+        dg.dPds          = (dst12.y * dp02 - dst02.y * dp12) * invDet;
+        dg.dPdt          = (dst02.x * dp12 - dst12.x * dp02) * invDet;
+        compute_tangents = false;
+      }
+    }
+  }
+  if (compute_tangents) {
+    linear3f f = frame(dg.Ng);
+    dg.dPds = f.vx;
+    dg.dPdt = f.vy;
+  }
+}
+
+SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
+                                      const int32 primID,
+                                      const uniform affine3f &xfm,
+                                      const uniform affine3f &,
+                                      const vec2f &s)
+{
+  const Mesh *const uniform self = (const Mesh *uniform)_self;
+  SampleAreaRes res;
+  vec4ui index4;
+  if (self->is_triangleMesh) {
+    const vec3ui index3 = get_vec3ui(self->index, primID);
+    index4 = make_vec4ui(index3.x, index3.y, index3.z, index3.z);
+  } else
+   index4 = get_vec4ui(self->index, primID);
+  const vec4ui index = index4;
+
   const vec3f a = get_vec3f(self->vertex, index.x);
   const vec3f b = get_vec3f(self->vertex, index.y);
   const vec3f c = get_vec3f(self->vertex, index.z);
-  const vec3f d = get_vec3f(self->vertex, index.w);
-
   const vec3f e1 = xfmVector(xfm, a - c);
   const vec3f e2 = xfmVector(xfm, b - c);
   const vec3f m1 = cross(e1, e2);
@@ -151,6 +214,7 @@ SampleAreaRes QuadMesh_sampleArea(const Geometry *uniform const _self,
   vec2f sp   = s;
 
   if (index.z != index.w) {
+    const vec3f d = get_vec3f(self->vertex, index.w);
     // painfully slow: re-calculate areas to decide which triangle to sample
     const vec3f e3 = xfmVector(xfm, d - b);
     const vec3f m2 = cross(e3, e2);
@@ -175,34 +239,37 @@ SampleAreaRes QuadMesh_sampleArea(const Geometry *uniform const _self,
   return res;
 }
 
-void QuadMesh_getAreas(const Geometry *const uniform _self,
-                       const int32 *const uniform primIDs,
-                       const uniform int32 numPrims,
-                       const uniform affine3f &xfm,
-                       float *const uniform areas)
+void Mesh_getAreas(const Geometry *const uniform _self,
+                           const int32 *const uniform primIDs,
+                           const uniform int32 numPrims,
+                           const uniform affine3f &xfm,
+                           float *const uniform areas)
 {
-  const QuadMesh *const uniform self = (const QuadMesh *uniform)_self;
-
+  const Mesh *const uniform self = (const Mesh *uniform)_self;
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
   for (uniform int32 i = 0; i < numPrims; i++) {
-    const uniform vec4i index = get_vec4i(self->index, primIDs[i]);
-    // triangles a b c and d c b
+    const uniform vec4ui index = self->is_triangleMesh ?
+      make_vec4ui(get_vec3ui(self->index, primIDs[i])) :
+      get_vec4ui(self->index, primIDs[i]);
     const uniform vec3f a = get_vec3f(self->vertex, index.x);
     const uniform vec3f b = get_vec3f(self->vertex, index.y);
     const uniform vec3f c = get_vec3f(self->vertex, index.z);
-    const uniform vec3f d = get_vec3f(self->vertex, index.w);
     const uniform vec3f e1 = xfmVector(xfm, a - c);
     const uniform vec3f e2 = xfmVector(xfm, b - c);
-    const uniform vec3f e3 = xfmVector(xfm, d - b);
-    areas[i] = 0.5f * (length(cross(e1, e2)) + length(cross(e2, e3)));
+    areas[i]               = 0.5f * length(cross(e1, e2));
+    if(!self->is_triangleMesh) {
+      const uniform vec3f d = get_vec3f(self->vertex, index.w);
+      const uniform vec3f e3 = xfmVector(xfm, d - b);
+      areas[i] += 0.5f * length(cross(e2, e3));
+    }
   }
 }
 
-void QuadMesh_Constructor(QuadMesh *uniform self, void *uniform cppEquivalent)
+void Mesh_Constructor(Mesh *uniform self, void *uniform cppEquivalent)
 {
-  Geometry_Constructor(&self->super, cppEquivalent, QuadMesh_postIntersect);
-  self->super.getAreas = QuadMesh_getAreas;
-  self->super.sampleArea = QuadMesh_sampleArea;
+  Geometry_Constructor(&self->super, cppEquivalent, NULL);
+  self->super.getAreas = Mesh_getAreas;
+  self->super.sampleArea = Mesh_sampleArea;
   Data1D_Constructor(&self->index);
   Data1D_Constructor(&self->vertex);
   Data1D_Constructor(&self->normal);
@@ -210,22 +277,23 @@ void QuadMesh_Constructor(QuadMesh *uniform self, void *uniform cppEquivalent)
   Data1D_Constructor(&self->texcoord);
 }
 
-export void *uniform QuadMesh_create(void *uniform cppEquivalent)
+export void *uniform Mesh_create(void *uniform cppEquivalent)
 {
-  QuadMesh *uniform self = uniform new QuadMesh;
-  QuadMesh_Constructor(self, cppEquivalent);
+  Mesh *uniform self = uniform new Mesh;
+  Mesh_Constructor(self, cppEquivalent);
   return self;
 }
 
-export void *uniform QuadMesh_set(void *uniform _self,
+export void *uniform Mesh_set(void *uniform _self,
     const Data1D *uniform index,
     const Data1D *uniform vertex,
     const Data1D *uniform normal,
     const Data1D *uniform color,
     const Data1D *uniform texcoord,
-    uniform bool has_alpha)
+    uniform bool has_alpha,
+    uniform bool is_triangleMesh)
 {
-  QuadMesh *uniform self = (QuadMesh * uniform) _self;
+  Mesh *uniform self = (Mesh * uniform) _self;
   self->index = *index;
   self->vertex = *vertex;
   self->normal = *normal;
@@ -233,6 +301,10 @@ export void *uniform QuadMesh_set(void *uniform _self,
   self->texcoord = *texcoord;
   self->has_alpha = has_alpha;
   self->super.numPrimitives = index->numItems;
+  self->is_triangleMesh = is_triangleMesh;
+  self->super.postIntersect = self->is_triangleMesh ?
+    TriangleMesh_PostIntersect :
+    QuadMesh_postIntersect;
 
   self->flagMask = -1;
   cif (!valid(self->normal))

@@ -33,6 +33,16 @@ macro(get_subdirectories result curdir)
   set(${result} ${dirlist})
 endmacro()
 
+## Get all subdirectories and call add_subdirectory() if it has a CMakeLists.txt
+macro(add_all_subdirectories)
+  file(GLOB dirs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/ *)
+  foreach(dir ${dirs})
+    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/CMakeLists.txt)
+      add_subdirectory(${dir})
+    endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/CMakeLists.txt)
+  endforeach(dir ${dirs})
+endmacro()
+
 ## Setup CMAKE_BUILD_TYPE to have a default + cycle between options in UI
 macro(ospray_configure_build_type)
   set(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
@@ -48,6 +58,20 @@ macro(ospray_configure_build_type)
       set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type." FORCE)
     endif()
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
+  endif()
+
+  if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    set(OSPRAY_BUILD_RELEASE        TRUE )
+    set(OSPRAY_BUILD_DEBUG          FALSE)
+    set(OSPRAY_BUILD_RELWITHDEBINFO FALSE)
+  elseif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(OSPRAY_BUILD_RELEASE        FALSE)
+    set(OSPRAY_BUILD_DEBUG          TRUE )
+    set(OSPRAY_BUILD_RELWITHDEBINFO FALSE)
+  else()
+    set(OSPRAY_BUILD_RELEASE        FALSE)
+    set(OSPRAY_BUILD_DEBUG          FALSE)
+    set(OSPRAY_BUILD_RELWITHDEBINFO TRUE )
   endif()
 endmacro()
 
@@ -311,7 +335,7 @@ macro(ospray_create_embree_target)
 
     target_link_libraries(embree
     INTERFACE
-      $<BUILD_INTERFACE:${EMBREE_LIBRARIES}>
+      $<BUILD_INTERFACE:${EMBREE_LIBRARY}>
     )
   endif()
 endmacro()
@@ -328,8 +352,6 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
   else()
     message(STATUS "Found Embree v${EMBREE_VERSION}: ${EMBREE_LIBRARY}")
   endif()
-
-  set(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
 
   if ("${EMBREE_VERSION}" STREQUAL "3.6.0")
     message(FATAL_ERROR "Embree v3.6.0 is incompatible with OSPRay.")

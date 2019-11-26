@@ -14,11 +14,13 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-if (NOT WIN32)
-  add_executable(ospConvertRawToAMR ospConvertRawToAMR.cpp rawToAMR.cpp)
-  target_link_libraries(ospConvertRawToAMR PRIVATE ospcommon::ospcommon)
-  install(TARGETS ospConvertRawToAMR
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT apps
-  )
+if (NOT OSPRAY_APPS_TESTING)
+  return()
 endif()
+
+add_executable(ospConvertRawToAMR ospConvertRawToAMR.cpp)
+target_link_libraries(ospConvertRawToAMR PRIVATE raw_to_amr)
+install(TARGETS ospConvertRawToAMR
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

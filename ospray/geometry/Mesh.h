@@ -17,13 +17,14 @@
 #pragma once
 
 #include "Geometry.h"
+#include "common/Data.h"
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE Cylinders : public Geometry
+  struct OSPRAY_SDK_INTERFACE Mesh : public Geometry
   {
-    Cylinders() = default;
-    virtual ~Cylinders() override = default;
+    Mesh() = default;
+    virtual ~Mesh() override = default;
 
     virtual std::string toString() const override;
 
@@ -34,12 +35,11 @@ namespace ospray {
     LiveGeometry createEmbreeGeometry() override;
 
    protected:
-    float radius{0.01}; // default radius, if no per-cylinder radius
-    Ref<const DataT<vec3f>> vertex0Data;
-    Ref<const DataT<vec3f>> vertex1Data;
-    Ref<const DataT<float>> radiusData;
-    Ref<const DataT<vec2f>> texcoord0Data;
-    Ref<const DataT<vec2f>> texcoord1Data;
+    Ref<const DataT<vec3f>> vertexData;
+    Ref<const DataT<vec3f>> normalData;
+    Ref<const Data> colorData;
+    Ref<const DataT<vec2f>> texcoordData;
+    Ref<const Data> indexData;
   };
 
 }  // namespace ospray

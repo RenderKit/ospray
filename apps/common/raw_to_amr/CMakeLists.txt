@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2017-2019 Intel Corporation                                    ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,30 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-if (NOT OSPRAY_APPS_TESTING)
-  return()
-endif()
-
-ospray_disable_compiler_warnings()
-
-add_executable(ospTestSuite
-  environment.cpp
-  test_fixture.cpp
-  test_geometry.cpp
-  test_tools.cpp
-  test_volumetric.cpp
-  ospTestSuite.cpp
-)
-
-target_link_libraries(ospTestSuite
-PRIVATE
-  arcball_camera
-  ospray_testing
-  gtest_main
-	stb_image
-)
-
-install(TARGETS ospTestSuite
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
-)
+add_library(raw_to_amr STATIC rawToAMR.cpp)
+target_link_libraries(raw_to_amr PUBLIC ospcommon::ospcommon)
+target_include_directories(raw_to_amr INTERFACE ${CMAKE_CURRENT_LIST_DIR})

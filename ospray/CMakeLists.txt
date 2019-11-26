@@ -103,22 +103,16 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/GeometricModel.cpp
   geometry/Boxes.ispc
   geometry/Boxes.cpp
-  geometry/TriangleMesh.ispc
-  geometry/TriangleMesh.cpp
   geometry/Subdivision.ispc
   geometry/Subdivision.cpp
-  geometry/QuadMesh.ispc
-  geometry/QuadMesh.cpp
   geometry/Curves.cpp
   geometry/Curves.ispc
-  geometry/StreamLines.cpp
-  geometry/StreamLines.ispc
   geometry/Spheres.cpp
   geometry/Spheres.ispc
-  geometry/Cylinders.cpp
-  geometry/Cylinders.ispc
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
+  geometry/Mesh.cpp 
+  geometry/Mesh.ispc
 
   lights/Light.ispc
   lights/Light.cpp
@@ -311,12 +305,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     COMPONENT devel
   )
 
-  find_package(openvkl 0.7.0 REQUIRED)
-
   ## Build the module ##
-
-  get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
-    INTERFACE_INCLUDE_DIRECTORIES)
 
   ispc_include_directories(
     ${CMAKE_SOURCE_DIR}/ospray/include
