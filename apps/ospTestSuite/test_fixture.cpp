@@ -18,6 +18,8 @@
 #include "ArcballCamera.h"
 // ospray_testing
 #include "ospray_testing.h"
+// ospcommon
+#include "ospcommon/utility/multidim_index_sequence.h"
 
 extern OSPRayEnvironment *ospEnv;
 
@@ -391,6 +393,88 @@ namespace OSPRayTestScenes {
 
     renderer.setParam("maxDepthTexture", depthTex);
     renderer.setParam("bgColor", bgColor);
+
+    cpp::Light ambient("ambient");
+    ambient.setParam("intensity", 0.5f);
+    AddLight(ambient);
+  }
+
+  RendererMaterialList::RendererMaterialList()
+  {
+    rendererType = GetParam();
+  }
+
+  void RendererMaterialList::SetUp()
+  {
+    Base::SetUp();
+
+    // Setup geometry //
+
+    cpp::Geometry sphereGeometry("spheres");
+
+    constexpr int dimSize = 3;
+
+    ospcommon::index_sequence_2D numSpheres(dimSize);
+
+    std::vector<vec3f> spheres;
+    std::vector<uint32_t> index;
+    std::vector<cpp::Material> materials;
+
+    auto makeObjMaterial = [](const std::string &rendererType,
+                              vec3f Kd,
+                              vec3f Ks) -> cpp::Material {
+      cpp::Material mat(rendererType, "OBJMaterial");
+      mat.setParam("Kd", Kd);
+      mat.setParam("Ks", Ks);
+      mat.commit();
+
+      return mat;
+    };
+
+    for (auto i : numSpheres) {
+      auto i_f = static_cast<vec2f>(i);
+      spheres.emplace_back(i_f.x, i_f.y, 0.f);
+
+      auto l = i_f / (dimSize - 1);
+      materials.push_back(
+          makeObjMaterial(rendererType,
+                          lerp(l.x, vec3f(0.1f), vec3f(0.f, 0.f, 1.f)),
+                          lerp(l.y, vec3f(0.f), vec3f(1.f))));
+
+      index.push_back(static_cast<uint32_t>(numSpheres.flatten(i)));
+    }
+
+    sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
+    sphereGeometry.setParam("radius", 0.4f);
+    sphereGeometry.commit();
+
+    cpp::GeometricModel model(sphereGeometry);
+    model.setParam("rendererMaterialIndex", cpp::Data(index));
+
+    AddModel(model);
+
+    // Setup renderer material list //
+
+    renderer.setParam("material", cpp::Data(materials));
+
+    // Create the world to get bounds for camera setup //
+
+    if (!instances.empty())
+      world.setParam("instance", cpp::Data(instances));
+
+    instances.clear();
+
+    world.commit();
+
+    auto worldBounds = world.getBounds();
+
+    ArcballCamera arcballCamera(worldBounds, imgSize);
+
+    camera.setParam("position", arcballCamera.eyePos());
+    camera.setParam("direction", arcballCamera.lookDir());
+    camera.setParam("up", arcballCamera.upDir());
+
+    // Setup lights //
 
     cpp::Light ambient("ambient");
     ambient.setParam("intensity", 0.5f);

@@ -39,6 +39,7 @@ namespace ospray {
     Ref<const DataT<Material *>> materialData;
     Ref<const DataT<vec4f>> colorData;
     Ref<const DataT<uint8_t>> indexData;
+    Ref<const DataT<uint32_t>> rendererMaterialIndexData;
     std::vector<void *> ispcMaterialPtrs;
 
     friend struct PathTracer;  // TODO: fix this!

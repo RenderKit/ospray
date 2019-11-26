@@ -15,9 +15,10 @@
 // ======================================================================== //
 
 // ospray
-#include "math/random.ih"
 #include "camera/PerspectiveCamera.ih"
+#include "common/World.ih"
 #include "fb/FrameBuffer.ih"
+#include "math/random.ih"
 #include "render/Renderer.ih"
 #include "render/util.ih"
 #include "volume/VolumetricModel.ih"
@@ -102,7 +103,7 @@ void RaycastRenderer_renderSample_Ng(Renderer *uniform _self,
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
-    postIntersect(world, dg, sample.ray, DG_NORMALIZE | DG_NG);
+    postIntersect(world, &self->super, dg, sample.ray, DG_NORMALIZE | DG_NG);
     sample.rgb = absf(dg.Ng);
   }
 }
@@ -123,7 +124,7 @@ void RaycastRenderer_renderSample_Ns(Renderer *uniform _self,
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
-    postIntersect(world, dg, sample.ray, DG_NORMALIZE | DG_NS);
+    postIntersect(world, &self->super, dg, sample.ray, DG_NORMALIZE | DG_NS);
     sample.rgb = absf(dg.Ns);
   }
 }
@@ -144,7 +145,7 @@ void RaycastRenderer_renderSample_dPds(Renderer *uniform _self,
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
-    postIntersect(world, dg, sample.ray, DG_TANGENTS);
+    postIntersect(world, &self->super, dg, sample.ray, DG_TANGENTS);
     sample.rgb = normalize(dg.dPds);
     if (sample.rgb.x < 0.f)
       sample.rgb.x = sample.rgb.x * -0.3f;
@@ -171,7 +172,7 @@ void RaycastRenderer_renderSample_dPdt(Renderer *uniform _self,
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
-    postIntersect(world, dg, sample.ray, DG_TANGENTS);
+    postIntersect(world, &self->super, dg, sample.ray, DG_TANGENTS);
     sample.rgb = normalize(dg.dPdt);
     if (sample.rgb.x < 0.f)
       sample.rgb.x = sample.rgb.x * -0.3f;
@@ -200,7 +201,8 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(
   else {
     DifferentialGeometry dg;
     dg.color = make_vec4f(0.f);
-    postIntersect(world, dg, sample.ray, DG_COLOR | DG_NG | DG_NS);
+    postIntersect(
+        world, &self->super, dg, sample.ray, DG_COLOR | DG_NG | DG_NS);
     sample.rgb = make_vec3f(dg.color) *
                  abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
   }
@@ -308,7 +310,7 @@ void RaycastRenderer_renderSample_backfacing_Ns(Renderer *uniform _self,
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     DifferentialGeometry dg;
-    postIntersect(world, dg, sample.ray, DG_NORMALIZE | DG_NS);
+    postIntersect(world, &self->super, dg, sample.ray, DG_NORMALIZE | DG_NS);
     const float c = dot(dg.Ns, sample.ray.dir);
     sample.rgb    = make_vec3f(.2f + .8f * abs(c));
     if (c > 0.f)
@@ -323,10 +325,12 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
                                          varying ScreenSample &sample)
 {
   RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
-  
+
   LDSampler ldSamplerObj;
-  varying LDSampler* uniform ldSampler = &ldSamplerObj;
-  LDSampler_init(ldSampler, sample.sampleID.x + fb->size.x * sample.sampleID.y, sample.sampleID.z);
+  varying LDSampler *uniform ldSampler = &ldSamplerObj;
+  LDSampler_init(ldSampler,
+                 sample.sampleID.x + fb->size.x * sample.sampleID.y,
+                 sample.sampleID.z);
 
   vec3f &color = sample.rgb;
   float &alpha = sample.alpha;
@@ -350,7 +354,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
   const float jitter = LDSampler_getFloat(ldSampler, 0);
 
   foreach_unique(m in model)
-  {     
+  {
     Volume *uniform volume       = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
@@ -368,26 +372,28 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
 
       // initial sub interval, based on our renderer-defined sampling rate
       // and the volume's nominal dt
-      box1f subInterval = make_box1f(
-          interval.tRange.lower,
-          min(interval.tRange.lower + nominalSamplingDt, interval.tRange.upper));
- 
+      box1f subInterval =
+          make_box1f(interval.tRange.lower,
+                     min(interval.tRange.lower + nominalSamplingDt,
+                         interval.tRange.upper));
+
       while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
-        ray.t0  = subInterval.lower + jitter * (subInterval.upper - subInterval.lower);
+        ray.t0 = subInterval.lower +
+                 jitter * (subInterval.upper - subInterval.lower);
         const float dt = subInterval.upper - subInterval.lower;
 
         // Get volume sample
-        vec3f p = ray.org + ray.t0 * ray.dir;
-        const float sample = vklComputeSampleV(volume->vklVolume, (const varying vkl_vec3f *uniform) &p);
+        vec3f p            = ray.org + ray.t0 * ray.dir;
+        const float sample = vklComputeSampleV(
+            volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
 
         if (!isnan(sample)) {
           vec4f sampleColorOpacity = tf->get(tf, sample);
- 
-          const float clampedOpacity =
-             clamp(sampleColorOpacity.w * dt);
-          color = color
-              + ((1.f - alpha) * clampedOpacity * make_vec3f(sampleColorOpacity));
-          alpha = alpha + ((1.f - alpha) * clampedOpacity);
+
+          const float clampedOpacity = clamp(sampleColorOpacity.w * dt);
+          color                      = color + ((1.f - alpha) * clampedOpacity *
+                           make_vec3f(sampleColorOpacity));
+          alpha                      = alpha + ((1.f - alpha) * clampedOpacity);
         }
 
         // compute next sub interval

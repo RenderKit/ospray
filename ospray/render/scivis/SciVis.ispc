@@ -68,7 +68,7 @@ void SciVis_renderSample(Renderer *uniform _self,
 
       // Prepare differential geometry structure
       DifferentialGeometry dg;
-      computeDG(world, ray, dg);
+      computeDG(world, self, ray, dg);
 
       // Shade geometry
       SSI surfaceShading;
@@ -82,7 +82,7 @@ void SciVis_renderSample(Renderer *uniform _self,
       setRay(ray, ray.t + dg.epsilon, originalRayTFar);
 
       // Initialize other per sample data with first hit values
-      cif (firstHit) {
+      if (firstHit) {
         sample.z      = ray.t;
         sample.albedo = surfaceShading.albedo;
         sample.normal = dg.Ns;
@@ -94,7 +94,7 @@ void SciVis_renderSample(Renderer *uniform _self,
       blendedColor.w = 1.f;
 
       // Initialize other per sample data with first hit values
-      cif (firstHit) {
+      if (firstHit) {
         sample.z      = inf;
         sample.albedo = make_vec3f(bgColor);
         sample.normal = sample.ray.dir;

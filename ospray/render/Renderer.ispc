@@ -75,6 +75,7 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
       initDgFromTexCoord(lookup, depthTexCoord);
       tMax = min(get1f(self->maxDepthTexture, lookup), inf);
     }
+
     vec3f col    = make_vec3f(0.f);
     float alpha  = 0.f;
     vec3f normal = make_vec3f(0.f);
@@ -105,6 +106,7 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
       normal = normal + screenSample.normal;
       albedo = albedo + screenSample.albedo;
     }
+
     const float rspp    = rcpf(spp);
     screenSample.rgb    = col * rspp;
     screenSample.alpha  = alpha * rspp;
@@ -119,6 +121,8 @@ export void Renderer_set(void *uniform _self,
                          const uniform int32 maxDepth,
                          const uniform float minContribution,
                          const uniform vec4f &bgColor,
+                         const uniform int32 numMaterials,
+                         void *uniform materials,
                          void *uniform _maxDepthTexture);
 
 void Renderer_Constructor(uniform Renderer *uniform self, void *uniform cppE)
@@ -126,7 +130,7 @@ void Renderer_Constructor(uniform Renderer *uniform self, void *uniform cppE)
   self->cppEquivalent = cppE;
   self->renderSample  = Renderer_default_renderSample;
   self->renderTile    = Renderer_default_renderTile;
-  Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), NULL);
+  Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), 0, NULL, NULL);
   precomputedHalton_create();
 }
 
@@ -160,6 +164,8 @@ export void Renderer_set(void *uniform _self,
                          const uniform int32 maxDepth,
                          const uniform float minContribution,
                          const uniform vec4f &bgColor,
+                         const uniform int32 numMaterials,
+                         void *uniform materials,
                          void *uniform _maxDepthTexture)
 {
   uniform Renderer *uniform self = (uniform Renderer * uniform) _self;
@@ -168,6 +174,8 @@ export void Renderer_set(void *uniform _self,
   self->maxDepth        = maxDepth;
   self->minContribution = minContribution;
   self->bgColor         = bgColor;
+  self->numMaterials    = numMaterials;
+  self->material        = (Material**uniform)materials;
   self->maxDepthTexture = (uniform Texture2D * uniform) _maxDepthTexture;
 
   precomputeZOrder();

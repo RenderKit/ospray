@@ -72,7 +72,8 @@ namespace ospray {
 
           if (hasEmissive) {
             if (ispc::GeometryLight_isSupported(model->getIE())) {
-              void *light = ispc::GeometryLight_create(model->getIE(), &xfm);
+              void *light =
+                ispc::GeometryLight_create(model->getIE(), getIE(), &xfm);
 
               // check whether the geometry has any emissive primitives
               if (light)

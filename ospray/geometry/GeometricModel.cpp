@@ -24,8 +24,8 @@ namespace ospray {
 
   GeometricModel::GeometricModel(Geometry *_geometry)
   {
-    managedObjectType = OSP_GEOMETRIC_MODEL;
-    geom = _geometry;
+    managedObjectType    = OSP_GEOMETRIC_MODEL;
+    geom                 = _geometry;
     this->ispcEquivalent = ispc::GeometricModel_create(this);
   }
 
@@ -37,30 +37,32 @@ namespace ospray {
   void GeometricModel::commit()
   {
     materialData = getParamDataT<Material *>("material");
-    colorData = getParamDataT<vec4f>("color");
-    indexData = getParamDataT<uint8_t>("index");
+    colorData    = getParamDataT<vec4f>("color");
+    indexData    = getParamDataT<uint8_t>("index");
+
+    rendererMaterialIndexData =
+        getParamDataT<uint32_t>("rendererMaterialIndex");
 
     size_t maxItems = geom->numPrimitives();
-    size_t minItems = 0; // without index, a single material / color is OK
+    size_t minItems = 0;  // without index, a single material / color is OK
     if (indexData && indexData->size() < maxItems) {
-      postStatusMsg(1)
-          << toString()
-          << " not enough 'index' elements for geometry, clamping";
+      postStatusMsg(1) << toString()
+                       << " not enough 'index' elements for geometry, clamping";
     }
     if (indexData) {
-      maxItems = 256; // conservative, should actually go over the index
+      maxItems = 256;  // conservative, should actually go over the index
       minItems = 1;
     }
 
-    if (materialData && materialData->size() > minItems
-        && materialData->size() < maxItems) {
-      postStatusMsg(1)
-          << toString()
-          << " potentially not enough 'material' elements for geometry, clamping";
+    if (materialData && materialData->size() > minItems &&
+        materialData->size() < maxItems) {
+      postStatusMsg(1) << toString()
+                       << " potentially not enough 'material' elements for "
+                          "geometry, clamping";
     }
 
-    if (colorData && colorData->size() > minItems
-        && colorData->size() < maxItems) {
+    if (colorData && colorData->size() > minItems &&
+        colorData->size() < maxItems) {
       postStatusMsg(1)
           << toString()
           << " potentially not enough 'color' elements for geometry, clamping";
@@ -72,10 +74,11 @@ namespace ospray {
       ispcMaterialPtrs.clear();
 
     ispc::GeometricModel_set(getIE(),
-        ispc(colorData),
-        ispc(indexData),
-        ispcMaterialPtrs.size(),
-        ispcMaterialPtrs.data());
+                             ispc(colorData),
+                             ispc(indexData),
+                             ispc(rendererMaterialIndexData),
+                             ispcMaterialPtrs.size(),
+                             ispcMaterialPtrs.data());
   }
 
   void GeometricModel::setGeomIE(void *geomIE, int geomID)
