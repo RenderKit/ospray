@@ -1,7 +1,7 @@
 stages:
   - build
-  - test-src
   - test-build
+  - test-src
   - deploy
 
 variables:
