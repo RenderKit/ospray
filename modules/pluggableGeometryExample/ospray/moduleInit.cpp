@@ -17,6 +17,7 @@
 /*! \file ospray/moduleInit \brief Defines the module initialization callback */
 
 #include "geometry/BilinearPatches.h"
+#include "ospray/version.h"
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */
@@ -49,10 +50,10 @@ namespace ospray {
         name of the module and shared library containing this module
         (see comments regarding library name in CMakeLists.txt)
     */
-    extern "C" void ospray_init_module_bilinear_patches()
+    extern "C" int64_t ospray_init_module_bilinear_patches()
     {
       std::cout << "#osp: initializing the 'bilinear_patches' module" << std::endl;
-      /* nothing to do, actually - this is only an example */
+      return 10000*OSPRAY_VERSION_MAJOR + 100*OSPRAY_VERSION_MINOR + OSPRAY_VERSION_PATCH;
     }
 
   } // ::ospray::bilinearPatch

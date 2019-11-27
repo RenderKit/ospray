@@ -519,4 +519,6 @@ namespace ospray {
   }  // namespace api
 }  // namespace ospray
 
-extern "C" OSPRAY_DLLEXPORT void ospray_init_module_ispc() {}
+extern "C" OSPRAY_DLLEXPORT int64_t ospray_init_module_ispc() {
+  return 10000*OSPRAY_VERSION_MAJOR + 100*OSPRAY_VERSION_MINOR + OSPRAY_VERSION_PATCH;
+}
