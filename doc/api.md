@@ -774,7 +774,7 @@ triangle as a quad with the last two vertex indices being identical
 (`w=z`).
 
 The `vertex.position` and `index` arrays are mandatory to create a valid
-mesh. 
+mesh.
 
 ### Subdivision
 
@@ -858,7 +858,7 @@ this geometry are listed in the table below.
 
   float              radius                 global radius of all curves (if
                                             per-vertex radius is not used), default 0.01
-  
+
   vec2f[]            vertex.texcoord        [data] array of per-vertex texture coordinates
 
   vec4f[]            vertex.color           [data] array of corresponding vertex
@@ -904,7 +904,7 @@ linearly-connected segments.
 Positions in `vertex.position_radius` format supports per-vertex varying
 radii with data type `vec4f[]` and instantiate Embree curves internally
 for the relevant type/basis mapping (See Embree documentation for
-discussion of curve types and data formatting). 
+discussion of curve types and data formatting).
 
 If a constant `radius` is used and positions are specified in a
 `vec3f[]` type of `vertex.position` format, then type/basis defaults to
@@ -954,16 +954,20 @@ valid range, thus a single color or material is fine), or mapped first via the
 `index` array (if present). All paramters are optional, however, some renderers
 (notably the [path tracer]) require a material to be set.
 
-  -------------- ---------- ----------------------------------------------------
-  Type           Name       Description
-  -------------- ---------- ----------------------------------------------------
-  OSPMaterial[]  material   [data] array of (per-primitive) materials
+  -------------- --------------------- ----------------------------------------------------
+  Type           Name                  Description
+  -------------- --------------------- ----------------------------------------------------
+  OSPMaterial[]  material              [data] array of (per-primitive) materials
 
-  vec4f[]        color      optional [data] array of (per-primitive) colors
+  vec4f[]        color                 optional [data] array of (per-primitive) colors
 
-  uint8[]        index      optional [data] array of per-primitive indices into
-                            `color` and `material`
-  -------------- ---------- ----------------------------------------------------
+  uint8[]        index                 optional [data] array of per-primitive indices into
+                                       `color` and `material`
+
+  uint32[]       rendererMaterialIndex optional [data] array of per-primitive indices into
+                                       the `material` parameter on the `renderer` (if
+                                       it exists)
+  -------------- --------------------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
 
@@ -1268,6 +1272,11 @@ all renderers are
   OSPTexture     maxDepthTexture           NULL  screen-sized float [texture]
                                                  with maximum far distance per pixel
                                                  (use texture type `texture2d`)
+
+  OSPMaterial[]  material                  NULL  [data] array of (per-primitive) materials
+                                                 which can be indexed by a
+                                                 [geometricmodel] if it has the
+                                                 `rendererMaterialIndex` parameter
   -------------- ------------------ -----------  -----------------------------------------
   : Parameters understood by all renderers.
 
