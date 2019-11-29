@@ -516,9 +516,24 @@ namespace ospray {
     OSP_REGISTER_DEVICE(ISPCDevice, default_device);
     OSP_REGISTER_DEVICE(ISPCDevice, default);
 
+    extern "C" OSPRAY_DLLEXPORT OSPError ospray_module_init_ispc() {
+        std::cout << "#osp: initializing the 'ispc' module" << std::endl;  
+        auto funcSymbol = getSymbol("osprayVersionInfo");
+        int64_t (*getVersionMethod)() = (int64_t(*)())funcSymbol;
+        if (!getVersionMethod)
+          return OSP_INVALID_OPERATION;
+            
+        auto currentOSPVersion = getVersionMethod();
+        if (moduleOSPVersion == currentOSPVersion) {
+          return OSP_NO_ERROR;
+        } else if ((moduleOSPVersion/10000 == currentOSPVersion/10000) &&
+          ((moduleOSPVersion%10000)/100 == (currentOSPVersion%10000)/100)) {
+          std::cerr << "[ WARNING ] " << " patch version mismatch " << std::endl;      
+          } else {
+          return OSP_INVALID_OPERATION;
+        }
+        return OSP_NO_ERROR;  
+    }
   }  // namespace api
 }  // namespace ospray
 
-extern "C" OSPRAY_DLLEXPORT int64_t ospray_init_module_ispc() {
-  return 10000*OSPRAY_VERSION_MAJOR + 100*OSPRAY_VERSION_MINOR + OSPRAY_VERSION_PATCH;
-}

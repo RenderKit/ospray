@@ -378,32 +378,26 @@ namespace ospray {
     std::string libName = "ospray_module_" + name;
     loadLibrary(libName, false);
 
-    std::string initSymName = "ospray_init_module_" + name;
+    std::string initSymName = "ospray_module_init_" + name;
     void*initSym = getSymbol(initSymName);
     if (!initSym) {
       throw std::runtime_error("#osp:api: could not find module initializer "
                                +initSymName);
     }
 
-    int64_t (*initMethod)() = (int64_t(*)())initSym;
+    OSPError (*initMethod)() = (OSPError(*)())initSym;
 
     if (!initMethod)
-      return OSP_INVALID_ARGUMENT;
+      return OSP_INVALID_OPERATION;
 
-    auto ospModuleVersion = initMethod();
-    auto currentOSPVersion = 10000*OSPRAY_VERSION_MAJOR + 100*OSPRAY_VERSION_MINOR + OSPRAY_VERSION_PATCH;
-
-    if (ospModuleVersion == currentOSPVersion) {
-      return OSP_NO_ERROR;
-    } else if ((ospModuleVersion/10000 == currentOSPVersion/10000) &&
-      ((ospModuleVersion%10000)/100 == (currentOSPVersion%10000)/100)) {
-      // only patch version mis-match, continue with warning   
-      postStatusMsg() << "Warning: module patch version mismatch";
-    } else {
+    try {
+      initMethod();
+    } catch (...) {
       return OSP_UNKNOWN_ERROR;
     }
 
     return OSP_NO_ERROR;
+    
   }
 
   StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)

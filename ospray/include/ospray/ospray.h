@@ -142,6 +142,9 @@ extern "C" {
   OSPRAY_INTERFACE OSPError ospInit(int *argc OSP_DEFAULT_VAL(NULL),
                                     const char **argv OSP_DEFAULT_VAL(NULL));
 
+  // return the OSPRay version of the installation
+  OSPRAY_INTERFACE int64_t ospVersionInfo();
+
   // returns the OSPRay Version in use by the device
   OSPRAY_INTERFACE int64_t ospDeviceGetProperty(OSPDevice, OSPDeviceProperty);
 
@@ -186,7 +189,6 @@ extern "C" {
   OSPRAY_INTERFACE void ospDeviceRetain(OSPDevice);
 
   /* Load module 'name' from shard lib libospray_module_<name>.so
-
      returns OSPError value to report any errors during initialization */
   OSPRAY_INTERFACE OSPError ospLoadModule(const char *name);
 
