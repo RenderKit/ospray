@@ -385,19 +385,19 @@ namespace ospray {
                                +initSymName);
     }
 
-    OSPError (*initMethod)() = (OSPError(*)())initSym;
+    OSPError (*initMethod)(int16_t, int16_t, int16_t) = (OSPError(*)(int16_t, int16_t, int16_t))initSym;
 
     if (!initMethod)
       return OSP_INVALID_OPERATION;
 
     try {
-      initMethod();
+      initMethod(OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH);
     } catch (...) {
       return OSP_UNKNOWN_ERROR;
     }
 
     return OSP_NO_ERROR;
-    
+
   }
 
   StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)

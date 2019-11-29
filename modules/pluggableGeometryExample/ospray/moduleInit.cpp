@@ -51,30 +51,11 @@ namespace ospray {
         (see comments regarding library name in CMakeLists.txt)
     */
 
-    static int64_t moduleOSPVersion = 10000*OSPRAY_VERSION_MAJOR +
-    100*OSPRAY_VERSION_MINOR + OSPRAY_VERSION_PATCH;
-
-    extern "C" OSPError ospray_module_init_bilinear_patches()
+    extern "C" OSPError ospray_module_init_bilinear_patches(int16_t versionMajor, int16_t versionMinor, 
+                                                            int16_t versionPatch)
     {
-      std::cout << "#osp: initializing the 'bilinear_patches' module" << std::endl;  
-
-      auto funcSymbol = getSymbol("osprayVersionInfo");
-
-      int64_t (*getVersionMethod)() = (int64_t(*)())funcSymbol;
-
-      if (!getVersionMethod)
-        return OSP_INVALID_OPERATION;
-        
-      auto currentOSPVersion = getVersionMethod();
-      if (moduleOSPVersion == currentOSPVersion) {
-        return OSP_NO_ERROR;
-      } else if ((moduleOSPVersion/10000 == currentOSPVersion/10000) &&
-        ((moduleOSPVersion%10000)/100 == (currentOSPVersion%10000)/100)) {
-        std::cerr << "[ WARNING ] " << " patch version mismatch " << std::endl;      
-        } else {
-        return OSP_INVALID_OPERATION;
-      }
-      return OSP_NO_ERROR;
+      std::cout << "#osp: initializing the 'bilinear_patches' module" << std::endl;        
+      return moduleVersionCheck(versionMajor, versionMinor, versionPatch);
     }
   } // ::ospray::bilinearPatch
 } // ::ospray
