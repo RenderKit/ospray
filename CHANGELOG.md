@@ -67,6 +67,9 @@ Version History
 -   Removal of `cylinders` (grass) tutorial.
 -   `streamlines` of streamlines tutorial now connected
     `OSP_CATMULL_ROM` curves.
+-   Changed signature for module init methods. New signature is:
+    `ospray_module_init_<module_name>(int16_t, int16_t, int16_t)`
+-   `moduleVersionCheck` method added to check module compatibility.
 -   Known issues:
     -   Open VKL must be built with a compatible set of ISAs with OSPRay
         due to a known issue with VKL iterator types. This is easiest
