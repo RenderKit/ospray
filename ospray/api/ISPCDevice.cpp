@@ -511,11 +511,11 @@ namespace ospray {
       return renderer->pick(fb, camera, world, screenPos);
     }
 
-    extern "C" OSPError ospray_module_init_ispc(int16_t versionMajor, int16_t versionMinor, 
-                                                int16_t versionPatch)
+    extern "C" OSPError ospray_module_init_ispc(const int16_t &versionMajor,
+                                                const int16_t &versionMinor)
     {
       std::cout << "#osp: initializing the 'ispc' module" << std::endl;        
-      return moduleVersionCheck(versionMajor, versionMinor, versionPatch);      
+      return moduleVersionCheck(versionMajor, versionMinor);      
     }
 
     OSP_REGISTER_DEVICE(ISPCDevice, local_device);

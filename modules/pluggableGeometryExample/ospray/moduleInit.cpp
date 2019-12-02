@@ -51,11 +51,11 @@ namespace ospray {
         (see comments regarding library name in CMakeLists.txt)
     */
 
-    extern "C" OSPError ospray_module_init_bilinear_patches(int16_t versionMajor, int16_t versionMinor, 
-                                                            int16_t versionPatch)
+    extern "C" OSPError ospray_module_init_bilinear_patches(const int16_t &versionMajor,
+                                                            const int16_t &versionMinor)
     {
       std::cout << "#osp: initializing the 'bilinear_patches' module" << std::endl;        
-      return moduleVersionCheck(versionMajor, versionMinor, versionPatch);
+      return moduleVersionCheck(versionMajor, versionMinor);
     }
   } // ::ospray::bilinearPatch
 } // ::ospray

@@ -135,8 +135,8 @@ namespace ospray {
 
   OSPRAY_CORE_INTERFACE OSPError loadLocalModule(const std::string &name);
 
-  inline OSPError moduleVersionCheck(int16_t versionMajor, int16_t versionMinor, 
-                                     int16_t versionPatch)
+  inline OSPError moduleVersionCheck(const int16_t &versionMajor,
+                                     const int16_t &versionMinor)
   {
     if ((OSPRAY_VERSION_MAJOR == versionMajor) &&
         (OSPRAY_VERSION_MINOR == versionMinor)) {
