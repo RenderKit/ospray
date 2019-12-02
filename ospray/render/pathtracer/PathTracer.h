@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "render/Renderer.h"
 #include "common/Material.h"
+#include "render/Renderer.h"
 
 namespace ospray {
 
@@ -32,10 +32,13 @@ namespace ospray {
     void generateGeometryLights(const World &);
     void destroyGeometryLights();
 
-    std::vector<void*> lightArray; // the 'IE's of the XXXLights
-    size_t geometryLights {0}; // number of GeometryLights at beginning of lightArray
+    // the 'IE's of the XXXLights
+    std::vector<void *> lightArray;
+    // number of GeometryLights at beginning of lightArray
+    size_t geometryLights{0};
     bool useGeometryLights{true};
+    OSPTexture bgTexture{nullptr};
   };
 
-}// ::ospray
+}  // namespace ospray
 

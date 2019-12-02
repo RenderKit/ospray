@@ -451,6 +451,12 @@ void GLFWOSPRayWindow::buildUI()
   }
 
   if (rendererType == OSPRayRendererType::PATHTRACER) {
+    static vec3f bgColor(0.f);
+    if (ImGui::ColorEdit3("bgColor", bgColor)) {
+      renderer.setParam("bgColor", bgColor);
+      addObjectToCommit(renderer.handle());
+    }
+
     static int maxDepth = 20;
     if (ImGui::SliderInt("maxDepth", &maxDepth, 1, 64)) {
       renderer.setParam("maxDepth", maxDepth);
