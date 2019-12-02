@@ -992,7 +992,7 @@ To create a new light source of given type `type` use
 
     OSPLight ospNewLight(const char *type);
 
-All light sources[^1] accept the following parameters:
+All light sources accept the following parameters:
 
   Type      Name        Default  Description
   --------- ---------- --------  ---------------------------------------
@@ -1003,9 +1003,6 @@ All light sources[^1] accept the following parameters:
   : Parameters accepted by all lights.
 
 The following light types are supported by most OSPRay renderers.
-
-[^1]: The [HDRI light] is an exception, it knows about `intensity`, but
-not about `color`.
 
 ### Directional Light / Distant Light
 
@@ -1082,7 +1079,8 @@ tracer]).
 
 ### Quad Light
 
-The quad^[actually a parallelogram] light is a planar, procedural area light source emitting
+The quad^[actually a parallelogram] light is a planar, procedural area
+light source emitting
 uniformly on one side into the half-space. It is created by passing the
 type string "`quad`" to `ospNewLight`. In addition to the [general
 parameters](#lights) understood by all lights the quad light supports
@@ -1108,8 +1106,8 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-"`hdri`" to `ospNewLight`. In addition to the [parameter
-`intensity`](#lights) the HDRI light supports the following special
+"`hdri`" to `ospNewLight`. In addition to the [general
+parameters](#lights) the HDRI light supports the following special
 parameters:
 
   ------------ --------- --------------------------------------------------

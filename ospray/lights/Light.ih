@@ -54,9 +54,7 @@ struct Light
 {
   Light_SampleFunc sample;
   Light_EvalFunc eval;
-  vec3f color;
-  float intensity;
-  vec3f radiance;
+  vec3f radiance; // or power; = color * intensity
   bool isVisible; // either directly in camera, or via a straight path (i.e. through ThinGlass)
 };
 
