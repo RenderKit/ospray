@@ -44,7 +44,7 @@ Version History
     -   Several parameters are available for performance/quality
         trade-offs for both photo-realistic and scientific visualization
         use cases
--   Simplification of the `scivis` renderer
+-   Simplification of the SciVis renderer
     -   Fixed AO lighting and simple ray marched volume rendering for
         ease of use and performance
 -   New API call for querying the bounds of objects (`OSPWorld`,
@@ -56,14 +56,16 @@ Version History
 -   Introduction of new `boxes` geometry type
 -   Expansion of information returned by `ospPick`
 -   Addition of API to query version information at runtime
--   Removal of `cylinders` and `streamlines` geometry.
 -   Curves now supports both, per vertex varying radii as in `vec4f[]
     vertex.position_radius` and constant radius for the geometry with
     `float radius`. It uses `OSP_ROUND` type and `OSP_LINEAR` basis by
     default to create the connected segments of constant radius. For per
     vertex varying radii curves it uses embree curves.
--   Add new embree curve type `OSP_CATMULL_ROM` for curves.
--   Triangle meshes and Quad meshes superseded by `mesh` geometry.
+-   Add new embree curve type `OSP_CATMULL_ROM` for curves, thus minimum
+    required Embree version is now 3.6.1
+-   Removal of `cylinders` and `streamlines` geometry, use `curves`
+    instead
+-   Triangle mesh and Quad mesh are superseded by the `mesh` geometry
 -   Removal of `cylinders` (grass) tutorial.
 -   `streamlines` of streamlines tutorial now connected
     `OSP_CATMULL_ROM` curves.
