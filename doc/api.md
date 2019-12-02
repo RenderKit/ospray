@@ -964,6 +964,9 @@ valid range, thus a single color or material is fine), or mapped first via the
   uint8[]        index                 optional [data] array of per-primitive indices into
                                        `color` and `material`
 
+  int/uint32     rendererMaterialIndex optional [data] index into the `material` parameter
+                                       on the `renderer` (if it exists)
+
   uint32[]       rendererMaterialIndex optional [data] array of per-primitive indices into
                                        the `material` parameter on the `renderer` (if
                                        it exists)

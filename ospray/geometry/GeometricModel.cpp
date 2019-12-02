@@ -43,6 +43,18 @@ namespace ospray {
     rendererMaterialIndexData =
         getParamDataT<uint32_t>("rendererMaterialIndex");
 
+    if (!rendererMaterialIndexData && hasParam("rendererMaterialIndex")) {
+      uint32_t matIdx = getParam<uint32_t>(
+          "rendererMaterialIndex", getParam<int>("rendererMaterialIndex"));
+
+      auto *arr     = new Data(OSP_UINT, vec3ui(0));
+      auto *tmpData = new Data(&matIdx, OSP_UINT, vec3ui(1), vec3l(0));
+      arr->copy(*tmpData, vec3ui(0));
+      delete tmpData;
+      rendererMaterialIndexData = &arr->as<uint32_t>();
+      arr->refDec();
+    }
+
     size_t maxItems = geom->numPrimitives();
     size_t minItems = 0;  // without index, a single material / color is OK
     if (indexData && indexData->size() < maxItems) {
