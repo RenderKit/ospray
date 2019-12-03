@@ -385,18 +385,12 @@ namespace ospray {
                                +initSymName);
     }
 
-    OSPError (*initMethod)(const int16_t&, const int16_t&) = (OSPError(*)(const int16_t&, const int16_t&))initSym;
+    OSPError (*initMethod)(int16_t, int16_t, int16_t) = (OSPError(*)(int16_t, int16_t, int16_t))initSym;
 
     if (!initMethod)
       return OSP_INVALID_OPERATION;
 
-    try {
-      initMethod(OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR);
-    } catch (...) {
-      return OSP_UNKNOWN_ERROR;
-    }
-
-    return OSP_NO_ERROR;
+    return initMethod(OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH);
 
   }
 

@@ -86,11 +86,6 @@ inline std::string getPidString()
 
 using namespace ospray;
 
-extern "C" int64_t osprayVersionInfo() OSPRAY_CATCH_BEGIN
-{
-  return 10000*OSPRAY_VERSION_MAJOR + 100*OSPRAY_VERSION_MINOR + OSPRAY_VERSION_PATCH;
-} OSPRAY_CATCH_END(0)
-
 static inline void loadModulesFromEnvironmentVar()
 {
   auto OSPRAY_LOAD_MODULES =

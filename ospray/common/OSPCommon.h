@@ -135,16 +135,14 @@ namespace ospray {
 
   OSPRAY_CORE_INTERFACE OSPError loadLocalModule(const std::string &name);
 
-  inline OSPError moduleVersionCheck(const int16_t &versionMajor,
-                                     const int16_t &versionMinor)
+  inline OSPError moduleVersionCheck(int16_t versionMajor,
+                                     int16_t versionMinor)
   {
     if ((OSPRAY_VERSION_MAJOR == versionMajor) &&
         (OSPRAY_VERSION_MINOR == versionMinor)) {
         return OSP_NO_ERROR;
-    } else {
+    } else
         return OSP_INVALID_OPERATION;
-    }
-    return OSP_NO_ERROR;
   }
 
   /*! little helper class that prints out a warning string upon the
