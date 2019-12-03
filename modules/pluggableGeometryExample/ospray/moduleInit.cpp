@@ -53,7 +53,7 @@ namespace ospray {
 
     extern "C" OSPError ospray_module_init_bilinear_patches(int16_t versionMajor,
                                                             int16_t versionMinor,
-                                                            int16_t versionPatch)
+                                                            int16_t /*versionPatch*/)
     {
       std::cout << "#osp: initializing the 'bilinear_patches' module" << std::endl;
       return moduleVersionCheck(versionMajor, versionMinor);

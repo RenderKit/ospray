@@ -513,7 +513,7 @@ namespace ospray {
 
     extern "C" OSPError ospray_module_init_ispc(int16_t versionMajor,
                                                 int16_t versionMinor,
-                                                int16_t versionPatch)
+                                                int16_t /*versionPatch*/)
     {
       std::cout << "#osp: initializing the 'ispc' module" << std::endl;
       return moduleVersionCheck(versionMajor, versionMinor);
