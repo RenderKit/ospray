@@ -66,6 +66,9 @@ Version History
 -   Removal of `cylinders` and `streamlines` geometry, use `curves`
     instead
 -   Triangle mesh and Quad mesh are superseded by the `mesh` geometry
+-   Applications need to use the various error reporting methods to
+    check wether the creation (via `ospNew...`) of objects failed; a
+    returned `NULL` is not a special handle anymore to signify an error
 -   Removal of `cylinders` (grass) tutorial.
 -   `streamlines` of streamlines tutorial now connected
     `OSP_CATMULL_ROM` curves.

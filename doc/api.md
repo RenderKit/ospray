@@ -472,9 +472,6 @@ given type `type` use
 
     OSPVolume ospNewVolume(const char *type);
 
-The call returns `NULL` if that type of volume is not known by OSPRay,
-or else a valid `OSPVolume` handle.
-
 ### Structured Volume
 
 Structured volumes only need to store the values of the samples, because
@@ -690,11 +687,8 @@ volume. To create a new transfer function of given type `type` use
 
     OSPTransferFunction ospNewTransferFunction(const char *type);
 
-The call returns `NULL` if that type of transfer functions is not known
-by OSPRay, or else an `OSPTransferFunction` handle to the created
-transfer function. That handle can be assigned to a volumetric model
-(described below) as parameter "`transferFunction`" using
-`ospSetObject`.
+The returned handle can be assigned to a volumetric model (described
+below) as parameter "`transferFunction`" using `ospSetObject`.
 
 One type of transfer function that is supported by OSPRay is the linear
 transfer function, which interpolates between given equidistant colors
@@ -746,9 +740,6 @@ Geometries in OSPRay are objects that describe intersectable surfaces.
 To create a new geometry object of given type `type` use
 
     OSPGeometry ospNewGeometry(const char *type);
-
-The call returns `NULL` if that type of geometry is not known by OSPRay,
-or else an `OSPGeometry` handle.
 
 ### Mesh
 
@@ -985,8 +976,6 @@ To create a new light source of given type `type` use
 
     OSPLight ospNewLight(const char *type);
 
-The call returns `NULL` if that type of light is not known by the
-renderer, or else an `OSPLight` handle to the created light source.
 All light sources[^1] accept the following parameters:
 
   Type      Name        Default  Description
@@ -1257,9 +1246,7 @@ To create a new renderer of given type `type` use
 
     OSPRenderer ospNewRenderer(const char *type);
 
-The call returns `NULL` if that type of renderer is not known, or else
-an `OSPRenderer` handle to the created renderer. General parameters of
-all renderers are
+General parameters of all renderers are
 
   -------------- ------------------ -----------  -----------------------------------------
   Type          Name                    Default  Description
@@ -1374,9 +1361,8 @@ of given type `type` call
 
     OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
 
-The call returns `NULL` if the material type is not known by the
-renderer type, or else an `OSPMaterial` handle to the created material. The
-handle can then be used to assign the material to a given geometry with
+The returned handle can then be used to assign the material to a given
+geometry with
 
     void ospSetObject(OSPGeometricModel, "material", OSPMaterial);
 
@@ -1795,10 +1781,6 @@ To create a new texture use
 
     OSPTexture ospNewTexture(const char *type);
 
-The call returns `NULL` if the texture could not be created with the
-given parameters, or else an `OSPTexture` handle to the created
-texture.
-
 #### Texture2D
 
 The `texture2d` texture type implements an image-based texture, where
@@ -1885,9 +1867,7 @@ To create a new camera of given type `type` use
 
     OSPCamera ospNewCamera(const char *type);
 
-The call returns `NULL` if that type of camera is not known, or else an
-`OSPCamera` handle to the created camera. All cameras accept these
-parameters:
+All cameras accept these parameters:
 
   Type   Name        Description
   ------ ----------- ------------------------------------------
@@ -2147,9 +2127,6 @@ filtering, blending, tone mapping, or sending tiles to a display wall.
 To create a new pixel operation of given type `type` use
 
     OSPPixelOp ospNewPixelOp(const char *type);
-
-The call returns `NULL` if that type is not known, or else an
-`OSPPixelOp` handle to the created pixel operation.
 
 #### Tone Mapper {-}
 
