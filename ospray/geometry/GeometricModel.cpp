@@ -36,24 +36,23 @@ namespace ospray {
 
   void GeometricModel::commit()
   {
+    bool useRendererMaterialList = false;
     materialData = getParamDataT<Material *>("material", false, true);
-    colorData    = getParamDataT<vec4f>("color");
-    indexData    = getParamDataT<uint8_t>("index");
-
-    rendererMaterialIndexData =
-        getParamDataT<uint32_t>("rendererMaterialIndex");
-
-    if (!rendererMaterialIndexData && hasParam("rendererMaterialIndex")) {
-      uint32_t matIdx = getParam<uint32_t>(
-          "rendererMaterialIndex", getParam<int>("rendererMaterialIndex"));
-
-      auto *arr     = new Data(OSP_UINT, vec3ui(0));
-      auto *tmpData = new Data(&matIdx, OSP_UINT, vec3ui(1), vec3l(0));
-      arr->copy(*tmpData, vec3ui(0));
-      delete tmpData;
-      rendererMaterialIndexData = &arr->as<uint32_t>();
-      arr->refDec();
+    if (materialData) {
+      ispcMaterialPtrs = createArrayOfIE(materialData->as<Material *>());
+      auto *data       = new Data(ispcMaterialPtrs.data(),
+                            OSP_VOID_PTR,
+                            vec3ui(ispcMaterialPtrs.size(), 1, 1),
+                            vec3l(0));
+      materialData     = data;
+      data->refDec();
+    } else {
+      ispcMaterialPtrs.clear();
+      materialData = getParamDataT<uint32_t>("material", false, true);
+      useRendererMaterialList = true;
     }
+    colorData = getParamDataT<vec4f>("color");
+    indexData = getParamDataT<uint8_t>("index");
 
     size_t maxItems = geom->numPrimitives();
     size_t minItems = 0;  // without index, a single material / color is OK
@@ -80,17 +79,11 @@ namespace ospray {
           << " potentially not enough 'color' elements for geometry, clamping";
     }
 
-    if (materialData)
-      ispcMaterialPtrs = createArrayOfIE(*materialData);
-    else
-      ispcMaterialPtrs.clear();
-
     ispc::GeometricModel_set(getIE(),
                              ispc(colorData),
                              ispc(indexData),
-                             ispc(rendererMaterialIndexData),
-                             ispcMaterialPtrs.size(),
-                             ispcMaterialPtrs.data());
+                             ispc(materialData),
+                             useRendererMaterialList);
   }
 
   void GeometricModel::setGeomIE(void *geomIE, int geomID)

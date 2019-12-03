@@ -950,30 +950,31 @@ and material information. To create a geometric model, call
 
     OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
-Color and material are fetched with the primitive ID of the hit (clamped to the
-valid range, thus a single color or material is fine), or mapped first via the
-`index` array (if present). All paramters are optional, however, some renderers
-(notably the [path tracer]) require a material to be set.
+Color and material are fetched with the primitive ID of the hit (clamped
+to the valid range, thus a single color or material is fine), or mapped
+first via the `index` array (if present). All paramters are optional,
+however, some renderers (notably the [path tracer]) require a material
+to be set. Materials are either handles of `OSPMaterial`, or indices
+into the `material` array on the [renderer], which allows to build a
+[world] which can be used by different types of renderers.
 
-  -------------- --------------------- ----------------------------------------------------
-  Type           Name                  Description
-  -------------- --------------------- ----------------------------------------------------
-  OSPMaterial    material              optional material applied to the geometry
+  ------------------------ --------- ----------------------------------------------------
+  Type                     Name      Description
+  ------------------------ --------- ----------------------------------------------------
+  OSPMaterial / uint32     material  optional [material] applied to the geometry, may be
+                                     an index into the `material` parameter on the
+                                     [renderer] (if it exists)
 
-  OSPMaterial[]  material              [data] array of (per-primitive) materials
+  OSPMaterial[] / uint32[] material  optional [data] array of (per-primitive) materials,
+                                     may be an index into the `material` parameter on
+                                     the renderer (if it exists)
 
-  vec4f[]        color                 optional [data] array of (per-primitive) colors
 
-  uint8[]        index                 optional [data] array of per-primitive indices into
-                                       `color` and `material`
+  vec4f[]                  color     optional [data] array of (per-primitive) colors
 
-  int/uint32     rendererMaterialIndex optional [data] index into the `material` parameter
-                                       on the `renderer` (if it exists)
-
-  uint32[]       rendererMaterialIndex optional [data] array of per-primitive indices into
-                                       the `material` parameter on the `renderer` (if
-                                       it exists)
-  -------------- --------------------- ----------------------------------------------------
+  uint8[]                  index     optional [data] array of per-primitive indices into
+                                     `color` and `material`
+  ------------------------ --------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
 
@@ -1275,14 +1276,13 @@ all renderers are
   float /        bgColor                 black,  background color and alpha
   vec3f / vec4f                     transparent  (RGBA)
 
-  OSPTexture     maxDepthTexture           NULL  screen-sized float [texture]
+  OSPTexture     maxDepthTexture                 optional screen-sized float [texture]
                                                  with maximum far distance per pixel
                                                  (use texture type `texture2d`)
 
-  OSPMaterial[]  material                  NULL  [data] array of (per-primitive) materials
+  OSPMaterial[]  material                        optional [data] array of [materials]
                                                  which can be indexed by a
-                                                 [geometricmodel] if it has the
-                                                 `rendererMaterialIndex` parameter
+                                                 [GeometricModel]'s `material` parameter
   -------------- ------------------ -----------  -----------------------------------------
   : Parameters understood by all renderers.
 

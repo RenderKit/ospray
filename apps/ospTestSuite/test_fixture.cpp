@@ -449,7 +449,7 @@ namespace OSPRayTestScenes {
     sphereGeometry.commit();
 
     cpp::GeometricModel model(sphereGeometry);
-    model.setParam("rendererMaterialIndex", cpp::Data(index));
+    model.setParam("material", cpp::Data(index));
 
     AddModel(model);
 
