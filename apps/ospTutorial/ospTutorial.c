@@ -105,7 +105,7 @@ int main(int argc, const char **argv) {
   printf("setting up scene...");
 
   // create and setup model and mesh
-  OSPGeometry mesh = ospNewGeometry("triangles");
+  OSPGeometry mesh = ospNewGeometry("mesh");
 
   OSPData data = ospNewSharedData1D(vertex, OSP_VEC3F, 4);
   // alternatively with an OSPRay managed OSPData
@@ -177,7 +177,6 @@ int main(int argc, const char **argv) {
       ospNewRenderer("pathtracer"); // choose path tracing renderer
 
   // complete setup of renderer
-  ospSetInt(renderer, "aoSamples", 1);
   ospSetFloat(renderer, "bgColor", 1.0f); // white, transparent
   ospCommit(renderer);
 

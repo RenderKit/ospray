@@ -187,7 +187,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospCommit(*camera); // commit each object to indicate modifications are done
 
   // create and setup model and mesh
-  OSPGeometry mesh = ospNewGeometry("triangles");
+  OSPGeometry mesh = ospNewGeometry("mesh");
   OSPData data = ospNewSharedData1D(vertex, OSP_VEC3F, 4);
   ospCommit(data);
   ospSetObject(mesh, "vertex.position", data);
@@ -290,7 +290,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospCommit(*camera); // commit each object to indicate modifications are done
 
   // create and setup model and mesh
-  OSPGeometry mesh = ospNewGeometry("triangles");
+  OSPGeometry mesh = ospNewGeometry("mesh");
   OSPData data = ospNewSharedData1D(vertex, OSP_VEC3F, 4);
   ospCommit(data);
   ospSetObject(mesh, "vertex.position", data);
