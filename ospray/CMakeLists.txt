@@ -111,7 +111,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/Spheres.ispc
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
-  geometry/Mesh.cpp 
+  geometry/Mesh.cpp
   geometry/Mesh.ispc
 
   lights/Light.ispc
@@ -299,6 +299,11 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
       "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
   mark_as_advanced(OSPRAY_PIXELS_PER_JOB)
 
+  option(OSPRAY_DEBUG_NO_TASKING
+         "Remove tasking parallelism system for debugging"
+         OFF)
+  mark_as_advanced(OSPRAY_DEBUG_NO_TASKING)
+
   configure_file(common/OSPConfig.h.in ../OSPConfig.h)
   install(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
@@ -345,9 +350,10 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   target_compile_definitions(ospray_module_ispc
   PUBLIC
-    -DTILE_SIZE=${OSPRAY_TILE_SIZE}
-    -DMAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
-    -DRENDERTILE_PIXELS_PER_JOB=${OSPRAY_PIXELS_PER_JOB}
+    TILE_SIZE=${OSPRAY_TILE_SIZE}
+    MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
+    RENDERTILE_PIXELS_PER_JOB=${OSPRAY_PIXELS_PER_JOB}
+    $<$<BOOL:${OSPRAY_DEBUG_NO_TASKING}>:OSPRAY_SERIAL_RENDERING>
   )
 
   set_target_properties(ospray_module_ispc
