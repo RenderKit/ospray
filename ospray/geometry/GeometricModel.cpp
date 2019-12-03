@@ -55,24 +55,21 @@ namespace ospray {
     indexData = getParamDataT<uint8_t>("index");
 
     size_t maxItems = geom->numPrimitives();
-    size_t minItems = 0;  // without index, a single material / color is OK
     if (indexData && indexData->size() < maxItems) {
       postStatusMsg(1) << toString()
                        << " not enough 'index' elements for geometry, clamping";
     }
-    if (indexData) {
+    if (indexData)
       maxItems = 256;  // conservative, should actually go over the index
-      minItems = 1;
-    }
 
-    if (materialData && materialData->size() > minItems &&
+    if (materialData && materialData->size() > 1 &&
         materialData->size() < maxItems) {
       postStatusMsg(1) << toString()
                        << " potentially not enough 'material' elements for "
                           "geometry, clamping";
     }
 
-    if (colorData && colorData->size() > minItems &&
+    if (colorData && colorData->size() > 1 &&
         colorData->size() < maxItems) {
       postStatusMsg(1)
           << toString()
