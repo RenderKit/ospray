@@ -155,7 +155,7 @@ build-windows-msvc14:
     - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "v140"
   tags:
     - msvc14
-    - win7
+    - win
   artifacts:
     paths:
       - build/install
@@ -167,7 +167,7 @@ build-windows-msvc15:
     - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141"
   tags:
     - msvc15
-    - win7
+    - win
 #  artifacts:
 #    paths:
 #      - build/install
@@ -179,7 +179,7 @@ build-windows-icc:
     - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0"
   tags:
     - icc18
-    - win7
+    - win
   artifacts:
     paths:
       - build/install
@@ -227,7 +227,7 @@ test-ubuntu1604-gcc:
 test-windows-icc:
   <<: *test_job_windows
   tags:
-    - win7
+    - win
     - icc
   dependencies:
     - build-windows-icc
@@ -235,7 +235,7 @@ test-windows-icc:
 #test-windows-msvc15:
 #  <<: *test_job_windows
 #  tags:
-#    - win7
+#    - win
 #    - msvc14
 #  dependencies:
 #    - build-windows-msvc15
@@ -243,7 +243,7 @@ test-windows-icc:
 test-windows-msvc14:
   <<: *test_job_windows
   tags:
-    - win7
+    - win
     - msvc14
   dependencies:
     - build-windows-msvc14
@@ -348,7 +348,7 @@ release-windows:
     - Invoke-Expression "$env:SIGN_FILE_WINDOWS build_release\ospray*.msi"
   tags:
     - msvc
-    - win7
+    - win
   artifacts:
     paths:
       - build_release\ospray*.zip
