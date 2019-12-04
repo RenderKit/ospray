@@ -161,29 +161,29 @@ build-windows-msvc14:
       - build/install
     expire_in: 3 day
 
-build-windows-msvc15:
-  <<: *build_job_shell
-  script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141"
-  tags:
-    - msvc15
-    - win
+#build-windows-msvc15:
+#  <<: *build_job_shell
+#  script:
+#    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141"
+#  tags:
+#    - msvc15
+#    - win
 #  artifacts:
 #    paths:
 #      - build/install
 #    expire_in: 3 day
 
-build-windows-icc:
-  <<: *build_job_shell
-  script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 17.0"
-  tags:
-    - icc17
-    - win
-  artifacts:
-    paths:
-      - build/install
-    expire_in: 3 day
+#build-windows-icc:
+#  <<: *build_job_shell
+#  script:
+#    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 17.0"
+#  tags:
+#    - icc17
+#    - win
+#  artifacts:
+#    paths:
+#      - build/install
+#    expire_in: 3 day
 
 build-scan-kw:
   stage: build
@@ -224,13 +224,13 @@ test-ubuntu1604-gcc:
   dependencies:
     - build-ubuntu1604-gcc
 
-test-windows-icc:
-  <<: *test_job_windows
-  tags:
-    - win
-    - icc
-  dependencies:
-    - build-windows-icc
+#test-windows-icc:
+#  <<: *test_job_windows
+#  tags:
+#    - win
+#    - icc
+#  dependencies:
+#    - build-windows-icc
 
 #test-windows-msvc15:
 #  <<: *test_job_windows
