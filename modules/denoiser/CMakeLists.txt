@@ -17,33 +17,33 @@
 option(OSPRAY_MODULE_DENOISER
   "Build the Denoiser FrameOp module for denoising (requires OIDN)" OFF)
 
-if (OSPRAY_MODULE_DENOISER)
-  include(GenerateExportHeader)
-  find_package(OpenImageDenoise 1.0 REQUIRED)
-
-  add_library(ospray_module_denoiser SHARED DenoiseFrameOp.cpp)
-
-  generate_export_header(ospray_module_denoiser)
-
-  target_link_libraries(ospray_module_denoiser
-  PRIVATE
-    OpenImageDenoise
-  PUBLIC
-    ospray_module_ispc
-  )
-
-  target_include_directories(ospray_module_denoiser
-  PRIVATE
-    ${CMAKE_CURRENT_BINARY_DIR}
-  )
-
-  set_target_properties(ospray_module_denoiser
-    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-
-  install(TARGETS ospray_module_denoiser
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT mpi
-  )
-
+if (NOT OSPRAY_MODULE_DENOISER)
+  return()
 endif()
 
+include(GenerateExportHeader)
+find_package(OpenImageDenoise 1.0 REQUIRED)
+
+add_library(ospray_module_denoiser SHARED DenoiseFrameOp.cpp)
+
+generate_export_header(ospray_module_denoiser)
+
+target_link_libraries(ospray_module_denoiser
+PRIVATE
+  OpenImageDenoise
+PUBLIC
+  ospray_module_ispc
+)
+
+target_include_directories(ospray_module_denoiser
+PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+set_target_properties(ospray_module_denoiser
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+
+install(TARGETS ospray_module_denoiser
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT mpi
+)

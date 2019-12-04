@@ -40,89 +40,69 @@ void SciVis_renderSample(Renderer *uniform _self,
   uniform bool firstHit       = true;
   const float originalRayTFar = sample.ray.t;
 
+  // This is our main ray
+  Ray &ray = sample.ray;
+
+  // Iterate over all translucent geometry till we are fully opaque
   while (outputColor.w < 0.99f) {
-    Ray &geomRay  = sample.ray;
-    Ray volumeRay = sample.ray;
 
-    if (geomRay.t0 < geomRay.t)
-      traceRay(world, geomRay);
+    // Trace geometry using given ray,
+    // if hit ray.t will be updated
+    traceRay(world, ray);
 
-    VolumeInterval volumeInterval;
-    traceVolumeRay(world, volumeRay, volumeInterval);
+    // Determine volume intervals by tracing ray in the volume scene
+    Ray volumeRay = ray;
+    VolumeIntervals volumeIntervals;
+    traceVolumeRay(world, volumeRay, volumeIntervals);
 
-    const bool haveGeometryHit = hadHit(geomRay);
-    const bool haveVolumeHit   = hasInterval(volumeInterval);
+    // Sample volumes across volume intervals (in front of geometry hit)
+    if (volumeIntervals.numVolumeIntervals > 0) {
+      vec4f volumeColor = integrateVolumeIntervals(
+        volumeIntervals, volumeRay, ldSampler);
+      outputColor = outputColor + (1.f - outputColor.w) * volumeColor;
+    }
 
-    const bool bothHit   = haveGeometryHit && haveVolumeHit;
-    const bool eitherHit = haveGeometryHit || haveVolumeHit;
+    // If any geometry has been hit
+    vec4f blendedColor;
+    if (hadHit(ray)) {
 
-    const bool volumeFirst = volumeInterval.interval.lower < geomRay.t;
+      // Prepare differential geometry structure
+      DifferentialGeometry dg;
+      computeDG(world, self, ray, dg);
 
-    cif(firstHit)
-    {
-      sample.z = geomRay.t;
-      if (!(eitherHit)) {
-        outputColor   = bgColor;
+      // Shade geometry
+      SSI surfaceShading;
+      surfaceShading = computeShading(self, fb, world, dg, sample);
+
+      // Use shaded color for blending
+      blendedColor = surfaceShading.shadedColor;
+
+      // Prepare ray for next loop iteration,
+      // start from the last geometry hit all over to initial Tfar
+      setRay(ray, ray.t + dg.epsilon, originalRayTFar);
+
+      // Initialize other per sample data with first hit values
+      if (firstHit) {
+        sample.z      = ray.t;
+        sample.albedo = surfaceShading.albedo;
+        sample.normal = dg.Ns;
+      }
+    } else {
+
+      // Use background color if no geometry has been hit
+      blendedColor = bgColor;
+      blendedColor.w = 1.f;
+
+      // Initialize other per sample data with first hit values
+      if (firstHit) {
+        sample.z      = inf;
         sample.albedo = make_vec3f(bgColor);
         sample.normal = sample.ray.dir;
       }
     }
 
-    if (!eitherHit) {
-      vec3f color =
-          make_vec3f(outputColor) + (1.f - outputColor.w) * make_vec3f(bgColor);
-      float alpha = outputColor.w + (1.f - outputColor.w) * bgColor.w;
-      outputColor = make_vec4f(color.x, color.y, color.z, alpha);
-      break;
-    }
-
-    SSI surfaceShading;
-
-    vec4f volumeColor   = make_vec4f(0.f);
-    vec4f &surfaceColor = surfaceShading.shadedColor;
-
-    DifferentialGeometry dg;
-    if (haveGeometryHit) {
-      computeDG(world, geomRay, dg);
-      surfaceShading = computeShading(self, fb, world, dg, sample);
-    }
-
-    if (haveVolumeHit && volumeFirst) {
-      volumeInterval.interval.upper =
-          min(geomRay.t, volumeInterval.interval.upper);
-
-      setRay(volumeRay,
-             volumeInterval.interval.lower,
-             volumeInterval.interval.upper);
-
-      volumeColor = integrateVolumeInterval(sample, volumeInterval, volumeRay, ldSampler);
-    }
-
-    vec4f blendedColor = make_vec4f(0.f);
-
-    if (bothHit) {
-      blendedColor = volumeColor + (1.0f - volumeColor.w) * surfaceColor;
-    } else {
-      if (haveGeometryHit)
-        blendedColor = surfaceColor;
-      else
-        blendedColor = volumeColor;
-    }
-
-    outputColor = outputColor + (1.0f - outputColor.w) * blendedColor;
-
-    if (haveGeometryHit)
-      setRay(geomRay, geomRay.t + dg.epsilon, originalRayTFar);
-    else
-      setRay(geomRay, geomRay.t, geomRay.t0);
-
-    cif(firstHit)
-    {
-      sample.albedo =
-          haveGeometryHit ? surfaceShading.albedo : make_vec3f(bgColor);
-      sample.normal = haveGeometryHit ? dg.Ns : negate(geomRay.dir);
-    }
-
+    // Blend with output final color
+    outputColor = outputColor + (1.f - outputColor.w) * blendedColor;
     firstHit = false;
   }
 

@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "common/World.ih"
 #include "render/Renderer.ih"
 
 struct SciVis

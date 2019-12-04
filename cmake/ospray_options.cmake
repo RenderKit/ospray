@@ -64,8 +64,12 @@ option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 option(OSPRAY_ENABLE_MODULES "Enable the 'modules' subtree in the build." ON)
 mark_as_advanced(OSPRAY_ENABLE_MODULES)
 
-option(OSPRAY_ENABLE_TESTING
-       "Enable building, installing, and packaging of test tools.")
+if (OSPRAY_ENABLE_APPS)
+  option(OSPRAY_APPS_TESTING
+         "Enable building, installing, and packaging of test tools." ON)
+  option(OSPRAY_APPS_EXAMPLES
+         "Enable building, installing, and packaging of example apps." ON)
+endif()
 
 option(OSPRAY_ENABLE_TARGET_CLANGFORMAT
        "Enable 'format' target, requires clang-format too")

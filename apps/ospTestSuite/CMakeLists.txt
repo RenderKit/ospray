@@ -14,6 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+if (NOT OSPRAY_APPS_TESTING)
+  return()
+endif()
+
 ospray_disable_compiler_warnings()
 
 add_executable(ospTestSuite

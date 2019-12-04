@@ -78,7 +78,7 @@ if (OSPRAY_ENABLE_MODULES)
 endif()
 
 ## Testing ##
-if (OSPRAY_ENABLE_TESTING)
+if (OSPRAY_APPS_TESTING)
   add_subdirectory(test_image_data)
 endif()
 

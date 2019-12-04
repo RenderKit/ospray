@@ -15,62 +15,71 @@
 // ======================================================================== //
 
 // ospray
-#include "QuadMesh.h"
+#include "Mesh.h"
 #include "../include/ospray/ospray.h"
 #include "common/World.h"
 // ispc exports
 #include <cmath>
-#include "QuadMesh_ispc.h"
+#include "Mesh_ispc.h"
 
 namespace ospray {
 
-  std::string QuadMesh::toString() const
+  std::string Mesh::toString() const
   {
-    return "ospray::QuadMesh";
+    return "ospray::Mesh";
   }
 
-  void QuadMesh::commit()
+  void Mesh::commit()
   {
     vertexData = getParamDataT<vec3f>("vertex.position", true);
     normalData = getParamDataT<vec3f>("vertex.normal");
     colorData = getParam<Data *>("vertex.color");
     texcoordData = getParamDataT<vec2f>("vertex.texcoord");
-    indexData = getParamDataT<vec4ui>("index", true);
-
+    indexData = getParamDataT<vec3ui>("index");
+      if (!indexData)
+        indexData = getParamDataT<vec4ui>("index", true);
     postCreationInfo(vertexData->size());
   }
 
-  size_t QuadMesh::numPrimitives() const
+  size_t Mesh::numPrimitives() const
   {
-    return indexData ? indexData->size() : 0;
+    return indexData->size();
   }
 
-  LiveGeometry QuadMesh::createEmbreeGeometry()
+  LiveGeometry Mesh::createEmbreeGeometry()
   {
-    auto embreeGeo =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_QUAD);
-
+    const bool isTri = indexData->type == OSP_VEC3UI;
+    auto embreeGeo = rtcNewGeometry(ispc_embreeDevice(),
+        isTri ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
     setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_VERTEX, vertexData);
-    setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexData);
-
+    rtcSetSharedGeometryBuffer(embreeGeo,
+        RTC_BUFFER_TYPE_INDEX,
+        0,
+        isTri ? RTC_FORMAT_UINT3 : RTC_FORMAT_UINT4,
+        indexData->data(),
+        0,
+        isTri ? sizeof(vec3ui) : sizeof(vec4ui),
+        indexData->size());
     rtcCommitGeometry(embreeGeo);
 
     LiveGeometry retval;
     retval.embreeGeometry = embreeGeo;
 
-    retval.ispcEquivalent = ispc::QuadMesh_create(this);
+    retval.ispcEquivalent = ispc::Mesh_create(this);
 
-    ispc::QuadMesh_set(retval.ispcEquivalent,
+    ispc::Mesh_set(retval.ispcEquivalent,
         ispc(indexData),
         ispc(vertexData),
         ispc(normalData),
         ispc(colorData),
         ispc(texcoordData),
-        colorData && colorData->type == OSP_VEC4F);
+        colorData && colorData->type == OSP_VEC4F,
+        isTri);
 
     return retval;
+
   }
 
-  OSP_REGISTER_GEOMETRY(QuadMesh, quads);
+  OSP_REGISTER_GEOMETRY(Mesh, mesh);
 
 }  // namespace ospray

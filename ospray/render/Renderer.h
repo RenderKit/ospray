@@ -77,22 +77,16 @@ namespace ospray {
                                World *world,
                                const vec2f &screenPos);
 
-    /*! \brief number of samples to be used per pixel in a tile */
+    // Data //
+
     int32 spp{1};
-
-    /*! adaptive accumulation: variance-based error to reach */
     float errorThreshold{0.f};
-
-    /*! \brief the background color */
     vec4f bgColor{0.f};
 
-    /*! \brief maximum depth texture provided as an optional parameter to the
-      renderer, used for early ray termination
-
-      The texture format should be OSP_TEXTURE_R32F and texture filtering
-      should be set to nearest-neighbor interpolation:
-      (OSP_TEXTURE_FILTER_NEAREST). */
     Ref<Texture2D> maxDepthTexture;
+
+    Ref<const DataT<Material *>> materialData;
+    std::vector<void *> ispcMaterialPtrs;
   };
 
   OSPTYPEFOR_SPECIALIZATION(Renderer *, OSP_RENDERER);
@@ -117,8 +111,6 @@ namespace ospray {
     return nullptr;
   }
 
-  inline void Renderer::endFrame(FrameBuffer *, void *)
-  {
-  }
+  inline void Renderer::endFrame(FrameBuffer *, void *) {}
 
 }  // namespace ospray

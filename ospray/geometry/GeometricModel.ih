@@ -19,32 +19,49 @@
 #include "Geometry.ih"
 #include "common/Data.ih"
 #include "math/AffineSpace.ih"
+#include "render/Renderer.ih"
 
 struct GeometricModel
 {
-  Geometry *geom;  //!< instanced Geometry
+  Geometry *geom;
 
   Data1D color;
-  Data1D index;
+  Data1D localIndex;  // index into local color/materials
+
+  Data1D rendererMaterialIndex;  // index into materials on the renderer
 
   int32 numMaterials;
   Material **material;
 
   float areaPDF;
 };
-inline Material *GeometricModel_getMaterial(
-    const GeometricModel *uniform self, int32 primID)
+
+inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
+                                            const Renderer *uniform renderer,
+                                            int32 primID)
 {
-  if (!self->material)
+  uniform int32 numMaterials = self->numMaterials;
+  Material **uniform mats    = self->material;
+
+  if (valid(self->rendererMaterialIndex) && renderer->material) {
+    primID = get_uint32(self->rendererMaterialIndex,
+                        min(primID, self->rendererMaterialIndex.numItems - 1));
+
+    mats         = renderer->material;
+    numMaterials = renderer->numMaterials;
+  } else if (valid(self->localIndex)) {
+    primID =
+        get_uint8(self->localIndex, min(primID, self->localIndex.numItems - 1));
+  }
+
+  if (mats)
+    return mats[min(primID, numMaterials - 1)];
+  else
     return NULL;
-
-  if (valid(self->index))
-    primID = get_uint8(self->index, min(primID, self->index.numItems - 1));
-
-  return self->material[min(primID, self->numMaterials - 1)];
 }
 
 inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
+                                         const Renderer *uniform renderer,
                                          varying DifferentialGeometry &dg,
                                          const varying Ray &ray,
                                          uniform int64 flags)
@@ -56,12 +73,13 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
   dg.areaPDF = self->areaPDF;
 
   uint32 idx = ray.primID;
-  if (valid(self->index))
-    idx = get_uint8(self->index, min(ray.primID, self->index.numItems - 1));
+  if (valid(self->localIndex)) {
+    idx = get_uint8(self->localIndex,
+                    min(ray.primID, self->localIndex.numItems - 1));
+  }
 
   if (flags & DG_COLOR && valid(self->color))
-    dg.color =
-        get_vec4f(self->color, min(idx, self->color.numItems - 1));
+    dg.color = get_vec4f(self->color, min(idx, self->color.numItems - 1));
 
-  dg.material = GeometricModel_getMaterial(self, ray.primID);
+  dg.material = GeometricModel_getMaterial(self, renderer, ray.primID);
 }

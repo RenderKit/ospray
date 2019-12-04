@@ -14,6 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+if (NOT OSPRAY_APPS_EXAMPLES)
+  return()
+endif()
+
 # prefer libGL over libOpenGl for better compatibility with SWR
 set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(OpenGL 2 REQUIRED)

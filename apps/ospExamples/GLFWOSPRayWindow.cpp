@@ -29,7 +29,6 @@ static bool g_quitNextFrame = false;
 static const std::vector<std::string> g_scenes = {"boxes",
                                                   "cornell_box",
                                                   "curves",
-                                                  "cylinders",
                                                   "gravity_spheres_volume",
                                                   "perlin_noise_volumes",
                                                   "random_spheres",
@@ -37,12 +36,26 @@ static const std::vector<std::string> g_scenes = {"boxes",
                                                   "subdivision_cube",
                                                   "unstructured_volume"};
 
-static const std::vector<std::string> g_renderers = {
-    "scivis", "pathtracer", "raycast"};
+static const std::vector<std::string> g_curveBasis = {
+    "bspline", "hermite", "catmull-rom", "linear"};
+
+static const std::vector<std::string> g_renderers = {"scivis",
+                                                     "pathtracer",
+                                                     "raycast",
+                                                     "raycast_vertexColor",
+                                                     "instID",
+                                                     "geomID",
+                                                     "primID"};
 
 bool sceneUI_callback(void *, int index, const char **out_text)
 {
   *out_text = g_scenes[index].c_str();
+  return true;
+}
+
+bool curveBasisUI_callback(void *, int index, const char **out_text)
+{
+  *out_text = g_curveBasis[index].c_str();
   return true;
 }
 
@@ -397,6 +410,18 @@ void GLFWOSPRayWindow::buildUI()
     refreshScene(true);
   }
 
+  if (scene == "curves") {
+    static int whichCurveBasis = 0;
+    if (ImGui::Combo("curveBasis##whichCurveBasis",
+                     &whichCurveBasis,
+                     curveBasisUI_callback,
+                     nullptr,
+                     g_curveBasis.size())) {
+      curveBasis = g_curveBasis[whichCurveBasis];
+      refreshScene(true);
+    }
+  }
+
   static int whichRenderer = 0;
   if (ImGui::Combo("renderer##whichRenderer",
                    &whichRenderer,
@@ -484,6 +509,9 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
 {
   auto builder = testing::newBuilder(scene);
   testing::setParam(builder, "rendererType", rendererTypeStr);
+  if (scene == "curves") {
+    testing::setParam(builder, "curveBasis", curveBasis);
+  }
   testing::commit(builder);
 
   world = testing::buildWorld(builder);

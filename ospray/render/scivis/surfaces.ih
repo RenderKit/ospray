@@ -27,10 +27,12 @@ struct SurfaceShadingInfo
 typedef SurfaceShadingInfo SSI;
 
 inline void computeDG(const World *uniform world,
+                      const SciVis *uniform renderer,
                       const Ray &ray,
                       DifferentialGeometry &dg)
 {
   postIntersect(world,
+      &renderer->super,
       dg,
       ray,
       DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TEXCOORD);

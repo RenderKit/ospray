@@ -26,26 +26,30 @@ export void *uniform GeometricModel_create(void *uniform cppE)
 
   self->geom = NULL;
   Data1D_Constructor(&self->color);
-  Data1D_Constructor(&self->index);
+  Data1D_Constructor(&self->localIndex);
+  Data1D_Constructor(&self->rendererMaterialIndex);
   self->numMaterials = 0;
-  self->material = NULL;
-  self->areaPDF = 0.f;
+  self->material     = NULL;
+  self->areaPDF      = 0.f;
 
   return self;
 }
 
 export void GeometricModel_set(void *uniform _self,
-    const Data1D *uniform color,
-    const Data1D *uniform index,
-    uniform int numMaterials,
-    void *uniform _matList)
+                               const Data1D *uniform color,
+                               const Data1D *uniform localIndex,
+                               const Data1D *uniform rendererMaterialIndex,
+                               uniform int numMaterials,
+                               void *uniform _matList)
 {
   GeometricModel *uniform self = (GeometricModel * uniform) _self;
 
-  self->color = *color;
-  self->index = *index;
+  self->color        = *color;
+  self->localIndex   = *localIndex;
   self->numMaterials = numMaterials;
-  self->material = (Material * uniform * uniform) _matList;
+  self->material     = (Material ** uniform) _matList;
+
+  self->rendererMaterialIndex = *rendererMaterialIndex;
 }
 
 export void GeometricModel_setGeomIE(void *uniform _self, void *uniform _geomIE)

@@ -16,6 +16,7 @@
 
 #include "Builder.h"
 #include "ospray_testing.h"
+#include <iostream>
 // stl
 #include <random>
 
@@ -29,103 +30,83 @@ namespace ospray {
       Curves()           = default;
       ~Curves() override = default;
 
+      void commit() override;
+
       cpp::Group buildGroup() const override;
 
-     private:
-      void kleinBottle(std::vector<vec4f> &points,
-                       std::vector<unsigned int> &indices,
-                       std::vector<vec4f> &colors) const;
-      void embreeTutorialCurve(std::vector<vec4f> &points,
-                               std::vector<unsigned int> &indices,
-                               std::vector<vec4f> &colors) const;
+      std::string curveBasis;
     };
 
-    // Inlined definitions ////////////////////////////////////////////////////
+    static std::vector<vec4f> points = {
+      {-1.0f, 0.0f, -2.f, 0.2f},
+      {0.0f, -1.0f, 0.0f, 0.2f},
+      {1.0f, 0.0f, 2.f, 0.2f},
+      {-1.0f, 0.0f, 2.f, 0.2f},
+      {0.0f, 1.0f, 0.0f, 0.6f},
+      {1.0f, 0.0f, -2.f, 0.2f},
+      {-1.0f, 0.0f, -2.f, 0.2f},
+      {0.0f, -1.0f, 0.0f, 0.2f},
+      {1.0f, 0.0f, 2.f, 0.2f}
+    };
+    static std::vector<unsigned int> indices = {0, 1, 2, 3, 4, 5};
 
-    void Curves::kleinBottle(std::vector<vec4f> &points,
-                             std::vector<unsigned int> &indices,
-                             std::vector<vec4f> &colors) const
+    void Curves::commit()
     {
-      // spout
-      points.push_back(vec4f(0.0f, 0.0f, 0.0f, 0.1f));
-      points.push_back(vec4f(0.0f, 1.5f, 0.0f, 0.05f));
-      points.push_back(vec4f(-.3f, 1.65f, 0.0f, 0.05f));
-      points.push_back(vec4f(-.6f, 1.5f, 0.0f, 0.1f));
-      // handle
-      points.push_back(vec4f(-.3f, 0.0f, 0.0f, 0.1f));
-      // base
-      points.push_back(vec4f(0.0f, -.5f, 0.0f, 0.3f));
-      points.push_back(vec4f(0.0f, -.65f, 0.0f, 0.3f));
-      points.push_back(vec4f(0.0f, 0.0f, 0.0f, 0.3f));
-      points.push_back(vec4f(0.0f, 0.0f, 0.0f, 0.3f));
-      // neck
-      points.push_back(vec4f(0.0f, 1.5f, 0.0f, 0.05));
-      points.push_back(vec4f(-.3f, 1.65f, 0.0f, 0.05f));
+      Builder::commit();
 
-      for (int i = 0; i < 8; i++) {
-        indices.push_back(i);
-        colors.push_back(vec4f(1.0f, 0.0f, 0.0f, 0.0f));
-      }
-    }
-
-    // from Embree's curve_geometry tutorial
-    void Curves::embreeTutorialCurve(std::vector<vec4f> &points,
-                                     std::vector<unsigned int> &indices,
-                                     std::vector<vec4f> &colors) const
-    {
-      points.push_back(vec4f(-1.0f, 0.0f, -2.f, 0.2f));
-      points.push_back(vec4f(0.0f, -1.0f, 0.0f, 0.2f));
-      points.push_back(vec4f(1.0f, 0.0f, 2.f, 0.2f));
-      points.push_back(vec4f(-1.0f, 0.0f, 2.f, 0.2f));
-      points.push_back(vec4f(0.0f, 1.0f, 0.0f, 0.6f));
-      points.push_back(vec4f(1.0f, 0.0f, -2.f, 0.2f));
-      points.push_back(vec4f(-1.0f, 0.0f, -2.f, 0.2f));
-      points.push_back(vec4f(0.0f, -1.0f, 0.0f, 0.2f));
-      points.push_back(vec4f(1.0f, 0.0f, 2.f, 0.2f));
-
-      indices.push_back(0);
-      indices.push_back(1);
-      indices.push_back(2);
-      indices.push_back(3);
-      indices.push_back(4);
-      indices.push_back(5);
-
-      colors.push_back(vec4f(1.0f, 0.0f, 0.0f, 0.0f));
-      colors.push_back(vec4f(1.0f, 1.0f, 0.0f, 0.0f));
-      colors.push_back(vec4f(0.0f, 1.0f, 0.0f, 0.0f));
-      colors.push_back(vec4f(0.0f, 1.0f, 1.0f, 0.0f));
-      colors.push_back(vec4f(0.0f, 0.0f, 1.0f, 0.0f));
-      colors.push_back(vec4f(1.0f, 0.0f, 1.0f, 0.0f));
+      curveBasis = getParam<std::string>("curveBasis", "bspline");
     }
 
     cpp::Group Curves::buildGroup() const
     {
+      std::vector<cpp::GeometricModel> geometricModels;
+      std::mt19937 gen(randomSeed);
+      std::uniform_real_distribution<float> colorDistribution(0.1f, 1.0f);
+      std::vector<vec4f> s_colors(points.size());
+      
       cpp::Geometry geom("curves");
 
-      geom.setParam("type", int(OSP_ROUND));
-      geom.setParam("basis", int(OSP_BSPLINE));
+      if(curveBasis == "hermite") {
+        geom.setParam("type", int(OSP_ROUND));
+        geom.setParam("basis", int(OSP_HERMITE));
+        std::vector<vec4f> tangents;
+        for(auto iter = points.begin(); iter != points.end() - 1; ++iter) {
+          const vec4f pointTangent = *(iter+1) - *iter;
+          tangents.push_back(pointTangent);
+        }
+        geom.setParam("vertex.position_radius", cpp::Data(points));
+        geom.setParam("vertex.tangent", cpp::Data(tangents));
+      } else if (curveBasis == "catmull-rom") {
+        geom.setParam("type", int(OSP_ROUND));
+        geom.setParam("basis", int(OSP_CATMULL_ROM));
+        geom.setParam("vertex.position_radius", cpp::Data(points));
+      } else if (curveBasis == "linear") {
+        geom.setParam("radius", 0.1f);
+        geom.setParam("vertex.position", cpp::Data(points.size(), sizeof(vec4f), (vec3f*)points.data()));
+      } else {
+        geom.setParam("type", int(OSP_ROUND));
+        geom.setParam("basis", int(OSP_BSPLINE));
+        geom.setParam("vertex.position_radius", cpp::Data(points));
+     }
 
-      std::vector<vec4f> points;
-      std::vector<unsigned int> indices;
-      std::vector<vec4f> colors;
+      for (auto &c : s_colors) {
+        c.x = colorDistribution(gen);
+        c.y = colorDistribution(gen);
+        c.z = colorDistribution(gen);
+        c.w = colorDistribution(gen);
+      }
 
-#if 0
-      kleinBottle(points, indices, colors);
-#else
-      embreeTutorialCurve(points, indices, colors);
-#endif
-
-      geom.setParam("vertex.position", cpp::Data(points));
+      geom.setParam("vertex.color", cpp::Data(s_colors));
+      
       geom.setParam("index", cpp::Data(indices));
       geom.commit();
 
       cpp::Material mat(rendererType, "ThinGlass");
-      mat.setParam("attenuationDistance", 0.2f);
+      mat.setParam("attenuationDistance", 1.0f);
       mat.commit();
 
       cpp::GeometricModel model(geom);
       model.setParam("material", cpp::Data(mat));
-      model.setParam("color", cpp::Data(colors));
       model.commit();
 
       cpp::Group group;

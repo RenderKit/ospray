@@ -378,25 +378,20 @@ namespace ospray {
     std::string libName = "ospray_module_" + name;
     loadLibrary(libName, false);
 
-    std::string initSymName = "ospray_init_module_" + name;
+    std::string initSymName = "ospray_module_init_" + name;
     void*initSym = getSymbol(initSymName);
     if (!initSym) {
       throw std::runtime_error("#osp:api: could not find module initializer "
                                +initSymName);
     }
 
-    void (*initMethod)() = (void(*)())initSym;
+    OSPError (*initMethod)(int16_t, int16_t, int16_t) = (OSPError(*)(int16_t, int16_t, int16_t))initSym;
 
     if (!initMethod)
-      return OSP_INVALID_ARGUMENT;
+      return OSP_INVALID_OPERATION;
 
-    try {
-      initMethod();
-    } catch (...) {
-      return OSP_UNKNOWN_ERROR;
-    }
+    return initMethod(OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH);
 
-    return OSP_NO_ERROR;
   }
 
   StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)

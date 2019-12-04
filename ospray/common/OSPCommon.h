@@ -42,7 +42,7 @@ typedef int ssize_t;
 // ospray
 #include "ospray/ospray.h"
 #include "ospray/ospray_cpp/Traits.h"
-
+#include "ospray/version.h"
 // std
 #include <cstdint> // for int64_t etc
 #include <sstream>
@@ -134,6 +134,16 @@ namespace ospray {
   OSPRAY_CORE_INTERFACE size_t sizeOf(OSPTextureFormat);
 
   OSPRAY_CORE_INTERFACE OSPError loadLocalModule(const std::string &name);
+
+  inline OSPError moduleVersionCheck(int16_t versionMajor,
+                                     int16_t versionMinor)
+  {
+    if ((OSPRAY_VERSION_MAJOR == versionMajor) &&
+        (OSPRAY_VERSION_MINOR == versionMinor)) {
+        return OSP_NO_ERROR;
+    } else
+        return OSP_INVALID_OPERATION;
+  }
 
   /*! little helper class that prints out a warning string upon the
     first time it is encountered.

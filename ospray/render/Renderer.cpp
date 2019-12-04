@@ -46,8 +46,8 @@ namespace ospray {
     maxDepthTexture = (Texture2D *)getParamObject("maxDepthTexture", nullptr);
 
     if (maxDepthTexture) {
-      if (maxDepthTexture->format != OSP_TEXTURE_R32F
-          || maxDepthTexture->filter != OSP_TEXTURE_FILTER_NEAREST) {
+      if (maxDepthTexture->format != OSP_TEXTURE_R32F ||
+          maxDepthTexture->filter != OSP_TEXTURE_FILTER_NEAREST) {
         static WarnOnce warning(
             "maxDepthTexture provided to the renderer "
             "needs to be of type OSP_TEXTURE_R32F and have "
@@ -55,8 +55,16 @@ namespace ospray {
       }
     }
 
-    vec3f bgColor3 = getParam<vec3f>("bgColor", vec3f(getParam<float>("bgColor", 0.f)));
-    bgColor        = getParam<vec4f>("bgColor", vec4f(bgColor3, 0.f));
+    vec3f bgColor3 =
+        getParam<vec3f>("bgColor", vec3f(getParam<float>("bgColor", 0.f)));
+    bgColor = getParam<vec4f>("bgColor", vec4f(bgColor3, 0.f));
+
+    materialData = getParamDataT<Material *>("material");
+
+    if (materialData)
+      ispcMaterialPtrs = createArrayOfIE(*materialData);
+    else
+      ispcMaterialPtrs.clear();
 
     if (getIE()) {
       ispc::Renderer_set(getIE(),
@@ -64,6 +72,8 @@ namespace ospray {
                          maxDepth,
                          minContribution,
                          (ispc::vec4f &)bgColor,
+                         ispcMaterialPtrs.size(),
+                         ispcMaterialPtrs.data(),
                          maxDepthTexture ? maxDepthTexture->getIE() : nullptr);
     }
   }
@@ -123,7 +133,7 @@ namespace ospray {
     if (res.hasHit) {
       auto *instance = (*world->instances)[instID];
       auto *group    = instance->group.ptr;
-      auto *model = (*group->geometricModels)[geomID];
+      auto *model    = (*group->geometricModels)[geomID];
 
       instance->refInc();
       model->refInc();

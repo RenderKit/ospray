@@ -186,7 +186,6 @@ extern "C" {
   OSPRAY_INTERFACE void ospDeviceRetain(OSPDevice);
 
   /* Load module 'name' from shard lib libospray_module_<name>.so
-
      returns OSPError value to report any errors during initialization */
   OSPRAY_INTERFACE OSPError ospLoadModule(const char *name);
 

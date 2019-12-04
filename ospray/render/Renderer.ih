@@ -17,7 +17,6 @@
 #pragma once
 
 #include "camera/Camera.ih"
-#include "common/World.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/Tile.ih"
 #include "texture/Texture2D.ih"
@@ -88,6 +87,9 @@ struct Renderer
                                // ray termination
   int maxDepth;
   float minContribution;
+
+  int32 numMaterials;
+  Material **material;
 };
 
 void Renderer_Constructor(uniform Renderer *uniform self, void *uniform cppE);

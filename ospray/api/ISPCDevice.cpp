@@ -511,6 +511,14 @@ namespace ospray {
       return renderer->pick(fb, camera, world, screenPos);
     }
 
+    extern "C" OSPError ospray_module_init_ispc(int16_t versionMajor,
+                                                int16_t versionMinor,
+                                                int16_t versionPatch)
+    {
+      std::cout << "#osp: initializing the 'ispc' module" << std::endl;
+      return moduleVersionCheck(versionMajor, versionMinor);
+    }
+
     OSP_REGISTER_DEVICE(ISPCDevice, local_device);
     OSP_REGISTER_DEVICE(ISPCDevice, local);
     OSP_REGISTER_DEVICE(ISPCDevice, default_device);
@@ -519,4 +527,3 @@ namespace ospray {
   }  // namespace api
 }  // namespace ospray
 
-extern "C" OSPRAY_DLLEXPORT void ospray_init_module_ispc() {}

@@ -23,7 +23,6 @@ add_library(ospray_testing SHARED
   builders/Builder.cpp
   builders/CornellBox.cpp
   builders/Curves.cpp
-  builders/Cylinders.cpp
   builders/Empty.cpp
   builders/GravitySpheresVolume.cpp
   builders/PerlinNoiseVolumes.cpp

@@ -18,7 +18,6 @@
 #include "Device.h"
 #include "common/OSPCommon.h"
 #include "objectFactory.h"
-#include "ospray/version.h"
 // ospcommon
 #include "ospcommon/os/library.h"
 #include "ospcommon/utility/getEnvVar.h"

@@ -20,6 +20,8 @@
 #include "../common/Ray.ih"
 #include "Instance.ih"
 
+struct Renderer;
+
 struct World
 {
   void *cppEquivalent;
@@ -74,7 +76,7 @@ inline void traceVolumeRay(const World *uniform world,
 
   VolumeIntervals intervals;
   initVolumeIntervals(intervals);
-  
+
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = &intervals;
@@ -82,8 +84,7 @@ inline void traceVolumeRay(const World *uniform world,
                 &context.ectx,
                 (varying RTCRayHit * uniform) & ray);
 
-  if (hasInterval(intervals.intervals[0]))
-  {
+  if (hasInterval(intervals.intervals[0])) {
     Instance * instance = *(world->instances + intervals.intervals[0].instID);
     interval.volumetricModel = instance->group->volumetricModels[intervals.intervals[0].geomID];
     interval.xfm             = instance->xfm;
@@ -106,10 +107,8 @@ inline void traceVolumeRay(const World *uniform world,
                 &context.ectx,
                 (varying RTCRayHit * uniform) & ray);
 
-  if (intervals.numVolumeIntervals > 0) 
-  {
-    for (int i = 0; i < intervals.numVolumeIntervals; ++i)
-    {
+  if (intervals.numVolumeIntervals > 0) {
+    for (int i = 0; i < intervals.numVolumeIntervals; ++i) {
       Instance * instance = *(world->instances + intervals.intervals[i].instID);
       intervals.intervals[i].volumetricModel = instance->group->volumetricModels[intervals.intervals[i].geomID];
       intervals.intervals[i].xfm             = instance->xfm;
@@ -126,6 +125,7 @@ inline void traceVolumeRay(const World *uniform world,
     Color defaults to vec4f(1.f) if queried but not present in geometry.
    */
 inline void postIntersect(const World *uniform world,
+                          const Renderer *uniform renderer,
                           varying DifferentialGeometry &dg,
                           const varying Ray &ray,
                           uniform int64 flags)
@@ -133,7 +133,8 @@ inline void postIntersect(const World *uniform world,
   dg.primID = ray.primID;
   dg.st     = make_vec2f(ray.u, ray.v);
 
-  dg.material   = NULL;
+  dg.material = NULL;
+  dg.renderer = renderer;
 
   if (flags & DG_COLOR)
     dg.color = make_vec4f(1.f);
@@ -150,7 +151,7 @@ inline void postIntersect(const World *uniform world,
   {
     if (instID != RTC_INVALID_GEOMETRY_ID) {
       Instance *uniform instance = *(world->instances + instID);
-      Instance_postIntersect(instance, instID, dg, ray, flags);
+      Instance_postIntersect(instance, renderer, instID, dg, ray, flags);
     } else {
       dg.Ns = dg.Ng = ray.Ng;
     }

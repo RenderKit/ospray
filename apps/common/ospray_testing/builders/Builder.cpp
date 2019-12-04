@@ -106,7 +106,7 @@ namespace ospray {
 
       cpp::GeometricModel Builder::makeGroundPlane(float planeExtent) const
       {
-        cpp::Geometry planeGeometry("quads");
+        cpp::Geometry planeGeometry("mesh");
 
         std::vector<vec3f> v_position;
         std::vector<vec3f> v_normal;
