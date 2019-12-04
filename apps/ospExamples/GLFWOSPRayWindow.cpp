@@ -68,6 +68,10 @@ bool rendererUI_callback(void *, int index, const char **out_text)
 
 // GLFWOSPRayWindow definitions ///////////////////////////////////////////////
 
+void error_callback(int error, const char *desc) {
+    std::cerr << "error " << error << ": " << desc << std::endl;
+}
+
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
 GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize)
@@ -77,6 +81,8 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize)
   }
 
   activeWindow = this;
+
+  glfwSetErrorCallback(error_callback);
 
   // initialize GLFW
   if (!glfwInit()) {
@@ -475,6 +481,16 @@ void GLFWOSPRayWindow::buildUI()
       addObjectToCommit(renderer.handle());
     }
   } else if (rendererType == OSPRayRendererType::SCIVIS) {
+    static bool useTestTex = false;
+    if (ImGui::Checkbox("backplate texture", &useTestTex)) {
+      if (useTestTex) {
+        renderer.setParam("backplate", backplateTex);
+      } else {
+        renderer.removeParam("backplate");
+      }
+      addObjectToCommit(renderer.handle());
+    }
+
     static vec3f bgColor(0.f);
     if (ImGui::ColorEdit3("bgColor", bgColor)) {
       renderer.setParam("bgColor", bgColor);
@@ -528,6 +544,19 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
 
   renderer = cpp::Renderer(rendererTypeStr);
   addObjectToCommit(renderer.handle());
+
+  // set up backplate texture
+  std::vector<vec4f> backplate;
+  backplate.push_back(vec4f(0.8f, 0.2f, 0.2f, 1.0f));
+  backplate.push_back(vec4f(0.2f, 0.8f, 0.2f, 1.0f));
+  backplate.push_back(vec4f(0.2f, 0.2f, 0.8f, 1.0f));
+  backplate.push_back(vec4f(0.4f, 0.2f, 0.4f, 1.0f));
+
+  OSPTextureFormat texFmt = OSP_TEXTURE_RGBA32F;
+  cpp::Data texData(vec2ul(2, 2), backplate.data());
+  backplateTex.setParam("data", texData);
+  backplateTex.setParam("format", OSP_INT, &texFmt);
+  addObjectToCommit(backplateTex.handle());
 
   if (resetCamera) {
     // create the arcball camera model
