@@ -89,8 +89,20 @@ void SciVis_renderSample(Renderer *uniform _self,
       }
     } else {
 
-      // Use background color if no geometry has been hit
-      blendedColor = bgColor;
+      // Use backplate or background color if no geometry has been hit
+      if(self->backplate != NULL) {
+        vec2f pixel;
+        DifferentialGeometry lookup;
+
+        pixel.x = (sample.sampleID.x) * fb->rcpSize.x;
+        pixel.y = (sample.sampleID.y) * fb->rcpSize.y;
+        initDgFromTexCoord(lookup, clamp2edge(self->backplate, pixel));
+
+        blendedColor = get4f(self->backplate, lookup);
+      } else {
+        blendedColor = bgColor;
+      }
+
       blendedColor.w = 1.f;
 
       // Initialize other per sample data with first hit values
@@ -123,11 +135,13 @@ export void *uniform SciVis_create(void *uniform cppE)
 export void SciVis_set(void *uniform _self,
                        uniform int aoSamples,
                        uniform float aoRadius,
-                       uniform float aoIntensity)
+                       uniform float aoIntensity,
+                       void *uniform backplate)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
   self->aoSamples   = aoSamples;
   self->aoRadius    = aoRadius;
   self->aoIntensity = aoIntensity;
+  self->backplate   = (uniform Texture2D *uniform)backplate;
 }
