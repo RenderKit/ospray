@@ -176,9 +176,9 @@ build-windows-msvc15:
 build-windows-icc:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 17.0"
   tags:
-    - icc18
+    - icc17
     - win
   artifacts:
     paths:
