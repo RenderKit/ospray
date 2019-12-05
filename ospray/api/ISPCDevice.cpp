@@ -515,7 +515,6 @@ namespace ospray {
                                                 int16_t versionMinor,
                                                 int16_t /*versionPatch*/)
     {
-      std::cout << "#osp: initializing the 'ispc' module" << std::endl;
       return moduleVersionCheck(versionMajor, versionMinor);
     }
 
