@@ -605,14 +605,15 @@ specified through `ospInit` or manually set parameters.
 
 The following errors are currently used by OSPRay:
 
-| Name                    | Description                                           |
-|:------------------------|:------------------------------------------------------|
-| OSP\_NO\_ERROR          | no error occurred                                     |
-| OSP\_UNKNOWN\_ERROR     | an unknown error occurred                             |
-| OSP\_INVALID\_ARGUMENT  | an invalid argument was specified                     |
-| OSP\_INVALID\_OPERATION | the operation is not allowed for the specified object |
-| OSP\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command     |
-| OSP\_UNSUPPORTED\_CPU   | the CPU is not supported (minimum ISA is SSE4.1)      |
+| Name                    | Description                                             |
+|:------------------------|:--------------------------------------------------------|
+| OSP\_NO\_ERROR          | no error occurred                                       |
+| OSP\_UNKNOWN\_ERROR     | an unknown error occurred                               |
+| OSP\_INVALID\_ARGUMENT  | an invalid argument was specified                       |
+| OSP\_INVALID\_OPERATION | the operation is not allowed for the specified object   |
+| OSP\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command       |
+| OSP\_UNSUPPORTED\_CPU   | the CPU is not supported (minimum ISA is SSE4.1)        |
+| OSP\_VERSION\_MISMATCH  | a module could not be loaded due to mismatching version |
 
 : Possible error codes, i.e., valid named constants of type `OSPError`.
 
@@ -2210,9 +2211,7 @@ To create a new renderer of given type `type` use
 OSPRenderer ospNewRenderer(const char *type);
 ```
 
-The call returns `NULL` if that type of renderer is not known, or else
-an `OSPRenderer` handle to the created renderer. General parameters of
-all renderers are
+General parameters of all renderers are
 
 <table style="width:98%;">
 <caption>Parameters understood by all renderers.</caption>

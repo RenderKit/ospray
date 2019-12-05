@@ -142,7 +142,7 @@ namespace ospray {
         (OSPRAY_VERSION_MINOR == versionMinor)) {
         return OSP_NO_ERROR;
     } else
-        return OSP_INVALID_OPERATION;
+        return OSP_VERSION_MISMATCH;
   }
 
   /*! little helper class that prints out a warning string upon the
