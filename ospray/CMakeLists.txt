@@ -19,12 +19,13 @@
 # -------------------------------------------------------
 
 set(OSPRAY_SOURCES
+  ospray.rc
+
   api/API.cpp
   api/Device.cpp
   api/ospray_util_impl.cpp
   api/ospray_cpp_defs.cpp
 
-  common/ospray.rc
   common/OSPCommon.cpp
 
   include/ospray/ospray.h
