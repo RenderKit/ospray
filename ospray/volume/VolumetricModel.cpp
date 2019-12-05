@@ -17,12 +17,11 @@
 // ospray
 #include "VolumetricModel.h"
 #include "transferFunction/TransferFunction.h"
-#include "VKLSharedStructuredVolume.h"
+// openvkl
 #include "openvkl/openvkl.h"
 // ispc exports
 #include "Volume_ispc.h"
 #include "VolumetricModel_ispc.h"
-
 
 namespace ospray {
 
@@ -67,7 +66,7 @@ namespace ospray {
       vklCommit(vklValueSelector);
       ispc::VolumetricModel_set_valueSelector(ispcEquivalent, vklValueSelector);
     }
-      
+
     // Finish getting/setting other appearance information //
     volumeBounds = volume->bounds;
 

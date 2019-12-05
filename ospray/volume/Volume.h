@@ -19,8 +19,8 @@
 #include "api/ISPCDevice.h"
 #include "common/Managed.h"
 // embree
-#include "embree3/rtcore.h"
 #include "Volume_ispc.h"
+#include "embree3/rtcore.h"
 
 #include "openvkl/volume.h"
 
@@ -28,25 +28,31 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   {
-    Volume();
-    virtual ~Volume() override;
+    Volume(const std::string &vklType);
+    ~Volume() override;
 
-    virtual std::string toString() const override;
+    std::string toString() const override;
 
-    static Volume *createInstance(const std::string &type);
+    void commit() override;
 
-    virtual void commit() override;
-
+   private:
     void handleParams();
+
+    void createEmbreeGeometry();
+
+    // Friends //
+
+    friend struct Isosurfaces;
+    friend struct VolumetricModel;
+
+    // Data //
+
+    RTCGeometry embreeGeometry{nullptr};
+    VKLVolume vklVolume{nullptr};
 
     box3f bounds{empty};
 
-    RTCGeometry embreeGeometry{nullptr};
-
-    VKLVolume vklVolume = nullptr;
-
-   private:
-    void createEmbreeGeometry();
+    std::string vklType;
   };
 
   OSPTYPEFOR_SPECIALIZATION(Volume *, OSP_VOLUME);

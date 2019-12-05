@@ -473,13 +473,17 @@ given type `type` use
 
     OSPVolume ospNewVolume(const char *type);
 
+NOTE: OSPRay's implementation forwards `type` directly to Open VKL, allowing
+new Open VKL volume types to be usable within OSPRay without the need to
+change (or even recompile) OSPRay.
+
 ### Structured Volume
 
 Structured volumes only need to store the values of the samples, because
 their addresses in memory can be easily computed from a 3D position. A
 common type of structured volumes are regular grids.
 
-Structured volumes are created by passing the `structured_volume`
+Structured volumes are created by passing the `structured_regular`
 type string to `ospNewVolume`. Structured volumes are represented
 through an `OSPData` array (which may or may not be shared with the
 application), where the voxel data is laid out in memory in
@@ -525,7 +529,7 @@ at a coarser level have a larger cell width than finer levels.
 
 There can be any number of refinement levels and any number of blocks at any
 level of refinement. An AMR volume type is created by passing the type string
-`"amr_volume"` to `ospNewVolume`.
+`"amr"` to `ospNewVolume`.
 
 Blocks are defined by four parameters: their bounds, the refinement level in
 which they reside, the cell widths for each refinement level, and the scalar
@@ -601,7 +605,7 @@ Geometry can be composed of tetrahedral, hexahedral, wedge or pyramid
 cell types. Used data format is compatible with VTK and consists from
 multiple arrays: vertex positions and values, vertex indices, cell start
 indices, cell types, and cell values. An unstructured volume type is
-created by passing the type string "`unstructured_volume`" to
+created by passing the type string "`unstructured`" to
 `ospNewVolume`.
 
 Sampled cell values can be specified either per-vertex (`vertex.value`)

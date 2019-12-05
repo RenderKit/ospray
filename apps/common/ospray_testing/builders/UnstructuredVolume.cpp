@@ -205,7 +205,7 @@ namespace ospray {
       // define per-cell values
       std::vector<float> cellValues = {0.1f, .3f, .7f, 1.f};
 
-      cpp::Volume volume("unstructured_volume");
+      cpp::Volume volume("unstructured");
 
       // set data objects for volume object
       volume.setParam("vertex.position", cpp::Data(vertices));

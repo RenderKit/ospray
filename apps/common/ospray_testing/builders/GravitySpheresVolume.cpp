@@ -189,7 +189,7 @@ namespace ospray {
     cpp::Volume GravitySpheres::createStructuredVolume(
         const VoxelArray &voxels) const
     {
-      cpp::Volume volume("structured_volume");
+      cpp::Volume volume("structured_regular");
 
       volume.setParam("dimensions", volumeDimensions);
       volume.setParam("voxelType", int(OSP_FLOAT));
@@ -231,7 +231,7 @@ namespace ospray {
         blockData.emplace_back(bd.size(), OSP_FLOAT, bd.data());
 
       // create an AMR volume and assign attributes
-      cpp::Volume volume("amr_volume");
+      cpp::Volume volume("amr");
 
       volume.setParam("voxelType", int(OSP_FLOAT));
       volume.setParam("block.data", cpp::Data(blockData));
