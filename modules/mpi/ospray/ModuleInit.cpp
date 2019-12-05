@@ -16,6 +16,8 @@
 
 #include "common/OSPCommon.h"
 
-// TODO WILL: Seems like we should have dllexport for all the other structs
-// and functions in the MPI module as well? Why aren't they tagged?
-extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi() {}
+extern "C" OSPError ospray_module_init_mpi(
+    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
+{
+  return ospray::moduleVersionCheck(versionMajor, versionMinor);
+}
