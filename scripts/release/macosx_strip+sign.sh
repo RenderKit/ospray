@@ -15,5 +15,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-echo stripping $1
-strip -x $1
+file=${!#}
+
+echo stripping $file
+strip $@
+
+# per-file signing
+[ -x "$SIGN_FILE_MAC" ] && "$SIGN_FILE_MAC" -o runtime "$file"
