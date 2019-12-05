@@ -14,7 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "openvkl/openvkl.isph"
 #include "../../common/DistributedWorld.ih"
 #include "DistributedRenderer.ih"
 #include "common/Instance.ih"
@@ -22,6 +21,7 @@
 #include "math/box.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
+#include "openvkl/openvkl.isph"
 #include "render/scivis/SciVisMaterial.ih"
 #include "render/scivis/surfaces.ih"
 #include "render/scivis/volumes.ih"
@@ -64,11 +64,11 @@ vec4f DRR_integrateVolumeInterval(
 
     uniform VKLIntervalIterator intervalIterator;
     vklInitIntervalIteratorV(&intervalIterator,
-                             volume->vklVolume,
-                             (varying vkl_vec3f *)&ray.org,
-                             (varying vkl_vec3f *)&ray.dir,
-                             (varying vkl_range1f *)&interval.interval,
-                             vm->vklValueSelector);
+        volume->vklVolume,
+        (varying vkl_vec3f *)&ray.org,
+        (varying vkl_vec3f *)&ray.dir,
+        (varying vkl_range1f *)&interval.interval,
+        vm->vklValueSelector);
 
     VKLInterval interval;
     while (vklIterateIntervalV(&intervalIterator, &interval) && alpha < 0.99f) {
@@ -76,25 +76,26 @@ vec4f DRR_integrateVolumeInterval(
 
       // initial sub interval, based on our renderer-defined sampling rate
       // and the volume's nominal dt
-      box1f subInterval = make_box1f(
-          interval.tRange.lower,
-          min(interval.tRange.lower + nominalSamplingDt, interval.tRange.upper));
- 
+      box1f subInterval = make_box1f(interval.tRange.lower,
+          min(interval.tRange.lower + nominalSamplingDt,
+              interval.tRange.upper));
+
       while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
-        ray.t0  = subInterval.lower + (subInterval.upper - subInterval.lower);
+        ray.t0 = subInterval.lower + (subInterval.upper - subInterval.lower);
         const float dt = subInterval.upper - subInterval.lower;
 
         // Get volume sample
         vec3f p = ray.org + ray.t0 * ray.dir;
-        const float sample = vklComputeSampleV(volume->vklVolume, (const varying vkl_vec3f *uniform) &p);
+        const float sample = vklComputeSampleV(
+            volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
 
         if (!isnan(sample)) {
           vec4f sampleColorOpacity = tf->get(tf, sample);
- 
-          const float clampedOpacity =
-             clamp(sampleColorOpacity.w * dt);
+
+          const float clampedOpacity = clamp(sampleColorOpacity.w * dt);
           color = color
-              + ((1.f - alpha) * clampedOpacity * make_vec3f(sampleColorOpacity));
+              + ((1.f - alpha) * clampedOpacity
+                  * make_vec3f(sampleColorOpacity));
           alpha = alpha + ((1.f - alpha) * clampedOpacity);
         }
 
@@ -244,10 +245,10 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
 
   traceRay(&world->super, geomRay);
   traceVolumeRay(&world->super, volumeRay, volumeInterval);
-  volumeInterval.interval.lower = max(volumeInterval.interval.lower,
-                                      regionInterval.x);
-  volumeInterval.interval.upper = min(volumeInterval.interval.upper,
-                                      regionInterval.y);
+  volumeInterval.interval.lower =
+      max(volumeInterval.interval.lower, regionInterval.x);
+  volumeInterval.interval.upper =
+      min(volumeInterval.interval.upper, regionInterval.y);
 
   sample.z = min(geomRay.t, volumeInterval.interval.lower);
 
@@ -272,7 +273,12 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
     vec4f surfaceColor = make_vec4f(0.f);
     DifferentialGeometry dg;
     if (haveGeometryHit) {
-      computeDG(&world->super, geomRay, dg);
+      postIntersect(&world->super,
+          &self->super.super,
+          dg,
+          geomRay,
+          DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
+              | DG_TEXCOORD);
       surfaceColor =
           DRR_shadeSurface(self, fb, world, sample.sampleID, geomRay, dg);
     }

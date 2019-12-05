@@ -36,7 +36,6 @@
 #include "common/World.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "fb/LocalFB.h"
-#include "geometry/TriangleMesh.h"
 #include "ospcommon/networking/DataStreaming.h"
 #include "ospcommon/networking/Socket.h"
 #include "ospcommon/utility/ArrayView.h"
