@@ -16,8 +16,6 @@
 
 #include "Builder.h"
 #include "ospray_testing.h"
-// stl
-#include <random>
 
 using namespace ospcommon::math;
 
