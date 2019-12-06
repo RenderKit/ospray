@@ -139,6 +139,12 @@ inline API_TYPE createLocalObject(const char *type)
   return (API_TYPE)instance;
 }
 
+template <>
+inline OSPVolume createLocalObject<Volume, OSPVolume>(const char *type)
+{
+  return (OSPVolume) new Volume(type);
+}
+
 template <typename OSPRAY_TYPE, typename API_TYPE>
 inline API_TYPE createDistributedObject(const char *type)
 {
@@ -346,7 +352,7 @@ OSPCamera MPIDistributedDevice::newCamera(const char *type)
 
 OSPVolume MPIDistributedDevice::newVolume(const char *type)
 {
-  return (OSPVolume) new Volume(type);
+  return createLocalObject<Volume, OSPVolume>(type);
 }
 
 OSPGeometry MPIDistributedDevice::newGeometry(const char *type)
