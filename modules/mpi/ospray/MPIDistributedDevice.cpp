@@ -31,6 +31,7 @@
 #include "render/DistributedLoadBalancer.h"
 #include "render/RenderTask.h"
 #include "render/distributed/DistributedRaycast.h"
+#include "volume/Volume.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
 #include "openvkl/openvkl.h"
@@ -345,7 +346,7 @@ OSPCamera MPIDistributedDevice::newCamera(const char *type)
 
 OSPVolume MPIDistributedDevice::newVolume(const char *type)
 {
-  return createLocalObject<Volume, OSPVolume>(type);
+  return (OSPVolume) new Volume(type);
 }
 
 OSPGeometry MPIDistributedDevice::newGeometry(const char *type)
