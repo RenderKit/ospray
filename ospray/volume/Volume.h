@@ -57,7 +57,4 @@ namespace ospray {
 
   OSPTYPEFOR_SPECIALIZATION(Volume *, OSP_VOLUME);
 
-#define OSP_REGISTER_VOLUME(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(::ospray::Volume, volume, InternalClass, external_name)
-
 }  // namespace ospray

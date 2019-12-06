@@ -116,6 +116,7 @@ namespace ospray {
 
   Volume::Volume(const std::string &type) : vklType(type)
   {
+    ispcEquivalent    = ispc::Volume_createInstance_vklVolume(this);
     managedObjectType = OSP_VOLUME;
   }
 
@@ -132,8 +133,6 @@ namespace ospray {
 
   void Volume::commit()
   {
-    ispcEquivalent = ispc::Volume_createInstance_vklVolume(this);
-
     if (vklVolume)
       vklRelease(vklVolume);
 
