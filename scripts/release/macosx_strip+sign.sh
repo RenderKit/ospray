@@ -16,9 +16,10 @@
 ## ======================================================================== ##
 
 file=${!#}
+dir=`dirname $0`
 
 echo stripping $file
 strip $@
 
 # per-file signing
-[ -x "$SIGN_FILE_MAC" ] && "$SIGN_FILE_MAC" -o runtime "$file"
+[ -x "$SIGN_FILE_MAC" ] && "$SIGN_FILE_MAC" -o runtime -e "$dir"/ospray.entitlements "$file"
