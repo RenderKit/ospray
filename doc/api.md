@@ -196,6 +196,7 @@ The following errors are currently used by OSPRay:
   OSP_INVALID_OPERATION  the operation is not allowed for the specified object
   OSP_OUT_OF_MEMORY      there is not enough memory to execute the command
   OSP_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1)
+  OSP_VERSION_MISMATCH   a module could not be loaded due to mismatching version
   ---------------------- -------------------------------------------------------
   : Possible error codes, i.e., valid named constants of type `OSPError`.
 
@@ -472,8 +473,9 @@ given type `type` use
 
     OSPVolume ospNewVolume(const char *type);
 
-The call returns `NULL` if that type of volume is not known by OSPRay,
-or else a valid `OSPVolume` handle.
+NOTE: OSPRay's implementation forwards `type` directly to Open VKL, allowing
+new Open VKL volume types to be usable within OSPRay without the need to
+change (or even recompile) OSPRay.
 
 ### Structured Volume
 
@@ -481,7 +483,7 @@ Structured volumes only need to store the values of the samples, because
 their addresses in memory can be easily computed from a 3D position. A
 common type of structured volumes are regular grids.
 
-Structured volumes are created by passing the `structured_volume`
+Structured volumes are created by passing the `structured_regular`
 type string to `ospNewVolume`. Structured volumes are represented
 through an `OSPData` array (which may or may not be shared with the
 application), where the voxel data is laid out in memory in
@@ -527,7 +529,7 @@ at a coarser level have a larger cell width than finer levels.
 
 There can be any number of refinement levels and any number of blocks at any
 level of refinement. An AMR volume type is created by passing the type string
-`"amr_volume"` to `ospNewVolume`.
+`"amr"` to `ospNewVolume`.
 
 Blocks are defined by four parameters: their bounds, the refinement level in
 which they reside, the cell widths for each refinement level, and the scalar
@@ -603,7 +605,7 @@ Geometry can be composed of tetrahedral, hexahedral, wedge or pyramid
 cell types. Used data format is compatible with VTK and consists from
 multiple arrays: vertex positions and values, vertex indices, cell start
 indices, cell types, and cell values. An unstructured volume type is
-created by passing the type string "`unstructured_volume`" to
+created by passing the type string "`unstructured`" to
 `ospNewVolume`.
 
 Sampled cell values can be specified either per-vertex (`vertex.value`)
@@ -690,11 +692,8 @@ volume. To create a new transfer function of given type `type` use
 
     OSPTransferFunction ospNewTransferFunction(const char *type);
 
-The call returns `NULL` if that type of transfer functions is not known
-by OSPRay, or else an `OSPTransferFunction` handle to the created
-transfer function. That handle can be assigned to a volumetric model
-(described below) as parameter "`transferFunction`" using
-`ospSetObject`.
+The returned handle can be assigned to a volumetric model (described
+below) as parameter "`transferFunction`" using `ospSetObject`.
 
 One type of transfer function that is supported by OSPRay is the linear
 transfer function, which interpolates between given equidistant colors
@@ -746,9 +745,6 @@ Geometries in OSPRay are objects that describe intersectable surfaces.
 To create a new geometry object of given type `type` use
 
     OSPGeometry ospNewGeometry(const char *type);
-
-The call returns `NULL` if that type of geometry is not known by OSPRay,
-or else an `OSPGeometry` handle.
 
 ### Mesh
 
@@ -930,14 +926,15 @@ geometry by calling `ospNewGeometry` with type string "`boxes`".
 OSPRay can directly render multiple isosurfaces of a volume without
 first tessellating them. To do so create an isosurfaces geometry by
 calling `ospNewGeometry` with type string "`isosurfaces`". Each
-isosurface will be colored according to the provided volume's [transfer
-function].
+isosurface will be colored according to the [transfer function] assigned
+to the `volume`.
 
-  Type       Name       Description
-  ---------- ---------- ------------------------------------------------------
-  float[]    isovalue   [data] array of isovalues
-  OSPVolume  volume     handle of the [volume] to be isosurfaced
-  ---------- ---------- ------------------------------------------------------
+  Type               Name      Description
+  ------------------ --------- --------------------------------------------------
+  float              isovalue  single isovalues
+  float[]            isovalue  [data] array of isovalues
+  OSPVolumetricModel volume    handle of the [VolumetricModels] to be isosurfaced
+  ------------------ --------- --------------------------------------------------
   : Parameters defining an isosurfaces geometry.
 
 ### GeometricModels
@@ -949,28 +946,31 @@ and material information. To create a geometric model, call
 
     OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
-Color and material are fetched with the primitive ID of the hit (clamped to the
-valid range, thus a single color or material is fine), or mapped first via the
-`index` array (if present). All paramters are optional, however, some renderers
-(notably the [path tracer]) require a material to be set.
+Color and material are fetched with the primitive ID of the hit (clamped
+to the valid range, thus a single color or material is fine), or mapped
+first via the `index` array (if present). All paramters are optional,
+however, some renderers (notably the [path tracer]) require a material
+to be set. Materials are either handles of `OSPMaterial`, or indices
+into the `material` array on the [renderer], which allows to build a
+[world] which can be used by different types of renderers.
 
-  -------------- --------------------- ----------------------------------------------------
-  Type           Name                  Description
-  -------------- --------------------- ----------------------------------------------------
-  OSPMaterial[]  material              [data] array of (per-primitive) materials
+  ------------------------ --------- ----------------------------------------------------
+  Type                     Name      Description
+  ------------------------ --------- ----------------------------------------------------
+  OSPMaterial / uint32     material  optional [material] applied to the geometry, may be
+                                     an index into the `material` parameter on the
+                                     [renderer] (if it exists)
 
-  vec4f[]        color                 optional [data] array of (per-primitive) colors
+  OSPMaterial[] / uint32[] material  optional [data] array of (per-primitive) materials,
+                                     may be an index into the `material` parameter on
+                                     the renderer (if it exists)
 
-  uint8[]        index                 optional [data] array of per-primitive indices into
-                                       `color` and `material`
 
-  int/uint32     rendererMaterialIndex optional [data] index into the `material` parameter
-                                       on the `renderer` (if it exists)
+  vec4f[]                  color     optional [data] array of (per-primitive) colors
 
-  uint32[]       rendererMaterialIndex optional [data] array of per-primitive indices into
-                                       the `material` parameter on the `renderer` (if
-                                       it exists)
-  -------------- --------------------- ----------------------------------------------------
+  uint8[]                  index     optional [data] array of per-primitive indices into
+                                     `color` and `material`
+  ------------------------ --------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
 
@@ -981,8 +981,6 @@ To create a new light source of given type `type` use
 
     OSPLight ospNewLight(const char *type);
 
-The call returns `NULL` if that type of light is not known by the
-renderer, or else an `OSPLight` handle to the created light source.
 All light sources[^1] accept the following parameters:
 
   Type      Name        Default  Description
@@ -1151,27 +1149,27 @@ Groups take arrays of geometric models and volumetric models, but they
 are optional. In other words, there is no need to create empty arrays if
 there are no geometries or volumes in the group.
 
-  ------------------ --------------- ----------  --------------------------------------
-  Type               Name               Default  Description
-  ------------------ --------------- ----------  --------------------------------------
-  OSPData            geometry              NULL  [data] array of [GeometricModels]
+  -------------------- --------------- ----------  --------------------------------------
+  Type                 Name               Default  Description
+  -------------------- --------------- ----------  --------------------------------------
+  OSPGeometricModel[]  geometry              NULL  [data] array of [GeometricModels]
 
-  OSPData            volume                NULL  [data] array of [VolumetricModels]
+  OSPVolumetricModel[] volume                NULL  [data] array of [VolumetricModels]
 
-  bool               dynamicScene         false  use RTC_SCENE_DYNAMIC flag (faster
-                                                 BVH build, slower ray traversal),
-                                                 otherwise uses RTC_SCENE_STATIC flag
-                                                 (faster ray traversal, slightly
-                                                 slower BVH build)
+  bool                 dynamicScene         false  use RTC_SCENE_DYNAMIC flag (faster
+                                                   BVH build, slower ray traversal),
+                                                   otherwise uses RTC_SCENE_STATIC flag
+                                                   (faster ray traversal, slightly
+                                                   slower BVH build)
 
-  bool               compactMode          false  tell Embree to use a more compact BVH
-                                                 in memory by trading ray traversal
-                                                 performance
+  bool                 compactMode          false  tell Embree to use a more compact BVH
+                                                   in memory by trading ray traversal
+                                                   performance
 
-  bool               robustMode           false  tell Embree to enable more robust ray
-                                                 intersection code paths (slightly
-                                                 slower)
-  ------------------ --------------- ---------- ---------------------------------------
+  bool                 robustMode           false  tell Embree to enable more robust ray
+                                                   intersection code paths (slightly
+                                                   slower)
+  -------------------- --------------- ---------- ---------------------------------------
   : Parameters understood by groups.
 
 Note that groups only need to re re-committed if a geometry or volume
@@ -1253,9 +1251,7 @@ To create a new renderer of given type `type` use
 
     OSPRenderer ospNewRenderer(const char *type);
 
-The call returns `NULL` if that type of renderer is not known, or else
-an `OSPRenderer` handle to the created renderer. General parameters of
-all renderers are
+General parameters of all renderers are
 
   -------------- ------------------ -----------  -----------------------------------------
   Type          Name                    Default  Description
@@ -1272,14 +1268,13 @@ all renderers are
   float /        bgColor                 black,  background color and alpha
   vec3f / vec4f                     transparent  (RGBA)
 
-  OSPTexture     maxDepthTexture           NULL  screen-sized float [texture]
+  OSPTexture     maxDepthTexture                 optional screen-sized float [texture]
                                                  with maximum far distance per pixel
                                                  (use texture type `texture2d`)
 
-  OSPMaterial[]  material                  NULL  [data] array of (per-primitive) materials
+  OSPMaterial[]  material                        optional [data] array of [materials]
                                                  which can be indexed by a
-                                                 [geometricmodel] if it has the
-                                                 `rendererMaterialIndex` parameter
+                                                 [GeometricModel]'s `material` parameter
   -------------- ------------------ -----------  -----------------------------------------
   : Parameters understood by all renderers.
 
@@ -1371,9 +1366,8 @@ of given type `type` call
 
     OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
 
-The call returns `NULL` if the material type is not known by the
-renderer type, or else an `OSPMaterial` handle to the created material. The
-handle can then be used to assign the material to a given geometry with
+The returned handle can then be used to assign the material to a given
+geometry with
 
     void ospSetObject(OSPGeometricModel, "material", OSPMaterial);
 
@@ -1792,10 +1786,6 @@ To create a new texture use
 
     OSPTexture ospNewTexture(const char *type);
 
-The call returns `NULL` if the texture could not be created with the
-given parameters, or else an `OSPTexture` handle to the created
-texture.
-
 #### Texture2D
 
 The `texture2d` texture type implements an image-based texture, where
@@ -1882,9 +1872,7 @@ To create a new camera of given type `type` use
 
     OSPCamera ospNewCamera(const char *type);
 
-The call returns `NULL` if that type of camera is not known, or else an
-`OSPCamera` handle to the created camera. All cameras accept these
-parameters:
+All cameras accept these parameters:
 
   Type   Name        Description
   ------ ----------- ------------------------------------------
@@ -2144,9 +2132,6 @@ filtering, blending, tone mapping, or sending tiles to a display wall.
 To create a new pixel operation of given type `type` use
 
     OSPPixelOp ospNewPixelOp(const char *type);
-
-The call returns `NULL` if that type is not known, or else an
-`OSPPixelOp` handle to the created pixel operation.
 
 #### Tone Mapper {-}
 

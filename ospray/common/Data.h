@@ -290,24 +290,36 @@ namespace ospray {
   }
 
   template <typename T, int DIM>
-  inline const DataT<T, DIM> *ManagedObject::getParamDataT(
-      const char *name, bool required)
+  inline const Ref<const DataT<T, DIM>> ManagedObject::getParamDataT(
+      const char *name, bool required, bool promoteScalar)
   {
-    auto data = getParam<Data*>(name);
+    Data *data = getParam<Data *>(name);
 
     if (data && data->is<T, DIM>())
       return &(data->as<T, DIM>());
-    else {
-      if (required)
-        throw std::runtime_error(toString() + " must have '" + name
-            + "' array with element type " + stringFor(OSPTypeFor<T>::value));
-      else {
-        if (data)
-          postStatusMsg(1) << toString() << " ignoring '" << name
-                           << "' array with wrong element type (should be "
-                           << stringFor(OSPTypeFor<T>::value) << ")";
-        return nullptr;
+
+    // if no data array is found, look for single item of same type
+    if (promoteScalar) {
+      auto item = getOptParam<T>(name);
+      if (item) {
+        // wrap item into data array
+        data = new Data(OSPTypeFor<T>::value, vec3ui(1));
+        auto &dataT = data->as<T, DIM>();
+        T *p = dataT.data();
+        *p = item.value();
+        return &dataT;
       }
+    }
+
+    if (required)
+      throw std::runtime_error(toString() + " must have '" + name
+          + "' array with element type " + stringFor(OSPTypeFor<T>::value));
+    else {
+      if (data)
+        postStatusMsg(1) << toString() << " ignoring '" << name
+                         << "' array with wrong element type (should be "
+                         << stringFor(OSPTypeFor<T>::value) << ")";
+      return nullptr;
     }
   }
 

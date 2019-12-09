@@ -26,38 +26,36 @@ struct GeometricModel
   Geometry *geom;
 
   Data1D color;
-  Data1D localIndex;  // index into local color/materials
+  Data1D index; // per-primitive property mapping
+  Data1D material;
 
-  Data1D rendererMaterialIndex;  // index into materials on the renderer
-
-  int32 numMaterials;
-  Material **material;
+  bool useRendererMaterialList;
 
   float areaPDF;
 };
 
 inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
                                             const Renderer *uniform renderer,
-                                            int32 primID)
+                                            const int32 primID)
 {
-  uniform int32 numMaterials = self->numMaterials;
-  Material **uniform mats    = self->material;
+  if (!valid(self->material))
+    return NULL;
 
-  if (valid(self->rendererMaterialIndex) && renderer->material) {
-    primID = get_uint32(self->rendererMaterialIndex,
-                        min(primID, self->rendererMaterialIndex.numItems - 1));
+  uint32 idx = primID;
+  if (valid(self->index)) {
+    idx = get_uint8(self->index, min(primID, self->index.numItems - 1));
+  }
 
-    mats         = renderer->material;
-    numMaterials = renderer->numMaterials;
-  } else if (valid(self->localIndex)) {
-    primID =
-        get_uint8(self->localIndex, min(primID, self->localIndex.numItems - 1));
+  uniform int32 lastMaterial = self->material.numItems - 1;
+  Material **uniform mats = (Material **uniform)self->material.addr;
+  if (self->useRendererMaterialList) {
+    idx = get_uint32(self->material, min(idx, lastMaterial));
+    mats = renderer->material;
+    lastMaterial = renderer->numMaterials - 1;
   }
 
   if (mats)
-    return mats[min(primID, numMaterials - 1)];
-  else
-    return NULL;
+    return mats[min(idx, lastMaterial)];
 }
 
 inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
@@ -73,9 +71,8 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
   dg.areaPDF = self->areaPDF;
 
   uint32 idx = ray.primID;
-  if (valid(self->localIndex)) {
-    idx = get_uint8(self->localIndex,
-                    min(ray.primID, self->localIndex.numItems - 1));
+  if (valid(self->index)) {
+    idx = get_uint8(self->index, min(ray.primID, self->index.numItems - 1));
   }
 
   if (flags & DG_COLOR && valid(self->color))

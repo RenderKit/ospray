@@ -52,7 +52,7 @@ namespace ospray {
       return;
 
     for (auto &&instance : *world.instances) {
-      auto geometries = instance->group->geometricModels;
+      auto geometries = instance->group->geometricModels.ptr;
 
       if (!geometries)
         return;

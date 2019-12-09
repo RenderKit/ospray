@@ -196,19 +196,19 @@ namespace ospray {
       VKLDriver driver = nullptr;
 
       int ispc_width = ispc::ISPCDevice_programCount();
-      switch(ispc_width) {
-        case 4:
-          driver = vklNewDriver("ispc_4");
-          break;
-        case 8:
-          driver = vklNewDriver("ispc_8");
-          break;
-        case 16:
-          driver = vklNewDriver("ispc_16");
-          break;
-        default:
-          driver = vklNewDriver("ispc");
-          break;
+      switch (ispc_width) {
+      case 4:
+        driver = vklNewDriver("ispc_4");
+        break;
+      case 8:
+        driver = vklNewDriver("ispc_8");
+        break;
+      case 16:
+        driver = vklNewDriver("ispc_16");
+        break;
+      default:
+        driver = vklNewDriver("ispc");
+        break;
       }
 
       vklCommitDriver(driver);
@@ -270,7 +270,7 @@ namespace ospray {
 
     OSPVolume ISPCDevice::newVolume(const char *type)
     {
-      return (OSPVolume)Volume::createInstance(type);
+      return (OSPVolume) new Volume(type);
     }
 
     OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
@@ -513,9 +513,8 @@ namespace ospray {
 
     extern "C" OSPError ospray_module_init_ispc(int16_t versionMajor,
                                                 int16_t versionMinor,
-                                                int16_t versionPatch)
+                                                int16_t /*versionPatch*/)
     {
-      std::cout << "#osp: initializing the 'ispc' module" << std::endl;
       return moduleVersionCheck(versionMajor, versionMinor);
     }
 
@@ -526,4 +525,3 @@ namespace ospray {
 
   }  // namespace api
 }  // namespace ospray
-

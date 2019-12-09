@@ -167,7 +167,7 @@ namespace ospray {
     {
       vec3l dims{128};  // should be at least 2
       const float spacing = 3.f / (reduce_max(dims) - 1);
-      cpp::Volume volume("structured_volume");
+      cpp::Volume volume("structured_regular");
 
       // generate volume data
       auto numVoxels = dims.product();
@@ -222,7 +222,7 @@ namespace ospray {
       objMaterial.setParam("Kd", kd);
       objMaterial.commit();
 
-      geometricModel.setParam("material", cpp::Data(objMaterial));
+      geometricModel.setParam("material", objMaterial);
 
       return geometricModel;
     }

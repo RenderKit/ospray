@@ -9,7 +9,7 @@ packages contain most needed 3rd party dependencies, whereas for the
 (much smaller) RPM/installer packages you need to have installed
 
 - Intel® [TBB](https://www.threadingbuildingblocks.org/) v3.0 or newer
-- [Embree] ray tracing kernels v3.1 or newer
+- [Embree] ray tracing kernels v3.6.1 or newer
 - To run the example viewer: OpenGL
 - To use the distributed, multi-node rendering feature: Intel® [MPI
   Library](https://software.intel.com/en-us/intel-mpi-library/))

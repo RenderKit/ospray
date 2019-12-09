@@ -106,7 +106,7 @@ namespace ospray {
       mat.commit();
 
       cpp::GeometricModel model(geom);
-      model.setParam("material", cpp::Data(mat));
+      model.setParam("material", mat);
       model.commit();
 
       cpp::Group group;
