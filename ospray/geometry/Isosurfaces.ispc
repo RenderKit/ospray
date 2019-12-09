@@ -57,7 +57,7 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
 
   Volume *uniform volume = self->volumetricModel->volume;
 
-  uniform VKLHitIterator iterator;
+  VKLHitIterator iterator;
   vkl_range1f tRange;
   tRange.lower = ray->t0;
   tRange.upper = ray->t;

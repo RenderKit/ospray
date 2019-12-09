@@ -358,7 +358,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
     Volume *uniform volume       = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
-    uniform VKLIntervalIterator intervalIterator;
+    VKLIntervalIterator intervalIterator;
     vklInitIntervalIteratorV(&intervalIterator,
                              volume->vklVolume,
                              (varying vkl_vec3f *)&ray.org,
