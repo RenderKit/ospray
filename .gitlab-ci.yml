@@ -310,7 +310,6 @@ release-linux-icc:
   image: ospray/docker-images:centos7-mod
   script:
     - module load cmake
-    - module load ispc
     - module load intel
     - export CC=icc
     - export CXX=icpc
@@ -347,7 +346,7 @@ release-windows:
     - scripts\release\win.ps1 "Visual Studio 14 2015 Win64"
     - Invoke-Expression "$env:SIGN_FILE_WINDOWS build_release\ospray*.msi"
   tags:
-    - msvc
+    - msvc14
     - win
   artifacts:
     paths:
