@@ -30,8 +30,8 @@ namespace ospray {
     {
       bool hasHit{false};
       vec3f worldPosition;
-      Instance instance{(OSPInstance)nullptr};
-      GeometricModel model{(OSPGeometricModel)nullptr};
+      Instance instance{(OSPInstance) nullptr};
+      GeometricModel model{(OSPGeometricModel) nullptr};
       uint32_t primID{0};
     };
 
@@ -125,11 +125,12 @@ namespace ospray {
               screenPos.y);
 
       if (pick.hasHit) {
-        res.hasHit        = true;
-        res.worldPosition = vec3f(pick.worldPosition);
-        res.instance      = Instance(pick.instance);
-        res.model         = GeometricModel(pick.model);
-        res.primID        = pick.primID;
+        res.hasHit   = true;
+        res.instance = Instance(pick.instance);
+        res.model    = GeometricModel(pick.model);
+        res.primID   = pick.primID;
+
+        std::memcpy(res.worldPosition, pick.worldPosition, sizeof(vec3f));
       }
 
       return res;

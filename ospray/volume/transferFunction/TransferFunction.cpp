@@ -28,8 +28,10 @@ namespace ospray {
 
   void TransferFunction::commit()
   {
-    valueRange = range1f(getParam<vec2f>("valueRange", vec2f(0.0f, 1.0f)));
-    ispc::TransferFunction_set(ispcEquivalent, (const ispc::box1f &)(valueRange));
+    auto param = getParam<vec2f>("valueRange", vec2f(0.0f, 1.0f));
+    valueRange = range1f(param.x, param.y);
+    ispc::TransferFunction_set(ispcEquivalent,
+                               (const ispc::box1f &)(valueRange));
   }
 
   std::string TransferFunction::toString() const
@@ -44,4 +46,4 @@ namespace ospray {
 
   OSPTYPEFOR_DEFINITION(TransferFunction *);
 
-} // namespace ospray
+}  // namespace ospray
