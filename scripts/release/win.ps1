@@ -29,45 +29,51 @@ cmake -L `
   -D BUILD_DEPENDENCIES_ONLY=ON `
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR `
   -D CMAKE_INSTALL_LIBDIR=lib `
-  -D BUILD_TBB_FROM_SOURCE=OFF `
   -D BUILD_EMBREE_FROM_SOURCE=OFF `
   -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF `
   ../scripts/superbuild
 
 cmake --build . --config Release --target ALL_BUILD
 
-cd ..
+cd $ROOT_DIR
 
-## Build OSPRay ##
+#### Build OSPRay ####
 
 md build_release
 cd build_release
 
+# Setup environment variables for dependencies
+$env:OSPCOMMON_TBB_ROOT = $DEP_DIR
+$env:ospcommon_DIR = $DEP_DIR
+$env:embree_DIR = $DEP_DIR
+$env:glfw3_DIR = $DEP_DIR
+$env:openvkl_DIR = $DEP_DIR
+
 # set release settings
 cmake -L `
--G $args[0] `
--D CMAKE_PREFIX_PATH="$DEP_DIR\lib\cmake" `
--D OSPRAY_BUILD_ISA=ALL `
--D OSPRAY_ZIP_MODE=OFF `
--D OSPRAY_INSTALL_DEPENDENCIES=ON `
--D USE_STATIC_RUNTIME=OFF `
--D CMAKE_INSTALL_INCLUDEDIR=include `
--D CMAKE_INSTALL_LIBDIR=lib `
--D CMAKE_INSTALL_DATAROOTDIR= `
--D CMAKE_INSTALL_DOCDIR=doc `
--D CMAKE_INSTALL_BINDIR=bin `
-..
+  -G $args[0] `
+  -D CMAKE_PREFIX_PATH="$DEP_DIR\lib\cmake" `
+  -D OSPRAY_BUILD_ISA=ALL `
+  -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc.exe `
+  -D OSPRAY_ZIP_MODE=OFF `
+  -D OSPRAY_INSTALL_DEPENDENCIES=ON `
+  -D USE_STATIC_RUNTIME=OFF `
+  -D CMAKE_INSTALL_INCLUDEDIR=include `
+  -D CMAKE_INSTALL_LIBDIR=lib `
+  -D CMAKE_INSTALL_DATAROOTDIR= `
+  -D CMAKE_INSTALL_DOCDIR=doc `
+  -D CMAKE_INSTALL_BINDIR=bin `
+  ..
 
 # compile and create installers
 # option '--clean-first' somehow conflicts with options after '--' for msbuild
 cmake --build . --config Release --target PACKAGE
 
 # create ZIP files
-cmake -D OSPRAY_ZIP_MODE=ON `
--D OSPRAY_APPS_ENABLE_DENOISER=ON `
--D OSPRAY_INSTALL_DEPENDENCIES=ON `
-..
+cmake -L `
+  -D OSPRAY_ZIP_MODE=ON `
+  ..
 
 cmake --build . --config Release --target PACKAGE
 
-cd ..
+exit $LASTEXITCODE

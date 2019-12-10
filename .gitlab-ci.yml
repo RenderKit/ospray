@@ -144,7 +144,7 @@ build-debug:
 build-osx-clang:
   <<: *build_job_shell
   script:
-    - scripts/build_gitlab/osx.sh
+    - scripts/build_gitlab/macosx.sh
   tags:
     - osx
     - clang
