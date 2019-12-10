@@ -456,13 +456,12 @@ void GLFWOSPRayWindow::buildUI()
     addObjectToCommit(renderer.handle());
   }
 
-  if (rendererType == OSPRayRendererType::PATHTRACER) {
-    static vec3f bgColor(0.f);
-    if (ImGui::ColorEdit3("bgColor", bgColor)) {
-      renderer.setParam("bgColor", bgColor);
-      addObjectToCommit(renderer.handle());
-    }
+  if (ImGui::ColorEdit3("bgColor", bgColor)) {
+    renderer.setParam("bgColor", bgColor);
+    addObjectToCommit(renderer.handle());
+  }
 
+  if (rendererType == OSPRayRendererType::PATHTRACER) {
     static int maxDepth = 20;
     if (ImGui::SliderInt("maxDepth", &maxDepth, 1, 64)) {
       renderer.setParam("maxDepth", maxDepth);
@@ -488,12 +487,6 @@ void GLFWOSPRayWindow::buildUI()
       } else {
         renderer.removeParam("backplate");
       }
-      addObjectToCommit(renderer.handle());
-    }
-
-    static vec3f bgColor(0.f);
-    if (ImGui::ColorEdit3("bgColor", bgColor)) {
-      renderer.setParam("bgColor", bgColor);
       addObjectToCommit(renderer.handle());
     }
 
@@ -543,6 +536,8 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
   world.commit();
 
   renderer = cpp::Renderer(rendererTypeStr);
+  // retains a set background color on renderer change
+  renderer.setParam("bgColor", bgColor);
   addObjectToCommit(renderer.handle());
 
   // set up backplate texture

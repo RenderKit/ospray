@@ -89,6 +89,8 @@ class GLFWOSPRayWindow
   cpp::Future currentFrame;
   cpp::Texture backplateTex{"texture2d"};
 
+  vec3f bgColor{0.f};
+
   std::string scene{"boxes"};
 
   std::string curveBasis{"bspline"};
