@@ -100,8 +100,8 @@ if (BUILD_TBB_FROM_SOURCE)
 endif()
 
 include(dep_ospcommon)
-include(dep_openvkl)
 include(dep_embree)
+include(dep_openvkl)
 
 if (BUILD_GLFW)
   include(dep_glfw)

@@ -53,5 +53,6 @@ list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
 ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
   configure
     ospcommon
+    embree
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
 )
