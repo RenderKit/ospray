@@ -805,12 +805,18 @@ the following parameters:
 
   int             mode                 `OSP_SUBDIVISION_SMOOTH_BOUNDARY` subdivision edge boundary mode.
                                                                          Supported modes are:
+
                                                                          `OSP_SUBDIVISION_NO_BOUNDARY`
+
                                                                          `OSP_SUBDIVISION_SMOOTH_BOUNDARY`
+
                                                                          `OSP_SUBDIVISION_PIN_CORNERS`
+
                                                                          `OSP_SUBDIVISION_PIN_BOUNDARY`
+
                                                                          `OSP_SUBDIVISION_PIN_ALL`
-  --------------- -------------------- ------- -------------------------------------------------
+
+  --------------- -------------------- --------------------------------- -------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
 The `vertex` and `index` arrays are mandatory to create a valid

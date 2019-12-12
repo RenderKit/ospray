@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include "embree3/rtcore.h"
 #include "openvkl/openvkl.h"
 #include "ospray/OSPEnums.h"
 
@@ -59,4 +60,12 @@ TEST(Enums, VKLAMRMethod)
   ASSERT_EQ(OSP_AMR_CURRENT, VKL_AMR_CURRENT);
   ASSERT_EQ(OSP_AMR_FINEST, VKL_AMR_FINEST);
   ASSERT_EQ(OSP_AMR_OCTANT, VKL_AMR_OCTANT);
+}
+
+TEST(Enums, RTCSubdivisionMode)
+{
+  ASSERT_LE(sizeof(OSPSubdivisionMode), sizeof(RTCSubdivisionMode));
+  ASSERT_EQ(OSP_SUBDIVISION_NO_BOUNDARY, RTC_SUBDIVISION_MODE_NO_BOUNDARY);
+  ASSERT_EQ(OSP_SUBDIVISION_PIN_CORNERS, RTC_SUBDIVISION_MODE_PIN_CORNERS);
+  ASSERT_EQ(OSP_SUBDIVISION_PIN_ALL, RTC_SUBDIVISION_MODE_PIN_ALL);
 }

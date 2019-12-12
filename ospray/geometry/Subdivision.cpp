@@ -79,18 +79,7 @@ namespace ospray {
     setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexData);
     setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_FACE, facesData);
 
-    //subdivisionmode determines how emrbee handles bare edges
-    RTCSubdivisionMode embreeMode = RTC_SUBDIVISION_MODE_SMOOTH_BOUNDARY; //default
-    if (mode == OSP_SUBDIVISION_NO_BOUNDARY)
-      embreeMode = RTC_SUBDIVISION_MODE_NO_BOUNDARY;
-    else if (mode == OSP_SUBDIVISION_PIN_CORNERS)
-      embreeMode = RTC_SUBDIVISION_MODE_PIN_CORNERS;
-    else if (mode == OSP_SUBDIVISION_PIN_BOUNDARY)
-      embreeMode = RTC_SUBDIVISION_MODE_PIN_BOUNDARY;
-    else if (mode == OSP_SUBDIVISION_PIN_ALL)
-      embreeMode = RTC_SUBDIVISION_MODE_PIN_ALL;
-    rtcSetGeometrySubdivisionMode(embreeGeo, 0,
-        embreeMode);
+    rtcSetGeometrySubdivisionMode(embreeGeo, 0, (RTCSubdivisionMode)mode);
 
     if (edge_crease_indicesData && edge_crease_weightsData) {
       if (edge_crease_indicesData->size() != edge_crease_weightsData->size())
