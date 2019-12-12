@@ -199,6 +199,18 @@ build-scan-kw:
     expire_in: 3 day
   allow_failure: true
 
+source-protex-scan:
+  stage: build
+  image: ospray-protex-centos7
+  script:
+    - /tmp/source-scan-protex.sh
+  dependencies:
+  tags:
+    - protex-scan-docker
+  ## Temporarily allow to fail
+  when: manual
+  allow_failure: true
+
 
 ### TEST JOBS ###
 
@@ -259,17 +271,18 @@ test-kw-critical:
     - kw-scan-docker
   allow_failure: true
 
-source-protex-scan:
-  stage: build
-  image: ospray-protex-centos7
+generate-ci-baseline:
+  <<: *test_job_unix
+  image: ospray/docker-images:ubuntu18.04
   script:
-    - /tmp/source-scan-protex.sh
+    - scripts/tests/generate_baseline.sh
   dependencies:
-  tags:
-    - protex-scan-docker
-  ## Temporarily allow to fail
+    - build-ubuntu1804-gcc
+  artifacts:
+    paths:
+      - img
+    expire_in: 3 day
   when: manual
-  allow_failure: true
 
 
 ### Documentation ###
