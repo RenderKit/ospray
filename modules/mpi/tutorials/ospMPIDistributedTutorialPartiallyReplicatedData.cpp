@@ -210,7 +210,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   // on the actual data
   brick.ghostBounds = box3f(brickLower - vec3f(1.f), brickUpper + vec3f(1.f));
 
-  brick.brick = cpp::Volume("structured_volume");
+  brick.brick = cpp::Volume("structured_regular");
 
   brick.brick.setParam("dimensions", brickGhostDims);
 
