@@ -102,35 +102,15 @@ int main(int argc, char **argv)
   // all ranks specify the same rendering parameters, with the exception of
   // the data to be rendered, which is distributed among the ranks
   // triangle mesh data
-  float vertex[] = {mpiRank,
-      0.0f,
-      3.5f,
-      mpiRank,
-      1.0f,
-      3.0f,
-      1.0f * (mpiRank + 1.f),
-      0.0f,
-      3.0f,
-      1.0f * (mpiRank + 1.f),
-      1.0f,
-      2.5f};
-  float color[] = {0.0f,
-      0.0f,
-      (mpiRank + 1.f) / mpiWorldSize,
-      1.0f,
-      0.0f,
-      0.0f,
-      (mpiRank + 1.f) / mpiWorldSize,
-      1.0f,
-      0.0f,
-      0.0f,
-      (mpiRank + 1.f) / mpiWorldSize,
-      1.0f,
-      0.0f,
-      0.0f,
-      (mpiRank + 1.f) / mpiWorldSize,
-      1.0f};
-  int32_t index[] = {0, 1, 2, 1, 2, 3};
+  vec3f vertex[] = {vec3f(mpiRank, 0.0f, 3.5f),
+      vec3f(mpiRank, 1.0f, 3.0f),
+      vec3f(1.0f * (mpiRank + 1.f), 0.0f, 3.0f),
+      vec3f(1.0f * (mpiRank + 1.f), 1.0f, 2.5f)};
+  vec4f color[] = {vec4f(0.0f, 0.0f, (mpiRank + 1.f) / mpiWorldSize, 1.0f),
+      vec4f(0.0f, 0.0f, (mpiRank + 1.f) / mpiWorldSize, 1.0f),
+      vec4f(0.0f, 0.0f, (mpiRank + 1.f) / mpiWorldSize, 1.0f),
+      vec4f(0.0f, 0.0f, (mpiRank + 1.f) / mpiWorldSize, 1.0f)};
+  vec3ui index[] = {vec3ui(0, 1, 2), vec3ui(1, 2, 3)};
 
   // load the MPI module, and select the MPI distributed device. Here we
   // do not call ospInit, as we want to explicitly pick the distributed
@@ -154,18 +134,16 @@ int main(int argc, char **argv)
     camera.commit(); // commit each object to indicate modifications are done
 
     // create and setup model and mesh
-    ospray::cpp::Geometry mesh("triangles");
-    ospray::cpp::Data data(4,
-        OSP_VEC3F,
-        vertex); // OSP_FLOAT3 format is also supported for vertex positions
+    ospray::cpp::Geometry mesh("mesh");
+    ospray::cpp::Data data(4, vertex);
     data.commit();
     mesh.setParam("vertex.position", data);
 
-    data = ospray::cpp::Data(4, OSP_VEC4F, color);
+    data = ospray::cpp::Data(4, color);
     data.commit();
     mesh.setParam("vertex.color", data);
 
-    data = ospray::cpp::Data(2, OSP_VEC3UI, index);
+    data = ospray::cpp::Data(2, index);
     data.commit();
     mesh.setParam("index", data);
 
@@ -177,9 +155,7 @@ int main(int argc, char **argv)
 
     // put the model into a group (collection of models)
     ospray::cpp::Group group;
-    auto modelHandle = model.handle();
-    data = ospray::cpp::Data(1, OSP_GEOMETRIC_MODEL, &modelHandle);
-    group.setParam("geometry", data);
+    group.setParam("geometry", ospray::cpp::Data(model));
     group.commit();
 
     // put the group into an instance (give the group a world transform)
@@ -187,15 +163,12 @@ int main(int argc, char **argv)
     instance.commit();
 
     ospray::cpp::World world;
-    auto instanceHandle = instance.handle();
-    data = ospray::cpp::Data(1, OSP_INSTANCE, &instanceHandle);
-    world.setParam("instance", data);
+    world.setParam("instance", ospray::cpp::Data(instance));
 
     // Specify the region of the world this rank owns
-    float regionBounds[] = {mpiRank, 0.f, 2.5f, 1.f * (mpiRank + 1.f), 1.f, 3.5f};
-    data = ospray::cpp::Data(1, OSP_BOX3F, regionBounds);
-    data.commit();
-    world.setParam("regions", data);
+    box3f regionBounds(
+        vec3f(mpiRank, 0.f, 2.5f), vec3f(1.f * (mpiRank + 1.f), 1.f, 3.5f));
+    world.setParam("regions", ospray::cpp::Data(regionBounds));
 
     world.commit();
 
@@ -205,14 +178,10 @@ int main(int argc, char **argv)
     // create and setup light for Ambient Occlusion
     // TODO: Who gets the lights now?
     ospray::cpp::Light light("ambient");
-    light.commit();
-    auto lightHandle = light.handle();
-    ospray::cpp::Data lights(1, OSP_LIGHT, &lightHandle);
-    lights.commit();
 
     // complete setup of renderer
     renderer.setParam("bgColor", 1.0f); // white, transparent
-    renderer.setParam("light", lights);
+    renderer.setParam("light", ospray::cpp::Data(light));
     renderer.commit();
 
     // create and setup framebuffer
