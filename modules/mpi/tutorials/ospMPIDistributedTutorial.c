@@ -255,6 +255,7 @@ int main(int argc, char **argv)
   ospRelease(light);
   ospRelease(framebuffer);
   ospRelease(world);
+  ospDeviceRelease(mpiDevice);
 
   ospShutdown();
 

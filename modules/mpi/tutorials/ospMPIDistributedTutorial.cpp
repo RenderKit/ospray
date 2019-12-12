@@ -45,8 +45,9 @@
 
 #include "ospray/ospray_cpp.h"
 
+using namespace ospray;
 using namespace ospcommon;
-using namespace math;
+using namespace ospcommon::math;
 
 // helper function to write the rendered image as PPM file
 void writePPM(const char *fileName, const vec2i &size, const uint32_t *pixel)
@@ -119,14 +120,14 @@ int main(int argc, char **argv)
   // application will likely not behave as expected
   ospLoadModule("mpi");
 
-  OSPDevice mpiDevice = ospNewDevice("mpi_distributed");
-  ospDeviceCommit(mpiDevice);
-  ospSetCurrentDevice(mpiDevice);
-
   // use scoped lifetimes of wrappers to release everything before ospShutdown()
   {
+    cpp::Device mpiDevice("mpi_distributed");
+    mpiDevice.commit();
+    mpiDevice.setCurrent();
+
     // create and setup camera
-    ospray::cpp::Camera camera("perspective");
+    cpp::Camera camera("perspective");
     camera.setParam("aspect", imgSize.x / (float)imgSize.y);
     camera.setParam("position", cam_pos);
     camera.setParam("direction", cam_view);
@@ -134,58 +135,58 @@ int main(int argc, char **argv)
     camera.commit(); // commit each object to indicate modifications are done
 
     // create and setup model and mesh
-    ospray::cpp::Geometry mesh("mesh");
-    ospray::cpp::Data data(4, vertex);
+    cpp::Geometry mesh("mesh");
+    cpp::Data data(4, vertex);
     data.commit();
     mesh.setParam("vertex.position", data);
 
-    data = ospray::cpp::Data(4, color);
+    data = cpp::Data(4, color);
     data.commit();
     mesh.setParam("vertex.color", data);
 
-    data = ospray::cpp::Data(2, index);
+    data = cpp::Data(2, index);
     data.commit();
     mesh.setParam("index", data);
 
     mesh.commit();
 
     // put the mesh into a model
-    ospray::cpp::GeometricModel model(mesh);
+    cpp::GeometricModel model(mesh);
     model.commit();
 
     // put the model into a group (collection of models)
-    ospray::cpp::Group group;
-    group.setParam("geometry", ospray::cpp::Data(model));
+    cpp::Group group;
+    group.setParam("geometry", cpp::Data(model));
     group.commit();
 
     // put the group into an instance (give the group a world transform)
-    ospray::cpp::Instance instance(group);
+    cpp::Instance instance(group);
     instance.commit();
 
-    ospray::cpp::World world;
-    world.setParam("instance", ospray::cpp::Data(instance));
+    cpp::World world;
+    world.setParam("instance", cpp::Data(instance));
 
     // Specify the region of the world this rank owns
     box3f regionBounds(
         vec3f(mpiRank, 0.f, 2.5f), vec3f(1.f * (mpiRank + 1.f), 1.f, 3.5f));
-    world.setParam("regions", ospray::cpp::Data(regionBounds));
+    world.setParam("regions", cpp::Data(regionBounds));
 
     world.commit();
 
     // create the mpi_raycast renderer (requred for distributed rendering)
-    ospray::cpp::Renderer renderer("mpi_raycast");
+    cpp::Renderer renderer("mpi_raycast");
 
     // create and setup light for Ambient Occlusion
     // TODO: Who gets the lights now?
-    ospray::cpp::Light light("ambient");
+    cpp::Light light("ambient");
 
     // complete setup of renderer
     renderer.setParam("bgColor", 1.0f); // white, transparent
-    renderer.setParam("light", ospray::cpp::Data(light));
+    renderer.setParam("light", cpp::Data(light));
     renderer.commit();
 
     // create and setup framebuffer
-    ospray::cpp::FrameBuffer framebuffer(
+    cpp::FrameBuffer framebuffer(
         imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
     framebuffer.clear();
 

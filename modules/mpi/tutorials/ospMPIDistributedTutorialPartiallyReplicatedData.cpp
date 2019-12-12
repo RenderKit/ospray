@@ -85,18 +85,18 @@ int main(int argc, char **argv)
   // application will likely not behave as expected
   ospLoadModule("mpi");
 
-  OSPDevice mpiDevice = ospNewDevice("mpi_distributed");
-  ospDeviceCommit(mpiDevice);
-  ospSetCurrentDevice(mpiDevice);
-
-  // set an error callback to catch any OSPRay errors and exit the application
-  ospDeviceSetErrorFunc(
-      ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
-        std::cerr << "OSPRay error: " << errorDetails << std::endl;
-        exit(error);
-      });
-
   {
+    cpp::Device mpiDevice("mpi_distributed");
+    mpiDevice.commit();
+    mpiDevice.setCurrent();
+
+    // set an error callback to catch any OSPRay errors and exit the application
+    ospDeviceSetErrorFunc(
+        ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
+          std::cerr << "OSPRay error: " << errorDetails << std::endl;
+          exit(error);
+        });
+
     // every two ranks will share a volume brick to render, if we have an
     // odd number of ranks the last one will have its own brick
     const int sharedWorldSize = mpiWorldSize / 2 + mpiWorldSize % 2;

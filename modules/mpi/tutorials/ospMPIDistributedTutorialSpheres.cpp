@@ -68,18 +68,18 @@ int main(int argc, char **argv)
   // application will likely not behave as expected
   ospLoadModule("mpi");
 
-  OSPDevice mpiDevice = ospNewDevice("mpi_distributed");
-  ospDeviceCommit(mpiDevice);
-  ospSetCurrentDevice(mpiDevice);
-
-  // set an error callback to catch any OSPRay errors and exit the application
-  ospDeviceSetErrorFunc(
-      ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
-        std::cerr << "OSPRay error: " << errorDetails << std::endl;
-        exit(error);
-      });
-
   {
+    cpp::Device mpiDevice("mpi_distributed");
+    mpiDevice.commit();
+    mpiDevice.setCurrent();
+
+    // set an error callback to catch any OSPRay errors and exit the application
+    ospDeviceSetErrorFunc(
+        ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
+          std::cerr << "OSPRay error: " << errorDetails << std::endl;
+          exit(error);
+        });
+
     // all ranks specify the same rendering parameters, with the exception of
     // the data to be rendered, which is distributed among the ranks
     box3f regionBounds;
