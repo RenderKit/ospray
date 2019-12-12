@@ -26,6 +26,7 @@ add_executable(ospTestSuite
   test_geometry.cpp
   test_tools.cpp
   test_volumetric.cpp
+  test_enums.cpp
   ospTestSuite.cpp
 )
 
@@ -33,8 +34,9 @@ target_link_libraries(ospTestSuite
 PRIVATE
   arcball_camera
   ospray_testing
+  ospray_module_ispc
   gtest_main
-	stb_image
+  stb_image
 )
 
 install(TARGETS ospTestSuite

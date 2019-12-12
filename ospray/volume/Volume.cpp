@@ -27,91 +27,6 @@
 
 namespace ospray {
 
-  // Helper for converting OSP to VKL data types //////////////////////////////
-
-  static VKLDataType getVKLDataType(OSPDataType dataType)
-  {
-    switch (dataType) {
-    case OSP_CHAR:
-      return VKL_CHAR;
-    case OSP_UCHAR:
-      return VKL_UCHAR;
-    case OSP_VEC2UC:
-      return VKL_UCHAR2;
-    case OSP_VEC3UC:
-      return VKL_UCHAR3;
-    case OSP_VEC4UC:
-      return VKL_UCHAR4;
-    case OSP_SHORT:
-      return VKL_SHORT;
-    case OSP_USHORT:
-      return VKL_USHORT;
-    case OSP_INT:
-      return VKL_INT;
-    case OSP_VEC2I:
-      return VKL_INT2;
-    case OSP_VEC3I:
-      return VKL_INT3;
-    case OSP_VEC4I:
-      return VKL_INT4;
-    case OSP_UINT:
-      return VKL_UINT;
-    case OSP_VEC2UI:
-      return VKL_UINT2;
-    case OSP_VEC3UI:
-      return VKL_UINT3;
-    case OSP_VEC4UI:
-      return VKL_UINT4;
-    case OSP_LONG:
-      return VKL_LONG;
-    case OSP_VEC2L:
-      return VKL_LONG2;
-    case OSP_VEC3L:
-      return VKL_LONG3;
-    case OSP_VEC4L:
-      return VKL_LONG4;
-    case OSP_ULONG:
-      return VKL_ULONG;
-    case OSP_VEC2UL:
-      return VKL_ULONG2;
-    case OSP_VEC3UL:
-      return VKL_ULONG3;
-    case OSP_VEC4UL:
-      return VKL_ULONG4;
-    case OSP_FLOAT:
-      return VKL_FLOAT;
-    case OSP_VEC2F:
-      return VKL_FLOAT2;
-    case OSP_VEC3F:
-      return VKL_FLOAT3;
-    case OSP_VEC4F:
-      return VKL_FLOAT4;
-    case OSP_DOUBLE:
-      return VKL_DOUBLE;
-    case OSP_BOX1I:
-      return VKL_BOX1I;
-    case OSP_BOX2I:
-      return VKL_BOX2I;
-    case OSP_BOX3I:
-      return VKL_BOX3I;
-    case OSP_BOX4I:
-      return VKL_BOX4I;
-    case OSP_BOX1F:
-      return VKL_BOX1F;
-    case OSP_BOX2F:
-      return VKL_BOX2F;
-    case OSP_BOX3F:
-      return VKL_BOX3F;
-    case OSP_BOX4F:
-      return VKL_BOX4F;
-    case OSP_DATA:
-      return VKL_DATA;
-    default:
-      std::cerr << "[Volume] unknown data type " << dataType << std::endl;
-      return VKL_UNKNOWN;
-    }
-  }
-
   // Volume defintions ////////////////////////////////////////////////////////
 
   Volume::Volume(const std::string &type) : vklType(type)
@@ -194,20 +109,14 @@ namespace ospray {
                     param.data.get<vec3i>().z);
       } else if (param.data.is<ManagedObject *>()) {
         Data *data           = (Data *)param.data.get<ManagedObject *>();
-        VKLDataType dataType = getVKLDataType(data->type);
-        if (dataType == VKL_UNKNOWN) {
-          std::cerr << "[Volume] unknown type for parameter " << param.name
-                    << std::endl;
-          return;
-        }
 
-        if (dataType == VKL_DATA) {
+        if (data->type == OSP_DATA) {
           const Ref<const DataT<Data *>> blockData =
               getParamDataT<Data *>(param.name.c_str(), true);
           std::vector<VKLData> vklBlockData;
           for (auto &&data : *blockData) {
             VKLData vklData = vklNewData(data->size(),
-                                         getVKLDataType(data->type),
+                                         (VKLDataType)data->type,
                                          data->data(),
                                          VKL_DATA_SHARED_BUFFER);
             vklBlockData.push_back(vklData);
@@ -217,8 +126,10 @@ namespace ospray {
           vklSetData(vklVolume, param.name.c_str(), vklData);
           vklRelease(vklData);
         } else {
-          VKLData vklData = vklNewData(
-              data->size(), dataType, data->data(), VKL_DATA_SHARED_BUFFER);
+          VKLData vklData = vklNewData(data->size(),
+                                       (VKLDataType)data->type,
+                                       data->data(),
+                                       VKL_DATA_SHARED_BUFFER);
           vklSetData(vklVolume, param.name.c_str(), vklData);
           vklRelease(vklData);
         }
