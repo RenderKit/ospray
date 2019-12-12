@@ -264,13 +264,3 @@ typedef enum
   OSP_AMR_FINEST,
   OSP_AMR_OCTANT
 } OSPAMRMethod;
-
-// UnstructuredVolume interpolation methods
-typedef enum
-# if __cplusplus >= 201103L
-: uint8_t
-#endif
-{
-  OSP_FAST,
-  OSP_ITERATIVE,
-} OSPUnstructuredMethod;

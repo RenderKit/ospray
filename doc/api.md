@@ -549,13 +549,13 @@ Note that cell widths are defined _per refinement level_, not per block.
 
                                                     `OSP_AMR_OCTANT`
 
+  float[]        cellWidth                    NULL  array of each level's cell width
+
   box3f[]        block.bounds                 NULL  [data] array of bounds for each AMR
                                                     block
 
   int[]          block.level                  NULL  array of each block's refinement
                                                     level
-
-  float[]        block.cellWidth              NULL  array of each block's cell width
 
   OSPData[]      block.data                   NULL  [data] array of OSPData containing
                                                     the actual scalar voxel data
@@ -671,13 +671,11 @@ id_m$.
 
                                                      `OSP_PYRAMID`
 
-  int                  hexMethod           OSP_FAST  `OSPUnstructuredMethod` hexahedron
-                                                     interpolation method, should be one of:
-
-                                                     `OSP_FAST` (rendering inaccuracies may appear
-                                                     if hex is not parallelepiped)
-
-                                                     `OSP_ITERATIVE`
+  bool                 hexIterative           false  hexahedron interpolation method,
+                                                     defaults to fast non-iterative version
+                                                     which could have rendering
+                                                     inaccuracies may appear if hex is not
+                                                     parallelepiped
 
   bool                 precomputedNormals      true  whether to accelerate by precomputing,
                                                      at a cost of 12 bytes/face
