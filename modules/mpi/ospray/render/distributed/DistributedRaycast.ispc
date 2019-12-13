@@ -62,7 +62,7 @@ vec4f DRR_integrateVolumeInterval(
     Volume *uniform volume = vm->volume;
     TransferFunction *uniform tf = vm->transferFunction;
 
-    uniform VKLIntervalIterator intervalIterator;
+    VKLIntervalIterator intervalIterator;
     vklInitIntervalIteratorV(&intervalIterator,
         volume->vklVolume,
         (varying vkl_vec3f *)&ray.org,
