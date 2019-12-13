@@ -73,7 +73,8 @@ void DistributedRaycastRenderer::commit()
   ispc::DistributedRaycastRenderer_set(getIE(),
       getParam<int>("aoSamples", 0),
       getParam<float>("aoRadius", 1e20f),
-      getParam<int>("shadowsEnabled", 0));
+      getParam<int>("shadowsEnabled", 0),
+      getParam<float>("volumeSamplingRate", 0.125f));
 }
 
 std::shared_ptr<TileOperation> DistributedRaycastRenderer::tileOperation()
