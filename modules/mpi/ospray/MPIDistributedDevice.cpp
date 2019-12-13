@@ -29,7 +29,7 @@
 #include "ospcommon/tasking/tasking_system_init.h"
 #include "ospcommon/utility/getEnvVar.h"
 #include "render/DistributedLoadBalancer.h"
-#include "render/RenderTask.h"
+#include "render/ThreadedRenderTask.h"
 #include "render/distributed/DistributedRaycast.h"
 #include "volume/Volume.h"
 #include "volume/VolumetricModel.h"
@@ -409,7 +409,7 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   camera->refInc();
   world->refInc();
 
-  auto *f = new RenderTask(fb, [=]() {
+  auto *f = new ThreadedRenderTask(fb, [=]() {
     float result = renderer->renderFrame(fb, camera, world);
 
     fb->refDec();
