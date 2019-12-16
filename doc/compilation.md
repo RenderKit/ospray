@@ -40,13 +40,10 @@ before you can build OSPRay you need the following prerequisites:
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
     system for performance and flexibility reasons. Alternatively you can set
     CMake variable `OSPCOMMON_TASKING_SYSTEM` to `OpenMP` or `Internal`.
--   OSPRay also heavily uses Intel [Embree], installing version 3.2 or
+-   OSPRay also heavily uses Intel [Embree], installing version 3.6.1 or
     newer is required. If Embree is not found by CMake its location can
     be hinted with the variable `embree_DIR`.
 
-    NOTE: Windows users should use Embree v3.2.2 or later.
-
-    NOTE: OSPRay is incompatible with Embree v3.6.0.
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/), installing version 0.7.0 or
     newer is required. If Open VKL is not found by CMake its location can
     be hinted with the variable `openvkl_DIR`.
