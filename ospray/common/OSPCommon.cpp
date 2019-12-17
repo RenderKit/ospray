@@ -99,50 +99,55 @@ namespace ospray {
           removeArgs(ac, av, i, 1);
         }
         // arguments taking required values
-        else if (beginsWith(parm, "--osp:loglevel")) {
+        else if (beginsWith(parm, "--osp:log-level")) {
           device->setParam("logLevel", getArgInt(parm));
           removeArgs(ac, av, i, 1);
-        } else if (beginsWith(parm, "--osp:logoutput") ||
-                   beginsWith(parm, "--osp:log-output")) {
+        } else if (beginsWith(parm, "--osp:log-output")) {
           std::string dst = getArgString(parm);
-          if (dst == "cout" || dst == "cerr")
+          if (dst == "cout" || dst == "cerr") {
             device->setParam("logOutput", dst);
-          else
-            postStatusMsg("You must use 'cout' or 'cerr' for --osp:logoutput");
+          } else {
+            std::stringstream ss;
+            ss << "Invalid output '" << dst
+               << "' provided for --osp:log-output. Must be 'cerr' or 'cout'";
+            postStatusMsg(ss);
+          }
           removeArgs(ac, av, i, 1);
-        } else if (beginsWith(parm, "--osp:erroroutput") ||
-                   beginsWith(parm, "--osp:error-output")) {
+        } else if (beginsWith(parm, "--osp:error-output")) {
           std::string dst = getArgString(parm);
           if (dst == "cout" || dst == "cerr") {
             device->setParam("errorOutput", dst);
           } else {
-            postStatusMsg(
-                "You must use 'cout' or 'cerr' for --osp:erroroutput");
+            std::stringstream ss;
+            ss << "Invalid output '" << dst
+               << "' provided for --osp:error-output. Must be 'cerr' or 'cout'";
+            postStatusMsg(ss);
           }
           removeArgs(ac, av, i, 1);
-        } else if (beginsWith(parm, "--osp:numthreads") ||
-                   beginsWith(parm, "--osp:num-threads")) {
-          device->setParam("numThreads", getArgInt(parm));
+        } else if (beginsWith(parm, "--osp:num-threads")) {
+          int nt = std::min(1, getArgInt(parm));
+          device->setParam("numThreads", nt);
           removeArgs(ac, av, i, 1);
-        } else if (beginsWith(parm, "--osp:setaffinity") ||
-                   beginsWith(parm, "--osp:affinity")) {
+        } else if (beginsWith(parm, "--osp:set-affinity")) {
           int val = getArgInt(parm);
           if (val == 0 || val == 1) {
             // this will be set to 0 if the value is invalid
             device->setParam<bool>("setAffinity", atoi(av[i + 1]));
           } else {
-            postStatusMsg("You must use 0 or 1 for --osp:setaffinity");
+            postStatusMsg(
+                "Invalid value provided for --osp:set-affinity. "
+                "Must be 0 or 1");
           }
           removeArgs(ac, av, i, 1);
-        } else if (beginsWith(parm, "--osp:deviceparam") ||
-                   beginsWith(parm, "--osp:device-param")) {
-          std::string dparm             = getArgString(parm);
-          std::string::size_type seppos = dparm.find(':');
-          if (seppos == std::string::npos) {
+        } else if (beginsWith(parm, "--osp:device-param")) {
+          std::string dparm           = getArgString(parm);
+          std::vector<std::string> kv = split(dparm, ':');
+          if (kv.size() != 2) {
             postStatusMsg(
-                "--osp:deviceparam requires arguments as <param>:<value>");
+                "Invalid parameters provided for --osp:device-param. "
+                "Must be formatted as <param>:<value>");
           } else {
-            device->setParam(dparm.substr(0, seppos), dparm.substr(seppos + 1));
+            device->setParam(kv[0], kv[1]);
           }
           removeArgs(ac, av, i, 1);
         } else {
