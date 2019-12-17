@@ -157,7 +157,6 @@ namespace ospray {
       bool isCommitted();
 
       int numThreads{-1};
-      /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode{false};
       bool apiTraceEnabled{false};
 
@@ -170,7 +169,6 @@ namespace ospray {
 
       int threadAffinity{AUTO_DETECT};
 
-      /*! logging level (cmdline: --osp:loglevel \<n\>) */
       // NOTE(jda) - Keep logLevel static because the device factory function
       //             needs to have a valid value for the initial Device creation
       static uint32_t logLevel;
