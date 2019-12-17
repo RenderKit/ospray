@@ -139,15 +139,18 @@ namespace ospray {
                 "Must be 0 or 1");
           }
           removeArgs(ac, av, i, 1);
-        } else if (beginsWith(parm, "--osp:device-param")) {
-          std::string dparm           = getArgString(parm);
-          std::vector<std::string> kv = split(dparm, ':');
-          if (kv.size() != 2) {
-            postStatusMsg(
-                "Invalid parameters provided for --osp:device-param. "
-                "Must be formatted as <param>:<value>");
-          } else {
-            device->setParam(kv[0], kv[1]);
+        } else if (beginsWith(parm, "--osp:device-params")) {
+          std::string parmesan              = getArgString(parm);
+          std::vector<std::string> parmList = split(parmesan, ',');
+          for (std::string &p : parmList) {
+            std::vector<std::string> kv = split(p, ':');
+            if (kv.size() != 2) {
+              postStatusMsg(
+                  "Invalid parameters provided for --osp:device-params. "
+                  "Must be formatted as <param>:<value>[,<param>:<value>,...]");
+            } else {
+              device->setParam(kv[0], kv[1]);
+            }
           }
           removeArgs(ac, av, i, 1);
         } else {

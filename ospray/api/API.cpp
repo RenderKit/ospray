@@ -116,9 +116,18 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
     for (int i = 1; i < *_ac; i++) {
       std::string av(_av[i]);
 
-      if (ospcommon::utility::beginsWith(av, "--osp:module")) {
-        std::string moduleName = getArgString(av);
-        loadLocalModule(moduleName);
+      if (ospcommon::utility::beginsWith(av, "--osp:load-modules")) {
+        std::string modules = getArgString(av);
+        if (modules == "") {
+          throw std::runtime_error(
+              "Invalid module name(s) provided to --osp:load-modules. Must be "
+              "formatted as <module1>[,<module2>,...]");
+        }
+        std::vector<std::string> moduleList =
+            ospcommon::utility::split(modules, ',');
+        for (std::string &moduleName : moduleList) {
+          loadLocalModule(moduleName);
+        }
         removeArgs(*_ac, _av, i, 1);
       }
 
