@@ -116,22 +116,16 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
     for (int i = 1; i < *_ac; i++) {
       std::string av(_av[i]);
 
-      auto moduleSwitch = av.substr(0, 13);
-      if (moduleSwitch == "--osp:module:") {
-        removeArgs(*_ac, _av, i, 1);
-
-        auto moduleName = av.substr(13);
+      if (ospcommon::utility::beginsWith(av, "--osp:module")) {
+        std::string moduleName = getArgString(av);
         loadLocalModule(moduleName);
-
-        --i;
-        continue;
+        removeArgs(*_ac, _av, i, 1);
       }
 
-      auto deviceSwitch = av.substr(0, 13);
-      if (deviceSwitch == "--osp:device:") {
-        removeArgs(*_ac, _av, i, 1);
-        auto deviceName = av.substr(13);
-
+      // ALOK: explicitly checking with the equals sign so this does not get
+      // clobbered by --osp:device-param
+      if (ospcommon::utility::beginsWith(av, "--osp:device=")) {
+        std::string deviceName = getArgString(av);
         try {
           currentDevice = Device::createDevice(deviceName.c_str());
         } catch (const std::runtime_error &) {
@@ -141,8 +135,7 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
                                    "device name wrong or didn't link the "
                                    "library which defines the device?");
         }
-        --i;
-        continue;
+        removeArgs(*_ac, _av, i, 1);
       }
     }
   }

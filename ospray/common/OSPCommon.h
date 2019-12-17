@@ -107,6 +107,10 @@ namespace ospray {
 
   using index_t = std::int64_t;
 
+  // Argument parsing functions
+  std::string getArgString(const std::string &s);
+  int getArgInt(const std::string &s);
+
   void initFromCommandLine(int *ac = nullptr, const char ***av = nullptr);
 
   extern "C" {

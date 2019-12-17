@@ -17,6 +17,8 @@
 #include "OSPCommon.h"
 #include "api/Device.h"
 
+#include "ospcommon/utility/StringManip.h"
+
 #include <map>
 
 namespace ospray {
@@ -40,96 +42,119 @@ namespace ospray {
                                   << " (only reporting first occurrence)";
   }
 
+  std::string getArgString(const std::string &s)
+  {
+    std::vector<std::string> tokens = ospcommon::utility::split(s, '=');
+    if (tokens.size() < 2) {
+      std::stringstream ss;
+      ss << "Invalid format for command-line argument " << s
+         << ". Should be formatted --osp:<parameter>=<value>";
+      postStatusMsg(ss, 0);
+      return "";
+    } else {
+      return tokens.back();
+    }
+  }
+
+  int getArgInt(const std::string &s)
+  {
+    std::string value = getArgString(s);
+    try {
+      return std::stoi(value);
+    } catch (std::exception &e) {
+      std::stringstream ss;
+      ss << "Invalid value '" << value << "' in command-line argument " << s
+         << ". Should be an integer";
+      postStatusMsg(ss, 0);
+      return 0;
+    }
+  }
+
   void initFromCommandLine(int *_ac, const char ***_av)
   {
+    using namespace ospcommon::utility;
+
     auto &device = ospray::api::Device::current;
 
     if (_ac && _av) {
-      int &ac = *_ac;
+      int &ac  = *_ac;
       auto &av = *_av;
-      for (int i=1;i<ac;) {
+      for (int i = 1; i < ac;) {
         std::string parm = av[i];
+        // flag-style arguments
         if (parm == "--osp:debug") {
           device->setParam("debug", true);
           device->setParam("logOutput", std::string("cout"));
           device->setParam("errorOutput", std::string("cerr"));
-          removeArgs(ac,av,i,1);
+          removeArgs(ac, av, i, 1);
         } else if (parm == "--osp:verbose") {
           device->setParam("logLevel", 1);
           device->setParam("logOutput", std::string("cout"));
           device->setParam("errorOutput", std::string("cerr"));
-          removeArgs(ac,av,i,1);
+          removeArgs(ac, av, i, 1);
         } else if (parm == "--osp:vv") {
           device->setParam("logLevel", 2);
           device->setParam("logOutput", std::string("cout"));
           device->setParam("errorOutput", std::string("cerr"));
-          removeArgs(ac,av,i,1);
-        } else if (parm == "--osp:loglevel") {
-          if (i+1<ac) {
-            device->setParam("logLevel", atoi(av[i+1]));
-            removeArgs(ac,av,i,2);
-          } else {
-            postStatusMsg("<n> argument required for --osp:loglevel!");
-            removeArgs(ac,av,i,1);
-          }
-        } else if (parm == "--osp:logoutput") {
-          if (i+1<ac) {
-            std::string dst = av[i+1];
-
-            if (dst == "cout" || dst == "cerr")
-              device->setParam("logOutput", dst);
-            else
-              postStatusMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
-
-            removeArgs(ac,av,i,2);
-          } else {
-            postStatusMsg("<dst> argument required for --osp:logoutput!");
-            removeArgs(ac,av,i,1);
-          }
-        } else if (parm == "--osp:erroroutput") {
-          if (i+1<ac) {
-            std::string dst = av[i+1];
-
-            if (dst == "cout" || dst == "cerr")
-              device->setParam("errorOutput", dst);
-            else {
-              postStatusMsg("You must use 'cout' or 'cerr' for"
-                            " --osp:erroroutput!");
-            }
-
-            removeArgs(ac,av,i,2);
-          } else {
-            postStatusMsg("<dst> argument required for --osp:erroroutput!");
-            removeArgs(ac,av,i,1);
-          }
-        } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
-          if (i+1<ac) {
-            device->setParam("numThreads", atoi(av[i+1]));
-            removeArgs(ac,av,i,2);
-          } else {
-            postStatusMsg("<n> argument required for --osp:numthreads");
-            removeArgs(ac,av,i,1);
-          }
-        } else if (parm == "--osp:setaffinity" || parm == "--osp:affinity") {
-          if (i+1<ac) {
-            device->setParam<bool>("setAffinity", atoi(av[i+1]));
-            removeArgs(ac,av,i,2);
-          } else {
-            postStatusMsg("<n> argument required for --osp:setaffinity!");
-            removeArgs(ac,av,i,1);
-          }
-        } else if (parm == "--osp:deviceparam") {
-          if (i + 2 < ac) {
-            device->setParam(av[i + 1], std::string(av[i + 2]));
-            removeArgs(ac, av, i, 3);
-          } else {
-            postStatusMsg("<param name> <param val> arguments required for "
-                          "--osp:deviceparam!");
-            removeArgs(ac,av,i,1);
-          }
-        } else {
-          ++i;
+          removeArgs(ac, av, i, 1);
         }
+        // arguments taking required values
+        else if (beginsWith(parm, "--osp:loglevel")) {
+          device->setParam("logLevel", getArgInt(parm));
+          removeArgs(ac, av, i, 1);
+        } else if (beginsWith(parm, "--osp:logoutput") ||
+                   beginsWith(parm, "--osp:log-output")) {
+          std::string dst = getArgString(parm);
+          if (dst == "cout" || dst == "cerr")
+            device->setParam("logOutput", dst);
+          else
+            postStatusMsg("You must use 'cout' or 'cerr' for --osp:logoutput");
+          removeArgs(ac, av, i, 1);
+        } else if (beginsWith(parm, "--osp:erroroutput") ||
+                   beginsWith(parm, "--osp:error-output")) {
+          std::string dst = getArgString(parm);
+          if (dst == "cout" || dst == "cerr") {
+            device->setParam("errorOutput", dst);
+          } else {
+            postStatusMsg(
+                "You must use 'cout' or 'cerr' for --osp:erroroutput");
+          }
+          removeArgs(ac, av, i, 1);
+        } else if (beginsWith(parm, "--osp:numthreads") ||
+                   beginsWith(parm, "--osp:num-threads")) {
+          device->setParam("numThreads", getArgInt(parm));
+          removeArgs(ac, av, i, 1);
+        } else if (beginsWith(parm, "--osp:setaffinity") ||
+                   beginsWith(parm, "--osp:affinity")) {
+          int val = getArgInt(parm);
+          if (val == 0 || val == 1) {
+            // this will be set to 0 if the value is invalid
+            device->setParam<bool>("setAffinity", atoi(av[i + 1]));
+          } else {
+            postStatusMsg("You must use 0 or 1 for --osp:setaffinity");
+          }
+          removeArgs(ac, av, i, 1);
+        } else if (beginsWith(parm, "--osp:deviceparam") ||
+                   beginsWith(parm, "--osp:device-param")) {
+          std::string dparm             = getArgString(parm);
+          std::string::size_type seppos = dparm.find(':');
+          if (seppos == std::string::npos) {
+            postStatusMsg(
+                "--osp:deviceparam requires arguments as <param>:<value>");
+          } else {
+            device->setParam(dparm.substr(0, seppos), dparm.substr(seppos + 1));
+          }
+          removeArgs(ac, av, i, 1);
+        } else {
+          // silently ignore other arguments
+        }
+
+        // ALOK: apply changes so that error messages and warnings during
+        // initialization might appear for the user. Without this, any errors in
+        // parsing will never be shown, even if the user sets the log output
+        // stream, log level, etc. They still may not be shown if the output is
+        // not set, however
+        device->commit();
       }
     }
   }
