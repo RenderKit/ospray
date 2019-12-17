@@ -217,7 +217,7 @@ namespace ospray {
       cpp::GeometricModel geometricModel(geo);
 
       cpp::Material objMaterial(rendererType, "obj");
-      objMaterial.setParam("Kd", kd);
+      objMaterial.setParam("kd", kd);
       objMaterial.commit();
 
       geometricModel.setParam("material", objMaterial);

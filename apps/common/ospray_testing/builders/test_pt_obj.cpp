@@ -40,8 +40,8 @@ namespace ospray {
                                          vec3f Ks)
     {
       cpp::Material mat(rendererType, "obj");
-      mat.setParam("Kd", Kd);
-      mat.setParam("Ks", Ks);
+      mat.setParam("kd", Kd);
+      mat.setParam("ks", Ks);
       mat.commit();
 
       return mat;

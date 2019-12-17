@@ -1382,12 +1382,12 @@ files. To create an OBJ material pass the type string "`obj`" to
 
   Type          Name         Default  Description
   ------------- --------- ----------  -----------------------------------------
-  vec3f         Kd         white 0.8  diffuse color
-  vec3f         Ks             black  specular color
-  float         Ns                10  shininess (Phong exponent), usually in [2–10^4^]
+  vec3f         kd         white 0.8  diffuse color
+  vec3f         ks             black  specular color
+  float         ns                10  shininess (Phong exponent), usually in [2–10^4^]
   float         d             opaque  opacity
-  vec3f         Tf             black  transparency filter color
-  OSPTexture    map_Bump        NULL  normal map
+  vec3f         tf             black  transparency filter color
+  OSPTexture    map_bump        NULL  normal map
   ------------- --------- ----------  -----------------------------------------
   : Main parameters of the OBJ material.
 

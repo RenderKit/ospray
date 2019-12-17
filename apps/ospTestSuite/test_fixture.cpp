@@ -314,7 +314,7 @@ namespace OSPRayTestScenes {
     tex.commit();
 
     cpp::Material sphereMaterial(rendererType, "default");
-    sphereMaterial.setParam("map_Kd", tex);
+    sphereMaterial.setParam("map_kd", tex);
     sphereMaterial.commit();
 
     cpp::Geometry sphere("sphere");
@@ -422,8 +422,8 @@ namespace OSPRayTestScenes {
                               vec3f Kd,
                               vec3f Ks) -> cpp::Material {
       cpp::Material mat(rendererType, "obj");
-      mat.setParam("Kd", Kd);
-      mat.setParam("Ks", Ks);
+      mat.setParam("kd", Kd);
+      mat.setParam("ks", Ks);
       mat.commit();
 
       return mat;

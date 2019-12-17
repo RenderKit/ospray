@@ -107,7 +107,7 @@ namespace ospray {
 
       // create OBJ material and assign to geometry
       cpp::Material material(rendererType, "obj");
-      material.setParam("Ks", vec3f(0.5f, 0.5f, 0.5f));
+      material.setParam("ks", vec3f(0.5f, 0.5f, 0.5f));
       material.commit();
 
       model.setParam("material", material);

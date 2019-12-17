@@ -108,7 +108,7 @@ namespace ospray {
         isoGeom.commit();
 
         cpp::Material mat(rendererType, "obj");
-        mat.setParam("Ks", vec3f(0.2f));
+        mat.setParam("ks", vec3f(0.2f));
         mat.commit();
 
         cpp::GeometricModel isoModel(isoGeom);
