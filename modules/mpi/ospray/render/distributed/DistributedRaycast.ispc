@@ -58,9 +58,11 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
 {
   VolumetricModel *varying volModel = interval.volumetricModel;
 
+  Ray transformedRay = ray;
+  transformRay(transformedRay, interval.rcp_xfm);
+
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
-
   foreach_unique (vm in volModel) {
     Volume *uniform volume = vm->volume;
     TransferFunction *uniform tf = vm->transferFunction;
@@ -68,8 +70,8 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
     VKLIntervalIterator intervalIterator;
     vklInitIntervalIteratorV(&intervalIterator,
         volume->vklVolume,
-        (varying vkl_vec3f *)&ray.org,
-        (varying vkl_vec3f *)&ray.dir,
+        (varying vkl_vec3f *)&transformedRay.org,
+        (varying vkl_vec3f *)&transformedRay.dir,
         (varying vkl_range1f *)&interval.interval,
         vm->vklValueSelector);
 
@@ -84,11 +86,12 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
               interval.tRange.upper));
 
       while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
-        ray.t0 = subInterval.lower + (subInterval.upper - subInterval.lower);
+        transformedRay.t0 =
+            subInterval.lower + (subInterval.upper - subInterval.lower);
         const float dt = subInterval.upper - subInterval.lower;
 
         // Get volume sample
-        vec3f p = ray.org + ray.t0 * ray.dir;
+        vec3f p = transformedRay.org + transformedRay.t0 * transformedRay.dir;
         const float sample = vklComputeSampleV(
             volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
 
@@ -98,7 +101,7 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
           const float clampedOpacity = clamp(sampleColorOpacity.w * dt);
           color = color
               + ((1.f - alpha) * clampedOpacity
-                  * make_vec3f(sampleColorOpacity));
+                    * make_vec3f(sampleColorOpacity));
           alpha = alpha + ((1.f - alpha) * clampedOpacity);
         }
 
