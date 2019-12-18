@@ -476,57 +476,90 @@ given type `type` use
 
     OSPVolume ospNewVolume(const char *type);
 
-NOTE: OSPRay's implementation forwards `type` directly to Open VKL, allowing
-new Open VKL volume types to be usable within OSPRay without the need to
-change (or even recompile) OSPRay.
+Note that OSPRay's implementation forwards `type` directly to Open VKL,
+allowing new Open VKL volume types to be usable within OSPRay without
+the need to change (or even recompile) OSPRay.
 
-### Structured Volume
+### Structured Regular Volume
 
 Structured volumes only need to store the values of the samples, because
 their addresses in memory can be easily computed from a 3D position. A
 common type of structured volumes are regular grids.
 
-Structured volumes are created by passing the `structured_regular`
-type string to `ospNewVolume`. Structured volumes are represented
-through an `OSPData` 3D array `data` (which may or may not be shared
-with the application), where currently the voxel data needs to be laid
-out compact in memory in xyz-order^[For consecutive memory addresses the
-x-index of the corresponding voxel changes the quickest.]
+Structured regular volumes are created by passing the
+`structured_regular` type string to `ospNewVolume`. Structured volumes
+are represented through an `OSPData` 3D array `data` (which may or may
+not be shared with the application), where currently the voxel data
+needs to be laid out compact in memory in xyz-order^[For consecutive
+memory addresses the x-index of the corresponding voxel changes the
+quickest.]
 
 The parameters understood by structured volumes are summarized in the
 table below.
 
-  ------- ----------- -----------  ----------------------------------
   Type    Name            Default  Description
-  ------- ----------- -----------  ----------------------------------
+  ------- ----------- -----------  --------------------------------------
   vec3f   gridOrigin  $(0, 0, 0)$  origin of the grid in object-space
-
-  vec3f   gridSpacing $(1, 1, 1)$  size of the grid cells in
-                                   object-space
-
+  vec3f   gridSpacing $(1, 1, 1)$  size of the grid cells in object-space
   OSPData data                     the actual voxel 3D [data]
-  ------- ----------- -----------  ----------------------------------
-  : Additional configuration parameters for structured volumes.
+  ------- ----------- -----------  --------------------------------------
+  : Additional configuration parameters for structured regular volumes.
 
 The size of the volume is inferred from the size of the 3D array `data`,
 as is the type of the voxel values (currently supported are:
 `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_FLOAT`, and `OSP_DOUBLE`).
 
+### Structured Spherical Volume
+
+Structured spherical volumes are also supported, which are created by
+passing a type string of `"structured_spherical"` to `ospNewVolume`. The
+grid dimensions and parameters are defined in terms of radial distance
+$r$, inclination angle $\theta$, and azimuthal angle $\phi$, conforming
+with the ISO convention for spherical coordinate systems. The coordinate
+system and parameters understood by structured spherical volumes are
+summarized below.
+
+![Coordinate system of structured spherical volumes.][imgStructuredSphericalCoords]
+
+  Type   Name            Default    Description
+  ------ ----------- -------------  ---------------------------------------------
+  vec3f  gridOrigin  $(0, 0, 0)$    origin of the grid in units of $(r, \theta, \phi)$; angles in degrees
+  vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in units of $(r, \theta, \phi)$; angles in degrees
+  OSPData data                      the actual voxel 3D [data]
+  ------ ----------- -------------  ---------------------------------------------
+  : Additional configuration parameters for structured spherical volumes.
+
+The dimensions $(r, \theta, \phi)$ of the volume are inferred from the
+size of the 3D array `data`, as is the type of the voxel values
+(currently supported are: `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`,
+`OSP_FLOAT`, and `OSP_DOUBLE`).
+
+These grid parameters support flexible specification of spheres,
+hemispheres, spherical shells, spherical wedges, and so forth. The grid
+extents (computed as `[gridOrigin, gridOrigin + (dimensions - 1) *
+gridSpacing]`) however must be constrained such that:
+
+  * $r \geq 0$
+  * $0 \leq \theta \leq 180$
+  * $0 \leq \phi \leq 360$
+
 ### Adaptive Mesh Refinement (AMR) Volume
 
-AMR volumes are specified as a list of blocks, which exist at levels of
-refinement in potentially overlapping regions.  Blocks exist in a tree
-structure, with coarser refinement level blocks containing finer blocks.  The
-cell width is equal for all blocks at the same refinement level, though blocks
-at a coarser level have a larger cell width than finer levels.
+OSPRay currently supports block-structured (Berger-Colella) AMR volumes.
+Volumes are specified as a list of blocks, which exist at levels of
+refinement in potentially overlapping regions. Blocks exist in a tree
+structure, with coarser refinement level blocks containing finer blocks.
+The cell width is equal for all blocks at the same refinement level,
+though blocks at a coarser level have a larger cell width than finer
+levels.
 
-There can be any number of refinement levels and any number of blocks at any
-level of refinement. An AMR volume type is created by passing the type string
-`"amr"` to `ospNewVolume`.
+There can be any number of refinement levels and any number of blocks at
+any level of refinement. An AMR volume type is created by passing the
+type string `"amr"` to `ospNewVolume`.
 
-Blocks are defined by four parameters: their bounds, the refinement level in
-which they reside, the cell widths for each refinement level, and the scalar
-data contained within each block.
+Blocks are defined by three parameters: their bounds, the refinement
+level in which they reside, and the scalar data contained within each
+block.
 
 Note that cell widths are defined _per refinement level_, not per block.
 
@@ -560,49 +593,51 @@ Note that cell widths are defined _per refinement level_, not per block.
   -------------- --------------- -----------------  -----------------------------------
   : Additional configuration parameters for AMR volumes.
 
-Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just like
-the structured volume equivalent, but they only modify the root (coarsest level)
-of refinement.
+Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
+like the structured volume equivalent, but they only modify the root
+(coarsest level) of refinement.
 
 In particular, OSPRay's AMR implementation was designed to cover
-Berger-Colella [1] and Chombo [2] AMR data.  The `method` parameter above
-determines the interpolation method used when sampling the volume.
+Berger-Colella [1] and Chombo [2] AMR data.  The `method` parameter
+above determines the interpolation method used when sampling the volume.
 
 * `OSP_AMR_CURRENT` finds the finest refinement level at that cell and
   interpolates through this "current" level
 * `OSP_AMR_FINEST` will interpolate at the closest existing cell in the
-  volume-wide finest refinement level regardless of the sample cell's level
-* `OSP_AMR_OCTANT` interpolates through all available refinement levels at that
-  cell. This method avoids discontinuities at refinement level boundaries at
-  the cost of performance
+  volume-wide finest refinement level regardless of the sample cell's
+  level
+* `OSP_AMR_OCTANT` interpolates through all available refinement levels
+* at that
+  cell. This method avoids discontinuities at refinement level
+  boundaries at the cost of performance
 
 Details and more information can be found in the publication for the
 implementation [3].
 
 1. M. J. Berger, and P. Colella. "Local adaptive mesh refinement for
-   shock hydrodynamics." Journal of Computational Physics 82.1 (1989): 64-84.
-   DOI: 10.1016/0021-9991(89)90035-1
-2. M. Adams, P. Colella, D. T. Graves, J.N. Johnson, N.D. Keen, T. J. Ligocki.
-   D. F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz, T.D. Sternberg
-   and B. Van Straalen, Chombo Software Package for AMR Applications - Design
-   Document,  Lawrence Berkeley National Laboratory Technical Report
-   LBNL-6616E.
+   shock hydrodynamics." Journal of Computational Physics 82.1 (1989):
+   64-84. DOI: 10.1016/0021-9991(89)90035-1
+2. M. Adams, P. Colella, D. T. Graves, J.N. Johnson, N.D. Keen, T. J.
+   Ligocki. D. F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz,
+   T.D. Sternberg and B. Van Straalen, Chombo Software Package for AMR
+   Applications - Design Document,  Lawrence Berkeley National
+   Laboratory Technical Report LBNL-6616E.
 3. I. Wald, C. Brownlee, W. Usher, and A. Knoll. CPU volume rendering of
-   adaptive mesh refinement data. SIGGRAPH Asia 2017 Symposium on Visualization
-   on - SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305
+   adaptive mesh refinement data. SIGGRAPH Asia 2017 Symposium on
+   Visualization on - SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305
 
-### Unstructured Volumes
+### Unstructured Volume
 
-Unstructured volumes can have its topology and geometry freely defined.
-Geometry can be composed of tetrahedral, hexahedral, wedge or pyramid
-cell types. Used data format is compatible with VTK and consists from
-multiple arrays: vertex positions and values, vertex indices, cell start
-indices, cell types, and cell values. An unstructured volume type is
-created by passing the type string "`unstructured`" to
-`ospNewVolume`.
+Unstructured volumes can have their topology and geometry freely
+defined. Geometry can be composed of tetrahedral, hexahedral, wedge or
+pyramid cell types. The data format used is compatible with VTK and
+consists of multiple arrays: vertex positions and values, vertex
+indices, cell start indices, cell types, and cell values. An
+unstructured volume type is created by passing the type string
+"`unstructured`" to `ospNewVolume`.
 
-Sampled cell values can be specified either per-vertex (`vertex.value`)
-or per-cell (`cell.value`). If both arrays are set, `cell.value` takes
+Sampled cell values can be specified either per-vertex (`vertex.data`)
+or per-cell (`cell.data`). If both arrays are set, `cell.data` takes
 precedence.
 
 Similar to a mesh, each cell is formed by a group of indices into the
@@ -612,9 +647,9 @@ for a tetrahedron is the same as `VTK_TETRA`: bottom triangle
 counterclockwise, then the top vertex.
 
 For hexahedral cells, each hexahedron is formed by a group of eight
-indices into the vertices and data values. Vertex ordering is the same as
-`VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
-counterclockwise.
+indices into the vertices and data values. Vertex ordering is the same
+as `VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top
+four counterclockwise.
 
 For wedge cells, each wedge is formed by a group of six indices into the
 vertices and data values. Vertex ordering is the same as `VTK_WEDGE`:
@@ -626,16 +661,16 @@ the vertices and data values. Vertex ordering is the same as
 vertex.
 
 To maintain VTK data compatibility an index array may be specified via
-`indexPrefixed` array that allow vertex indices to be interleaved with
-cell sizes in the following format: $n, id_1, ..., id_n, m, id_1, ...,
-id_m$.
+the `indexPrefixed` array that allow vertex indices to be interleaved
+with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
+..., id_m$.
 
   -------------------  ------------------  --------  ---------------------------------------
   Type                 Name                Default   Description
   -------------------  ------------------  --------  ---------------------------------------
   vec3f[]              vertex.position               [data] array of vertex positions
 
-  float[]              vertex.value                  [data] array of vertex data values to
+  float[]              vertex.data                   [data] array of vertex data values to
                                                      be sampled
 
   uint32[] / uint64[]  index                         [data] array of indices (into the
@@ -650,7 +685,7 @@ id_m$.
                                                      index array), specifying the first index
                                                      of each cell
 
-  float[]              cell.value                    [data] array of cell data values to be
+  float[]              cell.data                     [data] array of cell data values to be
                                                      sampled
 
   uint8[]              cell.type                     [data] array of cell types
