@@ -31,45 +31,46 @@ It is important to note that the arguments passed to `ospInit()` are
 processed in order they are listed. The following parameters (which are
 prefixed by convention with "`--osp:`") are understood:
 
-  -------------------------------------------------------------- -----------------------------------------------------
-  Parameter                                                      Description
-  -------------------------------------------------------------- -----------------------------------------------------
-  `--osp:debug`                                                  enables various extra checks and debug output, and
-                                                                 disables multi-threading
+  -------------------------------------------- -----------------------------------------------------
+  Parameter                                    Description
+  -------------------------------------------- -----------------------------------------------------
+  `--osp:debug`                                enables various extra checks and debug output, and
+                                               disables multi-threading
 
-  `--osp:num-threads=<n>`                                        use `n` threads instead of per default using all
-                                                                 detected hardware threads
+  `--osp:num-threads=<n>`                      use `n` threads instead of per default using all
+                                               detected hardware threads
 
-  `--osp:log-level=<n>`                                          set logging level, default `0`; increasing `n` means
-                                                                 increasingly verbose log messages
+  `--osp:log-level=<n>`                        set logging level, default `0`; increasing `n` means
+                                               increasingly verbose log messages
 
-  `--osp:verbose`                                                shortcut for `--osp:log-level=1` and enable debug
-                                                                 output on console
+  `--osp:verbose`                              shortcut for `--osp:log-level=1` and enable debug
+                                               output on console
 
-  `--osp:vv`                                                     shortcut for `--osp:log-level=2` and enable debug
-                                                                 output on console
+  `--osp:vv`                                   shortcut for `--osp:log-level=2` and enable debug
+                                               output on console
 
-  `--osp:load-modules=<name>[,<name>...]`                        load one or more modules during initialization;
-                                                                 equivalent to calling `ospLoadModule(name)`
+  `--osp:load-modules=<name>[,...]`            load one or more modules during initialization;
+                                               equivalent to calling `ospLoadModule(name)`
 
-  `--osp:log-output=<dst>`                                       convenience for setting where status messages go;
-                                                                 valid values for `dst` are `cerr` and `cout`
+  `--osp:log-output=<dst>`                     convenience for setting where status messages go;
+                                               valid values for `dst` are `cerr` and `cout`
 
-  `--osp:error-output=<dst>`                                     convenience for setting where error messages go;
-                                                                 valid values for `dst` are `cerr` and `cout`
+  `--osp:error-output=<dst>`                   convenience for setting where error messages go;
+                                               valid values for `dst` are `cerr` and `cout`
 
-  `--osp:device=<name>`                                          use `name` as the type of device for OSPRay to
-                                                                 create; e.g., `--osp:device=default` gives you the
-                                                                 default local device; Note if the device to be used
-                                                                 is defined in a module, remember to pass
-                                                                 `--osp:load-modules=<name>` first
+  `--osp:device=<name>`                        use `name` as the type of device for OSPRay to
+                                               create; e.g., `--osp:device=default` gives you the
+                                               default local device; Note if the device to be used
+                                               is defined in a module, remember to pass
+                                               `--osp:load-modules=<name>` first
 
-  `--osp:set-affinity=<n>`                                       if `1`, bind software threads to hardware threads;
-                                                                 `0` disables binding; default is `1` on KNL and `0`
-                                                                 otherwise
+  `--osp:set-affinity=<n>`                     if `1`, bind software threads to hardware threads;
+                                               `0` disables binding; default is `1` on KNL and `0`
+                                               otherwise
   
-  `--osp:device-params=<param1>:<value1>[,<param2>:<value2>...]` set one or more other device parameters
-  -------------------------------------------------------------- -----------------------------------------------------
+  `--osp:device-params=<param>:<value>[,...]`  set one or more other device parameters; equivalent
+                                               to calling `ospDeviceSet*(param, value)`
+  -------------------------------------------- -----------------------------------------------------
   : Command line parameters accepted by OSPRay's `ospInit`.
 
 ### Manual Device Instantiation
