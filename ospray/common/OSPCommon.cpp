@@ -61,7 +61,7 @@ namespace ospray {
     std::string value = getArgString(s);
     try {
       return std::stoi(value);
-    } catch (std::exception &e) {
+    } catch (...) { // std::invalid_argument or std::out_of_range
       std::stringstream ss;
       ss << "Invalid value '" << value << "' in command-line argument " << s
          << ". Should be an integer";
