@@ -77,6 +77,9 @@ Version History
 -   The `map_backplate` texture is supported in all renderers and does
     not hide lights in infinity (like the HDRI light) anymore;
     explicitely make lights in`visible` if this is needed
+-   Changed the computation of variance for adaptive accumulation to be
+    independent of `TILE_SIZE`, thus `varianceThreshold` needs to be
+    adapted if using a different TILE_SIZE than default 64
 -   Known issues:
     -   Open VKL must be built with a compatible set of ISAs with OSPRay
         due to a known issue with VKL iterator types. This is easiest
