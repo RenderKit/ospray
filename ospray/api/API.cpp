@@ -151,11 +151,11 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
 
   // no device created on cmd line, yet, so default to ISPCDevice
   if (!deviceIsSet()) {
-    auto OSPRAY_DEFAULT_DEVICE =
-        utility::getEnvVar<std::string>("OSPRAY_DEFAULT_DEVICE");
+    auto OSPRAY_DEVICE =
+        utility::getEnvVar<std::string>("OSPRAY_DEVICE");
 
-    if (OSPRAY_DEFAULT_DEVICE) {
-      auto device_name = OSPRAY_DEFAULT_DEVICE.value();
+    if (OSPRAY_DEVICE) {
+      auto device_name = OSPRAY_DEVICE.value();
       currentDevice = Device::createDevice(device_name.c_str());
     } else {
       ospLoadModule("ispc");

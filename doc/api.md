@@ -180,7 +180,7 @@ with "`OSPRAY_`"):
   OSPRAY_LOAD_MODULES   equivalent to `--osp:load-modules`, can be a comma separated
                         list of modules which will be loaded in order
 
-  OSPRAY_DEFAULT_DEVICE equivalent to `--osp:device:`
+  OSPRAY_DEVICE         equivalent to `--osp:device:`
   --------------------- --------------------------------------------------------
   : Environment variables interpreted by OSPRay.
 
