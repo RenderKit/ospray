@@ -211,6 +211,13 @@ namespace ospray {
         break;
       }
 
+      vklDriverSetErrorFunc(driver, [](VKLError, const char *message) {
+        handleError(OSP_UNKNOWN_ERROR, message);
+      });
+
+      vklDriverSetLogFunc(
+          driver, [](const char *message) { postStatusMsg() << message; });
+
       vklCommitDriver(driver);
       vklSetCurrentDriver(driver);
     }

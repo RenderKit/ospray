@@ -87,6 +87,9 @@ class GLFWOSPRayWindow
   cpp::World world;
   cpp::FrameBuffer framebuffer;
   cpp::Future currentFrame;
+  cpp::Texture backplateTex{"texture2d"};
+
+  vec3f bgColor{0.f};
 
   std::string scene{"boxes"};
 

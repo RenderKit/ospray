@@ -14,17 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "render/pathtracer/PathTracer.ih"
-#include "render/pathtracer/PathSampler.ih"
-#include "render/pathtracer/PathTracerUtil.ih"
-#include "render/pathtracer/PathTracerDefines.ih"
-#include "render/pathtracer/PathStructs.ih"
+#include "PathTracer.ih"
+#include "PathSampler.ih"
+#include "PathTracerUtil.ih"
+#include "PathTracerDefines.ih"
+#include "PathStructs.ih"
 
-#include "render/pathtracer/bsdfs/BSDF.ih"
-#include "render/pathtracer/bsdfs/MicrofacetAlbedoTables.ih"
-#include "render/pathtracer/materials/Medium.ih"
-#include "render/pathtracer/materials/Material.ih"
-#include "render/pathtracer/volumes/VolumeSampler.ih"
+#include "bsdfs/BSDF.ih"
+#include "bsdfs/MicrofacetAlbedoTables.ih"
+#include "materials/Medium.ih"
+#include "materials/Material.ih"
+#include "volumes/VolumeSampler.ih"
 
 #include "camera/Camera.ih"
 #include "math/random.ih"
@@ -57,15 +57,8 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
   pathContext.numBounceSampleDims = 4 + numLights*2; // BSDF sample (3D), roulette (1D), light samples (N*2D)
 
   PathState pathState;
-#if 0 // debug MIS
-  int c = (int)((pixel.x + pixel.y) * 10.f) % 3;
-  if (c == 0) { pathState.disableNEE = false; pathState.disableFWD = false; }
-  if (c == 1) { pathState.disableNEE = false; pathState.disableFWD = true; }
-  if (c == 2) { pathState.disableNEE = true; pathState.disableFWD = false; }
-#else
   pathState.disableNEE = false; 
   pathState.disableFWD = false;
-#endif
   pathState.straightPath = true; // path from camera did not change direction, for alpha and backplate
   pathState.auxFree = true; // normal & albedo buffer were not yet written to
   pathState.depth = 0;
@@ -77,17 +70,8 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
   pathState.shadowCatcherDist = -inf;
 
   pathState.debug = false;
-  //vec2f debug_pixel = make_vec2f(0.45f, 0.45f);
-  //if (ix == (int)(debug_pixel.x*fb->size.x) && iy == (int)(debug_pixel.y*fb->size.y))
-  //{
-  //  pathState.debug = true;
-  //}
 
   samplePath(pathContext, pathState, ray, sample);
-
-  //if (pathState.debug) {
-  //  sample.rgb = make_vec3f(0.8f, 0.2f, 0.8f);
-  //}
 
   return sample;
 }

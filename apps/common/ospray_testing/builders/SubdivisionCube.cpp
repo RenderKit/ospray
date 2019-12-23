@@ -99,6 +99,8 @@ namespace ospray {
       geometry.setParam("edgeCrease.index", cpp::Data(edgeCreaseIndices));
       geometry.setParam("edgeCrease.weight", cpp::Data(edgeCreaseWeights));
       geometry.setParam("level", level);
+      geometry.setParam("mode", (int)OSP_SUBDIVISION_PIN_CORNERS);
+
       geometry.commit();
 
       cpp::GeometricModel model(geometry);

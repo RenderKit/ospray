@@ -46,10 +46,15 @@ namespace ospray {
   void SciVis::commit()
   {
     Renderer::commit();
+
+    Texture2D *backplate = (Texture2D *)getParamObject("backplate", nullptr);
+
     ispc::SciVis_set(getIE(),
                      getParam<int>("aoSamples", aoSamples),
                      getParam<float>("aoRadius", 1e20f),
-                     getParam<float>("aoIntensity", 1.f));
+                     getParam<float>("aoIntensity", 1.f),
+                     backplate ? backplate->getIE() : nullptr,
+                     getParam<float>("volumeSamplingRate", 0.125f));
   }
 
   OSP_REGISTER_RENDERER(SciVis, scivis);

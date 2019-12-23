@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ## ======================================================================== ##
 ## Copyright 2016-2019 Intel Corporation                                    ##
 ##                                                                          ##
@@ -15,15 +15,11 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-mkdir build
-cd build
+file=${!#}
+dir=`dirname $0`
 
-cmake --version
+echo stripping $file
+strip $@
 
-cmake -L \
-  -DBUILD_OSPRAY_CI_TESTS=ON \
-  -DCMAKE_INSTALL_LIBDIR=lib \
-  -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
-  "$@" ../scripts/superbuild
-
-cmake --build .
+# per-file signing
+[ -x "$SIGN_FILE_MAC" ] && "$SIGN_FILE_MAC" -o runtime -e "$dir"/ospray.entitlements "$file"

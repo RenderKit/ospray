@@ -234,7 +234,7 @@ namespace ospray {
       Builder::commit();
 
       addSphereVolume = getParam<bool>("addSphereVolume", true);
-      addTorusVolume  = getParam<bool>("addTorusVolume", false);
+      addTorusVolume  = getParam<bool>("addTorusVolume", true);
       addBoxes        = getParam<bool>("addBoxes", false);
 
       addAreaLight    = getParam<bool>("addAreaLight", true);

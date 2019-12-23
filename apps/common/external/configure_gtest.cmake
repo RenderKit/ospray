@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+set(GOOGLETEST_VERSION 1.10.0)
+
 if (NOT USE_STATIC_RUNTIME)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 endif()

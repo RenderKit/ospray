@@ -144,7 +144,7 @@ build-debug:
 build-osx-clang:
   <<: *build_job_shell
   script:
-    - scripts/build_gitlab/osx.sh
+    - scripts/build_gitlab/macosx.sh
   tags:
     - osx
     - clang
@@ -197,6 +197,18 @@ build-scan-kw:
     paths:
         - $CI_PROJECT_DIR/kw_build_number
     expire_in: 3 day
+  allow_failure: true
+
+source-protex-scan:
+  stage: build
+  image: ospray-protex-centos7
+  script:
+    - /tmp/source-scan-protex.sh
+  dependencies:
+  tags:
+    - protex-scan-docker
+  ## Temporarily allow to fail
+  when: manual
   allow_failure: true
 
 
@@ -259,17 +271,18 @@ test-kw-critical:
     - kw-scan-docker
   allow_failure: true
 
-source-protex-scan:
-  stage: build
-  image: ospray-protex-centos7
+generate-ci-baseline:
+  <<: *test_job_unix
+  image: ospray/docker-images:ubuntu18.04
   script:
-    - /tmp/source-scan-protex.sh
+    - scripts/tests/generate_baseline.sh
   dependencies:
-  tags:
-    - protex-scan-docker
-  ## Temporarily allow to fail
+    - build-ubuntu1804-gcc
+  artifacts:
+    paths:
+      - img
+    expire_in: 3 day
   when: manual
-  allow_failure: true
 
 
 ### Documentation ###
@@ -310,7 +323,6 @@ release-linux-icc:
   image: ospray/docker-images:centos7-mod
   script:
     - module load cmake
-    - module load ispc
     - module load intel
     - export CC=icc
     - export CXX=icpc
@@ -331,15 +343,15 @@ release-osx-clang:
     - export CC=clang
     - export CXX=clang++
     - scripts/release/macosx.sh
-# DMGs cannot be signed; enable signing when switched to PKG:
-# $SIGN_FILE_MAC build_release/ospray-*.pkg
+    - $SIGN_FILE_MAC -o runtime -e scripts/release/ospray.entitlements build_release/ospray-*
+    - scripts/release/macosx_notarization.sh build_release/ospray-*.pkg
   tags:
     - clang
     - osx
   artifacts:
     paths:
-      - build_release/*.gz
-      - build_release/*.dmg
+      - build_release/*.zip
+      - build_release/*.pkg
 
 release-windows:
   <<: *release_job
@@ -347,7 +359,7 @@ release-windows:
     - scripts\release\win.ps1 "Visual Studio 14 2015 Win64"
     - Invoke-Expression "$env:SIGN_FILE_WINDOWS build_release\ospray*.msi"
   tags:
-    - msvc
+    - msvc14
     - win
   artifacts:
     paths:

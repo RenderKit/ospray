@@ -48,6 +48,8 @@ namespace ospray {
     vertex_crease_indicesData = getParamDataT<uint32_t>("vertexCrease.index");
     vertex_crease_weightsData = getParamDataT<float>("vertexCrease.weight");
 
+    mode = (OSPSubdivisionMode)getParam<int>("mode", OSP_SUBDIVISION_SMOOTH_BOUNDARY);
+
     if (!facesData) {
       if (indexData->size() % 4 != 0)
         throw std::runtime_error(toString()
@@ -76,6 +78,8 @@ namespace ospray {
     setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_VERTEX, vertexData);
     setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_INDEX, indexData);
     setEmbreeGeometryBuffer(embreeGeo, RTC_BUFFER_TYPE_FACE, facesData);
+
+    rtcSetGeometrySubdivisionMode(embreeGeo, 0, (RTCSubdivisionMode)mode);
 
     if (edge_crease_indicesData && edge_crease_weightsData) {
       if (edge_crease_indicesData->size() != edge_crease_weightsData->size())

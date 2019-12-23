@@ -17,9 +17,9 @@
 #include "render/Renderer.ih"
 // ao renderer
 #include "SciVis.ih"
+#include "math/random.ih"
 #include "surfaces.ih"
 #include "volumes.ih"
-#include "math/random.ih"
 
 void SciVis_renderSample(Renderer *uniform _self,
                          FrameBuffer *uniform fb,
@@ -30,8 +30,10 @@ void SciVis_renderSample(Renderer *uniform _self,
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
   LDSampler ldSamplerObj;
-  varying LDSampler* uniform ldSampler = &ldSamplerObj;
-  LDSampler_init(ldSampler, sample.sampleID.x + fb->size.x * sample.sampleID.y, sample.sampleID.z);
+  varying LDSampler *uniform ldSampler = &ldSamplerObj;
+  LDSampler_init(ldSampler,
+                 sample.sampleID.x + fb->size.x * sample.sampleID.y,
+                 sample.sampleID.z);
 
   const uniform vec4f &bgColor = self->super.bgColor;
 
@@ -45,7 +47,6 @@ void SciVis_renderSample(Renderer *uniform _self,
 
   // Iterate over all translucent geometry till we are fully opaque
   while (outputColor.w < 0.99f) {
-
     // Trace geometry using given ray,
     // if hit ray.t will be updated
     traceRay(world, ray);
@@ -58,14 +59,13 @@ void SciVis_renderSample(Renderer *uniform _self,
     // Sample volumes across volume intervals (in front of geometry hit)
     if (volumeIntervals.numVolumeIntervals > 0) {
       vec4f volumeColor = integrateVolumeIntervals(
-        volumeIntervals, volumeRay, ldSampler);
+          volumeIntervals, volumeRay, ldSampler, self->volumeSamplingRate);
       outputColor = outputColor + (1.f - outputColor.w) * volumeColor;
     }
 
     // If any geometry has been hit
     vec4f blendedColor;
     if (hadHit(ray)) {
-
       // Prepare differential geometry structure
       DifferentialGeometry dg;
       computeDG(world, self, ray, dg);
@@ -88,9 +88,20 @@ void SciVis_renderSample(Renderer *uniform _self,
         sample.normal = dg.Ns;
       }
     } else {
+      // Use backplate or background color if no geometry has been hit
+      if (self->backplate != NULL) {
+        vec2f pixel;
+        DifferentialGeometry lookup;
 
-      // Use background color if no geometry has been hit
-      blendedColor = bgColor;
+        pixel.x = (sample.sampleID.x) * fb->rcpSize.x;
+        pixel.y = (sample.sampleID.y) * fb->rcpSize.y;
+        initDgFromTexCoord(lookup, clamp2edge(self->backplate, pixel));
+
+        blendedColor = get4f(self->backplate, lookup);
+      } else {
+        blendedColor = bgColor;
+      }
+
       blendedColor.w = 1.f;
 
       // Initialize other per sample data with first hit values
@@ -103,7 +114,7 @@ void SciVis_renderSample(Renderer *uniform _self,
 
     // Blend with output final color
     outputColor = outputColor + (1.f - outputColor.w) * blendedColor;
-    firstHit = false;
+    firstHit    = false;
   }
 
   sample.rgb   = make_vec3f(outputColor);
@@ -123,11 +134,16 @@ export void *uniform SciVis_create(void *uniform cppE)
 export void SciVis_set(void *uniform _self,
                        uniform int aoSamples,
                        uniform float aoRadius,
-                       uniform float aoIntensity)
+                       uniform float aoIntensity,
+                       void *uniform backplate,
+                       uniform float volumeSamplingRate)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
   self->aoSamples   = aoSamples;
   self->aoRadius    = aoRadius;
   self->aoIntensity = aoIntensity;
+  self->backplate   = (uniform Texture2D * uniform) backplate;
+
+  self->volumeSamplingRate = volumeSamplingRate;
 }

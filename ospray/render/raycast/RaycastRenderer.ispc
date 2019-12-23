@@ -358,7 +358,7 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
     Volume *uniform volume       = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
-    uniform VKLIntervalIterator intervalIterator;
+    VKLIntervalIterator intervalIterator;
     vklInitIntervalIteratorV(&intervalIterator,
                              volume->vklVolume,
                              (varying vkl_vec3f *)&ray.org,
@@ -367,8 +367,11 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
                              m->vklValueSelector);
 
     VKLInterval interval;
+
+    static const uniform float samplingRate = 0.5f;
+
     while (vklIterateIntervalV(&intervalIterator, &interval) && alpha < 0.99f) {
-      const float nominalSamplingDt = interval.nominalDeltaT / m->samplingRate;
+      const float nominalSamplingDt = interval.nominalDeltaT / samplingRate;
 
       // initial sub interval, based on our renderer-defined sampling rate
       // and the volume's nominal dt
@@ -391,9 +394,10 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
           vec4f sampleColorOpacity = tf->get(tf, sample);
 
           const float clampedOpacity = clamp(sampleColorOpacity.w * dt);
-          color                      = color + ((1.f - alpha) * clampedOpacity *
+
+          color = color + ((1.f - alpha) * clampedOpacity *
                            make_vec3f(sampleColorOpacity));
-          alpha                      = alpha + ((1.f - alpha) * clampedOpacity);
+          alpha = alpha + ((1.f - alpha) * clampedOpacity);
         }
 
         // compute next sub interval

@@ -43,6 +43,7 @@ ExternalProject_Add(${COMPONENT_NAME}
     -DBUILD_BENCHMARKS=OFF
     -DBUILD_EXAMPLES=OFF
     -DBUILD_TESTING=OFF
+    -DOPENVKL_MAX_ISA=AVX2
   BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
   BUILD_ALWAYS ${ALWAYS_REBUILD}
 )
@@ -52,5 +53,6 @@ list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
 ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
   configure
     ospcommon
+    embree
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
 )

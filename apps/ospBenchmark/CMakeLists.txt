@@ -24,6 +24,7 @@ add_executable(ospBenchmark
 
   benchmarks/CornellBoxSpp.cpp
   benchmarks/GravitySpheresVolume.cpp
+  benchmarks/PerlinNoiseVolumes.cpp
 )
 
 target_link_libraries(ospBenchmark

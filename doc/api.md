@@ -549,13 +549,13 @@ Note that cell widths are defined _per refinement level_, not per block.
 
                                                     `OSP_AMR_OCTANT`
 
+  float[]        cellWidth                    NULL  array of each level's cell width
+
   box3f[]        block.bounds                 NULL  [data] array of bounds for each AMR
                                                     block
 
   int[]          block.level                  NULL  array of each block's refinement
                                                     level
-
-  float[]        block.cellWidth              NULL  array of each block's cell width
 
   OSPData[]      block.data                   NULL  [data] array of OSPData containing
                                                     the actual scalar voxel data
@@ -671,13 +671,11 @@ id_m$.
 
                                                      `OSP_PYRAMID`
 
-  int                  hexMethod           OSP_FAST  `OSPUnstructuredMethod` hexahedron
-                                                     interpolation method, should be one of:
-
-                                                     `OSP_FAST` (rendering inaccuracies may appear
-                                                     if hex is not parallelepiped)
-
-                                                     `OSP_ITERATIVE`
+  bool                 hexIterative           false  hexahedron interpolation method,
+                                                     defaults to fast non-iterative version
+                                                     which could have rendering
+                                                     inaccuracies may appear if hex is not
+                                                     parallelepiped
 
   bool                 precomputedNormals      true  whether to accelerate by precomputing,
                                                      at a cost of 12 bytes/face
@@ -723,10 +721,6 @@ concurrently). To create a volume instance, call
   Type                 Name                    Default    Description
   -------------------- ----------------------- ---------- --------------------------------------
   OSPTransferFunction  transferFunction                   [transfer function] to use
-
-  float                samplingRate                 0.125 sampling rate of the volume (this
-                                                          is the minimum step size for
-                                                          adaptive sampling)
 
   float                densityScale                   1.0 used to make volumes uniformly thinner
                                                           or thicker ([path tracer] only)
@@ -778,33 +772,47 @@ A mesh consisting of subdivision surfaces, created by specifying a
 geometry of type "`subdivision`". Once created, a subdivision recognizes
 the following parameters:
 
-  --------------- -------------------- ------- -------------------------------------------------
-  Type            Name                 Default Description
-  --------------- -------------------- ------- -------------------------------------------------
-  vec3f[]         vertex.position         NULL [data] array of vertex positions
+  --------------- -------------------- --------------------------------- -------------------------------------------------
+  Type            Name                                           Default Description
+  --------------- -------------------- --------------------------------- -------------------------------------------------
+  vec3f[]         vertex.position                                   NULL [data] array of vertex positions
 
-  vec4f[]         vertex.color            NULL [data] array of vertex colors (RGBA)
+  vec4f[]         vertex.color                                      NULL [data] array of vertex colors (RGBA)
 
-  vec2f[]         vertex.texcoord         NULL [data] array of vertex texture coordinates
+  vec2f[]         vertex.texcoord                                   NULL [data] array of vertex texture coordinates
 
-  float           level                      5 global level of tessellation, default is 5
+  float           level                                                  5 global level of tessellation, default is 5
 
-  uint[]          index                   NULL [data] array of indices (into the vertex array(s))
+  uint[]          index                                             NULL [data] array of indices (into the vertex array(s))
 
-  float[]         index.level             NULL [data] array of per-edge levels of tessellation,
-                                               overrides global level
+  float[]         index.level                                       NULL [data] array of per-edge levels of tessellation,
+                                                                         overrides global level
 
-  uint[]          face                    NULL [data] array holding the number of indices/edges
-                                               (3 to 15) per face
+  uint[]          face                                              NULL [data] array holding the number of indices/edges
+                                                                         (3 to 15) per face
 
-  vec2i[]         edgeCrease.index        NULL [data] array of edge crease indices
+  vec2i[]         edgeCrease.index                                  NULL [data] array of edge crease indices
 
-  float[]         edgeCrease.weight       NULL [data] array of edge crease weights
+  float[]         edgeCrease.weight                                 NULL [data] array of edge crease weights
 
-  uint[]          vertexCrease.index      NULL [data] array of vertex crease indices
+  uint[]          vertexCrease.index                                NULL [data] array of vertex crease indices
 
-  float[]         vertexCrease.weight     NULL [data] array of vertex crease weights
-  --------------- -------------------- ------- -------------------------------------------------
+  float[]         vertexCrease.weight                               NULL [data] array of vertex crease weights
+
+  int             mode                 `OSP_SUBDIVISION_SMOOTH_BOUNDARY` subdivision edge boundary mode.
+                                                                         Supported modes are:
+
+                                                                         `OSP_SUBDIVISION_NO_BOUNDARY`
+
+                                                                         `OSP_SUBDIVISION_SMOOTH_BOUNDARY`
+
+                                                                         `OSP_SUBDIVISION_PIN_CORNERS`
+
+                                                                         `OSP_SUBDIVISION_PIN_BOUNDARY`
+
+                                                                         `OSP_SUBDIVISION_PIN_ALL`
+
+  --------------- -------------------- --------------------------------- -------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
 The `vertex` and `index` arrays are mandatory to create a valid
@@ -1317,6 +1325,8 @@ renderers, the SciVis renderer supports the following parameters:
                                                      for ambient occlusion
 
   float         aoIntensity                       1  ambient occlusion strength
+
+  float         volumeSamplingRate            0.125  sampling rate of the volume
   ------------- ---------------------- ------------  ----------------------------
   : Special parameters understood by the SciVis renderer.
 

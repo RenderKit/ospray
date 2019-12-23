@@ -53,8 +53,8 @@ namespace ospray {
       std::mt19937 rng(randomSeed);
       std::uniform_real_distribution<float> radDist(0.5f, 1.5f);
       std::uniform_real_distribution<float> stepDist(0.001f, 0.1f);
-      std::uniform_int_distribution<int> sDist(0, 360);
-      std::uniform_int_distribution<int> dDist(360, 720);
+      std::uniform_real_distribution<float> sDist(0, 360);
+      std::uniform_real_distribution<float> dDist(360, 720);
       std::uniform_real_distribution<float> freqDist(0.5f, 1.5f);
 
       // create multiple lines

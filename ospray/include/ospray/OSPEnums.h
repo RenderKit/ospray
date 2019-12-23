@@ -50,8 +50,8 @@ typedef enum
   OSP_OBJECT = 0x8000000,
 
   // object subtypes
-  OSP_CAMERA = 0x8000000 + 100,
-  OSP_DATA,
+  OSP_DATA = 0x8000000 + 100,
+  OSP_CAMERA,
   OSP_FRAMEBUFFER,
   OSP_FUTURE,
   OSP_GEOMETRIC_MODEL,
@@ -265,12 +265,15 @@ typedef enum
   OSP_AMR_OCTANT
 } OSPAMRMethod;
 
-// UnstructuredVolume interpolation methods
+// Subdivision modes
 typedef enum
 # if __cplusplus >= 201103L
 : uint8_t
 #endif
 {
-  OSP_FAST,
-  OSP_ITERATIVE,
-} OSPUnstructuredMethod;
+  OSP_SUBDIVISION_NO_BOUNDARY,
+  OSP_SUBDIVISION_SMOOTH_BOUNDARY,
+  OSP_SUBDIVISION_PIN_CORNERS,
+  OSP_SUBDIVISION_PIN_BOUNDARY,
+  OSP_SUBDIVISION_PIN_ALL
+} OSPSubdivisionMode;

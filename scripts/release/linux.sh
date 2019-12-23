@@ -62,12 +62,13 @@ export LD_LIBRARY_PATH=$DEP_DIR/lib:${LD_LIBRARY_PATH}
 cmake --version
 
 cmake \
-  -DBUILD_DEPENDENCIES_ONLY=ON \
-  -DCMAKE_INSTALL_PREFIX=$DEP_DIR \
-  -DCMAKE_INSTALL_LIBDIR=lib \
-  -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
-  -DDOWNLOAD_ISPC=OFF \
-  "$@" ../scripts/superbuild
+  "$@" \
+  -D BUILD_DEPENDENCIES_ONLY=ON \
+  -D CMAKE_INSTALL_PREFIX=$DEP_DIR \
+  -D CMAKE_INSTALL_LIBDIR=lib \
+  -D BUILD_EMBREE_FROM_SOURCE=OFF \
+  -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF \
+  ../scripts/superbuild
 
 cmake --build .
 
@@ -82,7 +83,6 @@ cd build_release
 rm -rf *
 
 # Setup environment variables for dependencies
-
 export OSPCOMMON_TBB_ROOT=$DEP_DIR
 export ospcommon_DIR=$DEP_DIR
 export embree_DIR=$DEP_DIR
@@ -91,11 +91,12 @@ export openvkl_DIR=$DEP_DIR
 
 # set release and RPM settings
 cmake -L \
--D OSPRAY_BUILD_ISA=ALL \
--D OSPRAY_ZIP_MODE=OFF \
--D OSPRAY_INSTALL_DEPENDENCIES=OFF \
--D CPACK_PACKAGING_INSTALL_PREFIX=/usr \
-..
+  -D OSPRAY_BUILD_ISA=ALL \
+  -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc \
+  -D OSPRAY_ZIP_MODE=OFF \
+  -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
+  -D CPACK_PACKAGING_INSTALL_PREFIX=/usr \
+  ..
 
 # create RPM files
 make -j `nproc` preinstall
@@ -108,15 +109,14 @@ make -j `nproc` package || exit 2
 
 # change settings for zip mode
 cmake -L \
--D OSPRAY_ZIP_MODE=ON \
--D OSPRAY_INSTALL_DEPENDENCIES=ON \
--D CPACK_PACKAGING_INSTALL_PREFIX=/ \
--D CMAKE_INSTALL_INCLUDEDIR=include \
--D CMAKE_INSTALL_LIBDIR=lib \
--D CMAKE_INSTALL_DOCDIR=doc \
--D CMAKE_INSTALL_BINDIR=bin \
-..
+  -D OSPRAY_ZIP_MODE=ON \
+  -D OSPRAY_INSTALL_DEPENDENCIES=ON \
+  -D CPACK_PACKAGING_INSTALL_PREFIX=/ \
+  -D CMAKE_INSTALL_INCLUDEDIR=include \
+  -D CMAKE_INSTALL_LIBDIR=lib \
+  -D CMAKE_INSTALL_DOCDIR=doc \
+  -D CMAKE_INSTALL_BINDIR=bin \
+  ..
 
 # create tar.gz files
 make -j `nproc` package || exit 2
-

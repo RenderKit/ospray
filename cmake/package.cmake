@@ -71,7 +71,10 @@ set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}")
 #set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/ospray-doc/images/icon.png)
 #set(CPACK_PACKAGE_RELOCATABLE TRUE)
 set(CPACK_STRIP_FILES TRUE) # do not disable, stripping symbols is important for security reasons
-set(CMAKE_STRIP "${PROJECT_SOURCE_DIR}/scripts/strip.sh") # needs this to properly strip under MacOSX
+if (APPLE)
+  # needs this to properly strip and sign under MacOSX
+  set(CMAKE_STRIP "${PROJECT_SOURCE_DIR}/scripts/release/macosx_strip+sign.sh")
+endif()
 
 set(CPACK_PACKAGE_VERSION_MAJOR ${OSPRAY_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${OSPRAY_VERSION_MINOR})
@@ -107,6 +110,11 @@ set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE.txt)
 
 if (OSPRAY_ZIP_MODE)
   set(CPACK_MONOLITHIC_INSTALL ON)
+else()
+  set(CPACK_COMPONENTS_ALL lib devel apps)
+  if (OSPRAY_ENABLE_TESTING)
+    list(APPEND CPACK_COMPONENTS_ALL test)
+  endif()
 endif()
 
 
@@ -124,7 +132,7 @@ if (WIN32) # Windows specific settings
     set(CPACK_WIX_ROOT_FEATURE_DESCRIPTION "OSPRay is an open source, scalable, and portable ray tracing engine for high-performance, high-fidelity visualization.")
     set(CPACK_WIX_PROPERTY_ARPURLINFOABOUT http://www.ospray.org/)
     set(CPACK_PACKAGE_NAME "OSPRay v${OSPRAY_VERSION}")
-    set(CPACK_COMPONENTS_ALL lib devel apps redist)
+    list(APPEND CPACK_COMPONENTS_ALL redist)
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "Intel\\\\OSPRay v${OSPRAY_VERSION_MAJOR}")
     math(EXPR OSPRAY_VERSION_NUMBER "10000*${OSPRAY_VERSION_MAJOR} + 100*${OSPRAY_VERSION_MINOR} + ${OSPRAY_VERSION_PATCH}")
     set(CPACK_WIX_PRODUCT_GUID "9D64D525-2603-4E8C-9108-845A146${OSPRAY_VERSION_NUMBER}")
@@ -139,14 +147,12 @@ elseif(APPLE) # MacOSX specific settings
   set(CPACK_RESOURCE_FILE_README ${PROJECT_BINARY_DIR}/ReadMe.txt)
 
   if (OSPRAY_ZIP_MODE)
-    set(CPACK_GENERATOR TGZ)
+    set(CPACK_GENERATOR ZIP)
     set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64.macosx")
   else()
     set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-    set(CPACK_GENERATOR DragNDrop)
+    set(CPACK_GENERATOR productbuild)
     set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64")
-    #set(CPACK_COMPONENTS_ALL lib devel apps)
-    set(CPACK_MONOLITHIC_INSTALL ON)
     set(CPACK_PACKAGE_NAME ospray-${OSPRAY_VERSION})
     set(CPACK_PACKAGE_VENDOR "intel") # creates short name com.intel.ospray.xxx in pkgutil
   endif()
@@ -159,10 +165,6 @@ else() # Linux specific settings
     set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64.linux")
   else()
     set(CPACK_GENERATOR RPM)
-    set(CPACK_COMPONENTS_ALL lib devel apps)
-    if (OSPRAY_ENABLE_TESTING)
-      list(APPEND CPACK_COMPONENTS_ALL test)
-    endif()
     set(CPACK_RPM_COMPONENT_INSTALL ON)
 
     # dependencies
