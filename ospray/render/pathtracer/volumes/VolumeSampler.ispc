@@ -43,8 +43,12 @@ float delta_tracking(
   {
     box1f subInterval = make_box1f(interval.tRange.lower, interval.tRange.upper);
     t = interval.tRange.lower;
-    const vec4f color_max = vModel->transferFunction->get(vModel->transferFunction, interval.valueRange.upper);
-    const float mu_max = vModel->densityScale * color_max.w;
+
+    const float maxOpacity = vModel->transferFunction->getMaxOpacity(
+        vModel->transferFunction,
+        *((varying range1f * uniform) & interval.valueRange));
+
+    const float mu_max = vModel->densityScale * maxOpacity;
 
     while (true)
     {
