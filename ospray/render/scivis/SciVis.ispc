@@ -102,8 +102,6 @@ void SciVis_renderSample(Renderer *uniform _self,
         blendedColor = bgColor;
       }
 
-      blendedColor.w = 1.f;
-
       // Initialize other per sample data with first hit values
       if (firstHit) {
         sample.z      = inf;
@@ -115,6 +113,9 @@ void SciVis_renderSample(Renderer *uniform _self,
     // Blend with output final color
     outputColor = outputColor + (1.f - outputColor.w) * blendedColor;
     firstHit    = false;
+    if (!hadHit(ray)) {
+      break;
+    }
   }
 
   sample.rgb   = make_vec3f(outputColor);
