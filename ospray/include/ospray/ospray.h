@@ -193,23 +193,23 @@ extern "C" {
 
   OSPRAY_INTERFACE OSPData ospNewSharedData(const void *sharedData,
       OSPDataType,
-      uint32_t numItems1,
+      uint64_t numItems1,
       int64_t byteStride1 OSP_DEFAULT_VAL(0),
-      uint32_t numItems2 OSP_DEFAULT_VAL(1),
+      uint64_t numItems2 OSP_DEFAULT_VAL(1),
       int64_t byteStride2 OSP_DEFAULT_VAL(0),
-      uint32_t numItems3 OSP_DEFAULT_VAL(1),
+      uint64_t numItems3 OSP_DEFAULT_VAL(1),
       int64_t byteStride3 OSP_DEFAULT_VAL(0));
 
   OSPRAY_INTERFACE OSPData ospNewData(OSPDataType,
-      uint32_t numItems1,
-      uint32_t numItems2 OSP_DEFAULT_VAL(1),
-      uint32_t numItems3 OSP_DEFAULT_VAL(1));
+      uint64_t numItems1,
+      uint64_t numItems2 OSP_DEFAULT_VAL(1),
+      uint64_t numItems3 OSP_DEFAULT_VAL(1));
 
   OSPRAY_INTERFACE void ospCopyData(const OSPData source,
       OSPData destination,
-      uint32_t destinationIndex1 OSP_DEFAULT_VAL(0),
-      uint32_t destinationIndex2 OSP_DEFAULT_VAL(0),
-      uint32_t destinationIndex3 OSP_DEFAULT_VAL(0));
+      uint64_t destinationIndex1 OSP_DEFAULT_VAL(0),
+      uint64_t destinationIndex2 OSP_DEFAULT_VAL(0),
+      uint64_t destinationIndex3 OSP_DEFAULT_VAL(0));
 
   // Renderable Objects ///////////////////////////////////////////////////////
 

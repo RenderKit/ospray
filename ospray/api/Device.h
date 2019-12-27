@@ -58,14 +58,14 @@ namespace ospray {
 
       virtual OSPData newSharedData(const void *sharedData,
                                     OSPDataType,
-                                    const vec3i &numItems,
+                                    const vec3ul &numItems,
                                     const vec3l &byteStride) = 0;
 
-      virtual OSPData newData(OSPDataType, const vec3i &numItems) = 0;
+      virtual OSPData newData(OSPDataType, const vec3ul &numItems) = 0;
 
       virtual void copyData(const OSPData source,
                             OSPData destination,
-                            const vec3i &DestinationIndex) = 0;
+                            const vec3ul &destinationIndex) = 0;
 
       // Renderable Objects ///////////////////////////////////////////////////
 

@@ -26,45 +26,45 @@ extern "C" {
 
 OSPRAY_INTERFACE OSPData ospNewSharedData1D(const void *sharedData,
                                             OSPDataType type,
-                                            uint32_t numItems);
+                                            uint64_t numItems);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData1DStride(const void *sharedData,
                                                   OSPDataType type,
-                                                  uint32_t numItems,
+                                                  uint64_t numItems,
                                                   int64_t byteStride);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData2D(const void *sharedData,
                                             OSPDataType type,
-                                            uint32_t numItems1,
-                                            uint32_t numItems2);
+                                            uint64_t numItems1,
+                                            uint64_t numItems2);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData2DStride(const void *sharedData,
                                                   OSPDataType type,
-                                                  uint32_t numItems1,
+                                                  uint64_t numItems1,
                                                   int64_t byteStride1,
-                                                  uint32_t numItems2,
+                                                  uint64_t numItems2,
                                                   int64_t byteStride2);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData3D(const void *sharedData,
                                             OSPDataType type,
-                                            uint32_t numItems1,
-                                            uint32_t numItems2,
-                                            uint32_t numItems3);
+                                            uint64_t numItems1,
+                                            uint64_t numItems2,
+                                            uint64_t numItems3);
 
-OSPRAY_INTERFACE OSPData ospNewData1D(OSPDataType type, uint32_t numItems);
+OSPRAY_INTERFACE OSPData ospNewData1D(OSPDataType type, uint64_t numItems);
 
 OSPRAY_INTERFACE OSPData ospNewData2D(OSPDataType type,
-                                      uint32_t numItems1,
-                                      uint32_t numItems2);
+                                      uint64_t numItems1,
+                                      uint64_t numItems2);
 
 OSPRAY_INTERFACE void ospCopyData1D(const OSPData source,
                                     OSPData destination,
-                                    uint32_t destinationIndex);
+                                    uint64_t destinationIndex);
 
 OSPRAY_INTERFACE void ospCopyData2D(const OSPData source,
                                     OSPData destination,
-                                    uint32_t destinationIndex1,
-                                    uint32_t destinationIndex2);
+                                    uint64_t destinationIndex1,
+                                    uint64_t destinationIndex2);
 
 // Parameter helpers //////////////////////////////////////////////////////////
 

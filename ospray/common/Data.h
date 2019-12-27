@@ -44,18 +44,18 @@ namespace ospray {
   {
     Data(const void *sharedData,
         OSPDataType,
-        const vec3ui &numItems,
+        const vec3ul &numItems,
         const vec3l &byteStride);
-    Data(OSPDataType, const vec3ui &numItems);
+    Data(OSPDataType, const vec3ul &numItems);
 
     virtual ~Data() override;
     virtual std::string toString() const override;
 
     size_t size() const;
     char *data() const;
-    char *data(const vec3ui &idx) const;
+    char *data(const vec3ul &idx) const;
     bool compact() const; // all strides are natural
-    void copy(const Data &source, const vec3ui &destinationIndex);
+    void copy(const Data &source, const vec3ul &destinationIndex);
 
     template <typename T, int DIM = 1>
     const DataT<T, DIM> &as() const;
@@ -72,7 +72,7 @@ namespace ospray {
 
    public:
     OSPDataType type{OSP_UNKNOWN};
-    vec3ui numItems;
+    vec3ul numItems;
 
    protected:
     vec3l byteStride;
@@ -93,10 +93,10 @@ namespace ospray {
   class Iter : public std::iterator<std::forward_iterator_tag, T>
   {
     const Data &data;
-    vec3ui idx;
+    vec3ul idx;
 
    public:
-    Iter(const Data &data, vec3ui idx) : data(data), idx(idx) {}
+    Iter(const Data &data, vec3ul idx) : data(data), idx(idx) {}
     Iter &operator++()
     {
       if (++idx.x >= data.numItems.x) {
@@ -171,11 +171,11 @@ namespace ospray {
 
     Iter<T> begin() const
     {
-      return Iter<T>(*this, vec3ui(0));
+      return Iter<T>(*this, vec3ul(0));
     }
     Iter<T> end() const
     {
-      return Iter<T>(*this, vec3ui(0, 0, numItems.z));
+      return Iter<T>(*this, vec3ul(0, 0, numItems.z));
     }
 
     T &operator[](const vec_t<int64_t, DIM> &idx)
@@ -252,7 +252,7 @@ namespace ospray {
     return addr;
   }
 
-  inline char *Data::data(const vec3ui &idx) const
+  inline char *Data::data(const vec3ul &idx) const
   {
     return addr + idx.x * byteStride.x + idx.y * byteStride.y
         + idx.z * byteStride.z;
@@ -303,7 +303,7 @@ namespace ospray {
       auto item = getOptParam<T>(name);
       if (item) {
         // wrap item into data array
-        data = new Data(OSPTypeFor<T>::value, vec3ui(1));
+        data = new Data(OSPTypeFor<T>::value, vec3ul(1));
         auto &dataT = data->as<T, DIM>();
         T *p = dataT.data();
         *p = item.value();
