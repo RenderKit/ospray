@@ -497,7 +497,7 @@ box3f MPIOffloadDevice::getBounds(OSPObject _obj)
 
 OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
     OSPDataType format,
-    const vec3i &numItems,
+    const vec3ul &numItems,
     const vec3l &byteStride)
 {
   ObjectHandle handle = allocateHandle();
@@ -548,7 +548,7 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
   return (OSPData)(int64)handle;
 }
 
-OSPData MPIOffloadDevice::newData(OSPDataType format, const vec3i &numItems)
+OSPData MPIOffloadDevice::newData(OSPDataType format, const vec3ul &numItems)
 {
   ObjectHandle handle = allocateHandle();
 
@@ -560,7 +560,7 @@ OSPData MPIOffloadDevice::newData(OSPDataType format, const vec3i &numItems)
 }
 
 void MPIOffloadDevice::copyData(
-    const OSPData source, OSPData destination, const vec3i &destinationIndex)
+    const OSPData source, OSPData destination, const vec3ul &destinationIndex)
 {
   networking::BufferWriter writer;
   const ObjectHandle sourceHandle = (const ObjectHandle &)source;

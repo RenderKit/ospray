@@ -96,14 +96,14 @@ struct MPIDistributedDevice : public api::Device
 
   OSPData newSharedData(const void *sharedData,
       OSPDataType,
-      const vec3i &numItems,
+      const vec3ul &numItems,
       const vec3l &byteStride) override;
 
-  OSPData newData(OSPDataType, const vec3i &numItems) override;
+  OSPData newData(OSPDataType, const vec3ul &numItems) override;
 
   void copyData(const OSPData source,
       OSPData destination,
-      const vec3i &DestinationIndex) override;
+      const vec3ul &destinationIndex) override;
 
   /*! create a new renderer object (out of list of registered renderers) */
   OSPRenderer newRenderer(const char *type) override;

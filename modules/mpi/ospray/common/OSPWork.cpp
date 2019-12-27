@@ -178,7 +178,7 @@ void newSharedData(OSPState &state,
 
   int64_t handle = 0;
   OSPDataType format;
-  vec3i numItems = 0;
+  vec3ul numItems = 0;
   vec3l byteStride;
   cmdBuf >> handle >> format >> numItems >> byteStride;
 
@@ -240,7 +240,7 @@ void newData(OSPState &state,
 {
   int64_t handle = 0;
   OSPDataType format;
-  vec3i numItems = 0;
+  vec3ul numItems = 0;
   cmdBuf >> handle >> format >> numItems;
 
   state.objects[handle] =
@@ -253,7 +253,7 @@ void copyData(OSPState &state,
 {
   int64_t sourceHandle = 0;
   int64_t destinationHandle = 0;
-  vec3i destinationIndex = 0;
+  vec3ul destinationIndex = 0;
   cmdBuf >> sourceHandle >> destinationHandle >> destinationIndex;
 
   ospCopyData(state.getObject<OSPData>(sourceHandle),

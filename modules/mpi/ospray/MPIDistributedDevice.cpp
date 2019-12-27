@@ -312,19 +312,19 @@ box3f MPIDistributedDevice::getBounds(OSPObject _obj)
 
 OSPData MPIDistributedDevice::newSharedData(const void *sharedData,
     OSPDataType type,
-    const vec3i &numItems,
+    const vec3ul &numItems,
     const vec3l &byteStride)
 {
   return (OSPData) new Data(sharedData, type, numItems, byteStride);
 }
 
-OSPData MPIDistributedDevice::newData(OSPDataType type, const vec3i &numItems)
+OSPData MPIDistributedDevice::newData(OSPDataType type, const vec3ul &numItems)
 {
   return (OSPData) new Data(type, numItems);
 }
 
 void MPIDistributedDevice::copyData(
-    const OSPData source, OSPData destination, const vec3i &destinationIndex)
+    const OSPData source, OSPData destination, const vec3ul &destinationIndex)
 {
   Data *dst = (Data *)destination;
   dst->copy(*(Data *)source, destinationIndex);
