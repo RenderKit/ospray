@@ -33,6 +33,7 @@ struct DistributedRaycastRenderer
   int aoSamples;
   float aoRadius;
   bool shadowsEnabled;
+  float volumeSamplingRate;
 };
 
 struct RegionInfo
@@ -50,29 +51,33 @@ struct RegionInfo
 // The distributed raycast renderer uses its own volume interval integration
 // because we want to apply the jitter before offsetting our step size to stay
 // inside the region, not after.
-vec4f DRR_integrateVolumeInterval(
-    const ScreenSample &sample, const VolumeInterval &interval, Ray &ray)
+vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
+    const VolumeInterval &interval,
+    Ray &ray,
+    uniform float samplingRate)
 {
   VolumetricModel *varying volModel = interval.volumetricModel;
 
+  Ray transformedRay = ray;
+  transformRay(transformedRay, interval.rcp_xfm);
+
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
-
   foreach_unique (vm in volModel) {
     Volume *uniform volume = vm->volume;
     TransferFunction *uniform tf = vm->transferFunction;
 
-    uniform VKLIntervalIterator intervalIterator;
+    VKLIntervalIterator intervalIterator;
     vklInitIntervalIteratorV(&intervalIterator,
         volume->vklVolume,
-        (varying vkl_vec3f *)&ray.org,
-        (varying vkl_vec3f *)&ray.dir,
+        (varying vkl_vec3f *)&transformedRay.org,
+        (varying vkl_vec3f *)&transformedRay.dir,
         (varying vkl_range1f *)&interval.interval,
         vm->vklValueSelector);
 
     VKLInterval interval;
     while (vklIterateIntervalV(&intervalIterator, &interval) && alpha < 0.99f) {
-      const float nominalSamplingDt = interval.nominalDeltaT / vm->samplingRate;
+      const float nominalSamplingDt = interval.nominalDeltaT / samplingRate;
 
       // initial sub interval, based on our renderer-defined sampling rate
       // and the volume's nominal dt
@@ -81,21 +86,24 @@ vec4f DRR_integrateVolumeInterval(
               interval.tRange.upper));
 
       while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
-        ray.t0 = subInterval.lower + (subInterval.upper - subInterval.lower);
+        transformedRay.t0 =
+            subInterval.lower + (subInterval.upper - subInterval.lower);
         const float dt = subInterval.upper - subInterval.lower;
 
         // Get volume sample
-        vec3f p = ray.org + ray.t0 * ray.dir;
+        vec3f p = transformedRay.org + transformedRay.t0 * transformedRay.dir;
         const float sample = vklComputeSampleV(
             volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
 
         if (!isnan(sample)) {
           vec4f sampleColorOpacity = tf->get(tf, sample);
 
-          const float clampedOpacity = clamp(sampleColorOpacity.w * dt);
+          sampleColorOpacity.w = 1.f
+              - pow(1.f - sampleColorOpacity.w, dt / interval.nominalDeltaT);
+          const float clampedOpacity = clamp(sampleColorOpacity.w);
           color = color
               + ((1.f - alpha) * clampedOpacity
-                  * make_vec3f(sampleColorOpacity));
+                    * make_vec3f(sampleColorOpacity));
           alpha = alpha + ((1.f - alpha) * clampedOpacity);
         }
 
@@ -296,8 +304,7 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
 
       // Offset the volume interval start to align to the same sampling steps
       // across each rank, and apply the same jitter for each pixel on all ranks
-      VolumetricModel *varying volModel = volumeInterval.volumetricModel;
-      float dt = volModel->samplingStep / volModel->samplingRate;
+      float dt = 1.f /*was 'volModel->samplingStep*/ / self->volumeSamplingRate;
       float t0 = volumeInterval.interval.lower;
       volumeInterval.interval.lower = floor(t0 / dt) * dt;
 
@@ -322,8 +329,8 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
       setRay(volumeRay,
           volumeInterval.interval.lower,
           volumeInterval.interval.upper);
-      volumeColor =
-          DRR_integrateVolumeInterval(sample, volumeInterval, volumeRay);
+      volumeColor = DRR_integrateVolumeInterval(
+          sample, volumeInterval, volumeRay, self->volumeSamplingRate);
     }
 
     vec4f blendedColor = make_vec4f(0.f);
@@ -373,7 +380,8 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE)
 export void DistributedRaycastRenderer_set(void *uniform _self,
     const uniform int aoSamples,
     const uniform float aoRadius,
-    const uniform bool shadowsEnabled)
+    const uniform bool shadowsEnabled,
+    const uniform float volumeSamplingRate)
 {
   DistributedRaycastRenderer *uniform self =
       (DistributedRaycastRenderer * uniform) _self;
@@ -381,4 +389,5 @@ export void DistributedRaycastRenderer_set(void *uniform _self,
   self->aoSamples = aoSamples;
   self->aoRadius = aoRadius;
   self->shadowsEnabled = shadowsEnabled;
+  self->volumeSamplingRate = volumeSamplingRate;
 }
