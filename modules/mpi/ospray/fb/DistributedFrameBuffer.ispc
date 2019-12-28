@@ -289,7 +289,8 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
     uniform int end_frag)
 {
   for (uniform int frag = begin_frag; frag < end_frag; ++frag) {
-#if 1
+    // NOTE: sort order is set at the tile-level
+#if 0
     for (uniform int i = 1; i < numTiles; ++i) {
       for (uniform int j = i; j > 0; --j) {
         VaryingTile *uniform ta = tileArray[j];

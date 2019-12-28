@@ -208,6 +208,8 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
       {
         const float regionEnter = max(isect.entry.t, screenSample.ray.t0);
         const float regionExit = min(isect.exit.t, screenSample.ray.t);
+        screenSample.ray.t0 = regionEnter;
+        screenSample.ray.t = regionExit;
         self->renderRegionSample(self,
             fb,
             world,

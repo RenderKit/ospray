@@ -16,6 +16,7 @@
 
 #include "DistributedLoadBalancer.h"
 #include <algorithm>
+#include <limits>
 #include <map>
 #include "../fb/DistributedFrameBuffer.h"
 #include "WriteMultipleTileOperation.h"
@@ -202,6 +203,7 @@ float Distributed::renderFrame(
     // children for the number of regions projecting to it that will be
     // sent.
     if (tileOwner) {
+      bgtile.sortOrder = std::numeric_limits<int32_t>::max();
       bgtile.generation = 0;
       bgtile.children =
           std::count(regionVisible, regionVisible + numRegions, true);
@@ -228,8 +230,8 @@ float Distributed::renderFrame(
       const size_t i = myVisibleRegions[vid];
       Tile __aligned(64) tile(tileID, fbSize, accumID);
 #else
-          for (const size_t &i : myVisibleRegions) {
-            Tile &tile = bgtile;
+      for (const size_t &i : myVisibleRegions) {
+        Tile &tile = bgtile;
 #endif
       tile.generation = 1;
       tile.children = 0;
@@ -260,7 +262,7 @@ float Distributed::renderFrame(
 #if PARALLEL_REGION_RENDERING
     });
 #else
-          }
+    }
 #endif
   });
 
