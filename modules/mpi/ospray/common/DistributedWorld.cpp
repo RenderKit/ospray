@@ -59,8 +59,7 @@ RegionScreenBounds Region::project(const Camera *camera) const
 
         ProjectedPoint proj = camera->projectPoint(pt);
         screen.extend(proj.screenPos);
-        vec3f v = pt - camera->pos;
-        screen.depth = std::max(dot(v, camera->dir), screen.depth);
+        screen.depth = std::max(length(pt - camera->pos), screen.depth);
       }
     }
   }
