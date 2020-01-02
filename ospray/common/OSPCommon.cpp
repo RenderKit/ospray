@@ -155,6 +155,7 @@ namespace ospray {
           removeArgs(ac, av, i, 1);
         } else {
           // silently ignore other arguments
+          i++;
         }
 
         // ALOK: apply changes so that error messages and warnings during
