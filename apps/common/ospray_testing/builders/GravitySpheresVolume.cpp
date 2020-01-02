@@ -195,8 +195,7 @@ namespace ospray {
       volume.setParam("voxelType", int(OSP_FLOAT));
       volume.setParam("gridOrigin", vec3f(-1.f, -1.f, -1.f));
       volume.setParam("gridSpacing", vec3f(2.f / reduce_max(volumeDimensions)));
-      volume.setParam("voxelData",
-                      cpp::Data(volumeDimensions, {0}, voxels.data()));
+      volume.setParam("data", cpp::Data(volumeDimensions, {0}, voxels.data()));
 
       volume.commit();
       return volume;

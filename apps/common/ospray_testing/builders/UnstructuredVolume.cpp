@@ -209,9 +209,9 @@ namespace ospray {
       volume.setParam("vertex.position", cpp::Data(vertices));
 
       if (valuesPerCell)
-        volume.setParam("cell.value", cpp::Data(cellValues));
+        volume.setParam("cell.data", cpp::Data(cellValues));
       else
-        volume.setParam("vertex.value", cpp::Data(vertexValues));
+        volume.setParam("vertex.data", cpp::Data(vertexValues));
 
       volume.setParam("index", cpp::Data(indices));
       volume.setParam("cell.index", cpp::Data(cells));
