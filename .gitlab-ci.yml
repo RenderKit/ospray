@@ -78,17 +78,17 @@ build-arch-clang:
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
 
-build-arch-gcc-warnings:
+build-arch-gcc-extras:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=ON
 
-build-arch-clang-warnings:
+build-arch-clang-extras:
   <<: *build_job_docker
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=ON
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker
