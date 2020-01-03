@@ -125,8 +125,8 @@ namespace ospray {
 
     if (normalData && normalData->type != OSP_FLOAT3)
       throw std::runtime_error("curves 'normal' array must be type OSP_FLOAT3");
-    if (tangentData && tangentData->type != OSP_FLOAT3)
-      throw std::runtime_error("curves 'tangent' array must be type OSP_FLOAT3");
+    if (tangentData && tangentData->type != OSP_FLOAT4)
+      throw std::runtime_error("curves 'tangent' array must be type OSP_FLOAT4");
 
     postStatusMsg(2) << "#osp: creating curves geometry, "
                      << "#verts=" << numVertices << ", "
@@ -156,7 +156,7 @@ namespace ospray {
                      indexData->numItems,
                      normalData ? (const ispc::vec3f*)normalData->data : nullptr,
                      normalData ? normalData->numItems : 0,
-                     tangentData ? (const ispc::vec3f*)tangentData->data : nullptr,
+                     tangentData ? (const ispc::vec4f*)tangentData->data : nullptr,
                      tangentData ? tangentData->numItems : 0);
   }
 

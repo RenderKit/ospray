@@ -59,7 +59,7 @@ Curves_set(void           *uniform _self,
            int32           uniform numSegments,
            const uniform vec3f *uniform normalCurve,
            int32           uniform numNormals,
-           const uniform vec3f *uniform tangentCurve,
+           const uniform vec4f *uniform tangentCurve,
            int32           uniform numTangents)
 {
   Curves *uniform self = (Curves *uniform)_self;
@@ -75,8 +75,8 @@ Curves_set(void           *uniform _self,
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_NORMAL, 0, RTC_FORMAT_FLOAT3,
                                normalCurve, 0, sizeof(uniform vec3f), numNormals);
   if (tangentCurve)
-    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_TANGENT, 0, RTC_FORMAT_FLOAT3,
-                               tangentCurve, 0, sizeof(uniform vec3f), numTangents);
+    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_TANGENT, 0, RTC_FORMAT_FLOAT4,
+                               tangentCurve, 0, sizeof(uniform vec4f), numTangents);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle, geom);
   rtcCommitGeometry(geom);
   rtcReleaseGeometry(geom);
