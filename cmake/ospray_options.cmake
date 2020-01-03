@@ -48,9 +48,7 @@ ospray_determine_embree_isa_support()
 ospray_create_embree_target()
 
 # Open VKL
-find_package(openvkl ${OPENVKL_VERSION_REQUIRED} REQUIRED)
-get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
-    INTERFACE_INCLUDE_DIRECTORIES)
+ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
 
 ###########################################################
 # OSPRay specific build options and configuration selection

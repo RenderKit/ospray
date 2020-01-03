@@ -436,3 +436,20 @@ macro(ospray_determine_embree_isa_support)
               "Your Embree build needs to support at least one ISA >= SSE4.1!")
   endif()
 endmacro()
+
+macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED)
+  find_dependency(openvkl ${OPENVKL_VERSION_REQUIRED})
+  if(NOT openvkl_FOUND)
+    message(FATAL_ERROR
+            "We did not find Open VKL installed on your system. OSPRay requires"
+            " an Open VKL installation >= v${OPENVKL_VERSION_REQUIRED}, please"
+            " download and extract Open VKL (or compile from source), then"
+            " set the 'openvkl_DIR' variable to the installation directory.")
+  else()
+    get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
+        INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(OPENVKL_LIBRARY openvkl::openvkl
+        IMPORTED_LOCATION_RELEASE)
+    message(STATUS "Found Open VKL: ${OPENVKL_LIBRARY}")
+  endif()
+endmacro()
