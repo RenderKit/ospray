@@ -28,6 +28,7 @@ if (BUILD_EMBREE_FROM_SOURCE)
     STAMP_DIR ${COMPONENT_NAME}/stamp
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
+    LIST_SEPARATOR | # Use the alternate list separator
     URL "https://github.com/embree/embree/archive/${BUILD_EMBREE_VERSION}.zip"
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
@@ -82,3 +83,4 @@ else()
 endif()
 
 list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
+string(REPLACE ";" "|" CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
