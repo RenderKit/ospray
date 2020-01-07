@@ -132,6 +132,12 @@ void DistributedWorld::commit()
 
   // Figure out the unique regions on this node which we can send
   // to the others to build the distributed world
+  std::sort(
+      myRegions.begin(), myRegions.end(), [](const box3f &a, const box3f &b) {
+        std::less<vec3f> op;
+        return op(a.lower, b.lower)
+            || (a.lower == b.lower && op(a.upper, b.upper));
+      });
   auto last = std::unique(myRegions.begin(), myRegions.end());
   myRegions.erase(last, myRegions.end());
 
