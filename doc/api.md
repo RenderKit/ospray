@@ -1263,7 +1263,7 @@ To create a new renderer of given type `type` use
 General parameters of all renderers are
 
   -------------- ------------------ -----------  -----------------------------------------
-  Type          Name                    Default  Description
+  Type           Name                   Default  Description
   -------------- ------------------ -----------  -----------------------------------------
   int            pixelSamples                 1  samples per pixel
 
@@ -1330,7 +1330,7 @@ renderers, the SciVis renderer supports the following parameters:
 
   float         aoIntensity                       1  ambient occlusion strength
 
-  float         volumeSamplingRate            0.125  sampling rate of the volume
+  float         volumeSamplingRate                1  sampling rate for volumes
   ------------- ---------------------- ------------  ----------------------------
   : Special parameters understood by the SciVis renderer.
 

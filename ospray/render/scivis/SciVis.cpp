@@ -51,7 +51,7 @@ namespace ospray {
                      getParam<int>("aoSamples", aoSamples),
                      getParam<float>("aoRadius", 1e20f),
                      getParam<float>("aoIntensity", 1.f),
-                     getParam<float>("volumeSamplingRate", 0.125f));
+                     getParam<float>("volumeSamplingRate", 1.f));
   }
 
   OSP_REGISTER_RENDERER(SciVis, scivis);
