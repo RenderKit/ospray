@@ -50,6 +50,8 @@ namespace ospray {
       template <typename T>
       void setParam(const std::string &name, const T &v) const;
 
+      void setParam(const std::string &name, const std::string &v) const;
+
       void setParam(const std::string &name, OSPDataType, const void *) const;
 
       void removeParam(const std::string &name) const;
@@ -107,8 +109,9 @@ namespace ospray {
     }
 
     template <typename HANDLE_T, OSPDataType TYPE>
-    inline ManagedObject<HANDLE_T, TYPE> &ManagedObject<HANDLE_T, TYPE>::
-    operator=(const ManagedObject<HANDLE_T, TYPE> &copy)
+    inline ManagedObject<HANDLE_T, TYPE>
+        &ManagedObject<HANDLE_T, TYPE>::operator=(
+            const ManagedObject<HANDLE_T, TYPE> &copy)
     {
       ospObject = copy.handle();
       ospRetain(copy.handle());
@@ -116,8 +119,9 @@ namespace ospray {
     }
 
     template <typename HANDLE_T, OSPDataType TYPE>
-    inline ManagedObject<HANDLE_T, TYPE> &ManagedObject<HANDLE_T, TYPE>::
-    operator=(ManagedObject<HANDLE_T, TYPE> &&move)
+    inline ManagedObject<HANDLE_T, TYPE>
+        &ManagedObject<HANDLE_T, TYPE>::operator=(
+            ManagedObject<HANDLE_T, TYPE> &&move)
     {
       ospObject      = move.handle();
       move.ospObject = nullptr;
@@ -135,6 +139,13 @@ namespace ospray {
                     "box, linear, affine) are "
                     "expected to come from ospcommon::math.");
       ospSetParam(ospObject, name.c_str(), OSPTypeFor<T>::value, &v);
+    }
+
+    template <typename HANDLE_T, OSPDataType TYPE>
+    inline void ManagedObject<HANDLE_T, TYPE>::setParam(
+        const std::string &name, const std::string &v) const
+    {
+      ospSetParam(ospObject, name.c_str(), OSP_STRING, v.c_str());
     }
 
     template <typename HANDLE_T, OSPDataType TYPE>

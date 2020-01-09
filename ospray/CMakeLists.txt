@@ -143,8 +143,11 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/Renderer.ispc
   render/Renderer.cpp
   render/util.ispc
-  render/raycast/RaycastRenderer.cpp
-  render/raycast/RaycastRenderer.ispc
+
+  render/debug/DebugRenderer.cpp
+  render/debug/DebugRenderer.ispc
+  render/debug/DebugMaterial.cpp
+
   render/scivis/SciVis.cpp
   render/scivis/SciVis.ispc
   render/scivis/SciVisMaterial.cpp

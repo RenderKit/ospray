@@ -40,13 +40,20 @@ static const std::vector<std::string> g_scenes = {"boxes",
 static const std::vector<std::string> g_curveBasis = {
     "bspline", "hermite", "catmull-rom", "linear"};
 
-static const std::vector<std::string> g_renderers = {"scivis",
-                                                     "pathtracer",
-                                                     "raycast",
-                                                     "raycast_vertexColor",
-                                                     "instID",
-                                                     "geomID",
-                                                     "primID"};
+static const std::vector<std::string> g_renderers = {
+    "scivis", "pathtracer", "debug"};
+
+static const std::vector<std::string> g_debugRendererTypes = {"eyeLight",
+                                                              "primID",
+                                                              "geomID",
+                                                              "instID",
+                                                              "Ng",
+                                                              "Ns",
+                                                              "backfacing_Ng",
+                                                              "backfacing_Ns",
+                                                              "dPds",
+                                                              "dPdt",
+                                                              "volume"};
 
 bool sceneUI_callback(void *, int index, const char **out_text)
 {
@@ -66,10 +73,17 @@ bool rendererUI_callback(void *, int index, const char **out_text)
   return true;
 }
 
+bool debugTypeUI_callback(void *, int index, const char **out_text)
+{
+  *out_text = g_debugRendererTypes[index].c_str();
+  return true;
+}
+
 // GLFWOSPRayWindow definitions ///////////////////////////////////////////////
 
-void error_callback(int error, const char *desc) {
-    std::cerr << "error " << error << ": " << desc << std::endl;
+void error_callback(int error, const char *desc)
+{
+  std::cerr << "error " << error << ": " << desc << std::endl;
 }
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
@@ -436,13 +450,31 @@ void GLFWOSPRayWindow::buildUI()
                    nullptr,
                    g_renderers.size())) {
     rendererTypeStr = g_renderers[whichRenderer];
+
     if (rendererTypeStr == "scivis")
       rendererType = OSPRayRendererType::SCIVIS;
     else if (rendererTypeStr == "pathtracer")
       rendererType = OSPRayRendererType::PATHTRACER;
-    else
+    else if (rendererTypeStr == "debug") {
+      rendererType = OSPRayRendererType::DEBUG;
+      renderer.setParam("method", g_debugRendererTypes[0]);
+      addObjectToCommit(renderer.handle());
+    } else
       rendererType = OSPRayRendererType::OTHER;
+
     refreshScene();
+  }
+
+  if (rendererType == OSPRayRendererType::DEBUG) {
+    static int whichType = 0;
+    if (ImGui::Combo("debug type##whichDebugType",
+                     &whichType,
+                     debugTypeUI_callback,
+                     nullptr,
+                     g_debugRendererTypes.size())) {
+      renderer.setParam("method", g_debugRendererTypes[whichType]);
+      addObjectToCommit(renderer.handle());
+    }
   }
 
   ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);

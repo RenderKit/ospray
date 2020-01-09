@@ -78,6 +78,14 @@ namespace ospray {
     }                                                                        \
   }
 
+#define declare_param_setter_string(TYPE)                                    \
+  {                                                                          \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) { \
+      const char *str = (const char *)v;                                     \
+      setParamOnObject(o, p, std::string(str));                              \
+    }                                                                        \
+  }
+
     static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
         declare_param_setter(Device *),
         declare_param_setter(void *),
@@ -99,6 +107,7 @@ namespace ospray {
         declare_param_setter_object(Volume *),
         declare_param_setter_object(VolumetricModel *),
         declare_param_setter_object(World *),
+        declare_param_setter_string(const char *),
         declare_param_setter(char *),
         declare_param_setter(char),
         declare_param_setter(unsigned char),

@@ -23,27 +23,23 @@
 #include "render/util.ih"
 #include "volume/VolumetricModel.ih"
 
+#include "DebugRendererType.h"
+
 #include "openvkl/openvkl.isph"
 
-/*! \brief a simple, primary-ray-only ray cast render that
-
-  This simple renderer shoots only a single primary ray and does some
-  simple shading, mostly for debugging purposes such as visualizing
-  primitive ID, geometry ID, shading normals, eyelight shading, etc */
-struct RaycastRenderer
+struct DebugRenderer
 {
-  /*! the base "Renderer" we are derived from */
   Renderer super;
 };
 
 /*! a simple test-frame renderer that doesn't even trace a ray, just
   returns a well-defined test frame (mostly useful for debugging
   whether frame buffers are properly set up etcpp */
-void RaycastRenderer_renderSample_testFrame(Renderer *uniform _self,
-                                            FrameBuffer *uniform fb,
-                                            World *uniform world,
-                                            void *uniform perFrameData,
-                                            varying ScreenSample &sample)
+void DebugRenderer_testFrame(Renderer *uniform _self,
+                             FrameBuffer *uniform fb,
+                             World *uniform world,
+                             void *uniform perFrameData,
+                             varying ScreenSample &sample)
 {
   sample.rgb.x = ((sample.sampleID.x) % 256) / 255.f;
   sample.rgb.y = ((sample.sampleID.y) % 256) / 255.f;
@@ -56,24 +52,24 @@ void RaycastRenderer_renderSample_testFrame(Renderer *uniform _self,
 
 /*! a simple test-frame renderer that doesn't even trace a ray, just
   returns the absolute of the ray direction */
-void RaycastRenderer_renderSample_rayDir(Renderer *uniform _self,
-                                         FrameBuffer *uniform fb,
-                                         World *uniform world,
-                                         void *uniform perFrameData,
-                                         varying ScreenSample &sample)
+void DebugRenderer_rayDir(Renderer *uniform _self,
+                          FrameBuffer *uniform fb,
+                          World *uniform world,
+                          void *uniform perFrameData,
+                          varying ScreenSample &sample)
 {
   sample.rgb   = absf(sample.ray.dir);
   sample.alpha = 1.f;
   sample.z     = 1.f;
 }
 
-void RaycastRenderer_renderSample_eyeLight(Renderer *uniform _self,
-                                           FrameBuffer *uniform fb,
-                                           World *uniform world,
-                                           void *uniform perFrameData,
-                                           varying ScreenSample &sample)
+void DebugRenderer_eyeLight(Renderer *uniform _self,
+                            FrameBuffer *uniform fb,
+                            World *uniform world,
+                            void *uniform perFrameData,
+                            varying ScreenSample &sample)
 {
-  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -87,13 +83,13 @@ void RaycastRenderer_renderSample_eyeLight(Renderer *uniform _self,
   }
 }
 
-void RaycastRenderer_renderSample_Ng(Renderer *uniform _self,
-                                     FrameBuffer *uniform fb,
-                                     World *uniform world,
-                                     void *uniform perFrameData,
-                                     varying ScreenSample &sample)
+void DebugRenderer_Ng(Renderer *uniform _self,
+                      FrameBuffer *uniform fb,
+                      World *uniform world,
+                      void *uniform perFrameData,
+                      varying ScreenSample &sample)
 {
-  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -108,13 +104,13 @@ void RaycastRenderer_renderSample_Ng(Renderer *uniform _self,
   }
 }
 
-void RaycastRenderer_renderSample_Ns(Renderer *uniform _self,
-                                     FrameBuffer *uniform fb,
-                                     World *uniform world,
-                                     void *uniform perFrameData,
-                                     varying ScreenSample &sample)
+void DebugRenderer_Ns(Renderer *uniform _self,
+                      FrameBuffer *uniform fb,
+                      World *uniform world,
+                      void *uniform perFrameData,
+                      varying ScreenSample &sample)
 {
-  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -129,13 +125,13 @@ void RaycastRenderer_renderSample_Ns(Renderer *uniform _self,
   }
 }
 
-void RaycastRenderer_renderSample_dPds(Renderer *uniform _self,
-                                       FrameBuffer *uniform fb,
-                                       World *uniform world,
-                                       void *uniform perFrameData,
-                                       varying ScreenSample &sample)
+void DebugRenderer_dPds(Renderer *uniform _self,
+                        FrameBuffer *uniform fb,
+                        World *uniform world,
+                        void *uniform perFrameData,
+                        varying ScreenSample &sample)
 {
-  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -156,13 +152,13 @@ void RaycastRenderer_renderSample_dPds(Renderer *uniform _self,
   }
 }
 
-void RaycastRenderer_renderSample_dPdt(Renderer *uniform _self,
-                                       FrameBuffer *uniform fb,
-                                       World *uniform world,
-                                       void *uniform perFrameData,
-                                       varying ScreenSample &sample)
+void DebugRenderer_dPdt(Renderer *uniform _self,
+                        FrameBuffer *uniform fb,
+                        World *uniform world,
+                        void *uniform perFrameData,
+                        varying ScreenSample &sample)
 {
-  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -183,14 +179,13 @@ void RaycastRenderer_renderSample_dPdt(Renderer *uniform _self,
   }
 }
 
-void RaycastRenderer_renderSample_eyeLight_vertexColor(
-    Renderer *uniform _self,
-    FrameBuffer *uniform fb,
-    World *uniform world,
-    void *uniform perFrameData,
-    varying ScreenSample &sample)
+void DebugRenderer_vertexColor(Renderer *uniform _self,
+                               FrameBuffer *uniform fb,
+                               World *uniform world,
+                               void *uniform perFrameData,
+                               varying ScreenSample &sample)
 {
-  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -208,13 +203,13 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(
   }
 }
 
-void RaycastRenderer_renderSample_eyeLight_primID(Renderer *uniform _self,
-                                                  FrameBuffer *uniform fb,
-                                                  World *uniform world,
-                                                  void *uniform perFrameData,
-                                                  varying ScreenSample &sample)
+void DebugRenderer_primID(Renderer *uniform _self,
+                          FrameBuffer *uniform fb,
+                          World *uniform world,
+                          void *uniform perFrameData,
+                          varying ScreenSample &sample)
 {
-  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -229,13 +224,13 @@ void RaycastRenderer_renderSample_eyeLight_primID(Renderer *uniform _self,
   }
 }
 
-void RaycastRenderer_renderSample_eyeLight_instID(Renderer *uniform _self,
-                                                  FrameBuffer *uniform fb,
-                                                  World *uniform world,
-                                                  void *uniform perFrameData,
-                                                  varying ScreenSample &sample)
+void DebugRenderer_instID(Renderer *uniform _self,
+                          FrameBuffer *uniform fb,
+                          World *uniform world,
+                          void *uniform perFrameData,
+                          varying ScreenSample &sample)
 {
-  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -250,13 +245,13 @@ void RaycastRenderer_renderSample_eyeLight_instID(Renderer *uniform _self,
   }
 }
 
-void RaycastRenderer_renderSample_eyeLight_geomID(Renderer *uniform _self,
-                                                  FrameBuffer *uniform fb,
-                                                  World *uniform world,
-                                                  void *uniform perFrameData,
-                                                  varying ScreenSample &sample)
+void DebugRenderer_geomID(Renderer *uniform _self,
+                          FrameBuffer *uniform fb,
+                          World *uniform world,
+                          void *uniform perFrameData,
+                          varying ScreenSample &sample)
 {
-  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -271,13 +266,13 @@ void RaycastRenderer_renderSample_eyeLight_geomID(Renderer *uniform _self,
   }
 }
 
-void RaycastRenderer_renderSample_backfacing_Ng(Renderer *uniform _self,
-                                                FrameBuffer *uniform fb,
-                                                World *uniform world,
-                                                void *uniform perFrameData,
-                                                varying ScreenSample &sample)
+void DebugRenderer_backfacing_Ng(Renderer *uniform _self,
+                                 FrameBuffer *uniform fb,
+                                 World *uniform world,
+                                 void *uniform perFrameData,
+                                 varying ScreenSample &sample)
 {
-  uniform RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  uniform DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -293,14 +288,13 @@ void RaycastRenderer_renderSample_backfacing_Ng(Renderer *uniform _self,
   }
 }
 
-void RaycastRenderer_renderSample_backfacing_Ns(Renderer *uniform _self,
-                                                FrameBuffer *uniform fb,
-                                                World *uniform world,
-                                                void *uniform perFrameData,
-                                                varying ScreenSample &sample)
+void DebugRenderer_backfacing_Ns(Renderer *uniform _self,
+                                 FrameBuffer *uniform fb,
+                                 World *uniform world,
+                                 void *uniform perFrameData,
+                                 varying ScreenSample &sample)
 {
-  uniform RaycastRenderer *uniform self =
-      (uniform RaycastRenderer * uniform) _self;
+  uniform DebugRenderer *uniform self = (uniform DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
   sample.z     = sample.ray.t;
@@ -318,13 +312,13 @@ void RaycastRenderer_renderSample_backfacing_Ns(Renderer *uniform _self,
   }
 }
 
-void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
-                                         FrameBuffer *uniform fb,
-                                         World *uniform world,
-                                         void *uniform perFrameData,
-                                         varying ScreenSample &sample)
+void DebugRenderer_volume(Renderer *uniform _self,
+                          FrameBuffer *uniform fb,
+                          World *uniform world,
+                          void *uniform perFrameData,
+                          varying ScreenSample &sample)
 {
-  RaycastRenderer *uniform self = (RaycastRenderer * uniform) _self;
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
@@ -409,27 +403,60 @@ void RaycastRenderer_renderSample_volume(Renderer *uniform _self,
   }
 }
 
-#define DEFINE_RAYCAST_RENDERER(name)                                    \
-  export void *uniform RaycastRenderer_create_##name(void *uniform cppE) \
-  {                                                                      \
-    uniform RaycastRenderer *uniform self =                              \
-        uniform new uniform RaycastRenderer;                             \
-    Renderer_Constructor(&self->super, cppE);                            \
-    self->super.renderSample = RaycastRenderer_renderSample_##name;      \
-    return self;                                                         \
-  }
+// DebugRenderer C++ interface ////////////////////////////////////////////////
 
-DEFINE_RAYCAST_RENDERER(testFrame);
-DEFINE_RAYCAST_RENDERER(rayDir);
-DEFINE_RAYCAST_RENDERER(eyeLight);
-DEFINE_RAYCAST_RENDERER(Ng);
-DEFINE_RAYCAST_RENDERER(Ns);
-DEFINE_RAYCAST_RENDERER(dPds);
-DEFINE_RAYCAST_RENDERER(dPdt);
-DEFINE_RAYCAST_RENDERER(eyeLight_primID);
-DEFINE_RAYCAST_RENDERER(eyeLight_geomID);
-DEFINE_RAYCAST_RENDERER(eyeLight_instID);
-DEFINE_RAYCAST_RENDERER(eyeLight_vertexColor);
-DEFINE_RAYCAST_RENDERER(backfacing_Ng);
-DEFINE_RAYCAST_RENDERER(backfacing_Ns);
-DEFINE_RAYCAST_RENDERER(volume);
+export void *uniform DebugRenderer_create(void *uniform cppE)
+{
+  DebugRenderer *uniform self = uniform new uniform DebugRenderer;
+  Renderer_Constructor(&self->super, cppE, 1);
+  self->super.renderSample = DebugRenderer_testFrame;
+  return self;
+}
+
+export void DebugRenderer_set(void *uniform _self, uniform int type)
+{
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+
+  switch (type) {
+  case RAY_DIR:
+    self->super.renderSample = DebugRenderer_rayDir;
+    break;
+  case EYE_LIGHT:
+    self->super.renderSample = DebugRenderer_eyeLight;
+    break;
+  case NG:
+    self->super.renderSample = DebugRenderer_Ng;
+    break;
+  case NS:
+    self->super.renderSample = DebugRenderer_Ns;
+    break;
+  case DPDS:
+    self->super.renderSample = DebugRenderer_dPds;
+    break;
+  case DPDT:
+    self->super.renderSample = DebugRenderer_dPdt;
+    break;
+  case PRIM_ID:
+    self->super.renderSample = DebugRenderer_primID;
+    break;
+  case GEOM_ID:
+    self->super.renderSample = DebugRenderer_geomID;
+    break;
+  case INST_ID:
+    self->super.renderSample = DebugRenderer_instID;
+    break;
+  case BACKFACING_NG:
+    self->super.renderSample = DebugRenderer_backfacing_Ng;
+    break;
+  case BACKFACING_NS:
+    self->super.renderSample = DebugRenderer_backfacing_Ns;
+    break;
+  case VOLUME:
+    self->super.renderSample = DebugRenderer_volume;
+    break;
+  case TEST_FRAME:
+  default:
+    self->super.renderSample = DebugRenderer_testFrame;
+    break;
+  }
+}
