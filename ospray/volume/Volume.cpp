@@ -130,7 +130,18 @@ namespace ospray {
                                        (VKLDataType)data->type,
                                        data->data(),
                                        VKL_DATA_SHARED_BUFFER);
-          vklSetData(vklVolume, param.name.c_str(), vklData);
+
+          std::string name(param.name);
+          if (name == "data") {
+            if (!data->compact())
+              throw std::runtime_error(
+                  toString() +
+                  " 'data' array with strides currently not supported.");
+            vec3ul &dim = data->numItems;
+            vklSetVec3i(vklVolume, "dimensions", dim.x, dim.y, dim.z);
+            vklSetInt(vklVolume, "voxelType", (VKLDataType)data->type);
+          }
+          vklSetData(vklVolume, name.c_str(), vklData);
           vklRelease(vklData);
         }
       } else {

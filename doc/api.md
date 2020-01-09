@@ -488,39 +488,29 @@ common type of structured volumes are regular grids.
 
 Structured volumes are created by passing the `structured_regular`
 type string to `ospNewVolume`. Structured volumes are represented
-through an `OSPData` array (which may or may not be shared with the
-application), where the voxel data is laid out in memory in
-xyz-order^[For consecutive memory addresses the x-index of the
-corresponding voxel changes the quickest.]
+through an `OSPData` 3D array `data` (which may or may not be shared
+with the application), where currently the voxel data needs to be laid
+out compact in memory in xyz-order^[For consecutive memory addresses the
+x-index of the corresponding voxel changes the quickest.]
 
 The parameters understood by structured volumes are summarized in the
 table below.
 
-  ------ ----------- -----------  -----------------------------------
-  Type   Name            Default  Description
-  ------ ----------- -----------  -----------------------------------
-  vec3i  dimensions               number of voxels in each
-                                  dimension $(x, y, z)$
+  ------- ----------- -----------  ----------------------------------
+  Type    Name            Default  Description
+  ------- ----------- -----------  ----------------------------------
+  vec3f   gridOrigin  $(0, 0, 0)$  origin of the grid in object-space
 
-  int    voxelType                `OSPDataType` of each voxel,
-                                  currently supported are:
+  vec3f   gridSpacing $(1, 1, 1)$  size of the grid cells in
+                                   object-space
 
-                                  `OSP_UCHAR`
-
-                                  `OSP_SHORT`
-
-                                  `OSP_USHORT`
-
-                                  `OSP_FLOAT`
-
-                                  `OSP_DOUBLE`
-
-  vec3f  gridOrigin  $(0, 0, 0)$  origin of the grid in world-space
-
-  vec3f  gridSpacing $(1, 1, 1)$  size of the grid cells in
-                                  world-space
-  ------ ----------- -----------  -----------------------------------
+  OSPData data                     the actual voxel 3D [data]
+  ------- ----------- -----------  ----------------------------------
   : Additional configuration parameters for structured volumes.
+
+The size of the volume is inferred from the size of the 3D array `data`,
+as is the type of the voxel values (currently supported are:
+`OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_FLOAT`, and `OSP_DOUBLE`).
 
 ### Adaptive Mesh Refinement (AMR) Volume
 
@@ -1805,7 +1795,7 @@ its parameters are as follows
   ------- ------------ ----------------------------------
   int     format       `OSPTextureFormat` for the texture
   int     filter       default `OSP_TEXTURE_FILTER_BILINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
-  OSPData data         the actual texel [data]
+  OSPData data         the actual texel 2D [data]
   ------- ------------ ----------------------------------
   : Parameters of `texture2d` texture type.
 
@@ -1828,7 +1818,9 @@ The supported texture formats for `texture2d` are:
   : Supported texture formats by `texture2d`, i.e., valid constants
   of type `OSPTextureFormat`.
 
-The texel data addressed by `source` starts with the texels in the lower
+The size of the texture is inferred from the size of the 2D array
+`data`, which also needs have a compatible type to `format`.
+The texel data in `data` starts with the texels in the lower
 left corner of the texture image, like in OpenGL. Per default a texture
 fetch is filtered by performing bi-linear interpolation of the nearest
 2×2 texels; if instead fetching only the nearest texel is desired (i.e.,
@@ -2251,7 +2243,7 @@ The following are values which can be synchronized with the application
                        the future. The underlying task may involve one or
                        more of the above synchronization events
   -------------------- --------------------------------------------------------
-  : Supported events that can be passed to `ospWait`
+  : Supported events that can be passed to `ospWait`.
 
 Currently only rendering can be invoked asynchronously. However, future
 releases of OSPRay may add more asynchronous versions of API calls (and

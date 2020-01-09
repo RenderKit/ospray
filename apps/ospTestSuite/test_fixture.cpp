@@ -53,8 +53,7 @@ namespace OSPRayTestScenes {
     }
 
     cpp::Volume torus("structured_regular");
-    torus.setParam("data", cpp::Data(volumetricData));
-    torus.setParam("dimensions", vec3i(size, size, size));
+    torus.setParam("data", cpp::Data(vec3ul(size), volumetricData.data()));
     torus.setParam("gridOrigin", vec3f(-0.5f, -0.5f, -0.5f));
     torus.setParam("gridSpacing", vec3f(1.f / size, 1.f / size, 1.f / size));
     return torus;

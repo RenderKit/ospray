@@ -191,12 +191,9 @@ namespace ospray {
     {
       cpp::Volume volume("structured_regular");
 
-      volume.setParam("dimensions", volumeDimensions);
-      volume.setParam("voxelType", int(OSP_FLOAT));
       volume.setParam("gridOrigin", vec3f(-1.f, -1.f, -1.f));
       volume.setParam("gridSpacing", vec3f(2.f / reduce_max(volumeDimensions)));
-      volume.setParam("data", cpp::Data(volumeDimensions, {0}, voxels.data()));
-
+      volume.setParam("data", cpp::Data(volumeDimensions, voxels.data()));
       volume.commit();
       return volume;
     }
@@ -232,7 +229,6 @@ namespace ospray {
       // create an AMR volume and assign attributes
       cpp::Volume volume("amr");
 
-      volume.setParam("voxelType", int(OSP_FLOAT));
       volume.setParam("block.data", cpp::Data(blockData));
       volume.setParam("block.bounds", cpp::Data(blockBounds));
       volume.setParam("block.level", cpp::Data(refinementLevels));

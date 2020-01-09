@@ -165,16 +165,16 @@ namespace ospray {
         float densityScale,
         float anisotropy)
     {
-      vec3l dims{128};  // should be at least 2
+      vec3ul dims{128};  // should be at least 2
       const float spacing = 3.f / (reduce_max(dims) - 1);
       cpp::Volume volume("structured_regular");
 
       // generate volume data
       auto numVoxels = dims.product();
       std::vector<float> voxels(numVoxels, 0);
-      tasking::parallel_for(dims.z, [&](int64_t z) {
-        for (int y = 0; y < dims.y; ++y) {
-          for (int x = 0; x < dims.x; ++x) {
+      tasking::parallel_for(dims.z, [&](uint64_t z) {
+        for (uint64_t y = 0; y < dims.y; ++y) {
+          for (uint64_t x = 0; x < dims.x; ++x) {
             vec3f p = vec3f(x + 0.5f, y + 0.5f, z + 0.5f) / dims;
             if (D(p))
               voxels[dims.x * dims.y * z + dims.x * y + x] =
@@ -190,9 +190,7 @@ namespace ospray {
           voxelRange.extend(v);
       });
 
-      volume.setParam("data", cpp::Data(voxels));
-      volume.setParam("voxelType", int(OSP_FLOAT));
-      volume.setParam("dimensions", vec3i(dims));
+      volume.setParam("data", cpp::Data(dims, voxels.data()));
       volume.setParam("gridOrigin", vec3f(-1.5f, -1.5f, -1.5f));
       volume.setParam("gridSpacing", vec3f(spacing));
       volume.commit();
