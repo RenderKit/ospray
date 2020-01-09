@@ -100,23 +100,8 @@ namespace ospray {
   {
     Renderer::commit();
 
-    const int32 rouletteDepth = getParam<int>("rouletteDepth", 5);
+    const int32 rouletteDepth = getParam<int>("roulettePathLength", 5);
     const float maxRadiance = getParam<float>("maxContribution", inf);
-
-    // ALOK: if a backplate is not set, but bgColor is, use bgColor to create a
-    // small backplate texture
-    if (!hasParam("backplate") && hasParam("bgColor")) {
-      bgTexture    = ospNewTexture("texture2d");
-      OSPData data = ospNewSharedData(bgColor, OSP_VEC4F, 1);
-      OSPTextureFormat f = OSP_TEXTURE_RGBA32F;
-      ospCommit(data);
-      ospSetParam(bgTexture, "format", OSP_INT, &f);
-      ospSetParam(bgTexture, "data", OSP_DATA, &data);
-      ospCommit(bgTexture);
-    }
-
-    Texture2D *backplate = (Texture2D *)getParamObject("backplate", (ManagedObject *)bgTexture);
-
     vec4f shadowCatcherPlane =
         getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
     useGeometryLights = getParam<bool>("geometryLights", true);
@@ -124,7 +109,6 @@ namespace ospray {
     ispc::PathTracer_set(getIE(),
         rouletteDepth,
         maxRadiance,
-        backplate ? backplate->getIE() : nullptr,
         (ispc::vec4f &)shadowCatcherPlane);
   }
 

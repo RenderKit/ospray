@@ -140,7 +140,7 @@ int main(int argc, const char **argv)
 
     // complete setup of renderer
     renderer.setParam("aoSamples", 1);
-    renderer.setParam("bgColor", 1.0f);  // white, transparent
+    renderer.setParam("backgroundColor", 1.0f);  // white, transparent
     renderer.commit();
 
     // create and setup framebuffer

@@ -19,18 +19,37 @@
 #include "common/World.ih"
 #include "render/util.ih"
 
-// The layout of this struct must match that of OSPPickData in ospray.h
+vec4f Renderer_getBackground(const Renderer *uniform self, const vec2f& screenPos)
+{
+  if (!self->backplate) 
+    return self->bgColor;
+
+  DifferentialGeometry lookup;
+  initDgFromTexCoord(lookup, clamp2edge(self->backplate, screenPos));
+
+  return get4f(self->backplate, lookup);
+}
+
+float Renderer_getMaxDepth(const Renderer *uniform self, const vec2f& screenPos)
+{
+  if (!self->maxDepthTexture)
+    return inf;
+
+  DifferentialGeometry lookup;
+  initDgFromTexCoord(lookup, screenPos);
+  return get1f(self->maxDepthTexture, lookup);
+}
+
 void Renderer_default_renderSample(Renderer *uniform self,
                                    FrameBuffer *uniform fb,
                                    World *uniform model,
                                    void *uniform perFrameData,
                                    varying ScreenSample &sample)
 {
-  sample.z     = inf;
-  sample.alpha = 1.f;
-  sample.rgb =
-      make_random_color((sample.sampleID.x << 0) + (sample.sampleID.y << 14) +
-                        (sample.sampleID.z << 28));
+  sample.z = sample.ray.t;
+  vec4f bg = Renderer_getBackground(self, sample.pos);
+  sample.alpha = bg.w;
+  sample.rgb = make_vec3f(bg);
 }
 
 unmasked void Renderer_default_renderTile(Renderer *uniform self,
@@ -62,19 +81,9 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
         (screenSample.sampleID.y >= fb->size.y))
       continue;
 
-    float tMax = inf;
-    // set ray t value for early ray termination if we have a maximum depth
-    // texture
-    if (self->maxDepthTexture) {
-      // always sample center of pixel
-      vec2f depthTexCoord;
-      depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
-      depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
-
-      DifferentialGeometry lookup;
-      initDgFromTexCoord(lookup, depthTexCoord);
-      tMax = min(get1f(self->maxDepthTexture, lookup), inf);
-    }
+    // set ray t value for early ray termination (from maximum depth texture)
+    vec2f center = make_vec2f(screenSample.sampleID.x, screenSample.sampleID.y) + 0.5f;
+    const float tMax = Renderer_getMaxDepth(self, center * fb->rcpSize);
 
     vec3f col    = make_vec3f(0.f);
     float alpha  = 0.f;
@@ -92,6 +101,7 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
           (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
       cameraSample.screen.y =
           (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+      screenSample.pos = cameraSample.screen;
 
       // TODO: fix correlations / better RNG
       cameraSample.lens.x = precomputedHalton3(startSampleID + s);
@@ -121,25 +131,18 @@ export void Renderer_set(void *uniform _self,
                          const uniform int32 maxDepth,
                          const uniform float minContribution,
                          const uniform vec4f &bgColor,
+                         void *uniform backplate,
                          const uniform int32 numMaterials,
                          void *uniform materials,
                          void *uniform _maxDepthTexture);
 
-void Renderer_Constructor(uniform Renderer *uniform self, void *uniform cppE)
+void Renderer_Constructor(Renderer *uniform self, void *uniform cppE)
 {
   self->cppEquivalent = cppE;
   self->renderSample  = Renderer_default_renderSample;
   self->renderTile    = Renderer_default_renderTile;
-  Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), 0, NULL, NULL);
+  Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), NULL, 0, NULL, NULL);
   precomputedHalton_create();
-}
-
-void Renderer_Constructor(uniform Renderer *uniform self,
-                          void *uniform cppE,
-                          const uniform int32 spp)
-{
-  Renderer_Constructor(self, cppE);
-  self->spp = spp;
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////
@@ -164,6 +167,7 @@ export void Renderer_set(void *uniform _self,
                          const uniform int32 maxDepth,
                          const uniform float minContribution,
                          const uniform vec4f &bgColor,
+                         void *uniform backplate,
                          const uniform int32 numMaterials,
                          void *uniform materials,
                          void *uniform _maxDepthTexture)
@@ -174,6 +178,7 @@ export void Renderer_set(void *uniform _self,
   self->maxDepth        = maxDepth;
   self->minContribution = minContribution;
   self->bgColor         = bgColor;
+  self->backplate = (uniform Texture2D * uniform) backplate;
   self->numMaterials    = numMaterials;
   self->material        = (Material**uniform)materials;
   self->maxDepthTexture = (uniform Texture2D * uniform) _maxDepthTexture;
@@ -207,16 +212,7 @@ export void Renderer_pick(const void *uniform _self,
 
   Ray ray;
   camera->initRay(camera, ray, cameraSample);
-
-  if (self->maxDepthTexture) {
-    // always sample center of pixel
-    const vec2f pixel = floor(screenPos * make_vec2f(fb->size.x, fb->size.y));
-    const vec2f depthTexCoord = (pixel + 0.5f) * fb->rcpSize;
-    DifferentialGeometry lookup;
-    initDgFromTexCoord(lookup, depthTexCoord);
-    const float tMax = get1f(self->maxDepthTexture, lookup);
-    ray.t            = min(ray.t, tMax);
-  }
+  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen));
 
   traceRay(world, ray);
 

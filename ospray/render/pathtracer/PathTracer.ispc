@@ -115,6 +115,8 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     cameraSample.time     = LDSampler_getFloat(ldSampler, 4);
 
     camera->initRay(camera, screenSample.ray, cameraSample);
+    const float tMax = Renderer_getMaxDepth(&self->super, cameraSample.screen);
+    screenSample.ray.t = min(screenSample.ray.t, tMax);
 
     ScreenSample sample = PathTraceIntegrator_Li(self, world,
                                                 fb, ix, iy,
@@ -179,7 +181,6 @@ unmasked void PathTracer_renderTile(Renderer *uniform _self,
 export void PathTracer_set(void *uniform _self
     , const uniform int32 rouletteDepth
     , const uniform float maxRadiance
-    , void *uniform backplate
     , const uniform vec4f &shadowCatcherPlane
     )
 {
@@ -187,7 +188,6 @@ export void PathTracer_set(void *uniform _self
 
   self->rouletteDepth = rouletteDepth;
   self->maxRadiance = maxRadiance;
-  self->backplate = (uniform Texture2D *uniform)backplate;
 
   uniform vec3f normal = make_vec3f(shadowCatcherPlane);
   const uniform float l = length(normal);
@@ -214,7 +214,7 @@ export void* uniform PathTracer_create(void *uniform cppE)
   Renderer_Constructor(&self->super, cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  PathTracer_set(self, 5, inf, NULL, make_vec4f(0.f));
+  PathTracer_set(self, 5, inf, make_vec4f(0.f));
   PathTracer_setLights(self, NULL, 0, 0);
 
   precomputeMicrofacetAlbedoTables();

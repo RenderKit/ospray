@@ -74,6 +74,9 @@ Version History
     `OSP_CATMULL_ROM` curves.
 -   Changed module init methods to facilitate version checking:
     `extern "C" OSPError ospray_module_init_<name>(int16_t versionMajor, int16_t versionMinor, int16_t versionPatch)`
+-   The `map_backplate` texture is supported in all renderers and does
+    not hide lights in infinity (like the HDRI light) anymore;
+    explicitely make lights in`visible` if this is needed
 -   Known issues:
     -   Open VKL must be built with a compatible set of ISAs with OSPRay
         due to a known issue with VKL iterator types. This is easiest

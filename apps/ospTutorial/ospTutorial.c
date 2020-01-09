@@ -177,7 +177,7 @@ int main(int argc, const char **argv) {
       ospNewRenderer("pathtracer"); // choose path tracing renderer
 
   // complete setup of renderer
-  ospSetFloat(renderer, "bgColor", 1.0f); // white, transparent
+  ospSetFloat(renderer, "backgroundColor", 1.0f); // white, transparent
   ospCommit(renderer);
 
   // create and setup framebuffer

@@ -451,26 +451,26 @@ void GLFWOSPRayWindow::buildUI()
   ImGui::Separator();
 
   static int spp = 1;
-  if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-    renderer.setParam("spp", spp);
+  if (ImGui::SliderInt("pixelSamples", &spp, 1, 64)) {
+    renderer.setParam("pixelSamples", spp);
     addObjectToCommit(renderer.handle());
   }
 
-  if (ImGui::ColorEdit3("bgColor", bgColor)) {
-    renderer.setParam("bgColor", bgColor);
+  if (ImGui::ColorEdit3("backgroundColor", bgColor)) {
+    renderer.setParam("backgroundColor", bgColor);
     addObjectToCommit(renderer.handle());
   }
 
   if (rendererType == OSPRayRendererType::PATHTRACER) {
     static int maxDepth = 20;
-    if (ImGui::SliderInt("maxDepth", &maxDepth, 1, 64)) {
-      renderer.setParam("maxDepth", maxDepth);
+    if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {
+      renderer.setParam("maxPathLength", maxDepth);
       addObjectToCommit(renderer.handle());
     }
 
     static int rouletteDepth = 1;
-    if (ImGui::SliderInt("rouletteDepth", &rouletteDepth, 1, 64)) {
-      renderer.setParam("rouletteDepth", rouletteDepth);
+    if (ImGui::SliderInt("roulettePathLength", &rouletteDepth, 1, 64)) {
+      renderer.setParam("roulettePathLength", rouletteDepth);
       addObjectToCommit(renderer.handle());
     }
 
@@ -483,9 +483,9 @@ void GLFWOSPRayWindow::buildUI()
     static bool useTestTex = false;
     if (ImGui::Checkbox("backplate texture", &useTestTex)) {
       if (useTestTex) {
-        renderer.setParam("backplate", backplateTex);
+        renderer.setParam("map_backplate", backplateTex);
       } else {
-        renderer.removeParam("backplate");
+        renderer.removeParam("map_backplate");
       }
       addObjectToCommit(renderer.handle());
     }
@@ -543,7 +543,7 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
 
   renderer = cpp::Renderer(rendererTypeStr);
   // retains a set background color on renderer change
-  renderer.setParam("bgColor", bgColor);
+  renderer.setParam("backgroundColor", bgColor);
   addObjectToCommit(renderer.handle());
 
   // set up backplate texture

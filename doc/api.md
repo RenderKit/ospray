@@ -1265,19 +1265,21 @@ General parameters of all renderers are
   -------------- ------------------ -----------  -----------------------------------------
   Type          Name                    Default  Description
   -------------- ------------------ -----------  -----------------------------------------
-  int            spp                          1  samples per pixel
+  int            pixelSamples                 1  samples per pixel
 
-  int            maxDepth                    20  maximum ray recursion depth
+  int            maxPathLength               20  maximum ray recursion depth
 
   float          minContribution          0.001  sample contributions below this value
                                                  will be neglected to speedup rendering
 
   float          varianceThreshold            0  threshold for adaptive accumulation
 
-  float /        bgColor                 black,  background color and alpha
-  vec3f / vec4f                     transparent  (RGBA)
+  float /        backgroundColor         black,  background color and alpha (RGBA), if no
+  vec3f / vec4f                     transparent  map_backplate is set
 
-  OSPTexture     maxDepthTexture                 optional screen-sized float [texture]
+  OSPTexture     map_backplate                   optional [texture] image used as background
+
+  OSPTexture     map_maxDepth                    optional screen-sized float [texture]
                                                  with maximum far distance per pixel
                                                  (use texture type `texture2d`)
 
@@ -1294,15 +1296,16 @@ refinement of image regions that have an estimated variance below the
 `OSP_FB_VARIANCE` channel.
 
 Per default the background of the rendered image will be transparent
-black, i.e., the alpha channel holds the opacity of the rendered objects.
-This eases transparency-aware blending of the image with an
-arbitrary background image by the application. The parameter `bgColor`
-can be used to already blend with a constant background color (and
+black, i.e., the alpha channel holds the opacity of the rendered
+objects. This eases transparency-aware blending of the image with an
+arbitrary background image by the application. The parameter
+`backgroundColor` or `map_backplate` can be used to already blend with a
+constant background color or backplate texture, respectively, (and
 alpha) during rendering.
 
 OSPRay renderers support depth composition with images of other
 renderers, for example to incorporate help geometries of a 3D UI that
-were rendered with OpenGL. The screen-sized [texture] `maxDepthTexture`
+were rendered with OpenGL. The screen-sized [texture] `map_maxDepth`
 must have format `OSP_TEXTURE_R32F` and flag
 `OSP_TEXTURE_FILTER_NEAREST`. The fetched values are used to limit the
 distance of primary rays, thus objects of other renderers can hide
@@ -1346,19 +1349,12 @@ supports the following special parameters:
   bool       geometryLights       true  whether to render light emitted from
                                         geometries
 
-  int        rouletteDepth           5  ray recursion depth at which to
+  int        roulettePathLength      5  ray recursion depth at which to
                                         start Russian roulette termination
 
   float      maxContribution         ∞  samples are clamped to this value
                                         before they are accumulated into
                                         the framebuffer
-
-  OSPTexture backplate            NULL  [texture] image used as background,
-                                        replacing visible lights in infinity
-                                        (e.g., the [HDRI light])
-
-  vec4f      shadowCatcherPlane      0  optional invisible plane that captures
-                                        shadows for compositing
   ---------- ---------------- --------  -------------------------------------
   : Special parameters understood by the path tracer.
 

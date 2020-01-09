@@ -35,8 +35,6 @@ void SciVis_renderSample(Renderer *uniform _self,
                  sample.sampleID.x + fb->size.x * sample.sampleID.y,
                  sample.sampleID.z);
 
-  const uniform vec4f &bgColor = self->super.bgColor;
-
   vec4f outputColor = make_vec4f(0.f);
 
   uniform bool firstHit       = true;
@@ -88,24 +86,11 @@ void SciVis_renderSample(Renderer *uniform _self,
         sample.normal = dg.Ns;
       }
     } else {
-      // Use backplate or background color if no geometry has been hit
-      if (self->backplate != NULL) {
-        vec2f pixel;
-        DifferentialGeometry lookup;
-
-        pixel.x = (sample.sampleID.x) * fb->rcpSize.x;
-        pixel.y = (sample.sampleID.y) * fb->rcpSize.y;
-        initDgFromTexCoord(lookup, clamp2edge(self->backplate, pixel));
-
-        blendedColor = get4f(self->backplate, lookup);
-      } else {
-        blendedColor = bgColor;
-      }
-
+      blendedColor = Renderer_getBackground(&self->super, sample.pos);
       // Initialize other per sample data with first hit values
       if (firstHit) {
-        sample.z      = inf;
-        sample.albedo = make_vec3f(bgColor);
+        sample.z      = ray.t;
+        sample.albedo = make_vec3f(blendedColor);
         sample.normal = sample.ray.dir;
       }
     }
@@ -127,7 +112,7 @@ void SciVis_renderSample(Renderer *uniform _self,
 export void *uniform SciVis_create(void *uniform cppE)
 {
   uniform SciVis *uniform self = uniform new uniform SciVis;
-  Renderer_Constructor(&self->super, cppE, 1);
+  Renderer_Constructor(&self->super, cppE);
   self->super.renderSample = SciVis_renderSample;
   return self;
 }
@@ -136,7 +121,6 @@ export void SciVis_set(void *uniform _self,
                        uniform int aoSamples,
                        uniform float aoRadius,
                        uniform float aoIntensity,
-                       void *uniform backplate,
                        uniform float volumeSamplingRate)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
@@ -144,7 +128,6 @@ export void SciVis_set(void *uniform _self,
   self->aoSamples   = aoSamples;
   self->aoRadius    = aoRadius;
   self->aoIntensity = aoIntensity;
-  self->backplate   = (uniform Texture2D * uniform) backplate;
 
   self->volumeSamplingRate = volumeSamplingRate;
 }

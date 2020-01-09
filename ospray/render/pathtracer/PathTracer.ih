@@ -29,7 +29,6 @@ struct PathTracer {
 
   int32 rouletteDepth;
   float maxRadiance;
-  Texture2D* uniform backplate;
   // coefficients of plane equation defining geometry to catch shadows for
   // compositing; disabled if normal is zero-length
   vec4f shadowCatcherPlane;

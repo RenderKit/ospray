@@ -30,7 +30,7 @@ class CornellBox : public BaseFixture
 
   void SetRendererParameters(cpp::Renderer r)
   {
-    r.setParam("spp", SPP);
+    r.setParam("pixelSamples", SPP);
   }
 };
 

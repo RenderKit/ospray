@@ -149,16 +149,13 @@ void samplePath(const PathContext& pathContext,
       pathState.throughput = pathState.throughput * pathVertex.albedo;
     }
 
-    // backplate handling
+    // background handling
     if (pathVertex.type == ENVIRONMENT && pathState.straightPath)
     {
-      if ((bool)pathContext.context->backplate) {
-        DifferentialGeometry lookup;
-        initDgFromTexCoord(lookup, clamp2edge(pathContext.context->backplate, *pathContext.pixel));
-        pathState.contribution = pathState.contribution + pathState.throughput * get3f(pathContext.context->backplate, lookup);
-      }
-      else
-        sample.alpha = 1.0f - luminance(pathState.throughput);
+      vec4f bg = Renderer_getBackground(&pathContext.context->super, *pathContext.pixel);
+      pathState.contribution = pathState.contribution + pathState.throughput * make_vec3f(bg);
+      sample.alpha = 1.0f - luminance(pathState.throughput);
+      sample.alpha += (1.f - sample.alpha) * bg.w;
     }
 
     if ((!pathState.disableFWD || pathState.depth == 0) && pathVertex.type != VOLUME) {

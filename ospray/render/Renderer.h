@@ -84,6 +84,7 @@ namespace ospray {
     vec4f bgColor{0.f};
 
     Ref<Texture2D> maxDepthTexture;
+    Ref<Texture2D> backplate;
 
     Ref<const DataT<Material *>> materialData;
     std::vector<void *> ispcMaterialPtrs;

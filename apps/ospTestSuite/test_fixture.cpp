@@ -180,8 +180,8 @@ namespace OSPRayTestScenes {
 
     renderer = cpp::Renderer(rendererType);
     renderer.setParam("aoSamples", 0);
-    renderer.setParam("bgColor", vec3f(1.0f));
-    renderer.setParam("spp", samplesPerPixel);
+    renderer.setParam("backgroundColor", vec3f(1.0f));
+    renderer.setParam("pixelSamples", samplesPerPixel);
 
     world = cpp::World();
   }
@@ -220,13 +220,13 @@ namespace OSPRayTestScenes {
     camera.setParam("up", vec3f(0.f, 1.f, 0.f));
     camera.setParam("fovy", fov);
 
-    renderer.setParam("spp", 16);
-    renderer.setParam("bgColor", vec4f(0.2f, 0.2f, 0.4f, 1.0f));
+    renderer.setParam("pixelSamples", 16);
+    renderer.setParam("backgroundColor", vec4f(0.2f, 0.2f, 0.4f, 1.0f));
     // scivis params
     renderer.setParam("aoSamples", 16);
     renderer.setParam("aoIntensity", 1.f);
     // pathtracer params
-    renderer.setParam("maxDepth", 2);
+    renderer.setParam("maxPathLength", 2);
 
     cpp::Geometry sphere("spheres");
     cpp::Geometry inst_sphere("spheres");
@@ -391,8 +391,8 @@ namespace OSPRayTestScenes {
     depthTex.setParam("data", cpp::Data(imgSize, texData.data()));
     depthTex.commit();
 
-    renderer.setParam("maxDepthTexture", depthTex);
-    renderer.setParam("bgColor", bgColor);
+    renderer.setParam("map_maxDepth", depthTex);
+    renderer.setParam("backgroundColor", bgColor);
 
     cpp::Light ambient("ambient");
     ambient.setParam("intensity", 0.5f);
