@@ -205,7 +205,7 @@ namespace ospray {
     }
     Iter1D<T> end() const
     {
-      return Iter1D<T>(addr + ispc.byteStride * ispc.numItems, ispc.byteStride);
+      return Iter1D<T>(addr + ispc.byteStride * size(), ispc.byteStride);
     }
 
     T &operator[](int64_t idx)
@@ -232,6 +232,10 @@ namespace ospray {
 
   inline const ispc::Data1D *ispc(Ref<const Data> &dataRef)
   {
+    if (dataRef->size() > std::numeric_limits<std::uint32_t>::max())
+      throw std::runtime_error(
+          "data array too large (over 4B elements, index is limited to 32bit");
+      
     return dataRef && dataRef->dimensions == 1 ? &dataRef->ispc
                                                : &Data::empytData1D;
   }
@@ -244,7 +248,7 @@ namespace ospray {
 
   inline size_t Data::size() const
   {
-    return numItems.x * size_t(numItems.y) * numItems.z;
+    return numItems.x * numItems.y * numItems.z;
   }
 
   inline char *Data::data() const

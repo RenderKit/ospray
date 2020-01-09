@@ -87,18 +87,19 @@ namespace ospray {
       return;
 
     ispc.byteStride = byteStride.x;
-    ispc.numItems   = numItems.x;
+    size_t numItems1D = numItems.x;
     if (numItems.y > 1) {
       ispc.byteStride = byteStride.y;
-      ispc.numItems   = numItems.y;
+      numItems1D = numItems.y;
     } else if (numItems.z > 1) {
       ispc.byteStride = byteStride.z;
-      ispc.numItems   = numItems.z;
+      numItems1D = numItems.z;
     }
     // finalize ispc-side
     ispc.addr = reinterpret_cast<decltype(ispc.addr)>(addr);
-    ispc.huge = ispc.byteStride * ispc.numItems >
+    ispc.huge = ispc.byteStride * numItems1D >
                 std::numeric_limits<std::int32_t>::max();
+    ispc.numItems = (uint32_t)numItems1D;
   }
 
   bool Data::compact() const

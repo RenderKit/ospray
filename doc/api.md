@@ -361,11 +361,11 @@ is to created a shared data array, which is done with
 
     OSPData ospNewSharedData(const void *sharedData,
                        OSPDataType,
-      uint32_t numItems1,
+      uint64_t numItems1,
       int64_t byteStride1 = 0,
-      uint32_t numItems2 = 1,
+      uint64_t numItems2 = 1,
       int64_t byteStride2 = 0,
-      uint32_t numItems3 = 1,
+      uint64_t numItems3 = 1,
       int64_t byteStride3 = 0);
 
 The call returns an `OSPData` handle to the created array. The calling
@@ -742,6 +742,9 @@ Geometries in OSPRay are objects that describe intersectable surfaces.
 To create a new geometry object of given type `type` use
 
     OSPGeometry ospNewGeometry(const char *type);
+
+Note that in the current implementation geometries are limited to a
+maximum of 2^32^ primitives.
 
 ### Mesh
 
