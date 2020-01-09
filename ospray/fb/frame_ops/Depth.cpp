@@ -105,6 +105,6 @@ namespace ospray {
     });
   }
 
-  OSP_REGISTER_IMAGE_OP(DepthFrameOp, frame_depth);
+  OSP_REGISTER_IMAGE_OP(DepthFrameOp, depth);
 
 }  // namespace ospray

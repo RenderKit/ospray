@@ -52,6 +52,7 @@ NOTE: Both C++ and ISPC files can be formatted with clang-format.
 ## Naming conventions for public API
 
 - Prefer enums over string parameters.
+- Parameter and object names are camelCase (e.g. `metallicPaint`)
 - Parameter names are singular, even if it is an array (e.g. `index`,
   `material`)
 - Data belonging together like the members of an array of structs, which

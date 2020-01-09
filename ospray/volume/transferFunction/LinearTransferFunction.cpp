@@ -108,6 +108,6 @@ namespace ospray {
     return valueRanges;
   }
 
-  OSP_REGISTER_TRANSFER_FUNCTION(LinearTransferFunction, piecewise_linear);
+  OSP_REGISTER_TRANSFER_FUNCTION(LinearTransferFunction, piecewiseLinear);
 
 } // namespace ospray

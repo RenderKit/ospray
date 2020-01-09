@@ -35,7 +35,7 @@ namespace ospray {
 
     cpp::Group PtLuminous::buildGroup() const
     {
-      cpp::Geometry sphereGeometry("spheres");
+      cpp::Geometry sphereGeometry("sphere");
 
       sphereGeometry.setParam("sphere.position", cpp::Data(vec3f(0.f)));
       sphereGeometry.setParam("radius", 1.f);
@@ -43,7 +43,7 @@ namespace ospray {
 
       cpp::GeometricModel model(sphereGeometry);
 
-      cpp::Material material(rendererType, "Luminous");
+      cpp::Material material(rendererType, "luminous");
       material.setParam("color", vec3f(0.7f, 0.7f, 1.f));
       material.commit();
 

@@ -29,6 +29,6 @@ namespace ospray {
     return "ospray::PanoramicCamera";
   }
 
-  OSP_REGISTER_CAMERA(PanoramicCamera,panoramic);
+  OSP_REGISTER_CAMERA(PanoramicCamera, panoramic);
 
 } // ::ospray

@@ -63,6 +63,6 @@ namespace ospray {
     return retval;
   }
 
-  OSP_REGISTER_GEOMETRY(Spheres, spheres);
+  OSP_REGISTER_GEOMETRY(Spheres, sphere);
 
 }  // namespace ospray

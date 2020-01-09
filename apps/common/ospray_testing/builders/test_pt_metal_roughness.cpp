@@ -39,7 +39,7 @@ namespace ospray {
                                            vec3f k,
                                            float roughness)
     {
-      cpp::Material mat(rendererType, "Metal");
+      cpp::Material mat(rendererType, "metal");
       mat.setParam("eta", eta);
       mat.setParam("k", k);
       mat.setParam("roughness", roughness);
@@ -58,7 +58,7 @@ namespace ospray {
 
     cpp::Group PtMetalRoughness::buildGroup() const
     {
-      cpp::Geometry sphereGeometry("spheres");
+      cpp::Geometry sphereGeometry("sphere");
 
       constexpr int dimSize = 5;
 

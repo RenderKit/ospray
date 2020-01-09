@@ -37,9 +37,6 @@ namespace ospray {
     ispc::PointLight_set(getIE(), (ispc::vec3f &)position, radius);
   }
 
-  OSP_REGISTER_LIGHT(PointLight, PointLight);
-  OSP_REGISTER_LIGHT(PointLight, point);
-  OSP_REGISTER_LIGHT(PointLight, SphereLight);
   OSP_REGISTER_LIGHT(PointLight, sphere);
 
 }  // namespace ospray

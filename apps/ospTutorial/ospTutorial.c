@@ -128,7 +128,7 @@ int main(int argc, const char **argv) {
 
   ospCommit(mesh);
 
-  OSPMaterial mat = ospNewMaterial("pathtracer", "OBJMaterial");
+  OSPMaterial mat = ospNewMaterial("pathtracer", "obj");
   ospCommit(mat);
 
   // put the mesh into a model

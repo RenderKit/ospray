@@ -152,7 +152,7 @@ namespace ospray {
 
     cpp::Geometry makeBoxGeometry(const box3f &box)
     {
-      cpp::Geometry ospGeometry("boxes");
+      cpp::Geometry ospGeometry("box");
       ospGeometry.setParam("box", cpp::Data(1, OSP_BOX3F, &box));
       ospGeometry.commit();
       return ospGeometry;
@@ -197,7 +197,7 @@ namespace ospray {
       volume.setParam("gridSpacing", vec3f(spacing));
       volume.commit();
 
-      cpp::TransferFunction tfn("piecewise_linear");
+      cpp::TransferFunction tfn("piecewiseLinear");
       tfn.setParam("valueRange", voxelRange.toVec2());
       tfn.setParam("color", cpp::Data(colors));
       tfn.setParam("opacity", cpp::Data(opacities));
@@ -218,7 +218,7 @@ namespace ospray {
     {
       cpp::GeometricModel geometricModel(geo);
 
-      cpp::Material objMaterial(rendererType, "OBJMaterial");
+      cpp::Material objMaterial(rendererType, "obj");
       objMaterial.setParam("Kd", kd);
       objMaterial.commit();
 

@@ -125,7 +125,6 @@ namespace ospray {
     }
   }
 
-  OSP_REGISTER_IMAGE_OP(SaveTiles, tile_debug);
-  OSP_REGISTER_IMAGE_OP(SaveTiles, save_tiles);
+  OSP_REGISTER_IMAGE_OP(SaveTiles, save);
 
 }  // namespace ospray

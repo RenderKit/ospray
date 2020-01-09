@@ -69,7 +69,7 @@ namespace ospray {
       cpp::TransferFunction Builder::makeTransferFunction(
           const vec2f &valueRange) const
       {
-        cpp::TransferFunction transferFunction("piecewise_linear");
+        cpp::TransferFunction transferFunction("piecewiseLinear");
 
         std::vector<vec3f> colors;
         std::vector<float> opacities;
@@ -210,7 +210,7 @@ namespace ospray {
 
         cpp::GeometricModel model(planeGeometry);
 
-        cpp::Material material(rendererType, "OBJMaterial");
+        cpp::Material material(rendererType, "obj");
         material.commit();
 
         model.setParam("material", material);

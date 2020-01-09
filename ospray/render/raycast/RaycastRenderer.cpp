@@ -50,8 +50,6 @@ namespace ospray {
       effect of a point light at the viewer's position */
   using RaycastRenderer_eyeLight = RaycastRenderer<ispc::RaycastRenderer_create_eyeLight>;
   OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight,raycast);
-  OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight,eyeLight);
-  OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight,raycast_eyelight);
 
   /*! \brief Instantion of Ray Cast Renderer that shows dg.Ng (geometry normal of hit) */
   using RaycastRenderer_Ng = RaycastRenderer<ispc::RaycastRenderer_create_Ng>;
@@ -71,18 +69,15 @@ namespace ospray {
 
   /*! \brief Instantion of Ray Cast Renderer that shows dg.primID (primitive ID of hit) */
   using RaycastRenderer_eyeLight_primID = RaycastRenderer<ispc::RaycastRenderer_create_eyeLight_primID>;
-  OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight_primID,eyeLight_primID);
   OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight_primID,primID);
 
   /*! \brief Instantion of Ray Cast Renderer that shows dg.instID (instance ID of hit) */
   using RaycastRenderer_eyeLight_instID = RaycastRenderer<ispc::RaycastRenderer_create_eyeLight_instID>;
-  OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight_instID,eyeLight_instID);
   OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight_instID,instID);
 
   /*! \brief Instantion of Ray Cast Renderer that shows eye-light
       shading with a material color based on dg.geomID */
   using RaycastRenderer_eyeLight_geomID = RaycastRenderer<ispc::RaycastRenderer_create_eyeLight_geomID>;
-  OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight_geomID,eyeLight_geomID);
   OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight_geomID,geomID);
 
   /*! \brief Instantion of Ray Cast Renderer that shows eye-light

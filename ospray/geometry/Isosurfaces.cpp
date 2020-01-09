@@ -97,6 +97,6 @@ namespace ospray {
     return retval;
   }
 
-  OSP_REGISTER_GEOMETRY(Isosurfaces, isosurfaces);
+  OSP_REGISTER_GEOMETRY(Isosurfaces, isosurface);
 
 }  // namespace ospray

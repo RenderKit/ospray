@@ -64,7 +64,7 @@ namespace ospray {
       std::uniform_real_distribution<float> colorDistribution(0.1f, 1.0f);
       std::vector<vec4f> s_colors(points.size());
       
-      cpp::Geometry geom("curves");
+      cpp::Geometry geom("curve");
 
       if(curveBasis == "hermite") {
         geom.setParam("type", int(OSP_ROUND));
@@ -101,7 +101,7 @@ namespace ospray {
       geom.setParam("index", cpp::Data(indices));
       geom.commit();
 
-      cpp::Material mat(rendererType, "ThinGlass");
+      cpp::Material mat(rendererType, "thinGlass");
       mat.setParam("attenuationDistance", 1.0f);
       mat.commit();
 

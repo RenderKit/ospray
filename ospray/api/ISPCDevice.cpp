@@ -525,10 +525,8 @@ namespace ospray {
       return moduleVersionCheck(versionMajor, versionMinor);
     }
 
-    OSP_REGISTER_DEVICE(ISPCDevice, local_device);
-    OSP_REGISTER_DEVICE(ISPCDevice, local);
-    OSP_REGISTER_DEVICE(ISPCDevice, default_device);
     OSP_REGISTER_DEVICE(ISPCDevice, default);
+    OSP_REGISTER_DEVICE(ISPCDevice, local);
 
   }  // namespace api
 }  // namespace ospray

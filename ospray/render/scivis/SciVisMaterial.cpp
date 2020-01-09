@@ -52,14 +52,10 @@ namespace ospray {
   }
 
   OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, obj);
 
   // NOTE(jda) - support all renderer aliases
-  OSP_REGISTER_MATERIAL(sv, SciVisMaterial, default);
   OSP_REGISTER_MATERIAL(ao, SciVisMaterial, default);
-  OSP_REGISTER_MATERIAL(ao1, SciVisMaterial, default);
-  OSP_REGISTER_MATERIAL(ao2, SciVisMaterial, default);
-  OSP_REGISTER_MATERIAL(ao4, SciVisMaterial, default);
-  OSP_REGISTER_MATERIAL(ao8, SciVisMaterial, default);
-  OSP_REGISTER_MATERIAL(ao16, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(ao, SciVisMaterial, obj);
 
 }  // namespace ospray

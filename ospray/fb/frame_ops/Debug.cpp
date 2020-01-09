@@ -75,6 +75,6 @@ namespace ospray {
     });
   }
 
-  OSP_REGISTER_IMAGE_OP(DebugFrameOp, frame_debug);
+  OSP_REGISTER_IMAGE_OP(DebugFrameOp, debug);
 
 }  // namespace ospray

@@ -54,6 +54,6 @@ namespace ospray {
     return retval;
   }
 
-  OSP_REGISTER_GEOMETRY(Boxes, boxes);
+  OSP_REGISTER_GEOMETRY(Boxes, box);
 
 }  // namespace ospray

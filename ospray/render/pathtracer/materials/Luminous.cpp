@@ -48,7 +48,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pathtracer, Luminous, Luminous);
-    OSP_REGISTER_MATERIAL(pt, Luminous, Luminous);
+    OSP_REGISTER_MATERIAL(pathtracer, Luminous, luminous);
   }
 }

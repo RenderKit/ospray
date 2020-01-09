@@ -44,7 +44,7 @@ namespace ospray {
 
     cpp::Group Streamlines::buildGroup() const
     {
-      cpp::Geometry slGeom("curves");
+      cpp::Geometry slGeom("curve");
 
       std::vector<vec4f> points;
       std::vector<unsigned int> indices;
@@ -124,7 +124,7 @@ namespace ospray {
       
       slGeom.commit();
 
-      cpp::Material slMat(rendererType, "OBJMaterial");
+      cpp::Material slMat(rendererType, "obj");
       slMat.commit();
 
       cpp::GeometricModel model(slGeom);

@@ -39,7 +39,7 @@ namespace ospray {
                                          vec3f Kd,
                                          vec3f Ks)
     {
-      cpp::Material mat(rendererType, "OBJMaterial");
+      cpp::Material mat(rendererType, "obj");
       mat.setParam("Kd", Kd);
       mat.setParam("Ks", Ks);
       mat.commit();
@@ -57,7 +57,7 @@ namespace ospray {
 
     cpp::Group PtObj::buildGroup() const
     {
-      cpp::Geometry sphereGeometry("spheres");
+      cpp::Geometry sphereGeometry("sphere");
 
       constexpr int dimSize = 5;
 
@@ -104,7 +104,7 @@ namespace ospray {
 
       std::vector<cpp::Light> lightHandles;
 
-      cpp::Light dirLight("directional");
+      cpp::Light dirLight("distant");
       dirLight.setParam("direction", vec3f(1.f, -1.f, 1.f));
       dirLight.commit();
 

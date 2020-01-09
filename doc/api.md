@@ -698,7 +698,7 @@ below) as parameter "`transferFunction`" using `ospSetObject`.
 
 One type of transfer function that is supported by OSPRay is the linear
 transfer function, which interpolates between given equidistant colors
-and opacities. It is create by passing the string "`piecewise_linear`"
+and opacities. It is create by passing the string "`piecewiseLinear`"
 to `ospNewTransferFunction` and it is controlled by these parameters:
 
   Type         Name        Description
@@ -827,7 +827,7 @@ Optionally supported are edge and vertex creases.
 
 A geometry consisting of individual spheres, each of which can have an
 own radius, is created by calling `ospNewGeometry` with type string
-"`spheres`". The spheres will not be tessellated but rendered
+"`sphere`". The spheres will not be tessellated but rendered
 procedurally and are thus perfectly round. To allow a variety of sphere
 representations in the application this geometry allows a flexible way
 of specifying the data of center position and radius within a [data]
@@ -852,7 +852,7 @@ array:
 ### Curves
 
 A geometry consisting of multiple curves is created by calling
-`ospNewGeometry` with type string "`curves`".  The parameters defining
+`ospNewGeometry` with type string "`curve`".  The parameters defining
 this geometry are listed in the table below.
 
   ------------------ ---------------------- -------------------------------------------
@@ -924,7 +924,7 @@ each segment corresponds to a link between two vertices.
 
 OSPRay can directly render axis-aligned bounding boxes without the need
 to convert them to quads or triangles. To do so create a boxes
-geometry by calling `ospNewGeometry` with type string "`boxes`".
+geometry by calling `ospNewGeometry` with type string "`box`".
 
   Type       Name       Description
   ---------- ---------- ------------------------------------------------------
@@ -936,7 +936,7 @@ geometry by calling `ospNewGeometry` with type string "`boxes`".
 
 OSPRay can directly render multiple isosurfaces of a volume without
 first tessellating them. To do so create an isosurfaces geometry by
-calling `ospNewGeometry` with type string "`isosurfaces`". Each
+calling `ospNewGeometry` with type string "`isosurface`". Each
 isosurface will be colored according to the [transfer function] assigned
 to the `volume`.
 
@@ -1384,7 +1384,7 @@ The OBJ material is the workhorse material supported by both the [SciVis
 renderer] and the [path tracer]. It offers widely used common properties
 like diffuse and specular reflection and is based on the [MTL material
 format](http://paulbourke.net/dataformats/mtl/) of Lightwave's OBJ scene
-files. To create an OBJ material pass the type string "`OBJMaterial`" to
+files. To create an OBJ material pass the type string "`obj`" to
 `ospNewMaterial`. Its main parameters are
 
   Type          Name         Default  Description
@@ -1459,7 +1459,7 @@ The Principled material is the most complex material offered by the
 and lobes. It uses the GGX microfacet distribution with approximate multiple
 scattering for dielectrics and metals, uses the Oren-Nayar model for diffuse
 reflection, and is energy conserving. To create a Principled material, pass
-the type string "`Principled`" to `ospNewMaterial`. Its parameters are
+the type string "`principled`" to `ospNewMaterial`. Its parameters are
 listed in the table below.
 
   -------------------------------------------------------------------------------------------
@@ -1542,7 +1542,7 @@ anisotropic rotation and a dust layer (sheen) on top.][imgMaterialPrincipled]
 
 The CarPaint material is a specialized version of the Principled material for
 rendering different types of car paints. To create a CarPaint material, pass
-the type string "`CarPaint`" to `ospNewMaterial`. Its parameters are listed
+the type string "`carPaint`" to `ospNewMaterial`. Its parameters are listed
 in the table below.
 
   -------------------------------------------------------------------------------------------
@@ -1597,7 +1597,7 @@ supported as well.
 
 The [path tracer] offers a physical metal, supporting changing roughness
 and realistic color shifts at edges. To create a Metal material pass the
-type string "`Metal`" to `ospNewMaterial`. Its parameters are
+type string "`metal`" to `ospNewMaterial`. Its parameters are
 
   -------- ---------- ----------  --------------------------------------------
   Type     Name          Default  Description
@@ -1650,7 +1650,7 @@ roughness.][imgMaterialMetal]
 
 The [path tracer] offers an alloy material, which behaves similar to
 [Metal], but allows for more intuitive and flexible control of the
-color. To create an Alloy material pass the type string "`Alloy`" to
+color. To create an Alloy material pass the type string "`alloy`" to
 `ospNewMaterial`. Its parameters are
 
   Type   Name          Default  Description
@@ -1679,7 +1679,7 @@ color.][imgMaterialAlloy]
 The [path tracer] offers a realistic a glass material, supporting
 refraction and volumetric attenuation (i.e., the transparency color
 varies with the geometric thickness). To create a Glass material pass
-the type string "`Glass`" to `ospNewMaterial`. Its parameters are
+the type string "`glass`" to `ospNewMaterial`. Its parameters are
 
   Type   Name                  Default  Description
   ------ -------------------- --------  -----------------------------------
@@ -1706,7 +1706,7 @@ parallel to the real geometric surface. The implementation accounts for
 multiple internal reflections between the interfaces (including
 attenuation), but neglects parallax effects due to its (virtual)
 thickness. To create a such a thin glass material pass the type string
-"`ThinGlass`" to `ospNewMaterial`. Its parameters are
+"`thinGlass`" to `ospNewMaterial`. Its parameters are
 
   Type      Name                  Default  Description
   --------- -------------------- --------  -----------------------------------
@@ -1738,7 +1738,7 @@ the ThinGlass material.][imgColoredWindow]
 
 The [path tracer] offers a metallic paint material, consisting of a base
 coat with optional flakes and a clear coat. To create a MetallicPaint
-material pass the type string "`MetallicPaint`" to `ospNewMaterial`. Its
+material pass the type string "`metallicPaint`" to `ospNewMaterial`. Its
 parameters are listed in the table below.
 
   Type      Name            Default  Description
@@ -2085,7 +2085,7 @@ In particular, `OSP_FB_NONE` is a perfectly valid pixel format for a
 framebuffer that an application will never map. For example, an
 application driving a display wall may well generate an intermediate
 framebuffer and eventually transfer its pixel to the individual displays
-using an `OSPPixelOp` [pixel operation].
+using an `OSPImageOperation` [image operation].
 
 The application can map the given channel of a framebuffer – and thus
 access the stored pixel information – via
@@ -2131,21 +2131,21 @@ they are in the array.
   : Parameters accepted by the framebuffer.
 
 
-### Pixel Operation {-}
+### Image Operation {-}
 
-Pixel operations are functions that are applied to every pixel that
-gets written into a framebuffer. Examples include post-processing,
+Image operations are functions that are applied to every pixel of a
+frame. Examples include post-processing,
 filtering, blending, tone mapping, or sending tiles to a display wall.
 To create a new pixel operation of given type `type` use
 
-    OSPPixelOp ospNewPixelOp(const char *type);
+    OSPImageOperation ospNewImageOperation(const char *type);
 
 #### Tone Mapper {-}
 
 The tone mapper is a pixel operation which implements a generic filmic tone
 mapping operator. Using the default parameters it approximates the Academy
 Color Encoding System (ACES). The tone mapper is created by passing the type
-string "`tonemapper`" to `ospNewPixelOp`. The tone mapping curve can be
+string "`tonemapper`" to `ospNewImageOperation`. The tone mapping curve can be
 customized using the parameters listed in the table below.
 
   ----- ---------  --------    -----------------------------------------

@@ -55,13 +55,6 @@ namespace ospray {
   }
 
   OSP_REGISTER_RENDERER(SciVis, scivis);
-  OSP_REGISTER_RENDERER(SciVis, sv);
-
   OSP_REGISTER_RENDERER(SciVis, ao);
-  OSP_REGISTER_RENDERER(SciVis(1), ao1);
-  OSP_REGISTER_RENDERER(SciVis(2), ao2);
-  OSP_REGISTER_RENDERER(SciVis(4), ao4);
-  OSP_REGISTER_RENDERER(SciVis(8), ao8);
-  OSP_REGISTER_RENDERER(SciVis(16), ao16);
 
 }  // namespace ospray

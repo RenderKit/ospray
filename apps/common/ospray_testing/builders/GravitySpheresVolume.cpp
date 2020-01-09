@@ -102,12 +102,12 @@ namespace ospray {
         group.setParam("volume", cpp::Data(model));
 
       if (withIsosurface) {
-        cpp::Geometry isoGeom("isosurfaces");
+        cpp::Geometry isoGeom("isosurface");
         isoGeom.setParam("isovalue", isovalue);
         isoGeom.setParam("volume", model);
         isoGeom.commit();
 
-        cpp::Material mat(rendererType, "OBJMaterial");
+        cpp::Material mat(rendererType, "obj");
         mat.setParam("Ks", vec3f(0.2f));
         mat.commit();
 

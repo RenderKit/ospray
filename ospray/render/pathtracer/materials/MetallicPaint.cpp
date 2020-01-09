@@ -57,7 +57,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pathtracer, MetallicPaint, MetallicPaint);
-    OSP_REGISTER_MATERIAL(pt, MetallicPaint, MetallicPaint);
+    OSP_REGISTER_MATERIAL(pathtracer, MetallicPaint, metallicPaint);
   }
 }

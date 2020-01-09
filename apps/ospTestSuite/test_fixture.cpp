@@ -55,7 +55,6 @@ namespace OSPRayTestScenes {
     cpp::Volume torus("structured_regular");
     torus.setParam("data", cpp::Data(volumetricData));
     torus.setParam("dimensions", vec3i(size, size, size));
-    torus.setParam<int>("voxelType", OSP_FLOAT);
     torus.setParam("gridOrigin", vec3f(-0.5f, -0.5f, -0.5f));
     torus.setParam("gridSpacing", vec3f(1.f / size, 1.f / size, 1.f / size));
     return torus;
@@ -228,8 +227,8 @@ namespace OSPRayTestScenes {
     // pathtracer params
     renderer.setParam("maxPathLength", 2);
 
-    cpp::Geometry sphere("spheres");
-    cpp::Geometry inst_sphere("spheres");
+    cpp::Geometry sphere("sphere");
+    cpp::Geometry inst_sphere("sphere");
 
     std::vector<vec3f> sph_center = {
         vec3f(-0.5f * radius, -0.3f * radius, cent),
@@ -296,7 +295,7 @@ namespace OSPRayTestScenes {
 
     cpp::VolumetricModel volumetricModel(torus);
 
-    cpp::TransferFunction transferFun("piecewise_linear");
+    cpp::TransferFunction transferFun("piecewiseLinear");
     transferFun.setParam("valueRange", vec2f(-10000.f, 10000.f));
 
     std::vector<vec3f> colors = {vec3f(1.0f, 0.0f, 0.0f),
@@ -319,7 +318,7 @@ namespace OSPRayTestScenes {
     sphereMaterial.setParam("map_Kd", tex);
     sphereMaterial.commit();
 
-    cpp::Geometry sphere("spheres");
+    cpp::Geometry sphere("sphere");
     sphere.setParam("sphere.position", cpp::Data(vec3f(0.f)));
     sphere.setParam("radius", 0.51f);
     sphere.commit();
@@ -353,7 +352,7 @@ namespace OSPRayTestScenes {
 
     cpp::VolumetricModel volumetricModel(torus);
 
-    cpp::TransferFunction transferFun("piecewise_linear");
+    cpp::TransferFunction transferFun("piecewiseLinear");
     transferFun.setParam("valueRange", vec2f(-10000.f, 10000.f));
 
     std::vector<vec3f> colors = {vec3f(1.0f, 0.0f, 0.0f),
@@ -410,7 +409,7 @@ namespace OSPRayTestScenes {
 
     // Setup geometry //
 
-    cpp::Geometry sphereGeometry("spheres");
+    cpp::Geometry sphereGeometry("sphere");
 
     constexpr int dimSize = 3;
 
@@ -423,7 +422,7 @@ namespace OSPRayTestScenes {
     auto makeObjMaterial = [](const std::string &rendererType,
                               vec3f Kd,
                               vec3f Ks) -> cpp::Material {
-      cpp::Material mat(rendererType, "OBJMaterial");
+      cpp::Material mat(rendererType, "obj");
       mat.setParam("Kd", Kd);
       mat.setParam("Ks", Ks);
       mat.commit();
