@@ -456,7 +456,7 @@ void GLFWOSPRayWindow::buildUI()
     else if (rendererTypeStr == "pathtracer")
       rendererType = OSPRayRendererType::PATHTRACER;
     else if (rendererTypeStr == "debug") {
-      rendererType = OSPRayRendererType::DEBUG;
+      rendererType = OSPRayRendererType::DEBUGGER;
       renderer.setParam("method", g_debugRendererTypes[0]);
       addObjectToCommit(renderer.handle());
     } else
@@ -465,7 +465,7 @@ void GLFWOSPRayWindow::buildUI()
     refreshScene();
   }
 
-  if (rendererType == OSPRayRendererType::DEBUG) {
+  if (rendererType == OSPRayRendererType::DEBUGGER) {
     static int whichType = 0;
     if (ImGui::Combo("debug type##whichDebugType",
                      &whichType,

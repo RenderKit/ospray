@@ -97,8 +97,8 @@ namespace ospray {
     }
     // finalize ispc-side
     ispc.addr = reinterpret_cast<decltype(ispc.addr)>(addr);
-    ispc.huge = ispc.byteStride * numItems1D >
-                std::numeric_limits<std::int32_t>::max();
+    ispc.huge = std::abs(ispc.byteStride) * numItems1D >
+                (size_t)std::numeric_limits<int32_t>::max();
     ispc.numItems = (uint32_t)numItems1D;
   }
 

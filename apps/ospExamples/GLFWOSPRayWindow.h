@@ -33,7 +33,7 @@ enum class OSPRayRendererType
 {
   SCIVIS,
   PATHTRACER,
-  DEBUG,
+  DEBUGGER,
   OTHER
 };
 
