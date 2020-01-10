@@ -236,6 +236,15 @@ test-ubuntu1604-gcc:
   dependencies:
     - build-ubuntu1604-gcc
 
+test-tutorials:
+  <<: *test_job_unix
+  image: ospray/docker-images:centos7
+  script:
+    - scripts/tests/run_tutorials.sh
+  dependencies:
+    - build-centos7-gcc
+  allow_failure: true
+
 #test-windows-icc:
 #  <<: *test_job_windows
 #  tags:
