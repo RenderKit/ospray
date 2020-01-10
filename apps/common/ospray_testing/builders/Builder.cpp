@@ -59,6 +59,7 @@ namespace ospray {
         world.setParam("instance", cpp::Data(instances));
 
         cpp::Light light("ambient");
+        light.setParam("visible", false);
         light.commit();
 
         world.setParam("light", cpp::Data(light));
