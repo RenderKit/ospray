@@ -232,7 +232,7 @@ namespace ospray {
 
   inline const ispc::Data1D *ispc(Ref<const Data> &dataRef)
   {
-    if (dataRef->size() > std::numeric_limits<std::uint32_t>::max())
+    if (dataRef && dataRef->size() > std::numeric_limits<std::uint32_t>::max())
       throw std::runtime_error(
           "data array too large (over 4B elements, index is limited to 32bit");
       
