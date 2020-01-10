@@ -237,7 +237,9 @@ test-ubuntu1604-gcc:
     - build-ubuntu1604-gcc
 
 test-tutorials:
-  <<: *test_job_unix
+  stage: test-build
+  tags:
+    - docker
   image: ospray/docker-images:centos7
   script:
     - scripts/tests/run_tutorials.sh
