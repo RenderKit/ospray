@@ -130,7 +130,7 @@ int main(int argc, char **argv)
     int currentSpp = 1;
     if (mpiRank == 0) {
       glfwOSPRayWindow->registerImGuiCallback(
-          [&]() { ImGui::SliderInt("spp", &spp, 1, 64); });
+          [&]() { ImGui::SliderInt("pixelSamples", &spp, 1, 64); });
     }
 
     glfwOSPRayWindow->registerDisplayCallback(
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
           MPI_Bcast(&spp, 1, MPI_INT, 0, MPI_COMM_WORLD);
           if (spp != currentSpp) {
             currentSpp = spp;
-            renderer.setParam("spp", spp);
+            renderer.setParam("pixelSamples", spp);
             win->addObjectToCommit(renderer.handle());
           }
         });
@@ -210,7 +210,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   // on the actual data
   brick.ghostBounds = box3f(brickLower - vec3f(1.f), brickUpper + vec3f(1.f));
 
-  brick.brick = cpp::Volume("structured_regular");
+  brick.brick = cpp::Volume("structuredRegular");
 
   brick.brick.setParam("dimensions", brickGhostDims);
 

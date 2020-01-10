@@ -236,7 +236,7 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
 void DistributedRenderer_Constructor(
     uniform DistributedRenderer *uniform self, void *uniform cppE)
 {
-  Renderer_Constructor(&self->super, cppE, 1);
+  Renderer_Constructor(&self->super, cppE);
 
   self->computeRegionVisibility = DR_default_computeRegionVisibility;
   self->renderRegionSample = DR_default_renderRegionSample;
