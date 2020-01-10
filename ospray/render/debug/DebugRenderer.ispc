@@ -408,7 +408,7 @@ void DebugRenderer_volume(Renderer *uniform _self,
 export void *uniform DebugRenderer_create(void *uniform cppE)
 {
   DebugRenderer *uniform self = uniform new uniform DebugRenderer;
-  Renderer_Constructor(&self->super, cppE, 1);
+  Renderer_Constructor(&self->super, cppE);
   self->super.renderSample = DebugRenderer_testFrame;
   return self;
 }
