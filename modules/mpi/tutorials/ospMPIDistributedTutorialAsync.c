@@ -137,7 +137,7 @@ int main(int argc, char **argv)
   // application will likely not behave as expected
   ospLoadModule("mpi");
 
-  OSPDevice mpiDevice = ospNewDevice("mpi_distributed");
+  OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
   ospDeviceCommit(mpiDevice);
   ospSetCurrentDevice(mpiDevice);
 
@@ -204,7 +204,7 @@ int main(int argc, char **argv)
   ospCommit(world);
 
   // create the mpi_raycast renderer (requred for distributed rendering)
-  OSPRenderer renderer = ospNewRenderer("mpi_raycast");
+  OSPRenderer renderer = ospNewRenderer("mpiRaycast");
 
   // create and setup light for Ambient Occlusion
   // TODO: Who gets the lights now?
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
   ospCommit(lights);
 
   // complete setup of renderer
-  ospSetFloat(renderer, "bgColor", 1.0f); // white, transparent
+  ospSetFloat(renderer, "backgroundColor", 1.0f); // white, transparent
   ospSetObject(renderer, "light", lights);
   ospCommit(renderer);
 

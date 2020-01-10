@@ -78,10 +78,10 @@ Documentation
 =============
 
 The MPI module provides two OSPRay devices to allow applications to leverage
-distributed rendering capabilities. The `mpi_offload` device provides transparent
+distributed rendering capabilities. The `mpiOffload` device provides transparent
 image-parallel rendering, where the same OSPRay application written for local
 rendering can be replicated across multiple nodes to distribute the rendering
-work. The `mpi_distributed` device allows MPI distributed
+work. The `mpiDistributed` device allows MPI distributed
 applications to use OSPRay for distributed rendering, where each rank can
 render and independent piece of a global data set, or hybrid rendering where
 ranks partially or completely share data.
@@ -90,16 +90,17 @@ ranks partially or completely share data.
 MPI Offload Rendering
 ---------------------
 
-The `mpi_offload` device can be used to distribute image rendering tasks across
+The `mpiOffload` device can be used to distribute image rendering tasks across
 a cluster without requiring modifications to the application itself. Existing
 applications using OSPRay for local rendering simply be passed command line
-arguments to load the module and indicate that the `mpi_offload` device should
+arguments to load the module and indicate that the `mpiOffload` device should
 be used for image-parallel rendering. To load the module, pass
-`--osp:module:mpi`, to select the MPIOffloadDevice, pass `--osp:device:mpi`.
+`--osp:module:mpi`, to select the MPIOffloadDevice, pass
+`--osp:device:mpiOffload`.
 For example, the `ospExamples` application can be run as:
 
 ```
-mpirun -n <N> ./ospExamples --osp:module:mpi --osp:device:mpi
+mpirun -n <N> ./ospExamples --osp:module:mpi --osp:device:mpiOffload
 ```
 
 and will automatically distribute the image rendering tasks among the
@@ -149,12 +150,12 @@ While MPI Offload rendering is used to transparently distribute rendering work
 without requiring modification to the application, MPI Distributed rendering
 is targetted at use of OSPRay within MPI-parallel applications. The MPI
 distributed device can be selected by loading the `mpi` module, and manually
-creating and using an instance of the `mpi_distributed` device.
+creating and using an instance of the `mpiDistributed` device.
 
 ```c
 ospLoadModule("mpi");
 
-OSPDevice mpiDevice = ospNewDevice("mpi_distributed");
+OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
 ospDeviceCommit(mpiDevice);
 ospSetCurrentDevice(mpiDevice);
 ```
@@ -166,7 +167,7 @@ specify independent local data using the OSPRay API, as if rendering locally.
 However, when calling `ospRenderFrameAsync` the ranks will work collectively
 to render the data. The distributed device supports both image-parallel,
 where the data is replicated, and data-parallel, where the data is distributed,
-rendering modes. The `mpi_distributed` device will by default use each rank in
+rendering modes. The `mpiDistributed` device will by default use each rank in
 `MPI_COMM_WORLD` as a render worker; however, it can also take a specific MPI
 communicator to use as the world communicator. Only those ranks in the specified
 communicator will participate in rendering.
@@ -175,7 +176,7 @@ communicator will participate in rendering.
 |:------|:------------------|--------------------:|:---------------------------|
 | void* | worldCommunicator |    MPI\_COMM\_WORLD | The MPI communicator which the OSPRay workers should treat as their world
 
-: Parameters specific to the distributed `mpi_distributed` Device.
+: Parameters specific to the distributed `mpiDistributed` Device.
 
 | Type         | Name    | Default| Description                                |
 |:-------------|:--------|-------:|:-------------------------------------------|
@@ -189,7 +190,7 @@ communicator will participate in rendering.
 | aoSamples    | int     |      0 | The number of AO samples to take per-pixel |
 | aoRadius     | float   |   1e20f| The AO ray length to use. Note that if the AO ray would have crossed a rank boundary and ghost geometry is not available, there  will be visible artifacts in the shading. |
 
-: Parameters specific to the `mpi_raycast` renderer.
+: Parameters specific to the `mpiRaycast` renderer.
 
 
 ### Image Parallel Rendering in the MPI Distributed Device
@@ -210,7 +211,7 @@ The MPI Distributed device also supports data-parallel rendering with sort-last
 compositing. Each rank can specify a different piece of data, as long as the
 bounding boxes of each rank's data are non-overlapping. The rest of the
 scene setup is similar to local rendering; however, for distributed rendering
-only the `mpi_raycast` renderer is supported. This renderer implements a subset
+only the `mpiRaycast` renderer is supported. This renderer implements a subset
 of the `scivis` rendering features which are suitable for implementation in
 a distributed environment.
 

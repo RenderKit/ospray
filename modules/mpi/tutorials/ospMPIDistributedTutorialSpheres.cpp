@@ -69,7 +69,7 @@ int main(int argc, char **argv)
   ospLoadModule("mpi");
 
   {
-    cpp::Device mpiDevice("mpi_distributed");
+    cpp::Device mpiDevice("mpiDistributed");
     mpiDevice.commit();
     mpiDevice.setCurrent();
 
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
     world.commit();
 
     // create OSPRay renderer
-    cpp::Renderer renderer("mpi_raycast");
+    cpp::Renderer renderer("mpiRaycast");
 
     // create and setup an ambient light
     std::array<cpp::Light, 2> lights = {

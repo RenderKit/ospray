@@ -102,7 +102,7 @@ int main(int argc, char **argv)
   ospLoadModule("mpi");
 
   {
-    cpp::Device mpiDevice("mpi_distributed");
+    cpp::Device mpiDevice("mpiDistributed");
     mpiDevice.commit();
     mpiDevice.setCurrent();
 

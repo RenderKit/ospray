@@ -513,8 +513,7 @@ OSPTexture MPIDistributedDevice::newTexture(const char *type)
   return createLocalObject<Texture, OSPTexture>(type);
 }
 
-OSP_REGISTER_DEVICE(MPIDistributedDevice, mpi_distributed_device);
-OSP_REGISTER_DEVICE(MPIDistributedDevice, mpi_distributed);
+OSP_REGISTER_DEVICE(MPIDistributedDevice, mpiDistributed);
 
 } // namespace mpi
 } // namespace ospray

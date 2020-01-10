@@ -986,8 +986,7 @@ ObjectHandle MPIOffloadDevice::allocateHandle() const
   return ObjectHandle();
 }
 
-OSP_REGISTER_DEVICE(MPIOffloadDevice, mpi_offload);
-OSP_REGISTER_DEVICE(MPIOffloadDevice, mpi);
+OSP_REGISTER_DEVICE(MPIOffloadDevice, mpiOffload);
 
 } // namespace mpi
 } // namespace ospray

@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 
   // use scoped lifetimes of wrappers to release everything before ospShutdown()
   {
-    cpp::Device mpiDevice("mpi_distributed");
+    cpp::Device mpiDevice("mpiDistributed");
     mpiDevice.commit();
     mpiDevice.setCurrent();
 
@@ -174,14 +174,14 @@ int main(int argc, char **argv)
     world.commit();
 
     // create the mpi_raycast renderer (requred for distributed rendering)
-    cpp::Renderer renderer("mpi_raycast");
+    cpp::Renderer renderer("mpiRaycast");
 
     // create and setup light for Ambient Occlusion
     // TODO: Who gets the lights now?
     cpp::Light light("ambient");
 
     // complete setup of renderer
-    renderer.setParam("bgColor", 1.0f); // white, transparent
+    renderer.setParam("backgoundColor", 1.0f); // white, transparent
     renderer.setParam("light", cpp::Data(light));
     renderer.commit();
 
