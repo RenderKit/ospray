@@ -56,7 +56,7 @@ set(BUILD_OSPCOMMON_VERSION "v1.1.0" CACHE STRING "Which version of ospcommon to
 
 option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
 
-set(BUILD_EMBREE_VERSION "v3.6.1" CACHE STRING "Which version of Embree to build?")
+set(BUILD_EMBREE_VERSION "v3.7.0" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
 set(BUILD_OPENVKL_VERSION "v0.8.0" CACHE STRING "Which version of OpenVKL to build?")

@@ -60,9 +60,9 @@ Version History
     vertex.position_radius` and constant radius for the geometry with
     `float radius`. It uses `OSP_ROUND` type and `OSP_LINEAR` basis by
     default to create the connected segments of constant radius. For per
-    vertex varying radii curves it uses embree curves.
--   Add new embree curve type `OSP_CATMULL_ROM` for curves, thus minimum
-    required Embree version is now 3.6.1
+    vertex varying radii curves it uses Embree curves.
+-   Add new Embree curve type `OSP_CATMULL_ROM` for curves
+-   Minimum required Embree version is now 3.7.0
 -   Removal of `cylinders` and `streamlines` geometry, use `curves`
     instead
 -   Triangle mesh and Quad mesh are superseded by the `mesh` geometry

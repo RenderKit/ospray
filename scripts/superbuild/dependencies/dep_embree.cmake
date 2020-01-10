@@ -58,7 +58,7 @@ else()
   string(REPLACE "v" "" EMBREE_VERSION_NUMBER ${BUILD_EMBREE_VERSION})
 
   if (APPLE)
-    set(EMBREE_URL "https://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.tar.gz")
+    set(EMBREE_URL "https://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.zip")
   elseif (WIN32)
     set(EMBREE_URL "https://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x64.vc14.windows.zip")
   else()
