@@ -167,7 +167,7 @@ namespace ospray {
     {
       vec3ul dims{128};  // should be at least 2
       const float spacing = 3.f / (reduce_max(dims) - 1);
-      cpp::Volume volume("structured_regular");
+      cpp::Volume volume("structuredRegular");
 
       // generate volume data
       auto numVoxels = dims.product();

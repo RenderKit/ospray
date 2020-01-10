@@ -33,6 +33,11 @@ namespace ospray {
   {
     ispcEquivalent    = ispc::Volume_createInstance_vklVolume(this);
     managedObjectType = OSP_VOLUME;
+    // XXX temporary until VKL 0.9 is released
+    if (vklType == "structuredRegular")
+      vklType = "structured_regular";
+    if (vklType == "structuredSpherical")
+      vklType = "structured_spherical";
   }
 
   Volume::~Volume()

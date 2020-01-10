@@ -487,7 +487,7 @@ their addresses in memory can be easily computed from a 3D position. A
 common type of structured volumes are regular grids.
 
 Structured regular volumes are created by passing the
-`structured_regular` type string to `ospNewVolume`. Structured volumes
+`structuredRegular` type string to `ospNewVolume`. Structured volumes
 are represented through an `OSPData` 3D array `data` (which may or may
 not be shared with the application), where currently the voxel data
 needs to be laid out compact in memory in xyz-order^[For consecutive
@@ -512,7 +512,7 @@ as is the type of the voxel values (currently supported are:
 ### Structured Spherical Volume
 
 Structured spherical volumes are also supported, which are created by
-passing a type string of `"structured_spherical"` to `ospNewVolume`. The
+passing a type string of `"structuredSpherical"` to `ospNewVolume`. The
 grid dimensions and parameters are defined in terms of radial distance
 $r$, inclination angle $\theta$, and azimuthal angle $\phi$, conforming
 with the ISO convention for spherical coordinate systems. The coordinate

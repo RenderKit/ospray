@@ -189,7 +189,7 @@ namespace ospray {
     cpp::Volume GravitySpheres::createStructuredVolume(
         const VoxelArray &voxels) const
     {
-      cpp::Volume volume("structured_regular");
+      cpp::Volume volume("structuredRegular");
 
       volume.setParam("gridOrigin", vec3f(-1.f, -1.f, -1.f));
       volume.setParam("gridSpacing", vec3f(2.f / reduce_max(volumeDimensions)));
