@@ -122,7 +122,7 @@ namespace ospray {
     size_t numGeometries = geometricModels ? geometricModels->size() : 0;
     size_t numVolumes    = volumetricModels ? volumetricModels->size() : 0;
 
-    postStatusMsg(2)
+    postStatusMsg(OSP_LOG_DEBUG)
         << "=======================================================\n"
         << "Finalizing instance, which has " << numGeometries
         << " geometries and " << numVolumes << " volumes";

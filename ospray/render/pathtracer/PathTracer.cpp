@@ -73,16 +73,17 @@ namespace ospray {
           if (hasEmissive) {
             if (ispc::GeometryLight_isSupported(model->getIE())) {
               void *light =
-                ispc::GeometryLight_create(model->getIE(), getIE(), &xfm);
+                  ispc::GeometryLight_create(model->getIE(), getIE(), &xfm);
 
               // check whether the geometry has any emissive primitives
               if (light)
                 lightArray.push_back(light);
             } else {
-              postStatusMsg(1) << "#osp:pt Geometry " << model->toString()
-                               << " does not implement area sampling! "
-                               << "Cannot use importance sampling for that "
-                               << "geometry with emissive material!";
+              postStatusMsg(OSP_LOG_WARNING)
+                  << "#osp:pt Geometry " << model->toString()
+                  << " does not implement area sampling! "
+                  << "Cannot use importance sampling for that "
+                  << "geometry with emissive material!";
             }
           }
         }
@@ -101,15 +102,13 @@ namespace ospray {
     Renderer::commit();
 
     const int32 rouletteDepth = getParam<int>("roulettePathLength", 5);
-    const float maxRadiance = getParam<float>("maxContribution", inf);
+    const float maxRadiance   = getParam<float>("maxContribution", inf);
     vec4f shadowCatcherPlane =
         getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
     useGeometryLights = getParam<bool>("geometryLights", true);
 
-    ispc::PathTracer_set(getIE(),
-        rouletteDepth,
-        maxRadiance,
-        (ispc::vec4f &)shadowCatcherPlane);
+    ispc::PathTracer_set(
+        getIE(), rouletteDepth, maxRadiance, (ispc::vec4f &)shadowCatcherPlane);
   }
 
   void *PathTracer::beginFrame(FrameBuffer *, World *world)

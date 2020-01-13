@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray
-#include "ospray/ospray_util.h"
+#include "ospray/ospray.h"
 // std
 #include <iostream>
 #include <stdexcept>
@@ -48,4 +48,6 @@ inline void initializeOSPRay(int argc,
       std::cerr << "OSPRay error: " << errorDetails << std::endl;
     });
   }
+
+  ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
 }

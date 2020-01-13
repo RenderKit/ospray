@@ -35,11 +35,10 @@ namespace ospray {
     return alignedFree(ptr);
   }
 
-  WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel)
-    : s(s)
+  WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel) : s(s)
   {
-    postStatusMsg(postAtLogLevel) << "Warning: " << s
-                                  << " (only reporting first occurrence)";
+    postStatusMsg(postAtLogLevel)
+        << "Warning: " << s << " (only reporting first occurrence)";
   }
 
   std::string getArgString(const std::string &s)
@@ -61,7 +60,7 @@ namespace ospray {
     std::string value = getArgString(s);
     try {
       return std::stoi(value);
-    } catch (...) { // std::invalid_argument or std::out_of_range
+    } catch (...) {  // std::invalid_argument or std::out_of_range
       std::stringstream ss;
       ss << "Invalid value '" << value << "' in command-line argument " << s
          << ". Should be an integer";
@@ -88,19 +87,21 @@ namespace ospray {
           device->setParam("errorOutput", std::string("cerr"));
           removeArgs(ac, av, i, 1);
         } else if (parm == "--osp:verbose") {
-          device->setParam("logLevel", 1);
+          device->setParam("logLevel", 3);
           device->setParam("logOutput", std::string("cout"));
           device->setParam("errorOutput", std::string("cerr"));
           removeArgs(ac, av, i, 1);
         } else if (parm == "--osp:vv") {
-          device->setParam("logLevel", 2);
+          device->setParam("logLevel", 4);
           device->setParam("logOutput", std::string("cout"));
           device->setParam("errorOutput", std::string("cerr"));
           removeArgs(ac, av, i, 1);
         }
         // arguments taking required values
         else if (beginsWith(parm, "--osp:log-level")) {
-          device->setParam("logLevel", getArgInt(parm));
+          std::string str = getArgString(parm);
+          auto level      = api::Device::logLevelFromString(str);
+          device->setParam("logLevel", level.value_or(0));
           removeArgs(ac, av, i, 1);
         } else if (beginsWith(parm, "--osp:log-output")) {
           std::string dst = getArgString(parm);
@@ -191,49 +192,92 @@ namespace ospray {
     case OSP_VOLUME:
     case OSP_VOLUMETRIC_MODEL:
     case OSP_WORLD:
-    case OSP_STRING:    return sizeof(void *);
-    case OSP_BOOL:      return sizeof(bool);
-    case OSP_CHAR:      return sizeof(int8);
-    case OSP_UCHAR:     return sizeof(uint8);
-    case OSP_VEC2UC:    return sizeof(vec2uc);
-    case OSP_VEC3UC:    return sizeof(vec3uc);
-    case OSP_VEC4UC:    return sizeof(vec4uc);
-    case OSP_SHORT:     return sizeof(int16);
-    case OSP_USHORT:    return sizeof(uint16);
-    case OSP_INT:       return sizeof(int32);
-    case OSP_VEC2I:     return sizeof(vec2i);
-    case OSP_VEC3I:     return sizeof(vec3i);
-    case OSP_VEC4I:     return sizeof(vec4i);
-    case OSP_UINT:      return sizeof(uint32);
-    case OSP_VEC2UI:    return sizeof(vec2ui);
-    case OSP_VEC3UI:    return sizeof(vec3ui);
-    case OSP_VEC4UI:    return sizeof(vec4ui);
-    case OSP_LONG:      return sizeof(int64);
-    case OSP_VEC2L:     return sizeof(vec2l);
-    case OSP_VEC3L:     return sizeof(vec3l);
-    case OSP_VEC4L:     return sizeof(vec4l);
-    case OSP_ULONG:     return sizeof(uint64);
-    case OSP_VEC2UL:    return sizeof(vec2ul);
-    case OSP_VEC3UL:    return sizeof(vec3ul);
-    case OSP_VEC4UL:    return sizeof(vec4ul);
-    case OSP_FLOAT:     return sizeof(float);
-    case OSP_VEC2F:     return sizeof(vec2f);
-    case OSP_VEC3F:     return sizeof(vec3f);
-    case OSP_VEC4F:     return sizeof(vec4f);
-    case OSP_DOUBLE:    return sizeof(double);
-    case OSP_BOX1I:     return sizeof(box1i);
-    case OSP_BOX2I:     return sizeof(box2i);
-    case OSP_BOX3I:     return sizeof(box3i);
-    case OSP_BOX4I:     return sizeof(box4i);
-    case OSP_BOX1F:     return sizeof(box1f);
-    case OSP_BOX2F:     return sizeof(box2f);
-    case OSP_BOX3F:     return sizeof(box3f);
-    case OSP_BOX4F:     return sizeof(box4f);
-    case OSP_LINEAR2F:  return sizeof(linear2f);
-    case OSP_LINEAR3F:  return sizeof(linear3f);
-    case OSP_AFFINE2F:  return sizeof(affine2f);
-    case OSP_AFFINE3F:  return sizeof(affine3f);
-    case OSP_UNKNOWN:   return 0;
+    case OSP_STRING:
+      return sizeof(void *);
+    case OSP_BOOL:
+      return sizeof(bool);
+    case OSP_CHAR:
+      return sizeof(int8);
+    case OSP_UCHAR:
+      return sizeof(uint8);
+    case OSP_VEC2UC:
+      return sizeof(vec2uc);
+    case OSP_VEC3UC:
+      return sizeof(vec3uc);
+    case OSP_VEC4UC:
+      return sizeof(vec4uc);
+    case OSP_SHORT:
+      return sizeof(int16);
+    case OSP_USHORT:
+      return sizeof(uint16);
+    case OSP_INT:
+      return sizeof(int32);
+    case OSP_VEC2I:
+      return sizeof(vec2i);
+    case OSP_VEC3I:
+      return sizeof(vec3i);
+    case OSP_VEC4I:
+      return sizeof(vec4i);
+    case OSP_UINT:
+      return sizeof(uint32);
+    case OSP_VEC2UI:
+      return sizeof(vec2ui);
+    case OSP_VEC3UI:
+      return sizeof(vec3ui);
+    case OSP_VEC4UI:
+      return sizeof(vec4ui);
+    case OSP_LONG:
+      return sizeof(int64);
+    case OSP_VEC2L:
+      return sizeof(vec2l);
+    case OSP_VEC3L:
+      return sizeof(vec3l);
+    case OSP_VEC4L:
+      return sizeof(vec4l);
+    case OSP_ULONG:
+      return sizeof(uint64);
+    case OSP_VEC2UL:
+      return sizeof(vec2ul);
+    case OSP_VEC3UL:
+      return sizeof(vec3ul);
+    case OSP_VEC4UL:
+      return sizeof(vec4ul);
+    case OSP_FLOAT:
+      return sizeof(float);
+    case OSP_VEC2F:
+      return sizeof(vec2f);
+    case OSP_VEC3F:
+      return sizeof(vec3f);
+    case OSP_VEC4F:
+      return sizeof(vec4f);
+    case OSP_DOUBLE:
+      return sizeof(double);
+    case OSP_BOX1I:
+      return sizeof(box1i);
+    case OSP_BOX2I:
+      return sizeof(box2i);
+    case OSP_BOX3I:
+      return sizeof(box3i);
+    case OSP_BOX4I:
+      return sizeof(box4i);
+    case OSP_BOX1F:
+      return sizeof(box1f);
+    case OSP_BOX2F:
+      return sizeof(box2f);
+    case OSP_BOX3F:
+      return sizeof(box3f);
+    case OSP_BOX4F:
+      return sizeof(box4f);
+    case OSP_LINEAR2F:
+      return sizeof(linear2f);
+    case OSP_LINEAR3F:
+      return sizeof(linear3f);
+    case OSP_AFFINE2F:
+      return sizeof(affine2f);
+    case OSP_AFFINE3F:
+      return sizeof(affine3f);
+    case OSP_UNKNOWN:
+      return 0;
     }
 
     std::stringstream error;
@@ -244,96 +288,180 @@ namespace ospray {
 
   OSPDataType typeOf(const char *string)
   {
-    if (string == nullptr)             return(OSP_UNKNOWN);
-    if (strcmp(string, "bool"  ) == 0) return(OSP_BOOL);
-    if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
-    if (strcmp(string, "double") == 0) return(OSP_DOUBLE);
-    if (strcmp(string, "float" ) == 0) return(OSP_FLOAT);
-    if (strcmp(string, "vec2f" ) == 0) return(OSP_VEC2F);
-    if (strcmp(string, "vec3f" ) == 0) return(OSP_VEC3F);
-    if (strcmp(string, "vec4f" ) == 0) return(OSP_VEC4F);
-    if (strcmp(string, "int"   ) == 0) return(OSP_INT);
-    if (strcmp(string, "vec2i" ) == 0) return(OSP_VEC2I);
-    if (strcmp(string, "vec3i" ) == 0) return(OSP_VEC3I);
-    if (strcmp(string, "vec4i" ) == 0) return(OSP_VEC4I);
-    if (strcmp(string, "uchar" ) == 0) return(OSP_UCHAR);
-    if (strcmp(string, "vec2uc") == 0) return(OSP_VEC2UC);
-    if (strcmp(string, "vec3uc") == 0) return(OSP_VEC3UC);
-    if (strcmp(string, "vec4uc") == 0) return(OSP_VEC4UC);
-    if (strcmp(string, "short" ) == 0) return(OSP_SHORT);
-    if (strcmp(string, "ushort") == 0) return(OSP_USHORT);
-    if (strcmp(string, "uint"  ) == 0) return(OSP_UINT);
-    if (strcmp(string, "uint2" ) == 0) return(OSP_VEC2UI);
-    if (strcmp(string, "uint3" ) == 0) return(OSP_VEC3UI);
-    if (strcmp(string, "uint4" ) == 0) return(OSP_VEC4UI);
-    return(OSP_UNKNOWN);
+    if (string == nullptr)
+      return (OSP_UNKNOWN);
+    if (strcmp(string, "bool") == 0)
+      return (OSP_BOOL);
+    if (strcmp(string, "char") == 0)
+      return (OSP_CHAR);
+    if (strcmp(string, "double") == 0)
+      return (OSP_DOUBLE);
+    if (strcmp(string, "float") == 0)
+      return (OSP_FLOAT);
+    if (strcmp(string, "vec2f") == 0)
+      return (OSP_VEC2F);
+    if (strcmp(string, "vec3f") == 0)
+      return (OSP_VEC3F);
+    if (strcmp(string, "vec4f") == 0)
+      return (OSP_VEC4F);
+    if (strcmp(string, "int") == 0)
+      return (OSP_INT);
+    if (strcmp(string, "vec2i") == 0)
+      return (OSP_VEC2I);
+    if (strcmp(string, "vec3i") == 0)
+      return (OSP_VEC3I);
+    if (strcmp(string, "vec4i") == 0)
+      return (OSP_VEC4I);
+    if (strcmp(string, "uchar") == 0)
+      return (OSP_UCHAR);
+    if (strcmp(string, "vec2uc") == 0)
+      return (OSP_VEC2UC);
+    if (strcmp(string, "vec3uc") == 0)
+      return (OSP_VEC3UC);
+    if (strcmp(string, "vec4uc") == 0)
+      return (OSP_VEC4UC);
+    if (strcmp(string, "short") == 0)
+      return (OSP_SHORT);
+    if (strcmp(string, "ushort") == 0)
+      return (OSP_USHORT);
+    if (strcmp(string, "uint") == 0)
+      return (OSP_UINT);
+    if (strcmp(string, "uint2") == 0)
+      return (OSP_VEC2UI);
+    if (strcmp(string, "uint3") == 0)
+      return (OSP_VEC3UI);
+    if (strcmp(string, "uint4") == 0)
+      return (OSP_VEC4UI);
+    return (OSP_UNKNOWN);
   }
 
   std::string stringFor(OSPDataType type)
   {
     switch (type) {
-    case OSP_VOID_PTR:          return "void_ptr";
-    case OSP_OBJECT:            return "object";
-    case OSP_CAMERA:            return "camera";
-    case OSP_DATA:              return "data";
-    case OSP_DEVICE:            return "device";
-    case OSP_FRAMEBUFFER:       return "framebuffer";
-    case OSP_FUTURE:            return "future";
-    case OSP_GEOMETRIC_MODEL:   return "geometric_model";
-    case OSP_GEOMETRY:          return "geometry";
-    case OSP_GROUP:             return "group";
-    case OSP_IMAGE_OPERATION:   return "image_operation";
-    case OSP_INSTANCE:          return "instance";
-    case OSP_LIGHT:             return "light";
-    case OSP_MATERIAL:          return "material";
-    case OSP_RENDERER:          return "renderer";
-    case OSP_TEXTURE:           return "texture";
-    case OSP_TRANSFER_FUNCTION: return "transfer_function";
-    case OSP_VOLUME:            return "volume";
-    case OSP_VOLUMETRIC_MODEL:  return "volumetric_model";
-    case OSP_WORLD:             return "world";
-    case OSP_STRING:            return "string";
-    case OSP_BOOL:              return "bool";
-    case OSP_CHAR:              return "char";
-    case OSP_UCHAR:             return "uchar";
-    case OSP_VEC2UC:            return "vec2uc";
-    case OSP_VEC3UC:            return "vec3uc";
-    case OSP_VEC4UC:            return "vec4uc";
-    case OSP_SHORT:             return "short";
-    case OSP_USHORT:            return "ushort";
-    case OSP_INT:               return "int";
-    case OSP_VEC2I:             return "vec2i";
-    case OSP_VEC3I:             return "vec3i";
-    case OSP_VEC4I:             return "vec4i";
-    case OSP_UINT:              return "uint";
-    case OSP_VEC2UI:            return "vec2ui";
-    case OSP_VEC3UI:            return "vec3ui";
-    case OSP_VEC4UI:            return "vec4ui";
-    case OSP_LONG:              return "long";
-    case OSP_VEC2L:             return "vec2l";
-    case OSP_VEC3L:             return "vec3l";
-    case OSP_VEC4L:             return "vec4l";
-    case OSP_ULONG:             return "ulong";
-    case OSP_VEC2UL:            return "vec2ul";
-    case OSP_VEC3UL:            return "vec3ul";
-    case OSP_VEC4UL:            return "vec4ul";
-    case OSP_FLOAT:             return "float";
-    case OSP_VEC2F:             return "vec2f";
-    case OSP_VEC3F:             return "vec3f";
-    case OSP_VEC4F:             return "vec4f";
-    case OSP_DOUBLE:            return "double";
-    case OSP_BOX1I:             return "box1i";
-    case OSP_BOX2I:             return "box2i";
-    case OSP_BOX3I:             return "box3i";
-    case OSP_BOX4I:             return "box4i";
-    case OSP_BOX1F:             return "box1f";
-    case OSP_BOX2F:             return "box2f";
-    case OSP_BOX3F:             return "box3f";
-    case OSP_BOX4F:             return "box4f";
-    case OSP_LINEAR2F:          return "linear2f";
-    case OSP_LINEAR3F:          return "linear3f";
-    case OSP_AFFINE2F:          return "affine2f";
-    case OSP_AFFINE3F:          return "affine3f";
+    case OSP_VOID_PTR:
+      return "void_ptr";
+    case OSP_OBJECT:
+      return "object";
+    case OSP_CAMERA:
+      return "camera";
+    case OSP_DATA:
+      return "data";
+    case OSP_DEVICE:
+      return "device";
+    case OSP_FRAMEBUFFER:
+      return "framebuffer";
+    case OSP_FUTURE:
+      return "future";
+    case OSP_GEOMETRIC_MODEL:
+      return "geometric_model";
+    case OSP_GEOMETRY:
+      return "geometry";
+    case OSP_GROUP:
+      return "group";
+    case OSP_IMAGE_OPERATION:
+      return "image_operation";
+    case OSP_INSTANCE:
+      return "instance";
+    case OSP_LIGHT:
+      return "light";
+    case OSP_MATERIAL:
+      return "material";
+    case OSP_RENDERER:
+      return "renderer";
+    case OSP_TEXTURE:
+      return "texture";
+    case OSP_TRANSFER_FUNCTION:
+      return "transfer_function";
+    case OSP_VOLUME:
+      return "volume";
+    case OSP_VOLUMETRIC_MODEL:
+      return "volumetric_model";
+    case OSP_WORLD:
+      return "world";
+    case OSP_STRING:
+      return "string";
+    case OSP_BOOL:
+      return "bool";
+    case OSP_CHAR:
+      return "char";
+    case OSP_UCHAR:
+      return "uchar";
+    case OSP_VEC2UC:
+      return "vec2uc";
+    case OSP_VEC3UC:
+      return "vec3uc";
+    case OSP_VEC4UC:
+      return "vec4uc";
+    case OSP_SHORT:
+      return "short";
+    case OSP_USHORT:
+      return "ushort";
+    case OSP_INT:
+      return "int";
+    case OSP_VEC2I:
+      return "vec2i";
+    case OSP_VEC3I:
+      return "vec3i";
+    case OSP_VEC4I:
+      return "vec4i";
+    case OSP_UINT:
+      return "uint";
+    case OSP_VEC2UI:
+      return "vec2ui";
+    case OSP_VEC3UI:
+      return "vec3ui";
+    case OSP_VEC4UI:
+      return "vec4ui";
+    case OSP_LONG:
+      return "long";
+    case OSP_VEC2L:
+      return "vec2l";
+    case OSP_VEC3L:
+      return "vec3l";
+    case OSP_VEC4L:
+      return "vec4l";
+    case OSP_ULONG:
+      return "ulong";
+    case OSP_VEC2UL:
+      return "vec2ul";
+    case OSP_VEC3UL:
+      return "vec3ul";
+    case OSP_VEC4UL:
+      return "vec4ul";
+    case OSP_FLOAT:
+      return "float";
+    case OSP_VEC2F:
+      return "vec2f";
+    case OSP_VEC3F:
+      return "vec3f";
+    case OSP_VEC4F:
+      return "vec4f";
+    case OSP_DOUBLE:
+      return "double";
+    case OSP_BOX1I:
+      return "box1i";
+    case OSP_BOX2I:
+      return "box2i";
+    case OSP_BOX3I:
+      return "box3i";
+    case OSP_BOX4I:
+      return "box4i";
+    case OSP_BOX1F:
+      return "box1f";
+    case OSP_BOX2F:
+      return "box2f";
+    case OSP_BOX3F:
+      return "box3f";
+    case OSP_BOX4F:
+      return "box4f";
+    case OSP_LINEAR2F:
+      return "linear2f";
+    case OSP_LINEAR3F:
+      return "linear3f";
+    case OSP_AFFINE2F:
+      return "affine2f";
+    case OSP_AFFINE3F:
+      return "affine3f";
     case OSP_UNKNOWN:
       return "unknown";
     }
@@ -382,18 +510,26 @@ namespace ospray {
   size_t sizeOf(OSPTextureFormat format)
   {
     switch (format) {
-      case OSP_TEXTURE_RGBA8:
-      case OSP_TEXTURE_SRGBA:          return sizeof(uint32);
-      case OSP_TEXTURE_RGBA32F:        return sizeof(vec4f);
-      case OSP_TEXTURE_RGB8:
-      case OSP_TEXTURE_SRGB:           return sizeof(vec3uc);
-      case OSP_TEXTURE_RGB32F:         return sizeof(vec3f);
-      case OSP_TEXTURE_R8:
-      case OSP_TEXTURE_L8:             return sizeof(uint8);
-      case OSP_TEXTURE_RA8:
-      case OSP_TEXTURE_LA8:            return sizeof(vec2uc);
-      case OSP_TEXTURE_R32F:           return sizeof(float);
-      case OSP_TEXTURE_FORMAT_INVALID: return 0;
+    case OSP_TEXTURE_RGBA8:
+    case OSP_TEXTURE_SRGBA:
+      return sizeof(uint32);
+    case OSP_TEXTURE_RGBA32F:
+      return sizeof(vec4f);
+    case OSP_TEXTURE_RGB8:
+    case OSP_TEXTURE_SRGB:
+      return sizeof(vec3uc);
+    case OSP_TEXTURE_RGB32F:
+      return sizeof(vec3f);
+    case OSP_TEXTURE_R8:
+    case OSP_TEXTURE_L8:
+      return sizeof(uint8);
+    case OSP_TEXTURE_RA8:
+    case OSP_TEXTURE_LA8:
+      return sizeof(vec2uc);
+    case OSP_TEXTURE_R32F:
+      return sizeof(float);
+    case OSP_TEXTURE_FORMAT_INVALID:
+      return 0;
     }
 
     std::stringstream error;
@@ -413,10 +549,10 @@ namespace ospray {
     loadLibrary(libName, false);
 
     std::string initSymName = "ospray_module_init_" + name;
-    void*initSym = getSymbol(initSymName);
+    void *initSym           = getSymbol(initSymName);
     if (!initSym) {
-      throw std::runtime_error("#osp:api: could not find module initializer "
-                               +initSymName);
+      throw std::runtime_error("#osp:api: could not find module initializer " +
+                               initSymName);
     }
 
     auto initMethod = (OSPError(*)(int16_t, int16_t, int16_t))initSym;
@@ -445,7 +581,8 @@ namespace ospray {
 
   void postStatusMsg(const std::string &msg, uint32_t postAtLogLevel)
   {
-    if (logLevel() >= postAtLogLevel && api::deviceIsSet())
+    if (api::deviceIsSet() && logLevel() != OSP_LOG_NONE &&
+        logLevel() >= postAtLogLevel)
       ospray::api::Device::current->msg_fcn((msg + '\n').c_str());
   }
 
@@ -480,7 +617,7 @@ namespace ospray {
     auto itr = id_translation.find(v);
     if (itr == id_translation.end()) {
       static size_t newIndex = 0;
-      id_translation[v] = newIndex;
+      id_translation[v]      = newIndex;
       return newIndex++;
     } else {
       return id_translation[v];
@@ -490,7 +627,7 @@ namespace ospray {
   OSPTYPEFOR_DEFINITION(void *);
   OSPTYPEFOR_DEFINITION(char *);
   OSPTYPEFOR_DEFINITION(const char *);
-  OSPTYPEFOR_DEFINITION(const char []);
+  OSPTYPEFOR_DEFINITION(const char[]);
   OSPTYPEFOR_DEFINITION(bool);
   OSPTYPEFOR_DEFINITION(char);
   OSPTYPEFOR_DEFINITION(unsigned char);
@@ -552,5 +689,4 @@ namespace ospray {
   OSPTYPEFOR_DEFINITION(OSPVolumetricModel);
   OSPTYPEFOR_DEFINITION(OSPWorld);
 
-} // ::ospray
-
+}  // namespace ospray

@@ -56,9 +56,10 @@ namespace ospray {
 
         const float color_total = reduce_max(Kd + Ks + Tf);
         if (color_total > 1.0) {
-          postStatusMsg() << "#osp:PT: warning: OBJ material produces energy "
-                          << "(kd + ks + tf = " << color_total
-                          << ", should be <= 1). Scaling down to 1.";
+          postStatusMsg(OSP_LOG_DEBUG)
+              << "#osp:PT OBJ material produces energy "
+              << "(kd + ks + tf = " << color_total
+              << ", should be <= 1). Scaling down to 1.";
           Kd /= color_total;
           Ks /= color_total;
           Tf /= color_total;

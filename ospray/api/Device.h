@@ -18,6 +18,7 @@
 
 // ospcommon
 #include "ospcommon/memory/IntrusivePtr.h"
+#include "ospcommon/utility/Optional.h"
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "../common/OSPCommon.h"
@@ -155,6 +156,8 @@ namespace ospray {
 
       virtual void commit();
       bool isCommitted();
+
+      static utility::Optional<int> logLevelFromString(const std::string &str);
 
       int numThreads{-1};
       bool debugMode{false};

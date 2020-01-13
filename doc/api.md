@@ -40,8 +40,8 @@ prefixed by convention with "`--osp:`") are understood:
   `--osp:num-threads=<n>`                      use `n` threads instead of per default using all
                                                detected hardware threads
 
-  `--osp:log-level=<n>`                        set logging level, default `0`; increasing `n` means
-                                               increasingly verbose log messages
+  `--osp:log-level=<n>`                        set logging level; valid values (in order of severity)
+                                               are `none`, `debug`, `info`, `warning`, and `error`
 
   `--osp:verbose`                              shortcut for `--osp:log-level=1` and enable debug
                                                output on console
@@ -67,7 +67,7 @@ prefixed by convention with "`--osp:`") are understood:
   `--osp:set-affinity=<n>`                     if `1`, bind software threads to hardware threads;
                                                `0` disables binding; default is `1` on KNL and `0`
                                                otherwise
-  
+
   `--osp:device-params=<param>:<value>[,...]`  set one or more other device parameters; equivalent
                                                to calling `ospDeviceSet*(param, value)`
   -------------------------------------------- -----------------------------------------------------
@@ -101,7 +101,8 @@ all devices:
   ------ ------------ ----------------------------------------------------------
   int    numThreads   number of threads which OSPRay should use
 
-  int    logLevel     logging level
+  string logLevel     logging level; valid values (in order of severity)
+                      are `none`, `debug`, `info`, `warning`, and `error`
 
   string logOutput    convenience for setting where status messages go; valid
                       values are `cerr` and `cout`
@@ -185,7 +186,7 @@ with "`OSPRAY_`"):
   : Environment variables interpreted by OSPRay.
 
 Note that these environment variables take precedence over values
-specified through `ospInit` or manually set parameters.
+specified through `ospInit` or manually set device parameters.
 
 ### Error Handling and Status Messages
 
