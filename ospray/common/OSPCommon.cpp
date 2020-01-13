@@ -86,6 +86,9 @@ namespace ospray {
           device->setParam("logOutput", std::string("cout"));
           device->setParam("errorOutput", std::string("cerr"));
           removeArgs(ac, av, i, 1);
+        } else if (parm == "--osp:warn-as-error") {
+          device->setParam("warnAsError", true);
+          removeArgs(ac, av, i, 1);
         } else if (parm == "--osp:verbose") {
           device->setParam("logLevel", 3);
           device->setParam("logOutput", std::string("cout"));
@@ -581,9 +584,25 @@ namespace ospray {
 
   void postStatusMsg(const std::string &msg, uint32_t postAtLogLevel)
   {
-    if (api::deviceIsSet() && logLevel() != OSP_LOG_NONE &&
-        logLevel() <= postAtLogLevel)
-      ospray::api::Device::current->msg_fcn((msg + '\n').c_str());
+    if (!api::deviceIsSet())
+      return;
+
+    auto level = logLevel();
+    if (level == OSP_LOG_NONE)
+      return;
+
+    auto &device = *api::Device::current;
+
+    if (level <= postAtLogLevel) {
+      bool logAsError =
+          (device.warningsAreErrors && postAtLogLevel == OSP_LOG_WARNING) ||
+          postAtLogLevel == OSP_LOG_ERROR;
+
+      if (logAsError)
+        handleError(OSP_UNKNOWN_ERROR, msg + '\n');
+      else
+        api::Device::current->msg_fcn((msg + '\n').c_str());
+    }
   }
 
   void handleError(OSPError e, const std::string &message)

@@ -70,8 +70,13 @@ namespace ospray {
       auto OSPRAY_DEBUG = utility::getEnvVar<int>("OSPRAY_DEBUG");
       debugMode         = OSPRAY_DEBUG.value_or(getParam<bool>("debug", 0));
 
+      auto OSPRAY_WARN = utility::getEnvVar<int>("OSPRAY_WARN_AS_ERROR");
+      warningsAreErrors =
+          OSPRAY_WARN.value_or(getParam<bool>("warnAsError", false));
+
       auto OSPRAY_TRACE_API = utility::getEnvVar<int>("OSPRAY_TRACE_API");
-      bool traceAPI = OSPRAY_TRACE_API.value_or(getParam<bool>("traceApi", 0));
+      bool traceAPI =
+          OSPRAY_TRACE_API.value_or(getParam<bool>("traceApi", false));
 
       if (traceAPI && !apiTraceEnabled) {
         auto streamPtr =
@@ -136,7 +141,7 @@ namespace ospray {
       if (OSPRAY_SET_AFFINITY)
         threadAffinity = OSPRAY_SET_AFFINITY.value();
 
-      threadAffinity = getParam<int>("setAffinity", threadAffinity);
+      threadAffinity = getParam<bool>("setAffinity", threadAffinity);
 
       tasking::initTaskingSystem(numThreads);
 

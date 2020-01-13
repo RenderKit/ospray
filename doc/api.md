@@ -43,6 +43,10 @@ prefixed by convention with "`--osp:`") are understood:
   `--osp:log-level=<str>`                      set logging level; valid values (in order of severity)
                                                are `none`, `debug`, `info`, `warning`, and `error`
 
+  `--osp:warn-as-error`                        send `warning` and `error` messages throug the error
+                                               callback, otherwise send `warning` messages through
+                                               the message callback
+
   `--osp:verbose`                              shortcut for `--osp:log-level=1` and enable debug
                                                output on console
 
@@ -110,9 +114,13 @@ all devices:
   string errorOutput  convenience for setting where error messages go; valid
                       values  are `cerr` and `cout`
 
-  int    debug        set debug mode; equivalent to logLevel=2 and numThreads=1
+  bool   debug        set debug mode; equivalent to logLevel=2 and numThreads=1
 
-  int    setAffinity  bind software threads to hardware threads if set to 1;
+  bool   warnAsError  send `warning` and `error` messages throug the error
+                      callback, otherwise send `warning` messages through
+                      the message callback
+
+  bool   setAffinity  bind software threads to hardware threads if set to 1;
                       0 disables binding omitting the parameter will let OSPRay
                       choose
   ------ ------------ ----------------------------------------------------------
@@ -175,6 +183,8 @@ with "`OSPRAY_`"):
   OSPRAY_ERROR_OUTPUT   equivalent to `--osp:error-output`
 
   OSPRAY_DEBUG          equivalent to `--osp:debug`
+
+  OSPRAY_WARN_AS_ERROR  equivalent to `--osp:warn-as-error`
 
   OSPRAY_SET_AFFINITY   equivalent to `--osp:set-affinity`
 

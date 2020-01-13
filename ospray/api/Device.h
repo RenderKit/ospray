@@ -176,6 +176,8 @@ namespace ospray {
       //             needs to have a valid value for the initial Device creation
       static uint32_t logLevel;
 
+      bool warningsAreErrors{false};
+
       std::function<void(const char *)> msg_fcn{[](const char *) {}};
 
       std::function<void(OSPError, const char *)> error_fcn{
