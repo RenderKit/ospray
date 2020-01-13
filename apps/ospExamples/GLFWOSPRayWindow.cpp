@@ -30,19 +30,30 @@ static const std::vector<std::string> g_scenes = {"boxes",
                                                   "cornell_box",
                                                   "curves",
                                                   "gravity_spheres_volume",
+                                                  "gravity_spheres_isosurface",
                                                   "perlin_noise_volumes",
                                                   "random_spheres",
                                                   "streamlines",
                                                   "subdivision_cube",
                                                   "unstructured_volume"};
 
-static const std::vector<std::string> g_curveBasis = {"bspline",
-                                                      "hermite",
-                                                      "catmull-rom",
-                                                      "linear"};
+static const std::vector<std::string> g_curveBasis = {
+    "bspline", "hermite", "catmull-rom", "linear"};
 
 static const std::vector<std::string> g_renderers = {
-    "scivis", "pathtracer", "raycast"};
+    "scivis", "pathtracer", "debug"};
+
+static const std::vector<std::string> g_debugRendererTypes = {"eyeLight",
+                                                              "primID",
+                                                              "geomID",
+                                                              "instID",
+                                                              "Ng",
+                                                              "Ns",
+                                                              "backfacing_Ng",
+                                                              "backfacing_Ns",
+                                                              "dPds",
+                                                              "dPdt",
+                                                              "volume"};
 
 bool sceneUI_callback(void *, int index, const char **out_text)
 {
@@ -56,14 +67,24 @@ bool curveBasisUI_callback(void *, int index, const char **out_text)
   return true;
 }
 
-
 bool rendererUI_callback(void *, int index, const char **out_text)
 {
   *out_text = g_renderers[index].c_str();
   return true;
 }
 
+bool debugTypeUI_callback(void *, int index, const char **out_text)
+{
+  *out_text = g_debugRendererTypes[index].c_str();
+  return true;
+}
+
 // GLFWOSPRayWindow definitions ///////////////////////////////////////////////
+
+void error_callback(int error, const char *desc)
+{
+  std::cerr << "error " << error << ": " << desc << std::endl;
+}
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
@@ -74,6 +95,8 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize)
   }
 
   activeWindow = this;
+
+  glfwSetErrorCallback(error_callback);
 
   // initialize GLFW
   if (!glfwInit()) {
@@ -408,7 +431,7 @@ void GLFWOSPRayWindow::buildUI()
     refreshScene(true);
   }
 
-  if(scene == "curves") {
+  if (scene == "curves") {
     static int whichCurveBasis = 0;
     if (ImGui::Combo("curveBasis##whichCurveBasis",
                      &whichCurveBasis,
@@ -427,13 +450,31 @@ void GLFWOSPRayWindow::buildUI()
                    nullptr,
                    g_renderers.size())) {
     rendererTypeStr = g_renderers[whichRenderer];
+
     if (rendererTypeStr == "scivis")
       rendererType = OSPRayRendererType::SCIVIS;
     else if (rendererTypeStr == "pathtracer")
       rendererType = OSPRayRendererType::PATHTRACER;
-    else
+    else if (rendererTypeStr == "debug") {
+      rendererType = OSPRayRendererType::DEBUGGER;
+      renderer.setParam("method", g_debugRendererTypes[0]);
+      addObjectToCommit(renderer.handle());
+    } else
       rendererType = OSPRayRendererType::OTHER;
+
     refreshScene();
+  }
+
+  if (rendererType == OSPRayRendererType::DEBUGGER) {
+    static int whichType = 0;
+    if (ImGui::Combo("debug type##whichDebugType",
+                     &whichType,
+                     debugTypeUI_callback,
+                     nullptr,
+                     g_debugRendererTypes.size())) {
+      renderer.setParam("method", g_debugRendererTypes[whichType]);
+      addObjectToCommit(renderer.handle());
+    }
   }
 
   ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);
@@ -442,21 +483,26 @@ void GLFWOSPRayWindow::buildUI()
   ImGui::Separator();
 
   static int spp = 1;
-  if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-    renderer.setParam("spp", spp);
+  if (ImGui::SliderInt("pixelSamples", &spp, 1, 64)) {
+    renderer.setParam("pixelSamples", spp);
+    addObjectToCommit(renderer.handle());
+  }
+
+  if (ImGui::ColorEdit3("backgroundColor", bgColor)) {
+    renderer.setParam("backgroundColor", bgColor);
     addObjectToCommit(renderer.handle());
   }
 
   if (rendererType == OSPRayRendererType::PATHTRACER) {
     static int maxDepth = 20;
-    if (ImGui::SliderInt("maxDepth", &maxDepth, 1, 64)) {
-      renderer.setParam("maxDepth", maxDepth);
+    if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {
+      renderer.setParam("maxPathLength", maxDepth);
       addObjectToCommit(renderer.handle());
     }
 
     static int rouletteDepth = 1;
-    if (ImGui::SliderInt("rouletteDepth", &rouletteDepth, 1, 64)) {
-      renderer.setParam("rouletteDepth", rouletteDepth);
+    if (ImGui::SliderInt("roulettePathLength", &rouletteDepth, 1, 64)) {
+      renderer.setParam("roulettePathLength", rouletteDepth);
       addObjectToCommit(renderer.handle());
     }
 
@@ -466,9 +512,13 @@ void GLFWOSPRayWindow::buildUI()
       addObjectToCommit(renderer.handle());
     }
   } else if (rendererType == OSPRayRendererType::SCIVIS) {
-    static vec3f bgColor(0.f);
-    if (ImGui::ColorEdit3("bgColor", bgColor)) {
-      renderer.setParam("bgColor", bgColor);
+    static bool useTestTex = false;
+    if (ImGui::Checkbox("backplate texture", &useTestTex)) {
+      if (useTestTex) {
+        renderer.setParam("map_backplate", backplateTex);
+      } else {
+        renderer.removeParam("map_backplate");
+      }
       addObjectToCommit(renderer.handle());
     }
 
@@ -481,6 +531,12 @@ void GLFWOSPRayWindow::buildUI()
     static float aoIntensity = 1.f;
     if (ImGui::SliderFloat("aoIntensity", &aoIntensity, 0.f, 1.f)) {
       renderer.setParam("aoIntensity", aoIntensity);
+      addObjectToCommit(renderer.handle());
+    }
+
+    static float samplingRate = 0.125f;
+    if (ImGui::SliderFloat("volumeSamplingRate", &samplingRate, 0.001f, 1.f)) {
+      renderer.setParam("volumeSamplingRate", samplingRate);
       addObjectToCommit(renderer.handle());
     }
   }
@@ -507,7 +563,7 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
 {
   auto builder = testing::newBuilder(scene);
   testing::setParam(builder, "rendererType", rendererTypeStr);
-  if(scene == "curves") {
+  if (scene == "curves") {
     testing::setParam(builder, "curveBasis", curveBasis);
   }
   testing::commit(builder);
@@ -518,7 +574,22 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
   world.commit();
 
   renderer = cpp::Renderer(rendererTypeStr);
+  // retains a set background color on renderer change
+  renderer.setParam("backgroundColor", bgColor);
   addObjectToCommit(renderer.handle());
+
+  // set up backplate texture
+  std::vector<vec4f> backplate;
+  backplate.push_back(vec4f(0.8f, 0.2f, 0.2f, 1.0f));
+  backplate.push_back(vec4f(0.2f, 0.8f, 0.2f, 1.0f));
+  backplate.push_back(vec4f(0.2f, 0.2f, 0.8f, 1.0f));
+  backplate.push_back(vec4f(0.4f, 0.2f, 0.4f, 1.0f));
+
+  OSPTextureFormat texFmt = OSP_TEXTURE_RGBA32F;
+  cpp::Data texData(vec2ul(2, 2), backplate.data());
+  backplateTex.setParam("data", texData);
+  backplateTex.setParam("format", OSP_INT, &texFmt);
+  addObjectToCommit(backplateTex.handle());
 
   if (resetCamera) {
     // create the arcball camera model

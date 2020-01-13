@@ -14,17 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "render/pathtracer/PathTracer.ih"
-#include "render/pathtracer/PathSampler.ih"
-#include "render/pathtracer/PathTracerUtil.ih"
-#include "render/pathtracer/PathTracerDefines.ih"
-#include "render/pathtracer/PathStructs.ih"
+#include "PathTracer.ih"
+#include "PathSampler.ih"
+#include "PathTracerUtil.ih"
+#include "PathTracerDefines.ih"
+#include "PathStructs.ih"
 
-#include "render/pathtracer/bsdfs/BSDF.ih"
-#include "render/pathtracer/bsdfs/MicrofacetAlbedoTables.ih"
-#include "render/pathtracer/materials/Medium.ih"
-#include "render/pathtracer/materials/Material.ih"
-#include "render/pathtracer/volumes/VolumeSampler.ih"
+#include "bsdfs/BSDF.ih"
+#include "bsdfs/MicrofacetAlbedoTables.ih"
+#include "materials/Medium.ih"
+#include "materials/Material.ih"
+#include "volumes/VolumeSampler.ih"
 
 #include "camera/Camera.ih"
 #include "math/random.ih"
@@ -57,15 +57,8 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
   pathContext.numBounceSampleDims = 4 + numLights*2; // BSDF sample (3D), roulette (1D), light samples (N*2D)
 
   PathState pathState;
-#if 0 // debug MIS
-  int c = (int)((pixel.x + pixel.y) * 10.f) % 3;
-  if (c == 0) { pathState.disableNEE = false; pathState.disableFWD = false; }
-  if (c == 1) { pathState.disableNEE = false; pathState.disableFWD = true; }
-  if (c == 2) { pathState.disableNEE = true; pathState.disableFWD = false; }
-#else
   pathState.disableNEE = false; 
   pathState.disableFWD = false;
-#endif
   pathState.straightPath = true; // path from camera did not change direction, for alpha and backplate
   pathState.auxFree = true; // normal & albedo buffer were not yet written to
   pathState.depth = 0;
@@ -77,17 +70,8 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer* uniform self,
   pathState.shadowCatcherDist = -inf;
 
   pathState.debug = false;
-  //vec2f debug_pixel = make_vec2f(0.45f, 0.45f);
-  //if (ix == (int)(debug_pixel.x*fb->size.x) && iy == (int)(debug_pixel.y*fb->size.y))
-  //{
-  //  pathState.debug = true;
-  //}
 
   samplePath(pathContext, pathState, ray, sample);
-
-  //if (pathState.debug) {
-  //  sample.rgb = make_vec3f(0.8f, 0.2f, 0.8f);
-  //}
 
   return sample;
 }
@@ -131,6 +115,8 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     cameraSample.time     = LDSampler_getFloat(ldSampler, 4);
 
     camera->initRay(camera, screenSample.ray, cameraSample);
+    const float tMax = Renderer_getMaxDepth(&self->super, cameraSample.screen);
+    screenSample.ray.t = min(screenSample.ray.t, tMax);
 
     ScreenSample sample = PathTraceIntegrator_Li(self, world,
                                                 fb, ix, iy,
@@ -195,7 +181,6 @@ unmasked void PathTracer_renderTile(Renderer *uniform _self,
 export void PathTracer_set(void *uniform _self
     , const uniform int32 rouletteDepth
     , const uniform float maxRadiance
-    , void *uniform backplate
     , const uniform vec4f &shadowCatcherPlane
     )
 {
@@ -203,7 +188,6 @@ export void PathTracer_set(void *uniform _self
 
   self->rouletteDepth = rouletteDepth;
   self->maxRadiance = maxRadiance;
-  self->backplate = (uniform Texture2D *uniform)backplate;
 
   uniform vec3f normal = make_vec3f(shadowCatcherPlane);
   const uniform float l = length(normal);
@@ -230,7 +214,7 @@ export void* uniform PathTracer_create(void *uniform cppE)
   Renderer_Constructor(&self->super, cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  PathTracer_set(self, 5, inf, NULL, make_vec4f(0.f));
+  PathTracer_set(self, 5, inf, make_vec4f(0.f));
   PathTracer_setLights(self, NULL, 0, 0);
 
   precomputeMicrofacetAlbedoTables();

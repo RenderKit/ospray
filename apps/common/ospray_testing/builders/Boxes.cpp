@@ -50,7 +50,7 @@ namespace ospray {
 
     cpp::Group Boxes::buildGroup() const
     {
-      cpp::Geometry boxGeometry("boxes");
+      cpp::Geometry boxGeometry("box");
 
       index_sequence_3D numBoxes(dimensions);
 
@@ -77,10 +77,10 @@ namespace ospray {
 
       model.setParam("color", cpp::Data(color));
 
-      cpp::Material material(rendererType, "OBJMaterial");
+      cpp::Material material(rendererType, "obj");
       material.commit();
 
-      model.setParam("material", cpp::Data(material));
+      model.setParam("material", material);
       model.commit();
 
       cpp::Group group;

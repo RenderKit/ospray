@@ -50,8 +50,8 @@ typedef enum
   OSP_OBJECT = 0x8000000,
 
   // object subtypes
-  OSP_CAMERA = 0x8000000 + 100,
-  OSP_DATA,
+  OSP_DATA = 0x8000000 + 100,
+  OSP_CAMERA,
   OSP_FRAMEBUFFER,
   OSP_FUTURE,
   OSP_GEOMETRIC_MODEL,
@@ -154,12 +154,13 @@ typedef enum
 : uint32_t
 #endif
 {
-  OSP_NO_ERROR = 0,          //< No error has been recorded
-  OSP_UNKNOWN_ERROR = 1,     //< An unknown error has occurred
-  OSP_INVALID_ARGUMENT = 2,  //< An invalid argument is specified
-  OSP_INVALID_OPERATION = 3, //< The operation is not allowed for the specified object
-  OSP_OUT_OF_MEMORY = 4,     //< There is not enough memory left to execute the command
-  OSP_UNSUPPORTED_CPU = 5,   //< The CPU is not supported as it does not support SSE4.1
+  OSP_NO_ERROR = 0,          // No error has been recorded
+  OSP_UNKNOWN_ERROR = 1,     // An unknown error has occurred
+  OSP_INVALID_ARGUMENT = 2,  // An invalid argument is specified
+  OSP_INVALID_OPERATION = 3, // The operation is not allowed for the specified object
+  OSP_OUT_OF_MEMORY = 4,     // There is not enough memory left to execute the command
+  OSP_UNSUPPORTED_CPU = 5,   // The CPU is not supported as it does not support SSE4.1
+  OSP_VERSION_MISMATCH = 6,  // A module could not be loaded due to mismatching version
 } OSPError;
 
 // OSPRay format constants for Frame Buffer creation
@@ -168,10 +169,10 @@ typedef enum
 : uint32_t
 #endif
 {
-  OSP_FB_NONE,    //< framebuffer will not be mapped by application
-  OSP_FB_RGBA8,   //< one dword per pixel: rgb+alpha, each one byte
-  OSP_FB_SRGBA,   //< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
-  OSP_FB_RGBA32F, //< one float4 per pixel: rgb+alpha, each one float
+  OSP_FB_NONE,    // framebuffer will not be mapped by application
+  OSP_FB_RGBA8,   // one dword per pixel: rgb+alpha, each one byte
+  OSP_FB_SRGBA,   // one dword per pixel: rgb (in sRGB space) + alpha, each one byte
+  OSP_FB_RGBA32F, // one float4 per pixel: rgb+alpha, each one float
 } OSPFrameBufferFormat;
 
 // OSPRay channel constants for Frame Buffer (can be OR'ed together)
@@ -264,12 +265,15 @@ typedef enum
   OSP_AMR_OCTANT
 } OSPAMRMethod;
 
-// UnstructuredVolume interpolation methods
+// Subdivision modes
 typedef enum
 # if __cplusplus >= 201103L
 : uint8_t
 #endif
 {
-  OSP_FAST,
-  OSP_ITERATIVE,
-} OSPUnstructuredMethod;
+  OSP_SUBDIVISION_NO_BOUNDARY,
+  OSP_SUBDIVISION_SMOOTH_BOUNDARY,
+  OSP_SUBDIVISION_PIN_CORNERS,
+  OSP_SUBDIVISION_PIN_BOUNDARY,
+  OSP_SUBDIVISION_PIN_ALL
+} OSPSubdivisionMode;

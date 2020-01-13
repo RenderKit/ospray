@@ -36,8 +36,8 @@ namespace ospray {
     colorData = getParam<Data *>("vertex.color");
     texcoordData = getParamDataT<vec2f>("vertex.texcoord");
     indexData = getParamDataT<vec3ui>("index");
-      if (!indexData)
-        indexData = getParamDataT<vec4ui>("index", true);
+    if (!indexData)
+      indexData = getParamDataT<vec4ui>("index", true);
     postCreationInfo(vertexData->size());
   }
 

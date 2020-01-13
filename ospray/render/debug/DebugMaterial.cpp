@@ -14,19 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "openvkl/openvkl.h"
-#include "Volume.h"
+// ospray
+#include "common/Material.h"
 
 namespace ospray {
 
-  struct VKLSharedStructuredVolume : public Volume
+  struct DebugMaterial : public ospray::Material
   {
-    VKLSharedStructuredVolume() = default;
-    virtual ~VKLSharedStructuredVolume() override = default;
-    virtual std::string toString() const override;
-    virtual void commit() override;
+    DebugMaterial() = default;
   };
+
+  OSP_REGISTER_MATERIAL(debug, DebugMaterial, default);
 
 }  // namespace ospray

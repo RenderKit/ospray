@@ -99,16 +99,18 @@ namespace ospray {
       geometry.setParam("edgeCrease.index", cpp::Data(edgeCreaseIndices));
       geometry.setParam("edgeCrease.weight", cpp::Data(edgeCreaseWeights));
       geometry.setParam("level", level);
+      geometry.setParam("mode", (int)OSP_SUBDIVISION_PIN_CORNERS);
+
       geometry.commit();
 
       cpp::GeometricModel model(geometry);
 
       // create OBJ material and assign to geometry
-      cpp::Material material(rendererType, "OBJMaterial");
-      material.setParam("Ks", vec3f(0.5f, 0.5f, 0.5f));
+      cpp::Material material(rendererType, "obj");
+      material.setParam("ks", vec3f(0.5f, 0.5f, 0.5f));
       material.commit();
 
-      model.setParam("material", cpp::Data(material));
+      model.setParam("material", material);
       material.commit();
 
       model.commit();

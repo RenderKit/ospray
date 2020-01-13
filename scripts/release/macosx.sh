@@ -51,12 +51,14 @@ cd deps_build
 cmake --version
 
 cmake \
-  -DBUILD_JOBS=`nproc` \
-  -DBUILD_DEPENDENCIES_ONLY=ON \
-  -DCMAKE_INSTALL_PREFIX=$DEP_DIR \
-  -DCMAKE_INSTALL_LIBDIR=lib \
-  -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
-  "$@" ../scripts/superbuild
+  "$@" \
+  -D BUILD_JOBS=`nproc` \
+  -D BUILD_DEPENDENCIES_ONLY=ON \
+  -D CMAKE_INSTALL_PREFIX=$DEP_DIR \
+  -D CMAKE_INSTALL_LIBDIR=lib \
+  -D BUILD_EMBREE_FROM_SOURCE=OFF \
+  -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF \
+  ../scripts/superbuild
 
 cmake --build .
 
@@ -71,7 +73,6 @@ cd build_release
 rm -rf *
 
 # Setup environment variables for dependencies
-
 export OSPCOMMON_TBB_ROOT=$DEP_DIR
 export ospcommon_DIR=$DEP_DIR
 export embree_DIR=$DEP_DIR
@@ -80,31 +81,29 @@ export openvkl_DIR=$DEP_DIR
 
 # set release and installer settings
 cmake -L \
--D OSPRAY_BUILD_ISA=ALL \
--D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc \
--D OSPRAY_ZIP_MODE=OFF \
--D OSPRAY_INSTALL_DEPENDENCIES=OFF \
--D CMAKE_INSTALL_PREFIX=/opt/local \
--D CMAKE_INSTALL_INCLUDEDIR=include \
--D CMAKE_INSTALL_LIBDIR=lib \
--D CMAKE_INSTALL_DOCDIR=../../Applications/OSPRay/doc \
--D CMAKE_INSTALL_BINDIR=../../Applications/OSPRay/bin \
-..
+  -D OSPRAY_BUILD_ISA=ALL \
+  -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc \
+  -D OSPRAY_ZIP_MODE=OFF \
+  -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
+  -D CMAKE_INSTALL_PREFIX=/opt/local \
+  -D CMAKE_INSTALL_INCLUDEDIR=include \
+  -D CMAKE_INSTALL_LIBDIR=lib \
+  -D CMAKE_INSTALL_DOCDIR=../../Applications/OSPRay/doc \
+  -D CMAKE_INSTALL_BINDIR=../../Applications/OSPRay/bin \
+  ..
 
 # create installers
-make -j 4 package || exit 2
+make -j `nproc` package || exit 2
 
 # change settings for zip mode
 cmake -L \
--D OSPRAY_ZIP_MODE=ON \
--D OSPRAY_APPS_ENABLE_DENOISER=ON \
--D OSPRAY_INSTALL_DEPENDENCIES=ON \
--D CMAKE_INSTALL_INCLUDEDIR=include \
--D CMAKE_INSTALL_LIBDIR=lib \
--D CMAKE_INSTALL_DOCDIR=doc \
--D CMAKE_INSTALL_BINDIR=bin \
-..
+  -D OSPRAY_ZIP_MODE=ON \
+  -D OSPRAY_INSTALL_DEPENDENCIES=ON \
+  -D CMAKE_INSTALL_INCLUDEDIR=include \
+  -D CMAKE_INSTALL_LIBDIR=lib \
+  -D CMAKE_INSTALL_DOCDIR=doc \
+  -D CMAKE_INSTALL_BINDIR=bin \
+  ..
 
 # create ZIP files
-make -j 4 package || exit 2
-
+make -j `nproc` package || exit 2

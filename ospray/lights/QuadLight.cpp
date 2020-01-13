@@ -42,7 +42,6 @@ namespace ospray {
                         (ispc::vec3f &)edge2);
   }
 
-  OSP_REGISTER_LIGHT(QuadLight, QuadLight);
   OSP_REGISTER_LIGHT(QuadLight, quad); // actually a parallelogram
 
 }// ::ospray

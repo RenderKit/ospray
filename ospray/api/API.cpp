@@ -116,22 +116,25 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
     for (int i = 1; i < *_ac; i++) {
       std::string av(_av[i]);
 
-      auto moduleSwitch = av.substr(0, 13);
-      if (moduleSwitch == "--osp:module:") {
+      if (ospcommon::utility::beginsWith(av, "--osp:load-modules")) {
+        std::string modules = getArgString(av);
+        if (modules == "") {
+          throw std::runtime_error(
+              "Invalid module name(s) provided to --osp:load-modules. Must be "
+              "formatted as <module1>[,<module2>,...]");
+        }
+        std::vector<std::string> moduleList =
+            ospcommon::utility::split(modules, ',');
+        for (std::string &moduleName : moduleList) {
+          loadLocalModule(moduleName);
+        }
         removeArgs(*_ac, _av, i, 1);
-
-        auto moduleName = av.substr(13);
-        loadLocalModule(moduleName);
-
-        --i;
-        continue;
       }
 
-      auto deviceSwitch = av.substr(0, 13);
-      if (deviceSwitch == "--osp:device:") {
-        removeArgs(*_ac, _av, i, 1);
-        auto deviceName = av.substr(13);
-
+      // ALOK: explicitly checking with the equals sign so this does not get
+      // clobbered by --osp:device-param
+      if (ospcommon::utility::beginsWith(av, "--osp:device=")) {
+        std::string deviceName = getArgString(av);
         try {
           currentDevice = Device::createDevice(deviceName.c_str());
         } catch (const std::runtime_error &) {
@@ -141,19 +144,18 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
                                    "device name wrong or didn't link the "
                                    "library which defines the device?");
         }
-        --i;
-        continue;
+        removeArgs(*_ac, _av, i, 1);
       }
     }
   }
 
   // no device created on cmd line, yet, so default to ISPCDevice
   if (!deviceIsSet()) {
-    auto OSPRAY_DEFAULT_DEVICE =
-        utility::getEnvVar<std::string>("OSPRAY_DEFAULT_DEVICE");
+    auto OSPRAY_DEVICE =
+        utility::getEnvVar<std::string>("OSPRAY_DEVICE");
 
-    if (OSPRAY_DEFAULT_DEVICE) {
-      auto device_name = OSPRAY_DEFAULT_DEVICE.value();
+    if (OSPRAY_DEVICE) {
+      auto device_name = OSPRAY_DEVICE.value();
       currentDevice = Device::createDevice(device_name.c_str());
     } else {
       ospLoadModule("ispc");
@@ -337,44 +339,44 @@ OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
 
 extern "C" OSPData ospNewSharedData(const void *sharedData,
                                     OSPDataType type,
-                                    uint32_t numItems1,
+                                    uint64_t numItems1,
                                     int64_t byteStride1,
-                                    uint32_t numItems2,
+                                    uint64_t numItems2,
                                     int64_t byteStride2,
-                                    uint32_t numItems3,
+                                    uint64_t numItems3,
                                     int64_t byteStride3) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   OSPData data = currentDevice().newSharedData(
       sharedData,
       type,
-      ospray::vec3ui(numItems1, numItems2, numItems3),
+      ospray::vec3ul(numItems1, numItems2, numItems3),
       ospray::vec3l(byteStride1, byteStride2, byteStride3));
   return data;
 }
 OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPData ospNewData(OSPDataType type,
-                              uint32_t numItems1,
-                              uint32_t numItems2,
-                              uint32_t numItems3) OSPRAY_CATCH_BEGIN
+                              uint64_t numItems1,
+                              uint64_t numItems2,
+                              uint64_t numItems3) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   OSPData data = currentDevice().newData(
-      type, ospray::vec3ui(numItems1, numItems2, numItems3));
+      type, ospray::vec3ul(numItems1, numItems2, numItems3));
   return data;
 }
 OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospCopyData(const OSPData source,
                             OSPData destination,
-                            uint32_t dstIdx1,
-                            uint32_t dstIdx2,
-                            uint32_t dstIdx3) OSPRAY_CATCH_BEGIN
+                            uint64_t dstIdx1,
+                            uint64_t dstIdx2,
+                            uint64_t dstIdx3) OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   currentDevice().copyData(
-      source, destination, ospray::vec3ui(dstIdx1, dstIdx2, dstIdx3));
+      source, destination, ospray::vec3ul(dstIdx1, dstIdx2, dstIdx3));
 }
 OSPRAY_CATCH_END()
 

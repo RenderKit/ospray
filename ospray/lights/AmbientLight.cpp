@@ -35,7 +35,6 @@ namespace ospray {
     ispc::AmbientLight_set(getIE());
   }
 
-  OSP_REGISTER_LIGHT(AmbientLight, AmbientLight);
   OSP_REGISTER_LIGHT(AmbientLight, ambient);
 
 } // ::ospray

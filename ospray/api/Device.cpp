@@ -18,7 +18,6 @@
 #include "Device.h"
 #include "common/OSPCommon.h"
 #include "objectFactory.h"
-#include "ospray/version.h"
 // ospcommon
 #include "ospcommon/os/library.h"
 #include "ospcommon/utility/getEnvVar.h"
@@ -91,8 +90,8 @@ namespace ospray {
       auto OSPRAY_LOG_LEVEL = utility::getEnvVar<int>("OSPRAY_LOG_LEVEL");
       logLevel = OSPRAY_LOG_LEVEL.value_or(getParam<int>("logLevel", 0));
 
-      auto OSPRAY_THREADS = utility::getEnvVar<int>("OSPRAY_THREADS");
-      numThreads = OSPRAY_THREADS.value_or(getParam<int>("numThreads", -1));
+      auto OSPRAY_NUM_THREADS = utility::getEnvVar<int>("OSPRAY_NUM_THREADS");
+      numThreads = OSPRAY_NUM_THREADS.value_or(getParam<int>("numThreads", -1));
 
       auto OSPRAY_LOG_OUTPUT =
           utility::getEnvVar<std::string>("OSPRAY_LOG_OUTPUT");

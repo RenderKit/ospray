@@ -78,17 +78,17 @@ build-arch-clang:
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
 
-build-arch-gcc-warnings:
+build-arch-gcc-extras:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=ON
 
-build-arch-clang-warnings:
+build-arch-clang-extras:
   <<: *build_job_docker
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=ON
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker
@@ -144,7 +144,7 @@ build-debug:
 build-osx-clang:
   <<: *build_job_shell
   script:
-    - scripts/build_gitlab/osx.sh
+    - scripts/build_gitlab/macosx.sh
   tags:
     - osx
     - clang
@@ -155,35 +155,35 @@ build-windows-msvc14:
     - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "v140"
   tags:
     - msvc14
-    - win7
+    - win
   artifacts:
     paths:
       - build/install
     expire_in: 3 day
 
-build-windows-msvc15:
-  <<: *build_job_shell
-  script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141"
-  tags:
-    - msvc15
-    - win7
+#build-windows-msvc15:
+#  <<: *build_job_shell
+#  script:
+#    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141"
+#  tags:
+#    - msvc15
+#    - win
 #  artifacts:
 #    paths:
 #      - build/install
 #    expire_in: 3 day
 
-build-windows-icc:
-  <<: *build_job_shell
-  script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 18.0"
-  tags:
-    - icc18
-    - win7
-  artifacts:
-    paths:
-      - build/install
-    expire_in: 3 day
+#build-windows-icc:
+#  <<: *build_job_shell
+#  script:
+#    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 17.0"
+#  tags:
+#    - icc17
+#    - win
+#  artifacts:
+#    paths:
+#      - build/install
+#    expire_in: 3 day
 
 build-scan-kw:
   stage: build
@@ -197,6 +197,18 @@ build-scan-kw:
     paths:
         - $CI_PROJECT_DIR/kw_build_number
     expire_in: 3 day
+  allow_failure: true
+
+source-protex-scan:
+  stage: build
+  image: ospray-protex-centos7
+  script:
+    - /tmp/source-scan-protex.sh
+  dependencies:
+  tags:
+    - protex-scan-docker
+  ## Temporarily allow to fail
+  when: manual
   allow_failure: true
 
 
@@ -224,18 +236,29 @@ test-ubuntu1604-gcc:
   dependencies:
     - build-ubuntu1604-gcc
 
-test-windows-icc:
-  <<: *test_job_windows
+test-tutorials:
+  stage: test-build
   tags:
-    - win7
-    - icc
+    - docker
+  image: ospray/docker-images:centos7
+  script:
+    - scripts/tests/run_tutorials.sh
   dependencies:
-    - build-windows-icc
+    - build-centos7-gcc
+  allow_failure: true
+
+#test-windows-icc:
+#  <<: *test_job_windows
+#  tags:
+#    - win
+#    - icc
+#  dependencies:
+#    - build-windows-icc
 
 #test-windows-msvc15:
 #  <<: *test_job_windows
 #  tags:
-#    - win7
+#    - win
 #    - msvc14
 #  dependencies:
 #    - build-windows-msvc15
@@ -243,7 +266,7 @@ test-windows-icc:
 test-windows-msvc14:
   <<: *test_job_windows
   tags:
-    - win7
+    - win
     - msvc14
   dependencies:
     - build-windows-msvc14
@@ -259,17 +282,18 @@ test-kw-critical:
     - kw-scan-docker
   allow_failure: true
 
-source-protex-scan:
-  stage: build
-  image: ospray-protex-centos7
+generate-ci-baseline:
+  <<: *test_job_unix
+  image: ospray/docker-images:ubuntu18.04
   script:
-    - /tmp/source-scan-protex.sh
+    - scripts/tests/generate_baseline.sh
   dependencies:
-  tags:
-    - protex-scan-docker
-  ## Temporarily allow to fail
+    - build-ubuntu1804-gcc
+  artifacts:
+    paths:
+      - img
+    expire_in: 3 day
   when: manual
-  allow_failure: true
 
 
 ### Documentation ###
@@ -310,7 +334,6 @@ release-linux-icc:
   image: ospray/docker-images:centos7-mod
   script:
     - module load cmake
-    - module load ispc
     - module load intel
     - export CC=icc
     - export CXX=icpc
@@ -331,15 +354,15 @@ release-osx-clang:
     - export CC=clang
     - export CXX=clang++
     - scripts/release/macosx.sh
-# DMGs cannot be signed; enable signing when switched to PKG:
-# $SIGN_FILE_MAC build_release/ospray-*.pkg
+    - $SIGN_FILE_MAC -o runtime -e scripts/release/ospray.entitlements build_release/ospray-*
+    - scripts/release/macosx_notarization.sh build_release/ospray-*.pkg
   tags:
     - clang
     - osx
   artifacts:
     paths:
-      - build_release/*.gz
-      - build_release/*.dmg
+      - build_release/*.zip
+      - build_release/*.pkg
 
 release-windows:
   <<: *release_job
@@ -347,8 +370,8 @@ release-windows:
     - scripts\release\win.ps1 "Visual Studio 14 2015 Win64"
     - Invoke-Expression "$env:SIGN_FILE_WINDOWS build_release\ospray*.msi"
   tags:
-    - msvc
-    - win7
+    - msvc14
+    - win
   artifacts:
     paths:
       - build_release\ospray*.zip

@@ -222,6 +222,6 @@ namespace ospray {
     }
   }
 
-  OSP_REGISTER_IMAGE_OP(SSAOFrameOp, frame_ssao);
+  OSP_REGISTER_IMAGE_OP(SSAOFrameOp, ssao);
 
 }  // namespace ospray

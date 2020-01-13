@@ -28,8 +28,8 @@ namespace ospray {
   {
     TransferFunction::commit();
 
-    colorValues = getParamDataT<vec3f>("color");
-    opacityValues = getParamDataT<float>("opacity");
+    colorValues = getParamDataT<vec3f>("color", true);
+    opacityValues = getParamDataT<float>("opacity", true);
 
     ispc::LinearTransferFunction_set(
         ispcEquivalent, ispc(colorValues), ispc(opacityValues));
@@ -108,6 +108,6 @@ namespace ospray {
     return valueRanges;
   }
 
-  OSP_REGISTER_TRANSFER_FUNCTION(LinearTransferFunction, piecewise_linear);
+  OSP_REGISTER_TRANSFER_FUNCTION(LinearTransferFunction, piecewiseLinear);
 
 } // namespace ospray

@@ -28,16 +28,9 @@ struct VolumetricModel
 {
   Volume *volume;  //!< instanced Volume
 
-  //! Recommended sampling step size for ray casting based renderers, set by the
-  //! underlying volume implementation.
-  float samplingStep;
-
-  //! Recommended sampling rate for the renderer.
-  float samplingRate;
-
   //! Color and opacity transfer function.
   TransferFunction *transferFunction;
-  
+
   //! value selector
   VKLValueSelector vklValueSelector;
 
@@ -45,7 +38,8 @@ struct VolumetricModel
 
   //! Volume parameters understood by the pathtracer
   float densityScale;
-  float anisotropy;     // the anisotropy of the volume's phase function (Heyney-Greenstein)
+  float anisotropy;  // the anisotropy of the volume's phase function
+                     // (Heyney-Greenstein)
 };
 
 inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
@@ -53,9 +47,6 @@ inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
                                           const varying Ray &ray,
                                           uniform int64 flags)
 {
-  //Volume *uniform volume = self->volume;
-  //geom->postIntersect(geom, dg, ray, flags);
-
   dg.areaPDF = 0.f;
-  dg.color = make_vec4f(0.f);
+  dg.color   = make_vec4f(0.f);
 }

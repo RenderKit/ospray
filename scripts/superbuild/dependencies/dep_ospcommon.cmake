@@ -44,6 +44,7 @@ ExternalProject_Add(${COMPONENT_NAME}
 )
 
 list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
+string(REPLACE ";" "|" CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
 
 if (BUILD_TBB_FROM_SOURCE)
   ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)

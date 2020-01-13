@@ -128,8 +128,6 @@ namespace ospray {
     return ProjectedPoint(vec3f(sp.x, sp.y, depth), 0);
   }
 
-  OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);
-  OSP_REGISTER_CAMERA(PerspectiveCamera,thinlens);
-  OSP_REGISTER_CAMERA(PerspectiveCamera,stereo);
+  OSP_REGISTER_CAMERA(PerspectiveCamera, perspective);
 
 } // ::ospray

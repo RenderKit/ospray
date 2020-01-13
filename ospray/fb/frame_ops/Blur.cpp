@@ -122,6 +122,6 @@ namespace ospray {
     return "ospray::BlurFrameOp";
   }
 
-  OSP_REGISTER_IMAGE_OP(BlurFrameOp, frame_blur);
+  OSP_REGISTER_IMAGE_OP(BlurFrameOp, blur);
 
 }  // namespace ospray

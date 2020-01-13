@@ -20,6 +20,8 @@
 #include "Group.ih"
 #include "Ray.ih"
 
+struct Renderer;
+
 struct Instance
 {
   void *cppEquivalent;
@@ -31,6 +33,7 @@ struct Instance
 };
 
 inline void Instance_postIntersect(const Instance *uniform self,
+                                   const Renderer *uniform renderer,
                                    const uniform int32 instID,
                                    varying DifferentialGeometry &dg,
                                    const varying Ray &ray,
@@ -39,7 +42,7 @@ inline void Instance_postIntersect(const Instance *uniform self,
   foreach_unique(geomID in ray.geomID)
   {
     GeometricModel *uniform model = *(self->group->geometricModels + geomID);
-    GeometricModel_postIntersect(model, dg, ray, flags);
+    GeometricModel_postIntersect(model, renderer, dg, ray, flags);
 
     dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
     dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);

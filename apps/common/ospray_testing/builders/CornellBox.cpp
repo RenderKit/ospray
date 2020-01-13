@@ -248,12 +248,12 @@ namespace ospray {
       quadMesh.commit();
 
       // create and setup a material
-      cpp::Material quadMeshMaterial(rendererType, "OBJMaterial");
+      cpp::Material quadMeshMaterial(rendererType, "obj");
       quadMeshMaterial.commit();
 
       // Put the mesh and material into a model
       cpp::GeometricModel model(quadMesh);
-      model.setParam("material", cpp::Data(quadMeshMaterial));
+      model.setParam("material", quadMeshMaterial);
       model.commit();
 
       cpp::Group group;

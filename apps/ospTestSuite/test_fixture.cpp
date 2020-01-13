@@ -18,6 +18,8 @@
 #include "ArcballCamera.h"
 // ospray_testing
 #include "ospray_testing.h"
+// ospcommon
+#include "ospcommon/utility/multidim_index_sequence.h"
 
 extern OSPRayEnvironment *ospEnv;
 
@@ -50,10 +52,8 @@ namespace OSPRayTestScenes {
       }
     }
 
-    cpp::Volume torus("structured_volume");
-    torus.setParam("voxelData", cpp::Data(volumetricData));
-    torus.setParam("dimensions", vec3i(size, size, size));
-    torus.setParam<int>("voxelType", OSP_FLOAT);
+    cpp::Volume torus("structured_regular");
+    torus.setParam("data", cpp::Data(vec3ul(size), volumetricData.data()));
     torus.setParam("gridOrigin", vec3f(-0.5f, -0.5f, -0.5f));
     torus.setParam("gridSpacing", vec3f(1.f / size, 1.f / size, 1.f / size));
     return torus;
@@ -178,8 +178,8 @@ namespace OSPRayTestScenes {
 
     renderer = cpp::Renderer(rendererType);
     renderer.setParam("aoSamples", 0);
-    renderer.setParam("bgColor", vec3f(1.0f));
-    renderer.setParam("spp", samplesPerPixel);
+    renderer.setParam("backgroundColor", vec3f(1.0f));
+    renderer.setParam("pixelSamples", samplesPerPixel);
 
     world = cpp::World();
   }
@@ -218,16 +218,16 @@ namespace OSPRayTestScenes {
     camera.setParam("up", vec3f(0.f, 1.f, 0.f));
     camera.setParam("fovy", fov);
 
-    renderer.setParam("spp", 16);
-    renderer.setParam("bgColor", vec4f(0.2f, 0.2f, 0.4f, 1.0f));
+    renderer.setParam("pixelSamples", 16);
+    renderer.setParam("backgroundColor", vec4f(0.2f, 0.2f, 0.4f, 1.0f));
     // scivis params
     renderer.setParam("aoSamples", 16);
     renderer.setParam("aoIntensity", 1.f);
     // pathtracer params
-    renderer.setParam("maxDepth", 2);
+    renderer.setParam("maxPathLength", 2);
 
-    cpp::Geometry sphere("spheres");
-    cpp::Geometry inst_sphere("spheres");
+    cpp::Geometry sphere("sphere");
+    cpp::Geometry inst_sphere("sphere");
 
     std::vector<vec3f> sph_center = {
         vec3f(-0.5f * radius, -0.3f * radius, cent),
@@ -253,8 +253,8 @@ namespace OSPRayTestScenes {
     sphereMaterial.setParam("d", 1.0f);
     sphereMaterial.commit();
 
-    model1.setParam("material", cpp::Data(sphereMaterial));
-    model2.setParam("material", cpp::Data(sphereMaterial));
+    model1.setParam("material", sphereMaterial);
+    model2.setParam("material", sphereMaterial);
 
     affine3f xfm(vec3f(0.01, 0, 0),
                  vec3f(0, 0.01, 0),
@@ -294,7 +294,7 @@ namespace OSPRayTestScenes {
 
     cpp::VolumetricModel volumetricModel(torus);
 
-    cpp::TransferFunction transferFun("piecewise_linear");
+    cpp::TransferFunction transferFun("piecewiseLinear");
     transferFun.setParam("valueRange", vec2f(-10000.f, 10000.f));
 
     std::vector<vec3f> colors = {vec3f(1.0f, 0.0f, 0.0f),
@@ -314,16 +314,16 @@ namespace OSPRayTestScenes {
     tex.commit();
 
     cpp::Material sphereMaterial(rendererType, "default");
-    sphereMaterial.setParam("map_Kd", tex);
+    sphereMaterial.setParam("map_kd", tex);
     sphereMaterial.commit();
 
-    cpp::Geometry sphere("spheres");
+    cpp::Geometry sphere("sphere");
     sphere.setParam("sphere.position", cpp::Data(vec3f(0.f)));
     sphere.setParam("radius", 0.51f);
     sphere.commit();
 
     cpp::GeometricModel model(sphere);
-    model.setParam("material", cpp::Data(sphereMaterial));
+    model.setParam("material", sphereMaterial);
     AddModel(model);
 
     cpp::Light ambient("ambient");
@@ -351,7 +351,7 @@ namespace OSPRayTestScenes {
 
     cpp::VolumetricModel volumetricModel(torus);
 
-    cpp::TransferFunction transferFun("piecewise_linear");
+    cpp::TransferFunction transferFun("piecewiseLinear");
     transferFun.setParam("valueRange", vec2f(-10000.f, 10000.f));
 
     std::vector<vec3f> colors = {vec3f(1.0f, 0.0f, 0.0f),
@@ -389,8 +389,90 @@ namespace OSPRayTestScenes {
     depthTex.setParam("data", cpp::Data(imgSize, texData.data()));
     depthTex.commit();
 
-    renderer.setParam("maxDepthTexture", depthTex);
-    renderer.setParam("bgColor", bgColor);
+    renderer.setParam("map_maxDepth", depthTex);
+    renderer.setParam("backgroundColor", bgColor);
+
+    cpp::Light ambient("ambient");
+    ambient.setParam("intensity", 0.5f);
+    AddLight(ambient);
+  }
+
+  RendererMaterialList::RendererMaterialList()
+  {
+    rendererType = GetParam();
+  }
+
+  void RendererMaterialList::SetUp()
+  {
+    Base::SetUp();
+
+    // Setup geometry //
+
+    cpp::Geometry sphereGeometry("sphere");
+
+    constexpr int dimSize = 3;
+
+    ospcommon::index_sequence_2D numSpheres(dimSize);
+
+    std::vector<vec3f> spheres;
+    std::vector<uint32_t> index;
+    std::vector<cpp::Material> materials;
+
+    auto makeObjMaterial = [](const std::string &rendererType,
+                              vec3f Kd,
+                              vec3f Ks) -> cpp::Material {
+      cpp::Material mat(rendererType, "obj");
+      mat.setParam("kd", Kd);
+      mat.setParam("ks", Ks);
+      mat.commit();
+
+      return mat;
+    };
+
+    for (auto i : numSpheres) {
+      auto i_f = static_cast<vec2f>(i);
+      spheres.emplace_back(i_f.x, i_f.y, 0.f);
+
+      auto l = i_f / (dimSize - 1);
+      materials.push_back(
+          makeObjMaterial(rendererType,
+                          lerp(l.x, vec3f(0.1f), vec3f(0.f, 0.f, 1.f)),
+                          lerp(l.y, vec3f(0.f), vec3f(1.f))));
+
+      index.push_back(static_cast<uint32_t>(numSpheres.flatten(i)));
+    }
+
+    sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
+    sphereGeometry.setParam("radius", 0.4f);
+    sphereGeometry.commit();
+
+    cpp::GeometricModel model(sphereGeometry);
+    model.setParam("material", cpp::Data(index));
+
+    AddModel(model);
+
+    // Setup renderer material list //
+
+    renderer.setParam("material", cpp::Data(materials));
+
+    // Create the world to get bounds for camera setup //
+
+    if (!instances.empty())
+      world.setParam("instance", cpp::Data(instances));
+
+    instances.clear();
+
+    world.commit();
+
+    auto worldBounds = world.getBounds();
+
+    ArcballCamera arcballCamera(worldBounds, imgSize);
+
+    camera.setParam("position", arcballCamera.eyePos());
+    camera.setParam("direction", arcballCamera.lookDir());
+    camera.setParam("up", arcballCamera.upDir());
+
+    // Setup lights //
 
     cpp::Light ambient("ambient");
     ambient.setParam("intensity", 0.5f);

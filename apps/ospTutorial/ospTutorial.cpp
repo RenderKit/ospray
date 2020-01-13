@@ -105,7 +105,7 @@ int main(int argc, const char **argv)
     camera.commit();  // commit each object to indicate modifications are done
 
     // create and setup model and mesh
-    ospray::cpp::Geometry mesh("triangles");
+    ospray::cpp::Geometry mesh("mesh");
     mesh.setParam("vertex.position", ospray::cpp::Data(vertex));
     mesh.setParam("vertex.color", ospray::cpp::Data(color));
     mesh.setParam("index", ospray::cpp::Data(index));
@@ -140,7 +140,7 @@ int main(int argc, const char **argv)
 
     // complete setup of renderer
     renderer.setParam("aoSamples", 1);
-    renderer.setParam("bgColor", 1.0f);  // white, transparent
+    renderer.setParam("backgroundColor", 1.0f);  // white, transparent
     renderer.commit();
 
     // create and setup framebuffer

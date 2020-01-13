@@ -72,7 +72,7 @@ Light_SampleRes HDRILight_sample(const uniform Light* uniform super,
 
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, sample2d.uv);
-  res.weight = get3f(self->map, lookup) * self->super.intensity / res.pdf;
+  res.weight = get3f(self->map, lookup) * self->super.radiance / res.pdf;
 
   return res;
 }
@@ -98,7 +98,7 @@ Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
 
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, uv);
-  res.radiance = get3f(self->map, lookup) * self->super.intensity;
+  res.radiance = get3f(self->map, lookup) * self->super.radiance;
 
   // domain of Distribution2D is shifted by half a texel compared to texture
   // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)

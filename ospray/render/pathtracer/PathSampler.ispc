@@ -32,12 +32,13 @@
 #include "common/Intersect.ih"
 
 inline void postIntersect(const PathContext& pathContext,
-                          const PathState& pathState, 
+                          const PathState& pathState,
                           PathVertex& pathVertex, Ray& ray)
 {
   if (pathVertex.type == SURFACE)
   {
     postIntersect(pathContext.world,
+        &pathContext.context->super,
         pathVertex.dg,
         ray,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
@@ -47,7 +48,7 @@ inline void postIntersect(const PathContext& pathContext,
   {
       pathVertex.dg.Ng = make_vec3f(0.f);
       pathVertex.dg.Ns = make_vec3f(0.f);
-      pathVertex.dg.dPds = make_vec3f(0.f); 
+      pathVertex.dg.dPds = make_vec3f(0.f);
       pathVertex.dg.dPdt = make_vec3f(0.f);
       pathVertex.dg.st = make_vec2f(0);
       pathVertex.dg.color = make_vec4f(0.f);
@@ -58,8 +59,8 @@ inline void postIntersect(const PathContext& pathContext,
   }
 }
 
-inline Scattering_SampleRes sampleDirection(const PathContext& pathContext, 
-                                            const PathState& pathState, 
+inline Scattering_SampleRes sampleDirection(const PathContext& pathContext,
+                                            const PathState& pathState,
                                             PathVertex& pathVertex)
 {
   const vec2f ss = LDSampler_getFloat2(pathContext.ldSampler, pathState.sampleDim);
@@ -90,8 +91,8 @@ inline Scattering_SampleRes sampleDirection(const PathContext& pathContext,
 }
 
 void samplePath(const PathContext& pathContext,
-                PathState& pathState, 
-                Ray& ray, 
+                PathState& pathState,
+                Ray& ray,
                 ScreenSample& sample)
 {
   PathVertex lastVertex;
@@ -136,10 +137,10 @@ void samplePath(const PathContext& pathContext,
       break;
 
     pathVertex.wo = neg(ray.dir);
-    
+
     float extinctionCoefficient;
-    float freePath = volumeSampleFreePath(pathState, pathContext.world, ray, 
-      pathContext.ldSampler, pathContext.randomSampler, 
+    float freePath = volumeSampleFreePath(pathState, pathContext.world, ray,
+      pathContext.ldSampler, pathContext.randomSampler,
       &pathVertex.volume, extinctionCoefficient, pathVertex.albedo);
     if (freePath < inf)
     {
@@ -148,17 +149,14 @@ void samplePath(const PathContext& pathContext,
       pathState.throughput = pathState.throughput * pathVertex.albedo;
     }
 
-    // backplate handling
-    if (pathVertex.type == ENVIRONMENT && pathState.straightPath) 
+    // background handling
+    if (pathVertex.type == ENVIRONMENT && pathState.straightPath)
     {
-      if ((bool)pathContext.context->backplate) {
-        DifferentialGeometry lookup;
-        initDgFromTexCoord(lookup, clamp2edge(pathContext.context->backplate, *pathContext.pixel));
-        pathState.contribution = pathState.contribution + pathState.throughput * get3f(pathContext.context->backplate, lookup);
-      }
-      else
-        sample.alpha = 1.0f - luminance(pathState.throughput);
-    }    
+      vec4f bg = Renderer_getBackground(&pathContext.context->super, *pathContext.pixel);
+      pathState.contribution = pathState.contribution + pathState.throughput * make_vec3f(bg);
+      sample.alpha = 1.0f - luminance(pathState.throughput);
+      sample.alpha += (1.f - sample.alpha) * bg.w;
+    }
 
     if ((!pathState.disableFWD || pathState.depth == 0) && pathVertex.type != VOLUME) {
       pathState.contribution = pathState.contribution + evaluateVirtualLights(pathContext, pathState, lastVertex, pathVertex, ray);
@@ -201,7 +199,7 @@ void samplePath(const PathContext& pathContext,
     }
 
     Scattering_SampleRes fs = sampleDirection(pathContext, pathState, pathVertex);
-    
+
     if (pathState.auxFree && (fs.type & SCATTERING_SMOOTH)) {
       updateAuxilliaryData(pathState, pathVertex, sample);
     }
@@ -257,8 +255,8 @@ void samplePath(const PathContext& pathContext,
   } while (reduce_max(pathState.throughput) > pathContext.context->super.minContribution);
 
   sample.rgb = pathState.contribution;
-  if (isnan(pathState.contribution.x) || 
-      isnan(pathState.contribution.y) || 
+  if (isnan(pathState.contribution.x) ||
+      isnan(pathState.contribution.y) ||
       isnan(pathState.contribution.z))
   {
     sample.rgb = make_vec3f(0.f);

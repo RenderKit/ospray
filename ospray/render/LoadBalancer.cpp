@@ -39,7 +39,11 @@ namespace ospray {
     fb->beginFrame();
     void *perFrameData = renderer->beginFrame(fb, world);
 
+#ifdef OSPRAY_SERIAL_RENDERING
+    tasking::serial_for(fb->getTotalTiles(), [&](int taskIndex) {
+#else
     tasking::parallel_for(fb->getTotalTiles(), [&](int taskIndex) {
+#endif
       if (cancel)
         return;
       const size_t numTiles_x = fb->getNumTiles().x;
@@ -62,7 +66,11 @@ namespace ospray {
       Tile __aligned(64) tile(tileID, fbSize, accumID);
 #endif
 
+#ifdef OSPRAY_SERIAL_RENDERING
+      tasking::serial_for(numJobs(renderer->spp, accumID), [&](size_t tIdx) {
+#else
       tasking::parallel_for(numJobs(renderer->spp, accumID), [&](size_t tIdx) {
+#endif
         renderer->renderTile(fb, camera, world, perFrameData, tile, tIdx);
       });
 

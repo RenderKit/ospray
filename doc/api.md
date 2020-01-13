@@ -31,43 +31,46 @@ It is important to note that the arguments passed to `ospInit()` are
 processed in order they are listed. The following parameters (which are
 prefixed by convention with "`--osp:`") are understood:
 
-  -------------------------- -----------------------------------------------------
-  Parameter                  Description
-  -------------------------- -----------------------------------------------------
-  `--osp:debug`              enables various extra checks and debug output, and
-                             disables multi-threading
+  -------------------------------------------- -----------------------------------------------------
+  Parameter                                    Description
+  -------------------------------------------- -----------------------------------------------------
+  `--osp:debug`                                enables various extra checks and debug output, and
+                                               disables multi-threading
 
-  `--osp:numthreads <n>`     use `n` threads instead of per default using all
-                             detected hardware threads
+  `--osp:num-threads=<n>`                      use `n` threads instead of per default using all
+                                               detected hardware threads
 
-  `--osp:loglevel <n>`       set logging level, default `0`; increasing `n` means
-                             increasingly verbose log messages
+  `--osp:log-level=<n>`                        set logging level, default `0`; increasing `n` means
+                                               increasingly verbose log messages
 
-  `--osp:verbose`            shortcut for `--osp:loglevel 1` and enable debug
-                             output on console
+  `--osp:verbose`                              shortcut for `--osp:log-level=1` and enable debug
+                                               output on console
 
-  `--osp:vv`                 shortcut for `--osp:loglevel 2` and enable debug
-                             output on console
+  `--osp:vv`                                   shortcut for `--osp:log-level=2` and enable debug
+                                               output on console
 
-  `--osp:module:<name>`      load a module during initialization; equivalent to
-                             calling `ospLoadModule(name)`
+  `--osp:load-modules=<name>[,...]`            load one or more modules during initialization;
+                                               equivalent to calling `ospLoadModule(name)`
 
-  `--osp:logoutput <dst>`    convenience for setting where status messages go;
-                             valid values for `dst` are `cerr` and `cout`
+  `--osp:log-output=<dst>`                     convenience for setting where status messages go;
+                                               valid values for `dst` are `cerr` and `cout`
 
-  `--osp:erroroutput <dst>`  convenience for setting where error messages go;
-                             valid values for `dst` are `cerr` and `cout`
+  `--osp:error-output=<dst>`                   convenience for setting where error messages go;
+                                               valid values for `dst` are `cerr` and `cout`
 
-  `--osp:device:<name>`      use `name` as the type of device for OSPRay to
-                             create; e.g., `--osp:device:default` gives you the
-                             default local device; Note if the device to be used
-                             is defined in a module, remember to pass
-                             `--osp:module:<name>` first
+  `--osp:device=<name>`                        use `name` as the type of device for OSPRay to
+                                               create; e.g., `--osp:device=default` gives you the
+                                               default local device; Note if the device to be used
+                                               is defined in a module, remember to pass
+                                               `--osp:load-modules=<name>` first
 
-  `--osp:setaffinity <n>`    if `1`, bind software threads to hardware threads;
-                             `0` disables binding; default is `1` on KNL and `0`
-                             otherwise
-  -------------------------- -----------------------------------------------------
+  `--osp:set-affinity=<n>`                     if `1`, bind software threads to hardware threads;
+                                               `0` disables binding; default is `1` on KNL and `0`
+                                               otherwise
+  
+  `--osp:device-params=<param>:<value>[,...]`  set one or more other device parameters; equivalent
+                                               to calling `ospDeviceSet*(param, value)`
+  -------------------------------------------- -----------------------------------------------------
   : Command line parameters accepted by OSPRay's `ospInit`.
 
 ### Manual Device Instantiation
@@ -162,22 +165,22 @@ with "`OSPRAY_`"):
   --------------------- --------------------------------------------------------
   Variable              Description
   --------------------- --------------------------------------------------------
-  OSPRAY_THREADS        equivalent to `--osp:numthreads`
+  OSPRAY_NUM_THREADS    equivalent to `--osp:num-threads`
 
-  OSPRAY_LOG_LEVEL      equivalent to `--osp:loglevel`
+  OSPRAY_LOG_LEVEL      equivalent to `--osp:log-level`
 
-  OSPRAY_LOG_OUTPUT     equivalent to `--osp:logoutput`
+  OSPRAY_LOG_OUTPUT     equivalent to `--osp:log-output`
 
-  OSPRAY_ERROR_OUTPUT   equivalent to `--osp:erroroutput`
+  OSPRAY_ERROR_OUTPUT   equivalent to `--osp:error-output`
 
   OSPRAY_DEBUG          equivalent to `--osp:debug`
 
-  OSPRAY_SET_AFFINITY   equivalent to `--osp:setaffinity`
+  OSPRAY_SET_AFFINITY   equivalent to `--osp:set-affinity`
 
-  OSPRAY_LOAD_MODULES   equivalent to `--osp:module:`, can be a comma separated
+  OSPRAY_LOAD_MODULES   equivalent to `--osp:load-modules`, can be a comma separated
                         list of modules which will be loaded in order
 
-  OSPRAY_DEFAULT_DEVICE equivalent to `--osp:device:`
+  OSPRAY_DEVICE         equivalent to `--osp:device:`
   --------------------- --------------------------------------------------------
   : Environment variables interpreted by OSPRay.
 
@@ -196,6 +199,7 @@ The following errors are currently used by OSPRay:
   OSP_INVALID_OPERATION  the operation is not allowed for the specified object
   OSP_OUT_OF_MEMORY      there is not enough memory to execute the command
   OSP_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1)
+  OSP_VERSION_MISMATCH   a module could not be loaded due to mismatching version
   ---------------------- -------------------------------------------------------
   : Possible error codes, i.e., valid named constants of type `OSPError`.
 
@@ -357,11 +361,11 @@ is to created a shared data array, which is done with
 
     OSPData ospNewSharedData(const void *sharedData,
                        OSPDataType,
-      uint32_t numItems1,
+      uint64_t numItems1,
       int64_t byteStride1 = 0,
-      uint32_t numItems2 = 1,
+      uint64_t numItems2 = 1,
       int64_t byteStride2 = 0,
-      uint32_t numItems3 = 1,
+      uint64_t numItems3 = 1,
       int64_t byteStride3 = 0);
 
 The call returns an `OSPData` handle to the created array. The calling
@@ -472,66 +476,90 @@ given type `type` use
 
     OSPVolume ospNewVolume(const char *type);
 
-The call returns `NULL` if that type of volume is not known by OSPRay,
-or else a valid `OSPVolume` handle.
+Note that OSPRay's implementation forwards `type` directly to Open VKL,
+allowing new Open VKL volume types to be usable within OSPRay without
+the need to change (or even recompile) OSPRay.
 
-### Structured Volume
+### Structured Regular Volume
 
 Structured volumes only need to store the values of the samples, because
 their addresses in memory can be easily computed from a 3D position. A
 common type of structured volumes are regular grids.
 
-Structured volumes are created by passing the `structured_volume`
-type string to `ospNewVolume`. Structured volumes are represented
-through an `OSPData` array (which may or may not be shared with the
-application), where the voxel data is laid out in memory in
-xyz-order^[For consecutive memory addresses the x-index of the
-corresponding voxel changes the quickest.]
+Structured regular volumes are created by passing the
+`structuredRegular` type string to `ospNewVolume`. Structured volumes
+are represented through an `OSPData` 3D array `data` (which may or may
+not be shared with the application), where currently the voxel data
+needs to be laid out compact in memory in xyz-order^[For consecutive
+memory addresses the x-index of the corresponding voxel changes the
+quickest.]
 
 The parameters understood by structured volumes are summarized in the
 table below.
 
-  ------ ----------- -----------  -----------------------------------
-  Type   Name            Default  Description
-  ------ ----------- -----------  -----------------------------------
-  vec3i  dimensions               number of voxels in each
-                                  dimension $(x, y, z)$
+  Type    Name            Default  Description
+  ------- ----------- -----------  --------------------------------------
+  vec3f   gridOrigin  $(0, 0, 0)$  origin of the grid in object-space
+  vec3f   gridSpacing $(1, 1, 1)$  size of the grid cells in object-space
+  OSPData data                     the actual voxel 3D [data]
+  ------- ----------- -----------  --------------------------------------
+  : Additional configuration parameters for structured regular volumes.
 
-  int    voxelType                `OSPDataType` of each voxel,
-                                  currently supported are:
+The size of the volume is inferred from the size of the 3D array `data`,
+as is the type of the voxel values (currently supported are:
+`OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_FLOAT`, and `OSP_DOUBLE`).
 
-                                  `OSP_UCHAR`
+### Structured Spherical Volume
 
-                                  `OSP_SHORT`
+Structured spherical volumes are also supported, which are created by
+passing a type string of `"structuredSpherical"` to `ospNewVolume`. The
+grid dimensions and parameters are defined in terms of radial distance
+$r$, inclination angle $\theta$, and azimuthal angle $\phi$, conforming
+with the ISO convention for spherical coordinate systems. The coordinate
+system and parameters understood by structured spherical volumes are
+summarized below.
 
-                                  `OSP_USHORT`
+![Coordinate system of structured spherical volumes.][imgStructuredSphericalCoords]
 
-                                  `OSP_FLOAT`
+  Type   Name            Default    Description
+  ------ ----------- -------------  ---------------------------------------------
+  vec3f  gridOrigin  $(0, 0, 0)$    origin of the grid in units of $(r, \theta, \phi)$; angles in degrees
+  vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in units of $(r, \theta, \phi)$; angles in degrees
+  OSPData data                      the actual voxel 3D [data]
+  ------ ----------- -------------  ---------------------------------------------
+  : Additional configuration parameters for structured spherical volumes.
 
-                                  `OSP_DOUBLE`
+The dimensions $(r, \theta, \phi)$ of the volume are inferred from the
+size of the 3D array `data`, as is the type of the voxel values
+(currently supported are: `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`,
+`OSP_FLOAT`, and `OSP_DOUBLE`).
 
-  vec3f  gridOrigin  $(0, 0, 0)$  origin of the grid in world-space
+These grid parameters support flexible specification of spheres,
+hemispheres, spherical shells, spherical wedges, and so forth. The grid
+extents (computed as `[gridOrigin, gridOrigin + (dimensions - 1) *
+gridSpacing]`) however must be constrained such that:
 
-  vec3f  gridSpacing $(1, 1, 1)$  size of the grid cells in
-                                  world-space
-  ------ ----------- -----------  -----------------------------------
-  : Additional configuration parameters for structured volumes.
+  * $r \geq 0$
+  * $0 \leq \theta \leq 180$
+  * $0 \leq \phi \leq 360$
 
 ### Adaptive Mesh Refinement (AMR) Volume
 
-AMR volumes are specified as a list of blocks, which exist at levels of
-refinement in potentially overlapping regions.  Blocks exist in a tree
-structure, with coarser refinement level blocks containing finer blocks.  The
-cell width is equal for all blocks at the same refinement level, though blocks
-at a coarser level have a larger cell width than finer levels.
+OSPRay currently supports block-structured (Berger-Colella) AMR volumes.
+Volumes are specified as a list of blocks, which exist at levels of
+refinement in potentially overlapping regions. Blocks exist in a tree
+structure, with coarser refinement level blocks containing finer blocks.
+The cell width is equal for all blocks at the same refinement level,
+though blocks at a coarser level have a larger cell width than finer
+levels.
 
-There can be any number of refinement levels and any number of blocks at any
-level of refinement. An AMR volume type is created by passing the type string
-`"amr_volume"` to `ospNewVolume`.
+There can be any number of refinement levels and any number of blocks at
+any level of refinement. An AMR volume type is created by passing the
+type string `"amr"` to `ospNewVolume`.
 
-Blocks are defined by four parameters: their bounds, the refinement level in
-which they reside, the cell widths for each refinement level, and the scalar
-data contained within each block.
+Blocks are defined by three parameters: their bounds, the refinement
+level in which they reside, and the scalar data contained within each
+block.
 
 Note that cell widths are defined _per refinement level_, not per block.
 
@@ -547,13 +575,13 @@ Note that cell widths are defined _per refinement level_, not per block.
 
                                                     `OSP_AMR_OCTANT`
 
+  float[]        cellWidth                    NULL  array of each level's cell width
+
   box3f[]        block.bounds                 NULL  [data] array of bounds for each AMR
                                                     block
 
   int[]          block.level                  NULL  array of each block's refinement
                                                     level
-
-  float[]        block.cellWidth              NULL  array of each block's cell width
 
   OSPData[]      block.data                   NULL  [data] array of OSPData containing
                                                     the actual scalar voxel data
@@ -565,49 +593,51 @@ Note that cell widths are defined _per refinement level_, not per block.
   -------------- --------------- -----------------  -----------------------------------
   : Additional configuration parameters for AMR volumes.
 
-Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just like
-the structured volume equivalent, but they only modify the root (coarsest level)
-of refinement.
+Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
+like the structured volume equivalent, but they only modify the root
+(coarsest level) of refinement.
 
 In particular, OSPRay's AMR implementation was designed to cover
-Berger-Colella [1] and Chombo [2] AMR data.  The `method` parameter above
-determines the interpolation method used when sampling the volume.
+Berger-Colella [1] and Chombo [2] AMR data.  The `method` parameter
+above determines the interpolation method used when sampling the volume.
 
 * `OSP_AMR_CURRENT` finds the finest refinement level at that cell and
   interpolates through this "current" level
 * `OSP_AMR_FINEST` will interpolate at the closest existing cell in the
-  volume-wide finest refinement level regardless of the sample cell's level
-* `OSP_AMR_OCTANT` interpolates through all available refinement levels at that
-  cell. This method avoids discontinuities at refinement level boundaries at
-  the cost of performance
+  volume-wide finest refinement level regardless of the sample cell's
+  level
+* `OSP_AMR_OCTANT` interpolates through all available refinement levels
+* at that
+  cell. This method avoids discontinuities at refinement level
+  boundaries at the cost of performance
 
 Details and more information can be found in the publication for the
 implementation [3].
 
 1. M. J. Berger, and P. Colella. "Local adaptive mesh refinement for
-   shock hydrodynamics." Journal of Computational Physics 82.1 (1989): 64-84.
-   DOI: 10.1016/0021-9991(89)90035-1
-2. M. Adams, P. Colella, D. T. Graves, J.N. Johnson, N.D. Keen, T. J. Ligocki.
-   D. F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz, T.D. Sternberg
-   and B. Van Straalen, Chombo Software Package for AMR Applications - Design
-   Document,  Lawrence Berkeley National Laboratory Technical Report
-   LBNL-6616E.
+   shock hydrodynamics." Journal of Computational Physics 82.1 (1989):
+   64-84. DOI: 10.1016/0021-9991(89)90035-1
+2. M. Adams, P. Colella, D. T. Graves, J.N. Johnson, N.D. Keen, T. J.
+   Ligocki. D. F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz,
+   T.D. Sternberg and B. Van Straalen, Chombo Software Package for AMR
+   Applications - Design Document,  Lawrence Berkeley National
+   Laboratory Technical Report LBNL-6616E.
 3. I. Wald, C. Brownlee, W. Usher, and A. Knoll. CPU volume rendering of
-   adaptive mesh refinement data. SIGGRAPH Asia 2017 Symposium on Visualization
-   on - SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305
+   adaptive mesh refinement data. SIGGRAPH Asia 2017 Symposium on
+   Visualization on - SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305
 
-### Unstructured Volumes
+### Unstructured Volume
 
-Unstructured volumes can have its topology and geometry freely defined.
-Geometry can be composed of tetrahedral, hexahedral, wedge or pyramid
-cell types. Used data format is compatible with VTK and consists from
-multiple arrays: vertex positions and values, vertex indices, cell start
-indices, cell types, and cell values. An unstructured volume type is
-created by passing the type string "`unstructured_volume`" to
-`ospNewVolume`.
+Unstructured volumes can have their topology and geometry freely
+defined. Geometry can be composed of tetrahedral, hexahedral, wedge or
+pyramid cell types. The data format used is compatible with VTK and
+consists of multiple arrays: vertex positions and values, vertex
+indices, cell start indices, cell types, and cell values. An
+unstructured volume type is created by passing the type string
+"`unstructured`" to `ospNewVolume`.
 
-Sampled cell values can be specified either per-vertex (`vertex.value`)
-or per-cell (`cell.value`). If both arrays are set, `cell.value` takes
+Sampled cell values can be specified either per-vertex (`vertex.data`)
+or per-cell (`cell.data`). If both arrays are set, `cell.data` takes
 precedence.
 
 Similar to a mesh, each cell is formed by a group of indices into the
@@ -617,9 +647,9 @@ for a tetrahedron is the same as `VTK_TETRA`: bottom triangle
 counterclockwise, then the top vertex.
 
 For hexahedral cells, each hexahedron is formed by a group of eight
-indices into the vertices and data values. Vertex ordering is the same as
-`VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
-counterclockwise.
+indices into the vertices and data values. Vertex ordering is the same
+as `VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top
+four counterclockwise.
 
 For wedge cells, each wedge is formed by a group of six indices into the
 vertices and data values. Vertex ordering is the same as `VTK_WEDGE`:
@@ -631,16 +661,16 @@ the vertices and data values. Vertex ordering is the same as
 vertex.
 
 To maintain VTK data compatibility an index array may be specified via
-`indexPrefixed` array that allow vertex indices to be interleaved with
-cell sizes in the following format: $n, id_1, ..., id_n, m, id_1, ...,
-id_m$.
+the `indexPrefixed` array that allow vertex indices to be interleaved
+with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
+..., id_m$.
 
   -------------------  ------------------  --------  ---------------------------------------
   Type                 Name                Default   Description
   -------------------  ------------------  --------  ---------------------------------------
   vec3f[]              vertex.position               [data] array of vertex positions
 
-  float[]              vertex.value                  [data] array of vertex data values to
+  float[]              vertex.data                   [data] array of vertex data values to
                                                      be sampled
 
   uint32[] / uint64[]  index                         [data] array of indices (into the
@@ -655,7 +685,7 @@ id_m$.
                                                      index array), specifying the first index
                                                      of each cell
 
-  float[]              cell.value                    [data] array of cell data values to be
+  float[]              cell.data                     [data] array of cell data values to be
                                                      sampled
 
   uint8[]              cell.type                     [data] array of cell types
@@ -669,13 +699,11 @@ id_m$.
 
                                                      `OSP_PYRAMID`
 
-  int                  hexMethod           OSP_FAST  `OSPUnstructuredMethod` hexahedron
-                                                     interpolation method, should be one of:
-
-                                                     `OSP_FAST` (rendering inaccuracies may appear
-                                                     if hex is not parallelepiped)
-
-                                                     `OSP_ITERATIVE`
+  bool                 hexIterative           false  hexahedron interpolation method,
+                                                     defaults to fast non-iterative version
+                                                     which could have rendering
+                                                     inaccuracies may appear if hex is not
+                                                     parallelepiped
 
   bool                 precomputedNormals      true  whether to accelerate by precomputing,
                                                      at a cost of 12 bytes/face
@@ -690,15 +718,12 @@ volume. To create a new transfer function of given type `type` use
 
     OSPTransferFunction ospNewTransferFunction(const char *type);
 
-The call returns `NULL` if that type of transfer functions is not known
-by OSPRay, or else an `OSPTransferFunction` handle to the created
-transfer function. That handle can be assigned to a volumetric model
-(described below) as parameter "`transferFunction`" using
-`ospSetObject`.
+The returned handle can be assigned to a volumetric model (described
+below) as parameter "`transferFunction`" using `ospSetObject`.
 
 One type of transfer function that is supported by OSPRay is the linear
 transfer function, which interpolates between given equidistant colors
-and opacities. It is create by passing the string "`piecewise_linear`"
+and opacities. It is create by passing the string "`piecewiseLinear`"
 to `ospNewTransferFunction` and it is controlled by these parameters:
 
   Type         Name        Description
@@ -725,10 +750,6 @@ concurrently). To create a volume instance, call
   -------------------- ----------------------- ---------- --------------------------------------
   OSPTransferFunction  transferFunction                   [transfer function] to use
 
-  float                samplingRate                 0.125 sampling rate of the volume (this
-                                                          is the minimum step size for
-                                                          adaptive sampling)
-
   float                densityScale                   1.0 used to make volumes uniformly thinner
                                                           or thicker ([path tracer] only)
 
@@ -747,8 +768,8 @@ To create a new geometry object of given type `type` use
 
     OSPGeometry ospNewGeometry(const char *type);
 
-The call returns `NULL` if that type of geometry is not known by OSPRay,
-or else an `OSPGeometry` handle.
+Note that in the current implementation geometries are limited to a
+maximum of 2^32^ primitives.
 
 ### Mesh
 
@@ -774,7 +795,7 @@ triangle as a quad with the last two vertex indices being identical
 (`w=z`).
 
 The `vertex.position` and `index` arrays are mandatory to create a valid
-mesh. 
+mesh.
 
 ### Subdivision
 
@@ -782,33 +803,47 @@ A mesh consisting of subdivision surfaces, created by specifying a
 geometry of type "`subdivision`". Once created, a subdivision recognizes
 the following parameters:
 
-  --------------- -------------------- ------- -------------------------------------------------
-  Type            Name                 Default Description
-  --------------- -------------------- ------- -------------------------------------------------
-  vec3f[]         vertex.position         NULL [data] array of vertex positions
+  --------------- -------------------- --------------------------------- -------------------------------------------------
+  Type            Name                                           Default Description
+  --------------- -------------------- --------------------------------- -------------------------------------------------
+  vec3f[]         vertex.position                                   NULL [data] array of vertex positions
 
-  vec4f[]         vertex.color            NULL [data] array of vertex colors (RGBA)
+  vec4f[]         vertex.color                                      NULL [data] array of vertex colors (RGBA)
 
-  vec2f[]         vertex.texcoord         NULL [data] array of vertex texture coordinates
+  vec2f[]         vertex.texcoord                                   NULL [data] array of vertex texture coordinates
 
-  float           level                      5 global level of tessellation, default is 5
+  float           level                                                  5 global level of tessellation, default is 5
 
-  uint[]          index                   NULL [data] array of indices (into the vertex array(s))
+  uint[]          index                                             NULL [data] array of indices (into the vertex array(s))
 
-  float[]         index.level             NULL [data] array of per-edge levels of tessellation,
-                                               overrides global level
+  float[]         index.level                                       NULL [data] array of per-edge levels of tessellation,
+                                                                         overrides global level
 
-  uint[]          face                    NULL [data] array holding the number of indices/edges
-                                               (3 to 15) per face
+  uint[]          face                                              NULL [data] array holding the number of indices/edges
+                                                                         (3 to 15) per face
 
-  vec2i[]         edgeCrease.index        NULL [data] array of edge crease indices
+  vec2i[]         edgeCrease.index                                  NULL [data] array of edge crease indices
 
-  float[]         edgeCrease.weight       NULL [data] array of edge crease weights
+  float[]         edgeCrease.weight                                 NULL [data] array of edge crease weights
 
-  uint[]          vertexCrease.index      NULL [data] array of vertex crease indices
+  uint[]          vertexCrease.index                                NULL [data] array of vertex crease indices
 
-  float[]         vertexCrease.weight     NULL [data] array of vertex crease weights
-  --------------- -------------------- ------- -------------------------------------------------
+  float[]         vertexCrease.weight                               NULL [data] array of vertex crease weights
+
+  int             mode                 `OSP_SUBDIVISION_SMOOTH_BOUNDARY` subdivision edge boundary mode.
+                                                                         Supported modes are:
+
+                                                                         `OSP_SUBDIVISION_NO_BOUNDARY`
+
+                                                                         `OSP_SUBDIVISION_SMOOTH_BOUNDARY`
+
+                                                                         `OSP_SUBDIVISION_PIN_CORNERS`
+
+                                                                         `OSP_SUBDIVISION_PIN_BOUNDARY`
+
+                                                                         `OSP_SUBDIVISION_PIN_ALL`
+
+  --------------- -------------------- --------------------------------- -------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
 The `vertex` and `index` arrays are mandatory to create a valid
@@ -820,7 +855,7 @@ Optionally supported are edge and vertex creases.
 
 A geometry consisting of individual spheres, each of which can have an
 own radius, is created by calling `ospNewGeometry` with type string
-"`spheres`". The spheres will not be tessellated but rendered
+"`sphere`". The spheres will not be tessellated but rendered
 procedurally and are thus perfectly round. To allow a variety of sphere
 representations in the application this geometry allows a flexible way
 of specifying the data of center position and radius within a [data]
@@ -845,7 +880,7 @@ array:
 ### Curves
 
 A geometry consisting of multiple curves is created by calling
-`ospNewGeometry` with type string "`curves`".  The parameters defining
+`ospNewGeometry` with type string "`curve`".  The parameters defining
 this geometry are listed in the table below.
 
   ------------------ ---------------------- -------------------------------------------
@@ -858,7 +893,7 @@ this geometry are listed in the table below.
 
   float              radius                 global radius of all curves (if
                                             per-vertex radius is not used), default 0.01
-  
+
   vec2f[]            vertex.texcoord        [data] array of per-vertex texture coordinates
 
   vec4f[]            vertex.color           [data] array of corresponding vertex
@@ -904,7 +939,7 @@ linearly-connected segments.
 Positions in `vertex.position_radius` format supports per-vertex varying
 radii with data type `vec4f[]` and instantiate Embree curves internally
 for the relevant type/basis mapping (See Embree documentation for
-discussion of curve types and data formatting). 
+discussion of curve types and data formatting).
 
 If a constant `radius` is used and positions are specified in a
 `vec3f[]` type of `vertex.position` format, then type/basis defaults to
@@ -917,7 +952,7 @@ each segment corresponds to a link between two vertices.
 
 OSPRay can directly render axis-aligned bounding boxes without the need
 to convert them to quads or triangles. To do so create a boxes
-geometry by calling `ospNewGeometry` with type string "`boxes`".
+geometry by calling `ospNewGeometry` with type string "`box`".
 
   Type       Name       Description
   ---------- ---------- ------------------------------------------------------
@@ -929,15 +964,16 @@ geometry by calling `ospNewGeometry` with type string "`boxes`".
 
 OSPRay can directly render multiple isosurfaces of a volume without
 first tessellating them. To do so create an isosurfaces geometry by
-calling `ospNewGeometry` with type string "`isosurfaces`". Each
-isosurface will be colored according to the provided volume's [transfer
-function].
+calling `ospNewGeometry` with type string "`isosurface`". Each
+isosurface will be colored according to the [transfer function] assigned
+to the `volume`.
 
-  Type       Name       Description
-  ---------- ---------- ------------------------------------------------------
-  float[]    isovalue   [data] array of isovalues
-  OSPVolume  volume     handle of the [volume] to be isosurfaced
-  ---------- ---------- ------------------------------------------------------
+  Type               Name      Description
+  ------------------ --------- --------------------------------------------------
+  float              isovalue  single isovalues
+  float[]            isovalue  [data] array of isovalues
+  OSPVolumetricModel volume    handle of the [VolumetricModels] to be isosurfaced
+  ------------------ --------- --------------------------------------------------
   : Parameters defining an isosurfaces geometry.
 
 ### GeometricModels
@@ -949,21 +985,31 @@ and material information. To create a geometric model, call
 
     OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
-Color and material are fetched with the primitive ID of the hit (clamped to the
-valid range, thus a single color or material is fine), or mapped first via the
-`index` array (if present). All paramters are optional, however, some renderers
-(notably the [path tracer]) require a material to be set.
+Color and material are fetched with the primitive ID of the hit (clamped
+to the valid range, thus a single color or material is fine), or mapped
+first via the `index` array (if present). All paramters are optional,
+however, some renderers (notably the [path tracer]) require a material
+to be set. Materials are either handles of `OSPMaterial`, or indices
+into the `material` array on the [renderer], which allows to build a
+[world] which can be used by different types of renderers.
 
-  -------------- ---------- ----------------------------------------------------
-  Type           Name       Description
-  -------------- ---------- ----------------------------------------------------
-  OSPMaterial[]  material   [data] array of (per-primitive) materials
+  ------------------------ --------- ----------------------------------------------------
+  Type                     Name      Description
+  ------------------------ --------- ----------------------------------------------------
+  OSPMaterial / uint32     material  optional [material] applied to the geometry, may be
+                                     an index into the `material` parameter on the
+                                     [renderer] (if it exists)
 
-  vec4f[]        color      optional [data] array of (per-primitive) colors
+  OSPMaterial[] / uint32[] material  optional [data] array of (per-primitive) materials,
+                                     may be an index into the `material` parameter on
+                                     the renderer (if it exists)
 
-  uint8[]        index      optional [data] array of per-primitive indices into
-                            `color` and `material`
-  -------------- ---------- ----------------------------------------------------
+
+  vec4f[]                  color     optional [data] array of (per-primitive) colors
+
+  uint8[]                  index     optional [data] array of per-primitive indices into
+                                     `color` and `material`
+  ------------------------ --------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
 
@@ -974,9 +1020,7 @@ To create a new light source of given type `type` use
 
     OSPLight ospNewLight(const char *type);
 
-The call returns `NULL` if that type of light is not known by the
-renderer, or else an `OSPLight` handle to the created light source.
-All light sources[^1] accept the following parameters:
+All light sources accept the following parameters:
 
   Type      Name        Default  Description
   --------- ---------- --------  ---------------------------------------
@@ -987,9 +1031,6 @@ All light sources[^1] accept the following parameters:
   : Parameters accepted by all lights.
 
 The following light types are supported by most OSPRay renderers.
-
-[^1]: The [HDRI light] is an exception, it knows about `intensity`, but
-not about `color`.
 
 ### Directional Light / Distant Light
 
@@ -1066,7 +1107,8 @@ tracer]).
 
 ### Quad Light
 
-The quad^[actually a parallelogram] light is a planar, procedural area light source emitting
+The quad^[actually a parallelogram] light is a planar, procedural area
+light source emitting
 uniformly on one side into the half-space. It is created by passing the
 type string "`quad`" to `ospNewLight`. In addition to the [general
 parameters](#lights) understood by all lights the quad light supports
@@ -1092,8 +1134,8 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-"`hdri`" to `ospNewLight`. In addition to the [parameter
-`intensity`](#lights) the HDRI light supports the following special
+"`hdri`" to `ospNewLight`. In addition to the [general
+parameters](#lights) the HDRI light supports the following special
 parameters:
 
   ------------ --------- --------------------------------------------------
@@ -1144,27 +1186,27 @@ Groups take arrays of geometric models and volumetric models, but they
 are optional. In other words, there is no need to create empty arrays if
 there are no geometries or volumes in the group.
 
-  ------------------ --------------- ----------  --------------------------------------
-  Type               Name               Default  Description
-  ------------------ --------------- ----------  --------------------------------------
-  OSPData            geometry              NULL  [data] array of [GeometricModels]
+  -------------------- --------------- ----------  --------------------------------------
+  Type                 Name               Default  Description
+  -------------------- --------------- ----------  --------------------------------------
+  OSPGeometricModel[]  geometry              NULL  [data] array of [GeometricModels]
 
-  OSPData            volume                NULL  [data] array of [VolumetricModels]
+  OSPVolumetricModel[] volume                NULL  [data] array of [VolumetricModels]
 
-  bool               dynamicScene         false  use RTC_SCENE_DYNAMIC flag (faster
-                                                 BVH build, slower ray traversal),
-                                                 otherwise uses RTC_SCENE_STATIC flag
-                                                 (faster ray traversal, slightly
-                                                 slower BVH build)
+  bool                 dynamicScene         false  use RTC_SCENE_DYNAMIC flag (faster
+                                                   BVH build, slower ray traversal),
+                                                   otherwise uses RTC_SCENE_STATIC flag
+                                                   (faster ray traversal, slightly
+                                                   slower BVH build)
 
-  bool               compactMode          false  tell Embree to use a more compact BVH
-                                                 in memory by trading ray traversal
-                                                 performance
+  bool                 compactMode          false  tell Embree to use a more compact BVH
+                                                   in memory by trading ray traversal
+                                                   performance
 
-  bool               robustMode           false  tell Embree to enable more robust ray
-                                                 intersection code paths (slightly
-                                                 slower)
-  ------------------ --------------- ---------- ---------------------------------------
+  bool                 robustMode           false  tell Embree to enable more robust ray
+                                                   intersection code paths (slightly
+                                                   slower)
+  -------------------- --------------- ---------- ---------------------------------------
   : Parameters understood by groups.
 
 Note that groups only need to re re-committed if a geometry or volume
@@ -1246,28 +1288,32 @@ To create a new renderer of given type `type` use
 
     OSPRenderer ospNewRenderer(const char *type);
 
-The call returns `NULL` if that type of renderer is not known, or else
-an `OSPRenderer` handle to the created renderer. General parameters of
-all renderers are
+General parameters of all renderers are
 
   -------------- ------------------ -----------  -----------------------------------------
-  Type          Name                    Default  Description
+  Type           Name                   Default  Description
   -------------- ------------------ -----------  -----------------------------------------
-  int            spp                          1  samples per pixel
+  int            pixelSamples                 1  samples per pixel
 
-  int            maxDepth                    20  maximum ray recursion depth
+  int            maxPathLength               20  maximum ray recursion depth
 
   float          minContribution          0.001  sample contributions below this value
                                                  will be neglected to speedup rendering
 
   float          varianceThreshold            0  threshold for adaptive accumulation
 
-  float /        bgColor                 black,  background color and alpha
-  vec3f / vec4f                     transparent  (RGBA)
+  float /        backgroundColor         black,  background color and alpha (RGBA), if no
+  vec3f / vec4f                     transparent  map_backplate is set
 
-  OSPTexture     maxDepthTexture           NULL  screen-sized float [texture]
+  OSPTexture     map_backplate                   optional [texture] image used as background
+
+  OSPTexture     map_maxDepth                    optional screen-sized float [texture]
                                                  with maximum far distance per pixel
                                                  (use texture type `texture2d`)
+
+  OSPMaterial[]  material                        optional [data] array of [materials]
+                                                 which can be indexed by a
+                                                 [GeometricModel]'s `material` parameter
   -------------- ------------------ -----------  -----------------------------------------
   : Parameters understood by all renderers.
 
@@ -1278,15 +1324,16 @@ refinement of image regions that have an estimated variance below the
 `OSP_FB_VARIANCE` channel.
 
 Per default the background of the rendered image will be transparent
-black, i.e., the alpha channel holds the opacity of the rendered objects.
-This eases transparency-aware blending of the image with an
-arbitrary background image by the application. The parameter `bgColor`
-can be used to already blend with a constant background color (and
+black, i.e., the alpha channel holds the opacity of the rendered
+objects. This eases transparency-aware blending of the image with an
+arbitrary background image by the application. The parameter
+`backgroundColor` or `map_backplate` can be used to already blend with a
+constant background color or backplate texture, respectively, (and
 alpha) during rendering.
 
 OSPRay renderers support depth composition with images of other
 renderers, for example to incorporate help geometries of a 3D UI that
-were rendered with OpenGL. The screen-sized [texture] `maxDepthTexture`
+were rendered with OpenGL. The screen-sized [texture] `map_maxDepth`
 must have format `OSP_TEXTURE_R32F` and flag
 `OSP_TEXTURE_FILTER_NEAREST`. The fetched values are used to limit the
 distance of primary rays, thus objects of other renderers can hide
@@ -1310,6 +1357,8 @@ renderers, the SciVis renderer supports the following parameters:
                                                      for ambient occlusion
 
   float         aoIntensity                       1  ambient occlusion strength
+
+  float         volumeSamplingRate                1  sampling rate for volumes
   ------------- ---------------------- ------------  ----------------------------
   : Special parameters understood by the SciVis renderer.
 
@@ -1328,19 +1377,12 @@ supports the following special parameters:
   bool       geometryLights       true  whether to render light emitted from
                                         geometries
 
-  int        rouletteDepth           5  ray recursion depth at which to
+  int        roulettePathLength      5  ray recursion depth at which to
                                         start Russian roulette termination
 
   float      maxContribution         ∞  samples are clamped to this value
                                         before they are accumulated into
                                         the framebuffer
-
-  OSPTexture backplate            NULL  [texture] image used as background,
-                                        replacing visible lights in infinity
-                                        (e.g., the [HDRI light])
-
-  vec4f      shadowCatcherPlane      0  optional invisible plane that captures
-                                        shadows for compositing
   ---------- ---------------- --------  -------------------------------------
   : Special parameters understood by the path tracer.
 
@@ -1359,9 +1401,8 @@ of given type `type` call
 
     OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
 
-The call returns `NULL` if the material type is not known by the
-renderer type, or else an `OSPMaterial` handle to the created material. The
-handle can then be used to assign the material to a given geometry with
+The returned handle can then be used to assign the material to a given
+geometry with
 
     void ospSetObject(OSPGeometricModel, "material", OSPMaterial);
 
@@ -1371,17 +1412,17 @@ The OBJ material is the workhorse material supported by both the [SciVis
 renderer] and the [path tracer]. It offers widely used common properties
 like diffuse and specular reflection and is based on the [MTL material
 format](http://paulbourke.net/dataformats/mtl/) of Lightwave's OBJ scene
-files. To create an OBJ material pass the type string "`OBJMaterial`" to
+files. To create an OBJ material pass the type string "`obj`" to
 `ospNewMaterial`. Its main parameters are
 
   Type          Name         Default  Description
   ------------- --------- ----------  -----------------------------------------
-  vec3f         Kd         white 0.8  diffuse color
-  vec3f         Ks             black  specular color
-  float         Ns                10  shininess (Phong exponent), usually in [2–10^4^]
+  vec3f         kd         white 0.8  diffuse color
+  vec3f         ks             black  specular color
+  float         ns                10  shininess (Phong exponent), usually in [2–10^4^]
   float         d             opaque  opacity
-  vec3f         Tf             black  transparency filter color
-  OSPTexture    map_Bump        NULL  normal map
+  vec3f         tf             black  transparency filter color
+  OSPTexture    map_bump        NULL  normal map
   ------------- --------- ----------  -----------------------------------------
   : Main parameters of the OBJ material.
 
@@ -1446,7 +1487,7 @@ The Principled material is the most complex material offered by the
 and lobes. It uses the GGX microfacet distribution with approximate multiple
 scattering for dielectrics and metals, uses the Oren-Nayar model for diffuse
 reflection, and is energy conserving. To create a Principled material, pass
-the type string "`Principled`" to `ospNewMaterial`. Its parameters are
+the type string "`principled`" to `ospNewMaterial`. Its parameters are
 listed in the table below.
 
   -------------------------------------------------------------------------------------------
@@ -1529,7 +1570,7 @@ anisotropic rotation and a dust layer (sheen) on top.][imgMaterialPrincipled]
 
 The CarPaint material is a specialized version of the Principled material for
 rendering different types of car paints. To create a CarPaint material, pass
-the type string "`CarPaint`" to `ospNewMaterial`. Its parameters are listed
+the type string "`carPaint`" to `ospNewMaterial`. Its parameters are listed
 in the table below.
 
   -------------------------------------------------------------------------------------------
@@ -1584,7 +1625,7 @@ supported as well.
 
 The [path tracer] offers a physical metal, supporting changing roughness
 and realistic color shifts at edges. To create a Metal material pass the
-type string "`Metal`" to `ospNewMaterial`. Its parameters are
+type string "`metal`" to `ospNewMaterial`. Its parameters are
 
   -------- ---------- ----------  --------------------------------------------
   Type     Name          Default  Description
@@ -1637,7 +1678,7 @@ roughness.][imgMaterialMetal]
 
 The [path tracer] offers an alloy material, which behaves similar to
 [Metal], but allows for more intuitive and flexible control of the
-color. To create an Alloy material pass the type string "`Alloy`" to
+color. To create an Alloy material pass the type string "`alloy`" to
 `ospNewMaterial`. Its parameters are
 
   Type   Name          Default  Description
@@ -1666,7 +1707,7 @@ color.][imgMaterialAlloy]
 The [path tracer] offers a realistic a glass material, supporting
 refraction and volumetric attenuation (i.e., the transparency color
 varies with the geometric thickness). To create a Glass material pass
-the type string "`Glass`" to `ospNewMaterial`. Its parameters are
+the type string "`glass`" to `ospNewMaterial`. Its parameters are
 
   Type   Name                  Default  Description
   ------ -------------------- --------  -----------------------------------
@@ -1693,7 +1734,7 @@ parallel to the real geometric surface. The implementation accounts for
 multiple internal reflections between the interfaces (including
 attenuation), but neglects parallax effects due to its (virtual)
 thickness. To create a such a thin glass material pass the type string
-"`ThinGlass`" to `ospNewMaterial`. Its parameters are
+"`thinGlass`" to `ospNewMaterial`. Its parameters are
 
   Type      Name                  Default  Description
   --------- -------------------- --------  -----------------------------------
@@ -1725,7 +1766,7 @@ the ThinGlass material.][imgColoredWindow]
 
 The [path tracer] offers a metallic paint material, consisting of a base
 coat with optional flakes and a clear coat. To create a MetallicPaint
-material pass the type string "`MetallicPaint`" to `ospNewMaterial`. Its
+material pass the type string "`metallicPaint`" to `ospNewMaterial`. Its
 parameters are listed in the table below.
 
   Type      Name            Default  Description
@@ -1780,10 +1821,6 @@ To create a new texture use
 
     OSPTexture ospNewTexture(const char *type);
 
-The call returns `NULL` if the texture could not be created with the
-given parameters, or else an `OSPTexture` handle to the created
-texture.
-
 #### Texture2D
 
 The `texture2d` texture type implements an image-based texture, where
@@ -1793,7 +1830,7 @@ its parameters are as follows
   ------- ------------ ----------------------------------
   int     format       `OSPTextureFormat` for the texture
   int     filter       default `OSP_TEXTURE_FILTER_BILINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST`
-  OSPData data         the actual texel [data]
+  OSPData data         the actual texel 2D [data]
   ------- ------------ ----------------------------------
   : Parameters of `texture2d` texture type.
 
@@ -1816,7 +1853,9 @@ The supported texture formats for `texture2d` are:
   : Supported texture formats by `texture2d`, i.e., valid constants
   of type `OSPTextureFormat`.
 
-The texel data addressed by `source` starts with the texels in the lower
+The size of the texture is inferred from the size of the 2D array
+`data`, which also needs have a compatible type to `format`.
+The texel data in `data` starts with the texels in the lower
 left corner of the texture image, like in OpenGL. Per default a texture
 fetch is filtered by performing bi-linear interpolation of the nearest
 2×2 texels; if instead fetching only the nearest texel is desired (i.e.,
@@ -1870,9 +1909,7 @@ To create a new camera of given type `type` use
 
     OSPCamera ospNewCamera(const char *type);
 
-The call returns `NULL` if that type of camera is not known, or else an
-`OSPCamera` handle to the created camera. All cameras accept these
-parameters:
+All cameras accept these parameters:
 
   Type   Name        Description
   ------ ----------- ------------------------------------------
@@ -2078,7 +2115,7 @@ In particular, `OSP_FB_NONE` is a perfectly valid pixel format for a
 framebuffer that an application will never map. For example, an
 application driving a display wall may well generate an intermediate
 framebuffer and eventually transfer its pixel to the individual displays
-using an `OSPPixelOp` [pixel operation].
+using an `OSPImageOperation` [image operation].
 
 The application can map the given channel of a framebuffer – and thus
 access the stored pixel information – via
@@ -2124,24 +2161,21 @@ they are in the array.
   : Parameters accepted by the framebuffer.
 
 
-### Pixel Operation {-}
+### Image Operation {-}
 
-Pixel operations are functions that are applied to every pixel that
-gets written into a framebuffer. Examples include post-processing,
+Image operations are functions that are applied to every pixel of a
+frame. Examples include post-processing,
 filtering, blending, tone mapping, or sending tiles to a display wall.
 To create a new pixel operation of given type `type` use
 
-    OSPPixelOp ospNewPixelOp(const char *type);
-
-The call returns `NULL` if that type is not known, or else an
-`OSPPixelOp` handle to the created pixel operation.
+    OSPImageOperation ospNewImageOperation(const char *type);
 
 #### Tone Mapper {-}
 
 The tone mapper is a pixel operation which implements a generic filmic tone
 mapping operator. Using the default parameters it approximates the Academy
 Color Encoding System (ACES). The tone mapper is created by passing the type
-string "`tonemapper`" to `ospNewPixelOp`. The tone mapping curve can be
+string "`tonemapper`" to `ospNewImageOperation`. The tone mapping curve can be
 customized using the parameters listed in the table below.
 
   ----- ---------  --------    -----------------------------------------
@@ -2244,7 +2278,7 @@ The following are values which can be synchronized with the application
                        the future. The underlying task may involve one or
                        more of the above synchronization events
   -------------------- --------------------------------------------------------
-  : Supported events that can be passed to `ospWait`
+  : Supported events that can be passed to `ospWait`.
 
 Currently only rendering can be invoked asynchronously. However, future
 releases of OSPRay may add more asynchronous versions of API calls (and

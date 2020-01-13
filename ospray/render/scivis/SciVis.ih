@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "common/World.ih"
 #include "render/Renderer.ih"
 
 struct SciVis
@@ -24,4 +25,5 @@ struct SciVis
   int aoSamples;
   float aoRadius;
   float aoIntensity;
+  float volumeSamplingRate;
 };

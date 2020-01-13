@@ -16,7 +16,6 @@
 
 // ospray
 #include "common/Ray.ih"
-#include "common/World.ih"
 #include "geometry/Geometry.ih"
 #include "math/LinearSpace.ih"
 #include "math/box.ih"

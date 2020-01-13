@@ -52,14 +52,14 @@ option(ALWAYS_REBUILD "Force every project to always be rebuilt?" OFF)
 
 option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
 
-set(BUILD_OSPCOMMON_VERSION "devel" CACHE STRING "Which version of ospcommon to build?")
+set(BUILD_OSPCOMMON_VERSION "v1.1.0" CACHE STRING "Which version of ospcommon to build?")
 
 option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
 
-set(BUILD_EMBREE_VERSION "v3.6.1" CACHE STRING "Which version of Embree to build?")
+set(BUILD_EMBREE_VERSION "v3.7.0" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
-set(BUILD_OPENVKL_VERSION "v0.7.0" CACHE STRING "Which version of OpenVKL to build?")
+set(BUILD_OPENVKL_VERSION "v0.8.0" CACHE STRING "Which version of OpenVKL to build?")
 
 option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
 set(BUILD_OIDN_VERSION "v1.0.0" CACHE STRING "Which version of OpenImageDenoise to build?")
@@ -100,8 +100,8 @@ if (BUILD_TBB_FROM_SOURCE)
 endif()
 
 include(dep_ospcommon)
-include(dep_openvkl)
 include(dep_embree)
+include(dep_openvkl)
 
 if (BUILD_GLFW)
   include(dep_glfw)
@@ -119,8 +119,6 @@ set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
 if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
 endif()
-
-string(REPLACE ";" "|" CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
 
 if (NOT BUILD_DEPENDENCIES_ONLY)
   ExternalProject_Add(${COMPONENT_NAME}

@@ -39,7 +39,7 @@ namespace ospray {
                                            vec3f color,
                                            float attenuationDistance)
     {
-      cpp::Material mat(rendererType, "Glass");
+      cpp::Material mat(rendererType, "glass");
       mat.setParam("eta", eta);
       mat.setParam("attenuationColor", color);
       mat.setParam("attenuationDistance", attenuationDistance);
@@ -58,7 +58,7 @@ namespace ospray {
 
     cpp::Group PtGlass::buildGroup() const
     {
-      cpp::Geometry sphereGeometry("spheres");
+      cpp::Geometry sphereGeometry("sphere");
 
       constexpr int dimSize = 5;
 

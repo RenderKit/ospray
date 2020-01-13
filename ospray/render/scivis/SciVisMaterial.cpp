@@ -42,9 +42,9 @@ namespace ospray {
 
   void SciVisMaterial::commit()
   {
-    Kd = getParam<vec3f>("color", getParam<vec3f>("kd", getParam<vec3f>("Kd", vec3f(.8f))));
+    Kd = getParam<vec3f>("kd", vec3f(.8f));
     d  = getParam<float>("d", 1.f);
-    map_Kd = (Texture2D *)getParamObject("map_Kd", getParamObject("map_kd"));
+    map_Kd = (Texture2D *)getParamObject("map_kd");
     ispc::SciVisMaterial_set(getIE(),
                              (const ispc::vec3f &)Kd,
                              d,
@@ -52,14 +52,10 @@ namespace ospray {
   }
 
   OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, obj);
 
   // NOTE(jda) - support all renderer aliases
-  OSP_REGISTER_MATERIAL(sv, SciVisMaterial, default);
   OSP_REGISTER_MATERIAL(ao, SciVisMaterial, default);
-  OSP_REGISTER_MATERIAL(ao1, SciVisMaterial, default);
-  OSP_REGISTER_MATERIAL(ao2, SciVisMaterial, default);
-  OSP_REGISTER_MATERIAL(ao4, SciVisMaterial, default);
-  OSP_REGISTER_MATERIAL(ao8, SciVisMaterial, default);
-  OSP_REGISTER_MATERIAL(ao16, SciVisMaterial, default);
+  OSP_REGISTER_MATERIAL(ao, SciVisMaterial, obj);
 
 }  // namespace ospray

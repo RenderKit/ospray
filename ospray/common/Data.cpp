@@ -24,7 +24,7 @@ namespace ospray {
 
   Data::Data(const void *sharedData,
              OSPDataType type,
-             const vec3ui &numItems,
+             const vec3ul &numItems,
              const vec3l &byteStride)
       : shared(true), type(type), numItems(numItems), byteStride(byteStride)
 
@@ -42,7 +42,7 @@ namespace ospray {
     }
   }
 
-  Data::Data(OSPDataType type, const vec3ui &numItems)
+  Data::Data(OSPDataType type, const vec3ul &numItems)
       : shared(false), type(type), numItems(numItems), byteStride(0)
   {
     addr = (char *)alignedMalloc(size() * sizeOf(type) +
@@ -87,18 +87,19 @@ namespace ospray {
       return;
 
     ispc.byteStride = byteStride.x;
-    ispc.numItems   = numItems.x;
+    size_t numItems1D = numItems.x;
     if (numItems.y > 1) {
       ispc.byteStride = byteStride.y;
-      ispc.numItems   = numItems.y;
+      numItems1D = numItems.y;
     } else if (numItems.z > 1) {
       ispc.byteStride = byteStride.z;
-      ispc.numItems   = numItems.z;
+      numItems1D = numItems.z;
     }
     // finalize ispc-side
     ispc.addr = reinterpret_cast<decltype(ispc.addr)>(addr);
-    ispc.huge = ispc.byteStride * ispc.numItems >
-                std::numeric_limits<std::int32_t>::max();
+    ispc.huge = std::abs(ispc.byteStride) * numItems1D >
+                (size_t)std::numeric_limits<int32_t>::max();
+    ispc.numItems = (uint32_t)numItems1D;
   }
 
   bool Data::compact() const
@@ -106,7 +107,7 @@ namespace ospray {
     return data() + sizeOf(type) * (size() - 1) == data(numItems - 1);
   }
 
-  void Data::copy(const Data &source, const vec3ui &destinationIndex)
+  void Data::copy(const Data &source, const vec3ul &destinationIndex)
   {
     if (type != source.type &&
         !(type == OSP_OBJECT && isObjectType(source.type))) {

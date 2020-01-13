@@ -28,6 +28,7 @@ if (BUILD_EMBREE_FROM_SOURCE)
     STAMP_DIR ${COMPONENT_NAME}/stamp
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
+    LIST_SEPARATOR | # Use the alternate list separator
     URL "https://github.com/embree/embree/archive/${BUILD_EMBREE_VERSION}.zip"
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
@@ -57,7 +58,7 @@ else()
   string(REPLACE "v" "" EMBREE_VERSION_NUMBER ${BUILD_EMBREE_VERSION})
 
   if (APPLE)
-    set(EMBREE_URL "https://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.tar.gz")
+    set(EMBREE_URL "https://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.zip")
   elseif (WIN32)
     set(EMBREE_URL "https://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x64.vc14.windows.zip")
   else()
@@ -82,3 +83,4 @@ else()
 endif()
 
 list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
+string(REPLACE ";" "|" CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")

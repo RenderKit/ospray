@@ -115,7 +115,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pathtracer, Principled, Principled);
-    OSP_REGISTER_MATERIAL(pt, Principled, Principled);
+    OSP_REGISTER_MATERIAL(pathtracer, Principled, principled);
   }
 }

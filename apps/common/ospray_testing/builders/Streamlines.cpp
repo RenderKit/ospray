@@ -44,7 +44,7 @@ namespace ospray {
 
     cpp::Group Streamlines::buildGroup() const
     {
-      cpp::Geometry slGeom("curves");
+      cpp::Geometry slGeom("curve");
 
       std::vector<vec4f> points;
       std::vector<unsigned int> indices;
@@ -53,8 +53,8 @@ namespace ospray {
       std::mt19937 rng(randomSeed);
       std::uniform_real_distribution<float> radDist(0.5f, 1.5f);
       std::uniform_real_distribution<float> stepDist(0.001f, 0.1f);
-      std::uniform_int_distribution<int> sDist(0, 360);
-      std::uniform_int_distribution<int> dDist(360, 720);
+      std::uniform_real_distribution<float> sDist(0, 360);
+      std::uniform_real_distribution<float> dDist(360, 720);
       std::uniform_real_distribution<float> freqDist(0.5f, 1.5f);
 
       // create multiple lines
@@ -124,11 +124,11 @@ namespace ospray {
       
       slGeom.commit();
 
-      cpp::Material slMat(rendererType, "OBJMaterial");
+      cpp::Material slMat(rendererType, "obj");
       slMat.commit();
 
       cpp::GeometricModel model(slGeom);
-      model.setParam("material", cpp::Data(slMat));
+      model.setParam("material", slMat);
       model.commit();
 
       cpp::Group group;

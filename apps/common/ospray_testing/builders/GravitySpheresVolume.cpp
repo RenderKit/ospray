@@ -102,17 +102,17 @@ namespace ospray {
         group.setParam("volume", cpp::Data(model));
 
       if (withIsosurface) {
-        cpp::Geometry isoGeom("isosurfaces");
-        isoGeom.setParam("isovalue", cpp::Data(isovalue));
+        cpp::Geometry isoGeom("isosurface");
+        isoGeom.setParam("isovalue", isovalue);
         isoGeom.setParam("volume", model);
         isoGeom.commit();
 
-        cpp::Material mat(rendererType, "OBJMaterial");
-        mat.setParam("Ks", vec3f(0.2f));
+        cpp::Material mat(rendererType, "obj");
+        mat.setParam("ks", vec3f(0.2f));
         mat.commit();
 
         cpp::GeometricModel isoModel(isoGeom);
-        isoModel.setParam("material", cpp::Data(mat));
+        isoModel.setParam("material", mat);
         isoModel.commit();
 
         group.setParam("geometry", cpp::Data(isoModel));
@@ -189,15 +189,11 @@ namespace ospray {
     cpp::Volume GravitySpheres::createStructuredVolume(
         const VoxelArray &voxels) const
     {
-      cpp::Volume volume("structured_volume");
+      cpp::Volume volume("structuredRegular");
 
-      volume.setParam("dimensions", volumeDimensions);
-      volume.setParam("voxelType", int(OSP_FLOAT));
       volume.setParam("gridOrigin", vec3f(-1.f, -1.f, -1.f));
       volume.setParam("gridSpacing", vec3f(2.f / reduce_max(volumeDimensions)));
-      volume.setParam("voxelData",
-                      cpp::Data(volumeDimensions, {0}, voxels.data()));
-
+      volume.setParam("data", cpp::Data(volumeDimensions, voxels.data()));
       volume.commit();
       return volume;
     }
@@ -231,9 +227,8 @@ namespace ospray {
         blockData.emplace_back(bd.size(), OSP_FLOAT, bd.data());
 
       // create an AMR volume and assign attributes
-      cpp::Volume volume("amr_volume");
+      cpp::Volume volume("amr");
 
-      volume.setParam("voxelType", int(OSP_FLOAT));
       volume.setParam("block.data", cpp::Data(blockData));
       volume.setParam("block.bounds", cpp::Data(blockBounds));
       volume.setParam("block.level", cpp::Data(refinementLevels));

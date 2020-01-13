@@ -47,6 +47,8 @@ namespace ospray {
     Ref<const DataT<float>> edge_crease_weightsData;
     Ref<const DataT<uint32_t>> vertex_crease_indicesData;
     Ref<const DataT<float>> vertex_crease_weightsData;
+
+    OSPSubdivisionMode mode;
   };
 
 }  // namespace ospray

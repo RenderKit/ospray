@@ -15,5 +15,20 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-echo stripping $1
-strip -x $1
+export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH=`pwd`/build/install/lib:$DYLD_LIBRARY_PATH
+export PATH=`pwd`/build/install/bin:$PATH
+
+echo "Running 'ospTutorial'..."
+ospTutorial
+echo "...done!"
+
+echo "Running 'ospTutorialCpp'..."
+ospTutorialCpp
+echo "...done!"
+
+echo "Running 'ospTutorialAsync'..."
+ospTutorialAsync
+echo "...done!"
+
+exit $?

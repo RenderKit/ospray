@@ -6,15 +6,16 @@ tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilatio
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe))
 images_fig := spot_light quad_light hdri_light
-images_svg := gitter_badge
+images_svg := gitter_badge structured_spherical_coords
 images_webonly := $(addprefix images/, VESTEC-Logo-web.png $(addsuffix .jpg, stingray $(addprefix teaser_, clouds cosmos hdospray materials moana rm tapestry)))
 scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
+images_svg2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_svg)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
 webimages := $(addprefix www/, $(images_webonly) $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
 webscripts := $(addprefix www/, $(scripts))
-pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf)
+pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_fig2svg)
 
 PANDOC := pandoc
 PDMINVERSION := 2000000
@@ -60,7 +61,7 @@ tmp/images_local_png.md: images.md
 	sed -e "s@: @: images/@" -e "s/\.fig/.png/" $< > $@
 
 tmp/images_local_pdf.md: images.md
-	sed -e "s@: @: images/@" -e "s@images/\(.*\)\.fig@tmp/\1.pdf@" $< > $@
+	sed -e "s@: @: images/@" -e "s@images/\(.*\)\.fig@tmp/\1.pdf@" -e "s@\.svg@.pdf@" $< > $@
 
 changelog.md:
 	ln -s ../CHANGELOG.md $@

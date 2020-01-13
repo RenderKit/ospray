@@ -44,18 +44,18 @@ namespace ospray {
   {
     Data(const void *sharedData,
         OSPDataType,
-        const vec3ui &numItems,
+        const vec3ul &numItems,
         const vec3l &byteStride);
-    Data(OSPDataType, const vec3ui &numItems);
+    Data(OSPDataType, const vec3ul &numItems);
 
     virtual ~Data() override;
     virtual std::string toString() const override;
 
     size_t size() const;
     char *data() const;
-    char *data(const vec3ui &idx) const;
+    char *data(const vec3ul &idx) const;
     bool compact() const; // all strides are natural
-    void copy(const Data &source, const vec3ui &destinationIndex);
+    void copy(const Data &source, const vec3ul &destinationIndex);
 
     template <typename T, int DIM = 1>
     const DataT<T, DIM> &as() const;
@@ -72,7 +72,7 @@ namespace ospray {
 
    public:
     OSPDataType type{OSP_UNKNOWN};
-    vec3ui numItems;
+    vec3ul numItems;
 
    protected:
     vec3l byteStride;
@@ -93,10 +93,10 @@ namespace ospray {
   class Iter : public std::iterator<std::forward_iterator_tag, T>
   {
     const Data &data;
-    vec3ui idx;
+    vec3ul idx;
 
    public:
-    Iter(const Data &data, vec3ui idx) : data(data), idx(idx) {}
+    Iter(const Data &data, vec3ul idx) : data(data), idx(idx) {}
     Iter &operator++()
     {
       if (++idx.x >= data.numItems.x) {
@@ -171,11 +171,11 @@ namespace ospray {
 
     Iter<T> begin() const
     {
-      return Iter<T>(*this, vec3ui(0));
+      return Iter<T>(*this, vec3ul(0));
     }
     Iter<T> end() const
     {
-      return Iter<T>(*this, vec3ui(0, 0, numItems.z));
+      return Iter<T>(*this, vec3ul(0, 0, numItems.z));
     }
 
     T &operator[](const vec_t<int64_t, DIM> &idx)
@@ -205,7 +205,7 @@ namespace ospray {
     }
     Iter1D<T> end() const
     {
-      return Iter1D<T>(addr + ispc.byteStride * ispc.numItems, ispc.byteStride);
+      return Iter1D<T>(addr + ispc.byteStride * size(), ispc.byteStride);
     }
 
     T &operator[](int64_t idx)
@@ -232,6 +232,10 @@ namespace ospray {
 
   inline const ispc::Data1D *ispc(Ref<const Data> &dataRef)
   {
+    if (dataRef && dataRef->size() > std::numeric_limits<std::uint32_t>::max())
+      throw std::runtime_error(
+          "data array too large (over 4B elements, index is limited to 32bit");
+      
     return dataRef && dataRef->dimensions == 1 ? &dataRef->ispc
                                                : &Data::empytData1D;
   }
@@ -244,7 +248,7 @@ namespace ospray {
 
   inline size_t Data::size() const
   {
-    return numItems.x * size_t(numItems.y) * numItems.z;
+    return numItems.x * numItems.y * numItems.z;
   }
 
   inline char *Data::data() const
@@ -252,7 +256,7 @@ namespace ospray {
     return addr;
   }
 
-  inline char *Data::data(const vec3ui &idx) const
+  inline char *Data::data(const vec3ul &idx) const
   {
     return addr + idx.x * byteStride.x + idx.y * byteStride.y
         + idx.z * byteStride.z;
@@ -290,24 +294,36 @@ namespace ospray {
   }
 
   template <typename T, int DIM>
-  inline const DataT<T, DIM> *ManagedObject::getParamDataT(
-      const char *name, bool required)
+  inline const Ref<const DataT<T, DIM>> ManagedObject::getParamDataT(
+      const char *name, bool required, bool promoteScalar)
   {
-    auto data = getParam<Data*>(name);
+    Data *data = getParam<Data *>(name);
 
     if (data && data->is<T, DIM>())
       return &(data->as<T, DIM>());
-    else {
-      if (required)
-        throw std::runtime_error(toString() + " must have '" + name
-            + "' array with element type " + stringFor(OSPTypeFor<T>::value));
-      else {
-        if (data)
-          postStatusMsg(1) << toString() << " ignoring '" << name
-                           << "' array with wrong element type (should be "
-                           << stringFor(OSPTypeFor<T>::value) << ")";
-        return nullptr;
+
+    // if no data array is found, look for single item of same type
+    if (promoteScalar) {
+      auto item = getOptParam<T>(name);
+      if (item) {
+        // wrap item into data array
+        data = new Data(OSPTypeFor<T>::value, vec3ul(1));
+        auto &dataT = data->as<T, DIM>();
+        T *p = dataT.data();
+        *p = item.value();
+        return &dataT;
       }
+    }
+
+    if (required)
+      throw std::runtime_error(toString() + " must have '" + name
+          + "' array with element type " + stringFor(OSPTypeFor<T>::value));
+    else {
+      if (data)
+        postStatusMsg(1) << toString() << " ignoring '" << name
+                         << "' array with wrong element type (should be "
+                         << stringFor(OSPTypeFor<T>::value) << ")";
+      return nullptr;
     }
   }
 

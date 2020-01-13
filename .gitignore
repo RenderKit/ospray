@@ -22,7 +22,6 @@ ispc
 readme.pdf
 !/modules
 /modules/*
-!/modules/mpi
 !/modules/pluggableGeometryExample
 !/modules/simdGeometryExample
 !/modules/denoiser

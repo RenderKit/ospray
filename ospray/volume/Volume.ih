@@ -35,10 +35,6 @@ struct Volume
   /*! pointer to the c++-equivalent class of this entity */
   void *cppEquivalent;
 
-  //! Recommended sampling step size for ray casting based renderers, set by the
-  //! underlying volume implementation.
-  float samplingStep;
-
   int32 volumeID;
 
   VKLVolume vklVolume;
@@ -60,10 +56,7 @@ struct Volume
   box3f boundingBox;
 };
 
-void Volume_Constructor(
-    Volume *uniform volume,
-    /*! pointer to the c++-equivalent class of this entity */
-    void *uniform cppEquivalent);
+void Volume_Constructor(Volume *uniform volume, void *uniform cppEquivalent);
 
 // Helper functions ///////////////////////////////////////////////////////////
 

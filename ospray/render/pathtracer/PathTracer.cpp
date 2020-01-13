@@ -52,7 +52,7 @@ namespace ospray {
       return;
 
     for (auto &&instance : *world.instances) {
-      auto geometries = instance->group->geometricModels;
+      auto geometries = instance->group->geometricModels.ptr;
 
       if (!geometries)
         return;
@@ -72,7 +72,8 @@ namespace ospray {
 
           if (hasEmissive) {
             if (ispc::GeometryLight_isSupported(model->getIE())) {
-              void *light = ispc::GeometryLight_create(model->getIE(), &xfm);
+              void *light =
+                ispc::GeometryLight_create(model->getIE(), getIE(), &xfm);
 
               // check whether the geometry has any emissive primitives
               if (light)
@@ -99,9 +100,8 @@ namespace ospray {
   {
     Renderer::commit();
 
-    const int32 rouletteDepth = getParam<int>("rouletteDepth", 5);
+    const int32 rouletteDepth = getParam<int>("roulettePathLength", 5);
     const float maxRadiance = getParam<float>("maxContribution", inf);
-    Texture2D *backplate = (Texture2D *)getParamObject("backplate", nullptr);
     vec4f shadowCatcherPlane =
         getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
     useGeometryLights = getParam<bool>("geometryLights", true);
@@ -109,7 +109,6 @@ namespace ospray {
     ispc::PathTracer_set(getIE(),
         rouletteDepth,
         maxRadiance,
-        backplate ? backplate->getIE() : nullptr,
         (ispc::vec4f &)shadowCatcherPlane);
   }
 

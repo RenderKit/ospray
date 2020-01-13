@@ -152,7 +152,7 @@ namespace ospray {
 
     cpp::Geometry makeBoxGeometry(const box3f &box)
     {
-      cpp::Geometry ospGeometry("boxes");
+      cpp::Geometry ospGeometry("box");
       ospGeometry.setParam("box", cpp::Data(1, OSP_BOX3F, &box));
       ospGeometry.commit();
       return ospGeometry;
@@ -165,16 +165,16 @@ namespace ospray {
         float densityScale,
         float anisotropy)
     {
-      vec3l dims{128};  // should be at least 2
+      vec3ul dims{128};  // should be at least 2
       const float spacing = 3.f / (reduce_max(dims) - 1);
-      cpp::Volume volume("structured_volume");
+      cpp::Volume volume("structuredRegular");
 
       // generate volume data
       auto numVoxels = dims.product();
       std::vector<float> voxels(numVoxels, 0);
-      tasking::parallel_for(dims.z, [&](int64_t z) {
-        for (int y = 0; y < dims.y; ++y) {
-          for (int x = 0; x < dims.x; ++x) {
+      tasking::parallel_for(dims.z, [&](uint64_t z) {
+        for (uint64_t y = 0; y < dims.y; ++y) {
+          for (uint64_t x = 0; x < dims.x; ++x) {
             vec3f p = vec3f(x + 0.5f, y + 0.5f, z + 0.5f) / dims;
             if (D(p))
               voxels[dims.x * dims.y * z + dims.x * y + x] =
@@ -190,14 +190,12 @@ namespace ospray {
           voxelRange.extend(v);
       });
 
-      volume.setParam("voxelData", cpp::Data(voxels));
-      volume.setParam("voxelType", int(OSP_FLOAT));
-      volume.setParam("dimensions", vec3i(dims));
+      volume.setParam("data", cpp::Data(dims, voxels.data()));
       volume.setParam("gridOrigin", vec3f(-1.5f, -1.5f, -1.5f));
       volume.setParam("gridSpacing", vec3f(spacing));
       volume.commit();
 
-      cpp::TransferFunction tfn("piecewise_linear");
+      cpp::TransferFunction tfn("piecewiseLinear");
       tfn.setParam("valueRange", voxelRange.toVec2());
       tfn.setParam("color", cpp::Data(colors));
       tfn.setParam("opacity", cpp::Data(opacities));
@@ -218,11 +216,11 @@ namespace ospray {
     {
       cpp::GeometricModel geometricModel(geo);
 
-      cpp::Material objMaterial(rendererType, "OBJMaterial");
-      objMaterial.setParam("Kd", kd);
+      cpp::Material objMaterial(rendererType, "obj");
+      objMaterial.setParam("kd", kd);
       objMaterial.commit();
 
-      geometricModel.setParam("material", cpp::Data(objMaterial));
+      geometricModel.setParam("material", objMaterial);
 
       return geometricModel;
     }
@@ -234,7 +232,7 @@ namespace ospray {
       Builder::commit();
 
       addSphereVolume = getParam<bool>("addSphereVolume", true);
-      addTorusVolume  = getParam<bool>("addTorusVolume", false);
+      addTorusVolume  = getParam<bool>("addTorusVolume", true);
       addBoxes        = getParam<bool>("addBoxes", false);
 
       addAreaLight    = getParam<bool>("addAreaLight", true);

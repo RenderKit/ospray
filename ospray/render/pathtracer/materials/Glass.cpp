@@ -39,14 +39,13 @@ namespace ospray {
 
         const vec3f& attenuationColorInside =
           getParam<vec3f>("attenuationColorInside",
-          getParam<vec3f>("attenuationColor",
-          getParam<vec3f>("color", vec3f(1.f))));
+          getParam<vec3f>("attenuationColor", vec3f(1.f)));
 
         const vec3f& attenuationColorOutside =
           getParam<vec3f>("attenuationColorOutside", vec3f(1.f));
 
         const float attenuationDistance =
-          getParam<float>("attenuationDistance", getParam<float>("distance", 1.0f));
+          getParam<float>("attenuationDistance", 1.0f);
 
         ispc::PathTracer_Glass_set(
           ispcEquivalent,
@@ -58,9 +57,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pathtracer, Glass, Glass);
-    OSP_REGISTER_MATERIAL(pathtracer, Glass, Dielectric);
-    OSP_REGISTER_MATERIAL(pt, Glass, Glass);
-    OSP_REGISTER_MATERIAL(pt, Glass, Dielectric);
+    OSP_REGISTER_MATERIAL(pathtracer, Glass, glass);
   }
 }

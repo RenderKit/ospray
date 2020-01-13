@@ -36,7 +36,7 @@ namespace ospray {
 
    private:
     Ref<Geometry> geom;
-    Ref<const DataT<Material *>> materialData;
+    Ref<const Data> materialData;
     Ref<const DataT<vec4f>> colorData;
     Ref<const DataT<uint8_t>> indexData;
     std::vector<void *> ispcMaterialPtrs;

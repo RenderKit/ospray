@@ -26,4 +26,8 @@ struct LinearTransferFunction
   TransferFunction super;
   Data1D color;
   Data1D opacity;
+
+  // precomputed maximum opacity values per range
+  float maxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT]
+                         [PRECOMPUTED_OPACITY_SUBRANGE_COUNT];
 };

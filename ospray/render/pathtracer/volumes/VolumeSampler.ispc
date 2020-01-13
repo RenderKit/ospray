@@ -29,22 +29,26 @@ float delta_tracking(
   float& mu_t,   // sampled extinction coefficint
   vec3f& albedo) // sampled albedo (color)
 {
-  uniform VKLIntervalIterator intervalIterator;
+  VKLIntervalIterator intervalIterator;
   vklInitIntervalIteratorV(&intervalIterator,
                            vModel->volume->vklVolume,
                            (varying vkl_vec3f *)&o,
                            (varying vkl_vec3f *)&w,
                            (varying vkl_range1f *)&vInterval.interval,
                            vModel->vklValueSelector);
-  
+
   float t = 0.f;
   VKLInterval interval;
   while (vklIterateIntervalV(&intervalIterator, &interval))
   {
     box1f subInterval = make_box1f(interval.tRange.lower, interval.tRange.upper);
     t = interval.tRange.lower;
-    const vec4f color_max = vModel->transferFunction->get(vModel->transferFunction, interval.valueRange.upper);
-    const float mu_max = vModel->densityScale * color_max.w;
+
+    const float maxOpacity = vModel->transferFunction->getMaxOpacity(
+        vModel->transferFunction,
+        *((varying range1f * uniform) & interval.valueRange));
+
+    const float mu_max = vModel->densityScale * maxOpacity;
 
     while (true)
     {
@@ -53,7 +57,7 @@ float delta_tracking(
       t += dt;
       if (t > interval.tRange.upper)
         break;
-      
+
       xi = RandomSampler_getFloat(randomSampler);
       const vec3f p = o + t * w;
       const float sample = vklComputeSampleV(vModel->volume->vklVolume, (const varying vkl_vec3f *uniform) &p);
@@ -86,7 +90,7 @@ float volumeSampleFreePath(const PathState& pathState,
   unmasked { *sampledInstance = NULL; }
   if (haveVolumeHit)
   {
-    for (int i = 0; i < volumeIntervals.numVolumeIntervals; ++i) 
+    for (int i = 0; i < volumeIntervals.numVolumeIntervals; ++i)
     {
       VolumeInterval vInterval = volumeIntervals.intervals[i];
       VolumetricModel *varying instance = volumeIntervals.intervals[i].volumetricModel;
@@ -135,7 +139,7 @@ float volumeTransmittance(const PathState& pathState,
   float transmittance = 1.f;
   if (haveVolumeHit)
   {
-    for (int i = 0; i < volumeIntervals.numVolumeIntervals; ++i) 
+    for (int i = 0; i < volumeIntervals.numVolumeIntervals; ++i)
     {
       VolumeInterval vInterval = volumeIntervals.intervals[i];
       VolumetricModel *varying instance = volumeIntervals.intervals[i].volumetricModel;

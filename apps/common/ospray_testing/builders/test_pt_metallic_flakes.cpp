@@ -39,7 +39,7 @@ namespace ospray {
         float flakeAmount,
         float flakeSpread)
     {
-      cpp::Material mat(rendererType, "MetallicPaint");
+      cpp::Material mat(rendererType, "metallicPaint");
       mat.setParam("baseColor", vec3f(1.f, 0.f, 0.f));
       mat.setParam("flakeAmount", flakeAmount);
       mat.setParam("flakeSpread", flakeSpread);
@@ -58,7 +58,7 @@ namespace ospray {
 
     cpp::Group PtMetallicFlakes::buildGroup() const
     {
-      cpp::Geometry sphereGeometry("spheres");
+      cpp::Geometry sphereGeometry("sphere");
 
       constexpr int dimSize = 5;
 

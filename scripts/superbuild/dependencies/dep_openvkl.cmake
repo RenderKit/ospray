@@ -27,6 +27,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
+  LIST_SEPARATOR | # Use the alternate list separator
   URL "https://github.com/openvkl/openvkl/archive/${BUILD_OPENVKL_VERSION}.zip"
   CMAKE_ARGS
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
@@ -43,14 +44,17 @@ ExternalProject_Add(${COMPONENT_NAME}
     -DBUILD_BENCHMARKS=OFF
     -DBUILD_EXAMPLES=OFF
     -DBUILD_TESTING=OFF
+    -DOPENVKL_MAX_ISA=AVX2
   BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
   BUILD_ALWAYS ${ALWAYS_REBUILD}
 )
 
 list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
+string(REPLACE ";" "|" CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
 
 ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
   configure
     ospcommon
+    embree
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
 )

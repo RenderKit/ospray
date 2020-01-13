@@ -149,6 +149,6 @@ namespace ospray {
     return retval;
   }
 
-  OSP_REGISTER_GEOMETRY(Curves, curves);
+  OSP_REGISTER_GEOMETRY(Curves, curve);
 
 }  // namespace ospray

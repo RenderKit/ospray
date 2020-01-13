@@ -23,14 +23,14 @@ extern "C" {
 
 OSPData ospNewSharedData1D(const void *sharedData,
                            OSPDataType type,
-                           uint32_t numItems)
+                           uint64_t numItems)
 {
   return ospNewSharedData(sharedData, type, numItems, 0, 1, 0, 1, 0);
 }
 
 OSPData ospNewSharedData1DStride(const void *sharedData,
                                  OSPDataType type,
-                                 uint32_t numItems,
+                                 uint64_t numItems,
                                  int64_t byteStride)
 {
   return ospNewSharedData(sharedData, type, numItems, byteStride, 1, 0, 1, 0);
@@ -38,17 +38,17 @@ OSPData ospNewSharedData1DStride(const void *sharedData,
 
 OSPData ospNewSharedData2D(const void *sharedData,
                            OSPDataType type,
-                           uint32_t numItems1,
-                           uint32_t numItems2)
+                           uint64_t numItems1,
+                           uint64_t numItems2)
 {
   return ospNewSharedData(sharedData, type, numItems1, 0, numItems2, 0, 1, 0);
 }
 
 OSPData ospNewSharedData2DStride(const void *sharedData,
                                  OSPDataType type,
-                                 uint32_t numItems1,
+                                 uint64_t numItems1,
                                  int64_t byteStride1,
-                                 uint32_t numItems2,
+                                 uint64_t numItems2,
                                  int64_t byteStride2)
 {
   return ospNewSharedData(
@@ -57,35 +57,35 @@ OSPData ospNewSharedData2DStride(const void *sharedData,
 
 OSPData ospNewSharedData3D(const void *sharedData,
                            OSPDataType type,
-                           uint32_t numItems1,
-                           uint32_t numItems2,
-                           uint32_t numItems3)
+                           uint64_t numItems1,
+                           uint64_t numItems2,
+                           uint64_t numItems3)
 {
   return ospNewSharedData(
       sharedData, type, numItems1, 0, numItems2, 0, numItems3, 0);
 }
 
-OSPData ospNewData1D(OSPDataType type, uint32_t numItems)
+OSPData ospNewData1D(OSPDataType type, uint64_t numItems)
 {
   return ospNewData(type, numItems, 1, 1);
 }
 
-OSPData ospNewData2D(OSPDataType type, uint32_t numItems1, uint32_t numItems2)
+OSPData ospNewData2D(OSPDataType type, uint64_t numItems1, uint64_t numItems2)
 {
   return ospNewData(type, numItems1, numItems2, 1);
 }
 
 void ospCopyData1D(const OSPData source,
                    OSPData destination,
-                   uint32_t destinationIndex)
+                   uint64_t destinationIndex)
 {
   ospCopyData(source, destination, destinationIndex, 0, 0);
 }
 
 void ospCopyData2D(const OSPData source,
                    OSPData destination,
-                   uint32_t destinationIndex1,
-                   uint32_t destinationIndex2)
+                   uint64_t destinationIndex1,
+                   uint64_t destinationIndex2)
 {
   ospCopyData(source, destination, destinationIndex1, destinationIndex2, 0);
 }

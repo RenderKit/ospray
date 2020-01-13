@@ -187,7 +187,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospCommit(*camera); // commit each object to indicate modifications are done
 
   // create and setup model and mesh
-  OSPGeometry mesh = ospNewGeometry("triangles");
+  OSPGeometry mesh = ospNewGeometry("mesh");
   OSPData data = ospNewSharedData1D(vertex, OSP_VEC3F, 4);
   ospCommit(data);
   ospSetObject(mesh, "vertex.position", data);
@@ -248,7 +248,7 @@ void buildScene1(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // complete setup of renderer
   ospSetInt(*renderer, "aoSamples", 1);
-  ospSetFloat(*renderer, "bgColor", 1.0f); // white, transparent
+  ospSetFloat(*renderer, "backgroundColor", 1.0f); // white, transparent
   ospCommit(*renderer);
 
   ospRelease(light);
@@ -290,7 +290,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
   ospCommit(*camera); // commit each object to indicate modifications are done
 
   // create and setup model and mesh
-  OSPGeometry mesh = ospNewGeometry("triangles");
+  OSPGeometry mesh = ospNewGeometry("mesh");
   OSPData data = ospNewSharedData1D(vertex, OSP_VEC3F, 4);
   ospCommit(data);
   ospSetObject(mesh, "vertex.position", data);
@@ -351,7 +351,7 @@ void buildScene2(OSPCamera *camera, OSPWorld *world, OSPRenderer *renderer,
 
   // complete setup of renderer
   ospSetInt(*renderer, "aoSamples", 4);
-  ospSetFloat(*renderer, "bgColor", 0.2f); // gray, transparent
+  ospSetFloat(*renderer, "backgroundColor", 0.2f); // gray, transparent
   ospCommit(*renderer);
 
   ospRelease(light);

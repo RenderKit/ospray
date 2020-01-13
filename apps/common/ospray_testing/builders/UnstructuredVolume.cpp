@@ -16,8 +16,6 @@
 
 #include "Builder.h"
 #include "ospray_testing.h"
-// stl
-#include <random>
 
 using namespace ospcommon::math;
 
@@ -205,15 +203,15 @@ namespace ospray {
       // define per-cell values
       std::vector<float> cellValues = {0.1f, .3f, .7f, 1.f};
 
-      cpp::Volume volume("unstructured_volume");
+      cpp::Volume volume("unstructured");
 
       // set data objects for volume object
       volume.setParam("vertex.position", cpp::Data(vertices));
 
       if (valuesPerCell)
-        volume.setParam("cell.value", cpp::Data(cellValues));
+        volume.setParam("cell.data", cpp::Data(cellValues));
       else
-        volume.setParam("vertex.value", cpp::Data(vertexValues));
+        volume.setParam("vertex.data", cpp::Data(vertexValues));
 
       volume.setParam("index", cpp::Data(indices));
       volume.setParam("cell.index", cpp::Data(cells));

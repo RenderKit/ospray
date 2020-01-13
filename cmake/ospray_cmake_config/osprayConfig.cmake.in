@@ -152,7 +152,7 @@ else()
   endif()
 
   if (NOT TARGET openvkl::openvkl)
-   find_dependency(openvkl ${OPENVKL_VERSION_REQUIRED})
+    ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
   endif()
 
   set(EMBREE_LIBRARY embree)

@@ -9,7 +9,7 @@ packages contain most needed 3rd party dependencies, whereas for the
 (much smaller) RPM/installer packages you need to have installed
 
 - Intel® [TBB](https://www.threadingbuildingblocks.org/) v3.0 or newer
-- [Embree] ray tracing kernels v3.1 or newer
+- [Embree] ray tracing kernels v3.7.0 or newer
 - To run the example viewer: OpenGL
 - To use the distributed, multi-node rendering feature: Intel® [MPI
   Library](https://software.intel.com/en-us/intel-mpi-library/))
@@ -19,16 +19,16 @@ We recommend the latest version of both TBB and Embree libraries.
 Packages
 --------
 
-For Linux we provide OSPRay precompiled for 64\ bit as RPMs or as TGZ
-file.
+For Linux we provide OSPRay precompiled for 64\ bit as RPMs or as a TGZ
+archive.
 
 [ospray-<OSPRAY_VERSION>.x86_64.rpm.tar.gz](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.rpm.tar.gz)
 [ospray-<OSPRAY_VERSION>.x86_64.linux.tar.gz](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.linux.tar.gz)
 
-For Mac OS\ X we provide OSPRay as an installer and as a TGZ file:
+For Mac OS\ X we provide OSPRay as an PKG installer and as a ZIP archive:
 
-[ospray-<OSPRAY_VERSION>.x86_64.dmg](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.dmg)
-[ospray-<OSPRAY_VERSION>.x86_64.macosx.tar.gz](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.macosx.tar.gz)
+[ospray-<OSPRAY_VERSION>.x86_64.pkg](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.pkg)
+[ospray-<OSPRAY_VERSION>.x86_64.macosx.zip](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.macosx.zip)
 
 For Windows we provide OSPRay binaries precompiled for 64\ bit as an MSI
 installer as well as a ZIP archive:

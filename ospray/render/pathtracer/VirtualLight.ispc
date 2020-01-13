@@ -30,16 +30,14 @@ inline box1f getMinMaxDistForVirtualLights(const PathContext& pathContext,
   // minimal distance is not always zero (when previously sampled a Dirac transmission)
   interval.lower = distance(lastVertex.dg.P, ray.org);
 
-  // virtual lights are occluded by hit geometry because lastVertex.dg.P can be
-  // different from ray.org (when previously sampled a Dirac transmission) we
-  // cannot just use ray.t as maximum distance
+  // virtual lights are occluded by hit geometry
+  // because lastVertex.dg.P can be different from ray.org (when previously
+  // sampled a Dirac transmission) we cannot just use ray.t as maximum distance
   interval.upper = distance(lastVertex.dg.P, ray.org + ray.t * ray.dir);
 
-  if (pathVertex.type == ENVIRONMENT) {
+  if (pathVertex.type == ENVIRONMENT)
     interval.upper = inf;
-    if (pathState.straightPath && (bool)pathContext.context->backplate) 
-      interval.upper = 1e38; // backplate hides envLights (i.e. the ones at infinity)
-  }
+
   return interval;
 }
 
@@ -52,9 +50,10 @@ vec3f evaluateVirtualLights(const PathContext& pathContext,
   // add light from *virtual* lights by intersecting them
   vec3f L = make_vec3f(0.f);
 
-  box1f intervalLightDist; // [minLightDist, maxLightDist] for virtual light visibility
-  if (pathContext.numLights > pathContext.context->numGeoLights)
-    intervalLightDist = getMinMaxDistForVirtualLights(pathContext, pathState, lastVertex, pathVertex, ray);
+  if (pathContext.numLights <= pathContext.context->numGeoLights)
+    return L; // return if no virtual lights at all
+
+  box1f intervalLightDist = getMinMaxDistForVirtualLights(pathContext, pathState, lastVertex, pathVertex, ray);
 
   for (uniform int i = pathContext.context->numGeoLights; i < pathContext.numLights; i++) 
   {

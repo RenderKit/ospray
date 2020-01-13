@@ -132,6 +132,15 @@ namespace OSPRayTestScenes {
     vec4f bgColor;
   };
 
+  class RendererMaterialList
+      : public Base,
+        public ::testing::TestWithParam<const char *>
+  {
+   public:
+    RendererMaterialList();
+    void SetUp() override;
+  };
+
   // Fixture class used for tests that uses 'ospray_testing' scenes
   class FromOsprayTesting
       : public Base,

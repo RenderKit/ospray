@@ -55,7 +55,7 @@ struct PathContext
 {
   const PathTracer* uniform context;
   const World* uniform world;
-  const varying vec2f* pixel; 
+  const varying vec2f* uniform pixel; 
   varying LDSampler* uniform ldSampler;
   varying RandomSampler* uniform randomSampler;
   uniform int numLights;

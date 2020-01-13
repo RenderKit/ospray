@@ -16,17 +16,19 @@
 
 #pragma once
 
-#include "openvkl/openvkl.h"
-#include "Volume.h"
+// ospray
+#include "render/Renderer.h"
 
 namespace ospray {
 
-  struct VKLAMRVolume : public Volume
+  struct DebugRenderer : public Renderer
   {
-    VKLAMRVolume() = default;
-    virtual ~VKLAMRVolume() override = default;
+    DebugRenderer();
+    virtual ~DebugRenderer() override = default;
+
     virtual std::string toString() const override;
+
     virtual void commit() override;
   };
 
-}  // namespace ospray
+} // namespace ospray

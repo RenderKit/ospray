@@ -21,6 +21,7 @@
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "../common/OSPCommon.h"
+#include "ospray/version.h"
 // std
 #include <functional>
 
@@ -57,14 +58,14 @@ namespace ospray {
 
       virtual OSPData newSharedData(const void *sharedData,
                                     OSPDataType,
-                                    const vec3i &numItems,
+                                    const vec3ul &numItems,
                                     const vec3l &byteStride) = 0;
 
-      virtual OSPData newData(OSPDataType, const vec3i &numItems) = 0;
+      virtual OSPData newData(OSPDataType, const vec3ul &numItems) = 0;
 
       virtual void copyData(const OSPData source,
                             OSPData destination,
-                            const vec3i &DestinationIndex) = 0;
+                            const vec3ul &destinationIndex) = 0;
 
       // Renderable Objects ///////////////////////////////////////////////////
 
@@ -156,7 +157,6 @@ namespace ospray {
       bool isCommitted();
 
       int numThreads{-1};
-      /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode{false};
       bool apiTraceEnabled{false};
 
@@ -169,7 +169,6 @@ namespace ospray {
 
       int threadAffinity{AUTO_DETECT};
 
-      /*! logging level (cmdline: --osp:loglevel \<n\>) */
       // NOTE(jda) - Keep logLevel static because the device factory function
       //             needs to have a valid value for the initial Device creation
       static uint32_t logLevel;

@@ -44,6 +44,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pt, Plastic, Plastic);
+    OSP_REGISTER_MATERIAL(pt, Plastic, plastic);
   }
 }

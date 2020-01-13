@@ -78,6 +78,14 @@ namespace ospray {
     }                                                                        \
   }
 
+#define declare_param_setter_string(TYPE)                                    \
+  {                                                                          \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) { \
+      const char *str = (const char *)v;                                     \
+      setParamOnObject(o, p, std::string(str));                              \
+    }                                                                        \
+  }
+
     static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
         declare_param_setter(Device *),
         declare_param_setter(void *),
@@ -99,6 +107,7 @@ namespace ospray {
         declare_param_setter_object(Volume *),
         declare_param_setter_object(VolumetricModel *),
         declare_param_setter_object(World *),
+        declare_param_setter_string(const char *),
         declare_param_setter(char *),
         declare_param_setter(char),
         declare_param_setter(unsigned char),
@@ -196,20 +205,27 @@ namespace ospray {
       VKLDriver driver = nullptr;
 
       int ispc_width = ispc::ISPCDevice_programCount();
-      switch(ispc_width) {
-        case 4:
-          driver = vklNewDriver("ispc_4");
-          break;
-        case 8:
-          driver = vklNewDriver("ispc_8");
-          break;
-        case 16:
-          driver = vklNewDriver("ispc_16");
-          break;
-        default:
-          driver = vklNewDriver("ispc");
-          break;
+      switch (ispc_width) {
+      case 4:
+        driver = vklNewDriver("ispc_4");
+        break;
+      case 8:
+        driver = vklNewDriver("ispc_8");
+        break;
+      case 16:
+        driver = vklNewDriver("ispc_16");
+        break;
+      default:
+        driver = vklNewDriver("ispc");
+        break;
       }
+
+      vklDriverSetErrorFunc(driver, [](VKLError, const char *message) {
+        handleError(OSP_UNKNOWN_ERROR, message);
+      });
+
+      vklDriverSetLogFunc(
+          driver, [](const char *message) { postStatusMsg() << message; });
 
       vklCommitDriver(driver);
       vklSetCurrentDriver(driver);
@@ -230,20 +246,20 @@ namespace ospray {
 
     OSPData ISPCDevice::newSharedData(const void *sharedData,
                                       OSPDataType type,
-                                      const vec3i &numItems,
+                                      const vec3ul &numItems,
                                       const vec3l &byteStride)
     {
       return (OSPData) new Data(sharedData, type, numItems, byteStride);
     }
 
-    OSPData ISPCDevice::newData(OSPDataType type, const vec3i &numItems)
+    OSPData ISPCDevice::newData(OSPDataType type, const vec3ul &numItems)
     {
       return (OSPData) new Data(type, numItems);
     }
 
     void ISPCDevice::copyData(const OSPData source,
                               OSPData destination,
-                              const vec3i &destinationIndex)
+                              const vec3ul &destinationIndex)
     {
       Data *dst = (Data *)destination;
       dst->copy(*(Data *)source, destinationIndex);
@@ -270,7 +286,7 @@ namespace ospray {
 
     OSPVolume ISPCDevice::newVolume(const char *type)
     {
-      return (OSPVolume)Volume::createInstance(type);
+      return (OSPVolume) new Volume(type);
     }
 
     OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
@@ -511,12 +527,15 @@ namespace ospray {
       return renderer->pick(fb, camera, world, screenPos);
     }
 
-    OSP_REGISTER_DEVICE(ISPCDevice, local_device);
-    OSP_REGISTER_DEVICE(ISPCDevice, local);
-    OSP_REGISTER_DEVICE(ISPCDevice, default_device);
+    extern "C" OSPError ospray_module_init_ispc(int16_t versionMajor,
+                                                int16_t versionMinor,
+                                                int16_t /*versionPatch*/)
+    {
+      return moduleVersionCheck(versionMajor, versionMinor);
+    }
+
     OSP_REGISTER_DEVICE(ISPCDevice, default);
+    OSP_REGISTER_DEVICE(ISPCDevice, local);
 
   }  // namespace api
 }  // namespace ospray
-
-extern "C" OSPRAY_DLLEXPORT void ospray_init_module_ispc() {}

@@ -24,9 +24,11 @@ export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
 cmake --version
 
 cmake -L \
-  -DBUILD_OSPRAY_CI_TESTS=ON \
-  -DCMAKE_INSTALL_LIBDIR=lib \
-  -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
-  "$@" ../scripts/superbuild
+  -D CMAKE_INSTALL_LIBDIR=lib \
+  -D BUILD_OSPRAY_CI_TESTS=ON \
+  -D BUILD_EMBREE_FROM_SOURCE=OFF \
+  -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF \
+  "$@" \
+ ../scripts/superbuild
 
 cmake --build .

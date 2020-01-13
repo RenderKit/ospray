@@ -14,30 +14,21 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "VKLUnstructuredVolume.h"
-#include "common/Data.h"
+#pragma once
 
-namespace ospray {
-
-  std::string VKLUnstructuredVolume::toString() const
-  {
-    return "ospray::volume::VKLUnstructuredVolume";
-  }
-
-  void VKLUnstructuredVolume::commit()
-  {
-    ispcEquivalent = ispc::Volume_createInstance_vklVolume(this);
-    vklVolume      = vklNewVolume("unstructured");
-
-    handleParams();
-
-    vklCommit(vklVolume);
-    (vkl_box3f &)bounds = vklGetBoundingBox(vklVolume);
-    Volume::commit();
-    ispc::Volume_set_vklVolume(
-        ispcEquivalent, vklVolume, (ispc::box3f *)&bounds);
-  }
-
-  OSP_REGISTER_VOLUME(VKLUnstructuredVolume, unstructured_volume);
-
-}  // namespace ospray
+typedef enum
+{
+  TEST_FRAME,
+  RAY_DIR,
+  EYE_LIGHT,
+  NG,
+  NS,
+  DPDS,
+  DPDT,
+  PRIM_ID,
+  GEOM_ID,
+  INST_ID,
+  BACKFACING_NG,
+  BACKFACING_NS,
+  VOLUME
+} DebugRendererType;
