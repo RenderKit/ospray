@@ -26,20 +26,15 @@ namespace ospray {
   // Embree helper functions //////////////////////////////////////////////////
 
   template <typename T>
-  inline std::vector<void *> createEmbreeScene(
-      RTCScene &scene, const DataT<T *> &objects, int embreeFlags)
+  inline std::vector<void *> createEmbreeScene(RTCScene &scene,
+                                               const DataT<T *> &objects,
+                                               int embreeFlags)
   {
     std::vector<void *> ptrsToIE;
     for (auto &&obj : objects) {
-      Geometry &geom    = obj->geometry();
-      auto liveGeometry = geom.createEmbreeGeometry();
-
-      auto geomID = rtcAttachGeometry(scene, liveGeometry.embreeGeometry);
-      obj->setGeomIE(liveGeometry.ispcEquivalent, geomID);
-
-      ptrsToIE.push_back(liveGeometry.ispcEquivalent);
-
-      rtcReleaseGeometry(liveGeometry.embreeGeometry);
+      Geometry &geom = obj->geometry();
+      rtcAttachGeometry(scene, geom.embreeGeometry);
+      ptrsToIE.push_back(geom.getIE());
     }
 
     rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
@@ -71,9 +66,6 @@ namespace ospray {
 
   static void freeIEPtrs(std::vector<void *> &ptrs)
   {
-    for (auto &p : ptrs)
-      ispc::delete_uniform(p);
-
     ptrs.clear();
   }
 
@@ -100,7 +92,7 @@ namespace ospray {
 
   void Group::commit()
   {
-    geometricModels = getParamDataT<GeometricModel *>("geometry");
+    geometricModels  = getParamDataT<GeometricModel *>("geometry");
     volumetricModels = getParamDataT<VolumetricModel *>("volume");
 
     // get rid of stride for now
@@ -112,8 +104,8 @@ namespace ospray {
       data->refDec();
     }
     if (volumetricModels && !volumetricModels->compact()) {
-      auto data = new Data(
-          OSP_VOLUMETRIC_MODEL, vec3ui(volumetricModels->size(), 1, 1));
+      auto data = new Data(OSP_VOLUMETRIC_MODEL,
+                           vec3ui(volumetricModels->size(), 1, 1));
       data->copy(*volumetricModels, vec3ui(0));
       volumetricModels = &(data->as<VolumetricModel *>());
       data->refDec();
@@ -175,7 +167,7 @@ namespace ospray {
   {
     box3f sceneBounds;
 
-    box4f bounds; // NOTE(jda) - Embree expects box4f, NOT box3f...
+    box4f bounds;  // NOTE(jda) - Embree expects box4f, NOT box3f...
     rtcGetSceneBounds(sceneGeometries, (RTCBounds *)&bounds);
     sceneBounds.extend(box3f(vec3f(bounds.lower[0]), vec3f(bounds.upper[0])));
 

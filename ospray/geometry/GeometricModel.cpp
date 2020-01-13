@@ -40,11 +40,12 @@ namespace ospray {
     materialData = getParamDataT<Material *>("material", false, true);
     if (materialData) {
       ispcMaterialPtrs = createArrayOfIE(materialData->as<Material *>());
-      auto *data       = new Data(ispcMaterialPtrs.data(),
+
+      auto *data   = new Data(ispcMaterialPtrs.data(),
                             OSP_VOID_PTR,
                             vec3ui(ispcMaterialPtrs.size(), 1, 1),
                             vec3l(0));
-      materialData     = data;
+      materialData = data;
       data->refDec();
     } else {
       ispcMaterialPtrs.clear();
@@ -59,6 +60,7 @@ namespace ospray {
       postStatusMsg(1) << toString()
                        << " not enough 'index' elements for geometry, clamping";
     }
+
     if (indexData)
       maxItems = 256;  // conservative, should actually go over the index
 
@@ -69,24 +71,18 @@ namespace ospray {
                           "geometry, clamping";
     }
 
-    if (colorData && colorData->size() > 1 &&
-        colorData->size() < maxItems) {
+    if (colorData && colorData->size() > 1 && colorData->size() < maxItems) {
       postStatusMsg(1)
           << toString()
           << " potentially not enough 'color' elements for geometry, clamping";
     }
 
     ispc::GeometricModel_set(getIE(),
+                             geometry().getIE(),
                              ispc(colorData),
                              ispc(indexData),
                              ispc(materialData),
                              useRendererMaterialList);
-  }
-
-  void GeometricModel::setGeomIE(void *geomIE, int geomID)
-  {
-    ispc::Geometry_set_geomID(geomIE, geomID);
-    ispc::GeometricModel_setGeomIE(getIE(), geomIE);
   }
 
   OSPTYPEFOR_DEFINITION(GeometricModel *);

@@ -22,15 +22,7 @@ static void Geometry_Constructor(Geometry *uniform self,
 {
   self->cppEquivalent = cppEquivalent;
   self->numPrimitives = 0;
-  self->geomID = -1;
   self->postIntersect = postIntersect;
   self->sampleArea = NULL;
   self->getAreas = NULL;
-}
-
-export void Geometry_set_geomID(void *uniform _self, uniform int32 geomID)
-{
-  Geometry *uniform self = (Geometry *uniform)_self;
-
-  self->geomID = geomID;
 }

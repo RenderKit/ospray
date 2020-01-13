@@ -32,8 +32,6 @@ namespace ospray {
 
     Geometry &geometry();
 
-    void setGeomIE(void *geomIE, int geomID);
-
    private:
     Ref<Geometry> geom;
     Ref<const Data> materialData;

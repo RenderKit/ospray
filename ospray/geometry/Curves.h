@@ -22,15 +22,13 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE Curves : public Geometry
   {
-    Curves() = default;
+    Curves();
     virtual ~Curves() override = default;
     virtual std::string toString() const override;
 
     virtual void commit() override;
 
     virtual size_t numPrimitives() const override;
-
-    LiveGeometry createEmbreeGeometry() override;
 
    protected:
     Ref<const Data> vertexData;
@@ -39,7 +37,7 @@ namespace ospray {
     Ref<const DataT<vec4f>> tangentData;
     Ref<const DataT<vec4f>> colorData;
     Ref<const DataT<vec2f>> texcoordData;
-    
+
     float radius{0.01};
 
     RTCGeometryType embreeCurveType;
@@ -47,6 +45,8 @@ namespace ospray {
     OSPCurveType curveType{OSP_UNKNOWN_CURVE_TYPE};
     OSPCurveBasis curveBasis{OSP_UNKNOWN_CURVE_BASIS};
 
+   private:
+    void createEmbreeGeometry();
   };
 
 }  // namespace ospray

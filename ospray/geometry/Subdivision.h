@@ -23,7 +23,7 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE Subdivision : public Geometry
   {
-    Subdivision() = default;
+    Subdivision();
     virtual ~Subdivision() override = default;
 
     virtual std::string toString() const override;
@@ -31,8 +31,6 @@ namespace ospray {
     virtual void commit() override;
 
     virtual size_t numPrimitives() const override;
-
-    LiveGeometry createEmbreeGeometry() override;
 
    protected:
     float level{0.f};
