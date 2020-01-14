@@ -235,7 +235,7 @@ namespace ospray {
     if (dataRef && dataRef->size() > std::numeric_limits<std::uint32_t>::max())
       throw std::runtime_error(
           "data array too large (over 4B elements, index is limited to 32bit");
-      
+
     return dataRef && dataRef->dimensions == 1 ? &dataRef->ispc
                                                : &Data::empytData1D;
   }
@@ -319,10 +319,12 @@ namespace ospray {
       throw std::runtime_error(toString() + " must have '" + name
           + "' array with element type " + stringFor(OSPTypeFor<T>::value));
     else {
-      if (data)
-        postStatusMsg(1) << toString() << " ignoring '" << name
-                         << "' array with wrong element type (should be "
-                         << stringFor(OSPTypeFor<T>::value) << ")";
+      if (data) {
+        postStatusMsg(OSP_LOG_WARNING)
+            << toString() << " ignoring '" << name
+            << "' array with wrong element type (should be "
+            << stringFor(OSPTypeFor<T>::value) << ")";
+      }
       return nullptr;
     }
   }

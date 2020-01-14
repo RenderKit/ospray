@@ -48,7 +48,7 @@ namespace ospray {
       std::stringstream ss;
       ss << "Invalid format for command-line argument " << s
          << ". Should be formatted --osp:<parameter>=<value>";
-      postStatusMsg(ss, 0);
+      postStatusMsg(ss, OSP_LOG_WARNING);
       return "";
     } else {
       return tokens.back();
@@ -64,7 +64,7 @@ namespace ospray {
       std::stringstream ss;
       ss << "Invalid value '" << value << "' in command-line argument " << s
          << ". Should be an integer";
-      postStatusMsg(ss, 0);
+      postStatusMsg(ss, OSP_LOG_WARNING);
       return 0;
     }
   }

@@ -57,8 +57,9 @@ namespace ospray {
 
     size_t maxItems = geom->numPrimitives();
     if (indexData && indexData->size() < maxItems) {
-      postStatusMsg(1) << toString()
-                       << " not enough 'index' elements for geometry, clamping";
+      postStatusMsg(OSP_LOG_INFO)
+          << toString()
+          << " not enough 'index' elements for geometry, clamping";
     }
 
     if (indexData)
@@ -66,13 +67,14 @@ namespace ospray {
 
     if (materialData && materialData->size() > 1 &&
         materialData->size() < maxItems) {
-      postStatusMsg(1) << toString()
-                       << " potentially not enough 'material' elements for "
-                          "geometry, clamping";
+      postStatusMsg(OSP_LOG_INFO)
+          << toString()
+          << " potentially not enough 'material' elements for "
+             "geometry, clamping";
     }
 
     if (colorData && colorData->size() > 1 && colorData->size() < maxItems) {
-      postStatusMsg(1)
+      postStatusMsg(OSP_LOG_INFO)
           << toString()
           << " potentially not enough 'color' elements for geometry, clamping";
     }
