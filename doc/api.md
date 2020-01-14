@@ -43,9 +43,10 @@ prefixed by convention with "`--osp:`") are understood:
   `--osp:log-level=<str>`                      set logging level; valid values (in order of severity)
                                                are `none`, `error`, `warning`, `info`, and `debug`
 
-  `--osp:warn-as-error`                        send `warning` and `error` messages throug the error
+  `--osp:warn-as-error`                        send `warning` and `error` messages through the error
                                                callback, otherwise send `warning` messages through
-                                               the message callback
+                                               the message callback; must have sufficient `logLevel`
+                                               to enable warnings
 
   `--osp:verbose`                              shortcut for `--osp:log-level=info` and enable debug
                                                output on `cout`, error output on `cerr`
@@ -116,9 +117,10 @@ all devices:
 
   bool   debug        set debug mode; equivalent to logLevel=2 and numThreads=1
 
-  bool   warnAsError  send `warning` and `error` messages throug the error
+  bool   warnAsError  send `warning` and `error` messages through the error
                       callback, otherwise send `warning` messages through
-                      the message callback
+                      the message callback; must have sufficient `logLevel` to
+                      enable warnings
 
   bool   setAffinity  bind software threads to hardware threads if set to 1;
                       0 disables binding omitting the parameter will let OSPRay
