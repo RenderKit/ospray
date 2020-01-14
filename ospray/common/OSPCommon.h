@@ -182,12 +182,12 @@ namespace ospray {
 
   struct StatusMsgStream : public std::stringstream
   {
-    StatusMsgStream(uint32_t postAtLogLevel = 0);
+    StatusMsgStream(uint32_t postAtLogLevel = OSP_LOG_DEBUG);
     StatusMsgStream(StatusMsgStream &&other);
     ~StatusMsgStream();
 
    private:
-    uint32_t logLevel{0};
+    uint32_t logLevel{OSP_LOG_DEBUG};
   };
 
   inline StatusMsgStream::StatusMsgStream(uint32_t postAtLogLevel)
@@ -208,7 +208,7 @@ namespace ospray {
   }
 
   OSPRAY_CORE_INTERFACE StatusMsgStream
-  postStatusMsg(uint32_t postAtLogLevel = 0);
+  postStatusMsg(uint32_t postAtLogLevel = OSP_LOG_DEBUG);
 
   /////////////////////////////////////////////////////////////////////////////
 
