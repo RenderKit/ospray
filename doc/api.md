@@ -41,17 +41,17 @@ prefixed by convention with "`--osp:`") are understood:
                                                detected hardware threads
 
   `--osp:log-level=<str>`                      set logging level; valid values (in order of severity)
-                                               are `none`, `debug`, `info`, `warning`, and `error`
+                                               are `none`, `error`, `warning`, `info`, and `debug`
 
   `--osp:warn-as-error`                        send `warning` and `error` messages throug the error
                                                callback, otherwise send `warning` messages through
                                                the message callback
 
-  `--osp:verbose`                              shortcut for `--osp:log-level=1` and enable debug
-                                               output on console
+  `--osp:verbose`                              shortcut for `--osp:log-level=info` and enable debug
+                                               output on `cout`, error output on `cerr`
 
-  `--osp:vv`                                   shortcut for `--osp:log-level=2` and enable debug
-                                               output on console
+  `--osp:vv`                                   shortcut for `--osp:log-level=debug` and enable debug
+                                               output on `cout`, error output on `cerr`
 
   `--osp:load-modules=<name>[,...]`            load one or more modules during initialization;
                                                equivalent to calling `ospLoadModule(name)`
@@ -106,7 +106,7 @@ all devices:
   int    numThreads   number of threads which OSPRay should use
 
   string logLevel     logging level; valid values (in order of severity)
-                      are `none`, `debug`, `info`, `warning`, and `error`
+                      are `none`, `error`, `warning`, `info`, and `debug`
 
   string logOutput    convenience for setting where status messages go; valid
                       values are `cerr` and `cout`

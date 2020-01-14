@@ -90,12 +90,12 @@ namespace ospray {
           device->setParam("warnAsError", true);
           removeArgs(ac, av, i, 1);
         } else if (parm == "--osp:verbose") {
-          device->setParam("logLevel", 3);
+          device->setParam("logLevel", int(OSP_LOG_INFO));
           device->setParam("logOutput", std::string("cout"));
           device->setParam("errorOutput", std::string("cerr"));
           removeArgs(ac, av, i, 1);
         } else if (parm == "--osp:vv") {
-          device->setParam("logLevel", 4);
+          device->setParam("logLevel", int(OSP_LOG_DEBUG));
           device->setParam("logOutput", std::string("cout"));
           device->setParam("errorOutput", std::string("cerr"));
           removeArgs(ac, av, i, 1);
