@@ -25,11 +25,11 @@ typedef enum
 : uint32_t
 #endif
 {
-  OSP_LOG_NONE    = 0,
   OSP_LOG_DEBUG   = 1,
   OSP_LOG_INFO    = 2,
   OSP_LOG_WARNING = 3,
   OSP_LOG_ERROR   = 4,
+  OSP_LOG_NONE    = 5
 } OSPLogLevel;
 
 // enum representing different device properties

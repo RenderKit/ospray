@@ -87,7 +87,7 @@ namespace ospray {
 
       apiTraceEnabled = traceAPI;
 
-      logLevel = getParam<int>("logLevel", 0);
+      logLevel = getParam<int>("logLevel", OSP_LOG_NONE);
 
       auto logLevelStr =
           utility::getEnvVar<std::string>("OSPRAY_LOG_LEVEL").value_or("");
@@ -124,7 +124,7 @@ namespace ospray {
         error_fcn = [](OSPError, const char *) {};
 
       if (debugMode) {
-        logLevel   = OSP_LOG_ERROR;
+        logLevel   = OSP_LOG_DEBUG;
         numThreads = 1;
         installStatusMsgFunc(*this, std::cout);
         installErrorMsgFunc(*this, std::cerr);

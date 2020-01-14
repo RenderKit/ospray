@@ -40,7 +40,7 @@ prefixed by convention with "`--osp:`") are understood:
   `--osp:num-threads=<n>`                      use `n` threads instead of per default using all
                                                detected hardware threads
 
-  `--osp:log-level=<n>`                        set logging level; valid values (in order of severity)
+  `--osp:log-level=<str>`                      set logging level; valid values (in order of severity)
                                                are `none`, `debug`, `info`, `warning`, and `error`
 
   `--osp:verbose`                              shortcut for `--osp:log-level=1` and enable debug
