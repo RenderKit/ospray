@@ -50,4 +50,12 @@ inline void initializeOSPRay(int argc,
   }
 
   ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
+
+  bool warnAsErrors = true;
+  auto logLevel     = OSP_LOG_WARNING;
+
+  ospDeviceSetParam(device, "warnAsError", OSP_BOOL, &warnAsErrors);
+  ospDeviceSetParam(device, "logLevel", OSP_INT, &logLevel);
+
+  ospDeviceCommit(device);
 }

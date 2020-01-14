@@ -216,7 +216,7 @@ namespace ospray {
     {
       cpp::GeometricModel geometricModel(geo);
 
-      cpp::Material objMaterial(rendererType, "obj");
+      cpp::Material objMaterial(rendererType, "default");
       objMaterial.setParam("kd", kd);
       objMaterial.commit();
 
@@ -342,6 +342,7 @@ namespace ospray {
       cpp::Light ambientLight("ambient");
       ambientLight.setParam("intensity", 0.4f);
       ambientLight.setParam("color", vec3f(1.f));
+      ambientLight.setParam("visible", false);
       ambientLight.commit();
 
       if (addAreaLight)

@@ -320,7 +320,7 @@ namespace ospray {
           + "' array with element type " + stringFor(OSPTypeFor<T>::value));
     else {
       if (data) {
-        postStatusMsg(OSP_LOG_WARNING)
+        postStatusMsg(OSP_LOG_DEBUG)
             << toString() << " ignoring '" << name
             << "' array with wrong element type (should be "
             << stringFor(OSPTypeFor<T>::value) << ")";

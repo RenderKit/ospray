@@ -77,7 +77,7 @@ namespace ospray {
 
       model.setParam("color", cpp::Data(color));
 
-      cpp::Material material(rendererType, "obj");
+      cpp::Material material(rendererType, "default");
       material.commit();
 
       model.setParam("material", material);
