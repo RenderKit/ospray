@@ -18,17 +18,31 @@
 
 #pragma once
 
+// Log levels which can be set on a driver via "logLevel" parameter or
+// "OSPRAY_LOG_LEVEL" environment variable
+typedef enum
+#if __cplusplus >= 201103L
+: uint32_t
+#endif
+{
+  OSP_LOG_DEBUG   = 1,
+  OSP_LOG_INFO    = 2,
+  OSP_LOG_WARNING = 3,
+  OSP_LOG_ERROR   = 4,
+  OSP_LOG_NONE    = 5
+} OSPLogLevel;
+
 // enum representing different device properties
 typedef enum
 # if __cplusplus >= 201103L
 : uint32_t
 #endif
 {
-  OSP_DEVICE_VERSION = 0,
+  OSP_DEVICE_VERSION       = 0,
   OSP_DEVICE_VERSION_MAJOR = 1,
   OSP_DEVICE_VERSION_MINOR = 2,
   OSP_DEVICE_VERSION_PATCH = 3,
-  OSP_DEVICE_SO_VERSION = 4
+  OSP_DEVICE_SO_VERSION    = 4
 } OSPDeviceProperty;
 
 // An enum type that represensts the different data types represented in OSPRay
@@ -154,13 +168,13 @@ typedef enum
 : uint32_t
 #endif
 {
-  OSP_NO_ERROR = 0,          // No error has been recorded
-  OSP_UNKNOWN_ERROR = 1,     // An unknown error has occurred
-  OSP_INVALID_ARGUMENT = 2,  // An invalid argument is specified
+  OSP_NO_ERROR          = 0, // No error has been recorded
+  OSP_UNKNOWN_ERROR     = 1, // An unknown error has occurred
+  OSP_INVALID_ARGUMENT  = 2, // An invalid argument is specified
   OSP_INVALID_OPERATION = 3, // The operation is not allowed for the specified object
-  OSP_OUT_OF_MEMORY = 4,     // There is not enough memory left to execute the command
-  OSP_UNSUPPORTED_CPU = 5,   // The CPU is not supported as it does not support SSE4.1
-  OSP_VERSION_MISMATCH = 6,  // A module could not be loaded due to mismatching version
+  OSP_OUT_OF_MEMORY     = 4, // There is not enough memory left to execute the command
+  OSP_UNSUPPORTED_CPU   = 5, // The CPU is not supported as it does not support SSE4.1
+  OSP_VERSION_MISMATCH  = 6, // A module could not be loaded due to mismatching version
 } OSPError;
 
 // OSPRay format constants for Frame Buffer creation
@@ -181,12 +195,12 @@ typedef enum
 : uint32_t
 #endif
 {
-  OSP_FB_COLOR=(1<<0),
-  OSP_FB_DEPTH=(1<<1),
-  OSP_FB_ACCUM=(1<<2),
-  OSP_FB_VARIANCE=(1<<3),
-  OSP_FB_NORMAL=(1<<4), // in world-space
-  OSP_FB_ALBEDO=(1<<5)
+  OSP_FB_COLOR    = (1<<0),
+  OSP_FB_DEPTH    = (1<<1),
+  OSP_FB_ACCUM    = (1<<2),
+  OSP_FB_VARIANCE = (1<<3),
+  OSP_FB_NORMAL   = (1<<4), // in world-space
+  OSP_FB_ALBEDO   = (1<<5)
 } OSPFrameBufferChannel;
 
 // OSPRay events which can be waited on via ospWait()
@@ -195,11 +209,11 @@ typedef enum
 : uint32_t
 #endif
 {
-  OSP_NONE_FINISHED = 0,
-  OSP_WORLD_RENDERED = 10,
+  OSP_NONE_FINISHED   = 0,
+  OSP_WORLD_RENDERED  = 10,
   OSP_WORLD_COMMITTED = 20,
-  OSP_FRAME_FINISHED = 30,
-  OSP_TASK_FINISHED = 100000
+  OSP_FRAME_FINISHED  = 30,
+  OSP_TASK_FINISHED   = 100000
 } OSPSyncEvent;
 
 // OSPRay cell types definition for unstructured volumes, values are set to match VTK
@@ -208,10 +222,10 @@ typedef enum
 : uint8_t
 #endif
 {
-  OSP_TETRAHEDRON = 10,
-  OSP_HEXAHEDRON = 12,
-  OSP_WEDGE = 13,
-  OSP_PYRAMID = 14,
+  OSP_TETRAHEDRON       = 10,
+  OSP_HEXAHEDRON        = 12,
+  OSP_WEDGE             = 13,
+  OSP_PYRAMID           = 14,
   OSP_UNKNOWN_CELL_TYPE = 255
 } OSPUnstructuredCellType;
 

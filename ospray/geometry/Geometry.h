@@ -26,28 +26,22 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE LiveGeometry
-  {
-    void *ispcEquivalent{nullptr};
-    RTCGeometry embreeGeometry{nullptr};
-  };
-
   struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
   {
     Geometry();
-    virtual ~Geometry() override = default;
+    virtual ~Geometry() override;
 
     virtual std::string toString() const override;
 
     virtual size_t numPrimitives() const = 0;
-
-    virtual LiveGeometry createEmbreeGeometry() = 0;
 
     void postCreationInfo(size_t numVerts = 0) const;
 
     // Object factory //
 
     static Geometry *createInstance(const char *type);
+
+    RTCGeometry embreeGeometry{nullptr};
   };
 
   OSPTYPEFOR_SPECIALIZATION(Geometry *, OSP_GEOMETRY);

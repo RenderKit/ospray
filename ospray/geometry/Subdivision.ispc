@@ -37,7 +37,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
 
   flags &= self->flagMask;
 
-  cif (flags & DG_NS) {
+  if (flags & DG_NS) {
     vec3f dPdu, dPdv;
     rtcInterpolateV1(self->geom,
                      ray.primID,
@@ -52,7 +52,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
     dg.Ns = cross(dPdu, dPdv);
   }
 
-  cif (flags & DG_COLOR) {
+  if (flags & DG_COLOR) {
     rtcInterpolateV1(self->geom,
                      ray.primID,
                      ray.u,
@@ -65,7 +65,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
                      4);
   }
 
-  cif (flags & DG_TEXCOORD) {
+  if (flags & DG_TEXCOORD) {
     rtcInterpolateV1(self->geom,
                      ray.primID,
                      ray.u,
@@ -100,7 +100,7 @@ export void *uniform Subdivision_set(void *uniform _mesh,
     uniform bool haveColor,
     uniform bool haveTC)
 {
-  uniform Subdivision *uniform mesh = (uniform Subdivision * uniform) _mesh;
+  Subdivision *uniform mesh = (Subdivision * uniform) _mesh;
   mesh->geom = geom;
   mesh->flagMask = -1;
   if (!haveColor)

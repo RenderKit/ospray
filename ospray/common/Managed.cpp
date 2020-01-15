@@ -45,10 +45,12 @@ namespace ospray {
   void ManagedObject::checkUnused()
   {
     for (auto p = params_begin(); p != params_end(); ++p) {
-      if (!(*p)->query)
-        postStatusMsg(1) << toString()
-                         << ": found unused (or of wrong data type) parameter '"
-                         << (*p)->name << "'";
+      if (!(*p)->query) {
+        postStatusMsg(OSP_LOG_WARNING)
+            << toString()
+            << ": found unused (or of wrong data type) parameter '"
+            << (*p)->name << "'";
+      }
     }
   }
 

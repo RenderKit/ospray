@@ -27,7 +27,7 @@ namespace ospray {
   {
     // Function pointer type for creating a concrete instance of a subtype of
     // this class.
-    using creationFunctionPointer = T*(*)();
+    using creationFunctionPointer = T *(*)();
 
     // Function pointers corresponding to each subtype.
     static std::map<std::string, creationFunctionPointer> symbolRegistry;
@@ -35,13 +35,13 @@ namespace ospray {
 
     // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {
-      postStatusMsg(2) << "#ospray: trying to look up "
-                       << type_string << " type '" << type
-                       << "' for the first time";
+      postStatusMsg(OSP_LOG_DEBUG)
+          << "#ospray: trying to look up " << type_string << " type '" << type
+          << "' for the first time";
 
       // Construct the name of the creation function to look for.
-      std::string creationFunctionName = "ospray_create_" + type_string
-                                         +  "__" + type;
+      std::string creationFunctionName =
+          "ospray_create_" + type_string + "__" + type;
 
       // Look for the named function.
       symbolRegistry[type] =
@@ -50,8 +50,9 @@ namespace ospray {
       // The named function may not be found if the requested subtype is not
       // known.
       if (!symbolRegistry[type]) {
-        postStatusMsg(1) << "  WARNING: unrecognized " << type_string
-                         << " type '" << type << "'.";
+        postStatusMsg(OSP_LOG_WARNING)
+            << "  WARNING: unrecognized " << type_string << " type '" << type
+            << "'.";
       }
     }
 
@@ -60,11 +61,12 @@ namespace ospray {
 
     if (object == nullptr) {
       symbolRegistry.erase(type);
-      throw std::runtime_error("Could not find " + type_string + " of type: "
-        + type + ".  Make sure you have the correct OSPRay libraries linked.");
+      throw std::runtime_error(
+          "Could not find " + type_string + " of type: " + type +
+          ".  Make sure you have the correct OSPRay libraries linked.");
     }
 
     return object;
   }
 
-}// namespace ospray
+}  // namespace ospray

@@ -132,7 +132,7 @@ namespace ospray {
     sceneFlags |=
         (getParam<bool>("robustMode", false) ? RTC_SCENE_FLAG_ROBUST : 0);
 
-    postStatusMsg(2)
+    postStatusMsg(OSP_LOG_DEBUG)
         << "=======================================================\n"
         << "Committing world, which has " << numInstances << " instances";
 

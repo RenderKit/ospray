@@ -211,7 +211,7 @@ namespace ospray {
 
         cpp::GeometricModel model(planeGeometry);
 
-        cpp::Material material(rendererType, "obj");
+        cpp::Material material(rendererType, "default");
         material.commit();
 
         model.setParam("material", material);

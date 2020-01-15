@@ -90,12 +90,18 @@ namespace ospray {
 
       model.setParam("color", cpp::Data(s_colors));
 
-      // create glass material and assign to geometry
-      cpp::Material glassMaterial(rendererType.c_str(), "thinGlass");
-      glassMaterial.setParam("attenuationDistance", 0.2f);
-      glassMaterial.commit();
+      if (rendererType == "pathtracer") {
+        // create glass material and assign to geometry
+        cpp::Material glassMaterial(rendererType.c_str(), "thinGlass");
+        glassMaterial.setParam("attenuationDistance", 0.2f);
+        glassMaterial.commit();
+        model.setParam("material", glassMaterial);
+      } else {
+        cpp::Material glassMaterial(rendererType.c_str(), "default");
+        glassMaterial.commit();
+        model.setParam("material", glassMaterial);
+      }
 
-      model.setParam("material", glassMaterial);
       model.commit();
 
       cpp::Group group;

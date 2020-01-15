@@ -443,7 +443,8 @@ void GLFWOSPRayWindow::buildUI()
     }
   }
 
-  static int whichRenderer = 0;
+  static int whichRenderer     = 0;
+  static int whichDebuggerType = 0;
   if (ImGui::Combo("renderer##whichRenderer",
                    &whichRenderer,
                    rendererUI_callback,
@@ -451,28 +452,28 @@ void GLFWOSPRayWindow::buildUI()
                    g_renderers.size())) {
     rendererTypeStr = g_renderers[whichRenderer];
 
+    if (rendererType == OSPRayRendererType::DEBUGGER)
+      whichDebuggerType = 0; // reset UI if switching away from debug renderer
+
     if (rendererTypeStr == "scivis")
       rendererType = OSPRayRendererType::SCIVIS;
     else if (rendererTypeStr == "pathtracer")
       rendererType = OSPRayRendererType::PATHTRACER;
-    else if (rendererTypeStr == "debug") {
+    else if (rendererTypeStr == "debug")
       rendererType = OSPRayRendererType::DEBUGGER;
-      renderer.setParam("method", g_debugRendererTypes[0]);
-      addObjectToCommit(renderer.handle());
-    } else
+    else
       rendererType = OSPRayRendererType::OTHER;
 
     refreshScene();
   }
 
   if (rendererType == OSPRayRendererType::DEBUGGER) {
-    static int whichType = 0;
     if (ImGui::Combo("debug type##whichDebugType",
-                     &whichType,
+                     &whichDebuggerType,
                      debugTypeUI_callback,
                      nullptr,
                      g_debugRendererTypes.size())) {
-      renderer.setParam("method", g_debugRendererTypes[whichType]);
+      renderer.setParam("method", g_debugRendererTypes[whichDebuggerType]);
       addObjectToCommit(renderer.handle());
     }
   }

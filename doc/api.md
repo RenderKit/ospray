@@ -40,14 +40,19 @@ prefixed by convention with "`--osp:`") are understood:
   `--osp:num-threads=<n>`                      use `n` threads instead of per default using all
                                                detected hardware threads
 
-  `--osp:log-level=<n>`                        set logging level, default `0`; increasing `n` means
-                                               increasingly verbose log messages
+  `--osp:log-level=<str>`                      set logging level; valid values (in order of severity)
+                                               are `none`, `error`, `warning`, `info`, and `debug`
 
-  `--osp:verbose`                              shortcut for `--osp:log-level=1` and enable debug
-                                               output on console
+  `--osp:warn-as-error`                        send `warning` and `error` messages through the error
+                                               callback, otherwise send `warning` messages through
+                                               the message callback; must have sufficient `logLevel`
+                                               to enable warnings
 
-  `--osp:vv`                                   shortcut for `--osp:log-level=2` and enable debug
-                                               output on console
+  `--osp:verbose`                              shortcut for `--osp:log-level=info` and enable debug
+                                               output on `cout`, error output on `cerr`
+
+  `--osp:vv`                                   shortcut for `--osp:log-level=debug` and enable debug
+                                               output on `cout`, error output on `cerr`
 
   `--osp:load-modules=<name>[,...]`            load one or more modules during initialization;
                                                equivalent to calling `ospLoadModule(name)`
@@ -67,7 +72,7 @@ prefixed by convention with "`--osp:`") are understood:
   `--osp:set-affinity=<n>`                     if `1`, bind software threads to hardware threads;
                                                `0` disables binding; default is `1` on KNL and `0`
                                                otherwise
-  
+
   `--osp:device-params=<param>:<value>[,...]`  set one or more other device parameters; equivalent
                                                to calling `ospDeviceSet*(param, value)`
   -------------------------------------------- -----------------------------------------------------
@@ -101,7 +106,8 @@ all devices:
   ------ ------------ ----------------------------------------------------------
   int    numThreads   number of threads which OSPRay should use
 
-  int    logLevel     logging level
+  string logLevel     logging level; valid values (in order of severity)
+                      are `none`, `error`, `warning`, `info`, and `debug`
 
   string logOutput    convenience for setting where status messages go; valid
                       values are `cerr` and `cout`
@@ -109,9 +115,14 @@ all devices:
   string errorOutput  convenience for setting where error messages go; valid
                       values  are `cerr` and `cout`
 
-  int    debug        set debug mode; equivalent to logLevel=2 and numThreads=1
+  bool   debug        set debug mode; equivalent to logLevel=2 and numThreads=1
 
-  int    setAffinity  bind software threads to hardware threads if set to 1;
+  bool   warnAsError  send `warning` and `error` messages through the error
+                      callback, otherwise send `warning` messages through
+                      the message callback; must have sufficient `logLevel` to
+                      enable warnings
+
+  bool   setAffinity  bind software threads to hardware threads if set to 1;
                       0 disables binding omitting the parameter will let OSPRay
                       choose
   ------ ------------ ----------------------------------------------------------
@@ -175,6 +186,8 @@ with "`OSPRAY_`"):
 
   OSPRAY_DEBUG          equivalent to `--osp:debug`
 
+  OSPRAY_WARN_AS_ERROR  equivalent to `--osp:warn-as-error`
+
   OSPRAY_SET_AFFINITY   equivalent to `--osp:set-affinity`
 
   OSPRAY_LOAD_MODULES   equivalent to `--osp:load-modules`, can be a comma separated
@@ -185,7 +198,7 @@ with "`OSPRAY_`"):
   : Environment variables interpreted by OSPRay.
 
 Note that these environment variables take precedence over values
-specified through `ospInit` or manually set parameters.
+specified through `ospInit` or manually set device parameters.
 
 ### Error Handling and Status Messages
 

@@ -63,7 +63,7 @@ namespace ospray {
       std::mt19937 gen(randomSeed);
       std::uniform_real_distribution<float> colorDistribution(0.1f, 1.0f);
       std::vector<vec4f> s_colors(points.size());
-      
+
       cpp::Geometry geom("curve");
 
       if(curveBasis == "hermite") {
@@ -97,16 +97,24 @@ namespace ospray {
       }
 
       geom.setParam("vertex.color", cpp::Data(s_colors));
-      
+
       geom.setParam("index", cpp::Data(indices));
       geom.commit();
 
-      cpp::Material mat(rendererType, "thinGlass");
-      mat.setParam("attenuationDistance", 1.0f);
-      mat.commit();
-
       cpp::GeometricModel model(geom);
-      model.setParam("material", mat);
+
+      if (rendererType == "pathtracer") {
+        // create glass material and assign to geometry
+        cpp::Material glassMaterial(rendererType.c_str(), "thinGlass");
+        glassMaterial.setParam("attenuationDistance", 1.f);
+        glassMaterial.commit();
+        model.setParam("material", glassMaterial);
+      } else {
+        cpp::Material glassMaterial(rendererType.c_str(), "default");
+        glassMaterial.commit();
+        model.setParam("material", glassMaterial);
+      }
+
       model.commit();
 
       cpp::Group group;

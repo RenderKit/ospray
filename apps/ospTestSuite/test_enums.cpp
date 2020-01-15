@@ -1,7 +1,33 @@
+// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include <gtest/gtest.h>
 #include "embree3/rtcore.h"
 #include "openvkl/openvkl.h"
 #include "ospray/OSPEnums.h"
+
+TEST(Enums, VKLLogLevel)
+{
+  ASSERT_LE(sizeof(OSPLogLevel), sizeof(VKLLogLevel));
+  ASSERT_EQ(OSP_LOG_DEBUG, VKL_LOG_DEBUG);
+  ASSERT_EQ(OSP_LOG_INFO, VKL_LOG_INFO);
+  ASSERT_EQ(OSP_LOG_WARNING, VKL_LOG_WARNING);
+  ASSERT_EQ(OSP_LOG_ERROR, VKL_LOG_ERROR);
+  // ASSERT_EQ(OSP_LOG_NONE, VKL_LOG_NONE);
+}
 
 TEST(Enums, VKLDataType)
 {
@@ -54,7 +80,7 @@ TEST(Enums, VKLDataType)
   ASSERT_EQ(OSP_STRING, VKL_STRING);
   ASSERT_EQ(OSP_OBJECT, VKL_OBJECT);
   // those are different object types:
-  //ASSERT_EQ(OSP_VOLUME, VKL_VOLUME);
+  // ASSERT_EQ(OSP_VOLUME, VKL_VOLUME);
 }
 
 TEST(Enums, VKLUnstructuredCellType)
@@ -78,7 +104,8 @@ TEST(Enums, RTCSubdivisionMode)
 {
   ASSERT_LE(sizeof(OSPSubdivisionMode), sizeof(RTCSubdivisionMode));
   ASSERT_EQ(OSP_SUBDIVISION_NO_BOUNDARY, RTC_SUBDIVISION_MODE_NO_BOUNDARY);
-  ASSERT_EQ(OSP_SUBDIVISION_SMOOTH_BOUNDARY, RTC_SUBDIVISION_MODE_SMOOTH_BOUNDARY);
+  ASSERT_EQ(OSP_SUBDIVISION_SMOOTH_BOUNDARY,
+            RTC_SUBDIVISION_MODE_SMOOTH_BOUNDARY);
   ASSERT_EQ(OSP_SUBDIVISION_PIN_CORNERS, RTC_SUBDIVISION_MODE_PIN_CORNERS);
   ASSERT_EQ(OSP_SUBDIVISION_PIN_BOUNDARY, RTC_SUBDIVISION_MODE_PIN_BOUNDARY);
   ASSERT_EQ(OSP_SUBDIVISION_PIN_ALL, RTC_SUBDIVISION_MODE_PIN_ALL);

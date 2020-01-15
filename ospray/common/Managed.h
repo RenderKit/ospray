@@ -114,8 +114,10 @@ namespace ospray {
         T>::type;
     if (param && param->data.is<S>()) {
       auto val = param->data.get<S>();
-      if (checkObjType(val, OSPTypeFor<T>::value))
+      if (checkObjType(val, OSPTypeFor<T>::value)) {
         retval = (T)val;
+        param->query = true;
+      }
     }
     return retval;
   }

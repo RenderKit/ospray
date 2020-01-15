@@ -88,9 +88,6 @@ struct Geometry
 
   //! number of primitives this geometry has
   int32 numPrimitives;
-
-  //! ID that 'model' knows this geometry under
-  int32 geomID;
 };
 
 inline void Geometry_setEmbreeUserGeometry(Geometry *uniform self,

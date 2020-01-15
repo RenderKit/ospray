@@ -30,13 +30,15 @@ namespace ospray {
   {
     texData = getParam<Data *>("data");
 
-    if (!texData || texData->numItems.z > 1)
-      throw std::runtime_error(toString()
-          + " must have 2D 'data' array using the first two dimensions.");
+    if (!texData || texData->numItems.z > 1) {
+      throw std::runtime_error(
+          toString() +
+          " must have 2D 'data' array using the first two dimensions.");
+    }
 
     const vec2i size = vec2i(texData->numItems.x, texData->numItems.y);
     if (!texData->compact()) {
-      postStatusMsg(1)
+      postStatusMsg(OSP_LOG_INFO)
           << toString()
           << " does currently not support strides, copying texture data.";
 
@@ -52,9 +54,9 @@ namespace ospray {
         getParam<int>("filter", OSP_TEXTURE_FILTER_BILINEAR));
 
     if (sizeOf(format) != sizeOf(texData->type))
-      throw std::runtime_error(toString() + ": 'format'='" + stringFor(format)
-          + "' does not match type of 'data'='" + stringFor(texData->type)
-          + "'!");
+      throw std::runtime_error(toString() + ": 'format'='" + stringFor(format) +
+                               "' does not match type of 'data'='" +
+                               stringFor(texData->type) + "'!");
 
     this->ispcEquivalent = ispc::Texture2D_create(
         (ispc::vec2i &)size, texData->data(), format, filter);
@@ -62,4 +64,4 @@ namespace ospray {
 
   OSP_REGISTER_TEXTURE(Texture2D, texture2d);
 
-} // ::ospray
+}  // namespace ospray

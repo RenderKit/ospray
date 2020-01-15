@@ -107,8 +107,9 @@ namespace ospray {
         isoGeom.setParam("volume", model);
         isoGeom.commit();
 
-        cpp::Material mat(rendererType, "obj");
-        mat.setParam("ks", vec3f(0.2f));
+        cpp::Material mat(rendererType, "default");
+        if (rendererType == "pathtracer")
+          mat.setParam("ks", vec3f(0.2f));
         mat.commit();
 
         cpp::GeometricModel isoModel(isoGeom);

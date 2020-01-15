@@ -18,6 +18,7 @@
 
 // ospcommon
 #include "ospcommon/memory/IntrusivePtr.h"
+#include "ospcommon/utility/Optional.h"
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "../common/OSPCommon.h"
@@ -156,6 +157,8 @@ namespace ospray {
       virtual void commit();
       bool isCommitted();
 
+      static utility::Optional<int> logLevelFromString(const std::string &str);
+
       int numThreads{-1};
       bool debugMode{false};
       bool apiTraceEnabled{false};
@@ -172,6 +175,8 @@ namespace ospray {
       // NOTE(jda) - Keep logLevel static because the device factory function
       //             needs to have a valid value for the initial Device creation
       static uint32_t logLevel;
+
+      bool warningsAreErrors{false};
 
       std::function<void(const char *)> msg_fcn{[](const char *) {}};
 

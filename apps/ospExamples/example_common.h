@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray
-#include "ospray/ospray_util.h"
+#include "ospray/ospray.h"
 // std
 #include <iostream>
 #include <stdexcept>
@@ -48,4 +48,14 @@ inline void initializeOSPRay(int argc,
       std::cerr << "OSPRay error: " << errorDetails << std::endl;
     });
   }
+
+  ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
+
+  bool warnAsErrors = true;
+  auto logLevel     = OSP_LOG_WARNING;
+
+  ospDeviceSetParam(device, "warnAsError", OSP_BOOL, &warnAsErrors);
+  ospDeviceSetParam(device, "logLevel", OSP_INT, &logLevel);
+
+  ospDeviceCommit(device);
 }

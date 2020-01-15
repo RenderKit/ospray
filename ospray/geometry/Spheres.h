@@ -22,7 +22,7 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE Spheres : public Geometry
   {
-    Spheres() = default;
+    Spheres();
     virtual ~Spheres() override = default;
 
     virtual std::string toString() const override;
@@ -30,8 +30,6 @@ namespace ospray {
     virtual void commit() override;
 
     virtual size_t numPrimitives() const override;
-
-    LiveGeometry createEmbreeGeometry() override;
 
    protected:
     float radius{0.01}; // default radius, if no per-sphere radius

@@ -23,7 +23,7 @@ namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
   {
-    Isosurfaces() = default;
+    Isosurfaces();
     virtual ~Isosurfaces() override;
 
     virtual std::string toString() const override;
@@ -31,8 +31,6 @@ namespace ospray {
     virtual void commit() override;
 
     virtual size_t numPrimitives() const override;
-
-    LiveGeometry createEmbreeGeometry() override;
 
    protected:
     // Data members //

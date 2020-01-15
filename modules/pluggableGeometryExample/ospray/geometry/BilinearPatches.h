@@ -66,7 +66,7 @@ namespace ospray {
         vec3f controlPoint[2][2];
       };
 
-      BilinearPatches()                   = default;
+      BilinearPatches();
       virtual ~BilinearPatches() override = default;
 
       /*! the commit() message that gets called upon the app calling
@@ -74,8 +74,6 @@ namespace ospray {
       virtual void commit() override;
 
       virtual size_t numPrimitives() const override;
-
-      LiveGeometry createEmbreeGeometry() override;
 
      protected:
       /*! the input data array. the data array contains a list of

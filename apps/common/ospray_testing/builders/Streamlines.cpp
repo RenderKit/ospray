@@ -94,7 +94,7 @@ namespace ospray {
             indices.push_back(points.size() - 4);
             colors.push_back(c);
             colors.push_back(c);
-          } else if (d +10 < dStart + dEnd && d + 20 > dStart + dEnd) {    
+          } else if (d +10 < dStart + dEnd && d + 20 > dStart + dEnd) {
             const vec3f rim = lerp(1.f + startRadius / length(p - q), p, q);
             const vec3f cap = lerp(1.f + endRadius / length(rim - q), q, rim);
             points.push_back(vec4f(p, startRadius));
@@ -113,7 +113,7 @@ namespace ospray {
           }
           colors.push_back(c);
           radius -= 0.05f;
-        }      
+        }
       }
 
       slGeom.setParam("vertex.position_radius", cpp::Data(points));
@@ -121,10 +121,10 @@ namespace ospray {
       slGeom.setParam("vertex.color", cpp::Data(colors));
       slGeom.setParam("type", int(OSP_ROUND));
       slGeom.setParam("basis", int(OSP_CATMULL_ROM));
-      
+
       slGeom.commit();
 
-      cpp::Material slMat(rendererType, "obj");
+      cpp::Material slMat(rendererType, "default");
       slMat.commit();
 
       cpp::GeometricModel model(slGeom);
