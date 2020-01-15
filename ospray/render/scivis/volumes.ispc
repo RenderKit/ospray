@@ -24,44 +24,43 @@
 
 struct VolumeContext
 {
-  varying VKLIntervalIterator *intervalIterator;
+  VKLIntervalIterator intervalIterator;
   VKLInterval interval;
   vec3f org;
   vec3f dir;
-  float jitter;
-  range1f subInterval;
-  float distance;
+  float iuLength;     // VKL interval length in sampling steps as an unit
+  float iuDistance;   // sampling distance within VKL interval in sampling steps as an unit
+  float distance;     // last sampling distance from 'vc.org'
   vec4f sample;
-  uint32 ready;
-  uniform float samplingRate;
+  uint32 ready;       // 1 if sample is ready to be used
 };
 
 static void sampleVolume(VolumeContext &vc,
-                         varying VKLIntervalIterator *uniform ii,
-                         VolumetricModel *uniform m)
+                         VolumetricModel *uniform m,
+                         const uniform float samplingRate)
 {
-  // We have to iterate till we get valid sample value
-  float dt;
+  // We have to iterate till we get a valid sample value
+  float newDistance;
   float sampleVal = nan;
   while (isnan(sampleVal)) {
-    // Calculate sampling step
-    dt = vc.subInterval.upper - vc.subInterval.lower;
 
-    // If the end of VKL interval has been reached
-    if (dt <= 0.0f) {
+    // Iterate till sampling position is within interval
+    while (vc.iuDistance > vc.iuLength) {
+
       // Get next VKL interval
-      VKLInterval interv;
-      if (vklIterateIntervalV(ii, &interv)) {
-        vc.interval = interv;
+      if (vklIterateIntervalV(&vc.intervalIterator, &vc.interval)) {
 
-        // Calculate a new sub-interval
-        const float nominalSamplingDt = interv.nominalDeltaT / vc.samplingRate;
-        vc.subInterval.lower          = interv.tRange.lower;
-        vc.subInterval.upper =
-            min(interv.tRange.lower + nominalSamplingDt, interv.tRange.upper);
+        // Make it local for the next interval
+        vc.iuDistance -= vc.iuLength;
 
-        // Calculate a new step
-        dt = vc.subInterval.upper - vc.subInterval.lower;
+        // Calulate how many steps can be made within this interval
+        const float samplingStep = vc.interval.nominalDeltaT / samplingRate;
+        vc.iuLength =
+          (vc.interval.tRange.upper - vc.interval.tRange.lower) / samplingStep;
+
+        // Initialize distance if necessary
+        vc.distance = (vc.distance == inf) ? vc.interval.tRange.lower : vc.distance;
+
       } else {
         // The end of the volume has been reached
         vc.distance = inf;
@@ -70,29 +69,32 @@ static void sampleVolume(VolumeContext &vc,
     }
 
     // Calculate sampling distance
-    vc.distance = vc.subInterval.lower + vc.jitter * dt;
+    const float samplingStep = vc.interval.nominalDeltaT / samplingRate;
+    newDistance = vc.interval.tRange.lower + vc.iuDistance * samplingStep;
 
     // Prepare sampling position
-    const vec3f p = vc.org + vc.distance * vc.dir;
+    const vec3f p = vc.org + newDistance * vc.dir;
 
     // Sample volume value in given point
     sampleVal = vklComputeSampleV(m->volume->vklVolume,
                                   (const varying vkl_vec3f *uniform) & p);
 
     // Go to the next sub-interval
-    const float nominalSamplingDt = vc.interval.nominalDeltaT / vc.samplingRate;
-    vc.subInterval.lower          = vc.subInterval.upper;
-    vc.subInterval.upper =
-        min(vc.subInterval.lower + nominalSamplingDt, vc.interval.tRange.upper);
+    vc.iuDistance += 1.f;
   }
 
-  // Convert value into color with alpha and normalize it
+  // Apply transfer function to get color with alpha
   vc.sample = m->transferFunction->get(m->transferFunction, sampleVal);
-  vc.sample.w *= dt * m->densityScale;
+
+  // Weight the opacity with deltaT using Beer law
+  const float dt = newDistance - vc.distance;
+  vc.sample.w = 1.f - exp(-vc.sample.w * dt * m->densityScale);
+  vc.distance = newDistance;
 }
 
 static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
                               varying VolumeContext *uniform volumeContexts,
+                              const uniform float samplingRate,
                               vec4f &sampledColor)
 {
   // Look for the closest sample across all volumes
@@ -110,12 +112,9 @@ static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
 
     // If the sample has been used already regenerate a new one
     if (vc.ready == 0) {
-      foreach_unique(ii in vc.intervalIterator)
+      foreach_unique(m in vi->volumetricModel)
       {
-        foreach_unique(m in vi->volumetricModel)
-        {
-          sampleVolume(vc, ii, m);
-        }
+        sampleVolume(vc, m, samplingRate);
       }
       vc.ready = 1;
     }
@@ -142,10 +141,6 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
                                varying LDSampler *uniform ldSampler,
                                const uniform float samplingRate)
 {
-  // Uniform array of VKL iterators
-  varying VKLIntervalIterator intervalIterators[NUM_VOLUME_INTERVALS_MAX];
-  uniform int iiCount = 0;
-
   // Array of volume contexts
   VolumeContext volumeContexts[NUM_VOLUME_INTERVALS_MAX];
 
@@ -168,11 +163,10 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
     VolumeContext &vc = volumeContexts[i];
     vc.org            = transformedRay.org;
     vc.dir            = transformedRay.dir;
-    vc.jitter         = jitter;
-    vc.subInterval    = make_box1f(0.f, 0.f);
+    vc.iuDistance     = jitter;
+    vc.iuLength       = 0.f;
     vc.distance       = inf;
     vc.ready          = 0;
-    vc.samplingRate   = samplingRate;
 
     // There might be different volumetric models used across vector lanes
     // so we must iterate over them
@@ -180,14 +174,12 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
     foreach_unique(m in model)
     {
       // Create volume interval interator
-      varying VKLIntervalIterator *uniform ii = &intervalIterators[iiCount++];
-      vklInitIntervalIteratorV(ii,
+      vklInitIntervalIteratorV(&vc.intervalIterator,
                                m->volume->vklVolume,
                                (varying vkl_vec3f *)&transformedRay.org,
                                (varying vkl_vec3f *)&transformedRay.dir,
                                (varying vkl_range1f *)&vi->interval,
                                m->vklValueSelector);
-      vc.intervalIterator = ii;
     }
   }
 
@@ -199,19 +191,17 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
   while (alpha < .99f) {
     // Sample across all volumes
     vec4f sampledColorOpacity;
-    float dist =
-        sampleAllVolumes(volumeIntervals, volumeContexts, sampledColorOpacity);
+    float dist = sampleAllVolumes(volumeIntervals,
+       volumeContexts, samplingRate, sampledColorOpacity);
 
     // Exit loop if nothing sampled
     if (dist == inf)
       break;
 
     // Alpha blend sampled color
-    const float clampedOpacity = clamp(sampledColorOpacity.w);
-
     color = color +
-            ((1.f - alpha) * clampedOpacity * make_vec3f(sampledColorOpacity));
-    alpha = alpha + ((1.f - alpha) * clampedOpacity);
+            ((1.f - alpha) * sampledColorOpacity.w * make_vec3f(sampledColorOpacity));
+    alpha = alpha + ((1.f - alpha) * sampledColorOpacity.w);
   }
 
   // Return final color
