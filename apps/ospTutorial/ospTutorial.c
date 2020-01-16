@@ -18,10 +18,11 @@
 /* This is a small example tutorial how to use OSPRay in an application.
  *
  * On Linux build it in the build_directory with
- *   gcc -std=c99 ../apps/tutorials/ospTutorial.c \
+ *   gcc -std=c99 ../apps/ospTutorial/ospTutorial.c \
  *       -I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospTutorial
  * On Windows build it in the build_directory\$Configuration with
- *   cl ..\..\apps\tutorials\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+ *   cl ..\..\apps\ospTutorial\ospTutorial.c -I ..\..\ospray\include ^
+ *       -I ..\.. ospray.lib
  */
 
 #include <stdint.h>
@@ -85,7 +86,8 @@ int main(int argc, const char **argv) {
 
   printf("initialize OSPRay...");
 
-  // initialize OSPRay; OSPRay parses (and removes) its commandline parameters, e.g. "--osp:debug"
+  // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
+  // e.g. "--osp:debug"
   OSPError init_error = ospInit(&argc, argv);
   if (init_error != OSP_NO_ERROR)
     return init_error;

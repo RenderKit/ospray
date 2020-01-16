@@ -14,13 +14,13 @@ An example of building `ospTutorial.c` with CMake can be found in
 
 To build the tutorial on Linux, build it in a build directory with
 
-    gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. \
-    ./libospray.so -Wl,-rpath,. -o ospTutorial
+    gcc -std=c99 ../apps/ospTutorial/ospTutorial.c \
+    -I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospTutorial
 
 On Windows build it can be build manually in a
 "build_directory\\$Configuration" directory with
 
-    cl ..\..\apps\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+    cl ..\..\apps\ospTutorial\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
