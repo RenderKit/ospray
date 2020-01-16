@@ -62,10 +62,7 @@ ispc_target_add_sources(ospray_module_mpi
   render/distributed/AlphaCompositeTileOperation.cpp
 )
 
-ospray_install_library(ospray_module_mpi COMPONENT mpi)
-
-set_target_properties(ospray_module_mpi
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+ospray_install_library(ospray_module_mpi mpi)
 
 target_link_libraries(ospray_module_mpi
   PRIVATE
