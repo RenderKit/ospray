@@ -146,7 +146,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   render/debug/DebugRenderer.cpp
   render/debug/DebugRenderer.ispc
-  render/debug/DebugMaterial.cpp
 
   render/scivis/SciVis.cpp
   render/scivis/SciVis.ispc

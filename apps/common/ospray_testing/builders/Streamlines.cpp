@@ -75,18 +75,18 @@ namespace ospray {
           vec3f p, q;
           float startRadius, endRadius;
 
-            p.x = radius * std::sin(d * M_PI / 180.f);
-            p.y = h - 2;
-            p.z = radius * std::cos(d * M_PI / 180.f);
-            startRadius = 0.015f * std::sin(f * d * M_PI/180) + 0.02f;
+          p.x         = radius * std::sin(d * M_PI / 180.f);
+          p.y         = h - 2;
+          p.z         = radius * std::cos(d * M_PI / 180.f);
+          startRadius = 0.015f * std::sin(f * d * M_PI / 180) + 0.02f;
 
-            q.x = (radius - 0.05f) * std::sin((d+10) * M_PI / 180.f);
-            q.y = h + hStep- 2;
-            q.z = (radius - 0.05f) * std::cos((d+10) * M_PI / 180.f);
-            endRadius =  0.015f * std::sin(f * (d+10) * M_PI/180) + 0.02f;
+          q.x       = (radius - 0.05f) * std::sin((d + 10) * M_PI / 180.f);
+          q.y       = h + hStep - 2;
+          q.z       = (radius - 0.05f) * std::cos((d + 10) * M_PI / 180.f);
+          endRadius = 0.015f * std::sin(f * (d + 10) * M_PI / 180) + 0.02f;
           if (d == dStart) {
             const vec3f rim = lerp(1.f + endRadius / length(q - p), q, p);
-            const vec3f cap = lerp(1.f + startRadius/ length(rim - p), p, rim);
+            const vec3f cap = lerp(1.f + startRadius / length(rim - p), p, rim);
             points.push_back(vec4f(cap, 0.f));
             points.push_back(vec4f(rim, 0.f));
             points.push_back(vec4f(p, startRadius));
@@ -94,7 +94,7 @@ namespace ospray {
             indices.push_back(points.size() - 4);
             colors.push_back(c);
             colors.push_back(c);
-          } else if (d +10 < dStart + dEnd && d + 20 > dStart + dEnd) {
+          } else if (d + 10 < dStart + dEnd && d + 20 > dStart + dEnd) {
             const vec3f rim = lerp(1.f + startRadius / length(p - q), p, q);
             const vec3f cap = lerp(1.f + endRadius / length(rim - q), q, rim);
             points.push_back(vec4f(p, startRadius));
@@ -107,7 +107,8 @@ namespace ospray {
             indices.push_back(points.size() - 4);
             colors.push_back(c);
             colors.push_back(c);
-          } else if ((d != dStart && d != dStart + 10) && d + 20 < dStart + dEnd ){
+          } else if ((d != dStart && d != dStart + 10) &&
+                     d + 20 < dStart + dEnd) {
             points.push_back(vec4f(p, startRadius));
             indices.push_back(points.size() - 4);
           }
@@ -124,11 +125,14 @@ namespace ospray {
 
       slGeom.commit();
 
-      cpp::Material slMat(rendererType, "default");
-      slMat.commit();
-
       cpp::GeometricModel model(slGeom);
-      model.setParam("material", slMat);
+
+      if (rendererType == "pathtracer" || rendererType == "scivis") {
+        cpp::Material slMat(rendererType, "obj");
+        slMat.commit();
+        model.setParam("material", slMat);
+      }
+
       model.commit();
 
       cpp::Group group;

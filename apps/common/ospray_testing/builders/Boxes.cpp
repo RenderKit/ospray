@@ -77,10 +77,12 @@ namespace ospray {
 
       model.setParam("color", cpp::Data(color));
 
-      cpp::Material material(rendererType, "default");
-      material.commit();
+      if (rendererType == "pathtracer" || rendererType == "scivis") {
+        cpp::Material material(rendererType, "obj");
+        material.commit();
+        model.setParam("material", material);
+      }
 
-      model.setParam("material", material);
       model.commit();
 
       cpp::Group group;

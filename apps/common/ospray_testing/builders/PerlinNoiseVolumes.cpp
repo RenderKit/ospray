@@ -216,11 +216,12 @@ namespace ospray {
     {
       cpp::GeometricModel geometricModel(geo);
 
-      cpp::Material objMaterial(rendererType, "default");
-      objMaterial.setParam("kd", kd);
-      objMaterial.commit();
-
-      geometricModel.setParam("material", objMaterial);
+      if (rendererType == "pathtracer" || rendererType == "scivis") {
+        cpp::Material objMaterial(rendererType, "obj");
+        objMaterial.setParam("kd", kd);
+        objMaterial.commit();
+        geometricModel.setParam("material", objMaterial);
+      }
 
       return geometricModel;
     }

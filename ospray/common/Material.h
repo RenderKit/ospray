@@ -22,7 +22,7 @@ namespace ospray {
 
   struct Texture2D;
 
-  /*! \brief helper structure to store a uniform or textured material parameter */
+  /*! helper structure to store a uniform or textured material parameter */
   template <typename T>
   struct MaterialParam
   {
@@ -35,9 +35,6 @@ namespace ospray {
   using MaterialParam1f = MaterialParam<float>;
   using MaterialParam3f = MaterialParam<vec3f>;
 
-  /*! \brief implements the basic abstraction for anything that is a 'material'.
-
-    Note that different renderers will probably define different materials, so the same "logical" material (such a as a "diffuse gray" material) may look differently */
   struct OSPRAY_SDK_INTERFACE Material : public ManagedObject
   {
     Material();

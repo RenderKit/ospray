@@ -251,7 +251,7 @@ namespace OSPRayTestScenes {
     cpp::GeometricModel model1(sphere);
     cpp::GeometricModel model2(inst_sphere);
 
-    cpp::Material sphereMaterial(rendererType, "default");
+    cpp::Material sphereMaterial(rendererType, "obj");
     sphereMaterial.setParam("d", 1.0f);
     sphereMaterial.commit();
 
@@ -315,7 +315,7 @@ namespace OSPRayTestScenes {
     tex.setParam("volume", volumetricModel);
     tex.commit();
 
-    cpp::Material sphereMaterial(rendererType, "default");
+    cpp::Material sphereMaterial(rendererType, "obj");
     sphereMaterial.setParam("map_kd", tex);
     sphereMaterial.commit();
 
