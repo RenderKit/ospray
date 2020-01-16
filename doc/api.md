@@ -763,12 +763,12 @@ concurrently). To create a volume instance, call
   -------------------- ----------------------- ---------- --------------------------------------
   OSPTransferFunction  transferFunction                   [transfer function] to use
 
-  float                densityScale                   1.0 used to make volumes uniformly thinner
-                                                          or thicker ([path tracer] only)
+  float                densityScale                   1.0 makes volumes uniformly thinner or
+                                                          thicker
 
   float                anisotropy                     0.0 anisotropy of the (Henyey-Greenstein)
-                                                          phase function in [-1, 1]. Default:
-                                                          Isotropic scattering. ([path tracer] only)
+                                                          phase function in [-1, 1] ([path tracer]
+                                                          only), default to isotropic scattering
   -------------------- ------------------------ --------- ---------------------------------------
   : Parameters understood by VolumetricModel.
 
