@@ -29,7 +29,7 @@ PUBLIC
   ospcommon::ospcommon
 )
 
-ospray_install_library(ospray_imgui COMPONENT apps)
+ospray_install_library(ospray_imgui apps)
 
 target_include_directories(
   ospray_imgui

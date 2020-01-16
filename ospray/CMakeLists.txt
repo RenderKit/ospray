@@ -232,9 +232,7 @@ endforeach()
 
 add_library(ospray SHARED ${OSPRAY_SOURCES})
 target_link_libraries(ospray PUBLIC $<BUILD_INTERFACE:ospcommon::ospcommon>)
-ospray_install_library(ospray COMPONENT lib)
-set_target_properties(ospray
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+ospray_install_library(ospray lib)
 
 target_include_directories(ospray
   PUBLIC
@@ -323,7 +321,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   ispc_target_add_sources(ospray_module_ispc ${OSPRAY_ISPC_DEVICE_SOURCES})
 
-  ospray_install_library(ospray_module_ispc COMPONENT lib)
+  ospray_install_library(ospray_module_ispc lib)
 
   target_link_libraries(ospray_module_ispc
   PUBLIC
@@ -354,9 +352,6 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     $<$<BOOL:${OSPRAY_DEBUG_NO_TASKING}>:OSPRAY_SERIAL_RENDERING>
   )
 
-  set_target_properties(ospray_module_ispc
-    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-
 endif()
 
 ##############################################################
@@ -368,7 +363,7 @@ target_link_libraries(ospray_sdk
 INTERFACE
   ospray_module_ispc ospcommon::ospcommon
 )
-ospray_install_library(ospray_sdk COMPONENT devel)
+ospray_install_target(ospray_sdk devel)
 
 ##############################################################
 # Configure find_package files
