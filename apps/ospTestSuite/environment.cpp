@@ -30,6 +30,20 @@ OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
     std::cout << "Failed to init the ospray device" << std::endl << std::flush;
     std::exit(EXIT_FAILURE);
   }
+
+  ospDeviceSetErrorFunc(device, [](OSPError error, const char *errorDetails) {
+    std::cerr << "OSPRay error: " << errorDetails << std::endl;
+    std::exit(EXIT_FAILURE);
+  });
+
+  ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
+
+  bool warnAsErrors = true;
+  auto logLevel     = OSP_LOG_WARNING;
+
+  ospDeviceSetParam(device, "warnAsError", OSP_BOOL, &warnAsErrors);
+  ospDeviceSetParam(device, "logLevel", OSP_INT, &logLevel);
+
   ospDeviceCommit(device);
   ospSetCurrentDevice(device);
 }
