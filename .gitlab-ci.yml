@@ -368,7 +368,7 @@ release-windows:
   <<: *release_job
   script:
     - scripts\release\win.ps1 "Visual Studio 14 2015 Win64"
-    - Invoke-Expression "$env:SIGN_FILE_WINDOWS build_release\ospray*.msi"
+    - ;& $env:SIGN_FILE_WINDOWS ospray*.msi
   tags:
     - msvc14
     - win
