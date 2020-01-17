@@ -106,7 +106,7 @@ tmp/scenegraph_html.md: scenegraph.md tmp/links.md tmp/images_local_png.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
 www/index.html: teaser.html overview.md changelog.md
-www/demos.html: tmp/demos.md
+www/demos.html: examples.md tmp/demos.md
 www/gallery.html: gallery.md
 www/downloads.html: tmp/getting_ospray.md compilation.md
 www/related_projects.html: related_projects.md
@@ -114,7 +114,7 @@ www/pvospray.html: pvospray.md
 www/displaywall.html: displaywall.md
 www/fiu_comparison.html: fiu_comparison.md
 www/legal.html: legal.md
-www/documentation.html: documentation.md tmp/api_html.md examples.md
+www/documentation.html: documentation.md tmp/api_html.md
 
 
 ### images
