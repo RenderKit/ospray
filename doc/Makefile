@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-webpages := $(addprefix www/, $(addsuffix .html, index news demos documentation gallery downloads related_projects pvospray displaywall fiu_comparison legal))
+webpages := $(addprefix www/, $(addsuffix .html, index demos documentation gallery downloads related_projects pvospray displaywall fiu_comparison legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, demos getting_ospray readme_head))
 tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api scenegraph examples))
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow))
@@ -106,7 +106,6 @@ tmp/scenegraph_html.md: scenegraph.md tmp/links.md tmp/images_local_png.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
 www/index.html: teaser.html overview.md changelog.md
-www/news.html: news.md
 www/demos.html: tmp/demos.md
 www/gallery.html: gallery.md
 www/downloads.html: tmp/getting_ospray.md compilation.md
