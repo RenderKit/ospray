@@ -24,6 +24,7 @@ cmake -L `
   -T $args[1] `
   -D BUILD_OSPRAY_CI_TESTS=ON `
   -D BUILD_EMBREE_FROM_SOURCE=OFF `
+  -D BUILD_OIDN=ON `
   -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF `
   ../scripts/superbuild
 
