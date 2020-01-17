@@ -31,7 +31,6 @@ generate_export_header(ospray_module_denoiser)
 target_link_libraries(ospray_module_denoiser
 PRIVATE
   OpenImageDenoise
-PUBLIC
   ospray_module_ispc
 )
 
@@ -40,10 +39,4 @@ PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-set_target_properties(ospray_module_denoiser
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-
-install(TARGETS ospray_module_denoiser
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT mpi
-)
+ospray_install_library(ospray_module_denoiser lib)
