@@ -50,6 +50,7 @@ function check_symbols
 
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
+THREADS=`nproc`
 
 #### Build dependencies ####
 
@@ -99,13 +100,13 @@ cmake -L \
   ..
 
 # create RPM files
-make -j `nproc` preinstall
+make -j $THREADS preinstall
 
 check_symbols libospray.so GLIBC   2 14 0
 check_symbols libospray.so GLIBCXX 3 4 14
 check_symbols libospray.so CXXABI  1 3 5
 
-make -j `nproc` package || exit 2
+make -j $THREADS package || exit 2
 
 # change settings for zip mode
 cmake -L \
@@ -119,4 +120,4 @@ cmake -L \
   ..
 
 # create tar.gz files
-make -j `nproc` package || exit 2
+make -j $THREADS package || exit 2

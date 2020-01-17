@@ -28,6 +28,7 @@ umask 002
 
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
+THREADS=`sysctl -n hw.logicalcpu`
 
 # set compiler if the user hasn't explicitly set CC and CXX
 if [ -z $CC ]; then
@@ -52,7 +53,7 @@ cmake --version
 
 cmake \
   "$@" \
-  -D BUILD_JOBS=`nproc` \
+  -D BUILD_JOBS=$THREADS \
   -D BUILD_DEPENDENCIES_ONLY=ON \
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR \
   -D CMAKE_INSTALL_LIBDIR=lib \
@@ -93,7 +94,7 @@ cmake -L \
   ..
 
 # create installers
-make -j `nproc` package || exit 2
+make -j $THREADS package || exit 2
 
 # change settings for zip mode
 cmake -L \
@@ -106,4 +107,4 @@ cmake -L \
   ..
 
 # create ZIP files
-make -j `nproc` package || exit 2
+make -j $THREADS package || exit 2
