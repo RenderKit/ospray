@@ -64,8 +64,8 @@ prefixed by convention with "`--osp:`") are understood:
                                                valid values for `dst` are `cerr` and `cout`
 
   `--osp:device=<name>`                        use `name` as the type of device for OSPRay to
-                                               create; e.g., `--osp:device=default` gives you the
-                                               default local device; Note if the device to be used
+                                               create; e.g., `--osp:device=cpu` gives you the
+                                               default `cpu` device; Note if the device to be used
                                                is defined in a module, remember to pass
                                                `--osp:load-modules=<name>` first
 
@@ -88,7 +88,7 @@ sections). The first step is to create the device with
     OSPDevice ospNewDevice(const char *type);
 
 where the `type` string maps to a specific device implementation. OSPRay
-always provides the "`default`" device, which maps to a fast, local CPU
+always provides the "`cpu`" device, which maps to a fast, local CPU
 implementation. Other devices can also be added through additional
 modules, such as distributed MPI device implementations.
 
@@ -1006,12 +1006,12 @@ and how they define the geometry of a curve:
 
 OSP_FLAT
 : This type enables faster rendering as the curve is rendered as a
-connected sequence of ray facing quads. 
+connected sequence of ray facing quads.
 
 OSP_ROUND
 : This type enables rendering a real geometric surface for the curve
 which allows closeup views. This mode renders a sweep surface by
-sweeping a varying radius circle tangential along the curve. 
+sweeping a varying radius circle tangential along the curve.
 
 OSP_RIBBON
 : The type enables normal orientation of the curve and requires a normal

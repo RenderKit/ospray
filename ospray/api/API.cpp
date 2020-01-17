@@ -159,7 +159,7 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
       currentDevice = Device::createDevice(device_name.c_str());
     } else {
       ospLoadModule("ispc");
-      currentDevice = Device::createDevice("default");
+      currentDevice = Device::createDevice("cpu");
     }
   }
 

@@ -27,7 +27,7 @@ namespace ospray {
     class Device
     {
      public:
-      Device(const std::string &type = "default");
+      Device(const std::string &type = "cpu");
       Device(const Device &copy);
       Device(OSPDevice existing = nullptr);
 

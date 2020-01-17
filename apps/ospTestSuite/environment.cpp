@@ -19,7 +19,7 @@
 OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
     : dumpImg(false),
       rendererType("scivis"),
-      deviceType("default"),
+      deviceType("cpu"),
       baselineDir("regression_test_baseline"),
       failedDir("failed")
 {
