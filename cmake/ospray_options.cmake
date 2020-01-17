@@ -50,6 +50,11 @@ ospray_create_embree_target()
 # Open VKL
 ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
 
+# OpenImageDenoise
+if (OSPRAY_MODULE_DENOISER)
+  find_package(OpenImageDenoise 1.0 REQUIRED)
+endif()
+
 ###########################################################
 # OSPRay specific build options and configuration selection
 ###########################################################

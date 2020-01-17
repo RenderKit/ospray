@@ -22,7 +22,6 @@ if (NOT OSPRAY_MODULE_DENOISER)
 endif()
 
 include(GenerateExportHeader)
-find_package(OpenImageDenoise 1.0 REQUIRED)
 
 add_library(ospray_module_denoiser SHARED DenoiseFrameOp.cpp)
 
