@@ -960,6 +960,66 @@ If a constant `radius` is used and positions are specified in a
 efficient mode). Implementation is with round linear segements where
 each segment corresponds to a link between two vertices.
 
+The following section describes the properties of different curve basis'
+and how they use the data provided in data buffers:
+
+OSP_LINEAR
+: The indices point to the first of 2 consecutive control points in the
+vertex buffer. The first control point is the start and the second
+control point the end of the line segment. The curve goes through all
+control points listed in the vertex buffer.
+
+OSP_BEZIER
+: The indices point to the first of 4 consecutive control points in the
+vertex buffer. The first control point represents the start point of the
+curve, and the 4th control point the end point of the curve. The Bézier
+basis is interpolating, thus the curve does go exactly through the first
+and fourth control vertex.
+
+OSP_BSPLINE
+: The indices point to the first of 4 consecutive control points in the
+vertex buffer. This basis is not interpolating, thus the curve does in
+general not go through any of the control points directly. Using this
+basis, 3 control points can be shared for two continuous neighboring
+curve segments, e.g. the curves $(p0, p1, p2, p3)$ and $(p1, p2, p3,
+p4)$ are C1 continuous. This feature make this basis a good choice to
+construct continuous multi-segment curves, as memory consumption can be
+kept minimal.
+
+OSP_HERMITE
+: It is necessary to have both vertex buffer and tangent buffer for
+using this basis. The indices point to the first of 2 consecutive points
+in the vertex buffer, and the first of 2 consecutive tangents in the
+tangent buffer. This basis is interpolating, thus does exactly go
+through the first and second control point, and the first order
+derivative at the begin and end matches exactly the value specified in
+the tangent buffer. When connecting two segments continuously, the end
+point and tangent of the previous segment can be shared.
+
+OSP_CATMULL_ROM
+: The indices point to the first of 4 consecutive control points in the
+vertex buffer. If $(p0, p1, p2, p3)$ represent the points then this basis
+goes through $p1$ and $p2$, with tangents as $(p2-p0)/2$ and $(p3-p1)/2$.
+
+The following section describes the properties of different curve types'
+and how they define the geometry of a curve:
+
+OSP_FLAT
+: This type enables faster rendering as the curve is rendered as a
+connected sequence of ray facing quads. 
+
+OSP_ROUND
+: This type enables rendering a real geometric surface for the curve
+which allows closeup views. This mode renders a sweep surface by
+sweeping a varying radius circle tangential along the curve. 
+
+OSP_RIBBON
+: The type enables normal orientation of the curve and requires a normal
+buffer be specified along with vertex buffer. The curve is rendered as a
+flat band whose center approximately follows the provided vertex buffer
+and whose normal orientation approximately follows the provided normal
+buffer.
+
 
 ### Boxes
 
