@@ -107,13 +107,16 @@ namespace ospray {
         isoGeom.setParam("volume", model);
         isoGeom.commit();
 
-        cpp::Material mat(rendererType, "default");
-        if (rendererType == "pathtracer")
-          mat.setParam("ks", vec3f(0.2f));
-        mat.commit();
-
         cpp::GeometricModel isoModel(isoGeom);
-        isoModel.setParam("material", mat);
+
+        if (rendererType == "pathtracer" || rendererType == "scivis") {
+          cpp::Material mat(rendererType, "obj");
+          if (rendererType == "pathtracer")
+            mat.setParam("ks", vec3f(0.2f));
+          mat.commit();
+          isoModel.setParam("material", mat);
+        }
+
         isoModel.commit();
 
         group.setParam("geometry", cpp::Data(isoModel));

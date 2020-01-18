@@ -17,10 +17,11 @@
 /* This is a small example tutorial how to use OSPRay in an application.
  *
  * On Linux build it in the build_directory with
- *   g++ ../apps/tutorials/ospTutorial.cpp -I ../ospray/include -I ../components
- * \ -L . -lospray -Wl,-rpath,. -o ospTutorial On Windows build it in the
- * build_directory\$Configuration with cl ..\..\apps\tutorials\ospTutorial.cpp
- * /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\components ospray.lib
+ *   g++ ../apps/ospTutorial/ospTutorial.cpp -I ../ospray/include \
+ *       -I ../../ospcommon -L . -lospray -Wl,-rpath,. -o ospTutorial
+ * On Windows build it in the build_directory\$Configuration with
+ *   cl ..\..\apps\ospTutorial\ospTutorial.cpp /EHsc -I ..\..\ospray\include ^
+ *      -I ..\.. -I ..\..\..\ospcommon ospray.lib
  */
 
 #include <errno.h>

@@ -49,9 +49,6 @@ PRIVATE
   raw_to_amr
 )
 
-set_target_properties(ospray_testing
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-
 target_include_directories(ospray_testing
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
@@ -61,7 +58,7 @@ target_include_directories(ospray_testing
 
 ## Install library/headers ##
 
-ospray_install_library(ospray_testing COMPONENT apps)
+ospray_install_library(ospray_testing apps)
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray

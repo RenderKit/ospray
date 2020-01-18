@@ -96,8 +96,8 @@ namespace ospray {
         glassMaterial.setParam("attenuationDistance", 0.2f);
         glassMaterial.commit();
         model.setParam("material", glassMaterial);
-      } else {
-        cpp::Material glassMaterial(rendererType.c_str(), "default");
+      } else if (rendererType == "scivis") {
+        cpp::Material glassMaterial(rendererType.c_str(), "obj");
         glassMaterial.commit();
         model.setParam("material", glassMaterial);
       }

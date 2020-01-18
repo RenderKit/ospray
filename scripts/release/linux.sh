@@ -50,6 +50,7 @@ function check_symbols
 
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
+THREADS=`nproc`
 
 #### Build dependencies ####
 
@@ -67,6 +68,8 @@ cmake \
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR \
   -D CMAKE_INSTALL_LIBDIR=lib \
   -D BUILD_EMBREE_FROM_SOURCE=OFF \
+  -D BUILD_OIDN=ON \
+  -D BUILD_OIDN_FROM_SOURCE=OFF \
   -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   ../scripts/superbuild
 
@@ -88,24 +91,26 @@ export ospcommon_DIR=$DEP_DIR
 export embree_DIR=$DEP_DIR
 export glfw3_DIR=$DEP_DIR
 export openvkl_DIR=$DEP_DIR
+export OpenImageDenoise_DIR=$DEP_DIR
 
 # set release and RPM settings
 cmake -L \
   -D OSPRAY_BUILD_ISA=ALL \
   -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc \
   -D OSPRAY_ZIP_MODE=OFF \
+  -D OSPRAY_MODULE_DENOISER=ON \
   -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
   -D CPACK_PACKAGING_INSTALL_PREFIX=/usr \
   ..
 
 # create RPM files
-make -j `nproc` preinstall
+make -j $THREADS preinstall
 
 check_symbols libospray.so GLIBC   2 14 0
 check_symbols libospray.so GLIBCXX 3 4 14
 check_symbols libospray.so CXXABI  1 3 5
 
-make -j `nproc` package || exit 2
+make -j $THREADS package || exit 2
 
 # change settings for zip mode
 cmake -L \
@@ -119,4 +124,4 @@ cmake -L \
   ..
 
 # create tar.gz files
-make -j `nproc` package || exit 2
+make -j $THREADS package || exit 2

@@ -247,13 +247,16 @@ namespace ospray {
       quadMesh.setParam("index", cpp::Data(indices));
       quadMesh.commit();
 
+      cpp::GeometricModel model(quadMesh);
+
       // create and setup a material
-      cpp::Material quadMeshMaterial(rendererType, "default");
-      quadMeshMaterial.commit();
+      if (rendererType == "pathtracer" || rendererType == "scivis") {
+        cpp::Material quadMeshMaterial(rendererType, "obj");
+        quadMeshMaterial.commit();
+        model.setParam("material", quadMeshMaterial);
+      }
 
       // Put the mesh and material into a model
-      cpp::GeometricModel model(quadMesh);
-      model.setParam("material", quadMeshMaterial);
       model.commit();
 
       cpp::Group group;

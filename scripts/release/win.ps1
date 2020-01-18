@@ -30,6 +30,8 @@ cmake -L `
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR `
   -D CMAKE_INSTALL_LIBDIR=lib `
   -D BUILD_EMBREE_FROM_SOURCE=OFF `
+  -D BUILD_OIDN=ON `
+  -D BUILD_OIDN_FROM_SOURCE=OFF `
   -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF `
   ../scripts/superbuild
 
@@ -48,6 +50,7 @@ $env:ospcommon_DIR = $DEP_DIR
 $env:embree_DIR = $DEP_DIR
 $env:glfw3_DIR = $DEP_DIR
 $env:openvkl_DIR = $DEP_DIR
+$env:OpenImageDenoise_DIR = $DEP_DIR
 
 # set release settings
 cmake -L `
@@ -56,6 +59,7 @@ cmake -L `
   -D OSPRAY_BUILD_ISA=ALL `
   -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc.exe `
   -D OSPRAY_ZIP_MODE=OFF `
+  -D OSPRAY_MODULE_DENOISER=ON `
   -D OSPRAY_INSTALL_DEPENDENCIES=ON `
   -D USE_STATIC_RUNTIME=OFF `
   -D CMAKE_INSTALL_INCLUDEDIR=include `

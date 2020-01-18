@@ -28,6 +28,7 @@ umask 002
 
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
+THREADS=`sysctl -n hw.logicalcpu`
 
 # set compiler if the user hasn't explicitly set CC and CXX
 if [ -z $CC ]; then
@@ -52,11 +53,13 @@ cmake --version
 
 cmake \
   "$@" \
-  -D BUILD_JOBS=`nproc` \
+  -D BUILD_JOBS=$THREADS \
   -D BUILD_DEPENDENCIES_ONLY=ON \
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR \
   -D CMAKE_INSTALL_LIBDIR=lib \
   -D BUILD_EMBREE_FROM_SOURCE=OFF \
+  -D BUILD_OIDN=ON \
+  -D BUILD_OIDN_FROM_SOURCE=OFF \
   -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   ../scripts/superbuild
 
@@ -78,12 +81,14 @@ export ospcommon_DIR=$DEP_DIR
 export embree_DIR=$DEP_DIR
 export glfw3_DIR=$DEP_DIR
 export openvkl_DIR=$DEP_DIR
+export OpenImageDenoise_DIR=$DEP_DIR
 
 # set release and installer settings
 cmake -L \
   -D OSPRAY_BUILD_ISA=ALL \
   -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc \
   -D OSPRAY_ZIP_MODE=OFF \
+  -D OSPRAY_MODULE_DENOISER=ON \
   -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
   -D CMAKE_INSTALL_PREFIX=/opt/local \
   -D CMAKE_INSTALL_INCLUDEDIR=include \
@@ -93,7 +98,7 @@ cmake -L \
   ..
 
 # create installers
-make -j `nproc` package || exit 2
+make -j $THREADS package || exit 2
 
 # change settings for zip mode
 cmake -L \
@@ -106,4 +111,4 @@ cmake -L \
   ..
 
 # create ZIP files
-make -j `nproc` package || exit 2
+make -j $THREADS package || exit 2

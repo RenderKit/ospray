@@ -29,7 +29,8 @@ if (BUILD_OIDN_FROM_SOURCE)
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
     LIST_SEPARATOR | # Use the alternate list separator
-    URL "https://github.com/OpenImageDenoise/oidn/archive/${BUILD_OIDN_VERSION}.zip"
+    GIT_REPOSITORY "https://github.com/OpenImageDenoise/oidn.git"
+    GIT_SHALLOW ON
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -40,12 +41,12 @@ if (BUILD_OIDN_FROM_SOURCE)
       -DCMAKE_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
       -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
       -DCMAKE_BUILD_TYPE=Release
-      -DTBB_ROOT=${TBB_PATH}
+      $<$<BOOL:${DOWNLOAD_TBB}>:-DTBB_ROOT=${TBB_PATH}>
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS ${ALWAYS_REBUILD}
   )
 
-  if (BUILD_TBB_FROM_SOURCE)
+  if (DOWNLOAD_TBB)
     ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
   endif()
 else()

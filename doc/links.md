@@ -12,6 +12,7 @@
 [tutorial]: #tutorial
 [camera]: #cameras
 [volume]: #volumes
+[curves]: #curves
 [world]: #world
 [data]: #data
 [GeometricModel]: #geometricmodels

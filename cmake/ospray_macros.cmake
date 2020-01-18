@@ -226,6 +226,12 @@ endmacro()
 ## Target creation macros ##
 
 macro(ospray_install_library name component)
+  set_target_properties(${name}
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+  ospray_install_target(${name} ${component})
+endmacro()
+
+macro(ospray_install_target name component)
   install(TARGETS ${name}
     EXPORT ospray_Exports
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -42,14 +42,14 @@ macro(ospray_install_namelink NAME TARGET_NAME)
   endif()
 endmacro()
 
-if (OSPRAY_TASKING_TBB)
+if (OSPCOMMON_TASKING_TBB)
   if (WIN32)
     set(TBB_DLL_HINTS
       HINTS
-      ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/vc14
-      ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/vc14
-      ${TBB_ROOT}/bin/${TBB_ARCH}/vc14
-      ${TBB_ROOT}/bin
+      ${OSPCOMMON_TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/vc14
+      ${OSPCOMMON_TBB_ROOT}/../redist/${TBB_ARCH}/tbb/vc14
+      ${OSPCOMMON_TBB_ROOT}/bin/${TBB_ARCH}/vc14
+      ${OSPCOMMON_TBB_ROOT}/bin
     )
     find_file(TBB_DLL tbb.dll ${TBB_DLL_HINTS})
     find_file(TBB_DLL_DEBUG tbb_debug.dll ${TBB_DLL_HINTS})
@@ -87,6 +87,9 @@ endmacro()
 ospray_add_dependent_lib(ospcommon::ospcommon)
 ospray_add_dependent_lib(openvkl::openvkl)
 ospray_add_dependent_lib(openvkl::openvkl_module_ispc_driver)
+if (OSPRAY_MODULE_DENOISER)
+  ospray_add_dependent_lib(OpenImageDenoise)
+endif()
 
 if (WIN32)
   get_filename_component(EMBREE_LIB_DIR ${EMBREE_LIBRARY} PATH)

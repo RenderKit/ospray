@@ -81,14 +81,14 @@ build-arch-clang:
 build-arch-gcc-extras:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=ON -DBUILD_OIDN=ON
 
 build-arch-clang-extras:
   <<: *build_job_docker
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=ON -DBUILD_OIDN=ON
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker
@@ -368,7 +368,7 @@ release-windows:
   <<: *release_job
   script:
     - scripts\release\win.ps1 "Visual Studio 14 2015 Win64"
-    - Invoke-Expression "$env:SIGN_FILE_WINDOWS build_release\ospray*.msi"
+    - ;& $env:SIGN_FILE_WINDOWS ospray*.msi
   tags:
     - msvc14
     - win

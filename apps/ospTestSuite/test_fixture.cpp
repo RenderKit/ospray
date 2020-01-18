@@ -177,7 +177,8 @@ namespace OSPRayTestScenes {
     camera.setParam("up", vec3f(0.f, 1.f, 0.f));
 
     renderer = cpp::Renderer(rendererType);
-    renderer.setParam("aoSamples", 0);
+    if (rendererType == "scivis")
+      renderer.setParam("aoSamples", 0);
     renderer.setParam("backgroundColor", vec3f(1.0f));
     renderer.setParam("pixelSamples", samplesPerPixel);
 
@@ -220,11 +221,12 @@ namespace OSPRayTestScenes {
 
     renderer.setParam("pixelSamples", 16);
     renderer.setParam("backgroundColor", vec4f(0.2f, 0.2f, 0.4f, 1.0f));
-    // scivis params
-    renderer.setParam("aoSamples", 16);
-    renderer.setParam("aoIntensity", 1.f);
-    // pathtracer params
-    renderer.setParam("maxPathLength", 2);
+    if (rendererType == "scivis") {
+      renderer.setParam("aoSamples", 16);
+      renderer.setParam("aoIntensity", 1.f);
+    } else if (rendererType == "pathtracer") {
+      renderer.setParam("maxPathLength", 2);
+    }
 
     cpp::Geometry sphere("sphere");
     cpp::Geometry inst_sphere("sphere");
@@ -249,7 +251,7 @@ namespace OSPRayTestScenes {
     cpp::GeometricModel model1(sphere);
     cpp::GeometricModel model2(inst_sphere);
 
-    cpp::Material sphereMaterial(rendererType, "default");
+    cpp::Material sphereMaterial(rendererType, "obj");
     sphereMaterial.setParam("d", 1.0f);
     sphereMaterial.commit();
 
@@ -313,7 +315,7 @@ namespace OSPRayTestScenes {
     tex.setParam("volume", volumetricModel);
     tex.commit();
 
-    cpp::Material sphereMaterial(rendererType, "default");
+    cpp::Material sphereMaterial(rendererType, "obj");
     sphereMaterial.setParam("map_kd", tex);
     sphereMaterial.commit();
 
@@ -423,7 +425,8 @@ namespace OSPRayTestScenes {
                               vec3f Ks) -> cpp::Material {
       cpp::Material mat(rendererType, "obj");
       mat.setParam("kd", Kd);
-      mat.setParam("ks", Ks);
+      if (rendererType == "pathtracer")
+        mat.setParam("ks", Ks);
       mat.commit();
 
       return mat;

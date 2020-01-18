@@ -51,11 +51,9 @@ namespace ospray {
                              map_Kd ? map_Kd->getIE() : nullptr);
   }
 
-  OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, default);
   OSP_REGISTER_MATERIAL(scivis, SciVisMaterial, obj);
 
   // NOTE(jda) - support all renderer aliases
-  OSP_REGISTER_MATERIAL(ao, SciVisMaterial, default);
   OSP_REGISTER_MATERIAL(ao, SciVisMaterial, obj);
 
 }  // namespace ospray

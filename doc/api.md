@@ -64,8 +64,8 @@ prefixed by convention with "`--osp:`") are understood:
                                                valid values for `dst` are `cerr` and `cout`
 
   `--osp:device=<name>`                        use `name` as the type of device for OSPRay to
-                                               create; e.g., `--osp:device=default` gives you the
-                                               default local device; Note if the device to be used
+                                               create; e.g., `--osp:device=cpu` gives you the
+                                               default `cpu` device; Note if the device to be used
                                                is defined in a module, remember to pass
                                                `--osp:load-modules=<name>` first
 
@@ -88,7 +88,7 @@ sections). The first step is to create the device with
     OSPDevice ospNewDevice(const char *type);
 
 where the `type` string maps to a specific device implementation. OSPRay
-always provides the "`default`" device, which maps to a fast, local CPU
+always provides the "`cpu`" device, which maps to a fast, local CPU
 implementation. Other devices can also be added through additional
 modules, such as distributed MPI device implementations.
 
@@ -763,12 +763,12 @@ concurrently). To create a volume instance, call
   -------------------- ----------------------- ---------- --------------------------------------
   OSPTransferFunction  transferFunction                   [transfer function] to use
 
-  float                densityScale                   1.0 used to make volumes uniformly thinner
-                                                          or thicker ([path tracer] only)
+  float                densityScale                   1.0 makes volumes uniformly thinner or
+                                                          thicker
 
   float                anisotropy                     0.0 anisotropy of the (Henyey-Greenstein)
-                                                          phase function in [-1, 1]. Default:
-                                                          Isotropic scattering. ([path tracer] only)
+                                                          phase function in [-1, 1] ([path tracer]
+                                                          only), default to isotropic scattering
   -------------------- ------------------------ --------- ---------------------------------------
   : Parameters understood by VolumetricModel.
 
@@ -959,6 +959,66 @@ If a constant `radius` is used and positions are specified in a
 `OSP_ROUND` and `OSP_LINEAR` (this is the fastest and most memory
 efficient mode). Implementation is with round linear segements where
 each segment corresponds to a link between two vertices.
+
+The following section describes the properties of different curve basis'
+and how they use the data provided in data buffers:
+
+OSP_LINEAR
+: The indices point to the first of 2 consecutive control points in the
+vertex buffer. The first control point is the start and the second
+control point the end of the line segment. The curve goes through all
+control points listed in the vertex buffer.
+
+OSP_BEZIER
+: The indices point to the first of 4 consecutive control points in the
+vertex buffer. The first control point represents the start point of the
+curve, and the 4th control point the end point of the curve. The Bézier
+basis is interpolating, thus the curve does go exactly through the first
+and fourth control vertex.
+
+OSP_BSPLINE
+: The indices point to the first of 4 consecutive control points in the
+vertex buffer. This basis is not interpolating, thus the curve does in
+general not go through any of the control points directly. Using this
+basis, 3 control points can be shared for two continuous neighboring
+curve segments, e.g. the curves $(p0, p1, p2, p3)$ and $(p1, p2, p3,
+p4)$ are C1 continuous. This feature make this basis a good choice to
+construct continuous multi-segment curves, as memory consumption can be
+kept minimal.
+
+OSP_HERMITE
+: It is necessary to have both vertex buffer and tangent buffer for
+using this basis. The indices point to the first of 2 consecutive points
+in the vertex buffer, and the first of 2 consecutive tangents in the
+tangent buffer. This basis is interpolating, thus does exactly go
+through the first and second control point, and the first order
+derivative at the begin and end matches exactly the value specified in
+the tangent buffer. When connecting two segments continuously, the end
+point and tangent of the previous segment can be shared.
+
+OSP_CATMULL_ROM
+: The indices point to the first of 4 consecutive control points in the
+vertex buffer. If $(p0, p1, p2, p3)$ represent the points then this basis
+goes through $p1$ and $p2$, with tangents as $(p2-p0)/2$ and $(p3-p1)/2$.
+
+The following section describes the properties of different curve types'
+and how they define the geometry of a curve:
+
+OSP_FLAT
+: This type enables faster rendering as the curve is rendered as a
+connected sequence of ray facing quads.
+
+OSP_ROUND
+: This type enables rendering a real geometric surface for the curve
+which allows closeup views. This mode renders a sweep surface by
+sweeping a varying radius circle tangential along the curve.
+
+OSP_RIBBON
+: The type enables normal orientation of the curve and requires a normal
+buffer be specified along with vertex buffer. The curve is rendered as a
+flat band whose center approximately follows the provided vertex buffer
+and whose normal orientation approximately follows the provided normal
+buffer.
 
 
 ### Boxes
@@ -2229,6 +2289,15 @@ parameters to the values listed in the table below.
   : Filmic tone mapping curve parameters. Note that the curve includes an
   exposure bias to match 18% middle gray.
 
+#### Denoiser {-}
+
+OSPRay comes with a module that adds support for Intel® Open Image Denoise.
+This is provided as an optional module as it creates an additional project
+dependency at compile time. The module implements a "`denoiser`"
+frame operation, which denoises the entire frame before the frame is
+completed.
+
+
 Rendering
 ---------
 
@@ -2329,3 +2398,10 @@ This version is the equivalent of:
     - return `ospGetVariance(fb)`
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
+
+Distributed rendering with MPI
+------------------------------
+
+The OSPRay MPI module is now a stand alone repository. It can be found on
+GitHub [here](https://github.com/ospray/module_mpi), where all code and
+documentation can be found.

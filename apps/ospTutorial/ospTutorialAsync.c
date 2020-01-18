@@ -18,11 +18,6 @@
 /* This is a small example tutorial of how to use OSPRay's async API in an
  * application. We setup up two scenes which are rendered asynchronously
  * in parallel to each other.
- *
- * On Linux build it in the build_directory with
- *   gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorial
- * On Windows build it in the build_directory\$Configuration with
- *   cl ..\..\apps\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
  */
 
 #include <stdint.h>
