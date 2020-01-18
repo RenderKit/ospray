@@ -2289,6 +2289,15 @@ parameters to the values listed in the table below.
   : Filmic tone mapping curve parameters. Note that the curve includes an
   exposure bias to match 18% middle gray.
 
+#### Denoiser {-}
+
+OSPRay comes with a module that adds support for Intel® Open Image Denoise.
+This is provided as an optional module as it creates an additional project
+dependency at compile time. The module implements a "`denoiser`"
+frame operation, which denoises the entire frame before the frame is
+completed.
+
+
 Rendering
 ---------
 

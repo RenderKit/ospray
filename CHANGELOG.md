@@ -1,7 +1,25 @@
 Version History
 ---------------
 
-### Changes in v2.0.0:
+### Changes in v2.0.0 (since alpha):
+
+-   OSPRay now requires Open VKL v0.8.0+, which alleviates the need for
+-   OSPRay now requires Embree v3.7.0, which lets OSPRay represent groups and
+    instances much more efficiently
+-   new log level enums (warnings as errors)
+-   new debug renderer
+-   merged geometry types
+-   C++ wrapper enhancements (STL vector/array support in cpp::Data)
+-   unused parameter warnings
+-   naming conventions are always camel-case
+-   renderer material lists
+-   new examples app to consolidate interactive apps into one
+-   new benchmark suite
+-   overlapping volume support in both path tracer and scivis renderer
+-   MPI device is now a separate repository
+-   various bug fixes
+
+### Changes in v2.0.0 (alpha):
 
 -   New major revision of OSPRay brings API breaking improvements over
     v1.x. See `doc/ospray2_porting_guide.md` for a deeper description of
