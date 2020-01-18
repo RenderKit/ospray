@@ -81,6 +81,7 @@ export ospcommon_DIR=$DEP_DIR
 export embree_DIR=$DEP_DIR
 export glfw3_DIR=$DEP_DIR
 export openvkl_DIR=$DEP_DIR
+export OpenImageDenoise_DIR=$DEP_DIR
 
 # set release and installer settings
 cmake -L \
