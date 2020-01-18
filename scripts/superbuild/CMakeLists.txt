@@ -52,7 +52,7 @@ option(ALWAYS_REBUILD "Force every project to always be rebuilt?" OFF)
 
 option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
 
-set(BUILD_OSPCOMMON_VERSION "v1.1.0" CACHE STRING "Which version of ospcommon to build?")
+set(BUILD_OSPCOMMON_VERSION "v1.2.0" CACHE STRING "Which version of ospcommon to build?")
 
 option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
 
