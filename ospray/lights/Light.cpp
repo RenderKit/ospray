@@ -21,11 +21,17 @@
 
 namespace ospray {
 
+  Light::Light()
+  {
+    managedObjectType = OSP_LIGHT;
+  }
+
   void Light::commit()
   {
-    isVisible = getParam1i("isVisible", true);
-
-    ispc::Light_set(getIE(), isVisible);
+    const vec3f radiance = getParam<vec3f>("color", vec3f(1.f)) *
+                           getParam<float>("intensity", 1.f);
+    ispc::Light_set(
+        getIE(), (ispc::vec3f &)radiance, getParam<bool>("visible", true));
   }
 
   std::string Light::toString() const
@@ -38,4 +44,6 @@ namespace ospray {
     return createInstanceHelper<Light, OSP_LIGHT>(type);
   }
 
-}
+  OSPTYPEFOR_DEFINITION(Light *);
+
+} // namespace ospray

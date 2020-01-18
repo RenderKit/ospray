@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "Managed.h"
+#include "./Managed.h"
 #include "../api/objectFactory.h"
 
 #include <map>

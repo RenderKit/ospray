@@ -12,11 +12,15 @@
 [tutorial]: #tutorial
 [camera]: #cameras
 [volume]: #volumes
-[model]: #model
+[curves]: #curves
+[world]: #world
 [data]: #data
+[GeometricModel]: #geometricmodels
 [texture transformations]: #texture2d-transformations
+[renderer]: #renderers
 [SciVis renderer]: #scivis-renderer
 [path tracer]: #path-tracer
+[material]: #materials
 [OBJ material]: #obj-material
 [point light]: #point-light-sphere-light
 [Compiling OSPRay]: #compiling-ospray

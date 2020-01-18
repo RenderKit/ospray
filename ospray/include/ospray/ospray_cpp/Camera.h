@@ -16,41 +16,42 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/ManagedObject.h>
+#include "ManagedObject.h"
 
 namespace ospray {
-namespace cpp    {
+  namespace cpp {
 
-class Camera : public ManagedObject_T<OSPCamera>
-{
-public:
+    class Camera : public ManagedObject<OSPCamera, OSP_CAMERA>
+    {
+     public:
+      Camera(const std::string &type);
+      Camera(const Camera &copy);
+      Camera(OSPCamera existing = nullptr);
+    };
 
-  Camera(const std::string &type);
-  Camera(const Camera &copy);
-  Camera(OSPCamera existing = nullptr);
-};
+    static_assert(sizeof(Camera) == sizeof(OSPCamera),
+                  "cpp::Camera can't have data members!");
 
-// Inlined function definitions ///////////////////////////////////////////////
+    // Inlined function definitions ///////////////////////////////////////////
 
-inline Camera::Camera(const std::string &type)
-{
-  OSPCamera c = ospNewCamera(type.c_str());
-  if (c) {
-    ospObject = c;
-  } else {
-    throw std::runtime_error("Failed to create OSPCamera!");
-  }
-}
+    inline Camera::Camera(const std::string &type)
+    {
+      ospObject = ospNewCamera(type.c_str());
+    }
 
-inline Camera::Camera(const Camera &copy) :
-  ManagedObject_T<OSPCamera>(copy.handle())
-{
-}
+    inline Camera::Camera(const Camera &copy)
+        : ManagedObject<OSPCamera, OSP_CAMERA>(copy.handle())
+    {
+      ospRetain(copy.handle());
+    }
 
-inline Camera::Camera(OSPCamera existing) :
-  ManagedObject_T<OSPCamera>(existing)
-{
-}
+    inline Camera::Camera(OSPCamera existing)
+        : ManagedObject<OSPCamera, OSP_CAMERA>(existing)
+    {
+    }
 
-}// namespace cpp
-}// namespace ospray
+  }  // namespace cpp
+
+  OSPTYPEFOR_SPECIALIZATION(cpp::Camera, OSP_CAMERA);
+
+}  // namespace ospray

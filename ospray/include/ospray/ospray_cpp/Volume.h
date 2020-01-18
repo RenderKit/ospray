@@ -18,93 +18,41 @@
 
 #include <vector>
 
-#include <ospray/ospray_cpp/ManagedObject.h>
+#include "ManagedObject.h"
 
 namespace ospray {
-namespace cpp    {
+  namespace cpp {
 
-struct AMRBrickInfo
-{
-  ospcommon::box3i bounds;
-  int              refinemntLevel;
-  float            cellWidth;
-};
+    class Volume : public ManagedObject<OSPVolume, OSP_VOLUME>
+    {
+     public:
+      Volume(const std::string &type);
+      Volume(const Volume &copy);
+      Volume(OSPVolume existing = nullptr);
+    };
 
-class Volume : public ManagedObject_T<OSPVolume>
-{
-public:
+    static_assert(sizeof(Volume) == sizeof(OSPVolume),
+                  "cpp::Volume can't have data members!");
 
-  Volume(const std::string &type);
-  Volume(const Volume &copy);
-  Volume(OSPVolume existing);
+    // Inlined function definitions ///////////////////////////////////////////
 
-  void setRegion(void *source,
-                 const ospcommon::vec3i &regionCoords,
-                 const ospcommon::vec3i &regionSize) const;
+    inline Volume::Volume(const std::string &type)
+    {
+      ospObject = ospNewVolume(type.c_str());
+    }
 
-  void sampleVolume(float **results,
-                    const ospcommon::vec3f *worldCoordinates,
-                    size_t count) const;
-  std::vector<float> sampleVolume(const std::vector<ospcommon::vec3f> &points) const;
-};
+    inline Volume::Volume(const Volume &copy)
+        : ManagedObject<OSPVolume, OSP_VOLUME>(copy.handle())
+    {
+      ospRetain(copy.handle());
+    }
 
-// Inlined function definitions ///////////////////////////////////////////////
+    inline Volume::Volume(OSPVolume existing)
+        : ManagedObject<OSPVolume, OSP_VOLUME>(existing)
+    {
+    }
+  }  // namespace cpp
 
-inline Volume::Volume(const std::string &type)
-{
-  OSPVolume c = ospNewVolume(type.c_str());
-  if (c) {
-    ospObject = c;
-  } else {
-    throw std::runtime_error("Failed to create OSPVolume!");
-  }
-}
+  OSPTYPEFOR_SPECIALIZATION(cpp::Volume, OSP_VOLUME);
 
-inline Volume::Volume(const Volume &copy) :
-  ManagedObject_T<OSPVolume>(copy.handle())
-{
-}
-
-inline Volume::Volume(OSPVolume existing) :
-  ManagedObject_T<OSPVolume>(existing)
-{
-}
-
-inline void Volume::setRegion(void *source,
-                              const ospcommon::vec3i &regionCoords,
-                              const ospcommon::vec3i &regionSize) const
-{
-  // TODO return error code
-  ospSetRegion(handle(),
-               source,
-               (const osp::vec3i&)regionCoords,
-               (const osp::vec3i&)regionSize);
-}
-
-inline void Volume::sampleVolume(float **results,
-                                 const ospcommon::vec3f *worldCoordinates,
-                                 size_t count) const
-{
-  ospSampleVolume(results,
-                  handle(),
-                  (const osp::vec3f&)*worldCoordinates,
-                  count);
-}
-
-inline std::vector<float>
-Volume::sampleVolume(const std::vector<ospcommon::vec3f> &points) const
-{
-  float *results = nullptr;
-  auto numPoints = points.size();
-  sampleVolume(&results, points.data(), numPoints);
-
-  if (!results)
-    throw std::runtime_error("Failed to sample volume!");
-
-  std::vector<float> retval(points.size());
-  memcpy(retval.data(), results, numPoints*sizeof(float));
-  return retval;
-}
-
-}// namespace cpp
-}// namespace ospray
+}  // namespace ospray

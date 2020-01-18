@@ -34,6 +34,7 @@ namespace ospray {
       perspectivecamera etc for that */
   struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
   {
+    Camera();
     virtual ~Camera() override = default;
 
     virtual std::string toString() const override;
@@ -59,6 +60,8 @@ namespace ospray {
     float shutterOpen; // start time of camera shutter
     float shutterClose; // end time of camera shutter
   };
+
+  OSPTYPEFOR_SPECIALIZATION(Camera *, OSP_CAMERA);
 
   /*! \brief registers a internal ospray::'ClassName' camera under
       the externally accessible name "external_name"

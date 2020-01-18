@@ -29,7 +29,7 @@ For more information see the project's [page on GitHub](https://github.com/ospra
 
 Tapestry
 --------
-![](images/teaser_tapestry.png)
+![](images/teaser_tapestry.jpg)
 Tapestry is a microservice for delivering scientific visualization on
 the cloud. With OSPRay, Tapestry can provide interactive visualization
 of large datasets accessible to many users throughout the web ecosystem.

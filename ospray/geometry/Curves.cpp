@@ -19,70 +19,49 @@
 // ospray
 #include "Curves.h"
 #include "common/Data.h"
-#include "common/Model.h"
-#include "ospcommon/utility/DataView.h"
+#include "common/World.h"
 // ispc-generated files
 #include "Curves_ispc.h"
+// ospcommon
+#include "ospcommon/utility/DataView.h"
+// std
+#include <map>
 
 namespace ospray {
 
-  enum curveType { ROUND, FLAT, RIBBON };
-  enum curveBasis { LINEAR, BEZIER, BSPLINE, HERMITE };
+  static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
+      curveMap = {
+          {{OSP_ROUND, OSP_LINEAR}, RTC_GEOMETRY_TYPE_USER},
+          {{OSP_FLAT, OSP_LINEAR}, RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE},
+          {{OSP_RIBBON, OSP_LINEAR}, (RTCGeometryType)-1},
 
-  static RTCGeometryType curveMap[4][3] =
-    {
-      {
-        (RTCGeometryType)-1,
-        RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE,
-        (RTCGeometryType)-1,
-      },
+          {{OSP_ROUND, OSP_BEZIER}, RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE},
+          {{OSP_FLAT, OSP_BEZIER}, RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE},
+          {{OSP_RIBBON, OSP_BEZIER},
+           RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE},
 
-      {
-        RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE,
-        RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE,
-        RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE,
-      },
+          {{OSP_ROUND, OSP_BSPLINE}, RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE},
+          {{OSP_FLAT, OSP_BSPLINE}, RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE},
+          {{OSP_RIBBON, OSP_BSPLINE},
+           RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE},
 
-      {
-        RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE,
-        RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE,
-        RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE,
-      },
+          {{OSP_ROUND, OSP_HERMITE}, RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE},
+          {{OSP_FLAT, OSP_HERMITE}, RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE},
+          {{OSP_RIBBON, OSP_HERMITE},
+           RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE},
 
-      {
-        RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE,
-        RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE,
-        RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE
-      }
-    };
+          {{OSP_ROUND, OSP_CATMULL_ROM},
+           RTC_GEOMETRY_TYPE_ROUND_CATMULL_ROM_CURVE},
+          {{OSP_FLAT, OSP_CATMULL_ROM},
+           RTC_GEOMETRY_TYPE_FLAT_CATMULL_ROM_CURVE},
+          {{OSP_RIBBON, OSP_CATMULL_ROM},
+           RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE}};
 
-  static curveType curveTypeForString(const std::string &s)
-  {
-    if (s == "flat")
-      return FLAT;
-    if (s == "ribbon")
-      return RIBBON;
-    if (s == "round")
-      return ROUND;
-    throw std::runtime_error("curve with unknown curveType");
-  }
-
-  static curveBasis curveBasisForString(const std::string &s)
-  {
-    if (s == "bezier")
-      return BEZIER;
-    if (s == "bspline")
-      return BSPLINE;
-    if (s == "linear")
-      return LINEAR;
-    if (s == "hermite")
-      return HERMITE;
-    throw std::runtime_error("curve with unknown curveBasis");
-  }
+  // Curves definitions ///////////////////////////////////////////////////////
 
   Curves::Curves()
   {
-    this->ispcEquivalent = ispc::Curves_create(this);
+    ispcEquivalent = ispc::Curves_create(this);
   }
 
   std::string Curves::toString() const
@@ -90,76 +69,108 @@ namespace ospray {
     return "ospray::Curves";
   }
 
-  void Curves::finalize(Model *model)
+  void Curves::commit()
   {
-    Geometry::finalize(model);
+    indexData    = getParamDataT<uint32_t>("index", true);
+    normalData   = nullptr;
+    tangentData  = nullptr;
+    vertexData   = getParamDataT<vec3f>("vertex.position");
+    texcoordData = getParamDataT<vec2f>("vertex.texcoord");
 
-    vertexData = getParamData("vertex",nullptr);
-    if (!vertexData)
-      throw std::runtime_error("curves must have 'vertex' array");
-    if (vertexData->type != OSP_FLOAT4)
-      throw std::runtime_error("curves 'vertex' must be type OSP_FLOAT4");
-    auto vertex = (vec4f*)vertexData->data;
-    auto numVertices = vertexData->numItems;
+    if (vertexData) {  // round, linear curves with constant radius
+      radius     = getParam<float>("radius", 0.01f);
+      curveType  = (OSPCurveType)getParam<int>("type", OSP_ROUND);
+      curveBasis = (OSPCurveBasis)getParam<int>("basis", OSP_LINEAR);
+      if (curveMap[std::make_pair(curveType, curveBasis)] !=
+          RTC_GEOMETRY_TYPE_USER)
+        throw std::runtime_error(
+            "constant-radius curves need to be of type OSP_ROUND and have "
+            "basis OSP_LINEAR");
+    } else {  // embree curves
+      vertexData = getParamDataT<vec4f>("vertex.position_radius", true);
+      radius     = 0.0f;
 
-    indexData  = getParamData("index",nullptr);
-    if (!indexData)
-      throw std::runtime_error("curves must have 'index' array");
-    if (indexData->type != OSP_INT)
-      throw std::runtime_error("curves 'index' array must be type OSP_INT");
-    auto index = (uint32*)indexData->data;
-    auto numSegments = indexData->numItems;
+      curveType = (OSPCurveType)getParam<int>("type", OSP_UNKNOWN_CURVE_TYPE);
+      if (curveType == OSP_UNKNOWN_CURVE_TYPE)
+        throw std::runtime_error("curves geometry has invalid 'type'");
 
-    normalData = getParamData("vertex.normal", nullptr);
-    tangentData = getParamData("vertex.tangent", nullptr);
+      curveBasis =
+          (OSPCurveBasis)getParam<int>("basis", OSP_UNKNOWN_CURVE_BASIS);
 
-    auto basis = curveBasisForString(getParamString("curveBasis", "unspecified"));
-    auto type = curveTypeForString(getParamString("curveType", "unspecified"));
+      if (curveBasis == OSP_UNKNOWN_CURVE_BASIS)
+        throw std::runtime_error("curves geometry has invalid 'basis'");
 
-    if (type == RIBBON && !normalData)
-      throw std::runtime_error("ribbon curve must have 'normal' array");
-    if (basis == LINEAR && type != FLAT)
-      throw std::runtime_error("linear curve with non-flat type");
-    if (basis == HERMITE && !tangentData)
-      throw std::runtime_error("hermite curve must have 'tangent' array");
-
-    if (normalData && normalData->type != OSP_FLOAT3)
-      throw std::runtime_error("curves 'normal' array must be type OSP_FLOAT3");
-    if (tangentData && tangentData->type != OSP_FLOAT3)
-      throw std::runtime_error("curves 'tangent' array must be type OSP_FLOAT3");
-
-    postStatusMsg(2) << "#osp: creating curves geometry, "
-                     << "#verts=" << numVertices << ", "
-                     << "#segments=" << numSegments;
-
-    uint32_t numVerts = 4;
-    if (basis == LINEAR || basis == HERMITE)
-      numVerts = 2;
-
-    bounds = empty;
-    for (uint32_t i = 0; i < indexData->numItems; i++) {
-      const uint32_t idx = index[i];
-      for (uint32_t v = idx; v < idx + numVerts; v++) {
-        float radius = vertex[v].w;
-        vec3f vtx(vertex[v].x, vertex[v].y, vertex[v].z);
-        bounds.extend(vtx - radius);
-        bounds.extend(vtx + radius);
+      if (curveBasis == OSP_LINEAR && curveType != OSP_FLAT) {
+        throw std::runtime_error(
+            "curves geometry with linear basis must be of flat type or have "
+            "constant radius");
       }
+
+      if (curveType == OSP_RIBBON)
+        normalData = getParamDataT<vec3f>("vertex.normal", true);
+
+      if (curveBasis == OSP_HERMITE)
+        tangentData = getParamDataT<vec4f>("vertex.tangent", true);
     }
 
-    ispc::Curves_set(getIE(),
-                     model->getIE(),
-                     (ispc::RTCGeometryType)curveMap[basis][type],
-                     (const ispc::vec4f*)vertexData->data,
-                     vertexData->numItems,
-                     (const uint32_t*)indexData->data,
-                     indexData->numItems,
-                     normalData ? (const ispc::vec3f*)normalData->data : nullptr,
-                     normalData ? normalData->numItems : 0,
-                     tangentData ? (const ispc::vec3f*)tangentData->data : nullptr,
-                     tangentData ? tangentData->numItems : 0);
+    colorData = getParamDataT<vec4f>("vertex.color");
+
+    embreeCurveType = curveMap[std::make_pair(curveType, curveBasis)];
+
+    createEmbreeGeometry();
+
+    postCreationInfo(vertexData->size());
   }
 
-  OSP_REGISTER_GEOMETRY(Curves,curves);
+  size_t Curves::numPrimitives() const
+  {
+    return indexData->size();
+  }
 
-} // ::ospray
+  void Curves::createEmbreeGeometry()
+  {
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
+
+    embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
+
+    if (embreeCurveType == RTC_GEOMETRY_TYPE_USER) {
+      ispc::Curves_setUserGeometry(getIE(),
+                                   embreeGeometry,
+                                   radius,
+                                   ispc(indexData),
+                                   ispc(vertexData),
+                                   ispc(colorData),
+                                   ispc(texcoordData));
+    } else {
+      Ref<const DataT<vec4f>> vertex4f(&vertexData->as<vec4f>());
+      setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertex4f);
+      setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_INDEX, indexData);
+      setEmbreeGeometryBuffer(
+          embreeGeometry, RTC_BUFFER_TYPE_NORMAL, normalData);
+      setEmbreeGeometryBuffer(
+          embreeGeometry, RTC_BUFFER_TYPE_TANGENT, tangentData);
+      if (colorData) {
+        rtcSetGeometryVertexAttributeCount(embreeGeometry, 1);
+        setEmbreeGeometryBuffer(
+            embreeGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, colorData);
+      }
+      if (texcoordData) {
+        rtcSetGeometryVertexAttributeCount(embreeGeometry, 2);
+        setEmbreeGeometryBuffer(
+            embreeGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, texcoordData, 1);
+      }
+
+      ispc::Curves_set(getIE(),
+                       embreeGeometry,
+                       colorData,
+                       texcoordData,
+                       indexData->size());
+
+      rtcCommitGeometry(embreeGeometry);
+    }
+  }
+
+  OSP_REGISTER_GEOMETRY(Curves, curve);
+
+}  // namespace ospray

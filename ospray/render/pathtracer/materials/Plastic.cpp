@@ -35,15 +35,15 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        const vec3f pigmentColor = getParam3f("pigmentColor",vec3f(1.f));
-        const float eta          = getParamf("eta",1.4f);
-        const float roughness    = getParamf("roughness",0.01f);
+        const vec3f pigmentColor = getParam<vec3f>("pigmentColor",vec3f(1.f));
+        const float eta          = getParam<float>("eta",1.4f);
+        const float roughness    = getParam<float>("roughness",0.01f);
 
         ispc::PathTracer_Plastic_set
           (getIE(), (const ispc::vec3f&)pigmentColor,eta,roughness);
       }
     };
 
-    OSP_REGISTER_MATERIAL(pt, Plastic, Plastic);
+    OSP_REGISTER_MATERIAL(pt, Plastic, plastic);
   }
 }

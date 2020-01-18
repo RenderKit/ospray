@@ -32,8 +32,6 @@ namespace ospray {
   private:
     vec3f position {0.f};           //!< world-space position of the light
     vec3f direction {0.f, 0.f, 1.f};//!< Direction that the SpotLight is pointing
-    vec3f color {1.f};              //!< RGB color of the SpotLight
-    float intensity {1.f};          //!< Amount of light emitted
     float openingAngle {180.f};     //!< Full opening angle of spot light, in degree. If angle from hit to light is greater than 1/2 * this, the light does not influence shading for that point
     float penumbraAngle {5.f};      //!< Angle, in degree, of the "penumbra", the region between the rim and full intensity of the spot. Should be smaller than half of the openingAngle.
     float radius {0.f};             //!< Radius of ExtendedSpotLight

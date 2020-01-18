@@ -14,12 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
 // ospray
 #include "Isosurfaces.h"
 #include "common/Data.h"
-#include "common/Model.h"
+#include "common/World.h"
+// openvkl
+#include "openvkl/openvkl.h"
 // ispc-generated files
 #include "Isosurfaces_ispc.h"
 
@@ -27,7 +27,17 @@ namespace ospray {
 
   Isosurfaces::Isosurfaces()
   {
-    this->ispcEquivalent = ispc::Isosurfaces_create(this);
+    ispcEquivalent = ispc::Isosurfaces_create(this);
+    embreeGeometry =
+        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+  }
+
+  Isosurfaces::~Isosurfaces()
+  {
+    if (valueSelector) {
+      vklRelease(valueSelector);
+      valueSelector = nullptr;
+    }
   }
 
   std::string Isosurfaces::toString() const
@@ -35,22 +45,54 @@ namespace ospray {
     return "ospray::Isosurfaces";
   }
 
-  void Isosurfaces::finalize(Model *model)
+  void Isosurfaces::commit()
   {
-    isovaluesData = getParamData("isovalues", nullptr);
-    volume        = (Volume *)getParamObject("volume", nullptr);
+    isovaluesData = getParamDataT<float>("isovalue", true, true);
 
-    Assert(isovaluesData);
-    Assert(isovaluesData->numItems > 0);
-    Assert(volume);
+    model = (VolumetricModel *)getParamObject("volume");
 
-    numIsovalues = isovaluesData->numItems;
-    isovalues    = (float*)isovaluesData->data;
+    if (!model) {
+      throw std::runtime_error(
+          "the 'volume' parameter must be set for isosurfaces");
+    }
 
-    ispc::Isosurfaces_set(getIE(), model->getIE(), numIsovalues,
-                          isovalues, volume->getIE());
+    if (!isovaluesData->compact()) {
+      // get rid of stride
+      auto data = new Data(OSP_FLOAT, vec3ui(isovaluesData->size(), 1, 1));
+      data->copy(*isovaluesData, vec3ui(0));
+      isovaluesData = &(data->as<float>());
+      data->refDec();
+    }
+
+    if (valueSelector) {
+      vklRelease(valueSelector);
+      valueSelector = nullptr;
+    }
+
+    valueSelector = vklNewValueSelector(model->getVolume()->vklVolume);
+
+    if (isovaluesData->size() > 0) {
+      vklValueSelectorSetValues(
+          valueSelector, isovaluesData->size(), isovaluesData->data());
+    }
+
+    vklCommit(valueSelector);
+
+    ispc::Isosurfaces_set(getIE(),
+                          embreeGeometry,
+                          isovaluesData->size(),
+                          isovaluesData->data(),
+                          model->getIE(),
+                          valueSelector);
+
+    postCreationInfo();
   }
 
-  OSP_REGISTER_GEOMETRY(Isosurfaces, isosurfaces);
+  size_t Isosurfaces::numPrimitives() const
+  {
+    return isovaluesData->size();
+  }
 
-} // ::ospray
+  OSP_REGISTER_GEOMETRY(Isosurfaces, isosurface);
+
+}  // namespace ospray

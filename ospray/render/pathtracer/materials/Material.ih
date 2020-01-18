@@ -63,7 +63,6 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium = NULL);
                                    // const uniform vec3f emission = { 0.f, 0.f, 0.f }; fails, ISPC issue #1231
 
-
 inline linear3f makeShadingFrame(const DifferentialGeometry& dg)
 {
   vec3f N = dg.Ns;

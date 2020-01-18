@@ -15,85 +15,56 @@
 // ======================================================================== //
 
 #include "Managed.h"
+#include "Data.h"
 #include "OSPCommon_ispc.h"
 
 namespace ospray {
 
   ManagedObject::~ManagedObject()
   {
-    // it is OK to potentially delete nullptr, nothing bad happens ==> no need to check
     ispc::delete_uniform(ispcEquivalent);
     ispcEquivalent = nullptr;
 
-    // make sure all ManagedObject parameter refs are decremented
-    std::for_each(params_begin(),
-                  params_end(),
-                  [&](std::shared_ptr<Param> &p) {
-                    auto &param = *p;
-                    if (param.data.is<OSP_PTR>()) {
-                      auto *obj = param.data.get<OSP_PTR>();
-                      if (obj != nullptr) obj->refDec();
-                    }
-                  });
+    std::for_each(params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
+      auto &param = *p;
+      if (param.data.is<OSP_PTR>()) {
+        auto *obj = param.data.get<OSP_PTR>();
+        if (obj != nullptr)
+          obj->refDec();
+      }
+    });
   }
 
-  /*! \brief commit the object's outstanding changes (i.e. changed parameters etc) */
-  void ManagedObject::commit()
-  {
-  }
+  void ManagedObject::commit() {}
 
-  //! \brief common function to help printf-debugging
-  /*! \detailed Every derived class should override this! */
   std::string ManagedObject::toString() const
   {
     return "ospray::ManagedObject";
   }
 
-  //! \brief register a new listener for given object
-  /*! \detailed this object will now get update notifications from us */
-  void ManagedObject::registerListener(ManagedObject *newListener)
+  void ManagedObject::checkUnused()
   {
-    objectsListeningForChanges.insert(newListener);
+    for (auto p = params_begin(); p != params_end(); ++p) {
+      if (!(*p)->query) {
+        postStatusMsg(OSP_LOG_WARNING)
+            << toString()
+            << ": found unused (or of wrong data type) parameter '"
+            << (*p)->name << "'";
+      }
+    }
   }
 
-  //! \brief un-register a listener
-  /*! \detailed this object will no longer get update notifications from us  */
-  void ManagedObject::unregisterListener(ManagedObject *noLongerListening)
+  box3f ManagedObject::getBounds() const
   {
-    objectsListeningForChanges.erase(noLongerListening);
+    return box3f(empty);
   }
 
-  /*! \brief gets called whenever any of this node's dependencies got changed */
-  void ManagedObject::dependencyGotChanged(ManagedObject *object)
+  ManagedObject *ManagedObject::getParamObject(const char *name,
+                                               ManagedObject *valIfNotFound)
   {
-    UNUSED(object);
+    return getParam<ManagedObject *>(name, valIfNotFound);
   }
 
-#define define_getparam(T,ABB)                                      \
-  T ManagedObject::getParam##ABB(const char *name, T valIfNotFound) \
-  {                                                                 \
-    return getParam<T>(name, valIfNotFound);                        \
-  }
+  OSPTYPEFOR_DEFINITION(ManagedObject *);
 
-  define_getparam(ManagedObject *, Object)
-  define_getparam(std::string,     String)
-  define_getparam(void*,           VoidPtr)
-
-  define_getparam(int32,  1i)
-  define_getparam(vec3i,  3i)
-  define_getparam(vec3f,  3f)
-  define_getparam(vec3fa, 3f)
-  define_getparam(vec4f,  4f)
-  define_getparam(vec2f,  2f)
-  define_getparam(float,  1f)
-  define_getparam(float,  f)
-
-#undef define_getparam
-
-  void ManagedObject::notifyListenersThatObjectGotChanged()
-  {
-    for (auto *object : objectsListeningForChanges)
-      object->dependencyGotChanged(this);
-  }
-
-} // ::ospray
+}  // namespace ospray

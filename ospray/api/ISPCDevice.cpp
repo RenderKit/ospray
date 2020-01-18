@@ -14,35 +14,142 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospray
 #include "ISPCDevice.h"
-#include "common/Model.h"
-#include "common/Data.h"
-#include "common/Util.h"
-#include "geometry/TriangleMesh.h"
-#include "render/Renderer.h"
 #include "camera/Camera.h"
-#include "volume/Volume.h"
-#include "transferFunction/TransferFunction.h"
-#include "render/LoadBalancer.h"
-#include "common/Material.h"
+#include "common/Data.h"
+#include "common/Group.h"
+#include "common/Instance.h"
 #include "common/Library.h"
+#include "common/Material.h"
+#include "common/Util.h"
+#include "common/World.h"
+#include "fb/ImageOp.h"
+#include "fb/LocalFB.h"
+#include "geometry/GeometricModel.h"
+#include "lights/Light.h"
+#include "render/LoadBalancer.h"
+#include "render/RenderTask.h"
+#include "render/Renderer.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
-#include "lights/Light.h"
-#include "fb/LocalFB.h"
-
+#include "volume/VolumetricModel.h"
+#include "volume/transferFunction/TransferFunction.h"
 // stl
 #include <algorithm>
+#include <functional>
+#include <map>
+// openvkl
+#include "openvkl/openvkl.h"
+// ospcommon
+#include "ospcommon/tasking/tasking_system_init.h"
 
-extern "C" {
-  RTCDevice ispc_embreeDevice()
-  {
-    return ospray::api::ISPCDevice::embreeDevice;
-  }
+#include "ISPCDevice_ispc.h"
+
+extern "C" RTCDevice ispc_embreeDevice()
+{
+  return ospray::api::ISPCDevice::embreeDevice;
 }
 
 namespace ospray {
   namespace api {
+
+    using SetParamFcn = void(OSPObject, const char *, const void *);
+
+    template <typename T>
+    static void setParamOnObject(OSPObject _obj, const char *p, const T &v)
+    {
+      auto *obj = (ManagedObject *)_obj;
+      obj->setParam(p, v);
+    }
+
+#define declare_param_setter(TYPE)                                           \
+  {                                                                          \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) { \
+      setParamOnObject(o, p, *(TYPE *)v);                                    \
+    }                                                                        \
+  }
+
+#define declare_param_setter_object(TYPE)                                    \
+  {                                                                          \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) { \
+      ManagedObject *obj = *(TYPE *)v;                                       \
+      setParamOnObject(o, p, obj);                                           \
+    }                                                                        \
+  }
+
+#define declare_param_setter_string(TYPE)                                    \
+  {                                                                          \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) { \
+      const char *str = (const char *)v;                                     \
+      setParamOnObject(o, p, std::string(str));                              \
+    }                                                                        \
+  }
+
+    static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
+        declare_param_setter(Device *),
+        declare_param_setter(void *),
+        declare_param_setter(bool),
+        declare_param_setter_object(ManagedObject *),
+        declare_param_setter_object(Camera *),
+        declare_param_setter_object(Data *),
+        declare_param_setter_object(FrameBuffer *),
+        declare_param_setter_object(Future *),
+        declare_param_setter_object(GeometricModel *),
+        declare_param_setter_object(Group *),
+        declare_param_setter_object(ImageOp *),
+        declare_param_setter_object(Instance *),
+        declare_param_setter_object(Light *),
+        declare_param_setter_object(Material *),
+        declare_param_setter_object(Renderer *),
+        declare_param_setter_object(Texture *),
+        declare_param_setter_object(TransferFunction *),
+        declare_param_setter_object(Volume *),
+        declare_param_setter_object(VolumetricModel *),
+        declare_param_setter_object(World *),
+        declare_param_setter_string(const char *),
+        declare_param_setter(char *),
+        declare_param_setter(char),
+        declare_param_setter(unsigned char),
+        declare_param_setter(vec2uc),
+        declare_param_setter(vec3uc),
+        declare_param_setter(vec4uc),
+        declare_param_setter(short),
+        declare_param_setter(int),
+        declare_param_setter(vec2i),
+        declare_param_setter(vec3i),
+        declare_param_setter(vec4i),
+        declare_param_setter(unsigned int),
+        declare_param_setter(vec2ui),
+        declare_param_setter(vec3ui),
+        declare_param_setter(vec4ui),
+        declare_param_setter(int64_t),
+        declare_param_setter(vec2l),
+        declare_param_setter(vec3l),
+        declare_param_setter(vec4l),
+        declare_param_setter(uint64_t),
+        declare_param_setter(vec2ul),
+        declare_param_setter(vec3ul),
+        declare_param_setter(vec4ul),
+        declare_param_setter(float),
+        declare_param_setter(vec2f),
+        declare_param_setter(vec3f),
+        declare_param_setter(vec4f),
+        declare_param_setter(double),
+        declare_param_setter(box1i),
+        declare_param_setter(box2i),
+        declare_param_setter(box3i),
+        declare_param_setter(box4i),
+        declare_param_setter(box1f),
+        declare_param_setter(box2f),
+        declare_param_setter(box3f),
+        declare_param_setter(box4f),
+        declare_param_setter(linear2f),
+        declare_param_setter(linear3f),
+        declare_param_setter(affine2f),
+        declare_param_setter(affine3f)};
+
+#undef declare_param_setter
 
     RTCDevice ISPCDevice::embreeDevice = nullptr;
 
@@ -58,292 +165,151 @@ namespace ospray {
       }
     }
 
-    static void embreeErrorFunc(void *, const RTCError code, const char* str)
+    static void embreeErrorFunc(void *, const RTCError code, const char *str)
     {
       postStatusMsg() << "#osp: embree internal error " << code << " : " << str;
-      throw std::runtime_error("embree internal error '" +std::string(str)+"'");
+      throw std::runtime_error("embree internal error '" + std::string(str) +
+                               "'");
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // ManagedObject Implementation ///////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     void ISPCDevice::commit()
     {
       Device::commit();
 
+      TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
+
+      tasking::initTaskingSystem(numThreads, true);
+
       if (!embreeDevice) {
-      // -------------------------------------------------------
-      // initialize embree. (we need to do this here rather than in
-      // ospray::init() because in mpi-mode the latter is also called
-      // in the host-stubs, where it shouldn't.
-      // -------------------------------------------------------
+        // -------------------------------------------------------
+        // initialize embree. (we need to do this here rather than in
+        // ospray::init() because in mpi-mode the latter is also called
+        // in the host-stubs, where it shouldn't.
+        // -------------------------------------------------------
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
         rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
         RTCError erc = rtcGetDeviceError(embreeDevice);
         if (erc != RTC_ERROR_NONE) {
           // why did the error function not get called !?
           postStatusMsg() << "#osp:init: embree internal error number " << erc;
-          assert(erc == RTC_ERROR_NONE);
+          throw std::runtime_error("failed to initialize Embree");
         }
-
       }
 
-      TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
-    }
+      vklLoadModule("ispc_driver");
 
-    OSPFrameBuffer
-    ISPCDevice::frameBufferCreate(const vec2i &size,
-                                   const OSPFrameBufferFormat mode,
-                                   const uint32 channels)
-    {
-      FrameBuffer::ColorBufferFormat colorBufferFormat = mode;
+      VKLDriver driver = nullptr;
 
-      FrameBuffer *fb = new LocalFrameBuffer(size, colorBufferFormat, channels);
-      return (OSPFrameBuffer)fb;
-    }
-
-    void ISPCDevice::frameBufferClear(OSPFrameBuffer _fb,
-                                       const uint32 fbChannelFlags)
-    {
-      LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
-      fb->clear(fbChannelFlags);
-    }
-
-    /*! map frame buffer */
-    const void *ISPCDevice::frameBufferMap(OSPFrameBuffer _fb,
-                                           OSPFrameBufferChannel channel)
-    {
-      LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
-      return fb->mapBuffer(channel);
-    }
-
-    /*! unmap previously mapped frame buffer */
-    void ISPCDevice::frameBufferUnmap(const void *mapped,
-                                       OSPFrameBuffer _fb)
-    {
-      FrameBuffer *fb = (FrameBuffer *)_fb;
-      fb->unmap(mapped);
-    }
-
-    /*! create a new model */
-    OSPModel ISPCDevice::newModel()
-    {
-      return (OSPModel)new Model;
-    }
-
-    /*! finalize a newly specified model */
-    void ISPCDevice::commit(OSPObject _object)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->commit();
-    }
-
-    /*! add a new geometry to a model */
-    void ISPCDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
-    {
-      Model *model = (Model *)_model;
-      Geometry *geometry = (Geometry *)_geometry;
-      model->geometry.push_back(geometry);
-    }
-
-    void ISPCDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
-    {
-      Model *model = (Model *)_model;
-      Geometry *geometry = (Geometry *)_geometry;
-
-      auto it = std::find_if(model->geometry.begin(),
-                             model->geometry.end(),
-                             [&](const Ref<ospray::Geometry> &g) {
-                               return geometry == &*g;
-                             });
-
-      if(it != model->geometry.end()) {
-        model->geometry.erase(it);
+      int ispc_width = ispc::ISPCDevice_programCount();
+      switch (ispc_width) {
+      case 4:
+        driver = vklNewDriver("ispc_4");
+        break;
+      case 8:
+        driver = vklNewDriver("ispc_8");
+        break;
+      case 16:
+        driver = vklNewDriver("ispc_16");
+        break;
+      default:
+        driver = vklNewDriver("ispc");
+        break;
       }
+
+      vklDriverSetErrorFunc(driver, [](VKLError, const char *message) {
+        handleError(OSP_UNKNOWN_ERROR, message);
+      });
+
+      vklDriverSetLogFunc(driver, [](const char *message) {
+        postStatusMsg(OSP_LOG_INFO) << message;
+      });
+
+      vklDriverSetInt(driver, "logLevel", logLevel);
+
+      vklCommitDriver(driver);
+      vklSetCurrentDriver(driver);
     }
 
-    /*! add a new volume to a model */
-    void ISPCDevice::addVolume(OSPModel _model, OSPVolume _volume)
+    ///////////////////////////////////////////////////////////////////////////
+    // Device Implementation //////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    int ISPCDevice::loadModule(const char *name)
     {
-      Model *model = (Model *) _model;
-      Volume *volume = (Volume *) _volume;
-      model->volume.push_back(volume);
+      return loadLocalModule(name);
     }
 
-    void ISPCDevice::removeVolume(OSPModel _model, OSPVolume _volume)
+    ///////////////////////////////////////////////////////////////////////////
+    // OSPRay Data Arrays /////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPData ISPCDevice::newSharedData(const void *sharedData,
+                                      OSPDataType type,
+                                      const vec3ul &numItems,
+                                      const vec3l &byteStride)
     {
-      Model *model = (Model *)_model;
-      Volume *volume = (Volume *)_volume;
-
-      auto it = std::find_if(model->volume.begin(),
-                             model->volume.end(),
-                             [&](const Ref<ospray::Volume> &g) {
-                               return volume == &*g;
-                             });
-
-      if(it != model->volume.end()) {
-        model->volume.erase(it);
-      }
+      return (OSPData) new Data(sharedData, type, numItems, byteStride);
     }
 
-    /*! create a new data buffer */
-    OSPData ISPCDevice::newData(size_t nitems, OSPDataType format,
-                                 const void *init, int flags)
+    OSPData ISPCDevice::newData(OSPDataType type, const vec3ul &numItems)
     {
-      Data *data = new Data(nitems,format,init,flags);
-      return (OSPData)data;
+      return (OSPData) new Data(type, numItems);
     }
 
-    /*! assign (named) string parameter to an object */
-    void ISPCDevice::setString(OSPObject _object,
-                                const char *bufName,
-                                const char *s)
+    void ISPCDevice::copyData(const OSPData source,
+                              OSPData destination,
+                              const vec3ul &destinationIndex)
     {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam<std::string>(bufName, s);
+      Data *dst = (Data *)destination;
+      dst->copy(*(Data *)source, destinationIndex);
     }
 
-    /*! assign (named) string parameter to an object */
-    void ISPCDevice::setVoidPtr(OSPObject _object,
-                                 const char *bufName,
-                                 void *v)
+    ///////////////////////////////////////////////////////////////////////////
+    // Renderable Objects /////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPLight ISPCDevice::newLight(const char *type)
     {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
+      return (OSPLight)Light::createInstance(type);
     }
 
-    void ISPCDevice::removeParam(OSPObject _object, const char *name)
+    OSPCamera ISPCDevice::newCamera(const char *type)
     {
-      ManagedObject *object = (ManagedObject *)_object;
-      // ManagedObjects have to be decref before removing them
-      ManagedObject *existing = object->getParam<ManagedObject*>(name, nullptr);
-      if (existing)
-          existing->refDec();
-      object->removeParam(name);
+      return (OSPCamera)Camera::createInstance(type);
     }
 
-    /*! assign (named) int parameter to an object */
-    void ISPCDevice::setInt(OSPObject _object,
-                            const char *bufName,
-                            const int f)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, f);
-    }
-
-    /*! assign (named) float parameter to an object */
-    void ISPCDevice::setBool(OSPObject _object,
-                             const char *bufName,
-                             const bool b)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, b);
-    }
-
-    /*! assign (named) float parameter to an object */
-    void ISPCDevice::setFloat(OSPObject _object,
-                              const char *bufName,
-                              const float f)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, f);
-    }
-
-    /*! Copy data into the given volume. */
-    int ISPCDevice::setRegion(OSPVolume handle, const void *source,
-                              const vec3i &index, const vec3i &count)
-    {
-      Volume *volume = (Volume *)handle;
-      return volume->setRegion(source, index, count);
-    }
-
-    /*! assign (named) vec2f parameter to an object */
-    void ISPCDevice::setVec2f(OSPObject _object,
-                              const char *bufName,
-                              const vec2f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    /*! assign (named) vec3f parameter to an object */
-    void ISPCDevice::setVec3f(OSPObject _object,
-                              const char *bufName,
-                              const vec3f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    /*! assign (named) vec3f parameter to an object */
-    void ISPCDevice::setVec4f(OSPObject _object,
-                              const char *bufName,
-                              const vec4f &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    /*! assign (named) vec2f parameter to an object */
-    void ISPCDevice::setVec2i(OSPObject _object,
-                              const char *bufName,
-                              const vec2i &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    /*! assign (named) vec3i parameter to an object */
-    void ISPCDevice::setVec3i(OSPObject _object,
-                              const char *bufName,
-                              const vec3i &v)
-    {
-      ManagedObject *object = (ManagedObject *)_object;
-      object->setParam(bufName, v);
-    }
-
-    /*! assign (named) data item as a parameter to an object */
-    void ISPCDevice::setObject(OSPObject _target,
-                               const char *bufName,
-                               OSPObject _value)
-    {
-      ManagedObject *target = (ManagedObject *)_target;
-      ManagedObject *value  = (ManagedObject *)_value;
-      target->setParam(bufName, value);
-    }
-
-    /*! create a new pixelOp object (out of list of registered pixelOps) */
-    OSPPixelOp ISPCDevice::newPixelOp(const char *type)
-    {
-      return (OSPPixelOp)PixelOp::createInstance(type);
-    }
-
-    /*! set a frame buffer's pixel op object */
-    void ISPCDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
-    {
-      FrameBuffer *fb = (FrameBuffer*)_fb;
-      PixelOp *po = (PixelOp*)_op;
-      fb->pixelOp = po->createInstance(fb,fb->pixelOp.ptr);
-    }
-
-    /*! create a new renderer object (out of list of registered renderers) */
-    OSPRenderer ISPCDevice::newRenderer(const char *type)
-    {
-      return (OSPRenderer)Renderer::createInstance(type);
-    }
-
-    /*! create a new geometry object (out of list of registered geometries) */
     OSPGeometry ISPCDevice::newGeometry(const char *type)
     {
       return (OSPGeometry)Geometry::createInstance(type);
     }
 
-    OSPMaterial ISPCDevice::newMaterial(OSPRenderer _renderer,
-                                        const char *material_type)
+    OSPVolume ISPCDevice::newVolume(const char *type)
     {
-      auto *renderer = reinterpret_cast<Renderer*>(_renderer);
-      auto name = renderer->getParamString("externalNameFromAPI");
-      return newMaterial(name.c_str(), material_type);
+      return (OSPVolume) new Volume(type);
     }
 
-    /*! have given renderer create a new material */
+    OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
+    {
+      auto *geom  = (Geometry *)_geom;
+      auto *model = new GeometricModel(geom);
+      return (OSPGeometricModel)model;
+    }
+
+    OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
+    {
+      auto *volume = (Volume *)_volume;
+      auto *model  = new VolumetricModel(volume);
+      return (OSPVolumetricModel)model;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Model Meta-Data ////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
     OSPMaterial ISPCDevice::newMaterial(const char *renderer_type,
                                         const char *material_type)
     {
@@ -351,101 +317,227 @@ namespace ospray {
                                                    material_type);
     }
 
-    /*! create a new camera object (out of list of registered cameras) */
-    OSPCamera ISPCDevice::newCamera(const char *type)
-    {
-      return (OSPCamera)Camera::createInstance(type);
-    }
-
-    /*! create a new volume object (out of list of registered volumes) */
-    OSPVolume ISPCDevice::newVolume(const char *type)
-    {
-      return (OSPVolume)Volume::createInstance(type);
-    }
-
-    /*! create a new volume object (out of list of registered volumes) */
     OSPTransferFunction ISPCDevice::newTransferFunction(const char *type)
     {
       return (OSPTransferFunction)TransferFunction::createInstance(type);
     }
 
-    OSPLight ISPCDevice::newLight(const char *type)
-    {
-      return (OSPLight)Light::createInstance(type);
-    }
-
-    /*! create a new Texture object */
     OSPTexture ISPCDevice::newTexture(const char *type)
     {
       return (OSPTexture)Texture::createInstance(type);
     }
 
-    /*! load module */
-    int ISPCDevice::loadModule(const char *name)
+    ///////////////////////////////////////////////////////////////////////////
+    // Instancing /////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPGroup ISPCDevice::newGroup()
     {
-      return loadLocalModule(name);
+      return (OSPGroup) new Group;
     }
 
-    /*! call a renderer to render a frame buffer */
-    float ISPCDevice::renderFrame(OSPFrameBuffer _fb,
-                                  OSPRenderer    _renderer,
-                                  const uint32   fbChannelFlags)
+    OSPInstance ISPCDevice::newInstance(OSPGroup _group)
     {
-      FrameBuffer *fb       = (FrameBuffer *)_fb;
-      Renderer    *renderer = (Renderer *)_renderer;
-
-      return renderer->renderFrame(fb, fbChannelFlags);
+      auto *group    = (Group *)_group;
+      auto *instance = new Instance(group);
+      return (OSPInstance)instance;
     }
 
-    //! release (i.e., reduce refcount of) given object
-    /*! Note that all objects in ospray are refcounted, so one cannot
-      explicitly "delete" any object. Instead, each object is created
-      with a refcount of 1, and this refcount will be
-      increased/decreased every time another object refers to this
-      object resp. releases its hold on it; if the refcount is 0 the
-      object will automatically get deleted. For example, you can
-      create a new material, assign it to a geometry, and immediately
-      after this assignation release it; the material will
-      stay 'alive' as long as the given geometry requires it. */
+    ///////////////////////////////////////////////////////////////////////////
+    // Top-level Worlds ///////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPWorld ISPCDevice::newWorld()
+    {
+      return (OSPWorld) new World;
+    }
+
+    box3f ISPCDevice::getBounds(OSPObject _obj)
+    {
+      auto *obj = (ManagedObject *)_obj;
+      return obj->getBounds();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Object + Parameter Lifetime Management /////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    void ISPCDevice::setObjectParam(OSPObject object,
+                                    const char *name,
+                                    OSPDataType type,
+                                    const void *mem)
+    {
+      if (type == OSP_UNKNOWN)
+        throw std::runtime_error("cannot set OSP_UNKNOWN parameter type");
+
+      if (type == OSP_BYTE || type == OSP_RAW) {
+        setParamOnObject(object, name, *(const byte_t *)mem);
+        return;
+      }
+
+      setParamFcns[type](object, name, mem);
+    }
+
+    void ISPCDevice::removeObjectParam(OSPObject _object, const char *name)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      ManagedObject *existing =
+          object->getParam<ManagedObject *>(name, nullptr);
+      if (existing)
+        existing->refDec();
+      object->removeParam(name);
+    }
+
+    void ISPCDevice::commit(OSPObject _object)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      object->commit();
+      object->checkUnused();
+      object->resetAllParamQueryStatus();
+    }
+
     void ISPCDevice::release(OSPObject _obj)
     {
-      if (!_obj) return;
       ManagedObject *obj = (ManagedObject *)_obj;
       obj->refDec();
     }
 
-    //! assign given material to given geometry
-    void ISPCDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
+    void ISPCDevice::retain(OSPObject _obj)
     {
-      Geometry *geometry = (Geometry*)_geometry;
-      Material *material = (Material*)_material;
-      geometry->setMaterial(material);
+      ManagedObject *obj = (ManagedObject *)_obj;
+      obj->refInc();
     }
 
-    OSPPickResult ISPCDevice::pick(OSPRenderer _renderer,
+    ///////////////////////////////////////////////////////////////////////////
+    // FrameBuffer Manipulation ///////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPFrameBuffer ISPCDevice::frameBufferCreate(
+        const vec2i &size,
+        const OSPFrameBufferFormat mode,
+        const uint32 channels)
+    {
+      FrameBuffer::ColorBufferFormat colorBufferFormat = mode;
+
+      FrameBuffer *fb = new LocalFrameBuffer(size, colorBufferFormat, channels);
+      return (OSPFrameBuffer)fb;
+    }
+
+    OSPImageOperation ISPCDevice::newImageOp(const char *type)
+    {
+      return (OSPImageOperation)ImageOp::createInstance(type);
+    }
+
+    const void *ISPCDevice::frameBufferMap(OSPFrameBuffer _fb,
+                                           OSPFrameBufferChannel channel)
+    {
+      LocalFrameBuffer *fb = (LocalFrameBuffer *)_fb;
+      return fb->mapBuffer(channel);
+    }
+
+    void ISPCDevice::frameBufferUnmap(const void *mapped, OSPFrameBuffer _fb)
+    {
+      FrameBuffer *fb = (FrameBuffer *)_fb;
+      fb->unmap(mapped);
+    }
+
+    float ISPCDevice::getVariance(OSPFrameBuffer _fb)
+    {
+      FrameBuffer *fb = (FrameBuffer *)_fb;
+      return fb->getVariance();
+    }
+
+    void ISPCDevice::resetAccumulation(OSPFrameBuffer _fb)
+    {
+      LocalFrameBuffer *fb = (LocalFrameBuffer *)_fb;
+      fb->clear();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Frame Rendering ////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    OSPRenderer ISPCDevice::newRenderer(const char *type)
+    {
+      return (OSPRenderer)Renderer::createInstance(type);
+    }
+
+    OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
+                                      OSPRenderer _renderer,
+                                      OSPCamera _camera,
+                                      OSPWorld _world)
+    {
+      FrameBuffer *fb    = (FrameBuffer *)_fb;
+      Renderer *renderer = (Renderer *)_renderer;
+      Camera *camera     = (Camera *)_camera;
+      World *world       = (World *)_world;
+
+      fb->setCompletedEvent(OSP_NONE_FINISHED);
+
+      fb->refInc();
+      renderer->refInc();
+      camera->refInc();
+      world->refInc();
+
+      auto *f = new RenderTask(fb, [=]() {
+        float result = renderer->renderFrame(fb, camera, world);
+
+        fb->refDec();
+        renderer->refDec();
+        camera->refDec();
+        world->refDec();
+
+        return result;
+      });
+
+      return (OSPFuture)f;
+    }
+
+    int ISPCDevice::isReady(OSPFuture _task, OSPSyncEvent event)
+    {
+      auto *task = (Future *)_task;
+      return task->isFinished(event);
+    }
+
+    void ISPCDevice::wait(OSPFuture _task, OSPSyncEvent event)
+    {
+      auto *task = (Future *)_task;
+      task->wait(event);
+    }
+
+    void ISPCDevice::cancel(OSPFuture _task)
+    {
+      auto *task = (Future *)_task;
+      return task->cancel();
+    }
+
+    float ISPCDevice::getProgress(OSPFuture _task)
+    {
+      auto *task = (Future *)_task;
+      return task->getProgress();
+    }
+
+    OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
+                                   OSPRenderer _renderer,
+                                   OSPCamera _camera,
+                                   OSPWorld _world,
                                    const vec2f &screenPos)
     {
-      Renderer *renderer = (Renderer*)_renderer;
-      return renderer->pick(screenPos);
+      FrameBuffer *fb    = (FrameBuffer *)_fb;
+      Renderer *renderer = (Renderer *)_renderer;
+      Camera *camera     = (Camera *)_camera;
+      World *world       = (World *)_world;
+      return renderer->pick(fb, camera, world, screenPos);
     }
 
-    void ISPCDevice::sampleVolume(float **results,
-                                  OSPVolume _volume,
-                                  const vec3f *worldCoordinates,
-                                  const size_t &count)
+    extern "C" OSPError ospray_module_init_ispc(int16_t versionMajor,
+                                                int16_t versionMinor,
+                                                int16_t /*versionPatch*/)
     {
-      Volume *volume = (Volume *)_volume;
-      volume->computeSamples(results, worldCoordinates, count);
+      return moduleVersionCheck(versionMajor, versionMinor);
     }
 
-    OSP_REGISTER_DEVICE(ISPCDevice, local_device);
-    OSP_REGISTER_DEVICE(ISPCDevice, local);
-    OSP_REGISTER_DEVICE(ISPCDevice, default_device);
-    OSP_REGISTER_DEVICE(ISPCDevice, default);
+    OSP_REGISTER_DEVICE(ISPCDevice, cpu);
 
-  } // ::ospray::api
-} // ::ospray
-
-extern "C" OSPRAY_DLLEXPORT void ospray_init_module_ispc()
-{
-}
+  }  // namespace api
+}  // namespace ospray

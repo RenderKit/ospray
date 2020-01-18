@@ -27,12 +27,6 @@ namespace ospray {
     virtual ~AmbientLight() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
-
-    vec3f getRadiance() const;
-
-  private:
-    vec3f color {1.f};    //!< RGB color of the light
-    float intensity {1.f};//!< Amount of light emitted
   };
 
 } // ::ospray

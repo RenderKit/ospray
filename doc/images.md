@@ -21,3 +21,5 @@
 [imgMaterialLuminous]: material_Luminous.jpg { width=60% }
 [imgColoredWindow]: ColoredWindow.jpg { width=60% }
 [imgExampleViewer]: exampleViewer.jpg
+[imgStructuredSphericalCoords]: structured_spherical_coords.svg { width=60% }
+

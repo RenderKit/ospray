@@ -17,19 +17,20 @@
 #pragma once
 
 #include "common/Managed.h"
-#include "ospray/OSPTexture.h"
 
 namespace ospray {
 
   struct OSPRAY_SDK_INTERFACE Texture : public ManagedObject
   {
+    Texture();
     virtual ~Texture() override = default;
 
     virtual std::string toString() const override;
 
-    /*! \brief creates a Texture2D object with the given parameter */
     static Texture *createInstance(const char *type);
   };
+
+  OSPTYPEFOR_SPECIALIZATION(Texture *, OSP_TEXTURE);
 
   /*! \brief registers a internal ospray::<ClassName> geometry under
       the externally accessible name "external_name"

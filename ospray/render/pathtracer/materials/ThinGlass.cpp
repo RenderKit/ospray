@@ -36,21 +36,17 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit()  override
       {
-        const float eta = getParamf("eta", 1.5f);
+        const float eta = getParam<float>("eta", 1.5f);
         const vec3f& attenuationColor =
-          getParam3f("attenuationColor",
-              getParam3f("transmission",
-                getParam3f("color", vec3f(1.f))));
+          getParam<vec3f>("attenuationColor", vec3f(1.f));
         const float attenuationDistance =
-          getParamf("attenuationDistance", 1.f);
-        const float thickness = getParamf("thickness", 1.f);
+          getParam<float>("attenuationDistance", 1.f);
+        const float thickness = getParam<float>("thickness", 1.f);
 
         Texture2D *map_attenuationColor =
-          (Texture2D*)getParamObject("map_attenuationColor",
-              getParamObject("colorMap", nullptr));
+          (Texture2D*)getParamObject("map_attenuationColor");
         affine2f xform_attenuationColor =
-          getTextureTransform("map_attenuationColor")
-          * getTextureTransform("colorMap");
+          getTextureTransform("map_attenuationColor");
 
         ispc::PathTracer_ThinGlass_set(getIE()
             , eta
@@ -63,7 +59,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pathtracer, ThinGlass, ThinGlass);
-    OSP_REGISTER_MATERIAL(pt, ThinGlass, ThinGlass);
+    OSP_REGISTER_MATERIAL(pathtracer, ThinGlass, thinGlass);
   }
 }

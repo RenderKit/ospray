@@ -35,12 +35,12 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        vec3f reflectance              = getParam3f("reflectance",
+        vec3f reflectance              = getParam<vec3f>("reflectance",
                                                     vec3f(.4f,0.f,0.f));
-        float backScattering           = getParam1f("backScattering",.5f);
-        vec3f horizonScatteringColor   = getParam3f("horizonScatteringColor",
+        float backScattering           = getParam<float>("backScattering",.5f);
+        vec3f horizonScatteringColor   = getParam<vec3f>("horizonScatteringColor",
                                                     vec3f(.75f,.1f,.1f));
-        float horizonScatteringFallOff = getParam1f("horizonScatteringFallOff",10);
+        float horizonScatteringFallOff = getParam<float>("horizonScatteringFallOff",10);
 
         ispc::PathTracer_Velvet_set
           (getIE(), (const ispc::vec3f&)reflectance,(const ispc::vec3f&)horizonScatteringColor,
@@ -48,7 +48,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pathtracer, Velvet, Velvet);
-    OSP_REGISTER_MATERIAL(pt, Velvet, Velvet);
+    OSP_REGISTER_MATERIAL(pathtracer, Velvet, velvet);
   }
 }

@@ -15,386 +15,204 @@
 // ======================================================================== //
 
 // ospray
-#include "math/vec.ih"
-#include "math/box.ih"
+#include "common/Data.ih"
+#include "common/Intersect.ih"
 #include "common/Ray.ih"
-#include "common/Model.ih"
-#include "common/safe_gather.ih"
+#include "common/World.ih"
 #include "geometry/Geometry.ih"
+#include "math/box.ih"
 #include "math/sampling.ih"
-#include "ospray/OSPDataType.h"
+#include "math/vec.ih"
 
-struct Spheres {
-  /*! inherit from "Geometry" class: */
-  Geometry   super;
-
-  /*! data array that contains the sphere data (possibly but not
-    necessarily including the color, which could be in color);
-    most offset and stride values point into here.  */
-  uint8     *data;
-  int32      stride;
-  int        offset_center;
-  int        offset_radius;
-  int        offset_materialID;
-  int        offset_colorID;
-
-  float      radius;
-  int        materialID;
-
-  uint8      *color;
-  int         color_stride;
-  int         color_offset;
-  int         color_format;
-
-  vec2f     *texcoord;
-
-  bool huge_mesh;
+struct Spheres
+{
+  Geometry super;
+  Data1D vertex;
+  Data1D radius;
+  Data1D texcoord;
+  float global_radius;
 };
 
-inline int32 Spheres_getMaterialID(const uniform Spheres *uniform self,
-                                   int32 primID)
-{
-  int32 materialID = -1;
-  if (self->offset_materialID >= 0) {
-    const uniform int32 primsPerPage = (1024*1024*64);
-    if (any(primID >= primsPerPage )) {
-      const int primPageID  = primID / primsPerPage;
-      const int localPrimID = primID % primsPerPage;
-      foreach_unique (primPage in primPageID) {
-        uniform uint8 *uniform pagePtr = self->data
-          + (((int64)primPage)
-             * primsPerPage
-             * self->stride);
-        uniform uint8 *varying spherePtr = pagePtr
-          + self->stride*localPrimID;
-        materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-      }
-    } else {
-      uniform uint8 *varying spherePtr = self->data
-        + self->stride*primID;
-      materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-    }
-  } else {
-    materialID = self->materialID;
-  }
-  return materialID;
-}
-
-static void Spheres_postIntersect(uniform Geometry *uniform geometry,
-                                  uniform Model *uniform model,
+static void Spheres_postIntersect(const Geometry *uniform geometry,
                                   varying DifferentialGeometry &dg,
                                   const varying Ray &ray,
                                   uniform int64 flags)
 {
-  uniform Spheres *uniform self = (uniform Spheres *uniform)geometry;
+  Spheres *uniform self = (Spheres * uniform) geometry;
 
   dg.Ng = dg.Ns = ray.Ng;
 
-  uint8 * spherePtr = self->data + self->stride*((int64)ray.primID);
-  float radius = self->radius;
-  if (self->offset_radius >= 0)
-    radius = *((float *)(spherePtr + self->offset_radius));
+  float radius = self->global_radius;
+  if (valid(self->radius))
+    radius = get_float(self->radius, ray.primID);
+
   // make epsilon large enough to not get lost when computing
   // |CO| = |center-ray.org| ~ radius for 2ndary rays
   dg.epsilon = radius * ulpEpsilon;
 
-  if ((flags & DG_COLOR) && self->color) {
-    uint32 colorID = 0;
-    if (self->offset_colorID >= 0) {
-      uniform uint8 *varying spherePtr =
-        self->data + self->stride*ray.primID;
-      colorID = *((uniform uint32 *varying)(spherePtr+self->offset_colorID));
-    } else
-      colorID = ray.primID;
-    if (self->color_format == OSP_FLOAT4) {
-      dg.color = gather_byte_stride_vec4f(self->huge_mesh,
-                                          self->color + self->color_offset,
-                                          self->color_stride,
-                                          colorID);
-    } else if (self->color_format == OSP_FLOAT3
-        || self->color_format == OSP_FLOAT3A)
-    {
-      vec3f c = gather_byte_stride_vec3f(self->huge_mesh,
-                                         self->color + self->color_offset,
-                                         self->color_stride,
-                                         colorID);
-      dg.color = make_vec4f(c.x, c.y, c.z, 1.f);
-    } else if (self->color_format == OSP_UCHAR4) {
-      const uint32 c = gather_stride_uint32(self->huge_mesh,
-                                            self->color + self->color_offset,
-                                            self->color_stride,
-                                            colorID);
-      dg.color.x = (c & 0x000000ff) / 255.0;
-      dg.color.y = ((c & 0x0000ff00) >> 8) / 255.0;
-      dg.color.z = ((c & 0x00ff0000) >> 16) / 255.0;
-      dg.color.w = ((c & 0xff000000) >> 24) / 255.0;
-    }
-  }
-
-  if (flags & DG_TEXCOORD && self->texcoord)
-    dg.st = self->texcoord[ray.primID];
-
-  if (flags & DG_MATERIALID) {
-    dg.materialID = Spheres_getMaterialID(self, ray.primID);
-  }
+  if (and(flags & DG_TEXCOORD, valid(self->texcoord)))
+    dg.st = get_vec2f(self->texcoord, ray.primID);
 }
 
 unmasked void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
-  Spheres *uniform self = (Spheres *uniform)args->geometryUserPtr;
-  uniform int primID = args->primID;
-  uint8 *uniform spherePtr = self->data + self->stride*((uniform int64)primID);
-  uniform bool offr = self->offset_radius >= 0;
-  uniform float radius =
-    offr ? *((uniform float *uniform)(spherePtr+self->offset_radius)) :
-    self->radius;
-  uniform vec3f center = *((vec3f*uniform)(spherePtr+self->offset_center));
-  box3fa *uniform out = (box3fa *uniform)args->bounds_o;
-  *out = make_box3fa(center - radius, center + radius);
+  Spheres *uniform self = (Spheres * uniform) args->geometryUserPtr;
+  uniform int primID    = args->primID;
+  uniform float radius  = valid(self->radius) ? get_float(self->radius, primID)
+                                             : self->global_radius;
+  uniform vec3f center = get_vec3f(self->vertex, primID);
+  box3fa *uniform out  = (box3fa * uniform) args->bounds_o;
+  *out                 = make_box3fa(center - radius, center + radius);
 }
 
-void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
+void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
+                                  args,
                               const uniform bool isOcclusionTest)
 {
   // make sure to set the mask
-  if (!args->valid[programIndex]) return;
-
-  Spheres *uniform self = (Spheres *uniform)args->geometryUserPtr;
-  uniform int primID = args->primID;
-
-  // this assumes that the args->rayhit is actually a pointer to a varying ray!
-  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
-
-  uint8 *uniform spherePtr = self->data + self->stride*((uniform int64)primID);
-  uniform float radius = self->radius;
-  if (self->offset_radius >= 0) {
-    radius = *((float *uniform)(spherePtr + self->offset_radius));
-  }
-  uniform vec3f center = *((vec3f*uniform)(spherePtr + self->offset_center));
-
-  const vec3f d = ray->dir;
-  const float rd2 = 1.0f / dot(d, d); // 1/a
-  const vec3f CO = center - ray->org;
-  // transformation to avoid missing a small sphere which is far away:
-  // the standard c=CO^2-r^2 would quickly loose term r due to float arithmetic
-  const float projCO = dot(CO, d) * rd2; // in ray-space
-  const vec3f perp = CO - projCO * d;
-  const float l2 = dot(perp, perp);
-  const uniform float r2 = sqr(radius);
-  if (l2 > r2)
+  if (!args->valid[programIndex])
     return;
 
-  float td = sqrt((r2 - l2) * rd2);
-  const float t_in = projCO - td;
-  const float t_out = projCO + td;
-  // above solutions are problematic if rays starts close to the sphere
-  // (due to catastrophic cancellation, because then |projCO| ~ td)
-  // the usual recommendation is to choose the one solution with same sign:
-  //   const float t1 = projCO + floatbits(signbits(projCO)|intbits(td));
-  // and compute the other solution via t1*t2=c/a:
-  //   const float t2 = (dot(CO, CO) - r2) / t1 * rd2;
-  // this is more precise, but still problematic in particular for large
-  // spheres, because |CO| ~ r; slightly better alternative, but costly sqrt:
-  //   const float f = sqrt(dot(CO, CO));
-  //   const float t2 = (f - radius) * (f + radius) / t1 * rd2;
-  // the only variant I found that has high enough precision to avoid
-  // self-intersections of 2ndary rays is to (re-)compute most terms (CO, dot,
-  // r2, t2) with doubles; large spheres are a rare usecase for OSPRay, thus we
-  // use instead as a workaround an additional, radius-dependent epsilon
+  Spheres *uniform self = (Spheres * uniform) args->geometryUserPtr;
+  uniform int primID    = args->primID;
+
+  // this assumes that the args->rayhit is actually a pointer to a varying ray!
+  varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
+
+  uniform float radius = valid(self->radius) ? get_float(self->radius, primID)
+                                             : self->global_radius;
+  uniform vec3f center = get_vec3f(self->vertex, primID);
+
+  const Intersections isect =
+      intersectSphere(ray->org, ray->dir, center, radius);
 
   bool hit = false;
-  // avoid short-circuiting &&
-  if (and(ray->t0 < t_in, t_in <= ray->t)) {
-    hit = true;
-    td *= -1.f;
-    ray->t = t_in;
-  } else if (and(ray->t0 < t_out, t_out <= ray->t)) {
-    hit = true;
-    ray->t = t_out;
+  if (and(and(isect.entry.t > ray->t0, isect.entry.t <= ray->t),
+          isect.entry.hit)) {
+    hit     = true;
+    ray->t  = isect.entry.t;
+    ray->Ng = isect.entry.N;
+  } else if (and(and(isect.exit.t > ray->t0, isect.exit.t <= ray->t),
+                 isect.exit.hit)) {
+    hit     = true;
+    ray->t  = isect.exit.t;
+    ray->Ng = isect.exit.N;
   }
 
   if (hit) {
-    cif (isOcclusionTest) {
+    if (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
       ray->primID = primID;
-      ray->geomID = self->super.geomID;
+      ray->geomID = 0;
       ray->instID = args->context->instID[0];
-      // cannot easily be moved to postIntersect
-      // we need hit in object space, in postIntersect it is in world-space
-      ray->Ng = td * d - perp;
     }
   }
 }
 
-unmasked void Spheres_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+unmasked void Spheres_intersect(
+    const struct RTCIntersectFunctionNArguments *uniform args)
 {
-  Spheres_intersect_kernel(args,false);
+  Spheres_intersect_kernel(args, false);
 }
 
-unmasked void Spheres_occluded(const struct RTCIntersectFunctionNArguments *uniform args)
+unmasked void Spheres_occluded(
+    const struct RTCOccludedFunctionNArguments *uniform args)
 {
-  Spheres_intersect_kernel(args,true);
+  Spheres_intersect_kernel((RTCIntersectFunctionNArguments *)args, true);
 }
 
-int32 Spheres_getMaterialID(
-                            const Geometry *uniform const _self
-                            , const int32 primID
-                            )
+SampleAreaRes Spheres_sampleArea(const Geometry *uniform const _self,
+                                 const int32 primID,
+                                 const uniform affine3f &xfm,
+                                 const uniform affine3f &rcp_xfm,
+                                 const vec2f &s)
 {
   const Spheres *const uniform self = (const Spheres *uniform)_self;
-  return Spheres_getMaterialID(self, primID);
-}
 
-SampleAreaRes Spheres_sampleArea(
-                                 const Geometry *uniform const _self
-                                 , const int32 primID
-                                 , const uniform affine3f &xfm
-                                 , const uniform affine3f &rcp_xfm
-                                 , const vec2f& s
-                                 )
-{
-  const Spheres *const uniform self = (const Spheres *uniform)_self;
-  float radius = self->radius;
-  vec3f center;
-
-  const uniform int32 primsPerPage = (1024*1024*64);
-  if (any(primID >= primsPerPage )) {
-    const int primPageID  = primID / primsPerPage;
-    const int localPrimID = primID % primsPerPage;
-    foreach_unique(primPage in primPageID) {
-      uint8 *uniform pagePtr = self->data
-        + (((int64)primPage)
-           * primsPerPage
-           * self->stride);
-      uint8 *spherePtr = pagePtr + self->stride*localPrimID;
-      center = *((vec3f*)(spherePtr+self->offset_center));
-      if (self->offset_radius >= 0)
-        radius = *((float *)(spherePtr+self->offset_radius));
-    }
-  } else {
-    uint8 *spherePtr = self->data + self->stride*primID;
-    center = *((vec3f*)(spherePtr+self->offset_center));
-    if (self->offset_radius >= 0)
-      radius = *((float *)(spherePtr+self->offset_radius));
-  }
+  float radius = self->global_radius;
+  if (valid(self->radius))
+    radius = get_float(self->radius, primID);
 
   const vec3f localNormal = uniformSampleSphere(radius, s);
-  const vec3f localPos = center + localNormal;
+  const vec3f localPos    = get_vec3f(self->vertex, primID) + localNormal;
 
   SampleAreaRes res;
-  res.pos = xfmPoint(xfm, localPos);
+  res.pos    = xfmPoint(xfm, localPos);
   res.normal = normalize(xfmVector(transposed(rcp_xfm.l), localNormal));
 
   return res;
 }
 
-void Spheres_getAreas(
-                      const Geometry *const uniform _self
-                      , const int32 *const uniform primIDs
-                      , const uniform int32 numPrims
-                      , const uniform affine3f &xfm
-                      , float *const uniform areas
-                      )
+void Spheres_getAreas(const Geometry *const uniform _self,
+                      const int32 *const uniform primIDs,
+                      const uniform int32 numPrims,
+                      const uniform affine3f &xfm,
+                      float *const uniform areas)
 {
-  Spheres *uniform self = (Spheres *uniform)_self;
+  Spheres *uniform self = (Spheres * uniform) _self;
 
   // detect (non-uniform) scaling; get length of transformed unit-vectors
   const uniform vec3f scaling3 =
-    make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
+      make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
   const uniform float min_scaling = reduce_min(scaling3);
   const uniform float max_scaling = reduce_max(scaling3);
-  if ((max_scaling - min_scaling) > 1e-4f*min_scaling)
-    print("#osp:Spheres_getAreas: Non-uniform scaling in instance "
-          "transformation detected! Importance sampling for emissive "
-          "materials and thus resulting image may be wrong.\n");
+  if ((max_scaling - min_scaling) > 1e-4f * min_scaling) {
+    print(
+        "#osp:Spheres_getAreas: Non-uniform scaling in instance "
+        "transformation detected! Importance sampling for emissive "
+        "materials and thus resulting image may be wrong.\n");
+  }
   // use average as approximation to closest uniform scaling
-  const uniform float scaling = reduce_add(scaling3)/3.f;
+  const uniform float scale = four_pi * sqr(reduce_add(scaling3) / 3.f);
 
-  if (self->offset_radius < 0) {
-    const uniform float sphereArea = four_pi * sqr(self->radius * scaling);
+  if (!valid(self->radius)) {
+    const uniform float sphereArea = scale * sqr(self->global_radius);
     foreach (i = 0 ... numPrims)
       areas[i] = sphereArea;
   } else {
-    const uniform int64 stride = self->stride;
     // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
-    for (uniform int32 i = 0; i < numPrims; i++) {
-      const uniform uint8 *uniform radiusPtr = self->data + self->offset_radius + primIDs[i] * stride;
-      const uniform float radius = *((float *uniform)radiusPtr);
-      areas[i] = four_pi * sqr(radius * scaling);
-    }
+    for (uniform int32 i = 0; i < numPrims; i++)
+      areas[i] = scale * sqr(get_float(self->radius, i));
   }
 }
 
+void Spheres_Constructor(Spheres *uniform self, void *uniform cppEquivalent)
+{
+  Geometry_Constructor(&self->super, cppEquivalent, Spheres_postIntersect);
+  self->super.getAreas   = Spheres_getAreas;
+  self->super.sampleArea = Spheres_sampleArea;
+  Data1D_Constructor(&self->vertex);
+  Data1D_Constructor(&self->radius);
+  Data1D_Constructor(&self->texcoord);
+  self->global_radius = 0.01;
+}
 
 export void *uniform Spheres_create(void *uniform cppEquivalent)
 {
-  uniform Spheres *uniform self = uniform new uniform Spheres;
-  Geometry_Constructor(&self->super,cppEquivalent,
-                       Spheres_postIntersect,
-                       NULL,
-                       NULL,
-                       0,NULL);
+  Spheres *uniform self = uniform new Spheres;
+  Spheres_Constructor(self, cppEquivalent);
   return self;
 }
 
-export void SpheresGeometry_set(void  *uniform _self
-                                , void *uniform _model
-                                , void *uniform data
-                                , void *uniform materialList
-                                , vec2f *uniform texcoord
-                                , void *uniform color
-                                , uniform int color_offset
-                                , uniform int color_stride
-                                , uniform int color_format
-                                , uniform int numSpheres
-                                , uniform int bytesPerSphere
-                                , uniform float radius
-                                , uniform int materialID
-                                , uniform int offset_center
-                                , uniform int offset_radius
-                                , uniform int offset_materialID
-                                , uniform int offset_colorID
-                                , uniform bool huge_mesh
-                                )
+export void SpheresGeometry_set(void *uniform _self,
+                                void *uniform _embreeGeometry,
+                                const Data1D *uniform vertex,
+                                const Data1D *uniform radius,
+                                const Data1D *uniform texcoord,
+                                uniform float global_radius)
 {
-  uniform Spheres *uniform self = (uniform Spheres *uniform)_self;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  Spheres *uniform self = (Spheres * uniform) _self;
 
-  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
-  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+  self->vertex              = *vertex;
+  self->radius              = *radius;
+  self->texcoord            = *texcoord;
+  self->global_radius       = global_radius;
+  self->super.numPrimitives = vertex->numItems;
 
-  self->super.model = model;
-  self->super.geomID = geomID;
-  self->super.numPrimitives = numSpheres;
-  self->super.getAreas = Spheres_getAreas;
-  self->super.sampleArea = Spheres_sampleArea;
-  self->super.materialList = (Material **)materialList;
-  self->texcoord = texcoord;
-  self->color = (uint8 *uniform)color;
-  self->color_stride = color_stride;
-  self->color_offset = color_offset;
-  self->color_format = color_format;
-  self->radius = radius;
-  self->data = (uint8 *uniform)data;
-  self->materialID = materialID;
-  self->stride = bytesPerSphere;
-
-  self->offset_center     = offset_center;
-  self->offset_radius     = offset_radius;
-  self->offset_materialID = offset_materialID;
-  self->offset_colorID    = offset_colorID;
-
-  self->huge_mesh = huge_mesh;
-
-  rtcSetGeometryUserData(geom, self);
-  rtcSetGeometryUserPrimitiveCount(geom,numSpheres);
-  rtcSetGeometryBoundsFunction
-    (geom,(uniform RTCBoundsFunction)&Spheres_bounds, self);
-  rtcSetGeometryIntersectFunction
-    (geom,(uniform RTCIntersectFunctionN)&Spheres_intersect);
-  rtcSetGeometryOccludedFunction
-    (geom,(uniform RTCOccludedFunctionN)&Spheres_occluded);
-  rtcCommitGeometry(geom);
-  rtcReleaseGeometry(geom);
+  Geometry_setEmbreeUserGeometry(&self->super,
+                                 (RTCGeometry)_embreeGeometry,
+                                 Spheres_bounds,
+                                 Spheres_intersect,
+                                 Spheres_occluded);
 }

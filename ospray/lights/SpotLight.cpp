@@ -32,33 +32,30 @@ namespace ospray {
   void SpotLight::commit()
   {
     Light::commit();
-    position  = getParam3f("position", vec3f(0.f));
-    direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
-    color     = getParam3f("color", vec3f(1.f));
-    intensity = getParam1f("intensity", 1.f);
-    openingAngle = getParam1f("openingAngle", 2.0f * getParam1f("halfAngle"/*deprecated*/, 90.f));
-    penumbraAngle = getParam1f("penumbraAngle", 5.f);
-    radius    = getParam1f("radius", 0.f);
+    position      = getParam<vec3f>("position", vec3f(0.f));
+    direction     = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
+    openingAngle  = getParam<float>("openingAngle", 180.f);
+    penumbraAngle = getParam<float>("penumbraAngle", 5.f);
+    radius        = getParam<float>("radius", 0.f);
 
     // check ranges and pre-compute parameters
-    vec3f power = color * intensity;
-    direction = normalize(direction);
-    openingAngle = clamp(openingAngle, 0.f, 180.f);
-    penumbraAngle = clamp(penumbraAngle, 0.f, 0.5f*openingAngle);
-    const float cosAngleMax = ospcommon::cos(deg2rad(0.5f*openingAngle));
-    const float cosAngleMin = ospcommon::cos(deg2rad(0.5f*openingAngle - penumbraAngle));
-    const float cosAngleScale = 1.0f/(cosAngleMin - cosAngleMax);
+    direction     = normalize(direction);
+    openingAngle  = clamp(openingAngle, 0.f, 180.f);
+    penumbraAngle = clamp(penumbraAngle, 0.f, 0.5f * openingAngle);
+
+    const float cosAngleMax = std::cos(deg2rad(0.5f * openingAngle));
+    const float cosAngleMin =
+        std::cos(deg2rad(0.5f * openingAngle - penumbraAngle));
+    const float cosAngleScale = 1.0f / (cosAngleMin - cosAngleMax);
 
     ispc::SpotLight_set(getIE(),
-                        (ispc::vec3f&)position,
-                        (ispc::vec3f&)direction,
-                        (ispc::vec3f&)power,
+                        (ispc::vec3f &)position,
+                        (ispc::vec3f &)direction,
                         cosAngleMax,
                         cosAngleScale,
                         radius);
   }
 
-  OSP_REGISTER_LIGHT(SpotLight, SpotLight);
-  OSP_REGISTER_LIGHT(SpotLight, ExtendedSpotLight);
   OSP_REGISTER_LIGHT(SpotLight, spot);
-}
+
+}  // namespace ospray

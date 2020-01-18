@@ -16,55 +16,42 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/ManagedObject.h>
-#include <ospray/ospray_cpp/Material.h>
+#include "ManagedObject.h"
 
 namespace ospray {
-  namespace cpp    {
+  namespace cpp {
 
-    class Geometry : public ManagedObject_T<OSPGeometry>
+    class Geometry : public ManagedObject<OSPGeometry, OSP_GEOMETRY>
     {
-    public:
-
+     public:
       Geometry(const std::string &type);
       Geometry(const Geometry &copy);
-      Geometry(OSPGeometry existing);
-
-      void setMaterial(Material &m) const;
-      void setMaterial(OSPMaterial m) const;
+      Geometry(OSPGeometry existing = nullptr);
     };
 
-    // Inlined function definitions ///////////////////////////////////////////////
+    static_assert(sizeof(Geometry) == sizeof(OSPGeometry),
+                  "cpp::Geometry can't have data members!");
+
+    // Inlined function definitions ///////////////////////////////////////////
 
     inline Geometry::Geometry(const std::string &type)
     {
-      OSPGeometry c = ospNewGeometry(type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("Failed to create OSPGeometry!");
-      }
+      ospObject = ospNewGeometry(type.c_str());
     }
 
-    inline Geometry::Geometry(const Geometry &copy) :
-      ManagedObject_T<OSPGeometry>(copy.handle())
+    inline Geometry::Geometry(const Geometry &copy)
+        : ManagedObject<OSPGeometry, OSP_GEOMETRY>(copy.handle())
+    {
+      ospRetain(copy.handle());
+    }
+
+    inline Geometry::Geometry(OSPGeometry existing)
+        : ManagedObject<OSPGeometry, OSP_GEOMETRY>(existing)
     {
     }
 
-    inline Geometry::Geometry(OSPGeometry existing) :
-      ManagedObject_T<OSPGeometry>(existing)
-    {
-    }
+  }  // namespace cpp
 
-    inline void Geometry::setMaterial(Material &m) const
-    {
-      setMaterial(m.handle());
-    }
+  OSPTYPEFOR_SPECIALIZATION(cpp::Geometry, OSP_GEOMETRY);
 
-    inline void Geometry::setMaterial(OSPMaterial m) const
-    {
-      ospSetMaterial(handle(), m);
-    }
-
-  }// namespace cpp
-}// namespace ospray
+}  // namespace ospray

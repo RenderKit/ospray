@@ -21,7 +21,9 @@
 
 namespace ospray {
 
-  // manages error per tile and adaptive regions, for variance estimation
+/* manages error per tile and adaptive regions, for variance estimation
+  Implementation based on Dammertz et al., "A Hierarchical Automatic Stopping
+  Condition for Monte Carlo Global Illumination", WSCG 2010 */
   class OSPRAY_SDK_INTERFACE TileError
   {
     public:

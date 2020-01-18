@@ -16,44 +16,44 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/ManagedObject.h>
+#include "ManagedObject.h"
 
 namespace ospray {
-namespace cpp    {
+  namespace cpp {
 
-class TransferFunction : public ManagedObject_T<OSPTransferFunction>
-{
-public:
+    class TransferFunction
+        : public ManagedObject<OSPTransferFunction, OSP_TRANSFER_FUNCTION>
+    {
+     public:
+      TransferFunction(const std::string &type);
+      TransferFunction(const TransferFunction &copy);
+      TransferFunction(OSPTransferFunction existing = nullptr);
+    };
 
-  TransferFunction();
-  TransferFunction(const std::string &type);
-  TransferFunction(const TransferFunction &copy);
-  TransferFunction(OSPTransferFunction existing);
-};
+    static_assert(sizeof(TransferFunction) == sizeof(OSPTransferFunction),
+                  "cpp::TransferFunction can't have data members!");
 
-// Inlined function definitions ///////////////////////////////////////////////
+    // Inlined function definitions ///////////////////////////////////////////
 
-inline TransferFunction::TransferFunction() {}
+    inline TransferFunction::TransferFunction(const std::string &type)
+    {
+      ospObject = ospNewTransferFunction(type.c_str());
+    }
 
-inline TransferFunction::TransferFunction(const std::string &type)
-{
-  OSPTransferFunction c = ospNewTransferFunction(type.c_str());
-  if (c) {
-    ospObject = c;
-  } else {
-    throw std::runtime_error("Failed to create OSPTransferFunction!");
-  }
-}
+    inline TransferFunction::TransferFunction(const TransferFunction &copy)
+        : ManagedObject<OSPTransferFunction, OSP_TRANSFER_FUNCTION>(
+              copy.handle())
+    {
+      ospRetain(copy.handle());
+    }
 
-inline TransferFunction::TransferFunction(const TransferFunction &copy) :
-  ManagedObject_T<OSPTransferFunction>(copy.handle())
-{
-}
+    inline TransferFunction::TransferFunction(OSPTransferFunction existing)
+        : ManagedObject<OSPTransferFunction, OSP_TRANSFER_FUNCTION>(existing)
+    {
+    }
 
-inline TransferFunction::TransferFunction(OSPTransferFunction existing) :
-  ManagedObject_T<OSPTransferFunction>(existing)
-{
-}
+  }  // namespace cpp
 
-}// namespace cpp
-}// namespace ospray
+  OSPTYPEFOR_SPECIALIZATION(cpp::TransferFunction, OSP_TRANSFER_FUNCTION);
+
+}  // namespace ospray

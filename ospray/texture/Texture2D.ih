@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/OSPTexture.h"
+#include "ospray/OSPEnums.h"
 #include "math/vec.ih"
 #include "../common/DifferentialGeometry.ih"
 

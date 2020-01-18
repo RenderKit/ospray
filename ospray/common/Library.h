@@ -16,9 +16,11 @@
 
 #pragma once
 
-#include "ospcommon/library.h"
+#include "ospcommon/os/library.h"
 
 namespace ospray {
+
   using ospcommon::getSymbol;
   using ospcommon::loadLibrary;
-}
+
+}  // namespace ospray

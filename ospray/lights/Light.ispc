@@ -32,9 +32,13 @@ Light_EvalRes Light_eval(const uniform Light* uniform,
 //////////////////////////////////////////////////////////////////////////////
 
 //! Set the parameters of an ispc-side Light object
-export void Light_set(void* uniform _self, const uniform bool isVisible)
+export void Light_set(void *uniform _self,
+                      const uniform vec3f &radiance,
+                      const uniform bool isVisible)
 {
-  Light* uniform self = (Light* uniform)_self;
+  Light *uniform self = (Light * uniform) _self;
+
+  self->radiance  = radiance;
   self->isVisible = isVisible;
 }
 

@@ -16,41 +16,42 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/ManagedObject.h>
+#include "ManagedObject.h"
 
 namespace ospray {
-  namespace cpp    {
+  namespace cpp {
 
-    class Light : public ManagedObject_T<OSPLight>
+    class Light : public ManagedObject<OSPLight, OSP_LIGHT>
     {
-    public:
-
+     public:
       Light(const std::string &light_type);
       Light(const Light &copy);
-      Light(OSPLight existing);
+      Light(OSPLight existing = nullptr);
     };
+
+    static_assert(sizeof(Light) == sizeof(OSPLight),
+                  "cpp::Light can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
     inline Light::Light(const std::string &light_type)
     {
-      auto c = ospNewLight3(light_type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("Failed to create OSPLight (of type '"+light_type+"')!");
-      }
+      ospObject = ospNewLight(light_type.c_str());
     }
 
-    inline Light::Light(const Light &copy) :
-      ManagedObject_T<OSPLight>(copy.handle())
+    inline Light::Light(const Light &copy)
+        : ManagedObject<OSPLight, OSP_LIGHT>(copy.handle())
+    {
+      ospRetain(copy.handle());
+    }
+
+    inline Light::Light(OSPLight existing)
+        : ManagedObject<OSPLight, OSP_LIGHT>(existing)
     {
     }
 
-    inline Light::Light(OSPLight existing) :
-      ManagedObject_T<OSPLight>(existing)
-    {
-    }
+  }  // namespace cpp
 
-  }// namespace cpp
-}// namespace ospray
+  OSPTYPEFOR_SPECIALIZATION(cpp::Light, OSP_LIGHT);
+
+}  // namespace ospray

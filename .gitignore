@@ -2,7 +2,7 @@
 *#
 bin
 *.user*
-build*
+./build*
 *.sw?
 tags
 .ycm_extra_conf.pyc
@@ -22,9 +22,9 @@ ispc
 readme.pdf
 !/modules
 /modules/*
-!/modules/mpi
 !/modules/pluggableGeometryExample
 !/modules/simdGeometryExample
+!/modules/denoiser
 *.vim
 .idea/
 premake.local.*

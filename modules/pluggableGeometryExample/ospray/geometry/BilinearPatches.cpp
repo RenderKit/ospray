@@ -31,22 +31,14 @@ namespace ospray {
     'bilinar_patch' etc would all work equally well. */
   namespace blp {
 
-    /*! constructor - will create the 'ispc equivalent' */
     BilinearPatches::BilinearPatches()
     {
       /*! create the 'ispc equivalent': ie, the ispc-side class that
         implements all the ispc-side code for intersection,
         postintersect, etc. See BilinearPatches.ispc */
-      this->ispcEquivalent = ispc::BilinearPatches_create(this);
-
-      // note we do _not_ yet do anything else here - the actual input
-      // data isn't available to use until 'commit()' gets called
-    }
-
-    /*! destructor - supposed to clean up all alloced memory */
-    BilinearPatches::~BilinearPatches()
-    {
-      ispc::BilinearPatches_destroy(ispcEquivalent);
+      ispcEquivalent = ispc::BilinearPatches_create(this);
+      embreeGeometry =
+          rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
     }
 
     /*! commit - this is the function that parses all the parameters
@@ -56,50 +48,27 @@ namespace ospray {
       control points */
     void BilinearPatches::commit()
     {
-      this->patchesData = getParamData("vertices");
+      this->patchesData = getParamDataT<vec3f>("vertices", true);
 
-      /* assert that some valid input data is available */
-      if (!this->patchesData) {
-
-        std::cout << "#osp.blp: Warning: no input patches provided "
-                  << "for bilinear_patches geometry" << std::endl;
-        return;
-      }
-    }
-
-    /*! 'finalize' is what ospray calls when everything is set and
-        done, and a actual user geometry has to be built */
-    void BilinearPatches::finalize(Model *model)
-    {
-      // sanity check if a patches data was actually set!
-      if (!patchesData)
-        return;
-
-      Geometry::finalize(model);
+      if (!patchesData && !patchesData->compact())
+        throw std::runtime_error(
+            "BilinearPatches needs compact 'vertices' data!");
 
       // look at the data we were provided with ....
-      size_t numPatchesInInput = patchesData->numBytes / sizeof(Patch);
+      size_t numPatchesInInput = numPrimitives();
 
-      /* get the acutal 'raw' pointer to the data (ispc doesn't know
-         what to do with the 'Data' abstraction class */
-      void *patchesDataPointer = patchesData->data;
-      ispc::BilinearPatches_finalize(getIE(),model->getIE(),
-                                     (float*)patchesDataPointer,
+      ispc::BilinearPatches_finalize(getIE(),
+                                     embreeGeometry,
+                                     (float *)patchesData->data(),
                                      numPatchesInInput);
 
-      /* important: set our bounding box, else renderer can't compute
-         global bounding box, and may get confused with epsilon
-         compuatations */
-      bounds = empty;
-      const Patch *patch = (const Patch *)patchesDataPointer;
-      for (uint32_t i = 0; i < numPatchesInInput; i++) {
-        bounds.extend(patch[i].controlPoint[0][0]);
-        bounds.extend(patch[i].controlPoint[0][1]);
-        bounds.extend(patch[i].controlPoint[1][0]);
-        bounds.extend(patch[i].controlPoint[1][1]);
-      }
+      postCreationInfo(patchesData->size());
     }
 
+    size_t BilinearPatches::numPrimitives() const
+    {
+      return patchesData->size() * sizeOf(patchesData->type) / sizeof(Patch);
+    }
 
     /*! maybe one of the most important parts of this example: this
         macro 'registers' the BilinearPatches class under the ospray
@@ -113,5 +82,5 @@ namespace ospray {
     */
     OSP_REGISTER_GEOMETRY(BilinearPatches, bilinear_patches);
 
-  } // ::ospray::bilinearPatch
-} // ::ospray
+  }  // namespace blp
+}  // namespace ospray

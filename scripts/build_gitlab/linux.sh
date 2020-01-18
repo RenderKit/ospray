@@ -18,14 +18,17 @@
 mkdir build
 cd build
 
-cmake \
-  -D OSPRAY_BUILD_ISA=ALL \
-  -D OSPRAY_ENABLE_TESTING=ON \
-  -D OSPRAY_AUTO_DOWNLOAD_TEST_IMAGES=OFF \
-  -D OSPRAY_MODULE_BILINEAR_PATCH=ON \
-  -D OSPRAY_SG_CHOMBO=OFF \
-  -D OSPRAY_SG_OPENIMAGEIO=OFF \
-  -D OSPRAY_SG_VTK=OFF \
-  "$@" ..
+# NOTE(jda) - Some Linux OSs need to have lib/ on LD_LIBRARY_PATH at build time
+export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
 
-make -j`nproc` && make test
+cmake --version
+
+cmake -L \
+  -D CMAKE_INSTALL_LIBDIR=lib \
+  -D BUILD_OSPRAY_CI_TESTS=ON \
+  -D BUILD_EMBREE_FROM_SOURCE=OFF \
+  -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF \
+  "$@" \
+ ../scripts/superbuild
+
+cmake --build .

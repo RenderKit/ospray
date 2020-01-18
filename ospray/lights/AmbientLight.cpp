@@ -32,20 +32,9 @@ namespace ospray {
   void AmbientLight::commit()
   {
     Light::commit();
-
-    color     = getParam3f("color", vec3f(1.f));
-    intensity = getParam1f("intensity", 1.f);
-
-    vec3f radiance = getRadiance();
-    ispc::AmbientLight_set(getIE(), (ispc::vec3f&)radiance);
+    ispc::AmbientLight_set(getIE());
   }
 
-  vec3f AmbientLight::getRadiance() const
-  {
-    return color * intensity;
-  }
-
-  OSP_REGISTER_LIGHT(AmbientLight, AmbientLight);
   OSP_REGISTER_LIGHT(AmbientLight, ambient);
 
 } // ::ospray

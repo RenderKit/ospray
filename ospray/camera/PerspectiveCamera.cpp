@@ -36,14 +36,14 @@ namespace ospray {
     // ------------------------------------------------------------------
     // first, "parse" the additional expected parameters
     // ------------------------------------------------------------------
-    fovy = getParamf("fovy", 60.f);
-    aspect = getParamf("aspect", 1.f);
-    apertureRadius = getParamf("apertureRadius", 0.f);
-    focusDistance = getParamf("focusDistance", 1.f);
-    architectural = getParam1i("architectural", false);
-    stereoMode = (StereoMode)getParam1i("stereoMode", OSP_STEREO_NONE);
+    fovy = getParam<float>("fovy", 60.f);
+    aspect = getParam<float>("aspect", 1.f);
+    apertureRadius = getParam<float>("apertureRadius", 0.f);
+    focusDistance = getParam<float>("focusDistance", 1.f);
+    architectural = getParam<bool>("architectural", false);
+    stereoMode = (OSPStereoMode)getParam<int>("stereoMode", OSP_STEREO_NONE);
     // the default 63.5mm represents the average human IPD
-    interpupillaryDistance = getParamf("interpupillaryDistance", 0.0635f);
+    interpupillaryDistance = getParam<float>("interpupillaryDistance", 0.0635f);
 
     // ------------------------------------------------------------------
     // now, update the local precomputed values
@@ -70,6 +70,11 @@ namespace ospray {
         break;
       case OSP_STEREO_NONE:
         break;
+      case OSP_STEREO_UNKNOWN:
+        throw std::runtime_error(
+            "perspective camera 'stereoMode' is invalid. Must be one of: "
+            "OSP_STEREO_LEFT, OSP_STEREO_RIGHT, OSP_STEREO_SIDE_BY_SIDE, "
+            "OSP_STEREO_NONE");
     }
 
     imgPlaneSize.y = 2.f * tanf(deg2rad(0.5f * fovy));
@@ -123,8 +128,6 @@ namespace ospray {
     return ProjectedPoint(vec3f(sp.x, sp.y, depth), 0);
   }
 
-  OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);
-  OSP_REGISTER_CAMERA(PerspectiveCamera,thinlens);
-  OSP_REGISTER_CAMERA(PerspectiveCamera,stereo);
+  OSP_REGISTER_CAMERA(PerspectiveCamera, perspective);
 
 } // ::ospray

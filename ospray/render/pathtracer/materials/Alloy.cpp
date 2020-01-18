@@ -38,15 +38,15 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        const vec3f& color = getParam3f("color", vec3f(0.9f));
+        const vec3f& color = getParam<vec3f>("color", vec3f(0.9f));
         Texture2D *map_color = (Texture2D*)getParamObject("map_color");
         affine2f xform_color = getTextureTransform("map_color");
 
-        const vec3f& edgeColor = getParam3f("edgeColor", vec3f(1.f));
+        const vec3f& edgeColor = getParam<vec3f>("edgeColor", vec3f(1.f));
         Texture2D *map_edgeColor = (Texture2D*)getParamObject("map_edgeColor");
         affine2f xform_edgeColor = getTextureTransform("map_edgeColor");
 
-        const float roughness = getParamf("roughness", 0.1f);
+        const float roughness = getParam<float>("roughness", 0.1f);
         Texture2D *map_roughness = (Texture2D*)getParamObject("map_roughness");
         affine2f xform_roughness = getTextureTransform("map_roughness");
 
@@ -64,7 +64,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pathtracer, Alloy, Alloy);
-    OSP_REGISTER_MATERIAL(pt, Alloy, Alloy);
+    OSP_REGISTER_MATERIAL(pathtracer, Alloy, alloy);
   }
 }

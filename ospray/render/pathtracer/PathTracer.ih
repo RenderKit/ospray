@@ -17,7 +17,6 @@
 #pragma once
 
 #include "math/vec.ih"
-#include "common/Model.ih"
 #include "fb/FrameBuffer.ih"
 #include "render/util.ih"
 #include "lights/Light.ih"
@@ -30,16 +29,14 @@ struct PathTracer {
 
   int32 rouletteDepth;
   float maxRadiance;
-  Texture2D* uniform backplate;
   // coefficients of plane equation defining geometry to catch shadows for
   // compositing; disabled if normal is zero-length
   vec4f shadowCatcherPlane;
   bool shadowCatcher; // preprocessed
 
+  Material* uniform volumetricMaterial;
+
   const uniform Light *uniform *uniform lights;
   uint32 numLights;
   uint32 numGeoLights;
-  // XXX hack: there is no concept of instance data, but need pdfs (wrt. area)
-  // of geometry light instances
-  float *uniform areaPDF;
 };

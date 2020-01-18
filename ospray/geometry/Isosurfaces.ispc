@@ -15,108 +15,105 @@
 // ======================================================================== //
 
 // ospray
-#include "math/vec.ih"
-#include "math/box.ih"
 #include "common/Ray.ih"
-#include "common/Model.ih"
+#include "common/World.ih"
 #include "geometry/Geometry.ih"
+#include "math/box.ih"
+#include "math/vec.ih"
+#include "openvkl/iterator.isph"
 #include "volume/Volume.ih"
 
-struct Isosurfaces {
-  uniform Geometry super; //!< inherited geometry fields
-  uniform float *uniform isovalues;
-  uniform Volume *uniform volume;
+struct Isosurfaces
+{
+  Geometry super;  //!< inherited geometry fields
+  float *isovalues;
+  VolumetricModel *volumetricModel;
+  VKLValueSelector valueSelector;
 };
 
 unmasked void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
-  uniform Isosurfaces *uniform self = (uniform Isosurfaces *uniform)args->geometryUserPtr;
+  uniform Isosurfaces *uniform self =
+      (uniform Isosurfaces * uniform) args->geometryUserPtr;
   uniform int primID = args->primID;
 
-  box3fa *uniform out = (box3fa *uniform)args->bounds_o;
-  *out = make_box3fa(self->volume->boundingBox);
+  box3fa *uniform out = (box3fa * uniform) args->bounds_o;
+  *out                = make_box3fa(self->volumetricModel->volume->boundingBox);
 }
 
-void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
-                                const uniform bool isOcclusionTest)
+void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
+                                      args,
+                                  const uniform bool isOcclusionTest)
 {
   // make sure to set the mask
-  if (!args->valid[programIndex]) return;
+  if (!args->valid[programIndex])
+    return;
 
-  uniform Isosurfaces *uniform self
-    = (uniform Isosurfaces *uniform)args->geometryUserPtr;
+  Isosurfaces *uniform self   = (Isosurfaces * uniform) args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
 
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
-  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
+  varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
 
-  uniform Volume *uniform volume = self->volume;
+  Volume *uniform volume = self->volumetricModel->volume;
 
-  float hit_t;
-  vec3f hit_Ng;
+  VKLHitIterator iterator;
+  vkl_range1f tRange;
+  tRange.lower = ray->t0;
+  tRange.upper = ray->t;
+  vklInitHitIteratorV(&iterator,
+                      self->volumetricModel->volume->vklVolume,
+                      (varying vkl_vec3f *)&ray->org,
+                      (varying vkl_vec3f *)&ray->dir,
+                      &tRange,
+                      self->valueSelector);
+  VKLHit hit;
+  bool gotHit = vklIterateHitV(&iterator, &hit);
 
-  /* iw - just to explain the following code sequence: in embree3, the
-     'occluded' function no longer guarantees that we have a 'full'
-     ospray ray to intersect (the ospray ray is what emrbee calls a
-     rayhit, the concatenation of ray _and_ hitpoint!), but that
-     voluem->intersectIsoSurface code seems to assume that this is
-     always a ful ospray::ray. So, just to make sure that this code
-     always has a valid "full" ray to work with I'm creating a temp
-     one here, and then, when writing results back, make sure that we
-     not write any hit information unless it's not an occlusoin
-     test */
-  Ray tmpRay;
-  tmpRay.org = ray->org;
-  tmpRay.time = ray->time;
-  tmpRay.dir = ray->dir;
-  tmpRay.t0 = ray->t0;
-  tmpRay.t = ray->t;
-  tmpRay.instID = -1;
-  tmpRay.geomID = -1;
-  tmpRay.primID = -1;
-
-  volume->intersectIsosurface(volume,
-                              self->isovalues,
-                              self->super.numPrimitives,
-                              self->super.geomID,
-                              tmpRay);
-  const bool hit = tmpRay.primID >= 0;
-  if (hit) {
+  if (gotHit) {
     if (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
-      ray->geomID = self->super.geomID;
-      ray->primID = tmpRay.primID;
-      ray->t =  tmpRay.t;
-      ray->Ng = tmpRay.Ng;
-      ray->u = tmpRay.u; // transport epsilon to postIntersect
+      ray->geomID = 0;
+      ray->primID = 0;  // ??? which primID?
+      ray->t      = hit.t;
+      ray->u =
+          1e-3;  // ??? which epsilon?  // transport epsilon to postIntersect
+
+      // NOTE(jda) - Initialize ray.Ng with something, even if it's wrong
+      //             (better than garbage). Real normals are computed if DG_NS
+      //             flag is specified to postIntersect()
+      ray->Ng = negate(ray->dir);
     }
   }
 }
 
-unmasked void Isosurfaces_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+unmasked void Isosurfaces_intersect(
+    const struct RTCIntersectFunctionNArguments *uniform args)
 {
-  Isosurfaces_intersect_kernel(args,false);
+  Isosurfaces_intersect_kernel(args, false);
 }
 
-unmasked void Isosurfaces_occluded(const struct RTCIntersectFunctionNArguments *uniform args)
+unmasked void Isosurfaces_occluded(
+    const struct RTCOccludedFunctionNArguments *uniform args)
 {
-  Isosurfaces_intersect_kernel(args,true);
+  Isosurfaces_intersect_kernel(
+      (RTCIntersectFunctionNArguments * uniform) args, true);
 }
 
-static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,
-                                      uniform Model *uniform model,
+static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
                                       varying DifferentialGeometry &dg,
                                       const varying Ray &ray,
                                       uniform int64 flags)
 {
-  uniform Isosurfaces *uniform self = (uniform Isosurfaces *uniform)geometry;
+  Isosurfaces *uniform self = (Isosurfaces * uniform) geometry;
+  Volume *uniform volume    = self->volumetricModel->volume;
 
   if (flags & DG_NS) {
-    dg.Ns = self->volume->computeGradient(self->volume, dg.P);
-    if (dot(dg.Ns,dg.Ns) < 1e-6f)
-      dg.Ns = neg(ray.dir); //make_vec3f(1.f,0.f,0.f);
+    dg.Ns = Volume_getGradient(volume, dg.P);
+    if (dot(dg.Ns, dg.Ns) < 1e-6f)
+      dg.Ns = neg(ray.dir);  // make_vec3f(1.f,0.f,0.f);
   }
 
   dg.Ng = dg.Ns;
@@ -126,49 +123,40 @@ static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,
   dg.epsilon = reduce_max(abs(ray.dir)) * ray.u;
 
   if (flags & DG_COLOR) {
-   TransferFunction *uniform xf = self->volume->transferFunction;
-   const vec3f sampleColor = xf->getColorForValue(xf, self->isovalues[ray.primID]);
-   const float sampleOpacity = 1.f; // later allow "opacity" parameter on isosurfaces.
-   dg.color = make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, sampleOpacity);
+    TransferFunction *uniform xf = self->volumetricModel->transferFunction;
+    dg.color = xf->get(xf, self->isovalues[ray.primID]);
   }
 }
 
 export void *uniform Isosurfaces_create(void *uniform cppEquivalent)
 {
   uniform Isosurfaces *uniform isosurfaces = uniform new uniform Isosurfaces;
-
-  Geometry_Constructor(&isosurfaces->super, cppEquivalent, Isosurfaces_postIntersect, NULL, 0, NULL);
-
+  Geometry_Constructor(
+      &isosurfaces->super, cppEquivalent, Isosurfaces_postIntersect);
   return isosurfaces;
 }
 
-export void *uniform Isosurfaces_set(void          *uniform _self,
-                                     void          *uniform _model,
-                                     int32          uniform numIsovalues,
+export void *uniform Isosurfaces_set(void *uniform _self,
+                                     void *uniform _embreeGeometry,
+                                     int32 uniform numIsovalues,
                                      uniform float *uniform isovalues,
-                                     void          *uniform _volume)
+                                     void *uniform _volume,
+                                     void *uniform _valueSelector)
 {
-  uniform Isosurfaces *uniform self = (uniform Isosurfaces *uniform)_self;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
-  uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
+  Isosurfaces *uniform self       = (Isosurfaces * uniform) _self;
+  VolumetricModel *uniform volume = (VolumetricModel * uniform) _volume;
+  VKLValueSelector valueSelector  = (VKLValueSelector)_valueSelector;
 
-  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
-  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
+  self->isovalues           = isovalues;
+  self->volumetricModel     = volume;
+  self->super.numPrimitives = 1; // for embree it is just one prim
+  self->valueSelector       = valueSelector;
 
-  self->super.model = model;
-  self->super.geomID = geomID;
+  Geometry_setEmbreeUserGeometry(&self->super,
+      (RTCGeometry)_embreeGeometry,
+      Isosurfaces_bounds,
+      Isosurfaces_intersect,
+      Isosurfaces_occluded);
+
   self->super.numPrimitives = numIsovalues;
-  self->isovalues = isovalues;
-  self->volume = volume;
-
-  rtcSetGeometryUserData(geom, self);
-  rtcSetGeometryUserPrimitiveCount(geom,1);
-  rtcSetGeometryBoundsFunction
-    (geom,(uniform RTCBoundsFunction)&Isosurfaces_bounds, self);
-  rtcSetGeometryIntersectFunction
-    (geom,(uniform RTCIntersectFunctionN)&Isosurfaces_intersect);
-  rtcSetGeometryOccludedFunction
-    (geom,(uniform RTCOccludedFunctionN)&Isosurfaces_occluded);
-  rtcCommitGeometry(geom);
-  rtcReleaseGeometry(geom);
 }

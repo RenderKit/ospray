@@ -16,45 +16,39 @@
 
 #include "Texture2D.ih"
 
-#include "../volume/Volume.ih"
+#include "volume/VolumetricModel.ih"
 
-vec4f TextureVolume_get(const uniform Texture2D *uniform self,
+vec4f TextureVolume_get(const Texture2D *uniform self,
                         const varying DifferentialGeometry &dg)
 {
-  uniform Volume *uniform volume = (uniform Volume *uniform)self->data;
-  const uniform box3f bounds = volume->boundingBox;
+  VolumetricModel *uniform volumetricModel =
+      (VolumetricModel * uniform) self->data;
+  const uniform box3f bounds = volumetricModel->boundingBox;
 
   if (box_contains(bounds, dg.P)) {
+    Volume *uniform volume = (Volume * uniform) volumetricModel->volume;
     const float sample = Volume_getSample(volume, dg.P);
-    return make_vec4f(Volume_getColor(volume, sample),
-                      Volume_getOpacity(volume, sample));
-  } else {
+    TransferFunction *uniform tfn = volumetricModel->transferFunction;
+    return tfn->get(tfn, sample);
+  } else
     return make_vec4f(0.f);
-  }
 }
 
-vec3f TextureVolume_getN(const uniform Texture2D *uniform self,
+vec3f TextureVolume_getN(const Texture2D *uniform self,
                          const varying DifferentialGeometry &dg)
 {
-  uniform Volume *uniform volume = (uniform Volume *uniform)self->data;
-  const uniform box3f bounds = volume->boundingBox;
-
-  if (box_contains(bounds, dg.P)) {
-    const float sample = Volume_getSample(volume, dg.P);
-    return Volume_getColor(volume, sample);
-  } else {
-    return make_vec3f(0.f);
-  }
+  // TODO
+  return make_vec3f(0.f, 0.0f, 1.0f);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 export void *uniform TextureVolume_create(void *uniform volume)
 {
-  uniform Texture2D *uniform self = uniform new uniform Texture2D;
-  self->data = volume;
-  self->get = TextureVolume_get;
-  self->getNormal = TextureVolume_getN;
+  Texture2D *uniform self = uniform new uniform Texture2D;
+  self->data              = volume;
+  self->get               = TextureVolume_get;
+  self->getNormal         = TextureVolume_getN;
 
   return self;
 }

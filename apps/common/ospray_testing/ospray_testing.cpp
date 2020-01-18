@@ -16,97 +16,88 @@
 
 // ospray_testing
 #include "ospray_testing.h"
-#include "detail/objectFactory.h"
-#include "geometry/Geometry.h"
-#include "lights/Lights.h"
-#include "transferFunction/TransferFunction.h"
-#include "volume/Volume.h"
 // ospcommon
-#include "ospcommon/box.h"
-#include "ospcommon/utility/OnScopeExit.h"
+#include "ospcommon/os/library.h"
+// stl
+#include <map>
 
 using namespace ospcommon;
+using namespace ospcommon::math;
 
-extern "C" OSPRenderer ospTestingNewRenderer(const char *type)
-{
-  auto renderer = ospNewRenderer(type);
-  return renderer;
-}
+namespace ospray {
+  namespace testing {
 
-extern "C" OSPTestingGeometry ospTestingNewGeometry(const char *geom_type,
-                                                    const char *renderer_type)
-{
-  auto geometryCreator =
-      ospray::testing::objectFactory<ospray::testing::Geometry>(
-          "testing_geometry", geom_type);
+    // Helper functions //
 
-  utility::OnScopeExit cleanup([=]() { delete geometryCreator; });
+    template <typename T>
+    inline T *objectFactory(const std::string &categoryName,
+                            const std::string &type)
+    {
+      using namespace ospcommon;
+      // Function pointer type for creating a concrete instance of a subtype of
+      // this class.
+      using creationFunctionPointer = T *(*)();
 
-  if (geometryCreator != nullptr)
-    return geometryCreator->createGeometry(renderer_type);
-  else
-    return {};
-}
+      // Function pointers corresponding to each subtype.
+      static std::map<std::string, creationFunctionPointer> symbolRegistry;
 
-extern "C" OSPTestingVolume ospTestingNewVolume(const char *volume_type)
-{
-  auto volumeCreator = ospray::testing::objectFactory<ospray::testing::Volume>(
-      "testing_volume", volume_type);
+      // Find the creation function for the subtype if not already known.
+      if (symbolRegistry.count(type) == 0) {
+        // Construct the name of the creation function to look for.
+        std::string creationFunctionName =
+            "ospray_create_" + categoryName + "__" + type;
 
-  utility::OnScopeExit cleanup([=]() { delete volumeCreator; });
+        loadLibrary("ospray_testing", false);
 
-  if (volumeCreator != nullptr)
-    return volumeCreator->createVolume();
-  else
-    return {};
-}
+        // Look for the named function.
+        symbolRegistry[type] =
+            (creationFunctionPointer)getSymbol(creationFunctionName);
+      }
 
-extern "C" OSPTransferFunction ospTestingNewTransferFunction(osp::vec2f range,
-                                                             const char *name)
-{
-  auto tfnCreator =
-      ospray::testing::objectFactory<ospray::testing::TransferFunction>(
-          "testing_transfer_function", name);
+      // Create a concrete instance of the requested subtype.
+      auto *object = symbolRegistry[type] ? (*symbolRegistry[type])() : nullptr;
 
-  utility::OnScopeExit cleanup([=]() { delete tfnCreator; });
+      if (object == nullptr) {
+        symbolRegistry.erase(type);
+        throw std::runtime_error(
+            "Could not find " + categoryName + " of type: " + type +
+            ".  Make sure you have the correct OSPRay libraries linked.");
+      }
 
-  if (tfnCreator != nullptr)
-    return tfnCreator->createTransferFunction(range);
-  else
-    return {};
-}
+      return object;
+    }
 
-extern "C" OSPCamera ospTestingNewDefaultCamera(osp::box3f _bounds)
-{
-  auto camera = ospNewCamera("perspective");
+    // ospray_testing definitions //
 
-  auto &upper = _bounds.upper;
-  auto &lower = _bounds.lower;
-  box3f bounds(vec3f(upper.x, upper.y, upper.z),
-               vec3f(lower.x, lower.y, lower.z));
-  vec3f diag = bounds.size();
-  diag       = max(diag, vec3f(0.3f * length(diag)));
+    SceneBuilderHandle newBuilder(const std::string &type)
+    {
+      auto *b = objectFactory<detail::Builder>("testing_builder", type);
+      return (SceneBuilderHandle)b;
+    }
 
-  auto gaze = ospcommon::center(bounds);
-  auto pos  = gaze - .75f * vec3f(-.6 * diag.x, -1.2f * diag.y, .8f * diag.z);
-  auto up   = vec3f(0.f, 1.f, 0.f);
-  auto dir  = normalize(gaze - pos);
+    cpp::Group buildGroup(SceneBuilderHandle _b)
+    {
+      auto *b = (detail::Builder *)_b;
+      return b->buildGroup();
+    }
 
-  ospSet3f(camera, "pos", pos.x, pos.y, pos.z);
-  ospSet3f(camera, "dir", dir.x, dir.y, dir.z);
-  ospSet3f(camera, "up", up.x, up.y, up.z);
-  ospCommit(camera);
+    cpp::World buildWorld(SceneBuilderHandle _b)
+    {
+      auto *b = (detail::Builder *)_b;
+      return b->buildWorld();
+    }
 
-  return camera;
-}
+    void commit(SceneBuilderHandle _b)
+    {
+      auto *b = (detail::Builder *)_b;
+      b->commit();
+    }
 
-extern "C" OSPData ospTestingNewLights(const char *lighting_set_name)
-{
-  auto *lightsCreator = ospray::testing::objectFactory<ospray::testing::Lights>(
-      "testing_lights", lighting_set_name);
+    void release(SceneBuilderHandle _b)
+    {
+      auto *b = (detail::Builder *)_b;
+      b->refDec();
+    }
 
-  if (lightsCreator != nullptr)
-    return lightsCreator->createLights();
-  else
-    return nullptr;
-}
+  }  // namespace testing
+}  // namespace ospray

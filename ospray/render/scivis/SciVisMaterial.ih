@@ -16,25 +16,14 @@
 
 #pragma once
 
-#include "math/vec.ih"
 #include "common/Material.ih"
+#include "math/vec.ih"
 #include "texture/Texture2D.ih"
-#include "texture/TextureParam.ih"
-#include "volume/Volume.ih"
 
-//! ispc-equivalent of ospray::raytracer::SciVisMaterial
 struct SciVisMaterial
 {
-  uniform Material super; //!< inherited material properties
-  TextureParam map_d;
-  float d;
-  TextureParam map_Kd;
+  Material super;
   vec3f Kd;
-  TextureParam map_Ks;
-  vec3f Ks;
-  TextureParam map_Ns;
-  float Ns;
-  TextureParam map_Bump;
-  linear2f rot_Bump; // just the inverse of rotational/mirror part
-  uniform Volume *uniform volume;
+  float d;
+  Texture2D *map_Kd;
 };

@@ -18,8 +18,6 @@
 #include "Geometry.h"
 #include "common/Data.h"
 #include "common/Util.h"
-// ISPC exports
-#include "Geometry_ispc.h"
 
 namespace ospray {
 
@@ -28,48 +26,10 @@ namespace ospray {
     managedObjectType = OSP_GEOMETRY;
   }
 
-  void Geometry::setMaterial(Material *mat)
+  Geometry::~Geometry()
   {
-    if (!mat) {
-      postStatusMsg("#osp: warning - tried to set NULL material; ignoring. "
-          "(Note this means that object may not get any material at all!)");
-      return;
-    }
-
-    OSPMaterial ospMat = (OSPMaterial)mat;
-    auto *data = new Data(1, OSP_OBJECT, &ospMat);
-    setMaterialList(data);
-    data->refDec();
-  }
-
-  void Geometry::setMaterialList(Data *matListData)
-  {
-    if (!matListData || matListData->numItems == 0) {
-      postStatusMsg("#osp: warning - tried to set NULL material list, ignoring."
-          " (Note this means that object may not get any material at all!)");
-      return;
-    }
-
-    materialListData = matListData;
-    materialList = (Material**)materialListData->data;
-
-    if (!getIE()) {
-      postStatusMsg("#osp: warning: geometry does not have an "
-                    "ispc equivalent!");
-    }
-    else {
-      const int numMaterials = materialListData->numItems;
-      ispcMaterialPtrs.resize(numMaterials);
-      for (int i = 0; i < numMaterials; i++)
-        ispcMaterialPtrs[i] = materialList[i]->getIE();
-
-      ispc::Geometry_setMaterialList(this->getIE(), ispcMaterialPtrs.data());
-    }
-  }
-
-  Material *Geometry::getMaterial() const
-  {
-    return materialList ? materialList[0] : nullptr;
+    if (embreeGeometry)
+      rtcReleaseGeometry(embreeGeometry);
   }
 
   std::string Geometry::toString() const
@@ -77,16 +37,20 @@ namespace ospray {
     return "ospray::Geometry";
   }
 
-  void Geometry::finalize(Model *)
-  {
-    Data *materialListDataPtr = getParamData("materialList");
-    if (materialListDataPtr)
-      setMaterialList(materialListDataPtr);
-  }
-
   Geometry *Geometry::createInstance(const char *type)
   {
     return createInstanceHelper<Geometry, OSP_GEOMETRY>(type);
   }
 
-} // ::ospray
+  void Geometry::postCreationInfo(size_t numVerts) const
+  {
+    std::stringstream ss;
+    ss << toString() << " created: #primitives=" << numPrimitives();
+    if (numVerts > 0)
+      ss << ", #vertices=" << numVerts;
+    postStatusMsg(OSP_LOG_INFO) << ss.str();
+  }
+
+  OSPTYPEFOR_DEFINITION(Geometry *);
+
+}  // namespace ospray

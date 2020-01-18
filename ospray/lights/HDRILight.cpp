@@ -38,9 +38,8 @@ namespace ospray {
   void HDRILight::commit()
   {
     Light::commit();
-    up = getParam3f("up", vec3f(0.f, 1.f, 0.f));
-    dir = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
-    intensity = getParam1f("intensity", 1.f);
+    up = getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f));
+    dir = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
     map  = (Texture2D*)getParamObject("map", nullptr);
 
     linear3f frame;
@@ -49,9 +48,8 @@ namespace ospray {
     frame.vz = cross(frame.vx, frame.vy);
 
     ispc::HDRILight_set(getIE(),
-                        (const ispc::LinearSpace3f&)frame,
-                        map ? map->getIE() : nullptr,
-                        intensity);
+                        (const ispc::LinearSpace3f &)frame,
+                        map ? map->getIE() : nullptr);
   }
 
   OSP_REGISTER_LIGHT(HDRILight, hdri);

@@ -24,11 +24,3 @@
     programCount (16), and must be smaller than TILE_SIZE (in one
     dimension) */
 #define RENDERTILE_PIXELS_PER_JOB @OSPRAY_PIXELS_PER_JOB@
-
-#cmakedefine OSPRAY_USE_EMBREE_STREAMS
-
-/*! if defined, we'll be using the novel block-bricked volume layout
-    with ghost cells. this requires some more memory than the old
-    block-bricked code - and is significantly less tested - but should
-    be faster */
-#cmakedefine EXP_NEW_BB_VOLUME_KERNELS

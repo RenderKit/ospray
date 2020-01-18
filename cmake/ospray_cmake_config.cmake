@@ -70,14 +70,8 @@ endforeach()
 
 install(FILES
   ${OSPRAY_MODULE_INSTALL_FILES}
-  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/FindTBB.cmake
-  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/clang.cmake
-  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/icc.cmake
-  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/ispc.cmake
-  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/gcc.cmake
-  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/msvc.cmake
-  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/macros.cmake#NOTE(jda) - hack!
   ${CMAKE_SOURCE_DIR}/cmake/ospray_macros.cmake
+  ${CMAKE_SOURCE_DIR}/cmake/compiler/ispc.cmake
   DESTINATION ${OSPRAY_CMAKECONFIG_DIR}
   COMPONENT devel
 )

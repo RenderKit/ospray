@@ -70,7 +70,11 @@ template_writeTile(RGBA32F, vec4f, cvt_nop);
 /*! \detailed After this call, the frame buffer will contain 'prev
     accum value + tile value', while the tile will contain '(prev
     accum value + tile value)/numAccums'
-   return tile error */
+   return tile error
+
+Implementation based on
+Dammertz et al., "A Hierarchical Automatic Stopping Condition for Monte Carlo
+Global Illumination", WSCG 2010 */
 export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
                                             uniform Tile &tile)
 {
@@ -154,8 +158,8 @@ export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
   if (variance && (tile.accumID & 1) == 1) {
     uniform vec2i dia = tile.region.upper - tile.region.lower;
     uniform float cntu = (uniform float)dia.x * dia.y;
-    errf = reduce_add(err) * rsqrtf(cntu);
-    // print("[%, %]:  \t%\t%\n", tileIdx.x, tileIdx.y, errf);
+    // scaling factor to stay backward compatible to default TILE_SIZE=64
+    errf = reduce_add(err) * rcp(cntu) * 64.f;
   }
   return errf;
 }
@@ -164,12 +168,15 @@ export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
 export void LocalFrameBuffer_accumulateAuxTile(void *uniform _fb
     , const uniform Tile &tile
     , uniform vec3f *uniform aux
-    , const varying float * uniform ax
-    , const varying float * uniform ay
-    , const varying float * uniform az
+    , const void * uniform _ax
+    , const void * uniform _ay
+    , const void * uniform _az
     )
 {
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
+  const varying float * uniform ax = (const varying float * uniform) _ax;
+  const varying float * uniform ay = (const varying float * uniform) _ay;
+  const varying float * uniform az = (const varying float * uniform) _az;
 
   const uniform float accumID = tile.accumID;
   const uniform float accScale = rcpf(tile.accumID + 1);

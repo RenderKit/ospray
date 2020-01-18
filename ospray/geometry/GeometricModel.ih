@@ -1,0 +1,82 @@
+// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "Geometry.ih"
+#include "common/Data.ih"
+#include "math/AffineSpace.ih"
+#include "render/Renderer.ih"
+
+struct GeometricModel
+{
+  Geometry *geom;
+
+  Data1D color;
+  Data1D index; // per-primitive property mapping
+  Data1D material;
+
+  bool useRendererMaterialList;
+
+  float areaPDF;
+};
+
+inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
+                                            const Renderer *uniform renderer,
+                                            const int32 primID)
+{
+  if (!valid(self->material))
+    return NULL;
+
+  uint32 idx = primID;
+  if (valid(self->index)) {
+    idx = get_uint8(self->index, min(primID, self->index.numItems - 1));
+  }
+
+  uniform int32 lastMaterial = self->material.numItems - 1;
+  Material **uniform mats = (Material **uniform)self->material.addr;
+  if (self->useRendererMaterialList) {
+    idx = get_uint32(self->material, min(idx, lastMaterial));
+    mats = renderer->material;
+    lastMaterial = renderer->numMaterials - 1;
+  }
+
+  if (mats)
+    return mats[min(idx, lastMaterial)];
+}
+
+inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
+                                         const Renderer *uniform renderer,
+                                         varying DifferentialGeometry &dg,
+                                         const varying Ray &ray,
+                                         uniform int64 flags)
+{
+  Geometry *uniform geom = self->geom;
+
+  geom->postIntersect(geom, dg, ray, flags);
+
+  dg.areaPDF = self->areaPDF;
+
+  uint32 idx = ray.primID;
+  if (valid(self->index)) {
+    idx = get_uint8(self->index, min(ray.primID, self->index.numItems - 1));
+  }
+
+  if (flags & DG_COLOR && valid(self->color))
+    dg.color = get_vec4f(self->color, min(idx, self->color.numItems - 1));
+
+  dg.material = GeometricModel_getMaterial(self, renderer, ray.primID);
+}

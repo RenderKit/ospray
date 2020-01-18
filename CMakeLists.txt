@@ -14,17 +14,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+cmake_minimum_required(VERSION 3.1)
+
+##############################################################
+# Language setup
+##############################################################
+
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-
-cmake_minimum_required(VERSION 3.1)
-if(POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW) # since 3.12
-endif()
-
-include(cmake/ospray_version.cmake)
-
-project(OSPRay VERSION ${OSPRAY_VERSION} LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD   99)
 set(CMAKE_CXX_STANDARD 11)
@@ -32,90 +29,63 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED   ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# configure directories for components we are going to include
-set(OSPRAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(COMPONENTS_DIR ${OSPRAY_DIR}/components)
-set(OSPCOMMON_DIR ${COMPONENTS_DIR}/ospcommon)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-## Target install macros for OSPRay libraries ##
-include(GNUInstallDirs)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+##############################################################
+# Establish project
+##############################################################
+
+include(cmake/ospray_version.cmake)
+
+project(OSPRay VERSION ${OSPRAY_VERSION} LANGUAGES C CXX)
 
 ##############################################################
 # CMake modules and macro files
 ##############################################################
 
-include(macros)
+list(APPEND CMAKE_MODULE_PATH
+  ${PROJECT_SOURCE_DIR}/cmake
+  ${PROJECT_SOURCE_DIR}/cmake/compiler
+)
+
 include(ospray_macros)
 include(ospray_options)
+include(package)
 include(ispc)
 
-##############################################################
-# the OSPRay 'common' library
-##############################################################
-add_subdirectory(${OSPCOMMON_DIR})
-
-##############################################################
-# OSPRay components
-#
-# 'components' work similar to 'packages' in linux distributions: each
-# component is its own little piece that builds some applications,
-# libraries, etc, and may have dependencies to other components.
-##############################################################
-include(components/configure.cmake)
-
-##############################################################
-# the OSPRay library
-##############################################################
-
-add_subdirectory(ospray)
-
-##############################################################
-# OSPRay tutorials
-##############################################################
-if (OSPRAY_ENABLE_TUTORIALS)
-  add_subdirectory(tutorials)
+if (OSPRAY_INSTALL_DEPENDENCIES)
+  include(ospray_redistribute_deps)
 endif()
 
 ##############################################################
-# OSPRay sample apps; at the end: they may need modules
+# Add library and executable targets
 ##############################################################
+
+## Main OSPRay library ##
+add_subdirectory(ospray)
+
+## OSPRay sample apps ##
 if (OSPRAY_ENABLE_APPS)
   add_subdirectory(apps)
 endif()
 
-##############################################################
-# OSPRay modules
-# modules are OPTTIONAL and EXTERNAL packages that
-# users can link into ospray. they can use any and all pieces of
-# ospray but obviously no ospray parts may ever depend on a
-# module (which by definition is OPTIONAL) - so those go
-# AT THE BACK, only AFTER ALL OTHER PARTS OF OSPRAY ARE BUILT
-##############################################################
-add_subdirectory(modules)
-
-##############################################################
-# Google Test
-##############################################################
-if (OSPRAY_ENABLE_TESTING)
-  add_subdirectory(tests)
+## Modules ##
+if (OSPRAY_ENABLE_MODULES)
+  add_subdirectory(modules)
 endif()
 
-##############################################################
-# add target for running clang-format
-##############################################################
-option(OSPRAY_ENABLE_TARGET_CLANGFORMAT
-       "Enable 'format' target, requires clang-format too" OFF)
-include(clang-format)
+## Testing ##
+if (OSPRAY_APPS_TESTING)
+  add_subdirectory(test_image_data)
+endif()
 
-# create a configure file that both ospray and ispc can read the cmake config
-# from needs to be at the end, after all cache variables have been set
-configure_file(ospray/common/OSPConfig.h.in OSPConfig.h)
-install(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
-  COMPONENT devel
-)
+## Clang-format target ##
+if (OSPRAY_ENABLE_TARGET_CLANGFORMAT)
+  include(clang-format)
+endif()
 
-# has to be last
+# Must be last
 include(CPack)

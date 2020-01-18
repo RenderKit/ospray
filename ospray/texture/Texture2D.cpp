@@ -28,43 +28,40 @@ namespace ospray {
 
   void Texture2D::commit()
   {
-    auto size = getParam<vec2i>("size", vec2i(-1, -1));
+    texData = getParam<Data *>("data");
 
-    if (size.x < 0 || size.y < 0) {
-      std::stringstream ss;
-      ss << "'size' param on Texture2D must be positive! got " << size;
-      throw std::runtime_error(ss.str());
+    if (!texData || texData->numItems.z > 1) {
+      throw std::runtime_error(
+          toString() +
+          " must have 2D 'data' array using the first two dimensions.");
     }
 
-    auto texData = getParamData("data", nullptr);
+    const vec2i size = vec2i(texData->numItems.x, texData->numItems.y);
+    if (!texData->compact()) {
+      postStatusMsg(OSP_LOG_INFO)
+          << toString()
+          << " does currently not support strides, copying texture data.";
 
-    if (!texData->data)
-      throw std::runtime_error("no texel data provided to Texture2D");
-
-    type  = static_cast<OSPTextureFormat>(
-      getParam1i("type", OSP_TEXTURE_FORMAT_INVALID)
-    );
-    flags = getParam1i("flags", 0);
-
-    const size_t numBytesExpected = sizeOf(type) * size.x * size.y;
-
-    if (numBytesExpected != texData->numBytes) {
-      std::stringstream ss;
-      ss << "'size' and 'data' parameters disagree on memory size!\n";
-      ss << "expected #bytes: " << numBytesExpected;
-      ss << "   given #bytes: " << texData->numBytes;
-      throw std::runtime_error(ss.str());
+      auto data = new Data(texData->type, texData->numItems);
+      data->copy(*texData, vec3ui(0));
+      texData = data;
+      data->refDec();
     }
 
-    this->ispcEquivalent = ispc::Texture2D_create((ispc::vec2i&)size,
-                                                  texData->data, type, flags);
+    format = static_cast<OSPTextureFormat>(
+        getParam<int>("format", OSP_TEXTURE_FORMAT_INVALID));
+    filter = static_cast<OSPTextureFilter>(
+        getParam<int>("filter", OSP_TEXTURE_FILTER_BILINEAR));
+
+    if (sizeOf(format) != sizeOf(texData->type))
+      throw std::runtime_error(toString() + ": 'format'='" + stringFor(format) +
+                               "' does not match type of 'data'='" +
+                               stringFor(texData->type) + "'!");
+
+    this->ispcEquivalent = ispc::Texture2D_create(
+        (ispc::vec2i &)size, texData->data(), format, filter);
   }
 
   OSP_REGISTER_TEXTURE(Texture2D, texture2d);
-  OSP_REGISTER_TEXTURE(Texture2D, texture2D);
-  OSP_REGISTER_TEXTURE(Texture2D, image2d);
-  OSP_REGISTER_TEXTURE(Texture2D, image2D);
-  OSP_REGISTER_TEXTURE(Texture2D, 2d);
-  OSP_REGISTER_TEXTURE(Texture2D, 2D);
 
-} // ::ospray
+}  // namespace ospray

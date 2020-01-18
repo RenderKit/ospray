@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "../common/Ray.ih"
+#include "common/Ray.ih"
 #include "math/box.ih"
 
 /*! \file camera.ih Defines the abstract base class of an ISPC-side camera */
@@ -33,7 +33,7 @@ struct CameraSample {
 
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
 // generated ray.dir must be normalized to ensure ray.t is world-space distance
-typedef void (*Camera_initRay)(uniform Camera *uniform,
+typedef void (*Camera_initRay)(const Camera *uniform,
                                varying Ray &ray,
                                const varying CameraSample &sample);
 
@@ -52,8 +52,8 @@ struct Camera
   vec3f org;      //!< camera position
   linear3f frame; //!< camera coordinate frame, i.e. (right, up, neg direction)
   float nearClip; //!< near clipping plane
-  box2f subImage; //!< viewable tile / subregion to compute, [0..1]^2 x [0..1]^2
-  region1f shutter; //!< camera shutter open start and end time, in [0..1]
+  box2f subImage; //!< viewable tile / subrange to compute, [0..1]^2 x [0..1]^2
+  range1f shutter; //!< camera shutter open start and end time, in [0..1]
 };
 
 inline vec2f Camera_subRegion(const Camera *uniform self, const vec2f &screen)

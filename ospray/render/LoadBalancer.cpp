@@ -22,58 +22,72 @@
 
 namespace ospray {
 
-  std::unique_ptr<TiledLoadBalancer> TiledLoadBalancer::instance {};
+  std::unique_ptr<TiledLoadBalancer> TiledLoadBalancer::instance;
 
   /*! render a frame via the tiled load balancer */
-  float LocalTiledLoadBalancer::renderFrame(Renderer *renderer,
-                                            FrameBuffer *fb,
-                                            const uint32 channelFlags)
+  float LocalTiledLoadBalancer::renderFrame(FrameBuffer *fb,
+                                            Renderer *renderer,
+                                            Camera *camera,
+                                            World *world)
   {
-    Assert(renderer);
-    Assert(fb);
-
-    void *perFrameData = renderer->beginFrame(fb);
     bool cancel = false;
     std::atomic<int> pixelsDone{0};
-    const float rcpPixels = 1.0f/(fb->size.x * fb->size.y);
 
+    const auto fbSize     = fb->getNumPixels();
+    const float rcpPixels = 1.0f / (fbSize.x * fbSize.y);
+
+    fb->beginFrame();
+    void *perFrameData = renderer->beginFrame(fb, world);
+
+#ifdef OSPRAY_SERIAL_RENDERING
+    tasking::serial_for(fb->getTotalTiles(), [&](int taskIndex) {
+#else
     tasking::parallel_for(fb->getTotalTiles(), [&](int taskIndex) {
+#endif
       if (cancel)
         return;
       const size_t numTiles_x = fb->getNumTiles().x;
-      const size_t tile_y = taskIndex / numTiles_x;
-      const size_t tile_x = taskIndex - tile_y*numTiles_x;
+      const size_t tile_y     = taskIndex / numTiles_x;
+      const size_t tile_x     = taskIndex - tile_y * numTiles_x;
       const vec2i tileID(tile_x, tile_y);
       const int32 accumID = fb->accumID(tileID);
 
       // increment also for finished tiles
-      vec2i pixels = ospcommon::min(vec2i(TILE_SIZE),
-          fb->size - tileID * TILE_SIZE);
-      pixelsDone += pixels.x * pixels.y;
+      vec2i numPixels = min(vec2i(TILE_SIZE), fbSize - tileID * TILE_SIZE);
+      pixelsDone += numPixels.product();
 
       if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
 
 #if TILE_SIZE > MAX_TILE_SIZE
-      auto tilePtr = make_unique<Tile>(tileID, fb->size, accumID);
+      auto tilePtr = make_unique<Tile>(tileID, fbSize, accumID);
       auto &tile   = *tilePtr;
 #else
-      Tile __aligned(64) tile(tileID, fb->size, accumID);
+      Tile __aligned(64) tile(tileID, fbSize, accumID);
 #endif
 
+#ifdef OSPRAY_SERIAL_RENDERING
+      tasking::serial_for(numJobs(renderer->spp, accumID), [&](size_t tIdx) {
+#else
       tasking::parallel_for(numJobs(renderer->spp, accumID), [&](size_t tIdx) {
-        renderer->renderTile(perFrameData, tile, tIdx);
+#endif
+        renderer->renderTile(fb, camera, world, perFrameData, tile, tIdx);
       });
 
       fb->setTile(tile);
+      fb->reportProgress(pixelsDone * rcpPixels);
 
-      if (!api::currentDevice().reportProgress(pixelsDone*rcpPixels))
+      if (fb->frameCancelled())
         cancel = true;
     });
 
-    renderer->endFrame(perFrameData,channelFlags);
+    renderer->endFrame(fb, perFrameData);
 
-    return fb->endFrame(renderer->errorThreshold);
+    fb->setCompletedEvent(OSP_WORLD_RENDERED);
+    fb->endFrame(renderer->errorThreshold, camera);
+    fb->setCompletedEvent(OSP_FRAME_FINISHED);
+
+    return fb->getVariance();
   }
 
   std::string LocalTiledLoadBalancer::toString() const
@@ -81,4 +95,4 @@ namespace ospray {
     return "ospray::LocalTiledLoadBalancer";
   }
 
-} // ::ospray
+}  // namespace ospray

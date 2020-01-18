@@ -37,9 +37,9 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        const vec3f radiance = getParam3f("color", vec3f(1.f)) *
-                               getParam1f("intensity", 1.f);
-        const float transparency = getParam1f("transparency", 0.f);
+        const vec3f radiance = getParam<vec3f>("color", vec3f(1.f)) *
+                               getParam<float>("intensity", 1.f);
+        const float transparency = getParam<float>("transparency", 0.f);
 
         ispc::PathTracer_Luminous_set(getIE()
             , (const ispc::vec3f&)radiance
@@ -48,7 +48,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pathtracer, Luminous, Luminous);
-    OSP_REGISTER_MATERIAL(pt, Luminous, Luminous);
+    OSP_REGISTER_MATERIAL(pathtracer, Luminous, luminous);
   }
 }

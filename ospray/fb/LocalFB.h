@@ -25,6 +25,7 @@ namespace ospray {
   /*! local frame buffer - frame buffer that exists on local machine */
   struct OSPRAY_SDK_INTERFACE LocalFrameBuffer : public FrameBuffer
   {
+    // TODO: Replace w/ some std::vector
     void      *colorBuffer; /*!< format depends on
                                FrameBuffer::colorBufferFormat, may be
                                NULL */
@@ -42,6 +43,8 @@ namespace ospray {
                      void *colorBufferToUse=nullptr);
     virtual ~LocalFrameBuffer() override;
 
+    virtual void commit() override;
+
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should override this! */
     virtual std::string toString() const override;
@@ -50,11 +53,11 @@ namespace ospray {
     int32 accumID(const vec2i &tile) override;
     float tileError(const vec2i &tile) override;
     void beginFrame() override;
-    float endFrame(const float errorThreshold) override;
+    void endFrame(const float errorThreshold, const Camera *camera) override;
 
     const void *mapBuffer(OSPFrameBufferChannel channel) override;
     void unmap(const void *mappedMem) override;
-    void clear(const uint32 fbChannelFlags) override;
+    void clear() override;
   };
 
 } // ::ospray

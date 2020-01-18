@@ -17,85 +17,25 @@
 #pragma once
 
 #include "Geometry.h"
-#include "ospray/OSPDataType.h"
 
 namespace ospray {
-  /*! @{ \defgroup geometry_spheres Spheres ("spheres")
 
-    \ingroup ospray_supported_geometries
-
-    \brief Geometry representing spheres with a per-sphere radius
-
-    Implements a geometry consisting of individual spheres, each of
-    which can have a radius.  To allow a variety of sphere
-    representations this geometry allows a flexible way of specifying
-    the offsets of origin, radius, and material ID within a data array
-    of 32-bit floats.
-
-    Parameters:
-    <dl>
-    <dt><code>float        radius = 0.01f</code></dt><dd>Base radius common to all spheres if 'offset_radius' is not used</dd>
-    <dt><code>int32        materialID = 0</code></dt><dd>Material ID common to all spheres if 'offset_materialID' is not used</dd>
-    <dt><code>int32        bytes_per_sphere = 4*sizeof(float)</code></dt><dd>Size (in bytes) of each sphere in the data array.</dd>
-    <dt><code>int32        offset_center = 0</code></dt><dd>Offset (in bytes) of each sphere's 'vec3f center' value within the sphere</dd>
-    <dt><code>int32        offset_radius = -1</code></dt><dd>Offset (in bytes) of each sphere's 'float radius' value within each sphere. Setting this value to -1 means that there is no per-sphere radius value, and that all spheres should use the (shared) 'radius' value instead</dd>
-    <dt><code>int32        offset_materialID = -1</code></dt><dd>Offset (in bytes) of each sphere's 'int materialID' value within each sphere. Setting this value to -1 means that there is no per-sphere material ID, and that all spheres share the same per-geometry 'materialID'</dd>
-    <dt><code>Data<float>  spheres</code></dt><dd> Array of data elements.</dd>
-    </dl>
-
-    The functionality for this geometry is implemented via the
-    \ref ospray::Spheres class.
-
-  */
-
-  /*! \brief A geometry for a set of spheres
-
-    Implements the \ref geometry_spheres geometry
-
-  */
   struct OSPRAY_SDK_INTERFACE Spheres : public Geometry
   {
     Spheres();
+    virtual ~Spheres() override = default;
 
     virtual std::string toString() const override;
-    virtual void finalize(Model *model) override;
 
-    // Data members //
+    virtual void commit() override;
 
-    /*! default radius, if no per-sphere radius was specified. */
-    float radius;
-    int32 materialID;
+    virtual size_t numPrimitives() const override;
 
-    size_t numSpheres;
-    size_t bytesPerSphere; //!< num bytes per sphere
-    int64 offset_center;
-    int64 offset_radius;
-    int64 offset_materialID;
-    int64 offset_colorID;
-
-    Ref<Data> sphereData;
-
-    /*! data array from which we read the per-sphere color data; if
-      NULL we do not have per-sphere data */
-    Ref<Data> colorData;
-
-    Ref<Data> texcoordData;
-
-    /*! The color format of the colorData array, one of:
-        OSP_FLOAT3, OSP_FLOAT3A, OSP_FLOAT4 or OSP_UCHAR4 */
-    OSPDataType colorFormat;
-
-    /*! stride in colorData array for accessing i'th sphere's
-      color. color of sphere i will be read as colorFormat color from
-      'colorOffset+i*colorStride */
-    size_t colorStride;
-
-    /*! offset in colorData array for accessing i'th sphere's
-      color. color of sphere i will be read as colorFormat color from
-      'colorOffset+i*colorStride */
-    size_t colorOffset;
+   protected:
+    float radius{0.01}; // default radius, if no per-sphere radius
+    Ref<const DataT<vec3f>> vertexData;
+    Ref<const DataT<float>> radiusData;
+    Ref<const DataT<vec2f>> texcoordData;
   };
-  /*! @} */
 
-} // ::ospray
-
+}  // namespace ospray

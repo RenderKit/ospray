@@ -38,18 +38,16 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        auto ior = getParamData("ior");
+        auto ior = getParamDataT<vec3f>("ior");
         float etaResampled[SPECTRUM_SAMPLES];
         float kResampled[SPECTRUM_SAMPLES];
         float *etaSpectral = nullptr;
         float *kSpectral = nullptr;
-        if (ior && ior->data && ior->size() > 0) {
-          if (ior->type != OSP_FLOAT3)
-            throw std::runtime_error("Metal::ior must have data type OSP_FLOAT3 (wavelength, eta, k)[]");
+        if (ior) {
           // resample, relies on ordered samples
-          auto iorP = (vec3f*)ior->data;
+          auto iorP = ior->begin();
           auto iorPrev = *iorP;
-          const auto iorLast = (vec3f*)ior->data + ior->size()-1;
+          const auto iorLast = ior->end();
           float wl = SPECTRUM_FIRSTWL;
           for(int l = 0; l < SPECTRUM_SAMPLES; wl += SPECTRUM_SPACING, l++) {
             for(; iorP != iorLast && iorP->x < wl; iorP++)
@@ -68,11 +66,11 @@ namespace ospray {
         }
 
         // default to Aluminium, used when ior not given
-        const vec3f& eta = getParam3f("eta", vec3f(RGB_AL_ETA));
-        const vec3f& k = getParam3f("k", vec3f(RGB_AL_K));
+        const vec3f& eta = getParam<vec3f>("eta", vec3f(RGB_AL_ETA));
+        const vec3f& k = getParam<vec3f>("k", vec3f(RGB_AL_K));
 
 
-        const float roughness = getParamf("roughness", 0.1f);
+        const float roughness = getParam<float>("roughness", 0.1f);
         Texture2D *map_roughness = (Texture2D*)getParamObject("map_roughness");
         affine2f xform_roughness = getTextureTransform("map_roughness");
 
@@ -88,7 +86,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pathtracer, Metal, Metal);
-    OSP_REGISTER_MATERIAL(pt, Metal, Metal);
+    OSP_REGISTER_MATERIAL(pathtracer, Metal, metal);
   }
 }

@@ -31,10 +31,10 @@ namespace ospray {
     if (this->ispcEquivalent)
       ispc::delete_uniform(ispcEquivalent);
 
-    auto v = dynamic_cast<Volume*>(getParamObject("volume"));
+    auto *v = dynamic_cast<VolumetricModel *>(getParamObject("volume"));
 
     if (v == nullptr)
-      throw std::runtime_error("no volume specified on 'volume' texture!");
+      throw std::runtime_error("volume texture must have 'volume' object");
 
     volume = v;
 
@@ -43,4 +43,4 @@ namespace ospray {
 
   OSP_REGISTER_TEXTURE(TextureVolume, volume);
 
-} // ::ospray
+}  // namespace ospray

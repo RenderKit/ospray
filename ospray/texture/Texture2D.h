@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Texture.h"
+#include "common/Data.h"
 
 namespace ospray {
 
@@ -29,8 +30,11 @@ namespace ospray {
 
     virtual void commit() override;
 
-    OSPTextureFormat type;
-    int flags;
+    OSPTextureFormat format{OSP_TEXTURE_FORMAT_INVALID};
+    OSPTextureFilter filter{OSP_TEXTURE_FILTER_BILINEAR};
+
+   protected:
+    Ref<const Data> texData;
   };
 
 } // ::ospray

@@ -19,156 +19,6 @@
 #include "vec.ih"
 #include "sobol.ih"
 
-#define TABLE_SIZE 32
-#define WARMUP_ITERATIONS 7
-
-struct Random
-{
-  int seed;
-  int state;
-  int table[TABLE_SIZE];
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// uniform Random
-
-inline void Random__setSeed(uniform Random* uniform this, const uniform int s)
-{
-  const uniform int a = 16807; 
-  const uniform int m = 2147483647;
-  const uniform int q = 127773;
-  const uniform int r = 2836;
-  
-  if (s == 0) this->seed = 1;
-  else this->seed = s & 0x7FFFFFFF;
-  
-  for (uniform int j = TABLE_SIZE+WARMUP_ITERATIONS; j >= 0; j--) 
-  {
-    uniform int k = this->seed / q;
-    this->seed = a*(this->seed - k*q) - r*k;
-    this->seed = this->seed & 0x7FFFFFFF;
-    if (j < TABLE_SIZE) this->table[j] = this->seed;
-  }
-  this->state = this->table[0];
-}
-
-inline void Random__Constructor(uniform Random* uniform this, const uniform int seed/* = 27*/) 
-{
-  Random__setSeed(this,seed);
-}
-
-inline uniform int Random__getInt(uniform Random* uniform this)
-{
-  const uniform int a = 16807;
-  const uniform int m = 2147483647;
-  const uniform int q = 127773;
-  const uniform int r = 2836;
-  const uniform int f = 1 + 2147483647 / TABLE_SIZE;
-  
-  uniform int k = this->seed / q;
-  this->seed = a*(this->seed - k*q) - r*k;
-  this->seed = this->seed & 0x7FFFFFFF;
-  uniform int j = min(this->state / f, TABLE_SIZE-1);
-  this->state = this->table[j];
-  this->table[j] = this->seed;
-  return this->state;
-}
-
-inline uniform int Random__getInt (uniform Random* uniform this, uniform int limit) { 
-  return Random__getInt(this) % limit; 
-}
-
-inline uniform float Random__getFloat (uniform Random* uniform this) { 
-  return min(Random__getInt(this) / 2147483647.0f, 1.0f);
-} 
-
-///////////////////////////////////////////////////////////////////////////////
-// varying Random
-
-inline void Random__setSeed(varying Random* uniform this, const varying int s)
-{
-  const varying int a = 16807;
-  const varying int m = 2147483647;
-  const varying int q = 127773;
-  const varying int r = 2836;
-  
-  if (s == 0) this->seed = 1;
-  else this->seed = s & 0x7FFFFFFF;
-  
-  for (uniform int j = TABLE_SIZE+WARMUP_ITERATIONS; j >= 0; j--) 
-  {
-    varying int k = this->seed / q;
-    this->seed = a*(this->seed - k*q) - r*k;
-    this->seed = this->seed & 0x7FFFFFFF;
-    if (j < TABLE_SIZE) this->table[j] = this->seed;
-  }
-  this->state = this->table[0];
-}
-
-inline void Random__Constructor(varying Random* uniform this, const int seed/* = 27*/) 
-{
-  Random__setSeed(this,seed);
-}
-
-inline varying int Random__getInt(varying Random* uniform this)
-{
-  const varying int a = 16807;
-  const varying int m = 2147483647UL;
-  const varying int q = 127773;
-  const varying int r = 2836;
-  const varying int f = 1 + 2147483647UL / TABLE_SIZE;
-  
-  varying int k = this->seed / q;
-  this->seed = a*(this->seed - k*q) - r*k;
-  this->seed = this->seed & 0x7FFFFFFF;
-  varying int j = min(this->state / f, TABLE_SIZE-1);
-  this->state = this->table[j];
-  this->table[j] = this->seed;
-  return this->state;
-}
-
-inline varying int Random__getInt (varying Random* uniform this, varying int limit) { 
-  return Random__getInt(this) % limit; 
-}
-
-inline varying float Random__getFloat (varying Random* uniform this) { 
-  return min(Random__getInt(this) / 2147483647.0f, 1.0f);
-} 
-
-
-///////////////////////////////////////////////////////////////////////////////
-// TEA - Random numbers based on Tiny Encryption Algorithm
-
-inline void tea8(unsigned int& v0, unsigned int& v1)
-{
-  unsigned int sum = 0;
-
-  for(uniform int i = 0; i < 8; i++) { // just 8 instead of 32 rounds
-    sum += 0x9e3779b9;
-    v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + sum) ^ ((v1 >> 5) + 0xc8013ea4);
-    v1 += ((v0 << 4) + 0xad90777d) ^ (v0 + sum) ^ ((v0 >> 5) + 0x7e95761e);
-  }
-}
-
-struct RandomTEA
-{
-  unsigned int v0, v1;
-};
-
-inline void RandomTEA__Constructor(varying RandomTEA* uniform this,
-                                   const unsigned int idx,
-                                   const unsigned int seed)
-{
-  this->v0 = idx;
-  this->v1 = seed;
-}
-
-inline varying vec2f RandomTEA__getFloats(varying RandomTEA* uniform this) { 
-  tea8(this->v0, this->v1);
-  const float tofloat = 2.3283064365386962890625e-10f; // 1/2^32
-  return make_vec2f(this->v0 * tofloat, this->v1 * tofloat);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Hash functions
 
@@ -209,47 +59,6 @@ inline unsigned int hashToRandom(unsigned int value, unsigned int scramble)
   value ^= value >> 4;
   value *= 0x27d4eb2d;
   return value;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// LCG - Linear Congruential Generator
-
-inline unsigned int LCG_init(unsigned int pixelID, unsigned int sampleIndex)
-{
-  unsigned int state = 0;
-  state = MurmurHash3_mix(state, pixelID);
-  state = MurmurHash3_mix(state, sampleIndex);
-  state = MurmurHash3_finalize(state);
-  return state;
-}
-
-inline unsigned int LCG_next(unsigned int value)
-{
-  const unsigned int m = 1664525;
-  const unsigned int n = 1013904223;
-
-  return value * m + n;
-}
-
-inline float LCG_getFloat(unsigned int& state)
-{
-  state = LCG_next(state);
-  return to_float_unorm(state);
-}
-
-inline vec2f LCG_getFloat2(unsigned int& state)
-{
-  const float x = LCG_getFloat(state);
-  const float y = LCG_getFloat(state);
-  return make_vec2f(x, y);
-}
-
-inline vec3f LCG_getFloat3(unsigned int& state)
-{
-  const float x = LCG_getFloat(state);
-  const float y = LCG_getFloat(state);
-  const float z = LCG_getFloat(state);
-  return make_vec3f(x, y, z);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -299,8 +108,130 @@ inline float radicalInverse2(uint32 idx)
   return f;
 }
 
+////////////////////V///////////////////////////////////////////////////////////
+// PCG pseudo-random number generator http://www.pcg-random.org/
+
+typedef unsigned int uint32_t;
+typedef unsigned int64 uint64_t;
+
+struct RandomSampler {
+  uint64_t state;
+  uint64_t stream;
+};
+
+inline uint32_t RandomSampler__pcg32(varying RandomSampler* uniform self)
+{
+  uint64_t oldstate = self->state;
+  self->state = oldstate * 6364136223846793005ULL + (self->stream|1u);
+  uint32_t xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
+  uint32_t rot = oldstate >> 59u;
+  return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
+}
+
+inline float RandomSampler_getFloat(varying RandomSampler* uniform self) 
+{
+  return ldexp((double)RandomSampler__pcg32(self), -32);
+}
+
+inline void RandomSampler_init(varying RandomSampler* uniform self,
+                               uint64_t seed, 
+                               uint64_t stream) 
+{
+  self->state = 0;
+  self->stream = (stream << 1u) | 1u;
+
+  // hash seed to reduce correlation artefacts
+  self->state = MurmurHash3_mix(self->state, seed);
+  self->state = MurmurHash3_finalize(self->state);
+
+  RandomSampler__pcg32(self);
+  self->state += seed;
+  RandomSampler__pcg32(self);
+}
+
+inline void RandomSampler_init(varying RandomSampler* uniform self,
+                               uint64_t seed) 
+{
+  RandomSampler_init(self, seed, 0);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
+// TEA - Random numbers based on Tiny Encryption Algorithm
+
+inline void tea8(unsigned int& v0, unsigned int& v1)
+{
+  unsigned int sum = 0;
+
+  for(uniform int i = 0; i < 8; i++) { // just 8 instead of 32 rounds
+    sum += 0x9e3779b9;
+    v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + sum) ^ ((v1 >> 5) + 0xc8013ea4);
+    v1 += ((v0 << 4) + 0xad90777d) ^ (v0 + sum) ^ ((v0 >> 5) + 0x7e95761e);
+  }
+}
+
+struct RandomTEA
+{
+  unsigned int v0, v1;
+};
+
+inline void RandomTEA__Constructor(varying RandomTEA* uniform this,
+                                   const unsigned int idx,
+                                   const unsigned int seed)
+{
+  this->v0 = idx;
+  this->v1 = seed;
+}
+
+inline varying vec2f RandomTEA__getFloats(varying RandomTEA* uniform this) { 
+  tea8(this->v0, this->v1);
+  const float tofloat = 2.3283064365386962890625e-10f; // 1/2^32
+  return make_vec2f(this->v0 * tofloat, this->v1 * tofloat);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// LCG - Linear Congruential Generator
+
+inline unsigned int LCG_init(unsigned int pixelID, unsigned int sampleIndex)
+{
+  unsigned int state = 0;
+  state = MurmurHash3_mix(state, pixelID);
+  state = MurmurHash3_mix(state, sampleIndex);
+  state = MurmurHash3_finalize(state);
+  return state;
+}
+
+inline unsigned int LCG_next(unsigned int value)
+{
+  const unsigned int m = 1664525;
+  const unsigned int n = 1013904223;
+
+  return value * m + n;
+}
+
+inline float LCG_getFloat(unsigned int& state)
+{
+  state = LCG_next(state);
+  return to_float_unorm(state);
+}
+
+inline vec2f LCG_getFloat2(unsigned int& state)
+{
+  const float x = LCG_getFloat(state);
+  const float y = LCG_getFloat(state);
+  return make_vec2f(x, y);
+}
+
+inline vec3f LCG_getFloat3(unsigned int& state)
+{
+  const float x = LCG_getFloat(state);
+  const float y = LCG_getFloat(state);
+  const float z = LCG_getFloat(state);
+  return make_vec3f(x, y, z);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Low-discrepancy (Sobol) sampler
 
 struct LDSampler
@@ -310,9 +241,12 @@ struct LDSampler
   unsigned int lcg;      // LCG used when we run out of dimensions
 };
 
-inline void LDSampler_init(varying LDSampler* uniform self, unsigned int pixelID, unsigned int sampleIndex)
+inline void LDSampler_init(varying LDSampler* uniform self, 
+                           unsigned int pixelID, 
+                           unsigned int sampleIndex) 
 {
-  self->index = sampleIndex + 64; // skip the first few samples to reduce correlation artifacts
+  // skip the first few samples to reduce correlation artifacts
+  self->index = sampleIndex + 64; 
 
   unsigned int hash = 0;
   hash = MurmurHash3_mix(hash, pixelID);
@@ -322,7 +256,8 @@ inline void LDSampler_init(varying LDSampler* uniform self, unsigned int pixelID
   self->lcg = MurmurHash3_finalize(hash);
 }
 
-inline float LDSampler_getFloat(varying LDSampler* uniform self, uniform unsigned int dimension)
+inline float LDSampler_getFloat(varying LDSampler* uniform self, 
+                                uniform unsigned int dimension)
 {
   if (dimension >= Sobol_numDimensions)
     return LCG_getFloat(self->lcg);
@@ -335,7 +270,8 @@ inline float LDSampler_getFloat(varying LDSampler* uniform self, uniform unsigne
   return CranleyPattersonRotation(s, shift);
 }
 
-inline vec2f LDSampler_getFloat2(varying LDSampler* uniform self, uniform unsigned int dimension)
+inline vec2f LDSampler_getFloat2(varying LDSampler* uniform self, 
+                                 uniform unsigned int dimension)
 {
   const float x = LDSampler_getFloat(self, dimension);
   const float y = LDSampler_getFloat(self, dimension+1);
@@ -351,6 +287,7 @@ inline varying vec2f RandomHammersley2__getFloats(varying unsigned int idx) {
 
 ///////////////////////////////////////////////////////////////////////////////
 // halton - low discrepancy halton sequence; first two dimensions; no state
+
 inline varying vec2f HaltonSequence_get2D(varying unsigned int idx) {
   return make_vec2f(radicalInverse2(idx),radicalInverse(idx,3));
 }

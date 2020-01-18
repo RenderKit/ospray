@@ -32,7 +32,7 @@ namespace ospray {
         if (getIE() == nullptr)
           ispcEquivalent = ispc::PathTracer_Mix_create();
 
-        float factor = getParam1f("factor", 0.5f);
+        float factor = getParam<float>("factor", 0.5f);
         Texture2D *map_factor  = (Texture2D*)getParamObject("map_factor", nullptr);
         affine2f xform_factor  = getTextureTransform("map_factor");
         ospray::Material* mat1 = (ospray::Material*)getParamObject("material1", nullptr);
@@ -48,7 +48,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(pathtracer, MixMaterial, MixMaterial);
-    OSP_REGISTER_MATERIAL(pt, MixMaterial, MixMaterial);
+    OSP_REGISTER_MATERIAL(pathtracer, MixMaterial, mix);
   }
 }

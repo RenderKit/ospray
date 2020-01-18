@@ -50,37 +50,30 @@ function check_symbols
 
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
+THREADS=`nproc`
 
-DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/linux
-DEP_EMBREE=embree-3.4.0.x86_64.linux
-DEP_ISPC_VER=1.9.2
-DEP_ISPC=ispc-v${DEP_ISPC_VER}-linux
-DEP_ISPC_DIR=ispc-v${DEP_ISPC_VER}-linux
-DEP_TBB=tbb2019_20181203oss
-DEP_OIDN=oidn-0.8.1.x86_64.linux
-DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz $DEP_OIDN.tar.gz"
+#### Build dependencies ####
 
+mkdir deps_build
+cd deps_build
 
-# set compiler if the user hasn't explicitly set CC and CXX
-if [ -z $CC ]; then
-  echo "***NOTE: Defaulting to use icc/icpc!"
-  echo -n "         Please set env variables 'CC' and 'CXX' to"
-  echo " a different supported compiler (gcc/clang) if desired."
-  export CC=icc
-  export CXX=icpc
-fi
+# NOTE(jda) - Some Linux OSs need to have lib/ on LD_LIBRARY_PATH at build time
+export LD_LIBRARY_PATH=$DEP_DIR/lib:${LD_LIBRARY_PATH}
 
-#### Fetch dependencies (TBB+Embree+ISPC+OIDN) ####
+cmake --version
 
-mkdir -p $DEP_DIR
-cd $DEP_DIR
+cmake \
+  "$@" \
+  -D BUILD_DEPENDENCIES_ONLY=ON \
+  -D CMAKE_INSTALL_PREFIX=$DEP_DIR \
+  -D CMAKE_INSTALL_LIBDIR=lib \
+  -D BUILD_EMBREE_FROM_SOURCE=OFF \
+  -D BUILD_OIDN=ON \
+  -D BUILD_OIDN_FROM_SOURCE=OFF \
+  -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF \
+  ../scripts/superbuild
 
-for dep in $DEP_TARBALLS ; do
-  wget --progress=dot:mega -c $DEP_LOCATION/$dep
-  tar -xaf $dep
-done
-export embree_DIR=$DEP_DIR/$DEP_EMBREE
-export OpenImageDenoise_DIR=$DEP_DIR/$DEP_OIDN
+cmake --build .
 
 cd $ROOT_DIR
 
@@ -92,42 +85,43 @@ cd build_release
 # Clean out build directory to be sure we are doing a fresh build
 rm -rf *
 
+# Setup environment variables for dependencies
+export OSPCOMMON_TBB_ROOT=$DEP_DIR
+export ospcommon_DIR=$DEP_DIR
+export embree_DIR=$DEP_DIR
+export glfw3_DIR=$DEP_DIR
+export openvkl_DIR=$DEP_DIR
+export OpenImageDenoise_DIR=$DEP_DIR
+
 # set release and RPM settings
-cmake \
--D OSPRAY_BUILD_ISA=ALL \
--D OSPRAY_MODULE_MPI=ON \
--D OSPRAY_MODULE_MPI_APPS=OFF \
--D TBB_ROOT=$DEP_DIR/$DEP_TBB \
--D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC_DIR/ispc \
--D OSPRAY_SG_CHOMBO=OFF \
--D OSPRAY_SG_OPENIMAGEIO=OFF \
--D OSPRAY_SG_VTK=OFF \
--D OSPRAY_ZIP_MODE=OFF \
--D OSPRAY_INSTALL_DEPENDENCIES=OFF \
--D CPACK_PACKAGING_INSTALL_PREFIX=/usr \
-..
+cmake -L \
+  -D OSPRAY_BUILD_ISA=ALL \
+  -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc \
+  -D OSPRAY_ZIP_MODE=OFF \
+  -D OSPRAY_MODULE_DENOISER=ON \
+  -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
+  -D CPACK_PACKAGING_INSTALL_PREFIX=/usr \
+  ..
 
 # create RPM files
-make -j `nproc` preinstall
+make -j $THREADS preinstall
 
-check_symbols libospray.so GLIBC   2 4 0
-check_symbols libospray.so GLIBCXX 3 4 11
-check_symbols libospray.so CXXABI  1 3 0
+check_symbols libospray.so GLIBC   2 14 0
+check_symbols libospray.so GLIBCXX 3 4 14
+check_symbols libospray.so CXXABI  1 3 5
 
-make -j `nproc` package || exit 2
+make -j $THREADS package || exit 2
 
 # change settings for zip mode
-cmake \
--D OSPRAY_ZIP_MODE=ON \
--D OSPRAY_APPS_ENABLE_DENOISER=ON \
--D OSPRAY_INSTALL_DEPENDENCIES=ON \
--D CPACK_PACKAGING_INSTALL_PREFIX=/ \
--D CMAKE_INSTALL_INCLUDEDIR=include \
--D CMAKE_INSTALL_LIBDIR=lib \
--D CMAKE_INSTALL_DOCDIR=doc \
--D CMAKE_INSTALL_BINDIR=bin \
-..
+cmake -L \
+  -D OSPRAY_ZIP_MODE=ON \
+  -D OSPRAY_INSTALL_DEPENDENCIES=ON \
+  -D CPACK_PACKAGING_INSTALL_PREFIX=/ \
+  -D CMAKE_INSTALL_INCLUDEDIR=include \
+  -D CMAKE_INSTALL_LIBDIR=lib \
+  -D CMAKE_INSTALL_DOCDIR=doc \
+  -D CMAKE_INSTALL_BINDIR=bin \
+  ..
 
 # create tar.gz files
-make -j `nproc` package || exit 2
-
+make -j $THREADS package || exit 2

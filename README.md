@@ -1,8 +1,8 @@
 OSPRay
 ======
 
-This is release v1.8.5 of OSPRay. For changes and new features see the
-[changelog](CHANGELOG.md). Visit http://www.ospray.org for more
+This is release v2.0.0 of Intel® OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
 OSPRay Overview
@@ -10,9 +10,9 @@ OSPRay Overview
 
 Intel OSPRay is an **o**pen source, **s**calable, and **p**ortable
 **ray** tracing engine for high-performance, high-fidelity visualization
-on Intel Architecture CPUs. OSPRay is part of the [Intel Rendering
-Framework](https://software.intel.com/en-us/rendering-framework) and is
-released under the permissive [Apache 2.0
+on Intel Architecture CPUs. OSPRay is part of the [Intel oneAPI
+Rendering Toolkit](https://software.intel.com/en-us/rendering-framework)
+and is released under the permissive [Apache 2.0
 license](http://www.apache.org/licenses/LICENSE-2.0).
 
 The purpose of OSPRay is to provide an open, powerful, and easy-to-use
@@ -52,12 +52,12 @@ receive release announcements and major news regarding OSPRay.
 [![Join the chat at
 https://gitter.im/ospray/ospray](https://ospray.github.io/images/gitter_badge.svg)](https://gitter.im/ospray/ospray?utm_source=badge&utm_medium=badge&utm_content=badge)
 
-Building OSPRay from Source
+Building and Finding OSPRay
 ===========================
 
 The latest OSPRay sources are always available at the [OSPRay GitHub
 repository](http://github.com/ospray/ospray). The default `master`
-branch should always point to the latest tested bugfix release.
+branch should always point to the latest bugfix release.
 
 Prerequisites
 -------------
@@ -70,11 +70,11 @@ before you can build OSPRay you need the following prerequisites:
         git clone https://github.com/ospray/ospray.git
 
 -   To build OSPRay you need [CMake](http://www.cmake.org), any form of
-    C++11 compiler (we recommend using GCC, but also support Clang and
-    the [Intel® C++ Compiler
+    C++11 compiler (we recommend using GCC, but also support Clang,
+    MSVC, and [Intel® C++ Compiler
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
-    Linux development tools. To build the example viewers, you should
-    also have some version of OpenGL.
+    Linux development tools. To build the interactive tutorials, you
+    should also have some version of OpenGL and GLFW.
 
 -   Additionally you require a copy of the [Intel® SPMD Program Compiler
     (ISPC)](http://ispc.github.io), version 1.9.1 or later. Please
@@ -84,22 +84,35 @@ before you can build OSPRay you need the following prerequisites:
     checked-out OSPRay sources.[^1] Alternatively set the CMake variable
     `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 
--   Per default OSPRay uses the Intel® [Threading Building
+    NOTE: OSPRay is incompatible with ISPC v1.11.0.
+
+-   OSPRay builds on top of a small C++ utility library called
+    `ospcommon`. The library provides abstractions for tasking, aligned
+    memory allocation, vector math types, among others. For users who
+    also need to build
+    [ospcommon](https://www.github.com/ospray/ospcommon), we recommend
+    the default the Intel® [Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
-    system, which we recommend for performance and flexibility reasons.
-    Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to
-    `OpenMP`, `Internal`, or `Cilk` (icc only).
+    system for performance and flexibility reasons. Alternatively you
+    can set CMake variable `OSPCOMMON_TASKING_SYSTEM` to `OpenMP` or
+    `Internal`.
 
 -   OSPRay also heavily uses Intel [Embree](https://embree.github.io/),
-    installing version 3.2 or newer is required. If Embree is not found
-    by CMake its location can be hinted with the variable `embree_DIR`.
-    NOTE: Windows users should use Embree v3.2.2 or later.
+    installing version 3.7.0 or newer is required. If Embree is not
+    found by CMake its location can be hinted with the variable
+    `embree_DIR`.
 
--   If available OSPRay’s [Example Viewer](#example-viewer) can be
-    compiled with support for Intel [Open Image
-    Denoise](http://www.openimagedenoise.org/) by enabling
-    `OSPRAY_APPS_ENABLE_DENOISER`. You may need to hint the location of
-    the library with the CMake variable `OpenImageDenoise_DIR`.
+-   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
+    installing version 0.7.0 or newer is required. If Open VKL is not
+    found by CMake its location can be hinted with the variable
+    `openvkl_DIR`.
+
+-   OSPRay also provides an optional module that adds support for Intel
+    [Open Image Denoise](http://www.openimagedenoise.org/), which is
+    enabled by `OSPRAY_MODULE_DENOISER`. When loaded, this module
+    enables the `denosier` image operation. You may need to hint the
+    location of the library with the CMake variable
+    `OpenImageDenoise_DIR`.
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be
@@ -126,10 +139,59 @@ Under Windows please directly use the appropriate installers for
 [ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
 version) and [Embree](https://github.com/embree/embree/releases/).
 
-Compiling OSPRay on Linux and Mac OS X
---------------------------------------
+CMake Superbuild
+----------------
 
-Assume the above requisites are all fulfilled, building OSPRay through
+For convenience, OSPRay provides a CMake Superbuild script which will
+pull down OSPRay’s dependencies and build OSPRay itself. By default, the
+result is an install directory, with each dependency in its own
+directory.
+
+Run with:
+
+``` {.bash}
+mkdir build
+cd build
+cmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
+cmake --build .
+```
+
+The resulting `install` directory (or the one set with
+`CMAKE_INSTALL_PREFIX`) will have everything in it, with one
+subdirectory per dependency.
+
+CMake options to note (all have sensible defaults):
+
+-   `CMAKE_INSTALL_PREFIX` will be the root directory where everything
+    gets installed.
+-   `BUILD_JOBS` sets the number given to `make -j` for parallel builds.
+-   `INSTALL_IN_SEPARATE_DIRECTORIES` toggles installation of all
+    libraries in separate or the same directory.
+-   `BUILD_EMBREE_FROM_SOURCE` set to OFF will download a pre-built
+    version of Embree.
+-   `BUILD_OIDN_FROM_SOURCE` set to OFF will download a pre-built
+    version of OpenImageDenoise.
+-   `BUILD_OIDN_VERSION` determines which verison of OpenImageDenoise to
+    pull down.
+
+For the full set of options, run:
+
+``` {.bash}
+ccmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
+```
+
+or
+
+``` {.bash}
+cmake-gui [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
+```
+
+Standard CMake build
+--------------------
+
+### Compiling OSPRay on Linux and Mac OS X
+
+Assuming the above requisites are all fulfilled, building OSPRay through
 CMake is easy:
 
 -   Create a build directory, and go into it
@@ -163,13 +225,12 @@ CMake is easy:
 
         make
 
--   You should now have `libospray.so` as well as a set of example
-    application. You can test your version of OSPRay using any of the
-    examples on the [OSPRay Demos and
+-   You should now have `libospray.[so,dylib]` as well as a set of
+    example application. You can test your version of OSPRay using any
+    of the examples on the [OSPRay Demos and
     Examples](https://www.ospray.org/demos.html) page.
 
-Compiling OSPRay on Windows
----------------------------
+### Compiling OSPRay on Windows
 
 On Windows using the CMake GUI (`cmake-gui.exe`) is the most convenient
 way to configure OSPRay and to create the Visual Studio solution files:
@@ -185,7 +246,7 @@ way to configure OSPRay and to create the Visual Studio solution files:
 -   If the configuration fails because some dependencies could not be
     found then follow the instructions given in the error message, e.g.,
     set the variable `embree_DIR` to the folder where Embree was
-    installed.
+    installed and `openvkl_DIR` to where Open VKL was installed.
 
 -   Optionally change the default build options, and then click
     “Generate” to create the solution and project files in the build
@@ -213,13 +274,13 @@ example applications use
 
     cmake --build . --config Release --target ospray -- /m
 
-Finding an OSPRay install with CMake
-====================================
+Finding an OSPRay Install with CMake
+------------------------------------
 
 Client applications using OSPRay can find it with CMake’s
 `find_package()` command. For example,
 
-    find_package(ospray 1.8.0 REQUIRED)
+    find_package(ospray 2.0.0 REQUIRED)
 
 finds OSPRay via OSPRay’s configuration file `osprayConfig.cmake`[^2].
 Once found, the following is all that is required to use OSPRay:
@@ -234,11 +295,11 @@ Advanced users may want to link to additional targets which are exported
 in OSPRay’s CMake config, which includes all installed modules. All
 targets built with OSPRay are exported in the `ospray::` namespace,
 therefore all targets locally used in the OSPRay source tree can be
-accessed from an install. For example, `ospray_common` can be consumed
-directly via the `ospray::ospray_common` target. All targets have their
-libraries, includes, and definitions attached to them for public
-consumption (please [report bugs](#ospray-support-and-contact) if this
-is broken!).
+accessed from an install. For example, `ospray_module_ispc` can be
+consumed directly via the `ospray::ospray_module_ispc` target. All
+targets have their libraries, includes, and definitions attached to them
+for public consumption (please [report
+bugs](#ospray-support-and-contact) if this is broken!).
 
 Documentation
 =============
@@ -274,8 +335,9 @@ Initialization and Shutdown
 
 To use the API, OSPRay must be initialized with a “device”. A device is
 the object which implements the API. Creating and initializing a device
-can be done in either of two ways: command line arguments or manually
-instantiating a device.
+can be done in either of two ways: command line arguments using
+`ospInit` or manually instantiating a device and setting parameters on
+it.
 
 ### Command Line Arguments
 
@@ -294,94 +356,40 @@ is important to note that the arguments passed to `ospInit()` are
 processed in order they are listed. The following parameters (which are
 prefixed by convention with “`--osp:`”) are understood:
 
-<table style="width:97%;">
-<caption>Command line parameters accepted by OSPRay’s <code>ospInit</code>.</caption>
-<colgroup>
-<col style="width: 36%" />
-<col style="width: 61%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Parameter</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><code>--osp:debug</code></td>
-<td style="text-align: left;">enables various extra checks and debug output, and disables multi-threading</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>--osp:numthreads &lt;n&gt;</code></td>
-<td style="text-align: left;">use <code>n</code> threads instead of per default using all detected hardware threads</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>--osp:loglevel &lt;n&gt;</code></td>
-<td style="text-align: left;">set logging level, default <code>0</code>; increasing <code>n</code> means increasingly verbose log messages</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>--osp:verbose</code></td>
-<td style="text-align: left;">shortcut for <code>--osp:loglevel 1</code> and enable debug output on console</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>--osp:vv</code></td>
-<td style="text-align: left;">shortcut for <code>--osp:loglevel 2</code> and enable debug output on console</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>--osp:module:&lt;name&gt;</code></td>
-<td style="text-align: left;">load a module during initialization; equivalent to calling <code>ospLoadModule(name)</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>--osp:mpi</code></td>
-<td style="text-align: left;">enables MPI mode for parallel rendering with the <code>mpi_offload</code> device, to be used in conjunction with <code>mpirun</code>; this will automatically load the “mpi” module if it is not yet loaded or linked</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>--osp:mpi-offload</code></td>
-<td style="text-align: left;">same as <code>--osp:mpi</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>--osp:mpi-distributed</code></td>
-<td style="text-align: left;">same as <code>--osp:mpi</code>, but will create an <code>mpi_distributed</code> device instead; Note that this will likely require application changes to work properly</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>--osp:logoutput &lt;dst&gt;</code></td>
-<td style="text-align: left;">convenience for setting where status messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>--osp:erroroutput &lt;dst&gt;</code></td>
-<td style="text-align: left;">convenience for setting where error messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>--osp:device:&lt;name&gt;</code></td>
-<td style="text-align: left;">use <code>name</code> as the type of device for OSPRay to create; e.g., <code>--osp:device:default</code> gives you the default local device; Note if the device to be used is defined in a module, remember to pass <code>--osp:module:&lt;name&gt;</code> first</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>--osp:setaffinity &lt;n&gt;</code></td>
-<td style="text-align: left;">if <code>1</code>, bind software threads to hardware threads; <code>0</code> disables binding; default is <code>1</code> on KNL and <code>0</code> otherwise</td>
-</tr>
-</tbody>
-</table>
+| Parameter                                   | Description                                                                                                                                                                                                                  |
+|:--------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--osp:debug`                               | enables various extra checks and debug output, and disables multi-threading                                                                                                                                                  |
+| `--osp:num-threads=<n>`                     | use `n` threads instead of per default using all detected hardware threads                                                                                                                                                   |
+| `--osp:log-level=<str>`                     | set logging level; valid values (in order of severity) are `none`, `error`, `warning`, `info`, and `debug`                                                                                                                   |
+| `--osp:warn-as-error`                       | send `warning` and `error` messages through the error callback, otherwise send `warning` messages through the message callback; must have sufficient `logLevel` to enable warnings                                           |
+| `--osp:verbose`                             | shortcut for `--osp:log-level=info` and enable debug output on `cout`, error output on `cerr`                                                                                                                                |
+| `--osp:vv`                                  | shortcut for `--osp:log-level=debug` and enable debug output on `cout`, error output on `cerr`                                                                                                                               |
+| `--osp:load-modules=<name>[,...]`           | load one or more modules during initialization; equivalent to calling `ospLoadModule(name)`                                                                                                                                  |
+| `--osp:log-output=<dst>`                    | convenience for setting where status messages go; valid values for `dst` are `cerr` and `cout`                                                                                                                               |
+| `--osp:error-output=<dst>`                  | convenience for setting where error messages go; valid values for `dst` are `cerr` and `cout`                                                                                                                                |
+| `--osp:device=<name>`                       | use `name` as the type of device for OSPRay to create; e.g., `--osp:device=cpu` gives you the default `cpu` device; Note if the device to be used is defined in a module, remember to pass `--osp:load-modules=<name>` first |
+| `--osp:set-affinity=<n>`                    | if `1`, bind software threads to hardware threads; `0` disables binding; default is `1` on KNL and `0` otherwise                                                                                                             |
+| `--osp:device-params=<param>:<value>[,...]` | set one or more other device parameters; equivalent to calling `ospDeviceSet*(param, value)`                                                                                                                                 |
 
 : Command line parameters accepted by OSPRay’s `ospInit`.
 
 ### Manual Device Instantiation
 
 The second method of initialization is to explicitly create the device
-yourself, and possibly set parameters. This method looks almost
-identical to how other [objects](#objects) are created and used by
-OSPRay (described in later sections). The first step is to create the
-device with
+and possibly set parameters. This method looks almost identical to how
+other [objects](#objects) are created and used by OSPRay (described in
+later sections). The first step is to create the device with
 
 ``` {.cpp}
 OSPDevice ospNewDevice(const char *type);
 ```
 
 where the `type` string maps to a specific device implementation. OSPRay
-always provides the “`default`” device, which maps to a local CPU
-rendering device. If it is enabled in the build, you can also use
-“`mpi`” to access the MPI multi-node rendering device (see [Parallel
-Rendering with MPI](#parallel-rendering-with-mpi) section for more
-information). Once a device is created, you can call
+always provides the “`cpu`” device, which maps to a fast, local CPU
+implementation. Other devices can also be added through additional
+modules, such as distributed MPI device implementations.
+
+Once a device is created, you can call
 
 ``` {.cpp}
 void ospDeviceSet1i(OSPDevice, const char *id, int val);
@@ -392,53 +400,15 @@ void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *val);
 to set parameters on the device. The following parameters can be set on
 all devices:
 
-<table style="width:97%;">
-<caption>Parameters shared by all devices.</caption>
-<colgroup>
-<col style="width: 11%" />
-<col style="width: 18%" />
-<col style="width: 67%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">numThreads</td>
-<td style="text-align: left;">number of threads which OSPRay should use</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">logLevel</td>
-<td style="text-align: left;">logging level</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">logOutput</td>
-<td style="text-align: left;">convenience for setting where status messages go; valid values are <code>cerr</code> and <code>cout</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">errorOutput</td>
-<td style="text-align: left;">convenience for setting where error messages go; valid values are <code>cerr</code> and <code>cout</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">debug</td>
-<td style="text-align: left;">set debug mode; equivalent to logLevel=2 and numThreads=1</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">setAffinity</td>
-<td style="text-align: left;">bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose</td>
-</tr>
-</tbody>
-</table>
+| Type   | Name        | Description                                                                                                                                                                        |
+|:-------|:------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| int    | numThreads  | number of threads which OSPRay should use                                                                                                                                          |
+| string | logLevel    | logging level; valid values (in order of severity) are `none`, `error`, `warning`, `info`, and `debug`                                                                             |
+| string | logOutput   | convenience for setting where status messages go; valid values are `cerr` and `cout`                                                                                               |
+| string | errorOutput | convenience for setting where error messages go; valid values are `cerr` and `cout`                                                                                                |
+| bool   | debug       | set debug mode; equivalent to logLevel=2 and numThreads=1                                                                                                                          |
+| bool   | warnAsError | send `warning` and `error` messages through the error callback, otherwise send `warning` messages through the message callback; must have sufficient `logLevel` to enable warnings |
+| bool   | setAffinity | bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose                                                            |
 
 : Parameters shared by all devices.
 
@@ -470,41 +440,63 @@ to OSPRay API calls, where users can set/change parameters and recommit
 the device. If changes are made to the device that is already set as the
 current device, it does not need to be set as current again.
 
+OSPRay allows applications to query runtime properties of a device in
+order to do enhanced validation of what device was loaded at runtime.
+The following function can be used to get these device-specific
+properties (attiributes about the device, not paramter values)
+
+``` {.cpp}
+int64_t ospDeviceGetProperty(OSPDevice, OSPDeviceProperty);
+```
+
+It returns an integer value of the queried property and the following
+properties can be provided as parameter:
+
+``` {.cpp}
+OSP_DEVICE_VERSION
+OSP_DEVICE_VERSION_MAJOR
+OSP_DEVICE_VERSION_MINOR
+OSP_DEVICE_VERSION_PATCH
+OSP_DEVICE_SO_VERSION
+```
+
 ### Environment Variables
 
-Finally, OSPRay’s generic device parameters can be overridden via
-environment variables for easy changes to OSPRay’s behavior without
-needing to change the application (variables are prefixed by convention
-with “`OSPRAY_`”):
+OSPRay’s generic device parameters can be overridden via environment
+variables for easy changes to OSPRay’s behavior without needing to
+change the application (variables are prefixed by convention with
+“`OSPRAY_`”):
 
-| Variable                | Description                       |
-|:------------------------|:----------------------------------|
-| OSPRAY\_THREADS         | equivalent to `--osp:numthreads`  |
-| OSPRAY\_LOG\_LEVEL      | equivalent to `--osp:loglevel`    |
-| OSPRAY\_LOG\_OUTPUT     | equivalent to `--osp:logoutput`   |
-| OSPRAY\_ERROR\_OUTPUT   | equivalent to `--osp:erroroutput` |
-| OSPRAY\_DEBUG           | equivalent to `--osp:debug`       |
-| OSPRAY\_SET\_AFFINITY   | equivalent to `--osp:setaffinity` |
-| OSPRAY\_LOAD\_MODULES   | equivalent to `--osp:module:`,    |
-|                         | can be a comma separated list     |
-|                         | of modules which will be loaded   |
-|                         | in order                          |
-| OSPRAY\_DEFAULT\_DEVICE | equivalent to `--osp:device:`     |
+| Variable                | Description                                                                                                |
+|:------------------------|:-----------------------------------------------------------------------------------------------------------|
+| OSPRAY\_NUM\_THREADS    | equivalent to `--osp:num-threads`                                                                          |
+| OSPRAY\_LOG\_LEVEL      | equivalent to `--osp:log-level`                                                                            |
+| OSPRAY\_LOG\_OUTPUT     | equivalent to `--osp:log-output`                                                                           |
+| OSPRAY\_ERROR\_OUTPUT   | equivalent to `--osp:error-output`                                                                         |
+| OSPRAY\_DEBUG           | equivalent to `--osp:debug`                                                                                |
+| OSPRAY\_WARN\_AS\_ERROR | equivalent to `--osp:warn-as-error`                                                                        |
+| OSPRAY\_SET\_AFFINITY   | equivalent to `--osp:set-affinity`                                                                         |
+| OSPRAY\_LOAD\_MODULES   | equivalent to `--osp:load-modules`, can be a comma separated list of modules which will be loaded in order |
+| OSPRAY\_DEVICE          | equivalent to `--osp:device:`                                                                              |
 
 : Environment variables interpreted by OSPRay.
+
+Note that these environment variables take precedence over values
+specified through `ospInit` or manually set device parameters.
 
 ### Error Handling and Status Messages
 
 The following errors are currently used by OSPRay:
 
-| Name                    | Description                                           |
-|:------------------------|:------------------------------------------------------|
-| OSP\_NO\_ERROR          | no error occurred                                     |
-| OSP\_UNKNOWN\_ERROR     | an unknown error occurred                             |
-| OSP\_INVALID\_ARGUMENT  | an invalid argument was specified                     |
-| OSP\_INVALID\_OPERATION | the operation is not allowed for the specified object |
-| OSP\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command     |
-| OSP\_UNSUPPORTED\_CPU   | the CPU is not supported (minimum ISA is SSE4.1)      |
+| Name                    | Description                                             |
+|:------------------------|:--------------------------------------------------------|
+| OSP\_NO\_ERROR          | no error occurred                                       |
+| OSP\_UNKNOWN\_ERROR     | an unknown error occurred                               |
+| OSP\_INVALID\_ARGUMENT  | an invalid argument was specified                       |
+| OSP\_INVALID\_OPERATION | the operation is not allowed for the specified object   |
+| OSP\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command       |
+| OSP\_UNSUPPORTED\_CPU   | the CPU is not supported (minimum ISA is SSE4.1)        |
+| OSP\_VERSION\_MISMATCH  | a module could not be loaded due to mismatching version |
 
 : Possible error codes, i.e., valid named constants of type `OSPError`.
 
@@ -555,11 +547,14 @@ will require that a callback is provided. Note that callbacks for C++
 `std::cout` and `std::cerr` can be alternatively set through `ospInit()`
 or the `OSPRAY_LOG_OUTPUT` environment variable.
 
+Applications can clear either callback by passing `nullptr` instead of
+an actual function pointer.
+
 ### Loading OSPRay Extensions at Runtime
 
-OSPRay’s functionality can be extended via plugins, which are
-implemented in shared libraries. To load plugin `name` from
-`libospray_module_<name>.so` (on Linux and Mac OS X) or
+OSPRay’s functionality can be extended via plugins (which we call
+“modules”), which are implemented in shared libraries. To load module
+`name` from `libospray_module_<name>.so` (on Linux and Mac OS X) or
 `ospray_module_<name>.dll` (on Windows) use
 
 ``` {.cpp}
@@ -587,7 +582,7 @@ Objects
 -------
 
 All entities of OSPRay (the renderer, volumes, geometries, lights,
-cameras, …) are a specialization of `OSPObject` and share common
+cameras, …) are a logical specialization of `OSPObject` and share common
 mechanism to deal with parameters and lifetime.
 
 An important aspect of object parameters is that parameters do not get
@@ -606,11 +601,9 @@ camera) it is perfectly valid to do so, as long as the changed
 parameters are recommitted.
 
 The commit semantic allow for batching up multiple small changes, and
-specifies exactly when changes to objects will occur. This is important
-to ensure performance and consistency for devices crossing a PCI bus, or
-across a network. In our MPI implementation, for example, we can easily
-guarantee consistency among different nodes by MPI barrier’ing on every
-commit.
+specifies exactly when changes to objects will occur. This can impact
+performance and consistency for devices crossing a PCI bus or across a
+network.
 
 Note that OSPRay uses reference counting to manage the lifetime of all
 objects, so one cannot explicitly “delete” any object. Instead, to
@@ -624,53 +617,48 @@ void ospRelease(OSPObject);
 This decreases its reference count and if the count reaches `0` the
 object will automatically get deleted. Passing `NULL` is not an error.
 
+Sometimes applications may want to have more than one reference to an
+object, where it is desirable for the application to increment the
+reference count of an object. This is done with
+
+``` {.cpp}
+void ospRetain(OSPObject);
+```
+
+It is important to note that this is only necessary if the application
+wants to call `ospRelease` on an object more than once: objects which
+contain other objects as parameters internally increment/decrement ref
+counts and should not be explicitly done by the application.
+
 ### Parameters
 
 Parameters allow to configure the behavior of and to pass data to
 objects. However, objects do *not* have an explicit interface for
 reasons of high flexibility and a more stable compile-time API. Instead,
 parameters are passed separately to objects in an arbitrary order, and
-unknown parameters will simply be ignored. The following functions allow
-adding various types of parameters with name `id` to a given object:
+unknown parameters will simply be ignored (though a warning message will
+be posted). The following function allows adding various types of
+parameters with name `id` to a given object:
 
 ``` {.cpp}
-// add a C-string (zero-terminated char *) parameter
-void ospSetString(OSPObject, const char *id, const char *s);
-
-// add an object handle parameter to another object
-void ospSetObject(OSPObject, const char *id, OSPObject object);
-
-// add an untyped pointer -- this will *ONLY* work in local rendering!
-void ospSetVoidPtr(OSPObject, const char *id, void *v);
-
-// add scalar and vector integer and float parameters
-void ospSetf  (OSPObject, const char *id, float x);
-void ospSet1f (OSPObject, const char *id, float x);
-void ospSet1i (OSPObject, const char *id, int32_t x);
-void ospSet2f (OSPObject, const char *id, float x, float y);
-void ospSet2fv(OSPObject, const char *id, const float *xy);
-void ospSet2i (OSPObject, const char *id, int x, int y);
-void ospSet2iv(OSPObject, const char *id, const int *xy);
-void ospSet3f (OSPObject, const char *id, float x, float y, float z);
-void ospSet3fv(OSPObject, const char *id, const float *xyz);
-void ospSet3i (OSPObject, const char *id, int x, int y, int z);
-void ospSet3iv(OSPObject, const char *id, const int *xyz);
-void ospSet4f (OSPObject, const char *id, float x, float y, float z, float w);
-void ospSet4fv(OSPObject, const char *id, const float *xyzw);
-
-// additional functions to pass vector integer and float parameters in C++
-void ospSetVec2f(OSPObject, const char *id, const vec2f &v);
-void ospSetVec2i(OSPObject, const char *id, const vec2i &v);
-void ospSetVec3f(OSPObject, const char *id, const vec3f &v);
-void ospSetVec3i(OSPObject, const char *id, const vec3i &v);
-void ospSetVec4f(OSPObject, const char *id, const vec4f &v);
+void ospSetParam(OSPObject, const char *id, OSPDataType type, const void *mem);
 ```
 
-Users can also remove parameters that have been explicitly set via an
-ospSet call. Any parameters which have been removed will go back to
+The valid parameter names for all `OSPObject`s and what types are valid
+are discussed in future sections.
+
+Note that `mem` must always be a pointer *to* the object, otherwise
+accidental type casting can occur. This is especially true for pointer
+types (`OSP_VOID_PTR` and `OSPObject` handles), as they will implicitly
+cast to `void *`, but be incorrectly interpreted. To help with some of
+these issues, there also exist variants of `ospSetParam` for specific
+types, such as `ospSetInt` and `ospSetVec3f` in the [OSPRay utility
+library](util.md) (found in `ospray_util.h`).
+
+Users can also remove parameters that have been explicitly set from
+`ospSetParam`. Any parameters which have been removed will go back to
 their default value during the next commit unless a new parameter was
-set after the parameter was removed. The following API function removes
-the named parameter from the given object:
+set after the parameter was removed. To remove a parameter, use
 
 ``` {.cpp}
 void ospRemoveParam(OSPObject, const char *id);
@@ -678,31 +666,54 @@ void ospRemoveParam(OSPObject, const char *id);
 
 ### Data
 
-There is also the possibility to aggregate many values of the same type
-into an array, which then itself can be used as a parameter to objects.
-To create such a new data buffer, holding `numItems` elements of the
-given type, from the initialization data pointed to by `source` and
-optional creation flags, use
+OSPRay consumes data arrays from the application using a specific object
+type, `OSPData`. There are several components to describing a data
+array: element type, 1/2/3 dimensional striding, and whether the array
+is shared with the application or copied into opaque, OSPRay-owned
+memory.
+
+Shared data arrays require that the application’s array memory outlives
+the lifetime of the created `OSPData`, as OSPRay is referring to
+application memory. Where this is not preferable, applications use
+opaque arrays to allow the `OSPData` to own the lifetime of the array
+memory. However, opaque arrays dictate the cost of copying data into it,
+which should be kept in mind.
+
+Thus the most efficient way to specify a data array from the application
+is to created a shared data array, which is done with
 
 ``` {.cpp}
-OSPData ospNewData(size_t numItems,
+OSPData ospNewSharedData(const void *sharedData,
                    OSPDataType,
-                   const void *source,
-                   const uint32_t dataCreationFlags = 0);
+  uint64_t numItems1,
+  int64_t byteStride1 = 0,
+  uint64_t numItems2 = 1,
+  int64_t byteStride2 = 0,
+  uint64_t numItems3 = 1,
+  int64_t byteStride3 = 0);
 ```
 
-The call returns an `OSPData` handle to the created array. The flag
-`OSP_DATA_SHARED_BUFFER` indicates that the buffer can be shared with
-the application. In this case the calling program guarantees that the
-`source` pointer will remain valid for the duration that this data array
-is being used. The enum type `OSPDataType` describes the different data
-types that can be represented in OSPRay; valid constants are listed in
-the table below.
+The call returns an `OSPData` handle to the created array. The calling
+program guarantees that the `sharedData` pointer will remain valid for
+the duration that this data array is being used. The number of elements
+`numItems` must be positive (there cannot be an empty data object). The
+data is arranged in three dimensions, with specializations to two or one
+dimension (if some `numItems` are 1). The distance between consecutive
+elements (per dimension) is given in bytes with `byteStride` and can
+also be negative. If `byteStride` is zero it will be determined
+automatically (e.g., as `sizeof(type)`). Strides do not need to be
+ordered, i.e., `byteStride2` can be smaller than `byteStride1`, which is
+equivalent to a transpose. However, if the stride should be calculated,
+then an ordering like `byteStride1 < byteStride2` is assumed to
+disambiguate.
+
+The enum type `OSPDataType` describes the different element types that
+can be represented in OSPRay; valid constants are listed in the table
+below.
 
 | Type/Name               | Description                                                       |
 |:------------------------|:------------------------------------------------------------------|
 | OSP\_DEVICE             | API device object reference                                       |
-| OSP\_VOID\_PTR          | void pointer                                                      |
 | OSP\_DATA               | data reference                                                    |
 | OSP\_OBJECT             | generic object reference                                          |
 | OSP\_CAMERA             | camera object reference                                           |
@@ -711,35 +722,78 @@ the table below.
 | OSP\_MATERIAL           | material object reference                                         |
 | OSP\_TEXTURE            | texture object reference                                          |
 | OSP\_RENDERER           | renderer object reference                                         |
-| OSP\_MODEL              | model object reference                                            |
+| OSP\_WORLD              | world object reference                                            |
 | OSP\_GEOMETRY           | geometry object reference                                         |
 | OSP\_VOLUME             | volume object reference                                           |
 | OSP\_TRANSFER\_FUNCTION | transfer function object reference                                |
-| OSP\_PIXEL\_OP          | pixel operation object reference                                  |
+| OSP\_IMAGE\_OPERATION   | image operation object reference                                  |
 | OSP\_STRING             | C-style zero-terminated character string                          |
 | OSP\_CHAR               | 8 bit signed character scalar                                     |
 | OSP\_UCHAR              | 8 bit unsigned character scalar                                   |
-| OSP\_UCHAR\[234\]       | … and \[234\]-element vector                                      |
+| OSP\_VEC\[234\]UC       | … and \[234\]-element vector                                      |
 | OSP\_USHORT             | 16 bit unsigned integer scalar                                    |
 | OSP\_INT                | 32 bit signed integer scalar                                      |
-| OSP\_INT\[234\]         | … and \[234\]-element vector                                      |
+| OSP\_VEC\[234\]I        | … and \[234\]-element vector                                      |
 | OSP\_UINT               | 32 bit unsigned integer scalar                                    |
-| OSP\_UINT\[234\]        | … and \[234\]-element vector                                      |
+| OSP\_VEC\[234\]UI       | … and \[234\]-element vector                                      |
 | OSP\_LONG               | 64 bit signed integer scalar                                      |
-| OSP\_LONG\[234\]        | … and \[234\]-element vector                                      |
+| OSP\_VEC\[234\]L        | … and \[234\]-element vector                                      |
 | OSP\_ULONG              | 64 bit unsigned integer scalar                                    |
-| OSP\_ULONG\[234\]       | … and \[234\]-element vector                                      |
+| OSP\_VEC\[234\]UL       | … and \[234\]-element vector                                      |
 | OSP\_FLOAT              | 32 bit single precision floating-point scalar                     |
-| OSP\_FLOAT\[234\]       | … and \[234\]-element vector                                      |
-| OSP\_FLOAT3A            | … and 3-element vector with padding (same size as an OSP\_FLOAT4) |
+| OSP\_VEC\[234\]F        | … and \[234\]-element vector                                      |
 | OSP\_DOUBLE             | 64 bit double precision floating-point scalar                     |
+| OSP\_BOX\[1234\]I       | 32 bit integer box (lower + upper bounds)                         |
+| OSP\_BOX\[1234\]F       | 32 bit single precision floating-point box (lower + upper bounds) |
+| OSP\_LINEAR\[234\]F     | 32 bit single precision floating-point linear transform           |
+| OSP\_AFFINE\[234\]F     | 32 bit single precision floating-point affine transform           |
+| OSP\_VOID\_PTR          | raw memory address (only found in module extensions)              |
 
 : Valid named constants for `OSPDataType`.
 
-To add a data array as parameter named `id` to another object call
+An opaque `OSPData` with memory allocated by OSPRay is created with
 
 ``` {.cpp}
-void ospSetData(OSPObject, const char *id, OSPData);
+OSPData ospNewData(OSPDataType,
+  uint32_t numItems1,
+  uint32_t numItems2 = 1,
+  uint32_t numItems3 = 1);
+```
+
+To allow for (partial) copies or updates of data arrays use
+
+``` {.cpp}
+void ospCopyData(const OSPData source,
+  OSPData destination,
+  uint32_t destinationIndex1 = 0,
+  uint32_t destinationIndex2 = 0,
+  uint32_t destinationIndex3 = 0);
+```
+
+which will copy the whole[^3] content of the `source` array into
+`destination` at the given location `destinationIndex`. The
+`OSPDataType`s of the data objects must match. The region to be copied
+must be valid inside the destination, i.e., in all dimensions,
+`destinationIndex + sourceSize <= destinationSize`. The affected region
+`[destinationIndex, destinationIndex + sourceSize)` is marked as dirty,
+which may be used by OSPRay to only process or update that sub-region
+(e.g., updating an acceleration structure). If the destination array is
+shared with OSPData by the application (created with
+`ospNewSharedData`), then
+
+-   the source array must be shared as well (thus `ospCopyData` cannot
+    be used to read opaque data)
+-   if source and destination memory overlaps (aliasing), then behaviour
+    is undefined
+-   except if source and destination regions are identical (including
+    matching strides), which can be used by application to mark that
+    region as dirty (instead of the whole `OSPData`)
+
+To add a data array as parameter named `id` to another object call also
+use
+
+``` {.cpp}
+void ospSetObject(OSPObject, const char *id, OSPData);
 ```
 
 Volumes
@@ -753,335 +807,108 @@ given type `type` use
 OSPVolume ospNewVolume(const char *type);
 ```
 
-The call returns `NULL` if that type of volume is not known by OSPRay,
-or else an `OSPVolume` handle.
+Note that OSPRay’s implementation forwards `type` directly to Open VKL,
+allowing new Open VKL volume types to be usable within OSPRay without
+the need to change (or even recompile) OSPRay.
 
-The common parameters understood by all volume variants are summarized
-in the table below.
-
-<table style="width:98%;">
-<caption>Configuration parameters shared by all volume types.</caption>
-<colgroup>
-<col style="width: 23%" />
-<col style="width: 27%" />
-<col style="width: 11%" />
-<col style="width: 34%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">OSPTransferFunction</td>
-<td style="text-align: left;">transferFunction</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;"><a href="#transfer-function">transfer function</a> to use</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec2f</td>
-<td style="text-align: left;">voxelRange</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">minimum and maximum of the scalar values</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">gradientShadingEnabled</td>
-<td style="text-align: right;">false</td>
-<td style="text-align: left;">volume is rendered with surface shading wrt. to normalized gradient</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">preIntegration</td>
-<td style="text-align: right;">false</td>
-<td style="text-align: left;">use pre-integration for <a href="#transfer-function">transfer function</a> lookups</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">singleShade</td>
-<td style="text-align: right;">true</td>
-<td style="text-align: left;">shade only at the point of maximum intensity</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">adaptiveSampling</td>
-<td style="text-align: right;">true</td>
-<td style="text-align: left;">adapt ray step size based on opacity</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">adaptiveScalar</td>
-<td style="text-align: right;">15</td>
-<td style="text-align: left;">modifier for adaptive step size</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">adaptiveMaxSamplingRate</td>
-<td style="text-align: right;">2</td>
-<td style="text-align: left;">maximum sampling rate for adaptive sampling</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">samplingRate</td>
-<td style="text-align: right;">0.125</td>
-<td style="text-align: left;">sampling rate of the volume (this is the minimum step size for adaptive sampling)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">specular</td>
-<td style="text-align: right;">gray 0.3</td>
-<td style="text-align: left;">specular color for shading</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">volumeClippingBoxLower</td>
-<td style="text-align: right;">disabled</td>
-<td style="text-align: left;">lower coordinate (in object-space) to clip the volume values</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">volumeClippingBoxUpper</td>
-<td style="text-align: right;">disabled</td>
-<td style="text-align: left;">upper coordinate (in object-space) to clip the volume values</td>
-</tr>
-</tbody>
-</table>
-
-: Configuration parameters shared by all volume types.
-
-Note that if `voxelRange` is not provided for a volume then OSPRay will
-compute it based on the voxel data, which may result in slower data
-updates.
-
-### Structured Volume
+### Structured Regular Volume
 
 Structured volumes only need to store the values of the samples, because
 their addresses in memory can be easily computed from a 3D position. A
-common type of structured volumes are regular grids. OSPRay supports two
-variants that differ in how the volumetric data for the regular grids is
-specified.
+common type of structured volumes are regular grids.
 
-The first variant shares the voxel data with the application. Such a
-volume type is created by passing the type string
-“`shared_structured_volume`” to `ospNewVolume`. The voxel data is laid
-out in memory in xyz-order[^3] and provided to the volume via a
-[data](#data) buffer parameter named “`voxelData`”.
+Structured regular volumes are created by passing the
+`structuredRegular` type string to `ospNewVolume`. Structured volumes
+are represented through an `OSPData` 3D array `data` (which may or may
+not be shared with the application), where currently the voxel data
+needs to be laid out compact in memory in xyz-order[^4]
 
-The second regular grid variant is optimized for rendering performance:
-data locality in memory is increased by arranging the voxel data in
-smaller blocks. This volume type is created by passing the type string
-“`block_bricked_volume`” to `ospNewVolume`. Because of this
-rearrangement of voxel data it cannot be shared the with the application
-anymore, but has to be transferred to OSPRay via
+The parameters understood by structured volumes are summarized in the
+table below.
 
-``` {.cpp}
-OSPError ospSetRegion(OSPVolume, void *source,
-                      const vec3i &regionCoords,
-                      const vec3i &regionSize);
-```
+| Type    | Name        |      Default| Description                            |
+|:--------|:------------|------------:|:---------------------------------------|
+| vec3f   | gridOrigin  |  $(0, 0, 0)$| origin of the grid in object-space     |
+| vec3f   | gridSpacing |  $(1, 1, 1)$| size of the grid cells in object-space |
+| OSPData | data        |             | the actual voxel 3D [data](#data)      |
 
-The voxel data pointed to by `source` is copied into the given volume
-starting at position `regionCoords`, must be of size `regionSize` and be
-placed in memory in xyz-order. Note that OSPRay distinguishes between
-volume data and volume parameters. This function must be called only
-after all volume parameters (in particular `dimensions` and `voxelType`,
-see below) have been set and *before* `ospCommit(volume)` is called. If
-necessary then memory for the volume is allocated on the first call to
-this function.
+: Additional configuration parameters for structured regular volumes.
 
-The common parameters understood by both structured volume variants are
-summarized in the table below.
+The size of the volume is inferred from the size of the 3D array `data`,
+as is the type of the voxel values (currently supported are:
+`OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_FLOAT`, and `OSP_DOUBLE`).
 
-<table style="width:97%;">
-<caption>Additional configuration parameters for structured volumes.</caption>
-<colgroup>
-<col style="width: 12%" />
-<col style="width: 18%" />
-<col style="width: 18%" />
-<col style="width: 48%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">vec3i</td>
-<td style="text-align: left;">dimensions</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">number of voxels in each dimension <span class="math inline">(<em>x</em>, <em>y</em>, <em>z</em>)</span></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">voxelType</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">data type of each voxel, currently supported are:</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">“uchar” (8 bit unsigned integer)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">“short” (16 bit signed integer)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">“ushort” (16 bit unsigned integer)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">“float” (32 bit single precision floating point)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">“double” (64 bit double precision floating point)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">gridOrigin</td>
-<td style="text-align: right;"><span class="math inline">(0, 0, 0)</span></td>
-<td style="text-align: left;">origin of the grid in world-space</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">gridSpacing</td>
-<td style="text-align: right;"><span class="math inline">(1, 1, 1)</span></td>
-<td style="text-align: left;">size of the grid cells in world-space</td>
-</tr>
-</tbody>
-</table>
+### Structured Spherical Volume
 
-: Additional configuration parameters for structured volumes.
+Structured spherical volumes are also supported, which are created by
+passing a type string of `"structuredSpherical"` to `ospNewVolume`. The
+grid dimensions and parameters are defined in terms of radial distance
+$r$, inclination angle $\theta$, and azimuthal angle $\phi$, conforming
+with the ISO convention for spherical coordinate systems. The coordinate
+system and parameters understood by structured spherical volumes are
+summarized below.
+
+<figure>
+<img src="https://ospray.github.io/images/structured_spherical_coords.svg" width="60.0%" alt="" /><figcaption>Coordinate system of structured spherical volumes.</figcaption>
+</figure>
+
+
+
+| Type    | Name        |   Default   | Description                                                               |
+|:--------|:------------|:-----------:|:--------------------------------------------------------------------------|
+| vec3f   | gridOrigin  | $(0, 0, 0)$ | origin of the grid in units of $(r, \theta, \phi)$; angles in degrees     |
+| vec3f   | gridSpacing | $(1, 1, 1)$ | size of the grid cells in units of $(r, \theta, \phi)$; angles in degrees |
+| OSPData | data        |             | the actual voxel 3D [data](#data)                                         |
+
+: Additional configuration parameters for structured spherical volumes.
+
+The dimensions $(r, \theta, \phi)$ of the volume are inferred from the
+size of the 3D array `data`, as is the type of the voxel values
+(currently supported are: `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`,
+`OSP_FLOAT`, and `OSP_DOUBLE`).
+
+These grid parameters support flexible specification of spheres,
+hemispheres, spherical shells, spherical wedges, and so forth. The grid
+extents (computed as
+`[gridOrigin, gridOrigin + (dimensions - 1) * gridSpacing]`) however
+must be constrained such that:
+
+-   $r \geq 0$
+-   $0 \leq \theta \leq 180$
+-   $0 \leq \phi \leq 360$
 
 ### Adaptive Mesh Refinement (AMR) Volume
 
-AMR volumes are specified as a list of bricks, which are levels of
-refinement in potentially overlapping regions. There can be any number
-of refinement levels and any number of bricks at any level of
-refinement. An AMR volume type is created by passing the type string
-“`amr_volume`” to `ospNewVolume`.
+OSPRay currently supports block-structured (Berger-Colella) AMR volumes.
+Volumes are specified as a list of blocks, which exist at levels of
+refinement in potentially overlapping regions. Blocks exist in a tree
+structure, with coarser refinement level blocks containing finer blocks.
+The cell width is equal for all blocks at the same refinement level,
+though blocks at a coarser level have a larger cell width than finer
+levels.
 
-Applications should first create an `OSPData` array which holds
-information about each brick. The following structure is used to
-populate this array (found in `ospray.h`):
+There can be any number of refinement levels and any number of blocks at
+any level of refinement. An AMR volume type is created by passing the
+type string `"amr"` to `ospNewVolume`.
 
-``` {.cpp}
-struct amr_brick_info
-{
-  box3i bounds;
-  int   refinementLevel;
-  float cellWidth;
-};
-```
+Blocks are defined by three parameters: their bounds, the refinement
+level in which they reside, and the scalar data contained within each
+block.
 
-Then for each brick, the application should create an `OSPData` array of
-`OSPData` handles, where each handle is the data per-brick. Currently we
-only support `float` voxels.
+Note that cell widths are defined *per refinement level*, not per block.
 
-<table style="width:97%;">
-<caption>Additional configuration parameters for AMR volumes.</caption>
-<colgroup>
-<col style="width: 13%" />
-<col style="width: 18%" />
-<col style="width: 18%" />
-<col style="width: 47%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">gridOrigin</td>
-<td style="text-align: right;"><span class="math inline">(0, 0, 0)</span></td>
-<td style="text-align: left;">origin of the grid in world-space</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">gridSpacing</td>
-<td style="text-align: right;"><span class="math inline">(1, 1, 1)</span></td>
-<td style="text-align: left;">size of the grid cells in world-space</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">amrMethod</td>
-<td style="text-align: right;">current</td>
-<td style="text-align: left;">sampling method; valid values are “finest”, “current”, or “octant”</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">voxelType</td>
-<td style="text-align: right;">undefined</td>
-<td style="text-align: left;">data type of each voxel, currently supported are:</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">“uchar” (8 bit unsigned integer)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">“short” (16 bit signed integer)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">“ushort” (16 bit unsigned integer)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">“float” (32 bit single precision floating point)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">“double” (64 bit double precision floating point)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">OSPData</td>
-<td style="text-align: left;">brickInfo</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">array of info defining each brick</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">OSPData</td>
-<td style="text-align: left;">brickData</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">array of handles to per-brick voxel data</td>
-</tr>
-</tbody>
-</table>
+| Type           | Name         |            Default| Description                                                            |
+|:---------------|:-------------|------------------:|:-----------------------------------------------------------------------|
+| `OSPAMRMethod` | method       |  `OSP_AMR_CURRENT`| `OSPAMRMethod` sampling method. Supported methods are:                 |
+|                |              |                   | `OSP_AMR_CURRENT`                                                      |
+|                |              |                   | `OSP_AMR_FINEST`                                                       |
+|                |              |                   | `OSP_AMR_OCTANT`                                                       |
+| float\[\]      | cellWidth    |               NULL| array of each level’s cell width                                       |
+| box3f\[\]      | block.bounds |               NULL| [data](#data) array of bounds for each AMR block                       |
+| int\[\]        | block.level  |               NULL| array of each block’s refinement level                                 |
+| OSPData\[\]    | block.data   |               NULL| [data](#data) array of OSPData containing the actual scalar voxel data |
+| vec3f          | gridOrigin   |        $(0, 0, 0)$| origin of the grid in world-space                                      |
+| vec3f          | gridSpacing  |        $(1, 1, 1)$| size of the grid cells in world-space                                  |
 
 : Additional configuration parameters for AMR volumes.
 
@@ -1089,89 +916,89 @@ Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
 like the structured volume equivalent, but they only modify the root
 (coarsest level) of refinement.
 
-### Unstructured Volumes
+In particular, OSPRay’s AMR implementation was designed to cover
+Berger-Colella \[1\] and Chombo \[2\] AMR data. The `method` parameter
+above determines the interpolation method used when sampling the volume.
 
-Unstructured volumes can contain tetrahedral, wedge, or hexahedral cell
-types, and are defined by three arrays: vertices, corresponding field
-values, and eight indices per cell (first four are -1 for tetrahedral
-cells, first two are -2 for wedge cells). An unstructured volume type is
-created by passing the type string “`unstructured_volume`” to
-`ospNewVolume`.
+-   `OSP_AMR_CURRENT` finds the finest refinement level at that cell and
+    interpolates through this “current” level
+-   `OSP_AMR_FINEST` will interpolate at the closest existing cell in
+    the volume-wide finest refinement level regardless of the sample
+    cell’s level
+-   `OSP_AMR_OCTANT` interpolates through all available refinement
+    levels
+-   at that cell. This method avoids discontinuities at refinement level
+    boundaries at the cost of performance
 
-Field values can be specified per-vertex (`field`) or per-cell
-(`cellField`). If both values are set, `cellField` takes precedence.
+Details and more information can be found in the publication for the
+implementation \[3\].
 
-Similar to [triangle mesh](#triangle-mesh), each tetrahedron is formed
-by a group of indices into the vertices. For each vertex, the
-corresponding (by array index) data value will be used for sampling when
-rendering. Note that the index order for each tetrahedron does not
-matter, as OSPRay internally calculates vertex normals to ensure proper
-sampling and interpolation.
+1.  M. J. Berger, and P. Colella. “Local adaptive mesh refinement for
+    shock hydrodynamics.” Journal of Computational Physics 82.1 (1989):
+    64-84. DOI: 10.1016/0021-9991(89)90035-1
+2.  M. Adams, P. Colella, D. T. Graves, J.N. Johnson, N.D. Keen, T. J.
+    Ligocki. D. F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz,
+    T.D. Sternberg and B. Van Straalen, Chombo Software Package for AMR
+    Applications - Design Document, Lawrence Berkeley National
+    Laboratory Technical Report LBNL-6616E.
+3.  I. Wald, C. Brownlee, W. Usher, and A. Knoll. CPU volume rendering
+    of adaptive mesh refinement data. SIGGRAPH Asia 2017 Symposium on
+    Visualization on - SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305
 
-For wedge cells, each wedge is formed by a group of six indices into the
-vertices and data value. Vertex ordering is the same as `VTK_WEDGE`:
-three bottom vertices counterclockwise, then top three counterclockwise.
+### Unstructured Volume
+
+Unstructured volumes can have their topology and geometry freely
+defined. Geometry can be composed of tetrahedral, hexahedral, wedge or
+pyramid cell types. The data format used is compatible with VTK and
+consists of multiple arrays: vertex positions and values, vertex
+indices, cell start indices, cell types, and cell values. An
+unstructured volume type is created by passing the type string
+“`unstructured`” to `ospNewVolume`.
+
+Sampled cell values can be specified either per-vertex (`vertex.data`)
+or per-cell (`cell.data`). If both arrays are set, `cell.data` takes
+precedence.
+
+Similar to a mesh, each cell is formed by a group of indices into the
+vertices. For each vertex, the corresponding (by array index) data value
+will be used for sampling when rendering, if specified. The index order
+for a tetrahedron is the same as `VTK_TETRA`: bottom triangle
+counterclockwise, then the top vertex.
 
 For hexahedral cells, each hexahedron is formed by a group of eight
-indices into the vertices and data value. Vertex ordering is the same as
-`VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
-counterclockwise.
+indices into the vertices and data values. Vertex ordering is the same
+as `VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top
+four counterclockwise.
 
-<table style="width:98%;">
-<caption>Additional configuration parameters for unstructured volumes.</caption>
-<colgroup>
-<col style="width: 14%" />
-<col style="width: 25%" />
-<col style="width: 12%" />
-<col style="width: 44%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: left;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">vec3f[]</td>
-<td style="text-align: left;">vertices</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"><a href="#data">data</a> array of vertex positions</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float[]</td>
-<td style="text-align: left;">field</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"><a href="#data">data</a> array of vertex data values to be sampled</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float[]</td>
-<td style="text-align: left;">cellField</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"><a href="#data">data</a> array of cell data values to be sampled</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec4i[]</td>
-<td style="text-align: left;">indices</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"><a href="#data">data</a> array of tetrahedra indices (into vertices and field)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">hexMethod</td>
-<td style="text-align: left;">planar</td>
-<td style="text-align: left;">“planar” (faster, assumes planar sides) or “nonplanar”</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">precomputedNormals</td>
-<td style="text-align: left;">true</td>
-<td style="text-align: left;">whether to accelerate by precomputing, at a cost of 72 bytes/cell</td>
-</tr>
-</tbody>
-</table>
+For wedge cells, each wedge is formed by a group of six indices into the
+vertices and data values. Vertex ordering is the same as `VTK_WEDGE`:
+three bottom vertices counterclockwise, then top three counterclockwise.
+
+For pyramid cells, each cell is formed by a group of five indices into
+the vertices and data values. Vertex ordering is the same as
+`VTK_PYRAMID`: four bottom vertices counterclockwise, then the top
+vertex.
+
+To maintain VTK data compatibility an index array may be specified via
+the `indexPrefixed` array that allow vertex indices to be interleaved
+with cell sizes in the following format:
+$n, id_1, ..., id_n, m, id_1, ..., id_m$.
+
+| Type                    | Name               | Default | Description                                                                                                                                             |
+|:------------------------|:-------------------|:--------|:--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vec3f\[\]               | vertex.position    |         | [data](#data) array of vertex positions                                                                                                                 |
+| float\[\]               | vertex.data        |         | [data](#data) array of vertex data values to be sampled                                                                                                 |
+| uint32\[\] / uint64\[\] | index              |         | [data](#data) array of indices (into the vertex array(s)) that form cells                                                                               |
+| uint32\[\] / uint64\[\] | indexPrefixed      |         | alternative [data](#data) array of indices compatible to VTK, where the indices of each cell are prefixed with the number of vertices                   |
+| uint32\[\] / uint64\[\] | cell.index         |         | [data](#data) array of locations (into the index array), specifying the first index of each cell                                                        |
+| float\[\]               | cell.data          |         | [data](#data) array of cell data values to be sampled                                                                                                   |
+| uint8\[\]               | cell.type          |         | [data](#data) array of cell types (VTK compatible). Supported types are:                                                                                |
+|                         |                    |         | `OSP_TETRAHEDRON`                                                                                                                                       |
+|                         |                    |         | `OSP_HEXAHEDRON`                                                                                                                                        |
+|                         |                    |         | `OSP_WEDGE`                                                                                                                                             |
+|                         |                    |         | `OSP_PYRAMID`                                                                                                                                           |
+| bool                    | hexIterative       | false   | hexahedron interpolation method, defaults to fast non-iterative version which could have rendering inaccuracies may appear if hex is not parallelepiped |
+| bool                    | precomputedNormals | true    | whether to accelerate by precomputing, at a cost of 12 bytes/face                                                                                       |
 
 : Additional configuration parameters for unstructured volumes.
 
@@ -1185,76 +1012,80 @@ volume. To create a new transfer function of given type `type` use
 OSPTransferFunction ospNewTransferFunction(const char *type);
 ```
 
-The call returns `NULL` if that type of transfer functions is not known
-by OSPRay, or else an `OSPTransferFunction` handle to the created
-transfer function. That handle can be assigned to a volume as parameter
-“`transferFunction`” using `ospSetObject`.
+The returned handle can be assigned to a volumetric model (described
+below) as parameter “`transferFunction`” using `ospSetObject`.
 
 One type of transfer function that is supported by OSPRay is the linear
 transfer function, which interpolates between given equidistant colors
-and opacities. It is create by passing the string “`piecewise_linear`”
-to `ospNewTransferFunction` and it is controlled by these parameters:
+and opacities. It is create by passing the string “`piecewiseLinear`” to
+`ospNewTransferFunction` and it is controlled by these parameters:
 
 | Type      | Name       | Description                                   |
 |:----------|:-----------|:----------------------------------------------|
-| vec3f\[\] | colors     | [data](#data) array of RGB colors             |
-| float\[\] | opacities  | [data](#data) array of opacities              |
+| vec3f\[\] | color      | [data](#data) array of RGB colors             |
+| float\[\] | opacity    | [data](#data) array of opacities              |
 | vec2f     | valueRange | domain (scalar range) this function maps from |
 
 : Parameters accepted by the linear transfer function.
 
+### VolumetricModels
+
+Volumes in OSPRay are given volume rendering appearance information
+through VolumetricModels. This decouples the physical representation of
+the volume (and possible acceleration structures it contains) to
+rendering-specific parameters (where more than one set may exist
+concurrently). To create a volume instance, call
+
+``` {.cpp}
+OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
+```
+
+| Type                | Name             | Default | Description                                                                                                                           |
+|:--------------------|:-----------------|:--------|:--------------------------------------------------------------------------------------------------------------------------------------|
+| OSPTransferFunction | transferFunction |         | [transfer function](#transfer-function) to use                                                                                        |
+| float               | densityScale     | 1.0     | makes volumes uniformly thinner or thicker                                                                                            |
+| float               | anisotropy       | 0.0     | anisotropy of the (Henyey-Greenstein) phase function in \[-1, 1\] ([path tracer](#path-tracer) only), default to isotropic scattering |
+
+: Parameters understood by VolumetricModel.
+
 Geometries
 ----------
 
-Geometries in OSPRay are objects that describe surfaces. To create a new
-geometry object of given type `type` use
+Geometries in OSPRay are objects that describe intersectable surfaces.
+To create a new geometry object of given type `type` use
 
 ``` {.cpp}
 OSPGeometry ospNewGeometry(const char *type);
 ```
 
-The call returns `NULL` if that type of geometry is not known by OSPRay,
-or else an `OSPGeometry` handle.
+Note that in the current implementation geometries are limited to a
+maximum of 2^32^ primitives.
 
-### Triangle Mesh
+### Mesh
 
-A traditional triangle mesh (indexed face set) geometry is created by
-calling `ospNewGeometry` with type string “`triangles`”. Once created, a
-triangle mesh recognizes the following parameters:
+A mesh consiting of either triangles or quads is created by calling
+`ospNewGeometry` with type string “`mesh`”. Once created, a mesh
+recognizes the following parameters:
 
-| Type                   | Name            | Description                                                        |
-|:-----------------------|:----------------|:-------------------------------------------------------------------|
-| vec3f(a)\[\]           | vertex          | [data](#data) array of vertex positions                            |
-| vec3f(a)\[\]           | vertex.normal   | [data](#data) array of vertex normals                              |
-| vec4f\[\] / vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)                    |
-| vec2f\[\]              | vertex.texcoord | [data](#data) array of vertex texture coordinates                  |
-| vec3i(a)\[\]           | index           | [data](#data) array of triangle indices (into the vertex array(s)) |
+| Type                    | Name            | Description                                                                         |
+|:------------------------|:----------------|:------------------------------------------------------------------------------------|
+| vec3f\[\]               | vertex.position | [data](#data) array of vertex positions                                             |
+| vec3f\[\]               | vertex.normal   | [data](#data) array of vertex normals                                               |
+| vec4f\[\] / vec3f\[\]   | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)                                     |
+| vec2f\[\]               | vertex.texcoord | [data](#data) array of vertex texture coordinates                                   |
+| vec3ui\[\] / vec4ui\[\] | index           | [data](#data) array of (either triangle or quad) indices (into the vertex array(s)) |
 
-: Parameters defining a triangle mesh geometry.
+: Parameters defining a mesh geometry.
 
-The `vertex` and `index` arrays are mandatory to create a valid triangle
+The data type of index arrays differentiates between the underlying
+geometry, triangles are used for a index with `vec3ui` type and quads
+for `vec4ui` type. Quads are internally handled as a pair of two
+triangles, thus mixing triangles and quads is supported by encoding some
+triangle as a quad with the last two vertex indices being identical
+(`w=z`).
+
+The `vertex.position` and `index` arrays are mandatory to create a valid
 mesh.
-
-### Quad Mesh
-
-A mesh consisting of quads is created by calling `ospNewGeometry` with
-type string “`quads`”. Once created, a quad mesh recognizes the
-following parameters:
-
-| Type                   | Name            | Description                                                    |
-|:-----------------------|:----------------|:---------------------------------------------------------------|
-| vec3f(a)\[\]           | vertex          | [data](#data) array of vertex positions                        |
-| vec3f(a)\[\]           | vertex.normal   | [data](#data) array of vertex normals                          |
-| vec4f\[\] / vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)                |
-| vec2f\[\]              | vertex.texcoord | [data](#data) array of vertex texture coordinates              |
-| vec4i\[\]              | index           | [data](#data) array of quad indices (into the vertex array(s)) |
-
-: Parameters defining a quad mesh geometry.
-
-The `vertex` and `index` arrays are mandatory to create a valid quad
-mesh. A quad is internally handled as a pair of two triangles, thus
-mixing triangles and quad is supported by encoding a triangle as a quad
-with the last two vertex indices being identical (`w=z`).
 
 ### Subdivision
 
@@ -1262,728 +1093,249 @@ A mesh consisting of subdivision surfaces, created by specifying a
 geometry of type “`subdivision`”. Once created, a subdivision recognizes
 the following parameters:
 
-| Type               | Name              | Description                                                                    |
-|:-------------------|:------------------|:-------------------------------------------------------------------------------|
-| vec3f\[\]          | vertex            | [data](#data) array of vertex positions                                        |
-| vec4f\[\]          | vertex.color      | [data](#data) array of vertex colors (RGBA)                                    |
-| vec2f\[\]          | vertex.texcoord   | [data](#data) array of vertex texture coordinates                              |
-| float              | level             | global level of tessellation, default is 5                                     |
-| uint\[\]/vec4i\[\] | index             | [data](#data) array of indices (into the vertex array(s))                      |
-| float\[\]          | index.level       | [data](#data) array of per-edge levels of tessellation, overrides global level |
-| uint\[\]           | face              | [data](#data) array holding the number of indices/edges (3 to 15) per face     |
-| vec2i\[\]          | edgeCrease.index  | [data](#data) array of edge crease indices                                     |
-| float\[\]          | edgeCrease.weight | [data](#data) array of edge crease weights                                     |
-| uint\[\]           | vertexCrease.inde | x [data](#data) array of vertex crease indices                                 |
-| float\[\]          | vertexCrease.weig | ht [data](#data) array of vertex crease weights                                |
+| Type      | Name                |                            Default| Description                                                                    |
+|:----------|:--------------------|----------------------------------:|:-------------------------------------------------------------------------------|
+| vec3f\[\] | vertex.position     |                               NULL| [data](#data) array of vertex positions                                        |
+| vec4f\[\] | vertex.color        |                               NULL| [data](#data) array of vertex colors (RGBA)                                    |
+| vec2f\[\] | vertex.texcoord     |                               NULL| [data](#data) array of vertex texture coordinates                              |
+| float     | level               |                                   | 5 global level of tessellation, default is 5                                   |
+| uint\[\]  | index               |                               NULL| [data](#data) array of indices (into the vertex array(s))                      |
+| float\[\] | index.level         |                               NULL| [data](#data) array of per-edge levels of tessellation, overrides global level |
+| uint\[\]  | face                |                               NULL| [data](#data) array holding the number of indices/edges (3 to 15) per face     |
+| vec2i\[\] | edgeCrease.index    |                               NULL| [data](#data) array of edge crease indices                                     |
+| float\[\] | edgeCrease.weight   |                               NULL| [data](#data) array of edge crease weights                                     |
+| uint\[\]  | vertexCrease.index  |                               NULL| [data](#data) array of vertex crease indices                                   |
+| float\[\] | vertexCrease.weight |                               NULL| [data](#data) array of vertex crease weights                                   |
+| int       | mode                |  `OSP_SUBDIVISION_SMOOTH_BOUNDARY`| subdivision edge boundary mode. Supported modes are:                           |
+|           |                     |                                   | `OSP_SUBDIVISION_NO_BOUNDARY`                                                  |
+|           |                     |                                   | `OSP_SUBDIVISION_SMOOTH_BOUNDARY`                                              |
+|           |                     |                                   | `OSP_SUBDIVISION_PIN_CORNERS`                                                  |
+|           |                     |                                   | `OSP_SUBDIVISION_PIN_BOUNDARY`                                                 |
+|           |                     |                                   | `OSP_SUBDIVISION_PIN_ALL`                                                      |
 
 : Parameters defining a Subdivision geometry.
 
 The `vertex` and `index` arrays are mandatory to create a valid
 subdivision surface. If no `face` array is present then a pure quad mesh
-is assumed (and indices must be of type `vec4i`). Optionally supported
-are edge and vertex creases.
+is assumed (the number of indices must be a multiple of 4). Optionally
+supported are edge and vertex creases.
 
 ### Spheres
 
 A geometry consisting of individual spheres, each of which can have an
 own radius, is created by calling `ospNewGeometry` with type string
-“`spheres`”. The spheres will not be tessellated but rendered
+“`sphere`”. The spheres will not be tessellated but rendered
 procedurally and are thus perfectly round. To allow a variety of sphere
 representations in the application this geometry allows a flexible way
 of specifying the data of center position and radius within a
 [data](#data) array:
 
-<table style="width:98%;">
-<caption>Parameters defining a spheres geometry.</caption>
-<colgroup>
-<col style="width: 16%" />
-<col style="width: 22%" />
-<col style="width: 26%" />
-<col style="width: 32%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">radius</td>
-<td style="text-align: right;">0.01</td>
-<td style="text-align: left;">radius of all spheres (if <code>offset_radius</code> is not used)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">OSPData</td>
-<td style="text-align: left;">spheres</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;">memory holding the spatial <a href="#data">data</a> of all spheres</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">bytes_per_sphere</td>
-<td style="text-align: right;">16</td>
-<td style="text-align: left;">size (in bytes) of each sphere within the <code>spheres</code> array</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">offset_center</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">offset (in bytes) of each sphere’s “vec3f center” position (in object-space) within the <code>spheres</code> array</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">offset_radius</td>
-<td style="text-align: right;">-1</td>
-<td style="text-align: left;">offset (in bytes) of each sphere’s “float radius” within the <code>spheres</code> array (<code>-1</code> means disabled and use <code>radius</code>)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">offset_colorID</td>
-<td style="text-align: right;">-1</td>
-<td style="text-align: left;">offset (in bytes) of each sphere’s “int colorID” within the <code>spheres</code> array (<code>-1</code> means disabled and use the shared material color)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec4f[] / vec3f(a)[] / vec4uc</td>
-<td style="text-align: left;">color</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;"><a href="#data">data</a> array of colors (RGBA/RGB), color is constant for each sphere</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">color_offset</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">offset (in bytes) to the start of the color data in <code>color</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">color_format</td>
-<td style="text-align: right;"><code>color.data_type</code></td>
-<td style="text-align: left;">the format of the color data. Can be one of: <code>OSP_FLOAT4</code>, <code>OSP_FLOAT3</code>, <code>OSP_FLOAT3A</code> or <code>OSP_UCHAR4</code>. Defaults to the type of data in <code>color</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">color_stride</td>
-<td style="text-align: right;"><code>sizeof(color_format)</code></td>
-<td style="text-align: left;">stride (in bytes) between each color element in the <code>color</code> array. Defaults to the size of a single element of type <code>color_format</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec2f[]</td>
-<td style="text-align: left;">texcoord</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;"><a href="#data">data</a> array of texture coordinates, coordinate is constant for each sphere</td>
-</tr>
-</tbody>
-</table>
+| Type      | Name            |  Default| Description                                                               |
+|:----------|:----------------|--------:|:--------------------------------------------------------------------------|
+| vec3f\[\] | sphere.position |         | [data](#data) array of center positions                                   |
+| float\[\] | sphere.radius   |     NULL| optional [data](#data) array of the per-sphere radius                     |
+| vec2f\[\] | sphere.texcoord |     NULL| optional [data](#data) array of texture coordinates (constant per sphere) |
+| float     | radius          |     0.01| default radius for all spheres (if `sphere.radius` is not set)            |
 
 : Parameters defining a spheres geometry.
-
-### Cylinders
-
-A geometry consisting of individual cylinders, each of which can have an
-own radius, is created by calling `ospNewGeometry` with type string
-“`cylinders`”. The cylinders will not be tessellated but rendered
-procedurally and are thus perfectly round. To allow a variety of
-cylinder representations in the application this geometry allows a
-flexible way of specifying the data of offsets for start position, end
-position and radius within a [data](#data) array. All parameters are
-listed in the table below.
-
-<table style="width:98%;">
-<caption>Parameters defining a cylinders geometry.</caption>
-<colgroup>
-<col style="width: 17%" />
-<col style="width: 27%" />
-<col style="width: 11%" />
-<col style="width: 40%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">radius</td>
-<td style="text-align: right;">0.01</td>
-<td style="text-align: left;">radius of all cylinders (if <code>offset_radius</code> is not used)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">OSPData</td>
-<td style="text-align: left;">cylinders</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;">memory holding the spatial <a href="#data">data</a> of all cylinders</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">bytes_per_cylinder</td>
-<td style="text-align: right;">24</td>
-<td style="text-align: left;">size (in bytes) of each cylinder within the <code>cylinders</code> array</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">offset_v0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">offset (in bytes) of each cylinder’s “vec3f v0” position (the start vertex, in object-space) within the <code>cylinders</code> array</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">offset_v1</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: left;">offset (in bytes) of each cylinder’s “vec3f v1” position (the end vertex, in object-space) within the <code>cylinders</code> array</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">offset_radius</td>
-<td style="text-align: right;">-1</td>
-<td style="text-align: left;">offset (in bytes) of each cylinder’s “float radius” within the <code>cylinders</code> array (<code>-1</code> means disabled and use <code>radius</code> instead)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec4f[] / vec3f(a)[]</td>
-<td style="text-align: left;">color</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;"><a href="#data">data</a> array of colors (RGBA/RGB), color is constant for each cylinder</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">OSPData</td>
-<td style="text-align: left;">texcoord</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;"><a href="#data">data</a> array of texture coordinates, in pairs (each a vec2f at vertex v0 and v1)</td>
-</tr>
-</tbody>
-</table>
-
-: Parameters defining a cylinders geometry.
-
-For texturing each cylinder is seen as a 1D primitive, i.e., a line
-segment: the 2D texture coordinates at its vertices v0 and v1 are
-linearly interpolated.
-
-### Streamlines
-
-A geometry consisting of multiple streamlines is created by calling
-`ospNewGeometry` with type string “`streamlines`”. The streamlines are
-internally assembled either from connected (and rounded) cylinder
-segments, or represented as Bézier curves; they are thus always
-perfectly round. The parameters defining this geometry are listed in the
-table below.
-
-<table style="width:97%;">
-<caption>Parameters defining a streamlines geometry.</caption>
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 21%" />
-<col style="width: 53%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">radius</td>
-<td style="text-align: left;">global radius of all streamlines (if per-vertex radius is not used), default 0.01</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">smooth</td>
-<td style="text-align: left;">enable curve interpolation, default off (always on if per-vertex radius is used)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec3fa[] / vec4f[]</td>
-<td style="text-align: left;">vertex</td>
-<td style="text-align: left;"><a href="#data">data</a> array of all vertex position (and optional radius) for <em>all</em> streamlines</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec4f[]</td>
-<td style="text-align: left;">vertex.color</td>
-<td style="text-align: left;"><a href="#data">data</a> array of corresponding vertex colors (RGBA)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float[]</td>
-<td style="text-align: left;">vertex.radius</td>
-<td style="text-align: left;"><a href="#data">data</a> array of corresponding vertex radius</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int32[]</td>
-<td style="text-align: left;">index</td>
-<td style="text-align: left;"><a href="#data">data</a> array of indices to the first vertex of a link</td>
-</tr>
-</tbody>
-</table>
-
-: Parameters defining a streamlines geometry.
-
-Each streamline is specified by a set of (aligned) control points in
-`vertex`. If `smooth` is disabled and a constant `radius` is used for
-all streamlines then all vertices belonging to the same logical
-streamline are connected via [cylinders](#cylinders), with additional
-[spheres](#spheres) at each vertex to create a continuous, closed
-surface. Otherwise, streamlines are represented as Bézier curves,
-smoothly interpolating the vertices. This mode supports per-vertex
-varying radii (either given in `vertex.radius`, or in the 4th component
-of a *vec4f* `vertex`), but is slower and consumes more memory.
-Additionally, the radius needs to be smaller than the curvature radius
-of the Bézier curve at each location on the curve.
-
-A streamlines geometry can contain multiple disjoint streamlines, each
-streamline is specified as a list of segments (or links) referenced via
-`index`: each entry `e` of the `index` array points the first vertex of
-a link (`vertex[index[e]]`) and the second vertex of the link is
-implicitly the directly following one (`vertex[index[e]+1]`). For
-example, two streamlines of vertices `(A-B-C-D)` and `(E-F-G)`,
-respectively, would internally correspond to five links (`A-B`, `B-C`,
-`C-D`, `E-F`, and `F-G`), and would be specified via an array of
-vertices `[A,B,C,D,E,F,G]`, plus an array of link indices `[0,1,2,4,5]`.
 
 ### Curves
 
 A geometry consisting of multiple curves is created by calling
-`ospNewGeometry` with type string “`curves`”. The parameters defining
+`ospNewGeometry` with type string “`curve`”. The parameters defining
 this geometry are listed in the table below.
 
-<table style="width:97%;">
-<caption>Parameters defining a curves geometry.</caption>
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 22%" />
-<col style="width: 52%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">curveType</td>
-<td style="text-align: left;">“flat” (ray oriented), “round” (circular cross section), “ribbon” (normal oriented flat curve)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">curveBasis</td>
-<td style="text-align: left;">“linear”, “bezier”, “bspline”, “hermite”</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec4f[]</td>
-<td style="text-align: left;">vertex</td>
-<td style="text-align: left;"><a href="#data">data</a> array of vertex position and radius</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int32[]</td>
-<td style="text-align: left;">index</td>
-<td style="text-align: left;"><a href="#data">data</a> array of indices to the first vertex or tangent of a curve segment</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec3f[]</td>
-<td style="text-align: left;">vertex.normal</td>
-<td style="text-align: left;"><a href="#data">data</a> array of curve normals (only for “ribbon” curves)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f[]</td>
-<td style="text-align: left;">vertex.tangent</td>
-<td style="text-align: left;"><a href="#data">data</a> array of curve tangents (only for “hermite” curves)</td>
-</tr>
-</tbody>
-</table>
+| Type       | Name                    | Description                                                                      |
+|:-----------|:------------------------|:---------------------------------------------------------------------------------|
+| vec4f\[\]  | vertex.position\_radius | [data](#data) array of vertex position and per-vertex radius                     |
+| vec3f\[\]  | vertex.position         | [data](#data) array of vertex position                                           |
+| float      | radius                  | global radius of all curves (if per-vertex radius is not used), default 0.01     |
+| vec2f\[\]  | vertex.texcoord         | [data](#data) array of per-vertex texture coordinates                            |
+| vec4f\[\]  | vertex.color            | [data](#data) array of corresponding vertex colors (RGBA)                        |
+| vec3f\[\]  | vertex.normal           | [data](#data) array of curve normals (only for “ribbon” curves)                  |
+| vec3f\[\]  | vertex.tangent          | [data](#data) array of curve tangents (only for “hermite” curves)                |
+| uint32\[\] | index                   | [data](#data) array of indices to the first vertex or tangent of a curve segment |
+| int        | type                    | `OSPCurveType` for rendering the curve. Supported types are:                     |
+|            |                         | `OSP_FLAT`                                                                       |
+|            |                         | `OSP_ROUND`                                                                      |
+|            |                         | `OSP_RIBBON`                                                                     |
+| int        | basis                   | `OSPCurveBasis` for defining the curve. Supported bases are:                     |
+|            |                         | `OSP_LINEAR`                                                                     |
+|            |                         | `OSP_BEZIER`                                                                     |
+|            |                         | `OSP_BSPLINE`                                                                    |
+|            |                         | `OSP_HERMITE`                                                                    |
+|            |                         | `OSP_CATMULL_ROM`                                                                |
 
 : Parameters defining a curves geometry.
 
-See Embree documentation for discussion of curve types and data
-formatting.
+Depending upon the specified data type of vertex positions, the curves
+will be implemented Embree curves or assembled from rounded and
+linearly-connected segments.
+
+Positions in `vertex.position_radius` format supports per-vertex varying
+radii with data type `vec4f[]` and instantiate Embree curves internally
+for the relevant type/basis mapping (See Embree documentation for
+discussion of curve types and data formatting).
+
+If a constant `radius` is used and positions are specified in a
+`vec3f[]` type of `vertex.position` format, then type/basis defaults to
+`OSP_ROUND` and `OSP_LINEAR` (this is the fastest and most memory
+efficient mode). Implementation is with round linear segements where
+each segment corresponds to a link between two vertices.
+
+The following section describes the properties of different curve basis’
+and how they use the data provided in data buffers:
+
+OSP\_LINEAR
+:   The indices point to the first of 2 consecutive control points in
+    the vertex buffer. The first control point is the start and the
+    second control point the end of the line segment. The curve goes
+    through all control points listed in the vertex buffer.
+
+OSP\_BEZIER
+:   The indices point to the first of 4 consecutive control points in
+    the vertex buffer. The first control point represents the start
+    point of the curve, and the 4th control point the end point of the
+    curve. The Bézier basis is interpolating, thus the curve does go
+    exactly through the first and fourth control vertex.
+
+OSP\_BSPLINE
+:   The indices point to the first of 4 consecutive control points in
+    the vertex buffer. This basis is not interpolating, thus the curve
+    does in general not go through any of the control points directly.
+    Using this basis, 3 control points can be shared for two continuous
+    neighboring curve segments, e.g. the curves $(p0, p1, p2, p3)$ and
+    $(p1, p2, p3, p4)$ are C1 continuous. This feature make this basis a
+    good choice to construct continuous multi-segment curves, as memory
+    consumption can be kept minimal.
+
+OSP\_HERMITE
+:   It is necessary to have both vertex buffer and tangent buffer for
+    using this basis. The indices point to the first of 2 consecutive
+    points in the vertex buffer, and the first of 2 consecutive tangents
+    in the tangent buffer. This basis is interpolating, thus does
+    exactly go through the first and second control point, and the first
+    order derivative at the begin and end matches exactly the value
+    specified in the tangent buffer. When connecting two segments
+    continuously, the end point and tangent of the previous segment can
+    be shared.
+
+OSP\_CATMULL\_ROM
+:   The indices point to the first of 4 consecutive control points in
+    the vertex buffer. If $(p0, p1, p2, p3)$ represent the points then
+    this basis goes through $p1$ and $p2$, with tangents as $(p2-p0)/2$
+    and $(p3-p1)/2$.
+
+The following section describes the properties of different curve types’
+and how they define the geometry of a curve:
+
+OSP\_FLAT
+:   This type enables faster rendering as the curve is rendered as a
+    connected sequence of ray facing quads.
+
+OSP\_ROUND
+:   This type enables rendering a real geometric surface for the curve
+    which allows closeup views. This mode renders a sweep surface by
+    sweeping a varying radius circle tangential along the curve.
+
+OSP\_RIBBON
+:   The type enables normal orientation of the curve and requires a
+    normal buffer be specified along with vertex buffer. The curve is
+    rendered as a flat band whose center approximately follows the
+    provided vertex buffer and whose normal orientation approximately
+    follows the provided normal buffer.
+
+### Boxes
+
+OSPRay can directly render axis-aligned bounding boxes without the need
+to convert them to quads or triangles. To do so create a boxes geometry
+by calling `ospNewGeometry` with type string “`box`”.
+
+| Type      | Name | Description                  |
+|:----------|:-----|:-----------------------------|
+| box3f\[\] | box  | [data](#data) array of boxes |
+
+: Parameters defining a boxes geometry.
 
 ### Isosurfaces
 
 OSPRay can directly render multiple isosurfaces of a volume without
 first tessellating them. To do so create an isosurfaces geometry by
-calling `ospNewGeometry` with type string “`isosurfaces`”. Each
-isosurface will be colored according to the provided volume’s [transfer
-function](#transfer-function).
+calling `ospNewGeometry` with type string “`isosurface`”. Each
+isosurface will be colored according to the [transfer
+function](#transfer-function) assigned to the `volume`.
 
-| Type      | Name      | Description                                        |
-|:----------|:----------|:---------------------------------------------------|
-| float\[\] | isovalues | [data](#data) array of isovalues                   |
-| OSPVolume | volume    | handle of the [volume](#volumes) to be isosurfaced |
+| Type               | Name     | Description                                                           |
+|:-------------------|:---------|:----------------------------------------------------------------------|
+| float              | isovalue | single isovalues                                                      |
+| float\[\]          | isovalue | [data](#data) array of isovalues                                      |
+| OSPVolumetricModel | volume   | handle of the [VolumetricModels](#volumetricmodels) to be isosurfaced |
 
 : Parameters defining an isosurfaces geometry.
 
-### Slices
+### GeometricModels
 
-One tool to highlight notable features of volumetric data is to
-visualize 2D cuts (or slices) by placing planes into the volume. Such a
-slices geometry is created by calling `ospNewGeometry` with type string
-“`slices`”. The planes are defined by the coefficients $(a,b,c,d)$ of
-the plane equation $ax + by + cz + d = 0$. Each slice is colored
-according to the provided volume’s [transfer
-function](#transfer-function).
-
-| Type      | Name   | Description                                                |
-|:----------|:-------|:-----------------------------------------------------------|
-| vec4f\[\] | planes | [data](#data) array with plane coefficients for all slices |
-| OSPVolume | volume | handle of the [volume](#volumes) that will be sliced       |
-
-: Parameters defining a slices geometry.
-
-### Instances
-
-OSPRay supports instancing via a special type of geometry. Instances are
-created by transforming another given [model](#model)
-`modelToInstantiate` with the given affine transformation `transform` by
-calling
+Geometries are matched with surface appearance information through
+GeometricModels. These take a geometry, which defines the surface
+representation, and applies either full-object or per-primitive color
+and material information. To create a geometric model, call
 
 ``` {.cpp}
-OSPGeometry ospNewInstance(OSPModel modelToInstantiate, const affine3f &transform);
+OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 ```
 
-Renderer
---------
+Color and material are fetched with the primitive ID of the hit (clamped
+to the valid range, thus a single color or material is fine), or mapped
+first via the `index` array (if present). All paramters are optional,
+however, some renderers (notably the [path tracer](#path-tracer))
+require a material to be set. Materials are either handles of
+`OSPMaterial`, or indices into the `material` array on the
+[renderer](#renderers), which allows to build a [world](#world) which
+can be used by different types of renderers.
 
-A renderer is the central object for rendering in OSPRay. Different
-renderers implement different features and support different materials.
-To create a new renderer of given type `type` use
+| Type                         | Name     | Description                                                                                                                                         |
+|:-----------------------------|:---------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSPMaterial / uint32         | material | optional [material](#materials) applied to the geometry, may be an index into the `material` parameter on the [renderer](#renderers) (if it exists) |
+| OSPMaterial\[\] / uint32\[\] | material | optional [data](#data) array of (per-primitive) materials, may be an index into the `material` parameter on the renderer (if it exists)             |
+| vec4f\[\]                    | color    | optional [data](#data) array of (per-primitive) colors                                                                                              |
+| uint8\[\]                    | index    | optional [data](#data) array of per-primitive indices into `color` and `material`                                                                   |
 
-``` {.cpp}
-OSPRenderer ospNewRenderer(const char *type);
-```
+: Parameters understood by GeometricModel.
 
-The call returns `NULL` if that type of renderer is not known, or else
-an `OSPRenderer` handle to the created renderer. General parameters of
-all renderers are
-
-<table style="width:98%;">
-<caption>Parameters understood by all renderers.</caption>
-<colgroup>
-<col style="width: 18%" />
-<col style="width: 24%" />
-<col style="width: 12%" />
-<col style="width: 42%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">OSPModel</td>
-<td style="text-align: left;">model</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">the <a href="#model">model</a> to render</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">OSPCamera</td>
-<td style="text-align: left;">camera</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">the <a href="#cameras">camera</a> to be used for rendering</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">OSPLight[]</td>
-<td style="text-align: left;">lights</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;"><a href="#data">data</a> array with handles of the <a href="#lights">lights</a></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">spp</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">samples per pixel</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">maxDepth</td>
-<td style="text-align: right;">20</td>
-<td style="text-align: left;">maximum ray recursion depth</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">minContribution</td>
-<td style="text-align: right;">0.001</td>
-<td style="text-align: left;">sample contributions below this value will be neglected to speedup rendering</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">varianceThreshold</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">threshold for adaptive accumulation</td>
-</tr>
-</tbody>
-</table>
-
-: Parameters understood by all renderers.
-
-OSPRay’s renderers support a feature called adaptive accumulation, which
-accelerates progressive [rendering](#rendering) by stopping the
-rendering and refinement of image regions that have an estimated
-variance below the `varianceThreshold`. This feature requires a
-[framebuffer](#framebuffer) with an `OSP_FB_VARIANCE` channel.
-
-### SciVis Renderer
-
-The SciVis renderer is a fast ray tracer for scientific visualization
-which supports volume rendering and ambient occlusion (AO). It is
-created by passing the type string “`scivis`” or “`raytracer`” to
-`ospNewRenderer`. In addition to the [general parameters](#renderer)
-understood by all renderers the SciVis renderer supports the following
-special parameters:
-
-<table style="width:97%;">
-<caption>Special parameters understood by the SciVis renderer.</caption>
-<colgroup>
-<col style="width: 16%" />
-<col style="width: 30%" />
-<col style="width: 17%" />
-<col style="width: 32%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">shadowsEnabled</td>
-<td style="text-align: right;">false</td>
-<td style="text-align: left;">whether to compute (hard) shadows</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">aoSamples</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">number of rays per sample to compute ambient occlusion</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">aoDistance</td>
-<td style="text-align: right;">10<sup>20</sup></td>
-<td style="text-align: left;">maximum distance to consider for ambient occlusion</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">aoTransparencyEnabled</td>
-<td style="text-align: right;">false</td>
-<td style="text-align: left;">whether object transparency is respected when computing ambient occlusion (slower)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">oneSidedLighting</td>
-<td style="text-align: right;">true</td>
-<td style="text-align: left;">if true, backfacing surfaces (wrt. light source) receive no illumination</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float / vec3f / vec4f</td>
-<td style="text-align: left;">bgColor</td>
-<td style="text-align: right;">black, transparent</td>
-<td style="text-align: left;">background color and alpha (RGBA)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">OSPTexture</td>
-<td style="text-align: left;">maxDepthTexture</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;">screen-sized float <a href="#texture">texture</a> with maximum far distance per pixel (use texture type ‘texture2d’)</td>
-</tr>
-</tbody>
-</table>
-
-: Special parameters understood by the SciVis renderer.
-
-Note that the intensity (and color) of AO is deduced from an [ambient
-light](#ambient-light) in the `lights` array.[^4] If `aoSamples` is zero
-(the default) then ambient lights cause ambient illumination (without
-occlusion).
-
-Per default the background of the rendered image will be transparent
-black, i.e., the alpha channel holds the opacity of the rendered
-objects. This eases transparency-aware blending of the image with an
-arbitrary background image by the application. The parameter `bgColor`
-can be used to already blend with a constant background color (and
-alpha) during rendering.
-
-The SciVis renderer supports depth composition with images of other
-renderers, for example to incorporate help geometries of a 3D UI that
-were rendered with OpenGL. The screen-sized [texture](#texture)
-`maxDepthTexture` must have format `OSP_TEXTURE_R32F` and flag
-`OSP_TEXTURE_FILTER_NEAREST`. The fetched values are used to limit the
-distance of primary rays, thus objects of other renderers can hide
-objects rendered by OSPRay.
-
-### Path Tracer
-
-The path tracer supports soft shadows, indirect illumination and
-realistic materials. This renderer is created by passing the type string
-“`pathtracer`” to `ospNewRenderer`. In addition to the [general
-parameters](#renderer) understood by all renderers the path tracer
-supports the following special parameters:
-
-<table style="width:97%;">
-<caption>Special parameters understood by the path tracer.</caption>
-<colgroup>
-<col style="width: 16%" />
-<col style="width: 23%" />
-<col style="width: 12%" />
-<col style="width: 44%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">rouletteDepth</td>
-<td style="text-align: right;">5</td>
-<td style="text-align: left;">ray recursion depth at which to start Russian roulette termination</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">maxContribution</td>
-<td style="text-align: right;">∞</td>
-<td style="text-align: left;">samples are clamped to this value before they are accumulated into the framebuffer</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">OSPTexture</td>
-<td style="text-align: left;">backplate</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;"><a href="#texture">texture</a> image used as background, replacing visible lights in infinity (e.g., the <a href="#hdri-light">HDRI light</a>)</td>
-</tr>
-</tbody>
-</table>
-
-: Special parameters understood by the path tracer.
-
-The path tracer requires that [materials](#materials) are assigned to
-[geometries](#geometries), otherwise surfaces are treated as completely
-black.
-
-### Model
-
-Models are a container of scene data. They can hold the different
-[geometries](#geometries) and [volumes](#volumes) as well as references
-to (and [instances](#instances) of) other models. A model is associated
-with a single logical acceleration structure. To create an (empty) model
-call
-
-``` {.cpp}
-OSPModel ospNewModel();
-```
-
-The call returns an `OSPModel` handle to the created model. To add an
-already created geometry or volume to a model use
-
-``` {.cpp}
-void ospAddGeometry(OSPModel, OSPGeometry);
-void ospAddVolume(OSPModel, OSPVolume);
-```
-
-An existing geometry or volume can be removed from a model with
-
-``` {.cpp}
-void ospRemoveGeometry(OSPModel, OSPGeometry);
-void ospRemoveVolume(OSPModel, OSPVolume);
-```
-
-Finally, Models can be configured with parameters for making various
-feature/performance trade-offs:
-
-<table style="width:97%;">
-<caption>Parameters understood by Models</caption>
-<colgroup>
-<col style="width: 17%" />
-<col style="width: 20%" />
-<col style="width: 13%" />
-<col style="width: 45%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">dynamicScene</td>
-<td style="text-align: right;">false</td>
-<td style="text-align: left;">use RTC_SCENE_DYNAMIC flag (faster BVH build, slower ray traversal), otherwise uses RTC_SCENE_STATIC flag (faster ray traversal, slightly slower BVH build)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">compactMode</td>
-<td style="text-align: right;">false</td>
-<td style="text-align: left;">tell Embree to use a more compact BVH in memory by trading ray traversal performance</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">robustMode</td>
-<td style="text-align: right;">false</td>
-<td style="text-align: left;">tell Embree to enable more robust ray intersection code paths (slightly slower)</td>
-</tr>
-</tbody>
-</table>
-
-: Parameters understood by Models
-
-### Lights
+Lights
+------
 
 To create a new light source of given type `type` use
 
 ``` {.cpp}
-OSPLight ospNewLight3(const char *type);
+OSPLight ospNewLight(const char *type);
 ```
 
-The call returns `NULL` if that type of light is not known by the
-renderer, or else an `OSPLight` handle to the created light source. All
-light sources[^5] accept the following parameters:
+All light sources accept the following parameters:
 
-| Type     | Name      |  Default| Description                            |
-|:---------|:----------|--------:|:---------------------------------------|
-| vec3f(a) | color     |    white| color of the light                     |
-| float    | intensity |        1| intensity of the light (a factor)      |
-| bool     | isVisible |     true| whether the light can be directly seen |
+| Type  | Name      |  Default| Description                            |
+|:------|:----------|--------:|:---------------------------------------|
+| vec3f | color     |    white| color of the light                     |
+| float | intensity |        1| intensity of the light (a factor)      |
+| bool  | visible   |     true| whether the light can be directly seen |
 
 : Parameters accepted by all lights.
 
 The following light types are supported by most OSPRay renderers.
 
-#### Directional Light / Distant Light
+### Directional Light / Distant Light
 
 The distant light (or traditionally the directional light) is thought to
 be far away (outside of the scene), thus its light arrives (almost) as
 parallel rays. It is created by passing the type string “`distant`” to
-`ospNewLight3`. In addition to the [general parameters](#lights)
+`ospNewLight`. In addition to the [general parameters](#lights)
 understood by all lights the distant light supports the following
 special parameters:
 
-| Type     | Name            | Description                                  |
-|:---------|:----------------|:---------------------------------------------|
-| vec3f(a) | direction       | main emission direction of the distant light |
-| float    | angularDiameter | apparent size (angle in degree) of the light |
+| Type  | Name            | Description                                  |
+|:------|:----------------|:---------------------------------------------|
+| vec3f | direction       | main emission direction of the distant light |
+| float | angularDiameter | apparent size (angle in degree) of the light |
 
 : Special parameters accepted by the distant light.
 
@@ -1992,18 +1344,19 @@ soft shadows when the renderer uses stochastic sampling (like the [path
 tracer](#path-tracer)). For instance, the apparent size of the sun is
 about 0.53°.
 
-#### Point Light / Sphere Light
+### Point Light / Sphere Light
 
 The sphere light (or the special case point light) is a light emitting
-uniformly in all directions. It is created by passing the type string
-“`sphere`” to `ospNewLight3`. In addition to the [general
-parameters](#lights) understood by all lights the sphere light supports
-the following special parameters:
+uniformly in all directions from the surface towards the outside. It
+does not emit any light towards the inside of the sphere. It is created
+by passing the type string “`sphere`” to `ospNewLight`. In addition to
+the [general parameters](#lights) understood by all lights the sphere
+light supports the following special parameters:
 
-| Type     | Name     | Description                                    |
-|:---------|:---------|:-----------------------------------------------|
-| vec3f(a) | position | the center of the sphere light, in world-space |
-| float    | radius   | the size of the sphere light                   |
+| Type  | Name     | Description                                    |
+|:------|:---------|:-----------------------------------------------|
+| vec3f | position | the center of the sphere light, in world-space |
+| float | radius   | the size of the sphere light                   |
 
 : Special parameters accepted by the sphere light.
 
@@ -2011,55 +1364,20 @@ Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer](#path-tracer)).
 
-#### Spotlight
+### Spotlight
 
 The spotlight is a light emitting into a cone of directions. It is
-created by passing the type string “`spot`” to `ospNewLight3`. In
+created by passing the type string “`spot`” to `ospNewLight`. In
 addition to the [general parameters](#lights) understood by all lights
 the spotlight supports the special parameters listed in the table.
 
-<table style="width:97%;">
-<caption>Special parameters accepted by the spotlight.</caption>
-<colgroup>
-<col style="width: 14%" />
-<col style="width: 21%" />
-<col style="width: 61%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">vec3f(a)</td>
-<td style="text-align: left;">position</td>
-<td style="text-align: left;">the center of the spotlight, in world-space</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f(a)</td>
-<td style="text-align: left;">direction</td>
-<td style="text-align: left;">main emission direction of the spot</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">openingAngle</td>
-<td style="text-align: left;">full opening angle (in degree) of the spot; outside of this cone is no illumination</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">penumbraAngle</td>
-<td style="text-align: left;">size (angle in degree) of the “penumbra”, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of <code>openingAngle</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">radius</td>
-<td style="text-align: left;">the size of the spotlight, the radius of a disk with normal <code>direction</code></td>
-</tr>
-</tbody>
-</table>
+| Type  | Name          | Default     | Description                                                                                                                                                                   |
+|:------|:--------------|:------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vec3f | position      | $(0, 0, 0)$ | the center of the spotlight, in world-space                                                                                                                                   |
+| vec3f | direction     | $(0, 0, 1)$ | main emission direction of the spot                                                                                                                                           |
+| float | openingAngle  | 180         | full opening angle (in degree) of the spot; outside of this cone is no illumination                                                                                           |
+| float | penumbraAngle | 5           | size (angle in degree) of the “penumbra”, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of `openingAngle` |
+| float | radius        | 0           | the size of the spotlight, the radius of a disk with normal `direction`                                                                                                       |
 
 : Special parameters accepted by the spotlight.
 
@@ -2070,19 +1388,19 @@ Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer](#path-tracer)).
 
-#### Quad Light
+### Quad Light
 
-The quad[^6] light is a planar, procedural area light source emitting
+The quad[^5] light is a planar, procedural area light source emitting
 uniformly on one side into the half-space. It is created by passing the
-type string “`quad`” to `ospNewLight3`. In addition to the [general
+type string “`quad`” to `ospNewLight`. In addition to the [general
 parameters](#lights) understood by all lights the quad light supports
 the following special parameters:
 
-| Type     | Name     | Description                                          |
-|:---------|:---------|:-----------------------------------------------------|
-| vec3f(a) | position | world-space position of one vertex of the quad light |
-| vec3f(a) | edge1    | vector to one adjacent vertex                        |
-| vec3f(a) | edge2    | vector to the other adjacent vertex                  |
+| Type  | Name     | Description                                          |
+|:------|:---------|:-----------------------------------------------------|
+| vec3f | position | world-space position of one vertex of the quad light |
+| vec3f | edge1    | vector to one adjacent vertex                        |
+| vec3f | edge2    | vector to the other adjacent vertex                  |
 
 : Special parameters accepted by the quad light.
 
@@ -2095,46 +1413,19 @@ tracer) will compute soft shadows from the quad light. Other renderers
 will just sample the center of the quad light, which results in hard
 shadows.
 
-#### HDRI Light
+### HDRI Light
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-“`hdri`” to `ospNewLight3`. In addition to the [parameter
-`intensity`](#lights) the HDRI light supports the following special
+“`hdri`” to `ospNewLight`. In addition to the [general
+parameters](#lights) the HDRI light supports the following special
 parameters:
 
-<table style="width:97%;">
-<caption>Special parameters accepted by the HDRI light.</caption>
-<colgroup>
-<col style="width: 17%" />
-<col style="width: 9%" />
-<col style="width: 69%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">vec3f(a)</td>
-<td style="text-align: left;">up</td>
-<td style="text-align: left;">up direction of the light in world-space</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f(a)</td>
-<td style="text-align: left;">dir</td>
-<td style="text-align: left;">direction to which the center of the texture will be mapped to (analog to <a href="#panoramic-camera">panoramic camera</a>)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">OSPTexture</td>
-<td style="text-align: left;">map</td>
-<td style="text-align: left;">environment map in latitude / longitude format</td>
-</tr>
-</tbody>
-</table>
+| Type       | Name      | Description                                                                                                      |
+|:-----------|:----------|:-----------------------------------------------------------------------------------------------------------------|
+| vec3f      | up        | up direction of the light in world-space                                                                         |
+| vec3f      | direction | direction to which the center of the texture will be mapped to (analog to [panoramic camera](#panoramic-camera)) |
+| OSPTexture | map       | environment map in latitude / longitude format                                                                   |
 
 : Special parameters accepted by the HDRI light.
 
@@ -2144,21 +1435,195 @@ Light.](https://ospray.github.io/images/hdri_light.png)
 Note that the currently only the [path tracer](#path-tracer) supports
 the HDRI light.
 
-#### Ambient Light
+### Ambient Light
 
 The ambient light surrounds the scene and illuminates it from infinity
 with constant radiance (determined by combining the [parameters `color`
 and `intensity`](#lights)). It is created by passing the type string
-“`ambient`” to `ospNewLight3`.
+“`ambient`” to `ospNewLight`.
 
 Note that the [SciVis renderer](#scivis-renderer) uses ambient lights to
 control the color and intensity of the computed ambient occlusion (AO).
 
-#### Emissive Objects
+### Emissive Objects
 
 The [path tracer](#path-tracer) will consider illumination by
 [geometries](#geometries) which have a light emitting material assigned
 (for example the [Luminous](#luminous) material).
+
+Scene Hierarchy
+---------------
+
+### Groups
+
+Groups in OSPRay represent collections of GeometricModels and
+VolumetricModels which share a common local-space coordinate system. To
+create a group call
+
+``` {.cpp}
+OSPGroup ospNewGroup();
+```
+
+Groups take arrays of geometric models and volumetric models, but they
+are optional. In other words, there is no need to create empty arrays if
+there are no geometries or volumes in the group.
+
+| Type                   | Name         |  Default| Description                                                                                                                                                     |
+|:-----------------------|:-------------|--------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSPGeometricModel\[\]  | geometry     |     NULL| [data](#data) array of [GeometricModels](#geometricmodels)                                                                                                      |
+| OSPVolumetricModel\[\] | volume       |     NULL| [data](#data) array of [VolumetricModels](#volumetricmodels)                                                                                                    |
+| bool                   | dynamicScene |    false| use RTC\_SCENE\_DYNAMIC flag (faster BVH build, slower ray traversal), otherwise uses RTC\_SCENE\_STATIC flag (faster ray traversal, slightly slower BVH build) |
+| bool                   | compactMode  |    false| tell Embree to use a more compact BVH in memory by trading ray traversal performance                                                                            |
+| bool                   | robustMode   |    false| tell Embree to enable more robust ray intersection code paths (slightly slower)                                                                                 |
+
+: Parameters understood by groups.
+
+Note that groups only need to re re-committed if a geometry or volume
+changes (surface/scalar field representation). Appearance information on
+`OSPGeometricModel` and `OSPVolumetricModel` can be changed freely, as
+internal acceleration structures do not need to be reconstructed.
+
+### Instances
+
+Instances in OSPRay represent a single group’s placement into the world
+via a transform. To create and instance call
+
+``` {.cpp}
+OSPInstance ospNewInstance(OSPGroup);
+```
+
+| Type     | Name |     Default| Description                                                   |
+|:---------|:-----|-----------:|:--------------------------------------------------------------|
+| affine3f | xfm  |  (identity)| world-space transform for all attached geometries and volumes |
+
+: Parameters understood by instances.
+
+### World
+
+Worlds are a container of scene data represented by
+[instances](#instances). To create an (empty) world call
+
+``` {.cpp}
+OSPWorld ospNewWorld();
+```
+
+Objects are placed in the world through an array of instances. Similar
+to \[group\], the array of instances is optional: there is no need to
+create empty arrays if there are no instances (though there will be
+nothing to render).
+
+Applications can query the world (axis-aligned) bounding box after the
+world has been committed. To get this information, call
+
+``` {.cpp}
+OSPBounds ospGetBounds(OSPObject);
+```
+
+This call can also take `OSPGroup` and `OSPInstance` as well: all other
+object types will return an empty bounding box.
+
+Finally, Worlds can be configured with parameters for making various
+feature/performance trade-offs (similar to groups).
+
+| Type            | Name         |  Default| Description                                                                                                                                                     |
+|:----------------|:-------------|--------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSPInstance\[\] | instance     |     NULL| [data](#data) array with handles of the [instances](#instances)                                                                                                 |
+| OSPLight\[\]    | light        |     NULL| [data](#data) array with handles of the [lights](#lights)                                                                                                       |
+| bool            | dynamicScene |    false| use RTC\_SCENE\_DYNAMIC flag (faster BVH build, slower ray traversal), otherwise uses RTC\_SCENE\_STATIC flag (faster ray traversal, slightly slower BVH build) |
+| bool            | compactMode  |    false| tell Embree to use a more compact BVH in memory by trading ray traversal performance                                                                            |
+| bool            | robustMode   |    false| tell Embree to enable more robust ray intersection code paths (slightly slower)                                                                                 |
+
+: Parameters understood by worlds.
+
+Renderers
+---------
+
+A renderer is the central object for rendering in OSPRay. Different
+renderers implement different features and support different materials.
+To create a new renderer of given type `type` use
+
+``` {.cpp}
+OSPRenderer ospNewRenderer(const char *type);
+```
+
+General parameters of all renderers are
+
+| Type                  | Name              |             Default| Description                                                                                                                                 |
+|:----------------------|:------------------|-------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------|
+| int                   | pixelSamples      |                   1| samples per pixel                                                                                                                           |
+| int                   | maxPathLength     |                  20| maximum ray recursion depth                                                                                                                 |
+| float                 | minContribution   |               0.001| sample contributions below this value will be neglected to speedup rendering                                                                |
+| float                 | varianceThreshold |                   0| threshold for adaptive accumulation                                                                                                         |
+| float / vec3f / vec4f | backgroundColor   |  black, transparent| background color and alpha (RGBA), if no map\_backplate is set                                                                              |
+| OSPTexture            | map\_backplate    |                    | optional [texture](#texture) image used as background                                                                                       |
+| OSPTexture            | map\_maxDepth     |                    | optional screen-sized float [texture](#texture) with maximum far distance per pixel (use texture type `texture2d`)                          |
+| OSPMaterial\[\]       | material          |                    | optional [data](#data) array of [materials](#materials) which can be indexed by a [GeometricModel](#geometricmodels)’s `material` parameter |
+
+: Parameters understood by all renderers.
+
+OSPRay’s renderers support a feature called adaptive accumulation, which
+accelerates progressive [rendering](#rendering) by stopping the
+rendering and refinement of image regions that have an estimated
+variance below the `varianceThreshold`. This feature requires a
+[framebuffer](#framebuffer) with an `OSP_FB_VARIANCE` channel.
+
+Per default the background of the rendered image will be transparent
+black, i.e., the alpha channel holds the opacity of the rendered
+objects. This eases transparency-aware blending of the image with an
+arbitrary background image by the application. The parameter
+`backgroundColor` or `map_backplate` can be used to already blend with a
+constant background color or backplate texture, respectively, (and
+alpha) during rendering.
+
+OSPRay renderers support depth composition with images of other
+renderers, for example to incorporate help geometries of a 3D UI that
+were rendered with OpenGL. The screen-sized [texture](#texture)
+`map_maxDepth` must have format `OSP_TEXTURE_R32F` and flag
+`OSP_TEXTURE_FILTER_NEAREST`. The fetched values are used to limit the
+distance of primary rays, thus objects of other renderers can hide
+objects rendered by OSPRay.
+
+### SciVis Renderer
+
+The SciVis renderer is a fast ray tracer for scientific visualization
+which supports volume rendering and ambient occlusion (AO). It is
+created by passing the type string “`scivis`” to `ospNewRenderer`. In
+addition to the [general parameters](#renderer) understood by all
+renderers, the SciVis renderer supports the following parameters:
+
+| Type  | Name               |  Default| Description                                            |
+|:------|:-------------------|--------:|:-------------------------------------------------------|
+| int   | aoSamples          |        0| number of rays per sample to compute ambient occlusion |
+| float | aoRadius           |   10^20^| maximum distance to consider for ambient occlusion     |
+| float | aoIntensity        |        1| ambient occlusion strength                             |
+| float | volumeSamplingRate |        1| sampling rate for volumes                              |
+
+: Special parameters understood by the SciVis renderer.
+
+### Path Tracer
+
+The path tracer supports soft shadows, indirect illumination and
+realistic materials. This renderer is created by passing the type string
+“`pathtracer`” to `ospNewRenderer`. In addition to the [general
+parameters](#renderer) understood by all renderers the path tracer
+supports the following special parameters:
+
+| Type  | Name              |  Default| Description                                                                        |
+|:------|:------------------|--------:|:-----------------------------------------------------------------------------------|
+| bool  | geometryLights    |     true| whether to render light emitted from geometries                                    |
+| int   | roulettePathLengt |      h 5| ray recursion depth at which to start Russian roulette termination                 |
+| float | maxContribution   |        ∞| samples are clamped to this value before they are accumulated into the framebuffer |
+
+: Special parameters understood by the path tracer.
+
+The path tracer requires that [materials](#materials) are assigned to
+[geometries](#geometries), otherwise surfaces are treated as completely
+black.
+
+The path tracer supports [volumes](#volumes) with multiple scattering.
+The scattering albedo can be specified using the [transfer
+function](#transfer-function). Extinction is assumed to be spectrally
+constant.
 
 ### Materials
 
@@ -2167,16 +1632,14 @@ their distinctive look. To let the given renderer create a new material
 of given type `type` call
 
 ``` {.cpp}
-OSPMaterial ospNewMaterial2(const char *renderer_type, const char *material_type);
+OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
 ```
 
-The call returns `NULL` if the material type is not known by the
-renderer type, or else an `OSPMaterial` handle to the created material.
-The handle can then be used to assign the material to a given geometry
-with
+The returned handle can then be used to assign the material to a given
+geometry with
 
 ``` {.cpp}
-void ospSetMaterial(OSPGeometry, OSPMaterial);
+void ospSetObject(OSPGeometricModel, "material", OSPMaterial);
 ```
 
 #### OBJ Material
@@ -2186,17 +1649,17 @@ renderer](#scivis-renderer) and the [path tracer](#path-tracer). It
 offers widely used common properties like diffuse and specular
 reflection and is based on the [MTL material
 format](http://paulbourke.net/dataformats/mtl/) of Lightwave’s OBJ scene
-files. To create an OBJ material pass the type string “`OBJMaterial`” to
-`ospNewMaterial2`. Its main parameters are
+files. To create an OBJ material pass the type string “`obj`” to
+`ospNewMaterial`. Its main parameters are
 
 | Type       | Name      |    Default| Description                                        |
 |:-----------|:----------|----------:|:---------------------------------------------------|
-| vec3f      | Kd        |  white 0.8| diffuse color                                      |
-| vec3f      | Ks        |      black| specular color                                     |
-| float      | Ns        |         10| shininess (Phong exponent), usually in \[2–10^4^\] |
+| vec3f      | kd        |  white 0.8| diffuse color                                      |
+| vec3f      | ks        |      black| specular color                                     |
+| float      | ns        |         10| shininess (Phong exponent), usually in \[2–10^4^\] |
 | float      | d         |     opaque| opacity                                            |
-| vec3f      | Tf        |      black| transparency filter color                          |
-| OSPTexture | map\_Bump |       NULL| normal map                                         |
+| vec3f      | tf        |      black| transparency filter color                          |
+| OSPTexture | map\_bump |       NULL| normal map                                         |
 
 : Main parameters of the OBJ material.
 
@@ -2214,7 +1677,7 @@ white room would hardly be discernible, as can be seen in the figure
 below).
 
 <figure>
-<img src="https://ospray.github.io/images/diffuse_rooms.png" alt="Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels." width="80.0%" /><figcaption>Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels.</figcaption>
+<img src="https://ospray.github.io/images/diffuse_rooms.png" width="80.0%" alt="" /><figcaption>Comparison of diffuse rooms with 100% reflecting white paint (left) and realistic 80% reflecting white paint (right), which leads to higher overall contrast. Note that exposure has been adjusted to achieve similar brightness levels.</figcaption>
 </figure>
 
 
@@ -2227,20 +1690,20 @@ Note that currently only the path tracer implements colored transparency
 with `Tf`.
 
 Normal mapping can simulate small geometric features via the texture
-`map_Bump`. The normals $n$ in the normal map are wrt. the local
-tangential shading coordinate system and are encoded as $½(n+1)$, thus a
-texel $(0.5, 0.5, 1)$[^7] represents the unperturbed shading normal
-$(0, 0, 1)$. Because of this encoding an sRGB gamma [texture](#texture)
-format is ignored and normals are always fetched as linear from a normal
-map. Note that the orientation of normal maps is important for a
-visually consistent look: by convention OSPRay uses a coordinate system
-with the origin in the lower left corner; thus a convexity will look
-green toward the top of the texture image (see also the example image of
-a normal map). If this is not the case flip the normal map vertically or
-invert its green channel.
+`map_Bump`. The normals $n$ in the normal map are with respect to the
+local tangential shading coordinate system and are encoded as $½(n+1)$,
+thus a texel $(0.5, 0.5, 1)$[^6] represents the unperturbed shading
+normal $(0, 0, 1)$. Because of this encoding an sRGB gamma
+[texture](#texture) format is ignored and normals are always fetched as
+linear from a normal map. Note that the orientation of normal maps is
+important for a visually consistent look: by convention OSPRay uses a
+coordinate system with the origin in the lower left corner; thus a
+convexity will look green toward the top of the texture image (see also
+the example image of a normal map). If this is not the case flip the
+normal map vertically or invert its green channel.
 
 <figure>
-<img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." width="60.0%" /><figcaption>Normal map representing an exalted square pyramidal frustum.</figcaption>
+<img src="https://ospray.github.io/images/normalmap_frustum.png" width="60.0%" alt="" /><figcaption>Normal map representing an exalted square pyramidal frustum.</figcaption>
 </figure>
 
 
@@ -2248,15 +1711,15 @@ invert its green channel.
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with “`map_`”. The fetched texels
 are multiplied by the respective parameter value. Texturing requires
-[geometries](#geometries) with texture coordinates, e.g., a [triangle
-mesh](#triangle-mesh) with `vertex.texcoord` provided. The color
-textures `map_Kd` and `map_Ks` are typically in one of the sRGB gamma
-encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
-linear format (and only the first component is used). Additionally, all
-textures support [texture transformations](#texture2d-transformations).
+[geometries](#geometries) with texture coordinates, e.g., a \[triangle
+mesh\] with `vertex.texcoord` provided. The color textures `map_Kd` and
+`map_Ks` are typically in one of the sRGB gamma encoded formats, whereas
+textures `map_Ns` and `map_d` are usually in a linear format (and only
+the first component is used). Additionally, all textures support
+[texture transformations](#texture2d-transformations).
 
 <figure>
-<img src="https://ospray.github.io/images/material_OBJ.jpg" alt="Rendering of a OBJ material with wood textures." width="60.0%" /><figcaption>Rendering of a OBJ material with wood textures.</figcaption>
+<img src="https://ospray.github.io/images/material_OBJ.jpg" width="60.0%" alt="" /><figcaption>Rendering of a OBJ material with wood textures.</figcaption>
 </figure>
 
 
@@ -2270,205 +1733,48 @@ multiple different layers and lobes. It uses the GGX microfacet
 distribution with approximate multiple scattering for dielectrics and
 metals, uses the Oren-Nayar model for diffuse reflection, and is energy
 conserving. To create a Principled material, pass the type string
-“`Principled`” to `ospNewMaterial2`. Its parameters are listed in the
+“`principled`” to `ospNewMaterial`. Its parameters are listed in the
 table below.
 
-<table style="width:98%;">
-<caption>Parameters of the Principled material.</caption>
-<colgroup>
-<col style="width: 9%" />
-<col style="width: 24%" />
-<col style="width: 12%" />
-<col style="width: 51%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">baseColor</td>
-<td style="text-align: right;">white 0.8</td>
-<td style="text-align: left;">base reflectivity (diffuse and/or metallic)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">edgeColor</td>
-<td style="text-align: right;">white</td>
-<td style="text-align: left;">edge tint (metallic only)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">metallic</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">mix between dielectric (diffuse and/or specular) and metallic (specular only with complex IOR) in [0–1]</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">diffuse</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">diffuse reflection weight in [0–1]</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">specular</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">specular reflection/transmission weight in [0–1]</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">ior</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">dielectric index of refraction</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">transmission</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">specular transmission weight in [0–1]</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">transmissionColor</td>
-<td style="text-align: right;">white</td>
-<td style="text-align: left;">attenuated color due to transmission (Beer’s law)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">transmissionDepth</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">distance at which color attenuation is equal to transmissionColor</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">roughness</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">diffuse and specular roughness in [0–1], 0 is perfectly smooth</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">anisotropy</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">amount of specular anisotropy in [0–1]</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">rotation</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">rotation of the direction of anisotropy in [0–1], 1 is going full circle</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">normal</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">default normal map/scale for all layers</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">baseNormal</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">base normal map/scale (overrides default normal)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">thin</td>
-<td style="text-align: right;">false</td>
-<td style="text-align: left;">flag specifying whether the material is thin or solid</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">thickness</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">thickness of the material (thin only), affects the amount of color attenuation due to specular transmission</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">backlight</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">amount of diffuse transmission (thin only) in [0–2], 1 is 50% reflection and 50% transmission, 2 is transmission only</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">coat</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">clear coat layer weight in [0–1]</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">coatIor</td>
-<td style="text-align: right;">1.5</td>
-<td style="text-align: left;">clear coat index of refraction</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">coatColor</td>
-<td style="text-align: right;">white</td>
-<td style="text-align: left;">clear coat color tint</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">coatThickness</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">clear coat thickness, affects the amount of color attenuation</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">coatRoughness</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">clear coat roughness in [0–1], 0 is perfectly smooth</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">coatNormal</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">clear coat normal map/scale (overrides default normal)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">sheen</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">sheen layer weight in [0–1]</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">sheenColor</td>
-<td style="text-align: right;">white</td>
-<td style="text-align: left;">sheen color tint</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">sheenTint</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">how much sheen is tinted from sheenColor toward baseColor</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">sheenRoughness</td>
-<td style="text-align: right;">0.2</td>
-<td style="text-align: left;">sheen roughness in [0–1], 0 is perfectly smooth</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">opacity</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">cut-out opacity/transparency, 1 is fully opaque</td>
-</tr>
-</tbody>
-</table>
+| Type  | Name              |    Default| Description                                                                                                             |
+|:------|:------------------|----------:|:------------------------------------------------------------------------------------------------------------------------|
+| vec3f | baseColor         |  white 0.8| base reflectivity (diffuse and/or metallic)                                                                             |
+| vec3f | edgeColor         |      white| edge tint (metallic only)                                                                                               |
+| float | metallic          |          0| mix between dielectric (diffuse and/or specular) and metallic (specular only with complex IOR) in \[0–1\]               |
+| float | diffuse           |          1| diffuse reflection weight in \[0–1\]                                                                                    |
+| float | specular          |          1| specular reflection/transmission weight in \[0–1\]                                                                      |
+| float | ior               |          1| dielectric index of refraction                                                                                          |
+| float | transmission      |          0| specular transmission weight in \[0–1\]                                                                                 |
+| vec3f | transmissionColor |      white| attenuated color due to transmission (Beer’s law)                                                                       |
+| float | transmissionDepth |          1| distance at which color attenuation is equal to transmissionColor                                                       |
+| float | roughness         |          0| diffuse and specular roughness in \[0–1\], 0 is perfectly smooth                                                        |
+| float | anisotropy        |          0| amount of specular anisotropy in \[0–1\]                                                                                |
+| float | rotation          |          0| rotation of the direction of anisotropy in \[0–1\], 1 is going full circle                                              |
+| float | normal            |          1| default normal map/scale for all layers                                                                                 |
+| float | baseNormal        |          1| base normal map/scale (overrides default normal)                                                                        |
+| bool  | thin              |      false| flag specifying whether the material is thin or solid                                                                   |
+| float | thickness         |          1| thickness of the material (thin only), affects the amount of color attenuation due to specular transmission             |
+| float | backlight         |          0| amount of diffuse transmission (thin only) in \[0–2\], 1 is 50% reflection and 50% transmission, 2 is transmission only |
+| float | coat              |          0| clear coat layer weight in \[0–1\]                                                                                      |
+| float | coatIor           |        1.5| clear coat index of refraction                                                                                          |
+| vec3f | coatColor         |      white| clear coat color tint                                                                                                   |
+| float | coatThickness     |          1| clear coat thickness, affects the amount of color attenuation                                                           |
+| float | coatRoughness     |          0| clear coat roughness in \[0–1\], 0 is perfectly smooth                                                                  |
+| float | coatNormal        |          1| clear coat normal map/scale (overrides default normal)                                                                  |
+| float | sheen             |          0| sheen layer weight in \[0–1\]                                                                                           |
+| vec3f | sheenColor        |      white| sheen color tint                                                                                                        |
+| float | sheenTint         |          0| how much sheen is tinted from sheenColor toward baseColor                                                               |
+| float | sheenRoughness    |        0.2| sheen roughness in \[0–1\], 0 is perfectly smooth                                                                       |
+| float | opacity           |          1| cut-out opacity/transparency, 1 is fully opaque                                                                         |
 
 : Parameters of the Principled material.
 
 All parameters can be textured by passing a [texture](#texture) handle,
-suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
+prefixed with “`map_`” (e.g., “`map_baseColor`”). [texture
 transformations](#texture2d-transformations) are supported as well.
 
 <figure>
-<img src="https://ospray.github.io/images/material_Principled.jpg" alt="Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top." width="60.0%" /><figcaption>Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top.</figcaption>
+<img src="https://ospray.github.io/images/material_Principled.jpg" width="60.0%" alt="" /><figcaption>Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top.</figcaption>
 </figure>
 
 
@@ -2477,133 +1783,36 @@ transformations](#texture2d-transformations) are supported as well.
 
 The CarPaint material is a specialized version of the Principled
 material for rendering different types of car paints. To create a
-CarPaint material, pass the type string “`CarPaint`” to
-`ospNewMaterial2`. Its parameters are listed in the table below.
+CarPaint material, pass the type string “`carPaint`” to
+`ospNewMaterial`. Its parameters are listed in the table below.
 
-<table style="width:98%;">
-<caption>Parameters of the CarPaint material.</caption>
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 22%" />
-<col style="width: 12%" />
-<col style="width: 52%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">baseColor</td>
-<td style="text-align: right;">white 0.8</td>
-<td style="text-align: left;">diffuse base reflectivity</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">roughness</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">diffuse roughness in [0–1], 0 is perfectly smooth</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">normal</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">normal map/scale</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">flakeDensity</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">density of metallic flakes in [0–1], 0 disables flakes, 1 fully covers the surface with flakes</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">flakeScale</td>
-<td style="text-align: right;">100</td>
-<td style="text-align: left;">scale of the flake structure, higher values increase the amount of flakes</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">flakeSpread</td>
-<td style="text-align: right;">0.3</td>
-<td style="text-align: left;">flake spread in [0–1]</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">flakeJitter</td>
-<td style="text-align: right;">0.75</td>
-<td style="text-align: left;">flake randomness in [0–1]</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">flakeRoughness</td>
-<td style="text-align: right;">0.3</td>
-<td style="text-align: left;">flake roughness in [0–1], 0 is perfectly smooth</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">coat</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">clear coat layer weight in [0–1]</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">coatIor</td>
-<td style="text-align: right;">1.5</td>
-<td style="text-align: left;">clear coat index of refraction</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">coatColor</td>
-<td style="text-align: right;">white</td>
-<td style="text-align: left;">clear coat color tint</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">coatThickness</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">clear coat thickness, affects the amount of color attenuation</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">coatRoughness</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">clear coat roughness in [0–1], 0 is perfectly smooth</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">coatNormal</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">clear coat normal map/scale</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">flipflopColor</td>
-<td style="text-align: right;">white</td>
-<td style="text-align: left;">reflectivity of coated flakes at grazing angle, used together with coatColor produces a pearlescent paint</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">flipflopFalloff</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">flip flop color falloff, 1 disables the flip flop effect</td>
-</tr>
-</tbody>
-</table>
+| Type  | Name            |    Default| Description                                                                                               |
+|:------|:----------------|----------:|:----------------------------------------------------------------------------------------------------------|
+| vec3f | baseColor       |  white 0.8| diffuse base reflectivity                                                                                 |
+| float | roughness       |          0| diffuse roughness in \[0–1\], 0 is perfectly smooth                                                       |
+| float | normal          |          1| normal map/scale                                                                                          |
+| float | flakeDensity    |          0| density of metallic flakes in \[0–1\], 0 disables flakes, 1 fully covers the surface with flakes          |
+| float | flakeScale      |        100| scale of the flake structure, higher values increase the amount of flakes                                 |
+| float | flakeSpread     |        0.3| flake spread in \[0–1\]                                                                                   |
+| float | flakeJitter     |       0.75| flake randomness in \[0–1\]                                                                               |
+| float | flakeRoughness  |        0.3| flake roughness in \[0–1\], 0 is perfectly smooth                                                         |
+| float | coat            |          1| clear coat layer weight in \[0–1\]                                                                        |
+| float | coatIor         |        1.5| clear coat index of refraction                                                                            |
+| vec3f | coatColor       |      white| clear coat color tint                                                                                     |
+| float | coatThickness   |          1| clear coat thickness, affects the amount of color attenuation                                             |
+| float | coatRoughness   |          0| clear coat roughness in \[0–1\], 0 is perfectly smooth                                                    |
+| float | coatNormal      |          1| clear coat normal map/scale                                                                               |
+| vec3f | flipflopColor   |      white| reflectivity of coated flakes at grazing angle, used together with coatColor produces a pearlescent paint |
+| float | flipflopFalloff |          1| flip flop color falloff, 1 disables the flip flop effect                                                  |
 
 : Parameters of the CarPaint material.
 
 All parameters can be textured by passing a [texture](#texture) handle,
-suffixed with “`Map`” (e.g., “`baseColorMap`”); [texture
+prefixed with “`map_`” (e.g., “`map_baseColor`”). [texture
 transformations](#texture2d-transformations) are supported as well.
 
 <figure>
-<img src="https://ospray.github.io/images/material_CarPaint.jpg" alt="Rendering of a pearlescent CarPaint material." width="60.0%" /><figcaption>Rendering of a pearlescent CarPaint material.</figcaption>
+<img src="https://ospray.github.io/images/material_CarPaint.jpg" width="60.0%" alt="" /><figcaption>Rendering of a pearlescent CarPaint material.</figcaption>
 </figure>
 
 
@@ -2612,59 +1821,22 @@ transformations](#texture2d-transformations) are supported as well.
 
 The [path tracer](#path-tracer) offers a physical metal, supporting
 changing roughness and realistic color shifts at edges. To create a
-Metal material pass the type string “`Metal`” to `ospNewMaterial2`. Its
+Metal material pass the type string “`metal`” to `ospNewMaterial`. Its
 parameters are
 
-<table style="width:97%;">
-<caption>Parameters of the Metal material.</caption>
-<colgroup>
-<col style="width: 15%" />
-<col style="width: 15%" />
-<col style="width: 15%" />
-<col style="width: 51%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">vec3f[]</td>
-<td style="text-align: left;">ior</td>
-<td style="text-align: right;">Aluminium</td>
-<td style="text-align: left;"><a href="#data">data</a> array of spectral samples of complex refractive index, each entry in the form (wavelength, eta, k), ordered by wavelength (which is in nm)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">eta</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">RGB complex refractive index, real part</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">k</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;">RGB complex refractive index, imaginary part</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">roughness</td>
-<td style="text-align: right;">0.1</td>
-<td style="text-align: left;">roughness in [0–1], 0 is perfect mirror</td>
-</tr>
-</tbody>
-</table>
+| Type      | Name      |    Default| Description                                                                                                                                              |
+|:----------|:----------|----------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vec3f\[\] | ior       |  Aluminium| [data](#data) array of spectral samples of complex refractive index, each entry in the form (wavelength, eta, k), ordered by wavelength (which is in nm) |
+| vec3f     | eta       |           | RGB complex refractive index, real part                                                                                                                  |
+| vec3f     | k         |           | RGB complex refractive index, imaginary part                                                                                                             |
+| float     | roughness |        0.1| roughness in \[0–1\], 0 is perfect mirror                                                                                                                |
 
 : Parameters of the Metal material.
 
 The main appearance (mostly the color) of the Metal material is
 controlled by the physical parameters `eta` and `k`, the
 wavelength-dependent, complex index of refraction. These coefficients
-are quite counterintuitive but can be found in [published
+are quite counter-intuitive but can be found in [published
 measurements](https://refractiveindex.info/). For accuracy the index of
 refraction can be given as an array of spectral samples in `ior`, each
 sample a triplet of wavelength (in nm), eta, and k, ordered
@@ -2691,7 +1863,7 @@ transformations](#texture2d-transformations) are supported as well) to
 create notable edging effects.
 
 <figure>
-<img src="https://ospray.github.io/images/material_Metal.jpg" alt="Rendering of golden Metal material with textured roughness." width="60.0%" /><figcaption>Rendering of golden Metal material with textured roughness.</figcaption>
+<img src="https://ospray.github.io/images/material_Metal.jpg" width="60.0%" alt="" /><figcaption>Rendering of golden Metal material with textured roughness.</figcaption>
 </figure>
 
 
@@ -2701,7 +1873,7 @@ create notable edging effects.
 The [path tracer](#path-tracer) offers an alloy material, which behaves
 similar to [Metal](#metal), but allows for more intuitive and flexible
 control of the color. To create an Alloy material pass the type string
-“`Alloy`” to `ospNewMaterial2`. Its parameters are
+“`alloy`” to `ospNewMaterial`. Its parameters are
 
 | Type  | Name      |    Default| Description                                 |
 |:------|:----------|----------:|:--------------------------------------------|
@@ -2722,7 +1894,7 @@ a [texture](#texture) handle, prefixed with “`map_`”; [texture
 transformations](#texture2d-transformations) are supported as well.
 
 <figure>
-<img src="https://ospray.github.io/images/material_Alloy.jpg" alt="Rendering of a fictional Alloy material with textured color." width="60.0%" /><figcaption>Rendering of a fictional Alloy material with textured color.</figcaption>
+<img src="https://ospray.github.io/images/material_Alloy.jpg" width="60.0%" alt="" /><figcaption>Rendering of a fictional Alloy material with textured color.</figcaption>
 </figure>
 
 
@@ -2732,7 +1904,7 @@ transformations](#texture2d-transformations) are supported as well.
 The [path tracer](#path-tracer) offers a realistic a glass material,
 supporting refraction and volumetric attenuation (i.e., the transparency
 color varies with the geometric thickness). To create a Glass material
-pass the type string “`Glass`” to `ospNewMaterial2`. Its parameters are
+pass the type string “`glass`” to `ospNewMaterial`. Its parameters are
 
 | Type  | Name                |  Default| Description                        |
 |:------|:--------------------|--------:|:-----------------------------------|
@@ -2742,13 +1914,13 @@ pass the type string “`Glass`” to `ospNewMaterial2`. Its parameters are
 
 : Parameters of the Glass material.
 
-For convenience, the rather counterintuitive physical attenuation
+For convenience, the rather counter-intuitive physical attenuation
 coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
 trough a glass of thickness `attenuationDistance`.
 
 <figure>
-<img src="https://ospray.github.io/images/material_Glass.jpg" alt="Rendering of a Glass material with orange attenuation." width="60.0%" /><figcaption>Rendering of a Glass material with orange attenuation.</figcaption>
+<img src="https://ospray.github.io/images/material_Glass.jpg" width="60.0%" alt="" /><figcaption>Rendering of a Glass material with orange attenuation.</figcaption>
 </figure>
 
 
@@ -2762,7 +1934,7 @@ surface is parallel to the real geometric surface. The implementation
 accounts for multiple internal reflections between the interfaces
 (including attenuation), but neglects parallax effects due to its
 (virtual) thickness. To create a such a thin glass material pass the
-type string “`ThinGlass`” to `ospNewMaterial2`. Its parameters are
+type string “`thinGlass`” to `ospNewMaterial`. Its parameters are
 
 | Type  | Name                |  Default| Description                        |
 |:------|:--------------------|--------:|:-----------------------------------|
@@ -2785,13 +1957,13 @@ thickness and allows for easy exchange of parameters with the (real)
 attenuation and thus the material appearance.
 
 <figure>
-<img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." width="60.0%" /><figcaption>Rendering of a ThinGlass material with red attenuation.</figcaption>
+<img src="https://ospray.github.io/images/material_ThinGlass.jpg" width="60.0%" alt="" /><figcaption>Rendering of a ThinGlass material with red attenuation.</figcaption>
 </figure>
 
 
 
 <figure>
-<img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." width="60.0%" /><figcaption>Example image of a colored window made with textured attenuation of the ThinGlass material.</figcaption>
+<img src="https://ospray.github.io/images/ColoredWindow.jpg" width="60.0%" alt="" /><figcaption>Example image of a colored window made with textured attenuation of the ThinGlass material.</figcaption>
 </figure>
 
 
@@ -2800,8 +1972,8 @@ attenuation and thus the material appearance.
 
 The [path tracer](#path-tracer) offers a metallic paint material,
 consisting of a base coat with optional flakes and a clear coat. To
-create a MetallicPaint material pass the type string “`MetallicPaint`”
-to `ospNewMaterial2`. Its parameters are listed in the table below.
+create a MetallicPaint material pass the type string “`metallicPaint`”
+to `ospNewMaterial`. Its parameters are listed in the table below.
 
 | Type  | Name        |    Default| Description                       |
 |:------|:------------|----------:|:----------------------------------|
@@ -2826,7 +1998,7 @@ that the effect of the metallic flakes is currently only computed on
 average, thus individual flakes are not visible.
 
 <figure>
-<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" alt="Rendering of a MetallicPaint material." width="60.0%" /><figcaption>Rendering of a MetallicPaint material.</figcaption>
+<img src="https://ospray.github.io/images/material_MetallicPaint.jpg" width="60.0%" alt="" /><figcaption>Rendering of a MetallicPaint material.</figcaption>
 </figure>
 
 
@@ -2836,12 +2008,20 @@ average, thus individual flakes are not visible.
 The [path tracer](#path-tracer) supports the Luminous material which
 emits light uniformly in all directions and which can thus be used to
 turn any geometric object into a light source. It is created by passing
-the type string “`Luminous`” to `ospNewMaterial2`. The amount of
-constant radiance that is emitted is determined by combining the general
+the type string “`Luminous`” to `ospNewMaterial`. The amount of constant
+radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
 
+| Type  | Name         |  Default| Description                       |
+|:------|:-------------|--------:|:----------------------------------|
+| vec3f | color        |    white| color of the emitted light        |
+| float | intensity    |        1| intensity of the light (a factor) |
+| float | transparency |        1| material transparency             |
+
+: Parameters accepted by the Luminous material.
+
 <figure>
-<img src="https://ospray.github.io/images/material_Luminous.jpg" alt="Rendering of a yellow Luminous material." width="60.0%" /><figcaption>Rendering of a yellow Luminous material.</figcaption>
+<img src="https://ospray.github.io/images/material_Luminous.jpg" width="60.0%" alt="" /><figcaption>Rendering of a yellow Luminous material.</figcaption>
 </figure>
 
 
@@ -2858,25 +2038,18 @@ To create a new texture use
 OSPTexture ospNewTexture(const char *type);
 ```
 
-The call returns `NULL` if the texture could not be created with the
-given parameters, or else an `OSPTexture` handle to the created texture.
-
 #### Texture2D
 
-The `texture2D` texture type implements an image-based texture, where
+The `texture2d` texture type implements an image-based texture, where
 its parameters are as follows
 
-| Type    | Name  | Description                        |
-|:--------|:------|:-----------------------------------|
-| vec2i   | size  | size of the textures               |
-| int     | type  | `OSPTextureFormat` for the texture |
-| int     | flags | special attribute flags for this   |
-|         |       | texture, currently only responds   |
-|         |       | to `OSP_TEXTURE_FILTER_NEAREST` or |
-|         |       | no flags                           |
-| OSPData | data  | the actual texel data              |
+| Type    | Name   | Description                                                                       |
+|:--------|:-------|:----------------------------------------------------------------------------------|
+| int     | format | `OSPTextureFormat` for the texture                                                |
+| int     | filter | default `OSP_TEXTURE_FILTER_BILINEAR`, alternatively `OSP_TEXTURE_FILTER_NEAREST` |
+| OSPData | data   | the actual texel 2D [data](#data)                                                 |
 
-: Parameters of `texture2D` texture type
+: Parameters of `texture2d` texture type.
 
 The supported texture formats for `texture2d` are:
 
@@ -2894,14 +2067,16 @@ The supported texture formats for `texture2d` are:
 | OSP\_TEXTURE\_LA8     | 8 bit \[0–255\] gamma encoded luminance, and linear alpha   |
 | OSP\_TEXTURE\_R32F    | 32 bit float single component                               |
 
-: Supported texture formats by `texture2D`, i.e., valid constants of
+: Supported texture formats by `texture2d`, i.e., valid constants of
 type `OSPTextureFormat`.
 
-The texel data addressed by `source` starts with the texels in the lower
-left corner of the texture image, like in OpenGL. Per default a texture
-fetch is filtered by performing bi-linear interpolation of the nearest
-2×2 texels; if instead fetching only the nearest texel is desired (i.e.,
-no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
+The size of the texture is inferred from the size of the 2D array
+`data`, which also needs have a compatible type to `format`. The texel
+data in `data` starts with the texels in the lower left corner of the
+texture image, like in OpenGL. Per default a texture fetch is filtered
+by performing bi-linear interpolation of the nearest 2×2 texels; if
+instead fetching only the nearest texel is desired (i.e., no filtering)
+then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
 
 #### TextureVolume
 
@@ -2918,7 +2093,11 @@ parameters are as follows
 |:----------|:-------|:--------------------------------------|
 | OSPVolume | volume | volume used to generate color lookups |
 
-: Parameters of `volume` texture type
+: Parameters of `volume` texture type.
+
+TextureVolume can be used for implementing slicing of volumes with any
+geometry type. It enables coloring of the slicing geometry with a
+different transfer function than that of the sliced volume.
 
 ### Texture2D Transformations
 
@@ -2949,93 +2128,48 @@ To create a new camera of given type `type` use
 OSPCamera ospNewCamera(const char *type);
 ```
 
-The call returns `NULL` if that type of camera is not known, or else an
-`OSPCamera` handle to the created camera. All cameras accept these
-parameters:
+All cameras accept these parameters:
 
-| Type     | Name       | Description                               |
-|:---------|:-----------|:------------------------------------------|
-| vec3f(a) | pos        | position of the camera in world-space     |
-| vec3f(a) | dir        | main viewing direction of the camera      |
-| vec3f(a) | up         | up direction of the camera                |
-| float    | nearClip   | near clipping distance                    |
-| vec2f    | imageStart | start of image region (lower left corner) |
-| vec2f    | imageEnd   | end of image region (upper right corner)  |
+| Type  | Name       | Description                               |
+|:------|:-----------|:------------------------------------------|
+| vec3f | position   | position of the camera in world-space     |
+| vec3f | direction  | main viewing direction of the camera      |
+| vec3f | up         | up direction of the camera                |
+| float | nearClip   | near clipping distance                    |
+| vec2f | imageStart | start of image region (lower left corner) |
+| vec2f | imageEnd   | end of image region (upper right corner)  |
 
 : Parameters accepted by all cameras.
 
-The camera is placed and oriented in the world with `pos`, `dir` and
-`up`. OSPRay uses a right-handed coordinate system. The region of the
-camera sensor that is rendered to the image can be specified in
-normalized screen-space coordinates with `imageStart` (lower left
-corner) and `imageEnd` (upper right corner). This can be used, for
-example, to crop the image, to achieve asymmetrical view frusta, or to
-horizontally flip the image to view scenes which are specified in a
-left-handed coordinate system. Note that values outside the default
-range of \[0–1\] are valid, which is useful to easily realize overscan
-or film gate, or to emulate a shifted sensor.
+The camera is placed and oriented in the world with `position`,
+`direction` and `up`. OSPRay uses a right-handed coordinate system. The
+region of the camera sensor that is rendered to the image can be
+specified in normalized screen-space coordinates with `imageStart`
+(lower left corner) and `imageEnd` (upper right corner). This can be
+used, for example, to crop the image, to achieve asymmetrical view
+frusta, or to horizontally flip the image to view scenes which are
+specified in a left-handed coordinate system. Note that values outside
+the default range of \[0–1\] are valid, which is useful to easily
+realize overscan or film gate, or to emulate a shifted sensor.
 
 #### Perspective Camera
 
-The perspective camera implements a simple thinlens camera for
+The perspective camera implements a simple thin lens camera for
 perspective rendering, supporting optionally depth of field and stereo
 rendering, but no motion blur. It is created by passing the type string
 “`perspective`” to `ospNewCamera`. In addition to the [general
 parameters](#cameras) understood by all cameras the perspective camera
 supports the special parameters listed in the table below.
 
-<table style="width:97%;">
-<caption>Parameters accepted by the perspective camera.</caption>
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 32%" />
-<col style="width: 53%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">fovy</td>
-<td style="text-align: left;">the field of view (angle in degree) of the frame’s height</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">aspect</td>
-<td style="text-align: left;">ratio of width by height of the frame (and image region)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">apertureRadius</td>
-<td style="text-align: left;">size of the aperture, controls the depth of field</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">focusDistance</td>
-<td style="text-align: left;">distance at where the image is sharpest when depth of field is enabled</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">architectural</td>
-<td style="text-align: left;">vertical edges are projected to be parallel</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">stereoMode</td>
-<td style="text-align: left;">0: no stereo (default), 1: left eye, 2: right eye, 3: side-by-side</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">interpupillaryDistance</td>
-<td style="text-align: left;">distance between left and right eye when stereo is enabled</td>
-</tr>
-</tbody>
-</table>
+| Type  | Name                   | Description                                                            |
+|:------|:-----------------------|:-----------------------------------------------------------------------|
+| float | fovy                   | the field of view (angle in degree) of the frame’s height              |
+| float | aspect                 | ratio of width by height of the frame (and image region)               |
+| float | apertureRadius         | size of the aperture, controls the depth of field                      |
+| float | focusDistance          | distance at where the image is sharpest when depth of field is enabled |
+| bool  | architectural          | vertical edges are projected to be parallel                            |
+| int   | stereoMode             | 0: no stereo (default), 1: left eye, 2: right eye, 3: side-by-side     |
+| float | interpupillaryDistance | distance between left and right eye when stereo is enabled             |
 
 : Parameters accepted by the perspective camera.
 
@@ -3055,19 +2189,19 @@ buildings, the whole façade appears sharp, as can be seen in the example
 images below.
 
 <figure>
-<img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." width="60.0%" /><figcaption>Example image created with the perspective camera, featuring depth of field.</figcaption>
+<img src="https://ospray.github.io/images/camera_perspective.jpg" width="60.0%" alt="" /><figcaption>Example image created with the perspective camera, featuring depth of field.</figcaption>
 </figure>
 
 
 
 <figure>
-<img src="https://ospray.github.io/images/camera_architectural.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." width="60.0%" /><figcaption>Enabling the <code>architectural</code> flag corrects the perspective projection distortion, resulting in parallel vertical edges.</figcaption>
+<img src="https://ospray.github.io/images/camera_architectural.jpg" width="60.0%" alt="" /><figcaption>Enabling the <code>architectural</code> flag corrects the perspective projection distortion, resulting in parallel vertical edges.</figcaption>
 </figure>
 
 
 
 <figure>
-<img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." width="90.0%" /><figcaption>Example 3D stereo image using <code>stereoMode</code> side-by-side.</figcaption>
+<img src="https://ospray.github.io/images/camera_stereo.jpg" width="90.0%" alt="" /><figcaption>Example 3D stereo image using <code>stereoMode</code> side-by-side.</figcaption>
 </figure>
 
 
@@ -3095,7 +2229,7 @@ and `imageEnd`, and both methods can be combined. In any case, the
 `aspect` ratio needs to be set accordingly to get an undistorted image.
 
 <figure>
-<img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." width="60.0%" /><figcaption>Example image created with the orthographic camera.</figcaption>
+<img src="https://ospray.github.io/images/camera_orthographic.jpg" width="60.0%" alt="" /><figcaption>Example image created with the orthographic camera.</figcaption>
 </figure>
 
 
@@ -3110,7 +2244,7 @@ of 2:1. A panoramic camera is created by passing the type string
 by using the [general parameters](#cameras) understood by all cameras.
 
 <figure>
-<img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." width="90.0%" /><figcaption>Latitude / longitude map created with the panoramic camera.</figcaption>
+<img src="https://ospray.github.io/images/camera_panoramic.jpg" width="90.0%" alt="" /><figcaption>Latitude / longitude map created with the panoramic camera.</figcaption>
 </figure>
 
 
@@ -3121,15 +2255,22 @@ To get the world-space position of the geometry (if any) seen at \[0–1\]
 normalized screen-space pixel coordinates `screenPos` use
 
 ``` {.cpp}
-void ospPick(OSPPickResult*, OSPRenderer, const vec2f &screenPos);
+void ospPick(OSPPickResult *,
+             OSPFrameBuffer,
+             OSPRenderer,
+             OSPCamera,
+             OSPWorld,
+             osp_vec2f screenPos);
 ```
 
 The result is returned in the provided `OSPPickResult` struct:
 
 ``` {.cpp}
 typedef struct {
-    vec3f position; // the position of the hit point (in world-space)
-    bool hit;       // whether or not a hit actually occurred
+    int hasHit;
+    osp_vec3f worldPosition;
+    OSPGeometricModel GeometricModel;
+    uint32_t primID;
 } OSPPickResult;
 ```
 
@@ -3146,9 +2287,9 @@ information associated with pixels). To create a new framebuffer object
 of given size `size` (in pixels), color format, and channels use
 
 ``` {.cpp}
-OSPFrameBuffer ospNewFrameBuffer(const vec2i &size,
-                                 const OSPFrameBufferFormat format = OSP_FB_SRGBA,
-                                 const uint32_t frameBufferChannels = OSP_FB_COLOR);
+OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
+                                 OSPFrameBufferFormat format = OSP_FB_SRGBA,
+                                 uint32_t frameBufferChannels = OSP_FB_COLOR);
 ```
 
 The parameter `format` describes the format the color buffer has *on the
@@ -3181,8 +2322,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
 
 : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
 naming optional information the framebuffer can store. These values can
-be combined by bitwise OR when passed to `ospNewFrameBuffer` or
-`ospFrameBufferClear`.
+be combined by bitwise OR when passed to `ospNewFrameBuffer`.
 
 If a certain channel value is *not* specified, the given buffer channel
 will not be present. Note that OSPRay makes a clear distinction between
@@ -3200,14 +2340,14 @@ In particular, `OSP_FB_NONE` is a perfectly valid pixel format for a
 framebuffer that an application will never map. For example, an
 application driving a display wall may well generate an intermediate
 framebuffer and eventually transfer its pixel to the individual displays
-using an `OSPPixelOp` [pixel operation](#pixel-operation).
+using an `OSPImageOperation` [image operation](#image-operation).
 
 The application can map the given channel of a framebuffer – and thus
 access the stored pixel information – via
 
 ``` {.cpp}
 const void *ospMapFrameBuffer(OSPFrameBuffer,
-                              const OSPFrameBufferChannel = OSP_FB_COLOR);
+                              OSPFrameBufferChannel = OSP_FB_COLOR);
 ```
 
 Note that `OSP_FB_ACCUM` or `OSP_FB_VARIANCE` cannot be mapped. The
@@ -3225,33 +2365,45 @@ void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer);
 The individual channels of a framebuffer can be cleared with
 
 ``` {.cpp}
-void ospFrameBufferClear(OSPFrameBuffer, const uint32_t frameBufferChannels);
+void ospResetAccumulation(OSPFrameBuffer);
 ```
 
-When selected, `OSP_FB_COLOR` will clear the color buffer to black
-`(0, 0, 0, 0)`, `OSP_FB_DEPTH` will clear the depth buffer to `inf`.
-`OSP_FB_ACCUM` will clear *all* accumulating buffers (`OSP_FB_VARIANCE`,
+This function will clear *all* accumulating buffers (`OSP_FB_VARIANCE`,
 `OSP_FB_NORMAL`, and `OSP_FB_ALBEDO`, if present) and resets the
-accumulation counter `accumID`.
+accumulation counter `accumID`. It is unspecified if the existing color
+and depth buffers are physically cleared when `ospResetAccumulation` is
+called.
 
-### Pixel Operation {#pixel-operation .unnumbered}
-
-Pixel operations are functions that are applied to every pixel that gets
-written into a framebuffer. Examples include post-processing, filtering,
-blending, tone mapping, or sending tiles to a display wall. To create a
-new pixel operation of given type `type` use
+If `OSP_FB_VARIANCE` is specified, an estimate of the variance of the
+last accumulated frame can be queried with
 
 ``` {.cpp}
-OSPPixelOp ospNewPixelOp(const char *type);
+float ospGetVariance(OSPFrameBuffer);
 ```
 
-The call returns `NULL` if that type is not known, or else an
-`OSPPixelOp` handle to the created pixel operation.
+Note this value is only updated after synchronizing with
+`OSP_FRAME_FINISHED`, as further described in [asynchronous
+rendering](#asynchronous-rendering).
 
-To set a pixel operation to the given framebuffer use
+The framebuffer takes a list of pixel operations to be applied to the
+image in sequence as an `OSPData`. The pixel operations will be run in
+the order they are in the array.
+
+| Type                  | Name           | Description                          |
+|:----------------------|:---------------|:-------------------------------------|
+| OSPImageOperation\[\] | imageOperation | ordered sequence of image operations |
+
+: Parameters accepted by the framebuffer.
+
+### Image Operation {#image-operation .unnumbered}
+
+Image operations are functions that are applied to every pixel of a
+frame. Examples include post-processing, filtering, blending, tone
+mapping, or sending tiles to a display wall. To create a new pixel
+operation of given type `type` use
 
 ``` {.cpp}
-void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
+OSPImageOperation ospNewImageOperation(const char *type);
 ```
 
 #### Tone Mapper {#tone-mapper .unnumbered}
@@ -3259,65 +2411,19 @@ void ospSetPixelOp(OSPFrameBuffer, OSPPixelOp);
 The tone mapper is a pixel operation which implements a generic filmic
 tone mapping operator. Using the default parameters it approximates the
 Academy Color Encoding System (ACES). The tone mapper is created by
-passing the type string “`tonemapper`” to `ospNewPixelOp`. The tone
-mapping curve can be customized using the parameters listed in the table
-below.
+passing the type string “`tonemapper`” to `ospNewImageOperation`. The
+tone mapping curve can be customized using the parameters listed in the
+table below.
 
-<table style="width:97%;">
-<caption>Parameters accepted by the tone mapper.</caption>
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 16%" />
-<col style="width: 16%" />
-<col style="width: 54%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: left;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">contrast</td>
-<td style="text-align: left;">1.6773</td>
-<td style="text-align: left;">contrast (toe of the curve); typically is in [1–2]</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">shoulder</td>
-<td style="text-align: left;">0.9714</td>
-<td style="text-align: left;">highlight compression (shoulder of the curve); typically is in [0.9–1]</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">midIn</td>
-<td style="text-align: left;">0.18</td>
-<td style="text-align: left;">mid-level anchor input; default is 18% gray</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">midOut</td>
-<td style="text-align: left;">0.18</td>
-<td style="text-align: left;">mid-level anchor output; default is 18% gray</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">float</td>
-<td style="text-align: left;">hdrMax</td>
-<td style="text-align: left;">11.0785</td>
-<td style="text-align: left;">maximum HDR input that is not clipped</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">acesColor</td>
-<td style="text-align: left;">true</td>
-<td style="text-align: left;">apply the ACES color transforms</td>
-</tr>
-</tbody>
-</table>
+| Type  | Name      | Default | Description                                                              |
+|:------|:----------|:--------|:-------------------------------------------------------------------------|
+| float | exposure  | 1.0     | amount of light per unit area                                            |
+| float | contrast  | 1.6773  | contrast (toe of the curve); typically is in \[1–2\]                     |
+| float | shoulder  | 0.9714  | highlight compression (shoulder of the curve); typically is in \[0.9–1\] |
+| float | midIn     | 0.18    | mid-level anchor input; default is 18% gray                              |
+| float | midOut    | 0.18    | mid-level anchor output; default is 18% gray                             |
+| float | hdrMax    | 11.0785 | maximum HDR input that is not clipped                                    |
+| bool  | acesColor | true    | apply the ACES color transforms                                          |
 
 : Parameters accepted by the tone mapper.
 
@@ -3336,506 +2442,124 @@ the parameters to the values listed in the table below.
 : Filmic tone mapping curve parameters. Note that the curve includes an
 exposure bias to match 18% middle gray.
 
+#### Denoiser {#denoiser .unnumbered}
+
+OSPRay comes with a module that adds support for Intel® Open Image
+Denoise. This is provided as an optional module as it creates an
+additional project dependency at compile time. The module implements a
+“`denoiser`” frame operation, which denoises the entire frame before the
+frame is completed.
+
 Rendering
 ---------
 
-To render a frame into the given framebuffer with the given renderer use
+### Asynchronous Rendering
+
+Rendering is by default asynchronous (non-blocking), and is done by
+combining a frame buffer, renderer, camera, and world.
+
+What to render and how to render it depends on the renderer’s
+parameters. If the framebuffer supports accumulation (i.e., it was
+created with `OSP_FB_ACCUM`) then successive calls to `ospRenderFrame`
+will progressively refine the rendered image. If additionally the
+framebuffer has an `OSP_FB_VARIANCE` channel then `ospRenderFrame`
+returns an estimate of the current variance of the rendered image,
+otherwise `inf` is returned. The estimated variance can be used by the
+application as a quality indicator and thus to decide whether to stop or
+to continue progressive rendering.
+
+To start an render task, use
 
 ``` {.cpp}
-float ospRenderFrame(OSPFrameBuffer, OSPRenderer,
-                     const uint32_t frameBufferChannels = OSP_FB_COLOR);
+OSPFuture ospRenderFrame(OSPFrameBuffer,
+                         OSPRenderer,
+                         OSPCamera,
+                         OSPWorld);
 ```
 
-The third parameter specifies what channel(s) of the framebuffer is
-written to[^8]. What to render and how to render it depends on the
-renderer’s parameters. If the framebuffer supports accumulation (i.e.,
-it was created with `OSP_FB_ACCUM`) then successive calls to
-`ospRenderFrame` will progressively refine the rendered image. If
-additionally the framebuffer has an `OSP_FB_VARIANCE` channel then
-`ospRenderFrame` returns an estimate of the current variance of the
-rendered image, otherwise `inf` is returned. The estimated variance can
-be used by the application as a quality indicator and thus to decide
-whether to stop or to continue progressive rendering.
+This returns an `OSPFuture` handle, which can be used to synchronize
+with the application, cancel, or query for progress of the running task.
+When `ospRenderFrame` is called, there is no guarantee when the
+associated task will begin execution.
 
-### Progress and Cancel {#progress-and-cancel .unnumbered}
-
-To be informed about the progress of rendering the current frame the
-application can register a callback function of type
+Progress of a running frame can be queried with the following API
+function
 
 ``` {.cpp}
-typedef int (*OSPProgressFunc)(void* userPtr, const float progress);
+float ospGetProgress(OSPFuture);
 ```
 
-via
+This returns the progress of the task in \[0-1\].
+
+Applications can wait on the result of an asynchronous operation, or
+choose to only synchronize with a specific event. To synchronize with an
+`OSPFuture` use
 
 ``` {.cpp}
-void ospSetProgressFunc(OSPProgressFunc, void* userPtr);
+void ospWait(OSPFuture, OSPSyncEvent = OSP_TASK_FINISHED);
 ```
 
-The provided user pointer `userPtr` is passed as first argument to the
-callback function[^9] and the reported progress is in (0–1\]. If the
-callback function returns zero than the application requests to cancel
-rendering, i.e., the current `ospRenderFrame` will return at the first
-opportunity and the content of the framebuffer will be undefined.
-Therefore, better clear the framebuffer with `ospFrameBufferClear` then
-before a subsequent call of `ospRenderFrame`.
-
-Passing `NULL` as `OSPProgressFunc` function pointer disables the
-progress callback.
-
-Parallel Rendering with MPI
-===========================
-
-OSPRay has the ability to scale to multiple nodes in a cluster via MPI.
-This enables applications to take advantage of larger compute and memory
-resources when available.
-
-Prerequisites for MPI Mode
---------------------------
-
-In addition to the standard build requirements of OSPRay, you must have
-the following items available in your environment in order to build &
-run OSPRay in MPI mode:
-
--   An MPI enabled multi-node environment, such as an HPC cluster
--   An MPI implementation you can build against (i.e., Intel MPI,
-    MVAPICH2, etc…)
-
-Enabling the MPI Module in your Build
--------------------------------------
-
-To build the MPI module the CMake option `OSPRAY_MODULE_MPI` must be
-enabled, which can be done directly on the command line (with
-`-DOSPRAY_MODULE_MPI=ON`) or through a configuration dialog (`ccmake`,
-`cmake-gui`), see also [Compiling OSPRay](#compiling-ospray).
-
-This will trigger CMake to go look for an MPI implementation in your
-environment. You can then inspect the CMake value of `MPI_LIBRARY` to
-make sure that CMake found your MPI build environment correctly.
-
-This will result in an OSPRay module being built. To enable using it,
-applications will need to either link `libospray_module_mpi`, or call
-
-    ospLoadModule("mpi");
-
-before initializing OSPRay.
-
-Modes of Using OSPRay’s MPI Features
-------------------------------------
-
-OSPRay provides two ways of using MPI to scale up rendering: offload and
-distributed.
-
-### Offload Rendering
-
-The “offload” rendering mode is where a single (not-distributed) calling
-application treats the OSPRay API the same as with local rendering.
-However, OSPRay uses multiple MPI connected nodes to evenly distribute
-frame rendering work, where each node contains a full copy of all scene
-data. This method is most effective for scenes which can fit into
-memory, but are expensive to render: for example, path tracing with many
-samples-per-pixel is compute heavy, making it a good situation to use
-the offload feature. This can be done with any application which already
-uses OSPRay for local rendering without the need for any code changes.
-
-When doing MPI offload rendering, applications can optionally enable
-dynamic load balancing, which can be beneficial in certain contexts.
-This load balancing refers to the distribution of tile rendering work
-across nodes: thread-level load balancing on each node is still dynamic
-with the thread tasking system. The options for enabling/controlling the
-dynamic load balancing features on the `mpi_offload` device are found in
-the table below, which can be changed while the application is running.
-Please note that these options will likely only pay off for scenes which
-have heavy rendering load (e.g., path tracing a non-trivial scene) and
-have much variance in how expensive each tile is to render.
-
-| Type | Name                |  Default| Description                           |
-|:-----|:--------------------|--------:|:--------------------------------------|
-| bool | dynamicLoadBalancer |    false| whether to use dynamic load balancing |
-
-: Parameters specific to the `mpi_offload` device.
-
-### Distributed Rendering
-
-The “distributed” rendering mode is where a MPI distributed application
-(such as a scientific simulation) uses OSPRay collectively to render
-frames. In this case, the API expects all calls (both created objects
-and parameters) to be the same on every application rank, except each
-rank can specify arbitrary geometries and volumes. Each renderer will
-have its own limitations on the topology of the data (i.e., overlapping
-data regions, concave data, etc.), but the API calls will only differ
-for scene objects. Thus all other calls (i.e., setting camera, creating
-framebuffer, rendering frame, etc.) will all be assumed to be identical,
-but only rendering a frame and committing the model must be in
-lock-step. This mode targets using all available aggregate memory for
-huge scenes and for “in-situ” visualization where the data is already
-distributed by a simulation app.
-
-Running an Application with the “offload” Device
-------------------------------------------------
-
-As an example, our sample viewer can be run as a single application
-which offloads rendering work to multiple MPI processes running on
-multiple machines.
-
-The example apps are setup to be launched in two different setups. In
-either setup, the application must initialize OSPRay with the offload
-device. This can be done by creating an “`mpi_offload`” device and
-setting it as the current device (via the `ospSetCurrentDevice()`
-function), or passing either “`--osp:mpi`” or “`--osp:mpi-offload`” as a
-command line parameter to `ospInit()`. Note that passing a command line
-parameter will automatically call `ospLoadModule("mpi")` to load the MPI
-module, while the application will have to load the module explicitly if
-using `ospNewDevice()`.
-
-### Single MPI Launch
-
-OSPRay is initialized with the `ospInit()` function call which takes
-command line arguments in and configures OSPRay based on what it finds.
-In this setup, the app is launched across all ranks, but workers will
-never return from `ospInit()`, essentially turning the application into
-a worker process for OSPRay. Here’s an example of running the
-ospVolumeViewer data-replicated, using `c1`-`c4` as compute nodes and
-`localhost` the process running the viewer itself:
-
-    mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer <scene file> --osp:mpi
-
-### Separate Application & Worker Launches
-
-The second option is to explicitly launch the app on rank 0 and worker
-ranks on the other nodes. This is done by running `ospray_mpi_worker` on
-worker nodes and the application on the display node. Here’s the same
-example above using this syntax:
-
-    mpirun -perhost 1 -hosts localhost ./ospExampleViewer <scene file> --osp:mpi \
-      : -hosts c1,c2,c3,c4 ./ospray_mpi_worker
-
-This method of launching the application and OSPRay worker separately
-works best for applications which do not immediately call `ospInit()` in
-their `main()` function, or for environments where application
-dependencies (such as GUI libraries) may not be available on compute
-nodes.
-
-Running an Application with the “distributed” Device
-----------------------------------------------------
-
-Applications using the new distributed device should initialize OSPRay
-by creating (and setting current) an “`mpi_distributed`” device or pass
-`"--osp:mpi-distributed"` as a command line argument to `ospInit()`.
-Note that due to the semantic differences the distributed device gives
-the OSPRay API, it is not expected for applications which can already
-use the offload device to correctly use the distributed device without
-changes to the application.
-
-The following additional parameter can be set on the `mpi_distributed`
-device.
-
-<table style="width:98%;">
-<caption>Parameters for the <code>mpi_distributed</code> device.</caption>
-<colgroup>
-<col style="width: 8%" />
-<col style="width: 23%" />
-<col style="width: 65%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">void*</td>
-<td style="text-align: left;">worldCommunicator</td>
-<td style="text-align: left;">A pointer to the <code>MPI_Comm</code> which should be used as OSPRay’s world communicator. This will set how many ranks OSPRay should expect to participate in rendering. The default is <code>MPI_COMM_WORLD</code> where all ranks are expected to participate in rendering.</td>
-</tr>
-</tbody>
-</table>
-
-: Parameters for the `mpi_distributed` device.
-
-By setting the `worldCommunicator` parameter to a different communicator
-than `MPI_COMM_WORLD` the client application can tune how OSPRay is run
-within its processes. The default uses `MPI_COMM_WORLD` and thus expects
-all processes to also participate in rendering, thus if a subset of
-processes do not call collectives like `ospRenderFrame` the application
-would hang.
-
-For example, an MPI parallel application may be run with one process
-per-core, however OSPRay is multithreaded and will perform best when run
-with one process per-node. By splitting `MPI_COMM_WORLD` the application
-can create a communicator with one rank per-node to then run OSPRay on
-one process per-node. The remaining ranks on each node can then
-aggregate their data to the OSPRay process for rendering.
-
-The model used by the distributed device takes three additional
-parameters, to allow users to express their data distribution to OSPRay.
-All models should be disjoint to ensure correct sort-last compositing.
-Geometries used in the distributed MPI renderer can make use of the
-[SciVis renderer](#scivis-renderer)’s [OBJ material](#obj-material).
-
-<table style="width:98%;">
-<caption>Parameters for the distributed <code>OSPModel</code>.</caption>
-<colgroup>
-<col style="width: 8%" />
-<col style="width: 17%" />
-<col style="width: 71%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">id</td>
-<td style="text-align: left;">An integer that uniquely identifies this piece of distributed data. For example, in a common case of one sub-brick per-rank, this would just be the region’s MPI rank. Multiple ranks can specify models with the same ID, in which case the rendering work for the model will be shared among them.</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">region.lower</td>
-<td style="text-align: left;">Override the original model geometry + volume bounds with a custom lower bound position. This can be used to clip geometry in the case the objects cross over to another region owned by a different node. For example, rendering a set of spheres with radius.</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">vec3f</td>
-<td style="text-align: left;">region.upper</td>
-<td style="text-align: left;">Override the original model geometry + volume bounds with a custom upper bound position.</td>
-</tr>
-</tbody>
-</table>
-
-: Parameters for the distributed `OSPModel`.
-
-The renderer supported when using the distributed device is the
-`mpi_raycast` renderer. This renderer is an experimental renderer and
-currently only supports ambient occlusion (on the local data only, with
-optional ghost data). To compute correct ambient occlusion across the
-distributed data the application is responsible for replicating ghost
-data and specifying the ghost models and models as described above. Note
-that shadows and ambient occlusion are computed on the local geometries,
-in the `model` and the corresponding `ghostModel` in the ghost model
-array, if any where set.
-
-<table style="width:98%;">
-<caption>Parameters for the <code>mpi_raycast</code> renderer.</caption>
-<colgroup>
-<col style="width: 25%" />
-<col style="width: 28%" />
-<col style="width: 12%" />
-<col style="width: 30%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Type</th>
-<th style="text-align: left;">Name</th>
-<th style="text-align: right;">Default</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">OSPModel/OSPModel[]</td>
-<td style="text-align: left;">model</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;">the <a href="#model">model</a> to render, can optionally be a <a href="#data">data</a> array of multiple models</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">OSPModel/OSPModel[]</td>
-<td style="text-align: left;">ghostModel</td>
-<td style="text-align: right;">NULL</td>
-<td style="text-align: left;">the optional <a href="#model">model</a> containing the ghost geometry for ambient occlusion; when setting a <a href="#data">data</a> array for both <code>model</code> and <code>ghostModel</code>, each individual ghost model shadows only its corresponding model</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">OSPLight[]</td>
-<td style="text-align: left;">lights</td>
-<td style="text-align: right;"></td>
-<td style="text-align: left;"><a href="#data">data</a> array with handles of the <a href="#lights">lights</a></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">int</td>
-<td style="text-align: left;">aoSamples</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: left;">number of rays per sample to compute ambient occlusion</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">aoTransparencyEnabled</td>
-<td style="text-align: right;">false</td>
-<td style="text-align: left;">whether object transparency is respected when computing ambient occlusion (slower)</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">bool</td>
-<td style="text-align: left;">oneSidedLighting</td>
-<td style="text-align: right;">true</td>
-<td style="text-align: left;">if true, backfacing surfaces (wrt. light source) receive no illumination</td>
-</tr>
-</tbody>
-</table>
-
-: Parameters for the `mpi_raycast` renderer.
-
-See the distributed device examples in the MPI module for examples.
-
-Scene graph
-===========
-
-**WARNING: USE AT YOUR OWN RISK. The Scene graph is currently in Alpha
-mode and will change frequently. It is not yet recommended for critical
-production work.**
-
-The scene graph is the basis of our Example Viewer which consists of a
-superset of OSPRay objects represented in a graph hierarchy (currently a
-tree). This graph functions as a hierarchical specification for scene
-properties and a self-managed update graph. The scene graph
-infrastructure includes many convenience functions for templated
-traversals, queries of state and child state, automated updates, and
-timestamped modifications to underlying state.
-
-The scene graph nodes closely follow the dependencies of existing OSPRay
-API internals, i.e., a `sg::Renderer` has a “`model`” child, which in
-turn has a “`TriangleMesh`”, which in turn has a child named “`vertex`”
-similar to how you may set the “`vertex`” parameter on the
-`osp::TriangleMesh` which in turn is added to an `OSPModel` object which
-is set as the model on the `OSPRenderer`. The scene graph is a superset
-of OSPRay functionality so there is no direct 1:1 mapping between the
-scene graph hierarchy in all cases, however it is kept as close as
-possible. This makes the scene graph viewer in the [Example
-Viewer](#example-viewer) a great way to understand OSPRay state.
-
-Hierarchy Structure
--------------------
-
-The root of the scene graph is based on `sg::Renderer`. The scene graph
-can be created by
-
-    auto renderer = sg::createNode("renderer", "Renderer");
-
-which automatically creates child nodes for necessary OSPRay state. To
-update and commit all state and render a single function is provided
-which can be called with:
-
-    renderer.renderFrame(renderer["frameBuffer"].nodeAs<sg::FrameBuffer>);
-
-Values can be set using:
-
-    renderer["spp"] = 16;
-
-The explore the full set of nodes, simply launch the Example Viewer and
-traverse through the GUI representation of all scene graph nodes.
-
-Traversals
-----------
-
-The scene graph contains a set of builtin traversals as well as modular
-visitor functors for implementing custom passes over the scene graph.
-The required traversals are handled for you by default within the
-renderFrame function on the renderer. For any given node there are two
-phases to a traversal operation, pre and post traversal of the nodes
-children. `preTraversal` initializes node state and objects and sets the
-current traversal context with appropriate state. For instance,
-`sg::Model` will create a new `OSPModel` object, set its value to that
-object, and set `sg::RenderContext.currentOSPModel` to its own value.
-After `preTraversal` is finished, the children of `sg::Model` are
-processed in a similar fashion and now use the modified context. In
-`postTraversal`, `sg::Model` will commit the changes that its children
-have potentially set and it will pop its modifications from the current
-context. This behavior is replicated for every scene graph node and
-enables children to act on parent state without specific implementations
-from the parent node. An example of this are the `sg::NodeParam` nodes
-which are containers for values to be set on `OSPObject`s, such as a
-float value. This is put on the scene graph with a call to:
-
-    renderer["lights"]["sun"].createChild("intensity", "float", 0.3f);
-
-This call accesses the child named “`lights`” on the renderer, and in
-turn the child named “`sun`”. This child then gets its own child of a
-newly created node with the name “`intensity"` of type `float` with a
-value of `0.3f`. When committed, this node will call `ospSet1f`with the
-node value on the current `OSPObject` on the context which is set by the
-parent. If you were to create a custom light called”`MyLight`" and had a
-float parameter called “`flickerFreq`”, a similar line would be used
-without requiring any additional changes in the scene graph internals
-beyond registering the new light class. Known parameters such as floats
-will also show up in the Example Viewer GUI without requiring any
-additional code beyond adding them to the scene graph and the internal
-implementation in OSPRay.
-
-The base passes required to use the scene graph include `verification`,
-`commit`, and `render` traversals. Every node in the scene graph has a
-valid state which needs to be set before operating on the node. Nodes
-may have custom qualifications for validity, but by default they are set
-through `valid_` flags on the scene graph `Node` for things like
-whitelists and range checks. Once verified, `commit` traverses the scene
-graph and commits scene graph state to OSPRay. Commits are timestamped,
-so re-committing will only have any affect if a dependent child has been
-modified requiring a new commit. Because of this, each node does not
-have to track if it is valid or if anything in the scene has been
-modified, as commit will only be called on that node if those are
-already true. By default invalid nodes with throw exceptions, however
-this can be turned off which enables the program to keep running. In the
-Example Viewer GUI, invalid nodes will be marked in red but the
-previously committed state will keep rendering until the invalid state
-is corrected.
-
-For examples of implementing custom traversals, see the `sg/visitors`
-folder. Here is an example of a visitor that collects all nodes with a
-given name:
-
-    struct GatherNodesByName : public Visitor
-    {
-      GatherNodesByName(const std::string &_name);
-
-      bool operator()(Node &node, TraversalContext &ctx) override;
-
-      std::vector<std::shared_ptr<Node>> results();
-
-    private:
-      std::string name;
-      std::vector<std::shared_ptr<Node>> nodes;
-    };
-
-    // Inlined definitions ////////////////////////////////////////////////////
-
-    inline GatherNodesByName::GatherNodesByName(const std::string &_name)
-        : name(_name)
-    {
-    }
-
-    inline bool GatherNodesByName::operator()(Node &node, TraversalContext &)
-    {
-      if (utility::longestBeginningMatch(node.name(), this->name) == this->name) {
-        auto itr = std::find_if(
-          nodes.begin(),
-          nodes.end(),
-          [&](const std::shared_ptr<Node> &nodeInList) {
-            return nodeInList.get() == &node;
-          }
-        );
-
-        if (itr == nodes.end())
-          nodes.push_back(node.shared_from_this());
-      }
-
-      return true;
-    }
-
-    inline std::vector<std::shared_ptr<Node>> GatherNodesByName::results()
-    {
-      return nodes;// TODO: should this be a move (i.e., reader 'consumes')?
-    }
-
-Thread Safety
--------------
-
-The scene graph is only thread safe for accessing and setting values on
-nodes. More advanced operations like adding or removing nodes are not
-thread safe. At some point we hope to add transactions to handle these,
-but for now the scene graph nodes must be added/removed on the same
-thread that is committing and rendering.
+The following are values which can be synchronized with the application
+
+| Name                  | Description                                                                                                                                     |
+|:----------------------|:------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSP\_NONE\_FINISHED   | Don’t wait for anything to be finished (immediately return from `ospWait`)                                                                      |
+| OSP\_WORLD\_COMMITTED | Wait for the world to be committed (not yet implemented)                                                                                        |
+| OSP\_WORLD\_RENDERED  | Wait for the world to be rendered, but not post-processing operations (Pixel/Tile/Frame Op)                                                     |
+| OSP\_FRAME\_FINISHED  | Wait for all rendering operations to complete                                                                                                   |
+| OSP\_TASK\_FINISHED   | Wait on full completion of the task associated with the future. The underlying task may involve one or more of the above synchronization events |
+
+: Supported events that can be passed to `ospWait`.
+
+Currently only rendering can be invoked asynchronously. However, future
+releases of OSPRay may add more asynchronous versions of API calls (and
+thus return `OSPFuture`).
+
+Applications can query whether particular events are complete with
+
+``` {.cpp}
+int ospIsReady(OSPFuture, OSPSyncEvent = OSP_TASK_FINISHED);
+```
+
+As the given running task runs (as tracked by the `OSPFuture`),
+applications can query a boolean \[0,1\] result if the passed event has
+been completed.
+
+### Asynchronously Rendering and ospCommit()
+
+The use of either `ospRenderFrame` or `ospRenderFrame` requires that all
+objects in the scene being rendered have been committed before rendering
+occurs. If a call to `ospCommit()` happens while a frame is rendered,
+the result is undefined behavior and should be avoided.
+
+### Synchronous Rendering
+
+For convenience in certain use cases, `ospray_util.h` provides a
+synchronous version of `ospRenderFrame`:
+
+``` {.cpp}
+float ospRenderFrameBlocking(OSPFrameBuffer,
+                             OSPRenderer,
+                             OSPCamera,
+                             OSPWorld);
+```
+
+This version is the equivalent of:
+
+``` {.cpp}
+- `ospRenderFrame`
+- `ospWait(f, OSP_TASK_FINISHED)`
+- return `ospGetVariance(fb)`
+```
+
+This version is closest to `ospRenderFrame` from OSPRay v1.x.
+
+Distributed rendering with MPI
+------------------------------
+
+The OSPRay MPI module is now a stand alone repository. It can be found
+on GitHub [here](https://github.com/ospray/module_mpi), where all code
+and documentation can be found.
 
 Examples
 ========
@@ -3844,15 +2568,20 @@ Simple Tutorial
 ---------------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.c`[^10]. On Linux build it in the build directory
-with
+at `apps/tutorials/ospTutorial.c`[^7].
 
-    gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. \
-    ./libospray.so -Wl,-rpath,. -o ospTutorial
+An example of building `ospTutorial.c` with CMake can be found in
+`apps/tutorials/ospTutorialFindospray/`.
 
-On Windows build it in the “build\_directory\\\$Configuration” with
+To build the tutorial on Linux, build it in a build directory with
 
-    cl ..\..\apps\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+    gcc -std=c99 ../apps/ospTutorial/ospTutorial.c \
+    -I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospTutorial
+
+On Windows build it can be build manually in a
+“build\_directory\\\$Configuration” directory with
+
+    cl ..\..\apps\ospTutorial\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
@@ -3867,181 +2596,88 @@ frames in the second image `accumulatedFrames.ppm`.
 ![After accumulating ten
 frames.](https://ospray.github.io/images/tutorial_accumulatedframe.png)
 
-Mini-App Tutorials
-------------------
+ospExamples
+-----------
 
-OSPRay also ships various mini-apps to showcase OSPRay features. These
-apps are all prefixed with `ospTutorial` and can be found in the
-`tutorials/` directory of the OSPRay source tree. Current tutorials
-include:
+Apart from tutorials, `OSPRay` comes with a C++ app called `ospExamples`
+which is an elaborate easy-to-use tutorial, with a single interface to
+try various `OSPRay` features. It is aimed at providing users with
+multiple simple scenes composed of basic geometry types, lights, volumes
+etc. to get started with OSPRay quickly.
 
--   structured volumes
--   unstructured volumes
--   spheres
--   animated spheres
--   subdivision surfaces
+`ospExamples` app runs a `GLFWOSPRayWindow` instance that manages
+instances of the camera, framebuffer, renderer and other OSPRay objects
+necessary to render an interactive scene. The scene is rendered on a
+`GLFW` window with an `imgui` GUI controls panel for the user to
+manipulate the scene at runtime.
 
-More apps will be created in future releases to further demonstrate
-other interesting OSPRay features.
+The application is located in `apps/ospExamples/` directory and can be
+built with CMake. It can be run from the build directory via:
 
-Example Viewer
---------------
+    ./ospExamples <command-line-parameter>
 
-![Screenshot of using ospExampleViewer with a scene
-graph.](https://ospray.github.io/images/exampleViewer.jpg)
+The command line parameter is optional however.
 
-OSPRay includes an exemplary viewer application `ospExampleViewer`,
-showcasing most features of OSPRay which can be run as
-`./ospExampleViewer [options] <filename>`. The Example Viewer uses the
-ImGui library for user interface controls and is based on a prototype
-OSPRay [scene graph](#scene-graph) interface where nodes can be viewed
-and edited interactively. Updates to scene graph nodes update OSPRay
-state automatically through the scene graph viewer which is enabled by
-pressing ‘g’.
+### Scenes
 
-### Exploring the Scene
+Different scenes can be selected from the `scenes` dropdown and each
+scene corresponds to an instance of a special `detail::Builder` struct.
+Example builders are located in `apps/common/ospray_testing/builders/`.
+These builders provide a usage guide for the OSPRay scene hierarchy and
+OSPRay API in the form of `cpp` wrappers. They instantiate and manage
+objects for the specific scene like `cpp::Geometry`, `cpp::Volume`,
+`cpp::Light` etc.
 
-The GUI shows the entire state of the program under the root scene graph
-node. Expanding nodes down to explore and edit the scene is possible,
-for example a material parameter may be found under
-renderer→world→mesh→material→Kd. Updates to values will be automatically
-propagated to the next render. Individual nodes can be easily found
-using the “Find Node” section, which will find nodes with a given name
-based on the input string. Scene objects can also be selected with the
-mouse by shift-left clicking in the viewer.
+The `detail::Builder` base struct is mostly responsible for setting up
+OSPRay `world` and objects common in all scenes (for eg: lighting and
+ground plane), which can be conveniently overridden in the derived
+builders.
 
-Click on nodes to expand their children, whose values can be set by
-dragging or double clicking and typing in values. You can also add new
-nodes where appropriate: for example, when “lights” is expanded right
-clicking on “lights” and selecting create new node and typing in a light
-type, such as “PointLight”, will add it to the scene. Similarly, right
-clicking on “world” and creating an “Importer” node will add a new scene
-importer from a file. Changing the filename to an appropriate file will
-load the scene and propagate the resulting state. Exporting and
-importing the scene graph is only partially supported at the moment
-through “ospsg” files. Currently, any nodes with Data members will break
-this functionality, however right clicking and selecting export on the
-camera or lights nodes for instance will save out their respective state
-which can be imported on the command line. The Example Viewer also
-functions as an OSPRay state debugger – invalid values will be shown in
-red up the hierarchy and will not change the viewer until corrected.
+Given below are different scenes listed with their string identifiers:
 
-### Volume Rendering
+boxes
+:   A simple scene with `box` geometry type.
 
-Volumes are loaded into the viewer just as a mesh is. Volume appearance
-is modified according to the transfer function, which will show up in a
-popup window on the GUI after pressing ‘g’. Click and drag across the
-transfer function to set opacity values, and selecting near the bottom
-of the editable transfer function widget sets the opacity to zero. The
-colors themselves can only be modified by selecting from the dropdown
-menu ‘ColorMap’ or importing and exporting json colors. The range that
-the transfer function operates on can be modified on the scene graph
-viewer.
+cornell\_box
+:   A scene depicting a classic cornell box with `quad` mesh geometry
+    type for rendering two cubes and a `quad` light type.
 
-### Controls
+curves
+:   A simple scene with `curve` geometry type and options to change
+    `curveBasis`. For details on different basis’ please check
+    documentation of [curves](#curves).
 
--   ‘g’ - toggle scene graph display
--   ‘q’ - quit
--   Left click and drag to rotate
--   Right click and drag or mouse wheel to zoom in and out.
--   Mouse-Wheel click will pan the camera.
--   Control-Left clicking on an object will select a model and all of
-    its children which will be displayed in the
--   Shift-Left click on an object will zoom into that part of the scene
-    and set the focal distance.
+gravity\_spheres\_volume
+:   A scene with `structuredRegular` type of [volume](#volumes).
 
-### Command Line Options
+gravity\_spheres\_isosurface
+:   A scene depicting iso-surface rendering of `gravity_spheres_volume`
+    using geometry type `isosurface`.
 
--   Running `./ospExampleViewer -help` will bring up a list of command
-    line options. These options allow you to load files, run animations,
-    modify any scene graph state, and many other functions. See the
-    [demos](#demos) page for examples.
--   Supported file importers currently include: `obj`, `ply`, `x3d`,
-    `vtu`, `osp`, `ospsg`, `xml` (rivl), `points`, `xyz`.
+perlin\_noise\_volumes
+:   An example scene with `structuredRegular` volume type depicting
+    perlin noise.
 
-### Denoiser
+random\_spheres
+:   A simple scene depicting `sphere` geometry type.
 
-When the example viewer is built with OpenImageDenoise, the denoiser is
-automatically enabled when running the application. It can be toggled
-on/off at runtime via the `useDenoiser` GUI parameter found under the
-framebuffer in the scene graph.
+streamlines
+:   A scene showcasing streamlines geometry derived from `curve`
+    geometry type.
 
-Distributed Viewer
-------------------
+subdivision\_cube
+:   A scene with a cube of `subdivision` geometry type to showcase
+    subdivision surfaces.
 
-The application `ospDistribViewerDemo` demonstrates how to write a
-distributed SciVis style interactive renderer using the distributed MPI
-device. Note that because OSPRay uses sort-last compositing it is up to
-the user to ensure that the data distribution across the nodes is
-suitable. Specifically, each nodes’ data must be convex and disjoint.
-This renderer supports multiple volumes and geometries per node. To
-ensure they are composited correctly you specify a list of bounding
-regions to the model, within these regions can be arbitrary
-volumes/geometries and each rank can have as many regions as needed. As
-long as the regions are disjoint/convex the data will be rendered
-correctly. In this demo we either generate a volume, or load a RAW
-volume file if one is passed on the command line.
+unstructured\_volume
+:   A simple scene with a volume of `unstructured` volume type.
 
-### Loading a RAW Volume
+### Renderer
 
-To load a RAW volume you must specify the filename (`-f <file>`), the
-data type (`-dtype <dtype>`), the dimensions (`-dims <x> <y> <z>`) and
-the value range for the transfer function (`-range <min> <max>`). For
-example, to run on the [CSAFE data set from the demos
-page](http://www.ospray.org/demos.html#csafe-heptane-gas-dataset) you
-would pass the following arguments:
-
-    mpirun -np <n> ./ospDistribViewerDemo \
-        -f <path to csafe>/csafe-heptane-302-volume.raw \
-        -dtype uchar -dims 302 302 302 -range 0 255
-
-The volume file will then be chunked up into an `x×y×z` grid such that
-$n = xyz$. See `loadVolume` in
-[gensv/generateSciVis.cpp](https://github.com/ospray/ospray/blob/devel/modules/mpi/apps/gensv/generateSciVis.cpp#L213)
-for an example of how to properly load a volume distributed across ranks
-with correct specification of brick positions and ghost voxels for
-interpolation at boundaries. If no volume file data is passed a volume
-will be generated instead, in that case see `makeVolume`.
-
-### Geometry
-
-The viewer can also display some randomly generated sphere geometry if
-you pass `-spheres <n>` where `n` is the number of spheres to generate
-per-node. These spheres will be generated inside the bounding box of the
-region’s volume data.
-
-In the case that you have geometry crossing the boundary of nodes and
-are replicating it on both nodes to render (ghost zones, etc.) the
-region will be used by the renderer to clip rays against allowing to
-split the object between the two nodes, with each rendering half. This
-will keep the regions rendered by each rank disjoint and thus avoid any
-artifacts. For example, if a sphere center is on the border between two
-nodes, each would render half the sphere and the halves would be
-composited to produce the final complete sphere in the image.
-
-### App-initialized MPI
-
-Passing the `-appMPI` flag will have the application initialize MPI
-instead of letting OSPRay do it internally when creating the MPI
-distributed device. In this case OSPRay will not finalize MPI when
-cleaning up the device, allowing the application to use OSPRay for some
-work, shut it down and recreate everything later if needed for
-additional computation, without accidentally shutting down its MPI
-communication.
-
-### Interactive Viewer
-
-Rank 0 will open an interactive window with GLFW and display the
-rendered image. When the application state needs to update (e.g., camera
-or transfer function changes), this information is broadcasted out to
-the other nodes to update their scene data.
-
-Demos
------
-
-Several ready-to-run demos, models and data sets for OSPRay can be found
-at the [OSPRay Demos and Examples](https://www.ospray.org/demos.html)
-page.
+This app comes with three [renderer](#renderers) options: `scivis`,
+`pathtracer` and `debug`. The app provides some common rendering
+controls like `pixel samples` and other more specific to the renderer
+type like `aoIntensity` for `scivis` renderer.
 
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
     be searched in `~/Projects/ispc-v1.9.2-linux`
@@ -4052,25 +2688,16 @@ page.
     variable `ospray_DIR` (either an environment variable or CMake
     variable).
 
-[^3]: For consecutive memory addresses the x-index of the corresponding
+[^3]: The number of items to be copied is defined by the size of the
+    source array
+
+[^4]: For consecutive memory addresses the x-index of the corresponding
     voxel changes the quickest.
 
-[^4]: If there are multiple ambient lights then their contribution is
-    added
+[^5]: actually a parallelogram
 
-[^5]: The [HDRI light](#hdri-light) is an exception, it knows about
-    `intensity`, but not about `color`.
+[^6]: respectively $(127, 127, 255)$ for 8 bit textures
 
-[^6]: actually a parallelogram
-
-[^7]: respectively $(127, 127, 255)$ for 8 bit textures
-
-[^8]: This is currently not implemented, i.e., all channels of the
-    framebuffer are always updated.
-
-[^9]: That way applications can also register a member function of a C++
-    class together with the `this` pointer as `userPtr`.
-
-[^10]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
+[^7]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
     C99 API via `include/ospray/ospray_cpp.h` is available at
-    `apps/ospTutorial.cpp`.
+    `apps/tutorials/ospTutorial.cpp`.

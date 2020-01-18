@@ -22,11 +22,10 @@
   per patch. */
 
 // ospcomon: vec3f, box3f, etcpp - generic helper stuff
-#include "ospcommon/vec.h"
-#include "ospcommon/box.h"
+#include "ospcommon/math/box.h"
+#include "ospcommon/math/vec.h"
 // ospray: everything that's related to the ospray ray tracing core
 #include "ospray/geometry/Geometry.h"
-#include "ospray/common/Model.h"
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */
@@ -67,28 +66,23 @@ namespace ospray {
         vec3f controlPoint[2][2];
       };
 
-      /*! constructor - will create the 'ispc equivalent' */
       BilinearPatches();
-
-      /*! destructor - supposed to clean up all alloced memory */
-      virtual ~BilinearPatches() override;
+      virtual ~BilinearPatches() override = default;
 
       /*! the commit() message that gets called upon the app calling
           "ospCommit(<thisGeometry>)" */
       virtual void commit() override;
 
-      /*! 'finalize' is what ospray calls when everything is set and
-        done, and a actual user geometry has to be built */
-      virtual void finalize(Model *model) override;
+      virtual size_t numPrimitives() const override;
 
+     protected:
       /*! the input data array. the data array contains a list of
           patches, each of which consists of four vec3fs. Note in this
           example we do not particularly care about whether this comes
           as a plain array of floats (with 12 floats per patch), or as
           a array of vec3fs. */
-      Ref<Data> patchesData;
+      Ref<const DataT<vec3f>> patchesData;
     };
 
-  } // ::ospray::bilinearPatch
-} // ::ospray
-
+  }  // namespace blp
+}  // namespace ospray

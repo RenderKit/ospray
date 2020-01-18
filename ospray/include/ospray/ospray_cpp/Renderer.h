@@ -16,62 +16,42 @@
 
 #pragma once
 
-#include <ospray/ospray_cpp/FrameBuffer.h>
-#include <ospray/ospray_cpp/Light.h>
-#include <ospray/ospray_cpp/ManagedObject.h>
-#include <ospray/ospray_cpp/Material.h>
+#include "ManagedObject.h"
 
 namespace ospray {
-  namespace cpp    {
+  namespace cpp {
 
-    class Renderer : public ManagedObject_T<OSPRenderer>
+    class Renderer : public ManagedObject<OSPRenderer, OSP_RENDERER>
     {
-    public:
-
+     public:
       Renderer(const std::string &type);
       Renderer(const Renderer &copy);
       Renderer(OSPRenderer existing = nullptr);
-
-      float renderFrame(const FrameBuffer &fb, uint32_t channels) const;
-
-      OSPPickResult pick(const ospcommon::vec2f &screenPos) const;
     };
+
+    static_assert(sizeof(Renderer) == sizeof(OSPRenderer),
+                  "cpp::Renderer can't have data members!");
 
     // Inlined function definitions ///////////////////////////////////////////
 
     inline Renderer::Renderer(const std::string &type)
     {
-      OSPRenderer c = ospNewRenderer(type.c_str());
-      if (c) {
-        ospObject = c;
-      } else {
-        throw std::runtime_error("Failed to create OSPRenderer!");
-      }
+      ospObject = ospNewRenderer(type.c_str());
     }
 
-    inline Renderer::Renderer(const Renderer &copy) :
-      ManagedObject_T<OSPRenderer>(copy.handle())
+    inline Renderer::Renderer(const Renderer &copy)
+        : ManagedObject<OSPRenderer, OSP_RENDERER>(copy.handle())
+    {
+      ospRetain(copy.handle());
+    }
+
+    inline Renderer::Renderer(OSPRenderer existing)
+        : ManagedObject<OSPRenderer, OSP_RENDERER>(existing)
     {
     }
 
-    inline Renderer::Renderer(OSPRenderer existing) :
-      ManagedObject_T<OSPRenderer>(existing)
-    {
-    }
+  }  // namespace cpp
 
-    inline float Renderer::renderFrame(const FrameBuffer &fb,
-                                       uint32_t channels) const
-    {
-      return ospRenderFrame(fb.handle(), handle(), channels);
-    }
+  OSPTYPEFOR_SPECIALIZATION(cpp::Renderer, OSP_RENDERER);
 
-    inline OSPPickResult Renderer::pick(const ospcommon::vec2f &screenPos) const
-    {
-      OSPPickResult result;
-      ospPick(&result, handle(), (const osp::vec2f&)screenPos);
-      return result;
-    }
-
-
-  }// namespace cpp
-}// namespace ospray
+}  // namespace ospray
