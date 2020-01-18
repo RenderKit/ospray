@@ -42,7 +42,7 @@ macro(ospray_install_namelink NAME TARGET_NAME)
   endif()
 endmacro()
 
-if (OSPRAY_TASKING_TBB)
+if (OSPCOMMON_TASKING_TBB)
   if (WIN32)
     set(TBB_DLL_HINTS
       HINTS
