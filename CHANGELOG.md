@@ -1,25 +1,7 @@
 Version History
 ---------------
 
-### Changes in v2.0.0 (since alpha):
-
--   OSPRay now requires Open VKL v0.8.0+, which alleviates the need for
--   OSPRay now requires Embree v3.7.0, which lets OSPRay represent groups and
-    instances much more efficiently
--   new log level enums (warnings as errors)
--   new debug renderer
--   merged geometry types
--   C++ wrapper enhancements (STL vector/array support in cpp::Data)
--   unused parameter warnings
--   naming conventions are always camel-case
--   renderer material lists
--   new examples app to consolidate interactive apps into one
--   new benchmark suite
--   overlapping volume support in both path tracer and scivis renderer
--   MPI device is now a separate repository
--   various bug fixes
-
-### Changes in v2.0.0 (alpha):
+### Changes in v2.0.0:
 
 -   New major revision of OSPRay brings API breaking improvements over
     v1.x. See `doc/ospray2_porting_guide.md` for a deeper description of
@@ -52,12 +34,20 @@ Version History
     performance
 -   Added direct support for Intel® Open Image Denoise as an optional
     module, which adds a `denoiser` type to `ospNewImageOperation`
+-   OSPRay now requires minimum Embree v3.7.0
 -   New CMake superbuild available to build both OSPRay's dependencies
     and OSPRay itself
     -   Found in `scripts/superbuild`
     -   See documentation for more details and example usage
 -   The `ospcommon` library now lives as a stand alone repository and
     is required to build OSPRay
+-   The MPI module is now a separate repository, which also contains all
+    MPI distributed rendering documentation
+-   Log levels are now controled with enums and named strings (where applicable)
+    -   A new flag was also introduced which turns all OSP_LOG_WARNING messages
+        into errors, which are submitted to the error callback instead of the
+        message callback
+    -   Any unused parameters an object ignores now emit a warning message
 -   New support for volumes in the `pathtracer`
     -   Several parameters are available for performance/quality
         trade-offs for both photo-realistic and scientific visualization
@@ -65,12 +55,13 @@ Version History
 -   Simplification of the SciVis renderer
     -   Fixed AO lighting and simple ray marched volume rendering for
         ease of use and performance
+-   Overlapping volumes are now supported in both the `pathtracer` and `scivis`
+    renderers
 -   New API call for querying the bounds of objects (`OSPWorld`,
     `OSPInstance`, and `OSPGroup`)
 -   Lights now exist as a parameter to the world instead of the renderer
 -   Removal of `slices` geometry. Instead, any geometry with volume
-    texture can be used for slicing (see tutorial
-    `ospTutorialStructuredVolume` for example)
+    texture can be used for slicing
 -   Introduction of new `boxes` geometry type
 -   Expansion of information returned by `ospPick`
 -   Addition of API to query version information at runtime
@@ -87,9 +78,6 @@ Version History
 -   Applications need to use the various error reporting methods to
     check wether the creation (via `ospNew...`) of objects failed; a
     returned `NULL` is not a special handle anymore to signify an error
--   Removal of `cylinders` (grass) tutorial.
--   `streamlines` of streamlines tutorial now connected
-    `OSP_CATMULL_ROM` curves.
 -   Changed module init methods to facilitate version checking:
     `extern "C" OSPError ospray_module_init_<name>(int16_t versionMajor, int16_t versionMinor, int16_t versionPatch)`
 -   The `map_backplate` texture is supported in all renderers and does
@@ -98,20 +86,16 @@ Version History
 -   Changed the computation of variance for adaptive accumulation to be
     independent of `TILE_SIZE`, thus `varianceThreshold` needs to be
     adapted if using a different TILE_SIZE than default 64
+-   `OSPGeometricModel` now has the option to index a renderer-global material
+    list that lives on the renderer, allowing scenes to avoid renderer-specific
+    materials
+-   Object type names and parameters all now follow the camel-case convention
+-   New `ospExamples` app which consolidates previous interactive apps into one
+-   New `ospBenchmark` app which implements a runnable benchmark suite
 -   Known issues:
-    -   Open VKL must be built with a compatible set of ISAs with OSPRay
-        due to a known issue with VKL iterator types. This is easiest
-        to address by using `OSPRAY_BUILD_ISA` and `OPENVKL_BUILD_ISA`
-        with the ISA of the target machine. This will be addressed for
-        the official v2.0 release.
-    -   The old variant of `ospNewData` was temporarily retained in
-        `ospray_util.h` for C++ applications and will be removed for the
-        official v2.0 release
     -   ISPC v1.11.0 and Embree v3.6.0 are both incompatible with OSPRay
         and should be avoided (OSPRay should catch this during CMake
         configure)
-    -   This is a source-only release, binaries will be made available
-        for the official v2.0.0 release
 
 ### Changes in v1.8.5:
 

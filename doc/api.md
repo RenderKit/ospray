@@ -2398,3 +2398,10 @@ This version is the equivalent of:
     - return `ospGetVariance(fb)`
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
+
+Distributed rendering with MPI
+------------------------------
+
+The OSPRay MPI module is now a stand alone repository. It can be found on
+GitHub [here](https://github.com/ospray/module_mpi), where all code and
+documentation can be found.
