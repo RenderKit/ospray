@@ -46,7 +46,7 @@ if (BUILD_OIDN_FROM_SOURCE)
     BUILD_ALWAYS ${ALWAYS_REBUILD}
   )
 
-  if (BUILD_TBB_FROM_SOURCE)
+  if (DOWNLOAD_TBB)
     ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
   endif()
 else()
