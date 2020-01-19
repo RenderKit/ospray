@@ -64,7 +64,7 @@ set(BUILD_OPENVKL_VERSION "v0.8.0" CACHE STRING "Which version of OpenVKL to bui
 
 option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
 set(BUILD_OIDN_VERSION "v1.1.0" CACHE STRING "Which version of OpenImageDenoise to build?")
-option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" ON)
+option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" OFF)
 
 option(BUILD_GLFW "Build glfw for OSPRay examples or use one in existing environment?" ON)
 
