@@ -15,7 +15,7 @@
 ## ======================================================================== ##
 
 add_library(ospray_pico_bench INTERFACE)
-ospray_install_library(ospray_pico_bench pico_bench)
+ospray_install_target(ospray_pico_bench pico_bench)
 
 target_include_directories(ospray_pico_bench
   INTERFACE
