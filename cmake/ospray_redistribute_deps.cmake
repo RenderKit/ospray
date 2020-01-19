@@ -46,10 +46,10 @@ if (OSPCOMMON_TASKING_TBB)
   if (WIN32)
     set(TBB_DLL_HINTS
       HINTS
-      ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/vc14
-      ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/vc14
-      ${TBB_ROOT}/bin/${TBB_ARCH}/vc14
-      ${TBB_ROOT}/bin
+      ${OSPCOMMON_TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/vc14
+      ${OSPCOMMON_TBB_ROOT}/../redist/${TBB_ARCH}/tbb/vc14
+      ${OSPCOMMON_TBB_ROOT}/bin/${TBB_ARCH}/vc14
+      ${OSPCOMMON_TBB_ROOT}/bin
     )
     find_file(TBB_DLL tbb.dll ${TBB_DLL_HINTS})
     find_file(TBB_DLL_DEBUG tbb_debug.dll ${TBB_DLL_HINTS})

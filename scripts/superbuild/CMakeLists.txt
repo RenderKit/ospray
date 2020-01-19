@@ -54,7 +54,8 @@ option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
 
 set(BUILD_OSPCOMMON_VERSION "v1.2.0" CACHE STRING "Which version of ospcommon to build?")
 
-option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
+option(DOWNLOAD_TBB "Download TBB or use the only found in the system environment?" ON)
+set(TBB_VERSION "2020.0" CACHE STRING "Which version of TBB to download?")
 
 set(BUILD_EMBREE_VERSION "v3.7.0" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
