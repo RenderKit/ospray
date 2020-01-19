@@ -22,11 +22,11 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
 endif()
 
 if (APPLE)
-  set(TBB_URL "https://github.com/intel/tbb/v${TBB_VERSION}/tbb-${TBB_VERSION}-mac.tgz")
+  set(TBB_URL "https://github.com/intel/tbb/releases/download/v${TBB_VERSION}/tbb-${TBB_VERSION}-mac.tgz")
 elseif (WIN32)
-  set(TBB_URL "https://github.com/intel/tbb/v${TBB_VERSION}/tbb-${TBB_VERSION}-win.zip")
+  set(TBB_URL "https://github.com/intel/tbb/releases/download/v${TBB_VERSION}/tbb-${TBB_VERSION}-win.zip")
 else()
-  set(TBB_URL "https://github.com/intel/tbb/v${TBB_VERSION}/tbb-${TBB_VERSION}-lin.tgz")
+  set(TBB_URL "https://github.com/intel/tbb/releases/download/v${TBB_VERSION}/tbb-${TBB_VERSION}-lin.tgz")
 endif()
 
 ExternalProject_Add(${COMPONENT_NAME}

@@ -96,7 +96,7 @@ if (DOWNLOAD_ISPC)
   include(dep_ispc)
 endif()
 
-if (BUILD_TBB_FROM_SOURCE)
+if (DOWNLOAD_TBB)
   include(dep_tbb)
 endif()
 
