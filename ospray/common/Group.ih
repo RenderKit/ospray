@@ -17,9 +17,9 @@
 #pragma once
 
 // ospray stuff
-#include "Ray.ih"
 #include "../geometry/GeometricModel.ih"
 #include "../volume/VolumetricModel.ih"
+#include "Ray.ih"
 
 struct Group
 {

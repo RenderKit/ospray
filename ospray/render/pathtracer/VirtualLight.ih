@@ -23,8 +23,8 @@ struct PathState;
 struct PathVertex;
 struct Ray;
 
-vec3f evaluateVirtualLights(const PathContext& pathContext, 
-                            const PathState& pathState, 
-                            const PathVertex& lastVertex, 
-                            const PathVertex& pathVertex, 
-                            Ray& ray);
+vec3f evaluateVirtualLights(const PathContext &pathContext,
+    const PathState &pathState,
+    const PathVertex &lastVertex,
+    const PathVertex &pathVertex,
+    Ray &ray);

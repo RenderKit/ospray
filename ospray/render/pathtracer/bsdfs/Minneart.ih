@@ -26,23 +26,25 @@ struct Minneart
   float b;
 };
 
-inline BSDF_EvalRes Minneart_eval(const varying BSDF* uniform super,
-                                  const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes Minneart_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
-  const varying Minneart* uniform self = (const varying Minneart* uniform)super;
+  const varying Minneart *uniform self = (const varying Minneart *uniform)super;
   BSDF_EvalRes res;
 
-  const float cosThetaI = clamp(dot(wi,getN(super)));
-  const float backScatter = pow(clamp(dot(wo,wi)), self->b);
+  const float cosThetaI = clamp(dot(wi, getN(super)));
+  const float backScatter = pow(clamp(dot(wo, wi)), self->b);
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
   res.value = (backScatter * cosThetaI * one_over_pi) * self->super.albedo;
   return res;
 }
 
-inline BSDF_SampleRes Minneart_sample(const varying BSDF* uniform super,
-                                      const vec3f& wo, const vec2f& s, float ss)
+inline BSDF_SampleRes Minneart_sample(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
 {
-  const varying Minneart* uniform self = (const varying Minneart* uniform)super;
+  const varying Minneart *uniform self = (const varying Minneart *uniform)super;
   BSDF_SampleRes res;
 
   const vec3f localDir = cosineSampleHemisphere(s);
@@ -54,20 +56,29 @@ inline BSDF_SampleRes Minneart_sample(const varying BSDF* uniform super,
   return res;
 }
 
-inline void Minneart_Constructor(varying Minneart* uniform self, const varying linear3f* uniform frame,
-                                 vec3f R, float b)
+inline void Minneart_Constructor(varying Minneart *uniform self,
+    const varying linear3f *uniform frame,
+    vec3f R,
+    float b)
 {
-  BSDF_Constructor(&self->super, R, BSDF_DIFFUSE_REFLECTION,
-                   Minneart_eval, Minneart_sample,
-                   frame);
+  BSDF_Constructor(&self->super,
+      R,
+      BSDF_DIFFUSE_REFLECTION,
+      Minneart_eval,
+      Minneart_sample,
+      frame);
 
   self->b = b;
 }
 
-inline varying BSDF* uniform Minneart_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                             vec3f R, float b)
+inline varying BSDF *uniform Minneart_create(
+    uniform ShadingContext *uniform ctx,
+    const varying linear3f *uniform frame,
+    vec3f R,
+    float b)
 {
-  varying Minneart* uniform self = (varying Minneart* uniform)ShadingContext_alloc(ctx, sizeof(Minneart));
+  varying Minneart *uniform self =
+      (varying Minneart * uniform) ShadingContext_alloc(ctx, sizeof(Minneart));
   Minneart_Constructor(self, frame, R, b);
   return &self->super;
 }

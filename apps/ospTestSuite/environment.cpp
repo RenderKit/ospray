@@ -39,7 +39,7 @@ OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
   ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
 
   bool warnAsErrors = true;
-  auto logLevel     = OSP_LOG_WARNING;
+  auto logLevel = OSP_LOG_WARNING;
 
   ospDeviceSetParam(device, "warnAsError", OSP_BOOL, &warnAsErrors);
   ospDeviceSetParam(device, "logLevel", OSP_INT, &logLevel);
@@ -86,7 +86,7 @@ void OSPRayEnvironment::ParsArgs(int argc, char **argv)
 
 int OSPRayEnvironment::GetNumArgValue(std::string *arg) const
 {
-  int ret              = 0;
+  int ret = 0;
   size_t valueStartPos = arg->find_first_of('=');
   if (valueStartPos != std::string::npos) {
     ret = std::stoi(arg->substr(valueStartPos + 1));

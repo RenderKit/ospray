@@ -21,8 +21,8 @@ class PerlinNoiseVolumes : public BaseFixture
 {
  public:
   PerlinNoiseVolumes()
-      : BaseFixture(USE_SCIVIS ? "scivis" : "pathtracer",
-                    "gravity_spheres_volume")
+      : BaseFixture(
+          USE_SCIVIS ? "scivis" : "pathtracer", "gravity_spheres_volume")
   {
     outputFilename = "PerlinNoiseVolumes";
     outputFilename += "_add_torus_" + std::to_string(ADD_TORUS);
@@ -35,7 +35,7 @@ class PerlinNoiseVolumes : public BaseFixture
   }
 };
 
-using PerlinNoiseVolumes_sphere_only_scivis  = PerlinNoiseVolumes<true, true>;
+using PerlinNoiseVolumes_sphere_only_scivis = PerlinNoiseVolumes<true, true>;
 using PerlinNoiseVolumes_both_volumes_scivis = PerlinNoiseVolumes<false, true>;
 
 OSPRAY_DEFINE_BENCHMARK(PerlinNoiseVolumes_sphere_only_scivis);

@@ -16,18 +16,18 @@
 
 #pragma once
 
-#include "math/sampling.ih"
 #include "math/LinearSpace.ih"
+#include "math/sampling.ih"
 
 /*! Reflects a viewing vector I at a normal N. Cosine between I
  *  and N is given as input. */
-inline vec3f reflect(const vec3f& I, const vec3f& N, float cosI)
+inline vec3f reflect(const vec3f &I, const vec3f &N, float cosI)
 {
-  return (2.0f*cosI) * N - I;
+  return (2.0f * cosI) * N - I;
 }
 
 /*! Reflects a viewing vector I at a normal N. */
-inline vec3f reflect(const vec3f& I, const vec3f& N)
+inline vec3f reflect(const vec3f &I, const vec3f &N)
 {
   return reflect(I, N, dot(I, N));
 }
@@ -35,7 +35,7 @@ inline vec3f reflect(const vec3f& I, const vec3f& N)
 // helper function which computes cosT^2 from cosI and eta
 inline float sqrCosT(const float cosI, const float eta)
 {
-  return 1.0f - sqr(eta)*(1.0f - sqr(cosI));
+  return 1.0f - sqr(eta) * (1.0f - sqr(cosI));
 }
 
 //! \brief Refracts a viewing vector I at a normal N
@@ -45,15 +45,17 @@ inline float sqrCosT(const float cosI, const float eta)
  *  inside medium. The vectors I and N have to point towards the same
  *  side of the surface. The cosine between I and N, and the cosine of -N and
  *  the refracted ray is given as input */
-inline vec3f refract(const vec3f& I, const vec3f& N, float cosI, float cosT, float eta)
+inline vec3f refract(
+    const vec3f &I, const vec3f &N, float cosI, float cosT, float eta)
 {
-  return eta*(cosI*N - I) - cosT*N;
+  return eta * (cosI * N - I) - cosT * N;
 }
 
-inline vec3f refract(const vec3f& I, const vec3f& N, float cosI, float eta)
+inline vec3f refract(const vec3f &I, const vec3f &N, float cosI, float eta)
 {
   const float sqrCosT = sqrCosT(cosI, eta);
-  if (sqrCosT < 0.0f) return make_vec3f(0.f);
+  if (sqrCosT < 0.0f)
+    return make_vec3f(0.f);
   return refract(I, N, cosI, sqrt(sqrCosT), eta);
 }
 

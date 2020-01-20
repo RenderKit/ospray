@@ -21,29 +21,28 @@
 
 namespace ospray {
 
-  TransferFunction::TransferFunction()
-  {
-    managedObjectType = OSP_TRANSFER_FUNCTION;
-  }
+TransferFunction::TransferFunction()
+{
+  managedObjectType = OSP_TRANSFER_FUNCTION;
+}
 
-  void TransferFunction::commit()
-  {
-    auto param = getParam<vec2f>("valueRange", vec2f(0.0f, 1.0f));
-    valueRange = range1f(param.x, param.y);
-    ispc::TransferFunction_set(ispcEquivalent,
-                               (const ispc::box1f &)(valueRange));
-  }
+void TransferFunction::commit()
+{
+  auto param = getParam<vec2f>("valueRange", vec2f(0.0f, 1.0f));
+  valueRange = range1f(param.x, param.y);
+  ispc::TransferFunction_set(ispcEquivalent, (const ispc::box1f &)(valueRange));
+}
 
-  std::string TransferFunction::toString() const
-  {
-    return "ospray::TransferFunction";
-  }
+std::string TransferFunction::toString() const
+{
+  return "ospray::TransferFunction";
+}
 
-  TransferFunction *TransferFunction::createInstance(const std::string &type)
-  {
-    return createInstanceHelper<TransferFunction, OSP_TRANSFER_FUNCTION>(type);
-  }
+TransferFunction *TransferFunction::createInstance(const std::string &type)
+{
+  return createInstanceHelper<TransferFunction, OSP_TRANSFER_FUNCTION>(type);
+}
 
-  OSPTYPEFOR_DEFINITION(TransferFunction *);
+OSPTYPEFOR_DEFINITION(TransferFunction *);
 
-}  // namespace ospray
+} // namespace ospray

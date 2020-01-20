@@ -17,10 +17,10 @@
 #include "ArcballCamera.h"
 
 ArcballCamera::ArcballCamera(const ospcommon::math::box3f &worldBounds,
-                             const ospcommon::math::vec2i &windowSize)
+    const ospcommon::math::vec2i &windowSize)
     : zoomSpeed(1),
-      invWindowSize(ospcommon::math::vec2f(1.0) /
-                    ospcommon::math::vec2f(windowSize)),
+      invWindowSize(
+          ospcommon::math::vec2f(1.0) / ospcommon::math::vec2f(windowSize)),
       centerTranslation(ospcommon::math::one),
       translation(ospcommon::math::one),
       rotation(ospcommon::math::one)
@@ -37,8 +37,8 @@ ArcballCamera::ArcballCamera(const ospcommon::math::box3f &worldBounds,
   updateCamera();
 }
 
-void ArcballCamera::rotate(const ospcommon::math::vec2f &from,
-                           const ospcommon::math::vec2f &to)
+void ArcballCamera::rotate(
+    const ospcommon::math::vec2f &from, const ospcommon::math::vec2f &to)
 {
   rotation = screenToArcball(to) * screenToArcball(from) * rotation;
   updateCamera();
@@ -48,8 +48,8 @@ void ArcballCamera::zoom(float amount)
 {
   amount *= zoomSpeed;
   translation = ospcommon::math::AffineSpace3f::translate(
-                    ospcommon::math::vec3f(0, 0, amount)) *
-                translation;
+                    ospcommon::math::vec3f(0, 0, amount))
+      * translation;
   updateCamera();
 }
 

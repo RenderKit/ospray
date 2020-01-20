@@ -28,9 +28,9 @@ struct Subdivision
 };
 
 static void Subdivision_postIntersect(const Geometry *uniform _self,
-                                      varying DifferentialGeometry &dg,
-                                      const varying Ray &ray,
-                                      uniform int64 flags)
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
 {
   Subdivision *uniform self = (Subdivision * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
@@ -40,42 +40,42 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
   if (flags & DG_NS) {
     vec3f dPdu, dPdv;
     rtcInterpolateV1(self->geom,
-                     ray.primID,
-                     ray.u,
-                     ray.v,
-                     RTC_BUFFER_TYPE_VERTEX,
-                     0,
-                     NULL,
-                     &dPdu.x,
-                     &dPdv.x,
-                     3);
+        ray.primID,
+        ray.u,
+        ray.v,
+        RTC_BUFFER_TYPE_VERTEX,
+        0,
+        NULL,
+        &dPdu.x,
+        &dPdv.x,
+        3);
     dg.Ns = cross(dPdu, dPdv);
   }
 
   if (flags & DG_COLOR) {
     rtcInterpolateV1(self->geom,
-                     ray.primID,
-                     ray.u,
-                     ray.v,
-                     RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
-                     0,
-                     &dg.color.x,
-                     NULL,
-                     NULL,
-                     4);
+        ray.primID,
+        ray.u,
+        ray.v,
+        RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
+        0,
+        &dg.color.x,
+        NULL,
+        NULL,
+        4);
   }
 
   if (flags & DG_TEXCOORD) {
     rtcInterpolateV1(self->geom,
-                     ray.primID,
-                     ray.u,
-                     ray.v,
-                     RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
-                     1,
-                     &dg.st.x,
-                     NULL,
-                     NULL,
-                     2);
+        ray.primID,
+        ray.u,
+        ray.v,
+        RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
+        1,
+        &dg.st.x,
+        NULL,
+        NULL,
+        2);
   }
 }
 

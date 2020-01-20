@@ -20,13 +20,12 @@ using OSPRayTestScenes::DepthCompositeVolume;
 using OSPRayTestScenes::FromOsprayTesting;
 using OSPRayTestScenes::TextureVolume;
 
-INSTANTIATE_TEST_CASE_P(
-    TestScenesVolumes,
+INSTANTIATE_TEST_CASE_P(TestScenesVolumes,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("gravity_spheres_volume",
-                                         "perlin_noise_volumes",
-                                         "unstructured_volume"),
-                       ::testing::Values("scivis", "pathtracer")));
+                           "perlin_noise_volumes",
+                           "unstructured_volume"),
+        ::testing::Values("scivis", "pathtracer")));
 
 TEST_P(TextureVolume, simple)
 {
@@ -40,11 +39,10 @@ TEST_P(DepthCompositeVolume, simple)
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(
-    Renderers,
+INSTANTIATE_TEST_CASE_P(Renderers,
     DepthCompositeVolume,
     ::testing::Combine(::testing::Values("scivis"),
-                       ::testing::Values(vec4f(0.f),
-                                         vec4f(1.f),
-                                         vec4f(0.f, 0.f, 0.f, 1.f),
-                                         vec4f(1.f, 0.f, 0.f, 0.5f))));
+        ::testing::Values(vec4f(0.f),
+            vec4f(1.f),
+            vec4f(0.f, 0.f, 0.f, 1.f),
+            vec4f(1.f, 0.f, 0.f, 0.5f))));

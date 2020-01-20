@@ -31,18 +31,18 @@ inline BeckmannDistribution make_BeckmannDistribution(float alpha)
   return m;
 }
 
-inline vec3f sample(const BeckmannDistribution& self,
-                    float& pdf, const vec2f& s)
+inline vec3f sample(
+    const BeckmannDistribution &self, float &pdf, const vec2f &s)
 {
   float alpha2 = sqr(self.alpha);
-  float tanTheta2 = -alpha2 * log(1.f-s.x);
+  float tanTheta2 = -alpha2 * log(1.f - s.x);
   float cosTheta = rsqrt(1.f + tanTheta2);
   float sinTheta = cos2sin(cosTheta);
 
-  float phi = 2.f*pi * s.y;
+  float phi = 2.f * pi * s.y;
 
-  float cosTheta3 = sqr(cosTheta)*cosTheta;
-  pdf = (1.f-s.x) * rcp(pi * alpha2 * cosTheta3);
+  float cosTheta3 = sqr(cosTheta) * cosTheta;
+  pdf = (1.f - s.x) * rcp(pi * alpha2 * cosTheta3);
 
   float sinPhi, cosPhi;
   sincos(phi, &sinPhi, &cosPhi);
@@ -50,5 +50,5 @@ inline vec3f sample(const BeckmannDistribution& self,
   float x = cosPhi * sinTheta;
   float y = sinPhi * sinTheta;
   float z = cosTheta;
-  return make_vec3f(x,y,z);
+  return make_vec3f(x, y, z);
 }

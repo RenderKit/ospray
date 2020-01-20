@@ -19,11 +19,11 @@
 #include "render/pathtracer/PathTracer.ih"
 #include "render/pathtracer/Scattering.ih"
 
-#include "render/pathtracer/materials/Medium.ih"
 #include "render/pathtracer/bsdfs/BSDF.ih"
+#include "render/pathtracer/materials/Medium.ih"
 
-#include "common/World.ih"
 #include "common/DifferentialGeometry.ih"
+#include "common/World.ih"
 #include "math/random.ih"
 #include "volume/VolumetricModel.ih"
 
@@ -44,8 +44,8 @@ struct PathVertex
 
   vec3f albedo;
 
-  const varying BSDF* bsdf; // only valid if path vertex is surface vertex
-  VolumetricModel* volume;  // only valid if path vertex is volume vertex
+  const varying BSDF *bsdf; // only valid if path vertex is surface vertex
+  VolumetricModel *volume; // only valid if path vertex is volume vertex
 
   float pdf_w; // the pdf of sampling wo in solid angle measure
   PathVertexType type;
@@ -53,22 +53,24 @@ struct PathVertex
 
 struct PathContext
 {
-  const PathTracer* uniform context;
-  const World* uniform world;
-  const varying vec2f* uniform pixel; 
-  varying LDSampler* uniform ldSampler;
-  varying RandomSampler* uniform randomSampler;
+  const PathTracer *uniform context;
+  const World *uniform world;
+  const varying vec2f *uniform pixel;
+  varying LDSampler *uniform ldSampler;
+  varying RandomSampler *uniform randomSampler;
   uniform int numLights;
-  uniform uint32 numBounceSampleDims; // BSDF sample (3D), roulette (1D), light samples (N*2D)
+  uniform uint32 numBounceSampleDims; // BSDF sample (3D), roulette (1D), light
+                                      // samples (N*2D)
 };
 
 struct PathState
 {
   bool debug;
-  bool disableNEE;          // turn off NEE contribution for debugging purposes
-  bool disableFWD;          // turn off FWD contribution for debugging purposes
-  bool straightPath;        // path from camera did not change direction, for alpha and backplate
-  bool auxFree;             // normal & albedo buffer were not yet written to
+  bool disableNEE; // turn off NEE contribution for debugging purposes
+  bool disableFWD; // turn off FWD contribution for debugging purposes
+  bool straightPath; // path from camera did not change direction, for alpha and
+                     // backplate
+  bool auxFree; // normal & albedo buffer were not yet written to
   uniform uint32 depth;
   uniform uint32 sampleDim; // skip: pixel (2D), lens (2D), time (1D)
   vec3f throughput;

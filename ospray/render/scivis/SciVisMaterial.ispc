@@ -26,13 +26,13 @@ export void *uniform SciVisMaterial_create(void *uniform cppE)
 }
 
 export void SciVisMaterial_set(void *uniform _mat,
-                               const uniform vec3f &Kd,
-                               uniform float d,
-                               void *uniform _map_Kd)
+    const uniform vec3f &Kd,
+    uniform float d,
+    void *uniform _map_Kd)
 {
   SciVisMaterial *uniform mat = (SciVisMaterial * uniform) _mat;
 
-  mat->Kd     = Kd;
+  mat->Kd = Kd;
   mat->map_Kd = (uniform Texture2D * uniform) _map_Kd;
-  mat->d      = d;
+  mat->d = d;
 }

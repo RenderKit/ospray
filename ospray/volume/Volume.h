@@ -26,35 +26,35 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
-  {
-    Volume(const std::string &vklType);
-    ~Volume() override;
+struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
+{
+  Volume(const std::string &vklType);
+  ~Volume() override;
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-    void commit() override;
+  void commit() override;
 
-   private:
-    void handleParams();
+ private:
+  void handleParams();
 
-    void createEmbreeGeometry();
+  void createEmbreeGeometry();
 
-    // Friends //
+  // Friends //
 
-    friend struct Isosurfaces;
-    friend struct VolumetricModel;
+  friend struct Isosurfaces;
+  friend struct VolumetricModel;
 
-    // Data //
+  // Data //
 
-    RTCGeometry embreeGeometry{nullptr};
-    VKLVolume vklVolume{nullptr};
+  RTCGeometry embreeGeometry{nullptr};
+  VKLVolume vklVolume{nullptr};
 
-    box3f bounds{empty};
+  box3f bounds{empty};
 
-    std::string vklType;
-  };
+  std::string vklType;
+};
 
-  OSPTYPEFOR_SPECIALIZATION(Volume *, OSP_VOLUME);
+OSPTYPEFOR_SPECIALIZATION(Volume *, OSP_VOLUME);
 
-}  // namespace ospray
+} // namespace ospray

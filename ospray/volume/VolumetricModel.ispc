@@ -20,8 +20,8 @@
 #include "math/box.ih"
 #include "math/vec.ih"
 
-export void *uniform VolumetricModel_create(void *uniform cppE,
-                                            void *uniform volume)
+export void *uniform VolumetricModel_create(
+    void *uniform cppE, void *uniform volume)
 {
   VolumetricModel *uniform self = uniform new VolumetricModel;
 
@@ -31,22 +31,22 @@ export void *uniform VolumetricModel_create(void *uniform cppE,
 }
 
 export void VolumetricModel_set(void *uniform _self,
-                                void *uniform transferFunction,
-                                const uniform box3f &bounds,
-                                uniform float densityScale,
-                                uniform float anisotropy)
+    void *uniform transferFunction,
+    const uniform box3f &bounds,
+    uniform float densityScale,
+    uniform float anisotropy)
 {
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
 
   self->transferFunction = (TransferFunction * uniform) transferFunction;
-  self->boundingBox      = bounds;
-  self->densityScale     = densityScale;
-  self->anisotropy       = anisotropy;
+  self->boundingBox = bounds;
+  self->densityScale = densityScale;
+  self->anisotropy = anisotropy;
 }
 
-export void VolumetricModel_set_valueSelector(void *uniform _self,
-                                              void *uniform valueSelector)
+export void VolumetricModel_set_valueSelector(
+    void *uniform _self, void *uniform valueSelector)
 {
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
-  self->vklValueSelector        = (VKLValueSelector)valueSelector;
+  self->vklValueSelector = (VKLValueSelector)valueSelector;
 }

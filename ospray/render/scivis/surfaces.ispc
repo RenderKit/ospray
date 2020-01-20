@@ -26,14 +26,13 @@ inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
   const SciVisMaterial *mat = (const SciVisMaterial *)dg.material;
 
   vec3f surfaceColor = make_vec3f(1.f);
-  float opacity      = 1.f;
+  float opacity = 1.f;
   if (mat) {
-    foreach_unique(m in mat)
-    {
+    foreach_unique (m in mat) {
       surfaceColor = m->Kd;
       if (m->map_Kd) {
         vec4f Kd_from_map = get4f(m->map_Kd, dg);
-        surfaceColor      = surfaceColor * make_vec3f(Kd_from_map);
+        surfaceColor = surfaceColor * make_vec3f(Kd_from_map);
       }
       opacity = m->d;
     }
@@ -43,13 +42,13 @@ inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 }
 
 inline float computeAO(const uniform SciVis *uniform self,
-                       const FrameBuffer *uniform fb,
-                       const World *uniform world,
-                       const varying vec3i &sampleID,
-                       const varying DifferentialGeometry &dg)
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
+    const varying vec3i &sampleID,
+    const varying DifferentialGeometry &dg)
 {
   const uniform int &sampleCnt = self->aoSamples;
-  const uniform int accumID    = reduce_max(sampleID.z) * sampleCnt;
+  const uniform int accumID = reduce_max(sampleID.z) * sampleCnt;
 
   // init TEA RNG //
   RandomTEA rng_state;
@@ -62,12 +61,12 @@ inline float computeAO(const uniform SciVis *uniform self,
   const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec2f halton       = HaltonSequence_get2D(sampleCnt * accumID + i);
-    const vec2f r            = CranleyPattersonRotation(halton, rot);
+    const vec2f halton = HaltonSequence_get2D(sampleCnt * accumID + i);
+    const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
-    const vec3f ao_dir       = localToWorld * local_ao_dir;
+    const vec3f ao_dir = localToWorld * local_ao_dir;
 
-    if (dot(ao_dir, dg.Ns) < 0.05f) {  // check below surface
+    if (dot(ao_dir, dg.Ns) < 0.05f) { // check below surface
       hits++;
       continue;
     }
@@ -86,16 +85,16 @@ inline float computeAO(const uniform SciVis *uniform self,
 ///////////////////////////////////////////////////////////////////////////////
 
 SSI computeShading(const SciVis *uniform self,
-                   const FrameBuffer *uniform fb,
-                   const World *uniform world,
-                   const DifferentialGeometry &dg,
-                   ScreenSample &sample)
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
+    const DifferentialGeometry &dg,
+    ScreenSample &sample)
 {
   SSI retval;
 
   const vec4f surfaceColor = getSurfaceColor(dg);
 
-  const vec3f color   = make_vec3f(surfaceColor);
+  const vec3f color = make_vec3f(surfaceColor);
   const float opacity = surfaceColor.w;
 
   const float eyeLightIntensity = absf(dot(dg.Ns, sample.ray.dir)) * opacity;
@@ -110,7 +109,7 @@ SSI computeShading(const SciVis *uniform self,
       ((1 - aoIntensity) + (ao * aoIntensity)) * eyeLightIntensity;
 
   retval.shadedColor = make_vec4f(color * intensity, opacity);
-  retval.albedo      = color;
+  retval.albedo = color;
 
   return retval;
 }

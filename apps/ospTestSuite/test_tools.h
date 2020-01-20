@@ -35,7 +35,7 @@
 using pixelColorValue = unsigned char;
 
 const pixelColorValue pixelThreshold = 10;
-const float errorRate                = 0.03;
+const float errorRate = 0.03;
 
 enum class OsprayStatus
 {
@@ -74,8 +74,8 @@ class OSPImageTools
 
  public:
   OSPImageTools(vec2i imgSize,
-                std::string testName,
-                OSPFrameBufferFormat frameBufferFormat);
+      std::string testName,
+      OSPFrameBufferFormat frameBufferFormat);
   ~OSPImageTools() = default;
 
   // helper method to saved rendered file

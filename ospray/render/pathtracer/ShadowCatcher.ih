@@ -22,8 +22,8 @@ struct PathVertex;
 struct Ray;
 struct ScreenSample;
 
-bool shadowCatcher(const PathContext& pathContext,
-                   PathState& pathState,
-                   PathVertex& pathVertex,
-                   const Ray& ray,
-                   ScreenSample& sample);
+bool shadowCatcher(const PathContext &pathContext,
+    PathState &pathState,
+    PathVertex &pathVertex,
+    const Ray &ray,
+    ScreenSample &sample);

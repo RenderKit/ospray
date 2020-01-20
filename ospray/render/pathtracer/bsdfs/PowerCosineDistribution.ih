@@ -23,17 +23,17 @@ struct PowerCosineDistribution
   float exp;
 };
 
-inline float eval(const PowerCosineDistribution& self,
-                  float cosThetaH, float& pdf)
+inline float eval(
+    const PowerCosineDistribution &self, float cosThetaH, float &pdf)
 {
   pdf = powerCosineSampleHemispherePDF(cosThetaH, self.exp);
-  return (self.exp+2) * one_over_two_pi * pow(abs(cosThetaH), self.exp);
+  return (self.exp + 2) * one_over_two_pi * pow(abs(cosThetaH), self.exp);
   // TODO: check with powerCosineSampleHemispherePDF
 }
 
 /*! Samples the power cosine distribution. */
-inline vec3f sample(const PowerCosineDistribution& self,
-                    float& pdf, const vec2f& s)
+inline vec3f sample(
+    const PowerCosineDistribution &self, float &pdf, const vec2f &s)
 {
   const vec3f wh = powerCosineSampleHemisphere(self.exp, s);
   pdf = powerCosineSampleHemispherePDF(wh, self.exp);

@@ -27,15 +27,15 @@
 static bool g_quitNextFrame = false;
 
 static const std::vector<std::string> g_scenes = {"boxes",
-                                                  "cornell_box",
-                                                  "curves",
-                                                  "gravity_spheres_volume",
-                                                  "gravity_spheres_isosurface",
-                                                  "perlin_noise_volumes",
-                                                  "random_spheres",
-                                                  "streamlines",
-                                                  "subdivision_cube",
-                                                  "unstructured_volume"};
+    "cornell_box",
+    "curves",
+    "gravity_spheres_volume",
+    "gravity_spheres_isosurface",
+    "perlin_noise_volumes",
+    "random_spheres",
+    "streamlines",
+    "subdivision_cube",
+    "unstructured_volume"};
 
 static const std::vector<std::string> g_curveBasis = {
     "bspline", "hermite", "catmull-rom", "linear"};
@@ -44,16 +44,16 @@ static const std::vector<std::string> g_renderers = {
     "scivis", "pathtracer", "debug"};
 
 static const std::vector<std::string> g_debugRendererTypes = {"eyeLight",
-                                                              "primID",
-                                                              "geomID",
-                                                              "instID",
-                                                              "Ng",
-                                                              "Ns",
-                                                              "backfacing_Ng",
-                                                              "backfacing_Ns",
-                                                              "dPds",
-                                                              "dPdt",
-                                                              "volume"};
+    "primID",
+    "geomID",
+    "instID",
+    "Ng",
+    "Ns",
+    "backfacing_Ng",
+    "backfacing_Ns",
+    "dPds",
+    "dPdt",
+    "volume"};
 
 bool sceneUI_callback(void *, int index, const char **out_text)
 {
@@ -141,28 +141,28 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize)
     }
   });
 
-  glfwSetKeyCallback(glfwWindow,
-                     [](GLFWwindow *, int key, int, int action, int) {
-                       if (action == GLFW_PRESS) {
-                         switch (key) {
-                         case GLFW_KEY_G:
-                           activeWindow->showUi = !(activeWindow->showUi);
-                           break;
-                         case GLFW_KEY_Q:
-                           g_quitNextFrame = true;
-                           break;
-                         }
-                       }
-                     });
+  glfwSetKeyCallback(
+      glfwWindow, [](GLFWwindow *, int key, int, int action, int) {
+        if (action == GLFW_PRESS) {
+          switch (key) {
+          case GLFW_KEY_G:
+            activeWindow->showUi = !(activeWindow->showUi);
+            break;
+          case GLFW_KEY_Q:
+            g_quitNextFrame = true;
+            break;
+          }
+        }
+      });
 
   glfwSetMouseButtonCallback(
       glfwWindow, [](GLFWwindow *, int button, int action, int /*mods*/) {
         auto &w = *activeWindow;
         if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS) {
-          auto mouse      = activeWindow->previousMouse;
+          auto mouse = activeWindow->previousMouse;
           auto windowSize = activeWindow->windowSize;
           const vec2f pos(mouse.x / static_cast<float>(windowSize.x),
-                          1.f - mouse.y / static_cast<float>(windowSize.y));
+              1.f - mouse.y / static_cast<float>(windowSize.y));
 
           auto res = w.framebuffer.pick(w.renderer, w.camera, w.world, pos);
 
@@ -230,8 +230,7 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   windowSize = newWindowSize;
 
   // create new frame buffer
-  framebuffer = cpp::FrameBuffer(
-      windowSize,
+  framebuffer = cpp::FrameBuffer(windowSize,
       OSP_FB_SRGBA,
       OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO);
   framebuffer.commit();
@@ -273,11 +272,10 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
     bool cameraChanged = leftDown || rightDown || middleDown;
 
     if (leftDown) {
-      const vec2f mouseFrom(
-          clamp(prev.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
+      const vec2f mouseFrom(clamp(prev.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
           clamp(prev.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
       const vec2f mouseTo(clamp(mouse.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
-                          clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
+          clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
       arcballCamera->rotate(mouseFrom, mouseTo);
     } else if (rightDown) {
       arcballCamera->zoom(mouse.y - prev.y);
@@ -315,8 +313,8 @@ void GLFWOSPRayWindow::display()
     // display frame rate in window title
     auto displayEnd = std::chrono::high_resolution_clock::now();
     auto durationMilliseconds =
-        std::chrono::duration_cast<std::chrono::milliseconds>(displayEnd -
-                                                              displayStart);
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            displayEnd - displayStart);
 
     latestFPS = 1000.f / float(durationMilliseconds.count());
 
@@ -328,17 +326,17 @@ void GLFWOSPRayWindow::display()
     auto *fb = framebuffer.map(showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
 
     const GLint glFormat = showAlbedo ? GL_RGB : GL_RGBA;
-    const GLenum glType  = showAlbedo ? GL_FLOAT : GL_UNSIGNED_BYTE;
+    const GLenum glType = showAlbedo ? GL_FLOAT : GL_UNSIGNED_BYTE;
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 glFormat,
-                 windowSize.x,
-                 windowSize.y,
-                 0,
-                 glFormat,
-                 glType,
-                 fb);
+        0,
+        glFormat,
+        windowSize.x,
+        windowSize.y,
+        0,
+        glFormat,
+        glType,
+        fb);
 
     framebuffer.unmap(fb);
 
@@ -404,12 +402,12 @@ void GLFWOSPRayWindow::updateTitleBar()
     std::string progBar;
     progBar.resize(barWidth + 2);
     auto start = progBar.begin() + 1;
-    auto end   = start + progress * barWidth;
+    auto end = start + progress * barWidth;
     std::fill(start, end, '=');
     std::fill(end, progBar.end(), '_');
-    *end            = '>';
+    *end = '>';
     progBar.front() = '[';
-    progBar.back()  = ']';
+    progBar.back() = ']';
     windowTitle << progBar;
   }
 
@@ -423,10 +421,10 @@ void GLFWOSPRayWindow::buildUI()
 
   static int whichScene = 0;
   if (ImGui::Combo("scene##whichScene",
-                   &whichScene,
-                   sceneUI_callback,
-                   nullptr,
-                   g_scenes.size())) {
+          &whichScene,
+          sceneUI_callback,
+          nullptr,
+          g_scenes.size())) {
     scene = g_scenes[whichScene];
     refreshScene(true);
   }
@@ -434,22 +432,22 @@ void GLFWOSPRayWindow::buildUI()
   if (scene == "curves") {
     static int whichCurveBasis = 0;
     if (ImGui::Combo("curveBasis##whichCurveBasis",
-                     &whichCurveBasis,
-                     curveBasisUI_callback,
-                     nullptr,
-                     g_curveBasis.size())) {
+            &whichCurveBasis,
+            curveBasisUI_callback,
+            nullptr,
+            g_curveBasis.size())) {
       curveBasis = g_curveBasis[whichCurveBasis];
       refreshScene(true);
     }
   }
 
-  static int whichRenderer     = 0;
+  static int whichRenderer = 0;
   static int whichDebuggerType = 0;
   if (ImGui::Combo("renderer##whichRenderer",
-                   &whichRenderer,
-                   rendererUI_callback,
-                   nullptr,
-                   g_renderers.size())) {
+          &whichRenderer,
+          rendererUI_callback,
+          nullptr,
+          g_renderers.size())) {
     rendererTypeStr = g_renderers[whichRenderer];
 
     if (rendererType == OSPRayRendererType::DEBUGGER)
@@ -469,10 +467,10 @@ void GLFWOSPRayWindow::buildUI()
 
   if (rendererType == OSPRayRendererType::DEBUGGER) {
     if (ImGui::Combo("debug type##whichDebugType",
-                     &whichDebuggerType,
-                     debugTypeUI_callback,
-                     nullptr,
-                     g_debugRendererTypes.size())) {
+            &whichDebuggerType,
+            debugTypeUI_callback,
+            nullptr,
+            g_debugRendererTypes.size())) {
       renderer.setParam("method", g_debugRendererTypes[whichDebuggerType]);
       addObjectToCommit(renderer.handle());
     }

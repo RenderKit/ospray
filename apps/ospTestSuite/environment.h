@@ -35,8 +35,8 @@ class OSPRayEnvironment : public ::testing::Environment
   std::string deviceType;
   std::string baselineDir;
   std::string failedDir;
-  vec2i imgSize {1024, 768};
-  OSPDevice device {nullptr};
+  vec2i imgSize{1024, 768};
+  OSPDevice device{nullptr};
 
  public:
   OSPRayEnvironment(int argc, char **argv);

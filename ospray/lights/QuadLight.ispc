@@ -18,25 +18,25 @@
 
 struct QuadLight
 {
-  Light super;            //!< inherited light fields
+  Light super; //!< inherited light fields
 
-  vec3f position;         //!< world-space corner position of the light
-  vec3f edge1;            //!< vectors to adjacent corners
-  vec3f edge2;            //!< vectors to adjacent corners
+  vec3f position; //!< world-space corner position of the light
+  vec3f edge1; //!< vectors to adjacent corners
+  vec3f edge2; //!< vectors to adjacent corners
 
-  vec3f nnormal;          //!< negated normal, the direction that the QuadLight is not emitting; normalized
-  float ppdf;             // probability to sample point on light = 1/area
+  vec3f nnormal; //!< negated normal, the direction that the QuadLight is not
+                 //!< emitting; normalized
+  float ppdf; // probability to sample point on light = 1/area
 };
-
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
-                                 const DifferentialGeometry& dg,
-                                 const vec2f& sp)
+Light_SampleRes QuadLight_sample(const uniform Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec2f &sp)
 {
-  const QuadLight* uniform self = (QuadLight* uniform)super;
+  const QuadLight *uniform self = (QuadLight * uniform) super;
   Light_SampleRes res;
 
   // (0, 0) should sample center --> add 0.5 CranleyPatterson rotation
@@ -61,18 +61,19 @@ Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
   res.pdf = self->ppdf * sqr(dist) / abs(cosd);
 
   // emit only to one side
-  res.weight = cosd > 0.f ? self->super.radiance * rcp(res.pdf) : make_vec3f(0.f);
+  res.weight =
+      cosd > 0.f ? self->super.radiance * rcp(res.pdf) : make_vec3f(0.f);
 
   return res;
 }
 
-Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
-                             const DifferentialGeometry& dg,
-                             const vec3f& dir,
-                             const float minDist,
-                             const float maxDist)
+Light_EvalRes QuadLight_eval(const uniform Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec3f &dir,
+    const float minDist,
+    const float maxDist)
 {
-  uniform QuadLight* uniform self = (uniform QuadLight* uniform)super;
+  uniform QuadLight *uniform self = (uniform QuadLight * uniform) super;
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
 
@@ -88,7 +89,7 @@ Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
   const float v = -dot(r, self->edge2);
 
   // u/denominator > 1?
-  if (min(u, v) < 0.f | max(u, v)*self->ppdf > cosd)
+  if (min(u, v) < 0.f | max(u, v) * self->ppdf > cosd)
     return res;
 
   const float rcosd = rcp(cosd);
@@ -102,20 +103,19 @@ Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
   return res;
 }
 
-
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
 //! Set the parameters of an ispc-side QuadLight object
-export void QuadLight_set(void* uniform super,
-                          const uniform vec3f& position,
-                          const uniform vec3f& edge1,
-                          const uniform vec3f& edge2)
+export void QuadLight_set(void *uniform super,
+    const uniform vec3f &position,
+    const uniform vec3f &edge1,
+    const uniform vec3f &edge2)
 {
-  uniform QuadLight* uniform self = (uniform QuadLight* uniform)super;
+  uniform QuadLight *uniform self = (uniform QuadLight * uniform) super;
   self->position = position;
-  self->edge1    = edge1;
-  self->edge2    = edge2;
+  self->edge1 = edge1;
+  self->edge2 = edge2;
 
   const uniform vec3f ndirection = cross(edge2, edge1);
   self->ppdf = rcp(length(ndirection)); // 1/area
@@ -123,18 +123,18 @@ export void QuadLight_set(void* uniform super,
 }
 
 //! Create an ispc-side QuadLight object
-export void* uniform QuadLight_create()
+export void *uniform QuadLight_create()
 {
-  uniform QuadLight* uniform self = uniform new uniform QuadLight;
+  uniform QuadLight *uniform self = uniform new uniform QuadLight;
 
   Light_Constructor(&self->super);
   self->super.sample = QuadLight_sample;
   self->super.eval = QuadLight_eval;
 
   QuadLight_set(self,
-                make_vec3f(0.f),
-                make_vec3f(1.f, 0.f, 0.f),
-                make_vec3f(0.f, 1.f, 0.f));
+      make_vec3f(0.f),
+      make_vec3f(1.f, 0.f, 0.f),
+      make_vec3f(0.f, 1.f, 0.f));
 
   return self;
 }

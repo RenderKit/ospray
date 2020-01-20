@@ -19,39 +19,38 @@
 #include "ManagedObject.h"
 
 namespace ospray {
-  namespace cpp {
+namespace cpp {
 
-    class Group : public ManagedObject<OSPGroup, OSP_GROUP>
-    {
-     public:
-      Group();
-      Group(const Group &copy);
-      Group(OSPGroup existing);
-    };
+class Group : public ManagedObject<OSPGroup, OSP_GROUP>
+{
+ public:
+  Group();
+  Group(const Group &copy);
+  Group(OSPGroup existing);
+};
 
-    static_assert(sizeof(Group) == sizeof(OSPGroup),
-                  "cpp::Group can't have data members!");
+static_assert(
+    sizeof(Group) == sizeof(OSPGroup), "cpp::Group can't have data members!");
 
-    // Inlined function definitions ///////////////////////////////////////////
+// Inlined function definitions ///////////////////////////////////////////
 
-    inline Group::Group()
-    {
-      ospObject = ospNewGroup();
-    }
+inline Group::Group()
+{
+  ospObject = ospNewGroup();
+}
 
-    inline Group::Group(const Group &copy)
-        : ManagedObject<OSPGroup, OSP_GROUP>(copy.handle())
-    {
-      ospRetain(copy.handle());
-    }
+inline Group::Group(const Group &copy)
+    : ManagedObject<OSPGroup, OSP_GROUP>(copy.handle())
+{
+  ospRetain(copy.handle());
+}
 
-    inline Group::Group(OSPGroup existing)
-        : ManagedObject<OSPGroup, OSP_GROUP>(existing)
-    {
-    }
+inline Group::Group(OSPGroup existing)
+    : ManagedObject<OSPGroup, OSP_GROUP>(existing)
+{}
 
-  }  // namespace cpp
+} // namespace cpp
 
-  OSPTYPEFOR_SPECIALIZATION(cpp::Group, OSP_GROUP);
+OSPTYPEFOR_SPECIALIZATION(cpp::Group, OSP_GROUP);
 
-}  // namespace ospray
+} // namespace ospray

@@ -23,19 +23,22 @@ struct Conductor
 {
   BSDF super;
 
-  Fresnel* uniform fresnel;
+  Fresnel *uniform fresnel;
 };
 
-inline BSDF_EvalRes Conductor_eval(const varying BSDF* uniform super,
-                                   const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes Conductor_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
   return make_BSDF_EvalRes_zero();
 }
 
-inline BSDF_SampleRes Conductor_sample(const varying BSDF* uniform super,
-                                       const vec3f& wo, const vec2f& s, float ss)
+inline BSDF_SampleRes Conductor_sample(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
 {
-  const varying Conductor* uniform self = (const varying Conductor* uniform)super;
+  const varying Conductor *uniform self =
+      (const varying Conductor *uniform)super;
   BSDF_SampleRes res;
   res.wi = reflect(wo, getN(super));
   res.pdf = inf;
@@ -44,22 +47,26 @@ inline BSDF_SampleRes Conductor_sample(const varying BSDF* uniform super,
   return res;
 }
 
-inline void Conductor_Constructor(varying Conductor* uniform self,
-                                  const varying linear3f* uniform frame,
-                                  Fresnel* uniform fresnel)
+inline void Conductor_Constructor(varying Conductor *uniform self,
+    const varying linear3f *uniform frame,
+    Fresnel *uniform fresnel)
 {
-  BSDF_Constructor(&self->super, fresnel->evalAvg(fresnel),
-                   BSDF_SPECULAR_REFLECTION,
-                   Conductor_eval, Conductor_sample,
-                   frame);
+  BSDF_Constructor(&self->super,
+      fresnel->evalAvg(fresnel),
+      BSDF_SPECULAR_REFLECTION,
+      Conductor_eval,
+      Conductor_sample,
+      frame);
   self->fresnel = fresnel;
 }
 
-inline varying BSDF* uniform Conductor_create(uniform ShadingContext* uniform ctx,
-                                              const varying linear3f* uniform frame,
-                                              Fresnel* uniform fresnel)
+inline varying BSDF *uniform Conductor_create(
+    uniform ShadingContext *uniform ctx,
+    const varying linear3f *uniform frame,
+    Fresnel *uniform fresnel)
 {
-  varying Conductor* uniform self = (varying Conductor* uniform)ShadingContext_alloc(ctx, sizeof(Conductor));
+  varying Conductor *uniform self = (varying Conductor * uniform)
+      ShadingContext_alloc(ctx, sizeof(Conductor));
   Conductor_Constructor(self, frame, fresnel);
   return &self->super;
 }

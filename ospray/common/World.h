@@ -28,30 +28,30 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE World : public ManagedObject
-  {
-    World();
-    virtual ~World() override;
+struct OSPRAY_SDK_INTERFACE World : public ManagedObject
+{
+  World();
+  virtual ~World() override;
 
-    std::string toString() const override;
-    void commit() override;
+  std::string toString() const override;
+  void commit() override;
 
-    box3f getBounds() const override;
+  box3f getBounds() const override;
 
-    // Data members //
+  // Data members //
 
-    Ref<const DataT<Instance *>> instances;
-    Ref<const DataT<Light *>> lights;
+  Ref<const DataT<Instance *>> instances;
+  Ref<const DataT<Light *>> lights;
 
-    std::vector<void*> instanceIEs;
-    int numGeometries{0};
-    int numVolumes{0};
+  std::vector<void *> instanceIEs;
+  int numGeometries{0};
+  int numVolumes{0};
 
-    //! \brief the embree scene handle for this geometry
-    RTCScene embreeSceneHandleGeometries{nullptr};
-    RTCScene embreeSceneHandleVolumes{nullptr};
-  };
+  //! \brief the embree scene handle for this geometry
+  RTCScene embreeSceneHandleGeometries{nullptr};
+  RTCScene embreeSceneHandleVolumes{nullptr};
+};
 
-  OSPTYPEFOR_SPECIALIZATION(World *, OSP_WORLD);
+OSPTYPEFOR_SPECIALIZATION(World *, OSP_WORLD);
 
-}  // namespace ospray
+} // namespace ospray

@@ -24,8 +24,8 @@ struct Ray;
 
 #include "render/pathtracer/materials/Medium.ih"
 
-vec3f transparentShadow(const uniform PathTracer* uniform self,
-                        const World *uniform world,
-                        vec3f lightContrib,
-                        Ray &shadowRay,
-                        Medium medium);
+vec3f transparentShadow(const uniform PathTracer *uniform self,
+    const World *uniform world,
+    vec3f lightContrib,
+    Ray &shadowRay,
+    Medium medium);

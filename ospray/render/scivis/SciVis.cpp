@@ -21,40 +21,40 @@
 
 namespace ospray {
 
-  struct SciVis : public Renderer
-  {
-    SciVis(int defaultAOSamples = 1);
-    std::string toString() const override;
-    void commit() override;
+struct SciVis : public Renderer
+{
+  SciVis(int defaultAOSamples = 1);
+  std::string toString() const override;
+  void commit() override;
 
-   private:
-    int aoSamples{1};
-  };
+ private:
+  int aoSamples{1};
+};
 
-  // SciVis definitions /////////////////////////////////////////////////////
+// SciVis definitions /////////////////////////////////////////////////////
 
-  SciVis::SciVis(int defaultNumSamples) : aoSamples(defaultNumSamples)
-  {
-    ispcEquivalent = ispc::SciVis_create(this);
-  }
+SciVis::SciVis(int defaultNumSamples) : aoSamples(defaultNumSamples)
+{
+  ispcEquivalent = ispc::SciVis_create(this);
+}
 
-  std::string SciVis::toString() const
-  {
-    return "ospray::render::SciVis";
-  }
+std::string SciVis::toString() const
+{
+  return "ospray::render::SciVis";
+}
 
-  void SciVis::commit()
-  {
-    Renderer::commit();
+void SciVis::commit()
+{
+  Renderer::commit();
 
-    ispc::SciVis_set(getIE(),
-                     getParam<int>("aoSamples", aoSamples),
-                     getParam<float>("aoRadius", 1e20f),
-                     getParam<float>("aoIntensity", 1.f),
-                     getParam<float>("volumeSamplingRate", 1.f));
-  }
+  ispc::SciVis_set(getIE(),
+      getParam<int>("aoSamples", aoSamples),
+      getParam<float>("aoRadius", 1e20f),
+      getParam<float>("aoIntensity", 1.f),
+      getParam<float>("volumeSamplingRate", 1.f));
+}
 
-  OSP_REGISTER_RENDERER(SciVis, scivis);
-  OSP_REGISTER_RENDERER(SciVis, ao);
+OSP_REGISTER_RENDERER(SciVis, scivis);
+OSP_REGISTER_RENDERER(SciVis, ao);
 
-}  // namespace ospray
+} // namespace ospray

@@ -34,9 +34,9 @@ struct Spheres
 };
 
 static void Spheres_postIntersect(const Geometry *uniform geometry,
-                                  varying DifferentialGeometry &dg,
-                                  const varying Ray &ray,
-                                  uniform int64 flags)
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
 {
   Spheres *uniform self = (Spheres * uniform) geometry;
 
@@ -57,24 +57,24 @@ static void Spheres_postIntersect(const Geometry *uniform geometry,
 unmasked void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   Spheres *uniform self = (Spheres * uniform) args->geometryUserPtr;
-  uniform int primID    = args->primID;
-  uniform float radius  = valid(self->radius) ? get_float(self->radius, primID)
+  uniform int primID = args->primID;
+  uniform float radius = valid(self->radius) ? get_float(self->radius, primID)
                                              : self->global_radius;
   uniform vec3f center = get_vec3f(self->vertex, primID);
-  box3fa *uniform out  = (box3fa * uniform) args->bounds_o;
-  *out                 = make_box3fa(center - radius, center + radius);
+  box3fa *uniform out = (box3fa * uniform) args->bounds_o;
+  *out = make_box3fa(center - radius, center + radius);
 }
 
-void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
-                                  args,
-                              const uniform bool isOcclusionTest)
+void Spheres_intersect_kernel(
+    const RTCIntersectFunctionNArguments *uniform args,
+    const uniform bool isOcclusionTest)
 {
   // make sure to set the mask
   if (!args->valid[programIndex])
     return;
 
   Spheres *uniform self = (Spheres * uniform) args->geometryUserPtr;
-  uniform int primID    = args->primID;
+  uniform int primID = args->primID;
 
   // this assumes that the args->rayhit is actually a pointer to a varying ray!
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
@@ -89,13 +89,13 @@ void Spheres_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
   bool hit = false;
   if (and(and(isect.entry.t > ray->t0, isect.entry.t <= ray->t),
           isect.entry.hit)) {
-    hit     = true;
-    ray->t  = isect.entry.t;
+    hit = true;
+    ray->t = isect.entry.t;
     ray->Ng = isect.entry.N;
   } else if (and(and(isect.exit.t > ray->t0, isect.exit.t <= ray->t),
                  isect.exit.hit)) {
-    hit     = true;
-    ray->t  = isect.exit.t;
+    hit = true;
+    ray->t = isect.exit.t;
     ray->Ng = isect.exit.N;
   }
 
@@ -123,10 +123,10 @@ unmasked void Spheres_occluded(
 }
 
 SampleAreaRes Spheres_sampleArea(const Geometry *uniform const _self,
-                                 const int32 primID,
-                                 const uniform affine3f &xfm,
-                                 const uniform affine3f &rcp_xfm,
-                                 const vec2f &s)
+    const int32 primID,
+    const uniform affine3f &xfm,
+    const uniform affine3f &rcp_xfm,
+    const vec2f &s)
 {
   const Spheres *const uniform self = (const Spheres *uniform)_self;
 
@@ -135,20 +135,20 @@ SampleAreaRes Spheres_sampleArea(const Geometry *uniform const _self,
     radius = get_float(self->radius, primID);
 
   const vec3f localNormal = uniformSampleSphere(radius, s);
-  const vec3f localPos    = get_vec3f(self->vertex, primID) + localNormal;
+  const vec3f localPos = get_vec3f(self->vertex, primID) + localNormal;
 
   SampleAreaRes res;
-  res.pos    = xfmPoint(xfm, localPos);
+  res.pos = xfmPoint(xfm, localPos);
   res.normal = normalize(xfmVector(transposed(rcp_xfm.l), localNormal));
 
   return res;
 }
 
 void Spheres_getAreas(const Geometry *const uniform _self,
-                      const int32 *const uniform primIDs,
-                      const uniform int32 numPrims,
-                      const uniform affine3f &xfm,
-                      float *const uniform areas)
+    const int32 *const uniform primIDs,
+    const uniform int32 numPrims,
+    const uniform affine3f &xfm,
+    float *const uniform areas)
 {
   Spheres *uniform self = (Spheres * uniform) _self;
 
@@ -180,7 +180,7 @@ void Spheres_getAreas(const Geometry *const uniform _self,
 void Spheres_Constructor(Spheres *uniform self, void *uniform cppEquivalent)
 {
   Geometry_Constructor(&self->super, cppEquivalent, Spheres_postIntersect);
-  self->super.getAreas   = Spheres_getAreas;
+  self->super.getAreas = Spheres_getAreas;
   self->super.sampleArea = Spheres_sampleArea;
   Data1D_Constructor(&self->vertex);
   Data1D_Constructor(&self->radius);
@@ -196,23 +196,23 @@ export void *uniform Spheres_create(void *uniform cppEquivalent)
 }
 
 export void SpheresGeometry_set(void *uniform _self,
-                                void *uniform _embreeGeometry,
-                                const Data1D *uniform vertex,
-                                const Data1D *uniform radius,
-                                const Data1D *uniform texcoord,
-                                uniform float global_radius)
+    void *uniform _embreeGeometry,
+    const Data1D *uniform vertex,
+    const Data1D *uniform radius,
+    const Data1D *uniform texcoord,
+    uniform float global_radius)
 {
   Spheres *uniform self = (Spheres * uniform) _self;
 
-  self->vertex              = *vertex;
-  self->radius              = *radius;
-  self->texcoord            = *texcoord;
-  self->global_radius       = global_radius;
+  self->vertex = *vertex;
+  self->radius = *radius;
+  self->texcoord = *texcoord;
+  self->global_radius = global_radius;
   self->super.numPrimitives = vertex->numItems;
 
   Geometry_setEmbreeUserGeometry(&self->super,
-                                 (RTCGeometry)_embreeGeometry,
-                                 Spheres_bounds,
-                                 Spheres_intersect,
-                                 Spheres_occluded);
+      (RTCGeometry)_embreeGeometry,
+      Spheres_bounds,
+      Spheres_intersect,
+      Spheres_occluded);
 }

@@ -19,40 +19,39 @@
 #include "ManagedObject.h"
 
 namespace ospray {
-  namespace cpp {
+namespace cpp {
 
-    class ImageOperation
-        : public ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>
-    {
-     public:
-      ImageOperation(const std::string &type);
-      ImageOperation(const ImageOperation &copy);
-      ImageOperation(OSPImageOperation existing = nullptr);
-    };
+class ImageOperation
+    : public ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>
+{
+ public:
+  ImageOperation(const std::string &type);
+  ImageOperation(const ImageOperation &copy);
+  ImageOperation(OSPImageOperation existing = nullptr);
+};
 
-    static_assert(sizeof(ImageOperation) == sizeof(OSPImageOperation),
-                  "cpp::ImageOperation can't have data members!");
+static_assert(sizeof(ImageOperation) == sizeof(OSPImageOperation),
+    "cpp::ImageOperation can't have data members!");
 
-    // Inlined function definitions ///////////////////////////////////////////
+// Inlined function definitions ///////////////////////////////////////////
 
-    inline ImageOperation::ImageOperation(const std::string &type)
-    {
-      ospObject = ospNewImageOperation(type.c_str());
-    }
+inline ImageOperation::ImageOperation(const std::string &type)
+{
+  ospObject = ospNewImageOperation(type.c_str());
+}
 
-    inline ImageOperation::ImageOperation(const ImageOperation &copy)
-        : ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>(copy.handle())
-    {
-      ospRetain(copy.handle());
-    }
+inline ImageOperation::ImageOperation(const ImageOperation &copy)
+    : ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>(copy.handle())
+{
+  ospRetain(copy.handle());
+}
 
-    inline ImageOperation::ImageOperation(OSPImageOperation existing)
-        : ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>(existing)
-    {
-    }
+inline ImageOperation::ImageOperation(OSPImageOperation existing)
+    : ManagedObject<OSPImageOperation, OSP_IMAGE_OPERATION>(existing)
+{}
 
-  }  // namespace cpp
+} // namespace cpp
 
-  OSPTYPEFOR_SPECIALIZATION(cpp::ImageOperation, OSP_IMAGE_OPERATION);
+OSPTYPEFOR_SPECIALIZATION(cpp::ImageOperation, OSP_IMAGE_OPERATION);
 
-}  // namespace ospray
+} // namespace ospray

@@ -41,8 +41,7 @@ struct Volume
 
   //! Find the next isosurface hit point in the volume for ray casting based
   //! renderers.
-  void (*intersectIsosurface)(
-      const void *uniform _self,
+  void (*intersectIsosurface)(const void *uniform _self,
       uniform float *uniform isovalues,
       uniform int numIsovalues,
       uniform size_t geomID,

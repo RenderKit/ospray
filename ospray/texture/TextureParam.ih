@@ -23,12 +23,12 @@
 
 struct TextureParam
 {
-  uniform Texture2D* map;
+  uniform Texture2D *map;
   affine2f xform;
 };
 
-inline uniform TextureParam make_TextureParam(uniform Texture2D * uniform tex,
-                                              const uniform affine2f &xform)
+inline uniform TextureParam make_TextureParam(
+    uniform Texture2D *uniform tex, const uniform affine2f &xform)
 {
   uniform TextureParam t;
   t.map = tex;
@@ -47,7 +47,7 @@ inline uniform bool hasAlpha(const uniform TextureParam uniform &tex)
 }
 
 inline float get1f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg)
+    const varying DifferentialGeometry &dg)
 {
   DifferentialGeometry xfmDg = dg;
   xfmDg.st = tex.xform * dg.st;
@@ -55,8 +55,8 @@ inline float get1f(const uniform TextureParam uniform &tex,
 }
 
 inline float get1f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg,
-                   const varying float defaultValue)
+    const varying DifferentialGeometry &dg,
+    const varying float defaultValue)
 {
   if (!valid(tex))
     return defaultValue;
@@ -66,7 +66,7 @@ inline float get1f(const uniform TextureParam uniform &tex,
 }
 
 inline vec3f get3f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg)
+    const varying DifferentialGeometry &dg)
 {
   DifferentialGeometry xfmDg = dg;
   xfmDg.st = tex.xform * dg.st;
@@ -74,8 +74,8 @@ inline vec3f get3f(const uniform TextureParam uniform &tex,
 }
 
 inline vec3f get3f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg,
-                   const varying vec3f defaultValue)
+    const varying DifferentialGeometry &dg,
+    const varying vec3f defaultValue)
 {
   if (!valid(tex))
     return defaultValue;
@@ -85,7 +85,7 @@ inline vec3f get3f(const uniform TextureParam uniform &tex,
 }
 
 inline vec4f get4f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg)
+    const varying DifferentialGeometry &dg)
 {
   DifferentialGeometry xfmDg = dg;
   xfmDg.st = tex.xform * dg.st;
@@ -93,8 +93,8 @@ inline vec4f get4f(const uniform TextureParam uniform &tex,
 }
 
 inline vec4f get4f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg,
-                   const varying vec4f defaultValue)
+    const varying DifferentialGeometry &dg,
+    const varying vec4f defaultValue)
 {
   if (!valid(tex))
     return defaultValue;
@@ -104,7 +104,7 @@ inline vec4f get4f(const uniform TextureParam uniform &tex,
 }
 
 inline vec3f getNormal(const uniform TextureParam uniform &tex,
-                       const varying DifferentialGeometry &dg)
+    const varying DifferentialGeometry &dg)
 {
   DifferentialGeometry xfmDg = dg;
   xfmDg.st = tex.xform * dg.st;

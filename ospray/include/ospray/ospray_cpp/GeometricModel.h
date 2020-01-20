@@ -20,46 +20,44 @@
 #include "Material.h"
 
 namespace ospray {
-  namespace cpp {
+namespace cpp {
 
-    class GeometricModel
-        : public ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>
-    {
-     public:
-      GeometricModel(const Geometry &geom);
-      GeometricModel(OSPGeometry geom);
-      GeometricModel(const GeometricModel &copy);
-      GeometricModel(OSPGeometricModel existing = nullptr);
-    };
+class GeometricModel
+    : public ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>
+{
+ public:
+  GeometricModel(const Geometry &geom);
+  GeometricModel(OSPGeometry geom);
+  GeometricModel(const GeometricModel &copy);
+  GeometricModel(OSPGeometricModel existing = nullptr);
+};
 
-    static_assert(sizeof(GeometricModel) == sizeof(OSPGeometricModel),
-                  "cpp::GeometricModel can't have data members!");
+static_assert(sizeof(GeometricModel) == sizeof(OSPGeometricModel),
+    "cpp::GeometricModel can't have data members!");
 
-    // Inlined function definitions ///////////////////////////////////////////
+// Inlined function definitions ///////////////////////////////////////////
 
-    inline GeometricModel::GeometricModel(const Geometry &geom)
-        : GeometricModel(geom.handle())
-    {
-    }
+inline GeometricModel::GeometricModel(const Geometry &geom)
+    : GeometricModel(geom.handle())
+{}
 
-    inline GeometricModel::GeometricModel(OSPGeometry existing)
-    {
-      ospObject = ospNewGeometricModel(existing);
-    }
+inline GeometricModel::GeometricModel(OSPGeometry existing)
+{
+  ospObject = ospNewGeometricModel(existing);
+}
 
-    inline GeometricModel::GeometricModel(const GeometricModel &copy)
-        : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(copy.handle())
-    {
-      ospRetain(copy.handle());
-    }
+inline GeometricModel::GeometricModel(const GeometricModel &copy)
+    : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(copy.handle())
+{
+  ospRetain(copy.handle());
+}
 
-    inline GeometricModel::GeometricModel(OSPGeometricModel existing)
-        : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(existing)
-    {
-    }
+inline GeometricModel::GeometricModel(OSPGeometricModel existing)
+    : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(existing)
+{}
 
-  }  // namespace cpp
+} // namespace cpp
 
-  OSPTYPEFOR_SPECIALIZATION(cpp::GeometricModel, OSP_GEOMETRIC_MODEL);
+OSPTYPEFOR_SPECIALIZATION(cpp::GeometricModel, OSP_GEOMETRIC_MODEL);
 
-}  // namespace ospray
+} // namespace ospray

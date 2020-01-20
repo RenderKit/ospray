@@ -22,106 +22,104 @@
 using namespace ospcommon::math;
 
 namespace ospray {
-  namespace testing {
+namespace testing {
 
-    struct PtObj : public detail::Builder
-    {
-      PtObj()           = default;
-      ~PtObj() override = default;
+struct PtObj : public detail::Builder
+{
+  PtObj() = default;
+  ~PtObj() override = default;
 
-      void commit() override;
+  void commit() override;
 
-      cpp::Group buildGroup() const override;
-      cpp::World buildWorld() const override;
-    };
+  cpp::Group buildGroup() const override;
+  cpp::World buildWorld() const override;
+};
 
-    static cpp::Material makeObjMaterial(const std::string &rendererType,
-                                         vec3f Kd,
-                                         vec3f Ks)
-    {
-      cpp::Material mat(rendererType, "obj");
-      mat.setParam("kd", Kd);
-      mat.setParam("ks", Ks);
-      mat.commit();
+static cpp::Material makeObjMaterial(
+    const std::string &rendererType, vec3f Kd, vec3f Ks)
+{
+  cpp::Material mat(rendererType, "obj");
+  mat.setParam("kd", Kd);
+  mat.setParam("ks", Ks);
+  mat.commit();
 
-      return mat;
-    }
+  return mat;
+}
 
-    // Inlined definitions ////////////////////////////////////////////////////
+// Inlined definitions ////////////////////////////////////////////////////
 
-    void PtObj::commit()
-    {
-      Builder::commit();
-      addPlane = false;
-    }
+void PtObj::commit()
+{
+  Builder::commit();
+  addPlane = false;
+}
 
-    cpp::Group PtObj::buildGroup() const
-    {
-      cpp::Geometry sphereGeometry("sphere");
+cpp::Group PtObj::buildGroup() const
+{
+  cpp::Geometry sphereGeometry("sphere");
 
-      constexpr int dimSize = 5;
+  constexpr int dimSize = 5;
 
-      index_sequence_2D numSpheres(dimSize);
+  index_sequence_2D numSpheres(dimSize);
 
-      std::vector<vec3f> spheres;
-      std::vector<uint8_t> index;
-      std::vector<cpp::Material> materials;
+  std::vector<vec3f> spheres;
+  std::vector<uint8_t> index;
+  std::vector<cpp::Material> materials;
 
-      for (auto i : numSpheres) {
-        auto i_f = static_cast<vec2f>(i);
-        spheres.emplace_back(i_f.x, i_f.y, 0.f);
+  for (auto i : numSpheres) {
+    auto i_f = static_cast<vec2f>(i);
+    spheres.emplace_back(i_f.x, i_f.y, 0.f);
 
-        auto l = i_f / (dimSize - 1);
-        materials.push_back(
-            makeObjMaterial(rendererType,
-                            lerp(l.x, vec3f(0.1f), vec3f(1.f, 0.f, 0.f)),
-                            lerp(l.y, vec3f(0.f), vec3f(1.f))));
+    auto l = i_f / (dimSize - 1);
+    materials.push_back(makeObjMaterial(rendererType,
+        lerp(l.x, vec3f(0.1f), vec3f(1.f, 0.f, 0.f)),
+        lerp(l.y, vec3f(0.f), vec3f(1.f))));
 
-        index.push_back(numSpheres.flatten(i));
-      }
+    index.push_back(numSpheres.flatten(i));
+  }
 
-      sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
-      sphereGeometry.setParam("radius", 0.4f);
-      sphereGeometry.commit();
+  sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
+  sphereGeometry.setParam("radius", 0.4f);
+  sphereGeometry.commit();
 
-      cpp::GeometricModel model(sphereGeometry);
+  cpp::GeometricModel model(sphereGeometry);
 
-      model.setParam("material", cpp::Data(materials));
-      model.setParam("index", cpp::Data(index));
-      model.commit();
+  model.setParam("material", cpp::Data(materials));
+  model.setParam("index", cpp::Data(index));
+  model.commit();
 
-      cpp::Group group;
+  cpp::Group group;
 
-      group.setParam("geometry", cpp::Data(model));
-      group.commit();
+  group.setParam("geometry", cpp::Data(model));
+  group.commit();
 
-      return group;
-    }
+  return group;
+}
 
-    cpp::World PtObj::buildWorld() const
-    {
-      auto world = Builder::buildWorld();
+cpp::World PtObj::buildWorld() const
+{
+  auto world = Builder::buildWorld();
 
-      std::vector<cpp::Light> lightHandles;
+  std::vector<cpp::Light> lightHandles;
 
-      cpp::Light dirLight("distant");
-      dirLight.setParam("direction", vec3f(1.f, -1.f, 1.f));
-      dirLight.commit();
+  cpp::Light dirLight("distant");
+  dirLight.setParam("direction", vec3f(1.f, -1.f, 1.f));
+  dirLight.commit();
 
-      cpp::Light ambientLight("ambient");
-      ambientLight.setParam("intensity", 0.4f);
-      ambientLight.setParam("color", vec3f(1.f));
-      ambientLight.commit();
+  cpp::Light ambientLight("ambient");
+  ambientLight.setParam("intensity", 0.4f);
+  ambientLight.setParam("color", vec3f(1.f));
+  ambientLight.commit();
 
-      lightHandles.push_back(dirLight);
-      lightHandles.push_back(ambientLight);
+  lightHandles.push_back(dirLight);
+  lightHandles.push_back(ambientLight);
 
-      world.setParam("light", cpp::Data(lightHandles));
+  world.setParam("light", cpp::Data(lightHandles));
 
-      return world;
-    }
+  return world;
+}
 
-    OSP_REGISTER_TESTING_BUILDER(PtObj, test_pt_obj);
+OSP_REGISTER_TESTING_BUILDER(PtObj, test_pt_obj);
 
-  }  // namespace testing
-}  // namespace ospray
+} // namespace testing
+} // namespace ospray

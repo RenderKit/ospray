@@ -17,16 +17,15 @@
 #include "../builders/Builder.h"
 
 namespace ospray {
-  namespace testing {
+namespace testing {
 
-    template <typename T>
-    inline void setParam(SceneBuilderHandle _b,
-                         const std::string &type,
-                         const T &val)
-    {
-      auto *b = (detail::Builder *)_b;
-      b->setParam(type, val);
-    }
+template <typename T>
+inline void setParam(
+    SceneBuilderHandle _b, const std::string &type, const T &val)
+{
+  auto *b = (detail::Builder *)_b;
+  b->setParam(type, val);
+}
 
-  }  // namespace testing
-}  // namespace ospray
+} // namespace testing
+} // namespace ospray

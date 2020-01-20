@@ -52,13 +52,13 @@ class BaseFixture : public ::benchmark::Fixture
   cpp::World world{nullptr};
 };
 
-#define OSPRAY_DEFINE_BENCHMARK(FixtureName)            \
-  BENCHMARK_DEFINE_F(FixtureName, )                     \
-  (benchmark::State & st)                               \
-  {                                                     \
-    for (auto _ : st) {                                 \
-      framebuffer.renderFrame(renderer, camera, world); \
-    }                                                   \
-  }                                                     \
-                                                        \
+#define OSPRAY_DEFINE_BENCHMARK(FixtureName)                                   \
+  BENCHMARK_DEFINE_F(FixtureName, )                                            \
+  (benchmark::State & st)                                                      \
+  {                                                                            \
+    for (auto _ : st) {                                                        \
+      framebuffer.renderFrame(renderer, camera, world);                        \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
   BENCHMARK_REGISTER_F(FixtureName, )->Unit(benchmark::kMillisecond);

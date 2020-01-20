@@ -22,22 +22,22 @@
 
 namespace ospray {
 
-  // piecewise linear transfer function
-  struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
-  {
-    LinearTransferFunction();
-    virtual ~LinearTransferFunction() override = default;
+// piecewise linear transfer function
+struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
+{
+  LinearTransferFunction();
+  virtual ~LinearTransferFunction() override = default;
 
-    virtual void commit() override;
+  virtual void commit() override;
 
-    virtual std::string toString() const override;
-    
-    virtual std::vector<range1f> getPositiveOpacityValueRanges() const override;
-    virtual std::vector<range1i> getPositiveOpacityIndexRanges() const override;
+  virtual std::string toString() const override;
 
-   private:
-    Ref<const DataT<vec3f>> colorValues;
-    Ref<const DataT<float>> opacityValues;
-  };
+  virtual std::vector<range1f> getPositiveOpacityValueRanges() const override;
+  virtual std::vector<range1i> getPositiveOpacityIndexRanges() const override;
+
+ private:
+  Ref<const DataT<vec3f>> colorValues;
+  Ref<const DataT<float>> opacityValues;
+};
 
 } // namespace ospray

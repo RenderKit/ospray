@@ -21,16 +21,16 @@
 
 namespace ospray {
 
-  /*! \brief A Texture defined through a 2D Image. */
-  struct OSPRAY_SDK_INTERFACE TextureVolume : public Texture
-  {
-    virtual ~TextureVolume() override = default;
+/*! \brief A Texture defined through a 2D Image. */
+struct OSPRAY_SDK_INTERFACE TextureVolume : public Texture
+{
+  virtual ~TextureVolume() override = default;
 
-    virtual std::string toString() const override;
+  virtual std::string toString() const override;
 
-    virtual void commit() override;
+  virtual void commit() override;
 
-    Ref<VolumetricModel> volume;
-  };
+  Ref<VolumetricModel> volume;
+};
 
-} // ::ospray
+} // namespace ospray

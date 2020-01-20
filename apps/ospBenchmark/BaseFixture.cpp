@@ -22,8 +22,7 @@ std::string BaseFixture::dumpFinalImageDir;
 
 BaseFixture::BaseFixture(std::string r, std::string s)
     : rendererType(r), scene(s)
-{
-}
+{}
 
 void BaseFixture::SetUp(::benchmark::State &)
 {
@@ -65,14 +64,14 @@ void BaseFixture::TearDown(::benchmark::State &)
 
     auto *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
     utility::writePPM(dumpFinalImageDir + "/" + outputFilename + ".ppm",
-                      imgSize.x,
-                      imgSize.y,
-                      fb);
+        imgSize.x,
+        imgSize.y,
+        fb);
     framebuffer.unmap(fb);
   }
 
   framebuffer = nullptr;
-  renderer    = nullptr;
-  camera      = nullptr;
-  world       = nullptr;
+  renderer = nullptr;
+  camera = nullptr;
+  world = nullptr;
 }

@@ -18,14 +18,14 @@
 
 #include "BSDF.ih"
 
-inline BSDF_EvalRes Transmission_eval(const varying BSDF* uniform self,
-                                      const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes Transmission_eval(
+    const varying BSDF *uniform self, const vec3f &wo, const vec3f &wi)
 {
   return make_BSDF_EvalRes_zero();
 }
 
-inline BSDF_SampleRes Transmission_sample(const varying BSDF* uniform self,
-                                          const vec3f& wo, const vec2f& s, float ss)
+inline BSDF_SampleRes Transmission_sample(
+    const varying BSDF *uniform self, const vec3f &wo, const vec2f &s, float ss)
 {
   BSDF_SampleRes res;
 
@@ -36,12 +36,18 @@ inline BSDF_SampleRes Transmission_sample(const varying BSDF* uniform self,
   return res;
 }
 
-inline varying BSDF* uniform Transmission_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                 vec3f T)
+inline varying BSDF *uniform Transmission_create(
+    uniform ShadingContext *uniform ctx,
+    const varying linear3f *uniform frame,
+    vec3f T)
 {
-  varying BSDF* uniform self = (varying BSDF* uniform)ShadingContext_alloc(ctx, sizeof(BSDF));
-  BSDF_Constructor(self, T, BSDF_SPECULAR_TRANSMISSION,
-                   Transmission_eval, Transmission_sample,
-                   frame);
+  varying BSDF *uniform self =
+      (varying BSDF * uniform) ShadingContext_alloc(ctx, sizeof(BSDF));
+  BSDF_Constructor(self,
+      T,
+      BSDF_SPECULAR_TRANSMISSION,
+      Transmission_eval,
+      Transmission_sample,
+      frame);
   return self;
 }

@@ -49,8 +49,8 @@ inline vec4f LinearTransferFunction_get(const void *uniform _self, float value)
   return make_vec4f(col, opacity);
 }
 
-inline float LinearTransferFunction_getMaxOpacity(const void *uniform _self,
-                                                  const range1f &valueRange)
+inline float LinearTransferFunction_getMaxOpacity(
+    const void *uniform _self, const range1f &valueRange)
 {
   uniform LinearTransferFunction *uniform self =
       (uniform LinearTransferFunction * uniform) _self;
@@ -58,11 +58,11 @@ inline float LinearTransferFunction_getMaxOpacity(const void *uniform _self,
   const uniform float denom =
       self->super.valueRange.upper - self->super.valueRange.lower;
   const varying int i =
-      floor(clamp((valueRange.lower - self->super.valueRange.lower) / denom) *
-            maxDim);
+      floor(clamp((valueRange.lower - self->super.valueRange.lower) / denom)
+          * maxDim);
   const varying int j =
-      ceil(clamp((valueRange.upper - self->super.valueRange.lower) / denom) *
-           maxDim);
+      ceil(clamp((valueRange.upper - self->super.valueRange.lower) / denom)
+          * maxDim);
   return self->maxOpacityInRange[min(i, maxDim)][min(j, maxDim)];
 }
 
@@ -72,7 +72,7 @@ inline void LinearTransferFunction_precomputeMaxOpacityRanges(
   uniform LinearTransferFunction *uniform self =
       (uniform LinearTransferFunction * uniform) _self;
 
-  const uniform int maxOpacityDim     = self->opacity.numItems - 1;
+  const uniform int maxOpacityDim = self->opacity.numItems - 1;
   const uniform int maxPrecomputedDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
 
   // compute the diagonal
@@ -121,8 +121,8 @@ export void *uniform LinearTransferFunction_create()
   LinearTransferFunction *uniform self = uniform new LinearTransferFunction;
 
   TransferFunction_Constructor(&self->super,
-                               LinearTransferFunction_get,
-                               LinearTransferFunction_getMaxOpacity);
+      LinearTransferFunction_get,
+      LinearTransferFunction_getMaxOpacity);
   Data1D_Constructor(&self->color);
   Data1D_Constructor(&self->opacity);
 

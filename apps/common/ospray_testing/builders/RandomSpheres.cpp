@@ -22,97 +22,97 @@
 using namespace ospcommon::math;
 
 namespace ospray {
-  namespace testing {
+namespace testing {
 
-    struct Spheres : public detail::Builder
-    {
-      Spheres()           = default;
-      ~Spheres() override = default;
+struct Spheres : public detail::Builder
+{
+  Spheres() = default;
+  ~Spheres() override = default;
 
-      void commit() override;
+  void commit() override;
 
-      cpp::Group buildGroup() const override;
+  cpp::Group buildGroup() const override;
 
-     private:
-      // Data //
+ private:
+  // Data //
 
-      int numSpheres{100};
-    };
+  int numSpheres{100};
+};
 
-    // Inlined definitions ////////////////////////////////////////////////////
+// Inlined definitions ////////////////////////////////////////////////////
 
-    void Spheres::commit()
-    {
-      Builder::commit();
+void Spheres::commit()
+{
+  Builder::commit();
 
-      numSpheres = getParam<int>("numSpheres", 100);
-    }
+  numSpheres = getParam<int>("numSpheres", 100);
+}
 
-    cpp::Group Spheres::buildGroup() const
-    {
-      std::vector<vec3f> s_center(numSpheres);
-      std::vector<float> s_radius(numSpheres);
-      std::vector<vec4f> s_colors(numSpheres);
+cpp::Group Spheres::buildGroup() const
+{
+  std::vector<vec3f> s_center(numSpheres);
+  std::vector<float> s_radius(numSpheres);
+  std::vector<vec4f> s_colors(numSpheres);
 
-      // create random number distributions for sphere center, radius, and color
-      std::mt19937 gen(randomSeed);
+  // create random number distributions for sphere center, radius, and color
+  std::mt19937 gen(randomSeed);
 
-      std::uniform_real_distribution<float> centerDistribution(-1.f, 1.f);
-      std::uniform_real_distribution<float> radiusDistribution(0.05f, 0.15f);
-      std::uniform_real_distribution<float> colorDistribution(0.5f, 1.f);
+  std::uniform_real_distribution<float> centerDistribution(-1.f, 1.f);
+  std::uniform_real_distribution<float> radiusDistribution(0.05f, 0.15f);
+  std::uniform_real_distribution<float> colorDistribution(0.5f, 1.f);
 
-      // populate the spheres
+  // populate the spheres
 
-      for (auto &center : s_center) {
-        center.x = centerDistribution(gen);
-        center.y = centerDistribution(gen);
-        center.z = centerDistribution(gen);
-      }
+  for (auto &center : s_center) {
+    center.x = centerDistribution(gen);
+    center.y = centerDistribution(gen);
+    center.z = centerDistribution(gen);
+  }
 
-      for (auto &radius : s_radius)
-        radius = radiusDistribution(gen);
+  for (auto &radius : s_radius)
+    radius = radiusDistribution(gen);
 
-      for (auto &c : s_colors) {
-        c.x = colorDistribution(gen);
-        c.y = colorDistribution(gen);
-        c.z = colorDistribution(gen);
-        c.w = colorDistribution(gen);
-      }
+  for (auto &c : s_colors) {
+    c.x = colorDistribution(gen);
+    c.y = colorDistribution(gen);
+    c.z = colorDistribution(gen);
+    c.w = colorDistribution(gen);
+  }
 
-      // create the sphere geometry, and assign attributes
-      cpp::Geometry spheresGeometry("sphere");
+  // create the sphere geometry, and assign attributes
+  cpp::Geometry spheresGeometry("sphere");
 
-      spheresGeometry.setParam("sphere.position", cpp::Data(s_center));
-      spheresGeometry.setParam("sphere.radius", cpp::Data(s_radius));
-      spheresGeometry.commit();
+  spheresGeometry.setParam("sphere.position", cpp::Data(s_center));
+  spheresGeometry.setParam("sphere.radius", cpp::Data(s_radius));
+  spheresGeometry.commit();
 
-      cpp::GeometricModel model(spheresGeometry);
+  cpp::GeometricModel model(spheresGeometry);
 
-      model.setParam("color", cpp::Data(s_colors));
+  model.setParam("color", cpp::Data(s_colors));
 
-      if (rendererType == "pathtracer") {
-        // create glass material and assign to geometry
-        cpp::Material glassMaterial(rendererType.c_str(), "thinGlass");
-        glassMaterial.setParam("attenuationDistance", 0.2f);
-        glassMaterial.commit();
-        model.setParam("material", glassMaterial);
-      } else if (rendererType == "scivis") {
-        cpp::Material glassMaterial(rendererType.c_str(), "obj");
-        glassMaterial.commit();
-        model.setParam("material", glassMaterial);
-      }
+  if (rendererType == "pathtracer") {
+    // create glass material and assign to geometry
+    cpp::Material glassMaterial(rendererType.c_str(), "thinGlass");
+    glassMaterial.setParam("attenuationDistance", 0.2f);
+    glassMaterial.commit();
+    model.setParam("material", glassMaterial);
+  } else if (rendererType == "scivis") {
+    cpp::Material glassMaterial(rendererType.c_str(), "obj");
+    glassMaterial.commit();
+    model.setParam("material", glassMaterial);
+  }
 
-      model.commit();
+  model.commit();
 
-      cpp::Group group;
+  cpp::Group group;
 
-      group.setParam("geometry", cpp::Data(model));
-      group.commit();
+  group.setParam("geometry", cpp::Data(model));
+  group.commit();
 
-      return group;
-    }
+  return group;
+}
 
-    OSP_REGISTER_TESTING_BUILDER(Spheres, random_spheres);
+OSP_REGISTER_TESTING_BUILDER(Spheres, random_spheres);
 
-  }  // namespace testing
-}  // namespace ospray
+} // namespace testing
+} // namespace ospray

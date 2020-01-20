@@ -20,7 +20,7 @@
 
 namespace ospray {
 
-  using ospcommon::getSymbol;
-  using ospcommon::loadLibrary;
+using ospcommon::getSymbol;
+using ospcommon::loadLibrary;
 
-}  // namespace ospray
+} // namespace ospray

@@ -35,8 +35,8 @@ struct GeometricModel
 };
 
 inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
-                                            const Renderer *uniform renderer,
-                                            const int32 primID)
+    const Renderer *uniform renderer,
+    const int32 primID)
 {
   if (!valid(self->material))
     return NULL;
@@ -47,7 +47,7 @@ inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
   }
 
   uniform int32 lastMaterial = self->material.numItems - 1;
-  Material **uniform mats = (Material **uniform)self->material.addr;
+  Material **uniform mats = (Material * *uniform) self->material.addr;
   if (self->useRendererMaterialList) {
     idx = get_uint32(self->material, min(idx, lastMaterial));
     mats = renderer->material;
@@ -59,10 +59,10 @@ inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
 }
 
 inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
-                                         const Renderer *uniform renderer,
-                                         varying DifferentialGeometry &dg,
-                                         const varying Ray &ray,
-                                         uniform int64 flags)
+    const Renderer *uniform renderer,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
 {
   Geometry *uniform geom = self->geom;
 

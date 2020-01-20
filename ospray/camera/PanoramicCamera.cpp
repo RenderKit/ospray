@@ -19,16 +19,16 @@
 
 namespace ospray {
 
-  PanoramicCamera::PanoramicCamera()
-  {
-    ispcEquivalent = ispc::PanoramicCamera_create(this);
-  }
+PanoramicCamera::PanoramicCamera()
+{
+  ispcEquivalent = ispc::PanoramicCamera_create(this);
+}
 
-  std::string PanoramicCamera::toString() const
-  {
-    return "ospray::PanoramicCamera";
-  }
+std::string PanoramicCamera::toString() const
+{
+  return "ospray::PanoramicCamera";
+}
 
-  OSP_REGISTER_CAMERA(PanoramicCamera, panoramic);
+OSP_REGISTER_CAMERA(PanoramicCamera, panoramic);
 
-} // ::ospray
+} // namespace ospray

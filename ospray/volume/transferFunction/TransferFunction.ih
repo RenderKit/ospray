@@ -22,8 +22,8 @@
 
 typedef vec4f (*TransferFunction_getFct)(const void *uniform self, float value);
 
-typedef float (*TransferFunction_getMaxOpacityFct)(const void *uniform self,
-                                                   const range1f &valueRange);
+typedef float (*TransferFunction_getMaxOpacityFct)(
+    const void *uniform self, const range1f &valueRange);
 
 struct TransferFunction
 {
@@ -33,12 +33,11 @@ struct TransferFunction
   TransferFunction_getMaxOpacityFct getMaxOpacity;
 };
 
-inline void TransferFunction_Constructor(
-    TransferFunction *uniform self,
+inline void TransferFunction_Constructor(TransferFunction *uniform self,
     uniform TransferFunction_getFct get,
     uniform TransferFunction_getMaxOpacityFct getMaxOpacity)
 {
-  self->valueRange    = make_box1f(0.0f, 1.0f);
-  self->get           = get;
+  self->valueRange = make_box1f(0.0f, 1.0f);
+  self->get = get;
   self->getMaxOpacity = getMaxOpacity;
 }

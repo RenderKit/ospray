@@ -25,40 +25,39 @@
 
 namespace ospray {
 
-  Spheres::Spheres()
-  {
-    ispcEquivalent = ispc::Spheres_create(this);
-    embreeGeometry =
-        rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-  }
+Spheres::Spheres()
+{
+  ispcEquivalent = ispc::Spheres_create(this);
+  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+}
 
-  std::string Spheres::toString() const
-  {
-    return "ospray::Spheres";
-  }
+std::string Spheres::toString() const
+{
+  return "ospray::Spheres";
+}
 
-  void Spheres::commit()
-  {
-    radius       = getParam<float>("radius", 0.01f);
-    vertexData   = getParamDataT<vec3f>("sphere.position", true);
-    radiusData   = getParamDataT<float>("sphere.radius");
-    texcoordData = getParamDataT<vec2f>("sphere.texcoord");
+void Spheres::commit()
+{
+  radius = getParam<float>("radius", 0.01f);
+  vertexData = getParamDataT<vec3f>("sphere.position", true);
+  radiusData = getParamDataT<float>("sphere.radius");
+  texcoordData = getParamDataT<vec2f>("sphere.texcoord");
 
-    ispc::SpheresGeometry_set(getIE(),
-                              embreeGeometry,
-                              ispc(vertexData),
-                              ispc(radiusData),
-                              ispc(texcoordData),
-                              radius);
+  ispc::SpheresGeometry_set(getIE(),
+      embreeGeometry,
+      ispc(vertexData),
+      ispc(radiusData),
+      ispc(texcoordData),
+      radius);
 
-    postCreationInfo();
-  }
+  postCreationInfo();
+}
 
-  size_t Spheres::numPrimitives() const
-  {
-    return vertexData ? vertexData->size() : 0;
-  }
+size_t Spheres::numPrimitives() const
+{
+  return vertexData ? vertexData->size() : 0;
+}
 
-  OSP_REGISTER_GEOMETRY(Spheres, sphere);
+OSP_REGISTER_GEOMETRY(Spheres, sphere);
 
-}  // namespace ospray
+} // namespace ospray

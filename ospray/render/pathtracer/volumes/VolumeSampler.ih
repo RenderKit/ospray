@@ -28,22 +28,22 @@ struct Ray;
 #include "math/vec.ih"
 #include "volume/VolumetricModel.ih"
 
-float volumeSampleFreePath(const PathState& pathState,
-                           const World *uniform world,
-                           Ray &ray,
-                           varying LDSampler* uniform ldSampler,
-                           varying RandomSampler* uniform randomSampler,
-                           VolumetricModel* varying *uniform sampledInstance,
-                           float& sampledExtinctionCoefficient,
-                           vec3f& sampledAlbedo);
+float volumeSampleFreePath(const PathState &pathState,
+    const World *uniform world,
+    Ray &ray,
+    varying LDSampler *uniform ldSampler,
+    varying RandomSampler *uniform randomSampler,
+    VolumetricModel *varying *uniform sampledInstance,
+    float &sampledExtinctionCoefficient,
+    vec3f &sampledAlbedo);
 
-float volumeTransmittance(const PathState& pathState,
-                          const World *uniform world,
-                          Ray &ray,
-                          varying LDSampler* uniform ldSampler,
-                          varying RandomSampler* uniform randomSampler);
+float volumeTransmittance(const PathState &pathState,
+    const World *uniform world,
+    Ray &ray,
+    varying LDSampler *uniform ldSampler,
+    varying RandomSampler *uniform randomSampler);
 
-inline bool isSmoothVolumeVertex(const PathVertex& pathVertex)
+inline bool isSmoothVolumeVertex(const PathVertex &pathVertex)
 {
   return HenyeyGreenstein_isSmooth(pathVertex.volume->anisotropy);
 }

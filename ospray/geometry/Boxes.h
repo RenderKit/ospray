@@ -21,19 +21,19 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE Boxes : public Geometry
-  {
-    Boxes();
-    virtual ~Boxes() override = default;
+struct OSPRAY_SDK_INTERFACE Boxes : public Geometry
+{
+  Boxes();
+  virtual ~Boxes() override = default;
 
-    virtual std::string toString() const override;
+  virtual std::string toString() const override;
 
-    virtual void commit() override;
+  virtual void commit() override;
 
-    virtual size_t numPrimitives() const override;
+  virtual size_t numPrimitives() const override;
 
-   protected:
-    Ref<const DataT<box3f>> boxData;
-  };
+ protected:
+  Ref<const DataT<box3f>> boxData;
+};
 
-}  // namespace ospray
+} // namespace ospray

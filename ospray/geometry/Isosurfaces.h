@@ -21,23 +21,23 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
-  {
-    Isosurfaces();
-    virtual ~Isosurfaces() override;
+struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
+{
+  Isosurfaces();
+  virtual ~Isosurfaces() override;
 
-    virtual std::string toString() const override;
+  virtual std::string toString() const override;
 
-    virtual void commit() override;
+  virtual void commit() override;
 
-    virtual size_t numPrimitives() const override;
+  virtual size_t numPrimitives() const override;
 
-   protected:
-    // Data members //
+ protected:
+  // Data members //
 
-    Ref<const DataT<float>> isovaluesData;
-    Ref<VolumetricModel> model;
-    VKLValueSelector valueSelector{nullptr};
-  };
+  Ref<const DataT<float>> isovaluesData;
+  Ref<VolumetricModel> model;
+  VKLValueSelector valueSelector{nullptr};
+};
 
-}  // namespace ospray
+} // namespace ospray

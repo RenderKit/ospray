@@ -21,38 +21,37 @@
 #include "ManagedObject.h"
 
 namespace ospray {
-  namespace cpp {
+namespace cpp {
 
-    class Volume : public ManagedObject<OSPVolume, OSP_VOLUME>
-    {
-     public:
-      Volume(const std::string &type);
-      Volume(const Volume &copy);
-      Volume(OSPVolume existing = nullptr);
-    };
+class Volume : public ManagedObject<OSPVolume, OSP_VOLUME>
+{
+ public:
+  Volume(const std::string &type);
+  Volume(const Volume &copy);
+  Volume(OSPVolume existing = nullptr);
+};
 
-    static_assert(sizeof(Volume) == sizeof(OSPVolume),
-                  "cpp::Volume can't have data members!");
+static_assert(sizeof(Volume) == sizeof(OSPVolume),
+    "cpp::Volume can't have data members!");
 
-    // Inlined function definitions ///////////////////////////////////////////
+// Inlined function definitions ///////////////////////////////////////////
 
-    inline Volume::Volume(const std::string &type)
-    {
-      ospObject = ospNewVolume(type.c_str());
-    }
+inline Volume::Volume(const std::string &type)
+{
+  ospObject = ospNewVolume(type.c_str());
+}
 
-    inline Volume::Volume(const Volume &copy)
-        : ManagedObject<OSPVolume, OSP_VOLUME>(copy.handle())
-    {
-      ospRetain(copy.handle());
-    }
+inline Volume::Volume(const Volume &copy)
+    : ManagedObject<OSPVolume, OSP_VOLUME>(copy.handle())
+{
+  ospRetain(copy.handle());
+}
 
-    inline Volume::Volume(OSPVolume existing)
-        : ManagedObject<OSPVolume, OSP_VOLUME>(existing)
-    {
-    }
-  }  // namespace cpp
+inline Volume::Volume(OSPVolume existing)
+    : ManagedObject<OSPVolume, OSP_VOLUME>(existing)
+{}
+} // namespace cpp
 
-  OSPTYPEFOR_SPECIALIZATION(cpp::Volume, OSP_VOLUME);
+OSPTYPEFOR_SPECIALIZATION(cpp::Volume, OSP_VOLUME);
 
-}  // namespace ospray
+} // namespace ospray

@@ -37,18 +37,18 @@ export void *uniform GeometricModel_create(void *uniform cppE)
 }
 
 export void GeometricModel_set(void *uniform _self,
-                               void *uniform _geom,
-                               const Data1D *uniform color,
-                               const Data1D *uniform index,
-                               const Data1D *uniform material,
-                               const uniform bool useRendererMaterialList)
+    void *uniform _geom,
+    const Data1D *uniform color,
+    const Data1D *uniform index,
+    const Data1D *uniform material,
+    const uniform bool useRendererMaterialList)
 {
   GeometricModel *uniform self = (GeometricModel * uniform) _self;
 
-  self->geom = (Geometry *uniform)_geom;
+  self->geom = (Geometry * uniform) _geom;
 
-  self->color    = *color;
-  self->index    = *index;
+  self->color = *color;
+  self->index = *index;
   self->material = *material;
 
   self->useRendererMaterialList = useRendererMaterialList;

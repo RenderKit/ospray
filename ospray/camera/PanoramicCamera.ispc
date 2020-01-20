@@ -18,8 +18,8 @@
 #include "math/sampling.ih"
 
 void PanoramicCamera_initRay(const Camera *uniform self,
-                             varying Ray &ray,
-                             const varying CameraSample &sample)
+    varying Ray &ray,
+    const varying CameraSample &sample)
 {
   const vec2f screen = Camera_subRegion(self, sample.screen);
 
@@ -31,8 +31,8 @@ void PanoramicCamera_initRay(const Camera *uniform self,
   const vec3f localDir = cartesian(phi, sinTheta, cosTheta);
 
   // trnasform to camera- and then to world-space
-  const vec3f dir = self->frame *
-    make_vec3f(-localDir.y, -localDir.z, localDir.x);
+  const vec3f dir =
+      self->frame * make_vec3f(-localDir.y, -localDir.z, localDir.x);
 
   const float time = Camera_shutterTime(self, sample.time);
   const vec3f org = self->org;

@@ -24,19 +24,18 @@
 
 namespace ospray {
 
-  struct OSPRAY_MODULE_DENOISER_EXPORT DenoiseFrameOp : public FrameOp
-  {
-    DenoiseFrameOp();
+struct OSPRAY_MODULE_DENOISER_EXPORT DenoiseFrameOp : public FrameOp
+{
+  DenoiseFrameOp();
 
-    virtual ~DenoiseFrameOp() override;
+  virtual ~DenoiseFrameOp() override;
 
-    virtual std::unique_ptr<LiveImageOp> attach(
-        FrameBufferView &fbView) override;
+  virtual std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-   private:
-    OIDNDevice device;
-  };
+ private:
+  OIDNDevice device;
+};
 
-}  // namespace ospray
+} // namespace ospray

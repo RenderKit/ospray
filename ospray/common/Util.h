@@ -16,29 +16,28 @@
 
 #pragma once
 
-#include "./Managed.h"
 #include "../api/objectFactory.h"
+#include "./Managed.h"
 
 #include <map>
 
 namespace ospray {
 
-  template <typename OSPRAY_CLASS, OSPDataType OSP_TYPE>
-  inline OSPRAY_CLASS *createInstanceHelper(const std::string &type)
-  {
-    static_assert(std::is_base_of<ManagedObject, OSPRAY_CLASS>::value,
-                  "createInstanceHelper<>() is only for OSPRay classes, not"
-                  " generic types!");
+template <typename OSPRAY_CLASS, OSPDataType OSP_TYPE>
+inline OSPRAY_CLASS *createInstanceHelper(const std::string &type)
+{
+  static_assert(std::is_base_of<ManagedObject, OSPRAY_CLASS>::value,
+      "createInstanceHelper<>() is only for OSPRay classes, not"
+      " generic types!");
 
-    auto *object = objectFactory<OSPRAY_CLASS, OSP_TYPE>(type);
+  auto *object = objectFactory<OSPRAY_CLASS, OSP_TYPE>(type);
 
-    // Denote the subclass type in the ManagedObject base class.
-    if (object) {
-      object->managedObjectType = OSP_TYPE;
-    }
-
-    return object;
+  // Denote the subclass type in the ManagedObject base class.
+  if (object) {
+    object->managedObjectType = OSP_TYPE;
   }
 
-}// namespace ospray
+  return object;
+}
 
+} // namespace ospray

@@ -19,22 +19,22 @@
 
 namespace ospray {
 
-  AmbientLight::AmbientLight()
-  {
-    ispcEquivalent = ispc::AmbientLight_create();
-  }
+AmbientLight::AmbientLight()
+{
+  ispcEquivalent = ispc::AmbientLight_create();
+}
 
-  std::string AmbientLight::toString() const
-  {
-    return "ospray::AmbientLight";
-  }
+std::string AmbientLight::toString() const
+{
+  return "ospray::AmbientLight";
+}
 
-  void AmbientLight::commit()
-  {
-    Light::commit();
-    ispc::AmbientLight_set(getIE());
-  }
+void AmbientLight::commit()
+{
+  Light::commit();
+  ispc::AmbientLight_set(getIE());
+}
 
-  OSP_REGISTER_LIGHT(AmbientLight, ambient);
+OSP_REGISTER_LIGHT(AmbientLight, ambient);
 
-} // ::ospray
+} // namespace ospray

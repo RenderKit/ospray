@@ -20,34 +20,34 @@
 using namespace ospcommon::math;
 
 namespace ospray {
-  namespace testing {
+namespace testing {
 
-    struct Empty : public detail::Builder
-    {
-      Empty()           = default;
-      ~Empty() override = default;
+struct Empty : public detail::Builder
+{
+  Empty() = default;
+  ~Empty() override = default;
 
-      void commit() override;
+  void commit() override;
 
-      cpp::Group buildGroup() const override;
-    };
+  cpp::Group buildGroup() const override;
+};
 
-    // Inlined definitions ////////////////////////////////////////////////////
+// Inlined definitions ////////////////////////////////////////////////////
 
-    void Empty::commit()
-    {
-      Builder::commit();
-      addPlane = false;
-    }
+void Empty::commit()
+{
+  Builder::commit();
+  addPlane = false;
+}
 
-    cpp::Group Empty::buildGroup() const
-    {
-      cpp::Group group;
-      group.commit();
-      return group;
-    }
+cpp::Group Empty::buildGroup() const
+{
+  cpp::Group group;
+  group.commit();
+  return group;
+}
 
-    OSP_REGISTER_TESTING_BUILDER(Empty, empty);
+OSP_REGISTER_TESTING_BUILDER(Empty, empty);
 
-  }  // namespace testing
-}  // namespace ospray
+} // namespace testing
+} // namespace ospray

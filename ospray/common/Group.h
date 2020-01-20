@@ -30,47 +30,47 @@
 
 namespace ospray {
 
-  using OptionalScene = utility::Optional<RTCScene>;
+using OptionalScene = utility::Optional<RTCScene>;
 
-  struct OSPRAY_SDK_INTERFACE Group : public ManagedObject
-  {
-    Group();
-    ~Group() override;
+struct OSPRAY_SDK_INTERFACE Group : public ManagedObject
+{
+  Group();
+  ~Group() override;
 
-    std::string toString() const override;
-    void commit() override;
+  std::string toString() const override;
+  void commit() override;
 
-    box3f getBounds() const override;
+  box3f getBounds() const override;
 
-    OptionalScene embreeGeometryScene();
-    OptionalScene embreeVolumeScene();
+  OptionalScene embreeGeometryScene();
+  OptionalScene embreeVolumeScene();
 
-    // Data members //
+  // Data members //
 
-    Ref<const DataT<GeometricModel *>> geometricModels;
-    std::vector<void *> geometryIEs;  // NOTE: needs to be freed!
-    std::vector<void *> geometricModelIEs;
+  Ref<const DataT<GeometricModel *>> geometricModels;
+  std::vector<void *> geometryIEs; // NOTE: needs to be freed!
+  std::vector<void *> geometricModelIEs;
 
-    Ref<const DataT<VolumetricModel *>> volumetricModels;
-    std::vector<void *> volumeIEs;  // NOTE: needs to be freed!
-    std::vector<void *> volumetricModelIEs;
+  Ref<const DataT<VolumetricModel *>> volumetricModels;
+  std::vector<void *> volumeIEs; // NOTE: needs to be freed!
+  std::vector<void *> volumetricModelIEs;
 
-    RTCScene sceneGeometries{nullptr};
-    RTCScene sceneVolumes{nullptr};
-  };
+  RTCScene sceneGeometries{nullptr};
+  RTCScene sceneVolumes{nullptr};
+};
 
-  OSPTYPEFOR_SPECIALIZATION(Group *, OSP_GROUP);
+OSPTYPEFOR_SPECIALIZATION(Group *, OSP_GROUP);
 
-  // Inlined members /////////////////////////////////////////////////////////
+// Inlined members /////////////////////////////////////////////////////////
 
-  inline OptionalScene Group::embreeGeometryScene()
-  {
-    return sceneGeometries ? sceneGeometries : OptionalScene();
-  }
+inline OptionalScene Group::embreeGeometryScene()
+{
+  return sceneGeometries ? sceneGeometries : OptionalScene();
+}
 
-  inline OptionalScene Group::embreeVolumeScene()
-  {
-    return sceneVolumes ? sceneVolumes : OptionalScene();
-  }
+inline OptionalScene Group::embreeVolumeScene()
+{
+  return sceneVolumes ? sceneVolumes : OptionalScene();
+}
 
-}  // namespace ospray
+} // namespace ospray

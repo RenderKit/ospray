@@ -33,16 +33,15 @@ struct World
   RTCScene embreeSceneHandleVolumes;
 };
 
-inline void traceRay(const World *uniform world,
-                     varying Ray &ray,
-                     void *uniform userPtr)
+inline void traceRay(
+    const World *uniform world, varying Ray &ray, void *uniform userPtr)
 {
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = userPtr;
   rtcIntersectV(world->embreeSceneHandleGeometries,
-                &context.ectx,
-                (varying RTCRayHit * uniform) & ray);
+      &context.ectx,
+      (varying RTCRayHit * uniform) & ray);
 }
 
 inline void traceRay(const World *uniform world, varying Ray &ray)
@@ -50,16 +49,15 @@ inline void traceRay(const World *uniform world, varying Ray &ray)
   traceRay(world, ray, NULL);
 }
 
-inline bool isOccluded(const World *uniform world,
-                       varying Ray &ray,
-                       void *uniform userPtr)
+inline bool isOccluded(
+    const World *uniform world, varying Ray &ray, void *uniform userPtr)
 {
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = userPtr;
   rtcOccludedV(world->embreeSceneHandleGeometries,
-               &context.ectx,
-               (varying RTCRay * uniform) & ray);
+      &context.ectx,
+      (varying RTCRay * uniform) & ray);
   return ray.t < ray.t0;
 }
 
@@ -68,9 +66,8 @@ inline bool isOccluded(const World *uniform world, varying Ray &ray)
   return isOccluded(world, ray, NULL);
 }
 
-inline void traceVolumeRay(const World *uniform world,
-                           varying Ray &ray,
-                           VolumeInterval &interval)
+inline void traceVolumeRay(
+    const World *uniform world, varying Ray &ray, VolumeInterval &interval)
 {
   initVolumeInterval(interval);
 
@@ -81,22 +78,22 @@ inline void traceVolumeRay(const World *uniform world,
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = &intervals;
   rtcIntersectV(world->embreeSceneHandleVolumes,
-                &context.ectx,
-                (varying RTCRayHit * uniform) & ray);
+      &context.ectx,
+      (varying RTCRayHit * uniform) & ray);
 
   if (hasInterval(intervals.intervals[0])) {
-    Instance * instance = *(world->instances + intervals.intervals[0].instID);
-    interval.volumetricModel = instance->group->volumetricModels[intervals.intervals[0].geomID];
-    interval.xfm             = instance->xfm;
-    interval.rcp_xfm         = instance->rcp_xfm;
-    interval.interval.lower  = intervals.intervals[0].interval.lower;
-    interval.interval.upper  = intervals.intervals[0].interval.upper;
+    Instance *instance = *(world->instances + intervals.intervals[0].instID);
+    interval.volumetricModel =
+        instance->group->volumetricModels[intervals.intervals[0].geomID];
+    interval.xfm = instance->xfm;
+    interval.rcp_xfm = instance->rcp_xfm;
+    interval.interval.lower = intervals.intervals[0].interval.lower;
+    interval.interval.upper = intervals.intervals[0].interval.upper;
   }
 }
 
-inline void traceVolumeRay(const World *uniform world,
-                           varying Ray &ray,
-                           VolumeIntervals &intervals)
+inline void traceVolumeRay(
+    const World *uniform world, varying Ray &ray, VolumeIntervals &intervals)
 {
   initVolumeIntervals(intervals);
 
@@ -104,15 +101,16 @@ inline void traceVolumeRay(const World *uniform world,
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = &intervals;
   rtcIntersectV(world->embreeSceneHandleVolumes,
-                &context.ectx,
-                (varying RTCRayHit * uniform) & ray);
+      &context.ectx,
+      (varying RTCRayHit * uniform) & ray);
 
   if (intervals.numVolumeIntervals > 0) {
     for (int i = 0; i < intervals.numVolumeIntervals; ++i) {
-      Instance * instance = *(world->instances + intervals.intervals[i].instID);
-      intervals.intervals[i].volumetricModel = instance->group->volumetricModels[intervals.intervals[i].geomID];
-      intervals.intervals[i].xfm             = instance->xfm;
-      intervals.intervals[i].rcp_xfm         = instance->rcp_xfm;
+      Instance *instance = *(world->instances + intervals.intervals[i].instID);
+      intervals.intervals[i].volumetricModel =
+          instance->group->volumetricModels[intervals.intervals[i].geomID];
+      intervals.intervals[i].xfm = instance->xfm;
+      intervals.intervals[i].rcp_xfm = instance->rcp_xfm;
     }
   }
 }
@@ -125,13 +123,13 @@ inline void traceVolumeRay(const World *uniform world,
     Color defaults to vec4f(1.f) if queried but not present in geometry.
    */
 inline void postIntersect(const World *uniform world,
-                          const Renderer *uniform renderer,
-                          varying DifferentialGeometry &dg,
-                          const varying Ray &ray,
-                          uniform int64 flags)
+    const Renderer *uniform renderer,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
 {
   dg.primID = ray.primID;
-  dg.st     = make_vec2f(ray.u, ray.v);
+  dg.st = make_vec2f(ray.u, ray.v);
 
   dg.material = NULL;
   dg.renderer = renderer;
@@ -144,11 +142,10 @@ inline void postIntersect(const World *uniform world,
     dg.dPdt = make_vec3f(0.f, 1.f, 0.f);
   }
 
-  dg.P       = ray.org + ray.t * ray.dir;
-  dg.epsilon = 0.f;  // per default no geometry-type specific epsilon
+  dg.P = ray.org + ray.t * ray.dir;
+  dg.epsilon = 0.f; // per default no geometry-type specific epsilon
 
-  foreach_unique(instID in ray.instID)
-  {
+  foreach_unique (instID in ray.instID) {
     if (instID != RTC_INVALID_GEOMETRY_ID) {
       Instance *uniform instance = *(world->instances + instID);
       Instance_postIntersect(instance, renderer, instID, dg, ray, flags);

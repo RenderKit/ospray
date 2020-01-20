@@ -22,7 +22,7 @@ struct PathState;
 struct PathVertex;
 struct Ray;
 
-vec3f evaluateGeometryLights(const PathState& pathState, 
-                             const PathVertex& lastVertex, 
-                             const PathVertex& pathVertex, 
-                             Ray& ray);
+vec3f evaluateGeometryLights(const PathState &pathState,
+    const PathVertex &lastVertex,
+    const PathVertex &pathVertex,
+    Ray &ray);

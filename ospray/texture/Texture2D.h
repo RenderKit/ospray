@@ -21,20 +21,20 @@
 
 namespace ospray {
 
-  /*! \brief A Texture defined through a 2D Image. */
-  struct OSPRAY_SDK_INTERFACE Texture2D : public Texture
-  {
-    virtual ~Texture2D() override = default;
+/*! \brief A Texture defined through a 2D Image. */
+struct OSPRAY_SDK_INTERFACE Texture2D : public Texture
+{
+  virtual ~Texture2D() override = default;
 
-    virtual std::string toString() const override;
+  virtual std::string toString() const override;
 
-    virtual void commit() override;
+  virtual void commit() override;
 
-    OSPTextureFormat format{OSP_TEXTURE_FORMAT_INVALID};
-    OSPTextureFilter filter{OSP_TEXTURE_FILTER_BILINEAR};
+  OSPTextureFormat format{OSP_TEXTURE_FORMAT_INVALID};
+  OSPTextureFilter filter{OSP_TEXTURE_FILTER_BILINEAR};
 
-   protected:
-    Ref<const Data> texData;
-  };
+ protected:
+  Ref<const Data> texData;
+};
 
-} // ::ospray
+} // namespace ospray

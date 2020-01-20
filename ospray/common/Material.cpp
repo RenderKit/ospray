@@ -20,80 +20,80 @@
 
 namespace ospray {
 
-  Material::Material()
-  {
-    managedObjectType = OSP_MATERIAL;
-  }
+Material::Material()
+{
+  managedObjectType = OSP_MATERIAL;
+}
 
-  Material *Material::createInstance(const char *_renderer_type,
-                                     const char *_material_type)
-  {
-    std::string renderer_type = _renderer_type;
-    std::string material_type = _material_type;
+Material *Material::createInstance(
+    const char *_renderer_type, const char *_material_type)
+{
+  std::string renderer_type = _renderer_type;
+  std::string material_type = _material_type;
 
-    std::string type = renderer_type + "__" + material_type;
-    return createInstanceHelper<Material, OSP_MATERIAL>(type.c_str());
-  }
+  std::string type = renderer_type + "__" + material_type;
+  return createInstanceHelper<Material, OSP_MATERIAL>(type.c_str());
+}
 
-  std::string Material::toString() const
-  {
-    return "ospray::Material";
-  }
+std::string Material::toString() const
+{
+  return "ospray::Material";
+}
 
-  void Material::commit()
-  {
-  }
+void Material::commit() {}
 
-  affine2f Material::getTextureTransform(const char* _texname)
-  {
-    std::string texname(_texname);
-    texname += ".";
+affine2f Material::getTextureTransform(const char *_texname)
+{
+  std::string texname(_texname);
+  texname += ".";
 
-    const vec2f translation = getParam<vec2f>((texname+"translation").c_str(),
-                                         vec2f(0.f));
-    affine2f xform = affine2f::translate(-translation);
+  const vec2f translation =
+      getParam<vec2f>((texname + "translation").c_str(), vec2f(0.f));
+  affine2f xform = affine2f::translate(-translation);
 
-    xform *= affine2f::translate(vec2f(0.5f));
+  xform *= affine2f::translate(vec2f(0.5f));
 
-    const vec2f scale = getParam<vec2f>((texname+"scale").c_str(), vec2f(1.f));
-    xform *= affine2f::scale(rcp(scale));
+  const vec2f scale = getParam<vec2f>((texname + "scale").c_str(), vec2f(1.f));
+  xform *= affine2f::scale(rcp(scale));
 
-    const float rotation = deg2rad(getParam<float>((texname+"rotation").c_str(),
-                                              0.f));
-    xform *= affine2f::rotate(-rotation);
+  const float rotation =
+      deg2rad(getParam<float>((texname + "rotation").c_str(), 0.f));
+  xform *= affine2f::rotate(-rotation);
 
-    xform *= affine2f::translate(vec2f(-0.5f));
+  xform *= affine2f::translate(vec2f(-0.5f));
 
-    const vec4f transf = getParam<vec4f>((texname+"transform").c_str(),
-                                         vec4f(1.f, 0.f, 0.f, 1.f));
-    const linear2f transform = (const linear2f&)transf;
-    xform *= affine2f(transform);
+  const vec4f transf = getParam<vec4f>(
+      (texname + "transform").c_str(), vec4f(1.f, 0.f, 0.f, 1.f));
+  const linear2f transform = (const linear2f &)transf;
+  xform *= affine2f(transform);
 
-    return xform;
-  }
+  return xform;
+}
 
-  MaterialParam1f Material::getMaterialParam1f(const char *name, float valIfNotFound)
-  {
-    const std::string mapName = "map_" + std::string(name);
-    MaterialParam1f param;
-    param.map = (Texture2D*)getParamObject(mapName.c_str());
-    param.xform = getTextureTransform(mapName.c_str());
-    param.rot = param.xform.l.orthogonal().transposed();
-    param.factor = getParam<float>(name, param.map ? 1.f : valIfNotFound);
-    return param;
-  }
+MaterialParam1f Material::getMaterialParam1f(
+    const char *name, float valIfNotFound)
+{
+  const std::string mapName = "map_" + std::string(name);
+  MaterialParam1f param;
+  param.map = (Texture2D *)getParamObject(mapName.c_str());
+  param.xform = getTextureTransform(mapName.c_str());
+  param.rot = param.xform.l.orthogonal().transposed();
+  param.factor = getParam<float>(name, param.map ? 1.f : valIfNotFound);
+  return param;
+}
 
-  MaterialParam3f Material::getMaterialParam3f(const char *name, vec3f valIfNotFound)
-  {
-    const std::string mapName = "map_" + std::string(name);
-    MaterialParam3f param;
-    param.map = (Texture2D*)getParamObject(mapName.c_str());
-    param.xform = getTextureTransform(mapName.c_str());
-    param.rot = param.xform.l.orthogonal().transposed();
-    param.factor = getParam<vec3f>(name, param.map ? vec3f(1.f) : valIfNotFound);
-    return param;
-  }
+MaterialParam3f Material::getMaterialParam3f(
+    const char *name, vec3f valIfNotFound)
+{
+  const std::string mapName = "map_" + std::string(name);
+  MaterialParam3f param;
+  param.map = (Texture2D *)getParamObject(mapName.c_str());
+  param.xform = getTextureTransform(mapName.c_str());
+  param.rot = param.xform.l.orthogonal().transposed();
+  param.factor = getParam<vec3f>(name, param.map ? vec3f(1.f) : valIfNotFound);
+  return param;
+}
 
-  OSPTYPEFOR_DEFINITION(Material*);
+OSPTYPEFOR_DEFINITION(Material *);
 
-} // ::ospray
+} // namespace ospray

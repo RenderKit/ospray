@@ -23,34 +23,34 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE Instance : public ManagedObject
-  {
-    Instance(Group *group);
-    ~Instance() override = default;
+struct OSPRAY_SDK_INTERFACE Instance : public ManagedObject
+{
+  Instance(Group *group);
+  ~Instance() override = default;
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-    void commit() override;
+  void commit() override;
 
-    box3f getBounds() const override;
+  box3f getBounds() const override;
 
-    affine3f xfm();
+  affine3f xfm();
 
-    // Data //
+  // Data //
 
-    affine3f instanceXfm;
-    affine3f rcpXfm;
+  affine3f instanceXfm;
+  affine3f rcpXfm;
 
-    Ref<Group> group;
-  };
+  Ref<Group> group;
+};
 
-  OSPTYPEFOR_SPECIALIZATION(Instance *, OSP_INSTANCE);
+OSPTYPEFOR_SPECIALIZATION(Instance *, OSP_INSTANCE);
 
-  // Inlined definitions //////////////////////////////////////////////////////
+// Inlined definitions //////////////////////////////////////////////////////
 
-  inline affine3f Instance::xfm()
-  {
-    return instanceXfm;
-  }
+inline affine3f Instance::xfm()
+{
+  return instanceXfm;
+}
 
-}  // namespace ospray
+} // namespace ospray

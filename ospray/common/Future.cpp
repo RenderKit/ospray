@@ -18,16 +18,16 @@
 
 namespace ospray {
 
-  Future::Future()
-  {
-    managedObjectType = OSP_FUTURE;
-  }
+Future::Future()
+{
+  managedObjectType = OSP_FUTURE;
+}
 
-  std::string Future::toString() const
-  {
-    return "ospray::Future";
-  }
+std::string Future::toString() const
+{
+  return "ospray::Future";
+}
 
-  OSPTYPEFOR_DEFINITION(Future *);
+OSPTYPEFOR_DEFINITION(Future *);
 
 } // namespace ospray

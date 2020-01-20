@@ -18,10 +18,10 @@
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights to
-// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-// of the Software, and to permit persons to whom the Software is furnished to do
-// so, subject to the following conditions:
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
@@ -39,26 +39,28 @@
 #include "math.ih"
 
 #define Sobol_numDimensions 1024
-#define Sobol_numBits       52
+#define Sobol_numBits 52
 
-extern const uniform unsigned int Sobol_matrices[Sobol_numDimensions * Sobol_numBits];
+extern const uniform unsigned int
+    Sobol_matrices[Sobol_numDimensions * Sobol_numBits];
 
 // Compute one component of the Sobol'-sequence, where the component
 // corresponds to the dimension parameter, and the index specifies
 // the point inside the sequence. The scramble parameter can be used
 // to permute elementary intervals, and might be chosen randomly to
 // generate a randomized QMC sequence.
-inline float Sobol_sample(unsigned int index, uniform unsigned int dimension, unsigned int scramble = 0)
+inline float Sobol_sample(unsigned int index,
+    uniform unsigned int dimension,
+    unsigned int scramble = 0)
 {
   assert(dimension < Sobol_numDimensions);
 
   unsigned int result = scramble;
-  for (uniform unsigned int i = dimension * Sobol_numBits; index; index >>= 1, ++i)
-  {
+  for (uniform unsigned int i = dimension * Sobol_numBits; index;
+       index >>= 1, ++i) {
     if (index & 1)
       result ^= Sobol_matrices[i];
   }
 
   return to_float_unorm(result);
 }
-

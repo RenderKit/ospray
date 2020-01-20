@@ -22,22 +22,22 @@
 #include "volumes.ih"
 
 void SciVis_renderSample(Renderer *uniform _self,
-                         FrameBuffer *uniform fb,
-                         World *uniform world,
-                         void *uniform perFrameData,
-                         varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
   LDSampler_init(ldSampler,
-                 sample.sampleID.x + fb->size.x * sample.sampleID.y,
-                 sample.sampleID.z);
+      sample.sampleID.x + fb->size.x * sample.sampleID.y,
+      sample.sampleID.z);
 
   vec4f outputColor = make_vec4f(0.f);
 
-  uniform bool firstHit       = true;
+  uniform bool firstHit = true;
   const float originalRayTFar = sample.ray.t;
 
   // This is our main ray
@@ -81,7 +81,7 @@ void SciVis_renderSample(Renderer *uniform _self,
 
       // Initialize other per sample data with first hit values
       if (firstHit) {
-        sample.z      = ray.t;
+        sample.z = ray.t;
         sample.albedo = surfaceShading.albedo;
         sample.normal = dg.Ns;
       }
@@ -89,7 +89,7 @@ void SciVis_renderSample(Renderer *uniform _self,
       blendedColor = Renderer_getBackground(&self->super, sample.pos);
       // Initialize other per sample data with first hit values
       if (firstHit) {
-        sample.z      = ray.t;
+        sample.z = ray.t;
         sample.albedo = make_vec3f(blendedColor);
         sample.normal = sample.ray.dir;
       }
@@ -97,13 +97,13 @@ void SciVis_renderSample(Renderer *uniform _self,
 
     // Blend with output final color
     outputColor = outputColor + (1.f - outputColor.w) * blendedColor;
-    firstHit    = false;
+    firstHit = false;
     if (!hadHit(ray)) {
       break;
     }
   }
 
-  sample.rgb   = make_vec3f(outputColor);
+  sample.rgb = make_vec3f(outputColor);
   sample.alpha = outputColor.w;
 }
 
@@ -118,15 +118,15 @@ export void *uniform SciVis_create(void *uniform cppE)
 }
 
 export void SciVis_set(void *uniform _self,
-                       uniform int aoSamples,
-                       uniform float aoRadius,
-                       uniform float aoIntensity,
-                       uniform float volumeSamplingRate)
+    uniform int aoSamples,
+    uniform float aoRadius,
+    uniform float aoIntensity,
+    uniform float volumeSamplingRate)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
-  self->aoSamples   = aoSamples;
-  self->aoRadius    = aoRadius;
+  self->aoSamples = aoSamples;
+  self->aoRadius = aoRadius;
   self->aoIntensity = aoIntensity;
 
   self->volumeSamplingRate = volumeSamplingRate;

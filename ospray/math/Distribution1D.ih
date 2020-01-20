@@ -19,20 +19,22 @@
 // input: importance in 'cdf'
 // output: cdf of importance in 'cdf'
 //         return sum
-uniform float Distribution1D_create(const uniform int size, uniform float* uniform cdf);
+uniform float Distribution1D_create(
+    const uniform int size, uniform float *uniform cdf);
 
-struct Sample1D {
+struct Sample1D
+{
   int idx; // relative to start
   float frac;
   float pdf;
 };
 
-inline Sample1D Distribution1D_sample(
-  const uniform int size,
-  const uniform float* uniform cdf,
-  // we may sample different rows within one gang: use a varying offset 'start' instead of a varying pointer 'cdf'
-  const int start,
-  const float s)
+inline Sample1D Distribution1D_sample(const uniform int size,
+    const uniform float *uniform cdf,
+    // we may sample different rows within one gang: use a varying offset
+    // 'start' instead of a varying pointer 'cdf'
+    const int start,
+    const float s)
 {
   // find minimum index where cdf[i-1] <= s < cdf[i]
   int first = start;
@@ -51,7 +53,7 @@ inline Sample1D Distribution1D_sample(
 
   Sample1D ret;
   ret.idx = first - start;
-  const float bef = first == start ? 0.0f : cdf[first-1];
+  const float bef = first == start ? 0.0f : cdf[first - 1];
   const float dcdf = cdf[first] - bef;
   ret.pdf = dcdf * size;
   ret.frac = (s - bef) * rcp(dcdf); // rescale

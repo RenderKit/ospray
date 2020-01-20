@@ -19,21 +19,21 @@
 
 namespace ospray {
 
-  Texture::Texture()
-  {
-    managedObjectType = OSP_TEXTURE;
-  }
+Texture::Texture()
+{
+  managedObjectType = OSP_TEXTURE;
+}
 
-  std::string Texture::toString() const
-  {
-    return "ospray::Texture";
-  }
+std::string Texture::toString() const
+{
+  return "ospray::Texture";
+}
 
-  Texture *Texture::createInstance(const char *type)
-  {
-    return createInstanceHelper<Texture, OSP_TEXTURE>(type);
-  }
+Texture *Texture::createInstance(const char *type)
+{
+  return createInstanceHelper<Texture, OSP_TEXTURE>(type);
+}
 
-  OSPTYPEFOR_DEFINITION(Texture *);
+OSPTYPEFOR_DEFINITION(Texture *);
 
-} // ::ospray
+} // namespace ospray

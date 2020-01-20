@@ -20,52 +20,52 @@
 using namespace ospcommon::math;
 
 namespace ospray {
-  namespace testing {
+namespace testing {
 
-    struct PtLuminous : public detail::Builder
-    {
-      PtLuminous()           = default;
-      ~PtLuminous() override = default;
+struct PtLuminous : public detail::Builder
+{
+  PtLuminous() = default;
+  ~PtLuminous() override = default;
 
-      cpp::Group buildGroup() const override;
-      cpp::World buildWorld() const override;
-    };
+  cpp::Group buildGroup() const override;
+  cpp::World buildWorld() const override;
+};
 
-    // Inlined definitions ////////////////////////////////////////////////////
+// Inlined definitions ////////////////////////////////////////////////////
 
-    cpp::Group PtLuminous::buildGroup() const
-    {
-      cpp::Geometry sphereGeometry("sphere");
+cpp::Group PtLuminous::buildGroup() const
+{
+  cpp::Geometry sphereGeometry("sphere");
 
-      sphereGeometry.setParam("sphere.position", cpp::Data(vec3f(0.f)));
-      sphereGeometry.setParam("radius", 1.f);
-      sphereGeometry.commit();
+  sphereGeometry.setParam("sphere.position", cpp::Data(vec3f(0.f)));
+  sphereGeometry.setParam("radius", 1.f);
+  sphereGeometry.commit();
 
-      cpp::GeometricModel model(sphereGeometry);
+  cpp::GeometricModel model(sphereGeometry);
 
-      cpp::Material material(rendererType, "luminous");
-      material.setParam("color", vec3f(0.7f, 0.7f, 1.f));
-      material.commit();
+  cpp::Material material(rendererType, "luminous");
+  material.setParam("color", vec3f(0.7f, 0.7f, 1.f));
+  material.commit();
 
-      model.setParam("material", material);
-      model.commit();
+  model.setParam("material", material);
+  model.commit();
 
-      cpp::Group group;
+  cpp::Group group;
 
-      group.setParam("geometry", cpp::Data(model));
-      group.commit();
+  group.setParam("geometry", cpp::Data(model));
+  group.commit();
 
-      return group;
-    }
+  return group;
+}
 
-    cpp::World PtLuminous::buildWorld() const
-    {
-      auto world = Builder::buildWorld();
-      world.removeParam("light");
-      return world;
-    }
+cpp::World PtLuminous::buildWorld() const
+{
+  auto world = Builder::buildWorld();
+  world.removeParam("light");
+  return world;
+}
 
-    OSP_REGISTER_TESTING_BUILDER(PtLuminous, test_pt_luminous);
+OSP_REGISTER_TESTING_BUILDER(PtLuminous, test_pt_luminous);
 
-  }  // namespace testing
-}  // namespace ospray
+} // namespace testing
+} // namespace ospray

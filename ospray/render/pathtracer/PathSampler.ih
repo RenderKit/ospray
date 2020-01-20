@@ -21,7 +21,7 @@ struct PathState;
 struct Ray;
 struct ScreenSample;
 
-void samplePath(const PathContext& pathContext, 
-                PathState& pathState, 
-                Ray& ray, 
-                ScreenSample& sample);
+void samplePath(const PathContext &pathContext,
+    PathState &pathState,
+    Ray &ray,
+    ScreenSample &sample);

@@ -21,26 +21,26 @@
 
 namespace ospray {
 
-  std::string TextureVolume::toString() const
-  {
-    return "ospray::TextureVolume";
-  }
+std::string TextureVolume::toString() const
+{
+  return "ospray::TextureVolume";
+}
 
-  void TextureVolume::commit()
-  {
-    if (this->ispcEquivalent)
-      ispc::delete_uniform(ispcEquivalent);
+void TextureVolume::commit()
+{
+  if (this->ispcEquivalent)
+    ispc::delete_uniform(ispcEquivalent);
 
-    auto *v = dynamic_cast<VolumetricModel *>(getParamObject("volume"));
+  auto *v = dynamic_cast<VolumetricModel *>(getParamObject("volume"));
 
-    if (v == nullptr)
-      throw std::runtime_error("volume texture must have 'volume' object");
+  if (v == nullptr)
+    throw std::runtime_error("volume texture must have 'volume' object");
 
-    volume = v;
+  volume = v;
 
-    this->ispcEquivalent = ispc::TextureVolume_create(v->getIE());
-  }
+  this->ispcEquivalent = ispc::TextureVolume_create(v->getIE());
+}
 
-  OSP_REGISTER_TEXTURE(TextureVolume, volume);
+OSP_REGISTER_TEXTURE(TextureVolume, volume);
 
-}  // namespace ospray
+} // namespace ospray

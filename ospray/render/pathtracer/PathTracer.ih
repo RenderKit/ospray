@@ -16,15 +16,16 @@
 
 #pragma once
 
-#include "math/vec.ih"
 #include "fb/FrameBuffer.ih"
-#include "render/util.ih"
 #include "lights/Light.ih"
+#include "math/vec.ih"
 #include "render/Renderer.ih"
+#include "render/util.ih"
 
 #define MAX_LIGHTS 1000
 
-struct PathTracer {
+struct PathTracer
+{
   Renderer super;
 
   int32 rouletteDepth;
@@ -34,7 +35,7 @@ struct PathTracer {
   vec4f shadowCatcherPlane;
   bool shadowCatcher; // preprocessed
 
-  Material* uniform volumetricMaterial;
+  Material *uniform volumetricMaterial;
 
   const uniform Light *uniform *uniform lights;
   uint32 numLights;

@@ -19,7 +19,8 @@
 #include "../common/OSPCommon.ih"
 
 /*! ISPC-side abstraction for a material. */
-struct Material {
+struct Material
+{
   //! pointer back to the C++-equivalent of this class
-  void *uniform cppEquivalent; 
+  void *uniform cppEquivalent;
 };

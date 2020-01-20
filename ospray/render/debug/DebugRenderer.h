@@ -21,14 +21,14 @@
 
 namespace ospray {
 
-  struct DebugRenderer : public Renderer
-  {
-    DebugRenderer();
-    virtual ~DebugRenderer() override = default;
+struct DebugRenderer : public Renderer
+{
+  DebugRenderer();
+  virtual ~DebugRenderer() override = default;
 
-    virtual std::string toString() const override;
+  virtual std::string toString() const override;
 
-    virtual void commit() override;
-  };
+  virtual void commit() override;
+};
 
 } // namespace ospray

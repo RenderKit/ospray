@@ -24,28 +24,28 @@
 
 namespace ospray {
 
-  struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
-  {
-    VolumetricModel(Volume *geometry);
-    ~VolumetricModel() override = default;
-    std::string toString() const override;
+struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
+{
+  VolumetricModel(Volume *geometry);
+  ~VolumetricModel() override = default;
+  std::string toString() const override;
 
-    void commit() override;
+  void commit() override;
 
-    RTCGeometry embreeGeometryHandle() const;
+  RTCGeometry embreeGeometryHandle() const;
 
-    box3f bounds() const;
+  box3f bounds() const;
 
-    Ref<Volume> getVolume() const;
+  Ref<Volume> getVolume() const;
 
-    void setGeomID(int geomID);
+  void setGeomID(int geomID);
 
-   private:
-    box3f volumeBounds;
-    Ref<Volume> volume;
-    VKLValueSelector vklValueSelector { nullptr };
-  };
+ private:
+  box3f volumeBounds;
+  Ref<Volume> volume;
+  VKLValueSelector vklValueSelector{nullptr};
+};
 
-  OSPTYPEFOR_SPECIALIZATION(VolumetricModel *, OSP_VOLUMETRIC_MODEL);
+OSPTYPEFOR_SPECIALIZATION(VolumetricModel *, OSP_VOLUMETRIC_MODEL);
 
-}  // namespace ospray
+} // namespace ospray

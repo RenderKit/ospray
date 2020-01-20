@@ -26,7 +26,7 @@
 
 struct VolumetricModel
 {
-  Volume *volume;  //!< instanced Volume
+  Volume *volume; //!< instanced Volume
 
   //! Color and opacity transfer function.
   TransferFunction *transferFunction;
@@ -38,15 +38,15 @@ struct VolumetricModel
 
   //! Volume parameters understood by the pathtracer
   float densityScale;
-  float anisotropy;  // the anisotropy of the volume's phase function
-                     // (Heyney-Greenstein)
+  float anisotropy; // the anisotropy of the volume's phase function
+                    // (Heyney-Greenstein)
 };
 
 inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
-                                          varying DifferentialGeometry &dg,
-                                          const varying Ray &ray,
-                                          uniform int64 flags)
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
 {
   dg.areaPDF = 0.f;
-  dg.color   = make_vec4f(0.f);
+  dg.color = make_vec4f(0.f);
 }

@@ -22,9 +22,8 @@
 #include <iostream>
 #include <stdexcept>
 
-inline void initializeOSPRay(int argc,
-                             const char **argv,
-                             bool errorsFatal = true)
+inline void initializeOSPRay(
+    int argc, const char **argv, bool errorsFatal = true)
 {
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
   // e.g. "--osp:debug"
@@ -52,7 +51,7 @@ inline void initializeOSPRay(int argc,
   ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
 
   bool warnAsErrors = true;
-  auto logLevel     = OSP_LOG_WARNING;
+  auto logLevel = OSP_LOG_WARNING;
 
   ospDeviceSetParam(device, "warnAsError", OSP_BOOL, &warnAsErrors);
   ospDeviceSetParam(device, "logLevel", OSP_INT, &logLevel);

@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "math/sampling.ih"
 #include "MicrofacetDistribution.ih"
+#include "math/sampling.ih"
 
 // Cylindrical microfiber distribution for sheen
 // [Conty and Kulla, 2017, "Production Friendly Microfacet Sheen BRDF"]
@@ -34,8 +34,7 @@ inline SheenDistribution make_SheenDistribution(float r)
   return self;
 }
 
-inline float eval(const SheenDistribution& self,
-                  float cosTheta)
+inline float eval(const SheenDistribution &self, float cosTheta)
 {
   float sinTheta = cos2sin(cosTheta);
   float invr = rcp(self.r);
@@ -43,8 +42,7 @@ inline float eval(const SheenDistribution& self,
 }
 
 // Helper function for computing Lambda
-inline float evalL(const SheenDistribution& self,
-                   float x)
+inline float evalL(const SheenDistribution &self, float x)
 {
   const float a0 = 25.3245f;
   const float a1 = 21.5473f;
@@ -61,17 +59,16 @@ inline float evalL(const SheenDistribution& self,
   float w0 = sqr(1.f - r);
   float w1 = 1.f - w0;
 
-  float a = w0*a0 + w1*a1;
-  float b = w0*b0 + w1*b1;
-  float c = w0*c0 + w1*c1;
-  float d = w0*d0 + w1*d1;
-  float e = w0*e0 + w1*e1;
+  float a = w0 * a0 + w1 * a1;
+  float b = w0 * b0 + w1 * b1;
+  float c = w0 * c0 + w1 * c1;
+  float d = w0 * d0 + w1 * d1;
+  float e = w0 * e0 + w1 * e1;
 
   return a / (1.f + b * pow(x, c)) + d * x + e;
 }
 
-inline float evalLambda(const SheenDistribution& self,
-                        float cosTheta)
+inline float evalLambda(const SheenDistribution &self, float cosTheta)
 {
   if (cosTheta < 0.5f)
     return exp(evalL(self, cosTheta));
@@ -80,21 +77,25 @@ inline float evalLambda(const SheenDistribution& self,
 }
 
 // Non-physical artistic adjustment for a softer light terminator
-inline float evalLambdaI(const SheenDistribution& self,
-                         float cosTheta)
+inline float evalLambdaI(const SheenDistribution &self, float cosTheta)
 {
   float x = 1.f + 2.f * sqr(sqr(sqr(1.f - cosTheta)));
   return pow(evalLambda(self, cosTheta), x);
 }
 
 // Smith's height-correlated masking-shadowing function
-// [Heitz, 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"]
-inline float evalG2(const SheenDistribution& self,
-                    float cosThetaO, float cosThetaI, float cosThetaOH, float cosThetaIH)
+// [Heitz, 2014, "Understanding the Masking-Shadowing Function in
+// Microfacet-Based BRDFs"]
+inline float evalG2(const SheenDistribution &self,
+    float cosThetaO,
+    float cosThetaI,
+    float cosThetaOH,
+    float cosThetaIH)
 {
   if (cosThetaO * cosThetaOH <= 0.f || cosThetaI * cosThetaIH <= 0.f)
     return 0.f;
 
-  //return rcp(1.f + evalLambda(self, cosThetaO) + evalLambda(self, cosThetaI));
+  // return rcp(1.f + evalLambda(self, cosThetaO) + evalLambda(self,
+  // cosThetaI));
   return rcp(1.f + evalLambda(self, cosThetaO) + evalLambdaI(self, cosThetaI));
 }

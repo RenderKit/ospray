@@ -22,82 +22,81 @@
 using namespace ospcommon::math;
 
 namespace ospray {
-  namespace testing {
+namespace testing {
 
-    struct PtGlass : public detail::Builder
-    {
-      PtGlass()           = default;
-      ~PtGlass() override = default;
+struct PtGlass : public detail::Builder
+{
+  PtGlass() = default;
+  ~PtGlass() override = default;
 
-      void commit() override;
+  void commit() override;
 
-      cpp::Group buildGroup() const override;
-    };
+  cpp::Group buildGroup() const override;
+};
 
-    static cpp::Material makeGlassMaterial(const std::string &rendererType,
-                                           float eta,
-                                           vec3f color,
-                                           float attenuationDistance)
-    {
-      cpp::Material mat(rendererType, "glass");
-      mat.setParam("eta", eta);
-      mat.setParam("attenuationColor", color);
-      mat.setParam("attenuationDistance", attenuationDistance);
-      mat.commit();
+static cpp::Material makeGlassMaterial(const std::string &rendererType,
+    float eta,
+    vec3f color,
+    float attenuationDistance)
+{
+  cpp::Material mat(rendererType, "glass");
+  mat.setParam("eta", eta);
+  mat.setParam("attenuationColor", color);
+  mat.setParam("attenuationDistance", attenuationDistance);
+  mat.commit();
 
-      return mat;
-    }
+  return mat;
+}
 
-    // Inlined definitions ////////////////////////////////////////////////////
+// Inlined definitions ////////////////////////////////////////////////////
 
-    void PtGlass::commit()
-    {
-      Builder::commit();
-      addPlane = false;
-    }
+void PtGlass::commit()
+{
+  Builder::commit();
+  addPlane = false;
+}
 
-    cpp::Group PtGlass::buildGroup() const
-    {
-      cpp::Geometry sphereGeometry("sphere");
+cpp::Group PtGlass::buildGroup() const
+{
+  cpp::Geometry sphereGeometry("sphere");
 
-      constexpr int dimSize = 5;
+  constexpr int dimSize = 5;
 
-      index_sequence_2D numSpheres(dimSize);
+  index_sequence_2D numSpheres(dimSize);
 
-      std::vector<vec3f> spheres;
-      std::vector<uint8_t> index;
-      std::vector<cpp::Material> materials;
+  std::vector<vec3f> spheres;
+  std::vector<uint8_t> index;
+  std::vector<cpp::Material> materials;
 
-      for (auto i : numSpheres) {
-        auto i_f = static_cast<vec2f>(i);
-        spheres.emplace_back(i_f.x, i_f.y, 0.f);
-        materials.push_back(
-            makeGlassMaterial(rendererType,
-                              lerp(i_f.x / (dimSize - 1), 1.f, 5.f),
-                              vec3f(1.f, 0.25f, 0.f),
-                              lerp(i_f.y / (dimSize - 1), 0.5f, 5.f)));
-        index.push_back(numSpheres.flatten(i));
-      }
+  for (auto i : numSpheres) {
+    auto i_f = static_cast<vec2f>(i);
+    spheres.emplace_back(i_f.x, i_f.y, 0.f);
+    materials.push_back(makeGlassMaterial(rendererType,
+        lerp(i_f.x / (dimSize - 1), 1.f, 5.f),
+        vec3f(1.f, 0.25f, 0.f),
+        lerp(i_f.y / (dimSize - 1), 0.5f, 5.f)));
+    index.push_back(numSpheres.flatten(i));
+  }
 
-      sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
-      sphereGeometry.setParam("radius", 0.4f);
-      sphereGeometry.commit();
+  sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
+  sphereGeometry.setParam("radius", 0.4f);
+  sphereGeometry.commit();
 
-      cpp::GeometricModel model(sphereGeometry);
+  cpp::GeometricModel model(sphereGeometry);
 
-      model.setParam("material", cpp::Data(materials));
-      model.setParam("index", cpp::Data(index));
-      model.commit();
+  model.setParam("material", cpp::Data(materials));
+  model.setParam("index", cpp::Data(index));
+  model.commit();
 
-      cpp::Group group;
+  cpp::Group group;
 
-      group.setParam("geometry", cpp::Data(model));
-      group.commit();
+  group.setParam("geometry", cpp::Data(model));
+  group.commit();
 
-      return group;
-    }
+  return group;
+}
 
-    OSP_REGISTER_TESTING_BUILDER(PtGlass, test_pt_glass);
+OSP_REGISTER_TESTING_BUILDER(PtGlass, test_pt_glass);
 
-  }  // namespace testing
-}  // namespace ospray
+} // namespace testing
+} // namespace ospray

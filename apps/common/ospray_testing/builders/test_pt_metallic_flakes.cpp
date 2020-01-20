@@ -22,81 +22,78 @@
 using namespace ospcommon::math;
 
 namespace ospray {
-  namespace testing {
+namespace testing {
 
-    struct PtMetallicFlakes : public detail::Builder
-    {
-      PtMetallicFlakes()           = default;
-      ~PtMetallicFlakes() override = default;
+struct PtMetallicFlakes : public detail::Builder
+{
+  PtMetallicFlakes() = default;
+  ~PtMetallicFlakes() override = default;
 
-      void commit() override;
+  void commit() override;
 
-      cpp::Group buildGroup() const override;
-    };
+  cpp::Group buildGroup() const override;
+};
 
-    static cpp::Material makeMetallicFlakesMaterial(
-        const std::string &rendererType,
-        float flakeAmount,
-        float flakeSpread)
-    {
-      cpp::Material mat(rendererType, "metallicPaint");
-      mat.setParam("baseColor", vec3f(1.f, 0.f, 0.f));
-      mat.setParam("flakeAmount", flakeAmount);
-      mat.setParam("flakeSpread", flakeSpread);
-      mat.commit();
+static cpp::Material makeMetallicFlakesMaterial(
+    const std::string &rendererType, float flakeAmount, float flakeSpread)
+{
+  cpp::Material mat(rendererType, "metallicPaint");
+  mat.setParam("baseColor", vec3f(1.f, 0.f, 0.f));
+  mat.setParam("flakeAmount", flakeAmount);
+  mat.setParam("flakeSpread", flakeSpread);
+  mat.commit();
 
-      return mat;
-    }
+  return mat;
+}
 
-    // Inlined definitions ////////////////////////////////////////////////////
+// Inlined definitions ////////////////////////////////////////////////////
 
-    void PtMetallicFlakes::commit()
-    {
-      Builder::commit();
-      addPlane = false;
-    }
+void PtMetallicFlakes::commit()
+{
+  Builder::commit();
+  addPlane = false;
+}
 
-    cpp::Group PtMetallicFlakes::buildGroup() const
-    {
-      cpp::Geometry sphereGeometry("sphere");
+cpp::Group PtMetallicFlakes::buildGroup() const
+{
+  cpp::Geometry sphereGeometry("sphere");
 
-      constexpr int dimSize = 5;
+  constexpr int dimSize = 5;
 
-      index_sequence_2D numSpheres(dimSize);
+  index_sequence_2D numSpheres(dimSize);
 
-      std::vector<vec3f> spheres;
-      std::vector<uint8_t> index;
-      std::vector<cpp::Material> materials;
+  std::vector<vec3f> spheres;
+  std::vector<uint8_t> index;
+  std::vector<cpp::Material> materials;
 
-      for (auto i : numSpheres) {
-        auto i_f = static_cast<vec2f>(i);
-        spheres.emplace_back(i_f.x, i_f.y, 0.f);
-        materials.push_back(
-            makeMetallicFlakesMaterial(rendererType,
-                                       lerp(i_f.x / (dimSize - 1), 1.f, 0.f),
-                                       lerp(i_f.y / (dimSize - 1), 1.f, 0.f)));
-        index.push_back(numSpheres.flatten(i));
-      }
+  for (auto i : numSpheres) {
+    auto i_f = static_cast<vec2f>(i);
+    spheres.emplace_back(i_f.x, i_f.y, 0.f);
+    materials.push_back(makeMetallicFlakesMaterial(rendererType,
+        lerp(i_f.x / (dimSize - 1), 1.f, 0.f),
+        lerp(i_f.y / (dimSize - 1), 1.f, 0.f)));
+    index.push_back(numSpheres.flatten(i));
+  }
 
-      sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
-      sphereGeometry.setParam("radius", 0.4f);
-      sphereGeometry.commit();
+  sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
+  sphereGeometry.setParam("radius", 0.4f);
+  sphereGeometry.commit();
 
-      cpp::GeometricModel model(sphereGeometry);
+  cpp::GeometricModel model(sphereGeometry);
 
-      model.setParam("material", cpp::Data(materials));
-      model.setParam("index", cpp::Data(index));
-      model.commit();
+  model.setParam("material", cpp::Data(materials));
+  model.setParam("index", cpp::Data(index));
+  model.commit();
 
-      cpp::Group group;
+  cpp::Group group;
 
-      group.setParam("geometry", cpp::Data(model));
-      group.commit();
+  group.setParam("geometry", cpp::Data(model));
+  group.commit();
 
-      return group;
-    }
+  return group;
+}
 
-    OSP_REGISTER_TESTING_BUILDER(PtMetallicFlakes, test_pt_metallic_flakes);
+OSP_REGISTER_TESTING_BUILDER(PtMetallicFlakes, test_pt_metallic_flakes);
 
-  }  // namespace testing
-}  // namespace ospray
+} // namespace testing
+} // namespace ospray

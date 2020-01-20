@@ -22,78 +22,78 @@
 using namespace ospcommon::math;
 
 namespace ospray {
-  namespace testing {
+namespace testing {
 
-    struct Boxes : public detail::Builder
-    {
-      Boxes()           = default;
-      ~Boxes() override = default;
+struct Boxes : public detail::Builder
+{
+  Boxes() = default;
+  ~Boxes() override = default;
 
-      void commit() override;
+  void commit() override;
 
-      cpp::Group buildGroup() const override;
+  cpp::Group buildGroup() const override;
 
-     private:
-      vec3i dimensions{4};
-    };
+ private:
+  vec3i dimensions{4};
+};
 
-    // Inlined definitions ////////////////////////////////////////////////////
+// Inlined definitions ////////////////////////////////////////////////////
 
-    void Boxes::commit()
-    {
-      Builder::commit();
+void Boxes::commit()
+{
+  Builder::commit();
 
-      dimensions = getParam<vec3i>("dimensions", vec3i(4));
+  dimensions = getParam<vec3i>("dimensions", vec3i(4));
 
-      addPlane = false;
-    }
+  addPlane = false;
+}
 
-    cpp::Group Boxes::buildGroup() const
-    {
-      cpp::Geometry boxGeometry("box");
+cpp::Group Boxes::buildGroup() const
+{
+  cpp::Geometry boxGeometry("box");
 
-      index_sequence_3D numBoxes(dimensions);
+  index_sequence_3D numBoxes(dimensions);
 
-      std::vector<box3f> boxes;
-      std::vector<vec4f> color;
+  std::vector<box3f> boxes;
+  std::vector<vec4f> color;
 
-      auto dim = reduce_max(dimensions);
+  auto dim = reduce_max(dimensions);
 
-      for (auto i : numBoxes) {
-        auto i_f = static_cast<vec3f>(i);
+  for (auto i : numBoxes) {
+    auto i_f = static_cast<vec3f>(i);
 
-        auto lower = i_f * 5.f;
-        auto upper = lower + (0.75f * 5.f);
-        boxes.emplace_back(lower, upper);
+    auto lower = i_f * 5.f;
+    auto upper = lower + (0.75f * 5.f);
+    boxes.emplace_back(lower, upper);
 
-        auto box_color = (0.8f * i_f / dim) + 0.2f;
-        color.emplace_back(box_color.x, box_color.y, box_color.z, 1.f);
-      }
+    auto box_color = (0.8f * i_f / dim) + 0.2f;
+    color.emplace_back(box_color.x, box_color.y, box_color.z, 1.f);
+  }
 
-      boxGeometry.setParam("box", cpp::Data(boxes));
-      boxGeometry.commit();
+  boxGeometry.setParam("box", cpp::Data(boxes));
+  boxGeometry.commit();
 
-      cpp::GeometricModel model(boxGeometry);
+  cpp::GeometricModel model(boxGeometry);
 
-      model.setParam("color", cpp::Data(color));
+  model.setParam("color", cpp::Data(color));
 
-      if (rendererType == "pathtracer" || rendererType == "scivis") {
-        cpp::Material material(rendererType, "obj");
-        material.commit();
-        model.setParam("material", material);
-      }
+  if (rendererType == "pathtracer" || rendererType == "scivis") {
+    cpp::Material material(rendererType, "obj");
+    material.commit();
+    model.setParam("material", material);
+  }
 
-      model.commit();
+  model.commit();
 
-      cpp::Group group;
+  cpp::Group group;
 
-      group.setParam("geometry", cpp::Data(model));
-      group.commit();
+  group.setParam("geometry", cpp::Data(model));
+  group.commit();
 
-      return group;
-    }
+  return group;
+}
 
-    OSP_REGISTER_TESTING_BUILDER(Boxes, boxes);
+OSP_REGISTER_TESTING_BUILDER(Boxes, boxes);
 
-  }  // namespace testing
-}  // namespace ospray
+} // namespace testing
+} // namespace ospray

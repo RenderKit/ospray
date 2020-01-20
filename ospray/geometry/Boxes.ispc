@@ -32,7 +32,7 @@ struct Boxes
 unmasked void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   Boxes *uniform self = (Boxes * uniform) args->geometryUserPtr;
-  uniform int primID  = args->primID;
+  uniform int primID = args->primID;
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
 
@@ -40,13 +40,13 @@ unmasked void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
 }
 
 void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
-                            const uniform bool isOcclusionTest)
+    const uniform bool isOcclusionTest)
 {
   // make sure to set the mask
   if (!args->valid[programIndex])
     return;
 
-  Boxes *uniform self      = (Boxes * uniform) args->geometryUserPtr;
+  Boxes *uniform self = (Boxes * uniform) args->geometryUserPtr;
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
 
   uniform int primID = args->primID;
@@ -68,12 +68,9 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   }
 
   if (hit) {
-    if(isOcclusionTest)
-    {
+    if (isOcclusionTest) {
       ray->t = neg_inf;
-    }
-    else
-    {
+    } else {
       ray->instID = args->context->instID[0];
       ray->geomID = 0;
       ray->primID = primID;
@@ -94,9 +91,9 @@ unmasked void Boxes_occluded(
 }
 
 static void Boxes_postIntersect(const Geometry *uniform geometry,
-                                varying DifferentialGeometry &dg,
-                                const varying Ray &ray,
-                                uniform int64 flags)
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
 {
   dg.Ng = dg.Ns = ray.Ng;
 }

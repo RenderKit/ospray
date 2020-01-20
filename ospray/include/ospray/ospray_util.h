@@ -24,47 +24,44 @@ extern "C" {
 
 // OSPData helpers //////////////////////////////////////////////////////////
 
-OSPRAY_INTERFACE OSPData ospNewSharedData1D(const void *sharedData,
-                                            OSPDataType type,
-                                            uint64_t numItems);
+OSPRAY_INTERFACE OSPData ospNewSharedData1D(
+    const void *sharedData, OSPDataType type, uint64_t numItems);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData1DStride(const void *sharedData,
-                                                  OSPDataType type,
-                                                  uint64_t numItems,
-                                                  int64_t byteStride);
+    OSPDataType type,
+    uint64_t numItems,
+    int64_t byteStride);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData2D(const void *sharedData,
-                                            OSPDataType type,
-                                            uint64_t numItems1,
-                                            uint64_t numItems2);
+    OSPDataType type,
+    uint64_t numItems1,
+    uint64_t numItems2);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData2DStride(const void *sharedData,
-                                                  OSPDataType type,
-                                                  uint64_t numItems1,
-                                                  int64_t byteStride1,
-                                                  uint64_t numItems2,
-                                                  int64_t byteStride2);
+    OSPDataType type,
+    uint64_t numItems1,
+    int64_t byteStride1,
+    uint64_t numItems2,
+    int64_t byteStride2);
 
 OSPRAY_INTERFACE OSPData ospNewSharedData3D(const void *sharedData,
-                                            OSPDataType type,
-                                            uint64_t numItems1,
-                                            uint64_t numItems2,
-                                            uint64_t numItems3);
+    OSPDataType type,
+    uint64_t numItems1,
+    uint64_t numItems2,
+    uint64_t numItems3);
 
 OSPRAY_INTERFACE OSPData ospNewData1D(OSPDataType type, uint64_t numItems);
 
-OSPRAY_INTERFACE OSPData ospNewData2D(OSPDataType type,
-                                      uint64_t numItems1,
-                                      uint64_t numItems2);
+OSPRAY_INTERFACE OSPData ospNewData2D(
+    OSPDataType type, uint64_t numItems1, uint64_t numItems2);
 
-OSPRAY_INTERFACE void ospCopyData1D(const OSPData source,
-                                    OSPData destination,
-                                    uint64_t destinationIndex);
+OSPRAY_INTERFACE void ospCopyData1D(
+    const OSPData source, OSPData destination, uint64_t destinationIndex);
 
 OSPRAY_INTERFACE void ospCopyData2D(const OSPData source,
-                                    OSPData destination,
-                                    uint64_t destinationIndex1,
-                                    uint64_t destinationIndex2);
+    OSPData destination,
+    uint64_t destinationIndex1,
+    uint64_t destinationIndex2);
 
 // Parameter helpers //////////////////////////////////////////////////////////
 
@@ -94,11 +91,9 @@ OSPRAY_INTERFACE void ospSetObjectAsData(OSPObject target,
 // Rendering helpers //////////////////////////////////////////////////////////
 
 // Start a frame task and immediately wait on it, return frame buffer varaince
-OSPRAY_INTERFACE float ospRenderFrameBlocking(OSPFrameBuffer,
-                                              OSPRenderer,
-                                              OSPCamera,
-                                              OSPWorld);
+OSPRAY_INTERFACE float ospRenderFrameBlocking(
+    OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 
 #ifdef __cplusplus
-}  // extern "C"
+} // extern "C"
 #endif
