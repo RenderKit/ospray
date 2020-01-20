@@ -1,10 +1,9 @@
 #!/bin/bash
-## Copyright 2014-2019 Intel Corporation
+## Copyright 2014-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 #### Helper functions ####
 
-# check version of symbols
 function check_symbols
 {
   for sym in `nm $1 | grep $2_`
@@ -31,6 +30,17 @@ function check_symbols
       fi
     fi
   done
+}
+
+function check_imf
+{
+for lib in "$@"
+do
+  if [ -n "`ldd $lib | fgrep libimf.so`" ]; then
+    echo "Error: dependency to 'libimf.so' found"
+    exit 3
+  fi
+done
 }
 
 #### Set variables for script ####
@@ -96,6 +106,13 @@ make -j $THREADS preinstall
 check_symbols libospray.so GLIBC   2 14 0
 check_symbols libospray.so GLIBCXX 3 4 14
 check_symbols libospray.so CXXABI  1 3 5
+
+check_symbols libospray_module_ispc.so GLIBC   2 14 0
+check_symbols libospray_module_ispc.so GLIBCXX 3 4 14
+check_symbols libospray_module_ispc.so CXXABI  1 3 5
+
+check_imf libospray.so libospray_module_ispc.so
+
 
 make -j $THREADS package || exit 2
 
