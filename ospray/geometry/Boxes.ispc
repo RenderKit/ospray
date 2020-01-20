@@ -68,7 +68,7 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   }
 
   if (hit) {
-    cif(isOcclusionTest)
+    if(isOcclusionTest)
     {
       ray->t = neg_inf;
     }

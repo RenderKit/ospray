@@ -71,7 +71,7 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
 
   flags &= self->flagMask;
 
-  cif (flags & DG_NS) {
+  if (flags & DG_NS) {
     const vec3f a = get_vec3f(self->normal, index.x);
     const vec3f b = get_vec3f(self->normal, index.y);
     const vec3f c = get_vec3f(self->normal, index.z);
@@ -79,7 +79,7 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
     dg.Ns         = quad_interpolate(uv, a, b, c, d);
   }
 
-  cif (flags & DG_COLOR) {
+  if (flags & DG_COLOR) {
     const vec4f a = get_vec4f(self->color, index.x);
     const vec4f b = get_vec4f(self->color, index.y);
     const vec4f c = get_vec4f(self->color, index.z);
@@ -91,15 +91,15 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
-  cif (and(or(compute_texcoord, compute_tangents), valid(self->texcoord))) {
+  if (and(or(compute_texcoord, compute_tangents), valid(self->texcoord))) {
     const vec2f a = get_vec2f(self->texcoord, index.x);
     const vec2f b = get_vec2f(self->texcoord, index.y);
     const vec2f d = get_vec2f(self->texcoord, index.w);
-    cif (compute_texcoord) {
+    if (compute_texcoord) {
       const vec2f c = get_vec2f(self->texcoord, index.z);
       dg.st = quad_interpolate(uv, a, b, c, d);
     }
-    cif (compute_tangents) {
+    if (compute_tangents) {
       const vec2f dst02 = a - d;
       const vec2f dst12 = b - d;
       const float det   = dst02.x * dst12.y - dst02.y * dst12.x;
@@ -135,14 +135,14 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
 
   flags &= self->flagMask;
 
-  cif (flags & DG_NS) {
+  if (flags & DG_NS) {
     const vec3f a = get_vec3f(self->normal, index.x);
     const vec3f b = get_vec3f(self->normal, index.y);
     const vec3f c = get_vec3f(self->normal, index.z);
     dg.Ns         = interpolate(uv, a, b, c);
   }
 
-  cif (flags & DG_COLOR) {
+  if (flags & DG_COLOR) {
     const vec4f a = get_vec4f(self->color, index.x);
     const vec4f b = get_vec4f(self->color, index.y);
     const vec4f c = get_vec4f(self->color, index.z);
@@ -153,13 +153,13 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
-  cif (and(or(compute_texcoord, compute_tangents), valid(self->texcoord))) {
+  if (and(or(compute_texcoord, compute_tangents), valid(self->texcoord))) {
     const vec2f a = get_vec2f(self->texcoord, index.x);
     const vec2f b = get_vec2f(self->texcoord, index.y);
     const vec2f c = get_vec2f(self->texcoord, index.z);
-    cif (compute_texcoord)
+    if (compute_texcoord)
       dg.st = interpolate(uv, a, b, c);
-    cif (compute_tangents) {
+    if (compute_tangents) {
       const vec2f dst02 = a - c;
       const vec2f dst12 = b - c;
       const float det   = dst02.x * dst12.y - dst02.y * dst12.x;
@@ -307,10 +307,10 @@ export void *uniform Mesh_set(void *uniform _self,
     QuadMesh_postIntersect;
 
   self->flagMask = -1;
-  cif (!valid(self->normal))
+  if (!valid(self->normal))
     self->flagMask &= ~DG_NS;
-  cif (!valid(self->color))
+  if (!valid(self->color))
     self->flagMask &= ~DG_COLOR;
-  cif (!valid(self->texcoord))
+  if (!valid(self->texcoord))
     self->flagMask &= ~DG_TEXCOORD;
 }

@@ -44,7 +44,7 @@ static void Curves_postIntersect(const Geometry *uniform _self,
   Curves *uniform self = (Curves * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   flags &= self->flagMask;
-  cif(flags & DG_COLOR)
+  if(flags & DG_COLOR)
   {
     rtcInterpolateV1(self->geom,
                      ray.primID,
@@ -57,7 +57,7 @@ static void Curves_postIntersect(const Geometry *uniform _self,
                      NULL,
                      4);
   }
-  cif(flags & DG_TEXCOORD)
+  if(flags & DG_TEXCOORD)
   {
     rtcInterpolateV1(self->geom,
                      ray.primID,
@@ -89,7 +89,7 @@ static void CurvesUserGeometry_postIntersect(const Geometry *uniform self,
     dg.color           = lerp(ray.u, col0, col1);
   }
 
-  cif(and(flags & DG_TEXCOORD, valid(self->texcoord)))
+  if(and(flags & DG_TEXCOORD, valid(self->texcoord)))
   {
     const uint32 index = get_int32(self->index, ray.primID);
     const vec2f tc0    = get_vec2f(self->texcoord, index);
