@@ -115,7 +115,8 @@ all devices:
   string errorOutput  convenience for setting where error messages go; valid
                       values  are `cerr` and `cout`
 
-  bool   debug        set debug mode; equivalent to logLevel=2 and numThreads=1
+  bool   debug        set debug mode; equivalent to `logLevel=debug` and
+                      `numThreads=1`
 
   bool   warnAsError  send `warning` and `error` messages through the error
                       callback, otherwise send `warning` messages through
@@ -344,8 +345,8 @@ otherwise accidental type casting can occur. This is especially true for
 pointer types (`OSP_VOID_PTR` and `OSPObject` handles), as they will
 implicitly cast to `void *`, but be incorrectly interpreted. To help
 with some of these issues, there also exist variants of `ospSetParam`
-for specific types, such as `ospSetInt` and `ospSetVec3f` in the
-[OSPRay utility library](util.md) (found in `ospray_util.h`).
+for specific types, such as `ospSetInt` and `ospSetVec3f` in the OSPRay
+utility library (found in `ospray_util.h`).
 
 Users can also remove parameters that have been explicitly set from
 `ospSetParam`. Any parameters which have been removed will go back to
@@ -2234,7 +2235,7 @@ they are in the array.
   : Parameters accepted by the framebuffer.
 
 
-### Image Operation {-}
+### Image Operation
 
 Image operations are functions that are applied to every pixel of a
 frame. Examples include post-processing,
@@ -2243,7 +2244,7 @@ To create a new pixel operation of given type `type` use
 
     OSPImageOperation ospNewImageOperation(const char *type);
 
-#### Tone Mapper {-}
+#### Tone Mapper
 
 The tone mapper is a pixel operation which implements a generic filmic tone
 mapping operator. Using the default parameters it approximates the Academy
@@ -2289,7 +2290,7 @@ parameters to the values listed in the table below.
   : Filmic tone mapping curve parameters. Note that the curve includes an
   exposure bias to match 18% middle gray.
 
-#### Denoiser {-}
+#### Denoiser
 
 OSPRay comes with a module that adds support for Intel® Open Image Denoise.
 This is provided as an optional module as it creates an additional project
@@ -2318,10 +2319,7 @@ to continue progressive rendering.
 
 To start an render task, use
 
-    OSPFuture ospRenderFrame(OSPFrameBuffer,
-                             OSPRenderer,
-                             OSPCamera,
-                             OSPWorld);
+    OSPFuture ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 
 This returns an `OSPFuture` handle, which can be used to
 synchronize with the application, cancel, or query for progress of the
@@ -2386,16 +2384,13 @@ rendered, the result is undefined behavior and should be avoided.
 For convenience in certain use cases, `ospray_util.h` provides a
 synchronous version of `ospRenderFrame`:
 
-    float ospRenderFrameBlocking(OSPFrameBuffer,
-                                 OSPRenderer,
-                                 OSPCamera,
-                                 OSPWorld);
+    float ospRenderFrameBlocking(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 
 This version is the equivalent of:
 
-    - `ospRenderFrame`
-    - `ospWait(f, OSP_TASK_FINISHED)`
-    - return `ospGetVariance(fb)`
+    ospRenderFrame
+    ospWait(f, OSP_TASK_FINISHED)
+    return ospGetVariance(fb)
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
 

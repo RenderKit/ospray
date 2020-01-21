@@ -42,9 +42,6 @@ happen to have a fix for it,you can also send us a pull request); for
 missing features please contact us via email at
 <a href="mailto:ospray@googlegroups.com" class="email">ospray@googlegroups.com</a>.
 
-For recent news, updates, and announcements, please see our complete
-[news/updates](https://www.ospray.org/news.html) page.
-
 Join our [mailing
 list](https://groups.google.com/forum/#!forum/ospray-announce/join) to
 receive release announcements and major news regarding OSPRay.
@@ -406,7 +403,7 @@ all devices:
 | string | logLevel    | logging level; valid values (in order of severity) are `none`, `error`, `warning`, `info`, and `debug`                                                                             |
 | string | logOutput   | convenience for setting where status messages go; valid values are `cerr` and `cout`                                                                                               |
 | string | errorOutput | convenience for setting where error messages go; valid values are `cerr` and `cout`                                                                                                |
-| bool   | debug       | set debug mode; equivalent to logLevel=2 and numThreads=1                                                                                                                          |
+| bool   | debug       | set debug mode; equivalent to `logLevel=debug` and `numThreads=1`                                                                                                                  |
 | bool   | warnAsError | send `warning` and `error` messages through the error callback, otherwise send `warning` messages through the message callback; must have sufficient `logLevel` to enable warnings |
 | bool   | setAffinity | bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose                                                            |
 
@@ -652,8 +649,8 @@ accidental type casting can occur. This is especially true for pointer
 types (`OSP_VOID_PTR` and `OSPObject` handles), as they will implicitly
 cast to `void *`, but be incorrectly interpreted. To help with some of
 these issues, there also exist variants of `ospSetParam` for specific
-types, such as `ospSetInt` and `ospSetVec3f` in the [OSPRay utility
-library](util.md) (found in `ospray_util.h`).
+types, such as `ospSetInt` and `ospSetVec3f` in the OSPRay utility
+library (found in `ospray_util.h`).
 
 Users can also remove parameters that have been explicitly set from
 `ospSetParam`. Any parameters which have been removed will go back to
@@ -2395,7 +2392,7 @@ the order they are in the array.
 
 : Parameters accepted by the framebuffer.
 
-### Image Operation {#image-operation .unnumbered}
+### Image Operation
 
 Image operations are functions that are applied to every pixel of a
 frame. Examples include post-processing, filtering, blending, tone
@@ -2406,7 +2403,7 @@ operation of given type `type` use
 OSPImageOperation ospNewImageOperation(const char *type);
 ```
 
-#### Tone Mapper {#tone-mapper .unnumbered}
+#### Tone Mapper
 
 The tone mapper is a pixel operation which implements a generic filmic
 tone mapping operator. Using the default parameters it approximates the
@@ -2442,7 +2439,7 @@ the parameters to the values listed in the table below.
 : Filmic tone mapping curve parameters. Note that the curve includes an
 exposure bias to match 18% middle gray.
 
-#### Denoiser {#denoiser .unnumbered}
+#### Denoiser
 
 OSPRay comes with a module that adds support for Intel® Open Image
 Denoise. This is provided as an optional module as it creates an
@@ -2471,10 +2468,7 @@ to continue progressive rendering.
 To start an render task, use
 
 ``` {.cpp}
-OSPFuture ospRenderFrame(OSPFrameBuffer,
-                         OSPRenderer,
-                         OSPCamera,
-                         OSPWorld);
+OSPFuture ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 ```
 
 This returns an `OSPFuture` handle, which can be used to synchronize
@@ -2538,18 +2532,15 @@ For convenience in certain use cases, `ospray_util.h` provides a
 synchronous version of `ospRenderFrame`:
 
 ``` {.cpp}
-float ospRenderFrameBlocking(OSPFrameBuffer,
-                             OSPRenderer,
-                             OSPCamera,
-                             OSPWorld);
+float ospRenderFrameBlocking(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 ```
 
 This version is the equivalent of:
 
 ``` {.cpp}
-- `ospRenderFrame`
-- `ospWait(f, OSP_TASK_FINISHED)`
-- return `ospGetVariance(fb)`
+ospRenderFrame
+ospWait(f, OSP_TASK_FINISHED)
+return ospGetVariance(fb)
 ```
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
@@ -2564,8 +2555,8 @@ and documentation can be found.
 Examples
 ========
 
-Simple Tutorial
----------------
+Tutorial
+--------
 
 A minimal working example demonstrating how to use OSPRay can be found
 at `apps/tutorials/ospTutorial.c`[^7].

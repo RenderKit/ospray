@@ -1,8 +1,8 @@
 Examples
 ========
 
-Simple Tutorial
----------------
+Tutorial
+--------
 
 A minimal working example demonstrating how to use OSPRay can be found
 at `apps/tutorials/ospTutorial.c`^[A C++ version that uses the C++

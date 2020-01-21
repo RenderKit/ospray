@@ -35,9 +35,6 @@ happen to have a fix for it,you can also send us a pull request); for
 missing features please contact us via email at
 <ospray@googlegroups.com>.
 
-For recent news, updates, and announcements, please see our complete
-[news/updates] page.
-
 Join our [mailing
 list](https://groups.google.com/forum/#!forum/ospray-announce/join) to
 receive release announcements and major news regarding OSPRay.
