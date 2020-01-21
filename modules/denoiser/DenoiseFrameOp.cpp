@@ -115,4 +115,8 @@ OSP_REGISTER_IMAGE_OP(DenoiseFrameOp, frame_denoise);
 
 } // namespace ospray
 
-extern "C" OSPRAY_MODULE_DENOISER_EXPORT void ospray_init_module_denoiser() {}
+extern "C" OSPError ospray_module_init_denoiser(
+    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
+{
+  return ospray::moduleVersionCheck(versionMajor, versionMinor);
+}

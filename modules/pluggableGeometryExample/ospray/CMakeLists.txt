@@ -22,8 +22,9 @@
 # "ospLoadModule(<moduleName>) this module _has_ to
 #
 # a) be called libospray_module_<modulename>.so, and
-# b) contain a (extern C linkage) initializatoin routine named
-#    void ospray_init_module_<moduleName>()
+# b) contain a (extern C linkage) initialization routine named
+#    OSPError ospray_module_init_<moduleName>(int16_t versionMajor,
+#        int16_t versionMinor, int16_t versionPatch)
 #
 add_library(ospray_module_bilinear_patches SHARED)
 
