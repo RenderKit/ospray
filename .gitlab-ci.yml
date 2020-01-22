@@ -201,14 +201,11 @@ build-scan-kw:
 
 source-protex-scan:
   stage: build
-  image: ospray-protex-centos7
+  image: amd64/openjdk:8 
   script:
-    - /tmp/source-scan-protex.sh
-  dependencies:
-  tags:
-    - protex-scan-docker
-  ## Temporarily allow to fail
-  when: manual
+    - scripts/build_gitlab/source-scan-protex.sh
+  dependencies: []
+  tags: [docker]
   allow_failure: true
 
 
