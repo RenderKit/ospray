@@ -15,11 +15,11 @@
 ## ======================================================================== ##
 
 set(OSPRAY_VERSION_MAJOR 2)
-set(OSPRAY_VERSION_MINOR 0)
+set(OSPRAY_VERSION_MINOR 1)
 set(OSPRAY_VERSION_PATCH 0)
 set(OSPRAY_SOVERSION 2)
 set(OSPRAY_VERSION_GITHASH 0)
-set(OSPRAY_VERSION_NOTE "")
+set(OSPRAY_VERSION_NOTE "devel")
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git AND
    IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.git)
