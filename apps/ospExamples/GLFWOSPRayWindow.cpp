@@ -11,6 +11,17 @@
 #include <iostream>
 #include <stdexcept>
 
+// on Windows often only GL 1.1 headers are present
+#ifndef GL_CLAMP_TO_BORDER
+#define GL_CLAMP_TO_BORDER                0x812D
+#endif
+#ifndef GL_SRGB_ALPHA
+#define GL_SRGB_ALPHA                     0x8C42
+#endif
+#ifndef GL_FRAMEBUFFER_SRGB
+#define GL_FRAMEBUFFER_SRGB               0x8DB9
+#endif
+
 static bool g_quitNextFrame = false;
 
 static const std::vector<std::string> g_scenes = {"boxes",
@@ -75,7 +86,8 @@ void error_callback(int error, const char *desc)
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
-GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize)
+GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
+  : denoiserAvailable(denoiser)
 {
   if (activeWindow != nullptr) {
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -90,6 +102,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize)
     throw std::runtime_error("Failed to initialize GLFW!");
   }
 
+  glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
   // create GLFW window
   glfwWindow = glfwCreateWindow(
       windowSize.x, windowSize.y, "OSPRay Tutorial", nullptr, nullptr);
@@ -110,7 +123,6 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize)
 
   // create OpenGL frame buffer texture
   glGenTextures(1, &framebufferTexture);
-  glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, framebufferTexture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -184,17 +196,6 @@ GLFWOSPRayWindow *GLFWOSPRayWindow::getActiveWindow()
   return activeWindow;
 }
 
-void GLFWOSPRayWindow::registerDisplayCallback(
-    std::function<void(GLFWOSPRayWindow *)> callback)
-{
-  displayCallback = callback;
-}
-
-void GLFWOSPRayWindow::registerImGuiCallback(std::function<void()> callback)
-{
-  uiCallback = callback;
-}
-
 void GLFWOSPRayWindow::mainLoop()
 {
   // continue until the user closes the window
@@ -218,8 +219,12 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
 
   // create new frame buffer
   framebuffer = cpp::FrameBuffer(windowSize,
-      OSP_FB_SRGBA,
+      OSP_FB_RGBA32F,
       OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO);
+  if (denoiserEnabled) {
+    cpp::ImageOperation d("frame_denoise");
+    framebuffer.setParam("imageOperation", cpp::Data(d));
+  }
   framebuffer.commit();
 
   // reset OpenGL viewport and orthographic projection
@@ -295,6 +300,9 @@ void GLFWOSPRayWindow::display()
 
   updateTitleBar();
 
+  // Turn on SRGB conversion for OSPRay frame
+  glEnable(GL_FRAMEBUFFER_SRGB);
+
   static bool firstFrame = true;
   if (firstFrame || currentFrame.isReady()) {
     // display frame rate in window title
@@ -313,7 +321,6 @@ void GLFWOSPRayWindow::display()
     auto *fb = framebuffer.map(showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
 
     const GLint glFormat = showAlbedo ? GL_RGB : GL_RGBA;
-    const GLenum glType = showAlbedo ? GL_FLOAT : GL_UNSIGNED_BYTE;
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
         0,
@@ -322,7 +329,7 @@ void GLFWOSPRayWindow::display()
         windowSize.y,
         0,
         glFormat,
-        glType,
+        GL_FLOAT,
         fb);
 
     framebuffer.unmap(fb);
@@ -354,6 +361,9 @@ void GLFWOSPRayWindow::display()
   glVertex2f(windowSize.x, 0.f);
 
   glEnd();
+
+  // Disable SRGB conversion for UI
+  glDisable(GL_FRAMEBUFFER_SRGB);
 
   if (showUi) {
     ImGui::Render();
@@ -465,6 +475,10 @@ void GLFWOSPRayWindow::buildUI()
 
   ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);
   ImGui::Checkbox("show albedo", &showAlbedo);
+  if (denoiserAvailable) {
+    if(ImGui::Checkbox("denoiser", &denoiserEnabled))
+      reshape(this->windowSize);
+  }
 
   ImGui::Separator();
 

@@ -27,22 +27,17 @@ enum class OSPRayRendererType
 class GLFWOSPRayWindow
 {
  public:
-  GLFWOSPRayWindow(const vec2i &windowSize);
+  GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser = false);
 
   ~GLFWOSPRayWindow();
 
   static GLFWOSPRayWindow *getActiveWindow();
 
-  void registerDisplayCallback(
-      std::function<void(GLFWOSPRayWindow *)> callback);
-
-  void registerImGuiCallback(std::function<void()> callback);
-
   void mainLoop();
 
+ protected:
   void addObjectToCommit(OSPObject obj);
 
- protected:
   void updateCamera();
 
   void reshape(const vec2i &newWindowSize);
@@ -60,6 +55,8 @@ class GLFWOSPRayWindow
   vec2i windowSize;
   vec2f previousMouse{-1.f};
 
+  bool denoiserAvailable{false};
+  bool denoiserEnabled{false};
   bool showAlbedo{false};
   bool cancelFrameOnInteraction{false};
 

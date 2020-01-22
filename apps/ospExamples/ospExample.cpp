@@ -9,9 +9,12 @@ using ospcommon::make_unique;
 
 int main(int argc, const char *argv[])
 {
+  bool denoiser = ospLoadModule("denoiser") == OSP_NO_ERROR;
+
   initializeOSPRay(argc, argv);
 
-  auto glfwOSPRayWindow = make_unique<GLFWOSPRayWindow>(vec2i(1024, 768));
+  auto glfwOSPRayWindow =
+      make_unique<GLFWOSPRayWindow>(vec2i(1024, 768), denoiser);
   glfwOSPRayWindow->mainLoop();
   glfwOSPRayWindow.reset();
 
