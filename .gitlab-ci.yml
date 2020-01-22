@@ -40,7 +40,7 @@ variables:
   only:
     - devel
     - master
-    - /^release-.*$/
+    - /release/
 
 .job_template: &test_job
   stage: test-build
