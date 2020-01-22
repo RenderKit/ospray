@@ -155,10 +155,10 @@ box3f Group::getBounds() const
 
   box4f bounds; // NOTE(jda) - Embree expects box4f, NOT box3f...
   rtcGetSceneBounds(sceneGeometries, (RTCBounds *)&bounds);
-  sceneBounds.extend(box3f(vec3f(bounds.lower[0]), vec3f(bounds.upper[0])));
+  sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
 
   rtcGetSceneBounds(sceneVolumes, (RTCBounds *)&bounds);
-  sceneBounds.extend(box3f(vec3f(bounds.lower[0]), vec3f(bounds.upper[0])));
+  sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
 
   return sceneBounds;
 }
