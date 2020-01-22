@@ -1156,24 +1156,42 @@ created by passing the type string "`spot`" to `ospNewLight`. In
 addition to the [general parameters](#lights) understood by all lights
 the spotlight supports the special parameters listed in the table.
 
-  ------ ------------- ----------- ----------------------------------------------
-  Type   Name          Default     Description
-  ------ ------------- ----------- ----------------------------------------------
-  vec3f  position      $(0, 0, 0)$ the center of the spotlight, in world-space
+  ---------- --------------------- ----------- ---------------------------------
+  Type       Name                      Default Description
+  ---------- --------------------- ----------- ---------------------------------
+  vec3f      position              $(0, 0, 0)$ the center of the spotlight, in
+                                               world-space
 
-  vec3f  direction     $(0, 0, 1)$ main emission direction of the spot
+  vec3f      direction             $(0, 0, 1)$ main emission direction of the
+                                               spot
 
-  float  openingAngle          180 full opening angle (in degree) of the spot;
-                                   outside of this cone is no illumination
+  float      openingAngle                  180 full opening angle (in degree) of
+                                               the spot; outside of this cone is
+                                               no illumination
 
-  float  penumbraAngle           5 size (angle in degree) of the "penumbra", the
-                                   region between the rim (of the illumination
-                                   cone) and full intensity of the spot; should
-                                   be smaller than half of `openingAngle`
+  float      penumbraAngle                   5 size (angle in degree) of the
+                                               "penumbra", the region between
+                                               the rim (of the illumination
+                                               cone) and full intensity of the
+                                               spot; should be smaller than half
+                                               of `openingAngle`
 
-  float  radius                  0 the size of the spotlight, the radius of a
-                                   disk with normal `direction`
-  ------ ------------- ----------- ----------------------------------------------
+  float      radius                          0 the size of the spotlight, the
+                                               radius of a disk with normal
+                                               `direction`
+
+  float[]    intensityDistribution             luminous intensity distribution
+                                               for photometric lights; can be 2D
+                                               for assymentric illumination;
+                                               values are assumed to be
+                                               uniformly distributed
+
+  vec3f      c0                                orientation, i.e. direction of
+                                               the C0-(half)plane (only needed
+                                               if illumination via
+                                               `intensityDistribution` is
+                                               asymmetric)
+  ---------- --------------------- ----------- ---------------------------------
   : Special parameters accepted by the spotlight.
 
 ![Angles used by the spotlight.][imgSpotLight]
@@ -1181,6 +1199,10 @@ the spotlight supports the special parameters listed in the table.
 Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer]).
+
+Measured light sources (IES, EULUMDAT, ...) are supported by providing
+an `intensityDistribution` [data] array to modulate the intensity per
+direction.
 
 ### Quad Light
 

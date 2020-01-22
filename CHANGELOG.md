@@ -1,6 +1,9 @@
 Version History
 ---------------
 
+### Changes in v2.1.0:
+-   Add support for photometric lights (e.g. IES or EULUMDAT)
+
 ### Changes in v2.0.0:
 
 -   New major revision of OSPRay brings API breaking improvements over
