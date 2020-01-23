@@ -112,7 +112,6 @@ std::string DenoiseFrameOp::toString() const
 }
 
 OSP_REGISTER_IMAGE_OP(DenoiseFrameOp, denoiser);
-OSP_REGISTER_IMAGE_OP(DenoiseFrameOp, frame_denoise);
 
 } // namespace ospray
 
