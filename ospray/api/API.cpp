@@ -194,7 +194,9 @@ OSPRAY_CATCH_END()
 
 extern "C" OSPDevice ospGetCurrentDevice() OSPRAY_CATCH_BEGIN
 {
-  return (OSPDevice)Device::current.ptr;
+  auto *ptr = Device::current.ptr;
+  ptr->refInc();
+  return (OSPDevice)ptr;
 }
 OSPRAY_CATCH_END(nullptr)
 

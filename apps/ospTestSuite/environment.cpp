@@ -33,6 +33,7 @@ OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
 
   ospDeviceCommit(device);
   ospSetCurrentDevice(device);
+  ospDeviceRelease(device);
 }
 
 void OSPRayEnvironment::ParsArgs(int argc, char **argv)
