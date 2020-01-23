@@ -1,4 +1,4 @@
-// Copyright 2018-2019 Intel Corporation
+// Copyright 2018-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "GLFWOSPRayWindow.h"
@@ -218,9 +218,10 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   windowSize = newWindowSize;
 
   // create new frame buffer
-  framebuffer = cpp::FrameBuffer(windowSize,
-      OSP_FB_RGBA32F,
-      OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO);
+  auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO;
+  if (denoiserEnabled)
+    buffers |= OSP_FB_NORMAL;
+  framebuffer = cpp::FrameBuffer(windowSize, OSP_FB_RGBA32F, buffers);
   if (denoiserEnabled) {
     cpp::ImageOperation d("frame_denoise");
     framebuffer.setParam("imageOperation", cpp::Data(d));
