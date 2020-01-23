@@ -223,7 +223,7 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
     buffers |= OSP_FB_NORMAL;
   framebuffer = cpp::FrameBuffer(windowSize, OSP_FB_RGBA32F, buffers);
   if (denoiserEnabled) {
-    cpp::ImageOperation d("frame_denoise");
+    cpp::ImageOperation d("denoiser");
     framebuffer.setParam("imageOperation", cpp::Data(d));
   }
   framebuffer.commit();

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DenoiseFrameOp.h"
@@ -111,7 +111,7 @@ std::string DenoiseFrameOp::toString() const
   return "ospray::DenoiseFrameOp";
 }
 
-OSP_REGISTER_IMAGE_OP(DenoiseFrameOp, frame_denoise);
+OSP_REGISTER_IMAGE_OP(DenoiseFrameOp, denoiser);
 
 } // namespace ospray
 
