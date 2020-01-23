@@ -182,16 +182,15 @@ void samplePath(const PathContext &pathContext,
     // shade surface
     ShadingContext_Constructor(&ctx);
     if (pathVertex.type == SURFACE) {
-      uniform PathTraceMaterial *material =
-          (uniform PathTraceMaterial *)pathVertex.dg.material;
-      foreach_unique (m in material)
-        if (m != NULL)
-          pathVertex.bsdf =
-              m->getBSDF(m, &ctx, pathVertex.dg, ray, pathState.currentMedium);
-      // terminate path when we don't have any BSDF
-      if (!pathVertex.bsdf)
+      PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
+      // terminate path when we don't have any material
+      if (material == NULL)
         break;
-      pathVertex.albedo = pathVertex.bsdf->albedo;
+      foreach_unique (m in material) {
+        pathVertex.bsdf =
+            m->getBSDF(m, &ctx, pathVertex.dg, ray, pathState.currentMedium);
+        pathVertex.albedo = pathVertex.bsdf->albedo;
+      }
     }
 
     // next event estimation
