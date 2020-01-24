@@ -108,6 +108,7 @@ void samplePath(const PathContext &pathContext,
     traceRay(pathContext.world, ray);
 
     PathVertex pathVertex;
+    pathVertex.bsdf = NULL;
     pathVertex.pdf_w = inf;
     pathVertex.volume = NULL;
     if (noHit(ray)) {
@@ -183,14 +184,18 @@ void samplePath(const PathContext &pathContext,
     ShadingContext_Constructor(&ctx);
     if (pathVertex.type == SURFACE) {
       PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
-      // terminate path when we don't have any material
-      if (material == NULL)
-        break;
       foreach_unique (m in material) {
-        pathVertex.bsdf =
-            m->getBSDF(m, &ctx, pathVertex.dg, ray, pathState.currentMedium);
-        pathVertex.albedo = pathVertex.bsdf->albedo;
+        if (m != NULL) {
+          pathVertex.bsdf =
+              m->getBSDF(m, &ctx, pathVertex.dg, ray, pathState.currentMedium);
+          if (pathVertex.bsdf != NULL)
+            pathVertex.albedo = pathVertex.bsdf->albedo;
+        }
       }
+
+      // terminate path when we don't have any BSDF
+      if (pathVertex.bsdf == NULL)
+        break;
     }
 
     // next event estimation
