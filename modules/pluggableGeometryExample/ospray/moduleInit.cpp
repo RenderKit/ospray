@@ -38,7 +38,7 @@ namespace blp {
     (see comments regarding library name in CMakeLists.txt)
 */
 
-extern "C" OSPError ospray_module_init_bilinear_patches(
+extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_bilinear_patches(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
   std::cout << "#osp: initializing the 'bilinear_patches' module" << std::endl;

@@ -508,7 +508,7 @@ OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
   return renderer->pick(fb, camera, world, screenPos);
 }
 
-extern "C" OSPError ospray_module_init_ispc(
+extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
   return moduleVersionCheck(versionMajor, versionMinor);
