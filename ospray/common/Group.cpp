@@ -19,8 +19,14 @@ inline std::vector<void *> createEmbreeScene(
   std::vector<void *> ptrsToIE;
   for (auto &&obj : objects) {
     Geometry &geom = obj->geometry();
-    rtcAttachGeometry(scene, geom.embreeGeometry);
+    auto liveGeometry = geom.createEmbreeGeometry();
+
+    auto geomID = rtcAttachGeometry(scene, liveGeometry.embreeGeometry);
+    obj->setGeomIE(liveGeometry.ispcEquivalent, geomID);
+
     ptrsToIE.push_back(geom.getIE());
+
+    rtcReleaseGeometry(liveGeometry.embreeGeometry);
   }
 
   rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
@@ -52,6 +58,9 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
 
 static void freeIEPtrs(std::vector<void *> &ptrs)
 {
+  for (auto &p : ptrs)
+    ispc::delete_uniform(p);
+
   ptrs.clear();
 }
 

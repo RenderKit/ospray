@@ -53,12 +53,14 @@ struct BilinearPatches : public ospray::Geometry
     vec3f controlPoint[2][2];
   };
 
-  BilinearPatches();
+  BilinearPatches() = default;
   virtual ~BilinearPatches() override = default;
 
   /*! the commit() message that gets called upon the app calling
       "ospCommit(<thisGeometry>)" */
   virtual void commit() override;
+
+  LiveGeometry createEmbreeGeometry() override;
 
   virtual size_t numPrimitives() const override;
 

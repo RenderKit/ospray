@@ -134,7 +134,7 @@ unmasked void Curves_intersect_kernel(
       ray->t = neg_inf;
     } else {
       ray->primID = primID;
-      ray->geomID = 0;
+      ray->geomID = self->super.geomID;
       ray->instID = args->context->instID[0];
     }
   }

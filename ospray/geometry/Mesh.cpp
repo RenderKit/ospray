@@ -11,11 +11,6 @@
 
 namespace ospray {
 
-Mesh::Mesh()
-{
-  ispcEquivalent = ispc::Mesh_create(this);
-}
-
 std::string Mesh::toString() const
 {
   return "ospray::Mesh";
@@ -31,12 +26,17 @@ void Mesh::commit()
   if (!indexData)
     indexData = getParamDataT<vec4ui>("index", true);
 
-  if (embreeGeometry)
-    rtcReleaseGeometry(embreeGeometry);
+  postCreationInfo(vertexData->size());
+}
 
+LiveGeometry Mesh::createEmbreeGeometry()
+{
   const bool isTri = indexData->type == OSP_VEC3UI;
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(),
+
+  auto ispcEquivalent = ispc::Mesh_create(this);
+  auto embreeGeometry = rtcNewGeometry(ispc_embreeDevice(),
       isTri ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
+
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertexData);
   rtcSetSharedGeometryBuffer(embreeGeometry,
       RTC_BUFFER_TYPE_INDEX,
@@ -48,7 +48,7 @@ void Mesh::commit()
       indexData->size());
   rtcCommitGeometry(embreeGeometry);
 
-  ispc::Mesh_set(getIE(),
+  ispc::Mesh_set(ispcEquivalent,
       ispc(indexData),
       ispc(vertexData),
       ispc(normalData),
@@ -57,7 +57,12 @@ void Mesh::commit()
       colorData && colorData->type == OSP_VEC4F,
       isTri);
 
-  postCreationInfo(vertexData->size());
+  LiveGeometry retval;
+
+  retval.ispcEquivalent = ispcEquivalent;
+  retval.embreeGeometry = embreeGeometry;
+
+  return retval;
 }
 
 size_t Mesh::numPrimitives() const

@@ -10,12 +10,6 @@
 
 namespace ospray {
 
-Boxes::Boxes()
-{
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-  ispcEquivalent = ispc::Boxes_create(this);
-}
-
 std::string Boxes::toString() const
 {
   return "ospray::Boxes";
@@ -25,9 +19,20 @@ void Boxes::commit()
 {
   boxData = getParamDataT<box3f>("box", true);
 
-  ispc::Boxes_set(getIE(), embreeGeometry, ispc(boxData));
-
   postCreationInfo();
+}
+
+LiveGeometry Boxes::createEmbreeGeometry()
+{
+  LiveGeometry retval;
+
+  retval.embreeGeometry =
+      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+  retval.ispcEquivalent = ispc::Boxes_create(this);
+
+  ispc::Boxes_set(retval.ispcEquivalent, retval.embreeGeometry, ispc(boxData));
+
+  return retval;
 }
 
 size_t Boxes::numPrimitives() const

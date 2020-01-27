@@ -59,7 +59,7 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
-      ray->geomID = 0;
+      ray->geomID = self->super.geomID;
       ray->primID = primID;
     }
   }

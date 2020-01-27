@@ -14,8 +14,7 @@ namespace ospray {
 
 Spheres::Spheres()
 {
-  ispcEquivalent = ispc::Spheres_create(this);
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+  // no-op
 }
 
 std::string Spheres::toString() const
@@ -30,14 +29,25 @@ void Spheres::commit()
   radiusData = getParamDataT<float>("sphere.radius");
   texcoordData = getParamDataT<vec2f>("sphere.texcoord");
 
-  ispc::SpheresGeometry_set(getIE(),
-      embreeGeometry,
+  postCreationInfo();
+}
+
+LiveGeometry Spheres::createEmbreeGeometry()
+{
+  LiveGeometry retval;
+
+  retval.ispcEquivalent = ispc::Spheres_create(this);
+  retval.embreeGeometry =
+      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+
+  ispc::SpheresGeometry_set(retval.ispcEquivalent,
+      retval.embreeGeometry,
       ispc(vertexData),
       ispc(radiusData),
       ispc(texcoordData),
       radius);
 
-  postCreationInfo();
+  return retval;
 }
 
 size_t Spheres::numPrimitives() const

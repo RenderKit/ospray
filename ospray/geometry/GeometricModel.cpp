@@ -66,11 +66,16 @@ void GeometricModel::commit()
   }
 
   ispc::GeometricModel_set(getIE(),
-      geometry().getIE(),
       ispc(colorData),
       ispc(indexData),
       ispc(materialData),
       useRendererMaterialList);
+}
+
+void GeometricModel::setGeomIE(void *geomIE, int geomID)
+{
+  ispc::Geometry_set_geomID(geomIE, geomID);
+  ispc::GeometricModel_set_geomIE(getIE(), geomIE);
 }
 
 OSPTYPEFOR_DEFINITION(GeometricModel *);

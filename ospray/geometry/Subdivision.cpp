@@ -11,13 +11,6 @@
 
 namespace ospray {
 
-Subdivision::Subdivision()
-{
-  ispcEquivalent = ispc::Subdivision_create(this);
-  embreeGeometry =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
-}
-
 std::string Subdivision::toString() const
 {
   return "ospray::Subdivision";
@@ -58,6 +51,15 @@ void Subdivision::commit()
     for (auto &&face : *facesData)
       face = 4;
   }
+
+  postCreationInfo(vertexData->size());
+}
+
+LiveGeometry Subdivision::createEmbreeGeometry()
+{
+  auto ispcEquivalent = ispc::Subdivision_create(this);
+  auto embreeGeometry =
+      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
 
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertexData);
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_INDEX, indexData);
@@ -120,9 +122,15 @@ void Subdivision::commit()
 
   rtcCommitGeometry(embreeGeometry);
 
-  ispc::Subdivision_set(getIE(), embreeGeometry, colorsData, texcoordData);
+  ispc::Subdivision_set(
+      ispcEquivalent, embreeGeometry, colorsData, texcoordData);
 
-  postCreationInfo(vertexData->size());
+  LiveGeometry retval;
+
+  retval.ispcEquivalent = ispcEquivalent;
+  retval.embreeGeometry = embreeGeometry;
+
+  return retval;
 }
 
 size_t Subdivision::numPrimitives() const

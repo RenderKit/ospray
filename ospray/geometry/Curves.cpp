@@ -44,11 +44,6 @@ static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
 
 // Curves definitions ///////////////////////////////////////////////////////
 
-Curves::Curves()
-{
-  ispcEquivalent = ispc::Curves_create(this);
-}
-
 std::string Curves::toString() const
 {
   return "ospray::Curves";
@@ -101,8 +96,6 @@ void Curves::commit()
 
   embreeCurveType = curveMap[std::make_pair(curveType, curveBasis)];
 
-  createEmbreeGeometry();
-
   postCreationInfo(vertexData->size());
 }
 
@@ -111,15 +104,13 @@ size_t Curves::numPrimitives() const
   return indexData->size();
 }
 
-void Curves::createEmbreeGeometry()
+LiveGeometry Curves::createEmbreeGeometry()
 {
-  if (embreeGeometry)
-    rtcReleaseGeometry(embreeGeometry);
-
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
+  auto embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
+  auto ispcEquivalent = ispc::Curves_create(this);
 
   if (embreeCurveType == RTC_GEOMETRY_TYPE_USER) {
-    ispc::Curves_setUserGeometry(getIE(),
+    ispc::Curves_setUserGeometry(ispcEquivalent,
         embreeGeometry,
         radius,
         ispc(indexData),
@@ -144,11 +135,21 @@ void Curves::createEmbreeGeometry()
           embreeGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, texcoordData, 1);
     }
 
-    ispc::Curves_set(
-        getIE(), embreeGeometry, colorData, texcoordData, indexData->size());
+    ispc::Curves_set(ispcEquivalent,
+        embreeGeometry,
+        colorData,
+        texcoordData,
+        indexData->size());
 
     rtcCommitGeometry(embreeGeometry);
   }
+
+  LiveGeometry retval;
+
+  retval.embreeGeometry = embreeGeometry;
+  retval.ispcEquivalent = ispcEquivalent;
+
+  return retval;
 }
 
 OSP_REGISTER_GEOMETRY(Curves, curve);

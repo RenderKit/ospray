@@ -13,12 +13,6 @@ Geometry::Geometry()
   managedObjectType = OSP_GEOMETRY;
 }
 
-Geometry::~Geometry()
-{
-  if (embreeGeometry)
-    rtcReleaseGeometry(embreeGeometry);
-}
-
 std::string Geometry::toString() const
 {
   return "ospray::Geometry";

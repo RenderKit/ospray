@@ -10,12 +10,14 @@ namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
 {
-  Isosurfaces();
+  Isosurfaces() = default;
   virtual ~Isosurfaces() override;
 
   virtual std::string toString() const override;
 
   virtual void commit() override;
+
+  LiveGeometry createEmbreeGeometry() override;
 
   virtual size_t numPrimitives() const override;
 
