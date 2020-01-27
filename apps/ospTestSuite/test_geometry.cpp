@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Intel Corporation
+// Copyright 2017-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_fixture.h"
@@ -43,7 +43,8 @@ INSTANTIATE_TEST_CASE_P(TestScenesGeometry,
                            "empty",
                            "random_spheres",
                            "streamlines",
-                           "subdivision_cube"),
+                           "subdivision_cube",
+                           "cornell_box_photometric"),
         ::testing::Values("scivis", "pathtracer")));
 
 INSTANTIATE_TEST_CASE_P(TestScenesPtMaterials,
