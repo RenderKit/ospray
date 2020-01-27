@@ -1,18 +1,5 @@
-## ======================================================================== ##
-## Copyright 2009-2019 Intel Corporation                                    ##
-##                                                                          ##
-## Licensed under the Apache License, Version 2.0 (the "License");          ##
-## you may not use this file except in compliance with the License.         ##
-## You may obtain a copy of the License at                                  ##
-##                                                                          ##
-##     http://www.apache.org/licenses/LICENSE-2.0                           ##
-##                                                                          ##
-## Unless required by applicable law or agreed to in writing, software      ##
-## distributed under the License is distributed on an "AS IS" BASIS,        ##
-## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
-## See the License for the specific language governing permissions and      ##
-## limitations under the License.                                           ##
-## ======================================================================== ##
+## Copyright 2009-2019 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 set(CMAKE_INSTALL_SCRIPTDIR scripts)
 if (OSPRAY_ZIP_MODE)
@@ -67,7 +54,7 @@ install(FILES ${PROJECT_SOURCE_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDI
 ##############################################################
 
 set(CPACK_PACKAGE_NAME "OSPRay")
-set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}")
+set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}.x86_64")
 #set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/ospray-doc/images/icon.png)
 #set(CPACK_PACKAGE_RELOCATABLE TRUE)
 set(CPACK_STRIP_FILES TRUE) # do not disable, stripping symbols is important for security reasons
@@ -124,9 +111,10 @@ if (WIN32) # Windows specific settings
     message(FATAL_ERROR "Only 64bit architecture supported.")
   endif()
 
+  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.windows")
+
   if (OSPRAY_ZIP_MODE)
     set(CPACK_GENERATOR ZIP)
-    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.windows")
   else()
     set(CPACK_GENERATOR WIX)
     set(CPACK_WIX_ROOT_FEATURE_DESCRIPTION "OSPRay is an open source, scalable, and portable ray tracing engine for high-performance, high-fidelity visualization.")
@@ -145,14 +133,13 @@ elseif(APPLE) # MacOSX specific settings
 
   configure_file(${PROJECT_SOURCE_DIR}/README.md ${PROJECT_BINARY_DIR}/ReadMe.txt COPYONLY)
   set(CPACK_RESOURCE_FILE_README ${PROJECT_BINARY_DIR}/ReadMe.txt)
+  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.macosx")
 
   if (OSPRAY_ZIP_MODE)
     set(CPACK_GENERATOR ZIP)
-    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64.macosx")
   else()
     set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
     set(CPACK_GENERATOR productbuild)
-    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64")
     set(CPACK_PACKAGE_NAME ospray-${OSPRAY_VERSION})
     set(CPACK_PACKAGE_VENDOR "intel") # creates short name com.intel.ospray.xxx in pkgutil
   endif()
@@ -160,9 +147,10 @@ elseif(APPLE) # MacOSX specific settings
 
 else() # Linux specific settings
 
+  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.linux")
+
   if (OSPRAY_ZIP_MODE)
     set(CPACK_GENERATOR TGZ)
-    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64.linux")
   else()
     set(CPACK_GENERATOR RPM)
     set(CPACK_RPM_COMPONENT_INSTALL ON)

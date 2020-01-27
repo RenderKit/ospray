@@ -19,6 +19,8 @@ pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_fig2svg)
 
 PANDOC := pandoc
 PDMINVERSION := 2000000
+PDVERSION := $(shell $(PANDOC) --version|head -n 1)
+$(info Using $(PDVERSION))
 PDOK := $(shell expr `$(PANDOC) --version|head -n 1|cut -d' ' -f 2| sed -e 's/\.\([0-9][0-9]\)/\1/g' -e 's/\.\([0-9]\)/0\1/g' -e 's/^[0-9]\{3,4\}$$/&00/' -e 's/^[0-9]\{5,6\}$$/&00/'` \>= $(PDMINVERSION))
 ifneq "$(PDOK)" "1"
   $(error You need at least pandoc v2.0)

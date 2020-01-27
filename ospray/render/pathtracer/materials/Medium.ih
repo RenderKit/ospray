@@ -1,26 +1,14 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+#include "math/vec.ih"
 
 struct Medium
 {
-  vec3f attenuation;  //!< negative Napierian attenuation coefficient,
-                      // i.e. wrt. the natural base e
-  float ior;          //!< Refraction index of medium.
+  vec3f attenuation; //!< negative Napierian attenuation coefficient,
+                     // i.e. wrt. the natural base e
+  float ior; //!< Refraction index of medium.
 };
 
 inline Medium make_Medium(const vec3f attenuation, const float ior)
@@ -31,18 +19,22 @@ inline Medium make_Medium(const vec3f attenuation, const float ior)
   return m;
 }
 
-inline Medium make_Medium_vacuum() {
+inline Medium make_Medium_vacuum()
+{
   return make_Medium(make_vec3f(0.0f), 1.0f);
 }
 
-inline bool eq(const Medium &a, const Medium &b) {
+inline bool eq(const Medium &a, const Medium &b)
+{
   return (a.ior == b.ior) & eq(a.attenuation, b.attenuation);
 }
 
-inline bool eq(const Medium &a, const uniform Medium &b) {
+inline bool eq(const Medium &a, const uniform Medium &b)
+{
   return (a.ior == b.ior) & eq(a.attenuation, b.attenuation);
 }
 
-inline uniform bool eq(const uniform Medium &a, const uniform Medium &b) {
+inline uniform bool eq(const uniform Medium &a, const uniform Medium &b)
+{
   return (a.ior == b.ior) & eq(a.attenuation, b.attenuation);
 }

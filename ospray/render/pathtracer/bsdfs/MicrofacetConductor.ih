@@ -17,18 +17,19 @@
 #pragma once
 
 #include "BSDF.ih"
-#include "GGXDistribution.ih"
 #include "Fresnel.ih"
+#include "GGXDistribution.ih"
 #include "MicrofacetAlbedoTables.ih"
 
-// Microfacet conductor BRDF with the Smith microsurface model and approximate multiple scattering.
-// [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
-// [Jakob et al., 2014, "A Comprehensive Framework for Rendering Layered Materials", Extended Technical Report]
+// Microfacet conductor BRDF with the Smith microsurface model and approximate
+// multiple scattering. [Kulla and Conty, 2017, "Revisiting Physically Based
+// Shading at Imageworks"] [Jakob et al., 2014, "A Comprehensive Framework for
+// Rendering Layered Materials", Extended Technical Report]
 struct MicrofacetConductor
 {
   BSDF super;
 
-  Fresnel* uniform fresnel;
+  Fresnel *uniform fresnel;
   GGXDistribution microfacet;
   float roughness;
 
@@ -37,10 +38,11 @@ struct MicrofacetConductor
   vec3f fmsScale;
 };
 
-inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF* uniform super,
-                                             const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes MicrofacetConductor_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
-  const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;
+  const varying MicrofacetConductor *uniform self =
+      (const varying MicrofacetConductor *uniform)super;
   BSDF_EvalRes res;
 
   float cosThetaO = dot(wo, getN(super));
@@ -67,17 +69,22 @@ inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF* uniform super,
   // Energy compensation
   float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
   float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
-  vec3f fms = self->fmsScale * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+  vec3f fms = self->fmsScale
+      * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
 
-  res.pdf = whPdf * rcp(4.f*abs(cosThetaOH));
-  res.value = F * (D * G * rcp(4.f*cosThetaO)) + fms;
+  res.pdf = whPdf * rcp(4.f * abs(cosThetaOH));
+  res.value = F * (D * G * rcp(4.f * cosThetaO)) + fms;
   return res;
 }
 
-inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform super,
-                                                 const vec3f& wo, const vec2f& s, float ss)
+inline BSDF_SampleRes MicrofacetConductor_sample(
+    const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
 {
-  const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;
+  const varying MicrofacetConductor *uniform self =
+      (const varying MicrofacetConductor *uniform)super;
   BSDF_SampleRes res;
 
   float cosThetaO = dot(wo, getN(super));
@@ -106,38 +113,52 @@ inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform sup
   // Energy compensation
   float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
   float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
-  vec3f fms = self->fmsScale * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+  vec3f fms = self->fmsScale
+      * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
 
   res.type = BSDF_GLOSSY_REFLECTION;
-  res.pdf = whPdf * rcp(4.f*abs(cosThetaOH));
-  res.weight = F * (G * rcp_safe(evalG1(self->microfacet, wo0, cosThetaOH))) + (fms * rcp(res.pdf));
+  res.pdf = whPdf * rcp(4.f * abs(cosThetaOH));
+  res.weight = F * (G * rcp_safe(evalG1(self->microfacet, wo0, cosThetaOH)))
+      + (fms * rcp(res.pdf));
 
   return res;
 }
 
-inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform self,
-                                            const varying linear3f* uniform frame,
-                                            Fresnel* uniform fresnel, float roughness, float anisotropy)
+inline void MicrofacetConductor_Constructor(
+    varying MicrofacetConductor *uniform self,
+    const varying linear3f *uniform frame,
+    Fresnel *uniform fresnel,
+    float roughness,
+    float anisotropy)
 {
   // Energy compensation
   self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
   vec3f Favg = fresnel->evalAvg(fresnel);
-  self->fmsScale = sqr(Favg) * self->Eavg / (1.f - Favg * (1.f - self->Eavg)); // Stephen Hill's tweak
+  self->fmsScale = sqr(Favg) * self->Eavg
+      / (1.f - Favg * (1.f - self->Eavg)); // Stephen Hill's tweak
 
-  BSDF_Constructor(&self->super, Favg * self->Eavg, // TODO better estimate
-                   BSDF_GLOSSY_REFLECTION,
-                   MicrofacetConductor_eval, MicrofacetConductor_sample,
-                   frame);
+  BSDF_Constructor(&self->super,
+      Favg * self->Eavg, // TODO better estimate
+      BSDF_GLOSSY_REFLECTION,
+      MicrofacetConductor_eval,
+      MicrofacetConductor_sample,
+      frame);
   self->fresnel = fresnel;
-  self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
+  self->microfacet =
+      make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   self->roughness = roughness;
 }
 
-inline varying BSDF* uniform MicrofacetConductor_create(uniform ShadingContext* uniform ctx,
-                                                        const varying linear3f* uniform frame,
-                                                        Fresnel* uniform fresnel, float roughness, float anisotropy)
+inline varying BSDF *uniform MicrofacetConductor_create(
+    uniform ShadingContext *uniform ctx,
+    const varying linear3f *uniform frame,
+    Fresnel *uniform fresnel,
+    float roughness,
+    float anisotropy)
 {
-  varying MicrofacetConductor* uniform self = (varying MicrofacetConductor* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetConductor));
+  varying MicrofacetConductor *uniform self =
+      (varying MicrofacetConductor * uniform)
+          ShadingContext_alloc(ctx, sizeof(MicrofacetConductor));
   MicrofacetConductor_Constructor(self, frame, fresnel, roughness, anisotropy);
   return &self->super;
 }

@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -21,10 +8,11 @@
 #include "GGXDistribution.ih"
 #include "MicrofacetAlbedoTables.ih"
 
-// Microfacet dielectric BSDF with the Smith microsurface model and approximate multiple scattering.
-// [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
-// [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
-// [Jakob et al., 2014, "A Comprehensive Framework for Rendering Layered Materials", Extended Technical Report]
+// Microfacet dielectric BSDF with the Smith microsurface model and approximate
+// multiple scattering. [Walter et al., 2007, "Microfacet Models for Refraction
+// through Rough Surfaces"] [Kulla and Conty, 2017, "Revisiting Physically Based
+// Shading at Imageworks"] [Jakob et al., 2014, "A Comprehensive Framework for
+// Rendering Layered Materials", Extended Technical Report]
 // FIXME: improve robustness
 struct MicrofacetDielectric
 {
@@ -41,10 +29,11 @@ struct MicrofacetDielectric
 };
 
 // Single-scattering lobe
-inline BSDF_EvalRes MicrofacetDielectric_evalSingle(const varying BSDF* uniform super,
-                                                    const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes MicrofacetDielectric_evalSingle(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
-  const varying MicrofacetDielectric* uniform self = (const varying MicrofacetDielectric* uniform)super;
+  const varying MicrofacetDielectric *uniform self =
+      (const varying MicrofacetDielectric *uniform)super;
   BSDF_EvalRes res;
 
   float cosThetaO = dot(wo, getN(super));
@@ -56,15 +45,12 @@ inline BSDF_EvalRes MicrofacetDielectric_evalSingle(const varying BSDF* uniform 
   // Compute the microfacet normal
   vec3f wh;
 
-  if (isReflection)
-  {
+  if (isReflection) {
     // Reflection
     wh = wo + wi;
-  }
-  else
-  {
+  } else {
     // Transmission
-    wh = self->eta*wo + wi;
+    wh = self->eta * wo + wi;
   }
 
   wh = normalize(wh);
@@ -80,17 +66,16 @@ inline BSDF_EvalRes MicrofacetDielectric_evalSingle(const varying BSDF* uniform 
   float F = fresnelDielectric(cosThetaOH, self->eta);
 
   float value;
-  if (isReflection)
-  {
+  if (isReflection) {
     // Reflection
-    res.pdf = F * rcp(4.f*abs(cosThetaOH));
-    value = F * rcp(4.f*cosThetaO);
-  }
-  else
-  {
+    res.pdf = F * rcp(4.f * abs(cosThetaOH));
+    value = F * rcp(4.f * cosThetaO);
+  } else {
     // Transmission
-    res.pdf = (1.f-F) * rcp(sqr(self->eta)) * abs(cosThetaIH) * rcp(sqr(cosThetaOH + rcp(self->eta)*cosThetaIH));
-    value = res.pdf * abs(cosThetaOH) * rcp(cosThetaO); // ignore solid angle compression
+    res.pdf = (1.f - F) * rcp(sqr(self->eta)) * abs(cosThetaIH)
+        * rcp(sqr(cosThetaOH + rcp(self->eta) * cosThetaIH));
+    value = res.pdf * abs(cosThetaOH)
+        * rcp(cosThetaO); // ignore solid angle compression
   }
 
   linear3f toLocal = transposed(getFrame(super));
@@ -107,10 +92,11 @@ inline BSDF_EvalRes MicrofacetDielectric_evalSingle(const varying BSDF* uniform 
   return res;
 }
 
-inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
-                                              const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes MicrofacetDielectric_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
-  const varying MicrofacetDielectric* uniform self = (const varying MicrofacetDielectric* uniform)super;
+  const varying MicrofacetDielectric *uniform self =
+      (const varying MicrofacetDielectric *uniform)super;
   BSDF_EvalRes res;
 
   float cosThetaO = dot(wo, getN(super));
@@ -120,22 +106,25 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
   bool isReflection = cosThetaI > 0.f;
 
   // Evaluate the energy compensation lobe [Kulla and Conty, 2017]
-  float Eo = MicrofacetDielectricAlbedoTable_eval(cosThetaO, self->eta, self->roughness);
+  float Eo = MicrofacetDielectricAlbedoTable_eval(
+      cosThetaO, self->eta, self->roughness);
 
   BSDF_EvalRes fms;
-  if (isReflection)
-  {
+  if (isReflection) {
     // Reflection
-    float Ei = MicrofacetDielectricAlbedoTable_eval(cosThetaI, self->eta, self->roughness);
+    float Ei = MicrofacetDielectricAlbedoTable_eval(
+        cosThetaI, self->eta, self->roughness);
     fms.pdf = self->fmsRatio * cosineSampleHemispherePDF(cosThetaI);
-    fms.value = make_vec3f(self->fmsRatio * (1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->EavgEta)) * cosThetaI);
-  }
-  else
-  {
+    fms.value = make_vec3f(self->fmsRatio * (1.f - Eo) * (1.f - Ei)
+        * rcp(pi * (1.f - self->EavgEta)) * cosThetaI);
+  } else {
     // Transmission
-    float Ei = MicrofacetDielectricAlbedoTable_eval(abs(cosThetaI), rcp(self->eta), self->roughness);
-    fms.pdf = (1.f - self->fmsRatio) * cosineSampleHemispherePDF(abs(cosThetaI));
-    fms.value = make_vec3f((1.f - self->fmsRatio) * (1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI));
+    float Ei = MicrofacetDielectricAlbedoTable_eval(
+        abs(cosThetaI), rcp(self->eta), self->roughness);
+    fms.pdf =
+        (1.f - self->fmsRatio) * cosineSampleHemispherePDF(abs(cosThetaI));
+    fms.value = make_vec3f((1.f - self->fmsRatio) * (1.f - Eo) * (1.f - Ei)
+        * rcp(pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI));
   }
 
   // Evaluate the single-scattering lobe
@@ -148,10 +137,14 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(const varying BSDF* uniform super,
   return res;
 }
 
-inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform super,
-                                                  const vec3f& wo, const vec2f& s, float ss)
+inline BSDF_SampleRes MicrofacetDielectric_sample(
+    const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
 {
-  const varying MicrofacetDielectric* uniform self = (const varying MicrofacetDielectric* uniform)super;
+  const varying MicrofacetDielectric *uniform self =
+      (const varying MicrofacetDielectric *uniform)super;
   BSDF_SampleRes res;
 
   float cosThetaO = dot(wo, getN(super));
@@ -159,14 +152,14 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
     return make_BSDF_SampleRes_zero();
 
   // Energy compensation
-  float Eo = MicrofacetDielectricAlbedoTable_eval(cosThetaO, self->eta, self->roughness);
+  float Eo = MicrofacetDielectricAlbedoTable_eval(
+      cosThetaO, self->eta, self->roughness);
 
   float singlePickProb = Eo;
   bool doReflection;
   bool doSingle = (ss <= singlePickProb);
 
-  if (doSingle)
-  {
+  if (doSingle) {
     // Sample the single-scattering lobe
     linear3f toGlobal = getFrame(super);
     linear3f toLocal = transposed(getFrame(super));
@@ -185,33 +178,25 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
     float ss1 = ss * rcp(singlePickProb);
     doReflection = (ss1 <= F);
 
-    if (doReflection)
-    {
+    if (doReflection) {
       // Reflection
       res.type = BSDF_GLOSSY_REFLECTION;
       res.wi = reflect(wo, wh, cosThetaOH);
-    }
-    else
-    {
+    } else {
       // Transmission
       res.type = BSDF_GLOSSY_TRANSMISSION;
       res.wi = refract(wo, wh, cosThetaOH, cosThetaTH, self->eta);
     }
-  }
-  else
-  {
+  } else {
     // Sample the energy compensation lobe
     float ss1 = (ss - singlePickProb) * rcp(1.f - singlePickProb);
     doReflection = (ss1 <= self->fmsRatio);
     res.wi = getFrame(super) * cosineSampleHemisphere(s);
 
-    if (doReflection)
-    {
+    if (doReflection) {
       // Reflection
       res.type = BSDF_DIFFUSE_REFLECTION;
-    }
-    else
-    {
+    } else {
       // Transmission
       res.type = BSDF_DIFFUSE_TRANSMISSION;
       res.wi = neg(res.wi);
@@ -224,19 +209,21 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
 
   // Evaluate the energy compensation lobe
   BSDF_EvalRes fms;
-  if (doReflection)
-  {
+  if (doReflection) {
     // Reflection
-    float Ei = MicrofacetDielectricAlbedoTable_eval(cosThetaI, self->eta, self->roughness);
+    float Ei = MicrofacetDielectricAlbedoTable_eval(
+        cosThetaI, self->eta, self->roughness);
     fms.pdf = self->fmsRatio * cosineSampleHemispherePDF(cosThetaI);
-    fms.value = make_vec3f(self->fmsRatio * (1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->EavgEta)) * cosThetaI);
-  }
-  else
-  {
+    fms.value = make_vec3f(self->fmsRatio * (1.f - Eo) * (1.f - Ei)
+        * rcp(pi * (1.f - self->EavgEta)) * cosThetaI);
+  } else {
     // Transmission
-    float Ei = MicrofacetDielectricAlbedoTable_eval(abs(cosThetaI), rcp(self->eta), self->roughness);
-    fms.pdf = (1.f - self->fmsRatio) * cosineSampleHemispherePDF(abs(cosThetaI));
-    fms.value = make_vec3f((1.f - self->fmsRatio) * (1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI));
+    float Ei = MicrofacetDielectricAlbedoTable_eval(
+        abs(cosThetaI), rcp(self->eta), self->roughness);
+    fms.pdf =
+        (1.f - self->fmsRatio) * cosineSampleHemispherePDF(abs(cosThetaI));
+    fms.value = make_vec3f((1.f - self->fmsRatio) * (1.f - Eo) * (1.f - Ei)
+        * rcp(pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI));
   }
 
   // Evaluate the single-scattering lobe
@@ -248,37 +235,49 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(const varying BSDF* uniform su
   return res;
 }
 
-inline void MicrofacetDielectric_Constructor(varying MicrofacetDielectric* uniform self,
-                                             const varying linear3f* uniform frame,
-                                             float eta, float roughness, float anisotropy)
+inline void MicrofacetDielectric_Constructor(
+    varying MicrofacetDielectric *uniform self,
+    const varying linear3f *uniform frame,
+    float eta,
+    float roughness,
+    float anisotropy)
 {
-  BSDF_Constructor(&self->super, make_vec3f(0.9f), // TODO better estimate
-                   BSDF_GLOSSY | BSDF_DIFFUSE,
-                   MicrofacetDielectric_eval, MicrofacetDielectric_sample,
-                   frame);
+  BSDF_Constructor(&self->super,
+      make_vec3f(0.9f), // TODO better estimate
+      BSDF_GLOSSY | BSDF_DIFFUSE,
+      MicrofacetDielectric_eval,
+      MicrofacetDielectric_sample,
+      frame);
 
   self->eta = eta;
-  self->microfacet = make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
+  self->microfacet =
+      make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   self->roughness = roughness;
 
   // Energy compensation
   self->EavgEta = MicrofacetDielectricAlbedoTable_evalAvg(eta, roughness);
-  self->EavgRcpEta = MicrofacetDielectricAlbedoTable_evalAvg(rcp(eta), roughness);
+  self->EavgRcpEta =
+      MicrofacetDielectricAlbedoTable_evalAvg(rcp(eta), roughness);
   self->FavgEta = fresnelDielectricAvg(eta);
   self->FavgRcpEta = fresnelDielectricAvg(rcp(eta));
   float a = (1.f - self->FavgEta) * rcp(1.f - self->EavgRcpEta);
-  float b = (1.f - self->FavgRcpEta) * rcp(1.f - self->EavgEta)/* * sqr(eta)*/; // ignore solid angle compression
+  float b = (1.f - self->FavgRcpEta)
+      * rcp(1.f
+          - self->EavgEta) /* * sqr(eta)*/; // ignore solid angle compression
   float x = b * rcp(a + b);
   self->fmsRatio = (1.f - x * (1.f - self->FavgEta));
 }
 
-inline varying BSDF* uniform MicrofacetDielectric_create(uniform ShadingContext* uniform ctx,
-                                                         const varying linear3f* uniform frame,
-                                                         float eta, float roughness, float anisotropy)
+inline varying BSDF *uniform MicrofacetDielectric_create(
+    uniform ShadingContext *uniform ctx,
+    const varying linear3f *uniform frame,
+    float eta,
+    float roughness,
+    float anisotropy)
 {
-  varying MicrofacetDielectric* uniform self =
-    (varying MicrofacetDielectric* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetDielectric));
+  varying MicrofacetDielectric *uniform self =
+      (varying MicrofacetDielectric * uniform)
+          ShadingContext_alloc(ctx, sizeof(MicrofacetDielectric));
   MicrofacetDielectric_Constructor(self, frame, eta, roughness, anisotropy);
   return &self->super;
 }
-

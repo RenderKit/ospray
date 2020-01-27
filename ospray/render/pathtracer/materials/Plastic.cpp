@@ -1,49 +1,38 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
-#include "common/Material.h"
 #include "Plastic_ispc.h"
+#include "common/Material.h"
 
 namespace ospray {
-  namespace pathtracer {
+namespace pathtracer {
 
-    struct Plastic : public ospray::Material
-    {
-      //! \brief common function to help printf-debugging
-      /*! Every derived class should override this! */
-      virtual std::string toString() const  override
-      { return "ospray::pathtracer::Plastic"; }
-
-      Plastic()
-      {
-        ispcEquivalent = ispc::PathTracer_Plastic_create();
-      }
-
-      //! \brief commit the material's parameters
-      virtual void commit() override
-      {
-        const vec3f pigmentColor = getParam<vec3f>("pigmentColor",vec3f(1.f));
-        const float eta          = getParam<float>("eta",1.4f);
-        const float roughness    = getParam<float>("roughness",0.01f);
-
-        ispc::PathTracer_Plastic_set
-          (getIE(), (const ispc::vec3f&)pigmentColor,eta,roughness);
-      }
-    };
-
-    OSP_REGISTER_MATERIAL(pt, Plastic, plastic);
+struct Plastic : public ospray::Material
+{
+  //! \brief common function to help printf-debugging
+  /*! Every derived class should override this! */
+  virtual std::string toString() const override
+  {
+    return "ospray::pathtracer::Plastic";
   }
-}
+
+  Plastic()
+  {
+    ispcEquivalent = ispc::PathTracer_Plastic_create();
+  }
+
+  //! \brief commit the material's parameters
+  virtual void commit() override
+  {
+    const vec3f pigmentColor = getParam<vec3f>("pigmentColor", vec3f(1.f));
+    const float eta = getParam<float>("eta", 1.4f);
+    const float roughness = getParam<float>("roughness", 0.01f);
+
+    ispc::PathTracer_Plastic_set(
+        getIE(), (const ispc::vec3f &)pigmentColor, eta, roughness);
+  }
+};
+
+OSP_REGISTER_MATERIAL(pt, Plastic, plastic);
+} // namespace pathtracer
+} // namespace ospray

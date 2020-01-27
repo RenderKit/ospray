@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -21,14 +8,18 @@
 #include "render/pathtracer/bsdfs/BSDF.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 
-inline bool isSmooth(const PathVertex& pathVertex)
+inline bool isSmooth(const PathVertex &pathVertex)
 {
-  if (pathVertex.type == SURFACE && pathVertex.bsdf   && pathVertex.bsdf->type & SCATTERING_SMOOTH) return true;
-  if (pathVertex.type == VOLUME  && pathVertex.volume && isSmoothVolumeVertex(pathVertex)) return true;
+  if (pathVertex.type == SURFACE && pathVertex.bsdf
+      && pathVertex.bsdf->type & SCATTERING_SMOOTH)
+    return true;
+  if (pathVertex.type == VOLUME && pathVertex.volume
+      && isSmoothVolumeVertex(pathVertex))
+    return true;
   return false;
 }
 
-inline float misHeuristic(const PathState& pathState, float pdf1, float pdf2)
+inline float misHeuristic(const PathState &pathState, float pdf1, float pdf2)
 {
   if (pathState.disableNEE || pathState.disableFWD)
     return 1.f;
@@ -41,19 +32,18 @@ inline float misHeuristic(const PathState& pathState, float pdf1, float pdf2)
   return pdf1 > 1e17f ? 1.0f : p;
 }
 
-inline void updateAuxilliaryData(PathState& pathState, 
-                                 const PathVertex& pathVertex, 
-                                 ScreenSample& sample)
+inline void updateAuxilliaryData(
+    PathState &pathState, const PathVertex &pathVertex, ScreenSample &sample)
 {
   sample.albedo = pathVertex.albedo;
   if (pathVertex.type == VOLUME) {
     sample.normal = make_vec3f(0.f);
-  }
-  else if (pathVertex.type == SURFACE)
-  {
+  } else if (pathVertex.type == SURFACE) {
     vec3f Ns = pathVertex.dg.Ns;
-    foreach_unique(f in pathVertex.bsdf)
-      if (f != NULL) { Ns = getN(f); }
+    foreach_unique (f in pathVertex.bsdf)
+      if (f != NULL) {
+        Ns = getN(f);
+      }
     sample.normal = Ns;
   }
   pathState.auxFree = false;

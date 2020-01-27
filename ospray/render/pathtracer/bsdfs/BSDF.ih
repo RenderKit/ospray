@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -20,30 +7,29 @@
 
 #include "math/vec.ih"
 // utilities used by (almost all) implementations
-#include "math/sampling.ih"
-#include "math/random.ih"
 #include "Optics.ih"
+#include "math/random.ih"
+#include "math/sampling.ih"
 
 // keep interface of BSDFs the same
 typedef Scattering_EvalRes BSDF_EvalRes;
 typedef Scattering_SampleRes BSDF_SampleRes;
 typedef Scattering_Type BSDF_Type;
 
-#define BSDF_SPECULAR_REFLECTION   SCATTERING_SPECULAR_REFLECTION
-#define BSDF_GLOSSY_REFLECTION     SCATTERING_GLOSSY_REFLECTION
-#define BSDF_DIFFUSE_REFLECTION    SCATTERING_DIFFUSE_REFLECTION
+#define BSDF_SPECULAR_REFLECTION SCATTERING_SPECULAR_REFLECTION
+#define BSDF_GLOSSY_REFLECTION SCATTERING_GLOSSY_REFLECTION
+#define BSDF_DIFFUSE_REFLECTION SCATTERING_DIFFUSE_REFLECTION
 #define BSDF_SPECULAR_TRANSMISSION SCATTERING_SPECULAR_TRANSMISSION
-#define BSDF_GLOSSY_TRANSMISSION   SCATTERING_GLOSSY_TRANSMISSION
-#define BSDF_DIFFUSE_TRANSMISSION  SCATTERING_DIFFUSE_TRANSMISSION
-#define BSDF_DIFFUSE               SCATTERING_DIFFUSE      
-#define BSDF_GLOSSY                SCATTERING_GLOSSY       
-#define BSDF_SPECULAR              SCATTERING_SPECULAR     
-#define BSDF_REFLECTION            SCATTERING_REFLECTION   
-#define BSDF_TRANSMISSION          SCATTERING_TRANSMISSION 
-#define BSDF_SMOOTH                SCATTERING_SMOOTH       
-#define BSDF_NONE                  SCATTERING_NONE         
-#define BSDF_ALL                   SCATTERING_ALL          
-
+#define BSDF_GLOSSY_TRANSMISSION SCATTERING_GLOSSY_TRANSMISSION
+#define BSDF_DIFFUSE_TRANSMISSION SCATTERING_DIFFUSE_TRANSMISSION
+#define BSDF_DIFFUSE SCATTERING_DIFFUSE
+#define BSDF_GLOSSY SCATTERING_GLOSSY
+#define BSDF_SPECULAR SCATTERING_SPECULAR
+#define BSDF_REFLECTION SCATTERING_REFLECTION
+#define BSDF_TRANSMISSION SCATTERING_TRANSMISSION
+#define BSDF_SMOOTH SCATTERING_SMOOTH
+#define BSDF_NONE SCATTERING_NONE
+#define BSDF_ALL SCATTERING_ALL
 
 struct BSDF;
 
@@ -62,11 +48,13 @@ inline BSDF_SampleRes make_BSDF_SampleRes_zero()
   return res;
 }
 
-typedef BSDF_EvalRes (*BSDF_EvalFunc)(const varying BSDF* uniform self,
-                                      const vec3f& wo, const vec3f& wi);
+typedef BSDF_EvalRes (*BSDF_EvalFunc)(
+    const varying BSDF *uniform self, const vec3f &wo, const vec3f &wi);
 
-typedef BSDF_SampleRes (*BSDF_SampleFunc)(const varying BSDF* uniform self,
-                                          const vec3f& wo, const vec2f& s, float ss);
+typedef BSDF_SampleRes (*BSDF_SampleFunc)(const varying BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss);
 
 struct BSDF
 {
@@ -74,15 +62,15 @@ struct BSDF
   varying BSDF_Type type;
   uniform BSDF_EvalFunc eval;
   uniform BSDF_SampleFunc sample;
-  const varying linear3f* uniform frame;
+  const varying linear3f *uniform frame;
 };
 
-inline void BSDF_Constructor(varying BSDF* uniform self,
-                             varying vec3f albedo,
-                             varying BSDF_Type type,
-                             uniform BSDF_EvalFunc eval,
-                             uniform BSDF_SampleFunc sample,
-                             const varying linear3f* uniform frame)
+inline void BSDF_Constructor(varying BSDF *uniform self,
+    varying vec3f albedo,
+    varying BSDF_Type type,
+    uniform BSDF_EvalFunc eval,
+    uniform BSDF_SampleFunc sample,
+    const varying linear3f *uniform frame)
 {
   self->albedo = albedo;
   self->type = type;
@@ -91,12 +79,12 @@ inline void BSDF_Constructor(varying BSDF* uniform self,
   self->frame = frame;
 }
 
-inline vec3f getN(const varying BSDF* uniform bsdf)
+inline vec3f getN(const varying BSDF *uniform bsdf)
 {
   return bsdf->frame->vz;
 }
 
-inline linear3f getFrame(const varying BSDF* uniform bsdf)
+inline linear3f getFrame(const varying BSDF *uniform bsdf)
 {
   return *bsdf->frame;
 }

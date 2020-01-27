@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "camera/PerspectiveCamera.ih"
@@ -36,63 +23,63 @@ struct DebugRenderer
   returns a well-defined test frame (mostly useful for debugging
   whether frame buffers are properly set up etcpp */
 void DebugRenderer_testFrame(Renderer *uniform _self,
-                             FrameBuffer *uniform fb,
-                             World *uniform world,
-                             void *uniform perFrameData,
-                             varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   sample.rgb.x = ((sample.sampleID.x) % 256) / 255.f;
   sample.rgb.y = ((sample.sampleID.y) % 256) / 255.f;
   sample.rgb.z =
-      ((sample.sampleID.x + sample.sampleID.y + sample.sampleID.z) % 256) /
-      255.f;
+      ((sample.sampleID.x + sample.sampleID.y + sample.sampleID.z) % 256)
+      / 255.f;
   sample.alpha = 1.f;
-  sample.z     = 1.f;
+  sample.z = 1.f;
 }
 
 /*! a simple test-frame renderer that doesn't even trace a ray, just
   returns the absolute of the ray direction */
 void DebugRenderer_rayDir(Renderer *uniform _self,
-                          FrameBuffer *uniform fb,
-                          World *uniform world,
-                          void *uniform perFrameData,
-                          varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
-  sample.rgb   = absf(sample.ray.dir);
+  sample.rgb = absf(sample.ray.dir);
   sample.alpha = 1.f;
-  sample.z     = 1.f;
+  sample.z = 1.f;
 }
 
 void DebugRenderer_eyeLight(Renderer *uniform _self,
-                            FrameBuffer *uniform fb,
-                            World *uniform world,
-                            void *uniform perFrameData,
-                            varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     const float c = dot(normalize(sample.ray.Ng), sample.ray.dir);
-    sample.rgb    = make_vec3f(.2f + .8f * abs(c));
+    sample.rgb = make_vec3f(.2f + .8f * abs(c));
   }
 }
 
 void DebugRenderer_Ng(Renderer *uniform _self,
-                      FrameBuffer *uniform fb,
-                      World *uniform world,
-                      void *uniform perFrameData,
-                      varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
@@ -105,15 +92,15 @@ void DebugRenderer_Ng(Renderer *uniform _self,
 }
 
 void DebugRenderer_Ns(Renderer *uniform _self,
-                      FrameBuffer *uniform fb,
-                      World *uniform world,
-                      void *uniform perFrameData,
-                      varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
@@ -126,15 +113,15 @@ void DebugRenderer_Ns(Renderer *uniform _self,
 }
 
 void DebugRenderer_dPds(Renderer *uniform _self,
-                        FrameBuffer *uniform fb,
-                        World *uniform world,
-                        void *uniform perFrameData,
-                        varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
@@ -153,15 +140,15 @@ void DebugRenderer_dPds(Renderer *uniform _self,
 }
 
 void DebugRenderer_dPdt(Renderer *uniform _self,
-                        FrameBuffer *uniform fb,
-                        World *uniform world,
-                        void *uniform perFrameData,
-                        varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
@@ -180,15 +167,15 @@ void DebugRenderer_dPdt(Renderer *uniform _self,
 }
 
 void DebugRenderer_vertexColor(Renderer *uniform _self,
-                               FrameBuffer *uniform fb,
-                               World *uniform world,
-                               void *uniform perFrameData,
-                               varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
@@ -198,21 +185,21 @@ void DebugRenderer_vertexColor(Renderer *uniform _self,
     dg.color = make_vec4f(0.f);
     postIntersect(
         world, &self->super, dg, sample.ray, DG_COLOR | DG_NG | DG_NS);
-    sample.rgb = make_vec3f(dg.color) *
-                 abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
+    sample.rgb = make_vec3f(dg.color)
+        * abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
   }
 }
 
 void DebugRenderer_primID(Renderer *uniform _self,
-                          FrameBuffer *uniform fb,
-                          World *uniform world,
-                          void *uniform perFrameData,
-                          varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
@@ -225,15 +212,15 @@ void DebugRenderer_primID(Renderer *uniform _self,
 }
 
 void DebugRenderer_instID(Renderer *uniform _self,
-                          FrameBuffer *uniform fb,
-                          World *uniform world,
-                          void *uniform perFrameData,
-                          varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
@@ -246,15 +233,15 @@ void DebugRenderer_instID(Renderer *uniform _self,
 }
 
 void DebugRenderer_geomID(Renderer *uniform _self,
-                          FrameBuffer *uniform fb,
-                          World *uniform world,
-                          void *uniform perFrameData,
-                          varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
@@ -267,37 +254,37 @@ void DebugRenderer_geomID(Renderer *uniform _self,
 }
 
 void DebugRenderer_backfacing_Ng(Renderer *uniform _self,
-                                 FrameBuffer *uniform fb,
-                                 World *uniform world,
-                                 void *uniform perFrameData,
-                                 varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   uniform DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
     sample.rgb = make_vec3f(self->super.bgColor);
   else {
     const float c = dot(normalize(sample.ray.Ng), sample.ray.dir);
-    sample.rgb    = make_vec3f(.2f + .8f * abs(c));
+    sample.rgb = make_vec3f(.2f + .8f * abs(c));
     if (c > 0.f)
       sample.rgb.y = 0.f;
   }
 }
 
 void DebugRenderer_backfacing_Ns(Renderer *uniform _self,
-                                 FrameBuffer *uniform fb,
-                                 World *uniform world,
-                                 void *uniform perFrameData,
-                                 varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   uniform DebugRenderer *uniform self = (uniform DebugRenderer * uniform) _self;
 
   traceRay(world, sample.ray);
-  sample.z     = sample.ray.t;
+  sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0)
@@ -306,25 +293,25 @@ void DebugRenderer_backfacing_Ns(Renderer *uniform _self,
     DifferentialGeometry dg;
     postIntersect(world, &self->super, dg, sample.ray, DG_NORMALIZE | DG_NS);
     const float c = dot(dg.Ns, sample.ray.dir);
-    sample.rgb    = make_vec3f(.2f + .8f * abs(c));
+    sample.rgb = make_vec3f(.2f + .8f * abs(c));
     if (c > 0.f)
       sample.rgb.y = 0.f;
   }
 }
 
 void DebugRenderer_volume(Renderer *uniform _self,
-                          FrameBuffer *uniform fb,
-                          World *uniform world,
-                          void *uniform perFrameData,
-                          varying ScreenSample &sample)
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
 
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
   LDSampler_init(ldSampler,
-                 sample.sampleID.x + fb->size.x * sample.sampleID.y,
-                 sample.sampleID.z);
+      sample.sampleID.x + fb->size.x * sample.sampleID.y,
+      sample.sampleID.z);
 
   vec3f &color = sample.rgb;
   float &alpha = sample.alpha;
@@ -343,22 +330,21 @@ void DebugRenderer_volume(Renderer *uniform _self,
   Ray &ray = sample.ray;
 
   ray.t0 = vInterval.interval.lower;
-  ray.t  = vInterval.interval.upper;
+  ray.t = vInterval.interval.upper;
 
   const float jitter = LDSampler_getFloat(ldSampler, 0);
 
-  foreach_unique(m in model)
-  {
-    Volume *uniform volume       = m->volume;
+  foreach_unique (m in model) {
+    Volume *uniform volume = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
     VKLIntervalIterator intervalIterator;
     vklInitIntervalIteratorV(&intervalIterator,
-                             volume->vklVolume,
-                             (varying vkl_vec3f *)&ray.org,
-                             (varying vkl_vec3f *)&ray.dir,
-                             (varying vkl_range1f *)&vInterval.interval,
-                             m->vklValueSelector);
+        volume->vklVolume,
+        (varying vkl_vec3f *)&ray.org,
+        (varying vkl_vec3f *)&ray.dir,
+        (varying vkl_range1f *)&vInterval.interval,
+        m->vklValueSelector);
 
     VKLInterval interval;
 
@@ -369,18 +355,17 @@ void DebugRenderer_volume(Renderer *uniform _self,
 
       // initial sub interval, based on our renderer-defined sampling rate
       // and the volume's nominal dt
-      box1f subInterval =
-          make_box1f(interval.tRange.lower,
-                     min(interval.tRange.lower + nominalSamplingDt,
-                         interval.tRange.upper));
+      box1f subInterval = make_box1f(interval.tRange.lower,
+          min(interval.tRange.lower + nominalSamplingDt,
+              interval.tRange.upper));
 
       while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
-        ray.t0 = subInterval.lower +
-                 jitter * (subInterval.upper - subInterval.lower);
+        ray.t0 = subInterval.lower
+            + jitter * (subInterval.upper - subInterval.lower);
         const float dt = subInterval.upper - subInterval.lower;
 
         // Get volume sample
-        vec3f p            = ray.org + ray.t0 * ray.dir;
+        vec3f p = ray.org + ray.t0 * ray.dir;
         const float sample = vklComputeSampleV(
             volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
 
@@ -389,8 +374,9 @@ void DebugRenderer_volume(Renderer *uniform _self,
 
           const float clampedOpacity = clamp(sampleColorOpacity.w * dt);
 
-          color = color + ((1.f - alpha) * clampedOpacity *
-                           make_vec3f(sampleColorOpacity));
+          color = color
+              + ((1.f - alpha) * clampedOpacity
+                  * make_vec3f(sampleColorOpacity));
           alpha = alpha + ((1.f - alpha) * clampedOpacity);
         }
 

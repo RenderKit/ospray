@@ -1,23 +1,9 @@
 #!/bin/bash
-## ======================================================================== ##
-## Copyright 2014-2019 Intel Corporation                                    ##
-##                                                                          ##
-## Licensed under the Apache License, Version 2.0 (the "License");          ##
-## you may not use this file except in compliance with the License.         ##
-## You may obtain a copy of the License at                                  ##
-##                                                                          ##
-##     http://www.apache.org/licenses/LICENSE-2.0                           ##
-##                                                                          ##
-## Unless required by applicable law or agreed to in writing, software      ##
-## distributed under the License is distributed on an "AS IS" BASIS,        ##
-## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
-## See the License for the specific language governing permissions and      ##
-## limitations under the License.                                           ##
-## ======================================================================== ##
+## Copyright 2014-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 #### Helper functions ####
 
-# check version of symbols
 function check_symbols
 {
   for sym in `nm $1 | grep $2_`
@@ -44,6 +30,17 @@ function check_symbols
       fi
     fi
   done
+}
+
+function check_imf
+{
+for lib in "$@"
+do
+  if [ -n "`ldd $lib | fgrep libimf.so`" ]; then
+    echo "Error: dependency to 'libimf.so' found"
+    exit 3
+  fi
+done
 }
 
 #### Set variables for script ####
@@ -109,6 +106,13 @@ make -j $THREADS preinstall
 check_symbols libospray.so GLIBC   2 14 0
 check_symbols libospray.so GLIBCXX 3 4 14
 check_symbols libospray.so CXXABI  1 3 5
+
+check_symbols libospray_module_ispc.so GLIBC   2 14 0
+check_symbols libospray_module_ispc.so GLIBCXX 3 4 14
+check_symbols libospray_module_ispc.so CXXABI  1 3 5
+
+check_imf libospray.so libospray_module_ispc.so
+
 
 make -j $THREADS package || exit 2
 

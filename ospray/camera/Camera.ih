@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -25,17 +12,18 @@ struct Camera;
 
 /*! \brief Specifies the input parameters (time, screen, and lens
     samples) required for 'initRay' to generate a primary ray */
-struct CameraSample {
+struct CameraSample
+{
   vec2f screen; /*!< normalized screen sample, from [0..1] */
-  vec2f lens;   /*!< may be left un-initialized if 'camera.doesDOF' is false */
-  float time;   /*!< time */
+  vec2f lens; /*!< may be left un-initialized if 'camera.doesDOF' is false */
+  float time; /*!< time */
 };
 
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
 // generated ray.dir must be normalized to ensure ray.t is world-space distance
 typedef void (*Camera_initRay)(const Camera *uniform,
-                               varying Ray &ray,
-                               const varying CameraSample &sample);
+    varying Ray &ray,
+    const varying CameraSample &sample);
 
 /*! \brief Abstract base class for all camera types */
 struct Camera
@@ -49,7 +37,7 @@ struct Camera
                     'lens' value; if not, this value can remain
                     unused. */
 
-  vec3f org;      //!< camera position
+  vec3f org; //!< camera position
   linear3f frame; //!< camera coordinate frame, i.e. (right, up, neg direction)
   float nearClip; //!< near clipping plane
   box2f subImage; //!< viewable tile / subrange to compute, [0..1]^2 x [0..1]^2

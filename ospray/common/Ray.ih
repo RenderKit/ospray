@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -30,26 +17,26 @@ struct Ray
 {
   /* ray input data */
   vec3f org; /*!< ray origin */
-  float t0;  /*!< start of valid ray interval */
+  float t0; /*!< start of valid ray interval */
 
-  vec3f dir;   /*!< ray direction */
-  float time;  //!< Time of this ray for motion blur
+  vec3f dir; /*!< ray direction */
+  float time; //!< Time of this ray for motion blur
 
-  float t;     /*!< end of valid ray interval, or distance to hit point after
-                  'intersect' */
-  int32 mask;  //!< Used to mask out objects during traversal
+  float t; /*!< end of valid ray interval, or distance to hit point after
+              'intersect' */
+  int32 mask; //!< Used to mask out objects during traversal
   int32 rayID;
   int32 flags;
 
   /* hit data */
   vec3f Ng; /*! geometry normal*/
 
-  float u;  //!< Barycentric u coordinate of hit
-  float v;  //!< Barycentric v coordinate of hit
+  float u; //!< Barycentric u coordinate of hit
+  float v; //!< Barycentric v coordinate of hit
 
-  int primID;  //!< primitive ID
-  int geomID;  //!< geometry ID
-  int instID;  //!< instance ID
+  int primID; //!< primitive ID
+  int geomID; //!< geometry ID
+  int instID; //!< instance ID
 };
 
 struct EmbreeIntersectionContext
@@ -73,27 +60,27 @@ inline bool hadHit(const Ray &ray)
 // Ray initialization /////////////////////////////////////////////////////////
 
 inline void setRay(Ray &ray,
-                   const vec3f &ray_org,
-                   const vec3f &ray_dir,
-                   const float t0,
-                   const float t1,
-                   const float time = 0.f)
+    const vec3f &ray_org,
+    const vec3f &ray_dir,
+    const float t0,
+    const float t1,
+    const float time = 0.f)
 {
-  ray.org    = ray_org;
-  ray.dir    = ray_dir;
-  ray.t0     = t0;
-  ray.t      = t1;
-  ray.time   = time;
-  ray.mask   = -1;
+  ray.org = ray_org;
+  ray.dir = ray_dir;
+  ray.t0 = t0;
+  ray.t = t1;
+  ray.time = time;
+  ray.mask = -1;
   ray.geomID = -1;
   ray.primID = -1;
   ray.instID = -1;
 }
 
 inline void setRay(Ray &ray,
-                   const vec3f &ray_org,
-                   const vec3f &ray_dir,
-                   const float time = 0.f)
+    const vec3f &ray_org,
+    const vec3f &ray_dir,
+    const float time = 0.f)
 {
   setRay(ray, ray_org, ray_dir, 0.f, inf, time);
 }
@@ -135,8 +122,8 @@ struct VolumeInterval
 inline void initVolumeInterval(VolumeInterval &hit)
 {
   hit.volumetricModel = NULL;
-  hit.interval.lower  = inf;
-  hit.interval.upper  = -inf;
+  hit.interval.lower = inf;
+  hit.interval.upper = -inf;
 }
 
 inline bool hasInterval(const VolumeInterval &vi)

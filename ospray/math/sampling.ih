@@ -1,36 +1,23 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 /*! \brief utility library containing sampling functions */
 
-// convention is to return the sample (vec3f) generated from given vec2f 's'ample as last parameter
-// sampling functions often come in pairs: sample and pdf (needed later for MIS)
-// good reference is "Total Compendium" by Philip Dutre http://people.cs.kuleuven.be/~philip.dutre/GI/
+// convention is to return the sample (vec3f) generated from given vec2f
+// 's'ample as last parameter sampling functions often come in pairs: sample and
+// pdf (needed later for MIS) good reference is "Total Compendium" by Philip
+// Dutre http://people.cs.kuleuven.be/~philip.dutre/GI/
 
 #include "math/vec.ih"
 
-inline vec3f cartesian(const float phi, const float sinTheta, const float cosTheta)
+inline vec3f cartesian(
+    const float phi, const float sinTheta, const float cosTheta)
 {
   float sinPhi, cosPhi;
   sincos(phi, &sinPhi, &cosPhi);
-  return make_vec3f(cosPhi * sinTheta,
-                    sinPhi * sinTheta,
-                    cosTheta);
+  return make_vec3f(cosPhi * sinTheta, sinPhi * sinTheta, cosTheta);
 }
 
 inline vec3f cartesian(const float phi, const float cosTheta)
@@ -75,7 +62,6 @@ inline float cosineSampleHemispherePDF(float cosTheta)
   return cosTheta * one_over_pi;
 }
 
-
 /// power cosine-weighted sampling of hemisphere oriented along the +z-axis
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -86,12 +72,14 @@ inline vec3f powerCosineSampleHemisphere(const float n, const vec2f &s)
   return cartesian(phi, cosTheta);
 }
 
-inline float powerCosineSampleHemispherePDF(const float cosTheta, const float n) // TODO: order of arguments
+inline float powerCosineSampleHemispherePDF(
+    const float cosTheta, const float n) // TODO: order of arguments
 {
   return (n + 1.0f) * one_over_two_pi * pow(cosTheta, n);
 }
 
-inline float powerCosineSampleHemispherePDF(const vec3f& dir, const float n) // TODO: order of arguments
+inline float powerCosineSampleHemispherePDF(
+    const vec3f &dir, const float n) // TODO: order of arguments
 {
   return (n + 1.0f) * one_over_two_pi * pow(dir.z, n);
 }
@@ -108,14 +96,13 @@ inline vec3f uniformSampleCone(const float cosAngle, const vec2f &s)
 
 inline float uniformSampleConePDF(const float cosAngle)
 {
-    return rcp(two_pi*(1.0f - cosAngle));
+  return rcp(two_pi * (1.0f - cosAngle));
 }
 
 inline uniform float uniformSampleConePDF(const uniform float cosAngle)
 {
-    return rcp(two_pi*(1.0f - cosAngle));
+  return rcp(two_pi * (1.0f - cosAngle));
 }
-
 
 /// uniform sampling of disk
 ////////////////////////////////////////////////////////////////////////////////
@@ -139,21 +126,21 @@ inline uniform float uniformSampleDiskPDF(const uniform float radius)
   return rcp(M_PI * sqr(radius));
 }
 
-
 /// uniform sampling of triangle abc
 ////////////////////////////////////////////////////////////////////////////////
 
-inline vec3f uniformSampleTriangle(const vec3f &a, const vec3f &b, const vec3f &c, const vec2f &s)
+inline vec3f uniformSampleTriangle(
+    const vec3f &a, const vec3f &b, const vec3f &c, const vec2f &s)
 {
   const float su = sqrtf(s.x);
-  return c + (1.0f - su) * (a-c) + (s.y*su) * (b-c);
+  return c + (1.0f - su) * (a - c) + (s.y * su) * (b - c);
 }
 
-inline float uniformSampleTrianglePDF(const vec3f &a, const vec3f &b, const vec3f &c)
+inline float uniformSampleTrianglePDF(
+    const vec3f &a, const vec3f &b, const vec3f &c)
 {
-  return 2.0f * rcp(length(cross(a-c, b-c)));
+  return 2.0f * rcp(length(cross(a - c, b - c)));
 }
-
 
 /// uniform sampling of sphere
 ////////////////////////////////////////////////////////////////////////////////
@@ -161,8 +148,8 @@ inline float uniformSampleTrianglePDF(const vec3f &a, const vec3f &b, const vec3
 inline vec3f uniformSampleSphere(const float radius, const vec2f s)
 {
   const float phi = two_pi * s.x;
-  const float cosTheta = radius * (1.f - 2.f*s.y);
-  const float sinTheta = 2.f*radius * sqrt(s.y*(1.f - s.y));
+  const float cosTheta = radius * (1.f - 2.f * s.y);
+  const float sinTheta = 2.f * radius * sqrt(s.y * (1.f - s.y));
   return cartesian(phi, sinTheta, cosTheta);
 }
 

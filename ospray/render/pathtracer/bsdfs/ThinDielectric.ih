@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -28,16 +15,19 @@ struct ThinDielectric
   vec3f attenuation;
 };
 
-inline BSDF_EvalRes ThinDielectric_eval(const varying BSDF* uniform super,
-                                        const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes ThinDielectric_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
   return make_BSDF_EvalRes_zero();
 }
 
-inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF* uniform super,
-                                            const vec3f& wo, const vec2f& s, float ss)
+inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
 {
-  const varying ThinDielectric* uniform self = (const varying ThinDielectric* uniform)super;
+  const varying ThinDielectric *uniform self =
+      (const varying ThinDielectric *uniform)super;
   BSDF_SampleRes res;
 
   float cosThetaO = max(dot(wo, getN(super)), 0.f);
@@ -49,15 +39,12 @@ inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF* uniform super,
 
   // Sample the reflection or the transmission
   bool doReflection = (ss <= F);
-  if (doReflection)
-  {
+  if (doReflection) {
     // Reflection
     res.wi = reflect(wo, getN(super), cosThetaO);
     res.type = BSDF_SPECULAR_REFLECTION;
     res.weight = make_vec3f(1.f);
-  }
-  else
-  {
+  } else {
     // Transmission
     // Attenuation for crossing the slab once
     float length = rcp(cosThetaT);
@@ -71,28 +58,36 @@ inline BSDF_SampleRes ThinDielectric_sample(const varying BSDF* uniform super,
   return res;
 }
 
-inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self,
-                                       const varying linear3f* uniform frame,
-                                       float eta, vec3f attenuation)
+inline void ThinDielectric_Constructor(varying ThinDielectric *uniform self,
+    const varying linear3f *uniform frame,
+    float eta,
+    vec3f attenuation)
 {
-  BSDF_Constructor(&self->super, expf(attenuation), BSDF_SPECULAR,
-                   ThinDielectric_eval, ThinDielectric_sample,
-                   frame);
+  BSDF_Constructor(&self->super,
+      expf(attenuation),
+      BSDF_SPECULAR,
+      ThinDielectric_eval,
+      ThinDielectric_sample,
+      frame);
   self->eta = eta;
   self->attenuation = attenuation;
 }
 
-inline varying BSDF* uniform ThinDielectric_create(uniform ShadingContext* uniform ctx,
-                                                   const varying linear3f* uniform frame,
-                                                   float eta, vec3f attenuation)
+inline varying BSDF *uniform ThinDielectric_create(
+    uniform ShadingContext *uniform ctx,
+    const varying linear3f *uniform frame,
+    float eta,
+    vec3f attenuation)
 {
-  varying ThinDielectric* uniform self = (varying ThinDielectric* uniform)ShadingContext_alloc(ctx, sizeof(ThinDielectric));
+  varying ThinDielectric *uniform self = (varying ThinDielectric * uniform)
+      ShadingContext_alloc(ctx, sizeof(ThinDielectric));
   ThinDielectric_Constructor(self, frame, eta, attenuation);
   return &self->super;
 }
 
 // Helper function for transparent shadow rays
-inline vec3f ThinDielectric_getTransparency(float cosThetaO, float eta, vec3f attenuation)
+inline vec3f ThinDielectric_getTransparency(
+    float cosThetaO, float eta, vec3f attenuation)
 {
   // Fresnel term
   float cosThetaT; // positive

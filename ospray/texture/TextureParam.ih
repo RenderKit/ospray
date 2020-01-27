@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -23,12 +10,12 @@
 
 struct TextureParam
 {
-  uniform Texture2D* map;
+  uniform Texture2D *map;
   affine2f xform;
 };
 
-inline uniform TextureParam make_TextureParam(uniform Texture2D * uniform tex,
-                                              const uniform affine2f &xform)
+inline uniform TextureParam make_TextureParam(
+    uniform Texture2D *uniform tex, const uniform affine2f &xform)
 {
   uniform TextureParam t;
   t.map = tex;
@@ -47,7 +34,7 @@ inline uniform bool hasAlpha(const uniform TextureParam uniform &tex)
 }
 
 inline float get1f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg)
+    const varying DifferentialGeometry &dg)
 {
   DifferentialGeometry xfmDg = dg;
   xfmDg.st = tex.xform * dg.st;
@@ -55,8 +42,8 @@ inline float get1f(const uniform TextureParam uniform &tex,
 }
 
 inline float get1f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg,
-                   const varying float defaultValue)
+    const varying DifferentialGeometry &dg,
+    const varying float defaultValue)
 {
   if (!valid(tex))
     return defaultValue;
@@ -66,7 +53,7 @@ inline float get1f(const uniform TextureParam uniform &tex,
 }
 
 inline vec3f get3f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg)
+    const varying DifferentialGeometry &dg)
 {
   DifferentialGeometry xfmDg = dg;
   xfmDg.st = tex.xform * dg.st;
@@ -74,8 +61,8 @@ inline vec3f get3f(const uniform TextureParam uniform &tex,
 }
 
 inline vec3f get3f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg,
-                   const varying vec3f defaultValue)
+    const varying DifferentialGeometry &dg,
+    const varying vec3f defaultValue)
 {
   if (!valid(tex))
     return defaultValue;
@@ -85,7 +72,7 @@ inline vec3f get3f(const uniform TextureParam uniform &tex,
 }
 
 inline vec4f get4f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg)
+    const varying DifferentialGeometry &dg)
 {
   DifferentialGeometry xfmDg = dg;
   xfmDg.st = tex.xform * dg.st;
@@ -93,8 +80,8 @@ inline vec4f get4f(const uniform TextureParam uniform &tex,
 }
 
 inline vec4f get4f(const uniform TextureParam uniform &tex,
-                   const varying DifferentialGeometry &dg,
-                   const varying vec4f defaultValue)
+    const varying DifferentialGeometry &dg,
+    const varying vec4f defaultValue)
 {
   if (!valid(tex))
     return defaultValue;
@@ -104,7 +91,7 @@ inline vec4f get4f(const uniform TextureParam uniform &tex,
 }
 
 inline vec3f getNormal(const uniform TextureParam uniform &tex,
-                       const varying DifferentialGeometry &dg)
+    const varying DifferentialGeometry &dg)
 {
   DifferentialGeometry xfmDg = dg;
   xfmDg.st = tex.xform * dg.st;

@@ -1,43 +1,33 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "MicrofacetDistribution.ih"
 
 // GGX (Trowbridge-Reitz) microfacet distribution
-// [Walter et al., 2007, "Microfacet Models for Refraction through Rough Surfaces"]
-// [Heitz, 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"]
-// [Heitz and d'Eon, 2014, "Importance Sampling Microfacet-Based BSDFs using the Distribution of Visible Normals"]
-// [Heitz, 2017, "A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals"]
+// [Walter et al., 2007, "Microfacet Models for Refraction through Rough
+// Surfaces"] [Heitz, 2014, "Understanding the Masking-Shadowing Function in
+// Microfacet-Based BRDFs"] [Heitz and d'Eon, 2014, "Importance Sampling
+// Microfacet-Based BSDFs using the Distribution of Visible Normals"] [Heitz,
+// 2017, "A Simpler and Exact Sampling Routine for the GGX Distribution of
+// Visible Normals"]
 struct GGXDistribution
 {
   vec2f alpha;
 };
 
-inline GGXDistribution make_GGXDistribution(const vec2f& alpha)
+inline GGXDistribution make_GGXDistribution(const vec2f &alpha)
 {
   GGXDistribution self;
   self.alpha = alpha;
   return self;
 }
 
-// D(\omega_m) = \frac{1}{\pi \alpha_x \alpha_y \cos^4\theta_m \left(1 + \tan^2\theta_m \left(\frac{\cos^2\phi_m}{\alpha_x^2} + \frac{\sin^2\phi_m}{\alpha_y^2}\right)\right)^2}
-inline float eval(const GGXDistribution& self,
-                  const vec3f& wh)
+// D(\omega_m) = \frac{1}{\pi \alpha_x \alpha_y \cos^4\theta_m \left(1 +
+// \tan^2\theta_m \left(\frac{\cos^2\phi_m}{\alpha_x^2} +
+// \frac{\sin^2\phi_m}{\alpha_y^2}\right)\right)^2}
+inline float eval(const GGXDistribution &self, const vec3f &wh)
 {
   float cosTheta = wh.z;
   float cosTheta2 = sqr(cosTheta);
@@ -47,8 +37,7 @@ inline float eval(const GGXDistribution& self,
 }
 
 // p(\omega_m) = D(\omega_m) \cos\theta_m
-inline float eval(const GGXDistribution& self,
-                  const vec3f& wh, float& pdf)
+inline float eval(const GGXDistribution &self, const vec3f &wh, float &pdf)
 {
   float cosTheta = wh.z;
   float D = eval(self, wh);
@@ -59,18 +48,15 @@ inline float eval(const GGXDistribution& self,
 // \theta_m = \arctan \left( \frac{\alpha\sqrt{\xi_1}}{\sqrt{1-\xi_1}} \right)
 // \phi_m   = 2\pi \xi_2
 // p(\omega_m) = D(\omega_m) \cos\theta_m
-inline vec3f sample(const GGXDistribution& self,
-                    float& pdf, const vec2f& s)
+inline vec3f sample(const GGXDistribution &self, float &pdf, const vec2f &s)
 {
   float phi;
-  if (self.alpha.x == self.alpha.y)
-  {
-    phi = 2.f*pi * s.y;
-  }
-  else
-  {
-    phi = atan(self.alpha.y / self.alpha.x * tan(pi*(2.f*s.y + 0.5f)));
-    if (s.y > 0.5f) phi += pi;
+  if (self.alpha.x == self.alpha.y) {
+    phi = 2.f * pi * s.y;
+  } else {
+    phi = atan(self.alpha.y / self.alpha.x * tan(pi * (2.f * s.y + 0.5f)));
+    if (s.y > 0.5f)
+      phi += pi;
   }
 
   float sinPhi, cosPhi;
@@ -81,10 +67,10 @@ inline vec3f sample(const GGXDistribution& self,
     alpha2 = sqr(self.alpha.x);
   else
     alpha2 = rcp(sqr(cosPhi / self.alpha.x) + sqr(sinPhi / self.alpha.y));
-  
-  float tanTheta2 = alpha2*s.x / (1.f-s.x);
+
+  float tanTheta2 = alpha2 * s.x / (1.f - s.x);
   float cosTheta = rsqrt(1.f + tanTheta2);
-  float cosTheta3 = sqr(cosTheta)*cosTheta;
+  float cosTheta3 = sqr(cosTheta) * cosTheta;
   float sinTheta = cos2sin(cosTheta);
 
   float e = tanTheta2 / alpha2;
@@ -93,24 +79,24 @@ inline vec3f sample(const GGXDistribution& self,
   float x = cosPhi * sinTheta;
   float y = sinPhi * sinTheta;
   float z = cosTheta;
-  return make_vec3f(x,y,z);
+  return make_vec3f(x, y, z);
 }
 
 // Smith Lambda function [Heitz, 2014]
 // \Lambda(\omega_o) = \frac{-1 + \sqrt{1+\frac{1}{a^2}}}{2}
 // a = \frac{1}{\alpha_o \tan\theta_o}
 // \alpha_o = \sqrt{cos^2\phi_o \alpha_x^2 + sin^2\phi_o \alpha_y^2}
-inline float evalLambda(const GGXDistribution& self,
-                        const vec3f& wo)
+inline float evalLambda(const GGXDistribution &self, const vec3f &wo)
 {
   float cosThetaO = wo.z;
   float cosThetaO2 = sqr(cosThetaO);
-  float invA2 = (sqr(wo.x * self.alpha.x) + sqr(wo.y * self.alpha.y)) / cosThetaO2;
-  return 0.5f * (-1.f + sqrt(1.f+invA2));
+  float invA2 =
+      (sqr(wo.x * self.alpha.x) + sqr(wo.y * self.alpha.y)) / cosThetaO2;
+  return 0.5f * (-1.f + sqrt(1.f + invA2));
 }
 
-inline float evalG1(const GGXDistribution& self,
-                    const vec3f& wo, float cosThetaOH)
+inline float evalG1(
+    const GGXDistribution &self, const vec3f &wo, float cosThetaOH)
 {
   float cosThetaO = wo.z;
   if (cosThetaO * cosThetaOH <= 0.f)
@@ -120,9 +106,13 @@ inline float evalG1(const GGXDistribution& self,
 }
 
 // Smith's height-correlated masking-shadowing function
-// [Heitz, 2014, "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs"]
-inline float evalG2(const GGXDistribution& self,
-                    const vec3f& wo, const vec3f& wi, float cosThetaOH, float cosThetaIH)
+// [Heitz, 2014, "Understanding the Masking-Shadowing Function in
+// Microfacet-Based BRDFs"]
+inline float evalG2(const GGXDistribution &self,
+    const vec3f &wo,
+    const vec3f &wi,
+    float cosThetaOH,
+    float cosThetaIH)
 {
   float cosThetaO = wo.z;
   float cosThetaI = wi.z;
@@ -132,8 +122,11 @@ inline float evalG2(const GGXDistribution& self,
   return rcp(1.f + evalLambda(self, wo) + evalLambda(self, wi));
 }
 
-inline float evalVisible(const GGXDistribution& self,
-                         const vec3f& wh, const vec3f& wo, float cosThetaOH, float& pdf)
+inline float evalVisible(const GGXDistribution &self,
+    const vec3f &wh,
+    const vec3f &wo,
+    float cosThetaOH,
+    float &pdf)
 {
   float cosThetaO = wo.z;
   float D = eval(self, wh);
@@ -142,33 +135,37 @@ inline float evalVisible(const GGXDistribution& self,
 }
 
 // Fast visible normal sampling (wo must be in the upper hemisphere)
-// [Heitz, 2017, "A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals"]
-inline vec3f sampleVisible(const GGXDistribution& self,
-                           const vec3f& wo, float& pdf, const vec2f& s)
+// [Heitz, 2017, "A Simpler and Exact Sampling Routine for the GGX Distribution
+// of Visible Normals"]
+inline vec3f sampleVisible(
+    const GGXDistribution &self, const vec3f &wo, float &pdf, const vec2f &s)
 {
   // Stretch wo
-  vec3f V = normalize(make_vec3f(self.alpha.x * wo.x, self.alpha.y * wo.y, wo.z));
+  vec3f V =
+      normalize(make_vec3f(self.alpha.x * wo.x, self.alpha.y * wo.y, wo.z));
 
   // Orthonormal basis
-  vec3f T1 = (V.z < 0.9999f) ? normalize(cross(V, make_vec3f(0,0,1))) : make_vec3f(1,0,0);
+  vec3f T1 = (V.z < 0.9999f) ? normalize(cross(V, make_vec3f(0, 0, 1)))
+                             : make_vec3f(1, 0, 0);
   vec3f T2 = cross(T1, V);
 
   // Sample point with polar coordinates (r, phi)
   float a = 1.f / (1.f + V.z);
   float r = sqrt(s.x);
-  float phi = (s.y<a) ? s.y/a * pi : pi + (s.y-a)/(1.f-a) * pi;
-  float P1 = r*cos(phi);
-  float P2 = r*sin(phi)*((s.y<a) ? 1.f : V.z);
+  float phi = (s.y < a) ? s.y / a * pi : pi + (s.y - a) / (1.f - a) * pi;
+  float P1 = r * cos(phi);
+  float P2 = r * sin(phi) * ((s.y < a) ? 1.f : V.z);
 
   // Compute normal
-  vec3f wh = P1*T1 + P2*T2 + sqrt(max(0.f, 1.f - P1*P1 - P2*P2))*V;
+  vec3f wh = P1 * T1 + P2 * T2 + sqrt(max(0.f, 1.f - P1 * P1 - P2 * P2)) * V;
 
   // Unstretch
-  wh = normalize(make_vec3f(self.alpha.x * wh.x, self.alpha.y * wh.y, max(0.f, wh.z)));
+  wh = normalize(
+      make_vec3f(self.alpha.x * wh.x, self.alpha.y * wh.y, max(0.f, wh.z)));
 
   // Compute pdf
   float cosThetaO = wo.z;
-  pdf = evalG1(self, wo, dot(wo, wh)) * abs(dot(wo, wh)) * eval(self, wh) / abs(cosThetaO);
+  pdf = evalG1(self, wo, dot(wo, wh)) * abs(dot(wo, wh)) * eval(self, wh)
+      / abs(cosThetaO);
   return wh;
 }
-

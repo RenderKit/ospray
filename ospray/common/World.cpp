@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "World.h"
@@ -22,161 +9,159 @@
 
 namespace ospray {
 
-  extern "C" void *ospray_getEmbreeDevice()
-  {
-    return api::ISPCDevice::embreeDevice;
-  }
+extern "C" void *ospray_getEmbreeDevice()
+{
+  return api::ISPCDevice::embreeDevice;
+}
 
-  // Embree helper functions ///////////////////////////////////////////////////
+// Embree helper functions ///////////////////////////////////////////////////
 
-  static std::pair<int, int> createEmbreeScenes(RTCScene &geometryScene,
-      RTCScene &volumeScene,
-      const DataT<Instance *> &instances,
-      int embreeFlags)
-  {
-    RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+static std::pair<int, int> createEmbreeScenes(RTCScene &geometryScene,
+    RTCScene &volumeScene,
+    const DataT<Instance *> &instances,
+    int embreeFlags)
+{
+  RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
-    int numGeomInstances   = 0;
-    int numVolumeInstances = 0;
+  int numGeomInstances = 0;
+  int numVolumeInstances = 0;
 
-    for (auto &&inst : instances) {
-      auto instGeometryScene = inst->group->embreeGeometryScene();
-      auto instVolumeScene   = inst->group->embreeVolumeScene();
+  for (auto &&inst : instances) {
+    auto instGeometryScene = inst->group->embreeGeometryScene();
+    auto instVolumeScene = inst->group->embreeVolumeScene();
 
-      auto xfm = inst->xfm();
+    auto xfm = inst->xfm();
 
-      {
-        auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
-        rtcSetGeometryInstancedScene(eInst, instGeometryScene.value());
-        rtcSetGeometryTransform(
-            eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
-        rtcCommitGeometry(eInst);
+    {
+      auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
+      rtcSetGeometryInstancedScene(eInst, instGeometryScene.value());
+      rtcSetGeometryTransform(eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+      rtcCommitGeometry(eInst);
 
-        rtcAttachGeometry(geometryScene, eInst);
-
-#if 0 // NOTE(jda) - there seems to still be an Embree ref-count issue here
-        rtcReleaseGeometry(eInst);
-#endif
-
-        numGeomInstances++;
-      }
-
-      {
-        auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
-        rtcSetGeometryInstancedScene(eInst, instVolumeScene.value());
-        rtcSetGeometryTransform(
-            eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
-        rtcCommitGeometry(eInst);
-
-        rtcAttachGeometry(volumeScene, eInst);
+      rtcAttachGeometry(geometryScene, eInst);
 
 #if 0 // NOTE(jda) - there seems to still be an Embree ref-count issue here
         rtcReleaseGeometry(eInst);
 #endif
 
-        numVolumeInstances++;
-      }
+      numGeomInstances++;
     }
 
-    rtcSetSceneFlags(geometryScene, static_cast<RTCSceneFlags>(embreeFlags));
-    rtcSetSceneFlags(volumeScene, static_cast<RTCSceneFlags>(embreeFlags));
+    {
+      auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
+      rtcSetGeometryInstancedScene(eInst, instVolumeScene.value());
+      rtcSetGeometryTransform(eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+      rtcCommitGeometry(eInst);
 
-    return std::make_pair(numGeomInstances, numVolumeInstances);
-  }
+      rtcAttachGeometry(volumeScene, eInst);
 
-  static void freeAndNullifyEmbreeScene(RTCScene &scene)
-  {
-    if (scene)
-      rtcReleaseScene(scene);
+#if 0 // NOTE(jda) - there seems to still be an Embree ref-count issue here
+        rtcReleaseGeometry(eInst);
+#endif
 
-    scene = nullptr;
-  }
-
-  // World definitions ////////////////////////////////////////////////////////
-
-  World::World()
-  {
-    managedObjectType    = OSP_WORLD;
-    this->ispcEquivalent = ispc::World_create(this);
-  }
-
-  World::~World()
-  {
-    freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
-    freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
-  }
-
-  std::string World::toString() const
-  {
-    return "ospray::World";
-  }
-
-  void World::commit()
-  {
-    numGeometries = 0;
-    numVolumes    = 0;
-
-    freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
-    freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
-
-    instances = getParamDataT<Instance *>("instance");
-    lights = getParamDataT<Light *>("light");
-
-    auto numInstances = instances ? instances->size() : 0;
-
-    int sceneFlags = 0;
-    sceneFlags |=
-        (getParam<bool>("dynamicScene", false) ? RTC_SCENE_FLAG_DYNAMIC : 0);
-    sceneFlags |=
-        (getParam<bool>("compactMode", false) ? RTC_SCENE_FLAG_COMPACT : 0);
-    sceneFlags |=
-        (getParam<bool>("robustMode", false) ? RTC_SCENE_FLAG_ROBUST : 0);
-
-    postStatusMsg(OSP_LOG_DEBUG)
-        << "=======================================================\n"
-        << "Committing world, which has " << numInstances << " instances";
-
-    RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
-
-    embreeSceneHandleGeometries = rtcNewScene(embreeDevice);
-    embreeSceneHandleVolumes    = rtcNewScene(embreeDevice);
-
-    if (instances) {
-      auto numGeomsAndVolumes = createEmbreeScenes(embreeSceneHandleGeometries,
-                                                   embreeSceneHandleVolumes,
-                                                   *instances,
-                                                   sceneFlags);
-
-      numGeometries = numGeomsAndVolumes.first;
-      numVolumes    = numGeomsAndVolumes.second;
-
-      instanceIEs = createArrayOfIE(*instances);
+      numVolumeInstances++;
     }
-
-    rtcCommitScene(embreeSceneHandleGeometries);
-    rtcCommitScene(embreeSceneHandleVolumes);
-
-    ispc::World_set(getIE(),
-                    instanceIEs.data(),
-                    numInstances,
-                    embreeSceneHandleGeometries,
-                    embreeSceneHandleVolumes);
   }
 
-  box3f World::getBounds() const
-  {
-    box3f sceneBounds;
+  rtcSetSceneFlags(geometryScene, static_cast<RTCSceneFlags>(embreeFlags));
+  rtcSetSceneFlags(volumeScene, static_cast<RTCSceneFlags>(embreeFlags));
 
-    box4f bounds; // NOTE(jda) - Embree expects box4f, NOT box3f...
-    rtcGetSceneBounds(embreeSceneHandleGeometries, (RTCBounds *)&bounds);
-    sceneBounds.extend(box3f(vec3f(bounds.lower[0]), vec3f(bounds.upper[0])));
+  return std::make_pair(numGeomInstances, numVolumeInstances);
+}
 
-    rtcGetSceneBounds(embreeSceneHandleVolumes, (RTCBounds *)&bounds);
-    sceneBounds.extend(box3f(vec3f(bounds.lower[0]), vec3f(bounds.upper[0])));
+static void freeAndNullifyEmbreeScene(RTCScene &scene)
+{
+  if (scene)
+    rtcReleaseScene(scene);
 
-    return sceneBounds;
+  scene = nullptr;
+}
+
+// World definitions ////////////////////////////////////////////////////////
+
+World::World()
+{
+  managedObjectType = OSP_WORLD;
+  this->ispcEquivalent = ispc::World_create(this);
+}
+
+World::~World()
+{
+  freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
+  freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
+}
+
+std::string World::toString() const
+{
+  return "ospray::World";
+}
+
+void World::commit()
+{
+  numGeometries = 0;
+  numVolumes = 0;
+
+  freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
+  freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
+
+  instances = getParamDataT<Instance *>("instance");
+  lights = getParamDataT<Light *>("light");
+
+  auto numInstances = instances ? instances->size() : 0;
+
+  int sceneFlags = 0;
+  sceneFlags |=
+      (getParam<bool>("dynamicScene", false) ? RTC_SCENE_FLAG_DYNAMIC : 0);
+  sceneFlags |=
+      (getParam<bool>("compactMode", false) ? RTC_SCENE_FLAG_COMPACT : 0);
+  sceneFlags |=
+      (getParam<bool>("robustMode", false) ? RTC_SCENE_FLAG_ROBUST : 0);
+
+  postStatusMsg(OSP_LOG_DEBUG)
+      << "=======================================================\n"
+      << "Committing world, which has " << numInstances << " instances";
+
+  RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+
+  embreeSceneHandleGeometries = rtcNewScene(embreeDevice);
+  embreeSceneHandleVolumes = rtcNewScene(embreeDevice);
+
+  if (instances) {
+    auto numGeomsAndVolumes = createEmbreeScenes(embreeSceneHandleGeometries,
+        embreeSceneHandleVolumes,
+        *instances,
+        sceneFlags);
+
+    numGeometries = numGeomsAndVolumes.first;
+    numVolumes = numGeomsAndVolumes.second;
+
+    instanceIEs = createArrayOfIE(*instances);
   }
 
-  OSPTYPEFOR_DEFINITION(World *);
+  rtcCommitScene(embreeSceneHandleGeometries);
+  rtcCommitScene(embreeSceneHandleVolumes);
 
-}  // namespace ospray
+  ispc::World_set(getIE(),
+      instanceIEs.data(),
+      numInstances,
+      embreeSceneHandleGeometries,
+      embreeSceneHandleVolumes);
+}
+
+box3f World::getBounds() const
+{
+  box3f sceneBounds;
+
+  box4f bounds; // NOTE(jda) - Embree expects box4f, NOT box3f...
+  rtcGetSceneBounds(embreeSceneHandleGeometries, (RTCBounds *)&bounds);
+  sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
+
+  rtcGetSceneBounds(embreeSceneHandleVolumes, (RTCBounds *)&bounds);
+  sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
+
+  return sceneBounds;
+}
+
+OSPTYPEFOR_DEFINITION(World *);
+
+} // namespace ospray

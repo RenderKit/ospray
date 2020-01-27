@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -28,10 +15,11 @@ struct OrenNayar
   float roughness;
 };
 
-inline BSDF_EvalRes OrenNayar_eval(const varying BSDF* uniform super,
-                                   const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes OrenNayar_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
-  const varying OrenNayar* uniform self = (const varying OrenNayar* uniform)super;
+  const varying OrenNayar *uniform self =
+      (const varying OrenNayar *uniform)super;
   BSDF_EvalRes res;
 
   float cosThetaO = max(dot(wo, getN(super)), 0.f);
@@ -39,15 +27,20 @@ inline BSDF_EvalRes OrenNayar_eval(const varying BSDF* uniform super,
 
   float s = dot(wo, wi) - cosThetaO * cosThetaI;
   float sInvt = (s > 0.f) ? (s * rcp_safe(max(cosThetaO, cosThetaI))) : s;
-  res.value = self->super.albedo * (cosThetaI * (1.f + self->roughness * sInvt) * rcp(pi + (pi/2.f - 2.f/3.f) * self->roughness));
+  res.value = self->super.albedo
+      * (cosThetaI * (1.f + self->roughness * sInvt)
+          * rcp(pi + (pi / 2.f - 2.f / 3.f) * self->roughness));
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
   return res;
 }
 
-inline BSDF_SampleRes OrenNayar_sample(const varying BSDF* uniform super,
-                                       const vec3f& wo, const vec2f& s, float ss)
+inline BSDF_SampleRes OrenNayar_sample(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
 {
-  const varying OrenNayar* uniform self = (const varying OrenNayar* uniform)super;
+  const varying OrenNayar *uniform self =
+      (const varying OrenNayar *uniform)super;
   const vec3f localDir = cosineSampleHemisphere(s);
   BSDF_SampleRes res;
   res.wi = getFrame(super) * localDir;
@@ -58,22 +51,29 @@ inline BSDF_SampleRes OrenNayar_sample(const varying BSDF* uniform super,
   return res;
 }
 
-inline void OrenNayar_Constructor(varying OrenNayar* uniform self, 
-                                  const varying linear3f* uniform frame,
-                                  const vec3f& R, float roughness)
+inline void OrenNayar_Constructor(varying OrenNayar *uniform self,
+    const varying linear3f *uniform frame,
+    const vec3f &R,
+    float roughness)
 {
-  BSDF_Constructor(&self->super, R, BSDF_DIFFUSE_REFLECTION,
-                   OrenNayar_eval, OrenNayar_sample,
-                   frame);
+  BSDF_Constructor(&self->super,
+      R,
+      BSDF_DIFFUSE_REFLECTION,
+      OrenNayar_eval,
+      OrenNayar_sample,
+      frame);
 
   self->roughness = roughness;
 }
 
-inline varying BSDF* uniform OrenNayar_create(uniform ShadingContext* uniform ctx, 
-                                              const varying linear3f* uniform frame,
-                                              const vec3f& R, float roughness)
+inline varying BSDF *uniform OrenNayar_create(
+    uniform ShadingContext *uniform ctx,
+    const varying linear3f *uniform frame,
+    const vec3f &R,
+    float roughness)
 {
-  varying OrenNayar* uniform self = (varying OrenNayar* uniform)ShadingContext_alloc(ctx, sizeof(OrenNayar));
+  varying OrenNayar *uniform self = (varying OrenNayar * uniform)
+      ShadingContext_alloc(ctx, sizeof(OrenNayar));
   OrenNayar_Constructor(self, frame, R, roughness);
   return &self->super;
 }

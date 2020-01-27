@@ -1,64 +1,52 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
+#include "ThinGlass_ispc.h"
 #include "common/Material.h"
 #include "texture/Texture2D.h"
-#include "ThinGlass_ispc.h"
 
 namespace ospray {
-  namespace pathtracer {
+namespace pathtracer {
 
-    struct ThinGlass : public ospray::Material
-    {
-      //! \brief common function to help printf-debugging
-      /*! Every derived class should override this! */
-      virtual std::string toString() const  override
-      { return "ospray::pathtracer::ThinGlass"; }
-
-      ThinGlass()
-      {
-        ispcEquivalent = ispc::PathTracer_ThinGlass_create();
-      }
-
-      //! \brief commit the material's parameters
-      virtual void commit()  override
-      {
-        const float eta = getParam<float>("eta", 1.5f);
-        const vec3f& attenuationColor =
-          getParam<vec3f>("attenuationColor", vec3f(1.f));
-        const float attenuationDistance =
-          getParam<float>("attenuationDistance", 1.f);
-        const float thickness = getParam<float>("thickness", 1.f);
-
-        Texture2D *map_attenuationColor =
-          (Texture2D*)getParamObject("map_attenuationColor");
-        affine2f xform_attenuationColor =
-          getTextureTransform("map_attenuationColor");
-
-        ispc::PathTracer_ThinGlass_set(getIE()
-            , eta
-            , (const ispc::vec3f&)attenuationColor
-            , map_attenuationColor ? map_attenuationColor->getIE() : nullptr,
-              (const ispc::AffineSpace2f&)xform_attenuationColor
-            , attenuationDistance
-            , thickness
-            );
-      }
-    };
-
-    OSP_REGISTER_MATERIAL(pathtracer, ThinGlass, thinGlass);
+struct ThinGlass : public ospray::Material
+{
+  //! \brief common function to help printf-debugging
+  /*! Every derived class should override this! */
+  virtual std::string toString() const override
+  {
+    return "ospray::pathtracer::ThinGlass";
   }
-}
+
+  ThinGlass()
+  {
+    ispcEquivalent = ispc::PathTracer_ThinGlass_create();
+  }
+
+  //! \brief commit the material's parameters
+  virtual void commit() override
+  {
+    const float eta = getParam<float>("eta", 1.5f);
+    const vec3f &attenuationColor =
+        getParam<vec3f>("attenuationColor", vec3f(1.f));
+    const float attenuationDistance =
+        getParam<float>("attenuationDistance", 1.f);
+    const float thickness = getParam<float>("thickness", 1.f);
+
+    Texture2D *map_attenuationColor =
+        (Texture2D *)getParamObject("map_attenuationColor");
+    affine2f xform_attenuationColor =
+        getTextureTransform("map_attenuationColor");
+
+    ispc::PathTracer_ThinGlass_set(getIE(),
+        eta,
+        (const ispc::vec3f &)attenuationColor,
+        map_attenuationColor ? map_attenuationColor->getIE() : nullptr,
+        (const ispc::AffineSpace2f &)xform_attenuationColor,
+        attenuationDistance,
+        thickness);
+  }
+};
+
+OSP_REGISTER_MATERIAL(pathtracer, ThinGlass, thinGlass);
+} // namespace pathtracer
+} // namespace ospray

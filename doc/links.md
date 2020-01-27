@@ -2,11 +2,8 @@
 [Embree]: https://embree.github.io/
 [Intel Embree]: https://embree.github.io/
 [Open Image Denoise]: http://www.openimagedenoise.org/
-[news/updates]: https://www.ospray.org/news.html
-[getting OSPRay]: https://www.ospray.org/downloads.html
 [OSPRay Demos and Examples]: https://www.ospray.org/demos.html
 [OSPRayReadme]: http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation"
-[gensv/generateSciVis.cpp]: https://github.com/ospray/ospray/blob/devel/modules/mpi/apps/gensv/generateSciVis.cpp#L213
 
 [report bugs]: #ospray-support-and-contact
 [tutorial]: #tutorial

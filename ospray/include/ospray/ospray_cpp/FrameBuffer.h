@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -24,135 +11,130 @@
 #include "World.h"
 
 namespace ospray {
-  namespace cpp {
+namespace cpp {
 
-    struct PickResult
-    {
-      bool hasHit{false};
-      vec3f worldPosition;
-      Instance instance{(OSPInstance) nullptr};
-      GeometricModel model{(OSPGeometricModel) nullptr};
-      uint32_t primID{0};
-    };
+struct PickResult
+{
+  bool hasHit{false};
+  vec3f worldPosition;
+  Instance instance{(OSPInstance) nullptr};
+  GeometricModel model{(OSPGeometricModel) nullptr};
+  uint32_t primID{0};
+};
 
-    class FrameBuffer : public ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>
-    {
-     public:
-      FrameBuffer() =
-          default;  // NOTE(jda) - this does *not* create the underlying
-      //            OSP object
-      FrameBuffer(const vec2i &size,
-                  OSPFrameBufferFormat format = OSP_FB_SRGBA,
-                  int channels                = OSP_FB_COLOR);
-      FrameBuffer(const FrameBuffer &copy);
-      FrameBuffer(OSPFrameBuffer existing);
+class FrameBuffer : public ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>
+{
+ public:
+  FrameBuffer() = default; // NOTE(jda) - this does *not* create the underlying
+  //            OSP object
+  FrameBuffer(const vec2i &size,
+      OSPFrameBufferFormat format = OSP_FB_SRGBA,
+      int channels = OSP_FB_COLOR);
+  FrameBuffer(const FrameBuffer &copy);
+  FrameBuffer(OSPFrameBuffer existing);
 
-      FrameBuffer &operator=(const FrameBuffer &copy);
+  FrameBuffer &operator=(const FrameBuffer &copy);
 
-      void resetAccumulation() const;
+  void resetAccumulation() const;
 
-      Future renderFrame(const Renderer &renderer,
-                         const Camera &camera,
-                         const World &world) const;
+  Future renderFrame(
+      const Renderer &renderer, const Camera &camera, const World &world) const;
 
-      PickResult pick(const Renderer &renderer,
-                      const Camera &camera,
-                      const World &world,
-                      const vec2f &screenPos) const;
+  PickResult pick(const Renderer &renderer,
+      const Camera &camera,
+      const World &world,
+      const vec2f &screenPos) const;
 
-      void *map(OSPFrameBufferChannel channel) const;
-      void unmap(void *ptr) const;
-      void clear() const;
-    };
+  void *map(OSPFrameBufferChannel channel) const;
+  void unmap(void *ptr) const;
+  void clear() const;
+};
 
-    static_assert(sizeof(FrameBuffer) == sizeof(OSPFrameBuffer),
-                  "cpp::FrameBuffer can't have data members!");
+static_assert(sizeof(FrameBuffer) == sizeof(OSPFrameBuffer),
+    "cpp::FrameBuffer can't have data members!");
 
-    // Inlined function definitions ///////////////////////////////////////////
+// Inlined function definitions ///////////////////////////////////////////
 
-    inline FrameBuffer::FrameBuffer(const vec2i &size,
-                                    OSPFrameBufferFormat format,
-                                    int channels)
-    {
-      ospObject = ospNewFrameBuffer(size.x, size.y, format, channels);
-    }
+inline FrameBuffer::FrameBuffer(
+    const vec2i &size, OSPFrameBufferFormat format, int channels)
+{
+  ospObject = ospNewFrameBuffer(size.x, size.y, format, channels);
+}
 
-    inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
-        : ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>(copy.handle())
-    {
-      ospRetain(copy.handle());
-    }
+inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
+    : ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>(copy.handle())
+{
+  ospRetain(copy.handle());
+}
 
-    inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing)
-        : ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>(existing)
-    {
-    }
+inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing)
+    : ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>(existing)
+{}
 
-    inline FrameBuffer &FrameBuffer::operator=(const FrameBuffer &copy)
-    {
-      ospObject = copy.ospObject;
-      ospRetain(copy.handle());
-      return *this;
-    }
+inline FrameBuffer &FrameBuffer::operator=(const FrameBuffer &copy)
+{
+  ospObject = copy.ospObject;
+  ospRetain(copy.handle());
+  return *this;
+}
 
-    inline void FrameBuffer::resetAccumulation() const
-    {
-      ospResetAccumulation(handle());
-    }
+inline void FrameBuffer::resetAccumulation() const
+{
+  ospResetAccumulation(handle());
+}
 
-    inline Future FrameBuffer::renderFrame(const Renderer &renderer,
-                                           const Camera &camera,
-                                           const World &world) const
-    {
-      return ospRenderFrame(
-          handle(), renderer.handle(), camera.handle(), world.handle());
-    }
+inline Future FrameBuffer::renderFrame(
+    const Renderer &renderer, const Camera &camera, const World &world) const
+{
+  return ospRenderFrame(
+      handle(), renderer.handle(), camera.handle(), world.handle());
+}
 
-    inline PickResult FrameBuffer::pick(const Renderer &renderer,
-                                        const Camera &camera,
-                                        const World &world,
-                                        const vec2f &screenPos) const
-    {
-      PickResult res;
+inline PickResult FrameBuffer::pick(const Renderer &renderer,
+    const Camera &camera,
+    const World &world,
+    const vec2f &screenPos) const
+{
+  PickResult res;
 
-      OSPPickResult pick;
-      ospPick((OSPPickResult *)&pick,
-              handle(),
-              renderer.handle(),
-              camera.handle(),
-              world.handle(),
-              screenPos.x,
-              screenPos.y);
+  OSPPickResult pick;
+  ospPick((OSPPickResult *)&pick,
+      handle(),
+      renderer.handle(),
+      camera.handle(),
+      world.handle(),
+      screenPos.x,
+      screenPos.y);
 
-      if (pick.hasHit) {
-        res.hasHit   = true;
-        res.instance = Instance(pick.instance);
-        res.model    = GeometricModel(pick.model);
-        res.primID   = pick.primID;
+  if (pick.hasHit) {
+    res.hasHit = true;
+    res.instance = Instance(pick.instance);
+    res.model = GeometricModel(pick.model);
+    res.primID = pick.primID;
 
-        std::memcpy(res.worldPosition, pick.worldPosition, sizeof(vec3f));
-      }
+    std::memcpy(res.worldPosition, pick.worldPosition, sizeof(vec3f));
+  }
 
-      return res;
-    }
+  return res;
+}
 
-    inline void *FrameBuffer::map(OSPFrameBufferChannel channel) const
-    {
-      return const_cast<void *>(ospMapFrameBuffer(handle(), channel));
-    }
+inline void *FrameBuffer::map(OSPFrameBufferChannel channel) const
+{
+  return const_cast<void *>(ospMapFrameBuffer(handle(), channel));
+}
 
-    inline void FrameBuffer::unmap(void *ptr) const
-    {
-      ospUnmapFrameBuffer(ptr, handle());
-    }
+inline void FrameBuffer::unmap(void *ptr) const
+{
+  ospUnmapFrameBuffer(ptr, handle());
+}
 
-    inline void FrameBuffer::clear() const
-    {
-      ospResetAccumulation(handle());
-    }
+inline void FrameBuffer::clear() const
+{
+  ospResetAccumulation(handle());
+}
 
-  }  // namespace cpp
+} // namespace cpp
 
-  OSPTYPEFOR_SPECIALIZATION(cpp::FrameBuffer, OSP_FRAMEBUFFER);
+OSPTYPEFOR_SPECIALIZATION(cpp::FrameBuffer, OSP_FRAMEBUFFER);
 
-}  // namespace ospray
+} // namespace ospray

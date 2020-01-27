@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -24,7 +11,7 @@
 inline float hg(float cosTheta, float g)
 {
   float denom = 1.f + g * g - 2.f * g * cosTheta;
-  return rcp(4.f*pi) * (1.f - g * g) * rcp(denom * sqrt(denom));
+  return rcp(4.f * pi) * (1.f - g * g) * rcp(denom * sqrt(denom));
 }
 
 inline bool HenyeyGreenstein_isSmooth(float anisotropy)
@@ -35,9 +22,8 @@ inline bool HenyeyGreenstein_isSmooth(float anisotropy)
   return true;
 }
 
-inline Scattering_EvalRes HenyeyGreenstein_eval(float anisotropy,
-                                                const vec3f& wo, 
-                                                const vec3f& wi)
+inline Scattering_EvalRes HenyeyGreenstein_eval(
+    float anisotropy, const vec3f &wo, const vec3f &wi)
 {
   Scattering_EvalRes res;
   if (!HenyeyGreenstein_isSmooth(anisotropy)) {
@@ -49,30 +35,26 @@ inline Scattering_EvalRes HenyeyGreenstein_eval(float anisotropy,
   return res;
 }
 
-inline Scattering_SampleRes HenyeyGreenstein_sample(float anisotropy,
-                                                    const vec3f wo, 
-                                                    const vec2f s, 
-                                                    float /*ss*/)
+inline Scattering_SampleRes HenyeyGreenstein_sample(
+    float anisotropy, const vec3f wo, const vec2f s, float /*ss*/)
 {
   Scattering_SampleRes res;
-  
+
   res.weight = make_vec3f(1.f);
 
   const float g = anisotropy;
   float cosTheta;
-  if (!HenyeyGreenstein_isSmooth(anisotropy)) 
-  {
-    // special case for delta function 
+  if (!HenyeyGreenstein_isSmooth(anisotropy)) {
+    // special case for delta function
     res.wi = g > 0 ? neg(wo) : wo;
     res.pdf = inf;
-    res.type = g > 0 ? SCATTERING_SPECULAR_TRANSMISSION : SCATTERING_SPECULAR_REFLECTION;
+    res.type = g > 0 ? SCATTERING_SPECULAR_TRANSMISSION
+                     : SCATTERING_SPECULAR_REFLECTION;
     return res;
-  }
-  else if (abs(g) < 1e-3f) {
+  } else if (abs(g) < 1e-3f) {
     // special case for isotropic scattering
     cosTheta = 1.f - 2.f * s.x;
-  }
-  else {
+  } else {
     // general case
     float sqrTerm = (1.f - g * g) * rcp(1.f - g + 2.f * g * s.x);
     cosTheta = (1.f + g * g - sqrTerm * sqrTerm) * rcp(2.f * g);

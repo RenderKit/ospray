@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -24,55 +11,61 @@ struct MultiBSDF
 {
   BSDF super;
 
-  const varying BSDF* uniform bsdfs[MULTIBSDF_MAX_COMPONENTS]; //!< pointers to BSDF components
+  const varying BSDF *uniform
+      bsdfs[MULTIBSDF_MAX_COMPONENTS]; //!< pointers to BSDF components
   float weights[MULTIBSDF_MAX_COMPONENTS];
   float importances[MULTIBSDF_MAX_COMPONENTS];
   float importanceSum;
-  uniform int numBsdfs;                                        //!< number of stored BSDF components
+  uniform int numBsdfs; //!< number of stored BSDF components
 };
 
 /*! Adds a new BSDF to the list of BSDFs */
-inline void MultiBSDF_add(varying BSDF* uniform super,
-                          const varying BSDF* uniform bsdf, float weight = 1.f, float importance = 1.f)
+inline void MultiBSDF_add(varying BSDF *uniform super,
+    const varying BSDF *uniform bsdf,
+    float weight = 1.f,
+    float importance = 1.f)
 {
-  varying MultiBSDF* uniform self = (varying MultiBSDF* uniform)super;
+  varying MultiBSDF *uniform self = (varying MultiBSDF * uniform) super;
 
   assert(self->numBsdfs < MULTIBSDF_MAX_COMPONENTS);
-  if (self->numBsdfs < MULTIBSDF_MAX_COMPONENTS)
-  {
+  if (self->numBsdfs < MULTIBSDF_MAX_COMPONENTS) {
     self->super.albedo = self->super.albedo + bsdf->albedo * weight;
     self->super.type |= bsdf->type;
     if (!self->super.frame) // use first frame TODO use dominant frame
       self->super.frame = bsdf->frame;
     self->bsdfs[self->numBsdfs] = bsdf;
     self->weights[self->numBsdfs] = weight;
-    unmasked { self->importances[self->numBsdfs] = 0.0f; }
+    unmasked
+    {
+      self->importances[self->numBsdfs] = 0.0f;
+    }
     self->importances[self->numBsdfs] = importance;
     self->importanceSum += importance;
     self->numBsdfs++;
   }
 }
 
-inline void MultiBSDF_add(varying BSDF* uniform super,
-                          const varying BSDF* varying bsdf, float weight = 1.f, float importance = 1.f)
+inline void MultiBSDF_add(varying BSDF *uniform super,
+    const varying BSDF *varying bsdf,
+    float weight = 1.f,
+    float importance = 1.f)
 {
   foreach_unique (f in bsdf)
     MultiBSDF_add(super, f, weight, importance);
 }
 
 /*! Evaluates all BSDF components. */
-inline BSDF_EvalRes MultiBSDF_eval(const varying BSDF* uniform super,
-                                   const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes MultiBSDF_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
-  const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;
+  const varying MultiBSDF *uniform self =
+      (const varying MultiBSDF *uniform)super;
 
   BSDF_EvalRes res = make_BSDF_EvalRes_zero();
 
-  for (uniform int i = 0; i < self->numBsdfs; ++i)
-  {
-    if (self->importances[i] > 0.0f)
-    {
-      const varying BSDF* uniform curBsdf = self->bsdfs[i];
+  for (uniform int i = 0; i < self->numBsdfs; ++i) {
+    if (self->importances[i] > 0.0f) {
+      const varying BSDF *uniform curBsdf = self->bsdfs[i];
       BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, wi);
       cur.value = cur.value * self->weights[i];
       res.value = res.value + cur.value;
@@ -85,43 +78,43 @@ inline BSDF_EvalRes MultiBSDF_eval(const varying BSDF* uniform super,
 }
 
 /*! Sample the multi-BSDF. */
-inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
-                                       const vec3f& wo, const vec2f& s, float ss)
+inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
 {
-  const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;
+  const varying MultiBSDF *uniform self =
+      (const varying MultiBSDF *uniform)super;
 
   BSDF_SampleRes res = make_BSDF_SampleRes_zero(); // default
 
   if (self->importanceSum == 0.0f) // also handles case self->numBsdfs == 0
     return res;
 
-  if (self->numBsdfs == 1)
-  {
-    const varying BSDF* uniform bsdf = self->bsdfs[0];
+  if (self->numBsdfs == 1) {
+    const varying BSDF *uniform bsdf = self->bsdfs[0];
     res = bsdf->sample(bsdf, wo, s, ss);
     res.weight = res.weight * self->weights[0];
     return res;
-  }
-  else
-  {
+  } else {
     // choose which BSDF to sample
     float x = ss * self->importanceSum;
     int choice = 0;
     float prefixSum = self->importances[0];
     // to handle ss==0.0 and invalid BSDF (importance==0.0), use "x >="
-    while ((choice < self->numBsdfs-1) & (x >= prefixSum))
+    while ((choice < self->numBsdfs - 1) & (x >= prefixSum))
       prefixSum += self->importances[++choice];
 
     if (self->importances[choice] == 0.0f)
       return res;
 
     // remap sample
-    ss = (x + self->importances[choice] - prefixSum) * rcp(self->importances[choice]);
+    ss = (x + self->importances[choice] - prefixSum)
+        * rcp(self->importances[choice]);
 
     // sample chosen BSDF
-    foreach_unique (i in choice)
-    {
-      const varying BSDF* uniform bsdf = self->bsdfs[i];
+    foreach_unique (i in choice) {
+      const varying BSDF *uniform bsdf = self->bsdfs[i];
       res = bsdf->sample(bsdf, wo, s, ss);
       res.weight = res.weight * self->weights[i];
     }
@@ -129,12 +122,13 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
     if (eq(res.weight, make_vec3f(0.0f)) | (res.pdf == 0.0f))
       return make_BSDF_SampleRes_zero();
 
-    // if the sampled BSDF is specular (has a delta distribution), we cannot add the contributions from the other BSDFs
-    // [Pharr et al., 2016, "Physically Based Rendering", 3rd Edition, Section 14.1.6]
-    if (res.type & BSDF_SPECULAR)
-    {
+    // if the sampled BSDF is specular (has a delta distribution), we cannot add
+    // the contributions from the other BSDFs [Pharr et al., 2016, "Physically
+    // Based Rendering", 3rd Edition, Section 14.1.6]
+    if (res.type & BSDF_SPECULAR) {
       // scale by rcp(selection pdf)
-      res.weight = res.weight * (self->importanceSum * rcp(self->importances[choice]));
+      res.weight =
+          res.weight * (self->importanceSum * rcp(self->importances[choice]));
       return res;
     }
 
@@ -142,11 +136,9 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
     vec3f value = res.weight * res.pdf;
     res.pdf *= self->importances[choice];
 
-    for (uniform int i = 0; i < self->numBsdfs; ++i)
-    {
-      if ((i != choice) & (self->importances[i] > 0.0f))
-      {
-        const varying BSDF* uniform curBsdf = self->bsdfs[i];
+    for (uniform int i = 0; i < self->numBsdfs; ++i) {
+      if ((i != choice) & (self->importances[i] > 0.0f)) {
+        const varying BSDF *uniform curBsdf = self->bsdfs[i];
         BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, res.wi);
         cur.value = cur.value * self->weights[i];
         value = value + cur.value;
@@ -160,17 +152,26 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
   }
 }
 
-inline void MultiBSDF_Constructor(varying MultiBSDF* uniform self)
+inline void MultiBSDF_Constructor(varying MultiBSDF *uniform self)
 {
-  BSDF_Constructor(&self->super, make_vec3f(0.f), BSDF_NONE,
-                   MultiBSDF_eval, MultiBSDF_sample, NULL);
+  BSDF_Constructor(&self->super,
+      make_vec3f(0.f),
+      BSDF_NONE,
+      MultiBSDF_eval,
+      MultiBSDF_sample,
+      NULL);
   self->numBsdfs = 0;
-  unmasked { self->importanceSum = 0.0f; }
+  unmasked
+  {
+    self->importanceSum = 0.0f;
+  }
 }
 
-inline varying BSDF* uniform MultiBSDF_create(uniform ShadingContext* uniform ctx)
+inline varying BSDF *uniform MultiBSDF_create(
+    uniform ShadingContext *uniform ctx)
 {
-  varying MultiBSDF* uniform self = (varying MultiBSDF* uniform)ShadingContext_alloc(ctx, sizeof(MultiBSDF));
+  varying MultiBSDF *uniform self = (varying MultiBSDF * uniform)
+      ShadingContext_alloc(ctx, sizeof(MultiBSDF));
   MultiBSDF_Constructor(self);
   return &self->super;
 }
