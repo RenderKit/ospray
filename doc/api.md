@@ -1149,7 +1149,7 @@ Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer]).
 
-### Spotlight
+### Spotlight / Photometric Light
 
 The spotlight is a light emitting into a cone of directions. It is
 created by passing the type string "`spot`" to `ospNewLight`. In
@@ -1202,7 +1202,18 @@ tracer]).
 
 Measured light sources (IES, EULUMDAT, ...) are supported by providing
 an `intensityDistribution` [data] array to modulate the intensity per
-direction.
+direction. The mapping is using the C-γ coordinate system (see also
+below figure): the values of the first (or only) dimension of
+`intensityDistribution` are uniformly mapped to γ in [0–π]; the first
+intensity value to 0, the last value to π, thus at least two values need
+to be present. If the array has a second dimension then the intensities
+are not rotational symmetric around `direction`, but are accordingly
+mapped to the C-halfplanes in [0–2π]; the first "row" of values to 0 and
+2π, the other rows such that they have uniform distance to its
+neighbors. The orientation of the C0-plane is specified via `c0`. 
+
+![C-γ coordinate system for the mapping of `intensityDistribution` to
+the spotlight.][imgSpotCoords]
 
 ### Quad Light
 

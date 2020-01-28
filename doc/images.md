@@ -1,6 +1,7 @@
 [imgTutorial1]: tutorial_firstframe.png
 [imgTutorial2]: tutorial_accumulatedframe.png
 [imgSpotLight]: spot_light.fig
+[imgSpotCoords]: spot_coords.fig
 [imgQuadLight]: quad_light.fig
 [imgHDRILight]: hdri_light.fig
 [imgCameraPerspective]: camera_perspective.jpg { width=60% }
