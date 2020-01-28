@@ -21,6 +21,15 @@ endif()
 
 project(OSPRay_superbuild)
 
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  message(FATAL_ERROR "OSPRay can only be built on 64-bit platforms. This
+  problem most commonly happens on Windows, where the right solution is to
+  switch to a 64-bit generator: retry running CMake with '-G \"Visual
+  Studio 15 2017 Win64\"'")
+else()
+  message(STATUS "Proceeding with a 64-bit generator. (${CMAKE_SIZEOF_VOID_P})")
+endif()
+
 include(ExternalProject)
 include(GNUInstallDirs)
 include(ProcessorCount)
