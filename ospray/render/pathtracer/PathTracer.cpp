@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #undef NDEBUG
@@ -112,8 +112,11 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   }
 
   if (world->lights) {
-    for (auto &&obj : *world->lights)
+    for (auto &&obj : *world->lights) {
       lightArray.push_back(obj->getIE());
+      if (obj->getSecondIE().has_value())
+        lightArray.push_back(obj->getSecondIE().value());
+    }
   }
 
   void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];

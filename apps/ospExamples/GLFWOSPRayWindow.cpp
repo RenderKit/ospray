@@ -495,6 +495,29 @@ void GLFWOSPRayWindow::buildUI()
   }
 
   if (rendererType == OSPRayRendererType::PATHTRACER) {
+    if (ImGui::Checkbox("renderSunSky", &renderSunSky)) {
+      if (renderSunSky) {
+        sunSky.setParam("direction", vec3f(-10.f, -4.0f, 0.f));
+        world.setParam("light", cpp::Data(sunSky));
+        addObjectToCommit(sunSky.handle());
+      } else {
+        cpp::Light light("ambient");
+        light.setParam("visible", false);
+        light.commit();
+        world.setParam("light", cpp::Data(light));
+      }
+      addObjectToCommit(world.handle());
+    }
+    if (renderSunSky) {
+      if (ImGui::DragFloat3("sunDirection", sunDirection, 0.1f, 0.f, 100.f)) {
+        sunSky.setParam("direction", sunDirection);
+        addObjectToCommit(sunSky.handle());
+      }
+      if (ImGui::DragFloat("turbidity", &turbidity, 0.1f, 1.f, 10.f)) { 
+        sunSky.setParam("turbidity", turbidity);
+        addObjectToCommit(sunSky.handle());
+      }
+    }
     static int maxDepth = 20;
     if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {
       renderer.setParam("maxPathLength", maxDepth);
@@ -562,6 +585,7 @@ void GLFWOSPRayWindow::commitOutstandingHandles()
 
 void GLFWOSPRayWindow::refreshScene(bool resetCamera)
 {
+  renderSunSky = false;
   auto builder = testing::newBuilder(scene);
   testing::setParam(builder, "rendererType", rendererTypeStr);
   if (scene == "curves") {

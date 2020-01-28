@@ -115,6 +115,12 @@ unstructured_volume
 ### Renderer
 
 This app comes with three [renderer] options: `scivis`, `pathtracer` and
-`debug`. The app provides some common rendering controls like `pixel
-samples` and other more specific to the renderer type like `aoIntensity`
-for `scivis` renderer.
+`debug`. The app provides some common rendering controls like
+`pixelSamples` and other more specific to the renderer type like
+`aoIntensity` for `scivis` renderer.
+
+The sun-sky lighting can be used in a sample scene by enabling the
+`renderSunSky` option of the `pathtracer` renderer. It allows the user
+to change `turbidity` and `sunDirection`. 
+
+![Rendering an evening sky with the `renderSunSky` option.][renderSunSky]

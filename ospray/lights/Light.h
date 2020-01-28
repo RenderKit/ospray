@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -16,6 +16,9 @@ struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
   static Light *createInstance(const char *type);
   virtual void commit() override;
   virtual std::string toString() const override;
+
+  //! get IE of a second light associated with the light type(if available)
+  virtual utility::Optional<void *> getSecondIE();
 };
 
 OSPTYPEFOR_SPECIALIZATION(Light *, OSP_LIGHT);

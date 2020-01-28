@@ -1274,6 +1274,27 @@ and `intensity`](#lights)). It is created by passing the type string
 Note that the [SciVis renderer] uses ambient lights to control the color
 and intensity of the computed ambient occlusion (AO).
 
+### Sun-Sky Light
+
+The sun-sky light is a combination of a `distant` light for the sun and
+a procedural `hdri` light for the sky. It surrounds the scene and
+illuminates it from infinity and can be used for rendering outdoor
+scenes. The radiance values are calculated using the Hošek-Wilkie sky
+model and solar radiance function. In addition to the [general
+parameters](#lights) the `sunSky` light supports the following special
+parameters:
+
+  Type      Name           Default  Description
+  --------- ---------- -----------  --------------------------------------------
+  vec3f     up         $(0, 1, 0)$  zenith of sky in world-space
+  vec3f     direction  $(0, -1, 0)$ main emission direction of the sun
+  float     turbidity            3  atmospheric turbidity due to particles, in [1–10]
+  float     albedo             0.3  ground reflectance, in [0–1]
+  --------- ---------- -----------  --------------------------------------------
+  : Special parameters accepted by the `sunSky` light.
+
+The lowest elevation for the sun is restricted to the horizon.
+
 ### Emissive Objects
 
 The [path tracer] will consider illumination by [geometries] which have

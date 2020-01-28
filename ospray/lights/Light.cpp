@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -29,6 +29,12 @@ std::string Light::toString() const
 Light *Light::createInstance(const char *type)
 {
   return createInstanceHelper<Light, OSP_LIGHT>(type);
+}
+
+utility::Optional<void *> Light::getSecondIE()
+{
+  utility::Optional<void *> emptyOptional;
+  return emptyOptional;
 }
 
 OSPTYPEFOR_DEFINITION(Light *);

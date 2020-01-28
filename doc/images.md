@@ -1,5 +1,6 @@
 [imgTutorial1]: tutorial_firstframe.png
 [imgTutorial2]: tutorial_accumulatedframe.png
+[renderSunSky]: renderSunSky.png
 [imgSpotLight]: spot_light.fig
 [imgSpotCoords]: spot_coords.fig
 [imgQuadLight]: quad_light.fig
