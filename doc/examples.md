@@ -58,7 +58,7 @@ built with CMake. It can be run from the build directory via:
 ```
 The command line parameter is optional however.
 
-![ospExamples app with default boxes scene][ospExamples]
+![`ospExamples` application with default `boxes` scene.][ospExamples]
 
 ### Scenes
 

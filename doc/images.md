@@ -1,6 +1,6 @@
 [imgTutorial1]: tutorial_firstframe.png
 [imgTutorial2]: tutorial_accumulatedframe.png
-[ospExamples]: ospExamples.png
+[ospExamples]: ospExamples.png { width=90% }
 [imgSpotLight]: spot_light.fig
 [imgQuadLight]: quad_light.fig
 [imgHDRILight]: hdri_light.fig
