@@ -65,7 +65,7 @@ branch should always point to the latest bugfix release.
 Prerequisites
 -------------
 
-OSPRay v2.0.0 (alpha) is required, and can be built from source following the
+OSPRay v2.0.x is required, and can be built from source following the
 instructions on the [OSPRay GitHub Repository](http://github.com/ospray/ospray).
 After getting the OSPRay source code clone this module into the `modules/`
 subdirectory of OSPRay, and enable the MPI module by setting
@@ -138,7 +138,7 @@ The workers will print out a port number to connect to, e.g.,
 port number to the device:
 
 ```
-./ospTutorialBoxes --osp:load-modules=mpi --osp:device=mpiOffload \
+./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
   --osp:device-params=mpiMode:mpi-connect,host:<worker rank 0 host>,port:<port printed above>
 ```
 
@@ -219,7 +219,8 @@ a distributed environment.
 By default the aggregate bounding box of the instances in the local world will
 be used as the bounds of that rank's data. However, when using ghost zones for
 volume interpolation, geometry or ambient occlusion, each rank's data can
-overlap. To clip these non-owned overlap regions out a set of `regions` can
+overlap. To clip these non-owned overlap regions out a set of regions
+(the `region` parameter) can
 pass as a parameter to the `OSPWorld` being rendered. Each rank can specify
 one or more non-overlapping `box3f`'s which bound the portions of its local
 data which it is reponsible for rendering.
@@ -230,7 +231,7 @@ Finally, the MPI distributed device also supports hybrid-parallel rendering,
 where multiple ranks can share a single piece of data. For each shared piece
 of data the rendering work will be assigned image-parallel among the ranks.
 Partially-shared regions are determined by finding those ranks specifying data
-with the same bounds (or `regions`) and merging them. See the
+with the same bounds (matching regions) and merging them. See the
 [ospMPIDistributedTutorialPartiallyReplicatedData](tutorials/ospMPIDistributedTutorialPartiallyReplicatedData.cpp)
 for an example.
 
