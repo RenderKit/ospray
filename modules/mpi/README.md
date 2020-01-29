@@ -95,12 +95,12 @@ a cluster without requiring modifications to the application itself. Existing
 applications using OSPRay for local rendering simply be passed command line
 arguments to load the module and indicate that the `mpiOffload` device should
 be used for image-parallel rendering. To load the module, pass
-`--osp:module:mpi`, to select the MPIOffloadDevice, pass
-`--osp:device:mpiOffload`.
+`--osp:load-modules=mpi`, to select the MPIOffloadDevice, pass
+`--osp:device=mpiOffload`.
 For example, the `ospExamples` application can be run as:
 
 ```
-mpirun -n <N> ./ospExamples --osp:module:mpi --osp:device:mpiOffload
+mpirun -n <N> ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload
 ```
 
 and will automatically distribute the image rendering tasks among the
@@ -118,7 +118,7 @@ and the `ospray_mpi_worker` program through MPI's MPMD mode. The
 by default.
 
 ```
-mpirun -n 1 ./ospTutorialBoxes --osp:module:mpi --osp:device:mpi \
+mpirun -n 1 ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
   : -n <N> ./ospray_mpi_worker
 ```
 
@@ -129,7 +129,7 @@ where the two devices may not be able to connect over MPI. First, launch
 the workers in `mpi-listen` mode:
 
 ```
-mpirun -n <N> ./ospray_mpi_worker --osp:deviceparam mpiMode mpi-listen
+mpirun -n <N> ./ospray_mpi_worker --osp:device-params=mpiMode:mpi-listen
 ```
 
 The workers will print out a port number to connect to, e.g.,
@@ -138,9 +138,8 @@ The workers will print out a port number to connect to, e.g.,
 port number to the device:
 
 ```
-./ospTutorialBoxes --osp:module:mpi --osp:device:mpi \
-  --osp:deviceparam mpiMode mpi-connect \
-  --osp:deviceparam host <worker rank 0 host>:<port>
+./ospTutorialBoxes --osp:load-modules=mpi --osp:device=mpiOffload \
+  --osp:device-params=mpiMode:mpi-connect,host:<worker rank 0 host>,port:<port printed above>
 ```
 
 MPI Distributed Rendering
@@ -162,7 +161,9 @@ ospSetCurrentDevice(mpiDevice);
 
 Your application can either initialize MPI before-hand, ensuring that
 `MPI_THREAD_SERIALIZED` or higher is supported, or allow the device to
-initialize MPI on commit. When using the distributed device each rank can
+initialize MPI on commit. Thread multiple support is required if your
+application will make MPI calls while rendering asynchronously with OSPRay. 
+When using the distributed device each rank can
 specify independent local data using the OSPRay API, as if rendering locally.
 However, when calling `ospRenderFrameAsync` the ranks will work collectively
 to render the data. The distributed device supports both image-parallel,
@@ -180,7 +181,7 @@ communicator will participate in rendering.
 
 | Type         | Name    | Default| Description                                |
 |:-------------|:--------|-------:|:-------------------------------------------|
-| OSPBox3f\[\] | regions |    NULL| A list of bounding boxes which bound the owned local data to be rendered by the rank |
+| OSPBox3f\[\] | region |    NULL| A list of bounding boxes which bound the owned local data to be rendered by the rank |
 
 : Parameters specific to the distributed `OSPWorld`.
 

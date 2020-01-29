@@ -104,7 +104,7 @@ void DistributedWorld::commit()
 
   myRegions.clear();
 
-  localRegions = getParamDataT<box3f>("regions");
+  localRegions = getParamDataT<box3f>("region");
   if (localRegions) {
     std::copy(localRegions->begin(),
         localRegions->end(),
@@ -213,25 +213,25 @@ void DistributedWorld::exchangeRegions()
   // TODO WILL: Remove this eventually? It may be useful for users to debug
   // their code when setting regions. Maybe fix build on Apple? Why did
   // it fail to compile?
-  if (logLevel() >= 3) {
+  if (logLevel() >= OSP_LOG_DEBUG) {
     for (int i = 0; i < mpiGroup.size; ++i) {
       if (i == mpiGroup.rank) {
-        postStatusMsg(1) << "Rank " << mpiGroup.rank
+        postStatusMsg(OSP_LOG_DEBUG) << "Rank " << mpiGroup.rank
                          << ": All regions in world {";
         for (const auto &b : allRegions) {
-          postStatusMsg(1) << "\t" << b << ",";
+          postStatusMsg(OSP_LOG_DEBUG) << "\t" << b << ",";
         }
-        postStatusMsg(1) << "}\n";
+        postStatusMsg(OSP_LOG_DEBUG) << "}\n";
 
-        postStatusMsg(1) << "Ownership Information: {";
+        postStatusMsg(OSP_LOG_DEBUG) << "Ownership Information: {";
         for (const auto &r : regionOwners) {
-          postStatusMsg(1) << "(" << r.first << ": [";
+          postStatusMsg(OSP_LOG_DEBUG) << "(" << r.first << ": [";
           for (const auto &i : r.second) {
-            postStatusMsg(1) << i << ", ";
+            postStatusMsg(OSP_LOG_DEBUG) << i << ", ";
           }
-          postStatusMsg(1) << "])";
+          postStatusMsg(OSP_LOG_DEBUG) << "])";
         }
-        postStatusMsg(1) << "\n" << std::flush;
+        postStatusMsg(OSP_LOG_DEBUG) << "\n" << std::flush;
       }
       mpicommon::barrier(mpiGroup.comm).wait();
     }

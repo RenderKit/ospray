@@ -198,7 +198,7 @@ int main(int argc, char **argv)
   float regionBounds[] = {mpiRank, 0.f, 2.5f, 1.f * (mpiRank + 1.f), 1.f, 3.5f};
   data = ospNewSharedData1D(regionBounds, OSP_BOX3F, 1);
   ospCommit(data);
-  ospSetObject(world, "regions", data);
+  ospSetObject(world, "region", data);
   ospRelease(data);
 
   ospCommit(world);

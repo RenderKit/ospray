@@ -518,7 +518,3 @@ OSP_REGISTER_DEVICE(MPIDistributedDevice, mpiDistributed);
 } // namespace mpi
 } // namespace ospray
 
-extern "C" void ospray_init_module_mpi_distributed()
-{
-  std::cout << "Loading MPI Distributed Device module\n";
-}

@@ -109,7 +109,7 @@ int main(int argc, char **argv)
     cpp::World world;
     world.setParam("instance", cpp::Data(brick.instance));
 
-    world.setParam("regions", cpp::Data(brick.bounds));
+    world.setParam("region", cpp::Data(brick.bounds));
     world.commit();
 
     // create OSPRay renderer
@@ -221,15 +221,14 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   // generate the volume data to just be filled with this rank's id
   const size_t nVoxels = brickGhostDims.x * brickGhostDims.y * brickGhostDims.z;
   std::vector<uint8_t> volumeData(nVoxels, static_cast<uint8_t>(mpiRank));
-  brick.brick.setParam("voxelData", cpp::Data(volumeData));
+  brick.brick.setParam("data",
+      cpp::Data(vec3ul(brickVolumeDims),
+          static_cast<const uint8_t *>(volumeData.data())));
 
-  // Set the clipping box of the volume to clip off the ghost voxels
-  brick.brick.setParam("volumeClippingBoxLower", brick.bounds.lower);
-  brick.brick.setParam("volumeClippingBoxUpper", brick.bounds.upper);
   brick.brick.commit();
 
   brick.model = cpp::VolumetricModel(brick.brick);
-  cpp::TransferFunction tfn("piecewise_linear");
+  cpp::TransferFunction tfn("piecewiseLinear");
   std::vector<vec3f> colors = {vec3f(0.f, 0.f, 1.f), vec3f(1.f, 0.f, 0.f)};
   std::vector<float> opacities = {0.05f, 1.f};
 

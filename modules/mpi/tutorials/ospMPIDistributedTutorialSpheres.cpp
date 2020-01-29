@@ -69,6 +69,7 @@ int main(int argc, char **argv)
   ospLoadModule("mpi");
 
   {
+    // TODO Seems like the device isn't released properly?
     cpp::Device mpiDevice("mpiDistributed");
     mpiDevice.commit();
     mpiDevice.setCurrent();
@@ -93,9 +94,9 @@ int main(int argc, char **argv)
     /*
      * Note: We've taken care that all the generated spheres are completely
      * within the bounds, and we don't have ghost data or portions of speres
-     * to clip off. Thus we actually don't need to set regions at all in
+     * to clip off. Thus we actually don't need to set region at all in
      * this tutorial. Example:
-     * world.setParam("regions", cpp::Data(regionBounds));
+     * world.setParam("region", cpp::Data(regionBounds));
      */
 
     world.commit();
@@ -221,13 +222,13 @@ cpp::Instance makeLocalSpheres(
     s.z = distZ(rng);
   }
 
-  cpp::Geometry sphereGeom("spheres");
+  cpp::Geometry sphereGeom("sphere");
   sphereGeom.setParam("radius", sphereRadius);
   sphereGeom.setParam("sphere.position", cpp::Data(spheres));
   sphereGeom.commit();
 
   vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
-  cpp::Material material("scivis", "default");
+  cpp::Material material("scivis", "obj");
   material.setParam("Kd", color);
   material.commit();
 

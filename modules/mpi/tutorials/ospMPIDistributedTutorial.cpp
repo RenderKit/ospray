@@ -169,9 +169,11 @@ int main(int argc, char **argv)
     // Specify the region of the world this rank owns
     box3f regionBounds(
         vec3f(mpiRank, 0.f, 2.5f), vec3f(1.f * (mpiRank + 1.f), 1.f, 3.5f));
-    world.setParam("regions", cpp::Data(regionBounds));
+    world.setParam("region", cpp::Data(regionBounds));
+    PING;
 
     world.commit();
+    PING;
 
     // create the mpi_raycast renderer (requred for distributed rendering)
     cpp::Renderer renderer("mpiRaycast");

@@ -52,16 +52,6 @@ namespace mpi {
 using namespace mpicommon;
 using namespace ospcommon;
 
-void parseHost(const std::string &hostport, std::string &host, int &port)
-{
-  auto fnd = hostport.find(':');
-  if (fnd == std::string::npos) {
-    throw std::runtime_error("failed to parse host: " + hostport);
-  }
-  host = hostport.substr(0, fnd);
-  port = std::stoi(hostport.substr(fnd + 1));
-}
-
 ///////////////////////////////////////////////////////////////////////////
 // Forward declarations ///////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
@@ -250,16 +240,15 @@ void MPIOffloadDevice::initializeDevice()
   } else if (mode == "mpi-listen") {
     createMPI_ListenForClient(&_ac, _av);
   } else if (mode == "mpi-connect") {
-    std::string hostPort = getParam<std::string>("host", "");
+    const std::string host = getParam<std::string>("host", "");
+    const std::string portParam = getParam<std::string>("port", "");
 
-    if (hostPort.empty()) {
+    if (host.empty() || portParam.empty()) {
       throw std::runtime_error(
-          "Error: mpi-connect requires a host:port "
+          "Error: mpi-connect requires a host and port "
           "argument to connect to");
     }
-    std::string host;
-    int port = 0;
-    parseHost(hostPort, host, port);
+    int port = std::stoi(portParam);
     postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
         << "MPIOffloadDevice connecting to " << host << ":" << port << "\n";
     fabric = ospcommon::make_unique<SocketWriterFabric>(host, port);
@@ -281,32 +270,6 @@ void MPIOffloadDevice::commit()
 {
   if (!initialized)
     initializeDevice();
-
-    // TODO: These params should be shipped over to the workers
-#if 0
-      auto OSPRAY_DYNAMIC_LOADBALANCER =
-          utility::getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
-
-      auto useDynamicLoadBalancer = getParam<int>(
-          "dynamicLoadBalancer", OSPRAY_DYNAMIC_LOADBALANCER.value_or(false));
-
-      auto OSPRAY_PREALLOCATED_TILES =
-          utility::getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
-
-      auto preAllocatedTiles = OSPRAY_PREALLOCATED_TILES.value_or(
-          getParam<int>("preAllocatedTiles", 4));
-#endif
-
-  // writeStream = mpiFabric.get();
-  // writeStream->flush();
-  // writeStream =
-  // make_unique<networking::BufferedWriteStream>(*mpiFabric, bufferSize);
-
-  /*
-  work::SetLoadBalancer slbWork(
-      ObjectHandle(), useDynamicLoadBalancer, preAllocatedTiles);
-  processWork(slbWork);
-  */
 }
 
 ///////////////////////////////////////////////////////////////////////////

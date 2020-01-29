@@ -24,8 +24,8 @@
 int main(int argc, const char **av)
 {
   std::vector<const char *> args(av, av + argc);
-  args.push_back("--osp:module:mpi");
-  args.push_back("--osp:device:mpi");
+  args.push_back("--osp:load-modules=mpi");
+  args.push_back("--osp:device=mpiOffload");
 
   argc = args.size();
   ospInit(&argc, args.data());
