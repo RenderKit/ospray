@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospcommon
@@ -100,7 +100,7 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
   loadModulesFromEnvironmentVar();
 
   if (_ac && _av) {
-    for (int i = 1; i < *_ac; i++) {
+    for (int i = 1; i < *_ac;) {
       std::string av(_av[i]);
 
       if (ospcommon::utility::beginsWith(av, "--osp:load-modules")) {
@@ -116,11 +116,9 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
           loadLocalModule(moduleName);
         }
         removeArgs(*_ac, _av, i, 1);
-      }
-
-      // ALOK: explicitly checking with the equals sign so this does not get
-      // clobbered by --osp:device-param
-      if (ospcommon::utility::beginsWith(av, "--osp:device=")) {
+      } else if (ospcommon::utility::beginsWith(av, "--osp:device=")) {
+        // ALOK: explicitly checking with the equals sign so this does not get
+        // clobbered by --osp:device-param
         std::string deviceName = getArgString(av);
         try {
           currentDevice = Device::createDevice(deviceName.c_str());
@@ -132,6 +130,9 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
                                    "library which defines the device?");
         }
         removeArgs(*_ac, _av, i, 1);
+      } else {
+        // Ignore other arguments
+        ++i;
       }
     }
   }
