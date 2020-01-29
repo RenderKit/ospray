@@ -15,42 +15,43 @@ before you can build OSPRay you need the following prerequisites:
 
         git clone https://github.com/ospray/ospray.git
 
--   To build OSPRay you need [CMake](http://www.cmake.org), any form
-    of C++11 compiler (we recommend using GCC, but also support Clang, MSVC, and
-    [Intel® C++ Compiler (icc)](https://software.intel.com/en-us/c-compilers)),
-    and standard Linux development tools. To build the interactive tutorials,
-    you should also have some version of OpenGL and GLFW.
--   Additionally you require a copy of the [Intel® SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.9.1 or later.
-    Please obtain a release of ISPC from the [ISPC downloads
-    page](https://ispc.github.io/downloads.html). The build
-    system looks for ISPC in the `PATH` and in the directory right
-    "next to" the checked-out OSPRay sources.^[For example, if OSPRay is
-    in `~/Projects/ospray`, ISPC will also be searched in
-    `~/Projects/ispc-v1.9.2-linux`]
-    Alternatively set the CMake variable `ISPC_EXECUTABLE` to the
-    location of the ISPC compiler.
-
-    NOTE: OSPRay is incompatible with ISPC v1.11.0.
--   OSPRay builds on top of a small C++ utility library called `ospcommon`. The
-    library provides abstractions for tasking, aligned memory allocation, vector
-    math types, among others. For users who also need to build
+-   To build OSPRay you need [CMake](http://www.cmake.org), any form of
+    C++11 compiler (we recommend using GCC, but also support Clang,
+    MSVC, and [Intel® C++ Compiler
+    (icc)](https://software.intel.com/en-us/c-compilers)), and standard
+    Linux development tools. To build the interactive tutorials, you
+    should also have some version of OpenGL and GLFW.
+-   Additionally you require a copy of the [Intel® SPMD Program Compiler
+    (ISPC)](http://ispc.github.io), version 1.9.1 or later. Please
+    obtain a release of ISPC from the [ISPC downloads
+    page](https://ispc.github.io/downloads.html). The build system looks
+    for ISPC in the `PATH` and in the directory right "next to" the
+    checked-out OSPRay sources.^[For example, if OSPRay is in
+    `~/Projects/ospray`, ISPC will also be searched in
+    `~/Projects/ispc-v1.12.0-linux`] Alternatively set the CMake
+    variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
+    Note: OSPRay is incompatible with ISPC v1.11.0.
+-   OSPRay builds on top of a small C++ utility library called
+    `ospcommon`. The library provides abstractions for tasking, aligned
+    memory allocation, vector math types, among others. For users who
+    also need to build
     [ospcommon](https://www.github.com/ospray/ospcommon), we recommend
     the default the Intel® [Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
-    system for performance and flexibility reasons. Alternatively you can set
-    CMake variable `OSPCOMMON_TASKING_SYSTEM` to `OpenMP` or `Internal`.
+    system for performance and flexibility reasons. Alternatively you
+    can set CMake variable `OSPCOMMON_TASKING_SYSTEM` to `OpenMP` or
+    `Internal`.
 -   OSPRay also heavily uses Intel [Embree], installing version 3.7.0 or
     newer is required. If Embree is not found by CMake its location can
     be hinted with the variable `embree_DIR`.
-
--   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/), installing version 0.7.0 or
-    newer is required. If Open VKL is not found by CMake its location can
-    be hinted with the variable `openvkl_DIR`.
--   OSPRay also provides an optional module that adds support for Intel [Open
-    Image Denoise], which is enabled by `OSPRAY_MODULE_DENOISER`. When loaded,
-    this module enables the `denosier` image operation. You may need to hint
-    the location of the library with the CMake variable
+-   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
+    installing version 0.8.0 or newer is required. If Open VKL is not
+    found by CMake its location can be hinted with the variable
+    `openvkl_DIR`.
+-   OSPRay also provides an optional module that adds support for Intel
+    [Open Image Denoise], which is enabled by `OSPRAY_MODULE_DENOISER`.
+    When loaded, this module enables the `denosier` image operation. You
+    may need to hint the location of the library with the CMake variable
     `OpenImageDenoise_DIR`.
 
 Depending on your Linux distribution you can install these dependencies
@@ -81,44 +82,53 @@ version) and [Embree](https://github.com/embree/embree/releases/).
 CMake Superbuild
 ----------------
 
-For convenience, OSPRay provides a CMake Superbuild script which will pull
-down OSPRay's dependencies and build OSPRay itself. By default, the result is
-an install directory, with each dependency in its own directory.
+For convenience, OSPRay provides a CMake Superbuild script which will
+pull down OSPRay's dependencies and build OSPRay itself. By default, the
+result is an install directory, with each dependency in its own
+directory.
 
 Run with:
 
-```bash
-mkdir build
-cd build
-cmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
-cmake --build .
-```
+    mkdir build
+    cd build
+    cmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
 
-The resulting `install` directory (or the one set with `CMAKE_INSTALL_PREFIX`)
-will have everything in it, with one subdirectory per dependency.
+On Windows make sure to select the non-default 64bit generator, e.g.
+
+    cmake -G "Visual Studio 15 2017 Win64" [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
+
+The resulting `install` directory (or the one set with
+`CMAKE_INSTALL_PREFIX`) will have everything in it, with one
+subdirectory per dependency.
 
 CMake options to note (all have sensible defaults):
 
-- `CMAKE_INSTALL_PREFIX` will be the root directory where everything gets
-  installed.
-- `BUILD_JOBS` sets the number given to `make -j` for parallel builds.
-- `INSTALL_IN_SEPARATE_DIRECTORIES` toggles installation of all libraries in
-  separate or the same directory.
-- `BUILD_EMBREE_FROM_SOURCE` set to OFF will download a pre-built version of Embree.
-- `BUILD_OIDN_FROM_SOURCE` set to OFF will download a pre-built version of OpenImageDenoise.
-- `BUILD_OIDN_VERSION` determines which verison of OpenImageDenoise to pull down.
+CMAKE_INSTALL_PREFIX
+: will be the root directory where everything gets installed.
+
+BUILD_JOBS
+: sets the number given to `make -j` for parallel builds.
+
+INSTALL_IN_SEPARATE_DIRECTORIES
+: toggles installation of all libraries in separate or the same
+directory.
+
+BUILD_EMBREE_FROM_SOURCE
+: set to OFF will download a pre-built version of Embree.
+
+BUILD_OIDN_FROM_SOURCE
+: set to OFF will download a pre-built version of OpenImageDenoise.
+
+BUILD_OIDN_VERSION
+: determines which verison of OpenImageDenoise to pull down.
 
 For the full set of options, run:
 
-```bash
-ccmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
-```
+    ccmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
 
 or
 
-```bash
-cmake-gui [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
-```
+    cmake-gui [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
 
 
 Standard CMake build
@@ -160,9 +170,9 @@ CMake is easy:
 
         make
 
--   You should now have `libospray.[so,dylib]` as well as a set of example
-    application. You can test your version of OSPRay using any of the
-    examples on the [OSPRay Demos and Examples] page.
+-   You should now have `libospray.[so,dylib]` as well as a set of
+    example application. You can test your version of OSPRay using any
+    of the examples on the [OSPRay Demos and Examples] page.
 
 
 ### Compiling OSPRay on Windows
@@ -236,7 +246,7 @@ Advanced users may want to link to additional targets which are exported
 in OSPRay's CMake config, which includes all installed modules. All
 targets built with OSPRay are exported in the `ospray::` namespace,
 therefore all targets locally used in the OSPRay source tree can be
-accessed from an install. For example, `ospray_module_ispc` can be consumed
-directly via the `ospray::ospray_module_ispc` target. All targets have their
-libraries, includes, and definitions attached to them for public
-consumption (please [report bugs] if this is broken!).
+accessed from an install. For example, `ospray_module_ispc` can be
+consumed directly via the `ospray::ospray_module_ispc` target. All
+targets have their libraries, includes, and definitions attached to them
+for public consumption (please [report bugs] if this is broken!).

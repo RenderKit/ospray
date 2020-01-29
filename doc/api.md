@@ -149,7 +149,7 @@ either method above), by calling
 This function returns the handle to the device currently used to respond
 to OSPRay API calls, where users can set/change parameters and recommit
 the device. If changes are made to the device that is already set as the
-current device, it does not need to be set as current again. NOTE: this
+current device, it does not need to be set as current again. Note this
 API call will increment the ref count of the returned device handle, so
 applications must use `ospDeviceRelease` when finished using the handle
 to avoid leaking the underlying device object.
