@@ -170,21 +170,11 @@ int main(int argc, char **argv)
     box3f regionBounds(
         vec3f(mpiRank, 0.f, 2.5f), vec3f(1.f * (mpiRank + 1.f), 1.f, 3.5f));
     world.setParam("region", cpp::Data(regionBounds));
-    PING;
 
     world.commit();
-    PING;
 
     // create the mpi_raycast renderer (requred for distributed rendering)
     cpp::Renderer renderer("mpiRaycast");
-
-    // create and setup light for Ambient Occlusion
-    // TODO: Who gets the lights now?
-    cpp::Light light("ambient");
-
-    // complete setup of renderer
-    renderer.setParam("backgoundColor", 1.0f); // white, transparent
-    renderer.setParam("light", cpp::Data(light));
     renderer.commit();
 
     // create and setup framebuffer
