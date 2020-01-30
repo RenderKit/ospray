@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v2.0.0 of Intel® OSPRay. For changes and new features
-see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
-information.
+This is release v2.1.0 (devel) of Intel® OSPRay. For changes and new
+features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
+for more information.
 
 OSPRay Overview
 ===============
@@ -302,9 +302,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -435,7 +435,10 @@ OSPDevice ospGetCurrentDevice();
 This function returns the handle to the device currently used to respond
 to OSPRay API calls, where users can set/change parameters and recommit
 the device. If changes are made to the device that is already set as the
-current device, it does not need to be set as current again.
+current device, it does not need to be set as current again. NOTE: this
+API call will increment the ref count of the returned device handle, so
+applications must use `ospDeviceRelease` when finished using the handle
+to avoid leaking the underlying device object.
 
 OSPRay allows applications to query runtime properties of a device in
 order to do enhanced validation of what device was loaded at runtime.
@@ -1361,20 +1364,22 @@ Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer](#path-tracer)).
 
-### Spotlight
+### Spotlight / Photometric Light
 
 The spotlight is a light emitting into a cone of directions. It is
 created by passing the type string “`spot`” to `ospNewLight`. In
 addition to the [general parameters](#lights) understood by all lights
 the spotlight supports the special parameters listed in the table.
 
-| Type  | Name          | Default     | Description                                                                                                                                                                   |
-|:------|:--------------|:------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| vec3f | position      | $(0, 0, 0)$ | the center of the spotlight, in world-space                                                                                                                                   |
-| vec3f | direction     | $(0, 0, 1)$ | main emission direction of the spot                                                                                                                                           |
-| float | openingAngle  | 180         | full opening angle (in degree) of the spot; outside of this cone is no illumination                                                                                           |
-| float | penumbraAngle | 5           | size (angle in degree) of the “penumbra”, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of `openingAngle` |
-| float | radius        | 0           | the size of the spotlight, the radius of a disk with normal `direction`                                                                                                       |
+| Type      | Name                  |      Default| Description                                                                                                                                                                   |
+|:----------|:----------------------|------------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vec3f     | position              |  $(0, 0, 0)$| the center of the spotlight, in world-space                                                                                                                                   |
+| vec3f     | direction             |  $(0, 0, 1)$| main emission direction of the spot                                                                                                                                           |
+| float     | openingAngle          |          180| full opening angle (in degree) of the spot; outside of this cone is no illumination                                                                                           |
+| float     | penumbraAngle         |            5| size (angle in degree) of the “penumbra”, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of `openingAngle` |
+| float     | radius                |            0| the size of the spotlight, the radius of a disk with normal `direction`                                                                                                       |
+| float\[\] | intensityDistribution |             | luminous intensity distribution for photometric lights; can be 2D for assymentric illumination; values are assumed to be uniformly distributed                                |
+| vec3f     | c0                    |             | orientation, i.e. direction of the C0-(half)plane (only needed if illumination via `intensityDistribution` is asymmetric)                                                     |
 
 : Special parameters accepted by the spotlight.
 
@@ -1384,6 +1389,21 @@ spotlight.](https://ospray.github.io/images/spot_light.png)
 Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer](#path-tracer)).
+
+Measured light sources (IES, EULUMDAT, …) are supported by providing an
+`intensityDistribution` [data](#data) array to modulate the intensity
+per direction. The mapping is using the C-γ coordinate system (see also
+below figure): the values of the first (or only) dimension of
+`intensityDistribution` are uniformly mapped to γ in \[0–π\]; the first
+intensity value to 0, the last value to π, thus at least two values need
+to be present. If the array has a second dimension then the intensities
+are not rotational symmetric around `direction`, but are accordingly
+mapped to the C-halfplanes in \[0–2π\]; the first “row” of values to 0
+and 2π, the other rows such that they have uniform distance to its
+neighbors. The orientation of the C0-plane is specified via `c0`.
+
+![C-γ coordinate system for the mapping of `intensityDistribution` to
+the spotlight.](https://ospray.github.io/images/spot_coords.png)
 
 ### Quad Light
 
