@@ -614,9 +614,10 @@ before the calling application process terminates.
 Objects
 -------
 
-All entities of OSPRay (the renderer, volumes, geometries, lights,
-cameras, …) are a logical specialization of `OSPObject` and share common
-mechanism to deal with parameters and lifetime.
+All entities of OSPRay (the [renderer](#renderers), [volumes](#volumes),
+[geometries](#geometries), [lights](#lights), [cameras](#cameras), …)
+are a logical specialization of `OSPObject` and share common mechanism
+to deal with parameters and lifetime.
 
 An important aspect of object parameters is that parameters do not get
 passed to objects immediately. Instead, parameters are not visible at
@@ -2713,7 +2714,7 @@ controls like `pixel samples` and other more specific to the renderer
 type like `aoIntensity` for `scivis` renderer.
 
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
-    be searched in `~/Projects/ispc-v1.9.2-linux`
+    be searched in `~/Projects/ispc-v1.12.0-linux`
 
 [^2]: This file is usually in
     `${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake

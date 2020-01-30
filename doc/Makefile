@@ -47,8 +47,9 @@ tmp/version: ../cmake/ospray_version.cmake $(wildcard ../.git/HEAD)
 
 replace_version = sed -e "s/<OSPRAY_VERSION>/`cat tmp/version`/g" $< > $@
 
-tmp/%.md: %.md tmp/version
+tmp/%.md: %.md tmp/version tmp/links_local.md tmp/images_web.md
 	$(replace_version)
+	$(PANDOC) $@ tmp/links_local.md tmp/images_web.md -o $@
 
 tmp/links.md: links.md
 	$(if_is_devel_then) \
@@ -169,8 +170,8 @@ tmp/api.md: api.md tmp/links_local.md tmp/images_web.md
 tmp/compilation.md: compilation.md tmp/links_local.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md overview.md gitter.md tmp/compilation.md documentation.md tmp/api.md examples.md tmp/links_local.md tmp/images_web.md
-	$(PANDOC) $+ -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
+../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/examples.md
+	$(PANDOC) --file-scope $+ -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
 
 ### pdf
 ########################################################################
