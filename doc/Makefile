@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-webpages := $(addprefix www/, $(addsuffix .html, index examples documentation gallery downloads related_projects pvospray displaywall fiu_comparison legal))
+webpages := $(addprefix www/, $(addsuffix .html, index examples documentation gallery downloads related_projects displaywall ospray2_porting_guide legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, examples getting_ospray readme_head))
 tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api examples))
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow))
@@ -56,6 +56,9 @@ tmp/links.md: links.md
 	  else cp $< $@ ;\
 	fi
 
+tmp/links_local.md: tmp/links.md
+	sed -e "s@: [a-z]\+\.html#@: #@" $< > $@
+
 tmp/images_web.md: images.md
 	sed -e "s/\.fig/.png/" -e "s@: @: https://ospray.github.io/images/@" $< > $@
 
@@ -64,9 +67,6 @@ tmp/images_local_png.md: images.md
 
 tmp/images_local_pdf.md: images.md
 	sed -e "s@: @: images/@" -e "s@images/\(.*\)\.fig@tmp/\1.pdf@" -e "s@\.svg@.pdf@" $< > $@
-
-changelog.md:
-	ln -s ../CHANGELOG.md $@
 
 
 ### directories
@@ -83,7 +83,7 @@ $(webscripts): | wwwscriptdir
 wwwscriptdir:
 	@mkdir -p www/scripts
 
-$(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_html.md tmp/compilation.md tmp/links.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
+$(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_web.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
 tmpdir:
 	@mkdir -p tmp
 
@@ -101,19 +101,26 @@ www/%.html:
 www/stylesheet.css: stylesheet.css
 	cp $< $@
 
-tmp/api_html.md: api.md tmp/links.md tmp/images_local_png.md
+tmp/api_web.md: api.md tmp/links.md tmp/images_local_png.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-www/index.html: teaser.html overview.md changelog.md
+tmp/compilation_web.md: compilation.md tmp/links.md
+	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
+
+tmp/changelog_web.md: ../CHANGELOG.md
+	sed -e "s@README.md@documentation.html@" $< > $@
+
+
+www/index.html: teaser.html overview.md tmp/changelog_web.md
 www/examples.html: examples.md
 www/gallery.html: gallery.md
-www/downloads.html: tmp/getting_ospray.md tmp/compilation.md
+www/downloads.html: tmp/getting_ospray.md tmp/compilation_web.md
 www/related_projects.html: related_projects.md
-www/pvospray.html: pvospray.md
 www/displaywall.html: displaywall.md
-www/fiu_comparison.html: fiu_comparison.md
 www/legal.html: legal.md
-www/documentation.html: documentation.md tmp/api_html.md
+www/documentation.html: documentation.md tmp/api_web.md
+www/ospray2_porting_guide.html: ospray2_porting_guide.md
+	$(markdown2web) --indented-code-classes=cpp
 
 
 ### images
@@ -156,13 +163,13 @@ www/scripts/%: scripts/%
 # also works around pandoc #5121, should be fixed in v2.5.1
 convert_nbsp_width = sed -e 's@\\ @ @g' -e 's/" style="width:/" width="/g' -e "s@^</figure>@\0\n\n@"
 
-tmp/api.md: api.md tmp/links.md tmp/images_web.md
+tmp/api.md: api.md tmp/links_local.md tmp/images_web.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-tmp/compilation.md: compilation.md tmp/links.md
+tmp/compilation.md: compilation.md tmp/links_local.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md overview.md gitter.md tmp/compilation.md documentation.md tmp/api.md examples.md tmp/links.md tmp/images_web.md
+../README.md: tmp/readme_head.md overview.md gitter.md tmp/compilation.md documentation.md tmp/api.md examples.md tmp/links_local.md tmp/images_web.md
 	$(PANDOC) $+ -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
 
 ### pdf
@@ -170,14 +177,17 @@ tmp/compilation.md: compilation.md tmp/links.md
 
 markdown2tex = $(PANDOC) --columns=72 --top-level-division=chapter --filter $+ -o $@
 
-tmp/%.tex: filter-latex.py %.md tmp/links.md tmp/images_local_pdf.md
+tmp/%.tex: filter-latex.py %.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex)
 
-tmp/api.tex: filter-latex.py api.md tmp/links.md tmp/images_local_pdf.md
+tmp/api.tex: filter-latex.py api.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=cpp
 
-tmp/compilation.tex: filter-latex.py compilation.md tmp/links.md tmp/images_local_pdf.md
+tmp/compilation.tex: filter-latex.py compilation.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=sh
+
+changelog.md: ../CHANGELOG.md
+	sed -e "s@README.md@@" $< > $@
 
 ../readme.pdf: readme.tex $(tmptexfiles) $(wildcard ospray-doc/intel-spec.cls) preamble.tex tmp/version $(pdfimages)
 	md5s=0;\

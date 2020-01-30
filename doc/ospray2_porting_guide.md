@@ -1,5 +1,5 @@
-OSPRay v2.0.0 Porting Guide
-===========================
+OSPRay v2.0 Porting Guide
+=========================
 
 OSPRay v2.0.0 introduces a number of new features and updates, as well
 as some API changes. This guide is intended as an introduction to the

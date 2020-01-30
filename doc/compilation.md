@@ -171,8 +171,7 @@ CMake is easy:
         make
 
 -   You should now have `libospray.[so,dylib]` as well as a set of
-    example application. You can test your version of OSPRay using any
-    of the examples on the [OSPRay Demos and Examples] page.
+    [example applications].
 
 
 ### Compiling OSPRay on Windows
