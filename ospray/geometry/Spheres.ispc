@@ -91,7 +91,7 @@ void Spheres_intersect_kernel(
       ray->t = neg_inf;
     } else {
       ray->primID = primID;
-      ray->geomID = self->super.geomID;
+      ray->geomID = 0;
       ray->instID = args->context->instID[0];
     }
   }

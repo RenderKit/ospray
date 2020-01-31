@@ -18,6 +18,15 @@ namespace ospray {
   'bilinar_patch' etc would all work equally well. */
 namespace blp {
 
+BilinearPatches::BilinearPatches()
+{
+  /*! create the 'ispc equivalent': ie, the ispc-side class that
+    implements all the ispc-side code for intersection,
+    postintersect, etc. See BilinearPatches.ispc */
+  ispcEquivalent = ispc::BilinearPatches_create(this);
+  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+}
+
 /*! commit - this is the function that parses all the parameters
   that the app has proivded for this geometry. In this simple
   example we're looking for a single parameter named 'patches',
@@ -30,26 +39,13 @@ void BilinearPatches::commit()
   if (!patchesData && !patchesData->compact())
     throw std::runtime_error("BilinearPatches needs compact 'vertices' data!");
 
+  // look at the data we were provided with ....
+  size_t numPatchesInInput = numPrimitives();
+
+  ispc::BilinearPatches_finalize(
+      getIE(), embreeGeometry, (float *)patchesData->data(), numPatchesInInput);
+
   postCreationInfo(patchesData->size());
-}
-
-LiveGeometry BilinearPatches::createEmbreeGeometry()
-{
-  LiveGeometry retval;
-
-  /*! create the 'ispc equivalent': ie, the ispc-side class that
-    implements all the ispc-side code for intersection,
-    postintersect, etc. See BilinearPatches.ispc */
-  retval.ispcEquivalent = ispc::BilinearPatches_create(this);
-  retval.embreeGeometry =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-
-  ispc::BilinearPatches_finalize(getIE(),
-      retval.embreeGeometry,
-      (float *)patchesData->data(),
-      numPrimitives());
-
-  return retval;
 }
 
 size_t BilinearPatches::numPrimitives() const

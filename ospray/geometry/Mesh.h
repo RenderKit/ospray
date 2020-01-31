@@ -10,14 +10,12 @@ namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE Mesh : public Geometry
 {
-  Mesh() = default;
+  Mesh();
   virtual ~Mesh() override = default;
 
   virtual std::string toString() const override;
 
   virtual void commit() override;
-
-  LiveGeometry createEmbreeGeometry() override;
 
   virtual size_t numPrimitives() const override;
 

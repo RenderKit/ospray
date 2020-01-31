@@ -19,8 +19,6 @@ struct OSPRAY_SDK_INTERFACE GeometricModel : public ManagedObject
 
   Geometry &geometry();
 
-  void setGeomIE(void *geomIE, int geomID);
-
  private:
   Ref<Geometry> geom;
   Ref<const Data> materialData;

@@ -9,13 +9,11 @@ namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE Curves : public Geometry
 {
-  Curves() = default;
+  Curves();
   virtual ~Curves() override = default;
   virtual std::string toString() const override;
 
   virtual void commit() override;
-
-  LiveGeometry createEmbreeGeometry() override;
 
   virtual size_t numPrimitives() const override;
 
@@ -33,6 +31,9 @@ struct OSPRAY_SDK_INTERFACE Curves : public Geometry
 
   OSPCurveType curveType{OSP_UNKNOWN_CURVE_TYPE};
   OSPCurveBasis curveBasis{OSP_UNKNOWN_CURVE_BASIS};
+
+ private:
+  void createEmbreeGeometry();
 };
 
 } // namespace ospray

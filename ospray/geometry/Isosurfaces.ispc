@@ -62,7 +62,7 @@ void Isosurfaces_intersect_kernel(
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
-      ray->geomID = self->super.geomID;
+      ray->geomID = 0;
       ray->primID = 0; // ??? which primID?
       ray->t = hit.t;
       ray->u =

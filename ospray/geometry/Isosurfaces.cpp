@@ -12,6 +12,12 @@
 
 namespace ospray {
 
+Isosurfaces::Isosurfaces()
+{
+  ispcEquivalent = ispc::Isosurfaces_create(this);
+  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+}
+
 Isosurfaces::~Isosurfaces()
 {
   if (valueSelector) {
@@ -58,25 +64,14 @@ void Isosurfaces::commit()
 
   vklCommit(valueSelector);
 
-  postCreationInfo();
-}
-
-LiveGeometry Isosurfaces::createEmbreeGeometry()
-{
-  LiveGeometry retval;
-
-  retval.ispcEquivalent = ispc::Isosurfaces_create(this);
-  retval.embreeGeometry =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
-
-  ispc::Isosurfaces_set(retval.ispcEquivalent,
-      retval.embreeGeometry,
+  ispc::Isosurfaces_set(getIE(),
+      embreeGeometry,
       isovaluesData->size(),
       isovaluesData->data(),
       model->getIE(),
       valueSelector);
 
-  return retval;
+  postCreationInfo();
 }
 
 size_t Isosurfaces::numPrimitives() const

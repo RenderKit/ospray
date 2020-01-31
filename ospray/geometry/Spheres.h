@@ -16,8 +16,6 @@ struct OSPRAY_SDK_INTERFACE Spheres : public Geometry
 
   virtual void commit() override;
 
-  LiveGeometry createEmbreeGeometry() override;
-
   virtual size_t numPrimitives() const override;
 
  protected:
