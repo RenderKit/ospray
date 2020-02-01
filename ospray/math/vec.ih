@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -1025,6 +1025,28 @@ inline float get(const vec3f &v, const uniform uint32 dim)
 }
 
 // -------------------------------------------------------
+// float / int conversion functions
+// -------------------------------------------------------
+/* convert float-color into rgba-uint format, i.e. normalized fixed-point
+ * round to nearest, see "2.3.5 Fixed-Point Data Conversions" of OpenGL 4.6 */
+inline uint32 cvt_uint32(const float f)
+{
+  return (int32)round(255.f * clamp(f, 0.f, 1.f));
+}
+
+inline uint32 cvt_uint32(const vec4f &v)
+{
+  return (cvt_uint32(v.x) << 0) | (cvt_uint32(v.y) << 8)
+      | (cvt_uint32(v.z) << 16) | (cvt_uint32(v.w) << 24);
+}
+
+inline uint32 cvt_uint32(const vec3f &v)
+{
+  return (cvt_uint32(v.x) << 0) | (cvt_uint32(v.y) << 8)
+      | (cvt_uint32(v.z) << 16);
+}
+
+// -------------------------------------------------------
 // sRGB conversion functions
 // -------------------------------------------------------
 #define APPROXIMATE_SRGB
@@ -1050,9 +1072,7 @@ inline vec4f linear_to_srgba(const vec4f c)
 inline uint32 linear_to_srgba8(const vec4f c)
 {
 #if 1
-  vec4f l = 255.f * min(linear_to_srgba(c), make_vec4f(1.f));
-  return ((uint32)l.x << 0) | ((uint32)l.y << 8) | ((uint32)l.z << 16)
-      | ((uint32)l.w << 24);
+  return cvt_uint32(linear_to_srgba(c));
 #else
   //  TODO use ISPC's float_to_srgb8 once it is fixed (issue #1198)
   return (float_to_srgb8(c.x) << 0) | (float_to_srgb8(c.y) << 8)

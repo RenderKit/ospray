@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -34,26 +34,6 @@ struct FrameBuffer
 
   void *cClassPtr; /*!< pointer back to c++-side of this class */
 };
-
-/*! helper function to convert float-color into rgba-uint format */
-inline uint32 cvt_uint32(const float f)
-{
-  return (int32)(255.f * clamp(f, 0.f, 1.f));
-}
-
-/*! helper function to convert float-color into rgba-uint format */
-inline uint32 cvt_uint32(const vec4f &v)
-{
-  return (cvt_uint32(v.x) << 0) | (cvt_uint32(v.y) << 8)
-      | (cvt_uint32(v.z) << 16) | (cvt_uint32(v.w) << 24);
-}
-
-/*! helper function to convert float-color into rgba-uint format */
-inline uint32 cvt_uint32(const vec3f &v)
-{
-  return (cvt_uint32(v.x) << 0) | (cvt_uint32(v.y) << 8)
-      | (cvt_uint32(v.z) << 16);
-}
 
 void FrameBuffer_Constructor(
     FrameBuffer *uniform self, void *uniform cClassPtr);
