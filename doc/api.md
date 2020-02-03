@@ -1077,10 +1077,11 @@ into the `material` array on the [renderer], which allows to build a
                                      an index into the `material` parameter on the
                                      [renderer] (if it exists)
 
+  vec4f                    color     optional color assigned to the geometry
+
   OSPMaterial[] / uint32[] material  optional [data] array of (per-primitive) materials,
                                      may be an index into the `material` parameter on
                                      the renderer (if it exists)
-
 
   vec4f[]                  color     optional [data] array of (per-primitive) colors
 
