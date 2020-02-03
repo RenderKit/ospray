@@ -94,12 +94,11 @@ modules, such as distributed MPI device implementations.
 
 Once a device is created, you can call
 
-    void ospDeviceSet1i(OSPDevice, const char *id, int val);
-    void ospDeviceSetString(OSPDevice, const char *id, const char *val);
-    void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *val);
+    void ospDeviceSetParam(OSPObject, const char *id, OSPDataType type, const void *mem);
 
-to set parameters on the device. The following parameters can be set on
-all devices:
+to set parameters on the device. The semantics of setting parameters is
+exactly the same as `ospSetParam`, which is documented below in the
+[parameters] section. The following parameters can be set on all devices:
 
   ------ ------------ ----------------------------------------------------------
   Type   Name         Description
