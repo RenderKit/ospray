@@ -17,10 +17,10 @@
 #pragma once
 
 #include "common/DistributedWorld.ih"
-#include "ospray/camera/Camera.ih"
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/fb/Tile.ih"
-#include "ospray/render/Renderer.ih"
+#include "camera/Camera.ih"
+#include "fb/FrameBuffer.ih"
+#include "fb/Tile.ih"
+#include "render/Renderer.ih"
 
 struct DistributedRenderer;
 

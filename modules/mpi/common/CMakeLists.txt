@@ -24,26 +24,23 @@ add_library(ospray_mpi_common SHARED
     maml/Context.cpp
 )
 
-ospray_install_library(ospray_mpi_common mpi)
-
 target_link_libraries(ospray_mpi_common
   PRIVATE
     snappy
   PUBLIC
-    ${MPI_CXX_LIBRARIES}
+    ospray::ospray_sdk
     ospcommon::ospcommon
+    ospray::ospray_module_ispc
+    ${MPI_C_LIBRARIES}
 )
 
 target_include_directories(ospray_mpi_common
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/include>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
-    $<BUILD_INTERFACE:${OSPRay_BINARY_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon/maml>
-    ${OSPRAY_MPI_INCLUDES}
+    ${MPI_C_INCLUDE_PATH}
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
@@ -53,3 +50,4 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   PATTERN *.h
 )
 
+# TODO need to install targets

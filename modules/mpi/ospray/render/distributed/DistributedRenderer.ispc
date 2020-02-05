@@ -16,12 +16,8 @@
 
 #include "DistributedRenderer.ih"
 #include "common/DistributedWorld.ih"
-#include "ospray/camera/Camera.ih"
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/fb/Tile.ih"
-#include "ospray/render/Renderer.ih"
-#include "ospray/render/util.ih"
-#include "ospray/common/Intersect.ih"
+#include "render/util.ih"
+#include "common/Intersect.ih"
 
 unmasked void DR_default_computeRegionVisibility(
     DistributedRenderer *uniform self,

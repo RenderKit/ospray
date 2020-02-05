@@ -20,9 +20,9 @@
 #include <memory>
 #include "../common/Messaging.h"
 #include "DistributedFrameBuffer_TileMessages.h"
+#include "fb/LocalFB.h"
 #include "ospcommon/containers/AlignedVector.h"
-#include "ospray/fb/LocalFB.h"
-#include "ospray/render/Renderer.h"
+#include "render/Renderer.h"
 
 namespace ospray {
 struct TileDesc;

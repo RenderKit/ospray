@@ -14,23 +14,26 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-option(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
+cmake_minimum_required(VERSION 3.1)
 
-if (OSPRAY_MODULE_MPI)
+find_package(MPI REQUIRED)
+find_package(ospray 2.0 REQUIRED)
+find_package(openvkl 0.8 REQUIRED)
 
-  include(mpi_setup.cmake)
+include(cmake/ispc.cmake)
 
-  add_subdirectory(common)
-  add_subdirectory(external/pico_bench)
-  add_subdirectory(external/snappy EXCLUDE_FROM_ALL)
-  add_subdirectory(ospray)
+add_subdirectory(external/snappy EXCLUDE_FROM_ALL)
+set_target_properties(snappy PROPERTIES
+    POSITION_INDEPENDENT_CODE ON)
 
-  ##############################################################
-  # Tutorials
-  ##############################################################
-  if (OSPRAY_ENABLE_APPS)
+add_subdirectory(common)
+add_subdirectory(external/pico_bench)
+add_subdirectory(ospray)
+
+##############################################################
+# Tutorials
+##############################################################
+if (OSPRAY_MODULE_MPI_ENABLE_APPS)
     add_subdirectory(tutorials)
-  endif()
-
-endif (OSPRAY_MODULE_MPI)
+endif()
 
