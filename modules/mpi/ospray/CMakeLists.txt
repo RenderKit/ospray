@@ -25,13 +25,13 @@ mark_as_advanced(OSP_MPI_COMPRESSION_THRESHOLD)
 get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
   INTERFACE_INCLUDE_DIRECTORIES)
 
-message("${OSPRAY_ROOT}/include/ospray/")
-
 ispc_include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${OSPRAY_ROOT}/include/
-  ${OSPRAY_ROOT}/include/ospray/
-  ${OSPRAY_ROOT}/include/ospray/SDK/
+  ${OSPRAY_INCLUDE_DIR}
+  # TODO: It looks like I need all these paths set for the includes
+  # within the OSPRay dirs to be found properly
+  ${OSPRAY_INCLUDE_DIR}/ospray/
+  ${OSPRAY_INCLUDE_DIR}/ospray/SDK/
   ${EMBREE_INCLUDE_DIRS}
   ${OPENVKL_INCLUDE_DIRS})
 

@@ -20,7 +20,7 @@ find_package(MPI REQUIRED)
 find_package(ospray 2.0 REQUIRED)
 find_package(openvkl 0.8 REQUIRED)
 
-include(cmake/ispc.cmake)
+include(${OSPRAY_CMAKE_ROOT}/ispc.cmake)
 
 add_subdirectory(external/snappy EXCLUDE_FROM_ALL)
 set_target_properties(snappy PROPERTIES
