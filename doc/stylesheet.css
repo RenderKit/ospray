@@ -61,14 +61,6 @@ div.left {
 }
 br { clear:both; }
 
-/* this fixes anchor links offset from header*/
-:target:before {
-  content: "";
-  display: block;
-  height: 125px;
-  margin: -125px 0 0;
-}
-
 #demo-bullets { font-size: 90%; }
 
 #footer  {
@@ -114,10 +106,11 @@ br { clear:both; }
 
 #content-wrap {
     width:100%;
-    height:100%;
+    height:calc(100% - 134px);
+    position:fixed;
+    top:107px;
+    overflow:auto;
     background: #f2f2f2;
-    /*padding-left: 100px;*/
-    padding-top:100px;
 }
 
 #content {
