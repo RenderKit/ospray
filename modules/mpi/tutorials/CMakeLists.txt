@@ -32,7 +32,7 @@ find_package(MPI REQUIRED)
 set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(OpenGL 2 REQUIRED)
 
-find_package(glfw3 QUIET)
+find_package(glfw3 REQUIRED)
 if (TARGET glfw)
   get_property(glfw3_INCLUDE_DIRS TARGET glfw
     PROPERTY INTERFACE_INCLUDE_DIRECTORIES
@@ -41,37 +41,45 @@ endif()
 
 # build ospTutorial, for demonstration and API testing
 add_executable(ospMPIDistributedTutorial ospMPIDistributedTutorial.c)
+
 target_link_libraries(ospMPIDistributedTutorial PRIVATE
-  ospray ${MPI_C_LIBRARIES})
+  ospray::ospray
+  ${MPI_C_LIBRARIES})
+
 target_include_directories(ospMPIDistributedTutorial PRIVATE
   $<BUILD_INTERFACE:${MPI_C_INCLUDE_PATH}>)
 
 # C++ version
 add_executable(ospMPIDistributedTutorialCpp ospMPIDistributedTutorial.cpp)
+
 target_link_libraries(ospMPIDistributedTutorialCpp PRIVATE
-  ospray ospcommon::ospcommon ${MPI_CXX_LIBRARIES})
+  ospray::ospray
+  ospcommon::ospcommon
+  ${MPI_CXX_LIBRARIES})
+
 target_include_directories(ospMPIDistributedTutorialCpp PRIVATE
   $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
 
 # async version
 add_executable(ospMPIDistributedTutorialAsync ospMPIDistributedTutorialAsync.c)
+
 target_link_libraries(ospMPIDistributedTutorialAsync PRIVATE
-  ospray ${MPI_C_LIBRARIES})
+  ospray::ospray
+  ${MPI_C_LIBRARIES})
+
 target_include_directories(ospMPIDistributedTutorialAsync PRIVATE
   $<BUILD_INTERFACE:${MPI_C_INCLUDE_PATH}>)
 
-set(OSPRAY_EXAMPLE_DIR "${OSPRay_SOURCE_DIR}/apps/ospExamples")
-
+# MPI Tutorial utilities library
 add_library(mpi_tutorial_common STATIC
   GLFWDistribOSPRayWindow.cpp
-  ${OSPRAY_EXAMPLE_DIR}/imgui_impl_glfw_gl3.cpp
+  imgui_impl_glfw_gl3.cpp
 )
 
 target_link_libraries(mpi_tutorial_common PUBLIC
   ospcommon::ospcommon
-  ospray
-  ospray_testing
-  ospray_imgui
+  ospray::ospray
+  imgui
   glfw
   arcball_camera
   ${OPENGL_LIBRARIES}
@@ -79,8 +87,6 @@ target_link_libraries(mpi_tutorial_common PUBLIC
 )
 
 target_include_directories(mpi_tutorial_common PUBLIC
-  $<BUILD_INTERFACE:${OSPRAY_EXAMPLE_DIR}>
-  $<BUILD_INTERFACE:${OSPRAY_ARCBALL_DIR}>
   $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>
 )
 
@@ -96,7 +102,10 @@ ospray_create_mpi_tutorial(ospMPIDistributedTutorialPartiallyReplicatedData
   ospMPIDistributedTutorialPartiallyReplicatedData.cpp
 )
 
-ospray_create_mpi_tutorial(ospMPIDistributedTutorialReplicatedData
-  ospMPIDistributedTutorialReplicatedData.cpp
-)
+# TODO: for this tutorial we need the OSPRay testing/examples code
+# because it just runs that through the distributed API to demonstrate
+# an app with fully replicated data using the distributed API
+#ospray_create_mpi_tutorial(ospMPIDistributedTutorialReplicatedData
+#  ospMPIDistributedTutorialReplicatedData.cpp
+#)
 

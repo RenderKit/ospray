@@ -14,22 +14,11 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-cmake_minimum_required(VERSION 3.1)
+add_subdirectory(snappy EXCLUDE_FROM_ALL)
+set_target_properties(snappy PROPERTIES
+    POSITION_INDEPENDENT_CODE ON)
 
-find_package(MPI REQUIRED)
-find_package(ospray 2.0 REQUIRED)
-find_package(openvkl 0.8 REQUIRED)
-
-include(${OSPRAY_CMAKE_ROOT}/ispc.cmake)
-
-add_subdirectory(common)
-add_subdirectory(external)
-add_subdirectory(ospray)
-
-##############################################################
-# Tutorials
-##############################################################
-if (OSPRAY_MODULE_MPI_ENABLE_APPS)
-    add_subdirectory(tutorials)
-endif()
+add_subdirectory(pico_bench)
+add_subdirectory(arcball_camera)
+add_subdirectory(imgui)
 

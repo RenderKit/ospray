@@ -35,7 +35,6 @@
 #include <memory>
 #include <random>
 #include "GLFWDistribOSPRayWindow.h"
-#include "ospray_testing.h"
 
 using namespace ospray;
 using namespace ospcommon;
