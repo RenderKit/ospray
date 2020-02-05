@@ -84,7 +84,7 @@ $(webscripts): | wwwscriptdir
 wwwscriptdir:
 	@mkdir -p www/scripts
 
-$(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_web.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
+$(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_web.md tmp/changelog_web.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
 tmpdir:
 	@mkdir -p tmp
 
@@ -120,6 +120,7 @@ www/related_projects.html: related_projects.md
 www/displaywall.html: displaywall.md
 www/legal.html: legal.md
 www/documentation.html: documentation.md tmp/api_web.md
+	$(markdown2web) --toc
 www/ospray2_porting_guide.html: ospray2_porting_guide.md
 	$(markdown2web) --indented-code-classes=cpp
 

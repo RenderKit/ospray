@@ -41,9 +41,14 @@ $endif$
       </div>
       <div id="header-spacing"></div>
     </div>
+$if(toc)$
+<nav id="$idprefix$TOC" role="doc-toc">
+$table-of-contents$
+</nav>
+$endif$
 
     <div id="content-wrap">
-      <div id="content">
+      <div id="content$if(toc)$-wtoc$endif$">
 
 $body$
 

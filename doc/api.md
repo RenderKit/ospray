@@ -284,9 +284,9 @@ before the calling application process terminates.
 Objects
 -------
 
-All entities of OSPRay (the renderer, volumes, geometries, lights,
-cameras, ...) are a logical specialization of `OSPObject` and share
-common mechanism to deal with parameters and lifetime.
+All entities of OSPRay (the [renderer], [volumes], [geometries],
+[lights], [cameras], ...) are a logical specialization of `OSPObject`
+and share common mechanism to deal with parameters and lifetime.
 
 An important aspect of object parameters is that parameters do not get
 passed to objects immediately. Instead, parameters are not visible at
