@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -251,7 +251,7 @@ void BilinearPatches_intersect_kernel(
       ray->t = neg_inf;
     } else {
       ray->primID = primID;
-      ray->geomID = 0;
+      ray->geomID = args->geomID;
       ray->instID = args->context->instID[0];
     }
   }
