@@ -28,10 +28,6 @@ get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
 ispc_include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${OSPRAY_INCLUDE_DIR}
-  # TODO: It looks like I need all these paths set for the includes
-  # within the OSPRay dirs to be found properly
-  ${OSPRAY_INCLUDE_DIR}/ospray/
-  ${OSPRAY_INCLUDE_DIR}/ospray/SDK/
   ${EMBREE_INCLUDE_DIRS}
   ${OPENVKL_INCLUDE_DIRS})
 
