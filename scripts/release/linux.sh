@@ -48,8 +48,9 @@ done
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 DEP_BUILD_DIR=$ROOT_DIR/build_deps
+OSPRAY_PKG_BASE=ospray-2.0.1.x86_64.linux
 OSPRAY_BUILD_DIR=$ROOT_DIR/build_release
-INSTALL_DIR=$ROOT_DIR/install
+INSTALL_DIR=$ROOT_DIR/install/$OSPRAY_PKG_BASE
 THREADS=`nproc`
 
 #### Cleanup any existing directories ####
@@ -116,7 +117,7 @@ cmake -L \
   ..
 
 # build OSPRay
-make -j $THREADS install || exit 2
+make -j $THREADS install
 
 # verify libs
 check_symbols $INSTALL_DIR/lib/libospray.so GLIBC   2 14 0
@@ -141,6 +142,6 @@ cp -P $DEP_BUILD_DIR/tbb/src/tbb/lib/intel64/gcc4.8/libtbb.so.* $INSTALL_LIB_DIR
 cp -P $DEP_BUILD_DIR/tbb/src/tbb/lib/intel64/gcc4.8/libtbbmalloc.so.* $INSTALL_LIB_DIR
 
 # tar up the results
-cd $INSTALL_DIR
-tar -caf ospray-2.0.1.x86_64.linux.tar.gz *
+cd $INSTALL_DIR/..
+tar -caf $OSPRAY_PKG_BASE.tar.gz $OSPRAY_PKG_BASE
 mv *.tar.gz $ROOT_DIR
