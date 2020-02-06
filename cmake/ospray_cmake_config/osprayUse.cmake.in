@@ -13,4 +13,7 @@ include(ispc)
 
 message(STATUS "Using found OSPRay ISA targets: ${OSPRAY_ISPC_TARGET_LIST}")
 
-ispc_include_directories(${OSPRAY_INCLUDE_DIRS})
+ispc_include_directories(
+  ${OSPRAY_INCLUDE_DIR}
+  ${OSPRAY_INCLUDE_DIR}/ospray/SDK
+)
