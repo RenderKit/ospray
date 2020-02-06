@@ -102,10 +102,11 @@ ospray_create_mpi_tutorial(ospMPIDistributedTutorialPartiallyReplicatedData
   ospMPIDistributedTutorialPartiallyReplicatedData.cpp
 )
 
-# TODO: for this tutorial we need the OSPRay testing/examples code
-# because it just runs that through the distributed API to demonstrate
-# an app with fully replicated data using the distributed API
-#ospray_create_mpi_tutorial(ospMPIDistributedTutorialReplicatedData
-#  ospMPIDistributedTutorialReplicatedData.cpp
-#)
+ospray_create_mpi_tutorial(ospMPIDistributedTutorialReplicatedData
+  ospMPIDistributedTutorialReplicatedData.cpp
+)
+
+target_link_libraries(ospMPIDistributedTutorialReplicatedData PUBLIC
+  ospray::ospray_testing
+)
 
