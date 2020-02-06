@@ -16,6 +16,8 @@
 
 cmake_minimum_required(VERSION 3.1)
 
+project(ospray_module_mpi)
+
 find_package(MPI REQUIRED)
 find_package(ospray 2.0 REQUIRED)
 find_package(openvkl 0.8 REQUIRED)
