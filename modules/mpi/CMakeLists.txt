@@ -20,9 +20,7 @@ project(ospray_module_mpi)
 
 find_package(MPI REQUIRED)
 find_package(ospray 2.0 REQUIRED)
-find_package(openvkl 0.8 REQUIRED)
-
-include(${OSPRAY_CMAKE_ROOT}/ispc.cmake)
+include(${OSPRAY_SDK_USE_FILE})
 
 add_subdirectory(common)
 add_subdirectory(external)

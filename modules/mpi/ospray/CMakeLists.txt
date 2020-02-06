@@ -27,7 +27,6 @@ get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
 
 ispc_include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${OSPRAY_INCLUDE_DIR}
   ${EMBREE_INCLUDE_DIRS}
   ${OPENVKL_INCLUDE_DIRS})
 
