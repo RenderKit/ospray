@@ -22,13 +22,7 @@ mark_as_advanced(OSP_MPI_COMPRESSION_THRESHOLD)
 
 ## Build the MPI module ##
 
-get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
-  INTERFACE_INCLUDE_DIRECTORIES)
-
-ispc_include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${EMBREE_INCLUDE_DIRS}
-  ${OPENVKL_INCLUDE_DIRS})
+ispc_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(ospray_module_mpi SHARED)
 
