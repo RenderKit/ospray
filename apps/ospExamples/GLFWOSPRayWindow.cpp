@@ -222,11 +222,7 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   if (denoiserEnabled)
     buffers |= OSP_FB_NORMAL;
   framebuffer = cpp::FrameBuffer(windowSize, OSP_FB_RGBA32F, buffers);
-  if (denoiserEnabled) {
-    cpp::ImageOperation d("denoiser");
-    framebuffer.setParam("imageOperation", cpp::Data(d));
-  }
-  framebuffer.commit();
+  setDenoiserOn(denoiserEnabled);
 
   // reset OpenGL viewport and orthographic projection
   glViewport(0, 0, windowSize.x, windowSize.y);
@@ -248,6 +244,18 @@ void GLFWOSPRayWindow::updateCamera()
   camera.setParam("position", arcballCamera->eyePos());
   camera.setParam("direction", arcballCamera->lookDir());
   camera.setParam("up", arcballCamera->upDir());
+}
+
+void GLFWOSPRayWindow::setDenoiserOn(bool on)
+{
+  if (denoiserAvailable && on) {
+    cpp::ImageOperation d("denoiser");
+    framebuffer.setParam("imageOperation", cpp::Data(d));
+  } else {
+    framebuffer.removeParam("imageOperation");
+  }
+
+  framebuffer.commit();
 }
 
 void GLFWOSPRayWindow::motion(const vec2f &position)
@@ -478,7 +486,7 @@ void GLFWOSPRayWindow::buildUI()
   ImGui::Checkbox("show albedo", &showAlbedo);
   if (denoiserAvailable) {
     if(ImGui::Checkbox("denoiser", &denoiserEnabled))
-      reshape(this->windowSize);
+      setDenoiserOn(denoiserEnabled);
   }
 
   ImGui::Separator();
