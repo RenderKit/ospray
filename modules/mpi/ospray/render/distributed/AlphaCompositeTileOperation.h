@@ -28,6 +28,6 @@ struct AlphaCompositeTileOperation : public TileOperation
       size_t tileID,
       size_t ownerID) override;
 
-  std::string toString() const;
+  std::string toString() const override;
 };
 } // namespace ospray
