@@ -56,11 +56,10 @@ ispc_target_add_sources(ospray_module_mpi
 target_link_libraries(ospray_module_mpi
   PRIVATE
     snappy
-  PUBLIC
-    ospray::ospray_sdk
-    ospray::ospray_module_ispc
     ospray_mpi_common
     ospray_pico_bench
+    ospray::ospray_sdk
+    ospray::ospray_module_ispc
 )
 
 target_include_directories(ospray_module_mpi
@@ -73,21 +72,27 @@ target_include_directories(ospray_module_mpi
 target_compile_definitions(ospray_module_mpi PUBLIC
   -DOSP_MPI_COMPRESSION_THRESHOLD=${OSP_MPI_COMPRESSION_THRESHOLD})
 
+install(TARGETS ospray_module_mpi
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} NAMELINK_SKIP
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(TARGETS ospray_module_mpi
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} NAMELINK_ONLY
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
 ## Build the worker executable ##
 
 add_executable(ospray_mpi_worker mpi_offload_worker_main.cpp)
 
-target_link_libraries(ospray_mpi_worker
-    PRIVATE
-      ospray::ospray)
+target_link_libraries(ospray_mpi_worker PRIVATE ospray::ospray)
 
 if (WIN32)
   set_target_properties(ospray_mpi_worker
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 endif()
 
-install(TARGETS ospray_mpi_worker
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT mpi
-)
-
+install(TARGETS ospray_mpi_worker DESTINATION ${CMAKE_INSTALL_BINDIR})

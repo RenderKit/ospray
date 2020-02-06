@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_library(ospray_mpi_common SHARED
+add_library(ospray_mpi_common STATIC
     Collectives.cpp
     MPIBcastFabric.cpp
     MPICommon.cpp
@@ -42,12 +42,3 @@ target_include_directories(ospray_mpi_common
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon/maml>
     ${MPI_C_INCLUDE_PATH}
 )
-
-install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
-  COMPONENT devel
-  FILES_MATCHING
-  PATTERN *.h
-)
-
-# TODO need to install targets
