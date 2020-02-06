@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../common/Messaging.h"
-#include "ospray/fb/LocalFB.h"
+#include "fb/LocalFB.h"
 
 namespace ospray {
 

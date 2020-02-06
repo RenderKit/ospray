@@ -22,17 +22,7 @@ mark_as_advanced(OSP_MPI_COMPRESSION_THRESHOLD)
 
 ## Build the MPI module ##
 
-find_package(openvkl 0.7.0 REQUIRED)
-
-get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
-  INTERFACE_INCLUDE_DIRECTORIES)
-
-ispc_include_directories(
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${EMBREE_INCLUDE_DIRS}
-  ${OPENVKL_INCLUDE_DIRS})
+ispc_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(ospray_module_mpi SHARED)
 
@@ -40,6 +30,7 @@ ispc_target_add_sources(ospray_module_mpi
   MPIOffloadDevice.cpp
   MPIOffloadWorker.cpp
   MPIDistributedDevice.cpp
+  MPIDistributedDevice.ispc
   ModuleInit.cpp
   common/DistributedWorld.cpp
   common/DistributedWorld.ispc
@@ -62,40 +53,46 @@ ispc_target_add_sources(ospray_module_mpi
   render/distributed/AlphaCompositeTileOperation.cpp
 )
 
-ospray_install_library(ospray_module_mpi mpi)
-
 target_link_libraries(ospray_module_mpi
   PRIVATE
     snappy
-  PUBLIC
-    ospray_module_ispc
     ospray_mpi_common
     ospray_pico_bench
-    ospcommon::ospcommon
+    ospray::ospray_sdk
+    ospray::ospray_module_ispc
 )
 
 target_include_directories(ospray_module_mpi
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
   PRIVATE
-    ${PROJECT_BINARY_DIR}/ospray/
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 target_compile_definitions(ospray_module_mpi PUBLIC
   -DOSP_MPI_COMPRESSION_THRESHOLD=${OSP_MPI_COMPRESSION_THRESHOLD})
 
+install(TARGETS ospray_module_mpi
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} NAMELINK_SKIP
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(TARGETS ospray_module_mpi
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} NAMELINK_ONLY
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
 ## Build the worker executable ##
 
 add_executable(ospray_mpi_worker mpi_offload_worker_main.cpp)
-target_link_libraries(ospray_mpi_worker PRIVATE ospray_module_ispc)
+
+target_link_libraries(ospray_mpi_worker PRIVATE ospray::ospray)
+
 if (WIN32)
   set_target_properties(ospray_mpi_worker
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 endif()
 
-install(TARGETS ospray_mpi_worker
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT mpi
-)
-
+install(TARGETS ospray_mpi_worker DESTINATION ${CMAKE_INSTALL_BINDIR})

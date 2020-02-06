@@ -18,8 +18,8 @@
 
 #include <thread>
 // ospray
-#include "../common/Future.h"
-#include "../fb/FrameBuffer.h"
+#include "common/Future.h"
+#include "fb/FrameBuffer.h"
 
 namespace ospray {
 namespace mpi {

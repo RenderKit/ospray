@@ -14,31 +14,11 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_library(ospray_mpi_common STATIC
-    Collectives.cpp
-    MPIBcastFabric.cpp
-    MPICommon.cpp
-    SocketBcastFabric.cpp
-    ObjectHandle.cpp
-    maml/maml.cpp
-    maml/Context.cpp
-)
+add_subdirectory(snappy EXCLUDE_FROM_ALL)
+set_target_properties(snappy PROPERTIES
+    POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(ospray_mpi_common
-  PRIVATE
-    snappy
-  PUBLIC
-    ospray::ospray_sdk
-    ospcommon::ospcommon
-    ospray::ospray_module_ispc
-    ${MPI_C_LIBRARIES}
-)
+add_subdirectory(pico_bench)
+add_subdirectory(arcball_camera)
+add_subdirectory(imgui)
 
-target_include_directories(ospray_mpi_common
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon/maml>
-    ${MPI_C_INCLUDE_PATH}
-)

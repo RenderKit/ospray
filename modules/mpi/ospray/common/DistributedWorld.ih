@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "common/World.ih"
+#include "ospray/SDK/common/World.ih"
 
 struct Region
 {

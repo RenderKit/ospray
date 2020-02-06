@@ -16,6 +16,7 @@
 
 #include "MPIDistributedDevice.h"
 #include <map>
+#include "MPIDistributedDevice_ispc.h"
 #include "api/ISPCDevice.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
@@ -26,6 +27,7 @@
 #include "fb/DistributedFrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
+#include "openvkl/openvkl.h"
 #include "ospcommon/tasking/tasking_system_init.h"
 #include "ospcommon/utility/getEnvVar.h"
 #include "render/DistributedLoadBalancer.h"
@@ -34,8 +36,6 @@
 #include "volume/Volume.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
-#include "openvkl/openvkl.h"
-#include "ISPCDevice_ispc.h"
 
 namespace ospray {
 namespace mpi {
@@ -212,7 +212,7 @@ void MPIDistributedDevice::commit()
 
     VKLDriver driver = nullptr;
 
-    int ispc_width = ispc::ISPCDevice_programCount();
+    int ispc_width = ispc::MPIDistributedDevice_programCount();
     switch (ispc_width) {
     case 4:
       driver = vklNewDriver("ispc_4");

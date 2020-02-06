@@ -14,23 +14,42 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-option(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
+cmake_minimum_required(VERSION 3.1)
 
-if (OSPRAY_MODULE_MPI)
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-  include(mpi_setup.cmake)
+set(CMAKE_C_STANDARD   99)
+set(CMAKE_CXX_STANDARD 11)
 
-  add_subdirectory(common)
-  add_subdirectory(external/pico_bench)
-  add_subdirectory(external/snappy EXCLUDE_FROM_ALL)
-  add_subdirectory(ospray)
+set(CMAKE_C_STANDARD_REQUIRED   ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-  ##############################################################
-  # Tutorials
-  ##############################################################
-  if (OSPRAY_ENABLE_APPS)
-    add_subdirectory(tutorials)
-  endif()
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-endif (OSPRAY_MODULE_MPI)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+project(ospray_module_mpi VERSION 2.0.1 LANGUAGES C CXX)
+
+include(GNUInstallDirs)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+
+find_package(MPI REQUIRED)
+find_package(ospray 2.0 REQUIRED)
+include(${OSPRAY_SDK_USE_FILE})
+
+ospcommon_configure_build_type()
+
+add_subdirectory(common)
+add_subdirectory(external)
+add_subdirectory(ospray)
+
+option(BUILD_TUTORIALS "Enable MPI module sample apps")
+if (BUILD_TUTORIALS)
+  add_subdirectory(tutorials)
+endif()
 
