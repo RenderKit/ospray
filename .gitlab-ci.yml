@@ -117,7 +117,7 @@ build-centos7-icc:
     - module load intel
     - export CC=icc
     - export CXX=icpc
-    - scripts/build_gitlab/linux.sh
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
 build-centos7-icc15:
   <<: *build_job_docker_modules
@@ -126,7 +126,7 @@ build-centos7-icc15:
     - module load intel/2015
     - export CC=icc
     - export CXX=icpc
-    - scripts/build_gitlab/linux.sh
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
 build-centos7-gcc:
   <<: *build_job_docker

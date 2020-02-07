@@ -68,6 +68,9 @@ option(BUILD_DEPENDENCIES_ONLY "Don't build OSPRay itself, only its dependencies
 option(BUILD_OSPRAY_CI_TESTS "Enable OSPRay's tests." OFF)
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
+option(BUILD_OSPRAY_MODULE_MPI "Enable fetch/build of module_mpi" OFF)
+set(BUILD_OSPRAY_MODULE_MPI_VERSION "release-2.0.x" CACHE STRING "What version of module_mpi?")
+
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
   ON
@@ -108,52 +111,9 @@ if (BUILD_OIDN)
   include(dep_oidn)
 endif()
 
-## Build OSPRay ##
-
-set(COMPONENT_NAME ospray)
-
-set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
-if (INSTALL_IN_SEPARATE_DIRECTORIES)
-  set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
-endif()
-
 if (NOT BUILD_DEPENDENCIES_ONLY)
-  ExternalProject_Add(${COMPONENT_NAME}
-    PREFIX ${COMPONENT_NAME}
-    DOWNLOAD_COMMAND ""
-    STAMP_DIR ${COMPONENT_NAME}/stamp
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..
-    BINARY_DIR ${COMPONENT_NAME}/build
-    LIST_SEPARATOR | # Use the alternate list separator
-    CMAKE_ARGS
-      -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-      -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
-      -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
-      -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
-      -DCMAKE_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
-      -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
-      -DOSPRAY_BUILD_ISA=ALL
-      -DOSPRAY_ENABLE_TESTING=${BUILD_OSPRAY_CI_TESTS}
-      -DOSPRAY_MODULE_BILINEAR_PATCH=${BUILD_OSPRAY_CI_TESTS}
-      -DOSPRAY_MODULE_DENOISER=${BUILD_OIDN}
-      -DOSPRAY_STRICT_BUILD=${BUILD_OSPRAY_CI_EXTRAS}
-      -DOSPRAY_WARN_AS_ERRORS=${BUILD_OSPRAY_CI_EXTRAS}
-      $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
-      $<$<BOOL:${DOWNLOAD_TBB}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
-    BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
-    BUILD_ALWAYS OFF
-  )
-
-  ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
-  configure
-    ospcommon
-    embree
-    OpenVKL
-    $<$<BOOL:${BUILD_GLFW}>:glfw>
-    $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
-    $<$<BOOL:${BUILD_OIDN}>:OpenImageDenoise>
-  )
+  include(build_ospray.cmake)
+  if (BUILD_OSPRAY_MODULE_MPI)
+    include(build_module_mpi.cmake)
+  endif()
 endif()

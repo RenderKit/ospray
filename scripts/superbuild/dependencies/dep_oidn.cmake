@@ -1,7 +1,7 @@
 ## Copyright 2009-2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-set(COMPONENT_NAME OpenImageDenoise)
+set(COMPONENT_NAME oidn)
 
 set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
 if (INSTALL_IN_SEPARATE_DIRECTORIES)
