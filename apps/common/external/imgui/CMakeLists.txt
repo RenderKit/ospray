@@ -7,7 +7,6 @@ add_library(ospray_imgui SHARED
   imgui.cpp
   imgui_draw.cpp
   imgui_demo.cpp
-  imguifilesystem/imguifilesystem.cpp
 )
 
 target_link_libraries(ospray_imgui
@@ -22,8 +21,6 @@ target_include_directories(
   ospray_imgui
 INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/imguifilesystem>
 PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/imguifilesystem
 )
