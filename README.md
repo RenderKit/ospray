@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v2.0.0 of Intel® OSPRay. For changes and new features
+This is release v2.0.1 of Intel® OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
@@ -96,7 +96,7 @@ before you can build OSPRay you need the following prerequisites:
     `Internal`.
 
 -   OSPRay also heavily uses Intel [Embree](https://www.embree.org/),
-    installing version 3.7.0 or newer is required. If Embree is not
+    installing version 3.8.0 or newer is required. If Embree is not
     found by CMake its location can be hinted with the variable
     `embree_DIR`.
 
@@ -422,13 +422,13 @@ modules, such as distributed MPI device implementations.
 Once a device is created, you can call
 
 ``` {.cpp}
-void ospDeviceSet1i(OSPDevice, const char *id, int val);
-void ospDeviceSetString(OSPDevice, const char *id, const char *val);
-void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *val);
+void ospDeviceSetParam(OSPObject, const char *id, OSPDataType type, const void *mem);
 ```
 
-to set parameters on the device. The following parameters can be set on
-all devices:
+to set parameters on the device. The semantics of setting parameters is
+exactly the same as `ospSetParam`, which is documented below in the
+[parameters](#parameters) section. The following parameters can be set
+on all devices:
 
 | Type   | Name        | Description                                                                                                                                                                        |
 |:-------|:------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -1330,6 +1330,7 @@ can be used by different types of renderers.
 | Type                         | Name     | Description                                                                                                                                         |
 |:-----------------------------|:---------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
 | OSPMaterial / uint32         | material | optional [material](#materials) applied to the geometry, may be an index into the `material` parameter on the [renderer](#renderers) (if it exists) |
+| vec4f                        | color    | optional color assigned to the geometry                                                                                                             |
 | OSPMaterial\[\] / uint32\[\] | material | optional [data](#data) array of (per-primitive) materials, may be an index into the `material` parameter on the renderer (if it exists)             |
 | vec4f\[\]                    | color    | optional [data](#data) array of (per-primitive) colors                                                                                              |
 | uint8\[\]                    | index    | optional [data](#data) array of per-primitive indices into `color` and `material`                                                                   |
