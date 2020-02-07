@@ -40,8 +40,6 @@ class GLFWOSPRayWindow
 
   void updateCamera();
 
-  void setDenoiserOn(bool on);
-
   void reshape(const vec2i &newWindowSize);
   void motion(const vec2f &position);
   void display();
