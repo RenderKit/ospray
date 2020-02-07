@@ -111,10 +111,9 @@ void SunSkyLight::commit()
 
   const float cosAngle = std::cos(deg2rad(0.5f * angularDiameter));
   const float rcpPdf = 2 * (float)pi * (1 - cosAngle);
-  const vec3f radianceScale = getParam<vec3f>("color", vec3f(1.f)) * getParam<float>("intensity", 1.f);
 
   solarRadiance =
-      xyzToRgb(solarRadiance) * rcpPdf * intensityScale * radianceScale;
+      xyzToRgb(solarRadiance) * rcpPdf * intensityScale * radiance;
 
   ispc::Light_set(getSecondIE().value(), (ispc::vec3f &)solarRadiance, true);
 

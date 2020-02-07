@@ -15,7 +15,7 @@ Light::Light()
 
 void Light::commit()
 {
-  const vec3f radiance =
+  radiance =
       getParam<vec3f>("color", vec3f(1.f)) * getParam<float>("intensity", 1.f);
   ispc::Light_set(
       getIE(), (ispc::vec3f &)radiance, getParam<bool>("visible", true));

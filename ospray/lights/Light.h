@@ -19,6 +19,8 @@ struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
 
   //! get IE of a second light associated with the light type(if available)
   virtual utility::Optional<void *> getSecondIE();
+
+  vec3f radiance{1.0f, 1.0f, 1.0f};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Light *, OSP_LIGHT);
