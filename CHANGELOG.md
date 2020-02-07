@@ -1,6 +1,28 @@
 Version History
 ---------------
 
+### Changes in v2.0.1:
+
+-   Fix bug where Embree user-defined geometries were not indexed correctly
+    in the scene, which requires Embree v3.8.0+
+-   Fix crash when the path tracer encounters geometric models that do not
+    have a material
+-   Fix crash when some path tracer materials generated NULL bsdfs
+-   Fix bug in values returned by `ospGetBounds`
+-   Fix missing symbol in denoiser module
+-   Fix missing symbol exports on Windows for all OSPRay built modules
+-   Add the option to specify a single color for geometric models
+-   The `scivis` renderer now respects opacity found in `color` of geometric
+    models
+-   Fix various inconsistent handling of alpha between renderers
+-   `ospGetCurrentDevice` now increments the ref count of the returned
+    `OSPDevice` handle, so applications will need to `ospDeviceRelease` the
+    handle accordingly when finished with it
+-   Added denoiser to `ospExamples` app
+-   Added `module_mpi` to superbuild (disabled by default)
+-   The superbuild now will emit a CMake error when using any 32-bit CMake
+    generator, as 32-bit builds are not supported
+
 ### Changes in v2.0.0:
 
 -   New major revision of OSPRay brings API breaking improvements over
