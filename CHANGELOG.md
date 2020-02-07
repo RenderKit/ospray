@@ -16,8 +16,8 @@ Version History
     models
 -   Fix various inconsistent handling of alpha between renderers
 -   `ospGetCurrentDevice` now increments the ref count of the returned
-    `OSPDevice` handle, so applications will need to `ospDeviceRelease` the
-    handle accordingly when finished with it
+    `OSPDevice` handle, so applications will need to release the handle when
+    finished by using `ospDeviceRelease` accordingly
 -   Added denoiser to `ospExamples` app
 -   Added `module_mpi` to superbuild (disabled by default)
 -   The superbuild now will emit a CMake error when using any 32-bit CMake
