@@ -137,7 +137,7 @@ INSTALL_LIB_DIR=$INSTALL_DIR/lib
 cp -P $DEP_DIR/lib/*ospcommon.so* $INSTALL_LIB_DIR
 cp -P $DEP_DIR/lib/*openvkl*.so* $INSTALL_LIB_DIR
 cp -P $DEP_BUILD_DIR/embree/src/lib/*embree*.so* $INSTALL_LIB_DIR
-cp -P $DEP_BUILD_DIR/OpenImageDenoise/src/lib/*OpenImage*.so* $INSTALL_LIB_DIR
+cp -P $DEP_BUILD_DIR/oidn/src/lib/*OpenImage*.so* $INSTALL_LIB_DIR
 cp -P $DEP_BUILD_DIR/tbb/src/tbb/lib/intel64/gcc4.8/libtbb.so.* $INSTALL_LIB_DIR
 cp -P $DEP_BUILD_DIR/tbb/src/tbb/lib/intel64/gcc4.8/libtbbmalloc.so.* $INSTALL_LIB_DIR
 
