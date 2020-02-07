@@ -44,11 +44,12 @@ include(${OSPRAY_SDK_USE_FILE})
 
 ospcommon_configure_build_type()
 
+option(BUILD_TUTORIALS "Enable MPI module sample apps")
+
 add_subdirectory(common)
 add_subdirectory(external)
 add_subdirectory(ospray)
 
-option(BUILD_TUTORIALS "Enable MPI module sample apps")
 if (BUILD_TUTORIALS)
   add_subdirectory(tutorials)
 endif()
