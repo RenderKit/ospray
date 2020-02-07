@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -27,16 +14,19 @@ struct Dielectric
   float eta; // etaO / etaI
 };
 
-inline BSDF_EvalRes Dielectric_eval(const varying BSDF* uniform super,
-                                    const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes Dielectric_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
   return make_BSDF_EvalRes_zero();
 }
 
-inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
-                                        const vec3f& wo, const vec2f& s, float ss)
+inline BSDF_SampleRes Dielectric_sample(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
 {
-  const varying Dielectric* uniform self = (const varying Dielectric* uniform)super;
+  const varying Dielectric *uniform self =
+      (const varying Dielectric *uniform)super;
   BSDF_SampleRes res;
 
   float cosThetaO = max(dot(wo, getN(super)), 0.f);
@@ -48,41 +38,42 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
 
   // Sample the reflection or the transmission
   bool doReflection = (ss <= F);
-  if (doReflection)
-  {
+  if (doReflection) {
     // Reflection
     res.wi = reflect(wo, getN(super), cosThetaO);
     res.type = BSDF_SPECULAR_REFLECTION;
     res.weight = make_vec3f(1.f);
-  }
-  else
-  {
+  } else {
     // Transmission
     res.wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
     res.type = BSDF_SPECULAR_TRANSMISSION;
-    //res.weight = make_vec3f(sqr(self->eta)); // solid angle compression
+    // res.weight = make_vec3f(sqr(self->eta)); // solid angle compression
     res.weight = make_vec3f(1.f); // ignore solid angle compression
   }
 
   return res;
 }
 
-inline void Dielectric_Constructor(varying Dielectric* uniform self,
-                                   const varying linear3f* uniform frame,
-                                   float eta)
+inline void Dielectric_Constructor(varying Dielectric *uniform self,
+    const varying linear3f *uniform frame,
+    float eta)
 {
-  BSDF_Constructor(&self->super, make_vec3f(1.0f),
-                   BSDF_SPECULAR,
-                   Dielectric_eval, Dielectric_sample,
-                   frame);
+  BSDF_Constructor(&self->super,
+      make_vec3f(1.0f),
+      BSDF_SPECULAR,
+      Dielectric_eval,
+      Dielectric_sample,
+      frame);
   self->eta = eta;
 }
 
-inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx,
-                                               const varying linear3f* uniform frame,
-                                               float eta)
+inline varying BSDF *uniform Dielectric_create(
+    uniform ShadingContext *uniform ctx,
+    const varying linear3f *uniform frame,
+    float eta)
 {
-  varying Dielectric* uniform self = (varying Dielectric* uniform)ShadingContext_alloc(ctx, sizeof(Dielectric));
+  varying Dielectric *uniform self = (varying Dielectric * uniform)
+      ShadingContext_alloc(ctx, sizeof(Dielectric));
   Dielectric_Constructor(self, frame, eta);
   return &self->super;
 }

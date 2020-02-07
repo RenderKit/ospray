@@ -94,12 +94,11 @@ modules, such as distributed MPI device implementations.
 
 Once a device is created, you can call
 
-    void ospDeviceSet1i(OSPDevice, const char *id, int val);
-    void ospDeviceSetString(OSPDevice, const char *id, const char *val);
-    void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *val);
+    void ospDeviceSetParam(OSPObject, const char *id, OSPDataType type, const void *mem);
 
-to set parameters on the device. The following parameters can be set on
-all devices:
+to set parameters on the device. The semantics of setting parameters is
+exactly the same as `ospSetParam`, which is documented below in the
+[parameters] section. The following parameters can be set on all devices:
 
   ------ ------------ ----------------------------------------------------------
   Type   Name         Description
@@ -115,7 +114,8 @@ all devices:
   string errorOutput  convenience for setting where error messages go; valid
                       values  are `cerr` and `cout`
 
-  bool   debug        set debug mode; equivalent to logLevel=2 and numThreads=1
+  bool   debug        set debug mode; equivalent to `logLevel=debug` and
+                      `numThreads=1`
 
   bool   warnAsError  send `warning` and `error` messages through the error
                       callback, otherwise send `warning` messages through
@@ -148,7 +148,10 @@ either method above), by calling
 This function returns the handle to the device currently used to respond
 to OSPRay API calls, where users can set/change parameters and recommit
 the device. If changes are made to the device that is already set as the
-current device, it does not need to be set as current again.
+current device, it does not need to be set as current again. Note this
+API call will increment the ref count of the returned device handle, so
+applications must use `ospDeviceRelease` when finished using the handle
+to avoid leaking the underlying device object.
 
 OSPRay allows applications to query runtime properties of a device in
 order to do enhanced validation of what device was loaded at runtime.
@@ -281,9 +284,9 @@ before the calling application process terminates.
 Objects
 -------
 
-All entities of OSPRay (the renderer, volumes, geometries, lights,
-cameras, ...) are a logical specialization of `OSPObject` and share
-common mechanism to deal with parameters and lifetime.
+All entities of OSPRay (the [renderer], [volumes], [geometries],
+[lights], [cameras], ...) are a logical specialization of `OSPObject`
+and share common mechanism to deal with parameters and lifetime.
 
 An important aspect of object parameters is that parameters do not get
 passed to objects immediately. Instead, parameters are not visible at
@@ -344,8 +347,8 @@ otherwise accidental type casting can occur. This is especially true for
 pointer types (`OSP_VOID_PTR` and `OSPObject` handles), as they will
 implicitly cast to `void *`, but be incorrectly interpreted. To help
 with some of these issues, there also exist variants of `ospSetParam`
-for specific types, such as `ospSetInt` and `ospSetVec3f` in the
-[OSPRay utility library](util.md) (found in `ospray_util.h`).
+for specific types, such as `ospSetInt` and `ospSetVec3f` in the OSPRay
+utility library (found in `ospray_util.h`).
 
 Users can also remove parameters that have been explicitly set from
 `ospSetParam`. Any parameters which have been removed will go back to
@@ -1073,10 +1076,11 @@ into the `material` array on the [renderer], which allows to build a
                                      an index into the `material` parameter on the
                                      [renderer] (if it exists)
 
+  vec4f                    color     optional color assigned to the geometry
+
   OSPMaterial[] / uint32[] material  optional [data] array of (per-primitive) materials,
                                      may be an index into the `material` parameter on
                                      the renderer (if it exists)
-
 
   vec4f[]                  color     optional [data] array of (per-primitive) colors
 
@@ -1870,7 +1874,7 @@ thus individual flakes are not visible.
 The [path tracer] supports the Luminous material which emits light
 uniformly in all directions and which can thus be used to turn any
 geometric object into a light source. It is created by passing the type
-string "`Luminous`" to `ospNewMaterial`. The amount of constant
+string "`luminous`" to `ospNewMaterial`. The amount of constant
 radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
 
@@ -2234,7 +2238,7 @@ they are in the array.
   : Parameters accepted by the framebuffer.
 
 
-### Image Operation {-}
+### Image Operation
 
 Image operations are functions that are applied to every pixel of a
 frame. Examples include post-processing,
@@ -2243,7 +2247,7 @@ To create a new pixel operation of given type `type` use
 
     OSPImageOperation ospNewImageOperation(const char *type);
 
-#### Tone Mapper {-}
+#### Tone Mapper
 
 The tone mapper is a pixel operation which implements a generic filmic tone
 mapping operator. Using the default parameters it approximates the Academy
@@ -2289,7 +2293,7 @@ parameters to the values listed in the table below.
   : Filmic tone mapping curve parameters. Note that the curve includes an
   exposure bias to match 18% middle gray.
 
-#### Denoiser {-}
+#### Denoiser
 
 OSPRay comes with a module that adds support for Intel® Open Image Denoise.
 This is provided as an optional module as it creates an additional project
@@ -2318,10 +2322,7 @@ to continue progressive rendering.
 
 To start an render task, use
 
-    OSPFuture ospRenderFrame(OSPFrameBuffer,
-                             OSPRenderer,
-                             OSPCamera,
-                             OSPWorld);
+    OSPFuture ospRenderFrame(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 
 This returns an `OSPFuture` handle, which can be used to
 synchronize with the application, cancel, or query for progress of the
@@ -2386,16 +2387,13 @@ rendered, the result is undefined behavior and should be avoided.
 For convenience in certain use cases, `ospray_util.h` provides a
 synchronous version of `ospRenderFrame`:
 
-    float ospRenderFrameBlocking(OSPFrameBuffer,
-                                 OSPRenderer,
-                                 OSPCamera,
-                                 OSPWorld);
+    float ospRenderFrameBlocking(OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld);
 
 This version is the equivalent of:
 
-    - `ospRenderFrame`
-    - `ospWait(f, OSP_TASK_FINISHED)`
-    - return `ospGetVariance(fb)`
+    ospRenderFrame
+    ospWait(f, OSP_TASK_FINISHED)
+    return ospGetVariance(fb)
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
 

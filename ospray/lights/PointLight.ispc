@@ -1,43 +1,29 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
-#include "math/sampling.ih"
-#include "math/LinearSpace.ih"
-#include "common/Ray.ih"
 #include "common/Intersect.ih"
+#include "common/Ray.ih"
+#include "math/LinearSpace.ih"
+#include "math/sampling.ih"
 
 struct PointLight
 {
-  Light super;    //!< inherited light fields
+  Light super; //!< inherited light fields
 
   vec3f position; //!< light position
-  vec3f power;    //!< RGB color and intensity of light
-  float radius;   //!< defines the size of the SphereLight
+  vec3f power; //!< RGB color and intensity of light
+  float radius; //!< defines the size of the SphereLight
 };
-
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-Light_SampleRes PointLight_sample(const uniform Light* uniform super,
-                                  const DifferentialGeometry& dg,
-                                  const vec2f& s)
+Light_SampleRes PointLight_sample(const uniform Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec2f &s)
 {
-  const PointLight* uniform self = (PointLight* uniform)super;
+  const PointLight *uniform self = (PointLight * uniform) super;
   Light_SampleRes res;
 
   // extant light vector from the hit point
@@ -57,31 +43,33 @@ Light_SampleRes PointLight_sample(const uniform Light* uniform super,
 
   if ((self->radius > 0.f) & (sinTheta > 0.005f)) {
     // sample surface of sphere as seen by hit point -> cone of directions
-    // for very small cones treat as point light, because float precision is not good enough
+    // for very small cones treat as point light, because float precision is not
+    // good enough
     if (sinTheta < 1.f) {
       const float cosTheta = sqrt(1.f - sinTheta * sinTheta);
       const vec3f localDir = uniformSampleCone(cosTheta, s);
       res.dir = frame(res.dir) * localDir;
       res.pdf = uniformSampleConePDF(cosTheta);
       const float c = localDir.z;
-      res.dist = c*res.dist - sqrt_safe(sqr(self->radius) - (1.f - c*c) * dist2);
+      res.dist =
+          c * res.dist - sqrt_safe(sqr(self->radius) - (1.f - c * c) * dist2);
       // scale radiance by actual distance
       res.weight = self->power * rcp(sqr(res.dist));
     } else {
-        // emit only from the surface to the outside
-        res.weight = make_vec3f(0.f);
+      // emit only from the surface to the outside
+      res.weight = make_vec3f(0.f);
     }
   }
   return res;
 }
 
-Light_EvalRes PointLight_eval(const uniform Light* uniform super,
-                              const DifferentialGeometry& dg,
-                              const vec3f& dir,
-                              const float minDist,
-                              const float maxDist)
+Light_EvalRes PointLight_eval(const uniform Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec3f &dir,
+    const float minDist,
+    const float maxDist)
 {
-  const PointLight* uniform self = (PointLight* uniform)super;
+  const PointLight *uniform self = (PointLight * uniform) super;
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
 
@@ -107,20 +95,19 @@ Light_EvalRes PointLight_eval(const uniform Light* uniform super,
 //////////////////////////////////////////////////////////////////////////////
 
 //! Set the parameters of an ispc-side PointLight object
-export void PointLight_set(void* uniform super,
-                           const uniform vec3f& position,
-                           uniform float radius)
+export void PointLight_set(
+    void *uniform super, const uniform vec3f &position, uniform float radius)
 {
-  uniform PointLight* uniform self = (uniform PointLight* uniform)super;
+  uniform PointLight *uniform self = (uniform PointLight * uniform) super;
   self->position = position;
   self->power = self->super.radiance;
   self->radius = radius;
 }
 
 //! Create an ispc-side PointLight object
-export void* uniform PointLight_create()
+export void *uniform PointLight_create()
 {
-  uniform PointLight* uniform self = uniform new uniform PointLight;
+  uniform PointLight *uniform self = uniform new uniform PointLight;
   Light_Constructor(&self->super);
   self->super.sample = PointLight_sample;
   self->super.eval = PointLight_eval;

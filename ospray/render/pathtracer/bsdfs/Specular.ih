@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -29,10 +16,10 @@ struct Specular
   float ns; // exponent
 };
 
-inline BSDF_EvalRes Specular_eval(const varying BSDF* uniform super,
-                                  const vec3f& wo, const vec3f& wi)
+inline BSDF_EvalRes Specular_eval(
+    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
 {
-  const varying Specular* uniform self = (const varying Specular* uniform)super;
+  const varying Specular *uniform self = (const varying Specular *uniform)super;
   BSDF_EvalRes res;
 
   const vec3f N = getN(super);
@@ -44,16 +31,18 @@ inline BSDF_EvalRes Specular_eval(const varying BSDF* uniform super,
   const vec3f wh = normalize(wo + wi);
   const float cosThetaH = dot(wh, N);
   res.pdf = powerCosineSampleHemispherePDF(cosThetaH, self->ns)
-    * rcp(4.0f * dot(wo, wh));
+      * rcp(4.0f * dot(wo, wh));
   res.value = self->ks * powf(cosThetaH, self->ns);
 
   return res;
 }
 
-inline BSDF_SampleRes Specular_sample(const varying BSDF* uniform super,
-                                      const vec3f& wo, const vec2f& s, float ss)
+inline BSDF_SampleRes Specular_sample(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss)
 {
-  const varying Specular* uniform self = (const varying Specular* uniform)super;
+  const varying Specular *uniform self = (const varying Specular *uniform)super;
   BSDF_SampleRes res;
 
   const vec3f wh_local = powerCosineSampleHemisphere(self->ns, s);
@@ -67,35 +56,41 @@ inline BSDF_SampleRes Specular_sample(const varying BSDF* uniform super,
 
   const float cosThetaH = wh_local.z;
   res.pdf = powerCosineSampleHemispherePDF(cosThetaH, self->ns)
-    * rcp(4.0f * cosThetaOH);
+      * rcp(4.0f * cosThetaOH);
   res.type = BSDF_GLOSSY_REFLECTION;
   res.weight = self->weight * cosThetaOH;
 
   return res;
 }
 
-inline void Specular_Constructor(varying Specular* uniform self,
-                                 const varying linear3f* uniform frame,
-                                 vec3f R,
-                                 float exp_)
+inline void Specular_Constructor(varying Specular *uniform self,
+    const varying linear3f *uniform frame,
+    vec3f R,
+    float exp_)
 {
-  BSDF_Constructor(&self->super, R, BSDF_GLOSSY_REFLECTION,
-                   Specular_eval, Specular_sample, frame);
+  BSDF_Constructor(&self->super,
+      R,
+      BSDF_GLOSSY_REFLECTION,
+      Specular_eval,
+      Specular_sample,
+      frame);
 
   // convert from Phong exponent to Blinn
   self->ns = exp_ * 4.f;
-  const float tmp = (self->ns + 2.f) * rcp(2.f - exp(self->ns * -lntwo_over_two));
+  const float tmp =
+      (self->ns + 2.f) * rcp(2.f - exp(self->ns * -lntwo_over_two));
   self->ks = R * (one_over_four_pi * tmp);
   self->weight = R * (2.f * tmp * rcp(self->ns + 1.f));
 }
 
-inline varying BSDF* uniform Specular_create(uniform ShadingContext* uniform ctx,
-                                             const varying linear3f* uniform frame,
-                                             vec3f R,
-                                             float exp_)
+inline varying BSDF *uniform Specular_create(
+    uniform ShadingContext *uniform ctx,
+    const varying linear3f *uniform frame,
+    vec3f R,
+    float exp_)
 {
-  varying Specular* uniform self =
-    (varying Specular* uniform)ShadingContext_alloc(ctx, sizeof(Specular));
+  varying Specular *uniform self =
+      (varying Specular * uniform) ShadingContext_alloc(ctx, sizeof(Specular));
   Specular_Constructor(self, frame, R, exp_);
   return &self->super;
 }

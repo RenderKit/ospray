@@ -1,8 +1,8 @@
 Examples
 ========
 
-Simple Tutorial
----------------
+Tutorial
+--------
 
 A minimal working example demonstrating how to use OSPRay can be found
 at `apps/tutorials/ospTutorial.c`^[A C++ version that uses the C++
@@ -57,6 +57,8 @@ built with CMake. It can be run from the build directory via:
 ./ospExamples <command-line-parameter>
 ```
 The command line parameter is optional however.
+
+![`ospExamples` application with default `boxes` scene.][ospExamples]
 
 ### Scenes
 

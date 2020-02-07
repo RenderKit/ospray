@@ -1,45 +1,34 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
-#include "math/sampling.ih"
 #include "math/LinearSpace.ih"
+#include "math/sampling.ih"
 
 struct DirectionalLight
 {
-  Light super;      //!< inherited light fields
+  Light super; //!< inherited light fields
 
-  linear3f frame;   //!< coordinate frame, with vz == direction *towards* the light source
-  vec3f power;      //!< RGB power of light
-  float cosAngle;   //!< Angular limit of the cone light in an easier to use form: cosine of the half angle in radians
-  float pdf;        //!< Probability to sample a direction to the light
+  linear3f frame; //!< coordinate frame, with vz == direction *towards* the
+                  //!< light source
+  vec3f power; //!< RGB power of light
+  float cosAngle; //!< Angular limit of the cone light in an easier to use form:
+                  //!< cosine of the half angle in radians
+  float pdf; //!< Probability to sample a direction to the light
 };
 
-// for very small cones treat as singular light, because float precision is not good enough
+// for very small cones treat as singular light, because float precision is not
+// good enough
 #define COS_ANGLE_MAX 0.99999988f
-
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-Light_SampleRes DirectionalLight_sample(const uniform Light* uniform super,
-                                        const DifferentialGeometry& dg,
-                                        const vec2f& s)
+Light_SampleRes DirectionalLight_sample(const uniform Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec2f &s)
 {
-  const DirectionalLight* uniform self = (DirectionalLight* uniform)super;
+  const DirectionalLight *uniform self = (DirectionalLight * uniform) super;
   Light_SampleRes res;
 
   res.dir = self->frame.vz;
@@ -54,18 +43,18 @@ Light_SampleRes DirectionalLight_sample(const uniform Light* uniform super,
   return res;
 }
 
-Light_EvalRes DirectionalLight_eval(const uniform Light* uniform super,
-                                    const DifferentialGeometry&,
-                                    const vec3f& dir,
-                                    const float,
-                                    const float maxDist)
+Light_EvalRes DirectionalLight_eval(const uniform Light *uniform super,
+    const DifferentialGeometry &,
+    const vec3f &dir,
+    const float,
+    const float maxDist)
 {
-  uniform DirectionalLight* uniform self = (uniform DirectionalLight* uniform)super;
+  uniform DirectionalLight *uniform self =
+      (uniform DirectionalLight * uniform) super;
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
 
-  if (inf <= maxDist
-      && self->cosAngle < COS_ANGLE_MAX 
+  if (inf <= maxDist && self->cosAngle < COS_ANGLE_MAX
       && dot(self->frame.vz, dir) > self->cosAngle) {
     res.radiance = self->power * self->pdf;
     res.pdf = self->pdf;
@@ -74,16 +63,15 @@ Light_EvalRes DirectionalLight_eval(const uniform Light* uniform super,
   return res;
 }
 
-
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
 //! Set the parameters of an ispc-side DirectionalLight object
-export void DirectionalLight_set(void* uniform super,
-                                 const uniform vec3f& direction,
-                                 uniform float cosAngle)
+export void DirectionalLight_set(
+    void *uniform super, const uniform vec3f &direction, uniform float cosAngle)
 {
-  uniform DirectionalLight* uniform self = (uniform DirectionalLight* uniform)super;
+  uniform DirectionalLight *uniform self =
+      (uniform DirectionalLight * uniform) super;
   self->frame = frame(direction);
   self->power = self->super.radiance;
   self->cosAngle = cosAngle;
@@ -91,9 +79,9 @@ export void DirectionalLight_set(void* uniform super,
 }
 
 //! Create an ispc-side DirectionalLight object
-export void* uniform DirectionalLight_create()
+export void *uniform DirectionalLight_create()
 {
-  uniform DirectionalLight* uniform self = uniform new uniform DirectionalLight;
+  uniform DirectionalLight *uniform self = uniform new uniform DirectionalLight;
   Light_Constructor(&self->super);
   self->super.sample = DirectionalLight_sample;
   self->super.eval = DirectionalLight_eval;

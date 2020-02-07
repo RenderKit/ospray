@@ -19,28 +19,21 @@ We recommend the latest version of both TBB and Embree libraries.
 Packages
 --------
 
-For Linux we provide OSPRay precompiled for 64\ bit as RPMs or as a TGZ
-archive.
-
-[ospray-<OSPRAY_VERSION>.x86_64.rpm.tar.gz](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.rpm.tar.gz)
+For Linux we provide OSPRay precompiled for 64\ bit as a TGZ archive.  
 [ospray-<OSPRAY_VERSION>.x86_64.linux.tar.gz](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.linux.tar.gz)
 
-For Mac OS\ X we provide OSPRay as an PKG installer and as a ZIP archive:
-
-[ospray-<OSPRAY_VERSION>.x86_64.pkg](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.pkg)
+For Mac OS\ X we provide OSPRay as a ZIP archive:  
 [ospray-<OSPRAY_VERSION>.x86_64.macosx.zip](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.macosx.zip)
 
 For Windows we provide OSPRay binaries precompiled for 64\ bit as an MSI
-installer as well as a ZIP archive:
-
-[ospray-<OSPRAY_VERSION>.msi](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.msi)
-[ospray-<OSPRAY_VERSION>.windows.zip](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.windows.zip)
+installer as well as a ZIP archive:  
+[ospray-<OSPRAY_VERSION>.x86_64.windows.msi](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.windows.msi)  
+[ospray-<OSPRAY_VERSION>.x86_64.windows.zip](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.windows.zip)  
 You may need to additionally install the [x64 Microsoft^\*^ Visual C++^\*^ 2015
 Redistributable](https://www.microsoft.com/download/details.aspx?id=53840).
 
-The source code of the latest OSPRay version can be downloaded here:
-
-[ospray-<OSPRAY_VERSION>.zip](https://github.com/ospray/OSPRay/archive/v<OSPRAY_VERSION>.zip)
+The source code of the latest OSPRay version can be downloaded here:  
+[ospray-<OSPRAY_VERSION>.zip](https://github.com/ospray/OSPRay/archive/v<OSPRAY_VERSION>.zip)  
 [ospray-<OSPRAY_VERSION>.tar.gz](https://github.com/ospray/OSPRay/archive/v<OSPRAY_VERSION>.tar.gz)
 
 You can also access [old OSPRay releases](https://github.com/ospray/OSPRay/releases).

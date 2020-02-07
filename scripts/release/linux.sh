@@ -1,23 +1,9 @@
 #!/bin/bash
-## ======================================================================== ##
-## Copyright 2014-2019 Intel Corporation                                    ##
-##                                                                          ##
-## Licensed under the Apache License, Version 2.0 (the "License");          ##
-## you may not use this file except in compliance with the License.         ##
-## You may obtain a copy of the License at                                  ##
-##                                                                          ##
-##     http://www.apache.org/licenses/LICENSE-2.0                           ##
-##                                                                          ##
-## Unless required by applicable law or agreed to in writing, software      ##
-## distributed under the License is distributed on an "AS IS" BASIS,        ##
-## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
-## See the License for the specific language governing permissions and      ##
-## limitations under the License.                                           ##
-## ======================================================================== ##
+## Copyright 2014-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 #### Helper functions ####
 
-# check version of symbols
 function check_symbols
 {
   for sym in `nm $1 | grep $2_`
@@ -46,16 +32,38 @@ function check_symbols
   done
 }
 
+function check_imf
+{
+for lib in "$@"
+do
+  if [ -n "`ldd $lib | fgrep libimf.so`" ]; then
+    echo "Error: dependency to 'libimf.so' found"
+    exit 3
+  fi
+done
+}
+
 #### Set variables for script ####
 
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
+DEP_BUILD_DIR=$ROOT_DIR/build_deps
+OSPRAY_PKG_BASE=ospray-2.0.1.x86_64.linux
+OSPRAY_BUILD_DIR=$ROOT_DIR/build_release
+INSTALL_DIR=$ROOT_DIR/install/$OSPRAY_PKG_BASE
 THREADS=`nproc`
+
+#### Cleanup any existing directories ####
+
+rm -rf $DEP_DIR
+rm -rf $DEP_BUILD_DIR
+rm -rf $OSPRAY_BUILD_DIR
+rm -rf $INSTALL_DIR
 
 #### Build dependencies ####
 
-mkdir deps_build
-cd deps_build
+mkdir $DEP_BUILD_DIR
+cd $DEP_BUILD_DIR
 
 # NOTE(jda) - Some Linux OSs need to have lib/ on LD_LIBRARY_PATH at build time
 export LD_LIBRARY_PATH=$DEP_DIR/lib:${LD_LIBRARY_PATH}
@@ -79,8 +87,8 @@ cd $ROOT_DIR
 
 #### Build OSPRay ####
 
-mkdir -p build_release
-cd build_release
+mkdir -p $OSPRAY_BUILD_DIR
+cd $OSPRAY_BUILD_DIR
 
 # Clean out build directory to be sure we are doing a fresh build
 rm -rf *
@@ -93,29 +101,14 @@ export glfw3_DIR=$DEP_DIR
 export openvkl_DIR=$DEP_DIR
 export OpenImageDenoise_DIR=$DEP_DIR
 
-# set release and RPM settings
+# set release settings
 cmake -L \
-  -D OSPRAY_BUILD_ISA=ALL \
+  -D CMAKE_INSTALL_PREFIX=$INSTALL_DIR \
   -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc \
-  -D OSPRAY_ZIP_MODE=OFF \
+  -D OSPRAY_BUILD_ISA=ALL \
   -D OSPRAY_MODULE_DENOISER=ON \
   -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
-  -D CPACK_PACKAGING_INSTALL_PREFIX=/usr \
-  ..
-
-# create RPM files
-make -j $THREADS preinstall
-
-check_symbols libospray.so GLIBC   2 14 0
-check_symbols libospray.so GLIBCXX 3 4 14
-check_symbols libospray.so CXXABI  1 3 5
-
-make -j $THREADS package || exit 2
-
-# change settings for zip mode
-cmake -L \
   -D OSPRAY_ZIP_MODE=ON \
-  -D OSPRAY_INSTALL_DEPENDENCIES=ON \
   -D CPACK_PACKAGING_INSTALL_PREFIX=/ \
   -D CMAKE_INSTALL_INCLUDEDIR=include \
   -D CMAKE_INSTALL_LIBDIR=lib \
@@ -123,5 +116,32 @@ cmake -L \
   -D CMAKE_INSTALL_BINDIR=bin \
   ..
 
-# create tar.gz files
-make -j $THREADS package || exit 2
+# build OSPRay
+make -j $THREADS install
+
+# verify libs
+check_symbols $INSTALL_DIR/lib/libospray.so GLIBC   2 14 0
+check_symbols $INSTALL_DIR/lib/libospray.so GLIBCXX 3 4 15
+check_symbols $INSTALL_DIR/lib/libospray.so CXXABI  1 3 5
+
+check_symbols $INSTALL_DIR/lib/libospray_module_ispc.so GLIBC   2 14 0
+check_symbols $INSTALL_DIR/lib/libospray_module_ispc.so GLIBCXX 3 4 15
+check_symbols $INSTALL_DIR/lib/libospray_module_ispc.so CXXABI  1 3 5
+
+check_imf $INSTALL_DIR/lib/libospray.so
+check_imf $INSTALL_DIR/lib/libospray_module_ispc.so
+
+# copy dependent libs into the install
+INSTALL_LIB_DIR=$INSTALL_DIR/lib
+
+cp -P $DEP_DIR/lib/*ospcommon.so* $INSTALL_LIB_DIR
+cp -P $DEP_DIR/lib/*openvkl*.so* $INSTALL_LIB_DIR
+cp -P $DEP_BUILD_DIR/embree/src/lib/*embree*.so* $INSTALL_LIB_DIR
+cp -P $DEP_BUILD_DIR/oidn/src/lib/*OpenImage*.so* $INSTALL_LIB_DIR
+cp -P $DEP_BUILD_DIR/tbb/src/tbb/lib/intel64/gcc4.8/libtbb.so.* $INSTALL_LIB_DIR
+cp -P $DEP_BUILD_DIR/tbb/src/tbb/lib/intel64/gcc4.8/libtbbmalloc.so.* $INSTALL_LIB_DIR
+
+# tar up the results
+cd $INSTALL_DIR/..
+tar -caf $OSPRAY_PKG_BASE.tar.gz $OSPRAY_PKG_BASE
+mv *.tar.gz $ROOT_DIR

@@ -1,23 +1,10 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "Noise.ih"
 #include "../bsdfs/BeckmannDistribution.ih"
+#include "Noise.ih"
 
 struct Flakes
 {
@@ -27,7 +14,7 @@ struct Flakes
   float jitter;
 };
 
-inline vec3f Flakes_eval(const Flakes& self, vec3f P, int& mask)
+inline vec3f Flakes_eval(const Flakes &self, vec3f P, int &mask)
 {
   vec3f N = make_vec3f(0.f, 0.f, 1.f);
   mask = 0;
@@ -35,22 +22,21 @@ inline vec3f Flakes_eval(const Flakes& self, vec3f P, int& mask)
   if (self.density <= 0.f || self.spread <= 0.f)
     return N;
 
-  const BeckmannDistribution flakeDistribution = make_BeckmannDistribution(roughnessToAlpha(self.spread));
+  const BeckmannDistribution flakeDistribution =
+      make_BeckmannDistribution(roughnessToAlpha(self.spread));
   P = P * self.scale;
 
   // Simple Worley cellular noise with jittered feature points
-  // [Apodaca and Gritz, 1999, "Advanced RenderMan: Creating CGI for Motion Pictures", pp. 255-261]
+  // [Apodaca and Gritz, 1999, "Advanced RenderMan: Creating CGI for Motion
+  // Pictures", pp. 255-261]
   const vec3f thisCell = floor(P) + 0.5f;
   float f1 = 1000.f;
   vec3f cellPos;
   unsigned int cellRnd;
 
-  for (int i = -1; i <= 1; i++)
-  {
-    for (int j = -1; j <= 1; j++)
-    {
-      for (int k = -1; k <= 1; k++)
-      {
+  for (int i = -1; i <= 1; i++) {
+    for (int j = -1; j <= 1; j++) {
+      for (int k = -1; k <= 1; k++) {
         const vec3f testCell = thisCell + make_vec3f(i, j, k);
 
         // generate a random ID for the test cell
@@ -62,8 +48,7 @@ inline vec3f Flakes_eval(const Flakes& self, vec3f P, int& mask)
         // distance test
         const vec3f offset = pos - P;
         const float dist = dot(offset, offset); // actually dist^2
-        if (dist < f1)
-        {
+        if (dist < f1) {
           f1 = dist;
           cellRnd = rnd;
         }
@@ -72,8 +57,7 @@ inline vec3f Flakes_eval(const Flakes& self, vec3f P, int& mask)
   }
 
   // test whether the flake exists
-  if (LCG_getFloat(cellRnd) <= self.density)
-  {
+  if (LCG_getFloat(cellRnd) <= self.density) {
     // generate a random normal for the flake
     float pdf;
     N = sample(flakeDistribution, pdf, LCG_getFloat2(cellRnd));
@@ -82,4 +66,3 @@ inline vec3f Flakes_eval(const Flakes& self, vec3f P, int& mask)
 
   return normalize(N);
 }
-

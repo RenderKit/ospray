@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "common/Ray.ih"
@@ -25,7 +12,7 @@
 
 struct Isosurfaces
 {
-  Geometry super;  //!< inherited geometry fields
+  Geometry super; //!< inherited geometry fields
   float *isovalues;
   VolumetricModel *volumetricModel;
   VKLValueSelector valueSelector;
@@ -38,18 +25,18 @@ unmasked void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
   uniform int primID = args->primID;
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
-  *out                = make_box3fa(self->volumetricModel->volume->boundingBox);
+  *out = make_box3fa(self->volumetricModel->volume->boundingBox);
 }
 
-void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
-                                      args,
-                                  const uniform bool isOcclusionTest)
+void Isosurfaces_intersect_kernel(
+    const RTCIntersectFunctionNArguments *uniform args,
+    const uniform bool isOcclusionTest)
 {
   // make sure to set the mask
   if (!args->valid[programIndex])
     return;
 
-  Isosurfaces *uniform self   = (Isosurfaces * uniform) args->geometryUserPtr;
+  Isosurfaces *uniform self = (Isosurfaces * uniform) args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
 
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
@@ -62,11 +49,11 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
   tRange.lower = ray->t0;
   tRange.upper = ray->t;
   vklInitHitIteratorV(&iterator,
-                      self->volumetricModel->volume->vklVolume,
-                      (varying vkl_vec3f *)&ray->org,
-                      (varying vkl_vec3f *)&ray->dir,
-                      &tRange,
-                      self->valueSelector);
+      self->volumetricModel->volume->vklVolume,
+      (varying vkl_vec3f *)&ray->org,
+      (varying vkl_vec3f *)&ray->dir,
+      &tRange,
+      self->valueSelector);
   VKLHit hit;
   bool gotHit = vklIterateHitV(&iterator, &hit);
 
@@ -75,11 +62,11 @@ void Isosurfaces_intersect_kernel(const RTCIntersectFunctionNArguments *uniform
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
-      ray->geomID = 0;
-      ray->primID = 0;  // ??? which primID?
-      ray->t      = hit.t;
+      ray->geomID = args->geomID;
+      ray->primID = 0; // ??? which primID?
+      ray->t = hit.t;
       ray->u =
-          1e-3;  // ??? which epsilon?  // transport epsilon to postIntersect
+          1e-3; // ??? which epsilon?  // transport epsilon to postIntersect
 
       // NOTE(jda) - Initialize ray.Ng with something, even if it's wrong
       //             (better than garbage). Real normals are computed if DG_NS
@@ -103,17 +90,17 @@ unmasked void Isosurfaces_occluded(
 }
 
 static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
-                                      varying DifferentialGeometry &dg,
-                                      const varying Ray &ray,
-                                      uniform int64 flags)
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
 {
   Isosurfaces *uniform self = (Isosurfaces * uniform) geometry;
-  Volume *uniform volume    = self->volumetricModel->volume;
+  Volume *uniform volume = self->volumetricModel->volume;
 
   if (flags & DG_NS) {
     dg.Ns = Volume_getGradient(volume, dg.P);
     if (dot(dg.Ns, dg.Ns) < 1e-6f)
-      dg.Ns = neg(ray.dir);  // make_vec3f(1.f,0.f,0.f);
+      dg.Ns = neg(ray.dir); // make_vec3f(1.f,0.f,0.f);
   }
 
   dg.Ng = dg.Ns;
@@ -137,20 +124,20 @@ export void *uniform Isosurfaces_create(void *uniform cppEquivalent)
 }
 
 export void *uniform Isosurfaces_set(void *uniform _self,
-                                     void *uniform _embreeGeometry,
-                                     int32 uniform numIsovalues,
-                                     uniform float *uniform isovalues,
-                                     void *uniform _volume,
-                                     void *uniform _valueSelector)
+    void *uniform _embreeGeometry,
+    int32 uniform numIsovalues,
+    uniform float *uniform isovalues,
+    void *uniform _volume,
+    void *uniform _valueSelector)
 {
-  Isosurfaces *uniform self       = (Isosurfaces * uniform) _self;
+  Isosurfaces *uniform self = (Isosurfaces * uniform) _self;
   VolumetricModel *uniform volume = (VolumetricModel * uniform) _volume;
-  VKLValueSelector valueSelector  = (VKLValueSelector)_valueSelector;
+  VKLValueSelector valueSelector = (VKLValueSelector)_valueSelector;
 
-  self->isovalues           = isovalues;
-  self->volumetricModel     = volume;
+  self->isovalues = isovalues;
+  self->volumetricModel = volume;
   self->super.numPrimitives = 1; // for embree it is just one prim
-  self->valueSelector       = valueSelector;
+  self->valueSelector = valueSelector;
 
   Geometry_setEmbreeUserGeometry(&self->super,
       (RTCGeometry)_embreeGeometry,

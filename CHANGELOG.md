@@ -1,12 +1,34 @@
 Version History
 ---------------
 
+### Changes in v2.0.1:
+
+-   Fix bug where Embree user-defined geometries were not indexed correctly
+    in the scene, which now requires Embree v3.8.0+
+-   Fix crash when the path tracer encounters geometric models that do not
+    have a material
+-   Fix crash when some path tracer materials generated NULL bsdfs
+-   Fix bug where `ospGetBounds` returned incorrect values
+-   Fix missing symbol in denoiser module
+-   Fix missing symbol exports on Windows for all OSPRay built modules
+-   Add the option to specify a single color for geometric models
+-   The `scivis` renderer now respects the opacity component of `color` on
+    geometric models
+-   Fix various inconsistent handling of frame buffer alpha between renderers
+-   `ospGetCurrentDevice` now increments the ref count of the returned
+    `OSPDevice` handle, so applications will need to release the handle when
+    finished by using `ospDeviceRelease` accordingly
+-   Added denoiser to `ospExamples` app
+-   Added `module_mpi` to superbuild (disabled by default)
+-   The superbuild now will emit a CMake error when using any 32-bit CMake
+    generator, as 32-bit builds are not supported
+
 ### Changes in v2.0.0:
 
 -   New major revision of OSPRay brings API breaking improvements over
-    v1.x. See `doc/ospray2_porting_guide.md` for a deeper description of
-    migrating from v1.x to v2.0 and `doc/api.md` for the latest API
-    documentation
+    v1.x. See [doc/ospray2_porting_guide.md] for a deeper description of
+    migrating from v1.x to v2.0 and the latest
+    [API documentation](README.md#ospray-api)
     -   `ospRenderFrame` now takes all participating objects as
         function parameters instead of setting some as renderer params
     -   `ospRenderFrame` is now asynchronous, where the task is managed
@@ -21,8 +43,8 @@ Version History
         to use `ospRelease` (or the new `ospRetain`) with them: see
         usage example in `apps/tutorials/ospTutorial.cpp`
     -   Unused parameters are reported as status messages when
-        `logLevel` is >= 1 (most easily set by enabling OSPRay debug on
-        initialization)
+        `logLevel` is at least `warning` (most easily set by enabling
+        OSPRay debug on initialization)
 -   New utility library which adds functions to help with new API
     migration and reduction of boilerplate code
     -   Use `ospray_util.h` to access these additional functions

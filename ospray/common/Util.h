@@ -1,44 +1,30 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "./Managed.h"
 #include "../api/objectFactory.h"
+#include "./Managed.h"
 
 #include <map>
 
 namespace ospray {
 
-  template <typename OSPRAY_CLASS, OSPDataType OSP_TYPE>
-  inline OSPRAY_CLASS *createInstanceHelper(const std::string &type)
-  {
-    static_assert(std::is_base_of<ManagedObject, OSPRAY_CLASS>::value,
-                  "createInstanceHelper<>() is only for OSPRay classes, not"
-                  " generic types!");
+template <typename OSPRAY_CLASS, OSPDataType OSP_TYPE>
+inline OSPRAY_CLASS *createInstanceHelper(const std::string &type)
+{
+  static_assert(std::is_base_of<ManagedObject, OSPRAY_CLASS>::value,
+      "createInstanceHelper<>() is only for OSPRay classes, not"
+      " generic types!");
 
-    auto *object = objectFactory<OSPRAY_CLASS, OSP_TYPE>(type);
+  auto *object = objectFactory<OSPRAY_CLASS, OSP_TYPE>(type);
 
-    // Denote the subclass type in the ManagedObject base class.
-    if (object) {
-      object->managedObjectType = OSP_TYPE;
-    }
-
-    return object;
+  // Denote the subclass type in the ManagedObject base class.
+  if (object) {
+    object->managedObjectType = OSP_TYPE;
   }
 
-}// namespace ospray
+  return object;
+}
 
+} // namespace ospray

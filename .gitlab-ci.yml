@@ -40,7 +40,7 @@ variables:
   only:
     - devel
     - master
-    - /^release-.*$/
+    - /release/
 
 .job_template: &test_job
   stage: test-build
@@ -161,17 +161,17 @@ build-windows-msvc14:
       - build/install
     expire_in: 3 day
 
-#build-windows-msvc15:
-#  <<: *build_job_shell
-#  script:
-#    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141"
-#  tags:
-#    - msvc15
-#    - win
-#  artifacts:
-#    paths:
-#      - build/install
-#    expire_in: 3 day
+build-windows-msvc15:
+  <<: *build_job_shell
+  script:
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141"
+  tags:
+    - msvc15
+    - win
+  artifacts:
+    paths:
+      - build/install
+    expire_in: 3 day
 
 #build-windows-icc:
 #  <<: *build_job_shell
@@ -255,13 +255,13 @@ test-tutorials:
 #  dependencies:
 #    - build-windows-icc
 
-#test-windows-msvc15:
-#  <<: *test_job_windows
-#  tags:
-#    - win
-#    - msvc14
-#  dependencies:
-#    - build-windows-msvc15
+test-windows-msvc15:
+  <<: *test_job_windows
+  tags:
+    - win
+    - msvc15
+  dependencies:
+    - build-windows-msvc15
 
 test-windows-msvc14:
   <<: *test_job_windows
@@ -334,19 +334,12 @@ release-linux-icc:
   image: ospray/docker-images:centos7-mod
   script:
     - module load cmake
-    - module load intel
-    - export CC=icc
-    - export CXX=icpc
     - scripts/release/linux.sh
-    - cd build_release
-    - OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
-    - $SIGN_FILE_LINUX ospray-*-${OSPRAY_VERSION}-*.rpm
-    - tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.rpm
   tags:
     - modules
   artifacts:
     paths:
-      - build_release/*.gz
+      - ./*.gz
 
 release-osx-clang:
   <<: *release_job

@@ -1,20 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
-
-#undef NDEBUG
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "PathTracer.h"
 // ospray
@@ -31,112 +16,111 @@
 
 namespace ospray {
 
-  PathTracer::PathTracer()
-  {
-    ispcEquivalent = ispc::PathTracer_create(this);
-  }
+PathTracer::PathTracer()
+{
+  ispcEquivalent = ispc::PathTracer_create(this);
+}
 
-  PathTracer::~PathTracer()
-  {
-    destroyGeometryLights();
-  }
+PathTracer::~PathTracer()
+{
+  destroyGeometryLights();
+}
 
-  std::string PathTracer::toString() const
-  {
-    return "ospray::PathTracer";
-  }
+std::string PathTracer::toString() const
+{
+  return "ospray::PathTracer";
+}
 
-  void PathTracer::generateGeometryLights(const World &world)
-  {
-    if (!world.instances)
+void PathTracer::generateGeometryLights(const World &world)
+{
+  if (!world.instances)
+    return;
+
+  for (auto &&instance : *world.instances) {
+    auto geometries = instance->group->geometricModels.ptr;
+
+    if (!geometries)
       return;
 
-    for (auto &&instance : *world.instances) {
-      auto geometries = instance->group->geometricModels.ptr;
+    affine3f xfm = instance->xfm();
 
-      if (!geometries)
-        return;
-
-      affine3f xfm = instance->xfm();
-
-      for (auto &&model : *geometries) {
-        if (model->materialData) {
-          // check whether the model has any emissive materials
-          bool hasEmissive = false;
-          for (auto mat : model->ispcMaterialPtrs) {
-            if (mat && ispc::PathTraceMaterial_isEmissive(mat)) {
-              hasEmissive = true;
-              break;
-            }
+    for (auto &&model : *geometries) {
+      if (model->materialData) {
+        // check whether the model has any emissive materials
+        bool hasEmissive = false;
+        for (auto mat : model->ispcMaterialPtrs) {
+          if (mat && ispc::PathTraceMaterial_isEmissive(mat)) {
+            hasEmissive = true;
+            break;
           }
+        }
 
-          if (hasEmissive) {
-            if (ispc::GeometryLight_isSupported(model->getIE())) {
-              void *light =
-                  ispc::GeometryLight_create(model->getIE(), getIE(), &xfm);
+        if (hasEmissive) {
+          if (ispc::GeometryLight_isSupported(model->getIE())) {
+            void *light =
+                ispc::GeometryLight_create(model->getIE(), getIE(), &xfm);
 
-              // check whether the geometry has any emissive primitives
-              if (light)
-                lightArray.push_back(light);
-            } else {
-              postStatusMsg(OSP_LOG_WARNING)
-                  << "#osp:pt Geometry " << model->toString()
-                  << " does not implement area sampling! "
-                  << "Cannot use importance sampling for that "
-                  << "geometry with emissive material!";
-            }
+            // check whether the geometry has any emissive primitives
+            if (light)
+              lightArray.push_back(light);
+          } else {
+            postStatusMsg(OSP_LOG_WARNING)
+                << "#osp:pt Geometry " << model->toString()
+                << " does not implement area sampling! "
+                << "Cannot use importance sampling for that "
+                << "geometry with emissive material!";
           }
         }
       }
     }
   }
+}
 
-  void PathTracer::destroyGeometryLights()
-  {
-    for (size_t i = 0; i < geometryLights; i++)
-      ispc::GeometryLight_destroy(lightArray[i]);
-  }
+void PathTracer::destroyGeometryLights()
+{
+  for (size_t i = 0; i < geometryLights; i++)
+    ispc::GeometryLight_destroy(lightArray[i]);
+}
 
-  void PathTracer::commit()
-  {
-    Renderer::commit();
+void PathTracer::commit()
+{
+  Renderer::commit();
 
-    const int32 rouletteDepth = getParam<int>("roulettePathLength", 5);
-    const float maxRadiance   = getParam<float>("maxContribution", inf);
-    vec4f shadowCatcherPlane =
-        getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
-    useGeometryLights = getParam<bool>("geometryLights", true);
+  const int32 rouletteDepth = getParam<int>("roulettePathLength", 5);
+  const float maxRadiance = getParam<float>("maxContribution", inf);
+  vec4f shadowCatcherPlane = getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
+  useGeometryLights = getParam<bool>("geometryLights", true);
 
-    ispc::PathTracer_set(
-        getIE(), rouletteDepth, maxRadiance, (ispc::vec4f &)shadowCatcherPlane);
-  }
+  ispc::PathTracer_set(
+      getIE(), rouletteDepth, maxRadiance, (ispc::vec4f &)shadowCatcherPlane);
+}
 
-  void *PathTracer::beginFrame(FrameBuffer *, World *world)
-  {
-    if (!world)
-      return nullptr;
-
-    destroyGeometryLights();
-    lightArray.clear();
-    geometryLights = 0;
-
-    if (useGeometryLights) {
-      generateGeometryLights(*world);
-      geometryLights = lightArray.size();
-    }
-
-    if (world->lights) {
-      for (auto &&obj : *world->lights)
-        lightArray.push_back(obj->getIE());
-    }
-
-    void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
-
-    ispc::PathTracer_setLights(
-        getIE(), lightPtr, lightArray.size(), geometryLights);
+void *PathTracer::beginFrame(FrameBuffer *, World *world)
+{
+  if (!world)
     return nullptr;
+
+  destroyGeometryLights();
+  lightArray.clear();
+  geometryLights = 0;
+
+  if (useGeometryLights) {
+    generateGeometryLights(*world);
+    geometryLights = lightArray.size();
   }
 
-  OSP_REGISTER_RENDERER(PathTracer, pathtracer);
+  if (world->lights) {
+    for (auto &&obj : *world->lights)
+      lightArray.push_back(obj->getIE());
+  }
 
-}  // namespace ospray
+  void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
+
+  ispc::PathTracer_setLights(
+      getIE(), lightPtr, lightArray.size(), geometryLights);
+  return nullptr;
+}
+
+OSP_REGISTER_RENDERER(PathTracer, pathtracer);
+
+} // namespace ospray

@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -48,18 +35,18 @@ inline Intersections intersectSphere(const vec3f &rayOrg,
   isect.entry.t = inf;
   isect.exit.t = -inf;
 
-  const vec3f d   = rayDir;
-  const float rd2 = 1.0f / dot(d, d);  // 1/a
-  const vec3f CO  = center - rayOrg;
+  const vec3f d = rayDir;
+  const float rd2 = 1.0f / dot(d, d); // 1/a
+  const vec3f CO = center - rayOrg;
   // transformation to avoid missing a small sphere which is far away:
   // the standard c=CO^2-r^2 would quickly loose term r due to float arithmetic
-  const float projCO     = dot(CO, d) * rd2;  // in ray-space
-  const vec3f perp       = CO - projCO * d;
-  const float l2         = dot(perp, perp);
+  const float projCO = dot(CO, d) * rd2; // in ray-space
+  const vec3f perp = CO - projCO * d;
+  const float l2 = dot(perp, perp);
   const uniform float r2 = sqr(radius);
   if (l2 > r2)
     return isect;
-  float td          = sqrt((r2 - l2) * rd2);
+  float td = sqrt((r2 - l2) * rd2);
   isect.entry.hit = true;
   isect.exit.hit = true;
   isect.entry.t = projCO - td;
@@ -88,7 +75,6 @@ inline Intersections intersectSphere(const vec3f &rayOrg,
   return isect;
 }
 
-
 // robust ray-cylinder intersection
 inline Intersections intersectCylinder(const vec3f &rayOrg,
     const vec3f &rayDir,
@@ -102,34 +88,35 @@ inline Intersections intersectCylinder(const vec3f &rayOrg,
   isect.entry.t = inf;
   isect.exit.t = -inf;
 
-  const vec3f d         = rayDir;
-  const uniform vec3f s = v1 - v0;  // axis
-  const vec3f sxd       = cross(s, d);
-  const float a         = dot(sxd, sxd);  // (s x d)^2
+  const vec3f d = rayDir;
+  const uniform vec3f s = v1 - v0; // axis
+  const vec3f sxd = cross(s, d);
+  const float a = dot(sxd, sxd); // (s x d)^2
   if (a == 0.f)
     return isect;
-  const vec3f f   = v0 - rayOrg;
+  const vec3f f = v0 - rayOrg;
   const vec3f sxf = cross(s, f);
-  const float ra  = 1.0f / a;
-  const float ts = dot(sxd, sxf) * ra; // (s x d)(s x f) / (s x d)^2, in ray-space
-  const vec3f fp = f - ts * d;  // f' = v0 - closest point to axis
+  const float ra = 1.0f / a;
+  const float ts =
+      dot(sxd, sxf) * ra; // (s x d)(s x f) / (s x d)^2, in ray-space
+  const vec3f fp = f - ts * d; // f' = v0 - closest point to axis
 
-  const uniform float s2 = dot(s, s);             // s^2
-  const vec3f perp       = cross(s, fp);          // s x f'
-  const float c = sqr(radius) * s2 - dot(perp, perp);  //  r^2 s^2 - (s x f')^2
+  const uniform float s2 = dot(s, s); // s^2
+  const vec3f perp = cross(s, fp); // s x f'
+  const float c = sqr(radius) * s2 - dot(perp, perp); //  r^2 s^2 - (s x f')^2
   if (c < 0.f)
     return isect;
 
-  float td         = sqrt(c * ra);
-  const float tin  = ts - td;
+  float td = sqrt(c * ra);
+  const float tin = ts - td;
   const float tout = ts + td;
 
   // clip to cylinder caps
-  const float sf  = dot(s, f);
-  const float sd  = dot(s, d);
+  const float sf = dot(s, f);
+  const float sd = dot(s, d);
   const float rsd = rcp(sd);
-  const float tA  = sf * rsd;
-  const float tB  = tA + s2 * rsd;
+  const float tA = sf * rsd;
+  const float tB = tA + s2 * rsd;
 
   const float cap_tin = min(tA, tB);
   const float cap_tout = max(tA, tB);

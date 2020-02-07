@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2018-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2018-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -40,22 +27,17 @@ enum class OSPRayRendererType
 class GLFWOSPRayWindow
 {
  public:
-  GLFWOSPRayWindow(const vec2i &windowSize);
+  GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser = false);
 
   ~GLFWOSPRayWindow();
 
   static GLFWOSPRayWindow *getActiveWindow();
 
-  void registerDisplayCallback(
-      std::function<void(GLFWOSPRayWindow *)> callback);
-
-  void registerImGuiCallback(std::function<void()> callback);
-
   void mainLoop();
 
+ protected:
   void addObjectToCommit(OSPObject obj);
 
- protected:
   void updateCamera();
 
   void reshape(const vec2i &newWindowSize);
@@ -73,6 +55,8 @@ class GLFWOSPRayWindow
   vec2i windowSize;
   vec2f previousMouse{-1.f};
 
+  bool denoiserAvailable{false};
+  bool denoiserEnabled{false};
   bool showAlbedo{false};
   bool cancelFrameOnInteraction{false};
 

@@ -1,19 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
-
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial how to use OSPRay in an application.
  *
@@ -25,21 +11,19 @@
  *       -I ..\.. ospray.lib
  */
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <errno.h>
 #ifdef _WIN32
-#  include <malloc.h>
+#include <malloc.h>
 #else
-#  include <alloca.h>
+#include <alloca.h>
 #endif
 #include "ospray/ospray_util.h"
 
 // helper function to write the rendered image as PPM file
-void writePPM(const char *fileName,
-              int size_x,
-              int size_y,
-              const uint32_t *pixel)
+void writePPM(
+    const char *fileName, int size_x, int size_y, const uint32_t *pixel)
 {
   FILE *file = fopen(fileName, "wb");
   if (!file) {
@@ -47,42 +31,62 @@ void writePPM(const char *fileName,
     return;
   }
   fprintf(file, "P6\n%i %i\n255\n", size_x, size_y);
-  unsigned char *out = (unsigned char *)alloca(3*size_x);
+  unsigned char *out = (unsigned char *)alloca(3 * size_x);
   for (int y = 0; y < size_y; y++) {
-    const unsigned char *in = (const unsigned char *)&pixel[(size_y-1-y)*size_x];
+    const unsigned char *in =
+        (const unsigned char *)&pixel[(size_y - 1 - y) * size_x];
     for (int x = 0; x < size_x; x++) {
-      out[3*x + 0] = in[4*x + 0];
-      out[3*x + 1] = in[4*x + 1];
-      out[3*x + 2] = in[4*x + 2];
+      out[3 * x + 0] = in[4 * x + 0];
+      out[3 * x + 1] = in[4 * x + 1];
+      out[3 * x + 2] = in[4 * x + 2];
     }
-    fwrite(out, 3*size_x, sizeof(char), file);
+    fwrite(out, 3 * size_x, sizeof(char), file);
   }
   fprintf(file, "\n");
   fclose(file);
 }
 
-
-int main(int argc, const char **argv) {
+int main(int argc, const char **argv)
+{
   // image size
   int imgSize_x = 1024; // width
   int imgSize_y = 768; // height
 
   // camera
   float cam_pos[] = {0.f, 0.f, 0.f};
-  float cam_up [] = {0.f, 1.f, 0.f};
-  float cam_view [] = {0.1f, 0.f, 1.f};
+  float cam_up[] = {0.f, 1.f, 0.f};
+  float cam_view[] = {0.1f, 0.f, 1.f};
 
   // triangle mesh data
-  float vertex[] = { -1.0f, -1.0f, 3.0f,
-                     -1.0f,  1.0f, 3.0f,
-                      1.0f, -1.0f, 3.0f,
-                      0.1f,  0.1f, 0.3f };
-  float color[] =  { 0.9f, 0.5f, 0.5f, 1.0f,
-                     0.8f, 0.8f, 0.8f, 1.0f,
-                     0.8f, 0.8f, 0.8f, 1.0f,
-                     0.5f, 0.9f, 0.5f, 1.0f };
-  int32_t index[] = { 0, 1, 2,
-                      1, 2, 3 };
+  float vertex[] = {-1.0f,
+      -1.0f,
+      3.0f,
+      -1.0f,
+      1.0f,
+      3.0f,
+      1.0f,
+      -1.0f,
+      3.0f,
+      0.1f,
+      0.1f,
+      0.3f};
+  float color[] = {0.9f,
+      0.5f,
+      0.5f,
+      1.0f,
+      0.8f,
+      0.8f,
+      0.8f,
+      1.0f,
+      0.8f,
+      0.8f,
+      0.8f,
+      1.0f,
+      0.5f,
+      0.9f,
+      0.5f,
+      1.0f};
+  int32_t index[] = {0, 1, 2, 1, 2, 3};
 
   printf("initialize OSPRay...");
 
@@ -97,7 +101,7 @@ int main(int argc, const char **argv) {
 
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");
-  ospSetFloat(camera, "aspect", imgSize_x/(float)imgSize_y);
+  ospSetFloat(camera, "aspect", imgSize_x / (float)imgSize_y);
   ospSetParam(camera, "position", OSP_VEC3F, cam_pos);
   ospSetParam(camera, "direction", OSP_VEC3F, cam_view);
   ospSetParam(camera, "up", OSP_VEC3F, cam_up);
@@ -169,8 +173,12 @@ int main(int argc, const char **argv) {
   // print out world bounds
   OSPBounds worldBounds = ospGetBounds(world);
   printf("\nworld bounds: ({%f, %f, %f}, {%f, %f, %f}\n\n",
-         worldBounds.lower[0], worldBounds.lower[1], worldBounds.lower[2],
-         worldBounds.upper[0], worldBounds.upper[1], worldBounds.upper[2]);
+      worldBounds.lower[0],
+      worldBounds.lower[1],
+      worldBounds.lower[2],
+      worldBounds.upper[0],
+      worldBounds.upper[1],
+      worldBounds.upper[2]);
 
   printf("setting up renderer...");
 
@@ -183,7 +191,10 @@ int main(int argc, const char **argv) {
   ospCommit(renderer);
 
   // create and setup framebuffer
-  OSPFrameBuffer framebuffer = ospNewFrameBuffer(imgSize_x, imgSize_y, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+  OSPFrameBuffer framebuffer = ospNewFrameBuffer(imgSize_x,
+      imgSize_y,
+      OSP_FB_SRGBA,
+      OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
   ospResetAccumulation(framebuffer);
 
   printf("rendering initial frame to firstFrame.ppm...");
@@ -192,18 +203,19 @@ int main(int argc, const char **argv) {
   ospRenderFrameBlocking(framebuffer, renderer, camera, world);
 
   // access framebuffer and write its content as PPM file
-  const uint32_t * fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
+  const uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
   writePPM("firstFrame.ppm", imgSize_x, imgSize_y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
   printf("done!\n");
   printf("rendering 10 accumulated frames to accumulatedFrame.ppm...");
 
-  // render 10 more frames, which are accumulated to result in a better converged image
+  // render 10 more frames, which are accumulated to result in a better
+  // converged image
   for (int frames = 0; frames < 10; frames++)
     ospRenderFrameBlocking(framebuffer, renderer, camera, world);
 
-  fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
+  fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
   writePPM("accumulatedFrame.ppm", imgSize_x, imgSize_y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
@@ -213,9 +225,9 @@ int main(int argc, const char **argv) {
   ospPick(&p, framebuffer, renderer, camera, world, 0.5f, 0.5f);
 
   printf("\nospPick() center of screen --> [inst: %p, model: %p, prim: %u]\n",
-         p.instance,
-         p.model,
-         p.primID);
+      p.instance,
+      p.model,
+      p.primID);
 
   printf("\ncleaning up objects...");
 

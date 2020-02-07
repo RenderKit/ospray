@@ -1,37 +1,32 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-/*! \file perspectivecamera.ih \brief Defines the ISPC-side Perspective Camera class */
+/*! \file perspectivecamera.ih \brief Defines the ISPC-side Perspective Camera
+ * class */
 
 #include "Camera.ih"
 
 /*! \brief A plain perspective ("PinHole") camera; no depth of field  */
-struct PerspectiveCamera {
+struct PerspectiveCamera
+{
   /*! \brief The parent class info required for this camera to
     'inherit' from Camera */
   Camera super;
 
-  vec3f org;    //!< position of camera, already contains shift when STEREO_{LEFT|RIGHT}
-  vec3f dir_00; //!< direction of ray with screenSample=(0,0); scaled to focusDistance
-  vec3f dir_du; //!< delta of ray direction between two pixels in X; scaled to focusDistance
-  vec3f dir_dv; //!< delta of ray direction between two pixels in Y; scaled to focusDistance
-  float scaledAperture; //!< radius of aperture, divided by horizontal image plane size
+  vec3f org; //!< position of camera, already contains shift when
+             //!< STEREO_{LEFT|RIGHT}
+  vec3f dir_00; //!< direction of ray with screenSample=(0,0); scaled to
+                //!< focusDistance
+  vec3f dir_du; //!< delta of ray direction between two pixels in X; scaled to
+                //!< focusDistance
+  vec3f dir_dv; //!< delta of ray direction between two pixels in Y; scaled to
+                //!< focusDistance
+  float scaledAperture; //!< radius of aperture, divided by horizontal image
+                        //!< plane size
   float aspect; //!< image plane size x / y
   bool side_by_side; //!< stereo mode SIDE_BY_SIDE
-  vec3f ipd_offset; //!< shift of camera position for left/right eye (only when SIDE_BY_SIDE)
+  vec3f ipd_offset; //!< shift of camera position for left/right eye (only when
+                    //!< SIDE_BY_SIDE)
 };

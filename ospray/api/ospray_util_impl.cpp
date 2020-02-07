@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "ospray/ospray_cpp.h"
 #include "ospray/ospray_util.h"
@@ -21,45 +8,44 @@ extern "C" {
 
 // OSPData helpers ////////////////////////////////////////////////////////////
 
-OSPData ospNewSharedData1D(const void *sharedData,
-                           OSPDataType type,
-                           uint64_t numItems)
+OSPData ospNewSharedData1D(
+    const void *sharedData, OSPDataType type, uint64_t numItems)
 {
   return ospNewSharedData(sharedData, type, numItems, 0, 1, 0, 1, 0);
 }
 
 OSPData ospNewSharedData1DStride(const void *sharedData,
-                                 OSPDataType type,
-                                 uint64_t numItems,
-                                 int64_t byteStride)
+    OSPDataType type,
+    uint64_t numItems,
+    int64_t byteStride)
 {
   return ospNewSharedData(sharedData, type, numItems, byteStride, 1, 0, 1, 0);
 }
 
 OSPData ospNewSharedData2D(const void *sharedData,
-                           OSPDataType type,
-                           uint64_t numItems1,
-                           uint64_t numItems2)
+    OSPDataType type,
+    uint64_t numItems1,
+    uint64_t numItems2)
 {
   return ospNewSharedData(sharedData, type, numItems1, 0, numItems2, 0, 1, 0);
 }
 
 OSPData ospNewSharedData2DStride(const void *sharedData,
-                                 OSPDataType type,
-                                 uint64_t numItems1,
-                                 int64_t byteStride1,
-                                 uint64_t numItems2,
-                                 int64_t byteStride2)
+    OSPDataType type,
+    uint64_t numItems1,
+    int64_t byteStride1,
+    uint64_t numItems2,
+    int64_t byteStride2)
 {
   return ospNewSharedData(
       sharedData, type, numItems1, byteStride1, numItems2, byteStride2, 1, 0);
 }
 
 OSPData ospNewSharedData3D(const void *sharedData,
-                           OSPDataType type,
-                           uint64_t numItems1,
-                           uint64_t numItems2,
-                           uint64_t numItems3)
+    OSPDataType type,
+    uint64_t numItems1,
+    uint64_t numItems2,
+    uint64_t numItems3)
 {
   return ospNewSharedData(
       sharedData, type, numItems1, 0, numItems2, 0, numItems3, 0);
@@ -75,17 +61,16 @@ OSPData ospNewData2D(OSPDataType type, uint64_t numItems1, uint64_t numItems2)
   return ospNewData(type, numItems1, numItems2, 1);
 }
 
-void ospCopyData1D(const OSPData source,
-                   OSPData destination,
-                   uint64_t destinationIndex)
+void ospCopyData1D(
+    const OSPData source, OSPData destination, uint64_t destinationIndex)
 {
   ospCopyData(source, destination, destinationIndex, 0, 0);
 }
 
 void ospCopyData2D(const OSPData source,
-                   OSPData destination,
-                   uint64_t destinationIndex1,
-                   uint64_t destinationIndex2)
+    OSPData destination,
+    uint64_t destinationIndex1,
+    uint64_t destinationIndex2)
 {
   ospCopyData(source, destination, destinationIndex1, destinationIndex2, 0);
 }
@@ -154,12 +139,10 @@ void ospSetVec4i(OSPObject o, const char *id, int x, int y, int z, int w)
   ospSetParam(o, id, OSP_VEC4I, v);
 }
 
-void ospSetObjectAsData(OSPObject o,
-                        const char *n,
-                        OSPDataType type,
-                        OSPObject p)
+void ospSetObjectAsData(
+    OSPObject o, const char *n, OSPDataType type, OSPObject p)
 {
-  OSPData tmp  = ospNewSharedData(&p, type, 1);
+  OSPData tmp = ospNewSharedData(&p, type, 1);
   OSPData data = ospNewData(type, 1);
   ospCopyData(tmp, data);
   ospSetParam(o, n, OSP_DATA, &data);
@@ -169,10 +152,8 @@ void ospSetObjectAsData(OSPObject o,
 
 // Rendering helpers //////////////////////////////////////////////////////////
 
-float ospRenderFrameBlocking(OSPFrameBuffer fb,
-                             OSPRenderer renderer,
-                             OSPCamera camera,
-                             OSPWorld world)
+float ospRenderFrameBlocking(
+    OSPFrameBuffer fb, OSPRenderer renderer, OSPCamera camera, OSPWorld world)
 {
   OSPFuture f = ospRenderFrame(fb, renderer, camera, world);
   ospWait(f, OSP_TASK_FINISHED);
@@ -180,4 +161,4 @@ float ospRenderFrameBlocking(OSPFrameBuffer fb,
   return ospGetVariance(fb);
 }
 
-}  // extern "C"
+} // extern "C"

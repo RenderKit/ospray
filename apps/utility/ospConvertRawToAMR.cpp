@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "rawToAMR.h"
 
@@ -30,7 +17,7 @@ regions of higher refinement in the highly varying portions of the volume.
 )description";
 
 static const std::string usage =
-R"usage([-h | --help] input_volume variable_type x_dim y_dim z_dim num_levels
+    R"usage([-h | --help] input_volume variable_type x_dim y_dim z_dim num_levels
     block_size refinement_factor threshold output_basename
 )usage";
 
@@ -90,8 +77,8 @@ static std::string outFileBase;
 bool parseArguments(int argc, char **argv)
 {
   if (argc != 11) {
-    if (argc > 1 &&
-        (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help")) {
+    if (argc > 1
+        && (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help")) {
       std::cerr << description << std::endl;
       std::cerr << "Usage: " << argv[0] << " " << usage << std::endl;
       std::cerr << help << std::endl;
@@ -104,16 +91,16 @@ bool parseArguments(int argc, char **argv)
     return false;
   }
 
-  inFileName      = argv[1];
-  format          = argv[2];
-  inDims.x        = atoi(argv[3]);
-  inDims.y        = atoi(argv[4]);
-  inDims.z        = atoi(argv[5]);
-  numLevels       = atoi(argv[6]);
-  blockSize       = atoi(argv[7]);
+  inFileName = argv[1];
+  format = argv[2];
+  inDims.x = atoi(argv[3]);
+  inDims.y = atoi(argv[4]);
+  inDims.z = atoi(argv[5]);
+  numLevels = atoi(argv[6]);
+  blockSize = atoi(argv[7]);
   refinementLevel = atoi(argv[8]);
-  threshold       = atof(argv[9]);
-  outFileBase     = argv[10];
+  threshold = atof(argv[9]);
+  outFileBase = argv[10];
 
   return true;
 }
@@ -140,21 +127,21 @@ int main(int argc, char **argv)
   std::vector<std::vector<float>> brickData;
 
   ospray::amr::makeAMR(in,
-                       inDims,
-                       numLevels,
-                       blockSize,
-                       refinementLevel,
-                       threshold,
-                       blockBounds,
-                       refinementLevels,
-                       cellWidths,
-                       brickData);
+      inDims,
+      numLevels,
+      blockSize,
+      refinementLevel,
+      threshold,
+      blockBounds,
+      refinementLevels,
+      cellWidths,
+      brickData);
   ospray::amr::outputAMR(outFileBase,
-                         blockBounds,
-                         refinementLevels,
-                         cellWidths,
-                         brickData,
-                         blockSize);
+      blockBounds,
+      refinementLevels,
+      cellWidths,
+      brickData,
+      blockSize);
 
   return 0;
 }

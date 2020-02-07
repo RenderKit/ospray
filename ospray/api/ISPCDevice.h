@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -26,126 +13,121 @@
 extern "C" OSPRAY_SDK_INTERFACE RTCDevice ispc_embreeDevice();
 
 namespace ospray {
-  namespace api {
+namespace api {
 
-    struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
-    {
-      ISPCDevice() = default;
-      ~ISPCDevice() override;
+struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
+{
+  ISPCDevice() = default;
+  ~ISPCDevice() override;
 
-      /////////////////////////////////////////////////////////////////////////
-      // ManagedObject Implementation /////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+  // ManagedObject Implementation /////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
-      void commit() override;
+  void commit() override;
 
-      /////////////////////////////////////////////////////////////////////////
-      // Device Implementation ////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+  // Device Implementation ////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
-      int loadModule(const char *name) override;
+  int loadModule(const char *name) override;
 
-      // OSPRay Data Arrays ///////////////////////////////////////////////////
+  // OSPRay Data Arrays ///////////////////////////////////////////////////
 
-      OSPData newSharedData(const void *sharedData,
-                            OSPDataType,
-                            const vec3ul &numItems,
-                            const vec3l &byteStride) override;
+  OSPData newSharedData(const void *sharedData,
+      OSPDataType,
+      const vec3ul &numItems,
+      const vec3l &byteStride) override;
 
-      OSPData newData(OSPDataType, const vec3ul &numItems) override;
+  OSPData newData(OSPDataType, const vec3ul &numItems) override;
 
-      void copyData(const OSPData source,
-                    OSPData destination,
-                    const vec3ul &destinationIndex) override;
+  void copyData(const OSPData source,
+      OSPData destination,
+      const vec3ul &destinationIndex) override;
 
-      // Renderable Objects ///////////////////////////////////////////////////
+  // Renderable Objects ///////////////////////////////////////////////////
 
-      OSPLight newLight(const char *type) override;
+  OSPLight newLight(const char *type) override;
 
-      OSPCamera newCamera(const char *type) override;
+  OSPCamera newCamera(const char *type) override;
 
-      OSPGeometry newGeometry(const char *type) override;
-      OSPVolume newVolume(const char *type) override;
+  OSPGeometry newGeometry(const char *type) override;
+  OSPVolume newVolume(const char *type) override;
 
-      OSPGeometricModel newGeometricModel(OSPGeometry geom) override;
-      OSPVolumetricModel newVolumetricModel(OSPVolume volume) override;
+  OSPGeometricModel newGeometricModel(OSPGeometry geom) override;
+  OSPVolumetricModel newVolumetricModel(OSPVolume volume) override;
 
-      // Model Meta-Data //////////////////////////////////////////////////////
+  // Model Meta-Data //////////////////////////////////////////////////////
 
-      OSPMaterial newMaterial(const char *renderer_type,
-                              const char *material_type) override;
+  OSPMaterial newMaterial(
+      const char *renderer_type, const char *material_type) override;
 
-      OSPTransferFunction newTransferFunction(const char *type) override;
+  OSPTransferFunction newTransferFunction(const char *type) override;
 
-      OSPTexture newTexture(const char *type) override;
+  OSPTexture newTexture(const char *type) override;
 
-      // Instancing ///////////////////////////////////////////////////////////
+  // Instancing ///////////////////////////////////////////////////////////
 
-      OSPGroup newGroup() override;
-      OSPInstance newInstance(OSPGroup group) override;
+  OSPGroup newGroup() override;
+  OSPInstance newInstance(OSPGroup group) override;
 
-      // Top-level Worlds /////////////////////////////////////////////////////
+  // Top-level Worlds /////////////////////////////////////////////////////
 
-      OSPWorld newWorld() override;
-      box3f getBounds(OSPObject) override;
+  OSPWorld newWorld() override;
+  box3f getBounds(OSPObject) override;
 
-      // Object + Parameter Lifetime Management ///////////////////////////////
+  // Object + Parameter Lifetime Management ///////////////////////////////
 
-      void setObjectParam(OSPObject object,
-                          const char *name,
-                          OSPDataType type,
-                          const void *mem) override;
+  void setObjectParam(OSPObject object,
+      const char *name,
+      OSPDataType type,
+      const void *mem) override;
 
-      void removeObjectParam(OSPObject object, const char *name) override;
+  void removeObjectParam(OSPObject object, const char *name) override;
 
-      void commit(OSPObject object) override;
+  void commit(OSPObject object) override;
 
-      void release(OSPObject _obj) override;
-      void retain(OSPObject _obj) override;
+  void release(OSPObject _obj) override;
+  void retain(OSPObject _obj) override;
 
-      // FrameBuffer Manipulation /////////////////////////////////////////////
+  // FrameBuffer Manipulation /////////////////////////////////////////////
 
-      OSPFrameBuffer frameBufferCreate(const vec2i &size,
-                                       const OSPFrameBufferFormat mode,
-                                       const uint32 channels) override;
+  OSPFrameBuffer frameBufferCreate(const vec2i &size,
+      const OSPFrameBufferFormat mode,
+      const uint32 channels) override;
 
-      OSPImageOperation newImageOp(const char *type) override;
+  OSPImageOperation newImageOp(const char *type) override;
 
-      const void *frameBufferMap(OSPFrameBuffer fb,
-                                 const OSPFrameBufferChannel) override;
+  const void *frameBufferMap(
+      OSPFrameBuffer fb, const OSPFrameBufferChannel) override;
 
-      void frameBufferUnmap(const void *mapped, OSPFrameBuffer fb) override;
+  void frameBufferUnmap(const void *mapped, OSPFrameBuffer fb) override;
 
-      float getVariance(OSPFrameBuffer) override;
+  float getVariance(OSPFrameBuffer) override;
 
-      void resetAccumulation(OSPFrameBuffer _fb) override;
+  void resetAccumulation(OSPFrameBuffer _fb) override;
 
-      // Frame Rendering //////////////////////////////////////////////////////
+  // Frame Rendering //////////////////////////////////////////////////////
 
-      OSPRenderer newRenderer(const char *type) override;
+  OSPRenderer newRenderer(const char *type) override;
 
-      OSPFuture renderFrame(OSPFrameBuffer,
-                            OSPRenderer,
-                            OSPCamera,
-                            OSPWorld) override;
+  OSPFuture renderFrame(
+      OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld) override;
 
-      int isReady(OSPFuture, OSPSyncEvent) override;
-      void wait(OSPFuture, OSPSyncEvent) override;
-      void cancel(OSPFuture) override;
-      float getProgress(OSPFuture) override;
+  int isReady(OSPFuture, OSPSyncEvent) override;
+  void wait(OSPFuture, OSPSyncEvent) override;
+  void cancel(OSPFuture) override;
+  float getProgress(OSPFuture) override;
 
-      OSPPickResult pick(OSPFrameBuffer,
-                         OSPRenderer,
-                         OSPCamera,
-                         OSPWorld,
-                         const vec2f &) override;
+  OSPPickResult pick(
+      OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
 
-      // Public Data //
+  // Public Data //
 
-      // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
-      //             safely assume that a device exists.
-      static RTCDevice embreeDevice;
-    };
+  // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
+  //             safely assume that a device exists.
+  static RTCDevice embreeDevice;
+};
 
-  }  // namespace api
-}  // namespace ospray
+} // namespace api
+} // namespace ospray

@@ -20,7 +20,8 @@
 #include "GGXDistribution.ih"
 #include "SheenDistribution.ih"
 
-inline float MicrofacetAlbedo_sample(float cosThetaO, const GGXDistribution& microfacet, const vec2f& s)
+inline float MicrofacetAlbedo_sample(
+    float cosThetaO, const GGXDistribution &microfacet, const vec2f &s)
 {
   // Handle edge cases
   cosThetaO = max(cosThetaO, 1e-6f);
@@ -46,7 +47,10 @@ inline float MicrofacetAlbedo_sample(float cosThetaO, const GGXDistribution& mic
   return G * rcp_safe(evalG1(microfacet, wo, cosThetaOH));
 }
 
-inline float MicrofacetDielectricAlbedo_sample(float cosThetaO, float eta, const GGXDistribution& microfacet, const vec2f& s)
+inline float MicrofacetDielectricAlbedo_sample(float cosThetaO,
+    float eta,
+    const GGXDistribution &microfacet,
+    const vec2f &s)
 {
   // Handle edge cases
   cosThetaO = max(cosThetaO, 1e-6f);
@@ -69,8 +73,7 @@ inline float MicrofacetDielectricAlbedo_sample(float cosThetaO, float eta, const
   // Sample the reflection
   vec3f wi = reflect(wo, wh, cosThetaOH);
   float cosThetaI = wi.z;
-  if (cosThetaI > 0.f)
-  {
+  if (cosThetaI > 0.f) {
     float cosThetaIH = dot(wi, wh);
     float G = evalG2(microfacet, wo, wi, cosThetaOH, cosThetaIH);
     weight += F * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
@@ -80,17 +83,19 @@ inline float MicrofacetDielectricAlbedo_sample(float cosThetaO, float eta, const
   // cosThetaTH = -cosThetaIH
   wi = refract(wo, wh, cosThetaOH, cosThetaTH, eta);
   cosThetaI = wi.z;
-  if (cosThetaI < 0.f)
-  {
+  if (cosThetaI < 0.f) {
     float cosThetaIH = dot(wi, wh);
     float G = evalG2(microfacet, wo, wi, cosThetaOH, cosThetaIH);
-    weight += (1.f-F) * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
+    weight += (1.f - F) * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
   }
 
   return weight;
 }
 
-inline float MicrofacetDielectricReflectionAlbedo_sample(float cosThetaO, float eta, const GGXDistribution& microfacet, const vec2f& s)
+inline float MicrofacetDielectricReflectionAlbedo_sample(float cosThetaO,
+    float eta,
+    const GGXDistribution &microfacet,
+    const vec2f &s)
 {
   // Handle edge cases
   cosThetaO = max(cosThetaO, 1e-6f);
@@ -119,7 +124,8 @@ inline float MicrofacetDielectricReflectionAlbedo_sample(float cosThetaO, float 
   return F * (G * rcp_safe(evalG1(microfacet, wo, cosThetaOH)));
 }
 
-inline float MicrofacetSheenAlbedo_sample(float cosThetaO, const SheenDistribution& microfacet, const vec2f& s)
+inline float MicrofacetSheenAlbedo_sample(
+    float cosThetaO, const SheenDistribution &microfacet, const vec2f &s)
 {
   // Handle edge cases
   cosThetaO = max(cosThetaO, 1e-6f);
@@ -142,77 +148,78 @@ inline float MicrofacetSheenAlbedo_sample(float cosThetaO, const SheenDistributi
   float G = evalG2(microfacet, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
   float pdf = uniformSampleHemispherePDF();
-  return D * G * rcp(4.f*cosThetaO * pdf);
+  return D * G * rcp(4.f * cosThetaO * pdf);
 }
 
-inline float MicrofacetAlbedo_integrate(float cosThetaO, float roughness, uniform int numSamples = 1024)
+inline float MicrofacetAlbedo_integrate(
+    float cosThetaO, float roughness, uniform int numSamples = 1024)
 {
-  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, 0.f));
+  GGXDistribution microfacet =
+      make_GGXDistribution(roughnessToAlpha(roughness, 0.f));
 
   uniform int n = sqrt((uniform float)numSamples);
   float sum = 0.f;
-  for (uniform int i = 0; i < n; i++)
-  {
-    for (uniform int j = 0; j < n; j++)
-    {
+  for (uniform int i = 0; i < n; i++) {
+    for (uniform int j = 0; j < n; j++) {
       vec2f s = min((make_vec2f(i, j) + 0.5f) / n, make_vec2f(1.f - 1e-6f));
       sum += MicrofacetAlbedo_sample(cosThetaO, microfacet, s);
     }
   }
 
-  return min(sum / (n*n), 1.f);
+  return min(sum / (n * n), 1.f);
 }
 
-inline float MicrofacetDielectricAlbedo_integrate(float cosThetaO, float eta, float roughness, uniform int numSamples = 1024)
+inline float MicrofacetDielectricAlbedo_integrate(
+    float cosThetaO, float eta, float roughness, uniform int numSamples = 1024)
 {
-  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, 0.f));
+  GGXDistribution microfacet =
+      make_GGXDistribution(roughnessToAlpha(roughness, 0.f));
 
   uniform int n = sqrt((uniform float)numSamples);
   float sum = 0.f;
-  for (uniform int i = 0; i < n; i++)
-  {
-    for (uniform int j = 0; j < n; j++)
-    {
+  for (uniform int i = 0; i < n; i++) {
+    for (uniform int j = 0; j < n; j++) {
       vec2f s = min((make_vec2f(i, j) + 0.5f) / n, make_vec2f(1.f - 1e-6f));
       sum += MicrofacetDielectricAlbedo_sample(cosThetaO, eta, microfacet, s);
     }
   }
 
-  return min(sum / (n*n), 1.f);
+  return min(sum / (n * n), 1.f);
 }
 
-inline float MicrofacetDielectricReflectionAlbedo_integrate(float cosThetaO, float eta, float roughness, uniform int numSamples = 1024)
+inline float MicrofacetDielectricReflectionAlbedo_integrate(
+    float cosThetaO, float eta, float roughness, uniform int numSamples = 1024)
 {
-  GGXDistribution microfacet = make_GGXDistribution(roughnessToAlpha(roughness, 0.f));
+  GGXDistribution microfacet =
+      make_GGXDistribution(roughnessToAlpha(roughness, 0.f));
 
   uniform int n = sqrt((uniform float)numSamples);
   float sum = 0.f;
-  for (uniform int i = 0; i < n; i++)
-  {
-    for (uniform int j = 0; j < n; j++)
-    {
+  for (uniform int i = 0; i < n; i++) {
+    for (uniform int j = 0; j < n; j++) {
       vec2f s = min((make_vec2f(i, j) + 0.5f) / n, make_vec2f(1.f - 1e-6f));
-      sum += MicrofacetDielectricReflectionAlbedo_sample(cosThetaO, eta, microfacet, s);
+      sum += MicrofacetDielectricReflectionAlbedo_sample(
+          cosThetaO, eta, microfacet, s);
     }
   }
 
-  return min(sum / (n*n), 1.f);
+  return min(sum / (n * n), 1.f);
 }
 
-inline float MicrofacetSheenAlbedo_integrate(float cosThetaO, float roughness, uniform int numSamples = 1024)
+inline float MicrofacetSheenAlbedo_integrate(
+    float cosThetaO, float roughness, uniform int numSamples = 1024)
 {
-  SheenDistribution microfacet = make_SheenDistribution(roughnessToAlpha(roughness));
+  SheenDistribution microfacet =
+      make_SheenDistribution(roughnessToAlpha(roughness));
 
   uniform int n = sqrt((uniform float)numSamples);
   float sum = 0.f;
-  for (uniform int i = 0; i < n; i++)
-  {
-    for (uniform int j = 0; j < n; j++)
-    {
+  for (uniform int i = 0; i < n; i++) {
+    for (uniform int j = 0; j < n; j++) {
       vec2f s = min((make_vec2f(i, j) + 0.5f) / n, make_vec2f(1.f - 1e-6f));
       sum += MicrofacetSheenAlbedo_sample(cosThetaO, microfacet, s);
     }
   }
 
-  return min(sum / (n*n), 1.f);
+  return min(sum / (n * n), 1.f);
 }

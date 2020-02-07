@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "common/Ray.ih"
@@ -40,9 +27,9 @@ struct BilinearPatches
 };
 
 static void BilinearPatches_postIntersect(const Geometry *uniform geometry,
-                                          varying DifferentialGeometry &dg,
-                                          const varying Ray &ray,
-                                          uniform int64 flags)
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
 {
   const BilinearPatches *uniform self =
       (const BilinearPatches *uniform)geometry;
@@ -78,35 +65,35 @@ unmasked void BilinearPatches_bounds(
 {
   uniform BilinearPatches *uniform self =
       (uniform BilinearPatches * uniform) args->geometryUserPtr;
-  uniform int primID   = args->primID;
+  uniform int primID = args->primID;
   Patch *uniform patch = self->patchArray + primID;
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
   *out = box_extend(box_extend(box_extend(box_extend(make_box3fa_empty(),
-                                                     make_vec3f(patch->v00)),
-                                          make_vec3f(patch->v01)),
-                               make_vec3f(patch->v10)),
-                    make_vec3f(patch->v11));
+                                              make_vec3f(patch->v00)),
+                                   make_vec3f(patch->v01)),
+                        make_vec3f(patch->v10)),
+      make_vec3f(patch->v11));
 }
 
 bool recursiveBisection(varying Ray &ray,
-                        const uniform bool isOcclusionTest,
-                        const varying LinearSpace3f &frame,
-                        const uniform vec3f p00,
-                        const uniform vec3f p01,
-                        const uniform vec3f p10,
-                        const uniform vec3f p11,
-                        const uniform float u0,
-                        const uniform float u1,
-                        const uniform float v0,
-                        const uniform float v1,
-                        uniform int recursionsLeft)
+    const uniform bool isOcclusionTest,
+    const varying LinearSpace3f &frame,
+    const uniform vec3f p00,
+    const uniform vec3f p01,
+    const uniform vec3f p10,
+    const uniform vec3f p11,
+    const uniform float u0,
+    const uniform float u1,
+    const uniform float v0,
+    const uniform float v1,
+    uniform int recursionsLeft)
 {
   // compute signs to x plane
-  const float x0    = dot(p00 - ray.org, frame.vx);
-  const float x1    = dot(p01 - ray.org, frame.vx);
-  const float x2    = dot(p10 - ray.org, frame.vx);
-  const float x3    = dot(p11 - ray.org, frame.vx);
+  const float x0 = dot(p00 - ray.org, frame.vx);
+  const float x1 = dot(p01 - ray.org, frame.vx);
+  const float x2 = dot(p10 - ray.org, frame.vx);
+  const float x3 = dot(p11 - ray.org, frame.vx);
   const float min_x = min(min(x0, x1), min(x2, x3));
   if (min_x > 0.f)
     return false;
@@ -115,10 +102,10 @@ bool recursiveBisection(varying Ray &ray,
     return false;
 
   // compute signs to y plane
-  const float y0    = dot(p00 - ray.org, frame.vy);
-  const float y1    = dot(p01 - ray.org, frame.vy);
-  const float y2    = dot(p10 - ray.org, frame.vy);
-  const float y3    = dot(p11 - ray.org, frame.vy);
+  const float y0 = dot(p00 - ray.org, frame.vy);
+  const float y1 = dot(p01 - ray.org, frame.vy);
+  const float y2 = dot(p10 - ray.org, frame.vy);
+  const float y3 = dot(p11 - ray.org, frame.vy);
   const float min_y = min(min(y0, y1), min(y2, y3));
   if (min_y > 0.f)
     return false;
@@ -168,54 +155,54 @@ bool recursiveBisection(varying Ray &ray,
 
     bool hit = false;
     hit |= recursiveBisection(ray,
-                              isOcclusionTest,
-                              frame,
-                              p00,
-                              p0c,
-                              pc0,
-                              pcc,
-                              u0,
-                              uc,
-                              v0,
-                              vc,
-                              recursionsLeft - 1);
+        isOcclusionTest,
+        frame,
+        p00,
+        p0c,
+        pc0,
+        pcc,
+        u0,
+        uc,
+        v0,
+        vc,
+        recursionsLeft - 1);
     hit |= recursiveBisection(ray,
-                              isOcclusionTest,
-                              frame,
-                              pc0,
-                              pcc,
-                              p10,
-                              p1c,
-                              u0,
-                              uc,
-                              vc,
-                              v1,
-                              recursionsLeft - 1);
+        isOcclusionTest,
+        frame,
+        pc0,
+        pcc,
+        p10,
+        p1c,
+        u0,
+        uc,
+        vc,
+        v1,
+        recursionsLeft - 1);
 
     hit |= recursiveBisection(ray,
-                              isOcclusionTest,
-                              frame,
-                              p0c,
-                              p01,
-                              pcc,
-                              pc1,
-                              uc,
-                              u1,
-                              v0,
-                              vc,
-                              recursionsLeft - 1);
+        isOcclusionTest,
+        frame,
+        p0c,
+        p01,
+        pcc,
+        pc1,
+        uc,
+        u1,
+        v0,
+        vc,
+        recursionsLeft - 1);
     hit |= recursiveBisection(ray,
-                              isOcclusionTest,
-                              frame,
-                              pcc,
-                              pc1,
-                              p1c,
-                              p11,
-                              uc,
-                              u1,
-                              vc,
-                              v1,
-                              recursionsLeft - 1);
+        isOcclusionTest,
+        frame,
+        pcc,
+        pc1,
+        p1c,
+        p11,
+        uc,
+        u1,
+        vc,
+        v1,
+        recursionsLeft - 1);
     return hit;
   }
 }
@@ -247,24 +234,24 @@ void BilinearPatches_intersect_kernel(
   const LinearSpace3f coordSys = frame(ray->dir);
 
   bool hit = recursiveBisection(*ray,
-                                isOcclusionTest,
-                                coordSys,
-                                patch->v00,
-                                patch->v01,
-                                patch->v10,
-                                patch->v11,
-                                0.f,
-                                1.f,
-                                0.f,
-                                1.f,
-                                /* number of bisections */ 10);
+      isOcclusionTest,
+      coordSys,
+      patch->v00,
+      patch->v01,
+      patch->v10,
+      patch->v11,
+      0.f,
+      1.f,
+      0.f,
+      1.f,
+      /* number of bisections */ 10);
 
   if (hit) {
     if (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
       ray->primID = primID;
-      ray->geomID = 0;
+      ray->geomID = args->geomID;
       ray->instID = args->context->instID[0];
     }
   }
@@ -288,9 +275,9 @@ unmasked void BilinearPatches_occluded(
   existing class'es data members, but handling this would make this
   code significantly larger */
 export void BilinearPatches_finalize(void *uniform _self,
-                                     void *uniform _embreeGeometry,
-                                     float *uniform patchesDataMemory,
-                                     uniform size_t numPatches)
+    void *uniform _embreeGeometry,
+    float *uniform patchesDataMemory,
+    uniform size_t numPatches)
 {
   // first, typecast to our 'real' type. since ispc can't export real
   // types to c we have to pass 'self' in as a void*, and typecast

@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "Material.ih"
 #include "render/pathtracer/bsdfs/RobustDielectric.ih"
@@ -29,40 +16,43 @@ struct Glass
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* varying Glass_getBSDF(const uniform PathTraceMaterial* uniform super,
-                                          uniform ShadingContext* uniform ctx,
-                                          const DifferentialGeometry& dg,
-                                          const Ray& ray,
-                                          const Medium& currentMedium)
+const varying BSDF *varying Glass_getBSDF(
+    const uniform PathTraceMaterial *uniform super,
+    uniform ShadingContext *uniform ctx,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const Medium &currentMedium)
 {
-  uniform const Glass* uniform self = (uniform const Glass* uniform)super;
+  uniform const Glass *uniform self = (uniform const Glass *uniform)super;
 
-  float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
-                                                     : self->mediumInside.ior*rcp(self->mediumOutside.ior);
-                                                     
-  varying BSDF* uniform bsdf = RobustDielectric_create(ctx, dg, eta);
+  float eta = eq(currentMedium, self->mediumOutside)
+      ? self->mediumOutside.ior * rcp(self->mediumInside.ior)
+      : self->mediumInside.ior * rcp(self->mediumOutside.ior);
+
+  varying BSDF *uniform bsdf = RobustDielectric_create(ctx, dg, eta);
   return bsdf;
 }
 
-vec3f Glass_getTransparency(const uniform PathTraceMaterial* uniform material,
-                            const DifferentialGeometry& dg,
-                            const Ray& ray,
-                            const Medium& currentMedium)
+vec3f Glass_getTransparency(const uniform PathTraceMaterial *uniform material,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const Medium &currentMedium)
 {
-  const uniform Glass* uniform self = (const uniform Glass* uniform)material;
+  const uniform Glass *uniform self = (const uniform Glass *uniform)material;
 
-  float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
-                                                     : self->mediumInside.ior*rcp(self->mediumOutside.ior);
+  float eta = eq(currentMedium, self->mediumOutside)
+      ? self->mediumOutside.ior * rcp(self->mediumInside.ior)
+      : self->mediumInside.ior * rcp(self->mediumOutside.ior);
 
   float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.0f);
-  return make_vec3f(1.0f-fresnelDielectric(cosThetaO, eta));
+  return make_vec3f(1.0f - fresnelDielectric(cosThetaO, eta));
 }
 
-void Glass_selectNextMedium(const uniform PathTraceMaterial* uniform super,
-                            const DifferentialGeometry& dg,
-                            Medium& currentMedium)
+void Glass_selectNextMedium(const uniform PathTraceMaterial *uniform super,
+    const DifferentialGeometry &dg,
+    Medium &currentMedium)
 {
-  const uniform Glass* uniform self = (const uniform Glass* uniform)super;
+  const uniform Glass *uniform self = (const uniform Glass *uniform)super;
 
   if (eq(currentMedium, self->mediumOutside))
     currentMedium = self->mediumInside;
@@ -73,27 +63,30 @@ void Glass_selectNextMedium(const uniform PathTraceMaterial* uniform super,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void PathTracer_Glass_set(
-  void* uniform _self,
-  const uniform float iorInside,
-  const uniform vec3f & attenuationColorInside,
-  const uniform float outsideIor,
-  const uniform vec3f & attenuationColorOutside,
-  const uniform float attenuationDistance)
+export void PathTracer_Glass_set(void *uniform _self,
+    const uniform float iorInside,
+    const uniform vec3f &attenuationColorInside,
+    const uniform float outsideIor,
+    const uniform vec3f &attenuationColorOutside,
+    const uniform float attenuationDistance)
 {
-  uniform Glass* uniform self = (uniform Glass* uniform)_self;
+  uniform Glass *uniform self = (uniform Glass * uniform) _self;
 
-  self->mediumInside.ior           = iorInside;
-  self->mediumInside.attenuation   = logf(attenuationColorInside) / attenuationDistance;
-  self->mediumOutside.ior          = outsideIor;
-  self->mediumOutside.attenuation  = logf(attenuationColorOutside) / attenuationDistance;
+  self->mediumInside.ior = iorInside;
+  self->mediumInside.attenuation =
+      logf(attenuationColorInside) / attenuationDistance;
+  self->mediumOutside.ior = outsideIor;
+  self->mediumOutside.attenuation =
+      logf(attenuationColorOutside) / attenuationDistance;
 }
 
-export void* uniform PathTracer_Glass_create()
+export void *uniform PathTracer_Glass_create()
 {
-  uniform Glass* uniform self = uniform new uniform Glass;
-  PathTraceMaterial_Constructor(&self->super, Glass_getBSDF, 
-    Glass_getTransparency, Glass_selectNextMedium);
+  uniform Glass *uniform self = uniform new uniform Glass;
+  PathTraceMaterial_Constructor(&self->super,
+      Glass_getBSDF,
+      Glass_getTransparency,
+      Glass_selectNextMedium);
 
   return self;
 }

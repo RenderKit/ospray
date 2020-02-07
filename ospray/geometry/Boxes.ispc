@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "common/Data.ih"
@@ -32,7 +19,7 @@ struct Boxes
 unmasked void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   Boxes *uniform self = (Boxes * uniform) args->geometryUserPtr;
-  uniform int primID  = args->primID;
+  uniform int primID = args->primID;
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
 
@@ -40,13 +27,13 @@ unmasked void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
 }
 
 void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
-                            const uniform bool isOcclusionTest)
+    const uniform bool isOcclusionTest)
 {
   // make sure to set the mask
   if (!args->valid[programIndex])
     return;
 
-  Boxes *uniform self      = (Boxes * uniform) args->geometryUserPtr;
+  Boxes *uniform self = (Boxes * uniform) args->geometryUserPtr;
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
 
   uniform int primID = args->primID;
@@ -68,14 +55,11 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   }
 
   if (hit) {
-    cif(isOcclusionTest)
-    {
+    if (isOcclusionTest) {
       ray->t = neg_inf;
-    }
-    else
-    {
+    } else {
       ray->instID = args->context->instID[0];
-      ray->geomID = 0;
+      ray->geomID = args->geomID;
       ray->primID = primID;
     }
   }
@@ -94,9 +78,9 @@ unmasked void Boxes_occluded(
 }
 
 static void Boxes_postIntersect(const Geometry *uniform geometry,
-                                varying DifferentialGeometry &dg,
-                                const varying Ray &ray,
-                                uniform int64 flags)
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
 {
   dg.Ng = dg.Ns = ray.Ng;
 }

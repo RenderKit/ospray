@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2017-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2017-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -21,9 +8,8 @@
 
 extern OSPRayEnvironment *ospEnv;
 
-OSPImageTools::OSPImageTools(vec2i imgSize,
-                             std::string testName,
-                             OSPFrameBufferFormat frameBufferFormat)
+OSPImageTools::OSPImageTools(
+    vec2i imgSize, std::string testName, OSPFrameBufferFormat frameBufferFormat)
     : size(imgSize), imgName(testName)
 {
   switch (frameBufferFormat) {
@@ -42,11 +28,11 @@ OSPImageTools::OSPImageTools(vec2i imgSize,
   }
 }
 
-OsprayStatus OSPImageTools::writePPM(std::string fileName,
-                                     const uint32_t *pixel)
+OsprayStatus OSPImageTools::writePPM(
+    std::string fileName, const uint32_t *pixel)
 {
-  std::ofstream outFile(fileName.c_str(),
-                        std::ofstream::out | std::ofstream::binary);
+  std::ofstream outFile(
+      fileName.c_str(), std::ofstream::out | std::ofstream::binary);
   if (!outFile.good()) {
     std::cerr << "Failed to open file " << fileName << std::endl;
     return OsprayStatus::Error;
@@ -73,8 +59,8 @@ OsprayStatus OSPImageTools::writePPM(std::string fileName,
   return OsprayStatus::Ok;
 }
 
-OsprayStatus OSPImageTools::writePNG(std::string fileName,
-                                     const uint32_t *pixel)
+OsprayStatus OSPImageTools::writePNG(
+    std::string fileName, const uint32_t *pixel)
 {
   unsigned int bufferLen = ImgType::RGBA * size.x * size.y;
   std::vector<pixelColorValue> writeImage(
@@ -84,15 +70,15 @@ OsprayStatus OSPImageTools::writePNG(std::string fileName,
     pixelColorValue *lineAdrr =
         &(writeImage[ImgType::RGBA * size.x * (size.y - 1 - y)]);
     std::memcpy(lineAdrr,
-                &(pixel[size.x * y]),
-                ImgType::RGBA * sizeof(pixelColorValue) * size.x);
+        &(pixel[size.x * y]),
+        ImgType::RGBA * sizeof(pixelColorValue) * size.x);
   }
   int retCode = stbi_write_png(fileName.c_str(),
-                               size.x,
-                               size.y,
-                               ImgType::RGBA,
-                               (const void *)writeImage.data(),
-                               0);
+      size.x,
+      size.y,
+      ImgType::RGBA,
+      (const void *)writeImage.data(),
+      0);
   if (!retCode) {
     std::cerr << "Failed to save image: " << fileName << std::endl;
     return OsprayStatus::Fail;
@@ -108,8 +94,8 @@ OsprayStatus OSPImageTools::writeHDR(std::string fileName, const float *pixel)
   for (int y = 0; y < size.y; ++y) {
     float *lineAdrr = &(writeImage[ImgType::RGBA * size.x * (size.y - 1 - y)]);
     std::memcpy(lineAdrr,
-                &(pixel[size.x * y]),
-                ImgType::RGBA * sizeof(pixelColorValue) * size.x);
+        &(pixel[size.x * y]),
+        ImgType::RGBA * sizeof(pixelColorValue) * size.x);
   }
   int retCode = stbi_write_hdr(
       fileName.c_str(), size.x, size.y, ImgType::RGBA, writeImage.data());
@@ -173,15 +159,15 @@ OsprayStatus OSPImageTools::compareImgWithBaseline(const uint32_t *testImg)
     pixelColorValue *lineAdrr =
         &(baselineImage[ImgType::RGBA * size.x * (size.y - 1 - y)]);
     std::memcpy(lineAdrr,
-                &(baselineData[ImgType::RGBA * size.x * y]),
-                ImgType::RGBA * sizeof(pixelColorValue) * size.x);
+        &(baselineData[ImgType::RGBA * size.x * y]),
+        ImgType::RGBA * sizeof(pixelColorValue) * size.x);
   }
 
-  bool notPerfect          = false;
+  bool notPerfect = false;
   unsigned incorrectPixels = 0;
   pixelColorValue maxError = 0;
   pixelColorValue minError = std::numeric_limits<pixelColorValue>::max();
-  long long totalError     = 0;
+  long long totalError = 0;
 
   for (int pixel = 0; pixel < size.x * size.y; ++pixel) {
     for (int channel = 0; channel < 3; ++channel) {
@@ -193,8 +179,8 @@ OsprayStatus OSPImageTools::compareImgWithBaseline(const uint32_t *testImg)
           std::abs((int)baselineValue - (int)renderedValue);
 
       notPerfect = notPerfect || diffValue;
-      maxError   = std::max(maxError, diffValue);
-      minError   = std::min(minError, diffValue);
+      maxError = std::max(maxError, diffValue);
+      minError = std::min(minError, diffValue);
       totalError += diffValue;
       if (diffValue > pixelThreshold)
         incorrectPixels++;
@@ -209,7 +195,7 @@ OsprayStatus OSPImageTools::compareImgWithBaseline(const uint32_t *testImg)
 
   if (incorrectPixels > 0) {
     double meanError = totalError / double(3 * size.x * size.y);
-    double variance  = 0.0;
+    double variance = 0.0;
     for (int pixel = 0; pixel < size.x * size.y; ++pixel)
       for (int channel = 0; channel < 3; ++channel) {
         double diff = diffImage[ImgType::RGBA * pixel + channel] - meanError;
@@ -230,11 +216,11 @@ OsprayStatus OSPImageTools::compareImgWithBaseline(const uint32_t *testImg)
 
   if (failed) {
     writeImg(ospEnv->GetFailedDir() + "/" + imgName + "_baseline",
-             (const uint32_t *)baselineImage.data());
+        (const uint32_t *)baselineImage.data());
     writeImg(ospEnv->GetFailedDir() + "/" + imgName + "_rendered",
-             (const uint32_t *)testImage);
+        (const uint32_t *)testImage);
     writeImg(ospEnv->GetFailedDir() + "/" + imgName + "_diff",
-             (const uint32_t *)diffImage.data());
+        (const uint32_t *)diffImage.data());
   }
 
   stbi_image_free(baselineData);
