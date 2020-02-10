@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Material.ih"
@@ -74,10 +74,10 @@ export void PathTracer_Glass_set(void *uniform _self,
 
   self->mediumInside.ior = iorInside;
   self->mediumInside.attenuation =
-      logf(attenuationColorInside) / attenuationDistance;
+      logf(attenuationColorInside) / max(attenuationDistance, EPS);
   self->mediumOutside.ior = outsideIor;
   self->mediumOutside.attenuation =
-      logf(attenuationColorOutside) / attenuationDistance;
+      logf(attenuationColorOutside) / max(attenuationDistance, EPS);
 }
 
 export void *uniform PathTracer_Glass_create()
