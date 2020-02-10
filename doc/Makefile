@@ -188,6 +188,9 @@ tmp/api.tex: filter-latex.py api.md tmp/links_local.md tmp/images_local_pdf.md
 tmp/compilation.tex: filter-latex.py compilation.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=sh
 
+tmp/changelog.tex: filter-sectionnumbers.py changelog.md
+	$(markdown2tex)
+
 changelog.md: ../CHANGELOG.md
 	sed -e "s@README.md@@" $< > $@
 

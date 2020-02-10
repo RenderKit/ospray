@@ -1,30 +1,40 @@
 Version History
 ---------------
 
-### Changes in v2.1.0:
--   Add support for photometric lights (e.g. IES or EULUMDAT)
+### OSPRay 2.1.0
+
+#### New Features:
+-   Support for photometric lights (e.g. IES or EULUMDAT)
+-   Sun-sky light based on pysical model of Hošek-Wilkie
+
+#### Fixed Issues:
+-   None
+
+#### Known Issues:
+-   None
 
 ### Changes in v2.0.1:
 
--   Fix bug where Embree user-defined geometries were not indexed correctly
-    in the scene, which now requires Embree v3.8.0+
--   Fix crash when the path tracer encounters geometric models that do not
-    have a material
--   Fix crash when some path tracer materials generated NULL bsdfs
+-   Fix bug where Embree user-defined geometries were not indexed
+    correctly in the scene, which now requires Embree v3.8.0+
+-   Fix crash when the path tracer encounters geometric models that do
+    not have a material
+-   Fix crash when some path tracer materials generated `NULL` bsdfs
 -   Fix bug where `ospGetBounds` returned incorrect values
 -   Fix missing symbol in denoiser module
 -   Fix missing symbol exports on Windows for all OSPRay built modules
 -   Add the option to specify a single color for geometric models
--   The `scivis` renderer now respects the opacity component of `color` on
-    geometric models
--   Fix various inconsistent handling of frame buffer alpha between renderers
+-   The `scivis` renderer now respects the opacity component of `color`
+    on geometric models
+-   Fix various inconsistent handling of frame buffer alpha between
+    renderers
 -   `ospGetCurrentDevice` now increments the ref count of the returned
-    `OSPDevice` handle, so applications will need to release the handle when
-    finished by using `ospDeviceRelease` accordingly
+    `OSPDevice` handle, so applications will need to release the handle
+    when finished by using `ospDeviceRelease` accordingly
 -   Added denoiser to `ospExamples` app
 -   Added `module_mpi` to superbuild (disabled by default)
--   The superbuild now will emit a CMake error when using any 32-bit CMake
-    generator, as 32-bit builds are not supported
+-   The superbuild now will emit a CMake error when using any 32-bit
+    CMake generator, as 32-bit builds are not supported
 
 ### Changes in v2.0.0:
 
