@@ -40,10 +40,10 @@ inline void updateAuxilliaryData(
     sample.normal = make_vec3f(0.f);
   } else if (pathVertex.type == SURFACE) {
     vec3f Ns = pathVertex.dg.Ns;
-    foreach_unique (f in pathVertex.bsdf)
-      if (f != NULL) {
+    foreach_unique (f in pathVertex.bsdf) {
+      if (f != NULL && f->frame != NULL)
         Ns = getN(f);
-      }
+    }
     sample.normal = Ns;
   }
   pathState.auxFree = false;

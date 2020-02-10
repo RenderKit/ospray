@@ -23,7 +23,7 @@ CPU-based, and runs on anything from laptops, to workstations, to
 compute nodes in HPC systems.
 
 OSPRay internally builds on top of [Intel
-Embree](https://embree.github.io/) and [ISPC (Intel SPMD Program
+Embree](https://www.embree.org/) and [ISPC (Intel SPMD Program
 Compiler)](https://ispc.github.io/), and fully exploits modern
 instruction sets like Intel SSE4, AVX, AVX2, and AVX-512 to achieve high
 rendering performance, thus a CPU with support for at least SSE4.1 is
@@ -64,7 +64,9 @@ before you can build OSPRay you need the following prerequisites:
 
 -   You can clone the latest OSPRay sources via:
 
-        git clone https://github.com/ospray/ospray.git
+    ``` {.sh}
+    git clone https://github.com/ospray/ospray.git
+    ```
 
 -   To build OSPRay you need [CMake](http://www.cmake.org), any form of
     C++11 compiler (we recommend using GCC, but also support Clang,
@@ -79,9 +81,8 @@ before you can build OSPRay you need the following prerequisites:
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right “next to” the
     checked-out OSPRay sources.[^1] Alternatively set the CMake variable
-    `ISPC_EXECUTABLE` to the location of the ISPC compiler.
-
-    NOTE: OSPRay is incompatible with ISPC v1.11.0.
+    `ISPC_EXECUTABLE` to the location of the ISPC compiler. Note: OSPRay
+    is incompatible with ISPC v1.11.0.
 
 -   OSPRay builds on top of a small C++ utility library called
     `ospcommon`. The library provides abstractions for tasking, aligned
@@ -94,18 +95,18 @@ before you can build OSPRay you need the following prerequisites:
     can set CMake variable `OSPCOMMON_TASKING_SYSTEM` to `OpenMP` or
     `Internal`.
 
--   OSPRay also heavily uses Intel [Embree](https://embree.github.io/),
-    installing version 3.7.0 or newer is required. If Embree is not
+-   OSPRay also heavily uses Intel [Embree](https://www.embree.org/),
+    installing version 3.8.0 or newer is required. If Embree is not
     found by CMake its location can be hinted with the variable
     `embree_DIR`.
 
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.7.0 or newer is required. If Open VKL is not
+    installing version 0.8.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 
 -   OSPRay also provides an optional module that adds support for Intel
-    [Open Image Denoise](http://www.openimagedenoise.org/), which is
+    [Open Image Denoise](https://openimagedenoise.github.io/), which is
     enabled by `OSPRAY_MODULE_DENOISER`. When loaded, this module
     enables the `denosier` image operation. You may need to hint the
     location of the library with the CMake variable
@@ -117,18 +118,24 @@ installed or might have slightly different names.
 
 Type the following to install the dependencies using `yum`:
 
-    sudo yum install cmake.x86_64
-    sudo yum install tbb.x86_64 tbb-devel.x86_64
+``` {.sh}
+sudo yum install cmake.x86_64
+sudo yum install tbb.x86_64 tbb-devel.x86_64
+```
 
 Type the following to install the dependencies using `apt-get`:
 
-    sudo apt-get install cmake-curses-gui
-    sudo apt-get install libtbb-dev
+``` {.sh}
+sudo apt-get install cmake-curses-gui
+sudo apt-get install libtbb-dev
+```
 
 Under Mac OS X these dependencies can be installed using
 [MacPorts](http://www.macports.org/):
 
-    sudo port install cmake tbb
+``` {.sh}
+sudo port install cmake tbb
+```
 
 Under Windows please directly use the appropriate installers for
 [CMake](https://cmake.org/download/),
@@ -146,11 +153,16 @@ directory.
 
 Run with:
 
-``` {.bash}
+``` {.sh}
 mkdir build
 cd build
 cmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
-cmake --build .
+```
+
+On Windows make sure to select the non-default 64bit generator, e.g.
+
+``` {.sh}
+cmake -G "Visual Studio 15 2017 Win64" [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
 ```
 
 The resulting `install` directory (or the one set with
@@ -159,27 +171,34 @@ subdirectory per dependency.
 
 CMake options to note (all have sensible defaults):
 
--   `CMAKE_INSTALL_PREFIX` will be the root directory where everything
-    gets installed.
--   `BUILD_JOBS` sets the number given to `make -j` for parallel builds.
--   `INSTALL_IN_SEPARATE_DIRECTORIES` toggles installation of all
-    libraries in separate or the same directory.
--   `BUILD_EMBREE_FROM_SOURCE` set to OFF will download a pre-built
-    version of Embree.
--   `BUILD_OIDN_FROM_SOURCE` set to OFF will download a pre-built
-    version of OpenImageDenoise.
--   `BUILD_OIDN_VERSION` determines which verison of OpenImageDenoise to
-    pull down.
+CMAKE\_INSTALL\_PREFIX
+:   will be the root directory where everything gets installed.
+
+BUILD\_JOBS
+:   sets the number given to `make -j` for parallel builds.
+
+INSTALL\_IN\_SEPARATE\_DIRECTORIES
+:   toggles installation of all libraries in separate or the same
+    directory.
+
+BUILD\_EMBREE\_FROM\_SOURCE
+:   set to OFF will download a pre-built version of Embree.
+
+BUILD\_OIDN\_FROM\_SOURCE
+:   set to OFF will download a pre-built version of OpenImageDenoise.
+
+BUILD\_OIDN\_VERSION
+:   determines which verison of OpenImageDenoise to pull down.
 
 For the full set of options, run:
 
-``` {.bash}
+``` {.sh}
 ccmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
 ```
 
 or
 
-``` {.bash}
+``` {.sh}
 cmake-gui [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
 ```
 
@@ -193,8 +212,10 @@ CMake is easy:
 
 -   Create a build directory, and go into it
 
-        mkdir ospray/build
-        cd ospray/build
+    ``` {.sh}
+    mkdir ospray/build
+    cd ospray/build
+    ```
 
     (We do recommend having separate build directories for different
     configurations such as release, debug, etc.).
@@ -205,7 +226,9 @@ CMake is easy:
     compiler. The default compiler on most linux machines is `gcc`, but
     it can be pointed to `clang` instead by executing the following:
 
-        cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
+    ``` {.sh}
+    cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
+    ```
 
     CMake will now use Clang instead of GCC. If you are ok with using
     the default compiler on your system, then simply skip this step.
@@ -214,18 +237,20 @@ CMake is easy:
 
 -   Open the CMake configuration dialog
 
-        ccmake ..
+    ``` {.sh}
+    ccmake ..
+    ```
 
 -   Make sure to properly set build mode and enable the components you
     need, etc.; then type ’c’onfigure and ’g’enerate. When back on the
     command prompt, build it using
 
-        make
+    ``` {.sh}
+    make
+    ```
 
 -   You should now have `libospray.[so,dylib]` as well as a set of
-    example application. You can test your version of OSPRay using any
-    of the examples on the [OSPRay Demos and
-    Examples](https://www.ospray.org/demos.html) page.
+    [example applications](#examples).
 
 ### Compiling OSPRay on Windows
 
@@ -255,11 +280,13 @@ way to configure OSPRay and to create the Visual Studio solution files:
 Alternatively, OSPRay can also be built without any GUI, entirely on the
 console. In the Visual Studio command prompt type:
 
-    cd path\to\ospray
-    mkdir build
-    cd build
-    cmake -G "Visual Studio 15 2017 Win64" [-D VARIABLE=value] ..
-    cmake --build . --config Release
+``` {.sh}
+cd path\to\ospray
+mkdir build
+cd build
+cmake -G "Visual Studio 15 2017 Win64" [-D VARIABLE=value] ..
+cmake --build . --config Release
+```
 
 Use `-D` to set variables for CMake, e.g., the path to Embree with
 “`-D embree_DIR=\path\to\embree`”.
@@ -269,7 +296,9 @@ Additional parameters after “`--`” will be passed to `msbuild`. For
 example, to build in parallel only the OSPRay library without the
 example applications use
 
-    cmake --build . --config Release --target ospray -- /m
+``` {.sh}
+cmake --build . --config Release --target ospray -- /m
+```
 
 Finding an OSPRay Install with CMake
 ------------------------------------
@@ -277,12 +306,16 @@ Finding an OSPRay Install with CMake
 Client applications using OSPRay can find it with CMake’s
 `find_package()` command. For example,
 
-    find_package(ospray 2.0.0 REQUIRED)
+``` {.sh}
+find_package(ospray 2.0.0 REQUIRED)
+```
 
 finds OSPRay via OSPRay’s configuration file `osprayConfig.cmake`[^2].
 Once found, the following is all that is required to use OSPRay:
 
-    target_link_libraries(${client_target} ospray::ospray)
+``` {.sh}
+target_link_libraries(${client_target} ospray::ospray)
+```
 
 This will automatically propagate all required include paths, linked
 libraries, and compiler definitions to the client CMake target (either
@@ -389,13 +422,13 @@ modules, such as distributed MPI device implementations.
 Once a device is created, you can call
 
 ``` {.cpp}
-void ospDeviceSet1i(OSPDevice, const char *id, int val);
-void ospDeviceSetString(OSPDevice, const char *id, const char *val);
-void ospDeviceSetVoidPtr(OSPDevice, const char *id, void *val);
+void ospDeviceSetParam(OSPObject, const char *id, OSPDataType type, const void *mem);
 ```
 
-to set parameters on the device. The following parameters can be set on
-all devices:
+to set parameters on the device. The semantics of setting parameters is
+exactly the same as `ospSetParam`, which is documented below in the
+[parameters](#parameters) section. The following parameters can be set
+on all devices:
 
 | Type   | Name        | Description                                                                                                                                                                        |
 |:-------|:------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -435,7 +468,7 @@ OSPDevice ospGetCurrentDevice();
 This function returns the handle to the device currently used to respond
 to OSPRay API calls, where users can set/change parameters and recommit
 the device. If changes are made to the device that is already set as the
-current device, it does not need to be set as current again. NOTE: this
+current device, it does not need to be set as current again. Note this
 API call will increment the ref count of the returned device handle, so
 applications must use `ospDeviceRelease` when finished using the handle
 to avoid leaking the underlying device object.
@@ -581,9 +614,10 @@ before the calling application process terminates.
 Objects
 -------
 
-All entities of OSPRay (the renderer, volumes, geometries, lights,
-cameras, …) are a logical specialization of `OSPObject` and share common
-mechanism to deal with parameters and lifetime.
+All entities of OSPRay (the [renderer](#renderers), [volumes](#volumes),
+[geometries](#geometries), [lights](#lights), [cameras](#cameras), …)
+are a logical specialization of `OSPObject` and share common mechanism
+to deal with parameters and lifetime.
 
 An important aspect of object parameters is that parameters do not get
 passed to objects immediately. Instead, parameters are not visible at
@@ -1296,6 +1330,7 @@ can be used by different types of renderers.
 | Type                         | Name     | Description                                                                                                                                         |
 |:-----------------------------|:---------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
 | OSPMaterial / uint32         | material | optional [material](#materials) applied to the geometry, may be an index into the `material` parameter on the [renderer](#renderers) (if it exists) |
+| vec4f                        | color    | optional color assigned to the geometry                                                                                                             |
 | OSPMaterial\[\] / uint32\[\] | material | optional [data](#data) array of (per-primitive) materials, may be an index into the `material` parameter on the renderer (if it exists)             |
 | vec4f\[\]                    | color    | optional [data](#data) array of (per-primitive) colors                                                                                              |
 | uint8\[\]                    | index    | optional [data](#data) array of per-primitive indices into `color` and `material`                                                                   |
@@ -1461,6 +1496,27 @@ and `intensity`](#lights)). It is created by passing the type string
 
 Note that the [SciVis renderer](#scivis-renderer) uses ambient lights to
 control the color and intensity of the computed ambient occlusion (AO).
+
+### Sun-Sky Light
+
+The sun-sky light is a combination of a `distant` light for the sun and
+a procedural `hdri` light for the sky. It surrounds the scene and
+illuminates it from infinity and can be used for rendering outdoor
+scenes. The radiance values are calculated using the Hošek-Wilkie sky
+model and solar radiance function. In addition to the [general
+parameters](#lights) the `sunSky` light supports the following special
+parameters:
+
+| Type  | Name      |       Default| Description                                         |
+|:------|:----------|-------------:|:----------------------------------------------------|
+| vec3f | up        |   $(0, 1, 0)$| zenith of sky in world-space                        |
+| vec3f | direction |  $(0, -1, 0)$| main emission direction of the sun                  |
+| float | turbidity |             3| atmospheric turbidity due to particles, in \[1–10\] |
+| float | albedo    |           0.3| ground reflectance, in \[0–1\]                      |
+
+: Special parameters accepted by the `sunSky` light.
+
+The lowest elevation for the sun is restricted to the horizon.
 
 ### Emissive Objects
 
@@ -2025,7 +2081,7 @@ average, thus individual flakes are not visible.
 The [path tracer](#path-tracer) supports the Luminous material which
 emits light uniformly in all directions and which can thus be used to
 turn any geometric object into a light source. It is created by passing
-the type string “`Luminous`” to `ospNewMaterial`. The amount of constant
+the type string “`luminous`” to `ospNewMaterial`. The amount of constant
 radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
 
@@ -2629,6 +2685,12 @@ built with CMake. It can be run from the build directory via:
 
 The command line parameter is optional however.
 
+<figure>
+<img src="https://ospray.github.io/images/ospExamples.png" width="90.0%" alt="" /><figcaption><code>ospExamples</code> application with default <code>boxes</code> scene.</figcaption>
+</figure>
+
+
+
 ### Scenes
 
 Different scenes can be selected from the `scenes` dropdown and each
@@ -2687,11 +2749,18 @@ unstructured\_volume
 
 This app comes with three [renderer](#renderers) options: `scivis`,
 `pathtracer` and `debug`. The app provides some common rendering
-controls like `pixel samples` and other more specific to the renderer
+controls like `pixelSamples` and other more specific to the renderer
 type like `aoIntensity` for `scivis` renderer.
 
+The sun-sky lighting can be used in a sample scene by enabling the
+`renderSunSky` option of the `pathtracer` renderer. It allows the user
+to change `turbidity` and `sunDirection`.
+
+![Rendering an evening sky with the `renderSunSky`
+option.](https://ospray.github.io/images/renderSunSky.png)
+
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
-    be searched in `~/Projects/ispc-v1.9.2-linux`
+    be searched in `~/Projects/ispc-v1.12.0-linux`
 
 [^2]: This file is usually in
     `${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake

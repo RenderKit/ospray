@@ -1,8 +1,6 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#undef NDEBUG
-
 #include "PathTracer.h"
 // ospray
 #include "common/Data.h"

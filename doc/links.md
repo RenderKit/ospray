@@ -1,25 +1,25 @@
 
-[Embree]: https://embree.github.io/
-[Intel Embree]: https://embree.github.io/
-[Open Image Denoise]: http://www.openimagedenoise.org/
-[OSPRay Demos and Examples]: https://www.ospray.org/demos.html
+[Embree]: https://www.embree.org/
+[Intel Embree]: https://www.embree.org/
+[Open Image Denoise]: https://openimagedenoise.github.io/
 [OSPRayReadme]: http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation"
+[doc/ospray2_porting_guide.md]: https://www.ospray.org/ospray2_porting_guide.html
 
-[report bugs]: #ospray-support-and-contact
-[tutorial]: #tutorial
-[camera]: #cameras
-[volume]: #volumes
-[curves]: #curves
-[world]: #world
-[data]: #data
-[GeometricModel]: #geometricmodels
-[texture transformations]: #texture2d-transformations
-[renderer]: #renderers
-[SciVis renderer]: #scivis-renderer
-[path tracer]: #path-tracer
-[material]: #materials
-[OBJ material]: #obj-material
-[point light]: #point-light-sphere-light
-[Compiling OSPRay]: #compiling-ospray
-[scene graph]: #scene-graph
-[Parallel Rendering with MPI]: #parallel-rendering-with-mpi
+[camera]: documentation.html#cameras
+[volume]: documentation.html#volumes
+[curves]: documentation.html#curves
+[world]: documentation.html#world
+[data]: documentation.html#data
+[GeometricModel]: documentation.html#geometricmodels
+[texture transformations]: documentation.html#texture2d-transformations
+[renderer]: documentation.html#renderers
+[SciVis renderer]: documentation.html#scivis-renderer
+[path tracer]: documentation.html#path-tracer
+[material]: documentation.html#materials
+[OBJ material]: documentation.html#obj-material
+[point light]: documentation.html#point-light-sphere-light
+
+[example applications]: examples.html#examples
+[tutorial]: examples.html#tutorial
+[report bugs]: index.html#ospray-support-and-contact
+

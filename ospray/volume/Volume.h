@@ -6,7 +6,6 @@
 #include "api/ISPCDevice.h"
 #include "common/Managed.h"
 // embree
-#include "Volume_ispc.h"
 #include "embree3/rtcore.h"
 
 #include "openvkl/volume.h"

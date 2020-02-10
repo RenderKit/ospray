@@ -4,9 +4,9 @@
 #pragma once
 
 // ospray
-#include "math/AffineSpace.ih"
-#include "math/box.ih"
-#include "math/vec.ih"
+#include "../math/AffineSpace.ih"
+#include "../math/box.ih"
+#include "../math/vec.ih"
 // embree
 #include "embree3/rtcore.isph"
 

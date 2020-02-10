@@ -1,5 +1,5 @@
-OSPRay v2.0.0 Porting Guide
-===========================
+OSPRay v2.0 Porting Guide
+=========================
 
 OSPRay v2.0.0 introduces a number of new features and updates, as well
 as some API changes. This guide is intended as an introduction to the
@@ -182,164 +182,21 @@ print a warning (visible if debug logs are enabled) if a parameter
 provided by the user is not used by an object. This can help catch cases
 where applications are using parameter names from OSPRay v1.8.5 or
 mistyped names. Some objects have required parameters. In these cases,
-OSPRay will terminate with an error message indicating which object and
+OSPRay will invoke the error callback indicating which object and
 which parameter.
 
-Below is a table of updated objects, their old parameter names, and the
-updated equivalent names. In some cases, parameters have changed from
-taking a string identifying an option to an enumerated value. The
-available options for these values are listed.
+OSPRay now universally uses the camelCase naming convention for all object
+types and parameter names. Furthermore, parameter names which are data
+arrays now use singular names to indicate what the elements are, and parameters
+which form a logical "struture-of-arrays" are communicated via the
+`"[structure_name].[member_name]"` naming convention.
 
-<table>
-<!-- ALOK: need to identify parameters that are enums now -->
-  <tr>
-    <th>Object</th> <th>Old parameter name</th> <th>New parameter name</th> <th>Enum values (if applicable)</th>
-  </tr>
+For example, the `"opacities"` array for `linear` transfer functions is now
+named `"opacity"`.
 
-  <tr>
-    <td rowspan="2">Camera</td> <td>pos</td> <td>position</td> <td></td>
-  </tr>
-  <tr>
-    <td>dir</td> <td>direction</td> <td></td>
-  </tr>
-
-  <tr>
-    <td rowspan="4">PerspectiveCamera</td> <td rowspan="4">stereoMode</td> <td rowspan="4">stereoMode</td> <td>OSP_STEREO_NONE (default)</td>
-  </tr>
-  <tr>
-    <td>OSP_STEREO_LEFT</td>
-  </tr>
-  <tr>
-    <td>OSP_STEREO_RIGHT</td>
-  </tr>
-  <tr>
-    <td>OSP_STEREO_SIDE_BY_SIDE</td>
-  </tr>
-
-  <tr>
-    <td>Boxes</td> <td>boxes</td> <td>box</td> <td></td>
-  </tr>
-
-  <tr>
-    <td rowspan="8">Curves</td> <td>vertex</td> <td>vertex.position</td> <td></td>
-  </tr>
-  <tr>
-    <td rowspan="4">curveBasis</td> <td rowspan="4">basis</td> <td>OSP_LINEAR</td>
-  </tr>
-  <tr>
-    <td>OSP_BEZIER</td>
-  </tr>
-  <tr>
-    <td>OSP_BSPLINE</td>
-  </tr>
-  <tr>
-    <td>OSP_HERMITE</td>
-  </tr>
-  <tr>
-    <td rowspan="3">curveType</td> <td rowspan="3">type</td> <td>OSP_ROUND</td>
-  </tr>
-  <tr>
-    <td>OSP_FLAT</td>
-  </tr>
-  <tr>
-    <td>OSP_RIBBON</td>
-  </tr>
-
-  <tr>
-    <td>Isosurfaces</td> <td>isovalues</td> <td>isovalue</td> <td></td>
-  </tr>
-
-  <tr>
-    <td>QuadMesh</td> <td>vertex</td> <td>vertex.position</td> <td></td>
-  </tr>
-
-  <tr>
-    <td>Slices</td> <td>planes</td> <td>plane</td> <td></td>
-  </tr>
-
-  <tr>
-    <td>StreamLines</td> <td>vertex</td> <td>vertex.position</td> <td></td>
-  </tr>
-
-  <tr>
-    <td>Subdivision</td> <td>vertex</td> <td>vertex.position</td> <td></td>
-  </tr>
-
-  <tr>
-    <td>TriangleMesh</td> <td>vertex</td> <td>vertex.position</td> <td></td>
-  </tr>
-
-  <tr>
-    <td>Light</td> <td>isVisible</td> <td>visible</td> <td></td>
-  </tr>
-
-  <tr>
-    <td rowspan="2">PathTracer</td> <td>useGeometryLights</td> <td>geometryLights</td> <td></td>
-  </tr>
-  <tr>
-    <td>lights</td> <td>light</td> <td></td>
-  </tr>
-
-  <tr>
-    <td rowspan="2">LinearTransferFunction</td> <td>colors</td> <td>color</td> <td></td>
-  </tr>
-  <tr>
-    <td>opacities</td> <td>opacity</td> <td></td>
-  </tr>
-
-  <tr>
-    <td rowspan="7">AMRVolume</td> <td rowspan="3">amrMethod</td> <td rowspan="3">method</td> <td>OSP_AMR_CURRENT (default)</td>
-  </tr>
-  <tr>
-    <td>OSP_AMR_FINEST</td>
-  </tr>
-  <tr>
-    <td>OSP_AMR_OCTANT</td>
-  </tr>
-  <tr>
-    <td>blockBounds</td> <td>block.bounds</td> <td></td>
-  </tr>
-  <tr>
-    <td>refinementLevels</td> <td>block.level</td> <td></td>
-  </tr>
-  <tr>
-    <td>cellWidths</td> <td>block.cellWidth</td> <td></td>
-  </tr>
-  <tr>
-    <td>blockData</td> <td>block.data</td> <td></td>
-  </tr>
-
-  <tr>
-    <td rowspan="5">StructuredVolume</td> <td rowspan="5">voxelType</td> <td rowspan="5">voxelType</td> <td>OSP_UCHAR</td>
-  </tr>
-  <tr>
-    <td>OSP_SHORT</td>
-  </tr>
-  <tr>
-    <td>OSP_USHORT</td>
-  </tr>
-  <tr>
-    <td>OSP_FLOAT</td>
-  </tr>
-  <tr>
-    <td>OSP_DOUBLE</td>
-  </tr>
-
-  <tr>
-    <td rowspan="3">UnstructuredVolume</td> <td>vertex</td> <td>vertex.position</td> <td></td>
-  </tr>
-  <tr>
-    <td rowspan="2">hexMethod</td> <td rowspan="2">hexMethod</td> <td>OSP_FAST</td>
-  </tr>
-  <tr>
-    <td>OSP_ITERATIVE</td>
-  </tr>
-</table>
-
-* **OSPRay will print warnings for parameters that were not used by the object,
-which should aid in the transition to the new parameter names.  To use this
-feature, enable OSPRay debug (see api documentation) and search the output log
-for "found unused parameter" messages.**
+Finally, some parameters have changed from being string-based to enum-based.
+All enums can be found in `OSPEnums.h`, where their usage can be found in
+the main API documentation.
 
 ospRenderFrame
 --------------
@@ -391,7 +248,7 @@ provides wrappers to the familiar calls listed below:
 
     ospSetObjectAsData(OSPObject, const char *n, OSPDataType type, OSPObject obj);
 
-OSPRay v1.x calls to `ospSetData` have been replaced with `ospSetObject`. 
+OSPRay v1.x calls to `ospSetData` have been replaced with `ospSetObject`.
 Convenience wrappers have also been provided to specialize `ospNewData`, and the
 new `ospNewSharedData` and `ospCopyData` APIs.
 

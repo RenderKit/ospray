@@ -13,4 +13,15 @@ include(ispc)
 
 message(STATUS "Using found OSPRay ISA targets: ${OSPRAY_ISPC_TARGET_LIST}")
 
-ispc_include_directories(${OSPRAY_INCLUDE_DIRS})
+if (NOT TARGET openvkl::openvkl OR NOT TARGET embree)
+  message(FATAL_ERROR "OSPRay pre-built binary redistributables cannot be
+  extended with the SDK. Please build OSPRay from source to enable extending
+  OSPRay!")
+endif()
+
+ispc_include_directories(
+  ${OSPRAY_INCLUDE_DIR}
+  ${OSPRAY_INCLUDE_DIR}/ospray/SDK
+  ${EMBREE_INCLUDE_DIRS}
+  ${OPENVKL_INCLUDE_DIRS}
+)

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ispc device
@@ -25,7 +25,7 @@ inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
     }
   }
 
-  return make_vec4f(surfaceColor * make_vec3f(dg.color), opacity);
+  return make_vec4f(surfaceColor * make_vec3f(dg.color), opacity * dg.color.w);
 }
 
 inline float computeAO(const uniform SciVis *uniform self,
