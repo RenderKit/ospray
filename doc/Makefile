@@ -4,7 +4,7 @@ webpages := $(addprefix www/, $(addsuffix .html, index examples documentation ga
 process_version := $(addprefix tmp/, $(addsuffix .md, examples getting_ospray readme_head))
 tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api examples))
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow))
-images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe ospExamples))
+images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe ospExamples renderSunSky))
 images_fig := spot_light spot_coords quad_light hdri_light 
 images_svg := gitter_badge structured_spherical_coords
 images_webonly := $(addprefix images/, VESTEC-Logo-web.png $(addsuffix .jpg, stingray $(addprefix teaser_, clouds cosmos hdospray materials moana rm tapestry)))
@@ -51,7 +51,7 @@ tmp/%.md: %.md tmp/version tmp/links_local.md tmp/images_web.md
 	$(replace_version)
 	$(PANDOC) $@ tmp/links_local.md tmp/images_web.md -o $@
 
-tmp/links.md: links.md
+tmp/links.md: links.md $(wildcard ../.git/HEAD)
 	$(if_is_devel_then) \
 	  sed -e "s/OSPRay_readme.pdf/OSPRay_readme_devel.pdf/g" $< > $@;\
 	  else cp $< $@ ;\

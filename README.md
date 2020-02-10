@@ -2756,8 +2756,11 @@ The sun-sky lighting can be used in a sample scene by enabling the
 `renderSunSky` option of the `pathtracer` renderer. It allows the user
 to change `turbidity` and `sunDirection`.
 
-![Rendering an evening sky with the `renderSunSky`
-option.](https://ospray.github.io/images/renderSunSky.png)
+<figure>
+<img src="https://ospray.github.io/images/renderSunSky.png" width="90.0%" alt="" /><figcaption>Rendering an evening sky with the <code>renderSunSky</code> option.</figcaption>
+</figure>
+
+
 
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
     be searched in `~/Projects/ispc-v1.12.0-linux`
