@@ -1,7 +1,7 @@
 OSPRay MPI Module
 =================
 
-This is release v2.0.0 (alpha) of Intel® OSPRay's MPI Module. For changes and new
+This is release v2.0.1 of Intel® OSPRay's MPI Module. For changes and new
 features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
 for more information.
 
@@ -67,10 +67,14 @@ Prerequisites
 
 OSPRay v2.0.x is required, and can be built from source following the
 instructions on the [OSPRay GitHub Repository](http://github.com/ospray/ospray).
-After getting the OSPRay source code clone this module into the `modules/`
-subdirectory of OSPRay, and enable the MPI module by setting
-`OSPRAY_MODULE_MPI=ON` in CMake. When building OSPRay with
-`OSPRAY_ENABLE_APPS=ON` the MPI module's [tutorial apps](tutorials/) will be built,
+The MPI module can also be built together with OSPRay using the [superbuild](https://github.com/ospray/ospray#cmake-superbuild)
+by setting `BUILD_OSPRAY_MODULE_MPI=ON`.
+After building OSPRay, you can build this module by pointing it to your OSPRay,
+OpenVKL and ospcommon install directories. Applications using the MPI module
+can then be run by ensuring the module is in your library path and loading the
+module via `ospLoadModule` or using the command line options below.
+When building the module with
+`BUILD_TUTORIALS=ON` the MPI module's [tutorial apps](tutorials/) will be built,
 which demonstrate the various features of the module.
 
 
