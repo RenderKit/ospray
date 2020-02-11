@@ -10,9 +10,10 @@ int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
 
+  ospInit(&argc, (const char **)argv);
+
   {
-    ospLoadModule("ispc");
-    cpp::Device device("cpu");
+    cpp::Device device = cpp::Device::current();
 
     device.setErrorFunc([](OSPError error, const char *errorDetails) {
       std::cerr << "OSPRay error: " << errorDetails << std::endl;
@@ -28,7 +29,6 @@ int main(int argc, char **argv)
     device.setParam("logLevel", logLevel);
 
     device.commit();
-    device.setCurrent();
   }
 
   ospEnv = new OSPRayEnvironment(argc, argv);
