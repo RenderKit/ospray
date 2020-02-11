@@ -6,29 +6,10 @@
 OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
     : dumpImg(false),
       rendererType("scivis"),
-      deviceType("cpu"),
       baselineDir("regression_test_baseline"),
       failedDir("failed")
 {
   ParsArgs(argc, argv);
-  ospLoadModule("ispc");
-  cpp::Device device(GetDeviceType());
-
-  device.setErrorFunc([](OSPError error, const char *errorDetails) {
-    std::cerr << "OSPRay error: " << errorDetails << std::endl;
-    std::exit(EXIT_FAILURE);
-  });
-
-  device.setStatusFunc([](const char *msg) { std::cout << msg; });
-
-  bool warnAsErrors = true;
-  int logLevel = int(OSP_LOG_WARNING);
-
-  device.setParam("warnAsError", warnAsErrors);
-  device.setParam("logLevel", logLevel);
-
-  device.commit();
-  device.setCurrent();
 }
 
 void OSPRayEnvironment::ParsArgs(int argc, char **argv)
@@ -43,8 +24,6 @@ void OSPRayEnvironment::ParsArgs(int argc, char **argv)
                 << "--dump-img : dump the rendered image to file\n"
                 << "--imgsize-x=XX : change the length of an image\n"
                 << "--imgsize-y=XX : change the height of an image\n"
-                << "--device-type=XX : change the device type which is used by "
-                   "OSPRay\n"
                 << "--renderer-type=XX : change the renderer used for tests\n"
                 << "--baseline-dir=XX : Change the directory used for baseline "
                    "images during tests\n";
@@ -57,8 +36,6 @@ void OSPRayEnvironment::ParsArgs(int argc, char **argv)
       imgSize.x = GetNumArgValue(&testArgs.at(idx));
     } else if (testArgs.at(idx).find("--imgsize-y=") == 0) {
       imgSize.y = GetNumArgValue(&testArgs.at(idx));
-    } else if (testArgs.at(idx).find("--device-type=") == 0) {
-      deviceType = GetStrArgValue(&testArgs.at(idx));
     } else if (testArgs.at(idx).find("--baseline-dir=") == 0) {
       baselineDir = GetStrArgValue(&testArgs.at(idx));
     } else if (testArgs.at(idx).find("--failed-dir=") == 0) {
