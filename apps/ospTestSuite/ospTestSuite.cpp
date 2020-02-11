@@ -8,8 +8,6 @@ OSPRayEnvironment *ospEnv;
 
 int main(int argc, char **argv)
 {
-  ::testing::InitGoogleTest(&argc, argv);
-
   ospInit(&argc, (const char **)argv);
 
   {
@@ -31,9 +29,13 @@ int main(int argc, char **argv)
     device.commit();
   }
 
+
+  ::testing::InitGoogleTest(&argc, argv);
   ospEnv = new OSPRayEnvironment(argc, argv);
   AddGlobalTestEnvironment(ospEnv);
   auto result = RUN_ALL_TESTS();
+
   ospShutdown();
+
   return result;
 }
