@@ -20,6 +20,12 @@ class Device
 
   ~Device();
 
+  template <typename FCN_T>
+  void setErrorFunc(FCN_T &&fcn);
+
+  template <typename FCN_T>
+  void setStatusFunc(FCN_T &&fcn);
+
   template <typename T>
   void setParam(const std::string &name, const T &v) const;
 
@@ -59,6 +65,18 @@ inline Device::Device(OSPDevice existing) : ospHandle(existing) {}
 inline Device::~Device()
 {
   ospDeviceRelease(ospHandle);
+}
+
+template <typename FCN_T>
+inline void Device::setErrorFunc(FCN_T &&fcn)
+{
+  ospDeviceSetErrorFunc(ospHandle, std::forward<FCN_T>(fcn));
+}
+
+template <typename FCN_T>
+inline void Device::setStatusFunc(FCN_T &&fcn)
+{
+  ospDeviceSetStatusFunc(ospHandle, std::forward<FCN_T>(fcn));
 }
 
 template <typename T>

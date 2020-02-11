@@ -12,28 +12,23 @@ OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
 {
   ParsArgs(argc, argv);
   ospLoadModule("ispc");
-  device = ospNewDevice(GetDeviceType().c_str());
-  if (device == NULL) {
-    std::cout << "Failed to init the ospray device" << std::endl << std::flush;
-    std::exit(EXIT_FAILURE);
-  }
+  cpp::Device device(GetDeviceType());
 
-  ospDeviceSetErrorFunc(device, [](OSPError error, const char *errorDetails) {
+  device.setErrorFunc([](OSPError error, const char *errorDetails) {
     std::cerr << "OSPRay error: " << errorDetails << std::endl;
     std::exit(EXIT_FAILURE);
   });
 
-  ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
+  device.setStatusFunc([](const char *msg) { std::cout << msg; });
 
   bool warnAsErrors = true;
-  auto logLevel = OSP_LOG_WARNING;
+  int logLevel = int(OSP_LOG_WARNING);
 
-  ospDeviceSetParam(device, "warnAsError", OSP_BOOL, &warnAsErrors);
-  ospDeviceSetParam(device, "logLevel", OSP_INT, &logLevel);
+  device.setParam("warnAsError", warnAsErrors);
+  device.setParam("logLevel", logLevel);
 
-  ospDeviceCommit(device);
-  ospSetCurrentDevice(device);
-  ospDeviceRelease(device);
+  device.commit();
+  device.setCurrent();
 }
 
 void OSPRayEnvironment::ParsArgs(int argc, char **argv)
