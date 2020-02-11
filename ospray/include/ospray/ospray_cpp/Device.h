@@ -123,6 +123,11 @@ inline void Device::setCurrent() const
   ospSetCurrentDevice(ospHandle);
 }
 
+inline Device Device::current()
+{
+  return Device(ospGetCurrentDevice());
+}
+
 inline OSPDevice Device::handle() const
 {
   return ospHandle;

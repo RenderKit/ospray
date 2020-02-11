@@ -7,15 +7,6 @@
 
 namespace ospray {
 
-namespace cpp {
-
-Device Device::current()
-{
-  return Device(ospGetCurrentDevice());
-}
-
-} // namespace cpp
-
 OSPTYPEFOR_DEFINITION(cpp::Camera);
 OSPTYPEFOR_DEFINITION(cpp::Data);
 OSPTYPEFOR_DEFINITION(cpp::FrameBuffer);
