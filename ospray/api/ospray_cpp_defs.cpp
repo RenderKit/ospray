@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/OSPCommon.h"
@@ -6,6 +6,15 @@
 #include "ospray/ospray_cpp.h"
 
 namespace ospray {
+
+namespace cpp {
+
+Device Device::current()
+{
+  return Device(ospGetCurrentDevice());
+}
+
+} // namespace cpp
 
 OSPTYPEFOR_DEFINITION(cpp::Camera);
 OSPTYPEFOR_DEFINITION(cpp::Data);
