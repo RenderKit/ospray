@@ -745,45 +745,48 @@ The enum type `OSPDataType` describes the different element types that
 can be represented in OSPRay; valid constants are listed in the table
 below.
 
-| Type/Name               | Description                                                       |
-|:------------------------|:------------------------------------------------------------------|
-| OSP\_DEVICE             | API device object reference                                       |
-| OSP\_DATA               | data reference                                                    |
-| OSP\_OBJECT             | generic object reference                                          |
-| OSP\_CAMERA             | camera object reference                                           |
-| OSP\_FRAMEBUFFER        | framebuffer object reference                                      |
-| OSP\_LIGHT              | light object reference                                            |
-| OSP\_MATERIAL           | material object reference                                         |
-| OSP\_TEXTURE            | texture object reference                                          |
-| OSP\_RENDERER           | renderer object reference                                         |
-| OSP\_WORLD              | world object reference                                            |
-| OSP\_GEOMETRY           | geometry object reference                                         |
-| OSP\_VOLUME             | volume object reference                                           |
-| OSP\_TRANSFER\_FUNCTION | transfer function object reference                                |
-| OSP\_IMAGE\_OPERATION   | image operation object reference                                  |
-| OSP\_STRING             | C-style zero-terminated character string                          |
-| OSP\_CHAR               | 8 bit signed character scalar                                     |
-| OSP\_UCHAR              | 8 bit unsigned character scalar                                   |
-| OSP\_VEC\[234\]UC       | … and \[234\]-element vector                                      |
-| OSP\_USHORT             | 16 bit unsigned integer scalar                                    |
-| OSP\_INT                | 32 bit signed integer scalar                                      |
-| OSP\_VEC\[234\]I        | … and \[234\]-element vector                                      |
-| OSP\_UINT               | 32 bit unsigned integer scalar                                    |
-| OSP\_VEC\[234\]UI       | … and \[234\]-element vector                                      |
-| OSP\_LONG               | 64 bit signed integer scalar                                      |
-| OSP\_VEC\[234\]L        | … and \[234\]-element vector                                      |
-| OSP\_ULONG              | 64 bit unsigned integer scalar                                    |
-| OSP\_VEC\[234\]UL       | … and \[234\]-element vector                                      |
-| OSP\_FLOAT              | 32 bit single precision floating-point scalar                     |
-| OSP\_VEC\[234\]F        | … and \[234\]-element vector                                      |
-| OSP\_DOUBLE             | 64 bit double precision floating-point scalar                     |
-| OSP\_BOX\[1234\]I       | 32 bit integer box (lower + upper bounds)                         |
-| OSP\_BOX\[1234\]F       | 32 bit single precision floating-point box (lower + upper bounds) |
-| OSP\_LINEAR\[234\]F     | 32 bit single precision floating-point linear transform           |
-| OSP\_AFFINE\[234\]F     | 32 bit single precision floating-point affine transform           |
-| OSP\_VOID\_PTR          | raw memory address (only found in module extensions)              |
+| Type/Name               | Description                                                                                 |
+|:------------------------|:--------------------------------------------------------------------------------------------|
+| OSP\_DEVICE             | API device object reference                                                                 |
+| OSP\_DATA               | data reference                                                                              |
+| OSP\_OBJECT             | generic object reference                                                                    |
+| OSP\_CAMERA             | camera object reference                                                                     |
+| OSP\_FRAMEBUFFER        | framebuffer object reference                                                                |
+| OSP\_LIGHT              | light object reference                                                                      |
+| OSP\_MATERIAL           | material object reference                                                                   |
+| OSP\_TEXTURE            | texture object reference                                                                    |
+| OSP\_RENDERER           | renderer object reference                                                                   |
+| OSP\_WORLD              | world object reference                                                                      |
+| OSP\_GEOMETRY           | geometry object reference                                                                   |
+| OSP\_VOLUME             | volume object reference                                                                     |
+| OSP\_TRANSFER\_FUNCTION | transfer function object reference                                                          |
+| OSP\_IMAGE\_OPERATION   | image operation object reference                                                            |
+| OSP\_STRING             | C-style zero-terminated character string                                                    |
+| OSP\_CHAR               | 8 bit signed character scalar                                                               |
+| OSP\_UCHAR              | 8 bit unsigned character scalar                                                             |
+| OSP\_VEC\[234\]UC       | … and \[234\]-element vector                                                                |
+| OSP\_USHORT             | 16 bit unsigned integer scalar                                                              |
+| OSP\_INT                | 32 bit signed integer scalar                                                                |
+| OSP\_VEC\[234\]I        | … and \[234\]-element vector                                                                |
+| OSP\_UINT               | 32 bit unsigned integer scalar                                                              |
+| OSP\_VEC\[234\]UI       | … and \[234\]-element vector                                                                |
+| OSP\_LONG               | 64 bit signed integer scalar                                                                |
+| OSP\_VEC\[234\]L        | … and \[234\]-element vector                                                                |
+| OSP\_ULONG              | 64 bit unsigned integer scalar                                                              |
+| OSP\_VEC\[234\]UL       | … and \[234\]-element vector                                                                |
+| OSP\_FLOAT              | 32 bit single precision floating-point scalar                                               |
+| OSP\_VEC\[234\]F        | … and \[234\]-element vector                                                                |
+| OSP\_DOUBLE             | 64 bit double precision floating-point scalar                                               |
+| OSP\_BOX\[1234\]I       | 32 bit integer box (lower + upper bounds)                                                   |
+| OSP\_BOX\[1234\]F       | 32 bit single precision floating-point box (lower + upper bounds)                           |
+| OSP\_LINEAR\[23\]F      | 32 bit single precision floating-point linear transform (\[23\] vectors)                    |
+| OSP\_AFFINE\[23\]F      | 32 bit single precision floating-point affine transform (linear transform plus translation) |
+| OSP\_VOID\_PTR          | raw memory address (only found in module extensions)                                        |
 
 : Valid named constants for `OSPDataType`.
+
+If the elements of the array are handles to objects, then their
+reference counter is incremented.
 
 An opaque `OSPData` with memory allocated by OSPRay is created with
 
@@ -1062,6 +1065,8 @@ and opacities. It is create by passing the string “`piecewiseLinear`” to
 
 : Parameters accepted by the linear transfer function.
 
+The arrays `color` and `opacity` can be of different length.
+
 ### VolumetricModels
 
 Volumes in OSPRay are given volume rendering appearance information
@@ -1299,11 +1304,11 @@ calling `ospNewGeometry` with type string “`isosurface`”. Each
 isosurface will be colored according to the [transfer
 function](#transfer-function) assigned to the `volume`.
 
-| Type               | Name     | Description                                                           |
-|:-------------------|:---------|:----------------------------------------------------------------------|
-| float              | isovalue | single isovalues                                                      |
-| float\[\]          | isovalue | [data](#data) array of isovalues                                      |
-| OSPVolumetricModel | volume   | handle of the [VolumetricModels](#volumetricmodels) to be isosurfaced |
+| Type               | Name     | Description                                                          |
+|:-------------------|:---------|:---------------------------------------------------------------------|
+| float              | isovalue | single isovalues                                                     |
+| float\[\]          | isovalue | [data](#data) array of isovalues                                     |
+| OSPVolumetricModel | volume   | handle of the [VolumetricModel](#volumetricmodels) to be isosurfaced |
 
 : Parameters defining an isosurfaces geometry.
 
@@ -1681,11 +1686,11 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-| Type  | Name              |  Default| Description                                                                        |
-|:------|:------------------|--------:|:-----------------------------------------------------------------------------------|
-| bool  | geometryLights    |     true| whether to render light emitted from geometries                                    |
-| int   | roulettePathLengt |      h 5| ray recursion depth at which to start Russian roulette termination                 |
-| float | maxContribution   |        ∞| samples are clamped to this value before they are accumulated into the framebuffer |
+| Type  | Name               |  Default| Description                                                                                    |
+|:------|:-------------------|--------:|:-----------------------------------------------------------------------------------------------|
+| bool  | geometryLights     |     true| whether geometries with an emissive material (e.g. [Luminous](#luminous)) illuminate the scene |
+| int   | roulettePathLength |        5| ray recursion depth at which to start Russian roulette termination                             |
+| float | maxContribution    |        ∞| samples are clamped to this value before they are accumulated into the framebuffer             |
 
 : Special parameters understood by the path tracer.
 
@@ -2080,9 +2085,9 @@ average, thus individual flakes are not visible.
 
 The [path tracer](#path-tracer) supports the Luminous material which
 emits light uniformly in all directions and which can thus be used to
-turn any geometric object into a light source. It is created by passing
-the type string “`luminous`” to `ospNewMaterial`. The amount of constant
-radiance that is emitted is determined by combining the general
+turn any geometric object into a light source[^7]. It is created by
+passing the type string “`luminous`” to `ospNewMaterial`. The amount of
+constant radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
 
 | Type  | Name         |  Default| Description                       |
@@ -2162,9 +2167,9 @@ transfer function) on arbitrary surfaces inside the volume (as opposed
 to an isosurface showing a particular value in the volume). Its
 parameters are as follows
 
-| Type      | Name   | Description                           |
-|:----------|:-------|:--------------------------------------|
-| OSPVolume | volume | volume used to generate color lookups |
+| Type               | Name   | Description                                                         |
+|:-------------------|:-------|:--------------------------------------------------------------------|
+| OSPVolumetricModel | volume | [VolumetricModel](#volumetricmodels) used to generate color lookups |
 
 : Parameters of `volume` texture type.
 
@@ -2259,7 +2264,8 @@ image. If finer control of the lens shift is needed use `imageStart` &
 `imageEnd`. Because the camera is now effectively leveled its image
 plane and thus the plane of focus is oriented parallel to the front of
 buildings, the whole façade appears sharp, as can be seen in the example
-images below.
+images below. The resolution of the [framebuffer](#framebuffer) is not
+altered by `imageStart`/`imageEnd`.
 
 <figure>
 <img src="https://ospray.github.io/images/camera_perspective.jpg" width="60.0%" alt="" /><figcaption>Example image created with the perspective camera, featuring depth of field.</figcaption>
@@ -2360,7 +2366,7 @@ information associated with pixels). To create a new framebuffer object
 of given size `size` (in pixels), color format, and channels use
 
 ``` {.cpp}
-OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
+OSPFrameBuffer ospNewFrameBuffer(int size_x, int size_y,
                                  OSPFrameBufferFormat format = OSP_FB_SRGBA,
                                  uint32_t frameBufferChannels = OSP_FB_COLOR);
 ```
@@ -2635,7 +2641,7 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/tutorials/ospTutorial.c`[^7].
+at `apps/tutorials/ospTutorial.c`[^8].
 
 An example of building `ospTutorial.c` with CMake can be found in
 `apps/tutorials/ospTutorialFindospray/`.
@@ -2781,6 +2787,8 @@ to change `turbidity` and `sunDirection`.
 
 [^6]: respectively $(127, 127, 255)$ for 8 bit textures
 
-[^7]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
+[^7]: If `geometryLights` is enabled in the [path tracer](#path-tracer).
+
+[^8]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
     C99 API via `include/ospray/ospray_cpp.h` is available at
     `apps/tutorials/ospTutorial.cpp`.

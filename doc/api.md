@@ -436,11 +436,14 @@ below.
   OSP_DOUBLE             64\ bit double precision floating-point scalar
   OSP_BOX[1234]I         32\ bit integer box (lower + upper bounds)
   OSP_BOX[1234]F         32\ bit single precision floating-point box (lower + upper bounds)
-  OSP_LINEAR[234]F       32\ bit single precision floating-point linear transform
-  OSP_AFFINE[234]F       32\ bit single precision floating-point affine transform
+  OSP_LINEAR[23]F        32\ bit single precision floating-point linear transform ([23] vectors)
+  OSP_AFFINE[23]F        32\ bit single precision floating-point affine transform (linear transform plus translation)
   OSP_VOID_PTR           raw memory address (only found in module extensions)
   ---------------------- -----------------------------------------------
   : Valid named constants for `OSPDataType`.
+
+If the elements of the array are handles to objects, then their
+reference counter is incremented.
 
 An opaque `OSPData` with memory allocated by OSPRay is created with
 
@@ -750,6 +753,7 @@ to `ospNewTransferFunction` and it is controlled by these parameters:
   ------------ ----------- ----------------------------------------------
   : Parameters accepted by the linear transfer function.
 
+The arrays `color` and `opacity` can be of different length.
 
 ### VolumetricModels
 
@@ -1048,7 +1052,7 @@ to the `volume`.
   ------------------ --------- --------------------------------------------------
   float              isovalue  single isovalues
   float[]            isovalue  [data] array of isovalues
-  OSPVolumetricModel volume    handle of the [VolumetricModels] to be isosurfaced
+  OSPVolumetricModel volume    handle of the [VolumetricModel] to be isosurfaced
   ------------------ --------- --------------------------------------------------
   : Parameters defining an isosurfaces geometry.
 
@@ -1502,19 +1506,20 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-  ---------- ---------------- --------  -------------------------------------
-  Type       Name              Default  Description
-  ---------- ---------------- --------  -------------------------------------
-  bool       geometryLights       true  whether to render light emitted from
-                                        geometries
+  ---------- ------------------ --------  ------------------------------------
+  Type       Name                Default  Description
+  ---------- ------------------ --------  ------------------------------------
+  bool       geometryLights         true  whether geometries with an emissive
+                                          material (e.g. [Luminous]) illuminate
+                                          the scene
 
-  int        roulettePathLength      5  ray recursion depth at which to
-                                        start Russian roulette termination
+  int        roulettePathLength        5  ray recursion depth at which to
+                                          start Russian roulette termination
 
-  float      maxContribution         ∞  samples are clamped to this value
-                                        before they are accumulated into
-                                        the framebuffer
-  ---------- ---------------- --------  -------------------------------------
+  float      maxContribution           ∞  samples are clamped to this value
+                                          before they are accumulated into
+                                          the framebuffer
+  ---------- ------------------ --------  ------------------------------------
   : Special parameters understood by the path tracer.
 
 The path tracer requires that [materials] are assigned to [geometries],
@@ -1927,10 +1932,11 @@ thus individual flakes are not visible.
 
 The [path tracer] supports the Luminous material which emits light
 uniformly in all directions and which can thus be used to turn any
-geometric object into a light source. It is created by passing the type
-string "`luminous`" to `ospNewMaterial`. The amount of constant
-radiance that is emitted is determined by combining the general
-parameters of lights: [`color` and `intensity`](#lights).
+geometric object into a light source^[If `geometryLights` is enabled in
+the [path tracer].]. It is created by passing the type string
+"`luminous`" to `ospNewMaterial`. The amount of constant radiance that
+is emitted is determined by combining the general parameters of lights:
+[`color` and `intensity`](#lights).
 
   Type   Name          Default  Description
   ------ ------------ --------  ---------------------------------------
@@ -2003,10 +2009,10 @@ transfer function) on arbitrary surfaces inside the volume (as opposed
 to an isosurface showing a particular value in the volume). Its
 parameters are as follows
 
-  Type      Name         Description
-  --------- ------------ -------------------------------------------
-  OSPVolume volume       volume used to generate color lookups
-  --------- ------------ -------------------------------------------
+  Type               Name    Description
+  ------------------ ------- -------------------------------------------
+  OSPVolumetricModel volume  [VolumetricModel] used to generate color lookups
+  ------------------ ------- -------------------------------------------
   : Parameters of `volume` texture type.
 
 TextureVolume can be used for implementing slicing of volumes with any
@@ -2114,7 +2120,8 @@ image. If finer control of the lens shift is needed use `imageStart` &
 `imageEnd`. Because the camera is now effectively leveled its image
 plane and thus the plane of focus is oriented parallel to the front of
 buildings, the whole façade appears sharp, as can be seen in the example
-images below.
+images below. The resolution of the [framebuffer] is not altered by
+`imageStart`/`imageEnd`.
 
 ![Example image created with the perspective camera, featuring depth of
 field.][imgCameraPerspective]
@@ -2194,7 +2201,7 @@ The framebuffer holds the rendered 2D image (and optionally auxiliary
 information associated with pixels). To create a new framebuffer object
 of given size `size` (in pixels), color format, and channels use
 
-    OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
+    OSPFrameBuffer ospNewFrameBuffer(int size_x, int size_y,
                                      OSPFrameBufferFormat format = OSP_FB_SRGBA,
                                      uint32_t frameBufferChannels = OSP_FB_COLOR);
 
