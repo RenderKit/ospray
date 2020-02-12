@@ -81,12 +81,11 @@ void SunSkyLight::commit()
   }
 
   // clamp sun to horizon
-  if(sunTheta < 0)
+  if (sunTheta < 0)
     direction = frame.vx;
 
   // sun doesn't go beneath the horizon as theta clamped to pi/2
-  const float sunThetaMax =
-      min(std::acos(sunTheta), (float)pi * 0.999f / 2.0f);
+  const float sunThetaMax = min(std::acos(sunTheta), (float)pi * 0.999f / 2.0f);
   const float sunPhi = pi;
   const float sunElevation = (float)pi / 2.0f - sunThetaMax;
 
@@ -112,8 +111,7 @@ void SunSkyLight::commit()
   const float cosAngle = std::cos(deg2rad(0.5f * angularDiameter));
   const float rcpPdf = 2 * (float)pi * (1 - cosAngle);
 
-  solarRadiance =
-      xyzToRgb(solarRadiance) * rcpPdf * intensityScale * radiance;
+  solarRadiance = xyzToRgb(solarRadiance) * rcpPdf * intensityScale * radiance;
 
   ispc::Light_set(getSecondIE().value(), (ispc::vec3f &)solarRadiance, true);
 

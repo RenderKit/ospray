@@ -29,7 +29,6 @@ int main(int argc, char **argv)
     device.commit();
   }
 
-
   ::testing::InitGoogleTest(&argc, argv);
   ospEnv = new OSPRayEnvironment(argc, argv);
   AddGlobalTestEnvironment(ospEnv);

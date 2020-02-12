@@ -4,8 +4,8 @@
 #pragma once
 
 #include "Light.h"
-#include "external/sky_model/sky_model.h"
 #include "external/sky_model/color_info.h"
+#include "external/sky_model/sky_model.h"
 #include "math/spectrum.h"
 #include "ospcommon/tasking/parallel_for.h"
 #include "texture/Texture2D.h"

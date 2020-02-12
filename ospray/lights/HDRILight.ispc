@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -130,10 +130,8 @@ export void HDRILight_set(
 {
   HDRILight *uniform self = (HDRILight * uniform) super;
 
-  if (self->distribution != NULL) {
-    Distribution2D_destroy(self->distribution);
-    self->distribution = NULL;
-  }
+  Distribution2D_destroy(self->distribution);
+  self->distribution = NULL;
 
   if (map) {
     self->light2world = light2world;

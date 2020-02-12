@@ -90,8 +90,7 @@ inline void Device::setParam(const std::string &name, const T &v) const
   ospDeviceSetParam(ospHandle, name.c_str(), OSPTypeFor<T>::value, &v);
 }
 
-inline void Device::setParam(
-    const std::string &name, const char *v) const
+inline void Device::setParam(const std::string &name, const char *v) const
 {
   ospDeviceSetParam(ospHandle, name.c_str(), OSP_STRING, v);
 }
