@@ -49,6 +49,7 @@ class GLFWOSPRayWindow
   void buildUI();
   void commitOutstandingHandles();
   void refreshScene(bool resetCamera = false);
+  void refreshFrameOperations();
 
   static GLFWOSPRayWindow *activeWindow;
 
@@ -56,6 +57,7 @@ class GLFWOSPRayWindow
   vec2f previousMouse{-1.f};
 
   bool denoiserAvailable{false};
+  bool updateFrameOpsNextFrame{false};
   bool denoiserEnabled{false};
   bool showAlbedo{false};
   bool renderSunSky{false};

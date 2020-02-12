@@ -13,13 +13,13 @@
 
 // on Windows often only GL 1.1 headers are present
 #ifndef GL_CLAMP_TO_BORDER
-#define GL_CLAMP_TO_BORDER                0x812D
+#define GL_CLAMP_TO_BORDER 0x812D
 #endif
 #ifndef GL_SRGB_ALPHA
-#define GL_SRGB_ALPHA                     0x8C42
+#define GL_SRGB_ALPHA 0x8C42
 #endif
 #ifndef GL_FRAMEBUFFER_SRGB
-#define GL_FRAMEBUFFER_SRGB               0x8DB9
+#define GL_FRAMEBUFFER_SRGB 0x8DB9
 #endif
 
 static bool g_quitNextFrame = false;
@@ -87,7 +87,7 @@ void error_callback(int error, const char *desc)
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
 GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
-  : denoiserAvailable(denoiser)
+    : denoiserAvailable(denoiser)
 {
   if (activeWindow != nullptr) {
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -218,15 +218,11 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   windowSize = newWindowSize;
 
   // create new frame buffer
-  auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO;
-  if (denoiserEnabled)
-    buffers |= OSP_FB_NORMAL;
+  auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO
+      | OSP_FB_NORMAL;
   framebuffer = cpp::FrameBuffer(windowSize, OSP_FB_RGBA32F, buffers);
-  if (denoiserEnabled) {
-    cpp::ImageOperation d("denoiser");
-    framebuffer.setParam("imageOperation", cpp::Data(d));
-  }
-  framebuffer.commit();
+
+  refreshFrameOperations();
 
   // reset OpenGL viewport and orthographic projection
   glViewport(0, 0, windowSize.x, windowSize.y);
@@ -376,6 +372,10 @@ void GLFWOSPRayWindow::display()
 
 void GLFWOSPRayWindow::startNewOSPRayFrame()
 {
+  if (updateFrameOpsNextFrame) {
+    refreshFrameOperations();
+    updateFrameOpsNextFrame = false;
+  }
   currentFrame = framebuffer.renderFrame(renderer, camera, world);
 }
 
@@ -477,8 +477,8 @@ void GLFWOSPRayWindow::buildUI()
   ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);
   ImGui::Checkbox("show albedo", &showAlbedo);
   if (denoiserAvailable) {
-    if(ImGui::Checkbox("denoiser", &denoiserEnabled))
-      reshape(this->windowSize);
+    if (ImGui::Checkbox("denoiser", &denoiserEnabled))
+      updateFrameOpsNextFrame = true;
   }
 
   ImGui::Separator();
@@ -624,4 +624,16 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
     updateCamera();
     camera.commit();
   }
+}
+
+void GLFWOSPRayWindow::refreshFrameOperations()
+{
+  if (denoiserEnabled) {
+    cpp::ImageOperation d("denoiser");
+    framebuffer.setParam("imageOperation", cpp::Data(d));
+  } else {
+    framebuffer.removeParam("imageOperation");
+  }
+
+  framebuffer.commit();
 }
