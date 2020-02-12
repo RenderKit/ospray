@@ -540,7 +540,6 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospRelease(OSPObject _object) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(_object);
   ASSERT_DEVICE();
   if (!_object)
     return;
