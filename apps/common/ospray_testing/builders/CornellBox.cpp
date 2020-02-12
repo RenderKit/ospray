@@ -291,7 +291,7 @@ cpp::World CornellBoxPhotometric::buildWorld() const
   light1d.setParam("direction", vec3f(0.0f, -1.0f, 0.0f));
   light1d.setParam("openingAngle", 360.f);
   light1d.setParam("penumbraAngle", 0.f);
-  static float lid1d[] = {2.5f, 0.4f, 0.2f, 0.1f, 0.03f, 0.01f, 0.01f};
+  float lid1d[] = {2.5f, 0.4f, 0.2f, 0.1f, 0.03f, 0.01f, 0.01f};
   light1d.setParam("intensityDistribution", cpp::Data(7, lid1d));
   light1d.commit();
 
@@ -301,13 +301,13 @@ cpp::World CornellBoxPhotometric::buildWorld() const
   light2d.setParam("direction", vec3f(0.0f, -1.0f, 0.0f));
   light2d.setParam("openingAngle", 270.f);
   light2d.setParam("penumbraAngle", 10.f);
-  static float lid2d[60] = {
+  float lid2d[60] = {
       1.5f, 5.0f, 6.0f, 0.3f, 0.01f, 0.15f, 0.5f, 1.6f, 0.1f, 0.01f};
   light2d.setParam("intensityDistribution", cpp::Data(vec2ul(5, 12), lid2d));
   light2d.setParam("c0", vec3f(1.0f, 0.0f, 0.0f));
   light2d.commit();
 
-  static std::vector<cpp::Light> lights;
+  std::vector<cpp::Light> lights;
   lights.clear();
   lights.push_back(light1d);
   lights.push_back(light2d);
