@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Distribution2D.ih"
@@ -38,9 +38,11 @@ float Distribution2D_pdf(
 
 void Distribution2D_destroy(Distribution2D *uniform self)
 {
-  delete[] self->cdf_x;
-  delete[] self->cdf_y;
-  delete self;
+  if (self != NULL) {
+    delete[] self->cdf_x;
+    delete[] self->cdf_y;
+    delete self;
+  }
 }
 
 Distribution2D *uniform Distribution2D_create(
