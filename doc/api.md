@@ -823,47 +823,48 @@ A mesh consisting of subdivision surfaces, created by specifying a
 geometry of type "`subdivision`". Once created, a subdivision recognizes
 the following parameters:
 
-  --------------- -------------------- --------------------------------- -------------------------------------------------
-  Type            Name                                           Default Description
-  --------------- -------------------- --------------------------------- -------------------------------------------------
-  vec3f[]         vertex.position                                   NULL [data] array of vertex positions
+  ------- ------------------- --------------------------------------------------
+  Type    Name                Description
+  ------- ------------------- --------------------------------------------------
+  vec3f[] vertex.position     [data] array of vertex positions
 
-  vec4f[]         vertex.color                                      NULL [data] array of vertex colors (RGBA)
+  vec4f[] vertex.color        optional [data] array of vertex colors (RGBA)
 
-  vec2f[]         vertex.texcoord                                   NULL [data] array of vertex texture coordinates
+  vec2f[] vertex.texcoord     optional [data] array of vertex texture
+                              coordinates
 
-  float           level                                                  5 global level of tessellation, default is 5
+  float   level               global level of tessellation, default 5
 
-  uint[]          index                                             NULL [data] array of indices (into the vertex array(s))
+  uint[]  index               [data] array of indices (into the vertex array(s))
 
-  float[]         index.level                                       NULL [data] array of per-edge levels of tessellation,
-                                                                         overrides global level
+  float[] index.level         optional [data] array of per-edge levels of
+                              tessellation, overrides global level
 
-  uint[]          face                                              NULL [data] array holding the number of indices/edges
-                                                                         (3 to 15) per face
+  uint[]  face                optional [data] array holding the number of
+                              indices/edges (3 to 15) per face,
+                              defaults to 4 (a pure quad mesh)
 
-  vec2i[]         edgeCrease.index                                  NULL [data] array of edge crease indices
+  vec2i[] edgeCrease.index    optional [data] array of edge crease indices
 
-  float[]         edgeCrease.weight                                 NULL [data] array of edge crease weights
+  float[] edgeCrease.weight   optional [data] array of edge crease weights
 
-  uint[]          vertexCrease.index                                NULL [data] array of vertex crease indices
+  uint[]  vertexCrease.index  optional [data] array of vertex crease indices
 
-  float[]         vertexCrease.weight                               NULL [data] array of vertex crease weights
+  float[] vertexCrease.weight optional [data] array of vertex crease weights
 
-  int             mode                 `OSP_SUBDIVISION_SMOOTH_BOUNDARY` subdivision edge boundary mode.
-                                                                         Supported modes are:
+  int     mode                subdivision edge boundary mode, supported modes
+                              are:
 
-                                                                         `OSP_SUBDIVISION_NO_BOUNDARY`
+                              `OSP_SUBDIVISION_NO_BOUNDARY`
 
-                                                                         `OSP_SUBDIVISION_SMOOTH_BOUNDARY`
+                              `OSP_SUBDIVISION_SMOOTH_BOUNDARY` (default)
 
-                                                                         `OSP_SUBDIVISION_PIN_CORNERS`
+                              `OSP_SUBDIVISION_PIN_CORNERS`
 
-                                                                         `OSP_SUBDIVISION_PIN_BOUNDARY`
+                              `OSP_SUBDIVISION_PIN_BOUNDARY`
 
-                                                                         `OSP_SUBDIVISION_PIN_ALL`
-
-  --------------- -------------------- --------------------------------- -------------------------------------------------
+                              `OSP_SUBDIVISION_PIN_ALL`
+  ------- ------------------- --------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
 The `vertex` and `index` arrays are mandatory to create a valid
