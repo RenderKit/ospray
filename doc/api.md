@@ -1214,7 +1214,7 @@ to be present. If the array has a second dimension then the intensities
 are not rotational symmetric around `direction`, but are accordingly
 mapped to the C-halfplanes in [0–2π]; the first "row" of values to 0 and
 2π, the other rows such that they have uniform distance to its
-neighbors. The orientation of the C0-plane is specified via `c0`. 
+neighbors. The orientation of the C0-plane is specified via `c0`.
 
 ![C-γ coordinate system for the mapping of `intensityDistribution` to
 the spotlight.][imgSpotCoords]
@@ -2286,7 +2286,9 @@ accumulated frame can be queried with
     float ospGetVariance(OSPFrameBuffer);
 
 Note this value is only updated after synchronizing with `OSP_FRAME_FINISHED`,
-as further described in [asynchronous rendering].
+as further described in [asynchronous rendering]. The estimated variance can
+be used by the application as a quality indicator and thus to decide whether
+to stop or to continue progressive rendering.
 
 The framebuffer takes a list of pixel operations to be applied to the image
 in sequence as an `OSPData`. The pixel operations will be run in the order
@@ -2374,12 +2376,7 @@ combining a frame buffer, renderer, camera, and world.
 What to render and how to render it depends on the renderer's
 parameters. If the framebuffer supports accumulation (i.e., it was
 created with `OSP_FB_ACCUM`) then successive calls to `ospRenderFrame`
-will progressively refine the rendered image. If additionally the
-framebuffer has an `OSP_FB_VARIANCE` channel then `ospRenderFrame`
-returns an estimate of the current variance of the rendered image,
-otherwise `inf` is returned. The estimated variance can be used by the
-application as a quality indicator and thus to decide whether to stop or
-to continue progressive rendering.
+will progressively refine the rendered image.
 
 To start an render task, use
 
@@ -2435,6 +2432,16 @@ Applications can query whether particular events are complete with
 As the given running task runs (as tracked by the `OSPFuture`),
 applications can query a boolean [0,1] result if the passed event has
 been completed.
+
+Applications can query how long an async task ran with
+
+    float ospGetTaskDuration(OSPFuture);
+
+This returns the wall clock execution time of the task in seconds. If the task
+is still running, this will block until the task is completed. This is useful
+for applications to query exactly how long an asynchronous task executed without
+the overhead of measuring both task execution + synchronization by the calling
+application.
 
 ### Asynchronously Rendering and ospCommit()
 

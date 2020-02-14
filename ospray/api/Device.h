@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -128,6 +128,7 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
   virtual void wait(OSPFuture, OSPSyncEvent) = 0;
   virtual void cancel(OSPFuture) = 0;
   virtual float getProgress(OSPFuture) = 0;
+  virtual float getTaskDuration(OSPFuture) = 0;
 
   virtual OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &)

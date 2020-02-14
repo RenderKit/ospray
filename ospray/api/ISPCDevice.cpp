@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -30,6 +30,7 @@
 #include "openvkl/openvkl.h"
 // ospcommon
 #include "ospcommon/tasking/tasking_system_init.h"
+#include "ospcommon/utility/CodeTimer.h"
 
 #include "ISPCDevice_ispc.h"
 
@@ -458,14 +459,17 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   world->refInc();
 
   auto *f = new RenderTask(fb, [=]() {
-    float result = renderer->renderFrame(fb, camera, world);
+    utility::CodeTimer timer;
+    timer.start();
+    renderer->renderFrame(fb, camera, world);
+    timer.stop();
 
     fb->refDec();
     renderer->refDec();
     camera->refDec();
     world->refDec();
 
-    return result;
+    return timer.seconds();
   });
 
   return (OSPFuture)f;
@@ -493,6 +497,12 @@ float ISPCDevice::getProgress(OSPFuture _task)
 {
   auto *task = (Future *)_task;
   return task->getProgress();
+}
+
+float ISPCDevice::getTaskDuration(OSPFuture _task)
+{
+  auto *task = (Future *)_task;
+  return task->getTaskDuration();
 }
 
 OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,

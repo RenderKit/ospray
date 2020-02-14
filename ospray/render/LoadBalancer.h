@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -17,7 +17,7 @@ struct OSPRAY_SDK_INTERFACE TiledLoadBalancer
 
   virtual std::string toString() const = 0;
 
-  virtual float renderFrame(
+  virtual void renderFrame(
       FrameBuffer *fb, Renderer *renderer, Camera *camera, World *world) = 0;
 
   static size_t numJobs(const int spp, int accumID);
@@ -41,7 +41,7 @@ inline size_t TiledLoadBalancer::numJobs(const int spp, int accumID)
   application ranks each doing local rendering on their own)  */
 struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
 {
-  float renderFrame(FrameBuffer *fb,
+  void renderFrame(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
       World *world) override;

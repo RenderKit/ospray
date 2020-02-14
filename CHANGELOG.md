@@ -9,6 +9,7 @@ Version History
 -   Add static `cpp::Device::current` method as a C++ wrapper equivalent to
     `ospGetCurrentDevice`
 -   Generalized `cpp::Device` parameter setting to match other handle types
+-   Add new `ospGetTaskDuration` API call to query execution time of async tasks
 
 #### Fixed Issues:
 -   None

@@ -699,6 +699,14 @@ extern "C" float ospGetProgress(OSPFuture f) OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(1.f)
 
+extern "C" float ospGetTaskDuration(OSPFuture f) OSPRAY_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(f);
+  ASSERT_DEVICE();
+  return currentDevice().getTaskDuration(f);
+}
+OSPRAY_CATCH_END(0.f)
+
 extern "C" void ospPick(OSPPickResult *result,
     OSPFrameBuffer fb,
     OSPRenderer renderer,

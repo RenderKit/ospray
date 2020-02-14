@@ -287,8 +287,6 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
 
 void GLFWOSPRayWindow::display()
 {
-  static auto displayStart = std::chrono::high_resolution_clock::now();
-
   if (showUi)
     buildUI();
 
@@ -302,18 +300,9 @@ void GLFWOSPRayWindow::display()
 
   static bool firstFrame = true;
   if (firstFrame || currentFrame.isReady()) {
-    // display frame rate in window title
-    auto displayEnd = std::chrono::high_resolution_clock::now();
-    auto durationMilliseconds =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            displayEnd - displayStart);
-
-    latestFPS = 1000.f / float(durationMilliseconds.count());
-
-    // map OSPRay frame buffer, update OpenGL texture with its contents, then
-    // unmap
-
     waitOnOSPRayFrame();
+
+    latestFPS = 1.f / currentFrame.duration();
 
     auto *fb = framebuffer.map(showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
 
@@ -333,8 +322,6 @@ void GLFWOSPRayWindow::display()
 
     commitOutstandingHandles();
 
-    // Start new frame and reset frame timing interval start
-    displayStart = std::chrono::high_resolution_clock::now();
     startNewOSPRayFrame();
     firstFrame = false;
   }

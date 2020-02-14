@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -118,6 +118,7 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   void wait(OSPFuture, OSPSyncEvent) override;
   void cancel(OSPFuture) override;
   float getProgress(OSPFuture) override;
+  float getTaskDuration(OSPFuture) override;
 
   OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
