@@ -6,10 +6,13 @@ Version History
 #### New Features:
 -   Support for photometric lights (e.g. IES or EULUMDAT)
 -   Sun-sky light based on pysical model of Hošek-Wilkie
--   Add static `cpp::Device::current` method as a C++ wrapper equivalent to
-    `ospGetCurrentDevice`
--   Generalized `cpp::Device` parameter setting to match other handle types
--   Add new `ospGetTaskDuration` API call to query execution time of async tasks
+-   Add static `cpp::Device::current` method as a C++ wrapper equivalent
+    to `ospGetCurrentDevice`
+-   Generalized `cpp::Device` parameter setting to match other handle
+    types
+-   Add new `ospGetTaskDuration` API call to query execution time of
+    asynchronous tasks
+-   Support for 16bit (unsigned short) textures
 
 #### Fixed Issues:
 -   Proper demonstration of `ospGetVariance` in `ospTutorialAsync`

@@ -1600,18 +1600,18 @@ Note that currently only the path tracer implements colored transparency
 with `Tf`.
 
 Normal mapping can simulate small geometric features via the texture
-`map_Bump`. The normals $n$ in the normal map are with respect to the local
-tangential shading coordinate system and are encoded as $½(n+1)$, thus a
-texel $(0.5, 0.5, 1)$^[respectively $(127, 127, 255)$ for 8\ bit
-textures] represents the unperturbed shading normal $(0, 0, 1)$. Because
-of this encoding an sRGB gamma [texture] format is ignored and normals
-are always fetched as linear from a normal map. Note that the
-orientation of normal maps is important for a visually consistent look:
-by convention OSPRay uses a coordinate system with the origin in the
-lower left corner; thus a convexity will look green toward the top of
-the texture image (see also the example image of a normal map). If this
-is not the case flip the normal map vertically or invert its green
-channel.
+`map_Bump`. The normals $n$ in the normal map are with respect to the
+local tangential shading coordinate system and are encoded as $½(n+1)$,
+thus a texel $(0.5, 0.5, 1)$^[respectively $(127, 127, 255)$ for 8\ bit
+textures and $(32767, 32767, 65535)$ for 16\ bit textures] represents
+the unperturbed shading normal $(0, 0, 1)$. Because of this encoding an
+sRGB gamma [texture] format is ignored and normals are always fetched as
+linear from a normal map. Note that the orientation of normal maps is
+important for a visually consistent look: by convention OSPRay uses a
+coordinate system with the origin in the lower left corner; thus a
+convexity will look green toward the top of the texture image (see also
+the example image of a normal map). If this is not the case flip the
+normal map vertically or invert its green channel.
 
 ![Normal map representing an exalted square pyramidal
 frustum.][imgNormalMap]
@@ -1993,11 +1993,15 @@ The supported texture formats for `texture2d` are:
   OSP_TEXTURE_RGB8    8\ bit [0–255] linear components red, green, blue
   OSP_TEXTURE_SRGB    8\ bit sRGB gamma encoded components red, green, blue
   OSP_TEXTURE_RGB32F  32\ bit float components red, green, blue
-  OSP_TEXTURE_R8      8\ bit [0–255] linear single component
-  OSP_TEXTURE_RA8     8\ bit [0–255] linear two component
-  OSP_TEXTURE_L8      8\ bit [0–255] gamma encoded luminance
+  OSP_TEXTURE_R8      8\ bit [0–255] linear single component red
+  OSP_TEXTURE_RA8     8\ bit [0–255] linear two components red, alpha
+  OSP_TEXTURE_L8      8\ bit [0–255] gamma encoded luminance (replicated into red, gree, blue)
   OSP_TEXTURE_LA8     8\ bit [0–255] gamma encoded luminance, and linear alpha
-  OSP_TEXTURE_R32F    32\ bit float single component
+  OSP_TEXTURE_R32F    32\ bit float single component red
+  OSP_TEXTURE_RGBA16  16\ bit [0–65535] linear components red, green, blue, alpha
+  OSP_TEXTURE_RGB16   16\ bit [0–65535] linear components red, green, blue
+  OSP_TEXTURE_RA16    16\ bit [0–65535] linear two components red, alpha
+  OSP_TEXTURE_R16     16\ bit [0–65535] linear single component red
   ------------------- ----------------------------------------------------------
   : Supported texture formats by `texture2d`, i.e., valid constants
   of type `OSPTextureFormat`.
