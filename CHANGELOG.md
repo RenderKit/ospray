@@ -12,7 +12,7 @@ Version History
 -   Add new `ospGetTaskDuration` API call to query execution time of async tasks
 
 #### Fixed Issues:
--   None
+-   Proper demonstration of `ospGetVariance` in `ospTutorialAsync`
 
 #### Known Issues:
 -   None
