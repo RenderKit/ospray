@@ -13,6 +13,8 @@ Version History
 
 #### Fixed Issues:
 -   Proper demonstration of `ospGetVariance` in `ospTutorialAsync`
+-   Add missing C++ wrapper for `ospGetVariance`
+-   Passing `NULL` to `ospRelease` is not reported as error anymore
 
 #### Known Issues:
 -   None
