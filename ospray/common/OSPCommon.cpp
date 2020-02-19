@@ -77,12 +77,12 @@ void initFromCommandLine(int *_ac, const char ***_av)
         device->setParam("warnAsError", true);
         removeArgs(ac, av, i, 1);
       } else if (parm == "--osp:verbose") {
-        device->setParam("logLevel", int(OSP_LOG_INFO));
+        device->setParam("logLevel", OSP_LOG_INFO);
         device->setParam("logOutput", std::string("cout"));
         device->setParam("errorOutput", std::string("cerr"));
         removeArgs(ac, av, i, 1);
       } else if (parm == "--osp:vv") {
-        device->setParam("logLevel", int(OSP_LOG_DEBUG));
+        device->setParam("logLevel", OSP_LOG_DEBUG);
         device->setParam("logOutput", std::string("cout"));
         device->setParam("errorOutput", std::string("cerr"));
         removeArgs(ac, av, i, 1);

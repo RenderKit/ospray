@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Intel Corporation
+// Copyright 2017-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_fixture.h"
@@ -20,11 +20,8 @@ int main(int argc, char **argv)
 
     device.setStatusFunc([](const char *msg) { std::cout << msg; });
 
-    bool warnAsErrors = true;
-    int logLevel = int(OSP_LOG_WARNING);
-
-    device.setParam("warnAsError", warnAsErrors);
-    device.setParam("logLevel", logLevel);
+    device.setParam("warnAsError", true);
+    device.setParam("logLevel", OSP_LOG_WARNING);
 
     device.commit();
   }

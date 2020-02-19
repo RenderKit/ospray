@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
@@ -106,8 +106,8 @@ cpp::Group Streamlines::buildGroup() const
   slGeom.setParam("vertex.position_radius", cpp::Data(points));
   slGeom.setParam("index", cpp::Data(indices));
   slGeom.setParam("vertex.color", cpp::Data(colors));
-  slGeom.setParam("type", int(OSP_ROUND));
-  slGeom.setParam("basis", int(OSP_CATMULL_ROM));
+  slGeom.setParam("type", OSP_ROUND);
+  slGeom.setParam("basis", OSP_CATMULL_ROM);
 
   slGeom.commit();
 
