@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "OSPCommon.h"
@@ -200,6 +200,12 @@ size_t sizeOf(OSPDataType type)
     return sizeof(int16);
   case OSP_USHORT:
     return sizeof(uint16);
+  case OSP_VEC2US:
+    return sizeof(vec2us);
+  case OSP_VEC3US:
+    return sizeof(vec3us);
+  case OSP_VEC4US:
+    return sizeof(vec4us);
   case OSP_INT:
     return sizeof(int32);
   case OSP_VEC2I:
@@ -313,6 +319,12 @@ OSPDataType typeOf(const char *string)
     return (OSP_SHORT);
   if (strcmp(string, "ushort") == 0)
     return (OSP_USHORT);
+  if (strcmp(string, "vec2us") == 0)
+    return (OSP_VEC2US);
+  if (strcmp(string, "vec3us") == 0)
+    return (OSP_VEC3US);
+  if (strcmp(string, "vec4us") == 0)
+    return (OSP_VEC4US);
   if (strcmp(string, "uint") == 0)
     return (OSP_UINT);
   if (strcmp(string, "uint2") == 0)
@@ -385,6 +397,12 @@ std::string stringFor(OSPDataType type)
     return "short";
   case OSP_USHORT:
     return "ushort";
+  case OSP_VEC2US:
+    return "vec2us";
+  case OSP_VEC3US:
+    return "vec3us";
+  case OSP_VEC4US:
+    return "vec4us";
   case OSP_INT:
     return "int";
   case OSP_VEC2I:

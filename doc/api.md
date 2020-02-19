@@ -423,6 +423,7 @@ below.
   OSP_UCHAR              8\ bit unsigned character scalar
   OSP_VEC[234]UC         ... and [234]-element vector
   OSP_USHORT             16\ bit unsigned integer scalar
+  OSP_VEC[234]US         ... and [234]-element vector
   OSP_INT                32\ bit signed integer scalar
   OSP_VEC[234]I          ... and [234]-element vector
   OSP_UINT               32\ bit unsigned integer scalar
