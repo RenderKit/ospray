@@ -4,19 +4,9 @@
 #include "test_fixture.h"
 
 using OSPRayTestScenes::FromOsprayTesting;
-using OSPRayTestScenes::RendererMaterialList;
 using OSPRayTestScenes::SpherePrecision;
 
 using namespace ospcommon;
-
-TEST_P(RendererMaterialList, material_list)
-{
-  PerformRenderTest();
-}
-
-INSTANTIATE_TEST_CASE_P(MaterialLists,
-    RendererMaterialList,
-    ::testing::Values("scivis", "pathtracer"));
 
 TEST_P(SpherePrecision, sphere)
 {
@@ -46,12 +36,3 @@ INSTANTIATE_TEST_CASE_P(TestScenesGeometry,
                            "subdivision_cube",
                            "cornell_box_photometric"),
         ::testing::Values("scivis", "pathtracer")));
-
-INSTANTIATE_TEST_CASE_P(TestScenesPtMaterials,
-    FromOsprayTesting,
-    ::testing::Combine(::testing::Values("test_pt_glass",
-                           "test_pt_luminous",
-                           "test_pt_metal_roughness",
-                           "test_pt_metallic_flakes",
-                           "test_pt_obj"),
-        ::testing::Values("pathtracer")));

@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Intel Corporation
+// Copyright 2017-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -93,6 +93,16 @@ class SpherePrecision
   float dist;
   float radius;
   bool move_cam;
+};
+
+// Test all texture image formats (and filter modes)
+class Texture2D : public Base,
+                  public ::testing::TestWithParam<
+                      std::tuple<int /*filter*/, bool /*lightset*/>>
+{
+ public:
+  Texture2D();
+  void SetUp() override;
 };
 
 // Test a texture colored by a volume.  Creates a sphere colored by the torus
