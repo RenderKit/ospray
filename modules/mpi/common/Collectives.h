@@ -30,14 +30,11 @@ namespace mpicommon {
  * valid until the future completes.
  */
 std::future<void *> OSPRAY_MPI_INTERFACE bcast(
-    void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+    void *buffer, size_t count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
-// TODO: Maybe we can just send a unique ptr or move only types
-// NOTE: std::future dtor blocks, so for async sending we need to hang
-// on to the futures and check on them
 std::future<void *> OSPRAY_MPI_INTERFACE bcast(
     std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> &buffer,
-    int count,
+    size_t count,
     MPI_Datatype datatype,
     int root,
     MPI_Comm comm);
@@ -92,6 +89,7 @@ std::future<void *> OSPRAY_MPI_INTERFACE reduce(const void *sendBuffer,
 /* Start an asynchronously run send. The buffer is owned by
  * the caller and must be kept valid until the future is set, indicating
  * completion of the send.
+ * TODO: Chunking
  */
 std::future<void *> OSPRAY_MPI_INTERFACE send(void *buffer,
     int count,
@@ -103,6 +101,7 @@ std::future<void *> OSPRAY_MPI_INTERFACE send(void *buffer,
 /* Start an asynchronously run recv. The buffer is owned by
  * the caller and must be kept valid until the future is set, indicating
  * completion of the recv.
+ * TODO: Chunking
  */
 std::future<void *> OSPRAY_MPI_INTERFACE recv(void *buffer,
     int count,
@@ -154,7 +153,7 @@ class OSPRAY_MPI_INTERFACE Bcast : public Collective
    * completion of the broadcast.
    */
   Bcast(std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> buffer,
-      int count,
+      size_t count,
       MPI_Datatype datatype,
       int root,
       MPI_Comm comm);

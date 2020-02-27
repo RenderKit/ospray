@@ -26,17 +26,6 @@
 
 namespace mpicommon {
 
-/* Plans for reworking of MPI fabric:
- *
- * - Want to be able to chunk up large buffers to send them and
- *   re-assemble them on the host side, kind of like in the socket
- *   recv stuff.
- *
- * - Want to keep large buffers (newData, setRegion) separate from
- *   regular command stuff so we don't need to pack/unpack them all
- *   the time to cut out these copies.
- */
-
 /*! a specific fabric based on MPI. Note that in the case of an
  *  MPIFabric using an intercommunicator the send rank must
  *  be MPI_ROOT and the recv rank must be 0. The group passed will

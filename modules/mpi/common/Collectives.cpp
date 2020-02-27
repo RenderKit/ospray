@@ -25,7 +25,7 @@ namespace mpicommon {
 using namespace ospcommon;
 
 std::future<void *> bcast(
-    void *buf, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
+    void *buf, size_t count, MPI_Datatype datatype, int root, MPI_Comm comm)
 {
   int typeSize = 0;
   MPI_Type_size(datatype, &typeSize);
@@ -38,7 +38,7 @@ std::future<void *> bcast(
 
 std::future<void *> OSPRAY_MPI_INTERFACE bcast(
     std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> &buffer,
-    int count,
+    size_t count,
     MPI_Datatype datatype,
     int root,
     MPI_Comm comm)
@@ -167,7 +167,7 @@ void Barrier::onFinish()
 }
 
 Bcast::Bcast(std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> buffer,
-    int count,
+    size_t count,
     MPI_Datatype datatype,
     int root,
     MPI_Comm comm)
@@ -188,13 +188,13 @@ std::future<void *> Bcast::future()
 void Bcast::start()
 {
   // 1GB as the max bcast size
-  const static int MAX_BCAST_SIZE = 1e9;
-  int remaining = count;
+  const static size_t MAX_BCAST_SIZE = 1e9;
+  size_t remaining = count;
   // TODO: This is Rust's slice::chunks iterator
   uint8_t *iter = buffer->begin();
   do {
     MPI_Request req;
-    const int toSend = std::min(MAX_BCAST_SIZE, remaining);
+    const size_t toSend = std::min(MAX_BCAST_SIZE, remaining);
     MPI_CALL(Ibcast(iter, toSend, datatype, root, comm, &req));
     requests.push_back(req);
 
