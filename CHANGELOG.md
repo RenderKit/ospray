@@ -19,6 +19,9 @@ Version History
 -   Add missing C++ wrapper for `ospGetVariance`
 -   Passing `NULL` to `ospRelease` is not reported as error anymore
 -   Fix computation of strides for ospData
+-   Fix handling of `--osp:device-params` to process and set all passed
+    arguments first before committing the device, to ensure it is committed
+    in a valid state.
 
 #### Known Issues:
 -   None

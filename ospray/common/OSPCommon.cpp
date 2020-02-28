@@ -65,6 +65,34 @@ void initFromCommandLine(int *_ac, const char ***_av)
   if (_ac && _av) {
     int &ac = *_ac;
     auto &av = *_av;
+
+    // If we have any device-params those must be set first to avoid
+    // initializing the device in an invalid or partial state
+    bool hadDeviceParams = false;
+    for (int i = 1; i < ac;) {
+      if (std::strncmp(av[i], "--osp:device-params", 19) == 0) {
+        hadDeviceParams = true;
+        std::string parmesan = getArgString(av[i]);
+        std::vector<std::string> parmList = split(parmesan, ',');
+        for (std::string &p : parmList) {
+          std::vector<std::string> kv = split(p, ':');
+          if (kv.size() != 2) {
+            postStatusMsg(
+                "Invalid parameters provided for --osp:device-params. "
+                "Must be formatted as <param>:<value>[,<param>:<value>,...]");
+          } else {
+            device->setParam(kv[0], kv[1]);
+          }
+        }
+        removeArgs(ac, av, i, 1);
+      } else {
+        ++i;
+      }
+    }
+    if (hadDeviceParams) {
+      device->commit();
+    }
+
     for (int i = 1; i < ac;) {
       std::string parm = av[i];
       // flag-style arguments
@@ -128,20 +156,6 @@ void initFromCommandLine(int *_ac, const char ***_av)
           postStatusMsg(
               "Invalid value provided for --osp:set-affinity. "
               "Must be 0 or 1");
-        }
-        removeArgs(ac, av, i, 1);
-      } else if (beginsWith(parm, "--osp:device-params")) {
-        std::string parmesan = getArgString(parm);
-        std::vector<std::string> parmList = split(parmesan, ',');
-        for (std::string &p : parmList) {
-          std::vector<std::string> kv = split(p, ':');
-          if (kv.size() != 2) {
-            postStatusMsg(
-                "Invalid parameters provided for --osp:device-params. "
-                "Must be formatted as <param>:<value>[,<param>:<value>,...]");
-          } else {
-            device->setParam(kv[0], kv[1]);
-          }
         }
         removeArgs(ac, av, i, 1);
       } else {
