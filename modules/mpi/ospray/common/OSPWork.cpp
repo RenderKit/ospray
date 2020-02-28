@@ -27,10 +27,10 @@
 #include "ospcommon/utility/ArrayView.h"
 #include "ospcommon/utility/OwnedArray.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
+#include "ospray/MPIDistributedDevice.h"
 #include "render/RenderTask.h"
 #include "texture/Texture.h"
 #include "volume/VolumetricModel.h"
-#include "ospray/MPIDistributedDevice.h"
 
 namespace ospray {
 namespace mpi {
@@ -195,10 +195,10 @@ void newSharedData(OSPState &state,
 
   size_t nbytes = numItems.x * stride.x;
   if (numItems.y > 1) {
-    nbytes += numItems.y * stride.y;
+    nbytes = numItems.y * stride.y;
   }
   if (numItems.z > 1) {
-    nbytes += numItems.z * stride.z;
+    nbytes = numItems.z * stride.z;
   }
 
   auto view = ospcommon::make_unique<OwnedArray<uint8_t>>();
@@ -324,7 +324,6 @@ void release(
       ++it;
     }
   }
-
 
   // Pass through the data and see if any have been completely free'd
   // i.e., no object depends on them anymore either.

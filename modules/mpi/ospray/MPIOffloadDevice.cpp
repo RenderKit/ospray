@@ -483,10 +483,10 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
 
   size_t nbytes = numItems.x * stride.x;
   if (numItems.y > 1) {
-    nbytes += numItems.y * stride.y;
+    nbytes = numItems.y * stride.y;
   }
   if (numItems.z > 1) {
-    nbytes += numItems.z * stride.z;
+    nbytes = numItems.z * stride.z;
   }
 
   /*
