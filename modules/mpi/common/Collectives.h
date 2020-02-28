@@ -168,7 +168,7 @@ class OSPRAY_MPI_INTERFACE Bcast : public Collective
 
  private:
   std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> buffer;
-  int count;
+  size_t count;
   int typeSize;
   MPI_Datatype datatype;
   int root;
