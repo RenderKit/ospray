@@ -41,6 +41,8 @@ struct OSPRAY_MPI_INTERFACE SocketWriterFabric : public networking::Fabric
 
   void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
 
+  void flushBcastSends() override;
+
   void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
 
   void send(
@@ -63,6 +65,9 @@ struct OSPRAY_MPI_INTERFACE SocketWriterFabric : public networking::Fabric
   std::vector<ospcommon::socket_t> sockets;
   std::unique_ptr<ospcommon::tasking::AsyncLoop> sendThread;
   ospcommon::containers::TransactionalBuffer<Message> outbox;
+
+  std::mutex mutex;
+  bool bcasts_in_outbox;
 };
 
 /*! A reader which reads data broadcast out from a root process
@@ -80,6 +85,8 @@ struct OSPRAY_MPI_INTERFACE SocketReaderFabric : public networking::Fabric
   SocketReaderFabric &operator=(const SocketReaderFabric &) = delete;
 
   void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
+ 
+  void flushBcastSends() override;
 
   void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
 

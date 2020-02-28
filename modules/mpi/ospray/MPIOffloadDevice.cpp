@@ -489,18 +489,8 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
     nbytes = numItems.z * stride.z;
   }
 
-  /*
   std::shared_ptr<utility::AbstractArray<uint8_t>> dataView =
       std::make_shared<utility::ArrayView<uint8_t>>(
-          const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
-          nbytes);
-          */
-  // TODO NOTE: For backwards compatabiliy we can't assume the data will
-  // actually be kept alive because of how the newData wrapper util is
-  // implemented. What we'd want to do in the future is compact when given a
-  // strided data, but share when given a native sized data.
-  std::shared_ptr<utility::AbstractArray<uint8_t>> dataView =
-      std::make_shared<utility::OwnedArray<uint8_t>>(
           const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
           nbytes);
 
@@ -726,6 +716,10 @@ void MPIOffloadDevice::release(OSPObject _object)
   networking::BufferWriter writer;
   writer << work::RELEASE << handle.i64;
   sendWork(writer.buffer);
+
+  // Make sure any object setup/data copy/etc. related to this object are
+  // completed
+  fabric->flushBcastSends();
 }
 
 void MPIOffloadDevice::retain(OSPObject _obj)

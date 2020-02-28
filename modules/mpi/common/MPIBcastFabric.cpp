@@ -53,6 +53,13 @@ void MPIFabric::sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf)
   checkPendingSends();
 }
 
+void MPIFabric::flushBcastSends()
+{
+  while (!pendingSends.empty()) {
+    checkPendingSends();
+  }
+}
+
 void MPIFabric::recvBcast(utility::AbstractArray<uint8_t> &buf)
 {
   mpicommon::bcast(buf.data(), buf.size(), MPI_BYTE, bcastRoot, group.comm)

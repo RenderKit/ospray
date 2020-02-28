@@ -41,6 +41,8 @@ class OSPRAY_MPI_INTERFACE MPIFabric : public networking::Fabric
 
   void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
 
+  void flushBcastSends() override;
+
   void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
 
   void send(

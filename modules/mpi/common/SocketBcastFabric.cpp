@@ -101,6 +101,16 @@ void SocketWriterFabric::sendBcast(
   outbox.push_back(Message(buf, -1));
 }
 
+void SocketWriterFabric::flushBcastSends()
+{
+  do {
+    std::lock_guard<std::mutex> lock(mutex);
+    if (outbox.empty() && !bcasts_in_outbox) {
+      return;
+    }
+  } while (true);
+}
+
 void SocketWriterFabric::recvBcast(utility::AbstractArray<uint8_t> &buf)
 {
   throw std::runtime_error("Cannot recvBcast on socket writer!");
@@ -119,7 +129,19 @@ void SocketWriterFabric::recv(utility::AbstractArray<uint8_t> &buf, int rank)
 
 void SocketWriterFabric::sendThreadLoop()
 {
-  auto msg = outbox.consume();
+  std::vector<Message> msg;
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    msg = outbox.consume();
+    bcasts_in_outbox = false;
+    for (auto &m : msg) {
+      if (m.ranks == -1) {
+        bcasts_in_outbox = true;
+        break;
+      }
+    }
+  }
+
   for (auto &m : msg) {
     if (m.ranks == -1) {
       for (auto &s : sockets) {
@@ -192,6 +214,8 @@ void SocketReaderFabric::sendBcast(
 {
   throw std::runtime_error("Reader fabric can't send bcast!");
 }
+
+void SocketReaderFabric::flushBcastSends() {}
 
 void SocketReaderFabric::recvBcast(utility::AbstractArray<uint8_t> &buf)
 {
