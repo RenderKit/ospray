@@ -376,13 +376,13 @@ Thus the most efficient way to specify a data array from the application
 is to created a shared data array, which is done with
 
     OSPData ospNewSharedData(const void *sharedData,
-                       OSPDataType,
-      uint64_t numItems1,
-      int64_t byteStride1 = 0,
-      uint64_t numItems2 = 1,
-      int64_t byteStride2 = 0,
-      uint64_t numItems3 = 1,
-      int64_t byteStride3 = 0);
+        OSPDataType,
+        uint64_t numItems1,
+        int64_t byteStride1 = 0,
+        uint64_t numItems2 = 1,
+        int64_t byteStride2 = 0,
+        uint64_t numItems3 = 1,
+        int64_t byteStride3 = 0);
 
 The call returns an `OSPData` handle to the created array. The calling
 program guarantees that the `sharedData` pointer will remain valid for
@@ -448,17 +448,17 @@ reference counter is incremented.
 An opaque `OSPData` with memory allocated by OSPRay is created with
 
     OSPData ospNewData(OSPDataType,
-      uint32_t numItems1,
-      uint32_t numItems2 = 1,
-      uint32_t numItems3 = 1);
+        uint32_t numItems1,
+        uint32_t numItems2 = 1,
+        uint32_t numItems3 = 1);
 
 To allow for (partial) copies or updates of data arrays use
 
     void ospCopyData(const OSPData source,
-      OSPData destination,
-      uint32_t destinationIndex1 = 0,
-      uint32_t destinationIndex2 = 0,
-      uint32_t destinationIndex3 = 0);
+        OSPData destination,
+        uint32_t destinationIndex1 = 0,
+        uint32_t destinationIndex2 = 0,
+        uint32_t destinationIndex3 = 0);
 
 which will copy the whole^[The number of items to be copied is defined
 by the size of the source array] content of the `source` array into
@@ -1383,6 +1383,15 @@ world has been committed. To get this information, call
 
     OSPBounds ospGetBounds(OSPObject);
 
+The result is returned in the provided `OSPBounds`^[`OSPBounds` has
+essentially the same layout as the `OSP_BOX3F` [`OSPDataType`][data].]
+struct:
+
+    typedef struct {
+        float lower[3];
+        float upper[3];
+    } OSPBounds;
+
 This call can also take `OSPGroup` and `OSPInstance` as well: all other
 object types will return an empty bounding box.
 
@@ -2174,11 +2183,11 @@ To get the world-space position of the geometry (if any) seen at [0–1]
 normalized screen-space pixel coordinates `screenPos` use
 
     void ospPick(OSPPickResult *,
-                 OSPFrameBuffer,
-                 OSPRenderer,
-                 OSPCamera,
-                 OSPWorld,
-                 osp_vec2f screenPos);
+        OSPFrameBuffer,
+        OSPRenderer,
+        OSPCamera,
+        OSPWorld,
+        osp_vec2f screenPos);
 
 The result is returned in the provided `OSPPickResult` struct:
 
@@ -2203,8 +2212,8 @@ information associated with pixels). To create a new framebuffer object
 of given size `size` (in pixels), color format, and channels use
 
     OSPFrameBuffer ospNewFrameBuffer(int size_x, int size_y,
-                                     OSPFrameBufferFormat format = OSP_FB_SRGBA,
-                                     uint32_t frameBufferChannels = OSP_FB_COLOR);
+        OSPFrameBufferFormat format = OSP_FB_SRGBA,
+        uint32_t frameBufferChannels = OSP_FB_COLOR);
 
 The parameter `format` describes the format the color buffer has _on the
 host_, and the format that `ospMapFrameBuffer` will eventually return.
@@ -2259,8 +2268,7 @@ using an `OSPImageOperation` [image operation].
 The application can map the given channel of a framebuffer – and thus
 access the stored pixel information – via
 
-    const void *ospMapFrameBuffer(OSPFrameBuffer,
-                                  OSPFrameBufferChannel = OSP_FB_COLOR);
+    const void *ospMapFrameBuffer(OSPFrameBuffer, OSPFrameBufferChannel = OSP_FB_COLOR);
 
 Note that `OSP_FB_ACCUM` or `OSP_FB_VARIANCE` cannot be mapped. The
 origin of the screen coordinate system in OSPRay is the lower left
