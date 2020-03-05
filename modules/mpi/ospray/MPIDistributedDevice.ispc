@@ -5,4 +5,3 @@ export uniform int MPIDistributedDevice_programCount()
 {
   return programCount;
 }
-

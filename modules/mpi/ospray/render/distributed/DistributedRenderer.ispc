@@ -1,23 +1,10 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedRenderer.ih"
 #include "common/DistributedWorld.ih"
-#include "render/util.ih"
 #include "common/Intersect.ih"
+#include "render/util.ih"
 
 unmasked void DR_default_computeRegionVisibility(
     DistributedRenderer *uniform self,
@@ -89,12 +76,11 @@ unmasked void DR_default_computeRegionVisibility(
       for (uniform int r = 0; r < world->numRegions; ++r) {
         if (!regionVisible[r] && !isEmpty(world->regions[r].bounds)) {
           Intersections isect = intersectBox(screenSample.ray.org,
-                                             screenSample.ray.dir,
-                                             world->regions[r].bounds);
+              screenSample.ray.dir,
+              world->regions[r].bounds);
           if (isect.entry.t < isect.exit.t
               && isect.exit.t >= screenSample.ray.t0
-              && isect.entry.t <= screenSample.ray.t)
-          {
+              && isect.entry.t <= screenSample.ray.t) {
             regionVisible[r] = true;
           }
         }
@@ -194,14 +180,11 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
 
       // TODO: We could store and use the region t intervals from when
       // we did the visibility test?
-      Intersections isect = intersectBox(screenSample.ray.org,
-                                         screenSample.ray.dir,
-                                         region->bounds);
+      Intersections isect = intersectBox(
+          screenSample.ray.org, screenSample.ray.dir, region->bounds);
 
-      if (isect.entry.t < isect.exit.t
-          && isect.exit.t >= screenSample.ray.t0
-          && isect.entry.t <= screenSample.ray.t)
-      {
+      if (isect.entry.t < isect.exit.t && isect.exit.t >= screenSample.ray.t0
+          && isect.entry.t <= screenSample.ray.t) {
         const float regionEnter = max(isect.entry.t, screenSample.ray.t0);
         const float regionExit = min(isect.exit.t, screenSample.ray.t);
         screenSample.ray.t0 = regionEnter;
