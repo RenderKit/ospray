@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -109,6 +109,27 @@ void DebugRenderer_Ns(Renderer *uniform _self,
     DifferentialGeometry dg;
     postIntersect(world, &self->super, dg, sample.ray, DG_NORMALIZE | DG_NS);
     sample.rgb = absf(dg.Ns);
+  }
+}
+
+void DebugRenderer_texCoord(Renderer *uniform _self,
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
+{
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+
+  traceRay(world, sample.ray);
+  sample.z = sample.ray.t;
+  sample.alpha = 1.f;
+
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(self->super.bgColor);
+  else {
+    DifferentialGeometry dg;
+    postIntersect(world, &self->super, dg, sample.ray, DG_TEXCOORD);
+    sample.rgb = abs(make_vec3f(dg.st.x, dg.st.y, 0.0f));
   }
 }
 
@@ -415,6 +436,12 @@ export void DebugRenderer_set(void *uniform _self, uniform int type)
     break;
   case NS:
     self->super.renderSample = DebugRenderer_Ns;
+    break;
+  case COLOR:
+    self->super.renderSample = DebugRenderer_vertexColor;
+    break;
+  case TEX_COORD:
+    self->super.renderSample = DebugRenderer_texCoord;
     break;
   case DPDS:
     self->super.renderSample = DebugRenderer_dPds;

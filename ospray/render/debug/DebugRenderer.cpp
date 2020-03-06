@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -21,6 +21,10 @@ static DebugRendererType typeFromString(const std::string &name)
     return DebugRendererType::NG;
   else if (name == "Ns")
     return DebugRendererType::NS;
+  else if (name == "color")
+    return DebugRendererType::COLOR;
+  else if (name == "texCoord")
+    return DebugRendererType::TEX_COORD;
   else if (name == "backfacing_Ng")
     return DebugRendererType::BACKFACING_NG;
   else if (name == "backfacing_Ns")
