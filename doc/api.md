@@ -1448,9 +1448,10 @@ General parameters of all renderers are
   float          varianceThreshold            0  threshold for adaptive accumulation
 
   float /        backgroundColor         black,  background color and alpha (RGBA), if no
-  vec3f / vec4f                     transparent  map_backplate is set
+  vec3f / vec4f                     transparent  `map_backplate` is set
 
   OSPTexture     map_backplate                   optional [texture] image used as background
+                                                 (use texture type `texture2d`)
 
   OSPTexture     map_maxDepth                    optional screen-sized float [texture]
                                                  with maximum far distance per pixel

@@ -481,6 +481,16 @@ void GLFWOSPRayWindow::buildUI()
     addObjectToCommit(renderer.handle());
   }
 
+  static bool useTestTex = false;
+  if (ImGui::Checkbox("backplate texture", &useTestTex)) {
+    if (useTestTex) {
+      renderer.setParam("map_backplate", backplateTex);
+    } else {
+      renderer.removeParam("map_backplate");
+    }
+    addObjectToCommit(renderer.handle());
+  }
+
   if (rendererType == OSPRayRendererType::PATHTRACER) {
     if (ImGui::Checkbox("renderSunSky", &renderSunSky)) {
       if (renderSunSky) {
@@ -523,16 +533,6 @@ void GLFWOSPRayWindow::buildUI()
       addObjectToCommit(renderer.handle());
     }
   } else if (rendererType == OSPRayRendererType::SCIVIS) {
-    static bool useTestTex = false;
-    if (ImGui::Checkbox("backplate texture", &useTestTex)) {
-      if (useTestTex) {
-        renderer.setParam("map_backplate", backplateTex);
-      } else {
-        renderer.removeParam("map_backplate");
-      }
-      addObjectToCommit(renderer.handle());
-    }
-
     static int aoSamples = 1;
     if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
       renderer.setParam("aoSamples", aoSamples);
