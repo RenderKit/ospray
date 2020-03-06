@@ -15,6 +15,7 @@ Version History
 -   Proper demonstration of `ospGetVariance` in `ospTutorialAsync`
 -   Add missing C++ wrapper for `ospGetVariance`
 -   Passing `NULL` to `ospRelease` is not reported as error anymore
+-   Fix computation of strides for ospData
 
 #### Known Issues:
 -   None

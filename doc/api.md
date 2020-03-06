@@ -395,8 +395,8 @@ and can also be negative. If `byteStride` is zero it will be determined
 automatically (e.g., as `sizeof(type)`). Strides do not need to be
 ordered, i.e., `byteStride2` can be smaller than `byteStride1`, which is
 equivalent to a transpose. However, if the stride should be calculated,
-then an ordering like `byteStride1 < byteStride2` is assumed to
-disambiguate.
+then an ordering in dimensions is assumed to disambiguate, i.e.,
+`byteStride1 < byteStride2 < byteStride3`.
 
 The enum type `OSPDataType` describes the different element types that
 can be represented in OSPRay; valid constants are listed in the table
@@ -989,7 +989,7 @@ OSP_BSPLINE
 vertex buffer. This basis is not interpolating, thus the curve does in
 general not go through any of the control points directly. Using this
 basis, 3 control points can be shared for two continuous neighboring
-curve segments, e.g. the curves $(p0, p1, p2, p3)$ and $(p1, p2, p3,
+curve segments, e.g., the curves $(p0, p1, p2, p3)$ and $(p1, p2, p3,
 p4)$ are C1 continuous. This feature make this basis a good choice to
 construct continuous multi-segment curves, as memory consumption can be
 kept minimal.
@@ -1191,7 +1191,7 @@ the spotlight supports the special parameters listed in the table.
                                                values are assumed to be
                                                uniformly distributed
 
-  vec3f      c0                                orientation, i.e. direction of
+  vec3f      c0                                orientation, i.e., direction of
                                                the C0-(half)plane (only needed
                                                if illumination via
                                                `intensityDistribution` is
@@ -1521,7 +1521,7 @@ supports the following special parameters:
   Type       Name                Default  Description
   ---------- ------------------ --------  ------------------------------------
   bool       geometryLights         true  whether geometries with an emissive
-                                          material (e.g. [Luminous]) illuminate
+                                          material (e.g., [Luminous]) illuminate
                                           the scene
 
   int        roulettePathLength        5  ray recursion depth at which to
