@@ -75,67 +75,6 @@ class Base
   std::vector<cpp::Instance> instances;
 };
 
-// Fixture class to test cornercases of intersection precision and epsilon
-// handling; parametrized with renderer, sphere radius, distance factor, and
-// whether the sphere is in origin
-class SpherePrecision
-    : public Base,
-      public ::testing::TestWithParam<std::tuple<float /*radius*/,
-          float /*factor*/,
-          bool /*move_cam*/,
-          const char * /*renderer*/>>
-{
- public:
-  SpherePrecision();
-  void SetUp() override;
-
- protected:
-  float dist;
-  float radius;
-  bool move_cam;
-};
-
-// Test all texture image formats (and filter modes)
-class Texture2D : public Base,
-                  public ::testing::TestWithParam<
-                      std::tuple<int /*filter*/, bool /*lightset*/>>
-{
- public:
-  Texture2D();
-  void SetUp() override;
-};
-
-// Test a texture colored by a volume.  Creates a sphere colored by the torus
-// volume It's parametrized with type of the renderer.
-class TextureVolume : public Base, public ::testing::TestWithParam<const char *>
-{
- public:
-  TextureVolume();
-  void SetUp() override;
-};
-
-// Test a texture colored by a volume.  Creates a sphere colored by the torus
-// volume It's parametrized with type of the renderer and background color
-class DepthCompositeVolume
-    : public Base,
-      public ::testing::TestWithParam<std::tuple<const char *, vec4f>>
-{
- public:
-  DepthCompositeVolume();
-  void SetUp() override;
-
- private:
-  vec4f bgColor;
-};
-
-class RendererMaterialList : public Base,
-                             public ::testing::TestWithParam<const char *>
-{
- public:
-  RendererMaterialList();
-  void SetUp() override;
-};
-
 // Fixture class used for tests that uses 'ospray_testing' scenes
 class FromOsprayTesting
     : public Base,
