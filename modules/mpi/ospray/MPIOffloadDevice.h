@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
+// Copyright 2009-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -127,6 +127,8 @@ struct MPIOffloadDevice : public api::Device
   void wait(OSPFuture, OSPSyncEvent) override;
   void cancel(OSPFuture) override;
   float getProgress(OSPFuture) override;
+
+  float getTaskDuration(OSPFuture) override;
 
   OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;

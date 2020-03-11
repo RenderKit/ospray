@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
+// Copyright 2009-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -751,6 +751,22 @@ void futureGetProgress(OSPState &state,
   }
 }
 
+void futureGetTaskDuration(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric)
+{
+  int64_t handle = 0;
+  cmdBuf >> handle;
+  float progress = ospGetTaskDuration(state.getObject<OSPFuture>(handle));
+
+  if (mpicommon::worker.rank == 0) {
+    using namespace utility;
+    auto view = std::make_shared<OwnedArray<uint8_t>>(
+        reinterpret_cast<uint8_t *>(&progress), sizeof(progress));
+    fabric.send(view, 0);
+  }
+}
+
 void finalize(
     OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
@@ -869,6 +885,9 @@ void dispatchWork(TAG t,
     break;
   case FUTURE_GET_PROGRESS:
     futureGetProgress(state, cmdBuf, fabric);
+    break;
+  case FUTURE_GET_TASK_DURATION:
+    futureGetTaskDuration(state, cmdBuf, fabric);
     break;
   case FINALIZE:
     finalize(state, cmdBuf, fabric);

@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Changes in v2.1.0
+
+- Add suport for `ospGetTaskDuration` to query the render time of a asynchronous
+  (or synchronous) renderFrame call.
+
 ### Changes in v2.0.0:
 
 - The MPI module is now provided separately from the main OSPRay repo.

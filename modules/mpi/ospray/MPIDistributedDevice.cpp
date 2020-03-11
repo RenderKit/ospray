@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
+// Copyright 2009-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -29,6 +29,7 @@
 #include "lights/Light.h"
 #include "openvkl/openvkl.h"
 #include "ospcommon/tasking/tasking_system_init.h"
+#include "ospcommon/utility/CodeTimer.h"
 #include "ospcommon/utility/getEnvVar.h"
 #include "render/DistributedLoadBalancer.h"
 #include "render/ThreadedRenderTask.h"
@@ -410,14 +411,17 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   world->refInc();
 
   auto *f = new ThreadedRenderTask(fb, [=]() {
-    float result = renderer->renderFrame(fb, camera, world);
+    utility::CodeTimer timer;
+    timer.start();
+    renderer->renderFrame(fb, camera, world);
+    timer.stop();
 
     fb->refDec();
     renderer->refDec();
     camera->refDec();
     world->refDec();
 
-    return result;
+    return timer.seconds();
   });
 
   return (OSPFuture)f;
@@ -445,6 +449,12 @@ float MPIDistributedDevice::getProgress(OSPFuture _task)
 {
   auto *task = (Future *)_task;
   return task->getProgress();
+}
+
+float MPIDistributedDevice::getTaskDuration(OSPFuture _task)
+{
+  auto *task = (Future *)_task;
+  return task->getTaskDuration();
 }
 
 float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)

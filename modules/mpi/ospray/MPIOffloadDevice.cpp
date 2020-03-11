@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
+// Copyright 2009-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -887,6 +887,19 @@ float MPIOffloadDevice::getProgress(OSPFuture _task)
   const ObjectHandle handle = (ObjectHandle &)_task;
   networking::BufferWriter writer;
   writer << work::FUTURE_GET_PROGRESS << handle.i64;
+  sendWork(writer.buffer);
+  float result = 0;
+  utility::ArrayView<uint8_t> view(
+      reinterpret_cast<uint8_t *>(&result), sizeof(result));
+  fabric->recv(view, rootWorkerRank());
+  return result;
+}
+
+float MPIOffloadDevice::getTaskDuration(OSPFuture _task)
+{
+  const ObjectHandle handle = (ObjectHandle &)_task;
+  networking::BufferWriter writer;
+  writer << work::FUTURE_GET_TASK_DURATION << handle.i64;
   sendWork(writer.buffer);
   float result = 0;
   utility::ArrayView<uint8_t> view(

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
+// Copyright 2009-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,12 +34,12 @@ namespace staticLoadBalancer {
  */
 struct Distributed : public TiledLoadBalancer
 {
-  float renderFrame(FrameBuffer *fb,
+  void renderFrame(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
       World *world) override;
 
-  float renderFrameReplicated(DistributedFrameBuffer *dfb,
+  void renderFrameReplicated(DistributedFrameBuffer *dfb,
       Renderer *renderer,
       Camera *camera,
       DistributedWorld *world);
