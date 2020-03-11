@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 include(CMakeFindDependencyMacro)
@@ -441,8 +441,10 @@ macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED)
   else()
     get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
         INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(CONFIGURATIONS openvkl::openvkl IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION)
     get_target_property(OPENVKL_LIBRARY openvkl::openvkl
-        IMPORTED_LOCATION_RELEASE)
+        IMPORTED_LOCATION_${CONFIGURATION})
     message(STATUS "Found Open VKL: ${OPENVKL_LIBRARY}")
   endif()
 endmacro()
