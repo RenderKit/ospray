@@ -5,8 +5,11 @@
 # Setup ospray include directories and source files
 # -------------------------------------------------------
 
+set(OSPRAY_RESOURCE ${CMAKE_CURRENT_SOURCE_DIR}/ospray.rc)
+set(OSPRAY_RESOURCE ${OSPRAY_RESOURCE} PARENT_SCOPE)
+
 set(OSPRAY_SOURCES
-  ospray.rc
+  ${OSPRAY_RESOURCE}
 
   api/API.cpp
   api/Device.cpp
@@ -37,6 +40,8 @@ set(OSPRAY_SOURCES
 
 
 set(OSPRAY_ISPC_DEVICE_SOURCES
+  ${OSPRAY_RESOURCE}
+
   ispc_tasksys.cpp
 
   api/ISPCDevice.h

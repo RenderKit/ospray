@@ -8,6 +8,7 @@ endif()
 ospray_disable_compiler_warnings()
 
 add_executable(ospTestSuite
+  ${OSPRAY_RESOURCE}
   environment.cpp
   test_fixture.cpp
   test_tools.cpp

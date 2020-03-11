@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 option(OSPRAY_MODULE_DENOISER
@@ -10,7 +10,7 @@ endif()
 
 include(GenerateExportHeader)
 
-add_library(ospray_module_denoiser SHARED DenoiseFrameOp.cpp)
+add_library(ospray_module_denoiser SHARED ${OSPRAY_RESOURCE} DenoiseFrameOp.cpp)
 
 generate_export_header(ospray_module_denoiser)
 

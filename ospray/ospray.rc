@@ -1,3 +1,6 @@
+// Copyright 2016-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 #include "ospray/version.h"
 
 1 VERSIONINFO
@@ -21,10 +24,9 @@ BEGIN
             VALUE "FileDescription", "OSPRay Ray Tracing Rendering Engine"
             VALUE "FileVersion", OSPRAY_VERSION
             VALUE "ProductVersion", OSPRAY_VERSION
-            VALUE "LegalCopyright", "www.apache.org/licenses/LICENSE-2.0"
-            VALUE "OriginalFilename", "ospray.dll"
+            VALUE "LegalCopyright", "© 2009-2020 Intel Corporation"
             VALUE "InternalName", "OSPRay"
-            VALUE "ProductName", "OSPRay"
+            VALUE "ProductName", "Intel® OSPRay"
         END
     END
     BLOCK "VarFileInfo"

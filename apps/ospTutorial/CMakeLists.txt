@@ -1,4 +1,4 @@
-## Copyright 2018-2019 Intel Corporation
+## Copyright 2018-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 if (NOT OSPRAY_APPS_EXAMPLES)
@@ -6,15 +6,15 @@ if (NOT OSPRAY_APPS_EXAMPLES)
 endif()
 
 # build ospTutorial, for demonstration and API testing
-add_executable(ospTutorial ospTutorial.c)
+add_executable(ospTutorial ${OSPRAY_RESOURCE} ospTutorial.c)
 target_link_libraries(ospTutorial PRIVATE ospray)
 
 # C++ version
-add_executable(ospTutorialCpp ospTutorial.cpp)
+add_executable(ospTutorialCpp ${OSPRAY_RESOURCE} ospTutorial.cpp)
 target_link_libraries(ospTutorialCpp PRIVATE ospray)
 
 # async version
-add_executable(ospTutorialAsync ospTutorialAsync.c)
+add_executable(ospTutorialAsync ${OSPRAY_RESOURCE} ospTutorialAsync.c)
 target_link_libraries(ospTutorialAsync PRIVATE ospray)
 
 install(TARGETS ospTutorial ospTutorialCpp ospTutorialAsync
