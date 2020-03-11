@@ -19,6 +19,13 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 project(ospray_module_mpi VERSION 2.1.0 LANGUAGES C CXX)
 
+configure_file(
+  ${CMAKE_SOURCE_DIR}/ospray/version.h.in
+  ${CMAKE_BINARY_DIR}/ospray/version.h
+  @ONLY
+)
+set(OSPRAY_MPI_RESOURCE ${CMAKE_SOURCE_DIR}/ospray/ospray.rc)
+
 include(GNUInstallDirs)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
@@ -26,7 +33,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 find_package(MPI REQUIRED)
-find_package(ospray 2.0 REQUIRED)
+find_package(ospray 2.1 REQUIRED)
 include(${OSPRAY_SDK_USE_FILE})
 
 ospcommon_configure_build_type()

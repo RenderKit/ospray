@@ -14,6 +14,8 @@ ispc_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(ospray_module_mpi SHARED)
 
 ispc_target_add_sources(ospray_module_mpi
+  ${OSPRAY_MPI_RESOURCE}
+
   MPIOffloadDevice.cpp
   MPIOffloadWorker.cpp
   MPIDistributedDevice.cpp
@@ -59,6 +61,9 @@ target_include_directories(ospray_module_mpi
 target_compile_definitions(ospray_module_mpi PUBLIC
   -DOSP_MPI_COMPRESSION_THRESHOLD=${OSP_MPI_COMPRESSION_THRESHOLD})
 
+set_target_properties(ospray_module_mpi
+  PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+
 install(TARGETS ospray_module_mpi
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} NAMELINK_SKIP
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -73,13 +78,9 @@ install(TARGETS ospray_module_mpi
 
 ## Build the worker executable ##
 
-add_executable(ospray_mpi_worker mpi_offload_worker_main.cpp)
+add_executable(ospray_mpi_worker
+  ${OSPRAY_MPI_RESOURCE} mpi_offload_worker_main.cpp)
 
 target_link_libraries(ospray_mpi_worker PRIVATE ospray::ospray)
-
-if (WIN32)
-  set_target_properties(ospray_mpi_worker
-    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-endif()
 
 install(TARGETS ospray_mpi_worker DESTINATION ${CMAKE_INSTALL_BINDIR})
