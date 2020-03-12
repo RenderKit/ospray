@@ -23,6 +23,7 @@ Version History
     arguments first before committing the device, to ensure it is committed
     in a valid state.
 -   Fix issue with OSPRay ignoring tasking system thread count settings
+-   Fix issue where OSPRay always loaded the ISPC module, even if not required
 
 #### Known Issues:
 -   None
