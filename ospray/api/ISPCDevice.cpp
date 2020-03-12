@@ -215,6 +215,7 @@ void ISPCDevice::commit()
       [](const char *message) { postStatusMsg(OSP_LOG_INFO) << message; });
 
   vklDriverSetInt(driver, "logLevel", logLevel);
+  vklDriverSetInt(driver, "numThreads", numThreads);
 
   vklCommitDriver(driver);
   vklSetCurrentDriver(driver);

@@ -22,6 +22,7 @@ Version History
 -   Fix handling of `--osp:device-params` to process and set all passed
     arguments first before committing the device, to ensure it is committed
     in a valid state.
+-   Fix issue with OSPRay ignoring tasking system thread count settings
 
 #### Known Issues:
 -   None
