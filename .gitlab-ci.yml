@@ -146,6 +146,14 @@ build-centos7-gcc:
       - build/install
     expire_in: 3 day
 
+build-centos7-mpi:
+  <<: *build_job_docker_modules
+  script:
+    - module load cmake
+    - module load intel
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+  allow_failure: true
+
 build-debug:
   <<: *build_job_docker
   script:
