@@ -110,6 +110,16 @@ build-ubuntu1804-gcc:
       - build/install
     expire_in: 3 day
 
+build-centos8:
+  <<: *build_job_docker
+  image: ospray/docker-images:centos8
+  script:
+    - scripts/build_gitlab/linux.sh -G Ninja
+  artifacts:
+    paths:
+      - build/install
+    expire_in: 3 day
+
 build-centos7-icc:
   <<: *build_job_docker_modules
   script:
@@ -201,7 +211,7 @@ build-scan-kw:
 
 source-protex-scan:
   stage: build
-  image: amd64/openjdk:8 
+  image: amd64/openjdk:8
   script:
     - scripts/build_gitlab/source-scan-protex.sh
   dependencies: []
@@ -216,6 +226,12 @@ test-centos7-gcc:
   image: ospray/docker-images:centos7
   dependencies:
     - build-centos7-gcc
+
+test-centos8:
+  <<: *test_job_unix
+  image: ospray/docker-images:centos8
+  dependencies:
+    - build-centos8
 
 test-ubuntu1804-gcc:
   <<: *test_job_unix
