@@ -3,8 +3,6 @@
 
 // ospray
 #include "Device.h"
-#include "common/OSPCommon.h"
-#include "objectFactory.h"
 // ospcommon
 #include "ospcommon/os/library.h"
 #include "ospcommon/tasking/tasking_system_init.h"
@@ -15,7 +13,9 @@
 namespace ospray {
 namespace api {
 
-// Helper functions ///////////////////////////////////////////////////////
+static FactoryMap<Device> g_devicesMap;
+
+// Helper functions ///////////////////////////////////////////////////////////
 
 template <typename OSTREAM_T>
 static inline void installStatusMsgFunc(Device &device, OSTREAM_T &stream)
@@ -31,7 +31,7 @@ static inline void installErrorMsgFunc(Device &device, OSTREAM_T &stream)
   };
 }
 
-// Device definitions /////////////////////////////////////////////////////
+// Device definitions /////////////////////////////////////////////////////////
 
 memory::IntrusivePtr<Device> Device::current;
 uint32_t Device::logLevel = OSP_LOG_NONE;
@@ -49,7 +49,12 @@ Device *Device::createDevice(const char *type)
   if (!repo.libraryExists("ospray_module_ispc") && type == std::string("cpu"))
     repo.add("ospray_module_ispc");
 
-  return objectFactory<Device, OSP_DEVICE>(type);
+  return createInstanceHelper(type, g_devicesMap[type]);
+}
+
+void Device::registerType(const char *type, FactoryFcn<Device> f)
+{
+  g_devicesMap[type] = f;
 }
 
 void Device::commit()

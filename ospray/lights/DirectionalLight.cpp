@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DirectionalLight.h"
@@ -30,7 +30,5 @@ void DirectionalLight::commit()
 
   ispc::DirectionalLight_set(getIE(), (ispc::vec3f &)direction, cosAngle);
 }
-
-OSP_REGISTER_LIGHT(DirectionalLight, distant);
 
 } // namespace ospray

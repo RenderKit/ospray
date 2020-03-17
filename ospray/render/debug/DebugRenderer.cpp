@@ -64,6 +64,4 @@ void DebugRenderer::commit()
   ispc::DebugRenderer_set(getIE(), typeFromString(method));
 }
 
-OSP_REGISTER_RENDERER(DebugRenderer, debug);
-
 } // namespace ospray

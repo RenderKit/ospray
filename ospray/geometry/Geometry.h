@@ -6,8 +6,7 @@
 #include "api/ISPCDevice.h"
 #include "common/Data.h"
 #include "common/Managed.h"
-#include "common/Material.h"
-#include "common/OSPCommon.h"
+#include "common/Util.h"
 // embree
 #include "embree3/rtcore.h"
 
@@ -27,13 +26,28 @@ struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
   // Object factory //
 
   static Geometry *createInstance(const char *type);
+  template <typename T>
+  static void registerType(const char *type);
 
   RTCGeometry embreeGeometry{nullptr};
+
+ private:
+  template <typename BASE_CLASS, typename CHILD_CLASS>
+  friend void registerTypeHelper(const char *type);
+  static void registerType(const char *type, FactoryFcn<Geometry> f);
 };
 
 OSPTYPEFOR_SPECIALIZATION(Geometry *, OSP_GEOMETRY);
 
-// convenience wrappers to set Embree buffer ////////////////////////////////
+// Inlined defintions /////////////////////////////////////////////////////////
+
+template <typename T>
+inline void Geometry::registerType(const char *type)
+{
+  registerTypeHelper<Geometry, T>(type);
+}
+
+// convenience wrappers to set Embree buffer //////////////////////////////////
 
 template <typename T>
 struct RTCFormatFor
@@ -112,9 +126,5 @@ void setEmbreeGeometryBuffer(RTCGeometry geom,
       sizeof(T),
       data.size());
 }
-
-#define OSP_REGISTER_GEOMETRY(InternalClass, external_name)                    \
-  OSP_REGISTER_OBJECT(                                                         \
-      ::ospray::Geometry, geometry, InternalClass, external_name)
 
 } // namespace ospray

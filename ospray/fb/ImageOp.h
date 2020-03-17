@@ -1,9 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "FrameBufferView.h"
+#include "common/Util.h"
 #include "fb/Tile.h"
 
 namespace ospray {
@@ -45,6 +46,13 @@ struct OSPRAY_SDK_INTERFACE ImageOp : public ManagedObject
   virtual std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) = 0;
 
   static ImageOp *createInstance(const char *type);
+  template <typename T>
+  static void registerType(const char *type);
+
+ private:
+  template <typename BASE_CLASS, typename CHILD_CLASS>
+  friend void registerTypeHelper(const char *type);
+  static void registerType(const char *type, FactoryFcn<ImageOp> f);
 };
 
 OSPTYPEFOR_SPECIALIZATION(ImageOp *, OSP_IMAGE_OPERATION);
@@ -84,16 +92,12 @@ struct OSPRAY_SDK_INTERFACE LiveFrameOp : public LiveImageOp
   virtual void process(const Camera *camera) = 0;
 };
 
-/*! \brief registers a internal ospray::<ClassName> renderer under
-    the externally accessible name "external_name"
+// Inlined definitions ////////////////////////////////////////////////////////
 
-    \internal This currently works by defining a extern "C" function
-    with a given predefined name that creates a new instance of this
-    imageop. By having this symbol in the shared lib ospray can
-    later on always get a handle to this fct and create an instance
-    of this imageop.
-*/
-#define OSP_REGISTER_IMAGE_OP(InternalClass, external_name)                    \
-  OSP_REGISTER_OBJECT(ImageOp, image_operation, InternalClass, external_name)
+template <typename T>
+inline void ImageOp::registerType(const char *type)
+{
+  registerTypeHelper<ImageOp, T>(type);
+}
 
 } // namespace ospray

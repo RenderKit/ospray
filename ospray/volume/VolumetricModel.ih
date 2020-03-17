@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,7 +8,6 @@
 #include "transferFunction/TransferFunction.ih"
 
 #include "../common/DifferentialGeometry.ih"
-#include "../common/Material.ih"
 #include "../common/Ray.ih"
 
 struct VolumetricModel

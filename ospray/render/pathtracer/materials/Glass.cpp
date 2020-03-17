@@ -1,52 +1,47 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "Glass.h"
+// ispc
 #include "Glass_ispc.h"
-#include "common/Material.h"
-#include "texture/Texture2D.h"
 
 namespace ospray {
 namespace pathtracer {
-struct Glass : public ospray::Material
+
+Glass::Glass()
 {
-  //! \brief common function to help printf-debugging
-  /*! Every derived class should override this! */
-  virtual std::string toString() const override
-  {
-    return "ospray::pathtracer::Glass";
-  }
+  ispcEquivalent = ispc::PathTracer_Glass_create();
+}
 
-  //! \brief commit the material's parameters
-  virtual void commit() override
-  {
-    if (getIE() == nullptr) {
-      ispcEquivalent = ispc::PathTracer_Glass_create();
-    }
+std::string Glass::toString() const
+{
+  return "ospray::pathtracer::Glass";
+}
 
-    const float etaInside =
-        getParam<float>("etaInside", getParam<float>("eta", 1.5f));
+void Glass::commit()
+{
+  const float etaInside =
+      getParam<float>("etaInside", getParam<float>("eta", 1.5f));
 
-    const float etaOutside = getParam<float>("etaOutside", 1.f);
+  const float etaOutside = getParam<float>("etaOutside", 1.f);
 
-    const vec3f &attenuationColorInside =
-        getParam<vec3f>("attenuationColorInside",
-            getParam<vec3f>("attenuationColor", vec3f(1.f)));
+  const vec3f &attenuationColorInside =
+      getParam<vec3f>("attenuationColorInside",
+          getParam<vec3f>("attenuationColor", vec3f(1.f)));
 
-    const vec3f &attenuationColorOutside =
-        getParam<vec3f>("attenuationColorOutside", vec3f(1.f));
+  const vec3f &attenuationColorOutside =
+      getParam<vec3f>("attenuationColorOutside", vec3f(1.f));
 
-    const float attenuationDistance =
-        getParam<float>("attenuationDistance", 1.0f);
+  const float attenuationDistance =
+      getParam<float>("attenuationDistance", 1.0f);
 
-    ispc::PathTracer_Glass_set(ispcEquivalent,
-        etaInside,
-        (const ispc::vec3f &)attenuationColorInside,
-        etaOutside,
-        (const ispc::vec3f &)attenuationColorOutside,
-        attenuationDistance);
-  }
-};
+  ispc::PathTracer_Glass_set(ispcEquivalent,
+      etaInside,
+      (const ispc::vec3f &)attenuationColorInside,
+      etaOutside,
+      (const ispc::vec3f &)attenuationColorOutside,
+      attenuationDistance);
+}
 
-OSP_REGISTER_MATERIAL(pathtracer, Glass, glass);
 } // namespace pathtracer
 } // namespace ospray

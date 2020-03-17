@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LinearTransferFunction.h"
@@ -96,7 +96,5 @@ std::vector<range1f> LinearTransferFunction::getPositiveOpacityValueRanges()
 
   return valueRanges;
 }
-
-OSP_REGISTER_TRANSFER_FUNCTION(LinearTransferFunction, piecewiseLinear);
 
 } // namespace ospray

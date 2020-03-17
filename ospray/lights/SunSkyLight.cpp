@@ -162,5 +162,5 @@ void SunSkyLight::commit()
   ispc::HDRILight_set(getIE(), (const ispc::LinearSpace3f &)frame, map);
   arhosekskymodelstate_free(rgbModel);
 }
-OSP_REGISTER_LIGHT(SunSkyLight, sunSky);
+
 } // namespace ospray

@@ -130,5 +130,8 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   static RTCDevice embreeDevice;
 };
 
+extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
+    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/);
+
 } // namespace api
 } // namespace ospray

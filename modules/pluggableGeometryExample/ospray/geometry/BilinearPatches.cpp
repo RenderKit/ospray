@@ -53,17 +53,5 @@ size_t BilinearPatches::numPrimitives() const
   return patchesData->size() * sizeOf(patchesData->type) / sizeof(Patch);
 }
 
-/*! maybe one of the most important parts of this example: this
-    macro 'registers' the BilinearPatches class under the ospray
-    geometry type name of 'bilinear_patches'.
-
-    It is _this_ name that one can now (assuming the module has
-    been loaded with ospLoadModule(), of course) create geometries
-    with; i.e.,
-
-    OSPGeometry geom = ospNewGeometry("bilinear_patches") ;
-*/
-OSP_REGISTER_GEOMETRY(BilinearPatches, bilinear_patches);
-
 } // namespace blp
 } // namespace ospray

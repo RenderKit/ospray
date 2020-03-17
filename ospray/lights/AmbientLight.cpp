@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AmbientLight.h"
@@ -21,7 +21,5 @@ void AmbientLight::commit()
   Light::commit();
   ispc::AmbientLight_set(getIE());
 }
-
-OSP_REGISTER_LIGHT(AmbientLight, ambient);
 
 } // namespace ospray

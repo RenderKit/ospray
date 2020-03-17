@@ -1,9 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "common/Managed.h"
+#include "common/Util.h"
 
 namespace ospray {
 
@@ -34,6 +35,8 @@ struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
   virtual ProjectedPoint projectPoint(const vec3f &p) const;
 
   static Camera *createInstance(const char *identifier);
+  template <typename T>
+  static void registerType(const char *type);
 
   // Data members //
 
@@ -47,20 +50,21 @@ struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
   vec2f imageEnd; // upper right corner
   float shutterOpen; // start time of camera shutter
   float shutterClose; // end time of camera shutter
+
+ private:
+  template <typename BASE_CLASS, typename CHILD_CLASS>
+  friend void registerTypeHelper(const char *type);
+  static void registerType(const char *type, FactoryFcn<Camera> f);
 };
 
 OSPTYPEFOR_SPECIALIZATION(Camera *, OSP_CAMERA);
 
-/*! \brief registers a internal ospray::'ClassName' camera under
-    the externally accessible name "external_name"
+// Inlined defintions /////////////////////////////////////////////////////////
 
-    \internal This currently works by defining a extern "C" function
-    with a given predefined name that creates a new instance of this
-    camera. By having this symbol in the shared lib ospray can
-    lateron always get a handle to this fct and create an instance
-    of this camera.
-*/
-#define OSP_REGISTER_CAMERA(InternalClass, external_name)                      \
-  OSP_REGISTER_OBJECT(::ospray::Camera, camera, InternalClass, external_name)
+template <typename T>
+inline void Camera::registerType(const char *type)
+{
+  registerTypeHelper<Camera, T>(type);
+}
 
 } // namespace ospray

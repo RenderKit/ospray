@@ -52,7 +52,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   common/Instance.ispc
   common/Managed.cpp
   common/OSPCommon.ispc
-  common/Material.cpp
   common/Util.h
   common/World.ispc
   common/World.cpp
@@ -65,6 +64,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   fb/ImageOp.cpp
   fb/Tile.h
   fb/TileError.cpp
+  fb/registration.cpp
 
   fb/frame_ops/Blur.cpp
   fb/frame_ops/Debug.cpp
@@ -84,6 +84,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   camera/OrthographicCamera.cpp
   camera/PanoramicCamera.ispc
   camera/PanoramicCamera.cpp
+  camera/registration.cpp
 
   geometry/Geometry.ispc
   geometry/Geometry.cpp
@@ -101,6 +102,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/Isosurfaces.cpp
   geometry/Mesh.cpp
   geometry/Mesh.ispc
+  geometry/registration.cpp
 
   lights/Light.ispc
   lights/Light.cpp
@@ -117,6 +119,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   lights/HDRILight.cpp
   lights/HDRILight.ispc
   lights/SunSkyLight.cpp
+  lights/registration.cpp
 
   math/box.ispc
   math/Distribution1D.ispc
@@ -128,9 +131,11 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   math/spectrum.ispc
 
   render/LoadBalancer.cpp
+  render/Material.cpp
   render/Renderer.ispc
   render/Renderer.cpp
   render/util.ispc
+  render/registration.cpp
 
   render/debug/DebugRenderer.cpp
   render/debug/DebugRenderer.ispc
@@ -183,6 +188,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   texture/Texture2D.ispc
   texture/TextureVolume.cpp
   texture/TextureVolume.ispc
+  texture/registration.cpp
 
   volume/Volume.ispc
   volume/Volume.cpp
@@ -193,6 +199,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   volume/transferFunction/LinearTransferFunction.cpp
   volume/transferFunction/TransferFunction.ispc
   volume/transferFunction/TransferFunction.cpp
+  volume/transferFunction/registration.cpp
 )
 
 # -------------------------------------------------------
@@ -316,7 +323,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ospcommon::ospcommon
     $<BUILD_INTERFACE:embree>
     $<BUILD_INTERFACE:openvkl::openvkl_module_ispc_driver>
-  PRIVATE 
+  PRIVATE
     sky_model
   )
 

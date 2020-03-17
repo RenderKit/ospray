@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -32,6 +32,7 @@ typedef int ssize_t;
 #include "ospray/version.h"
 // std
 #include <cstdint> // for int64_t etc
+#include <map>
 #include <sstream>
 
 // NOTE(jda) - This one file is shared between the core OSPRay library and the
@@ -63,15 +64,6 @@ typedef int ssize_t;
 #endif
 #define OSPRAY_SDK_INTERFACE OSPRAY_MODULE_ISPC_INTERFACE
 
-#define OSP_REGISTER_OBJECT(Object, object_name, InternalClass, external_name) \
-  extern "C" OSPRAY_DLLEXPORT Object                                           \
-      *ospray_create_##object_name##__##external_name()                        \
-  {                                                                            \
-    return new InternalClass;                                                  \
-  }                                                                            \
-  /* additional declaration to avoid "extra ;" -Wpedantic warnings */          \
-  Object *ospray_create_##object_name##__##external_name()
-
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
 
@@ -93,6 +85,18 @@ using int8 = std::int8_t;
 using uint8 = std::uint8_t;
 
 using index_t = std::int64_t;
+
+template <typename T>
+using FactoryFcn = T *(*)();
+
+template <typename T>
+using FactoryMap = std::map<std::string, FactoryFcn<T>>;
+
+template <typename B, typename T>
+inline B *allocate_object()
+{
+  return new T;
+}
 
 // Argument parsing functions
 std::string getArgString(const std::string &s);

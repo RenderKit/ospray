@@ -130,6 +130,4 @@ size_t Subdivision::numPrimitives() const
   return facesData->size();
 }
 
-OSP_REGISTER_GEOMETRY(Subdivision, subdivision);
-
 } // namespace ospray

@@ -8,7 +8,6 @@
 #include "common/Group.h"
 #include "common/Instance.h"
 #include "common/Library.h"
-#include "common/Material.h"
 #include "common/Util.h"
 #include "common/World.h"
 #include "fb/ImageOp.h"
@@ -16,12 +15,22 @@
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
+#include "render/Material.h"
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
+
+#include "camera/registration.h"
+#include "fb/registration.h"
+#include "geometry/registration.h"
+#include "lights/registration.h"
+#include "render/registration.h"
+#include "texture/registration.h"
+#include "volume/transferFunction/registration.h"
+
 // stl
 #include <algorithm>
 #include <functional>
@@ -522,10 +531,19 @@ OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
+  Device::registerType<ISPCDevice>("cpu");
+
+  registerAllCameras();
+  registerAllImageOps();
+  registerAllGeometries();
+  registerAllLights();
+  registerAllMaterials();
+  registerAllRenderers();
+  registerAllTextures();
+  registerAllTransferFunctions();
+
   return moduleVersionCheck(versionMajor, versionMinor);
 }
-
-OSP_REGISTER_DEVICE(ISPCDevice, cpu);
 
 } // namespace api
 } // namespace ospray

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PointLight.h"
@@ -23,7 +23,5 @@ void PointLight::commit()
 
   ispc::PointLight_set(getIE(), (ispc::vec3f &)position, radius);
 }
-
-OSP_REGISTER_LIGHT(PointLight, sphere);
 
 } // namespace ospray

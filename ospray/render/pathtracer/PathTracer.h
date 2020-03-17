@@ -1,9 +1,9 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "common/Material.h"
+#include "render/Material.h"
 #include "render/Renderer.h"
 
 namespace ospray {

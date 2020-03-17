@@ -75,6 +75,4 @@ void SpotLight::commit()
       lid ? lid->data() : nullptr);
 }
 
-OSP_REGISTER_LIGHT(SpotLight, spot);
-
 } // namespace ospray

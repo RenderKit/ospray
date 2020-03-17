@@ -51,6 +51,4 @@ void Texture2D::commit()
       (ispc::vec2i &)size, texData->data(), format, filter);
 }
 
-OSP_REGISTER_TEXTURE(Texture2D, texture2d);
-
 } // namespace ospray

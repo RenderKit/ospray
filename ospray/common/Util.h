@@ -1,30 +1,39 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "../api/objectFactory.h"
 #include "./Managed.h"
-
-#include <map>
 
 namespace ospray {
 
-template <typename OSPRAY_CLASS, OSPDataType OSP_TYPE>
-inline OSPRAY_CLASS *createInstanceHelper(const std::string &type)
+template <typename OSPRAY_CLASS>
+inline OSPRAY_CLASS *createInstanceHelper(
+    const std::string &type, FactoryFcn<OSPRAY_CLASS> fcn)
 {
-  static_assert(std::is_base_of<ManagedObject, OSPRAY_CLASS>::value,
-      "createInstanceHelper<>() is only for OSPRay classes, not"
-      " generic types!");
+  const auto type_string = stringFor(OSPTypeFor<OSPRAY_CLASS *>::value);
 
-  auto *object = objectFactory<OSPRAY_CLASS, OSP_TYPE>(type);
-
-  // Denote the subclass type in the ManagedObject base class.
-  if (object) {
-    object->managedObjectType = OSP_TYPE;
+  if (fcn) {
+    auto *obj = fcn();
+    if (obj == nullptr) {
+      throw std::runtime_error("Could not find " + type_string
+        + " of type: " + type
+        + ".  Make sure you have the correct OSPRay libraries "
+        "linked and initialized.");
+    }
+    return obj;
+  } else {
+    postStatusMsg(OSP_LOG_WARNING) << "  WARNING: unrecognized " << type_string
+                                   << " type '" << type << "'.";
+    return nullptr;
   }
+}
 
-  return object;
+template <typename BASE_CLASS, typename CHILD_CLASS>
+inline void registerTypeHelper(const char *type)
+{
+  BASE_CLASS *(*fcn)() = &allocate_object<BASE_CLASS, CHILD_CLASS>;
+  BASE_CLASS::registerType(type, fcn);
 }
 
 } // namespace ospray

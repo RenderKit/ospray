@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -7,6 +7,10 @@
 #include "common/Util.h"
 
 namespace ospray {
+
+static FactoryMap<TransferFunction> g_tfnsMap;
+
+// TransferFunction definitions ///////////////////////////////////////////////
 
 TransferFunction::TransferFunction()
 {
@@ -27,7 +31,13 @@ std::string TransferFunction::toString() const
 
 TransferFunction *TransferFunction::createInstance(const std::string &type)
 {
-  return createInstanceHelper<TransferFunction, OSP_TRANSFER_FUNCTION>(type);
+  return createInstanceHelper(type, g_tfnsMap[type]);
+}
+
+void TransferFunction::registerType(
+    const char *type, FactoryFcn<TransferFunction> f)
+{
+  g_tfnsMap[type] = f;
 }
 
 OSPTYPEFOR_DEFINITION(TransferFunction *);

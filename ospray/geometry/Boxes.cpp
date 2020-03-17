@@ -35,6 +35,4 @@ size_t Boxes::numPrimitives() const
   return boxData ? boxData->size() : 0;
 }
 
-OSP_REGISTER_GEOMETRY(Boxes, box);
-
 } // namespace ospray

@@ -65,6 +65,4 @@ size_t Mesh::numPrimitives() const
   return indexData->size();
 }
 
-OSP_REGISTER_GEOMETRY(Mesh, mesh);
-
 } // namespace ospray

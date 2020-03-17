@@ -20,13 +20,18 @@ Version History
 -   Passing `NULL` to `ospRelease` is not reported as error anymore
 -   Fix computation of strides for ospData
 -   Fix handling of `--osp:device-params` to process and set all passed
-    arguments first before committing the device, to ensure it is committed
-    in a valid state.
+    arguments first before committing the device, to ensure it is
+    committed in a valid state.
 -   Fix issue with OSPRay ignoring tasking system thread count settings
--   Fix issue where OSPRay always loaded the ISPC module, even if not required
+-   Fix issue where OSPRay always loaded the ISPC module, even if not
+    required
 
 #### Known Issues:
 -   None
+
+#### Other Changes:
+-   Object factory functions are now registered during module
+    initialization via the appropiate `registerType` function
 
 ### Changes in v2.0.1:
 

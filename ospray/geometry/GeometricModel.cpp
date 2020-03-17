@@ -3,6 +3,7 @@
 
 // ospray
 #include "GeometricModel.h"
+#include "../render/Material.h"
 // ispc exports
 #include "GeometricModel_ispc.h"
 #include "Geometry_ispc.h"

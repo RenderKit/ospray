@@ -5,8 +5,8 @@
 
 #include "Medium.ih"
 #include "common/DifferentialGeometry.ih"
-#include "common/Material.ih"
 #include "common/Ray.ih"
+#include "render/Material.ih"
 #include "render/pathtracer/bsdfs/BSDF.ih"
 #include "render/pathtracer/bsdfs/ShadingContext.ih"
 #include "texture/TextureParam.ih"

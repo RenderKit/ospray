@@ -8,6 +8,10 @@
 
 namespace ospray {
 
+static FactoryMap<Light> g_lightsMap;
+
+// Light definitions //////////////////////////////////////////////////////////
+
 Light::Light()
 {
   managedObjectType = OSP_LIGHT;
@@ -28,7 +32,12 @@ std::string Light::toString() const
 
 Light *Light::createInstance(const char *type)
 {
-  return createInstanceHelper<Light, OSP_LIGHT>(type);
+  return createInstanceHelper(type, g_lightsMap[type]);
+}
+
+void Light::registerType(const char *type, FactoryFcn<Light> f)
+{
+  g_lightsMap[type] = f;
 }
 
 utility::Optional<void *> Light::getSecondIE()

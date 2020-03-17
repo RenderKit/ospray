@@ -79,6 +79,4 @@ size_t Isosurfaces::numPrimitives() const
   return isovaluesData->size();
 }
 
-OSP_REGISTER_GEOMETRY(Isosurfaces, isosurface);
-
 } // namespace ospray

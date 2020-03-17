@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "TextureVolume.h"
@@ -27,7 +27,5 @@ void TextureVolume::commit()
 
   this->ispcEquivalent = ispc::TextureVolume_create(v->getIE());
 }
-
-OSP_REGISTER_TEXTURE(TextureVolume, volume);
 
 } // namespace ospray

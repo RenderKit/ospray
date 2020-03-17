@@ -124,6 +124,4 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   return nullptr;
 }
 
-OSP_REGISTER_RENDERER(PathTracer, pathtracer);
-
 } // namespace ospray

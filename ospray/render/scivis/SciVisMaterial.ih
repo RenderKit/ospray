@@ -1,10 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "common/Material.ih"
 #include "math/vec.ih"
+#include "render/Material.ih"
 #include "texture/Texture2D.ih"
 
 struct SciVisMaterial

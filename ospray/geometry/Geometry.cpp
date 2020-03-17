@@ -8,6 +8,10 @@
 
 namespace ospray {
 
+static FactoryMap<Geometry> g_geomMap;
+
+// Geometry definitions ///////////////////////////////////////////////////////
+
 Geometry::Geometry()
 {
   managedObjectType = OSP_GEOMETRY;
@@ -26,7 +30,12 @@ std::string Geometry::toString() const
 
 Geometry *Geometry::createInstance(const char *type)
 {
-  return createInstanceHelper<Geometry, OSP_GEOMETRY>(type);
+  return createInstanceHelper(type, g_geomMap[type]);
+}
+
+void Geometry::registerType(const char *type, FactoryFcn<Geometry> f)
+{
+  g_geomMap[type] = f;
 }
 
 void Geometry::postCreationInfo(size_t numVerts) const

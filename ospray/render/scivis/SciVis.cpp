@@ -1,24 +1,12 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
-#include "../Renderer.h"
+#include "SciVis.h"
 // ispc exports
 #include "SciVis_ispc.h"
 
 namespace ospray {
-
-struct SciVis : public Renderer
-{
-  SciVis(int defaultAOSamples = 1);
-  std::string toString() const override;
-  void commit() override;
-
- private:
-  int aoSamples{1};
-};
-
-// SciVis definitions /////////////////////////////////////////////////////
 
 SciVis::SciVis(int defaultNumSamples) : aoSamples(defaultNumSamples)
 {
@@ -40,8 +28,5 @@ void SciVis::commit()
       getParam<float>("aoIntensity", 1.f),
       getParam<float>("volumeSamplingRate", 1.f));
 }
-
-OSP_REGISTER_RENDERER(SciVis, scivis);
-OSP_REGISTER_RENDERER(SciVis, ao);
 
 } // namespace ospray

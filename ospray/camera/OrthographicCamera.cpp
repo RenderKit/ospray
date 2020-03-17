@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "OrthographicCamera.h"
@@ -44,7 +44,5 @@ void OrthographicCamera::commit()
       (const ispc::vec3f &)pos_du,
       (const ispc::vec3f &)pos_dv);
 }
-
-OSP_REGISTER_CAMERA(OrthographicCamera, orthographic);
 
 } // namespace ospray
