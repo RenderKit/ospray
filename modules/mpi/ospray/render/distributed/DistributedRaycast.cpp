@@ -74,7 +74,5 @@ std::string DistributedRaycastRenderer::toString() const
   return "ospray::mpi::DistributedRaycastRenderer";
 }
 
-OSP_REGISTER_RENDERER(DistributedRaycastRenderer, mpiRaycast);
-
 } // namespace mpi
 } // namespace ospray
