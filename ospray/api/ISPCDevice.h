@@ -7,6 +7,8 @@
 #include "Device.h"
 // embree
 #include "embree3/rtcore.h"
+// openvkl
+#include "openvkl/openvkl.h"
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
 
@@ -128,6 +130,8 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
   //             safely assume that a device exists.
   static RTCDevice embreeDevice;
+
+  static VKLDriver vklDriver;
 };
 
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(

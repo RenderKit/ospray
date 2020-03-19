@@ -35,8 +35,6 @@
 #include <algorithm>
 #include <functional>
 #include <map>
-// openvkl
-#include "openvkl/openvkl.h"
 // ospcommon
 #include "ospcommon/tasking/tasking_system_init.h"
 #include "ospcommon/utility/CodeTimer.h"
@@ -149,6 +147,7 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 #undef declare_param_setter
 
 RTCDevice ISPCDevice::embreeDevice = nullptr;
+VKLDriver ISPCDevice::vklDriver = nullptr;
 
 ISPCDevice::~ISPCDevice()
 {
@@ -159,6 +158,11 @@ ISPCDevice::~ISPCDevice()
     }
   } catch (...) {
     // silently move on, sometimes a pthread mutex lock fails in Embree
+  }
+
+  if (vklDriver) {
+    vklShutdown();
+    vklDriver = nullptr;
   }
 }
 
@@ -196,38 +200,42 @@ void ISPCDevice::commit()
     }
   }
 
-  vklLoadModule("ispc_driver");
+  if (!vklDriver) {
+    vklLoadModule("ispc_driver");
 
-  VKLDriver driver = nullptr;
+    VKLDriver driver = nullptr;
 
-  int ispc_width = ispc::ISPCDevice_programCount();
-  switch (ispc_width) {
-  case 4:
-    driver = vklNewDriver("ispc_4");
-    break;
-  case 8:
-    driver = vklNewDriver("ispc_8");
-    break;
-  case 16:
-    driver = vklNewDriver("ispc_16");
-    break;
-  default:
-    driver = vklNewDriver("ispc");
-    break;
+    int ispc_width = ispc::ISPCDevice_programCount();
+    switch (ispc_width) {
+    case 4:
+      driver = vklNewDriver("ispc_4");
+      break;
+    case 8:
+      driver = vklNewDriver("ispc_8");
+      break;
+    case 16:
+      driver = vklNewDriver("ispc_16");
+      break;
+    default:
+      driver = vklNewDriver("ispc");
+      break;
+    }
+
+    vklDriverSetErrorFunc(driver, [](VKLError, const char *message) {
+      handleError(OSP_UNKNOWN_ERROR, message);
+    });
+
+    vklDriverSetLogFunc(driver,
+        [](const char *message) { postStatusMsg(OSP_LOG_INFO) << message; });
+
+    vklDriverSetInt(driver, "logLevel", logLevel);
+    vklDriverSetInt(driver, "numThreads", numThreads);
+
+    vklCommitDriver(driver);
+    vklSetCurrentDriver(driver);
+
+    vklDriver = driver;
   }
-
-  vklDriverSetErrorFunc(driver, [](VKLError, const char *message) {
-    handleError(OSP_UNKNOWN_ERROR, message);
-  });
-
-  vklDriverSetLogFunc(driver,
-      [](const char *message) { postStatusMsg(OSP_LOG_INFO) << message; });
-
-  vklDriverSetInt(driver, "logLevel", logLevel);
-  vklDriverSetInt(driver, "numThreads", numThreads);
-
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
 }
 
 ///////////////////////////////////////////////////////////////////////////
