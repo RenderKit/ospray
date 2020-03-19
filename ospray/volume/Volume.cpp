@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -20,11 +20,6 @@ Volume::Volume(const std::string &type) : vklType(type)
 {
   ispcEquivalent = ispc::Volume_createInstance_vklVolume(this);
   managedObjectType = OSP_VOLUME;
-  // XXX temporary until VKL 0.9 is released
-  if (vklType == "structuredRegular")
-    vklType = "structured_regular";
-  if (vklType == "structuredSpherical")
-    vklType = "structured_spherical";
 }
 
 Volume::~Volume()

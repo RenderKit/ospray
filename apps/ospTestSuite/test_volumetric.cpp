@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Intel Corporation
+// Copyright 2017-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_volumetric.h"
@@ -31,7 +31,7 @@ static cpp::Volume CreateTorus(const int size)
     }
   }
 
-  cpp::Volume torus("structured_regular");
+  cpp::Volume torus("structuredRegular");
   torus.setParam("data", cpp::Data(vec3ul(size), volumetricData.data()));
   torus.setParam("gridOrigin", vec3f(-0.5f, -0.5f, -0.5f));
   torus.setParam("gridSpacing", vec3f(1.f / size, 1.f / size, 1.f / size));
