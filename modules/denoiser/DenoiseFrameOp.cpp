@@ -116,6 +116,10 @@ std::string DenoiseFrameOp::toString() const
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_denoiser(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
-  ospray::ImageOp::registerType<ospray::DenoiseFrameOp>("denoiser");
-  return ospray::moduleVersionCheck(versionMajor, versionMinor);
+  auto status = ospray::moduleVersionCheck(versionMajor, versionMinor);
+
+  if (status == OSP_NO_ERROR)
+    ospray::ImageOp::registerType<ospray::DenoiseFrameOp>("denoiser");
+
+  return status;
 }

@@ -531,18 +531,22 @@ OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
-  Device::registerType<ISPCDevice>("cpu");
+  auto status = moduleVersionCheck(versionMajor, versionMinor);
 
-  registerAllCameras();
-  registerAllImageOps();
-  registerAllGeometries();
-  registerAllLights();
-  registerAllMaterials();
-  registerAllRenderers();
-  registerAllTextures();
-  registerAllTransferFunctions();
+  if (status == OSP_NO_ERROR) {
+    Device::registerType<ISPCDevice>("cpu");
 
-  return moduleVersionCheck(versionMajor, versionMinor);
+    registerAllCameras();
+    registerAllImageOps();
+    registerAllGeometries();
+    registerAllLights();
+    registerAllMaterials();
+    registerAllRenderers();
+    registerAllTextures();
+    registerAllTransferFunctions();
+  }
+
+  return status;
 }
 
 } // namespace api
