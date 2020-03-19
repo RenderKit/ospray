@@ -141,17 +141,6 @@ macro(ospray_configure_ispc_isa)
       message(STATUS "OSPRay AVX512SKX ISA target enabled.")
     endif()
 
-    # NOTE(jda) - These checks are due to temporary Open VKL limitations with
-    #             iterators, they ought to be removed when these limitations are
-    #             lifted in a future version.
-    if(NOT EMBREE_ISA_SUPPORTS_AVX512SKX AND OPENVKL_ISA_AVX512SKX)
-      message(FATAL_ERROR "Currently Open VKL cannot have AVX512SKX compiled in without Embree AVX512SKX support")
-    endif()
-
-    if(NOT EMBREE_ISA_SUPPORTS_AVX512KNL AND OPENVKL_ISA_AVX512KNL)
-      message(FATAL_ERROR "Currently Open VKL cannot have AVX512KNL compiled in without Embree AVX512KNL support")
-    endif()
-
   elseif (OSPRAY_BUILD_ISA STREQUAL "AVX512SKX")
 
     if(NOT EMBREE_ISA_SUPPORTS_AVX512SKX)

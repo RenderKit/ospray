@@ -329,7 +329,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ospray
     ospcommon::ospcommon
     $<BUILD_INTERFACE:embree>
-    $<BUILD_INTERFACE:openvkl::openvkl_module_ispc_driver>
+    $<BUILD_INTERFACE:openvkl::openvkl>
   PRIVATE
     sky_model
   )
