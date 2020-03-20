@@ -5,6 +5,7 @@
 #include "Curves.h"
 #include "Isosurfaces.h"
 #include "Mesh.h"
+#include "Planes.h"
 #include "Spheres.h"
 #include "Subdivision.h"
 
@@ -18,6 +19,7 @@ void registerAllGeometries()
   Geometry::registerType<Mesh>("mesh");
   Geometry::registerType<Spheres>("sphere");
   Geometry::registerType<Subdivision>("subdivision");
+  Geometry::registerType<Planes>("plane");
 }
 
 } // namespace ospray

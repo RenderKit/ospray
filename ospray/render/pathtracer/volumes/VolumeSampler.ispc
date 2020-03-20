@@ -8,7 +8,7 @@
 #include "openvkl/openvkl.isph"
 
 float delta_tracking(VolumetricModel *uniform vModel,
-    const VolumeInterval &vInterval,
+    const range1f &rInterval,
     varying RandomSampler *uniform randomSampler,
     const vec3f &o,
     const vec3f &w,
@@ -20,7 +20,7 @@ float delta_tracking(VolumetricModel *uniform vModel,
       vModel->volume->vklVolume,
       (varying vkl_vec3f *)&o,
       (varying vkl_vec3f *)&w,
-      (varying vkl_range1f *)&vInterval.interval,
+      (varying vkl_range1f *)&rInterval,
       vModel->vklValueSelector);
 
   float t = 0.f;
@@ -62,51 +62,72 @@ float delta_tracking(VolumetricModel *uniform vModel,
 float volumeSampleFreePath(const PathState &pathState,
     const World *uniform world,
     Ray &ray,
+    RayIntervals &rayIntervals,
     varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler,
     VolumetricModel *varying *uniform sampledInstance,
     float &sampledExtinctionCoefficient,
     vec3f &sampledAlbedo)
 {
+  // Get volume intervals
   Ray volumeRay = ray;
   VolumeIntervals volumeIntervals;
   traceVolumeRay(world, volumeRay, volumeIntervals);
-  const bool haveVolumeHit = volumeIntervals.numVolumeIntervals > 0;
+
+  // Iterate through volume intervals
   float min_dist = inf;
   unmasked
   {
     *sampledInstance = NULL;
   }
-  if (haveVolumeHit) {
-    for (int i = 0; i < volumeIntervals.numVolumeIntervals; ++i) {
-      VolumeInterval vInterval = volumeIntervals.intervals[i];
-      VolumetricModel *varying instance =
-          volumeIntervals.intervals[i].volumetricModel;
-      foreach_unique (inst in instance) {
-        vInterval.interval.lower = max(0.f, vInterval.interval.lower);
-        vInterval.interval.upper = noHit(ray)
-            ? vInterval.interval.upper
-            : min(vInterval.interval.upper, ray.t);
-        if (hasInterval(vInterval)) {
-          float dist = inf;
-          float extinctionCoefficient;
-          vec3f albedo;
-          Ray transformedVolumeRay = volumeRay;
-          transformRay(
-              transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
-          dist = delta_tracking(inst,
-              vInterval,
-              randomSampler,
-              transformedVolumeRay.org,
-              transformedVolumeRay.dir,
-              extinctionCoefficient,
-              albedo);
-          if (dist < min_dist && dist < inf) {
+  for (uniform int i = 0; i < reduce_max(volumeIntervals.numVolumeIntervals);
+       i++) {
+    if (i >= volumeIntervals.numVolumeIntervals)
+      break;
+
+    range1f vInterval = volumeIntervals.intervals[i].interval;
+    vInterval.lower = max(0.f, vInterval.lower);
+    vInterval.upper =
+        noHit(ray) ? vInterval.upper : min(vInterval.upper, ray.t);
+
+    if (isEmpty(vInterval))
+      continue;
+
+    Ray transformedVolumeRay = volumeRay;
+    transformRay(transformedVolumeRay, volumeIntervals.intervals[i].rcp_xfm);
+
+    VolumetricModel *varying instance =
+        volumeIntervals.intervals[i].volumetricModel;
+    foreach_unique (inst in instance) {
+      for (int j = 0; j < rayIntervals.count; j++) {
+        range1f rInterval = rayIntervals.intervals[j];
+
+        // Skip ray intervals outside of the volume range
+        if (or (vInterval.upper < rInterval.lower,
+                rInterval.upper < vInterval.lower))
+          continue;
+
+        // Clip ray interval to the volume range
+        rInterval.lower = max(rInterval.lower, vInterval.lower);
+        rInterval.upper = min(rInterval.upper, vInterval.upper);
+
+        float extinctionCoefficient;
+        vec3f albedo;
+        const float dist = delta_tracking(inst,
+            rInterval,
+            randomSampler,
+            transformedVolumeRay.org,
+            transformedVolumeRay.dir,
+            extinctionCoefficient,
+            albedo);
+        if (dist < inf) {
+          if (dist < min_dist) {
             min_dist = dist;
             *sampledInstance = inst;
             sampledExtinctionCoefficient = extinctionCoefficient;
             sampledAlbedo = albedo;
           }
+          break;
         }
       }
     }
@@ -117,41 +138,55 @@ float volumeSampleFreePath(const PathState &pathState,
 float volumeTransmittance(const PathState &pathState,
     const World *uniform world,
     Ray &ray,
+    RayIntervals &rayIntervals,
     varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler)
 {
+  // Get volume intervals
   Ray volumeRay = ray;
   VolumeIntervals volumeIntervals;
   traceVolumeRay(world, volumeRay, volumeIntervals);
-  const bool haveVolumeHit = volumeIntervals.numVolumeIntervals > 0;
 
+  // Iterate through volume intervals
   float transmittance = 1.f;
-  if (haveVolumeHit) {
-    for (int i = 0; i < volumeIntervals.numVolumeIntervals; ++i) {
-      VolumeInterval vInterval = volumeIntervals.intervals[i];
-      VolumetricModel *varying instance =
-          volumeIntervals.intervals[i].volumetricModel;
-      foreach_unique (inst in instance) {
-        vInterval.interval.lower = max(ray.t0, vInterval.interval.lower);
-        vInterval.interval.upper = noHit(ray)
-            ? vInterval.interval.upper
-            : min(vInterval.interval.upper, ray.t);
-        if (hasInterval(vInterval)) {
-          Ray transformedVolumeRay = volumeRay;
-          transformRay(
-              transformedVolumeRay, rcp(volumeIntervals.intervals[i].xfm));
-          float extinctionCoefficient;
-          vec3f albedo;
-          const float dist = delta_tracking(inst,
-              vInterval,
-              randomSampler,
-              transformedVolumeRay.org,
-              transformedVolumeRay.dir,
-              extinctionCoefficient,
-              albedo);
-          transmittance =
-              transmittance * ((dist < vInterval.interval.upper) ? 0.f : 1.f);
-        }
+  for (int i = 0; and(i<volumeIntervals.numVolumeIntervals, transmittance> 0.f);
+       i++) {
+    range1f vInterval = volumeIntervals.intervals[i].interval;
+    vInterval.lower = max(ray.t0, vInterval.lower);
+    vInterval.upper =
+        noHit(ray) ? vInterval.upper : min(vInterval.upper, ray.t);
+
+    if (isEmpty(vInterval))
+      continue;
+
+    Ray transformedVolumeRay = volumeRay;
+    transformRay(transformedVolumeRay, volumeIntervals.intervals[i].rcp_xfm);
+
+    VolumetricModel *varying instance =
+        volumeIntervals.intervals[i].volumetricModel;
+    foreach_unique (inst in instance) {
+      for (int j = 0; and(j<rayIntervals.count, transmittance> 0.f); j++) {
+        range1f rInterval = rayIntervals.intervals[j];
+
+        // Skip ray intervals outside of the volume range
+        if (or (vInterval.upper < rInterval.lower,
+                rInterval.upper < vInterval.lower))
+          continue;
+
+        // Clip ray interval to the volume range
+        rInterval.lower = max(rInterval.lower, vInterval.lower);
+        rInterval.upper = min(rInterval.upper, vInterval.upper);
+
+        float extinctionCoefficient;
+        vec3f albedo;
+        const float dist = delta_tracking(inst,
+            rInterval,
+            randomSampler,
+            transformedVolumeRay.org,
+            transformedVolumeRay.dir,
+            extinctionCoefficient,
+            albedo);
+        transmittance = transmittance * ((dist < rInterval.upper) ? 0.f : 1.f);
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -191,14 +191,29 @@ inline Intersections intersectBox(
   isect.exit.hit = isect.entry.hit;
 
   // Calculate geometry normal
-  const vec3f c = rayOrg - (box.lower + box.upper) * 0.5f;
-  const vec3f d = rcp(box_size(box) * 0.4999f); // include bias
+  {
+    // Calculate hit points,
+    // keep values that scale with camera distance together for better fp
+    // precision
+    const vec3f hit_in = rayOrg + isect.entry.t * rayDir;
+    const vec3f hit_out = rayOrg + isect.exit.t * rayDir;
 
-  const vec3f p_in = c + isect.entry.t * rayDir;
-  const vec3f p_out = c + isect.exit.t * rayDir;
+    // Use progressive bias
+    // When camera is far from the hit points its coordiantes deviates more
+    // from 1.0f and to get correct normals we need higher bias values. On the
+    // other hand, higher bias numbers make box edges look beveled especially at
+    // closeups and causes artifact when boxes are used for clipping
+    const vec3f d = (2.0000002f + isect.exit.t * 14e-7f) * rcp(box_size(box));
 
-  isect.entry.N = make_vec3f(make_vec3i(p_in * d));
-  isect.exit.N = make_vec3f(make_vec3i(p_out * d));
+    // Place box at origin
+    const vec3f c = (box.lower + box.upper) * 0.5f;
+    const vec3f p_in = hit_in - c;
+    const vec3f p_out = hit_out - c;
+
+    // Optimization possibility: casting float <-> int is relatively slow
+    isect.entry.N = make_vec3f(make_vec3i(p_in * d));
+    isect.exit.N = make_vec3f(make_vec3i(p_out * d));
+  }
 
   return isect;
 }

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -17,6 +17,8 @@ struct GeometricModel
   Data1D material;
 
   bool useRendererMaterialList;
+
+  bool invertedNormals;
 
   float areaPDF;
 };
@@ -57,13 +59,18 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
 
   dg.areaPDF = self->areaPDF;
 
-  uint32 idx = ray.primID;
-  if (valid(self->index)) {
-    idx = get_uint8(self->index, min(ray.primID, self->index.numItems - 1));
+  if (flags & DG_COLOR && valid(self->color)) {
+    uint32 idx = ray.primID;
+    if (valid(self->index)) {
+      idx = get_uint8(self->index, min(ray.primID, self->index.numItems - 1));
+    }
+    dg.color = get_vec4f(self->color, min(idx, self->color.numItems - 1));
   }
 
-  if (flags & DG_COLOR && valid(self->color))
-    dg.color = get_vec4f(self->color, min(idx, self->color.numItems - 1));
+  if (renderer) {
+    dg.material = GeometricModel_getMaterial(self, renderer, ray.primID);
+  }
 
-  dg.material = GeometricModel_getMaterial(self, renderer, ray.primID);
+  if (flags & DG_NS && self->invertedNormals)
+    dg.Ns = neg(dg.Ns);
 }

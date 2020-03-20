@@ -3,6 +3,7 @@
 
 // ospray
 #include "common/Data.ih"
+#include "common/FilterIntersect.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
@@ -41,28 +42,8 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   uniform box3f box = get_box3f(self->boxes, primID);
   const Intersections isect = intersectBox(ray->org, ray->dir, box);
 
-  bool hit = false;
-  if (and(and(isect.entry.t > ray->t0, isect.entry.t <= ray->t),
-          isect.entry.hit)) {
-    hit = true;
-    ray->Ng = isect.entry.N;
-    ray->t = isect.entry.t;
-  } else if (and(and(isect.exit.t > ray->t0, isect.exit.t <= ray->t),
-                 isect.exit.hit)) {
-    hit = true;
-    ray->Ng = isect.exit.N;
-    ray->t = isect.exit.t;
-  }
-
-  if (hit) {
-    if (isOcclusionTest) {
-      ray->t = neg_inf;
-    } else {
-      ray->instID = args->context->instID[0];
-      ray->geomID = args->geomID;
-      ray->primID = primID;
-    }
-  }
+  // call intersection filtering callback and setup hit if accepted
+  filterIntersectionBoth(args, isect, isOcclusionTest);
 }
 
 unmasked void Boxes_intersect(

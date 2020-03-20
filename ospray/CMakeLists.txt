@@ -105,6 +105,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   geometry/Spheres.ispc
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
+  geometry/Planes.ispc
+  geometry/Planes.cpp
   geometry/Mesh.cpp
   geometry/Mesh.ispc
   geometry/registration.cpp

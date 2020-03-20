@@ -1,9 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 // ospray stuff
+#include "../common/Clipping.ih"
 #include "../common/Ray.ih"
 #include "Instance.ih"
 
@@ -13,50 +14,41 @@ struct World
 {
   void *cppEquivalent;
 
-  Instance **instances;
-  int32 numInstances;
+  Instance **geometriesInst;
+  int32 numGeometriesInst;
+
+  Instance **volumesInst;
+  int32 numVolumesInst;
+
+  Instance **clippersInst;
+  int32 numClippersInst;
 
   RTCScene embreeSceneHandleGeometries;
   RTCScene embreeSceneHandleVolumes;
+  RTCScene embreeSceneHandleClippers;
+
+  int32 numInvertedClippers;
 };
 
-inline void traceRay(
-    const World *uniform world, varying Ray &ray, void *uniform userPtr)
+inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
 {
+  // Skip if no geometries scene
+  cif (!world->embreeSceneHandleGeometries)
+    return;
+
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
-  context.userPtr = userPtr;
   rtcIntersectV(world->embreeSceneHandleGeometries,
       &context.ectx,
       (varying RTCRayHit * uniform) & ray);
-}
-
-inline void traceRay(const World *uniform world, varying Ray &ray)
-{
-  traceRay(world, ray, NULL);
-}
-
-inline bool isOccluded(
-    const World *uniform world, varying Ray &ray, void *uniform userPtr)
-{
-  uniform EmbreeIntersectionContext context;
-  rtcInitIntersectContext(&context.ectx);
-  context.userPtr = userPtr;
-  rtcOccludedV(world->embreeSceneHandleGeometries,
-      &context.ectx,
-      (varying RTCRay * uniform) & ray);
-  return ray.t < ray.t0;
-}
-
-inline bool isOccluded(const World *uniform world, varying Ray &ray)
-{
-  return isOccluded(world, ray, NULL);
 }
 
 inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeInterval &interval)
 {
   initVolumeInterval(interval);
+  cif (!world->embreeSceneHandleVolumes)
+    return;
 
   VolumeIntervals intervals;
   initVolumeIntervals(intervals);
@@ -69,7 +61,7 @@ inline void traceVolumeRay(
       (varying RTCRayHit * uniform) & ray);
 
   if (hasInterval(intervals.intervals[0])) {
-    Instance *instance = *(world->instances + intervals.intervals[0].instID);
+    Instance *instance = *(world->volumesInst + intervals.intervals[0].instID);
     interval.volumetricModel =
         instance->group->volumetricModels[intervals.intervals[0].geomID];
     interval.xfm = instance->xfm;
@@ -83,6 +75,8 @@ inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeIntervals &intervals)
 {
   initVolumeIntervals(intervals);
+  cif (!world->embreeSceneHandleVolumes)
+    return;
 
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
@@ -93,13 +87,193 @@ inline void traceVolumeRay(
 
   if (intervals.numVolumeIntervals > 0) {
     for (int i = 0; i < intervals.numVolumeIntervals; ++i) {
-      Instance *instance = *(world->instances + intervals.intervals[i].instID);
+      Instance *instance =
+          *(world->volumesInst + intervals.intervals[i].instID);
       intervals.intervals[i].volumetricModel =
           instance->group->volumetricModels[intervals.intervals[i].geomID];
       intervals.intervals[i].xfm = instance->xfm;
       intervals.intervals[i].rcp_xfm = instance->rcp_xfm;
     }
   }
+}
+
+// Intersection context structure used for clipping geometries
+struct UserIntersectionContextForClipping
+{
+  uniform RTCIntersectContext ectx;
+  const World *uniform world;
+  varying int32 corrClippingDepth;
+  varying uint32 hitsCount;
+  varying ClippingHit hits[CLIPPING_HITS_MAX_COUNT];
+};
+
+unmasked void clippingIntersectionFilterV(
+    const struct RTCFilterFunctionNArguments *uniform args);
+
+inline void traceClippingRay(const World *uniform world,
+    varying Ray &ray,
+    varying RayIntervals &rayIntervals)
+{
+  // A scene with clipping geometries has to exist
+  cif (!world->embreeSceneHandleClippers) {
+    rayIntervals.intervals[0] = make_box1f(ray.t0, ray.t);
+    rayIntervals.count = 1;
+    return;
+  }
+
+  // Create and initialize intersection context
+  UserIntersectionContextForClipping context;
+  rtcInitIntersectContext(&context.ectx);
+  context.ectx.filter = clippingIntersectionFilterV;
+  context.world = world;
+  context.corrClippingDepth = 0;
+  context.hitsCount = 0;
+
+  // Intersect all geometry along given ray
+  rtcIntersectV(world->embreeSceneHandleClippers,
+      &context.ectx,
+      (varying RTCRayHit * uniform) & ray);
+
+  // Set initial clipping depth,
+  // we have to apply correction because ray origin can be inside clipping area
+  const uniform int32 voidClippingDepth = world->numInvertedClippers;
+  int32 clippingDepth = voidClippingDepth - context.corrClippingDepth;
+
+  // Variables used for intervals construction
+  uint32 intervalId = 0;
+  bool intervalCompleted = true;
+
+  // Start ray interval if not in clipping area
+  if (clippingDepth == 0) {
+    rayIntervals.intervals[intervalId].lower = ray.t0;
+    intervalCompleted = false;
+  }
+
+  // Iterate through collected hits and build ray intervals
+  for (uint32 i = 0; i < context.hitsCount; i++) {
+    // Check if comming into or out of clipping area
+    if (context.hits[i].t < 0.0f) {
+      clippingDepth--; // out of clipping area
+    } else {
+      clippingDepth++; // into clipping area
+    }
+
+    // Start interval if previous one is closed and we are not in clipping area
+    if (and(clippingDepth == 0, intervalCompleted)) {
+      rayIntervals.intervals[intervalId].lower = abs(context.hits[i].t);
+      intervalCompleted = false;
+    }
+
+    // End interval if current one is not closed and we enter clipping area
+    if (and(clippingDepth > 0, !intervalCompleted)) {
+      rayIntervals.intervals[intervalId].upper = abs(context.hits[i].t);
+      intervalCompleted = true;
+      intervalId++;
+    }
+  }
+
+  // Complete ray interval if started
+  if (!intervalCompleted) {
+    rayIntervals.intervals[intervalId].upper = ray.t;
+    intervalId++;
+  }
+
+  // Save number of ray intervals
+  rayIntervals.count = intervalId;
+}
+
+inline void traceGeometryRayIntervals(const World *uniform world,
+    varying Ray &ray,
+    varying RayIntervals &rayIntervals)
+{
+  // Save the ray
+  const float t0 = ray.t0;
+  const float t = ray.t;
+
+  // Iterate through ray intervals
+  for (uint32 i = 0; i < rayIntervals.count; i++) {
+    // Set ray interval
+    ray.t0 = rayIntervals.intervals[i].lower;
+    ray.t = rayIntervals.intervals[i].upper;
+
+    // Skip intervals outside of the ray range
+    if (or (t < ray.t0, ray.t < t0))
+      continue;
+
+    // Clip interval to the ray range
+    ray.t0 = max(ray.t0, t0);
+    ray.t = min(ray.t, t);
+
+    // Shoot the ray
+    traceGeometryRay(world, ray);
+
+    // Exit loop if geometry hit
+    if (hadHit(ray)) {
+      ray.t0 = t0;
+      return;
+    }
+  }
+
+  // Restore the ray
+  ray.t0 = t0;
+  ray.t = t;
+}
+
+inline void traceRay(const World *uniform world, varying Ray &ray)
+{
+  // Trace ray in clipping geometries scene, fill array with ray intervals
+  varying RayIntervals rayIntervals;
+  traceClippingRay(world, ray, rayIntervals);
+
+  // Trace ray intervals
+  traceGeometryRayIntervals(world, ray, rayIntervals);
+}
+
+inline bool isOccludedNoClipping(const World *uniform world, varying Ray &ray)
+{
+  // Skip if no geometries scene
+  cif (!world->embreeSceneHandleGeometries)
+    return false;
+
+  uniform EmbreeIntersectionContext context;
+  rtcInitIntersectContext(&context.ectx);
+  rtcOccludedV(world->embreeSceneHandleGeometries,
+      &context.ectx,
+      (varying RTCRay * uniform) & ray);
+
+  return ray.t < ray.t0;
+}
+
+inline bool areIntervalsOccluded(const World *uniform world,
+    varying Ray &ray,
+    varying RayIntervals &rayIntervals)
+{
+  // Iterate through ray intervals
+  for (uint32 i = 0; i < rayIntervals.count; i++) {
+    // Set ray interval
+    ray.t0 = rayIntervals.intervals[i].lower;
+    ray.t = rayIntervals.intervals[i].upper;
+
+    // Check for occluders
+    if (isOccludedNoClipping(world, ray))
+      return true;
+  }
+
+  // No occluder found
+  return false;
+}
+
+inline bool isOccluded(const World *uniform world, varying Ray &ray)
+{
+  // Allocate array for ray intervals
+  varying RayIntervals rayIntervals;
+  rayIntervals.count = 0;
+
+  // Trace ray in clipping geometries scene, fill array with ray intervals
+  traceClippingRay(world, ray, rayIntervals);
+
+  // Is there any occluder within given ray intervals
+  return areIntervalsOccluded(world, ray, rayIntervals);
 }
 
 /*! Perform post-intersect computations, i.e. fill the members of
@@ -134,8 +308,8 @@ inline void postIntersect(const World *uniform world,
 
   foreach_unique (instID in ray.instID) {
     if (instID != RTC_INVALID_GEOMETRY_ID) {
-      Instance *uniform instance = *(world->instances + instID);
-      Instance_postIntersect(instance, renderer, instID, dg, ray, flags);
+      Instance *uniform instance = *(world->geometriesInst + instID);
+      Instance_postIntersect(instance, renderer, dg, ray, flags);
     } else {
       dg.Ns = dg.Ng = ray.Ng;
     }

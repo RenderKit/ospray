@@ -1,0 +1,52 @@
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+// ospray
+#include "../math/AffineSpace.ih"
+#include "../math/box.ih"
+
+// Array of all ray intervals across ray
+#define CLIPPING_INTERVALS_MAX_COUNT 64
+struct RayIntervals
+{
+  uint32 count;
+  range1f intervals[CLIPPING_INTERVALS_MAX_COUNT];
+};
+
+// Maximum number of intersections with clipping geometries
+#define CLIPPING_HITS_MAX_COUNT ((CLIPPING_INTERVALS_MAX_COUNT - 1) * 2)
+
+// Single clipping hit structure
+struct ClippingHit
+{
+  float t;
+  int primID;
+  int geomID;
+  int instID;
+};
+
+// Compare two floats using ULP distance
+inline bool floatUlpCompare(float a, float b, uniform unsigned int ulpMaxDiff)
+{
+  if (a == b)
+    return true;
+
+  int ulpDiff = (int)intbits(a) - (int)intbits(b);
+
+  // Integer absolute value, equivalent to:
+  // if (ulpDiff < 0) ulpDiff = -ulpDiff;
+  int mask = (ulpDiff >> 31);
+  ulpDiff = (ulpDiff ^ mask) - mask;
+
+  if (ulpDiff <= ulpMaxDiff)
+    return true;
+
+  return false;
+}
+
+inline bool overlapped(const range1f &a, const range1f &b)
+{
+  return (a.upper > b.lower) && (a.lower < b.upper);
+}

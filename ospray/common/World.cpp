@@ -16,57 +16,20 @@ extern "C" void *ospray_getEmbreeDevice()
 
 // Embree helper functions ///////////////////////////////////////////////////
 
-static std::pair<int, int> createEmbreeScenes(RTCScene &geometryScene,
-    RTCScene &volumeScene,
-    const DataT<Instance *> &instances,
-    int embreeFlags)
+static void addGeometryInstance(
+    RTCScene &scene, RTCScene instScene, const ospcommon::math::affine3f &xfm)
 {
+  // Create parent scene if not yet created
   RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+  if (!scene)
+    scene = rtcNewScene(embreeDevice);
 
-  int numGeomInstances = 0;
-  int numVolumeInstances = 0;
-
-  for (auto &&inst : instances) {
-    auto instGeometryScene = inst->group->embreeGeometryScene();
-    auto instVolumeScene = inst->group->embreeVolumeScene();
-
-    auto xfm = inst->xfm();
-
-    {
-      auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
-      rtcSetGeometryInstancedScene(eInst, instGeometryScene.value());
-      rtcSetGeometryTransform(eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
-      rtcCommitGeometry(eInst);
-
-      rtcAttachGeometry(geometryScene, eInst);
-
-#if 0 // NOTE(jda) - there seems to still be an Embree ref-count issue here
-        rtcReleaseGeometry(eInst);
-#endif
-
-      numGeomInstances++;
-    }
-
-    {
-      auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
-      rtcSetGeometryInstancedScene(eInst, instVolumeScene.value());
-      rtcSetGeometryTransform(eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
-      rtcCommitGeometry(eInst);
-
-      rtcAttachGeometry(volumeScene, eInst);
-
-#if 0 // NOTE(jda) - there seems to still be an Embree ref-count issue here
-        rtcReleaseGeometry(eInst);
-#endif
-
-      numVolumeInstances++;
-    }
-  }
-
-  rtcSetSceneFlags(geometryScene, static_cast<RTCSceneFlags>(embreeFlags));
-  rtcSetSceneFlags(volumeScene, static_cast<RTCSceneFlags>(embreeFlags));
-
-  return std::make_pair(numGeomInstances, numVolumeInstances);
+  // Create geometry instance
+  auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
+  rtcSetGeometryInstancedScene(eInst, instScene);
+  rtcSetGeometryTransform(eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+  rtcCommitGeometry(eInst);
+  rtcAttachGeometry(scene, eInst);
 }
 
 static void freeAndNullifyEmbreeScene(RTCScene &scene)
@@ -79,16 +42,17 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
 
 // World definitions ////////////////////////////////////////////////////////
 
-World::World()
-{
-  managedObjectType = OSP_WORLD;
-  this->ispcEquivalent = ispc::World_create(this);
-}
-
 World::~World()
 {
   freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
   freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
+  freeAndNullifyEmbreeScene(embreeSceneHandleClippers);
+}
+
+World::World()
+{
+  managedObjectType = OSP_WORLD;
+  this->ispcEquivalent = ispc::World_create(this);
 }
 
 std::string World::toString() const
@@ -98,11 +62,9 @@ std::string World::toString() const
 
 void World::commit()
 {
-  numGeometries = 0;
-  numVolumes = 0;
-
   freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
   freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
+  freeAndNullifyEmbreeScene(embreeSceneHandleClippers);
 
   instances = getParamDataT<Instance *>("instance");
   lights = getParamDataT<Light *>("light");
@@ -121,31 +83,66 @@ void World::commit()
       << "=======================================================\n"
       << "Committing world, which has " << numInstances << " instances";
 
-  RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+  geometriesInstIEs.clear();
+  volumesInstIEs.clear();
+  clippersInstIEs.clear();
 
-  embreeSceneHandleGeometries = rtcNewScene(embreeDevice);
-  embreeSceneHandleVolumes = rtcNewScene(embreeDevice);
-
+  int numInvertedClippers = 0;
   if (instances) {
-    auto numGeomsAndVolumes = createEmbreeScenes(embreeSceneHandleGeometries,
-        embreeSceneHandleVolumes,
-        *instances,
-        sceneFlags);
+    for (auto &&inst : *instances) {
+      auto xfm = inst->xfm();
 
-    numGeometries = numGeomsAndVolumes.first;
-    numVolumes = numGeomsAndVolumes.second;
-
-    instanceIEs = createArrayOfIE(*instances);
+      if (inst->group->sceneGeometries) {
+        geometriesInstIEs.push_back(inst->getIE());
+        addGeometryInstance(
+            embreeSceneHandleGeometries, inst->group->sceneGeometries, xfm);
+      }
+      if (inst->group->sceneVolumes) {
+        volumesInstIEs.push_back(inst->getIE());
+        addGeometryInstance(
+            embreeSceneHandleVolumes, inst->group->sceneVolumes, xfm);
+      }
+      if (inst->group->sceneClippers) {
+        clippersInstIEs.push_back(inst->getIE());
+        addGeometryInstance(
+            embreeSceneHandleClippers, inst->group->sceneClippers, xfm);
+        numInvertedClippers += inst->group->numInvertedClippers;
+      }
+    }
   }
 
-  rtcCommitScene(embreeSceneHandleGeometries);
-  rtcCommitScene(embreeSceneHandleVolumes);
+  if (embreeSceneHandleGeometries) {
+    rtcSetSceneFlags(
+        embreeSceneHandleGeometries, static_cast<RTCSceneFlags>(sceneFlags));
+    rtcCommitScene(embreeSceneHandleGeometries);
+  }
+  if (embreeSceneHandleVolumes) {
+    rtcSetSceneFlags(
+        embreeSceneHandleVolumes, static_cast<RTCSceneFlags>(sceneFlags));
+    rtcCommitScene(embreeSceneHandleVolumes);
+  }
+  if (embreeSceneHandleClippers) {
+    rtcSetSceneFlags(embreeSceneHandleClippers,
+        static_cast<RTCSceneFlags>(
+            sceneFlags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION));
+    rtcCommitScene(embreeSceneHandleClippers);
+  }
+
+  const auto numGeometriesInst = geometriesInstIEs.size();
+  const auto numVolumesInst = volumesInstIEs.size();
+  const auto numClippersInst = clippersInstIEs.size();
 
   ispc::World_set(getIE(),
-      instanceIEs.data(),
-      numInstances,
+      numGeometriesInst ? geometriesInstIEs.data() : nullptr,
+      numGeometriesInst,
+      numVolumesInst ? volumesInstIEs.data() : nullptr,
+      numVolumesInst,
+      numClippersInst ? clippersInstIEs.data() : nullptr,
+      numClippersInst,
       embreeSceneHandleGeometries,
-      embreeSceneHandleVolumes);
+      embreeSceneHandleVolumes,
+      embreeSceneHandleClippers,
+      numInvertedClippers);
 }
 
 box3f World::getBounds() const
@@ -153,11 +150,15 @@ box3f World::getBounds() const
   box3f sceneBounds;
 
   box4f bounds; // NOTE(jda) - Embree expects box4f, NOT box3f...
-  rtcGetSceneBounds(embreeSceneHandleGeometries, (RTCBounds *)&bounds);
-  sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
+  if (embreeSceneHandleGeometries) {
+    rtcGetSceneBounds(embreeSceneHandleGeometries, (RTCBounds *)&bounds);
+    sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
+  }
 
-  rtcGetSceneBounds(embreeSceneHandleVolumes, (RTCBounds *)&bounds);
-  sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
+  if (embreeSceneHandleVolumes) {
+    rtcGetSceneBounds(embreeSceneHandleVolumes, (RTCBounds *)&bounds);
+    sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
+  }
 
   return sceneBounds;
 }

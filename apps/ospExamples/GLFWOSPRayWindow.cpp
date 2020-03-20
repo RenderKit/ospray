@@ -33,7 +33,11 @@ static const std::vector<std::string> g_scenes = {"boxes",
     "random_spheres",
     "streamlines",
     "subdivision_cube",
-    "unstructured_volume"};
+    "unstructured_volume",
+    "clip_with_spheres",
+    "clip_with_planes",
+    "clip_gravity_spheres_volume",
+    "clip_perlin_noise_volumes"};
 
 static const std::vector<std::string> g_curveBasis = {
     "bspline", "hermite", "catmull-rom", "linear"};

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
@@ -17,15 +17,21 @@ void Builder::commit()
 
 cpp::World Builder::buildWorld() const
 {
+  return buildWorld({});
+}
+
+cpp::World Builder::buildWorld(
+    const std::vector<cpp::Instance> &instances) const
+{
   cpp::World world;
 
   auto group = buildGroup();
 
-  cpp::Instance inst(group);
-  inst.commit();
+  cpp::Instance instance(group);
+  instance.commit();
 
-  std::vector<cpp::Instance> instances;
-  instances.push_back(inst);
+  std::vector<cpp::Instance> inst = instances;
+  inst.push_back(instance);
 
   if (addPlane) {
     auto bounds = group.getBounds();
@@ -40,10 +46,10 @@ cpp::World Builder::buildWorld() const
     cpp::Instance planeInst(planeGroup);
     planeInst.commit();
 
-    instances.push_back(planeInst);
+    inst.push_back(planeInst);
   }
 
-  world.setParam("instance", cpp::Data(instances));
+  world.setParam("instance", cpp::Data(inst));
 
   cpp::Light light("ambient");
   light.setParam("visible", false);

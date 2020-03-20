@@ -1042,6 +1042,18 @@ geometry by calling `ospNewGeometry` with type string "`box`".
   ---------- ---------- ------------------------------------------------------
   : Parameters defining a boxes geometry.
 
+### Planes
+
+OSPRay can directly render planes defined by plane equation coefficients
+in its implicit form $ax + by + cz + d = 0$. To do so create a planes
+geometry by calling `ospNewGeometry` with type string "`plane`".
+
+  Type       Name       Description
+  ---------- ---------- ------------------------------------------------
+  vec4f[]    plane      [data] array of plane coefficients $(a, b, c, d)$
+  ---------- ---------- ------------------------------------------------
+  : Parameters defining a planes geometry.
+
 ### Isosurfaces
 
 OSPRay can directly render multiple isosurfaces of a volume without
@@ -1075,24 +1087,32 @@ to be set. Materials are either handles of `OSPMaterial`, or indices
 into the `material` array on the [renderer], which allows to build a
 [world] which can be used by different types of renderers.
 
-  ------------------------ --------- ----------------------------------------------------
-  Type                     Name      Description
-  ------------------------ --------- ----------------------------------------------------
-  OSPMaterial / uint32     material  optional [material] applied to the geometry, may be
-                                     an index into the `material` parameter on the
-                                     [renderer] (if it exists)
+An `invertNormals` flag allows to invert (shading) normal vectors of the
+rendered geometry. That is particularly useful for clipping. By changing
+normal vectors orientation one can control whether inside or outside of
+the clipping geometry is being removed. For example, a clipping geometry
+with normals oriented outside clips everything what's inside.
 
-  vec4f                    color     optional color assigned to the geometry
+  ------------------------ -------------- ----------------------------------------------------
+  Type                     Name           Description
+  ------------------------ -------------- ----------------------------------------------------
+  OSPMaterial / uint32     material       optional [material] applied to the geometry, may be
+                                          an index into the `material` parameter on the
+                                          [renderer] (if it exists)
 
-  OSPMaterial[] / uint32[] material  optional [data] array of (per-primitive) materials,
-                                     may be an index into the `material` parameter on
-                                     the renderer (if it exists)
+  vec4f                    color          optional color assigned to the geometry
 
-  vec4f[]                  color     optional [data] array of (per-primitive) colors
+  OSPMaterial[] / uint32[] material       optional [data] array of (per-primitive) materials,
+                                          may be an index into the `material` parameter on
+                                          the renderer (if it exists)
 
-  uint8[]                  index     optional [data] array of per-primitive indices into
-                                     `color` and `material`
-  ------------------------ --------- ----------------------------------------------------
+  vec4f[]                  color          optional [data] array of (per-primitive) colors
+
+  uint8[]                  index          optional [data] array of per-primitive indices into
+                                          `color` and `material`
+
+  bool                     invertNormals  inverts all shading normals (Ns), default false
+  ------------------------ -------------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
 
@@ -1183,7 +1203,7 @@ the spotlight supports the special parameters listed in the table.
                                                of `openingAngle`
 
   float      radius                          0 the size of the spotlight, the
-                                               radius of a disk with normal
+                                               radius of a disc with normal
                                                `direction`
 
   float[]    intensityDistribution             luminous intensity distribution
@@ -1319,31 +1339,48 @@ create a group call
 
     OSPGroup ospNewGroup();
 
-Groups take arrays of geometric models and volumetric models, but they
-are optional. In other words, there is no need to create empty arrays if
-there are no geometries or volumes in the group.
+Groups take arrays of geometric models, volumetric models and clipping
+geometric models, but they are optional. In other words, there is no need
+to create empty arrays if there are no geometries or volumes in the group.
 
-  -------------------- --------------- ----------  --------------------------------------
-  Type                 Name               Default  Description
-  -------------------- --------------- ----------  --------------------------------------
-  OSPGeometricModel[]  geometry              NULL  [data] array of [GeometricModels]
+By adding `OSPGeometricModel`s to the `clippingGeometry` array a clipping
+geometry feature is enabled. Geometries assigned to this parameter
+will be used as clipping geometries. Any supported geometry can be used
+for clipping. The only requirement is that it has to distinctly partition
+space into clipping and non-clipping one. These include: spheres, boxes,
+infinite planes, closed meshes, closed subdivisions and curves. All
+geometries and volumes assigned to `geometry` or `volume` will be clipped.
+Use of clipping geometry that is not closed (or infinite) will result in
+rendering artifacts. User can decide which part of space is clipped by
+changing shading normals orientation with the `invertNormals` flag of
+the [GeometricModel]. When more than single clipping geometry is defined
+all clipping areas will be "added" together – an union of these areas
+will be applied.
 
-  OSPVolumetricModel[] volume                NULL  [data] array of [VolumetricModels]
+  -------------------- ---------------- ----------  --------------------------------------
+  Type                 Name                Default  Description
+  -------------------- ---------------- ----------  --------------------------------------
+  OSPGeometricModel[]  geometry               NULL  [data] array of [GeometricModels]
 
-  bool                 dynamicScene         false  use RTC_SCENE_DYNAMIC flag (faster
-                                                   BVH build, slower ray traversal),
-                                                   otherwise uses RTC_SCENE_STATIC flag
-                                                   (faster ray traversal, slightly
-                                                   slower BVH build)
+  OSPVolumetricModel[] volume                 NULL  [data] array of [VolumetricModels]
 
-  bool                 compactMode          false  tell Embree to use a more compact BVH
-                                                   in memory by trading ray traversal
-                                                   performance
+  OSPGeometricModel[]  clippingGeometry       NULL  [data] array of [GeometricModels]
+                                                    used for clipping
 
-  bool                 robustMode           false  tell Embree to enable more robust ray
-                                                   intersection code paths (slightly
-                                                   slower)
-  -------------------- --------------- ---------- ---------------------------------------
+  bool                 dynamicScene          false  use RTC_SCENE_DYNAMIC flag (faster
+                                                    BVH build, slower ray traversal),
+                                                    otherwise uses RTC_SCENE_STATIC flag
+                                                    (faster ray traversal, slightly
+                                                    slower BVH build)
+
+  bool                 compactMode           false  tell Embree to use a more compact BVH
+                                                    in memory by trading ray traversal
+                                                    performance
+
+  bool                 robustMode            false  tell Embree to enable more robust ray
+                                                    intersection code paths (slightly
+                                                    slower)
+  -------------------- ---------------- ----------  ---------------------------------------
   : Parameters understood by groups.
 
 Note that groups only need to re re-committed if a geometry or volume

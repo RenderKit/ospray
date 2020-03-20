@@ -13,6 +13,11 @@ Version History
 -   Add new `ospGetTaskDuration` API call to query execution time of
     asynchronous tasks
 -   Support for 16bit (unsigned short) textures
+-   New plane geometry defined via plane equation
+-   New clipping geometries feature that allow to clip any scene
+    (including volumetrics) with OSPRay arbitrary geometry
+    -   Inverted clipping is supported via new `invertNormals` parameter
+        of `GeometricModel`
 
 #### Fixed Issues:
 -   Proper demonstration of `ospGetVariance` in `ospTutorialAsync`
@@ -27,7 +32,10 @@ Version History
     required
 
 #### Known Issues:
--   None
+-   When clipping with curves geometry (any basis except linear) some
+    rendering artifacts may appear
+-   Currently there is an fixed upper limit (64) of how many clipping
+    geometries can be nested
 
 #### Other Changes:
 -   Object factory functions are now registered during module

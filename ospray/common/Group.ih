@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -17,4 +17,7 @@ struct Group
 
   VolumetricModel **volumetricModels;
   int32 numVolumetricModels;
+
+  GeometricModel **clipModels;
+  int32 numClipModels;
 };

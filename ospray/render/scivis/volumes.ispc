@@ -13,6 +13,7 @@ struct VolumeContext
 {
   VKLIntervalIterator intervalIterator;
   VKLInterval interval;
+  uint32 rayIntervalId;
   vec3f org;
   vec3f dir;
   float iuLength; // VKL interval length in sampling steps as an unit
@@ -23,12 +24,34 @@ struct VolumeContext
   uint32 ready; // 1 if sample is ready to be used
 };
 
-static void sampleVolume(VolumeContext &vc,
+static bool inInterval(const RayIntervals &rayIntervals, VolumeContext &vc)
+{
+  do {
+    // Value before the current interval
+    if (rayIntervals.intervals[vc.rayIntervalId].lower > vc.distance)
+      return false;
+
+    // Value in the current interval
+    if (rayIntervals.intervals[vc.rayIntervalId].upper > vc.distance)
+      return true;
+
+    // Go to the next interval
+    vc.rayIntervalId++;
+
+  } while (vc.rayIntervalId < rayIntervals.count);
+
+  // No more intervals to test
+  vc.distance = inf;
+  return false;
+}
+
+static void sampleVolume(const RayIntervals &rayIntervals,
+    VolumeContext &vc,
     VolumetricModel *uniform m,
     const uniform float samplingRate)
 {
   // We have to iterate till we get a valid sample value
-  float newDistance;
+  float prevDistance;
   float sampleVal = nan;
   while (isnan(sampleVal)) {
     // Iterate till sampling position is within interval
@@ -45,7 +68,7 @@ static void sampleVolume(VolumeContext &vc,
 
         // Initialize distance if necessary
         vc.distance =
-            (vc.distance == inf) ? vc.interval.tRange.lower : vc.distance;
+            select(vc.distance == inf, vc.interval.tRange.lower, vc.distance);
 
       } else {
         // The end of the volume has been reached
@@ -56,14 +79,20 @@ static void sampleVolume(VolumeContext &vc,
 
     // Calculate sampling distance
     const float samplingStep = vc.interval.nominalDeltaT / samplingRate;
-    newDistance = vc.interval.tRange.lower + vc.iuDistance * samplingStep;
+    prevDistance = vc.distance;
+    vc.distance = vc.interval.tRange.lower + vc.iuDistance * samplingStep;
 
-    // Prepare sampling position
-    const vec3f p = vc.org + newDistance * vc.dir;
+    // Check if sampling position is not clipped out
+    if (inInterval(rayIntervals, vc)) {
+      // Prepare sampling position
+      const vec3f p = vc.org + vc.distance * vc.dir;
 
-    // Sample volume value in given point
-    sampleVal = vklComputeSampleV(
-        m->volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
+      // Sample volume value in given point
+      sampleVal = vklComputeSampleV(
+          m->volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
+    } else if (vc.distance == inf) {
+      return;
+    }
 
     // Go to the next sub-interval
     vc.iuDistance += 1.f;
@@ -73,12 +102,12 @@ static void sampleVolume(VolumeContext &vc,
   vc.sample = m->transferFunction->get(m->transferFunction, sampleVal);
 
   // Weight the opacity with deltaT using Beer law
-  const float dt = newDistance - vc.distance;
+  const float dt = vc.distance - prevDistance;
   vc.sample.w = 1.f - exp(-vc.sample.w * dt * m->densityScale);
-  vc.distance = newDistance;
 }
 
 static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
+    const RayIntervals &rayIntervals,
     varying VolumeContext *uniform volumeContexts,
     const uniform float samplingRate,
     vec4f &sampledColor)
@@ -99,7 +128,7 @@ static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
     // If the sample has been used already regenerate a new one
     if (vc.ready == 0) {
       foreach_unique (m in vi->volumetricModel) {
-        sampleVolume(vc, m, samplingRate);
+        sampleVolume(rayIntervals, vc, m, samplingRate);
       }
       vc.ready = 1;
     }
@@ -122,11 +151,12 @@ static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
 }
 
 vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
+    const RayIntervals &rayIntervals,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
     const uniform float samplingRate)
 {
-  // Array of volume contexts
+  // Keep context for each volume here
   VolumeContext volumeContexts[NUM_VOLUME_INTERVALS_MAX];
 
   // Sampling position jitter
@@ -151,19 +181,38 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
     vc.iuDistance = jitter;
     vc.iuLength = 0.f;
     vc.distance = inf;
-    vc.ready = 0;
 
-    // There might be different volumetric models used across vector lanes
-    // so we must iterate over them
-    VolumetricModel *varying model = vi->volumetricModel;
-    foreach_unique (m in model) {
-      // Create volume interval interator
-      vklInitIntervalIteratorV(&vc.intervalIterator,
-          m->volume->vklVolume,
-          (varying vkl_vec3f *)&transformedRay.org,
-          (varying vkl_vec3f *)&transformedRay.dir,
-          (varying vkl_range1f *)&vi->interval,
-          m->vklValueSelector);
+    // Find initial ray interval indices
+    int j = 0;
+    for (; j < rayIntervals.count; j++) {
+      const range1f rayInterval = rayIntervals.intervals[j];
+      if (overlapped(rayInterval, vi->interval)) {
+        vc.rayIntervalId = j;
+        break;
+      }
+    }
+
+    // If no overlapping interval found
+    if (j == rayIntervals.count) {
+      // No need to sample
+      vc.ready = 1;
+
+    } else {
+      // There might be different volumetric models used across vector lanes
+      // so we must iterate over them
+      VolumetricModel *varying model = vi->volumetricModel;
+      foreach_unique (m in model) {
+        // Create volume interval interator
+        vklInitIntervalIteratorV(&vc.intervalIterator,
+            m->volume->vklVolume,
+            (varying vkl_vec3f *)&transformedRay.org,
+            (varying vkl_vec3f *)&transformedRay.dir,
+            (varying vkl_range1f *)&vi->interval,
+            m->vklValueSelector);
+      }
+
+      // Need to sample
+      vc.ready = 0;
     }
   }
 
@@ -175,8 +224,11 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
   while (alpha < .99f) {
     // Sample across all volumes
     vec4f sampledColorOpacity;
-    float dist = sampleAllVolumes(
-        volumeIntervals, volumeContexts, samplingRate, sampledColorOpacity);
+    float dist = sampleAllVolumes(volumeIntervals,
+        rayIntervals,
+        volumeContexts,
+        samplingRate,
+        sampledColorOpacity);
 
     // Exit loop if nothing sampled
     if (dist == inf)

@@ -116,4 +116,16 @@ INSTANTIATE_TEST_CASE_P(TestScenesGeometry,
                            "cornell_box_photometric"),
         ::testing::Values("scivis", "pathtracer")));
 
+INSTANTIATE_TEST_CASE_P(TestScenesClipping,
+    FromOsprayTesting,
+    ::testing::Combine(::testing::Values("clip_with_spheres",
+                           "clip_with_boxes",
+                           "clip_with_planes",
+                           "clip_with_meshes",
+                           "clip_with_subdivisions",
+                           "clip_with_linear_curves",
+                           "clip_with_bspline_curves",
+                           "clip_gravity_spheres_volume",
+                           "clip_perlin_noise_volumes"),
+        ::testing::Values("scivis", "pathtracer")));
 } // namespace OSPRayTestScenes

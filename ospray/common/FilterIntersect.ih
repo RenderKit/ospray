@@ -1,0 +1,98 @@
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "Intersect.ih"
+#include "Ray.ih"
+
+inline bool filterCall(const RTCIntersectFunctionNArguments *uniform args,
+    const RTCHit &rtcHitTemp)
+{
+  // prepare execution mask
+  varying int imask;
+  varying bool mask = __mask;
+  unmasked
+  {
+    imask = mask ? -1 : 0;
+  }
+
+  // call filter intersection callback
+  uniform RTCFilterFunctionNArguments filterArgs;
+  filterArgs.valid = (int *uniform) & imask;
+  filterArgs.geometryUserPtr = args->geometryUserPtr;
+  filterArgs.context = args->context;
+  filterArgs.ray = (RTCRayN * uniform) args->rayhit;
+  filterArgs.hit = (RTCHitN * uniform) & rtcHitTemp;
+  filterArgs.N = args->N;
+  rtcFilterIntersection(args, &filterArgs);
+
+  // return true if hit has been accepted
+  return (imask == -1);
+}
+
+inline bool filterIntersectionSingle(
+    const RTCIntersectFunctionNArguments *uniform args,
+    const Hit &hit,
+    const uniform bool isOcclusionTest,
+    const uniform bool alwaysReject)
+{
+  // if there is a hit
+  varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
+  if (and(hit.hit, and(hit.t > ray->t0, hit.t <= ray->t))) {
+    // set a new hit value
+    const float tOld = ray->t;
+    ray->t = hit.t;
+
+    // prepare temporary hit structure
+    RTCHit rtcHitTemp;
+    rtcHitTemp.Ng_x = hit.N.x;
+    rtcHitTemp.Ng_y = hit.N.y;
+    rtcHitTemp.Ng_z = hit.N.z;
+    rtcHitTemp.u = hit.u;
+    rtcHitTemp.v = 0.f;
+    rtcHitTemp.primID = args->primID;
+    rtcHitTemp.geomID = args->geomID;
+    rtcHitTemp.instID[0] = args->context->instID[0];
+
+    // call filter intersection callback
+    bool accept = filterCall(args, rtcHitTemp);
+    cif (alwaysReject) {
+      // the hit is always rejected
+      ray->t = tOld;
+    }
+    else
+    {
+      if (accept) {
+        // hit has been accepted
+        cif (isOcclusionTest) {
+          ray->t = neg_inf;
+        }
+        else
+        {
+          varying RTCHit *uniform rtcHit =
+              (varying RTCHit * uniform) & ray->Ng.x;
+          *rtcHit = rtcHitTemp;
+        }
+        return true;
+      } else {
+        // the hit has been rejected in the filter function,
+        // restore initial ray dimensions
+        ray->t = tOld;
+      }
+    }
+  }
+
+  // no hit or not accepted
+  return false;
+}
+
+inline bool filterIntersectionBoth(
+    const RTCIntersectFunctionNArguments *uniform args,
+    const Intersections &isect,
+    const uniform bool isOcclusionTest)
+{
+  if (!filterIntersectionSingle(args, isect.entry, isOcclusionTest, false)) {
+    filterIntersectionSingle(args, isect.exit, isOcclusionTest, false);
+  }
+}
