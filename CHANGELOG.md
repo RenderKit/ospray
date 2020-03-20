@@ -40,6 +40,7 @@ Version History
 #### Other Changes:
 -   Object factory functions are now registered during module
     initialization via the appropiate `registerType` function
+-   OSPRay now requires minimum Open VKL v0.9.0
 
 ### Changes in v2.0.1:
 
