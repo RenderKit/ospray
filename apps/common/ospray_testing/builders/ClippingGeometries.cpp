@@ -196,7 +196,7 @@ cpp::World ClippingGeometries::buildWorld() const
     cPos = vec3f(-.3f, 0.f, -.3f);
   } else if (geomType == "plane") {
     std::vector<vec4f> coefficients = {vec4f(1.0f, 1.0f, 1.0f, 0.0f)};
-    geometry.setParam("plane", cpp::Data(coefficients));
+    geometry.setParam("plane.coefficients", cpp::Data(coefficients));
     geometry.commit();
     cPos = vec3f(-.3f, .2f, -.3f);
   } else if (geomType == "box") {

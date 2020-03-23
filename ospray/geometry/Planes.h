@@ -19,7 +19,8 @@ struct OSPRAY_SDK_INTERFACE Planes : public Geometry
   virtual size_t numPrimitives() const override;
 
  protected:
-  Ref<const DataT<vec4f>> planeData;
+  Ref<const DataT<vec4f>> coeffsData;
+  Ref<const DataT<box3f>> boundsData;
 };
 
 } // namespace ospray

@@ -25,16 +25,17 @@ std::string Planes::toString() const
 
 void Planes::commit()
 {
-  planeData = getParamDataT<vec4f>("plane", true);
+  coeffsData = getParamDataT<vec4f>("plane.coefficients", true);
+  boundsData = getParamDataT<box3f>("plane.bounds");
 
-  ispc::Planes_set(getIE(), embreeGeometry, ispc(planeData));
+  ispc::Planes_set(getIE(), embreeGeometry, ispc(coeffsData), ispc(boundsData));
 
   postCreationInfo();
 }
 
 size_t Planes::numPrimitives() const
 {
-  return planeData ? planeData->size() : 0;
+  return coeffsData ? coeffsData->size() : 0;
 }
 
 } // namespace ospray

@@ -19,6 +19,7 @@ add_library(ospray_testing SHARED
   builders/Streamlines.cpp
   builders/SubdivisionCube.cpp
   builders/UnstructuredVolume.cpp
+  builders/Planes.cpp
   builders/ClippingGeometries.cpp
 
   # regression test scenes

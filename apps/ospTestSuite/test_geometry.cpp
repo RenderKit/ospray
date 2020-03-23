@@ -113,7 +113,8 @@ INSTANTIATE_TEST_CASE_P(TestScenesGeometry,
                            "random_spheres",
                            "streamlines",
                            "subdivision_cube",
-                           "cornell_box_photometric"),
+                           "cornell_box_photometric",
+                           "planes"),
         ::testing::Values("scivis", "pathtracer")));
 
 INSTANTIATE_TEST_CASE_P(TestScenesClipping,

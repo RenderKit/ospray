@@ -127,7 +127,7 @@ cpp::World GravitySpheres::buildWorld() const
     {
       cpp::Geometry planeGeometry("plane");
       std::vector<vec4f> coefficients = {vec4f(1.f, -1.f, 1.f, 0.f)};
-      planeGeometry.setParam("plane", cpp::Data(coefficients));
+      planeGeometry.setParam("plane.coefficients", cpp::Data(coefficients));
       planeGeometry.commit();
 
       cpp::GeometricModel model(planeGeometry);

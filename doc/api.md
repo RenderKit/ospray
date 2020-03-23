@@ -1045,13 +1045,16 @@ geometry by calling `ospNewGeometry` with type string "`box`".
 ### Planes
 
 OSPRay can directly render planes defined by plane equation coefficients
-in its implicit form $ax + by + cz + d = 0$. To do so create a planes
-geometry by calling `ospNewGeometry` with type string "`plane`".
+in its implicit form $ax + by + cz + d = 0$. By default planes are
+infinite but their extents can be limited by defining optional bounding
+boxes. A planes geometry can be created by calling `ospNewGeometry` with
+type string "`plane`".
 
   Type       Name       Description
-  ---------- ---------- ------------------------------------------------
-  vec4f[]    plane      [data] array of plane coefficients $(a, b, c, d)$
-  ---------- ---------- ------------------------------------------------
+  ---------- ------------------ -------------------------------------------------
+  vec4f[]    plane.coefficients [data] array of plane coefficients $(a, b, c, d)$
+  box3f[]    plane.bounds       optional [data] array of bounding boxes
+  ---------- ------------------ -------------------------------------------------
   : Parameters defining a planes geometry.
 
 ### Isosurfaces
