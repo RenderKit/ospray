@@ -1,47 +1,41 @@
 Version History
 ---------------
 
-### OSPRay 2.1.0
+### Changes in v2.1.0
 
-#### New Features:
--   Support for photometric lights (e.g. IES or EULUMDAT)
+-   New clipping geometries feature that allows clipping any scene
+    (gemetry and volumes); all OSPRay geometry types can by used as
+    clipping geometry
+    -   Inverted clipping is supported via new `invertNormals` parameter
+        of `GeometricModel`
+    -   Currently there is a fixed upper limit (64) of how many clipping
+        geometries can be nested
+    -   When clipping with curves geometry (any basis except linear)
+        some rendering artifacts may appear
+-   New plane geometry defined via plane equation and optional bounding
+    box
 -   Sun-sky light based on physical model of Hošek-Wilkie
+-   Support for photometric lights (e.g. IES or EULUMDAT)
+-   Add new `ospGetTaskDuration` API call to query execution time of
+    asynchronous tasks
+-   Support for 16bit (unsigned short) textures
 -   Add static `cpp::Device::current` method as a C++ wrapper equivalent
     to `ospGetCurrentDevice`
 -   Generalized `cpp::Device` parameter setting to match other handle
     types
--   Add new `ospGetTaskDuration` API call to query execution time of
-    asynchronous tasks
--   Support for 16bit (unsigned short) textures
--   New plane geometry defined via plane equation
--   New clipping geometries feature that allow to clip any scene
-    (including volumetrics) with OSPRay arbitrary geometry
-    -   Inverted clipping is supported via new `invertNormals` parameter
-        of `GeometricModel`
-
-#### Fixed Issues:
--   Proper demonstration of `ospGetVariance` in `ospTutorialAsync`
--   Add missing C++ wrapper for `ospGetVariance`
 -   Passing `NULL` to `ospRelease` is not reported as error anymore
 -   Fix computation of strides for ospData
+-   Fix transparency in `scivis` renderer
+-   Add missing C++ wrapper for `ospGetVariance`
+-   Proper demonstration of `ospGetVariance` in `ospTutorialAsync`
 -   Fix handling of `--osp:device-params` to process and set all passed
     arguments first before committing the device, to ensure it is
     committed in a valid state.
+-   Object factory functions are now registered during module
+    initialization via the appropiate `registerType` function
 -   Fix issue with OSPRay ignoring tasking system thread count settings
 -   Fix issue where OSPRay always loaded the ISPC module, even if not
     required
--   Fix transparency in `scivis` renderer
--   Fix assumed build structure in regression tests
-
-#### Known Issues:
--   When clipping with curves geometry (any basis except linear) some
-    rendering artifacts may appear
--   Currently there is an fixed upper limit (64) of how many clipping
-    geometries can be nested
-
-#### Other Changes:
--   Object factory functions are now registered during module
-    initialization via the appropiate `registerType` function
 -   OSPRay now requires minimum Open VKL v0.9.0
 
 ### Changes in v2.0.1:
