@@ -15,7 +15,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
   LIST_SEPARATOR | # Use the alternate list separator
-  URL "https://github.com/openvkl/openvkl/archive/${BUILD_OPENVKL_VERSION}.zip"
+  URL "http://github.com/openvkl/openvkl/archive/${BUILD_OPENVKL_VERSION}.zip"
   CMAKE_ARGS
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}

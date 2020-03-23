@@ -350,7 +350,7 @@ web:
 
 ### RELEASE JOBS ###
 
-release-linux-icc:
+release-linux:
   <<: *release_job
   image: ospray/docker-images:centos7-mod
   script:

@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(COMPONENT_NAME oidn)
@@ -16,7 +16,7 @@ if (BUILD_OIDN_FROM_SOURCE)
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
     LIST_SEPARATOR | # Use the alternate list separator
-    GIT_REPOSITORY "https://github.com/OpenImageDenoise/oidn.git"
+    GIT_REPOSITORY "http://github.com/OpenImageDenoise/oidn.git"
     GIT_SHALLOW ON
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
@@ -40,11 +40,11 @@ else()
   string(REPLACE "v" "" OIDN_VERSION_NUMBER ${BUILD_OIDN_VERSION})
 
   if (APPLE)
-    set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x86_64.macos.tar.gz")
+    set(OIDN_URL "http://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x86_64.macos.tar.gz")
   elseif (WIN32)
-    set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x64.vc14.windows.zip")
+    set(OIDN_URL "http://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x64.vc14.windows.zip")
   else()
-    set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x86_64.linux.tar.gz")
+    set(OIDN_URL "http://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x86_64.linux.tar.gz")
   endif()
 
   ExternalProject_Add(${COMPONENT_NAME}

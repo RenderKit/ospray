@@ -14,7 +14,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  URL "https://github.com/ospray/module_mpi/archive/${BUILD_OSPRAY_MODULE_MPI_VERSION}.zip"
+  URL "http://github.com/ospray/module_mpi/archive/${BUILD_OSPRAY_MODULE_MPI_VERSION}.zip"
   LIST_SEPARATOR | # Use the alternate list separator
   CMAKE_ARGS
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
