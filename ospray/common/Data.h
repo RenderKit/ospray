@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -68,7 +68,7 @@ struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   int dimensions{0};
 
   ispc::Data1D ispc;
-  static ispc::Data1D empytData1D; // dummy, zero-initialized
+  static ispc::Data1D emptyData1D; // dummy, zero-initialized
 
  private:
   void init(); // init dimensions and byteStride
@@ -223,13 +223,13 @@ inline const ispc::Data1D *ispc(Ref<const Data> &dataRef)
         "data array too large (over 4B elements, index is limited to 32bit");
 
   return dataRef && dataRef->dimensions == 1 ? &dataRef->ispc
-                                             : &Data::empytData1D;
+                                             : &Data::emptyData1D;
 }
 
 template <typename T>
 const ispc::Data1D *ispc(Ref<const DataT<T, 1>> &dataRef)
 {
-  return dataRef ? &dataRef->ispc : &Data::empytData1D;
+  return dataRef ? &dataRef->ispc : &Data::emptyData1D;
 }
 
 inline size_t Data::size() const

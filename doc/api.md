@@ -1206,7 +1206,7 @@ the spotlight supports the special parameters listed in the table.
                                                of `openingAngle`
 
   float      radius                          0 the size of the spotlight, the
-                                               radius of a disc with normal
+                                               radius of a disk with normal
                                                `direction`
 
   float[]    intensityDistribution             luminous intensity distribution

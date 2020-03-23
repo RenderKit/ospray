@@ -5,7 +5,7 @@ Version History
 
 #### New Features:
 -   Support for photometric lights (e.g. IES or EULUMDAT)
--   Sun-sky light based on pysical model of Hošek-Wilkie
+-   Sun-sky light based on physical model of Hošek-Wilkie
 -   Add static `cpp::Device::current` method as a C++ wrapper equivalent
     to `ospGetCurrentDevice`
 -   Generalized `cpp::Device` parameter setting to match other handle

@@ -52,7 +52,7 @@ Data::~Data()
     alignedFree(addr);
 }
 
-ispc::Data1D Data::empytData1D;
+ispc::Data1D Data::emptyData1D;
 
 void Data::init()
 {

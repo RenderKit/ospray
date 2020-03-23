@@ -92,6 +92,7 @@ Run with:
     mkdir build
     cd build
     cmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
+    cmake --build .
 
 On Windows make sure to select the non-default 64bit generator, e.g.
 
