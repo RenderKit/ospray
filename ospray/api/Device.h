@@ -9,7 +9,7 @@
 #include "ospcommon/utility/ParameterizedObject.h"
 // ospray
 #include "../common/OSPCommon.h"
-#include "common/Util.h"
+#include "../common/Util.h"
 #include "ospray/version.h"
 // std
 #include <functional>
