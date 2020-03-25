@@ -1,19 +1,19 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-echo Running tests
+# to run:  ./run_tests.ps1 <path to ospray source>
+# a new folder is created called build_regression_tests with results
 
-$PATH += ";..\build\install\bin"
+$osprayDir=$args[0]
 
 md build_regression_tests
 cd build_regression_tests
-
 md failed
 
-cmake ../test_image_data
+cmake $osprayDir/test_image_data
 
 cmake --build . --config Release --target ospray_test_data
 
-..\build\install\bin\ospTestSuite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed\ --gtest_filter=-TestScenesVolumes/FromOsprayTesting.test_scenes/2
+ospTestSuite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed\
 
 exit $LastExitCode

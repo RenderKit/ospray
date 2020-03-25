@@ -1,15 +1,13 @@
 #!/bin/bash
-## Copyright 2016-2019 Intel Corporation
+## Copyright 2016-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-rm -rf img
-mkdir img
+# results are put in a new folder called generated_test_images
 
-export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
-export DYLD_LIBRARY_PATH=`pwd`/build/install/lib:$DYLD_LIBRARY_PATH
-export PATH=`pwd`/build/install/bin:$PATH
+rm -rf generated_test_images
+mkdir generated_test_images
 
-ospTestSuite --dump-img --baseline-dir=img/
+ospTestSuite --dump-img --baseline-dir=generated_test_images/
 FAILED=$(echo $?)
 
 exit $FAILED

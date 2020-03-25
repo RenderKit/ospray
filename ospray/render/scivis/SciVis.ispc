@@ -57,7 +57,8 @@ void SciVis_renderSample(Renderer *uniform _self,
 
     // If any geometry has been hit
     vec4f blendedColor;
-    if (hadHit(ray)) {
+    const bool hadHit = hadHit(ray);
+    if (hadHit) {
       // Prepare differential geometry structure
       DifferentialGeometry dg;
       computeDG(world, self, ray, dg);
@@ -92,7 +93,7 @@ void SciVis_renderSample(Renderer *uniform _self,
     // Blend with output final color
     outputColor = outputColor + (1.f - outputColor.w) * blendedColor;
     firstHit = false;
-    if (!hadHit(ray)) {
+    if (!hadHit) {
       break;
     }
   }

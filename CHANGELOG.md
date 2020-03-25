@@ -30,6 +30,8 @@ Version History
 -   Fix issue with OSPRay ignoring tasking system thread count settings
 -   Fix issue where OSPRay always loaded the ISPC module, even if not
     required
+-   Fix transparency in `scivis` renderer
+-   Fix assumed build structure in regression tests
 
 #### Known Issues:
 -   When clipping with curves geometry (any basis except linear) some
