@@ -48,7 +48,7 @@ done
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 DEP_BUILD_DIR=$ROOT_DIR/build_deps
-OSPRAY_PKG_BASE=ospray-2.0.1.x86_64.linux
+OSPRAY_PKG_BASE=ospray-2.1.0.x86_64.linux
 OSPRAY_BUILD_DIR=$ROOT_DIR/build_release
 INSTALL_DIR=$ROOT_DIR/install/$OSPRAY_PKG_BASE
 THREADS=`nproc`
