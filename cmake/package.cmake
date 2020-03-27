@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(CMAKE_INSTALL_SCRIPTDIR scripts)
@@ -44,9 +44,17 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/ospray/include/ospray
 # install documentation
 ##############################################################
 
-install(FILES ${PROJECT_SOURCE_DIR}/LICENSE.txt DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
-install(FILES ${PROJECT_SOURCE_DIR}/CHANGELOG.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
-install(FILES ${PROJECT_SOURCE_DIR}/README.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
+install(FILES
+ ${PROJECT_SOURCE_DIR}/LICENSE.txt
+ ${PROJECT_SOURCE_DIR}/third-party-programs.txt
+ ${PROJECT_SOURCE_DIR}/third-party-programs-TBB.txt
+ ${PROJECT_SOURCE_DIR}/third-party-programs-Embree.txt
+ ${PROJECT_SOURCE_DIR}/third-party-programs-OpenVKL.txt
+ ${PROJECT_SOURCE_DIR}/third-party-programs-OIDN.txt
+ ${PROJECT_SOURCE_DIR}/third-party-programs-DNNL.txt
+ ${PROJECT_SOURCE_DIR}/CHANGELOG.md
+ ${PROJECT_SOURCE_DIR}/README.md
+ DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
 install(FILES ${PROJECT_SOURCE_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib OPTIONAL)
 
 ##############################################################
