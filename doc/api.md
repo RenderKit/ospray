@@ -1306,12 +1306,13 @@ and intensity of the computed ambient occlusion (AO).
 ### Sun-Sky Light
 
 The sun-sky light is a combination of a `distant` light for the sun and
-a procedural `hdri` light for the sky. It surrounds the scene and
-illuminates it from infinity and can be used for rendering outdoor
-scenes. The radiance values are calculated using the Hošek-Wilkie sky
-model and solar radiance function. In addition to the [general
-parameters](#lights) the `sunSky` light supports the following special
-parameters:
+a procedural `hdri` light for the sky. It is created by passing the type
+string "`sunSky`" to `ospNewLight`. The sun-sky light surrounds the
+scene and illuminates it from infinity and can be used for rendering
+outdoor scenes. The radiance values are calculated using the
+Hošek-Wilkie sky model and solar radiance function. In addition to the
+[general parameters](#lights) the following special parameters are
+supported:
 
   Type      Name           Default  Description
   --------- ---------- -----------  --------------------------------------------

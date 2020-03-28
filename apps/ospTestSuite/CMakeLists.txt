@@ -15,6 +15,7 @@ add_executable(ospTestSuite
   test_geometry.cpp
   test_volumetric.cpp
   test_appearance.cpp
+  test_light.cpp
   test_enums.cpp
   ospTestSuite.cpp
 )
