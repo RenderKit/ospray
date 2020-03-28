@@ -92,7 +92,7 @@ TEST_P(SpherePrecision, sphere)
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(Intersection,
+INSTANTIATE_TEST_SUITE_P(Intersection,
     SpherePrecision,
     ::testing::Combine(::testing::Values(0.001f, 3.e5f),
         ::testing::Values(3.f, 8000.0f, 2.e5f),
@@ -104,7 +104,7 @@ TEST_P(FromOsprayTesting, test_scenes)
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(TestScenesGeometry,
+INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("cornell_box",
                            "curves",
@@ -117,7 +117,7 @@ INSTANTIATE_TEST_CASE_P(TestScenesGeometry,
                            "planes"),
         ::testing::Values("scivis", "pathtracer")));
 
-INSTANTIATE_TEST_CASE_P(TestScenesClipping,
+INSTANTIATE_TEST_SUITE_P(TestScenesClipping,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("clip_with_spheres",
                            "clip_with_boxes",

@@ -163,7 +163,7 @@ void DepthCompositeVolume::SetUp()
 
 // Test Instantiations //////////////////////////////////////////////////////
 
-INSTANTIATE_TEST_CASE_P(TestScenesVolumes,
+INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("gravity_spheres_volume",
                            "perlin_noise_volumes",
@@ -175,14 +175,14 @@ TEST_P(TextureVolume, simple)
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(Renderers, TextureVolume, ::testing::Values("scivis"));
+INSTANTIATE_TEST_SUITE_P(Renderers, TextureVolume, ::testing::Values("scivis"));
 
 TEST_P(DepthCompositeVolume, simple)
 {
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(Renderers,
+INSTANTIATE_TEST_SUITE_P(Renderers,
     DepthCompositeVolume,
     ::testing::Combine(::testing::Values("scivis"),
         ::testing::Values(vec4f(0.f),

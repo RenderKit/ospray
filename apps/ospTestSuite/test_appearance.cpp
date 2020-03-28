@@ -255,11 +255,11 @@ TEST_P(RendererMaterialList, material_list)
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(MaterialLists,
+INSTANTIATE_TEST_SUITE_P(MaterialLists,
     RendererMaterialList,
     ::testing::Values("scivis", "pathtracer"));
 
-INSTANTIATE_TEST_CASE_P(TestScenesPtMaterials,
+INSTANTIATE_TEST_SUITE_P(TestScenesPtMaterials,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("test_pt_glass",
                            "test_pt_luminous",
@@ -273,7 +273,7 @@ TEST_P(Texture2D, filter)
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_CASE_P(Appearance,
+INSTANTIATE_TEST_SUITE_P(Appearance,
     Texture2D,
     ::testing::Values(std::make_tuple(OSP_TEXTURE_FILTER_BILINEAR, true),
         std::make_tuple(OSP_TEXTURE_FILTER_NEAREST, true),
