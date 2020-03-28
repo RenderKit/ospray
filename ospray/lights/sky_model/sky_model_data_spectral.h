@@ -101,7 +101,7 @@ This file contains the coefficient data for the spectral version of the model.
 
 // uses Apr 26 dataset
 
-static double dataset320[] = {
+static float dataset320[] = {
     // albedo 0, turbidity 1
     -1.341049e+001,
     -3.742293e+000,
@@ -1204,7 +1204,7 @@ static double dataset320[] = {
     6.227585e-001,
 };
 
-static double datasetRad320[] = {
+static float datasetRad320[] = {
     // albedo 0, turbidity 1
     9.282016e-004,
     3.169257e-004,
@@ -1347,7 +1347,7 @@ static double datasetRad320[] = {
     8.244103e-002,
 };
 
-static double dataset360[] = {
+static float dataset360[] = {
     // albedo 0, turbidity 1
     -2.974290e+000,
     -1.670904e+000,
@@ -2450,7 +2450,7 @@ static double dataset360[] = {
     7.279518e-001,
 };
 
-static double datasetRad360[] = {
+static float datasetRad360[] = {
     // albedo 0, turbidity 1
     2.494129e-003,
     3.556297e-003,
@@ -2593,7 +2593,7 @@ static double datasetRad360[] = {
     1.427310e-001,
 };
 
-static double dataset400[] = {
+static float dataset400[] = {
     // albedo 0, turbidity 1
     -1.869600e+000,
     -9.575785e-001,
@@ -3696,7 +3696,7 @@ static double dataset400[] = {
     7.086504e-001,
 };
 
-static double datasetRad400[] = {
+static float datasetRad400[] = {
     // albedo 0, turbidity 1
     5.767645e-003,
     1.219302e-002,
@@ -3839,7 +3839,7 @@ static double datasetRad400[] = {
     2.328116e-001,
 };
 
-static double dataset440[] = {
+static float dataset440[] = {
     // albedo 0, turbidity 1
     -1.397312e+000,
     -5.327311e-001,
@@ -4942,7 +4942,7 @@ static double dataset440[] = {
     6.840186e-001,
 };
 
-static double datasetRad440[] = {
+static float datasetRad440[] = {
     // albedo 0, turbidity 1
     9.406889e-003,
     1.954373e-002,
@@ -5085,7 +5085,7 @@ static double datasetRad440[] = {
     2.803810e-001,
 };
 
-static double dataset480[] = {
+static float dataset480[] = {
     // albedo 0, turbidity 1
     -1.255072e+000,
     -3.501170e-001,
@@ -6188,7 +6188,7 @@ static double dataset480[] = {
     6.747408e-001,
 };
 
-static double datasetRad480[] = {
+static float datasetRad480[] = {
     // albedo 0, turbidity 1
     1.367487e-002,
     1.998477e-002,
@@ -6331,7 +6331,7 @@ static double datasetRad480[] = {
     3.053035e-001,
 };
 
-static double dataset520[] = {
+static float dataset520[] = {
     // albedo 0, turbidity 1
     -1.171338e+000,
     -2.379456e-001,
@@ -7434,7 +7434,7 @@ static double dataset520[] = {
     6.713422e-001,
 };
 
-static double datasetRad520[] = {
+static float datasetRad520[] = {
     // albedo 0, turbidity 1
     1.459826e-002,
     1.539451e-002,
@@ -7577,7 +7577,7 @@ static double datasetRad520[] = {
     2.692918e-001,
 };
 
-static double dataset560[] = {
+static float dataset560[] = {
     // albedo 0, turbidity 1
     -1.121223e+000,
     -1.710187e-001,
@@ -8680,7 +8680,7 @@ static double dataset560[] = {
     5.872694e-001,
 };
 
-static double datasetRad560[] = {
+static float datasetRad560[] = {
     // albedo 0, turbidity 1
     1.518543e-002,
     1.176421e-002,
@@ -8823,7 +8823,7 @@ static double datasetRad560[] = {
     2.394514e-001,
 };
 
-static double dataset600[] = {
+static float dataset600[] = {
     // albedo 0, turbidity 1
     -1.120756e+000,
     -1.756050e-001,
@@ -9926,7 +9926,7 @@ static double dataset600[] = {
     6.545784e-001,
 };
 
-static double datasetRad600[] = {
+static float datasetRad600[] = {
     // albedo 0, turbidity 1
     1.605147e-002,
     1.028116e-002,
@@ -10069,7 +10069,7 @@ static double datasetRad600[] = {
     2.260782e-001,
 };
 
-static double dataset640[] = {
+static float dataset640[] = {
     // albedo 0, turbidity 1
     -1.113346e+000,
     -1.715076e-001,
@@ -11172,7 +11172,7 @@ static double dataset640[] = {
     6.650112e-001,
 };
 
-static double datasetRad640[] = {
+static float datasetRad640[] = {
     // albedo 0, turbidity 1
     1.479989e-002,
     9.575884e-003,
@@ -11315,7 +11315,7 @@ static double datasetRad640[] = {
     2.043633e-001,
 };
 
-static double dataset680[] = {
+static float dataset680[] = {
     // albedo 0, turbidity 1
     -1.112655e+000,
     -1.844098e-001,
@@ -12418,7 +12418,7 @@ static double dataset680[] = {
     6.710888e-001,
 };
 
-static double datasetRad680[] = {
+static float datasetRad680[] = {
     // albedo 0, turbidity 1
     1.320908e-002,
     9.179272e-003,
@@ -12561,7 +12561,7 @@ static double datasetRad680[] = {
     1.851691e-001,
 };
 
-static double dataset720[] = {
+static float dataset720[] = {
     // albedo 0, turbidity 1
     -1.110553e+000,
     -1.675726e-001,
@@ -13664,7 +13664,7 @@ static double dataset720[] = {
     6.917938e-001,
 };
 
-static double datasetRad720[] = {
+static float datasetRad720[] = {
     // albedo 0, turbidity 1
     1.130152e-002,
     8.671843e-003,
@@ -13807,7 +13807,7 @@ static double datasetRad720[] = {
     1.639884e-001,
 };
 
-static double *datasets[] = {dataset320,
+static float *datasets[] = {dataset320,
     dataset360,
     dataset400,
     dataset440,
@@ -13819,7 +13819,7 @@ static double *datasets[] = {dataset320,
     dataset680,
     dataset720};
 
-static double *datasetsRad[] = {datasetRad320,
+static float *datasetsRad[] = {datasetRad320,
     datasetRad360,
     datasetRad400,
     datasetRad440,
@@ -13832,7 +13832,7 @@ static double *datasetsRad[] = {datasetRad320,
     datasetRad720};
 
 // Uses Feb 9 dataset
-static double solarDataset320[] = {
+static float solarDataset320[] = {
     0,
     0,
     0,
@@ -15635,7 +15635,7 @@ static double solarDataset320[] = {
     1.715997e+03,
 };
 
-static double solarDataset360[] = {
+static float solarDataset360[] = {
     0,
     0,
     0,
@@ -17438,7 +17438,7 @@ static double solarDataset360[] = {
     4.337093e+03,
 };
 
-static double solarDataset400[] = {
+static float solarDataset400[] = {
     1.117129e+12,
     -1.629427e+07,
     -4.340837e+02,
@@ -19241,7 +19241,7 @@ static double solarDataset400[] = {
     8.894396e+03,
 };
 
-static double solarDataset440[] = {
+static float solarDataset440[] = {
     -6.439155e+11,
     7.682264e+06,
     1.061520e+03,
@@ -21044,7 +21044,7 @@ static double solarDataset440[] = {
     1.258462e+04,
 };
 
-static double solarDataset480[] = {
+static float solarDataset480[] = {
     -2.547404e+13,
     3.635631e+08,
     1.293910e+04,
@@ -22847,7 +22847,7 @@ static double solarDataset480[] = {
     1.549771e+04,
 };
 
-static double solarDataset520[] = {
+static float solarDataset520[] = {
     3.441260e+12,
     4.257012e+05,
     9.159649e+03,
@@ -24650,7 +24650,7 @@ static double solarDataset520[] = {
     1.483566e+04,
 };
 
-static double solarDataset560[] = {
+static float solarDataset560[] = {
     9.427478e+12,
     -2.974054e+07,
     3.050751e+04,
@@ -26453,7 +26453,7 @@ static double solarDataset560[] = {
     1.425796e+04,
 };
 
-static double solarDataset600[] = {
+static float solarDataset600[] = {
     1.454828e+13,
     -1.753873e+07,
     4.108891e+04,
@@ -28256,7 +28256,7 @@ static double solarDataset600[] = {
     1.483525e+04,
 };
 
-static double solarDataset640[] = {
+static float solarDataset640[] = {
     -4.439940e+13,
     4.727269e+08,
     1.531960e+05,
@@ -30059,7 +30059,7 @@ static double solarDataset640[] = {
     1.419677e+04,
 };
 
-static double solarDataset680[] = {
+static float solarDataset680[] = {
     -352468042275216,
     4.565228e+09,
     3.493754e+05,
@@ -31862,7 +31862,7 @@ static double solarDataset680[] = {
     1.371823e+04,
 };
 
-static double solarDataset720[] = {
+static float solarDataset720[] = {
     2.525918e+14,
     -2.554558e+09,
     -1.370972e+05,
@@ -33665,7 +33665,7 @@ static double solarDataset720[] = {
     1.313697e+04,
 };
 
-static double *solarDatasets[] = {solarDataset320,
+static float *solarDatasets[] = {solarDataset320,
     solarDataset360,
     solarDataset400,
     solarDataset440,
@@ -33677,40 +33677,40 @@ static double *solarDatasets[] = {solarDataset320,
     solarDataset680,
     solarDataset720};
 
-static double limbDarkeningDataset320[] = {
+static float limbDarkeningDataset320[] = {
     0.087657, 0.767174, 0.658123, -1.02953, 0.703297, -0.186735};
 
-static double limbDarkeningDataset360[] = {
+static float limbDarkeningDataset360[] = {
     0.122953, 1.01278, 0.238687, -1.12208, 1.17087, -0.424947};
 
-static double limbDarkeningDataset400[] = {
+static float limbDarkeningDataset400[] = {
     0.123511, 1.08444, -0.405598, 0.370629, -0.240567, 0.0674778};
 
-static double limbDarkeningDataset440[] = {
+static float limbDarkeningDataset440[] = {
     0.158489, 1.23346, -0.875754, 0.857812, -0.484919, 0.110895};
 
-static double limbDarkeningDataset480[] = {
+static float limbDarkeningDataset480[] = {
     0.198587, 1.30507, -1.25998, 1.49727, -1.04047, 0.299516};
 
-static double limbDarkeningDataset520[] = {
+static float limbDarkeningDataset520[] = {
     0.23695, 1.29927, -1.28034, 1.37760, -0.85054, 0.21706};
 
-static double limbDarkeningDataset560[] = {
+static float limbDarkeningDataset560[] = {
     0.26892, 1.34319, -1.58427, 1.91271, -1.31350, 0.37295};
 
-static double limbDarkeningDataset600[] = {
+static float limbDarkeningDataset600[] = {
     0.299804, 1.36718, -1.80884, 2.29294, -1.60595, 0.454874};
 
-static double limbDarkeningDataset640[] = {
+static float limbDarkeningDataset640[] = {
     0.33551, 1.30791, -1.79382, 2.44646, -1.89082, 0.594769};
 
-static double limbDarkeningDataset680[] = {
+static float limbDarkeningDataset680[] = {
     0.364007, 1.27316, -1.73824, 2.28535, -1.70203, 0.517758};
 
-static double limbDarkeningDataset720[] = {
+static float limbDarkeningDataset720[] = {
     0.389704, 1.2448, -1.69708, 2.14061, -1.51803, 0.440004};
 
-static double *limbDarkeningDatasets[] = {limbDarkeningDataset320,
+static float *limbDarkeningDatasets[] = {limbDarkeningDataset320,
     limbDarkeningDataset360,
     limbDarkeningDataset400,
     limbDarkeningDataset440,

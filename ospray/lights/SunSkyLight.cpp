@@ -9,12 +9,6 @@
 #include "Light_ispc.h"
 #include "Texture2D_ispc.h"
 
-// prototype of internal solar radiance function from arhosek-sky-model
-double arhosekskymodel_solar_radiance_internal2(ArHosekSkyModelState *state,
-    double wavelength,
-    double elevation,
-    double gamma);
-
 namespace ospray {
 SunSkyLight::SunSkyLight()
 {

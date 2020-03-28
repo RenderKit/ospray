@@ -117,7 +117,7 @@ bands, you would need something like
 You then have to allocate and initialise these states. In the following code
 snippet, we assume that 'albedo' is defined as
 
-    double  albedo[num_channels];
+    float  albedo[num_channels];
 
 with a ground albedo value between [0,1] for each channel. The solar elevation
 is given in radians.
@@ -145,7 +145,7 @@ Using the model to generate skydome samples
 Generating a skydome radiance spectrum "skydome_result" for a given location
 on the skydome determined via the angles theta and gamma works as follows:
 
-    double  skydome_result[num_channels];
+    float  skydome_result[num_channels];
 
     for ( unsigned int i = 0; i < num_channels; i++ )
         skydome_result[i] =
@@ -303,7 +303,7 @@ HINT #1:   if you want to model the sky of an earth-like planet that orbits
 #ifndef _ARHOSEK_SKYMODEL_H_
 #define _ARHOSEK_SKYMODEL_H_
 
-typedef double ArHosekSkyModelConfiguration[9];
+typedef float ArHosekSkyModelConfiguration[9];
 
 //   Spectral version of the model
 
@@ -336,13 +336,13 @@ typedef double ArHosekSkyModelConfiguration[9];
 typedef struct ArHosekSkyModelState
 {
   ArHosekSkyModelConfiguration configs[11];
-  double radiances[11];
-  double turbidity;
-  double solar_radius;
-  double emission_correction_factor_sky[11];
-  double emission_correction_factor_sun[11];
-  double albedo;
-  double elevation;
+  float radiances[11];
+  float turbidity;
+  float solar_radius;
+  float emission_correction_factor_sky[11];
+  float emission_correction_factor_sun[11];
+  float albedo;
+  float elevation;
 } ArHosekSkyModelState;
 
 /* ----------------------------------------------------------------------------
@@ -355,9 +355,9 @@ typedef struct ArHosekSkyModelState
 ---------------------------------------------------------------------------- */
 
 ArHosekSkyModelState *arhosekskymodelstate_alloc_init(
-    const double solar_elevation,
-    const double atmospheric_turbidity,
-    const double ground_albedo);
+    const float solar_elevation,
+    const float atmospheric_turbidity,
+    const float ground_albedo);
 
 /* ----------------------------------------------------------------------------
 
@@ -389,33 +389,38 @@ ArHosekSkyModelState *arhosekskymodelstate_alloc_init(
 ---------------------------------------------------------------------------- */
 
 ArHosekSkyModelState *arhosekskymodelstate_alienworld_alloc_init(
-    const double solar_elevation,
-    const double solar_intensity,
-    const double solar_surface_temperature_kelvin,
-    const double atmospheric_turbidity,
-    const double ground_albedo);
+    const float solar_elevation,
+    const float solar_intensity,
+    const float solar_surface_temperature_kelvin,
+    const float atmospheric_turbidity,
+    const float ground_albedo);
 
 void arhosekskymodelstate_free(ArHosekSkyModelState *state);
 
-double arhosekskymodel_radiance(
-    ArHosekSkyModelState *state, double theta, double gamma, double wavelength);
+float arhosekskymodel_radiance(
+    ArHosekSkyModelState *state, float theta, float gamma, float wavelength);
 
 // CIE XYZ and RGB versions
 
 ArHosekSkyModelState *arhosek_xyz_skymodelstate_alloc_init(
-    const double turbidity, const double albedo, const double elevation);
+    const float turbidity, const float albedo, const float elevation);
 
 ArHosekSkyModelState *arhosek_rgb_skymodelstate_alloc_init(
-    const double turbidity, const double albedo, const double elevation);
+    const float turbidity, const float albedo, const float elevation);
 
-double arhosek_tristim_skymodel_radiance(
-    ArHosekSkyModelState *state, double theta, double gamma, int channel);
+float arhosek_tristim_skymodel_radiance(
+    ArHosekSkyModelState *state, float theta, float gamma, int channel);
 
 //   Delivers the complete function: sky + sun, including limb darkening.
 //   Please read the above description before using this - there are several
 //   caveats!
 
-double arhosekskymodel_solar_radiance(
-    ArHosekSkyModelState *state, double theta, double gamma, double wavelength);
+float arhosekskymodel_solar_radiance(
+    ArHosekSkyModelState *state, float theta, float gamma, float wavelength);
+
+float arhosekskymodel_solar_radiance_internal2(ArHosekSkyModelState *state,
+    float wavelength,
+    float elevation,
+    float gamma);
 
 #endif // _ARHOSEK_SKYMODEL_H_

@@ -102,7 +102,7 @@ the model.
 
 // Uses Sep 9 pattern / Aug 23 mean dataset
 
-static double datasetXYZ1[] = {
+static float datasetXYZ1[] = {
     // albedo 0, turbidity 1
     -1.117001e+000,
     -1.867262e-001,
@@ -1205,7 +1205,7 @@ static double datasetXYZ1[] = {
     6.232887e-001,
 };
 
-static double datasetXYZRad1[] = {
+static float datasetXYZRad1[] = {
     // albedo 0, turbidity 1
     1.560219e+000,
     1.417388e+000,
@@ -1348,7 +1348,7 @@ static double datasetXYZRad1[] = {
     2.523432e+001,
 };
 
-static double datasetXYZ2[] = {
+static float datasetXYZ2[] = {
     // albedo 0, turbidity 1
     -1.127942e+000,
     -1.905548e-001,
@@ -2451,7 +2451,7 @@ static double datasetXYZ2[] = {
     6.118645e-001,
 };
 
-static double datasetXYZRad2[] = {
+static float datasetXYZRad2[] = {
     // albedo 0, turbidity 1
     1.632341e+000,
     1.395230e+000,
@@ -2594,7 +2594,7 @@ static double datasetXYZRad2[] = {
     2.641780e+001,
 };
 
-static double datasetXYZ3[] = {
+static float datasetXYZ3[] = {
     // albedo 0, turbidity 1
     -1.310023e+000,
     -4.407658e-001,
@@ -3697,7 +3697,7 @@ static double datasetXYZ3[] = {
     6.791814e-001,
 };
 
-static double datasetXYZRad3[] = {
+static float datasetXYZRad3[] = {
     // albedo 0, turbidity 1
     1.168084e+000,
     2.156455e+000,
@@ -3840,6 +3840,6 @@ static double datasetXYZRad3[] = {
     3.110255e+001,
 };
 
-static double *datasetsXYZ[] = {datasetXYZ1, datasetXYZ2, datasetXYZ3};
+static float *datasetsXYZ[] = {datasetXYZ1, datasetXYZ2, datasetXYZ3};
 
-static double *datasetsXYZRad[] = {datasetXYZRad1, datasetXYZRad2, datasetXYZRad3};
+static float *datasetsXYZRad[] = {datasetXYZRad1, datasetXYZRad2, datasetXYZRad3};
