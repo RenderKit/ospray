@@ -8,13 +8,11 @@ images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_fru
 images_fig := spot_light spot_coords quad_light hdri_light 
 images_svg := gitter_badge structured_spherical_coords
 images_webonly := $(addprefix images/, VESTEC-Logo-web.png $(addsuffix .jpg, stingray $(addprefix teaser_, clouds cosmos hdospray materials moana rm tapestry)))
-scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_svg2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_svg)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
 webimages := $(addprefix www/, $(images_webonly) $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
-webscripts := $(addprefix www/, $(scripts))
 pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_fig2svg)
 
 PANDOC := pandoc
@@ -27,7 +25,7 @@ ifneq "$(PDOK)" "1"
 endif
 
 all: www doc pdf
-www: $(webpages) www/stylesheet.css $(webimages) $(webscripts)
+www: $(webpages) www/stylesheet.css $(webimages) | wwwscripts
 doc: ../README.md
 pdf: ../readme.pdf
 
@@ -80,9 +78,10 @@ $(webimages): | wwwimgdir
 wwwimgdir:
 	@mkdir -p www/images
 
-$(webscripts): | wwwscriptdir
-wwwscriptdir:
-	@mkdir -p www/scripts
+wwwscripts: | wwwdir
+	if [[ -d ospray-doc/scripts ]] ; then \
+	  cp -r ospray-doc/scripts/ www ;\
+	fi
 
 $(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_web.md tmp/changelog_web.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
 tmpdir:
@@ -152,12 +151,6 @@ images/%:
 	    curl https://ospray.github.io/$@ --create-dirs -Lo $@ ;\
 	  fi \
 	fi
-
-### scripts
-########################################################################
-
-www/scripts/%: scripts/%
-	cp $< $@
 
 ### markdown
 ########################################################################
