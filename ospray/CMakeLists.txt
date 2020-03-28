@@ -126,6 +126,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   lights/HDRILight.cpp
   lights/HDRILight.ispc
   lights/SunSkyLight.cpp
+  lights/sky_model/sky_model.cpp
   lights/registration.cpp
 
   math/box.ispc
@@ -317,7 +318,6 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ${EMBREE_INCLUDE_DIRS}
     ${OPENVKL_INCLUDE_DIRS}
   )
-  add_subdirectory(external)
   add_library(ospray_module_ispc SHARED)
 
   ispc_target_add_sources(ospray_module_ispc ${OSPRAY_ISPC_DEVICE_SOURCES})
@@ -330,8 +330,6 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ospcommon::ospcommon
     $<BUILD_INTERFACE:embree>
     $<BUILD_INTERFACE:openvkl::openvkl>
-  PRIVATE
-    sky_model
   )
 
   target_include_directories(ospray_module_ispc
