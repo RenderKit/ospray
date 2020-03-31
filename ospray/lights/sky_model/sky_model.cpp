@@ -128,7 +128,7 @@ All instructions on how to use this code are in the accompanying header file.
 #endif
 
 #ifndef ALLOC
-#define ALLOC(_struct) ((_struct *)malloc(sizeof(_struct)))
+#define ALLOC(_struct) (new (_struct))
 #endif
 
 // internal definitions
@@ -496,7 +496,7 @@ ArHosekSkyModelState *arhosekskymodelstate_alienworld_alloc_init(
 
 void arhosekskymodelstate_free(ArHosekSkyModelState *state)
 {
-  free(state);
+  delete state;
 }
 
 float arhosekskymodel_radiance(
