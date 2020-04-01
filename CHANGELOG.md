@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v2.2.0
+
+-   Support for texture transformation in SciVis OBJ material
+
 ### Changes in v2.1.0
 
 -   New clipping geometries feature that allows clipping any scene

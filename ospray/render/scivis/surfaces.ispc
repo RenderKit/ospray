@@ -17,7 +17,7 @@ inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
   if (mat) {
     foreach_unique (m in mat) {
       surfaceColor = m->Kd;
-      if (m->map_Kd) {
+      if (valid(m->map_Kd)) {
         vec4f Kd_from_map = get4f(m->map_Kd, dg);
         surfaceColor = surfaceColor * make_vec3f(Kd_from_map);
         opacity *= Kd_from_map.w;

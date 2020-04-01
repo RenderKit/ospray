@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "SciVisMaterial.ih"
@@ -13,13 +13,14 @@ export void *uniform SciVisMaterial_create(void *uniform cppE)
 }
 
 export void SciVisMaterial_set(void *uniform _mat,
-    const uniform vec3f &Kd,
     uniform float d,
-    void *uniform _map_Kd)
+    void *uniform _map_Kd,
+    const uniform affine2f &xform_Kd,
+    const uniform vec3f &Kd)
 {
   SciVisMaterial *uniform mat = (SciVisMaterial * uniform) _mat;
 
-  mat->Kd = Kd;
-  mat->map_Kd = (uniform Texture2D * uniform) _map_Kd;
   mat->d = d;
+  mat->map_Kd = make_TextureParam((uniform Texture2D *)_map_Kd, xform_Kd);
+  mat->Kd = Kd;
 }
