@@ -47,46 +47,7 @@ terms are listed below.
 
 --------------------------------------------------------------------------------
 
-2.  Bootstrap
-    Copyright 2011-2019 The Bootstrap Authors
-    (https://github.com/twbs/bootstrap/graphs/contributors)
-
-    Dear ImGui
-    Copyright (c) 2014-2020 Omar Cornut
-
-    jQuery
-    Copyright (c) JS Foundation and other contributors
-
-    Popper
-    Copyright (c) Federico Zivolo 2019
-
-    The MIT License (MIT)
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to
-    deal in the Software without restriction, including without limitation the
-    rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-    sell copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-    IN THE SOFTWARE.
-
---------------------------------------------------------------------------------
-
-3.  C-Blosc
-    Copyright (C) 2009-2018 Francesc Alted <francesc@blosc.org>
-    Copyright (C) 2019-present Blosc Development team <blosc@blosc.org>
-
-    IlmBase (part of OpenEXR)
+2.  IlmBase (part of OpenEXR)
     Copyright (c) 2006-2019 OpenEXR a Series of LF Projects, LLC. All rights
     reserved.
 
@@ -118,37 +79,39 @@ terms are listed below.
 
 --------------------------------------------------------------------------------
 
-4.  GLFW
-    Copyright (c) 2002-2006 Marcus Geelnard
-    Copyright (c) 2006-2019 Camilla Löwy
+3.  Dear ImGui
+    Copyright (c) 2014-2020 Omar Cornut
 
-    zlib
-    Copyright (c) 1995-2017 Jean-loup Gailly and Mark Adler
+    The MIT License (MIT)
 
-    zlib License
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to
+    deal in the Software without restriction, including without limitation the
+    rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+    sell copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
 
-    This software is provided 'as-is', without any express or implied warranty.
-    In no event will the authors be held liable for any damages arising from the
-    use of this software.
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
 
-    Permission is granted to anyone to use this software for any purpose,
-    including commercial applications, and to alter it and redistribute it
-    freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-    claim that you wrote the original software. If you use this software in a
-    product, an acknowledgment in the product documentation would be appreciated
-    but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not be
-    misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+    IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 
-5.  Google Benchmark
+4.  Embree
+    Copyright 2009-2020 Intel Corporation
+
+    Google Benchmark
     Copyright 2014 Google Inc. All rights reserved.
+
+    OSPRay
+    Copyright 2009-2020 Intel Corporation
 
     Threading Building Blocks (TBB)
     Copyright (c) 2005-2020 Intel Corporation
@@ -341,6 +304,35 @@ terms are listed below.
     WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
     License for the specific language governing permissions and limitations
     under the License.
+
+--------------------------------------------------------------------------------
+
+5.  GLFW
+    Copyright (c) 2002-2006 Marcus Geelnard
+    Copyright (c) 2006-2019 Camilla Löwy
+
+    zlib
+    Copyright (c) 1995-2017 Jean-loup Gailly and Mark Adler
+
+    zlib License
+
+    This software is provided 'as-is', without any express or implied warranty.
+    In no event will the authors be held liable for any damages arising from the
+    use of this software.
+
+    Permission is granted to anyone to use this software for any purpose,
+    including commercial applications, and to alter it and redistribute it
+    freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+    claim that you wrote the original software. If you use this software in a
+    product, an acknowledgment in the product documentation would be appreciated
+    but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
 
 --------------------------------------------------------------------------------
 
@@ -674,10 +666,45 @@ terms are listed below.
 
 --------------------------------------------------------------------------------
 
+7. C-Blosc
+   Copyright (C) 2009-2018 Francesc Alted <francesc@blosc.org>
+   Copyright (C) 2019-present Blosc Development team <blosc@blosc.org>
+
+BSD-3-Clause (modified)
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+ * Neither the name Francesc Alted nor the names of its contributors may be used
+   to endorse or promote products derived from this software without specific
+   prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+--------------------------------------------------------------------------------
+
 The following third party programs have their own third party programs. These
 additional third party program files are as follows:
 
-1. Threading Building Blocks (TBB): ./third-party-programs-TBB.txt
+1. Embree: ./third-party-programs-Embree.txt
+2. OSPRay: ./third-party-programs.txt
+3. Threading Building Blocks (TBB): ./third-party-programs-TBB.txt
 
 --------------------------------------------------------------------------------
 
