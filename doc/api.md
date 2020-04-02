@@ -2154,10 +2154,16 @@ supports the special parameters listed in the table below.
   bool  architectural          vertical edges are projected to be
                                parallel
 
-  int   stereoMode             0: no stereo (default),
-                               1: left eye,
-                               2: right eye,
-                               3: side-by-side
+  int   stereoMode             `OSPStereoMode` for stereo rendering,
+                               possible values are:
+
+                               `OSP_STEREO_NONE` (default)
+
+                               `OSP_STEREO_LEFT`
+
+                               `OSP_STEREO_RIGHT`
+
+                               `OSP_STEREO_SIDE_BY_SIDE`
 
   float interpupillaryDistance distance between left and right eye when
                                stereo is enabled
