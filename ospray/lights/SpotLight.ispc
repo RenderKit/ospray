@@ -19,7 +19,8 @@ struct SpotLight
   float cosAngleScale; // 1/(cos(border of the penumbra area) - cosAngleMax);
                        // positive
   float radius; // defines the size of the (extended) SpotLight
-  float diskPdf; // pdf of disk with radius
+  float innerRadius; // defines the size of the (extended) SpotLight
+  float areaPdf; // pdf of disk/ring with radius/innerRadius
   float *lid; // luminance intensity distribution
   vec2i size;
   vec2f scale;
@@ -68,7 +69,9 @@ Light_SampleRes SpotLight_sample(
   res.dir = self->position - dg.P;
 
   if (self->radius > 0.)
-    res.dir = self->light2world * uniformSampleDisk(self->radius, s) + res.dir;
+    res.dir = self->light2world
+            * uniformSampleRing(self->radius, self->innerRadius, s)
+        + res.dir;
 
   const float dist2 = dot(res.dir, res.dir);
   const float invdist = rsqrt(dist2);
@@ -82,7 +85,7 @@ Light_SampleRes SpotLight_sample(
 
   if (self->radius > 0.) {
     // convert area PDF to solid angle PDF
-    res.pdf = self->diskPdf * (dist2 / abs(cosAngle));
+    res.pdf = self->areaPdf * (dist2 / abs(cosAngle));
     // calculate the attenuated emitted radiance
     res.weight = self->super.radiance
         * SpotLight_angularAttenuation(self, cosAngle, res.dir);
@@ -93,7 +96,7 @@ Light_SampleRes SpotLight_sample(
       // remove the cosine term. To avoid numerical issues
       // at cosineAngle = 0 we use the fact that the division
       // of radiance with the cosine cancels out.
-      res.weight = res.weight / (self->diskPdf * dist2);
+      res.weight = res.weight / (self->areaPdf * dist2);
     }
   } else {
     res.pdf = inf; // we always take this sample
@@ -122,14 +125,16 @@ Light_EvalRes SpotLight_eval(const uniform Light *uniform super,
   res.radiance = make_vec3f(0.f);
 
   if (self->radius > 0.f) {
-    // intersect disk
+    // intersect ring
     const float cosAngle = -dot(dir, self->light2world.vz);
     if (cosAngle > self->cosAngleMax) { // inside illuminated cone?
       const vec3f vp = dg.P - self->position;
       const float t = dot(vp, self->light2world.vz) * rcp(cosAngle);
       if (t > minDist & t <= maxDist) {
         const vec3f vd = vp + t * dir;
-        if (dot(vd, vd) < sqr(self->radius)) { // inside disk?
+        const float d2 = dot(vd, vd);
+        // inside ring?
+        if (and(d2 < sqr(self->radius), d2 > sqr(self->innerRadius))) {
           // calculate the attenuated emitted radiance
           res.radiance = self->super.radiance
               * SpotLight_angularAttenuation(self, cosAngle, dir);
@@ -139,9 +144,8 @@ Light_EvalRes SpotLight_eval(const uniform Light *uniform super,
           if (self->lid) {
             res.radiance = res.radiance / abs(cosAngle);
           }
-          const float pdf = self->diskPdf;
           // convert area PDF to solid angle PDF
-          res.pdf = pdf * (sqr(t) / abs(cosAngle));
+          res.pdf = self->areaPdf * (sqr(t) / abs(cosAngle));
         }
       }
     }
@@ -161,6 +165,7 @@ export void SpotLight_set(void *uniform super,
     uniform float cosAngleMax,
     uniform float cosAngleScale,
     uniform float radius,
+    uniform float innerRadius,
     const uniform vec2i &size,
     float *uniform lid)
 {
@@ -172,7 +177,8 @@ export void SpotLight_set(void *uniform super,
   self->cosAngleMax = cosAngleMax;
   self->cosAngleScale = cosAngleScale;
   self->radius = radius;
-  self->diskPdf = uniformSampleDiskPDF(radius);
+  self->innerRadius = innerRadius;
+  self->areaPdf = uniformSampleRingPDF(radius, innerRadius);
   self->lid = lid;
   if (self->lid) {
     self->world2light = rcp(frame);
@@ -197,6 +203,7 @@ export void *uniform SpotLight_create()
       make_vec3f(1.f),
       0.f,
       100.f,
+      0.f,
       0.f,
       make_vec2i(0),
       NULL);

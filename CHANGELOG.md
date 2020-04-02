@@ -19,6 +19,7 @@ Version History
 -   Added support for random light sampling to the `pathtracer`, the
     number of sampled light sources per path vertex is defined by the
     `lightSamples` parameter
+-   Support ring light by extending spot with `innerRadius`
 -   Fixed non-physical behavior of the `spot` and `sphere` light sources
     -   for area lights (when `radius > 0`) surfaces close to the light
         will be darker

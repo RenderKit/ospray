@@ -1284,6 +1284,10 @@ the spotlight supports the special parameters listed in the table.
                                                radius of a disk with normal
                                                `direction`
 
+  float      innerRadius                     0 in combination with
+                                               `radius` turns the disk
+                                               into a ring
+
   float[]    intensityDistribution             luminous intensity distribution
                                                for photometric lights; can be 2D
                                                for asymmetric illumination;
@@ -1302,7 +1306,8 @@ the spotlight supports the special parameters listed in the table.
 
 Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
-tracer]).
+tracer]). Additionally setting the inner radius will result in a ring
+instead of a disk emitting the light.
 
 Measured light sources (IES, EULUMDAT, ...) are supported by providing
 an `intensityDistribution` [data] array to modulate the intensity per
