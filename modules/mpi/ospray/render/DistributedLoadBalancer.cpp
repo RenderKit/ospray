@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedLoadBalancer.h"
 #include <algorithm>
@@ -31,7 +18,7 @@ namespace staticLoadBalancer {
 using namespace mpicommon;
 using namespace ospcommon;
 
-float Distributed::renderFrame(
+void Distributed::renderFrame(
     FrameBuffer *_fb, Renderer *_renderer, Camera *camera, World *_world)
 {
   auto *dfb = dynamic_cast<DistributedFrameBuffer *>(_fb);
@@ -44,12 +31,14 @@ float Distributed::renderFrame(
 
   auto *renderer = dynamic_cast<DistributedRenderer *>(_renderer);
   if (!renderer) {
-    if (world->allRegions.size() == 1)
-      return renderFrameReplicated(dfb, _renderer, camera, world);
-
-    throw std::runtime_error(
-        "Distributed rendering requires a "
-        "distributed renderer!");
+    if (world->allRegions.size() == 1) {
+      renderFrameReplicated(dfb, _renderer, camera, world);
+      return;
+    } else {
+      throw std::runtime_error(
+          "Distributed rendering requires a "
+          "distributed renderer!");
+    }
   }
 
   if (!reinterpret_cast<PerspectiveCamera *>(camera)) {
@@ -270,10 +259,9 @@ float Distributed::renderFrame(
   renderer->endFrame(dfb, perFrameData);
 
   dfb->endFrame(renderer->errorThreshold, camera);
-  return dfb->getVariance();
 }
 
-float Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
+void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
     Renderer *renderer,
     Camera *camera,
     DistributedWorld *world)
@@ -332,7 +320,6 @@ float Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
   renderer->endFrame(fb, perFrameData);
 
   fb->endFrame(renderer->errorThreshold, camera);
-  return fb->getVariance();
 }
 
 std::string Distributed::toString() const

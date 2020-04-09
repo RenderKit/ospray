@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include <vector>
 
@@ -27,10 +14,10 @@
 #include "ospcommon/utility/ArrayView.h"
 #include "ospcommon/utility/OwnedArray.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
+#include "ospray/MPIDistributedDevice.h"
 #include "render/RenderTask.h"
 #include "texture/Texture.h"
 #include "volume/VolumetricModel.h"
-#include "ospray/MPIDistributedDevice.h"
 
 namespace ospray {
 namespace mpi {
@@ -195,10 +182,10 @@ void newSharedData(OSPState &state,
 
   size_t nbytes = numItems.x * stride.x;
   if (numItems.y > 1) {
-    nbytes += numItems.y * stride.y;
+    nbytes = numItems.y * stride.y;
   }
   if (numItems.z > 1) {
-    nbytes += numItems.z * stride.z;
+    nbytes = numItems.z * stride.z;
   }
 
   auto view = ospcommon::make_unique<OwnedArray<uint8_t>>();
@@ -324,7 +311,6 @@ void release(
       ++it;
     }
   }
-
 
   // Pass through the data and see if any have been completely free'd
   // i.e., no object depends on them anymore either.
@@ -752,6 +738,22 @@ void futureGetProgress(OSPState &state,
   }
 }
 
+void futureGetTaskDuration(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric)
+{
+  int64_t handle = 0;
+  cmdBuf >> handle;
+  float progress = ospGetTaskDuration(state.getObject<OSPFuture>(handle));
+
+  if (mpicommon::worker.rank == 0) {
+    using namespace utility;
+    auto view = std::make_shared<OwnedArray<uint8_t>>(
+        reinterpret_cast<uint8_t *>(&progress), sizeof(progress));
+    fabric.send(view, 0);
+  }
+}
+
 void finalize(
     OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
@@ -870,6 +872,9 @@ void dispatchWork(TAG t,
     break;
   case FUTURE_GET_PROGRESS:
     futureGetProgress(state, cmdBuf, fabric);
+    break;
+  case FUTURE_GET_TASK_DURATION:
+    futureGetTaskDuration(state, cmdBuf, fabric);
     break;
   case FINALIZE:
     finalize(state, cmdBuf, fabric);

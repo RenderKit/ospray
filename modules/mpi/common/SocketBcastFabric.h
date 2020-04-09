@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -41,6 +28,8 @@ struct OSPRAY_MPI_INTERFACE SocketWriterFabric : public networking::Fabric
 
   void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
 
+  void flushBcastSends() override;
+
   void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
 
   void send(
@@ -63,6 +52,9 @@ struct OSPRAY_MPI_INTERFACE SocketWriterFabric : public networking::Fabric
   std::vector<ospcommon::socket_t> sockets;
   std::unique_ptr<ospcommon::tasking::AsyncLoop> sendThread;
   ospcommon::containers::TransactionalBuffer<Message> outbox;
+
+  std::mutex mutex;
+  bool bcasts_in_outbox;
 };
 
 /*! A reader which reads data broadcast out from a root process
@@ -80,6 +72,8 @@ struct OSPRAY_MPI_INTERFACE SocketReaderFabric : public networking::Fabric
   SocketReaderFabric &operator=(const SocketReaderFabric &) = delete;
 
   void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
+
+  void flushBcastSends() override;
 
   void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
 

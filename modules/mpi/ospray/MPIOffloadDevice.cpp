@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #ifndef _WIN32
 #include <dlfcn.h>
@@ -483,24 +470,14 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
 
   size_t nbytes = numItems.x * stride.x;
   if (numItems.y > 1) {
-    nbytes += numItems.y * stride.y;
+    nbytes = numItems.y * stride.y;
   }
   if (numItems.z > 1) {
-    nbytes += numItems.z * stride.z;
+    nbytes = numItems.z * stride.z;
   }
 
-  /*
   std::shared_ptr<utility::AbstractArray<uint8_t>> dataView =
       std::make_shared<utility::ArrayView<uint8_t>>(
-          const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
-          nbytes);
-          */
-  // TODO NOTE: For backwards compatabiliy we can't assume the data will
-  // actually be kept alive because of how the newData wrapper util is
-  // implemented. What we'd want to do in the future is compact when given a
-  // strided data, but share when given a native sized data.
-  std::shared_ptr<utility::AbstractArray<uint8_t>> dataView =
-      std::make_shared<utility::OwnedArray<uint8_t>>(
           const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
           nbytes);
 
@@ -726,6 +703,10 @@ void MPIOffloadDevice::release(OSPObject _object)
   networking::BufferWriter writer;
   writer << work::RELEASE << handle.i64;
   sendWork(writer.buffer);
+
+  // Make sure any object setup/data copy/etc. related to this object are
+  // completed
+  fabric->flushBcastSends();
 }
 
 void MPIOffloadDevice::retain(OSPObject _obj)
@@ -901,6 +882,19 @@ float MPIOffloadDevice::getProgress(OSPFuture _task)
   return result;
 }
 
+float MPIOffloadDevice::getTaskDuration(OSPFuture _task)
+{
+  const ObjectHandle handle = (ObjectHandle &)_task;
+  networking::BufferWriter writer;
+  writer << work::FUTURE_GET_TASK_DURATION << handle.i64;
+  sendWork(writer.buffer);
+  float result = 0;
+  utility::ArrayView<uint8_t> view(
+      reinterpret_cast<uint8_t *>(&result), sizeof(result));
+  fabric->recv(view, rootWorkerRank());
+  return result;
+}
+
 OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
     OSPRenderer renderer,
     OSPCamera camera,
@@ -948,8 +942,6 @@ ObjectHandle MPIOffloadDevice::allocateHandle() const
 {
   return ObjectHandle();
 }
-
-OSP_REGISTER_DEVICE(MPIOffloadDevice, mpiOffload);
 
 } // namespace mpi
 } // namespace ospray

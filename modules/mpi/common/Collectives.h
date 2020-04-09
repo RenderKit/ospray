@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2016-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2016-2019 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -30,14 +17,11 @@ namespace mpicommon {
  * valid until the future completes.
  */
 std::future<void *> OSPRAY_MPI_INTERFACE bcast(
-    void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+    void *buffer, size_t count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
-// TODO: Maybe we can just send a unique ptr or move only types
-// NOTE: std::future dtor blocks, so for async sending we need to hang
-// on to the futures and check on them
 std::future<void *> OSPRAY_MPI_INTERFACE bcast(
     std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> &buffer,
-    int count,
+    size_t count,
     MPI_Datatype datatype,
     int root,
     MPI_Comm comm);
@@ -92,6 +76,7 @@ std::future<void *> OSPRAY_MPI_INTERFACE reduce(const void *sendBuffer,
 /* Start an asynchronously run send. The buffer is owned by
  * the caller and must be kept valid until the future is set, indicating
  * completion of the send.
+ * TODO: Chunking
  */
 std::future<void *> OSPRAY_MPI_INTERFACE send(void *buffer,
     int count,
@@ -103,6 +88,7 @@ std::future<void *> OSPRAY_MPI_INTERFACE send(void *buffer,
 /* Start an asynchronously run recv. The buffer is owned by
  * the caller and must be kept valid until the future is set, indicating
  * completion of the recv.
+ * TODO: Chunking
  */
 std::future<void *> OSPRAY_MPI_INTERFACE recv(void *buffer,
     int count,
@@ -154,7 +140,7 @@ class OSPRAY_MPI_INTERFACE Bcast : public Collective
    * completion of the broadcast.
    */
   Bcast(std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> buffer,
-      int count,
+      size_t count,
       MPI_Datatype datatype,
       int root,
       MPI_Comm comm);
@@ -169,7 +155,7 @@ class OSPRAY_MPI_INTERFACE Bcast : public Collective
 
  private:
   std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> buffer;
-  int count;
+  size_t count;
   int typeSize;
   MPI_Datatype datatype;
   int root;

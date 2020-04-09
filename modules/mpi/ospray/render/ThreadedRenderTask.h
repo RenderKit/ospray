@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -38,8 +25,11 @@ struct ThreadedRenderTask : public Future
   void cancel() override;
   float getProgress() override;
 
+  float getTaskDuration() override;
+
  private:
   Ref<FrameBuffer> fb;
+  std::atomic<float> taskDuration{0.f};
   std::atomic<bool> finished;
   std::thread thread;
 };
@@ -51,7 +41,7 @@ inline ThreadedRenderTask::ThreadedRenderTask(
     : fb(_fb), finished(false)
 {
   thread = std::thread([this, fcn]() {
-    fcn();
+    taskDuration = fcn();
     finished = true;
   });
 }
@@ -88,6 +78,10 @@ inline float ThreadedRenderTask::getProgress()
   return fb->getCurrentProgress();
 }
 
+inline float ThreadedRenderTask::getTaskDuration()
+{
+    return taskDuration.load();
+}
+
 } // namespace mpi
 } // namespace ospray
-

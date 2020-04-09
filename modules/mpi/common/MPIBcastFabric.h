@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -25,17 +12,6 @@
 #include "MPICommon.h"
 
 namespace mpicommon {
-
-/* Plans for reworking of MPI fabric:
- *
- * - Want to be able to chunk up large buffers to send them and
- *   re-assemble them on the host side, kind of like in the socket
- *   recv stuff.
- *
- * - Want to keep large buffers (newData, setRegion) separate from
- *   regular command stuff so we don't need to pack/unpack them all
- *   the time to cut out these copies.
- */
 
 /*! a specific fabric based on MPI. Note that in the case of an
  *  MPIFabric using an intercommunicator the send rank must
@@ -51,6 +27,8 @@ class OSPRAY_MPI_INTERFACE MPIFabric : public networking::Fabric
   virtual ~MPIFabric() override = default;
 
   void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
+
+  void flushBcastSends() override;
 
   void recvBcast(utility::AbstractArray<uint8_t> &buf) override;
 
