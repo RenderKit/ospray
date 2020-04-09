@@ -1,25 +1,21 @@
 Version History
 ---------------
 
-### OSPRay MPI 2.1.0
+### Changes in v2.1.0:
 
-#### New Features:
 -   Add suport for `ospGetTaskDuration` to query the render time of a
     asynchronous (or synchronous) renderFrame call
-
-#### Fixed Issues:
 -   Use flush bcasts to allow us to use non-owning views for data
-    transfer
+    transfer. Note that shared `ospData` with strides is currently
+    transmitted as whole
 -   Fix member variable type for bcast
 -   Fix incorrect data size computation in `offload` device
 -   Fix large data chunking support for MPI Bcast
 
-#### Known Issues:
--   Shared `ospData` with strides is transmitted as whole
-
 ### Changes in v2.0.0:
 
--   The MPI module is now provided separately from the main OSPRay repo
+-   The MPI module is now provided separately from the main OSPRay
+    repository
 -   Users can now extend OSPRay with custom distributed renderers and
     compositing operations, by extending
     `ospray::mpi::DistributedRenderer` and the
