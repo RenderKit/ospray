@@ -118,10 +118,10 @@ BUILD_EMBREE_FROM_SOURCE
 : set to OFF will download a pre-built version of Embree.
 
 BUILD_OIDN_FROM_SOURCE
-: set to OFF will download a pre-built version of OpenImageDenoise.
+: set to OFF will download a pre-built version of Open Image Denoise.
 
 BUILD_OIDN_VERSION
-: determines which verison of OpenImageDenoise to pull down.
+: determines which version of Open Image Denoise to pull down.
 
 For the full set of options, run:
 

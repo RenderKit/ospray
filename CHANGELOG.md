@@ -1,10 +1,10 @@
 Version History
 ---------------
 
-### Changes in v2.1.0
+### Changes in v2.1.0:
 
 -   New clipping geometries feature that allows clipping any scene
-    (gemetry and volumes); all OSPRay geometry types can by used as
+    (geometry and volumes); all OSPRay geometry types can by used as
     clipping geometry
     -   Inverted clipping is supported via new `invertNormals` parameter
         of `GeometricModel`
@@ -24,7 +24,7 @@ Version History
 -   Generalized `cpp::Device` parameter setting to match other handle
     types
 -   Passing `NULL` to `ospRelease` is not reported as error anymore
--   Fix computation of strides for ospData
+-   Fix computation of strides for `OSPData`
 -   Fix transparency in `scivis` renderer
 -   Add missing C++ wrapper for `ospGetVariance`
 -   Proper demonstration of `ospGetVariance` in `ospTutorialAsync`
@@ -32,7 +32,7 @@ Version History
     arguments first before committing the device, to ensure it is
     committed in a valid state.
 -   Object factory functions are now registered during module
-    initialization via the appropiate `registerType` function
+    initialization via the appropriate `registerType` function
 -   Fix issue with OSPRay ignoring tasking system thread count settings
 -   Fix issue where OSPRay always loaded the ISPC module, even if not
     required
