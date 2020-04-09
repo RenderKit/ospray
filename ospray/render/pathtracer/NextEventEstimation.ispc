@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/NextEventEstimation.ih"
@@ -55,6 +55,10 @@ vec3f nextEventEstimation(const PathContext &pathContext,
     }
     setRay(shadowRay, org, ls.dir, 0.f, ls.dist, pathState.time);
 
+    // Trace ray in clipping geometries scene, fill array with ray intervals
+    RayIntervals rayIntervals;
+    traceClippingRay(pathContext.world, shadowRay, rayIntervals);
+
     const vec3f throughput = pathState.throughput * fe.value;
 
 #if ROULETTE == 1
@@ -71,11 +75,13 @@ vec3f nextEventEstimation(const PathContext &pathContext,
         pathContext.world,
         unshadedLightContrib,
         shadowRay,
+        rayIntervals,
         pathState.currentMedium);
     if (reduce_max(lightContrib) > 0) {
       const float T = volumeTransmittance(pathState,
           pathContext.world,
           shadowRay,
+          rayIntervals,
           pathContext.ldSampler,
           pathContext.randomSampler);
       if (reduce_max(T) > 0) {
@@ -86,6 +92,7 @@ vec3f nextEventEstimation(const PathContext &pathContext,
             : volumeTransmittance(pathState,
                 pathContext.world,
                 shadowRay,
+                rayIntervals,
                 pathContext.ldSampler,
                 pathContext.randomSampler);
         L = L

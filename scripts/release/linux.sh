@@ -48,7 +48,7 @@ done
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 DEP_BUILD_DIR=$ROOT_DIR/build_deps
-OSPRAY_PKG_BASE=ospray-2.0.1.x86_64.linux
+OSPRAY_PKG_BASE=ospray-2.1.0.x86_64.linux
 OSPRAY_BUILD_DIR=$ROOT_DIR/build_release
 INSTALL_DIR=$ROOT_DIR/install/$OSPRAY_PKG_BASE
 THREADS=`nproc`
@@ -120,13 +120,13 @@ cmake -L \
 make -j $THREADS install
 
 # verify libs
-check_symbols $INSTALL_DIR/lib/libospray.so GLIBC   2 14 0
-check_symbols $INSTALL_DIR/lib/libospray.so GLIBCXX 3 4 15
-check_symbols $INSTALL_DIR/lib/libospray.so CXXABI  1 3 5
+check_symbols $INSTALL_DIR/lib/libospray.so GLIBC   2 17 0
+check_symbols $INSTALL_DIR/lib/libospray.so GLIBCXX 3 4 19
+check_symbols $INSTALL_DIR/lib/libospray.so CXXABI  1 3 7
 
-check_symbols $INSTALL_DIR/lib/libospray_module_ispc.so GLIBC   2 14 0
-check_symbols $INSTALL_DIR/lib/libospray_module_ispc.so GLIBCXX 3 4 15
-check_symbols $INSTALL_DIR/lib/libospray_module_ispc.so CXXABI  1 3 5
+check_symbols $INSTALL_DIR/lib/libospray_module_ispc.so GLIBC   2 17 0
+check_symbols $INSTALL_DIR/lib/libospray_module_ispc.so GLIBCXX 3 4 19
+check_symbols $INSTALL_DIR/lib/libospray_module_ispc.so CXXABI  1 3 7
 
 check_imf $INSTALL_DIR/lib/libospray.so
 check_imf $INSTALL_DIR/lib/libospray_module_ispc.so

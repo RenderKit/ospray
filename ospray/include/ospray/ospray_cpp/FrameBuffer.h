@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -48,6 +48,7 @@ class FrameBuffer : public ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>
   void *map(OSPFrameBufferChannel channel) const;
   void unmap(void *ptr) const;
   void clear() const;
+  float variance() const;
 };
 
 static_assert(sizeof(FrameBuffer) == sizeof(OSPFrameBuffer),
@@ -131,6 +132,11 @@ inline void FrameBuffer::unmap(void *ptr) const
 inline void FrameBuffer::clear() const
 {
   ospResetAccumulation(handle());
+}
+
+inline float FrameBuffer::variance() const
+{
+  return ospGetVariance(handle());
 }
 
 } // namespace cpp

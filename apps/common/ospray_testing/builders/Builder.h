@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -27,6 +27,8 @@ struct Builder : public memory::RefCountedObject,
 
   virtual cpp::Group buildGroup() const = 0;
   virtual cpp::World buildWorld() const;
+  virtual cpp::World buildWorld(
+      const std::vector<cpp::Instance> &instances) const;
 
  protected:
   cpp::TransferFunction makeTransferFunction(const vec2f &valueRange) const;

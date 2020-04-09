@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -18,12 +18,15 @@ struct RenderTask : public Future, public tasking::AsyncTask<float>
 
   bool isFinished(OSPSyncEvent event = OSP_TASK_FINISHED) override;
 
-  void wait(OSPSyncEvent event) override;
+  void wait(OSPSyncEvent event = OSP_TASK_FINISHED) override;
   void cancel() override;
   float getProgress() override;
 
+  float getTaskDuration() override;
+
  private:
   Ref<FrameBuffer> fb;
+  float taskDuration{0.f};
 };
 
 // Inlined definitions //////////////////////////////////////////////////////
@@ -53,6 +56,14 @@ inline void RenderTask::cancel()
 inline float RenderTask::getProgress()
 {
   return fb->getCurrentProgress();
+}
+
+inline float RenderTask::getTaskDuration()
+{
+  if (AsyncTask<float>::valid())
+    taskDuration = AsyncTask<float>::get();
+
+  return taskDuration;
 }
 
 } // namespace ospray

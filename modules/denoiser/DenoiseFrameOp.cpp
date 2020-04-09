@@ -111,12 +111,15 @@ std::string DenoiseFrameOp::toString() const
   return "ospray::DenoiseFrameOp";
 }
 
-OSP_REGISTER_IMAGE_OP(DenoiseFrameOp, denoiser);
-
 } // namespace ospray
 
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_denoiser(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
-  return ospray::moduleVersionCheck(versionMajor, versionMinor);
+  auto status = ospray::moduleVersionCheck(versionMajor, versionMinor);
+
+  if (status == OSP_NO_ERROR)
+    ospray::ImageOp::registerType<ospray::DenoiseFrameOp>("denoiser");
+
+  return status;
 }

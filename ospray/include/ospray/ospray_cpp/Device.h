@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -20,14 +20,27 @@ class Device
 
   ~Device();
 
-  void set(const std::string &name, const std::string &v) const;
-  void set(const std::string &name, bool v) const;
-  void set(const std::string &name, int v) const;
-  void set(const std::string &name, void *v) const;
+  template <typename FCN_T>
+  void setErrorFunc(FCN_T &&fcn);
+
+  template <typename FCN_T>
+  void setStatusFunc(FCN_T &&fcn);
+
+  template <typename T>
+  void setParam(const std::string &name, const T &v) const;
+
+  void setParam(const std::string &name, const char *v) const;
+  void setParam(const std::string &name, const std::string &v) const;
+
+  void setParam(const std::string &name, OSPDataType, const void *) const;
+
+  void removeParam(const std::string &name) const;
 
   void commit() const;
 
   void setCurrent() const;
+
+  static Device current();
 
   OSPDevice handle() const;
 
@@ -54,25 +67,49 @@ inline Device::~Device()
   ospDeviceRelease(ospHandle);
 }
 
-inline void Device::set(const std::string &name, const std::string &v) const
+template <typename FCN_T>
+inline void Device::setErrorFunc(FCN_T &&fcn)
 {
-  auto *s = v.c_str();
-  ospDeviceSetParam(ospHandle, name.c_str(), OSP_STRING, &s);
+  ospDeviceSetErrorFunc(ospHandle, std::forward<FCN_T>(fcn));
 }
 
-inline void Device::set(const std::string &name, bool v) const
+template <typename FCN_T>
+inline void Device::setStatusFunc(FCN_T &&fcn)
 {
-  ospDeviceSetParam(ospHandle, name.c_str(), OSP_BOOL, &v);
+  ospDeviceSetStatusFunc(ospHandle, std::forward<FCN_T>(fcn));
 }
 
-inline void Device::set(const std::string &name, int v) const
+template <typename T>
+inline void Device::setParam(const std::string &name, const T &v) const
 {
-  ospDeviceSetParam(ospHandle, name.c_str(), OSP_INT, &v);
+  static_assert(OSPTypeFor<T>::value != OSP_UNKNOWN,
+      "Only types corresponding to OSPDataType values can be set "
+      "as parameters on OSPRay objects. NOTE: Math types (vec, "
+      "box, linear, affine) are "
+      "expected to come from ospcommon::math.");
+  ospDeviceSetParam(ospHandle, name.c_str(), OSPTypeFor<T>::value, &v);
 }
 
-inline void Device::set(const std::string &name, void *v) const
+inline void Device::setParam(const std::string &name, const char *v) const
 {
-  ospDeviceSetParam(ospHandle, name.c_str(), OSP_VOID_PTR, &v);
+  ospDeviceSetParam(ospHandle, name.c_str(), OSP_STRING, v);
+}
+
+inline void Device::setParam(
+    const std::string &name, const std::string &v) const
+{
+  ospDeviceSetParam(ospHandle, name.c_str(), OSP_STRING, v.c_str());
+}
+
+inline void Device::setParam(
+    const std::string &name, OSPDataType type, const void *mem) const
+{
+  ospDeviceSetParam(ospHandle, name.c_str(), type, mem);
+}
+
+inline void Device::removeParam(const std::string &name) const
+{
+  ospDeviceRemoveParam(ospHandle, name.c_str());
 }
 
 inline void Device::commit() const
@@ -83,6 +120,11 @@ inline void Device::commit() const
 inline void Device::setCurrent() const
 {
   ospSetCurrentDevice(ospHandle);
+}
+
+inline Device Device::current()
+{
+  return Device(ospGetCurrentDevice());
 }
 
 inline OSPDevice Device::handle() const

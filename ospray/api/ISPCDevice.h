@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,6 +7,8 @@
 #include "Device.h"
 // embree
 #include "embree3/rtcore.h"
+// openvkl
+#include "openvkl/openvkl.h"
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
 
@@ -118,6 +120,7 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   void wait(OSPFuture, OSPSyncEvent) override;
   void cancel(OSPFuture) override;
   float getProgress(OSPFuture) override;
+  float getTaskDuration(OSPFuture) override;
 
   OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
@@ -127,7 +130,12 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
   //             safely assume that a device exists.
   static RTCDevice embreeDevice;
+
+  static VKLDriver vklDriver;
 };
+
+extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
+    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/);
 
 } // namespace api
 } // namespace ospray

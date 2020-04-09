@@ -1,15 +1,17 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Medium.ih"
 #include "common/DifferentialGeometry.ih"
-#include "common/Material.ih"
 #include "common/Ray.ih"
+#include "render/Material.ih"
 #include "render/pathtracer/bsdfs/BSDF.ih"
 #include "render/pathtracer/bsdfs/ShadingContext.ih"
 #include "texture/TextureParam.ih"
+
+#define EPS 1e-5f
 
 struct PathTraceMaterial;
 

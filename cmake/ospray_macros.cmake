@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 include(CMakeFindDependencyMacro)
@@ -139,17 +139,6 @@ macro(ospray_configure_ispc_isa)
     if(EMBREE_ISA_SUPPORTS_AVX512SKX AND OPENVKL_ISA_AVX512SKX)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512skx-i32x16)
       message(STATUS "OSPRay AVX512SKX ISA target enabled.")
-    endif()
-
-    # NOTE(jda) - These checks are due to temporary Open VKL limitations with
-    #             iterators, they ought to be removed when these limitations are
-    #             lifted in a future version.
-    if(NOT EMBREE_ISA_SUPPORTS_AVX512SKX AND OPENVKL_ISA_AVX512SKX)
-      message(FATAL_ERROR "Currently Open VKL cannot have AVX512SKX compiled in without Embree AVX512SKX support")
-    endif()
-
-    if(NOT EMBREE_ISA_SUPPORTS_AVX512KNL AND OPENVKL_ISA_AVX512KNL)
-      message(FATAL_ERROR "Currently Open VKL cannot have AVX512KNL compiled in without Embree AVX512KNL support")
     endif()
 
   elseif (OSPRAY_BUILD_ISA STREQUAL "AVX512SKX")
@@ -441,8 +430,10 @@ macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED)
   else()
     get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
         INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(CONFIGURATIONS openvkl::openvkl IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION)
     get_target_property(OPENVKL_LIBRARY openvkl::openvkl
-        IMPORTED_LOCATION_RELEASE)
+        IMPORTED_LOCATION_${CONFIGURATION})
     message(STATUS "Found Open VKL: ${OPENVKL_LIBRARY}")
   endif()
 endmacro()

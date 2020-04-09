@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -7,6 +7,8 @@
 #include "common/Util.h"
 
 namespace ospray {
+
+static FactoryMap<Camera> g_cameraMap;
 
 ProjectedPoint::ProjectedPoint(const vec3f &pos, float radius)
     : screenPos(pos), radius(radius)
@@ -19,7 +21,12 @@ Camera::Camera()
 
 Camera *Camera::createInstance(const char *type)
 {
-  return createInstanceHelper<Camera, OSP_CAMERA>(type);
+  return createInstanceHelper(type, g_cameraMap[type]);
+}
+
+void Camera::registerType(const char *type, FactoryFcn<Camera> f)
+{
+  g_cameraMap[type] = f;
 }
 
 std::string Camera::toString() const

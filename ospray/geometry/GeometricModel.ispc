@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -28,7 +28,8 @@ export void GeometricModel_set(void *uniform _self,
     const Data1D *uniform color,
     const Data1D *uniform index,
     const Data1D *uniform material,
-    const uniform bool useRendererMaterialList)
+    const uniform bool useRendererMaterialList,
+    const uniform bool invertedNormals)
 {
   GeometricModel *uniform self = (GeometricModel * uniform) _self;
 
@@ -39,4 +40,5 @@ export void GeometricModel_set(void *uniform _self,
   self->material = *material;
 
   self->useRendererMaterialList = useRendererMaterialList;
+  self->invertedNormals = invertedNormals;
 }

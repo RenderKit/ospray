@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /*! \file ospray/moduleInit \brief Defines the module initialization callback */
@@ -41,8 +41,23 @@ namespace blp {
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_bilinear_patches(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
-  std::cout << "#osp: initializing the 'bilinear_patches' module" << std::endl;
-  return moduleVersionCheck(versionMajor, versionMinor);
+  auto status = moduleVersionCheck(versionMajor, versionMinor);
+
+  if (status == OSP_NO_ERROR) {
+    /*! maybe one of the most important parts of this example: this
+        function 'registers' the BilinearPatches class under the ospray
+        geometry type name of 'bilinear_patches'.
+
+        It is _this_ name that one can now (assuming the module has
+        been loaded with ospLoadModule(), of course) create geometries
+        with; i.e.,
+
+        OSPGeometry geom = ospNewGeometry("bilinear_patches") ;
+    */
+    Geometry::registerType<BilinearPatches>("bilinear_patches");
+  }
+
+  return status;
 }
 
 } // namespace blp

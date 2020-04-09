@@ -4,7 +4,6 @@
 #pragma once
 
 #include "../common/DifferentialGeometry.ih"
-#include "../common/Material.ih"
 #include "../common/Ray.ih"
 #include "math/AffineSpace.ih"
 

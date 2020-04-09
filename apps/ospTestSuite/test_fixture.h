@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Intel Corporation
+// Copyright 2017-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -73,57 +73,6 @@ class Base
   std::vector<cpp::Light> lightsList;
 
   std::vector<cpp::Instance> instances;
-};
-
-// Fixture class to test cornercases of intersection precision and epsilon
-// handling; parametrized with renderer, sphere radius, distance factor, and
-// whether the sphere is in origin
-class SpherePrecision
-    : public Base,
-      public ::testing::TestWithParam<std::tuple<float /*radius*/,
-          float /*factor*/,
-          bool /*move_cam*/,
-          const char * /*renderer*/>>
-{
- public:
-  SpherePrecision();
-  void SetUp() override;
-
- protected:
-  float dist;
-  float radius;
-  bool move_cam;
-};
-
-// Test a texture colored by a volume.  Creates a sphere colored by the torus
-// volume It's parametrized with type of the renderer.
-class TextureVolume : public Base, public ::testing::TestWithParam<const char *>
-{
- public:
-  TextureVolume();
-  void SetUp() override;
-};
-
-// Test a texture colored by a volume.  Creates a sphere colored by the torus
-// volume It's parametrized with type of the renderer and background color
-class DepthCompositeVolume
-    : public Base,
-      public ::testing::TestWithParam<std::tuple<const char *, vec4f>>
-{
- public:
-  DepthCompositeVolume();
-  void SetUp() override;
-
- private:
-  vec4f bgColor;
-};
-
-class RendererMaterialList : public Base,
-                             public ::testing::TestWithParam<const char *>
-{
- public:
-  RendererMaterialList();
-  void SetUp() override;
 };
 
 // Fixture class used for tests that uses 'ospray_testing' scenes

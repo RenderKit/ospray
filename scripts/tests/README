@@ -1,6 +1,10 @@
 Running Tests
 -------------
 
+notes for all items:
+${OSPRAY_SOURCE_DIR} is the ospray source root.
+PATH and LD_LIBRARY_PATH should contain ${OSPRAY_BUILD_DIR}.
+
 1. Build OSPRay
 
 Compile OSPRay in a build directory of your choosing. We will refer
@@ -8,31 +12,37 @@ to this directory as ${OSPRAY_BUILD_DIR}.
 
 2. Generate baseline images (OPTIONAL)
 
-images should download automatically when OSPRAY_TESTING is on.  Only
+Build OSPRay with OSPRAY_TESTING on.  Only
 generate new images for a test that has changed.  To generate new images for a specific
-test run ./regression_tests/ospTestSuite --gtest_filter="*TESTNAME*" --dump-img
-which will create images in a folder called baseline.
+test run ./ospTestSuite --gtest_filter="*TESTNAME*" --dump-img test_image_data/
+which will create images in a folder called test_image_data.
 
-In ${OSPRAY_BUILD_DIR}, run the "generate_baseline.sh" script:
+To make new images for all tests, In ${OSPRAY_BUILD_DIR}, run the
+"generate_baseline.sh" script:
 
-% ../scripts/tests/generate_baseline.sh
+% ${OSPRAY_SOURCE_DIR}/scripts/tests/generate_baseline.sh
+
+This will output generated images in a folder named generated_test_images.
+These images will not automatically be used as baseline images for the tests
+unless put into the correct folder or the update script is used (5).
 
 3. Run regression tests
 
 To verify whether a change to the codebase broke anything, run
 
-% ../scripts/tests/run_tests.sh
+% ${OSPRAY_SOURCE_DIR}/scripts/tests/run_tests.sh ${OSPRAY_SOURCE_DIR}
 
-This will run all tests and compare their results with baseline
-images generated in step 2.
+This will download baseline images and run tests to compare them
+in a folder named build_regression_tests.
 
 4.  To run an individual test
-./regression_tests/ospTestSuite --gtest_list_tests
+./ospTestSuite --gtest_list_tests
 this will output a list of test names
-./regression_tests/ospTestSuite --gest_filter="*NAME*"
+./ospTestSuite --gest_filter="*NAME*"
 will run a single test
 
-To add or update generated test images to ospray, use the included update_test_baseline.sh script and then send
+5.  Add or update generated test images to ospray
+Use the included update_test_baseline.sh script and then send
 the resulting files to ospray developers
 or do the following steps:
 

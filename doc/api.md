@@ -156,7 +156,7 @@ to avoid leaking the underlying device object.
 OSPRay allows applications to query runtime properties of a device in
 order to do enhanced validation of what device was loaded at runtime.
 The following function can be used to get these device-specific
-properties (attiributes about the device, not paramter values)
+properties (attributes about the device, not parameter values)
 
     int64_t ospDeviceGetProperty(OSPDevice, OSPDeviceProperty);
 
@@ -376,13 +376,13 @@ Thus the most efficient way to specify a data array from the application
 is to created a shared data array, which is done with
 
     OSPData ospNewSharedData(const void *sharedData,
-                       OSPDataType,
-      uint64_t numItems1,
-      int64_t byteStride1 = 0,
-      uint64_t numItems2 = 1,
-      int64_t byteStride2 = 0,
-      uint64_t numItems3 = 1,
-      int64_t byteStride3 = 0);
+        OSPDataType,
+        uint64_t numItems1,
+        int64_t byteStride1 = 0,
+        uint64_t numItems2 = 1,
+        int64_t byteStride2 = 0,
+        uint64_t numItems3 = 1,
+        int64_t byteStride3 = 0);
 
 The call returns an `OSPData` handle to the created array. The calling
 program guarantees that the `sharedData` pointer will remain valid for
@@ -395,8 +395,8 @@ and can also be negative. If `byteStride` is zero it will be determined
 automatically (e.g., as `sizeof(type)`). Strides do not need to be
 ordered, i.e., `byteStride2` can be smaller than `byteStride1`, which is
 equivalent to a transpose. However, if the stride should be calculated,
-then an ordering like `byteStride1 < byteStride2` is assumed to
-disambiguate.
+then an ordering in dimensions is assumed to disambiguate, i.e.,
+`byteStride1 < byteStride2 < byteStride3`.
 
 The enum type `OSPDataType` describes the different element types that
 can be represented in OSPRay; valid constants are listed in the table
@@ -423,6 +423,7 @@ below.
   OSP_UCHAR              8\ bit unsigned character scalar
   OSP_VEC[234]UC         ... and [234]-element vector
   OSP_USHORT             16\ bit unsigned integer scalar
+  OSP_VEC[234]US         ... and [234]-element vector
   OSP_INT                32\ bit signed integer scalar
   OSP_VEC[234]I          ... and [234]-element vector
   OSP_UINT               32\ bit unsigned integer scalar
@@ -436,26 +437,29 @@ below.
   OSP_DOUBLE             64\ bit double precision floating-point scalar
   OSP_BOX[1234]I         32\ bit integer box (lower + upper bounds)
   OSP_BOX[1234]F         32\ bit single precision floating-point box (lower + upper bounds)
-  OSP_LINEAR[234]F       32\ bit single precision floating-point linear transform
-  OSP_AFFINE[234]F       32\ bit single precision floating-point affine transform
+  OSP_LINEAR[23]F        32\ bit single precision floating-point linear transform ([23] vectors)
+  OSP_AFFINE[23]F        32\ bit single precision floating-point affine transform (linear transform plus translation)
   OSP_VOID_PTR           raw memory address (only found in module extensions)
   ---------------------- -----------------------------------------------
   : Valid named constants for `OSPDataType`.
 
+If the elements of the array are handles to objects, then their
+reference counter is incremented.
+
 An opaque `OSPData` with memory allocated by OSPRay is created with
 
     OSPData ospNewData(OSPDataType,
-      uint32_t numItems1,
-      uint32_t numItems2 = 1,
-      uint32_t numItems3 = 1);
+        uint32_t numItems1,
+        uint32_t numItems2 = 1,
+        uint32_t numItems3 = 1);
 
 To allow for (partial) copies or updates of data arrays use
 
     void ospCopyData(const OSPData source,
-      OSPData destination,
-      uint32_t destinationIndex1 = 0,
-      uint32_t destinationIndex2 = 0,
-      uint32_t destinationIndex3 = 0);
+        OSPData destination,
+        uint32_t destinationIndex1 = 0,
+        uint32_t destinationIndex2 = 0,
+        uint32_t destinationIndex3 = 0);
 
 which will copy the whole^[The number of items to be copied is defined
 by the size of the source array] content of the `source` array into
@@ -471,7 +475,7 @@ shared with OSPData by the application (created with
 
   - the source array must be shared as well (thus `ospCopyData` cannot
     be used to read opaque data)
-  - if source and destination memory overlaps (aliasing), then behaviour
+  - if source and destination memory overlaps (aliasing), then behavior
     is undefined
   - except if source and destination regions are identical (including
     matching strides), which can be used by application to mark that
@@ -677,7 +681,7 @@ the vertices and data values. Vertex ordering is the same as
 vertex.
 
 To maintain VTK data compatibility an index array may be specified via
-the `indexPrefixed` array that allow vertex indices to be interleaved
+the `indexPrefixed` array that allows vertex indices to be interleaved
 with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
 ..., id_m$.
 
@@ -721,7 +725,7 @@ with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
                                                      inaccuracies may appear if hex is not
                                                      parallelepiped
 
-  bool                 precomputedNormals      true  whether to accelerate by precomputing,
+  bool                 precomputedNormals     false  whether to accelerate by precomputing,
                                                      at a cost of 12 bytes/face
   -------------------  ------------------  --------  ---------------------------------------
   : Additional configuration parameters for unstructured volumes.
@@ -750,6 +754,7 @@ to `ospNewTransferFunction` and it is controlled by these parameters:
   ------------ ----------- ----------------------------------------------
   : Parameters accepted by the linear transfer function.
 
+The arrays `color` and `opacity` can be of different length.
 
 ### VolumetricModels
 
@@ -789,7 +794,7 @@ maximum of 2^32^ primitives.
 
 ### Mesh
 
-A mesh consiting of either triangles or quads is created by calling
+A mesh consisting of either triangles or quads is created by calling
 `ospNewGeometry` with type string "`mesh`". Once created, a mesh
 recognizes the following parameters:
 
@@ -819,47 +824,48 @@ A mesh consisting of subdivision surfaces, created by specifying a
 geometry of type "`subdivision`". Once created, a subdivision recognizes
 the following parameters:
 
-  --------------- -------------------- --------------------------------- -------------------------------------------------
-  Type            Name                                           Default Description
-  --------------- -------------------- --------------------------------- -------------------------------------------------
-  vec3f[]         vertex.position                                   NULL [data] array of vertex positions
+  ------- ------------------- --------------------------------------------------
+  Type    Name                Description
+  ------- ------------------- --------------------------------------------------
+  vec3f[] vertex.position     [data] array of vertex positions
 
-  vec4f[]         vertex.color                                      NULL [data] array of vertex colors (RGBA)
+  vec4f[] vertex.color        optional [data] array of vertex colors (RGBA)
 
-  vec2f[]         vertex.texcoord                                   NULL [data] array of vertex texture coordinates
+  vec2f[] vertex.texcoord     optional [data] array of vertex texture
+                              coordinates
 
-  float           level                                                  5 global level of tessellation, default is 5
+  float   level               global level of tessellation, default 5
 
-  uint[]          index                                             NULL [data] array of indices (into the vertex array(s))
+  uint[]  index               [data] array of indices (into the vertex array(s))
 
-  float[]         index.level                                       NULL [data] array of per-edge levels of tessellation,
-                                                                         overrides global level
+  float[] index.level         optional [data] array of per-edge levels of
+                              tessellation, overrides global level
 
-  uint[]          face                                              NULL [data] array holding the number of indices/edges
-                                                                         (3 to 15) per face
+  uint[]  face                optional [data] array holding the number of
+                              indices/edges (3 to 15) per face,
+                              defaults to 4 (a pure quad mesh)
 
-  vec2i[]         edgeCrease.index                                  NULL [data] array of edge crease indices
+  vec2i[] edgeCrease.index    optional [data] array of edge crease indices
 
-  float[]         edgeCrease.weight                                 NULL [data] array of edge crease weights
+  float[] edgeCrease.weight   optional [data] array of edge crease weights
 
-  uint[]          vertexCrease.index                                NULL [data] array of vertex crease indices
+  uint[]  vertexCrease.index  optional [data] array of vertex crease indices
 
-  float[]         vertexCrease.weight                               NULL [data] array of vertex crease weights
+  float[] vertexCrease.weight optional [data] array of vertex crease weights
 
-  int             mode                 `OSP_SUBDIVISION_SMOOTH_BOUNDARY` subdivision edge boundary mode.
-                                                                         Supported modes are:
+  int     mode                subdivision edge boundary mode, supported modes
+                              are:
 
-                                                                         `OSP_SUBDIVISION_NO_BOUNDARY`
+                              `OSP_SUBDIVISION_NO_BOUNDARY`
 
-                                                                         `OSP_SUBDIVISION_SMOOTH_BOUNDARY`
+                              `OSP_SUBDIVISION_SMOOTH_BOUNDARY` (default)
 
-                                                                         `OSP_SUBDIVISION_PIN_CORNERS`
+                              `OSP_SUBDIVISION_PIN_CORNERS`
 
-                                                                         `OSP_SUBDIVISION_PIN_BOUNDARY`
+                              `OSP_SUBDIVISION_PIN_BOUNDARY`
 
-                                                                         `OSP_SUBDIVISION_PIN_ALL`
-
-  --------------- -------------------- --------------------------------- -------------------------------------------------
+                              `OSP_SUBDIVISION_PIN_ALL`
+  ------- ------------------- --------------------------------------------------
   : Parameters defining a Subdivision geometry.
 
 The `vertex` and `index` arrays are mandatory to create a valid
@@ -960,7 +966,7 @@ discussion of curve types and data formatting).
 If a constant `radius` is used and positions are specified in a
 `vec3f[]` type of `vertex.position` format, then type/basis defaults to
 `OSP_ROUND` and `OSP_LINEAR` (this is the fastest and most memory
-efficient mode). Implementation is with round linear segements where
+efficient mode). Implementation is with round linear segments where
 each segment corresponds to a link between two vertices.
 
 The following section describes the properties of different curve basis'
@@ -984,7 +990,7 @@ OSP_BSPLINE
 vertex buffer. This basis is not interpolating, thus the curve does in
 general not go through any of the control points directly. Using this
 basis, 3 control points can be shared for two continuous neighboring
-curve segments, e.g. the curves $(p0, p1, p2, p3)$ and $(p1, p2, p3,
+curve segments, e.g., the curves $(p0, p1, p2, p3)$ and $(p1, p2, p3,
 p4)$ are C1 continuous. This feature make this basis a good choice to
 construct continuous multi-segment curves, as memory consumption can be
 kept minimal.
@@ -1036,6 +1042,21 @@ geometry by calling `ospNewGeometry` with type string "`box`".
   ---------- ---------- ------------------------------------------------------
   : Parameters defining a boxes geometry.
 
+### Planes
+
+OSPRay can directly render planes defined by plane equation coefficients
+in its implicit form $ax + by + cz + d = 0$. By default planes are
+infinite but their extents can be limited by defining optional bounding
+boxes. A planes geometry can be created by calling `ospNewGeometry` with
+type string "`plane`".
+
+  Type       Name       Description
+  ---------- ------------------ -------------------------------------------------
+  vec4f[]    plane.coefficients [data] array of plane coefficients $(a, b, c, d)$
+  box3f[]    plane.bounds       optional [data] array of bounding boxes
+  ---------- ------------------ -------------------------------------------------
+  : Parameters defining a planes geometry.
+
 ### Isosurfaces
 
 OSPRay can directly render multiple isosurfaces of a volume without
@@ -1048,7 +1069,7 @@ to the `volume`.
   ------------------ --------- --------------------------------------------------
   float              isovalue  single isovalues
   float[]            isovalue  [data] array of isovalues
-  OSPVolumetricModel volume    handle of the [VolumetricModels] to be isosurfaced
+  OSPVolumetricModel volume    handle of the [VolumetricModel] to be isosurfaced
   ------------------ --------- --------------------------------------------------
   : Parameters defining an isosurfaces geometry.
 
@@ -1063,30 +1084,38 @@ and material information. To create a geometric model, call
 
 Color and material are fetched with the primitive ID of the hit (clamped
 to the valid range, thus a single color or material is fine), or mapped
-first via the `index` array (if present). All paramters are optional,
+first via the `index` array (if present). All parameters are optional,
 however, some renderers (notably the [path tracer]) require a material
 to be set. Materials are either handles of `OSPMaterial`, or indices
 into the `material` array on the [renderer], which allows to build a
 [world] which can be used by different types of renderers.
 
-  ------------------------ --------- ----------------------------------------------------
-  Type                     Name      Description
-  ------------------------ --------- ----------------------------------------------------
-  OSPMaterial / uint32     material  optional [material] applied to the geometry, may be
-                                     an index into the `material` parameter on the
-                                     [renderer] (if it exists)
+An `invertNormals` flag allows to invert (shading) normal vectors of the
+rendered geometry. That is particularly useful for clipping. By changing
+normal vectors orientation one can control whether inside or outside of
+the clipping geometry is being removed. For example, a clipping geometry
+with normals oriented outside clips everything what's inside.
 
-  vec4f                    color     optional color assigned to the geometry
+  ------------------------ -------------- ----------------------------------------------------
+  Type                     Name           Description
+  ------------------------ -------------- ----------------------------------------------------
+  OSPMaterial / uint32     material       optional [material] applied to the geometry, may be
+                                          an index into the `material` parameter on the
+                                          [renderer] (if it exists)
 
-  OSPMaterial[] / uint32[] material  optional [data] array of (per-primitive) materials,
-                                     may be an index into the `material` parameter on
-                                     the renderer (if it exists)
+  vec4f                    color          optional color assigned to the geometry
 
-  vec4f[]                  color     optional [data] array of (per-primitive) colors
+  OSPMaterial[] / uint32[] material       optional [data] array of (per-primitive) materials,
+                                          may be an index into the `material` parameter on
+                                          the renderer (if it exists)
 
-  uint8[]                  index     optional [data] array of per-primitive indices into
-                                     `color` and `material`
-  ------------------------ --------- ----------------------------------------------------
+  vec4f[]                  color          optional [data] array of (per-primitive) colors
+
+  uint8[]                  index          optional [data] array of per-primitive indices into
+                                          `color` and `material`
+
+  bool                     invertNormals  inverts all shading normals (Ns), default false
+  ------------------------ -------------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
 
@@ -1149,31 +1178,49 @@ Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer]).
 
-### Spotlight
+### Spotlight / Photometric Light
 
 The spotlight is a light emitting into a cone of directions. It is
 created by passing the type string "`spot`" to `ospNewLight`. In
 addition to the [general parameters](#lights) understood by all lights
 the spotlight supports the special parameters listed in the table.
 
-  ------ ------------- ----------- ----------------------------------------------
-  Type   Name          Default     Description
-  ------ ------------- ----------- ----------------------------------------------
-  vec3f  position      $(0, 0, 0)$ the center of the spotlight, in world-space
+  ---------- --------------------- ----------- ---------------------------------
+  Type       Name                      Default Description
+  ---------- --------------------- ----------- ---------------------------------
+  vec3f      position              $(0, 0, 0)$ the center of the spotlight, in
+                                               world-space
 
-  vec3f  direction     $(0, 0, 1)$ main emission direction of the spot
+  vec3f      direction             $(0, 0, 1)$ main emission direction of the
+                                               spot
 
-  float  openingAngle          180 full opening angle (in degree) of the spot;
-                                   outside of this cone is no illumination
+  float      openingAngle                  180 full opening angle (in degree) of
+                                               the spot; outside of this cone is
+                                               no illumination
 
-  float  penumbraAngle           5 size (angle in degree) of the "penumbra", the
-                                   region between the rim (of the illumination
-                                   cone) and full intensity of the spot; should
-                                   be smaller than half of `openingAngle`
+  float      penumbraAngle                   5 size (angle in degree) of the
+                                               "penumbra", the region between
+                                               the rim (of the illumination
+                                               cone) and full intensity of the
+                                               spot; should be smaller than half
+                                               of `openingAngle`
 
-  float  radius                  0 the size of the spotlight, the radius of a
-                                   disk with normal `direction`
-  ------ ------------- ----------- ----------------------------------------------
+  float      radius                          0 the size of the spotlight, the
+                                               radius of a disk with normal
+                                               `direction`
+
+  float[]    intensityDistribution             luminous intensity distribution
+                                               for photometric lights; can be 2D
+                                               for asymmetric illumination;
+                                               values are assumed to be
+                                               uniformly distributed
+
+  vec3f      c0                                orientation, i.e., direction of
+                                               the C0-(half)plane (only needed
+                                               if illumination via
+                                               `intensityDistribution` is
+                                               asymmetric)
+  ---------- --------------------- ----------- ---------------------------------
   : Special parameters accepted by the spotlight.
 
 ![Angles used by the spotlight.][imgSpotLight]
@@ -1181,6 +1228,21 @@ the spotlight supports the special parameters listed in the table.
 Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer]).
+
+Measured light sources (IES, EULUMDAT, ...) are supported by providing
+an `intensityDistribution` [data] array to modulate the intensity per
+direction. The mapping is using the C-γ coordinate system (see also
+below figure): the values of the first (or only) dimension of
+`intensityDistribution` are uniformly mapped to γ in [0–π]; the first
+intensity value to 0, the last value to π, thus at least two values need
+to be present. If the array has a second dimension then the intensities
+are not rotational symmetric around `direction`, but are accordingly
+mapped to the C-halfplanes in [0–2π]; the first "row" of values to 0 and
+2π, the other rows such that they have uniform distance to its
+neighbors. The orientation of the C0-plane is specified via `c0`.
+
+![C-γ coordinate system for the mapping of `intensityDistribution` to
+the spotlight.][imgSpotCoords]
 
 ### Quad Light
 
@@ -1241,6 +1303,28 @@ and `intensity`](#lights)). It is created by passing the type string
 Note that the [SciVis renderer] uses ambient lights to control the color
 and intensity of the computed ambient occlusion (AO).
 
+### Sun-Sky Light
+
+The sun-sky light is a combination of a `distant` light for the sun and
+a procedural `hdri` light for the sky. It is created by passing the type
+string "`sunSky`" to `ospNewLight`. The sun-sky light surrounds the
+scene and illuminates it from infinity and can be used for rendering
+outdoor scenes. The radiance values are calculated using the
+Hošek-Wilkie sky model and solar radiance function. In addition to the
+[general parameters](#lights) the following special parameters are
+supported:
+
+  Type      Name           Default  Description
+  --------- ---------- -----------  --------------------------------------------
+  vec3f     up         $(0, 1, 0)$  zenith of sky in world-space
+  vec3f     direction  $(0, -1, 0)$ main emission direction of the sun
+  float     turbidity            3  atmospheric turbidity due to particles, in [1–10]
+  float     albedo             0.3  ground reflectance, in [0–1]
+  --------- ---------- -----------  --------------------------------------------
+  : Special parameters accepted by the `sunSky` light.
+
+The lowest elevation for the sun is restricted to the horizon.
+
 ### Emissive Objects
 
 The [path tracer] will consider illumination by [geometries] which have
@@ -1259,31 +1343,48 @@ create a group call
 
     OSPGroup ospNewGroup();
 
-Groups take arrays of geometric models and volumetric models, but they
-are optional. In other words, there is no need to create empty arrays if
-there are no geometries or volumes in the group.
+Groups take arrays of geometric models, volumetric models and clipping
+geometric models, but they are optional. In other words, there is no need
+to create empty arrays if there are no geometries or volumes in the group.
 
-  -------------------- --------------- ----------  --------------------------------------
-  Type                 Name               Default  Description
-  -------------------- --------------- ----------  --------------------------------------
-  OSPGeometricModel[]  geometry              NULL  [data] array of [GeometricModels]
+By adding `OSPGeometricModel`s to the `clippingGeometry` array a clipping
+geometry feature is enabled. Geometries assigned to this parameter
+will be used as clipping geometries. Any supported geometry can be used
+for clipping. The only requirement is that it has to distinctly partition
+space into clipping and non-clipping one. These include: spheres, boxes,
+infinite planes, closed meshes, closed subdivisions and curves. All
+geometries and volumes assigned to `geometry` or `volume` will be clipped.
+Use of clipping geometry that is not closed (or infinite) will result in
+rendering artifacts. User can decide which part of space is clipped by
+changing shading normals orientation with the `invertNormals` flag of
+the [GeometricModel]. When more than single clipping geometry is defined
+all clipping areas will be "added" together – an union of these areas
+will be applied.
 
-  OSPVolumetricModel[] volume                NULL  [data] array of [VolumetricModels]
+  -------------------- ---------------- ----------  --------------------------------------
+  Type                 Name                Default  Description
+  -------------------- ---------------- ----------  --------------------------------------
+  OSPGeometricModel[]  geometry               NULL  [data] array of [GeometricModels]
 
-  bool                 dynamicScene         false  use RTC_SCENE_DYNAMIC flag (faster
-                                                   BVH build, slower ray traversal),
-                                                   otherwise uses RTC_SCENE_STATIC flag
-                                                   (faster ray traversal, slightly
-                                                   slower BVH build)
+  OSPVolumetricModel[] volume                 NULL  [data] array of [VolumetricModels]
 
-  bool                 compactMode          false  tell Embree to use a more compact BVH
-                                                   in memory by trading ray traversal
-                                                   performance
+  OSPGeometricModel[]  clippingGeometry       NULL  [data] array of [GeometricModels]
+                                                    used for clipping
 
-  bool                 robustMode           false  tell Embree to enable more robust ray
-                                                   intersection code paths (slightly
-                                                   slower)
-  -------------------- --------------- ---------- ---------------------------------------
+  bool                 dynamicScene          false  use RTC_SCENE_DYNAMIC flag (faster
+                                                    BVH build, slower ray traversal),
+                                                    otherwise uses RTC_SCENE_STATIC flag
+                                                    (faster ray traversal, slightly
+                                                    slower BVH build)
+
+  bool                 compactMode           false  tell Embree to use a more compact BVH
+                                                    in memory by trading ray traversal
+                                                    performance
+
+  bool                 robustMode            false  tell Embree to enable more robust ray
+                                                    intersection code paths (slightly
+                                                    slower)
+  -------------------- ---------------- ----------  ---------------------------------------
   : Parameters understood by groups.
 
 Note that groups only need to re re-committed if a geometry or volume
@@ -1323,6 +1424,15 @@ Applications can query the world (axis-aligned) bounding box after the
 world has been committed. To get this information, call
 
     OSPBounds ospGetBounds(OSPObject);
+
+The result is returned in the provided `OSPBounds`^[`OSPBounds` has
+essentially the same layout as the `OSP_BOX3F` [`OSPDataType`][data].]
+struct:
+
+    typedef struct {
+        float lower[3];
+        float upper[3];
+    } OSPBounds;
 
 This call can also take `OSPGroup` and `OSPInstance` as well: all other
 object types will return an empty bounding box.
@@ -1380,9 +1490,10 @@ General parameters of all renderers are
   float          varianceThreshold            0  threshold for adaptive accumulation
 
   float /        backgroundColor         black,  background color and alpha (RGBA), if no
-  vec3f / vec4f                     transparent  map_backplate is set
+  vec3f / vec4f                     transparent  `map_backplate` is set
 
   OSPTexture     map_backplate                   optional [texture] image used as background
+                                                 (use texture type `texture2d`)
 
   OSPTexture     map_maxDepth                    optional screen-sized float [texture]
                                                  with maximum far distance per pixel
@@ -1448,19 +1559,20 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-  ---------- ---------------- --------  -------------------------------------
-  Type       Name              Default  Description
-  ---------- ---------------- --------  -------------------------------------
-  bool       geometryLights       true  whether to render light emitted from
-                                        geometries
+  ---------- ------------------ --------  ------------------------------------
+  Type       Name                Default  Description
+  ---------- ------------------ --------  ------------------------------------
+  bool       geometryLights         true  whether geometries with an emissive
+                                          material (e.g., [Luminous]) illuminate
+                                          the scene
 
-  int        roulettePathLength      5  ray recursion depth at which to
-                                        start Russian roulette termination
+  int        roulettePathLength        5  ray recursion depth at which to
+                                          start Russian roulette termination
 
-  float      maxContribution         ∞  samples are clamped to this value
-                                        before they are accumulated into
-                                        the framebuffer
-  ---------- ---------------- --------  -------------------------------------
+  float      maxContribution           ∞  samples are clamped to this value
+                                          before they are accumulated into
+                                          the framebuffer
+  ---------- ------------------ --------  ------------------------------------
   : Special parameters understood by the path tracer.
 
 The path tracer requires that [materials] are assigned to [geometries],
@@ -1529,18 +1641,18 @@ Note that currently only the path tracer implements colored transparency
 with `Tf`.
 
 Normal mapping can simulate small geometric features via the texture
-`map_Bump`. The normals $n$ in the normal map are with respect to the local
-tangential shading coordinate system and are encoded as $½(n+1)$, thus a
-texel $(0.5, 0.5, 1)$^[respectively $(127, 127, 255)$ for 8\ bit
-textures] represents the unperturbed shading normal $(0, 0, 1)$. Because
-of this encoding an sRGB gamma [texture] format is ignored and normals
-are always fetched as linear from a normal map. Note that the
-orientation of normal maps is important for a visually consistent look:
-by convention OSPRay uses a coordinate system with the origin in the
-lower left corner; thus a convexity will look green toward the top of
-the texture image (see also the example image of a normal map). If this
-is not the case flip the normal map vertically or invert its green
-channel.
+`map_Bump`. The normals $n$ in the normal map are with respect to the
+local tangential shading coordinate system and are encoded as $½(n+1)$,
+thus a texel $(0.5, 0.5, 1)$^[respectively $(127, 127, 255)$ for 8\ bit
+textures and $(32767, 32767, 65535)$ for 16\ bit textures] represents
+the unperturbed shading normal $(0, 0, 1)$. Because of this encoding an
+sRGB gamma [texture] format is ignored and normals are always fetched as
+linear from a normal map. Note that the orientation of normal maps is
+important for a visually consistent look: by convention OSPRay uses a
+coordinate system with the origin in the lower left corner; thus a
+convexity will look green toward the top of the texture image (see also
+the example image of a normal map). If this is not the case flip the
+normal map vertically or invert its green channel.
 
 ![Normal map representing an exalted square pyramidal
 frustum.][imgNormalMap]
@@ -1873,10 +1985,11 @@ thus individual flakes are not visible.
 
 The [path tracer] supports the Luminous material which emits light
 uniformly in all directions and which can thus be used to turn any
-geometric object into a light source. It is created by passing the type
-string "`luminous`" to `ospNewMaterial`. The amount of constant
-radiance that is emitted is determined by combining the general
-parameters of lights: [`color` and `intensity`](#lights).
+geometric object into a light source^[If `geometryLights` is enabled in
+the [path tracer].]. It is created by passing the type string
+"`luminous`" to `ospNewMaterial`. The amount of constant radiance that
+is emitted is determined by combining the general parameters of lights:
+[`color` and `intensity`](#lights).
 
   Type   Name          Default  Description
   ------ ------------ --------  ---------------------------------------
@@ -1921,11 +2034,15 @@ The supported texture formats for `texture2d` are:
   OSP_TEXTURE_RGB8    8\ bit [0–255] linear components red, green, blue
   OSP_TEXTURE_SRGB    8\ bit sRGB gamma encoded components red, green, blue
   OSP_TEXTURE_RGB32F  32\ bit float components red, green, blue
-  OSP_TEXTURE_R8      8\ bit [0–255] linear single component
-  OSP_TEXTURE_RA8     8\ bit [0–255] linear two component
-  OSP_TEXTURE_L8      8\ bit [0–255] gamma encoded luminance
+  OSP_TEXTURE_R8      8\ bit [0–255] linear single component red
+  OSP_TEXTURE_RA8     8\ bit [0–255] linear two components red, alpha
+  OSP_TEXTURE_L8      8\ bit [0–255] gamma encoded luminance (replicated into red, green, blue)
   OSP_TEXTURE_LA8     8\ bit [0–255] gamma encoded luminance, and linear alpha
-  OSP_TEXTURE_R32F    32\ bit float single component
+  OSP_TEXTURE_R32F    32\ bit float single component red
+  OSP_TEXTURE_RGBA16  16\ bit [0–65535] linear components red, green, blue, alpha
+  OSP_TEXTURE_RGB16   16\ bit [0–65535] linear components red, green, blue
+  OSP_TEXTURE_RA16    16\ bit [0–65535] linear two components red, alpha
+  OSP_TEXTURE_R16     16\ bit [0–65535] linear single component red
   ------------------- ----------------------------------------------------------
   : Supported texture formats by `texture2d`, i.e., valid constants
   of type `OSPTextureFormat`.
@@ -1949,10 +2066,10 @@ transfer function) on arbitrary surfaces inside the volume (as opposed
 to an isosurface showing a particular value in the volume). Its
 parameters are as follows
 
-  Type      Name         Description
-  --------- ------------ -------------------------------------------
-  OSPVolume volume       volume used to generate color lookups
-  --------- ------------ -------------------------------------------
+  Type               Name    Description
+  ------------------ ------- -------------------------------------------
+  OSPVolumetricModel volume  [VolumetricModel] used to generate color lookups
+  ------------------ ------- -------------------------------------------
   : Parameters of `volume` texture type.
 
 TextureVolume can be used for implementing slicing of volumes with any
@@ -2037,10 +2154,16 @@ supports the special parameters listed in the table below.
   bool  architectural          vertical edges are projected to be
                                parallel
 
-  int   stereoMode             0: no stereo (default),
-                               1: left eye,
-                               2: right eye,
-                               3: side-by-side
+  int   stereoMode             `OSPStereoMode` for stereo rendering,
+                               possible values are:
+
+                               `OSP_STEREO_NONE` (default)
+
+                               `OSP_STEREO_LEFT`
+
+                               `OSP_STEREO_RIGHT`
+
+                               `OSP_STEREO_SIDE_BY_SIDE`
 
   float interpupillaryDistance distance between left and right eye when
                                stereo is enabled
@@ -2060,7 +2183,8 @@ image. If finer control of the lens shift is needed use `imageStart` &
 `imageEnd`. Because the camera is now effectively leveled its image
 plane and thus the plane of focus is oriented parallel to the front of
 buildings, the whole façade appears sharp, as can be seen in the example
-images below.
+images below. The resolution of the [framebuffer] is not altered by
+`imageStart`/`imageEnd`.
 
 ![Example image created with the perspective camera, featuring depth of
 field.][imgCameraPerspective]
@@ -2112,11 +2236,11 @@ To get the world-space position of the geometry (if any) seen at [0–1]
 normalized screen-space pixel coordinates `screenPos` use
 
     void ospPick(OSPPickResult *,
-                 OSPFrameBuffer,
-                 OSPRenderer,
-                 OSPCamera,
-                 OSPWorld,
-                 osp_vec2f screenPos);
+        OSPFrameBuffer,
+        OSPRenderer,
+        OSPCamera,
+        OSPWorld,
+        osp_vec2f screenPos);
 
 The result is returned in the provided `OSPPickResult` struct:
 
@@ -2140,9 +2264,9 @@ The framebuffer holds the rendered 2D image (and optionally auxiliary
 information associated with pixels). To create a new framebuffer object
 of given size `size` (in pixels), color format, and channels use
 
-    OSPFrameBuffer ospNewFrameBuffer(osp_vec2i size,
-                                     OSPFrameBufferFormat format = OSP_FB_SRGBA,
-                                     uint32_t frameBufferChannels = OSP_FB_COLOR);
+    OSPFrameBuffer ospNewFrameBuffer(int size_x, int size_y,
+        OSPFrameBufferFormat format = OSP_FB_SRGBA,
+        uint32_t frameBufferChannels = OSP_FB_COLOR);
 
 The parameter `format` describes the format the color buffer has _on the
 host_, and the format that `ospMapFrameBuffer` will eventually return.
@@ -2197,8 +2321,7 @@ using an `OSPImageOperation` [image operation].
 The application can map the given channel of a framebuffer – and thus
 access the stored pixel information – via
 
-    const void *ospMapFrameBuffer(OSPFrameBuffer,
-                                  OSPFrameBufferChannel = OSP_FB_COLOR);
+    const void *ospMapFrameBuffer(OSPFrameBuffer, OSPFrameBufferChannel = OSP_FB_COLOR);
 
 Note that `OSP_FB_ACCUM` or `OSP_FB_VARIANCE` cannot be mapped. The
 origin of the screen coordinate system in OSPRay is the lower left
@@ -2225,7 +2348,9 @@ accumulated frame can be queried with
     float ospGetVariance(OSPFrameBuffer);
 
 Note this value is only updated after synchronizing with `OSP_FRAME_FINISHED`,
-as further described in [asynchronous rendering].
+as further described in [asynchronous rendering]. The estimated variance can
+be used by the application as a quality indicator and thus to decide whether
+to stop or to continue progressive rendering.
 
 The framebuffer takes a list of pixel operations to be applied to the image
 in sequence as an `OSPData`. The pixel operations will be run in the order
@@ -2313,12 +2438,7 @@ combining a frame buffer, renderer, camera, and world.
 What to render and how to render it depends on the renderer's
 parameters. If the framebuffer supports accumulation (i.e., it was
 created with `OSP_FB_ACCUM`) then successive calls to `ospRenderFrame`
-will progressively refine the rendered image. If additionally the
-framebuffer has an `OSP_FB_VARIANCE` channel then `ospRenderFrame`
-returns an estimate of the current variance of the rendered image,
-otherwise `inf` is returned. The estimated variance can be used by the
-application as a quality indicator and thus to decide whether to stop or
-to continue progressive rendering.
+will progressively refine the rendered image.
 
 To start an render task, use
 
@@ -2374,6 +2494,16 @@ Applications can query whether particular events are complete with
 As the given running task runs (as tracked by the `OSPFuture`),
 applications can query a boolean [0,1] result if the passed event has
 been completed.
+
+Applications can query how long an async task ran with
+
+    float ospGetTaskDuration(OSPFuture);
+
+This returns the wall clock execution time of the task in seconds. If the task
+is still running, this will block until the task is completed. This is useful
+for applications to query exactly how long an asynchronous task executed without
+the overhead of measuring both task execution + synchronization by the calling
+application.
 
 ### Asynchronously Rendering and ospCommit()
 

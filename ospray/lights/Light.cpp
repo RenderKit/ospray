@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -8,6 +8,10 @@
 
 namespace ospray {
 
+static FactoryMap<Light> g_lightsMap;
+
+// Light definitions //////////////////////////////////////////////////////////
+
 Light::Light()
 {
   managedObjectType = OSP_LIGHT;
@@ -15,7 +19,7 @@ Light::Light()
 
 void Light::commit()
 {
-  const vec3f radiance =
+  radiance =
       getParam<vec3f>("color", vec3f(1.f)) * getParam<float>("intensity", 1.f);
   ispc::Light_set(
       getIE(), (ispc::vec3f &)radiance, getParam<bool>("visible", true));
@@ -28,7 +32,18 @@ std::string Light::toString() const
 
 Light *Light::createInstance(const char *type)
 {
-  return createInstanceHelper<Light, OSP_LIGHT>(type);
+  return createInstanceHelper(type, g_lightsMap[type]);
+}
+
+void Light::registerType(const char *type, FactoryFcn<Light> f)
+{
+  g_lightsMap[type] = f;
+}
+
+utility::Optional<void *> Light::getSecondIE()
+{
+  utility::Optional<void *> emptyOptional;
+  return emptyOptional;
 }
 
 OSPTYPEFOR_DEFINITION(Light *);

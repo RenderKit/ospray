@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -29,14 +29,14 @@ struct OSPRAY_SDK_INTERFACE World : public ManagedObject
 
   Ref<const DataT<Instance *>> instances;
   Ref<const DataT<Light *>> lights;
-
-  std::vector<void *> instanceIEs;
-  int numGeometries{0};
-  int numVolumes{0};
+  std::vector<void *> geometriesInstIEs;
+  std::vector<void *> volumesInstIEs;
+  std::vector<void *> clippersInstIEs;
 
   //! \brief the embree scene handle for this geometry
   RTCScene embreeSceneHandleGeometries{nullptr};
   RTCScene embreeSceneHandleVolumes{nullptr};
+  RTCScene embreeSceneHandleClippers{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(World *, OSP_WORLD);

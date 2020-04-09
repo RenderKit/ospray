@@ -1,4 +1,4 @@
-## Copyright 2017-2019 Intel Corporation
+## Copyright 2017-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 if (NOT OSPRAY_APPS_TESTING)
@@ -8,11 +8,14 @@ endif()
 ospray_disable_compiler_warnings()
 
 add_executable(ospTestSuite
+  ${OSPRAY_RESOURCE}
   environment.cpp
   test_fixture.cpp
-  test_geometry.cpp
   test_tools.cpp
+  test_geometry.cpp
   test_volumetric.cpp
+  test_appearance.cpp
+  test_light.cpp
   test_enums.cpp
   ospTestSuite.cpp
 )

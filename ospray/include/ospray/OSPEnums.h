@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // This header is shared with ISPC
@@ -88,6 +88,9 @@ typedef enum
 
   // Unsigned 16-bit integer scalar.
   OSP_USHORT = 3500,
+  OSP_VEC2US,
+  OSP_VEC3US,
+  OSP_VEC4US,
 
   // Signed 32-bit integer scalar and vector types.
   OSP_INT = 4000,
@@ -161,6 +164,10 @@ typedef enum
   OSP_TEXTURE_L8,
   OSP_TEXTURE_RA8,
   OSP_TEXTURE_LA8,
+  OSP_TEXTURE_RGBA16,
+  OSP_TEXTURE_RGB16,
+  OSP_TEXTURE_RA16,
+  OSP_TEXTURE_R16,
   // Denotes an unknown texture format, so we can properly initialize parameters
   OSP_TEXTURE_FORMAT_INVALID = 255,
 } OSPTextureFormat;

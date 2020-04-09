@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture2D.h"
@@ -39,6 +39,9 @@ void Texture2D::commit()
   filter = static_cast<OSPTextureFilter>(
       getParam<int>("filter", OSP_TEXTURE_FILTER_BILINEAR));
 
+  if (format == OSP_TEXTURE_FORMAT_INVALID)
+    throw std::runtime_error(toString() + ": invalid 'format'");
+
   if (sizeOf(format) != sizeOf(texData->type))
     throw std::runtime_error(toString() + ": 'format'='" + stringFor(format)
         + "' does not match type of 'data'='" + stringFor(texData->type)
@@ -47,7 +50,5 @@ void Texture2D::commit()
   this->ispcEquivalent = ispc::Texture2D_create(
       (ispc::vec2i &)size, texData->data(), format, filter);
 }
-
-OSP_REGISTER_TEXTURE(Texture2D, texture2d);
 
 } // namespace ospray

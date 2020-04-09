@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -6,6 +6,10 @@
 #include "common/Util.h"
 
 namespace ospray {
+
+static FactoryMap<Material> g_materialsMap;
+
+// Material definitions ///////////////////////////////////////////////////////
 
 Material::Material()
 {
@@ -18,8 +22,13 @@ Material *Material::createInstance(
   std::string renderer_type = _renderer_type;
   std::string material_type = _material_type;
 
-  std::string type = renderer_type + "__" + material_type;
-  return createInstanceHelper<Material, OSP_MATERIAL>(type.c_str());
+  std::string name = renderer_type + "_" + material_type;
+  return createInstanceHelper(name, g_materialsMap[name]);
+}
+
+void Material::registerType(const char *name, FactoryFcn<Material> f)
+{
+  g_materialsMap[name] = f;
 }
 
 std::string Material::toString() const

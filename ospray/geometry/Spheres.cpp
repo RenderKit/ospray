@@ -43,6 +43,4 @@ size_t Spheres::numPrimitives() const
   return vertexData ? vertexData->size() : 0;
 }
 
-OSP_REGISTER_GEOMETRY(Spheres, sphere);
-
 } // namespace ospray

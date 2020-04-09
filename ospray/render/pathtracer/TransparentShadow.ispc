@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/PathTracer.ih"
@@ -14,13 +14,14 @@ vec3f transparentShadow(const uniform PathTracer *uniform self,
     const World *uniform world,
     vec3f lightContrib,
     Ray &shadowRay,
+    RayIntervals &rayIntervals,
     Medium medium)
 {
   uniform int maxDepth = self->super.maxDepth;
   const float tOriginal = shadowRay.t;
 
   while (1) {
-    traceRay(world, shadowRay);
+    traceGeometryRayIntervals(world, shadowRay, rayIntervals);
 
     if (noHit(shadowRay))
       return lightContrib;

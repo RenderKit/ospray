@@ -11,6 +11,7 @@
 [world]: documentation.html#world
 [data]: documentation.html#data
 [GeometricModel]: documentation.html#geometricmodels
+[VolumetricModel]: documentation.html#volumetricmodels
 [texture transformations]: documentation.html#texture2d-transformations
 [renderer]: documentation.html#renderers
 [SciVis renderer]: documentation.html#scivis-renderer

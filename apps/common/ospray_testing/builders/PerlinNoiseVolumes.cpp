@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
@@ -15,7 +15,7 @@ namespace testing {
 
 struct PerlinNoiseVolumes : public detail::Builder
 {
-  PerlinNoiseVolumes() = default;
+  PerlinNoiseVolumes(bool clip = false);
   ~PerlinNoiseVolumes() override = default;
 
   void commit() override;
@@ -33,6 +33,8 @@ struct PerlinNoiseVolumes : public detail::Builder
 
   float densityScale{10.f};
   float anisotropy{0.f};
+
+  bool withClipping{false};
 };
 
 /* heavily based on Perlin's Java reference implementation of
@@ -446,6 +448,8 @@ cpp::GeometricModel createGeometricModel(
 
 // PerlineNoiseVolumes definitions //
 
+PerlinNoiseVolumes::PerlinNoiseVolumes(bool clip) : withClipping(clip) {}
+
 void PerlinNoiseVolumes::commit()
 {
   Builder::commit();
@@ -459,6 +463,8 @@ void PerlinNoiseVolumes::commit()
 
   densityScale = getParam<float>("densityScale", 10.f);
   anisotropy = getParam<float>("anisotropy", 0.f);
+
+  withClipping = getParam<bool>("withClipping", withClipping);
 }
 
 cpp::Group PerlinNoiseVolumes::buildGroup() const
@@ -546,7 +552,29 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
 
 cpp::World PerlinNoiseVolumes::buildWorld() const
 {
-  auto world = Builder::buildWorld();
+  // Skip clipping if not enabled
+  std::vector<cpp::Instance> instances;
+  if (withClipping) {
+    // Create clipping sphere
+    cpp::Geometry sphereGeometry("sphere");
+    std::vector<vec3f> position = {vec3f(-.5f, .2f, -.5f)};
+    sphereGeometry.setParam("sphere.position", cpp::Data(position));
+    sphereGeometry.setParam("radius", 1.2f);
+    sphereGeometry.commit();
+
+    cpp::GeometricModel model(sphereGeometry);
+    model.commit();
+
+    cpp::Group group;
+    group.setParam("clippingGeometry", cpp::Data(model));
+    group.commit();
+
+    cpp::Instance inst(group);
+    inst.commit();
+    instances.push_back(inst);
+  }
+
+  auto world = Builder::buildWorld(instances);
 
   std::vector<cpp::Light> lightHandles;
 
@@ -578,6 +606,8 @@ cpp::World PerlinNoiseVolumes::buildWorld() const
 }
 
 OSP_REGISTER_TESTING_BUILDER(PerlinNoiseVolumes, perlin_noise_volumes);
+OSP_REGISTER_TESTING_BUILDER(
+    PerlinNoiseVolumes(true), clip_perlin_noise_volumes);
 
 } // namespace testing
 } // namespace ospray

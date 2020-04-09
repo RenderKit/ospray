@@ -1,9 +1,11 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include "Material.h"
 #include "camera/Camera.h"
+#include "common/Util.h"
 #include "common/World.h"
 #include "fb/FrameBuffer.h"
 #include "texture/Texture2D.h"
@@ -22,19 +24,15 @@ struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
   Renderer();
   virtual ~Renderer() override = default;
 
-  /*! \brief creates an abstract renderer class of given type
-
-    The respective renderer type must be a registered renderer type
-    in either ospray proper or any already loaded module. For
-    renderer types specified in special modules, make sure to call
-    ospLoadModule first. */
   static Renderer *createInstance(const char *identifier);
+  template <typename T>
+  static void registerType(const char *type);
 
   virtual void commit() override;
   virtual std::string toString() const override;
 
   /*! \brief render one frame, and put it into given frame buffer */
-  virtual float renderFrame(FrameBuffer *fb, Camera *camera, World *world);
+  virtual void renderFrame(FrameBuffer *fb, Camera *camera, World *world);
 
   //! \brief called to initialize a new frame
   /*! this function gets called exactly once (on each node) at the
@@ -73,24 +71,22 @@ struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
 
   Ref<const DataT<Material *>> materialData;
   std::vector<void *> ispcMaterialPtrs;
+
+ private:
+  template <typename BASE_CLASS, typename CHILD_CLASS>
+  friend void registerTypeHelper(const char *type);
+  static void registerType(const char *type, FactoryFcn<Renderer> f);
 };
 
 OSPTYPEFOR_SPECIALIZATION(Renderer *, OSP_RENDERER);
 
-/*! \brief registers a internal ospray::<ClassName> renderer under
-    the externally accessible name "external_name"
+// Inlined definitions ////////////////////////////////////////////////////////
 
-    \internal This currently works by defining a extern "C" function
-    with a given predefined name that creates a new instance of this
-    renderer. By having this symbol in the shared lib ospray can
-    lateron always get a handle to this fct and create an instance
-    of this renderer.
-*/
-#define OSP_REGISTER_RENDERER(InternalClass, external_name)                    \
-  OSP_REGISTER_OBJECT(                                                         \
-      ::ospray::Renderer, renderer, InternalClass, external_name)
-
-// Inlined definitions //////////////////////////////////////////////////////
+template <typename T>
+inline void Renderer::registerType(const char *type)
+{
+  registerTypeHelper<Renderer, T>(type);
+}
 
 inline void *Renderer::beginFrame(FrameBuffer *, World *)
 {

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/PathStructs.ih"
@@ -9,6 +9,7 @@
 #include "render/Renderer.ih"
 
 #include "common/Ray.ih"
+#include "common/World.ih"
 
 bool shadowCatcher(const PathContext &pathContext,
     PathState &pathState,
@@ -60,6 +61,10 @@ bool shadowCatcher(const PathContext &pathContext,
       Ray shadowRay;
       setRay(shadowRay, pathVertex.dg.P, ls.dir, 0.0f, ls.dist, pathState.time);
 
+      // Trace ray in clipping geometries scene, fill array with ray intervals
+      RayIntervals rayIntervals;
+      traceClippingRay(pathContext.world, shadowRay, rayIntervals);
+
       const vec3f unshadedLightContrib = pathState.throughput * ls.weight
           * brdf; // * misHeuristic(pathState, ls.pdf, brdf);
       unshaded = unshaded + unshadedLightContrib;
@@ -68,6 +73,7 @@ bool shadowCatcher(const PathContext &pathContext,
               pathContext.world,
               unshadedLightContrib,
               shadowRay,
+              rayIntervals,
               pathState.currentMedium);
     }
     // order of args important to filter NaNs (in case unshaded.X is zero)

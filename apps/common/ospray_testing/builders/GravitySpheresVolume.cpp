@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
@@ -21,13 +21,16 @@ using VoxelArray = std::vector<float>;
 
 struct GravitySpheres : public detail::Builder
 {
-  GravitySpheres(
-      bool addVolume = true, bool asAMR = false, bool addIsosurface = false);
+  GravitySpheres(bool addVolume = true,
+      bool asAMR = false,
+      bool addIsosurface = false,
+      bool clip = false);
   ~GravitySpheres() override = default;
 
   void commit() override;
 
   cpp::Group buildGroup() const override;
+  cpp::World buildWorld() const override;
 
  private:
   VoxelArray generateVoxels() const;
@@ -43,12 +46,17 @@ struct GravitySpheres : public detail::Builder
   bool createAsAMR{false};
   bool withIsosurface{false};
   float isovalue{2.5f};
+  bool withClipping{false};
 };
 
 // Inlined definitions ////////////////////////////////////////////////////
 
-GravitySpheres::GravitySpheres(bool addVolume, bool asAMR, bool addIsosurface)
-    : withVolume(addVolume), createAsAMR(asAMR), withIsosurface(addIsosurface)
+GravitySpheres::GravitySpheres(
+    bool addVolume, bool asAMR, bool addIsosurface, bool clip)
+    : withVolume(addVolume),
+      createAsAMR(asAMR),
+      withIsosurface(addIsosurface),
+      withClipping(clip)
 {}
 
 void GravitySpheres::commit()
@@ -61,6 +69,7 @@ void GravitySpheres::commit()
   createAsAMR = getParam<bool>("asAMR", createAsAMR);
   withIsosurface = getParam<bool>("withIsosurface", withIsosurface);
   isovalue = getParam<float>("isovalue", 2.5f);
+  withClipping = getParam<bool>("withClipping", withClipping);
 
   addPlane = false;
 }
@@ -106,6 +115,49 @@ cpp::Group GravitySpheres::buildGroup() const
   group.commit();
 
   return group;
+}
+
+cpp::World GravitySpheres::buildWorld() const
+{
+  // Skip clipping if not enabled
+  std::vector<cpp::Instance> instances;
+  if (withClipping) {
+    // Create clipping plane
+    std::vector<cpp::GeometricModel> geometricModels;
+    {
+      cpp::Geometry planeGeometry("plane");
+      std::vector<vec4f> coefficients = {vec4f(1.f, -1.f, 1.f, 0.f)};
+      planeGeometry.setParam("plane.coefficients", cpp::Data(coefficients));
+      planeGeometry.commit();
+
+      cpp::GeometricModel model(planeGeometry);
+      model.commit();
+      geometricModels.emplace_back(model);
+    }
+
+    // Create clipping sphere
+    {
+      cpp::Geometry sphereGeometry("sphere");
+      std::vector<vec3f> position = {vec3f(.2f, -.2f, .2f)};
+      sphereGeometry.setParam("sphere.position", cpp::Data(position));
+      sphereGeometry.setParam("radius", .5f);
+      sphereGeometry.commit();
+
+      cpp::GeometricModel model(sphereGeometry);
+      model.commit();
+      geometricModels.emplace_back(model);
+    }
+
+    cpp::Group group;
+    group.setParam("clippingGeometry", cpp::Data(geometricModels));
+    group.commit();
+
+    cpp::Instance inst(group);
+    inst.commit();
+    instances.push_back(inst);
+  }
+
+  return Builder::buildWorld(instances);
 }
 
 std::vector<float> GravitySpheres::generateVoxels() const
@@ -231,6 +283,9 @@ OSP_REGISTER_TESTING_BUILDER(
 
 OSP_REGISTER_TESTING_BUILDER(
     GravitySpheres(false, false, true), gravity_spheres_isosurface);
+
+OSP_REGISTER_TESTING_BUILDER(
+    GravitySpheres(true, false, false, true), clip_gravity_spheres_volume);
 
 } // namespace testing
 } // namespace ospray

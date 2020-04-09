@@ -1,4 +1,4 @@
-// Copyright 2018-2019 Intel Corporation
+// Copyright 2018-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -44,4 +44,5 @@ inline void initializeOSPRay(
   ospDeviceSetParam(device, "logLevel", OSP_INT, &logLevel);
 
   ospDeviceCommit(device);
+  ospDeviceRelease(device);
 }

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -14,15 +14,28 @@
 
 #include "openvkl/openvkl.isph"
 
-struct DebugRenderer
+// common utility function, traces ray and handles default and background
+bool hitBackground(
+    Renderer *uniform self, World *uniform world, varying ScreenSample &sample)
 {
-  Renderer super;
-};
+  traceRay(world, sample.ray);
+  sample.z = sample.ray.t;
+  sample.alpha = 1.f;
 
-/*! a simple test-frame renderer that doesn't even trace a ray, just
+  sample.rgb = make_vec3f(Renderer_getBackground(self, sample.pos));
+
+  return noHit(sample.ray);
+}
+
+float eyeLight(varying ScreenSample &sample)
+{
+  return 0.2f + 0.8f * dot(normalize(sample.ray.Ng), sample.ray.dir);
+}
+
+/* a simple test-frame renderer that doesn't even trace a ray, just
   returns a well-defined test frame (mostly useful for debugging
   whether frame buffers are properly set up etcpp */
-void DebugRenderer_testFrame(Renderer *uniform _self,
+void DebugRenderer_testFrame(Renderer *uniform,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -37,9 +50,9 @@ void DebugRenderer_testFrame(Renderer *uniform _self,
   sample.z = 1.f;
 }
 
-/*! a simple test-frame renderer that doesn't even trace a ray, just
+/* a simple test-frame renderer that doesn't even trace a ray, just
   returns the absolute of the ray direction */
-void DebugRenderer_rayDir(Renderer *uniform _self,
+void DebugRenderer_rayDir(Renderer *uniform,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -50,262 +63,188 @@ void DebugRenderer_rayDir(Renderer *uniform _self,
   sample.z = 1.f;
 }
 
-void DebugRenderer_eyeLight(Renderer *uniform _self,
+void DebugRenderer_eyeLight(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  if (hitBackground(self, world, sample))
+    return;
 
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    const float c = dot(normalize(sample.ray.Ng), sample.ray.dir);
-    sample.rgb = make_vec3f(.2f + .8f * abs(c));
-  }
+  sample.rgb = make_vec3f(eyeLight(sample));
 }
 
-void DebugRenderer_Ng(Renderer *uniform _self,
+void DebugRenderer_Ng(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  if (hitBackground(self, world, sample))
+    return;
 
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    DifferentialGeometry dg;
-    postIntersect(world, &self->super, dg, sample.ray, DG_NORMALIZE | DG_NG);
-    sample.rgb = absf(dg.Ng);
-  }
+  DifferentialGeometry dg;
+  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NG);
+  sample.rgb = absf(dg.Ng);
 }
 
-void DebugRenderer_Ns(Renderer *uniform _self,
+void DebugRenderer_Ns(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  if (hitBackground(self, world, sample))
+    return;
 
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    DifferentialGeometry dg;
-    postIntersect(world, &self->super, dg, sample.ray, DG_NORMALIZE | DG_NS);
-    sample.rgb = absf(dg.Ns);
-  }
+  DifferentialGeometry dg;
+  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NS);
+  sample.rgb = absf(dg.Ns);
 }
 
-void DebugRenderer_dPds(Renderer *uniform _self,
+void DebugRenderer_texCoord(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
-
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    DifferentialGeometry dg;
-    postIntersect(world, &self->super, dg, sample.ray, DG_TANGENTS);
-    sample.rgb = normalize(dg.dPds);
-    if (sample.rgb.x < 0.f)
-      sample.rgb.x = sample.rgb.x * -0.3f;
-    if (sample.rgb.y < 0.f)
-      sample.rgb.y = sample.rgb.y * -0.3f;
-    if (sample.rgb.z < 0.f)
-      sample.rgb.z = sample.rgb.z * -0.3f;
-  }
+  if (hitBackground(self, world, sample))
+    return;
+  DifferentialGeometry dg;
+  postIntersect(world, self, dg, sample.ray, DG_TEXCOORD);
+  sample.rgb = abs(make_vec3f(dg.st.x, dg.st.y, 0.0f));
 }
 
-void DebugRenderer_dPdt(Renderer *uniform _self,
+void DebugRenderer_dPds(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
-
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    DifferentialGeometry dg;
-    postIntersect(world, &self->super, dg, sample.ray, DG_TANGENTS);
-    sample.rgb = normalize(dg.dPdt);
-    if (sample.rgb.x < 0.f)
-      sample.rgb.x = sample.rgb.x * -0.3f;
-    if (sample.rgb.y < 0.f)
-      sample.rgb.y = sample.rgb.y * -0.3f;
-    if (sample.rgb.z < 0.f)
-      sample.rgb.z = sample.rgb.z * -0.3f;
-  }
+  if (hitBackground(self, world, sample))
+    return;
+  DifferentialGeometry dg;
+  postIntersect(world, self, dg, sample.ray, DG_TANGENTS);
+  sample.rgb = normalize(dg.dPds);
+  if (sample.rgb.x < 0.f)
+    sample.rgb.x = sample.rgb.x * -0.3f;
+  if (sample.rgb.y < 0.f)
+    sample.rgb.y = sample.rgb.y * -0.3f;
+  if (sample.rgb.z < 0.f)
+    sample.rgb.z = sample.rgb.z * -0.3f;
 }
 
-void DebugRenderer_vertexColor(Renderer *uniform _self,
+void DebugRenderer_dPdt(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  if (hitBackground(self, world, sample))
+    return;
 
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    DifferentialGeometry dg;
-    dg.color = make_vec4f(0.f);
-    postIntersect(
-        world, &self->super, dg, sample.ray, DG_COLOR | DG_NG | DG_NS);
-    sample.rgb = make_vec3f(dg.color)
-        * abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
-  }
+  DifferentialGeometry dg;
+  postIntersect(world, self, dg, sample.ray, DG_TANGENTS);
+  sample.rgb = normalize(dg.dPdt);
+  if (sample.rgb.x < 0.f)
+    sample.rgb.x = sample.rgb.x * -0.3f;
+  if (sample.rgb.y < 0.f)
+    sample.rgb.y = sample.rgb.y * -0.3f;
+  if (sample.rgb.z < 0.f)
+    sample.rgb.z = sample.rgb.z * -0.3f;
 }
 
-void DebugRenderer_primID(Renderer *uniform _self,
+void DebugRenderer_vertexColor(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  if (hitBackground(self, world, sample))
+    return;
 
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    const float c = dot(normalize(sample.ray.Ng), sample.ray.dir);
-    sample.rgb =
-        make_vec3f(.3f + .8f * abs(c)) * make_random_color(sample.ray.primID);
-  }
+  DifferentialGeometry dg;
+  postIntersect(world, self, dg, sample.ray, DG_COLOR | DG_NS);
+  sample.rgb = make_vec3f(dg.color)
+      * abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
 }
 
-void DebugRenderer_instID(Renderer *uniform _self,
+void DebugRenderer_primID(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  if (hitBackground(self, world, sample))
+    return;
 
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    const float c = dot(normalize(sample.ray.Ng), sample.ray.dir);
-    sample.rgb =
-        make_vec3f(.3f + .8f * abs(c)) * make_random_color(sample.ray.instID);
-  }
+  sample.rgb = eyeLight(sample) * make_random_color(sample.ray.primID);
 }
 
-void DebugRenderer_geomID(Renderer *uniform _self,
+void DebugRenderer_instID(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  if (hitBackground(self, world, sample))
+    return;
 
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    const float c = dot(normalize(sample.ray.Ng), sample.ray.dir);
-    sample.rgb =
-        make_vec3f(.3f + .8f * abs(c)) * make_random_color(sample.ray.geomID);
-  }
+  sample.rgb = eyeLight(sample) * make_random_color(sample.ray.instID);
 }
 
-void DebugRenderer_backfacing_Ng(Renderer *uniform _self,
+void DebugRenderer_geomID(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  uniform DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  if (hitBackground(self, world, sample))
+    return;
 
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    const float c = dot(normalize(sample.ray.Ng), sample.ray.dir);
-    sample.rgb = make_vec3f(.2f + .8f * abs(c));
-    if (c > 0.f)
-      sample.rgb.y = 0.f;
-  }
+  sample.rgb = eyeLight(sample) * make_random_color(sample.ray.geomID);
 }
 
-void DebugRenderer_backfacing_Ns(Renderer *uniform _self,
+void DebugRenderer_backfacing_Ng(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  uniform DebugRenderer *uniform self = (uniform DebugRenderer * uniform) _self;
+  if (hitBackground(self, world, sample))
+    return;
 
-  traceRay(world, sample.ray);
-  sample.z = sample.ray.t;
-  sample.alpha = 1.f;
-
-  if (sample.ray.geomID < 0)
-    sample.rgb = make_vec3f(self->super.bgColor);
-  else {
-    DifferentialGeometry dg;
-    postIntersect(world, &self->super, dg, sample.ray, DG_NORMALIZE | DG_NS);
-    const float c = dot(dg.Ns, sample.ray.dir);
-    sample.rgb = make_vec3f(.2f + .8f * abs(c));
-    if (c > 0.f)
-      sample.rgb.y = 0.f;
-  }
+  sample.rgb = make_vec3f(eyeLight(sample));
+  if (dot(sample.ray.Ng, sample.ray.dir) > 0.f)
+    sample.rgb.y = 0.f;
 }
 
-void DebugRenderer_volume(Renderer *uniform _self,
+void DebugRenderer_backfacing_Ns(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  if (hitBackground(self, world, sample))
+    return;
+
+  DifferentialGeometry dg;
+  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NS);
+  const float c = dot(dg.Ns, sample.ray.dir);
+  sample.rgb = make_vec3f(.2f + .8f * abs(c));
+  if (c > 0.f)
+    sample.rgb.y = 0.f;
+}
+
+void DebugRenderer_volume(Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
+{
+  if (hitBackground(self, world, sample))
+    return;
 
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
@@ -316,8 +255,9 @@ void DebugRenderer_volume(Renderer *uniform _self,
   vec3f &color = sample.rgb;
   float &alpha = sample.alpha;
 
-  color = make_vec3f(self->super.bgColor);
-  alpha = self->super.bgColor.w;
+  vec4f bgColor = Renderer_getBackground(self, sample.pos);
+  color = make_vec3f(bgColor);
+  alpha = bgColor.w;
 
   VolumeInterval vInterval;
   traceVolumeRay(world, sample.ray, vInterval);
@@ -393,56 +333,62 @@ void DebugRenderer_volume(Renderer *uniform _self,
 
 export void *uniform DebugRenderer_create(void *uniform cppE)
 {
-  DebugRenderer *uniform self = uniform new uniform DebugRenderer;
-  Renderer_Constructor(&self->super, cppE);
-  self->super.renderSample = DebugRenderer_testFrame;
+  Renderer *uniform self = uniform new Renderer;
+  Renderer_Constructor(self, cppE);
+  self->renderSample = DebugRenderer_testFrame;
   return self;
 }
 
 export void DebugRenderer_set(void *uniform _self, uniform int type)
 {
-  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  Renderer *uniform self = (Renderer * uniform) _self;
 
   switch (type) {
   case RAY_DIR:
-    self->super.renderSample = DebugRenderer_rayDir;
+    self->renderSample = DebugRenderer_rayDir;
     break;
   case EYE_LIGHT:
-    self->super.renderSample = DebugRenderer_eyeLight;
+    self->renderSample = DebugRenderer_eyeLight;
     break;
   case NG:
-    self->super.renderSample = DebugRenderer_Ng;
+    self->renderSample = DebugRenderer_Ng;
     break;
   case NS:
-    self->super.renderSample = DebugRenderer_Ns;
+    self->renderSample = DebugRenderer_Ns;
+    break;
+  case COLOR:
+    self->renderSample = DebugRenderer_vertexColor;
+    break;
+  case TEX_COORD:
+    self->renderSample = DebugRenderer_texCoord;
     break;
   case DPDS:
-    self->super.renderSample = DebugRenderer_dPds;
+    self->renderSample = DebugRenderer_dPds;
     break;
   case DPDT:
-    self->super.renderSample = DebugRenderer_dPdt;
+    self->renderSample = DebugRenderer_dPdt;
     break;
   case PRIM_ID:
-    self->super.renderSample = DebugRenderer_primID;
+    self->renderSample = DebugRenderer_primID;
     break;
   case GEOM_ID:
-    self->super.renderSample = DebugRenderer_geomID;
+    self->renderSample = DebugRenderer_geomID;
     break;
   case INST_ID:
-    self->super.renderSample = DebugRenderer_instID;
+    self->renderSample = DebugRenderer_instID;
     break;
   case BACKFACING_NG:
-    self->super.renderSample = DebugRenderer_backfacing_Ng;
+    self->renderSample = DebugRenderer_backfacing_Ng;
     break;
   case BACKFACING_NS:
-    self->super.renderSample = DebugRenderer_backfacing_Ns;
+    self->renderSample = DebugRenderer_backfacing_Ns;
     break;
   case VOLUME:
-    self->super.renderSample = DebugRenderer_volume;
+    self->renderSample = DebugRenderer_volume;
     break;
   case TEST_FRAME:
   default:
-    self->super.renderSample = DebugRenderer_testFrame;
+    self->renderSample = DebugRenderer_testFrame;
     break;
   }
 }

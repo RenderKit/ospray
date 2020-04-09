@@ -74,7 +74,7 @@ export void PathTracer_ThinGlass_set(void *uniform _self,
 {
   ThinGlass *uniform self = (ThinGlass * uniform) _self;
   self->eta = rcp(ior);
-  self->attenuationScale = thickness * rcp(attenuationDistance);
+  self->attenuationScale = thickness * rcp(max(attenuationDistance, EPS));
   self->attenuation = logf(attenuationColor) * self->attenuationScale;
   self->map_attenuationColor = make_TextureParam(
       (uniform Texture2D *)map_attenuationColor, xform_attenuationColor);

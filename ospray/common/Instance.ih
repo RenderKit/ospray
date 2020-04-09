@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -21,14 +21,15 @@ struct Instance
 
 inline void Instance_postIntersect(const Instance *uniform self,
     const Renderer *uniform renderer,
-    const uniform int32 instID,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
-    uniform int64 flags)
+    uniform int64 flags,
+    const uniform bool clip = false)
 {
+  GeometricModel **uniform models =
+      clip ? self->group->clipModels : self->group->geometricModels;
   foreach_unique (geomID in ray.geomID) {
-    GeometricModel *uniform model = *(self->group->geometricModels + geomID);
-    GeometricModel_postIntersect(model, renderer, dg, ray, flags);
+    GeometricModel_postIntersect(*(models + geomID), renderer, dg, ray, flags);
 
     dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
     dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);

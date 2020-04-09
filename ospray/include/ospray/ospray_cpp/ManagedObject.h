@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -37,6 +37,7 @@ class ManagedObject
   template <typename T>
   void setParam(const std::string &name, const T &v) const;
 
+  void setParam(const std::string &name, const char *v) const;
   void setParam(const std::string &name, const std::string &v) const;
 
   void setParam(const std::string &name, OSPDataType, const void *) const;
@@ -128,13 +129,20 @@ inline void ManagedObject<HANDLE_T, TYPE>::setParam(
 
 template <typename HANDLE_T, OSPDataType TYPE>
 inline void ManagedObject<HANDLE_T, TYPE>::setParam(
+    const std::string &name, const char *v) const
+{
+  ospSetParam(ospObject, name.c_str(), OSP_STRING, v);
+}
+
+template <typename HANDLE_T, OSPDataType TYPE>
+inline void ManagedObject<HANDLE_T, TYPE>::setParam(
     const std::string &name, const std::string &v) const
 {
   ospSetParam(ospObject, name.c_str(), OSP_STRING, v.c_str());
 }
 
 template <typename HANDLE_T, OSPDataType TYPE>
-void ManagedObject<HANDLE_T, TYPE>::setParam(
+inline void ManagedObject<HANDLE_T, TYPE>::setParam(
     const std::string &name, OSPDataType type, const void *mem) const
 {
   ospSetParam(ospObject, name.c_str(), type, mem);

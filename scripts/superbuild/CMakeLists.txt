@@ -48,18 +48,18 @@ option(ALWAYS_REBUILD "Force every project to always be rebuilt?" OFF)
 
 option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
 
-set(BUILD_OSPCOMMON_VERSION "v1.2.0" CACHE STRING "Which version of ospcommon to build?")
+set(BUILD_OSPCOMMON_VERSION "v1.3.0" CACHE STRING "Which version of ospcommon to build?")
 
 option(DOWNLOAD_TBB "Download TBB or use the only found in the system environment?" ON)
-set(TBB_VERSION "2020.0" CACHE STRING "Which version of TBB to download?")
+set(TBB_VERSION "2020.2" CACHE STRING "Which version of TBB to download?")
 
-set(BUILD_EMBREE_VERSION "v3.8.0" CACHE STRING "Which version of Embree to build?")
+set(BUILD_EMBREE_VERSION "v3.9.0" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
-set(BUILD_OPENVKL_VERSION "v0.8.0" CACHE STRING "Which version of OpenVKL to build?")
+set(BUILD_OPENVKL_VERSION "v0.9.0" CACHE STRING "Which version of OpenVKL to build?")
 
 option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
-set(BUILD_OIDN_VERSION "v1.1.0" CACHE STRING "Which version of OpenImageDenoise to build?")
+set(BUILD_OIDN_VERSION "v1.2.0" CACHE STRING "Which version of OpenImageDenoise to build?")
 option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" OFF)
 
 option(BUILD_GLFW "Build glfw for OSPRay examples or use one in existing environment?" ON)
@@ -69,7 +69,7 @@ option(BUILD_OSPRAY_CI_TESTS "Enable OSPRay's tests." OFF)
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
 option(BUILD_OSPRAY_MODULE_MPI "Enable fetch/build of module_mpi" OFF)
-set(BUILD_OSPRAY_MODULE_MPI_VERSION "v2.0.1" CACHE STRING "What version of module_mpi?")
+set(BUILD_OSPRAY_MODULE_MPI_VERSION "devel" CACHE STRING "What version of module_mpi?")
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"

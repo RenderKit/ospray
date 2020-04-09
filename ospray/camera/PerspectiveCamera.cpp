@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PerspectiveCamera.h"
@@ -116,7 +116,5 @@ ProjectedPoint PerspectiveCamera::projectPoint(const vec3f &p) const
   // TODO: Depth of field radius
   return ProjectedPoint(vec3f(sp.x, sp.y, depth), 0);
 }
-
-OSP_REGISTER_CAMERA(PerspectiveCamera, perspective);
 
 } // namespace ospray

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/GeometryLight.ih"
@@ -105,7 +105,12 @@ void samplePath(const PathContext &pathContext,
         > ray.t0) // valid hit can hide other geometry
       ray.t = min(pathState.shadowCatcherDist, ray.t);
 
-    traceRay(pathContext.world, ray);
+    // Trace ray in clipping geometries scene, fill array with ray intervals
+    RayIntervals rayIntervals;
+    traceClippingRay(pathContext.world, ray, rayIntervals);
+
+    // Trace ray intervals in geometry
+    traceGeometryRayIntervals(pathContext.world, ray, rayIntervals);
 
     PathVertex pathVertex;
     pathVertex.bsdf = NULL;
@@ -130,6 +135,7 @@ void samplePath(const PathContext &pathContext,
     float freePath = volumeSampleFreePath(pathState,
         pathContext.world,
         ray,
+        rayIntervals,
         pathContext.ldSampler,
         pathContext.randomSampler,
         &pathVertex.volume,

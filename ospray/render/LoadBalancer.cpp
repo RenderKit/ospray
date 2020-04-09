@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // own
@@ -11,8 +11,7 @@ namespace ospray {
 
 std::unique_ptr<TiledLoadBalancer> TiledLoadBalancer::instance;
 
-/*! render a frame via the tiled load balancer */
-float LocalTiledLoadBalancer::renderFrame(
+void LocalTiledLoadBalancer::renderFrame(
     FrameBuffer *fb, Renderer *renderer, Camera *camera, World *world)
 {
   bool cancel = false;
@@ -71,8 +70,6 @@ float LocalTiledLoadBalancer::renderFrame(
   fb->setCompletedEvent(OSP_WORLD_RENDERED);
   fb->endFrame(renderer->errorThreshold, camera);
   fb->setCompletedEvent(OSP_FRAME_FINISHED);
-
-  return fb->getVariance();
 }
 
 std::string LocalTiledLoadBalancer::toString() const

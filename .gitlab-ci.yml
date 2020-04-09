@@ -56,12 +56,13 @@ variables:
 .job_template: &test_job_unix
   <<: *test_job
   script:
-    - scripts/tests/run_tests.sh
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
 
 .job_template: &test_job_windows
   <<: *test_job
   script:
-    - scripts\tests\run_tests.ps1
+    - $env:Path += ";$CI_PROJECT_DIR\build\install\bin"
+    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR"
 
 
 ### BUILD JOBS ###
@@ -110,6 +111,16 @@ build-ubuntu1804-gcc:
       - build/install
     expire_in: 3 day
 
+build-centos8:
+  <<: *build_job_docker
+  image: ospray/docker-images:centos8
+  script:
+    - scripts/build_gitlab/linux.sh -G Ninja
+  artifacts:
+    paths:
+      - build/install
+    expire_in: 3 day
+
 build-centos7-icc:
   <<: *build_job_docker_modules
   script:
@@ -135,6 +146,14 @@ build-centos7-gcc:
     paths:
       - build/install
     expire_in: 3 day
+
+build-centos7-mpi:
+  <<: *build_job_docker_modules
+  script:
+    - module load cmake
+    - module load intel
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+  allow_failure: true
 
 build-debug:
   <<: *build_job_docker
@@ -201,14 +220,11 @@ build-scan-kw:
 
 source-protex-scan:
   stage: build
-  image: ospray-protex-centos7
+  image: amd64/openjdk:8
   script:
-    - /tmp/source-scan-protex.sh
-  dependencies:
-  tags:
-    - protex-scan-docker
-  ## Temporarily allow to fail
-  when: manual
+    - scripts/build_gitlab/source-scan-protex.sh
+  dependencies: []
+  tags: [docker]
   allow_failure: true
 
 
@@ -220,19 +236,21 @@ test-centos7-gcc:
   dependencies:
     - build-centos7-gcc
 
+test-centos8:
+  <<: *test_job_unix
+  image: ospray/docker-images:centos8
+  dependencies:
+    - build-centos8
+
 test-ubuntu1804-gcc:
   <<: *test_job_unix
   image: ospray/docker-images:ubuntu18.04
-  script:
-    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/ scripts/tests/run_tests.sh
   dependencies:
     - build-ubuntu1804-gcc
 
 test-ubuntu1604-gcc:
   <<: *test_job_unix
   image: ospray/docker-images:ubuntu16.04
-  script:
-    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/ scripts/tests/run_tests.sh
   dependencies:
     - build-ubuntu1604-gcc
 
@@ -286,12 +304,12 @@ generate-ci-baseline:
   <<: *test_job_unix
   image: ospray/docker-images:ubuntu18.04
   script:
-    - scripts/tests/generate_baseline.sh
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/bin:$PATH" scripts/tests/generate_baseline.sh
   dependencies:
     - build-ubuntu1804-gcc
   artifacts:
     paths:
-      - img
+      - generated_test_images
     expire_in: 3 day
   when: manual
 
@@ -329,7 +347,7 @@ web:
 
 ### RELEASE JOBS ###
 
-release-linux-icc:
+release-linux:
   <<: *release_job
   image: ospray/docker-images:centos7-mod
   script:

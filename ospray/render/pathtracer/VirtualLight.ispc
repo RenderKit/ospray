@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/PathStructs.ih"
@@ -66,9 +66,15 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
             intervalLightDist.lower,
             intervalLightDist.upper,
             ray.time);
+
+        // Trace ray in clipping geometries scene, fill array with ray intervals
+        RayIntervals rayIntervals;
+        traceClippingRay(pathContext.world, shadowRay, rayIntervals);
+
         const float T = volumeTransmittance(pathState,
             pathContext.world,
             shadowRay,
+            rayIntervals,
             pathContext.ldSampler,
             pathContext.randomSampler);
         L = L

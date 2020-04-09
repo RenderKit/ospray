@@ -149,6 +149,4 @@ void Curves::createEmbreeGeometry()
   }
 }
 
-OSP_REGISTER_GEOMETRY(Curves, curve);
-
 } // namespace ospray

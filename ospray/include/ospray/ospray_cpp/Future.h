@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -18,6 +18,7 @@ class Future : public ManagedObject<OSPFuture, OSP_FUTURE>
   void wait(OSPSyncEvent = OSP_TASK_FINISHED);
   void cancel();
   float progress();
+  float duration();
 };
 
 static_assert(sizeof(Future) == sizeof(OSPFuture),
@@ -53,6 +54,11 @@ inline void Future::cancel()
 inline float Future::progress()
 {
   return ospGetProgress(handle());
+}
+
+inline float Future::duration()
+{
+  return ospGetTaskDuration(handle());
 }
 
 } // namespace cpp

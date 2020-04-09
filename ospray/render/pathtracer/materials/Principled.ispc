@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../bsdfs/Conductor.ih"
@@ -130,8 +130,6 @@ struct Principled
 
   Medium outsideMedium;
 };
-
-#define EPS 1e-5f
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
@@ -289,10 +287,13 @@ const varying BSDF *varying Principled_getBSDF(
             // thin
             const vec3f transmissionColor = clamp(self->transmissionColor
                 * get3f(self->transmissionColorMap, dg, make_vec3f(1.f)));
+            const float transmissionDepth = max(self->transmissionDepth
+                    * get1f(self->transmissionDepthMap, dg, 1.f),
+                EPS);
             const float thickness =
                 max(self->thickness * get1f(self->thicknessMap, dg, 1.f), 0.f);
             const vec3f attenuation =
-                logf(transmissionColor) / self->transmissionDepth * thickness;
+                logf(transmissionColor) / transmissionDepth * thickness;
 
             if (roughness < EPS)
               glassBsdf =
@@ -468,7 +469,7 @@ vec3f Principled_getTransparency(
               * get3f(self->transmissionColorMap, dg, make_vec3f(1.f)));
           const float transmissionDepth = max(self->transmissionDepth
                   * get1f(self->transmissionDepthMap, dg, 1.f),
-              0.f);
+              EPS);
           const float thickness =
               max(self->thickness * get1f(self->thicknessMap, dg, 1.f), 0.f);
           const vec3f attenuation =
@@ -565,7 +566,7 @@ void Principled_selectNextMedium(const uniform PathTraceMaterial *uniform super,
         * get3f(self->transmissionColorMap, dg, make_vec3f(1.f)));
     const float transmissionDepth = max(
         self->transmissionDepth * get1f(self->transmissionDepthMap, dg, 1.f),
-        0.f);
+        EPS);
 
     currentMedium.ior = ior;
     currentMedium.attenuation = logf(transmissionColor) / transmissionDepth;

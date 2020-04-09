@@ -13,13 +13,13 @@
 
 // on Windows often only GL 1.1 headers are present
 #ifndef GL_CLAMP_TO_BORDER
-#define GL_CLAMP_TO_BORDER                0x812D
+#define GL_CLAMP_TO_BORDER 0x812D
 #endif
 #ifndef GL_SRGB_ALPHA
-#define GL_SRGB_ALPHA                     0x8C42
+#define GL_SRGB_ALPHA 0x8C42
 #endif
 #ifndef GL_FRAMEBUFFER_SRGB
-#define GL_FRAMEBUFFER_SRGB               0x8DB9
+#define GL_FRAMEBUFFER_SRGB 0x8DB9
 #endif
 
 static bool g_quitNextFrame = false;
@@ -33,7 +33,12 @@ static const std::vector<std::string> g_scenes = {"boxes",
     "random_spheres",
     "streamlines",
     "subdivision_cube",
-    "unstructured_volume"};
+    "unstructured_volume",
+    "planes",
+    "clip_with_spheres",
+    "clip_with_planes",
+    "clip_gravity_spheres_volume",
+    "clip_perlin_noise_volumes"};
 
 static const std::vector<std::string> g_curveBasis = {
     "bspline", "hermite", "catmull-rom", "linear"};
@@ -87,7 +92,7 @@ void error_callback(int error, const char *desc)
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
 GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
-  : denoiserAvailable(denoiser)
+    : denoiserAvailable(denoiser)
 {
   if (activeWindow != nullptr) {
     throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
@@ -218,15 +223,11 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   windowSize = newWindowSize;
 
   // create new frame buffer
-  auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO;
-  if (denoiserEnabled)
-    buffers |= OSP_FB_NORMAL;
+  auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO
+      | OSP_FB_NORMAL;
   framebuffer = cpp::FrameBuffer(windowSize, OSP_FB_RGBA32F, buffers);
-  if (denoiserEnabled) {
-    cpp::ImageOperation d("denoiser");
-    framebuffer.setParam("imageOperation", cpp::Data(d));
-  }
-  framebuffer.commit();
+
+  refreshFrameOperations();
 
   // reset OpenGL viewport and orthographic projection
   glViewport(0, 0, windowSize.x, windowSize.y);
@@ -291,8 +292,6 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
 
 void GLFWOSPRayWindow::display()
 {
-  static auto displayStart = std::chrono::high_resolution_clock::now();
-
   if (showUi)
     buildUI();
 
@@ -306,18 +305,9 @@ void GLFWOSPRayWindow::display()
 
   static bool firstFrame = true;
   if (firstFrame || currentFrame.isReady()) {
-    // display frame rate in window title
-    auto displayEnd = std::chrono::high_resolution_clock::now();
-    auto durationMilliseconds =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            displayEnd - displayStart);
-
-    latestFPS = 1000.f / float(durationMilliseconds.count());
-
-    // map OSPRay frame buffer, update OpenGL texture with its contents, then
-    // unmap
-
     waitOnOSPRayFrame();
+
+    latestFPS = 1.f / currentFrame.duration();
 
     auto *fb = framebuffer.map(showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
 
@@ -337,8 +327,6 @@ void GLFWOSPRayWindow::display()
 
     commitOutstandingHandles();
 
-    // Start new frame and reset frame timing interval start
-    displayStart = std::chrono::high_resolution_clock::now();
     startNewOSPRayFrame();
     firstFrame = false;
   }
@@ -376,6 +364,10 @@ void GLFWOSPRayWindow::display()
 
 void GLFWOSPRayWindow::startNewOSPRayFrame()
 {
+  if (updateFrameOpsNextFrame) {
+    refreshFrameOperations();
+    updateFrameOpsNextFrame = false;
+  }
   currentFrame = framebuffer.renderFrame(renderer, camera, world);
 }
 
@@ -477,8 +469,8 @@ void GLFWOSPRayWindow::buildUI()
   ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);
   ImGui::Checkbox("show albedo", &showAlbedo);
   if (denoiserAvailable) {
-    if(ImGui::Checkbox("denoiser", &denoiserEnabled))
-      reshape(this->windowSize);
+    if (ImGui::Checkbox("denoiser", &denoiserEnabled))
+      updateFrameOpsNextFrame = true;
   }
 
   ImGui::Separator();
@@ -494,7 +486,40 @@ void GLFWOSPRayWindow::buildUI()
     addObjectToCommit(renderer.handle());
   }
 
+  static bool useTestTex = false;
+  if (ImGui::Checkbox("backplate texture", &useTestTex)) {
+    if (useTestTex) {
+      renderer.setParam("map_backplate", backplateTex);
+    } else {
+      renderer.removeParam("map_backplate");
+    }
+    addObjectToCommit(renderer.handle());
+  }
+
   if (rendererType == OSPRayRendererType::PATHTRACER) {
+    if (ImGui::Checkbox("renderSunSky", &renderSunSky)) {
+      if (renderSunSky) {
+        sunSky.setParam("direction", sunDirection);
+        world.setParam("light", cpp::Data(sunSky));
+        addObjectToCommit(sunSky.handle());
+      } else {
+        cpp::Light light("ambient");
+        light.setParam("visible", false);
+        light.commit();
+        world.setParam("light", cpp::Data(light));
+      }
+      addObjectToCommit(world.handle());
+    }
+    if (renderSunSky) {
+      if (ImGui::DragFloat3("sunDirection", sunDirection, 0.01f, -1.f, 1.f)) {
+        sunSky.setParam("direction", sunDirection);
+        addObjectToCommit(sunSky.handle());
+      }
+      if (ImGui::DragFloat("turbidity", &turbidity, 0.1f, 1.f, 10.f)) {
+        sunSky.setParam("turbidity", turbidity);
+        addObjectToCommit(sunSky.handle());
+      }
+    }
     static int maxDepth = 20;
     if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {
       renderer.setParam("maxPathLength", maxDepth);
@@ -513,16 +538,6 @@ void GLFWOSPRayWindow::buildUI()
       addObjectToCommit(renderer.handle());
     }
   } else if (rendererType == OSPRayRendererType::SCIVIS) {
-    static bool useTestTex = false;
-    if (ImGui::Checkbox("backplate texture", &useTestTex)) {
-      if (useTestTex) {
-        renderer.setParam("map_backplate", backplateTex);
-      } else {
-        renderer.removeParam("map_backplate");
-      }
-      addObjectToCommit(renderer.handle());
-    }
-
     static int aoSamples = 1;
     if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
       renderer.setParam("aoSamples", aoSamples);
@@ -562,6 +577,7 @@ void GLFWOSPRayWindow::commitOutstandingHandles()
 
 void GLFWOSPRayWindow::refreshScene(bool resetCamera)
 {
+  renderSunSky = false;
   auto builder = testing::newBuilder(scene);
   testing::setParam(builder, "rendererType", rendererTypeStr);
   if (scene == "curves") {
@@ -600,4 +616,16 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
     updateCamera();
     camera.commit();
   }
+}
+
+void GLFWOSPRayWindow::refreshFrameOperations()
+{
+  if (denoiserEnabled) {
+    cpp::ImageOperation d("denoiser");
+    framebuffer.setParam("imageOperation", cpp::Data(d));
+  } else {
+    framebuffer.removeParam("imageOperation");
+  }
+
+  framebuffer.commit();
 }

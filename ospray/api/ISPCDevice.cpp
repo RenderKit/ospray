@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -8,7 +8,6 @@
 #include "common/Group.h"
 #include "common/Instance.h"
 #include "common/Library.h"
-#include "common/Material.h"
 #include "common/Util.h"
 #include "common/World.h"
 #include "fb/ImageOp.h"
@@ -16,20 +15,29 @@
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 #include "render/LoadBalancer.h"
+#include "render/Material.h"
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
+
+#include "camera/registration.h"
+#include "fb/registration.h"
+#include "geometry/registration.h"
+#include "lights/registration.h"
+#include "render/registration.h"
+#include "texture/registration.h"
+#include "volume/transferFunction/registration.h"
+
 // stl
 #include <algorithm>
 #include <functional>
 #include <map>
-// openvkl
-#include "openvkl/openvkl.h"
 // ospcommon
 #include "ospcommon/tasking/tasking_system_init.h"
+#include "ospcommon/utility/CodeTimer.h"
 
 #include "ISPCDevice_ispc.h"
 
@@ -139,6 +147,7 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 #undef declare_param_setter
 
 RTCDevice ISPCDevice::embreeDevice = nullptr;
+VKLDriver ISPCDevice::vklDriver = nullptr;
 
 ISPCDevice::~ISPCDevice()
 {
@@ -149,6 +158,11 @@ ISPCDevice::~ISPCDevice()
     }
   } catch (...) {
     // silently move on, sometimes a pthread mutex lock fails in Embree
+  }
+
+  if (vklDriver) {
+    vklShutdown();
+    vklDriver = nullptr;
   }
 }
 
@@ -186,37 +200,42 @@ void ISPCDevice::commit()
     }
   }
 
-  vklLoadModule("ispc_driver");
+  if (!vklDriver) {
+    vklLoadModule("ispc_driver");
 
-  VKLDriver driver = nullptr;
+    VKLDriver driver = nullptr;
 
-  int ispc_width = ispc::ISPCDevice_programCount();
-  switch (ispc_width) {
-  case 4:
-    driver = vklNewDriver("ispc_4");
-    break;
-  case 8:
-    driver = vklNewDriver("ispc_8");
-    break;
-  case 16:
-    driver = vklNewDriver("ispc_16");
-    break;
-  default:
-    driver = vklNewDriver("ispc");
-    break;
+    int ispc_width = ispc::ISPCDevice_programCount();
+    switch (ispc_width) {
+    case 4:
+      driver = vklNewDriver("ispc_4");
+      break;
+    case 8:
+      driver = vklNewDriver("ispc_8");
+      break;
+    case 16:
+      driver = vklNewDriver("ispc_16");
+      break;
+    default:
+      driver = vklNewDriver("ispc");
+      break;
+    }
+
+    vklDriverSetErrorFunc(driver, [](VKLError, const char *message) {
+      handleError(OSP_UNKNOWN_ERROR, message);
+    });
+
+    vklDriverSetLogFunc(driver,
+        [](const char *message) { postStatusMsg(OSP_LOG_INFO) << message; });
+
+    vklDriverSetInt(driver, "logLevel", logLevel);
+    vklDriverSetInt(driver, "numThreads", numThreads);
+
+    vklCommitDriver(driver);
+    vklSetCurrentDriver(driver);
+
+    vklDriver = driver;
   }
-
-  vklDriverSetErrorFunc(driver, [](VKLError, const char *message) {
-    handleError(OSP_UNKNOWN_ERROR, message);
-  });
-
-  vklDriverSetLogFunc(driver,
-      [](const char *message) { postStatusMsg(OSP_LOG_INFO) << message; });
-
-  vklDriverSetInt(driver, "logLevel", logLevel);
-
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -458,14 +477,17 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   world->refInc();
 
   auto *f = new RenderTask(fb, [=]() {
-    float result = renderer->renderFrame(fb, camera, world);
+    utility::CodeTimer timer;
+    timer.start();
+    renderer->renderFrame(fb, camera, world);
+    timer.stop();
 
     fb->refDec();
     renderer->refDec();
     camera->refDec();
     world->refDec();
 
-    return result;
+    return timer.seconds();
   });
 
   return (OSPFuture)f;
@@ -495,6 +517,12 @@ float ISPCDevice::getProgress(OSPFuture _task)
   return task->getProgress();
 }
 
+float ISPCDevice::getTaskDuration(OSPFuture _task)
+{
+  auto *task = (Future *)_task;
+  return task->getTaskDuration();
+}
+
 OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
     OSPRenderer _renderer,
     OSPCamera _camera,
@@ -511,10 +539,23 @@ OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
-  return moduleVersionCheck(versionMajor, versionMinor);
-}
+  auto status = moduleVersionCheck(versionMajor, versionMinor);
 
-OSP_REGISTER_DEVICE(ISPCDevice, cpu);
+  if (status == OSP_NO_ERROR) {
+    Device::registerType<ISPCDevice>("cpu");
+
+    registerAllCameras();
+    registerAllImageOps();
+    registerAllGeometries();
+    registerAllLights();
+    registerAllMaterials();
+    registerAllRenderers();
+    registerAllTextures();
+    registerAllTransferFunctions();
+  }
+
+  return status;
+}
 
 } // namespace api
 } // namespace ospray

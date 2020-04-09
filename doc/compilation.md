@@ -45,7 +45,7 @@ before you can build OSPRay you need the following prerequisites:
     newer is required. If Embree is not found by CMake its location can
     be hinted with the variable `embree_DIR`.
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.8.0 or newer is required. If Open VKL is not
+    installing version 0.9.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 -   OSPRay also provides an optional module that adds support for Intel
@@ -92,6 +92,7 @@ Run with:
     mkdir build
     cd build
     cmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
+    cmake --build .
 
 On Windows make sure to select the non-default 64bit generator, e.g.
 
@@ -117,10 +118,10 @@ BUILD_EMBREE_FROM_SOURCE
 : set to OFF will download a pre-built version of Embree.
 
 BUILD_OIDN_FROM_SOURCE
-: set to OFF will download a pre-built version of OpenImageDenoise.
+: set to OFF will download a pre-built version of Open Image Denoise.
 
 BUILD_OIDN_VERSION
-: determines which verison of OpenImageDenoise to pull down.
+: determines which version of Open Image Denoise to pull down.
 
 For the full set of options, run:
 

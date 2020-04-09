@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "HDRILight.h"
@@ -38,7 +38,5 @@ void HDRILight::commit()
       (const ispc::LinearSpace3f &)frame,
       map ? map->getIE() : nullptr);
 }
-
-OSP_REGISTER_LIGHT(HDRILight, hdri);
 
 } // namespace ospray

@@ -1,11 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Volume.h"
 #include "common/Data.h"
-#include "common/Material.h"
 
 #include "openvkl/value_selector.h"
 

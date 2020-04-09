@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -279,8 +279,7 @@ OSPRAY_INTERFACE void ospRetain(OSPObject);
 
 // FrameBuffer Manipulation /////////////////////////////////////////////////
 
-OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(int size_x,
-    int size_y,
+OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(int size_x, int size_y,
     OSPFrameBufferFormat format OSP_DEFAULT_VAL(OSP_FB_SRGBA),
     uint32_t frameBufferChannels OSP_DEFAULT_VAL(OSP_FB_COLOR));
 
@@ -320,6 +319,9 @@ OSPRAY_INTERFACE void ospCancel(OSPFuture);
 
 // Get the completion state of the given task [0.f-1.f]
 OSPRAY_INTERFACE float ospGetProgress(OSPFuture);
+
+// Get the execution duration (in seconds) state of the given task
+OSPRAY_INTERFACE float ospGetTaskDuration(OSPFuture);
 
 typedef struct
 {

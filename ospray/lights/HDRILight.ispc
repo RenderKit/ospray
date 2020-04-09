@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -9,14 +9,14 @@
 
 struct HDRILight
 {
-  Light super; //!< inherited light fields
+  Light super;
 
-  linear3f light2world; //!< Transformation from light space into world space
-  linear3f world2light; //!< Transformation from world space into light space
-  Texture2D *uniform map; //!< Environment map in latitude / longitude format
+  linear3f light2world;
+  linear3f world2light;
+  Texture2D *uniform map; // Environment map in latitude / longitude format
   Distribution2D *uniform
-      distribution; //!< The 2D distribution used to importance sample
-  vec2f rcpSize; //!< precomputed 1/map.size
+      distribution; // The 2D distribution used to importance sample
+  vec2f rcpSize; // precomputed 1/map.size
 };
 
 // Implementation
@@ -130,10 +130,8 @@ export void HDRILight_set(
 {
   HDRILight *uniform self = (HDRILight * uniform) super;
 
-  if (self->distribution != NULL) {
-    Distribution2D_destroy(self->distribution);
-    self->distribution = NULL;
-  }
+  Distribution2D_destroy(self->distribution);
+  self->distribution = NULL;
 
   if (map) {
     self->light2world = light2world;

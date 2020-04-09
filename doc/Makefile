@@ -4,17 +4,15 @@ webpages := $(addprefix www/, $(addsuffix .html, index examples documentation ga
 process_version := $(addprefix tmp/, $(addsuffix .md, examples getting_ospray readme_head))
 tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api examples))
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow))
-images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe ospExamples))
-images_fig := spot_light quad_light hdri_light
+images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe ospExamples renderSunSky))
+images_fig := spot_light spot_coords quad_light hdri_light 
 images_svg := gitter_badge structured_spherical_coords
 images_webonly := $(addprefix images/, VESTEC-Logo-web.png $(addsuffix .jpg, stingray $(addprefix teaser_, clouds cosmos hdospray materials moana rm tapestry)))
-scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_svg2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_svg)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
 webimages := $(addprefix www/, $(images_webonly) $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
-webscripts := $(addprefix www/, $(scripts))
 pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_fig2svg)
 
 PANDOC := pandoc
@@ -27,7 +25,7 @@ ifneq "$(PDOK)" "1"
 endif
 
 all: www doc pdf
-www: $(webpages) www/stylesheet.css $(webimages) $(webscripts)
+www: $(webpages) www/stylesheet.css $(webimages) | wwwscripts
 doc: ../README.md
 pdf: ../readme.pdf
 
@@ -51,7 +49,7 @@ tmp/%.md: %.md tmp/version tmp/links_local.md tmp/images_web.md
 	$(replace_version)
 	$(PANDOC) $@ tmp/links_local.md tmp/images_web.md -o $@
 
-tmp/links.md: links.md
+tmp/links.md: links.md $(wildcard ../.git/HEAD)
 	$(if_is_devel_then) \
 	  sed -e "s/OSPRay_readme.pdf/OSPRay_readme_devel.pdf/g" $< > $@;\
 	  else cp $< $@ ;\
@@ -80,9 +78,10 @@ $(webimages): | wwwimgdir
 wwwimgdir:
 	@mkdir -p www/images
 
-$(webscripts): | wwwscriptdir
-wwwscriptdir:
-	@mkdir -p www/scripts
+wwwscripts: | wwwdir
+	if [[ -d ospray-doc/scripts ]] ; then \
+	  cp -r ospray-doc/scripts/ www ;\
+	fi
 
 $(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_web.md tmp/changelog_web.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
 tmpdir:
@@ -153,12 +152,6 @@ images/%:
 	  fi \
 	fi
 
-### scripts
-########################################################################
-
-www/scripts/%: scripts/%
-	cp $< $@
-
 ### markdown
 ########################################################################
 
@@ -187,6 +180,9 @@ tmp/api.tex: filter-latex.py api.md tmp/links_local.md tmp/images_local_pdf.md
 
 tmp/compilation.tex: filter-latex.py compilation.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=sh
+
+tmp/changelog.tex: filter-sectionnumbers.py changelog.md
+	$(markdown2tex)
 
 changelog.md: ../CHANGELOG.md
 	sed -e "s@README.md@@" $< > $@

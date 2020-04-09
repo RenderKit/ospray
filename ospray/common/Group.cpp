@@ -50,11 +50,6 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
   scene = nullptr;
 }
 
-static void freeIEPtrs(std::vector<void *> &ptrs)
-{
-  ptrs.clear();
-}
-
 // Group definitions ////////////////////////////////////////////////////////
 
 Group::Group()
@@ -67,8 +62,7 @@ Group::~Group()
 {
   freeAndNullifyEmbreeScene(sceneGeometries);
   freeAndNullifyEmbreeScene(sceneVolumes);
-  freeIEPtrs(geometryIEs);
-  freeIEPtrs(volumeIEs);
+  freeAndNullifyEmbreeScene(sceneClippers);
 }
 
 std::string Group::toString() const
@@ -80,6 +74,7 @@ void Group::commit()
 {
   geometricModels = getParamDataT<GeometricModel *>("geometry");
   volumetricModels = getParamDataT<VolumetricModel *>("volume");
+  clipModels = getParamDataT<GeometricModel *>("clippingGeometry");
 
   // get rid of stride for now
   if (geometricModels && !geometricModels->compact()) {
@@ -96,14 +91,21 @@ void Group::commit()
     volumetricModels = &(data->as<VolumetricModel *>());
     data->refDec();
   }
+  if (clipModels && !clipModels->compact()) {
+    auto data = new Data(OSP_GEOMETRIC_MODEL, vec3ui(clipModels->size(), 1, 1));
+    data->copy(*clipModels, vec3ui(0));
+    clipModels = &(data->as<GeometricModel *>());
+    data->refDec();
+  }
 
   size_t numGeometries = geometricModels ? geometricModels->size() : 0;
   size_t numVolumes = volumetricModels ? volumetricModels->size() : 0;
+  size_t numClippers = clipModels ? clipModels->size() : 0;
 
   postStatusMsg(OSP_LOG_DEBUG)
       << "=======================================================\n"
-      << "Finalizing instance, which has " << numGeometries
-      << " geometries and " << numVolumes << " volumes";
+      << "Finalizing instance, which has " << numGeometries << " geometries, "
+      << numVolumes << " volumes and " << numClippers << " clipping geometries";
 
   int sceneFlags = 0;
   sceneFlags |=
@@ -115,38 +117,60 @@ void Group::commit()
 
   freeAndNullifyEmbreeScene(sceneGeometries);
   freeAndNullifyEmbreeScene(sceneVolumes);
+  freeAndNullifyEmbreeScene(sceneClippers);
 
-  freeIEPtrs(geometryIEs);
-  freeIEPtrs(volumeIEs);
+  geometryIEs.clear();
+  volumeIEs.clear();
+  clipIEs.clear();
 
   geometricModelIEs.clear();
   volumetricModelIEs.clear();
+  clipModelIEs.clear();
 
   RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
-  sceneGeometries = rtcNewScene(embreeDevice);
-  sceneVolumes = rtcNewScene(embreeDevice);
-
   if (numGeometries > 0) {
+    sceneGeometries = rtcNewScene(embreeDevice);
+
     geometryIEs = createEmbreeScene<GeometricModel>(
         sceneGeometries, *geometricModels, sceneFlags);
     geometricModelIEs = createArrayOfIE(*geometricModels);
+
+    rtcCommitScene(sceneGeometries);
   }
 
   if (numVolumes > 0) {
+    sceneVolumes = rtcNewScene(embreeDevice);
+
     volumeIEs = createEmbreeScene<VolumetricModel>(
         sceneVolumes, *volumetricModels, sceneFlags);
     volumetricModelIEs = createArrayOfIE(*volumetricModels);
+
+    rtcCommitScene(sceneVolumes);
   }
 
-  rtcCommitScene(sceneGeometries);
-  rtcCommitScene(sceneVolumes);
+  if (numClippers > 0) {
+    sceneClippers = rtcNewScene(embreeDevice);
+
+    clipIEs = createEmbreeScene<GeometricModel>(sceneClippers,
+        *clipModels,
+        sceneFlags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
+    clipModelIEs = createArrayOfIE(*clipModels);
+
+    numInvertedClippers = 0;
+    for (auto &&obj : *clipModels)
+      numInvertedClippers += obj->invertedNormals() ? 1 : 0;
+
+    rtcCommitScene(sceneClippers);
+  }
 
   ispc::Group_set(getIE(),
       geometricModels ? geometricModelIEs.data() : nullptr,
       numGeometries,
       volumetricModels ? volumetricModelIEs.data() : nullptr,
-      numVolumes);
+      numVolumes,
+      clipModels ? clipModelIEs.data() : nullptr,
+      numClippers);
 }
 
 box3f Group::getBounds() const
@@ -154,11 +178,15 @@ box3f Group::getBounds() const
   box3f sceneBounds;
 
   box4f bounds; // NOTE(jda) - Embree expects box4f, NOT box3f...
-  rtcGetSceneBounds(sceneGeometries, (RTCBounds *)&bounds);
-  sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
+  if (sceneGeometries) {
+    rtcGetSceneBounds(sceneGeometries, (RTCBounds *)&bounds);
+    sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
+  }
 
-  rtcGetSceneBounds(sceneVolumes, (RTCBounds *)&bounds);
-  sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
+  if (sceneVolumes) {
+    rtcGetSceneBounds(sceneVolumes, (RTCBounds *)&bounds);
+    sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
+  }
 
   return sceneBounds;
 }

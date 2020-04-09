@@ -18,6 +18,7 @@ struct Ray;
 float volumeSampleFreePath(const PathState &pathState,
     const World *uniform world,
     Ray &ray,
+    RayIntervals &rayIntervals,
     varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler,
     VolumetricModel *varying *uniform sampledInstance,
@@ -27,6 +28,7 @@ float volumeSampleFreePath(const PathState &pathState,
 float volumeTransmittance(const PathState &pathState,
     const World *uniform world,
     Ray &ray,
+    RayIntervals &rayIntervals,
     varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler);
 

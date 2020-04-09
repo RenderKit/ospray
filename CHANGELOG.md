@@ -1,27 +1,65 @@
 Version History
 ---------------
 
+### Changes in v2.1.0:
+
+-   New clipping geometries feature that allows clipping any scene
+    (geometry and volumes); all OSPRay geometry types can by used as
+    clipping geometry
+    -   Inverted clipping is supported via new `invertNormals` parameter
+        of `GeometricModel`
+    -   Currently there is a fixed upper limit (64) of how many clipping
+        geometries can be nested
+    -   When clipping with curves geometry (any basis except linear)
+        some rendering artifacts may appear
+-   New plane geometry defined via plane equation and optional bounding
+    box
+-   Sun-sky light based on physical model of Hošek-Wilkie
+-   Support for photometric lights (e.g. IES or EULUMDAT)
+-   Add new `ospGetTaskDuration` API call to query execution time of
+    asynchronous tasks
+-   Support for 16bit (unsigned short) textures
+-   Add static `cpp::Device::current` method as a C++ wrapper equivalent
+    to `ospGetCurrentDevice`
+-   Generalized `cpp::Device` parameter setting to match other handle
+    types
+-   Passing `NULL` to `ospRelease` is not reported as error anymore
+-   Fix computation of strides for `OSPData`
+-   Fix transparency in `scivis` renderer
+-   Add missing C++ wrapper for `ospGetVariance`
+-   Proper demonstration of `ospGetVariance` in `ospTutorialAsync`
+-   Fix handling of `--osp:device-params` to process and set all passed
+    arguments first before committing the device, to ensure it is
+    committed in a valid state.
+-   Object factory functions are now registered during module
+    initialization via the appropriate `registerType` function
+-   Fix issue with OSPRay ignoring tasking system thread count settings
+-   Fix issue where OSPRay always loaded the ISPC module, even if not
+    required
+-   OSPRay now requires minimum Open VKL v0.9.0
+
 ### Changes in v2.0.1:
 
--   Fix bug where Embree user-defined geometries were not indexed correctly
-    in the scene, which now requires Embree v3.8.0+
--   Fix crash when the path tracer encounters geometric models that do not
-    have a material
--   Fix crash when some path tracer materials generated NULL bsdfs
+-   Fix bug where Embree user-defined geometries were not indexed
+    correctly in the scene, which now requires Embree v3.8.0+
+-   Fix crash when the path tracer encounters geometric models that do
+    not have a material
+-   Fix crash when some path tracer materials generated `NULL` bsdfs
 -   Fix bug where `ospGetBounds` returned incorrect values
 -   Fix missing symbol in denoiser module
 -   Fix missing symbol exports on Windows for all OSPRay built modules
 -   Add the option to specify a single color for geometric models
--   The `scivis` renderer now respects the opacity component of `color` on
-    geometric models
--   Fix various inconsistent handling of frame buffer alpha between renderers
+-   The `scivis` renderer now respects the opacity component of `color`
+    on geometric models
+-   Fix various inconsistent handling of frame buffer alpha between
+    renderers
 -   `ospGetCurrentDevice` now increments the ref count of the returned
-    `OSPDevice` handle, so applications will need to release the handle when
-    finished by using `ospDeviceRelease` accordingly
+    `OSPDevice` handle, so applications will need to release the handle
+    when finished by using `ospDeviceRelease` accordingly
 -   Added denoiser to `ospExamples` app
 -   Added `module_mpi` to superbuild (disabled by default)
--   The superbuild now will emit a CMake error when using any 32-bit CMake
-    generator, as 32-bit builds are not supported
+-   The superbuild now will emit a CMake error when using any 32-bit
+    CMake generator, as 32-bit builds are not supported
 
 ### Changes in v2.0.0:
 

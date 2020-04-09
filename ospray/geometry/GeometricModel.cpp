@@ -3,6 +3,7 @@
 
 // ospray
 #include "GeometricModel.h"
+#include "../render/Material.h"
 // ispc exports
 #include "GeometricModel_ispc.h"
 #include "Geometry_ispc.h"
@@ -65,12 +66,15 @@ void GeometricModel::commit()
         << " potentially not enough 'color' elements for geometry, clamping";
   }
 
+  invertNormals = getParam<bool>("invertNormals");
+
   ispc::GeometricModel_set(getIE(),
       geometry().getIE(),
       ispc(colorData),
       ispc(indexData),
       ispc(materialData),
-      useRendererMaterialList);
+      useRendererMaterialList,
+      invertNormals);
 }
 
 OSPTYPEFOR_DEFINITION(GeometricModel *);

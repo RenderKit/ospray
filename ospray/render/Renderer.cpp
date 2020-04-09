@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -12,6 +12,10 @@
 #include "LoadBalancer.h"
 
 namespace ospray {
+
+static FactoryMap<Renderer> g_renderersMap;
+
+// Renderer definitions ///////////////////////////////////////////////////////
 
 Renderer::Renderer()
 {
@@ -69,7 +73,12 @@ void Renderer::commit()
 
 Renderer *Renderer::createInstance(const char *type)
 {
-  return createInstanceHelper<Renderer, OSP_RENDERER>(type);
+  return createInstanceHelper(type, g_renderersMap[type]);
+}
+
+void Renderer::registerType(const char *type, FactoryFcn<Renderer> f)
+{
+  g_renderersMap[type] = f;
 }
 
 void Renderer::renderTile(FrameBuffer *fb,
@@ -88,9 +97,9 @@ void Renderer::renderTile(FrameBuffer *fb,
       jobID);
 }
 
-float Renderer::renderFrame(FrameBuffer *fb, Camera *camera, World *world)
+void Renderer::renderFrame(FrameBuffer *fb, Camera *camera, World *world)
 {
-  return TiledLoadBalancer::instance->renderFrame(fb, this, camera, world);
+  TiledLoadBalancer::instance->renderFrame(fb, this, camera, world);
 }
 
 OSPPickResult Renderer::pick(

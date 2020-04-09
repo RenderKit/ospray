@@ -1,9 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "./Managed.h"
+#include "common/Managed.h"
+#include "common/Util.h"
 
 namespace ospray {
 
@@ -60,14 +61,30 @@ struct OSPRAY_SDK_INTERFACE Material : public ManagedObject
     ospLoadModule first. */
   static Material *createInstance(
       const char *renderer_type, const char *material_type);
+  template <typename T>
+  static void registerType(
+      const char *renderer_type, const char *material_type);
+
+ private:
+  template <typename BASE_CLASS, typename CHILD_CLASS>
+  friend void registerTypeHelper(const char *type);
+  static void registerType(const char *name, FactoryFcn<Material> f);
 };
 
 OSPTYPEFOR_SPECIALIZATION(Material *, OSP_MATERIAL);
 
-#define OSP_REGISTER_MATERIAL(renderer_name, InternalClass, external_name)     \
-  OSP_REGISTER_OBJECT(::ospray::Material,                                      \
-      material,                                                                \
-      InternalClass,                                                           \
-      renderer_name##__##external_name)
+// Inlined defintions /////////////////////////////////////////////////////////
+
+template <typename T>
+inline void Material::registerType(
+    const char *renderer_type, const char *material_type)
+{
+  std::string rType(renderer_type);
+  std::string mType(material_type);
+
+  std::string name = rType + "_" + mType;
+
+  registerTypeHelper<Material, T>(name.c_str());
+}
 
 } // namespace ospray

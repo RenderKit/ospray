@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "OSPCommon.h"
@@ -65,6 +65,34 @@ void initFromCommandLine(int *_ac, const char ***_av)
   if (_ac && _av) {
     int &ac = *_ac;
     auto &av = *_av;
+
+    // If we have any device-params those must be set first to avoid
+    // initializing the device in an invalid or partial state
+    bool hadDeviceParams = false;
+    for (int i = 1; i < ac;) {
+      if (std::strncmp(av[i], "--osp:device-params", 19) == 0) {
+        hadDeviceParams = true;
+        std::string parmesan = getArgString(av[i]);
+        std::vector<std::string> parmList = split(parmesan, ',');
+        for (std::string &p : parmList) {
+          std::vector<std::string> kv = split(p, ':');
+          if (kv.size() != 2) {
+            postStatusMsg(
+                "Invalid parameters provided for --osp:device-params. "
+                "Must be formatted as <param>:<value>[,<param>:<value>,...]");
+          } else {
+            device->setParam(kv[0], kv[1]);
+          }
+        }
+        removeArgs(ac, av, i, 1);
+      } else {
+        ++i;
+      }
+    }
+    if (hadDeviceParams) {
+      device->commit();
+    }
+
     for (int i = 1; i < ac;) {
       std::string parm = av[i];
       // flag-style arguments
@@ -77,12 +105,12 @@ void initFromCommandLine(int *_ac, const char ***_av)
         device->setParam("warnAsError", true);
         removeArgs(ac, av, i, 1);
       } else if (parm == "--osp:verbose") {
-        device->setParam("logLevel", int(OSP_LOG_INFO));
+        device->setParam("logLevel", OSP_LOG_INFO);
         device->setParam("logOutput", std::string("cout"));
         device->setParam("errorOutput", std::string("cerr"));
         removeArgs(ac, av, i, 1);
       } else if (parm == "--osp:vv") {
-        device->setParam("logLevel", int(OSP_LOG_DEBUG));
+        device->setParam("logLevel", OSP_LOG_DEBUG);
         device->setParam("logOutput", std::string("cout"));
         device->setParam("errorOutput", std::string("cerr"));
         removeArgs(ac, av, i, 1);
@@ -128,20 +156,6 @@ void initFromCommandLine(int *_ac, const char ***_av)
           postStatusMsg(
               "Invalid value provided for --osp:set-affinity. "
               "Must be 0 or 1");
-        }
-        removeArgs(ac, av, i, 1);
-      } else if (beginsWith(parm, "--osp:device-params")) {
-        std::string parmesan = getArgString(parm);
-        std::vector<std::string> parmList = split(parmesan, ',');
-        for (std::string &p : parmList) {
-          std::vector<std::string> kv = split(p, ':');
-          if (kv.size() != 2) {
-            postStatusMsg(
-                "Invalid parameters provided for --osp:device-params. "
-                "Must be formatted as <param>:<value>[,<param>:<value>,...]");
-          } else {
-            device->setParam(kv[0], kv[1]);
-          }
         }
         removeArgs(ac, av, i, 1);
       } else {
@@ -200,6 +214,12 @@ size_t sizeOf(OSPDataType type)
     return sizeof(int16);
   case OSP_USHORT:
     return sizeof(uint16);
+  case OSP_VEC2US:
+    return sizeof(vec2us);
+  case OSP_VEC3US:
+    return sizeof(vec3us);
+  case OSP_VEC4US:
+    return sizeof(vec4us);
   case OSP_INT:
     return sizeof(int32);
   case OSP_VEC2I:
@@ -313,6 +333,12 @@ OSPDataType typeOf(const char *string)
     return (OSP_SHORT);
   if (strcmp(string, "ushort") == 0)
     return (OSP_USHORT);
+  if (strcmp(string, "vec2us") == 0)
+    return (OSP_VEC2US);
+  if (strcmp(string, "vec3us") == 0)
+    return (OSP_VEC3US);
+  if (strcmp(string, "vec4us") == 0)
+    return (OSP_VEC4US);
   if (strcmp(string, "uint") == 0)
     return (OSP_UINT);
   if (strcmp(string, "uint2") == 0)
@@ -385,6 +411,12 @@ std::string stringFor(OSPDataType type)
     return "short";
   case OSP_USHORT:
     return "ushort";
+  case OSP_VEC2US:
+    return "vec2us";
+  case OSP_VEC3US:
+    return "vec3us";
+  case OSP_VEC4US:
+    return "vec4us";
   case OSP_INT:
     return "int";
   case OSP_VEC2I:
@@ -486,6 +518,14 @@ std::string stringFor(OSPTextureFormat format)
     return "la8";
   case OSP_TEXTURE_R32F:
     return "r32f";
+  case OSP_TEXTURE_RGBA16:
+    return "rgba16";
+  case OSP_TEXTURE_RGB16:
+    return "rgb16";
+  case OSP_TEXTURE_RA16:
+    return "ra16";
+  case OSP_TEXTURE_R16:
+    return "r16";
   case OSP_TEXTURE_FORMAT_INVALID:
     return "invalid";
   }
@@ -517,6 +557,14 @@ size_t sizeOf(OSPTextureFormat format)
     return sizeof(vec2uc);
   case OSP_TEXTURE_R32F:
     return sizeof(float);
+  case OSP_TEXTURE_RGBA16:
+    return sizeof(vec4us);
+  case OSP_TEXTURE_RGB16:
+    return sizeof(vec3us);
+  case OSP_TEXTURE_RA16:
+    return sizeof(vec2us);
+  case OSP_TEXTURE_R16:
+    return sizeof(uint16);
   case OSP_TEXTURE_FORMAT_INVALID:
     return 0;
   }

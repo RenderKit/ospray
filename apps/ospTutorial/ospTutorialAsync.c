@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial of how to use OSPRay's async API in an
@@ -115,6 +115,7 @@ int main(int argc, const char **argv)
 
   // render 10 more frames, which are accumulated to result in a better
   // converged image
+  printf("starting accumulation\n");
   for (int frames = 0; frames < 10; frames++) {
     for (int i = 0; i < 2; ++i) {
       futures[i] =
@@ -122,8 +123,16 @@ int main(int argc, const char **argv)
     }
     for (int i = 0; i < 2; ++i) {
       ospWait(futures[i], OSP_FRAME_FINISHED);
-      ospRelease(futures[i]);
+      if (frames < 9) // don't release future of last frame yet
+        ospRelease(futures[i]);
     }
+  }
+  for (int i = 1; i >= 0; --i) {
+    printf("...done!\n");
+    printf("variance of render %i is now %f\n",
+        i,
+        ospGetVariance(framebuffers[i]));
+    ospRelease(futures[i]);
   }
 
   fb = (uint32_t *)ospMapFrameBuffer(framebuffers[0], OSP_FB_COLOR);
@@ -271,7 +280,7 @@ void buildScene1(OSPCamera *camera,
   *framebuffer = ospNewFrameBuffer(imgSize.x,
       imgSize.y,
       OSP_FB_SRGBA,
-      OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+      OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM | OSP_FB_VARIANCE);
 }
 
 void buildScene2(OSPCamera *camera,
@@ -396,5 +405,5 @@ void buildScene2(OSPCamera *camera,
   *framebuffer = ospNewFrameBuffer(imgSize.x,
       imgSize.y,
       OSP_FB_SRGBA,
-      OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+      OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM | OSP_FB_VARIANCE);
 }

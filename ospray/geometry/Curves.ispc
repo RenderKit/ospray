@@ -3,6 +3,7 @@
 
 // ospray
 #include "common/Data.ih"
+#include "common/FilterIntersect.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
@@ -114,30 +115,8 @@ unmasked void Curves_intersect_kernel(
   const Intersections isect =
       intersectCapsule(ray->org, ray->dir, A, B, self->radius);
 
-  bool hit = false;
-  if (and(and(isect.entry.t > ray->t0, isect.entry.t < ray->t),
-          isect.entry.hit)) {
-    hit = true;
-    ray->t = isect.entry.t;
-    ray->u = isect.entry.u;
-    ray->Ng = isect.entry.N;
-  } else if (and(and(isect.exit.t > ray->t0, isect.exit.t < ray->t),
-                 isect.exit.hit)) {
-    hit = true;
-    ray->t = isect.exit.t;
-    ray->u = isect.exit.u;
-    ray->Ng = isect.exit.N;
-  }
-
-  if (hit) {
-    if (occlusionTest) {
-      ray->t = neg_inf;
-    } else {
-      ray->primID = primID;
-      ray->geomID = args->geomID;
-      ray->instID = args->context->instID[0];
-    }
-  }
+  // call intersection filtering callback and setup hit if accepted
+  filterIntersectionBoth(args, isect, occlusionTest);
 }
 
 unmasked void Curves_intersect(

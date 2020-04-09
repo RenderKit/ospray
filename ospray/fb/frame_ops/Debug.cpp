@@ -1,30 +1,13 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// ospray
-#include "../FrameBufferView.h"
-#include "../ImageOp.h"
+#include "Debug.h"
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
 
 namespace ospray {
-
-struct OSPRAY_SDK_INTERFACE DebugFrameOp : public FrameOp
-{
-  std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
-
-  std::string toString() const override;
-};
-
-struct OSPRAY_SDK_INTERFACE LiveDebugFrameOp : public LiveFrameOp
-{
-  LiveDebugFrameOp(FrameBufferView &fbView);
-  void process(const Camera *) override;
-};
-
-// Definitions //////////////////////////////////////////////////////////////
 
 std::unique_ptr<LiveImageOp> DebugFrameOp::attach(FrameBufferView &fbView)
 {
@@ -60,7 +43,5 @@ void LiveDebugFrameOp::process(const Camera *)
     }
   });
 }
-
-OSP_REGISTER_IMAGE_OP(DebugFrameOp, debug);
 
 } // namespace ospray

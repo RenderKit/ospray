@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "QuadLight.h"
@@ -28,7 +28,5 @@ void QuadLight::commit()
       (ispc::vec3f &)edge1,
       (ispc::vec3f &)edge2);
 }
-
-OSP_REGISTER_LIGHT(QuadLight, quad); // actually a parallelogram
 
 } // namespace ospray

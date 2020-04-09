@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/Renderer.ih"
@@ -22,19 +22,23 @@ void SciVis_renderSample(Renderer *uniform _self,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 
-  vec4f outputColor = make_vec4f(0.f);
-
   uniform bool firstHit = true;
   const float originalRayTFar = sample.ray.t;
 
   // This is our main ray
   Ray &ray = sample.ray;
 
+  // First trace the ray across clipping scene to calculate ray intervals,
+  // this step should keep ray structure unchanged
+  RayIntervals rayIntervals;
+  traceClippingRay(world, ray, rayIntervals);
+
   // Iterate over all translucent geometry till we are fully opaque
+  vec4f outputColor = make_vec4f(0.f);
   while (outputColor.w < 0.99f) {
-    // Trace geometry using given ray,
+    // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
-    traceRay(world, ray);
+    traceGeometryRayIntervals(world, ray, rayIntervals);
 
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
@@ -43,14 +47,18 @@ void SciVis_renderSample(Renderer *uniform _self,
 
     // Sample volumes across volume intervals (in front of geometry hit)
     if (volumeIntervals.numVolumeIntervals > 0) {
-      vec4f volumeColor = integrateVolumeIntervals(
-          volumeIntervals, volumeRay, ldSampler, self->volumeSamplingRate);
+      vec4f volumeColor = integrateVolumeIntervals(volumeIntervals,
+          rayIntervals,
+          volumeRay,
+          ldSampler,
+          self->volumeSamplingRate);
       outputColor = outputColor + (1.f - outputColor.w) * volumeColor;
     }
 
     // If any geometry has been hit
     vec4f blendedColor;
-    if (hadHit(ray)) {
+    const bool hadHit = hadHit(ray);
+    if (hadHit) {
       // Prepare differential geometry structure
       DifferentialGeometry dg;
       computeDG(world, self, ray, dg);
@@ -85,7 +93,7 @@ void SciVis_renderSample(Renderer *uniform _self,
     // Blend with output final color
     outputColor = outputColor + (1.f - outputColor.w) * blendedColor;
     firstHit = false;
-    if (!hadHit(ray)) {
+    if (!hadHit) {
       break;
     }
   }

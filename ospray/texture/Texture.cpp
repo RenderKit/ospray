@@ -1,10 +1,14 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture.h"
 #include "common/Util.h"
 
 namespace ospray {
+
+static FactoryMap<Texture> g_texMap;
+
+// Texture definitions ////////////////////////////////////////////////////////
 
 Texture::Texture()
 {
@@ -18,7 +22,12 @@ std::string Texture::toString() const
 
 Texture *Texture::createInstance(const char *type)
 {
-  return createInstanceHelper<Texture, OSP_TEXTURE>(type);
+  return createInstanceHelper(type, g_texMap[type]);
+}
+
+void Texture::registerType(const char *type, FactoryFcn<Texture> f)
+{
+  g_texMap[type] = f;
 }
 
 OSPTYPEFOR_DEFINITION(Texture *);

@@ -71,8 +71,8 @@ objects for the specific scene like `cpp::Geometry`, `cpp::Volume`,
 `cpp::Light` etc.
 
 The `detail::Builder` base struct is mostly responsible for setting up
-OSPRay `world` and objects common in all scenes (for eg: lighting and
-ground plane), which can be conveniently overridden in the derived
+OSPRay `world` and objects common in all scenes (for example lighting
+and ground plane), which can be conveniently overridden in the derived
 builders.
 
 Given below are different scenes listed with their string identifiers:
@@ -117,6 +117,12 @@ unstructured_volume
 ### Renderer
 
 This app comes with three [renderer] options: `scivis`, `pathtracer` and
-`debug`. The app provides some common rendering controls like `pixel
-samples` and other more specific to the renderer type like `aoIntensity`
-for `scivis` renderer.
+`debug`. The app provides some common rendering controls like
+`pixelSamples` and other more specific to the renderer type like
+`aoIntensity` for `scivis` renderer.
+
+The sun-sky lighting can be used in a sample scene by enabling the
+`renderSunSky` option of the `pathtracer` renderer. It allows the user
+to change `turbidity` and `sunDirection`. 
+
+![Rendering an evening sky with the `renderSunSky` option.][renderSunSky]
