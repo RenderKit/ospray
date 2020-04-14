@@ -162,7 +162,7 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
     foreach_unique (m in mat) {
       surfaceColor = m->Kd;
       opacity = m->d;
-      if (m->map_Kd) {
+      if (valid(m->map_Kd)) {
         vec4f kdFromMap = get4f(m->map_Kd, dg);
         surfaceColor = surfaceColor * make_vec3f(kdFromMap);
       }
