@@ -704,9 +704,14 @@ p.caption:before {
   }
 
   .exhibit img {
+    margin: 0;
+    padding: 0;
+    #float: left;
+    #display:inline-block;
+    display: block;
     float: left;
-    display:inline-block;
     width: 300px;
+    box-shadow: 3px 3px 12px -5px rgba(0,0,0,0.86);
   }
 
   .exhibit .caption {
