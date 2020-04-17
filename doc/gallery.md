@@ -6,137 +6,148 @@ with OSPRay. If *you* have created any notable images through OSPRay
 and would like to share them on this page, please [send us an
 email](mailto:ospray@googlegroups.com).
 
+<div class="gallery">
 
 <div class="exhibit">
-<div class="caption">
-<h2>Moana Island Scene Screen Capture</h2>
 [![Moana Island Scene](gallery/moana_video.jpg)](https://www.youtube.com/watch?v=p0EJo0pZ3QI "Moana Island Scene")
-<p>Real-time screen capture of OSPRay rendering the moana island scene.</p>
+<div class="caption">
+Real-time screen capture of OSPRay rendering the moana island scene.
 </div>
 </div>
 
 <div class="exhibit">
-<div class="caption">
-<h2>DKRZ Weather Visualization in ParaView</h2>
 [![DKRZ](gallery/dkrz_video.jpg)](https://youtu.be/aNz22XzjIV0 "DKRZ")
-<p>Path traced volumetric rendering of a clouds in a climate simulation.</p>
+<div class="caption">
+Path traced volumetric rendering of a clouds in a climate simulation, courtesy DKRZ Niklas Robert.
 </div>
 </div>
 
 <div class="exhibit">
-<div class="caption">
-<h2>Rhino Viewport OSPRay plugin</h2>
 [![Rhino Viewport](gallery/rhino_video.jpg)](https://vimeo.com/405661583 "Rhino Viewport")
-<p>Real-time screen capture of the "osprey" Rhino plugin by Darby Johnston.</p>
+<div class="caption">
+Real-time screen capture of the "osprey" Rhino plugin by Darby Johnston.
 </div>
 </div>
 
 <div class="exhibit">
-<div class="caption">
-<h2>AMR Binary Black Hole Merger</h2>
 [![Cosmos Video](gallery/cosmos_video.png)](https://vimeo.com/237987637 "Cosmos Video")
-<p>Simulation of two black holes colliding using GRChombo in reference to a LIGO event.  Simulation was conducted by
+<div class="caption">
+AMR Volume rendering of a simulation of two black holes colliding using GRChombo in reference to a LIGO event.  Simulation was conducted by
 [the Centre for Theoretical Cosmology (CTC)](http://www.ctc.cam.ac.uk/).  Images were 
-rendered in ParaView by directly sampling the AMR structure using OSPRay.</p>
+rendered in ParaView by directly sampling the AMR structure using OSPRay.
 </div>
 </div>
 
 <div class="exhibit">
-<div class="caption">
-<h2>NASA Ames Parachute Simulation</h2>
 [![NASA Parachute Video](gallery/nasa_parachute_video.png)](https://vimeo.com/237987416 "NASA Parachute Video")
-<p>Video rendered using OSPRay by Tim Sandstrom of NASA Ames.</p>
+<div class="caption">
+Parachute Simulation rendered using OSPRay by Tim Sandstrom of NASA Ames.
 </div>
 </div>
 
-Bentley Virtual Showroom
-------------------------------------------------
-
-<div class="left">
+<div class="exhibit">
 [![](gallery/bentley-thumb.jpg)](gallery/bentley.jpg)
-</div>
-
+<div class="caption">
 Photorealistic rendering of a Bentley virtual showroom using OSPRay's path tracer.
+</div>
+</div>
 
-Moana Island Scene
-------------------------------------------------
-
-<div class="left">
+<div class="exhibit">
 [![](gallery/moana1-thumb.jpg)](gallery/moana1.jpg)
+<div class="caption">
+Moana Island Scene
+</div>
+</div>
+
+<div class="exhibit">
 [![](gallery/moana2-thumb.jpg)](gallery/moana2.jpg)
+<div class="caption">
+</div>
+</div>
+
+<div class="exhibit">
 [![](gallery/moana3-thumb.jpg)](gallery/moana3.jpg)
+<div class="caption">
+</div>
+</div>
+
+<div class="exhibit">
 [![](gallery/moana4-thumb.jpg)](gallery/moana4.jpg)
+<div class="caption">
+Moana Island Scene with cloud
+</div>
 </div>
 
-The Moana Island Scene rendered in OSPRay, publicly released by
-[Disney](https://www.technology.disneyanimation.com/islandscene).
-The scene consists of 39.3 million instances, 261.1 million unique quads,
- and 82.4 billion instanced quads.  The cloud
-dataset was also added to the scene to highlight OSPRay's
- path traced volume rendering capabilities.  A video of
-the scene being rendered interactively can be found [here](https://www.youtube.com/watch?v=p0EJo0pZ3QI&t=11s).
-
-
-10TB Walls Dataset
-------------------------------------------------
-
-<div class="left">
+<div class="exhibit">
 [![](gallery/walls_4k_00-thumb.jpg)](gallery/walls_4k_00.png)
-[![](gallery/walls_4k_01-thumb.jpg)](gallery/walls_4k_01.png)
-[![](gallery/walls_4k_05-thumb.jpg)](gallery/walls_4k_05.png)
-[![](gallery/walls_4k_11-thumb.jpg)](gallery/walls_4k_11.png)
-[![](gallery/walls_4k_21-thumb.jpg)](gallery/walls_4k_21.png)
+<div class="caption">
+10TB simulation of the formation of domain walls in the early universe by
+[the Centre for Theoretical Cosmology (CTC)](http://www.ctc.cam.ac.uk/).
+</div>
 </div>
 
-Some of the forty time steps of the `walls` data set, which is a
-simulation of the formation of domain walls in the early universe by
-[the Centre for Theoretical Cosmology (CTC)](http://www.ctc.cam.ac.uk/)
-in cooperation with [SGI](http://www.sgi.com/). Each volume has a
-resolution of 4096^3^, thus the total data set is *10TB* large. With
-OSPRay running on a SGI UV300 system you can interactively explore the
-data -- watch the [movie](gallery/walls_4k.mp4). For more background
-read the related [blog post by
-SGI](http://blog.sgi.com/accelerating-scientific-discovery-through-visualization/).
+<div class="exhibit">
+[![](gallery/walls_4k_01-thumb.jpg)](gallery/walls_4k_01.png)
+<div class="caption">
+</div>
+</div>
 
-OSPRay Parallel Rendering on TACC's "Stallion" Display Wall
------------------------------------------------------------
+<div class="exhibit">
+[![](gallery/walls_4k_05-thumb.jpg)](gallery/walls_4k_05.png)
+<div class="caption">
+</div>
+</div>
 
+<div class="exhibit">
+[![](gallery/walls_4k_11-thumb.jpg)](gallery/walls_4k_11.png)
+<div class="caption">
+</div>
+</div>
+
+<div class="exhibit">
+[![](gallery/walls_4k_21-thumb.jpg)](gallery/walls_4k_21.png)
+<div class="caption">
+</div>
+</div>
+
+<div class="exhibit">
 [![](gallery/ospray_stallion-thumb.jpg)](displaywall.html)
-
+<div class="caption">
 This shows a photo of OSPRay parallel rendering on TACC's 320 MPixel
-"Stallion" Display wall.
+"Stallion" Display wall.  [Read more.](displaywall.html)
+</div>
+</div>
 
-[Read more.](displaywall.html)
-
-
-VMD/Tachyon Screenshots
------------------------
-
-This section shows some screenshots from the Tachyon module applied to
-models exported from the widely used "Visual Molecular Dynamics" (VMD)
-tool. In that workflow, a VMD user uses the VMD command
-`export Tachyon mymodel.tachy` to export the VMD model in tachyon
-format, then uses the `ospTachyon mymodel.tachy` viewer on those models.
-
+<div class="exhibit">
 [![](gallery/ospTachyon-glpf-thumb.jpg)](gallery/ospTachyon-glpf.png)
-
+<div class="caption">
 VMD "GLPF" model; original model courtesy John Stone, UIUC.\
+</div>
+</div>
 
+<div class="exhibit">
 [![](gallery/ospTachyon-organelle-thumb.jpg)](gallery/ospTachyon-organelle.png)
-
+<div class="caption">
 VMD "Organelle", using vdW-representation via ospray spheres. Model
 courtesy Carsten Kutzner, MPI BPC, Göttingen.\
+</div>
+</div>
 
+<div class="exhibit">
 [![](gallery/ospTachyon-ribosome-thumb.jpg)](gallery/ospTachyon-ribosome.png)
-
+<div class="caption">
 VMD "ribosome", with balls, sticks, ribbons, and quicksurfs. Model
 courtesy Carsten Kutzner, MPI BPC, Göttingen.
+</div>
+</div>
 
-Other
------------------------
-
+<div class="exhibit">
 [![](gallery/obj-xfrog-thumb.jpg)](gallery/obj-xfrog.png)
-
+<div class="caption">
 The "xfrog" model of 1.7 billion (instanced) triangles and transparency
 textures. Model originally created using XFrog, model courtesy Oliver
 Deussen, University of Konstanz.\
+</div>
+</div>
+
+</div>
