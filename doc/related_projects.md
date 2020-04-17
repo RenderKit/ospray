@@ -27,6 +27,13 @@ HdOSPRay
 HdOSPRay is a rendering plugin for the Hydra rendering layer in USD.
 For more information see the project's [page on GitHub](https://github.com/ospray/hdospray).
 
+OSPRay Studio
+--------
+![](images/ospray_studio_dlaf.jpg)
+[Studio](https://github.com/ospray/ospray_studio) is the
+    OSPRay team's lightweight visualization application used to showcase
+    the latest features of OSPRay. 
+
 Tapestry
 --------
 ![](images/teaser_tapestry.jpg)
@@ -73,9 +80,6 @@ visualizing the results.
 Projects that are closely related to OSPRay
 ===========================================
 
--   [OSPRay Studio](https://github.com/ospray/ospray_studio) is the
-    OSPRay team's lightweight visualization application used to showcase
-    the latest features of OSPRay. ![](images/ospray_studio_dlaf.jpg)
 -   The Intel® [Embree] Ray Tracing Kernel Framework
 -   Intel [Open Image Denoise], a high-performance denoising library
 -   OSPRay's "sister project" [OpenSWR](http://openswr.org/)
