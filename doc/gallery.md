@@ -18,7 +18,7 @@ Real-time screen capture of OSPRay rendering the moana island scene.
 <div class="exhibit">
 [![DKRZ](gallery/thumbnails/dkrz_video-thumb.jpg)](https://youtu.be/aNz22XzjIV0 "DKRZ")
 <div class="caption">
-Path traced volumetric rendering of clouds in a climate simulation, courtesy DKRZ Niklas Robert.
+Path traced volumetric rendering of clouds in a climate simulation, courtesy DKRZ Niklas Rober.
 </div>
 </div>
 
