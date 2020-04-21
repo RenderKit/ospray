@@ -93,6 +93,13 @@ Moana Island Scene with cloud
 </div>
 
 <div class="exhibit">
+[![](gallery/thumbnails/moana5-thumb.jpg)](gallery/moana5.jpg)
+<div class="caption">
+Moana Island Scene with backlit cloud
+</div>
+</div>
+
+<div class="exhibit">
 [![](gallery/thumbnails/teaser_clouds-thumb.jpg)](images/teaser_clouds.jpg)
 <div class="caption">
 ParaView volume rendering clouds.
