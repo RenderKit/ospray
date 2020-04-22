@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v2.1.1:
+
+-   CarPaint obeys `coat` weight parameter
+
 ### Changes in v2.1.0:
 
 -   New clipping geometries feature that allows clipping any scene
