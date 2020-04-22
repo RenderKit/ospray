@@ -60,9 +60,16 @@ Photorealistic rendering of a Bentley virtual showroom using OSPRay's path trace
 </div>
 
 <div class="exhibit">
-[![](gallery/thumbnails/teaser_hdospray-thumb.jpg)](images/teaser_hdospray.jpg)
+[![](gallery/thumbnails/teaser_hdospray-thumb.jpg)](gallery/teaser_hdospray.jpg)
 <div class="caption">
 USD hdOSPRay rendering plugin.
+</div>
+</div>
+
+<div class="exhibit">
+[![](gallery/thumbnails/rhino-thumb.jpg)](gallery/rhino.jpg)
+<div class="caption">
+OSPRay Rhino rendering plugin, "osprey".
 </div>
 </div>
 
@@ -100,21 +107,21 @@ Moana Island Scene with backlit cloud
 </div>
 
 <div class="exhibit">
-[![](gallery/thumbnails/teaser_clouds-thumb.jpg)](images/teaser_clouds.jpg)
+[![](gallery/thumbnails/teaser_clouds-thumb.jpg)](gallery/teaser_clouds.jpg)
 <div class="caption">
 ParaView volume rendering clouds.
 </div>
 </div>
 
 <div class="exhibit">
-[![](gallery/thumbnails/ospray_studio_dlaf-thumb.jpg)](images/ospray_studio_dlaf.jpg)
+[![](gallery/thumbnails/ospray_studio_dlaf-thumb.jpg)](gallery/ospray_studio_dlaf.jpg)
 <div class="caption">
 OSPRay Studio application.
 </div>
 </div>
 
 <div class="exhibit">
-[![](gallery/thumbnails/teaser_tapestry-thumb.jpg)](images/teaser_tapestry.jpg)
+[![](gallery/thumbnails/teaser_tapestry-thumb.jpg)](gallery/teaser_tapestry.jpg)
 <div class="caption">
 Tapestry cloud rendering microservice using OSPRay.
 </div>
