@@ -1,7 +1,7 @@
 OSPRay parallel rendering on TACC's "Stallion" display wall
 ===========================================================
 
-[![](gallery/ospray_stallion-thumb.jpg)](gallery/ospray_stallion.jpg)
+[![](gallery/thumbnails/ospray_stallion-thumb.jpg)](gallery/ospray_stallion.jpg)
 
 This photo shows OSPRay running on the [Stallion 328 megapixel tiled
 display](https://www.tacc.utexas.edu/vislab/stallion) at the Texas

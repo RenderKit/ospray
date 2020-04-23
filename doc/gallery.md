@@ -60,7 +60,7 @@ Photorealistic rendering of a Bentley virtual showroom using OSPRay's path trace
 </div>
 
 <div class="exhibit">
-[![](gallery/thumbnails/teaser_hdospray-thumb.jpg)](gallery/teaser_hdospray.jpg)
+[![](gallery/thumbnails/hdospray-thumb.jpg)](gallery/hdospray.jpg)
 <div class="caption">
 USD hdOSPRay rendering plugin.
 </div>
@@ -107,7 +107,7 @@ Moana Island Scene with backlit cloud
 </div>
 
 <div class="exhibit">
-[![](gallery/thumbnails/teaser_clouds-thumb.jpg)](gallery/teaser_clouds.jpg)
+[![](gallery/thumbnails/clouds-thumb.jpg)](gallery/clouds.jpg)
 <div class="caption">
 ParaView volume rendering clouds.
 </div>
@@ -121,7 +121,7 @@ OSPRay Studio application.
 </div>
 
 <div class="exhibit">
-[![](gallery/thumbnails/teaser_tapestry-thumb.jpg)](gallery/teaser_tapestry.jpg)
+[![](gallery/thumbnails/tapestry-thumb.jpg)](gallery/tapestry.jpg)
 <div class="caption">
 Tapestry cloud rendering microservice using OSPRay.
 </div>
