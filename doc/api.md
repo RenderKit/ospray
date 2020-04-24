@@ -597,8 +597,8 @@ Note that cell widths are defined _per refinement level_, not per block.
 
   float[]        cellWidth                    NULL  array of each level's cell width
 
-  box3f[]        block.bounds                 NULL  [data] array of bounds for each AMR
-                                                    block
+  box3i[]        block.bounds                 NULL  [data] array of grid sizes (in voxels)
+                                                    for each AMR block
 
   int[]          block.level                  NULL  array of each block's refinement
                                                     level

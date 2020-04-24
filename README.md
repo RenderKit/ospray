@@ -943,7 +943,7 @@ Note that cell widths are defined *per refinement level*, not per block.
 |                |              |                   | `OSP_AMR_FINEST`                                                       |
 |                |              |                   | `OSP_AMR_OCTANT`                                                       |
 | float\[\]      | cellWidth    |               NULL| array of each level’s cell width                                       |
-| box3f\[\]      | block.bounds |               NULL| [data](#data) array of bounds for each AMR block                       |
+| box3i\[\]      | block.bounds |               NULL| [data](#data) array of grid sizes (in voxels) for each AMR block       |
 | int\[\]        | block.level  |               NULL| array of each block’s refinement level                                 |
 | OSPData\[\]    | block.data   |               NULL| [data](#data) array of OSPData containing the actual scalar voxel data |
 | vec3f          | gridOrigin   |        $(0, 0, 0)$| origin of the grid in world-space                                      |
