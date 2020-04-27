@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../bsdfs/Conductor.ih"
@@ -185,7 +185,7 @@ const varying BSDF *varying CarPaint_getBSDF(
             rcp(coatIor),
             coatFinalColor,
             coatThickness,
-            1.f);
+            coat);
       } else {
         bsdf = MicrofacetDielectricLayer_create(ctx,
             coatFrame,
@@ -195,7 +195,7 @@ const varying BSDF *varying CarPaint_getBSDF(
             coatThickness,
             coatRoughness,
             0.f,
-            1.f);
+            coat);
       }
     }
   }

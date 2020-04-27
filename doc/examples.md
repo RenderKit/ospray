@@ -71,8 +71,8 @@ objects for the specific scene like `cpp::Geometry`, `cpp::Volume`,
 `cpp::Light` etc.
 
 The `detail::Builder` base struct is mostly responsible for setting up
-OSPRay `world` and objects common in all scenes (for eg: lighting and
-ground plane), which can be conveniently overridden in the derived
+OSPRay `world` and objects common in all scenes (for example lighting
+and ground plane), which can be conveniently overridden in the derived
 builders.
 
 Given below are different scenes listed with their string identifiers:

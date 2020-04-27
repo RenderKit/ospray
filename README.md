@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v2.1.0 (devel) of Intel® OSPRay. For changes and new
+This is release v2.2.0 (devel) of Intel® OSPRay. For changes and new
 features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
 for more information.
 
@@ -101,7 +101,7 @@ before you can build OSPRay you need the following prerequisites:
     `embree_DIR`.
 
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.8.0 or newer is required. If Open VKL is not
+    installing version 0.9.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 
@@ -157,6 +157,7 @@ Run with:
 mkdir build
 cd build
 cmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
+cmake --build .
 ```
 
 On Windows make sure to select the non-default 64bit generator, e.g.
@@ -185,10 +186,10 @@ BUILD\_EMBREE\_FROM\_SOURCE
 :   set to OFF will download a pre-built version of Embree.
 
 BUILD\_OIDN\_FROM\_SOURCE
-:   set to OFF will download a pre-built version of OpenImageDenoise.
+:   set to OFF will download a pre-built version of Open Image Denoise.
 
 BUILD\_OIDN\_VERSION
-:   determines which verison of OpenImageDenoise to pull down.
+:   determines which version of Open Image Denoise to pull down.
 
 For the full set of options, run:
 
@@ -476,7 +477,7 @@ to avoid leaking the underlying device object.
 OSPRay allows applications to query runtime properties of a device in
 order to do enhanced validation of what device was loaded at runtime.
 The following function can be used to get these device-specific
-properties (attiributes about the device, not paramter values)
+properties (attributes about the device, not parameter values)
 
 ``` {.cpp}
 int64_t ospDeviceGetProperty(OSPDevice, OSPDeviceProperty);
@@ -821,7 +822,7 @@ shared with OSPData by the application (created with
 
 -   the source array must be shared as well (thus `ospCopyData` cannot
     be used to read opaque data)
--   if source and destination memory overlaps (aliasing), then behaviour
+-   if source and destination memory overlaps (aliasing), then behavior
     is undefined
 -   except if source and destination regions are identical (including
     matching strides), which can be used by application to mark that
@@ -942,7 +943,7 @@ Note that cell widths are defined *per refinement level*, not per block.
 |                |              |                   | `OSP_AMR_FINEST`                                                       |
 |                |              |                   | `OSP_AMR_OCTANT`                                                       |
 | float\[\]      | cellWidth    |               NULL| array of each level’s cell width                                       |
-| box3f\[\]      | block.bounds |               NULL| [data](#data) array of bounds for each AMR block                       |
+| box3i\[\]      | block.bounds |               NULL| [data](#data) array of grid sizes (in voxels) for each AMR block       |
 | int\[\]        | block.level  |               NULL| array of each block’s refinement level                                 |
 | OSPData\[\]    | block.data   |               NULL| [data](#data) array of OSPData containing the actual scalar voxel data |
 | vec3f          | gridOrigin   |        $(0, 0, 0)$| origin of the grid in world-space                                      |
@@ -1018,7 +1019,7 @@ the vertices and data values. Vertex ordering is the same as
 vertex.
 
 To maintain VTK data compatibility an index array may be specified via
-the `indexPrefixed` array that allow vertex indices to be interleaved
+the `indexPrefixed` array that allows vertex indices to be interleaved
 with cell sizes in the following format:
 $n, id_1, ..., id_n, m, id_1, ..., id_m$.
 
@@ -1036,7 +1037,7 @@ $n, id_1, ..., id_n, m, id_1, ..., id_m$.
 |                         |                    |         | `OSP_WEDGE`                                                                                                                                             |
 |                         |                    |         | `OSP_PYRAMID`                                                                                                                                           |
 | bool                    | hexIterative       | false   | hexahedron interpolation method, defaults to fast non-iterative version which could have rendering inaccuracies may appear if hex is not parallelepiped |
-| bool                    | precomputedNormals | true    | whether to accelerate by precomputing, at a cost of 12 bytes/face                                                                                       |
+| bool                    | precomputedNormals | false   | whether to accelerate by precomputing, at a cost of 12 bytes/face                                                                                       |
 
 : Additional configuration parameters for unstructured volumes.
 
@@ -1103,7 +1104,7 @@ maximum of 2^32^ primitives.
 
 ### Mesh
 
-A mesh consiting of either triangles or quads is created by calling
+A mesh consisting of either triangles or quads is created by calling
 `ospNewGeometry` with type string “`mesh`”. Once created, a mesh
 recognizes the following parameters:
 
@@ -1220,8 +1221,8 @@ discussion of curve types and data formatting).
 If a constant `radius` is used and positions are specified in a
 `vec3f[]` type of `vertex.position` format, then type/basis defaults to
 `OSP_ROUND` and `OSP_LINEAR` (this is the fastest and most memory
-efficient mode). Implementation is with round linear segements where
-each segment corresponds to a link between two vertices.
+efficient mode). Implementation is with round linear segments where each
+segment corresponds to a link between two vertices.
 
 The following section describes the properties of different curve basis’
 and how they use the data provided in data buffers:
@@ -1297,6 +1298,21 @@ by calling `ospNewGeometry` with type string “`box`”.
 
 : Parameters defining a boxes geometry.
 
+### Planes
+
+OSPRay can directly render planes defined by plane equation coefficients
+in its implicit form $ax + by + cz + d = 0$. By default planes are
+infinite but their extents can be limited by defining optional bounding
+boxes. A planes geometry can be created by calling `ospNewGeometry` with
+type string “`plane`”.
+
+| Type      | Name Descript      | ion                                                      |
+|:----------|:-------------------|:---------------------------------------------------------|
+| vec4f\[\] | plane.coefficients | [data](#data) array of plane coefficients $(a, b, c, d)$ |
+| box3f\[\] | plane.bounds       | optional [data](#data) array of bounding boxes           |
+
+: Parameters defining a planes geometry.
+
 ### Isosurfaces
 
 OSPRay can directly render multiple isosurfaces of a volume without
@@ -1326,20 +1342,27 @@ OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
 Color and material are fetched with the primitive ID of the hit (clamped
 to the valid range, thus a single color or material is fine), or mapped
-first via the `index` array (if present). All paramters are optional,
+first via the `index` array (if present). All parameters are optional,
 however, some renderers (notably the [path tracer](#path-tracer))
 require a material to be set. Materials are either handles of
 `OSPMaterial`, or indices into the `material` array on the
 [renderer](#renderers), which allows to build a [world](#world) which
 can be used by different types of renderers.
 
-| Type                         | Name     | Description                                                                                                                                         |
-|:-----------------------------|:---------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
-| OSPMaterial / uint32         | material | optional [material](#materials) applied to the geometry, may be an index into the `material` parameter on the [renderer](#renderers) (if it exists) |
-| vec4f                        | color    | optional color assigned to the geometry                                                                                                             |
-| OSPMaterial\[\] / uint32\[\] | material | optional [data](#data) array of (per-primitive) materials, may be an index into the `material` parameter on the renderer (if it exists)             |
-| vec4f\[\]                    | color    | optional [data](#data) array of (per-primitive) colors                                                                                              |
-| uint8\[\]                    | index    | optional [data](#data) array of per-primitive indices into `color` and `material`                                                                   |
+An `invertNormals` flag allows to invert (shading) normal vectors of the
+rendered geometry. That is particularly useful for clipping. By changing
+normal vectors orientation one can control whether inside or outside of
+the clipping geometry is being removed. For example, a clipping geometry
+with normals oriented outside clips everything what’s inside.
+
+| Type                         | Name          | Description                                                                                                                                         |
+|:-----------------------------|:--------------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSPMaterial / uint32         | material      | optional [material](#materials) applied to the geometry, may be an index into the `material` parameter on the [renderer](#renderers) (if it exists) |
+| vec4f                        | color         | optional color assigned to the geometry                                                                                                             |
+| OSPMaterial\[\] / uint32\[\] | material      | optional [data](#data) array of (per-primitive) materials, may be an index into the `material` parameter on the renderer (if it exists)             |
+| vec4f\[\]                    | color         | optional [data](#data) array of (per-primitive) colors                                                                                              |
+| uint8\[\]                    | index         | optional [data](#data) array of per-primitive indices into `color` and `material`                                                                   |
+| bool                         | invertNormals | inverts all shading normals (Ns), default false                                                                                                     |
 
 : Parameters understood by GeometricModel.
 
@@ -1419,7 +1442,7 @@ the spotlight supports the special parameters listed in the table.
 | float     | openingAngle          |          180| full opening angle (in degree) of the spot; outside of this cone is no illumination                                                                                           |
 | float     | penumbraAngle         |            5| size (angle in degree) of the “penumbra”, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of `openingAngle` |
 | float     | radius                |            0| the size of the spotlight, the radius of a disk with normal `direction`                                                                                                       |
-| float\[\] | intensityDistribution |             | luminous intensity distribution for photometric lights; can be 2D for assymentric illumination; values are assumed to be uniformly distributed                                |
+| float\[\] | intensityDistribution |             | luminous intensity distribution for photometric lights; can be 2D for asymmetric illumination; values are assumed to be uniformly distributed                                 |
 | vec3f     | c0                    |             | orientation, i.e., direction of the C0-(half)plane (only needed if illumination via `intensityDistribution` is asymmetric)                                                    |
 
 : Special parameters accepted by the spotlight.
@@ -1506,12 +1529,13 @@ control the color and intensity of the computed ambient occlusion (AO).
 ### Sun-Sky Light
 
 The sun-sky light is a combination of a `distant` light for the sun and
-a procedural `hdri` light for the sky. It surrounds the scene and
-illuminates it from infinity and can be used for rendering outdoor
-scenes. The radiance values are calculated using the Hošek-Wilkie sky
-model and solar radiance function. In addition to the [general
-parameters](#lights) the `sunSky` light supports the following special
-parameters:
+a procedural `hdri` light for the sky. It is created by passing the type
+string “`sunSky`” to `ospNewLight`. The sun-sky light surrounds the
+scene and illuminates it from infinity and can be used for rendering
+outdoor scenes. The radiance values are calculated using the
+Hošek-Wilkie sky model and solar radiance function. In addition to the
+[general parameters](#lights) the following special parameters are
+supported:
 
 | Type  | Name      |       Default| Description                                         |
 |:------|:----------|-------------:|:----------------------------------------------------|
@@ -1543,17 +1567,34 @@ create a group call
 OSPGroup ospNewGroup();
 ```
 
-Groups take arrays of geometric models and volumetric models, but they
-are optional. In other words, there is no need to create empty arrays if
-there are no geometries or volumes in the group.
+Groups take arrays of geometric models, volumetric models and clipping
+geometric models, but they are optional. In other words, there is no
+need to create empty arrays if there are no geometries or volumes in the
+group.
 
-| Type                   | Name         |  Default| Description                                                                                                                                                     |
-|:-----------------------|:-------------|--------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| OSPGeometricModel\[\]  | geometry     |     NULL| [data](#data) array of [GeometricModels](#geometricmodels)                                                                                                      |
-| OSPVolumetricModel\[\] | volume       |     NULL| [data](#data) array of [VolumetricModels](#volumetricmodels)                                                                                                    |
-| bool                   | dynamicScene |    false| use RTC\_SCENE\_DYNAMIC flag (faster BVH build, slower ray traversal), otherwise uses RTC\_SCENE\_STATIC flag (faster ray traversal, slightly slower BVH build) |
-| bool                   | compactMode  |    false| tell Embree to use a more compact BVH in memory by trading ray traversal performance                                                                            |
-| bool                   | robustMode   |    false| tell Embree to enable more robust ray intersection code paths (slightly slower)                                                                                 |
+By adding `OSPGeometricModel`s to the `clippingGeometry` array a
+clipping geometry feature is enabled. Geometries assigned to this
+parameter will be used as clipping geometries. Any supported geometry
+can be used for clipping. The only requirement is that it has to
+distinctly partition space into clipping and non-clipping one. These
+include: spheres, boxes, infinite planes, closed meshes, closed
+subdivisions and curves. All geometries and volumes assigned to
+`geometry` or `volume` will be clipped. Use of clipping geometry that is
+not closed (or infinite) will result in rendering artifacts. User can
+decide which part of space is clipped by changing shading normals
+orientation with the `invertNormals` flag of the
+[GeometricModel](#geometricmodels). When more than single clipping
+geometry is defined all clipping areas will be “added” together – an
+union of these areas will be applied.
+
+| Type                   | Name             |  Default| Description                                                                                                                                                     |
+|:-----------------------|:-----------------|--------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSPGeometricModel\[\]  | geometry         |     NULL| [data](#data) array of [GeometricModels](#geometricmodels)                                                                                                      |
+| OSPVolumetricModel\[\] | volume           |     NULL| [data](#data) array of [VolumetricModels](#volumetricmodels)                                                                                                    |
+| OSPGeometricModel\[\]  | clippingGeometry |     NULL| [data](#data) array of [GeometricModels](#geometricmodels) used for clipping                                                                                    |
+| bool                   | dynamicScene     |    false| use RTC\_SCENE\_DYNAMIC flag (faster BVH build, slower ray traversal), otherwise uses RTC\_SCENE\_STATIC flag (faster ray traversal, slightly slower BVH build) |
+| bool                   | compactMode      |    false| tell Embree to use a more compact BVH in memory by trading ray traversal performance                                                                            |
+| bool                   | robustMode       |    false| tell Embree to enable more robust ray intersection code paths (slightly slower)                                                                                 |
 
 : Parameters understood by groups.
 
@@ -2141,23 +2182,23 @@ its parameters are as follows
 
 The supported texture formats for `texture2d` are:
 
-| Name                  | Description                                                               |
-|:----------------------|:--------------------------------------------------------------------------|
-| OSP\_TEXTURE\_RGBA8   | 8 bit \[0–255\] linear components red, green, blue, alpha                 |
-| OSP\_TEXTURE\_SRGBA   | 8 bit sRGB gamma encoded color components, and linear alpha               |
-| OSP\_TEXTURE\_RGBA32F | 32 bit float components red, green, blue, alpha                           |
-| OSP\_TEXTURE\_RGB8    | 8 bit \[0–255\] linear components red, green, blue                        |
-| OSP\_TEXTURE\_SRGB    | 8 bit sRGB gamma encoded components red, green, blue                      |
-| OSP\_TEXTURE\_RGB32F  | 32 bit float components red, green, blue                                  |
-| OSP\_TEXTURE\_R8      | 8 bit \[0–255\] linear single component red                               |
-| OSP\_TEXTURE\_RA8     | 8 bit \[0–255\] linear two components red, alpha                          |
-| OSP\_TEXTURE\_L8      | 8 bit \[0–255\] gamma encoded luminance (replicated into red, gree, blue) |
-| OSP\_TEXTURE\_LA8     | 8 bit \[0–255\] gamma encoded luminance, and linear alpha                 |
-| OSP\_TEXTURE\_R32F    | 32 bit float single component red                                         |
-| OSP\_TEXTURE\_RGBA16  | 16 bit \[0–65535\] linear components red, green, blue, alpha              |
-| OSP\_TEXTURE\_RGB16   | 16 bit \[0–65535\] linear components red, green, blue                     |
-| OSP\_TEXTURE\_RA16    | 16 bit \[0–65535\] linear two components red, alpha                       |
-| OSP\_TEXTURE\_R16     | 16 bit \[0–65535\] linear single component red                            |
+| Name                  | Description                                                                |
+|:----------------------|:---------------------------------------------------------------------------|
+| OSP\_TEXTURE\_RGBA8   | 8 bit \[0–255\] linear components red, green, blue, alpha                  |
+| OSP\_TEXTURE\_SRGBA   | 8 bit sRGB gamma encoded color components, and linear alpha                |
+| OSP\_TEXTURE\_RGBA32F | 32 bit float components red, green, blue, alpha                            |
+| OSP\_TEXTURE\_RGB8    | 8 bit \[0–255\] linear components red, green, blue                         |
+| OSP\_TEXTURE\_SRGB    | 8 bit sRGB gamma encoded components red, green, blue                       |
+| OSP\_TEXTURE\_RGB32F  | 32 bit float components red, green, blue                                   |
+| OSP\_TEXTURE\_R8      | 8 bit \[0–255\] linear single component red                                |
+| OSP\_TEXTURE\_RA8     | 8 bit \[0–255\] linear two components red, alpha                           |
+| OSP\_TEXTURE\_L8      | 8 bit \[0–255\] gamma encoded luminance (replicated into red, green, blue) |
+| OSP\_TEXTURE\_LA8     | 8 bit \[0–255\] gamma encoded luminance, and linear alpha                  |
+| OSP\_TEXTURE\_R32F    | 32 bit float single component red                                          |
+| OSP\_TEXTURE\_RGBA16  | 16 bit \[0–65535\] linear components red, green, blue, alpha               |
+| OSP\_TEXTURE\_RGB16   | 16 bit \[0–65535\] linear components red, green, blue                      |
+| OSP\_TEXTURE\_RA16    | 16 bit \[0–65535\] linear two components red, alpha                        |
+| OSP\_TEXTURE\_R16     | 16 bit \[0–65535\] linear single component red                             |
 
 : Supported texture formats by `texture2d`, i.e., valid constants of
 type `OSPTextureFormat`.
@@ -2260,7 +2301,11 @@ supports the special parameters listed in the table below.
 | float | apertureRadius         | size of the aperture, controls the depth of field                      |
 | float | focusDistance          | distance at where the image is sharpest when depth of field is enabled |
 | bool  | architectural          | vertical edges are projected to be parallel                            |
-| int   | stereoMode             | 0: no stereo (default), 1: left eye, 2: right eye, 3: side-by-side     |
+| int   | stereoMode             | `OSPStereoMode` for stereo rendering, possible values are:             |
+|       |                        | `OSP_STEREO_NONE` (default)                                            |
+|       |                        | `OSP_STEREO_LEFT`                                                      |
+|       |                        | `OSP_STEREO_RIGHT`                                                     |
+|       |                        | `OSP_STEREO_SIDE_BY_SIDE`                                              |
 | float | interpupillaryDistance | distance between left and right eye when stereo is enabled             |
 
 : Parameters accepted by the perspective camera.
@@ -2730,8 +2775,8 @@ objects for the specific scene like `cpp::Geometry`, `cpp::Volume`,
 `cpp::Light` etc.
 
 The `detail::Builder` base struct is mostly responsible for setting up
-OSPRay `world` and objects common in all scenes (for eg: lighting and
-ground plane), which can be conveniently overridden in the derived
+OSPRay `world` and objects common in all scenes (for example lighting
+and ground plane), which can be conveniently overridden in the derived
 builders.
 
 Given below are different scenes listed with their string identifiers:

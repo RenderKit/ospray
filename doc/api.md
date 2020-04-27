@@ -156,7 +156,7 @@ to avoid leaking the underlying device object.
 OSPRay allows applications to query runtime properties of a device in
 order to do enhanced validation of what device was loaded at runtime.
 The following function can be used to get these device-specific
-properties (attiributes about the device, not paramter values)
+properties (attributes about the device, not parameter values)
 
     int64_t ospDeviceGetProperty(OSPDevice, OSPDeviceProperty);
 
@@ -475,7 +475,7 @@ shared with OSPData by the application (created with
 
   - the source array must be shared as well (thus `ospCopyData` cannot
     be used to read opaque data)
-  - if source and destination memory overlaps (aliasing), then behaviour
+  - if source and destination memory overlaps (aliasing), then behavior
     is undefined
   - except if source and destination regions are identical (including
     matching strides), which can be used by application to mark that
@@ -597,8 +597,8 @@ Note that cell widths are defined _per refinement level_, not per block.
 
   float[]        cellWidth                    NULL  array of each level's cell width
 
-  box3f[]        block.bounds                 NULL  [data] array of bounds for each AMR
-                                                    block
+  box3i[]        block.bounds                 NULL  [data] array of grid sizes (in voxels)
+                                                    for each AMR block
 
   int[]          block.level                  NULL  array of each block's refinement
                                                     level
@@ -681,7 +681,7 @@ the vertices and data values. Vertex ordering is the same as
 vertex.
 
 To maintain VTK data compatibility an index array may be specified via
-the `indexPrefixed` array that allow vertex indices to be interleaved
+the `indexPrefixed` array that allows vertex indices to be interleaved
 with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
 ..., id_m$.
 
@@ -725,7 +725,7 @@ with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
                                                      inaccuracies may appear if hex is not
                                                      parallelepiped
 
-  bool                 precomputedNormals      true  whether to accelerate by precomputing,
+  bool                 precomputedNormals     false  whether to accelerate by precomputing,
                                                      at a cost of 12 bytes/face
   -------------------  ------------------  --------  ---------------------------------------
   : Additional configuration parameters for unstructured volumes.
@@ -794,7 +794,7 @@ maximum of 2^32^ primitives.
 
 ### Mesh
 
-A mesh consiting of either triangles or quads is created by calling
+A mesh consisting of either triangles or quads is created by calling
 `ospNewGeometry` with type string "`mesh`". Once created, a mesh
 recognizes the following parameters:
 
@@ -966,7 +966,7 @@ discussion of curve types and data formatting).
 If a constant `radius` is used and positions are specified in a
 `vec3f[]` type of `vertex.position` format, then type/basis defaults to
 `OSP_ROUND` and `OSP_LINEAR` (this is the fastest and most memory
-efficient mode). Implementation is with round linear segements where
+efficient mode). Implementation is with round linear segments where
 each segment corresponds to a link between two vertices.
 
 The following section describes the properties of different curve basis'
@@ -1084,7 +1084,7 @@ and material information. To create a geometric model, call
 
 Color and material are fetched with the primitive ID of the hit (clamped
 to the valid range, thus a single color or material is fine), or mapped
-first via the `index` array (if present). All paramters are optional,
+first via the `index` array (if present). All parameters are optional,
 however, some renderers (notably the [path tracer]) require a material
 to be set. Materials are either handles of `OSPMaterial`, or indices
 into the `material` array on the [renderer], which allows to build a
@@ -1211,7 +1211,7 @@ the spotlight supports the special parameters listed in the table.
 
   float[]    intensityDistribution             luminous intensity distribution
                                                for photometric lights; can be 2D
-                                               for assymentric illumination;
+                                               for asymmetric illumination;
                                                values are assumed to be
                                                uniformly distributed
 
@@ -2036,7 +2036,7 @@ The supported texture formats for `texture2d` are:
   OSP_TEXTURE_RGB32F  32\ bit float components red, green, blue
   OSP_TEXTURE_R8      8\ bit [0–255] linear single component red
   OSP_TEXTURE_RA8     8\ bit [0–255] linear two components red, alpha
-  OSP_TEXTURE_L8      8\ bit [0–255] gamma encoded luminance (replicated into red, gree, blue)
+  OSP_TEXTURE_L8      8\ bit [0–255] gamma encoded luminance (replicated into red, green, blue)
   OSP_TEXTURE_LA8     8\ bit [0–255] gamma encoded luminance, and linear alpha
   OSP_TEXTURE_R32F    32\ bit float single component red
   OSP_TEXTURE_RGBA16  16\ bit [0–65535] linear components red, green, blue, alpha
@@ -2154,10 +2154,16 @@ supports the special parameters listed in the table below.
   bool  architectural          vertical edges are projected to be
                                parallel
 
-  int   stereoMode             0: no stereo (default),
-                               1: left eye,
-                               2: right eye,
-                               3: side-by-side
+  int   stereoMode             `OSPStereoMode` for stereo rendering,
+                               possible values are:
+
+                               `OSP_STEREO_NONE` (default)
+
+                               `OSP_STEREO_LEFT`
+
+                               `OSP_STEREO_RIGHT`
+
+                               `OSP_STEREO_SIDE_BY_SIDE`
 
   float interpupillaryDistance distance between left and right eye when
                                stereo is enabled
