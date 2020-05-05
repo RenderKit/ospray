@@ -49,7 +49,7 @@ inline float computeAO(const uniform SciVis *uniform self,
   const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec2f halton = HaltonSequence_get2D(sampleCnt * accumID + i);
+    const vec2f halton = HaltonSequence_get2D(accumID + i);
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;

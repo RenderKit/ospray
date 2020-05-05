@@ -143,6 +143,9 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   math/spectrum.h
   math/spectrum.ih
   math/spectrum.ispc
+  math/random.ih
+  math/halton.ih
+  math/halton.ispc
 
   render/LoadBalancer.cpp
   render/Material.cpp

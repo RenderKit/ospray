@@ -1,9 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "sobol.ih"
+#include "halton.ih"
 #include "vec.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -269,7 +270,7 @@ inline vec2f LDSampler_getFloat2(
 
 inline varying vec2f RandomHammersley2__getFloats(varying unsigned int idx)
 {
-  return make_vec2f(rcp((float)idx), radicalInverse2(idx));
+  return make_vec2f(rcp((float)idx), Halton_sample2(idx));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -277,5 +278,5 @@ inline varying vec2f RandomHammersley2__getFloats(varying unsigned int idx)
 
 inline varying vec2f HaltonSequence_get2D(varying unsigned int idx)
 {
-  return make_vec2f(radicalInverse2(idx), radicalInverse(idx, 3));
+  return make_vec2f(Halton_sample2(idx), Halton_sample3(idx));
 }
