@@ -108,3 +108,13 @@ else()
     ospray_install_namelink(embree ${EMBREE_LIBNAME})
   endif()
 endif()
+
+# Install MSVC runtime
+if (WIN32)
+  set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+  include(InstallRequiredSystemLibraries)
+  list(FILTER CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS INCLUDE REGEX
+      ".*msvcp[0-9]+\.dll|.*vcruntime[0-9]+\.dll|.*vcruntime[0-9]+_[0-9]+\.dll")
+  install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+      DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
+endif()
