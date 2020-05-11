@@ -5,6 +5,7 @@ Version History
 
 -   CarPaint obeys `coat` weight parameter
 -   Correct depth buffer values with SciVis renderer
+-   Adaptions to Embree v3.10.0
 
 ### Changes in v2.1.0:
 

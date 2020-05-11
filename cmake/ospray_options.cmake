@@ -32,7 +32,6 @@ find_package(ospcommon ${OSPCOMMON_VERSION_REQUIRED} REQUIRED)
 ospray_find_embree(${EMBREE_VERSION_REQUIRED})
 ospray_verify_embree_features()
 ospray_determine_embree_isa_support()
-ospray_create_embree_target()
 
 # Open VKL
 ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})

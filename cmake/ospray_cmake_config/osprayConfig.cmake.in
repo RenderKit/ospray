@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # Called if we failed to find OSPRay or any of it's required dependencies,
@@ -131,7 +131,6 @@ else()
   if (NOT TARGET embree)
     ospray_find_embree(${EMBREE_VERSION_REQUIRED})
     ospray_verify_embree_features()
-    ospray_create_embree_target()
   endif()
 
   if (NOT TARGET ospcommon::ospcommon)
