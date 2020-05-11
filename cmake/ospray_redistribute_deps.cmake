@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 macro(ospray_install_namelink NAME TARGET_NAME)
@@ -65,10 +65,14 @@ if (OSPCOMMON_TASKING_TBB)
 endif()
 
 macro(ospray_add_dependent_lib TARGET_NAME)
-  get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
-  list(GET CONFIGURATIONS 0 CONFIGURATION)
-  get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
-  list(APPEND DEPENDENT_LIBS ${LIBRARY})
+  if (TARGET ${TARGET_NAME})
+    get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION)
+    get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
+    list(APPEND DEPENDENT_LIBS ${LIBRARY})
+  else()
+    message(STATUS "Skipping target '${TARGET_NAME}")
+  endif()
 endmacro()
 
 ospray_add_dependent_lib(ospcommon::ospcommon)
@@ -95,6 +99,7 @@ if (WIN32)
   install(PROGRAMS ${DEPENDENT_LIBS}
           DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
 else()
+  # TODO use ospray_add_dependent_lib(embree) when v3.10 (with targets) is minimum
   list(APPEND DEPENDENT_LIBS ${EMBREE_LIBRARY})
   install(PROGRAMS ${DEPENDENT_LIBS}
           DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
