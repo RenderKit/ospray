@@ -65,7 +65,6 @@ option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?"
 option(BUILD_GLFW "Build glfw for OSPRay examples or use one in existing environment?" ON)
 
 option(BUILD_DEPENDENCIES_ONLY "Don't build OSPRay itself, only its dependencies" OFF)
-option(BUILD_OSPRAY_CI_TESTS "Enable OSPRay's tests." OFF)
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
 option(BUILD_OSPRAY_MODULE_MPI "Enable fetch/build of module_mpi" OFF)
