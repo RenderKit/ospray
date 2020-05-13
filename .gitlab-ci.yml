@@ -357,7 +357,7 @@ release-linux:
     - modules
   artifacts:
     paths:
-      - ./*.gz
+      - build_release/*.gz
 
 release-osx-clang:
   <<: *release_job
