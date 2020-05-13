@@ -8,6 +8,9 @@
 // ospcommon
 #include "ospcommon/memory/IntrusivePtr.h"
 #include "ospcommon/utility/ParameterizedObject.h"
+// std
+#include <functional>
+#include <map>
 
 #include "ospray_testing_export.h"
 
@@ -21,6 +24,8 @@ using namespace ospcommon::math;
 struct Builder : public memory::RefCountedObject,
                  public utility::ParameterizedObject
 {
+  using BuilderFcn = std::function<Builder *()>;
+
   virtual ~Builder() = default;
 
   virtual void commit();
@@ -29,6 +34,9 @@ struct Builder : public memory::RefCountedObject,
   virtual cpp::World buildWorld() const;
   virtual cpp::World buildWorld(
       const std::vector<cpp::Instance> &instances) const;
+
+  static void registerBuilder(const std::string &name, BuilderFcn fcn);
+  static Builder *createBuilder(const std::string &name);
 
  protected:
   cpp::TransferFunction makeTransferFunction(const vec2f &valueRange) const;
@@ -44,6 +52,11 @@ struct Builder : public memory::RefCountedObject,
   bool addPlane{true};
 
   unsigned int randomSeed{0};
+
+ private:
+  using BuilderFactory = std::map<std::string, BuilderFcn>;
+
+  static std::unique_ptr<BuilderFactory> factory;
 };
 
 } // namespace detail
@@ -51,10 +64,11 @@ struct Builder : public memory::RefCountedObject,
 } // namespace ospray
 
 #define OSP_REGISTER_TESTING_BUILDER(InternalClassName, Name)                  \
-  extern "C" OSPRAY_TESTING_EXPORT ospray::testing::detail::Builder            \
-      *ospray_create_testing_builder__##Name()                                 \
+  static bool init_builder_##Name()                                            \
   {                                                                            \
-    return new InternalClassName;                                              \
+    using Builder = ospray::testing::detail::Builder;                          \
+    Builder::registerBuilder(                                                  \
+        TOSTRING(Name), [] { return new InternalClassName; });                 \
+    return true;                                                               \
   }                                                                            \
-  /* Extra declaration to avoid "extra ;" pedantic warnings */                 \
-  ospray::testing::detail::Builder *ospray_create_testing_builder__##Name()
+  static bool val_##Name##_initialized = init_builder_##Name();

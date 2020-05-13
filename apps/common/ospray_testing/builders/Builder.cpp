@@ -7,6 +7,8 @@ namespace ospray {
 namespace testing {
 namespace detail {
 
+std::unique_ptr<Builder::BuilderFactory> Builder::factory;
+
 void Builder::commit()
 {
   rendererType = getParam<std::string>("rendererType", "scivis");
@@ -207,6 +209,24 @@ cpp::GeometricModel Builder::makeGroundPlane(float planeExtent) const
   model.commit();
 
   return model;
+}
+
+void Builder::registerBuilder(const std::string &name, BuilderFcn fcn)
+{
+  if (factory.get() == nullptr)
+    factory = make_unique<BuilderFactory>();
+
+  (*factory)[name] = fcn;
+}
+
+Builder *Builder::createBuilder(const std::string &name)
+{
+  if (factory.get() == nullptr)
+    return nullptr;
+  else {
+    auto &fcn = (*factory)[name];
+    return fcn();
+  }
 }
 
 } // namespace detail
