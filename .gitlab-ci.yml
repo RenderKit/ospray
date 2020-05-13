@@ -31,6 +31,12 @@ variables:
   tags:
     - build
 
+.job_template: &build_artifacts
+  artifacts:
+    paths:
+      - build/install/ospray
+    expire_in: 3 day
+
 .job_template: &release_job
   stage: deploy
   tags:
@@ -56,12 +62,12 @@ variables:
 .job_template: &test_job_unix
   <<: *test_job
   script:
-    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
 
 .job_template: &test_job_windows
   <<: *test_job
   script:
-    - $env:Path += ";$CI_PROJECT_DIR\build\install\bin"
+    - $env:Path += ";$CI_PROJECT_DIR\build\install\ospray\bin"
     - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR"
 
 
@@ -82,44 +88,35 @@ build-arch-clang:
 build-arch-gcc-extras:
   <<: *build_job_docker
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=ON -DBUILD_OIDN=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
 
 build-arch-clang-extras:
   <<: *build_job_docker
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=ON -DBUILD_OIDN=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja
-  artifacts:
-    paths:
-      - build/install
-    expire_in: 3 day
+  <<: *build_artifacts
 
 build-ubuntu1804-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu18.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
-  artifacts:
-    paths:
-      - build/install
-    expire_in: 3 day
+  <<: *build_artifacts
 
 build-centos8:
   <<: *build_job_docker
   image: ospray/docker-images:centos8
   script:
     - scripts/build_gitlab/linux.sh -G Ninja
-  artifacts:
-    paths:
-      - build/install
-    expire_in: 3 day
+  <<: *build_artifacts
 
 build-centos7-icc:
   <<: *build_job_docker_modules
@@ -142,10 +139,7 @@ build-centos7-icc15:
 build-centos7-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:centos7
-  artifacts:
-    paths:
-      - build/install
-    expire_in: 3 day
+  <<: *build_artifacts
 
 build-centos7-mpi:
   <<: *build_job_docker_modules
@@ -175,10 +169,7 @@ build-windows-msvc14:
   tags:
     - msvc14
     - win
-  artifacts:
-    paths:
-      - build/install
-    expire_in: 3 day
+  <<: *build_artifacts
 
 build-windows-msvc15:
   <<: *build_job_shell
@@ -187,10 +178,7 @@ build-windows-msvc15:
   tags:
     - msvc15
     - win
-  artifacts:
-    paths:
-      - build/install
-    expire_in: 3 day
+  <<: *build_artifacts
 
 #build-windows-icc:
 #  <<: *build_job_shell
@@ -199,10 +187,7 @@ build-windows-msvc15:
 #  tags:
 #    - icc17
 #    - win
-#  artifacts:
-#    paths:
-#      - build/install
-#    expire_in: 3 day
+#  <<: *build_artifacts
 
 build-scan-kw:
   stage: build
@@ -304,7 +289,7 @@ generate-ci-baseline:
   <<: *test_job_unix
   image: ospray/docker-images:ubuntu18.04
   script:
-    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/bin:$PATH" scripts/tests/generate_baseline.sh
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/generate_baseline.sh
   dependencies:
     - build-ubuntu1804-gcc
   artifacts:
