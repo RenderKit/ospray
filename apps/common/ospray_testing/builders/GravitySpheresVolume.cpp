@@ -24,7 +24,8 @@ struct GravitySpheres : public detail::Builder
   GravitySpheres(bool addVolume = true,
       bool asAMR = false,
       bool addIsosurface = false,
-      bool clip = false);
+      bool clip = false,
+      bool multipleIsosurfaces = false);
   ~GravitySpheres() override = default;
 
   void commit() override;
@@ -47,16 +48,21 @@ struct GravitySpheres : public detail::Builder
   bool withIsosurface{false};
   float isovalue{2.5f};
   bool withClipping{false};
+  bool multipleIsosurfaces{false};
 };
 
 // Inlined definitions ////////////////////////////////////////////////////
 
-GravitySpheres::GravitySpheres(
-    bool addVolume, bool asAMR, bool addIsosurface, bool clip)
+GravitySpheres::GravitySpheres(bool addVolume,
+    bool asAMR,
+    bool addIsosurface,
+    bool clip,
+    bool multipleIsosurfaces)
     : withVolume(addVolume),
       createAsAMR(asAMR),
       withIsosurface(addIsosurface),
-      withClipping(clip)
+      withClipping(clip),
+      multipleIsosurfaces(multipleIsosurfaces)
 {}
 
 void GravitySpheres::commit()
@@ -93,17 +99,30 @@ cpp::Group GravitySpheres::buildGroup() const
 
   if (withIsosurface) {
     cpp::Geometry isoGeom("isosurface");
-    isoGeom.setParam("isovalue", isovalue);
-    isoGeom.setParam("volume", model);
+    std::vector<float> isovalues = {isovalue};
+    if (multipleIsosurfaces) {
+      isovalues.push_back(isovalue + 1.f);
+    }
+
+    isoGeom.setParam("isovalue", cpp::Data(isovalues));
+    isoGeom.setParam("volume", volume);
     isoGeom.commit();
 
     cpp::GeometricModel isoModel(isoGeom);
 
     if (rendererType == "pathtracer" || rendererType == "scivis") {
       cpp::Material mat(rendererType, "obj");
+      mat.setParam("kd", vec3f(1.f));
+      mat.setParam("d", 0.5f);
       if (rendererType == "pathtracer")
         mat.setParam("ks", vec3f(0.2f));
       mat.commit();
+
+      if (multipleIsosurfaces) {
+        std::vector<vec4f> colors = {
+            vec4f(0.2f, 0.2f, 0.8f, 1.f), vec4f(0.8f, 0.2f, 0.2f, 1.f)};
+        isoModel.setParam("color", cpp::Data(colors));
+      }
       isoModel.setParam("material", mat);
     }
 
@@ -281,8 +300,8 @@ OSP_REGISTER_TESTING_BUILDER(GravitySpheres, gravity_spheres_volume);
 OSP_REGISTER_TESTING_BUILDER(
     GravitySpheres(true, true, false), gravity_spheres_amr);
 
-OSP_REGISTER_TESTING_BUILDER(
-    GravitySpheres(false, false, true), gravity_spheres_isosurface);
+OSP_REGISTER_TESTING_BUILDER(GravitySpheres(false, false, true, false, true),
+    gravity_spheres_isosurface);
 
 OSP_REGISTER_TESTING_BUILDER(
     GravitySpheres(true, false, false, true), clip_gravity_spheres_volume);

@@ -14,9 +14,31 @@ struct Isosurfaces
 {
   Geometry super; //!< inherited geometry fields
   float *isovalues;
+  // For backwards compatability, a volumetric model was used to set
+  // the volume and color
   VolumetricModel *volumetricModel;
+  Volume *volume;
   VKLValueSelector valueSelector;
 };
+
+int Isosurfaces_primID(const Isosurfaces *uniform self, const float isovalue)
+{
+  for (uniform int i = 0; i < self->super.numPrimitives; ++i) {
+    if (isovalue == self->isovalues[i]) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+// A wrapper for backwards compatability with the old VolumetricModel API
+Volume *uniform Isosurfaces_getVolume(const Isosurfaces *uniform self)
+{
+  if (self->volume) {
+    return self->volume;
+  }
+  return self->volumetricModel->volume;
+}
 
 unmasked void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
@@ -25,7 +47,8 @@ unmasked void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
   uniform int primID = args->primID;
 
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
-  *out = make_box3fa(self->volumetricModel->volume->boundingBox);
+  Volume *uniform volume = Isosurfaces_getVolume(self);
+  *out = make_box3fa(volume->boundingBox);
 }
 
 void Isosurfaces_intersect_kernel(
@@ -42,14 +65,14 @@ void Isosurfaces_intersect_kernel(
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
 
-  Volume *uniform volume = self->volumetricModel->volume;
+  Volume *uniform volume = Isosurfaces_getVolume(self);
 
   VKLHitIterator iterator;
   vkl_range1f tRange;
   tRange.lower = ray->t0;
   tRange.upper = ray->t;
   vklInitHitIteratorV(&iterator,
-      self->volumetricModel->volume->vklVolume,
+      volume->vklVolume,
       (varying vkl_vec3f *)&ray->org,
       (varying vkl_vec3f *)&ray->dir,
       &tRange,
@@ -58,20 +81,17 @@ void Isosurfaces_intersect_kernel(
   bool gotHit = vklIterateHitV(&iterator, &hit);
 
   if (gotHit) {
-    int primID = 0;
-    for (primID = 0; primID < self->super.numPrimitives; primID++) {
-      if (hit.sample == self->isovalues[primID])
-        break;
-    }
     if (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
       ray->geomID = args->geomID;
-      ray->primID = primID;
+      ray->primID = Isosurfaces_primID(self, hit.sample);
       ray->t = hit.t;
-      ray->u =
-          1e-3; // ??? which epsilon?  // transport epsilon to postIntersect
+      // TODO: This needs to be given the appropriate epsilon to use from
+      // OpenVKL. Waiting on addition of this API to OpenVKL's hit iterators
+      // for support.
+      ray->u = 1e-3; // transport epsilon to postIntersect
 
       // NOTE(jda) - Initialize ray.Ng with something, even if it's wrong
       //             (better than garbage). Real normals are computed if DG_NS
@@ -100,7 +120,7 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
     uniform int64 flags)
 {
   Isosurfaces *uniform self = (Isosurfaces * uniform) geometry;
-  Volume *uniform volume = self->volumetricModel->volume;
+  Volume *uniform volume = Isosurfaces_getVolume(self);
 
   if (flags & DG_NS) {
     dg.Ns = Volume_getGradient(volume, dg.P);
@@ -114,7 +134,7 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
   // acceptable for eps
   dg.epsilon = reduce_max(abs(ray.dir)) * ray.u;
 
-  if (flags & DG_COLOR) {
+  if (and(flags & DG_COLOR, self->volumetricModel)) {
     TransferFunction *uniform xf = self->volumetricModel->transferFunction;
     dg.color = xf->get(xf, self->isovalues[ray.primID]);
   }
@@ -132,15 +152,19 @@ export void *uniform Isosurfaces_set(void *uniform _self,
     void *uniform _embreeGeometry,
     int32 uniform numIsovalues,
     uniform float *uniform isovalues,
+    void *uniform _volumetricModel,
     void *uniform _volume,
     void *uniform _valueSelector)
 {
   Isosurfaces *uniform self = (Isosurfaces * uniform) _self;
-  VolumetricModel *uniform volume = (VolumetricModel * uniform) _volume;
+  VolumetricModel *uniform volumetricModel =
+      (VolumetricModel * uniform) _volumetricModel;
+  Volume *uniform volume = (Volume * uniform) _volume;
   VKLValueSelector valueSelector = (VKLValueSelector)_valueSelector;
 
   self->isovalues = isovalues;
-  self->volumetricModel = volume;
+  self->volumetricModel = volumetricModel;
+  self->volume = volume;
   self->super.numPrimitives = 1; // for embree it is just one prim
   self->valueSelector = valueSelector;
 

@@ -1061,15 +1061,17 @@ type string "`plane`".
 
 OSPRay can directly render multiple isosurfaces of a volume without
 first tessellating them. To do so create an isosurfaces geometry by
-calling `ospNewGeometry` with type string "`isosurface`". Each
-isosurface will be colored according to the [transfer function] assigned
-to the `volume`.
+calling `ospNewGeometry` with type string "`isosurface`". 
+The appearance information of the surfaces is set through
+the Geometric Model. Per-isosurface colors can be set by passing
+per-primitive colors to the Geometric Model, in order of the isosurface
+array.
 
   Type               Name      Description
   ------------------ --------- --------------------------------------------------
   float              isovalue  single isovalues
   float[]            isovalue  [data] array of isovalues
-  OSPVolumetricModel volume    handle of the [VolumetricModel] to be isosurfaced
+  OSPVolume          volume    handle of the [Volume] to be isosurfaced
   ------------------ --------- --------------------------------------------------
   : Parameters defining an isosurfaces geometry.
 
