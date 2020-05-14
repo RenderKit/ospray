@@ -48,7 +48,7 @@ option(ALWAYS_REBUILD "Force every project to always be rebuilt?" OFF)
 
 option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
 
-set(BUILD_OSPCOMMON_VERSION "v1.3.0" CACHE STRING "Which version of ospcommon to build?")
+set(BUILD_OSPCOMMON_VERSION "v1.3.1" CACHE STRING "Which version of ospcommon to build?")
 
 option(DOWNLOAD_TBB "Download TBB or use the only found in the system environment?" ON)
 set(TBB_VERSION "2020.2" CACHE STRING "Which version of TBB to download?")
