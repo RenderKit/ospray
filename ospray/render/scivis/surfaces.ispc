@@ -49,12 +49,14 @@ inline float computeAO(const uniform SciVis *uniform self,
   const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec2f halton = HaltonSequence_get2D(accumID + i);
+    // Use base-5 and base-7 Halton to avoid correlation with sample position
+    const vec2f halton = make_vec2f(
+        PermHalton_sample5(accumID + i), PermHalton_sample7(accumID + i));
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
-    if (dot(ao_dir, dg.Ns) < 0.05f) { // check below surface
+    if (dot(ao_dir, dg.Ns) < 0.01f) { // check below surface
       hits++;
       continue;
     }

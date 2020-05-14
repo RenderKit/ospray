@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "sobol.ih"
 #include "halton.ih"
+#include "sobol.ih"
 #include "vec.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -77,20 +77,6 @@ inline float radicalInverse(uint32 idx, const uint32 base)
     g *= inv;
     f += (idx % base) * g;
     idx /= base;
-  }
-
-  return f;
-}
-
-// specialized version for base 2
-inline float radicalInverse2(uint32 idx)
-{
-  float f = 0.f, g = 1.0f;
-
-  while (idx > 0) {
-    g *= 0.5f;
-    f += idx & 1 ? g : 0.f;
-    idx >>= 1;
   }
 
   return f;

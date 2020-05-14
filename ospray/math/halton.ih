@@ -24,6 +24,8 @@
 #pragma once
 
 extern const uniform unsigned int perm3[243];
+extern const uniform unsigned int perm5[125];
+extern const uniform unsigned int perm7[343];
 
 inline float Halton_sample2(unsigned int index)
 {
@@ -49,4 +51,21 @@ inline float Halton_sample3(const unsigned int index)
              + perm3[(index / 59049u) % 243u] * 243u
              + perm3[(index / 14348907u) % 243u])
       * (float)(1.f / 3486784401u);
+}
+
+// Permuted Halton sequence base-5
+inline float PermHalton_sample5(const unsigned int index)
+{
+  return (perm5[index % 125u] * 1953125u + perm5[(index / 125u) % 125u] * 15625u
+             + perm5[(index / 15625u) % 125u] * 125u
+             + perm5[(index / 1953125u) % 125u])
+      * (float)(1.f / 244140625u);
+}
+
+// Permuted Halton sequence base-7
+inline float PermHalton_sample7(const unsigned int index)
+{
+  return (perm7[index % 343u] * 117649u + perm7[(index / 343u) % 343u] * 343u
+             + perm7[(index / 117649u) % 343u])
+      * (float)(1.f / 40353607u);
 }

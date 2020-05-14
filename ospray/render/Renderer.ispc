@@ -4,6 +4,7 @@
 #include "Renderer.ih"
 #include "camera/Camera.ih"
 #include "common/World.ih"
+#include "math/random.ih"
 #include "render/util.ih"
 
 vec4f Renderer_getBackground(
@@ -82,8 +83,10 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
     const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
 
     for (uniform uint32 s = 0; s < spp; s++) {
-      const float pixel_du = precomputedHalton2(startSampleID + s);
-      const float pixel_dv = precomputedHalton3(startSampleID + s);
+      const float pixel_du = Halton_sample2(startSampleID + s);
+      const float pixel_dv = CranleyPattersonRotation(
+          Halton_sample3(startSampleID + s),
+          1.f / 6.f); // rotate to sample center (0.5) of pixel for sampleID=0
       const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
 
       vec2f pfSample = pixelSample;
@@ -101,8 +104,8 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
       screenSample.pos = cameraSample.screen;
 
       // TODO: fix correlations / better RNG
-      cameraSample.lens.x = precomputedHalton3(startSampleID + s);
-      cameraSample.lens.y = precomputedHalton5(startSampleID + s);
+      cameraSample.lens.x = pixel_du;
+      cameraSample.lens.y = pixel_dv;
 
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);
@@ -140,7 +143,6 @@ void Renderer_Constructor(Renderer *uniform self, void *uniform cppE)
   self->renderSample = Renderer_default_renderSample;
   self->renderTile = Renderer_default_renderTile;
   Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), NULL, 0, NULL, NULL, NULL);
-  precomputedHalton_create();
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////
