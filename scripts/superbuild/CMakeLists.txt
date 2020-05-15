@@ -69,7 +69,7 @@ option(BUILD_OSPRAY_CI_TESTS "Enable OSPRay's tests." OFF)
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
 option(BUILD_OSPRAY_MODULE_MPI "Enable fetch/build of module_mpi" OFF)
-set(BUILD_OSPRAY_MODULE_MPI_VERSION "devel" CACHE STRING "What version of module_mpi?")
+set(BUILD_OSPRAY_MODULE_MPI_VERSION "v2.1.0" CACHE STRING "What version of module_mpi?")
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
