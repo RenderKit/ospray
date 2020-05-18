@@ -191,17 +191,16 @@ build-windows-msvc15:
 
 build-scan-kw:
   stage: build
-  image: ospray-kw-centos7
+  image: ospray/docker-images:centos7
   script:
     - scripts/build_gitlab/build-scan-kw.sh
     - test -s $CI_PROJECT_DIR/kw_build_number
   tags:
-    - kw-scan-docker
+    - docker
   artifacts:
     paths:
         - $CI_PROJECT_DIR/kw_build_number
     expire_in: 3 day
-  allow_failure: true
 
 source-protex-scan:
   stage: build
@@ -276,13 +275,13 @@ test-windows-msvc14:
 
 test-kw-critical:
   stage: test-src
-  image: ospray-kw-centos7
+  image: ospray/docker-images:centos7
   script:
-    - /tmp/test-kw-critical.sh
-  dependencies:
+    - scripts/build_gitlab/test-kw-critical.sh
+  needs:
     - build-scan-kw
   tags:
-    - kw-scan-docker
+    - docker
   allow_failure: true
 
 generate-ci-baseline:
