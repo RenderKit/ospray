@@ -63,7 +63,7 @@ static void sampleVolume(VolumeContext &vc,
 
     // Sample volume value in given point
     sampleVal = vklComputeSampleV(
-        m->volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
+        m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
 
     // Go to the next sub-interval
     vc.iuDistance += 1.f;

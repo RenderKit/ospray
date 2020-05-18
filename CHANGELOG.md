@@ -9,6 +9,8 @@ Version History
     is defined by the used filter type. Previously OSPRay implicitely
     used a box filter with a size of 1, for better results the default
     filter is now `OSP_PIXELFILTER_GAUSS`
+-   Support for Open VKL v0.10.0 and its new sampler object API, thus
+    this is now the requires minimum version
 
 ### Changes in v2.1.1:
 

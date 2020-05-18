@@ -307,7 +307,7 @@ void DebugRenderer_volume(Renderer *uniform self,
         // Get volume sample
         vec3f p = ray.org + ray.t0 * ray.dir;
         const float sample = vklComputeSampleV(
-            volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
+            volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
 
         if (!isnan(sample)) {
           vec4f sampleColorOpacity = tf->get(tf, sample);

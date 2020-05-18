@@ -48,10 +48,13 @@ void Volume::commit()
   vklCommit(vklVolume);
   (vkl_box3f &)bounds = vklGetBoundingBox(vklVolume);
 
+  vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
+
   createEmbreeGeometry();
 
   ispc::Volume_set(ispcEquivalent, embreeGeometry);
-  ispc::Volume_set_vklVolume(ispcEquivalent, vklVolume, (ispc::box3f *)&bounds);
+  ispc::Volume_set_vklVolume(ispcEquivalent, vklVolume, vklSampler, (ispc::box3f *)&bounds);
 }
 
 void Volume::createEmbreeGeometry()

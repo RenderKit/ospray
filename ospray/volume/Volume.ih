@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,7 +8,7 @@
 #include "math/box.ih"
 // openvkl
 #include "openvkl/value_selector.isph"
-#include "openvkl/volume.isph"
+#include "openvkl/openvkl.isph"
 
 struct TransferFunction;
 
@@ -25,6 +25,7 @@ struct Volume
   int32 volumeID;
 
   VKLVolume vklVolume;
+  VKLSampler vklSampler;
 
   //! Find the next isosurface hit point in the volume for ray casting based
   //! renderers.
@@ -48,13 +49,13 @@ void Volume_Constructor(Volume *uniform volume, void *uniform cppEquivalent);
 
 inline float Volume_getSample(const Volume *uniform volume, const vec3f &P)
 {
-  return vklComputeSampleV(volume->vklVolume, &((const vkl_vec3f &)P));
+  return vklComputeSampleV(volume->vklSampler, &((const vkl_vec3f &)P));
 }
 
 inline vec3f Volume_getGradient(const Volume *uniform volume, const vec3f &P)
 {
   vkl_vec3f result =
-      vklComputeGradientV(volume->vklVolume, &((const vkl_vec3f &)P));
+      vklComputeGradientV(volume->vklSampler, &((const vkl_vec3f &)P));
 
   return *((varying vec3f *)&result);
 }

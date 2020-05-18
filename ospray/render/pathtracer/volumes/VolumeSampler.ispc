@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/volumes/VolumeSampler.ih"
@@ -46,7 +46,7 @@ float delta_tracking(VolumetricModel *uniform vModel,
       xi = RandomSampler_getFloat(randomSampler);
       const vec3f p = o + t * w;
       const float sample = vklComputeSampleV(
-          vModel->volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
+          vModel->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
       const vec4f color =
           vModel->transferFunction->get(vModel->transferFunction, sample);
       mu_t = vModel->densityScale * color.w;
