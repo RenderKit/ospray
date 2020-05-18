@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
@@ -84,12 +84,20 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
     for (uniform uint32 s = 0; s < spp; s++) {
       const float pixel_du = precomputedHalton2(startSampleID + s);
       const float pixel_dv = precomputedHalton3(startSampleID + s);
+      const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
+
+      vec2f pfSample = pixelSample;
+      if (self->pixelFilter)
+      {
+        pfSample = self->pixelFilter->sample(self->pixelFilter, pixelSample) + make_vec2f(0.5f);
+      }
+
       screenSample.sampleID.z = startSampleID + s;
 
       cameraSample.screen.x =
-          (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
+          (screenSample.sampleID.x + pfSample.x) * fb->rcpSize.x;
       cameraSample.screen.y =
-          (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+          (screenSample.sampleID.y + pfSample.y) * fb->rcpSize.y;
       screenSample.pos = cameraSample.screen;
 
       // TODO: fix correlations / better RNG
@@ -123,14 +131,15 @@ export void Renderer_set(void *uniform _self,
     void *uniform backplate,
     const uniform int32 numMaterials,
     void *uniform materials,
-    void *uniform _maxDepthTexture);
+    void *uniform _maxDepthTexture,
+    void *uniform pixelFilter);
 
 void Renderer_Constructor(Renderer *uniform self, void *uniform cppE)
 {
   self->cppEquivalent = cppE;
   self->renderSample = Renderer_default_renderSample;
   self->renderTile = Renderer_default_renderTile;
-  Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), NULL, 0, NULL, NULL);
+  Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), NULL, 0, NULL, NULL, NULL);
   precomputedHalton_create();
 }
 
@@ -159,7 +168,8 @@ export void Renderer_set(void *uniform _self,
     void *uniform backplate,
     const uniform int32 numMaterials,
     void *uniform materials,
-    void *uniform _maxDepthTexture)
+    void *uniform _maxDepthTexture,
+    void *uniform pixelFilter)
 {
   uniform Renderer *uniform self = (uniform Renderer * uniform) _self;
 
@@ -170,7 +180,8 @@ export void Renderer_set(void *uniform _self,
   self->backplate = (uniform Texture2D * uniform) backplate;
   self->numMaterials = numMaterials;
   self->material = (Material * *uniform) materials;
-  self->maxDepthTexture = (uniform Texture2D * uniform) _maxDepthTexture;
+  self->maxDepthTexture = (Texture2D * uniform) _maxDepthTexture;
+  self->pixelFilter = (PixelFilter * uniform) pixelFilter;
 
   precomputeZOrder();
 }

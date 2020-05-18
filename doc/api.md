@@ -1477,32 +1477,37 @@ To create a new renderer of given type `type` use
 
 General parameters of all renderers are
 
-  -------------- ------------------ -----------  -----------------------------------------
-  Type           Name                   Default  Description
-  -------------- ------------------ -----------  -----------------------------------------
-  int            pixelSamples                 1  samples per pixel
+  -------------- ------------------ -----------------------  -----------------------------------------
+  Type           Name                               Default  Description
+  -------------- ------------------ -----------------------  -----------------------------------------
+  int            pixelSamples                             1  samples per pixel
 
-  int            maxPathLength               20  maximum ray recursion depth
+  int            maxPathLength                           20  maximum ray recursion depth
 
-  float          minContribution          0.001  sample contributions below this value
-                                                 will be neglected to speedup rendering
+  float          minContribution                      0.001  sample contributions below this value
+                                                             will be neglected to speedup rendering
 
-  float          varianceThreshold            0  threshold for adaptive accumulation
+  float          varianceThreshold                        0  threshold for adaptive accumulation
 
-  float /        backgroundColor         black,  background color and alpha (RGBA), if no
-  vec3f / vec4f                     transparent  `map_backplate` is set
+  float /        backgroundColor                     black,  background color and alpha (RGBA), if no
+  vec3f / vec4f                                 transparent  `map_backplate` is set
 
-  OSPTexture     map_backplate                   optional [texture] image used as background
-                                                 (use texture type `texture2d`)
+  OSPTexture     map_backplate                               optional [texture] image used as background
+                                                             (use texture type `texture2d`)
 
-  OSPTexture     map_maxDepth                    optional screen-sized float [texture]
-                                                 with maximum far distance per pixel
-                                                 (use texture type `texture2d`)
+  OSPTexture     map_maxDepth                                optional screen-sized float [texture]
+                                                             with maximum far distance per pixel
+                                                             (use texture type `texture2d`)
 
-  OSPMaterial[]  material                        optional [data] array of [materials]
-                                                 which can be indexed by a
-                                                 [GeometricModel]'s `material` parameter
-  -------------- ------------------ -----------  -----------------------------------------
+  OSPMaterial[]  material                                    optional [data] array of [materials]
+                                                             which can be indexed by a
+                                                             [GeometricModel]'s `material` parameter
+
+  int            pixelFilter        `OSP_PIXELFILTER_GAUSS`  `OSPPixelFilterType` to select the pixel
+                                                             filter used by the renderer for
+                                                             antialiasing. Possible pixel filters
+                                                             are listed below.
+  -------------- ------------------ -----------------------  -----------------------------------------
   : Parameters understood by all renderers.
 
 OSPRay's renderers support a feature called adaptive accumulation, which
@@ -1526,6 +1531,33 @@ must have format `OSP_TEXTURE_R32F` and flag
 `OSP_TEXTURE_FILTER_NEAREST`. The fetched values are used to limit the
 distance of primary rays, thus objects of other renderers can hide
 objects rendered by OSPRay.
+
+OSPRay supports antialiasing in image space by using pixel filters,
+which are centered around the center of a pixel. The size $w×w$ of the
+filter depends on the selected filter type. The types of supported pixel
+filters are defined by the `OSPPixelFilterType` enum and can be set
+using the `pixelFilter` parameter.
+
+  -------------------------------- ---------------------------------------------
+  Name                             Description
+  -------------------------------- ---------------------------------------------
+  OSP_PIXELFILTER_POINT            a point filter only samples the center of the
+                                   pixel, therefore the filter width is $w = 0$
+
+  OSP_PIXELFILTER_BOX              a uniform box filter with a width of $w = 1$
+
+  OSP_PIXELFILTER_GAUSS            a truncated, smooth Gaussian filter with a
+                                   standard deviation of $\sigma = 0.5$ and a
+                                   filter width of $w = 3$
+
+  OSP_PIXELFILTER_MITCHELL         the Mitchell-Netravali filter with a width of
+                                   $w = 4$
+
+  OSP_PIXELFILTER_BLACKMAN_HARRIS  the Blackman-Harris filter with a width of
+                                   $w = 3$
+  -------------------------------- ---------------------------------------------
+  : Pixel filter types supported by OSPRay for antialiasing in image space.
+
 
 ### SciVis Renderer
 

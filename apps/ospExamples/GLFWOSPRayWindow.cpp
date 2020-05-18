@@ -58,6 +58,9 @@ static const std::vector<std::string> g_debugRendererTypes = {"eyeLight",
     "dPdt",
     "volume"};
 
+static const std::vector<std::string> g_pixelFilterTypes = {
+    "point", "box", "gaussian", "mitchell", "blackmanHarris"};
+
 bool sceneUI_callback(void *, int index, const char **out_text)
 {
   *out_text = g_scenes[index].c_str();
@@ -79,6 +82,12 @@ bool rendererUI_callback(void *, int index, const char **out_text)
 bool debugTypeUI_callback(void *, int index, const char **out_text)
 {
   *out_text = g_debugRendererTypes[index].c_str();
+  return true;
+}
+
+bool pixelFilterTypeUI_callback(void *, int index, const char **out_text)
+{
+  *out_text = g_pixelFilterTypes[index].c_str();
   return true;
 }
 
@@ -471,6 +480,35 @@ void GLFWOSPRayWindow::buildUI()
   if (denoiserAvailable) {
     if (ImGui::Checkbox("denoiser", &denoiserEnabled))
       updateFrameOpsNextFrame = true;
+  }
+
+  ImGui::Separator();
+
+  // the gaussian pixel fiter is the default,
+  // which is at position 2 in the list
+  static int whichPixelFilter = 2;
+  if (ImGui::Combo("pixelfilter##whichPixelFilter",
+          &whichPixelFilter,
+          pixelFilterTypeUI_callback,
+          nullptr,
+          g_pixelFilterTypes.size())) {
+    pixelFilterTypeStr = g_pixelFilterTypes[whichPixelFilter];
+
+    OSPPixelFilterTypes pixelFilterType =
+        OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS;
+    if (pixelFilterTypeStr == "point")
+      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_POINT;
+    else if (pixelFilterTypeStr == "box")
+      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_BOX;
+    else if (pixelFilterTypeStr == "gaussian")
+      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS;
+    else if (pixelFilterTypeStr == "mitchell")
+      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_MITCHELL;
+    else if (pixelFilterTypeStr == "blackmanHarris")
+      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_BLACKMAN_HARRIS;
+
+    renderer.setParam("pixelFilter", pixelFilterType);
+    addObjectToCommit(renderer.handle());
   }
 
   ImGui::Separator();

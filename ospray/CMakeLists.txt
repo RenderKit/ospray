@@ -81,6 +81,12 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   fb/tile_ops/ToneMapper.cpp
   fb/tile_ops/ToneMapper.ispc
 
+  pf/PixelFilter.ih
+  pf/PixelFilter.ispc
+  pf/LUTPixelFilter.ih
+  pf/LUTPixelFilter.ispc
+  pf/PixelFilter.cpp
+
   camera/Camera.cpp
   camera/Camera.ispc
   camera/PerspectiveCamera.ispc

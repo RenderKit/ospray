@@ -89,6 +89,8 @@ class GLFWOSPRayWindow
   OSPRayRendererType rendererType{OSPRayRendererType::SCIVIS};
   std::string rendererTypeStr{"scivis"};
 
+  std::string pixelFilterTypeStr{"gaussian"};
+
   // List of OSPRay handles to commit before the next frame
   ospcommon::containers::TransactionalBuffer<OSPObject> objectsToCommit;
 

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PathSampler.ih"
@@ -99,10 +99,18 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
 
     CameraSample cameraSample;
     const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
+
+    vec2f pfSample = pixelSample;
+    if (self->super.pixelFilter)
+    {
+      pfSample = self->super.pixelFilter->sample(self->super.pixelFilter, pixelSample) + make_vec2f(0.5f);
+    }
+
     cameraSample.screen.x =
-        (screenSample.sampleID.x + pixelSample.x) * fb->rcpSize.x;
+        (screenSample.sampleID.x + pfSample.x) * fb->rcpSize.x;
     cameraSample.screen.y =
-        (screenSample.sampleID.y + pixelSample.y) * fb->rcpSize.y;
+        (screenSample.sampleID.y + pfSample.y) * fb->rcpSize.y;
+
     cameraSample.lens = LDSampler_getFloat2(ldSampler, 2);
     cameraSample.time = LDSampler_getFloat(ldSampler, 4);
 

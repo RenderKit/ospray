@@ -4,6 +4,11 @@ Version History
 ### Changes in v2.2.0:
 
 -   Support for texture transformation in SciVis OBJ material
+-   Support for better antialiasing using a set of different pixel
+    filters (e.g, box, Gaussian, ...). The size of the pixel filter
+    is defined by the used filter type. Previously OSPRay implicitely
+    used a box filter with a size of 1, for better results the default
+    filter is now `OSP_PIXELFILTER_GAUSS`
 
 ### Changes in v2.1.1:
 

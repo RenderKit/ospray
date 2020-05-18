@@ -317,3 +317,16 @@ typedef enum
   OSP_SUBDIVISION_PIN_BOUNDARY,
   OSP_SUBDIVISION_PIN_ALL
 } OSPSubdivisionMode;
+
+// OSPRay pixel filter types
+typedef enum
+#if __cplusplus >= 201103L
+    : uint8_t
+#endif
+{
+  OSP_PIXELFILTER_POINT,
+  OSP_PIXELFILTER_BOX,
+  OSP_PIXELFILTER_GAUSS,
+  OSP_PIXELFILTER_MITCHELL,
+  OSP_PIXELFILTER_BLACKMAN_HARRIS
+} OSPPixelFilterTypes;
