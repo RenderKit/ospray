@@ -18,7 +18,8 @@ Real-time screen capture of OSPRay rendering the moana island scene.
 <div class="exhibit">
 [![DKRZ](gallery/thumbnails/dkrz_video-thumb.jpg)](https://youtu.be/aNz22XzjIV0 "DKRZ")
 <div class="caption">
-Path traced volumetric rendering of clouds in a climate simulation, courtesy DKRZ Niklas Rober.
+Path traced volumetric rendering of clouds in a climate simulation,
+courtesy DKRZ Niklas Rober.
 </div>
 </div>
 
@@ -32,30 +33,45 @@ Real-time screen capture of the "osprey" Rhino plugin by Darby Johnston.
 <div class="exhibit">
 [![Cosmos Video](gallery/thumbnails/cosmos_video-thumb.jpg)](https://vimeo.com/237987637 "Cosmos Video")
 <div class="caption">
-AMR Volume rendering of a simulation of two black holes colliding using GRChombo in reference to a LIGO event.  Simulation was conducted by
-[the Centre for Theoretical Cosmology (CTC)](http://www.ctc.cam.ac.uk/).  Images were 
-rendered in ParaView by directly sampling the AMR structure using OSPRay.
+AMR Volume rendering of a simulation of two black holes colliding using
+GRChombo in reference to a LIGO event.  Simulation was conducted by [the
+Centre for Theoretical Cosmology (CTC)](http://www.ctc.cam.ac.uk/).
+Images were rendered in ParaView by directly sampling the AMR structure
+using OSPRay.
 </div>
 </div>
 
 <div class="exhibit">
 [![NASA Parachute Video](gallery/thumbnails/nasa_parachute_video-thumb.jpg)](https://vimeo.com/237987416 "NASA Parachute Video")
 <div class="caption">
-Parachute Simulation rendered using OSPRay by Tim Sandstrom of NASA Ames.
+Parachute Simulation rendered using OSPRay by Tim Sandstrom of NASA
+Ames.
 </div>
 </div>
 
 <div class="exhibit">
 [![NASA Booster Video](gallery/thumbnails/nasa_booster_video-thumb.jpg)](https://youtu.be/96U4d1wk23U "NASA Booster Video")
 <div class="caption">
-Booster Simulation rendered using OSPRay by Tim Sandstrom and Patrick Moran of NASA Ames.
+Booster Simulation rendered using OSPRay by Tim Sandstrom and Patrick
+Moran of NASA Ames.
+</div>
+</div>
+
+<div class="exhibit">
+[![Stellar Radiation Video](gallery/thumbnails/stellar_video-thumb.jpg)](https://vimeo.com/417360212 "Stellar Radiation Video")
+<div class="caption">
+Stellar Radation. Visualization by Greg P. Johnson, Intel, and Joseph
+Insley, Argonne National Lab, using OSPRay. Simulation provided by the
+University of California, Santa Barbara (team leads Yan-Fei Jiang and
+Lars Bildsten).
 </div>
 </div>
 
 <div class="exhibit">
 [![](gallery/thumbnails/bentley-thumb.jpg)](gallery/bentley.jpg)
 <div class="caption">
-Photorealistic rendering of a Bentley virtual showroom using OSPRay's path tracer.
+Photorealistic rendering of a Bentley virtual showroom using OSPRay's
+path tracer.
 </div>
 </div>
 

@@ -15,11 +15,14 @@
 #ifndef GL_CLAMP_TO_BORDER
 #define GL_CLAMP_TO_BORDER 0x812D
 #endif
-#ifndef GL_SRGB_ALPHA
-#define GL_SRGB_ALPHA 0x8C42
-#endif
 #ifndef GL_FRAMEBUFFER_SRGB
 #define GL_FRAMEBUFFER_SRGB 0x8DB9
+#endif
+#ifndef GL_RGBA32F
+#define GL_RGBA32F 0x8814
+#endif
+#ifndef GL_RGB32F
+#define GL_RGB32F 0x8815
 #endif
 
 static bool g_quitNextFrame = false;
@@ -320,15 +323,14 @@ void GLFWOSPRayWindow::display()
 
     auto *fb = framebuffer.map(showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
 
-    const GLint glFormat = showAlbedo ? GL_RGB : GL_RGBA;
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
         0,
-        glFormat,
+        showAlbedo ? GL_RGB32F : GL_RGBA32F,
         windowSize.x,
         windowSize.y,
         0,
-        glFormat,
+        showAlbedo ? GL_RGB : GL_RGBA,
         GL_FLOAT,
         fb);
 

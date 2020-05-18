@@ -70,16 +70,16 @@ void SciVis_renderSample(Renderer *uniform _self,
       // Use shaded color for blending
       blendedColor = surfaceShading.shadedColor;
 
-      // Prepare ray for next loop iteration,
-      // start from the last geometry hit all over to initial Tfar
-      setRay(ray, ray.t + dg.epsilon, originalRayTFar);
-
       // Initialize other per sample data with first hit values
       if (firstHit) {
         sample.z = ray.t;
         sample.albedo = surfaceShading.albedo;
         sample.normal = dg.Ns;
       }
+
+      // Prepare ray for next loop iteration,
+      // start from the last geometry hit all over to initial Tfar
+      setRay(ray, ray.t + dg.epsilon, originalRayTFar);
     } else {
       blendedColor = Renderer_getBackground(&self->super, sample.pos);
       // Initialize other per sample data with first hit values

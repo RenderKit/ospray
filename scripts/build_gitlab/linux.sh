@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2015-2019 Intel Corporation
+## Copyright 2015-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 mkdir build
@@ -12,9 +12,7 @@ cmake --version
 
 cmake -L \
   -D CMAKE_INSTALL_LIBDIR=lib \
-  -D BUILD_OSPRAY_CI_TESTS=ON \
   -D BUILD_EMBREE_FROM_SOURCE=OFF \
-  -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   "$@" \
  ../scripts/superbuild
 

@@ -1,31 +1,36 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-macro(ospray_install_namelink NAME TARGET_NAME)
-  set(BASE_LIB_NAME lib${NAME})
+macro(ospray_install_namelink NAME)
+  get_filename_component(TARGET_NAME ${NAME} NAME) # strip path
   set(LIB_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
-  execute_process(COMMAND "${CMAKE_COMMAND}" -E create_symlink
-                  ${TARGET_NAME} ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX})
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/lib${NAME}${LIB_SUFFIX}
-          DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+  # strip version and lib suffix
+  if(APPLE)
+    set(LIBREGEX "(.+)[.]([0-9]+)([.][0-9]+[.][0-9]+)?${LIB_SUFFIX}")
+  else()
+    set(LIBREGEX "(.+)${LIB_SUFFIX}[.]([0-9]+)([.][0-9]+[.][0-9]+)?")
+  endif()
+  string(REGEX REPLACE ${LIBREGEX} "\\1" BASE_LIB_NAME ${TARGET_NAME})
 
-  # If the shared lib we're copying is named with a specific version, also
-  # create a major version suffixed symlink
-  string(REGEX MATCH "([0-9]+)[.]([0-9]+)[.]([0-9]+)" VERSION_STRING ${TARGET_NAME})
-  if (CMAKE_MATCH_0)
+  if (CMAKE_MATCH_COUNT)
+    set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX})
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E
+        create_symlink ${TARGET_NAME} ${SYMLINK})
+    install(PROGRAMS ${SYMLINK} DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT redist)
+  endif()
+   
+  if (CMAKE_MATCH_COUNT GREATER 2)
+    # also create a major version suffixed symlink
     if(APPLE)
-      execute_process(COMMAND "${CMAKE_COMMAND}" -E create_symlink
-                      ${TARGET_NAME}
-                      ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}.${CMAKE_MATCH_1}${LIB_SUFFIX})
-      install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}.${CMAKE_MATCH_1}${LIB_SUFFIX}
-              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+      set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}.${CMAKE_MATCH_2}${LIB_SUFFIX})
     else()
-      execute_process(COMMAND "${CMAKE_COMMAND}" -E create_symlink
-                      ${TARGET_NAME}
-                      ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX}.${CMAKE_MATCH_1})
-      install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX}.${CMAKE_MATCH_1}
-              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+      set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX}.${CMAKE_MATCH_2})
     endif()
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E
+        create_symlink ${TARGET_NAME} ${SYMLINK})
+    install(PROGRAMS ${SYMLINK} DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT redist)
   endif()
 endmacro()
 
@@ -55,20 +60,21 @@ if (OSPCOMMON_TASKING_TBB)
   else()
     install(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC}
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
-    if (NOT APPLE)
-      get_filename_component(TBB_LIBNAME ${TBB_LIBRARY} NAME)
-      get_filename_component(TBB_MALLOC_LIBNAME ${TBB_LIBRARY_MALLOC} NAME)
-      ospray_install_namelink(tbb ${TBB_LIBNAME})
-      ospray_install_namelink(tbbmalloc ${TBB_MALLOC_LIBNAME})
-    endif()
+    ospray_install_namelink(${TBB_LIBRARY})
+    ospray_install_namelink(${TBB_LIBRARY_MALLOC})
   endif()
 endif()
 
 macro(ospray_add_dependent_lib TARGET_NAME)
-  get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
-  list(GET CONFIGURATIONS 0 CONFIGURATION)
-  get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
-  list(APPEND DEPENDENT_LIBS ${LIBRARY})
+  if (TARGET ${TARGET_NAME})
+    get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION)
+    get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
+    list(APPEND DEPENDENT_LIBS ${LIBRARY})
+    ospray_install_namelink(${LIBRARY})
+  else()
+    message(STATUS "Skipping target '${TARGET_NAME}")
+  endif()
 endmacro()
 
 ospray_add_dependent_lib(ospcommon::ospcommon)
@@ -95,11 +101,19 @@ if (WIN32)
   install(PROGRAMS ${DEPENDENT_LIBS}
           DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
 else()
+  # TODO use ospray_add_dependent_lib(embree) when v3.10 (with targets) is minimum
   list(APPEND DEPENDENT_LIBS ${EMBREE_LIBRARY})
   install(PROGRAMS ${DEPENDENT_LIBS}
           DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
-  if (NOT APPLE)
-    get_filename_component(EMBREE_LIBNAME ${EMBREE_LIBRARY} NAME)
-    ospray_install_namelink(embree ${EMBREE_LIBNAME})
-  endif()
+  ospray_install_namelink(${EMBREE_LIBRARY})
+endif()
+
+# Install MSVC runtime
+if (WIN32)
+  set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+  include(InstallRequiredSystemLibraries)
+  list(FILTER CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS INCLUDE REGEX
+      ".*msvcp[0-9]+\.dll|.*vcruntime[0-9]+\.dll|.*vcruntime[0-9]+_[0-9]+\.dll")
+  install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+      DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
 endif()

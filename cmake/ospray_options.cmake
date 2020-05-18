@@ -10,7 +10,7 @@ include(GNUInstallDirs)
 set(OSPRAY_CMAKECONFIG_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
 
-set(OSPCOMMON_VERSION_REQUIRED 1.3.0)
+set(OSPCOMMON_VERSION_REQUIRED 1.3.1)
 set(EMBREE_VERSION_REQUIRED 3.8.0)
 set(OPENVKL_VERSION_REQUIRED 0.9.0)
 
@@ -32,7 +32,6 @@ find_package(ospcommon ${OSPCOMMON_VERSION_REQUIRED} REQUIRED)
 ospray_find_embree(${EMBREE_VERSION_REQUIRED})
 ospray_verify_embree_features()
 ospray_determine_embree_isa_support()
-ospray_create_embree_target()
 
 # Open VKL
 ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
