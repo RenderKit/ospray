@@ -17,6 +17,7 @@ Version History
 -   CarPaint obeys `coat` weight parameter
 -   Correct depth buffer values with SciVis renderer
 -   Adaptions to Embree v3.10.0
+-   The Linux binary release finds `ospcommon` again
 
 ### Changes in v2.1.0:
 
@@ -32,7 +33,7 @@ Version History
 -   New plane geometry defined via plane equation and optional bounding
     box
 -   Sun-sky light based on physical model of Hošek-Wilkie
--   Support for photometric lights (e.g. IES or EULUMDAT)
+-   Support for photometric lights (e.g., IES or EULUMDAT)
 -   Add new `ospGetTaskDuration` API call to query execution time of
     asynchronous tasks
 -   Support for 16bit (unsigned short) textures
@@ -68,7 +69,7 @@ Version History
 -   Add the option to specify a single color for geometric models
 -   The `scivis` renderer now respects the opacity component of `color`
     on geometric models
--   Fix various inconsistent handling of frame buffer alpha between
+-   Fix various inconsistent handling of framebuffer alpha between
     renderers
 -   `ospGetCurrentDevice` now increments the ref count of the returned
     `OSPDevice` handle, so applications will need to release the handle
@@ -127,7 +128,7 @@ Version History
     -   Any unused parameters an object ignores now emit a warning message
 -   New support for volumes in the `pathtracer`
     -   Several parameters are available for performance/quality
-        trade-offs for both photo-realistic and scientific visualization
+        trade-offs for both photorealistic and scientific visualization
         use cases
 -   Simplification of the SciVis renderer
     -   Fixed AO lighting and simple ray marched volume rendering for
@@ -805,7 +806,7 @@ changes.
 -   Incorporated early version of a new Qt-based viewer to eventually
     unify (and replace) the existing simpler GLUT-based viewers
 -   Added new path tracing renderer (`ospray/render/pathtracer`),
--   roughly based on the Embree sample path tracer
+    roughly based on the Embree sample path tracer
 -   Added new features to the volume renderer
     -   Gradient shading (lighting)
     -   Implicit isosurfacing
