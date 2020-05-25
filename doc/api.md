@@ -372,8 +372,8 @@ opaque arrays to allow the `OSPData` to own the lifetime of the array
 memory. However, opaque arrays dictate the cost of copying data into it,
 which should be kept in mind.
 
-Thus the most efficient way to specify a data array from the application
-is to created a shared data array, which is done with
+Thus, the most efficient way to specify a data array from the
+application is to created a shared data array, which is done with
 
     OSPData ospNewSharedData(const void *sharedData,
         OSPDataType,
@@ -1161,8 +1161,8 @@ tracer]). For instance, the apparent size of the sun is about 0.53°.
 ### Point Light / Sphere Light
 
 The sphere light (or the special case point light) is a light emitting
-uniformly in all directions from the surface towards the outside.
-It does not emit any light towards the inside of the sphere.
+uniformly in all directions from the surface toward the outside.
+It does not emit any light toward the inside of the sphere.
 It is created by passing the type string "`sphere`" to `ospNewLight`.
 In addition to the [general parameters](#lights) understood by all lights
 the sphere light supports the following special parameters:
@@ -2433,7 +2433,7 @@ Rendering
 ### Asynchronous Rendering
 
 Rendering is by default asynchronous (non-blocking), and is done by
-combining a frame buffer, renderer, camera, and world.
+combining a framebuffer, renderer, camera, and world.
 
 What to render and how to render it depends on the renderer's
 parameters. If the framebuffer supports accumulation (i.e., it was
@@ -2467,7 +2467,7 @@ The following are values which can be synchronized with the application
   -------------------- --------------------------------------------------------
   Name                 Description
   -------------------- --------------------------------------------------------
-  OSP_NONE_FINISHED    Don't wait for anything to be finished (immediately
+  OSP_NONE_FINISHED    Do not wait for anything to be finished (immediately
                        return from `ospWait`)
 
   OSP_WORLD_COMMITTED  Wait for the world to be committed (not yet implemented)
