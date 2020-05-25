@@ -42,9 +42,8 @@ happen to have a fix for it,you can also send us a pull request); for
 missing features please contact us via email at
 <a href="mailto:ospray@googlegroups.com" class="email">ospray@googlegroups.com</a>.
 
-Join our [mailing
-list](https://groups.google.com/forum/#!forum/ospray-announce/join) to
-receive release announcements and major news regarding OSPRay.
+To receive release announcements simply [“Watch” the OSPRay
+repository](https://github.com/ospray/OSPRay) on GitHub.
 
 [![Join the chat at
 https://gitter.im/ospray/ospray](https://ospray.github.io/images/gitter_badge.svg)](https://gitter.im/ospray/ospray?utm_source=badge&utm_medium=badge&utm_content=badge)
