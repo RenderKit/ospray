@@ -10,7 +10,6 @@ listed here, please let us know.
 
 VTK, ParaView and VisIt
 -----------------------
-![](images/teaser_clouds.jpg)
 VTK and Paraview 5.x+ have direct integrations for OSPRay rendering, as
 has [VisIt 3.x+](https://wci.llnl.gov/simulation/computer-codes/visit).
 Code and documentation are available on Kitware's instance of
@@ -23,13 +22,27 @@ post](https://blog.kitware.com/virtual-tour-and-high-quality-visualization-with-
 
 HdOSPRay
 --------
-![](images/teaser_hdospray.jpg)
 HdOSPRay is a rendering plugin for the Hydra rendering layer in USD.
 For more information see the project's [page on GitHub](https://github.com/ospray/hdospray).
 
+OSPRay Studio
+--------
+[Studio](https://github.com/ospray/ospray_studio) is the
+    OSPRay team's lightweight visualization application used to showcase
+    the latest features of OSPRay. 
+
+"osprey" Rhino Viewport Plugin
+--------
+[osprey](https://github.com/darbyjohnston/Osprey) is a rendering plugin written by Darby Johnston
+for Rhino3D that greatly accelerates rendering over the built-in renderer.
+
+BLOSPRAY
+--------
+[BLOSPRAY](https://github.com/surfsara-visualization/blospray) is a rendering plugin
+for Blender that uses OSPRay for fast previews and final path traced rendering.
+
 Tapestry
 --------
-![](images/teaser_tapestry.jpg)
 Tapestry is a microservice for delivering scientific visualization on
 the cloud. With OSPRay, Tapestry can provide interactive visualization
 of large datasets accessible to many users throughout the web ecosystem.
@@ -61,21 +74,16 @@ VMD is a popular molecular dynamics visualization package, where OSPRay
 is integrated as one its renderers. For more information see VMD's
 [release notes](https://www.ks.uiuc.edu/Research/vmd/current/).
 
-StingRay
---------
-![](images/stingray.jpg)
-SURVICE Engineering's ["StingRay"
-toolkit](http://www.rtvtk.org/~cgribble/research/papers/gribble14high.pdf)
-makes use of Embree for simulating radio frequency, and uses OSPRay for
-visualizing the results.
+pCon.planner
+---
+[pCon.planner](https://pcon-planner.com/en/) is an architectural design and rendering applicaiton that
+utilizes OSPRay for path traced photorealistic renderings.
+
 
 
 Projects that are closely related to OSPRay
 ===========================================
 
--   [OSPRay Studio](https://github.com/ospray/ospray_studio) is the
-    OSPRay team's lightweight visualization application used to showcase
-    the latest features of OSPRay. ![](images/ospray_studio_dlaf.jpg)
 -   The Intel® [Embree] Ray Tracing Kernel Framework
 -   Intel [Open Image Denoise], a high-performance denoising library
 -   OSPRay's "sister project" [OpenSWR](http://openswr.org/)

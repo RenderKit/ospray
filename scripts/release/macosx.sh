@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2014-2019 Intel Corporation
+## Copyright 2014-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 #### Helper functions ####
@@ -15,6 +15,7 @@ umask 002
 
 ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
+DEP_BUILD_DIR=$ROOT_DIR/build_deps
 THREADS=`sysctl -n hw.logicalcpu`
 
 # set compiler if the user hasn't explicitly set CC and CXX
@@ -33,8 +34,8 @@ unset DYLD_LIBRARY_PATH
 
 #### Build dependencies ####
 
-mkdir deps_build
-cd deps_build
+mkdir $DEP_BUILD_DIR
+cd $DEP_BUILD_DIR
 
 cmake --version
 

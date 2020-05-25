@@ -58,12 +58,17 @@ void Isosurfaces_intersect_kernel(
   bool gotHit = vklIterateHitV(&iterator, &hit);
 
   if (gotHit) {
+    int primID = 0;
+    for (primID = 0; primID < self->super.numPrimitives; primID++) {
+      if (hit.sample == self->isovalues[primID])
+        break;
+    }
     if (isOcclusionTest) {
       ray->t = neg_inf;
     } else {
       ray->instID = args->context->instID[0];
       ray->geomID = args->geomID;
-      ray->primID = 0; // ??? which primID?
+      ray->primID = primID;
       ray->t = hit.t;
       ray->u =
           1e-3; // ??? which epsilon?  // transport epsilon to postIntersect

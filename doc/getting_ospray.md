@@ -5,11 +5,9 @@ Prerequisites
 -------------
 
 Your CPU must support at least SSE4.1 to run OSPRay. The TGZ/ZIP
-packages contain most needed 3rd party dependencies, whereas for the
-(much smaller) RPM/installer packages you need to have installed
+packages contain most needed 3rd party dependencies. Additionally you
+need
 
-- Intel® [TBB](https://www.threadingbuildingblocks.org/) v3.0 or newer
-- [Embree] ray tracing kernels v3.7.0 or newer
 - To run the example viewer: OpenGL
 - To use the distributed, multi-node rendering feature: Intel® [MPI
   Library](https://software.intel.com/en-us/intel-mpi-library/))

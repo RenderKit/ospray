@@ -677,3 +677,45 @@ p.caption:before {
     margin-bottom:8px;
     box-shadow: 0 8px 10px -6px black;
   }
+
+  .gallery {
+    display: grid;
+    #border: 2px dashed rgba(114, 186, 94, 0.35);
+    height: 250px;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto;
+    #background: rgba(114, 186, 94, 0.05);
+  }
+
+  .exhibit {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 2em 1ex 0;
+#    width: 50%;
+#    height: 50%;
+    font-size: 16px;
+    margin: 5px 0;
+    font-weight: 700;
+    color: #0071C5;
+    letter-spacing: normal;
+    clear: both;
+ text-align: center;
+  }
+
+  .exhibit img {
+    margin: 0;
+    padding: 0;
+    #float: left;
+    #display:inline-block;
+    display: block;
+    float: left;
+    width: 300px;
+    box-shadow: 3px 3px 12px -5px rgba(0,0,0,0.86);
+  }
+
+  .exhibit .caption {
+    font-size: 12px;
+    color: #555;
+ text-align: center;
+  }

@@ -7,12 +7,11 @@ images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix c
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe ospExamples renderSunSky))
 images_fig := spot_light spot_coords quad_light hdri_light 
 images_svg := gitter_badge structured_spherical_coords
-images_webonly := $(addprefix images/, VESTEC-Logo-web.png $(addsuffix .jpg, stingray $(addprefix teaser_, clouds cosmos hdospray materials moana rm tapestry)))
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_svg2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_svg)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
-webimages := $(addprefix www/, $(images_webonly) $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
+webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
 pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_fig2svg)
 
 PANDOC := pandoc
