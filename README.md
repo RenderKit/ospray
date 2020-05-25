@@ -42,9 +42,8 @@ happen to have a fix for it,you can also send us a pull request); for
 missing features please contact us via email at
 <a href="mailto:ospray@googlegroups.com" class="email">ospray@googlegroups.com</a>.
 
-Join our [mailing
-list](https://groups.google.com/forum/#!forum/ospray-announce/join) to
-receive release announcements and major news regarding OSPRay.
+To receive release announcements simply [“Watch” the OSPRay
+repository](https://github.com/ospray/OSPRay) on GitHub.
 
 [![Join the chat at
 https://gitter.im/ospray/ospray](https://ospray.github.io/images/gitter_badge.svg)](https://gitter.im/ospray/ospray?utm_source=badge&utm_medium=badge&utm_content=badge)
@@ -101,7 +100,7 @@ before you can build OSPRay you need the following prerequisites:
     `embree_DIR`.
 
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.9.0 or newer is required. If Open VKL is not
+    installing version 0.10.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 
@@ -714,8 +713,8 @@ opaque arrays to allow the `OSPData` to own the lifetime of the array
 memory. However, opaque arrays dictate the cost of copying data into it,
 which should be kept in mind.
 
-Thus the most efficient way to specify a data array from the application
-is to created a shared data array, which is done with
+Thus, the most efficient way to specify a data array from the
+application is to created a shared data array, which is done with
 
 ``` {.cpp}
 OSPData ospNewSharedData(const void *sharedData,
@@ -1317,15 +1316,16 @@ type string “`plane`”.
 
 OSPRay can directly render multiple isosurfaces of a volume without
 first tessellating them. To do so create an isosurfaces geometry by
-calling `ospNewGeometry` with type string “`isosurface`”. Each
-isosurface will be colored according to the [transfer
-function](#transfer-function) assigned to the `volume`.
+calling `ospNewGeometry` with type string “`isosurface`”. The appearance
+information of the surfaces is set through the Geometric Model.
+Per-isosurface colors can be set by passing per-primitive colors to the
+Geometric Model, in order of the isosurface array.
 
-| Type               | Name     | Description                                                          |
-|:-------------------|:---------|:---------------------------------------------------------------------|
-| float              | isovalue | single isovalues                                                     |
-| float\[\]          | isovalue | [data](#data) array of isovalues                                     |
-| OSPVolumetricModel | volume   | handle of the [VolumetricModel](#volumetricmodels) to be isosurfaced |
+| Type      | Name     | Description                                        |
+|:----------|:---------|:---------------------------------------------------|
+| float     | isovalue | single isovalues                                   |
+| float\[\] | isovalue | [data](#data) array of isovalues                   |
+| OSPVolume | volume   | handle of the [Volume](#volumes) to be isosurfaced |
 
 : Parameters defining an isosurfaces geometry.
 
@@ -1411,11 +1411,11 @@ about 0.53°.
 ### Point Light / Sphere Light
 
 The sphere light (or the special case point light) is a light emitting
-uniformly in all directions from the surface towards the outside. It
-does not emit any light towards the inside of the sphere. It is created
-by passing the type string “`sphere`” to `ospNewLight`. In addition to
-the [general parameters](#lights) understood by all lights the sphere
-light supports the following special parameters:
+uniformly in all directions from the surface toward the outside. It does
+not emit any light toward the inside of the sphere. It is created by
+passing the type string “`sphere`” to `ospNewLight`. In addition to the
+[general parameters](#lights) understood by all lights the sphere light
+supports the following special parameters:
 
 | Type  | Name     | Description                                    |
 |:------|:---------|:-----------------------------------------------|
@@ -1677,16 +1677,17 @@ OSPRenderer ospNewRenderer(const char *type);
 
 General parameters of all renderers are
 
-| Type                  | Name              |             Default| Description                                                                                                                                 |
-|:----------------------|:------------------|-------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------|
-| int                   | pixelSamples      |                   1| samples per pixel                                                                                                                           |
-| int                   | maxPathLength     |                  20| maximum ray recursion depth                                                                                                                 |
-| float                 | minContribution   |               0.001| sample contributions below this value will be neglected to speedup rendering                                                                |
-| float                 | varianceThreshold |                   0| threshold for adaptive accumulation                                                                                                         |
-| float / vec3f / vec4f | backgroundColor   |  black, transparent| background color and alpha (RGBA), if no `map_backplate` is set                                                                             |
-| OSPTexture            | map\_backplate    |                    | optional [texture](#texture) image used as background (use texture type `texture2d`)                                                        |
-| OSPTexture            | map\_maxDepth     |                    | optional screen-sized float [texture](#texture) with maximum far distance per pixel (use texture type `texture2d`)                          |
-| OSPMaterial\[\]       | material          |                    | optional [data](#data) array of [materials](#materials) which can be indexed by a [GeometricModel](#geometricmodels)’s `material` parameter |
+| Type                  | Name              |                  Default| Description                                                                                                                                 |
+|:----------------------|:------------------|------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------|
+| int                   | pixelSamples      |                        1| samples per pixel                                                                                                                           |
+| int                   | maxPathLength     |                       20| maximum ray recursion depth                                                                                                                 |
+| float                 | minContribution   |                    0.001| sample contributions below this value will be neglected to speedup rendering                                                                |
+| float                 | varianceThreshold |                        0| threshold for adaptive accumulation                                                                                                         |
+| float / vec3f / vec4f | backgroundColor   |       black, transparent| background color and alpha (RGBA), if no `map_backplate` is set                                                                             |
+| OSPTexture            | map\_backplate    |                         | optional [texture](#texture) image used as background (use texture type `texture2d`)                                                        |
+| OSPTexture            | map\_maxDepth     |                         | optional screen-sized float [texture](#texture) with maximum far distance per pixel (use texture type `texture2d`)                          |
+| OSPMaterial\[\]       | material          |                         | optional [data](#data) array of [materials](#materials) which can be indexed by a [GeometricModel](#geometricmodels)’s `material` parameter |
+| int                   | pixelFilter       |  `OSP_PIXELFILTER_GAUSS`| `OSPPixelFilterType` to select the pixel filter used by the renderer for antialiasing. Possible pixel filters are listed below.             |
 
 : Parameters understood by all renderers.
 
@@ -1711,6 +1712,23 @@ were rendered with OpenGL. The screen-sized [texture](#texture)
 `OSP_TEXTURE_FILTER_NEAREST`. The fetched values are used to limit the
 distance of primary rays, thus objects of other renderers can hide
 objects rendered by OSPRay.
+
+OSPRay supports antialiasing in image space by using pixel filters,
+which are centered around the center of a pixel. The size $w×w$ of the
+filter depends on the selected filter type. The types of supported pixel
+filters are defined by the `OSPPixelFilterType` enum and can be set
+using the `pixelFilter` parameter.
+
+| Name                               | Description                                                                                                   |
+|:-----------------------------------|:--------------------------------------------------------------------------------------------------------------|
+| OSP\_PIXELFILTER\_POINT            | a point filter only samples the center of the pixel, therefore the filter width is $w = 0$                    |
+| OSP\_PIXELFILTER\_BOX              | a uniform box filter with a width of $w = 1$                                                                  |
+| OSP\_PIXELFILTER\_GAUSS            | a truncated, smooth Gaussian filter with a standard deviation of $\sigma = 0.5$ and a filter width of $w = 3$ |
+| OSP\_PIXELFILTER\_MITCHELL         | the Mitchell-Netravali filter with a width of $w = 4$                                                         |
+| OSP\_PIXELFILTER\_BLACKMAN\_HARRIS | the Blackman-Harris filter with a width of $w = 3$                                                            |
+
+: Pixel filter types supported by OSPRay for antialiasing in image
+space.
 
 ### SciVis Renderer
 
@@ -2595,7 +2613,7 @@ Rendering
 ### Asynchronous Rendering
 
 Rendering is by default asynchronous (non-blocking), and is done by
-combining a frame buffer, renderer, camera, and world.
+combining a framebuffer, renderer, camera, and world.
 
 What to render and how to render it depends on the renderer’s
 parameters. If the framebuffer supports accumulation (i.e., it was
@@ -2634,7 +2652,7 @@ The following are values which can be synchronized with the application
 
 | Name                  | Description                                                                                                                                     |
 |:----------------------|:------------------------------------------------------------------------------------------------------------------------------------------------|
-| OSP\_NONE\_FINISHED   | Don’t wait for anything to be finished (immediately return from `ospWait`)                                                                      |
+| OSP\_NONE\_FINISHED   | Do not wait for anything to be finished (immediately return from `ospWait`)                                                                     |
 | OSP\_WORLD\_COMMITTED | Wait for the world to be committed (not yet implemented)                                                                                        |
 | OSP\_WORLD\_RENDERED  | Wait for the world to be rendered, but not post-processing operations (Pixel/Tile/Frame Op)                                                     |
 | OSP\_FRAME\_FINISHED  | Wait for all rendering operations to complete                                                                                                   |
