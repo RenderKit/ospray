@@ -1,12 +1,11 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
 #include "ospray_testing.h"
-// ospcommon
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 namespace ospray {
 namespace testing {

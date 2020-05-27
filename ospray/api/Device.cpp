@@ -3,10 +3,9 @@
 
 // ospray
 #include "Device.h"
-// ospcommon
-#include "ospcommon/os/library.h"
-#include "ospcommon/tasking/tasking_system_init.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/os/library.h"
+#include "rkcommon/tasking/tasking_system_init.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 #include <map>
 

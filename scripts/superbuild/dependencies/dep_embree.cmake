@@ -37,7 +37,6 @@ if (BUILD_EMBREE_FROM_SOURCE)
 
   ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
   configure
-    ospcommon
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
   )
 

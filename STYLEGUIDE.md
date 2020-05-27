@@ -40,7 +40,7 @@ make code better are:
     copy/paste)
 -   Compile errors over runtime errors
 
-We have a number of small, single-purpose abstractions in `ospcommon`
+We have a number of small, single-purpose abstractions in `rkcommon`
 that aide in the above goals. It is expected for contributions to first
 try and use those constructs before implementing their own.
 
@@ -74,11 +74,11 @@ in OSPRay:
 ### Memory Management, Object Lifetimes, and Pointers
 
 -   For collections, prefer STL containers over C arrays, specifically
-    `std::vector` and `ospcommon::containers::AlignedVector`.
+    `std::vector` and `rkcommon::containers::AlignedVector`.
 -   Prefer smart pointers to manage memory over raw `new` and `delete`.
 -   Prefer the usage of `std::unique_ptr` to manage heap objects, until
     memory lifetimes must be managed by more than one observer.
--   Prefer constructing smart pointers with `ospcommon::make_unique<>`
+-   Prefer constructing smart pointers with `rkcommon::make_unique<>`
     and `std::make_shared<>` over using `new`.
 -   Avoid globals and `std::shared_ptr` that cross translation units.
 -   Prefer global scope variables to be marked `static`.
@@ -88,7 +88,7 @@ in OSPRay:
     cpp file.
 -   Prefer the usage of references over pointers for cases where
     `nullptr` is not a valid value.
--   Prefer using `ospcommon::utility::OnScopeExit` to robustly cleanup
+-   Prefer using `rkcommon::utility::OnScopeExit` to robustly cleanup
     non-trivial objects in a function.
 -   Avoid constructing `static` data that requires initialization
     ordering with other `static` data.
@@ -124,7 +124,7 @@ in OSPRay:
 -   Prefer the usage of an algorithm call over implementing a raw loop.
 -   Prefer making multi-STL algorithm functions their own function with
     a name.
--   Prefer using `ospcommon::tasking` constructs instead of raw threads.
+-   Prefer using `rkcommon::tasking` constructs instead of raw threads.
 -   Prefer range-based for loops over indexing for loops where possible.
 -   Avoid shared mutable state in parallel code (requires
     synchronization).

@@ -239,7 +239,7 @@ endforeach()
 ##############################################################
 
 add_library(ospray SHARED ${OSPRAY_SOURCES})
-target_link_libraries(ospray PUBLIC $<BUILD_INTERFACE:ospcommon::ospcommon>)
+target_link_libraries(ospray PUBLIC $<BUILD_INTERFACE:rkcommon::rkcommon>)
 ospray_install_library(ospray lib)
 
 target_include_directories(ospray
@@ -333,7 +333,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
   target_link_libraries(ospray_module_ispc
   PUBLIC
     ospray
-    ospcommon::ospcommon
+    rkcommon::rkcommon
     $<BUILD_INTERFACE:embree>
     $<BUILD_INTERFACE:openvkl::openvkl>
   )
@@ -368,7 +368,7 @@ endif()
 add_library(ospray_sdk INTERFACE)
 target_link_libraries(ospray_sdk
 INTERFACE
-  ospray_module_ispc ospcommon::ospcommon
+  ospray_module_ispc rkcommon::rkcommon
 )
 ospray_install_target(ospray_sdk devel)
 

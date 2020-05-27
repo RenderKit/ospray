@@ -4,7 +4,7 @@
 #include "ToneMapper.h"
 #include "ToneMapper_ispc.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace ospray {
 
@@ -51,7 +51,7 @@ std::unique_ptr<LiveImageOp> ToneMapper::attach(FrameBufferView &fbView)
 {
   void *ispcEquiv = ispc::ToneMapper_create();
   ispc::ToneMapper_set(ispcEquiv, exposure, a, b, c, d, acesColor);
-  return ospcommon::make_unique<LiveToneMapper>(fbView, ispcEquiv);
+  return rkcommon::make_unique<LiveToneMapper>(fbView, ispcEquiv);
 }
 
 std::string ToneMapper::toString() const

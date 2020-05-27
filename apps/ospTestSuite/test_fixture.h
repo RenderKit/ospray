@@ -15,7 +15,7 @@
 #include "environment.h"
 #include "test_tools.h"
 
-#include "ospcommon/math/AffineSpace.h"
+#include "rkcommon/math/AffineSpace.h"
 
 namespace OSPRayTestScenes {
 

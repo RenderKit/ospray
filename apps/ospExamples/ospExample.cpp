@@ -5,7 +5,7 @@
 #include "example_common.h"
 
 using namespace ospray;
-using ospcommon::make_unique;
+using rkcommon::make_unique;
 
 int main(int argc, const char *argv[])
 {

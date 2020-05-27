@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -168,7 +168,7 @@ inline void Data::validate_element_type()
   static_assert(OSPTypeFor<T>::value != OSP_UNKNOWN,
       "Only types corresponding to OSPDataType values can be set "
       "as elements in OSPRay Data arrays. NOTE: Math types (vec, "
-      "box, linear, affine) are expected to come from ospcommon::math.");
+      "box, linear, affine) are expected to come from rkcommon::math.");
 }
 
 } // namespace cpp

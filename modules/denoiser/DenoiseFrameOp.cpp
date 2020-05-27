@@ -103,7 +103,7 @@ std::unique_ptr<LiveImageOp> DenoiseFrameOp::attach(FrameBufferView &fbView)
         "DenoiseFrameOp must be used with an RGBA32F "
         "color format framebuffer!");
 
-  return ospcommon::make_unique<LiveDenoiseFrameOp>(fbView, device);
+  return rkcommon::make_unique<LiveDenoiseFrameOp>(fbView, device);
 }
 
 std::string DenoiseFrameOp::toString() const

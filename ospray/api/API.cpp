@@ -1,11 +1,10 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// ospcommon
-#include "ospcommon/os/library.h"
-#include "ospcommon/utility/OnScopeExit.h"
-#include "ospcommon/utility/StringManip.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/os/library.h"
+#include "rkcommon/utility/OnScopeExit.h"
+#include "rkcommon/utility/StringManip.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 // ospray
 #include "Device.h"
@@ -51,7 +50,7 @@ inline std::string getPidString()
 #define OSPRAY_CATCH_BEGIN                                                     \
   try {                                                                        \
     auto *fcn_name_ = __PRETTY_FUNCTION__;                                     \
-    ospcommon::utility::OnScopeExit guard([&]() { postTraceMsg(fcn_name_); });
+    rkcommon::utility::OnScopeExit guard([&]() { postTraceMsg(fcn_name_); });
 
 #define OSPRAY_CATCH_END(a)                                                    \
   }                                                                            \
@@ -103,7 +102,7 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
     for (int i = 1; i < *_ac;) {
       std::string av(_av[i]);
 
-      if (ospcommon::utility::beginsWith(av, "--osp:load-modules")) {
+      if (rkcommon::utility::beginsWith(av, "--osp:load-modules")) {
         std::string modules = getArgString(av);
         if (modules == "") {
           throw std::runtime_error(
@@ -111,12 +110,12 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
               "formatted as <module1>[,<module2>,...]");
         }
         std::vector<std::string> moduleList =
-            ospcommon::utility::split(modules, ',');
+            rkcommon::utility::split(modules, ',');
         for (std::string &moduleName : moduleList) {
           loadLocalModule(moduleName);
         }
         removeArgs(*_ac, _av, i, 1);
-      } else if (ospcommon::utility::beginsWith(av, "--osp:device=")) {
+      } else if (rkcommon::utility::beginsWith(av, "--osp:device=")) {
         // ALOK: explicitly checking with the equals sign so this does not get
         // clobbered by --osp:device-param
         std::string deviceName = getArgString(av);

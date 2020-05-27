@@ -3,7 +3,7 @@
 
 #include "test_appearance.h"
 #include "ArcballCamera.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
 namespace OSPRayTestScenes {
 
@@ -27,11 +27,11 @@ void Texture2D::SetUp()
   constexpr int cols = 8;
   constexpr int rows = 4;
   std::array<vec3f, (cols + 1) * (rows + 1)> vertex;
-  ospcommon::index_sequence_2D vidx(vec2i(cols + 1, rows + 1));
+  rkcommon::index_sequence_2D vidx(vec2i(cols + 1, rows + 1));
   for (auto i : vidx)
     vertex[vidx.flatten(i)] = vec3f(i.x, i.y * 1.5f, 5.3f);
   std::array<vec4ui, cols * rows> index;
-  ospcommon::index_sequence_2D iidx(vec2i(cols, rows));
+  rkcommon::index_sequence_2D iidx(vec2i(cols, rows));
   for (auto i : iidx) {
     index[iidx.flatten(i)] = vec4i(vidx.flatten({i.x, i.y}),
         vidx.flatten({i.x + 1, i.y}),
@@ -87,7 +87,7 @@ void Texture2D::SetUp()
   std::array<vec4uc, 15> dbyte;
   std::array<vec4us, 15> dshort;
   std::array<vec4f, 15> dfloat;
-  ospcommon::index_sequence_2D didx(vec2i(3, 5));
+  rkcommon::index_sequence_2D didx(vec2i(3, 5));
   for (auto idx : didx) {
     auto i = didx.flatten(idx);
     // the center texel should be 127 / 32767 / 0.5, to test normal maps
@@ -182,7 +182,7 @@ void RendererMaterialList::SetUp()
 
   constexpr int dimSize = 3;
 
-  ospcommon::index_sequence_2D numSpheres(dimSize);
+  rkcommon::index_sequence_2D numSpheres(dimSize);
 
   std::vector<vec3f> spheres;
   std::vector<uint32_t> index;

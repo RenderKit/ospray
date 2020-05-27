@@ -1,9 +1,8 @@
-// Copyright 2018-2019 Intel Corporation
+// Copyright 2018-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "BaseFixture.h"
-// ospcommon
-#include "ospcommon/utility/SaveImage.h"
+#include "rkcommon/utility/SaveImage.h"
 
 std::string BaseFixture::dumpFinalImageDir;
 

@@ -5,7 +5,7 @@
 #include "LoadBalancer.h"
 #include "Renderer.h"
 #include "api/Device.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 namespace ospray {
 

@@ -35,9 +35,8 @@
 #include <algorithm>
 #include <functional>
 #include <map>
-// ospcommon
-#include "ospcommon/tasking/tasking_system_init.h"
-#include "ospcommon/utility/CodeTimer.h"
+#include "rkcommon/tasking/tasking_system_init.h"
+#include "rkcommon/utility/CodeTimer.h"
 
 #include "ISPCDevice_ispc.h"
 

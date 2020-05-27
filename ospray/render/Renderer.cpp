@@ -153,29 +153,31 @@ void Renderer::setupPixelFilter()
   switch(pixelFilterType){
     case OSPPixelFilterTypes::OSP_PIXELFILTER_BOX:
     {
-        pixelFilter = ospcommon::make_unique<ospray::BoxPixelFilter>();
-        break;
+      pixelFilter = rkcommon::make_unique<ospray::BoxPixelFilter>();
+      break;
     }
     case OSPPixelFilterTypes::OSP_PIXELFILTER_BLACKMAN_HARRIS:
     {
-        pixelFilter = ospcommon::make_unique<ospray::BlackmanHarrisLUTPixelFilter>();
-        break;
+      pixelFilter =
+          rkcommon::make_unique<ospray::BlackmanHarrisLUTPixelFilter>();
+      break;
     }
     case OSPPixelFilterTypes::OSP_PIXELFILTER_MITCHELL:
     {
-        pixelFilter = ospcommon::make_unique<ospray::MitchellNetravaliLUTPixelFilter>();
-        break;
+      pixelFilter =
+          rkcommon::make_unique<ospray::MitchellNetravaliLUTPixelFilter>();
+      break;
     }
     case OSPPixelFilterTypes::OSP_PIXELFILTER_POINT:
     {
-        pixelFilter = ospcommon::make_unique<ospray::PointPixelFilter>();
-        break;
+      pixelFilter = rkcommon::make_unique<ospray::PointPixelFilter>();
+      break;
     }
     case OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS:
     default:
     {
-        pixelFilter = ospcommon::make_unique<ospray::GaussianLUTPixelFilter>();
-        break;
+      pixelFilter = rkcommon::make_unique<ospray::GaussianLUTPixelFilter>();
+      break;
     }
   }
 }

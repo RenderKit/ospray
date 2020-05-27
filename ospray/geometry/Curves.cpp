@@ -7,8 +7,7 @@
 #include "common/World.h"
 // ispc-generated files
 #include "Curves_ispc.h"
-// ospcommon
-#include "ospcommon/utility/DataView.h"
+#include "rkcommon/utility/DataView.h"
 // std
 #include <map>
 

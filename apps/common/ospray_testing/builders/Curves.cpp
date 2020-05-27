@@ -7,7 +7,7 @@
 // stl
 #include <random>
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 namespace ospray {
 namespace testing {

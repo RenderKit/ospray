@@ -4,7 +4,7 @@
 #include "OSPCommon.h"
 #include "api/Device.h"
 
-#include "ospcommon/utility/StringManip.h"
+#include "rkcommon/utility/StringManip.h"
 
 #include <map>
 
@@ -30,7 +30,7 @@ WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel) : s(s)
 
 std::string getArgString(const std::string &s)
 {
-  std::vector<std::string> tokens = ospcommon::utility::split(s, '=');
+  std::vector<std::string> tokens = rkcommon::utility::split(s, '=');
   if (tokens.size() < 2) {
     std::stringstream ss;
     ss << "Invalid format for command-line argument " << s
@@ -58,7 +58,7 @@ int getArgInt(const std::string &s)
 
 void initFromCommandLine(int *_ac, const char ***_av)
 {
-  using namespace ospcommon::utility;
+  using namespace rkcommon::utility;
 
   auto &device = ospray::api::Device::current;
 

@@ -83,15 +83,15 @@ before you can build OSPRay you need the following prerequisites:
     `ISPC_EXECUTABLE` to the location of the ISPC compiler. Note: OSPRay
     is incompatible with ISPC v1.11.0.
 
--   OSPRay builds on top of a small C++ utility library called
-    `ospcommon`. The library provides abstractions for tasking, aligned
-    memory allocation, vector math types, among others. For users who
-    also need to build
-    [ospcommon](https://www.github.com/ospray/ospcommon), we recommend
-    the default the Intel® [Threading Building
+-   OSPRay builds on top of the Intel oneAPI Rendering Toolkit common
+    library `rkcommon`. The library provides abstractions for tasking,
+    aligned memory allocation, vector math types, among others. For
+    users who also need to build
+    [rkcommon](https://www.github.com/ospray/rkcommon), we recommend the
+    default the Intel [Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
     system for performance and flexibility reasons. Alternatively you
-    can set CMake variable `OSPCOMMON_TASKING_SYSTEM` to `OpenMP` or
+    can set CMake variable `RKCOMMON_TASKING_SYSTEM` to `OpenMP` or
     `Internal`.
 
 -   OSPRay also heavily uses Intel [Embree](https://www.embree.org/),

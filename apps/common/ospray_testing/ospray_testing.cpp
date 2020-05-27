@@ -6,8 +6,8 @@
 // stl
 #include <map>
 
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 namespace ospray {
 namespace testing {

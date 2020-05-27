@@ -1,13 +1,13 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "ospcommon/os/library.h"
+#include "rkcommon/os/library.h"
 
 namespace ospray {
 
-using ospcommon::getSymbol;
-using ospcommon::loadLibrary;
+using rkcommon::getSymbol;
+using rkcommon::loadLibrary;
 
 } // namespace ospray

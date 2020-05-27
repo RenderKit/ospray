@@ -3,10 +3,9 @@
 
 #pragma once
 
-// ospcommon
-#include "ospcommon/memory/IntrusivePtr.h"
-#include "ospcommon/utility/Optional.h"
-#include "ospcommon/utility/ParameterizedObject.h"
+#include "rkcommon/memory/IntrusivePtr.h"
+#include "rkcommon/utility/Optional.h"
+#include "rkcommon/utility/ParameterizedObject.h"
 // ospray
 #include "../common/OSPCommon.h"
 #include "../common/Util.h"

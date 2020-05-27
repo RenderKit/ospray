@@ -3,8 +3,7 @@
 
 // ospray
 #include "SaveTiles.h"
-// ospcommon
-#include "ospcommon/utility/SaveImage.h"
+#include "rkcommon/utility/SaveImage.h"
 
 namespace ospray {
 
@@ -16,7 +15,7 @@ void SaveTiles::commit()
 
 std::unique_ptr<LiveImageOp> SaveTiles::attach(FrameBufferView &fbView)
 {
-  return ospcommon::make_unique<LiveSaveTiles>(fbView, prefix, addColor);
+  return rkcommon::make_unique<LiveSaveTiles>(fbView, prefix, addColor);
 }
 
 std::string SaveTiles::toString() const
@@ -70,7 +69,7 @@ void LiveSaveTiles::process(Tile &tile)
 
   if (!prefix.empty()) {
     const std::string file = prefix + std::to_string(tile_id) + ".ppm";
-    ospcommon::utility::writePPM(
+    rkcommon::utility::writePPM(
         file, w, h, reinterpret_cast<uint32_t *>(data.data()));
   }
 }

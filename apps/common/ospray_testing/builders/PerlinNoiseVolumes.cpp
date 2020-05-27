@@ -3,12 +3,11 @@
 
 #include "Builder.h"
 #include "ospray_testing.h"
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/parallel_for.h"
 // stl
 #include <functional>
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 namespace ospray {
 namespace testing {

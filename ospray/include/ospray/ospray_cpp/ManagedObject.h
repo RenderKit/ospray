@@ -8,16 +8,15 @@
 #include <type_traits>
 // ospray
 #include "ospray/ospray_util.h"
-// ospcommon
-#include "ospcommon/math/AffineSpace.h"
-#include "ospcommon/math/vec.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/vec.h"
 // ospray::cpp
 #include "Traits.h"
 
 namespace ospray {
 namespace cpp {
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 template <typename HANDLE_T = OSPObject, OSPDataType TYPE = OSP_OBJECT>
 class ManagedObject
@@ -123,7 +122,7 @@ inline void ManagedObject<HANDLE_T, TYPE>::setParam(
       "Only types corresponding to OSPDataType values can be set "
       "as parameters on OSPRay objects. NOTE: Math types (vec, "
       "box, linear, affine) are "
-      "expected to come from ospcommon::math.");
+      "expected to come from rkcommon::math.");
   ospSetParam(ospObject, name.c_str(), OSPTypeFor<T>::value, &v);
 }
 

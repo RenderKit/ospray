@@ -4,7 +4,7 @@
 #include "Builder.h"
 #include "ospray_testing.h"
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 namespace ospray {
 namespace testing {

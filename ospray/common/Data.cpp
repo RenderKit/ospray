@@ -4,8 +4,7 @@
 // ospray
 #include "Data.h"
 #include "ospray/ospray.h"
-// ospcommon
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
 namespace ospray {
 

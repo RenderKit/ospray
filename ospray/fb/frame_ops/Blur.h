@@ -3,8 +3,7 @@
 
 // ospray
 #include "../ImageOp.h"
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
 

@@ -5,9 +5,8 @@
 
 // ospray
 #include "ospray/ospray_cpp.h"
-// ospcommon
-#include "ospcommon/memory/IntrusivePtr.h"
-#include "ospcommon/utility/ParameterizedObject.h"
+#include "rkcommon/memory/IntrusivePtr.h"
+#include "rkcommon/utility/ParameterizedObject.h"
 // std
 #include <functional>
 #include <map>
@@ -18,8 +17,8 @@ namespace ospray {
 namespace testing {
 namespace detail {
 
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 struct Builder : public memory::RefCountedObject,
                  public utility::ParameterizedObject

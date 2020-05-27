@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma clang diagnostic push
@@ -59,7 +59,7 @@ void makeAMR(const std::vector<float> &in,
         std::vector<float>(nextLevelSize.product(), 0);
 
     const vec3i numBricks = levelSize / blockSize;
-    ospcommon::tasking::parallel_for(numBricks.product(), [&](int brickIdx) {
+    rkcommon::tasking::parallel_for(numBricks.product(), [&](int brickIdx) {
       // dt == cellWidth in osp_amr_brick_info
       float dt = 1.f / powf(refinementLevel, level);
       // get 3D brick index from flat brickIdx
@@ -138,7 +138,7 @@ void outputAMR(const FileName outFileBase,
   std::ofstream osp(outFileBase + std::string(".osp"));
   osp << "<?xml?>" << std::endl;
   osp << "<AMRVolume>" << std::endl;
-  osp << "  <fileName>" << ospcommon::FileName(outFileBase).base()
+  osp << "  <fileName>" << rkcommon::FileName(outFileBase).base()
       << "</fileName>" << std::endl;
   osp << "  <brickSize>" << blockSize << "</brickSize>" << std::endl;
   osp << "  <clamp>0 100000</clamp>" << std::endl;

@@ -3,8 +3,7 @@
 
 #pragma once
 
-// ospcommon
-#include "ospcommon/tasking/AsyncTask.h"
+#include "rkcommon/tasking/AsyncTask.h"
 // ospray
 #include "../common/Future.h"
 #include "../fb/FrameBuffer.h"

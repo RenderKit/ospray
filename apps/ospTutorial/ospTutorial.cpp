@@ -1,14 +1,14 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial how to use OSPRay in an application.
  *
  * On Linux build it in the build_directory with
  *   g++ ../apps/ospTutorial/ospTutorial.cpp -I ../ospray/include \
- *       -I ../../ospcommon -L . -lospray -Wl,-rpath,. -o ospTutorial
+ *       -I ../../rkcommon -L . -lospray -Wl,-rpath,. -o ospTutorial
  * On Windows build it in the build_directory\$Configuration with
  *   cl ..\..\apps\ospTutorial\ospTutorial.cpp /EHsc -I ..\..\ospray\include ^
- *      -I ..\.. -I ..\..\..\ospcommon ospray.lib
+ *      -I ..\.. -I ..\..\..\rkcommon ospray.lib
  */
 
 #include <errno.h>
@@ -25,7 +25,7 @@
 
 #include "ospray/ospray_cpp.h"
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 // helper function to write the rendered image as PPM file
 void writePPM(const char *fileName, const vec2i &size, const uint32_t *pixel)
