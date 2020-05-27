@@ -33,8 +33,8 @@
 #include "ospray/ospray_cpp.h"
 
 using namespace ospray;
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 // helper function to write the rendered image as PPM file
 void writePPM(const char *fileName, const vec2i &size, const uint32_t *pixel)

@@ -17,7 +17,7 @@
 #include "common/MPICommon.h"
 #include "common/OSPWork.h"
 #include "common/SocketBcastFabric.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 4096

@@ -23,11 +23,11 @@
 #include "common/World.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "fb/LocalFB.h"
-#include "ospcommon/networking/DataStreaming.h"
-#include "ospcommon/networking/Socket.h"
-#include "ospcommon/utility/ArrayView.h"
-#include "ospcommon/utility/OwnedArray.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/networking/DataStreaming.h"
+#include "rkcommon/networking/Socket.h"
+#include "rkcommon/utility/ArrayView.h"
+#include "rkcommon/utility/OwnedArray.h"
+#include "rkcommon/utility/getEnvVar.h"
 #include "render/DistributedLoadBalancer.h"
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
@@ -37,7 +37,7 @@ namespace ospray {
 namespace mpi {
 
 using namespace mpicommon;
-using namespace ospcommon;
+using namespace rkcommon;
 
 ///////////////////////////////////////////////////////////////////////////
 // Forward declarations ///////////////////////////////////////////////////
@@ -221,7 +221,7 @@ void MPIOffloadDevice::initializeDevice()
   if (mode == "mpi") {
     createMPI_RanksBecomeWorkers(&_ac, _av);
     // Only the master returns from this call
-    fabric = ospcommon::make_unique<MPIFabric>(world, 0);
+    fabric = rkcommon::make_unique<MPIFabric>(world, 0);
     maml::init(false);
     maml::start();
   } else if (mode == "mpi-listen") {
@@ -238,7 +238,7 @@ void MPIOffloadDevice::initializeDevice()
     int port = std::stoi(portParam);
     postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
         << "MPIOffloadDevice connecting to " << host << ":" << port << "\n";
-    fabric = ospcommon::make_unique<SocketWriterFabric>(host, port);
+    fabric = rkcommon::make_unique<SocketWriterFabric>(host, port);
   } else {
     throw std::runtime_error("Invalid MPI mode!");
   }
@@ -760,7 +760,7 @@ const void *MPIOffloadDevice::frameBufferMap(
 
   fabric->recv(bytesView, rootWorkerRank());
 
-  auto mapping = ospcommon::make_unique<OwnedArray<uint8_t>>();
+  auto mapping = rkcommon::make_unique<OwnedArray<uint8_t>>();
   mapping->resize(nbytes, 0);
   fabric->recv(*mapping, rootWorkerRank());
 

@@ -9,7 +9,7 @@
 #include "common/MPICommon.h"
 #include "common/World.h"
 #include "embree3/rtcore.h"
-#include "ospcommon/math/box.h"
+#include "rkcommon/math/box.h"
 
 namespace ospray {
 namespace mpi {
@@ -17,7 +17,7 @@ namespace mpi {
 // The bounds of a region projected onto the image plane
 struct RegionScreenBounds
 {
-  ospcommon::math::box2f bounds;
+  rkcommon::math::box2f bounds;
   // The max-depth of the box, for sorting the compositing order
   float depth = -std::numeric_limits<float>::infinity();
 
@@ -26,7 +26,7 @@ struct RegionScreenBounds
   // along the camera view axis. So either we need the camera here, or
   // should just take the z val to only tell us if we should fill the whole
   // window.
-  void extend(const ospcommon::math::vec3f &p);
+  void extend(const rkcommon::math::vec3f &p);
 };
 
 /* A region is defined by its bounds and an ID, which allows us to group
@@ -34,11 +34,11 @@ struct RegionScreenBounds
  */
 struct Region
 {
-  ospcommon::math::box3f bounds;
+  rkcommon::math::box3f bounds;
   int id = -1;
 
   Region() = default;
-  Region(const ospcommon::math::box3f &bounds, int id);
+  Region(const rkcommon::math::box3f &bounds, int id);
 
   RegionScreenBounds project(const Camera *camera) const;
 
@@ -81,7 +81,7 @@ struct DistributedWorld : public World
 
  public:
   Ref<const DataT<box3f>> localRegions;
-  std::vector<ospcommon::math::box3f> myRegions;
+  std::vector<rkcommon::math::box3f> myRegions;
   // The global list of unique regions across all nodes, (including this
   // one), sorted by region id.
   std::vector<Region> allRegions;

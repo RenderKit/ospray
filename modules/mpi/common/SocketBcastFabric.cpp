@@ -9,12 +9,12 @@
 #include <thread>
 #include <vector>
 #include "Collectives.h"
-#include "ospcommon/networking/Socket.h"
+#include "rkcommon/networking/Socket.h"
 
 namespace mpicommon {
 
-using namespace ospcommon;
-using ospcommon::tasking::AsyncLoop;
+using namespace rkcommon;
+using rkcommon::tasking::AsyncLoop;
 
 SocketWriterFabric::Message::Message(
     std::shared_ptr<utility::AbstractArray<uint8_t>> &buf, int ranks)
@@ -32,28 +32,28 @@ SocketWriterFabric::SocketWriterFabric(
     const std::string &hostname, const uint16_t port)
 {
   // Listen on a port the readers can connect back to, to setup the fabric
-  socket_t listenSock = ospcommon::listen(0);
+  socket_t listenSock = rkcommon::listen(0);
 
   // Connect to the client info server and get back the number of readers
   uint32_t numClients = 0;
   {
     socket_t infoServer;
     try {
-      infoServer = ospcommon::connect(hostname.c_str(), port);
+      infoServer = rkcommon::connect(hostname.c_str(), port);
     } catch (const std::runtime_error &e) {
       std::cerr << "Failed to connect to " << hostname << ":" << port << "\n";
       throw e;
     }
 
-    ospcommon::read(infoServer, &numClients, sizeof(uint32_t));
+    rkcommon::read(infoServer, &numClients, sizeof(uint32_t));
 
     const uint16_t listenPort = getListenPort(listenSock);
     const std::string myIP = getIP(infoServer);
 
-    ospcommon::write(infoServer, &listenPort, sizeof(uint16_t));
+    rkcommon::write(infoServer, &listenPort, sizeof(uint16_t));
     const uint64_t ipLen = myIP.size();
-    ospcommon::write(infoServer, &ipLen, sizeof(uint64_t));
-    ospcommon::write(infoServer, &myIP[0], myIP.size());
+    rkcommon::write(infoServer, &ipLen, sizeof(uint64_t));
+    rkcommon::write(infoServer, &myIP[0], myIP.size());
   }
 
   sockets.resize(numClients, OSP_INVALID_SOCKET);
@@ -61,16 +61,16 @@ SocketWriterFabric::SocketWriterFabric(
   do {
     // TODO Will: Check the behavior of the backlog with a large number
     // of incoming connections
-    socket_t c = ospcommon::accept(listenSock);
+    socket_t c = rkcommon::accept(listenSock);
     uint32_t clientRank = 0;
-    ospcommon::read(c, &clientRank, sizeof(uint32_t));
+    rkcommon::read(c, &clientRank, sizeof(uint32_t));
     sockets[clientRank] = c;
     ++numConnected;
   } while (numConnected < numClients);
 
-  ospcommon::close(listenSock);
+  rkcommon::close(listenSock);
 
-  sendThread = ospcommon::make_unique<AsyncLoop>([&]() { sendThreadLoop(); });
+  sendThread = rkcommon::make_unique<AsyncLoop>([&]() { sendThreadLoop(); });
   sendThread->start();
 }
 
@@ -78,7 +78,7 @@ SocketWriterFabric::~SocketWriterFabric()
 {
   sendThread->stop();
   for (auto &s : sockets) {
-    ospcommon::close(s);
+    rkcommon::close(s);
   }
 }
 
@@ -111,7 +111,7 @@ void SocketWriterFabric::send(
 
 void SocketWriterFabric::recv(utility::AbstractArray<uint8_t> &buf, int rank)
 {
-  ospcommon::read(sockets[rank], buf.data(), buf.size());
+  rkcommon::read(sockets[rank], buf.data(), buf.size());
 }
 
 void SocketWriterFabric::sendThreadLoop()
@@ -132,10 +132,10 @@ void SocketWriterFabric::sendThreadLoop()
   for (auto &m : msg) {
     if (m.ranks == -1) {
       for (auto &s : sockets) {
-        ospcommon::write(s, m.buf->data(), m.buf->size());
+        rkcommon::write(s, m.buf->data(), m.buf->size());
       }
     } else {
-      ospcommon::write(sockets[m.ranks], m.buf->data(), m.buf->size());
+      rkcommon::write(sockets[m.ranks], m.buf->data(), m.buf->size());
     }
   }
 }
@@ -149,7 +149,7 @@ SocketReaderFabric::SocketReaderFabric(
   uint16_t bcastWriterPort = 0;
   std::string bcastWriterHost;
   if (group.rank == 0) {
-    socket_t listenSock = ospcommon::listen(port);
+    socket_t listenSock = rkcommon::listen(port);
 
     if (port == 0) {
       std::cout << "#osp: Listening on port " << getListenPort(listenSock)
@@ -157,17 +157,17 @@ SocketReaderFabric::SocketReaderFabric(
                 << std::flush;
     }
 
-    socket_t client = ospcommon::accept(listenSock);
+    socket_t client = rkcommon::accept(listenSock);
 
     // Send back the number of clients
     uint32_t numClients = group.size;
-    ospcommon::write(client, &numClients, sizeof(uint32_t));
+    rkcommon::write(client, &numClients, sizeof(uint32_t));
 
-    ospcommon::read(client, &bcastWriterPort, sizeof(uint16_t));
+    rkcommon::read(client, &bcastWriterPort, sizeof(uint16_t));
     uint64_t clientStrLen = 0;
-    ospcommon::read(client, &clientStrLen, sizeof(uint64_t));
+    rkcommon::read(client, &clientStrLen, sizeof(uint64_t));
     bcastWriterHost = std::string(clientStrLen, ' ');
-    ospcommon::read(client, &bcastWriterHost[0], clientStrLen);
+    rkcommon::read(client, &bcastWriterHost[0], clientStrLen);
   }
 
   bcast(&bcastWriterPort, sizeof(uint16_t), MPI_BYTE, 0, group.comm).wait();
@@ -180,19 +180,19 @@ SocketReaderFabric::SocketReaderFabric(
 
   // TODO: Will we have ECONNREFUSED if we have a lot of clients and exceed
   // the listen buffer?
-  socket = ospcommon::connect(bcastWriterHost.c_str(), bcastWriterPort);
+  socket = rkcommon::connect(bcastWriterHost.c_str(), bcastWriterPort);
   const uint32_t myRank = group.rank;
-  ospcommon::write(socket, &myRank, sizeof(uint32_t));
+  rkcommon::write(socket, &myRank, sizeof(uint32_t));
 
-  sendThread = ospcommon::make_unique<AsyncLoop>([&]() { sendThreadLoop(); });
+  sendThread = rkcommon::make_unique<AsyncLoop>([&]() { sendThreadLoop(); });
   sendThread->start();
 }
 
 SocketReaderFabric::~SocketReaderFabric()
 {
   sendThread->stop();
-  if (socket != ospcommon::OSP_INVALID_SOCKET) {
-    ospcommon::close(socket);
+  if (socket != rkcommon::OSP_INVALID_SOCKET) {
+    rkcommon::close(socket);
   }
 }
 
@@ -206,7 +206,7 @@ void SocketReaderFabric::flushBcastSends() {}
 
 void SocketReaderFabric::recvBcast(utility::AbstractArray<uint8_t> &buf)
 {
-  ospcommon::read(socket, buf.data(), buf.size());
+  rkcommon::read(socket, buf.data(), buf.size());
 }
 
 void SocketReaderFabric::send(
@@ -223,14 +223,14 @@ void SocketReaderFabric::recv(utility::AbstractArray<uint8_t> &buf, int rank)
   if (rank != 0)
     throw std::runtime_error("Reader fabric can only recv from bcast root");
 
-  ospcommon::read(socket, buf.data(), buf.size());
+  rkcommon::read(socket, buf.data(), buf.size());
 }
 
 void SocketReaderFabric::sendThreadLoop()
 {
   auto msg = outbox.consume();
   for (auto &m : msg) {
-    ospcommon::write(socket, m->data(), m->size());
+    rkcommon::write(socket, m->data(), m->size());
   }
 }
 } // namespace mpicommon

@@ -14,7 +14,7 @@
 namespace ospray {
 namespace mpi {
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 void RegionScreenBounds::extend(const vec3f &p)
 {

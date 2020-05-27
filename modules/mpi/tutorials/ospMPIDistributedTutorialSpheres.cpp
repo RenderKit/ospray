@@ -20,8 +20,8 @@
 #include "GLFWDistribOSPRayWindow.h"
 
 using namespace ospray;
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 // Generate the rank's local spheres within its assigned grid cell, and
 // return the bounds of this grid cell

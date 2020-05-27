@@ -130,14 +130,14 @@ struct MPIOffloadDevice : public api::Device
       const OSPDataType tag);
 
   void sendWork(
-      std::shared_ptr<ospcommon::utility::AbstractArray<uint8_t>> work);
+      std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> work);
 
   int rootWorkerRank() const;
 
   ObjectHandle allocateHandle() const;
 
   /*! @{ read and write stream for the work commands */
-  std::unique_ptr<ospcommon::networking::Fabric> fabric;
+  std::unique_ptr<rkcommon::networking::Fabric> fabric;
 
   using FrameBufferMapping = std::unique_ptr<utility::OwnedArray<uint8_t>>;
 

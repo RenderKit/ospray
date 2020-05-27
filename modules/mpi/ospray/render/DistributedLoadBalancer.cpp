@@ -10,13 +10,13 @@
 #include "camera/PerspectiveCamera.h"
 #include "common/MPICommon.h"
 #include "distributed/DistributedRenderer.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 namespace ospray {
 namespace mpi {
 namespace staticLoadBalancer {
 using namespace mpicommon;
-using namespace ospcommon;
+using namespace rkcommon;
 
 void Distributed::renderFrame(
     FrameBuffer *_fb, Renderer *_renderer, Camera *camera, World *_world)

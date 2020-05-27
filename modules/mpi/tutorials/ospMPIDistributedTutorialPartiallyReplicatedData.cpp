@@ -24,8 +24,8 @@
 #include "GLFWDistribOSPRayWindow.h"
 
 using namespace ospray;
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 struct VolumeBrick
 {

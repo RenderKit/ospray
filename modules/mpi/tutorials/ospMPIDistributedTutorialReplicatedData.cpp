@@ -21,8 +21,8 @@
 #include "ospray_testing.h"
 
 using namespace ospray;
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 static std::string rendererType = "pathtracer";
 static std::string builderType = "perlin_noise_volumes";

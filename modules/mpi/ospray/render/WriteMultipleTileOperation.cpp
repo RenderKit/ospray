@@ -6,7 +6,7 @@
 #include "DistributedFrameBuffer_ispc.h"
 
 namespace ospray {
-using namespace ospcommon;
+using namespace rkcommon;
 
 /* LiveTileOperation for image-parallel rendering, where the same image tile
  * could optionally be rendered by multiple ranks.

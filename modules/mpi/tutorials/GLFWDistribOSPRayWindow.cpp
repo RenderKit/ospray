@@ -10,7 +10,7 @@
 #include "imgui_impl_glfw_gl3.h"
 
 using namespace ospray;
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 GLFWDistribOSPRayWindow *GLFWDistribOSPRayWindow::activeWindow = nullptr;
 

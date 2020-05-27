@@ -36,7 +36,7 @@ find_package(MPI REQUIRED)
 find_package(ospray 2.2 REQUIRED)
 include(${OSPRAY_SDK_USE_FILE})
 
-ospcommon_configure_build_type()
+rkcommon_configure_build_type()
 
 option(BUILD_TUTORIALS "Enable MPI module sample apps")
 

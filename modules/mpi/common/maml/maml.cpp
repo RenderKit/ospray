@@ -6,7 +6,7 @@
 
 namespace maml {
 
-using ospcommon::make_unique;
+using rkcommon::make_unique;
 
 // maml API definitions /////////////////////////////////////////////////////
 

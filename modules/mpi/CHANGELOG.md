@@ -1,9 +1,12 @@
 Version History
 ---------------
 
+### Changes in v2.2.0:
+-   Move from `ospcommon` to `rkcommon`
+
 ### Changes in v2.1.0:
 
--   Add suport for `ospGetTaskDuration` to query the render time of a
+-   Add support for `ospGetTaskDuration` to query the render time of a
     asynchronous (or synchronous) renderFrame call
 -   Use flush bcasts to allow us to use non-owning views for data
     transfer. Note that shared `ospData` with strides is currently

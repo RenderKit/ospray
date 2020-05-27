@@ -7,7 +7,7 @@
 #include <future>
 #include <memory>
 #include "MPICommon.h"
-#include "ospcommon/utility/ArrayView.h"
+#include "rkcommon/utility/ArrayView.h"
 
 namespace mpicommon {
 // Convenient wrappers over the collectives //
@@ -20,7 +20,7 @@ std::future<void *> OSPRAY_MPI_INTERFACE bcast(
     void *buffer, size_t count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
 std::future<void *> OSPRAY_MPI_INTERFACE bcast(
-    std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> &buffer,
+    std::shared_ptr<rkcommon::utility::ArrayView<uint8_t>> &buffer,
     size_t count,
     MPI_Datatype datatype,
     int root,
@@ -139,7 +139,7 @@ class OSPRAY_MPI_INTERFACE Bcast : public Collective
    * the caller and must be kept valid until the future is set, indicating
    * completion of the broadcast.
    */
-  Bcast(std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> buffer,
+  Bcast(std::shared_ptr<rkcommon::utility::ArrayView<uint8_t>> buffer,
       size_t count,
       MPI_Datatype datatype,
       int root,
@@ -154,7 +154,7 @@ class OSPRAY_MPI_INTERFACE Bcast : public Collective
   void onFinish() override;
 
  private:
-  std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> buffer;
+  std::shared_ptr<rkcommon::utility::ArrayView<uint8_t>> buffer;
   size_t count;
   int typeSize;
   MPI_Datatype datatype;

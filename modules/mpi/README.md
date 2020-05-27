@@ -70,7 +70,7 @@ instructions on the [OSPRay GitHub Repository](http://github.com/ospray/ospray).
 The MPI module can also be built together with OSPRay using the [superbuild](https://github.com/ospray/ospray#cmake-superbuild)
 by setting `BUILD_OSPRAY_MODULE_MPI=ON`.
 After building OSPRay, you can build this module by pointing it to your OSPRay,
-OpenVKL and ospcommon install directories. Applications using the MPI module
+OpenVKL and rkcommon install directories. Applications using the MPI module
 can then be run by ensuring the module is in your library path and loading the
 module via `ospLoadModule` or using the command line options below.
 When building the module with

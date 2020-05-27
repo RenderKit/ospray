@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Messaging.h"
-// ospcommon
-#include "ospcommon/memory/DeletedUniquePtr.h"
+#include "rkcommon/memory/DeletedUniquePtr.h"
 // stl
 #include <unordered_map>
 
@@ -12,8 +11,8 @@ namespace mpi {
 namespace messaging {
 
 using namespace mpicommon;
-using ospcommon::memory::DeletedUniquePtr;
-using ospcommon::memory::make_deleted_unique;
+using rkcommon::memory::DeletedUniquePtr;
+using rkcommon::memory::make_deleted_unique;
 
 // Internal maml message handler for all of OSPRay //////////////////////
 

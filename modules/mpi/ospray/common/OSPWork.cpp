@@ -11,9 +11,9 @@
 #include "common/ObjectHandle.h"
 #include "common/World.h"
 #include "geometry/GeometricModel.h"
-#include "ospcommon/utility/ArrayView.h"
-#include "ospcommon/utility/OwnedArray.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/ArrayView.h"
+#include "rkcommon/utility/OwnedArray.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 #include "ospray/MPIDistributedDevice.h"
 #include "render/RenderTask.h"
 #include "texture/Texture.h"
@@ -188,14 +188,14 @@ void newSharedData(OSPState &state,
     nbytes = numItems.z * stride.z;
   }
 
-  auto view = ospcommon::make_unique<OwnedArray<uint8_t>>();
+  auto view = rkcommon::make_unique<OwnedArray<uint8_t>>();
   view->resize(nbytes, 0);
   fabric.recvBcast(*view);
 
   // If the data type is managed we need to convert the handles
   // back into pointers
   if (mpicommon::isManagedObject(format)) {
-    ospcommon::index_sequence_3D indices(numItems);
+    rkcommon::index_sequence_3D indices(numItems);
     for (auto idx : indices) {
       const size_t i = idx.x * stride.x + idx.y * stride.y + idx.z * stride.z;
       uint8_t *addr = view->data() + i;

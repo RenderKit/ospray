@@ -9,7 +9,7 @@
 #include "maml/maml.h"
 
 namespace mpicommon {
-using namespace ospcommon;
+using namespace rkcommon;
 
 std::future<void *> bcast(
     void *buf, size_t count, MPI_Datatype datatype, int root, MPI_Comm comm)
@@ -24,7 +24,7 @@ std::future<void *> bcast(
 }
 
 std::future<void *> OSPRAY_MPI_INTERFACE bcast(
-    std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> &buffer,
+    std::shared_ptr<rkcommon::utility::ArrayView<uint8_t>> &buffer,
     size_t count,
     MPI_Datatype datatype,
     int root,
@@ -153,7 +153,7 @@ void Barrier::onFinish()
   result.set_value();
 }
 
-Bcast::Bcast(std::shared_ptr<ospcommon::utility::ArrayView<uint8_t>> buffer,
+Bcast::Bcast(std::shared_ptr<rkcommon::utility::ArrayView<uint8_t>> buffer,
     size_t count,
     MPI_Datatype datatype,
     int root,

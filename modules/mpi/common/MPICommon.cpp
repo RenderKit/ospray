@@ -85,7 +85,7 @@ Group Group::dup() const
 /*! create a new message with given amount of bytes in storage */
 Message::Message(size_t size) : size(size)
 {
-  data = (ospcommon::byte_t *)malloc(size);
+  data = (rkcommon::byte_t *)malloc(size);
 }
 
 /*! create a new message with given amount of storage, and copy

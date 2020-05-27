@@ -40,7 +40,7 @@ add_executable(ospMPIDistributedTutorialCpp
 
 target_link_libraries(ospMPIDistributedTutorialCpp PRIVATE
   ospray::ospray
-  ospcommon::ospcommon
+  rkcommon::rkcommon
   ${MPI_CXX_LIBRARIES})
 
 target_include_directories(ospMPIDistributedTutorialCpp PRIVATE
@@ -64,7 +64,7 @@ add_library(mpi_tutorial_common STATIC
 )
 
 target_link_libraries(mpi_tutorial_common PUBLIC
-  ospcommon::ospcommon
+  rkcommon::rkcommon
   ospray::ospray
   imgui
   glfw

@@ -8,8 +8,8 @@
 #include "DistributedFrameBuffer_ispc.h"
 #include "TileOperation.h"
 
-#include "ospcommon/tasking/parallel_for.h"
-#include "ospcommon/tasking/schedule.h"
+#include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/schedule.h"
 #include "pico_bench.h"
 
 #include "api/Device.h"
@@ -68,7 +68,7 @@ DFB::DistributedFrameBuffer(const vec2i &numPixels,
   tileAccumID.resize(getTotalTiles(), 0);
 
   if (mpicommon::IamTheMaster() && colorBufferFormat != OSP_FB_NONE) {
-    localFBonMaster = ospcommon::make_unique<LocalFrameBuffer>(numPixels,
+    localFBonMaster = rkcommon::make_unique<LocalFrameBuffer>(numPixels,
         colorBufferFormat,
         channels & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE));
   }
@@ -649,7 +649,7 @@ void DFB::gatherFinalTiles()
 void DFB::gatherFinalErrors()
 {
   using namespace mpicommon;
-  using namespace ospcommon;
+  using namespace rkcommon;
 
   std::vector<int> tilesFromRank(workerSize(), 0);
   const int myTileCount = tileIDs.size();

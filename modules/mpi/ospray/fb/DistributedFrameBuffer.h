@@ -8,7 +8,7 @@
 #include "../common/Messaging.h"
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "fb/LocalFB.h"
-#include "ospcommon/containers/AlignedVector.h"
+#include "rkcommon/containers/AlignedVector.h"
 #include "render/Renderer.h"
 
 namespace ospray {
@@ -172,7 +172,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   mpicommon::Group mpiGroup;
 
   // Holds accumID per tile, for adaptive accumulation
-  ospcommon::containers::AlignedVector<uint32_t> tileAccumID;
+  rkcommon::containers::AlignedVector<uint32_t> tileAccumID;
 
   /*! holds error per tile and adaptive regions, for variance estimation /
       stopping */
