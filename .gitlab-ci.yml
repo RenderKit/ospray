@@ -265,6 +265,21 @@ test-tutorials:
     - build-centos7-gcc
   allow_failure: true
 
+test-find-ospray:
+  stage: test-build
+  tags:
+    - docker
+    - modules
+  image: ospray/docker-images:centos7-mod
+  script:
+    - module load cmake
+    - mkdir buildtut
+    - cd buildtut
+    - cmake -D ospray_DIR=`echo $CI_PROJECT_DIR/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray 
+    - cmake --build .
+  dependencies:
+    - build-centos7-gcc
+
 #test-windows-icc:
 #  <<: *test_job_windows
 #  tags:
