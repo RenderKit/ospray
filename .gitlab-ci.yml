@@ -97,6 +97,14 @@ build-arch-clang-extras:
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
 
+build-arch-clang-devel:
+  <<: *build_job_docker
+  script:
+    - export CC=clang
+    - export CXX=clang++
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_EMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OIDN_VERSION=devel -DBUILD_OPENVKL_VERSION=devel -DBUILD_RKCOMMON_VERSION=devel 
+  only: [schedules]
+
 build-ubuntu1604-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
@@ -147,6 +155,14 @@ build-centos7-mpi:
     - module load cmake
     - module load intel
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+  allow_failure: true
+
+build-centos7-mpi-devel:
+  <<: *build_job_docker_modules
+  script:
+    - module load cmake
+    - module load intel
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MPI_VERSION=devel
   allow_failure: true
 
 build-debug:
