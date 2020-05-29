@@ -11,11 +11,11 @@
 #include "common/ObjectHandle.h"
 #include "common/World.h"
 #include "geometry/GeometricModel.h"
+#include "ospray/MPIDistributedDevice.h"
+#include "render/RenderTask.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/OwnedArray.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
-#include "ospray/MPIDistributedDevice.h"
-#include "render/RenderTask.h"
 #include "texture/Texture.h"
 #include "volume/VolumetricModel.h"
 
@@ -199,9 +199,9 @@ void newSharedData(OSPState &state,
     for (auto idx : indices) {
       const size_t i = idx.x * stride.x + idx.y * stride.y + idx.z * stride.z;
       uint8_t *addr = view->data() + i;
-      int64_t *handle = reinterpret_cast<int64_t *>(addr);
+      int64_t *h = reinterpret_cast<int64_t *>(addr);
       OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
-      *obj = state.objects[*handle];
+      *obj = state.objects[*h];
     }
   }
 
@@ -287,7 +287,19 @@ void commit(OSPState &state,
   // If it's a data being committed, we need to recieve the updated data
   auto d = state.data.find(handle);
   if (d != state.data.end()) {
-    fabric.recvBcast(*d->second);
+    auto &view = *d->second;
+    fabric.recvBcast(view);
+
+    Data *d = state.getObject<Data *>(handle);
+    if (mpicommon::isManagedObject(d->type)) {
+      rkcommon::index_sequence_3D indices(d->numItems);
+      for (auto idx : indices) {
+        char *addr = d->data(idx);
+        int64_t *h = reinterpret_cast<int64_t *>(addr);
+        OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
+        *obj = state.objects[*h];
+      }
+    }
   }
 
   ospCommit(state.objects[handle]);
@@ -455,163 +467,144 @@ void setParam(
   OSPDataType type;
   cmdBuf >> handle >> param >> type;
 
-  switch (type) {
-  // All OSP_OBJECT fall through the same style of setting param since it's just
-  // a handle
-  case OSP_DEVICE:
-  case OSP_OBJECT:
-  case OSP_CAMERA:
-  case OSP_DATA:
-  case OSP_FRAMEBUFFER:
-  case OSP_FUTURE:
-  case OSP_GEOMETRIC_MODEL:
-  case OSP_GEOMETRY:
-  case OSP_GROUP:
-  case OSP_IMAGE_OPERATION:
-  case OSP_INSTANCE:
-  case OSP_LIGHT:
-  case OSP_MATERIAL:
-  case OSP_RENDERER:
-  case OSP_TEXTURE:
-  case OSP_TRANSFER_FUNCTION:
-  case OSP_VOLUME:
-  case OSP_VOLUMETRIC_MODEL:
-  case OSP_WORLD: {
+  // OSP_OBJECT use the same style of setting param since it's just a handle
+  if (mpicommon::isManagedObject(type)) {
     int64_t val = 0;
     cmdBuf >> val;
     ospSetParam(
         state.objects[handle], param.c_str(), type, &state.objects[val]);
-    break;
-  }
-  case OSP_STRING: {
-    std::string val = 0;
-    cmdBuf >> val;
-    ospSetParam(state.objects[handle], param.c_str(), type, val.c_str());
-    break;
-  }
-  case OSP_BOOL:
-    setParam<bool>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_CHAR:
-  case OSP_BYTE:
-    setParam<char>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC2UC:
-    setParam<vec2uc>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC3UC:
-    setParam<vec3uc>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC4UC:
-    setParam<vec4uc>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_SHORT:
-    setParam<short>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_USHORT:
-    setParam<unsigned short>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_INT:
-    setParam<int>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC2I:
-    setParam<vec2i>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC3I:
-    setParam<vec3i>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC4I:
-    setParam<vec4i>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_UINT:
-    setParam<unsigned int>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC2UI:
-    setParam<vec2ui>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC3UI:
-    setParam<vec3ui>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC4UI:
-    setParam<vec4ui>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_LONG:
-    setParam<long>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC2L:
-    setParam<vec2l>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC3L:
-    setParam<vec3l>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC4L:
-    setParam<vec4l>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_ULONG:
-    setParam<unsigned long>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC2UL:
-    setParam<vec2ul>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC3UL:
-    setParam<vec3ul>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC4UL:
-    setParam<vec4ul>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_FLOAT:
-    setParam<float>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC2F:
-    setParam<vec2f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC3F:
-    setParam<vec3f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_VEC4F:
-    setParam<vec4f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_DOUBLE:
-    setParam<double>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_BOX1I:
-    setParam<box1i>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_BOX2I:
-    setParam<box2i>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_BOX3I:
-    setParam<box3i>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_BOX4I:
-    setParam<box4i>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_BOX1F:
-    setParam<box1f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_BOX2F:
-    setParam<box2f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_BOX3F:
-    setParam<box3f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_BOX4F:
-    setParam<box4f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_LINEAR2F:
-    setParam<linear2f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_LINEAR3F:
-    setParam<linear3f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_AFFINE2F:
-    setParam<affine2f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  case OSP_AFFINE3F:
-    setParam<affine3f>(cmdBuf, state.objects[handle], param, type);
-    break;
-  default:
-    throw std::runtime_error("Unrecognized param type!");
+  } else {
+    switch (type) {
+    case OSP_STRING: {
+      std::string val = 0;
+      cmdBuf >> val;
+      ospSetParam(state.objects[handle], param.c_str(), type, val.c_str());
+      break;
+    }
+    case OSP_BOOL:
+      setParam<bool>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_CHAR:
+    case OSP_BYTE:
+      setParam<char>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC2UC:
+      setParam<vec2uc>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC3UC:
+      setParam<vec3uc>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC4UC:
+      setParam<vec4uc>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_SHORT:
+      setParam<short>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_USHORT:
+      setParam<unsigned short>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_INT:
+      setParam<int>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC2I:
+      setParam<vec2i>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC3I:
+      setParam<vec3i>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC4I:
+      setParam<vec4i>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_UINT:
+      setParam<unsigned int>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC2UI:
+      setParam<vec2ui>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC3UI:
+      setParam<vec3ui>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC4UI:
+      setParam<vec4ui>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_LONG:
+      setParam<long>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC2L:
+      setParam<vec2l>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC3L:
+      setParam<vec3l>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC4L:
+      setParam<vec4l>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_ULONG:
+      setParam<unsigned long>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC2UL:
+      setParam<vec2ul>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC3UL:
+      setParam<vec3ul>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC4UL:
+      setParam<vec4ul>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_FLOAT:
+      setParam<float>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC2F:
+      setParam<vec2f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC3F:
+      setParam<vec3f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_VEC4F:
+      setParam<vec4f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_DOUBLE:
+      setParam<double>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_BOX1I:
+      setParam<box1i>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_BOX2I:
+      setParam<box2i>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_BOX3I:
+      setParam<box3i>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_BOX4I:
+      setParam<box4i>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_BOX1F:
+      setParam<box1f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_BOX2F:
+      setParam<box2f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_BOX3F:
+      setParam<box3f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_BOX4F:
+      setParam<box4f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_LINEAR2F:
+      setParam<linear2f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_LINEAR3F:
+      setParam<linear3f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_AFFINE2F:
+      setParam<affine2f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    case OSP_AFFINE3F:
+      setParam<affine3f>(cmdBuf, state.objects[handle], param, type);
+      break;
+    default:
+      throw std::runtime_error("Unrecognized param type!");
+    }
   }
 }
 
