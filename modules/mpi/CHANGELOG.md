@@ -3,6 +3,9 @@ Version History
 
 ### Changes in v2.2.0:
 -   Move from `ospcommon` to `rkcommon`
+-   Fix bug where OSPObject handles where not translated to
+    worker-local pointers when committing an OSPData in the
+    MPIOffloadDevice.
 
 ### Changes in v2.1.0:
 
