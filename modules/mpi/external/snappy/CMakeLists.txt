@@ -7,10 +7,6 @@ project(Snappy VERSION 1.1.7 LANGUAGES C CXX)
 ospray_disable_compiler_warnings()
 ##############################################################################
 
-# BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to make
-# it prominent in the GUI.
-option(BUILD_SHARED_LIBS "Build shared libraries(DLLs)." OFF)
-
 option(SNAPPY_BUILD_TESTS "Build Snappy's own tests." OFF)
 
 include(TestBigEndian)
@@ -78,7 +74,7 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/snappy-stubs-public.h.in"
   "${PROJECT_BINARY_DIR}/snappy-stubs-public.h")
 
-add_library(snappy "")
+add_library(snappy STATIC "")
 target_sources(snappy
   PRIVATE
     "${PROJECT_SOURCE_DIR}/snappy-internal.h"
@@ -110,9 +106,6 @@ set_target_properties(snappy
   PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
 target_compile_definitions(snappy PRIVATE -DHAVE_CONFIG_H)
-if(BUILD_SHARED_LIBS)
-  set_target_properties(snappy PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-endif(BUILD_SHARED_LIBS)
 
 if(SNAPPY_BUILD_TESTS)
   enable_testing()
