@@ -699,6 +699,10 @@ void MPIOffloadDevice::commit(OSPObject _object)
 void MPIOffloadDevice::release(OSPObject _object)
 {
   const ObjectHandle handle = (const ObjectHandle &)_object;
+  if (futures.find(handle.i64) != futures.end()) {
+    wait((OSPFuture)_object, OSP_TASK_FINISHED);
+    futures.erase(handle.i64);
+  }
 
   networking::BufferWriter writer;
   writer << work::RELEASE << handle.i64;
@@ -833,6 +837,7 @@ OSPFuture MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
   writer << work::RENDER_FRAME << fbHandle << rendererHandle << cameraHandle
          << worldHandle << futureHandle;
   sendWork(writer.buffer);
+  futures.insert(futureHandle.i64);
   return (OSPFuture)(int64)futureHandle;
 }
 

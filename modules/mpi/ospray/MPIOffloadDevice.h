@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <unordered_set>
 #include "api/Device.h"
 #include "common/MPICommon.h"
 #include "common/Managed.h"
@@ -145,6 +146,8 @@ struct MPIOffloadDevice : public api::Device
 
   std::unordered_map<int64_t, std::shared_ptr<utility::AbstractArray<uint8_t>>>
       sharedData;
+
+  std::unordered_set<int64_t> futures;
 
   bool initialized{false};
 };
