@@ -1,0 +1,105 @@
+stages:
+  - build
+
+variables:
+  GIT_DEPTH: "15"
+  KW_PROJECT_NAME: module_mpi
+  ErrorActionPreference: STOP
+
+.job_template: &build_job_docker_modules
+  stage: build
+  tags:
+    - docker
+    - modules
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  script:
+    - scripts/build_gitlab/linux.sh
+
+.job_template: &build_job_docker
+  stage: build
+  tags:
+    - docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  script:
+    - scripts/build_gitlab/linux.sh
+
+### BUILD JOBS ###
+
+# WILL Note: Temporarily using older openvkl version while waiting for OSPRay to update
+# to the new iterator API
+build-centos7-intel:
+  <<: *build_job_docker_modules
+  script:
+    - module load cmake
+    - module load intel
+    - export CC=icc
+    - export CXX=icpc
+    - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then
+        export BUILD_OSPRAY_VERSION=master;
+        export BUILD_OPENVKL_VERSION=master;
+      else
+        export BUILD_OSPRAY_VERSION=devel;
+        export BUILD_OPENVKL_VERSION=679d598d;
+      fi
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
+
+build-centos7-openmpi:
+  <<: *build_job_docker_modules
+  script:
+    - export MODULEPATH=$MODULEPATH:/NAS/spack/share/spack/modules/linux-centos7-x86_64
+    - module load cmake
+    - module load openmpi
+    - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then
+        export BUILD_OSPRAY_VERSION=master;
+        export BUILD_OPENVKL_VERSION=master;
+      else
+        export BUILD_OSPRAY_VERSION=devel;
+        export BUILD_OPENVKL_VERSION=679d598d;
+      fi
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
+
+build-centos8-mpich:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  script:
+    - yum install -y mpich-devel mpich
+    - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then
+        export BUILD_OSPRAY_VERSION=master;
+        export BUILD_OPENVKL_VERSION=master;
+      else
+        export BUILD_OSPRAY_VERSION=devel;
+        export BUILD_OPENVKL_VERSION=679d598d;
+      fi
+    - export PATH=$PATH:/usr/lib64/mpich/bin/
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
+
+build-centos8-openmpi:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  script:
+    - yum install -y openmpi-devel openmpi
+    - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then
+        export BUILD_OSPRAY_VERSION=master;
+        export BUILD_OPENVKL_VERSION=master;
+      else
+        export BUILD_OSPRAY_VERSION=devel;
+        export BUILD_OPENVKL_VERSION=679d598d;
+      fi
+    - export PATH=$PATH:/usr/lib64/openmpi/bin/
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
+
+build-scan-kw:
+  stage: build
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  script:
+    - yum install -y mpich-devel mpich
+    - export PATH=$PATH:/usr/lib64/mpich/bin/
+    - scripts/build_gitlab/build-scan-kw.sh
+    - test -s $CI_PROJECT_DIR/kw_build_number
+  tags:
+    - docker
+  artifacts:
+    paths:
+        - $CI_PROJECT_DIR/kw_build_number
+    expire_in: 3 day
+
