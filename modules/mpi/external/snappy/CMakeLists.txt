@@ -1,3 +1,6 @@
+## Copyright 2018-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
 cmake_minimum_required(VERSION 3.1)
 project(Snappy VERSION 1.1.7 LANGUAGES C CXX)
 
