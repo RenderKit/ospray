@@ -33,6 +33,7 @@ endif()
 include(ExternalProject)
 include(GNUInstallDirs)
 include(ProcessorCount)
+include(CMakeDependentOption)
 
 ## Superbuild options ##
 
@@ -69,6 +70,10 @@ option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
 option(BUILD_OSPRAY_MODULE_MPI "Enable fetch/build of module_mpi" OFF)
 set(BUILD_OSPRAY_MODULE_MPI_VERSION "v2.1.0" CACHE STRING "What version of module_mpi?")
+
+# MPI needs working SDK, which rules out installed depedencies
+cmake_dependent_option(INSTALL_DEPENDENCIES "Install OSPRay dependencies" ON
+  "NOT BUILD_OSPRAY_MODULE_MPI" OFF)
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
