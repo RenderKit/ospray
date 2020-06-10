@@ -86,7 +86,8 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
           vec4f sampleColorOpacity = tf->get(tf, sample);
 
           sampleColorOpacity.w = 1.f
-              - pow(1.f - sampleColorOpacity.w, dt / interval.nominalDeltaT);
+              - pow(1.f - sampleColorOpacity.w * vm->densityScale,
+                  dt / interval.nominalDeltaT);
           const float clampedOpacity = clamp(sampleColorOpacity.w);
           color = color
               + ((1.f - alpha) * clampedOpacity
