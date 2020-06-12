@@ -1132,7 +1132,7 @@ All light sources accept the following parameters:
 
   Type      Name        Default  Description
   --------- ---------- --------  ---------------------------------------
-  vec3f     color         white  color of the light
+  vec3f     color         white  linearRGB color of the light
   float     intensity         1  intensity of the light (a factor)
   bool      visible        true  whether the light can be directly seen
   --------- ---------- --------  ---------------------------------------
@@ -1491,7 +1491,7 @@ General parameters of all renderers are
 
   float          varianceThreshold                        0  threshold for adaptive accumulation
 
-  float /        backgroundColor                     black,  background color and alpha (RGBA), if no
+  float /        backgroundColor                     black,  background color and alpha (linearRGBA), if no
   vec3f / vec4f                                 transparent  `map_backplate` is set
 
   OSPTexture     map_backplate                               optional [texture] image used as background
@@ -1858,9 +1858,9 @@ type string "`metal`" to `ospNewMaterial`. Its parameters are
                                   (wavelength, eta, k), ordered by wavelength
                                   (which is in nm)
 
-  vec3f    eta                    RGB complex refractive index, real part
+  vec3f    eta                    linearRGB  complex refractive index, real part
 
-  vec3f    k                      RGB complex refractive index, imaginary part
+  vec3f    k                      linearRGB complex refractive index, imaginary part
 
   float    roughness         0.1  roughness in [0–1], 0 is perfect mirror
   -------- ---------- ----------  --------------------------------------------
@@ -1875,7 +1875,7 @@ refraction can be given as an array of spectral samples in `ior`, each
 sample a triplet of wavelength (in nm), eta, and k, ordered
 monotonically increasing by wavelength; OSPRay will then calculate the
 Fresnel in the spectral domain. Alternatively, `eta` and `k` can also be
-specified as approximated RGB coefficients; some examples are given in
+specified as approximated linearRGB coefficients; some examples are given in
 below table.
 
   Metal                     eta                   k
@@ -1886,7 +1886,7 @@ below table.
   Cr, Chromium    (3.2, 3.1, 2.3)         (3.3, 3.3, 3.1)
   Cu, Copper      (0.1, 0.8, 1.1)         (3.5, 2.5, 2.4)
   -------------- ----------------------- -----------------
-  : Index of refraction of selected metals as approximated RGB
+  : Index of refraction of selected metals as approximated linearRGB
   coefficients, based on data from https://refractiveindex.info/.
 
 The `roughness` parameter controls the variation of microfacets and thus

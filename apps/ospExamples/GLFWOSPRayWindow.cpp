@@ -101,6 +101,23 @@ void error_callback(int error, const char *desc)
   std::cerr << "error " << error << ": " << desc << std::endl;
 }
 
+vec3f srgb_to_linear(const vec3f color)
+{
+	return vec3f(
+		powf(color.x, 2.2f),
+		powf(color.y, 2.2f),
+		powf(color.z, 2.2f)
+	);
+}
+
+vec4f srgb_to_linear(const vec4f color)
+{
+	return vec4f(
+		srgb_to_linear(vec3f(color.x, color.y, color.z)),
+		color.w
+	);
+}
+
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
 GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
@@ -522,7 +539,7 @@ void GLFWOSPRayWindow::buildUI()
   }
 
   if (ImGui::ColorEdit3("backgroundColor", bgColor)) {
-    renderer.setParam("backgroundColor", bgColor);
+    renderer.setParam("backgroundColor", srgb_to_linear(bgColor));
     addObjectToCommit(renderer.handle());
   }
 
@@ -632,7 +649,7 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
 
   renderer = cpp::Renderer(rendererTypeStr);
   // retains a set background color on renderer change
-  renderer.setParam("backgroundColor", bgColor);
+  renderer.setParam("backgroundColor", srgb_to_linear(bgColor));
   addObjectToCommit(renderer.handle());
 
   // set up backplate texture
