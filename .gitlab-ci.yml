@@ -13,7 +13,7 @@ variables:
   stage: build
   tags:
     - docker
-  image: ospray/docker-images:arch  # default image
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch  # default image
   script:
     - scripts/build_gitlab/linux.sh
 
@@ -22,7 +22,7 @@ variables:
   tags:
     - docker
     - modules
-  image: ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   script:
     - scripts/build_gitlab/linux.sh
 
@@ -107,21 +107,21 @@ build-arch-clang-devel:
 
 build-ubuntu1604-gcc:
   <<: *build_job_docker
-  image: ospray/docker-images:ubuntu16.04
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja
   <<: *build_artifacts
 
 build-ubuntu1804-gcc:
   <<: *build_job_docker
-  image: ospray/docker-images:ubuntu18.04
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
   <<: *build_artifacts
 
 build-centos8:
   <<: *build_job_docker
-  image: ospray/docker-images:centos8
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
   script:
     - scripts/build_gitlab/linux.sh -G Ninja
   <<: *build_artifacts
@@ -146,7 +146,7 @@ build-centos7-icc15:
 
 build-centos7-gcc:
   <<: *build_job_docker
-  image: ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   <<: *build_artifacts
 
 build-centos7-mpi:
@@ -207,7 +207,7 @@ build-windows-msvc15:
 
 build-scan-kw:
   stage: build
-  image: ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - scripts/build_gitlab/build-scan-kw.sh
     - test -s $CI_PROJECT_DIR/kw_build_number
@@ -220,7 +220,7 @@ build-scan-kw:
 
 source-protex-scan:
   stage: build
-  image: amd64/openjdk:8
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - scripts/build_gitlab/source-scan-protex.sh
   dependencies: []
@@ -232,25 +232,25 @@ source-protex-scan:
 
 test-centos7-gcc:
   <<: *test_job_unix
-  image: ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   dependencies:
     - build-centos7-gcc
 
 test-centos8:
   <<: *test_job_unix
-  image: ospray/docker-images:centos8
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
   dependencies:
     - build-centos8
 
 test-ubuntu1804-gcc:
   <<: *test_job_unix
-  image: ospray/docker-images:ubuntu18.04
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   dependencies:
     - build-ubuntu1804-gcc
 
 test-ubuntu1604-gcc:
   <<: *test_job_unix
-  image: ospray/docker-images:ubuntu16.04
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
   dependencies:
     - build-ubuntu1604-gcc
 
@@ -258,7 +258,7 @@ test-tutorials:
   stage: test-build
   tags:
     - docker
-  image: ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - scripts/tests/run_tutorials.sh
   dependencies:
@@ -270,7 +270,7 @@ test-find-ospray:
   tags:
     - docker
     - modules
-  image: ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   script:
     - module load cmake
     - mkdir buildtut
@@ -306,7 +306,7 @@ test-windows-msvc14:
 
 test-kw-critical:
   stage: test-src
-  image: ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - scripts/build_gitlab/test-kw-critical.sh
   needs:
@@ -317,7 +317,7 @@ test-kw-critical:
 
 generate-ci-baseline:
   <<: *test_job_unix
-  image: ospray/docker-images:ubuntu18.04
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   script:
     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/generate_baseline.sh
   dependencies:
@@ -335,7 +335,7 @@ generate-ci-baseline:
   stage: build
   tags:
     - docker
-  image: ospray/docker-images:docu
+  image: $DOCKER_REGISTRY/ospray/docker-images:docu
   variables:
     GIT_SUBMODULE_STRATEGY: normal
 
@@ -364,7 +364,7 @@ web:
 
 release-linux:
   <<: *release_job
-  image: ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   script:
     - module load cmake
     - scripts/release/linux.sh
