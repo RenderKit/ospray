@@ -1,4 +1,7 @@
 #!/bin/bash
+## Copyright 2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
 set -e
 KW_CRITICAL_OUTPUT_PATH=/tmp/critical
 export KW_BUILD_NUMBER=$(cat $CI_PROJECT_DIR/kw_build_number)

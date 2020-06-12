@@ -1,27 +1,36 @@
 #!/bin/bash
+## Copyright 2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
-PROTEX_ROOT=/NAS/tools/ip_protex/protex_v7.8
-BDSTOOL=$PROTEX_ROOT/bin/bdstool
-PROTEX_PROJECT_NAME=c_ospray_14348
-SERVER_URL=https://amrprotex008.devtools.intel.com/
+BDSTOOL=$PROTEX_PATH/bin/bdstool
+PROTEX_PROJECT_NAME=$PROTEX_OSPRAY_PROJECT
+SERVER_URL=$PROTEX_OSPRAY_URL
 SRC_PATH=$CI_PROJECT_DIR
+LOG_FILE=$SRC_PATH/ip_protex.log
 
-export _JAVA_OPTIONS=-Duser.home=$PROTEX_ROOT/home
+export _JAVA_OPTIONS=-Duser.home=$PROTEX_PATH/home
 
 # enter source code directory before scanning
 cd $SRC_PATH
 
-$BDSTOOL new-project --server $SERVER_URL $PROTEX_PROJECT_NAME |& tee ip_protex.log
-if grep -q "fail\|error\|fatal\|not found" ip_protex.log; then
+# scan additional source
+cmake -DBUILD_OSPRAY_MODULE_MPI=ON scripts/superbuild
+cmake --build . --target rkcommon-download
+cmake --build . --target module_mpi-download
+
+
+$BDSTOOL new-project --server $SERVER_URL $PROTEX_PROJECT_NAME |& tee $LOG_FILE
+if grep -q "fail\|error\|fatal\|not found" $LOG_FILE; then
     exit 1
 fi
 
-$BDSTOOL analyze --server $SERVER_URL |& tee -a ip_protex.log
-if grep -q "fail\|error\|fatal\|not found" ip_protex.log; then
+$BDSTOOL analyze --server $SERVER_URL --path $SRC_PATH |& tee -a $LOG_FILE
+
+if grep -q "fail\|error\|fatal\|not found" $LOG_FILE; then
     exit 1
 fi
 
-if grep -E "^Files pending identification: [0-9]+$" ip_protex.log; then
+if grep -E "^Files pending identification: [0-9]+$" $LOG_FILE; then
     echo "Protex scan FAILED!"
     exit 1
 fi
