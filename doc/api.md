@@ -105,8 +105,9 @@ exactly the same as `ospSetParam`, which is documented below in the
   ------ ------------ ----------------------------------------------------------
   int    numThreads   number of threads which OSPRay should use
 
-  string logLevel     logging level; valid values (in order of severity)
-                      are `none`, `error`, `warning`, `info`, and `debug`
+  int    logLevel     logging level; valid values (in order of severity) are
+                      `OSP_LOG_NONE`, `OSP_LOG_ERROR`, `OSP_LOG_WARNING`,
+                      `OSP_LOG_INFO`, and `OSP_LOG_DEBUG`
 
   string logOutput    convenience for setting where status messages go; valid
                       values are `cerr` and `cout`

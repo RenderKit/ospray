@@ -433,7 +433,7 @@ on all devices:
 | Type   | Name        | Description                                                                                                                                                                        |
 |:-------|:------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | int    | numThreads  | number of threads which OSPRay should use                                                                                                                                          |
-| string | logLevel    | logging level; valid values (in order of severity) are `none`, `error`, `warning`, `info`, and `debug`                                                                             |
+| int    | logLevel    | logging level; valid values (in order of severity) are `OSP_LOG_NONE`, `OSP_LOG_ERROR`, `OSP_LOG_WARNING`, `OSP_LOG_INFO`, and `OSP_LOG_DEBUG`                                     |
 | string | logOutput   | convenience for setting where status messages go; valid values are `cerr` and `cout`                                                                                               |
 | string | errorOutput | convenience for setting where error messages go; valid values are `cerr` and `cout`                                                                                                |
 | bool   | debug       | set debug mode; equivalent to `logLevel=debug` and `numThreads=1`                                                                                                                  |
