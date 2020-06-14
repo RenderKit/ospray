@@ -13,6 +13,7 @@ Version History
     is defined by the used filter type. Previously OSPRay implicitely
     used a box filter with a size of 1, for better results the default
     filter is now `OSP_PIXELFILTER_GAUSS`
+-   Support stereo3d mode for panoramic camera
 -   Add new `stereoMode` `OSP_STEREO_TOP_BOTTOM` (with left eye at top
     half of the image)
 -   Support for Open VKL v0.10.0 and its new sampler object API, thus

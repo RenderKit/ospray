@@ -2344,12 +2344,33 @@ and `imageEnd`, and both methods can be combined. In any case, the
 
 #### Panoramic Camera
 
-The panoramic camera implements a simple camera without support for
-motion blur. It captures the complete surrounding with a latitude /
+The panoramic camera implements a simple camera with support for stereo
+rendering. It captures the complete surrounding with a latitude /
 longitude mapping and thus the rendered images should best have a ratio
 of 2:1. A panoramic camera is created by passing the type string
 "`panoramic`" to `ospNewCamera`. It is placed and oriented in the scene
 by using the [general parameters](#cameras) understood by all cameras.
+
+  ----- ---------------------- -----------------------------------------
+  Type  Name                   Description
+  ----- ---------------------- -----------------------------------------
+  int   stereoMode             `OSPStereoMode` for stereo rendering,
+                               possible values are:
+
+                               `OSP_STEREO_NONE` (default)
+
+                               `OSP_STEREO_LEFT`
+
+                               `OSP_STEREO_RIGHT`
+
+                               `OSP_STEREO_SIDE_BY_SIDE`
+
+                               `OSP_STEREO_TOP_BOTTOM` (left eye at top half)
+
+  float interpupillaryDistance distance between left and right eye when
+                               stereo is enabled, default 0.0635
+  ----- ---------------------- -----------------------------------------
+  : Addtional parameters accepted by the panoramic camera.
 
 ![Latitude / longitude map created with the panoramic camera.][imgCameraPanoramic]
 

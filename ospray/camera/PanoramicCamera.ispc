@@ -1,14 +1,49 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Camera.ih"
 #include "math/sampling.ih"
+#include "ospray/OSPEnums.h"
 
-void PanoramicCamera_initRay(const Camera *uniform self,
+struct PanoramicCamera
+{
+  Camera super;
+
+  int stereoMode;
+  float ipd_offset; // half of the interpupillary distance
+};
+
+void PanoramicCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
     const varying CameraSample &sample)
 {
-  const vec2f screen = Camera_subRegion(self, sample.screen);
+  const PanoramicCamera *uniform self = (const PanoramicCamera *uniform)_self;
+
+  vec2f screen = sample.screen;
+
+  varying float *uniform split =
+      self->stereoMode == OSP_STEREO_SIDE_BY_SIDE ? &screen.x : &screen.y;
+  float offset = 0.f;
+  switch (self->stereoMode) {
+  case OSP_STEREO_LEFT:
+    offset = -self->ipd_offset;
+    break;
+  case OSP_STEREO_RIGHT:
+    offset = self->ipd_offset;
+    break;
+  case OSP_STEREO_SIDE_BY_SIDE:
+  case OSP_STEREO_TOP_BOTTOM:
+    *split *= 2.f;
+    if (*split < 1.f) {
+      offset = -self->ipd_offset;
+    } else {
+      offset = self->ipd_offset;
+      *split -= 1.f;
+    }
+    break;
+  }
+
+  screen = Camera_subRegion(_self, screen);
 
   const float phi = two_pi * screen.x;
   const float theta = M_PI * screen.y;
@@ -17,24 +52,33 @@ void PanoramicCamera_initRay(const Camera *uniform self,
   sincos(theta, &sinTheta, &cosTheta);
   const vec3f localDir = cartesian(phi, sinTheta, cosTheta);
 
-  // trnasform to camera- and then to world-space
+  // transform to camera- and then to world-space
   const vec3f dir =
-      self->frame * make_vec3f(-localDir.y, -localDir.z, localDir.x);
+      self->super.frame * make_vec3f(-localDir.y, -localDir.z, localDir.x);
 
-  const float time = Camera_shutterTime(self, sample.time);
-  const vec3f org = self->org;
-  setRay(ray, org, dir, self->nearClip, inf, time);
+  const float time = Camera_shutterTime(_self, sample.time);
+  const vec3f org = self->super.org + offset * cross(dir, self->super.frame.vy);
+  setRay(ray, org, dir, self->super.nearClip, inf, time);
 }
 
-/*! create a new ispc-side version of a panoramiccamera - with given
-    pointer to the c-class version - and return both class pointer and
-    pointer to internal data back via the supplied reference
-    parameters */
 export void *uniform PanoramicCamera_create(void *uniform cppE)
 {
-  Camera *uniform cam = uniform new Camera;
-  cam->cppEquivalent = cppE;
-  cam->initRay = PanoramicCamera_initRay;
-  cam->doesDOF = false;
-  return cam;
+  PanoramicCamera *uniform self = uniform new PanoramicCamera;
+  self->super.cppEquivalent = cppE;
+  self->super.initRay = PanoramicCamera_initRay;
+  self->super.doesDOF = false;
+  self->stereoMode = OSP_STEREO_NONE;
+  self->ipd_offset = 0.f;
+  return self;
+}
+
+export void PanoramicCamera_set(
+    void *uniform _self, const uniform int stereoMode, const uniform float ipd)
+{
+  PanoramicCamera *uniform self = (PanoramicCamera * uniform) _self;
+  self->stereoMode = stereoMode;
+  self->ipd_offset = 0.5f * ipd;
+  // flip offset to have left eye at top (image coord origin at lower left)
+  if (stereoMode == OSP_STEREO_TOP_BOTTOM)
+    self->ipd_offset = -self->ipd_offset;
 }
