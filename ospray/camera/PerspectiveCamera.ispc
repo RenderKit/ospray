@@ -1,8 +1,9 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PerspectiveCamera.ih"
 #include "math/sampling.ih"
+#include "ospray/OSPEnums.h"
 
 void PerspectiveCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
@@ -14,13 +15,15 @@ void PerspectiveCamera_initRay(const Camera *uniform _self,
   vec2f screen = sample.screen;
   vec3f org = self->org;
 
-  if (self->side_by_side) {
-    screen.x *= 2.f;
-    if (screen.x < 1.f) {
+  const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
+  varying float *uniform split = sbs ? &screen.x : &screen.y;
+  if (or(sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
+    *split *= 2.f;
+    if (*split < 1.f) {
       org = org - self->ipd_offset;
     } else {
       org = org + self->ipd_offset;
-      screen.x -= 1.f;
+      *split -= 1.f;
     }
   }
 
@@ -63,11 +66,10 @@ export void PerspectiveCamera_set(void *uniform _self,
     const uniform vec3f &dir_dv,
     const uniform float scaledAperture,
     const uniform float aspect,
-    const uniform bool side_by_side,
+    const uniform int stereoMode,
     const uniform vec3f &ipd_offset)
 {
-  uniform PerspectiveCamera *uniform self =
-      (uniform PerspectiveCamera * uniform) _self;
+  PerspectiveCamera *uniform self = (PerspectiveCamera * uniform) _self;
   self->org = org;
   self->dir_00 = dir_00;
   self->dir_du = dir_du;
@@ -75,6 +77,9 @@ export void PerspectiveCamera_set(void *uniform _self,
   self->scaledAperture = scaledAperture;
   self->super.doesDOF = scaledAperture > 0.f;
   self->aspect = aspect;
-  self->side_by_side = side_by_side;
+  self->stereoMode = stereoMode;
   self->ipd_offset = ipd_offset;
+  // flip offset to have left eye at top (image coord origin at lower left)
+  if (stereoMode == OSP_STEREO_TOP_BOTTOM)
+    self->ipd_offset = neg(self->ipd_offset);
 }

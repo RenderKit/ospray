@@ -2286,10 +2286,12 @@ supports the special parameters listed in the table below.
 
                                `OSP_STEREO_SIDE_BY_SIDE`
 
+                               `OSP_STEREO_TOP_BOTTOM` (left eye at top half)
+
   float interpupillaryDistance distance between left and right eye when
-                               stereo is enabled
+                               stereo is enabled, default 0.0635
   ----- ---------------------- -----------------------------------------
-  : Parameters accepted by the perspective camera.
+  : Addtional parameters accepted by the perspective camera.
 
 Note that when computing the `aspect` ratio a potentially set image region
 (using `imageStart` & `imageEnd`) needs to be regarded as well.
@@ -2314,7 +2316,7 @@ field.][imgCameraPerspective]
 distortion, resulting in parallel vertical
 edges.][imgCameraArchitectural]
 
-![Example 3D stereo image using `stereoMode` side-by-side.][imgCameraStereo]
+![Example 3D stereo image using `stereoMode = OSP_STEREO_SIDE_BY_SIDE`.][imgCameraStereo]
 
 #### Orthographic Camera
 
@@ -2330,7 +2332,7 @@ parameters:
   float  height  size of the camera's image plane in y, in world coordinates
   float  aspect  ratio of width by height of the frame
   ------ ------- ------------------------------------------------------------
-  : Parameters accepted by the orthographic camera.
+  : Addtional parameters accepted by the orthographic camera.
 
 For convenience the size of the camera sensor, and thus the extent of
 the scene that is captured in the image, can be controlled with the
