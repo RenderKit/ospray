@@ -1231,7 +1231,7 @@ this geometry are listed in the table below.
 | vec2f\[\]  | vertex.texcoord         | [data](#data) array of per-vertex texture coordinates                            |
 | vec4f\[\]  | vertex.color            | [data](#data) array of corresponding vertex colors (RGBA)                        |
 | vec3f\[\]  | vertex.normal           | [data](#data) array of curve normals (only for “ribbon” curves)                  |
-| vec3f\[\]  | vertex.tangent          | [data](#data) array of curve tangents (only for “hermite” curves)                |
+| vec4f\[\]  | vertex.tangent          | [data](#data) array of curve tangents (only for “hermite” curves)                |
 | uint32\[\] | index                   | [data](#data) array of indices to the first vertex or tangent of a curve segment |
 | int        | type                    | `OSPCurveType` for rendering the curve. Supported types are:                     |
 |            |                         | `OSP_FLAT`                                                                       |
@@ -1252,8 +1252,7 @@ linearly-connected segments.
 
 Positions in `vertex.position_radius` format supports per-vertex varying
 radii with data type `vec4f[]` and instantiate Embree curves internally
-for the relevant type/basis mapping (See Embree documentation for
-discussion of curve types and data formatting).
+for the relevant type/basis mapping.
 
 If a constant `radius` is used and positions are specified in a
 `vec3f[]` type of `vertex.position` format, then type/basis defaults to
@@ -1666,9 +1665,9 @@ OSPWorld ospNewWorld();
 ```
 
 Objects are placed in the world through an array of instances. Similar
-to \[group\], the array of instances is optional: there is no need to
-create empty arrays if there are no instances (though there will be
-nothing to render).
+to [groups](#groups), the array of instances is optional: there is no
+need to create empty arrays if there are no instances (though there will
+be nothing to render).
 
 Applications can query the world (axis-aligned) bounding box after the
 world has been committed. To get this information, call

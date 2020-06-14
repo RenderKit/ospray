@@ -979,7 +979,7 @@ this geometry are listed in the table below.
   vec3f[]            vertex.normal          [data] array of curve normals (only for
                                             "ribbon" curves)
 
-  vec3f[]            vertex.tangent         [data] array of curve tangents (only for
+  vec4f[]            vertex.tangent         [data] array of curve tangents (only for
                                             "hermite" curves)
 
   uint32[]           index                  [data] array of indices to the first vertex
@@ -1015,8 +1015,7 @@ linearly-connected segments.
 
 Positions in `vertex.position_radius` format supports per-vertex varying
 radii with data type `vec4f[]` and instantiate Embree curves internally
-for the relevant type/basis mapping (See Embree documentation for
-discussion of curve types and data formatting).
+for the relevant type/basis mapping.
 
 If a constant `radius` is used and positions are specified in a
 `vec3f[]` type of `vertex.position` format, then type/basis defaults to
@@ -1472,10 +1471,10 @@ create an (empty) world call
 
     OSPWorld ospNewWorld();
 
-Objects are placed in the world through an array of instances. Similar to
-[group], the array of instances is optional: there is no need to create
-empty arrays if there are no instances (though there will be nothing to
-render).
+Objects are placed in the world through an array of instances. Similar
+to [groups], the array of instances is optional: there is no need to
+create empty arrays if there are no instances (though there will be
+nothing to render).
 
 Applications can query the world (axis-aligned) bounding box after the
 world has been committed. To get this information, call
