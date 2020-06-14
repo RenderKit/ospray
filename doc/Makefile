@@ -82,7 +82,7 @@ wwwscripts: | wwwdir
 	  cp -r ospray-doc/scripts/ www ;\
 	fi
 
-$(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_web.md tmp/changelog_web.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
+$(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_web.md tmp/changelog.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
 tmpdir:
 	@mkdir -p tmp
 
@@ -106,11 +106,11 @@ tmp/api_web.md: api.md tmp/links.md tmp/images_local_png.md
 tmp/compilation_web.md: compilation.md tmp/links.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
-tmp/changelog_web.md: ../CHANGELOG.md
-	sed -e "s@README.md@documentation.html@" $< > $@
+tmp/changelog.md: filter-sectionnumbers.py ../CHANGELOG.md
+	$(PANDOC) --top-level-division=chapter --filter $+ -o $@
+	echo -e '\nFor the complete history of changes have a look at the [CHANGELOG](https://github.com/ospray/ospray/blob/master/CHANGELOG.md).' >> $@
 
-
-www/index.html: teaser.html overview.md tmp/changelog_web.md
+www/index.html: teaser.html overview.md tmp/changelog.md
 www/examples.html: examples.md
 www/gallery.html: gallery.md
 www/downloads.html: tmp/getting_ospray.md tmp/compilation_web.md
@@ -180,11 +180,8 @@ tmp/api.tex: filter-latex.py api.md tmp/links_local.md tmp/images_local_pdf.md
 tmp/compilation.tex: filter-latex.py compilation.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=sh
 
-tmp/changelog.tex: filter-sectionnumbers.py changelog.md
+tmp/changelog.tex: filter-latex.py tmp/changelog.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex)
-
-changelog.md: ../CHANGELOG.md
-	sed -e "s@README.md@@" $< > $@
 
 ../readme.pdf: readme.tex $(tmptexfiles) $(wildcard ospray-doc/intel-spec.cls) preamble.tex tmp/version $(pdfimages)
 	md5s=0;\
@@ -203,7 +200,7 @@ changelog.md: ../CHANGELOG.md
 ########################################################################
 
 clean:
-	rm -rf www tmp changelog.md __pycache__
+	rm -rf www tmp __pycache__
 
 realclean: clean
 	rm -irf images

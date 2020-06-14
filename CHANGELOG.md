@@ -22,7 +22,7 @@ Version History
 
 ### Changes in v2.1.1:
 
--   CarPaint obeys `coat` weight parameter
+-   CarPaint material obeys `coat` weight parameter
 -   Correct depth buffer values with SciVis renderer
 -   Adaptions to Embree v3.10.0
 -   The Linux binary release finds `ospcommon` again
