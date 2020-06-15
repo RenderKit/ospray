@@ -12,6 +12,7 @@ Version History
 -   Support for Open VKL v0.10.0 and its new sampler object API, thus
     this is now the requires minimum version
 -   Move from `ospcommon` to `rkcommon` v1.4.0
+-   Added support for particle volumes
 
 ### Changes in v2.1.1:
 

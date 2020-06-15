@@ -330,7 +330,7 @@ counts and should not be explicitly done by the application.
 ### Parameters
 
 Parameters allow to configure the behavior of and to pass data to
-objects.  However, objects do _not_ have an explicit interface for
+objects. However, objects do _not_ have an explicit interface for
 reasons of high flexibility and a more stable compile-time API. Instead,
 parameters are passed separately to objects in an arbitrary order, and
 unknown parameters will simply be ignored (though a warning message will
@@ -523,7 +523,7 @@ table below.
   vec3f   gridSpacing $(1, 1, 1)$  size of the grid cells in object-space
   OSPData data                     the actual voxel 3D [data]
   ------- ----------- -----------  --------------------------------------
-  : Additional configuration parameters for structured regular volumes.
+  : Configuration parameters for structured regular volumes.
 
 The size of the volume is inferred from the size of the 3D array `data`,
 as is the type of the voxel values (currently supported are:
@@ -541,13 +541,13 @@ summarized below.
 
 ![Coordinate system of structured spherical volumes.][imgStructuredSphericalCoords]
 
-  Type   Name            Default    Description
-  ------ ----------- -------------  ---------------------------------------------
-  vec3f  gridOrigin  $(0, 0, 0)$    origin of the grid in units of $(r, \theta, \phi)$; angles in degrees
-  vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in units of $(r, \theta, \phi)$; angles in degrees
-  OSPData data                      the actual voxel 3D [data]
-  ------ ----------- -------------  ---------------------------------------------
-  : Additional configuration parameters for structured spherical volumes.
+  Type   Name            Default  Description
+  ------ ----------- -----------  -------------------------------------------------------------------------
+  vec3f  gridOrigin  $(0, 0, 0)$  origin of the grid in units of $(r, \theta, \phi)$; angles in degrees
+  vec3f  gridSpacing $(1, 1, 1)$  size of the grid cells in units of $(r, \theta, \phi)$; angles in degrees
+  OSPData data                    the actual voxel 3D [data]
+  ------ ----------- -----------  -------------------------------------------------------------------------
+  : Configuration parameters for structured spherical volumes.
 
 The dimensions $(r, \theta, \phi)$ of the volume are inferred from the
 size of the 3D array `data`, as is the type of the voxel values
@@ -611,14 +611,14 @@ Note that cell widths are defined _per refinement level_, not per block.
   vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
                                                     world-space
   -------------- --------------- -----------------  -----------------------------------
-  : Additional configuration parameters for AMR volumes.
+  : Configuration parameters for AMR volumes.
 
 Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
 like the structured volume equivalent, but they only modify the root
 (coarsest level) of refinement.
 
-In particular, OSPRay's AMR implementation was designed to cover
-Berger-Colella [1] and Chombo [2] AMR data.  The `method` parameter
+In particular, OSPRay's / Open VKL's AMR implementation was designed to
+cover Berger-Colella [1] and Chombo [2] AMR data. The `method` parameter
 above determines the interpolation method used when sampling the volume.
 
 * `OSP_AMR_CURRENT` finds the finest refinement level at that cell and
@@ -634,17 +634,17 @@ above determines the interpolation method used when sampling the volume.
 Details and more information can be found in the publication for the
 implementation [3].
 
-1. M. J. Berger, and P. Colella. "Local adaptive mesh refinement for
+1. M.J. Berger and P. Colella, "Local adaptive mesh refinement for
    shock hydrodynamics." Journal of Computational Physics 82.1 (1989):
    64-84. DOI: 10.1016/0021-9991(89)90035-1
-2. M. Adams, P. Colella, D. T. Graves, J.N. Johnson, N.D. Keen, T. J.
-   Ligocki. D. F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz,
-   T.D. Sternberg and B. Van Straalen, Chombo Software Package for AMR
-   Applications - Design Document,  Lawrence Berkeley National
+2. M. Adams, P. Colella, D.T. Graves, J.N. Johnson, N.D. Keen, T.J.
+   Ligocki, D.F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz,
+   T.D. Sternberg, and B. Van Straalen, "Chombo Software Package for AMR
+   Applications – Design Document", Lawrence Berkeley National
    Laboratory Technical Report LBNL-6616E.
-3. I. Wald, C. Brownlee, W. Usher, and A. Knoll. CPU volume rendering of
-   adaptive mesh refinement data. SIGGRAPH Asia 2017 Symposium on
-   Visualization on - SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305
+3. I. Wald, C. Brownlee, W. Usher, and A. Knoll, "CPU volume rendering
+   of adaptive mesh refinement data". SIGGRAPH Asia 2017 Symposium on
+   Visualization – SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305
 
 ### Unstructured Volume
 
@@ -685,50 +685,104 @@ the `indexPrefixed` array that allows vertex indices to be interleaved
 with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
 ..., id_m$.
 
-  -------------------  ------------------  --------  ---------------------------------------
-  Type                 Name                Default   Description
-  -------------------  ------------------  --------  ---------------------------------------
-  vec3f[]              vertex.position               [data] array of vertex positions
+  ------------------- ------------------ --------  ---------------------------------------
+  Type                Name                Default  Description
+  ------------------- ------------------ --------  ---------------------------------------
+  vec3f[]             vertex.position              [data] array of vertex positions
 
-  float[]              vertex.data                   [data] array of vertex data values to
-                                                     be sampled
+  float[]             vertex.data                  [data] array of vertex data values to
+                                                   be sampled
 
-  uint32[] / uint64[]  index                         [data] array of indices (into the
-                                                     vertex array(s)) that form cells
+  uint32[] / uint64[] index                        [data] array of indices (into the
+                                                   vertex array(s)) that form cells
 
-  uint32[] / uint64[]  indexPrefixed                 alternative [data] array of indices
-                                                     compatible to VTK, where the indices of
-                                                     each cell are prefixed with the number
-                                                     of vertices
+  uint32[] / uint64[] indexPrefixed                alternative [data] array of indices
+                                                   compatible to VTK, where the indices of
+                                                   each cell are prefixed with the number
+                                                   of vertices
 
-  uint32[] / uint64[]  cell.index                    [data] array of locations (into the
-                                                     index array), specifying the first index
-                                                     of each cell
+  uint32[] / uint64[] cell.index                   [data] array of locations (into the
+                                                   index array), specifying the first index
+                                                   of each cell
 
-  float[]              cell.data                     [data] array of cell data values to be
-                                                     sampled
+  float[]             cell.data                    [data] array of cell data values to be
+                                                   sampled
 
-  uint8[]              cell.type                     [data] array of cell types
-                                                     (VTK compatible). Supported types are:
+  uint8[]             cell.type                    [data] array of cell types
+                                                   (VTK compatible). Supported types are:
 
-                                                     `OSP_TETRAHEDRON`
+                                                   `OSP_TETRAHEDRON`
 
-                                                     `OSP_HEXAHEDRON`
+                                                   `OSP_HEXAHEDRON`
 
-                                                     `OSP_WEDGE`
+                                                   `OSP_WEDGE`
 
-                                                     `OSP_PYRAMID`
+                                                   `OSP_PYRAMID`
 
-  bool                 hexIterative           false  hexahedron interpolation method,
-                                                     defaults to fast non-iterative version
-                                                     which could have rendering
-                                                     inaccuracies may appear if hex is not
-                                                     parallelepiped
+  bool                hexIterative          false  hexahedron interpolation method,
+                                                   defaults to fast non-iterative version
+                                                   which could have rendering
+                                                   inaccuracies may appear if hex is not
+                                                   parallelepiped
 
-  bool                 precomputedNormals     false  whether to accelerate by precomputing,
-                                                     at a cost of 12 bytes/face
-  -------------------  ------------------  --------  ---------------------------------------
-  : Additional configuration parameters for unstructured volumes.
+  bool                precomputedNormals    false  whether to accelerate by precomputing,
+                                                   at a cost of 12 bytes/face
+  ------------------- ------------------ --------  ---------------------------------------
+  : Configuration parameters for unstructured volumes.
+
+### Particle Volume
+
+Particle volumes consist of a set of points in space. Each point has a
+position, a radius, and a weight typically associated with an attribute.
+A radial basis function defines the contribution of that particle.
+Currently, we use the Gaussian radial basis function
+$$\phi(P) = w \exp\left(-\frac{(P - p)^2}{2 r^2}\right),$$
+where $P$ is the particle position, $p$ is the sample position, $r$ is
+the radius and $w$ is the weight. At each sample, the scalar field value
+is then computed as the sum of each radial basis function $\phi$, for
+each particle that overlaps it.
+
+The OSPRay / Open VKL implementation is similar to direct evaluation of
+samples in Reda et al. [2]. It uses an Embree-built BVH with a custom
+traversal, similar to the method in [1].
+
+  -------- ----------------------- --------  ---------------------------------------
+  Type     Name                     Default  Description
+  -------- ----------------------- --------  ---------------------------------------
+  vec3f[]  particle.position                 [data] array of particle positions
+
+  float[]  particle.radius                   [data] array of particle radii
+
+  float[]  particle.weight             NULL  optional [data] array of particle
+                                             weights, specifying the height of the
+                                             kernel.
+
+  float    radiusSupportFactor          3.0  The multipler of the particle radius
+                                             required for support. Larger radii
+                                             ensure smooth results at the cost of
+                                             performance. In the Gaussian kernel, the
+                                             the radius is one standard deviation
+                                             ($\sigma$), so a value of 3 corresponds
+                                             to $3 \sigma$.
+
+  float    clampMaxCumulativeValue        0  The maximum cumulative value possible,
+                                             set by user. All cumulative values will
+                                             be clamped to this, and further
+                                             traversal (RBF summation) of particle
+                                             contributions will halt when this value
+                                             is reached. A value of zero or less
+                                             turns this off.
+  -------- ----------------------- --------  ---------------------------------------
+  : Configuration parameters for particle volumes.
+
+1. A. Knoll, I. Wald, P. Navratil, A. Bowen, K. Reda, M.E., Papka, and
+   K. Gaither, "RBF Volume Ray Casting on Multicore and Manycore CPUs",
+   2014, Computer Graphics Forum, 33: 71–80. doi:10.1111/cgf.12363
+
+2. K. Reda, A. Knoll, K. Nomura, M. E. Papka, A. E. Johnson and J. Leigh,
+   "Visualizing large-scale atomistic simulations in ultra-resolution immersive
+   environments", 2013 IEEE Symposium on Large-Scale Data Analysis and
+   Visualization (LDAV), Atlanta, GA, 2013, pp. 59–65.
 
 ### Transfer Function
 
@@ -766,18 +820,18 @@ concurrently). To create a volume instance, call
 
     OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
 
-  -------------------- ----------------------- ---------- --------------------------------------
-  Type                 Name                    Default    Description
-  -------------------- ----------------------- ---------- --------------------------------------
-  OSPTransferFunction  transferFunction                   [transfer function] to use
+  -------------------- ----------------- --------  --------------------------------------
+  Type                 Name               Default  Description
+  -------------------- ----------------- --------  --------------------------------------
+  OSPTransferFunction  transferFunction            [transfer function] to use
 
-  float                densityScale                   1.0 makes volumes uniformly thinner or
-                                                          thicker
+  float                densityScale           1.0  makes volumes uniformly thinner or
+                                                   thicker
 
-  float                anisotropy                     0.0 anisotropy of the (Henyey-Greenstein)
-                                                          phase function in [-1, 1] ([path tracer]
-                                                          only), default to isotropic scattering
-  -------------------- ------------------------ --------- ---------------------------------------
+  float                anisotropy             0.0  anisotropy of the (Henyey-Greenstein)
+                                                   phase function in [-1, 1] ([path tracer]
+                                                   only), default to isotropic scattering
+  -------------------- --------------------------  ---------------------------------------
   : Parameters understood by VolumetricModel.
 
 
@@ -902,7 +956,7 @@ array:
 ### Curves
 
 A geometry consisting of multiple curves is created by calling
-`ospNewGeometry` with type string "`curve`".  The parameters defining
+`ospNewGeometry` with type string "`curve`". The parameters defining
 this geometry are listed in the table below.
 
   ------------------ ---------------------- -------------------------------------------

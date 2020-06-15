@@ -21,6 +21,7 @@ add_library(ospray_testing SHARED
   builders/UnstructuredVolume.cpp
   builders/Planes.cpp
   builders/ClippingGeometries.cpp
+  builders/ParticleVolume.cpp
 
   # regression test scenes
   builders/test_pt_glass.cpp
