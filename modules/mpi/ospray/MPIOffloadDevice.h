@@ -8,6 +8,7 @@
 #include "common/MPICommon.h"
 #include "common/Managed.h"
 #include "common/OSPWork.h"
+#include "common/Profiling.h"
 #include "common/SocketBcastFabric.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
@@ -150,6 +151,8 @@ struct MPIOffloadDevice : public api::Device
   std::unordered_set<int64_t> futures;
 
   bool initialized{false};
+
+  mpicommon::ProfilingPoint masterStart;
 };
 
 template <typename T>

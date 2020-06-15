@@ -23,14 +23,14 @@
 #include "common/World.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "fb/LocalFB.h"
+#include "render/DistributedLoadBalancer.h"
+#include "render/RenderTask.h"
+#include "render/Renderer.h"
 #include "rkcommon/networking/DataStreaming.h"
 #include "rkcommon/networking/Socket.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/OwnedArray.h"
 #include "rkcommon/utility/getEnvVar.h"
-#include "render/DistributedLoadBalancer.h"
-#include "render/RenderTask.h"
-#include "render/Renderer.h"
 #include "volume/Volume.h"
 
 namespace ospray {
@@ -198,6 +198,18 @@ MPIOffloadDevice::~MPIOffloadDevice()
   if (dynamic_cast<MPIFabric *>(fabric.get()) && world.rank == 0) {
     postStatusMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
 
+    {
+      ProfilingPoint masterEnd;
+      char hostname[512] = {0};
+      gethostname(hostname, 511);
+      const std::string master_log_file = std::string(hostname) + "_master.txt";
+      std::ofstream fout(master_log_file.c_str(), std::ios::app);
+      fout << "Shutting down, final /proc/self/status:\n"
+           << getProcStatus() << "\n=====\n"
+           << "Avg. CPU % during run: "
+           << cpuUtilization(masterStart, masterEnd) << "%\n";
+    }
+
     networking::BufferWriter writer;
     writer << work::FINALIZE;
     sendWork(writer.buffer);
@@ -220,6 +232,16 @@ void MPIOffloadDevice::initializeDevice()
 
   if (mode == "mpi") {
     createMPI_RanksBecomeWorkers(&_ac, _av);
+
+    char hostname[512] = {0};
+    gethostname(hostname, 511);
+    const std::string master_log_file = std::string(hostname) + "_master.txt";
+    std::ofstream fout(master_log_file.c_str());
+    fout << "Master on '" << hostname << "' before commit\n"
+         << "/proc/self/status:\n"
+         << getProcStatus() << "\n=====\n";
+    masterStart = ProfilingPoint();
+
     // Only the master returns from this call
     fabric = rkcommon::make_unique<MPIFabric>(world, 0);
     maml::init(false);
@@ -752,6 +774,7 @@ const void *MPIOffloadDevice::frameBufferMap(
     OSPFrameBuffer _fb, OSPFrameBufferChannel channel)
 {
   using namespace utility;
+  ProfilingPoint start;
 
   ObjectHandle handle = (ObjectHandle &)_fb;
   networking::BufferWriter writer;
@@ -770,6 +793,9 @@ const void *MPIOffloadDevice::frameBufferMap(
 
   void *ptr = mapping->data();
   framebufferMappings[handle.i64] = std::move(mapping);
+  ProfilingPoint end;
+  std::cout << "OffloadDevice::frameBufferMap took "
+            << elapsedTimeMs(start, end) << "\n";
 
   return ptr;
 }

@@ -16,6 +16,7 @@
 #include "common/MPIBcastFabric.h"
 #include "common/MPICommon.h"
 #include "common/OSPWork.h"
+#include "common/Profiling.h"
 #include "common/SocketBcastFabric.h"
 #include "rkcommon/utility/getEnvVar.h"
 
@@ -55,6 +56,13 @@ void runWorker(bool useMPIFabric)
       << "#w: running MPI worker process " << workerRank() << "/"
       << workerSize() << " on pid " << getpid() << "@" << hostname;
 
+  const std::string worker_log_file =
+      std::string(hostname) + "_" + std::to_string(workerRank()) + ".txt";
+  std::ofstream fout(worker_log_file.c_str());
+  fout << "Worker rank " << workerRank() << " on '" << hostname << "'\n"
+       << "/proc/self/status:\n"
+       << getProcStatus() << "\n=====\n";
+
   std::unique_ptr<networking::Fabric> fabric;
   if (useMPIFabric)
     fabric = make_unique<MPIFabric>(mpicommon::world, 0);
@@ -70,6 +78,7 @@ void runWorker(bool useMPIFabric)
   std::shared_ptr<utility::OwnedArray<uint8_t>> recvBuffer =
       std::make_shared<utility::OwnedArray<uint8_t>>();
 
+  ProfilingPoint workerStart;
   while (1) {
     fabric->recvBcast(cmdView);
 
@@ -83,6 +92,17 @@ void runWorker(bool useMPIFabric)
     postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
         << "#osp.mpi.worker: processing work " << workTag << ": "
         << work::tagName(workTag);
+
+    // We're exiting so sync out our debug log info
+    if (workTag == work::FINALIZE) {
+      ProfilingPoint workerEnd;
+      fout << "Worker exiting, /proc/self/status:\n"
+           << getProcStatus() << "\n======\n"
+           << "Avg. CPU % during run: "
+           << cpuUtilization(workerStart, workerEnd) << "%\n"
+           << std::flush;
+      fout.close();
+    }
 
     dispatchWork(workTag, ospState, reader, *fabric);
 

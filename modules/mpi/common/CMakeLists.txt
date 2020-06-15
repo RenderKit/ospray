@@ -9,6 +9,7 @@ add_library(ospray_mpi_common STATIC
     ObjectHandle.cpp
     maml/maml.cpp
     maml/Context.cpp
+    Profiling.cpp
 )
 
 target_link_libraries(ospray_mpi_common

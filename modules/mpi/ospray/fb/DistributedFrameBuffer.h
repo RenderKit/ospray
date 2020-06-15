@@ -93,22 +93,13 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
 
   size_t ownerIDFromTileID(size_t tileID) const;
 
-  void reportTimings(std::ostream &os);
-
  private:
-  using RealMilliseconds = std::chrono::duration<double, std::milli>;
-  std::vector<RealMilliseconds> queueTimes;
-  std::vector<RealMilliseconds> workTimes;
-  RealMilliseconds finalGatherTime, masterTileWriteTime, waitFrameFinishTime,
-      compressTime, decompressTime, preGatherDuration;
-  double compressedPercent;
-  std::mutex statsMutex;
-
-  std::vector<char> compressedBuf;
-  std::vector<char> tileGatherResult;
   std::vector<char> tileGatherBuffer;
   std::vector<char> compressedResults;
-  std::atomic<size_t> nextTileWrite;
+  // Locations of the compressed tiles in the tileGatherBuffer
+  std::vector<uint32_t> tileBufferOffsets;
+  uint32_t nextTileWrite;
+  std::mutex finalTileBufferMutex;
 
   friend struct LiveTileOperation;
 
@@ -196,7 +187,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   size_t globalTilesCompletedThisFrame;
 
   /*! The number of tiles the master is expecting to receive from each rank */
-  std::vector<size_t> numTilesExpected;
+  std::vector<int> numTilesExpected;
 
   /* protected numTilesCompletedThisFrame to ensure atomic update and compare
    */
@@ -226,7 +217,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   bool frameIsDone;
 
   int renderingProgressTiles;
-  std::chrono::high_resolution_clock::time_point lastProgressReport;
+  std::chrono::steady_clock::time_point lastProgressReport;
 
   //! condition that gets triggered when the frame is done
   std::condition_variable frameDoneCond;

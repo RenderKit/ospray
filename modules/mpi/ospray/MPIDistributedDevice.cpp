@@ -1,6 +1,7 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/Profiling.h"
 #include "MPIDistributedDevice.h"
 #include <map>
 #include "MPIDistributedDevice_ispc.h"
@@ -398,10 +399,17 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   world->refInc();
 
   auto *f = new ThreadedRenderTask(fb, [=]() {
+    using namespace mpicommon; 
+    ProfilingPoint start;
     utility::CodeTimer timer;
     timer.start();
     renderer->renderFrame(fb, camera, world);
     timer.stop();
+    ProfilingPoint end;
+#if 1
+    std::cout << "Frame took " << elapsedTimeMs(start, end) << "ms, CPU: "
+      << cpuUtilization(start, end) << "%\n";
+#endif
 
     fb->refDec();
     renderer->refDec();

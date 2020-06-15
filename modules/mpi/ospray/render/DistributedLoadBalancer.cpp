@@ -1,6 +1,7 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/Profiling.h"
 #include "DistributedLoadBalancer.h"
 #include <algorithm>
 #include <limits>
@@ -268,6 +269,7 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
     Camera *camera,
     DistributedWorld *world)
 {
+  using namespace std::chrono;
   std::shared_ptr<TileOperation> tileOperation = nullptr;
   if (fb->getLastRenderer() != renderer) {
     tileOperation = std::make_shared<WriteMultipleTileOperation>();
@@ -276,8 +278,14 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
     tileOperation = fb->getTileOperation();
   }
 
+  ProfilingPoint start;
   fb->startNewFrame(renderer->errorThreshold);
   void *perFrameData = renderer->beginFrame(fb, world);
+  ProfilingPoint end;
+
+#if 1
+  std::cout << "Start new frame took: " << elapsedTimeMs(start, end) << "ms\n";
+#endif
 
   const auto fbSize = fb->getNumPixels();
 
@@ -291,6 +299,7 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
   if ((ALLTASKS % workerSize()) > workerRank())
     NTASKS++;
 
+  start = ProfilingPoint();
   tasking::parallel_for(NTASKS, [&](int taskIndex) {
     const size_t tileID = taskIndex * workerSize() + workerRank();
     const size_t numTiles_x = fb->getNumTiles().x;
@@ -317,11 +326,28 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
 
     fb->setTile(tile);
   });
+  end = ProfilingPoint();
+#if 1
+  std::cout << "Render loop took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
+    << cpuUtilization(start, end) << "%\n";
+#endif
 
+  start = ProfilingPoint();
   fb->waitUntilFinished();
-  renderer->endFrame(fb, perFrameData);
+  end = ProfilingPoint();
+#if 1
+  std::cout << "Wait finished took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
+    << cpuUtilization(start, end) << "%\n";
+#endif
 
+  start = ProfilingPoint();
+  renderer->endFrame(fb, perFrameData);
   fb->endFrame(renderer->errorThreshold, camera);
+  end = ProfilingPoint();
+#if 1
+  std::cout << "End frame took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
+    << cpuUtilization(start, end) << "%\n";
+#endif
 }
 
 std::string Distributed::toString() const
