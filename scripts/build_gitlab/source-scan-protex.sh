@@ -17,6 +17,7 @@ cd $SRC_PATH
 cmake -DBUILD_OSPRAY_MODULE_MPI=ON scripts/superbuild
 cmake --build . --target rkcommon-download
 cmake --build . --target module_mpi-download
+rm -rf CMakeFiles
 
 
 $BDSTOOL new-project --server $SERVER_URL $PROTEX_PROJECT_NAME |& tee $LOG_FILE
