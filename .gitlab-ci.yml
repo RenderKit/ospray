@@ -119,6 +119,13 @@ build-ubuntu1804-gcc:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
   <<: *build_artifacts
 
+build-ubuntu2004-gcc:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
+  script:
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
+  <<: *build_artifacts
+
 build-centos8:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
@@ -242,17 +249,23 @@ test-centos8:
   dependencies:
     - build-centos8
 
+test-ubuntu1604-gcc:
+  <<: *test_job_unix
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
+  dependencies:
+    - build-ubuntu1604-gcc
+
 test-ubuntu1804-gcc:
   <<: *test_job_unix
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   dependencies:
     - build-ubuntu1804-gcc
 
-test-ubuntu1604-gcc:
+test-ubuntu2004-gcc:
   <<: *test_job_unix
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   dependencies:
-    - build-ubuntu1604-gcc
+    - build-ubuntu2004-gcc
 
 test-tutorials:
   stage: test-build
