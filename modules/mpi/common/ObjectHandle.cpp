@@ -56,8 +56,10 @@ void ObjectHandle::assign(ManagedObject *object) const
 void ObjectHandle::freeObject() const
 {
   auto it = objectByHandle.find(i64);
-  it->second->refDec();
-  objectByHandle.erase(it);
+  if (it != objectByHandle.end()) {
+    it->second->refDec();
+    objectByHandle.erase(it);
+  }
 }
 
 int32 ObjectHandle::ownerRank() const

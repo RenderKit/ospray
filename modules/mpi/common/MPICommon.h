@@ -10,8 +10,8 @@
 #define OMPI_SKIP_MPICXX 1
 #include <mpi.h>
 
-#include "rkcommon/common.h"
 #include "ospray/OSPEnums.h"
+#include "rkcommon/common.h"
 
 #ifdef _WIN32
 #ifdef ospray_mpi_common_EXPORTS
@@ -117,6 +117,10 @@ struct OSPRAY_MPI_INTERFACE Message
       amount of storage, and copy memory from the given address to
       it */
   Message(MPI_Comm comm, int rank, const void *copyMem, size_t size);
+
+  Message(const Message &) = delete;
+
+  Message &operator=(const Message &) = delete;
 
   /*! destruct message and free allocated memory */
   virtual ~Message();
