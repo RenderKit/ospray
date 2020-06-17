@@ -44,4 +44,5 @@ inline void initializeOSPRay(
   ospDeviceSetParam(device, "logLevel", OSP_INT, &logLevel);
 
   ospDeviceCommit(device);
+  ospDeviceRelease(device);
 }

@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 
     // set an error callback to catch any OSPRay errors and exit the application
     ospDeviceSetErrorFunc(
-        ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
+        mpiDevice.handle(), [](OSPError error, const char *errorDetails) {
           std::cerr << "OSPRay error: " << errorDetails << std::endl;
           exit(error);
         });
