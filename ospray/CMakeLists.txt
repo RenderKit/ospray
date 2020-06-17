@@ -202,6 +202,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   texture/Texture2D.ispc
   texture/TextureVolume.cpp
   texture/TextureVolume.ispc
+  texture/TextureParam.ispc
   texture/registration.cpp
 
   volume/Volume.ispc

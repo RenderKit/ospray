@@ -208,122 +208,91 @@ const varying BSDF *varying CarPaint_getBSDF(
 
 export void *uniform PathTracer_CarPaint_set(void *uniform _self,
     const uniform vec3f &baseColor,
-    void *uniform baseColorMap,
-    const uniform affine2f &baseColorXform,
+    const uniform TextureParam &baseColorMap,
     uniform float roughness,
-    void *uniform roughnessMap,
-    const uniform affine2f &roughnessXform,
+    const uniform TextureParam &roughnessMap,
     uniform float normal,
-    void *uniform normalMap,
-    const uniform affine2f &normalXform,
+    const uniform TextureParam &normalMap,
     const uniform linear2f &normalRot,
     uniform float flakeScale,
-    void *uniform flakeScaleMap,
-    const uniform affine2f &flakeScaleXform,
+    const uniform TextureParam &flakeScaleMap,
     uniform float flakeDensity,
-    void *uniform flakeDensityMap,
-    const uniform affine2f &flakeDensityXform,
+    const uniform TextureParam &flakeDensityMap,
     uniform float flakeSpread,
-    void *uniform flakeSpreadMap,
-    const uniform affine2f &flakeSpreadXform,
+    const uniform TextureParam &flakeSpreadMap,
     uniform float flakeJitter,
-    void *uniform flakeJitterMap,
-    const uniform affine2f &flakeJitterXform,
+    const uniform TextureParam &flakeJitterMap,
     uniform float flakeRoughness,
-    void *uniform flakeRoughnessMap,
-    const uniform affine2f &flakeRoughnessXform,
+    const uniform TextureParam &flakeRoughnessMap,
     uniform float coat,
-    void *uniform coatMap,
-    const uniform affine2f &coatXform,
+    const uniform TextureParam &coatMap,
     uniform float coatIor,
-    void *uniform coatIorMap,
-    const uniform affine2f &coatIorXform,
+    const uniform TextureParam &coatIorMap,
     const uniform vec3f &coatColor,
-    void *uniform coatColorMap,
-    const uniform affine2f &coatColorXform,
+    const uniform TextureParam &coatColorMap,
     uniform float coatThickness,
-    void *uniform coatThicknessMap,
-    const uniform affine2f &coatThicknessXform,
+    const uniform TextureParam &coatThicknessMap,
     uniform float coatRoughness,
-    void *uniform coatRoughnessMap,
-    const uniform affine2f &coatRoughnessXform,
+    const uniform TextureParam &coatRoughnessMap,
     uniform float coatNormal,
-    void *uniform coatNormalMap,
-    const uniform affine2f &coatNormalXform,
+    const uniform TextureParam &coatNormalMap,
     const uniform linear2f &coatNormalRot,
     const uniform vec3f &flipflopColor,
-    void *uniform flipflopColorMap,
-    const uniform affine2f &flipflopColorXform,
+    const uniform TextureParam &flipflopColorMap,
     uniform float flipflopFalloff,
-    void *uniform flipflopFalloffMap,
-    const uniform affine2f &flipflopFalloffXform)
+    const uniform TextureParam &flipflopFalloffMap)
 {
   CarPaint *uniform self = (CarPaint * uniform) _self;
 
   self->baseColor = baseColor;
-  self->baseColorMap =
-      make_TextureParam((uniform Texture2D *)baseColorMap, baseColorXform);
+  self->baseColorMap = baseColorMap;
 
   self->roughness = roughness;
-  self->roughnessMap =
-      make_TextureParam((uniform Texture2D *)roughnessMap, roughnessXform);
+  self->roughnessMap = roughnessMap;
 
   self->normal = normal;
-  self->normalMap =
-      make_TextureParam((uniform Texture2D *)normalMap, normalXform);
+  self->normalMap = normalMap;
   self->normalRot = normalRot;
 
   self->flakeScale = flakeScale;
-  self->flakeScaleMap =
-      make_TextureParam((uniform Texture2D *)flakeScaleMap, flakeScaleXform);
+  self->flakeScaleMap = flakeScaleMap;
 
   self->flakeDensity = flakeDensity;
-  self->flakeDensityMap = make_TextureParam(
-      (uniform Texture2D *)flakeDensityMap, flakeDensityXform);
+  self->flakeDensityMap = flakeDensityMap;
 
   self->flakeSpread = flakeSpread;
-  self->flakeSpreadMap =
-      make_TextureParam((uniform Texture2D *)flakeSpreadMap, flakeSpreadXform);
+  self->flakeSpreadMap = flakeSpreadMap;
 
   self->flakeJitter = flakeJitter;
-  self->flakeJitterMap =
-      make_TextureParam((uniform Texture2D *)flakeJitterMap, flakeJitterXform);
+  self->flakeJitterMap = flakeJitterMap;
 
   self->flakeRoughness = flakeRoughness;
-  self->flakeRoughnessMap = make_TextureParam(
-      (uniform Texture2D *)flakeRoughnessMap, flakeRoughnessXform);
+  self->flakeRoughnessMap = flakeRoughnessMap;
 
   self->coat = coat;
-  self->coatMap = make_TextureParam((uniform Texture2D *)coatMap, coatXform);
+  self->coatMap = coatMap;
 
   self->coatIor = coatIor;
-  self->coatIorMap =
-      make_TextureParam((uniform Texture2D *)coatIorMap, coatIorXform);
+  self->coatIorMap = coatIorMap;
 
   self->coatColor = coatColor;
-  self->coatColorMap =
-      make_TextureParam((uniform Texture2D *)coatColorMap, coatColorXform);
+  self->coatColorMap = coatColorMap;
 
   self->coatThickness = coatThickness;
-  self->coatThicknessMap = make_TextureParam(
-      (uniform Texture2D *)coatThicknessMap, coatThicknessXform);
+  self->coatThicknessMap = coatThicknessMap;
 
   self->coatRoughness = coatRoughness;
-  self->coatRoughnessMap = make_TextureParam(
-      (uniform Texture2D *)coatRoughnessMap, coatRoughnessXform);
+  self->coatRoughnessMap = coatRoughnessMap;
 
   self->coatNormal = coatNormal;
-  self->coatNormalMap =
-      make_TextureParam((uniform Texture2D *)coatNormalMap, coatNormalXform);
+  self->coatNormalMap = coatNormalMap;
   self->coatNormalRot = coatNormalRot;
 
   self->flipflopColor = flipflopColor;
-  self->flipflopColorMap = make_TextureParam(
-      (uniform Texture2D *)flipflopColorMap, flipflopColorXform);
+  self->flipflopColorMap = flipflopColorMap;
 
   self->flipflopFalloff = flipflopFalloff;
-  self->flipflopFalloffMap = make_TextureParam(
-      (uniform Texture2D *)flipflopFalloffMap, flipflopFalloffXform);
+  self->flipflopFalloffMap = flipflopFalloffMap;
 }
 
 export void *uniform PathTracer_CarPaint_create()
@@ -332,58 +301,42 @@ export void *uniform PathTracer_CarPaint_create()
 
   PathTraceMaterial_Constructor(&self->super, CarPaint_getBSDF);
 
-  uniform affine2f xform = make_AffineSpace2f_identity();
+  uniform TextureParam tex = make_TextureParam();
   PathTracer_CarPaint_set(self,
       make_vec3f(0.8f),
-      NULL,
-      xform, // baseColor
+      tex, // baseColor
       0.f,
-      NULL,
-      xform, // roughness
+      tex, // roughness
       1.f,
-      NULL,
-      xform,
+      tex,
       make_LinearSpace2f_identity(), // normal
       0.f,
-      NULL,
-      xform, // flakeScale
+      tex, // flakeScale
       0.f,
-      NULL,
-      xform, // flakeDensity
+      tex, // flakeDensity
       0.f,
-      NULL,
-      xform, // flakeSpread
+      tex, // flakeSpread
       0.f,
-      NULL,
-      xform, // flakeJitter
+      tex, // flakeJitter
       0.f,
-      NULL,
-      xform, // flakeRoughness
+      tex, // flakeRoughness
       1.f,
-      NULL,
-      xform, // coat
+      tex, // coat
       1.5f,
-      NULL,
-      xform, // coatIor
+      tex, // coatIor
       make_vec3f(1.f),
-      NULL,
-      xform, // coatColor
+      tex, // coatColor
       1.f,
-      NULL,
-      xform, // coatThickness
+      tex, // coatThickness
       0.f,
-      NULL,
-      xform, // coatRoughness
+      tex, // coatRoughness
       1.f,
-      NULL,
-      xform,
+      tex,
       make_LinearSpace2f_identity(), // coatNormal
       make_vec3f(1.f),
-      NULL,
-      xform, // flipflopColor
+      tex, // flipflopColor
       1.f,
-      NULL,
-      xform // flipflopFalloff
+      tex // flipflopFalloff
   );
 
   return self;

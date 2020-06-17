@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../bsdfs/DielectricLayer.ih"
@@ -12,7 +12,7 @@ struct MetallicPaint
 {
   PathTraceMaterial super;
   vec3f baseColor;
-  TextureParam map_baseColor;
+  TextureParam baseColorMap;
   float flakeAmount;
   vec3f flakeColor;
   float flakeSpread;
@@ -37,7 +37,7 @@ const varying BSDF *varying MetallicPaint_getBSDF(
   varying BSDF *uniform bsdf = MultiBSDF_create(ctx);
 
   const vec3f color = self->baseColor * make_vec3f(dg.color)
-      * get3f(self->map_baseColor, dg, make_vec3f(1.f));
+      * get3f(self->baseColorMap, dg, make_vec3f(1.f));
   MultiBSDF_add(
       bsdf, Lambert_create(ctx, shadingFrame, color), 1.f, luminance(color));
 
@@ -62,8 +62,7 @@ const varying BSDF *varying MetallicPaint_getBSDF(
 
 export void *uniform PathTracer_MetallicPaint_set(void *uniform _self,
     const uniform vec3f &baseColor,
-    void *uniform map_color,
-    const uniform affine2f &xform_color,
+    const uniform TextureParam &baseColorMap,
     const uniform float flakeAmount,
     const uniform vec3f &flakeColor,
     const uniform float flakeSpread,
@@ -72,8 +71,7 @@ export void *uniform PathTracer_MetallicPaint_set(void *uniform _self,
   MetallicPaint *uniform self = (MetallicPaint * uniform) _self;
   self->flakeAmount = flakeAmount;
   self->baseColor = baseColor * (1.f - flakeAmount);
-  self->map_baseColor =
-      make_TextureParam((uniform Texture2D *)map_color, xform_color);
+  self->baseColorMap = baseColorMap;
   self->flakeColor = flakeColor * flakeAmount;
   self->flakeSpread = flakeSpread;
   self->eta = rcp(ior);
@@ -84,13 +82,8 @@ export void *uniform PathTracer_MetallicPaint_create()
   uniform MetallicPaint *uniform self = uniform new uniform MetallicPaint;
   PathTraceMaterial_Constructor(&self->super, MetallicPaint_getBSDF);
   const uniform vec3f flakeColor = RGB_AL_COLOR;
-  PathTracer_MetallicPaint_set(self,
-      make_vec3f(0.5),
-      NULL,
-      make_AffineSpace2f_identity(),
-      0.5f,
-      flakeColor,
-      0.5f,
-      1.6f);
+
+  PathTracer_MetallicPaint_set(
+      self, make_vec3f(0.5), make_TextureParam(), 0.5f, flakeColor, 0.5f, 1.6f);
   return self;
 }

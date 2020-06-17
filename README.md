@@ -75,7 +75,7 @@ before you can build OSPRay you need the following prerequisites:
     should also have some version of OpenGL and GLFW.
 
 -   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io), version 1.9.1 or later. Please
+    (ISPC)](http://ispc.github.io), version 1.10.0 or later. Please
     obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right “next to” the
@@ -1895,13 +1895,13 @@ normal map vertically or invert its green channel.
 
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with “`map_`”. The fetched texels
-are multiplied by the respective parameter value. Texturing requires
-[geometries](#geometries) with texture coordinates, e.g., a \[triangle
-mesh\] with `vertex.texcoord` provided. The color textures `map_Kd` and
-`map_Ks` are typically in one of the sRGB gamma encoded formats, whereas
-textures `map_Ns` and `map_d` are usually in a linear format (and only
-the first component is used). Additionally, all textures support
-[texture transformations](#texture2d-transformations).
+are multiplied by the respective parameter value. If only the texture is
+given (but not the corresponding parameter), only the texture is used
+(the default value of the parameter is *not* multiplied). The color
+textures `map_Kd` and `map_Ks` are typically in one of the sRGB gamma
+encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
+linear format (and only the first component is used). Additionally, all
+textures support [texture transformations](#texture2d-transformations).
 
 <figure>
 <img src="https://ospray.github.io/images/material_OBJ.jpg" width="60.0%" alt="" /><figcaption>Rendering of a OBJ material with wood textures.</figcaption>
@@ -2267,9 +2267,13 @@ by performing bi-linear interpolation of the nearest 2×2 texels; if
 instead fetching only the nearest texel is desired (i.e., no filtering)
 then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
 
+Texturing with `texture2d` image textures requires
+[geometries](#geometries) with texture coordinates, e.g., a
+[mesh](#mesh) with `vertex.texcoord` provided.
+
 #### TextureVolume
 
-The `volume` texture type implements texture lookups based on 3D world
+The `volume` texture type implements texture lookups based on 3D object
 coordinates of the surface hit point on the associated geometry. If the
 given hit point is within the attached volume, the volume is sampled and
 classified with the transfer function attached to the volume. This
@@ -2288,26 +2292,36 @@ TextureVolume can be used for implementing slicing of volumes with any
 geometry type. It enables coloring of the slicing geometry with a
 different transfer function than that of the sliced volume.
 
-### Texture2D Transformations
+#### Texture Transformations
 
 All materials with textures also offer to manipulate the placement of
 these textures with the help of texture transformations. If so, this
-convention shall be used. The following parameters (prefixed with
-“`texture_name.`”) are combined into one transformation matrix:
+convention shall be used: the following parameters are prefixed with
+“`texture_name.`”).
 
-| Type  | Name        | Description                                           |
-|:------|:------------|:------------------------------------------------------|
-| vec4f | transform   | interpreted as 2×2 matrix (linear part), column-major |
-| float | rotation    | angle in degree, counterclockwise, around center      |
-| vec2f | scale       | enlarge texture, relative to center (0.5, 0.5)        |
-| vec2f | translation | move texture in positive direction (right/up)         |
+| Type     | Name        | Description                                      |
+|:---------|:------------|:-------------------------------------------------|
+| linear2f | transform   | linear transformation (rotation, scale)          |
+| float    | rotation    | angle in degree, counterclockwise, around center |
+| vec2f    | scale       | enlarge texture, relative to center (0.5, 0.5)   |
+| vec2f    | translation | move texture in positive direction (right/up)    |
 
-: Parameters to define texture coordinate transformations.
+: Parameters to define 2D texture coordinate transformations.
 
-The transformations are applied in the given order. Rotation, scale and
-translation are interpreted “texture centric”, i.e., their effect seen
-by an user are relative to the texture (although the transformations are
-applied to the texture coordinates).
+Above parameters are combined into a single `affine2d` transformation
+matrix and the transformations are applied in the given order. Rotation,
+scale and translation are interpreted “texture centric”, i.e., their
+effect seen by an user are relative to the texture (although the
+transformations are applied to the texture coordinates).
+
+| Type     | Name      | Description                                              |
+|:---------|:----------|:---------------------------------------------------------|
+| affine3f | transform | linear transformation (rotation, scale) plus translation |
+
+: Parameter to define 3D volume texture transformations.
+
+Similarly, volume texture placement can also be modified by an
+`affine3f` transformation matrix.
 
 ### Cameras
 

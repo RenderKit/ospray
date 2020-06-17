@@ -14,13 +14,14 @@ export void *uniform SciVisMaterial_create(void *uniform cppE)
 
 export void SciVisMaterial_set(void *uniform _mat,
     uniform float d,
-    void *uniform _map_Kd,
-    const uniform affine2f &xform_Kd,
-    const uniform vec3f &Kd)
+    const uniform TextureParam &dMap,
+    const uniform vec3f &Kd,
+    const uniform TextureParam &KdMap)
 {
   SciVisMaterial *uniform mat = (SciVisMaterial * uniform) _mat;
 
   mat->d = d;
-  mat->map_Kd = make_TextureParam((uniform Texture2D *)_map_Kd, xform_Kd);
+  mat->dMap = dMap;
   mat->Kd = Kd;
+  mat->KdMap = KdMap;
 }

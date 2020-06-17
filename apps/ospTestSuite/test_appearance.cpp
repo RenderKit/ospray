@@ -120,6 +120,7 @@ void Texture2D::SetUp()
     tex.setParam("data", data);
     tex.commit();
     cpp::Material mat(rendererType, "obj");
+    mat.setParam("kd", vec3f(0.8));
     mat.setParam(i & 1 ? "map_bump" : "map_kd", tex);
     mat.commit();
     material[i] = mat;
@@ -165,6 +166,95 @@ void Texture2D::SetUp()
 
   AddLight(light1);
   AddLight(light2);
+}
+
+static cpp::Texture createTexture2D()
+{
+  // Prepare pixel data
+  constexpr uint32_t width = 32;
+  constexpr uint32_t height = 32;
+  std::array<vec3uc, width * height> dbyte;
+  rkcommon::index_sequence_2D idx(vec2i(width, height));
+  for (auto i : idx)
+    dbyte[idx.flatten(i)] =
+        vec3uc(i.x * (256 / width), i.y * (256 / height), i.x * (256 / width));
+
+  // Create texture object
+  cpp::Texture tex("texture2d");
+  tex.setParam("format", OSP_TEXTURE_RGB8);
+  tex.setParam("data", cpp::Data(vec2ul(width, height), dbyte.data()));
+  tex.commit();
+  return tex;
+}
+
+Texture2DTransform::Texture2DTransform()
+{
+  rendererType = GetParam();
+}
+
+void Texture2DTransform::SetUp()
+{
+  Base::SetUp();
+
+  camera.setParam("position", vec3f(4.f, 4.f, -10.f));
+  camera.setParam("direction", vec3f(0.f, 0.f, 1.f));
+  camera.setParam("up", vec3f(0.f, 1.f, 0.f));
+
+  // Create quad geometry
+  constexpr int cols = 2;
+  constexpr int rows = 2;
+  cpp::Geometry quads("mesh");
+  {
+    // Create quads data
+    std::array<vec3f, 4 * cols * rows> position;
+    std::array<vec4ui, 4 * cols * rows> index;
+    rkcommon::index_sequence_2D idx(vec2i(cols, rows));
+    for (auto i : idx) {
+      auto l = static_cast<vec2f>(i) * 5.f;
+      auto u = l + (.75f * 5.f);
+      position[4 * idx.flatten(i) + 0] = vec3f(l.x, l.y, 0.f);
+      position[4 * idx.flatten(i) + 1] = vec3f(l.x, u.y, 0.f);
+      position[4 * idx.flatten(i) + 2] = vec3f(u.x, u.y, 0.f);
+      position[4 * idx.flatten(i) + 3] = vec3f(u.x, l.y, 0.f);
+      index[idx.flatten(i)] = vec4ui(0, 1, 2, 3) + 4 * idx.flatten(i);
+    }
+
+    // Set quads parameters
+    quads.setParam("vertex.position", cpp::Data(position));
+    quads.setParam("index", cpp::Data(index));
+    quads.commit();
+  }
+
+  // Create materials
+  std::array<cpp::Material, cols * rows> materials;
+  cpp::Texture tex = createTexture2D();
+  for (int i = 0; i < cols * rows; i++) {
+    cpp::Material mat(rendererType, "obj");
+    mat.setParam("map_kd", tex);
+    mat.commit();
+    materials[i] = mat;
+  }
+
+  // Set scale
+  materials[1].setParam("map_kd.scale", vec2f(.5f));
+  materials[1].commit();
+
+  // Set rotation
+  materials[2].setParam("map_kd.rotation", 45.f);
+  materials[2].commit();
+
+  // Set translation
+  materials[3].setParam("map_kd.translation", vec2f(.5f));
+  materials[3].commit();
+
+  // Create geometric model
+  cpp::GeometricModel model(quads);
+  model.setParam("material", cpp::Data(materials));
+  AddModel(model);
+
+  cpp::Light ambient("ambient");
+  ambient.setParam("intensity", 0.5f);
+  AddLight(ambient);
 }
 
 RendererMaterialList::RendererMaterialList()
@@ -278,5 +368,13 @@ INSTANTIATE_TEST_SUITE_P(Appearance,
     ::testing::Values(std::make_tuple(OSP_TEXTURE_FILTER_BILINEAR, true),
         std::make_tuple(OSP_TEXTURE_FILTER_NEAREST, true),
         std::make_tuple(OSP_TEXTURE_FILTER_NEAREST, false)));
+
+TEST_P(Texture2DTransform, simple)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Appearance, Texture2DTransform, ::testing::Values("scivis"));
 
 } // namespace OSPRayTestScenes

@@ -4,6 +4,10 @@ Version History
 ### Changes in v2.2.0:
 
 -   Support for texture transformation in SciVis OBJ material
+-   Add transformations for volume textures; volume texture lookups are
+    now with local object coordinates (not world coordinates anymore)
+-   Changed behavior: if solely a texure is given, then the default
+    value of the corresponding parameter is *not* multiplied
 -   Support for better antialiasing using a set of different pixel
     filters (e.g, box, Gaussian, ...). The size of the pixel filter
     is defined by the used filter type. Previously OSPRay implicitely
@@ -12,6 +16,7 @@ Version History
 -   Support for Open VKL v0.10.0 and its new sampler object API, thus
     this is now the requires minimum version
 -   Move from `ospcommon` to `rkcommon` v1.4.0
+-   New minimum ISPC version is 1.10.0
 -   Added support for particle volumes
 
 ### Changes in v2.1.1:

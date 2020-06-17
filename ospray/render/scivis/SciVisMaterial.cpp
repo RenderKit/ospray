@@ -14,15 +14,11 @@ SciVisMaterial::SciVisMaterial()
 
 void SciVisMaterial::commit()
 {
-  Kd = getParam<vec3f>("kd", vec3f(.8f));
-  d = getParam<float>("d", 1.f);
-  map_Kd = (Texture2D *)getParamObject("map_kd");
-  affine2f xform_Kd = getTextureTransform("map_kd");
-  ispc::SciVisMaterial_set(getIE(),
-      d,
-      map_Kd ? map_Kd->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)xform_Kd,
-      (const ispc::vec3f &)Kd);
+  MaterialParam1f d = getMaterialParam1f("d", 1.f);
+  MaterialParam3f Kd = getMaterialParam3f("kd", vec3f(.8f));
+
+  ispc::SciVisMaterial_set(
+      getIE(), d.factor, d.tex, (const ispc::vec3f &)Kd.factor, Kd.tex);
 }
 
 } // namespace ospray

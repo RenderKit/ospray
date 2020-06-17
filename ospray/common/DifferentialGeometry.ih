@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -26,8 +26,9 @@ typedef enum
     information on the actual geometry that a ray has hit */
 struct DifferentialGeometry
 {
-  vec3f P; //!< location of the hit-point, includes epsilon offset towards
-           //!< front side
+  vec3f P; // world space location of the hit-point, includes epsilon offset
+           // towards front side
+  vec3f lP; // local instance space location of the hit-point
   vec3f Ng; /*!< geometry normal if DG_NG was set, possibly not
                normalized/facefordwarded if DG_NORMALIZE and/or
                DG_FACEFORWARD weren't specified */
@@ -42,7 +43,6 @@ struct DifferentialGeometry
   vec4f color; /*! interpolated vertex color (rgba) if DG_COLOR was set;
                  defaults to vec4f(1.f) if queried but not present in geometry
                  */
-  int32 primID; /*!< hit primitive (-1 if no hit) */
 
   float areaPDF;
 
