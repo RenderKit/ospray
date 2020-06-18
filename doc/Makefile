@@ -6,13 +6,13 @@ tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilatio
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe ospExamples renderSunSky))
 images_fig := spot_light spot_coords quad_light hdri_light 
-images_svg := gitter_badge structured_spherical_coords
+images_svg := gitter_badge structured_spherical_coords vdb_structure
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
-images_svg2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_svg)))
+images_svg2pdf := $(addprefix images/, $(addsuffix .pdf, $(images_svg)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
 webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
-pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_fig2svg)
+pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_svg2pdf)
 
 PANDOC := pandoc
 PDMINVERSION := 2000000
@@ -82,7 +82,7 @@ wwwscripts: | wwwdir
 	  cp -r ospray-doc/scripts/ www ;\
 	fi
 
-$(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_web.md tmp/changelog.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
+$(process_version) tmp/version ../readme.pdf $(tmptexfiles) $(images_fig2pdf) tmp/api.md tmp/api_web.md tmp/changelog.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_png.md tmp/images_local_pdf.md: | tmpdir
 tmpdir:
 	@mkdir -p tmp
 

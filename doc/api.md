@@ -526,13 +526,12 @@ Structured volumes only need to store the values of the samples, because
 their addresses in memory can be easily computed from a 3D position. A
 common type of structured volumes are regular grids.
 
-Structured regular volumes are created by passing the
-`structuredRegular` type string to `ospNewVolume`. Structured volumes
-are represented through an `OSPData` 3D array `data` (which may or may
-not be shared with the application), where currently the voxel data
-needs to be laid out compact in memory in xyz-order^[For consecutive
-memory addresses the x-index of the corresponding voxel changes the
-quickest.]
+Structured regular volumes are created by passing the type string
+"`structuredRegular`" to `ospNewVolume`. Structured volumes are
+represented through an `OSPData` 3D array `data` (which may or may not
+be shared with the application), where currently the voxel data needs to
+be laid out compact in memory in xyz-order^[For consecutive memory
+addresses the x-index of the corresponding voxel changes the quickest.]
 
 The parameters understood by structured volumes are summarized in the
 table below.
@@ -552,7 +551,7 @@ as is the type of the voxel values (currently supported are:
 ### Structured Spherical Volume
 
 Structured spherical volumes are also supported, which are created by
-passing a type string of `"structuredSpherical"` to `ospNewVolume`. The
+passing a type string of "`structuredSpherical`" to `ospNewVolume`. The
 grid dimensions and parameters are defined in terms of radial distance
 $r$, inclination angle $\theta$, and azimuthal angle $\phi$, conforming
 with the ISO convention for spherical coordinate systems. The coordinate
@@ -595,7 +594,7 @@ levels.
 
 There can be any number of refinement levels and any number of blocks at
 any level of refinement. An AMR volume type is created by passing the
-type string `"amr"` to `ospNewVolume`.
+type string "`amr`" to `ospNewVolume`.
 
 Blocks are defined by three parameters: their bounds, the refinement
 level in which they reside, and the scalar data contained within each
@@ -638,21 +637,25 @@ like the structured volume equivalent, but they only modify the root
 (coarsest level) of refinement.
 
 In particular, OSPRay's / Open VKL's AMR implementation was designed to
-cover Berger-Colella [1] and Chombo [2] AMR data. The `method` parameter
-above determines the interpolation method used when sampling the volume.
+cover Berger-Colella [1]\ and Chombo\ [2] AMR data. The `method`
+parameter above determines the interpolation method used when sampling
+the volume.
 
-* `OSP_AMR_CURRENT` finds the finest refinement level at that cell and
-  interpolates through this "current" level
-* `OSP_AMR_FINEST` will interpolate at the closest existing cell in the
-  volume-wide finest refinement level regardless of the sample cell's
-  level
-* `OSP_AMR_OCTANT` interpolates through all available refinement levels
-* at that
-  cell. This method avoids discontinuities at refinement level
-  boundaries at the cost of performance
+OSP_AMR_CURRENT
+: finds the finest refinement level at that cell and interpolates
+through this "current" level
+
+OSP_AMR_FINEST
+: will interpolate at the closest existing cell in the volume-wide
+finest refinement level regardless of the sample cell's level
+
+OSP_AMR_OCTANT
+: interpolates through all available refinement levels at that cell.
+This method avoids discontinuities at refinement level boundaries at the
+cost of performance
 
 Details and more information can be found in the publication for the
-implementation [3].
+implementation\ [3].
 
 1. M.J. Berger and P. Colella, "Local adaptive mesh refinement for
    shock hydrodynamics." Journal of Computational Physics 82.1 (1989):
@@ -750,10 +753,82 @@ with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
   ------------------- ------------------ --------  ---------------------------------------
   : Configuration parameters for unstructured volumes.
 
+### VDB Volume
+
+VDB volumes implement a data structure that is very similar to the data
+structure outlined in Museth\ [1], they are created by passing the type
+string "`vdb`" to `ospNewVolume`.
+
+The data structure is a hierarchical regular grid at its core: Nodes are
+regular grids, and each grid cell may either store a constant value
+(this is called a tile), or child pointers. Nodes in VDB trees are wide:
+Nodes on the first level have a resolution of 32^3^ voxels, on the next
+level 16^3^, and on the leaf level 8^3^ voxels. All nodes on a given
+level have the same resolution. This makes it easy to find the node
+containing a coordinate using shift operations (see\ [1]). VDB leaf
+nodes are implicit in OSPRay / Open VKL: they are stored as pointers to
+user-provided data.
+
+![Topology of VDB volumes.][imgVdbStructure]
+
+VDB volumes interpret input data as constant cells (which are then
+potentially filtered). This is in contrast to `structuredRegular`
+volumes, which have a vertex-centered interpretation.
+
+The VDB implementation in OSPRay / Open VKL follows the following goals:
+
+  - Efficient data structure traversal on vector architectures.
+  - Enable the use of industry-standard `.vdb` files created through the
+    OpenVDB library.
+  - Compatibility with OpenVDB on a leaf data level, so that `.vdb` file
+    may be loaded with minimal overhead.
+
+VDB volumes have the following parameters:
+
+  ---------- ----------------- -------------------------------------------------
+  Type       Name              Description
+  ---------- ----------------- -------------------------------------------------
+  int        maxIteratorDepth  do not descend further than to this depth during
+                               interval iteration, the maximum value and the
+                               default is 3
+
+  int        maxSamplingDepth  do not descend further than to this depth during
+                               sampling, the maximum value and the default is 3
+
+  uint32[]   node.level        level on which each input node exists, may be 1,
+                               2 or 3 (levels are counted from the root level
+                               = 0 down)
+
+  vec3i[]    node.origin       the node origin index (per input node)
+
+  OSPData[]  node.data         [data] arrays with the node data (per input
+                               node). Nodes that are tiles are expected to have
+                               single-item arrays. Leaf-nodes with grid data
+                               expected to have compact 3D arrays in zyx layout
+                               (z changes most quickly) with the correct number
+                               of voxels for the `level`. Only `OSP_FLOAT` is
+                               supported as field `OSPDataType`.
+
+  int        filter            filter used for reconstructing the field, default
+                               is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively
+                               `OSP_VOLUME_FILTER_NEAREST`.
+
+  int        gradientFilter    filter used for reconstructing the field during
+                               gradient computations, default same as `filter`
+  ---------- ----------------- -------------------------------------------------
+  : Configuration parameters for VDB volumes.
+
+
+1. Museth, K. VDB: High-Resolution Sparse Volumes with Dynamic Topology.
+   ACM Transactions on Graphics 32(3), 2013. DOI: 10.1145/2487228.2487235
+
 ### Particle Volume
 
 Particle volumes consist of a set of points in space. Each point has a
 position, a radius, and a weight typically associated with an attribute.
+Particle volumes are created by passing the type string "`particle`" to
+`ospNewVolume`.
+
 A radial basis function defines the contribution of that particle.
 Currently, we use the Gaussian radial basis function
 $$\phi(P) = w \exp\left(-\frac{(P - p)^2}{2 r^2}\right),$$
@@ -763,8 +838,8 @@ is then computed as the sum of each radial basis function $\phi$, for
 each particle that overlaps it.
 
 The OSPRay / Open VKL implementation is similar to direct evaluation of
-samples in Reda et al. [2]. It uses an Embree-built BVH with a custom
-traversal, similar to the method in [1].
+samples in Reda et al.\ [2]. It uses an Embree-built BVH with a custom
+traversal, similar to the method in\ [1].
 
   -------- ----------------------- --------  ---------------------------------------
   Type     Name                     Default  Description
@@ -1479,12 +1554,12 @@ via a transform. To create and instance call
 
     OSPInstance ospNewInstance(OSPGroup);
 
-  ------------------ --------------- ---------- --------------------------------------
-  Type               Name               Default Description
-  ------------------ --------------- ---------- --------------------------------------
-  affine3f           xfm             (identity) world-space transform for all attached
-                                                geometries and volumes
-  ------------------ --------------- ---------- ---------------------------------------
+  ------------ ------ ---------- --------------------------------------
+  Type         Name      Default Description
+  ------------ ------ ---------- --------------------------------------
+  affine3f     xfm      identity world-space transform for all attached
+                                 geometries and volumes
+  ------------ ------ ---------- --------------------------------------
   : Parameters understood by instances.
 
 
