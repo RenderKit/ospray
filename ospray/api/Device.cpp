@@ -127,7 +127,8 @@ void Device::commit()
   if (OSPRAY_SET_AFFINITY)
     threadAffinity = OSPRAY_SET_AFFINITY.value();
 
-  threadAffinity = getParam<bool>("setAffinity", threadAffinity);
+  if (hasParam("setAffinity"))
+    threadAffinity = getParam<bool>("setAffinity", threadAffinity != 0);
 
   tasking::initTaskingSystem(numThreads);
 
