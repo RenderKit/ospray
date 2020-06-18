@@ -11,6 +11,7 @@
 
 struct VolumeContext
 {
+  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
   VKLIntervalIterator intervalIterator;
   VKLInterval interval;
   vec3f org;
@@ -34,7 +35,7 @@ static void sampleVolume(VolumeContext &vc,
     // Iterate till sampling position is within interval
     while (vc.iuDistance > vc.iuLength) {
       // Get next VKL interval
-      if (vklIterateIntervalV(&vc.intervalIterator, &vc.interval)) {
+      if (vklIterateIntervalV(vc.intervalIterator, &vc.interval)) {
         // Make it local for the next interval
         vc.iuDistance -= vc.iuLength;
 
@@ -192,12 +193,12 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
       VolumetricModel *varying model = vi.volumetricModel;
       foreach_unique (m in model) {
         // Create volume interval interator
-        vklInitIntervalIteratorV(&vc.intervalIterator,
-            m->volume->vklVolume,
+        vc.intervalIterator = vklInitIntervalIteratorV(m->volume->vklVolume,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
-            m->vklValueSelector);
+            m->vklValueSelector,
+            vc.intervalIteratorBuffer);
       }
     }
 

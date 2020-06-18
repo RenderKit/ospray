@@ -15,17 +15,18 @@ float delta_tracking(VolumetricModel *uniform vModel,
     float &mu_t, // sampled extinction coefficint
     vec3f &albedo) // sampled albedo (color)
 {
-  VKLIntervalIterator intervalIterator;
-  vklInitIntervalIteratorV(&intervalIterator,
-      vModel->volume->vklVolume,
-      (varying vkl_vec3f *)&o,
-      (varying vkl_vec3f *)&w,
-      (varying vkl_range1f *)&rInterval,
-      vModel->vklValueSelector);
+  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  VKLIntervalIterator intervalIterator =
+      vklInitIntervalIteratorV(vModel->volume->vklVolume,
+          (varying vkl_vec3f *)&o,
+          (varying vkl_vec3f *)&w,
+          (varying vkl_range1f *)&rInterval,
+          vModel->vklValueSelector,
+          intervalIteratorBuffer);
 
   float t = 0.f;
   VKLInterval interval;
-  while (vklIterateIntervalV(&intervalIterator, &interval)) {
+  while (vklIterateIntervalV(intervalIterator, &interval)) {
     box1f subInterval =
         make_box1f(interval.tRange.lower, interval.tRange.upper);
     t = interval.tRange.lower;
