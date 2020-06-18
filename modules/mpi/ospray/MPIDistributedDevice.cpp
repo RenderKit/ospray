@@ -172,6 +172,10 @@ MPIDistributedDevice::~MPIDistributedDevice()
 void MPIDistributedDevice::commit()
 {
   Device::commit();
+  // MPI Device defaults to not setting affinity
+  if (threadAffinity == AUTO_DETECT) {
+    threadAffinity = DEAFFINITIZE;
+  }
 
   if (!initialized) {
     int _ac = 1;
