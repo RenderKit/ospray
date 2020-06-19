@@ -150,8 +150,7 @@ void initFromCommandLine(int *_ac, const char ***_av)
       } else if (beginsWith(parm, "--osp:set-affinity")) {
         int val = getArgInt(parm);
         if (val == 0 || val == 1) {
-          // this will be set to 0 if the value is invalid
-          device->setParam<bool>("setAffinity", atoi(av[i + 1]));
+          device->setParam<int>("setAffinity", val);
         } else {
           postStatusMsg(
               "Invalid value provided for --osp:set-affinity. "
