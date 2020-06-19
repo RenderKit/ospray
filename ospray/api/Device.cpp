@@ -121,14 +121,11 @@ void Device::commit()
     installErrorMsgFunc(*this, std::cerr);
   }
 
-  threadAffinity = AUTO_DETECT;
+  threadAffinity = getParam<int>("setAffinity", AUTO_DETECT);
 
   auto OSPRAY_SET_AFFINITY = utility::getEnvVar<int>("OSPRAY_SET_AFFINITY");
   if (OSPRAY_SET_AFFINITY)
     threadAffinity = OSPRAY_SET_AFFINITY.value();
-
-  if (hasParam("setAffinity"))
-    threadAffinity = getParam<bool>("setAffinity", threadAffinity != 0);
 
   tasking::initTaskingSystem(numThreads);
 
