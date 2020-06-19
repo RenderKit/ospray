@@ -19,13 +19,13 @@ static FactoryMap<Device> g_devicesMap;
 template <typename OSTREAM_T>
 static inline void installStatusMsgFunc(Device &device, OSTREAM_T &stream)
 {
-  device.msg_fcn = [&](const char *msg) { stream << msg; };
+  device.msg_fcn = [&](void *, const char *msg) { stream << msg; };
 }
 
 template <typename OSTREAM_T>
 static inline void installErrorMsgFunc(Device &device, OSTREAM_T &stream)
 {
-  device.error_fcn = [&](OSPError e, const char *msg) {
+  device.error_fcn = [&](void *, OSPError e, const char *msg) {
     stream << "OSPRAY ERROR [" << e << "]: " << msg << std::endl;
   };
 }
@@ -100,7 +100,7 @@ void Device::commit()
   else if (dst == "cerr")
     installStatusMsgFunc(*this, std::cerr);
   else if (dst == "none")
-    msg_fcn = [](const char *) {};
+    msg_fcn = [](void *, const char *) {};
 
   auto OSPRAY_ERROR_OUTPUT =
       utility::getEnvVar<std::string>("OSPRAY_ERROR_OUTPUT");
@@ -112,7 +112,7 @@ void Device::commit()
   else if (dst == "cerr")
     installErrorMsgFunc(*this, std::cerr);
   else if (dst == "none")
-    error_fcn = [](OSPError, const char *) {};
+    error_fcn = [](void *, OSPError, const char *) {};
 
   if (debugMode) {
     logLevel = OSP_LOG_DEBUG;

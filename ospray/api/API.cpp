@@ -238,29 +238,59 @@ extern "C" void ospDeviceRemoveParam(
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospDeviceSetStatusFunc(
-    OSPDevice _object, OSPStatusFunc callback) OSPRAY_CATCH_BEGIN
+extern "C" void ospDeviceSetStatusCallback(OSPDevice _object,
+    OSPStatusCallback callback,
+    void *userData) OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(_object);
 
   auto *device = (Device *)_object;
-  if (callback == nullptr)
-    device->msg_fcn = [](const char *) {};
-  else
+  if (callback == nullptr) {
+    device->msg_fcn = [](void *, const char *) {};
+    device->statusUserData = nullptr;
+  } else {
     device->msg_fcn = callback;
+    device->statusUserData = userData;
+  }
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospDeviceSetErrorCallback(OSPDevice _object,
+    OSPErrorCallback callback,
+    void *userData) OSPRAY_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(_object);
+
+  auto *device = (Device *)_object;
+  if (callback == nullptr) {
+    device->error_fcn = [](void *, OSPError, const char *) {};
+    device->errorUserData = nullptr;
+  } else {
+    device->error_fcn = callback;
+    device->errorUserData = userData;
+  }
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospDeviceSetStatusFunc(
+    OSPDevice _object, OSPStatusFunc legacyCallback) OSPRAY_CATCH_BEGIN
+{
+  ospDeviceSetStatusCallback(
+      _object,
+      [](void *fcn, const char *msg) { ((OSPStatusFunc)fcn)(msg); },
+      &legacyCallback);
 }
 OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceSetErrorFunc(
-    OSPDevice _object, OSPErrorFunc callback) OSPRAY_CATCH_BEGIN
+    OSPDevice _object, OSPErrorFunc legacyCallback) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(_object);
-
-  auto *device = (Device *)_object;
-  if (callback == nullptr)
-    device->error_fcn = [](OSPError, const char *) {};
-  else
-    device->error_fcn = callback;
+  ospDeviceSetErrorCallback(
+      _object,
+      [](void *fcn, OSPError e, const char *msg) {
+        ((OSPErrorFunc)fcn)(e, msg);
+      },
+      &legacyCallback);
 }
 OSPRAY_CATCH_END()
 

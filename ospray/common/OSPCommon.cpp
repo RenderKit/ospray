@@ -634,7 +634,8 @@ void postStatusMsg(const std::string &msg, uint32_t postAtLogLevel)
     if (logAsError)
       handleError(OSP_UNKNOWN_ERROR, msg + '\n');
     else
-      api::Device::current->msg_fcn((msg + '\n').c_str());
+      api::Device::current->msg_fcn(
+          api::Device::current->statusUserData, (msg + '\n').c_str());
   }
 }
 
@@ -646,7 +647,7 @@ void handleError(OSPError e, const std::string &message)
     device.lastErrorCode = e;
     device.lastErrorMsg = "#ospray: " + message;
 
-    device.error_fcn(e, message.c_str());
+    device.error_fcn(device.errorUserData, e, message.c_str());
   } else {
     // NOTE: No device, but something should still get printed for the user to
     //       debug the calling application.

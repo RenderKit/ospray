@@ -13,12 +13,13 @@ int main(int argc, char **argv)
   {
     cpp::Device device = cpp::Device::current();
 
-    device.setErrorFunc([](OSPError error, const char *errorDetails) {
-      std::cerr << "OSPRay error: " << errorDetails << std::endl;
-      std::exit(EXIT_FAILURE);
-    });
+    device.setErrorCallback(
+        [](void *, OSPError error, const char *errorDetails) {
+          std::cerr << "OSPRay error: " << errorDetails << std::endl;
+          std::exit(EXIT_FAILURE);
+        });
 
-    device.setStatusFunc([](const char *msg) { std::cout << msg; });
+    device.setStatusCallback([](void *, const char *msg) { std::cout << msg; });
 
     device.setParam("warnAsError", true);
     device.setParam("logLevel", OSP_LOG_WARNING);

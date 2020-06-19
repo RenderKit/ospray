@@ -18,6 +18,7 @@ Version History
 -   Move from `ospcommon` to `rkcommon` v1.4.0
 -   New minimum ISPC version is 1.10.0
 -   Added support for particle volumes
+-   Status and error callbacks now support a user pointer
 
 ### Changes in v2.1.1:
 

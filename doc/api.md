@@ -231,22 +231,22 @@ A more descriptive error message can be queried by calling
 Alternatively, the application can also register a callback function of
 type
 
-    typedef void (*OSPErrorFunc)(OSPError, const char* errorDetails);
+    typedef void (*OSPErrorCallback)(void *userData, OSPError, const char* errorDetails);
 
 via
 
-    void ospDeviceSetErrorFunc(OSPDevice, OSPErrorFunc);
+    void ospDeviceSetErrorCallback(OSPDevice, OSPErrorCallback, void *userData);
 
 to get notified when errors occur.
 
 Applications may be interested in messages which OSPRay emits, whether
 for debugging or logging events. Applications can call
 
-    void ospDeviceSetStatusFunc(OSPDevice, OSPStatusFunc);
+    void ospDeviceSetStatusCallback(OSPDevice, OSPStatusCallback, void *userData);
 
 in order to register a callback function of type
 
-    typedef void (*OSPStatusFunc)(const char* messageText);
+    typedef void (*OSPStatusCallback)(void *userData, const char* messageText);
 
 which OSPRay will use to emit status messages. By default, OSPRay uses a
 callback which does nothing, so any output desired by an application

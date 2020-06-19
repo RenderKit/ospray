@@ -166,10 +166,13 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
 
   bool warningsAreErrors{false};
 
-  std::function<void(const char *)> msg_fcn{[](const char *) {}};
+  std::function<void(void *, const char *)> msg_fcn{
+      [](void *, const char *) {}};
+  void *statusUserData{nullptr};
 
-  std::function<void(OSPError, const char *)> error_fcn{
-      [](OSPError, const char *) {}};
+  std::function<void(void *, OSPError, const char *)> error_fcn{
+      [](void *, OSPError, const char *) {}};
+  void *errorUserData{nullptr};
 
   std::function<void(const char *)> trace_fcn{[](const char *) {}};
 
