@@ -12,7 +12,7 @@ getCriticalCount() {
 }
 if [ -f $KW_CRITICAL_OUTPUT_PATH ]; then
         echo "Critical issues found - $(getCriticalCount) in $KW_BUILD_NUMBER";
-        cat $KW_CRITICAL_OUTPUT_PATH
+        python -m json.tool $KW_CRITICAL_OUTPUT_PATH
         exit 1;
 else
         echo "No critical issues were found in $KW_BUILD_NUMBER"
