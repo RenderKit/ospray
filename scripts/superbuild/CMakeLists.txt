@@ -16,6 +16,9 @@ endif()
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
+if (NOT DEPENDENCIES_BUILD_TYPE)
+  set(DEPENDENCIES_BUILD_TYPE Release)
+endif()
 
 ## Establish project ##
 
@@ -91,9 +94,8 @@ if (${CMAKE_VERSION} VERSION_GREATER 3.11.4)
   set(PARALLEL_JOBS_OPTS -j ${BUILD_JOBS})
 endif()
 
-set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config release ${PARALLEL_JOBS_OPTS})
-
 ## Build dependencies ##
+set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${DEPENDENCIES_BUILD_TYPE} ${PARALLEL_JOBS_OPTS})
 
 if (DOWNLOAD_ISPC)
   include(dep_ispc)
@@ -116,6 +118,9 @@ if (BUILD_OIDN)
 endif()
 
 include(dep_glm)
+
+## Build main projects ##
+set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} ${PARALLEL_JOBS_OPTS})
 
 if (NOT BUILD_DEPENDENCIES_ONLY)
   include(build_ospray.cmake)

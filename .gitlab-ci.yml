@@ -117,6 +117,15 @@ build-arch-clang-devel:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_EMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OIDN_VERSION=devel -DBUILD_OPENVKL_VERSION=devel -DBUILD_RKCOMMON_VERSION=devel 
   only: [schedules]
 
+build-linux-debug-all:
+  <<: *build_job_docker
+  script:
+    - export CC=clang
+    - export CXX=clang++
+    - scripts/build_gitlab/linux.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDEPENDENCIES_BUILD_TYPE=Debug -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON
+  <<: *build_artifacts
+  only: [schedules]
+
 build-ubuntu1604-gcc:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
@@ -184,10 +193,11 @@ build-centos7-mpi-devel:
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MPI_VERSION=devel
   allow_failure: true
 
-build-debug:
+build-linux-debug:
   <<: *build_job_docker
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug
+  <<: *build_artifacts
 
 build-osx-clang:
   <<: *build_job_shell
@@ -200,7 +210,7 @@ build-osx-clang:
 build-windows-msvc14:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "v140"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "v140" "Release"
   tags:
     - msvc14
     - win
@@ -209,11 +219,21 @@ build-windows-msvc14:
 build-windows-msvc15:
   <<: *build_job_shell
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release"
   tags:
     - msvc15
     - win
   <<: *build_artifacts
+
+build-windows-debug-all:
+  <<: *build_job_shell
+  script:
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug"
+  tags:
+    - msvc15
+    - win
+  <<: *build_artifacts
+  only: [schedules]
 
 #build-windows-icc:
 #  <<: *build_job_shell
@@ -257,6 +277,19 @@ test-ubuntu2004-gcc:
   needs:
     - build-ubuntu2004-gcc
 
+test-linux-debug:
+  <<: *test_job_unix
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  needs:
+    - build-linux-debug
+
+test-linux-debug-all:
+  <<: *test_job_unix
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  needs:
+    - build-linux-debug-all
+  only: [schedules]
+
 test-tutorials:
   stage: test
   tags:
@@ -290,6 +323,14 @@ test-find-ospray:
 #  needs:
 #    - build-windows-icc
 
+test-windows-msvc14:
+  <<: *test_job_windows
+  tags:
+    - win
+    - msvc14
+  needs:
+    - build-windows-msvc14
+
 test-windows-msvc15:
   <<: *test_job_windows
   tags:
@@ -298,13 +339,14 @@ test-windows-msvc15:
   needs:
     - build-windows-msvc15
 
-test-windows-msvc14:
+test-windows-debug-all:
   <<: *test_job_windows
   tags:
     - win
-    - msvc14
+    - msvc15
   needs:
-    - build-windows-msvc14
+    - build-windows-debug-all
+  only: [schedules]
 
 generate-ci-baseline:
   <<: *test_job_unix
