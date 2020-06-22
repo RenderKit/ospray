@@ -435,7 +435,7 @@ release-osx-clang:
 release-windows:
   <<: *release_job
   script:
-    - scripts\release\win.ps1 "Visual Studio 14 2015 Win64"
+    - scripts\release\win.ps1 "Visual Studio 15 2017 Win64"
     - ;& $env:SIGN_FILE_WINDOWS ospray*.msi
   tags:
     - msvc14
