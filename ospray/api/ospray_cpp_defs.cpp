@@ -8,7 +8,8 @@
 namespace ospray {
 
 OSPTYPEFOR_DEFINITION(cpp::Camera);
-OSPTYPEFOR_DEFINITION(cpp::Data);
+OSPTYPEFOR_DEFINITION(cpp::SharedData);
+OSPTYPEFOR_DEFINITION(cpp::CopiedData);
 OSPTYPEFOR_DEFINITION(cpp::FrameBuffer);
 OSPTYPEFOR_DEFINITION(cpp::Future);
 OSPTYPEFOR_DEFINITION(cpp::GeometricModel);

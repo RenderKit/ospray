@@ -7,16 +7,12 @@
 #include <string>
 #include <type_traits>
 // ospray
-#include "ospray/ospray_util.h"
-#include "rkcommon/math/AffineSpace.h"
-#include "rkcommon/math/vec.h"
+#include "ospray/ospray.h"
 // ospray::cpp
 #include "Traits.h"
 
 namespace ospray {
 namespace cpp {
-
-using namespace rkcommon::math;
 
 template <typename HANDLE_T = OSPObject, OSPDataType TYPE = OSP_OBJECT>
 class ManagedObject
@@ -43,7 +39,8 @@ class ManagedObject
 
   void removeParam(const std::string &name) const;
 
-  box3f getBounds() const;
+  template <typename BOX3F_T>
+  BOX3F_T getBounds() const;
 
   void commit() const;
 
@@ -155,10 +152,14 @@ inline void ManagedObject<HANDLE_T, TYPE>::removeParam(
 }
 
 template <typename HANDLE_T, OSPDataType TYPE>
-box3f ManagedObject<HANDLE_T, TYPE>::getBounds() const
+template <typename BOX3F_T>
+BOX3F_T ManagedObject<HANDLE_T, TYPE>::getBounds() const
 {
+  static_assert(OSPTypeFor<BOX3F_T>::value == OSP_BOX3F,
+      "Your type for BOX3F_T must convert to OSP_BOX3F. You need to define"
+      " this conversion via the OSPTYPEFOR_SPECIALIZATION macro.");
   auto b = ospGetBounds(ospObject);
-  return box3f(vec3f(b.lower), vec3f(b.upper));
+  return *((BOX3F_T *)&b);
 }
 
 template <typename HANDLE_T, OSPDataType TYPE>

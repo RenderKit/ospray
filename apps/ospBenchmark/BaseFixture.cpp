@@ -12,8 +12,10 @@ BaseFixture::BaseFixture(std::string r, std::string s)
 
 void BaseFixture::SetUp(::benchmark::State &)
 {
-  framebuffer = cpp::FrameBuffer(
-      imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
+  framebuffer = cpp::FrameBuffer(imgSize.x,
+      imgSize.y,
+      OSP_FB_SRGBA,
+      OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
   framebuffer.resetAccumulation();
 
   auto builder = testing::newBuilder(scene);
@@ -26,7 +28,7 @@ void BaseFixture::SetUp(::benchmark::State &)
 
   world.commit();
 
-  auto worldBounds = world.getBounds();
+  auto worldBounds = world.getBounds<box3f>();
 
   ArcballCamera arcballCamera(worldBounds, imgSize);
 

@@ -183,7 +183,8 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
           const vec2f pos(mouse.x / static_cast<float>(windowSize.x),
               1.f - mouse.y / static_cast<float>(windowSize.y));
 
-          auto res = w.framebuffer.pick(w.renderer, w.camera, w.world, pos);
+          auto res =
+              w.framebuffer.pick(w.renderer, w.camera, w.world, pos.x, pos.y);
 
           if (res.hasHit) {
             std::cout << "Picked geometry [inst: " << res.instance
@@ -240,7 +241,8 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   // create new frame buffer
   auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO
       | OSP_FB_NORMAL;
-  framebuffer = cpp::FrameBuffer(windowSize, OSP_FB_RGBA32F, buffers);
+  framebuffer =
+      cpp::FrameBuffer(windowSize.x, windowSize.y, OSP_FB_RGBA32F, buffers);
 
   refreshFrameOperations();
 
@@ -543,13 +545,13 @@ void GLFWOSPRayWindow::buildUI()
     if (ImGui::Checkbox("renderSunSky", &renderSunSky)) {
       if (renderSunSky) {
         sunSky.setParam("direction", sunDirection);
-        world.setParam("light", cpp::Data(sunSky));
+        world.setParam("light", cpp::CopiedData(sunSky));
         addObjectToCommit(sunSky.handle());
       } else {
         cpp::Light light("ambient");
         light.setParam("visible", false);
         light.commit();
-        world.setParam("light", cpp::Data(light));
+        world.setParam("light", cpp::CopiedData(light));
       }
       addObjectToCommit(world.handle());
     }
@@ -646,14 +648,14 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
   backplate.push_back(vec4f(0.4f, 0.2f, 0.4f, 1.0f));
 
   OSPTextureFormat texFmt = OSP_TEXTURE_RGBA32F;
-  cpp::Data texData(vec2ul(2, 2), backplate.data());
-  backplateTex.setParam("data", texData);
+  backplateTex.setParam("data", cpp::CopiedData(backplate.data(), vec2ul(2, 2)));
   backplateTex.setParam("format", OSP_INT, &texFmt);
   addObjectToCommit(backplateTex.handle());
 
   if (resetCamera) {
     // create the arcball camera model
-    arcballCamera.reset(new ArcballCamera(world.getBounds(), windowSize));
+    arcballCamera.reset(
+        new ArcballCamera(world.getBounds<box3f>(), windowSize));
 
     // init camera
     updateCamera();
@@ -665,7 +667,7 @@ void GLFWOSPRayWindow::refreshFrameOperations()
 {
   if (denoiserEnabled) {
     cpp::ImageOperation d("denoiser");
-    framebuffer.setParam("imageOperation", cpp::Data(d));
+    framebuffer.setParam("imageOperation", cpp::CopiedData(d));
   } else {
     framebuffer.removeParam("imageOperation");
   }

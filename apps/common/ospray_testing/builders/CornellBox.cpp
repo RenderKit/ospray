@@ -229,9 +229,9 @@ cpp::Group CornellBox::buildGroup() const
 {
   cpp::Geometry quadMesh("mesh");
 
-  quadMesh.setParam("vertex.position", cpp::Data(vertices));
-  quadMesh.setParam("vertex.color", cpp::Data(colors));
-  quadMesh.setParam("index", cpp::Data(indices));
+  quadMesh.setParam("vertex.position", cpp::CopiedData(vertices));
+  quadMesh.setParam("vertex.color", cpp::CopiedData(colors));
+  quadMesh.setParam("index", cpp::CopiedData(indices));
   quadMesh.commit();
 
   cpp::GeometricModel model(quadMesh);
@@ -248,7 +248,7 @@ cpp::Group CornellBox::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;
@@ -268,7 +268,7 @@ cpp::World CornellBox::buildWorld() const
 
   light.commit();
 
-  world.setParam("light", cpp::Data(light));
+  world.setParam("light", cpp::CopiedData(light));
 
   return world;
 }
@@ -292,7 +292,7 @@ cpp::World CornellBoxPhotometric::buildWorld() const
   light1d.setParam("openingAngle", 360.f);
   light1d.setParam("penumbraAngle", 0.f);
   float lid1d[] = {2.5f, 0.4f, 0.2f, 0.1f, 0.03f, 0.01f, 0.01f};
-  light1d.setParam("intensityDistribution", cpp::Data(7, lid1d));
+  light1d.setParam("intensityDistribution", cpp::CopiedData(lid1d, 7));
   light1d.commit();
 
   cpp::Light light2d("spot");
@@ -303,7 +303,7 @@ cpp::World CornellBoxPhotometric::buildWorld() const
   light2d.setParam("penumbraAngle", 10.f);
   float lid2d[60] = {
       1.5f, 5.0f, 6.0f, 0.3f, 0.01f, 0.15f, 0.5f, 1.6f, 0.1f, 0.01f};
-  light2d.setParam("intensityDistribution", cpp::Data(vec2ul(5, 12), lid2d));
+  light2d.setParam("intensityDistribution", cpp::CopiedData(lid2d, vec2ul(5, 12)));
   light2d.setParam("c0", vec3f(1.0f, 0.0f, 0.0f));
   light2d.commit();
 
@@ -311,7 +311,7 @@ cpp::World CornellBoxPhotometric::buildWorld() const
   lights.clear();
   lights.push_back(light1d);
   lights.push_back(light2d);
-  world.setParam("light", cpp::Data(lights));
+  world.setParam("light", cpp::CopiedData(lights));
 
   return world;
 }

@@ -39,8 +39,8 @@ void Texture2D::SetUp()
         vidx.flatten({i.x, i.y + 1}));
   }
   cpp::Geometry mesh("mesh");
-  mesh.setParam("vertex.position", cpp::Data(vertex));
-  mesh.setParam("index", cpp::Data(index));
+  mesh.setParam("vertex.position", cpp::CopiedData(vertex));
+  mesh.setParam("index", cpp::CopiedData(index));
   mesh.commit();
 
   // create textures: columns=#channels, rows=type=[byte, byte, float, short]
@@ -125,7 +125,7 @@ void Texture2D::SetUp()
     mat.commit();
     material[i] = mat;
   }
-  model.setParam("material", cpp::Data(material));
+  model.setParam("material", cpp::CopiedData(material));
   AddModel(model);
 
   { // set up backplate texture
@@ -135,7 +135,7 @@ void Texture2D::SetUp()
       el = toggle ? vec3uc(5, 10, 5) : vec3uc(10, 5, 10);
       toggle = !toggle;
     }
-    cpp::Data texData(vec2ul(125, 94), bpdata.data());
+    cpp::CopiedData texData(bpdata.data(), vec2ul(125, 94));
 
     cpp::Texture backplateTex("texture2d");
     backplateTex.setParam("format", OSP_TEXTURE_RGB8);
@@ -182,7 +182,7 @@ static cpp::Texture createTexture2D()
   // Create texture object
   cpp::Texture tex("texture2d");
   tex.setParam("format", OSP_TEXTURE_RGB8);
-  tex.setParam("data", cpp::Data(vec2ul(width, height), dbyte.data()));
+  tex.setParam("data", cpp::CopiedData(dbyte.data(), vec2ul(width, height)));
   tex.commit();
   return tex;
 }
@@ -220,8 +220,8 @@ void Texture2DTransform::SetUp()
     }
 
     // Set quads parameters
-    quads.setParam("vertex.position", cpp::Data(position));
-    quads.setParam("index", cpp::Data(index));
+    quads.setParam("vertex.position", cpp::CopiedData(position));
+    quads.setParam("index", cpp::CopiedData(index));
     quads.commit();
   }
 
@@ -249,7 +249,7 @@ void Texture2DTransform::SetUp()
 
   // Create geometric model
   cpp::GeometricModel model(quads);
-  model.setParam("material", cpp::Data(materials));
+  model.setParam("material", cpp::CopiedData(materials));
   AddModel(model);
 
   cpp::Light ambient("ambient");
@@ -301,29 +301,29 @@ void RendererMaterialList::SetUp()
     index.push_back(static_cast<uint32_t>(numSpheres.flatten(i)));
   }
 
-  sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
+  sphereGeometry.setParam("sphere.position", cpp::CopiedData(spheres));
   sphereGeometry.setParam("radius", 0.4f);
   sphereGeometry.commit();
 
   cpp::GeometricModel model(sphereGeometry);
-  model.setParam("material", cpp::Data(index));
+  model.setParam("material", cpp::CopiedData(index));
 
   AddModel(model);
 
   // Setup renderer material list //
 
-  renderer.setParam("material", cpp::Data(materials));
+  renderer.setParam("material", cpp::CopiedData(materials));
 
   // Create the world to get bounds for camera setup //
 
   if (!instances.empty())
-    world.setParam("instance", cpp::Data(instances));
+    world.setParam("instance", cpp::CopiedData(instances));
 
   instances.clear();
 
   world.commit();
 
-  auto worldBounds = world.getBounds();
+  auto worldBounds = world.getBounds<box3f>();
 
   ArcballCamera arcballCamera(worldBounds, imgSize);
 

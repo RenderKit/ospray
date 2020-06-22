@@ -103,9 +103,9 @@ cpp::Group Streamlines::buildGroup() const
     }
   }
 
-  slGeom.setParam("vertex.position_radius", cpp::Data(points));
-  slGeom.setParam("index", cpp::Data(indices));
-  slGeom.setParam("vertex.color", cpp::Data(colors));
+  slGeom.setParam("vertex.position_radius", cpp::CopiedData(points));
+  slGeom.setParam("index", cpp::CopiedData(indices));
+  slGeom.setParam("vertex.color", cpp::CopiedData(colors));
   slGeom.setParam("type", OSP_ROUND);
   slGeom.setParam("basis", OSP_CATMULL_ROM);
 
@@ -123,7 +123,7 @@ cpp::Group Streamlines::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;

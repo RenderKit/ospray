@@ -56,12 +56,12 @@ cpp::Group Boxes::buildGroup() const
     color.emplace_back(box_color.x, box_color.y, box_color.z, 1.f);
   }
 
-  boxGeometry.setParam("box", cpp::Data(boxes));
+  boxGeometry.setParam("box", cpp::CopiedData(boxes));
   boxGeometry.commit();
 
   cpp::GeometricModel model(boxGeometry);
 
-  model.setParam("color", cpp::Data(color));
+  model.setParam("color", cpp::CopiedData(color));
 
   if (rendererType == "pathtracer" || rendererType == "scivis") {
     cpp::Material material(rendererType, "obj");
@@ -73,7 +73,7 @@ cpp::Group Boxes::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;

@@ -47,12 +47,12 @@ void SpherePrecision::SetUp()
   std::vector<float> sph_radius = {
       radius, 0.9f * radius, 0.9f * radius, 10000.f * radius};
 
-  sphere.setParam("sphere.position", cpp::Data(sph_center));
-  sphere.setParam("sphere.radius", cpp::Data(sph_radius));
+  sphere.setParam("sphere.position", cpp::CopiedData(sph_center));
+  sphere.setParam("sphere.radius", cpp::CopiedData(sph_radius));
   sphere.commit();
 
-  inst_sphere.setParam("sphere.position", cpp::Data(vec3f(0.f)));
-  inst_sphere.setParam("sphere.radius", cpp::Data(90.f * radius));
+  inst_sphere.setParam("sphere.position", cpp::CopiedData(vec3f(0.f)));
+  inst_sphere.setParam("sphere.radius", cpp::CopiedData(90.f * radius));
   inst_sphere.commit();
 
   cpp::GeometricModel model1(sphere);

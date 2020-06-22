@@ -280,7 +280,4 @@ inline std::string typeString(const std::shared_ptr<T> &v)
   return typeid(*v).name();
 }
 
-#define OSPTYPEFOR_DEFINITION(type)                                            \
-  constexpr OSPDataType OSPTypeFor<type>::value
-
 } // namespace ospray

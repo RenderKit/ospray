@@ -141,9 +141,9 @@ cpp::Group ParticleVolume::buildGroup() const
 
   cpp::Volume volume("particle");
   volume.setParam(
-      "particle.position", cpp::Data(numParticles, particles.data()));
-  volume.setParam("particle.radius", cpp::Data(numParticles, radius.data()));
-  volume.setParam("particle.weight", cpp::Data(numParticles, weights.data()));
+      "particle.position", cpp::CopiedData(particles));
+  volume.setParam("particle.radius", cpp::CopiedData(radius));
+  volume.setParam("particle.weight", cpp::CopiedData(weights));
   volume.setParam("clampMaxCumulativeValue", clampMaxCumulativeValue);
   volume.setParam("radiusSupportFactor", radiusSupportFactor);
 
@@ -160,7 +160,7 @@ cpp::Group ParticleVolume::buildGroup() const
   cpp::Group group;
 
   if (withVolume)
-    group.setParam("volume", cpp::Data(model));
+    group.setParam("volume", cpp::CopiedData(model));
 
   if (withIsosurface) {
     cpp::Geometry isoGeom("isosurface");
@@ -169,7 +169,7 @@ cpp::Group ParticleVolume::buildGroup() const
       isovalues.push_back(isovalue + .25f);
     }
 
-    isoGeom.setParam("isovalue", cpp::Data(isovalues));
+    isoGeom.setParam("isovalue", cpp::CopiedData(isovalues));
     isoGeom.setParam("volume", volume);
     isoGeom.commit();
 
@@ -186,14 +186,14 @@ cpp::Group ParticleVolume::buildGroup() const
       if (multipleIsosurfaces) {
         std::vector<vec4f> colors = {
             vec4f(0.2f, 0.2f, 0.8f, 1.f), vec4f(0.8f, 0.2f, 0.2f, 1.f)};
-        isoModel.setParam("color", cpp::Data(colors));
+        isoModel.setParam("color", cpp::CopiedData(colors));
       }
       isoModel.setParam("material", mat);
     }
 
     isoModel.commit();
 
-    group.setParam("geometry", cpp::Data(isoModel));
+    group.setParam("geometry", cpp::CopiedData(isoModel));
   }
 
   group.commit();
@@ -211,7 +211,7 @@ cpp::World ParticleVolume::buildWorld() const
     {
       cpp::Geometry planeGeometry("plane");
       std::vector<vec4f> coefficients = {vec4f(1.f, -1.f, 1.f, 0.f)};
-      planeGeometry.setParam("plane.coefficients", cpp::Data(coefficients));
+      planeGeometry.setParam("plane.coefficients", cpp::CopiedData(coefficients));
       planeGeometry.commit();
 
       cpp::GeometricModel model(planeGeometry);
@@ -223,7 +223,7 @@ cpp::World ParticleVolume::buildWorld() const
     {
       cpp::Geometry sphereGeometry("sphere");
       std::vector<vec3f> position = {vec3f(.2f, -.2f, .2f)};
-      sphereGeometry.setParam("sphere.position", cpp::Data(position));
+      sphereGeometry.setParam("sphere.position", cpp::CopiedData(position));
       sphereGeometry.setParam("radius", .5f);
       sphereGeometry.commit();
 
@@ -233,7 +233,7 @@ cpp::World ParticleVolume::buildWorld() const
     }
 
     cpp::Group group;
-    group.setParam("clippingGeometry", cpp::Data(geometricModels));
+    group.setParam("clippingGeometry", cpp::CopiedData(geometricModels));
     group.commit();
 
     cpp::Instance inst(group);

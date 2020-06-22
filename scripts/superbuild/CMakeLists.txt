@@ -115,6 +115,8 @@ if (BUILD_OIDN)
   include(dep_oidn)
 endif()
 
+include(dep_glm)
+
 if (NOT BUILD_DEPENDENCIES_ONLY)
   include(build_ospray.cmake)
   if (BUILD_OSPRAY_MODULE_MPI)

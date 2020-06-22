@@ -30,7 +30,7 @@ static cpp::Volume CreateTorus(const int size)
   }
 
   cpp::Volume torus("structuredRegular");
-  torus.setParam("data", cpp::Data(vec3ul(size), volumetricData.data()));
+  torus.setParam("data", cpp::CopiedData(volumetricData.data(), vec3ul(size)));
   torus.setParam("gridOrigin", vec3f(-0.5f));
   torus.setParam("gridSpacing", vec3f(1.f / size));
   torus.commit();
@@ -64,8 +64,8 @@ void TextureVolumeTransform::SetUp()
     std::vector<float> opacities = {1.f, 1.f};
 
     transferFun.setParam("valueRange", vec2f(-10000.f, 100.f));
-    transferFun.setParam("color", cpp::Data(colors));
-    transferFun.setParam("opacity", cpp::Data(opacities));
+    transferFun.setParam("color", cpp::CopiedData(colors));
+    transferFun.setParam("opacity", cpp::CopiedData(opacities));
     transferFun.commit();
   }
 
@@ -82,7 +82,7 @@ void TextureVolumeTransform::SetUp()
   // Create a single sphere geometry
   cpp::Geometry sphere("sphere");
   {
-    sphere.setParam("sphere.position", cpp::Data(vec3f(0.f)));
+    sphere.setParam("sphere.position", cpp::CopiedData(vec3f(0.f)));
     sphere.setParam("radius", 0.51f);
     sphere.commit();
   }
@@ -120,7 +120,7 @@ void TextureVolumeTransform::SetUp()
 
     // Create group
     cpp::Group group;
-    group.setParam("geometry", cpp::Data(model));
+    group.setParam("geometry", cpp::CopiedData(model));
     group.commit();
 
     // Create instance
@@ -161,8 +161,8 @@ void DepthCompositeVolume::SetUp()
 
   std::vector<float> opacities = {0.05f, 1.0f};
 
-  transferFun.setParam("color", cpp::Data(colors));
-  transferFun.setParam("opacity", cpp::Data(opacities));
+  transferFun.setParam("color", cpp::CopiedData(colors));
+  transferFun.setParam("opacity", cpp::CopiedData(opacities));
   transferFun.commit();
 
   volumetricModel.setParam("transferFunction", transferFun);
@@ -188,7 +188,7 @@ void DepthCompositeVolume::SetUp()
 
   depthTex.setParam("format", OSP_TEXTURE_R32F);
   depthTex.setParam("filter", OSP_TEXTURE_FILTER_NEAREST);
-  depthTex.setParam("data", cpp::Data(imgSize, texData.data()));
+  depthTex.setParam("data", cpp::CopiedData(texData.data(), imgSize));
   depthTex.commit();
 
   renderer.setParam("map_maxDepth", depthTex);

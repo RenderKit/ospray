@@ -43,8 +43,8 @@ cpp::Group Planes::buildGroup() const
     coeffs.push_back(vec4f(p.x, p.y, p.z, 0.f));
     bounds.push_back(b);
   }
-  planeGeometry.setParam("plane.coefficients", cpp::Data(coeffs));
-  planeGeometry.setParam("plane.bounds", cpp::Data(bounds));
+  planeGeometry.setParam("plane.coefficients", cpp::CopiedData(coeffs));
+  planeGeometry.setParam("plane.bounds", cpp::CopiedData(bounds));
   planeGeometry.commit();
 
   // Create geometric model
@@ -59,7 +59,7 @@ cpp::Group Planes::buildGroup() const
 
   // Create group
   cpp::Group group;
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   // Done

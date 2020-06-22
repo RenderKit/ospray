@@ -35,8 +35,7 @@ generate_export_header(ospray_testing)
 
 target_link_libraries(ospray_testing
 PUBLIC
-  ospray
-  rkcommon::rkcommon
+  ospray_sdk
 PRIVATE
   raw_to_amr
 )

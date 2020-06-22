@@ -19,6 +19,9 @@ Version History
 -   New minimum ISPC version is 1.10.0
 -   Added support for particle volumes
 -   Status and error callbacks now support a user pointer
+-   Enabled C++ wrappers (`ospray_cpp`) to work with non-rkcommon math types
+    -   Note that while the C API remains the same, the C++ wrappers will
+        require some application updates to account for these changes
 
 ### Changes in v2.1.1:
 

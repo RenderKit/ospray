@@ -57,7 +57,7 @@ cpp::Group PtMetalRoughness::buildGroup() const
     index.push_back(numSpheres.flatten(i));
   }
 
-  sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
+  sphereGeometry.setParam("sphere.position", cpp::CopiedData(spheres));
   sphereGeometry.setParam("radius", 0.4f);
   sphereGeometry.commit();
 
@@ -105,13 +105,13 @@ cpp::Group PtMetalRoughness::buildGroup() const
         float(i) / 4));
   }
 
-  model.setParam("material", cpp::Data(materials));
-  model.setParam("index", cpp::Data(index));
+  model.setParam("material", cpp::CopiedData(materials));
+  model.setParam("index", cpp::CopiedData(index));
   model.commit();
 
   cpp::Group group;
 
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;

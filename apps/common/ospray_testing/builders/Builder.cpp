@@ -36,13 +36,13 @@ cpp::World Builder::buildWorld(
   inst.push_back(instance);
 
   if (addPlane) {
-    auto bounds = group.getBounds();
+    auto bounds = group.getBounds<box3f>();
 
     auto extents = 0.8f * length(bounds.center() - bounds.lower);
 
     cpp::GeometricModel plane = makeGroundPlane(extents);
     cpp::Group planeGroup;
-    planeGroup.setParam("geometry", cpp::Data(plane));
+    planeGroup.setParam("geometry", cpp::CopiedData(plane));
     planeGroup.commit();
 
     cpp::Instance planeInst(planeGroup);
@@ -51,13 +51,13 @@ cpp::World Builder::buildWorld(
     inst.push_back(planeInst);
   }
 
-  world.setParam("instance", cpp::Data(inst));
+  world.setParam("instance", cpp::CopiedData(inst));
 
   cpp::Light light("ambient");
   light.setParam("visible", false);
   light.commit();
 
-  world.setParam("light", cpp::Data(light));
+  world.setParam("light", cpp::CopiedData(light));
 
   return world;
 }
@@ -92,8 +92,8 @@ cpp::TransferFunction Builder::makeTransferFunction(
     opacities.emplace_back(1.f);
   }
 
-  transferFunction.setParam("color", cpp::Data(colors));
-  transferFunction.setParam("opacity", cpp::Data(opacities));
+  transferFunction.setParam("color", cpp::CopiedData(colors));
+  transferFunction.setParam("opacity", cpp::CopiedData(opacities));
   transferFunction.setParam("valueRange", valueRange);
   transferFunction.commit();
 
@@ -191,10 +191,10 @@ cpp::GeometricModel Builder::makeGroundPlane(float planeExtent) const
         startingIndex, startingIndex + 1, startingIndex + 2, startingIndex + 3);
   }
 
-  planeGeometry.setParam("vertex.position", cpp::Data(v_position));
-  planeGeometry.setParam("vertex.normal", cpp::Data(v_normal));
-  planeGeometry.setParam("vertex.color", cpp::Data(v_color));
-  planeGeometry.setParam("index", cpp::Data(indices));
+  planeGeometry.setParam("vertex.position", cpp::CopiedData(v_position));
+  planeGeometry.setParam("vertex.normal", cpp::CopiedData(v_normal));
+  planeGeometry.setParam("vertex.color", cpp::CopiedData(v_color));
+  planeGeometry.setParam("index", cpp::CopiedData(indices));
 
   planeGeometry.commit();
 

@@ -1,14 +1,8 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-/* This is a small example tutorial how to use OSPRay in an application.
- *
- * On Linux build it in the build_directory with
- *   g++ ../apps/ospTutorial/ospTutorial.cpp -I ../ospray/include \
- *       -I ../../rkcommon -L . -lospray -Wl,-rpath,. -o ospTutorial
- * On Windows build it in the build_directory\$Configuration with
- *   cl ..\..\apps\ospTutorial\ospTutorial.cpp /EHsc -I ..\..\ospray\include ^
- *      -I ..\.. -I ..\..\..\rkcommon ospray.lib
+/* This is a small example tutorial how to use OSPRay in an application using
+   GLM instead of rkcommon for math types.
  */
 
 #include <errno.h>
@@ -21,14 +15,28 @@
 #include <alloca.h>
 #endif
 
+#include <cstring>
+
+#include <iostream>
 #include <vector>
 
 #include "ospray/ospray_cpp.h"
 
-using namespace rkcommon::math;
+#include "glm/vec2.hpp"
+#include "glm/vec3.hpp"
+#include "glm/vec4.hpp"
+
+namespace ospray {
+OSPTYPEFOR_SPECIALIZATION(glm::vec2, OSP_VEC2F);
+OSPTYPEFOR_SPECIALIZATION(glm::ivec2, OSP_VEC2I);
+OSPTYPEFOR_SPECIALIZATION(glm::vec3, OSP_VEC3F);
+OSPTYPEFOR_SPECIALIZATION(glm::uvec3, OSP_VEC3UI);
+OSPTYPEFOR_SPECIALIZATION(glm::vec4, OSP_VEC4F);
+} // namespace ospray
 
 // helper function to write the rendered image as PPM file
-void writePPM(const char *fileName, const vec2i &size, const uint32_t *pixel)
+void writePPM(
+    const char *fileName, const glm::ivec2 &size, const uint32_t *pixel)
 {
   FILE *file = fopen(fileName, "wb");
   if (file == nullptr) {
@@ -54,27 +62,27 @@ void writePPM(const char *fileName, const vec2i &size, const uint32_t *pixel)
 int main(int argc, const char **argv)
 {
   // image size
-  vec2i imgSize;
+  glm::ivec2 imgSize;
   imgSize.x = 1024; // width
   imgSize.y = 768; // height
 
   // camera
-  vec3f cam_pos{0.f, 0.f, 0.f};
-  vec3f cam_up{0.f, 1.f, 0.f};
-  vec3f cam_view{0.1f, 0.f, 1.f};
+  glm::vec3 cam_pos{0.f, 0.f, 0.f};
+  glm::vec3 cam_up{0.f, 1.f, 0.f};
+  glm::vec3 cam_view{0.1f, 0.f, 1.f};
 
   // triangle mesh data
-  std::vector<vec3f> vertex = {vec3f(-1.0f, -1.0f, 3.0f),
-      vec3f(-1.0f, 1.0f, 3.0f),
-      vec3f(1.0f, -1.0f, 3.0f),
-      vec3f(0.1f, 0.1f, 0.3f)};
+  std::vector<glm::vec3> vertex = {glm::vec3(-1.0f, -1.0f, 3.0f),
+      glm::vec3(-1.0f, 1.0f, 3.0f),
+      glm::vec3(1.0f, -1.0f, 3.0f),
+      glm::vec3(0.1f, 0.1f, 0.3f)};
 
-  std::vector<vec4f> color = {vec4f(0.9f, 0.5f, 0.5f, 1.0f),
-      vec4f(0.8f, 0.8f, 0.8f, 1.0f),
-      vec4f(0.8f, 0.8f, 0.8f, 1.0f),
-      vec4f(0.5f, 0.9f, 0.5f, 1.0f)};
+  std::vector<glm::vec4> color = {glm::vec4(0.9f, 0.5f, 0.5f, 1.0f),
+      glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
+      glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
+      glm::vec4(0.5f, 0.9f, 0.5f, 1.0f)};
 
-  std::vector<vec3ui> index = {vec3ui(0, 1, 2), vec3ui(1, 2, 3)};
+  std::vector<glm::uvec3> index = {glm::uvec3(0, 1, 2), glm::uvec3(1, 2, 3)};
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
   // e.g. "--osp:debug"
