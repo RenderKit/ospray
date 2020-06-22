@@ -3,6 +3,7 @@ stages:
   - test-build
   - test-src
   - deploy
+  - scan
 
 variables:
   GIT_DEPTH: "15"
@@ -415,3 +416,38 @@ release-windows:
     paths:
       - build_release\ospray*.zip
       - build_release\ospray*.msi
+
+scan-bdba-linux:
+  <<: *release_job
+  stage: scan
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
+  script:
+    - scripts/scan/bdba.sh build_release/ospray-*.linux.tar.gz
+  dependencies:
+    - release-linux
+  tags:
+    - docker
+
+scan-bdba-windows:
+  <<: *release_job
+  stage: scan
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
+  script:
+    - scripts/scan/bdba.sh build_release/ospray-*.windows.msi 
+    - scripts/scan/bdba.sh build_release/ospray-*.windows.zip 
+  dependencies:
+    - release-windows
+  tags:
+    - docker
+
+scan-bdba-osx:
+  <<: *release_job
+  stage: scan
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
+  script:
+    - scripts/scan/bdba.sh build_release/ospray-*.macosx.pkg 
+    - scripts/scan/bdba.sh build_release/ospray-*.macosx.zip 
+  dependencies:
+    - release-osx-clang
+  tags:
+    - docker
