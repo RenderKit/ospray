@@ -16,7 +16,7 @@ macro(ospray_install_namelink NAME)
     set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX})
     execute_process(COMMAND "${CMAKE_COMMAND}" -E
         create_symlink ${TARGET_NAME} ${SYMLINK})
-    install(PROGRAMS ${SYMLINK} DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    install(PROGRAMS ${SYMLINK} ${ARGN} DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT redist)
   endif()
    
@@ -29,7 +29,7 @@ macro(ospray_install_namelink NAME)
     endif()
     execute_process(COMMAND "${CMAKE_COMMAND}" -E
         create_symlink ${TARGET_NAME} ${SYMLINK})
-    install(PROGRAMS ${SYMLINK} DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    install(PROGRAMS ${SYMLINK} ${ARGN} DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT redist)
   endif()
 endmacro()
@@ -37,10 +37,18 @@ endmacro()
 macro(ospray_add_dependent_lib TARGET_NAME)
   if (TARGET ${TARGET_NAME})
     get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
+    # first/default configuration
     list(GET CONFIGURATIONS 0 CONFIGURATION)
     get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
     list(APPEND DEPENDENT_LIBS ${LIBRARY})
     ospray_install_namelink(${LIBRARY})
+    # potentially Debug configuration
+    list(FIND CONFIGURATIONS "DEBUG" FOUND)
+    if(FOUND GREATER 0)
+      get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_DEBUG)
+      list(APPEND DEPENDENT_LIBS_DEBUG ${LIBRARY})
+      ospray_install_namelink(${LIBRARY} CONFIGURATIONS Debug)
+    endif()
   else()
     message(STATUS "Skipping target '${TARGET_NAME}")
   endif()
@@ -71,14 +79,17 @@ if (WIN32)
   find_file(EMBREE_DLL embree3.dll HINTS ${EMBREE_DLL_HINTS})
   mark_as_advanced(EMBREE_DLL)
   list(APPEND DEPENDENT_LIBS ${EMBREE_DLL})
-  install(PROGRAMS ${DEPENDENT_LIBS}
-          DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
+  set(INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
 else()
   # TODO use ospray_add_dependent_lib(embree) when v3.10 (with targets) is minimum
   list(APPEND DEPENDENT_LIBS ${EMBREE_LIBRARY})
-  install(PROGRAMS ${DEPENDENT_LIBS}
-          DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
   ospray_install_namelink(${EMBREE_LIBRARY})
+  set(INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
+endif()
+install(PROGRAMS ${DEPENDENT_LIBS} DESTINATION ${INSTALL_DIR} COMPONENT redist)
+if (DEPENDENT_LIBS_DEBUG)
+  install(PROGRAMS ${DEPENDENT_LIBS_DEBUG} CONFIGURATIONS Debug
+          DESTINATION ${INSTALL_DIR} COMPONENT redist)
 endif()
 
 # Install MSVC runtime
