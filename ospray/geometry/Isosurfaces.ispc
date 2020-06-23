@@ -89,10 +89,7 @@ void Isosurfaces_intersect_kernel(
       ray->geomID = args->geomID;
       ray->primID = Isosurfaces_primID(self, hit.sample);
       ray->t = hit.t;
-      // TODO: This needs to be given the appropriate epsilon to use from
-      // OpenVKL. Waiting on addition of this API to OpenVKL's hit iterators
-      // for support.
-      ray->u = 1e-3; // transport epsilon to postIntersect
+      ray->u = hit.epsilon; // transport epsilon to postIntersect
 
       // NOTE(jda) - Initialize ray.Ng with something, even if it's wrong
       //             (better than garbage). Real normals are computed if DG_NS
