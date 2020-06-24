@@ -1,9 +1,11 @@
 stages:
   - build
-  - test-build
-  - test-src
-  - deploy
-  - scan
+  - docu
+  - test
+  - scan1
+  - scan2
+  - release
+  - scan3
 
 variables:
   GIT_DEPTH: "15"
@@ -39,10 +41,10 @@ variables:
     expire_in: 3 day
 
 .job_template: &release_job
-  stage: deploy
+  stage: release
   tags:
     - release
-  dependencies:
+  needs:
     - pdf
   only:
     - devel
@@ -50,7 +52,7 @@ variables:
     - /release/
 
 .job_template: &test_job
-  stage: test-build
+  stage: test
   tags:
     - docker
   artifacts:
@@ -213,74 +215,52 @@ build-windows-msvc15:
 #    - win
 #  <<: *build_artifacts
 
-build-scan-kw:
-  stage: build
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
-  script:
-    - scripts/build_gitlab/build-scan-kw.sh
-    - test -s $CI_PROJECT_DIR/kw_build_number
-  tags:
-    - docker
-  artifacts:
-    paths:
-        - $CI_PROJECT_DIR/kw_build_number
-    expire_in: 3 day
-
-source-protex-scan:
-  stage: build
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
-  script:
-    - scripts/build_gitlab/source-scan-protex.sh
-  dependencies: []
-  tags: [docker]
-  allow_failure: true
-
 
 ### TEST JOBS ###
 
 test-centos7-gcc:
   <<: *test_job_unix
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
-  dependencies:
+  needs:
     - build-centos7-gcc
 
 test-centos8:
   <<: *test_job_unix
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
-  dependencies:
+  needs:
     - build-centos8
 
 test-ubuntu1604-gcc:
   <<: *test_job_unix
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
-  dependencies:
+  needs:
     - build-ubuntu1604-gcc
 
 test-ubuntu1804-gcc:
   <<: *test_job_unix
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
-  dependencies:
+  needs:
     - build-ubuntu1804-gcc
 
 test-ubuntu2004-gcc:
   <<: *test_job_unix
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
-  dependencies:
+  needs:
     - build-ubuntu2004-gcc
 
 test-tutorials:
-  stage: test-build
+  stage: test
   tags:
     - docker
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - scripts/tests/run_tutorials.sh
-  dependencies:
+  needs:
     - build-centos7-gcc
   allow_failure: true
 
 test-find-ospray:
-  stage: test-build
+  stage: test
   tags:
     - docker
     - modules
@@ -291,7 +271,7 @@ test-find-ospray:
     - cd buildtut
     - cmake -D ospray_DIR=`echo $CI_PROJECT_DIR/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray 
     - cmake --build .
-  dependencies:
+  needs:
     - build-centos7-gcc
 
 #test-windows-icc:
@@ -299,7 +279,7 @@ test-find-ospray:
 #  tags:
 #    - win
 #    - icc
-#  dependencies:
+#  needs:
 #    - build-windows-icc
 
 test-windows-msvc15:
@@ -307,7 +287,7 @@ test-windows-msvc15:
   tags:
     - win
     - msvc15
-  dependencies:
+  needs:
     - build-windows-msvc15
 
 test-windows-msvc14:
@@ -315,26 +295,15 @@ test-windows-msvc14:
   tags:
     - win
     - msvc14
-  dependencies:
-    - build-windows-msvc14
-
-test-kw-critical:
-  stage: test-src
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
-  script:
-    - scripts/build_gitlab/test-kw-critical.sh
   needs:
-    - build-scan-kw
-  tags:
-    - docker
-  allow_failure: true
+    - build-windows-msvc14
 
 generate-ci-baseline:
   <<: *test_job_unix
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   script:
     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/generate_baseline.sh
-  dependencies:
+  needs:
     - build-ubuntu1804-gcc
   artifacts:
     paths:
@@ -346,10 +315,11 @@ generate-ci-baseline:
 ### Documentation ###
 
 .job_template: &doc-defaults
-  stage: build
+  stage: docu
   tags:
     - docker
   image: $DOCKER_REGISTRY/ospray/docker-images:docu
+  needs: []
   variables:
     GIT_SUBMODULE_STRATEGY: normal
 
@@ -417,37 +387,76 @@ release-windows:
       - build_release\ospray*.zip
       - build_release\ospray*.msi
 
-scan-bdba-linux:
-  <<: *release_job
-  stage: scan
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
+
+### SCAN JOBS ###
+
+build-kw:
+  stage: scan1
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
-    - scripts/scan/bdba.sh build_release/ospray-*.linux.tar.gz
-  dependencies:
-    - release-linux
+    - scripts/build_gitlab/kw.sh
+    - test -s $CI_PROJECT_DIR/kw_build_number
+  tags:
+    - docker
+  needs: []
+  artifacts:
+    paths:
+        - $CI_PROJECT_DIR/kw_build_number
+    expire_in: 3 day
+
+protex:
+  stage: scan1
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  script:
+    - scripts/scan/protex.sh
+  needs: []
+  tags: [docker]
+  allow_failure: true
+
+kw-critical:
+  stage: scan2
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  script:
+    - scripts/scan/kw.sh
+  needs:
+    - build-kw
   tags:
     - docker
 
+scan-bdba-linux:
+  <<: *release_job
+  stage: scan3
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
+  script:
+    - scripts/scan/bdba.sh build_release/ospray-*.linux.tar.gz
+  needs:
+    - release-linux
+  tags:
+    - docker
+  allow_failure: true
+
 scan-bdba-windows:
   <<: *release_job
-  stage: scan
+  stage: scan3
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
   script:
     - scripts/scan/bdba.sh build_release/ospray-*.windows.msi 
     - scripts/scan/bdba.sh build_release/ospray-*.windows.zip 
-  dependencies:
+  needs:
     - release-windows
   tags:
     - docker
+  allow_failure: true
 
 scan-bdba-osx:
   <<: *release_job
-  stage: scan
+  stage: scan3
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
   script:
     - scripts/scan/bdba.sh build_release/ospray-*.macosx.pkg 
     - scripts/scan/bdba.sh build_release/ospray-*.macosx.zip 
-  dependencies:
+  needs:
     - release-osx-clang
   tags:
     - docker
+  allow_failure: true
