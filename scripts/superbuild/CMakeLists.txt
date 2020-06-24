@@ -51,13 +51,14 @@ endif()
 option(ALWAYS_REBUILD "Force every project to always be rebuilt?" OFF)
 
 option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
+set(ISPC_VERSION "v1.12.0" CACHE STRING "Which version of ISCP to download?")
 
 set(BUILD_RKCOMMON_VERSION "devel" CACHE STRING "Which version of rkcommon to build?")
 
 option(DOWNLOAD_TBB "Download TBB or use the only found in the system environment?" ON)
 set(TBB_VERSION "2020.2" CACHE STRING "Which version of TBB to download?")
 
-set(BUILD_EMBREE_VERSION "v3.10.0" CACHE STRING "Which version of Embree to build?")
+set(BUILD_EMBREE_VERSION "v3.11.0" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
 set(BUILD_OPENVKL_VERSION "devel" CACHE STRING "Which version of OpenVKL to build?")

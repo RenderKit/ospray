@@ -43,13 +43,13 @@ if (BUILD_EMBREE_FROM_SOURCE)
   endif()
 else()
   string(REPLACE "v" "" EMBREE_VERSION_NUMBER ${BUILD_EMBREE_VERSION})
-
+  set(EMBREE_BASE_URL "https://github.com/embree/embree/releases/download")
   if (APPLE)
-    set(EMBREE_URL "http://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.zip")
+    set(EMBREE_URL "${EMBREE_BASE_URL}/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.zip")
   elseif (WIN32)
-    set(EMBREE_URL "http://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x64.vc14.windows.zip")
+    set(EMBREE_URL "${EMBREE_BASE_URL}/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x64.vc14.windows.zip")
   else()
-    set(EMBREE_URL "http://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.linux.tar.gz")
+    set(EMBREE_URL "${EMBREE_BASE_URL}/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.linux.tar.gz")
   endif()
 
   ExternalProject_Add(${COMPONENT_NAME}
