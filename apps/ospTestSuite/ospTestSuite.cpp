@@ -8,6 +8,15 @@ OSPRayEnvironment *ospEnv;
 
 int main(int argc, char **argv)
 {
+  {
+    // Check to make sure these functions work without a currently set device
+    std::cout << "Verify device API usage prior to ospInit()..." << std::endl;
+    auto d = ospGetCurrentDevice();
+    ospDeviceRetain(d);
+    ospDeviceRelease(d);
+    std::cout << "...done!" << std::endl;
+  }
+
   ospInit(&argc, (const char **)argv);
 
   {

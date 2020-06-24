@@ -22,6 +22,9 @@ Version History
 -   Enabled C++ wrappers (`ospray_cpp`) to work with non-rkcommon math types
     -   Note that while the C API remains the same, the C++ wrappers will
         require some application updates to account for these changes
+-   Fix bug where `ospGetCurrentDevice` would crash if used before `ospInit`
+-   Allow `NULL` handles to be passed to `ospDeviceRetain` and
+    `ospDeviceRelease`
 
 ### Changes in v2.1.1:
 

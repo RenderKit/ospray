@@ -141,6 +141,15 @@ To use the newly committed device, you must call
 This then sets the given device as the object which will respond to all
 other OSPRay API calls.
 
+Device handle lifetimes are managed with two calls, the first which
+increments the internal reference count to the given `OSPDevice`
+
+    void ospDeviceRetain(OSPDevice)
+
+and the second which decrements the reference count
+
+    void ospDeviceRelease(OSPDevice)
+
 Users can change parameters on the device after initialization (from
 either method above), by calling
 
@@ -152,7 +161,17 @@ the device. If changes are made to the device that is already set as the
 current device, it does not need to be set as current again. Note this
 API call will increment the ref count of the returned device handle, so
 applications must use `ospDeviceRelease` when finished using the handle
-to avoid leaking the underlying device object.
+to avoid leaking the underlying device object. If there is no current
+device set, this will return an invalid NULL handle.
+
+When a device is created, its reference count is initially `1`. When
+a device is set as the current device, it internally has its reference
+count incremented. Note that `ospDeviceRetain` and `ospDeviceRelease`
+should only be used with reference counts that the application tracks:
+removing reference held by the current set device should be handled
+by `ospShutdown`. Thus `ospDeviceRelease` should only decrement the
+reference counts that come from `ospNewDevice`, `ospGetCurrentDevice`,
+and the number of explicit calls to `ospDeviceRetain`.
 
 OSPRay allows applications to query runtime properties of a device in
 order to do enhanced validation of what device was loaded at runtime.
@@ -1115,7 +1134,7 @@ type string "`plane`".
 
 OSPRay can directly render multiple isosurfaces of a volume without
 first tessellating them. To do so create an isosurfaces geometry by
-calling `ospNewGeometry` with type string "`isosurface`". 
+calling `ospNewGeometry` with type string "`isosurface`".
 The appearance information of the surfaces is set through
 the Geometric Model. Per-isosurface colors can be set by passing
 per-primitive colors to the Geometric Model, in order of the isosurface
