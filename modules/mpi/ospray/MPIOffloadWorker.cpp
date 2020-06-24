@@ -56,12 +56,14 @@ void runWorker(bool useMPIFabric)
       << "#w: running MPI worker process " << workerRank() << "/"
       << workerSize() << " on pid " << getpid() << "@" << hostname;
 
+#ifdef ENABLE_PROFILING
   const std::string worker_log_file =
       std::string(hostname) + "_" + std::to_string(workerRank()) + ".txt";
   std::ofstream fout(worker_log_file.c_str());
   fout << "Worker rank " << workerRank() << " on '" << hostname << "'\n"
        << "/proc/self/status:\n"
        << getProcStatus() << "\n=====\n";
+#endif
 
   std::unique_ptr<networking::Fabric> fabric;
   if (useMPIFabric)
@@ -94,6 +96,7 @@ void runWorker(bool useMPIFabric)
         << work::tagName(workTag);
 
     // We're exiting so sync out our debug log info
+#ifdef ENABLE_PROFILING
     if (workTag == work::FINALIZE) {
       ProfilingPoint workerEnd;
       fout << "Worker exiting, /proc/self/status:\n"
@@ -103,6 +106,7 @@ void runWorker(bool useMPIFabric)
            << std::flush;
       fout.close();
     }
+#endif
 
     dispatchWork(workTag, ospState, reader, *fabric);
 

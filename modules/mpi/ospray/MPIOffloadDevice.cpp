@@ -198,6 +198,7 @@ MPIOffloadDevice::~MPIOffloadDevice()
   if (dynamic_cast<MPIFabric *>(fabric.get()) && world.rank == 0) {
     postStatusMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
 
+#ifdef ENABLE_PROFILING
     {
       ProfilingPoint masterEnd;
       char hostname[512] = {0};
@@ -209,6 +210,7 @@ MPIOffloadDevice::~MPIOffloadDevice()
            << "Avg. CPU % during run: "
            << cpuUtilization(masterStart, masterEnd) << "%\n";
     }
+#endif
 
     networking::BufferWriter writer;
     writer << work::FINALIZE;
@@ -233,6 +235,7 @@ void MPIOffloadDevice::initializeDevice()
   if (mode == "mpi") {
     createMPI_RanksBecomeWorkers(&_ac, _av);
 
+#ifdef ENABLE_PROFILING
     char hostname[512] = {0};
     gethostname(hostname, 511);
     const std::string master_log_file = std::string(hostname) + "_master.txt";
@@ -241,6 +244,7 @@ void MPIOffloadDevice::initializeDevice()
          << "/proc/self/status:\n"
          << getProcStatus() << "\n=====\n";
     masterStart = ProfilingPoint();
+#endif
 
     // Only the master returns from this call
     fabric = rkcommon::make_unique<MPIFabric>(world, 0);
@@ -793,9 +797,11 @@ const void *MPIOffloadDevice::frameBufferMap(
 
   void *ptr = mapping->data();
   framebufferMappings[handle.i64] = std::move(mapping);
+#ifdef ENABLE_PROFILING
   ProfilingPoint end;
   std::cout << "OffloadDevice::frameBufferMap took "
             << elapsedTimeMs(start, end) << "\n";
+#endif
 
   return ptr;
 }

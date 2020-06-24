@@ -38,7 +38,8 @@ include(${OSPRAY_SDK_USE_FILE})
 
 rkcommon_configure_build_type()
 
-option(BUILD_TUTORIALS "Enable MPI module sample apps")
+option(BUILD_TUTORIALS "Enable MPI module sample apps" OFF)
+option(ENABLE_PROFILING "Enable MPI module internal profiling" OFF)
 
 add_subdirectory(common)
 add_subdirectory(external)

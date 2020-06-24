@@ -152,7 +152,9 @@ struct MPIOffloadDevice : public api::Device
 
   bool initialized{false};
 
+#ifdef ENABLE_PROFILING
   mpicommon::ProfilingPoint masterStart;
+#endif
 };
 
 template <typename T>

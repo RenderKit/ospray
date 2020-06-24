@@ -281,7 +281,9 @@ void DFB::waitUntilFinished()
   using namespace mpicommon;
   using namespace std::chrono;
 
+#ifdef ENABLE_PROFILING
   ProfilingPoint start;
+#endif
   std::unique_lock<std::mutex> lock(mutex);
   frameDoneCond.wait(lock, [&] { return frameIsDone; });
 
@@ -290,8 +292,8 @@ void DFB::waitUntilFinished()
       .wait();
   frameIsActive = false;
 
+#ifdef ENABLE_PROFILING
   ProfilingPoint end;
-#if 1
   std::cout << "Waiting for completion and sync of cancellation status: "
             << elapsedTimeMs(start, end) << "ms\n";
 #endif
@@ -304,14 +306,16 @@ void DFB::waitUntilFinished()
     return;
   }
 
+#ifdef ENABLE_PROFILING
   start = ProfilingPoint();
+#endif
   if (colorBufferFormat != OSP_FB_NONE) {
     gatherFinalTiles();
   } else if (hasVarianceBuffer) {
     gatherFinalErrors();
   }
+#ifdef ENABLE_PROFILING
   end = ProfilingPoint();
-#if 1
   std::cout << "Gather final tiles took: " << elapsedTimeMs(start, end)
             << "ms\n";
 #endif
@@ -544,7 +548,9 @@ void DFB::gatherFinalTiles()
   using namespace mpicommon;
   using namespace std::chrono;
 
+#ifdef ENABLE_PROFILING
   ProfilingPoint preGatherComputeStart;
+#endif
 
   const size_t tileSize = masterMsgSize(
       colorBufferFormat, hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer);
@@ -563,8 +569,8 @@ void DFB::gatherFinalTiles()
     }
   }
 
+#ifdef ENABLE_PROFILING
   ProfilingPoint startGather;
-#if 1
   std::cout << "Pre-gather took: "
             << elapsedTimeMs(preGatherComputeStart, startGather) << "ms\n";
 #endif
@@ -627,16 +633,18 @@ void DFB::gatherFinalTiles()
 
   tileOffsetsGather.wait();
 
+#ifdef ENABLE_PROFILING
   ProfilingPoint endGather;
-#if 1
   std::cout << "Gather time: " << elapsedTimeMs(startGather, endGather)
             << "ms\n";
 #endif
 
+  // Now we must decompress each ranks data to process it, though we
+  // already know how much data each is sending us and where to write it.
   if (IamTheMaster()) {
-    // Now we must decompress each ranks data to process it, though we
-    // already know how much data each is sending us and where to write it.
+#ifdef ENABLE_PROFILING
     ProfilingPoint startFbWrite;
+#endif
     tasking::parallel_for(workerSize(), [&](int i) {
       tasking::parallel_for(numTilesExpected[i], [&](int tid) {
         int processTileOffset = processOffsets[i] + tid;
@@ -664,8 +672,8 @@ void DFB::gatherFinalTiles()
         }
       });
     });
+#ifdef ENABLE_PROFILING
     ProfilingPoint endFbWrite;
-#if 1
     std::cout << "Master tile write time: "
               << elapsedTimeMs(startFbWrite, endFbWrite) << "ms\n";
 #endif

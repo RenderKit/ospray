@@ -30,3 +30,10 @@ target_include_directories(ospray_mpi_common
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon/maml>
     ${MPI_C_INCLUDE_PATH}
 )
+
+if (ENABLE_PROFILING)
+target_compile_definitions(ospray_mpi_common
+  PUBLIC
+    -DENABLE_PROFILING)
+endif()
+

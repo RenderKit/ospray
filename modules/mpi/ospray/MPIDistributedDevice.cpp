@@ -399,14 +399,16 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   world->refInc();
 
   auto *f = new ThreadedRenderTask(fb, [=]() {
+#ifdef ENABLE_PROFILING
     using namespace mpicommon; 
     ProfilingPoint start;
+#endif
     utility::CodeTimer timer;
     timer.start();
     renderer->renderFrame(fb, camera, world);
     timer.stop();
+#ifdef ENABLE_PROFILING
     ProfilingPoint end;
-#if 1
     std::cout << "Frame took " << elapsedTimeMs(start, end) << "ms, CPU: "
       << cpuUtilization(start, end) << "%\n";
 #endif

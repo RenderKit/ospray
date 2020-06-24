@@ -269,7 +269,6 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
     Camera *camera,
     DistributedWorld *world)
 {
-  using namespace std::chrono;
   std::shared_ptr<TileOperation> tileOperation = nullptr;
   if (fb->getLastRenderer() != renderer) {
     tileOperation = std::make_shared<WriteMultipleTileOperation>();
@@ -278,12 +277,13 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
     tileOperation = fb->getTileOperation();
   }
 
+#ifdef ENABLE_PROFILING
   ProfilingPoint start;
+#endif
   fb->startNewFrame(renderer->errorThreshold);
   void *perFrameData = renderer->beginFrame(fb, world);
+#ifdef ENABLE_PROFILING
   ProfilingPoint end;
-
-#if 1
   std::cout << "Start new frame took: " << elapsedTimeMs(start, end) << "ms\n";
 #endif
 
@@ -299,7 +299,9 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
   if ((ALLTASKS % workerSize()) > workerRank())
     NTASKS++;
 
+#ifdef ENABLE_PROFILING
   start = ProfilingPoint();
+#endif
   tasking::parallel_for(NTASKS, [&](int taskIndex) {
     const size_t tileID = taskIndex * workerSize() + workerRank();
     const size_t numTiles_x = fb->getNumTiles().x;
@@ -326,25 +328,29 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
 
     fb->setTile(tile);
   });
+#ifdef ENABLE_PROFILING
   end = ProfilingPoint();
-#if 1
   std::cout << "Render loop took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
     << cpuUtilization(start, end) << "%\n";
-#endif
 
   start = ProfilingPoint();
+#endif
+
   fb->waitUntilFinished();
+
+#ifdef ENABLE_PROFILING
   end = ProfilingPoint();
-#if 1
   std::cout << "Wait finished took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
     << cpuUtilization(start, end) << "%\n";
-#endif
 
   start = ProfilingPoint();
+#endif
+
   renderer->endFrame(fb, perFrameData);
   fb->endFrame(renderer->errorThreshold, camera);
+
+#ifdef ENABLE_PROFILING
   end = ProfilingPoint();
-#if 1
   std::cout << "End frame took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
     << cpuUtilization(start, end) << "%\n";
 #endif
