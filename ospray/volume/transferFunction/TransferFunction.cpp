@@ -3,8 +3,8 @@
 
 // ospray
 #include "TransferFunction.h"
-#include "TransferFunction_ispc.h"
 #include "common/Util.h"
+#include "volume/transferFunction/TransferFunction_ispc.h"
 
 namespace ospray {
 

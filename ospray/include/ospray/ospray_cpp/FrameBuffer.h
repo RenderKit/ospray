@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <cstring>
 #include "Camera.h"
 #include "Future.h"
 #include "GeometricModel.h"

@@ -7,7 +7,7 @@
 #include "common/Util.h"
 #include "geometry/GeometricModel.h"
 // ispc exports
-#include "Renderer_ispc.h"
+#include "render/Renderer_ispc.h"
 // ospray
 #include "LoadBalancer.h"
 

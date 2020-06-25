@@ -28,6 +28,8 @@ Version History
 -   Fix bug where `ospGetCurrentDevice` would crash if used before `ospInit`
 -   Allow `NULL` handles to be passed to `ospDeviceRetain` and
     `ospDeviceRelease`
+-   ISPC generated headers containing the exported functions for OSPRay's ISPC
+    types and functions are now distributed with the SDK.
 
 ### Changes in v2.1.1:
 

@@ -109,7 +109,7 @@ macro (ispc_compile)
   endif()
 
   set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
-  include_directories(${ISPC_TARGET_DIR})
+  include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
   if(ISPC_INCLUDE_DIR)
     string(REPLACE ";" ";-I;" ISPC_INCLUDE_DIR_PARMS "${ISPC_INCLUDE_DIR}")
@@ -180,8 +180,9 @@ macro (ispc_compile)
     endif()
 
     add_custom_command(
-      OUTPUT ${results} ${ISPC_TARGET_DIR}/${fname}_ispc.h
+      OUTPUT ${results} ${ISPC_TARGET_DIR}/${dir}/${fname}_ispc.h
       COMMAND ${CMAKE_COMMAND} -E make_directory ${outdir}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${ISPC_TARGET_DIR}/${dir}/
       COMMAND ${ISPC_EXECUTABLE}
       ${ISPC_DEFINITIONS}
       -I ${CMAKE_CURRENT_SOURCE_DIR}
@@ -193,7 +194,7 @@ macro (ispc_compile)
       --woff
       --opt=fast-math
       ${ISPC_ADDITIONAL_ARGS}
-      -h ${ISPC_TARGET_DIR}/${fname}_ispc.h
+      -h ${ISPC_TARGET_DIR}/${dir}/${fname}_ispc.h
       -MMM  ${outdir}/${fname}.dev.idep
       -o ${outdir}/${fname}.dev${ISPC_TARGET_EXT}
       ${input}

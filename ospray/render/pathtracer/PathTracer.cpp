@@ -8,9 +8,9 @@
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 // ispc exports
-#include "GeometryLight_ispc.h"
-#include "Material_ispc.h"
-#include "PathTracer_ispc.h"
+#include "render/pathtracer/GeometryLight_ispc.h"
+#include "render/pathtracer/PathTracer_ispc.h"
+#include "render/pathtracer/materials/Material_ispc.h"
 // std
 #include <map>
 

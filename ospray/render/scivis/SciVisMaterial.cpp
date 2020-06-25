@@ -3,7 +3,7 @@
 
 #include "SciVisMaterial.h"
 // ispc
-#include "SciVisMaterial_ispc.h"
+#include "render/scivis/SciVisMaterial_ispc.h"
 
 namespace ospray {
 

@@ -7,7 +7,7 @@
 #include "common/World.h"
 // ispc exports
 #include <cmath>
-#include "Subdivision_ispc.h"
+#include "geometry/Subdivision_ispc.h"
 
 namespace ospray {
 

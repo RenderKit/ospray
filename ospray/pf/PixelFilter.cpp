@@ -3,8 +3,8 @@
 
 // ospray
 #include "PixelFilter.h"
-#include "LUTPixelFilter_ispc.h"
-#include "PixelFilter_ispc.h"
+#include "pf/LUTPixelFilter_ispc.h"
+#include "pf/PixelFilter_ispc.h"
 
 namespace ospray {
 

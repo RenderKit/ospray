@@ -3,10 +3,10 @@
 
 // ospray
 #include "volume/Volume.h"
-#include "Volume_ispc.h"
 #include "common/Data.h"
 #include "common/Util.h"
 #include "transferFunction/TransferFunction.h"
+#include "volume/Volume_ispc.h"
 
 #include "openvkl/openvkl.h"
 

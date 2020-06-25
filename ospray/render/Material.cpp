@@ -6,7 +6,7 @@
 #include "common/Util.h"
 #include "texture/Texture2D.h"
 
-#include "Material_ispc.h"
+#include "texture/TextureParam_ispc.h"
 
 namespace ospray {
 

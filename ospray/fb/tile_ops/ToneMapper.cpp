@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ToneMapper.h"
-#include "ToneMapper_ispc.h"
+#include "fb/tile_ops/ToneMapper_ispc.h"
 
 using namespace rkcommon;
 

@@ -3,7 +3,7 @@
 
 #include "Mix.h"
 // ispc
-#include "Mix_ispc.h"
+#include "render/pathtracer/materials/Mix_ispc.h"
 
 namespace ospray {
 namespace pathtracer {

@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "TextureParam_ispc.h"
 #include "common/Managed.h"
 #include "common/Util.h"
+#include "texture/TextureParam_ispc.h"
 
 namespace ospray {
 

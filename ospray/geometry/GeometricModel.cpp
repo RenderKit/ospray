@@ -5,8 +5,8 @@
 #include "GeometricModel.h"
 #include "../render/Material.h"
 // ispc exports
-#include "GeometricModel_ispc.h"
-#include "Geometry_ispc.h"
+#include "geometry/GeometricModel_ispc.h"
+#include "geometry/Geometry_ispc.h"
 
 namespace ospray {
 

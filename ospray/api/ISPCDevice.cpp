@@ -38,7 +38,7 @@
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/CodeTimer.h"
 
-#include "ISPCDevice_ispc.h"
+#include "api/ISPCDevice_ispc.h"
 
 extern "C" RTCDevice ispc_embreeDevice()
 {

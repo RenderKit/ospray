@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "HDRILight.h"
-#include "HDRILight_ispc.h"
+#include "lights/HDRILight_ispc.h"
 
 namespace ospray {
 

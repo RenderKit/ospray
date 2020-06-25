@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PerspectiveCamera.h"
-#include "PerspectiveCamera_ispc.h"
+#include "camera/PerspectiveCamera_ispc.h"
 
 namespace ospray {
 

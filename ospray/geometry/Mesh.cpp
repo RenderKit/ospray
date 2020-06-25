@@ -7,7 +7,7 @@
 #include "common/World.h"
 // ispc exports
 #include <cmath>
-#include "Mesh_ispc.h"
+#include "geometry/Mesh_ispc.h"
 
 namespace ospray {
 

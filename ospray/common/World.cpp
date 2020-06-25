@@ -5,7 +5,7 @@
 #include "World.h"
 #include "api/ISPCDevice.h"
 // ispc exports
-#include "World_ispc.h"
+#include "common/World_ispc.h"
 
 namespace ospray {
 

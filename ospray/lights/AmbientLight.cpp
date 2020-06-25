@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AmbientLight.h"
-#include "AmbientLight_ispc.h"
+#include "lights/AmbientLight_ispc.h"
 
 namespace ospray {
 

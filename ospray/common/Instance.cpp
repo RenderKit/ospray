@@ -1,13 +1,13 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Instance.h"
 #include "Data.h"
 // ispc exports
-#include "Geometry_ispc.h"
-#include "Instance_ispc.h"
-#include "OSPCommon_ispc.h"
+#include "common/Instance_ispc.h"
+#include "common/OSPCommon_ispc.h"
+#include "geometry/Geometry_ispc.h"
 
 namespace ospray {
 

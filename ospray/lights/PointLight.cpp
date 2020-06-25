@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PointLight.h"
-#include "PointLight_ispc.h"
+#include "lights/PointLight_ispc.h"
 
 namespace ospray {
 PointLight::PointLight()

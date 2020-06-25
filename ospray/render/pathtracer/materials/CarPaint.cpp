@@ -5,7 +5,7 @@
 #include "common/Data.h"
 #include "math/spectrum.h"
 // ispc
-#include "CarPaint_ispc.h"
+#include "render/pathtracer/materials/CarPaint_ispc.h"
 
 namespace ospray {
 namespace pathtracer {
