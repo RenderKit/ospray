@@ -11,9 +11,11 @@ add_executable(ospBenchmark
   ospBenchmark.cpp
   BaseFixture.cpp
 
+  benchmarks/BoxesAo.cpp
   benchmarks/CornellBoxSpp.cpp
   benchmarks/GravitySpheresVolume.cpp
   benchmarks/PerlinNoiseVolumes.cpp
+  benchmarks/ClippingGeometries.cpp
 )
 
 target_link_libraries(ospBenchmark

@@ -4,11 +4,15 @@
 #include "BaseFixture.h"
 #include "rkcommon/utility/SaveImage.h"
 
+#include <algorithm>
+
 std::string BaseFixture::dumpFinalImageDir;
 
-BaseFixture::BaseFixture(std::string r, std::string s)
-    : rendererType(r), scene(s)
-{}
+BaseFixture::BaseFixture(const std::string &s, const std::string &r)
+    : scene(s), rendererType(r)
+{
+  SetName(s + "/" + r);
+}
 
 void BaseFixture::SetUp(::benchmark::State &)
 {
@@ -46,15 +50,15 @@ void BaseFixture::SetUp(::benchmark::State &)
 
 void BaseFixture::TearDown(::benchmark::State &)
 {
-  if (!dumpFinalImageDir.empty() && !outputFilename.empty()) {
+  if (!dumpFinalImageDir.empty() && !name.empty()) {
+    std::string of = name;
+    std::replace(of.begin(), of.end(), '/', '_');
+
     framebuffer.resetAccumulation();
     framebuffer.renderFrame(renderer, camera, world);
-
     auto *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
-    utility::writePPM(dumpFinalImageDir + "/" + outputFilename + ".ppm",
-        imgSize.x,
-        imgSize.y,
-        fb);
+    utility::writePPM(
+        dumpFinalImageDir + "/" + of + ".ppm", imgSize.x, imgSize.y, fb);
     framebuffer.unmap(fb);
   }
 
@@ -63,3 +67,31 @@ void BaseFixture::TearDown(::benchmark::State &)
   camera = nullptr;
   world = nullptr;
 }
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "boxes", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "random_spheres", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "random_spheres", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "streamlines", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "streamlines", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "planes", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "planes", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_gravity_spheres_volume", "scivis");
+OSPRAY_DEFINE_BENCHMARK(
+    BaseFixture, "clip_gravity_spheres_volume", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_perlin_noise_volumes", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_perlin_noise_volumes", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_particle_volume", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_particle_volume", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume_isosurface", "scivis");
+OSPRAY_DEFINE_BENCHMARK(
+    BaseFixture, "particle_volume_isosurface", "pathtracer");

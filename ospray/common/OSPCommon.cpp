@@ -144,7 +144,7 @@ void initFromCommandLine(int *_ac, const char ***_av)
         }
         removeArgs(ac, av, i, 1);
       } else if (beginsWith(parm, "--osp:num-threads")) {
-        int nt = std::min(1, getArgInt(parm));
+        int nt = std::max(1, getArgInt(parm));
         device->setParam("numThreads", nt);
         removeArgs(ac, av, i, 1);
       } else if (beginsWith(parm, "--osp:set-affinity")) {
