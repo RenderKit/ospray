@@ -2,7 +2,7 @@
 ## SPDX-License-Identifier: Apache-2.0
 
 # ISPC versions to look for, in decending order (newest first)
-set(ISPC_VERSION_WORKING "1.13.0" "1.12.0" "1.10.0")
+set(ISPC_VERSION_WORKING "1.12.0" "1.10.0")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 if (NOT ISPC_EXECUTABLE)
@@ -60,6 +60,11 @@ endif()
 
 if ("${ISPC_VERSION}" STREQUAL "1.11.0")
   message(FATAL_ERROR "ISPC v1.11.0 is incompatible with OSPRay.")
+endif()
+message(STATUS "Found ISPC v${ISPC_VERSION}: ${ISPC_EXECUTABLE}")
+list(FIND ISPC_VERSION_WORKING ${ISPC_VERSION} ISPC_VERSION_TESTED)
+if (ISPC_VERSION_TESTED EQUAL -1)
+  message(WARNING "Using untested version ${ISPC_VERSION} of Intel SPMD Compiler (ISPC), proceed at own risk. Supported versions are ${ISPC_VERSION_WORKING}.")
 endif()
 
 set(OSPRAY_ISPC_ADDRESSING 32 CACHE STRING "32 vs 64 bit addressing in ispc")
