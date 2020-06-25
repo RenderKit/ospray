@@ -207,7 +207,7 @@ void Texture2DTransform::SetUp()
   {
     // Create quads data
     std::array<vec3f, 4 * cols * rows> position;
-    std::array<vec4ui, 4 * cols * rows> index;
+    std::array<vec4ui, cols * rows> index;
     rkcommon::index_sequence_2D idx(vec2i(cols, rows));
     for (auto i : idx) {
       auto l = static_cast<vec2f>(i) * 5.f;
