@@ -13,7 +13,7 @@ struct SpotLight
   linear3f light2world; // coordinate frame, with vz == direction that the
                         // SpotLight is emitting
   linear3f world2light;
-  vec3f power; // RGB color and intensity of the SpotLight
+  vec3f intensity; // RGB color and intensity of the SpotLight
   float cosAngleMax; // Angular limit of the spot in an easier to use form:
                      // cosine of the half angle in radians
   float cosAngleScale; // 1/(cos(border of the penumbra area) - cosAngleMax);
@@ -80,16 +80,26 @@ Light_SampleRes SpotLight_sample(
   // cosine of the negated light direction and light vector.
   const float cosAngle = -dot(self->light2world.vz, res.dir);
 
-  if (self->radius > 0.)
-    res.pdf = self->diskPdf * dist2 * abs(cosAngle);
-  else
+  if (self->radius > 0.) {
+    // convert area PDF to solid angle PDF
+    res.pdf = self->diskPdf * (dist2 / abs(cosAngle));
+    // calculate the attenuated emitted radiance
+    res.weight = self->super.radiance
+        * SpotLight_angularAttenuation(self, cosAngle, res.dir);
+    res.weight = res.weight / res.pdf;
+  } else {
     res.pdf = inf; // we always take this sample
-
-  // convert from power to radiance by attenuating by distance^2; attenuate by
-  // angle
-  res.weight = self->power
-      * (sqr(invdist) * SpotLight_angularAttenuation(self, cosAngle, res.dir));
-
+    // convert from intensity to radiance by attenuating by distance^2;
+    // attenuate by angle
+    res.weight = self->intensity
+        * (sqr(invdist)
+            * SpotLight_angularAttenuation(self, cosAngle, res.dir));
+    // if the spotlight does not use a measured LDF we
+    // simulate Lambertian behavior by multiplication with cosineAngle
+    if (!self->lid) {
+      res.weight = res.weight * abs(cosAngle);
+    }
+  }
   return res;
 }
 
@@ -112,11 +122,12 @@ Light_EvalRes SpotLight_eval(const uniform Light *uniform super,
       if (t > minDist & t <= maxDist) {
         const vec3f vd = vp + t * dir;
         if (dot(vd, vd) < sqr(self->radius)) { // inside disk?
-          const float pdf = self->diskPdf * abs(cosAngle);
-          res.radiance = self->power
-              * (SpotLight_angularAttenuation(self, cosAngle, dir)
-                  * pdf); // *sqr(t)/sqr(t) cancels
-          res.pdf = pdf * sqr(t);
+          // calculate the attenuated emitted radiance
+          res.radiance = self->super.radiance
+              * SpotLight_angularAttenuation(self, cosAngle, dir);
+          const float pdf = self->diskPdf;
+          // convert area PDF to solid angle PDF
+          res.pdf = pdf * (sqr(t) / abs(cosAngle));
         }
       }
     }
@@ -131,6 +142,8 @@ Light_EvalRes SpotLight_eval(const uniform Light *uniform super,
 export void SpotLight_set(void *uniform super,
     const uniform vec3f &position,
     const uniform linear3f &frame,
+    const uniform vec3f &radiance,
+    const uniform vec3f &intensity,
     uniform float cosAngleMax,
     uniform float cosAngleScale,
     uniform float radius,
@@ -140,7 +153,8 @@ export void SpotLight_set(void *uniform super,
   SpotLight *uniform self = (SpotLight * uniform) super;
   self->position = position;
   self->light2world = frame;
-  self->power = self->super.radiance;
+  self->super.radiance = radiance;
+  self->intensity = intensity;
   self->cosAngleMax = cosAngleMax;
   self->cosAngleScale = cosAngleScale;
   self->radius = radius;
@@ -165,6 +179,8 @@ export void *uniform SpotLight_create()
   SpotLight_set(self,
       make_vec3f(0.f),
       make_LinearSpace3f_identity(),
+      make_vec3f(1.f),
+      make_vec3f(1.f),
       0.f,
       100.f,
       0.f,

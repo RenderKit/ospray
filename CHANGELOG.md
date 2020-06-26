@@ -16,6 +16,13 @@ Version History
 -   Support stereo3d mode for panoramic camera
 -   Add new `stereoMode` `OSP_STEREO_TOP_BOTTOM` (with left eye at top
     half of the image)
+-   Fixed non-physical behavior of the `spot` and `sphere` light sources
+    -   for area lights (when `radius > 0`) surfaces close to the light
+        will be darker
+    -   the `spot` with now has an angular falloff, such that a disk
+        light is a proper lambertian area light, which leads to darker
+        regions perpedicular to its direction (thus barely visible with
+        a typically small `openingAngle`)
 -   Support for Open VKL v0.10.0 and its new sampler object API, thus
     this is now the requires minimum version
 -   Move from `ospcommon` to `rkcommon` v1.4.0

@@ -23,6 +23,22 @@ void SpotLight::commit()
   auto direction = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
   auto openingAngle = getParam<float>("openingAngle", 180.f);
   auto penumbraAngle = getParam<float>("penumbraAngle", 5.f);
+  auto radius = getParam<float>("radius", 0.f);
+
+  // for the spot light color * intensity
+  // does not parameterize radiance but radiant intensiy
+  vec3f radIntensity = radiance;
+
+  // converting radiant intensity to radiance
+  // for the case that the spot light represents an area
+  // light source with a disk shape
+  if (radius > 0.0f) {
+    vec3f power = 2.0f * M_PI * radIntensity;
+    float diskArea = M_PI * radius * radius;
+    radiance = power / (M_PI * diskArea);
+    // lagacy code to match old behavior
+    radiance *= 0.5f;
+  }
 
   // per default perpendicular to direction
   vec3f c0 = abs(direction.x) < abs(direction.y)
@@ -68,9 +84,11 @@ void SpotLight::commit()
   ispc::SpotLight_set(getIE(),
       (const ispc::vec3f &)position,
       (const ispc::LinearSpace3f &)frame,
+      (const ispc::vec3f &)radiance,
+      (const ispc::vec3f &)radIntensity,
       cosAngleMax,
       cosAngleScale,
-      getParam<float>("radius", 0.f),
+      radius,
       (const ispc::vec2i &)size,
       lid ? lid->data() : nullptr);
 }
