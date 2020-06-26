@@ -39,7 +39,7 @@ build-centos7-intel:
         export BUILD_OPENVKL_VERSION=master;
       else
         export BUILD_OSPRAY_VERSION=devel;
-        export BUILD_OPENVKL_VERSION=679d598d;
+        export BUILD_OPENVKL_VERSION=devel;
       fi
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
 
@@ -54,7 +54,7 @@ build-centos7-openmpi:
         export BUILD_OPENVKL_VERSION=master;
       else
         export BUILD_OSPRAY_VERSION=devel;
-        export BUILD_OPENVKL_VERSION=679d598d;
+        export BUILD_OPENVKL_VERSION=devel;
       fi
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
 
@@ -68,7 +68,7 @@ build-centos8-mpich:
         export BUILD_OPENVKL_VERSION=master;
       else
         export BUILD_OSPRAY_VERSION=devel;
-        export BUILD_OPENVKL_VERSION=679d598d;
+        export BUILD_OPENVKL_VERSION=devel;
       fi
     - export PATH=$PATH:/usr/lib64/mpich/bin/
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
@@ -83,7 +83,7 @@ build-centos8-openmpi:
         export BUILD_OPENVKL_VERSION=master;
       else
         export BUILD_OSPRAY_VERSION=devel;
-        export BUILD_OPENVKL_VERSION=679d598d;
+        export BUILD_OPENVKL_VERSION=devel;
       fi
     - export PATH=$PATH:/usr/lib64/openmpi/bin/
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION

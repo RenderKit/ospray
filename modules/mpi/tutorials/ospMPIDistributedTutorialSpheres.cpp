@@ -61,11 +61,13 @@ int main(int argc, char **argv)
     mpiDevice.setCurrent();
 
     // set an error callback to catch any OSPRay errors and exit the application
-    ospDeviceSetErrorFunc(
-        mpiDevice.handle(), [](OSPError error, const char *errorDetails) {
+    ospDeviceSetErrorCallback(
+        mpiDevice.handle(),
+        [](void *data, OSPError error, const char *errorDetails) {
           std::cerr << "OSPRay error: " << errorDetails << std::endl;
           exit(error);
-        });
+        },
+        nullptr);
 
     // all ranks specify the same rendering parameters, with the exception of
     // the data to be rendered, which is distributed among the ranks
@@ -75,14 +77,14 @@ int main(int argc, char **argv)
 
     // create the "world" model which will contain all of our geometries
     cpp::World world;
-    world.setParam("instance", cpp::Data(spheres));
+    world.setParam("instance", cpp::CopiedData(spheres));
 
     /*
      * Note: We've taken care that all the generated spheres are completely
      * within the bounds, and we don't have ghost data or portions of speres
      * to clip off. Thus we actually don't need to set region at all in
      * this tutorial. Example:
-     * world.setParam("region", cpp::Data(regionBounds));
+     * world.setParam("region", cpp::CopiedData(regionBounds));
      */
 
     world.commit();
@@ -98,7 +100,7 @@ int main(int argc, char **argv)
     lights[1].setParam("direction", vec3f(-1.f, -1.f, 0.5f));
     lights[1].commit();
 
-    renderer.setParam("lights", cpp::Data(lights));
+    renderer.setParam("lights", cpp::CopiedData(lights));
     renderer.setParam("aoSamples", 1);
 
     // create a GLFW OSPRay window: this object will create and manage the
@@ -210,7 +212,7 @@ cpp::Instance makeLocalSpheres(
 
   cpp::Geometry sphereGeom("sphere");
   sphereGeom.setParam("radius", sphereRadius);
-  sphereGeom.setParam("sphere.position", cpp::Data(spheres));
+  sphereGeom.setParam("sphere.position", cpp::CopiedData(spheres));
   sphereGeom.commit();
 
   vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
@@ -223,7 +225,7 @@ cpp::Instance makeLocalSpheres(
   model.commit();
 
   cpp::Group group;
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   cpp::Instance instance(group);

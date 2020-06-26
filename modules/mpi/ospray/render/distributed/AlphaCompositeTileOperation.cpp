@@ -4,7 +4,7 @@
 #include "AlphaCompositeTileOperation.h"
 #include <memory>
 #include "../../fb/DistributedFrameBuffer.h"
-#include "DistributedFrameBuffer_ispc.h"
+#include "fb/DistributedFrameBuffer_ispc.h"
 
 namespace ospray {
 

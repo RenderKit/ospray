@@ -18,7 +18,7 @@
 #include "AlphaCompositeTileOperation.h"
 #include "DistributedRaycast.h"
 
-#include "DistributedRaycast_ispc.h"
+#include "render/distributed/DistributedRaycast_ispc.h"
 
 namespace ospray {
 namespace mpi {

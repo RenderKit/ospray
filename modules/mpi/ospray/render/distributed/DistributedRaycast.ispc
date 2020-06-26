@@ -48,22 +48,24 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
   Ray transformedRay = ray;
   transformRay(transformedRay, interval.rcp_xfm);
 
+  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
   foreach_unique (vm in volModel) {
     Volume *uniform volume = vm->volume;
     TransferFunction *uniform tf = vm->transferFunction;
 
-    VKLIntervalIterator intervalIterator;
-    vklInitIntervalIteratorV(&intervalIterator,
-        volume->vklVolume,
-        (varying vkl_vec3f *)&transformedRay.org,
-        (varying vkl_vec3f *)&transformedRay.dir,
-        (varying vkl_range1f *)&interval.interval,
-        vm->vklValueSelector);
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIteratorV(volume->vklVolume,
+            (varying vkl_vec3f *)&transformedRay.org,
+            (varying vkl_vec3f *)&transformedRay.dir,
+            (varying vkl_range1f *)&interval.interval,
+            vm->vklValueSelector,
+            intervalIteratorBuffer);
 
     VKLInterval interval;
-    while (vklIterateIntervalV(&intervalIterator, &interval) && alpha < 0.99f) {
+    while (vklIterateIntervalV(intervalIterator, &interval) && alpha < 0.99f) {
       const float nominalSamplingDt = interval.nominalDeltaT / samplingRate;
 
       // initial sub interval, based on our renderer-defined sampling rate

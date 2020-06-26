@@ -25,17 +25,24 @@ inline void initializeOSPRay(
 
   // set an error callback to catch any OSPRay errors and exit the application
   if (errorsFatal) {
-    ospDeviceSetErrorFunc(device, [](OSPError error, const char *errorDetails) {
-      std::cerr << "OSPRay error: " << errorDetails << std::endl;
-      exit(error);
-    });
+    ospDeviceSetErrorCallback(
+        device,
+        [](void *data, OSPError error, const char *errorDetails) {
+          std::cerr << "OSPRay error: " << errorDetails << std::endl;
+          exit(error);
+        },
+        nullptr);
   } else {
-    ospDeviceSetErrorFunc(device, [](OSPError, const char *errorDetails) {
-      std::cerr << "OSPRay error: " << errorDetails << std::endl;
-    });
+    ospDeviceSetErrorCallback(
+        device,
+        [](void *data, OSPError error, const char *errorDetails) {
+          std::cerr << "OSPRay error: " << errorDetails << std::endl;
+        },
+        nullptr);
   }
 
-  ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
+  ospDeviceSetStatusCallback(
+      device, [](void *data, const char *msg) { std::cout << msg; }, nullptr);
 
   bool warnAsErrors = true;
   auto logLevel = OSP_LOG_WARNING;

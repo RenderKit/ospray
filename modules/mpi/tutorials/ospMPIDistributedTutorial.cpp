@@ -30,6 +30,10 @@
 #include <alloca.h>
 #endif
 
+#include "rkcommon/math/vec.h"
+#include "rkcommon/math/box.h"
+// Note: we define OSPRAY_CPP_RKCOMMON_TYPES to use rkcommon types
+// natively through the C++ wrappers
 #include "ospray/ospray_cpp.h"
 
 using namespace ospray;
@@ -123,15 +127,15 @@ int main(int argc, char **argv)
 
     // create and setup model and mesh
     cpp::Geometry mesh("mesh");
-    cpp::Data data(4, vertex);
+    cpp::CopiedData data(vertex, 4);
     data.commit();
     mesh.setParam("vertex.position", data);
 
-    data = cpp::Data(4, color);
+    data = cpp::CopiedData(color, 4);
     data.commit();
     mesh.setParam("vertex.color", data);
 
-    data = cpp::Data(2, index);
+    data = cpp::CopiedData(index, 2);
     data.commit();
     mesh.setParam("index", data);
 
@@ -143,7 +147,7 @@ int main(int argc, char **argv)
 
     // put the model into a group (collection of models)
     cpp::Group group;
-    group.setParam("geometry", cpp::Data(model));
+    group.setParam("geometry", cpp::CopiedData(model));
     group.commit();
 
     // put the group into an instance (give the group a world transform)
@@ -151,12 +155,12 @@ int main(int argc, char **argv)
     instance.commit();
 
     cpp::World world;
-    world.setParam("instance", cpp::Data(instance));
+    world.setParam("instance", cpp::CopiedData(instance));
 
     // Specify the region of the world this rank owns
     box3f regionBounds(
         vec3f(mpiRank, 0.f, 2.5f), vec3f(1.f * (mpiRank + 1.f), 1.f, 3.5f));
-    world.setParam("region", cpp::Data(regionBounds));
+    world.setParam("region", cpp::CopiedData(regionBounds));
 
     world.commit();
 
@@ -165,8 +169,10 @@ int main(int argc, char **argv)
     renderer.commit();
 
     // create and setup framebuffer
-    cpp::FrameBuffer framebuffer(
-        imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+    cpp::FrameBuffer framebuffer(imgSize.x,
+        imgSize.y,
+        OSP_FB_SRGBA,
+        OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
     framebuffer.clear();
 
     // render one frame

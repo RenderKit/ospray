@@ -94,11 +94,13 @@ int main(int argc, char **argv)
     mpiDevice.setCurrent();
 
     // set an error callback to catch any OSPRay errors and exit the application
-    ospDeviceSetErrorFunc(
-        mpiDevice.handle(), [](OSPError error, const char *errorDetails) {
+    ospDeviceSetErrorCallback(
+        mpiDevice.handle(),
+        [](void *data, OSPError error, const char *errorDetails) {
           std::cerr << "OSPRay error: " << errorDetails << std::endl;
           exit(error);
-        });
+        },
+        nullptr);
 
     auto builder = testing::newBuilder(builderType);
     testing::setParam(builder, "rendererType", rendererType);

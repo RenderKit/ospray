@@ -14,9 +14,6 @@ echo "$KW_SERVER_IP;$KW_SERVER_PORT;$KW_USER;$KW_LTOKEN" > $KLOCWORK_LTOKEN
 mkdir build
 cd build
 
-# NOTE(jda) - Some Linux OSs need to have lib/ on LD_LIBRARY_PATH at build time
-export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
-
 cmake --version
 
 # NOTE: temporarily using older VKL version while waiting to move to new iterator API
@@ -24,7 +21,7 @@ cmake -L \
   -DBUILD_DEPENDENCIES_ONLY=ON \
   -DBUILD_EMBREE_FROM_SOURCE=OFF \
   -DCMAKE_INSTALL_LIBDIR=lib \
-  -DBUILD_OPENVKL_VERSION=679d598d \
+  -DBUILD_OPENVKL_VERSION=devel \
   "$@" ../scripts/superbuild
 
 cmake --build .

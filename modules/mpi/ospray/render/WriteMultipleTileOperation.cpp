@@ -3,7 +3,7 @@
 
 #include "WriteMultipleTileOperation.h"
 #include "../fb/DistributedFrameBuffer.h"
-#include "DistributedFrameBuffer_ispc.h"
+#include "fb/DistributedFrameBuffer_ispc.h"
 
 namespace ospray {
 using namespace rkcommon;

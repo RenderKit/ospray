@@ -345,8 +345,8 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
     windowState.fbSizeChanged = false;
     windowSize = windowState.windowSize;
 
-    framebuffer =
-        cpp::FrameBuffer(windowSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+    framebuffer = cpp::FrameBuffer(
+        windowSize.x, windowSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
     camera.setParam("aspect", windowSize.x / float(windowSize.y));
     camera.commit();
     fbNeedsClear = true;

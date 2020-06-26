@@ -5,8 +5,8 @@
 #include <snappy.h>
 #include <thread>
 #include "DistributedFrameBuffer_TileMessages.h"
-#include "DistributedFrameBuffer_ispc.h"
 #include "TileOperation.h"
+#include "fb/DistributedFrameBuffer_ispc.h"
 
 #include "rkcommon/tasking/parallel_for.h"
 #include "rkcommon/tasking/schedule.h"

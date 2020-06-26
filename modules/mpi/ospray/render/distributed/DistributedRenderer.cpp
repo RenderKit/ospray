@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedRenderer.h"
-#include "DistributedRenderer_ispc.h"
+#include "render/distributed/DistributedRenderer_ispc.h"
 
 namespace ospray {
 namespace mpi {
