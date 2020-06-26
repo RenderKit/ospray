@@ -54,7 +54,7 @@ template <typename T>
 static void setParamOnObject(OSPObject _obj, const char *p, const T &v)
 {
   auto *obj = (ManagedObject *)_obj;
-  obj->setParam<T>(p, v);
+  obj->setParam(p, v);
 }
 
 #define declare_param_setter(TYPE)                                             \

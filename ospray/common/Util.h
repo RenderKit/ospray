@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "./Managed.h"
-
 namespace ospray {
 
 template <typename OSPRAY_CLASS>

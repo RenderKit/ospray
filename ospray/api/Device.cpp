@@ -59,7 +59,7 @@ void Device::registerType(const char *type, FactoryFcn<Device> f)
 void Device::commit()
 {
   auto OSPRAY_DEBUG = utility::getEnvVar<int>("OSPRAY_DEBUG");
-  debugMode = OSPRAY_DEBUG.value_or(getParam<bool>("debug", 0));
+  debugMode = OSPRAY_DEBUG.value_or(getParam<bool>("debug", false));
 
   auto OSPRAY_WARN = utility::getEnvVar<int>("OSPRAY_WARN_AS_ERROR");
   warningsAreErrors =

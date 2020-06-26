@@ -57,7 +57,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   common/Instance.ispc
   common/Managed.cpp
   common/OSPCommon.ispc
-  common/Util.h
   common/World.ih
   common/World.ispc
   common/World.cpp
