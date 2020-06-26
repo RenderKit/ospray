@@ -31,6 +31,7 @@ Version History
 -   ISPC generated headers containing the exported functions for OSPRay's ISPC
     types and functions are now distributed with the SDK.
 -   Add CarPaint `flakeColor` parameter.  Defaults to current Aluminium
+-   Fixed Debug build (which were producing different images)
 
 ### Changes in v2.1.1:
 
