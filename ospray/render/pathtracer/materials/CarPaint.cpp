@@ -25,7 +25,8 @@ void CarPaint::commit()
   MaterialParam3f baseColor = getMaterialParam3f("baseColor", vec3f(0.8f));
   MaterialParam1f roughness = getMaterialParam1f("roughness", 0.f);
   MaterialParam1f normal = getMaterialParam1f("normal", 1.f);
-
+  bool useFlakeColor = findParam("flakeColor") != nullptr;
+  MaterialParam3f flakeColor = getMaterialParam3f("flakeColor", vec3f(0.f));
   MaterialParam1f flakeScale = getMaterialParam1f("flakeScale", 100.f);
   MaterialParam1f flakeDensity = getMaterialParam1f("flakeDensity", 0.f);
   MaterialParam1f flakeSpread = getMaterialParam1f("flakeSpread", 0.3f);
@@ -51,7 +52,9 @@ void CarPaint::commit()
       normal.factor,
       normal.tex,
       (const ispc::LinearSpace2f &)normal.rot,
-
+      useFlakeColor,
+      (const ispc::vec3f &)flakeColor.factor,
+      flakeColor.tex,
       flakeScale.factor,
       flakeScale.tex,
       flakeDensity.factor,

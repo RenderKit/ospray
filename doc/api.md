@@ -1879,6 +1879,7 @@ in the table below.
 
   float  normal                     1  normal map/scale
 
+  vec3f  flakeColor         Aluminium  color of metallic flakes
   float  flakeDensity               0  density of metallic flakes in [0–1], 0 disables flakes,
                                        1 fully covers the surface with flakes
 

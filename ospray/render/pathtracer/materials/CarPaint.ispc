@@ -26,6 +26,10 @@ struct CarPaint
   TextureParam normalMap;
   linear2f normalRot;
 
+  bool useFlakeColor; // if disabled, flakes are Aluminium
+  vec3f flakeColor;
+  TextureParam flakeColorMap;
+
   float flakeScale;
   TextureParam flakeScaleMap;
 
@@ -111,13 +115,20 @@ const varying BSDF *varying CarPaint_getBSDF(
     if (flakeMask) {
       flakeFrame = LinearSpace3f_create(ctx, makeShadingFrame(dg, flakeN));
 
-      // flakes are made of aluminum
-      const uniform vec3f flakeEta =
-          make_vec3f(1.69700277f, 0.879832864f, 0.5301736f);
-      const uniform vec3f flakeK =
-          make_vec3f(9.30200672f, 6.27604008f, 4.89433956f);
-      Fresnel *uniform flakeFresnel =
-          FresnelConductorRGBUniform_create(ctx, flakeEta, flakeK);
+      Fresnel *uniform flakeFresnel;
+      if (self->useFlakeColor) {
+        const vec3f r = clamp(
+            self->flakeColor * get3f(self->flakeColorMap, dg, make_vec3f(1.f)));
+        const vec3f g = make_vec3f(1.f);
+        flakeFresnel = FresnelSchlick_create(ctx, r, g);
+      } else {
+        // flakes are made of aluminum
+        const uniform vec3f flakeEta =
+            make_vec3f(1.69700277f, 0.879832864f, 0.5301736f);
+        const uniform vec3f flakeK =
+            make_vec3f(9.30200672f, 6.27604008f, 4.89433956f);
+        flakeFresnel = FresnelConductorRGBUniform_create(ctx, flakeEta, flakeK);
+      }
 
       const float flakeRoughness = max(
           self->flakeRoughness * get1f(self->flakeRoughnessMap, dg, 1.f), 0.f);
@@ -214,6 +225,9 @@ export void *uniform PathTracer_CarPaint_set(void *uniform _self,
     uniform float normal,
     const uniform TextureParam &normalMap,
     const uniform linear2f &normalRot,
+    const uniform bool useFlakeColor,
+    const uniform vec3f &flakeColor,
+    const uniform TextureParam &flakeColorMap,
     uniform float flakeScale,
     const uniform TextureParam &flakeScaleMap,
     uniform float flakeDensity,
@@ -253,6 +267,10 @@ export void *uniform PathTracer_CarPaint_set(void *uniform _self,
   self->normal = normal;
   self->normalMap = normalMap;
   self->normalRot = normalRot;
+
+  self->useFlakeColor = useFlakeColor;
+  self->flakeColor = flakeColor;
+  self->flakeColorMap = flakeColorMap;
 
   self->flakeScale = flakeScale;
   self->flakeScaleMap = flakeScaleMap;
@@ -310,6 +328,9 @@ export void *uniform PathTracer_CarPaint_create()
       1.f,
       tex,
       make_LinearSpace2f_identity(), // normal
+      0, // useFlakeColor
+      make_vec3f(0.f),
+      tex, // flakeColor
       0.f,
       tex, // flakeScale
       0.f,
