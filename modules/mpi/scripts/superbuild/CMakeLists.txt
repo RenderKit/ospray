@@ -81,7 +81,7 @@ if (${CMAKE_VERSION} VERSION_GREATER 3.11.4)
   set(PARALLEL_JOBS_OPTS -j ${BUILD_JOBS})
 endif()
 
-set(DEFAULT_BUILD_COMMAND cmake --build . --config release ${PARALLEL_JOBS_OPTS})
+set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config release ${PARALLEL_JOBS_OPTS})
 
 ## Build dependencies ##
 
