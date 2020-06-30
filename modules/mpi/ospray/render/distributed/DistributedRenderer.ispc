@@ -4,6 +4,7 @@
 #include "DistributedRenderer.ih"
 #include "common/DistributedWorld.ih"
 #include "common/Intersect.ih"
+#include "math/random.ih"
 #include "render/util.ih"
 
 unmasked void DR_default_computeRegionVisibility(
@@ -57,8 +58,9 @@ unmasked void DR_default_computeRegionVisibility(
     // TODO: Does spp still show some block boundary artifacts? Check
     // and maybe just support spp = 1 in DR
     for (uniform uint32 s = 0; s < spp; s++) {
-      const float pixel_du = precomputedHalton2(startSampleID + s);
-      const float pixel_dv = precomputedHalton3(startSampleID + s);
+      const float pixel_du = Halton_sample2(startSampleID + s);
+      const float pixel_dv = CranleyPattersonRotation(
+          Halton_sample3(startSampleID + s), 1.f / 6.f);
       screenSample.sampleID.z = startSampleID + s;
 
       cameraSample.screen.x =
@@ -67,8 +69,8 @@ unmasked void DR_default_computeRegionVisibility(
           (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
       // TODO: fix correlations / better RNG
-      cameraSample.lens.x = precomputedHalton3(startSampleID + s);
-      cameraSample.lens.y = precomputedHalton5(startSampleID + s);
+      cameraSample.lens.x = pixel_du;
+      cameraSample.lens.y = pixel_dv;
 
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);
@@ -162,8 +164,9 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
 
     // TODO: same note on spp > 1 issues
     for (uniform uint32 s = 0; s < spp; s++) {
-      const float pixel_du = precomputedHalton2(startSampleID + s);
-      const float pixel_dv = precomputedHalton3(startSampleID + s);
+      const float pixel_du = Halton_sample2(startSampleID + s);
+      const float pixel_dv = CranleyPattersonRotation(
+          Halton_sample3(startSampleID + s), 1.f / 6.f);
       screenSample.sampleID.z = startSampleID + s;
 
       cameraSample.screen.x =
@@ -172,8 +175,8 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
           (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
       // TODO: fix correlations / better RNG
-      cameraSample.lens.x = precomputedHalton3(startSampleID + s);
-      cameraSample.lens.y = precomputedHalton5(startSampleID + s);
+      cameraSample.lens.x = pixel_du;
+      cameraSample.lens.y = pixel_dv;
 
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);

@@ -70,8 +70,10 @@ void Distributed::renderFrame(
       // Note that these bounds are very conservative, the bounds we
       // compute below are much tighter, and better. We just use the depth
       // from the projection to sort the tiles later
-      proj.bounds.lower *= fbSize;
-      proj.bounds.upper *= fbSize;
+      proj.bounds.lower =
+          max(proj.bounds.lower * fbSize - TILE_SIZE, vec2f(0.f));
+      proj.bounds.upper =
+          min(proj.bounds.upper * fbSize + TILE_SIZE, vec2f(fbSize - 1.f));
       regionOrdering.insert(std::make_pair(proj.depth, i));
     } else {
       proj = RegionScreenBounds();
