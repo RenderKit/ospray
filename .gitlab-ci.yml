@@ -42,6 +42,8 @@ variables:
   artifacts:
     paths:
       - build/install/ospray
+      - build/CMakeCache.txt
+      - build/ospray/build/CMakeCache.txt
     expire_in: 3 day
 
 .job_template: &release_job
