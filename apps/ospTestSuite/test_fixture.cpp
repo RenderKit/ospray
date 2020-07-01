@@ -178,4 +178,38 @@ void FromOsprayTesting::SetUp()
   camera.setParam("up", arcballCamera.upDir());
 }
 
+FromOsprayTestingDirect::FromOsprayTestingDirect()
+{
+  rendererType = "pathtracer";
+
+  auto params = GetParam();
+  sceneName = std::get<0>(params);
+}
+
+void FromOsprayTestingDirect::SetUp()
+{
+  Base::SetUp();
+
+  instances.clear();
+
+  auto builder = ospray::testing::newBuilder(sceneName);
+  ospray::testing::setParam(builder, "rendererType", rendererType);
+  ospray::testing::commit(builder);
+
+  world = ospray::testing::buildWorld(builder);
+  ospray::testing::release(builder);
+
+  world.commit();
+
+  auto worldBounds = world.getBounds<box3f>();
+
+  ArcballCamera arcballCamera(worldBounds, imgSize);
+
+  camera.setParam("position", arcballCamera.eyePos());
+  camera.setParam("direction", arcballCamera.lookDir());
+  camera.setParam("up", arcballCamera.upDir());
+
+  renderer.setParam("maxPathLength", 1);
+}
+
 } // namespace OSPRayTestScenes

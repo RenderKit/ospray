@@ -78,12 +78,24 @@ class Base
 // Fixture class used for tests that uses 'ospray_testing' scenes
 class FromOsprayTesting
     : public Base,
-      public ::testing::TestWithParam<std::tuple<const char *, // scene name
-          const char *>> // renderer
-                         // type
+      public ::testing::TestWithParam<std::tuple<const char * /*scene name*/,
+          const char * /*renderer type*/>>
 {
  public:
   FromOsprayTesting();
+  void SetUp() override;
+
+ private:
+  std::string sceneName;
+};
+
+// with direct lighting only
+class FromOsprayTestingDirect
+    : public Base,
+      public ::testing::TestWithParam<std::tuple<const char * /*scene name*/>>
+{
+ public:
+  FromOsprayTestingDirect();
   void SetUp() override;
 
  private:
