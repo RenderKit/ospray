@@ -57,6 +57,44 @@ static void setParamOnObject(OSPObject _obj, const char *p, const T &v)
   obj->setParam(p, v);
 }
 
+
+#define APPROXIMATE_SRGB // copied from vec.ih
+
+inline float srgb_to_linear(const float f)
+{
+	const float c = max(f, 0.f);
+#ifdef APPROXIMATE_SRGB
+	return pow(c, 2.2f);
+#else
+	return c <= 0.04045f ? c / 12.92f : pow((c + 0.055f) / 1.055f, 2.4f);
+#endif
+}
+
+inline vec4f srgba_to_linear(const vec4f c)
+{
+	return vec4f(srgb_to_linear(c.x),
+		srgb_to_linear(c.y),
+		srgb_to_linear(c.z),
+		max(c.w, 0.f)); // alpha is never gamma-corrected
+}
+
+inline vec3f srgba_to_linear(const vec3f c)
+{
+	return vec3f(srgb_to_linear(c.x),
+		srgb_to_linear(c.y),
+		srgb_to_linear(c.z)
+	);
+}
+#undef APPROXIMATE_SRGB
+// copied from vec.ih end
+
+#define declare_param_setterSRGBA(OSPType,TYPE)                              \
+{                                                                            \
+    OSPType, [](OSPObject o, const char *p, const void *v) {                  \
+    setParamOnObject(o, p, srgba_to_linear(*(TYPE*)v) );                      \
+  }                                                                           \
+}
+
 #define declare_param_setter(TYPE)                                             \
   {                                                                            \
     OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) {   \
@@ -141,7 +179,9 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter(linear2f),
     declare_param_setter(linear3f),
     declare_param_setter(affine2f),
-    declare_param_setter(affine3f)};
+    declare_param_setter(affine3f),
+    declare_param_setterSRGBA(OSP_SRGB, vec3f),
+    declare_param_setterSRGBA(OSP_SRGBA,vec4f)};
 
 #undef declare_param_setter
 

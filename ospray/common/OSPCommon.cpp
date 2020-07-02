@@ -260,6 +260,10 @@ size_t sizeOf(OSPDataType type)
     return sizeof(vec3f);
   case OSP_VEC4F:
     return sizeof(vec4f);
+  case OSP_SRGB:
+    return sizeof(vec4f);
+  case OSP_SRGBA:
+    return sizeof(vec3f);
   case OSP_DOUBLE:
     return sizeof(double);
   case OSP_BOX1I:
@@ -312,6 +316,10 @@ OSPDataType typeOf(const char *string)
   if (strcmp(string, "vec3f") == 0)
     return (OSP_VEC3F);
   if (strcmp(string, "vec4f") == 0)
+    return (OSP_VEC4F);
+  if (strcmp(string, "srgb") == 0)
+    return (OSP_VEC3F);
+  if (strcmp(string, "srgba") == 0)
     return (OSP_VEC4F);
   if (strcmp(string, "int") == 0)
     return (OSP_INT);

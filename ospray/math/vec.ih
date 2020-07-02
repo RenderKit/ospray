@@ -1099,6 +1099,13 @@ inline vec4f srgba_to_linear(const vec4f c)
       max(c.w, 0.f)); // alpha is never gamma-corrected
 }
 
+inline vec3f srgba_to_linear(const vec3f c)
+{
+  return make_vec3f(srgb_to_linear(c.x),
+      srgb_to_linear(c.y),
+      srgb_to_linear(c.z)
+      );
+}
 // TODO implement srgba8_to_linear with a 256 entry LUT
 
 #undef APPROXIMATE_SRGB

@@ -122,6 +122,8 @@ typedef enum
   OSP_VEC3F,
   OSP_VEC4F,
 
+  OSP_SRGB = 6100, // equavalend to OSP_VEC3F just interpreted as SRGB
+  OSP_SRGBA,       // equavalend to OSP_VEC4F just interpreted as SRGB
   // Double precision floating point scalar type.
   OSP_DOUBLE = 7000,
 
