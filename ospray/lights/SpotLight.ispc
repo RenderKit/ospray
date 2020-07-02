@@ -86,7 +86,15 @@ Light_SampleRes SpotLight_sample(
     // calculate the attenuated emitted radiance
     res.weight = self->super.radiance
         * SpotLight_angularAttenuation(self, cosAngle, res.dir);
-    res.weight = res.weight / res.pdf;
+    if (!self->lid) {
+      res.weight = res.weight / res.pdf;
+    } else {
+      // when an light distribution function is used we want to
+      // remove the cosine term. To avoid numerical issues
+      // at cosineAngle = 0 we use the fact that the division
+      // of radiance with the cosine cancels out.
+      res.weight = res.weight / (self->diskPdf * dist2);
+    }
   } else {
     res.pdf = inf; // we always take this sample
     // convert from intensity to radiance by attenuating by distance^2;
@@ -125,6 +133,12 @@ Light_EvalRes SpotLight_eval(const uniform Light *uniform super,
           // calculate the attenuated emitted radiance
           res.radiance = self->super.radiance
               * SpotLight_angularAttenuation(self, cosAngle, dir);
+          // since the light distribution function already includes
+          // the cosine term we remove it from the  Lambertian area
+          // light
+          if (self->lid) {
+            res.radiance = res.radiance / abs(cosAngle);
+          }
           const float pdf = self->diskPdf;
           // convert area PDF to solid angle PDF
           res.pdf = pdf * (sqr(t) / abs(cosAngle));
