@@ -133,6 +133,11 @@ OSPPickResult Renderer::pick(
   if (res.hasHit) {
     auto *instance = (*world->instances)[instID];
     auto *group = instance->group.ptr;
+    if (!group->geometricModels)
+    {
+      res.hasHit = false;
+      return res;
+    }
     auto *model = (*group->geometricModels)[geomID];
 
     instance->refInc();
