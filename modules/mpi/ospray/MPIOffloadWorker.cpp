@@ -80,7 +80,9 @@ void runWorker(bool useMPIFabric)
   std::shared_ptr<utility::OwnedArray<uint8_t>> recvBuffer =
       std::make_shared<utility::OwnedArray<uint8_t>>();
 
+#ifdef ENABLE_PROFILING
   ProfilingPoint workerStart;
+#endif
   while (1) {
     fabric->recvBcast(cmdView);
 

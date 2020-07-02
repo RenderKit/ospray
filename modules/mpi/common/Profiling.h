@@ -3,6 +3,8 @@
 
 #pragma once
 
+#ifdef ENABLE_PROFILING
+
 #include <chrono>
 #include <string>
 #ifdef __linux__
@@ -32,3 +34,6 @@ size_t elapsedTimeMs(const ProfilingPoint &start, const ProfilingPoint &end);
 std::string getProcStatus();
 
 } // namespace mpicommon
+
+#endif
+

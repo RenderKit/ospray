@@ -1,6 +1,8 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#ifdef ENABLE_PROFILING
+
 #include "Profiling.h"
 #include <cstring>
 #include <fstream>
@@ -53,3 +55,6 @@ std::string getProcStatus()
       std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 }
 } // namespace mpicommon
+
+#endif
+

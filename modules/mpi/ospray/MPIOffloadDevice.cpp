@@ -782,7 +782,9 @@ const void *MPIOffloadDevice::frameBufferMap(
     OSPFrameBuffer _fb, OSPFrameBufferChannel channel)
 {
   using namespace utility;
+#ifdef ENABLE_PROFILING
   ProfilingPoint start;
+#endif
 
   ObjectHandle handle = (ObjectHandle &)_fb;
   networking::BufferWriter writer;

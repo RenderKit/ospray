@@ -9,6 +9,10 @@ Version History
     collecting the final framebuffer to the head rank. This provides a
     substantial performance improvement when using just a few ranks or
     large framebuffers (both in pixel count or channel count).
+-   The MPI module will now default to setting thread affinity off, if
+    no option is selected. This improves thread usage and core
+    assignment of threads in most cases, where no specific options are
+    provided to the MPI runtime.
 
 ### Changes in v2.1.0:
 
