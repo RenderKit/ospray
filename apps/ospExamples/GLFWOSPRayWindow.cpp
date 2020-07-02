@@ -100,9 +100,6 @@ void error_callback(int error, const char *desc)
 {
   std::cerr << "error " << error << ": " << desc << std::endl;
 }
-
-
-
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
 GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
