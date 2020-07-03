@@ -1669,6 +1669,10 @@ supports the following special parameters:
   ---------- ------------------ --------  ------------------------------------
   Type       Name                Default  Description
   ---------- ------------------ --------  ------------------------------------
+  int        lightSamples            all  number of random light samples
+                                          per path vertex, per default
+                                          all light sources are sampled
+
   bool       geometryLights         true  whether geometries with an emissive
                                           material (e.g., [Luminous]) illuminate
                                           the scene

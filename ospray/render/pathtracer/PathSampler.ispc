@@ -177,7 +177,8 @@ void samplePath(const PathContext &pathContext,
 
     if (!pathState.disableFWD && pathVertex.type != VOLUME) {
       pathState.contribution = pathState.contribution
-          + evaluateGeometryLights(pathState, lastVertex, pathVertex, ray);
+          + evaluateGeometryLights(
+              pathContext, pathState, lastVertex, pathVertex, ray);
     }
 
     // terminate after evaluation of lights and before next shading to always

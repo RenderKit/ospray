@@ -24,6 +24,8 @@ PathTracer::PathTracer()
 PathTracer::~PathTracer()
 {
   destroyGeometryLights();
+  ispc::PathTracer_destroy(getIE());
+  ispcEquivalent = nullptr;
 }
 
 std::string PathTracer::toString() const
@@ -87,12 +89,16 @@ void PathTracer::commit()
   Renderer::commit();
 
   const int32 rouletteDepth = getParam<int>("roulettePathLength", 5);
+  const int32 numLightSamples = getParam<int>("lightSamples", -1);
   const float maxRadiance = getParam<float>("maxContribution", inf);
   vec4f shadowCatcherPlane = getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
   useGeometryLights = getParam<bool>("geometryLights", true);
 
-  ispc::PathTracer_set(
-      getIE(), rouletteDepth, maxRadiance, (ispc::vec4f &)shadowCatcherPlane);
+  ispc::PathTracer_set(getIE(),
+      rouletteDepth,
+      maxRadiance,
+      (ispc::vec4f &)shadowCatcherPlane,
+      numLightSamples);
 }
 
 void *PathTracer::beginFrame(FrameBuffer *, World *world)

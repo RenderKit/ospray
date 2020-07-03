@@ -79,7 +79,9 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
             pathContext.randomSampler);
         L = L
             + pathState.throughput * le.radiance
-                * misHeuristic(pathState, lastVertex.pdf_w * T, le.pdf);
+                * misHeuristic(pathState,
+                    lastVertex.pdf_w * T,
+                    light->selectionPDF * pathContext.numLightSamples * le.pdf);
       }
     }
   }

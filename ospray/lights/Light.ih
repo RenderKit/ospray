@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -48,6 +48,8 @@ struct Light
   vec3f radiance; // or power; = color * intensity
   bool isVisible; // either directly in camera, or via a straight path (i.e.
                   // through ThinGlass)
+  float selectionPDF; // the PDF of selecting the light from the renderers light
+                      // list
 };
 
 Light_EvalRes Light_eval(const uniform Light *uniform,
@@ -60,4 +62,5 @@ inline void Light_Constructor(uniform Light *uniform self)
 {
   self->eval = Light_eval;
   self->isVisible = true;
+  self->selectionPDF = 0.f;
 }
