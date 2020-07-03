@@ -35,21 +35,8 @@ cpp::World Builder::buildWorld(
   std::vector<cpp::Instance> inst = instances;
   inst.push_back(instance);
 
-  if (addPlane) {
-    auto bounds = group.getBounds<box3f>();
-
-    auto extents = 0.8f * length(bounds.center() - bounds.lower);
-
-    cpp::GeometricModel plane = makeGroundPlane(extents);
-    cpp::Group planeGroup;
-    planeGroup.setParam("geometry", cpp::CopiedData(plane));
-    planeGroup.commit();
-
-    cpp::Instance planeInst(planeGroup);
-    planeInst.commit();
-
-    inst.push_back(planeInst);
-  }
+  if (addPlane)
+    inst.push_back(makeGroundPlane(group.getBounds<box3f>()));
 
   world.setParam("instance", cpp::CopiedData(inst));
 
@@ -100,8 +87,10 @@ cpp::TransferFunction Builder::makeTransferFunction(
   return transferFunction;
 }
 
-cpp::GeometricModel Builder::makeGroundPlane(float planeExtent) const
+cpp::Instance Builder::makeGroundPlane(const box3f &bounds) const
 {
+  auto planeExtent = 0.8f * length(bounds.center() - bounds.lower);
+
   cpp::Geometry planeGeometry("mesh");
 
   std::vector<vec3f> v_position;
@@ -198,17 +187,23 @@ cpp::GeometricModel Builder::makeGroundPlane(float planeExtent) const
 
   planeGeometry.commit();
 
-  cpp::GeometricModel model(planeGeometry);
+  cpp::GeometricModel plane(planeGeometry);
 
   if (rendererType == "pathtracer" || rendererType == "scivis") {
     cpp::Material material(rendererType, "obj");
     material.commit();
-    model.setParam("material", material);
+    plane.setParam("material", material);
   }
 
-  model.commit();
+  plane.commit();
 
-  return model;
+  cpp::Group planeGroup;
+  planeGroup.setParam("geometry", cpp::CopiedData(plane));
+  planeGroup.commit();
+
+  cpp::Instance planeInst(planeGroup);
+  planeInst.commit();
+  return planeInst;
 }
 
 void Builder::registerBuilder(const std::string &name, BuilderFcn fcn)

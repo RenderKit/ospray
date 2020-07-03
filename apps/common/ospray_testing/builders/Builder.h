@@ -40,7 +40,7 @@ struct Builder : public memory::RefCountedObject,
  protected:
   cpp::TransferFunction makeTransferFunction(const vec2f &valueRange) const;
 
-  cpp::GeometricModel makeGroundPlane(float planeExtent) const;
+  cpp::Instance makeGroundPlane(const box3f &bounds) const;
 
   // Data //
 

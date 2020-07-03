@@ -4,6 +4,7 @@
 #include "Builder.h"
 #include "Noise.h"
 #include "ospray_testing.h"
+#include "rkcommon/math/AffineSpace.h"
 #include "rkcommon/tasking/parallel_for.h"
 
 using namespace rkcommon::math;
@@ -24,6 +25,7 @@ struct VdbVolume : public detail::Builder
  private:
   float densityScale{1.f};
   float anisotropy{0.f};
+  static constexpr uint32_t domainRes = 128;
 };
 
 // Inlined definitions ////////////////////////////////////////////////////
@@ -43,17 +45,14 @@ cpp::Group VdbVolume::buildGroup() const
   std::vector<uint32_t> level;
   std::vector<vec3i> origin;
   std::vector<cpp::CopiedData> data;
-  std::vector<uint32_t> format;
 
   constexpr uint32_t leafRes = 8;
-  constexpr uint32_t domainRes = 128;
   constexpr uint32_t N = domainRes / leafRes;
   constexpr size_t numLeaves = N * static_cast<size_t>(N) * N;
 
   level.reserve(numLeaves);
   origin.reserve(numLeaves);
   data.reserve(numLeaves);
-  format.reserve(numLeaves);
 
   std::vector<float> leaf(leafRes * (size_t)leafRes * leafRes, 0.f);
   for (uint32_t z = 0; z < N; ++z)
@@ -82,7 +81,6 @@ cpp::Group VdbVolume::buildGroup() const
           origin.push_back(vec3i(x * leafRes, y * leafRes, z * leafRes));
           data.emplace_back(
               cpp::CopiedData(leaf.data(), vec3ul(leafRes, leafRes, leafRes)));
-          format.push_back(1);
         }
       }
 
@@ -94,22 +92,6 @@ cpp::Group VdbVolume::buildGroup() const
   volume.setParam("node.level", cpp::CopiedData(level));
   volume.setParam("node.origin", cpp::CopiedData(origin));
   volume.setParam("node.data", cpp::CopiedData(data));
-  volume.setParam("node.format", cpp::CopiedData(format));
-
-  std::vector<float> i2o = {8.f / domainRes,
-      0,
-      0,
-      0,
-      8.f / domainRes,
-      0,
-      0,
-      0,
-      8.f / domainRes,
-      -4.f,
-      0,
-      -4.f};
- // volume.setParam("indexToObject", cpp::CopiedData(i2o));
-
   volume.commit();
 
   cpp::VolumetricModel model(volume);
@@ -119,7 +101,6 @@ cpp::Group VdbVolume::buildGroup() const
   model.commit();
 
   cpp::Group group;
-
   group.setParam("volume", cpp::CopiedData(model));
   group.commit();
 
@@ -128,10 +109,19 @@ cpp::Group VdbVolume::buildGroup() const
 
 cpp::World VdbVolume::buildWorld() const
 {
-  std::vector<cpp::Instance> instances;
-  auto world = Builder::buildWorld(instances);
+  auto group = buildGroup();
+  cpp::Instance instance(group);
+  rkcommon::math::AffineSpace3f xform(
+      rkcommon::math::LinearSpace3f::scale(8.f / domainRes),
+      vec3f(-4.f, 0, -4.f));
+  instance.setParam("xfm", xform);
+  instance.commit();
 
-  std::vector<cpp::Light> lightHandles;
+  std::vector<cpp::Instance> inst;
+  inst.push_back(instance);
+
+  if (addPlane)
+    inst.push_back(makeGroundPlane(instance.getBounds<box3f>()));
 
   cpp::Light quadLight("quad");
   quadLight.setParam("position", vec3f(-4.f, 8.0f, 4.f));
@@ -140,7 +130,12 @@ cpp::World VdbVolume::buildWorld() const
   quadLight.setParam("intensity", 5.0f);
   quadLight.setParam("color", vec3f(2.8f, 2.2f, 1.9f));
   quadLight.commit();
+
+  std::vector<cpp::Light> lightHandles;
   lightHandles.push_back(quadLight);
+
+  cpp::World world;
+  world.setParam("instance", cpp::CopiedData(inst));
   world.setParam("light", cpp::CopiedData(lightHandles));
 
   return world;
