@@ -576,17 +576,75 @@ cpp::World CornellBoxSpot40::buildWorld() const
   return world;
 }
 
+struct CornellBoxRing40 : public CornellBox
+{
+  CornellBoxRing40() = default;
+  ~CornellBoxRing40() override = default;
+
+  cpp::World buildWorld() const override;
+};
+
+cpp::World CornellBoxRing40::buildWorld() const
+{
+  auto world = CornellBox::buildWorld();
+
+  cpp::Light light("spot");
+
+  light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
+  light.setParam("intensity", 10.f);
+  light.setParam("position", vec3f(0.0f, 0.98f, 0.0f));
+  light.setParam("direction", vec3f(0.0f, -1.0f, 0.0f));
+  light.setParam("radius", 0.4f);
+  light.setParam("innerRadius", 0.2f);
+
+  light.commit();
+
+  world.setParam("light", cpp::CopiedData(light));
+
+  return world;
+}
+
+struct CornellBoxRing80 : public CornellBox
+{
+  CornellBoxRing80() = default;
+  ~CornellBoxRing80() override = default;
+
+  cpp::World buildWorld() const override;
+};
+
+cpp::World CornellBoxRing80::buildWorld() const
+{
+  auto world = CornellBox::buildWorld();
+
+  cpp::Light light("spot");
+
+  light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
+  light.setParam("intensity", 10.f);
+  light.setParam("position", vec3f(0.0f, 0.98f, 0.0f));
+  light.setParam("direction", vec3f(0.0f, -1.0f, 0.0f));
+  light.setParam("radius", 0.8f);
+  light.setParam("innerRadius", 0.7f);
+
+  light.commit();
+
+  world.setParam("light", cpp::CopiedData(light));
+
+  return world;
+}
+
 OSP_REGISTER_TESTING_BUILDER(CornellBox, cornell_box);
+OSP_REGISTER_TESTING_BUILDER(CornellBoxPhotometric, cornell_box_photometric);
+OSP_REGISTER_TESTING_BUILDER(CornellBoxPhotometric10, cornell_box_photometric10);
 OSP_REGISTER_TESTING_BUILDER(CornellBoxSphere, cornell_box_sphere);
 OSP_REGISTER_TESTING_BUILDER(CornellBoxSphere20, cornell_box_sphere20);
 OSP_REGISTER_TESTING_BUILDER(CornellBoxSphere30, cornell_box_sphere30);
 OSP_REGISTER_TESTING_BUILDER(CornellBoxSpot, cornell_box_spot);
 OSP_REGISTER_TESTING_BUILDER(CornellBoxSpot20, cornell_box_spot20);
 OSP_REGISTER_TESTING_BUILDER(CornellBoxSpot40, cornell_box_spot40);
+OSP_REGISTER_TESTING_BUILDER(CornellBoxRing40, cornell_box_ring40);
+OSP_REGISTER_TESTING_BUILDER(CornellBoxRing80, cornell_box_ring80);
 OSP_REGISTER_TESTING_BUILDER(CornellBoxQuad20, cornell_box_quad20);
 OSP_REGISTER_TESTING_BUILDER(CornellBoxQuad40, cornell_box_quad40);
-OSP_REGISTER_TESTING_BUILDER(CornellBoxPhotometric, cornell_box_photometric);
-OSP_REGISTER_TESTING_BUILDER(CornellBoxPhotometric10, cornell_box_photometric10);
 
 } // namespace testing
 } // namespace ospray

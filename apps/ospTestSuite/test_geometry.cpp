@@ -146,6 +146,8 @@ INSTANTIATE_TEST_SUITE_P(TestSceneLighting,
         "cornell_box_quad20",
         "cornell_box_quad40",
         "cornell_box_photometric",
-        "cornell_box_photometric10")));
+        "cornell_box_photometric10",
+        "cornell_box_ring40",
+        "cornell_box_ring80")));
 
 } // namespace OSPRayTestScenes
