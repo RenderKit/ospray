@@ -18,8 +18,10 @@ struct SpotLight
                      // cosine of the half angle in radians
   float cosAngleScale; // 1/(cos(border of the penumbra area) - cosAngleMax);
                        // positive
-  float radius; // defines the size of the (extended) SpotLight
-  float innerRadius; // defines the size of the (extended) SpotLight
+  float radius; // defines the size of the DiskLight represented using
+                // the (extended) SpotLight
+  float innerRadius; // defines the size of the inner cut out of the DiskLight
+                     // to represent a RingLight
   float areaPdf; // pdf of disk/ring with radius/innerRadius
   float *lid; // luminance intensity distribution
   vec2i size;

@@ -24,7 +24,8 @@ void SpotLight::commit()
   auto openingAngle = getParam<float>("openingAngle", 180.f);
   auto penumbraAngle = getParam<float>("penumbraAngle", 5.f);
   auto radius = max(0.0f, getParam<float>("radius", 0.f));
-  auto innerRadius = clamp(getParam<float>("innerRadius", 0.f), 0.0f, radius);
+  auto innerRadius =
+      clamp(getParam<float>("innerRadius", 0.f), 0.0f, 0.999f * radius);
 
   // for the spot light color * intensity does not parameterize radiance but
   // radiant intensiy
