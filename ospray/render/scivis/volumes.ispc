@@ -30,12 +30,17 @@ static void sampleVolume(VolumeContext &vc,
 {
   // We have to iterate till we get a valid sample value
   float newDistance;
+  float emptySpace = 0.f;
   float sampleVal = nan;
   while (isnan(sampleVal)) {
     // Iterate till sampling position is within interval
     while (vc.iuDistance > vc.iuLength) {
       // Get next VKL interval
+      float prevUpper = vc.interval.tRange.upper;
       if (vklIterateIntervalV(vc.intervalIterator, &vc.interval)) {
+        // Intervals may not be contiguous, accumulate empty space
+        emptySpace += max(vc.interval.tRange.lower - prevUpper, 0.f);
+
         // Make it local for the next interval
         vc.iuDistance -= vc.iuLength;
 
@@ -74,7 +79,7 @@ static void sampleVolume(VolumeContext &vc,
   vc.sample = m->transferFunction->get(m->transferFunction, sampleVal);
 
   // Weight the opacity with deltaT using Beer law
-  const float dt = newDistance - vc.distance;
+  const float dt = newDistance - vc.distance - emptySpace;
   vc.sample.w = 1.f - exp(-vc.sample.w * dt * m->densityScale);
   vc.distance = newDistance;
 }
@@ -187,6 +192,7 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
       vc.iuDistance = jitter;
       vc.iuLength = 0.f;
       vc.ready = 0;
+      vc.interval.tRange.upper = inf;
 
       // There might be different volumetric models used across vector lanes
       // so we must iterate over them
