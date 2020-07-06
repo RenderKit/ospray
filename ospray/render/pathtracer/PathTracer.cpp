@@ -56,6 +56,16 @@ void PathTracer::generateGeometryLights(const World &world)
             break;
           }
         }
+        // Materials from Renderer list
+        const auto numRendererMaterials = ispcMaterialPtrs.size();
+        if (numRendererMaterials > 0 && model->ispcMaterialPtrs.size() == 0)
+          for (auto matIdx : model->materialData->as<uint32_t>())
+            if (matIdx < numRendererMaterials
+                && ispc::PathTraceMaterial_isEmissive(
+                    ispcMaterialPtrs[matIdx])) {
+              hasEmissive = true;
+              break;
+            }
 
         if (hasEmissive) {
           if (ispc::GeometryLight_isSupported(model->getIE())) {

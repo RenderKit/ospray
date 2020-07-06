@@ -43,6 +43,8 @@ Version History
     types and functions are now distributed with the SDK.
 -   Add CarPaint `flakeColor` parameter.  Defaults to current Aluminium
 -   Fixed Debug build (which were producing different images)
+-   The pathtracer now also regards the renderer materialist when
+    creating geometry lights
 
 ### Changes in v2.1.1:
 
