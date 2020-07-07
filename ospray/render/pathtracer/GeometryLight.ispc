@@ -25,8 +25,12 @@ vec3f evaluateGeometryLights(const PathContext &pathContext,
     if (m != NULL && reduce_max(m->emission) > 0.f) {
       // at the moment we only support uniform light selection
       // therfore we can evaluate the selection PDF directly
-      const float lightSelectionPDF =
+      float lightSelectionPDF = 0.0f;
+      if(pathContext.numLights > 0)
+      {
+        lightSelectionPDF =
           (1.0f / (float)pathContext.numLights) * pathContext.numLightSamples;
+      }
       // convert pdf wrt. area to pdf wrt. solid angle
       const float cosd = dot(pathVertex.dg.Ng, ray.dir);
       const float lePdf = pathVertex.dg.areaPDF * sqr(ray.t) / abs(cosd);
