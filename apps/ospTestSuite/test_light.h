@@ -16,4 +16,13 @@ class SunSky : public Base,
   void SetUp() override;
 };
 
+class GeometricLight : public Base,
+                       public ::testing::TestWithParam<
+                           std::tuple<float /*size*/, bool /*useMaterialList*/>>
+{
+ public:
+  GeometricLight();
+  void SetUp() override;
+};
+
 } // namespace OSPRayTestScenes
