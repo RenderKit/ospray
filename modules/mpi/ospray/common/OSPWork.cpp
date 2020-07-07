@@ -476,7 +476,7 @@ void setParam(
   } else {
     switch (type) {
     case OSP_STRING: {
-      std::string val = 0;
+      std::string val;
       cmdBuf >> val;
       ospSetParam(state.objects[handle], param.c_str(), type, val.c_str());
       break;

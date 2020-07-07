@@ -575,9 +575,13 @@ void MPIOffloadDevice::setObjectParam(
   case OSP_BOOL:
     setParam<bool>(handle, name, mem, type);
     break;
-  case OSP_STRING:
-    setParam<std::string>(handle, name, mem, type);
+  case OSP_STRING: {
+    networking::BufferWriter writer;
+    writer << work::SET_PARAM << handle.i64 << std::string(name) << type
+           << (const char *)mem;
+    sendWork(writer.buffer);
     break;
+  }
   case OSP_CHAR:
   case OSP_BYTE:
     setParam<char>(handle, name, mem, type);
