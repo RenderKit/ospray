@@ -51,7 +51,7 @@ install(FILES
  ${PROJECT_SOURCE_DIR}/third-party-programs-Embree.txt
  ${PROJECT_SOURCE_DIR}/third-party-programs-OpenVKL.txt
  ${PROJECT_SOURCE_DIR}/third-party-programs-OIDN.txt
- ${PROJECT_SOURCE_DIR}/third-party-programs-DNNL.txt
+ ${PROJECT_SOURCE_DIR}/third-party-programs-oneDNN.txt
  ${PROJECT_SOURCE_DIR}/CHANGELOG.md
  ${PROJECT_SOURCE_DIR}/README.md
  DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT lib)
