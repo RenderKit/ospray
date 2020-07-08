@@ -623,7 +623,9 @@ Note that cell widths are defined _per refinement level_, not per block.
                                                     level
 
   OSPData[]      block.data                   NULL  [data] array of OSPData containing
-                                                    the actual scalar voxel data
+                                                    the actual scalar voxel data, only
+                                                    `OSP_FLOAT` is supported as
+                                                    `OSPDataType`
 
   vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid in world-space
 
@@ -703,10 +705,11 @@ the vertices and data values. Vertex ordering is the same as
 `VTK_PYRAMID`: four bottom vertices counterclockwise, then the top
 vertex.
 
-To maintain VTK data compatibility an index array may be specified via
-the `indexPrefixed` array that allows vertex indices to be interleaved
-with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
-..., id_m$.
+To maintain VTK data compatibility, the `index` array may be specified
+with cell sizes interleaved with vertex indices in the following format:
+$n, id_1, ..., id_n, m, id_1, ..., id_m$. This alternative `index` array
+layout can be enabled through the `indexPrefixed` flag (in which case,
+the `cell.type` parameter must be omitted).
 
   ------------------- ------------------ --------  ---------------------------------------
   Type                Name                Default  Description
@@ -719,7 +722,7 @@ with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
   uint32[] / uint64[] index                        [data] array of indices (into the
                                                    vertex array(s)) that form cells
 
-  uint32[] / uint64[] indexPrefixed                alternative [data] array of indices
+  bool                indexPrefixed          false indicates that the `index` array is
                                                    compatible to VTK, where the indices of
                                                    each cell are prefixed with the number
                                                    of vertices
@@ -731,8 +734,9 @@ with cell sizes in the following format: $n, id_1, ..., id_n, m, id_1,
   float[]             cell.data                    [data] array of cell data values to be
                                                    sampled
 
-  uint8[]             cell.type                    [data] array of cell types
-                                                   (VTK compatible). Supported types are:
+  uint8[]             cell.type                    [data] array of cell types (VTK
+                                                   compatible), only set if `indexPrefixed
+                                                   = false` false. Supported types are:
 
                                                    `OSP_TETRAHEDRON`
 
@@ -867,6 +871,19 @@ traversal, similar to the method in\ [1].
                                              contributions will halt when this value
                                              is reached. A value of zero or less
                                              turns this off.
+
+  bool     estimateValueRanges         true  Enable heuristic estimation of value
+                                             ranges which are used in internal
+                                             acceleration structures as well as for
+                                             determining the volume's overall value
+                                             range. When set to `false`, the user
+                                             *must* specify
+                                             `clampMaxCumulativeValue`, and all
+                                             value ranges will be assumed [0,
+                                             `clampMaxCumulativeValue`]. Disabling
+                                             this switch may improve volume commit
+                                             time, but will make volume rendering
+                                             less efficient.
   -------- ----------------------- --------  ---------------------------------------
   : Configuration parameters for particle volumes.
 

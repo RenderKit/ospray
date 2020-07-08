@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v2.2.0 (devel) of Intel® OSPRay. For changes and new
-features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
-for more information.
+This is release v2.2.0 of Intel® OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -335,9 +335,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -458,6 +458,19 @@ void ospSetCurrentDevice(OSPDevice);
 This then sets the given device as the object which will respond to all
 other OSPRay API calls.
 
+Device handle lifetimes are managed with two calls, the first which
+increments the internal reference count to the given `OSPDevice`
+
+``` {.cpp}
+void ospDeviceRetain(OSPDevice)
+```
+
+and the second which decrements the reference count
+
+``` {.cpp}
+void ospDeviceRelease(OSPDevice)
+```
+
 Users can change parameters on the device after initialization (from
 either method above), by calling
 
@@ -471,7 +484,17 @@ the device. If changes are made to the device that is already set as the
 current device, it does not need to be set as current again. Note this
 API call will increment the ref count of the returned device handle, so
 applications must use `ospDeviceRelease` when finished using the handle
-to avoid leaking the underlying device object.
+to avoid leaking the underlying device object. If there is no current
+device set, this will return an invalid NULL handle.
+
+When a device is created, its reference count is initially `1`. When a
+device is set as the current device, it internally has its reference
+count incremented. Note that `ospDeviceRetain` and `ospDeviceRelease`
+should only be used with reference counts that the application tracks:
+removing reference held by the current set device should be handled by
+`ospShutdown`. Thus `ospDeviceRelease` should only decrement the
+reference counts that come from `ospNewDevice`, `ospGetCurrentDevice`,
+and the number of explicit calls to `ospDeviceRetain`.
 
 OSPRay allows applications to query runtime properties of a device in
 order to do enhanced validation of what device was loaded at runtime.
@@ -550,13 +573,13 @@ Alternatively, the application can also register a callback function of
 type
 
 ``` {.cpp}
-typedef void (*OSPErrorFunc)(OSPError, const char* errorDetails);
+typedef void (*OSPErrorCallback)(void *userData, OSPError, const char* errorDetails);
 ```
 
 via
 
 ``` {.cpp}
-void ospDeviceSetErrorFunc(OSPDevice, OSPErrorFunc);
+void ospDeviceSetErrorCallback(OSPDevice, OSPErrorCallback, void *userData);
 ```
 
 to get notified when errors occur.
@@ -565,13 +588,13 @@ Applications may be interested in messages which OSPRay emits, whether
 for debugging or logging events. Applications can call
 
 ``` {.cpp}
-void ospDeviceSetStatusFunc(OSPDevice, OSPStatusFunc);
+void ospDeviceSetStatusCallback(OSPDevice, OSPStatusCallback, void *userData);
 ```
 
 in order to register a callback function of type
 
 ``` {.cpp}
-typedef void (*OSPStatusFunc)(const char* messageText);
+typedef void (*OSPStatusCallback)(void *userData, const char* messageText);
 ```
 
 which OSPRay will use to emit status messages. By default, OSPRay uses a
@@ -855,11 +878,11 @@ Structured volumes only need to store the values of the samples, because
 their addresses in memory can be easily computed from a 3D position. A
 common type of structured volumes are regular grids.
 
-Structured regular volumes are created by passing the
-`structuredRegular` type string to `ospNewVolume`. Structured volumes
-are represented through an `OSPData` 3D array `data` (which may or may
-not be shared with the application), where currently the voxel data
-needs to be laid out compact in memory in xyz-order[^4]
+Structured regular volumes are created by passing the type string
+“`structuredRegular`” to `ospNewVolume`. Structured volumes are
+represented through an `OSPData` 3D array `data` (which may or may not
+be shared with the application), where currently the voxel data needs to
+be laid out compact in memory in xyz-order[^4]
 
 The parameters understood by structured volumes are summarized in the
 table below.
@@ -879,7 +902,7 @@ as is the type of the voxel values (currently supported are:
 ### Structured Spherical Volume
 
 Structured spherical volumes are also supported, which are created by
-passing a type string of `"structuredSpherical"` to `ospNewVolume`. The
+passing a type string of “`structuredSpherical`” to `ospNewVolume`. The
 grid dimensions and parameters are defined in terms of radial distance
 $r$, inclination angle $\theta$, and azimuthal angle $\phi$, conforming
 with the ISO convention for spherical coordinate systems. The coordinate
@@ -927,7 +950,7 @@ levels.
 
 There can be any number of refinement levels and any number of blocks at
 any level of refinement. An AMR volume type is created by passing the
-type string `"amr"` to `ospNewVolume`.
+type string “`amr`” to `ospNewVolume`.
 
 Blocks are defined by three parameters: their bounds, the refinement
 level in which they reside, and the scalar data contained within each
@@ -935,18 +958,18 @@ block.
 
 Note that cell widths are defined *per refinement level*, not per block.
 
-| Type           | Name         |            Default| Description                                                            |
-|:---------------|:-------------|------------------:|:-----------------------------------------------------------------------|
-| `OSPAMRMethod` | method       |  `OSP_AMR_CURRENT`| `OSPAMRMethod` sampling method. Supported methods are:                 |
-|                |              |                   | `OSP_AMR_CURRENT`                                                      |
-|                |              |                   | `OSP_AMR_FINEST`                                                       |
-|                |              |                   | `OSP_AMR_OCTANT`                                                       |
-| float\[\]      | cellWidth    |               NULL| array of each level’s cell width                                       |
-| box3i\[\]      | block.bounds |               NULL| [data](#data) array of grid sizes (in voxels) for each AMR block       |
-| int\[\]        | block.level  |               NULL| array of each block’s refinement level                                 |
-| OSPData\[\]    | block.data   |               NULL| [data](#data) array of OSPData containing the actual scalar voxel data |
-| vec3f          | gridOrigin   |        $(0, 0, 0)$| origin of the grid in world-space                                      |
-| vec3f          | gridSpacing  |        $(1, 1, 1)$| size of the grid cells in world-space                                  |
+| Type           | Name         |            Default| Description                                                                                                            |
+|:---------------|:-------------|------------------:|:-----------------------------------------------------------------------------------------------------------------------|
+| `OSPAMRMethod` | method       |  `OSP_AMR_CURRENT`| `OSPAMRMethod` sampling method. Supported methods are:                                                                 |
+|                |              |                   | `OSP_AMR_CURRENT`                                                                                                      |
+|                |              |                   | `OSP_AMR_FINEST`                                                                                                       |
+|                |              |                   | `OSP_AMR_OCTANT`                                                                                                       |
+| float\[\]      | cellWidth    |               NULL| array of each level’s cell width                                                                                       |
+| box3i\[\]      | block.bounds |               NULL| [data](#data) array of grid sizes (in voxels) for each AMR block                                                       |
+| int\[\]        | block.level  |               NULL| array of each block’s refinement level                                                                                 |
+| OSPData\[\]    | block.data   |               NULL| [data](#data) array of OSPData containing the actual scalar voxel data, only `OSP_FLOAT` is supported as `OSPDataType` |
+| vec3f          | gridOrigin   |        $(0, 0, 0)$| origin of the grid in world-space                                                                                      |
+| vec3f          | gridSpacing  |        $(1, 1, 1)$| size of the grid cells in world-space                                                                                  |
 
 : Configuration parameters for AMR volumes.
 
@@ -955,22 +978,25 @@ like the structured volume equivalent, but they only modify the root
 (coarsest level) of refinement.
 
 In particular, OSPRay’s / Open VKL’s AMR implementation was designed to
-cover Berger-Colella \[1\] and Chombo \[2\] AMR data. The `method`
+cover Berger-Colella \[1\] and Chombo \[2\] AMR data. The `method`
 parameter above determines the interpolation method used when sampling
 the volume.
 
--   `OSP_AMR_CURRENT` finds the finest refinement level at that cell and
-    interpolates through this “current” level
--   `OSP_AMR_FINEST` will interpolate at the closest existing cell in
-    the volume-wide finest refinement level regardless of the sample
-    cell’s level
--   `OSP_AMR_OCTANT` interpolates through all available refinement
-    levels
--   at that cell. This method avoids discontinuities at refinement level
-    boundaries at the cost of performance
+OSP\_AMR\_CURRENT
+:   finds the finest refinement level at that cell and interpolates
+    through this “current” level
+
+OSP\_AMR\_FINEST
+:   will interpolate at the closest existing cell in the volume-wide
+    finest refinement level regardless of the sample cell’s level
+
+OSP\_AMR\_OCTANT
+:   interpolates through all available refinement levels at that cell.
+    This method avoids discontinuities at refinement level boundaries at
+    the cost of performance
 
 Details and more information can be found in the publication for the
-implementation \[3\].
+implementation \[3\].
 
 1.  M.J. Berger and P. Colella, “Local adaptive mesh refinement for
     shock hydrodynamics.” Journal of Computational Physics 82.1 (1989):
@@ -1018,20 +1044,21 @@ the vertices and data values. Vertex ordering is the same as
 `VTK_PYRAMID`: four bottom vertices counterclockwise, then the top
 vertex.
 
-To maintain VTK data compatibility an index array may be specified via
-the `indexPrefixed` array that allows vertex indices to be interleaved
-with cell sizes in the following format:
-$n, id_1, ..., id_n, m, id_1, ..., id_m$.
+To maintain VTK data compatibility, the `index` array may be specified
+with cell sizes interleaved with vertex indices in the following format:
+$n, id_1, ..., id_n, m, id_1, ..., id_m$. This alternative `index` array
+layout can be enabled through the `indexPrefixed` flag (in which case,
+the `cell.type` parameter must be omitted).
 
 | Type                    | Name               |  Default| Description                                                                                                                                             |
 |:------------------------|:-------------------|--------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------|
 | vec3f\[\]               | vertex.position    |         | [data](#data) array of vertex positions                                                                                                                 |
 | float\[\]               | vertex.data        |         | [data](#data) array of vertex data values to be sampled                                                                                                 |
 | uint32\[\] / uint64\[\] | index              |         | [data](#data) array of indices (into the vertex array(s)) that form cells                                                                               |
-| uint32\[\] / uint64\[\] | indexPrefixed      |         | alternative [data](#data) array of indices compatible to VTK, where the indices of each cell are prefixed with the number of vertices                   |
+| bool                    | indexPrefixed      |    false| indicates that the `index` array is compatible to VTK, where the indices of each cell are prefixed with the number of vertices                          |
 | uint32\[\] / uint64\[\] | cell.index         |         | [data](#data) array of locations (into the index array), specifying the first index of each cell                                                        |
 | float\[\]               | cell.data          |         | [data](#data) array of cell data values to be sampled                                                                                                   |
-| uint8\[\]               | cell.type          |         | [data](#data) array of cell types (VTK compatible). Supported types are:                                                                                |
+| uint8\[\]               | cell.type          |         | [data](#data) array of cell types (VTK compatible), only set if `indexPrefixed = false` false. Supported types are:                                     |
 |                         |                    |         | `OSP_TETRAHEDRON`                                                                                                                                       |
 |                         |                    |         | `OSP_HEXAHEDRON`                                                                                                                                        |
 |                         |                    |         | `OSP_WEDGE`                                                                                                                                             |
@@ -1041,10 +1068,65 @@ $n, id_1, ..., id_n, m, id_1, ..., id_m$.
 
 : Configuration parameters for unstructured volumes.
 
+### VDB Volume
+
+VDB volumes implement a data structure that is very similar to the data
+structure outlined in Museth \[1\], they are created by passing the type
+string “`vdb`” to `ospNewVolume`.
+
+The data structure is a hierarchical regular grid at its core: Nodes are
+regular grids, and each grid cell may either store a constant value
+(this is called a tile), or child pointers. Nodes in VDB trees are wide:
+Nodes on the first level have a resolution of 32^3^ voxels, on the next
+level 16^3^, and on the leaf level 8^3^ voxels. All nodes on a given
+level have the same resolution. This makes it easy to find the node
+containing a coordinate using shift operations (see \[1\]). VDB leaf
+nodes are implicit in OSPRay / Open VKL: they are stored as pointers to
+user-provided data.
+
+<figure>
+<img src="https://ospray.github.io/images/vdb_structure.svg" width="80.0%" alt="" /><figcaption>Topology of VDB volumes.</figcaption>
+</figure>
+
+
+
+VDB volumes interpret input data as constant cells (which are then
+potentially filtered). This is in contrast to `structuredRegular`
+volumes, which have a vertex-centered interpretation.
+
+The VDB implementation in OSPRay / Open VKL follows the following goals:
+
+-   Efficient data structure traversal on vector architectures.
+-   Enable the use of industry-standard `.vdb` files created through the
+    OpenVDB library.
+-   Compatibility with OpenVDB on a leaf data level, so that `.vdb` file
+    may be loaded with minimal overhead.
+
+VDB volumes have the following parameters:
+
+| Type        | Name             | Description                                                                                                                                                                                                                                                                                                                          |
+|:------------|:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| int         | maxIteratorDepth | do not descend further than to this depth during interval iteration, the maximum value and the default is 3                                                                                                                                                                                                                          |
+| int         | maxSamplingDepth | do not descend further than to this depth during sampling, the maximum value and the default is 3                                                                                                                                                                                                                                    |
+| uint32\[\]  | node.level       | level on which each input node exists, may be 1, 2 or 3 (levels are counted from the root level = 0 down)                                                                                                                                                                                                                            |
+| vec3i\[\]   | node.origin      | the node origin index (per input node)                                                                                                                                                                                                                                                                                               |
+| OSPData\[\] | node.data        | [data](#data) arrays with the node data (per input node). Nodes that are tiles are expected to have single-item arrays. Leaf-nodes with grid data expected to have compact 3D arrays in zyx layout (z changes most quickly) with the correct number of voxels for the `level`. Only `OSP_FLOAT` is supported as field `OSPDataType`. |
+| int         | filter           | filter used for reconstructing the field, default is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively `OSP_VOLUME_FILTER_NEAREST`.                                                                                                                                                                                                       |
+| int         | gradientFilter   | filter used for reconstructing the field during gradient computations, default same as `filter`                                                                                                                                                                                                                                      |
+
+: Configuration parameters for VDB volumes.
+
+1.  Museth, K. VDB: High-Resolution Sparse Volumes with Dynamic
+    Topology. ACM Transactions on Graphics 32(3), 2013. DOI:
+    10.1145/2487228.2487235
+
 ### Particle Volume
 
 Particle volumes consist of a set of points in space. Each point has a
 position, a radius, and a weight typically associated with an attribute.
+Particle volumes are created by passing the type string “`particle`” to
+`ospNewVolume`.
+
 A radial basis function defines the contribution of that particle.
 Currently, we use the Gaussian radial basis function
 $$\phi(P) = w \exp\left(-\frac{(P - p)^2}{2 r^2}\right),$$ where $P$ is
@@ -1055,15 +1137,16 @@ particle that overlaps it.
 
 The OSPRay / Open VKL implementation is similar to direct evaluation of
 samples in Reda et al. \[2\]. It uses an Embree-built BVH with a custom
-traversal, similar to the method in \[1\].
+traversal, similar to the method in \[1\].
 
-| Type      | Name                    |  Default| Description                                                                                                                                                                                                                                       |
-|:----------|:------------------------|--------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| vec3f\[\] | particle.position       |         | [data](#data) array of particle positions                                                                                                                                                                                                         |
-| float\[\] | particle.radius         |         | [data](#data) array of particle radii                                                                                                                                                                                                             |
-| float\[\] | particle.weight         |     NULL| optional [data](#data) array of particle weights, specifying the height of the kernel.                                                                                                                                                            |
-| float     | radiusSupportFactor     |      3.0| The multipler of the particle radius required for support. Larger radii ensure smooth results at the cost of performance. In the Gaussian kernel, the the radius is one standard deviation ($\sigma$), so a value of 3 corresponds to $3 \sigma$. |
-| float     | clampMaxCumulativeValue |        0| The maximum cumulative value possible, set by user. All cumulative values will be clamped to this, and further traversal (RBF summation) of particle contributions will halt when this value is reached. A value of zero or less turns this off.  |
+| Type      | Name                    |  Default| Description                                                                                                                                                                                                                                                                                                                                                                                                     |
+|:----------|:------------------------|--------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vec3f\[\] | particle.position       |         | [data](#data) array of particle positions                                                                                                                                                                                                                                                                                                                                                                       |
+| float\[\] | particle.radius         |         | [data](#data) array of particle radii                                                                                                                                                                                                                                                                                                                                                                           |
+| float\[\] | particle.weight         |     NULL| optional [data](#data) array of particle weights, specifying the height of the kernel.                                                                                                                                                                                                                                                                                                                          |
+| float     | radiusSupportFactor     |      3.0| The multipler of the particle radius required for support. Larger radii ensure smooth results at the cost of performance. In the Gaussian kernel, the the radius is one standard deviation ($\sigma$), so a value of 3 corresponds to $3 \sigma$.                                                                                                                                                               |
+| float     | clampMaxCumulativeValue |        0| The maximum cumulative value possible, set by user. All cumulative values will be clamped to this, and further traversal (RBF summation) of particle contributions will halt when this value is reached. A value of zero or less turns this off.                                                                                                                                                                |
+| bool      | estimateValueRanges     |     true| Enable heuristic estimation of value ranges which are used in internal acceleration structures as well as for determining the volume’s overall value range. When set to `false`, the user *must* specify `clampMaxCumulativeValue`, and all value ranges will be assumed \[0, `clampMaxCumulativeValue`\]. Disabling this switch may improve volume commit time, but will make volume rendering less efficient. |
 
 : Configuration parameters for particle volumes.
 
@@ -1479,6 +1562,7 @@ the spotlight supports the special parameters listed in the table.
 | float     | openingAngle          |          180| full opening angle (in degree) of the spot; outside of this cone is no illumination                                                                                           |
 | float     | penumbraAngle         |            5| size (angle in degree) of the “penumbra”, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of `openingAngle` |
 | float     | radius                |            0| the size of the spotlight, the radius of a disk with normal `direction`                                                                                                       |
+| float     | innerRadius           |            0| in combination with `radius` turns the disk into a ring                                                                                                                       |
 | float\[\] | intensityDistribution |             | luminous intensity distribution for photometric lights; can be 2D for asymmetric illumination; values are assumed to be uniformly distributed                                 |
 | vec3f     | c0                    |             | orientation, i.e., direction of the C0-(half)plane (only needed if illumination via `intensityDistribution` is asymmetric)                                                    |
 
@@ -1489,7 +1573,8 @@ spotlight.](https://ospray.github.io/images/spot_light.png)
 
 Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
-tracer](#path-tracer)).
+tracer](#path-tracer)). Additionally setting the inner radius will
+result in a ring instead of a disk emitting the light.
 
 Measured light sources (IES, EULUMDAT, …) are supported by providing an
 `intensityDistribution` [data](#data) array to modulate the intensity
@@ -1649,9 +1734,9 @@ via a transform. To create and instance call
 OSPInstance ospNewInstance(OSPGroup);
 ```
 
-| Type     | Name |     Default| Description                                                   |
-|:---------|:-----|-----------:|:--------------------------------------------------------------|
-| affine3f | xfm  |  (identity)| world-space transform for all attached geometries and volumes |
+| Type     | Name |   Default| Description                                                   |
+|:---------|:-----|---------:|:--------------------------------------------------------------|
+| affine3f | xfm  |  identity| world-space transform for all attached geometries and volumes |
 
 : Parameters understood by instances.
 
@@ -1794,6 +1879,7 @@ supports the following special parameters:
 
 | Type  | Name               |  Default| Description                                                                                     |
 |:------|:-------------------|--------:|:------------------------------------------------------------------------------------------------|
+| int   | lightSamples       |      all| number of random light samples per path vertex, per default all light sources are sampled       |
 | bool  | geometryLights     |     true| whether geometries with an emissive material (e.g., [Luminous](#luminous)) illuminate the scene |
 | int   | roulettePathLength |        5| ray recursion depth at which to start Russian roulette termination                              |
 | float | maxContribution    |        ∞| samples are clamped to this value before they are accumulated into the framebuffer              |
@@ -1970,24 +2056,24 @@ material for rendering different types of car paints. To create a
 CarPaint material, pass the type string “`carPaint`” to
 `ospNewMaterial`. Its parameters are listed in the table below.
 
-| Type  | Name            |    Default| Description                                                                                               |
-|:------|:----------------|----------:|:----------------------------------------------------------------------------------------------------------|
-| vec3f | baseColor       |  white 0.8| diffuse base reflectivity                                                                                 |
-| float | roughness       |          0| diffuse roughness in \[0–1\], 0 is perfectly smooth                                                       |
-| float | normal          |          1| normal map/scale                                                                                          |
-| float | flakeDensity    |          0| density of metallic flakes in \[0–1\], 0 disables flakes, 1 fully covers the surface with flakes          |
-| float | flakeScale      |        100| scale of the flake structure, higher values increase the amount of flakes                                 |
-| float | flakeSpread     |        0.3| flake spread in \[0–1\]                                                                                   |
-| float | flakeJitter     |       0.75| flake randomness in \[0–1\]                                                                               |
-| float | flakeRoughness  |        0.3| flake roughness in \[0–1\], 0 is perfectly smooth                                                         |
-| float | coat            |          1| clear coat layer weight in \[0–1\]                                                                        |
-| float | coatIor         |        1.5| clear coat index of refraction                                                                            |
-| vec3f | coatColor       |      white| clear coat color tint                                                                                     |
-| float | coatThickness   |          1| clear coat thickness, affects the amount of color attenuation                                             |
-| float | coatRoughness   |          0| clear coat roughness in \[0–1\], 0 is perfectly smooth                                                    |
-| float | coatNormal      |          1| clear coat normal map/scale                                                                               |
-| vec3f | flipflopColor   |      white| reflectivity of coated flakes at grazing angle, used together with coatColor produces a pearlescent paint |
-| float | flipflopFalloff |          1| flip flop color falloff, 1 disables the flip flop effect                                                  |
+| Type        | Name                    |      Default| Description                                                                                                               |
+|:------------|:------------------------|------------:|:--------------------------------------------------------------------------------------------------------------------------|
+| vec3f       | baseColor               |    white 0.8| diffuse base reflectivity                                                                                                 |
+| float       | roughness               |            0| diffuse roughness in \[0–1\], 0 is perfectly smooth                                                                       |
+| float       | normal                  |            1| normal map/scale                                                                                                          |
+| vec3f float | flakeColor flakeDensity |  Aluminium 0| color of metallic flakes density of metallic flakes in \[0–1\], 0 disables flakes, 1 fully covers the surface with flakes |
+| float       | flakeScale              |          100| scale of the flake structure, higher values increase the amount of flakes                                                 |
+| float       | flakeSpread             |          0.3| flake spread in \[0–1\]                                                                                                   |
+| float       | flakeJitter             |         0.75| flake randomness in \[0–1\]                                                                                               |
+| float       | flakeRoughness          |          0.3| flake roughness in \[0–1\], 0 is perfectly smooth                                                                         |
+| float       | coat                    |            1| clear coat layer weight in \[0–1\]                                                                                        |
+| float       | coatIor                 |          1.5| clear coat index of refraction                                                                                            |
+| vec3f       | coatColor               |        white| clear coat color tint                                                                                                     |
+| float       | coatThickness           |            1| clear coat thickness, affects the amount of color attenuation                                                             |
+| float       | coatRoughness           |            0| clear coat roughness in \[0–1\], 0 is perfectly smooth                                                                    |
+| float       | coatNormal              |            1| clear coat normal map/scale                                                                                               |
+| vec3f       | flipflopColor           |        white| reflectivity of coated flakes at grazing angle, used together with coatColor produces a pearlescent paint                 |
+| float       | flipflopFalloff         |            1| flip flop color falloff, 1 disables the flip flop effect                                                                  |
 
 : Parameters of the CarPaint material.
 
@@ -2363,21 +2449,22 @@ rendering, but no motion blur. It is created by passing the type string
 parameters](#cameras) understood by all cameras the perspective camera
 supports the special parameters listed in the table below.
 
-| Type  | Name                   | Description                                                            |
-|:------|:-----------------------|:-----------------------------------------------------------------------|
-| float | fovy                   | the field of view (angle in degree) of the frame’s height              |
-| float | aspect                 | ratio of width by height of the frame (and image region)               |
-| float | apertureRadius         | size of the aperture, controls the depth of field                      |
-| float | focusDistance          | distance at where the image is sharpest when depth of field is enabled |
-| bool  | architectural          | vertical edges are projected to be parallel                            |
-| int   | stereoMode             | `OSPStereoMode` for stereo rendering, possible values are:             |
-|       |                        | `OSP_STEREO_NONE` (default)                                            |
-|       |                        | `OSP_STEREO_LEFT`                                                      |
-|       |                        | `OSP_STEREO_RIGHT`                                                     |
-|       |                        | `OSP_STEREO_SIDE_BY_SIDE`                                              |
-| float | interpupillaryDistance | distance between left and right eye when stereo is enabled             |
+| Type  | Name                   | Description                                                                |
+|:------|:-----------------------|:---------------------------------------------------------------------------|
+| float | fovy                   | the field of view (angle in degree) of the frame’s height                  |
+| float | aspect                 | ratio of width by height of the frame (and image region)                   |
+| float | apertureRadius         | size of the aperture, controls the depth of field                          |
+| float | focusDistance          | distance at where the image is sharpest when depth of field is enabled     |
+| bool  | architectural          | vertical edges are projected to be parallel                                |
+| int   | stereoMode             | `OSPStereoMode` for stereo rendering, possible values are:                 |
+|       |                        | `OSP_STEREO_NONE` (default)                                                |
+|       |                        | `OSP_STEREO_LEFT`                                                          |
+|       |                        | `OSP_STEREO_RIGHT`                                                         |
+|       |                        | `OSP_STEREO_SIDE_BY_SIDE`                                                  |
+|       |                        | `OSP_STEREO_TOP_BOTTOM` (left eye at top half)                             |
+| float | interpupillaryDistance | distance between left and right eye when stereo is enabled, default 0.0635 |
 
-: Parameters accepted by the perspective camera.
+: Addtional parameters accepted by the perspective camera.
 
 Note that when computing the `aspect` ratio a potentially set image
 region (using `imageStart` & `imageEnd`) needs to be regarded as well.
@@ -2408,7 +2495,7 @@ altered by `imageStart`/`imageEnd`.
 
 
 <figure>
-<img src="https://ospray.github.io/images/camera_stereo.jpg" width="90.0%" alt="" /><figcaption>Example 3D stereo image using <code>stereoMode</code> side-by-side.</figcaption>
+<img src="https://ospray.github.io/images/camera_stereo.jpg" width="90.0%" alt="" /><figcaption>Example 3D stereo image using <code>stereoMode = OSP_STEREO_SIDE_BY_SIDE</code>.</figcaption>
 </figure>
 
 
@@ -2427,7 +2514,7 @@ parameters:
 | float | height | size of the camera’s image plane in y, in world coordinates |
 | float | aspect | ratio of width by height of the frame                       |
 
-: Parameters accepted by the orthographic camera.
+: Addtional parameters accepted by the orthographic camera.
 
 For convenience the size of the camera sensor, and thus the extent of
 the scene that is captured in the image, can be controlled with the
@@ -2443,12 +2530,24 @@ and `imageEnd`, and both methods can be combined. In any case, the
 
 #### Panoramic Camera
 
-The panoramic camera implements a simple camera without support for
-motion blur. It captures the complete surrounding with a latitude /
+The panoramic camera implements a simple camera with support for stereo
+rendering. It captures the complete surrounding with a latitude /
 longitude mapping and thus the rendered images should best have a ratio
 of 2:1. A panoramic camera is created by passing the type string
 “`panoramic`” to `ospNewCamera`. It is placed and oriented in the scene
 by using the [general parameters](#cameras) understood by all cameras.
+
+| Type  | Name                   | Description                                                                |
+|:------|:-----------------------|:---------------------------------------------------------------------------|
+| int   | stereoMode             | `OSPStereoMode` for stereo rendering, possible values are:                 |
+|       |                        | `OSP_STEREO_NONE` (default)                                                |
+|       |                        | `OSP_STEREO_LEFT`                                                          |
+|       |                        | `OSP_STEREO_RIGHT`                                                         |
+|       |                        | `OSP_STEREO_SIDE_BY_SIDE`                                                  |
+|       |                        | `OSP_STEREO_TOP_BOTTOM` (left eye at top half)                             |
+| float | interpupillaryDistance | distance between left and right eye when stereo is enabled, default 0.0635 |
+
+: Addtional parameters accepted by the panoramic camera.
 
 <figure>
 <img src="https://ospray.github.io/images/camera_panoramic.jpg" width="90.0%" alt="" /><figcaption>Latitude / longitude map created with the panoramic camera.</figcaption>
