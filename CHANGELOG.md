@@ -30,7 +30,7 @@ Version History
 -   Support for Open VKL v0.10.0 and its new sampler object API, thus
     this is now the required minimum version
 -   Added support for particle and VDB volumes
--   Move from `ospcommon` to `rkcommon` v1.4.0
+-   Move from `ospcommon` to `rkcommon` v1.4.2
 -   New minimum ISPC version is 1.10.0
 -   Status and error callbacks now support a user pointer
 -   Enabled C++ wrappers (`ospray_cpp`) to work with non-rkcommon math types
