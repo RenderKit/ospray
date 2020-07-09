@@ -169,7 +169,7 @@ a device is set as the current device, it internally has its reference
 count incremented. Note that `ospDeviceRetain` and `ospDeviceRelease`
 should only be used with reference counts that the application tracks:
 removing reference held by the current set device should be handled
-by `ospShutdown`. Thus `ospDeviceRelease` should only decrement the
+by `ospShutdown`. Thus, `ospDeviceRelease` should only decrement the
 reference counts that come from `ospNewDevice`, `ospGetCurrentDevice`,
 and the number of explicit calls to `ospDeviceRetain`.
 
@@ -856,10 +856,10 @@ traversal, similar to the method in\ [1].
                                              weights, specifying the height of the
                                              kernel.
 
-  float    radiusSupportFactor          3.0  The multipler of the particle radius
+  float    radiusSupportFactor          3.0  The multiplier of the particle radius
                                              required for support. Larger radii
                                              ensure smooth results at the cost of
-                                             performance. In the Gaussian kernel, the
+                                             performance. In the Gaussian kernel,
                                              the radius is one standard deviation
                                              ($\sigma$), so a value of 3 corresponds
                                              to $3 \sigma$.
@@ -2393,7 +2393,7 @@ supports the special parameters listed in the table below.
   float interpupillaryDistance distance between left and right eye when
                                stereo is enabled, default 0.0635
   ----- ---------------------- -----------------------------------------
-  : Addtional parameters accepted by the perspective camera.
+  : Additional parameters accepted by the perspective camera.
 
 Note that when computing the `aspect` ratio a potentially set image region
 (using `imageStart` & `imageEnd`) needs to be regarded as well.
@@ -2434,7 +2434,7 @@ parameters:
   float  height  size of the camera's image plane in y, in world coordinates
   float  aspect  ratio of width by height of the frame
   ------ ------- ------------------------------------------------------------
-  : Addtional parameters accepted by the orthographic camera.
+  : Additional parameters accepted by the orthographic camera.
 
 For convenience the size of the camera sensor, and thus the extent of
 the scene that is captured in the image, can be controlled with the
@@ -2472,7 +2472,7 @@ by using the [general parameters](#cameras) understood by all cameras.
   float interpupillaryDistance distance between left and right eye when
                                stereo is enabled, default 0.0635
   ----- ---------------------- -----------------------------------------
-  : Addtional parameters accepted by the panoramic camera.
+  : Additional parameters accepted by the panoramic camera.
 
 ![Latitude / longitude map created with the panoramic camera.][imgCameraPanoramic]
 

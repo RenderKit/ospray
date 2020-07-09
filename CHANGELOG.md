@@ -6,26 +6,26 @@ Version History
 -   Support for texture transformation in SciVis OBJ material
 -   Add transformations for volume textures; volume texture lookups are
     now with local object coordinates (not world coordinates anymore)
--   Changed behavior: if solely a texure is given, then the default
+-   Changed behavior: if solely a texture is given, then the default
     value of the corresponding parameter is *not* multiplied
 -   Support for better antialiasing using a set of different pixel
-    filters (e.g, box, Gaussian, ...). The size of the pixel filter
-    is defined by the used filter type. Previously OSPRay implicitely
-    used a box filter with a size of 1, for better results the default
-    filter is now `OSP_PIXELFILTER_GAUSS`
+    filters (e.g, box, Gaussian, ...). The size of the pixel filter is
+    defined by the used filter type. Previously OSPRay implicitly used a
+    box filter with a size of 1, for better results the default filter
+    is now `OSP_PIXELFILTER_GAUSS`
 -   Support stereo3d mode for panoramic camera
--   Add new `stereoMode` `OSP_STEREO_TOP_BOTTOM` (with left eye at top
-    half of the image)
+-   Add new camera `stereoMode` `OSP_STEREO_TOP_BOTTOM` (with left eye
+    at top half of the image)
 -   Added support for random light sampling to the `pathtracer`, the
     number of sampled light sources per path vertex is defined by the
     `lightSamples` parameter
 -   Support ring light by extending spot with `innerRadius`
--   Fixed non-physical behavior of the `spot` and `sphere` light sources
+-   Fixed nonphysical behavior of the `spot` and `sphere` light sources
     -   for area lights (when `radius > 0`) surfaces close to the light
         will be darker
     -   the `spot` now has an angular falloff, such that a disk light is
         a proper lambertian area light, which leads to darker regions
-        perpedicular to its direction (thus barely visible with a
+        perpendicular to its direction (thus barely visible with a
         typically small `openingAngle`)
 -   Support for Open VKL v0.10.0 and its new sampler object API, thus
     this is now the required minimum version
@@ -33,17 +33,20 @@ Version History
 -   Move from `ospcommon` to `rkcommon` v1.4.2
 -   New minimum ISPC version is 1.10.0
 -   Status and error callbacks now support a user pointer
--   Enabled C++ wrappers (`ospray_cpp`) to work with non-rkcommon math types
-    -   Note that while the C API remains the same, the C++ wrappers will
-        require some application updates to account for these changes
--   Fix bug where `ospGetCurrentDevice` would crash if used before `ospInit`
+-   Enabled C++ wrappers (`ospray_cpp`) to work with non-rkcommon math
+    types
+    -   Note that while the C API remains the same, the C++ wrappers
+        will require some application updates to account for these
+        changes
+-   Fix bug where `ospGetCurrentDevice` would crash if used before
+    `ospInit`
 -   Allow `NULL` handles to be passed to `ospDeviceRetain` and
     `ospDeviceRelease`
--   ISPC generated headers containing the exported functions for OSPRay's ISPC
-    types and functions are now distributed with the SDK.
--   Add CarPaint `flakeColor` parameter.  Defaults to current Aluminium
+-   ISPC generated headers containing the exported functions for
+    OSPRay's ISPC types and functions are now distributed with the SDK
+-   Add CarPaint `flakeColor` parameter, defaults to current Aluminium
 -   Fixed Debug build (which were producing different images)
--   The pathtracer now also regards the renderer materialist when
+-   The path tracer now also regards the renderer materialist when
     creating geometry lights
 
 ### Changes in v2.1.1:
@@ -82,7 +85,7 @@ Version History
 -   Proper demonstration of `ospGetVariance` in `ospTutorialAsync`
 -   Fix handling of `--osp:device-params` to process and set all passed
     arguments first before committing the device, to ensure it is
-    committed in a valid state.
+    committed in a valid state
 -   Object factory functions are now registered during module
     initialization via the appropriate `registerType` function
 -   Fix issue with OSPRay ignoring tasking system thread count settings
