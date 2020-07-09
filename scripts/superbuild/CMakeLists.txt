@@ -73,7 +73,7 @@ option(BUILD_DEPENDENCIES_ONLY "Don't build OSPRay itself, only its dependencies
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
 option(BUILD_OSPRAY_MODULE_MPI "Enable fetch/build of module_mpi" OFF)
-set(BUILD_OSPRAY_MODULE_MPI_VERSION "v2.1.0" CACHE STRING "What version of module_mpi?")
+set(BUILD_OSPRAY_MODULE_MPI_VERSION "v2.2.0" CACHE STRING "What version of module_mpi?")
 
 # MPI needs working SDK, which rules out installed depedencies
 cmake_dependent_option(INSTALL_DEPENDENCIES "Install OSPRay dependencies" ON
