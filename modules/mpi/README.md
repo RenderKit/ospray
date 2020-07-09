@@ -12,7 +12,8 @@ OSPRay MPI Module Overview
 Intel OSPRay is an **o**pen source, **s**calable, and **p**ortable
 **ray** tracing engine for high-performance, high-fidelity visualization
 on Intel Architecture CPUs. OSPRay is part of the [Intel oneAPI
-Rendering Toolkit](https://software.intel.com/en-us/rendering-framework)
+Rendering
+Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/rendering-toolkit.html)
 and is released under the permissive [Apache 2.0
 license](http://www.apache.org/licenses/LICENSE-2.0).
 
@@ -23,7 +24,7 @@ applications to transparently distribute rendering work, or to render
 data sets which are too large to fit in memory on a single machine.
 
 OSPRay internally builds on top of [Intel
-Embree](https://embree.github.io/) and [ISPC (Intel SPMD Program
+Embree]((https://www.embree.org/) and [ISPC (Intel SPMD Program
 Compiler)](https://ispc.github.io/), and fully exploits modern
 instruction sets like Intel SSE4, AVX, AVX2, and AVX-512 to achieve high
 rendering performance, thus a CPU with support for at least SSE4.1 is

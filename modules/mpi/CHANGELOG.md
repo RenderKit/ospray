@@ -2,9 +2,7 @@ Version History
 ---------------
 
 ### Changes in v2.2.0:
--   Move from `ospcommon` to `rkcommon`
--   Fix bug where OSPObject handles where not translated to worker-local
-    pointers when committing an OSPData in the MPIOffloadDevice.
+
 -   Improve parallelism of framebuffer compression & decompression when
     collecting the final framebuffer to the head rank. This provides a
     substantial performance improvement when using just a few ranks or
@@ -13,6 +11,10 @@ Version History
     no option is selected. This improves thread usage and core
     assignment of threads in most cases, where no specific options are
     provided to the MPI runtime.
+-   Fix bug where OSPObject handles where not translated to worker-local
+    pointers when committing an OSPData in the MPIOffloadDevice.
+-   Fix handling of `OSP_STRING` parameters
+-   Move from `ospcommon` to `rkcommon` v1.4.2
 
 ### Changes in v2.1.0:
 
