@@ -205,7 +205,9 @@ INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("gravity_spheres_volume",
                            "perlin_noise_volumes",
-                           "unstructured_volume"),
+                           "unstructured_volume",
+                           "particle_volume",
+                           "vdb_volume"),
         ::testing::Values("scivis", "pathtracer")));
 
 TEST_P(TextureVolumeTransform, simple)
