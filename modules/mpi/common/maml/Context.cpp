@@ -7,16 +7,16 @@
 #include <chrono>
 #include <iostream>
 
-#include "ospcommon/memory/malloc.h"
-#include "ospcommon/tasking/async.h"
-#include "ospcommon/tasking/tasking_system_init.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/memory/malloc.h"
+#include "rkcommon/tasking/async.h"
+#include "rkcommon/tasking/tasking_system_init.h"
+#include "rkcommon/utility/getEnvVar.h"
 
-using ospcommon::byte_t;
-using ospcommon::make_unique;
-using ospcommon::tasking::AsyncLoop;
-using ospcommon::tasking::numTaskingThreads;
-using ospcommon::utility::getEnvVar;
+using rkcommon::byte_t;
+using rkcommon::make_unique;
+using rkcommon::tasking::AsyncLoop;
+using rkcommon::tasking::numTaskingThreads;
+using rkcommon::utility::getEnvVar;
 
 using namespace std::chrono;
 

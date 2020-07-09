@@ -1,9 +1,24 @@
 Version History
 ---------------
 
+### Changes in v2.2.0:
+
+-   Improve parallelism of framebuffer compression & decompression when
+    collecting the final framebuffer to the head rank. This provides a
+    substantial performance improvement when using just a few ranks or
+    large framebuffers (both in pixel count or channel count).
+-   The MPI module will now default to setting thread affinity off, if
+    no option is selected. This improves thread usage and core
+    assignment of threads in most cases, where no specific options are
+    provided to the MPI runtime.
+-   Fix bug where OSPObject handles where not translated to worker-local
+    pointers when committing an OSPData in the MPIOffloadDevice.
+-   Fix handling of `OSP_STRING` parameters
+-   Move from `ospcommon` to `rkcommon` v1.4.2
+
 ### Changes in v2.1.0:
 
--   Add suport for `ospGetTaskDuration` to query the render time of a
+-   Add support for `ospGetTaskDuration` to query the render time of a
     asynchronous (or synchronous) renderFrame call
 -   Use flush bcasts to allow us to use non-owning views for data
     transfer. Note that shared `ospData` with strides is currently

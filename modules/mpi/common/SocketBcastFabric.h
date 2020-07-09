@@ -8,10 +8,10 @@
 #include <string>
 #include <vector>
 #include "MPICommon.h"
-#include "ospcommon/containers/TransactionalBuffer.h"
-#include "ospcommon/networking/Fabric.h"
-#include "ospcommon/networking/Socket.h"
-#include "ospcommon/tasking/AsyncLoop.h"
+#include "rkcommon/containers/TransactionalBuffer.h"
+#include "rkcommon/networking/Fabric.h"
+#include "rkcommon/networking/Socket.h"
+#include "rkcommon/tasking/AsyncLoop.h"
 
 namespace mpicommon {
 
@@ -49,9 +49,9 @@ struct OSPRAY_MPI_INTERFACE SocketWriterFabric : public networking::Fabric
     Message(std::shared_ptr<utility::AbstractArray<uint8_t>> &buf, int ranks);
   };
 
-  std::vector<ospcommon::socket_t> sockets;
-  std::unique_ptr<ospcommon::tasking::AsyncLoop> sendThread;
-  ospcommon::containers::TransactionalBuffer<Message> outbox;
+  std::vector<rkcommon::socket_t> sockets;
+  std::unique_ptr<rkcommon::tasking::AsyncLoop> sendThread;
+  rkcommon::containers::TransactionalBuffer<Message> outbox;
 
   std::mutex mutex;
   bool bcasts_in_outbox;
@@ -86,9 +86,9 @@ struct OSPRAY_MPI_INTERFACE SocketReaderFabric : public networking::Fabric
   void sendThreadLoop();
 
   Group group;
-  ospcommon::socket_t socket;
-  std::unique_ptr<ospcommon::tasking::AsyncLoop> sendThread;
-  ospcommon::containers::TransactionalBuffer<
+  rkcommon::socket_t socket;
+  std::unique_ptr<rkcommon::tasking::AsyncLoop> sendThread;
+  rkcommon::containers::TransactionalBuffer<
       std::shared_ptr<utility::AbstractArray<uint8_t>>>
       outbox;
 };

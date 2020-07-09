@@ -9,8 +9,8 @@
 #include "common/Data.h"
 #include "lights/AmbientLight.h"
 #include "lights/Light.h"
-#include "ospcommon/tasking/parallel_for.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 #include "../../common/DistributedWorld.h"
 #include "../../common/Profiling.h"
@@ -18,7 +18,7 @@
 #include "AlphaCompositeTileOperation.h"
 #include "DistributedRaycast.h"
 
-#include "DistributedRaycast_ispc.h"
+#include "render/distributed/DistributedRaycast_ispc.h"
 
 namespace ospray {
 namespace mpi {
@@ -42,7 +42,7 @@ DistributedRaycastRenderer::DistributedRaycastRenderer()
         utility::getEnvVar<std::string>("OSPRAY_JOB_NAME").value_or("log");
     std::string statsLogFile = job_name + std::string("-rank")
         + std::to_string(mpiGroup.rank) + ".txt";
-    statsLog = ospcommon::make_unique<std::ofstream>(statsLogFile.c_str());
+    statsLog = rkcommon::make_unique<std::ofstream>(statsLogFile.c_str());
   }
 }
 

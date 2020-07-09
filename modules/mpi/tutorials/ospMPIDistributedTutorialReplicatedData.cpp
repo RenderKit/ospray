@@ -21,8 +21,8 @@
 #include "ospray_testing.h"
 
 using namespace ospray;
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 static std::string rendererType = "pathtracer";
 static std::string builderType = "perlin_noise_volumes";
@@ -94,11 +94,13 @@ int main(int argc, char **argv)
     mpiDevice.setCurrent();
 
     // set an error callback to catch any OSPRay errors and exit the application
-    ospDeviceSetErrorFunc(
-        ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
+    ospDeviceSetErrorCallback(
+        mpiDevice.handle(),
+        [](void *data, OSPError error, const char *errorDetails) {
           std::cerr << "OSPRay error: " << errorDetails << std::endl;
           exit(error);
-        });
+        },
+        nullptr);
 
     auto builder = testing::newBuilder(builderType);
     testing::setParam(builder, "rendererType", rendererType);

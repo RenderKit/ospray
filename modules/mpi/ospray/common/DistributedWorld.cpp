@@ -5,16 +5,16 @@
 #include <algorithm>
 #include <iterator>
 #include "DistributedWorld.h"
-#include "DistributedWorld_ispc.h"
 #include "MPICommon.h"
 #include "Messaging.h"
 #include "api/ISPCDevice.h"
 #include "common/Data.h"
+#include "common/DistributedWorld_ispc.h"
 
 namespace ospray {
 namespace mpi {
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 void RegionScreenBounds::extend(const vec3f &p)
 {

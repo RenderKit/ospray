@@ -9,8 +9,8 @@
 #include <vector>
 #include "common/Collectives.h"
 #include "maml.h"
-#include "ospcommon/containers/TransactionalBuffer.h"
-#include "ospcommon/tasking/AsyncLoop.h"
+#include "rkcommon/containers/TransactionalBuffer.h"
+#include "rkcommon/tasking/AsyncLoop.h"
 
 namespace maml {
 
@@ -84,9 +84,9 @@ struct OSPRAY_MPI_INTERFACE Context
 
   // Data members //
 
-  ospcommon::containers::TransactionalBuffer<std::shared_ptr<Message>> inbox;
-  ospcommon::containers::TransactionalBuffer<std::shared_ptr<Message>> outbox;
-  ospcommon::containers::TransactionalBuffer<std::shared_ptr<Collective>>
+  rkcommon::containers::TransactionalBuffer<std::shared_ptr<Message>> inbox;
+  rkcommon::containers::TransactionalBuffer<std::shared_ptr<Message>> outbox;
+  rkcommon::containers::TransactionalBuffer<std::shared_ptr<Collective>>
       collectiveOutbox;
 
   // NOTE(jda) - sendCache/pendingSends MUST correspond with each other by
@@ -111,8 +111,8 @@ struct OSPRAY_MPI_INTERFACE Context
   bool tasksAreRunning{false};
   // std::thread sendReceiveThread, processInboxThread;
   std::atomic<bool> quitThreads{false};
-  std::unique_ptr<ospcommon::tasking::AsyncLoop> sendReceiveThread;
-  std::unique_ptr<ospcommon::tasking::AsyncLoop> processInboxThread;
+  std::unique_ptr<rkcommon::tasking::AsyncLoop> sendReceiveThread;
+  std::unique_ptr<rkcommon::tasking::AsyncLoop> processInboxThread;
 
   std::mutex statsMutex;
   using CompressionPercent = std::chrono::duration<double>;

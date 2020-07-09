@@ -9,6 +9,7 @@ add_library(ospray_mpi_common STATIC
     ObjectHandle.cpp
     maml/maml.cpp
     maml/Context.cpp
+    Profiling.cpp
 )
 
 target_link_libraries(ospray_mpi_common
@@ -16,9 +17,9 @@ target_link_libraries(ospray_mpi_common
     snappy
   PUBLIC
     ospray::ospray_sdk
-    ospcommon::ospcommon
+    rkcommon::rkcommon
     ospray::ospray_module_ispc
-    ${MPI_C_LIBRARIES}
+    ${MPI_CXX_LIBRARIES}
 )
 
 target_include_directories(ospray_mpi_common
@@ -27,5 +28,12 @@ target_include_directories(ospray_mpi_common
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/mpiCommon/maml>
-    ${MPI_C_INCLUDE_PATH}
+    ${MPI_CXX_INCLUDE_PATH}
 )
+
+if (ENABLE_PROFILING)
+target_compile_definitions(ospray_mpi_common
+  PUBLIC
+    -DENABLE_PROFILING)
+endif()
+

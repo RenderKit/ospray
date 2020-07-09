@@ -23,21 +23,21 @@
 #include "common/World.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "fb/LocalFB.h"
-#include "ospcommon/networking/DataStreaming.h"
-#include "ospcommon/networking/Socket.h"
-#include "ospcommon/utility/ArrayView.h"
-#include "ospcommon/utility/OwnedArray.h"
-#include "ospcommon/utility/getEnvVar.h"
 #include "render/DistributedLoadBalancer.h"
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
+#include "rkcommon/networking/DataStreaming.h"
+#include "rkcommon/networking/Socket.h"
+#include "rkcommon/utility/ArrayView.h"
+#include "rkcommon/utility/OwnedArray.h"
+#include "rkcommon/utility/getEnvVar.h"
 #include "volume/Volume.h"
 
 namespace ospray {
 namespace mpi {
 
 using namespace mpicommon;
-using namespace ospcommon;
+using namespace rkcommon;
 
 ///////////////////////////////////////////////////////////////////////////
 // Forward declarations ///////////////////////////////////////////////////
@@ -198,6 +198,20 @@ MPIOffloadDevice::~MPIOffloadDevice()
   if (dynamic_cast<MPIFabric *>(fabric.get()) && world.rank == 0) {
     postStatusMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
 
+#ifdef ENABLE_PROFILING
+    {
+      ProfilingPoint masterEnd;
+      char hostname[512] = {0};
+      gethostname(hostname, 511);
+      const std::string master_log_file = std::string(hostname) + "_master.txt";
+      std::ofstream fout(master_log_file.c_str(), std::ios::app);
+      fout << "Shutting down, final /proc/self/status:\n"
+           << getProcStatus() << "\n=====\n"
+           << "Avg. CPU % during run: "
+           << cpuUtilization(masterStart, masterEnd) << "%\n";
+    }
+#endif
+
     networking::BufferWriter writer;
     writer << work::FINALIZE;
     sendWork(writer.buffer);
@@ -210,6 +224,10 @@ MPIOffloadDevice::~MPIOffloadDevice()
 void MPIOffloadDevice::initializeDevice()
 {
   Device::commit();
+  // MPI Device defaults to not setting affinity
+  if (threadAffinity == AUTO_DETECT) {
+    threadAffinity = DEAFFINITIZE;
+  }
 
   initialized = true;
 
@@ -220,8 +238,20 @@ void MPIOffloadDevice::initializeDevice()
 
   if (mode == "mpi") {
     createMPI_RanksBecomeWorkers(&_ac, _av);
+
+#ifdef ENABLE_PROFILING
+    char hostname[512] = {0};
+    gethostname(hostname, 511);
+    const std::string master_log_file = std::string(hostname) + "_master.txt";
+    std::ofstream fout(master_log_file.c_str());
+    fout << "Master on '" << hostname << "' before commit\n"
+         << "/proc/self/status:\n"
+         << getProcStatus() << "\n=====\n";
+    masterStart = ProfilingPoint();
+#endif
+
     // Only the master returns from this call
-    fabric = ospcommon::make_unique<MPIFabric>(world, 0);
+    fabric = rkcommon::make_unique<MPIFabric>(world, 0);
     maml::init(false);
     maml::start();
   } else if (mode == "mpi-listen") {
@@ -238,7 +268,7 @@ void MPIOffloadDevice::initializeDevice()
     int port = std::stoi(portParam);
     postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
         << "MPIOffloadDevice connecting to " << host << ":" << port << "\n";
-    fabric = ospcommon::make_unique<SocketWriterFabric>(host, port);
+    fabric = rkcommon::make_unique<SocketWriterFabric>(host, port);
   } else {
     throw std::runtime_error("Invalid MPI mode!");
   }
@@ -545,9 +575,13 @@ void MPIOffloadDevice::setObjectParam(
   case OSP_BOOL:
     setParam<bool>(handle, name, mem, type);
     break;
-  case OSP_STRING:
-    setParam<std::string>(handle, name, mem, type);
+  case OSP_STRING: {
+    networking::BufferWriter writer;
+    writer << work::SET_PARAM << handle.i64 << std::string(name) << type
+           << (const char *)mem;
+    sendWork(writer.buffer);
     break;
+  }
   case OSP_CHAR:
   case OSP_BYTE:
     setParam<char>(handle, name, mem, type);
@@ -699,6 +733,10 @@ void MPIOffloadDevice::commit(OSPObject _object)
 void MPIOffloadDevice::release(OSPObject _object)
 {
   const ObjectHandle handle = (const ObjectHandle &)_object;
+  if (futures.find(handle.i64) != futures.end()) {
+    wait((OSPFuture)_object, OSP_TASK_FINISHED);
+    futures.erase(handle.i64);
+  }
 
   networking::BufferWriter writer;
   writer << work::RELEASE << handle.i64;
@@ -748,6 +786,9 @@ const void *MPIOffloadDevice::frameBufferMap(
     OSPFrameBuffer _fb, OSPFrameBufferChannel channel)
 {
   using namespace utility;
+#ifdef ENABLE_PROFILING
+  ProfilingPoint start;
+#endif
 
   ObjectHandle handle = (ObjectHandle &)_fb;
   networking::BufferWriter writer;
@@ -760,12 +801,17 @@ const void *MPIOffloadDevice::frameBufferMap(
 
   fabric->recv(bytesView, rootWorkerRank());
 
-  auto mapping = ospcommon::make_unique<OwnedArray<uint8_t>>();
+  auto mapping = rkcommon::make_unique<OwnedArray<uint8_t>>();
   mapping->resize(nbytes, 0);
   fabric->recv(*mapping, rootWorkerRank());
 
   void *ptr = mapping->data();
   framebufferMappings[handle.i64] = std::move(mapping);
+#ifdef ENABLE_PROFILING
+  ProfilingPoint end;
+  std::cout << "OffloadDevice::frameBufferMap took "
+            << elapsedTimeMs(start, end) << "\n";
+#endif
 
   return ptr;
 }
@@ -833,6 +879,7 @@ OSPFuture MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
   writer << work::RENDER_FRAME << fbHandle << rendererHandle << cameraHandle
          << worldHandle << futureHandle;
   sendWork(writer.buffer);
+  futures.insert(futureHandle.i64);
   return (OSPFuture)(int64)futureHandle;
 }
 

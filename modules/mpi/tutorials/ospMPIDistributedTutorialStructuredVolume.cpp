@@ -21,8 +21,8 @@
 #include "GLFWDistribOSPRayWindow.h"
 
 using namespace ospray;
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 struct VolumeBrick
 {
@@ -74,11 +74,13 @@ int main(int argc, char **argv)
     mpiDevice.setCurrent();
 
     // set an error callback to catch any OSPRay errors and exit the application
-    ospDeviceSetErrorFunc(
-        ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
+    ospDeviceSetErrorCallback(
+        mpiDevice.handle(),
+        [](void *data, OSPError error, const char *errorDetails) {
           std::cerr << "OSPRay error: " << errorDetails << std::endl;
           exit(error);
-        });
+        },
+        nullptr);
 
     // all ranks specify the same rendering parameters, with the exception of
     // the data to be rendered, which is distributed among the ranks
@@ -86,9 +88,9 @@ int main(int argc, char **argv)
 
     // create the "world" model which will contain all of our geometries
     cpp::World world;
-    world.setParam("instance", cpp::Data(brick.instance));
+    world.setParam("instance", cpp::CopiedData(brick.instance));
 
-    world.setParam("region", cpp::Data(brick.bounds));
+    world.setParam("region", cpp::CopiedData(brick.bounds));
     world.commit();
 
     // create OSPRay renderer
@@ -97,7 +99,7 @@ int main(int argc, char **argv)
     // create and setup an ambient light
     cpp::Light ambientLight("ambient");
     ambientLight.commit();
-    renderer.setParam("light", cpp::Data(ambientLight));
+    renderer.setParam("light", cpp::CopiedData(ambientLight));
 
     // create a GLFW OSPRay window: this object will create and manage the
     // OSPRay frame buffer and camera directly
@@ -200,8 +202,8 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   const size_t nVoxels = brickGhostDims.x * brickGhostDims.y * brickGhostDims.z;
   std::vector<uint8_t> volumeData(nVoxels, static_cast<uint8_t>(mpiRank));
   brick.brick.setParam("data",
-      cpp::Data(vec3ul(brickVolumeDims),
-          static_cast<const uint8_t *>(volumeData.data())));
+      cpp::CopiedData(static_cast<const uint8_t *>(volumeData.data()),
+          vec3ul(brickVolumeDims)));
 
   brick.brick.commit();
 
@@ -210,8 +212,8 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   std::vector<vec3f> colors = {vec3f(0.f, 0.f, 1.f), vec3f(1.f, 0.f, 0.f)};
   std::vector<float> opacities = {0.05f, 1.f};
 
-  tfn.setParam("color", cpp::Data(colors));
-  tfn.setParam("opacity", cpp::Data(opacities));
+  tfn.setParam("color", cpp::CopiedData(colors));
+  tfn.setParam("opacity", cpp::CopiedData(opacities));
   // color the bricks by their rank, we pad the range out a bit to keep
   // any brick from being completely transparent
   vec2f valueRange = vec2f(0, mpiWorldSize);
@@ -222,7 +224,7 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   brick.model.commit();
 
   brick.group = cpp::Group();
-  brick.group.setParam("volume", cpp::Data(brick.model));
+  brick.group.setParam("volume", cpp::CopiedData(brick.model));
   brick.group.commit();
 
   brick.instance = cpp::Instance(brick.group);

@@ -3,10 +3,12 @@
 
 #pragma once
 
+#include <unordered_set>
 #include "api/Device.h"
 #include "common/MPICommon.h"
 #include "common/Managed.h"
 #include "common/OSPWork.h"
+#include "common/Profiling.h"
 #include "common/SocketBcastFabric.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
@@ -130,14 +132,14 @@ struct MPIOffloadDevice : public api::Device
       const OSPDataType tag);
 
   void sendWork(
-      std::shared_ptr<ospcommon::utility::AbstractArray<uint8_t>> work);
+      std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> work);
 
   int rootWorkerRank() const;
 
   ObjectHandle allocateHandle() const;
 
   /*! @{ read and write stream for the work commands */
-  std::unique_ptr<ospcommon::networking::Fabric> fabric;
+  std::unique_ptr<rkcommon::networking::Fabric> fabric;
 
   using FrameBufferMapping = std::unique_ptr<utility::OwnedArray<uint8_t>>;
 
@@ -146,7 +148,13 @@ struct MPIOffloadDevice : public api::Device
   std::unordered_map<int64_t, std::shared_ptr<utility::AbstractArray<uint8_t>>>
       sharedData;
 
+  std::unordered_set<int64_t> futures;
+
   bool initialized{false};
+
+#ifdef ENABLE_PROFILING
+  mpicommon::ProfilingPoint masterStart;
+#endif
 };
 
 template <typename T>

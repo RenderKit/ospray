@@ -48,22 +48,24 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
   Ray transformedRay = ray;
   transformRay(transformedRay, interval.rcp_xfm);
 
+  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
   foreach_unique (vm in volModel) {
     Volume *uniform volume = vm->volume;
     TransferFunction *uniform tf = vm->transferFunction;
 
-    VKLIntervalIterator intervalIterator;
-    vklInitIntervalIteratorV(&intervalIterator,
-        volume->vklVolume,
-        (varying vkl_vec3f *)&transformedRay.org,
-        (varying vkl_vec3f *)&transformedRay.dir,
-        (varying vkl_range1f *)&interval.interval,
-        vm->vklValueSelector);
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIteratorV(volume->vklVolume,
+            (varying vkl_vec3f *)&transformedRay.org,
+            (varying vkl_vec3f *)&transformedRay.dir,
+            (varying vkl_range1f *)&interval.interval,
+            vm->vklValueSelector,
+            intervalIteratorBuffer);
 
     VKLInterval interval;
-    while (vklIterateIntervalV(&intervalIterator, &interval) && alpha < 0.99f) {
+    while (vklIterateIntervalV(intervalIterator, &interval) && alpha < 0.99f) {
       const float nominalSamplingDt = interval.nominalDeltaT / samplingRate;
 
       // initial sub interval, based on our renderer-defined sampling rate
@@ -80,13 +82,14 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
         // Get volume sample
         vec3f p = transformedRay.org + transformedRay.t0 * transformedRay.dir;
         const float sample = vklComputeSampleV(
-            volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
+            volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
 
         if (!isnan(sample)) {
           vec4f sampleColorOpacity = tf->get(tf, sample);
 
           sampleColorOpacity.w = 1.f
-              - pow(1.f - sampleColorOpacity.w, dt / interval.nominalDeltaT);
+              - pow(1.f - sampleColorOpacity.w * vm->densityScale,
+                  dt / interval.nominalDeltaT);
           const float clampedOpacity = clamp(sampleColorOpacity.w);
           color = color
               + ((1.f - alpha) * clampedOpacity
@@ -125,7 +128,7 @@ inline float computeAO(const DistributedRaycastRenderer *uniform self,
   const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec2f halton = HaltonSequence_get2D(sampleCnt * accumID + i);
+    const vec2f halton = HaltonSequence_get2D(accumID + i);
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
@@ -162,8 +165,8 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
     foreach_unique (m in mat) {
       surfaceColor = m->Kd;
       opacity = m->d;
-      if (m->map_Kd) {
-        vec4f kdFromMap = get4f(m->map_Kd, dg);
+      if (valid(m->KdMap)) {
+        vec4f kdFromMap = get4f(m->KdMap, dg);
         surfaceColor = surfaceColor * make_vec3f(kdFromMap);
       }
     }
@@ -299,12 +302,12 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
       float t0 = volumeInterval.interval.lower;
       volumeInterval.interval.lower = floor(t0 / dt) * dt;
 
-      float jitter = precomputedHalton2(sample.sampleID.z);
+      float jitter = Halton_sample2(sample.sampleID.z);
       int ix = sample.sampleID.x % 4;
       int iy = sample.sampleID.y % 4;
 
       int patternID = ix + 4 * iy;
-      jitter += precomputedHalton3(patternID);
+      jitter += Halton_sample3(patternID);
       if (jitter > 1.f) {
         jitter -= 1.f;
       }

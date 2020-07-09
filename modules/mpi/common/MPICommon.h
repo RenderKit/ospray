@@ -10,8 +10,8 @@
 #define OMPI_SKIP_MPICXX 1
 #include <mpi.h>
 
-#include "ospcommon/common.h"
 #include "ospray/OSPEnums.h"
+#include "rkcommon/common.h"
 
 #ifdef _WIN32
 #ifdef ospray_mpi_common_EXPORTS
@@ -47,7 +47,7 @@
 #define OSPRAY_WORLD_GROUP_TAG 290374
 
 namespace mpicommon {
-using namespace ospcommon;
+using namespace rkcommon;
 
 /*! global variable that turns on logging of MPI communication
   (for debugging) _may_ eventually turn this into a real logLevel,
@@ -118,6 +118,10 @@ struct OSPRAY_MPI_INTERFACE Message
       it */
   Message(MPI_Comm comm, int rank, const void *copyMem, size_t size);
 
+  Message(const Message &) = delete;
+
+  Message &operator=(const Message &) = delete;
+
   /*! destruct message and free allocated memory */
   virtual ~Message();
 
@@ -130,7 +134,7 @@ struct OSPRAY_MPI_INTERFACE Message
   /*! @} */
 
   /*! @{ actual payload of this message */
-  ospcommon::byte_t *data{nullptr};
+  rkcommon::byte_t *data{nullptr};
   size_t size{0};
   /*! @} */
   // TODO WILL: Profiling info, when this message started sending
@@ -144,7 +148,7 @@ struct UserMemMessage : public Message
 {
   UserMemMessage(void *nonCopyMem, size_t size) : Message()
   {
-    data = (ospcommon::byte_t *)nonCopyMem;
+    data = (rkcommon::byte_t *)nonCopyMem;
     this->size = size;
   }
 

@@ -25,7 +25,6 @@ ispc_target_add_sources(ospray_module_mpi
   common/DistributedWorld.ispc
 
   common/OSPWork.cpp
-  common/Profiling.cpp
   common/Messaging.cpp
 
   fb/DistributedFrameBuffer.cpp

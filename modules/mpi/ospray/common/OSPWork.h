@@ -10,9 +10,9 @@
 #include "MPICommon.h"
 #include "common/ObjectHandle.h"
 
-#include "ospcommon/networking/DataStreaming.h"
-#include "ospcommon/networking/Fabric.h"
-#include "ospcommon/utility/ArrayView.h"
+#include "rkcommon/networking/DataStreaming.h"
+#include "rkcommon/networking/Fabric.h"
+#include "rkcommon/utility/ArrayView.h"
 
 #include "camera/Camera.h"
 #include "common/Instance.h"
@@ -28,7 +28,7 @@ namespace ospray {
 namespace mpi {
 namespace work {
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 enum TAG
 {
@@ -93,7 +93,7 @@ struct OSPState
   std::unordered_map<int64_t, FrameBufferInfo> framebuffers;
 
   std::unordered_map<int64_t,
-      std::unique_ptr<ospcommon::utility::OwnedArray<uint8_t>>>
+      std::unique_ptr<rkcommon::utility::OwnedArray<uint8_t>>>
       data;
 
   template <typename T>

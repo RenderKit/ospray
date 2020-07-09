@@ -4,7 +4,7 @@
 #include "AlphaCompositeTileOperation.h"
 #include <memory>
 #include "../../fb/DistributedFrameBuffer.h"
-#include "DistributedFrameBuffer_ispc.h"
+#include "fb/DistributedFrameBuffer_ispc.h"
 
 namespace ospray {
 
@@ -67,7 +67,7 @@ void LiveAlphaCompositeTile::process(const ospray::Tile &tile)
 {
   std::lock_guard<std::mutex> lock(mutex);
   {
-    auto addTile = ospcommon::make_unique<BufferedTile>();
+    auto addTile = rkcommon::make_unique<BufferedTile>();
     std::memcpy(&addTile->tile, &tile, sizeof(tile));
 
     bufferedTiles.push_back(std::move(addTile));

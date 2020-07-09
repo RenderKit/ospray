@@ -5,9 +5,9 @@
 
 #include <future>
 #include <memory>
-#include "ospcommon/networking/DataStreaming.h"
-#include "ospcommon/networking/Fabric.h"
-#include "ospcommon/utility/AbstractArray.h"
+#include "rkcommon/networking/DataStreaming.h"
+#include "rkcommon/networking/Fabric.h"
+#include "rkcommon/utility/AbstractArray.h"
 
 #include "MPICommon.h"
 

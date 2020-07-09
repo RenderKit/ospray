@@ -40,11 +40,14 @@ add_executable(ospMPIDistributedTutorialCpp
 
 target_link_libraries(ospMPIDistributedTutorialCpp PRIVATE
   ospray::ospray
-  ospcommon::ospcommon
+  rkcommon::rkcommon
   ${MPI_CXX_LIBRARIES})
 
 target_include_directories(ospMPIDistributedTutorialCpp PRIVATE
   $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
+
+target_compile_definitions(ospMPIDistributedTutorialCpp PRIVATE
+    -DOSPRAY_CPP_RKCOMMON_TYPES)
 
 # async version
 add_executable(ospMPIDistributedTutorialAsync
@@ -64,7 +67,7 @@ add_library(mpi_tutorial_common STATIC
 )
 
 target_link_libraries(mpi_tutorial_common PUBLIC
-  ospcommon::ospcommon
+  rkcommon::rkcommon
   ospray::ospray
   imgui
   glfw
@@ -76,6 +79,8 @@ target_link_libraries(mpi_tutorial_common PUBLIC
 target_include_directories(mpi_tutorial_common PUBLIC
   $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>
 )
+
+target_compile_definitions(mpi_tutorial_common PUBLIC -DOSPRAY_CPP_RKCOMMON_TYPES)
 
 ospray_create_mpi_tutorial(ospMPIDistributedTutorialSpheres
   ospMPIDistributedTutorialSpheres.cpp

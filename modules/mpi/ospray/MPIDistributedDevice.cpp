@@ -1,6 +1,7 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/Profiling.h"
 #include "MPIDistributedDevice.h"
 #include <map>
 #include "MPIDistributedDevice_ispc.h"
@@ -15,12 +16,12 @@
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 #include "openvkl/openvkl.h"
-#include "ospcommon/tasking/tasking_system_init.h"
-#include "ospcommon/utility/CodeTimer.h"
-#include "ospcommon/utility/getEnvVar.h"
 #include "render/DistributedLoadBalancer.h"
 #include "render/ThreadedRenderTask.h"
 #include "render/distributed/DistributedRaycast.h"
+#include "rkcommon/tasking/tasking_system_init.h"
+#include "rkcommon/utility/CodeTimer.h"
+#include "rkcommon/utility/getEnvVar.h"
 #include "volume/Volume.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
@@ -92,11 +93,11 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter(vec2ui),
     declare_param_setter(vec3ui),
     declare_param_setter(vec4ui),
-    declare_param_setter(long),
+    declare_param_setter(int64_t),
     declare_param_setter(vec2l),
     declare_param_setter(vec3l),
     declare_param_setter(vec4l),
-    declare_param_setter(unsigned long),
+    declare_param_setter(uint64_t),
     declare_param_setter(vec2ul),
     declare_param_setter(vec3ul),
     declare_param_setter(vec4ul),
@@ -171,6 +172,10 @@ MPIDistributedDevice::~MPIDistributedDevice()
 void MPIDistributedDevice::commit()
 {
   Device::commit();
+  // MPI Device defaults to not setting affinity
+  if (threadAffinity == AUTO_DETECT) {
+    threadAffinity = DEAFFINITIZE;
+  }
 
   if (!initialized) {
     int _ac = 1;
@@ -398,10 +403,19 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   world->refInc();
 
   auto *f = new ThreadedRenderTask(fb, [=]() {
+#ifdef ENABLE_PROFILING
+    using namespace mpicommon; 
+    ProfilingPoint start;
+#endif
     utility::CodeTimer timer;
     timer.start();
     renderer->renderFrame(fb, camera, world);
     timer.stop();
+#ifdef ENABLE_PROFILING
+    ProfilingPoint end;
+    std::cout << "Frame took " << elapsedTimeMs(start, end) << "ms, CPU: "
+      << cpuUtilization(start, end) << "%\n";
+#endif
 
     fb->refDec();
     renderer->refDec();

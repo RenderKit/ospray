@@ -9,7 +9,7 @@ add_library(imgui STATIC
 
 target_link_libraries(imgui
 PUBLIC
-  ospcommon::ospcommon
+  rkcommon::rkcommon
 )
 
 target_include_directories(

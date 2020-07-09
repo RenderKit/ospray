@@ -1,23 +1,22 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedFrameBuffer.h"
 #include <snappy.h>
 #include <thread>
 #include "DistributedFrameBuffer_TileMessages.h"
-#include "DistributedFrameBuffer_ispc.h"
 #include "TileOperation.h"
+#include "fb/DistributedFrameBuffer_ispc.h"
+#include "common/Profiling.h"
 
-#include "ospcommon/tasking/parallel_for.h"
-#include "ospcommon/tasking/schedule.h"
 #include "pico_bench.h"
+#include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/schedule.h"
 
 #include "api/Device.h"
 #include "common/Collectives.h"
 #include "common/MPICommon.h"
 
-using std::cout;
-using std::endl;
 using namespace std::chrono;
 
 namespace ospray {
@@ -68,7 +67,7 @@ DFB::DistributedFrameBuffer(const vec2i &numPixels,
   tileAccumID.resize(getTotalTiles(), 0);
 
   if (mpicommon::IamTheMaster() && colorBufferFormat != OSP_FB_NONE) {
-    localFBonMaster = ospcommon::make_unique<LocalFrameBuffer>(numPixels,
+    localFBonMaster = rkcommon::make_unique<LocalFrameBuffer>(numPixels,
         colorBufferFormat,
         channels & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE));
   }
@@ -103,15 +102,18 @@ void DFB::commit()
 
 void DFB::startNewFrame(const float errorThreshold)
 {
-  queueTimes.clear();
-  workTimes.clear();
-
-  nextTileWrite = 0;
+  {
+    std::lock_guard<std::mutex> lock(finalTileBufferMutex);
+    nextTileWrite = 0;
+    tileBufferOffsets.clear();
+  }
   if (colorBufferFormat != OSP_FB_NONE) {
-    const size_t finalTileSize = masterMsgSize(
+    // Allocate a conservative upper bound of space which we'd need to
+    // store the compressed tiles
+    const size_t uncompressedSize = masterMsgSize(
         colorBufferFormat, hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer);
-    tileGatherBuffer.resize(myTiles.size() * finalTileSize, 0);
-    std::fill(tileGatherBuffer.begin(), tileGatherBuffer.end(), 0);
+    const size_t compressedSize = snappy::MaxCompressedLength(uncompressedSize);
+    tileGatherBuffer.resize(myTiles.size() * compressedSize, 0);
   }
 
   {
@@ -127,7 +129,7 @@ void DFB::startNewFrame(const float errorThreshold)
         imageOps.end(),
         [](std::unique_ptr<LiveImageOp> &p) { p->beginFrame(); });
 
-    lastProgressReport = std::chrono::high_resolution_clock::now();
+    lastProgressReport = std::chrono::steady_clock::now();
     renderingProgressTiles = 0;
 
     tileErrorRegion.sync();
@@ -140,6 +142,8 @@ void DFB::startNewFrame(const float errorThreshold)
       tileErrors.reserve(myTiles.size());
     }
 
+    // May be worth parallelizing if we have tile ops where
+    // new frame becomes expensive
     for (auto &tile : myTiles)
       tile->newFrame();
 
@@ -181,7 +185,7 @@ bool DFB::isFrameComplete(const size_t numTiles)
 
   renderingProgressTiles += numTiles;
 
-  auto now = std::chrono::high_resolution_clock::now();
+  auto now = std::chrono::steady_clock::now();
   auto timeSinceUpdate = duration_cast<milliseconds>(now - lastProgressReport);
   if (timeSinceUpdate.count() >= 1000) {
     auto msg = std::make_shared<mpicommon::Message>(sizeof(ProgressMessage));
@@ -277,7 +281,9 @@ void DFB::waitUntilFinished()
   using namespace mpicommon;
   using namespace std::chrono;
 
-  auto startWaitFrame = high_resolution_clock::now();
+#ifdef ENABLE_PROFILING
+  ProfilingPoint start;
+#endif
   std::unique_lock<std::mutex> lock(mutex);
   frameDoneCond.wait(lock, [&] { return frameIsDone; });
 
@@ -286,9 +292,11 @@ void DFB::waitUntilFinished()
       .wait();
   frameIsActive = false;
 
-  auto endWaitFrame = high_resolution_clock::now();
-  waitFrameFinishTime =
-      duration_cast<RealMilliseconds>(endWaitFrame - startWaitFrame);
+#ifdef ENABLE_PROFILING
+  ProfilingPoint end;
+  std::cout << "Waiting for completion and sync of cancellation status: "
+            << elapsedTimeMs(start, end) << "ms\n";
+#endif
 
   // Report that we're 100% done and do a final check for cancellation
   reportProgress(1.0f);
@@ -298,11 +306,19 @@ void DFB::waitUntilFinished()
     return;
   }
 
+#ifdef ENABLE_PROFILING
+  start = ProfilingPoint();
+#endif
   if (colorBufferFormat != OSP_FB_NONE) {
     gatherFinalTiles();
   } else if (hasVarianceBuffer) {
     gatherFinalErrors();
   }
+#ifdef ENABLE_PROFILING
+  end = ProfilingPoint();
+  std::cout << "Gather final tiles took: " << elapsedTimeMs(start, end)
+            << "ms\n";
+#endif
 }
 
 void DFB::processMessage(WriteTileMessage *msg)
@@ -371,12 +387,6 @@ void DFB::tileIsFinished(LiveTileOperation *tile)
     std::for_each(imageOps.begin(),
         imageOps.begin() + firstFrameOperation,
         [&](std::unique_ptr<LiveImageOp> &iop) {
-#if 0
-                      PixelOp *pop = dynamic_cast<PixelOp *>(iop);
-                      if (pop) {
-                        //p->postAccum(this, tile);
-                      }
-#endif
           LiveTileOp *top = dynamic_cast<LiveTileOp *>(iop.get());
           if (top) {
             top->process(tile->finished);
@@ -417,15 +427,29 @@ void DFB::tileIsFinished(LiveTileOperation *tile)
     return msg;
   };
 
-  // TODO still send normal & albedo
+  // TODO still send normal & albedo?
   if (colorBufferFormat == OSP_FB_NONE) {
     std::lock_guard<std::mutex> lock(tileErrorsMutex);
     tileIDs.push_back(tile->begin / TILE_SIZE);
     tileErrors.push_back(tile->error);
   } else {
     auto tileMsg = msg().message;
-    const size_t n = nextTileWrite.fetch_add(tileMsg->size);
-    std::memcpy(&tileGatherBuffer[n], tileMsg->data, tileMsg->size);
+    size_t compressedSize = snappy::MaxCompressedLength(tileMsg->size);
+    std::vector<char> compressedTile(compressedSize, 0);
+    snappy::RawCompress(reinterpret_cast<char *>(tileMsg->data),
+        tileMsg->size,
+        compressedTile.data(),
+        &compressedSize);
+
+    uint32_t tileOffset;
+    {
+      std::lock_guard<std::mutex> lock(finalTileBufferMutex);
+      tileOffset = nextTileWrite;
+      tileBufferOffsets.push_back(tileOffset);
+      nextTileWrite += compressedSize;
+    }
+    std::memcpy(
+        &tileGatherBuffer[tileOffset], compressedTile.data(), compressedSize);
   }
 
   if (isFrameComplete(1)) {
@@ -497,9 +521,7 @@ void DFB::incoming(const std::shared_ptr<mpicommon::Message> &message)
 
 void DFB::scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message)
 {
-  auto queuedTask = high_resolution_clock::now();
   tasking::schedule([=]() {
-    auto startedTask = high_resolution_clock::now();
     auto *msg = (TileMessage *)message->data;
     if (msg->command & MASTER_WRITE_TILE_I8) {
       throw std::runtime_error("#dfb: master msg should not be scheduled!");
@@ -512,16 +534,6 @@ void DFB::scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message)
     } else {
       throw std::runtime_error("#dfb: unknown tile type processed!");
     }
-
-    auto finishedTask = high_resolution_clock::now();
-    auto queueTime =
-        duration_cast<duration<double, std::milli>>(startedTask - queuedTask);
-    auto computeTime =
-        duration_cast<duration<double, std::milli>>(finishedTask - startedTask);
-
-    std::lock_guard<std::mutex> lock(statsMutex);
-    queueTimes.push_back(queueTime);
-    workTimes.push_back(computeTime);
   });
 }
 
@@ -530,58 +542,58 @@ void DFB::gatherFinalTiles()
   using namespace mpicommon;
   using namespace std::chrono;
 
-  auto preGatherComputeStart = high_resolution_clock::now();
+#ifdef ENABLE_PROFILING
+  ProfilingPoint preGatherComputeStart;
+#endif
 
   const size_t tileSize = masterMsgSize(
       colorBufferFormat, hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer);
 
-  const size_t totalTilesExpected =
+  const int totalTilesExpected =
       std::accumulate(numTilesExpected.begin(), numTilesExpected.end(), 0);
-  std::vector<int> tileBytesExpected(workerSize(), 0);
-  std::vector<int> processOffsets(workerSize(), 0);
+
+  std::vector<int> processOffsets;
   if (IamTheMaster()) {
-    tileGatherResult.resize(totalTilesExpected * tileSize);
-    for (size_t i = 0; i < numTilesExpected.size(); ++i) {
-      tileBytesExpected[i] = numTilesExpected[i] * tileSize;
-    }
-    size_t recvOffset = 0;
+    processOffsets.resize(workerSize(), 0);
+
+    int recvOffset = 0;
     for (int i = 0; i < workerSize(); ++i) {
-#if 0
-        std::cout << "Expecting " << tileBytesExpected[i] << " bytes from " << i
-          << ", #tiles: " << numTilesExpected[i] << "\n" << std::flush;
-#endif
       processOffsets[i] = recvOffset;
-      recvOffset += tileBytesExpected[i];
+      recvOffset += numTilesExpected[i];
     }
   }
 
-  const size_t renderedTileBytes = nextTileWrite.load();
-  size_t compressedSize = 0;
-  if (renderedTileBytes > 0) {
-    auto startCompr = high_resolution_clock::now();
-    compressedSize = snappy::MaxCompressedLength(renderedTileBytes);
-    compressedBuf.resize(compressedSize, 0);
-    snappy::RawCompress(tileGatherBuffer.data(),
-        renderedTileBytes,
-        compressedBuf.data(),
-        &compressedSize);
-    auto endCompr = high_resolution_clock::now();
+#ifdef ENABLE_PROFILING
+  ProfilingPoint startGather;
+  std::cout << "Pre-gather took: "
+            << elapsedTimeMs(preGatherComputeStart, startGather) << "ms\n";
+#endif
 
-    compressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
-    compressedPercent =
-        100.0 * (static_cast<double>(compressedSize) / renderedTileBytes);
+  // Each rank sends us the offset lists of the individually compressed tiles
+  // in its compressed data buffer
+  std::vector<uint32_t> compressedTileOffsets;
+  if (IamTheMaster()) {
+    compressedTileOffsets.resize(totalTilesExpected, 0);
   }
-
-  auto startGather = high_resolution_clock::now();
-  preGatherDuration =
-      duration_cast<RealMilliseconds>(startGather - preGatherComputeStart);
+  auto tileOffsetsGather = gatherv(tileBufferOffsets.data(),
+      tileBufferOffsets.size(),
+      MPI_INT,
+      compressedTileOffsets.data(),
+      numTilesExpected,
+      processOffsets,
+      MPI_INT,
+      masterRank(),
+      mpiGroup.comm);
 
   // We've got to use an int since Gatherv only takes int counts.
   // However, it's pretty unlikely we'll reach the point where someone
   // is sending 2GB in final tile data from a single process
-  const int sendCompressedSize = static_cast<int>(compressedSize);
+  const int sendCompressedSize = static_cast<int>(nextTileWrite);
   // Get info about how many bytes each proc is sending us
-  std::vector<int> gatherSizes(workerSize(), 0);
+  std::vector<int> gatherSizes;
+  if (IamTheMaster()) {
+    gatherSizes.resize(workerSize(), 0);
+  }
   gather(&sendCompressedSize,
       1,
       MPI_INT,
@@ -592,15 +604,17 @@ void DFB::gatherFinalTiles()
       mpiGroup.comm)
       .wait();
 
-  std::vector<int> compressedOffsets(workerSize(), 0);
-  int offset = 0;
-  for (size_t i = 0; i < gatherSizes.size(); ++i) {
-    compressedOffsets[i] = offset;
-    offset += gatherSizes[i];
+  std::vector<int> compressedOffsets;
+  if (IamTheMaster()) {
+    compressedOffsets.resize(workerSize(), 0);
+    int offset = 0;
+    for (size_t i = 0; i < gatherSizes.size(); ++i) {
+      compressedOffsets[i] = offset;
+      offset += gatherSizes[i];
+    }
+    compressedResults.resize(offset, 0);
   }
-
-  compressedResults.resize(offset, 0);
-  gatherv(compressedBuf.data(),
+  gatherv(tileGatherBuffer.data(),
       sendCompressedSize,
       MPI_BYTE,
       compressedResults.data(),
@@ -611,45 +625,59 @@ void DFB::gatherFinalTiles()
       mpiGroup.comm)
       .wait();
 
-  auto endGather = high_resolution_clock::now();
+  tileOffsetsGather.wait();
 
+#ifdef ENABLE_PROFILING
+  ProfilingPoint endGather;
+  std::cout << "Gather time: " << elapsedTimeMs(startGather, endGather)
+            << "ms\n";
+#endif
+
+  // Now we must decompress each ranks data to process it, though we
+  // already know how much data each is sending us and where to write it.
   if (IamTheMaster()) {
-    // Now we must decompress each ranks data to process it, though we
-    // already know how much data each is sending us and where to write it.
-    auto startCompr = high_resolution_clock::now();
+#ifdef ENABLE_PROFILING
+    ProfilingPoint startFbWrite;
+#endif
     tasking::parallel_for(workerSize(), [&](int i) {
-      snappy::RawUncompress(&compressedResults[compressedOffsets[i]],
-          gatherSizes[i],
-          &tileGatherResult[processOffsets[i]]);
-    });
-    auto endCompr = high_resolution_clock::now();
-    decompressTime = duration_cast<RealMilliseconds>(endCompr - startCompr);
-  }
-  finalGatherTime = duration_cast<RealMilliseconds>(endGather - startGather);
+      tasking::parallel_for(numTilesExpected[i], [&](int tid) {
+        int processTileOffset = processOffsets[i] + tid;
+        int compressedSize = 0;
+        if (tid + 1 < numTilesExpected[i]) {
+          compressedSize = compressedTileOffsets[processTileOffset + 1]
+              - compressedTileOffsets[processTileOffset];
+        } else {
+          compressedSize =
+              gatherSizes[i] - compressedTileOffsets[processTileOffset];
+        }
+        char *decompressedTile = STACK_BUFFER(char, tileSize);
+        snappy::RawUncompress(&compressedResults[compressedOffsets[i]
+                                  + compressedTileOffsets[processTileOffset]],
+            compressedSize,
+            decompressedTile);
 
-  if (IamTheMaster()) {
-    auto startMasterWrite = high_resolution_clock::now();
-    tasking::parallel_for(totalTilesExpected, [&](size_t tile) {
-      auto *msg =
-          reinterpret_cast<TileMessage *>(&tileGatherResult[tile * tileSize]);
-      if (msg->command & MASTER_WRITE_TILE_I8) {
-        this->processMessage((MasterTileMessage_RGBA_I8 *)msg);
-      } else if (msg->command & MASTER_WRITE_TILE_F32) {
-        this->processMessage((MasterTileMessage_RGBA_F32 *)msg);
-      } else {
-        throw std::runtime_error("#dfb: non-master tile in final gather!");
-      }
+        auto *msg = reinterpret_cast<TileMessage *>(decompressedTile);
+        if (msg->command & MASTER_WRITE_TILE_I8) {
+          this->processMessage((MasterTileMessage_RGBA_I8 *)msg);
+        } else if (msg->command & MASTER_WRITE_TILE_F32) {
+          this->processMessage((MasterTileMessage_RGBA_F32 *)msg);
+        } else {
+          throw std::runtime_error("#dfb: non-master tile in final gather!");
+        }
+      });
     });
-    auto endMasterWrite = high_resolution_clock::now();
-    masterTileWriteTime =
-        duration_cast<RealMilliseconds>(endMasterWrite - startMasterWrite);
+#ifdef ENABLE_PROFILING
+    ProfilingPoint endFbWrite;
+    std::cout << "Master tile write time: "
+              << elapsedTimeMs(startFbWrite, endFbWrite) << "ms\n";
+#endif
   }
 }
 
 void DFB::gatherFinalErrors()
 {
   using namespace mpicommon;
-  using namespace ospcommon;
+  using namespace rkcommon;
 
   std::vector<int> tilesFromRank(workerSize(), 0);
   const int myTileCount = tileIDs.size();
@@ -819,50 +847,6 @@ void DFB::endFrame(const float errorThreshold, const Camera *camera)
   }
 
   setCompletedEvent(OSP_FRAME_FINISHED);
-}
-
-void DFB::reportTimings(std::ostream &os)
-{
-#if 1
-  std::lock_guard<std::mutex> lock(statsMutex);
-
-  using Stats = pico_bench::Statistics<RealMilliseconds>;
-  if (!queueTimes.empty()) {
-    Stats queueStats(queueTimes);
-    queueStats.time_suffix = "ms";
-
-    os << "Tile Queue times:\n" << queueStats << "\n";
-  }
-
-  if (!workTimes.empty()) {
-    Stats workStats(workTimes);
-    workStats.time_suffix = "ms";
-    os << "Tile work times:\n" << workStats << "\n";
-  }
-
-  double localWaitTime = finalGatherTime.count();
-  os << "Gather time: " << localWaitTime << "ms\n"
-     << "Waiting for frame: " << waitFrameFinishTime.count() << "ms\n"
-     << "Compress time: " << compressTime.count() << "ms\n"
-     << "Compressed buffer size: " << compressedPercent << "%\n"
-     << "Pre-gather compute time: " << preGatherDuration.count() << "ms\n";
-
-  double maxWaitTime, minWaitTime;
-  auto maxReduce = mpicommon::reduce(
-      &localWaitTime, &maxWaitTime, 1, MPI_DOUBLE, MPI_MAX, 0, mpiGroup.comm);
-  auto minReduce = mpicommon::reduce(
-      &localWaitTime, &minWaitTime, 1, MPI_DOUBLE, MPI_MIN, 0, mpiGroup.comm);
-  maxReduce.wait();
-  minReduce.wait();
-
-  if (mpiGroup.rank == 0) {
-    os << "Max gather time: " << maxWaitTime << "ms\n"
-       << "Min gather time: " << minWaitTime << "ms\n"
-       << "Master tile write loop time: " << masterTileWriteTime.count()
-       << "ms\n"
-       << "Decompress time: " << decompressTime.count() << "ms\n";
-  }
-#endif
 }
 
 } // namespace ospray

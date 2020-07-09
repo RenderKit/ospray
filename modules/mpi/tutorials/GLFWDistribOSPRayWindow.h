@@ -6,10 +6,9 @@
 #include <GLFW/glfw3.h>
 #include <functional>
 #include "ArcballCamera.h"
-// ospcommon
-#include "ospcommon/containers/TransactionalBuffer.h"
-#include "ospcommon/math/box.h"
-#include "ospcommon/math/vec.h"
+#include "rkcommon/containers/TransactionalBuffer.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
 // ospray
 #include "ospray/ospray.h"
 #include "ospray/ospray_cpp.h"
@@ -20,10 +19,10 @@ struct WindowState
   bool cameraChanged;
   bool fbSizeChanged;
   int spp;
-  ospcommon::math::vec2i windowSize;
-  ospcommon::math::vec3f eyePos;
-  ospcommon::math::vec3f lookDir;
-  ospcommon::math::vec3f upDir;
+  rkcommon::math::vec2i windowSize;
+  rkcommon::math::vec3f eyePos;
+  rkcommon::math::vec3f lookDir;
+  rkcommon::math::vec3f upDir;
 
   WindowState();
 };
@@ -31,8 +30,8 @@ struct WindowState
 class GLFWDistribOSPRayWindow
 {
  public:
-  GLFWDistribOSPRayWindow(const ospcommon::math::vec2i &windowSize,
-      const ospcommon::math::box3f &worldBounds,
+  GLFWDistribOSPRayWindow(const rkcommon::math::vec2i &windowSize,
+      const rkcommon::math::box3f &worldBounds,
       ospray::cpp::World world,
       ospray::cpp::Renderer renderer);
 
@@ -55,8 +54,8 @@ class GLFWDistribOSPRayWindow
   void addObjectToCommit(OSPObject obj);
 
  protected:
-  void reshape(const ospcommon::math::vec2i &newWindowSize);
-  void motion(const ospcommon::math::vec2f &position);
+  void reshape(const rkcommon::math::vec2i &newWindowSize);
+  void motion(const rkcommon::math::vec2f &position);
   void display();
   void startNewOSPRayFrame();
   void waitOnOSPRayFrame();
@@ -64,8 +63,8 @@ class GLFWDistribOSPRayWindow
 
   static GLFWDistribOSPRayWindow *activeWindow;
 
-  ospcommon::math::vec2i windowSize;
-  ospcommon::math::box3f worldBounds;
+  rkcommon::math::vec2i windowSize;
+  rkcommon::math::box3f worldBounds;
   ospray::cpp::World world = nullptr;
   ospray::cpp::Renderer renderer = nullptr;
 
@@ -84,7 +83,7 @@ class GLFWDistribOSPRayWindow
   ospray::cpp::Future currentFrame = nullptr;
 
   // List of OSPRay handles to commit before the next frame
-  ospcommon::containers::TransactionalBuffer<OSPObject> objectsToCommit;
+  rkcommon::containers::TransactionalBuffer<OSPObject> objectsToCommit;
 
   // OpenGL framebuffer texture
   GLuint framebufferTexture = 0;

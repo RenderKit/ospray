@@ -1,6 +1,7 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/Profiling.h"
 #include "DistributedLoadBalancer.h"
 #include <algorithm>
 #include <limits>
@@ -10,13 +11,13 @@
 #include "camera/PerspectiveCamera.h"
 #include "common/MPICommon.h"
 #include "distributed/DistributedRenderer.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 namespace ospray {
 namespace mpi {
 namespace staticLoadBalancer {
 using namespace mpicommon;
-using namespace ospcommon;
+using namespace rkcommon;
 
 void Distributed::renderFrame(
     FrameBuffer *_fb, Renderer *_renderer, Camera *camera, World *_world)
@@ -70,8 +71,10 @@ void Distributed::renderFrame(
       // Note that these bounds are very conservative, the bounds we
       // compute below are much tighter, and better. We just use the depth
       // from the projection to sort the tiles later
-      proj.bounds.lower *= fbSize;
-      proj.bounds.upper *= fbSize;
+      proj.bounds.lower =
+          max(proj.bounds.lower * fbSize - TILE_SIZE, vec2f(0.f));
+      proj.bounds.upper =
+          min(proj.bounds.upper * fbSize + TILE_SIZE, vec2f(fbSize - 1.f));
       regionOrdering.insert(std::make_pair(proj.depth, i));
     } else {
       proj = RegionScreenBounds();
@@ -274,8 +277,15 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
     tileOperation = fb->getTileOperation();
   }
 
+#ifdef ENABLE_PROFILING
+  ProfilingPoint start;
+#endif
   fb->startNewFrame(renderer->errorThreshold);
   void *perFrameData = renderer->beginFrame(fb, world);
+#ifdef ENABLE_PROFILING
+  ProfilingPoint end;
+  std::cout << "Start new frame took: " << elapsedTimeMs(start, end) << "ms\n";
+#endif
 
   const auto fbSize = fb->getNumPixels();
 
@@ -289,6 +299,9 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
   if ((ALLTASKS % workerSize()) > workerRank())
     NTASKS++;
 
+#ifdef ENABLE_PROFILING
+  start = ProfilingPoint();
+#endif
   tasking::parallel_for(NTASKS, [&](int taskIndex) {
     const size_t tileID = taskIndex * workerSize() + workerRank();
     const size_t numTiles_x = fb->getNumTiles().x;
@@ -315,11 +328,32 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
 
     fb->setTile(tile);
   });
+#ifdef ENABLE_PROFILING
+  end = ProfilingPoint();
+  std::cout << "Render loop took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
+    << cpuUtilization(start, end) << "%\n";
+
+  start = ProfilingPoint();
+#endif
 
   fb->waitUntilFinished();
-  renderer->endFrame(fb, perFrameData);
 
+#ifdef ENABLE_PROFILING
+  end = ProfilingPoint();
+  std::cout << "Wait finished took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
+    << cpuUtilization(start, end) << "%\n";
+
+  start = ProfilingPoint();
+#endif
+
+  renderer->endFrame(fb, perFrameData);
   fb->endFrame(renderer->errorThreshold, camera);
+
+#ifdef ENABLE_PROFILING
+  end = ProfilingPoint();
+  std::cout << "End frame took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
+    << cpuUtilization(start, end) << "%\n";
+#endif
 }
 
 std::string Distributed::toString() const

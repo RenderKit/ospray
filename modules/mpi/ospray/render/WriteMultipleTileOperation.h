@@ -7,7 +7,7 @@
 #include <vector>
 #include "../fb/TileOperation.h"
 #include "common/MPICommon.h"
-#include "ospcommon/containers/AlignedVector.h"
+#include "rkcommon/containers/AlignedVector.h"
 
 namespace ospray {
 struct WriteMultipleTileOperation : public TileOperation
@@ -23,7 +23,7 @@ struct WriteMultipleTileOperation : public TileOperation
 
   void syncTileInstances();
 
-  ospcommon::containers::AlignedVector<uint32_t> tileInstances;
+  rkcommon::containers::AlignedVector<uint32_t> tileInstances;
   mpicommon::Group mpiGroup;
 };
 } // namespace ospray

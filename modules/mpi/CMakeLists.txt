@@ -17,7 +17,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-project(ospray_module_mpi VERSION 2.1.0 LANGUAGES C CXX)
+project(ospray_module_mpi VERSION 2.2.0 LANGUAGES C CXX)
 
 configure_file(
   ${CMAKE_SOURCE_DIR}/ospray/version.h.in
@@ -33,12 +33,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 find_package(MPI REQUIRED)
-find_package(ospray 2.1 REQUIRED)
+find_package(ospray 2.2 REQUIRED)
 include(${OSPRAY_SDK_USE_FILE})
 
-ospcommon_configure_build_type()
+rkcommon_configure_build_type()
 
-option(BUILD_TUTORIALS "Enable MPI module sample apps")
+option(BUILD_TUTORIALS "Enable MPI module sample apps" OFF)
+option(ENABLE_PROFILING "Enable MPI module internal profiling" OFF)
 
 add_subdirectory(common)
 add_subdirectory(external)
