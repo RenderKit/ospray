@@ -4,10 +4,10 @@
 // ospray
 #include "SunSkyLight.h"
 
-#include "DirectionalLight_ispc.h"
-#include "HDRILight_ispc.h"
-#include "Light_ispc.h"
-#include "Texture2D_ispc.h"
+#include "lights/DirectionalLight_ispc.h"
+#include "lights/HDRILight_ispc.h"
+#include "lights/Light_ispc.h"
+#include "texture/Texture2D_ispc.h"
 
 namespace ospray {
 SunSkyLight::SunSkyLight()

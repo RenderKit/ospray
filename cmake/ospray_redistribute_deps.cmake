@@ -16,7 +16,7 @@ macro(ospray_install_namelink NAME)
     set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX})
     execute_process(COMMAND "${CMAKE_COMMAND}" -E
         create_symlink ${TARGET_NAME} ${SYMLINK})
-    install(PROGRAMS ${SYMLINK} DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    install(PROGRAMS ${SYMLINK} ${ARGN} DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT redist)
   endif()
    
@@ -29,55 +29,36 @@ macro(ospray_install_namelink NAME)
     endif()
     execute_process(COMMAND "${CMAKE_COMMAND}" -E
         create_symlink ${TARGET_NAME} ${SYMLINK})
-    install(PROGRAMS ${SYMLINK} DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    install(PROGRAMS ${SYMLINK} ${ARGN} DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT redist)
   endif()
 endmacro()
 
-if (OSPCOMMON_TASKING_TBB)
-  if (WIN32)
-    set(TBB_DLL_HINTS
-      HINTS
-      ${OSPCOMMON_TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/vc14
-      ${OSPCOMMON_TBB_ROOT}/../redist/${TBB_ARCH}/tbb/vc14
-      ${OSPCOMMON_TBB_ROOT}/bin/${TBB_ARCH}/vc14
-      ${OSPCOMMON_TBB_ROOT}/bin
-    )
-    find_file(TBB_DLL tbb.dll ${TBB_DLL_HINTS})
-    find_file(TBB_DLL_DEBUG tbb_debug.dll ${TBB_DLL_HINTS})
-    find_file(TBB_DLL_MALLOC tbbmalloc.dll ${TBB_DLL_HINTS})
-    find_file(TBB_DLL_MALLOC_DEBUG tbbmalloc_debug.dll ${TBB_DLL_HINTS})
-    mark_as_advanced(TBB_DLL)
-    mark_as_advanced(TBB_DLL_DEBUG)
-    mark_as_advanced(TBB_DLL_MALLOC)
-    mark_as_advanced(TBB_DLL_MALLOC_DEBUG)
-    install(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
-            DESTINATION ${CMAKE_INSTALL_BINDIR}
-            CONFIGURATIONS Release RelWithDebInfo COMPONENT redist)
-    install(PROGRAMS ${TBB_DLL_DEBUG} ${TBB_DLL_MALLOC_DEBUG}
-            DESTINATION ${CMAKE_INSTALL_BINDIR}
-            CONFIGURATIONS Debug COMPONENT redist)
-  else()
-    install(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC}
-            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
-    ospray_install_namelink(${TBB_LIBRARY})
-    ospray_install_namelink(${TBB_LIBRARY_MALLOC})
-  endif()
-endif()
-
 macro(ospray_add_dependent_lib TARGET_NAME)
   if (TARGET ${TARGET_NAME})
     get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
+    # first/default configuration
     list(GET CONFIGURATIONS 0 CONFIGURATION)
     get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
     list(APPEND DEPENDENT_LIBS ${LIBRARY})
     ospray_install_namelink(${LIBRARY})
+    # potentially Debug configuration
+    list(FIND CONFIGURATIONS "DEBUG" FOUND)
+    if(FOUND GREATER 0)
+      get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_DEBUG)
+      list(APPEND DEPENDENT_LIBS_DEBUG ${LIBRARY})
+      ospray_install_namelink(${LIBRARY} CONFIGURATIONS Debug)
+    endif()
   else()
     message(STATUS "Skipping target '${TARGET_NAME}")
   endif()
 endmacro()
 
-ospray_add_dependent_lib(ospcommon::ospcommon)
+ospray_add_dependent_lib(rkcommon::rkcommon)
+if (RKCOMMON_TASKING_TBB)
+  ospray_add_dependent_lib(TBB::tbb)
+  ospray_add_dependent_lib(TBB::tbbmalloc)
+endif()
 ospray_add_dependent_lib(openvkl::openvkl)
 ospray_add_dependent_lib(openvkl::openvkl_module_ispc_driver)
 ospray_add_dependent_lib(openvkl::openvkl_module_ispc_driver_4)
@@ -98,14 +79,17 @@ if (WIN32)
   find_file(EMBREE_DLL embree3.dll HINTS ${EMBREE_DLL_HINTS})
   mark_as_advanced(EMBREE_DLL)
   list(APPEND DEPENDENT_LIBS ${EMBREE_DLL})
-  install(PROGRAMS ${DEPENDENT_LIBS}
-          DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
+  set(INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
 else()
   # TODO use ospray_add_dependent_lib(embree) when v3.10 (with targets) is minimum
   list(APPEND DEPENDENT_LIBS ${EMBREE_LIBRARY})
-  install(PROGRAMS ${DEPENDENT_LIBS}
-          DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
   ospray_install_namelink(${EMBREE_LIBRARY})
+  set(INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
+endif()
+install(PROGRAMS ${DEPENDENT_LIBS} DESTINATION ${INSTALL_DIR} COMPONENT redist)
+if (DEPENDENT_LIBS_DEBUG)
+  install(PROGRAMS ${DEPENDENT_LIBS_DEBUG} CONFIGURATIONS Debug
+          DESTINATION ${INSTALL_DIR} COMPONENT redist)
 endif()
 
 # Install MSVC runtime

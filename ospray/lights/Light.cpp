@@ -3,8 +3,8 @@
 
 // ospray
 #include "Light.h"
-#include "Light_ispc.h"
 #include "common/Util.h"
+#include "lights/Light_ispc.h"
 
 namespace ospray {
 

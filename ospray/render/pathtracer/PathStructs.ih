@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -46,8 +46,10 @@ struct PathContext
   varying LDSampler *uniform ldSampler;
   varying RandomSampler *uniform randomSampler;
   uniform int numLights;
+  uniform int numLightSamples;
+  uniform float *uniform lightsCDF;
   uniform uint32 numBounceSampleDims; // BSDF sample (3D), roulette (1D), light
-                                      // samples (N*2D)
+                                      // samples (numLightSamples*(1D+2D))
 };
 
 struct PathState

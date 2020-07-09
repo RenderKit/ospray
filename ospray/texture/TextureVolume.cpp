@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "TextureVolume.h"
-#include "TextureVolume_ispc.h"
+#include "texture/TextureVolume_ispc.h"
 
 #include "../common/Data.h"
 

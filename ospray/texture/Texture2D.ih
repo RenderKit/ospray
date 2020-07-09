@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -140,7 +140,6 @@ inline DifferentialGeometry dgFromTexCoord(const varying vec2f &c)
 #else
 inline void initDgFromTexCoord(DifferentialGeometry &dg, const varying vec2f &c)
 {
-  dg.primID = -1;
   dg.st = c;
 }
 #endif

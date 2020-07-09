@@ -3,7 +3,7 @@
 
 #include "Luminous.h"
 // ispc
-#include "Luminous_ispc.h"
+#include "render/pathtracer/materials/Luminous_ispc.h"
 
 namespace ospray {
 namespace pathtracer {

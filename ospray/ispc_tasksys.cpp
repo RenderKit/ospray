@@ -1,12 +1,12 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <assert.h>
 #include <vector>
-#include "ospcommon/memory/malloc.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/memory/malloc.h"
+#include "rkcommon/tasking/parallel_for.h"
 
-namespace ospcommon {
+namespace rkcommon {
 #define __dllexport /**/
 
 /* Signature of ispc-generated 'task' functions */
@@ -41,4 +41,4 @@ extern "C" __dllexport void ISPCLaunch(
     ((ISPCTaskFunc)func)(data, threadIndex, threadCount, i, count);
   });
 }
-} // namespace ospcommon
+} // namespace rkcommon

@@ -38,7 +38,6 @@ inline void postIntersect(const PathContext &pathContext,
     pathVertex.dg.dPdt = make_vec3f(0.f);
     pathVertex.dg.st = make_vec2f(0);
     pathVertex.dg.color = make_vec4f(0.f);
-    pathVertex.dg.primID = RTC_INVALID_GEOMETRY_ID;
     pathVertex.dg.areaPDF = 0.f;
     pathVertex.dg.epsilon = 0.f;
     pathVertex.dg.material = NULL;
@@ -161,7 +160,7 @@ void samplePath(const PathContext &pathContext,
         && pathVertex.type != VOLUME) {
       pathState.contribution = pathState.contribution
           + evaluateVirtualLights(
-              pathContext, pathState, lastVertex, pathVertex, ray);
+                pathContext, pathState, lastVertex, pathVertex, ray);
     }
 
     if (pathVertex.type == ENVIRONMENT)
@@ -178,7 +177,8 @@ void samplePath(const PathContext &pathContext,
 
     if (!pathState.disableFWD && pathVertex.type != VOLUME) {
       pathState.contribution = pathState.contribution
-          + evaluateGeometryLights(pathState, lastVertex, pathVertex, ray);
+          + evaluateGeometryLights(
+              pathContext, pathState, lastVertex, pathVertex, ray);
     }
 
     // terminate after evaluation of lights and before next shading to always

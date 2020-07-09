@@ -15,10 +15,10 @@ std::unique_ptr<LiveImageOp> BlurFrameOp::attach(FrameBufferView &fbView)
 
   if (fbView.colorBufferFormat == OSP_FB_RGBA8
       || fbView.colorBufferFormat == OSP_FB_SRGBA) {
-    return ospcommon::make_unique<LiveBlurFrameOp<uint8_t>>(fbView);
+    return rkcommon::make_unique<LiveBlurFrameOp<uint8_t>>(fbView);
   }
 
-  return ospcommon::make_unique<LiveBlurFrameOp<float>>(fbView);
+  return rkcommon::make_unique<LiveBlurFrameOp<float>>(fbView);
 }
 
 std::string BlurFrameOp::toString() const

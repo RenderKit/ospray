@@ -21,10 +21,10 @@ class Device
   ~Device();
 
   template <typename FCN_T>
-  void setErrorFunc(FCN_T &&fcn);
+  void setErrorCallback(FCN_T &&fcn);
 
   template <typename FCN_T>
-  void setStatusFunc(FCN_T &&fcn);
+  void setStatusCallback(FCN_T &&fcn);
 
   template <typename T>
   void setParam(const std::string &name, const T &v) const;
@@ -68,15 +68,15 @@ inline Device::~Device()
 }
 
 template <typename FCN_T>
-inline void Device::setErrorFunc(FCN_T &&fcn)
+inline void Device::setErrorCallback(FCN_T &&fcn)
 {
-  ospDeviceSetErrorFunc(ospHandle, std::forward<FCN_T>(fcn));
+  ospDeviceSetErrorCallback(ospHandle, std::forward<FCN_T>(fcn), nullptr);
 }
 
 template <typename FCN_T>
-inline void Device::setStatusFunc(FCN_T &&fcn)
+inline void Device::setStatusCallback(FCN_T &&fcn)
 {
-  ospDeviceSetStatusFunc(ospHandle, std::forward<FCN_T>(fcn));
+  ospDeviceSetStatusCallback(ospHandle, std::forward<FCN_T>(fcn), nullptr);
 }
 
 template <typename T>
@@ -86,7 +86,7 @@ inline void Device::setParam(const std::string &name, const T &v) const
       "Only types corresponding to OSPDataType values can be set "
       "as parameters on OSPRay objects. NOTE: Math types (vec, "
       "box, linear, affine) are "
-      "expected to come from ospcommon::math.");
+      "expected to come from rkcommon::math.");
   ospDeviceSetParam(ospHandle, name.c_str(), OSPTypeFor<T>::value, &v);
 }
 

@@ -9,8 +9,8 @@
   per patch. */
 
 // ospcomon: vec3f, box3f, etcpp - generic helper stuff
-#include "ospcommon/math/box.h"
-#include "ospcommon/math/vec.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
 // ospray: everything that's related to the ospray ray tracing core
 #include "ospray/geometry/Geometry.h"
 
@@ -24,8 +24,8 @@ namespace ospray {
   particularlly matter. E.g., 'bilinearPatch', 'module_blp',
   'bilinar_patch' etc would all work equally well. */
 namespace blp {
-// import ospcommon component - vec3f etc
-using namespace ospcommon;
+// import rkcommon component - vec3f etc
+using namespace rkcommon;
 
 /*! a geometry type that implements (a set of) bi-linear
   patches. This implements a new ospray geometry, and as such has

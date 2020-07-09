@@ -8,9 +8,9 @@
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 // ispc exports
-#include "GeometryLight_ispc.h"
-#include "Material_ispc.h"
-#include "PathTracer_ispc.h"
+#include "render/pathtracer/GeometryLight_ispc.h"
+#include "render/pathtracer/PathTracer_ispc.h"
+#include "render/pathtracer/materials/Material_ispc.h"
 // std
 #include <map>
 
@@ -24,6 +24,8 @@ PathTracer::PathTracer()
 PathTracer::~PathTracer()
 {
   destroyGeometryLights();
+  ispc::PathTracer_destroy(getIE());
+  ispcEquivalent = nullptr;
 }
 
 std::string PathTracer::toString() const
@@ -54,6 +56,16 @@ void PathTracer::generateGeometryLights(const World &world)
             break;
           }
         }
+        // Materials from Renderer list
+        const auto numRendererMaterials = ispcMaterialPtrs.size();
+        if (numRendererMaterials > 0 && model->ispcMaterialPtrs.size() == 0)
+          for (auto matIdx : model->materialData->as<uint32_t>())
+            if (matIdx < numRendererMaterials
+                && ispc::PathTraceMaterial_isEmissive(
+                    ispcMaterialPtrs[matIdx])) {
+              hasEmissive = true;
+              break;
+            }
 
         if (hasEmissive) {
           if (ispc::GeometryLight_isSupported(model->getIE())) {
@@ -87,12 +99,16 @@ void PathTracer::commit()
   Renderer::commit();
 
   const int32 rouletteDepth = getParam<int>("roulettePathLength", 5);
+  const int32 numLightSamples = getParam<int>("lightSamples", -1);
   const float maxRadiance = getParam<float>("maxContribution", inf);
   vec4f shadowCatcherPlane = getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
   useGeometryLights = getParam<bool>("geometryLights", true);
 
-  ispc::PathTracer_set(
-      getIE(), rouletteDepth, maxRadiance, (ispc::vec4f &)shadowCatcherPlane);
+  ispc::PathTracer_set(getIE(),
+      rouletteDepth,
+      maxRadiance,
+      (ispc::vec4f &)shadowCatcherPlane,
+      numLightSamples);
 }
 
 void *PathTracer::beginFrame(FrameBuffer *, World *world)

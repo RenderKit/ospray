@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Depth.h"
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
 
@@ -23,7 +22,7 @@ std::unique_ptr<LiveImageOp> DepthFrameOp::attach(FrameBufferView &fbView)
         "data");
   }
 
-  return ospcommon::make_unique<LiveDepthFrameOp>(fbView);
+  return rkcommon::make_unique<LiveDepthFrameOp>(fbView);
 }
 
 std::string DepthFrameOp::toString() const

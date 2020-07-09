@@ -4,7 +4,7 @@
 // ospray
 #include "SciVis.h"
 // ispc exports
-#include "SciVis_ispc.h"
+#include "render/scivis/SciVis_ispc.h"
 
 namespace ospray {
 

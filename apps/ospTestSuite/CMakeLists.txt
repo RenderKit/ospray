@@ -17,6 +17,7 @@ add_executable(ospTestSuite
   test_appearance.cpp
   test_light.cpp
   test_enums.cpp
+  test_camera.cpp
   ospTestSuite.cpp
 )
 

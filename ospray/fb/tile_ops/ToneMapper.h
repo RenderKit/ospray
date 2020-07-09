@@ -3,7 +3,7 @@
 
 #include "../ImageOp.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace ospray {
 

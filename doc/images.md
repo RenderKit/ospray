@@ -24,4 +24,5 @@
 [imgMaterialLuminous]: material_Luminous.jpg { width=60% }
 [imgColoredWindow]: ColoredWindow.jpg { width=60% }
 [imgStructuredSphericalCoords]: structured_spherical_coords.svg { width=60% }
+[imgVdbStructure]: vdb_structure.svg { width=80% }
 

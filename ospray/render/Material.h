@@ -5,18 +5,16 @@
 
 #include "common/Managed.h"
 #include "common/Util.h"
+#include "texture/TextureParam_ispc.h"
 
 namespace ospray {
-
-struct Texture2D;
 
 /*! helper structure to store a uniform or textured material parameter */
 template <typename T>
 struct MaterialParam
 {
   T factor;
-  Texture2D *map;
-  affine2f xform;
+  ispc::TextureParam tex;
   linear2f rot;
 };
 
@@ -30,24 +28,8 @@ struct OSPRAY_SDK_INTERFACE Material : public ManagedObject
   virtual std::string toString() const override;
   virtual void commit() override;
 
-  /*! \brief helper function to combine multiple texture transformation
-     parameters
-
-     The following parameters (prefixed with "texture_name.") are combined
-     into one transformation matrix:
-
-     name         type   description
-     transform    vec4f  interpreted as 2x2 matrix (linear part), column-major
-     rotation     float  angle in degree, counterclock-wise, around center (0.5,
-     0.5) scale        vec2f  enlarge texture, relative to center (0.5, 0.5)
-     translation  vec2f  move texture in positive direction (right/up)
-
-     The transformations are applied in the given order. Rotation, scale and
-     translation are interpreted "texture centric", i.e. their effect seen by
-     an user are relative to the texture (although the transformations are
-     applied to the texture coordinates).
-   */
-  affine2f getTextureTransform(const char *texture_name);
+  // helper function to get all texture related parameters
+  ispc::TextureParam getTextureParam(const char *texture_name);
 
   /*! \brief helper function to get a uniform or texture material parameter */
   MaterialParam1f getMaterialParam1f(const char *name, float valIfNotFound);
@@ -69,6 +51,26 @@ struct OSPRAY_SDK_INTERFACE Material : public ManagedObject
   template <typename BASE_CLASS, typename CHILD_CLASS>
   friend void registerTypeHelper(const char *type);
   static void registerType(const char *name, FactoryFcn<Material> f);
+
+  /*! \brief helper function to combine multiple texture transformation
+     parameters
+
+     The following parameters (prefixed with "texture_name.") are combined
+     into one transformation matrix:
+
+     name         type   description
+     transform    vec4f  interpreted as 2x2 matrix (linear part), column-major
+     rotation     float  angle in degree, counterclock-wise, around center (0.5,
+     0.5) scale        vec2f  enlarge texture, relative to center (0.5, 0.5)
+     translation  vec2f  move texture in positive direction (right/up)
+
+     The transformations are applied in the given order. Rotation, scale and
+     translation are interpreted "texture centric", i.e. their effect seen by
+     an user are relative to the texture (although the transformations are
+     applied to the texture coordinates).
+   */
+  utility::Optional<affine2f> getTextureTransform2f(const char *_texname);
+  utility::Optional<affine3f> getTextureTransform3f(const char *_texname);
 };
 
 OSPTYPEFOR_SPECIALIZATION(Material *, OSP_MATERIAL);

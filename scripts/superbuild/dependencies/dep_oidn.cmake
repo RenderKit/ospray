@@ -16,7 +16,7 @@ if (BUILD_OIDN_FROM_SOURCE)
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
     LIST_SEPARATOR | # Use the alternate list separator
-    GIT_REPOSITORY "http://github.com/OpenImageDenoise/oidn.git"
+    GIT_REPOSITORY "https://www.github.com/OpenImageDenoise/oidn.git"
     GIT_SHALLOW ON
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
@@ -27,14 +27,19 @@ if (BUILD_OIDN_FROM_SOURCE)
       -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
       -DCMAKE_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
       -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
-      -DCMAKE_BUILD_TYPE=Release
       $<$<BOOL:${DOWNLOAD_TBB}>:-DTBB_ROOT=${TBB_PATH}>
+      $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
+      -DCMAKE_BUILD_TYPE=${DEPENDENCIES_BUILD_TYPE}
+      -DOIDN_APPS=OFF
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS ${ALWAYS_REBUILD}
   )
 
   if (DOWNLOAD_TBB)
     ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
+  endif()
+  if (DOWNLOAD_ISPC)
+    ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ispc)
   endif()
 else()
   string(REPLACE "v" "" OIDN_VERSION_NUMBER ${BUILD_OIDN_VERSION})

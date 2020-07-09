@@ -1,4 +1,6 @@
 #!/bin/bash
+## Copyright 2019-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 set -e
 
@@ -19,22 +21,25 @@ cmake --version
 
 cmake -L \
   -DBUILD_DEPENDENCIES_ONLY=ON \
+  -DBUILD_EMBREE_FROM_SOURCE=OFF \
   -DCMAKE_INSTALL_LIBDIR=lib \
   -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   "$@" ../scripts/superbuild
 
 cmake --build .
 
+INSTALL_DIR=`pwd`/install
+
 mkdir ospray_build
 cd ospray_build
 
-export OSPCOMMON_TBB_ROOT=`pwd`/../install
-export ospcommon_DIR=`pwd`/../install
-export glfw3_DIR=`pwd`/../install
-export embree_DIR=`pwd`/../install
-export openvkl_DIR=`pwd`/../install
+export rkcommon_DIR=$INSTALL_DIR
+export glfw3_DIR=$INSTALL_DIR
+export embree_DIR=$INSTALL_DIR
+export openvkl_DIR=$INSTALL_DIR
 
-cmake -DISPC_EXECUTABLE=`pwd`/../install/bin/ispc ../..
+
+cmake -DISPC_EXECUTABLE=$INSTALL_DIR/bin/ispc -DTBB_ROOT=$INSTALL_DIR ../..
 
 $KW_CLIENT_PATH/bin/kwinject make -j `nproc`
 $KW_SERVER_PATH/bin/kwbuildproject --url http://$KW_SERVER_IP:$KW_SERVER_PORT/$KW_PROJECT_NAME --tables-directory $CI_PROJECT_DIR/kw_tables kwinject.out

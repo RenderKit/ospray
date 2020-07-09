@@ -1,10 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LocalFB.h"
 #include <iterator>
 #include "ImageOp.h"
-#include "LocalFB_ispc.h"
+#include "fb/LocalFB_ispc.h"
 
 namespace ospray {
 

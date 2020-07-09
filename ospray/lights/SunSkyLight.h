@@ -4,10 +4,10 @@
 #pragma once
 
 #include "Light.h"
+#include "math/spectrum.h"
+#include "rkcommon/tasking/parallel_for.h"
 #include "sky_model/color_info.h"
 #include "sky_model/sky_model.h"
-#include "math/spectrum.h"
-#include "ospcommon/tasking/parallel_for.h"
 #include "texture/Texture2D.h"
 
 // Sun and sky environment lights

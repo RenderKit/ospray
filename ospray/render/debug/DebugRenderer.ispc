@@ -278,19 +278,21 @@ void DebugRenderer_volume(Renderer *uniform self,
     Volume *uniform volume = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
-    VKLIntervalIterator intervalIterator;
-    vklInitIntervalIteratorV(&intervalIterator,
-        volume->vklVolume,
-        (varying vkl_vec3f *)&ray.org,
-        (varying vkl_vec3f *)&ray.dir,
-        (varying vkl_range1f *)&vInterval.interval,
-        m->vklValueSelector);
+    uniform unsigned int8
+        intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIteratorV(volume->vklVolume,
+            (varying vkl_vec3f *)&ray.org,
+            (varying vkl_vec3f *)&ray.dir,
+            (varying vkl_range1f *)&vInterval.interval,
+            m->vklValueSelector,
+            intervalIteratorBuffer);
 
     VKLInterval interval;
 
     static const uniform float samplingRate = 0.5f;
 
-    while (vklIterateIntervalV(&intervalIterator, &interval) && alpha < 0.99f) {
+    while (vklIterateIntervalV(intervalIterator, &interval) && alpha < 0.99f) {
       const float nominalSamplingDt = interval.nominalDeltaT / samplingRate;
 
       // initial sub interval, based on our renderer-defined sampling rate
@@ -307,7 +309,7 @@ void DebugRenderer_volume(Renderer *uniform self,
         // Get volume sample
         vec3f p = ray.org + ray.t0 * ray.dir;
         const float sample = vklComputeSampleV(
-            volume->vklVolume, (const varying vkl_vec3f *uniform) & p);
+            volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
 
         if (!isnan(sample)) {
           vec4f sampleColorOpacity = tf->get(tf, sample);

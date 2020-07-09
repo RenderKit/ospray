@@ -64,8 +64,7 @@ cd build_release
 rm -rf *
 
 # Setup environment variables for dependencies
-export OSPCOMMON_TBB_ROOT=$DEP_DIR
-export ospcommon_DIR=$DEP_DIR
+export rkcommon_DIR=$DEP_DIR
 export embree_DIR=$DEP_DIR
 export glfw3_DIR=$DEP_DIR
 export openvkl_DIR=$DEP_DIR
@@ -74,6 +73,7 @@ export OpenImageDenoise_DIR=$DEP_DIR
 # set release and installer settings
 cmake -L \
   -D OSPRAY_BUILD_ISA=ALL \
+  -D TBB_ROOT=$DEP_DIR \
   -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc \
   -D OSPRAY_ZIP_MODE=OFF \
   -D OSPRAY_MODULE_DENOISER=ON \

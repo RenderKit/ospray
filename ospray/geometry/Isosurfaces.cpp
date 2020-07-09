@@ -8,7 +8,7 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // ispc-generated files
-#include "Isosurfaces_ispc.h"
+#include "geometry/Isosurfaces_ispc.h"
 
 namespace ospray {
 
@@ -34,12 +34,20 @@ std::string Isosurfaces::toString() const
 void Isosurfaces::commit()
 {
   isovaluesData = getParamDataT<float>("isovalue", true, true);
+  model = nullptr;
 
-  model = (VolumetricModel *)getParamObject("volume");
-
-  if (!model) {
-    throw std::runtime_error(
-        "the 'volume' parameter must be set for isosurfaces");
+  volume = dynamic_cast<Volume *>(getParamObject("volume"));
+  if (!volume) {
+    model = dynamic_cast<VolumetricModel *>(getParamObject("volume"));
+    if (!model) {
+      throw std::runtime_error(
+          "the 'volume' parameter must be set for isosurfaces");
+    }
+    postStatusMsg(
+        "ospray::Isosurfaces deprecated parameter use. Isosurfaces "
+        "will begin taking an OSPVolume directly, with appearance set through "
+        "the GeometricModel instead.",
+        OSP_LOG_DEBUG);
   }
 
   if (!isovaluesData->compact()) {
@@ -55,7 +63,11 @@ void Isosurfaces::commit()
     valueSelector = nullptr;
   }
 
-  valueSelector = vklNewValueSelector(model->getVolume()->vklVolume);
+  if (volume) {
+    valueSelector = vklNewValueSelector(volume->vklVolume);
+  } else {
+    valueSelector = vklNewValueSelector(model->getVolume()->vklVolume);
+  }
 
   if (isovaluesData->size() > 0) {
     vklValueSelectorSetValues(
@@ -68,7 +80,8 @@ void Isosurfaces::commit()
       embreeGeometry,
       isovaluesData->size(),
       isovaluesData->data(),
-      model->getIE(),
+      model ? model->getIE() : nullptr,
+      volume ? volume->getIE() : nullptr,
       valueSelector);
 
   postCreationInfo();

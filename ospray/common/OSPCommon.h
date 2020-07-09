@@ -21,10 +21,9 @@ typedef int ssize_t;
 #include "unistd.h"
 #endif
 
-// ospcommon
-#include "ospcommon/math/AffineSpace.h"
-#include "ospcommon/memory/RefCount.h"
-#include "ospcommon/memory/malloc.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/memory/RefCount.h"
+#include "rkcommon/memory/malloc.h"
 
 // ospray
 #include "ospray/ospray.h"
@@ -67,9 +66,9 @@ typedef int ssize_t;
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
 
-using namespace ospcommon;
-using namespace ospcommon::math;
-using namespace ospcommon::memory;
+using namespace rkcommon;
+using namespace rkcommon::math;
+using namespace rkcommon::memory;
 
 /*! basic types */
 using int64 = std::int64_t;
@@ -280,8 +279,5 @@ inline std::string typeString(const std::shared_ptr<T> &v)
 {
   return typeid(*v).name();
 }
-
-#define OSPTYPEFOR_DEFINITION(type)                                            \
-  constexpr OSPDataType OSPTypeFor<type>::value
 
 } // namespace ospray

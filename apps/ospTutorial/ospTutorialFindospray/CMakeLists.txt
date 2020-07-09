@@ -1,4 +1,4 @@
-## Copyright 2019 Intel Corporation
+## Copyright 2019-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # NOTE: This CMakeLists.txt is intended to be used to exercise an OSPRay
@@ -15,6 +15,9 @@
 cmake_minimum_required(VERSION 3.1)
 
 project(ospTutorialFindospray LANGUAGES C)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 

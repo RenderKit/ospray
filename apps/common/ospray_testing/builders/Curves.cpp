@@ -7,7 +7,7 @@
 // stl
 #include <random>
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 namespace ospray {
 namespace testing {
@@ -59,20 +59,20 @@ cpp::Group Curves::buildGroup() const
       const vec4f pointTangent = *(iter + 1) - *iter;
       tangents.push_back(pointTangent);
     }
-    geom.setParam("vertex.position_radius", cpp::Data(points));
-    geom.setParam("vertex.tangent", cpp::Data(tangents));
+    geom.setParam("vertex.position_radius", cpp::CopiedData(points));
+    geom.setParam("vertex.tangent", cpp::CopiedData(tangents));
   } else if (curveBasis == "catmull-rom") {
     geom.setParam("type", OSP_ROUND);
     geom.setParam("basis", OSP_CATMULL_ROM);
-    geom.setParam("vertex.position_radius", cpp::Data(points));
+    geom.setParam("vertex.position_radius", cpp::CopiedData(points));
   } else if (curveBasis == "linear") {
     geom.setParam("radius", 0.1f);
     geom.setParam("vertex.position",
-        cpp::Data(points.size(), sizeof(vec4f), (vec3f *)points.data()));
+        cpp::CopiedData((vec3f *)points.data(), points.size(), sizeof(vec4f)));
   } else {
     geom.setParam("type", OSP_ROUND);
     geom.setParam("basis", OSP_BSPLINE);
-    geom.setParam("vertex.position_radius", cpp::Data(points));
+    geom.setParam("vertex.position_radius", cpp::CopiedData(points));
   }
 
   for (auto &c : s_colors) {
@@ -82,9 +82,9 @@ cpp::Group Curves::buildGroup() const
     c.w = colorDistribution(gen);
   }
 
-  geom.setParam("vertex.color", cpp::Data(s_colors));
+  geom.setParam("vertex.color", cpp::CopiedData(s_colors));
 
-  geom.setParam("index", cpp::Data(indices));
+  geom.setParam("index", cpp::CopiedData(indices));
   geom.commit();
 
   cpp::GeometricModel model(geom);
@@ -105,7 +105,7 @@ cpp::Group Curves::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;

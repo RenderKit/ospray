@@ -4,12 +4,11 @@
 // ospray
 #include "../ImageOp.h"
 #include "camera/PerspectiveCamera.h"
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
 // ispc
-#include "SSAO_ispc.h"
+#include "fb/frame_ops/SSAO_ispc.h"
 
 namespace ospray {
 

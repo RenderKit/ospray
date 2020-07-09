@@ -3,7 +3,7 @@
 
 // ospray
 #include "Camera.h"
-#include "Camera_ispc.h"
+#include "camera/Camera_ispc.h"
 #include "common/Util.h"
 
 namespace ospray {

@@ -5,7 +5,7 @@
 #include "DebugRenderer.h"
 #include "DebugRendererType.h"
 // ispc exports
-#include "DebugRenderer_ispc.h"
+#include "render/debug/DebugRenderer_ispc.h"
 
 namespace ospray {
 

@@ -5,12 +5,14 @@
 
 #include "math/vec.ih"
 #include "render/Material.ih"
-#include "texture/Texture2D.ih"
+#include "texture/TextureParam.ih"
 
 struct SciVisMaterial
 {
   Material super;
-  vec3f Kd;
+
   float d;
-  Texture2D *map_Kd;
+  TextureParam dMap;
+  vec3f Kd;
+  TextureParam KdMap;
 };

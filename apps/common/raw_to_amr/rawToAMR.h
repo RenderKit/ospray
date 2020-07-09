@@ -1,9 +1,9 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "ospcommon/math/box.h"
-#include "ospcommon/os/FileName.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/os/FileName.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -22,8 +22,8 @@
 namespace ospray {
 namespace amr {
 
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 void makeAMR(const std::vector<float> &in,
     const vec3i inGridDims,

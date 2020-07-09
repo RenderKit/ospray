@@ -4,9 +4,8 @@
 #include "CarPaint.h"
 #include "common/Data.h"
 #include "math/spectrum.h"
-#include "texture/Texture2D.h"
 // ispc
-#include "CarPaint_ispc.h"
+#include "render/pathtracer/materials/CarPaint_ispc.h"
 
 namespace ospray {
 namespace pathtracer {
@@ -26,7 +25,8 @@ void CarPaint::commit()
   MaterialParam3f baseColor = getMaterialParam3f("baseColor", vec3f(0.8f));
   MaterialParam1f roughness = getMaterialParam1f("roughness", 0.f);
   MaterialParam1f normal = getMaterialParam1f("normal", 1.f);
-
+  bool useFlakeColor = findParam("flakeColor") != nullptr;
+  MaterialParam3f flakeColor = getMaterialParam3f("flakeColor", vec3f(0.f));
   MaterialParam1f flakeScale = getMaterialParam1f("flakeScale", 100.f);
   MaterialParam1f flakeDensity = getMaterialParam1f("flakeDensity", 0.f);
   MaterialParam1f flakeSpread = getMaterialParam1f("flakeSpread", 0.3f);
@@ -46,58 +46,44 @@ void CarPaint::commit()
 
   ispc::PathTracer_CarPaint_set(getIE(),
       (const ispc::vec3f &)baseColor.factor,
-      baseColor.map ? baseColor.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)baseColor.xform,
+      baseColor.tex,
       roughness.factor,
-      roughness.map ? roughness.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)roughness.xform,
+      roughness.tex,
       normal.factor,
-      normal.map ? normal.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)normal.xform,
+      normal.tex,
       (const ispc::LinearSpace2f &)normal.rot,
-
+      useFlakeColor,
+      (const ispc::vec3f &)flakeColor.factor,
+      flakeColor.tex,
       flakeScale.factor,
-      flakeScale.map ? flakeScale.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)flakeScale.xform,
+      flakeScale.tex,
       flakeDensity.factor,
-      flakeDensity.map ? flakeDensity.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)flakeDensity.xform,
+      flakeDensity.tex,
       flakeSpread.factor,
-      flakeSpread.map ? flakeSpread.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)flakeSpread.xform,
+      flakeSpread.tex,
       flakeJitter.factor,
-      flakeJitter.map ? flakeJitter.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)flakeJitter.xform,
+      flakeJitter.tex,
       flakeRoughness.factor,
-      flakeRoughness.map ? flakeRoughness.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)flakeRoughness.xform,
+      flakeRoughness.tex,
 
       coat.factor,
-      coat.map ? coat.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)coat.xform,
+      coat.tex,
       coatIor.factor,
-      coatIor.map ? coatIor.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)coatIor.xform,
+      coatIor.tex,
       (const ispc::vec3f &)coatColor.factor,
-      coatColor.map ? coatColor.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)coatColor.xform,
+      coatColor.tex,
       coatThickness.factor,
-      coatThickness.map ? coatThickness.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)coatThickness.xform,
+      coatThickness.tex,
       coatRoughness.factor,
-      coatRoughness.map ? coatRoughness.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)coatRoughness.xform,
+      coatRoughness.tex,
       coatNormal.factor,
-      coatNormal.map ? coatNormal.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)coatNormal.xform,
+      coatNormal.tex,
       (const ispc::LinearSpace2f &)coatNormal.rot,
 
       (const ispc::vec3f &)flipflopColor.factor,
-      flipflopColor.map ? flipflopColor.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)flipflopColor.xform,
+      flipflopColor.tex,
       flipflopFalloff.factor,
-      flipflopFalloff.map ? flipflopFalloff.map->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)flipflopFalloff.xform);
+      flipflopFalloff.tex);
 }
 
 } // namespace pathtracer

@@ -1,11 +1,10 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// ospcommon
-#include "ospcommon/os/library.h"
-#include "ospcommon/utility/OnScopeExit.h"
-#include "ospcommon/utility/StringManip.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/os/library.h"
+#include "rkcommon/utility/OnScopeExit.h"
+#include "rkcommon/utility/StringManip.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 // ospray
 #include "Device.h"
@@ -51,7 +50,7 @@ inline std::string getPidString()
 #define OSPRAY_CATCH_BEGIN                                                     \
   try {                                                                        \
     auto *fcn_name_ = __PRETTY_FUNCTION__;                                     \
-    ospcommon::utility::OnScopeExit guard([&]() { postTraceMsg(fcn_name_); });
+    rkcommon::utility::OnScopeExit guard([&]() { postTraceMsg(fcn_name_); });
 
 #define OSPRAY_CATCH_END(a)                                                    \
   }                                                                            \
@@ -103,7 +102,7 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
     for (int i = 1; i < *_ac;) {
       std::string av(_av[i]);
 
-      if (ospcommon::utility::beginsWith(av, "--osp:load-modules")) {
+      if (rkcommon::utility::beginsWith(av, "--osp:load-modules")) {
         std::string modules = getArgString(av);
         if (modules == "") {
           throw std::runtime_error(
@@ -111,12 +110,12 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
               "formatted as <module1>[,<module2>,...]");
         }
         std::vector<std::string> moduleList =
-            ospcommon::utility::split(modules, ',');
+            rkcommon::utility::split(modules, ',');
         for (std::string &moduleName : moduleList) {
           loadLocalModule(moduleName);
         }
         removeArgs(*_ac, _av, i, 1);
-      } else if (ospcommon::utility::beginsWith(av, "--osp:device=")) {
+      } else if (rkcommon::utility::beginsWith(av, "--osp:device=")) {
         // ALOK: explicitly checking with the equals sign so this does not get
         // clobbered by --osp:device-param
         std::string deviceName = getArgString(av);
@@ -196,7 +195,8 @@ OSPRAY_CATCH_END()
 extern "C" OSPDevice ospGetCurrentDevice() OSPRAY_CATCH_BEGIN
 {
   auto *ptr = Device::current.ptr;
-  ptr->refInc();
+  if (ptr)
+    ptr->refInc();
   return (OSPDevice)ptr;
 }
 OSPRAY_CATCH_END(nullptr)
@@ -218,7 +218,7 @@ extern "C" void ospDeviceSetParam(OSPDevice _object,
     object->setParam<int>(id, *(int *)mem);
     break;
   case OSP_BOOL:
-    object->setParam<bool>(id, *(int *)mem);
+    object->setParam<bool>(id, *(bool *)mem);
     break;
   case OSP_VOID_PTR:
     object->setParam<void *>(id, *(void **)&mem);
@@ -239,29 +239,59 @@ extern "C" void ospDeviceRemoveParam(
 }
 OSPRAY_CATCH_END()
 
-extern "C" void ospDeviceSetStatusFunc(
-    OSPDevice _object, OSPStatusFunc callback) OSPRAY_CATCH_BEGIN
+extern "C" void ospDeviceSetStatusCallback(OSPDevice _object,
+    OSPStatusCallback callback,
+    void *userData) OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(_object);
 
   auto *device = (Device *)_object;
-  if (callback == nullptr)
-    device->msg_fcn = [](const char *) {};
-  else
+  if (callback == nullptr) {
+    device->msg_fcn = [](void *, const char *) {};
+    device->statusUserData = nullptr;
+  } else {
     device->msg_fcn = callback;
+    device->statusUserData = userData;
+  }
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospDeviceSetErrorCallback(OSPDevice _object,
+    OSPErrorCallback callback,
+    void *userData) OSPRAY_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(_object);
+
+  auto *device = (Device *)_object;
+  if (callback == nullptr) {
+    device->error_fcn = [](void *, OSPError, const char *) {};
+    device->errorUserData = nullptr;
+  } else {
+    device->error_fcn = callback;
+    device->errorUserData = userData;
+  }
+}
+OSPRAY_CATCH_END()
+
+extern "C" void ospDeviceSetStatusFunc(
+    OSPDevice _object, OSPStatusFunc legacyCallback) OSPRAY_CATCH_BEGIN
+{
+  ospDeviceSetStatusCallback(
+      _object,
+      [](void *fcn, const char *msg) { ((OSPStatusFunc)fcn)(msg); },
+      &legacyCallback);
 }
 OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceSetErrorFunc(
-    OSPDevice _object, OSPErrorFunc callback) OSPRAY_CATCH_BEGIN
+    OSPDevice _object, OSPErrorFunc legacyCallback) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(_object);
-
-  auto *device = (Device *)_object;
-  if (callback == nullptr)
-    device->error_fcn = [](OSPError, const char *) {};
-  else
-    device->error_fcn = callback;
+  ospDeviceSetErrorCallback(
+      _object,
+      [](void *fcn, OSPError e, const char *msg) {
+        ((OSPErrorFunc)fcn)(e, msg);
+      },
+      &legacyCallback);
 }
 OSPRAY_CATCH_END()
 
@@ -299,6 +329,8 @@ extern "C" void ospDeviceRelease(OSPDevice _object) OSPRAY_CATCH_BEGIN
   THROW_IF_NULL_OBJECT(_object);
 
   auto *object = (Device *)_object;
+  if (!object)
+    return;
   object->refDec();
 }
 OSPRAY_CATCH_END()
@@ -308,6 +340,8 @@ extern "C" void ospDeviceRetain(OSPDevice _object) OSPRAY_CATCH_BEGIN
   THROW_IF_NULL_OBJECT(_object);
 
   auto *object = (Device *)_object;
+  if (!object)
+    return;
   object->refInc();
 }
 OSPRAY_CATCH_END()

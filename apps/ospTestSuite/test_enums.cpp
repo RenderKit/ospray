@@ -87,6 +87,13 @@ TEST(Enums, VKLAMRMethod)
   ASSERT_EQ(OSP_AMR_OCTANT, VKL_AMR_OCTANT);
 }
 
+TEST(Enums, VKLFilter)
+{
+  ASSERT_LE(sizeof(OSPVolumeFilter), sizeof(VKLFilter));
+  ASSERT_EQ(OSP_VOLUME_FILTER_NEAREST, VKL_FILTER_NEAREST);
+  ASSERT_EQ(OSP_VOLUME_FILTER_TRILINEAR, VKL_FILTER_TRILINEAR);
+}
+ 
 TEST(Enums, RTCSubdivisionMode)
 {
   ASSERT_LE(sizeof(OSPSubdivisionMode), sizeof(RTCSubdivisionMode));

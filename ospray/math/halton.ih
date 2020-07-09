@@ -1,0 +1,71 @@
+// Copyright 2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+// Copyright (c) 2012 Leonhard Gruenschloss (leonhard@gruenschloss.org)
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+#pragma once
+
+extern const uniform unsigned int perm3[243];
+extern const uniform unsigned int perm5[125];
+extern const uniform unsigned int perm7[343];
+
+inline float Halton_sample2(unsigned int index)
+{
+  index = (index << 16) | (index >> 16);
+  index = ((index & 0x00ff00ff) << 8) | ((index & 0xff00ff00) >> 8);
+  index = ((index & 0x0f0f0f0f) << 4) | ((index & 0xf0f0f0f0) >> 4);
+  index = ((index & 0x33333333) << 2) | ((index & 0xcccccccc) >> 2);
+  index = ((index & 0x55555555) << 1) | ((index & 0xaaaaaaaa) >> 1);
+  unsigned int result = 0x3f800000u | (index >> 9);
+  return floatbits(result) - 1.f;
+}
+
+inline float Halton_sample3(const unsigned int index)
+{
+  // mpawlow1 note:
+  // with normalization using 1.f instead of original 0x1.fffffcp-1
+  // it generates results closer to the plain iterative implementation,
+  // (before results were usually smaller by 1-2 ULPs)
+  // but on the other hand results may be equal to 1.f, so the range
+  // [0-1) is not guaranteed
+  return (perm3[index % 243u] * 14348907u
+             + perm3[(index / 243u) % 243u] * 59049u
+             + perm3[(index / 59049u) % 243u] * 243u
+             + perm3[(index / 14348907u) % 243u])
+      * (float)(1.f / 3486784401u);
+}
+
+// Permuted Halton sequence base-5
+inline float PermHalton_sample5(const unsigned int index)
+{
+  return (perm5[index % 125u] * 1953125u + perm5[(index / 125u) % 125u] * 15625u
+             + perm5[(index / 15625u) % 125u] * 125u
+             + perm5[(index / 1953125u) % 125u])
+      * (float)(1.f / 244140625u);
+}
+
+// Permuted Halton sequence base-7
+inline float PermHalton_sample7(const unsigned int index)
+{
+  return (perm7[index % 343u] * 117649u + perm7[(index / 343u) % 343u] * 343u
+             + perm7[(index / 117649u) % 343u])
+      * (float)(1.f / 40353607u);
+}

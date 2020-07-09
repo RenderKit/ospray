@@ -3,12 +3,13 @@
 
 // ospray
 #include "volume/Volume.h"
-#include "Volume_ispc.h"
 #include "common/Data.h"
 #include "common/Util.h"
 #include "transferFunction/TransferFunction.h"
+#include "volume/Volume_ispc.h"
 
 #include "openvkl/openvkl.h"
+#include "openvkl/vdb.h"
 
 #include <unordered_map>
 
@@ -18,6 +19,14 @@ namespace ospray {
 
 Volume::Volume(const std::string &type) : vklType(type)
 {
+  // check VKL has default config for VDB
+  if (type == "vdb"
+      && (vklVdbLevelNumVoxels(0) != 262144 || vklVdbLevelNumVoxels(1) != 32768
+          || vklVdbLevelNumVoxels(2) != 4096 || vklVdbLevelNumVoxels(3) != 512
+          || vklVdbLevelNumVoxels(4) != 0))
+    throw std::runtime_error(
+        toString() + " VKL has non-default configuration for VDB volumes.");
+
   ispcEquivalent = ispc::Volume_createInstance_vklVolume(this);
   managedObjectType = OSP_VOLUME;
 }
@@ -48,10 +57,13 @@ void Volume::commit()
   vklCommit(vklVolume);
   (vkl_box3f &)bounds = vklGetBoundingBox(vklVolume);
 
+  vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
+
   createEmbreeGeometry();
 
   ispc::Volume_set(ispcEquivalent, embreeGeometry);
-  ispc::Volume_set_vklVolume(ispcEquivalent, vklVolume, (ispc::box3f *)&bounds);
+  ispc::Volume_set_vklVolume(ispcEquivalent, vklVolume, vklSampler, (ispc::box3f *)&bounds);
 }
 
 void Volume::createEmbreeGeometry()
@@ -96,10 +108,10 @@ void Volume::handleParams()
       Data *data = (Data *)param.data.get<ManagedObject *>();
 
       if (data->type == OSP_DATA) {
-        const Ref<const DataT<Data *>> blockData =
-            getParamDataT<Data *>(param.name.c_str(), true);
+        auto &dataD = data->as<Data *>();
         std::vector<VKLData> vklBlockData;
-        for (auto &&data : *blockData) {
+        vklBlockData.reserve(data->size());
+        for (auto &&data : dataD) {
           VKLData vklData = vklNewData(data->size(),
               (VKLDataType)data->type,
               data->data(),
@@ -110,6 +122,28 @@ void Volume::handleParams()
             vklNewData(vklBlockData.size(), VKL_DATA, vklBlockData.data());
         vklSetData(vklVolume, param.name.c_str(), vklData);
         vklRelease(vklData);
+
+        if (vklType == "vdb" && param.name == "node.data") {
+          // deduce format
+          std::vector<uint32_t> format;
+          format.reserve(data->size());
+          for (auto &&data : dataD) {
+            bool isTile = data->size() == 1;
+            if (!isTile) {
+              if (data->numItems.x != data->numItems.y
+                  || data->numItems.x != data->numItems.z)
+                throw std::runtime_error(
+                    toString() + " VDB leaf node data must have size n^3.");
+              // TODO test 2nd+3rd stride is natural
+            }
+            format.push_back(
+                isTile ? VKL_FORMAT_TILE : VKL_FORMAT_CONSTANT_ZYX);
+          }
+          VKLData vklData = vklNewData(format.size(), VKL_UINT, format.data());
+          vklSetData(vklVolume, "node.format", vklData);
+          vklRelease(vklData);
+        }
+
       } else {
         VKLData vklData = vklNewData(data->size(),
             (VKLDataType)data->type,
@@ -117,10 +151,8 @@ void Volume::handleParams()
             VKL_DATA_SHARED_BUFFER);
 
         std::string name(param.name);
-        if (name == "data") {
-          if (!data->compact())
-            throw std::runtime_error(toString()
-                + " 'data' array with strides currently not supported.");
+        if (name == "data") { // structured volumes
+          // TODO 2nd+3rd stride is natural
           vec3ul &dim = data->numItems;
           vklSetVec3i(vklVolume, "dimensions", dim.x, dim.y, dim.z);
           vklSetInt(vklVolume, "voxelType", (VKLDataType)data->type);

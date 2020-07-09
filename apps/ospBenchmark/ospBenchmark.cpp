@@ -1,9 +1,8 @@
-// Copyright 2018-2019 Intel Corporation
+// Copyright 2018-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "BaseFixture.h"
-// ospcommon
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 // Test init/shutdown cycle time //////////////////////////////////////////////
 
@@ -15,6 +14,7 @@ static void ospInit_ospShutdown(benchmark::State &state)
     ospInit();
     ospShutdown();
   }
+  state.SetItemsProcessed(state.iterations());
 
   ospInit();
 }

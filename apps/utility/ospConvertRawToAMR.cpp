@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "rawToAMR.h"
@@ -63,7 +63,7 @@ output_basename     Basename for the output files. This application creates
                     in common. (string)
 )help";
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 static std::string inFileName;
 static std::string format;

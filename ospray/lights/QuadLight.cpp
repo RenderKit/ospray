@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "QuadLight.h"
-#include "QuadLight_ispc.h"
+#include "lights/QuadLight_ispc.h"
 
 namespace ospray {
 

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture2D.ih"
@@ -12,9 +12,9 @@ vec4f TextureVolume_get(
       (VolumetricModel * uniform) self->data;
   const uniform box3f bounds = volumetricModel->boundingBox;
 
-  if (box_contains(bounds, dg.P)) {
+  if (box_contains(bounds, dg.lP)) {
     Volume *uniform volume = (Volume * uniform) volumetricModel->volume;
-    const float sample = Volume_getSample(volume, dg.P);
+    const float sample = Volume_getSample(volume, dg.lP);
     TransferFunction *uniform tfn = volumetricModel->transferFunction;
     return tfn->get(tfn, sample);
   } else

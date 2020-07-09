@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DirectionalLight.h"
-#include "DirectionalLight_ispc.h"
+#include "lights/DirectionalLight_ispc.h"
 
 namespace ospray {
 

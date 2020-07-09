@@ -1,10 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
 #include "ospray_testing.h"
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 namespace ospray {
 namespace testing {
@@ -192,16 +192,16 @@ cpp::Group UnstructuredVolume::buildGroup() const
   cpp::Volume volume("unstructured");
 
   // set data objects for volume object
-  volume.setParam("vertex.position", cpp::Data(vertices));
+  volume.setParam("vertex.position", cpp::CopiedData(vertices));
 
   if (valuesPerCell)
-    volume.setParam("cell.data", cpp::Data(cellValues));
+    volume.setParam("cell.data", cpp::CopiedData(cellValues));
   else
-    volume.setParam("vertex.data", cpp::Data(vertexValues));
+    volume.setParam("vertex.data", cpp::CopiedData(vertexValues));
 
-  volume.setParam("index", cpp::Data(indices));
-  volume.setParam("cell.index", cpp::Data(cells));
-  volume.setParam("cell.type", cpp::Data(cellTypes));
+  volume.setParam("index", cpp::CopiedData(indices));
+  volume.setParam("cell.index", cpp::CopiedData(cells));
+  volume.setParam("cell.type", cpp::CopiedData(cellTypes));
 
   volume.commit();
 
@@ -211,7 +211,7 @@ cpp::Group UnstructuredVolume::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("volume", cpp::Data(model));
+  group.setParam("volume", cpp::CopiedData(model));
   group.commit();
 
   return group;

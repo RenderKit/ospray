@@ -22,7 +22,7 @@ before you can build OSPRay you need the following prerequisites:
     Linux development tools. To build the interactive tutorials, you
     should also have some version of OpenGL and GLFW.
 -   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io), version 1.9.1 or later. Please
+    (ISPC)](http://ispc.github.io), version 1.10.0 or later. Please
     obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right "next to" the
@@ -31,21 +31,21 @@ before you can build OSPRay you need the following prerequisites:
     `~/Projects/ispc-v1.12.0-linux`] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
     Note: OSPRay is incompatible with ISPC v1.11.0.
--   OSPRay builds on top of a small C++ utility library called
-    `ospcommon`. The library provides abstractions for tasking, aligned
-    memory allocation, vector math types, among others. For users who
-    also need to build
-    [ospcommon](https://www.github.com/ospray/ospcommon), we recommend
-    the default the Intel® [Threading Building
+-   OSPRay builds on top of the Intel oneAPI Rendering Toolkit common
+    library `rkcommon`. The library provides abstractions for tasking,
+    aligned memory allocation, vector math types, among others. For
+    users who also need to build
+    [rkcommon](https://www.github.com/ospray/rkcommon), we recommend the
+    default the Intel [Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
     system for performance and flexibility reasons. Alternatively you
-    can set CMake variable `OSPCOMMON_TASKING_SYSTEM` to `OpenMP` or
+    can set CMake variable `RKCOMMON_TASKING_SYSTEM` to `OpenMP` or
     `Internal`.
 -   OSPRay also heavily uses Intel [Embree], installing version 3.8.0 or
     newer is required. If Embree is not found by CMake its location can
     be hinted with the variable `embree_DIR`.
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.9.0 or newer is required. If Open VKL is not
+    installing version 0.10.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 -   OSPRay also provides an optional module that adds support for Intel

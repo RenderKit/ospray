@@ -6,7 +6,7 @@
 #include "common/Data.h"
 #include "common/World.h"
 // ispc-generated files
-#include "Boxes_ispc.h"
+#include "geometry/Boxes_ispc.h"
 
 namespace ospray {
 

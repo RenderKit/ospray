@@ -8,12 +8,11 @@
 #include "GLFW/glfw3.h"
 // ospray
 #include "ospray/ospray_cpp.h"
-// ospcommon
-#include "ospcommon/containers/TransactionalBuffer.h"
+#include "rkcommon/containers/TransactionalBuffer.h"
 // std
 #include <functional>
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 using namespace ospray;
 
 enum class OSPRayRendererType
@@ -89,8 +88,10 @@ class GLFWOSPRayWindow
   OSPRayRendererType rendererType{OSPRayRendererType::SCIVIS};
   std::string rendererTypeStr{"scivis"};
 
+  std::string pixelFilterTypeStr{"gaussian"};
+
   // List of OSPRay handles to commit before the next frame
-  ospcommon::containers::TransactionalBuffer<OSPObject> objectsToCommit;
+  rkcommon::containers::TransactionalBuffer<OSPObject> objectsToCommit;
 
   // OpenGL framebuffer texture
   GLuint framebufferTexture = 0;

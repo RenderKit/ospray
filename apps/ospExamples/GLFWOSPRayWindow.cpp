@@ -41,7 +41,11 @@ static const std::vector<std::string> g_scenes = {"boxes",
     "clip_with_spheres",
     "clip_with_planes",
     "clip_gravity_spheres_volume",
-    "clip_perlin_noise_volumes"};
+    "clip_perlin_noise_volumes",
+    "clip_particle_volume",
+    "particle_volume",
+    "particle_volume_isosurface",
+    "vdb_volume"};
 
 static const std::vector<std::string> g_curveBasis = {
     "bspline", "hermite", "catmull-rom", "linear"};
@@ -60,6 +64,9 @@ static const std::vector<std::string> g_debugRendererTypes = {"eyeLight",
     "dPds",
     "dPdt",
     "volume"};
+
+static const std::vector<std::string> g_pixelFilterTypes = {
+    "point", "box", "gaussian", "mitchell", "blackmanHarris"};
 
 bool sceneUI_callback(void *, int index, const char **out_text)
 {
@@ -82,6 +89,12 @@ bool rendererUI_callback(void *, int index, const char **out_text)
 bool debugTypeUI_callback(void *, int index, const char **out_text)
 {
   *out_text = g_debugRendererTypes[index].c_str();
+  return true;
+}
+
+bool pixelFilterTypeUI_callback(void *, int index, const char **out_text)
+{
+  *out_text = g_pixelFilterTypes[index].c_str();
   return true;
 }
 
@@ -171,7 +184,8 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
           const vec2f pos(mouse.x / static_cast<float>(windowSize.x),
               1.f - mouse.y / static_cast<float>(windowSize.y));
 
-          auto res = w.framebuffer.pick(w.renderer, w.camera, w.world, pos);
+          auto res =
+              w.framebuffer.pick(w.renderer, w.camera, w.world, pos.x, pos.y);
 
           if (res.hasHit) {
             std::cout << "Picked geometry [inst: " << res.instance
@@ -228,7 +242,8 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   // create new frame buffer
   auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO
       | OSP_FB_NORMAL;
-  framebuffer = cpp::FrameBuffer(windowSize, OSP_FB_RGBA32F, buffers);
+  framebuffer =
+      cpp::FrameBuffer(windowSize.x, windowSize.y, OSP_FB_RGBA32F, buffers);
 
   refreshFrameOperations();
 
@@ -477,6 +492,35 @@ void GLFWOSPRayWindow::buildUI()
 
   ImGui::Separator();
 
+  // the gaussian pixel fiter is the default,
+  // which is at position 2 in the list
+  static int whichPixelFilter = 2;
+  if (ImGui::Combo("pixelfilter##whichPixelFilter",
+          &whichPixelFilter,
+          pixelFilterTypeUI_callback,
+          nullptr,
+          g_pixelFilterTypes.size())) {
+    pixelFilterTypeStr = g_pixelFilterTypes[whichPixelFilter];
+
+    OSPPixelFilterTypes pixelFilterType =
+        OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS;
+    if (pixelFilterTypeStr == "point")
+      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_POINT;
+    else if (pixelFilterTypeStr == "box")
+      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_BOX;
+    else if (pixelFilterTypeStr == "gaussian")
+      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS;
+    else if (pixelFilterTypeStr == "mitchell")
+      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_MITCHELL;
+    else if (pixelFilterTypeStr == "blackmanHarris")
+      pixelFilterType = OSPPixelFilterTypes::OSP_PIXELFILTER_BLACKMAN_HARRIS;
+
+    renderer.setParam("pixelFilter", pixelFilterType);
+    addObjectToCommit(renderer.handle());
+  }
+
+  ImGui::Separator();
+
   static int spp = 1;
   if (ImGui::SliderInt("pixelSamples", &spp, 1, 64)) {
     renderer.setParam("pixelSamples", spp);
@@ -502,13 +546,13 @@ void GLFWOSPRayWindow::buildUI()
     if (ImGui::Checkbox("renderSunSky", &renderSunSky)) {
       if (renderSunSky) {
         sunSky.setParam("direction", sunDirection);
-        world.setParam("light", cpp::Data(sunSky));
+        world.setParam("light", cpp::CopiedData(sunSky));
         addObjectToCommit(sunSky.handle());
       } else {
         cpp::Light light("ambient");
         light.setParam("visible", false);
         light.commit();
-        world.setParam("light", cpp::Data(light));
+        world.setParam("light", cpp::CopiedData(light));
       }
       addObjectToCommit(world.handle());
     }
@@ -605,14 +649,14 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
   backplate.push_back(vec4f(0.4f, 0.2f, 0.4f, 1.0f));
 
   OSPTextureFormat texFmt = OSP_TEXTURE_RGBA32F;
-  cpp::Data texData(vec2ul(2, 2), backplate.data());
-  backplateTex.setParam("data", texData);
+  backplateTex.setParam("data", cpp::CopiedData(backplate.data(), vec2ul(2, 2)));
   backplateTex.setParam("format", OSP_INT, &texFmt);
   addObjectToCommit(backplateTex.handle());
 
   if (resetCamera) {
     // create the arcball camera model
-    arcballCamera.reset(new ArcballCamera(world.getBounds(), windowSize));
+    arcballCamera.reset(
+        new ArcballCamera(world.getBounds<box3f>(), windowSize));
 
     // init camera
     updateCamera();
@@ -624,7 +668,7 @@ void GLFWOSPRayWindow::refreshFrameOperations()
 {
   if (denoiserEnabled) {
     cpp::ImageOperation d("denoiser");
-    framebuffer.setParam("imageOperation", cpp::Data(d));
+    framebuffer.setParam("imageOperation", cpp::CopiedData(d));
   } else {
     framebuffer.removeParam("imageOperation");
   }

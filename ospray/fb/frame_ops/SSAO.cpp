@@ -27,7 +27,7 @@ std::unique_ptr<LiveImageOp> SSAOFrameOp::attach(FrameBufferView &fbView)
 
   void *ispcEquiv = ispc::LiveSSAOFrameOp_create();
 
-  return ospcommon::make_unique<LiveSSAOFrameOp>(
+  return rkcommon::make_unique<LiveSSAOFrameOp>(
       fbView, ispcEquiv, ssaoStrength, radius, checkRadius, kernel, randomVecs);
 }
 

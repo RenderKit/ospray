@@ -5,7 +5,7 @@
 #include "World.h"
 #include "api/ISPCDevice.h"
 // ispc exports
-#include "World_ispc.h"
+#include "common/World_ispc.h"
 
 namespace ospray {
 
@@ -17,7 +17,7 @@ extern "C" void *ospray_getEmbreeDevice()
 // Embree helper functions ///////////////////////////////////////////////////
 
 static void addGeometryInstance(
-    RTCScene &scene, RTCScene instScene, const ospcommon::math::affine3f &xfm)
+    RTCScene &scene, RTCScene instScene, const rkcommon::math::affine3f &xfm)
 {
   // Create parent scene if not yet created
   RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();

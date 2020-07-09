@@ -7,6 +7,7 @@
 #include "camera/Camera.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/Tile.ih"
+#include "pf/PixelFilter.ih"
 #include "texture/Texture2D.ih"
 
 struct Renderer;
@@ -80,6 +81,8 @@ struct Renderer
 
   int32 numMaterials;
   Material **material;
+
+  PixelFilter *pixelFilter;
 };
 
 vec4f Renderer_getBackground(

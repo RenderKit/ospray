@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,43 +12,36 @@
 namespace ospray {
 namespace cpp {
 
+template <bool SHARED = false>
 class Data : public ManagedObject<OSPData, OSP_DATA>
 {
  public:
-  // Construction from an existing array (infer element type)
+  // Construction from an existing array (explicit element type and size/stride)
 
-  template <typename T>
-  Data(size_t numItems, const T *init, bool isShared = false);
+  template <typename DIM_T>
+  Data(const void *init, OSPDataType type, const DIM_T &numItems);
 
-  template <typename T>
-  Data(
-      size_t numItems, size_t byteStride, const T *init, bool isShared = false);
+  template <typename DIM_T>
+  Data(const void *init,
+      OSPDataType type,
+      const DIM_T &numItems,
+      const DIM_T &byteStride);
 
-  template <typename T>
-  Data(const vec2ul &numItems, const T *init, bool isShared = false);
+  // Construction from an existing array (infer element type and size/stride)
 
-  template <typename T>
-  Data(const vec2ul &numItems,
-      const vec2ul &byteStride,
-      const T *init,
-      bool isShared = false);
+  template <typename T, typename DIM_T>
+  Data(const T *init, const DIM_T &numItems);
 
-  template <typename T>
-  Data(const vec3ul &numItems, const T *init, bool isShared = false);
-
-  template <typename T>
-  Data(const vec3ul &numItems,
-      const vec3ul &byteStride,
-      const T *init,
-      bool isShared = false);
+  template <typename T, typename DIM_T>
+  Data(const T *init, const DIM_T &numItems, const DIM_T &byteStride);
 
   // Adapters to work with existing STL containers
 
   template <typename T, std::size_t N>
-  Data(const std::array<T, N> &arr, bool isShared = false);
+  Data(const std::array<T, N> &arr);
 
   template <typename T, typename ALLOC_T>
-  Data(const std::vector<T, ALLOC_T> &arr, bool isShared = false);
+  Data(const std::vector<T, ALLOC_T> &arr);
 
   // Set a single object as a 1-item data array
 
@@ -62,117 +55,185 @@ class Data : public ManagedObject<OSPData, OSP_DATA>
  private:
   template <typename T>
   void validate_element_type();
+
+  template <typename DIM_T>
+  void validate_dimension_type();
+
+  void constructArray(const void *init,
+      OSPDataType type,
+      uint64_t numItems1,
+      int64_t byteStride1 = 0,
+      uint64_t numItems2 = 1,
+      int64_t byteStride2 = 0,
+      uint64_t numItems3 = 1,
+      int64_t byteStride3 = 0);
 };
 
+using SharedData = Data<true>;
+using CopiedData = Data<false>;
+
 static_assert(
-    sizeof(Data) == sizeof(OSPData), "cpp::Data can't have data members!");
+    sizeof(Data<>) == sizeof(OSPData), "cpp::Data can't have data members!");
 
 // Inlined function definitions ///////////////////////////////////////////
 
-template <typename T>
-inline Data::Data(size_t numItems, const T *init, bool isShared)
-    : Data(numItems, 0, init, isShared)
+template <bool SHARED>
+template <typename DIM_T>
+inline Data<SHARED>::Data(
+    const void *init, OSPDataType type, const DIM_T &numItems)
+    : Data(init, type, numItems, DIM_T(0))
+
+{}
+
+template <bool SHARED>
+template <typename DIM_T>
+inline Data<SHARED>::Data(const void *init,
+    OSPDataType format,
+    const DIM_T &numItems,
+    const DIM_T &byteStride)
 {
-  validate_element_type<T>();
+  validate_dimension_type<DIM_T>();
+
+  constexpr auto dim_t = OSPTypeFor<DIM_T>::value;
+  constexpr auto nDims = OSPDimensionalityOf<dim_t>::value;
+
+  using vec_element_t = typename OSPVecElementOf<dim_t>::type;
+
+  const auto *d = (const vec_element_t *)&numItems;
+  const auto *s = (const vec_element_t *)&byteStride;
+
+  switch (nDims) {
+  case 1:
+    constructArray(init, format, d[0], s[0]);
+    break;
+  case 2:
+    constructArray(init, format, d[0], s[0], d[1], s[1]);
+    break;
+  case 3:
+    constructArray(init, format, d[0], s[0], d[1], s[1], d[2], s[2]);
+    break;
+  default:
+    throw std::runtime_error("invalid dimension type constructing cpp::Data");
+  }
 }
 
-template <typename T>
-inline Data::Data(
-    size_t numItems, size_t byteStride, const T *init, bool isShared)
-    : Data(vec3ul(numItems, 1, 1), vec3ul(byteStride, 0, 0), init, isShared)
+template <bool SHARED>
+template <typename T, typename DIM_T>
+inline Data<SHARED>::Data(const T *init, const DIM_T &numItems)
+    : Data(init, numItems, DIM_T(0))
+{}
+
+template <bool SHARED>
+template <typename T, typename DIM_T>
+inline Data<SHARED>::Data(
+    const T *init, const DIM_T &numItems, const DIM_T &byteStride)
 {
   validate_element_type<T>();
+  validate_dimension_type<DIM_T>();
+
+  constexpr auto format = OSPTypeFor<T>::value;
+  constexpr auto dim_t = OSPTypeFor<DIM_T>::value;
+
+  constexpr auto nDims = OSPDimensionalityOf<dim_t>::value;
+
+  using vec_element_t = typename OSPVecElementOf<dim_t>::type;
+
+  const auto *d = (const vec_element_t *)&numItems;
+  const auto *s = (const vec_element_t *)&byteStride;
+
+  switch (nDims) {
+  case 1:
+    constructArray(init, format, d[0], s[0]);
+    break;
+  case 2:
+    constructArray(init, format, d[0], s[0], d[1], s[1]);
+    break;
+  case 3:
+    constructArray(init, format, d[0], s[0], d[1], s[1], d[2], s[2]);
+    break;
+  default:
+    throw std::runtime_error("invalid dimension type constructing cpp::Data");
+  }
 }
 
+template <bool SHARED>
+template <typename T, std::size_t N>
+inline Data<SHARED>::Data(const std::array<T, N> &arr) : Data(arr.data(), N)
+{}
+
+template <bool SHARED>
+template <typename T, typename ALLOC_T>
+inline Data<SHARED>::Data(const std::vector<T, ALLOC_T> &arr)
+    : Data(arr.data(), arr.size())
+{}
+
+template <bool SHARED>
 template <typename T>
-inline Data::Data(const vec2ul &numItems, const T *init, bool isShared)
-    : Data(numItems, vec2ul(0), init, isShared)
+inline Data<SHARED>::Data(const T &obj) : Data(&obj, size_t(1))
+{}
+
+template <bool SHARED>
+inline Data<SHARED>::Data(OSPData existing)
+    : ManagedObject<OSPData, OSP_DATA>(existing)
+{}
+
+template <bool SHARED>
+template <typename T>
+inline void Data<SHARED>::validate_element_type()
 {
-  validate_element_type<T>();
+  static_assert(OSPTypeFor<T>::value != OSP_UNKNOWN,
+      "Only types corresponding to OSPDataType values can be set "
+      "as elements in OSPRay Data arrays. NOTE: Math types (vec, "
+      "box, linear, affine) must be inferrable as OSP_* enums, which are "
+      "defined by the OSPTYPEFOR_SPECIALIZATION() macro.");
 }
 
-template <typename T>
-inline Data::Data(const vec2ul &numItems,
-    const vec2ul &byteStride,
-    const T *init,
-    bool isShared)
-    : Data(vec3ul(numItems.x, numItems.y, 1),
-        vec3ul(byteStride.x, byteStride.y, 0),
-        init,
-        isShared)
+template <bool SHARED>
+template <typename DIM_T>
+inline void Data<SHARED>::validate_dimension_type()
 {
-  validate_element_type<T>();
+  static_assert(OSPTypeFor<DIM_T>::value == OSP_INT
+          || OSPTypeFor<DIM_T>::value == OSP_VEC2I
+          || OSPTypeFor<DIM_T>::value == OSP_VEC3I
+          || OSPTypeFor<DIM_T>::value == OSP_ULONG
+          || OSPTypeFor<DIM_T>::value == OSP_VEC2UL
+          || OSPTypeFor<DIM_T>::value == OSP_VEC3UL,
+      "The type used to describe an OSPData array dimensions must infer to "
+      "OSP_INT, OSP_ULONG, OSP_VEC2UL, or OSP_VEC3UL. These type inferences "
+      "are defined by using the OSPTYPEFOR_SPECIALIZATION() macro.");
 }
 
-template <typename T>
-inline Data::Data(const vec3ul &numItems, const T *init, bool isShared)
-    : Data(numItems, vec3ul(0), init, isShared)
+template <bool SHARED>
+inline void Data<SHARED>::constructArray(const void *data,
+    OSPDataType format,
+    uint64_t numItems1,
+    int64_t byteStride1,
+    uint64_t numItems2,
+    int64_t byteStride2,
+    uint64_t numItems3,
+    int64_t byteStride3)
 {
-  validate_element_type<T>();
-}
-
-template <typename T>
-inline Data::Data(const vec3ul &numItems,
-    const vec3ul &byteStride,
-    const T *init,
-    bool isShared)
-{
-  validate_element_type<T>();
-
-  auto format = OSPTypeFor<T>::value;
-
-  auto tmp = ospNewSharedData(init,
+  OSPData tmp = ospNewSharedData(data,
       format,
-      numItems.x,
-      byteStride.x,
-      numItems.y,
-      byteStride.y,
-      numItems.z,
-      byteStride.z);
+      numItems1,
+      byteStride1,
+      numItems2,
+      byteStride2,
+      numItems3,
+      byteStride3);
 
-  if (isShared) {
+  if (SHARED) {
     ospObject = tmp;
   } else {
-    ospObject = ospNewData(format, numItems.x, numItems.y, numItems.z);
+    ospObject = ospNewData(format, numItems1, numItems2, numItems3);
     ospCopyData(tmp, ospObject);
     ospRelease(tmp);
   }
 }
 
-template <typename T, std::size_t N>
-inline Data::Data(const std::array<T, N> &arr, bool isShared)
-    : Data(N, arr.data(), isShared)
-{
-  validate_element_type<T>();
-}
-
-template <typename T, typename ALLOC_T>
-inline Data::Data(const std::vector<T, ALLOC_T> &arr, bool isShared)
-    : Data(arr.size(), arr.data(), isShared)
-{
-  validate_element_type<T>();
-}
-
-template <typename T>
-inline Data::Data(const T &obj) : Data(1, &obj)
-{
-  validate_element_type<T>();
-}
-
-inline Data::Data(OSPData existing) : ManagedObject<OSPData, OSP_DATA>(existing)
-{}
-
-template <typename T>
-inline void Data::validate_element_type()
-{
-  static_assert(OSPTypeFor<T>::value != OSP_UNKNOWN,
-      "Only types corresponding to OSPDataType values can be set "
-      "as elements in OSPRay Data arrays. NOTE: Math types (vec, "
-      "box, linear, affine) are expected to come from ospcommon::math.");
-}
-
 } // namespace cpp
 
-OSPTYPEFOR_SPECIALIZATION(cpp::Data, OSP_DATA);
+OSPTYPEFOR_SPECIALIZATION(cpp::SharedData, OSP_DATA);
+OSPTYPEFOR_SPECIALIZATION(cpp::CopiedData, OSP_DATA);
 
 } // namespace ospray

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "OrthographicCamera.h"
-#include "OrthographicCamera_ispc.h"
+#include "camera/OrthographicCamera_ispc.h"
 
 namespace ospray {
 

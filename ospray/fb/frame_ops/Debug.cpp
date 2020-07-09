@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Debug.h"
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
 
@@ -17,7 +16,7 @@ std::unique_ptr<LiveImageOp> DebugFrameOp::attach(FrameBufferView &fbView)
         "data");
   }
 
-  return ospcommon::make_unique<LiveDebugFrameOp>(fbView);
+  return rkcommon::make_unique<LiveDebugFrameOp>(fbView);
 }
 
 std::string DebugFrameOp::toString() const

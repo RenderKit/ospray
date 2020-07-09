@@ -26,30 +26,30 @@ if (BUILD_EMBREE_FROM_SOURCE)
       -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
       -DCMAKE_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
       -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
-      -DEMBREE_TUTORIALS=OFF
       $<$<BOOL:${DOWNLOAD_TBB}>:-DEMBREE_TBB_ROOT=${TBB_PATH}>
       $<$<BOOL:${DOWNLOAD_ISPC}>:-DEMBREE_ISPC_EXECUTABLE=${ISPC_PATH}>
-      -DCMAKE_BUILD_TYPE=Release
+      -DCMAKE_BUILD_TYPE=${DEPENDENCIES_BUILD_TYPE}
+      -DEMBREE_TUTORIALS=OFF
       -DBUILD_TESTING=OFF
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS ${ALWAYS_REBUILD}
   )
 
-  ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
-  configure
-    ospcommon
-    $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
-  )
-
+  if (DOWNLOAD_TBB)
+    ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
+  endif()
+  if (DOWNLOAD_ISPC)
+    ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ispc)
+  endif()
 else()
   string(REPLACE "v" "" EMBREE_VERSION_NUMBER ${BUILD_EMBREE_VERSION})
-
+  set(EMBREE_BASE_URL "https://github.com/embree/embree/releases/download")
   if (APPLE)
-    set(EMBREE_URL "http://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.zip")
+    set(EMBREE_URL "${EMBREE_BASE_URL}/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.zip")
   elseif (WIN32)
-    set(EMBREE_URL "http://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x64.vc14.windows.zip")
+    set(EMBREE_URL "${EMBREE_BASE_URL}/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x64.vc14.windows.zip")
   else()
-    set(EMBREE_URL "http://github.com/embree/embree/releases/download/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.linux.tar.gz")
+    set(EMBREE_URL "${EMBREE_BASE_URL}/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.linux.tar.gz")
   endif()
 
   ExternalProject_Add(${COMPONENT_NAME}

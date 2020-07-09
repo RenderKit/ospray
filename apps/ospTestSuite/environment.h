@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Intel Corporation
+// Copyright 2017-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -11,8 +11,8 @@
 #include "ospray/ospray_cpp.h"
 using namespace ospray;
 
-#include "ospcommon/math/vec.h"
-using namespace ospcommon::math;
+#include "rkcommon/math/vec.h"
+using namespace rkcommon::math;
 
 class OSPRayEnvironment : public ::testing::Environment
 {

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -15,7 +15,7 @@ struct PathTracer
 {
   Renderer super;
 
-  int32 rouletteDepth;
+  int32 rouletteDepth; // path depth from which on RR is used
   float maxRadiance;
   // coefficients of plane equation defining geometry to catch shadows for
   // compositing; disabled if normal is zero-length
@@ -24,7 +24,11 @@ struct PathTracer
 
   Material *uniform volumetricMaterial;
 
-  const uniform Light *uniform *uniform lights;
-  uint32 numLights;
-  uint32 numGeoLights;
+  // array containing the scene light sources
+  // the lights are sorted: first geometric, then virtual lights
+  Light *uniform *uniform lights;
+  uint32 numLights; // total number of light sources (geometric + virtual)
+  uint32 numGeoLights; // number of geometric light sources
+  float *uniform lightsCDF; // CDF used by NEE for randomly picking lights
+  int32 numLightSamples; // number of light samples used for NEE
 };

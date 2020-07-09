@@ -1,10 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
 #include "ospray_testing.h"
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 namespace ospray {
 namespace testing {
@@ -24,7 +24,7 @@ cpp::Group PtLuminous::buildGroup() const
 {
   cpp::Geometry sphereGeometry("sphere");
 
-  sphereGeometry.setParam("sphere.position", cpp::Data(vec3f(0.f)));
+  sphereGeometry.setParam("sphere.position", cpp::CopiedData(vec3f(0.f)));
   sphereGeometry.setParam("radius", 1.f);
   sphereGeometry.commit();
 
@@ -39,7 +39,7 @@ cpp::Group PtLuminous::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
@@ -6,7 +6,7 @@
 // stl
 #include <random>
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 namespace ospray {
 namespace testing {
@@ -69,13 +69,13 @@ cpp::Group Spheres::buildGroup() const
   // create the sphere geometry, and assign attributes
   cpp::Geometry spheresGeometry("sphere");
 
-  spheresGeometry.setParam("sphere.position", cpp::Data(s_center));
-  spheresGeometry.setParam("sphere.radius", cpp::Data(s_radius));
+  spheresGeometry.setParam("sphere.position", cpp::CopiedData(s_center));
+  spheresGeometry.setParam("sphere.radius", cpp::CopiedData(s_radius));
   spheresGeometry.commit();
 
   cpp::GeometricModel model(spheresGeometry);
 
-  model.setParam("color", cpp::Data(s_colors));
+  model.setParam("color", cpp::CopiedData(s_colors));
 
   if (rendererType == "pathtracer") {
     // create glass material and assign to geometry
@@ -93,7 +93,7 @@ cpp::Group Spheres::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;

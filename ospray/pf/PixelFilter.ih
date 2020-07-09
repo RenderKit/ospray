@@ -1,0 +1,41 @@
+// Copyright 2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "math/vec.ih"
+
+struct PixelFilter;
+
+/* Samples a relative pixel position proportional to the kernel of a
+   pixel filter.
+
+   The sampled position is relative to the center of a pixel. It converts a
+   uniform 2D random variable s with values of the range [0..1) into a
+   non-uniform 2D position in the range of [-w/2 .. w/2], where w =
+   self->width. The center of the pixel filter kernel is [0,0], which
+   represents a position at the center of the pixel.
+
+   Returns a 2D position in the domain [-w/2 .. w/2] distributed proportionally
+   to the filter kernel.
+*/
+typedef vec2f (*PixelFilter_SampleFunc)(
+    const PixelFilter *uniform self, const vec2f &s);
+
+struct PixelFilter
+{
+  float width;
+  PixelFilter_SampleFunc sample;
+};
+
+inline void PixelFilter_Constructor(PixelFilter *uniform self,
+    uniform float width,
+    uniform PixelFilter_SampleFunc sample)
+{
+  self->width = width;
+  self->sample = sample;
+}
+
+inline vec2f Point_sample(const PixelFilter *uniform self, const vec2f &s);
+
+inline vec2f Box_sample(const PixelFilter *uniform self, const vec2f &s);

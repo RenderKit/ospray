@@ -57,7 +57,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   common/Instance.ispc
   common/Managed.cpp
   common/OSPCommon.ispc
-  common/Util.h
+  common/World.ih
   common/World.ispc
   common/World.cpp
 
@@ -80,6 +80,12 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   fb/tile_ops/SaveTiles.cpp
   fb/tile_ops/ToneMapper.cpp
   fb/tile_ops/ToneMapper.ispc
+
+  pf/PixelFilter.ih
+  pf/PixelFilter.ispc
+  pf/LUTPixelFilter.ih
+  pf/LUTPixelFilter.ispc
+  pf/PixelFilter.cpp
 
   camera/Camera.cpp
   camera/Camera.ispc
@@ -137,6 +143,9 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   math/spectrum.h
   math/spectrum.ih
   math/spectrum.ispc
+  math/random.ih
+  math/halton.ih
+  math/halton.ispc
 
   render/LoadBalancer.cpp
   render/Material.cpp
@@ -196,6 +205,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   texture/Texture2D.ispc
   texture/TextureVolume.cpp
   texture/TextureVolume.ispc
+  texture/TextureParam.ispc
   texture/registration.cpp
 
   volume/Volume.ispc
@@ -225,6 +235,12 @@ foreach(dir ${SUBDIRS})
       PATTERN *.h
       PATTERN *.ih
     )
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${dir}
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
+      COMPONENT devel
+      FILES_MATCHING
+      PATTERN *_ispc.h
+    )
   endif()
 endforeach()
 
@@ -233,7 +249,8 @@ endforeach()
 ##############################################################
 
 add_library(ospray SHARED ${OSPRAY_SOURCES})
-target_link_libraries(ospray PUBLIC $<BUILD_INTERFACE:ospcommon::ospcommon>)
+target_link_libraries(ospray PUBLIC $<BUILD_INTERFACE:rkcommon::rkcommon>)
+target_compile_definitions(ospray PRIVATE OSPRAY_CPP_RKCOMMON_TYPES)
 ospray_install_library(ospray lib)
 
 target_include_directories(ospray
@@ -327,7 +344,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
   target_link_libraries(ospray_module_ispc
   PUBLIC
     ospray
-    ospcommon::ospcommon
+    rkcommon::rkcommon
     $<BUILD_INTERFACE:embree>
     $<BUILD_INTERFACE:openvkl::openvkl>
   )
@@ -347,6 +364,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   target_compile_definitions(ospray_module_ispc
   PUBLIC
+    OSPRAY_CPP_RKCOMMON_TYPES
     TILE_SIZE=${OSPRAY_TILE_SIZE}
     MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
     RENDERTILE_PIXELS_PER_JOB=${OSPRAY_PIXELS_PER_JOB}
@@ -362,7 +380,7 @@ endif()
 add_library(ospray_sdk INTERFACE)
 target_link_libraries(ospray_sdk
 INTERFACE
-  ospray_module_ispc ospcommon::ospcommon
+  ospray_module_ispc rkcommon::rkcommon
 )
 ospray_install_target(ospray_sdk devel)
 

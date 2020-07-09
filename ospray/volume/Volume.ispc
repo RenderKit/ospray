@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/Intersect.ih"
@@ -61,6 +61,7 @@ void Volume_Constructor(Volume *uniform self, void *uniform cppEquivalent)
   self->boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
   self->volumeID = -1;
   self->vklVolume = NULL;
+  self->vklSampler = NULL;
 }
 
 export void Volume_getBoundingBox(
@@ -101,9 +102,10 @@ export void *uniform Volume_createInstance_vklVolume(
 }
 
 export void Volume_set_vklVolume(
-    void *uniform _self, void *uniform vklVolume, box3f *uniform bounds)
+    void *uniform _self, void *uniform vklVolume, void *uniform vklSampler, box3f *uniform bounds)
 {
   Volume *uniform self = (Volume * uniform) _self;
   self->vklVolume = (VKLVolume)vklVolume;
+  self->vklSampler = (VKLSampler)vklSampler;
   self->boundingBox = *bounds;
 }

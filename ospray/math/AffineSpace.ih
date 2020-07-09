@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -25,6 +25,14 @@ inline uniform AffineSpace3f make_AffineSpace3f(const uniform vec3f vx,
   xfm.l.vz = vz;
   xfm.p = p;
   return xfm;
+}
+
+inline uniform AffineSpace3f make_AffineSpace3f_identity()
+{
+  return make_AffineSpace3f(make_vec3f(1.f, 0.f, 0.f),
+      make_vec3f(0.f, 1.f, 0.f),
+      make_vec3f(0.f, 0.f, 1.f),
+      make_vec3f(0.f));
 }
 
 inline uniform AffineSpace3f make_AffineSpace3f(const uniform LinearSpace3f l)

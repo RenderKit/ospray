@@ -3,10 +3,9 @@
 
 #include "Builder.h"
 #include "ospray_testing.h"
-// ospcommon
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 namespace ospray {
 namespace testing {
@@ -59,7 +58,7 @@ cpp::Group ClippingGeometries::buildGroup() const
     positions.emplace_back(p);
   }
 
-  spheresGeometry.setParam("sphere.position", cpp::Data(positions));
+  spheresGeometry.setParam("sphere.position", cpp::CopiedData(positions));
   spheresGeometry.setParam("radius", size / dim / 2.f);
   spheresGeometry.commit();
 
@@ -73,7 +72,7 @@ cpp::Group ClippingGeometries::buildGroup() const
   model.commit();
 
   cpp::Group group;
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;
@@ -95,18 +94,18 @@ cpp::World ClippingGeometries::buildWorld() const
         {+0.f, -1.f, +0.f, 0.2f},
         {+1.f, +0.f, +1.f, 0.2f}};
     if (geomSubType == "bspline") {
-      geometry.setParam("vertex.position_radius", cpp::Data(vertices));
+      geometry.setParam("vertex.position_radius", cpp::CopiedData(vertices));
       geometry.setParam("basis", int(OSP_BSPLINE));
       cPos = vec3f(-.1f, 0.f, -.1f);
     } else if (geomSubType == "linear") {
       geometry.setParam("vertex.position",
-          cpp::Data(vertices.size(), sizeof(vec4f), (vec3f *)vertices.data()));
+          cpp::CopiedData((vec3f *)vertices.data(), vertices.size(), sizeof(vec4f)));
       geometry.setParam("radius", 0.2f);
       geometry.setParam("basis", int(OSP_LINEAR));
       cPos = vec3f(-.2f, 0.f, -.2f);
     }
     std::vector<unsigned int> indices = {0, 1, 2, 3, 4, 5};
-    geometry.setParam("index", cpp::Data(indices));
+    geometry.setParam("index", cpp::CopiedData(indices));
     geometry.setParam("type", int(OSP_ROUND));
     geometry.commit();
   } else if (geomType == "subdivision") {
@@ -119,9 +118,9 @@ cpp::World ClippingGeometries::buildWorld() const
         {+size, +size, -size},
         {+size, +size, +size},
         {-size, +size, +size}};
-    geometry.setParam("vertex.position", cpp::Data(vertices));
+    geometry.setParam("vertex.position", cpp::CopiedData(vertices));
     std::vector<unsigned int> faces = {4, 4, 4, 4, 4, 4};
-    geometry.setParam("face", cpp::Data(faces));
+    geometry.setParam("face", cpp::CopiedData(faces));
     std::vector<unsigned int> indices = {
         0,
         4,
@@ -148,12 +147,12 @@ cpp::World ClippingGeometries::buildWorld() const
         2,
         3,
     };
-    geometry.setParam("index", cpp::Data(indices));
+    geometry.setParam("index", cpp::CopiedData(indices));
     std::vector<unsigned int> vertexCreaseIndices = {0, 1, 2, 3, 4, 5, 6, 7};
-    geometry.setParam("vertexCrease.index", cpp::Data(vertexCreaseIndices));
+    geometry.setParam("vertexCrease.index", cpp::CopiedData(vertexCreaseIndices));
     std::vector<float> vertexCreaseWeights = {
         2.f, 2.f, 2.f, 2.f, 2.f, 2.f, 2.f, 2.f};
-    geometry.setParam("vertexCrease.weight", cpp::Data(vertexCreaseWeights));
+    geometry.setParam("vertexCrease.weight", cpp::CopiedData(vertexCreaseWeights));
     std::vector<vec2ui> edgeCreaseIndices = {{0, 1},
         {1, 2},
         {2, 3},
@@ -166,10 +165,10 @@ cpp::World ClippingGeometries::buildWorld() const
         {1, 5},
         {2, 6},
         {3, 7}};
-    geometry.setParam("edgeCrease.index", cpp::Data(edgeCreaseIndices));
+    geometry.setParam("edgeCrease.index", cpp::CopiedData(edgeCreaseIndices));
     std::vector<float> edgeCreaseWeights = {
         2.f, 2.f, 2.f, 2.f, 2.f, 2.f, 2.f, 2.f, 2.f, 2.f, 2.f, 2.f};
-    geometry.setParam("edgeCrease.weight", cpp::Data(edgeCreaseWeights));
+    geometry.setParam("edgeCrease.weight", cpp::CopiedData(edgeCreaseWeights));
     geometry.setParam("level", 10.f);
     geometry.commit();
     cPos = vec3f(-.3f, .3f, -.3f);
@@ -182,7 +181,7 @@ cpp::World ClippingGeometries::buildWorld() const
         {pos.x + size.x, pos.y, pos.z + size.z},
         {pos.x - size.x, pos.y, pos.z + size.z},
         {pos.x, pos.y + size.y, pos.z}};
-    geometry.setParam("vertex.position", cpp::Data(vertices));
+    geometry.setParam("vertex.position", cpp::CopiedData(vertices));
     std::vector<vec3ui> indices = {{0, 1, 2},
         {0, 2, 3},
         {0, 3, 4},
@@ -191,23 +190,23 @@ cpp::World ClippingGeometries::buildWorld() const
         {5, 3, 2},
         {5, 4, 3},
         {5, 1, 4}};
-    geometry.setParam("index", cpp::Data(indices));
+    geometry.setParam("index", cpp::CopiedData(indices));
     geometry.commit();
     cPos = vec3f(-.3f, 0.f, -.3f);
   } else if (geomType == "plane") {
     std::vector<vec4f> coefficients = {vec4f(1.0f, 1.0f, 1.0f, 0.0f)};
-    geometry.setParam("plane.coefficients", cpp::Data(coefficients));
+    geometry.setParam("plane.coefficients", cpp::CopiedData(coefficients));
     geometry.commit();
     cPos = vec3f(-.3f, .2f, -.3f);
   } else if (geomType == "box") {
     std::vector<box3f> boxes = {
         box3f(vec3f(-.9f, -.9f, -.9f), vec3f(.9f, .9f, .9f))};
-    geometry.setParam("box", cpp::Data(boxes));
+    geometry.setParam("box", cpp::CopiedData(boxes));
     geometry.commit();
     cPos = vec3f(-.3f, .3f, -.3f);
   } else if (geomType == "sphere") {
     std::vector<vec3f> position = {vec3f(0.f, 0.f, 0.f)};
-    geometry.setParam("sphere.position", cpp::Data(position));
+    geometry.setParam("sphere.position", cpp::CopiedData(position));
     geometry.setParam("radius", 1.f);
     geometry.commit();
     cPos = vec3f(-.3f, .2f, -.3f);
@@ -223,7 +222,7 @@ cpp::World ClippingGeometries::buildWorld() const
     model.commit();
 
     cpp::Group group;
-    group.setParam("clippingGeometry", cpp::Data(model));
+    group.setParam("clippingGeometry", cpp::CopiedData(model));
     group.commit();
 
     cpp::Instance instance(group);
@@ -238,7 +237,7 @@ cpp::World ClippingGeometries::buildWorld() const
     model.commit();
 
     cpp::Group group;
-    group.setParam("clippingGeometry", cpp::Data(model));
+    group.setParam("clippingGeometry", cpp::CopiedData(model));
     group.commit();
 
     cpp::Instance instance(group);

@@ -8,6 +8,7 @@
 #include "common/Util.h"
 #include "common/World.h"
 #include "fb/FrameBuffer.h"
+#include "pf/PixelFilter.h"
 #include "texture/Texture2D.h"
 
 namespace ospray {
@@ -69,6 +70,8 @@ struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
   Ref<Texture2D> maxDepthTexture;
   Ref<Texture2D> backplate;
 
+  std::unique_ptr<PixelFilter> pixelFilter;
+
   Ref<const DataT<Material *>> materialData;
   std::vector<void *> ispcMaterialPtrs;
 
@@ -76,6 +79,7 @@ struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
   template <typename BASE_CLASS, typename CHILD_CLASS>
   friend void registerTypeHelper(const char *type);
   static void registerType(const char *type, FactoryFcn<Renderer> f);
+  void setupPixelFilter();
 };
 
 OSPTYPEFOR_SPECIALIZATION(Renderer *, OSP_RENDERER);

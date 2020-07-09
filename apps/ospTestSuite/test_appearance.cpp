@@ -3,7 +3,7 @@
 
 #include "test_appearance.h"
 #include "ArcballCamera.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
 namespace OSPRayTestScenes {
 
@@ -27,11 +27,11 @@ void Texture2D::SetUp()
   constexpr int cols = 8;
   constexpr int rows = 4;
   std::array<vec3f, (cols + 1) * (rows + 1)> vertex;
-  ospcommon::index_sequence_2D vidx(vec2i(cols + 1, rows + 1));
+  rkcommon::index_sequence_2D vidx(vec2i(cols + 1, rows + 1));
   for (auto i : vidx)
     vertex[vidx.flatten(i)] = vec3f(i.x, i.y * 1.5f, 5.3f);
   std::array<vec4ui, cols * rows> index;
-  ospcommon::index_sequence_2D iidx(vec2i(cols, rows));
+  rkcommon::index_sequence_2D iidx(vec2i(cols, rows));
   for (auto i : iidx) {
     index[iidx.flatten(i)] = vec4i(vidx.flatten({i.x, i.y}),
         vidx.flatten({i.x + 1, i.y}),
@@ -39,8 +39,8 @@ void Texture2D::SetUp()
         vidx.flatten({i.x, i.y + 1}));
   }
   cpp::Geometry mesh("mesh");
-  mesh.setParam("vertex.position", cpp::Data(vertex));
-  mesh.setParam("index", cpp::Data(index));
+  mesh.setParam("vertex.position", cpp::CopiedData(vertex));
+  mesh.setParam("index", cpp::CopiedData(index));
   mesh.commit();
 
   // create textures: columns=#channels, rows=type=[byte, byte, float, short]
@@ -87,7 +87,7 @@ void Texture2D::SetUp()
   std::array<vec4uc, 15> dbyte;
   std::array<vec4us, 15> dshort;
   std::array<vec4f, 15> dfloat;
-  ospcommon::index_sequence_2D didx(vec2i(3, 5));
+  rkcommon::index_sequence_2D didx(vec2i(3, 5));
   for (auto idx : didx) {
     auto i = didx.flatten(idx);
     // the center texel should be 127 / 32767 / 0.5, to test normal maps
@@ -120,11 +120,12 @@ void Texture2D::SetUp()
     tex.setParam("data", data);
     tex.commit();
     cpp::Material mat(rendererType, "obj");
+    mat.setParam("kd", vec3f(0.8));
     mat.setParam(i & 1 ? "map_bump" : "map_kd", tex);
     mat.commit();
     material[i] = mat;
   }
-  model.setParam("material", cpp::Data(material));
+  model.setParam("material", cpp::CopiedData(material));
   AddModel(model);
 
   { // set up backplate texture
@@ -134,7 +135,7 @@ void Texture2D::SetUp()
       el = toggle ? vec3uc(5, 10, 5) : vec3uc(10, 5, 10);
       toggle = !toggle;
     }
-    cpp::Data texData(vec2ul(125, 94), bpdata.data());
+    cpp::CopiedData texData(bpdata.data(), vec2ul(125, 94));
 
     cpp::Texture backplateTex("texture2d");
     backplateTex.setParam("format", OSP_TEXTURE_RGB8);
@@ -167,6 +168,95 @@ void Texture2D::SetUp()
   AddLight(light2);
 }
 
+static cpp::Texture createTexture2D()
+{
+  // Prepare pixel data
+  constexpr uint32_t width = 32;
+  constexpr uint32_t height = 32;
+  std::array<vec3uc, width * height> dbyte;
+  rkcommon::index_sequence_2D idx(vec2i(width, height));
+  for (auto i : idx)
+    dbyte[idx.flatten(i)] =
+        vec3uc(i.x * (256 / width), i.y * (256 / height), i.x * (256 / width));
+
+  // Create texture object
+  cpp::Texture tex("texture2d");
+  tex.setParam("format", OSP_TEXTURE_RGB8);
+  tex.setParam("data", cpp::CopiedData(dbyte.data(), vec2ul(width, height)));
+  tex.commit();
+  return tex;
+}
+
+Texture2DTransform::Texture2DTransform()
+{
+  rendererType = GetParam();
+}
+
+void Texture2DTransform::SetUp()
+{
+  Base::SetUp();
+
+  camera.setParam("position", vec3f(4.f, 4.f, -10.f));
+  camera.setParam("direction", vec3f(0.f, 0.f, 1.f));
+  camera.setParam("up", vec3f(0.f, 1.f, 0.f));
+
+  // Create quad geometry
+  constexpr int cols = 2;
+  constexpr int rows = 2;
+  cpp::Geometry quads("mesh");
+  {
+    // Create quads data
+    std::array<vec3f, 4 * cols * rows> position;
+    std::array<vec4ui, cols * rows> index;
+    rkcommon::index_sequence_2D idx(vec2i(cols, rows));
+    for (auto i : idx) {
+      auto l = static_cast<vec2f>(i) * 5.f;
+      auto u = l + (.75f * 5.f);
+      position[4 * idx.flatten(i) + 0] = vec3f(l.x, l.y, 0.f);
+      position[4 * idx.flatten(i) + 1] = vec3f(l.x, u.y, 0.f);
+      position[4 * idx.flatten(i) + 2] = vec3f(u.x, u.y, 0.f);
+      position[4 * idx.flatten(i) + 3] = vec3f(u.x, l.y, 0.f);
+      index[idx.flatten(i)] = vec4ui(0, 1, 2, 3) + 4 * idx.flatten(i);
+    }
+
+    // Set quads parameters
+    quads.setParam("vertex.position", cpp::CopiedData(position));
+    quads.setParam("index", cpp::CopiedData(index));
+    quads.commit();
+  }
+
+  // Create materials
+  std::array<cpp::Material, cols * rows> materials;
+  cpp::Texture tex = createTexture2D();
+  for (int i = 0; i < cols * rows; i++) {
+    cpp::Material mat(rendererType, "obj");
+    mat.setParam("map_kd", tex);
+    mat.commit();
+    materials[i] = mat;
+  }
+
+  // Set scale
+  materials[1].setParam("map_kd.scale", vec2f(.5f));
+  materials[1].commit();
+
+  // Set rotation
+  materials[2].setParam("map_kd.rotation", 45.f);
+  materials[2].commit();
+
+  // Set translation
+  materials[3].setParam("map_kd.translation", vec2f(.5f));
+  materials[3].commit();
+
+  // Create geometric model
+  cpp::GeometricModel model(quads);
+  model.setParam("material", cpp::CopiedData(materials));
+  AddModel(model);
+
+  cpp::Light ambient("ambient");
+  ambient.setParam("intensity", 0.5f);
+  AddLight(ambient);
+}
+
 RendererMaterialList::RendererMaterialList()
 {
   rendererType = GetParam();
@@ -182,7 +272,7 @@ void RendererMaterialList::SetUp()
 
   constexpr int dimSize = 3;
 
-  ospcommon::index_sequence_2D numSpheres(dimSize);
+  rkcommon::index_sequence_2D numSpheres(dimSize);
 
   std::vector<vec3f> spheres;
   std::vector<uint32_t> index;
@@ -211,29 +301,29 @@ void RendererMaterialList::SetUp()
     index.push_back(static_cast<uint32_t>(numSpheres.flatten(i)));
   }
 
-  sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
+  sphereGeometry.setParam("sphere.position", cpp::CopiedData(spheres));
   sphereGeometry.setParam("radius", 0.4f);
   sphereGeometry.commit();
 
   cpp::GeometricModel model(sphereGeometry);
-  model.setParam("material", cpp::Data(index));
+  model.setParam("material", cpp::CopiedData(index));
 
   AddModel(model);
 
   // Setup renderer material list //
 
-  renderer.setParam("material", cpp::Data(materials));
+  renderer.setParam("material", cpp::CopiedData(materials));
 
   // Create the world to get bounds for camera setup //
 
   if (!instances.empty())
-    world.setParam("instance", cpp::Data(instances));
+    world.setParam("instance", cpp::CopiedData(instances));
 
   instances.clear();
 
   world.commit();
 
-  auto worldBounds = world.getBounds();
+  auto worldBounds = world.getBounds<box3f>();
 
   ArcballCamera arcballCamera(worldBounds, imgSize);
 
@@ -278,5 +368,13 @@ INSTANTIATE_TEST_SUITE_P(Appearance,
     ::testing::Values(std::make_tuple(OSP_TEXTURE_FILTER_BILINEAR, true),
         std::make_tuple(OSP_TEXTURE_FILTER_NEAREST, true),
         std::make_tuple(OSP_TEXTURE_FILTER_NEAREST, false)));
+
+TEST_P(Texture2DTransform, simple)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Appearance, Texture2DTransform, ::testing::Values("scivis"));
 
 } // namespace OSPRayTestScenes

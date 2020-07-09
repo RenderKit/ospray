@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ospray_disable_compiler_warnings()
@@ -12,7 +12,7 @@ add_library(ospray_imgui SHARED
 target_link_libraries(ospray_imgui
 PUBLIC
   ${OPENGL_LIBRARIES}
-  ospcommon::ospcommon
+  rkcommon::rkcommon
 )
 
 ospray_install_library(ospray_imgui apps)

@@ -5,8 +5,7 @@
 
 #pragma once
 
-// Log levels which can be set on a driver via "logLevel" parameter or
-// "OSPRAY_LOG_LEVEL" environment variable
+// Log levels which can be set on a driver via "logLevel" parameter
 typedef enum
 #if __cplusplus >= 201103L
     : uint32_t
@@ -19,7 +18,6 @@ typedef enum
   OSP_LOG_NONE = 5
 } OSPLogLevel;
 
-// enum representing different device properties
 typedef enum
 #if __cplusplus >= 201103L
     : uint32_t
@@ -255,7 +253,7 @@ typedef enum
   OSP_UNKNOWN_CELL_TYPE = 255
 } OSPUnstructuredCellType;
 
-// OSPRay PerspectiveCamera stereo image modes
+// OSPRay camera stereo image modes
 typedef enum
 #if __cplusplus >= 201103L
     : uint8_t
@@ -265,10 +263,10 @@ typedef enum
   OSP_STEREO_LEFT,
   OSP_STEREO_RIGHT,
   OSP_STEREO_SIDE_BY_SIDE,
+  OSP_STEREO_TOP_BOTTOM,
   OSP_STEREO_UNKNOWN = 255
 } OSPStereoMode;
 
-// OSPRay Curves geometry types
 typedef enum
 #if __cplusplus >= 201103L
     : uint8_t
@@ -280,7 +278,6 @@ typedef enum
   OSP_UNKNOWN_CURVE_TYPE = 255
 } OSPCurveType;
 
-// OSPRay Curves geometry bases
 typedef enum
 #if __cplusplus >= 201103L
     : uint8_t
@@ -294,18 +291,6 @@ typedef enum
   OSP_UNKNOWN_CURVE_BASIS = 255
 } OSPCurveBasis;
 
-// AMR Volume rendering methods
-typedef enum
-#if __cplusplus >= 201103L
-    : uint8_t
-#endif
-{
-  OSP_AMR_CURRENT,
-  OSP_AMR_FINEST,
-  OSP_AMR_OCTANT
-} OSPAMRMethod;
-
-// Subdivision modes
 typedef enum
 #if __cplusplus >= 201103L
     : uint8_t
@@ -317,3 +302,37 @@ typedef enum
   OSP_SUBDIVISION_PIN_BOUNDARY,
   OSP_SUBDIVISION_PIN_ALL
 } OSPSubdivisionMode;
+
+// AMR Volume rendering methods
+typedef enum
+#if __cplusplus >= 201103L
+    : uint8_t
+#endif
+{
+  OSP_AMR_CURRENT,
+  OSP_AMR_FINEST,
+  OSP_AMR_OCTANT
+} OSPAMRMethod;
+
+// Filter modes that can be set on 'VDB' type OSPVolume, compatible with VKL
+typedef enum
+#if __cplusplus >= 201103L
+    : uint32_t
+#endif
+{
+  OSP_VOLUME_FILTER_NEAREST = 0, // treating voxel cell as constant
+  OSP_VOLUME_FILTER_TRILINEAR = 100 // default trilinear interpolation
+} OSPVolumeFilter;
+
+// OSPRay pixel filter types
+typedef enum
+#if __cplusplus >= 201103L
+    : uint8_t
+#endif
+{
+  OSP_PIXELFILTER_POINT,
+  OSP_PIXELFILTER_BOX,
+  OSP_PIXELFILTER_GAUSS,
+  OSP_PIXELFILTER_MITCHELL,
+  OSP_PIXELFILTER_BLACKMAN_HARRIS
+} OSPPixelFilterTypes;

@@ -1,14 +1,14 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial how to use OSPRay in an application.
  *
  * On Linux build it in the build_directory with
  *   g++ ../apps/ospTutorial/ospTutorial.cpp -I ../ospray/include \
- *       -I ../../ospcommon -L . -lospray -Wl,-rpath,. -o ospTutorial
+ *       -I ../../rkcommon -L . -lospray -Wl,-rpath,. -o ospTutorial
  * On Windows build it in the build_directory\$Configuration with
  *   cl ..\..\apps\ospTutorial\ospTutorial.cpp /EHsc -I ..\..\ospray\include ^
- *      -I ..\.. -I ..\..\..\ospcommon ospray.lib
+ *      -I ..\.. -I ..\..\..\rkcommon ospray.lib
  */
 
 #include <errno.h>
@@ -25,7 +25,7 @@
 
 #include "ospray/ospray_cpp.h"
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 // helper function to write the rendered image as PPM file
 void writePPM(const char *fileName, const vec2i &size, const uint32_t *pixel)
@@ -94,9 +94,9 @@ int main(int argc, const char **argv)
 
     // create and setup model and mesh
     ospray::cpp::Geometry mesh("mesh");
-    mesh.setParam("vertex.position", ospray::cpp::Data(vertex));
-    mesh.setParam("vertex.color", ospray::cpp::Data(color));
-    mesh.setParam("index", ospray::cpp::Data(index));
+    mesh.setParam("vertex.position", ospray::cpp::CopiedData(vertex));
+    mesh.setParam("vertex.color", ospray::cpp::CopiedData(color));
+    mesh.setParam("index", ospray::cpp::CopiedData(index));
     mesh.commit();
 
     // put the mesh into a model
@@ -105,7 +105,7 @@ int main(int argc, const char **argv)
 
     // put the model into a group (collection of models)
     ospray::cpp::Group group;
-    group.setParam("geometry", ospray::cpp::Data(model));
+    group.setParam("geometry", ospray::cpp::CopiedData(model));
     group.commit();
 
     // put the group into an instance (give the group a world transform)
@@ -114,13 +114,13 @@ int main(int argc, const char **argv)
 
     // put the instance in the world
     ospray::cpp::World world;
-    world.setParam("instance", ospray::cpp::Data(instance));
+    world.setParam("instance", ospray::cpp::CopiedData(instance));
 
     // create and setup light for Ambient Occlusion
     ospray::cpp::Light light("ambient");
     light.commit();
 
-    world.setParam("light", ospray::cpp::Data(light));
+    world.setParam("light", ospray::cpp::CopiedData(light));
     world.commit();
 
     // create renderer, choose Scientific Visualization renderer
@@ -133,7 +133,7 @@ int main(int argc, const char **argv)
 
     // create and setup framebuffer
     ospray::cpp::FrameBuffer framebuffer(
-        imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+        imgSize.x, imgSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
     framebuffer.clear();
 
     // render one frame
@@ -154,7 +154,7 @@ int main(int argc, const char **argv)
     framebuffer.unmap(fb);
 
     ospray::cpp::PickResult res =
-        framebuffer.pick(renderer, camera, world, vec2f(0.5f));
+        framebuffer.pick(renderer, camera, world, 0.5f, 0.5f);
 
     if (res.hasHit) {
       std::cout << "Picked geometry [inst: " << res.instance.handle()

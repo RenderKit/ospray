@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -7,8 +7,8 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // ispc exports
-#include "Volume_ispc.h"
-#include "VolumetricModel_ispc.h"
+#include "volume/Volume_ispc.h"
+#include "volume/VolumetricModel_ispc.h"
 
 namespace ospray {
 

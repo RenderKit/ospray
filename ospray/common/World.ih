@@ -221,6 +221,12 @@ inline void traceGeometryRayIntervals(const World *uniform world,
 
 inline void traceRay(const World *uniform world, varying Ray &ray)
 {
+  // Fast path if no clipping geometry
+  cif (!world->embreeSceneHandleClippers) {
+    traceGeometryRay(world, ray);
+    return;
+  }
+
   // Trace ray in clipping geometries scene, fill array with ray intervals
   varying RayIntervals rayIntervals;
   traceClippingRay(world, ray, rayIntervals);
@@ -265,6 +271,11 @@ inline bool areIntervalsOccluded(const World *uniform world,
 
 inline bool isOccluded(const World *uniform world, varying Ray &ray)
 {
+  // Fast path if no clipping geometry
+  cif (!world->embreeSceneHandleClippers) {
+    return isOccludedNoClipping(world, ray);
+  }
+
   // Allocate array for ray intervals
   varying RayIntervals rayIntervals;
   rayIntervals.count = 0;
@@ -289,7 +300,6 @@ inline void postIntersect(const World *uniform world,
     const varying Ray &ray,
     uniform int64 flags)
 {
-  dg.primID = ray.primID;
   dg.st = make_vec2f(ray.u, ray.v);
 
   dg.material = NULL;

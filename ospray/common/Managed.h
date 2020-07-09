@@ -1,12 +1,11 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-// ospcommon
-#include "ospcommon/utility/Any.h"
-#include "ospcommon/utility/Optional.h"
-#include "ospcommon/utility/ParameterizedObject.h"
+#include "rkcommon/utility/Any.h"
+#include "rkcommon/utility/Optional.h"
+#include "rkcommon/utility/ParameterizedObject.h"
 // ospray
 #include "./OSPCommon.h"
 // stl
@@ -124,7 +123,7 @@ inline Data *ManagedObject::getParam<Data *>(
 
 // Specializations for ISPCDevice /////////////////////////////////////////////
 
-namespace ospcommon {
+namespace rkcommon {
 namespace utility {
 
 template <>
@@ -145,19 +144,5 @@ inline void ParameterizedObject::Param::set(
   data = object;
 }
 
-template <>
-inline void ParameterizedObject::setParam<bool>(
-    const std::string &name, const bool &v)
-{
-  setParam<int>(name, v);
-}
-
-template <>
-inline bool ParameterizedObject::getParam<bool>(
-    const std::string &name, bool valIfNotFound)
-{
-  return getParam<int>(name, valIfNotFound);
-}
-
 } // namespace utility
-} // namespace ospcommon
+} // namespace rkcommon

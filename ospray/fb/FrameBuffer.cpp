@@ -1,8 +1,8 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FrameBuffer.h"
-#include "FrameBuffer_ispc.h"
+#include "fb/FrameBuffer_ispc.h"
 
 namespace ospray {
 

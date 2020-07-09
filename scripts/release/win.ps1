@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 $ROOT_DIR = pwd
@@ -32,8 +32,7 @@ md build_release
 cd build_release
 
 # Setup environment variables for dependencies
-$env:OSPCOMMON_TBB_ROOT = $DEP_DIR
-$env:ospcommon_DIR = $DEP_DIR
+$env:rkcommon_DIR = $DEP_DIR
 $env:embree_DIR = $DEP_DIR
 $env:glfw3_DIR = $DEP_DIR
 $env:openvkl_DIR = $DEP_DIR
@@ -45,6 +44,7 @@ cmake -L `
   -D CMAKE_PREFIX_PATH="$DEP_DIR\lib\cmake" `
   -D OSPRAY_BUILD_ISA=ALL `
   -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc.exe `
+  -D TBB_ROOT=$DEP_DIR `
   -D OSPRAY_ZIP_MODE=OFF `
   -D OSPRAY_MODULE_DENOISER=ON `
   -D OSPRAY_INSTALL_DEPENDENCIES=ON `

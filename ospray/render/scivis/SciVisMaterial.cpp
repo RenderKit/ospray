@@ -3,7 +3,7 @@
 
 #include "SciVisMaterial.h"
 // ispc
-#include "SciVisMaterial_ispc.h"
+#include "render/scivis/SciVisMaterial_ispc.h"
 
 namespace ospray {
 
@@ -14,11 +14,11 @@ SciVisMaterial::SciVisMaterial()
 
 void SciVisMaterial::commit()
 {
-  Kd = getParam<vec3f>("kd", vec3f(.8f));
-  d = getParam<float>("d", 1.f);
-  map_Kd = (Texture2D *)getParamObject("map_kd");
+  MaterialParam1f d = getMaterialParam1f("d", 1.f);
+  MaterialParam3f Kd = getMaterialParam3f("kd", vec3f(.8f));
+
   ispc::SciVisMaterial_set(
-      getIE(), (const ispc::vec3f &)Kd, d, map_Kd ? map_Kd->getIE() : nullptr);
+      getIE(), d.factor, d.tex, (const ispc::vec3f &)Kd.factor, Kd.tex);
 }
 
 } // namespace ospray

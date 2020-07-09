@@ -3,10 +3,9 @@
 
 // ospray
 #include "Device.h"
-// ospcommon
-#include "ospcommon/os/library.h"
-#include "ospcommon/tasking/tasking_system_init.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/os/library.h"
+#include "rkcommon/tasking/tasking_system_init.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 #include <map>
 
@@ -20,13 +19,13 @@ static FactoryMap<Device> g_devicesMap;
 template <typename OSTREAM_T>
 static inline void installStatusMsgFunc(Device &device, OSTREAM_T &stream)
 {
-  device.msg_fcn = [&](const char *msg) { stream << msg; };
+  device.msg_fcn = [&](void *, const char *msg) { stream << msg; };
 }
 
 template <typename OSTREAM_T>
 static inline void installErrorMsgFunc(Device &device, OSTREAM_T &stream)
 {
-  device.error_fcn = [&](OSPError e, const char *msg) {
+  device.error_fcn = [&](void *, OSPError e, const char *msg) {
     stream << "OSPRAY ERROR [" << e << "]: " << msg << std::endl;
   };
 }
@@ -60,7 +59,7 @@ void Device::registerType(const char *type, FactoryFcn<Device> f)
 void Device::commit()
 {
   auto OSPRAY_DEBUG = utility::getEnvVar<int>("OSPRAY_DEBUG");
-  debugMode = OSPRAY_DEBUG.value_or(getParam<bool>("debug", 0));
+  debugMode = OSPRAY_DEBUG.value_or(getParam<bool>("debug", false));
 
   auto OSPRAY_WARN = utility::getEnvVar<int>("OSPRAY_WARN_AS_ERROR");
   warningsAreErrors =
@@ -101,7 +100,7 @@ void Device::commit()
   else if (dst == "cerr")
     installStatusMsgFunc(*this, std::cerr);
   else if (dst == "none")
-    msg_fcn = [](const char *) {};
+    msg_fcn = [](void *, const char *) {};
 
   auto OSPRAY_ERROR_OUTPUT =
       utility::getEnvVar<std::string>("OSPRAY_ERROR_OUTPUT");
@@ -113,7 +112,7 @@ void Device::commit()
   else if (dst == "cerr")
     installErrorMsgFunc(*this, std::cerr);
   else if (dst == "none")
-    error_fcn = [](OSPError, const char *) {};
+    error_fcn = [](void *, OSPError, const char *) {};
 
   if (debugMode) {
     logLevel = OSP_LOG_DEBUG;
@@ -122,13 +121,11 @@ void Device::commit()
     installErrorMsgFunc(*this, std::cerr);
   }
 
-  threadAffinity = AUTO_DETECT;
+  threadAffinity = getParam<int>("setAffinity", AUTO_DETECT);
 
   auto OSPRAY_SET_AFFINITY = utility::getEnvVar<int>("OSPRAY_SET_AFFINITY");
   if (OSPRAY_SET_AFFINITY)
     threadAffinity = OSPRAY_SET_AFFINITY.value();
-
-  threadAffinity = getParam<bool>("setAffinity", threadAffinity);
 
   tasking::initTaskingSystem(numThreads);
 

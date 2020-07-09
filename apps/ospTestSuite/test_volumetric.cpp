@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_volumetric.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
 namespace OSPRayTestScenes {
 
@@ -12,83 +13,122 @@ namespace OSPRayTestScenes {
 // returns created ospvolume of torus
 static cpp::Volume CreateTorus(const int size)
 {
-  std::vector<float> volumetricData(size * size * size, 0);
+  std::vector<float> volumetricData(size * size * size);
 
   const float r = 30;
   const float R = 80;
   const int size_2 = size / 2;
+  const vec3i dims = vec3i(size);
+  rkcommon::index_sequence_3D idx(dims);
+  for (vec3i i : idx) {
+    const float X = i.x - size_2;
+    const float Y = i.y - size_2;
+    const float Z = i.z - size_2;
 
-  for (int x = 0; x < size; ++x) {
-    for (int y = 0; y < size; ++y) {
-      for (int z = 0; z < size; ++z) {
-        const float X = x - size_2;
-        const float Y = y - size_2;
-        const float Z = z - size_2;
-
-        const float d = (R - std::sqrt(X * X + Y * Y));
-        volumetricData[size * size * x + size * y + z] = r * r - d * d - Z * Z;
-      }
-    }
+    const float d = (R - std::sqrt(Z * Z + Y * Y));
+    volumetricData[idx.flatten(i)] = r * r - d * d - X * X;
   }
 
   cpp::Volume torus("structuredRegular");
-  torus.setParam("data", cpp::Data(vec3ul(size), volumetricData.data()));
-  torus.setParam("gridOrigin", vec3f(-0.5f, -0.5f, -0.5f));
-  torus.setParam("gridSpacing", vec3f(1.f / size, 1.f / size, 1.f / size));
+  torus.setParam("data", cpp::CopiedData(volumetricData.data(), vec3ul(size)));
+  torus.setParam("gridOrigin", vec3f(-0.5f));
+  torus.setParam("gridSpacing", vec3f(1.f / size));
+  torus.commit();
   return torus;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-TextureVolume::TextureVolume()
+TextureVolumeTransform::TextureVolumeTransform()
 {
   rendererType = GetParam();
 }
 
-void TextureVolume::SetUp()
+void TextureVolumeTransform::SetUp()
 {
   Base::SetUp();
 
-  camera.setParam("position", vec3f(-0.7f, -1.4f, 0.f));
-  camera.setParam("direction", vec3f(0.5f, 1.f, 0.f));
-  camera.setParam("up", vec3f(0.f, 0.f, -1.f));
+  camera.setParam("position", vec3f(.66f, .66f, -2.5f));
+  camera.setParam("direction", vec3f(0.f, 0.f, 1.f));
+  camera.setParam("up", vec3f(0.f, 1.f, 0.f));
 
-  cpp::Volume torus = CreateTorus(256);
-  torus.commit();
-
-  cpp::VolumetricModel volumetricModel(torus);
-
+  // Create transfer function
   cpp::TransferFunction transferFun("piecewiseLinear");
-  transferFun.setParam("valueRange", vec2f(-10000.f, 10000.f));
+  {
+    std::vector<vec3f> colors = {vec3f(1.f, 0.f, 0.f),
+        vec3f(0.f, 1.f, 0.f),
+        vec3f(0.f, 1.f, 1.f),
+        vec3f(1.f, 1.f, 0.f),
+        vec3f(1.f, 1.f, 1.f),
+        vec3f(1.f, 0.f, 1.f)};
+    std::vector<float> opacities = {1.f, 1.f};
 
-  std::vector<vec3f> colors = {
-      vec3f(1.0f, 0.0f, 0.0f), vec3f(0.0f, 1.0f, 0.0f)};
+    transferFun.setParam("valueRange", vec2f(-10000.f, 100.f));
+    transferFun.setParam("color", cpp::CopiedData(colors));
+    transferFun.setParam("opacity", cpp::CopiedData(opacities));
+    transferFun.commit();
+  }
 
-  std::vector<float> opacities = {1.0f, 1.0f};
-
-  transferFun.setParam("color", cpp::Data(colors));
-  transferFun.setParam("opacity", cpp::Data(opacities));
-  transferFun.commit();
-
+  // Create volumetric model
+  cpp::VolumetricModel volumetricModel(CreateTorus(256));
   volumetricModel.setParam("transferFunction", transferFun);
   volumetricModel.commit();
 
+  // Create volume texture
   cpp::Texture tex("volume");
   tex.setParam("volume", volumetricModel);
   tex.commit();
 
-  cpp::Material sphereMaterial(rendererType, "obj");
-  sphereMaterial.setParam("map_kd", tex);
-  sphereMaterial.commit();
-
+  // Create a single sphere geometry
   cpp::Geometry sphere("sphere");
-  sphere.setParam("sphere.position", cpp::Data(vec3f(0.f)));
-  sphere.setParam("radius", 0.51f);
-  sphere.commit();
+  {
+    sphere.setParam("sphere.position", cpp::CopiedData(vec3f(0.f)));
+    sphere.setParam("radius", 0.51f);
+    sphere.commit();
+  }
 
-  cpp::GeometricModel model(sphere);
-  model.setParam("material", sphereMaterial);
-  AddModel(model);
+  // Prepare material array
+  constexpr uint32_t cols = 2;
+  constexpr uint32_t rows = 2;
+  std::array<cpp::Material, cols * rows> materials;
+  {
+    // Create materials
+    for (uint32_t i = 0; i < cols * rows; i++) {
+      cpp::Material mat(rendererType, "obj");
+      mat.setParam("map_kd", tex);
+      mat.commit();
+      materials[i] = mat;
+    }
+
+    // Set scale
+    materials[1].setParam("map_kd.transform", affine3f::scale(vec3f(1.2f)));
+    materials[1].commit();
+
+    // Set rotation
+    materials[2].setParam(
+        "map_kd.transform", affine3f::rotate(vec3f(0.5, 0.2, 1), 1.f));
+    materials[2].commit();
+  }
+
+  // Prepare instances
+  rkcommon::index_sequence_2D idx(vec2i(cols, rows));
+  for (auto i : idx) {
+    // Create geometric model
+    cpp::GeometricModel model(sphere);
+    model.setParam("material", materials[idx.flatten(i)]);
+    model.commit();
+
+    // Create group
+    cpp::Group group;
+    group.setParam("geometry", cpp::CopiedData(model));
+    group.commit();
+
+    // Create instance
+    cpp::Instance instance(group);
+    instance.setParam("xfm", affine3f::translate(1.25f * vec3f(i.x, i.y, 0.f)));
+    instance.commit();
+    AddInstance(instance);
+  }
 
   cpp::Light ambient("ambient");
   ambient.setParam("intensity", 0.5f);
@@ -111,8 +151,6 @@ void DepthCompositeVolume::SetUp()
   camera.setParam("up", vec3f(0.f, 1.f, 0.f));
 
   cpp::Volume torus = CreateTorus(256);
-  torus.commit();
-
   cpp::VolumetricModel volumetricModel(torus);
 
   cpp::TransferFunction transferFun("piecewiseLinear");
@@ -123,8 +161,8 @@ void DepthCompositeVolume::SetUp()
 
   std::vector<float> opacities = {0.05f, 1.0f};
 
-  transferFun.setParam("color", cpp::Data(colors));
-  transferFun.setParam("opacity", cpp::Data(opacities));
+  transferFun.setParam("color", cpp::CopiedData(colors));
+  transferFun.setParam("opacity", cpp::CopiedData(opacities));
   transferFun.commit();
 
   volumetricModel.setParam("transferFunction", transferFun);
@@ -150,7 +188,7 @@ void DepthCompositeVolume::SetUp()
 
   depthTex.setParam("format", OSP_TEXTURE_R32F);
   depthTex.setParam("filter", OSP_TEXTURE_FILTER_NEAREST);
-  depthTex.setParam("data", cpp::Data(imgSize, texData.data()));
+  depthTex.setParam("data", cpp::CopiedData(texData.data(), imgSize));
   depthTex.commit();
 
   renderer.setParam("map_maxDepth", depthTex);
@@ -167,15 +205,18 @@ INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("gravity_spheres_volume",
                            "perlin_noise_volumes",
-                           "unstructured_volume"),
+                           "unstructured_volume",
+                           "particle_volume",
+                           "vdb_volume"),
         ::testing::Values("scivis", "pathtracer")));
 
-TEST_P(TextureVolume, simple)
+TEST_P(TextureVolumeTransform, simple)
 {
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_SUITE_P(Renderers, TextureVolume, ::testing::Values("scivis"));
+INSTANTIATE_TEST_SUITE_P(
+    Renderers, TextureVolumeTransform, ::testing::Values("scivis"));
 
 TEST_P(DepthCompositeVolume, simple)
 {
