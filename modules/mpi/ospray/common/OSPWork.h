@@ -5,6 +5,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <queue>
 
 #include <ospray/ospray.h>
 #include "MPICommon.h"
@@ -13,6 +14,7 @@
 #include "rkcommon/networking/DataStreaming.h"
 #include "rkcommon/networking/Fabric.h"
 #include "rkcommon/utility/ArrayView.h"
+#include "rkcommon/utility/FixedArray.h"
 
 #include "camera/Camera.h"
 #include "common/Instance.h"
@@ -44,6 +46,7 @@ enum TAG
   NEW_IMAGE_OPERATION,
   NEW_MATERIAL,
   NEW_LIGHT,
+  EARLY_DATA,
   NEW_SHARED_DATA,
   NEW_DATA,
   COPY_DATA,
@@ -93,11 +96,15 @@ struct OSPState
   std::unordered_map<int64_t, FrameBufferInfo> framebuffers;
 
   std::unordered_map<int64_t,
-      std::unique_ptr<rkcommon::utility::OwnedArray<uint8_t>>>
+      std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>>>
       data;
 
-  template <typename T>
-  T getObject(int64_t handle)
+  // Data which is received early, before the command buffer referencing it 
+  std::queue<std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>>>
+    earlyData;
+
+      template <typename T>
+      T getObject(int64_t handle)
   {
     return reinterpret_cast<T>(objects[handle]);
   }

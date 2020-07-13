@@ -501,7 +501,7 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
     stride.z = numItems.x * numItems.y * sizeOf(format);
   }
 
-  size_t nbytes = numItems.x * stride.x;
+  uint64_t nbytes = numItems.x * stride.x;
   if (numItems.y > 1) {
     nbytes = numItems.y * stride.y;
   }
@@ -526,20 +526,26 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
   // we have a release hazard on that object. If that handle is released we
   // need to flush the messages out.
 
-  auto dataView =
-      std::make_shared<utility::ArrayView<uint8_t>>(
-          const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
-          nbytes);
+  auto dataView = std::make_shared<utility::ArrayView<uint8_t>>(
+      const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
+      nbytes);
 
   this->sharedData[handle.i64] = dataView;
 
-  // Note: a release hazard exists if this is not empty, however in the future
-  // we'd need to track if any shared buffers had been queud to send because
-  // I want to start sending these before the command buffer referencing them.
-  // Then I guess as I process the buffer I can see if I had received a data
-  // buffer and take them in order they were received
-  pendingDataViews.push_back(dataView);
-  //fabric->sendBcast(dataView);
+  // TODO: inline small data into the command buffer
+  // For large data we start sending it early as an early data command
+  sharedDataViewHazard = true;
+
+  std::cout << "Sending early data of size " << nbytes << "\n";
+  networking::BufferWriter earlyDataCmd;
+  earlyDataCmd << work::EARLY_DATA << nbytes;
+
+  networking::BufferWriter header;
+  header << earlyDataCmd.buffer->size();
+
+  fabric->sendBcast(header.buffer);
+  fabric->sendBcast(earlyDataCmd.buffer);
+  fabric->sendBcast(dataView);
 
   return (OSPData)(int64)handle;
 }
@@ -770,8 +776,9 @@ void MPIOffloadDevice::release(OSPObject _object)
 
   // Make sure any object setup/data copy/etc. related to this object are
   // completed
-  if (pendingDataViews.size() > 0) {
-    std::cout << "ospRelease: data reference hazard exists, submitting all work\n";
+  if (sharedDataViewHazard) {
+    std::cout
+        << "ospRelease: data reference hazard exists, submitting all work\n";
     submitWork();
     fabric->flushBcastSends();
   }
@@ -1021,6 +1028,7 @@ void MPIOffloadDevice::sendWork(
   if (commandBufferCursor + work->size() >= commandBuffer->size()) {
     submitWork();
   }
+  ++bufferedCommands;
   std::memcpy(commandBuffer->begin() + commandBufferCursor,
       work->begin(),
       work->size());
@@ -1034,15 +1042,15 @@ void MPIOffloadDevice::submitWork()
 
   fabric->sendBcast(header.buffer);
 
+  std::cout << "Submitting buffer with " << bufferedCommands << " commands\n"
+            << std::flush;
+
   // Make view of the valid set of commands in the buffer and submit them
   auto view = std::make_shared<utility::FixedArrayView<uint8_t>>(
       commandBuffer, 0, commandBufferCursor);
   fabric->sendBcast(view);
 
-  for (const auto &v : pendingDataViews) {
-    fabric->sendBcast(v);
-  }
-  pendingDataViews.clear();
+  bufferedCommands = 0;
 
   // Write new commands to a new buffer while the previous buffer is sent
   // out asynchronously

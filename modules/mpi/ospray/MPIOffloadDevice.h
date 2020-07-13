@@ -157,12 +157,8 @@ struct MPIOffloadDevice : public api::Device
   std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>> commandBuffer
     = std::make_shared<rkcommon::utility::FixedArray<uint8_t>>(512*1024*1024);
   uint64_t commandBufferCursor = 0;
-
-  // We can't send the large data items for the command buffer until it's
-  // been submitted to the workers, otherwise the items get out of order
-  // TODO: we need a way to send it first somehow? 
-  std::vector<std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>>>
-    pendingDataViews;
+  size_t bufferedCommands = 0;
+  bool sharedDataViewHazard = false;
 
   bool initialized{false};
 

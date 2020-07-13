@@ -157,6 +157,22 @@ void newLight(
   state.objects[handle] = ospNewLight(type.c_str());
 }
 
+void earlyData(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric)
+{
+  using namespace utility;
+  uint64_t nbytes = 0;
+  cmdBuf >> nbytes;
+
+  auto view = std::make_shared<FixedArray<uint8_t>>(nbytes);
+  fabric.recvBcast(*view);
+  std::cout << "Received early data of size " << view->size() << "\n"
+            << std::flush;
+
+  state.earlyData.push(view);
+}
+
 void newSharedData(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &fabric)
@@ -190,9 +206,22 @@ void newSharedData(OSPState &state,
 
   // TODO: We need a flag telling us if this data is inline in the command
   // buffer, or is being sent as a separate bcast
-  auto view = rkcommon::make_unique<OwnedArray<uint8_t>>();
-  view->resize(nbytes, 0);
-  fabric.recvBcast(*view);
+  // Check if early data is not empty if the data is not inline'd, in which case
+  // our data is the next one in there
+  std::shared_ptr<FixedArray<uint8_t>> view = nullptr;
+  if (!state.earlyData.empty()) {
+    view = state.earlyData.front();
+    state.earlyData.pop();
+    // Sanity check for debugging
+    if (view->size() != nbytes) {
+      std::cout << "Early data of size " << view->size()
+                << " does not match expected size " << nbytes << "!\n"
+                << std::flush;
+    }
+  } else {
+    view = std::make_shared<FixedArray<uint8_t>>(nbytes);
+    fabric.recvBcast(*view);
+  }
 
   // If the data type is managed we need to convert the handles
   // back into pointers
@@ -220,7 +249,7 @@ void newSharedData(OSPState &state,
   // buffer shared with OSPRay
   ospRetain(state.objects[handle]);
 
-  state.data[handle] = std::move(view);
+  state.data[handle] = view;
 }
 
 void newData(OSPState &state,
@@ -796,6 +825,9 @@ void dispatchWork(TAG t,
   case NEW_LIGHT:
     newLight(state, cmdBuf, fabric);
     break;
+  case EARLY_DATA:
+    earlyData(state, cmdBuf, fabric);
+    break;
   case NEW_SHARED_DATA:
     newSharedData(state, cmdBuf, fabric);
     break;
@@ -906,6 +938,8 @@ const char *tagName(work::TAG t)
     return "NEW_MATERIAL";
   case NEW_LIGHT:
     return "NEW_LIGHT";
+  case EARLY_DATA:
+    return "EARLY_DATA";
   case NEW_SHARED_DATA:
     return "NEW_SHARED_DATA";
   case NEW_DATA:
