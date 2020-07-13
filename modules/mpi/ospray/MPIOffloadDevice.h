@@ -4,13 +4,13 @@
 #pragma once
 
 #include <unordered_set>
-#include "rkcommon/utility/FixedArray.h"
 #include "api/Device.h"
 #include "common/MPICommon.h"
 #include "common/Managed.h"
 #include "common/OSPWork.h"
 #include "common/Profiling.h"
 #include "common/SocketBcastFabric.h"
+#include "rkcommon/utility/FixedArray.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
 
@@ -135,6 +135,9 @@ struct MPIOffloadDevice : public api::Device
   void sendWork(
       const std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> &work);
 
+  void sendDataWork(rkcommon::networking::BufferWriter &writer,
+      const std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> &data);
+
   void submitWork();
 
   int rootWorkerRank() const;
@@ -154,8 +157,12 @@ struct MPIOffloadDevice : public api::Device
   std::unordered_set<int64_t> futures;
 
   // TODO: read buf size from environment
-  std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>> commandBuffer
-    = std::make_shared<rkcommon::utility::FixedArray<uint8_t>>(512*1024*1024);
+  std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>> commandBuffer =
+      std::make_shared<rkcommon::utility::FixedArray<uint8_t>>(
+          512 * 1024 * 1024);
+  // TODO: read max inline size from environment
+  const uint64_t maxInlineDataSize = 4 * 1024 * 1024;
+
   uint64_t commandBufferCursor = 0;
   size_t bufferedCommands = 0;
   bool sharedDataViewHazard = false;

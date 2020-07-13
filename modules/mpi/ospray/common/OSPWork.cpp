@@ -173,6 +173,49 @@ void earlyData(OSPState &state,
   state.earlyData.push(view);
 }
 
+std::shared_ptr<utility::FixedArray<uint8_t>> retrieveData(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric,
+    uint64_t nbytes,
+    std::shared_ptr<utility::FixedArray<uint8_t>> outputView)
+{
+  using namespace utility;
+  uint32_t dataInline = 0;
+  cmdBuf >> dataInline;
+  if (dataInline) {
+    // If the data is inline we copy it out of the command buffer into
+    // a fixed array, since the command buffer will be destroyed after
+    // processing it
+    if (!outputView) {
+      outputView = std::make_shared<FixedArray<uint8_t>>(nbytes);
+    }
+    cmdBuf.read(outputView->begin(), outputView->size());
+  } else if (!state.earlyData.empty()) {
+    // If we have early data, the next one is ours
+    auto view = state.earlyData.front();
+    state.earlyData.pop();
+    // Sanity check for debugging
+    if (view->size() != nbytes) {
+      std::cout << "Early data of size " << view->size()
+                << " does not match expected size " << nbytes << "!\n"
+                << std::flush;
+      throw std::runtime_error("Early data size mismatch!");
+    }
+    if (outputView) {
+      std::memcpy(outputView->begin(), view->begin(), view->size());
+    } else {
+      outputView = view;
+    }
+  } else {
+    // Data isn't inline'd and wasn't received early, we have to receive it now
+    if (!outputView) {
+      outputView = std::make_shared<FixedArray<uint8_t>>(nbytes);
+    }
+    fabric.recvBcast(*outputView);
+  }
+  return outputView;
+}
+
 void newSharedData(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &fabric)
@@ -196,7 +239,7 @@ void newSharedData(OSPState &state,
     stride.z = numItems.x * numItems.y * sizeOf(format);
   }
 
-  size_t nbytes = numItems.x * stride.x;
+  uint64_t nbytes = numItems.x * stride.x;
   if (numItems.y > 1) {
     nbytes = numItems.y * stride.y;
   }
@@ -204,24 +247,7 @@ void newSharedData(OSPState &state,
     nbytes = numItems.z * stride.z;
   }
 
-  // TODO: We need a flag telling us if this data is inline in the command
-  // buffer, or is being sent as a separate bcast
-  // Check if early data is not empty if the data is not inline'd, in which case
-  // our data is the next one in there
-  std::shared_ptr<FixedArray<uint8_t>> view = nullptr;
-  if (!state.earlyData.empty()) {
-    view = state.earlyData.front();
-    state.earlyData.pop();
-    // Sanity check for debugging
-    if (view->size() != nbytes) {
-      std::cout << "Early data of size " << view->size()
-                << " does not match expected size " << nbytes << "!\n"
-                << std::flush;
-    }
-  } else {
-    view = std::make_shared<FixedArray<uint8_t>>(nbytes);
-    fabric.recvBcast(*view);
-  }
+  auto view = retrieveData(state, cmdBuf, fabric, nbytes, nullptr);
 
   // If the data type is managed we need to convert the handles
   // back into pointers
@@ -318,8 +344,8 @@ void commit(OSPState &state,
   // If it's a data being committed, we need to recieve the updated data
   auto d = state.data.find(handle);
   if (d != state.data.end()) {
-    auto &view = *d->second;
-    fabric.recvBcast(view);
+    auto view = d->second;
+    retrieveData(state, cmdBuf, fabric, view->size(), view);
 
     Data *d = state.getObject<Data *>(handle);
     if (mpicommon::isManagedObject(d->type)) {

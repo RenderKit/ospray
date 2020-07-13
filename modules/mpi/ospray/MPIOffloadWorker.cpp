@@ -84,8 +84,9 @@ void runWorker(bool useMPIFabric)
   ProfilingPoint workerStart;
 #endif
   while (1) {
+    using namespace std::chrono;
+    auto start = steady_clock::now();
     fabric->recvBcast(cmdView);
-    //std::cout << "Expecting work buffer of size " << commandSize << "\n" << std::flush;
 
     recvBuffer->resize(commandSize, 0);
     fabric->recvBcast(*recvBuffer);
@@ -121,7 +122,9 @@ void runWorker(bool useMPIFabric)
           << "#osp.mpi.worker: completed work " << workTag << ": "
           << work::tagName(workTag);
     }
-    std::cout << "Buffer had " << numCommands << " commands\n";
+    auto end = steady_clock::now();
+    std::cout << "Buffer had " << numCommands << " commands, processed in "
+              << duration_cast<milliseconds>(end - start).count() << "ms\n";
   }
 }
 } // namespace mpi

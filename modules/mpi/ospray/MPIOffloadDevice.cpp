@@ -488,7 +488,6 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
   networking::BufferWriter writer;
   writer << work::NEW_SHARED_DATA << handle.i64 << format << numItems
          << byteStride;
-  sendWork(writer.buffer);
 
   vec3l stride = byteStride;
   if (stride.x == 0) {
@@ -531,21 +530,7 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
       nbytes);
 
   this->sharedData[handle.i64] = dataView;
-
-  // TODO: inline small data into the command buffer
-  // For large data we start sending it early as an early data command
-  sharedDataViewHazard = true;
-
-  std::cout << "Sending early data of size " << nbytes << "\n";
-  networking::BufferWriter earlyDataCmd;
-  earlyDataCmd << work::EARLY_DATA << nbytes;
-
-  networking::BufferWriter header;
-  header << earlyDataCmd.buffer->size();
-
-  fabric->sendBcast(header.buffer);
-  fabric->sendBcast(earlyDataCmd.buffer);
-  fabric->sendBcast(dataView);
+  sendDataWork(writer, dataView);
 
   return (OSPData)(int64)handle;
 }
@@ -753,12 +738,11 @@ void MPIOffloadDevice::commit(OSPObject _object)
 
   networking::BufferWriter writer;
   writer << work::COMMIT << handle.i64;
-  sendWork(writer.buffer);
-
-  // If it's a shared data we need to send the updated data to the workers
   auto d = sharedData.find(handle.i64);
-  if (d != sharedData.end()) {
-    fabric->sendBcast(d->second);
+  if (d == sharedData.end()) {
+    sendWork(writer.buffer);
+  } else {
+    sendDataWork(writer, d->second);
   }
 }
 
@@ -781,6 +765,7 @@ void MPIOffloadDevice::release(OSPObject _object)
         << "ospRelease: data reference hazard exists, submitting all work\n";
     submitWork();
     fabric->flushBcastSends();
+    sharedDataViewHazard = false;
   }
 }
 
@@ -1018,13 +1003,6 @@ OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
 void MPIOffloadDevice::sendWork(
     const std::shared_ptr<utility::AbstractArray<uint8_t>> &work)
 {
-#if 0  
-  std::cout << "Master send work "
-            << work::tagName(*(reinterpret_cast<work::TAG *>(work->begin())))
-            << "\n"
-            << std::flush;
-#endif
-
   if (commandBufferCursor + work->size() >= commandBuffer->size()) {
     submitWork();
   }
@@ -1033,6 +1011,35 @@ void MPIOffloadDevice::sendWork(
       work->begin(),
       work->size());
   commandBufferCursor += work->size();
+}
+
+void MPIOffloadDevice::sendDataWork(rkcommon::networking::BufferWriter &writer,
+    const std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> &data)
+{
+  if (data->size() < maxInlineDataSize) {
+    // Small data gets inline'd into the command buffer
+    writer << (uint32_t)1;
+    const size_t commandSize = writer.buffer->size();
+    writer.buffer->resize(commandSize + data->size(), 0);
+    std::memcpy(
+        writer.buffer->begin() + commandSize, data->begin(), data->size());
+  } else {
+    // For large data we start sending it early as an early data command
+    writer << (uint32_t)0;
+
+    sharedDataViewHazard = true;
+
+    networking::BufferWriter earlyDataCmd;
+    earlyDataCmd << work::EARLY_DATA << data->size();
+
+    networking::BufferWriter header;
+    header << earlyDataCmd.buffer->size();
+
+    fabric->sendBcast(header.buffer);
+    fabric->sendBcast(earlyDataCmd.buffer);
+    fabric->sendBcast(data);
+  }
+  sendWork(writer.buffer);
 }
 
 void MPIOffloadDevice::submitWork()
@@ -1048,7 +1055,13 @@ void MPIOffloadDevice::submitWork()
   // Make view of the valid set of commands in the buffer and submit them
   auto view = std::make_shared<utility::FixedArrayView<uint8_t>>(
       commandBuffer, 0, commandBufferCursor);
+  using namespace std::chrono;
+  auto start = steady_clock::now();
   fabric->sendBcast(view);
+  fabric->flushBcastSends();
+  auto end = steady_clock::now();
+  std::cout << "Flush work took "
+            << duration_cast<milliseconds>(end - start).count() << "ms\n";
 
   bufferedCommands = 0;
 
