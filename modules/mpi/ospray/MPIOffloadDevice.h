@@ -4,6 +4,7 @@
 #pragma once
 
 #include <unordered_set>
+#include "rkcommon/utility/FixedArray.h"
 #include "api/Device.h"
 #include "common/MPICommon.h"
 #include "common/Managed.h"
@@ -132,7 +133,9 @@ struct MPIOffloadDevice : public api::Device
       const OSPDataType tag);
 
   void sendWork(
-      std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> work);
+      const std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> &work);
+
+  void submitWork();
 
   int rootWorkerRank() const;
 
@@ -149,6 +152,17 @@ struct MPIOffloadDevice : public api::Device
       sharedData;
 
   std::unordered_set<int64_t> futures;
+
+  // TODO: read buf size from environment
+  std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>> commandBuffer
+    = std::make_shared<rkcommon::utility::FixedArray<uint8_t>>(512*1024*1024);
+  uint64_t commandBufferCursor = 0;
+
+  // We can't send the large data items for the command buffer until it's
+  // been submitted to the workers, otherwise the items get out of order
+  // TODO: we need a way to send it first somehow? 
+  std::vector<std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>>>
+    pendingDataViews;
 
   bool initialized{false};
 

@@ -29,6 +29,7 @@
 #include "rkcommon/networking/DataStreaming.h"
 #include "rkcommon/networking/Socket.h"
 #include "rkcommon/utility/ArrayView.h"
+#include "rkcommon/utility/FixedArrayView.h"
 #include "rkcommon/utility/OwnedArray.h"
 #include "rkcommon/utility/getEnvVar.h"
 #include "volume/Volume.h"
@@ -215,6 +216,7 @@ MPIOffloadDevice::~MPIOffloadDevice()
     networking::BufferWriter writer;
     writer << work::FINALIZE;
     sendWork(writer.buffer);
+    submitWork();
 
     // TODO: if not mpi, don't finalize on head node
     MPI_Finalize();
@@ -463,6 +465,7 @@ box3f MPIOffloadDevice::getBounds(OSPObject _obj)
   networking::BufferWriter writer;
   writer << work::GET_BOUNDS << obj;
   sendWork(writer.buffer);
+  submitWork();
 
   box3f result;
   utility::ArrayView<uint8_t> view(
@@ -506,14 +509,37 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
     nbytes = numItems.z * stride.z;
   }
 
-  std::shared_ptr<utility::AbstractArray<uint8_t>> dataView =
+  // TODO For message batching: check what the size of the incoming data is,
+  // if it plus our current buffered size is > 512MB (or some env-set threshold)
+  // we can send out the buffer asynchronously. We do want renderframe to
+  // be send the current buffer as well to get rendering started as quickly
+  // as possible.
+  //
+  // So we have a split between what a "flushing" operation is and a buffer
+  // sending operation. Since the buffered up set of commands/data we can
+  // send asynchronously and open a new command buffer to fill up without
+  // having to block the application.
+  //
+  // The Worker's new data command will need a flag to tell if the data is
+  // embedded or coming separately. For data being set > threshold we'll send
+  // it as we do now, through a separate send and then have to mark that
+  // we have a release hazard on that object. If that handle is released we
+  // need to flush the messages out.
+
+  auto dataView =
       std::make_shared<utility::ArrayView<uint8_t>>(
           const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
           nbytes);
 
   this->sharedData[handle.i64] = dataView;
 
-  fabric->sendBcast(dataView);
+  // Note: a release hazard exists if this is not empty, however in the future
+  // we'd need to track if any shared buffers had been queud to send because
+  // I want to start sending these before the command buffer referencing them.
+  // Then I guess as I process the buffer I can see if I had received a data
+  // buffer and take them in order they were received
+  pendingDataViews.push_back(dataView);
+  //fabric->sendBcast(dataView);
 
   return (OSPData)(int64)handle;
 }
@@ -744,7 +770,11 @@ void MPIOffloadDevice::release(OSPObject _object)
 
   // Make sure any object setup/data copy/etc. related to this object are
   // completed
-  fabric->flushBcastSends();
+  if (pendingDataViews.size() > 0) {
+    std::cout << "ospRelease: data reference hazard exists, submitting all work\n";
+    submitWork();
+    fabric->flushBcastSends();
+  }
 }
 
 void MPIOffloadDevice::retain(OSPObject _obj)
@@ -794,6 +824,7 @@ const void *MPIOffloadDevice::frameBufferMap(
   networking::BufferWriter writer;
   writer << work::MAP_FRAMEBUFFER << handle.i64 << (uint32_t)channel;
   sendWork(writer.buffer);
+  submitWork();
 
   uint64_t nbytes = 0;
   auto bytesView =
@@ -833,6 +864,7 @@ float MPIOffloadDevice::getVariance(OSPFrameBuffer _fb)
   networking::BufferWriter writer;
   writer << work::GET_VARIANCE << handle.i64;
   sendWork(writer.buffer);
+  submitWork();
 
   float variance = 0;
   auto view = ArrayView<uint8_t>(
@@ -879,6 +911,8 @@ OSPFuture MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
   writer << work::RENDER_FRAME << fbHandle << rendererHandle << cameraHandle
          << worldHandle << futureHandle;
   sendWork(writer.buffer);
+  submitWork();
+
   futures.insert(futureHandle.i64);
   return (OSPFuture)(int64)futureHandle;
 }
@@ -889,6 +923,8 @@ int MPIOffloadDevice::isReady(OSPFuture _task, OSPSyncEvent event)
   networking::BufferWriter writer;
   writer << work::FUTURE_IS_READY << handle.i64 << (uint32_t)event;
   sendWork(writer.buffer);
+  submitWork();
+
   int result = 0;
   utility::ArrayView<uint8_t> view(
       reinterpret_cast<uint8_t *>(&result), sizeof(result));
@@ -902,6 +938,8 @@ void MPIOffloadDevice::wait(OSPFuture _task, OSPSyncEvent event)
   networking::BufferWriter writer;
   writer << work::FUTURE_WAIT << handle.i64 << (uint32_t)event;
   sendWork(writer.buffer);
+  submitWork();
+
   int result = 0;
   utility::ArrayView<uint8_t> view(
       reinterpret_cast<uint8_t *>(&result), sizeof(result));
@@ -922,6 +960,8 @@ float MPIOffloadDevice::getProgress(OSPFuture _task)
   networking::BufferWriter writer;
   writer << work::FUTURE_GET_PROGRESS << handle.i64;
   sendWork(writer.buffer);
+  submitWork();
+
   float result = 0;
   utility::ArrayView<uint8_t> view(
       reinterpret_cast<uint8_t *>(&result), sizeof(result));
@@ -935,6 +975,8 @@ float MPIOffloadDevice::getTaskDuration(OSPFuture _task)
   networking::BufferWriter writer;
   writer << work::FUTURE_GET_TASK_DURATION << handle.i64;
   sendWork(writer.buffer);
+  submitWork();
+
   float result = 0;
   utility::ArrayView<uint8_t> view(
       reinterpret_cast<uint8_t *>(&result), sizeof(result));
@@ -957,6 +999,7 @@ OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
   writer << work::PICK << fbHandle << rendererHandle << cameraHandle
          << worldHandle << screenPos;
   sendWork(writer.buffer);
+  submitWork();
 
   OSPPickResult result = {0};
   utility::ArrayView<uint8_t> view(
@@ -966,13 +1009,46 @@ OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
 }
 
 void MPIOffloadDevice::sendWork(
-    std::shared_ptr<utility::AbstractArray<uint8_t>> work)
+    const std::shared_ptr<utility::AbstractArray<uint8_t>> &work)
+{
+#if 0  
+  std::cout << "Master send work "
+            << work::tagName(*(reinterpret_cast<work::TAG *>(work->begin())))
+            << "\n"
+            << std::flush;
+#endif
+
+  if (commandBufferCursor + work->size() >= commandBuffer->size()) {
+    submitWork();
+  }
+  std::memcpy(commandBuffer->begin() + commandBufferCursor,
+      work->begin(),
+      work->size());
+  commandBufferCursor += work->size();
+}
+
+void MPIOffloadDevice::submitWork()
 {
   networking::BufferWriter header;
-  header << (uint64_t)work->size();
+  header << commandBufferCursor;
 
   fabric->sendBcast(header.buffer);
-  fabric->sendBcast(work);
+
+  // Make view of the valid set of commands in the buffer and submit them
+  auto view = std::make_shared<utility::FixedArrayView<uint8_t>>(
+      commandBuffer, 0, commandBufferCursor);
+  fabric->sendBcast(view);
+
+  for (const auto &v : pendingDataViews) {
+    fabric->sendBcast(v);
+  }
+  pendingDataViews.clear();
+
+  // Write new commands to a new buffer while the previous buffer is sent
+  // out asynchronously
+  commandBuffer = std::make_shared<rkcommon::utility::FixedArray<uint8_t>>(
+      512 * 1024 * 1024);
+  commandBufferCursor = 0;
 }
 
 int MPIOffloadDevice::rootWorkerRank() const

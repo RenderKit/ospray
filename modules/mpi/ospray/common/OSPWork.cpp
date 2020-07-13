@@ -188,6 +188,8 @@ void newSharedData(OSPState &state,
     nbytes = numItems.z * stride.z;
   }
 
+  // TODO: We need a flag telling us if this data is inline in the command
+  // buffer, or is being sent as a separate bcast
   auto view = rkcommon::make_unique<OwnedArray<uint8_t>>();
   view->resize(nbytes, 0);
   fabric.recvBcast(*view);

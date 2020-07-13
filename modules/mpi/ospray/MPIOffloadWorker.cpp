@@ -85,36 +85,43 @@ void runWorker(bool useMPIFabric)
 #endif
   while (1) {
     fabric->recvBcast(cmdView);
+    //std::cout << "Expecting work buffer of size " << commandSize << "\n" << std::flush;
 
     recvBuffer->resize(commandSize, 0);
     fabric->recvBcast(*recvBuffer);
 
+    size_t numCommands = 0;
+    // Read each command in the buffer and execute it
     networking::BufferReader reader(recvBuffer);
-    work::TAG workTag = work::NONE;
-    reader >> workTag;
+    while (!reader.end()) {
+      ++numCommands;
+      work::TAG workTag = work::NONE;
+      reader >> workTag;
 
-    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-        << "#osp.mpi.worker: processing work " << workTag << ": "
-        << work::tagName(workTag);
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#osp.mpi.worker: processing work " << workTag << ": "
+          << work::tagName(workTag);
 
-    // We're exiting so sync out our debug log info
+      // We're exiting so sync out our debug log info
 #ifdef ENABLE_PROFILING
-    if (workTag == work::FINALIZE) {
-      ProfilingPoint workerEnd;
-      fout << "Worker exiting, /proc/self/status:\n"
-           << getProcStatus() << "\n======\n"
-           << "Avg. CPU % during run: "
-           << cpuUtilization(workerStart, workerEnd) << "%\n"
-           << std::flush;
-      fout.close();
-    }
+      if (workTag == work::FINALIZE) {
+        ProfilingPoint workerEnd;
+        fout << "Worker exiting, /proc/self/status:\n"
+             << getProcStatus() << "\n======\n"
+             << "Avg. CPU % during run: "
+             << cpuUtilization(workerStart, workerEnd) << "%\n"
+             << std::flush;
+        fout.close();
+      }
 #endif
 
-    dispatchWork(workTag, ospState, reader, *fabric);
+      dispatchWork(workTag, ospState, reader, *fabric);
 
-    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-        << "#osp.mpi.worker: completed work " << workTag << ": "
-        << work::tagName(workTag);
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#osp.mpi.worker: completed work " << workTag << ": "
+          << work::tagName(workTag);
+    }
+    std::cout << "Buffer had " << numCommands << " commands\n";
   }
 }
 } // namespace mpi
