@@ -22,8 +22,13 @@ option(OSPRAY_APPS_TUTORIAL_GLM "Build ospTutorialGLM" OFF)
 
 if (OSPRAY_APPS_TUTORIAL_GLM)
   find_package(glm REQUIRED)
+  if(TARGET glm::glm)
+    set(GLM glm::glm)
+  else()
+    set(GLM glm)
+  endif()
   add_executable(ospTutorialGLM ${OSPRAY_RESOURCE} ospTutorialGLM.cpp)
-  target_link_libraries(ospTutorialGLM PRIVATE ospray glm::glm)
+  target_link_libraries(ospTutorialGLM PRIVATE ospray ${GLM})
   install(TARGETS ospTutorialGLM
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     COMPONENT apps
