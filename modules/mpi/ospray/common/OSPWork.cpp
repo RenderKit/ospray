@@ -433,12 +433,12 @@ void mapFramebuffer(OSPState &state,
     networking::Fabric &fabric)
 {
   // Map the channel and send the image back over the fabric
+  int64_t handle = 0;
+  uint32_t channel = 0;
+  cmdBuf >> handle >> channel;
+
   if (mpicommon::worker.rank == 0) {
     using namespace utility;
-
-    int64_t handle = 0;
-    uint32_t channel = 0;
-    cmdBuf >> handle >> channel;
 
     const FrameBufferInfo &fbInfo = state.framebuffers[handle];
     uint64_t nbytes = fbInfo.pixelSize(channel) * fbInfo.getNumPixels();
@@ -466,11 +466,11 @@ void getVariance(OSPState &state,
     networking::Fabric &fabric)
 {
   // Map the channel and send the image back over the fabric
+  int64_t handle = 0;
+  cmdBuf >> handle;
+
   if (mpicommon::worker.rank == 0) {
     using namespace utility;
-
-    int64_t handle = 0;
-    cmdBuf >> handle;
 
     float variance = ospGetVariance(state.getObject<OSPFrameBuffer>(handle));
 

@@ -52,7 +52,7 @@ void runWorker(bool useMPIFabric)
 
   char hostname[HOST_NAME_MAX] = {0};
   gethostname(hostname, HOST_NAME_MAX);
-  postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+  postStatusMsg(OSP_LOG_DEBUG)
       << "#w: running MPI worker process " << workerRank() << "/"
       << workerSize() << " on pid " << getpid() << "@" << hostname;
 
@@ -99,9 +99,8 @@ void runWorker(bool useMPIFabric)
       work::TAG workTag = work::NONE;
       reader >> workTag;
 
-      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "#osp.mpi.worker: processing work " << workTag << ": "
-          << work::tagName(workTag);
+      postStatusMsg(OSP_LOG_DEBUG) << "#osp.mpi.worker: processing work "
+                                   << workTag << ": " << work::tagName(workTag);
 
       // We're exiting so sync out our debug log info
 #ifdef ENABLE_PROFILING
@@ -118,13 +117,15 @@ void runWorker(bool useMPIFabric)
 
       dispatchWork(workTag, ospState, reader, *fabric);
 
-      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "#osp.mpi.worker: completed work " << workTag << ": "
-          << work::tagName(workTag);
+      postStatusMsg(OSP_LOG_DEBUG) << "#osp.mpi.worker: completed work "
+                                   << workTag << ": " << work::tagName(workTag);
     }
     auto end = steady_clock::now();
-    std::cout << "Buffer had " << numCommands << " commands, processed in "
-              << duration_cast<milliseconds>(end - start).count() << "ms\n";
+    // Debugging/profiling processing development
+    postStatusMsg(OSP_LOG_DEBUG)
+        << "#osp.mpi.worker: command buffer had " << numCommands
+        << " commands, processed in "
+        << duration_cast<milliseconds>(end - start).count() << "ms";
   }
 }
 } // namespace mpi

@@ -133,7 +133,8 @@ struct MPIOffloadDevice : public api::Device
       const OSPDataType tag);
 
   void sendWork(
-      const std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> &work);
+      const std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> &work,
+      bool submitImmediately);
 
   void sendDataWork(rkcommon::networking::BufferWriter &writer,
       const std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> &data);
@@ -156,12 +157,11 @@ struct MPIOffloadDevice : public api::Device
 
   std::unordered_set<int64_t> futures;
 
-  // TODO: read buf size from environment
+  uint32_t maxBufferedCommands = 4096;
+  uint32_t commandBufferSize = 512 * 1024 * 1024;
+  uint32_t maxInlineDataSize = 4 * 1024 * 1024;
   std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>> commandBuffer =
-      std::make_shared<rkcommon::utility::FixedArray<uint8_t>>(
-          512 * 1024 * 1024);
-  // TODO: read max inline size from environment
-  const uint64_t maxInlineDataSize = 4 * 1024 * 1024;
+      nullptr;
 
   uint64_t commandBufferCursor = 0;
   size_t bufferedCommands = 0;
@@ -183,7 +183,7 @@ void MPIOffloadDevice::setParam(ObjectHandle obj,
   const T &val = *(const T *)_val;
   networking::BufferWriter writer;
   writer << work::SET_PARAM << obj.i64 << std::string(param) << type << val;
-  sendWork(writer.buffer);
+  sendWork(writer.buffer, false);
 }
 
 } // namespace mpi
