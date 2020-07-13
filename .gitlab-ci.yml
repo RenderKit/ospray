@@ -208,6 +208,7 @@ build-osx-clang:
   tags:
     - osx
     - clang
+  <<: *build_artifacts
 
 build-windows-msvc14:
   <<: *build_job_shell
@@ -291,6 +292,14 @@ test-linux-debug-all:
   needs:
     - build-linux-debug-all
   only: [schedules]
+
+test-osx-clang:
+  <<: *test_job
+  tags:
+    - osx
+  script:
+    - DYLD_FALLBACK_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
+  needs: [build-osx-clang]
 
 test-tutorials:
   stage: test

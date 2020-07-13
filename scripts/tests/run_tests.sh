@@ -11,7 +11,7 @@ if  [ -z "$1" ]; then
 fi
 
 # Expand relative paths.
-SOURCEDIR=$(realpath "$1")
+SOURCEDIR=$([[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}")
 
 mkdir build_regression_tests
 cd build_regression_tests
