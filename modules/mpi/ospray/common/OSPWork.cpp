@@ -190,8 +190,8 @@ std::shared_ptr<utility::FixedArray<uint8_t>> retrieveData(OSPState &state,
       outputView = std::make_shared<FixedArray<uint8_t>>(nbytes);
     }
     cmdBuf.read(outputView->begin(), outputView->size());
-  } else if (!state.earlyData.empty()) {
-    // If we have early data, the next one is ours
+  } else {
+    // All large data is sent eagerly, before the command buffer
     auto view = state.earlyData.front();
     state.earlyData.pop();
     // Sanity check for debugging
@@ -206,12 +206,6 @@ std::shared_ptr<utility::FixedArray<uint8_t>> retrieveData(OSPState &state,
     } else {
       outputView = view;
     }
-  } else {
-    // Data isn't inline'd and wasn't received early, we have to receive it now
-    if (!outputView) {
-      outputView = std::make_shared<FixedArray<uint8_t>>(nbytes);
-    }
-    fabric.recvBcast(*outputView);
   }
   return outputView;
 }
