@@ -295,8 +295,6 @@ void MPIOffloadDevice::initializeDevice()
   if (OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE) {
     maxInlineDataSize = OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE.value() * 1e6;
   }
-  PRINT(commandBufferSize);
-  PRINT(maxInlineDataSize);
 
   if (commandBufferSize >= 2e9) {
     static WarnOnce warn(
@@ -1073,7 +1071,7 @@ void MPIOffloadDevice::sendDataWork(rkcommon::networking::BufferWriter &writer,
     sharedDataViewHazard = true;
 
     networking::BufferWriter earlyDataCmd;
-    earlyDataCmd << work::EARLY_DATA << data->size();
+    earlyDataCmd << work::DATA_TRANSFER << data->size();
 
     networking::BufferWriter header;
     header << earlyDataCmd.buffer->size();

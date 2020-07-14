@@ -157,7 +157,7 @@ void newLight(
   state.objects[handle] = ospNewLight(type.c_str());
 }
 
-void earlyData(OSPState &state,
+void dataTransfer(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &fabric)
 {
@@ -167,10 +167,8 @@ void earlyData(OSPState &state,
 
   auto view = std::make_shared<FixedArray<uint8_t>>(nbytes);
   fabric.recvBcast(*view);
-  std::cout << "Received early data of size " << view->size() << "\n"
-            << std::flush;
 
-  state.earlyData.push(view);
+  state.dataTransfers.push(view);
 }
 
 std::shared_ptr<utility::FixedArray<uint8_t>> retrieveData(OSPState &state,
@@ -192,14 +190,12 @@ std::shared_ptr<utility::FixedArray<uint8_t>> retrieveData(OSPState &state,
     cmdBuf.read(outputView->begin(), outputView->size());
   } else {
     // All large data is sent eagerly, before the command buffer
-    auto view = state.earlyData.front();
-    state.earlyData.pop();
-    // Sanity check for debugging
+    auto view = state.dataTransfers.front();
+    state.dataTransfers.pop();
+    // Sanity check, but this should not happen since transfers are
+    // still in order
     if (view->size() != nbytes) {
-      std::cout << "Early data of size " << view->size()
-                << " does not match expected size " << nbytes << "!\n"
-                << std::flush;
-      throw std::runtime_error("Early data size mismatch!");
+      throw std::runtime_error("Data transfer vs. command size mismatch!");
     }
     if (outputView) {
       std::memcpy(outputView->begin(), view->begin(), view->size());
@@ -845,8 +841,8 @@ void dispatchWork(TAG t,
   case NEW_LIGHT:
     newLight(state, cmdBuf, fabric);
     break;
-  case EARLY_DATA:
-    earlyData(state, cmdBuf, fabric);
+  case DATA_TRANSFER:
+    dataTransfer(state, cmdBuf, fabric);
     break;
   case NEW_SHARED_DATA:
     newSharedData(state, cmdBuf, fabric);
@@ -958,8 +954,8 @@ const char *tagName(work::TAG t)
     return "NEW_MATERIAL";
   case NEW_LIGHT:
     return "NEW_LIGHT";
-  case EARLY_DATA:
-    return "EARLY_DATA";
+  case DATA_TRANSFER:
+    return "DATA_TRANSFER";
   case NEW_SHARED_DATA:
     return "NEW_SHARED_DATA";
   case NEW_DATA:

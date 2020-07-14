@@ -3,9 +3,9 @@
 
 #pragma once
 
+#include <queue>
 #include <unordered_map>
 #include <vector>
-#include <queue>
 
 #include <ospray/ospray.h>
 #include "MPICommon.h"
@@ -46,7 +46,7 @@ enum TAG
   NEW_IMAGE_OPERATION,
   NEW_MATERIAL,
   NEW_LIGHT,
-  EARLY_DATA,
+  DATA_TRANSFER,
   NEW_SHARED_DATA,
   NEW_DATA,
   COPY_DATA,
@@ -99,12 +99,13 @@ struct OSPState
       std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>>>
       data;
 
-  // Data which is received early, before the command buffer referencing it 
+  // Large data which is transfered separately from the command buffer,
+  // prior to sending the command buffer
   std::queue<std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>>>
-    earlyData;
+      dataTransfers;
 
-      template <typename T>
-      T getObject(int64_t handle)
+  template <typename T>
+  T getObject(int64_t handle)
   {
     return reinterpret_cast<T>(objects[handle]);
   }
