@@ -276,7 +276,7 @@ void MPIOffloadDevice::initializeDevice()
 
   // Setup the command buffer on the app rank
   // TODO: Decide on good defaults
-  maxBufferedCommands = getParam<uint32_t>("maxBufferedCommands", 4096);
+  maxBufferedCommands = getParam<uint32_t>("maxBufferedCommands", 8192);
   commandBufferSize =
       getParam<uint32_t>("commandBufferSize", 512 * 1024 * 1024);
   maxInlineDataSize = getParam<uint32_t>("maxInlineDataSize", 8 * 1024 * 1024);
