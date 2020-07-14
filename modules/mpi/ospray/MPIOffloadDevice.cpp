@@ -277,9 +277,8 @@ void MPIOffloadDevice::initializeDevice()
   // Setup the command buffer on the app rank
   // TODO: Decide on good defaults
   maxBufferedCommands = getParam<uint32_t>("maxBufferedCommands", 8192);
-  commandBufferSize =
-      getParam<uint32_t>("commandBufferSize", 512 * 1024 * 1024);
-  maxInlineDataSize = getParam<uint32_t>("maxInlineDataSize", 8 * 1024 * 1024);
+  commandBufferSize = getParam<uint32_t>("commandBufferSize", 512) * 1e6;
+  maxInlineDataSize = getParam<uint32_t>("maxInlineDataSize", 8) * 1e6;
 
   auto OSPRAY_MPI_MAX_BUFFERED_CMDS =
       utility::getEnvVar<int>("OSPRAY_MPI_MAX_BUFFERED_CMDS");
@@ -289,22 +288,24 @@ void MPIOffloadDevice::initializeDevice()
   auto OSPRAY_MPI_CMD_BUFFER_SIZE =
       utility::getEnvVar<int>("OSPRAY_MPI_CMD_BUFFER_SIZE");
   if (OSPRAY_MPI_CMD_BUFFER_SIZE) {
-    commandBufferSize = OSPRAY_MPI_CMD_BUFFER_SIZE.value();
+    commandBufferSize = OSPRAY_MPI_CMD_BUFFER_SIZE.value() * 1e6;
   }
   auto OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE =
       utility::getEnvVar<int>("OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE");
   if (OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE) {
-    maxInlineDataSize = OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE.value();
+    maxInlineDataSize = OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE.value() * 1e6;
   }
+  PRINT(commandBufferSize);
+  PRINT(maxInlineDataSize);
 
   if (commandBufferSize >= 2e9) {
     static WarnOnce warn(
         "Command buffer size must be less than 2GB, resetting to 1.8GB");
     commandBufferSize = 1.8e9;
   }
-  if (maxInlineDataSize >= commandBufferSize) {
+  if (maxInlineDataSize >= commandBufferSize / 2.f) {
     static WarnOnce warn(
-        "Max inline data size must be less than command buffer size");
+        "Max inline data size must be less than half command buffer size");
     maxInlineDataSize = std::ceil(commandBufferSize / 2.f);
   }
 
@@ -1029,6 +1030,13 @@ void MPIOffloadDevice::sendWork(
     const std::shared_ptr<utility::AbstractArray<uint8_t>> &work,
     bool submitImmediately)
 {
+  // Note: curious if this ever happens, with a reasonable command buffer size
+  // (anything >= 1MB I don't think this should be an issue since commands are
+  // quite small, and limiting the inline data size to be half the command
+  // buffer size should avoid this.
+  if (work->size() >= commandBuffer->size()) {
+    throw std::runtime_error("Work size is too large for command buffer!");
+  }
   if (commandBufferCursor + work->size() >= commandBuffer->size()) {
     submitWork();
   }

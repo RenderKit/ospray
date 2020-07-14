@@ -158,8 +158,8 @@ struct MPIOffloadDevice : public api::Device
   std::unordered_set<int64_t> futures;
 
   uint32_t maxBufferedCommands = 8192;
-  uint32_t commandBufferSize = 512 * 1024 * 1024;
-  uint32_t maxInlineDataSize = 4 * 1024 * 1024;
+  uint32_t commandBufferSize = 512e6;
+  uint32_t maxInlineDataSize = 8e6;
   std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>> commandBuffer =
       nullptr;
 
