@@ -1,6 +1,13 @@
 Version History
 ---------------
 
+### Changes in v2.3.0:
+
+-   Significant improvements have been made to loading performance in
+    the MPI Offload device. Applications which make large numbers of API
+    calls or create many smaller geometries or volumes should see
+    substantial load time improvements.
+
 ### Changes in v2.2.0:
 
 -   Improve parallelism of framebuffer compression & decompression when
