@@ -154,8 +154,6 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
    * for OSP_FB_NONE rendering, where we only track that info on the master */
   void gatherFinalErrors();
 
-  void sendCancelRenderingMessage();
-
   // Data members ///////////////////////////////////////////////////////////
 
   // The communicator used by this DFB instance for collectives, to avoid

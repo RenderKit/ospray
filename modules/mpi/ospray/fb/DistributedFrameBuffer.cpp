@@ -6,8 +6,8 @@
 #include <thread>
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "TileOperation.h"
-#include "fb/DistributedFrameBuffer_ispc.h"
 #include "common/Profiling.h"
+#include "fb/DistributedFrameBuffer_ispc.h"
 
 #include "pico_bench.h"
 #include "rkcommon/tasking/parallel_for.h"
@@ -124,6 +124,8 @@ void DFB::startNewFrame(const float errorThreshold)
       throw std::runtime_error(
           "Attempt to start frame on already started frame!");
     }
+
+    FrameBuffer::beginFrame();
 
     std::for_each(imageOps.begin(),
         imageOps.end(),
@@ -287,9 +289,6 @@ void DFB::waitUntilFinished()
   std::unique_lock<std::mutex> lock(mutex);
   frameDoneCond.wait(lock, [&] { return frameIsDone; });
 
-  int renderingCancelled = frameCancelled();
-  mpicommon::bcast(&renderingCancelled, 1, MPI_INT, masterRank(), mpiGroup.comm)
-      .wait();
   frameIsActive = false;
 
 #ifdef ENABLE_PROFILING
@@ -302,7 +301,7 @@ void DFB::waitUntilFinished()
   reportProgress(1.0f);
   setCompletedEvent(OSP_WORLD_RENDERED);
 
-  if (renderingCancelled) {
+  if (frameCancelled()) {
     return;
   }
 
@@ -462,9 +461,6 @@ void DFB::updateProgress(ProgressMessage *msg)
   globalTilesCompletedThisFrame += msg->numCompleted;
   const float progress = globalTilesCompletedThisFrame / (float)getTotalTiles();
   reportProgress(progress);
-  if (frameCancelled()) {
-    sendCancelRenderingMessage();
-  }
 }
 
 size_t DFB::numMyTiles() const
@@ -736,30 +732,6 @@ void DFB::gatherFinalErrors()
       }
     });
   }
-}
-
-void DFB::sendCancelRenderingMessage()
-{
-  // WILL: Because we don't have a threaded MPI and the master
-  // in replicated rendering will just be waiting in the bcast when
-  // we call cancel, the message would never actually be sent out this
-  // frame. It would actually be delayed and sent the following frame.
-  // Instead, the best we can do without a threaded MPI at this point
-  // is to just cancel the final gathering stage.
-  cancelFrame();
-  /*
-  std::cout << "SENDING CANCEL RENDERING MSG\n";
-  PING;
-  std::cout << std::flush;
-  auto msg = std::make_shared<mpicommon::Message>(sizeof(TileMessage));
-
-  auto out = msg->data;
-  int val = CANCEL_RENDERING;
-  memcpy(out, &val, sizeof(val));
-
-  for (int rank = 0; rank < mpicommon::numGlobalRanks(); rank++)
-    mpi::messaging::sendTo(rank, myId, msg);
-  */
 }
 
 void DFB::closeCurrentFrame()
