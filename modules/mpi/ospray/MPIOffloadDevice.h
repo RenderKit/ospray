@@ -132,11 +132,20 @@ struct MPIOffloadDevice : public api::Device
       const void *_val,
       const OSPDataType tag);
 
-  void sendWork(
-      const std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> &work,
-      bool submitImmediately);
+  /*! Send work will use the write command function to pack the command into the
+   * command buffer. The writeCmd method is called twice, once to compute the
+   * size being written and a second time to output the data to the writer.
+   */
+  template <typename Fcn>
+  void sendWork(const Fcn &writeCmd, bool submitImmediately);
 
-  void sendDataWork(rkcommon::networking::BufferWriter &writer,
+  /*! Send data work should be called by data transfer writeCmd lambdas, to
+   * insert inline data or start the data transfer for large data. If doing
+   * a large data transfer the transfer is started on the second time the
+   * lambda is called (i.e., when writing to the command buffer, not when
+   * computing the size)
+   */
+  void sendDataWork(rkcommon::networking::WriteStream &writer,
       const std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> &data);
 
   void submitWork();
@@ -160,12 +169,11 @@ struct MPIOffloadDevice : public api::Device
   uint32_t maxBufferedCommands = 8192;
   uint32_t commandBufferSize = 512e6;
   uint32_t maxInlineDataSize = 8e6;
-  std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>> commandBuffer =
-      nullptr;
 
-  uint64_t commandBufferCursor = 0;
-  size_t bufferedCommands = 0;
+  size_t nBufferedCommands = 0;
   bool sharedDataViewHazard = false;
+
+  rkcommon::networking::FixedBufferWriter commandBuffer;
 
   bool initialized{false};
 
@@ -174,16 +182,52 @@ struct MPIOffloadDevice : public api::Device
 #endif
 };
 
+template <typename Fcn>
+void MPIOffloadDevice::sendWork(const Fcn &writeCmd, bool submitImmediately)
+{
+  networking::WriteSizeCalculator sizeCalc;
+  writeCmd(sizeCalc);
+
+  // Note: curious if this ever happens, with a reasonable command buffer size
+  // (anything >= 1MB I don't think this should be an issue since commands are
+  // quite small, and limiting the inline data size to be half the command
+  // buffer size should avoid this.
+  if (sizeCalc.writtenSize >= commandBuffer.capacity()) {
+    throw std::runtime_error("Work size is too large for command buffer!");
+  }
+  if (sizeCalc.writtenSize >= commandBuffer.available()) {
+    submitWork();
+  }
+
+  const size_t dbgWriteStart = commandBuffer.cursor;
+
+  writeCmd(commandBuffer);
+
+  postStatusMsg(OSP_LOG_DEBUG)
+      << "#osp.mpi.app: buffering command: "
+      << work::tagName(*(reinterpret_cast<work::TAG *>(
+             commandBuffer.buffer->begin() + dbgWriteStart)));
+
+  ++nBufferedCommands;
+
+  if (submitImmediately || nBufferedCommands >= maxBufferedCommands) {
+    submitWork();
+  }
+}
+
 template <typename T>
 void MPIOffloadDevice::setParam(ObjectHandle obj,
-    const char *param,
+    const char *_param,
     const void *_val,
     const OSPDataType type)
 {
   const T &val = *(const T *)_val;
-  networking::BufferWriter writer;
-  writer << work::SET_PARAM << obj.i64 << std::string(param) << type << val;
-  sendWork(writer.buffer, false);
+  const std::string param = _param;
+  sendWork(
+      [&](rkcommon::networking::WriteStream &writer) {
+        writer << work::SET_PARAM << obj.i64 << param << type << val;
+      },
+      false);
 }
 
 } // namespace mpi
