@@ -571,6 +571,7 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
     nbytes = numItems.z * stride.z;
   }
 
+  // TODO: compact data if not compactly stored
   auto dataView = std::make_shared<utility::ArrayView<uint8_t>>(
       const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
       nbytes);
@@ -800,20 +801,15 @@ void MPIOffloadDevice::commit(OSPObject _object)
   const ObjectHandle handle = (const ObjectHandle &)_object;
 
   auto d = sharedData.find(handle.i64);
-  if (d == sharedData.end()) {
-    sendWork(
-        [&](networking::WriteStream &writer) {
-          writer << work::COMMIT << handle.i64;
-        },
-        false);
-  } else {
-    sendWork(
-        [&](networking::WriteStream &writer) {
-          writer << work::COMMIT << handle.i64;
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::COMMIT << handle.i64;
+        if (d != sharedData.end()) {
+        // TODO: compact data if not compactly stored
           sendDataWork(writer, d->second);
-        },
-        false);
-  }
+        }
+      },
+      false);
 }
 
 void MPIOffloadDevice::release(OSPObject _object)

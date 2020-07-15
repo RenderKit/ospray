@@ -189,7 +189,8 @@ std::shared_ptr<utility::FixedArray<uint8_t>> retrieveData(OSPState &state,
     }
     cmdBuf.read(outputView->begin(), outputView->size());
   } else {
-    // All large data is sent eagerly, before the command buffer
+    // All large data is sent before the command buffer using it, and will be
+    // in the state's data transfers list
     auto view = state.dataTransfers.front();
     state.dataTransfers.pop();
     // Sanity check, but this should not happen since transfers are

@@ -189,7 +189,7 @@ void MPIOffloadDevice::sendWork(const Fcn &writeCmd, bool submitImmediately)
   writeCmd(sizeCalc);
 
   // Note: curious if this ever happens, with a reasonable command buffer size
-  // (anything >= 1MB I don't think this should be an issue since commands are
+  // (anything >= 1MB) I don't think this should be an issue since commands are
   // quite small, and limiting the inline data size to be half the command
   // buffer size should avoid this.
   if (sizeCalc.writtenSize >= commandBuffer.capacity()) {
