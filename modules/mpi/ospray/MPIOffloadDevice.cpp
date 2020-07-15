@@ -294,9 +294,9 @@ void MPIOffloadDevice::initializeDevice()
     maxInlineDataSize = OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE.value() * 1e6;
   }
 
-  if (commandBufferSize >= 2e9) {
+  if (commandBufferSize >= 1.8e9) {
     static WarnOnce warn(
-        "Command buffer size must be less than 2GB, resetting to 1.8GB");
+        "Command buffer size must be less than 1.8GB, resetting to 1.8GB");
     commandBufferSize = 1.8e9;
   }
   if (maxInlineDataSize >= commandBufferSize / 2.f) {
