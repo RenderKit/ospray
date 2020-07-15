@@ -294,12 +294,24 @@ inline const Ref<const DataT<T, DIM>> ManagedObject::getParamDataT(
   if (promoteScalar) {
     auto item = getOptParam<T>(name);
     if (item) {
-      // wrap item into data array
+      // create data array and its reference object
       data = new Data(OSPTypeFor<T>::value, vec3ul(1));
-      auto &dataT = data->as<T, DIM>();
-      T *p = dataT.data();
+      Ref<const DataT<T, DIM>> refDataT = &data->as<T, DIM>();
+
+      // 'data' reference counter equals to 2 now,
+      // but we want it to be 1 and the 'data' to be referenced only by the
+      // returned object for proper destruction
+      data->refDec();
+
+      // place value into 'data' array
+      T *p = refDataT->data();
       *p = item.value();
-      return &dataT;
+
+      // if we are inserting 'ManagedObject' we need to increase its reference
+      // counter, too
+      if (isObjectType(data->type))
+        (*data->as<ManagedObject *, DIM>().begin())->refInc();
+      return refDataT;
     }
   }
 
