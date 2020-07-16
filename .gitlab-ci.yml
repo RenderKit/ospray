@@ -397,6 +397,7 @@ pdf:
   script:
     - cd doc
     - make pdf
+    - make checklinks
   artifacts:
     paths:
       - readme.pdf
