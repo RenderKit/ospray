@@ -30,6 +30,7 @@ static void addGeometryInstance(
   rtcSetGeometryTransform(eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
   rtcCommitGeometry(eInst);
   rtcAttachGeometry(scene, eInst);
+  rtcReleaseGeometry(eInst);
 }
 
 static void freeAndNullifyEmbreeScene(RTCScene &scene)
