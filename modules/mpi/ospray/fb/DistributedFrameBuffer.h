@@ -8,8 +8,8 @@
 #include "../common/Messaging.h"
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "fb/LocalFB.h"
-#include "rkcommon/containers/AlignedVector.h"
 #include "render/Renderer.h"
+#include "rkcommon/containers/AlignedVector.h"
 
 namespace ospray {
 struct TileDesc;

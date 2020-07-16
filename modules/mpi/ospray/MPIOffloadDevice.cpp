@@ -805,7 +805,7 @@ void MPIOffloadDevice::commit(OSPObject _object)
       [&](networking::WriteStream &writer) {
         writer << work::COMMIT << handle.i64;
         if (d != sharedData.end()) {
-        // TODO: compact data if not compactly stored
+          // TODO: compact data if not compactly stored
           sendDataWork(writer, d->second);
         }
       },
@@ -832,11 +832,14 @@ void MPIOffloadDevice::release(OSPObject _object)
   // sends here, since if the data was small enough to inline in the command
   // buffer we aren't actually sharing the pointer with the app anymore
   if (sharedDataViewHazard) {
-    postStatusMsg(OSP_LOG_DEBUG)
-        << "#osp.mpi.app: ospRelease: data reference hazard exists, "
-        << " flushing pending sends";
-    fabric->flushBcastSends();
-    sharedDataViewHazard = false;
+    auto d = sharedData.find(handle.i64);
+    if (d != sharedData.end()) {
+      postStatusMsg(OSP_LOG_DEBUG)
+          << "#osp.mpi.app: ospRelease: data reference hazard exists, "
+          << " flushing pending sends";
+      fabric->flushBcastSends();
+      sharedDataViewHazard = false;
+    }
   }
 }
 
