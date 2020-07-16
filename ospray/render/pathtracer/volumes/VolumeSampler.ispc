@@ -36,6 +36,8 @@ float delta_tracking(VolumetricModel *uniform vModel,
             *((varying range1f * uniform) & interval.valueRange));
 
     const float mu_max = vModel->densityScale * maxOpacity;
+    if (mu_max <= 0.f)
+      continue;
 
     while (true) {
       float xi = RandomSampler_getFloat(randomSampler);
