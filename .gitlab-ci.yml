@@ -434,7 +434,7 @@ release-osx-clang:
     - export CC=clang
     - export CXX=clang++
     - scripts/release/macosx.sh
-    - $SIGN_FILE_MAC -o runtime -e scripts/release/ospray.entitlements build_release/ospray-*
+    - $SIGN_FILE_MAC -o runtime -e scripts/release/ospray.entitlements build_release/ospray-*pkg
     - scripts/release/macosx_notarization.sh build_release/ospray-*.pkg
   tags:
     - clang

@@ -6,27 +6,33 @@ macro(ospray_install_namelink NAME)
   set(LIB_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
   # strip version and lib suffix
   if(APPLE)
-    set(LIBREGEX "(.+)[.]([0-9]+)([.][0-9]+[.][0-9]+)?${LIB_SUFFIX}")
+    set(LIBREGEX "(.+)[.]([0-9]+)([.][0-9]+[.][0-9]+)${LIB_SUFFIX}")
   else()
-    set(LIBREGEX "(.+)${LIB_SUFFIX}[.]([0-9]+)([.][0-9]+[.][0-9]+)?")
+    set(LIBREGEX "(.+)${LIB_SUFFIX}[.]([0-9]+)([.][0-9]+[.][0-9]+)")
   endif()
   string(REGEX REPLACE ${LIBREGEX} "\\1" BASE_LIB_NAME ${TARGET_NAME})
-
-  if (CMAKE_MATCH_COUNT)
-    set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX})
+  if (CMAKE_MATCH_COUNT GREATER 2)
+    if(APPLE)
+      set(SYMLINK ${BASE_LIB_NAME}.${CMAKE_MATCH_2}${LIB_SUFFIX})
+    else()
+      set(SYMLINK ${BASE_LIB_NAME}${LIB_SUFFIX}.${CMAKE_MATCH_2})
+    endif()
     execute_process(COMMAND "${CMAKE_COMMAND}" -E
-        create_symlink ${TARGET_NAME} ${SYMLINK})
-    install(PROGRAMS ${SYMLINK} ${ARGN} DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        COMPONENT redist)
+        create_symlink ${TARGET_NAME} ${CMAKE_CURRENT_BINARY_DIR}/${SYMLINK})
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SYMLINK} ${ARGN}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+    set(TARGET_NAME ${SYMLINK})
   endif()
    
-  if (CMAKE_MATCH_COUNT GREATER 2)
-    # also create a major version suffixed symlink
-    if(APPLE)
-      set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}.${CMAKE_MATCH_2}${LIB_SUFFIX})
-    else()
-      set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX}.${CMAKE_MATCH_2})
-    endif()
+  # also create a major version suffixed symlink
+  if(APPLE)
+    set(LIBREGEX "(.+)[.]([0-9]+)${LIB_SUFFIX}")
+  else()
+    set(LIBREGEX "(.+)${LIB_SUFFIX}[.]([0-9]+)")
+  endif()
+  string(REGEX REPLACE ${LIBREGEX} "\\1" BASE_LIB_NAME ${TARGET_NAME})
+  if (CMAKE_MATCH_COUNT)
+    set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX})
     execute_process(COMMAND "${CMAKE_COMMAND}" -E
         create_symlink ${TARGET_NAME} ${SYMLINK})
     install(PROGRAMS ${SYMLINK} ${ARGN} DESTINATION ${CMAKE_INSTALL_LIBDIR}
