@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "MicrofacetAlbedo.ih"
@@ -181,4 +181,18 @@ void precomputeMicrofacetAlbedoTables()
   MicrofacetDielectricAlbedoTable_precompute();
   MicrofacetDielectricRcpEtaAlbedoTable_precompute();
   MicrofacetSheenAlbedoTable_precompute();
+}
+
+#define RELEASE(t) if (t) { delete[] t; t = NULL; }
+void releaseMicrofacetAlbedoTables()
+{
+  RELEASE(MicrofacetAlbedoTable_dir);
+  RELEASE(MicrofacetAlbedoTable_avg);
+  RELEASE(MicrofacetDielectricAlbedoTable_dir);
+  RELEASE(MicrofacetDielectricAlbedoTable_avg);
+  RELEASE(MicrofacetDielectricRcpEtaAlbedoTable_dir);
+  RELEASE(MicrofacetDielectricRcpEtaAlbedoTable_avg);
+  RELEASE(MicrofacetDielectricReflectionAlbedoTable_dir);
+  RELEASE(MicrofacetDielectricReflectionAlbedoTable_avg);
+  RELEASE(MicrofacetSheenAlbedoTable_dir);
 }

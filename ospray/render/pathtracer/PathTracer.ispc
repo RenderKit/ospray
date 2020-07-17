@@ -261,6 +261,8 @@ export void PathTracer_destroy(void *uniform _self)
 {
   PathTracer *uniform self = (PathTracer * uniform) _self;
 
+  releaseMicrofacetAlbedoTables();
+
   delete[] self->lightsCDF;
   delete self;
 }
