@@ -360,28 +360,29 @@ void release(
   cmdBuf >> handle;
   ospRelease(state.objects[handle]);
 
-  // Pass through the framebuffers and see if any have been completely free'd
-  for (auto it = state.framebuffers.begin(); it != state.framebuffers.end();) {
-    OSPObject obj = state.objects[it->first];
-    ManagedObject *m = lookupDistributedObject<ManagedObject>(obj);
-    if (m->useCount() == 1) {
-      ospRelease(state.objects[it->first]);
-      it = state.framebuffers.erase(it);
-    } else {
-      ++it;
+  // Check if we can release a referenced framebuffer info
+  {
+    auto fnd = state.framebuffers.find(handle);
+    if (fnd != state.framebuffers.end()) {
+      OSPObject obj = state.objects[handle];
+      ManagedObject *m = lookupDistributedObject<ManagedObject>(obj);
+      if (m->useCount() == 1) {
+        ospRelease(state.objects[handle]);
+        state.framebuffers.erase(fnd);
+      }
     }
   }
 
-  // Pass through the data and see if any have been completely free'd
-  // i.e., no object depends on them anymore either.
-  for (auto it = state.data.begin(); it != state.data.end();) {
-    OSPObject obj = state.objects[it->first];
-    ManagedObject *m = reinterpret_cast<ManagedObject *>(obj);
-    if (m->useCount() == 1) {
-      ospRelease(state.objects[it->first]);
-      it = state.data.erase(it);
-    } else {
-      ++it;
+  // Check if we can release a shared data buffer
+  {
+    auto fnd = state.data.find(handle);
+    if (fnd != state.data.end()) {
+      OSPObject obj = state.objects[handle];
+      ManagedObject *m = reinterpret_cast<ManagedObject *>(obj);
+      if (m->useCount() == 1) {
+        ospRelease(state.objects[handle]);
+        state.data.erase(fnd);
+      }
     }
   }
 }
