@@ -16,12 +16,24 @@ cd build
 
 cmake --version
 
+if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then
+    export BUILD_OSPRAY_VERSION=master
+    export BUILD_OPENVKL_VERSION=master
+    export BUILD_RKCOMMON_VERSION=master
+else
+    export BUILD_OSPRAY_VERSION=devel
+    export BUILD_OPENVKL_VERSION=devel
+    export BUILD_RKCOMMON_VERSION=devel
+fi
+
 # NOTE: temporarily using older VKL version while waiting to move to new iterator API
 cmake -L \
   -DBUILD_DEPENDENCIES_ONLY=ON \
   -DBUILD_EMBREE_FROM_SOURCE=OFF \
   -DCMAKE_INSTALL_LIBDIR=lib \
-  -DBUILD_OPENVKL_VERSION=devel \
+  -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION \
+  -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION \
+  -DBUILD_RKCOMMON_VERSION=$BUILD_RKCOMMON_VERSION \
   "$@" ../scripts/superbuild
 
 cmake --build .
