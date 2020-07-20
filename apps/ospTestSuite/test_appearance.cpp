@@ -119,6 +119,7 @@ void Texture2D::SetUp()
     ospRelease(tmp);
     tex.setParam("data", data);
     tex.commit();
+    ospRelease(data);
     cpp::Material mat(rendererType, "obj");
     mat.setParam("kd", vec3f(0.8));
     mat.setParam(i & 1 ? "map_bump" : "map_kd", tex);
