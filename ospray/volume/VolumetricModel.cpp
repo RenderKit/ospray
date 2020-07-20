@@ -24,6 +24,12 @@ VolumetricModel::VolumetricModel(Volume *_volume)
   this->ispcEquivalent = ispc::VolumetricModel_create(this, volume->getIE());
 }
 
+VolumetricModel::~VolumetricModel()
+{
+  if (vklValueSelector)
+    vklRelease(vklValueSelector);
+}
+
 std::string VolumetricModel::toString() const
 {
   return "ospray::VolumetricModel";
