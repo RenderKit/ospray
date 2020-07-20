@@ -33,6 +33,12 @@ Volume::Volume(const std::string &type) : vklType(type)
 
 Volume::~Volume()
 {
+  if (vklSampler)
+    vklRelease(vklSampler);
+
+  if (vklVolume)
+    vklRelease(vklVolume);
+
   if (embreeGeometry)
     rtcReleaseGeometry(embreeGeometry);
 }
@@ -44,6 +50,9 @@ std::string Volume::toString() const
 
 void Volume::commit()
 {
+  if (vklSampler)
+    vklRelease(vklSampler);
+
   if (vklVolume)
     vklRelease(vklVolume);
 
