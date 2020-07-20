@@ -139,6 +139,20 @@ struct MPIOffloadDevice : public api::Device
   template <typename Fcn>
   void sendWork(const Fcn &writeCmd, bool submitImmediately);
 
+  /*! The data shared with the application. The workerType may not be the same
+   * as the type of the data, because managed objects are unknown on the
+   * application rank, and are represented just as uint64 handles. Thus the
+   * local data objects see them as OSP_ULONG types, while the worker type
+   * is the true managed object type
+   */
+  struct ApplicationData
+  {
+    Data *data = nullptr;
+    // We can't tell the local Data object that the contained type
+    // is a managed type, because all the head node has are object handles
+    OSPDataType workerType = OSP_UNKNOWN;
+  };
+
   /*! Send data work should be called by data transfer writeCmd lambdas, to
    * insert inline data or start the data transfer for large data. If doing
    * a large data transfer the transfer is started on the second time the
@@ -146,7 +160,7 @@ struct MPIOffloadDevice : public api::Device
    * computing the size)
    */
   void sendDataWork(rkcommon::networking::WriteStream &writer,
-      const std::shared_ptr<rkcommon::utility::AbstractArray<uint8_t>> &data);
+      const ApplicationData &appData);
 
   void submitWork();
 
@@ -161,8 +175,7 @@ struct MPIOffloadDevice : public api::Device
 
   std::unordered_map<int64_t, FrameBufferMapping> framebufferMappings;
 
-  std::unordered_map<int64_t, std::shared_ptr<utility::AbstractArray<uint8_t>>>
-      sharedData;
+  std::unordered_map<int64_t, ApplicationData> sharedData;
 
   std::unordered_set<int64_t> futures;
 

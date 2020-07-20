@@ -95,14 +95,9 @@ struct OSPState
 
   std::unordered_map<int64_t, FrameBufferInfo> framebuffers;
 
-  std::unordered_map<int64_t,
-      std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>>>
-      data;
-
   // Large data which is transfered separately from the command buffer,
   // prior to sending the command buffer
-  std::queue<std::shared_ptr<rkcommon::utility::FixedArray<uint8_t>>>
-      dataTransfers;
+  std::queue<Data *> dataTransfers;
 
   template <typename T>
   T getObject(int64_t handle)

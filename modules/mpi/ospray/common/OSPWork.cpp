@@ -162,49 +162,76 @@ void dataTransfer(OSPState &state,
     networking::Fabric &fabric)
 {
   using namespace utility;
-  uint64_t nbytes = 0;
-  cmdBuf >> nbytes;
 
-  auto view = std::make_shared<FixedArray<uint8_t>>(nbytes);
+  OSPDataType type;
+  vec3ul numItems = 0;
+  cmdBuf >> type >> numItems;
+
+  Data *data = new Data(type, numItems);
+
+  const uint64_t nbytes = data->size() * sizeOf(type);
+  auto view = std::make_shared<ArrayView<uint8_t>>(
+      reinterpret_cast<uint8_t *>(data->data()), nbytes);
   fabric.recvBcast(*view);
 
-  state.dataTransfers.push(view);
+  state.dataTransfers.push(data);
 }
 
-std::shared_ptr<utility::FixedArray<uint8_t>> retrieveData(OSPState &state,
+Data *retrieveData(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &fabric,
-    uint64_t nbytes,
-    std::shared_ptr<utility::FixedArray<uint8_t>> outputView)
+    const OSPDataType type,
+    const vec3ul numItems,
+    Data *outputData)
 {
   using namespace utility;
   uint32_t dataInline = 0;
   cmdBuf >> dataInline;
+  const uint64_t nbytes = numItems.x * numItems.y * numItems.z * sizeOf(type);
   if (dataInline) {
     // If the data is inline we copy it out of the command buffer into
     // a fixed array, since the command buffer will be destroyed after
     // processing it
-    if (!outputView) {
-      outputView = std::make_shared<FixedArray<uint8_t>>(nbytes);
+    if (!outputData) {
+      outputData = new Data(type, numItems);
     }
-    cmdBuf.read(outputView->begin(), outputView->size());
+    cmdBuf.read(outputData->data(), nbytes);
   } else {
     // All large data is sent before the command buffer using it, and will be
     // in the state's data transfers list
-    auto view = state.dataTransfers.front();
+    auto data = state.dataTransfers.front();
     state.dataTransfers.pop();
-    // Sanity check, but this should not happen since transfers are
-    // still in order
-    if (view->size() != nbytes) {
-      throw std::runtime_error("Data transfer vs. command size mismatch!");
-    }
-    if (outputView) {
-      std::memcpy(outputView->begin(), view->begin(), view->size());
+
+    if (outputData) {
+      // All data on the workers is compact, with the compaction done by the
+      // app rank before sending
+      std::memcpy(outputData->data(), data->data(), nbytes);
     } else {
-      outputView = view;
+      outputData = data;
     }
   }
-  return outputView;
+
+  // If the data type is managed we need to convert the handles back into
+  // OSPObjects and increment the refcount because we're populating the data
+  // object manually
+  if (mpicommon::isManagedObject(type)) {
+    rkcommon::index_sequence_3D indices(numItems);
+    const vec3ul stride(sizeOf(type),
+        numItems.x * sizeOf(type),
+        numItems.x * numItems.y * sizeOf(type));
+    for (auto idx : indices) {
+      const size_t i = idx.x * stride.x + idx.y * stride.y + idx.z * stride.z;
+      char *addr = outputData->data() + i;
+      int64_t *h = reinterpret_cast<int64_t *>(addr);
+      OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
+      *obj = state.objects[*h];
+
+      ManagedObject *m = lookupObject<ManagedObject>(*obj);
+      m->refInc();
+    }
+  }
+
+  return outputData;
 }
 
 void newSharedData(OSPState &state,
@@ -216,57 +243,11 @@ void newSharedData(OSPState &state,
   int64_t handle = 0;
   OSPDataType format;
   vec3ul numItems = 0;
-  vec3l byteStride;
-  cmdBuf >> handle >> format >> numItems >> byteStride;
+  cmdBuf >> handle >> format >> numItems;
 
-  vec3l stride = byteStride;
-  if (stride.x == 0) {
-    stride.x = sizeOf(format);
-  }
-  if (stride.y == 0) {
-    stride.y = numItems.x * sizeOf(format);
-  }
-  if (stride.z == 0) {
-    stride.z = numItems.x * numItems.y * sizeOf(format);
-  }
+  auto data = retrieveData(state, cmdBuf, fabric, format, numItems, nullptr);
 
-  uint64_t nbytes = numItems.x * stride.x;
-  if (numItems.y > 1) {
-    nbytes = numItems.y * stride.y;
-  }
-  if (numItems.z > 1) {
-    nbytes = numItems.z * stride.z;
-  }
-
-  auto view = retrieveData(state, cmdBuf, fabric, nbytes, nullptr);
-
-  // If the data type is managed we need to convert the handles
-  // back into pointers
-  if (mpicommon::isManagedObject(format)) {
-    rkcommon::index_sequence_3D indices(numItems);
-    for (auto idx : indices) {
-      const size_t i = idx.x * stride.x + idx.y * stride.y + idx.z * stride.z;
-      uint8_t *addr = view->data() + i;
-      int64_t *h = reinterpret_cast<int64_t *>(addr);
-      OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
-      *obj = state.objects[*h];
-    }
-  }
-
-  state.objects[handle] = ospNewSharedData(view->data(),
-      format,
-      numItems.x,
-      byteStride.x,
-      numItems.y,
-      byteStride.y,
-      numItems.z,
-      byteStride.z);
-
-  // Offload device keeps +1 ref for tracking the lifetime of the data
-  // buffer shared with OSPRay
-  ospRetain(state.objects[handle]);
-
-  state.data[handle] = view;
+  state.objects[handle] = (OSPData)data;
 }
 
 void newData(OSPState &state,
@@ -332,22 +313,11 @@ void commit(OSPState &state,
   int64_t handle = 0;
   cmdBuf >> handle;
 
-  // If it's a data being committed, we need to recieve the updated data
-  auto d = state.data.find(handle);
-  if (d != state.data.end()) {
-    auto view = d->second;
-    retrieveData(state, cmdBuf, fabric, view->size(), view);
-
-    Data *d = state.getObject<Data *>(handle);
-    if (mpicommon::isManagedObject(d->type)) {
-      rkcommon::index_sequence_3D indices(d->numItems);
-      for (auto idx : indices) {
-        char *addr = d->data(idx);
-        int64_t *h = reinterpret_cast<int64_t *>(addr);
-        OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
-        *obj = state.objects[*h];
-      }
-    }
+  // If it's a data being committed, we need to retrieve the updated data
+  ManagedObject *m = lookupObject<ManagedObject>(state.objects[handle]);
+  Data *d = dynamic_cast<Data *>(m);
+  if (d) {
+    retrieveData(state, cmdBuf, fabric, d->type, d->numItems, d);
   }
 
   ospCommit(state.objects[handle]);
@@ -359,6 +329,8 @@ void release(
   int64_t handle = 0;
   cmdBuf >> handle;
   ospRelease(state.objects[handle]);
+  // Note: we keep the handle in the state.objects list as it may be referenced
+  // by other objects in the scene as a parameter or data.
 
   // Check if we can release a referenced framebuffer info
   {
@@ -369,19 +341,6 @@ void release(
       if (m->useCount() == 1) {
         ospRelease(state.objects[handle]);
         state.framebuffers.erase(fnd);
-      }
-    }
-  }
-
-  // Check if we can release a shared data buffer
-  {
-    auto fnd = state.data.find(handle);
-    if (fnd != state.data.end()) {
-      OSPObject obj = state.objects[handle];
-      ManagedObject *m = reinterpret_cast<ManagedObject *>(obj);
-      if (m->useCount() == 1) {
-        ospRelease(state.objects[handle]);
-        state.data.erase(fnd);
       }
     }
   }

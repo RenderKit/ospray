@@ -552,37 +552,20 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
 {
   ObjectHandle handle = allocateHandle();
 
-  vec3l stride = byteStride;
-  if (stride.x == 0) {
-    stride.x = sizeOf(format);
+  ApplicationData appData;
+  appData.workerType = format;
+  if (mpicommon::isManagedObject(format)) {
+    format = OSP_ULONG;
   }
-  if (stride.y == 0) {
-    stride.y = numItems.x * sizeOf(format);
-  }
-  if (stride.z == 0) {
-    stride.z = numItems.x * numItems.y * sizeOf(format);
-  }
-
-  uint64_t nbytes = numItems.x * stride.x;
-  if (numItems.y > 1) {
-    nbytes = numItems.y * stride.y;
-  }
-  if (numItems.z > 1) {
-    nbytes = numItems.z * stride.z;
-  }
-
-  // TODO: compact data if not compactly stored
-  auto dataView = std::make_shared<utility::ArrayView<uint8_t>>(
-      const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
-      nbytes);
-
-  this->sharedData[handle.i64] = dataView;
+  appData.data = new Data(sharedData, format, numItems, byteStride);
+  this->sharedData[handle.i64] = appData;
 
   sendWork(
       [&](networking::WriteStream &writer) {
-        writer << work::NEW_SHARED_DATA << handle.i64 << format << numItems
-               << byteStride;
-        sendDataWork(writer, dataView);
+        // Data on the workers is always compact, so we don't send the stride
+        writer << work::NEW_SHARED_DATA << handle.i64 << appData.workerType
+               << numItems;
+        sendDataWork(writer, this->sharedData[handle.i64]);
       },
       false);
 
@@ -805,7 +788,6 @@ void MPIOffloadDevice::commit(OSPObject _object)
       [&](networking::WriteStream &writer) {
         writer << work::COMMIT << handle.i64;
         if (d != sharedData.end()) {
-          // TODO: compact data if not compactly stored
           sendDataWork(writer, d->second);
         }
       },
@@ -1102,30 +1084,62 @@ OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
   return result;
 }
 
-void MPIOffloadDevice::sendDataWork(networking::WriteStream &writer,
-    const std::shared_ptr<utility::AbstractArray<uint8_t>> &data)
+void MPIOffloadDevice::sendDataWork(
+    networking::WriteStream &writer, const ApplicationData &appData)
 {
-  if (data->size() < maxInlineDataSize) {
+  const Data *data = appData.data;
+  const uint64_t compactSize = data->size() * sizeOf(data->type);
+  if (compactSize < maxInlineDataSize) {
     // Small data gets inline'd into the command buffer
     writer << (uint32_t)1;
-    writer.write(data->begin(), data->size());
+    if (data->compact()) {
+      writer.write(data->data(), compactSize);
+    } else {
+      auto *sizer = dynamic_cast<networking::WriteSizeCalculator *>(&writer);
+      if (sizer) {
+        sizer->write(nullptr, compactSize);
+      } else {
+        // Reserve space and copy the compact data into the buffer
+        auto *bufWriter =
+            dynamic_cast<networking::FixedBufferWriter *>(&writer);
+        Data compact(bufWriter->reserve(compactSize),
+            data->type,
+            data->numItems,
+            vec3ul(0));
+        compact.copy(*data, vec3ul(0));
+      }
+    }
   } else {
     // For large data we start sending it early as an early data command
     writer << (uint32_t)0;
 
     // Only send the data if we're not doing the size calculation step
     if (!dynamic_cast<networking::WriteSizeCalculator *>(&writer)) {
-      sharedDataViewHazard = true;
-
       networking::BufferWriter dataTransferCmd;
-      dataTransferCmd << work::DATA_TRANSFER << data->size();
+      dataTransferCmd << work::DATA_TRANSFER << appData.workerType
+                      << data->numItems;
 
       networking::BufferWriter header;
       header << dataTransferCmd.buffer->size();
 
       fabric->sendBcast(header.buffer);
       fabric->sendBcast(dataTransferCmd.buffer);
-      fabric->sendBcast(data);
+
+      std::shared_ptr<utility::AbstractArray<uint8_t>> dataView = nullptr;
+      if (data->compact()) {
+        sharedDataViewHazard = true;
+        dataView = std::make_shared<utility::ArrayView<uint8_t>>(
+            reinterpret_cast<uint8_t *>(data->data()), compactSize);
+      } else {
+        // Allocate space to store the compact data and compact into it,
+        // we send from this compacted buffer directly
+        auto mem = std::make_shared<utility::FixedArray<uint8_t>>(compactSize);
+        Data compact(mem->begin(), data->type, data->numItems, vec3ul(0));
+        compact.copy(*data, vec3ul(0));
+
+        dataView = mem;
+      }
+      fabric->sendBcast(dataView);
     }
   }
 }
