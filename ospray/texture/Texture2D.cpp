@@ -47,6 +47,8 @@ void Texture2D::commit()
         + "' does not match type of 'data'='" + stringFor(texData->type)
         + "'!");
 
+  if (this->ispcEquivalent)
+    ispc::delete_uniform(ispcEquivalent);
   this->ispcEquivalent = ispc::Texture2D_create(
       (ispc::vec2i &)size, texData->data(), format, filter);
 }
