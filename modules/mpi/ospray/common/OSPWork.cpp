@@ -316,7 +316,7 @@ void commit(OSPState &state,
   // If it's a data being committed, we need to retrieve the updated data
   ManagedObject *m = lookupObject<ManagedObject>(state.objects[handle]);
   Data *d = dynamic_cast<Data *>(m);
-  if (d) {
+  if (d && d->isShared()) {
     retrieveData(state, cmdBuf, fabric, d->type, d->numItems, d);
   }
 
