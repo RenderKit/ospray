@@ -4,6 +4,7 @@
 #pragma once
 
 // stl
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 // ospray
