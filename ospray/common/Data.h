@@ -44,6 +44,8 @@ struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   bool compact() const; // all strides are natural
   void copy(const Data &source, const vec3ul &destinationIndex);
 
+  bool isShared() const;
+
   template <typename T, int DIM = 1>
   const DataT<T, DIM> &as() const;
 

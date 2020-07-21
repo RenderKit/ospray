@@ -139,6 +139,11 @@ void Data::copy(const Data &source, const vec3ul &destinationIndex)
   }
 }
 
+bool Data::isShared() const
+{
+  return shared;
+}
+
 std::string Data::toString() const
 {
   return "ospray::Data";
