@@ -189,6 +189,9 @@ build-centos7-mpi-devel:
 build-linux-debug:
   <<: *build_job_docker
   script:
+    - export CFLAGS=-fsanitize=address
+    - export CXXFLAGS=-fsanitize=address
+    - export LDFLAGS=-fsanitize=address
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug
   <<: *build_artifacts
 
