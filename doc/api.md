@@ -1019,7 +1019,7 @@ the following parameters:
 
   float[] vertexCrease.weight optional [data] array of vertex crease weights
 
-  int     mode                subdivision edge boundary mode, supported modes
+  uchar   mode                subdivision edge boundary mode, supported modes
                               are:
 
                               `OSP_SUBDIVISION_NO_BOUNDARY`
@@ -1096,7 +1096,7 @@ this geometry are listed in the table below.
   uint32[]           index                  [data] array of indices to the first vertex
                                             or tangent of a curve segment
 
-  int                type                   `OSPCurveType` for rendering the curve.
+  uchar              type                   `OSPCurveType` for rendering the curve.
                                             Supported types are:
 
                                             `OSP_FLAT`
@@ -1105,7 +1105,7 @@ this geometry are listed in the table below.
 
                                             `OSP_RIBBON`
 
-  int                basis                  `OSPCurveBasis` for defining the curve.
+  uchar              basis                  `OSPCurveBasis` for defining the curve.
                                              Supported bases are:
 
                                             `OSP_LINEAR`
@@ -1675,7 +1675,7 @@ General parameters of all renderers are
                                                              which can be indexed by a
                                                              [GeometricModel]'s `material` parameter
 
-  int            pixelFilter        `OSP_PIXELFILTER_GAUSS`  `OSPPixelFilterType` to select the pixel
+  uchar          pixelFilter        `OSP_PIXELFILTER_GAUSS`  `OSPPixelFilterType` to select the pixel
                                                              filter used by the renderer for
                                                              antialiasing. Possible pixel filters
                                                              are listed below.
@@ -2377,7 +2377,7 @@ supports the special parameters listed in the table below.
   bool  architectural          vertical edges are projected to be
                                parallel
 
-  int   stereoMode             `OSPStereoMode` for stereo rendering,
+  uchar stereoMode             `OSPStereoMode` for stereo rendering,
                                possible values are:
 
                                `OSP_STEREO_NONE` (default)
@@ -2456,7 +2456,7 @@ by using the [general parameters](#cameras) understood by all cameras.
   ----- ---------------------- -----------------------------------------
   Type  Name                   Description
   ----- ---------------------- -----------------------------------------
-  int   stereoMode             `OSPStereoMode` for stereo rendering,
+  uchar stereoMode             `OSPStereoMode` for stereo rendering,
                                possible values are:
 
                                `OSP_STEREO_NONE` (default)

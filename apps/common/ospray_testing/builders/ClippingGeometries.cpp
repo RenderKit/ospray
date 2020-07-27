@@ -95,18 +95,18 @@ cpp::World ClippingGeometries::buildWorld() const
         {+1.f, +0.f, +1.f, 0.2f}};
     if (geomSubType == "bspline") {
       geometry.setParam("vertex.position_radius", cpp::CopiedData(vertices));
-      geometry.setParam("basis", int(OSP_BSPLINE));
+      geometry.setParam("basis", OSP_BSPLINE);
       cPos = vec3f(-.1f, 0.f, -.1f);
     } else if (geomSubType == "linear") {
       geometry.setParam("vertex.position",
           cpp::CopiedData((vec3f *)vertices.data(), vertices.size(), sizeof(vec4f)));
       geometry.setParam("radius", 0.2f);
-      geometry.setParam("basis", int(OSP_LINEAR));
+      geometry.setParam("basis", OSP_LINEAR);
       cPos = vec3f(-.2f, 0.f, -.2f);
     }
     std::vector<unsigned int> indices = {0, 1, 2, 3, 4, 5};
     geometry.setParam("index", cpp::CopiedData(indices));
-    geometry.setParam("type", int(OSP_ROUND));
+    geometry.setParam("type", OSP_ROUND);
     geometry.commit();
   } else if (geomType == "subdivision") {
     const float size = .9f;

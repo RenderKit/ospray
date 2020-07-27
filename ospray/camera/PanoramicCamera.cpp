@@ -21,7 +21,8 @@ void PanoramicCamera::commit()
   Camera::commit();
 
   ispc::PanoramicCamera_set(getIE(),
-      (OSPStereoMode)getParam<int>("stereoMode", OSP_STEREO_NONE),
+      (OSPStereoMode)getParam<uint8_t>(
+          "stereoMode", getParam<int32_t>("stereoMode", OSP_STEREO_NONE)),
       getParam<float>("interpupillaryDistance", 0.0635f));
 }
 
