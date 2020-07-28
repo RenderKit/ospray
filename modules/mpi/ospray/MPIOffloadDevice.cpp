@@ -801,12 +801,13 @@ void MPIOffloadDevice::release(OSPObject _object)
   // sends here, since if the data was small enough to inline in the command
   // buffer we aren't actually sharing the pointer with the app anymore
   auto d = sharedData.find(handle.i64);
-  if (d != sharedData.end() && d->second.releaseHazard) {
-    postStatusMsg(OSP_LOG_DEBUG)
-        << "#osp.mpi.app: ospRelease: data reference hazard exists, "
-        << " flushing pending sends";
-    fabric->flushBcastSends();
-    d->second.releaseHazard = false;
+  if (d != sharedData.end()) {
+    if (d->second.releaseHazard) {
+      postStatusMsg(OSP_LOG_DEBUG)
+          << "#osp.mpi.app: ospRelease: data reference hazard exists, "
+          << " flushing pending sends";
+      fabric->flushBcastSends();
+    }
     sharedData.erase(handle.i64);
   }
 }
