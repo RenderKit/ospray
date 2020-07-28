@@ -321,9 +321,8 @@ void MPIOffloadDevice::commit()
 // Device Implementation //////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-int MPIOffloadDevice::loadModule(const char *_name)
+int MPIOffloadDevice::loadModule(const char *name)
 {
-  const std::string name = _name;
   sendWork(
       [&](networking::WriteStream &writer) {
         writer << work::LOAD_MODULE << name;
@@ -338,11 +337,9 @@ int MPIOffloadDevice::loadModule(const char *_name)
 // Renderable Objects /////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-OSPLight MPIOffloadDevice::newLight(const char *_type)
+OSPLight MPIOffloadDevice::newLight(const char *type)
 {
   ObjectHandle handle = allocateHandle();
-
-  const std::string type = _type;
 
   sendWork(
       [&](networking::WriteStream &writer) {
@@ -353,11 +350,10 @@ OSPLight MPIOffloadDevice::newLight(const char *_type)
   return (OSPLight)(int64)handle;
 }
 
-OSPCamera MPIOffloadDevice::newCamera(const char *_type)
+OSPCamera MPIOffloadDevice::newCamera(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  const std::string type = _type;
   sendWork(
       [&](networking::WriteStream &writer) {
         writer << work::NEW_CAMERA << handle.i64 << type;
@@ -367,11 +363,10 @@ OSPCamera MPIOffloadDevice::newCamera(const char *_type)
   return (OSPCamera)(int64)handle;
 }
 
-OSPGeometry MPIOffloadDevice::newGeometry(const char *_type)
+OSPGeometry MPIOffloadDevice::newGeometry(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  const std::string type = _type;
   sendWork(
       [&](networking::WriteStream &writer) {
         writer << work::NEW_GEOMETRY << handle.i64 << type;
@@ -381,11 +376,10 @@ OSPGeometry MPIOffloadDevice::newGeometry(const char *_type)
   return (OSPGeometry)(int64)handle;
 }
 
-OSPVolume MPIOffloadDevice::newVolume(const char *_type)
+OSPVolume MPIOffloadDevice::newVolume(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  const std::string type = _type;
   sendWork(
       [&](networking::WriteStream &writer) {
         writer << work::NEW_VOLUME << handle.i64 << type;
@@ -430,12 +424,10 @@ OSPVolumetricModel MPIOffloadDevice::newVolumetricModel(OSPVolume volume)
 ///////////////////////////////////////////////////////////////////////////
 
 OSPMaterial MPIOffloadDevice::newMaterial(
-    const char *_renderer_type, const char *_material_type)
+    const char *renderer_type, const char *material_type)
 {
   ObjectHandle handle = allocateHandle();
 
-  const std::string renderer_type = _renderer_type;
-  const std::string material_type = _material_type;
   sendWork(
       [&](networking::WriteStream &writer) {
         writer << work::NEW_MATERIAL << handle.i64 << renderer_type
@@ -446,11 +438,10 @@ OSPMaterial MPIOffloadDevice::newMaterial(
   return (OSPMaterial)(int64)handle;
 }
 
-OSPTransferFunction MPIOffloadDevice::newTransferFunction(const char *_type)
+OSPTransferFunction MPIOffloadDevice::newTransferFunction(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  const std::string type = _type;
   sendWork(
       [&](networking::WriteStream &writer) {
         writer << work::NEW_TRANSFER_FUNCTION << handle.i64 << type;
@@ -460,11 +451,9 @@ OSPTransferFunction MPIOffloadDevice::newTransferFunction(const char *_type)
   return (OSPTransferFunction)(int64)handle;
 }
 
-OSPTexture MPIOffloadDevice::newTexture(const char *_type)
+OSPTexture MPIOffloadDevice::newTexture(const char *type)
 {
   ObjectHandle handle = allocateHandle();
-
-  const std::string type = _type;
 
   sendWork(
       [&](networking::WriteStream &writer) {
@@ -634,10 +623,9 @@ void MPIOffloadDevice::setObjectParam(
     setParam<bool>(handle, name, mem, type);
     break;
   case OSP_STRING: {
-    const std::string paramName = name;
     sendWork(
         [&](networking::WriteStream &writer) {
-          writer << work::SET_PARAM << handle.i64 << paramName << type
+          writer << work::SET_PARAM << handle.i64 << name << type
                  << (const char *)mem;
         },
         false);
@@ -773,7 +761,7 @@ void MPIOffloadDevice::removeObjectParam(OSPObject object, const char *name)
 
   sendWork(
       [&](networking::WriteStream &writer) {
-        writer << work::REMOVE_PARAM << handle.i64 << std::string(name);
+        writer << work::REMOVE_PARAM << handle.i64 << name;
       },
       false);
 }
@@ -854,11 +842,10 @@ OSPFrameBuffer MPIOffloadDevice::frameBufferCreate(
   return (OSPFrameBuffer)(int64)handle;
 }
 
-OSPImageOperation MPIOffloadDevice::newImageOp(const char *_type)
+OSPImageOperation MPIOffloadDevice::newImageOp(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  const std::string type = _type;
   sendWork(
       [&](networking::WriteStream &writer) {
         writer << work::NEW_IMAGE_OPERATION << handle.i64 << type;
@@ -953,7 +940,7 @@ OSPRenderer MPIOffloadDevice::newRenderer(const char *type)
 
   sendWork(
       [&](networking::WriteStream &writer) {
-        writer << work::NEW_RENDERER << handle.i64 << std::string(type);
+        writer << work::NEW_RENDERER << handle.i64 << type;
       },
       false);
   return (OSPRenderer)(int64)handle;

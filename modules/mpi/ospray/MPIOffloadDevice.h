@@ -230,12 +230,11 @@ void MPIOffloadDevice::sendWork(const Fcn &writeCmd, bool submitImmediately)
 
 template <typename T>
 void MPIOffloadDevice::setParam(ObjectHandle obj,
-    const char *_param,
+    const char *param,
     const void *_val,
     const OSPDataType type)
 {
   const T &val = *(const T *)_val;
-  const std::string param = _param;
   sendWork(
       [&](rkcommon::networking::WriteStream &writer) {
         writer << work::SET_PARAM << obj.i64 << param << type << val;
