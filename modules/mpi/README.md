@@ -150,20 +150,20 @@ If initializing the `mpiOffload` device manually, or passing parameters through
 the command line, the following parameters can be set:
 
 
-| Type   | Name                | Default             | Description                                                       |
-|:-------|:--------------------|--------------------:|:------------------------------------------------------------------|
-| string | mpiMode             | mpi                 | The mode to communicate with the worker ranks. `mpi` will assume you're launching the application and workers in the same mpi command (or split launch command). `mpi-listen` can be passed to the workers, indicating they should wait and listen for a connection from the application. `mpi-connect` can be passed to the application, indicating it should connect to the first worker at `host` and `port` to connect to the workers |
-| string | host                | none, optional      | On the app rank, specify the host worker 0 is on to connect to in mpi-connect mode |
-| string | port                | none, optional      | On the app rank, specify the port worker 0 is listening on to connect in mpi-connect mode |
-| uint   | maxBufferedCommands | 8192                | Set the max number of commands to buffer before submitting the command buffer to the workers |
-| uint   | commandBufferSize   | 512MB               | Set the max command buffer size to allow, units are in MB         |
-| uint   | maxInlineDataSize   | 8MB                 | Set the max size of an OSPData which can be inline'd into the command buffer instead of being sent separately. Units are in MB |
+| Type   | Name                    | Default             | Description                                                       |
+|:-------|:------------------------|--------------------:|:------------------------------------------------------------------|
+| string | mpiMode                 | mpi                 | The mode to communicate with the worker ranks. `mpi` will assume you're launching the application and workers in the same mpi command (or split launch command). `mpi-listen` can be passed to the workers, indicating they should wait and listen for a connection from the application. `mpi-connect` can be passed to the application, indicating it should connect to the first worker at `host` and `port` to connect to the workers |
+| string | host                    | none, optional      | On the app rank, specify the host worker 0 is on to connect to in mpi-connect mode |
+| string | port                    | none, optional      | On the app rank, specify the port worker 0 is listening on to connect in mpi-connect mode |
+| uint   | maxCommandBufferEntries | 8192                | Set the max number of commands to buffer before submitting the command buffer to the workers |
+| uint   | commandBufferSize       | 512MiB               | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8GiB         |
+| uint   | maxInlineDataSize       | 8MiB                 | Set the max size of an OSPData which can be inline'd into the command buffer instead of being sent separately. Max size is half the commandBufferSize. Units are in MiB |
 
 : Parameters specific to the `mpiOffload` Device.
 
-The `maxBufferedCommands`, `commandBufferSize`, and `maxInlineDataSize` can also
-be set via the environment variables: `OSPRAY_MPI_MAX_BUFFERED_CMDS`,
-`OSPRAY_MPI_CMD_BUFFER_SIZE`, and `OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE`,
+The `maxCommandBufferEntries`, `commandBufferSize`, and `maxInlineDataSize` can also
+be set via the environment variables: `OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES`,
+`OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
 respectively.
 
 MPI Distributed Rendering

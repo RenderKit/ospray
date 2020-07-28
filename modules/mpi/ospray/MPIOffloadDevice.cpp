@@ -274,30 +274,30 @@ void MPIOffloadDevice::initializeDevice()
   }
 
   // Setup the command buffer on the app rank
-  maxBufferedCommands = getParam<uint32_t>("maxBufferedCommands", 8192);
-  commandBufferSize = getParam<uint32_t>("commandBufferSize", 512) * 1e6;
-  maxInlineDataSize = getParam<uint32_t>("maxInlineDataSize", 8) * 1e6;
+  maxCommandBufferEntries = getParam<uint32_t>("maxCommandBufferEntries", 8192);
+  commandBufferSize = getParam<uint32_t>("commandBufferSize", 512) * (1 << 20);
+  maxInlineDataSize = getParam<uint32_t>("maxInlineDataSize", 8) * (1 << 20);
 
-  auto OSPRAY_MPI_MAX_BUFFERED_CMDS =
-      utility::getEnvVar<int>("OSPRAY_MPI_MAX_BUFFERED_CMDS");
-  if (OSPRAY_MPI_MAX_BUFFERED_CMDS) {
-    maxBufferedCommands = OSPRAY_MPI_MAX_BUFFERED_CMDS.value();
+  auto OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES =
+      utility::getEnvVar<int>("OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES");
+  if (OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES) {
+    maxCommandBufferEntries = OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES.value();
   }
-  auto OSPRAY_MPI_CMD_BUFFER_SIZE =
-      utility::getEnvVar<int>("OSPRAY_MPI_CMD_BUFFER_SIZE");
-  if (OSPRAY_MPI_CMD_BUFFER_SIZE) {
-    commandBufferSize = OSPRAY_MPI_CMD_BUFFER_SIZE.value() * 1e6;
+  auto OSPRAY_MPI_COMMAND_BUFFER_SIZE =
+      utility::getEnvVar<int>("OSPRAY_MPI_COMMAND_BUFFER_SIZE");
+  if (OSPRAY_MPI_COMMAND_BUFFER_SIZE) {
+    commandBufferSize = OSPRAY_MPI_COMMAND_BUFFER_SIZE.value() * (1 << 20);
   }
-  auto OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE =
-      utility::getEnvVar<int>("OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE");
-  if (OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE) {
-    maxInlineDataSize = OSPRAY_MPI_CMD_BUFFER_INLINE_DATA_SIZE.value() * 1e6;
+  auto OSPRAY_MPI_MAX_INLINE_DATA_SIZE =
+      utility::getEnvVar<int>("OSPRAY_MPI_MAX_INLINE_DATA_SIZE");
+  if (OSPRAY_MPI_MAX_INLINE_DATA_SIZE) {
+    maxInlineDataSize = OSPRAY_MPI_MAX_INLINE_DATA_SIZE.value() * (1 << 20);
   }
 
-  if (commandBufferSize >= 1.8e9) {
+  if (commandBufferSize >= 1.8f * (1 << 30)) {
     static WarnOnce warn(
         "Command buffer size must be less than 1.8GB, resetting to 1.8GB");
-    commandBufferSize = 1.8e9;
+    commandBufferSize = 1.8f * (1 << 30);
   }
   if (maxInlineDataSize >= commandBufferSize / 2.f) {
     static WarnOnce warn(

@@ -179,7 +179,7 @@ struct MPIOffloadDevice : public api::Device
 
   std::unordered_set<int64_t> futures;
 
-  uint32_t maxBufferedCommands = 8192;
+  uint32_t maxCommandBufferEntries = 8192;
   uint32_t commandBufferSize = 512e6;
   uint32_t maxInlineDataSize = 8e6;
 
@@ -223,7 +223,7 @@ void MPIOffloadDevice::sendWork(const Fcn &writeCmd, bool submitImmediately)
 
   ++nBufferedCommands;
 
-  if (submitImmediately || nBufferedCommands >= maxBufferedCommands) {
+  if (submitImmediately || nBufferedCommands >= maxCommandBufferEntries) {
     submitWork();
   }
 }
