@@ -258,14 +258,13 @@ void MPIOffloadDevice::initializeDevice()
     createMPI_ListenForClient(&_ac, _av);
   } else if (mode == "mpi-connect") {
     const std::string host = getParam<std::string>("host", "");
-    const std::string portParam = getParam<std::string>("port", "");
+    const int port = getParam<int>("port", -1);
 
-    if (host.empty() || portParam.empty()) {
+    if (host.empty() || port == -1) {
       throw std::runtime_error(
           "Error: mpi-connect requires a host and port "
           "argument to connect to");
     }
-    int port = std::stoi(portParam);
     postStatusMsg(OSP_LOG_INFO)
         << "MPIOffloadDevice connecting to " << host << ":" << port;
     fabric = rkcommon::make_unique<SocketWriterFabric>(host, port);

@@ -154,10 +154,10 @@ the command line, the following parameters can be set:
 |:-------|:------------------------|--------------------:|:------------------------------------------------------------------|
 | string | mpiMode                 | mpi                 | The mode to communicate with the worker ranks. `mpi` will assume you're launching the application and workers in the same mpi command (or split launch command). `mpi-listen` can be passed to the workers, indicating they should wait and listen for a connection from the application. `mpi-connect` can be passed to the application, indicating it should connect to the first worker at `host` and `port` to connect to the workers |
 | string | host                    | none, optional      | On the app rank, specify the host worker 0 is on to connect to in mpi-connect mode |
-| string | port                    | none, optional      | On the app rank, specify the port worker 0 is listening on to connect in mpi-connect mode |
+| int    | port                    | none, optional      | On the app rank, specify the port worker 0 is listening on to connect in mpi-connect mode |
 | uint   | maxCommandBufferEntries | 8192                | Set the max number of commands to buffer before submitting the command buffer to the workers |
-| uint   | commandBufferSize       | 512MiB               | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8GiB         |
-| uint   | maxInlineDataSize       | 8MiB                 | Set the max size of an OSPData which can be inline'd into the command buffer instead of being sent separately. Max size is half the commandBufferSize. Units are in MiB |
+| uint   | commandBufferSize       | 512MiB              | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8GiB         |
+| uint   | maxInlineDataSize       | 8MiB                | Set the max size of an OSPData which can be inline'd into the command buffer instead of being sent separately. Max size is half the commandBufferSize. Units are in MiB |
 
 : Parameters specific to the `mpiOffload` Device.
 
