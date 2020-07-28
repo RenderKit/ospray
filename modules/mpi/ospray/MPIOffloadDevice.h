@@ -151,6 +151,7 @@ struct MPIOffloadDevice : public api::Device
     // We can't tell the local Data object that the contained type
     // is a managed type, because all the head node has are object handles
     OSPDataType workerType = OSP_UNKNOWN;
+    bool releaseHazard = false;
   };
 
   /*! Send data work should be called by data transfer writeCmd lambdas, to
@@ -159,8 +160,8 @@ struct MPIOffloadDevice : public api::Device
    * lambda is called (i.e., when writing to the command buffer, not when
    * computing the size)
    */
-  void sendDataWork(rkcommon::networking::WriteStream &writer,
-      const ApplicationData &appData);
+  void sendDataWork(
+      rkcommon::networking::WriteStream &writer, ApplicationData &appData);
 
   void submitWork();
 
@@ -184,7 +185,6 @@ struct MPIOffloadDevice : public api::Device
   uint32_t maxInlineDataSize = 8e6;
 
   size_t nBufferedCommands = 0;
-  bool sharedDataViewHazard = false;
 
   rkcommon::networking::FixedBufferWriter commandBuffer;
 

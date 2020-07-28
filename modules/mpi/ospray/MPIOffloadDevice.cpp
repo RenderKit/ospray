@@ -801,14 +801,12 @@ void MPIOffloadDevice::release(OSPObject _object)
   // sends here, since if the data was small enough to inline in the command
   // buffer we aren't actually sharing the pointer with the app anymore
   auto d = sharedData.find(handle.i64);
-  if (d != sharedData.end()) {
-    if (sharedDataViewHazard) {
-      postStatusMsg(OSP_LOG_DEBUG)
-          << "#osp.mpi.app: ospRelease: data reference hazard exists, "
-          << " flushing pending sends";
-      fabric->flushBcastSends();
-      sharedDataViewHazard = false;
-    }
+  if (d != sharedData.end() && d->second.releaseHazard) {
+    postStatusMsg(OSP_LOG_DEBUG)
+        << "#osp.mpi.app: ospRelease: data reference hazard exists, "
+        << " flushing pending sends";
+    fabric->flushBcastSends();
+    d->second.releaseHazard = false;
     sharedData.erase(handle.i64);
   }
 }
@@ -1072,7 +1070,7 @@ OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
 }
 
 void MPIOffloadDevice::sendDataWork(
-    networking::WriteStream &writer, const ApplicationData &appData)
+    networking::WriteStream &writer, ApplicationData &appData)
 {
   const Data *data = appData.data;
   const uint64_t compactSize = data->size() * sizeOf(data->type);
@@ -1114,7 +1112,7 @@ void MPIOffloadDevice::sendDataWork(
 
       std::shared_ptr<utility::AbstractArray<uint8_t>> dataView = nullptr;
       if (data->compact()) {
-        sharedDataViewHazard = true;
+        appData.releaseHazard = true;
         dataView = std::make_shared<utility::ArrayView<uint8_t>>(
             reinterpret_cast<uint8_t *>(data->data()), compactSize);
       } else {
