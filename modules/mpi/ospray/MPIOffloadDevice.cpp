@@ -347,7 +347,7 @@ OSPLight MPIOffloadDevice::newLight(const char *_type)
 
   sendWork(
       [&](networking::WriteStream &writer) {
-        writer << work::NEW_LIGHT << handle.i64 << std::string(type);
+        writer << work::NEW_LIGHT << handle.i64 << type;
       },
       false);
 
@@ -1147,7 +1147,7 @@ void MPIOffloadDevice::sendDataWork(
 
 void MPIOffloadDevice::submitWork()
 {
-  if (commandBuffer.available() == 0) {
+  if (commandBuffer.available() == commandBuffer.capacity()) {
     postStatusMsg(OSP_LOG_ERROR)
         << "submit on empty command buffer attempted, should not happen!";
     return;

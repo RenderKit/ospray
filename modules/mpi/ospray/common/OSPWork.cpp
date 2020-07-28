@@ -13,6 +13,7 @@
 #include "geometry/GeometricModel.h"
 #include "ospray/MPIDistributedDevice.h"
 #include "render/RenderTask.h"
+#include "rkcommon/array3D/for_each.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/OwnedArray.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
@@ -215,13 +216,8 @@ Data *retrieveData(OSPState &state,
   // OSPObjects and increment the refcount because we're populating the data
   // object manually
   if (mpicommon::isManagedObject(type)) {
-    rkcommon::index_sequence_3D indices(numItems);
-    const vec3ul stride(sizeOf(type),
-        numItems.x * sizeOf(type),
-        numItems.x * numItems.y * sizeOf(type));
-    for (auto idx : indices) {
-      const size_t i = idx.x * stride.x + idx.y * stride.y + idx.z * stride.z;
-      char *addr = outputData->data() + i;
+    for (size_t i = 0; i < array3D::longProduct(numItems); ++i) {
+      char *addr = outputData->data() + i * sizeOf(type);
       int64_t *h = reinterpret_cast<int64_t *>(addr);
       OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
       *obj = state.objects[*h];
