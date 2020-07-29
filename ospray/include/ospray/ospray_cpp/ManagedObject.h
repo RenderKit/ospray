@@ -82,7 +82,8 @@ inline ManagedObject<HANDLE_T, TYPE>::ManagedObject(
     const ManagedObject<HANDLE_T, TYPE> &copy)
 {
   ospObject = copy.handle();
-  ospRetain(copy.handle());
+  if (copy.handle())
+    ospRetain(copy.handle());
 }
 
 template <typename HANDLE_T, OSPDataType TYPE>
@@ -98,7 +99,8 @@ inline ManagedObject<HANDLE_T, TYPE> &ManagedObject<HANDLE_T, TYPE>::operator=(
     const ManagedObject<HANDLE_T, TYPE> &copy)
 {
   ospObject = copy.handle();
-  ospRetain(copy.handle());
+  if (copy.handle())
+    ospRetain(copy.handle());
   return *this;
 }
 
