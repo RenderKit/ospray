@@ -48,8 +48,12 @@ float delta_tracking(VolumetricModel *uniform vModel,
 
       xi = RandomSampler_getFloat(randomSampler);
       const vec3f p = o + t * w;
+
       const float sample = vklComputeSampleV(
           vModel->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
+      if (isnan(sample))
+        continue;
+
       const vec4f color =
           vModel->transferFunction->get(vModel->transferFunction, sample);
       mu_t = vModel->densityScale * color.w;
