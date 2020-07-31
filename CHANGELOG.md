@@ -1,6 +1,12 @@
 Version History
 ---------------
 
+### Changes in v2.3.0:
+
+-   Fixed many memory leaks
+-   Handle `NaN` during volume sampling, which lead to bounding boxes
+    being visible for some volumes and settings
+
 ### Changes in v2.2.0:
 
 -   Support for texture transformation in SciVis OBJ material
