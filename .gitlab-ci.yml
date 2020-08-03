@@ -10,6 +10,7 @@ stages:
   - scan2
   - release
   - scan3
+  - mirror
 
 variables:
   GIT_DEPTH: "15"
@@ -18,8 +19,7 @@ variables:
 
 .job_template: &build_job_docker
   stage: build
-  tags:
-    - docker
+  tags: [docker]
   image: $DOCKER_REGISTRY/ospray/docker-images:arch  # default image
   script:
     - scripts/build_gitlab/linux.sh
@@ -33,11 +33,6 @@ variables:
   script:
     - scripts/build_gitlab/linux.sh
 
-.job_template: &build_job_shell
-  stage: build
-  tags:
-    - build
-
 .job_template: &build_artifacts
   artifacts:
     paths:
@@ -48,8 +43,6 @@ variables:
 
 .job_template: &release_job
   stage: release
-  tags:
-    - release
   needs: [pdf]
   only:
     - devel
@@ -201,7 +194,7 @@ build-linux-debug:
   <<: *build_artifacts
 
 build-osx-clang:
-  <<: *build_job_shell
+  stage: build
   script:
     - scripts/build_gitlab/macosx.sh
   tags:
@@ -210,7 +203,7 @@ build-osx-clang:
   <<: *build_artifacts
 
 build-windows-msvc14:
-  <<: *build_job_shell
+  stage: build
   script:
     - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "v140" "Release"
   tags:
@@ -219,7 +212,7 @@ build-windows-msvc14:
   <<: *build_artifacts
 
 build-windows-msvc15:
-  <<: *build_job_shell
+  stage: build
   script:
     - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release"
   tags:
@@ -228,7 +221,7 @@ build-windows-msvc15:
   <<: *build_artifacts
 
 build-windows-debug-all:
-  <<: *build_job_shell
+  stage: build
   script:
     - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug"
   tags:
@@ -238,7 +231,7 @@ build-windows-debug-all:
   only: [schedules]
 
 #build-windows-icc:
-#  <<: *build_job_shell
+  stage: build
 #  script:
 #    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "Intel C++ Compiler 17.0"
 #  tags:
@@ -488,3 +481,17 @@ scan-bdba:
     paths:
       - build_release/ospray-*
   allow_failure: true
+
+
+### Mirror ###
+
+mirror:
+  stage: mirror
+  tags: [docker]
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  only: [devel]
+  when: manual
+  dependencies:
+  script:
+    - git remote add github https://${GITHUB_TOKEN}github.com/ospray/OSPRay.git
+    - git push github devel

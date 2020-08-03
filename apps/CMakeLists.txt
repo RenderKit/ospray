@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 option(OSPRAY_APPS_ENABLE_GLM "Build ospray_cpp glm tests/tutorial" OFF)
