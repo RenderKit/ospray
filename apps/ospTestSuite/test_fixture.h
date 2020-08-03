@@ -15,8 +15,6 @@
 #include "environment.h"
 #include "test_tools.h"
 
-#include "rkcommon/math/AffineSpace.h"
-
 namespace OSPRayTestScenes {
 
 // Base class for all test fixtures.

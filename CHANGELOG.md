@@ -6,6 +6,15 @@ Version History
 -   Fixed many memory leaks
 -   Handle `NaN` during volume sampling, which lead to bounding boxes
     being visible for some volumes and settings
+-   Added `ospray_cpp` compatibility headers for C++ wrappers to
+    understand rkcommon and glm short vector types
+    -   For rkcommon, include `ospray/ospray_cpp/ext/rkcommon.h`
+    -   For glm, include `ospray/ospray_cpp/ext/glm.h`
+    -   NOTE: In debug builds some compilers will not optimize out type trait
+        definitions. This will require users to manually instantiate the glm
+        definitions in one translation unit within the application using
+        `#define OSPRAY_GLM_DEFINITIONS` before including `ext/glm.h`: see
+        `ospTutorialGLM` as an example
 
 ### Changes in v2.2.0:
 

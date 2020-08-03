@@ -250,7 +250,6 @@ endforeach()
 
 add_library(ospray SHARED ${OSPRAY_SOURCES})
 target_link_libraries(ospray PUBLIC $<BUILD_INTERFACE:rkcommon::rkcommon>)
-target_compile_definitions(ospray PRIVATE OSPRAY_CPP_RKCOMMON_TYPES)
 ospray_install_library(ospray lib)
 
 target_include_directories(ospray
@@ -364,7 +363,6 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   target_compile_definitions(ospray_module_ispc
   PUBLIC
-    OSPRAY_CPP_RKCOMMON_TYPES
     TILE_SIZE=${OSPRAY_TILE_SIZE}
     MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
     RENDERTILE_PIXELS_PER_JOB=${OSPRAY_PIXELS_PER_JOB}
