@@ -15,6 +15,7 @@ Version History
         definitions in one translation unit within the application using
         `#define OSPRAY_GLM_DEFINITIONS` before including `ext/glm.h`: see
         `ospTutorialGLM` as an example
+-   Fix shading for multiple modes of the `debug` renderer
 
 ### Changes in v2.2.0:
 
