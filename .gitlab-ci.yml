@@ -454,7 +454,6 @@ protex:
     - scripts/scan/protex.sh
   needs: []
   tags: [docker]
-  allow_failure: true
 
 kw-critical:
   stage: scan2
@@ -480,7 +479,6 @@ scan-bdba:
   artifacts:
     paths:
       - build_release/ospray-*
-  allow_failure: true
 
 
 ### Mirror ###
@@ -490,8 +488,7 @@ mirror:
   tags: [docker]
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   only: [devel]
-  when: manual
-  dependencies:
+  dependencies: []
   script:
     - git remote add github https://${GITHUB_TOKEN}github.com/ospray/OSPRay.git
-    - git push github devel
+    - git push github devel:devel
