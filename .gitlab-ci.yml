@@ -491,4 +491,4 @@ mirror:
   dependencies: []
   script:
     - git remote add github https://${GITHUB_TOKEN}github.com/ospray/OSPRay.git
-    - git push github devel:devel
+    - git push github HEAD:devel
