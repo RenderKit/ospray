@@ -4,7 +4,7 @@ Version History
 ### Changes in v2.3.0:
 
 -   Fixed many memory leaks
--   Handle `NaN` during volume sampling, which lead to bounding boxes
+-   Handle `NaN` during volume sampling, which led to bounding boxes
     being visible for some volumes and settings
 -   Added `ospray_cpp` compatibility headers for C++ wrappers to
     understand rkcommon and glm short vector types
@@ -16,6 +16,7 @@ Version History
         `#define OSPRAY_GLM_DEFINITIONS` before including `ext/glm.h`: see
         `ospTutorialGLM` as an example
 -   Fix shading for multiple modes of the `debug` renderer
+-   Depth is now "accumulated" as well, using the minimum
 
 ### Changes in v2.2.0:
 

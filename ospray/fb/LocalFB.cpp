@@ -128,6 +128,9 @@ void LocalFrameBuffer::setTile(Tile &tile)
     if ((tile.accumID & 1) == 1)
       tileErrorRegion.update(tile.region.lower / TILE_SIZE, err);
   }
+  if (hasDepthBuffer)
+    ispc::LocalFrameBuffer_accumulateWriteDepthTile(
+        getIE(), (ispc::Tile &)tile);
   if (hasAlbedoBuffer)
     ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),
         (ispc::Tile &)tile,
