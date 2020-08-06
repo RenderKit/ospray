@@ -327,7 +327,8 @@ void GLFWOSPRayWindow::display()
 
     latestFPS = 1.f / currentFrame.duration();
 
-    auto *fb = framebuffer.map(showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR);
+    auto *fb = framebuffer.map(
+        showDepth ? OSP_FB_DEPTH : (showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR));
 
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
@@ -336,7 +337,7 @@ void GLFWOSPRayWindow::display()
         windowSize.x,
         windowSize.y,
         0,
-        showAlbedo ? GL_RGB : GL_RGBA,
+        showDepth ? GL_RED : (showAlbedo ? GL_RGB : GL_RGBA),
         GL_FLOAT,
         fb);
 
@@ -484,7 +485,11 @@ void GLFWOSPRayWindow::buildUI()
   }
 
   ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);
-  ImGui::Checkbox("show albedo", &showAlbedo);
+  ImGui::Checkbox("show depth", &showDepth);
+  if (showDepth)
+    showAlbedo = false;
+  else
+    ImGui::Checkbox("show albedo", &showAlbedo);
   if (denoiserAvailable) {
     if (ImGui::Checkbox("denoiser", &denoiserEnabled))
       updateFrameOpsNextFrame = true;

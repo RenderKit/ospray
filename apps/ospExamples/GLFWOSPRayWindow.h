@@ -59,6 +59,7 @@ class GLFWOSPRayWindow
   bool updateFrameOpsNextFrame{false};
   bool denoiserEnabled{false};
   bool showAlbedo{false};
+  bool showDepth{false};
   bool renderSunSky{false};
   bool cancelFrameOnInteraction{false};
 
