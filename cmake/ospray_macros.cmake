@@ -30,13 +30,6 @@ macro(add_all_subdirectories)
   endforeach(dir ${dirs})
 endmacro()
 
-## Setup ospray build type according to config (works for single and multi-config generators)
-macro(ospray_configure_build_type)
-  set(OSPRAY_BUILD_RELEASE $<BOOL:$<CONFIG:Release>>)
-  set(OSPRAY_BUILD_DEBUG $<BOOL:$<CONFIG:Debug>>)
-  set(OSPRAY_BUILD_RELWITHDEBINFO $<NOT:$<OR:OSPRAY_BUILD_RELEASE,OSPRAY_BUILD_DEBUG>>)
-endmacro()
-
 # workaround link issues to Embree ISPC exports
 # ISPC only adds the ISA suffix during name mangling (and dynamic dispatch
 # code) when compiling for multiple targets. Thus, when only one OSPRay ISA is
