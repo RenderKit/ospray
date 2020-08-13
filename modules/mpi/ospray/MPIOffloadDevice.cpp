@@ -273,9 +273,10 @@ void MPIOffloadDevice::initializeDevice()
   }
 
   // Setup the command buffer on the app rank
-  maxCommandBufferEntries = getParam<uint32_t>("maxCommandBufferEntries", 8192);
+  maxCommandBufferEntries =
+      getParam<uint32_t>("maxCommandBufferEntries", 16384);
   commandBufferSize = getParam<uint32_t>("commandBufferSize", 512) * (1 << 20);
-  maxInlineDataSize = getParam<uint32_t>("maxInlineDataSize", 8) * (1 << 20);
+  maxInlineDataSize = getParam<uint32_t>("maxInlineDataSize", 32) * (1 << 20);
 
   auto OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES =
       utility::getEnvVar<int>("OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES");
