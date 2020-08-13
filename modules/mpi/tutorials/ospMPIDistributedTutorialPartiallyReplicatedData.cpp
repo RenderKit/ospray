@@ -1,4 +1,4 @@
-// Copyright 2018-2019 Intel Corporation
+// Copyright 2018-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This larger example shows how to use the MPIDistributedDevice to write an
@@ -16,12 +16,13 @@
 
 #include <imgui.h>
 #include <mpi.h>
-#include <ospray/ospray_cpp.h>
-#include <ospray/ospray_util.h>
 #include <iterator>
 #include <memory>
 #include <random>
 #include "GLFWDistribOSPRayWindow.h"
+#include "ospray/ospray_cpp.h"
+#include "ospray/ospray_cpp/ext/rkcommon.h"
+#include "ospray/ospray_util.h"
 
 using namespace ospray;
 using namespace rkcommon;

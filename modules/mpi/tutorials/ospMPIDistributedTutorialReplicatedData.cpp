@@ -1,4 +1,4 @@
-// Copyright 2018-2019 Intel Corporation
+// Copyright 2018-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This tutorial demonstrates how MPI-parallel applications can be
@@ -12,12 +12,14 @@
 
 #include <imgui.h>
 #include <mpi.h>
-#include <ospray/ospray_util.h>
 #include <iterator>
 #include <memory>
 #include <random>
 #include "GLFWDistribOSPRayWindow.h"
 #include "example_common.h"
+#include "ospray/ospray_cpp.h"
+#include "ospray/ospray_cpp/ext/rkcommon.h"
+#include "ospray/ospray_util.h"
 #include "ospray_testing.h"
 
 using namespace ospray;

@@ -30,3 +30,4 @@ readme.pdf
 .idea/
 premake.local.*
 cmake-build*/
+cmake-superbuild/
