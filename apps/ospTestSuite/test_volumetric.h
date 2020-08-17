@@ -7,6 +7,15 @@ namespace OSPRayTestScenes {
 
 // Test a texture colored by a volume.  Creates spheres colored by the torus
 // volume It's parametrized with type of the renderer.
+class TextureVolumeTransform_deprecated
+    : public Base,
+      public ::testing::TestWithParam<const char *>
+{
+ public:
+  TextureVolumeTransform_deprecated();
+  void SetUp() override;
+};
+
 class TextureVolumeTransform : public Base,
                                public ::testing::TestWithParam<const char *>
 {

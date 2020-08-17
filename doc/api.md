@@ -2273,21 +2273,22 @@ no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
 Texturing with `texture2d` image textures requires [geometries] with
 texture coordinates, e.g., a [mesh] with `vertex.texcoord` provided.
 
-#### TextureVolume
+#### Volume Texture
 
 The `volume` texture type implements texture lookups based on 3D object
 coordinates of the surface hit point on the associated geometry. If the
 given hit point is within the attached volume, the volume is sampled and
 classified with the transfer function attached to the volume. This
-implements the ability to visualize volume values (as colored by its
+implements the ability to visualize volume values (as colored by a
 transfer function) on arbitrary surfaces inside the volume (as opposed
 to an isosurface showing a particular value in the volume). Its
 parameters are as follows
 
-  Type               Name    Description
-  ------------------ ------- -------------------------------------------
-  OSPVolumetricModel volume  [VolumetricModel] used to generate color lookups
-  ------------------ ------- -------------------------------------------
+  Type                Name             Description
+  ------------------- ---------------- -----------------------------------------
+  OSPVolume           volume           [Volume] used to generate color lookups
+  OSPTransferFunction transferFunction [TransferFunction] applied to `volume`
+  ------------------- ---------------- -----------------------------------------
   : Parameters of `volume` texture type.
 
 TextureVolume can be used for implementing slicing of volumes with any

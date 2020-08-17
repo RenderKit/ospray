@@ -20,6 +20,8 @@ Version History
 -   Added support for data arrays with a stride between voxels in
     volumes
 -   New minimum ISPC version is 1.14.1
+-   Changed parameters to `volume` texture: it now directly accepts the
+    `volume` and the `transferFunction`. 
 
 ### Changes in v2.2.0:
 
