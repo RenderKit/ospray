@@ -29,14 +29,14 @@ static void sampleVolume(VolumeContext &vc,
     const uniform float samplingRate)
 {
   // We have to iterate till we get a valid sample value
-  float newDistance;
-  float emptySpace = 0.f;
+  float dt;
   float sampleVal = nan;
   while (isnan(sampleVal)) {
     // Iterate till sampling position is within interval
+    float emptySpace = 0.f;
     while (vc.iuDistance > vc.iuLength) {
       // Get next VKL interval
-      float prevUpper = vc.interval.tRange.upper;
+      const float prevUpper = vc.interval.tRange.upper;
       if (vklIterateIntervalV(vc.intervalIterator, &vc.interval)) {
         // Intervals may not be contiguous, accumulate empty space
         emptySpace += max(vc.interval.tRange.lower - prevUpper, 0.f);
@@ -62,7 +62,8 @@ static void sampleVolume(VolumeContext &vc,
 
     // Calculate sampling distance
     const float samplingStep = vc.interval.nominalDeltaT / samplingRate;
-    newDistance = vc.interval.tRange.lower + vc.iuDistance * samplingStep;
+    const float newDistance =
+        vc.interval.tRange.lower + vc.iuDistance * samplingStep;
 
     // Prepare sampling position
     const vec3f p = vc.org + newDistance * vc.dir;
@@ -73,15 +74,15 @@ static void sampleVolume(VolumeContext &vc,
 
     // Go to the next sub-interval
     vc.iuDistance += 1.f;
+    dt = newDistance - vc.distance - emptySpace;
+    vc.distance = newDistance;
   }
 
   // Apply transfer function to get color with alpha
   vc.sample = m->transferFunction->get(m->transferFunction, sampleVal);
 
   // Weight the opacity with deltaT using Beer law
-  const float dt = newDistance - vc.distance - emptySpace;
   vc.sample.w = 1.f - exp(-vc.sample.w * dt * m->densityScale);
-  vc.distance = newDistance;
 }
 
 static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
