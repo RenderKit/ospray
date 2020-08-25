@@ -529,9 +529,14 @@ common type of structured volumes are regular grids.
 Structured regular volumes are created by passing the type string
 "`structuredRegular`" to `ospNewVolume`. Structured volumes are
 represented through an `OSPData` 3D array `data` (which may or may not
-be shared with the application), where currently the voxel data needs to
-be laid out compact in memory in xyz-order^[For consecutive memory
-addresses the x-index of the corresponding voxel changes the quickest.]
+be shared with the application). The voxel data must be laid out in
+xyz-order^[For consecutive memory addresses the x-index of the corresponding
+voxel changes the quickest.] and can be compact (best for performance) or can
+have a stride between voxels, specified through the
+`byteStride1` parameter when creating the `OSPData`. Only 1D strides are
+supported, additional strides between scanlines (2D, `byteStride2`) and
+slices (3D, `byteStride3`) are not.
+
 
 The parameters understood by structured volumes are summarized in the
 table below.

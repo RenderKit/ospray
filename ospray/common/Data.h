@@ -39,6 +39,7 @@ struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   virtual std::string toString() const override;
 
   size_t size() const;
+  vec3l stride() const;
   char *data() const;
   char *data(const vec3ul &idx) const;
   bool compact() const; // all strides are natural
@@ -237,6 +238,11 @@ const ispc::Data1D *ispc(Ref<const DataT<T, 1>> &dataRef)
 inline size_t Data::size() const
 {
   return numItems.x * numItems.y * numItems.z;
+}
+
+inline vec3l Data::stride() const
+{
+  return byteStride;
 }
 
 inline char *Data::data() const

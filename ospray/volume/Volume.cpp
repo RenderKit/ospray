@@ -72,7 +72,8 @@ void Volume::commit()
   createEmbreeGeometry();
 
   ispc::Volume_set(ispcEquivalent, embreeGeometry);
-  ispc::Volume_set_vklVolume(ispcEquivalent, vklVolume, vklSampler, (ispc::box3f *)&bounds);
+  ispc::Volume_set_vklVolume(
+      ispcEquivalent, vklVolume, vklSampler, (ispc::box3f *)&bounds);
 }
 
 void Volume::createEmbreeGeometry()
@@ -154,14 +155,22 @@ void Volume::handleParams()
         }
 
       } else {
+        // TODO VKL only supports a 1d stride, so 2nd+3rd stride assumed to
+        // be multiples of the 1st stride
         VKLData vklData = vklNewData(data->size(),
             (VKLDataType)data->type,
             data->data(),
-            VKL_DATA_SHARED_BUFFER);
+            VKL_DATA_SHARED_BUFFER,
+            data->stride().x);
+
+        if (data->stride().y != int64_t(data->numItems.x) * data->stride().x
+            || data->stride().z != int64_t(data->numItems.y) * data->stride().y) {
+          throw std::runtime_error(
+              toString() + " VKL only supports 1D strides between elements");
+        }
 
         std::string name(param.name);
         if (name == "data") { // structured volumes
-          // TODO 2nd+3rd stride is natural
           vec3ul &dim = data->numItems;
           vklSetVec3i(vklVolume, "dimensions", dim.x, dim.y, dim.z);
           vklSetInt(vklVolume, "voxelType", (VKLDataType)data->type);
