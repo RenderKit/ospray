@@ -449,6 +449,11 @@ void GLFWOSPRayWindow::buildUI()
     }
   }
 
+  if (scene == "unstructured_volume") {
+    if (ImGui::Checkbox("show cells", &showUnstructuredCells))
+      refreshScene(true);
+  }
+
   static int whichRenderer = 0;
   static int whichDebuggerType = 0;
   if (ImGui::Combo("renderer##whichRenderer",
@@ -601,8 +606,8 @@ void GLFWOSPRayWindow::buildUI()
       addObjectToCommit(renderer.handle());
     }
 
-    static float samplingRate = 0.125f;
-    if (ImGui::SliderFloat("volumeSamplingRate", &samplingRate, 0.001f, 1.f)) {
+    static float samplingRate = 1.f;
+    if (ImGui::SliderFloat("volumeSamplingRate", &samplingRate, 0.001f, 2.f)) {
       renderer.setParam("volumeSamplingRate", samplingRate);
       addObjectToCommit(renderer.handle());
     }
@@ -633,6 +638,8 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
   testing::setParam(builder, "rendererType", rendererTypeStr);
   if (scene == "curves") {
     testing::setParam(builder, "curveBasis", curveBasis);
+  } else if (scene == "unstructured_volume") {
+    testing::setParam(builder, "showCells", showUnstructuredCells);
   }
   testing::commit(builder);
 
@@ -654,7 +661,8 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
   backplate.push_back(vec4f(0.4f, 0.2f, 0.4f, 1.0f));
 
   OSPTextureFormat texFmt = OSP_TEXTURE_RGBA32F;
-  backplateTex.setParam("data", cpp::CopiedData(backplate.data(), vec2ul(2, 2)));
+  backplateTex.setParam(
+      "data", cpp::CopiedData(backplate.data(), vec2ul(2, 2)));
   backplateTex.setParam("format", OSP_INT, &texFmt);
   addObjectToCommit(backplateTex.handle());
 

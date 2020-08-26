@@ -29,4 +29,18 @@ class DepthCompositeVolume
   vec4f bgColor;
 };
 
+// Test an unstructured volume rendering. Generates a complex scene made of
+// different cell types. Parametrized with cells visibility boolean.
+class UnstructuredVolume
+    : public Base,
+      public ::testing::TestWithParam<std::tuple<const char *, bool>>
+{
+ public:
+  UnstructuredVolume();
+  void SetUp() override;
+
+ private:
+  bool showCells;
+};
+
 } // namespace OSPRayTestScenes

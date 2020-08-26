@@ -77,6 +77,11 @@ cpp::TransferFunction Builder::makeTransferFunction(
   if (tfOpacityMap == "linear") {
     opacities.emplace_back(0.f);
     opacities.emplace_back(1.f);
+  } else if (tfOpacityMap == "linearInv") {
+    opacities.emplace_back(1.f);
+    opacities.emplace_back(0.f);
+  } else if (tfOpacityMap == "opaque") {
+    opacities.emplace_back(1.f);
   }
 
   transferFunction.setParam("color", cpp::CopiedData(colors));

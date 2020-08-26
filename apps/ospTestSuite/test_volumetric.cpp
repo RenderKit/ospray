@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_volumetric.h"
+#include "ArcballCamera.h"
+#include "ospray_testing.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 
 namespace OSPRayTestScenes {
@@ -199,16 +201,60 @@ void DepthCompositeVolume::SetUp()
   AddLight(ambient);
 }
 
+UnstructuredVolume::UnstructuredVolume()
+{
+  auto params = GetParam();
+  rendererType = std::get<0>(params);
+  showCells = std::get<1>(params);
+}
+
+void UnstructuredVolume::SetUp()
+{
+  Base::SetUp();
+
+  instances.clear();
+
+  auto builder = ospray::testing::newBuilder("unstructured_volume");
+  ospray::testing::setParam(builder, "rendererType", rendererType);
+  ospray::testing::setParam(builder, "showCells", showCells);
+  ospray::testing::commit(builder);
+
+  world = ospray::testing::buildWorld(builder);
+  ospray::testing::release(builder);
+
+  world.commit();
+
+  auto worldBounds = world.getBounds<box3f>();
+
+  ArcballCamera arcballCamera(worldBounds, imgSize);
+
+  camera.setParam("position", arcballCamera.eyePos());
+  camera.setParam("direction", arcballCamera.lookDir());
+  camera.setParam("up", arcballCamera.upDir());
+
+  renderer.setParam("maxPathLength", 1);
+}
+
 // Test Instantiations //////////////////////////////////////////////////////
 
 INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("gravity_spheres_volume",
                            "perlin_noise_volumes",
-                           "unstructured_volume",
+                           "unstructured_volume_simple",
                            "particle_volume",
                            "vdb_volume"),
         ::testing::Values("scivis", "pathtracer")));
+
+TEST_P(UnstructuredVolume, simple)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
+    UnstructuredVolume,
+    ::testing::Combine(::testing::Values("scivis", "pathtracer"),
+        ::testing::Values(false, true)));
 
 TEST_P(TextureVolumeTransform, simple)
 {

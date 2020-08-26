@@ -62,6 +62,7 @@ class GLFWOSPRayWindow
   bool showDepth{false};
   bool renderSunSky{false};
   bool cancelFrameOnInteraction{false};
+  bool showUnstructuredCells{false};
 
   // GLFW window instance
   GLFWwindow *glfwWindow = nullptr;
