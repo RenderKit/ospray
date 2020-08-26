@@ -340,7 +340,7 @@ INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
                            "unstructured_volume_simple",
                            "particle_volume",
                            "vdb_volume"),
-        ::testing::Values("scivis", "pathtracer")));
+        ::testing::Values("scivis", "pathtracer", "ao")));
 
 TEST_P(UnstructuredVolume, simple)
 {
@@ -349,7 +349,7 @@ TEST_P(UnstructuredVolume, simple)
 
 INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
     UnstructuredVolume,
-    ::testing::Combine(::testing::Values("scivis", "pathtracer"),
+    ::testing::Combine(::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(false, true)));
 
 TEST_P(TextureVolumeTransform_deprecated, simple)

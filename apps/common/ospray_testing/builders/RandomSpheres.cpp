@@ -83,7 +83,7 @@ cpp::Group Spheres::buildGroup() const
     glassMaterial.setParam("attenuationDistance", 0.2f);
     glassMaterial.commit();
     model.setParam("material", glassMaterial);
-  } else if (rendererType == "scivis") {
+  } else if (rendererType == "scivis" || rendererType == "ao") {
     cpp::Material glassMaterial(rendererType.c_str(), "obj");
     glassMaterial.commit();
     model.setParam("material", glassMaterial);

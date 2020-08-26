@@ -22,6 +22,8 @@ Version History
 -   New minimum ISPC version is 1.14.1
 -   Changed parameters to `volume` texture: it now directly accepts the
     `volume` and the `transferFunction`. 
+-   Re-add SciVis renderer features (the previous version is still
+    available as `ao` renderer)
 
 ### Changes in v2.2.0:
 

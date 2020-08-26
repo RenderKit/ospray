@@ -49,7 +49,8 @@ cpp::Group Planes::buildGroup() const
 
   // Create geometric model
   cpp::GeometricModel model(planeGeometry);
-  if (rendererType == "pathtracer" || rendererType == "scivis") {
+  if (rendererType == "pathtracer" || rendererType == "scivis"
+      || rendererType == "ao") {
     cpp::Material material(rendererType, "obj");
     material.setParam("kd", vec3f(.1f, .4f, .8f));
     material.commit();

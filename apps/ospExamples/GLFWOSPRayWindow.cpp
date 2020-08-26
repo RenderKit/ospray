@@ -51,7 +51,7 @@ static const std::vector<std::string> g_curveBasis = {
     "bspline", "hermite", "catmull-rom", "linear"};
 
 static const std::vector<std::string> g_renderers = {
-    "scivis", "pathtracer", "debug"};
+    "scivis", "pathtracer", "ao", "debug"};
 
 static const std::vector<std::string> g_debugRendererTypes = {"eyeLight",
     "primID",
@@ -470,6 +470,8 @@ void GLFWOSPRayWindow::buildUI()
       rendererType = OSPRayRendererType::SCIVIS;
     else if (rendererTypeStr == "pathtracer")
       rendererType = OSPRayRendererType::PATHTRACER;
+    else if (rendererTypeStr == "ao")
+      rendererType = OSPRayRendererType::AO;
     else if (rendererTypeStr == "debug")
       rendererType = OSPRayRendererType::DEBUGGER;
     else
@@ -594,6 +596,24 @@ void GLFWOSPRayWindow::buildUI()
       addObjectToCommit(renderer.handle());
     }
   } else if (rendererType == OSPRayRendererType::SCIVIS) {
+    static int aoSamples = 1;
+    if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
+      renderer.setParam("aoSamples", aoSamples);
+      addObjectToCommit(renderer.handle());
+    }
+
+    static float aoIntensity = 1.f;
+    if (ImGui::SliderFloat("aoIntensity", &aoIntensity, 0.f, 1.f)) {
+      renderer.setParam("aoIntensity", aoIntensity);
+      addObjectToCommit(renderer.handle());
+    }
+
+    static float samplingRate = 1.f;
+    if (ImGui::SliderFloat("volumeSamplingRate", &samplingRate, 0.001f, 2.f)) {
+      renderer.setParam("volumeSamplingRate", samplingRate);
+      addObjectToCommit(renderer.handle());
+    }
+  } else if (rendererType == OSPRayRendererType::AO) {
     static int aoSamples = 1;
     if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
       renderer.setParam("aoSamples", aoSamples);

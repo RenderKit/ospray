@@ -237,7 +237,8 @@ cpp::Group CornellBox::buildGroup() const
   cpp::GeometricModel model(quadMesh);
 
   // create and setup a material
-  if (rendererType == "pathtracer" || rendererType == "scivis") {
+  if (rendererType == "pathtracer" || rendererType == "scivis"
+      || rendererType == "ao") {
     cpp::Material quadMeshMaterial(rendererType, "obj");
     quadMeshMaterial.commit();
     model.setParam("material", quadMeshMaterial);

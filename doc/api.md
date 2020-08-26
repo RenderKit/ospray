@@ -1759,6 +1759,32 @@ renderers, the SciVis renderer supports the following parameters:
   ------------- ---------------------- ------------  ----------------------------
   : Special parameters understood by the SciVis renderer.
 
+### Ambient Occlusion Renderer
+
+This renderer supports only a subset of the features of the [SciVis
+renderer] to gain performance. As the name suggest its main shading
+method is ambient occlusion (AO), [lights] are *not* considered at all
+and ,
+Volume rendering is supported.
+The Ambient Occlusion renderer is created by passing the  type string
+"`ao`" to `ospNewRenderer`. In addition to the [general
+parameters](#renderer) understood by all renderers the following
+parameters are supported as well:
+
+  ------------- ---------------------- ------------  ----------------------------
+  Type          Name                        Default  Description
+  ------------- ---------------------- ------------  ----------------------------
+  int           aoSamples                         0  number of rays per sample to
+                                                     compute ambient occlusion
+
+  float         aoRadius                     10^20^  maximum distance to consider
+                                                     for ambient occlusion
+
+  float         aoIntensity                       1  ambient occlusion strength
+
+  float         volumeSamplingRate                1  sampling rate for volumes
+  ------------- ---------------------- ------------  ----------------------------
+  : Special parameters understood by the Ambient Occlusion renderer.
 
 ### Path Tracer
 
@@ -1811,7 +1837,8 @@ geometry with
 #### OBJ Material
 
 The OBJ material is the workhorse material supported by both the [SciVis
-renderer] and the [path tracer]. It offers widely used common properties
+renderer] and the [path tracer] (the [Ambient Occlusion renderer] only
+uses the `kd` and `d` parameter). It offers widely used common properties
 like diffuse and specular reflection and is based on the [MTL material
 format](http://paulbourke.net/dataformats/mtl/) of Lightwave's OBJ scene
 files. To create an OBJ material pass the type string "`obj`" to

@@ -3,9 +3,8 @@
 
 #pragma once
 
+#include "common/World.ih"
 #include "math/vec.ih"
-
-/*! \file ospray/render/util.ih \brief Utility-functions for shaders */
 
 inline vec3f make_random_color(const int i)
 {
@@ -17,6 +16,12 @@ inline vec3f make_random_color(const int i)
       (g % my) * (1.f / (my - 1)),
       (g % mz) * (1.f / (mz - 1)));
 }
+
+float computeAO(const World *uniform,
+    const varying DifferentialGeometry &,
+    const uniform int sampleCnt,
+    const uniform float aoRadius,
+    const varying vec3i &sampleID);
 
 /*! struct that stores a precomputed z-order for tiles of TILE_SIZE x TILE_SIZE
  * pixels */

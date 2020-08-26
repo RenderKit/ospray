@@ -63,7 +63,8 @@ cpp::Group Boxes::buildGroup() const
 
   model.setParam("color", cpp::CopiedData(color));
 
-  if (rendererType == "pathtracer" || rendererType == "scivis") {
+  if (rendererType == "pathtracer" || rendererType == "scivis"
+      || rendererType == "ao") {
     cpp::Material material(rendererType, "obj");
     material.commit();
     model.setParam("material", material);

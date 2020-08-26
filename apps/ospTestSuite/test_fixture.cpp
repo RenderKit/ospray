@@ -126,7 +126,7 @@ void Base::CreateEmptyScene()
   camera.setParam("up", vec3f(0.f, 1.f, 0.f));
 
   renderer = cpp::Renderer(rendererType);
-  if (rendererType == "scivis")
+  if (rendererType == "scivis" || rendererType == "ao")
     renderer.setParam("aoSamples", 0);
   renderer.setParam("backgroundColor", vec3f(1.0f));
   renderer.setParam("pixelSamples", samplesPerPixel);
