@@ -84,6 +84,15 @@ void Volume::createEmbreeGeometry()
   embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 }
 
+void Volume::checkDataStride(const Data *data) const
+{
+  if (data->stride().y != int64_t(data->numItems.x) * data->stride().x
+      || data->stride().z != int64_t(data->numItems.y) * data->stride().y) {
+    throw std::runtime_error(
+        toString() + " VKL only supports 1D strides between elements");
+  }
+}
+
 void Volume::handleParams()
 {
   // pass all supported parameters through to VKL volume object
@@ -122,10 +131,12 @@ void Volume::handleParams()
         std::vector<VKLData> vklBlockData;
         vklBlockData.reserve(data->size());
         for (auto &&data : dataD) {
+          checkDataStride(data);
           VKLData vklData = vklNewData(data->size(),
               (VKLDataType)data->type,
               data->data(),
-              VKL_DATA_SHARED_BUFFER);
+              VKL_DATA_SHARED_BUFFER,
+              data->stride().x);
           vklBlockData.push_back(vklData);
         }
         VKLData vklData =
@@ -144,7 +155,6 @@ void Volume::handleParams()
                   || data->numItems.x != data->numItems.z)
                 throw std::runtime_error(
                     toString() + " VDB leaf node data must have size n^3.");
-              // TODO test 2nd+3rd stride is natural
             }
             format.push_back(
                 isTile ? VKL_FORMAT_TILE : VKL_FORMAT_CONSTANT_ZYX);
@@ -155,19 +165,12 @@ void Volume::handleParams()
         }
 
       } else {
-        // TODO VKL only supports a 1d stride, so 2nd+3rd stride assumed to
-        // be multiples of the 1st stride
+        checkDataStride(data);
         VKLData vklData = vklNewData(data->size(),
             (VKLDataType)data->type,
             data->data(),
             VKL_DATA_SHARED_BUFFER,
             data->stride().x);
-
-        if (data->stride().y != int64_t(data->numItems.x) * data->stride().x
-            || data->stride().z != int64_t(data->numItems.y) * data->stride().y) {
-          throw std::runtime_error(
-              toString() + " VKL only supports 1D strides between elements");
-        }
 
         std::string name(param.name);
         if (name == "data") { // structured volumes
