@@ -8,7 +8,8 @@
 
 namespace ospray {
 
-SciVis::SciVis(int defaultNumSamples) : aoSamples(defaultNumSamples)
+SciVis::SciVis(int defaultNumSamples, bool defaultShadowsEnabled)
+    : aoSamples(defaultNumSamples), shadowsEnabled(defaultShadowsEnabled)
 {
   ispcEquivalent = ispc::SciVis_create(this);
 }
@@ -23,6 +24,7 @@ void SciVis::commit()
   Renderer::commit();
 
   ispc::SciVis_set(getIE(),
+      getParam<bool>("shadowsEnabled", shadowsEnabled),
       getParam<int>("aoSamples", aoSamples),
       getParam<float>("aoRadius", 1e20f),
       getParam<float>("aoIntensity", 1.f),

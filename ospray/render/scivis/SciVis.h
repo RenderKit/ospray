@@ -8,12 +8,13 @@ namespace ospray {
 
 struct SciVis : public Renderer
 {
-  SciVis(int defaultAOSamples = 1);
+  SciVis(int defaultAOSamples = 1, bool defaultShadowsEnabled = false);
   std::string toString() const override;
   void commit() override;
 
  private:
   int aoSamples{1};
+  bool shadowsEnabled{false};
 };
 
 } // namespace ospray
