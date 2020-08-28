@@ -31,6 +31,8 @@ static void sampleVolume(VolumeContext &vc,
   // We have to iterate till we get a valid sample value
   float dt;
   float sampleVal = nan;
+  const uniform float gsc = m->gradientShadingScale;
+  vec3f ns = make_vec3f(0.f);
   while (isnan(sampleVal)) {
     // Iterate till sampling position is within interval
     float emptySpace = 0.f;
@@ -76,10 +78,22 @@ static void sampleVolume(VolumeContext &vc,
     vc.iuDistance += 1.f;
     dt = newDistance - vc.distance - emptySpace;
     vc.distance = newDistance;
+
+    // get normal for gradient shading
+    if (gsc > 0.0f && !isnan(sampleVal))
+      ns = Volume_getGradient(m->volume, p);
   }
 
   // Apply transfer function to get color with alpha
   vc.sample = m->transferFunction->get(m->transferFunction, sampleVal);
+
+  // compute gradient shading lighting
+  if (dot(ns, ns) > 1e-6f) {
+    const vec3f dir = vc.dir / length(vc.dir);
+    const vec3f ns = ns / length(ns);
+    const float intensity = absf(dot(ns, dir));
+    vc.sample = vc.sample * intensity * gsc + vc.sample * (1.0f - gsc);
+  }
 
   // Weight the opacity with deltaT using Beer law
   vc.sample.w = 1.f - exp(-vc.sample.w * dt * m->densityScale);

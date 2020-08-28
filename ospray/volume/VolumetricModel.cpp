@@ -67,7 +67,8 @@ void VolumetricModel::commit()
       transferFunction->getIE(),
       (const ispc::box3f &)volumeBounds,
       getParam<float>("densityScale", 1.f),
-      getParam<float>("anisotropy", 0.f));
+      getParam<float>("anisotropy", 0.f),
+      getParam<float>("gradientShadingScale", 0.f));
 }
 
 RTCGeometry VolumetricModel::embreeGeometryHandle() const
