@@ -2569,7 +2569,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
   Name             Description
   ---------------- -----------------------------------------------------------
   OSP_FB_COLOR     RGB color including alpha
-  OSP_FB_DEPTH     euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float
+  OSP_FB_DEPTH     euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float; for multiple samples per pixel their minimum is taken
   OSP_FB_ACCUM     accumulation buffer for progressive refinement
   OSP_FB_VARIANCE  for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering]
   OSP_FB_NORMAL    accumulated world-space normal of the first hit, as vec3f
