@@ -22,15 +22,14 @@ before you can build OSPRay you need the following prerequisites:
     Linux development tools. To build the interactive tutorials, you
     should also have some version of OpenGL and GLFW.
 -   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io), version 1.10.0 or later. Please
+    (ISPC)](http://ispc.github.io), version 1.14.1 or later. Please
     obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.^[For example, if OSPRay is in
     `~/Projects/ospray`, ISPC will also be searched in
-    `~/Projects/ispc-v1.12.0-linux`] Alternatively set the CMake
+    `~/Projects/ispc-v1.14.1-linux`] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
-    Note: OSPRay is incompatible with ISPC v1.11.0.
 -   OSPRay builds on top of the Intel oneAPI Rendering Toolkit common
     library `rkcommon`. The library provides abstractions for tasking,
     aligned memory allocation, vector math types, among others. For
