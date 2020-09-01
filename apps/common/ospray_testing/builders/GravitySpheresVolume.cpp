@@ -288,7 +288,7 @@ cpp::Volume GravitySpheres::createAMRVolume(const VoxelArray &voxels) const
   volume.setParam("block.data", cpp::CopiedData(blockData));
   volume.setParam("block.bounds", cpp::CopiedData(blockBounds));
   volume.setParam("block.level", cpp::CopiedData(refinementLevels));
-  volume.setParam("block.cellWidth", cpp::CopiedData(cellWidths));
+  volume.setParam("cellWidth", cpp::CopiedData(cellWidths));
 
   volume.commit();
 
