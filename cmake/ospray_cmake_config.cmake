@@ -62,3 +62,35 @@ install(FILES
   DESTINATION ${OSPRAY_CMAKECONFIG_DIR}
   COMPONENT devel
 )
+
+if (WIN32)
+  set(dllsuffix ".dll")
+else()
+  if (APPLE)
+    set(dllsuffix ".dylib")
+  else()
+    set(dllsuffix ".so")
+  endif()
+endif()
+
+set(rkcommon_PATH ${rkcommon_DIR}/../../../bin)
+set(rkcommon_dlls ${rkcommon_PATH}/rkcommon${dllsuffix})
+install(
+  FILES ${rkcommon_dlls}
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT devel
+)
+
+set(openvkl_PATH ${openvkl_DIR}/../../../bin)
+set(openvkl_dlls 
+  ${openvkl_PATH}/openvkl${dllsuffix}
+  ${openvkl_PATH}/openvkl_module_ispc_driver${dllsuffix}
+  ${openvkl_PATH}/openvkl_module_ispc_driver_4${dllsuffix}
+  ${openvkl_PATH}/openvkl_module_ispc_driver_8${dllsuffix}
+  ${openvkl_PATH}/openvkl_module_ispc_driver_16${dllsuffix}
+  )
+install(
+  FILES ${openvkl_dlls}
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT devel
+)
