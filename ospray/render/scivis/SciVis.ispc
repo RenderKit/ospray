@@ -48,10 +48,15 @@ void SciVis_renderSample(Renderer *uniform _self,
     // Sample volumes across volume intervals (in front of geometry hit)
     if (volumeIntervals.numVolumeIntervals > 0) {
       vec4f volumeColor = integrateVolumeIntervalsGradient(volumeIntervals,
+          self,
+          fb,
+          world,
+          sample,
           rayIntervals,
           volumeRay,
           ldSampler,
           self->volumeSamplingRate);
+
       outputColor = outputColor + (1.f - outputColor.w) * volumeColor;
     }
 
