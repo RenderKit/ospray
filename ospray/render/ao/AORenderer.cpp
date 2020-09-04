@@ -22,7 +22,7 @@ void AORenderer::commit()
 
   ispc::AORenderer_set(getIE(),
       getParam<int>("aoSamples", aoSamples),
-      getParam<float>("aoRadius", 1e20f),
+      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f)),
       getParam<float>("aoIntensity", 1.f),
       getParam<float>("volumeSamplingRate", 1.f));
 }

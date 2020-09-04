@@ -24,9 +24,9 @@ void SciVis::commit()
   Renderer::commit();
 
   ispc::SciVis_set(getIE(),
-      getParam<bool>("shadowsEnabled", shadowsEnabled),
+      getParam<bool>("shadows", shadowsEnabled),
       getParam<int>("aoSamples", aoSamples),
-      getParam<float>("aoRadius", 1e20f),
+      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f)),
       getParam<float>("aoIntensity", 1.f),
       getParam<float>("volumeSamplingRate", 1.f));
 }

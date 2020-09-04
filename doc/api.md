@@ -1747,10 +1747,12 @@ renderers, the SciVis renderer supports the following parameters:
   ------------- ---------------------- ------------  ----------------------------
   Type          Name                        Default  Description
   ------------- ---------------------- ------------  ----------------------------
+  bool          shadows                       false  whether to compute (hard) shadows
+
   int           aoSamples                         0  number of rays per sample to
                                                      compute ambient occlusion
 
-  float         aoRadius                     10^20^  maximum distance to consider
+  float         aoDistance                   10^20^  maximum distance to consider
                                                      for ambient occlusion
 
   float         aoIntensity                       1  ambient occlusion strength
@@ -1774,10 +1776,10 @@ parameters are supported as well:
   ------------- ---------------------- ------------  ----------------------------
   Type          Name                        Default  Description
   ------------- ---------------------- ------------  ----------------------------
-  int           aoSamples                         0  number of rays per sample to
+  int           aoSamples                         1  number of rays per sample to
                                                      compute ambient occlusion
 
-  float         aoRadius                     10^20^  maximum distance to consider
+  float         aoDistance                   10^20^  maximum distance to consider
                                                      for ambient occlusion
 
   float         aoIntensity                       1  ambient occlusion strength
