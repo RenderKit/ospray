@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -13,20 +13,10 @@ struct SurfaceShadingInfo
 
 typedef SurfaceShadingInfo SSI;
 
-inline void computeDG(const World *uniform world,
-    const SciVis *uniform renderer,
-    const Ray &ray,
-    DifferentialGeometry &dg)
-{
-  postIntersect(world,
-      &renderer->super,
-      dg,
-      ray,
-      DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TEXCOORD);
-}
-
 SSI computeShading(const SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
-    ScreenSample &sample);
+    ScreenSample &sample,
+    const varying vec3f &inDir,
+    const float time);

@@ -1755,11 +1755,14 @@ renderers, the SciVis renderer supports the following parameters:
   float         aoDistance                   10^20^  maximum distance to consider
                                                      for ambient occlusion
 
-  float         aoIntensity                       1  ambient occlusion strength
-
   float         volumeSamplingRate                1  sampling rate for volumes
   ------------- ---------------------- ------------  ----------------------------
   : Special parameters understood by the SciVis renderer.
+
+Note that the intensity (and color) of AO is deduced from an [ambient
+light] in the `lights` array.^[If there are multiple ambient lights then
+their contribution is added] If `aoSamples` is zero (the default) then
+ambient lights cause ambient illumination (without occlusion).
 
 ### Ambient Occlusion Renderer
 
@@ -1879,9 +1882,6 @@ If present, the color component of [geometries] is also used for the
 diffuse color `Kd` and the alpha component is also used for the opacity
 `d`.
 
-Note that currently only the path tracer implements colored transparency
-with `Tf`.
-
 Normal mapping can simulate small geometric features via the texture
 `map_Bump`. The normals $n$ in the normal map are with respect to the
 local tangential shading coordinate system and are encoded as $½(n+1)$,
@@ -1898,6 +1898,9 @@ normal map vertically or invert its green channel.
 
 ![Normal map representing an exalted square pyramidal
 frustum.][imgNormalMap]
+
+Note that currently only the path tracer implements colored transparency
+with `Tf` and normal mapping with `map_Bump`.
 
 All parameters (except `Tf`) can be textured by passing a [texture]
 handle, prefixed with "`map_`". The fetched texels are multiplied by the

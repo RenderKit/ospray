@@ -24,6 +24,13 @@ Version History
     `volume` and the `transferFunction`. 
 -   Re-add SciVis renderer features (the previous version is still
     available as `ao` renderer)
+    -   Lights are regarded, and thus the OBJ material terms `ks` and
+        `ns` have effect again
+    -   Hard shadows are enabled via the `shadows` parameter
+    -   The control of ambient occlusion changed:
+        -   The `aoIntensity` paramter is replaced by the combined
+            intensity of ambient lights in the `World`
+        -   The effect range is controlled via `aoDistance`
 
 ### Changes in v2.2.0:
 

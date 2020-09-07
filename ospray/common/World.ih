@@ -4,11 +4,18 @@
 #pragma once
 
 // ospray stuff
-#include "../common/Clipping.ih"
-#include "../common/Ray.ih"
 #include "Instance.ih"
+#include "common/Clipping.ih"
+#include "common/Ray.ih"
+#include "lights/Light.ih"
 
 struct Renderer;
+
+struct SciVisData  {
+  vec3f aoColorPi;
+  Light *uniform *uniform lights;
+  uint32 numLights;
+};
 
 struct World
 {
@@ -28,6 +35,8 @@ struct World
   RTCScene embreeSceneHandleClippers;
 
   int32 numInvertedClippers;
+
+  SciVisData scivisData;
 };
 
 inline void traceGeometryRay(const World *uniform world, varying Ray &ray)

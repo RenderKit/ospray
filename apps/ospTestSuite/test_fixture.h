@@ -83,21 +83,15 @@ class FromOsprayTesting
   FromOsprayTesting();
   void SetUp() override;
 
- private:
+ protected:
   std::string sceneName;
 };
 
 // with direct lighting only
-class FromOsprayTestingDirect
-    : public Base,
-      public ::testing::TestWithParam<std::tuple<const char * /*scene name*/>>
+class FromOsprayTestingDirect : public FromOsprayTesting
 {
  public:
-  FromOsprayTestingDirect();
   void SetUp() override;
-
- private:
-  std::string sceneName;
 };
 
 } // namespace OSPRayTestScenes

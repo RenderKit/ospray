@@ -596,15 +596,15 @@ void GLFWOSPRayWindow::buildUI()
       addObjectToCommit(renderer.handle());
     }
   } else if (rendererType == OSPRayRendererType::SCIVIS) {
-    static int aoSamples = 1;
-    if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
-      renderer.setParam("aoSamples", aoSamples);
+    static bool shadowsEnabled = false;
+    if (ImGui::Checkbox("shadows", &shadowsEnabled)) {
+      renderer.setParam("shadows", shadowsEnabled);
       addObjectToCommit(renderer.handle());
     }
 
-    static float aoIntensity = 1.f;
-    if (ImGui::SliderFloat("aoIntensity", &aoIntensity, 0.f, 1.f)) {
-      renderer.setParam("aoIntensity", aoIntensity);
+    static int aoSamples = 0;
+    if (ImGui::SliderInt("aoSamples", &aoSamples, 0, 64)) {
+      renderer.setParam("aoSamples", aoSamples);
       addObjectToCommit(renderer.handle());
     }
 

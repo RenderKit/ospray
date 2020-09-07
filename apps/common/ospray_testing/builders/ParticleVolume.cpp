@@ -180,7 +180,7 @@ cpp::Group ParticleVolume::buildGroup() const
       cpp::Material mat(rendererType, "obj");
       mat.setParam("kd", vec3f(1.f));
       mat.setParam("d", 0.5f);
-      if (rendererType == "pathtracer")
+      if (rendererType == "pathtracer" || rendererType == "scivis")
         mat.setParam("ks", vec3f(0.2f));
       mat.commit();
 

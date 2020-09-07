@@ -29,7 +29,10 @@ void SpherePrecision::SetUp()
 
   renderer.setParam("pixelSamples", 16);
   renderer.setParam("backgroundColor", vec4f(0.2f, 0.2f, 0.4f, 1.0f));
-  if (rendererType == "scivis" || rendererType == "ao") {
+  if (rendererType == "scivis") {
+    renderer.setParam("shadows", true);
+    renderer.setParam("aoSamples", 16);
+  } else if (rendererType == "ao") {
     renderer.setParam("aoSamples", 16);
     renderer.setParam("aoIntensity", 1.f);
   } else if (rendererType == "pathtracer") {
@@ -148,6 +151,7 @@ INSTANTIATE_TEST_SUITE_P(TestSceneLighting,
         "cornell_box_photometric",
         "cornell_box_photometric10",
         "cornell_box_ring40",
-        "cornell_box_ring80")));
+        "cornell_box_ring80"),
+        ::testing::Values("scivis", "pathtracer")));
 
 } // namespace OSPRayTestScenes

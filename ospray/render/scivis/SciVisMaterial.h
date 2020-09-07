@@ -9,6 +9,7 @@ namespace ospray {
 struct SciVisMaterial : public ospray::Material
 {
   SciVisMaterial();
+  std::string toString() const override;
   void commit() override;
 };
 

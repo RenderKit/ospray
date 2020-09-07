@@ -48,6 +48,8 @@ World::~World()
   freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
   freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
   freeAndNullifyEmbreeScene(embreeSceneHandleClippers);
+  ispc::World_destroy(getIE());
+  ispcEquivalent = nullptr;
 }
 
 World::World()
@@ -66,6 +68,8 @@ void World::commit()
   freeAndNullifyEmbreeScene(embreeSceneHandleGeometries);
   freeAndNullifyEmbreeScene(embreeSceneHandleVolumes);
   freeAndNullifyEmbreeScene(embreeSceneHandleClippers);
+
+  scivisDataValid = false;
 
   instances = getParamDataT<Instance *>("instance");
   lights = getParamDataT<Light *>("light");

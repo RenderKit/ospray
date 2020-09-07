@@ -12,6 +12,11 @@ SciVisMaterial::SciVisMaterial()
   ispcEquivalent = ispc::SciVisMaterial_create(this);
 }
 
+std::string SciVisMaterial::toString() const
+{
+  return "ospray::scivis::obj";
+}
+
 void SciVisMaterial::commit()
 {
   MaterialParam1f d = getMaterialParam1f("d", 1.f);

@@ -126,8 +126,15 @@ void Base::CreateEmptyScene()
   camera.setParam("up", vec3f(0.f, 1.f, 0.f));
 
   renderer = cpp::Renderer(rendererType);
-  if (rendererType == "scivis" || rendererType == "ao")
+
+  if (rendererType == "ao")
     renderer.setParam("aoSamples", 0);
+ 
+  if (rendererType == "scivis") {
+    renderer.setParam("shadows", true);
+    renderer.setParam("aoSamples", 16);
+  }
+
   renderer.setParam("backgroundColor", vec3f(1.0f));
   renderer.setParam("pixelSamples", samplesPerPixel);
 
@@ -178,38 +185,12 @@ void FromOsprayTesting::SetUp()
   camera.setParam("up", arcballCamera.upDir());
 }
 
-FromOsprayTestingDirect::FromOsprayTestingDirect()
-{
-  rendererType = "pathtracer";
-
-  auto params = GetParam();
-  sceneName = std::get<0>(params);
-}
-
 void FromOsprayTestingDirect::SetUp()
 {
-  Base::SetUp();
+  FromOsprayTesting::SetUp();
 
-  instances.clear();
-
-  auto builder = ospray::testing::newBuilder(sceneName);
-  ospray::testing::setParam(builder, "rendererType", rendererType);
-  ospray::testing::commit(builder);
-
-  world = ospray::testing::buildWorld(builder);
-  ospray::testing::release(builder);
-
-  world.commit();
-
-  auto worldBounds = world.getBounds<box3f>();
-
-  ArcballCamera arcballCamera(worldBounds, imgSize);
-
-  camera.setParam("position", arcballCamera.eyePos());
-  camera.setParam("direction", arcballCamera.lookDir());
-  camera.setParam("up", arcballCamera.upDir());
-
-  renderer.setParam("maxPathLength", 1);
+  if (rendererType == "pathtracer")
+    renderer.setParam("maxPathLength", 1);
 }
 
 } // namespace OSPRayTestScenes

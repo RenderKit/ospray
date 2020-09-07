@@ -22,8 +22,6 @@ struct PathTracer
   vec4f shadowCatcherPlane;
   bool shadowCatcher; // preprocessed
 
-  Material *uniform volumetricMaterial;
-
   // array containing the scene light sources
   // the lights are sorted: first geometric, then virtual lights
   Light *uniform *uniform lights;

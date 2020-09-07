@@ -283,7 +283,7 @@ void RendererMaterialList::SetUp()
       [](const std::string &rendererType, vec3f Kd, vec3f Ks) -> cpp::Material {
     cpp::Material mat(rendererType, "obj");
     mat.setParam("kd", Kd);
-    if (rendererType == "pathtracer")
+    if (rendererType == "pathtracer" || rendererType == "scivis")
       mat.setParam("ks", Ks);
     mat.commit();
 

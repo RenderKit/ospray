@@ -12,6 +12,5 @@ struct SciVis
   bool shadowsEnabled;
   int aoSamples;
   float aoRadius;
-  float aoIntensity;
   float volumeSamplingRate;
 };

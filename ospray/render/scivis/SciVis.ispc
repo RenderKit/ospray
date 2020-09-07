@@ -61,11 +61,16 @@ void SciVis_renderSample(Renderer *uniform _self,
     if (hadHit) {
       // Prepare differential geometry structure
       DifferentialGeometry dg;
-      computeDG(world, self, ray, dg);
+      postIntersect(world,
+          &self->super,
+          dg,
+          ray,
+          DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TEXCOORD);
 
       // Shade geometry
       SSI surfaceShading;
-      surfaceShading = computeShading(self, fb, world, dg, sample);
+      surfaceShading =
+          computeShading(self, fb, world, dg, sample, ray.dir, ray.time);
 
       // Use shaded color for blending
       blendedColor = surfaceShading.shadedColor;
@@ -116,7 +121,6 @@ export void SciVis_set(void *uniform _self,
     uniform bool shadowsEnabled,
     uniform int aoSamples,
     uniform float aoRadius,
-    uniform float aoIntensity,
     uniform float volumeSamplingRate)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
@@ -124,7 +128,6 @@ export void SciVis_set(void *uniform _self,
   self->shadowsEnabled = shadowsEnabled;
   self->aoSamples = aoSamples;
   self->aoRadius = aoRadius;
-  self->aoIntensity = aoIntensity;
 
   self->volumeSamplingRate = volumeSamplingRate;
 }
