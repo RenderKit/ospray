@@ -65,7 +65,8 @@ void SciVis_renderSample(Renderer *uniform _self,
           &self->super,
           dg,
           ray,
-          DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TEXCOORD);
+          DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
+              | DG_TEXCOORD);
 
       // Shade geometry
       SSI surfaceShading;

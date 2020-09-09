@@ -11,7 +11,8 @@
 
 struct Renderer;
 
-struct SciVisData  {
+struct SciVisData
+{
   vec3f aoColorPi;
   Light *uniform *uniform lights;
   uint32 numLights;

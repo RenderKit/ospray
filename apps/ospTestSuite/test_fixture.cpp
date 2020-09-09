@@ -129,7 +129,7 @@ void Base::CreateEmptyScene()
 
   if (rendererType == "ao")
     renderer.setParam("aoSamples", 0);
- 
+
   if (rendererType == "scivis") {
     renderer.setParam("shadows", true);
     renderer.setParam("aoSamples", 16);

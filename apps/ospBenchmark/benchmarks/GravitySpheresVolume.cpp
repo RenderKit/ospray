@@ -21,6 +21,9 @@ class GravitySpheres : public BaseFixture
   int dim;
 };
 
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres, "gravity_spheres_volume", 32, "ao");
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres, "gravity_spheres_volume", 128, "ao");
+OSPRAY_DEFINE_BENCHMARK(GravitySpheres, "gravity_spheres_volume", 512, "ao");
 OSPRAY_DEFINE_BENCHMARK(GravitySpheres, "gravity_spheres_volume", 32, "scivis");
 OSPRAY_DEFINE_BENCHMARK(
     GravitySpheres, "gravity_spheres_volume", 128, "scivis");

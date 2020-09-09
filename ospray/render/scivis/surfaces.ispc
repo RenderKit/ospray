@@ -78,7 +78,7 @@ vec3f directIllumination(const uniform SciVis *uniform self,
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
       const float cosNL = dot(light.dir, dg.Ns);
       if (cosNL < 0.0f)
-          continue;
+        continue;
 
       const vec3f H = normalize(light.dir - inDir);
       const float cosNH = dot(H, dg.Ns);

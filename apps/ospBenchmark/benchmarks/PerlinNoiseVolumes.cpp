@@ -22,6 +22,9 @@ class PerlinNoiseVolumes : public BaseFixture
 };
 
 OSPRAY_DEFINE_BENCHMARK(
+    PerlinNoiseVolumes, "perlin_noise_volumes", false, "ao");
+OSPRAY_DEFINE_BENCHMARK(PerlinNoiseVolumes, "perlin_noise_volumes", true, "ao");
+OSPRAY_DEFINE_BENCHMARK(
     PerlinNoiseVolumes, "perlin_noise_volumes", false, "scivis");
 OSPRAY_DEFINE_BENCHMARK(
     PerlinNoiseVolumes, "perlin_noise_volumes", true, "scivis");
