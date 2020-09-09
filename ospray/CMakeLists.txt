@@ -162,6 +162,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/ao/Material.cpp
   render/ao/Material.ispc
   render/ao/surfaces.ispc
+  render/ao/volumes.ispc
 
   render/scivis/SciVis.cpp
   render/scivis/SciVis.ispc

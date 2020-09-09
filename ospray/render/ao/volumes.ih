@@ -11,7 +11,7 @@
 struct LDSampler;
 struct RandomSampler;
 
-vec4f integrateVolumeIntervalsGradient(const VolumeIntervals &intervals,
+vec4f integrateVolumeIntervals(const VolumeIntervals &intervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
     varying LDSampler *uniform ldSampler,

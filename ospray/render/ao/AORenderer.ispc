@@ -3,10 +3,10 @@
 
 #include "math/random.ih"
 #include "render/Renderer.ih"
-#include "render/scivis/volumes.ih"
 // AO renderer
 #include "AORenderer.ih"
 #include "surfaces.ih"
+#include "volumes.ih"
 
 void AORenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
