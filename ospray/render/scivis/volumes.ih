@@ -14,8 +14,8 @@ struct RandomSampler;
 
 vec4f integrateVolumeIntervalsGradient(const VolumeIntervals &intervals,
     const SciVis *uniform renderer,
-    FrameBuffer *uniform fb,
-    World *uniform world,
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
     varying ScreenSample &sample,
     const RayIntervals &rayIntervals,
     Ray &ray,

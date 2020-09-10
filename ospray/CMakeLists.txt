@@ -170,6 +170,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/scivis/SciVisMaterial.ispc
   render/scivis/surfaces.ispc
   render/scivis/volumes.ispc
+  render/scivis/lightAlpha.ispc
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp

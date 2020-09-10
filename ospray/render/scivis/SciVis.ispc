@@ -75,8 +75,8 @@ void SciVis_renderSample(Renderer *uniform _self,
 
       // Shade geometry
       SSI surfaceShading;
-      surfaceShading =
-          computeShading(self, fb, world, dg, sample, ray.dir, ray.time);
+      surfaceShading = computeShading(
+          self, fb, world, dg, sample, ldSampler, ray.dir, ray.time);
 
       // Use shaded color for blending
       blendedColor = surfaceShading.shadedColor;

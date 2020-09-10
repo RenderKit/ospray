@@ -14,3 +14,15 @@ struct SciVis
   float aoRadius;
   float volumeSamplingRate;
 };
+
+struct LDSampler;
+
+float lightAlpha(const uniform SciVis *uniform self,
+    Ray &ray,
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
+    ScreenSample &sample,
+    varying LDSampler *uniform ldSampler,
+    float weight,
+    float rayOffset,
+    uniform float quality);

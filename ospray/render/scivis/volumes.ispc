@@ -26,9 +26,10 @@ struct VolumeContext
 };
 
 static void sampleVolume(const SciVis *uniform renderer,
-    FrameBuffer *uniform fb,
-    World *uniform world,
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
     varying ScreenSample &sample,
+    varying LDSampler *uniform ldSampler,
     VolumeContext &vc,
     VolumetricModel *uniform m,
     const uniform float samplingRate)
@@ -102,8 +103,8 @@ static void sampleVolume(const SciVis *uniform renderer,
       dg.material = NULL;
       dg.Ns = dg.Ng = ns;
       dg.epsilon = dt / 2.f;
-      SSI shading =
-          computeShading(renderer, fb, world, dg, sample, vc.dir, 0.f);
+      SSI shading = computeShading(
+          renderer, fb, world, dg, sample, ldSampler, vc.dir, 0.f);
 
       vc.sample = lerp(gsc, vc.sample, shading.shadedColor);
     }
@@ -114,9 +115,10 @@ static void sampleVolume(const SciVis *uniform renderer,
 }
 
 static float sampleAllVolumes(const SciVis *uniform renderer,
-    FrameBuffer *uniform fb,
-    World *uniform world,
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
     varying ScreenSample &sample,
+    varying LDSampler *uniform ldSampler,
     const VolumeIntervals &volumeIntervals,
     varying VolumeContext *uniform volumeContexts,
     const uniform float samplingRate,
@@ -135,7 +137,8 @@ static float sampleAllVolumes(const SciVis *uniform renderer,
     if (vc.ready == 0) {
       const VolumeInterval &vi = volumeIntervals.intervals[i];
       foreach_unique (m in vi.volumetricModel) {
-        sampleVolume(renderer, fb, world, sample, vc, m, samplingRate);
+        sampleVolume(
+            renderer, fb, world, sample, ldSampler, vc, m, samplingRate);
       }
       vc.ready = 1;
     }
@@ -159,8 +162,8 @@ static float sampleAllVolumes(const SciVis *uniform renderer,
 
 vec4f integrateVolumeIntervalsGradient(const VolumeIntervals &volumeIntervals,
     const SciVis *uniform renderer,
-    FrameBuffer *uniform fb,
-    World *uniform world,
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
     varying ScreenSample &sample,
     const RayIntervals &rayIntervals,
     Ray &ray,
@@ -253,6 +256,7 @@ vec4f integrateVolumeIntervalsGradient(const VolumeIntervals &volumeIntervals,
           fb,
           world,
           sample,
+          ldSampler,
           volumeIntervals,
           volumeContexts,
           samplingRate,
