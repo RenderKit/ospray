@@ -143,6 +143,8 @@ void Volume::handleParams()
             vklNewData(vklBlockData.size(), VKL_DATA, vklBlockData.data());
         vklSetData(vklVolume, param.name.c_str(), vklData);
         vklRelease(vklData);
+        for (VKLData vd: vklBlockData)
+          vklRelease(vd);
 
         if (vklType == "vdb" && param.name == "node.data") {
           // deduce format
