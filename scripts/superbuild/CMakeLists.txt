@@ -53,7 +53,7 @@ option(ALWAYS_REBUILD "Force every project to always be rebuilt?" OFF)
 option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
 set(ISPC_VERSION "v1.14.1" CACHE STRING "Which version of ISCP to download?")
 
-set(BUILD_RKCOMMON_VERSION "v1.4.2" CACHE STRING "Which version of rkcommon to build?")
+set(BUILD_RKCOMMON_VERSION "v1.5.0" CACHE STRING "Which version of rkcommon to build?")
 
 option(DOWNLOAD_TBB "Download TBB or use the only found in the system environment?" ON)
 set(TBB_VERSION "2020.2" CACHE STRING "Which version of TBB to download?")

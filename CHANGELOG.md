@@ -3,25 +3,6 @@ Version History
 
 ### Changes in v2.3.0:
 
--   Fixed many memory leaks
--   Handle `NaN` during volume sampling, which led to bounding boxes
-    being visible for some volumes and settings
--   Added `ospray_cpp` compatibility headers for C++ wrappers to
-    understand rkcommon and glm short vector types
-    -   For rkcommon, include `ospray/ospray_cpp/ext/rkcommon.h`
-    -   For glm, include `ospray/ospray_cpp/ext/glm.h`
-    -   NOTE: In debug builds some compilers will not optimize out type trait
-        definitions. This will require users to manually instantiate the glm
-        definitions in one translation unit within the application using
-        `#define OSPRAY_GLM_DEFINITIONS` before including `ext/glm.h`: see
-        `ospTutorialGLM` as an example
--   Fix shading for multiple modes of the `debug` renderer
--   Depth is now "accumulated" as well, using the minimum
--   Added support for data arrays with a stride between voxels in
-    volumes
--   New minimum ISPC version is 1.14.1
--   Changed parameters to `volume` texture: it now directly accepts the
-    `volume` and the `transferFunction`. 
 -   Re-add SciVis renderer features (the previous version is still
     available as `ao` renderer)
     -   Lights are regarded, and thus the OBJ material terms `ks` and
@@ -31,6 +12,28 @@ Version History
         -   The `aoIntensity` paramter is replaced by the combined
             intensity of ambient lights in the `World`
         -   The effect range is controlled via `aoDistance`
+-   Added support for data arrays with a stride between voxels in
+    volumes
+-   Application thread waiting for finished image via `ospWait`
+    participates in rendering, increasing CPU utilization; via
+    rkcommon v1.5.0
+-   Added `ospray_cpp` compatibility headers for C++ wrappers to
+    understand rkcommon and glm short vector types
+    -   For rkcommon, include `ospray/ospray_cpp/ext/rkcommon.h`
+    -   For glm, include `ospray/ospray_cpp/ext/glm.h`
+    -   NOTE: In debug builds some compilers will not optimize out type trait
+        definitions. This will require users to manually instantiate the glm
+        definitions in one translation unit within the application using
+        `#define OSPRAY_GLM_DEFINITIONS` before including `ext/glm.h`: see
+        `ospTutorialGLM` as an example
+-   Changed parameters to `volume` texture: it now directly accepts the
+    `volume` and the `transferFunction`. 
+-   Fixed many memory leaks
+-   Handle `NaN` during volume sampling, which led to bounding boxes
+    being visible for some volumes and settings
+-   Depth is now "accumulated" as well, using the minimum
+-   Fix shading for multiple modes of the `debug` renderer
+-   New minimum ISPC version is 1.14.1
 
 ### Changes in v2.2.0:
 
