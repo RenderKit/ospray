@@ -58,7 +58,7 @@ vec3f directIllumination(const uniform SciVis *uniform self,
               ldSampler,
               max_contrib,
               dg.epsilon,
-              1.0f);
+              0.25f);
 
           color = color + light_alpha * light_contrib;
         }
@@ -90,7 +90,15 @@ SSI computeShading(const SciVis *uniform self,
 
   float ao = 1.f;
   if (self->aoSamples > 0 && reduce_max(world->scivisData.aoColorPi) > 0.01f)
-    ao = computeAO(world, dg, self->aoSamples, self->aoRadius, sample.sampleID);
+    ao = SciVis_computeAO(self,
+        fb,
+        world,
+        sample,
+        ldSampler,
+        dg,
+        self->aoSamples,
+        self->aoRadius,
+        sample.sampleID);
 
   color = color + bsdf.diffuse * ao * world->scivisData.aoColorPi;
 

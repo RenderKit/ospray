@@ -32,12 +32,13 @@ static void sampleVolume(const SciVis *uniform renderer,
     varying LDSampler *uniform ldSampler,
     VolumeContext &vc,
     VolumetricModel *uniform m,
-    const uniform float samplingRate)
+    const uniform float samplingRate,
+    const uniform bool shade)
 {
   // We have to iterate till we get a valid sample value
   float dt;
   float sampleVal = nan;
-  const uniform float gsc = m->gradientShadingScale;
+  const uniform float gsc = shade ? m->gradientShadingScale : 0.f;
   vec3f p;
   while (isnan(sampleVal)) {
     // Iterate till sampling position is within interval
@@ -122,7 +123,8 @@ static float sampleAllVolumes(const SciVis *uniform renderer,
     const VolumeIntervals &volumeIntervals,
     varying VolumeContext *uniform volumeContexts,
     const uniform float samplingRate,
-    vec4f &sampledColor)
+    vec4f &sampledColor,
+    const uniform bool shade)
 {
   // Look for the closest sample across all volumes
   float minDist = inf;
@@ -138,7 +140,7 @@ static float sampleAllVolumes(const SciVis *uniform renderer,
       const VolumeInterval &vi = volumeIntervals.intervals[i];
       foreach_unique (m in vi.volumetricModel) {
         sampleVolume(
-            renderer, fb, world, sample, ldSampler, vc, m, samplingRate);
+            renderer, fb, world, sample, ldSampler, vc, m, samplingRate, shade);
       }
       vc.ready = 1;
     }
@@ -168,7 +170,8 @@ vec4f integrateVolumeIntervalsGradient(const VolumeIntervals &volumeIntervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
-    const uniform float samplingRate)
+    const uniform float samplingRate,
+    const uniform bool shade)
 {
   // Array of volume contexts
   VolumeContext volumeContexts[NUM_VOLUME_INTERVALS_MAX];
@@ -260,7 +263,8 @@ vec4f integrateVolumeIntervalsGradient(const VolumeIntervals &volumeIntervals,
           volumeIntervals,
           volumeContexts,
           samplingRate,
-          sampledColorOpacity);
+          sampledColorOpacity,
+          shade);
 
       // Exit loop if nothing sampled
       if (dist == inf)

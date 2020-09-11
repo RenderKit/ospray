@@ -5,6 +5,7 @@
 // ao renderer
 #include "SciVis.ih"
 #include "math/random.ih"
+#include "math/sampling.ih"
 #include "surfaces.ih"
 #include "volumes.ih"
 
@@ -55,7 +56,8 @@ void SciVis_renderSample(Renderer *uniform _self,
           rayIntervals,
           volumeRay,
           ldSampler,
-          self->volumeSamplingRate);
+          self->volumeSamplingRate,
+          true);
 
       outputColor = outputColor + (1.f - outputColor.w) * volumeColor;
     }
@@ -136,4 +138,60 @@ export void SciVis_set(void *uniform _self,
   self->aoRadius = aoRadius;
 
   self->volumeSamplingRate = volumeSamplingRate;
+}
+
+float SciVis_computeAO(const uniform SciVis *uniform self,
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
+    ScreenSample &sample,
+    varying LDSampler *uniform ldSampler,
+    const varying DifferentialGeometry &dg,
+    const uniform int sampleCnt,
+    const uniform float aoRadius,
+    const varying vec3i &sampleID)
+{
+  const uniform int accumID = reduce_max(sampleID.z) * sampleCnt;
+
+  // init TEA RNG //
+  RandomTEA rng_state;
+  varying RandomTEA *const uniform rng = &rng_state;
+  RandomTEA__Constructor(rng, sampleID.x, sampleID.y);
+  const vec2f rot = RandomTEA__getFloats(rng);
+
+  float hits = 0.f;
+
+  const linear3f localToWorld = frame(dg.Ns);
+
+  for (uniform int i = 0; i < sampleCnt; i++) {
+    // Use base-5 and base-7 Halton to avoid correlation with sample position
+    const vec2f halton = make_vec2f(
+        PermHalton_sample5(accumID + i), PermHalton_sample7(accumID + i));
+    const vec2f r = CranleyPattersonRotation(halton, rot);
+    const vec3f local_ao_dir = cosineSampleHemisphere(r);
+    const vec3f ao_dir = localToWorld * local_ao_dir;
+
+    if (dot(ao_dir, dg.Ns) < 0.01f) { // check below surface
+      hits += 1.f;
+      continue;
+    }
+
+    Ray ao_ray;
+    setRay(ao_ray, dg.P, ao_dir, dg.epsilon, aoRadius);
+
+    hits = hits
+        + (1.f
+            - lightAlpha(self,
+                ao_ray,
+                fb,
+                world,
+                sample,
+                ldSampler,
+                1.f,
+                dg.epsilon,
+                1.0f));
+  }
+
+  // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
+  // cancel
+  return 1.0f - (hits / (float)sampleCnt);
 }

@@ -49,7 +49,8 @@ float lightAlpha(const uniform SciVis *uniform self,
           rayIntervals,
           volumeRay,
           ldSampler,
-          self->volumeSamplingRate * quality);
+          self->volumeSamplingRate * quality,
+          false);
 
       alpha *= 1.f - volumeColor.w;
     }

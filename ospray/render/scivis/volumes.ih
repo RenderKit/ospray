@@ -20,4 +20,5 @@ vec4f integrateVolumeIntervalsGradient(const VolumeIntervals &intervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
-    const uniform float samplingRate);
+    const uniform float samplingRate,
+    const uniform bool shade);

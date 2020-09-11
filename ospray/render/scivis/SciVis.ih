@@ -26,3 +26,13 @@ float lightAlpha(const uniform SciVis *uniform self,
     float weight,
     float rayOffset,
     uniform float quality);
+
+float SciVis_computeAO(const uniform SciVis *uniform self,
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
+    ScreenSample &sample,
+    varying LDSampler *uniform ldSampler,
+    const varying DifferentialGeometry &dg,
+    const uniform int sampleCnt,
+    const uniform float aoRadius,
+    const varying vec3i &sampleID);
