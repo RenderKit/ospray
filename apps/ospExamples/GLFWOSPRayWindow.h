@@ -84,7 +84,7 @@ class GLFWOSPRayWindow
   vec3f sunDirection{-0.25f, -1.0f, 0.0f};
   float turbidity{3.f};
 
-  std::string scene{"boxes"};
+  std::string scene{"boxes_lit"};
 
   std::string curveBasis{"bspline"};
 
