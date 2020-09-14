@@ -27,8 +27,17 @@ all: www doc pdf
 www: $(webpages) www/stylesheet.css $(webimages) | wwwscripts
 doc: ../README.md
 pdf: ../readme.pdf
+checklinks: tmp/brokenlinks.txt
+	@if [[ -s $^ ]] ; then \
+	  echo "Found broken link:" ;\
+	  cat $^ ;\
+	  exit 1 ;\
+	else \
+	  echo "All links good." ;\
+	fi
 
-.PHONY: all www doc pdf clean realclean submodule
+
+.PHONY: all www doc pdf clean realclean submodule checklinks
 
 submodule:
 	git submodule update --init --remote
@@ -194,6 +203,11 @@ tmp/changelog.tex: filter-latex.py tmp/changelog.md tmp/links_local.md tmp/image
 	done
 	cp tmp/$(basename $<).pdf $@
 
+# crude way to detect broken pdf links
+tmp/%.txt: $(tmptexfiles)
+	fgrep -h $* $^ | sed -e 's@.*$*{\([^}]*\)}.*@\1@'|sort -u > $@
+tmp/brokenlinks.txt: tmp/hypertarget.txt tmp/hyperlink.txt
+	-diff -u $^ | grep "^+[^+]" > $@
 
 
 ### clean

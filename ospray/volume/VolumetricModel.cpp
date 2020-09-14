@@ -24,6 +24,12 @@ VolumetricModel::VolumetricModel(Volume *_volume)
   this->ispcEquivalent = ispc::VolumetricModel_create(this, volume->getIE());
 }
 
+VolumetricModel::~VolumetricModel()
+{
+  if (vklValueSelector)
+    vklRelease(vklValueSelector);
+}
+
 std::string VolumetricModel::toString() const
 {
   return "ospray::VolumetricModel";
@@ -61,7 +67,8 @@ void VolumetricModel::commit()
       transferFunction->getIE(),
       (const ispc::box3f &)volumeBounds,
       getParam<float>("densityScale", 1.f),
-      getParam<float>("anisotropy", 0.f));
+      getParam<float>("anisotropy", 0.f),
+      getParam<float>("gradientShadingScale", 0.f));
 }
 
 RTCGeometry VolumetricModel::embreeGeometryHandle() const

@@ -27,7 +27,7 @@ typedef int ssize_t;
 
 // ospray
 #include "ospray/ospray.h"
-#include "ospray/ospray_cpp/Traits.h"
+#include "ospray/ospray_cpp/ext/rkcommon.h"
 #include "ospray/version.h"
 // std
 #include <cstdint> // for int64_t etc

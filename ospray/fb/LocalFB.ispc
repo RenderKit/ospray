@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LocalFB.ih"
@@ -12,14 +12,11 @@
   {                                                                            \
     uniform LocalFB *uniform fb = (uniform LocalFB * uniform) _fb;             \
     uniform type *uniform color = (uniform type * uniform) fb->colorBuffer;    \
-    uniform float *uniform depth = (uniform float *uniform)fb->depthBuffer;    \
     if (!color)                                                                \
       /* actually, this should never happen ... */                             \
       return;                                                                  \
                                                                                \
     color += (uniform uint64)tile.region.lower.y * fb->super.size.x;           \
-    if (depth)                                                                 \
-      depth += (uniform uint64)tile.region.lower.y * fb->super.size.x;         \
     VaryingTile *uniform varyTile = (VaryingTile * uniform) & tile;            \
     for (uniform uint32 iiy = tile.region.lower.y; iiy < tile.region.upper.y;  \
          iiy++) {                                                              \
@@ -38,12 +35,8 @@
           const type cvtCol = cvt(col);                                        \
         }                                                                      \
         color[iix] = cvtCol;                                                   \
-        if (depth)                                                             \
-          depth[iix] = varyTile->z[chunkID];                                   \
       }                                                                        \
       color += fb->super.size.x;                                               \
-      if (depth)                                                               \
-        depth += fb->super.size.x;                                             \
     }                                                                          \
   }
 
@@ -157,6 +150,36 @@ export uniform float LocalFrameBuffer_accumulateTile(
     errf = reduce_add(err) * rcp(cntu) * 64.f;
   }
   return errf;
+}
+
+// "accumulate" (using minimum) and write into depth buffer
+export void LocalFrameBuffer_accumulateWriteDepthTile(
+    void *uniform _fb, const uniform Tile &tile)
+{
+  uniform LocalFB *uniform fb = (uniform LocalFB * uniform) _fb;
+  VaryingTile *uniform varyTile = (VaryingTile * uniform) & tile;
+  uniform float *uniform depth = (uniform float *uniform)fb->depthBuffer;
+  depth += (uniform uint64)tile.region.lower.y * fb->super.size.x;
+
+  for (uniform uint32 iiy = tile.region.lower.y; iiy < tile.region.upper.y;
+       iiy++) {
+    uniform uint32 chunkID =
+        (iiy - tile.region.lower.y) * (TILE_SIZE / programCount);
+
+    for (uint32 iix = tile.region.lower.x + programIndex;
+         iix < tile.region.upper.x;
+         iix += programCount, chunkID++) {
+      varying float acc = inf;
+      if (tile.accumID > 0)
+        acc = depth[iix];
+      unmasked
+      {
+        acc = min(acc, varyTile->z[chunkID]);
+      }
+      depth[iix] = acc;
+    }
+    depth += fb->super.size.x;
+  }
 }
 
 // accumulate into a (valid) normal or albedo buffer

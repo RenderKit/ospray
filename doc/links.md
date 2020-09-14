@@ -12,7 +12,7 @@
 [data]: documentation.html#data
 [GeometricModel]: documentation.html#geometricmodels
 [VolumetricModel]: documentation.html#volumetricmodels
-[texture transformations]: documentation.html#texture2d-transformations
+[texture transformations]: documentation.html#texture-transformations
 [renderer]: documentation.html#renderers
 [SciVis renderer]: documentation.html#scivis-renderer
 [path tracer]: documentation.html#path-tracer

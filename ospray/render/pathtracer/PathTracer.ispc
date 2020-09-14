@@ -109,9 +109,10 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
 
     vec2f pfSample = pixelSample;
-    if (self->super.pixelFilter)
-    {
-      pfSample = self->super.pixelFilter->sample(self->super.pixelFilter, pixelSample) + make_vec2f(0.5f);
+    if (self->super.pixelFilter) {
+      pfSample =
+          self->super.pixelFilter->sample(self->super.pixelFilter, pixelSample)
+          + make_vec2f(0.5f);
     }
 
     cameraSample.screen.x =

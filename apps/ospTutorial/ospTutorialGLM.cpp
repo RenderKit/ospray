@@ -21,18 +21,8 @@
 #include <vector>
 
 #include "ospray/ospray_cpp.h"
-
-#include "glm/vec2.hpp"
-#include "glm/vec3.hpp"
-#include "glm/vec4.hpp"
-
-namespace ospray {
-OSPTYPEFOR_SPECIALIZATION(glm::vec2, OSP_VEC2F);
-OSPTYPEFOR_SPECIALIZATION(glm::ivec2, OSP_VEC2I);
-OSPTYPEFOR_SPECIALIZATION(glm::vec3, OSP_VEC3F);
-OSPTYPEFOR_SPECIALIZATION(glm::uvec3, OSP_VEC3UI);
-OSPTYPEFOR_SPECIALIZATION(glm::vec4, OSP_VEC4F);
-} // namespace ospray
+#define OSPRAY_GLM_DEFINITIONS
+#include "ospray/ospray_cpp/ext/glm.h"
 
 // helper function to write the rendered image as PPM file
 void writePPM(

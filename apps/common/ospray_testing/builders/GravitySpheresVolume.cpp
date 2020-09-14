@@ -109,11 +109,12 @@ cpp::Group GravitySpheres::buildGroup() const
 
     cpp::GeometricModel isoModel(isoGeom);
 
-    if (rendererType == "pathtracer" || rendererType == "scivis") {
+    if (rendererType == "pathtracer" || rendererType == "scivis"
+        || rendererType == "ao") {
       cpp::Material mat(rendererType, "obj");
       mat.setParam("kd", vec3f(1.f));
       mat.setParam("d", 0.5f);
-      if (rendererType == "pathtracer")
+      if (rendererType == "pathtracer" || rendererType == "scivis")
         mat.setParam("ks", vec3f(0.2f));
       mat.commit();
 
@@ -288,7 +289,7 @@ cpp::Volume GravitySpheres::createAMRVolume(const VoxelArray &voxels) const
   volume.setParam("block.data", cpp::CopiedData(blockData));
   volume.setParam("block.bounds", cpp::CopiedData(blockBounds));
   volume.setParam("block.level", cpp::CopiedData(refinementLevels));
-  volume.setParam("block.cellWidth", cpp::CopiedData(cellWidths));
+  volume.setParam("cellWidth", cpp::CopiedData(cellWidths));
 
   volume.commit();
 

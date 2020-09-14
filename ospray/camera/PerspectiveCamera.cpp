@@ -28,7 +28,8 @@ void PerspectiveCamera::commit()
   apertureRadius = getParam<float>("apertureRadius", 0.f);
   focusDistance = getParam<float>("focusDistance", 1.f);
   architectural = getParam<bool>("architectural", false);
-  stereoMode = (OSPStereoMode)getParam<int>("stereoMode", OSP_STEREO_NONE);
+  stereoMode = (OSPStereoMode)getParam<uint8_t>(
+      "stereoMode", getParam<int32_t>("stereoMode", OSP_STEREO_NONE));
   // the default 63.5mm represents the average human IPD
   interpupillaryDistance = getParam<float>("interpupillaryDistance", 0.0635f);
 

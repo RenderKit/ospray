@@ -51,6 +51,8 @@ struct Light
   float selectionPDF; // the PDF of selecting the light from the renderers light
                       // list
 };
+typedef Light *uniform LightPtr;
+typedef LightPtr *uniform LightArray;
 
 Light_EvalRes Light_eval(const uniform Light *uniform,
     const DifferentialGeometry &,

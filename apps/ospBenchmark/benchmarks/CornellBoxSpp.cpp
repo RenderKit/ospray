@@ -21,6 +21,9 @@ class CornellBox : public BaseFixture
   int pixelSamples;
 };
 
+OSPRAY_DEFINE_BENCHMARK(CornellBox, "cornell_box", 1, "ao");
+OSPRAY_DEFINE_BENCHMARK(CornellBox, "cornell_box", 16, "ao");
+OSPRAY_DEFINE_BENCHMARK(CornellBox, "cornell_box", 256, "ao");
 OSPRAY_DEFINE_BENCHMARK(CornellBox, "cornell_box", 1, "scivis");
 OSPRAY_DEFINE_BENCHMARK(CornellBox, "cornell_box", 16, "scivis");
 OSPRAY_DEFINE_BENCHMARK(CornellBox, "cornell_box", 256, "scivis");

@@ -77,6 +77,11 @@ cpp::TransferFunction Builder::makeTransferFunction(
   if (tfOpacityMap == "linear") {
     opacities.emplace_back(0.f);
     opacities.emplace_back(1.f);
+  } else if (tfOpacityMap == "linearInv") {
+    opacities.emplace_back(1.f);
+    opacities.emplace_back(0.f);
+  } else if (tfOpacityMap == "opaque") {
+    opacities.emplace_back(1.f);
   }
 
   transferFunction.setParam("color", cpp::CopiedData(colors));
@@ -189,7 +194,8 @@ cpp::Instance Builder::makeGroundPlane(const box3f &bounds) const
 
   cpp::GeometricModel plane(planeGeometry);
 
-  if (rendererType == "pathtracer" || rendererType == "scivis") {
+  if (rendererType == "pathtracer" || rendererType == "scivis"
+      || rendererType == "ao") {
     cpp::Material material(rendererType, "obj");
     material.commit();
     plane.setParam("material", material);

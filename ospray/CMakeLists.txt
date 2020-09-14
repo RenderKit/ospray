@@ -157,12 +157,20 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/debug/DebugRenderer.cpp
   render/debug/DebugRenderer.ispc
 
+  render/ao/AORenderer.cpp
+  render/ao/AORenderer.ispc
+  render/ao/Material.cpp
+  render/ao/Material.ispc
+  render/ao/surfaces.ispc
+  render/ao/volumes.ispc
+
   render/scivis/SciVis.cpp
   render/scivis/SciVis.ispc
   render/scivis/SciVisMaterial.cpp
   render/scivis/SciVisMaterial.ispc
   render/scivis/surfaces.ispc
   render/scivis/volumes.ispc
+  render/scivis/lightAlpha.ispc
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
@@ -250,7 +258,6 @@ endforeach()
 
 add_library(ospray SHARED ${OSPRAY_SOURCES})
 target_link_libraries(ospray PUBLIC $<BUILD_INTERFACE:rkcommon::rkcommon>)
-target_compile_definitions(ospray PRIVATE OSPRAY_CPP_RKCOMMON_TYPES)
 ospray_install_library(ospray lib)
 
 target_include_directories(ospray
@@ -364,7 +371,6 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
   target_compile_definitions(ospray_module_ispc
   PUBLIC
-    OSPRAY_CPP_RKCOMMON_TYPES
     TILE_SIZE=${OSPRAY_TILE_SIZE}
     MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
     RENDERTILE_PIXELS_PER_JOB=${OSPRAY_PIXELS_PER_JOB}

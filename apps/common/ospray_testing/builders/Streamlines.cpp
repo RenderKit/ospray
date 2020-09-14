@@ -113,7 +113,8 @@ cpp::Group Streamlines::buildGroup() const
 
   cpp::GeometricModel model(slGeom);
 
-  if (rendererType == "pathtracer" || rendererType == "scivis") {
+  if (rendererType == "pathtracer" || rendererType == "scivis"
+      || rendererType == "ao") {
     cpp::Material slMat(rendererType, "obj");
     slMat.commit();
     model.setParam("material", slMat);
