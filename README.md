@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v2.3.0 (devel) of Intel® OSPRay. For changes and new
-features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
-for more information.
+This is release v2.3.0 of Intel® OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -75,13 +75,12 @@ before you can build OSPRay you need the following prerequisites:
     should also have some version of OpenGL and GLFW.
 
 -   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io), version 1.10.0 or later. Please
+    (ISPC)](http://ispc.github.io), version 1.14.1 or later. Please
     obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right “next to” the
     checked-out OSPRay sources.[^1] Alternatively set the CMake variable
-    `ISPC_EXECUTABLE` to the location of the ISPC compiler. Note: OSPRay
-    is incompatible with ISPC v1.11.0.
+    `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 
 -   OSPRay builds on top of the Intel oneAPI Rendering Toolkit common
     library `rkcommon`. The library provides abstractions for tasking,
@@ -335,9 +334,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -881,8 +880,12 @@ common type of structured volumes are regular grids.
 Structured regular volumes are created by passing the type string
 “`structuredRegular`” to `ospNewVolume`. Structured volumes are
 represented through an `OSPData` 3D array `data` (which may or may not
-be shared with the application), where currently the voxel data needs to
-be laid out compact in memory in xyz-order[^4]
+be shared with the application). The voxel data must be laid out in
+xyz-order[^4] and can be compact (best for performance) or can have a
+stride between voxels, specified through the `byteStride1` parameter
+when creating the `OSPData`. Only 1D strides are supported, additional
+strides between scanlines (2D, `byteStride2`) and slices (3D,
+`byteStride3`) are not.
 
 The parameters understood by structured volumes are summarized in the
 table below.
@@ -1267,7 +1270,7 @@ the following parameters:
 | float\[\] | edgeCrease.weight   | optional [data](#data) array of edge crease weights                                                                   |
 | uint\[\]  | vertexCrease.index  | optional [data](#data) array of vertex crease indices                                                                 |
 | float\[\] | vertexCrease.weight | optional [data](#data) array of vertex crease weights                                                                 |
-| int       | mode                | subdivision edge boundary mode, supported modes are:                                                                  |
+| uchar     | mode                | subdivision edge boundary mode, supported modes are:                                                                  |
 |           |                     | `OSP_SUBDIVISION_NO_BOUNDARY`                                                                                         |
 |           |                     | `OSP_SUBDIVISION_SMOOTH_BOUNDARY` (default)                                                                           |
 |           |                     | `OSP_SUBDIVISION_PIN_CORNERS`                                                                                         |
@@ -1316,11 +1319,11 @@ this geometry are listed in the table below.
 | vec3f\[\]  | vertex.normal           | [data](#data) array of curve normals (only for “ribbon” curves)                  |
 | vec4f\[\]  | vertex.tangent          | [data](#data) array of curve tangents (only for “hermite” curves)                |
 | uint32\[\] | index                   | [data](#data) array of indices to the first vertex or tangent of a curve segment |
-| int        | type                    | `OSPCurveType` for rendering the curve. Supported types are:                     |
+| uchar      | type                    | `OSPCurveType` for rendering the curve. Supported types are:                     |
 |            |                         | `OSP_FLAT`                                                                       |
 |            |                         | `OSP_ROUND`                                                                      |
 |            |                         | `OSP_RIBBON`                                                                     |
-| int        | basis                   | `OSPCurveBasis` for defining the curve. Supported bases are:                     |
+| uchar      | basis                   | `OSPCurveBasis` for defining the curve. Supported bases are:                     |
 |            |                         | `OSP_LINEAR`                                                                     |
 |            |                         | `OSP_BEZIER`                                                                     |
 |            |                         | `OSP_BSPLINE`                                                                    |
@@ -1809,7 +1812,7 @@ General parameters of all renderers are
 | OSPTexture            | map\_backplate    |                         | optional [texture](#texture) image used as background (use texture type `texture2d`)                                                        |
 | OSPTexture            | map\_maxDepth     |                         | optional screen-sized float [texture](#texture) with maximum far distance per pixel (use texture type `texture2d`)                          |
 | OSPMaterial\[\]       | material          |                         | optional [data](#data) array of [materials](#materials) which can be indexed by a [GeometricModel](#geometricmodels)’s `material` parameter |
-| int                   | pixelFilter       |  `OSP_PIXELFILTER_GAUSS`| `OSPPixelFilterType` to select the pixel filter used by the renderer for antialiasing. Possible pixel filters are listed below.             |
+| uchar                 | pixelFilter       |  `OSP_PIXELFILTER_GAUSS`| `OSPPixelFilterType` to select the pixel filter used by the renderer for antialiasing. Possible pixel filters are listed below.             |
 
 : Parameters understood by all renderers.
 
@@ -1862,12 +1865,37 @@ renderers, the SciVis renderer supports the following parameters:
 
 | Type  | Name               |  Default| Description                                            |
 |:------|:-------------------|--------:|:-------------------------------------------------------|
+| bool  | shadows            |    false| whether to compute (hard) shadows                      |
 | int   | aoSamples          |        0| number of rays per sample to compute ambient occlusion |
-| float | aoRadius           |   10^20^| maximum distance to consider for ambient occlusion     |
-| float | aoIntensity        |        1| ambient occlusion strength                             |
+| float | aoDistance         |   10^20^| maximum distance to consider for ambient occlusion     |
 | float | volumeSamplingRate |        1| sampling rate for volumes                              |
 
 : Special parameters understood by the SciVis renderer.
+
+Note that the intensity (and color) of AO is deduced from an [ambient
+light](#ambient-light) in the `lights` array.[^7] If `aoSamples` is zero
+(the default) then ambient lights cause ambient illumination (without
+occlusion).
+
+### Ambient Occlusion Renderer
+
+This renderer supports only a subset of the features of the [SciVis
+renderer](#scivis-renderer) to gain performance. As the name suggest its
+main shading method is ambient occlusion (AO), [lights](#lights) are
+*not* considered at all and , Volume rendering is supported. The Ambient
+Occlusion renderer is created by passing the type string “`ao`” to
+`ospNewRenderer`. In addition to the [general parameters](#renderer)
+understood by all renderers the following parameters are supported as
+well:
+
+| Type  | Name               |  Default| Description                                            |
+|:------|:-------------------|--------:|:-------------------------------------------------------|
+| int   | aoSamples          |        1| number of rays per sample to compute ambient occlusion |
+| float | aoDistance         |   10^20^| maximum distance to consider for ambient occlusion     |
+| float | aoIntensity        |        1| ambient occlusion strength                             |
+| float | volumeSamplingRate |        1| sampling rate for volumes                              |
+
+: Special parameters understood by the Ambient Occlusion renderer.
 
 ### Path Tracer
 
@@ -1915,9 +1943,10 @@ void ospSetObject(OSPGeometricModel, "material", OSPMaterial);
 #### OBJ Material
 
 The OBJ material is the workhorse material supported by both the [SciVis
-renderer](#scivis-renderer) and the [path tracer](#path-tracer). It
-offers widely used common properties like diffuse and specular
-reflection and is based on the [MTL material
+renderer](#scivis-renderer) and the [path tracer](#path-tracer) (the
+[Ambient Occlusion renderer](#ambient-occlusion-renderer) only uses the
+`kd` and `d` parameter). It offers widely used common properties like
+diffuse and specular reflection and is based on the [MTL material
 format](http://paulbourke.net/dataformats/mtl/) of Lightwave’s OBJ scene
 files. To create an OBJ material pass the type string “`obj`” to
 `ospNewMaterial`. Its main parameters are
@@ -1956,13 +1985,10 @@ If present, the color component of [geometries](#geometries) is also
 used for the diffuse color `Kd` and the alpha component is also used for
 the opacity `d`.
 
-Note that currently only the path tracer implements colored transparency
-with `Tf`.
-
 Normal mapping can simulate small geometric features via the texture
 `map_Bump`. The normals $n$ in the normal map are with respect to the
 local tangential shading coordinate system and are encoded as $½(n+1)$,
-thus a texel $(0.5, 0.5, 1)$[^7] represents the unperturbed shading
+thus a texel $(0.5, 0.5, 1)$[^8] represents the unperturbed shading
 normal $(0, 0, 1)$. Because of this encoding an sRGB gamma
 [texture](#texture) format is ignored and normals are always fetched as
 linear from a normal map. Note that the orientation of normal maps is
@@ -1978,6 +2004,9 @@ normal map vertically or invert its green channel.
 
 
 
+Note that currently only the path tracer implements colored transparency
+with `Tf` and normal mapping with `map_Bump`.
+
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with “`map_`”. The fetched texels
 are multiplied by the respective parameter value. If only the texture is
@@ -1986,7 +2015,7 @@ given (but not the corresponding parameter), only the texture is used
 textures `map_Kd` and `map_Ks` are typically in one of the sRGB gamma
 encoded formats, whereas textures `map_Ns` and `map_d` are usually in a
 linear format (and only the first component is used). Additionally, all
-textures support [texture transformations](#texture2d-transformations).
+textures support [texture transformations](#texture-transformations).
 
 <figure>
 <img src="https://ospray.github.io/images/material_OBJ.jpg" width="60.0%" alt="" /><figcaption>Rendering of a OBJ material with wood textures.</figcaption>
@@ -2041,7 +2070,7 @@ table below.
 
 All parameters can be textured by passing a [texture](#texture) handle,
 prefixed with “`map_`” (e.g., “`map_baseColor`”). [texture
-transformations](#texture2d-transformations) are supported as well.
+transformations](#texture-transformations) are supported as well.
 
 <figure>
 <img src="https://ospray.github.io/images/material_Principled.jpg" width="60.0%" alt="" /><figcaption>Rendering of a Principled coated brushed metal material with textured anisotropic rotation and a dust layer (sheen) on top.</figcaption>
@@ -2079,7 +2108,7 @@ CarPaint material, pass the type string “`carPaint`” to
 
 All parameters can be textured by passing a [texture](#texture) handle,
 prefixed with “`map_`” (e.g., “`map_baseColor`”). [texture
-transformations](#texture2d-transformations) are supported as well.
+transformations](#texture-transformations) are supported as well.
 
 <figure>
 <img src="https://ospray.github.io/images/material_CarPaint.jpg" width="60.0%" alt="" /><figcaption>Rendering of a pearlescent CarPaint material.</figcaption>
@@ -2129,7 +2158,7 @@ coefficients, based on data from https://refractiveindex.info/.
 The `roughness` parameter controls the variation of microfacets and thus
 how polished the metal will look. The roughness can be modified by a
 [texture](#texture) `map_roughness` ([texture
-transformations](#texture2d-transformations) are supported as well) to
+transformations](#texture-transformations) are supported as well) to
 create notable edging effects.
 
 <figure>
@@ -2161,7 +2190,7 @@ for reflectivity at normal incidence `color`. As in [Metal](#metal) the
 `roughness` parameter controls the variation of microfacets and thus how
 polished the alloy will look. All parameters can be textured by passing
 a [texture](#texture) handle, prefixed with “`map_`”; [texture
-transformations](#texture2d-transformations) are supported as well.
+transformations](#texture-transformations) are supported as well.
 
 <figure>
 <img src="https://ospray.github.io/images/material_Alloy.jpg" width="60.0%" alt="" /><figcaption>Rendering of a fictional Alloy material with textured color.</figcaption>
@@ -2218,7 +2247,7 @@ type string “`thinGlass`” to `ospNewMaterial`. Its parameters are
 For convenience the attenuation is controlled the same way as with the
 [Glass](#glass) material. Additionally, the color due to attenuation can
 be modulated with a [texture](#texture) `map_attenuationColor` ([texture
-transformations](#texture2d-transformations) are supported as well). If
+transformations](#texture-transformations) are supported as well). If
 present, the color component of [geometries](#geometries) is also used
 for the attenuation color. The `thickness` parameter sets the (virtual)
 thickness and allows for easy exchange of parameters with the (real)
@@ -2257,7 +2286,7 @@ to `ospNewMaterial`. Its parameters are listed in the table below.
 
 The color of the base coat `baseColor` can be textured by a
 [texture](#texture) `map_baseColor`, which also supports [texture
-transformations](#texture2d-transformations). If present, the color
+transformations](#texture-transformations). If present, the color
 component of [geometries](#geometries) is also used for the color of the
 base coat. Parameter `flakeAmount` controls the proportion of flakes in
 the base coat, so when setting it to 1 the `baseColor` will not be
@@ -2277,7 +2306,7 @@ average, thus individual flakes are not visible.
 
 The [path tracer](#path-tracer) supports the Luminous material which
 emits light uniformly in all directions and which can thus be used to
-turn any geometric object into a light source[^8]. It is created by
+turn any geometric object into a light source[^9]. It is created by
 passing the type string “`luminous`” to `ospNewMaterial`. The amount of
 constant radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights).
@@ -2356,20 +2385,21 @@ Texturing with `texture2d` image textures requires
 [geometries](#geometries) with texture coordinates, e.g., a
 [mesh](#mesh) with `vertex.texcoord` provided.
 
-#### TextureVolume
+#### Volume Texture
 
 The `volume` texture type implements texture lookups based on 3D object
 coordinates of the surface hit point on the associated geometry. If the
 given hit point is within the attached volume, the volume is sampled and
 classified with the transfer function attached to the volume. This
-implements the ability to visualize volume values (as colored by its
+implements the ability to visualize volume values (as colored by a
 transfer function) on arbitrary surfaces inside the volume (as opposed
 to an isosurface showing a particular value in the volume). Its
 parameters are as follows
 
-| Type               | Name   | Description                                                         |
-|:-------------------|:-------|:--------------------------------------------------------------------|
-| OSPVolumetricModel | volume | [VolumetricModel](#volumetricmodels) used to generate color lookups |
+| Type                | Name             | Description                                       |
+|:--------------------|:-----------------|:--------------------------------------------------|
+| OSPVolume           | volume           | [Volume](#volumes) used to generate color lookups |
+| OSPTransferFunction | transferFunction | \[TransferFunction\] applied to `volume`          |
 
 : Parameters of `volume` texture type.
 
@@ -2456,7 +2486,7 @@ supports the special parameters listed in the table below.
 | float | apertureRadius         | size of the aperture, controls the depth of field                          |
 | float | focusDistance          | distance at where the image is sharpest when depth of field is enabled     |
 | bool  | architectural          | vertical edges are projected to be parallel                                |
-| int   | stereoMode             | `OSPStereoMode` for stereo rendering, possible values are:                 |
+| uchar | stereoMode             | `OSPStereoMode` for stereo rendering, possible values are:                 |
 |       |                        | `OSP_STEREO_NONE` (default)                                                |
 |       |                        | `OSP_STEREO_LEFT`                                                          |
 |       |                        | `OSP_STEREO_RIGHT`                                                         |
@@ -2539,7 +2569,7 @@ by using the [general parameters](#cameras) understood by all cameras.
 
 | Type  | Name                   | Description                                                                |
 |:------|:-----------------------|:---------------------------------------------------------------------------|
-| int   | stereoMode             | `OSPStereoMode` for stereo rendering, possible values are:                 |
+| uchar | stereoMode             | `OSPStereoMode` for stereo rendering, possible values are:                 |
 |       |                        | `OSP_STEREO_NONE` (default)                                                |
 |       |                        | `OSP_STEREO_LEFT`                                                          |
 |       |                        | `OSP_STEREO_RIGHT`                                                         |
@@ -2617,14 +2647,14 @@ The parameter `frameBufferChannels` specifies which channels the
 framebuffer holds, and can be combined together by bitwise OR from the
 values of `OSPFrameBufferChannel` listed in the table below.
 
-| Name              | Description                                                                                              |
-|:------------------|:---------------------------------------------------------------------------------------------------------|
-| OSP\_FB\_COLOR    | RGB color including alpha                                                                                |
-| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float                      |
-| OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                           |
-| OSP\_FB\_VARIANCE | for estimation of the current noise level if OSP\_FB\_ACCUM is also present, see [rendering](#rendering) |
-| OSP\_FB\_NORMAL   | accumulated world-space normal of the first hit, as vec3f                                                |
-| OSP\_FB\_ALBEDO   | accumulated material albedo (color without illumination) at the first hit, as vec3f                      |
+| Name              | Description                                                                                                                                |
+|:------------------|:-------------------------------------------------------------------------------------------------------------------------------------------|
+| OSP\_FB\_COLOR    | RGB color including alpha                                                                                                                  |
+| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float; for multiple samples per pixel their minimum is taken |
+| OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                                                             |
+| OSP\_FB\_VARIANCE | for estimation of the current noise level if OSP\_FB\_ACCUM is also present, see [rendering](#rendering)                                   |
+| OSP\_FB\_NORMAL   | accumulated world-space normal of the first hit, as vec3f                                                                                  |
+| OSP\_FB\_ALBEDO   | accumulated material albedo (color without illumination) at the first hit, as vec3f                                                        |
 
 : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
 naming optional information the framebuffer can store. These values can
@@ -2876,7 +2906,7 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/tutorials/ospTutorial.c`[^9].
+at `apps/tutorials/ospTutorial.c`[^10].
 
 An example of building `ospTutorial.c` with CMake can be found in
 `apps/tutorials/ospTutorialFindospray/`.
@@ -3004,7 +3034,7 @@ to change `turbidity` and `sunDirection`.
 
 
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
-    be searched in `~/Projects/ispc-v1.12.0-linux`
+    be searched in `~/Projects/ispc-v1.14.1-linux`
 
 [^2]: This file is usually in
     `${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake
@@ -3023,11 +3053,14 @@ to change `turbidity` and `sunDirection`.
 [^6]: `OSPBounds` has essentially the same layout as the `OSP_BOX3F`
     [`OSPDataType`](#data).
 
-[^7]: respectively $(127, 127, 255)$ for 8 bit textures and
+[^7]: If there are multiple ambient lights then their contribution is
+    added
+
+[^8]: respectively $(127, 127, 255)$ for 8 bit textures and
     $(32767, 32767, 65535)$ for 16 bit textures
 
-[^8]: If `geometryLights` is enabled in the [path tracer](#path-tracer).
+[^9]: If `geometryLights` is enabled in the [path tracer](#path-tracer).
 
-[^9]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
+[^10]: A C++ version that uses the C++ convenience wrappers of OSPRay’s
     C99 API via `include/ospray/ospray_cpp.h` is available at
     `apps/tutorials/ospTutorial.cpp`.

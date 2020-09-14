@@ -9,7 +9,7 @@ Version History
         `ns` have effect again
     -   Hard shadows are enabled via the `shadows` parameter
     -   The control of ambient occlusion changed:
-        -   The `aoIntensity` paramter is replaced by the combined
+        -   The `aoIntensity` parameter is replaced by the combined
             intensity of ambient lights in the `World`
         -   The effect range is controlled via `aoDistance`
 -   Added support for data arrays with a stride between voxels in
@@ -21,13 +21,13 @@ Version History
     understand rkcommon and glm short vector types
     -   For rkcommon, include `ospray/ospray_cpp/ext/rkcommon.h`
     -   For glm, include `ospray/ospray_cpp/ext/glm.h`
-    -   NOTE: In debug builds some compilers will not optimize out type trait
+    -   Note in debug builds some compilers will not optimize out type trait
         definitions. This will require users to manually instantiate the glm
         definitions in one translation unit within the application using
         `#define OSPRAY_GLM_DEFINITIONS` before including `ext/glm.h`: see
         `ospTutorialGLM` as an example
 -   Changed parameters to `volume` texture: it now directly accepts the
-    `volume` and the `transferFunction`. 
+    `volume` and the `transferFunction`
 -   Fixed many memory leaks
 -   Handle `NaN` during volume sampling, which led to bounding boxes
     being visible for some volumes and settings
@@ -234,7 +234,7 @@ Version History
     explicitely make lights in`visible` if this is needed
 -   Changed the computation of variance for adaptive accumulation to be
     independent of `TILE_SIZE`, thus `varianceThreshold` needs to be
-    adapted if using a different TILE_SIZE than default 64
+    adapted if using a different `TILE_SIZE` than default 64
 -   `OSPGeometricModel` now has the option to index a renderer-global material
     list that lives on the renderer, allowing scenes to avoid renderer-specific
     materials
