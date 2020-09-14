@@ -89,7 +89,7 @@ static void sampleVolume(
 
   // compute gradient shading lighting
   if (gsc > 0.0f) {
-    vec3f ns = Volume_getGradient(m->volume, p);
+    vec3f ns = Volume_getGradient(m->volume, p) * -1.f;
     if (dot(ns, ns) > 1e-6f) {
       ns = normalize(ns);
 
