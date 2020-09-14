@@ -191,7 +191,7 @@ float SciVis_computeAO(const uniform SciVis *uniform self,
                 ldSampler,
                 1.f,
                 dg.epsilon,
-                1.0f));
+                0.1f));
   }
 
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
