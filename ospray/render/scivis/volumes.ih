@@ -12,11 +12,9 @@
 struct LDSampler;
 struct RandomSampler;
 
-vec4f integrateVolumeIntervalsGradient(const VolumeIntervals &intervals,
-    const SciVis *uniform renderer,
-    const FrameBuffer *uniform fb,
-    const World *uniform world,
-    varying ScreenSample &sample,
+vec4f integrateVolumeIntervalsGradient(
+    SciVisRenderContext & rc,
+    const VolumeIntervals &intervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
     varying LDSampler *uniform ldSampler,

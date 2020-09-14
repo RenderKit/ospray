@@ -25,11 +25,8 @@ struct VolumeContext
   uint32 ready; // 1 if sample is ready to be used
 };
 
-static void sampleVolume(const SciVis *uniform renderer,
-    const FrameBuffer *uniform fb,
-    const World *uniform world,
-    varying ScreenSample &sample,
-    varying LDSampler *uniform ldSampler,
+static void sampleVolume(
+    SciVisRenderContext & rc,
     VolumeContext &vc,
     VolumetricModel *uniform m,
     const uniform float samplingRate,
@@ -99,14 +96,13 @@ static void sampleVolume(const SciVis *uniform renderer,
       // use scivis shading function
       // Prepare differential geometry structure
       DifferentialGeometry dg;
-      // computeDG(world, self, ray, dg);
       dg.color = vc.sample;
       dg.material = NULL;
       dg.Ns = dg.Ng = ns;
+      dg.P = p;
       dg.epsilon = dt / 2.f;
       SSI shading = computeShading(
-          renderer, fb, world, dg, sample, ldSampler, vc.dir, 0.f);
-
+          rc.renderer, rc.fb, rc.world, dg, rc.sample, rc.ldSampler, vc.dir, 0.f);
       vc.sample = lerp(gsc, vc.sample, shading.shadedColor);
     }
   }
@@ -115,11 +111,8 @@ static void sampleVolume(const SciVis *uniform renderer,
   vc.sample.w = 1.f - exp(-vc.sample.w * dt * m->densityScale);
 }
 
-static float sampleAllVolumes(const SciVis *uniform renderer,
-    const FrameBuffer *uniform fb,
-    const World *uniform world,
-    varying ScreenSample &sample,
-    varying LDSampler *uniform ldSampler,
+static float sampleAllVolumes(
+    SciVisRenderContext & rc,
     const VolumeIntervals &volumeIntervals,
     varying VolumeContext *uniform volumeContexts,
     const uniform float samplingRate,
@@ -140,7 +133,7 @@ static float sampleAllVolumes(const SciVis *uniform renderer,
       const VolumeInterval &vi = volumeIntervals.intervals[i];
       foreach_unique (m in vi.volumetricModel) {
         sampleVolume(
-            renderer, fb, world, sample, ldSampler, vc, m, samplingRate, shade);
+            rc, vc, m, samplingRate, shade);
       }
       vc.ready = 1;
     }
@@ -162,11 +155,9 @@ static float sampleAllVolumes(const SciVis *uniform renderer,
   return minDist;
 }
 
-vec4f integrateVolumeIntervalsGradient(const VolumeIntervals &volumeIntervals,
-    const SciVis *uniform renderer,
-    const FrameBuffer *uniform fb,
-    const World *uniform world,
-    varying ScreenSample &sample,
+vec4f integrateVolumeIntervalsGradient(
+    SciVisRenderContext & rc,
+    const VolumeIntervals &volumeIntervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
@@ -255,11 +246,7 @@ vec4f integrateVolumeIntervalsGradient(const VolumeIntervals &volumeIntervals,
     while (alpha < .99f) {
       // Sample across all volumes
       vec4f sampledColorOpacity;
-      float dist = sampleAllVolumes(renderer,
-          fb,
-          world,
-          sample,
-          ldSampler,
+      float dist = sampleAllVolumes(rc,
           volumeIntervals,
           volumeContexts,
           samplingRate,

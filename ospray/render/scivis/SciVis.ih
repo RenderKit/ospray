@@ -5,6 +5,7 @@
 
 #include "common/World.ih"
 #include "render/Renderer.ih"
+#include "math/random.ih"
 
 struct SciVis
 {
@@ -13,6 +14,15 @@ struct SciVis
   int aoSamples;
   float aoRadius;
   float volumeSamplingRate;
+};
+
+struct SciVisRenderContext
+{
+  const SciVis* uniform renderer;
+  const FrameBuffer* uniform fb;
+  const World* uniform world;
+  ScreenSample sample;
+  varying LDSampler *uniform ldSampler;
 };
 
 struct LDSampler;
