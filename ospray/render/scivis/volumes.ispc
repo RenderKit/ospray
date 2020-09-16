@@ -28,6 +28,8 @@ struct VolumeContext
 static void sampleVolume(SciVisRenderContext &rc,
     VolumeContext &vc,
     VolumetricModel *uniform m,
+    Ray &ray,
+    const VolumeInterval &vi,
     const uniform float samplingRate,
     const uniform bool shade)
 {
@@ -35,7 +37,7 @@ static void sampleVolume(SciVisRenderContext &rc,
   float dt;
   float sampleVal = nan;
   const uniform float gsc = shade ? m->gradientShadingScale : 0.f;
-  vec3f p;
+  vec3f p; // in volume local coords
   while (isnan(sampleVal)) {
     // Iterate till sampling position is within interval
     float emptySpace = 0.f;
@@ -93,23 +95,24 @@ static void sampleVolume(SciVisRenderContext &rc,
       // assume that opacity directly correlates to volume scalar field, i.e.
       // that "outside" has lower values; because the gradient point towards
       // increasing values we need to flip it
-      ns = neg(normalize(ns));
+      ns = neg(ns);
 
       // use scivis shading function
       // Prepare differential geometry structure
       DifferentialGeometry dg;
       dg.color = vc.sample;
       dg.material = NULL;
-      dg.Ns = dg.Ng = ns;
-      dg.P = p;
       dg.epsilon = dt / 2.f;
+      // transform to world coords
+      dg.Ns = dg.Ng = normalize(xfmVector(transposed(vi.xfm.l), ns));
+      dg.P = ray.org + vc.distance * ray.dir;
       SSI shading = computeShading(rc.renderer,
           rc.fb,
           rc.world,
           dg,
           rc.sample,
           rc.ldSampler,
-          vc.dir,
+          ray.dir,
           0.f);
       vc.sample = lerp(gsc, vc.sample, shading.shadedColor);
     }
@@ -122,6 +125,7 @@ static void sampleVolume(SciVisRenderContext &rc,
 static float sampleAllVolumes(SciVisRenderContext &rc,
     const VolumeIntervals &volumeIntervals,
     varying VolumeContext *uniform volumeContexts,
+    Ray &ray,
     const uniform float samplingRate,
     vec4f &sampledColor,
     const uniform bool shade)
@@ -139,7 +143,7 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
     if (vc.ready == 0) {
       const VolumeInterval &vi = volumeIntervals.intervals[i];
       foreach_unique (m in vi.volumetricModel) {
-        sampleVolume(rc, vc, m, samplingRate, shade);
+        sampleVolume(rc, vc, m, ray, vi, samplingRate, shade);
       }
       vc.ready = 1;
     }
@@ -254,6 +258,7 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       float dist = sampleAllVolumes(rc,
           volumeIntervals,
           volumeContexts,
+          ray,
           samplingRate,
           sampledColorOpacity,
           shade);
