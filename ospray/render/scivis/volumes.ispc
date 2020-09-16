@@ -89,9 +89,12 @@ static void sampleVolume(
 
   // compute gradient shading lighting
   if (gsc > 0.0f) {
-    vec3f ns = Volume_getGradient(m->volume, p) * -1.f;
+    vec3f ns = Volume_getGradient(m->volume, p);
     if (dot(ns, ns) > 1e-6f) {
-      ns = normalize(ns);
+      // assume that opacity directly correlates to volume scalar field, i.e.
+      // that "outside" has lower values; because the gradient point towards
+      // increasing values we need to flip it
+      ns = neg(normalize(ns));
 
       // use scivis shading function
       // Prepare differential geometry structure
