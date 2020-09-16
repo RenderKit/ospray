@@ -71,4 +71,3 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
 
   return res;
 }
-

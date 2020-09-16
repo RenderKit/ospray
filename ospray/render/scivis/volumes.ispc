@@ -25,8 +25,7 @@ struct VolumeContext
   uint32 ready; // 1 if sample is ready to be used
 };
 
-static void sampleVolume(
-    SciVisRenderContext & rc,
+static void sampleVolume(SciVisRenderContext &rc,
     VolumeContext &vc,
     VolumetricModel *uniform m,
     const uniform float samplingRate,
@@ -104,8 +103,14 @@ static void sampleVolume(
       dg.Ns = dg.Ng = ns;
       dg.P = p;
       dg.epsilon = dt / 2.f;
-      SSI shading = computeShading(
-          rc.renderer, rc.fb, rc.world, dg, rc.sample, rc.ldSampler, vc.dir, 0.f);
+      SSI shading = computeShading(rc.renderer,
+          rc.fb,
+          rc.world,
+          dg,
+          rc.sample,
+          rc.ldSampler,
+          vc.dir,
+          0.f);
       vc.sample = lerp(gsc, vc.sample, shading.shadedColor);
     }
   }
@@ -114,8 +119,7 @@ static void sampleVolume(
   vc.sample.w = 1.f - exp(-vc.sample.w * dt * m->densityScale);
 }
 
-static float sampleAllVolumes(
-    SciVisRenderContext & rc,
+static float sampleAllVolumes(SciVisRenderContext &rc,
     const VolumeIntervals &volumeIntervals,
     varying VolumeContext *uniform volumeContexts,
     const uniform float samplingRate,
@@ -135,8 +139,7 @@ static float sampleAllVolumes(
     if (vc.ready == 0) {
       const VolumeInterval &vi = volumeIntervals.intervals[i];
       foreach_unique (m in vi.volumetricModel) {
-        sampleVolume(
-            rc, vc, m, samplingRate, shade);
+        sampleVolume(rc, vc, m, samplingRate, shade);
       }
       vc.ready = 1;
     }
@@ -158,8 +161,7 @@ static float sampleAllVolumes(
   return minDist;
 }
 
-vec4f integrateVolumeIntervalsGradient(
-    SciVisRenderContext & rc,
+vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     const VolumeIntervals &volumeIntervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
@@ -263,7 +265,7 @@ vec4f integrateVolumeIntervalsGradient(
       // Alpha blend sampled color
       color = color
           + ((1.f - alpha) * sampledColorOpacity.w
-                * make_vec3f(sampledColorOpacity));
+              * make_vec3f(sampledColorOpacity));
       alpha = alpha + ((1.f - alpha) * sampledColorOpacity.w);
     }
   }
