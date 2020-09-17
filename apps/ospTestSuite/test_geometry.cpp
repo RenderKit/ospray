@@ -117,7 +117,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
                            "streamlines",
                            "subdivision_cube",
                            "cornell_box_photometric",
-                           "planes"),
+                           "planes",
+                           "unstructured_volume_isosurface"),
         ::testing::Values("scivis", "pathtracer", "ao")));
 
 INSTANTIATE_TEST_SUITE_P(TestScenesClipping,

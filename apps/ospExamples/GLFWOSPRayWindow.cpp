@@ -27,8 +27,7 @@
 
 static bool g_quitNextFrame = false;
 
-static const std::vector<std::string> g_scenes = {
-    "boxes_lit",
+static const std::vector<std::string> g_scenes = {"boxes_lit",
     "boxes",
     "cornell_box",
     "curves",
@@ -39,6 +38,7 @@ static const std::vector<std::string> g_scenes = {
     "streamlines",
     "subdivision_cube",
     "unstructured_volume",
+    "unstructured_volume_isosurface",
     "planes",
     "clip_with_spheres",
     "clip_with_planes",
