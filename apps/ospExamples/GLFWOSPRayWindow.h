@@ -72,7 +72,11 @@ class GLFWOSPRayWindow
   std::unique_ptr<ArcballCamera> arcballCamera;
 
   // OSPRay objects managed by this class
-  cpp::Renderer renderer;
+  cpp::Renderer rendererPT{"pathtracer"};
+  cpp::Renderer rendererSV{"scivis"};
+  cpp::Renderer rendererAO{"ao"};
+  cpp::Renderer rendererDBG{"debug"};
+  cpp::Renderer *renderer{nullptr};
   cpp::Camera camera{"perspective"};
   cpp::World world;
   cpp::Light sunSky{"sunSky"};
