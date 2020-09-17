@@ -69,8 +69,10 @@ cpp::Group Boxes::buildGroup() const
   if (rendererType == "pathtracer" || rendererType == "scivis"
       || rendererType == "ao") {
     cpp::Material material(rendererType, "obj");
-    material.setParam("ks", vec3f(0.3f));
-    material.setParam("ns", 10.f);
+    if (rendererType == "pathtracer" || rendererType == "scivis") {
+      material.setParam("ks", vec3f(0.3f));
+      material.setParam("ns", 10.f);
+    }
     material.commit();
     model.setParam("material", material);
   }
@@ -97,6 +99,7 @@ cpp::World Boxes::buildWorld() const
   light.commit();
   cpp::Light ambient("ambient");
   ambient.setParam("intensity", 0.35f);
+  ambient.setParam("visible", false);
   ambient.commit();
   std::vector<cpp::Light> lights{light, ambient};
   world.setParam("light", cpp::CopiedData(lights));
