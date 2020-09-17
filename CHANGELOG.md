@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v2.4.0:
+
+-   Fixed normals of (transformed) isosurfaces
+
 ### Changes in v2.3.0:
 
 -   Re-add SciVis renderer features (the previous version is still
