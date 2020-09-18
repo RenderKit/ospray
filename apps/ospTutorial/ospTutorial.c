@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial how to use OSPRay in an application.
@@ -15,7 +15,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #ifdef _WIN32
+#include <conio.h>
 #include <malloc.h>
+#include <windows.h>
 #else
 #include <alloca.h>
 #endif
@@ -88,6 +90,15 @@ int main(int argc, const char **argv)
       1.0f};
   int32_t index[] = {0, 1, 2, 1, 2, 3};
 
+#ifdef _WIN32
+  int waitForKey = 0;
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+    // detect standalone console: cursor at (0,0)?
+    waitForKey = csbi.dwCursorPosition.X == 0 && csbi.dwCursorPosition.Y == 0;
+  }
+#endif
+
   printf("initialize OSPRay...");
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
@@ -96,7 +107,7 @@ int main(int argc, const char **argv)
   if (init_error != OSP_NO_ERROR)
     return init_error;
 
-  printf("done!\n");
+  printf("done\n");
   printf("setting up camera...");
 
   // create and setup camera
@@ -107,7 +118,7 @@ int main(int argc, const char **argv)
   ospSetParam(camera, "up", OSP_VEC3F, cam_up);
   ospCommit(camera); // commit each object to indicate modifications are done
 
-  printf("done!\n");
+  printf("done\n");
   printf("setting up scene...");
 
   // create and setup model and mesh
@@ -168,11 +179,11 @@ int main(int argc, const char **argv)
 
   ospCommit(world);
 
-  printf("done!\n");
+  printf("done\n");
 
   // print out world bounds
   OSPBounds worldBounds = ospGetBounds(world);
-  printf("\nworld bounds: ({%f, %f, %f}, {%f, %f, %f}\n\n",
+  printf("world bounds: ({%f, %f, %f}, {%f, %f, %f}\n\n",
       worldBounds.lower[0],
       worldBounds.lower[1],
       worldBounds.lower[2],
@@ -207,7 +218,7 @@ int main(int argc, const char **argv)
   writePPM("firstFrame.ppm", imgSize_x, imgSize_y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
-  printf("done!\n");
+  printf("done\n");
   printf("rendering 10 accumulated frames to accumulatedFrame.ppm...");
 
   // render 10 more frames, which are accumulated to result in a better
@@ -219,17 +230,17 @@ int main(int argc, const char **argv)
   writePPM("accumulatedFrame.ppm", imgSize_x, imgSize_y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
-  printf("done!\n");
+  printf("done\n\n");
 
   OSPPickResult p;
   ospPick(&p, framebuffer, renderer, camera, world, 0.5f, 0.5f);
 
-  printf("\nospPick() center of screen --> [inst: %p, model: %p, prim: %u]\n",
+  printf("ospPick() center of screen --> [inst: %p, model: %p, prim: %u]\n",
       p.instance,
       p.model,
       p.primID);
 
-  printf("\ncleaning up objects...");
+  printf("cleaning up objects...");
 
   // cleanup pick handles (because p.hasHit was 'true')
   ospRelease(p.instance);
@@ -241,9 +252,16 @@ int main(int argc, const char **argv)
   ospRelease(framebuffer);
   ospRelease(world);
 
-  printf("done!\n");
+  printf("done\n");
 
   ospShutdown();
+
+#ifdef _WIN32
+  if (waitForKey) {
+    printf("\n\tpress any key to exit");
+    _getch();
+  }
+#endif
 
   return 0;
 }

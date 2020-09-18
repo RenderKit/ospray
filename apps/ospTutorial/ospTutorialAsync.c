@@ -10,7 +10,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #ifdef _WIN32
+#include <conio.h>
 #include <malloc.h>
+#include <windows.h>
 #else
 #include <alloca.h>
 #endif
@@ -59,6 +61,15 @@ void buildScene2(OSPCamera *camera,
 
 int main(int argc, const char **argv)
 {
+#ifdef _WIN32
+  int waitForKey = 0;
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+    // detect standalone console: cursor at (0,0)?
+    waitForKey = csbi.dwCursorPosition.X == 0 && csbi.dwCursorPosition.Y == 0;
+  }
+#endif
+
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
   // e.g. "--osp:debug"
   OSPError init_error = ospInit(&argc, argv);
@@ -81,7 +92,7 @@ int main(int argc, const char **argv)
   buildScene2(
       &cameras[1], &worlds[1], &renderers[1], &framebuffers[1], imgSizes[1]);
 
-  printf("starting renders\n");
+  printf("starting renders...\n");
   OSPFuture futures[2] = {0};
   // render one frame for each scene
   for (int i = 0; i < 2; ++i) {
@@ -97,9 +108,9 @@ int main(int argc, const char **argv)
   // We don't need to wait for them in the order they were started
   for (int i = 1; i >= 0; --i) {
     ospWait(futures[i], OSP_FRAME_FINISHED);
-    printf("...done!\n");
-    printf(
-        "variance of render %i was %f\n", i, ospGetVariance(framebuffers[i]));
+    printf("...done, variance of render %i was %f\n",
+        i,
+        ospGetVariance(framebuffers[i]));
     ospRelease(futures[i]);
   }
 
@@ -108,14 +119,16 @@ int main(int argc, const char **argv)
       (uint32_t *)ospMapFrameBuffer(framebuffers[0], OSP_FB_COLOR);
   writePPM("firstFrame-scene1.ppm", &imgSizes[0], fb);
   ospUnmapFrameBuffer(fb, framebuffers[0]);
+  printf("wrote rendered scene 1 to firstFrame-scene1.ppm\n");
 
   fb = (uint32_t *)ospMapFrameBuffer(framebuffers[1], OSP_FB_COLOR);
   writePPM("firstFrame-scene2.ppm", &imgSizes[1], fb);
   ospUnmapFrameBuffer(fb, framebuffers[1]);
+  printf("wrote rendered scene 2 to firstFrame-scene2.ppm\n");
 
   // render 10 more frames, which are accumulated to result in a better
   // converged image
-  printf("starting accumulation\n");
+  printf("starting accumulation...\n");
   for (int frames = 0; frames < 10; frames++) {
     for (int i = 0; i < 2; ++i) {
       futures[i] =
@@ -128,8 +141,7 @@ int main(int argc, const char **argv)
     }
   }
   for (int i = 1; i >= 0; --i) {
-    printf("...done!\n");
-    printf("variance of render %i is now %f\n",
+    printf("...done, variance of render %i is now %f\n",
         i,
         ospGetVariance(framebuffers[i]));
     ospRelease(futures[i]);
@@ -138,10 +150,12 @@ int main(int argc, const char **argv)
   fb = (uint32_t *)ospMapFrameBuffer(framebuffers[0], OSP_FB_COLOR);
   writePPM("accumulatedFrame-scene1.ppm", &imgSizes[0], fb);
   ospUnmapFrameBuffer(fb, framebuffers[0]);
+  printf("wrote accumulated scene 1 to accumulatedFrame-scene1.ppm\n");
 
   fb = (uint32_t *)ospMapFrameBuffer(framebuffers[1], OSP_FB_COLOR);
   writePPM("accumulatedFrame-scene2.ppm", &imgSizes[1], fb);
   ospUnmapFrameBuffer(fb, framebuffers[1]);
+  printf("wrote accumulated scene 2 to accumulatedFrame-scene2.ppm\n");
 
   // final cleanups
   for (int i = 0; i < 2; ++i) {
@@ -151,9 +165,15 @@ int main(int argc, const char **argv)
     ospRelease(framebuffers[i]);
   }
 
-  printf("Shutting down\n");
-  fflush(0);
+  printf("shutting down\n");
   ospShutdown();
+
+#ifdef _WIN32
+  if (waitForKey) {
+    printf("\n\tpress any key to exit");
+    _getch();
+  }
+#endif
 
   return 0;
 }
