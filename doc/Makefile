@@ -1,8 +1,8 @@
 SHELL := /bin/bash
 
-webpages := $(addprefix www/, $(addsuffix .html, index examples documentation gallery downloads related_projects displaywall ospray2_porting_guide legal))
-process_version := $(addprefix tmp/, $(addsuffix .md, examples getting_ospray readme_head))
-tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api examples))
+webpages := $(addprefix www/, $(addsuffix .html, index tutorials documentation gallery downloads related_projects displaywall ospray2_porting_guide legal))
+process_version := $(addprefix tmp/, $(addsuffix .md, tutorials getting_ospray readme_head))
+tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api tutorials))
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe ospExamples renderSunSky))
 images_fig := spot_light spot_coords quad_light hdri_light 
@@ -120,7 +120,7 @@ tmp/changelog.md: filter-sectionnumbers.py ../CHANGELOG.md
 	echo -e '\nFor the complete history of changes have a look at the [CHANGELOG](https://github.com/ospray/ospray/blob/master/CHANGELOG.md).' >> $@
 
 www/index.html: teaser.html overview.md tmp/changelog.md
-www/examples.html: examples.md
+www/tutorials.html: tutorials.md
 www/gallery.html: gallery.md
 www/downloads.html: tmp/getting_ospray.md tmp/compilation_web.md
 www/related_projects.html: related_projects.md
@@ -172,7 +172,7 @@ tmp/api.md: api.md tmp/links_local.md tmp/images_web.md
 tmp/compilation.md: compilation.md tmp/links_local.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/examples.md
+../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/tutorials.md
 	$(PANDOC) --file-scope $+ -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
 
 ### pdf
