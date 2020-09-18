@@ -30,16 +30,15 @@ before you can build OSPRay you need the following prerequisites:
     `~/Projects/ospray`, ISPC will also be searched in
     `~/Projects/ispc-v1.14.1-linux`] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
--   OSPRay builds on top of the Intel oneAPI Rendering Toolkit common
-    library `rkcommon`. The library provides abstractions for tasking,
-    aligned memory allocation, vector math types, among others. For
-    users who also need to build
-    [rkcommon](https://www.github.com/ospray/rkcommon), we recommend the
-    default the Intel [Threading Building
-    Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
-    system for performance and flexibility reasons. Alternatively you
-    can set CMake variable `RKCOMMON_TASKING_SYSTEM` to `OpenMP` or
-    `Internal`.
+-   OSPRay builds on top of the [Intel oneAPI Rendering Toolkit common
+    library (rkcommon)](https://www.github.com/ospray/rkcommon). The
+    library provides abstractions for tasking, aligned memory
+    allocation, vector math types, among others. For users who also need
+    to build rkcommon, we recommend the default the Intel [Threading
+    Building Blocks (TBB)](https://www.threadingbuildingblocks.org/) as
+    tasking system for performance and flexibility reasons.
+    Alternatively you can set CMake variable `RKCOMMON_TASKING_SYSTEM`
+    to `OpenMP` or `Internal`.
 -   OSPRay also heavily uses Intel [Embree], installing version 3.8.0 or
     newer is required. If Embree is not found by CMake its location can
     be hinted with the variable `embree_DIR`.

@@ -9,6 +9,9 @@
  * On Windows build it in the build_directory\$Configuration with
  *   cl ..\..\apps\ospTutorial\ospTutorial.cpp /EHsc -I ..\..\ospray\include ^
  *      -I ..\.. -I ..\..\..\rkcommon ospray.lib
+ * Above commands assume that rkcommon is present in a directory right "next
+ * to" the OSPRay directory. If this is not the case, then adjust the include
+ * path (alter "-I <path/to/rkcommon>" appropriately).
  */
 
 #include <errno.h>
