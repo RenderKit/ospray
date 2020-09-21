@@ -40,6 +40,8 @@ struct World
   SciVisData scivisData;
 };
 
+extern void World_Constructor(World *uniform world, void *uniform cppE);
+
 inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
 {
   // Skip if no geometries scene

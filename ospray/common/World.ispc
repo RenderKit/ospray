@@ -95,10 +95,8 @@ unmasked void clippingIntersectionFilterV(
   context->hitsCount++;
 }
 
-export void *uniform World_create(void *uniform cppE)
+static void World_Constructor(World *uniform world, void *uniform cppE)
 {
-  World *uniform world = uniform new World;
-
   world->cppEquivalent = cppE;
   world->geometriesInst = NULL;
   world->numGeometriesInst = 0;
@@ -114,7 +112,12 @@ export void *uniform World_create(void *uniform cppE)
   world->numInvertedClippers = 0;
 
   world->scivisData.lights = NULL;
+}
 
+export void *uniform World_create(void *uniform cppE)
+{
+  World *uniform world = uniform new World;
+  World_Constructor(world, cppE);
   return (void *uniform)world;
 }
 
