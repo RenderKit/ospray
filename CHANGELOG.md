@@ -4,6 +4,8 @@ Version History
 ### Changes in v2.4.0:
 
 -   Fixed normals of (transformed) isosurfaces
+-   Clipping geometry is now working correctly with `map_maxDepth`
+    renderer parameter
 
 ### Changes in v2.3.0:
 

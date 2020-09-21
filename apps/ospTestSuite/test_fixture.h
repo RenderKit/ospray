@@ -94,4 +94,11 @@ class FromOsprayTestingDirect : public FromOsprayTesting
   void SetUp() override;
 };
 
+// with map_maxDepth texture
+class FromOsprayTestingMaxDepth : public FromOsprayTesting
+{
+ public:
+  void SetUp() override;
+};
+
 } // namespace OSPRayTestScenes
