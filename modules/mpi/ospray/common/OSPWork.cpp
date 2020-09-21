@@ -13,6 +13,7 @@
 #include "geometry/GeometricModel.h"
 #include "ospray/MPIDistributedDevice.h"
 #include "render/RenderTask.h"
+#include "rkcommon/array3D/for_each.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/OwnedArray.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
@@ -157,6 +158,78 @@ void newLight(
   state.objects[handle] = ospNewLight(type.c_str());
 }
 
+void dataTransfer(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric)
+{
+  using namespace utility;
+
+  OSPDataType type;
+  vec3ul numItems = 0;
+  cmdBuf >> type >> numItems;
+
+  Data *data = new Data(type, numItems);
+
+  const uint64_t nbytes = data->size() * sizeOf(type);
+  auto view = std::make_shared<ArrayView<uint8_t>>(
+      reinterpret_cast<uint8_t *>(data->data()), nbytes);
+  fabric.recvBcast(*view);
+
+  state.dataTransfers.push(data);
+}
+
+Data *retrieveData(OSPState &state,
+    networking::BufferReader &cmdBuf,
+    networking::Fabric &fabric,
+    const OSPDataType type,
+    const vec3ul numItems,
+    Data *outputData)
+{
+  using namespace utility;
+  uint32_t dataInline = 0;
+  cmdBuf >> dataInline;
+  const uint64_t nbytes = numItems.x * numItems.y * numItems.z * sizeOf(type);
+  if (dataInline) {
+    // If the data is inline we copy it out of the command buffer into
+    // a fixed array, since the command buffer will be destroyed after
+    // processing it
+    if (!outputData) {
+      outputData = new Data(type, numItems);
+    }
+    cmdBuf.read(outputData->data(), nbytes);
+  } else {
+    // All large data is sent before the command buffer using it, and will be
+    // in the state's data transfers list
+    auto data = state.dataTransfers.front();
+    state.dataTransfers.pop();
+
+    if (outputData) {
+      // All data on the workers is compact, with the compaction done by the
+      // app rank before sending
+      std::memcpy(outputData->data(), data->data(), nbytes);
+    } else {
+      outputData = data;
+    }
+  }
+
+  // If the data type is managed we need to convert the handles back into
+  // OSPObjects and increment the refcount because we're populating the data
+  // object manually
+  if (mpicommon::isManagedObject(type)) {
+    for (size_t i = 0; i < array3D::longProduct(numItems); ++i) {
+      char *addr = outputData->data() + i * sizeOf(type);
+      int64_t *h = reinterpret_cast<int64_t *>(addr);
+      OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
+      *obj = state.objects[*h];
+
+      ManagedObject *m = lookupObject<ManagedObject>(*obj);
+      m->refInc();
+    }
+  }
+
+  return outputData;
+}
+
 void newSharedData(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &fabric)
@@ -166,59 +239,11 @@ void newSharedData(OSPState &state,
   int64_t handle = 0;
   OSPDataType format;
   vec3ul numItems = 0;
-  vec3l byteStride;
-  cmdBuf >> handle >> format >> numItems >> byteStride;
+  cmdBuf >> handle >> format >> numItems;
 
-  vec3l stride = byteStride;
-  if (stride.x == 0) {
-    stride.x = sizeOf(format);
-  }
-  if (stride.y == 0) {
-    stride.y = numItems.x * sizeOf(format);
-  }
-  if (stride.z == 0) {
-    stride.z = numItems.x * numItems.y * sizeOf(format);
-  }
+  auto data = retrieveData(state, cmdBuf, fabric, format, numItems, nullptr);
 
-  size_t nbytes = numItems.x * stride.x;
-  if (numItems.y > 1) {
-    nbytes = numItems.y * stride.y;
-  }
-  if (numItems.z > 1) {
-    nbytes = numItems.z * stride.z;
-  }
-
-  auto view = rkcommon::make_unique<OwnedArray<uint8_t>>();
-  view->resize(nbytes, 0);
-  fabric.recvBcast(*view);
-
-  // If the data type is managed we need to convert the handles
-  // back into pointers
-  if (mpicommon::isManagedObject(format)) {
-    rkcommon::index_sequence_3D indices(numItems);
-    for (auto idx : indices) {
-      const size_t i = idx.x * stride.x + idx.y * stride.y + idx.z * stride.z;
-      uint8_t *addr = view->data() + i;
-      int64_t *h = reinterpret_cast<int64_t *>(addr);
-      OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
-      *obj = state.objects[*h];
-    }
-  }
-
-  state.objects[handle] = ospNewSharedData(view->data(),
-      format,
-      numItems.x,
-      byteStride.x,
-      numItems.y,
-      byteStride.y,
-      numItems.z,
-      byteStride.z);
-
-  // Offload device keeps +1 ref for tracking the lifetime of the data
-  // buffer shared with OSPRay
-  ospRetain(state.objects[handle]);
-
-  state.data[handle] = std::move(view);
+  state.objects[handle] = (OSPData)data;
 }
 
 void newData(OSPState &state,
@@ -284,22 +309,11 @@ void commit(OSPState &state,
   int64_t handle = 0;
   cmdBuf >> handle;
 
-  // If it's a data being committed, we need to recieve the updated data
-  auto d = state.data.find(handle);
-  if (d != state.data.end()) {
-    auto &view = *d->second;
-    fabric.recvBcast(view);
-
-    Data *d = state.getObject<Data *>(handle);
-    if (mpicommon::isManagedObject(d->type)) {
-      rkcommon::index_sequence_3D indices(d->numItems);
-      for (auto idx : indices) {
-        char *addr = d->data(idx);
-        int64_t *h = reinterpret_cast<int64_t *>(addr);
-        OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
-        *obj = state.objects[*h];
-      }
-    }
+  // If it's a data being committed, we need to retrieve the updated data
+  ManagedObject *m = lookupObject<ManagedObject>(state.objects[handle]);
+  Data *d = dynamic_cast<Data *>(m);
+  if (d && d->isShared()) {
+    retrieveData(state, cmdBuf, fabric, d->type, d->numItems, d);
   }
 
   ospCommit(state.objects[handle]);
@@ -311,29 +325,19 @@ void release(
   int64_t handle = 0;
   cmdBuf >> handle;
   ospRelease(state.objects[handle]);
+  // Note: we keep the handle in the state.objects list as it may be referenced
+  // by other objects in the scene as a parameter or data.
 
-  // Pass through the framebuffers and see if any have been completely free'd
-  for (auto it = state.framebuffers.begin(); it != state.framebuffers.end();) {
-    OSPObject obj = state.objects[it->first];
-    ManagedObject *m = lookupDistributedObject<ManagedObject>(obj);
-    if (m->useCount() == 1) {
-      ospRelease(state.objects[it->first]);
-      it = state.framebuffers.erase(it);
-    } else {
-      ++it;
-    }
-  }
-
-  // Pass through the data and see if any have been completely free'd
-  // i.e., no object depends on them anymore either.
-  for (auto it = state.data.begin(); it != state.data.end();) {
-    OSPObject obj = state.objects[it->first];
-    ManagedObject *m = reinterpret_cast<ManagedObject *>(obj);
-    if (m->useCount() == 1) {
-      ospRelease(state.objects[it->first]);
-      it = state.data.erase(it);
-    } else {
-      ++it;
+  // Check if we can release a referenced framebuffer info
+  {
+    auto fnd = state.framebuffers.find(handle);
+    if (fnd != state.framebuffers.end()) {
+      OSPObject obj = state.objects[handle];
+      ManagedObject *m = lookupDistributedObject<ManagedObject>(obj);
+      if (m->useCount() == 1) {
+        ospRelease(state.objects[handle]);
+        state.framebuffers.erase(fnd);
+      }
     }
   }
 }
@@ -376,12 +380,12 @@ void mapFramebuffer(OSPState &state,
     networking::Fabric &fabric)
 {
   // Map the channel and send the image back over the fabric
+  int64_t handle = 0;
+  uint32_t channel = 0;
+  cmdBuf >> handle >> channel;
+
   if (mpicommon::worker.rank == 0) {
     using namespace utility;
-
-    int64_t handle = 0;
-    uint32_t channel = 0;
-    cmdBuf >> handle >> channel;
 
     const FrameBufferInfo &fbInfo = state.framebuffers[handle];
     uint64_t nbytes = fbInfo.pixelSize(channel) * fbInfo.getNumPixels();
@@ -409,11 +413,11 @@ void getVariance(OSPState &state,
     networking::Fabric &fabric)
 {
   // Map the channel and send the image back over the fabric
+  int64_t handle = 0;
+  cmdBuf >> handle;
+
   if (mpicommon::worker.rank == 0) {
     using namespace utility;
-
-    int64_t handle = 0;
-    cmdBuf >> handle;
 
     float variance = ospGetVariance(state.getObject<OSPFrameBuffer>(handle));
 
@@ -794,6 +798,9 @@ void dispatchWork(TAG t,
   case NEW_LIGHT:
     newLight(state, cmdBuf, fabric);
     break;
+  case DATA_TRANSFER:
+    dataTransfer(state, cmdBuf, fabric);
+    break;
   case NEW_SHARED_DATA:
     newSharedData(state, cmdBuf, fabric);
     break;
@@ -904,6 +911,8 @@ const char *tagName(work::TAG t)
     return "NEW_MATERIAL";
   case NEW_LIGHT:
     return "NEW_LIGHT";
+  case DATA_TRANSFER:
+    return "DATA_TRANSFER";
   case NEW_SHARED_DATA:
     return "NEW_SHARED_DATA";
   case NEW_DATA:

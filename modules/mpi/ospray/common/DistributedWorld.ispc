@@ -22,6 +22,7 @@ export void *uniform DistributedWorld_create(void *uniform cppE)
   world->super.embreeSceneHandleClippers = NULL;
                
   world->super.numInvertedClippers = 0;
+  world->super.scivisData.lights = NULL;
 
   return (void *uniform)world;
 }

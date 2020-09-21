@@ -29,6 +29,7 @@
 #include "rkcommon/networking/DataStreaming.h"
 #include "rkcommon/networking/Socket.h"
 #include "rkcommon/utility/ArrayView.h"
+#include "rkcommon/utility/FixedArrayView.h"
 #include "rkcommon/utility/OwnedArray.h"
 #include "rkcommon/utility/getEnvVar.h"
 #include "volume/Volume.h"
@@ -75,7 +76,7 @@ static inline void setupMaster()
   MPI_Comm_size(appComm, &size);
   MPI_Comm_rank(appComm, &rank);
 
-  postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+  postStatusMsg(OSP_LOG_INFO)
       << "#w: app process " << rank << '/' << size << " (global " << world.rank
       << '/' << world.size << ')';
 
@@ -96,7 +97,7 @@ static inline void setupWorker()
 
   worker.makeIntraComm();
 
-  postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+  postStatusMsg(OSP_LOG_INFO)
       << "master: Made 'worker' intercomm (through split): " << std::hex
       << std::showbase << worker.comm << std::noshowbase << std::dec;
 
@@ -151,7 +152,7 @@ void createMPI_RanksBecomeWorkers(int *ac, const char **av)
 {
   mpi::init(ac, av, true);
 
-  postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+  postStatusMsg(OSP_LOG_INFO)
       << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size;
 
   // Note: here we don't run this collective through MAML, since we
@@ -178,8 +179,8 @@ void createMPI_ListenForClient(int *ac, const char **av)
   mpi::init(ac, av, true);
 
   if (world.rank == 0) {
-    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-        << "#o: Initialize OSPRay MPI in 'Listen for Client' Mode\n";
+    postStatusMsg(OSP_LOG_INFO)
+        << "#o: Initialize OSPRay MPI in 'Listen for Client' Mode";
   }
   worker.comm = world.comm;
   worker.makeIntraComm();
@@ -196,7 +197,7 @@ MPIOffloadDevice::~MPIOffloadDevice()
   // TODO: This test needs to be corrected for handlign offload w/ sockets
   // in connect/accept mode.
   if (dynamic_cast<MPIFabric *>(fabric.get()) && world.rank == 0) {
-    postStatusMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
+    postStatusMsg(OSP_LOG_INFO) << "shutting down mpi device";
 
 #ifdef ENABLE_PROFILING
     {
@@ -212,9 +213,8 @@ MPIOffloadDevice::~MPIOffloadDevice()
     }
 #endif
 
-    networking::BufferWriter writer;
-    writer << work::FINALIZE;
-    sendWork(writer.buffer);
+    sendWork([](networking::WriteStream &writer) { writer << work::FINALIZE; },
+        true);
 
     // TODO: if not mpi, don't finalize on head node
     MPI_Finalize();
@@ -258,25 +258,54 @@ void MPIOffloadDevice::initializeDevice()
     createMPI_ListenForClient(&_ac, _av);
   } else if (mode == "mpi-connect") {
     const std::string host = getParam<std::string>("host", "");
-    const std::string portParam = getParam<std::string>("port", "");
+    const int port = getParam<int>("port", -1);
 
-    if (host.empty() || portParam.empty()) {
+    if (host.empty() || port == -1) {
       throw std::runtime_error(
           "Error: mpi-connect requires a host and port "
           "argument to connect to");
     }
-    int port = std::stoi(portParam);
-    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-        << "MPIOffloadDevice connecting to " << host << ":" << port << "\n";
+    postStatusMsg(OSP_LOG_INFO)
+        << "MPIOffloadDevice connecting to " << host << ":" << port;
     fabric = rkcommon::make_unique<SocketWriterFabric>(host, port);
   } else {
     throw std::runtime_error("Invalid MPI mode!");
   }
 
-  // The collectives don't get compressed through the optional
-  // compression path in MAML, so we can leave this off.
-  // TODO: We may want to optionally enable compression for collectives,
-  // if we have a lot of ranks
+  // Setup the command buffer on the app rank
+  maxCommandBufferEntries =
+      getParam<uint32_t>("maxCommandBufferEntries", 8192);
+  commandBufferSize = getParam<uint32_t>("commandBufferSize", 512) * (1 << 20);
+  maxInlineDataSize = getParam<uint32_t>("maxInlineDataSize", 32) * (1 << 20);
+
+  auto OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES =
+      utility::getEnvVar<int>("OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES");
+  if (OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES) {
+    maxCommandBufferEntries = OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES.value();
+  }
+  auto OSPRAY_MPI_COMMAND_BUFFER_SIZE =
+      utility::getEnvVar<int>("OSPRAY_MPI_COMMAND_BUFFER_SIZE");
+  if (OSPRAY_MPI_COMMAND_BUFFER_SIZE) {
+    commandBufferSize = OSPRAY_MPI_COMMAND_BUFFER_SIZE.value() * (1 << 20);
+  }
+  auto OSPRAY_MPI_MAX_INLINE_DATA_SIZE =
+      utility::getEnvVar<int>("OSPRAY_MPI_MAX_INLINE_DATA_SIZE");
+  if (OSPRAY_MPI_MAX_INLINE_DATA_SIZE) {
+    maxInlineDataSize = OSPRAY_MPI_MAX_INLINE_DATA_SIZE.value() * (1 << 20);
+  }
+
+  if (commandBufferSize >= 1.8f * (1 << 30)) {
+    static WarnOnce warn(
+        "Command buffer size must be less than 1.8GB, resetting to 1.8GB");
+    commandBufferSize = 1.8f * (1 << 30);
+  }
+  if (maxInlineDataSize >= commandBufferSize / 2.f) {
+    static WarnOnce warn(
+        "Max inline data size must be less than half command buffer size");
+    maxInlineDataSize = std::ceil(commandBufferSize / 2.f);
+  }
+
+  commandBuffer = networking::FixedBufferWriter(commandBufferSize);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -295,9 +324,11 @@ void MPIOffloadDevice::commit()
 
 int MPIOffloadDevice::loadModule(const char *name)
 {
-  networking::BufferWriter writer;
-  writer << work::LOAD_MODULE << std::string(name);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::LOAD_MODULE << name;
+      },
+      false);
 
   // TODO: Error reporting from the workers
   return 0;
@@ -311,9 +342,11 @@ OSPLight MPIOffloadDevice::newLight(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_LIGHT << handle.i64 << std::string(type);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_LIGHT << handle.i64 << type;
+      },
+      false);
 
   return (OSPLight)(int64)handle;
 }
@@ -322,9 +355,11 @@ OSPCamera MPIOffloadDevice::newCamera(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_CAMERA << handle.i64 << std::string(type);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_CAMERA << handle.i64 << type;
+      },
+      false);
 
   return (OSPCamera)(int64)handle;
 }
@@ -333,9 +368,11 @@ OSPGeometry MPIOffloadDevice::newGeometry(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_GEOMETRY << handle.i64 << std::string(type);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_GEOMETRY << handle.i64 << type;
+      },
+      false);
 
   return (OSPGeometry)(int64)handle;
 }
@@ -344,9 +381,11 @@ OSPVolume MPIOffloadDevice::newVolume(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_VOLUME << handle.i64 << std::string(type);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_VOLUME << handle.i64 << type;
+      },
+      false);
 
   return (OSPVolume)(int64)handle;
 }
@@ -356,9 +395,12 @@ OSPGeometricModel MPIOffloadDevice::newGeometricModel(OSPGeometry geom)
   ObjectHandle handle = allocateHandle();
 
   ObjectHandle geomHandle = (ObjectHandle &)geom;
-  networking::BufferWriter writer;
-  writer << work::NEW_GEOMETRIC_MODEL << handle.i64 << geomHandle.i64;
-  sendWork(writer.buffer);
+
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_GEOMETRIC_MODEL << handle.i64 << geomHandle.i64;
+      },
+      false);
 
   return (OSPGeometricModel)(int64)handle;
 }
@@ -368,9 +410,12 @@ OSPVolumetricModel MPIOffloadDevice::newVolumetricModel(OSPVolume volume)
   ObjectHandle handle = allocateHandle();
 
   ObjectHandle volHandle = (ObjectHandle &)volume;
-  networking::BufferWriter writer;
-  writer << work::NEW_VOLUMETRIC_MODEL << handle.i64 << volHandle.i64;
-  sendWork(writer.buffer);
+
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_VOLUMETRIC_MODEL << handle.i64 << volHandle.i64;
+      },
+      false);
 
   return (OSPVolumetricModel)(int64)handle;
 }
@@ -384,10 +429,12 @@ OSPMaterial MPIOffloadDevice::newMaterial(
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_MATERIAL << handle.i64 << std::string(renderer_type)
-         << std::string(material_type);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_MATERIAL << handle.i64 << renderer_type
+               << material_type;
+      },
+      false);
 
   return (OSPMaterial)(int64)handle;
 }
@@ -396,9 +443,11 @@ OSPTransferFunction MPIOffloadDevice::newTransferFunction(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_TRANSFER_FUNCTION << handle.i64 << std::string(type);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_TRANSFER_FUNCTION << handle.i64 << type;
+      },
+      false);
 
   return (OSPTransferFunction)(int64)handle;
 }
@@ -407,9 +456,11 @@ OSPTexture MPIOffloadDevice::newTexture(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_TEXTURE << handle.i64 << std::string(type);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_TEXTURE << handle.i64 << type;
+      },
+      false);
 
   return (OSPTexture)(int64)handle;
 }
@@ -422,9 +473,11 @@ OSPGroup MPIOffloadDevice::newGroup()
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_GROUP << handle.i64;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_GROUP << handle.i64;
+      },
+      false);
 
   return (OSPGroup)(int64)handle;
 }
@@ -434,9 +487,11 @@ OSPInstance MPIOffloadDevice::newInstance(OSPGroup group)
   ObjectHandle handle = allocateHandle();
   ObjectHandle groupHandle = (ObjectHandle &)group;
 
-  networking::BufferWriter writer;
-  writer << work::NEW_INSTANCE << handle.i64 << groupHandle.i64;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_INSTANCE << handle.i64 << groupHandle.i64;
+      },
+      false);
 
   return (OSPInstance)(int64)handle;
 }
@@ -449,9 +504,11 @@ OSPWorld MPIOffloadDevice::newWorld()
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_WORLD << handle.i64;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_WORLD << handle.i64;
+      },
+      false);
 
   return (OSPWorld)(int64)handle;
 }
@@ -460,9 +517,11 @@ box3f MPIOffloadDevice::getBounds(OSPObject _obj)
 {
   const ObjectHandle obj = (ObjectHandle &)_obj;
 
-  networking::BufferWriter writer;
-  writer << work::GET_BOUNDS << obj;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::GET_BOUNDS << obj;
+      },
+      true);
 
   box3f result;
   utility::ArrayView<uint8_t> view(
@@ -482,38 +541,22 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_SHARED_DATA << handle.i64 << format << numItems
-         << byteStride;
-  sendWork(writer.buffer);
-
-  vec3l stride = byteStride;
-  if (stride.x == 0) {
-    stride.x = sizeOf(format);
+  ApplicationData appData;
+  appData.workerType = format;
+  if (mpicommon::isManagedObject(format)) {
+    format = OSP_ULONG;
   }
-  if (stride.y == 0) {
-    stride.y = numItems.x * sizeOf(format);
-  }
-  if (stride.z == 0) {
-    stride.z = numItems.x * numItems.y * sizeOf(format);
-  }
+  appData.data = new Data(sharedData, format, numItems, byteStride);
+  this->sharedData[handle.i64] = appData;
 
-  size_t nbytes = numItems.x * stride.x;
-  if (numItems.y > 1) {
-    nbytes = numItems.y * stride.y;
-  }
-  if (numItems.z > 1) {
-    nbytes = numItems.z * stride.z;
-  }
-
-  std::shared_ptr<utility::AbstractArray<uint8_t>> dataView =
-      std::make_shared<utility::ArrayView<uint8_t>>(
-          const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(sharedData)),
-          nbytes);
-
-  this->sharedData[handle.i64] = dataView;
-
-  fabric->sendBcast(dataView);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        // Data on the workers is always compact, so we don't send the stride
+        writer << work::NEW_SHARED_DATA << handle.i64 << appData.workerType
+               << numItems;
+        sendDataWork(writer, this->sharedData[handle.i64]);
+      },
+      false);
 
   return (OSPData)(int64)handle;
 }
@@ -522,9 +565,11 @@ OSPData MPIOffloadDevice::newData(OSPDataType format, const vec3ul &numItems)
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_DATA << handle.i64 << format << numItems;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_DATA << handle.i64 << format << numItems;
+      },
+      false);
 
   return (OSPData)(int64)handle;
 }
@@ -532,12 +577,15 @@ OSPData MPIOffloadDevice::newData(OSPDataType format, const vec3ul &numItems)
 void MPIOffloadDevice::copyData(
     const OSPData source, OSPData destination, const vec3ul &destinationIndex)
 {
-  networking::BufferWriter writer;
   const ObjectHandle sourceHandle = (const ObjectHandle &)source;
   ObjectHandle destinationHandle = (ObjectHandle &)destination;
-  writer << work::COPY_DATA << sourceHandle.i64 << destinationHandle.i64
-         << destinationIndex;
-  sendWork(writer.buffer);
+
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::COPY_DATA << sourceHandle.i64 << destinationHandle.i64
+               << destinationIndex;
+      },
+      false);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -549,8 +597,8 @@ void MPIOffloadDevice::setObjectParam(
 {
   ObjectHandle handle = (ObjectHandle &)object;
   switch (type) {
-  // All OSP_OBJECT fall through the same style of setting param since it's just
-  // a handle
+  // All OSP_OBJECT fall through the same style of setting param since it's
+  // just a handle
   case OSP_DEVICE:
   case OSP_OBJECT:
   case OSP_CAMERA:
@@ -576,10 +624,12 @@ void MPIOffloadDevice::setObjectParam(
     setParam<bool>(handle, name, mem, type);
     break;
   case OSP_STRING: {
-    networking::BufferWriter writer;
-    writer << work::SET_PARAM << handle.i64 << std::string(name) << type
-           << (const char *)mem;
-    sendWork(writer.buffer);
+    sendWork(
+        [&](networking::WriteStream &writer) {
+          writer << work::SET_PARAM << handle.i64 << name << type
+                 << (const char *)mem;
+        },
+        false);
     break;
   }
   case OSP_CHAR:
@@ -710,24 +760,26 @@ void MPIOffloadDevice::removeObjectParam(OSPObject object, const char *name)
 {
   const ObjectHandle handle = (const ObjectHandle &)object;
 
-  networking::BufferWriter writer;
-  writer << work::REMOVE_PARAM << handle.i64 << std::string(name);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::REMOVE_PARAM << handle.i64 << name;
+      },
+      false);
 }
 
 void MPIOffloadDevice::commit(OSPObject _object)
 {
   const ObjectHandle handle = (const ObjectHandle &)_object;
 
-  networking::BufferWriter writer;
-  writer << work::COMMIT << handle.i64;
-  sendWork(writer.buffer);
-
-  // If it's a shared data we need to send the updated data to the workers
   auto d = sharedData.find(handle.i64);
-  if (d != sharedData.end()) {
-    fabric->sendBcast(d->second);
-  }
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::COMMIT << handle.i64;
+        if (d != sharedData.end()) {
+          sendDataWork(writer, d->second);
+        }
+      },
+      false);
 }
 
 void MPIOffloadDevice::release(OSPObject _object)
@@ -738,22 +790,38 @@ void MPIOffloadDevice::release(OSPObject _object)
     futures.erase(handle.i64);
   }
 
-  networking::BufferWriter writer;
-  writer << work::RELEASE << handle.i64;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::RELEASE << handle.i64;
+      },
+      false);
 
-  // Make sure any object setup/data copy/etc. related to this object are
-  // completed
-  fabric->flushBcastSends();
+  // If this object was sharing a data view with the application we need to
+  // make sure the data has been transferred before letting the application
+  // potentially release the buffer. We only need to flush any early data
+  // sends here, since if the data was small enough to inline in the command
+  // buffer we aren't actually sharing the pointer with the app anymore
+  auto d = sharedData.find(handle.i64);
+  if (d != sharedData.end()) {
+    if (d->second.releaseHazard) {
+      postStatusMsg(OSP_LOG_DEBUG)
+          << "#osp.mpi.app: ospRelease: data reference hazard exists, "
+          << " flushing pending sends";
+      fabric->flushBcastSends();
+    }
+    sharedData.erase(handle.i64);
+  }
 }
 
 void MPIOffloadDevice::retain(OSPObject _obj)
 {
   const ObjectHandle handle = (const ObjectHandle &)_obj;
 
-  networking::BufferWriter writer;
-  writer << work::RETAIN << handle.i64;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::RETAIN << handle.i64;
+      },
+      false);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -765,10 +833,12 @@ OSPFrameBuffer MPIOffloadDevice::frameBufferCreate(
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::CREATE_FRAMEBUFFER << handle.i64 << size << (uint32_t)format
-         << channels;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::CREATE_FRAMEBUFFER << handle.i64 << size
+               << (uint32_t)format << channels;
+      },
+      false);
   return (OSPFrameBuffer)(int64)handle;
 }
 
@@ -776,9 +846,11 @@ OSPImageOperation MPIOffloadDevice::newImageOp(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_IMAGE_OPERATION << handle.i64 << std::string(type);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_IMAGE_OPERATION << handle.i64 << type;
+      },
+      false);
   return (OSPImageOperation)(int64)handle;
 }
 
@@ -791,9 +863,11 @@ const void *MPIOffloadDevice::frameBufferMap(
 #endif
 
   ObjectHandle handle = (ObjectHandle &)_fb;
-  networking::BufferWriter writer;
-  writer << work::MAP_FRAMEBUFFER << handle.i64 << (uint32_t)channel;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::MAP_FRAMEBUFFER << handle.i64 << (uint32_t)channel;
+      },
+      true);
 
   uint64_t nbytes = 0;
   auto bytesView =
@@ -830,9 +904,12 @@ float MPIOffloadDevice::getVariance(OSPFrameBuffer _fb)
   using namespace utility;
 
   ObjectHandle handle = (ObjectHandle &)_fb;
-  networking::BufferWriter writer;
-  writer << work::GET_VARIANCE << handle.i64;
-  sendWork(writer.buffer);
+
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::GET_VARIANCE << handle.i64;
+      },
+      true);
 
   float variance = 0;
   auto view = ArrayView<uint8_t>(
@@ -845,9 +922,12 @@ float MPIOffloadDevice::getVariance(OSPFrameBuffer _fb)
 void MPIOffloadDevice::resetAccumulation(OSPFrameBuffer _fb)
 {
   ObjectHandle handle = (ObjectHandle &)_fb;
-  networking::BufferWriter writer;
-  writer << work::RESET_ACCUMULATION << handle.i64;
-  sendWork(writer.buffer);
+
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::RESET_ACCUMULATION << handle.i64;
+      },
+      false);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -858,9 +938,11 @@ OSPRenderer MPIOffloadDevice::newRenderer(const char *type)
 {
   ObjectHandle handle = allocateHandle();
 
-  networking::BufferWriter writer;
-  writer << work::NEW_RENDERER << handle.i64 << std::string(type);
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::NEW_RENDERER << handle.i64 << type;
+      },
+      false);
   return (OSPRenderer)(int64)handle;
 }
 
@@ -875,10 +957,13 @@ OSPFuture MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
   const ObjectHandle cameraHandle = (ObjectHandle &)_camera;
   const ObjectHandle worldHandle = (ObjectHandle &)_world;
 
-  networking::BufferWriter writer;
-  writer << work::RENDER_FRAME << fbHandle << rendererHandle << cameraHandle
-         << worldHandle << futureHandle;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::RENDER_FRAME << fbHandle << rendererHandle
+               << cameraHandle << worldHandle << futureHandle;
+      },
+      true);
+
   futures.insert(futureHandle.i64);
   return (OSPFuture)(int64)futureHandle;
 }
@@ -886,9 +971,13 @@ OSPFuture MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
 int MPIOffloadDevice::isReady(OSPFuture _task, OSPSyncEvent event)
 {
   const ObjectHandle handle = (ObjectHandle &)_task;
-  networking::BufferWriter writer;
-  writer << work::FUTURE_IS_READY << handle.i64 << (uint32_t)event;
-  sendWork(writer.buffer);
+
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::FUTURE_IS_READY << handle.i64 << (uint32_t)event;
+      },
+      true);
+
   int result = 0;
   utility::ArrayView<uint8_t> view(
       reinterpret_cast<uint8_t *>(&result), sizeof(result));
@@ -899,9 +988,13 @@ int MPIOffloadDevice::isReady(OSPFuture _task, OSPSyncEvent event)
 void MPIOffloadDevice::wait(OSPFuture _task, OSPSyncEvent event)
 {
   const ObjectHandle handle = (ObjectHandle &)_task;
-  networking::BufferWriter writer;
-  writer << work::FUTURE_WAIT << handle.i64 << (uint32_t)event;
-  sendWork(writer.buffer);
+
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::FUTURE_WAIT << handle.i64 << (uint32_t)event;
+      },
+      true);
+
   int result = 0;
   utility::ArrayView<uint8_t> view(
       reinterpret_cast<uint8_t *>(&result), sizeof(result));
@@ -911,17 +1004,24 @@ void MPIOffloadDevice::wait(OSPFuture _task, OSPSyncEvent event)
 void MPIOffloadDevice::cancel(OSPFuture _task)
 {
   const ObjectHandle handle = (ObjectHandle &)_task;
-  networking::BufferWriter writer;
-  writer << work::FUTURE_CANCEL << handle.i64;
-  sendWork(writer.buffer);
+
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::FUTURE_CANCEL << handle.i64;
+      },
+      true);
 }
 
 float MPIOffloadDevice::getProgress(OSPFuture _task)
 {
   const ObjectHandle handle = (ObjectHandle &)_task;
-  networking::BufferWriter writer;
-  writer << work::FUTURE_GET_PROGRESS << handle.i64;
-  sendWork(writer.buffer);
+
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::FUTURE_GET_PROGRESS << handle.i64;
+      },
+      true);
+
   float result = 0;
   utility::ArrayView<uint8_t> view(
       reinterpret_cast<uint8_t *>(&result), sizeof(result));
@@ -932,9 +1032,13 @@ float MPIOffloadDevice::getProgress(OSPFuture _task)
 float MPIOffloadDevice::getTaskDuration(OSPFuture _task)
 {
   const ObjectHandle handle = (ObjectHandle &)_task;
-  networking::BufferWriter writer;
-  writer << work::FUTURE_GET_TASK_DURATION << handle.i64;
-  sendWork(writer.buffer);
+
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::FUTURE_GET_TASK_DURATION << handle.i64;
+      },
+      true);
+
   float result = 0;
   utility::ArrayView<uint8_t> view(
       reinterpret_cast<uint8_t *>(&result), sizeof(result));
@@ -953,10 +1057,12 @@ OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
   const ObjectHandle cameraHandle = (ObjectHandle &)camera;
   const ObjectHandle worldHandle = (ObjectHandle &)world;
 
-  networking::BufferWriter writer;
-  writer << work::PICK << fbHandle << rendererHandle << cameraHandle
-         << worldHandle << screenPos;
-  sendWork(writer.buffer);
+  sendWork(
+      [&](networking::WriteStream &writer) {
+        writer << work::PICK << fbHandle << rendererHandle << cameraHandle
+               << worldHandle << screenPos;
+      },
+      true);
 
   OSPPickResult result = {0};
   utility::ArrayView<uint8_t> view(
@@ -965,14 +1071,92 @@ OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
   return result;
 }
 
-void MPIOffloadDevice::sendWork(
-    std::shared_ptr<utility::AbstractArray<uint8_t>> work)
+void MPIOffloadDevice::sendDataWork(
+    networking::WriteStream &writer, ApplicationData &appData)
 {
+  const Data *data = appData.data;
+  const uint64_t compactSize = data->size() * sizeOf(data->type);
+  if (compactSize < maxInlineDataSize) {
+    // Small data gets inline'd into the command buffer
+    writer << (uint32_t)1;
+    if (data->compact()) {
+      writer.write(data->data(), compactSize);
+    } else {
+      auto *sizer = dynamic_cast<networking::WriteSizeCalculator *>(&writer);
+      if (sizer) {
+        sizer->write(nullptr, compactSize);
+      } else {
+        // Reserve space and copy the compact data into the buffer
+        auto *bufWriter =
+            dynamic_cast<networking::FixedBufferWriter *>(&writer);
+        Data compact(bufWriter->reserve(compactSize),
+            data->type,
+            data->numItems,
+            vec3ul(0));
+        compact.copy(*data, vec3ul(0));
+      }
+    }
+  } else {
+    // For large data we start sending it early as an early data command
+    writer << (uint32_t)0;
+
+    // Only send the data if we're not doing the size calculation step
+    if (!dynamic_cast<networking::WriteSizeCalculator *>(&writer)) {
+      networking::BufferWriter dataTransferCmd;
+      dataTransferCmd << work::DATA_TRANSFER << appData.workerType
+                      << data->numItems;
+
+      networking::BufferWriter header;
+      header << dataTransferCmd.buffer->size();
+
+      fabric->sendBcast(header.buffer);
+      fabric->sendBcast(dataTransferCmd.buffer);
+
+      std::shared_ptr<utility::AbstractArray<uint8_t>> dataView = nullptr;
+      if (data->compact()) {
+        appData.releaseHazard = true;
+        dataView = std::make_shared<utility::ArrayView<uint8_t>>(
+            reinterpret_cast<uint8_t *>(data->data()), compactSize);
+      } else {
+        // Allocate space to store the compact data and compact into it,
+        // we send from this compacted buffer directly
+        auto mem = std::make_shared<utility::FixedArray<uint8_t>>(compactSize);
+        Data compact(mem->begin(), data->type, data->numItems, vec3ul(0));
+        compact.copy(*data, vec3ul(0));
+
+        dataView = mem;
+      }
+      fabric->sendBcast(dataView);
+    }
+  }
+}
+
+void MPIOffloadDevice::submitWork()
+{
+  if (commandBuffer.available() == commandBuffer.capacity()) {
+    postStatusMsg(OSP_LOG_ERROR)
+        << "submit on empty command buffer attempted, should not happen!";
+    return;
+  }
+
+  auto view = commandBuffer.getWrittenView();
+
   networking::BufferWriter header;
-  header << (uint64_t)work->size();
+  header << view->size();
 
   fabric->sendBcast(header.buffer);
-  fabric->sendBcast(work);
+
+  postStatusMsg(OSP_LOG_DEBUG)
+      << "#osp.mpi.app:  submitting buffer with " << nBufferedCommands
+      << " commands, size: " << view->size();
+
+  // Make view of the valid set of commands in the buffer and submit them
+  fabric->sendBcast(view);
+  nBufferedCommands = 0;
+
+  // Write new commands to a new buffer while the previous buffer is sent
+  // out asynchronously
+  commandBuffer = networking::FixedBufferWriter(commandBufferSize);
 }
 
 int MPIOffloadDevice::rootWorkerRank() const

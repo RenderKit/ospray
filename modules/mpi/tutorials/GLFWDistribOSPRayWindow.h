@@ -1,4 +1,4 @@
-// Copyright 2018-2019 Intel Corporation
+// Copyright 2018-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,6 +12,7 @@
 // ospray
 #include "ospray/ospray.h"
 #include "ospray/ospray_cpp.h"
+#include "ospray/ospray_cpp/ext/rkcommon.h"
 
 struct WindowState
 {

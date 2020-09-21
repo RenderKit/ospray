@@ -8,8 +8,8 @@
 #include "../common/Messaging.h"
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "fb/LocalFB.h"
-#include "rkcommon/containers/AlignedVector.h"
 #include "render/Renderer.h"
+#include "rkcommon/containers/AlignedVector.h"
 
 namespace ospray {
 struct TileDesc;
@@ -153,8 +153,6 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   /*! Gather the tile IDs and error info from the other ranks to the master,
    * for OSP_FB_NONE rendering, where we only track that info on the master */
   void gatherFinalErrors();
-
-  void sendCancelRenderingMessage();
 
   // Data members ///////////////////////////////////////////////////////////
 

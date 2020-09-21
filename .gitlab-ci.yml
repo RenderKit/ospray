@@ -37,11 +37,13 @@ build-centos7-intel:
     - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then
         export BUILD_OSPRAY_VERSION=master;
         export BUILD_OPENVKL_VERSION=master;
+        export BUILD_RKCOMMON_VERSION=master;
       else
         export BUILD_OSPRAY_VERSION=devel;
         export BUILD_OPENVKL_VERSION=devel;
+        export BUILD_RKCOMMON_VERSION=devel;
       fi
-    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION -DBUILD_RKCOMMON_VERSION=$BUILD_RKCOMMON_VERSION
 
 build-centos7-openmpi:
   <<: *build_job_docker_modules
@@ -52,11 +54,13 @@ build-centos7-openmpi:
     - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then
         export BUILD_OSPRAY_VERSION=master;
         export BUILD_OPENVKL_VERSION=master;
+        export BUILD_RKCOMMON_VERSION=master;
       else
         export BUILD_OSPRAY_VERSION=devel;
         export BUILD_OPENVKL_VERSION=devel;
+        export BUILD_RKCOMMON_VERSION=devel;
       fi
-    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION -DBUILD_RKCOMMON_VERSION=$BUILD_RKCOMMON_VERSION
 
 build-centos8-mpich:
   <<: *build_job_docker
@@ -66,12 +70,14 @@ build-centos8-mpich:
     - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then
         export BUILD_OSPRAY_VERSION=master;
         export BUILD_OPENVKL_VERSION=master;
+        export BUILD_RKCOMMON_VERSION=master;
       else
         export BUILD_OSPRAY_VERSION=devel;
         export BUILD_OPENVKL_VERSION=devel;
+        export BUILD_RKCOMMON_VERSION=devel;
       fi
     - export PATH=$PATH:/usr/lib64/mpich/bin/
-    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION -DBUILD_RKCOMMON_VERSION=$BUILD_RKCOMMON_VERSION
 
 build-centos8-openmpi:
   <<: *build_job_docker
@@ -81,12 +87,14 @@ build-centos8-openmpi:
     - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then
         export BUILD_OSPRAY_VERSION=master;
         export BUILD_OPENVKL_VERSION=master;
+        export BUILD_RKCOMMON_VERSION=master;
       else
         export BUILD_OSPRAY_VERSION=devel;
         export BUILD_OPENVKL_VERSION=devel;
+        export BUILD_RKCOMMON_VERSION=devel;
       fi
     - export PATH=$PATH:/usr/lib64/openmpi/bin/
-    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_VERSION=$BUILD_OSPRAY_VERSION -DBUILD_OPENVKL_VERSION=$BUILD_OPENVKL_VERSION -DBUILD_RKCOMMON_VERSION=$BUILD_RKCOMMON_VERSION
 
 build-scan-kw:
   stage: build

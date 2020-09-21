@@ -52,7 +52,7 @@ void runWorker(bool useMPIFabric)
 
   char hostname[HOST_NAME_MAX] = {0};
   gethostname(hostname, HOST_NAME_MAX);
-  postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+  postStatusMsg(OSP_LOG_DEBUG)
       << "#w: running MPI worker process " << workerRank() << "/"
       << workerSize() << " on pid " << getpid() << "@" << hostname;
 
@@ -89,32 +89,33 @@ void runWorker(bool useMPIFabric)
     recvBuffer->resize(commandSize, 0);
     fabric->recvBcast(*recvBuffer);
 
+    // Read each command in the buffer and execute it
     networking::BufferReader reader(recvBuffer);
-    work::TAG workTag = work::NONE;
-    reader >> workTag;
+    while (!reader.end()) {
+      work::TAG workTag = work::NONE;
+      reader >> workTag;
 
-    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-        << "#osp.mpi.worker: processing work " << workTag << ": "
-        << work::tagName(workTag);
+      postStatusMsg(OSP_LOG_DEBUG) << "#osp.mpi.worker: processing work "
+                                   << workTag << ": " << work::tagName(workTag);
 
-    // We're exiting so sync out our debug log info
+      // We're exiting so sync out our debug log info
 #ifdef ENABLE_PROFILING
-    if (workTag == work::FINALIZE) {
-      ProfilingPoint workerEnd;
-      fout << "Worker exiting, /proc/self/status:\n"
-           << getProcStatus() << "\n======\n"
-           << "Avg. CPU % during run: "
-           << cpuUtilization(workerStart, workerEnd) << "%\n"
-           << std::flush;
-      fout.close();
-    }
+      if (workTag == work::FINALIZE) {
+        ProfilingPoint workerEnd;
+        fout << "Worker exiting, /proc/self/status:\n"
+             << getProcStatus() << "\n======\n"
+             << "Avg. CPU % during run: "
+             << cpuUtilization(workerStart, workerEnd) << "%\n"
+             << std::flush;
+        fout.close();
+      }
 #endif
 
-    dispatchWork(workTag, ospState, reader, *fabric);
+      dispatchWork(workTag, ospState, reader, *fabric);
 
-    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-        << "#osp.mpi.worker: completed work " << workTag << ": "
-        << work::tagName(workTag);
+      postStatusMsg(OSP_LOG_DEBUG) << "#osp.mpi.worker: completed work "
+                                   << workTag << ": " << work::tagName(workTag);
+    }
   }
 }
 } // namespace mpi

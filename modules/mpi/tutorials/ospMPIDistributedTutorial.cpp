@@ -32,9 +32,10 @@
 
 #include "rkcommon/math/vec.h"
 #include "rkcommon/math/box.h"
-// Note: we define OSPRAY_CPP_RKCOMMON_TYPES to use rkcommon types
+// Note: we define OSPRAY_CPP_RKCOMMON_TYPES in CMAke to use rkcommon types
 // natively through the C++ wrappers
 #include "ospray/ospray_cpp.h"
+#include "ospray/ospray_cpp/ext/rkcommon.h"
 
 using namespace ospray;
 using namespace rkcommon;

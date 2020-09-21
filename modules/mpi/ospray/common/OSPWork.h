@@ -1,8 +1,9 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include <queue>
 #include <unordered_map>
 #include <vector>
 
@@ -13,6 +14,7 @@
 #include "rkcommon/networking/DataStreaming.h"
 #include "rkcommon/networking/Fabric.h"
 #include "rkcommon/utility/ArrayView.h"
+#include "rkcommon/utility/FixedArray.h"
 
 #include "camera/Camera.h"
 #include "common/Instance.h"
@@ -44,6 +46,7 @@ enum TAG
   NEW_IMAGE_OPERATION,
   NEW_MATERIAL,
   NEW_LIGHT,
+  DATA_TRANSFER,
   NEW_SHARED_DATA,
   NEW_DATA,
   COPY_DATA,
@@ -92,9 +95,9 @@ struct OSPState
 
   std::unordered_map<int64_t, FrameBufferInfo> framebuffers;
 
-  std::unordered_map<int64_t,
-      std::unique_ptr<rkcommon::utility::OwnedArray<uint8_t>>>
-      data;
+  // Large data which is transfered separately from the command buffer,
+  // prior to sending the command buffer
+  std::queue<Data *> dataTransfers;
 
   template <typename T>
   T getObject(int64_t handle)

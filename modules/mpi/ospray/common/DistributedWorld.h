@@ -54,7 +54,6 @@ struct Region
  * owns them. A region is some "clip box" within the world, which contains
  * some mix of volumes and geometries to be rendered, with rays clipped
  * against the bounds of this box.
- * TODO WILL: How to handle "ghost" regions, or with some "ghost instances"?
  */
 struct DistributedWorld : public World
 {

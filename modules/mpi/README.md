@@ -146,6 +146,26 @@ this port number to the device:
   --osp:device-params=mpiMode:mpi-connect,host:<worker rank 0 host>,port:<port printed above>
 ```
 
+If initializing the `mpiOffload` device manually, or passing parameters through
+the command line, the following parameters can be set:
+
+
+| Type   | Name                    | Default             | Description                                                       |
+|:-------|:------------------------|--------------------:|:------------------------------------------------------------------|
+| string | mpiMode                 | mpi                 | The mode to communicate with the worker ranks. `mpi` will assume you're launching the application and workers in the same mpi command (or split launch command). `mpi-listen` can be passed to the workers, indicating they should wait and listen for a connection from the application. `mpi-connect` can be passed to the application, indicating it should connect to the first worker at `host` and `port` to connect to the workers |
+| string | host                    | none, optional      | On the app rank, specify the host worker 0 is on to connect to in mpi-connect mode |
+| int    | port                    | none, optional      | On the app rank, specify the port worker 0 is listening on to connect in mpi-connect mode |
+| uint   | maxCommandBufferEntries | 8192                | Set the max number of commands to buffer before submitting the command buffer to the workers |
+| uint   | commandBufferSize       | 512MiB              | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8GiB         |
+| uint   | maxInlineDataSize       | 32MiB               | Set the max size of an OSPData which can be inline'd into the command buffer instead of being sent separately. Max size is half the commandBufferSize. Units are in MiB |
+
+: Parameters specific to the `mpiOffload` Device.
+
+The `maxCommandBufferEntries`, `commandBufferSize`, and `maxInlineDataSize` can also
+be set via the environment variables: `OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES`,
+`OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
+respectively.
+
 MPI Distributed Rendering
 -------------------------
 

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -39,10 +39,6 @@
 #define OSPRAY_THROW(a)                                                        \
   throw std::runtime_error(                                                    \
       "in " + std::string(__PRETTY_FUNCTION__) + " : " + std::string(a))
-
-// Log level at which extremely verbose MPI logging output will
-// be written
-#define OSPRAY_MPI_VERBOSE_LEVEL 3
 
 #define OSPRAY_WORLD_GROUP_TAG 290374
 
