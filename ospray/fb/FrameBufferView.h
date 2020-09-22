@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -38,6 +38,8 @@ struct OSPRAY_SDK_INTERFACE FrameBufferView
   vec3f *normalBuffer = nullptr;
   //! accumulated albedo, one RGBF32 per pixel
   vec3f *albedoBuffer = nullptr;
+
+  FrameBuffer *originalFB = nullptr;
 
   //! Convenience method to make a view of the entire framebuffer
   FrameBufferView(FrameBuffer *fb,

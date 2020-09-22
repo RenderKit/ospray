@@ -4,6 +4,7 @@ Version History
 ### Changes in v2.4.0:
 
 -   Fixed normals of (transformed) isosurfaces
+-   The denoiser now respects frame cancellation
 -   Clipping geometry is now working correctly with `map_maxDepth`
     renderer parameter
 -   Using materials in a renderer with a mismatched `renderer_type` no
