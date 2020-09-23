@@ -95,7 +95,7 @@ unmasked void clippingIntersectionFilterV(
   context->hitsCount++;
 }
 
-static void World_Constructor(World *uniform world, void *uniform cppE)
+void World_Constructor(World *uniform world, void *uniform cppE)
 {
   world->cppEquivalent = cppE;
   world->geometriesInst = NULL;
