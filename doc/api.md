@@ -1799,24 +1799,28 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-  ---------- ------------------ --------  ------------------------------------
-  Type       Name                Default  Description
-  ---------- ------------------ --------  ------------------------------------
-  int        lightSamples            all  number of random light samples
-                                          per path vertex, per default
-                                          all light sources are sampled
+  ---------- -------------------- --------  ------------------------------------
+  Type       Name                  Default  Description
+  ---------- -------------------- --------  ------------------------------------
+  int        lightSamples              all  number of random light samples
+                                            per path vertex, per default
+                                            all light sources are sampled
 
-  bool       geometryLights         true  whether geometries with an emissive
-                                          material (e.g., [Luminous]) illuminate
-                                          the scene
+  bool       geometryLights           true  whether geometries with an emissive
+                                            material (e.g., [Luminous]) illuminate
+                                            the scene
 
-  int        roulettePathLength        5  ray recursion depth at which to
-                                          start Russian roulette termination
+  int        roulettePathLength          5  ray recursion depth at which to
+                                            start Russian roulette termination
 
-  float      maxContribution           ∞  samples are clamped to this value
-                                          before they are accumulated into
-                                          the framebuffer
-  ---------- ------------------ --------  ------------------------------------
+  float      maxContribution             ∞  samples are clamped to this value
+                                            before they are accumulated into
+                                            the framebuffer
+
+  bool       backgroundRefraction    false  allow for alpha blending even if
+                                            backgound is seen through refractive
+                                            objects like glass
+  ---------- -------------------- --------  ------------------------------------
   : Special parameters understood by the path tracer.
 
 The path tracer requires that [materials] are assigned to [geometries],

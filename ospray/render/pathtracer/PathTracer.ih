@@ -21,6 +21,7 @@ struct PathTracer
   // compositing; disabled if normal is zero-length
   vec4f shadowCatcherPlane;
   bool shadowCatcher; // preprocessed
+  bool backgroundRefraction;
 
   // array containing the scene light sources
   // the lights are sorted: first geometric, then virtual lights

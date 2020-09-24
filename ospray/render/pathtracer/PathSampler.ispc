@@ -147,7 +147,10 @@ void samplePath(const PathContext &pathContext,
     }
 
     // background handling
-    if (pathVertex.type == ENVIRONMENT && pathState.straightPath) {
+    if (pathVertex.type == ENVIRONMENT
+        && (pathContext.context->backgroundRefraction
+                ? pathState.specularTransmissionPath
+                : pathState.straightPath)) {
       vec4f bg = Renderer_getBackground(
           &pathContext.context->super, *pathContext.pixel);
       pathState.contribution =
@@ -266,6 +269,9 @@ void samplePath(const PathContext &pathContext,
 
     // continue the path
     pathState.straightPath &= eq(ray.dir, fs.wi);
+    pathState.specularTransmissionPath &=
+        fs.type & SCATTERING_SPECULAR_TRANSMISSION;
+
     setRay(ray, ray_org, fs.wi, pathState.time);
     pathState.depth++;
     pathState.sampleDim += pathContext.numBounceSampleDims;

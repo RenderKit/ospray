@@ -58,6 +58,9 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathState.disableFWD = false;
   pathState.straightPath = true; // path from camera did not change direction,
                                  // for alpha and backplate
+  pathState.specularTransmissionPath =
+      true; // path from camera only has specular transmissions, for alpha and
+            // backplate
   pathState.auxFree = true; // normal & albedo buffer were not yet written to
   pathState.depth = 0;
   pathState.sampleDim = 5; // skip: pixel (2D), lens (2D), time (1D)
@@ -214,13 +217,15 @@ export void PathTracer_set(void *uniform _self,
     const uniform int32 rouletteDepth,
     const uniform float maxRadiance,
     const uniform vec4f &shadowCatcherPlane,
-    const uniform int32 numLightSamples)
+    const uniform int32 numLightSamples,
+    const uniform bool backgroundRefraction)
 {
   PathTracer *uniform self = (PathTracer * uniform) _self;
 
   self->rouletteDepth = rouletteDepth;
   self->maxRadiance = maxRadiance;
   self->numLightSamples = numLightSamples;
+  self->backgroundRefraction = backgroundRefraction;
 
   uniform vec3f normal = make_vec3f(shadowCatcherPlane);
   const uniform float l = length(normal);
@@ -249,7 +254,7 @@ export void *uniform PathTracer_create(void *uniform cppE)
   self->super.renderTile = PathTracer_renderTile;
 
   self->lightsCDF = NULL;
-  PathTracer_set(self, 5, inf, make_vec4f(0.f), 1);
+  PathTracer_set(self, 5, inf, make_vec4f(0.f), 1, false);
   PathTracer_setLights(self, NULL, 0, 0);
 
   precomputeMicrofacetAlbedoTables();

@@ -103,12 +103,14 @@ void PathTracer::commit()
   const float maxRadiance = getParam<float>("maxContribution", inf);
   vec4f shadowCatcherPlane = getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
   useGeometryLights = getParam<bool>("geometryLights", true);
+  const bool bgRefraction = getParam<bool>("backgroundRefraction", false);
 
   ispc::PathTracer_set(getIE(),
       rouletteDepth,
       maxRadiance,
       (ispc::vec4f &)shadowCatcherPlane,
-      numLightSamples);
+      numLightSamples,
+      bgRefraction);
 }
 
 void *PathTracer::beginFrame(FrameBuffer *, World *world)

@@ -3,6 +3,9 @@ Version History
 
 ### Changes in v2.4.0:
 
+-   The pathtracer optionally allows for alpha blending even if the
+    background is seen through refractive objects like glass, by
+    enabling `backgroundRefraction`
 -   Fixed normals of (transformed) isosurfaces
 -   The optional `denoiser` image operation now respects frame
     cancellation, requiring Intel® Open Image Denoise with minimum
@@ -33,11 +36,11 @@ Version History
     understand rkcommon and glm short vector types
     -   For rkcommon, include `ospray/ospray_cpp/ext/rkcommon.h`
     -   For glm, include `ospray/ospray_cpp/ext/glm.h`
-    -   Note in debug builds some compilers will not optimize out type trait
-        definitions. This will require users to manually instantiate the glm
-        definitions in one translation unit within the application using
-        `#define OSPRAY_GLM_DEFINITIONS` before including `ext/glm.h`: see
-        `ospTutorialGLM` as an example
+    -   Note in debug builds some compilers will not optimize out type
+        trait definitions. This will require users to manually
+        instantiate the glm definitions in one translation unit within
+        the application using `#define OSPRAY_GLM_DEFINITIONS` before
+        including `ext/glm.h`: see `ospTutorialGLM` as an example
 -   Changed parameters to `volume` texture: it now directly accepts the
     `volume` and the `transferFunction`
 -   Fixed many memory leaks
