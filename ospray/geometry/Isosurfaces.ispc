@@ -72,7 +72,7 @@ void Isosurfaces_intersect_kernel(
   tRange.lower = ray->t0;
   tRange.upper = ray->t;
   uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
-  iterator = vklInitHitIteratorV(volume->vklVolume,
+  iterator = vklInitHitIteratorV(volume->vklSampler,
       (varying vkl_vec3f *)&ray->org,
       (varying vkl_vec3f *)&ray->dir,
       &tRange,

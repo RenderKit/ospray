@@ -8,6 +8,7 @@ Version History
     renderer parameter
 -   Using materials in a renderer with a mismatched `renderer_type` no
     longer causes crashes while renderering
+-   OSPRay now requires minimum Open VKL v0.11.0
 
 ### Changes in v2.3.0:
 
