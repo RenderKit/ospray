@@ -9,7 +9,7 @@ using rkcommon::make_unique;
 
 int main(int argc, const char *argv[])
 {
-  initializeOSPRay(argc, argv);
+  initializeOSPRay(argc, argv, false);
 
   bool denoiser = ospLoadModule("denoiser") == OSP_NO_ERROR;
 
