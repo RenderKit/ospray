@@ -191,7 +191,7 @@ void samplePath(const PathContext &pathContext,
     if (pathVertex.type == SURFACE) {
       PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
       foreach_unique (m in material) {
-        if (m != NULL) {
+        if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER) {
           pathVertex.bsdf =
               m->getBSDF(m, &ctx, pathVertex.dg, ray, pathState.currentMedium);
           if (pathVertex.bsdf != NULL)
@@ -248,10 +248,10 @@ void samplePath(const PathContext &pathContext,
       // TODO: support nested dielectrics
       if (fs.type & SCATTERING_TRANSMISSION) {
         ray_org = ray_org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
-        uniform PathTraceMaterial *material =
-            (uniform PathTraceMaterial *)pathVertex.dg.material;
+        PathTraceMaterial *material =
+            (PathTraceMaterial *)pathVertex.dg.material;
         foreach_unique (m in material) {
-          if (m != NULL)
+          if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER)
             m->selectNextMedium(m, pathVertex.dg, pathState.currentMedium);
         }
       }

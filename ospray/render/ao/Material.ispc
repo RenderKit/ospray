@@ -20,6 +20,8 @@ export void AOMaterial_set(void *uniform _mat,
 {
   AOMaterial *uniform mat = (AOMaterial * uniform) _mat;
 
+  mat->super.type = RENDERER_TYPE_AO;
+
   mat->d = d;
   mat->dMap = dMap;
   mat->Kd = Kd;

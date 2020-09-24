@@ -6,6 +6,8 @@ Version History
 -   Fixed normals of (transformed) isosurfaces
 -   Clipping geometry is now working correctly with `map_maxDepth`
     renderer parameter
+-   Using materials in a renderer with a mismatched `renderer_type` no
+    longer causes crashes while renderering
 
 ### Changes in v2.3.0:
 
