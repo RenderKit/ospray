@@ -455,7 +455,6 @@ TEST_P(PTBackgroundRefraction, backgroundRefraction)
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    Appearance, PTBackgroundRefraction, ::testing::Values(false, true));
+INSTANTIATE_TEST_SUITE_P(Appearance, PTBackgroundRefraction, ::testing::Bool());
 
 } // namespace OSPRayTestScenes

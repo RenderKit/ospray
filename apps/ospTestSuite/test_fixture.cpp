@@ -185,14 +185,6 @@ void FromOsprayTesting::SetUp()
   camera.setParam("up", arcballCamera.upDir());
 }
 
-void FromOsprayTestingDirect::SetUp()
-{
-  FromOsprayTesting::SetUp();
-
-  if (rendererType == "pathtracer")
-    renderer.setParam("maxPathLength", 1);
-}
-
 void FromOsprayTestingMaxDepth::SetUp()
 {
   FromOsprayTesting::SetUp();
