@@ -103,3 +103,21 @@ OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume_isosurface", "ao");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume_isosurface", "scivis");
 OSPRAY_DEFINE_BENCHMARK(
     BaseFixture, "particle_volume_isosurface", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "vdb_volume", "ao");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "vdb_volume", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "vdb_volume", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume", "ao");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume_isosurface", "ao");
+OSPRAY_DEFINE_BENCHMARK(
+    BaseFixture, "unstructured_volume_isosurface", "scivis");
+OSPRAY_DEFINE_BENCHMARK(
+    BaseFixture, "unstructured_volume_isosurface", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "gravity_spheres_amr", "ao");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "gravity_spheres_amr", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "gravity_spheres_amr", "pathtracer");
