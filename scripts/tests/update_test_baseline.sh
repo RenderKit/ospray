@@ -12,5 +12,5 @@
 md5=`md5sum $2/$1.png | awk '{print $1 }'`
 echo $md5
 echo $md5 > $3/test_image_data/baseline/$1.png.md5
-rsync -e ssh -p --chmod=F664 --chown=:web $2/$1.png sdvis.org:/var/www/html/ospray/download/baseline/test-data/MD5/$md5
+rsync -e ssh -g -p --chmod=F664 --chown=:web $2/$1.png sdvis.org:/var/www/html/ospray/download/baseline/test-data/MD5/$md5
 
