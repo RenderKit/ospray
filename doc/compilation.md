@@ -46,11 +46,11 @@ before you can build OSPRay you need the following prerequisites:
     installing version 0.11.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
--   OSPRay also provides an optional module that adds support for Intel
-    [Open Image Denoise], which is enabled by `OSPRAY_MODULE_DENOISER`.
-    When loaded, this module enables the `denosier` image operation. You
-    may need to hint the location of the library with the CMake variable
-    `OpenImageDenoise_DIR`.
+-   OSPRay also provides an optional module implementing the `denosier`
+    image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
+    module requires Intel [Open Image Denoise] in version 1.2.3 or
+    newer. You may need to hint the location of the library with the
+    CMake variable `OpenImageDenoise_DIR`.
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be

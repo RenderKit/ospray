@@ -38,7 +38,7 @@ ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
 
 # OpenImageDenoise
 if (OSPRAY_MODULE_DENOISER)
-  find_package(OpenImageDenoise 1.0 REQUIRED)
+  find_package(OpenImageDenoise 1.2.3 REQUIRED)
 endif()
 
 ###########################################################

@@ -4,7 +4,9 @@ Version History
 ### Changes in v2.4.0:
 
 -   Fixed normals of (transformed) isosurfaces
--   The denoiser now respects frame cancellation
+-   The optional `denoiser` image operation now respects frame
+    cancellation, requiring Intel® Open Image Denoise with minimum
+    version 1.2.3
 -   Clipping geometry is now working correctly with `map_maxDepth`
     renderer parameter
 -   Using materials in a renderer with a mismatched `renderer_type` no
