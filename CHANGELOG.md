@@ -7,6 +7,7 @@ Version History
     background is seen through refractive objects like glass, by
     enabling `backgroundRefraction`
 -   Fixed normals of (transformed) isosurfaces
+-   Robust calculation of normals of `boxes` geometry
 -   The optional `denoiser` image operation now respects frame
     cancellation, requiring Intel® Open Image Denoise with minimum
     version 1.2.3
