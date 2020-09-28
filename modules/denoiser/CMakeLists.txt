@@ -1,8 +1,13 @@
 ## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-option(OSPRAY_MODULE_DENOISER
-  "Build the Denoiser FrameOp module for denoising (requires OIDN)" OFF)
+cmake_dependent_option(
+  OSPRAY_MODULE_DENOISER
+  "Build the Denoiser FrameOp module for denoising (requires OIDN)"
+  OFF
+  OSPRAY_ENABLE_MODULES
+  OFF
+)
 
 if (NOT OSPRAY_MODULE_DENOISER)
   return()
