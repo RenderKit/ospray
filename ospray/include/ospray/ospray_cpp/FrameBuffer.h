@@ -37,8 +37,6 @@ class FrameBuffer : public ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>
   FrameBuffer(const FrameBuffer &copy);
   FrameBuffer(OSPFrameBuffer existing);
 
-  FrameBuffer &operator=(const FrameBuffer &copy);
-
   void resetAccumulation() const;
 
   Future renderFrame(
@@ -76,13 +74,6 @@ inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
 inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing)
     : ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>(existing)
 {}
-
-inline FrameBuffer &FrameBuffer::operator=(const FrameBuffer &copy)
-{
-  ospObject = copy.ospObject;
-  ospRetain(copy.handle());
-  return *this;
-}
 
 inline void FrameBuffer::resetAccumulation() const
 {
