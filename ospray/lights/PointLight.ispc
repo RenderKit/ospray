@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -12,7 +12,7 @@ struct PointLight
   Light super; //!< inherited light fields
 
   vec3f position; //!< light position
-  vec3f power; //!< RGB color and intensity of light
+  vec3f intensity; //!< RGB color and intensity of light
   float radius; //!< defines the size of the SphereLight
 };
 
@@ -37,8 +37,8 @@ Light_SampleRes PointLight_sample(const uniform Light *uniform super,
 
   res.pdf = inf; // per default we always take this sample
 
-  // convert from power to radiance by attenuating by distance^2
-  res.weight = self->power * sqr(invdist);
+  // convert from intensity to radiance by attenuating by distance^2
+  res.weight = self->intensity * sqr(invdist);
   const float sinTheta = self->radius * invdist;
 
   if ((self->radius > 0.f) & (sinTheta > 0.005f)) {
@@ -53,8 +53,9 @@ Light_SampleRes PointLight_sample(const uniform Light *uniform super,
       const float c = localDir.z;
       res.dist =
           c * res.dist - sqrt_safe(sqr(self->radius) - (1.f - c * c) * dist2);
-      // scale radiance by actual distance
-      res.weight = self->power * rcp(sqr(res.dist));
+      // note the sampling PDF is already in solid angle therefore, we do not
+      // need to divide it by the squared distance
+      res.weight = self->super.radiance / res.pdf;
     } else {
       // emit only from the surface to the outside
       res.weight = make_vec3f(0.f);
@@ -84,8 +85,7 @@ Light_EvalRes PointLight_eval(const uniform Light *uniform super,
             isect.entry.hit)) {
       const float cosTheta = sqrt(1.f - sinTheta2);
       res.pdf = uniformSampleConePDF(cosTheta);
-      const float invdist = rcp(isect.entry.t);
-      res.radiance = self->power * res.pdf * sqr(invdist);
+      res.radiance = self->super.radiance;
     }
   }
   return res;
@@ -95,12 +95,16 @@ Light_EvalRes PointLight_eval(const uniform Light *uniform super,
 //////////////////////////////////////////////////////////////////////////////
 
 //! Set the parameters of an ispc-side PointLight object
-export void PointLight_set(
-    void *uniform super, const uniform vec3f &position, uniform float radius)
+export void PointLight_set(void *uniform super,
+    const uniform vec3f &position,
+    const uniform vec3f &radiance,
+    const uniform vec3f &intensity,
+    uniform float radius)
 {
   uniform PointLight *uniform self = (uniform PointLight * uniform) super;
   self->position = position;
-  self->power = self->super.radiance;
+  self->super.radiance = radiance;
+  self->intensity = intensity;
   self->radius = radius;
 }
 
@@ -112,6 +116,6 @@ export void *uniform PointLight_create()
   self->super.sample = PointLight_sample;
   self->super.eval = PointLight_eval;
 
-  PointLight_set(self, make_vec3f(0.f), 0.f);
+  PointLight_set(self, make_vec3f(0.f), make_vec3f(1.f), make_vec3f(1.f), 0.f);
   return self;
 }

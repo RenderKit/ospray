@@ -95,10 +95,8 @@ unmasked void clippingIntersectionFilterV(
   context->hitsCount++;
 }
 
-export void *uniform World_create(void *uniform cppE)
+void World_Constructor(World *uniform world, void *uniform cppE)
 {
-  World *uniform world = uniform new World;
-
   world->cppEquivalent = cppE;
   world->geometriesInst = NULL;
   world->numGeometriesInst = 0;
@@ -113,7 +111,22 @@ export void *uniform World_create(void *uniform cppE)
 
   world->numInvertedClippers = 0;
 
+  world->scivisData.lights = NULL;
+}
+
+export void *uniform World_create(void *uniform cppE)
+{
+  World *uniform world = uniform new World;
+  World_Constructor(world, cppE);
   return (void *uniform)world;
+}
+
+export void World_destroy(void *uniform _self)
+{
+  World *uniform self = (World * uniform) _self;
+
+  delete[] self->scivisData.lights;
+  delete self;
 }
 
 export void World_set(void *uniform _self,
@@ -147,4 +160,24 @@ export void World_set(void *uniform _self,
   self->embreeSceneHandleClippers = (RTCScene)embreeClipScene;
 
   self->numInvertedClippers = numInvertedClippers;
+}
+
+export void World_setSciVisData(void *uniform _self,
+    const uniform vec3f &aoColor,
+    void **uniform lights,
+    const uniform uint32 numLights)
+{
+  World *uniform self = (World * uniform) _self;
+
+  delete[] self->scivisData.lights;
+  self->scivisData.lights = NULL;
+
+  self->scivisData.aoColorPi = aoColor * pi;
+  self->scivisData.numLights = numLights;
+  if (numLights) {
+    self->scivisData.lights = uniform new LightPtr[numLights];
+    LightArray srcLights = (LightArray)lights;
+    for (uniform int i = 0; i < numLights; i++)
+      self->scivisData.lights[i] = srcLights[i];
+  }
 }

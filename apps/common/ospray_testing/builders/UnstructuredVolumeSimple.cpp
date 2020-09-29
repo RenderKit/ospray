@@ -9,10 +9,10 @@ using namespace rkcommon::math;
 namespace ospray {
 namespace testing {
 
-struct UnstructuredVolume : public detail::Builder
+struct UnstructuredVolumeSimple : public detail::Builder
 {
-  UnstructuredVolume() = default;
-  ~UnstructuredVolume() override = default;
+  UnstructuredVolumeSimple() = default;
+  ~UnstructuredVolumeSimple() override = default;
 
   void commit() override;
 
@@ -25,7 +25,7 @@ struct UnstructuredVolume : public detail::Builder
 
 // Inlined definitions ////////////////////////////////////////////////////
 
-void UnstructuredVolume::commit()
+void UnstructuredVolumeSimple::commit()
 {
   Builder::commit();
 
@@ -33,7 +33,7 @@ void UnstructuredVolume::commit()
   valuesPerCell = getParam<bool>("cellCenteredValues", false);
 }
 
-cpp::Group UnstructuredVolume::buildGroup() const
+cpp::Group UnstructuredVolumeSimple::buildGroup() const
 {
   // define hexahedron parameters
   const float hSize = .4f;
@@ -192,16 +192,16 @@ cpp::Group UnstructuredVolume::buildGroup() const
   cpp::Volume volume("unstructured");
 
   // set data objects for volume object
-  volume.setParam("vertex.position", cpp::Data(vertices));
+  volume.setParam("vertex.position", cpp::CopiedData(vertices));
 
   if (valuesPerCell)
-    volume.setParam("cell.data", cpp::Data(cellValues));
+    volume.setParam("cell.data", cpp::CopiedData(cellValues));
   else
-    volume.setParam("vertex.data", cpp::Data(vertexValues));
+    volume.setParam("vertex.data", cpp::CopiedData(vertexValues));
 
-  volume.setParam("index", cpp::Data(indices));
-  volume.setParam("cell.index", cpp::Data(cells));
-  volume.setParam("cell.type", cpp::Data(cellTypes));
+  volume.setParam("index", cpp::CopiedData(indices));
+  volume.setParam("cell.index", cpp::CopiedData(cells));
+  volume.setParam("cell.type", cpp::CopiedData(cellTypes));
 
   volume.commit();
 
@@ -211,13 +211,13 @@ cpp::Group UnstructuredVolume::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("volume", cpp::Data(model));
+  group.setParam("volume", cpp::CopiedData(model));
   group.commit();
 
   return group;
 }
 
-OSP_REGISTER_TESTING_BUILDER(UnstructuredVolume, unstructured_volume);
+OSP_REGISTER_TESTING_BUILDER(UnstructuredVolumeSimple, unstructured_volume_simple);
 
 } // namespace testing
 } // namespace ospray

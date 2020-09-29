@@ -9,6 +9,7 @@
 
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 
+#include "math/Distribution1D.ih"
 #include "math/sampling.ih"
 
 vec3f nextEventEstimation(const PathContext &pathContext,
@@ -17,12 +18,25 @@ vec3f nextEventEstimation(const PathContext &pathContext,
 {
   // direct lighting including shadows and MIS
   vec3f L = make_vec3f(0.f);
-  for (uniform int i = 0; i < pathContext.numLights; i++) {
-    const uniform Light *uniform light = pathContext.context->lights[i];
-
-    const vec2f s = LDSampler_getFloat2(
-        pathContext.ldSampler, pathState.sampleDim + 4 + i * 2);
-    Light_SampleRes ls = light->sample(light, pathVertex.dg, s);
+  for (uniform int i = 0; i < pathContext.numLightSamples; i++) {
+    // select a random light source from the list
+    const float s1 = LDSampler_getFloat(
+        pathContext.ldSampler, pathState.sampleDim + 4 + i * 3);
+    const Sample1D lSelectSample = Distribution1D_sample(
+        pathContext.numLights, pathContext.lightsCDF, 0, s1);
+    const float lightSelectionPDF =
+        (lSelectSample.pdf / (float)pathContext.numLights)
+        * pathContext.numLightSamples;
+    const Light *light = pathContext.context->lights[lSelectSample.idx];
+    // sample the contribution from the random light source
+    const vec2f s2 = LDSampler_getFloat2(
+        pathContext.ldSampler, pathState.sampleDim + 4 + i * 3 + 1);
+    Light_SampleRes ls;
+    foreach_unique (l in light)
+      ls = l->sample(l, pathVertex.dg, s2);
+    // adjust the contibution with the probabiltiy of selecting the light source
+    ls.weight = ls.weight / lightSelectionPDF;
+    ls.pdf = ls.pdf * lightSelectionPDF;
 
     // skip when zero contribution from light
     if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)

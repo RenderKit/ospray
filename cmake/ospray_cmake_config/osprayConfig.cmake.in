@@ -123,9 +123,15 @@ include(ospray_macros)
 
 if (OSPRAY_INSTALL_DEPENDENCIES)
   # Dependencies installed with OSPRay
-  file(GLOB_RECURSE EMBREE_LIBRARY    ${LIBRARY_PATH_PREFIX}embree*)
-  file(GLOB_RECURSE RKCOMMON_LIBRARY ${LIBRARY_PATH_PREFIX}rkcommon*)
-  file(GLOB_RECURSE OPENVKL_LIBRARY   ${LIBRARY_PATH_PREFIX}openvkl*)
+  if (WIN32)
+    file(GLOB_RECURSE EMBREE_LIBRARY    ${LIBRARY_PATH_PREFIX}embree*.lib)
+    file(GLOB_RECURSE RKCOMMON_LIBRARY ${LIBRARY_PATH_PREFIX}rkcommon*.lib)
+    file(GLOB_RECURSE OPENVKL_LIBRARY   ${LIBRARY_PATH_PREFIX}openvkl*.lib)
+  else()
+    file(GLOB_RECURSE EMBREE_LIBRARY    ${LIBRARY_PATH_PREFIX}embree*)
+    file(GLOB_RECURSE RKCOMMON_LIBRARY ${LIBRARY_PATH_PREFIX}rkcommon*)
+    file(GLOB_RECURSE OPENVKL_LIBRARY   ${LIBRARY_PATH_PREFIX}openvkl*)
+  endif()
 else()
   # Find existing Dependencies on the machine
   if (NOT TARGET embree)

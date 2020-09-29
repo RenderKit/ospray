@@ -4,9 +4,8 @@
 #include "Metal.h"
 #include "common/Data.h"
 #include "math/spectrum.h"
-#include "texture/Texture2D.h"
 // ispc
-#include "Metal_ispc.h"
+#include "render/pathtracer/materials/Metal_ispc.h"
 
 namespace ospray {
 namespace pathtracer {
@@ -54,18 +53,15 @@ void Metal::commit()
   const vec3f &eta = getParam<vec3f>("eta", vec3f(RGB_AL_ETA));
   const vec3f &k = getParam<vec3f>("k", vec3f(RGB_AL_K));
 
-  const float roughness = getParam<float>("roughness", 0.1f);
-  Texture2D *map_roughness = (Texture2D *)getParamObject("map_roughness");
-  affine2f xform_roughness = getTextureTransform("map_roughness");
+  MaterialParam1f roughness = getMaterialParam1f("roughness", .1f);
 
   ispc::PathTracer_Metal_set(getIE(),
       etaSpectral,
       kSpectral,
       (const ispc::vec3f &)eta,
       (const ispc::vec3f &)k,
-      roughness,
-      map_roughness ? map_roughness->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)xform_roughness);
+      roughness.factor,
+      roughness.tex);
 }
 
 } // namespace pathtracer

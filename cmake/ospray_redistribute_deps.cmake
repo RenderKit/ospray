@@ -6,30 +6,36 @@ macro(ospray_install_namelink NAME)
   set(LIB_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
   # strip version and lib suffix
   if(APPLE)
-    set(LIBREGEX "(.+)[.]([0-9]+)([.][0-9]+[.][0-9]+)?${LIB_SUFFIX}")
+    set(LIBREGEX "(.+)[.]([0-9]+)([.][0-9]+[.][0-9]+)${LIB_SUFFIX}")
   else()
-    set(LIBREGEX "(.+)${LIB_SUFFIX}[.]([0-9]+)([.][0-9]+[.][0-9]+)?")
+    set(LIBREGEX "(.+)${LIB_SUFFIX}[.]([0-9]+)([.][0-9]+[.][0-9]+)")
   endif()
   string(REGEX REPLACE ${LIBREGEX} "\\1" BASE_LIB_NAME ${TARGET_NAME})
-
+  if (CMAKE_MATCH_COUNT GREATER 2)
+    if(APPLE)
+      set(SYMLINK ${BASE_LIB_NAME}.${CMAKE_MATCH_2}${LIB_SUFFIX})
+    else()
+      set(SYMLINK ${BASE_LIB_NAME}${LIB_SUFFIX}.${CMAKE_MATCH_2})
+    endif()
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E
+        create_symlink ${TARGET_NAME} ${CMAKE_CURRENT_BINARY_DIR}/${SYMLINK})
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SYMLINK} ${ARGN}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
+    set(TARGET_NAME ${SYMLINK})
+  endif()
+   
+  # also create a major version suffixed symlink
+  if(APPLE)
+    set(LIBREGEX "(.+)[.]([0-9]+)${LIB_SUFFIX}")
+  else()
+    set(LIBREGEX "(.+)${LIB_SUFFIX}[.]([0-9]+)")
+  endif()
+  string(REGEX REPLACE ${LIBREGEX} "\\1" BASE_LIB_NAME ${TARGET_NAME})
   if (CMAKE_MATCH_COUNT)
     set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX})
     execute_process(COMMAND "${CMAKE_COMMAND}" -E
         create_symlink ${TARGET_NAME} ${SYMLINK})
-    install(PROGRAMS ${SYMLINK} DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        COMPONENT redist)
-  endif()
-   
-  if (CMAKE_MATCH_COUNT GREATER 2)
-    # also create a major version suffixed symlink
-    if(APPLE)
-      set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}.${CMAKE_MATCH_2}${LIB_SUFFIX})
-    else()
-      set(SYMLINK ${CMAKE_CURRENT_BINARY_DIR}/${BASE_LIB_NAME}${LIB_SUFFIX}.${CMAKE_MATCH_2})
-    endif()
-    execute_process(COMMAND "${CMAKE_COMMAND}" -E
-        create_symlink ${TARGET_NAME} ${SYMLINK})
-    install(PROGRAMS ${SYMLINK} DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    install(PROGRAMS ${SYMLINK} ${ARGN} DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT redist)
   endif()
 endmacro()
@@ -37,10 +43,18 @@ endmacro()
 macro(ospray_add_dependent_lib TARGET_NAME)
   if (TARGET ${TARGET_NAME})
     get_target_property(CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
+    # first/default configuration
     list(GET CONFIGURATIONS 0 CONFIGURATION)
     get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_${CONFIGURATION})
     list(APPEND DEPENDENT_LIBS ${LIBRARY})
     ospray_install_namelink(${LIBRARY})
+    # potentially Debug configuration
+    list(FIND CONFIGURATIONS "DEBUG" FOUND)
+    if(FOUND GREATER 0)
+      get_target_property(LIBRARY ${TARGET_NAME} IMPORTED_LOCATION_DEBUG)
+      list(APPEND DEPENDENT_LIBS_DEBUG ${LIBRARY})
+      ospray_install_namelink(${LIBRARY} CONFIGURATIONS Debug)
+    endif()
   else()
     message(STATUS "Skipping target '${TARGET_NAME}")
   endif()
@@ -71,14 +85,17 @@ if (WIN32)
   find_file(EMBREE_DLL embree3.dll HINTS ${EMBREE_DLL_HINTS})
   mark_as_advanced(EMBREE_DLL)
   list(APPEND DEPENDENT_LIBS ${EMBREE_DLL})
-  install(PROGRAMS ${DEPENDENT_LIBS}
-          DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
+  set(INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
 else()
   # TODO use ospray_add_dependent_lib(embree) when v3.10 (with targets) is minimum
   list(APPEND DEPENDENT_LIBS ${EMBREE_LIBRARY})
-  install(PROGRAMS ${DEPENDENT_LIBS}
-          DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
   ospray_install_namelink(${EMBREE_LIBRARY})
+  set(INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
+endif()
+install(PROGRAMS ${DEPENDENT_LIBS} DESTINATION ${INSTALL_DIR} COMPONENT redist)
+if (DEPENDENT_LIBS_DEBUG)
+  install(PROGRAMS ${DEPENDENT_LIBS_DEBUG} CONFIGURATIONS Debug
+          DESTINATION ${INSTALL_DIR} COMPONENT redist)
 endif()
 
 # Install MSVC runtime

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -7,8 +7,8 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // ispc exports
-#include "Volume_ispc.h"
-#include "VolumetricModel_ispc.h"
+#include "volume/Volume_ispc.h"
+#include "volume/VolumetricModel_ispc.h"
 
 namespace ospray {
 
@@ -22,6 +22,12 @@ VolumetricModel::VolumetricModel(Volume *_volume)
   volume = _volume;
 
   this->ispcEquivalent = ispc::VolumetricModel_create(this, volume->getIE());
+}
+
+VolumetricModel::~VolumetricModel()
+{
+  if (vklValueSelector)
+    vklRelease(vklValueSelector);
 }
 
 std::string VolumetricModel::toString() const
@@ -61,7 +67,8 @@ void VolumetricModel::commit()
       transferFunction->getIE(),
       (const ispc::box3f &)volumeBounds,
       getParam<float>("densityScale", 1.f),
-      getParam<float>("anisotropy", 0.f));
+      getParam<float>("anisotropy", 0.f),
+      getParam<float>("gradientShadingScale", 0.f));
 }
 
 RTCGeometry VolumetricModel::embreeGeometryHandle() const

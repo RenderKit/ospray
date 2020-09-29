@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Material.ih"
@@ -10,7 +10,7 @@ struct Mix
   PathTraceMaterial super;
 
   float factor;
-  TextureParam map_factor;
+  TextureParam factorMap;
   PathTraceMaterial *mat1;
   PathTraceMaterial *mat2;
 };
@@ -28,7 +28,7 @@ const varying BSDF *varying Mix_getBSDF(
   const Mix *uniform self = (const Mix *uniform)super;
   varying BSDF *uniform bsdf = MultiBSDF_create(ctx);
 
-  float factor = self->factor * clamp(get1f(self->map_factor, dg, 1.f));
+  float factor = self->factor * clamp(get1f(self->factorMap, dg, 1.f));
 
   if (self->mat1)
     MultiBSDF_add(bsdf,
@@ -60,7 +60,7 @@ vec3f Mix_getTransparency(const uniform PathTraceMaterial *uniform super,
   if (self->mat2)
     t2 = self->mat2->getTransparency(self->mat2, dg, ray, currentMedium);
 
-  float factor = self->factor * clamp(get1f(self->map_factor, dg, 1.f));
+  float factor = self->factor * clamp(get1f(self->factorMap, dg, 1.f));
   return lerp(factor, t1, t2);
 }
 
@@ -69,15 +69,13 @@ vec3f Mix_getTransparency(const uniform PathTraceMaterial *uniform super,
 
 export void PathTracer_Mix_set(void *uniform _self,
     uniform float factor,
-    void *uniform map_factor,
-    const uniform affine2f &xform_factor,
+    const uniform TextureParam &factorMap,
     void *uniform _mat1,
     void *uniform _mat2)
 {
   Mix *uniform self = (Mix * uniform) _self;
   self->factor = clamp(factor);
-  self->map_factor =
-      make_TextureParam((uniform Texture2D *)map_factor, xform_factor);
+  self->factorMap = factorMap;
   self->mat1 = (PathTraceMaterial * uniform) _mat1;
   self->mat2 = (PathTraceMaterial * uniform) _mat2;
 
@@ -92,8 +90,7 @@ export void PathTracer_Mix_set(void *uniform _self,
 void Mix_Constructor(uniform Mix *uniform self)
 {
   PathTraceMaterial_Constructor(&self->super, Mix_getBSDF, Mix_getTransparency);
-  PathTracer_Mix_set(
-      self, 0.5f, NULL, make_AffineSpace2f_identity(), NULL, NULL);
+  PathTracer_Mix_set(self, 0.5f, make_TextureParam(), NULL, NULL);
 }
 
 export void *uniform PathTracer_Mix_create()

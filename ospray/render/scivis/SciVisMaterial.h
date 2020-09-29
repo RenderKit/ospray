@@ -3,19 +3,14 @@
 
 // ospray
 #include "render/Material.h"
-#include "texture/Texture2D.h"
 
 namespace ospray {
 
 struct SciVisMaterial : public ospray::Material
 {
   SciVisMaterial();
+  std::string toString() const override;
   void commit() override;
-
- private:
-  vec3f Kd;
-  float d;
-  Ref<Texture2D> map_Kd;
 };
 
 } // namespace ospray

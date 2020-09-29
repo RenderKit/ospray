@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture2D.h"
-#include "Texture2D_ispc.h"
+#include "texture/Texture2D_ispc.h"
 
 #include "../common/Data.h"
 
@@ -47,6 +47,7 @@ void Texture2D::commit()
         + "' does not match type of 'data'='" + stringFor(texData->type)
         + "'!");
 
+  ispc::delete_uniform(ispcEquivalent);
   this->ispcEquivalent = ispc::Texture2D_create(
       (ispc::vec2i &)size, texData->data(), format, filter);
 }

@@ -99,14 +99,14 @@ cpp::Group SubdivisionCube::buildGroup() const
   // create the OSPRay geometry and set all parameters
   cpp::Geometry geometry("subdivision");
 
-  geometry.setParam("vertex.position", cpp::Data(vertices));
-  geometry.setParam("vertex.color", cpp::Data(colors));
-  geometry.setParam("face", cpp::Data(faces));
-  geometry.setParam("index", cpp::Data(indices));
-  geometry.setParam("vertexCrease.index", cpp::Data(vertexCreaseIndices));
-  geometry.setParam("vertexCrease.weight", cpp::Data(vertexCreaseWeights));
-  geometry.setParam("edgeCrease.index", cpp::Data(edgeCreaseIndices));
-  geometry.setParam("edgeCrease.weight", cpp::Data(edgeCreaseWeights));
+  geometry.setParam("vertex.position", cpp::CopiedData(vertices));
+  geometry.setParam("vertex.color", cpp::CopiedData(colors));
+  geometry.setParam("face", cpp::CopiedData(faces));
+  geometry.setParam("index", cpp::CopiedData(indices));
+  geometry.setParam("vertexCrease.index", cpp::CopiedData(vertexCreaseIndices));
+  geometry.setParam("vertexCrease.weight", cpp::CopiedData(vertexCreaseWeights));
+  geometry.setParam("edgeCrease.index", cpp::CopiedData(edgeCreaseIndices));
+  geometry.setParam("edgeCrease.weight", cpp::CopiedData(edgeCreaseWeights));
   geometry.setParam("level", level);
   geometry.setParam("mode", OSP_SUBDIVISION_PIN_CORNERS);
 
@@ -114,7 +114,8 @@ cpp::Group SubdivisionCube::buildGroup() const
 
   cpp::GeometricModel model(geometry);
 
-  if (rendererType == "pathtracer" || rendererType == "scivis") {
+  if (rendererType == "pathtracer" || rendererType == "scivis"
+      || rendererType == "ao") {
     cpp::Material material(rendererType, "obj");
     material.commit();
     model.setParam("material", material);
@@ -124,7 +125,7 @@ cpp::Group SubdivisionCube::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;

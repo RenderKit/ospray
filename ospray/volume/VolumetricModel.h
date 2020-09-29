@@ -13,7 +13,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
 {
   VolumetricModel(Volume *geometry);
-  ~VolumetricModel() override = default;
+  ~VolumetricModel() override;
   std::string toString() const override;
 
   void commit() override;

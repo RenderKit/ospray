@@ -39,8 +39,8 @@ void Texture2D::SetUp()
         vidx.flatten({i.x, i.y + 1}));
   }
   cpp::Geometry mesh("mesh");
-  mesh.setParam("vertex.position", cpp::Data(vertex));
-  mesh.setParam("index", cpp::Data(index));
+  mesh.setParam("vertex.position", cpp::CopiedData(vertex));
+  mesh.setParam("index", cpp::CopiedData(index));
   mesh.commit();
 
   // create textures: columns=#channels, rows=type=[byte, byte, float, short]
@@ -119,12 +119,14 @@ void Texture2D::SetUp()
     ospRelease(tmp);
     tex.setParam("data", data);
     tex.commit();
+    ospRelease(data);
     cpp::Material mat(rendererType, "obj");
+    mat.setParam("kd", vec3f(0.8));
     mat.setParam(i & 1 ? "map_bump" : "map_kd", tex);
     mat.commit();
     material[i] = mat;
   }
-  model.setParam("material", cpp::Data(material));
+  model.setParam("material", cpp::CopiedData(material));
   AddModel(model);
 
   { // set up backplate texture
@@ -134,7 +136,7 @@ void Texture2D::SetUp()
       el = toggle ? vec3uc(5, 10, 5) : vec3uc(10, 5, 10);
       toggle = !toggle;
     }
-    cpp::Data texData(vec2ul(125, 94), bpdata.data());
+    cpp::CopiedData texData(bpdata.data(), vec2ul(125, 94));
 
     cpp::Texture backplateTex("texture2d");
     backplateTex.setParam("format", OSP_TEXTURE_RGB8);
@@ -167,6 +169,95 @@ void Texture2D::SetUp()
   AddLight(light2);
 }
 
+static cpp::Texture createTexture2D()
+{
+  // Prepare pixel data
+  constexpr uint32_t width = 32;
+  constexpr uint32_t height = 32;
+  std::array<vec3uc, width * height> dbyte;
+  rkcommon::index_sequence_2D idx(vec2i(width, height));
+  for (auto i : idx)
+    dbyte[idx.flatten(i)] =
+        vec3uc(i.x * (256 / width), i.y * (256 / height), i.x * (256 / width));
+
+  // Create texture object
+  cpp::Texture tex("texture2d");
+  tex.setParam("format", OSP_TEXTURE_RGB8);
+  tex.setParam("data", cpp::CopiedData(dbyte.data(), vec2ul(width, height)));
+  tex.commit();
+  return tex;
+}
+
+Texture2DTransform::Texture2DTransform()
+{
+  rendererType = GetParam();
+}
+
+void Texture2DTransform::SetUp()
+{
+  Base::SetUp();
+
+  camera.setParam("position", vec3f(4.f, 4.f, -10.f));
+  camera.setParam("direction", vec3f(0.f, 0.f, 1.f));
+  camera.setParam("up", vec3f(0.f, 1.f, 0.f));
+
+  // Create quad geometry
+  constexpr int cols = 2;
+  constexpr int rows = 2;
+  cpp::Geometry quads("mesh");
+  {
+    // Create quads data
+    std::array<vec3f, 4 * cols * rows> position;
+    std::array<vec4ui, cols * rows> index;
+    rkcommon::index_sequence_2D idx(vec2i(cols, rows));
+    for (auto i : idx) {
+      auto l = static_cast<vec2f>(i) * 5.f;
+      auto u = l + (.75f * 5.f);
+      position[4 * idx.flatten(i) + 0] = vec3f(l.x, l.y, 0.f);
+      position[4 * idx.flatten(i) + 1] = vec3f(l.x, u.y, 0.f);
+      position[4 * idx.flatten(i) + 2] = vec3f(u.x, u.y, 0.f);
+      position[4 * idx.flatten(i) + 3] = vec3f(u.x, l.y, 0.f);
+      index[idx.flatten(i)] = vec4ui(0, 1, 2, 3) + 4 * idx.flatten(i);
+    }
+
+    // Set quads parameters
+    quads.setParam("vertex.position", cpp::CopiedData(position));
+    quads.setParam("index", cpp::CopiedData(index));
+    quads.commit();
+  }
+
+  // Create materials
+  std::array<cpp::Material, cols * rows> materials;
+  cpp::Texture tex = createTexture2D();
+  for (int i = 0; i < cols * rows; i++) {
+    cpp::Material mat(rendererType, "obj");
+    mat.setParam("map_kd", tex);
+    mat.commit();
+    materials[i] = mat;
+  }
+
+  // Set scale
+  materials[1].setParam("map_kd.scale", vec2f(.5f));
+  materials[1].commit();
+
+  // Set rotation
+  materials[2].setParam("map_kd.rotation", 45.f);
+  materials[2].commit();
+
+  // Set translation
+  materials[3].setParam("map_kd.translation", vec2f(.5f));
+  materials[3].commit();
+
+  // Create geometric model
+  cpp::GeometricModel model(quads);
+  model.setParam("material", cpp::CopiedData(materials));
+  AddModel(model);
+
+  cpp::Light ambient("ambient");
+  ambient.setParam("intensity", 0.5f);
+  AddLight(ambient);
+}
+
 RendererMaterialList::RendererMaterialList()
 {
   rendererType = GetParam();
@@ -192,7 +283,7 @@ void RendererMaterialList::SetUp()
       [](const std::string &rendererType, vec3f Kd, vec3f Ks) -> cpp::Material {
     cpp::Material mat(rendererType, "obj");
     mat.setParam("kd", Kd);
-    if (rendererType == "pathtracer")
+    if (rendererType == "pathtracer" || rendererType == "scivis")
       mat.setParam("ks", Ks);
     mat.commit();
 
@@ -211,29 +302,29 @@ void RendererMaterialList::SetUp()
     index.push_back(static_cast<uint32_t>(numSpheres.flatten(i)));
   }
 
-  sphereGeometry.setParam("sphere.position", cpp::Data(spheres));
+  sphereGeometry.setParam("sphere.position", cpp::CopiedData(spheres));
   sphereGeometry.setParam("radius", 0.4f);
   sphereGeometry.commit();
 
   cpp::GeometricModel model(sphereGeometry);
-  model.setParam("material", cpp::Data(index));
+  model.setParam("material", cpp::CopiedData(index));
 
   AddModel(model);
 
   // Setup renderer material list //
 
-  renderer.setParam("material", cpp::Data(materials));
+  renderer.setParam("material", cpp::CopiedData(materials));
 
   // Create the world to get bounds for camera setup //
 
   if (!instances.empty())
-    world.setParam("instance", cpp::Data(instances));
+    world.setParam("instance", cpp::CopiedData(instances));
 
   instances.clear();
 
   world.commit();
 
-  auto worldBounds = world.getBounds();
+  auto worldBounds = world.getBounds<box3f>();
 
   ArcballCamera arcballCamera(worldBounds, imgSize);
 
@@ -246,6 +337,78 @@ void RendererMaterialList::SetUp()
   cpp::Light ambient("ambient");
   ambient.setParam("intensity", 0.5f);
   AddLight(ambient);
+}
+
+PTBackgroundRefraction::PTBackgroundRefraction()
+{
+  rendererType = "pathtracer";
+  samplesPerPixel = 64;
+}
+
+void PTBackgroundRefraction::SetUp()
+{
+  bool backgroundRefraction = GetParam();
+
+  Base::SetUp();
+
+  // Setup geometry //
+  cpp::Geometry boxGeometry("box");
+
+  rkcommon::index_sequence_3D numBoxes(vec3i(2, 2, 1));
+
+  std::vector<box3f> boxes;
+
+  for (auto i : numBoxes) {
+    auto f3 = static_cast<vec3f>(i);
+    auto lower = f3 * vec3f(1.5f, 1.5f, 0.0f) + vec3f(-1.25f, -1.25f, 2.5f);
+    auto upper = lower + vec3f(1.f, 1.f, 0.27f);
+    boxes.emplace_back(lower, upper);
+  }
+
+  boxGeometry.setParam("box", cpp::CopiedData(boxes));
+  boxGeometry.commit();
+
+  cpp::GeometricModel model(boxGeometry);
+
+  std::vector<cpp::Material> materials;
+  materials.emplace_back(cpp::Material(rendererType, "thinGlass"));
+  materials.emplace_back(cpp::Material(rendererType, "glass"));
+  materials.emplace_back(cpp::Material(rendererType, "glass"));
+  materials.back().setParam("eta", 1.2f);
+  materials.emplace_back(cpp::Material(rendererType, "obj"));
+  materials.back().setParam("d", 0.2f);
+  materials.back().setParam("kd", vec3f(0.7f, 0.5f, 0.1f));
+  for (auto &m : materials)
+    m.commit();
+  model.setParam("material", cpp::CopiedData(materials));
+  AddModel(model);
+
+  renderer.setParam("backgroundRefraction", backgroundRefraction);
+
+  { // set up backplate texture
+    std::vector<vec4uc> bpdata;
+    bpdata.push_back(vec4uc(199, 60, 10, 255));
+    bpdata.push_back(vec4uc(60, 199, 40, 255));
+    bpdata.push_back(vec4uc(80, 40, 199, 255));
+    bpdata.push_back(vec4uc(99, 10, 99, 255));
+
+    cpp::CopiedData texData(bpdata.data(), vec2ul(2, 2));
+
+    cpp::Texture backplateTex("texture2d");
+    backplateTex.setParam("format", OSP_TEXTURE_RGBA8);
+    backplateTex.setParam("data", texData);
+    backplateTex.commit();
+
+    renderer.setParam("map_backplate", backplateTex);
+  }
+
+  cpp::Light light("sunSky");
+  light.setParam("turbidity", 8.0f);
+  light.setParam("intensity", 0.2f);
+  AddLight(light);
+  cpp::Light mirrorlight("sunSky");
+  mirrorlight.setParam("up", vec3f(0.0f, -1.0f, 0.0f));
+  AddLight(mirrorlight);
 }
 
 // Test Instantiations //////////////////////////////////////////////////////
@@ -278,5 +441,21 @@ INSTANTIATE_TEST_SUITE_P(Appearance,
     ::testing::Values(std::make_tuple(OSP_TEXTURE_FILTER_BILINEAR, true),
         std::make_tuple(OSP_TEXTURE_FILTER_NEAREST, true),
         std::make_tuple(OSP_TEXTURE_FILTER_NEAREST, false)));
+
+TEST_P(Texture2DTransform, simple)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Appearance, Texture2DTransform, ::testing::Values("scivis"));
+
+TEST_P(PTBackgroundRefraction, backgroundRefraction)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Appearance, PTBackgroundRefraction, ::testing::Values(false, true));
 
 } // namespace OSPRayTestScenes

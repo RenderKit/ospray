@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -11,9 +11,10 @@ uniform float Distribution1D_create(
 
 struct Sample1D
 {
-  int idx; // relative to start
-  float frac;
-  float pdf;
+  int idx; // relative sample index to start
+  float frac; // relative prosition of the random sample inside
+              // the selected bin (useful for random sample re-using)
+  float pdf; // probability of sampling idx
 };
 
 inline Sample1D Distribution1D_sample(const uniform int size,

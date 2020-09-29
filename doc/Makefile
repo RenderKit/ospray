@@ -1,18 +1,18 @@
 SHELL := /bin/bash
 
-webpages := $(addprefix www/, $(addsuffix .html, index examples documentation gallery downloads related_projects displaywall ospray2_porting_guide legal))
-process_version := $(addprefix tmp/, $(addsuffix .md, examples getting_ospray readme_head))
-tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api examples))
+webpages := $(addprefix www/, $(addsuffix .html, index tutorials documentation gallery downloads related_projects displaywall ospray2_porting_guide legal))
+process_version := $(addprefix tmp/, $(addsuffix .md, tutorials getting_ospray readme_head))
+tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api tutorials))
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe ospExamples renderSunSky))
 images_fig := spot_light spot_coords quad_light hdri_light 
-images_svg := gitter_badge structured_spherical_coords
+images_svg := gitter_badge structured_spherical_coords vdb_structure
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
-images_svg2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_svg)))
+images_svg2pdf := $(addprefix images/, $(addsuffix .pdf, $(images_svg)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
 webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
-pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_fig2svg)
+pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_svg2pdf)
 
 PANDOC := pandoc
 PDMINVERSION := 2000000
@@ -27,8 +27,17 @@ all: www doc pdf
 www: $(webpages) www/stylesheet.css $(webimages) | wwwscripts
 doc: ../README.md
 pdf: ../readme.pdf
+checklinks: tmp/brokenlinks.txt
+	@if [[ -s $^ ]] ; then \
+	  echo "Found broken link:" ;\
+	  cat $^ ;\
+	  exit 1 ;\
+	else \
+	  echo "All links good." ;\
+	fi
 
-.PHONY: all www doc pdf clean realclean submodule
+
+.PHONY: all www doc pdf clean realclean submodule checklinks
 
 submodule:
 	git submodule update --init --remote
@@ -82,7 +91,7 @@ wwwscripts: | wwwdir
 	  cp -r ospray-doc/scripts/ www ;\
 	fi
 
-$(process_version) tmp/version ../readme.pdf $(tmptexfiles) tmp/api.md tmp/api_web.md tmp/changelog_web.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_pdf.md tmp/images_local_png.md: | tmpdir
+$(process_version) tmp/version ../readme.pdf $(tmptexfiles) $(images_fig2pdf) tmp/api.md tmp/api_web.md tmp/changelog.md tmp/compilation.md tmp/compilation_web.md tmp/links.md tmp/links_local.md tmp/images_web.md tmp/images_local_png.md tmp/images_local_pdf.md: | tmpdir
 tmpdir:
 	@mkdir -p tmp
 
@@ -106,12 +115,12 @@ tmp/api_web.md: api.md tmp/links.md tmp/images_local_png.md
 tmp/compilation_web.md: compilation.md tmp/links.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
-tmp/changelog_web.md: ../CHANGELOG.md
-	sed -e "s@README.md@documentation.html@" $< > $@
+tmp/changelog.md: filter-sectionnumbers.py ../CHANGELOG.md
+	$(PANDOC) --top-level-division=chapter --filter $+ -o $@
+	echo -e '\nFor the complete history of changes have a look at the [CHANGELOG](https://github.com/ospray/ospray/blob/master/CHANGELOG.md).' >> $@
 
-
-www/index.html: teaser.html overview.md tmp/changelog_web.md
-www/examples.html: examples.md
+www/index.html: teaser.html overview.md tmp/changelog.md
+www/tutorials.html: tutorials.md
 www/gallery.html: gallery.md
 www/downloads.html: tmp/getting_ospray.md tmp/compilation_web.md
 www/related_projects.html: related_projects.md
@@ -163,7 +172,7 @@ tmp/api.md: api.md tmp/links_local.md tmp/images_web.md
 tmp/compilation.md: compilation.md tmp/links_local.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/examples.md
+../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/tutorials.md
 	$(PANDOC) --file-scope $+ -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
 
 ### pdf
@@ -180,11 +189,8 @@ tmp/api.tex: filter-latex.py api.md tmp/links_local.md tmp/images_local_pdf.md
 tmp/compilation.tex: filter-latex.py compilation.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=sh
 
-tmp/changelog.tex: filter-sectionnumbers.py changelog.md
+tmp/changelog.tex: filter-latex.py tmp/changelog.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex)
-
-changelog.md: ../CHANGELOG.md
-	sed -e "s@README.md@@" $< > $@
 
 ../readme.pdf: readme.tex $(tmptexfiles) $(wildcard ospray-doc/intel-spec.cls) preamble.tex tmp/version $(pdfimages)
 	md5s=0;\
@@ -197,13 +203,18 @@ changelog.md: ../CHANGELOG.md
 	done
 	cp tmp/$(basename $<).pdf $@
 
+# crude way to detect broken pdf links
+tmp/%.txt: $(tmptexfiles)
+	fgrep -h $* $^ | sed -e 's@.*$*{\([^}]*\)}.*@\1@'|sort -u > $@
+tmp/brokenlinks.txt: tmp/hypertarget.txt tmp/hyperlink.txt
+	-diff -u $^ | grep "^+[^+]" > $@
 
 
 ### clean
 ########################################################################
 
 clean:
-	rm -rf www tmp changelog.md __pycache__
+	rm -rf www tmp __pycache__
 
 realclean: clean
 	rm -irf images

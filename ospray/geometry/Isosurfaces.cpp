@@ -8,7 +8,7 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // ispc-generated files
-#include "Isosurfaces_ispc.h"
+#include "geometry/Isosurfaces_ispc.h"
 
 namespace ospray {
 

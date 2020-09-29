@@ -89,6 +89,6 @@ inline void Geometry_setEmbreeUserGeometry(Geometry *uniform self,
 }
 
 //! constructor for ispc-side Geometry object
-extern void Geometry_Constructor(Geometry *uniform geometry,
+void Geometry_Constructor(Geometry *uniform geometry,
     void *uniform cppEquivalent,
     uniform Geometry_postIntersectFct postIntersect);

@@ -18,7 +18,9 @@ bool shadowCatcher(const PathContext &pathContext,
     ScreenSample &sample)
 
 {
-  if (!pathState.straightPath)
+  if (!(pathContext.context->backgroundRefraction
+              ? pathState.specularTransmissionPath
+              : pathState.straightPath))
     return false;
 
   // TODO use MIS as well

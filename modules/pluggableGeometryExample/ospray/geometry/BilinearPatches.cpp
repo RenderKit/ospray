@@ -3,7 +3,7 @@
 
 #include "BilinearPatches.h"
 // 'export'ed functions from the ispc file:
-#include "BilinearPatches_ispc.h"
+#include "geometry/BilinearPatches_ispc.h"
 // ospray core:
 #include <ospray/common/Data.h>
 

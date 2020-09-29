@@ -8,7 +8,7 @@
 // std
 #include <algorithm>
 // ispc
-#include "SSAO_ispc.h"
+#include "fb/frame_ops/SSAO_ispc.h"
 
 namespace ospray {
 

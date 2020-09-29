@@ -58,6 +58,8 @@ particles interactively.
 
 VESTEC
 ------
+[![VESTEC](images/VESTEC-Logo-web.png){style="display:inline"}](https://vestec-project.eu/)
+
 [VESTEC](https://vestec-project.eu/) – Visual Exploration and Sampling
 Toolkit for Extreme Computing – is an European funded project that
 builds a flexible toolchain to combine multiple data sources,

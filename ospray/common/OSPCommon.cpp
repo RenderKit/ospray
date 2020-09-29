@@ -1,6 +1,10 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+// must be first
+#define OSPRAY_RKCOMMON_DEFINITIONS
+#include "ospray/ospray_cpp/ext/rkcommon.h"
+
 #include "OSPCommon.h"
 #include "api/Device.h"
 
@@ -144,14 +148,13 @@ void initFromCommandLine(int *_ac, const char ***_av)
         }
         removeArgs(ac, av, i, 1);
       } else if (beginsWith(parm, "--osp:num-threads")) {
-        int nt = std::min(1, getArgInt(parm));
+        int nt = std::max(1, getArgInt(parm));
         device->setParam("numThreads", nt);
         removeArgs(ac, av, i, 1);
       } else if (beginsWith(parm, "--osp:set-affinity")) {
         int val = getArgInt(parm);
         if (val == 0 || val == 1) {
-          // this will be set to 0 if the value is invalid
-          device->setParam<bool>("setAffinity", atoi(av[i + 1]));
+          device->setParam<int>("setAffinity", val);
         } else {
           postStatusMsg(
               "Invalid value provided for --osp:set-affinity. "
@@ -591,25 +594,32 @@ uint32_t logLevel()
 OSPError loadLocalModule(const std::string &name)
 {
   std::string libName = "ospray_module_" + name;
-  loadLibrary(libName, false);
+  try {
+    loadLibrary(libName, false);
+  } catch (const std::exception &e) {
+    handleError(OSP_INVALID_OPERATION, e.what());
+    return OSP_INVALID_OPERATION;
+  } catch (...) {
+    return OSP_INVALID_OPERATION;
+  }
 
   std::string initSymName = "ospray_module_init_" + name;
   void *initSym = getSymbol(initSymName);
   if (!initSym) {
-    throw std::runtime_error(
-        "#osp:api: could not find module initializer " + initSymName);
+    handleError(OSP_INVALID_OPERATION,
+        "Could not find module initializer " + initSymName);
+    unloadLibrary(libName);
+    return OSP_INVALID_OPERATION;
   }
 
   auto initMethod = (OSPError(*)(int16_t, int16_t, int16_t))initSym;
-
-  if (!initMethod)
-    return OSP_INVALID_OPERATION;
-
   auto err = initMethod(
       OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH);
 
-  if (err != OSP_NO_ERROR)
+  if (err != OSP_NO_ERROR) {
+    handleError(err, "Initialization of module " + name + " failed");
     unloadLibrary(libName);
+  }
 
   return err;
 }
@@ -643,7 +653,8 @@ void postStatusMsg(const std::string &msg, uint32_t postAtLogLevel)
     if (logAsError)
       handleError(OSP_UNKNOWN_ERROR, msg + '\n');
     else
-      api::Device::current->msg_fcn((msg + '\n').c_str());
+      api::Device::current->msg_fcn(
+          api::Device::current->statusUserData, (msg + '\n').c_str());
   }
 }
 
@@ -655,7 +666,7 @@ void handleError(OSPError e, const std::string &message)
     device.lastErrorCode = e;
     device.lastErrorMsg = "#ospray: " + message;
 
-    device.error_fcn(e, message.c_str());
+    device.error_fcn(device.errorUserData, e, message.c_str());
   } else {
     // NOTE: No device, but something should still get printed for the user to
     //       debug the calling application.
@@ -692,44 +703,16 @@ OSPTYPEFOR_DEFINITION(const char[]);
 OSPTYPEFOR_DEFINITION(bool);
 OSPTYPEFOR_DEFINITION(char);
 OSPTYPEFOR_DEFINITION(unsigned char);
-OSPTYPEFOR_DEFINITION(vec2uc);
-OSPTYPEFOR_DEFINITION(vec3uc);
-OSPTYPEFOR_DEFINITION(vec4uc);
 OSPTYPEFOR_DEFINITION(short);
 OSPTYPEFOR_DEFINITION(unsigned short);
-OSPTYPEFOR_DEFINITION(int32_t);
-OSPTYPEFOR_DEFINITION(vec2i);
-OSPTYPEFOR_DEFINITION(vec3i);
-OSPTYPEFOR_DEFINITION(vec4i);
-OSPTYPEFOR_DEFINITION(uint32_t);
-OSPTYPEFOR_DEFINITION(vec2ui);
-OSPTYPEFOR_DEFINITION(vec3ui);
-OSPTYPEFOR_DEFINITION(vec4ui);
-OSPTYPEFOR_DEFINITION(int64_t);
-OSPTYPEFOR_DEFINITION(vec2l);
-OSPTYPEFOR_DEFINITION(vec3l);
-OSPTYPEFOR_DEFINITION(vec4l);
-OSPTYPEFOR_DEFINITION(uint64_t);
-OSPTYPEFOR_DEFINITION(vec2ul);
-OSPTYPEFOR_DEFINITION(vec3ul);
-OSPTYPEFOR_DEFINITION(vec4ul);
+OSPTYPEFOR_DEFINITION(int);
+OSPTYPEFOR_DEFINITION(unsigned int);
+OSPTYPEFOR_DEFINITION(long);
+OSPTYPEFOR_DEFINITION(unsigned long);
+OSPTYPEFOR_DEFINITION(long long);
+OSPTYPEFOR_DEFINITION(unsigned long long);
 OSPTYPEFOR_DEFINITION(float);
-OSPTYPEFOR_DEFINITION(vec2f);
-OSPTYPEFOR_DEFINITION(vec3f);
-OSPTYPEFOR_DEFINITION(vec4f);
 OSPTYPEFOR_DEFINITION(double);
-OSPTYPEFOR_DEFINITION(box1i);
-OSPTYPEFOR_DEFINITION(box2i);
-OSPTYPEFOR_DEFINITION(box3i);
-OSPTYPEFOR_DEFINITION(box4i);
-OSPTYPEFOR_DEFINITION(box1f);
-OSPTYPEFOR_DEFINITION(box2f);
-OSPTYPEFOR_DEFINITION(box3f);
-OSPTYPEFOR_DEFINITION(box4f);
-OSPTYPEFOR_DEFINITION(linear2f);
-OSPTYPEFOR_DEFINITION(linear3f);
-OSPTYPEFOR_DEFINITION(affine2f);
-OSPTYPEFOR_DEFINITION(affine3f);
 
 OSPTYPEFOR_DEFINITION(OSPObject);
 OSPTYPEFOR_DEFINITION(OSPCamera);
@@ -749,5 +732,32 @@ OSPTYPEFOR_DEFINITION(OSPTransferFunction);
 OSPTYPEFOR_DEFINITION(OSPVolume);
 OSPTYPEFOR_DEFINITION(OSPVolumetricModel);
 OSPTYPEFOR_DEFINITION(OSPWorld);
+
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2UC);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3UC);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4UC);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2I);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3I);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4I);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2UI);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3UI);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4UI);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2L);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3L);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4L);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2UL);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3UL);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4UL);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2F);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3F);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4F);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX1I);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX2I);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX3I);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX4I);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX1F);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX2F);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX3F);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX4F);
 
 } // namespace ospray

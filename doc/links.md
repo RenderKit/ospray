@@ -12,7 +12,7 @@
 [data]: documentation.html#data
 [GeometricModel]: documentation.html#geometricmodels
 [VolumetricModel]: documentation.html#volumetricmodels
-[texture transformations]: documentation.html#texture2d-transformations
+[texture transformations]: documentation.html#texture-transformations
 [renderer]: documentation.html#renderers
 [SciVis renderer]: documentation.html#scivis-renderer
 [path tracer]: documentation.html#path-tracer
@@ -20,7 +20,7 @@
 [OBJ material]: documentation.html#obj-material
 [point light]: documentation.html#point-light-sphere-light
 
-[example applications]: examples.html#examples
-[tutorial]: examples.html#tutorial
+[example applications]: tutorials.html#tutorials
+[tutorial]: tutorials.html#osptutorial
 [report bugs]: index.html#ospray-support-and-contact
 

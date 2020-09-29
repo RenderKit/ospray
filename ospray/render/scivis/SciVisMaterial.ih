@@ -10,7 +10,13 @@
 struct SciVisMaterial
 {
   Material super;
+
   float d;
-  TextureParam map_Kd;
+  TextureParam dMap;
   vec3f Kd;
+  TextureParam KdMap;
+  vec3f Ks;
+  TextureParam KsMap;
+  float Ns;
+  TextureParam NsMap;
 };

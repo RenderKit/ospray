@@ -4,11 +4,19 @@
 #pragma once
 
 // ospray stuff
-#include "../common/Clipping.ih"
-#include "../common/Ray.ih"
 #include "Instance.ih"
+#include "common/Clipping.ih"
+#include "common/Ray.ih"
+#include "lights/Light.ih"
 
 struct Renderer;
+
+struct SciVisData
+{
+  vec3f aoColorPi;
+  Light *uniform *uniform lights;
+  uint32 numLights;
+};
 
 struct World
 {
@@ -28,7 +36,11 @@ struct World
   RTCScene embreeSceneHandleClippers;
 
   int32 numInvertedClippers;
+
+  SciVisData scivisData;
 };
+
+void World_Constructor(World *uniform world, void *uniform cppE);
 
 inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
 {
@@ -129,10 +141,15 @@ inline void traceClippingRay(const World *uniform world,
   context.corrClippingDepth = 0;
   context.hitsCount = 0;
 
-  // Intersect all geometry along given ray
+  // Intersect all geometry along given ray,
+  // we have to temporarily extend the ray to inf because
+  // even distant intersections affect visibilty of close objects
+  float origT = ray.t;
+  ray.t = inf;
   rtcIntersectV(world->embreeSceneHandleClippers,
       &context.ectx,
       (varying RTCRayHit * uniform) & ray);
+  ray.t = origT;
 
   // Set initial clipping depth,
   // we have to apply correction because ray origin can be inside clipping area
@@ -151,8 +168,14 @@ inline void traceClippingRay(const World *uniform world,
 
   // Iterate through collected hits and build ray intervals
   for (uint32 i = 0; i < context.hitsCount; i++) {
+    // Do not build ray intervals that are further than ray.t
+    float t = context.hits[i].t;
+    float absT = abs(t);
+    if (absT > ray.t)
+      break;
+
     // Check if comming into or out of clipping area
-    if (context.hits[i].t < 0.0f) {
+    if (t < 0.0f) {
       clippingDepth--; // out of clipping area
     } else {
       clippingDepth++; // into clipping area
@@ -160,13 +183,13 @@ inline void traceClippingRay(const World *uniform world,
 
     // Start interval if previous one is closed and we are not in clipping area
     if (and(clippingDepth == 0, intervalCompleted)) {
-      rayIntervals.intervals[intervalId].lower = abs(context.hits[i].t);
+      rayIntervals.intervals[intervalId].lower = absT;
       intervalCompleted = false;
     }
 
     // End interval if current one is not closed and we enter clipping area
     if (and(clippingDepth > 0, !intervalCompleted)) {
-      rayIntervals.intervals[intervalId].upper = abs(context.hits[i].t);
+      rayIntervals.intervals[intervalId].upper = absT;
       intervalCompleted = true;
       intervalId++;
     }
@@ -221,6 +244,12 @@ inline void traceGeometryRayIntervals(const World *uniform world,
 
 inline void traceRay(const World *uniform world, varying Ray &ray)
 {
+  // Fast path if no clipping geometry
+  cif (!world->embreeSceneHandleClippers) {
+    traceGeometryRay(world, ray);
+    return;
+  }
+
   // Trace ray in clipping geometries scene, fill array with ray intervals
   varying RayIntervals rayIntervals;
   traceClippingRay(world, ray, rayIntervals);
@@ -265,6 +294,11 @@ inline bool areIntervalsOccluded(const World *uniform world,
 
 inline bool isOccluded(const World *uniform world, varying Ray &ray)
 {
+  // Fast path if no clipping geometry
+  cif (!world->embreeSceneHandleClippers) {
+    return isOccludedNoClipping(world, ray);
+  }
+
   // Allocate array for ray intervals
   varying RayIntervals rayIntervals;
   rayIntervals.count = 0;
@@ -289,7 +323,6 @@ inline void postIntersect(const World *uniform world,
     const varying Ray &ray,
     uniform int64 flags)
 {
-  dg.primID = ray.primID;
   dg.st = make_vec2f(ray.u, ray.v);
 
   dg.material = NULL;

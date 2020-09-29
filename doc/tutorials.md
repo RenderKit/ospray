@@ -1,17 +1,20 @@
-Examples
-========
+Tutorials
+=========
 
-Tutorial
---------
+ospTutorial
+-----------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/tutorials/ospTutorial.c`^[A C++ version that uses the C++
-convenience wrappers of OSPRay's C99 API via
-`include/ospray/ospray_cpp.h` is available at
-`apps/tutorials/ospTutorial.cpp`.].
+at
+[`apps/tutorials/ospTutorial.c`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.c)^[A
+C++ version that uses the C++ convenience wrappers of OSPRay's C99 API
+via
+[`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
+is available at
+[`apps/tutorials/ospTutorial.cpp`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.cpp).].
 
 An example of building `ospTutorial.c` with CMake can be found in
-`apps/tutorials/ospTutorialFindospray/`.
+[`apps/tutorials/ospTutorialFindospray/`](https://github.com/ospray/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray).
 
 To build the tutorial on Linux, build it in a build directory with
 
@@ -39,7 +42,8 @@ frames in the second image `accumulatedFrames.ppm`.
 ospExamples
 -----------
 
-Apart from tutorials, `OSPRay` comes with a C++ app called `ospExamples`
+Apart from tutorials, `OSPRay` comes with a C++ app called
+[`ospExamples`](https://github.com/ospray/ospray/tree/master/apps/ospExamples)
 which is an elaborate easy-to-use tutorial, with a single interface to
 try various `OSPRay` features. It is aimed at providing users with
 multiple simple scenes composed of basic geometry types, lights, volumes
@@ -51,8 +55,10 @@ necessary to render an interactive scene. The scene is rendered on a
 `GLFW` window with an `imgui` GUI controls panel for the user to
 manipulate the scene at runtime.
 
-The application is located in `apps/ospExamples/` directory and can be
-built with CMake. It can be run from the build directory via:
+The application is located in
+[`apps/ospExamples/`](https://github.com/ospray/ospray/tree/master/apps/ospExamples)
+directory and can be built with CMake. It can be run from the build
+directory via:
 ```
 ./ospExamples <command-line-parameter>
 ```
@@ -64,7 +70,8 @@ The command line parameter is optional however.
 
 Different scenes can be selected from the `scenes` dropdown and each
 scene corresponds to an instance of a special `detail::Builder` struct.
-Example builders are located in `apps/common/ospray_testing/builders/`.
+Example builders are located in
+[`apps/common/ospray_testing/builders/`](https://github.com/ospray/ospray/tree/master/apps/common/ospray_testing/builders).
 These builders provide a usage guide for the OSPRay scene hierarchy and
 OSPRay API in the form of `cpp` wrappers. They instantiate and manage
 objects for the specific scene like `cpp::Geometry`, `cpp::Volume`,
@@ -116,10 +123,11 @@ unstructured_volume
 
 ### Renderer
 
-This app comes with three [renderer] options: `scivis`, `pathtracer` and
-`debug`. The app provides some common rendering controls like
+This app comes with four [renderer] options: `scivis`, `pathtracer`,
+`ao` and `debug`. The app provides some common rendering controls like
 `pixelSamples` and other more specific to the renderer type like
-`aoIntensity` for `scivis` renderer.
+`aoSamples` for the `scivis` and `ao` renderer or `maxPathLength` for
+the `pathtracer`.
 
 The sun-sky lighting can be used in a sample scene by enabling the
 `renderSunSky` option of the `pathtracer` renderer. It allows the user

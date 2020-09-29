@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,92 +8,102 @@
 
 //! Texture2D including coordinate transformation, plus helpers
 
-struct TextureParam
+enum TransformFlags
 {
-  uniform Texture2D *map;
-  affine2f xform;
+  TRANSFORM_FLAG_NONE = 0x0,
+  TRANSFORM_FLAG_2D = 0x1,
+  TRANSFORM_FLAG_3D = 0x2
 };
 
-inline uniform TextureParam make_TextureParam(
-    uniform Texture2D *uniform tex, const uniform affine2f &xform)
+struct TextureParam
+{
+  Texture2D *ptr;
+  TransformFlags transformFlags;
+  affine2f xform2f;
+  affine3f xform3f;
+};
+
+inline uniform TextureParam make_TextureParam()
 {
   uniform TextureParam t;
-  t.map = tex;
-  t.xform = xform;
+  t.ptr = NULL;
+  t.transformFlags = TRANSFORM_FLAG_NONE;
+  t.xform2f = make_AffineSpace2f_identity();
+  t.xform3f = make_AffineSpace3f_identity();
   return t;
 }
 
 inline uniform bool valid(const uniform TextureParam uniform &tex)
 {
-  return tex.map;
+  return tex.ptr;
 }
 
 inline uniform bool hasAlpha(const uniform TextureParam uniform &tex)
 {
-  return hasAlpha(tex.map);
+  return hasAlpha(tex.ptr);
 }
 
-inline float get1f(const uniform TextureParam uniform &tex,
+#define TEXTURE_TRANSFORM(fn)                                                  \
+  if (!tp.transformFlags)                                                      \
+    return fn(tp.ptr, dg);                                                     \
+                                                                               \
+  DifferentialGeometry xfmDg = dg;                                             \
+  if (tp.transformFlags & TRANSFORM_FLAG_2D)                                   \
+    xfmDg.st = tp.xform2f * dg.st;                                             \
+  if (tp.transformFlags & TRANSFORM_FLAG_3D)                                   \
+    xfmDg.lP = xfmPoint(tp.xform3f, dg.lP);                                    \
+  return fn(tp.ptr, xfmDg)
+
+inline float get1f(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg)
 {
-  DifferentialGeometry xfmDg = dg;
-  xfmDg.st = tex.xform * dg.st;
-  return get1f(tex.map, xfmDg);
+  TEXTURE_TRANSFORM(get1f);
 }
 
-inline float get1f(const uniform TextureParam uniform &tex,
+inline float get1f(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg,
     const varying float defaultValue)
 {
-  if (!valid(tex))
+  if (!valid(tp))
     return defaultValue;
-  DifferentialGeometry xfmDg = dg;
-  xfmDg.st = tex.xform * dg.st;
-  return get1f(tex.map, xfmDg);
+
+  TEXTURE_TRANSFORM(get1f);
 }
 
-inline vec3f get3f(const uniform TextureParam uniform &tex,
+inline vec3f get3f(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg)
 {
-  DifferentialGeometry xfmDg = dg;
-  xfmDg.st = tex.xform * dg.st;
-  return get3f(tex.map, xfmDg);
+  TEXTURE_TRANSFORM(get3f);
 }
 
-inline vec3f get3f(const uniform TextureParam uniform &tex,
+inline vec3f get3f(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg,
     const varying vec3f defaultValue)
 {
-  if (!valid(tex))
+  if (!valid(tp))
     return defaultValue;
-  DifferentialGeometry xfmDg = dg;
-  xfmDg.st = tex.xform * dg.st;
-  return get3f(tex.map, xfmDg);
+
+  TEXTURE_TRANSFORM(get3f);
 }
 
-inline vec4f get4f(const uniform TextureParam uniform &tex,
+inline vec4f get4f(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg)
 {
-  DifferentialGeometry xfmDg = dg;
-  xfmDg.st = tex.xform * dg.st;
-  return get4f(tex.map, xfmDg);
+  TEXTURE_TRANSFORM(get4f);
 }
 
-inline vec4f get4f(const uniform TextureParam uniform &tex,
+inline vec4f get4f(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg,
     const varying vec4f defaultValue)
 {
-  if (!valid(tex))
+  if (!valid(tp))
     return defaultValue;
-  DifferentialGeometry xfmDg = dg;
-  xfmDg.st = tex.xform * dg.st;
-  return get4f(tex.map, xfmDg);
+
+  TEXTURE_TRANSFORM(get4f);
 }
 
-inline vec3f getNormal(const uniform TextureParam uniform &tex,
+inline vec3f getNormal(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg)
 {
-  DifferentialGeometry xfmDg = dg;
-  xfmDg.st = tex.xform * dg.st;
-  return getNormal(tex.map, xfmDg);
+  TEXTURE_TRANSFORM(getNormal);
 }

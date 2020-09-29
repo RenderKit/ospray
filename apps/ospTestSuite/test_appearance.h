@@ -15,11 +15,27 @@ class Texture2D : public Base,
   void SetUp() override;
 };
 
+class Texture2DTransform : public Base,
+                           public ::testing::TestWithParam<const char *>
+{
+ public:
+  Texture2DTransform();
+  void SetUp() override;
+};
+
 class RendererMaterialList : public Base,
                              public ::testing::TestWithParam<const char *>
 {
  public:
   RendererMaterialList();
+  void SetUp() override;
+};
+
+class PTBackgroundRefraction : public Base,
+                               public ::testing::TestWithParam<bool>
+{
+ public:
+  PTBackgroundRefraction();
   void SetUp() override;
 };
 

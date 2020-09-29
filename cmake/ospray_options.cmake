@@ -10,9 +10,9 @@ include(GNUInstallDirs)
 set(OSPRAY_CMAKECONFIG_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
 
-set(RKCOMMON_VERSION_REQUIRED 1.4.0)
+set(RKCOMMON_VERSION_REQUIRED 1.4.2)
 set(EMBREE_VERSION_REQUIRED 3.8.0)
-set(OPENVKL_VERSION_REQUIRED 0.10.0)
+set(OPENVKL_VERSION_REQUIRED 0.11.0)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
@@ -38,7 +38,7 @@ ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
 
 # OpenImageDenoise
 if (OSPRAY_MODULE_DENOISER)
-  find_package(OpenImageDenoise 1.0 REQUIRED)
+  find_package(OpenImageDenoise 1.2.3 REQUIRED)
 endif()
 
 ###########################################################

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <cstring>
 #include "Camera.h"
 #include "Future.h"
 #include "GeometricModel.h"
@@ -16,7 +17,7 @@ namespace cpp {
 struct PickResult
 {
   bool hasHit{false};
-  vec3f worldPosition;
+  float worldPosition[3];
   Instance instance{(OSPInstance) nullptr};
   GeometricModel model{(OSPGeometricModel) nullptr};
   uint32_t primID{0};
@@ -25,11 +26,14 @@ struct PickResult
 class FrameBuffer : public ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>
 {
  public:
-  FrameBuffer() = default; // NOTE(jda) - this does *not* create the underlying
-  //            OSP object
-  FrameBuffer(const vec2i &size,
+  // NOTE(jda) - this does *not* create the underlying OSP object
+  FrameBuffer() = default;
+
+  FrameBuffer(int size_x,
+      int size_y,
       OSPFrameBufferFormat format = OSP_FB_SRGBA,
       int channels = OSP_FB_COLOR);
+
   FrameBuffer(const FrameBuffer &copy);
   FrameBuffer(OSPFrameBuffer existing);
 
@@ -43,7 +47,8 @@ class FrameBuffer : public ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>
   PickResult pick(const Renderer &renderer,
       const Camera &camera,
       const World &world,
-      const vec2f &screenPos) const;
+      float screenPos_x,
+      float screenPos_y) const;
 
   void *map(OSPFrameBufferChannel channel) const;
   void unmap(void *ptr) const;
@@ -57,9 +62,9 @@ static_assert(sizeof(FrameBuffer) == sizeof(OSPFrameBuffer),
 // Inlined function definitions ///////////////////////////////////////////
 
 inline FrameBuffer::FrameBuffer(
-    const vec2i &size, OSPFrameBufferFormat format, int channels)
+    int size_x, int size_y, OSPFrameBufferFormat format, int channels)
 {
-  ospObject = ospNewFrameBuffer(size.x, size.y, format, channels);
+  ospObject = ospNewFrameBuffer(size_x, size_y, format, channels);
 }
 
 inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
@@ -94,7 +99,8 @@ inline Future FrameBuffer::renderFrame(
 inline PickResult FrameBuffer::pick(const Renderer &renderer,
     const Camera &camera,
     const World &world,
-    const vec2f &screenPos) const
+    float screenPos_x,
+    float screenPos_y) const
 {
   PickResult res;
 
@@ -104,8 +110,8 @@ inline PickResult FrameBuffer::pick(const Renderer &renderer,
       renderer.handle(),
       camera.handle(),
       world.handle(),
-      screenPos.x,
-      screenPos.y);
+      screenPos_x,
+      screenPos_y);
 
   if (pick.hasHit) {
     res.hasHit = true;
@@ -113,7 +119,7 @@ inline PickResult FrameBuffer::pick(const Renderer &renderer,
     res.model = GeometricModel(pick.model);
     res.primID = pick.primID;
 
-    std::memcpy(res.worldPosition, pick.worldPosition, sizeof(vec3f));
+    std::memcpy(res.worldPosition, pick.worldPosition, 3 * sizeof(float));
   }
 
   return res;

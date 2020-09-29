@@ -14,6 +14,7 @@ static void ospInit_ospShutdown(benchmark::State &state)
     ospInit();
     ospShutdown();
   }
+  state.SetItemsProcessed(state.iterations());
 
   ospInit();
 }

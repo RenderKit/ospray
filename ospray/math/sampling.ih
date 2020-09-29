@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -104,9 +104,34 @@ inline uniform float uniformSampleConePDF(const uniform float cosAngle)
   return rcp(two_pi * (1.0f - cosAngle));
 }
 
+/// uniform sampling of ring
+////////////////////////////////////////////////////////////////////////////////
+
+inline vec3f uniformSampleRing(
+    const float radius, const float innerRadius, const vec2f &s)
+{
+  const float r = sqrtf(lerp(s.x, sqr(innerRadius), sqr(radius)));
+  const float phi = two_pi * s.y;
+  float sinPhi, cosPhi;
+  sincos(phi, &sinPhi, &cosPhi);
+  return make_vec3f(r * cosPhi, r * sinPhi, 0.f);
+}
+
+inline float uniformSampleRingPDF(const float radius, const float innerRadius)
+{
+  return rcp(M_PI * (sqr(radius) - sqr(innerRadius)));
+}
+
+inline uniform float uniformSampleRingPDF(
+    const uniform float radius, const uniform float innerRadius)
+{
+  return rcp(M_PI * (sqr(radius) - sqr(innerRadius)));
+}
+
 /// uniform sampling of disk
 ////////////////////////////////////////////////////////////////////////////////
 
+// TODO: just use uniformSampleRing with innerRadius = 0?
 inline vec3f uniformSampleDisk(const float radius, const vec2f &s)
 {
   const float r = sqrtf(s.x) * radius;

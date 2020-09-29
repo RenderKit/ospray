@@ -1,6 +1,4 @@
-// ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
-// Copyright  Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Material.ih"
@@ -26,6 +24,8 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
     uniform PathTraceMaterial_GetTransparencyFunc getTransparency,
     uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium)
 {
+  self->material.type = RENDERER_TYPE_PATHTRACER;
+
   self->getBSDF = getBSDF;
   self->getTransparency =
       getTransparency ? getTransparency : PathTraceMaterial_getTransparency;
@@ -36,7 +36,10 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
 
 export uniform bool PathTraceMaterial_isEmissive(void *uniform _mat)
 {
-  uniform PathTraceMaterial *uniform mat =
-      (uniform PathTraceMaterial * uniform) _mat;
+  PathTraceMaterial *uniform mat = (PathTraceMaterial * uniform) _mat;
+
+  if (mat->material.type != RENDERER_TYPE_PATHTRACER)
+    return false;
+
   return reduce_max(mat->emission) > 0.f;
 }

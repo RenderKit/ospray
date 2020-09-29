@@ -4,7 +4,7 @@
 // ospray
 #include "Group.h"
 // ispc exports
-#include "Group_ispc.h"
+#include "common/Group_ispc.h"
 
 namespace ospray {
 

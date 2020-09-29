@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "./Managed.h"
-
 namespace ospray {
 
 template <typename OSPRAY_CLASS>
@@ -15,18 +13,12 @@ inline OSPRAY_CLASS *createInstanceHelper(
 
   if (fcn) {
     auto *obj = fcn();
-    if (obj == nullptr) {
-      throw std::runtime_error("Could not find " + type_string
-        + " of type: " + type
-        + ".  Make sure you have the correct OSPRay libraries "
-        "linked and initialized.");
-    }
-    return obj;
-  } else {
-    postStatusMsg(OSP_LOG_WARNING) << "  WARNING: unrecognized " << type_string
-                                   << " type '" << type << "'.";
-    return nullptr;
+    if (obj != nullptr)
+      return obj;
   }
+
+  throw std::runtime_error("Could not find " + type_string + " of type: " + type
+      + ".  Make sure you have the correct OSPRay libraries linked and initialized.");
 }
 
 template <typename BASE_CLASS, typename CHILD_CLASS>

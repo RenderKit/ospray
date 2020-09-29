@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/GeometryLight.ih"
@@ -12,22 +12,32 @@
 #include "math/AffineSpace.ih"
 #include "math/Distribution1D.ih"
 
-vec3f evaluateGeometryLights(const PathState &pathState,
+vec3f evaluateGeometryLights(const PathContext &pathContext,
+    const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
     Ray &ray)
 {
   vec3f L = make_vec3f(0.f);
-  uniform PathTraceMaterial *material =
-      (uniform PathTraceMaterial *)pathVertex.dg.material;
+  PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
   foreach_unique (m in material) {
-    if (m != NULL && reduce_max(m->emission) > 0.f) {
+    if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER
+        && reduce_max(m->emission) > 0.f) {
+      // at the moment we only support uniform light selection
+      // therfore we can evaluate the selection PDF directly
+      float lightSelectionPDF = 0.0f;
+      if(pathContext.numLights > 0)
+      {
+        lightSelectionPDF =
+          (1.0f / (float)pathContext.numLights) * pathContext.numLightSamples;
+      }
       // convert pdf wrt. area to pdf wrt. solid angle
       const float cosd = dot(pathVertex.dg.Ng, ray.dir);
       const float lePdf = pathVertex.dg.areaPDF * sqr(ray.t) / abs(cosd);
       L = L
           + pathState.throughput * m->emission
-              * misHeuristic(pathState, lastVertex.pdf_w, lePdf);
+              * misHeuristic(
+                  pathState, lastVertex.pdf_w, lightSelectionPDF * lePdf);
     }
   }
   return L;

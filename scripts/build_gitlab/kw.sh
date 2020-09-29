@@ -1,4 +1,6 @@
 #!/bin/bash
+## Copyright 2019-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 set -e
 

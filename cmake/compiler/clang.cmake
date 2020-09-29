@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(OSPRAY_CXX_FLAGS "-fno-strict-aliasing -Wno-narrowing")
@@ -44,6 +44,7 @@ if(OSPRAY_STRICT_BUILD)
   set(OSPRAY_CXX_FLAGS "-Wno-cast-qual ${OSPRAY_CXX_FLAGS}") #Embree v3.x issue
   set(OSPRAY_CXX_FLAGS "-Wno-extra-semi-stmt ${OSPRAY_CXX_FLAGS}")
   set(OSPRAY_CXX_FLAGS "-Wno-shadow-field ${OSPRAY_CXX_FLAGS}")
+  set(OSPRAY_CXX_FLAGS "-Wno-alloca ${OSPRAY_CXX_FLAGS}")
 
   # Options selected for Clang 5.0+
   set(OSPRAY_CXX_FLAGS "-Weverything ${OSPRAY_CXX_FLAGS}")

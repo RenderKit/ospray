@@ -31,6 +31,7 @@ inline void Instance_postIntersect(const Instance *uniform self,
   foreach_unique (geomID in ray.geomID) {
     GeometricModel_postIntersect(*(models + geomID), renderer, dg, ray, flags);
 
+    dg.lP = xfmPoint(self->rcp_xfm, dg.P);
     dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
     dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);
     // scale dg.epsilon by max (epsilon is scalar and thus assumed to be

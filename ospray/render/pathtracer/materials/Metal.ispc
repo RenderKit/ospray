@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../bsdfs/Conductor.ih"
@@ -17,7 +17,7 @@ struct Metal
   vec3f etaRGB; // index of refraction
   vec3f kRGB; // index of refraction, imaginary part
   float roughness; // in [0, 1]; 0==ideally smooth (mirror)
-  TextureParam map_roughness;
+  TextureParam roughnessMap;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -39,7 +39,7 @@ const varying BSDF *varying Metal_getBSDF(
   else
     fresnel = FresnelConductorRGBUniform_create(ctx, self->etaRGB, self->kRGB);
 
-  const float roughness = self->roughness * get1f(self->map_roughness, dg, 1.f);
+  const float roughness = self->roughness * get1f(self->roughnessMap, dg, 1.f);
 
   if (roughness == 0.0f)
     return Conductor_create(ctx, frame, fresnel);
@@ -56,8 +56,7 @@ export void *uniform PathTracer_Metal_set(void *uniform _self,
     const uniform vec3f &etaRGB,
     const uniform vec3f &kRGB,
     uniform float roughness,
-    void *uniform map_roughness,
-    const uniform affine2f &xform_roughness)
+    const uniform TextureParam &roughnessMap)
 {
   Metal *uniform self = (Metal * uniform) _self;
 
@@ -75,8 +74,7 @@ export void *uniform PathTracer_Metal_set(void *uniform _self,
   }
 
   self->roughness = roughness;
-  self->map_roughness =
-      make_TextureParam((uniform Texture2D *)map_roughness, xform_roughness);
+  self->roughnessMap = roughnessMap;
 }
 
 export void *uniform PathTracer_Metal_create()
@@ -85,13 +83,8 @@ export void *uniform PathTracer_Metal_create()
   PathTraceMaterial_Constructor(&self->super, Metal_getBSDF);
   uniform vec3f etaRGB = RGB_AL_ETA;
   uniform vec3f kRGB = RGB_AL_K;
-  PathTracer_Metal_set(self,
-      NULL,
-      NULL,
-      etaRGB,
-      kRGB,
-      0.1f,
-      NULL,
-      make_AffineSpace2f_identity());
+
+  PathTracer_Metal_set(
+      self, NULL, NULL, etaRGB, kRGB, 0.1f, make_TextureParam());
   return self;
 }

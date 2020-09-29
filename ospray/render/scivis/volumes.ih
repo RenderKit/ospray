@@ -4,13 +4,18 @@
 #pragma once
 
 #include "SciVis.ih"
+#include "common/Clipping.ih"
+#include "common/Ray.ih"
+#include "math/random.ih"
 #include "volume/VolumetricModel.ih"
 
 struct LDSampler;
 struct RandomSampler;
 
-vec4f integrateVolumeIntervals(const VolumeIntervals &intervals,
+vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
+    const VolumeIntervals &intervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
-    const uniform float samplingRate);
+    const uniform float samplingRate,
+    const uniform bool shade);

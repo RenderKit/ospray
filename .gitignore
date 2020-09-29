@@ -2,7 +2,7 @@
 *#
 bin
 *.user*
-./build*
+build*
 install*
 *.sw?
 tags

@@ -103,9 +103,9 @@ cpp::Group Streamlines::buildGroup() const
     }
   }
 
-  slGeom.setParam("vertex.position_radius", cpp::Data(points));
-  slGeom.setParam("index", cpp::Data(indices));
-  slGeom.setParam("vertex.color", cpp::Data(colors));
+  slGeom.setParam("vertex.position_radius", cpp::CopiedData(points));
+  slGeom.setParam("index", cpp::CopiedData(indices));
+  slGeom.setParam("vertex.color", cpp::CopiedData(colors));
   slGeom.setParam("type", OSP_ROUND);
   slGeom.setParam("basis", OSP_CATMULL_ROM);
 
@@ -113,7 +113,8 @@ cpp::Group Streamlines::buildGroup() const
 
   cpp::GeometricModel model(slGeom);
 
-  if (rendererType == "pathtracer" || rendererType == "scivis") {
+  if (rendererType == "pathtracer" || rendererType == "scivis"
+      || rendererType == "ao") {
     cpp::Material slMat(rendererType, "obj");
     slMat.commit();
     model.setParam("material", slMat);
@@ -123,7 +124,7 @@ cpp::Group Streamlines::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;

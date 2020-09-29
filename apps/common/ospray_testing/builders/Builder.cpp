@@ -35,29 +35,16 @@ cpp::World Builder::buildWorld(
   std::vector<cpp::Instance> inst = instances;
   inst.push_back(instance);
 
-  if (addPlane) {
-    auto bounds = group.getBounds();
+  if (addPlane)
+    inst.push_back(makeGroundPlane(group.getBounds<box3f>()));
 
-    auto extents = 0.8f * length(bounds.center() - bounds.lower);
-
-    cpp::GeometricModel plane = makeGroundPlane(extents);
-    cpp::Group planeGroup;
-    planeGroup.setParam("geometry", cpp::Data(plane));
-    planeGroup.commit();
-
-    cpp::Instance planeInst(planeGroup);
-    planeInst.commit();
-
-    inst.push_back(planeInst);
-  }
-
-  world.setParam("instance", cpp::Data(inst));
+  world.setParam("instance", cpp::CopiedData(inst));
 
   cpp::Light light("ambient");
   light.setParam("visible", false);
   light.commit();
 
-  world.setParam("light", cpp::Data(light));
+  world.setParam("light", cpp::CopiedData(light));
 
   return world;
 }
@@ -90,18 +77,25 @@ cpp::TransferFunction Builder::makeTransferFunction(
   if (tfOpacityMap == "linear") {
     opacities.emplace_back(0.f);
     opacities.emplace_back(1.f);
+  } else if (tfOpacityMap == "linearInv") {
+    opacities.emplace_back(1.f);
+    opacities.emplace_back(0.f);
+  } else if (tfOpacityMap == "opaque") {
+    opacities.emplace_back(1.f);
   }
 
-  transferFunction.setParam("color", cpp::Data(colors));
-  transferFunction.setParam("opacity", cpp::Data(opacities));
+  transferFunction.setParam("color", cpp::CopiedData(colors));
+  transferFunction.setParam("opacity", cpp::CopiedData(opacities));
   transferFunction.setParam("valueRange", valueRange);
   transferFunction.commit();
 
   return transferFunction;
 }
 
-cpp::GeometricModel Builder::makeGroundPlane(float planeExtent) const
+cpp::Instance Builder::makeGroundPlane(const box3f &bounds) const
 {
+  auto planeExtent = 0.8f * length(bounds.center() - bounds.lower);
+
   cpp::Geometry planeGeometry("mesh");
 
   std::vector<vec3f> v_position;
@@ -191,24 +185,31 @@ cpp::GeometricModel Builder::makeGroundPlane(float planeExtent) const
         startingIndex, startingIndex + 1, startingIndex + 2, startingIndex + 3);
   }
 
-  planeGeometry.setParam("vertex.position", cpp::Data(v_position));
-  planeGeometry.setParam("vertex.normal", cpp::Data(v_normal));
-  planeGeometry.setParam("vertex.color", cpp::Data(v_color));
-  planeGeometry.setParam("index", cpp::Data(indices));
+  planeGeometry.setParam("vertex.position", cpp::CopiedData(v_position));
+  planeGeometry.setParam("vertex.normal", cpp::CopiedData(v_normal));
+  planeGeometry.setParam("vertex.color", cpp::CopiedData(v_color));
+  planeGeometry.setParam("index", cpp::CopiedData(indices));
 
   planeGeometry.commit();
 
-  cpp::GeometricModel model(planeGeometry);
+  cpp::GeometricModel plane(planeGeometry);
 
-  if (rendererType == "pathtracer" || rendererType == "scivis") {
+  if (rendererType == "pathtracer" || rendererType == "scivis"
+      || rendererType == "ao") {
     cpp::Material material(rendererType, "obj");
     material.commit();
-    model.setParam("material", material);
+    plane.setParam("material", material);
   }
 
-  model.commit();
+  plane.commit();
 
-  return model;
+  cpp::Group planeGroup;
+  planeGroup.setParam("geometry", cpp::CopiedData(plane));
+  planeGroup.commit();
+
+  cpp::Instance planeInst(planeGroup);
+  planeInst.commit();
+  return planeInst;
 }
 
 void Builder::registerBuilder(const std::string &name, BuilderFcn fcn)

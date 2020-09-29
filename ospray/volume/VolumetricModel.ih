@@ -26,6 +26,7 @@ struct VolumetricModel
   float densityScale;
   float anisotropy; // the anisotropy of the volume's phase function
                     // (Heyney-Greenstein)
+  float gradientShadingScale;
 };
 
 inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,

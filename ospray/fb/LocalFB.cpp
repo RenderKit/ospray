@@ -1,10 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LocalFB.h"
 #include <iterator>
 #include "ImageOp.h"
-#include "LocalFB_ispc.h"
+#include "fb/LocalFB_ispc.h"
 
 namespace ospray {
 
@@ -128,6 +128,9 @@ void LocalFrameBuffer::setTile(Tile &tile)
     if ((tile.accumID & 1) == 1)
       tileErrorRegion.update(tile.region.lower / TILE_SIZE, err);
   }
+  if (hasDepthBuffer)
+    ispc::LocalFrameBuffer_accumulateWriteDepthTile(
+        getIE(), (ispc::Tile &)tile);
   if (hasAlbedoBuffer)
     ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),
         (ispc::Tile &)tile,

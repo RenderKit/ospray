@@ -3,9 +3,8 @@
 
 #include "MetallicPaint.h"
 #include "math/spectrum.h"
-#include "texture/Texture2D.h"
 // ispc
-#include "MetallicPaint_ispc.h"
+#include "render/pathtracer/materials/MetallicPaint_ispc.h"
 
 namespace ospray {
 namespace pathtracer {
@@ -22,18 +21,15 @@ std::string MetallicPaint::toString() const
 
 void MetallicPaint::commit()
 {
-  const vec3f &color = getParam<vec3f>("baseColor", vec3f(0.8f));
-  Texture2D *map_color = (Texture2D *)getParamObject("map_baseColor");
-  affine2f xform_color = getTextureTransform("map_baseColor");
+  MaterialParam3f color = getMaterialParam3f("baseColor", vec3f(.8f));
   const float flakeAmount = getParam<float>("flakeAmount", 0.3f);
   const vec3f &flakeColor = getParam<vec3f>("flakeColor", vec3f(RGB_AL_COLOR));
   const float flakeSpread = getParam<float>("flakeSpread", 0.5f);
   const float eta = getParam<float>("eta", 1.5f);
 
   ispc::PathTracer_MetallicPaint_set(getIE(),
-      (const ispc::vec3f &)color,
-      map_color ? map_color->getIE() : nullptr,
-      (const ispc::AffineSpace2f &)xform_color,
+      (const ispc::vec3f &)color.factor,
+      color.tex,
       flakeAmount,
       (const ispc::vec3f &)flakeColor,
       flakeSpread,

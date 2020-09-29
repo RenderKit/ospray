@@ -3,7 +3,7 @@
 
 #include "Glass.h"
 // ispc
-#include "Glass_ispc.h"
+#include "render/pathtracer/materials/Glass_ispc.h"
 
 namespace ospray {
 namespace pathtracer {

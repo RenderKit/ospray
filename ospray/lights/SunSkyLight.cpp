@@ -4,10 +4,10 @@
 // ospray
 #include "SunSkyLight.h"
 
-#include "DirectionalLight_ispc.h"
-#include "HDRILight_ispc.h"
-#include "Light_ispc.h"
-#include "Texture2D_ispc.h"
+#include "lights/DirectionalLight_ispc.h"
+#include "lights/HDRILight_ispc.h"
+#include "lights/Light_ispc.h"
+#include "texture/Texture2D_ispc.h"
 
 namespace ospray {
 SunSkyLight::SunSkyLight()
@@ -64,10 +64,10 @@ void SunSkyLight::commit()
 
   linear3f frame;
   frame.vz = up;
-  if (abs(sunTheta) > 0.99f) {
+  if (std::abs(sunTheta) > 0.99f) {
     const vec3f dx0 = vec3f(0.0f, up.z, -up.y);
     const vec3f dx1 = vec3f(-up.z, 0.0f, up.x);
-    frame.vx = normalize(abs(up.x) < abs(up.y) ? dx0 : dx1);
+    frame.vx = normalize(std::abs(up.x) < std::abs(up.y) ? dx0 : dx1);
     frame.vy = cross(up, frame.vx);
   } else {
     frame.vy = normalize(cross(-direction, frame.vz));

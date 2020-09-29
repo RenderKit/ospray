@@ -71,14 +71,15 @@ void Isosurfaces_intersect_kernel(
   vkl_range1f tRange;
   tRange.lower = ray->t0;
   tRange.upper = ray->t;
-  vklInitHitIteratorV(&iterator,
-      volume->vklVolume,
+  uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
+  iterator = vklInitHitIteratorV(volume->vklSampler,
       (varying vkl_vec3f *)&ray->org,
       (varying vkl_vec3f *)&ray->dir,
       &tRange,
-      self->valueSelector);
+      self->valueSelector,
+      hitIteratorBuffer);
   VKLHit hit;
-  bool gotHit = vklIterateHitV(&iterator, &hit);
+  bool gotHit = vklIterateHitV(iterator, &hit);
 
   if (gotHit) {
     if (isOcclusionTest) {
@@ -88,15 +89,9 @@ void Isosurfaces_intersect_kernel(
       ray->geomID = args->geomID;
       ray->primID = Isosurfaces_primID(self, hit.sample);
       ray->t = hit.t;
-      // TODO: This needs to be given the appropriate epsilon to use from
-      // OpenVKL. Waiting on addition of this API to OpenVKL's hit iterators
-      // for support.
-      ray->u = 1e-3; // transport epsilon to postIntersect
-
-      // NOTE(jda) - Initialize ray.Ng with something, even if it's wrong
-      //             (better than garbage). Real normals are computed if DG_NS
-      //             flag is specified to postIntersect()
-      ray->Ng = negate(ray->dir);
+      ray->u = hit.epsilon; // transport epsilon to postIntersect
+      // transport hit point in *volume local coords* to postIntersect
+      ray->Ng = ray->org + ray->dir * hit.t;
     }
   }
 }
@@ -122,13 +117,9 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
   Isosurfaces *uniform self = (Isosurfaces * uniform) geometry;
   Volume *uniform volume = Isosurfaces_getVolume(self);
 
-  if (flags & DG_NS) {
-    dg.Ns = Volume_getGradient(volume, dg.P);
-    if (dot(dg.Ns, dg.Ns) < 1e-6f)
-      dg.Ns = neg(ray.dir); // make_vec3f(1.f,0.f,0.f);
-  }
+  if (flags & (DG_NS | DG_NG))
+    dg.Ng = dg.Ns = Volume_getGradient(volume, ray.Ng /* actually local hit */);
 
-  dg.Ng = dg.Ns;
   // convert ray-space epsilon (in ray.u) to object-/world-space using max(dir)
   // instead of costly length; the error is at most sqrt(3)~1.7, quite
   // acceptable for eps

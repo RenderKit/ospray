@@ -1,0 +1,10 @@
+// Copyright 2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+typedef int RendererType;
+#define RENDERER_TYPE_DEBUG      0
+#define RENDERER_TYPE_AO         1
+#define RENDERER_TYPE_SCIVIS     2
+#define RENDERER_TYPE_PATHTRACER 3

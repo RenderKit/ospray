@@ -14,13 +14,17 @@ add_library(ospray_testing SHARED
   builders/Curves.cpp
   builders/Empty.cpp
   builders/GravitySpheresVolume.cpp
+  builders/Noise.cpp
   builders/PerlinNoiseVolumes.cpp
   builders/RandomSpheres.cpp
   builders/Streamlines.cpp
   builders/SubdivisionCube.cpp
-  builders/UnstructuredVolume.cpp
+  builders/UnstructuredVolumeSimple.cpp
+  builders/UnstructuredVolumeGen.cpp
   builders/Planes.cpp
   builders/ClippingGeometries.cpp
+  builders/ParticleVolume.cpp
+  builders/VdbVolume.cpp
 
   # regression test scenes
   builders/test_pt_glass.cpp
@@ -34,8 +38,7 @@ generate_export_header(ospray_testing)
 
 target_link_libraries(ospray_testing
 PUBLIC
-  ospray
-  rkcommon::rkcommon
+  ospray_sdk
 PRIVATE
   raw_to_amr
 )

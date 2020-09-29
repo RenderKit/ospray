@@ -1,8 +1,8 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # ISPC versions to look for, in decending order (newest first)
-set(ISPC_VERSION_WORKING "1.12.0" "1.10.0" "1.9.2" "1.9.1")
+set(ISPC_VERSION_WORKING "1.14.1")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 if (NOT ISPC_EXECUTABLE)
@@ -58,8 +58,10 @@ if(NOT ISPC_VERSION)
   mark_as_advanced(ISPC_EXECUTABLE)
 endif()
 
-if ("${ISPC_VERSION}" STREQUAL "1.11.0")
-  message(FATAL_ERROR "ISPC v1.11.0 is incompatible with OSPRay.")
+message(STATUS "Found ISPC v${ISPC_VERSION}: ${ISPC_EXECUTABLE}")
+list(FIND ISPC_VERSION_WORKING ${ISPC_VERSION} ISPC_VERSION_TESTED)
+if (ISPC_VERSION_TESTED EQUAL -1)
+  message(WARNING "Using untested version ${ISPC_VERSION} of Intel SPMD Compiler (ISPC), proceed at own risk. Supported versions are ${ISPC_VERSION_WORKING}.")
 endif()
 
 set(OSPRAY_ISPC_ADDRESSING 32 CACHE STRING "32 vs 64 bit addressing in ispc")
@@ -109,7 +111,7 @@ macro (ispc_compile)
   endif()
 
   set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
-  include_directories(${ISPC_TARGET_DIR})
+  include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
   if(ISPC_INCLUDE_DIR)
     string(REPLACE ";" ";-I;" ISPC_INCLUDE_DIR_PARMS "${ISPC_INCLUDE_DIR}")
@@ -180,8 +182,9 @@ macro (ispc_compile)
     endif()
 
     add_custom_command(
-      OUTPUT ${results} ${ISPC_TARGET_DIR}/${fname}_ispc.h
+      OUTPUT ${results} ${ISPC_TARGET_DIR}/${dir}/${fname}_ispc.h
       COMMAND ${CMAKE_COMMAND} -E make_directory ${outdir}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${ISPC_TARGET_DIR}/${dir}/
       COMMAND ${ISPC_EXECUTABLE}
       ${ISPC_DEFINITIONS}
       -I ${CMAKE_CURRENT_SOURCE_DIR}
@@ -193,7 +196,7 @@ macro (ispc_compile)
       --woff
       --opt=fast-math
       ${ISPC_ADDITIONAL_ARGS}
-      -h ${ISPC_TARGET_DIR}/${fname}_ispc.h
+      -h ${ISPC_TARGET_DIR}/${dir}/${fname}_ispc.h
       -MMM  ${outdir}/${fname}.dev.idep
       -o ${outdir}/${fname}.dev${ISPC_TARGET_EXT}
       ${input}

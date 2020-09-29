@@ -1,15 +1,17 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "math/vec.ih"
 
+struct PathContext;
 struct PathState;
 struct PathVertex;
 struct Ray;
 
-vec3f evaluateGeometryLights(const PathState &pathState,
+vec3f evaluateGeometryLights(const PathContext &pathContext,
+    const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
     Ray &ray);

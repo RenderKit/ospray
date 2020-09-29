@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PanoramicCamera.h"
-#include "PanoramicCamera_ispc.h"
+#include "camera/PanoramicCamera_ispc.h"
 
 namespace ospray {
 
@@ -14,6 +14,16 @@ PanoramicCamera::PanoramicCamera()
 std::string PanoramicCamera::toString() const
 {
   return "ospray::PanoramicCamera";
+}
+
+void PanoramicCamera::commit()
+{
+  Camera::commit();
+
+  ispc::PanoramicCamera_set(getIE(),
+      (OSPStereoMode)getParam<uint8_t>(
+          "stereoMode", getParam<int32_t>("stereoMode", OSP_STEREO_NONE)),
+      getParam<float>("interpupillaryDistance", 0.0635f));
 }
 
 } // namespace ospray

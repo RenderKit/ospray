@@ -17,8 +17,10 @@ Base::Base()
       ::testing::UnitTest::GetInstance()->current_test_info();
   imgSize = ospEnv->GetImgSize();
 
-  framebuffer = cpp::FrameBuffer(
-      imgSize, frameBufferFormat, OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
+  framebuffer = cpp::FrameBuffer(imgSize.x,
+      imgSize.y,
+      frameBufferFormat,
+      OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_DEPTH);
 
   {
     std::string testCaseName = testCase->name();
@@ -59,7 +61,7 @@ void Base::AddModel(cpp::GeometricModel model, affine3f xfm)
   model.commit();
 
   cpp::Group group;
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   cpp::Instance instance(group);
@@ -73,7 +75,7 @@ void Base::AddModel(cpp::VolumetricModel model, affine3f xfm)
   model.commit();
 
   cpp::Group group;
-  group.setParam("volume", cpp::Data(model));
+  group.setParam("volume", cpp::CopiedData(model));
   group.commit();
 
   cpp::Instance instance(group);
@@ -93,7 +95,7 @@ void Base::PerformRenderTest()
   SetLights();
 
   if (!instances.empty())
-    world.setParam("instance", cpp::Data(instances));
+    world.setParam("instance", cpp::CopiedData(instances));
 
   camera.commit();
   world.commit();
@@ -124,8 +126,15 @@ void Base::CreateEmptyScene()
   camera.setParam("up", vec3f(0.f, 1.f, 0.f));
 
   renderer = cpp::Renderer(rendererType);
-  if (rendererType == "scivis")
+
+  if (rendererType == "ao")
     renderer.setParam("aoSamples", 0);
+
+  if (rendererType == "scivis") {
+    renderer.setParam("shadows", true);
+    renderer.setParam("aoSamples", 16);
+  }
+
   renderer.setParam("backgroundColor", vec3f(1.0f));
   renderer.setParam("pixelSamples", samplesPerPixel);
 
@@ -135,7 +144,7 @@ void Base::CreateEmptyScene()
 void Base::SetLights()
 {
   if (!lightsList.empty())
-    world.setParam("light", cpp::Data(lightsList));
+    world.setParam("light", cpp::CopiedData(lightsList));
 }
 
 void Base::RenderFrame()
@@ -167,13 +176,41 @@ void FromOsprayTesting::SetUp()
 
   world.commit();
 
-  auto worldBounds = world.getBounds();
+  auto worldBounds = world.getBounds<box3f>();
 
   ArcballCamera arcballCamera(worldBounds, imgSize);
 
   camera.setParam("position", arcballCamera.eyePos());
   camera.setParam("direction", arcballCamera.lookDir());
   camera.setParam("up", arcballCamera.upDir());
+}
+
+void FromOsprayTestingDirect::SetUp()
+{
+  FromOsprayTesting::SetUp();
+
+  if (rendererType == "pathtracer")
+    renderer.setParam("maxPathLength", 1);
+}
+
+void FromOsprayTestingMaxDepth::SetUp()
+{
+  FromOsprayTesting::SetUp();
+
+  // set up max depth texture
+  {
+    cpp::Texture maxDepthTex("texture2d");
+
+    std::vector<float> maxDepth = {3.f, 3.f, 3.f, 3.f};
+    OSPTextureFormat texFmt = OSP_TEXTURE_R32F;
+    maxDepthTex.setParam(
+        "data", cpp::CopiedData(maxDepth.data(), vec2ul(2, 2)));
+    maxDepthTex.setParam("format", OSP_INT, &texFmt);
+    maxDepthTex.setParam("filter", OSP_TEXTURE_FILTER_NEAREST);
+    maxDepthTex.commit();
+
+    renderer.setParam("map_maxDepth", maxDepthTex);
+  }
 }
 
 } // namespace OSPRayTestScenes

@@ -24,7 +24,7 @@ cpp::Group PtLuminous::buildGroup() const
 {
   cpp::Geometry sphereGeometry("sphere");
 
-  sphereGeometry.setParam("sphere.position", cpp::Data(vec3f(0.f)));
+  sphereGeometry.setParam("sphere.position", cpp::CopiedData(vec3f(0.f)));
   sphereGeometry.setParam("radius", 1.f);
   sphereGeometry.commit();
 
@@ -39,7 +39,7 @@ cpp::Group PtLuminous::buildGroup() const
 
   cpp::Group group;
 
-  group.setParam("geometry", cpp::Data(model));
+  group.setParam("geometry", cpp::CopiedData(model));
   group.commit();
 
   return group;

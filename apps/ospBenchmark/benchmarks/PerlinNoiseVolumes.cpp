@@ -1,37 +1,34 @@
-// Copyright 2018-2019 Intel Corporation
+// Copyright 2018-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../BaseFixture.h"
 
-template <bool ADD_TORUS = true, bool USE_SCIVIS = true>
 class PerlinNoiseVolumes : public BaseFixture
 {
  public:
-  PerlinNoiseVolumes()
-      : BaseFixture(
-          USE_SCIVIS ? "scivis" : "pathtracer", "gravity_spheres_volume")
+  PerlinNoiseVolumes(const std::string &s, bool at, const std::string &r)
+      : BaseFixture(s, r), addTorus(at)
   {
-    outputFilename = "PerlinNoiseVolumes";
-    outputFilename += "_add_torus_" + std::to_string(ADD_TORUS);
-    outputFilename += "_" + rendererType;
+    SetName(s + (at ? "/both_volumes" : "/sphere_only") + "/" + r);
   }
 
   void SetBuilderParameters(testing::SceneBuilderHandle scene) override
   {
-    testing::setParam(scene, "addTorusVolume", ADD_TORUS);
+    testing::setParam(scene, "addTorusVolume", addTorus);
   }
+
+ private:
+  bool addTorus;
 };
 
-using PerlinNoiseVolumes_sphere_only_scivis = PerlinNoiseVolumes<true, true>;
-using PerlinNoiseVolumes_both_volumes_scivis = PerlinNoiseVolumes<false, true>;
-
-OSPRAY_DEFINE_BENCHMARK(PerlinNoiseVolumes_sphere_only_scivis);
-OSPRAY_DEFINE_BENCHMARK(PerlinNoiseVolumes_both_volumes_scivis);
-
-using PerlinNoiseVolumes_sphere_only_pathtracer =
-    PerlinNoiseVolumes<true, false>;
-using PerlinNoiseVolumes_both_volumes_pathtracer =
-    PerlinNoiseVolumes<false, false>;
-
-OSPRAY_DEFINE_BENCHMARK(PerlinNoiseVolumes_sphere_only_pathtracer);
-OSPRAY_DEFINE_BENCHMARK(PerlinNoiseVolumes_both_volumes_pathtracer);
+OSPRAY_DEFINE_BENCHMARK(
+    PerlinNoiseVolumes, "perlin_noise_volumes", false, "ao");
+OSPRAY_DEFINE_BENCHMARK(PerlinNoiseVolumes, "perlin_noise_volumes", true, "ao");
+OSPRAY_DEFINE_BENCHMARK(
+    PerlinNoiseVolumes, "perlin_noise_volumes", false, "scivis");
+OSPRAY_DEFINE_BENCHMARK(
+    PerlinNoiseVolumes, "perlin_noise_volumes", true, "scivis");
+OSPRAY_DEFINE_BENCHMARK(
+    PerlinNoiseVolumes, "perlin_noise_volumes", false, "pathtracer");
+OSPRAY_DEFINE_BENCHMARK(
+    PerlinNoiseVolumes, "perlin_noise_volumes", true, "pathtracer");

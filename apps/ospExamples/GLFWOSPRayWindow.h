@@ -19,6 +19,7 @@ enum class OSPRayRendererType
 {
   SCIVIS,
   PATHTRACER,
+  AO,
   DEBUGGER,
   OTHER
 };
@@ -59,8 +60,10 @@ class GLFWOSPRayWindow
   bool updateFrameOpsNextFrame{false};
   bool denoiserEnabled{false};
   bool showAlbedo{false};
+  bool showDepth{false};
   bool renderSunSky{false};
   bool cancelFrameOnInteraction{false};
+  bool showUnstructuredCells{false};
 
   // GLFW window instance
   GLFWwindow *glfwWindow = nullptr;
@@ -69,7 +72,11 @@ class GLFWOSPRayWindow
   std::unique_ptr<ArcballCamera> arcballCamera;
 
   // OSPRay objects managed by this class
-  cpp::Renderer renderer;
+  cpp::Renderer rendererPT{"pathtracer"};
+  cpp::Renderer rendererSV{"scivis"};
+  cpp::Renderer rendererAO{"ao"};
+  cpp::Renderer rendererDBG{"debug"};
+  cpp::Renderer *renderer{nullptr};
   cpp::Camera camera{"perspective"};
   cpp::World world;
   cpp::Light sunSky{"sunSky"};
@@ -81,7 +88,7 @@ class GLFWOSPRayWindow
   vec3f sunDirection{-0.25f, -1.0f, 0.0f};
   float turbidity{3.f};
 
-  std::string scene{"boxes"};
+  std::string scene{"boxes_lit"};
 
   std::string curveBasis{"bspline"};
 

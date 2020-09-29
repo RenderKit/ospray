@@ -5,6 +5,8 @@
 
 // ospray
 #include "ospray/ospray_cpp.h"
+#include "ospray/ospray_cpp/ext/rkcommon.h"
+// rkcommon
 #include "rkcommon/memory/IntrusivePtr.h"
 #include "rkcommon/utility/ParameterizedObject.h"
 // std
@@ -40,7 +42,7 @@ struct Builder : public memory::RefCountedObject,
  protected:
   cpp::TransferFunction makeTransferFunction(const vec2f &valueRange) const;
 
-  cpp::GeometricModel makeGroundPlane(float planeExtent) const;
+  cpp::Instance makeGroundPlane(const box3f &bounds) const;
 
   // Data //
 

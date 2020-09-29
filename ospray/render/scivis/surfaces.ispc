@@ -1,103 +1,108 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// ispc device
 #include "math/random.ih"
 #include "math/sampling.ih"
+#include "render/util.ih"
 // SciVis renderer
 #include "SciVisMaterial.ih"
+#include "lights/Light.ih"
 #include "surfaces.ih"
 
-inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
-{
-  const SciVisMaterial *mat = (const SciVisMaterial *)dg.material;
-
-  vec3f surfaceColor = make_vec3f(1.f);
-  float opacity = 1.f;
-  if (mat) {
-    foreach_unique (m in mat) {
-      surfaceColor = m->Kd;
-      if (valid(m->map_Kd)) {
-        vec4f Kd_from_map = get4f(m->map_Kd, dg);
-        surfaceColor = surfaceColor * make_vec3f(Kd_from_map);
-        opacity *= Kd_from_map.w;
-      }
-      opacity *= m->d;
-    }
-  }
-
-  return make_vec4f(surfaceColor * make_vec3f(dg.color), opacity * dg.color.w);
-}
-
-inline float computeAO(const uniform SciVis *uniform self,
+vec3f directIllumination(const uniform SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
-    const varying vec3i &sampleID,
-    const varying DifferentialGeometry &dg)
+    const varying DifferentialGeometry &dg,
+    ScreenSample &sample,
+    varying LDSampler *uniform ldSampler,
+    const varying SciVisBSDF &bsdf,
+    const varying vec3f &inDir,
+    const float time)
 {
-  const uniform int &sampleCnt = self->aoSamples;
-  const uniform int accumID = reduce_max(sampleID.z) * sampleCnt;
+  vec3f color = make_vec3f(0.f);
+  if (!world->scivisData.lights)
+    return color;
 
-  // init TEA RNG //
-  RandomTEA rng_state;
-  varying RandomTEA *const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, 0x290374, (fb->size.x * sampleID.y) + sampleID.x);
-  const vec2f rot = RandomTEA__getFloats(rng);
+  // calculate shading for all lights
+  for (uniform int i = 0; i < world->scivisData.numLights; i++) {
+    const uniform Light *uniform l = world->scivisData.lights[i];
+    const vec2f s = make_vec2f(0.0f); // sample center of area lights
+    const Light_SampleRes light = l->sample(l, dg, s);
 
-  int hits = 0;
+    if (reduce_max(light.weight) > 0.f) { // any potential contribution?
+      const float cosNL = dot(light.dir, dg.Ns);
+      if (cosNL < 0.0f)
+        continue;
 
-  const linear3f localToWorld = frame(dg.Ns);
+      const vec3f H = normalize(light.dir - inDir);
+      const float cosNH = dot(H, dg.Ns);
+      const vec3f specular = bsdf.specular * powf(cosNH, bsdf.shininess);
+      const vec3f diffuse = bsdf.diffuse * cosNL;
+      const vec3f light_contrib = (diffuse + specular) * light.weight;
 
-  for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec2f halton = HaltonSequence_get2D(sampleCnt * accumID + i);
-    const vec2f r = CranleyPattersonRotation(halton, rot);
-    const vec3f local_ao_dir = cosineSampleHemisphere(r);
-    const vec3f ao_dir = localToWorld * local_ao_dir;
+      if (self->shadowsEnabled) {
+        const float max_contrib = reduce_max(light_contrib);
+        if (max_contrib > self->super.minContribution) {
+          vec3f P = dg.P;
+          if (dot(dg.Ng, light.dir) < 0.0f)
+            P = P - (2.f * dg.epsilon) * dg.Ng;
 
-    if (dot(ao_dir, dg.Ns) < 0.05f) { // check below surface
-      hits++;
-      continue;
+          Ray shadowRay;
+          setRay(shadowRay, P, light.dir, 0.0f, light.dist, time);
+
+          float light_alpha = lightAlpha(self,
+              shadowRay,
+              fb,
+              world,
+              sample,
+              ldSampler,
+              max_contrib,
+              dg.epsilon,
+              0.25f);
+
+          color = color + light_alpha * light_contrib;
+        }
+      } else {
+        color = color + light_contrib;
+      }
     }
-
-    Ray ao_ray;
-    setRay(ao_ray, dg.P, ao_dir, dg.epsilon, self->aoRadius);
-    if (isOccluded(world, ao_ray))
-      hits++;
   }
 
-  // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
-  // cancel
-  return 1.0f - (hits / (float)sampleCnt);
+  return color;
 }
-
-///////////////////////////////////////////////////////////////////////////////
 
 SSI computeShading(const SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
-    ScreenSample &sample)
+    ScreenSample &sample,
+    varying LDSampler *uniform ldSampler,
+    const varying vec3f &inDir,
+    const float time)
 {
   SSI retval;
 
-  const vec4f surfaceColor = getSurfaceColor(dg);
+  const SciVisBSDF bsdf = evalMaterial(dg);
+  retval.albedo = bsdf.albedo;
 
-  const vec3f color = make_vec3f(surfaceColor);
-  const float opacity = surfaceColor.w;
+  vec3f color = directIllumination(
+      self, fb, world, dg, sample, ldSampler, bsdf, inDir, time);
 
-  const float eyeLightIntensity = absf(dot(dg.Ns, sample.ray.dir)) * opacity;
+  float ao = 1.f;
+  if (self->aoSamples > 0 && reduce_max(world->scivisData.aoColorPi) > 0.01f)
+    ao = SciVis_computeAO(self,
+        fb,
+        world,
+        sample,
+        ldSampler,
+        dg,
+        self->aoSamples,
+        self->aoRadius,
+        sample.sampleID);
 
-  const uniform bool doAO = self->aoSamples > 0 && self->aoIntensity > 0.01f;
+  color = color + bsdf.diffuse * ao * world->scivisData.aoColorPi;
 
-  const float ao = doAO ? computeAO(self, fb, world, sample.sampleID, dg) : 1.f;
-
-  const float aoIntensity = doAO ? self->aoIntensity : 0.f;
-
-  const float intensity =
-      ((1 - aoIntensity) + (ao * aoIntensity)) * eyeLightIntensity;
-
-  retval.shadedColor = make_vec4f(color * intensity, opacity);
-  retval.albedo = color;
+  retval.shadedColor = make_vec4f(color, bsdf.opacity);
 
   return retval;
 }

@@ -31,5 +31,5 @@ ExternalProject_Add(${COMPONENT_NAME}
   BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
   BUILD_ALWAYS OFF
 )
-
+ExternalProject_Add_StepTargets(${COMPONENT_NAME} NO_DEPENDS download)
 ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ospray)

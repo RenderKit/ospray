@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PerspectiveCamera.h"
-#include "PerspectiveCamera_ispc.h"
+#include "camera/PerspectiveCamera_ispc.h"
 
 namespace ospray {
 
@@ -28,7 +28,8 @@ void PerspectiveCamera::commit()
   apertureRadius = getParam<float>("apertureRadius", 0.f);
   focusDistance = getParam<float>("focusDistance", 1.f);
   architectural = getParam<bool>("architectural", false);
-  stereoMode = (OSPStereoMode)getParam<int>("stereoMode", OSP_STEREO_NONE);
+  stereoMode = (OSPStereoMode)getParam<uint8_t>(
+      "stereoMode", getParam<int32_t>("stereoMode", OSP_STEREO_NONE));
   // the default 63.5mm represents the average human IPD
   interpupillaryDistance = getParam<float>("interpupillaryDistance", 0.0635f);
 
@@ -56,13 +57,13 @@ void PerspectiveCamera::commit()
   case OSP_STEREO_SIDE_BY_SIDE:
     aspect *= 0.5f;
     break;
+  case OSP_STEREO_TOP_BOTTOM:
+    aspect *= 2.f;
+    break;
   case OSP_STEREO_NONE:
     break;
   case OSP_STEREO_UNKNOWN:
-    throw std::runtime_error(
-        "perspective camera 'stereoMode' is invalid. Must be one of: "
-        "OSP_STEREO_LEFT, OSP_STEREO_RIGHT, OSP_STEREO_SIDE_BY_SIDE, "
-        "OSP_STEREO_NONE");
+    throw std::runtime_error(toString() + ": invalid 'stereoMode'");
   }
 
   imgPlaneSize.y = 2.f * tanf(deg2rad(0.5f * fovy));
@@ -89,7 +90,7 @@ void PerspectiveCamera::commit()
       (const ispc::vec3f &)dir_dv,
       scaledAperture,
       aspect,
-      stereoMode == OSP_STEREO_SIDE_BY_SIDE,
+      stereoMode,
       (const ispc::vec3f &)ipd_offset);
 }
 
@@ -113,7 +114,7 @@ ProjectedPoint PerspectiveCamera::projectPoint(const vec3f &p) const
                        dot(screenDir, normalize(dir_dv)))
       / imgPlaneSize;
   const float depth = sign(t) * length(v);
-  // TODO: Depth of field radius
+  // TODO: Depth of field radius, stereo
   return ProjectedPoint(vec3f(sp.x, sp.y, depth), 0);
 }
 
