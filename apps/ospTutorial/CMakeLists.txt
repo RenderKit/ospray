@@ -8,14 +8,17 @@ endif()
 # build ospTutorial, for demonstration and API testing
 add_executable(ospTutorial ${OSPRAY_RESOURCE} ospTutorial.c)
 target_link_libraries(ospTutorial PRIVATE ospray)
+ospray_sign_target(ospTutorial)
 
 # C++ version
 add_executable(ospTutorialCpp ${OSPRAY_RESOURCE} ospTutorial.cpp)
 target_link_libraries(ospTutorialCpp PRIVATE ospray_sdk)
+ospray_sign_target(ospTutorialCpp)
 
 # async version
 add_executable(ospTutorialAsync ${OSPRAY_RESOURCE} ospTutorialAsync.c)
 target_link_libraries(ospTutorialAsync PRIVATE ospray)
+ospray_sign_target(ospTutorialAsync)
 
 install(TARGETS ospTutorial ospTutorialCpp ospTutorialAsync
   DESTINATION ${CMAKE_INSTALL_BINDIR}

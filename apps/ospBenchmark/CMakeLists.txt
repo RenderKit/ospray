@@ -25,6 +25,8 @@ PRIVATE
   ospray_testing
 )
 
+ospray_sign_target(ospBenchmark)
+
 install(TARGETS ospBenchmark
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   COMPONENT apps

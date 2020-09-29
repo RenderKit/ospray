@@ -32,6 +32,8 @@ PRIVATE
   $<$<BOOL:${OSPRAY_APPS_ENABLE_GLM}>:${GLM_TARGET}>
 )
 
+ospray_sign_target(ospTestSuite)
+
 install(TARGETS ospTestSuite
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   COMPONENT apps
