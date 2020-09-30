@@ -6,6 +6,14 @@ Version History
 -   The pathtracer optionally allows for alpha blending even if the
     background is seen through refractive objects like glass, by
     enabling `backgroundRefraction`
+-   OSPRay now requires minimum Open VKL v0.11.0 to bring the following
+    improvements: 
+    -   Improved rendering performance of VDB volumes
+    -   Added support for configurable iterator depth via the
+        `maxIteratorDepth` parameters for unstructured and particle
+        volumes, improved performance
+    -   Added support for filter modes for structured volumes (regular
+        and spherical)
 -   Fixed normals of (transformed) isosurfaces
 -   Robust calculation of normals of `boxes` geometry
 -   The optional `denoiser` image operation now respects frame
@@ -15,7 +23,6 @@ Version History
     renderer parameter
 -   Using materials in a renderer with a mismatched `renderer_type` no
     longer causes crashes while renderering
--   OSPRay now requires minimum Open VKL v0.11.0
 
 ### Changes in v2.3.0:
 

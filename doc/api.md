@@ -541,12 +541,25 @@ slices (3D, `byteStride3`) are not.
 The parameters understood by structured volumes are summarized in the
 table below.
 
-  Type    Name            Default  Description
-  ------- ----------- -----------  --------------------------------------
-  vec3f   gridOrigin  $(0, 0, 0)$  origin of the grid in object-space
-  vec3f   gridSpacing $(1, 1, 1)$  size of the grid cells in object-space
-  OSPData data                     the actual voxel 3D [data]
-  ------- ----------- -----------  --------------------------------------
+  ------- -------------- -----------------------------  --------------------------
+  Type    Name                                 Default  Description
+  ------- -------------- -----------------------------  --------------------------
+  vec3f   gridOrigin                       $(0, 0, 0)$  origin of the grid in
+                                                        object-space
+
+  vec3f   gridSpacing                      $(1, 1, 1)$  size of the grid cells
+                                                        in object-space
+
+  OSPData data                                          the actual voxel 3D [data]
+
+  int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
+                                                        reconstructing the field,
+                                                        also allowed is
+                                                        `OSP_VOLUME_FILTER_NEAREST`
+
+  int     gradientFilter              same as `filter`  filter used during
+                                                        gradient computations
+  ------- -------------- -----------------------------  --------------------------
   : Configuration parameters for structured regular volumes.
 
 The size of the volume is inferred from the size of the 3D array `data`,
@@ -565,12 +578,28 @@ summarized below.
 
 ![Coordinate system of structured spherical volumes.][imgStructuredSphericalCoords]
 
-  Type   Name            Default  Description
-  ------ ----------- -----------  -------------------------------------------------------------------------
-  vec3f  gridOrigin  $(0, 0, 0)$  origin of the grid in units of $(r, \theta, \phi)$; angles in degrees
-  vec3f  gridSpacing $(1, 1, 1)$  size of the grid cells in units of $(r, \theta, \phi)$; angles in degrees
-  OSPData data                    the actual voxel 3D [data]
-  ------ ----------- -----------  -------------------------------------------------------------------------
+  ------- -------------- -----------------------------  --------------------------
+  Type    Name                                 Default  Description
+  ------- -------------- -----------------------------  --------------------------
+  vec3f   gridOrigin                       $(0, 0, 0)$  origin of the grid in
+                                                        units of $(r, \theta,
+                                                        \phi)$; angles in
+                                                        degrees
+
+  vec3f   gridSpacing                      $(1, 1, 1)$  size of the grid cells in
+                                                        units of $(r, \theta,
+                                                        \phi)$; angles in degrees
+
+  OSPData  data                                         the actual voxel 3D [data]
+
+  int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
+                                                        reconstructing the field,
+                                                        also allowed is
+                                                        `OSP_VOLUME_FILTER_NEAREST`
+
+  int     gradientFilter              same as `filter`  filter used during
+                                                        gradient computations
+  ------- -------------- -----------------------------  --------------------------
   : Configuration parameters for structured spherical volumes.
 
 The dimensions $(r, \theta, \phi)$ of the volume are inferred from the
@@ -759,6 +788,9 @@ the `cell.type` parameter must be omitted).
 
   bool                precomputedNormals    false  whether to accelerate by precomputing,
                                                    at a cost of 12 bytes/face
+
+  int                   maxIteratorDepth        6  do not descend further than to this BVH
+                                                   depth during interval iteration
   ------------------- ------------------ --------  ---------------------------------------
   : Configuration parameters for unstructured volumes.
 
@@ -889,6 +921,9 @@ traversal, similar to the method in\ [1].
                                              this switch may improve volume commit
                                              time, but will make volume rendering
                                              less efficient.
+
+  int             maxIteratorDepth        6  do not descend further than to this BVH
+                                             depth during interval iteration
   -------- ----------------------- --------  ---------------------------------------
   : Configuration parameters for particle volumes.
 
