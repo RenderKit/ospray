@@ -7,7 +7,7 @@ sec = 0
 
 def do_filter(k, v, f, m):
     global sec
-    if sec > 3 or (k == "Header" and v[0] < 3):
+    if sec > 2 or (k == "Header" and v[0] < 3):
         return []
     if k == "Header" and v[0] > 2:
         sec += 1
