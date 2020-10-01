@@ -1860,8 +1860,8 @@ supports the following special parameters:
                                             the framebuffer
 
   bool       backgroundRefraction    false  allow for alpha blending even if
-                                            backgound is seen through refractive
-                                            objects like glass
+                                            background is seen through
+                                            refractive objects like glass
   ---------- -------------------- --------  ------------------------------------
   : Special parameters understood by the path tracer.
 

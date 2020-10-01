@@ -17,15 +17,15 @@ Version History
 -   Expose parameter `horizonExtension` of Sun-sky light, which extends
     the sky dome by stretching the horizon over the lower hemisphere
 -   Optimize handling of geometry lights by the pathtracer
--   Fixed normals of (transformed) isosurfaces
--   Robust calculation of normals of `boxes` geometry
 -   The optional `denoiser` image operation now respects frame
     cancellation, requiring Intel® Open Image Denoise with minimum
     version 1.2.3
+-   Fixed normals of (transformed) isosurfaces
+-   Robust calculation of normals of `boxes` geometry
 -   Clipping geometry is now working correctly with `map_maxDepth`
     renderer parameter
 -   Using materials in a renderer with a mismatched `renderer_type` no
-    longer causes crashes while renderering
+    longer causes crashes while rendering
 
 ### Changes in v2.3.0:
 
@@ -186,7 +186,7 @@ Version History
         function parameters instead of setting some as renderer params
     -   `ospRenderFrame` is now asynchronous, where the task is managed
         through a returned `OSPFuture` handle
-    -   The heirarchy of objets in a scene are now more granular to
+    -   The hierarchy of objects in a scene are now more granular to
         aid in scene construction flexibility and reduce potential
         object duplication
     -   Type-specific parameter setting functions have been consolidated
@@ -251,13 +251,13 @@ Version History
     instead
 -   Triangle mesh and Quad mesh are superseded by the `mesh` geometry
 -   Applications need to use the various error reporting methods to
-    check wether the creation (via `ospNew...`) of objects failed; a
+    check whether the creation (via `ospNew...`) of objects failed; a
     returned `NULL` is not a special handle anymore to signify an error
 -   Changed module init methods to facilitate version checking:
     `extern "C" OSPError ospray_module_init_<name>(int16_t versionMajor, int16_t versionMinor, int16_t versionPatch)`
 -   The `map_backplate` texture is supported in all renderers and does
     not hide lights in infinity (like the HDRI light) anymore;
-    explicitely make lights in`visible` if this is needed
+    explicitly make lights in`visible` if this is needed
 -   Changed the computation of variance for adaptive accumulation to be
     independent of `TILE_SIZE`, thus `varianceThreshold` needs to be
     adapted if using a different `TILE_SIZE` than default 64
