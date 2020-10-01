@@ -22,12 +22,5 @@ struct PathTracer
   vec4f shadowCatcherPlane;
   bool shadowCatcher; // preprocessed
   bool backgroundRefraction;
-
-  // array containing the scene light sources
-  // the lights are sorted: first geometric, then virtual lights
-  Light *uniform *uniform lights;
-  uint32 numLights; // total number of light sources (geometric + virtual)
-  uint32 numGeoLights; // number of geometric light sources
-  float *uniform lightsCDF; // CDF used by NEE for randomly picking lights
   int32 numLightSamples; // number of light samples used for NEE
 };

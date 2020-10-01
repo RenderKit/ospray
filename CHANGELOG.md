@@ -16,6 +16,7 @@ Version History
         and spherical)
 -   Expose parameter `horizonExtension` of Sun-sky light, which extends
     the sky dome by stretching the horizon over the lower hemisphere
+-   Optimize handling of geometry lights by the pathtracer
 -   Fixed normals of (transformed) isosurfaces
 -   Robust calculation of normals of `boxes` geometry
 -   The optional `denoiser` image operation now respects frame

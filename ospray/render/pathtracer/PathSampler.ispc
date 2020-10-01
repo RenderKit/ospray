@@ -173,7 +173,7 @@ void samplePath(const PathContext &pathContext,
     // have both samples for MIS except if we have geometry lights (which we
     // still need to evaluate for MIS)
     if (pathState.depth >= pathContext.context->super.maxDepth
-        && pathContext.context->numGeoLights == 0)
+        && pathContext.world->pathtracerData.numGeoLights == 0)
       break;
 
     postIntersect(pathContext, pathState, pathVertex, ray);

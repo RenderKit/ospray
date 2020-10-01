@@ -63,7 +63,6 @@ void *SciVis::beginFrame(FrameBuffer *, World *world)
   }
 
   void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
-
   ispc::World_setSciVisData(
       world->getIE(), (ispc::vec3f &)aoColor, lightPtr, lightArray.size());
 

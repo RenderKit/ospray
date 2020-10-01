@@ -181,7 +181,7 @@ export void *uniform GeometryLight_create(
   return self;
 }
 
-export void GeometryLight_destroy(void *uniform _self)
+void GeometryLight_destroy(void *uniform _self)
 {
   GeometryLight *uniform self = (GeometryLight * uniform) _self;
   if (self) {

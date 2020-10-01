@@ -1850,10 +1850,6 @@ supports the following special parameters:
                                             per path vertex, per default
                                             all light sources are sampled
 
-  bool       geometryLights           true  whether geometries with an emissive
-                                            material (e.g., [Luminous]) illuminate
-                                            the scene
-
   int        roulettePathLength          5  ray recursion depth at which to
                                             start Russian roulette termination
 
