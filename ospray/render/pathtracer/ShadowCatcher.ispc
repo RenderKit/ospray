@@ -32,7 +32,7 @@ bool shadowCatcher(const PathContext &pathContext,
     if (dot(ray.dir, pathVertex.dg.Ng) >= 0.f)
       pathVertex.dg.Ns = pathVertex.dg.Ng = neg(pathVertex.dg.Ng);
 	
-	pathVertex.dg.P = ray.org + pathState.shadowCatcherDist * ray.dir;
+    pathVertex.dg.P = ray.org + pathState.shadowCatcherDist * ray.dir;
     const float eps =
         calcEpsilon(pathVertex.dg.P, ray.dir, pathState.shadowCatcherDist);
     pathVertex.dg.P = pathVertex.dg.P 
