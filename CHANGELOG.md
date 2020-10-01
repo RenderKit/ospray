@@ -14,6 +14,8 @@ Version History
         volumes, improved performance
     -   Added support for filter modes for structured volumes (regular
         and spherical)
+-   Expose parameter `horizonExtension` of Sun-sky light, which extends
+    the sky dome by stretching the horizon over the lower hemisphere
 -   Fixed normals of (transformed) isosurfaces
 -   Robust calculation of normals of `boxes` geometry
 -   The optional `denoiser` image operation now respects frame

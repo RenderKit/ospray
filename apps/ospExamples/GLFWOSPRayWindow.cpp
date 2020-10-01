@@ -608,6 +608,11 @@ void GLFWOSPRayWindow::buildUI()
         sunSky.setParam("turbidity", turbidity);
         addObjectToCommit(sunSky.handle());
       }
+      if (ImGui::DragFloat(
+              "horizonExtension", &horizonExtension, 0.01f, 0.f, 1.f)) {
+        sunSky.setParam("horizonExtension", horizonExtension);
+        addObjectToCommit(sunSky.handle());
+      }
     }
     static int maxDepth = 20;
     if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {

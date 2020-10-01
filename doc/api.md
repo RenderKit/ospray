@@ -1526,13 +1526,22 @@ Hošek-Wilkie sky model and solar radiance function. In addition to the
 [general parameters](#lights) the following special parameters are
 supported:
 
-  Type      Name           Default  Description
-  --------- ---------- -----------  --------------------------------------------
-  vec3f     up         $(0, 1, 0)$  zenith of sky in world-space
-  vec3f     direction  $(0, -1, 0)$ main emission direction of the sun
-  float     turbidity            3  atmospheric turbidity due to particles, in [1–10]
-  float     albedo             0.3  ground reflectance, in [0–1]
-  --------- ---------- -----------  --------------------------------------------
+  --------- ---------------- ------------  -------------------------------------
+  Type      Name                  Default  Description
+  --------- ---------------- ------------  -------------------------------------
+  vec3f     up                $(0, 1, 0)$  zenith of sky in world-space
+
+  vec3f     direction        $(0, -1, 0)$  main emission direction of the sun
+
+  float     turbidity                   3  atmospheric turbidity due to
+                                           particles, in [1–10]
+
+  float     albedo                    0.3  ground reflectance, in [0–1]
+
+  float     horizonExtension         0.01  extend the sky dome by stretching the
+                                           horizon, fraction of the lower
+                                           hemisphere to cover, in [0–1]
+  --------- ---------------- ------------  -------------------------------------
   : Special parameters accepted by the `sunSky` light.
 
 The lowest elevation for the sun is restricted to the horizon.

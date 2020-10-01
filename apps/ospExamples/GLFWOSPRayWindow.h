@@ -87,6 +87,7 @@ class GLFWOSPRayWindow
   vec3f bgColor{0.f};
   vec3f sunDirection{-0.25f, -1.0f, 0.0f};
   float turbidity{3.f};
+  float horizonExtension{0.1f};
 
   std::string scene{"boxes_lit"};
 

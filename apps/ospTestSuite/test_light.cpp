@@ -52,6 +52,7 @@ void SunSky::SetUp()
   light.setParam("albedo", std::get<3>(params));
   // lower brightness with high turbidity
   light.setParam("intensity", 1.0f / turb);
+  light.setParam("horizonExtension", std::get<4>(params));
   AddLight(light);
 
   renderer.setParam("backgroundColor", vec4f(0.f, 0.f, 0.f, 1.0f));
@@ -248,14 +249,16 @@ INSTANTIATE_TEST_SUITE_P(Light,
             vec3f(0.f, -0.3f, -1.f),
             vec3f(0.f, -0.8f, 0.4f)),
         ::testing::Values(1.0f, 3.0f, 10.0f),
-        ::testing::Values(0.0f)));
+        ::testing::Values(0.0f),
+        ::testing::Values(0.01f)));
 
 INSTANTIATE_TEST_SUITE_P(Light2,
     SunSky,
     ::testing::Combine(::testing::Values(vec3f(0.2f, -0.5f, 0.f)),
         ::testing::Values(vec3f(0.2f, 0.4f, -1.f), vec3f(0.f, 0.f, -1.f)),
         ::testing::Values(2.0f),
-        ::testing::Values(0.0f, 1.0f)));
+        ::testing::Values(0.0f, 1.0f),
+        ::testing::Values(0.1f)));
 
 TEST_P(AmbientLight, parameter)
 {

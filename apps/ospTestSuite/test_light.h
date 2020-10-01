@@ -16,7 +16,8 @@ class SunSky : public LightTest,
                public ::testing::TestWithParam<std::tuple<vec3f /*up*/,
                    vec3f /*direction*/,
                    float /*turbidity*/,
-                   float /*albedo*/>>
+                   float /*albedo*/,
+                   float /*"horizonExtension*/>>
 {
  public:
   SunSky();
