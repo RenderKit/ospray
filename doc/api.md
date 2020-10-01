@@ -335,6 +335,8 @@ given object anymore, call
 
 This decreases its reference count and if the count reaches `0` the
 object will automatically get deleted. Passing `NULL` is not an error.
+Note that every handle returned via the API needs to be released when
+the object is no longer needed, to avoid memory leaks.
 
 Sometimes applications may want to have more than one reference to an
 object, where it is desirable for the application to increment the
@@ -2561,21 +2563,24 @@ by using the [general parameters](#cameras) understood by all cameras.
 ### Picking
 
 To get the world-space position of the geometry (if any) seen at [0–1]
-normalized screen-space pixel coordinates `screenPos` use
+normalized screen-space pixel coordinates `screenPos_x` and
+`screenPos_y` use
 
     void ospPick(OSPPickResult *,
         OSPFrameBuffer,
         OSPRenderer,
         OSPCamera,
         OSPWorld,
-        osp_vec2f screenPos);
+        float screenPos_x,
+        float screenPos_y);
 
 The result is returned in the provided `OSPPickResult` struct:
 
     typedef struct {
         int hasHit;
-        osp_vec3f worldPosition;
-        OSPGeometricModel GeometricModel;
+        float worldPosition[3];
+        OSPInstance instance;
+        OSPGeometricModel model;
         uint32_t primID;
     } OSPPickResult;
 
@@ -2583,6 +2588,8 @@ Note that `ospPick` considers exactly the same camera of the given
 renderer that is used to render an image, thus matching results can be
 expected. If the camera supports depth of field then the center of the
 lens and thus the center of the circle of confusion is used for picking.
+Note that the caller needs to `ospRelease` the `instance` and `model`
+handles of `OSPPickResult` once the information is not needed anymore.
 
 
 Framebuffer
