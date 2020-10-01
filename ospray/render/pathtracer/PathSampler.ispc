@@ -41,6 +41,7 @@ inline void postIntersect(const PathContext &pathContext,
     pathVertex.dg.areaPDF = 0.f;
     pathVertex.dg.epsilon = 0.f;
     pathVertex.dg.material = NULL;
+    pathVertex.dg.renderer = &pathContext.context->super;
   }
 }
 
