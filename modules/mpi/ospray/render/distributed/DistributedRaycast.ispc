@@ -57,7 +57,7 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
     TransferFunction *uniform tf = vm->transferFunction;
 
     VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(volume->vklVolume,
+        vklInitIntervalIteratorV(volume->vklSampler,
             (varying vkl_vec3f *)&transformedRay.org,
             (varying vkl_vec3f *)&transformedRay.dir,
             (varying vkl_range1f *)&interval.interval,

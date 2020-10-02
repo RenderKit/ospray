@@ -1,12 +1,13 @@
 Version History
 ---------------
 
-### Changes in v2.3.0:
+### Changes in v2.4.0:
 
 -   Significant improvements have been made to loading performance in
     the MPI Offload device. Applications which make large numbers of API
     calls or create many smaller geometries or volumes should see
     substantial load time improvements.
+-   Strided data arrays are compacted on the app rank before sending
 
 ### Changes in v2.2.0:
 
