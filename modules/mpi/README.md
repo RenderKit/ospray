@@ -1,7 +1,7 @@
 OSPRay MPI Module
 =================
 
-This is release v2.2.0 of Intel® OSPRay's MPI Module. For changes and
+This is release v2.4.0 of Intel® OSPRay's MPI Module. For changes and
 new features see the [changelog](CHANGELOG.md). Visit
 http://www.ospray.org for more information.
 

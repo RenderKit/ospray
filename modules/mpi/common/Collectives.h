@@ -1,4 +1,4 @@
-// Copyright 2016-2019 Intel Corporation
+// Copyright 2016-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once

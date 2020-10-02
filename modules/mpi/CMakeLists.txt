@@ -17,7 +17,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-project(ospray_module_mpi VERSION 2.3.0 LANGUAGES C CXX)
+project(ospray_module_mpi VERSION 2.4.0 LANGUAGES C CXX)
 
 configure_file(
   ${CMAKE_SOURCE_DIR}/ospray/version.h.in
