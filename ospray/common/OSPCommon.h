@@ -126,6 +126,7 @@ inline bool isObjectType(OSPDataType type)
 
 OSPRAY_CORE_INTERFACE size_t sizeOf(OSPDataType);
 OSPRAY_CORE_INTERFACE size_t sizeOf(OSPTextureFormat);
+OSPRAY_CORE_INTERFACE size_t sizeOf(OSPFrameBufferFormat);
 
 OSPRAY_CORE_INTERFACE OSPError loadLocalModule(const std::string &name);
 

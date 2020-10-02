@@ -578,6 +578,25 @@ size_t sizeOf(OSPTextureFormat format)
   throw std::runtime_error(error.str());
 }
 
+size_t sizeOf(OSPFrameBufferFormat format)
+{
+  size_t bytes = 0;
+
+  switch (format) {
+  case OSP_FB_RGBA8:
+  case OSP_FB_SRGBA:
+    bytes = sizeof(uint32_t);
+    break;
+  case OSP_FB_RGBA32F:
+    bytes = sizeof(vec4f);
+    break;
+  default:
+    break;
+  }
+
+  return bytes;
+}
+
 uint32_t logLevel()
 {
   return ospray::api::Device::current->logLevel;

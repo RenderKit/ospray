@@ -26,21 +26,7 @@ LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
         "0");
   }
 
-  int pixelBytes = 0;
-
-  switch (colorBufferFormat) {
-  case OSP_FB_NONE:
-    pixelBytes = 0;
-    break;
-  case OSP_FB_RGBA8:
-  case OSP_FB_SRGBA:
-    pixelBytes = sizeof(uint32_t);
-    break;
-  case OSP_FB_RGBA32F:
-    pixelBytes = sizeof(vec4f);
-    break;
-  }
-
+  const size_t pixelBytes = sizeOf(colorBufferFormat);
   const size_t numPixels = size.long_product();
 
   colorBuffer.resize(pixelBytes * numPixels);
