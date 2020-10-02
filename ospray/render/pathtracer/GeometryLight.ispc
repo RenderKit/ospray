@@ -19,10 +19,10 @@ vec3f evaluateGeometryLights(const PathContext &pathContext,
     Ray &ray)
 {
   vec3f L = make_vec3f(0.f);
-  uniform PathTraceMaterial *material =
-      (uniform PathTraceMaterial *)pathVertex.dg.material;
+  PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
   foreach_unique (m in material) {
-    if (m != NULL && reduce_max(m->emission) > 0.f) {
+    if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER
+        && reduce_max(m->emission) > 0.f) {
       // at the moment we only support uniform light selection
       // therfore we can evaluate the selection PDF directly
       float lightSelectionPDF = 0.0f;
@@ -181,7 +181,7 @@ export void *uniform GeometryLight_create(
   return self;
 }
 
-export void GeometryLight_destroy(void *uniform _self)
+void GeometryLight_destroy(void *uniform _self)
 {
   GeometryLight *uniform self = (GeometryLight * uniform) _self;
   if (self) {

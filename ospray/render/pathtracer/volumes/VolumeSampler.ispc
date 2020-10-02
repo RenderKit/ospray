@@ -17,7 +17,7 @@ float delta_tracking(VolumetricModel *uniform vModel,
 {
   uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
   VKLIntervalIterator intervalIterator =
-      vklInitIntervalIteratorV(vModel->volume->vklVolume,
+      vklInitIntervalIteratorV(vModel->volume->vklSampler,
           (varying vkl_vec3f *)&o,
           (varying vkl_vec3f *)&w,
           (varying vkl_range1f *)&rInterval,

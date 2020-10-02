@@ -2,8 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DenoiseFrameOp.h"
+#include "fb/FrameBuffer.h"
 
 namespace ospray {
+
+static bool osprayDenoiseMonitorCallback(void *userPtr, double)
+{
+  auto *fb = (FrameBuffer *)userPtr;
+  return !fb->frameCancelled();
+}
 
 struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
 {
@@ -59,6 +66,10 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
 
     oidnSetFilter1b(filter, "hdr", false);
 
+    oidnSetFilterProgressMonitorFunction(filter,
+        (OIDNProgressMonitorFunction)osprayDenoiseMonitorCallback,
+        _fbView.originalFB);
+
     oidnCommitFilter(filter);
   }
 
@@ -73,7 +84,9 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
     oidnExecuteFilter(filter);
 
     const char *errorMessage = nullptr;
-    if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE) {
+    auto error = oidnGetDeviceError(device, &errorMessage);
+
+    if (error != OIDN_ERROR_NONE && error != OIDN_ERROR_CANCELLED) {
       std::cout << "OIDN ERROR " << errorMessage << "\n";
       throw std::runtime_error(
           "Error running OIDN: " + std::string(errorMessage));

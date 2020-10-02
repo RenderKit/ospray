@@ -281,7 +281,7 @@ void DebugRenderer_volume(Renderer *uniform self,
     uniform unsigned int8
         intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
     VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(volume->vklVolume,
+        vklInitIntervalIteratorV(volume->vklSampler,
             (varying vkl_vec3f *)&ray.org,
             (varying vkl_vec3f *)&ray.dir,
             (varying vkl_range1f *)&vInterval.interval,

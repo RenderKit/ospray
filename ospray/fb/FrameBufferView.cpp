@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FrameBufferView.h"
@@ -19,7 +19,8 @@ FrameBufferView::FrameBufferView(FrameBuffer *fb,
       colorBuffer(colorBuffer),
       depthBuffer(depthBuffer),
       normalBuffer(normalBuffer),
-      albedoBuffer(albedoBuffer)
+      albedoBuffer(albedoBuffer),
+      originalFB(fb)
 {}
 
 } // namespace ospray

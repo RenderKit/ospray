@@ -339,7 +339,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
                            "perlin_noise_volumes",
                            "unstructured_volume_simple",
                            "particle_volume",
-                           "vdb_volume"),
+                           "vdb_volume",
+                           "gravity_spheres_amr"),
         ::testing::Values("scivis", "pathtracer", "ao")));
 
 TEST_P(UnstructuredVolume, simple)

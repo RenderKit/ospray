@@ -185,12 +185,24 @@ void FromOsprayTesting::SetUp()
   camera.setParam("up", arcballCamera.upDir());
 }
 
-void FromOsprayTestingDirect::SetUp()
+void FromOsprayTestingMaxDepth::SetUp()
 {
   FromOsprayTesting::SetUp();
 
-  if (rendererType == "pathtracer")
-    renderer.setParam("maxPathLength", 1);
+  // set up max depth texture
+  {
+    cpp::Texture maxDepthTex("texture2d");
+
+    std::vector<float> maxDepth = {3.f, 3.f, 3.f, 3.f};
+    OSPTextureFormat texFmt = OSP_TEXTURE_R32F;
+    maxDepthTex.setParam(
+        "data", cpp::CopiedData(maxDepth.data(), vec2ul(2, 2)));
+    maxDepthTex.setParam("format", OSP_INT, &texFmt);
+    maxDepthTex.setParam("filter", OSP_TEXTURE_FILTER_NEAREST);
+    maxDepthTex.commit();
+
+    renderer.setParam("map_maxDepth", maxDepthTex);
+  }
 }
 
 } // namespace OSPRayTestScenes

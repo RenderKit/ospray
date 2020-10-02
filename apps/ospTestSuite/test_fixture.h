@@ -87,8 +87,8 @@ class FromOsprayTesting
   std::string sceneName;
 };
 
-// with direct lighting only
-class FromOsprayTestingDirect : public FromOsprayTesting
+// with map_maxDepth texture
+class FromOsprayTestingMaxDepth : public FromOsprayTesting
 {
  public:
   void SetUp() override;

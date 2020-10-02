@@ -48,7 +48,7 @@ float lightAlpha(const uniform SciVis *uniform self,
       rc.sample = sample;
       rc.ldSampler = ldSampler;
       vec4f volumeColor = integrateVolumeIntervalsGradient(rc,
-        volumeIntervals,
+          volumeIntervals,
           rayIntervals,
           volumeRay,
           ldSampler,

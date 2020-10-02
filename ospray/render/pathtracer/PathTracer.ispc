@@ -35,8 +35,9 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   sample.normal = make_vec3f(0.0f);
   sample.albedo = make_vec3f(0.0f);
 
-  const uniform int numLights =
-      self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
+  const uniform int numLights = world->pathtracerData.lights
+      ? min(MAX_LIGHTS, world->pathtracerData.numLights)
+      : 0;
   const uniform int numLightSamples =
       self->numLightSamples >= 0 ? self->numLightSamples : numLights;
   PathContext pathContext;
@@ -47,7 +48,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathContext.randomSampler = randomSampler;
   pathContext.numLights = numLights;
   pathContext.numLightSamples = numLightSamples;
-  pathContext.lightsCDF = self->lightsCDF;
+  pathContext.lightsCDF = world->pathtracerData.lightsCDF;
 
   pathContext.numBounceSampleDims =
       4 + numLightSamples * 3; // BSDF sample (3D), roulette (1D), light samples
@@ -58,6 +59,9 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathState.disableFWD = false;
   pathState.straightPath = true; // path from camera did not change direction,
                                  // for alpha and backplate
+  pathState.specularTransmissionPath =
+      true; // path from camera only has specular transmissions, for alpha and
+            // backplate
   pathState.auxFree = true; // normal & albedo buffer were not yet written to
   pathState.depth = 0;
   pathState.sampleDim = 5; // skip: pixel (2D), lens (2D), time (1D)
@@ -190,37 +194,21 @@ unmasked void PathTracer_renderTile(Renderer *uniform _self,
   PathTracer_renderTileJob(self, fb, camera, world, tile, jobID);
 }
 
-inline void PathTracer_initLightsCDF(PathTracer *uniform self)
-{
-  delete[] self->lightsCDF;
-  self->lightsCDF = NULL;
-
-  if (self->numLights > 0) {
-    self->lightsCDF = uniform new float[self->numLights];
-    // naive implementation of a stochastic light selection
-    // assigning each light source the same probability
-    uniform float uniformLightSelectionPDF = 1.0f / self->numLights;
-    for (uniform int l = 0; l < self->numLights; l++) {
-      self->lightsCDF[l] = 1.0f;
-      self->lights[l]->selectionPDF = uniformLightSelectionPDF;
-    }
-    Distribution1D_create(self->numLights, self->lightsCDF);
-  }
-}
-
 // Exports (called from C++) //////////////////////////////////////////////////
 
 export void PathTracer_set(void *uniform _self,
     const uniform int32 rouletteDepth,
     const uniform float maxRadiance,
     const uniform vec4f &shadowCatcherPlane,
-    const uniform int32 numLightSamples)
+    const uniform int32 numLightSamples,
+    const uniform bool backgroundRefraction)
 {
   PathTracer *uniform self = (PathTracer * uniform) _self;
 
   self->rouletteDepth = rouletteDepth;
   self->maxRadiance = maxRadiance;
   self->numLightSamples = numLightSamples;
+  self->backgroundRefraction = backgroundRefraction;
 
   uniform vec3f normal = make_vec3f(shadowCatcherPlane);
   const uniform float l = length(normal);
@@ -229,28 +217,13 @@ export void PathTracer_set(void *uniform _self,
   self->shadowCatcherPlane = make_vec4f(normal * rl, shadowCatcherPlane.w * rl);
 }
 
-export void PathTracer_setLights(void *uniform _self,
-    void **uniform lights,
-    const uniform uint32 numLights,
-    const uniform uint32 numGeoLights)
-{
-  PathTracer *uniform self = (PathTracer * uniform) _self;
-
-  self->numLights = numLights;
-  self->numGeoLights = numGeoLights;
-  self->lights = (Light *uniform *uniform)lights;
-  PathTracer_initLightsCDF(self);
-}
-
 export void *uniform PathTracer_create(void *uniform cppE)
 {
   uniform PathTracer *uniform self = uniform new uniform PathTracer;
   Renderer_Constructor(&self->super, cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  self->lightsCDF = NULL;
-  PathTracer_set(self, 5, inf, make_vec4f(0.f), 1);
-  PathTracer_setLights(self, NULL, 0, 0);
+  PathTracer_set(self, 5, inf, make_vec4f(0.f), 1, false);
 
   precomputeMicrofacetAlbedoTables();
   precomputeZOrder();
@@ -258,10 +231,3 @@ export void *uniform PathTracer_create(void *uniform cppE)
   return self;
 }
 
-export void PathTracer_destroy(void *uniform _self)
-{
-  PathTracer *uniform self = (PathTracer * uniform) _self;
-
-  delete[] self->lightsCDF;
-  delete self;
-}

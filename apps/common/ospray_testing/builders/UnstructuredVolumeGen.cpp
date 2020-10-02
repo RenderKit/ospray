@@ -138,16 +138,21 @@ namespace testing {
 
 struct UnstructuredVolumeGen : public detail::Builder
 {
-  UnstructuredVolumeGen() = default;
+  UnstructuredVolumeGen(bool transform = false, bool isosurface = false)
+      : transform(transform), isosurface(isosurface)
+  {}
   ~UnstructuredVolumeGen() override = default;
 
   void commit() override;
 
   cpp::Group buildGroup() const override;
+  cpp::World buildWorld() const override;
 
  private:
   bool showCells{false};
   float densityScale{1.f};
+  bool transform{false};
+  bool isosurface{false};
 };
 
 // Inlined definitions ////////////////////////////////////////////////////
@@ -178,8 +183,10 @@ cpp::Group UnstructuredVolumeGen::buildGroup() const
     vec3f i_f = static_cast<vec3f>(i);
     vec3f p = size * (i_f / (dimensions - 1) - .5f);
     uint32_t id = numVertices.flatten(i);
-    positions[id] = p;
     values[id] = sdf(p);
+    if (transform)
+      p.z *= 0.25f;
+    positions[id] = p;
   }
 
   // Initialize primitive arrays
@@ -294,20 +301,88 @@ cpp::Group UnstructuredVolumeGen::buildGroup() const
   volume.setParam("hexIterative", true);
   volume.commit();
 
-  cpp::VolumetricModel model(volume);
-  model.setParam("transferFunction",
-      makeTransferFunction(showCells ? vec2f{0.f, 1.f} : vec2f{-.4f, -.05f}));
-  model.setParam("densityScale", densityScale);
-  model.commit();
-
   cpp::Group group;
-  group.setParam("volume", cpp::CopiedData(model));
+
+  if (isosurface) {
+    cpp::Geometry isoGeom("isosurface");
+
+    std::vector<float> isovalues = {-0.2f};
+    isoGeom.setParam("isovalue", cpp::CopiedData(isovalues));
+    isoGeom.setParam("volume", volume);
+    isoGeom.commit();
+
+    cpp::GeometricModel isoModel(isoGeom);
+
+    if (rendererType == "pathtracer" || rendererType == "scivis"
+        || rendererType == "ao") {
+      cpp::Material mat(rendererType, "obj");
+      mat.setParam("kd", vec3f(0.8f));
+      if (rendererType == "pathtracer" || rendererType == "scivis")
+        mat.setParam("ks", vec3f(0.2f));
+      mat.commit();
+
+      isoModel.setParam("material", mat);
+    }
+
+    isoModel.commit();
+
+    group.setParam("geometry", cpp::CopiedData(isoModel));
+  } else {
+    cpp::VolumetricModel model(volume);
+    model.setParam("transferFunction",
+        makeTransferFunction(showCells ? vec2f{0.f, 1.f} : vec2f{-.4f, -.05f}));
+    model.setParam("densityScale", densityScale);
+    model.commit();
+
+    group.setParam("volume", cpp::CopiedData(model));
+  }
+
   group.commit();
 
   return group;
 }
 
+cpp::World UnstructuredVolumeGen::buildWorld() const
+{
+  if (!transform)
+    return Builder::buildWorld();
+
+  auto group = buildGroup();
+  cpp::Instance instance(group);
+
+  AffineSpace3f xform(LinearSpace3f::rotate(vec3f(2.2f, 1.0f, -0.35f), 0.4f)
+          * LinearSpace3f::scale(vec3f(1.0f, 1.0f, 4.0f)),
+      vec3f(0.1f, -0.3, 2.f));
+  instance.setParam("xfm", xform);
+  instance.commit();
+
+  std::vector<cpp::Instance> inst;
+  inst.push_back(instance);
+
+  cpp::Light light("distant");
+  light.setParam("direction", vec3f(-0.8f, -0.6f, 0.3f));
+  light.setParam("color", vec3f(0.78f, 0.551f, 0.483f));
+  light.setParam("intensity", 3.14f);
+  light.setParam("angularDiameter", 1.f);
+  light.commit();
+  cpp::Light ambient("ambient");
+  ambient.setParam("intensity", 0.35f);
+  ambient.setParam("visible", false);
+  ambient.commit();
+  std::vector<cpp::Light> lights{light, ambient};
+
+  cpp::World world;
+  world.setParam("instance", cpp::CopiedData(inst));
+  world.setParam("light", cpp::CopiedData(lights));
+
+  return world;
+}
+
 OSP_REGISTER_TESTING_BUILDER(UnstructuredVolumeGen, unstructured_volume);
+OSP_REGISTER_TESTING_BUILDER(
+    UnstructuredVolumeGen(true), unstructured_volume_transformed);
+OSP_REGISTER_TESTING_BUILDER(
+    UnstructuredVolumeGen(true, true), unstructured_volume_isosurface);
 
 } // namespace testing
 } // namespace ospray

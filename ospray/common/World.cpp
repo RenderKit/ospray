@@ -70,6 +70,7 @@ void World::commit()
   freeAndNullifyEmbreeScene(embreeSceneHandleClippers);
 
   scivisDataValid = false;
+  pathtracerDataValid = false;
 
   instances = getParamDataT<Instance *>("instance");
   lights = getParamDataT<Light *>("light");

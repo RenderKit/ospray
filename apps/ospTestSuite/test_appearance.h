@@ -31,4 +31,12 @@ class RendererMaterialList : public Base,
   void SetUp() override;
 };
 
+class PTBackgroundRefraction : public Base,
+                               public ::testing::TestWithParam<bool>
+{
+ public:
+  PTBackgroundRefraction();
+  void SetUp() override;
+};
+
 } // namespace OSPRayTestScenes

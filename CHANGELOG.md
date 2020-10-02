@@ -1,6 +1,32 @@
 Version History
 ---------------
 
+### Changes in v2.4.0:
+
+-   The pathtracer optionally allows for alpha blending even if the
+    background is seen through refractive objects like glass, by
+    enabling `backgroundRefraction`
+-   OSPRay now requires minimum Open VKL v0.11.0 to bring the following
+    improvements: 
+    -   Improved rendering performance of VDB volumes
+    -   Added support for configurable iterator depth via the
+        `maxIteratorDepth` parameters for unstructured and particle
+        volumes, improved performance
+    -   Added support for filter modes for structured volumes (regular
+        and spherical)
+-   Expose parameter `horizonExtension` of Sun-sky light, which extends
+    the sky dome by stretching the horizon over the lower hemisphere
+-   Optimize handling of geometry lights by the pathtracer
+-   The optional `denoiser` image operation now respects frame
+    cancellation, requiring Intel® Open Image Denoise with minimum
+    version 1.2.3
+-   Fixed normals of (transformed) isosurfaces
+-   Robust calculation of normals of `boxes` geometry
+-   Clipping geometry is now working correctly with `map_maxDepth`
+    renderer parameter
+-   Using materials in a renderer with a mismatched `renderer_type` no
+    longer causes crashes while rendering
+
 ### Changes in v2.3.0:
 
 -   Re-add SciVis renderer features (the previous version is still
@@ -21,11 +47,11 @@ Version History
     understand rkcommon and glm short vector types
     -   For rkcommon, include `ospray/ospray_cpp/ext/rkcommon.h`
     -   For glm, include `ospray/ospray_cpp/ext/glm.h`
-    -   Note in debug builds some compilers will not optimize out type trait
-        definitions. This will require users to manually instantiate the glm
-        definitions in one translation unit within the application using
-        `#define OSPRAY_GLM_DEFINITIONS` before including `ext/glm.h`: see
-        `ospTutorialGLM` as an example
+    -   Note in debug builds some compilers will not optimize out type
+        trait definitions. This will require users to manually
+        instantiate the glm definitions in one translation unit within
+        the application using `#define OSPRAY_GLM_DEFINITIONS` before
+        including `ext/glm.h`: see `ospTutorialGLM` as an example
 -   Changed parameters to `volume` texture: it now directly accepts the
     `volume` and the `transferFunction`
 -   Fixed many memory leaks
@@ -160,7 +186,7 @@ Version History
         function parameters instead of setting some as renderer params
     -   `ospRenderFrame` is now asynchronous, where the task is managed
         through a returned `OSPFuture` handle
-    -   The heirarchy of objets in a scene are now more granular to
+    -   The hierarchy of objects in a scene are now more granular to
         aid in scene construction flexibility and reduce potential
         object duplication
     -   Type-specific parameter setting functions have been consolidated
@@ -225,13 +251,13 @@ Version History
     instead
 -   Triangle mesh and Quad mesh are superseded by the `mesh` geometry
 -   Applications need to use the various error reporting methods to
-    check wether the creation (via `ospNew...`) of objects failed; a
+    check whether the creation (via `ospNew...`) of objects failed; a
     returned `NULL` is not a special handle anymore to signify an error
 -   Changed module init methods to facilitate version checking:
     `extern "C" OSPError ospray_module_init_<name>(int16_t versionMajor, int16_t versionMinor, int16_t versionPatch)`
 -   The `map_backplate` texture is supported in all renderers and does
     not hide lights in infinity (like the HDRI light) anymore;
-    explicitely make lights in`visible` if this is needed
+    explicitly make lights in`visible` if this is needed
 -   Changed the computation of variance for adaptive accumulation to be
     independent of `TILE_SIZE`, thus `varianceThreshold` needs to be
     adapted if using a different `TILE_SIZE` than default 64

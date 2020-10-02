@@ -26,7 +26,7 @@ float Renderer_getMaxDepth(const Renderer *uniform self, const vec2f &screenPos)
 
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, screenPos);
-  return get1f(self->maxDepthTexture, lookup);
+  return max(0.f, get1f(self->maxDepthTexture, lookup));
 }
 
 void Renderer_default_renderSample(Renderer *uniform self,

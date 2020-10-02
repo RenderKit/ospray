@@ -41,6 +41,7 @@ inline void postIntersect(const PathContext &pathContext,
     pathVertex.dg.areaPDF = 0.f;
     pathVertex.dg.epsilon = 0.f;
     pathVertex.dg.material = NULL;
+    pathVertex.dg.renderer = &pathContext.context->super;
   }
 }
 
@@ -147,7 +148,10 @@ void samplePath(const PathContext &pathContext,
     }
 
     // background handling
-    if (pathVertex.type == ENVIRONMENT && pathState.straightPath) {
+    if (pathVertex.type == ENVIRONMENT
+        && (pathContext.context->backgroundRefraction
+                ? pathState.specularTransmissionPath
+                : pathState.straightPath)) {
       vec4f bg = Renderer_getBackground(
           &pathContext.context->super, *pathContext.pixel);
       pathState.contribution =
@@ -170,7 +174,7 @@ void samplePath(const PathContext &pathContext,
     // have both samples for MIS except if we have geometry lights (which we
     // still need to evaluate for MIS)
     if (pathState.depth >= pathContext.context->super.maxDepth
-        && pathContext.context->numGeoLights == 0)
+        && pathContext.world->pathtracerData.numGeoLights == 0)
       break;
 
     postIntersect(pathContext, pathState, pathVertex, ray);
@@ -191,7 +195,7 @@ void samplePath(const PathContext &pathContext,
     if (pathVertex.type == SURFACE) {
       PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
       foreach_unique (m in material) {
-        if (m != NULL) {
+        if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER) {
           pathVertex.bsdf =
               m->getBSDF(m, &ctx, pathVertex.dg, ray, pathState.currentMedium);
           if (pathVertex.bsdf != NULL)
@@ -248,10 +252,10 @@ void samplePath(const PathContext &pathContext,
       // TODO: support nested dielectrics
       if (fs.type & SCATTERING_TRANSMISSION) {
         ray_org = ray_org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
-        uniform PathTraceMaterial *material =
-            (uniform PathTraceMaterial *)pathVertex.dg.material;
+        PathTraceMaterial *material =
+            (PathTraceMaterial *)pathVertex.dg.material;
         foreach_unique (m in material) {
-          if (m != NULL)
+          if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER)
             m->selectNextMedium(m, pathVertex.dg, pathState.currentMedium);
         }
       }
@@ -266,6 +270,9 @@ void samplePath(const PathContext &pathContext,
 
     // continue the path
     pathState.straightPath &= eq(ray.dir, fs.wi);
+    pathState.specularTransmissionPath &=
+        fs.type & SCATTERING_SPECULAR_TRANSMISSION;
+
     setRay(ray, ray_org, fs.wi, pathState.time);
     pathState.depth++;
     pathState.sampleDim += pathContext.numBounceSampleDims;

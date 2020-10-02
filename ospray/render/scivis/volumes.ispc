@@ -25,10 +25,11 @@ struct VolumeContext
   uint32 ready; // 1 if sample is ready to be used
 };
 
-static void sampleVolume(
-    SciVisRenderContext & rc,
+static void sampleVolume(SciVisRenderContext &rc,
     VolumeContext &vc,
     VolumetricModel *uniform m,
+    Ray &ray,
+    const VolumeInterval &vi,
     const uniform float samplingRate,
     const uniform bool shade)
 {
@@ -36,7 +37,7 @@ static void sampleVolume(
   float dt;
   float sampleVal = nan;
   const uniform float gsc = shade ? m->gradientShadingScale : 0.f;
-  vec3f p;
+  vec3f p; // in volume local coords
   while (isnan(sampleVal)) {
     // Iterate till sampling position is within interval
     float emptySpace = 0.f;
@@ -91,18 +92,28 @@ static void sampleVolume(
   if (gsc > 0.0f) {
     vec3f ns = Volume_getGradient(m->volume, p);
     if (dot(ns, ns) > 1e-6f) {
-      ns = normalize(ns);
+      // assume that opacity directly correlates to volume scalar field, i.e.
+      // that "outside" has lower values; because the gradient point towards
+      // increasing values we need to flip it
+      ns = neg(ns);
 
       // use scivis shading function
       // Prepare differential geometry structure
       DifferentialGeometry dg;
       dg.color = vc.sample;
       dg.material = NULL;
-      dg.Ns = dg.Ng = ns;
-      dg.P = p;
       dg.epsilon = dt / 2.f;
-      SSI shading = computeShading(
-          rc.renderer, rc.fb, rc.world, dg, rc.sample, rc.ldSampler, vc.dir, 0.f);
+      // transform to world coords
+      dg.Ns = dg.Ng = normalize(xfmVector(transposed(vi.xfm.l), ns));
+      dg.P = ray.org + vc.distance * ray.dir;
+      SSI shading = computeShading(rc.renderer,
+          rc.fb,
+          rc.world,
+          dg,
+          rc.sample,
+          rc.ldSampler,
+          ray.dir,
+          0.f);
       vc.sample = lerp(gsc, vc.sample, shading.shadedColor);
     }
   }
@@ -111,10 +122,10 @@ static void sampleVolume(
   vc.sample.w = 1.f - exp(-vc.sample.w * dt * m->densityScale);
 }
 
-static float sampleAllVolumes(
-    SciVisRenderContext & rc,
+static float sampleAllVolumes(SciVisRenderContext &rc,
     const VolumeIntervals &volumeIntervals,
     varying VolumeContext *uniform volumeContexts,
+    Ray &ray,
     const uniform float samplingRate,
     vec4f &sampledColor,
     const uniform bool shade)
@@ -132,8 +143,7 @@ static float sampleAllVolumes(
     if (vc.ready == 0) {
       const VolumeInterval &vi = volumeIntervals.intervals[i];
       foreach_unique (m in vi.volumetricModel) {
-        sampleVolume(
-            rc, vc, m, samplingRate, shade);
+        sampleVolume(rc, vc, m, ray, vi, samplingRate, shade);
       }
       vc.ready = 1;
     }
@@ -155,8 +165,7 @@ static float sampleAllVolumes(
   return minDist;
 }
 
-vec4f integrateVolumeIntervalsGradient(
-    SciVisRenderContext & rc,
+vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     const VolumeIntervals &volumeIntervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
@@ -233,7 +242,7 @@ vec4f integrateVolumeIntervalsGradient(
       VolumetricModel *varying model = vi.volumetricModel;
       foreach_unique (m in model) {
         // Create volume interval interator
-        vc.intervalIterator = vklInitIntervalIteratorV(m->volume->vklVolume,
+        vc.intervalIterator = vklInitIntervalIteratorV(m->volume->vklSampler,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
@@ -249,6 +258,7 @@ vec4f integrateVolumeIntervalsGradient(
       float dist = sampleAllVolumes(rc,
           volumeIntervals,
           volumeContexts,
+          ray,
           samplingRate,
           sampledColorOpacity,
           shade);
@@ -260,7 +270,7 @@ vec4f integrateVolumeIntervalsGradient(
       // Alpha blend sampled color
       color = color
           + ((1.f - alpha) * sampledColorOpacity.w
-                * make_vec3f(sampledColorOpacity));
+              * make_vec3f(sampledColorOpacity));
       alpha = alpha + ((1.f - alpha) * sampledColorOpacity.w);
     }
   }

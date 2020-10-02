@@ -83,6 +83,8 @@ cmake -L \
   -D CMAKE_INSTALL_LIBDIR=lib \
   -D CMAKE_INSTALL_DOCDIR=../../Applications/OSPRay/doc \
   -D CMAKE_INSTALL_BINDIR=../../Applications/OSPRay/bin \
+  -D CMAKE_BUILD_WITH_INSTALL_RPATH=ON \
+  -D OSPRAY_SIGN_FILE=$SIGN_FILE_MAC \
   ..
 
 # create installers
@@ -99,4 +101,5 @@ cmake -L \
   ..
 
 # create ZIP files
+make sign_files || exit 2
 make -j $THREADS package || exit 2

@@ -4,8 +4,8 @@
 #pragma once
 
 #include "common/World.ih"
-#include "render/Renderer.ih"
 #include "math/random.ih"
+#include "render/Renderer.ih"
 
 struct SciVis
 {
@@ -18,9 +18,9 @@ struct SciVis
 
 struct SciVisRenderContext
 {
-  const SciVis* uniform renderer;
-  const FrameBuffer* uniform fb;
-  const World* uniform world;
+  const SciVis *uniform renderer;
+  const FrameBuffer *uniform fb;
+  const World *uniform world;
   ScreenSample sample;
   varying LDSampler *uniform ldSampler;
 };

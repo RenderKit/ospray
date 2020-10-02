@@ -24,6 +24,8 @@ export void SciVisMaterial_set(void *uniform _mat,
 {
   SciVisMaterial *uniform mat = (SciVisMaterial * uniform) _mat;
 
+  mat->super.type = RENDERER_TYPE_SCIVIS;
+
   mat->d = d;
   mat->dMap = dMap;
   mat->Kd = Kd;

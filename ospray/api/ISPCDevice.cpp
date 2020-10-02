@@ -220,12 +220,17 @@ void ISPCDevice::commit()
       break;
     }
 
-    vklDriverSetErrorFunc(driver, [](VKLError, const char *message) {
-      handleError(OSP_UNKNOWN_ERROR, message);
-    });
+    vklDriverSetErrorCallback(driver,
+        [](void *, VKLError, const char *message) {
+          handleError(OSP_UNKNOWN_ERROR, message);
+        },
+        nullptr);
 
-    vklDriverSetLogFunc(driver,
-        [](const char *message) { postStatusMsg(OSP_LOG_INFO) << message; });
+    vklDriverSetLogCallback(driver,
+        [](void *, const char *message) {
+          postStatusMsg(OSP_LOG_INFO) << message;
+        },
+        nullptr);
 
     vklDriverSetInt(driver, "logLevel", logLevel);
     vklDriverSetInt(driver, "numThreads", numThreads);

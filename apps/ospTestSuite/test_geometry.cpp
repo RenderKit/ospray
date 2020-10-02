@@ -116,8 +116,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
                            "random_spheres",
                            "streamlines",
                            "subdivision_cube",
-                           "cornell_box_photometric",
-                           "planes"),
+                           "planes",
+                           "unstructured_volume_isosurface"),
         ::testing::Values("scivis", "pathtracer", "ao")));
 
 INSTANTIATE_TEST_SUITE_P(TestScenesClipping,
@@ -133,25 +133,16 @@ INSTANTIATE_TEST_SUITE_P(TestScenesClipping,
                            "clip_perlin_noise_volumes"),
         ::testing::Values("scivis", "pathtracer", "ao")));
 
-TEST_P(FromOsprayTestingDirect, test_scenes)
+TEST_P(FromOsprayTestingMaxDepth, test_scenes)
 {
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_SUITE_P(TestSceneLighting,
-    FromOsprayTestingDirect,
-    ::testing::Combine(::testing::Values("cornell_box_sphere",
-        "cornell_box_sphere20",
-        "cornell_box_sphere30",
-        "cornell_box_spot",
-        "cornell_box_spot20",
-        "cornell_box_spot40",
-        "cornell_box_quad20",
-        "cornell_box_quad40",
-        "cornell_box_photometric",
-        "cornell_box_photometric10",
-        "cornell_box_ring40",
-        "cornell_box_ring80"),
-        ::testing::Values("scivis", "pathtracer")));
+INSTANTIATE_TEST_SUITE_P(TestScenesMaxDepth,
+    FromOsprayTestingMaxDepth,
+    ::testing::Combine(
+        ::testing::Values(
+            "cornell_box", "clip_with_spheres", "clip_gravity_spheres_volume"),
+        ::testing::Values("ao")));
 
 } // namespace OSPRayTestScenes

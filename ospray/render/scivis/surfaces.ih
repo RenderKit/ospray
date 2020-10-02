@@ -43,8 +43,8 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
   res.shininess = 10.0f;
   res.opacity = dg.color.w;
 
-  if (mat) {
-    foreach_unique (m in mat) {
+  foreach_unique (m in mat) {
+    if (m != NULL && m->super.type == RENDERER_TYPE_SCIVIS) {
       res.opacity *= m->d * get1f(m->dMap, dg, 1.f);
 
       res.diffuse = res.diffuse * m->Kd;
@@ -71,4 +71,3 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
 
   return res;
 }
-

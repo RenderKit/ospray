@@ -38,16 +38,16 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
   // add light from *virtual* lights by intersecting them
   vec3f L = make_vec3f(0.f);
 
-  if (pathContext.numLights <= pathContext.context->numGeoLights)
+  if (pathContext.numLights <= pathContext.world->pathtracerData.numGeoLights)
     return L; // return if no virtual lights at all
 
   box1f intervalLightDist = getMinMaxDistForVirtualLights(
       pathContext, pathState, lastVertex, pathVertex, ray);
 
-  for (uniform int i = pathContext.context->numGeoLights;
+  for (uniform int i = pathContext.world->pathtracerData.numGeoLights;
        i < pathContext.numLights;
        i++) {
-    const uniform Light *uniform light = pathContext.context->lights[i];
+    const Light *uniform light = pathContext.world->pathtracerData.lights[i];
     if (!pathState.straightPath || light->isVisible) {
       // to correctly handle MIS through transparencies the light pdf needs to
       // be calculated wrt. lastVertex.dg however, we only have a valid

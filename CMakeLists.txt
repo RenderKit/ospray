@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.1)
@@ -55,19 +55,13 @@ endif()
 add_subdirectory(ospray)
 
 ## OSPRay sample apps ##
-if (OSPRAY_ENABLE_APPS)
-  add_subdirectory(apps)
-endif()
+add_subdirectory(apps)
 
 ## Modules ##
-if (OSPRAY_ENABLE_MODULES)
-  add_subdirectory(modules)
-endif()
+add_subdirectory(modules)
 
-## Testing ##
-if (OSPRAY_APPS_TESTING)
-  add_subdirectory(test_image_data)
-endif()
+## Regression test images target ##
+add_subdirectory(test_image_data)
 
 ## Clang-format target ##
 if (OSPRAY_ENABLE_TARGET_CLANGFORMAT)

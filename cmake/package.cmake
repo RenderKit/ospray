@@ -65,10 +65,12 @@ set(CPACK_PACKAGE_NAME "OSPRay")
 set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}.x86_64")
 #set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/ospray-doc/images/icon.png)
 #set(CPACK_PACKAGE_RELOCATABLE TRUE)
-set(CPACK_STRIP_FILES TRUE) # do not disable, stripping symbols is important for security reasons
-if (APPLE)
-  # needs this to properly strip and sign under MacOSX
-  set(CMAKE_STRIP "${PROJECT_SOURCE_DIR}/scripts/release/macosx_strip+sign.sh")
+if (APPLE AND OSPRAY_SIGN_FILE)
+  # on OSX we strip files during signing
+  set(CPACK_STRIP_FILES FALSE)
+else()
+  # do not disable, stripping symbols is important for security reasons
+  set(CPACK_STRIP_FILES TRUE)
 endif()
 
 set(CPACK_PACKAGE_VERSION_MAJOR ${OSPRAY_VERSION_MAJOR})

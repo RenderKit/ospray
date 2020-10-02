@@ -586,25 +586,32 @@ uint32_t logLevel()
 OSPError loadLocalModule(const std::string &name)
 {
   std::string libName = "ospray_module_" + name;
-  loadLibrary(libName, false);
+  try {
+    loadLibrary(libName, false);
+  } catch (const std::exception &e) {
+    handleError(OSP_INVALID_OPERATION, e.what());
+    return OSP_INVALID_OPERATION;
+  } catch (...) {
+    return OSP_INVALID_OPERATION;
+  }
 
   std::string initSymName = "ospray_module_init_" + name;
   void *initSym = getSymbol(initSymName);
   if (!initSym) {
-    throw std::runtime_error(
-        "#osp:api: could not find module initializer " + initSymName);
+    handleError(OSP_INVALID_OPERATION,
+        "Could not find module initializer " + initSymName);
+    unloadLibrary(libName);
+    return OSP_INVALID_OPERATION;
   }
 
   auto initMethod = (OSPError(*)(int16_t, int16_t, int16_t))initSym;
-
-  if (!initMethod)
-    return OSP_INVALID_OPERATION;
-
   auto err = initMethod(
       OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH);
 
-  if (err != OSP_NO_ERROR)
+  if (err != OSP_NO_ERROR) {
+    handleError(err, "Initialization of module " + name + " failed");
     unloadLibrary(libName);
+  }
 
   return err;
 }

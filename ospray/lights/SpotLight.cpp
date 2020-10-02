@@ -42,7 +42,7 @@ void SpotLight::commit()
   }
 
   // per default perpendicular to direction
-  vec3f c0 = abs(direction.x) < abs(direction.y)
+  vec3f c0 = std::abs(direction.x) < std::abs(direction.y)
       ? vec3f(0.0f, direction.z, direction.y)
       : vec3f(direction.z, 0.0f, direction.x);
   c0 = getParam<vec3f>("c0", c0);

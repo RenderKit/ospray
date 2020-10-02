@@ -59,6 +59,8 @@ struct PathState
   bool disableFWD; // turn off FWD contribution for debugging purposes
   bool straightPath; // path from camera did not change direction, for alpha and
                      // backplate
+  bool specularTransmissionPath; // path from camera only has specular
+                                 // transmissions, for alpha and backplate
   bool auxFree; // normal & albedo buffer were not yet written to
   uniform uint32 depth;
   uniform uint32 sampleDim; // skip: pixel (2D), lens (2D), time (1D)

@@ -248,7 +248,7 @@ cpp::Volume GravitySpheres::createStructuredVolume(
 {
   cpp::Volume volume("structuredRegular");
 
-  volume.setParam("gridOrigin", vec3f(-1.f, -1.f, -1.f));
+  volume.setParam("gridOrigin", vec3f(-1.f));
   volume.setParam("gridSpacing", vec3f(2.f / reduce_max(volumeDimensions)));
   volume.setParam("data", cpp::CopiedData(voxels.data(), volumeDimensions));
   volume.commit();
@@ -286,6 +286,10 @@ cpp::Volume GravitySpheres::createAMRVolume(const VoxelArray &voxels) const
   // create an AMR volume and assign attributes
   cpp::Volume volume("amr");
 
+  int toplevelVolDim =
+      reduce_max(volumeDimensions) / std::pow(refinementLevel, numLevels - 1);
+  volume.setParam("gridOrigin", vec3f(-1.f));
+  volume.setParam("gridSpacing", vec3f(2.f / toplevelVolDim));
   volume.setParam("block.data", cpp::CopiedData(blockData));
   volume.setParam("block.bounds", cpp::CopiedData(blockBounds));
   volume.setParam("block.level", cpp::CopiedData(refinementLevels));

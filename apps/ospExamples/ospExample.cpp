@@ -9,9 +9,9 @@ using rkcommon::make_unique;
 
 int main(int argc, const char *argv[])
 {
-  bool denoiser = ospLoadModule("denoiser") == OSP_NO_ERROR;
+  initializeOSPRay(argc, argv, false);
 
-  initializeOSPRay(argc, argv);
+  bool denoiser = ospLoadModule("denoiser") == OSP_NO_ERROR;
 
   auto glfwOSPRayWindow =
       make_unique<GLFWOSPRayWindow>(vec2i(1024, 768), denoiser);
