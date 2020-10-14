@@ -56,7 +56,7 @@ void World_Constructor(World *uniform world, void *uniform cppE);
 inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
 {
   // Skip if no geometries scene
-  cif (!world->embreeSceneHandleGeometries)
+  if (!world->embreeSceneHandleGeometries)
     return;
 
   uniform EmbreeIntersectionContext context;
@@ -70,7 +70,7 @@ inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeInterval &interval)
 {
   initVolumeInterval(interval);
-  cif (!world->embreeSceneHandleVolumes)
+  if (!world->embreeSceneHandleVolumes)
     return;
 
   VolumeIntervals intervals;
@@ -98,7 +98,7 @@ inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeIntervals &intervals)
 {
   initVolumeIntervals(intervals);
-  cif (!world->embreeSceneHandleVolumes)
+  if (!world->embreeSceneHandleVolumes)
     return;
 
   uniform EmbreeIntersectionContext context;
@@ -138,7 +138,7 @@ inline void traceClippingRay(const World *uniform world,
     varying RayIntervals &rayIntervals)
 {
   // A scene with clipping geometries has to exist
-  cif (!world->embreeSceneHandleClippers) {
+  if (!world->embreeSceneHandleClippers) {
     rayIntervals.intervals[0] = make_box1f(ray.t0, ray.t);
     rayIntervals.count = 1;
     return;
@@ -256,7 +256,7 @@ inline void traceGeometryRayIntervals(const World *uniform world,
 inline void traceRay(const World *uniform world, varying Ray &ray)
 {
   // Fast path if no clipping geometry
-  cif (!world->embreeSceneHandleClippers) {
+  if (!world->embreeSceneHandleClippers) {
     traceGeometryRay(world, ray);
     return;
   }
@@ -272,7 +272,7 @@ inline void traceRay(const World *uniform world, varying Ray &ray)
 inline bool isOccludedNoClipping(const World *uniform world, varying Ray &ray)
 {
   // Skip if no geometries scene
-  cif (!world->embreeSceneHandleGeometries)
+  if (!world->embreeSceneHandleGeometries)
     return false;
 
   uniform EmbreeIntersectionContext context;
@@ -306,7 +306,7 @@ inline bool areIntervalsOccluded(const World *uniform world,
 inline bool isOccluded(const World *uniform world, varying Ray &ray)
 {
   // Fast path if no clipping geometry
-  cif (!world->embreeSceneHandleClippers) {
+  if (!world->embreeSceneHandleClippers) {
     return isOccludedNoClipping(world, ray);
   }
 

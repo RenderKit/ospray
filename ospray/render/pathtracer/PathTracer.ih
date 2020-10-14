@@ -9,7 +9,7 @@
 #include "render/Renderer.ih"
 #include "render/util.ih"
 
-#define MAX_LIGHTS 1000
+#define MAX_LIGHTS 1000u
 
 struct PathTracer
 {
