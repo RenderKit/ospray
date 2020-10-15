@@ -8,13 +8,14 @@
 
 std::string BaseFixture::dumpFinalImageDir;
 
-BaseFixture::BaseFixture(const std::string &s, const std::string &r)
-    : scene(s), rendererType(r)
+BaseFixture::BaseFixture(
+    const std::string &n, const std::string &s, const std::string &r)
+    : name(n + "/" + r), scene(s), rendererType(r)
 {
-  SetName(s + "/" + r);
+  ::benchmark::Fixture::SetName(name.c_str());
 }
 
-void BaseFixture::SetUp(::benchmark::State &)
+void BaseFixture::Init()
 {
   framebuffer = cpp::FrameBuffer(imgSize.x,
       imgSize.y,
@@ -48,6 +49,14 @@ void BaseFixture::SetUp(::benchmark::State &)
   renderer.commit();
 }
 
+void BaseFixture::Shutdown()
+{
+  framebuffer = nullptr;
+  renderer = nullptr;
+  camera = nullptr;
+  world = nullptr;
+}
+
 void BaseFixture::TearDown(::benchmark::State &)
 {
   if (!dumpFinalImageDir.empty() && !name.empty()) {
@@ -62,62 +71,5 @@ void BaseFixture::TearDown(::benchmark::State &)
     framebuffer.unmap(fb);
   }
 
-  framebuffer = nullptr;
-  renderer = nullptr;
-  camera = nullptr;
-  world = nullptr;
+  Shutdown();
 }
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "boxes", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "random_spheres", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "random_spheres", "scivis");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "random_spheres", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "streamlines", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "streamlines", "scivis");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "streamlines", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "planes", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "planes", "scivis");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "planes", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_gravity_spheres_volume", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_gravity_spheres_volume", "scivis");
-OSPRAY_DEFINE_BENCHMARK(
-    BaseFixture, "clip_gravity_spheres_volume", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_perlin_noise_volumes", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_perlin_noise_volumes", "scivis");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_perlin_noise_volumes", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_particle_volume", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_particle_volume", "scivis");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_particle_volume", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume", "scivis");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume_isosurface", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume_isosurface", "scivis");
-OSPRAY_DEFINE_BENCHMARK(
-    BaseFixture, "particle_volume_isosurface", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "vdb_volume", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "vdb_volume", "scivis");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "vdb_volume", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume", "scivis");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume_isosurface", "ao");
-OSPRAY_DEFINE_BENCHMARK(
-    BaseFixture, "unstructured_volume_isosurface", "scivis");
-OSPRAY_DEFINE_BENCHMARK(
-    BaseFixture, "unstructured_volume_isosurface", "pathtracer");
-
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "gravity_spheres_amr", "ao");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "gravity_spheres_amr", "scivis");
-OSPRAY_DEFINE_BENCHMARK(BaseFixture, "gravity_spheres_amr", "pathtracer");
