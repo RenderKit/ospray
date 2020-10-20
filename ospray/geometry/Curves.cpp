@@ -14,7 +14,7 @@
 namespace ospray {
 
 static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
-    curveMap = {{{OSP_ROUND, OSP_LINEAR}, RTC_GEOMETRY_TYPE_USER},
+    curveMap = {{{OSP_ROUND, OSP_LINEAR}, RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE},
         {{OSP_FLAT, OSP_LINEAR}, RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE},
         {{OSP_RIBBON, OSP_LINEAR}, (RTCGeometryType)-1},
 
@@ -56,23 +56,34 @@ void Curves::commit()
   indexData = getParamDataT<uint32_t>("index", true);
   normalData = nullptr;
   tangentData = nullptr;
-  vertexData = getParamDataT<vec3f>("vertex.position");
   texcoordData = getParamDataT<vec2f>("vertex.texcoord");
 
-  if (vertexData) { // round, linear curves with constant radius
-    radius = getParam<float>("radius", 0.01f);
+  Ref<const DataT<vec3f>> vertexNoRadiusData = getParamDataT<vec3f>("vertex.position");
+  if (vertexNoRadiusData) { // round, linear curves with constant radius
+    float radius = getParam<float>("radius", 0.01f);
     curveType = (OSPCurveType)getParam<uint8_t>(
         "type", getParam<int32_t>("type", OSP_ROUND));
     curveBasis = (OSPCurveBasis)getParam<uint8_t>(
         "basis", getParam<int32_t>("basis", OSP_LINEAR));
     if (curveMap[std::make_pair(curveType, curveBasis)]
-        != RTC_GEOMETRY_TYPE_USER)
+        != RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE)
       throw std::runtime_error(
           "constant-radius curves need to be of type OSP_ROUND and have "
           "basis OSP_LINEAR");
+
+    // To maintain OSPRay 2.x compatibility and keep support for
+    // the global 'radius' parameter, a vec4f vertex buffer copy
+    // has to be created. It specifies radius on per-vertex basis and
+    // is required by Embree. TODO: Refactor for OSPRay 3.x
+    DataT<vec4f> *dataT = (DataT<vec4f>*)new Data(OSP_VEC4F, vertexNoRadiusData->numItems);
+    for (size_t i = 0; i < dataT->size(); i++) {
+      const vec3f &v = (*vertexNoRadiusData)[i];
+      (*dataT)[i] = vec4f(v.x, v.y, v.z, radius);
+    }
+    vertexData = dataT;
+    dataT->refDec();
   } else { // embree curves
     vertexData = getParamDataT<vec4f>("vertex.position_radius", true);
-    radius = 0.0f;
 
     curveType = (OSPCurveType)getParam<uint8_t>(
         "type", getParam<int32_t>("type", OSP_UNKNOWN_CURVE_TYPE));
@@ -119,37 +130,27 @@ void Curves::createEmbreeGeometry()
 
   embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
 
-  if (embreeCurveType == RTC_GEOMETRY_TYPE_USER) {
-    ispc::Curves_setUserGeometry(getIE(),
-        embreeGeometry,
-        radius,
-        ispc(indexData),
-        ispc(vertexData),
-        ispc(colorData),
-        ispc(texcoordData));
-  } else {
-    Ref<const DataT<vec4f>> vertex4f(&vertexData->as<vec4f>());
-    setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertex4f);
-    setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_INDEX, indexData);
-    setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_NORMAL, normalData);
+  Ref<const DataT<vec4f>> vertex4f(&vertexData->as<vec4f>());
+  setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertex4f);
+  setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_INDEX, indexData);
+  setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_NORMAL, normalData);
+  setEmbreeGeometryBuffer(
+      embreeGeometry, RTC_BUFFER_TYPE_TANGENT, tangentData);
+  if (colorData) {
+    rtcSetGeometryVertexAttributeCount(embreeGeometry, 1);
     setEmbreeGeometryBuffer(
-        embreeGeometry, RTC_BUFFER_TYPE_TANGENT, tangentData);
-    if (colorData) {
-      rtcSetGeometryVertexAttributeCount(embreeGeometry, 1);
-      setEmbreeGeometryBuffer(
-          embreeGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, colorData);
-    }
-    if (texcoordData) {
-      rtcSetGeometryVertexAttributeCount(embreeGeometry, 2);
-      setEmbreeGeometryBuffer(
-          embreeGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, texcoordData, 1);
-    }
-
-    ispc::Curves_set(
-        getIE(), embreeGeometry, colorData, texcoordData, indexData->size());
-
-    rtcCommitGeometry(embreeGeometry);
+        embreeGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, colorData);
   }
+  if (texcoordData) {
+    rtcSetGeometryVertexAttributeCount(embreeGeometry, 2);
+    setEmbreeGeometryBuffer(
+        embreeGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, texcoordData, 1);
+  }
+
+  ispc::Curves_set(
+      getIE(), embreeGeometry, colorData, texcoordData, indexData->size());
+
+  rtcCommitGeometry(embreeGeometry);
 }
 
 } // namespace ospray

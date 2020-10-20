@@ -39,7 +39,7 @@ before you can build OSPRay you need the following prerequisites:
     tasking system for performance and flexibility reasons.
     Alternatively you can set CMake variable `RKCOMMON_TASKING_SYSTEM`
     to `OpenMP` or `Internal`.
--   OSPRay also heavily uses Intel [Embree], installing version 3.8.0 or
+-   OSPRay also heavily uses Intel [Embree], installing version 3.9.0 or
     newer is required. If Embree is not found by CMake its location can
     be hinted with the variable `embree_DIR`.
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),

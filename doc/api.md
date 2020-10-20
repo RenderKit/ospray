@@ -1119,11 +1119,6 @@ this geometry are listed in the table below.
   vec4f[]            vertex.position_radius [data] array of vertex position and
                                             per-vertex radius
 
-  vec3f[]            vertex.position        [data] array of vertex position
-
-  float              radius                 global radius of all curves (if
-                                            per-vertex radius is not used), default 0.01
-
   vec2f[]            vertex.texcoord        [data] array of per-vertex texture coordinates
 
   vec4f[]            vertex.color           [data] array of corresponding vertex
@@ -1162,19 +1157,9 @@ this geometry are listed in the table below.
   ------------------ ---------------------- -------------------------------------------
   : Parameters defining a curves geometry.
 
-Depending upon the specified data type of vertex positions, the curves
-will be implemented Embree curves or assembled from rounded and
-linearly-connected segments.
-
-Positions in `vertex.position_radius` format supports per-vertex varying
+Positions in `vertex.position_radius` parameter supports per-vertex varying
 radii with data type `vec4f[]` and instantiate Embree curves internally
 for the relevant type/basis mapping.
-
-If a constant `radius` is used and positions are specified in a
-`vec3f[]` type of `vertex.position` format, then type/basis defaults to
-`OSP_ROUND` and `OSP_LINEAR` (this is the fastest and most memory
-efficient mode). Implementation is with round linear segments where
-each segment corresponds to a link between two vertices.
 
 The following section describes the properties of different curve basis'
 and how they use the data provided in data buffers:
