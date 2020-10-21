@@ -115,8 +115,12 @@ inline Data *ManagedObject::getParam<Data *>(
       name, (ManagedObject *)valIfNotFound);
   if (obj && obj->managedObjectType == OSP_DATA)
     return (Data *)obj;
-  else
+  else {
+    // reset query status if object is not a Data*
+    if (obj)
+      findParam(name)->query = false;
     return valIfNotFound;
+  }
 }
 
 } // namespace ospray
