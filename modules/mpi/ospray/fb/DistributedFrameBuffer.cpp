@@ -86,10 +86,10 @@ void DFB::commit()
     FrameBufferView fbv(localFBonMaster ? localFBonMaster.get()
                                         : static_cast<FrameBuffer *>(this),
         colorBufferFormat,
-        localFBonMaster ? localFBonMaster->colorBuffer : nullptr,
-        localFBonMaster ? localFBonMaster->depthBuffer : nullptr,
-        localFBonMaster ? localFBonMaster->normalBuffer : nullptr,
-        localFBonMaster ? localFBonMaster->albedoBuffer : nullptr);
+	localFBonMaster ? &localFBonMaster->colorBuffer[0] : nullptr,
+	localFBonMaster ? &localFBonMaster->depthBuffer[0] : nullptr,
+	localFBonMaster ? &localFBonMaster->normalBuffer[0] : nullptr,
+	localFBonMaster ? &localFBonMaster->albedoBuffer[0] : nullptr);
 
     std::for_each(imageOpData->begin(), imageOpData->end(), [&](ImageOp *i) {
       if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
@@ -350,7 +350,7 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
   if (msg->command & MASTER_TILE_HAS_AUX)
     aux = reinterpret_cast<MasterTileMessage_FB_Depth_Aux<ColorT> *>(msg);
 
-  ColorT *color = reinterpret_cast<ColorT *>(localFBonMaster->colorBuffer);
+  ColorT *color = reinterpret_cast<ColorT *>(&localFBonMaster->colorBuffer[0]);
   for (int iy = 0; iy < TILE_SIZE; iy++) {
     int iiy = iy + msg->coords.y;
     if (iiy >= numPixels.y) {
