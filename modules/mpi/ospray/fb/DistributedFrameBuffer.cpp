@@ -86,10 +86,10 @@ void DFB::commit()
     FrameBufferView fbv(localFBonMaster ? localFBonMaster.get()
                                         : static_cast<FrameBuffer *>(this),
         colorBufferFormat,
-	localFBonMaster ? &localFBonMaster->colorBuffer[0] : nullptr,
-	localFBonMaster ? &localFBonMaster->depthBuffer[0] : nullptr,
-	localFBonMaster ? &localFBonMaster->normalBuffer[0] : nullptr,
-	localFBonMaster ? &localFBonMaster->albedoBuffer[0] : nullptr);
+	localFBonMaster ? localFBonMaster->colorBuffer.data() : nullptr,
+	localFBonMaster ? localFBonMaster->depthBuffer.data() : nullptr,
+	localFBonMaster ? localFBonMaster->normalBuffer.data() : nullptr,
+	localFBonMaster ? localFBonMaster->albedoBuffer.data() : nullptr);
 
     std::for_each(imageOpData->begin(), imageOpData->end(), [&](ImageOp *i) {
       if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
