@@ -3,11 +3,12 @@ Version History
 
 ### Changes in v2.5.0:
 
+-   Add native support for cones or cylinders with curves geometry of
+    type `OSP_DISJOINT`, requiring minimum version 3.12.0 of Embree
 -   Replaced OSPRay's internal implementation of round linear curves by
-    Embree's native implementation, requiring minimum version 3.9.0 of
-    Embree. Internal surfaces at joints are now correctly removed,
-    leading to higher quality renderings with transparency, at the cost
-    of intersection performance
+    Embree's native implementation. Internal surfaces at joints are now
+    correctly removed, leading to higher quality renderings with
+    transparency, at the cost of intersection performance
 
 ### Changes in v2.4.0:
 

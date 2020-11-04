@@ -17,27 +17,32 @@ static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
     curveMap = {{{OSP_ROUND, OSP_LINEAR}, RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE},
         {{OSP_FLAT, OSP_LINEAR}, RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE},
         {{OSP_RIBBON, OSP_LINEAR}, (RTCGeometryType)-1},
+        {{OSP_DISJOINT, OSP_LINEAR}, RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE},
 
         {{OSP_ROUND, OSP_BEZIER}, RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE},
         {{OSP_FLAT, OSP_BEZIER}, RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE},
         {{OSP_RIBBON, OSP_BEZIER},
             RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE},
+        {{OSP_DISJOINT, OSP_BEZIER}, (RTCGeometryType)-1},
 
         {{OSP_ROUND, OSP_BSPLINE}, RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE},
         {{OSP_FLAT, OSP_BSPLINE}, RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE},
         {{OSP_RIBBON, OSP_BSPLINE},
             RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE},
+        {{OSP_DISJOINT, OSP_BSPLINE}, (RTCGeometryType)-1},
 
         {{OSP_ROUND, OSP_HERMITE}, RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE},
         {{OSP_FLAT, OSP_HERMITE}, RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE},
         {{OSP_RIBBON, OSP_HERMITE},
             RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE},
+        {{OSP_DISJOINT, OSP_HERMITE}, (RTCGeometryType)-1},
 
         {{OSP_ROUND, OSP_CATMULL_ROM},
             RTC_GEOMETRY_TYPE_ROUND_CATMULL_ROM_CURVE},
         {{OSP_FLAT, OSP_CATMULL_ROM}, RTC_GEOMETRY_TYPE_FLAT_CATMULL_ROM_CURVE},
         {{OSP_RIBBON, OSP_CATMULL_ROM},
-            RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE}};
+            RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE},
+        {{OSP_DISJOINT, OSP_CATMULL_ROM}, (RTCGeometryType)-1}};
 
 // Curves definitions ///////////////////////////////////////////////////////
 
@@ -92,15 +97,8 @@ void Curves::commit()
 
     curveBasis = (OSPCurveBasis)getParam<uint8_t>(
         "basis", getParam<int32_t>("basis", OSP_UNKNOWN_CURVE_BASIS));
-
     if (curveBasis == OSP_UNKNOWN_CURVE_BASIS)
       throw std::runtime_error("curves geometry has invalid 'basis'");
-
-    if (curveBasis == OSP_LINEAR && curveType != OSP_FLAT) {
-      throw std::runtime_error(
-          "curves geometry with linear basis must be of flat type or have "
-          "constant radius");
-    }
 
     if (curveType == OSP_RIBBON)
       normalData = getParamDataT<vec3f>("vertex.normal", true);
@@ -112,6 +110,8 @@ void Curves::commit()
   colorData = getParamDataT<vec4f>("vertex.color");
 
   embreeCurveType = curveMap[std::make_pair(curveType, curveBasis)];
+  if (embreeCurveType == (RTCGeometryType)-1)
+    throw std::runtime_error("unsupported combination of 'type' and 'basis'");
 
   createEmbreeGeometry();
 

@@ -94,7 +94,7 @@ Curves::Curves()
 {
   auto params = GetParam();
 
-  curveBasis = std::get<0>(params);
+  curveVariant = std::get<0>(params);
   rendererType = std::get<1>(params);
 }
 
@@ -104,7 +104,7 @@ void Curves::SetUp()
 
   auto builder = ospray::testing::newBuilder("curves");
   ospray::testing::setParam(builder, "rendererType", rendererType);
-  ospray::testing::setParam(builder, "curveBasis", curveBasis);
+  ospray::testing::setParam(builder, "curveVariant", curveVariant);
   ospray::testing::commit(builder);
 
   world = ospray::testing::buildWorld(builder);
@@ -157,8 +157,12 @@ TEST_P(Curves, test_scenes)
 
 INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
     Curves,
-    ::testing::Combine(
-        ::testing::Values("bspline", "hermite", "catmull-rom", "linear"),
+    ::testing::Combine(::testing::Values("bspline",
+                           "hermite",
+                           "catmull-rom",
+                           "linear_deprecated",
+                           "linear",
+                           "cones"),
         ::testing::Values("scivis", "pathtracer", "ao")));
 
 INSTANTIATE_TEST_SUITE_P(TestScenesClipping,

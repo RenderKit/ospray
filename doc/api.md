@@ -1142,6 +1142,8 @@ this geometry are listed in the table below.
 
                                             `OSP_RIBBON`
 
+                                            `OSP_DISJOINT`
+
   uchar              basis                  `OSPCurveBasis` for defining the curve.
                                              Supported bases are:
 
@@ -1219,8 +1221,12 @@ OSP_RIBBON
 buffer be specified along with vertex buffer. The curve is rendered as a
 flat band whose center approximately follows the provided vertex buffer
 and whose normal orientation approximately follows the provided normal
-buffer.
+buffer. Not supported for basis `OSP_LINEAR`.
 
+OSP_DISJOINT
+: Only supported for basis `OSP_LINEAR`; the segments are open and not
+connected at the joints, i.e., the curve segments are either individual
+cones or cylinders.
 
 ### Boxes
 

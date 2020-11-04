@@ -21,7 +21,7 @@ struct Curves : public detail::Builder
 
   cpp::Group buildGroup() const override;
 
-  std::string curveBasis;
+  std::string curveVariant;
 };
 
 static std::vector<vec4f> points = {{-1.0f, 0.0f, -2.f, 0.2f},
@@ -39,7 +39,7 @@ void Curves::commit()
 {
   Builder::commit();
 
-  curveBasis = getParam<std::string>("curveBasis", "bspline");
+  curveVariant = getParam<std::string>("curveVariant", "bspline");
 }
 
 cpp::Group Curves::buildGroup() const
@@ -50,29 +50,30 @@ cpp::Group Curves::buildGroup() const
   std::vector<vec4f> s_colors(points.size());
 
   cpp::Geometry geom("curve");
+  // defaults, "linear"
+  geom.setParam("type", OSP_ROUND);
+  geom.setParam("basis", OSP_LINEAR);
+  geom.setParam("vertex.position_radius", cpp::CopiedData(points));
 
-  if (curveBasis == "hermite") {
-    geom.setParam("type", OSP_ROUND);
+  if (curveVariant == "hermite") {
     geom.setParam("basis", OSP_HERMITE);
     std::vector<vec4f> tangents;
     for (auto iter = points.begin(); iter != points.end() - 1; ++iter) {
       const vec4f pointTangent = *(iter + 1) - *iter;
       tangents.push_back(pointTangent);
     }
-    geom.setParam("vertex.position_radius", cpp::CopiedData(points));
     geom.setParam("vertex.tangent", cpp::CopiedData(tangents));
-  } else if (curveBasis == "catmull-rom") {
-    geom.setParam("type", OSP_ROUND);
+  } else if (curveVariant == "catmull-rom") {
     geom.setParam("basis", OSP_CATMULL_ROM);
-    geom.setParam("vertex.position_radius", cpp::CopiedData(points));
-  } else if (curveBasis == "linear") {
+  } else if (curveVariant == "cones") {
+    geom.setParam("type", OSP_DISJOINT);
+  } else if (curveVariant == "linear_deprecated") {
+    geom.removeParam("vertex.position_radius");
     geom.setParam("radius", 0.1f);
     geom.setParam("vertex.position",
         cpp::CopiedData((vec3f *)points.data(), points.size(), sizeof(vec4f)));
-  } else {
-    geom.setParam("type", OSP_ROUND);
+  } else if (curveVariant == "bspline") {
     geom.setParam("basis", OSP_BSPLINE);
-    geom.setParam("vertex.position_radius", cpp::CopiedData(points));
   }
 
   for (auto &c : s_colors) {

@@ -25,10 +25,10 @@ class SpherePrecision
   bool move_cam;
 };
 
-// Fixture class used for tests all curves basis
+// Fixture class used for testing curves variants
 class Curves
     : public Base,
-      public ::testing::TestWithParam<std::tuple<const char * /*curve basis*/,
+      public ::testing::TestWithParam<std::tuple<const char * /*curve variant*/,
           const char * /*renderer type*/>>
 {
  public:
@@ -36,7 +36,7 @@ class Curves
   void SetUp() override;
 
  protected:
-  std::string curveBasis;
+  std::string curveVariant;
 };
 
 } // namespace OSPRayTestScenes
