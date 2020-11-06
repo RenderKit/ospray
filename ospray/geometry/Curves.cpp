@@ -7,7 +7,6 @@
 #include "common/World.h"
 // ispc-generated files
 #include "geometry/Curves_ispc.h"
-#include "rkcommon/utility/DataView.h"
 // std
 #include <map>
 
