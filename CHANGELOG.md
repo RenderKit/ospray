@@ -9,6 +9,7 @@ Version History
     Embree's native implementation. Internal surfaces at joints are now
     correctly removed, leading to higher quality renderings with
     transparency, at the cost of intersection performance
+-   Fix light leaking artifacts at poles of HDRI (and Sun-Sky) light
 
 ### Changes in v2.4.0:
 
