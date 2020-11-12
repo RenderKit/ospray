@@ -99,7 +99,9 @@ endmacro ()
 
 macro (ispc_compile)
   set(ISPC_ADDITIONAL_ARGS "")
-  if (NOT OSPRAY_STRICT_BUILD)
+  if (OSPRAY_STRICT_BUILD)
+    list(APPEND ISPC_ADDITIONAL_ARGS --wno-perf)
+  else()
     list(APPEND ISPC_ADDITIONAL_ARGS --woff)
   endif()
 
