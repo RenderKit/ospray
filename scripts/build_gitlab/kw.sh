@@ -42,7 +42,7 @@ export openvkl_DIR=$INSTALL_DIR
 cmake -DISPC_EXECUTABLE=$INSTALL_DIR/bin/ispc -DTBB_ROOT=$INSTALL_DIR ../..
 
 $KW_CLIENT_PATH/bin/kwinject make -j `nproc`
-$KW_SERVER_PATH/bin/kwbuildproject --url http://$KW_SERVER_IP:$KW_SERVER_PORT/$KW_PROJECT_NAME --tables-directory $CI_PROJECT_DIR/kw_tables kwinject.out
+$KW_SERVER_PATH/bin/kwbuildproject --classic --url http://$KW_SERVER_IP:$KW_SERVER_PORT/$KW_PROJECT_NAME --tables-directory $CI_PROJECT_DIR/kw_tables kwinject.out
 $KW_SERVER_PATH/bin/kwadmin --url http://$KW_SERVER_IP:$KW_SERVER_PORT/ load --force --name build-$CI_JOB_ID $KW_PROJECT_NAME $CI_PROJECT_DIR/kw_tables
 echo "build-$CI_JOB_ID" > $CI_PROJECT_DIR/kw_build_number
 
