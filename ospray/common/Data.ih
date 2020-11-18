@@ -1,10 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "../math/LinearSpace.ih"
-#include "../math/box.ih"
+#include "rkcommon/math/box.ih"
 
 struct Data1D
 {

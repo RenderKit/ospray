@@ -4,8 +4,8 @@
 // ospray
 #include "GeometricModel.ih"
 #include "common/Ray.ih"
-#include "math/box.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 
 export void *uniform GeometricModel_create(void *uniform cppE)
 {

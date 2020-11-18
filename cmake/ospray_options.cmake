@@ -28,6 +28,8 @@ ospray_configure_compiler()
 
 # rkcommon
 find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
+get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
+  INTERFACE_INCLUDE_DIRECTORIES)
 
 # Embree
 ospray_find_embree(${EMBREE_VERSION_REQUIRED})

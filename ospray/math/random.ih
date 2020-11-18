@@ -4,8 +4,8 @@
 #pragma once
 
 #include "halton.ih"
+#include "rkcommon/math/vec.ih"
 #include "sobol.ih"
-#include "vec.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Hash functions

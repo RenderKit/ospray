@@ -4,8 +4,8 @@
 #pragma once
 
 #include "../common/DifferentialGeometry.ih"
-#include "math/vec.ih"
 #include "ospray/OSPEnums.h"
+#include "rkcommon/math/vec.ih"
 
 struct Texture2D;
 

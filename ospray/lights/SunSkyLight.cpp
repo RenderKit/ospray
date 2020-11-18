@@ -4,6 +4,7 @@
 // ospray
 #include "SunSkyLight.h"
 
+#include "common/OSPCommon_ispc.h"
 #include "lights/DirectionalLight_ispc.h"
 #include "lights/HDRILight_ispc.h"
 #include "lights/Light_ispc.h"

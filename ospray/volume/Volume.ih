@@ -5,7 +5,7 @@
 
 #include "common/Ray.ih"
 #include "math/AffineSpace.ih"
-#include "math/box.ih"
+#include "rkcommon/math/box.ih"
 // openvkl
 #include "openvkl/value_selector.isph"
 #include "openvkl/openvkl.isph"

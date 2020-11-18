@@ -5,9 +5,9 @@
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
-#include "math/box.ih"
-#include "math/vec.ih"
 #include "openvkl/iterator.isph"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 #include "volume/Volume.ih"
 
 struct Isosurfaces

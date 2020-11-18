@@ -1,9 +1,9 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../Tile.ih"
 #include "math/LinearSpace.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/vec.ih"
 
 // Based on the generic filmic tone mapping operator from
 // [Lottes, 2016, "Advanced Techniques and Optimization of HDR Color Pipelines"]

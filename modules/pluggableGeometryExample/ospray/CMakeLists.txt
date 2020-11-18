@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # this subdirectory builds the actual ospray plugin into a library
@@ -27,6 +27,8 @@
 #        int16_t versionMinor, int16_t versionPatch)
 #
 add_library(ospray_module_bilinear_patches SHARED)
+
+ispc_include_directories(${RKCOMMON_INCLUDE_DIRS})
 
 ispc_target_add_sources(ospray_module_bilinear_patches
   # the cpp file that contains all the plugin code - parsing
