@@ -62,8 +62,15 @@ variables:
 .job_template: &test_job_unix
   <<: *test_job
   script:
-    - export LSAN_OPTIONS="suppressions=$CI_PROJECT_DIR/scripts/tests/sanitize_ignore.txt"
     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
+
+.job_template: &test_job_unix_sanitize
+  <<: *test_job
+  script:
+    - export LSAN_OPTIONS="suppressions=$CI_PROJECT_DIR/scripts/tests/sanitize_ignore.txt"
+    - export LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH"
+    - PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
+    - build/install/ospray/bin/ospBenchmark --benchmark_min_time=0
 
 .job_template: &test_job_windows
   <<: *test_job
@@ -271,7 +278,7 @@ test-ubuntu2004-gcc:
   needs: [build-ubuntu2004-gcc]
 
 test-linux-debug:
-  <<: *test_job_unix
+  <<: *test_job_unix_sanitize
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs: [build-linux-debug]
 
