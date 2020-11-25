@@ -277,7 +277,7 @@ test-ubuntu2004-gcc:
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs: [build-ubuntu2004-gcc]
 
-test-linux-debug:
+sanitize-linux-debug:
   <<: *test_job_unix_sanitize
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs: [build-linux-debug]
