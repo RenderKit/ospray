@@ -341,7 +341,14 @@ INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
                            "particle_volume",
                            "vdb_volume",
                            "gravity_spheres_amr"),
-        ::testing::Values("scivis", "pathtracer", "ao")));
+        ::testing::Values("scivis", "pathtracer", "ao"),
+        ::testing::Values(16)));
+
+INSTANTIATE_TEST_SUITE_P(TestScenesVolumesStrictParams,
+    FromOsprayTesting,
+    ::testing::Values(std::make_tuple("perlin_noise_many_volumes", "scivis", 4),
+        std::make_tuple("perlin_noise_many_volumes", "pathtracer", 32),
+        std::make_tuple("perlin_noise_many_volumes", "ao", 4)));
 
 TEST_P(UnstructuredVolume, simple)
 {

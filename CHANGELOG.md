@@ -10,6 +10,9 @@ Version History
     correctly removed, leading to higher quality renderings with
     transparency, at the cost of intersection performance
 -   Fix light leaking artifacts at poles of HDRI (and Sun-Sky) light
+-   Removed limit on the number of volumes (both overlapped and separate)
+    that a ray can intersect while rendering. Now it is limited by
+    available memory only.
 
 ### Changes in v2.4.0:
 

@@ -4,6 +4,7 @@
 #include <iostream>
 #include "Builder.h"
 #include "ospray_testing.h"
+#include "rkcommon/utility/random.h"
 // stl
 #include <random>
 
@@ -46,7 +47,7 @@ cpp::Group Curves::buildGroup() const
 {
   std::vector<cpp::GeometricModel> geometricModels;
   std::mt19937 gen(randomSeed);
-  std::uniform_real_distribution<float> colorDistribution(0.1f, 1.0f);
+  utility::uniform_real_distribution<float> colorDistribution(0.1f, 1.0f);
   std::vector<vec4f> s_colors(points.size());
 
   cpp::Geometry geom("curve");

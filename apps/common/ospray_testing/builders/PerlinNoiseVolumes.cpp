@@ -5,8 +5,11 @@
 #include "Noise.h"
 #include "ospray_testing.h"
 #include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/random.h"
 // stl
 #include <functional>
+#include <random>
 
 using namespace rkcommon::math;
 
@@ -16,6 +19,7 @@ namespace testing {
 struct PerlinNoiseVolumes : public detail::Builder
 {
   PerlinNoiseVolumes(bool clip = false, bool gradientShading = false);
+  PerlinNoiseVolumes(const vec3ui &volumes, float density);
   ~PerlinNoiseVolumes() override = default;
 
   void commit() override;
@@ -24,12 +28,14 @@ struct PerlinNoiseVolumes : public detail::Builder
   cpp::World buildWorld() const override;
 
  private:
+  vec3ui numVolumes{1, 1, 1};
+
   bool addSphereVolume{true};
-  bool addTorusVolume{false};
+  bool addTorusVolume{true};
   bool addBoxes{false};
 
   bool addAreaLight{true};
-  bool addAmbientLight{false};
+  bool addAmbientLight{true};
 
   float densityScale{10.f};
   float anisotropy{0.f};
@@ -126,19 +132,23 @@ PerlinNoiseVolumes::PerlinNoiseVolumes(bool clip, bool gradientShading)
     : gradientShadingScale(gradientShading), withClipping(clip)
 {}
 
+PerlinNoiseVolumes::PerlinNoiseVolumes(const vec3ui &volumes, float density)
+    : numVolumes(volumes), addAreaLight(false), densityScale(density)
+{}
+
 void PerlinNoiseVolumes::commit()
 {
   Builder::commit();
 
-  addSphereVolume = getParam<bool>("addSphereVolume", true);
-  addTorusVolume = getParam<bool>("addTorusVolume", true);
-  addBoxes = getParam<bool>("addBoxes", false);
+  addSphereVolume = getParam<bool>("addSphereVolume", addSphereVolume);
+  addTorusVolume = getParam<bool>("addTorusVolume", addTorusVolume);
+  addBoxes = getParam<bool>("addBoxes", addBoxes);
 
-  addAreaLight = getParam<bool>("addAreaLight", true);
-  addAmbientLight = getParam<bool>("addAmbientLight", true);
+  addAreaLight = getParam<bool>("addAreaLight", addAreaLight);
+  addAmbientLight = getParam<bool>("addAmbientLight", addAmbientLight);
 
-  densityScale = getParam<float>("densityScale", 10.f);
-  anisotropy = getParam<float>("anisotropy", 0.f);
+  densityScale = getParam<float>("densityScale", densityScale);
+  anisotropy = getParam<float>("anisotropy", anisotropy);
   gradientShadingScale =
       getParam<float>("gradientShadingScale", gradientShadingScale);
 
@@ -231,7 +241,42 @@ cpp::World PerlinNoiseVolumes::buildWorld() const
     instances.push_back(inst);
   }
 
-  auto world = Builder::buildWorld(instances);
+  // Create a group with volumes
+  auto group = buildGroup();
+  const box3f groupBounds = group.getBounds<box3f>();
+
+  // Create instances
+  std::mt19937 gen(randomSeed);
+  utility::uniform_real_distribution<float> dstrX(
+      groupBounds.lower.x, groupBounds.upper.x);
+  utility::uniform_real_distribution<float> dstrY(
+      groupBounds.lower.y, groupBounds.upper.y);
+  utility::uniform_real_distribution<float> dstrZ(
+      groupBounds.lower.z, groupBounds.upper.z);
+  const vec3f totalSize = groupBounds.size() * (numVolumes - 1);
+  box3f sceneBounds;
+  index_sequence_3D indexVolumes(numVolumes);
+  for (const vec3ui i : indexVolumes) {
+    vec3f rndT = vec3f(0.0f);
+    if (i != vec3ui(0)) {
+      rndT.x = dstrX(gen);
+      rndT.y = dstrY(gen);
+      rndT.z = dstrZ(gen);
+    }
+    const vec3f position = groupBounds.size() * vec3f(i.x, i.y, i.z)
+        - 0.5f * vec3f(totalSize.x, 0.0f, totalSize.z) + rndT;
+    cpp::Instance instance(group);
+    instance.setParam("xfm", affine3f::translate(position));
+    instance.commit();
+    instances.push_back(instance);
+    sceneBounds.extend(groupBounds + position);
+  }
+
+  if (addPlane)
+    instances.push_back(makeGroundPlane(sceneBounds));
+
+  cpp::World world;
+  world.setParam("instance", cpp::CopiedData(instances));
 
   std::vector<cpp::Light> lightHandles;
 
@@ -263,6 +308,8 @@ cpp::World PerlinNoiseVolumes::buildWorld() const
 }
 
 OSP_REGISTER_TESTING_BUILDER(PerlinNoiseVolumes, perlin_noise_volumes);
+OSP_REGISTER_TESTING_BUILDER(
+    PerlinNoiseVolumes({7, 7, 13}, 1.f), perlin_noise_many_volumes);
 OSP_REGISTER_TESTING_BUILDER(
     PerlinNoiseVolumes(true), clip_perlin_noise_volumes);
 OSP_REGISTER_TESTING_BUILDER(

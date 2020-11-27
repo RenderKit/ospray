@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,6 +6,7 @@
 #include "embree3/rtcore.isph"
 
 #include "OSPConfig.h"
+#include "TLSPools.h"
 
 #ifndef ISPC_UINT_IS_DEFINED
 typedef unsigned int64 uint64;
@@ -39,3 +40,7 @@ export void delete_uniform(void *uniform uptr);
 /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
 extern "C" void *uniform malloc64(uniform uint64 size);
 extern "C" void free64(void *uniform ptr);
+
+/*! Thread Local Storage allocation */
+extern "C" void *uniform reallocTLS(
+    uniform TLSPoolsEnum pool, uniform uint64 size);

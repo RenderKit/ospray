@@ -148,7 +148,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
                            "subdivision_cube",
                            "planes",
                            "unstructured_volume_isosurface"),
-        ::testing::Values("scivis", "pathtracer", "ao")));
+        ::testing::Values("scivis", "pathtracer", "ao"),
+        ::testing::Values(16)));
 
 TEST_P(Curves, test_scenes)
 {
@@ -176,7 +177,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesClipping,
                            "clip_with_bspline_curves",
                            "clip_gravity_spheres_volume",
                            "clip_perlin_noise_volumes"),
-        ::testing::Values("scivis", "pathtracer", "ao")));
+        ::testing::Values("scivis", "pathtracer", "ao"),
+        ::testing::Values(16)));
 
 TEST_P(FromOsprayTestingMaxDepth, test_scenes)
 {
@@ -188,6 +190,7 @@ INSTANTIATE_TEST_SUITE_P(TestScenesMaxDepth,
     ::testing::Combine(
         ::testing::Values(
             "cornell_box", "clip_with_spheres", "clip_gravity_spheres_volume"),
-        ::testing::Values("ao")));
+        ::testing::Values("ao"),
+        ::testing::Values(16)));
 
 } // namespace OSPRayTestScenes
