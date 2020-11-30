@@ -104,6 +104,7 @@ cmake -L \
   -D CMAKE_INSTALL_LIBDIR=lib \
   -D CMAKE_INSTALL_DOCDIR=doc \
   -D CMAKE_INSTALL_BINDIR=bin \
+  -D CMAKE_BUILD_WITH_INSTALL_RPATH=ON \
   ..
 
 # create tar.gz

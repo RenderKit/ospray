@@ -174,7 +174,10 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     const uniform bool shade)
 {
   // Array of volume contexts
-  VolumeContext volumeContexts[NUM_VOLUME_INTERVALS_MAX];
+  varying VolumeContext *uniform volumeContexts =
+      (varying VolumeContext * uniform) reallocTLS(TLSPOOL_VOLUME_CONTEXTS,
+          reduce_max(volumeIntervals.numVolumeIntervals)
+              * sizeof(varying VolumeContext));
 
   // Sampling position jitter
   const float jitter = LDSampler_getFloat(ldSampler, 0);

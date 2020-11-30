@@ -33,15 +33,16 @@ bool shadowCatcher(const PathContext &pathContext,
         make_vec3f(pathContext.context->shadowCatcherPlane);
     if (dot(ray.dir, pathVertex.dg.Ng) >= 0.f)
       pathVertex.dg.Ns = pathVertex.dg.Ng = neg(pathVertex.dg.Ng);
+
+    pathVertex.dg.P = ray.org + pathState.shadowCatcherDist * ray.dir;
     const float eps =
         calcEpsilon(pathVertex.dg.P, ray.dir, pathState.shadowCatcherDist);
-    pathVertex.dg.P = ray.org + pathState.shadowCatcherDist * ray.dir
-        + eps * pathVertex.dg.Ng;
+    pathVertex.dg.P = pathVertex.dg.P + eps * pathVertex.dg.Ng;
 
     vec3f unshaded = make_vec3f(0.f); // illumination without occluders
     vec3f shaded = make_vec3f(0.f); // illumination including shadows
     for (uniform int i = 0; i < pathContext.numLights; i++) {
-      const uniform Light *uniform light = pathContext.context->lights[i];
+      const Light *uniform light = pathContext.world->pathtracerData.lights[i];
 
       const vec2f s = LDSampler_getFloat2(
           pathContext.ldSampler, pathState.sampleDim + 4 + i * 2);

@@ -8,10 +8,15 @@
 
 namespace ospray {
 
+template <typename T, typename A>
+static T *getDataSafe(std::vector<T, A> &v)
+{
+  return v.empty() ? nullptr : v.data();
+}
+
 LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
-    const uint32 channels,
-    void *colorBufferToUse)
+    const uint32 channels)
     : FrameBuffer(_size, _colorBufferFormat, channels),
       tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0))
 {
@@ -21,64 +26,39 @@ LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
         "0");
   }
 
-  if (colorBufferToUse)
-    colorBuffer = colorBufferToUse;
-  else {
-    switch (colorBufferFormat) {
-    case OSP_FB_NONE:
-      colorBuffer = nullptr;
-      break;
-    case OSP_FB_RGBA8:
-    case OSP_FB_SRGBA:
-      colorBuffer = (uint32 *)alignedMalloc(sizeof(uint32) * size.x * size.y);
-      break;
-    case OSP_FB_RGBA32F:
-      colorBuffer = (vec4f *)alignedMalloc(sizeof(vec4f) * size.x * size.y);
-      break;
-    }
-  }
+  const size_t pixelBytes = sizeOf(colorBufferFormat);
+  const size_t numPixels = size.long_product();
 
-  depthBuffer =
-      hasDepthBuffer ? alignedMalloc<float>(size.x * size.y) : nullptr;
+  colorBuffer.resize(pixelBytes * numPixels);
 
-  accumBuffer =
-      hasAccumBuffer ? alignedMalloc<vec4f>(size.x * size.y) : nullptr;
+  if (hasDepthBuffer)
+    depthBuffer.resize(numPixels);
 
-  const size_t bytes = sizeof(int32) * getTotalTiles();
-  tileAccumID = (int32 *)alignedMalloc(bytes);
-  memset(tileAccumID, 0, bytes);
+  if (hasAccumBuffer)
+    accumBuffer.resize(numPixels);
 
-  varianceBuffer =
-      hasVarianceBuffer ? alignedMalloc<vec4f>(size.x * size.y) : nullptr;
+  tileAccumID.resize(getTotalTiles(), 0);
 
-  normalBuffer =
-      hasNormalBuffer ? alignedMalloc<vec3f>(size.x * size.y) : nullptr;
+  if (hasVarianceBuffer)
+    varianceBuffer.resize(numPixels);
 
-  albedoBuffer =
-      hasAlbedoBuffer ? alignedMalloc<vec3f>(size.x * size.y) : nullptr;
+  if (hasNormalBuffer)
+    normalBuffer.resize(numPixels);
+
+  if (hasAlbedoBuffer)
+    albedoBuffer.resize(numPixels);
 
   ispcEquivalent = ispc::LocalFrameBuffer_create(this,
       size.x,
       size.y,
       colorBufferFormat,
-      colorBuffer,
-      depthBuffer,
-      accumBuffer,
-      varianceBuffer,
-      normalBuffer,
-      albedoBuffer,
-      tileAccumID);
-}
-
-LocalFrameBuffer::~LocalFrameBuffer()
-{
-  alignedFree(depthBuffer);
-  alignedFree(colorBuffer);
-  alignedFree(accumBuffer);
-  alignedFree(varianceBuffer);
-  alignedFree(normalBuffer);
-  alignedFree(albedoBuffer);
-  alignedFree(tileAccumID);
+      getDataSafe(colorBuffer),
+      getDataSafe(depthBuffer),
+      getDataSafe(accumBuffer),
+      getDataSafe(varianceBuffer),
+      getDataSafe(normalBuffer),
+      getDataSafe(albedoBuffer),
+      getDataSafe(tileAccumID));
 }
 
 void LocalFrameBuffer::commit()
@@ -89,10 +69,10 @@ void LocalFrameBuffer::commit()
   if (imageOpData) {
     FrameBufferView fbv(this,
         colorBufferFormat,
-        colorBuffer,
-        depthBuffer,
-        normalBuffer,
-        albedoBuffer);
+        getDataSafe(colorBuffer),
+        getDataSafe(depthBuffer),
+        getDataSafe(normalBuffer),
+        getDataSafe(albedoBuffer));
 
     for (auto &&obj : *imageOpData)
       imageOps.push_back(obj->attach(fbv));
@@ -112,7 +92,7 @@ void LocalFrameBuffer::clear()
   // it is only necessary to reset the accumID,
   // LocalFrameBuffer_accumulateTile takes care of clearing the
   // accumulating buffers
-  memset(tileAccumID, 0, getTotalTiles() * sizeof(int32));
+  std::fill(tileAccumID.begin(), tileAccumID.end(), 0);
 
   // always also clear error buffer (if present)
   if (hasVarianceBuffer) {
@@ -122,26 +102,31 @@ void LocalFrameBuffer::clear()
 
 void LocalFrameBuffer::setTile(Tile &tile)
 {
-  if (accumBuffer) {
+  if (hasAccumBuffer) {
     const float err =
         ispc::LocalFrameBuffer_accumulateTile(getIE(), (ispc::Tile &)tile);
     if ((tile.accumID & 1) == 1)
       tileErrorRegion.update(tile.region.lower / TILE_SIZE, err);
   }
-  if (hasDepthBuffer)
+
+  if (hasDepthBuffer) {
     ispc::LocalFrameBuffer_accumulateWriteDepthTile(
         getIE(), (ispc::Tile &)tile);
-  if (hasAlbedoBuffer)
+  }
+
+  if (hasAlbedoBuffer) {
     ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),
         (ispc::Tile &)tile,
-        (ispc::vec3f *)albedoBuffer,
+        (ispc::vec3f *)albedoBuffer.data(),
         tile.ar,
         tile.ag,
         tile.ab);
+  }
+
   if (hasNormalBuffer)
     ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),
         (ispc::Tile &)tile,
-        (ispc::vec3f *)normalBuffer,
+        (ispc::vec3f *)normalBuffer.data(),
         tile.nx,
         tile.ny,
         tile.nz);
@@ -159,7 +144,7 @@ void LocalFrameBuffer::setTile(Tile &tile)
         });
   }
 
-  if (colorBuffer) {
+  if (!colorBuffer.empty()) {
     switch (colorBufferFormat) {
     case OSP_FB_RGBA8:
       ispc::LocalFrameBuffer_writeTile_RGBA8(getIE(), (ispc::Tile &)tile);
@@ -217,22 +202,22 @@ void LocalFrameBuffer::endFrame(
 
 const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)
 {
-  const void *buf;
+  const void *buf = nullptr;
+
   switch (channel) {
   case OSP_FB_COLOR:
-    buf = colorBuffer;
+    buf = getDataSafe(colorBuffer);
     break;
   case OSP_FB_DEPTH:
-    buf = depthBuffer;
+    buf = getDataSafe(depthBuffer);
     break;
   case OSP_FB_NORMAL:
-    buf = normalBuffer;
+    buf = getDataSafe(normalBuffer);
     break;
   case OSP_FB_ALBEDO:
-    buf = albedoBuffer;
+    buf = getDataSafe(albedoBuffer);
     break;
   default:
-    buf = nullptr;
     break;
   }
 
@@ -244,13 +229,8 @@ const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)
 
 void LocalFrameBuffer::unmap(const void *mappedMem)
 {
-  if (mappedMem) {
-    if (mappedMem != colorBuffer && mappedMem != depthBuffer
-        && mappedMem != normalBuffer && mappedMem != albedoBuffer) {
-      throw std::runtime_error("unmapping a pointer not created by OSPRay");
-    }
+  if (mappedMem)
     this->refDec();
-  }
 }
 
 } // namespace ospray

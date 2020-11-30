@@ -1,10 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Distribution1D.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/vec.ih"
 
 struct Distribution2D
 {

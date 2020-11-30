@@ -18,14 +18,12 @@ struct OSPRAY_SDK_INTERFACE Curves : public Geometry
   virtual size_t numPrimitives() const override;
 
  protected:
-  Ref<const Data> vertexData;
+  Ref<const DataT<vec4f>> vertexData;
   Ref<const DataT<uint32_t>> indexData;
   Ref<const DataT<vec3f>> normalData;
   Ref<const DataT<vec4f>> tangentData;
   Ref<const DataT<vec4f>> colorData;
   Ref<const DataT<vec2f>> texcoordData;
-
-  float radius{0.01};
 
   RTCGeometryType embreeCurveType;
 

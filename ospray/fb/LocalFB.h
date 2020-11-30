@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,32 +6,17 @@
 // ospray
 #include "fb/FrameBuffer.h"
 #include "fb/TileError.h"
+// rkcommon
+#include "rkcommon/containers/AlignedVector.h"
 
 namespace ospray {
 
-/*! local frame buffer - frame buffer that exists on local machine */
 struct OSPRAY_SDK_INTERFACE LocalFrameBuffer : public FrameBuffer
 {
-  // TODO: Replace w/ some std::vector
-  void *colorBuffer; /*!< format depends on
-                        FrameBuffer::colorBufferFormat, may be
-                        NULL */
-  float *depthBuffer; /*!< one float per pixel, may be NULL */
-  vec4f *accumBuffer; /*!< one RGBA per pixel, may be NULL */
-  vec4f *varianceBuffer; /*!< one RGBA per pixel, may be NULL, accumulates every
-                            other sample, for variance estimation / stopping */
-  vec3f *normalBuffer; /*!< accumulated world-space normal per pixel, may be
-                          NULL */
-  vec3f *albedoBuffer; /*!< accumulated, one RGB per pixel, may be NULL */
-  int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
-  TileError tileErrorRegion; /*!< holds error per tile and adaptive regions, for
-                                variance estimation / stopping */
-
   LocalFrameBuffer(const vec2i &size,
       ColorBufferFormat colorBufferFormat,
-      const uint32 channels,
-      void *colorBufferToUse = nullptr);
-  virtual ~LocalFrameBuffer() override;
+      const uint32 channels);
+  virtual ~LocalFrameBuffer() override = default;
 
   virtual void commit() override;
 
@@ -48,6 +33,28 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer : public FrameBuffer
   const void *mapBuffer(OSPFrameBufferChannel channel) override;
   void unmap(const void *mappedMem) override;
   void clear() override;
+
+  //// Data ////
+
+  // NOTE: All per-pixel data is only allocated if the corresponding channel
+  //       flag was passed on construction
+
+  // format depends on FrameBuffer::colorBufferFormat
+  std::vector<uint8_t> colorBuffer;
+  // one float per pixel
+  containers::AlignedVector<float> depthBuffer;
+  // one RGBA per pixel
+  containers::AlignedVector<vec4f> accumBuffer;
+  // one RGBA per pixel, accumulates every other sample, for variance estimation
+  containers::AlignedVector<vec4f> varianceBuffer;
+  // accumulated world-space normal per pixel
+  containers::AlignedVector<vec3f> normalBuffer;
+  // accumulated, one RGB per pixel
+  containers::AlignedVector<vec3f> albedoBuffer;
+  // holds accumID per tile, for adaptive accumulation
+  containers::AlignedVector<int32> tileAccumID;
+  // holds error per tile and adaptive regions
+  TileError tileErrorRegion;
 };
 
 } // namespace ospray

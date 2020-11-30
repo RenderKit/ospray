@@ -41,6 +41,7 @@ inline void postIntersect(const PathContext &pathContext,
     pathVertex.dg.areaPDF = 0.f;
     pathVertex.dg.epsilon = 0.f;
     pathVertex.dg.material = NULL;
+    pathVertex.dg.renderer = &pathContext.context->super;
   }
 }
 
@@ -173,7 +174,7 @@ void samplePath(const PathContext &pathContext,
     // have both samples for MIS except if we have geometry lights (which we
     // still need to evaluate for MIS)
     if (pathState.depth >= pathContext.context->super.maxDepth
-        && pathContext.context->numGeoLights == 0)
+        && pathContext.world->pathtracerData.numGeoLights == 0)
       break;
 
     postIntersect(pathContext, pathState, pathVertex, ray);

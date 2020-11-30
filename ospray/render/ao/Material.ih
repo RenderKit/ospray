@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "math/vec.ih"
 #include "render/Material.ih"
+#include "rkcommon/math/vec.ih"
 #include "texture/TextureParam.ih"
 
 struct AOMaterial

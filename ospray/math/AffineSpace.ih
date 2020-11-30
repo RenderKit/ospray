@@ -235,13 +235,3 @@ inline varying vec2f operator*(
 
 /*! short-hand name for AffineSpace2f */
 typedef AffineSpace2f affine2f;
-
-inline void out(uniform affine3f a)
-{
-  print("Affine3f(");
-  out(a.l.vx);
-  out(a.l.vy);
-  out(a.l.vz);
-  out(a.p);
-  print(")");
-}

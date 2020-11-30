@@ -56,6 +56,9 @@ Light_SampleRes HDRILight_sample(const uniform Light *uniform super,
 
   res.dist = inf;
 
+  // clamp2edge for theta for tex lookup, to prevent light leaks at the poles
+  sample2d.uv.y = clamp(
+      sample2d.uv.y, self->map->halfTexel.y, 1.0f - self->map->halfTexel.y);
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, sample2d.uv);
   res.weight = get3f(self->map, lookup) * self->super.radiance / res.pdf;
@@ -82,8 +85,11 @@ Light_EvalRes HDRILight_eval(const uniform Light *uniform super,
   const float v = acos(localDir.z) * one_over_pi;
   const vec2f uv = make_vec2f(u, v);
 
+  // clamp2edge for theta for tex lookup, to prevent light leaks at the poles
+  const vec2f uvc = make_vec2f(
+      u, clamp(v, self->map->halfTexel.y, 1.0f - self->map->halfTexel.y));
   DifferentialGeometry lookup;
-  initDgFromTexCoord(lookup, uv);
+  initDgFromTexCoord(lookup, uvc);
   res.radiance = get3f(self->map, lookup) * self->super.radiance;
 
   // domain of Distribution2D is shifted by half a texel compared to texture

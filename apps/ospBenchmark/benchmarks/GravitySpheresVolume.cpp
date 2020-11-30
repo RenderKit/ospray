@@ -6,11 +6,10 @@
 class GravitySpheres : public BaseFixture
 {
  public:
-  GravitySpheres(const std::string &s, int d, const std::string &r)
-      : BaseFixture(s, r), dim(d)
-  {
-    SetName(s + "/dim_" + std::to_string(dim) + "/" + r);
-  }
+  GravitySpheres(
+      const std::string &n, const std::string &s, int d, const std::string &r)
+      : BaseFixture(n + s + "/dim_" + std::to_string(d), s, r), dim(d)
+  {}
 
   void SetBuilderParameters(testing::SceneBuilderHandle scene) override
   {
@@ -35,3 +34,5 @@ OSPRAY_DEFINE_BENCHMARK(
     GravitySpheres, "gravity_spheres_volume", 128, "pathtracer");
 OSPRAY_DEFINE_BENCHMARK(
     GravitySpheres, "gravity_spheres_volume", 512, "pathtracer");
+OSPRAY_DEFINE_SETUP_BENCHMARK(
+    GravitySpheres, "gravity_spheres_volume", 128, "pathtracer");

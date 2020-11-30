@@ -201,10 +201,36 @@ endmacro()
 
 ## Target creation macros ##
 
+set(OSPRAY_SIGN_FILE_ARGS -q)
+if (APPLE)
+  list(APPEND OSPRAY_SIGN_FILE_ARGS -o runtime -e ${CMAKE_SOURCE_DIR}/scripts/release/ospray.entitlements)
+endif()
+
+macro(ospray_sign_target name)
+  if (OSPRAY_SIGN_FILE)
+    if (APPLE)
+      # on OSX we strip manually before signing instead of setting CPACK_STRIP_FILES
+      add_custom_command(TARGET ${name} POST_BUILD
+        COMMAND ${CMAKE_STRIP} -x $<TARGET_FILE:${name}>
+        COMMAND ${OSPRAY_SIGN_FILE} ${OSPRAY_SIGN_FILE_ARGS} $<TARGET_FILE:${name}>
+        COMMENT "Stripping and signing target"
+        VERBATIM
+      )
+    else()
+      add_custom_command(TARGET ${name} POST_BUILD
+        COMMAND ${OSPRAY_SIGN_FILE} ${OSPRAY_SIGN_FILE_ARGS} $<TARGET_FILE:${name}>
+        COMMENT "Signing target"
+        VERBATIM
+      )
+    endif()
+  endif()
+endmacro()
+
 macro(ospray_install_library name component)
   set_target_properties(${name}
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
   ospray_install_target(${name} ${component})
+  ospray_sign_target(${name})
 endmacro()
 
 macro(ospray_install_target name component)

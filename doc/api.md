@@ -335,6 +335,8 @@ given object anymore, call
 
 This decreases its reference count and if the count reaches `0` the
 object will automatically get deleted. Passing `NULL` is not an error.
+Note that every handle returned via the API needs to be released when
+the object is no longer needed, to avoid memory leaks.
 
 Sometimes applications may want to have more than one reference to an
 object, where it is desirable for the application to increment the
@@ -541,12 +543,25 @@ slices (3D, `byteStride3`) are not.
 The parameters understood by structured volumes are summarized in the
 table below.
 
-  Type    Name            Default  Description
-  ------- ----------- -----------  --------------------------------------
-  vec3f   gridOrigin  $(0, 0, 0)$  origin of the grid in object-space
-  vec3f   gridSpacing $(1, 1, 1)$  size of the grid cells in object-space
-  OSPData data                     the actual voxel 3D [data]
-  ------- ----------- -----------  --------------------------------------
+  ------- -------------- -----------------------------  --------------------------
+  Type    Name                                 Default  Description
+  ------- -------------- -----------------------------  --------------------------
+  vec3f   gridOrigin                       $(0, 0, 0)$  origin of the grid in
+                                                        object-space
+
+  vec3f   gridSpacing                      $(1, 1, 1)$  size of the grid cells
+                                                        in object-space
+
+  OSPData data                                          the actual voxel 3D [data]
+
+  int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
+                                                        reconstructing the field,
+                                                        also allowed is
+                                                        `OSP_VOLUME_FILTER_NEAREST`
+
+  int     gradientFilter              same as `filter`  filter used during
+                                                        gradient computations
+  ------- -------------- -----------------------------  --------------------------
   : Configuration parameters for structured regular volumes.
 
 The size of the volume is inferred from the size of the 3D array `data`,
@@ -565,12 +580,28 @@ summarized below.
 
 ![Coordinate system of structured spherical volumes.][imgStructuredSphericalCoords]
 
-  Type   Name            Default  Description
-  ------ ----------- -----------  -------------------------------------------------------------------------
-  vec3f  gridOrigin  $(0, 0, 0)$  origin of the grid in units of $(r, \theta, \phi)$; angles in degrees
-  vec3f  gridSpacing $(1, 1, 1)$  size of the grid cells in units of $(r, \theta, \phi)$; angles in degrees
-  OSPData data                    the actual voxel 3D [data]
-  ------ ----------- -----------  -------------------------------------------------------------------------
+  ------- -------------- -----------------------------  --------------------------
+  Type    Name                                 Default  Description
+  ------- -------------- -----------------------------  --------------------------
+  vec3f   gridOrigin                       $(0, 0, 0)$  origin of the grid in
+                                                        units of $(r, \theta,
+                                                        \phi)$; angles in
+                                                        degrees
+
+  vec3f   gridSpacing                      $(1, 1, 1)$  size of the grid cells in
+                                                        units of $(r, \theta,
+                                                        \phi)$; angles in degrees
+
+  OSPData  data                                         the actual voxel 3D [data]
+
+  int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
+                                                        reconstructing the field,
+                                                        also allowed is
+                                                        `OSP_VOLUME_FILTER_NEAREST`
+
+  int     gradientFilter              same as `filter`  filter used during
+                                                        gradient computations
+  ------- -------------- -----------------------------  --------------------------
   : Configuration parameters for structured spherical volumes.
 
 The dimensions $(r, \theta, \phi)$ of the volume are inferred from the
@@ -759,6 +790,9 @@ the `cell.type` parameter must be omitted).
 
   bool                precomputedNormals    false  whether to accelerate by precomputing,
                                                    at a cost of 12 bytes/face
+
+  int                   maxIteratorDepth        6  do not descend further than to this BVH
+                                                   depth during interval iteration
   ------------------- ------------------ --------  ---------------------------------------
   : Configuration parameters for unstructured volumes.
 
@@ -889,6 +923,9 @@ traversal, similar to the method in\ [1].
                                              this switch may improve volume commit
                                              time, but will make volume rendering
                                              less efficient.
+
+  int             maxIteratorDepth        6  do not descend further than to this BVH
+                                             depth during interval iteration
   -------- ----------------------- --------  ---------------------------------------
   : Configuration parameters for particle volumes.
 
@@ -1082,11 +1119,6 @@ this geometry are listed in the table below.
   vec4f[]            vertex.position_radius [data] array of vertex position and
                                             per-vertex radius
 
-  vec3f[]            vertex.position        [data] array of vertex position
-
-  float              radius                 global radius of all curves (if
-                                            per-vertex radius is not used), default 0.01
-
   vec2f[]            vertex.texcoord        [data] array of per-vertex texture coordinates
 
   vec4f[]            vertex.color           [data] array of corresponding vertex
@@ -1110,6 +1142,8 @@ this geometry are listed in the table below.
 
                                             `OSP_RIBBON`
 
+                                            `OSP_DISJOINT`
+
   uchar              basis                  `OSPCurveBasis` for defining the curve.
                                              Supported bases are:
 
@@ -1125,19 +1159,9 @@ this geometry are listed in the table below.
   ------------------ ---------------------- -------------------------------------------
   : Parameters defining a curves geometry.
 
-Depending upon the specified data type of vertex positions, the curves
-will be implemented Embree curves or assembled from rounded and
-linearly-connected segments.
-
-Positions in `vertex.position_radius` format supports per-vertex varying
+Positions in `vertex.position_radius` parameter supports per-vertex varying
 radii with data type `vec4f[]` and instantiate Embree curves internally
 for the relevant type/basis mapping.
-
-If a constant `radius` is used and positions are specified in a
-`vec3f[]` type of `vertex.position` format, then type/basis defaults to
-`OSP_ROUND` and `OSP_LINEAR` (this is the fastest and most memory
-efficient mode). Implementation is with round linear segments where
-each segment corresponds to a link between two vertices.
 
 The following section describes the properties of different curve basis'
 and how they use the data provided in data buffers:
@@ -1197,8 +1221,12 @@ OSP_RIBBON
 buffer be specified along with vertex buffer. The curve is rendered as a
 flat band whose center approximately follows the provided vertex buffer
 and whose normal orientation approximately follows the provided normal
-buffer.
+buffer. Not supported for basis `OSP_LINEAR`.
 
+OSP_DISJOINT
+: Only supported for basis `OSP_LINEAR`; the segments are open and not
+connected at the joints, i.e., the curve segments are either individual
+cones or cylinders.
 
 ### Boxes
 
@@ -1491,13 +1519,22 @@ Hošek-Wilkie sky model and solar radiance function. In addition to the
 [general parameters](#lights) the following special parameters are
 supported:
 
-  Type      Name           Default  Description
-  --------- ---------- -----------  --------------------------------------------
-  vec3f     up         $(0, 1, 0)$  zenith of sky in world-space
-  vec3f     direction  $(0, -1, 0)$ main emission direction of the sun
-  float     turbidity            3  atmospheric turbidity due to particles, in [1–10]
-  float     albedo             0.3  ground reflectance, in [0–1]
-  --------- ---------- -----------  --------------------------------------------
+  --------- ---------------- ------------  -------------------------------------
+  Type      Name                  Default  Description
+  --------- ---------------- ------------  -------------------------------------
+  vec3f     up                $(0, 1, 0)$  zenith of sky in world-space
+
+  vec3f     direction        $(0, -1, 0)$  main emission direction of the sun
+
+  float     turbidity                   3  atmospheric turbidity due to
+                                           particles, in [1–10]
+
+  float     albedo                    0.3  ground reflectance, in [0–1]
+
+  float     horizonExtension         0.01  extend the sky dome by stretching the
+                                           horizon, fraction of the lower
+                                           hemisphere to cover, in [0–1]
+  --------- ---------------- ------------  -------------------------------------
   : Special parameters accepted by the `sunSky` light.
 
 The lowest elevation for the sun is restricted to the horizon.
@@ -1806,10 +1843,6 @@ supports the following special parameters:
                                             per path vertex, per default
                                             all light sources are sampled
 
-  bool       geometryLights           true  whether geometries with an emissive
-                                            material (e.g., [Luminous]) illuminate
-                                            the scene
-
   int        roulettePathLength          5  ray recursion depth at which to
                                             start Russian roulette termination
 
@@ -1818,8 +1851,8 @@ supports the following special parameters:
                                             the framebuffer
 
   bool       backgroundRefraction    false  allow for alpha blending even if
-                                            backgound is seen through refractive
-                                            objects like glass
+                                            background is seen through
+                                            refractive objects like glass
   ---------- -------------------- --------  ------------------------------------
   : Special parameters understood by the path tracer.
 
@@ -2521,21 +2554,24 @@ by using the [general parameters](#cameras) understood by all cameras.
 ### Picking
 
 To get the world-space position of the geometry (if any) seen at [0–1]
-normalized screen-space pixel coordinates `screenPos` use
+normalized screen-space pixel coordinates `screenPos_x` and
+`screenPos_y` use
 
     void ospPick(OSPPickResult *,
         OSPFrameBuffer,
         OSPRenderer,
         OSPCamera,
         OSPWorld,
-        osp_vec2f screenPos);
+        float screenPos_x,
+        float screenPos_y);
 
 The result is returned in the provided `OSPPickResult` struct:
 
     typedef struct {
         int hasHit;
-        osp_vec3f worldPosition;
-        OSPGeometricModel GeometricModel;
+        float worldPosition[3];
+        OSPInstance instance;
+        OSPGeometricModel model;
         uint32_t primID;
     } OSPPickResult;
 
@@ -2543,6 +2579,8 @@ Note that `ospPick` considers exactly the same camera of the given
 renderer that is used to render an image, thus matching results can be
 expected. If the camera supports depth of field then the center of the
 lens and thus the center of the circle of confusion is used for picking.
+Note that the caller needs to `ospRelease` the `instance` and `model`
+handles of `OSPPickResult` once the information is not needed anymore.
 
 
 Framebuffer

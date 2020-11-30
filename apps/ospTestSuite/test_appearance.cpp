@@ -429,7 +429,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesPtMaterials,
                            "test_pt_metal_roughness",
                            "test_pt_metallic_flakes",
                            "test_pt_obj"),
-        ::testing::Values("pathtracer")));
+        ::testing::Values("pathtracer"),
+        ::testing::Values(16)));
 
 TEST_P(Texture2D, filter)
 {
@@ -455,7 +456,6 @@ TEST_P(PTBackgroundRefraction, backgroundRefraction)
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    Appearance, PTBackgroundRefraction, ::testing::Values(false, true));
+INSTANTIATE_TEST_SUITE_P(Appearance, PTBackgroundRefraction, ::testing::Bool());
 
 } // namespace OSPRayTestScenes

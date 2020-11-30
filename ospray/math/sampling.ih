@@ -10,7 +10,7 @@
 // pdf (needed later for MIS) good reference is "Total Compendium" by Philip
 // Dutre http://people.cs.kuleuven.be/~philip.dutre/GI/
 
-#include "math/vec.ih"
+#include "rkcommon/math/vec.ih"
 
 inline vec3f cartesian(
     const float phi, const float sinTheta, const float cosTheta)

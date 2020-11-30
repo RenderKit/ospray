@@ -92,6 +92,17 @@ else()
   ospray_install_namelink(${EMBREE_LIBRARY})
   set(INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
 endif()
+
+if (OSPRAY_SIGN_FILE)
+  add_custom_target(sign_files
+    COMMAND ${OSPRAY_SIGN_FILE} ${OSPRAY_SIGN_FILE_ARGS} ${DEPENDENT_LIBS} ${DEPENDENT_LIBS_DEBUG}
+    COMMENT "Signing files"
+    VERBATIM
+  )
+else()
+  add_custom_target(sign_files COMMENT "Not signing files")
+endif()
+
 install(PROGRAMS ${DEPENDENT_LIBS} DESTINATION ${INSTALL_DIR} COMPONENT redist)
 if (DEPENDENT_LIBS_DEBUG)
   install(PROGRAMS ${DEPENDENT_LIBS_DEBUG} CONFIGURATIONS Debug

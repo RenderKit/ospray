@@ -140,7 +140,9 @@ else()
   endif()
 
   if (NOT TARGET rkcommon::rkcommon)
-   find_dependency(rkcommon ${RKCOMMON_VERSION_REQUIRED})
+    find_dependency(rkcommon ${RKCOMMON_VERSION_REQUIRED})
+    get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
+      INTERFACE_INCLUDE_DIRECTORIES)
   endif()
 
   if (NOT TARGET openvkl::openvkl)

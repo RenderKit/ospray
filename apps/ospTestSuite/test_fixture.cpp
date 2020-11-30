@@ -159,6 +159,7 @@ FromOsprayTesting::FromOsprayTesting()
 
   sceneName = std::get<0>(params);
   rendererType = std::get<1>(params);
+  samplesPerPixel = std::get<2>(params);
 }
 
 void FromOsprayTesting::SetUp()
@@ -183,14 +184,6 @@ void FromOsprayTesting::SetUp()
   camera.setParam("position", arcballCamera.eyePos());
   camera.setParam("direction", arcballCamera.lookDir());
   camera.setParam("up", arcballCamera.upDir());
-}
-
-void FromOsprayTestingDirect::SetUp()
-{
-  FromOsprayTesting::SetUp();
-
-  if (rendererType == "pathtracer")
-    renderer.setParam("maxPathLength", 1);
 }
 
 void FromOsprayTestingMaxDepth::SetUp()

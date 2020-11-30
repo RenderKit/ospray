@@ -5,11 +5,11 @@
 
 #include "fb/FrameBuffer.ih"
 #include "lights/Light.ih"
-#include "math/vec.ih"
 #include "render/Renderer.ih"
 #include "render/util.ih"
+#include "rkcommon/math/vec.ih"
 
-#define MAX_LIGHTS 1000
+#define MAX_LIGHTS 1000u
 
 struct PathTracer
 {
@@ -22,12 +22,5 @@ struct PathTracer
   vec4f shadowCatcherPlane;
   bool shadowCatcher; // preprocessed
   bool backgroundRefraction;
-
-  // array containing the scene light sources
-  // the lights are sorted: first geometric, then virtual lights
-  Light *uniform *uniform lights;
-  uint32 numLights; // total number of light sources (geometric + virtual)
-  uint32 numGeoLights; // number of geometric light sources
-  float *uniform lightsCDF; // CDF used by NEE for randomly picking lights
   int32 numLightSamples; // number of light samples used for NEE
 };

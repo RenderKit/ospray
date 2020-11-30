@@ -277,6 +277,7 @@ typedef enum
   OSP_ROUND,
   OSP_FLAT,
   OSP_RIBBON,
+  OSP_DISJOINT,
   OSP_UNKNOWN_CURVE_TYPE = 255
 } OSPCurveType;
 

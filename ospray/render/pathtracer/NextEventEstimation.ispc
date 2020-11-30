@@ -27,7 +27,8 @@ vec3f nextEventEstimation(const PathContext &pathContext,
     const float lightSelectionPDF =
         (lSelectSample.pdf / (float)pathContext.numLights)
         * pathContext.numLightSamples;
-    const Light *light = pathContext.context->lights[lSelectSample.idx];
+    const Light *light =
+        pathContext.world->pathtracerData.lights[lSelectSample.idx];
     // sample the contribution from the random light source
     const vec2f s2 = LDSampler_getFloat2(
         pathContext.ldSampler, pathState.sampleDim + 4 + i * 3 + 1);

@@ -8,8 +8,10 @@
 #include "OSPCommon.h"
 #include "api/Device.h"
 
+#include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/utility/StringManip.h"
 
+#include <cassert>
 #include <map>
 
 namespace ospray {
@@ -23,7 +25,25 @@ extern "C" void *malloc64(size_t size)
 /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
 extern "C" void free64(void *ptr)
 {
-  return alignedFree(ptr);
+  alignedFree(ptr);
+}
+
+namespace {
+
+using TLSPool = containers::AlignedVector<uint8_t>;
+thread_local std::array<TLSPool, TLSPOOL_MAX> threadPools;
+} // namespace
+
+/*! Thread Local Storage allocation */
+extern "C" void *reallocTLS(TLSPoolsEnum pool, size_t size)
+{
+  // Get a pool
+  assert(pool < TLSPOOL_MAX);
+  TLSPool &tp = threadPools[pool];
+
+  // And reallocate memory
+  tp.resize(size);
+  return tp.data();
 }
 
 WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel) : s(s)
@@ -584,6 +604,25 @@ size_t sizeOf(OSPTextureFormat format)
   error << __FILE__ << ":" << __LINE__ << ": unknown OSPTextureFormat "
         << (int)format;
   throw std::runtime_error(error.str());
+}
+
+size_t sizeOf(OSPFrameBufferFormat format)
+{
+  size_t bytes = 0;
+
+  switch (format) {
+  case OSP_FB_RGBA8:
+  case OSP_FB_SRGBA:
+    bytes = sizeof(uint32_t);
+    break;
+  case OSP_FB_RGBA32F:
+    bytes = sizeof(vec4f);
+    break;
+  default:
+    break;
+  }
+
+  return bytes;
 }
 
 uint32_t logLevel()

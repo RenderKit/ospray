@@ -7,6 +7,7 @@ endif()
 
 add_executable(ospConvertRawToAMR ${OSPRAY_RESOURCE} ospConvertRawToAMR.cpp)
 target_link_libraries(ospConvertRawToAMR PRIVATE raw_to_amr ospray)
+ospray_sign_target(ospConvertRawToAMR)
 install(TARGETS ospConvertRawToAMR
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   COMPONENT apps

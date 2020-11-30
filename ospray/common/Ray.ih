@@ -1,12 +1,12 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 // ospray
 #include "../math/AffineSpace.ih"
-#include "../math/box.ih"
-#include "../math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 // embree
 #include "embree3/rtcore.isph"
 
@@ -131,15 +131,16 @@ inline bool hasInterval(const VolumeInterval &vi)
   return !isEmpty(vi.interval);
 }
 
-#define NUM_VOLUME_INTERVALS_MAX 10
 struct VolumeIntervals
 {
   unsigned int numVolumeIntervals;
-  VolumeInterval intervals[NUM_VOLUME_INTERVALS_MAX];
+  uniform unsigned int numAllocated;
+  varying VolumeInterval *uniform intervals;
 };
 
 inline void initVolumeIntervals(VolumeIntervals &intervals)
 {
   intervals.numVolumeIntervals = 0;
-  initVolumeInterval(intervals.intervals[0]);
+  intervals.numAllocated = 0;
+  intervals.intervals = NULL;
 }

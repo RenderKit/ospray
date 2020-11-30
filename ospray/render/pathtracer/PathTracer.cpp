@@ -8,6 +8,7 @@
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 // ispc exports
+#include "common/World_ispc.h"
 #include "render/pathtracer/GeometryLight_ispc.h"
 #include "render/pathtracer/PathTracer_ispc.h"
 #include "render/pathtracer/materials/Material_ispc.h"
@@ -21,19 +22,13 @@ PathTracer::PathTracer()
   ispcEquivalent = ispc::PathTracer_create(this);
 }
 
-PathTracer::~PathTracer()
-{
-  destroyGeometryLights();
-  ispc::PathTracer_destroy(getIE());
-  ispcEquivalent = nullptr;
-}
-
 std::string PathTracer::toString() const
 {
   return "ospray::PathTracer";
 }
 
-void PathTracer::generateGeometryLights(const World &world)
+void PathTracer::generateGeometryLights(
+    const World &world, std::vector<void *> &lightArray)
 {
   if (!world.instances)
     return;
@@ -88,12 +83,6 @@ void PathTracer::generateGeometryLights(const World &world)
   }
 }
 
-void PathTracer::destroyGeometryLights()
-{
-  for (size_t i = 0; i < geometryLights; i++)
-    ispc::GeometryLight_destroy(lightArray[i]);
-}
-
 void PathTracer::commit()
 {
   Renderer::commit();
@@ -118,12 +107,14 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   if (!world)
     return nullptr;
 
-  destroyGeometryLights();
-  lightArray.clear();
-  geometryLights = 0;
+  if (world->pathtracerDataValid)
+    return nullptr;
+
+  std::vector<void *> lightArray;
+  size_t geometryLights{0};
 
   if (useGeometryLights) {
-    generateGeometryLights(*world);
+    generateGeometryLights(*world, lightArray);
     geometryLights = lightArray.size();
   }
 
@@ -136,9 +127,11 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   }
 
   void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
+  ispc::World_setPathtracerData(
+      world->getIE(), lightPtr, lightArray.size(), geometryLights);
 
-  ispc::PathTracer_setLights(
-      getIE(), lightPtr, lightArray.size(), geometryLights);
+  world->pathtracerDataValid = true;
+
   return nullptr;
 }
 

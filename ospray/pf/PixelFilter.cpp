@@ -3,6 +3,7 @@
 
 // ospray
 #include "PixelFilter.h"
+#include "common/OSPCommon_ispc.h"
 #include "pf/LUTPixelFilter_ispc.h"
 #include "pf/PixelFilter_ispc.h"
 

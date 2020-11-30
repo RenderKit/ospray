@@ -5,7 +5,7 @@
 
 // ospray
 #include "../math/AffineSpace.ih"
-#include "../math/box.ih"
+#include "rkcommon/math/box.ih"
 
 // Array of all ray intervals across ray
 #define CLIPPING_INTERVALS_MAX_COUNT 64
