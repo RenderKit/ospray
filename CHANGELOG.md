@@ -13,6 +13,10 @@ Version History
 -   Removed limit on the number of volumes (both overlapped and separate)
     that a ray can intersect while rendering. Now it is limited by
     available memory only.
+-   OSPRay now requires minimum Open VKL v0.12.0 to bring the following
+    improvements: 
+    - Better default sampling rate for scaled volumes, improving
+      performance
 
 ### Changes in v2.4.0:
 
