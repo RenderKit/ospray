@@ -41,8 +41,7 @@ vec3f directIllumination(const uniform SciVis *uniform self,
       const vec3f light_contrib = (diffuse + specular) * light.weight;
 
       if (self->shadowsEnabled) {
-        const float max_contrib = reduce_max(light_contrib);
-        if (max_contrib > self->super.minContribution) {
+        if (luminance(light_contrib) > self->super.minContribution) {
           vec3f P = dg.P;
           if (dot(dg.Ng, light.dir) < 0.0f)
             P = P - (2.f * dg.epsilon) * dg.Ng;
@@ -50,13 +49,13 @@ vec3f directIllumination(const uniform SciVis *uniform self,
           Ray shadowRay;
           setRay(shadowRay, P, light.dir, 0.0f, light.dist, time);
 
-          float light_alpha = lightAlpha(self,
+          vec3f light_alpha = lightAlpha(self,
               shadowRay,
               fb,
               world,
               sample,
               ldSampler,
-              max_contrib,
+              light_contrib,
               dg.epsilon,
               0.25f);
 
@@ -88,8 +87,9 @@ SSI computeShading(const SciVis *uniform self,
   vec3f color = directIllumination(
       self, fb, world, dg, sample, ldSampler, bsdf, inDir, time);
 
-  float ao = 1.f;
-  if (self->aoSamples > 0 && reduce_max(world->scivisData.aoColorPi) > 0.01f)
+  vec3f ao = make_vec3f(1.f);
+  if (self->aoSamples > 0
+      && luminance(world->scivisData.aoColorPi) > self->super.minContribution)
     ao = SciVis_computeAO(self,
         fb,
         world,
@@ -102,7 +102,8 @@ SSI computeShading(const SciVis *uniform self,
 
   color = color + bsdf.diffuse * ao * world->scivisData.aoColorPi;
 
-  retval.shadedColor = make_vec4f(color, bsdf.opacity);
+  retval.shadedColor = color;
+  retval.transmission = bsdf.transmission;
 
   return retval;
 }

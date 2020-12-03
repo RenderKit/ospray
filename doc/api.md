@@ -1936,8 +1936,9 @@ normal map vertically or invert its green channel.
 ![Normal map representing an exalted square pyramidal
 frustum.][imgNormalMap]
 
-Note that currently only the path tracer implements colored transparency
-with `Tf` and normal mapping with `map_Bump`.
+Note that `Tf` colored transparency is implemented in the SciVis and
+the path tracer but normal mapping with `map_Bump` is currently supported
+in the path tracer only.
 
 All parameters (except `Tf`) can be textured by passing a [texture]
 handle, prefixed with "`map_`". The fetched texels are multiplied by the

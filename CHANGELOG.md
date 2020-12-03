@@ -17,6 +17,7 @@ Version History
     improvements: 
     - Better default sampling rate for scaled volumes, improving
       performance
+-   Add colored transparency in SciVis renderer
 
 ### Changes in v2.4.0:
 

@@ -20,7 +20,8 @@ export void SciVisMaterial_set(void *uniform _mat,
     const uniform vec3f &Ks,
     const uniform TextureParam &KsMap,
     const uniform float &Ns,
-    const uniform TextureParam &NsMap)
+    const uniform TextureParam &NsMap,
+    const uniform vec3f &Tf)
 {
   SciVisMaterial *uniform mat = (SciVisMaterial * uniform) _mat;
 
@@ -34,4 +35,5 @@ export void SciVisMaterial_set(void *uniform _mat,
   mat->KsMap = KsMap;
   mat->Ns = Ns;
   mat->NsMap = NsMap;
+  mat->Tf = Tf;
 }

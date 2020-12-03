@@ -11,17 +11,17 @@
 #include "volumes.ih"
 
 // Lighting functions //
-float lightAlpha(const uniform SciVis *uniform self,
+vec3f lightAlpha(const uniform SciVis *uniform self,
     Ray &ray,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
-    float weight,
+    vec3f weight,
     float rayOffset,
     uniform float quality)
 {
-  float alpha = 1.f;
+  vec3f alpha = make_vec3f(1.f);
   const float org_t_max = ray.t;
 
   // Allocate memory for volume intervals
@@ -33,7 +33,7 @@ float lightAlpha(const uniform SciVis *uniform self,
   RayIntervals rayIntervals;
   traceClippingRay(world, ray, rayIntervals);
 
-  while (1) {
+  while (true) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
     traceGeometryRayIntervals(world, ray, rayIntervals);
@@ -58,11 +58,10 @@ float lightAlpha(const uniform SciVis *uniform self,
           self->volumeSamplingRate * quality,
           false);
 
-      alpha *= 1.f - volumeColor.w;
+      alpha = alpha * make_vec3f(volumeColor.w);
     }
 
     // If any geometry has been hit
-    vec4f blendedColor;
     const bool hadHit = hadHit(ray);
     if (hadHit) {
       // Prepare differential geometry structure
@@ -70,8 +69,7 @@ float lightAlpha(const uniform SciVis *uniform self,
       postIntersect(world, &self->super, dg, ray, DG_COLOR | DG_TEXCOORD);
 
       const SciVisBSDF bsdf = evalMaterial(dg);
-
-      alpha *= 1.f - bsdf.opacity;
+      alpha = alpha * bsdf.transmission;
 
       // Prepare ray for next loop iteration,
       // start from the last geometry hit all over to initial Tfar
@@ -80,8 +78,9 @@ float lightAlpha(const uniform SciVis *uniform self,
       break;
     }
 
-    if (alpha * weight < 0.03f) {
-      alpha = 0.f;
+    // Check if there is enough contribution from this light
+    if (luminance(alpha * weight) < self->super.minContribution) {
+      alpha = make_vec3f(0.f);
       break;
     }
   }
