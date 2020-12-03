@@ -61,7 +61,7 @@ void DistributedRaycastRenderer::commit()
       getParam<int>("aoSamples", 0),
       getParam<float>("aoRadius", 1e20f),
       getParam<int>("shadowsEnabled", 0),
-      getParam<float>("volumeSamplingRate", 0.125f));
+      getParam<float>("volumeSamplingRate", 1.f));
 }
 
 std::shared_ptr<TileOperation> DistributedRaycastRenderer::tileOperation()

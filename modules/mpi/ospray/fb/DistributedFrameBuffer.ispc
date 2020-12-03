@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "fb/FrameBuffer.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/vec.ih"
 
 struct DistributedFrameBuffer
 {

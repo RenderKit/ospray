@@ -5,7 +5,7 @@
 #include "DistributedRenderer.ih"
 #include "common/Instance.ih"
 #include "common/World.ih"
-#include "math/box.ih"
+#include "rkcommon/math/box.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "openvkl/openvkl.isph"
