@@ -1,0 +1,36 @@
+// Copyright 2016-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#include "ospray/version.h"
+
+1 VERSIONINFO
+ FILEVERSION OSPRAY_MPI_VERSION_MAJOR,OSPRAY_MPI_VERSION_MINOR,OSPRAY_MPI_VERSION_PATCH,0
+ PRODUCTVERSION OSPRAY_MPI_VERSION_MAJOR,OSPRAY_MPI_VERSION_MINOR,OSPRAY_MPI_VERSION_PATCH,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Intel"
+            VALUE "FileDescription", "OSPRay Ray Tracing Rendering Engine MPI Module"
+            VALUE "FileVersion", OSPRAY_MPI_VERSION
+            VALUE "ProductVersion", OSPRAY_MPI_VERSION
+            VALUE "LegalCopyright", "© 2009-2020 Intel Corporation"
+            VALUE "InternalName", "OSPRay MPI"
+            VALUE "ProductName", "Intel® OSPRay"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
