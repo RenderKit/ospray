@@ -28,7 +28,7 @@ add_executable(ospMPIDistributedTutorial
   ${OSPRAY_MPI_RESOURCE} ospMPIDistributedTutorial.c)
 
 target_link_libraries(ospMPIDistributedTutorial PRIVATE
-  ospray::ospray
+  ospray
   ${MPI_C_LIBRARIES})
 
 target_include_directories(ospMPIDistributedTutorial PRIVATE
@@ -39,7 +39,7 @@ add_executable(ospMPIDistributedTutorialCpp
   ${OSPRAY_MPI_RESOURCE} ospMPIDistributedTutorial.cpp)
 
 target_link_libraries(ospMPIDistributedTutorialCpp PRIVATE
-  ospray::ospray
+  ospray
   rkcommon::rkcommon
   ${MPI_CXX_LIBRARIES})
 
@@ -54,7 +54,7 @@ add_executable(ospMPIDistributedTutorialAsync
   ${OSPRAY_MPI_RESOURCE} ospMPIDistributedTutorialAsync.c)
 
 target_link_libraries(ospMPIDistributedTutorialAsync PRIVATE
-  ospray::ospray
+  ospray
   ${MPI_C_LIBRARIES})
 
 target_include_directories(ospMPIDistributedTutorialAsync PRIVATE
@@ -68,8 +68,8 @@ add_library(mpi_tutorial_common STATIC
 
 target_link_libraries(mpi_tutorial_common PUBLIC
   rkcommon::rkcommon
-  ospray::ospray
-  imgui
+  ospray
+  ospray_imgui
   glfw
   arcball_camera
   ${OPENGL_LIBRARIES}
@@ -99,6 +99,6 @@ ospray_create_mpi_tutorial(ospMPIDistributedTutorialReplicatedData
 )
 
 target_link_libraries(ospMPIDistributedTutorialReplicatedData PUBLIC
-  ospray::ospray_testing
+  ospray_testing
 )
 

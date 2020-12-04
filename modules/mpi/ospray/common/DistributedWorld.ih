@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "ospray/SDK/common/World.ih"
+#include "ospray/common/World.ih"
 
 struct Region
 {

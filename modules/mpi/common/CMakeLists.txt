@@ -16,9 +16,9 @@ target_link_libraries(ospray_mpi_common
   PRIVATE
     snappy
   PUBLIC
-    ospray::ospray_sdk
     rkcommon::rkcommon
-    ospray::ospray_module_ispc
+    ospray_sdk
+    ospray_module_ispc
     ${MPI_CXX_LIBRARIES}
 )
 
@@ -31,7 +31,7 @@ target_include_directories(ospray_mpi_common
     ${MPI_CXX_INCLUDE_PATH}
 )
 
-if (ENABLE_PROFILING)
+if (OSPRAY_MPI_ENABLE_PROFILING)
 target_compile_definitions(ospray_mpi_common
   PUBLIC
     -DENABLE_PROFILING)

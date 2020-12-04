@@ -66,7 +66,7 @@ struct OSPRAY_MPI_INTERFACE SocketReaderFabric : public networking::Fabric
     recieving end to set up the info server so we can send back
     the root's info to the other ranks */
   SocketReaderFabric(const Group &parentGroup, const uint16_t port);
-  ~SocketReaderFabric();
+  ~SocketReaderFabric() override;
 
   SocketReaderFabric(const SocketReaderFabric &) = delete;
   SocketReaderFabric &operator=(const SocketReaderFabric &) = delete;
