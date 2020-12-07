@@ -179,7 +179,7 @@ struct StatusMsgStream : public std::stringstream
 {
   StatusMsgStream(uint32_t postAtLogLevel = OSP_LOG_DEBUG);
   StatusMsgStream(StatusMsgStream &&other);
-  ~StatusMsgStream();
+  ~StatusMsgStream() override;
 
  private:
   uint32_t logLevel{OSP_LOG_DEBUG};

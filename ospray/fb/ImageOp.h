@@ -34,9 +34,9 @@ struct OSPRAY_SDK_INTERFACE LiveImageOp
 struct OSPRAY_SDK_INTERFACE ImageOp : public ManagedObject
 {
   ImageOp();
-  virtual ~ImageOp() override = default;
+  ~ImageOp() override = default;
 
-  virtual std::string toString() const override;
+  std::string toString() const override;
 
   /*! Attach an image op to an existing framebuffer. Use this
    * to pass the params from the API to the instance of the image op
@@ -59,12 +59,12 @@ OSPTYPEFOR_SPECIALIZATION(ImageOp *, OSP_IMAGE_OPERATION);
 
 struct OSPRAY_SDK_INTERFACE TileOp : public ImageOp
 {
-  virtual ~TileOp() override = default;
+  ~TileOp() override = default;
 };
 
 struct OSPRAY_SDK_INTERFACE FrameOp : public ImageOp
 {
-  virtual ~FrameOp() override = default;
+  ~FrameOp() override = default;
   virtual vec2i haloSize()
   {
     return vec2i(0);
@@ -74,7 +74,7 @@ struct OSPRAY_SDK_INTERFACE FrameOp : public ImageOp
 struct OSPRAY_SDK_INTERFACE LiveTileOp : public LiveImageOp
 {
   LiveTileOp(FrameBufferView &fbView);
-  virtual ~LiveTileOp() override = default;
+  ~LiveTileOp() override = default;
 
   /*! called right after the tile got accumulated; i.e., the
     tile's RGBA values already contain the accu-buffer blended
@@ -87,7 +87,7 @@ struct OSPRAY_SDK_INTERFACE LiveTileOp : public LiveImageOp
 struct OSPRAY_SDK_INTERFACE LiveFrameOp : public LiveImageOp
 {
   LiveFrameOp(FrameBufferView &fbView);
-  virtual ~LiveFrameOp() override = default;
+  ~LiveFrameOp() override = default;
 
   virtual void process(const Camera *camera) = 0;
 };
