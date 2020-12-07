@@ -24,6 +24,10 @@ float lightAlpha(const uniform SciVis *uniform self,
   float alpha = 1.f;
   const float org_t_max = ray.t;
 
+  // Allocate memory for volume intervals
+  VolumeIntervals volumeIntervals;
+  allocVolumeIntervals(volumeIntervals);
+
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
   RayIntervals rayIntervals;
@@ -36,7 +40,6 @@ float lightAlpha(const uniform SciVis *uniform self,
 
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
-    VolumeIntervals volumeIntervals;
     traceVolumeRay(world, volumeRay, volumeIntervals);
 
     // Sample volumes across volume intervals (in front of geometry hit)
@@ -73,10 +76,16 @@ float lightAlpha(const uniform SciVis *uniform self,
       // Prepare ray for next loop iteration,
       // start from the last geometry hit all over to initial Tfar
       setRay(ray, ray.t + dg.epsilon, org_t_max);
-    } else
-      return alpha;
+    } else {
+      break;
+    }
 
-    if (alpha * weight < 0.03f)
-      return 0.f;
+    if (alpha * weight < 0.03f) {
+      alpha = 0.f;
+      break;
+    }
   }
+
+  freeVolumeIntervals(volumeIntervals);
+  return alpha;
 }

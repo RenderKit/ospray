@@ -6,7 +6,6 @@
 #include "embree3/rtcore.isph"
 
 #include "OSPConfig.h"
-#include "TLSPools.h"
 
 #ifndef ISPC_UINT_IS_DEFINED
 typedef unsigned int64 uint64;
@@ -41,6 +40,7 @@ export void delete_uniform(void *uniform uptr);
 extern "C" void *uniform malloc64(uniform uint64 size);
 extern "C" void free64(void *uniform ptr);
 
-/*! Thread Local Storage allocation */
-extern "C" void *uniform reallocTLS(
-    uniform TLSPoolsEnum pool, uniform uint64 size);
+/*! Thread Local Storage functions */
+extern "C" void *uniform pushTLS(uniform uint64 size);
+extern "C" void *uniform reallocTLS(void *uniform ptr, uniform uint64 size);
+extern "C" void popTLS(void *uniform ptr);

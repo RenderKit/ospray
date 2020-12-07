@@ -175,8 +175,8 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
 {
   // Array of volume contexts
   varying VolumeContext *uniform volumeContexts =
-      (varying VolumeContext * uniform) reallocTLS(TLSPOOL_VOLUME_CONTEXTS,
-          reduce_max(volumeIntervals.numVolumeIntervals)
+      (varying VolumeContext * uniform)
+          pushTLS(reduce_max(volumeIntervals.numVolumeIntervals)
               * sizeof(varying VolumeContext));
 
   // Sampling position jitter
@@ -279,5 +279,6 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
   }
 
   // Return final color
+  popTLS(volumeContexts);
   return make_vec4f(color, alpha);
 }

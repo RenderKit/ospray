@@ -31,19 +31,44 @@ extern "C" void free64(void *ptr)
 namespace {
 
 using TLSPool = containers::AlignedVector<uint8_t>;
-thread_local std::array<TLSPool, TLSPOOL_MAX> threadPools;
+thread_local std::vector<TLSPool> tlsStack;
+thread_local size_t topIndex = 0; // TLS stack top index
 } // namespace
 
-/*! Thread Local Storage allocation */
-extern "C" void *reallocTLS(TLSPoolsEnum pool, size_t size)
+extern "C" void *pushTLS(size_t size)
 {
-  // Get a pool
-  assert(pool < TLSPOOL_MAX);
-  TLSPool &tp = threadPools[pool];
+  // Grow stack
+  topIndex++;
+  if (topIndex > tlsStack.size())
+    tlsStack.resize(topIndex);
 
-  // And reallocate memory
+  // Grow pool
+  TLSPool &tp = tlsStack[topIndex - 1];
   tp.resize(size);
   return tp.data();
+}
+
+extern "C" void *reallocTLS(void *ptr, size_t size)
+{
+  // Silence 'unused variable' warning
+  (void)ptr;
+
+  // Grow pool
+  TLSPool &tp = tlsStack[topIndex - 1];
+  assert(ptr == tp.data());
+  tp.resize(size);
+  return tp.data();
+}
+
+extern "C" void popTLS(void *ptr)
+{
+  // Silence 'unused variable' warning
+  (void)ptr;
+
+  // Lower stack pointer
+  assert(topIndex > 0);
+  assert(ptr == tlsStack[topIndex - 1].data());
+  topIndex--;
 }
 
 WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel) : s(s)

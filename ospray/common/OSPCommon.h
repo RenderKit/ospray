@@ -26,7 +26,6 @@ typedef int ssize_t;
 #include "rkcommon/memory/malloc.h"
 
 // ospray
-#include "TLSPools.h"
 #include "ospray/ospray.h"
 #include "ospray/ospray_cpp/ext/rkcommon.h"
 #include "ospray/version.h"
@@ -110,8 +109,10 @@ extern "C" {
 OSPRAY_CORE_INTERFACE void *malloc64(size_t size);
 /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
 OSPRAY_CORE_INTERFACE void free64(void *ptr);
-/*! Thread Local Storage allocation */
-OSPRAY_CORE_INTERFACE void *reallocTLS(TLSPoolsEnum pool, size_t size);
+/*! Thread Local Storage functions */
+OSPRAY_CORE_INTERFACE void *pushTLS(size_t size);
+OSPRAY_CORE_INTERFACE void *reallocTLS(void *ptr, size_t size);
+OSPRAY_CORE_INTERFACE void popTLS(void *ptr);
 }
 
 OSPRAY_CORE_INTERFACE OSPDataType typeOf(const char *string);
