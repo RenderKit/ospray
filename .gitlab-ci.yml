@@ -438,7 +438,7 @@ release-windows:
 
 ### SCAN JOBS ###
 
-build-kw:
+kw-build:
   stage: scan1
   tags: [docker]
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
@@ -459,11 +459,11 @@ protex:
   script:
     - scripts/scan/protex.sh
 
-kw-critical:
+kw-scan:
   stage: scan2
   tags: [docker]
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
-  needs: [build-kw]
+  needs: [kw-build]
   script:
     - scripts/scan/kw.sh
 
