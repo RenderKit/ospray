@@ -83,7 +83,7 @@ inline void traceVolumeRay(
       &context.ectx,
       (varying RTCRayHit * uniform) & ray);
 
-  if (hasInterval(intervals.intervals[0])) {
+  if (intervals.numVolumeIntervals > 0 && hasInterval(intervals.intervals[0])) {
     Instance *instance = *(world->volumesInst + intervals.intervals[0].instID);
     interval.volumetricModel =
         instance->group->volumetricModels[intervals.intervals[0].geomID];

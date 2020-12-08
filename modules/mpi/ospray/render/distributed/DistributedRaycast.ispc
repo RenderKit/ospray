@@ -347,8 +347,6 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
     // Step the volume ray forwards as well
     volumeRay = geomRay;
 
-    // TODO: trace again at end of loop
-    // need to update geom ray though
     traceRay(&world->super, geomRay);
     traceVolumeRay(&world->super, volumeRay, volumeInterval);
   }
