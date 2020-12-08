@@ -16,6 +16,10 @@ struct Mesh
   Data1D normal;
   Data1D color;
   Data1D texcoord;
+  Data1D tex1d;
+  Data1D tex1d_elm;
+  Data1D atex1d;
+  Data1D atex1d_elm;
   int64 flagMask; // which attributes are missing and cannot be interpolated
   bool has_alpha; // 4th color component is valid
   bool is_triangleMesh;
@@ -137,6 +141,46 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
     dg.color = interpolate(uv, a, b, c);
     if (!self->has_alpha)
       dg.color.w = 1.f;
+  }
+
+  const bool is_pervert_tex1d = (bool)(flags & DG_TEX1D);
+  const bool is_perelem_tex1d = (bool)(flags & DG_TEX1D_ELM);
+  if (is_pervert_tex1d || is_perelem_tex1d){
+    float a, b, c;
+    if (is_pervert_tex1d) {
+        a = get_float(self->tex1d, index.x);
+        b = get_float(self->tex1d, index.y);
+        c = get_float(self->tex1d, index.z);
+        const vec2f a2 = {a, 0};
+        const vec2f b2 = {b, 0};
+        const vec2f c2 = {c, 0};
+        const vec2f out = interpolate(uv, a2, b2, c2);
+        dg.tex1d = out.x;
+    }
+    else {
+        const uint32 tid = ray.primID;
+        dg.tex1d = get_float(self->tex1d_elm, tid);
+    }
+  }
+
+  const bool is_pervert_atex1d = (bool)(flags & DG_ALPHATEX1D);
+  const bool is_perelem_atex1d = (bool)(flags & DG_ALPHATEX1D_ELM);
+  if (is_pervert_atex1d || is_perelem_atex1d){
+    float a, b, c;
+    if (is_pervert_atex1d) {
+        a = get_float(self->atex1d, index.x);
+        b = get_float(self->atex1d, index.y);
+        c = get_float(self->atex1d, index.z);
+        const vec2f a2 = {a, 0};
+        const vec2f b2 = {b, 0};
+        const vec2f c2 = {c, 0};
+        const vec2f out = interpolate(uv, a2, b2, c2);
+        dg.atex1d = out.x;
+    }
+    else {
+        const uint32 tid = ray.primID;
+        dg.atex1d = get_float(self->atex1d_elm, tid);
+    }
   }
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
@@ -278,6 +322,10 @@ export void *uniform Mesh_set(void *uniform _self,
     const Data1D *uniform normal,
     const Data1D *uniform color,
     const Data1D *uniform texcoord,
+    const Data1D *uniform tex1d,
+    const Data1D *uniform tex1d_elm,
+    const Data1D *uniform atex1d,
+    const Data1D *uniform atex1d_elm,
     uniform bool has_alpha,
     uniform bool is_triangleMesh)
 {
@@ -287,6 +335,10 @@ export void *uniform Mesh_set(void *uniform _self,
   self->normal = *normal;
   self->color = *color;
   self->texcoord = *texcoord;
+  self->tex1d = *tex1d;
+  self->tex1d_elm = *tex1d_elm;
+  self->atex1d = *atex1d;
+  self->atex1d_elm = *atex1d_elm;
   self->has_alpha = has_alpha;
   self->super.numPrimitives = index->numItems;
   self->is_triangleMesh = is_triangleMesh;
@@ -300,4 +352,17 @@ export void *uniform Mesh_set(void *uniform _self,
     self->flagMask &= ~DG_COLOR;
   if (!valid(self->texcoord))
     self->flagMask &= ~DG_TEXCOORD;
+
+  if (!valid(self->tex1d)) {
+    self->flagMask &= ~DG_TEX1D;
+  }
+  if (!valid(self->tex1d_elm)) {
+    self->flagMask &= ~DG_TEX1D_ELM;
+  }
+  if (!valid(self->atex1d)) {
+    self->flagMask &= ~DG_ALPHATEX1D;
+  }
+  if (!valid(self->atex1d_elm)) {
+    self->flagMask &= ~DG_ALPHATEX1D_ELM;
+  }
 }

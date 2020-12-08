@@ -27,6 +27,12 @@ void Mesh::commit()
   normalData = getParamDataT<vec3f>("vertex.normal");
   colorData = getParam<Data *>("vertex.color");
   texcoordData = getParamDataT<vec2f>("vertex.texcoord");
+
+  tex1dData = getParamDataT<float>("vertex.texcoord1d");
+  tex1dData_elm = getParamDataT<float>("vertex.texcoord1d_elm");
+  atex1dData = getParamDataT<float>("vertex.alphatexcoord1d");
+  atex1dData_elm = getParamDataT<float>("vertex.alphatexcoord1d_elm");
+
   indexData = getParamDataT<vec3ui>("index");
   if (!indexData)
     indexData = getParamDataT<vec4ui>("index", true);
@@ -54,6 +60,10 @@ void Mesh::commit()
       ispc(normalData),
       ispc(colorData),
       ispc(texcoordData),
+      ispc(tex1dData),
+      ispc(tex1dData_elm),
+      ispc(atex1dData),
+      ispc(atex1dData_elm),
       colorData && colorData->type == OSP_VEC4F,
       isTri);
 

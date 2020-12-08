@@ -20,7 +20,12 @@ typedef enum
   DG_TEXCOORD = (1 << 6), /*!< calculate texture coords st */
   DG_TANGENTS = (1 << 7), /*!< calculate tangents, i.e. the partial
                              derivatives of position wrt. texture coordinates */
-} DG_PostIntersectFlags;
+  DG_TEX1D = (1 << 8),      /*per vertex 1D texture, raw variable value */
+  DG_TEX1D_ELM = (1 << 9),  /*per element 1D texture, raw variable value */
+  DG_ALPHATEX1D = (1 << 10),    /*per vertex 1D alpha texture, raw variable value */
+  DG_ALPHATEX1D_ELM = (1 << 11),/*per element 1D alpha texture, raw variable value */
+}
+DG_PostIntersectFlags;
 
 /*! differential geometry information that gives more detailed
     information on the actual geometry that a ray has hit */
@@ -40,6 +45,8 @@ struct DifferentialGeometry
   vec3f dPdt; //!< bi-tangent, the partial derivative of the hit-point wrt.
               //!< texcoord t
   vec2f st; //!< texture coordinates if DG_TEXCOORD was set
+  float tex1d;  /* texture coordinate 1D (raw variable value) */
+  float atex1d; /* alpha texture coordinate 1D (raw variable value) */
   vec4f color; /*! interpolated vertex color (rgba) if DG_COLOR was set;
                  defaults to vec4f(1.f) if queried but not present in geometry
                  */

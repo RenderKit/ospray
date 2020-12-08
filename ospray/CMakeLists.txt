@@ -220,6 +220,37 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   volume/transferFunction/registration.cpp
 )
 
+# This will be our group of resource files
+set(project_ispc_FILES
+    common/DifferentialGeometry.ih
+    common/OSPCommon.ih
+
+    geometry/Mesh.ispc
+
+    math/AffineSpace.ih
+    math/interpolation.ih
+    math/LinearSpace.ih
+    math/math.ih
+    math/vec.ih
+    texture/Texture2D.ih
+    texture/Texture2D.ispc
+    texture/TextureParam.ih
+    texture/TextureParam.ispc
+    texture/TextureVolume.ispc
+)
+
+# Set properties for this group of files
+set_source_files_properties(
+  ${project_ispc_FILES}
+  PROPERTIES
+  HEADER_FILE_ONLY TRUE # Since it's just a text file, it doesn't need compiled
+)
+
+# Bonus points unlocked :)
+source_group(
+  "ISPC Files" FILES ${project_ispc_FILES}
+)
+
 # -------------------------------------------------------
 # Install SDK headers
 # -------------------------------------------------------
@@ -248,7 +279,7 @@ endforeach()
 # Build the ospray library
 ##############################################################
 
-add_library(ospray SHARED ${OSPRAY_SOURCES})
+add_library(ospray SHARED ${OSPRAY_SOURCES} ${project_ispc_FILES})
 target_link_libraries(ospray PUBLIC $<BUILD_INTERFACE:rkcommon::rkcommon>)
 target_compile_definitions(ospray PRIVATE OSPRAY_CPP_RKCOMMON_TYPES)
 ospray_install_library(ospray lib)
