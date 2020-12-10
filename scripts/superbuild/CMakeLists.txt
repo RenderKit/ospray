@@ -72,17 +72,14 @@ option(BUILD_GLFW "Build glfw for OSPRay examples or use one in existing environ
 option(BUILD_DEPENDENCIES_ONLY "Don't build OSPRay itself, only its dependencies" OFF)
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
-option(BUILD_OSPRAY_MODULE_MPI "Enable fetch/build of module_mpi" OFF)
-set(BUILD_OSPRAY_MODULE_MPI_VERSION "v2.4.0" CACHE STRING "What version of module_mpi?")
-
-# MPI needs working SDK, which rules out installed depedencies
-cmake_dependent_option(INSTALL_DEPENDENCIES "Install OSPRay dependencies" ON
-  "NOT BUILD_OSPRAY_MODULE_MPI" OFF)
+option(BUILD_OSPRAY_MODULE_MPI "Enable building module_mpi" OFF)
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
   ON
 )
+
+option(INSTALL_DEPENDENCIES "Install OSPRay dependencies" ON)
 
 ## Setup top-level variables ##
 
@@ -123,9 +120,11 @@ include(dep_glm)
 ## Build main projects ##
 set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} ${PARALLEL_JOBS_OPTS})
 
+if (BUILD_OSPRAY_MODULE_MPI)
+  set(OSPRAY_ENABLE_MODULES ON)
+  set(OSPRAY_MODULE_MPI ON)
+endif()
+
 if (NOT BUILD_DEPENDENCIES_ONLY)
   include(build_ospray.cmake)
-  if (BUILD_OSPRAY_MODULE_MPI)
-    include(build_module_mpi.cmake)
-  endif()
 endif()

@@ -19,7 +19,6 @@ cd $SRC_PATH
 # scan additional source
 cmake -DBUILD_OSPRAY_MODULE_MPI=ON scripts/superbuild
 cmake --build . --target rkcommon-download
-cmake --build . --target module_mpi-download
 rm -rf CMakeFiles
 
 

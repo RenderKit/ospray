@@ -178,21 +178,40 @@ build-centos7-gcc:
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   <<: *build_artifacts
 
-build-centos7-mpi:
+build-centos7-mpi-impi:
   <<: *build_job_docker_modules
   script:
     - module load cmake
     - module load intel
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
-  allow_failure: true
 
-build-centos7-mpi-devel:
+build-centos7-mpi-openmpi:
   <<: *build_job_docker_modules
   script:
     - module load cmake
-    - module load intel
-    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MPI_VERSION=devel
-  allow_failure: true
+    - module load mpi/openmpi-x86_64
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+
+build-centos7-mpi-mpich:
+  <<: *build_job_docker_modules
+  script:
+    - module load cmake
+    - module load mpi/mpich-x86_64
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+
+build-centos8-mpi-openmpi:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  script:
+    - module load mpi/openmpi-x86_64
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+
+build-centos8-mpi-mpich:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  script:
+    - module load mpi/mpich-x86_64
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
 build-linux-debug:
   <<: *build_job_docker
