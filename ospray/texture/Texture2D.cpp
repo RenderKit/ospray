@@ -49,10 +49,9 @@ void Texture2D::commit()
 
   bool hascolorby = false;
   {
-    const char *colormapping = static_cast<const char *>(
-        getParam<const char *>("tex1dcolormapping", nullptr));
-    if (colormapping && colormapping[0]) {
-      EnsightTex1dMapping mapping(colormapping);
+    const auto colormapping = getParam<std::string>("tex1dcolormapping", "");
+    if (!colormapping.empty()) {
+      EnsightTex1dMapping mapping(colormapping.c_str());
       this->map1d = mapping.d;
       hascolorby = true;
     }
@@ -60,10 +59,9 @@ void Texture2D::commit()
 
   bool hasalphaby = false;
   if (!hascolorby) {
-    const char *alphamapping = static_cast<const char *>(
-        getParam<const char *>("tex1dalphamapping", nullptr));
-    if (alphamapping && alphamapping[0]) {
-      EnsightTex1dMapping mapping(alphamapping);
+    const auto alphamapping = getParam<std::string>("tex1dalphamapping", "");
+    if (!alphamapping.empty()) {
+      EnsightTex1dMapping mapping(alphamapping.c_str());
       this->map1d = mapping.d;
       hasalphaby = true;
     }
