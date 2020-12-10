@@ -5,7 +5,23 @@ cmake_dependent_option(
   OSPRAY_MODULE_MPI
   "Build the MPI module (Requires ISPC module)"
   OFF
-  OSPRAY_ENABLE_MODULES # can I put an AND here?
+  OSPRAY_ENABLE_MODULES
+  OFF
+)
+
+cmake_dependent_option(
+  OSPRAY_MPI_BUILD_TUTORIALS
+  "Enable MPI module sample apps"
+  OFF
+  OSPRAY_MODULE_MPI
+  OFF
+)
+
+cmake_dependent_option(
+  OSPRAY_MPI_ENABLE_PROFILING
+  "Enable MPI module internal profiling"
+  OFF
+  OSPRAY_MODULE_MPI
   OFF
 )
 
@@ -13,13 +29,9 @@ if (NOT OSPRAY_MODULE_MPI)
   return()
 endif()
 
-
 find_package(MPI REQUIRED)
 
 rkcommon_configure_build_type()
-
-option(OSPRAY_MPI_BUILD_TUTORIALS "Enable MPI module sample apps" OFF)
-option(OSPRAY_MPI_ENABLE_PROFILING "Enable MPI module internal profiling" OFF)
 
 add_subdirectory(common)
 add_subdirectory(external)
