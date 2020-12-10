@@ -121,6 +121,10 @@ BUILD_OIDN_FROM_SOURCE
 BUILD_OIDN_VERSION
 : determines which version of Open Image Denoise to pull down.
 
+BUILD_OSPRAY_MODULE_MPI
+: set to ON to build OSPRay's MPI module for data-replicated and
+distributed parallel rendering on multiple nodes.
+
 For the full set of options, run:
 
     ccmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
