@@ -21,7 +21,7 @@ SunSkyLight::SunSkyLight()
   static auto filter =
       static_cast<OSPTextureFilter>(OSP_TEXTURE_FILTER_BILINEAR);
   map = (Texture2D *)ispc::Texture2D_create(
-      (ispc::vec2i &)skySize, skyImage.data(), format, filter);
+      (ispc::vec2i &)skySize, skyImage.data(), format, filter, nullptr);
 }
 
 std::string SunSkyLight::toString() const

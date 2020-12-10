@@ -200,6 +200,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/pathtracer/materials/Mix.ispc
   render/pathtracer/materials/Mix.cpp
 
+  texture/Mapping.cpp
   texture/Texture.cpp
   texture/Texture2D.cpp
   texture/Texture2D.ispc

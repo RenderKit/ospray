@@ -40,6 +40,9 @@ void OBJMaterial::commit()
     Tf /= color_total;
   }
 
+  ispc::TextureParam colorbyTex = getTextureParam("map_colorby");
+  ispc::TextureParam alphabyTex = getTextureParam("map_alphaby");
+
   ispc::PathTracer_OBJ_set(ispcEquivalent,
       d.tex,
       d.factor,
@@ -51,7 +54,10 @@ void OBJMaterial::commit()
       Ns.factor,
       (const ispc::vec3f &)Tf,
       bumpTex,
-      (const ispc::LinearSpace2f &)bumpRot);
+      (const ispc::LinearSpace2f &)bumpRot,
+      colorbyTex,
+      alphabyTex
+      );
 }
 
 } // namespace pathtracer

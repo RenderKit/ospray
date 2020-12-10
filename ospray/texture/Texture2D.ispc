@@ -328,7 +328,9 @@ static uniform Texture2D_getN Texture2D_getN_addr(
 export void *uniform Texture2D_create(uniform vec2i &size,
     void *uniform data,
     uniform uint32 type,
-    uniform uint32 flags)
+    uniform uint32 flags,
+    void *uniform map1d
+    )
 {
   Texture2D *uniform self = uniform new Texture2D;
   self->size = size;
@@ -341,7 +343,9 @@ export void *uniform Texture2D_create(uniform vec2i &size,
       nextafter((float)size.x, -1.0f), nextafter((float)size.y, -1.0f));
   self->halfTexel = make_vec2f(0.5f / size.x, 0.5f / size.y);
   self->data = data;
+  self->map1d = (uniform EnsightTex1dMappingData *)map1d;
   self->get = Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
+  self->get1d = NULL;//Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
   self->getNormal =
       Texture2D_getN_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
   self->hasAlpha = type == OSP_TEXTURE_RGBA8 || type == OSP_TEXTURE_SRGBA

@@ -151,15 +151,12 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
         a = get_float(self->tex1d, index.x);
         b = get_float(self->tex1d, index.y);
         c = get_float(self->tex1d, index.z);
-        const vec2f a2 = {a, 0};
-        const vec2f b2 = {b, 0};
-        const vec2f c2 = {c, 0};
+        const vec2f a2 = {a, 0}, b2 = {b, 0}, c2 = {c, 0};
         const vec2f out = interpolate(uv, a2, b2, c2);
         dg.tex1d = out.x;
     }
     else {
-        const uint32 tid = ray.primID;
-        dg.tex1d = get_float(self->tex1d_elm, tid);
+        dg.tex1d = get_float(self->tex1d_elm, ray.primID);
     }
   }
 
@@ -171,15 +168,12 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
         a = get_float(self->atex1d, index.x);
         b = get_float(self->atex1d, index.y);
         c = get_float(self->atex1d, index.z);
-        const vec2f a2 = {a, 0};
-        const vec2f b2 = {b, 0};
-        const vec2f c2 = {c, 0};
+        const vec2f a2 = {a, 0}, b2 = {b, 0}, c2 = {c, 0};
         const vec2f out = interpolate(uv, a2, b2, c2);
         dg.atex1d = out.x;
     }
     else {
-        const uint32 tid = ray.primID;
-        dg.atex1d = get_float(self->atex1d_elm, tid);
+        dg.atex1d = get_float(self->atex1d_elm, ray.primID);
     }
   }
 

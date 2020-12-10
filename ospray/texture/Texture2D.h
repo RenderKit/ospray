@@ -5,6 +5,7 @@
 
 #include "Texture.h"
 #include "common/Data.h"
+#include "texture/Mapping.h"
 
 namespace ospray {
 
@@ -19,9 +20,11 @@ struct OSPRAY_SDK_INTERFACE Texture2D : public Texture
 
   OSPTextureFormat format{OSP_TEXTURE_FORMAT_INVALID};
   OSPTextureFilter filter{OSP_TEXTURE_FILTER_BILINEAR};
+  EnsightTex1dMappingData map1d;
 
  protected:
   Ref<const Data> texData;
 };
 
 } // namespace ospray
+  

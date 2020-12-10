@@ -23,6 +23,8 @@ struct OBJ
   TextureParam bumpMap;
   linear2f bumpRot; // just the inverse of rotational/mirror part (must be
                     // orthonormal) of tc xfrom
+  TextureParam colorbyMap;
+  TextureParam alphabyMap;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -54,6 +56,16 @@ const varying BSDF *varying OBJ_getBSDF(
     d *= Kd_from_map.w;
   }
   Kd = Kd * d * make_vec3f(dg.color);
+
+  if (valid(self->colorbyMap)) {
+    bool usergba = false;
+    float rgba[4];
+    float t = EnsightTex1dMapping_getT(self->colorbyMap.ptr->map1d, dg.tex1d, &usergba, rgba);
+    if (t < 0) t = 0;
+    if (t > 1) t = 1;
+    Kd.x = Kd.y = Kd.z = t;
+  }
+
   if (reduce_max(Kd) > 0.0f)
     MultiBSDF_add(
         bsdf, Lambert_create(ctx, shadingFrame, Kd), 1.f, luminance(Kd));
@@ -108,7 +120,10 @@ export void PathTracer_OBJ_set(void *uniform _self,
     const uniform float Ns,
     const uniform vec3f &Tf,
     const uniform TextureParam &bumpMap,
-    const uniform linear2f &bumpRot)
+    const uniform linear2f &bumpRot,
+    const uniform TextureParam &colorbyMap,
+    const uniform TextureParam &alphabyMap
+    )
 {
   uniform OBJ *uniform self = (uniform OBJ * uniform) _self;
   self->dMap = dMap;
@@ -122,6 +137,8 @@ export void PathTracer_OBJ_set(void *uniform _self,
   self->Tf = Tf;
   self->bumpMap = bumpMap;
   self->bumpRot = bumpRot;
+  self->colorbyMap = colorbyMap;
+  self->alphabyMap = alphabyMap;
 }
 
 void OBJ_Constructor(uniform OBJ *uniform self)
@@ -140,7 +157,10 @@ void OBJ_Constructor(uniform OBJ *uniform self)
       2.0f,
       make_vec3f(0.f),
       tex,
-      make_LinearSpace2f_identity());
+      make_LinearSpace2f_identity(),
+      tex,
+      tex
+      );
 }
 
 export void *uniform PathTracer_OBJ_create()

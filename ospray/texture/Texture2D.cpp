@@ -47,8 +47,32 @@ void Texture2D::commit()
         + "' does not match type of 'data'='" + stringFor(texData->type)
         + "'!");
 
+  bool hascolorby = false;
+  {
+    const char *colormapping = static_cast<const char *>(
+        getParam<const char *>("tex1dcolormapping", nullptr));
+    if (colormapping && colormapping[0]) {
+      EnsightTex1dMapping mapping(colormapping);
+      this->map1d = mapping.d;
+      hascolorby = true;
+    }
+  }
+
+  bool hasalphaby = false;
+  if (!hascolorby) {
+    const char *alphamapping = static_cast<const char *>(
+        getParam<const char *>("tex1dalphamapping", nullptr));
+    if (alphamapping && alphamapping[0]) {
+      EnsightTex1dMapping mapping(alphamapping);
+      this->map1d = mapping.d;
+      hasalphaby = true;
+    }
+  }
+
+  void *map1d = (hascolorby || hasalphaby) ? &this->map1d : nullptr;
+
   this->ispcEquivalent = ispc::Texture2D_create(
-      (ispc::vec2i &)size, texData->data(), format, filter);
+      (ispc::vec2i &)size, texData->data(), format, filter, map1d);
 }
 
 } // namespace ospray
