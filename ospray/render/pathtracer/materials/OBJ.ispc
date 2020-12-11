@@ -60,10 +60,18 @@ const varying BSDF *varying OBJ_getBSDF(
   if (valid(self->colorbyMap)) {
     bool usergba = false;
     float rgba[4];
-    float t = EnsightTex1dMapping_getT(self->colorbyMap.ptr->map1d, dg.tex1d, &usergba, rgba);
-    if (t < 0) t = 0;
-    if (t > 1) t = 1;
-    Kd.x = Kd.y = Kd.z = t;
+    const float t = EnsightTex1dMapping_getT(self->colorbyMap.ptr->map1d, dg.tex1d, &usergba, rgba);
+    if (usergba){
+        Kd.x = rgba[0], Kd.y = rgba[1], Kd.z = rgba[2];
+    }
+    else {
+        DifferentialGeometry *p = (DifferentialGeometry *)&dg;
+        const vec2f st_backup = p->st; {
+            p->st.x = t, p->st.y = 0.5;
+            Kd = get3f(self->colorbyMap, dg, make_vec3f(1.f));
+        }
+        p->st = st_backup;
+    }
   }
 
   if (reduce_max(Kd) > 0.0f)

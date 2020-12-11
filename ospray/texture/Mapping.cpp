@@ -93,20 +93,6 @@ void EnsightTex1dMapping::fromString(const char *data)
         d.m_len = 0;
     }
 }
-/*
-void EnsightTex1dMapping::Map(const DifferentialGeometry &dg, bool *usergba, float rgba[4],
-    float *s, float *t, float *dsdx, float *dtdx, float *dsdy, float *dtdy) const
-{
-    const float u = m_isAlphaTexture1D ? dg.u3 : dg.u2;
-    *s = getT(u, usergba, rgba);
-    *t = 0.5f;
-    *dsdx = 0;
-    *dtdx = 0;
-    *dsdy = 0;
-    *dtdy = 0;
-}
-*/
-
 
 float EnsightTex1dMapping::getT(float x, bool *usergba, float rgba[4]) const
 {

@@ -345,7 +345,7 @@ export void *uniform Texture2D_create(uniform vec2i &size,
   self->data = data;
   self->map1d = (uniform EnsightTex1dMappingData *)map1d;
   self->get = Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
-  self->get1d = NULL;//Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
+  self->get1d = NULL;
   self->getNormal =
       Texture2D_getN_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
   self->hasAlpha = type == OSP_TEXTURE_RGBA8 || type == OSP_TEXTURE_SRGBA
