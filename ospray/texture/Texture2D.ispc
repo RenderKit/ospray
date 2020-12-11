@@ -182,8 +182,10 @@ inline BilinCoords bilinear_coords(const Texture2D *uniform self, const vec2f p)
 
   // repeat: get remainder within [0..1] parameter space
   // lower sample shifted by half a texel
-  vec2f tc = frac(p - self->halfTexel);
-  tc = max(tc, make_vec2f(0.0f)); // filter out inf/NaN
+  //vec2f tc = frac(p - self->halfTexel);
+  //tc = max(tc, make_vec2f(0.0f)); // filter out inf/NaN
+  vec2f p1 = max(p, self->halfTexel);
+  vec2f tc = frac(p1 - self->halfTexel);
 
   // scale by texture size
   tc = tc * self->sizef;
@@ -193,9 +195,9 @@ inline BilinCoords bilinear_coords(const Texture2D *uniform self, const vec2f p)
   coords.st1 = coords.st0 + 1;
   // handle border cases
   if (coords.st1.x >= self->size.x)
-    coords.st1.x = 0;
+    coords.st1.x = self->size.x - 1;
   if (coords.st1.y >= self->size.y)
-    coords.st1.y = 0;
+    coords.st1.y = self->size.y - 1;
 
   return coords;
 }

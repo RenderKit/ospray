@@ -143,8 +143,8 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
       dg.color.w = 1.f;
   }
 
-  const bool is_pervert_tex1d = (bool)(flags & DG_TEX1D);
-  const bool is_perelem_tex1d = (bool)(flags & DG_TEX1D_ELM);
+  const bool is_pervert_tex1d = valid(self->tex1d);
+  const bool is_perelem_tex1d = valid(self->tex1d_elm);
   if (is_pervert_tex1d || is_perelem_tex1d){
     float a, b, c;
     if (is_pervert_tex1d) {
@@ -160,8 +160,8 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
     }
   }
 
-  const bool is_pervert_atex1d = (bool)(flags & DG_ALPHATEX1D);
-  const bool is_perelem_atex1d = (bool)(flags & DG_ALPHATEX1D_ELM);
+  const bool is_pervert_atex1d = valid(self->atex1d);
+  const bool is_perelem_atex1d = valid(self->atex1d_elm);
   if (is_pervert_atex1d || is_perelem_atex1d){
     float a, b, c;
     if (is_pervert_atex1d) {
