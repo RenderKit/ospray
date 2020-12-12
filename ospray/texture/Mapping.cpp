@@ -61,37 +61,50 @@ EnsightTex1dMapping::EnsightTex1dMapping(const char *s)
 
 void EnsightTex1dMapping::fromString(const char *data)
 {
-    if (data == NULL || data[0] == 0) return;
-    //std::cout << data << std::endl;
-    std::stringstream ss(data);
-    int ver, tmp;
-    ss >> ver >> tmp;
-    if (ver != 10200){
-        fprintf(stderr, "Error: not supported EnsightTex1dMapping version number!\n");
-        return;
+  if (data == NULL || data[0] == 0)
+    return;
+  // std::cout << data << std::endl;
+  std::stringstream ss(data);
+  int ver, tmp;
+  ss >> ver >> tmp;
+  if (!((ver == 10200) || (ver == 10300))) {
+    fprintf(
+        stderr, "Error: not supported EnsightTex1dMapping version number!\n");
+    return;
+  }
+  for (int i = 0; i < 4; i++) {
+    ss >> d.m_partcolor[i];
+  }
+  if (ver >= 10300) {
+    for (int i = 0; i < 4; i++) {
+      ss >> d.m_usercolor[i];
     }
-    for (int i = 0; i < 4; i++){
-        ss >> d.m_partcolor[i];
+  } else {
+    for (int i = 0; i < 4; i++) {
+      d.m_usercolor[i] = d.m_partcolor[i];
     }
-    ss >> tmp; d.m_dispundef = DisplayUndefinedType(tmp);
-    ss >> tmp; d.m_limitfringe = LimitFringeType(tmp);
-    ss >> tmp; d.m_intp = InterpolationType(tmp);
-    ss >> d.m_len;
-    memset(d.m_levels, 0, sizeof(d.m_levels));
-    memset(d.m_values, 0, sizeof(d.m_values));
-    if (d.m_len > 0){
-        for (int i = 0; i < d.m_len; i++){
-            ss >> d.m_levels[i];
-        }
-        for (int i = 0; i < d.m_len; i++){
-            ss >> d.m_values[i];
-        }
-        ss >> d.m_tmin;
-        ss >> d.m_tmax;
+  }
+  ss >> tmp;
+  d.m_dispundef = DisplayUndefinedType(tmp);
+  ss >> tmp;
+  d.m_limitfringe = LimitFringeType(tmp);
+  ss >> tmp;
+  d.m_intp = InterpolationType(tmp);
+  ss >> d.m_len;
+  memset(d.m_levels, 0, sizeof(d.m_levels));
+  memset(d.m_values, 0, sizeof(d.m_values));
+  if (d.m_len > 0) {
+    for (int i = 0; i < d.m_len; i++) {
+      ss >> d.m_levels[i];
     }
-    else{
-        d.m_len = 0;
+    for (int i = 0; i < d.m_len; i++) {
+      ss >> d.m_values[i];
     }
+    ss >> d.m_tmin;
+    ss >> d.m_tmax;
+  } else {
+    d.m_len = 0;
+  }
 }
 
 float EnsightTex1dMapping::getT(float x, bool *usergba, float rgba[4]) const
