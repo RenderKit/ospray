@@ -13,6 +13,7 @@
  *   Software clause at 52.227-7013.
  ***************************************************************/
 #include "Mapping.h"
+#include "Mapping.ispc"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -107,7 +108,15 @@ void EnsightTex1dMapping::fromString(const char *data)
   }
 }
 
-float EnsightTex1dMapping::getT(float x, bool *usergba, float rgba[4]) const
+float EnsightTex1dMapping::getT(
+    float x, bool *usergba, float rgba[4]) const
 {
-    return EnsightTex1dMapping_getT(&this->d, x, usergba, rgba);
+  const EnsightTex1dMappingOut out = EnsightTex1dMapping_getT(&this->d, x);
+  *usergba = out.usergba;
+  if (out.usergba) {
+    for (int i = 0; i < 4; i++) {
+      rgba[i] = out.rgba[i];
+    }
+  }
+  return out.t;
 }

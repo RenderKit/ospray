@@ -134,77 +134,17 @@ public:
 #endif
 
 #ifdef ISPC
-typedef bool<2> bvec2;
-typedef int<2> ivec2;
-typedef float<3> vec3;
 #define FLT_ISNAN isnan
 #endif
 
-
-inline float EnsightTex1dMapping_getT(
-    const EnsightTex1dMappingData *d,
-    float x,
-    varying bool *usergba,
-    varying float *rgba)
+struct EnsightTex1dMappingOut
 {
-  *usergba = false;
-  bool hasnan = false;
-  if (FLT_ISNAN(x)) {
-    if (DISPUNDEFINED_BY_USERCOLOR == d->m_dispundef) {
-      *usergba = true;
-      for (int i = 0; i < 4; i++)
-        rgba[i] = d->m_usercolor[i];
-      return 0;
-    }
-    if (DISPUNDEFINED_BY_INVISIBLE == d->m_dispundef) {
-      // cannot handle INVISIBLE yet!
-      return 0;
-    }
-    hasnan = true;
-    x = 0;
-  }
+  float t;          //1. texture coordinate value,
+  float rgba[4];    //2. or use a given color
+  bool usergba;     //which to choose, use color or not?
+};
 
-  const int len1 = d->m_len - 1;
-  const float x0 = d->m_levels[0], x1 = d->m_levels[len1];
-  float clampedx = clamp(x, x0, x1);
-  if (!hasnan && x != clampedx) {
-    if (FRINGELIMIT_BY_PARTCOLOR == d->m_limitfringe) {
-      *usergba = true;
-      for (int i = 0; i < 4; i++)
-        rgba[i] = d->m_partcolor[i];
-      return 0;
-    } else if (FRINGELIMIT_BY_INVISIBLE == d->m_limitfringe) {
-      // cannot handle INVISIBLE yet!
-      return 0;
-    }
-  }
-  x = clampedx;
-
-  float t;
-  if (x <= x0) {
-    t = d->m_values[0];
-  } else if (x >= x1) {
-    t = d->m_values[len1];
-  } else {
-    int low = 0, high = len1;
-    while (high - low > 1) {
-      const int mid = (low + high) >> 1;
-      if (x >= d->m_levels[mid]) {
-        low = mid;
-      } else {
-        high = mid;
-      }
-    }
-    t = d->m_values[low];
-    if (high != low) {
-      const float t0 = (x - d->m_levels[low]) / (d->m_levels[high] - d->m_levels[low]);
-      t += (d->m_values[high] - d->m_values[low]) * t0;
-    }
-  }
-
-  return clamp(t, d->m_tmin, d->m_tmax);
-}
-
+extern EnsightTex1dMappingOut EnsightTex1dMapping_getT(const EnsightTex1dMappingData *d, float x);
 
 
 #endif

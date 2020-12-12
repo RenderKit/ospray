@@ -58,17 +58,16 @@ const varying BSDF *varying OBJ_getBSDF(
   Kd = Kd * d * make_vec3f(dg.color);
 
   if (valid(self->colorbyMap)) {
-    bool usergba = false;
-    float rgba[4];
-    const float t = EnsightTex1dMapping_getT(self->colorbyMap.ptr->map1d, dg.tex1d, &usergba, rgba);
-    if (usergba){
-        Kd.x = rgba[0], Kd.y = rgba[1], Kd.z = rgba[2];
+    const EnsightTex1dMappingOut out = EnsightTex1dMapping_getT(self->colorbyMap.ptr->map1d, dg.tex1d);
+    if (out.usergba){
+        Kd.x = out.rgba[0], Kd.y = out.rgba[1], Kd.z = out.rgba[2];
     }
     else {
         DifferentialGeometry *p = (DifferentialGeometry *)&dg;
         const vec2f st_backup = p->st; {
-            p->st.x = t, p->st.y = 0.5;
-            Kd = get3f(self->colorbyMap, dg, make_vec3f(1.f));
+            p->st.x = out.t, p->st.y = 0.5;
+            Kd = get3f(self->colorbyMap, dg);
+            //Kd.x = Kd.y = Kd.z = out.t;
         }
         p->st = st_backup;
     }

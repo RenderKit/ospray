@@ -6,7 +6,7 @@
 #include "../common/DifferentialGeometry.ih"
 #include "math/vec.ih"
 #include "ospray/OSPEnums.h"
-#include "texture/Mapping.h"
+#include "texture/Mapping.ih"
 
 struct Texture2D;
 
