@@ -145,12 +145,11 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
 
   const bool is_pervert_tex1d = valid(self->tex1d);
   const bool is_perelem_tex1d = valid(self->tex1d_elm);
-  if (is_pervert_tex1d || is_perelem_tex1d){
-    float a, b, c;
+  if (is_pervert_tex1d || is_perelem_tex1d) {
     if (is_pervert_tex1d) {
-        a = get_float(self->tex1d, index.x);
-        b = get_float(self->tex1d, index.y);
-        c = get_float(self->tex1d, index.z);
+        const float a = get_float(self->tex1d, index.x);
+        const float b = get_float(self->tex1d, index.y);
+        const float c = get_float(self->tex1d, index.z);
         const vec2f a2 = {a, 0}, b2 = {b, 0}, c2 = {c, 0};
         const vec2f out = interpolate(uv, a2, b2, c2);
         dg.tex1d = out.x;
