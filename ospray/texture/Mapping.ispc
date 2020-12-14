@@ -70,10 +70,8 @@ EnsightTex1dMappingOut EnsightTex1dMapping_getT(const EnsightTex1dMappingData *d
       }
     }
     t = d->m_values[low];
-    if (high != low) {
-      const float t0 = (x - d->m_levels[low]) / (d->m_levels[high] - d->m_levels[low]);
-      t += (d->m_values[high] - d->m_values[low]) * t0;
-    }
+    const float t0 = (x - d->m_levels[low]) / (d->m_levels[high] - d->m_levels[low]);
+    t += (d->m_values[high] - d->m_values[low]) * t0;
   }
 
   out.t = clamp(t, d->m_tmin, d->m_tmax);
