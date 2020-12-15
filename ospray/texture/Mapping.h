@@ -142,7 +142,7 @@ struct EnsightTex1dMappingOut
   float t;          //1. texture coordinate value,
   float rgba[4];    //2. or use a given color
   bool usergba;     //which to choose, use color or not?
-  bool interpl;     //when using t for lookup, whether use linear interp. on the palette or not
+  bool isbanded;    //when tex lookup, whether use linear interp. on the palette or not, banded tex will not
 };
 
 extern EnsightTex1dMappingOut EnsightTex1dMapping_getT(const EnsightTex1dMappingData *d, float x);

@@ -356,3 +356,43 @@ export void *uniform Texture2D_create(uniform vec2i &size,
       || type == OSP_TEXTURE_RA16;
   return self;
 }
+
+inline vec3f sampleTexture1D(const Texture2D *tex, float t, bool isbanded) {
+    const vec3f *pal = (const vec3f *)tex->data;
+    const int size1 = tex->size.x - 1;
+    vec3f out;
+    if (t <= 0.0f) {
+        out = pal[0];
+    }
+    else {
+        const float indexf = t * tex->sizef.x;     
+        if (indexf >= size1) {
+            out = pal[size1];
+        }
+        else{
+            const float tmp = floor(indexf);
+            const int index = (int)tmp;
+            if (isbanded) {
+                out = pal[index];
+            }
+            else {
+                const float dt = indexf - tmp;
+                out = pal[index] * (1.0f - dt) + pal[index + 1] * dt;
+            }
+        }
+    }
+    return out;
+};
+
+vec3f sampleTexture1DByRawVar(const Texture2D *tex, float t)
+{
+    const EnsightTex1dMappingOut out = EnsightTex1dMapping_getT(tex->map1d, t);
+    vec3f ret;
+    if (out.usergba){
+        ret.x = out.rgba[0], ret.y = out.rgba[1], ret.z = out.rgba[2];
+    }
+    else {
+        ret = sampleTexture1D(tex, out.t, out.isbanded);
+    }
+    return ret;
+}

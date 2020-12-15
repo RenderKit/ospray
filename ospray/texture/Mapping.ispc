@@ -18,8 +18,8 @@ EnsightTex1dMappingOut EnsightTex1dMapping_getT(const EnsightTex1dMappingData *d
 {
   EnsightTex1dMappingOut out;
   out.usergba = false;
+  out.isbanded = (d->m_intp == Banded);
   out.t = 0;
-  out.interpl = (d->m_intp != Banded);
   bool hasnan = false;
   if (FLT_ISNAN(x)) {
     if (DISPUNDEFINED_BY_USERCOLOR == d->m_dispundef) {

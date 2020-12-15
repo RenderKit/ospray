@@ -7,36 +7,6 @@
 #include "render/pathtracer/bsdfs/Specular.ih"
 #include "render/pathtracer/bsdfs/Transmission.ih"
 
-#include "texture/Texture2D.ih"
-
-
-inline vec3f sampleTexture1D(const Texture2D *tex, float t, bool interpl) {
-    const vec3f *pal = (const vec3f *)tex->data;
-    const int size1 = tex->size.x - 1;
-    vec3f out;
-    if (t <= 0.0f) {
-        out = pal[0];
-    }
-    else {
-        const float indexf = t * tex->sizef.x;     
-        if (indexf >= size1) {
-            out = pal[size1];
-        }
-        else{
-            const float tmp = floor(indexf);
-            const int index = (int)tmp;
-            if (interpl) {
-                const float dt = indexf - tmp;
-                out = pal[index] * (1.0f - dt) + pal[index + 1] * dt;
-            }
-            else{
-                out = pal[index];
-            }
-        }
-    }
-    return out;
-};
-
 struct OBJ
 {
   PathTraceMaterial super;
@@ -88,23 +58,7 @@ const varying BSDF *varying OBJ_getBSDF(
   Kd = Kd * d * make_vec3f(dg.color);
 
   if (valid(self->colorbyMap)) {
-    const EnsightTex1dMappingOut out = EnsightTex1dMapping_getT(self->colorbyMap.ptr->map1d, dg.tex1d);
-    if (out.usergba){
-        Kd.x = out.rgba[0], Kd.y = out.rgba[1], Kd.z = out.rgba[2];
-    }
-    else {
-        //DifferentialGeometry *p = (DifferentialGeometry *)&dg;
-        //const vec2f st_backup = p->st; 
-        {
-            //p->st.x = out.t, p->st.y = 0.5;
-            //Kd = get3f(self->colorbyMap, dg);
-
-            Kd = sampleTexture1D(self->colorbyMap.ptr, out.t, out.interpl);
-
-            //Kd.x = Kd.y = Kd.z = out.t;
-        }
-        //p->st = st_backup;
-    }
+    Kd = sampleTexture1DByRawVar(self->colorbyMap.ptr, dg.tex1d);
   }
 
   if (reduce_max(Kd) > 0.0f)
