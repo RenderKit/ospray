@@ -27,7 +27,7 @@ using namespace rkcommon;
 using namespace rkcommon::math;
 
 static std::string rendererType = "pathtracer";
-static std::string builderType = "perlin_noise_volumes";
+static std::string builderType = "boxes";
 
 void printHelp()
 {
