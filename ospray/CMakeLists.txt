@@ -227,6 +227,9 @@ set(project_ispc_FILES
     common/DifferentialGeometry.ih
     common/OSPCommon.ih
 
+    geometry/GeometricModel.ih
+    geometry/GeometricModel.ispc
+    geometry/Mesh.ih
     geometry/Mesh.ispc
 
     math/AffineSpace.ih
@@ -235,6 +238,7 @@ set(project_ispc_FILES
     math/math.ih
     math/vec.ih
 
+    render/pathtracer/GeometryLight.ispc
     render/pathtracer/materials/Material.ih
     render/pathtracer/materials/Material.ispc
     render/pathtracer/materials/Metal.ispc
