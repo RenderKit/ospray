@@ -235,6 +235,13 @@ set(project_ispc_FILES
     math/math.ih
     math/vec.ih
 
+    render/pathtracer/materials/Material.ih
+    render/pathtracer/materials/Material.ispc
+    render/pathtracer/materials/Metal.ispc
+    render/pathtracer/materials/MetallicPaint.ispc    
+    render/pathtracer/materials/OBJ.ispc
+    render/pathtracer/materials/Plastic.ispc
+
     texture/Mapping.ih
     texture/Mapping.ispc
     texture/Texture2D.ih
