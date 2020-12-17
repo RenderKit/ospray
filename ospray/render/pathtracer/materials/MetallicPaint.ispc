@@ -66,7 +66,9 @@ export void *uniform PathTracer_MetallicPaint_set(void *uniform _self,
     const uniform float flakeAmount,
     const uniform vec3f &flakeColor,
     const uniform float flakeSpread,
-    const uniform float ior)
+    const uniform float ior,
+    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
+    )
 {
   MetallicPaint *uniform self = (MetallicPaint * uniform) _self;
   self->flakeAmount = flakeAmount;
@@ -75,6 +77,8 @@ export void *uniform PathTracer_MetallicPaint_set(void *uniform _self,
   self->flakeColor = flakeColor * flakeAmount;
   self->flakeSpread = flakeSpread;
   self->eta = rcp(ior);
+
+  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
 }
 
 export void *uniform PathTracer_MetallicPaint_create()

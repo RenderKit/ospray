@@ -27,13 +27,17 @@ void MetallicPaint::commit()
   const float flakeSpread = getParam<float>("flakeSpread", 0.5f);
   const float eta = getParam<float>("eta", 1.5f);
 
+  ADD_ENSIGHT_TEXTURES;
+
   ispc::PathTracer_MetallicPaint_set(getIE(),
       (const ispc::vec3f &)color.factor,
       color.tex,
       flakeAmount,
       (const ispc::vec3f &)flakeColor,
       flakeSpread,
-      eta);
+      eta,
+      ENSIGHT_TEXTURE_PARAMETERS
+      );
 }
 
 } // namespace pathtracer
