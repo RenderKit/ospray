@@ -68,7 +68,9 @@ export void PathTracer_Glass_set(void *uniform _self,
     const uniform vec3f &attenuationColorInside,
     const uniform float outsideIor,
     const uniform vec3f &attenuationColorOutside,
-    const uniform float attenuationDistance)
+    const uniform float attenuationDistance,
+    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
+    )
 {
   uniform Glass *uniform self = (uniform Glass * uniform) _self;
 
@@ -78,6 +80,8 @@ export void PathTracer_Glass_set(void *uniform _self,
   self->mediumOutside.ior = outsideIor;
   self->mediumOutside.attenuation =
       logf(attenuationColorOutside) / max(attenuationDistance, EPS);
+
+  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
 }
 
 export void *uniform PathTracer_Glass_create()

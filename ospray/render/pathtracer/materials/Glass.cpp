@@ -35,12 +35,16 @@ void Glass::commit()
   const float attenuationDistance =
       getParam<float>("attenuationDistance", 1.0f);
 
+  ADD_ENSIGHT_TEXTURES;
+
   ispc::PathTracer_Glass_set(ispcEquivalent,
       etaInside,
       (const ispc::vec3f &)attenuationColorInside,
       etaOutside,
       (const ispc::vec3f &)attenuationColorOutside,
-      attenuationDistance);
+      attenuationDistance,
+      ENSIGHT_TEXTURE_PARAMETERS
+      );
 }
 
 } // namespace pathtracer
