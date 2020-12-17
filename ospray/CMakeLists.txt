@@ -229,8 +229,10 @@ set(project_ispc_FILES
 
     geometry/GeometricModel.ih
     geometry/GeometricModel.ispc
-    geometry/Mesh.ih
+    geometry/Isosurfaces.ispc
     geometry/Mesh.ispc
+    geometry/Planes.ispc
+    geometry/Subdivision.ispc
 
     math/AffineSpace.ih
     math/interpolation.ih
@@ -238,13 +240,39 @@ set(project_ispc_FILES
     math/math.ih
     math/vec.ih
 
+    render/pathtracer/GeometryLight.ih
     render/pathtracer/GeometryLight.ispc
+    render/pathtracer/NextEventEstimation.ih
+    render/pathtracer/NextEventEstimation.ispc
+    render/pathtracer/PathSampler.ih
+    render/pathtracer/PathSampler.ispc
+    render/pathtracer/PathStructs.ih
+    render/pathtracer/PathTracer.ih
+    render/pathtracer/PathTracer.ispc
+    render/pathtracer/PathTracerDefines.ih
+    render/pathtracer/PathTracerUtil.ih
+    render/pathtracer/Scattering.ih
+    render/pathtracer/ShadowCatcher.ih
+    render/pathtracer/ShadowCatcher.ispc
+    render/pathtracer/TransparentShadow.ih
+    render/pathtracer/TransparentShadow.ispc
+    render/pathtracer/VirtualLight.ih
+    render/pathtracer/VirtualLight.ispc
+
+    render/pathtracer/materials/Alloy.ispc
+    render/pathtracer/materials/CarPaint.ispc
+    render/pathtracer/materials/Glass.ispc
+    render/pathtracer/materials/Luminous.ispc
     render/pathtracer/materials/Material.ih
     render/pathtracer/materials/Material.ispc
+    render/pathtracer/materials/Medium.ih
     render/pathtracer/materials/Metal.ispc
     render/pathtracer/materials/MetallicPaint.ispc    
     render/pathtracer/materials/OBJ.ispc
     render/pathtracer/materials/Plastic.ispc
+    render/pathtracer/materials/Principled.ispc
+    render/pathtracer/materials/ThinGlass.ispc
+    render/pathtracer/materials/Velvet.ispc
 
     texture/Mapping.ih
     texture/Mapping.ispc
