@@ -13,6 +13,11 @@ Version History
 -   Removed limit on the number of volumes (both overlapped and separate)
     that a ray can intersect while rendering. Now it is limited by
     available memory only.
+-   OSPRay now requires minimum Open VKL v0.12.0 to bring the following
+    improvements: 
+    - Better default sampling rate for scaled volumes, improving
+      performance
+-   Add colored transparency in SciVis renderer
 -   The MPI module is now distributed as part of OSPRay in the modules
     directory
 

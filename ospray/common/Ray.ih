@@ -5,12 +5,9 @@
 
 // ospray
 #include "../math/AffineSpace.ih"
-#include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 // embree
 #include "embree3/rtcore.isph"
-
-struct VolumetricModel;
 
 // NOTE(jda) - this MUST match Embree's RayHit structure layout!
 struct Ray
@@ -104,43 +101,4 @@ inline void transformRay(Ray &ray, AffineSpace3f xfm)
   ray.org = xfmPoint(xfm, ray.org);
   ray.dir = xfmVector(xfm, ray.dir);
   ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
-}
-
-// Volume hit structure ///////////////////////////////////////////////////////
-
-struct VolumeInterval
-{
-  VolumetricModel *volumetricModel;
-  range1f interval;
-  AffineSpace3f xfm;
-  AffineSpace3f rcp_xfm;
-  unsigned int primID;
-  unsigned int geomID;
-  unsigned int instID;
-};
-
-inline void initVolumeInterval(VolumeInterval &hit)
-{
-  hit.volumetricModel = NULL;
-  hit.interval.lower = inf;
-  hit.interval.upper = -inf;
-}
-
-inline bool hasInterval(const VolumeInterval &vi)
-{
-  return !isEmpty(vi.interval);
-}
-
-struct VolumeIntervals
-{
-  unsigned int numVolumeIntervals;
-  uniform unsigned int numAllocated;
-  varying VolumeInterval *uniform intervals;
-};
-
-inline void initVolumeIntervals(VolumeIntervals &intervals)
-{
-  intervals.numVolumeIntervals = 0;
-  intervals.numAllocated = 0;
-  intervals.intervals = NULL;
 }

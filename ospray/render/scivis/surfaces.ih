@@ -8,7 +8,8 @@
 
 struct SurfaceShadingInfo
 {
-  vec4f shadedColor;
+  vec3f shadedColor;
+  vec3f transmission;
   vec3f albedo;
 };
 
@@ -28,7 +29,7 @@ struct SciVisBSDF
   vec3f diffuse;
   vec3f specular;
   float shininess;
-  float opacity;
+  vec3f transmission;
   vec3f albedo;
 };
 
@@ -41,21 +42,22 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
   res.diffuse = make_vec3f(dg.color);
   res.specular = make_vec3f(0.0f);
   res.shininess = 10.0f;
-  res.opacity = dg.color.w;
+  res.transmission = make_vec3f(1.f - dg.color.w);
 
   foreach_unique (m in mat) {
     if (m != NULL && m->super.type == RENDERER_TYPE_SCIVIS) {
-      res.opacity *= m->d * get1f(m->dMap, dg, 1.f);
+      float d = m->d * get1f(m->dMap, dg, 1.f) * dg.color.w;
 
       res.diffuse = res.diffuse * m->Kd;
       if (valid(m->KdMap)) {
         vec4f Kd_from_map = get4f(m->KdMap, dg);
         res.diffuse = res.diffuse * make_vec3f(Kd_from_map);
-        res.opacity *= Kd_from_map.w;
+        d *= Kd_from_map.w;
       }
-      res.diffuse = res.diffuse * res.opacity;
-      res.specular = res.opacity * m->Ks * get3f(m->KsMap, dg, make_vec3f(1.f));
+      res.diffuse = res.diffuse * d;
+      res.specular = d * m->Ks * get3f(m->KsMap, dg, make_vec3f(1.f));
       res.shininess = m->Ns * get1f(m->NsMap, dg, 1.0f);
+      res.transmission = m->Tf * d + make_vec3f(1.f - d);
     }
   }
 

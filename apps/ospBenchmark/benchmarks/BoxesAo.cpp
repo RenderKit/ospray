@@ -11,7 +11,7 @@ class Boxes : public BaseFixture
       : BaseFixture(n + s + "/ao_" + std::to_string(ao), s, r), aoSamples(ao)
   {}
 
-  void SetRendererParameters(cpp::Renderer r)
+  void SetRendererParameters(cpp::Renderer r) override
   {
     r.setParam("aoSamples", aoSamples);
   }

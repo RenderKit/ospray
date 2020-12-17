@@ -26,6 +26,10 @@ void SciVis_renderSample(Renderer *uniform _self,
   uniform bool firstHit = true;
   const float originalRayTFar = sample.ray.t;
 
+  // Allocate memory for volume intervals
+  VolumeIntervals volumeIntervals;
+  allocVolumeIntervals(volumeIntervals);
+
   // This is our main ray
   Ray &ray = sample.ray;
 
@@ -35,15 +39,15 @@ void SciVis_renderSample(Renderer *uniform _self,
   traceClippingRay(world, ray, rayIntervals);
 
   // Iterate over all translucent geometry till we are fully opaque
-  vec4f outputColor = make_vec4f(0.f);
-  while (outputColor.w < 0.99f) {
+  vec3f outColor = make_vec3f(0.f);
+  vec3f outTransmission = make_vec3f(1.f);
+  while (true) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
     traceGeometryRayIntervals(world, ray, rayIntervals);
 
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
-    VolumeIntervals volumeIntervals;
     traceVolumeRay(world, volumeRay, volumeIntervals);
 
     // Sample volumes across volume intervals (in front of geometry hit)
@@ -62,11 +66,12 @@ void SciVis_renderSample(Renderer *uniform _self,
           self->volumeSamplingRate,
           true);
 
-      outputColor = outputColor + (1.f - outputColor.w) * volumeColor;
+      // Blend volume
+      outColor = outColor + outTransmission * make_vec3f(volumeColor);
+      outTransmission = outTransmission * volumeColor.w;
     }
 
     // If any geometry has been hit
-    vec4f blendedColor;
     const bool hadHit = hadHit(ray);
     if (hadHit) {
       // Prepare differential geometry structure
@@ -83,39 +88,49 @@ void SciVis_renderSample(Renderer *uniform _self,
       surfaceShading = computeShading(
           self, fb, world, dg, sample, ldSampler, ray.dir, ray.time);
 
-      // Use shaded color for blending
-      blendedColor = surfaceShading.shadedColor;
-
       // Initialize other per sample data with first hit values
       if (firstHit) {
         sample.z = ray.t;
         sample.albedo = surfaceShading.albedo;
         sample.normal = dg.Ns;
+        firstHit = false;
+      }
+
+      // Blend with output final color
+      outColor = outColor + outTransmission * surfaceShading.shadedColor;
+      outTransmission = outTransmission * surfaceShading.transmission;
+
+      // Early exit if remaining transmission is below min contribution
+      // threshold
+      if (luminance(outTransmission) < self->super.minContribution) {
+        outTransmission = make_vec3f(0.f);
+        break;
       }
 
       // Prepare ray for next loop iteration,
       // start from the last geometry hit all over to initial Tfar
       setRay(ray, ray.t + dg.epsilon, originalRayTFar);
     } else {
-      blendedColor = Renderer_getBackground(&self->super, sample.pos);
+      // Blend background with output final color
+      vec4f backgroundColor = Renderer_getBackground(&self->super, sample.pos);
+      outColor = outColor + outTransmission * make_vec3f(backgroundColor);
+      outTransmission = outTransmission * (1.f - backgroundColor.w);
+
       // Initialize other per sample data with first hit values
       if (firstHit) {
         sample.z = ray.t;
-        sample.albedo = make_vec3f(blendedColor);
+        sample.albedo = make_vec3f(backgroundColor);
         sample.normal = sample.ray.dir;
       }
-    }
 
-    // Blend with output final color
-    outputColor = outputColor + (1.f - outputColor.w) * blendedColor;
-    firstHit = false;
-    if (!hadHit) {
+      // No more intersections
       break;
     }
   }
 
-  sample.rgb = make_vec3f(outputColor);
-  sample.alpha = outputColor.w;
+  freeVolumeIntervals(volumeIntervals);
+  sample.rgb = outColor;
+  sample.alpha = 1.f - luminance(outTransmission);
 }
 
 // SciVis C++ interface /////////////////////////////////////////////////////
@@ -143,7 +158,7 @@ export void SciVis_set(void *uniform _self,
   self->volumeSamplingRate = volumeSamplingRate;
 }
 
-float SciVis_computeAO(const uniform SciVis *uniform self,
+vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     ScreenSample &sample,
@@ -161,7 +176,7 @@ float SciVis_computeAO(const uniform SciVis *uniform self,
   RandomTEA__Constructor(rng, sampleID.x, sampleID.y);
   const vec2f rot = RandomTEA__getFloats(rng);
 
-  float hits = 0.f;
+  vec3f hits = make_vec3f(0.f);
 
   const linear3f localToWorld = frame(dg.Ns);
 
@@ -174,7 +189,7 @@ float SciVis_computeAO(const uniform SciVis *uniform self,
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
     if (dot(ao_dir, dg.Ns) < 0.01f) { // check below surface
-      hits += 1.f;
+      hits = hits + make_vec3f(1.f);
       continue;
     }
 
@@ -189,7 +204,7 @@ float SciVis_computeAO(const uniform SciVis *uniform self,
                 world,
                 sample,
                 ldSampler,
-                1.f,
+                make_vec3f(1.f),
                 dg.epsilon,
                 0.1f));
   }

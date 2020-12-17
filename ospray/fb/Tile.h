@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -28,9 +28,9 @@ struct OSPRAY_SDK_INTERFACE __aligned(64) Tile
   region2i region; // screen region that this corresponds to
   vec2i fbSize; // total frame buffer size, for the camera
   vec2f rcp_fbSize;
-  int32 generation;
-  int32 children;
-  int32 sortOrder;
+  int32 generation{0};
+  int32 children{0};
+  int32 sortOrder{0};
   int32 accumID; //!< how often has been accumulated into this tile
   float pad[4]; //!< padding to match the ISPC-side layout
   float r[TILE_SIZE * TILE_SIZE]; // 'red' component
@@ -49,8 +49,6 @@ struct OSPRAY_SDK_INTERFACE __aligned(64) Tile
   Tile(const vec2i &tile, const vec2i &fbsize, const int32 accumId)
       : fbSize(fbsize),
         rcp_fbSize(rcp(vec2f(fbsize))),
-        generation(0),
-        children(0),
         accumID(accumId)
   {
     region.lower = tile * TILE_SIZE;
