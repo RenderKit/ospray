@@ -71,7 +71,9 @@ export void PathTracer_Mix_set(void *uniform _self,
     uniform float factor,
     const uniform TextureParam &factorMap,
     void *uniform _mat1,
-    void *uniform _mat2)
+    void *uniform _mat2,
+    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
+    )
 {
   Mix *uniform self = (Mix * uniform) _self;
   self->factor = clamp(factor);
@@ -85,6 +87,8 @@ export void PathTracer_Mix_set(void *uniform _self,
   if (self->mat2)
     emission = emission + self->factor * self->mat2->emission;
   self->super.emission = emission;
+
+  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
 }
 
 void Mix_Constructor(uniform Mix *uniform self)

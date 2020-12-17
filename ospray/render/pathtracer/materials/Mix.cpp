@@ -26,11 +26,15 @@ void MixMaterial::commit()
   ospray::Material *mat2 =
       (ospray::Material *)getParamObject("material2", nullptr);
 
+  ADD_ENSIGHT_TEXTURES;
+
   ispc::PathTracer_Mix_set(ispcEquivalent,
       factor.factor,
       factor.tex,
       mat1 ? mat1->getIE() : nullptr,
-      mat2 ? mat2->getIE() : nullptr);
+      mat2 ? mat2->getIE() : nullptr,
+      ENSIGHT_TEXTURE_PARAMETERS
+      );
 }
 
 } // namespace pathtracer
