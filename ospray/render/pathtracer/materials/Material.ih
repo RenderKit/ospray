@@ -41,6 +41,20 @@ typedef void (*PathTraceMaterial_SelectNextMediumFunc)(
     const DifferentialGeometry &dg,
     Medium &currentMedium);
 
+enum ImageWrap{
+  TEXTURE_REPEAT = 0,
+  TEXTURE_BLACK,
+  TEXTURE_CLAMP,
+  TEXTURE_CLAMP_TO_TEXTURE
+};
+
+enum ImageMode{
+  TEXTURE_MODE_REPLACE = 0,
+  TEXTURE_MODE_DECAL,
+  TEXTURE_MODE_MODULATE,
+  NO_OF_TEXTURE_MODES
+};
+
 struct PathTraceMaterial
 {
   Material material;
@@ -49,6 +63,11 @@ struct PathTraceMaterial
   PathTraceMaterial_SelectNextMediumFunc selectNextMedium;
   vec3f emission; // simple constant (spatially and angular) emission, returns
                   // radiance; TODO SV-EDFs
+  TextureParam colorbyMap;  //EnSight's 1D texture mapping colorby
+  TextureParam alphabyMap;  //EnSight's 1D texture mapping alphaby
+  TextureParam tex2dMap;    //EnSight's 2D texture mapping
+  int tex2dImageWrap;       //ImageWrap value
+  int tex2dImageMode;       //ImageMode value
 };
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
@@ -56,6 +75,19 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
     uniform PathTraceMaterial_GetTransparencyFunc getTransparency = NULL,
     uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium = NULL);
 // const uniform vec3f emission = { 0.f, 0.f, 0.f }; fails, ISPC issue #1231
+
+void PathTraceMaterial_SetEnsightTex1D(
+    uniform PathTraceMaterial *uniform self,
+    uniform TextureParam *uniform colorbyMap = NULL,
+    uniform TextureParam *uniform alphabyMap = NULL
+);
+
+void PathTraceMaterial_SetEnsightTex2D(
+    uniform PathTraceMaterial *uniform self,
+    uniform TextureParam *uniform tex2dMap = NULL,
+    uniform int tex2dImageWrap = 0,
+    uniform int tex2dImageMode = 0
+);
 
 inline linear3f makeShadingFrame(const DifferentialGeometry &dg)
 {

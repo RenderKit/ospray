@@ -32,6 +32,36 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
   self->selectNextMedium =
       selectNextMedium ? selectNextMedium : PathTraceMaterial_selectNextMedium;
   self->emission = make_vec3f(0.f);
+
+  uniform TextureParam nulltex = make_TextureParam();
+  PathTraceMaterial_SetEnsightTex1D(self, &nulltex, &nulltex);
+  PathTraceMaterial_SetEnsightTex2D(self, &nulltex, 0, 0);
+}
+
+void PathTraceMaterial_SetEnsightTex1D(
+    uniform PathTraceMaterial *uniform self,
+    uniform TextureParam *uniform colorbyMap,
+    uniform TextureParam *uniform alphabyMap)
+{
+    if (colorbyMap) {
+        self->colorbyMap = *colorbyMap;
+    }
+    if (alphabyMap) {
+        self->alphabyMap = *alphabyMap;
+    }
+}
+
+void PathTraceMaterial_SetEnsightTex2D(
+    uniform PathTraceMaterial *uniform self,
+    uniform TextureParam *uniform tex2dMap,
+    uniform int tex2dImageWrap,
+    uniform int tex2dImageMode)
+{
+    if (tex2dMap) {
+        self->tex2dMap = *tex2dMap;
+    }
+    self->tex2dImageWrap = tex2dImageWrap,
+    self->tex2dImageMode = tex2dImageMode;
 }
 
 export uniform bool PathTraceMaterial_isEmissive(void *uniform _mat)

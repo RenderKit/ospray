@@ -23,8 +23,6 @@ struct OBJ
   TextureParam bumpMap;
   linear2f bumpRot; // just the inverse of rotational/mirror part (must be
                     // orthonormal) of tc xfrom
-  TextureParam colorbyMap;
-  TextureParam alphabyMap;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -57,8 +55,8 @@ const varying BSDF *varying OBJ_getBSDF(
   }
   Kd = Kd * d * make_vec3f(dg.color);
 
-  if (valid(self->colorbyMap)) {
-    Kd = sampleTexture1DByRawVar(self->colorbyMap.ptr, dg.tex1d);
+  if (valid(self->super.colorbyMap)) {
+    Kd = sampleTexture1DByRawVar(self->super.colorbyMap.ptr, dg.tex1d);
   }
 
   if (reduce_max(Kd) > 0.0f)
@@ -132,8 +130,8 @@ export void PathTracer_OBJ_set(void *uniform _self,
   self->Tf = Tf;
   self->bumpMap = bumpMap;
   self->bumpRot = bumpRot;
-  self->colorbyMap = colorbyMap;
-  self->alphabyMap = alphabyMap;
+
+  PathTraceMaterial_SetEnsightTex1D(&self->super, &colorbyMap, &alphabyMap);
 }
 
 void OBJ_Constructor(uniform OBJ *uniform self)
