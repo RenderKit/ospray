@@ -42,7 +42,7 @@ vec3f Luminous_getTransparency(const uniform PathTraceMaterial *uniform _self,
 }
 
 export void PathTracer_Luminous_set(
-    void *uniform, const uniform vec3f &, const uniform float);
+    void *uniform, const uniform vec3f &, const uniform float, PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS);
 
 void Luminous_Constructor(uniform Luminous *uniform self)
 {
@@ -56,11 +56,15 @@ void Luminous_Constructor(uniform Luminous *uniform self)
 
 export void PathTracer_Luminous_set(void *uniform _self,
     const uniform vec3f &radiance,
-    const uniform float transparency)
+    const uniform float transparency,
+    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
+    )
 {
   uniform Luminous *uniform self = (uniform Luminous * uniform) _self;
   self->super.emission = radiance;
   self->transparency = transparency;
+
+  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
 }
 
 export void *uniform PathTracer_Luminous_create()

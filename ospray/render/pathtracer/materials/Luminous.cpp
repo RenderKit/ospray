@@ -24,8 +24,11 @@ void Luminous::commit()
       getParam<vec3f>("color", vec3f(1.f)) * getParam<float>("intensity", 1.f);
   const float transparency = getParam<float>("transparency", 0.f);
 
+  ADD_ENSIGHT_TEXTURES;
+
   ispc::PathTracer_Luminous_set(
-      getIE(), (const ispc::vec3f &)radiance, transparency);
+      getIE(), (const ispc::vec3f &)radiance, transparency,
+      ENSIGHT_TEXTURE_PARAMETERS);
 }
 
 } // namespace pathtracer
