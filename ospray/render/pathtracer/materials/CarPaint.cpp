@@ -44,6 +44,8 @@ void CarPaint::commit()
       getMaterialParam3f("flipflopColor", vec3f(1.f));
   MaterialParam1f flipflopFalloff = getMaterialParam1f("flipflopFalloff", 1.f);
 
+  ADD_ENSIGHT_TEXTURES;
+
   ispc::PathTracer_CarPaint_set(getIE(),
       (const ispc::vec3f &)baseColor.factor,
       baseColor.tex,
@@ -83,7 +85,9 @@ void CarPaint::commit()
       (const ispc::vec3f &)flipflopColor.factor,
       flipflopColor.tex,
       flipflopFalloff.factor,
-      flipflopFalloff.tex);
+      flipflopFalloff.tex,
+      ENSIGHT_TEXTURE_PARAMETERS
+      );
 }
 
 } // namespace pathtracer

@@ -254,7 +254,9 @@ export void *uniform PathTracer_CarPaint_set(void *uniform _self,
     const uniform vec3f &flipflopColor,
     const uniform TextureParam &flipflopColorMap,
     uniform float flipflopFalloff,
-    const uniform TextureParam &flipflopFalloffMap)
+    const uniform TextureParam &flipflopFalloffMap,
+    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
+    )
 {
   CarPaint *uniform self = (CarPaint * uniform) _self;
 
@@ -311,6 +313,8 @@ export void *uniform PathTracer_CarPaint_set(void *uniform _self,
 
   self->flipflopFalloff = flipflopFalloff;
   self->flipflopFalloffMap = flipflopFalloffMap;
+
+  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
 }
 
 export void *uniform PathTracer_CarPaint_create()
