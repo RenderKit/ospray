@@ -24,8 +24,12 @@ void Plastic::commit()
   const float eta = getParam<float>("eta", 1.4f);
   const float roughness = getParam<float>("roughness", 0.01f);
 
+  ADD_ENSIGHT_TEXTURES;
+
   ispc::PathTracer_Plastic_set(
-      getIE(), (const ispc::vec3f &)pigmentColor, eta, roughness);
+      getIE(), (const ispc::vec3f &)pigmentColor, eta, roughness,
+      ENSIGHT_TEXTURE_PARAMETERS
+      );
 }
 
 } // namespace pathtracer

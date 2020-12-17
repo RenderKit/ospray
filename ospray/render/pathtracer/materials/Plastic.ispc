@@ -72,9 +72,14 @@ export void *uniform PathTracer_Plastic_create()
 export void *uniform PathTracer_Plastic_set(void *uniform _self,
     const uniform vec3f &pigmentColor,
     uniform float ior,
-    uniform float roughness)
+    uniform float roughness,
+    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
+    )
 {
   uniform Plastic *uniform self = (uniform Plastic * uniform) _self;
   Plastic_Constructor(self, pigmentColor, ior, roughness);
+
+  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
+
   return self;
 }
