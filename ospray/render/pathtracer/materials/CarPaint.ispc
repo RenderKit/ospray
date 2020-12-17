@@ -315,6 +315,8 @@ export void *uniform PathTracer_CarPaint_set(void *uniform _self,
   self->flipflopFalloffMap = flipflopFalloffMap;
 
   PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
+
+  return self;
 }
 
 export void *uniform PathTracer_CarPaint_create()

@@ -79,6 +79,8 @@ export void *uniform PathTracer_Metal_set(void *uniform _self,
   self->roughnessMap = roughnessMap;
 
   PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
+
+  return self;
 }
 
 export void *uniform PathTracer_Metal_create()

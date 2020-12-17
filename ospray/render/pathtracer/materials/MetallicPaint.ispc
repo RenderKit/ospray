@@ -79,6 +79,8 @@ export void *uniform PathTracer_MetallicPaint_set(void *uniform _self,
   self->eta = rcp(ior);
 
   PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
+
+  return self;
 }
 
 export void *uniform PathTracer_MetallicPaint_create()
