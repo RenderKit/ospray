@@ -46,8 +46,14 @@ void PathTraceMaterial_SetEnsightTex1D(
     if (colorbyMap) {
         self->colorbyMap = *colorbyMap;
     }
+    else {
+        self->colorbyMap = make_TextureParam();
+    }
     if (alphabyMap) {
         self->alphabyMap = *alphabyMap;
+    }
+    else {
+        self->alphabyMap = make_TextureParam();
     }
 }
 
@@ -59,6 +65,9 @@ void PathTraceMaterial_SetEnsightTex2D(
 {
     if (tex2dMap) {
         self->tex2dMap = *tex2dMap;
+    }
+    else {
+        self->tex2dMap = make_TextureParam();
     }
     self->tex2dImageWrap = tex2dImageWrap,
     self->tex2dImageMode = tex2dImageMode;

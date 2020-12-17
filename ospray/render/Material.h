@@ -90,3 +90,14 @@ inline void Material::registerType(
 }
 
 } // namespace ospray
+
+#define ADD_ENSIGHT_TEXTURES \
+  ispc::TextureParam colorbyTex = getTextureParam("map_colorby"); \
+  ispc::TextureParam alphabyTex = getTextureParam("map_alphaby");
+
+#define ENSIGHT_TEXTURE_PARAMETERS \
+  &colorbyTex \
+  , &alphabyTex
+
+
+

@@ -89,6 +89,14 @@ void PathTraceMaterial_SetEnsightTex2D(
     uniform int tex2dImageMode = 0
 );
 
+#define PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS \
+    const uniform TextureParam *uniform colorbyMap = NULL, \
+    const uniform TextureParam *uniform alphabyMap = NULL
+
+#define PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES \
+    PathTraceMaterial_SetEnsightTex1D(&self->super, colorbyMap, alphabyMap);
+
+
 inline linear3f makeShadingFrame(const DifferentialGeometry &dg)
 {
   vec3f N = dg.Ns;

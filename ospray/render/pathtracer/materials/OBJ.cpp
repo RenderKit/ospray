@@ -40,8 +40,7 @@ void OBJMaterial::commit()
     Tf /= color_total;
   }
 
-  ispc::TextureParam colorbyTex = getTextureParam("map_colorby");
-  ispc::TextureParam alphabyTex = getTextureParam("map_alphaby");
+  ADD_ENSIGHT_TEXTURES;
 
   ispc::PathTracer_OBJ_set(ispcEquivalent,
       d.tex,
@@ -55,8 +54,7 @@ void OBJMaterial::commit()
       (const ispc::vec3f &)Tf,
       bumpTex,
       (const ispc::LinearSpace2f &)bumpRot,
-      colorbyTex,
-      alphabyTex
+      ENSIGHT_TEXTURE_PARAMETERS
       );
 }
 

@@ -110,8 +110,7 @@ export void PathTracer_OBJ_set(void *uniform _self,
     const uniform vec3f &Tf,
     const uniform TextureParam &bumpMap,
     const uniform linear2f &bumpRot,
-    const uniform TextureParam &colorbyMap,
-    const uniform TextureParam &alphabyMap
+    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
     )
 {
   uniform OBJ *uniform self = (uniform OBJ * uniform) _self;
@@ -127,7 +126,7 @@ export void PathTracer_OBJ_set(void *uniform _self,
   self->bumpMap = bumpMap;
   self->bumpRot = bumpRot;
 
-  PathTraceMaterial_SetEnsightTex1D(&self->super, &colorbyMap, &alphabyMap);
+  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
 }
 
 void OBJ_Constructor(uniform OBJ *uniform self)
@@ -146,10 +145,7 @@ void OBJ_Constructor(uniform OBJ *uniform self)
       2.0f,
       make_vec3f(0.f),
       tex,
-      make_LinearSpace2f_identity(),
-      tex,
-      tex
-      );
+      make_LinearSpace2f_identity());
 }
 
 export void *uniform PathTracer_OBJ_create()

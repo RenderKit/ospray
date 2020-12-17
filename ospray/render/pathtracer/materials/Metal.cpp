@@ -55,8 +55,7 @@ void Metal::commit()
 
   MaterialParam1f roughness = getMaterialParam1f("roughness", .1f);
 
-  ispc::TextureParam colorbyTex = getTextureParam("map_colorby");
-  ispc::TextureParam alphabyTex = getTextureParam("map_alphaby");
+  ADD_ENSIGHT_TEXTURES;
 
   ispc::PathTracer_Metal_set(getIE(),
       etaSpectral,
@@ -65,8 +64,7 @@ void Metal::commit()
       (const ispc::vec3f &)k,
       roughness.factor,
       roughness.tex,
-      colorbyTex,
-      alphabyTex
+      ENSIGHT_TEXTURE_PARAMETERS
       );
 }
 
