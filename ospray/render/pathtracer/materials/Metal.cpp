@@ -55,13 +55,19 @@ void Metal::commit()
 
   MaterialParam1f roughness = getMaterialParam1f("roughness", .1f);
 
+  ispc::TextureParam colorbyTex = getTextureParam("map_colorby");
+  ispc::TextureParam alphabyTex = getTextureParam("map_alphaby");
+
   ispc::PathTracer_Metal_set(getIE(),
       etaSpectral,
       kSpectral,
       (const ispc::vec3f &)eta,
       (const ispc::vec3f &)k,
       roughness.factor,
-      roughness.tex);
+      roughness.tex,
+      colorbyTex,
+      alphabyTex
+      );
 }
 
 } // namespace pathtracer

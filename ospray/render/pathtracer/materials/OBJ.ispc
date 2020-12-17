@@ -55,10 +55,6 @@ const varying BSDF *varying OBJ_getBSDF(
   }
   Kd = Kd * d * make_vec3f(dg.color);
 
-  if (valid(self->super.colorbyMap)) {
-    Kd = sampleTexture1DByRawVar(self->super.colorbyMap.ptr, dg.tex1d);
-  }
-
   if (reduce_max(Kd) > 0.0f)
     MultiBSDF_add(
         bsdf, Lambert_create(ctx, shadingFrame, Kd), 1.f, luminance(Kd));

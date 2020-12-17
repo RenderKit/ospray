@@ -57,7 +57,10 @@ export void *uniform PathTracer_Alloy_set(void *uniform _self,
     const uniform vec3f &edgeColor,
     const uniform TextureParam &edgeColorMap,
     uniform float roughness,
-    const uniform TextureParam &roughnessMap)
+    const uniform TextureParam &roughnessMap,
+    const uniform TextureParam &colorbyMap,
+    const uniform TextureParam &alphabyMap
+    )
 {
   Alloy *uniform self = (Alloy * uniform) _self;
 
@@ -69,6 +72,8 @@ export void *uniform PathTracer_Alloy_set(void *uniform _self,
 
   self->roughness = roughness;
   self->roughnessMap = roughnessMap;
+
+  PathTraceMaterial_SetEnsightTex1D(&self->super, &colorbyMap, &alphabyMap);
 }
 
 export void *uniform PathTracer_Alloy_create()
@@ -77,7 +82,8 @@ export void *uniform PathTracer_Alloy_create()
   PathTraceMaterial_Constructor(&self->super, Alloy_getBSDF);
 
   uniform TextureParam tex = make_TextureParam();
+
   PathTracer_Alloy_set(
-      self, make_vec3f(0.9f), tex, make_vec3f(1.f), tex, 0.1f, tex);
+      self, make_vec3f(0.9f), tex, make_vec3f(1.f), tex, 0.1f, tex, tex, tex);
   return self;
 }

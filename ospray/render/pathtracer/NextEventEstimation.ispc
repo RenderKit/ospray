@@ -12,6 +12,21 @@
 #include "math/Distribution1D.ih"
 #include "math/sampling.ih"
 
+// EnSight's customized 1D & 2D texture mapping impl.
+#include "render/pathtracer/materials/Material.ih"
+#include "texture/TextureParam.ih"
+static vec3f addSideEffect(const DifferentialGeometry &dg, const vec3f &le)
+{
+  vec3f out = le;
+  PathTraceMaterial *mat = (PathTraceMaterial *)dg.material;
+  //if (valid(mat->colorbyMap)) {
+  if (mat->colorbyMap.ptr) {
+    out = le * sampleTexture1DByRawVar(mat->colorbyMap.ptr, dg.tex1d);
+  }
+
+  return out;
+}
+
 vec3f nextEventEstimation(const PathContext &pathContext,
     const PathState &pathState,
     PathVertex &pathVertex)
@@ -59,6 +74,9 @@ vec3f nextEventEstimation(const PathContext &pathContext,
     // skip when zero contribution from material
     if (reduce_max(fe.value) <= 0.0f)
       continue;
+
+    // implement ensight customized 1D and 2D texture mapping here!
+    fe.value = addSideEffect(pathVertex.dg, fe.value);
 
     // test for shadows
     Ray shadowRay;

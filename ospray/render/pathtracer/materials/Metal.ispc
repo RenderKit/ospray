@@ -56,7 +56,10 @@ export void *uniform PathTracer_Metal_set(void *uniform _self,
     const uniform vec3f &etaRGB,
     const uniform vec3f &kRGB,
     uniform float roughness,
-    const uniform TextureParam &roughnessMap)
+    const uniform TextureParam &roughnessMap,
+    const uniform TextureParam &colorbyMap,
+    const uniform TextureParam &alphabyMap
+    )
 {
   Metal *uniform self = (Metal * uniform) _self;
 
@@ -75,6 +78,8 @@ export void *uniform PathTracer_Metal_set(void *uniform _self,
 
   self->roughness = roughness;
   self->roughnessMap = roughnessMap;
+
+  PathTraceMaterial_SetEnsightTex1D(&self->super, &colorbyMap, &alphabyMap);
 }
 
 export void *uniform PathTracer_Metal_create()
@@ -83,8 +88,9 @@ export void *uniform PathTracer_Metal_create()
   PathTraceMaterial_Constructor(&self->super, Metal_getBSDF);
   uniform vec3f etaRGB = RGB_AL_ETA;
   uniform vec3f kRGB = RGB_AL_K;
+  uniform TextureParam nulltex = make_TextureParam();
 
   PathTracer_Metal_set(
-      self, NULL, NULL, etaRGB, kRGB, 0.1f, make_TextureParam());
+      self, NULL, NULL, etaRGB, kRGB, 0.1f, make_TextureParam(), nulltex, nulltex);
   return self;
 }

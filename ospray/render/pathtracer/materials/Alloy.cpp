@@ -27,13 +27,19 @@ void Alloy::commit()
   MaterialParam3f edgeColor = getMaterialParam3f("edgeColor", vec3f(1.f));
   MaterialParam1f roughness = getMaterialParam1f("roughness", .1f);
 
+  ispc::TextureParam colorbyTex = getTextureParam("map_colorby");
+  ispc::TextureParam alphabyTex = getTextureParam("map_alphaby");
+
   ispc::PathTracer_Alloy_set(getIE(),
       (const ispc::vec3f &)color.factor,
       color.tex,
       (const ispc::vec3f &)edgeColor.factor,
       edgeColor.tex,
       roughness.factor,
-      roughness.tex);
+      roughness.tex,
+      colorbyTex,
+      alphabyTex
+      );
 }
 
 } // namespace pathtracer
