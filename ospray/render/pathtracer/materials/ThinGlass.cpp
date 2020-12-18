@@ -26,12 +26,16 @@ void ThinGlass::commit()
   const float attenuationDistance = getParam<float>("attenuationDistance", 1.f);
   const float thickness = getParam<float>("thickness", 1.f);
 
+  ADD_ENSIGHT_TEXTURES;
+
   ispc::PathTracer_ThinGlass_set(getIE(),
       eta,
       (const ispc::vec3f &)attenuationColor,
       attenuationColor.tex,
       attenuationDistance,
-      thickness);
+      thickness,
+      ENSIGHT_TEXTURE_PARAMETERS
+      );
 }
 
 } // namespace pathtracer

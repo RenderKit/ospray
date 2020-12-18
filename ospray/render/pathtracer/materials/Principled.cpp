@@ -63,6 +63,8 @@ void Principled::commit()
   float outsideTransmissionDepth =
       getParam<float>("outsideTransmissionDepth", 1.f);
 
+  ADD_ENSIGHT_TEXTURES;
+
   ispc::PathTracer_Principled_set(getIE(),
       (const ispc::vec3f &)baseColor.factor,
       baseColor.tex,
@@ -129,7 +131,9 @@ void Principled::commit()
 
       outsideIor,
       (const ispc::vec3f &)outsideTransmissionColor,
-      outsideTransmissionDepth);
+      outsideTransmissionDepth,
+      ENSIGHT_TEXTURE_PARAMETERS
+      );
 }
 
 } // namespace pathtracer

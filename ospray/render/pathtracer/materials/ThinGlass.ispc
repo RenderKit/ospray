@@ -69,13 +69,17 @@ export void PathTracer_ThinGlass_set(void *uniform _self,
     const uniform vec3f &attenuationColor,
     const uniform TextureParam &attenuationColorMap,
     const uniform float attenuationDistance,
-    const uniform float thickness)
+    const uniform float thickness,
+    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
+    )
 {
   ThinGlass *uniform self = (ThinGlass * uniform) _self;
   self->eta = rcp(ior);
   self->attenuationScale = thickness * rcp(max(attenuationDistance, EPS));
   self->attenuation = logf(attenuationColor) * self->attenuationScale;
   self->attenuationColorMap = attenuationColorMap;
+
+  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
 }
 
 export void *uniform PathTracer_ThinGlass_create()

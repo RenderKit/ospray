@@ -27,11 +27,15 @@ void Velvet::commit()
   float horizonScatteringFallOff =
       getParam<float>("horizonScatteringFallOff", 10);
 
+  ADD_ENSIGHT_TEXTURES;
+
   ispc::PathTracer_Velvet_set(getIE(),
       (const ispc::vec3f &)reflectance,
       (const ispc::vec3f &)horizonScatteringColor,
       horizonScatteringFallOff,
-      backScattering);
+      backScattering,
+      ENSIGHT_TEXTURE_PARAMETERS
+      );
 }
 
 } // namespace pathtracer

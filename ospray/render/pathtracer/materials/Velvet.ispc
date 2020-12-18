@@ -70,7 +70,9 @@ export void *uniform PathTracer_Velvet_set(void *uniform _self,
     const uniform vec3f &reflectance,
     const uniform vec3f &horizonScatteringColor,
     uniform float horizonScatteringFallOff,
-    uniform float backScattering)
+    uniform float backScattering,
+    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
+    )
 {
   uniform Velvet *uniform self = (uniform Velvet * uniform) _self;
   self->reflectance = reflectance;
@@ -78,4 +80,7 @@ export void *uniform PathTracer_Velvet_set(void *uniform _self,
   self->horizonScatteringFallOff = horizonScatteringFallOff;
   self->backScattering = backScattering;
   PathTraceMaterial_Constructor(&self->super, Velvet_getBSDF);
+
+  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
+  return self;
 }

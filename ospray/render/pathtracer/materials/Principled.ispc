@@ -638,7 +638,9 @@ export void *uniform PathTracer_Principled_set(void *uniform _self,
     const uniform TextureParam &thicknessMap,
     uniform float outsideIor,
     const uniform vec3f &outsideTransmissionColor,
-    uniform float outsideTransmissionDepth)
+    uniform float outsideTransmissionDepth,
+    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
+    )
 {
   Principled *uniform self = (Principled * uniform) _self;
 
@@ -731,6 +733,9 @@ export void *uniform PathTracer_Principled_set(void *uniform _self,
   self->outsideMedium.ior = outsideIor >= 1.f ? outsideIor : rcp(outsideIor);
   self->outsideMedium.attenuation =
       logf(outsideTransmissionColor) / outsideTransmissionDepth;
+
+  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
+  return self;
 }
 
 export void *uniform PathTracer_Principled_create()
