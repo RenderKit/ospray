@@ -176,16 +176,14 @@ struct BilinCoords
   vec2f frac;
 };
 
-inline BilinCoords bilinear_coords(const Texture2D * self, const vec2f p)
+inline BilinCoords bilinear_coords(const Texture2D * self, const vec2f &p)
 {
   BilinCoords coords;
 
   // repeat: get remainder within [0..1] parameter space
   // lower sample shifted by half a texel
-  //vec2f tc = frac(p - self->halfTexel);
-  //tc = max(tc, make_vec2f(0.0f)); // filter out inf/NaN
-  vec2f p1 = max(p, self->halfTexel);
-  vec2f tc = frac(p1 - self->halfTexel);
+  vec2f tc = frac(p - self->halfTexel);
+  tc = max(tc, make_vec2f(0.0f)); // filter out inf/NaN
 
   // scale by texture size
   tc = tc * self->sizef;
@@ -195,9 +193,9 @@ inline BilinCoords bilinear_coords(const Texture2D * self, const vec2f p)
   coords.st1 = coords.st0 + 1;
   // handle border cases
   if (coords.st1.x >= self->size.x)
-    coords.st1.x = self->size.x - 1;
+    coords.st1.x = 0;
   if (coords.st1.y >= self->size.y)
-    coords.st1.y = self->size.y - 1;
+    coords.st1.y = 0;
 
   return coords;
 }
@@ -403,8 +401,48 @@ inline vec4f getTexel(const Texture2D * self, const vec2i i) {
   return ret;
 }
 
-inline vec4f texture2d(const Texture2D * self, const DifferentialGeometry &dg) {                                                                            
-    const BilinCoords cs = bilinear_coords(self, dg.st);                                                                                                            
+const float BLACKFLAG = -123456; //special value which should never appear, since return value range should be [0..1]
+
+inline BilinCoords bilinear_coords2(const Texture2D * self, const vec2f &uv, int imgwrap) {
+  BilinCoords coords;
+  vec2f p = uv;
+  if (TEXTURE_REPEAT == imgwrap){
+    p = frac(p);
+  }
+  else if (TEXTURE_BLACK == imgwrap) {
+    if ((p.x < 0 || p.x > 1) || (p.y < 0 || p.y > 1)){
+        coords.frac.x = BLACKFLAG;
+        return coords;
+    }
+  }
+  else { //(TEXTURE_CLAMP == imgwrap || TEXTURE_CLAMP_TO_TEXTURE == imgwrap)
+    p.x = clamp(p.x, 0, 1);
+    p.y = clamp(p.y, 0, 1);
+  }
+
+  vec2f p1 = max(p, self->halfTexel);
+  vec2f tc = frac(p1 - self->halfTexel);
+
+  // scale by texture size
+  tc = tc * self->sizef;
+  coords.frac = frac(tc);
+
+  coords.st0 = make_vec2i(tc);
+  coords.st1 = coords.st0 + 1;
+  // handle border cases
+  if (coords.st1.x >= self->size.x)
+    coords.st1.x = self->size.x - 1;
+  if (coords.st1.y >= self->size.y)
+    coords.st1.y = self->size.y - 1;
+
+  return coords;
+}
+
+inline vec4f texture2d(const Texture2D * self, const DifferentialGeometry &dg, int imgwrap) {                                                                            
+    const BilinCoords cs = bilinear_coords2(self, dg.st, imgwrap);
+    if (BLACKFLAG == cs.frac.x) {
+        return make_vec4f(0, 0, 0, 1);
+    }
     const vec4f c00 = getTexel(self, make_vec2i(cs.st0.x, cs.st0.y));    
     const vec4f c01 = getTexel(self, make_vec2i(cs.st1.x, cs.st0.y));    
     const vec4f c10 = getTexel(self, make_vec2i(cs.st0.x, cs.st1.y));    
@@ -420,7 +458,7 @@ inline float get_y(const vec3f &c){
 vec3f sampleTexture2DEnsight(const Texture2D *tex, int imgwrap, int texmode, const DifferentialGeometry &dg, const vec3f &le)
 {
     vec3f L = le;
-    const vec4f pixel = texture2d(tex, dg);
+    const vec4f pixel = texture2d(tex, dg, imgwrap);
     const vec3f k = make_vec3f(pixel.x, pixel.y, pixel.z);
     if (TEXTURE_MODE_MODULATE == texmode){
         L = L * k;
