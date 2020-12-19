@@ -41,20 +41,6 @@ typedef void (*PathTraceMaterial_SelectNextMediumFunc)(
     const DifferentialGeometry &dg,
     Medium &currentMedium);
 
-enum ImageWrap{
-  TEXTURE_REPEAT = 0,
-  TEXTURE_BLACK,
-  TEXTURE_CLAMP,
-  TEXTURE_CLAMP_TO_TEXTURE
-};
-
-enum ImageMode{
-  TEXTURE_MODE_REPLACE = 0,
-  TEXTURE_MODE_DECAL,
-  TEXTURE_MODE_MODULATE,
-  NO_OF_TEXTURE_MODES
-};
-
 struct PathTraceMaterial
 {
   Material material;
@@ -91,11 +77,14 @@ void PathTraceMaterial_SetEnsightTex2D(
 
 #define PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS \
     const uniform TextureParam *uniform colorbyMap = NULL, \
-    const uniform TextureParam *uniform alphabyMap = NULL
+    const uniform TextureParam *uniform alphabyMap = NULL, \
+    const uniform TextureParam *uniform tex2dMap = NULL, \
+    uniform int tex2dImageWrap = 0, \
+    uniform int tex2dImageMode = 0
 
 #define PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES \
-    PathTraceMaterial_SetEnsightTex1D(&self->super, colorbyMap, alphabyMap);
-
+    PathTraceMaterial_SetEnsightTex1D(&self->super, colorbyMap, alphabyMap); \
+    PathTraceMaterial_SetEnsightTex2D(&self->super, tex2dMap, tex2dImageWrap, tex2dImageMode);
 
 inline linear3f makeShadingFrame(const DifferentialGeometry &dg)
 {

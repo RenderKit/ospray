@@ -16,9 +16,6 @@ typedef varying vec4f (*Texture2D_get)(const uniform Texture2D *uniform self,
 typedef varying vec3f (*Texture2D_getN)(const uniform Texture2D *uniform self,
     const varying DifferentialGeometry &dg);
 
-typedef varying vec4f (*Texture2D_get1d)(const uniform Texture2D *uniform self,
-    const varying DifferentialGeometry &dg);
-
 struct Texture2D
 {
   vec2i size;
@@ -26,7 +23,6 @@ struct Texture2D
                // checks
   vec2f halfTexel; // 0.5/size, needed for bilinear filtering and clamp-to-edge
   Texture2D_get get;
-  Texture2D_get1d get1d;
   Texture2D_getN getNormal;
   void *data;
   EnsightTex1dMappingData *map1d;   //mapping data for 1d texture mapping, see Mapping.h
@@ -152,4 +148,19 @@ inline void initDgFromTexCoord(DifferentialGeometry &dg, const varying vec2f &c)
 #endif
 
 /*! sample 1D texture using a raw variable as input */
+enum ImageWrap{
+  TEXTURE_REPEAT = 0,
+  TEXTURE_BLACK,
+  TEXTURE_CLAMP,
+  TEXTURE_CLAMP_TO_TEXTURE
+};
+
+enum ImageMode{
+  TEXTURE_MODE_REPLACE = 0,
+  TEXTURE_MODE_DECAL,
+  TEXTURE_MODE_MODULATE,
+  NO_OF_TEXTURE_MODES
+};
+
 extern vec3f sampleTexture1DByRawVar(const Texture2D *tex, float t);
+extern vec3f sampleTexture2DEnsight(const Texture2D *tex, int imgwrap, int imgmode, const DifferentialGeometry &dg, const vec3f &le);
