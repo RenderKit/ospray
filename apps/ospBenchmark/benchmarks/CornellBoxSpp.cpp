@@ -12,7 +12,7 @@ class CornellBox : public BaseFixture
         pixelSamples(spp)
   {}
 
-  void SetRendererParameters(cpp::Renderer r)
+  void SetRendererParameters(cpp::Renderer r) override
   {
     r.setParam("pixelSamples", pixelSamples);
   }

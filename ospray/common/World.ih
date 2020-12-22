@@ -7,6 +7,7 @@
 #include "Instance.ih"
 #include "common/Clipping.ih"
 #include "common/Ray.ih"
+#include "common/VolumeIntervals.ih"
 #include "lights/Light.ih"
 
 struct Renderer;
@@ -74,7 +75,7 @@ inline void traceVolumeRay(
     return;
 
   VolumeIntervals intervals;
-  initVolumeIntervals(intervals);
+  allocVolumeIntervals(intervals);
 
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
@@ -83,7 +84,7 @@ inline void traceVolumeRay(
       &context.ectx,
       (varying RTCRayHit * uniform) & ray);
 
-  if (hasInterval(intervals.intervals[0])) {
+  if (intervals.numVolumeIntervals > 0 && hasInterval(intervals.intervals[0])) {
     Instance *instance = *(world->volumesInst + intervals.intervals[0].instID);
     interval.volumetricModel =
         instance->group->volumetricModels[intervals.intervals[0].geomID];
@@ -92,12 +93,12 @@ inline void traceVolumeRay(
     interval.interval.lower = intervals.intervals[0].interval.lower;
     interval.interval.upper = intervals.intervals[0].interval.upper;
   }
+  freeVolumeIntervals(intervals);
 }
 
 inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeIntervals &intervals)
 {
-  initVolumeIntervals(intervals);
   if (!world->embreeSceneHandleVolumes)
     return;
 

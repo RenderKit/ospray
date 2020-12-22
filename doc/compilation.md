@@ -43,7 +43,7 @@ before you can build OSPRay you need the following prerequisites:
     or newer is required. If Embree is not found by CMake its location
     can be hinted with the variable `embree_DIR`.
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.11.0 or newer is required. If Open VKL is not
+    installing version 0.12.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 -   OSPRay also provides an optional module implementing the `denosier`
@@ -120,6 +120,10 @@ BUILD_OIDN_FROM_SOURCE
 
 BUILD_OIDN_VERSION
 : determines which version of Open Image Denoise to pull down.
+
+BUILD_OSPRAY_MODULE_MPI
+: set to ON to build OSPRay's MPI module for data-replicated and
+distributed parallel rendering on multiple nodes.
 
 For the full set of options, run:
 

@@ -23,6 +23,7 @@ void SciVisMaterial::commit()
   MaterialParam3f Kd = getMaterialParam3f("kd", vec3f(.8f));
   MaterialParam3f Ks = getMaterialParam3f("ks", vec3f(0.f));
   MaterialParam1f Ns = getMaterialParam1f("ns", 10.f);
+  vec3f Tf = getParam<vec3f>("tf", vec3f(0.f));
 
   ispc::SciVisMaterial_set(getIE(),
       d.factor,
@@ -32,7 +33,8 @@ void SciVisMaterial::commit()
       (const ispc::vec3f &)Ks.factor,
       Ks.tex,
       Ns.factor,
-      Ns.tex);
+      Ns.tex,
+      (const ispc::vec3f &)Tf);
 }
 
 } // namespace ospray

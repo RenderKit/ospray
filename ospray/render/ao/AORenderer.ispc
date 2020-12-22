@@ -25,6 +25,10 @@ void AORenderer_renderSample(Renderer *uniform _self,
   uniform bool firstHit = true;
   const float originalRayTFar = sample.ray.t;
 
+  // Allocate memory for volume intervals
+  VolumeIntervals volumeIntervals;
+  allocVolumeIntervals(volumeIntervals);
+
   // This is our main ray
   Ray &ray = sample.ray;
 
@@ -42,7 +46,6 @@ void AORenderer_renderSample(Renderer *uniform _self,
 
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
-    VolumeIntervals volumeIntervals;
     traceVolumeRay(world, volumeRay, volumeIntervals);
 
     // Sample volumes across volume intervals (in front of geometry hit)
@@ -98,6 +101,7 @@ void AORenderer_renderSample(Renderer *uniform _self,
     }
   }
 
+  freeVolumeIntervals(volumeIntervals);
   sample.rgb = make_vec3f(outputColor);
   sample.alpha = outputColor.w;
 }

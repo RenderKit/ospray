@@ -43,13 +43,13 @@ struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
   vec3f pos; // position of the camera in world-space
   vec3f dir; // main direction of the camera in world-space
   vec3f up; // up direction of the camera in world-space
-  float nearClip; // near clipping distance
+  float nearClip{1e-6f}; // near clipping distance
   // definition of the image region, may even be outside of [0..1]^2
   // to simulate sensor shift
   vec2f imageStart; // lower left corner
   vec2f imageEnd; // upper right corner
-  float shutterOpen; // start time of camera shutter
-  float shutterClose; // end time of camera shutter
+  float shutterOpen{0.0f}; // start time of camera shutter
+  float shutterClose{0.0f}; // end time of camera shutter
 
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>

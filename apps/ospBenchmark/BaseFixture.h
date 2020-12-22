@@ -7,7 +7,10 @@
 // ospray_testing
 #include "ospray_testing.h"
 // google benchmark
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsuggest-override"
 #include "benchmark/benchmark.h"
+#pragma clang diagnostic pop
 
 using namespace ospray;
 using namespace rkcommon;
@@ -58,7 +61,7 @@ class BaseFixture : public ::benchmark::Fixture
     UNIQUE_NAME(FixtureName)() : FixtureName("", __VA_ARGS__) {}               \
                                                                                \
    protected:                                                                  \
-    virtual void BenchmarkCase(::benchmark::State &st)                         \
+    void BenchmarkCase(::benchmark::State &st) override                        \
     {                                                                          \
       for (auto _ : st) {                                                      \
         framebuffer.renderFrame(renderer, camera, world);                      \
@@ -78,7 +81,7 @@ class BaseFixture : public ::benchmark::Fixture
     UNIQUE_SETUP_NAME(FixtureName)() : FixtureName("setup/", __VA_ARGS__) {}   \
                                                                                \
    protected:                                                                  \
-    virtual void BenchmarkCase(::benchmark::State &st)                         \
+    void BenchmarkCase(::benchmark::State &st) override                        \
     {                                                                          \
       for (auto _ : st) {                                                      \
         Shutdown();                                                            \

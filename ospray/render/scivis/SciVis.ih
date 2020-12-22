@@ -27,17 +27,17 @@ struct SciVisRenderContext
 
 struct LDSampler;
 
-float lightAlpha(const uniform SciVis *uniform self,
+vec3f lightAlpha(const uniform SciVis *uniform self,
     Ray &ray,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
-    float weight,
+    vec3f weight,
     float rayOffset,
     uniform float quality);
 
-float SciVis_computeAO(const uniform SciVis *uniform self,
+vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     ScreenSample &sample,

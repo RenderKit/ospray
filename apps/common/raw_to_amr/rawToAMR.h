@@ -71,7 +71,7 @@ std::vector<T> mmapRAW(const std::string &fileName, const vec3i &dims)
   }
 
   int fd = ::open(fileName.c_str(), O_RDONLY);
-  if (!fd)
+  if (fd == -1)
     throw std::runtime_error("Could not open file.");
 
   void *mem = mmap(nullptr,
@@ -81,6 +81,7 @@ std::vector<T> mmapRAW(const std::string &fileName, const vec3i &dims)
       ,
       fd,
       0);
+  ::close(fd);
   if (mem == MAP_FAILED)
     throw std::runtime_error("Could not mmap file.");
 

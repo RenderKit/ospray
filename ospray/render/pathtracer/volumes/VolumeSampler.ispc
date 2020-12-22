@@ -79,6 +79,7 @@ float volumeSampleFreePath(const PathState &pathState,
   // Get volume intervals
   Ray volumeRay = ray;
   VolumeIntervals volumeIntervals;
+  allocVolumeIntervals(volumeIntervals);
   traceVolumeRay(world, volumeRay, volumeIntervals);
 
   // Iterate through volume intervals
@@ -139,6 +140,7 @@ float volumeSampleFreePath(const PathState &pathState,
       }
     }
   }
+  freeVolumeIntervals(volumeIntervals);
   return min_dist;
 }
 
@@ -152,6 +154,7 @@ float volumeTransmittance(const PathState &pathState,
   // Get volume intervals
   Ray volumeRay = ray;
   VolumeIntervals volumeIntervals;
+  allocVolumeIntervals(volumeIntervals);
   traceVolumeRay(world, volumeRay, volumeIntervals);
 
   // Iterate through volume intervals
@@ -197,5 +200,6 @@ float volumeTransmittance(const PathState &pathState,
       }
     }
   }
+  freeVolumeIntervals(volumeIntervals);
   return transmittance;
 }

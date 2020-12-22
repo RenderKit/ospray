@@ -3,6 +3,7 @@
 
 #include "common/Intersect.ih"
 #include "common/OSPCommon.ih"
+#include "common/VolumeIntervals.ih"
 #include "volume/Volume.ih"
 
 unmasked void Volume_embreeBounds(
@@ -48,7 +49,7 @@ unmasked void Volume_intersect_kernel(
         reduce_max(vIntervals->numVolumeIntervals) + 1;
     if (numNeeded > vIntervals->numAllocated) {
       vIntervals->intervals = (varying VolumeInterval * uniform) reallocTLS(
-          TLSPOOL_VOLUME_INTERVALS, numNeeded * sizeof(varying VolumeInterval));
+          vIntervals->intervals, numNeeded * sizeof(varying VolumeInterval));
       vIntervals->numAllocated = numNeeded;
     }
 
