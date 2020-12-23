@@ -394,6 +394,19 @@ vec3f sampleTexture1DByRawVar(const Texture2D *tex, float t)
     return ret;
 }
 
+float sampleAlphaTexture1DByRawVar(const Texture2D *tex, float t)
+{
+    if (NULL == tex) {
+        return 1.0f;
+    }
+    const EnsightTex1dMappingOut out = EnsightTex1dMapping_getT(tex->map1d, t);
+    if (out.usergba){
+        return 1.0f;
+    }
+    const vec3f ret = sampleTexture1D(tex, out.t, false);    
+    return ret.x;
+}
+
 inline vec4f getTexel(const Texture2D * self, const vec2i i) {
   vec4f ret;
   const vec3f v = ((const vec3f *)self->data)[i.y * self->size.x + i.x];
