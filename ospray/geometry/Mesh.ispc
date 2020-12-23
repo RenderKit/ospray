@@ -115,6 +115,14 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
   }
 }
 
+#include "render/pathtracer/materials/Material.ih"
+#include "texture/Texture2D.ih"
+float sampleAlphaTexture1D(const DifferentialGeometry &dg)
+{
+  const PathTraceMaterial* pmat = (const PathTraceMaterial *)dg.material;
+  return pmat ? sampleAlphaTexture1DByRawVar(pmat->alphabyMap.ptr, dg.atex1d) : 1;
+}
+
 static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
@@ -141,6 +149,10 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
     dg.color = interpolate(uv, a, b, c);
     if (!self->has_alpha)
       dg.color.w = 1.f;
+  }
+  else {
+    //NOTE: sampleAlphaTexture1D() only support pathtracing!!!
+    //dg.color.w = sampleAlphaTexture1D(dg);
   }
 
   const bool is_pervert_tex1d = valid(self->tex1d);

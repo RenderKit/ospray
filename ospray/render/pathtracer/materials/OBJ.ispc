@@ -45,6 +45,7 @@ const varying BSDF *varying OBJ_getBSDF(
 
   /*! cut-out opacity */
   float d = self->d * get1f(self->dMap, dg, 1.f) * dg.color.w;
+  d *= sampleAlphaTexture1DByRawVar(super->alphabyMap.ptr, dg.atex1d);
 
   /*! diffuse component */
   vec3f Kd = self->Kd;
@@ -84,6 +85,8 @@ vec3f OBJ_getTransparency(const uniform PathTraceMaterial *uniform super,
 
   /*! cut-out opacity */
   float d = self->d * get1f(self->dMap, dg, 1.f) * dg.color.w;
+  d *= sampleAlphaTexture1DByRawVar(super->alphabyMap.ptr, dg.atex1d);
+
   if (hasAlpha(self->KdMap)) {
     vec4f Kd_from_map = get4f(self->KdMap, dg);
     d *= Kd_from_map.w;
