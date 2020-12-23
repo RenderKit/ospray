@@ -156,7 +156,9 @@ const varying BSDF *varying Principled_getBSDF(
     frame->vy = cross(frame->vz, frame->vx);
   }
 
-  const float opacity = clamp(self->opacity * get1f(self->opacityMap, dg, 1.f));
+  const float opacity = clamp(self->opacity * get1f(self->opacityMap, dg, 1.f)) *
+    sampleAlphaTexture1DByRawVar(super->alphabyMap.ptr, dg.atex1d);
+
   if (opacity > EPS) {
     varying linear3f *uniform baseFrame = frame;
     if (valid(self->baseNormalMap)) {
@@ -422,7 +424,9 @@ vec3f Principled_getTransparency(
       (const uniform Principled *uniform)material;
   vec3f T = make_vec3f(0.f);
 
-  const float opacity = clamp(self->opacity * get1f(self->opacityMap, dg, 1.f));
+  const float opacity = clamp(self->opacity * get1f(self->opacityMap, dg, 1.f)) * 
+    sampleAlphaTexture1DByRawVar(material->alphabyMap.ptr, dg.atex1d);
+
   const float transparency = 1.f - opacity;
   const float transmission =
       clamp(self->transmission * get1f(self->transmissionMap, dg, 1.f));
