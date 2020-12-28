@@ -1,7 +1,6 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "common/Profiling.h"
 #include "MPIDistributedDevice.h"
 #include <map>
 #include "MPIDistributedDevice_ispc.h"
@@ -12,6 +11,7 @@
 #include "common/Group.h"
 #include "common/Instance.h"
 #include "common/MPICommon.h"
+#include "common/Profiling.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
@@ -56,6 +56,14 @@ static void setParamOnObject(OSPObject _obj, const char *p, const T &v)
     }                                                                          \
   }
 
+#define declare_param_setter_string(TYPE)                                      \
+  {                                                                            \
+    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) {   \
+      const char *str = (const char *)v;                                       \
+      setParamOnObject(o, p, std::string(str));                                \
+    }                                                                          \
+  }
+
 static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter(api::Device *),
     declare_param_setter(void *),
@@ -77,6 +85,7 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter_object(Volume *),
     declare_param_setter_object(VolumetricModel *),
     declare_param_setter_object(World *),
+    declare_param_setter_string(const char *),
     declare_param_setter(char *),
     declare_param_setter(char),
     declare_param_setter(unsigned char),
@@ -84,7 +93,6 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter(vec3uc),
     declare_param_setter(vec4uc),
     declare_param_setter(short),
-    declare_param_setter(unsigned short),
     declare_param_setter(int),
     declare_param_setter(vec2i),
     declare_param_setter(vec3i),
@@ -404,7 +412,7 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
 
   auto *f = new ThreadedRenderTask(fb, [=]() {
 #ifdef ENABLE_PROFILING
-    using namespace mpicommon; 
+    using namespace mpicommon;
     ProfilingPoint start;
 #endif
     utility::CodeTimer timer;
@@ -413,8 +421,8 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
     timer.stop();
 #ifdef ENABLE_PROFILING
     ProfilingPoint end;
-    std::cout << "Frame took " << elapsedTimeMs(start, end) << "ms, CPU: "
-      << cpuUtilization(start, end) << "%\n";
+    std::cout << "Frame took " << elapsedTimeMs(start, end)
+              << "ms, CPU: " << cpuUtilization(start, end) << "%\n";
 #endif
 
     fb->refDec();
