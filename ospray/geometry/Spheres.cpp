@@ -27,12 +27,16 @@ void Spheres::commit()
   vertexData = getParamDataT<vec3f>("sphere.position", true);
   radiusData = getParamDataT<float>("sphere.radius");
   texcoordData = getParamDataT<vec2f>("sphere.texcoord");
+  tex1dData = getParamDataT<float>("sphere.texcoord1d");
+  atex1dData = getParamDataT<float>("sphere.alphatexcoord1d");
 
   ispc::SpheresGeometry_set(getIE(),
       embreeGeometry,
       ispc(vertexData),
       ispc(radiusData),
       ispc(texcoordData),
+      ispc(tex1dData),
+      ispc(atex1dData),
       radius);
 
   postCreationInfo();

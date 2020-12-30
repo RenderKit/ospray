@@ -18,6 +18,8 @@ struct Spheres
   Data1D vertex;
   Data1D radius;
   Data1D texcoord;
+  Data1D tex1d;     //ensight's colorby attribute
+  Data1D atex1d;    //ensight's alphaby attribute
   float global_radius;
 };
 
@@ -40,6 +42,11 @@ static void Spheres_postIntersect(const Geometry *uniform geometry,
 
   if (and(flags & DG_TEXCOORD, valid(self->texcoord)))
     dg.st = get_vec2f(self->texcoord, ray.primID);
+
+  if (valid(self->tex1d))
+    dg.tex1d = get_float(self->tex1d, ray.primID);
+  if (valid(self->atex1d))
+    dg.atex1d = get_float(self->atex1d, ray.primID);
 }
 
 unmasked void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
@@ -153,6 +160,8 @@ void Spheres_Constructor(Spheres *uniform self, void *uniform cppEquivalent)
   Data1D_Constructor(&self->vertex);
   Data1D_Constructor(&self->radius);
   Data1D_Constructor(&self->texcoord);
+  Data1D_Constructor(&self->tex1d);
+  Data1D_Constructor(&self->atex1d);
   self->global_radius = 0.01;
 }
 
@@ -168,6 +177,8 @@ export void SpheresGeometry_set(void *uniform _self,
     const Data1D *uniform vertex,
     const Data1D *uniform radius,
     const Data1D *uniform texcoord,
+    const Data1D *uniform tex1d,
+    const Data1D *uniform atex1d,
     uniform float global_radius)
 {
   Spheres *uniform self = (Spheres * uniform) _self;
@@ -175,6 +186,8 @@ export void SpheresGeometry_set(void *uniform _self,
   self->vertex = *vertex;
   self->radius = *radius;
   self->texcoord = *texcoord;
+  self->tex1d = *tex1d;
+  self->atex1d = *atex1d;
   self->global_radius = global_radius;
   self->super.numPrimitives = vertex->numItems;
 
