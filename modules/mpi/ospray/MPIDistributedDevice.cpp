@@ -93,6 +93,7 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter(vec3uc),
     declare_param_setter(vec4uc),
     declare_param_setter(short),
+    declare_param_setter(unsigned short),
     declare_param_setter(int),
     declare_param_setter(vec2i),
     declare_param_setter(vec3i),
