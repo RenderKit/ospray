@@ -424,45 +424,74 @@ The enum type `OSPDataType` describes the different element types that
 can be represented in OSPRay; valid constants are listed in the table
 below.
 
-  Type/Name              Description
-  ---------------------- -----------------------------------------------
-  OSP_DEVICE             API device object reference
-  OSP_DATA               data reference
-  OSP_OBJECT             generic object reference
-  OSP_CAMERA             camera object reference
-  OSP_FRAMEBUFFER        framebuffer object reference
-  OSP_LIGHT              light object reference
-  OSP_MATERIAL           material object reference
-  OSP_TEXTURE            texture object reference
-  OSP_RENDERER           renderer object reference
-  OSP_WORLD              world object reference
-  OSP_GEOMETRY           geometry object reference
-  OSP_VOLUME             volume object reference
-  OSP_TRANSFER_FUNCTION  transfer function object reference
-  OSP_IMAGE_OPERATION    image operation object reference
-  OSP_STRING             C-style zero-terminated character string
-  OSP_CHAR               8\ bit signed character scalar
-  OSP_UCHAR              8\ bit unsigned character scalar
-  OSP_VEC[234]UC         ... and [234]-element vector
-  OSP_USHORT             16\ bit unsigned integer scalar
-  OSP_VEC[234]US         ... and [234]-element vector
-  OSP_INT                32\ bit signed integer scalar
-  OSP_VEC[234]I          ... and [234]-element vector
-  OSP_UINT               32\ bit unsigned integer scalar
-  OSP_VEC[234]UI         ... and [234]-element vector
-  OSP_LONG               64\ bit signed integer scalar
-  OSP_VEC[234]L          ... and [234]-element vector
-  OSP_ULONG              64\ bit unsigned integer scalar
-  OSP_VEC[234]UL         ... and [234]-element vector
-  OSP_FLOAT              32\ bit single precision floating-point scalar
-  OSP_VEC[234]F          ... and [234]-element vector
-  OSP_DOUBLE             64\ bit double precision floating-point scalar
-  OSP_BOX[1234]I         32\ bit integer box (lower + upper bounds)
-  OSP_BOX[1234]F         32\ bit single precision floating-point box (lower + upper bounds)
-  OSP_LINEAR[23]F        32\ bit single precision floating-point linear transform ([23] vectors)
-  OSP_AFFINE[23]F        32\ bit single precision floating-point affine transform (linear transform plus translation)
-  OSP_VOID_PTR           raw memory address (only found in module extensions)
-  ---------------------- -----------------------------------------------
+  -------------------------- ---------------------------------------------------
+  Type/Name                  Description
+  -------------------------- ---------------------------------------------------
+  OSP_DEVICE                 API device object reference
+
+  OSP_DATA                   data reference
+
+  OSP_OBJECT                 generic object reference
+
+  OSP_CAMERA                 camera object reference
+
+  OSP_FRAMEBUFFER            framebuffer object reference
+
+  OSP_LIGHT                  light object reference
+
+  OSP_MATERIAL               material object reference
+
+  OSP_TEXTURE                texture object reference
+
+  OSP_RENDERER               renderer object reference
+
+  OSP_WORLD                  world object reference
+
+  OSP_GEOMETRY               geometry object reference
+
+  OSP_VOLUME                 volume object reference
+
+  OSP_TRANSFER_FUNCTION      transfer function object reference
+
+  OSP_IMAGE_OPERATION        image operation object reference
+
+  OSP_STRING                 C-style zero-terminated character string
+
+  OSP_CHAR, OSP_VEC[234]C    8\ bit signed character scalar and [234]-element vector
+
+  OSP_UCHAR, OSP_VEC[234]UC  8\ bit unsigned character scalar and [234]-element vector
+
+  OSP_SHORT, OSP_VEC[234]S   16\ bit unsigned integer scalar and [234]-element vector
+
+  OSP_USHORT, OSP_VEC[234]US 16\ bit unsigned integer scalar and [234]-element vector
+
+  OSP_INT, OSP_VEC[234]I     32\ bit signed integer scalar and [234]-element vector
+
+  OSP_UINT, OSP_VEC[234]UI   32\ bit unsigned integer scalar and [234]-element vector
+
+  OSP_LONG, OSP_VEC[234]L    64\ bit signed integer scalar and [234]-element vector
+
+  OSP_ULONG, OSP_VEC[234]UL  64\ bit unsigned integer scalar and [234]-element vector
+
+  OSP_FLOAT, OSP_VEC[234]F   32\ bit single precision floating-point scalar
+                             and [234]-element vector
+
+  OSP_DOUBLE, OSP_VEC[234]D  64\ bit double precision floating-point scalar
+                             and [234]-element vector
+
+  OSP_BOX[1234]I             32\ bit integer box (lower + upper bounds)
+
+  OSP_BOX[1234]F             32\ bit single precision floating-point box
+                             (lower + upper bounds)
+
+  OSP_LINEAR[23]F            32\ bit single precision floating-point linear
+                             transform ([23] vectors)
+
+  OSP_AFFINE[23]F            32\ bit single precision floating-point affine
+                             transform (linear transform plus translation)
+
+  OSP_VOID_PTR               raw memory address (only found in module extensions)
+  -------------------------- ---------------------------------------------------
   : Valid named constants for `OSPDataType`.
 
 If the elements of the array are handles to objects, then their
