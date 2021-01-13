@@ -26,7 +26,7 @@ float Renderer_getMaxDepth(const Renderer *uniform self, const vec2f &screenPos)
 
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, screenPos);
-  return get1f(self->maxDepthTexture, lookup);
+  return max(0.f, get1f(self->maxDepthTexture, lookup));
 }
 
 void Renderer_default_renderSample(Renderer *uniform self,
@@ -77,6 +77,7 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
 
     vec3f col = make_vec3f(0.f);
     float alpha = 0.f;
+    float depth = inf;
     vec3f normal = make_vec3f(0.f);
     vec3f albedo = make_vec3f(0.f);
 
@@ -113,6 +114,7 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
       self->renderSample(self, fb, world, perFrameData, screenSample);
       col = col + screenSample.rgb;
       alpha += screenSample.alpha;
+      depth = min(depth, screenSample.z);
       normal = normal + screenSample.normal;
       albedo = albedo + screenSample.albedo;
     }
@@ -120,6 +122,7 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
     const float rspp = rcpf(spp);
     screenSample.rgb = col * rspp;
     screenSample.alpha = alpha * rspp;
+    screenSample.z = depth;
     screenSample.normal = normal * rspp;
     screenSample.albedo = albedo * rspp;
     setTile(tile, pixel, screenSample);

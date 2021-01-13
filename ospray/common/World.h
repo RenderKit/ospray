@@ -37,6 +37,9 @@ struct OSPRAY_SDK_INTERFACE World : public ManagedObject
   RTCScene embreeSceneHandleGeometries{nullptr};
   RTCScene embreeSceneHandleVolumes{nullptr};
   RTCScene embreeSceneHandleClippers{nullptr};
+
+  bool scivisDataValid;
+  bool pathtracerDataValid;
 };
 
 OSPTYPEFOR_SPECIALIZATION(World *, OSP_WORLD);

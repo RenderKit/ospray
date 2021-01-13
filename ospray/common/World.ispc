@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "World.ih"
+#include "math/Distribution1D.ih"
+#include "render/pathtracer/GeometryLight.ih"
 
 unmasked void clippingIntersectionFilterV(
     const struct RTCFilterFunctionNArguments *uniform args)
@@ -95,10 +97,8 @@ unmasked void clippingIntersectionFilterV(
   context->hitsCount++;
 }
 
-export void *uniform World_create(void *uniform cppE)
+void World_Constructor(World *uniform world, void *uniform cppE)
 {
-  World *uniform world = uniform new World;
-
   world->cppEquivalent = cppE;
   world->geometriesInst = NULL;
   world->numGeometriesInst = 0;
@@ -113,7 +113,37 @@ export void *uniform World_create(void *uniform cppE)
 
   world->numInvertedClippers = 0;
 
+  world->scivisData.lights = NULL;
+
+  world->pathtracerData.numLights = 0;
+  world->pathtracerData.numGeoLights = 0;
+  world->pathtracerData.lights = NULL;
+  world->pathtracerData.lightsCDF = NULL;
+}
+
+inline void PathtracerData_destroy(PathtracerData *uniform self)
+{
+  for (uniform int i = 0; i < self->numGeoLights; i++)
+    GeometryLight_destroy(self->lights[i]);
+  delete[] self->lights;
+  delete[] self->lightsCDF;
+}
+
+export void *uniform World_create(void *uniform cppE)
+{
+  World *uniform world = uniform new World;
+  World_Constructor(world, cppE);
   return (void *uniform)world;
+}
+
+export void World_destroy(void *uniform _self)
+{
+  World *uniform self = (World * uniform) _self;
+
+  delete[] self->scivisData.lights;
+  PathtracerData_destroy(&self->pathtracerData);
+
+  delete self;
 }
 
 export void World_set(void *uniform _self,
@@ -147,4 +177,55 @@ export void World_set(void *uniform _self,
   self->embreeSceneHandleClippers = (RTCScene)embreeClipScene;
 
   self->numInvertedClippers = numInvertedClippers;
+}
+
+export void World_setSciVisData(void *uniform _self,
+    const uniform vec3f &aoColor,
+    void **uniform lights,
+    const uniform uint32 numLights)
+{
+  World *uniform self = (World * uniform) _self;
+
+  delete[] self->scivisData.lights;
+  self->scivisData.lights = NULL;
+
+  self->scivisData.aoColorPi = aoColor * pi;
+  self->scivisData.numLights = numLights;
+  if (numLights) {
+    self->scivisData.lights = uniform new LightPtr[numLights];
+    LightArray srcLights = (LightArray)lights;
+    for (uniform int i = 0; i < numLights; i++)
+      self->scivisData.lights[i] = srcLights[i];
+  }
+}
+
+export void World_setPathtracerData(void *uniform _self,
+    void **uniform lights,
+    const uniform uint32 numLights,
+    const uniform uint32 numGeoLights)
+{
+  World *uniform self = (World * uniform) _self;
+  PathtracerData *uniform ptData = &self->pathtracerData;
+
+  PathtracerData_destroy(ptData);
+
+  ptData->lights = NULL;
+  ptData->lightsCDF = NULL;
+  ptData->numLights = numLights;
+  ptData->numGeoLights = numGeoLights;
+  if (numLights) {
+    ptData->lights = uniform new LightPtr[numLights];
+    ptData->lightsCDF = uniform new float[numLights];
+    LightArray srcLights = (LightArray)lights;
+    uniform float uniformLightSelectionPDF = 1.0f / numLights;
+    for (uniform int i = 0; i < numLights; i++) {
+      ptData->lights[i] = srcLights[i];
+
+      // naive implementation of a stochastic light selection
+      // assigning each light source the same probability
+      ptData->lightsCDF[i] = 1.0f;
+      ptData->lights[i]->selectionPDF = uniformLightSelectionPDF;
+    }
+    Distribution1D_create(numLights, ptData->lightsCDF);
+  }
 }

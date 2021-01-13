@@ -33,6 +33,12 @@ Volume::Volume(const std::string &type) : vklType(type)
 
 Volume::~Volume()
 {
+  if (vklSampler)
+    vklRelease(vklSampler);
+
+  if (vklVolume)
+    vklRelease(vklVolume);
+
   if (embreeGeometry)
     rtcReleaseGeometry(embreeGeometry);
 }
@@ -44,6 +50,9 @@ std::string Volume::toString() const
 
 void Volume::commit()
 {
+  if (vklSampler)
+    vklRelease(vklSampler);
+
   if (vklVolume)
     vklRelease(vklVolume);
 
@@ -63,7 +72,8 @@ void Volume::commit()
   createEmbreeGeometry();
 
   ispc::Volume_set(ispcEquivalent, embreeGeometry);
-  ispc::Volume_set_vklVolume(ispcEquivalent, vklVolume, vklSampler, (ispc::box3f *)&bounds);
+  ispc::Volume_set_vklVolume(
+      ispcEquivalent, vklVolume, vklSampler, (ispc::box3f *)&bounds);
 }
 
 void Volume::createEmbreeGeometry()
@@ -72,6 +82,15 @@ void Volume::createEmbreeGeometry()
     rtcReleaseGeometry(embreeGeometry);
 
   embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+}
+
+void Volume::checkDataStride(const Data *data) const
+{
+  if (data->stride().y != int64_t(data->numItems.x) * data->stride().x
+      || data->stride().z != int64_t(data->numItems.y) * data->stride().y) {
+    throw std::runtime_error(
+        toString() + " VKL only supports 1D strides between elements");
+  }
 }
 
 void Volume::handleParams()
@@ -112,16 +131,20 @@ void Volume::handleParams()
         std::vector<VKLData> vklBlockData;
         vklBlockData.reserve(data->size());
         for (auto &&data : dataD) {
+          checkDataStride(data);
           VKLData vklData = vklNewData(data->size(),
               (VKLDataType)data->type,
               data->data(),
-              VKL_DATA_SHARED_BUFFER);
+              VKL_DATA_SHARED_BUFFER,
+              data->stride().x);
           vklBlockData.push_back(vklData);
         }
         VKLData vklData =
             vklNewData(vklBlockData.size(), VKL_DATA, vklBlockData.data());
         vklSetData(vklVolume, param.name.c_str(), vklData);
         vklRelease(vklData);
+        for (VKLData vd: vklBlockData)
+          vklRelease(vd);
 
         if (vklType == "vdb" && param.name == "node.data") {
           // deduce format
@@ -134,7 +157,6 @@ void Volume::handleParams()
                   || data->numItems.x != data->numItems.z)
                 throw std::runtime_error(
                     toString() + " VDB leaf node data must have size n^3.");
-              // TODO test 2nd+3rd stride is natural
             }
             format.push_back(
                 isTile ? VKL_FORMAT_TILE : VKL_FORMAT_CONSTANT_ZYX);
@@ -145,14 +167,15 @@ void Volume::handleParams()
         }
 
       } else {
+        checkDataStride(data);
         VKLData vklData = vklNewData(data->size(),
             (VKLDataType)data->type,
             data->data(),
-            VKL_DATA_SHARED_BUFFER);
+            VKL_DATA_SHARED_BUFFER,
+            data->stride().x);
 
         std::string name(param.name);
         if (name == "data") { // structured volumes
-          // TODO 2nd+3rd stride is natural
           vec3ul &dim = data->numItems;
           vklSetVec3i(vklVolume, "dimensions", dim.x, dim.y, dim.z);
           vklSetInt(vklVolume, "voxelType", (VKLDataType)data->type);

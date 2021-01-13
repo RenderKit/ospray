@@ -1,6 +1,10 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+// must be first
+#define OSPRAY_RKCOMMON_DEFINITIONS
+#include "ospray/ospray_cpp/ext/rkcommon.h"
+
 #include "OSPCommon.h"
 #include "api/Device.h"
 
@@ -582,25 +586,32 @@ uint32_t logLevel()
 OSPError loadLocalModule(const std::string &name)
 {
   std::string libName = "ospray_module_" + name;
-  loadLibrary(libName, false);
+  try {
+    loadLibrary(libName, false);
+  } catch (const std::exception &e) {
+    handleError(OSP_INVALID_OPERATION, e.what());
+    return OSP_INVALID_OPERATION;
+  } catch (...) {
+    return OSP_INVALID_OPERATION;
+  }
 
   std::string initSymName = "ospray_module_init_" + name;
   void *initSym = getSymbol(initSymName);
   if (!initSym) {
-    throw std::runtime_error(
-        "#osp:api: could not find module initializer " + initSymName);
+    handleError(OSP_INVALID_OPERATION,
+        "Could not find module initializer " + initSymName);
+    unloadLibrary(libName);
+    return OSP_INVALID_OPERATION;
   }
 
   auto initMethod = (OSPError(*)(int16_t, int16_t, int16_t))initSym;
-
-  if (!initMethod)
-    return OSP_INVALID_OPERATION;
-
   auto err = initMethod(
       OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH);
 
-  if (err != OSP_NO_ERROR)
+  if (err != OSP_NO_ERROR) {
+    handleError(err, "Initialization of module " + name + " failed");
     unloadLibrary(libName);
+  }
 
   return err;
 }
@@ -694,37 +705,6 @@ OSPTYPEFOR_DEFINITION(long long);
 OSPTYPEFOR_DEFINITION(unsigned long long);
 OSPTYPEFOR_DEFINITION(float);
 OSPTYPEFOR_DEFINITION(double);
-
-OSPTYPEFOR_DEFINITION(vec2uc);
-OSPTYPEFOR_DEFINITION(vec3uc);
-OSPTYPEFOR_DEFINITION(vec4uc);
-OSPTYPEFOR_DEFINITION(vec2i);
-OSPTYPEFOR_DEFINITION(vec3i);
-OSPTYPEFOR_DEFINITION(vec4i);
-OSPTYPEFOR_DEFINITION(vec2ui);
-OSPTYPEFOR_DEFINITION(vec3ui);
-OSPTYPEFOR_DEFINITION(vec4ui);
-OSPTYPEFOR_DEFINITION(vec2l);
-OSPTYPEFOR_DEFINITION(vec3l);
-OSPTYPEFOR_DEFINITION(vec4l);
-OSPTYPEFOR_DEFINITION(vec2ul);
-OSPTYPEFOR_DEFINITION(vec3ul);
-OSPTYPEFOR_DEFINITION(vec4ul);
-OSPTYPEFOR_DEFINITION(vec2f);
-OSPTYPEFOR_DEFINITION(vec3f);
-OSPTYPEFOR_DEFINITION(vec4f);
-OSPTYPEFOR_DEFINITION(box1i);
-OSPTYPEFOR_DEFINITION(box2i);
-OSPTYPEFOR_DEFINITION(box3i);
-OSPTYPEFOR_DEFINITION(box4i);
-OSPTYPEFOR_DEFINITION(box1f);
-OSPTYPEFOR_DEFINITION(box2f);
-OSPTYPEFOR_DEFINITION(box3f);
-OSPTYPEFOR_DEFINITION(box4f);
-OSPTYPEFOR_DEFINITION(linear2f);
-OSPTYPEFOR_DEFINITION(linear3f);
-OSPTYPEFOR_DEFINITION(affine2f);
-OSPTYPEFOR_DEFINITION(affine3f);
 
 OSPTYPEFOR_DEFINITION(OSPObject);
 OSPTYPEFOR_DEFINITION(OSPCamera);

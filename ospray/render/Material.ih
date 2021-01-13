@@ -3,9 +3,12 @@
 
 #pragma once
 
+#include "RendererType.ih"
+
 /*! ISPC-side abstraction for a material. */
 struct Material
 {
   //! pointer back to the C++-equivalent of this class
   void *uniform cppEquivalent;
+  uniform RendererType type;
 };

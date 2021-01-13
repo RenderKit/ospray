@@ -22,6 +22,7 @@ struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   void commit() override;
 
  private:
+  void checkDataStride(const Data *) const;
   void handleParams();
 
   void createEmbreeGeometry();

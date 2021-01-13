@@ -9,10 +9,10 @@ using namespace rkcommon::math;
 namespace ospray {
 namespace testing {
 
-struct UnstructuredVolume : public detail::Builder
+struct UnstructuredVolumeSimple : public detail::Builder
 {
-  UnstructuredVolume() = default;
-  ~UnstructuredVolume() override = default;
+  UnstructuredVolumeSimple() = default;
+  ~UnstructuredVolumeSimple() override = default;
 
   void commit() override;
 
@@ -25,7 +25,7 @@ struct UnstructuredVolume : public detail::Builder
 
 // Inlined definitions ////////////////////////////////////////////////////
 
-void UnstructuredVolume::commit()
+void UnstructuredVolumeSimple::commit()
 {
   Builder::commit();
 
@@ -33,7 +33,7 @@ void UnstructuredVolume::commit()
   valuesPerCell = getParam<bool>("cellCenteredValues", false);
 }
 
-cpp::Group UnstructuredVolume::buildGroup() const
+cpp::Group UnstructuredVolumeSimple::buildGroup() const
 {
   // define hexahedron parameters
   const float hSize = .4f;
@@ -217,7 +217,7 @@ cpp::Group UnstructuredVolume::buildGroup() const
   return group;
 }
 
-OSP_REGISTER_TESTING_BUILDER(UnstructuredVolume, unstructured_volume);
+OSP_REGISTER_TESTING_BUILDER(UnstructuredVolumeSimple, unstructured_volume_simple);
 
 } // namespace testing
 } // namespace ospray

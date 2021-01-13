@@ -54,10 +54,13 @@ cmake -L `
   -D CMAKE_INSTALL_DATAROOTDIR= `
   -D CMAKE_INSTALL_DOCDIR=doc `
   -D CMAKE_INSTALL_BINDIR=bin `
+  -D CMAKE_BUILD_WITH_INSTALL_RPATH=bin `
+  -D OSPRAY_SIGN_FILE=$env:SIGN_FILE_WINDOWS `
   ..
 
 # compile and create installers
 # option '--clean-first' somehow conflicts with options after '--' for msbuild
+cmake --build . --config Release --target sign_files
 cmake --build . --config Release --target PACKAGE
 
 # create ZIP files

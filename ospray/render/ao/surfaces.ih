@@ -1,0 +1,32 @@
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "AORenderer.ih"
+
+struct SurfaceShadingInfo
+{
+  vec4f shadedColor;
+  vec3f albedo;
+};
+
+typedef SurfaceShadingInfo SSI;
+
+inline void computeDG(const World *uniform world,
+    const AORenderer *uniform renderer,
+    const Ray &ray,
+    DifferentialGeometry &dg)
+{
+  postIntersect(world,
+      &renderer->super,
+      dg,
+      ray,
+      DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TEXCOORD);
+}
+
+SSI computeShading(const AORenderer *uniform self,
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
+    const DifferentialGeometry &dg,
+    ScreenSample &sample);

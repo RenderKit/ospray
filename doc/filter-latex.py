@@ -1,5 +1,4 @@
 # 1. convert tables to use 'tabu'
-# 2. always add hypertargets, before headings, to workaround issue #2719
 # Based on Wagner Macedo's filter.py posted at
 # https://groups.google.com/forum/#!msg/pandoc-discuss/RUC-tuu_qf0/h-H3RRVt1coJ
 import pandocfilters as pf
@@ -64,9 +63,6 @@ def do_filter(k, v, f, m):
                 tbl_contents(v[4]),
                 latex(r'\bottomrule' '\n' r'\end{tabu}'),
                 latex(r'\end{table'+wd+'}')]
-    if k == "Header":
-        return [latex(r'\hypertarget{' + v[1][0] + r'}{}'),
-                pf.Header(v[0], v[1], v[2])]
 
 if __name__ == "__main__":
     pf.toJSONFilter(do_filter)

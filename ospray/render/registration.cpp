@@ -1,6 +1,7 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "ao/AORenderer.h"
 #include "debug/DebugRenderer.h"
 #include "pathtracer/PathTracer.h"
 #include "scivis/SciVis.h"
@@ -19,6 +20,7 @@
 #include "pathtracer/materials/Velvet.h"
 using namespace ospray::pathtracer;
 
+#include "ao/Material.h"
 #include "scivis/SciVisMaterial.h"
 
 namespace ospray {
@@ -28,7 +30,7 @@ void registerAllRenderers()
   Renderer::registerType<DebugRenderer>("debug");
   Renderer::registerType<PathTracer>("pathtracer");
   Renderer::registerType<SciVis>("scivis");
-  Renderer::registerType<SciVis>("ao");
+  Renderer::registerType<AORenderer>("ao");
 }
 
 void registerAllMaterials()
@@ -47,7 +49,7 @@ void registerAllMaterials()
   Material::registerType<Velvet>("pathtracer", "velvet");
 
   Material::registerType<SciVisMaterial>("scivis", "obj");
-  Material::registerType<SciVisMaterial>("ao", "obj");
+  Material::registerType<AOMaterial>("ao", "obj");
 }
 
 } // namespace ospray

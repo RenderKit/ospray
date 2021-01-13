@@ -335,6 +335,8 @@ given object anymore, call
 
 This decreases its reference count and if the count reaches `0` the
 object will automatically get deleted. Passing `NULL` is not an error.
+Note that every handle returned via the API needs to be released when
+the object is no longer needed, to avoid memory leaks.
 
 Sometimes applications may want to have more than one reference to an
 object, where it is desirable for the application to increment the
@@ -529,19 +531,37 @@ common type of structured volumes are regular grids.
 Structured regular volumes are created by passing the type string
 "`structuredRegular`" to `ospNewVolume`. Structured volumes are
 represented through an `OSPData` 3D array `data` (which may or may not
-be shared with the application), where currently the voxel data needs to
-be laid out compact in memory in xyz-order^[For consecutive memory
-addresses the x-index of the corresponding voxel changes the quickest.]
+be shared with the application). The voxel data must be laid out in
+xyz-order^[For consecutive memory addresses the x-index of the corresponding
+voxel changes the quickest.] and can be compact (best for performance) or can
+have a stride between voxels, specified through the
+`byteStride1` parameter when creating the `OSPData`. Only 1D strides are
+supported, additional strides between scanlines (2D, `byteStride2`) and
+slices (3D, `byteStride3`) are not.
+
 
 The parameters understood by structured volumes are summarized in the
 table below.
 
-  Type    Name            Default  Description
-  ------- ----------- -----------  --------------------------------------
-  vec3f   gridOrigin  $(0, 0, 0)$  origin of the grid in object-space
-  vec3f   gridSpacing $(1, 1, 1)$  size of the grid cells in object-space
-  OSPData data                     the actual voxel 3D [data]
-  ------- ----------- -----------  --------------------------------------
+  ------- -------------- -----------------------------  --------------------------
+  Type    Name                                 Default  Description
+  ------- -------------- -----------------------------  --------------------------
+  vec3f   gridOrigin                       $(0, 0, 0)$  origin of the grid in
+                                                        object-space
+
+  vec3f   gridSpacing                      $(1, 1, 1)$  size of the grid cells
+                                                        in object-space
+
+  OSPData data                                          the actual voxel 3D [data]
+
+  int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
+                                                        reconstructing the field,
+                                                        also allowed is
+                                                        `OSP_VOLUME_FILTER_NEAREST`
+
+  int     gradientFilter              same as `filter`  filter used during
+                                                        gradient computations
+  ------- -------------- -----------------------------  --------------------------
   : Configuration parameters for structured regular volumes.
 
 The size of the volume is inferred from the size of the 3D array `data`,
@@ -560,12 +580,28 @@ summarized below.
 
 ![Coordinate system of structured spherical volumes.][imgStructuredSphericalCoords]
 
-  Type   Name            Default  Description
-  ------ ----------- -----------  -------------------------------------------------------------------------
-  vec3f  gridOrigin  $(0, 0, 0)$  origin of the grid in units of $(r, \theta, \phi)$; angles in degrees
-  vec3f  gridSpacing $(1, 1, 1)$  size of the grid cells in units of $(r, \theta, \phi)$; angles in degrees
-  OSPData data                    the actual voxel 3D [data]
-  ------ ----------- -----------  -------------------------------------------------------------------------
+  ------- -------------- -----------------------------  --------------------------
+  Type    Name                                 Default  Description
+  ------- -------------- -----------------------------  --------------------------
+  vec3f   gridOrigin                       $(0, 0, 0)$  origin of the grid in
+                                                        units of $(r, \theta,
+                                                        \phi)$; angles in
+                                                        degrees
+
+  vec3f   gridSpacing                      $(1, 1, 1)$  size of the grid cells in
+                                                        units of $(r, \theta,
+                                                        \phi)$; angles in degrees
+
+  OSPData  data                                         the actual voxel 3D [data]
+
+  int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
+                                                        reconstructing the field,
+                                                        also allowed is
+                                                        `OSP_VOLUME_FILTER_NEAREST`
+
+  int     gradientFilter              same as `filter`  filter used during
+                                                        gradient computations
+  ------- -------------- -----------------------------  --------------------------
   : Configuration parameters for structured spherical volumes.
 
 The dimensions $(r, \theta, \phi)$ of the volume are inferred from the
@@ -754,6 +790,9 @@ the `cell.type` parameter must be omitted).
 
   bool                precomputedNormals    false  whether to accelerate by precomputing,
                                                    at a cost of 12 bytes/face
+
+  int                   maxIteratorDepth        6  do not descend further than to this BVH
+                                                   depth during interval iteration
   ------------------- ------------------ --------  ---------------------------------------
   : Configuration parameters for unstructured volumes.
 
@@ -884,6 +923,9 @@ traversal, similar to the method in\ [1].
                                              this switch may improve volume commit
                                              time, but will make volume rendering
                                              less efficient.
+
+  int             maxIteratorDepth        6  do not descend further than to this BVH
+                                             depth during interval iteration
   -------- ----------------------- --------  ---------------------------------------
   : Configuration parameters for particle volumes.
 
@@ -1019,7 +1061,7 @@ the following parameters:
 
   float[] vertexCrease.weight optional [data] array of vertex crease weights
 
-  int     mode                subdivision edge boundary mode, supported modes
+  uchar   mode                subdivision edge boundary mode, supported modes
                               are:
 
                               `OSP_SUBDIVISION_NO_BOUNDARY`
@@ -1096,7 +1138,7 @@ this geometry are listed in the table below.
   uint32[]           index                  [data] array of indices to the first vertex
                                             or tangent of a curve segment
 
-  int                type                   `OSPCurveType` for rendering the curve.
+  uchar              type                   `OSPCurveType` for rendering the curve.
                                             Supported types are:
 
                                             `OSP_FLAT`
@@ -1105,7 +1147,7 @@ this geometry are listed in the table below.
 
                                             `OSP_RIBBON`
 
-  int                basis                  `OSPCurveBasis` for defining the curve.
+  uchar              basis                  `OSPCurveBasis` for defining the curve.
                                              Supported bases are:
 
                                             `OSP_LINEAR`
@@ -1486,13 +1528,22 @@ Hošek-Wilkie sky model and solar radiance function. In addition to the
 [general parameters](#lights) the following special parameters are
 supported:
 
-  Type      Name           Default  Description
-  --------- ---------- -----------  --------------------------------------------
-  vec3f     up         $(0, 1, 0)$  zenith of sky in world-space
-  vec3f     direction  $(0, -1, 0)$ main emission direction of the sun
-  float     turbidity            3  atmospheric turbidity due to particles, in [1–10]
-  float     albedo             0.3  ground reflectance, in [0–1]
-  --------- ---------- -----------  --------------------------------------------
+  --------- ---------------- ------------  -------------------------------------
+  Type      Name                  Default  Description
+  --------- ---------------- ------------  -------------------------------------
+  vec3f     up                $(0, 1, 0)$  zenith of sky in world-space
+
+  vec3f     direction        $(0, -1, 0)$  main emission direction of the sun
+
+  float     turbidity                   3  atmospheric turbidity due to
+                                           particles, in [1–10]
+
+  float     albedo                    0.3  ground reflectance, in [0–1]
+
+  float     horizonExtension         0.01  extend the sky dome by stretching the
+                                           horizon, fraction of the lower
+                                           hemisphere to cover, in [0–1]
+  --------- ---------------- ------------  -------------------------------------
   : Special parameters accepted by the `sunSky` light.
 
 The lowest elevation for the sun is restricted to the horizon.
@@ -1675,7 +1726,7 @@ General parameters of all renderers are
                                                              which can be indexed by a
                                                              [GeometricModel]'s `material` parameter
 
-  int            pixelFilter        `OSP_PIXELFILTER_GAUSS`  `OSPPixelFilterType` to select the pixel
+  uchar          pixelFilter        `OSP_PIXELFILTER_GAUSS`  `OSPPixelFilterType` to select the pixel
                                                              filter used by the renderer for
                                                              antialiasing. Possible pixel filters
                                                              are listed below.
@@ -1742,18 +1793,49 @@ renderers, the SciVis renderer supports the following parameters:
   ------------- ---------------------- ------------  ----------------------------
   Type          Name                        Default  Description
   ------------- ---------------------- ------------  ----------------------------
+  bool          shadows                       false  whether to compute (hard) shadows
+
   int           aoSamples                         0  number of rays per sample to
                                                      compute ambient occlusion
 
-  float         aoRadius                     10^20^  maximum distance to consider
+  float         aoDistance                   10^20^  maximum distance to consider
+                                                     for ambient occlusion
+
+  float         volumeSamplingRate                1  sampling rate for volumes
+  ------------- ---------------------- ------------  ----------------------------
+  : Special parameters understood by the SciVis renderer.
+
+Note that the intensity (and color) of AO is deduced from an [ambient
+light] in the `lights` array.^[If there are multiple ambient lights then
+their contribution is added] If `aoSamples` is zero (the default) then
+ambient lights cause ambient illumination (without occlusion).
+
+### Ambient Occlusion Renderer
+
+This renderer supports only a subset of the features of the [SciVis
+renderer] to gain performance. As the name suggest its main shading
+method is ambient occlusion (AO), [lights] are *not* considered at all
+and ,
+Volume rendering is supported.
+The Ambient Occlusion renderer is created by passing the  type string
+"`ao`" to `ospNewRenderer`. In addition to the [general
+parameters](#renderer) understood by all renderers the following
+parameters are supported as well:
+
+  ------------- ---------------------- ------------  ----------------------------
+  Type          Name                        Default  Description
+  ------------- ---------------------- ------------  ----------------------------
+  int           aoSamples                         1  number of rays per sample to
+                                                     compute ambient occlusion
+
+  float         aoDistance                   10^20^  maximum distance to consider
                                                      for ambient occlusion
 
   float         aoIntensity                       1  ambient occlusion strength
 
   float         volumeSamplingRate                1  sampling rate for volumes
   ------------- ---------------------- ------------  ----------------------------
-  : Special parameters understood by the SciVis renderer.
-
+  : Special parameters understood by the Ambient Occlusion renderer.
 
 ### Path Tracer
 
@@ -1763,24 +1845,24 @@ realistic materials. This renderer is created by passing the type string
 parameters](#renderer) understood by all renderers the path tracer
 supports the following special parameters:
 
-  ---------- ------------------ --------  ------------------------------------
-  Type       Name                Default  Description
-  ---------- ------------------ --------  ------------------------------------
-  int        lightSamples            all  number of random light samples
-                                          per path vertex, per default
-                                          all light sources are sampled
+  ---------- -------------------- --------  ------------------------------------
+  Type       Name                  Default  Description
+  ---------- -------------------- --------  ------------------------------------
+  int        lightSamples              all  number of random light samples
+                                            per path vertex, per default
+                                            all light sources are sampled
 
-  bool       geometryLights         true  whether geometries with an emissive
-                                          material (e.g., [Luminous]) illuminate
-                                          the scene
+  int        roulettePathLength          5  ray recursion depth at which to
+                                            start Russian roulette termination
 
-  int        roulettePathLength        5  ray recursion depth at which to
-                                          start Russian roulette termination
+  float      maxContribution             ∞  samples are clamped to this value
+                                            before they are accumulated into
+                                            the framebuffer
 
-  float      maxContribution           ∞  samples are clamped to this value
-                                          before they are accumulated into
-                                          the framebuffer
-  ---------- ------------------ --------  ------------------------------------
+  bool       backgroundRefraction    false  allow for alpha blending even if
+                                            background is seen through
+                                            refractive objects like glass
+  ---------- -------------------- --------  ------------------------------------
   : Special parameters understood by the path tracer.
 
 The path tracer requires that [materials] are assigned to [geometries],
@@ -1806,7 +1888,8 @@ geometry with
 #### OBJ Material
 
 The OBJ material is the workhorse material supported by both the [SciVis
-renderer] and the [path tracer]. It offers widely used common properties
+renderer] and the [path tracer] (the [Ambient Occlusion renderer] only
+uses the `kd` and `d` parameter). It offers widely used common properties
 like diffuse and specular reflection and is based on the [MTL material
 format](http://paulbourke.net/dataformats/mtl/) of Lightwave's OBJ scene
 files. To create an OBJ material pass the type string "`obj`" to
@@ -1845,9 +1928,6 @@ If present, the color component of [geometries] is also used for the
 diffuse color `Kd` and the alpha component is also used for the opacity
 `d`.
 
-Note that currently only the path tracer implements colored transparency
-with `Tf`.
-
 Normal mapping can simulate small geometric features via the texture
 `map_Bump`. The normals $n$ in the normal map are with respect to the
 local tangential shading coordinate system and are encoded as $½(n+1)$,
@@ -1864,6 +1944,9 @@ normal map vertically or invert its green channel.
 
 ![Normal map representing an exalted square pyramidal
 frustum.][imgNormalMap]
+
+Note that currently only the path tracer implements colored transparency
+with `Tf` and normal mapping with `map_Bump`.
 
 All parameters (except `Tf`) can be textured by passing a [texture]
 handle, prefixed with "`map_`". The fetched texels are multiplied by the
@@ -2268,21 +2351,22 @@ no filtering) then pass the `OSP_TEXTURE_FILTER_NEAREST` flag.
 Texturing with `texture2d` image textures requires [geometries] with
 texture coordinates, e.g., a [mesh] with `vertex.texcoord` provided.
 
-#### TextureVolume
+#### Volume Texture
 
 The `volume` texture type implements texture lookups based on 3D object
 coordinates of the surface hit point on the associated geometry. If the
 given hit point is within the attached volume, the volume is sampled and
 classified with the transfer function attached to the volume. This
-implements the ability to visualize volume values (as colored by its
+implements the ability to visualize volume values (as colored by a
 transfer function) on arbitrary surfaces inside the volume (as opposed
 to an isosurface showing a particular value in the volume). Its
 parameters are as follows
 
-  Type               Name    Description
-  ------------------ ------- -------------------------------------------
-  OSPVolumetricModel volume  [VolumetricModel] used to generate color lookups
-  ------------------ ------- -------------------------------------------
+  Type                Name             Description
+  ------------------- ---------------- -----------------------------------------
+  OSPVolume           volume           [Volume] used to generate color lookups
+  OSPTransferFunction transferFunction [TransferFunction] applied to `volume`
+  ------------------- ---------------- -----------------------------------------
   : Parameters of `volume` texture type.
 
 TextureVolume can be used for implementing slicing of volumes with any
@@ -2377,7 +2461,7 @@ supports the special parameters listed in the table below.
   bool  architectural          vertical edges are projected to be
                                parallel
 
-  int   stereoMode             `OSPStereoMode` for stereo rendering,
+  uchar stereoMode             `OSPStereoMode` for stereo rendering,
                                possible values are:
 
                                `OSP_STEREO_NONE` (default)
@@ -2456,7 +2540,7 @@ by using the [general parameters](#cameras) understood by all cameras.
   ----- ---------------------- -----------------------------------------
   Type  Name                   Description
   ----- ---------------------- -----------------------------------------
-  int   stereoMode             `OSPStereoMode` for stereo rendering,
+  uchar stereoMode             `OSPStereoMode` for stereo rendering,
                                possible values are:
 
                                `OSP_STEREO_NONE` (default)
@@ -2479,21 +2563,24 @@ by using the [general parameters](#cameras) understood by all cameras.
 ### Picking
 
 To get the world-space position of the geometry (if any) seen at [0–1]
-normalized screen-space pixel coordinates `screenPos` use
+normalized screen-space pixel coordinates `screenPos_x` and
+`screenPos_y` use
 
     void ospPick(OSPPickResult *,
         OSPFrameBuffer,
         OSPRenderer,
         OSPCamera,
         OSPWorld,
-        osp_vec2f screenPos);
+        float screenPos_x,
+        float screenPos_y);
 
 The result is returned in the provided `OSPPickResult` struct:
 
     typedef struct {
         int hasHit;
-        osp_vec3f worldPosition;
-        OSPGeometricModel GeometricModel;
+        float worldPosition[3];
+        OSPInstance instance;
+        OSPGeometricModel model;
         uint32_t primID;
     } OSPPickResult;
 
@@ -2501,6 +2588,8 @@ Note that `ospPick` considers exactly the same camera of the given
 renderer that is used to render an image, thus matching results can be
 expected. If the camera supports depth of field then the center of the
 lens and thus the center of the circle of confusion is used for picking.
+Note that the caller needs to `ospRelease` the `instance` and `model`
+handles of `OSPPickResult` once the information is not needed anymore.
 
 
 Framebuffer
@@ -2536,7 +2625,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
   Name             Description
   ---------------- -----------------------------------------------------------
   OSP_FB_COLOR     RGB color including alpha
-  OSP_FB_DEPTH     euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float
+  OSP_FB_DEPTH     euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float; for multiple samples per pixel their minimum is taken
   OSP_FB_ACCUM     accumulation buffer for progressive refinement
   OSP_FB_VARIANCE  for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering]
   OSP_FB_NORMAL    accumulated world-space normal of the first hit, as vec3f

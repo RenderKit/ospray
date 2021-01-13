@@ -70,28 +70,54 @@ void BaseFixture::TearDown(::benchmark::State &)
 
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "boxes", "pathtracer");
 
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "random_spheres", "ao");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "random_spheres", "scivis");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "random_spheres", "pathtracer");
 
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "streamlines", "ao");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "streamlines", "scivis");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "streamlines", "pathtracer");
 
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "planes", "ao");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "planes", "scivis");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "planes", "pathtracer");
 
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_gravity_spheres_volume", "ao");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_gravity_spheres_volume", "scivis");
 OSPRAY_DEFINE_BENCHMARK(
     BaseFixture, "clip_gravity_spheres_volume", "pathtracer");
 
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_perlin_noise_volumes", "ao");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_perlin_noise_volumes", "scivis");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_perlin_noise_volumes", "pathtracer");
 
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_particle_volume", "ao");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_particle_volume", "scivis");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "clip_particle_volume", "pathtracer");
 
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume", "ao");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume", "scivis");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume", "pathtracer");
 
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume_isosurface", "ao");
 OSPRAY_DEFINE_BENCHMARK(BaseFixture, "particle_volume_isosurface", "scivis");
 OSPRAY_DEFINE_BENCHMARK(
     BaseFixture, "particle_volume_isosurface", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "vdb_volume", "ao");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "vdb_volume", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "vdb_volume", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume", "ao");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "unstructured_volume_isosurface", "ao");
+OSPRAY_DEFINE_BENCHMARK(
+    BaseFixture, "unstructured_volume_isosurface", "scivis");
+OSPRAY_DEFINE_BENCHMARK(
+    BaseFixture, "unstructured_volume_isosurface", "pathtracer");
+
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "gravity_spheres_amr", "ao");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "gravity_spheres_amr", "scivis");
+OSPRAY_DEFINE_BENCHMARK(BaseFixture, "gravity_spheres_amr", "pathtracer");

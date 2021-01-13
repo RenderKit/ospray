@@ -1,9 +1,9 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-/*! \file render/util.h Defines some utility functions shaared by different
+/*! \file render/util.h Defines some utility functions shared by different
  * shading codes */
 
 #include "common/OSPCommon.h"

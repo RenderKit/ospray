@@ -26,6 +26,8 @@ PRIVATE
   ${OPENGL_LIBRARIES}
 )
 
+ospray_sign_target(ospExamples)
+
 install(TARGETS ospExamples
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   COMPONENT apps

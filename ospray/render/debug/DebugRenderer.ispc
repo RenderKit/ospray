@@ -29,7 +29,7 @@ bool hitBackground(
 
 float eyeLight(varying ScreenSample &sample)
 {
-  return 0.2f + 0.8f * dot(normalize(sample.ray.Ng), sample.ray.dir);
+  return 0.2f + 0.8f * dot(normalize(sample.ray.Ng), neg(sample.ray.dir));
 }
 
 /* a simple test-frame renderer that doesn't even trace a ray, just
@@ -281,7 +281,7 @@ void DebugRenderer_volume(Renderer *uniform self,
     uniform unsigned int8
         intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
     VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(volume->vklVolume,
+        vklInitIntervalIteratorV(volume->vklSampler,
             (varying vkl_vec3f *)&ray.org,
             (varying vkl_vec3f *)&ray.dir,
             (varying vkl_range1f *)&vInterval.interval,

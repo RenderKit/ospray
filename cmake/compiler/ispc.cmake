@@ -2,7 +2,7 @@
 ## SPDX-License-Identifier: Apache-2.0
 
 # ISPC versions to look for, in decending order (newest first)
-set(ISPC_VERSION_WORKING "1.12.0" "1.10.0")
+set(ISPC_VERSION_WORKING "1.14.1")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 if (NOT ISPC_EXECUTABLE)
@@ -58,9 +58,6 @@ if(NOT ISPC_VERSION)
   mark_as_advanced(ISPC_EXECUTABLE)
 endif()
 
-if ("${ISPC_VERSION}" STREQUAL "1.11.0")
-  message(FATAL_ERROR "ISPC v1.11.0 is incompatible with OSPRay.")
-endif()
 message(STATUS "Found ISPC v${ISPC_VERSION}: ${ISPC_EXECUTABLE}")
 list(FIND ISPC_VERSION_WORKING ${ISPC_VERSION} ISPC_VERSION_TESTED)
 if (ISPC_VERSION_TESTED EQUAL -1)

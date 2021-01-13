@@ -58,7 +58,7 @@ cpp::Group VdbVolume::buildGroup() const
   for (uint32_t z = 0; z < N; ++z)
     for (uint32_t y = 0; y < N; ++y)
       for (uint32_t x = 0; x < N; ++x) {
-        range1f leafValueRange;
+        std::vector<range1f> leafValueRange(leafRes);
         tasking::parallel_for(leafRes, [&](uint32_t vz) {
           for (uint32_t vy = 0; vy < leafRes; ++vy)
             for (uint32_t vx = 0; vx < leafRes; ++vx) {
@@ -71,12 +71,15 @@ cpp::Group VdbVolume::buildGroup() const
 
               const size_t idx =
                   vx * (size_t)leafRes * leafRes + vy * (size_t)leafRes + vz;
-              leafValueRange.extend(v);
+              leafValueRange[vz].extend(v);
               leaf.at(idx) = v;
             }
         });
+        // reduction
+        for (auto &vr : leafValueRange)
+          leafValueRange[0].extend(vr);
 
-        if (leafValueRange.lower != 0.f || leafValueRange.upper != 0.f) {
+        if (leafValueRange[0].lower != 0.f || leafValueRange[0].upper != 0.f) {
           level.push_back(3);
           origin.push_back(vec3i(x * leafRes, y * leafRes, z * leafRes));
           data.emplace_back(

@@ -9,6 +9,9 @@
  * On Windows build it in the build_directory\$Configuration with
  *   cl ..\..\apps\ospTutorial\ospTutorial.cpp /EHsc -I ..\..\ospray\include ^
  *      -I ..\.. -I ..\..\..\rkcommon ospray.lib
+ * Above commands assume that rkcommon is present in a directory right "next
+ * to" the OSPRay directory. If this is not the case, then adjust the include
+ * path (alter "-I <path/to/rkcommon>" appropriately).
  */
 
 #include <errno.h>
@@ -16,7 +19,9 @@
 #include <stdio.h>
 #ifdef _WIN32
 #define NOMINMAX
+#include <conio.h>
 #include <malloc.h>
+#include <windows.h>
 #else
 #include <alloca.h>
 #endif
@@ -24,6 +29,7 @@
 #include <vector>
 
 #include "ospray/ospray_cpp.h"
+#include "ospray/ospray_cpp/ext/rkcommon.h"
 
 using namespace rkcommon::math;
 
@@ -75,6 +81,15 @@ int main(int argc, const char **argv)
       vec4f(0.5f, 0.9f, 0.5f, 1.0f)};
 
   std::vector<vec3ui> index = {vec3ui(0, 1, 2), vec3ui(1, 2, 3)};
+
+#ifdef _WIN32
+  bool waitForKey = false;
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+    // detect standalone console: cursor at (0,0)?
+    waitForKey = csbi.dwCursorPosition.X == 0 && csbi.dwCursorPosition.Y == 0;
+  }
+#endif
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
   // e.g. "--osp:debug"
@@ -143,6 +158,7 @@ int main(int argc, const char **argv)
     uint32_t *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
     writePPM("firstFrameCpp.ppm", imgSize, fb);
     framebuffer.unmap(fb);
+    std::cout << "rendering initial frame to firstFrameCpp.ppm" << std::endl;
 
     // render 10 more frames, which are accumulated to result in a better
     // converged image
@@ -152,18 +168,27 @@ int main(int argc, const char **argv)
     fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
     writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
     framebuffer.unmap(fb);
+    std::cout << "rendering 10 accumulated frames to accumulatedFrameCpp.ppm"
+              << std::endl;
 
     ospray::cpp::PickResult res =
         framebuffer.pick(renderer, camera, world, 0.5f, 0.5f);
 
     if (res.hasHit) {
-      std::cout << "Picked geometry [inst: " << res.instance.handle()
-                << ", model: " << res.model.handle() << ", prim: " << res.primID
-                << "]" << std::endl;
+      std::cout << "picked geometry [instance: " << res.instance.handle()
+                << ", model: " << res.model.handle()
+                << ", primitive: " << res.primID << "]" << std::endl;
     }
   }
 
   ospShutdown();
+
+#ifdef _WIN32
+  if (waitForKey) {
+    printf("\n\tpress any key to exit");
+    _getch();
+  }
+#endif
 
   return 0;
 }

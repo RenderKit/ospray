@@ -48,26 +48,24 @@ void SunSkyLight::commit()
 
   const float lambdaMin = 320.0f;
   const float lambdaMax = 720.0f;
-  // scaling factor for values provided from model for both sun and sky to be <
-  // 1
-  float intensityScale = 0.025f;
+  // scaling factor for values provided from model for both sun and sky to be <1
+  const float intensityScale = 0.025f;
 
-  // fetch horizon as param ?
-  // float horizon = clamp(getParam<float>("horizon", 0.f), 0.01f, 1.f);
-  float horizon = 0.01f;
-
-  up = normalize(getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f)));
-  direction = -normalize(getParam<vec3f>("direction", vec3f(0.f, -1.f, 0.f)));
-  albedo = clamp(getParam<float>("albedo", 0.3f), 0.1f, 1.f);
-  turbidity = clamp(getParam<float>("turbidity", 3.f), 1.f, 10.f);
+  const vec3f up = normalize(getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f)));
+  vec3f direction =
+      -normalize(getParam<vec3f>("direction", vec3f(0.f, -1.f, 0.f)));
+  const float albedo = clamp(getParam<float>("albedo", 0.3f), 0.1f, 1.f);
+  const float turbidity = clamp(getParam<float>("turbidity", 3.f), 1.f, 10.f);
+  const float horizon =
+      clamp(getParam<float>("horizonExtension", 0.01f), 0.0f, 1.f);
   const float sunTheta = dot(up, direction);
 
   linear3f frame;
   frame.vz = up;
-  if (abs(sunTheta) > 0.99f) {
+  if (std::abs(sunTheta) > 0.99f) {
     const vec3f dx0 = vec3f(0.0f, up.z, -up.y);
     const vec3f dx1 = vec3f(-up.z, 0.0f, up.x);
-    frame.vx = normalize(abs(up.x) < abs(up.y) ? dx0 : dx1);
+    frame.vx = normalize(std::abs(up.x) < std::abs(up.y) ? dx0 : dx1);
     frame.vy = cross(up, frame.vx);
   } else {
     frame.vy = normalize(cross(-direction, frame.vz));

@@ -15,8 +15,6 @@
 #include "environment.h"
 #include "test_tools.h"
 
-#include "rkcommon/math/AffineSpace.h"
-
 namespace OSPRayTestScenes {
 
 // Base class for all test fixtures.
@@ -85,21 +83,15 @@ class FromOsprayTesting
   FromOsprayTesting();
   void SetUp() override;
 
- private:
+ protected:
   std::string sceneName;
 };
 
-// with direct lighting only
-class FromOsprayTestingDirect
-    : public Base,
-      public ::testing::TestWithParam<std::tuple<const char * /*scene name*/>>
+// with map_maxDepth texture
+class FromOsprayTestingMaxDepth : public FromOsprayTesting
 {
  public:
-  FromOsprayTestingDirect();
   void SetUp() override;
-
- private:
-  std::string sceneName;
 };
 
 } // namespace OSPRayTestScenes

@@ -18,6 +18,12 @@ class ClippingGeometries : public BaseFixture
 };
 
 OSPRAY_DEFINE_BENCHMARK(
+    ClippingGeometries, "clip_with_spheres", "spheres", "ao");
+OSPRAY_DEFINE_BENCHMARK(ClippingGeometries, "clip_with_boxes", "boxes", "ao");
+OSPRAY_DEFINE_BENCHMARK(ClippingGeometries, "clip_with_planes", "planes", "ao");
+OSPRAY_DEFINE_BENCHMARK(ClippingGeometries, "clip_with_meshes", "meshes", "ao");
+
+OSPRAY_DEFINE_BENCHMARK(
     ClippingGeometries, "clip_with_spheres", "spheres", "scivis");
 OSPRAY_DEFINE_BENCHMARK(
     ClippingGeometries, "clip_with_boxes", "boxes", "scivis");

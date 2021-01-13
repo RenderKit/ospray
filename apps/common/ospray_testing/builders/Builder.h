@@ -5,6 +5,8 @@
 
 // ospray
 #include "ospray/ospray_cpp.h"
+#include "ospray/ospray_cpp/ext/rkcommon.h"
+// rkcommon
 #include "rkcommon/memory/IntrusivePtr.h"
 #include "rkcommon/utility/ParameterizedObject.h"
 // std

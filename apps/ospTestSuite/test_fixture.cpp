@@ -126,8 +126,15 @@ void Base::CreateEmptyScene()
   camera.setParam("up", vec3f(0.f, 1.f, 0.f));
 
   renderer = cpp::Renderer(rendererType);
-  if (rendererType == "scivis")
+
+  if (rendererType == "ao")
     renderer.setParam("aoSamples", 0);
+
+  if (rendererType == "scivis") {
+    renderer.setParam("shadows", true);
+    renderer.setParam("aoSamples", 16);
+  }
+
   renderer.setParam("backgroundColor", vec3f(1.0f));
   renderer.setParam("pixelSamples", samplesPerPixel);
 
@@ -178,38 +185,24 @@ void FromOsprayTesting::SetUp()
   camera.setParam("up", arcballCamera.upDir());
 }
 
-FromOsprayTestingDirect::FromOsprayTestingDirect()
+void FromOsprayTestingMaxDepth::SetUp()
 {
-  rendererType = "pathtracer";
+  FromOsprayTesting::SetUp();
 
-  auto params = GetParam();
-  sceneName = std::get<0>(params);
-}
+  // set up max depth texture
+  {
+    cpp::Texture maxDepthTex("texture2d");
 
-void FromOsprayTestingDirect::SetUp()
-{
-  Base::SetUp();
+    std::vector<float> maxDepth = {3.f, 3.f, 3.f, 3.f};
+    OSPTextureFormat texFmt = OSP_TEXTURE_R32F;
+    maxDepthTex.setParam(
+        "data", cpp::CopiedData(maxDepth.data(), vec2ul(2, 2)));
+    maxDepthTex.setParam("format", OSP_INT, &texFmt);
+    maxDepthTex.setParam("filter", OSP_TEXTURE_FILTER_NEAREST);
+    maxDepthTex.commit();
 
-  instances.clear();
-
-  auto builder = ospray::testing::newBuilder(sceneName);
-  ospray::testing::setParam(builder, "rendererType", rendererType);
-  ospray::testing::commit(builder);
-
-  world = ospray::testing::buildWorld(builder);
-  ospray::testing::release(builder);
-
-  world.commit();
-
-  auto worldBounds = world.getBounds<box3f>();
-
-  ArcballCamera arcballCamera(worldBounds, imgSize);
-
-  camera.setParam("position", arcballCamera.eyePos());
-  camera.setParam("direction", arcballCamera.lookDir());
-  camera.setParam("up", arcballCamera.upDir());
-
-  renderer.setParam("maxPathLength", 1);
+    renderer.setParam("map_maxDepth", maxDepthTex);
+  }
 }
 
 } // namespace OSPRayTestScenes

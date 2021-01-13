@@ -184,36 +184,25 @@ inline Intersections intersectBox(
 
   const vec3f mins = (box.lower - rayOrg) * rcp_safe(rayDir);
   const vec3f maxs = (box.upper - rayOrg) * rcp_safe(rayDir);
+  const vec3f nears = min(mins, maxs);
+  const vec3f fars = max(mins, maxs);
 
-  isect.entry.t = reduce_max(min(mins, maxs));
-  isect.exit.t = reduce_min(max(mins, maxs));
+  isect.entry.t = reduce_max(nears);
+  if (isect.entry.t == nears.x)
+    isect.entry.N = make_vec3f(rayDir.x > 0.0f ? -1.0f : 1.0f, 0.0f, 0.0f);
+  else if (isect.entry.t == nears.y)
+    isect.entry.N = make_vec3f(0.0f, rayDir.y > 0.0f ? -1.0f : 1.0f, 0.0f);
+  else
+    isect.entry.N = make_vec3f(0.0f, 0.0f, rayDir.z > 0.0f ? -1.0f : 1.0f);
+  isect.exit.t = reduce_min(fars);
+  if (isect.exit.t == fars.x)
+    isect.exit.N = make_vec3f(rayDir.x > 0.0f ? 1.0f : -1.0f, 0.0f, 0.0f);
+  else if (isect.exit.t == fars.y)
+    isect.exit.N = make_vec3f(0.0f, rayDir.y > 0.0f ? 1.0f : -1.0f, 0.0f);
+  else
+    isect.exit.N = make_vec3f(0.0f, 0.0f, rayDir.z > 0.0f ? 1.0f : -1.0f);
   isect.entry.hit = isect.entry.t < isect.exit.t;
   isect.exit.hit = isect.entry.hit;
-
-  // Calculate geometry normal
-  {
-    // Calculate hit points,
-    // keep values that scale with camera distance together for better fp
-    // precision
-    const vec3f hit_in = rayOrg + isect.entry.t * rayDir;
-    const vec3f hit_out = rayOrg + isect.exit.t * rayDir;
-
-    // Use progressive bias
-    // When camera is far from the hit points its coordiantes deviates more
-    // from 1.0f and to get correct normals we need higher bias values. On the
-    // other hand, higher bias numbers make box edges look beveled especially at
-    // closeups and causes artifact when boxes are used for clipping
-    const vec3f d = (2.0000002f + isect.exit.t * 14e-7f) * rcp(box_size(box));
-
-    // Place box at origin
-    const vec3f c = (box.lower + box.upper) * 0.5f;
-    const vec3f p_in = hit_in - c;
-    const vec3f p_out = hit_out - c;
-
-    // Optimization possibility: casting float <-> int is relatively slow
-    isect.entry.N = make_vec3f(make_vec3i(p_in * d));
-    isect.exit.N = make_vec3f(make_vec3i(p_out * d));
-  }
 
   return isect;
 }

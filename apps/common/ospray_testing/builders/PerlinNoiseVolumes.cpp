@@ -15,7 +15,7 @@ namespace testing {
 
 struct PerlinNoiseVolumes : public detail::Builder
 {
-  PerlinNoiseVolumes(bool clip = false);
+  PerlinNoiseVolumes(bool clip = false, bool gradientShading = false);
   ~PerlinNoiseVolumes() override = default;
 
   void commit() override;
@@ -33,6 +33,7 @@ struct PerlinNoiseVolumes : public detail::Builder
 
   float densityScale{10.f};
   float anisotropy{0.f};
+  float gradientShadingScale{0.f};
 
   bool withClipping{false};
 };
@@ -54,7 +55,8 @@ cpp::VolumetricModel createProceduralVolumetricModel(
     std::vector<vec3f> colors,
     std::vector<float> opacities,
     float densityScale,
-    float anisotropy)
+    float anisotropy,
+    float gradientShadingScale)
 {
   vec3ul dims{128}; // should be at least 2
   const float spacing = 3.f / (reduce_max(dims) - 1);
@@ -96,6 +98,7 @@ cpp::VolumetricModel createProceduralVolumetricModel(
   volumeModel.setParam("densityScale", densityScale);
   volumeModel.setParam("anisotropy", anisotropy);
   volumeModel.setParam("transferFunction", tfn);
+  volumeModel.setParam("gradientShadingScale", gradientShadingScale);
   volumeModel.commit();
 
   return volumeModel;
@@ -106,7 +109,8 @@ cpp::GeometricModel createGeometricModel(
 {
   cpp::GeometricModel geometricModel(geo);
 
-  if (rendererType == "pathtracer" || rendererType == "scivis") {
+  if (rendererType == "pathtracer" || rendererType == "scivis"
+      || rendererType == "ao") {
     cpp::Material objMaterial(rendererType, "obj");
     objMaterial.setParam("kd", kd);
     objMaterial.commit();
@@ -118,7 +122,9 @@ cpp::GeometricModel createGeometricModel(
 
 // PerlineNoiseVolumes definitions //
 
-PerlinNoiseVolumes::PerlinNoiseVolumes(bool clip) : withClipping(clip) {}
+PerlinNoiseVolumes::PerlinNoiseVolumes(bool clip, bool gradientShading)
+    : gradientShadingScale(gradientShading), withClipping(clip)
+{}
 
 void PerlinNoiseVolumes::commit()
 {
@@ -133,6 +139,8 @@ void PerlinNoiseVolumes::commit()
 
   densityScale = getParam<float>("densityScale", 10.f);
   anisotropy = getParam<float>("anisotropy", 0.f);
+  gradientShadingScale =
+      getParam<float>("gradientShadingScale", gradientShadingScale);
 
   withClipping = getParam<bool>("withClipping", withClipping);
 }
@@ -151,7 +159,8 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
             vec3f(1.f, 1.f, 1.f)},
         {0.f, 0.33f, 0.66f, 1.f},
         densityScale,
-        anisotropy));
+        anisotropy,
+        gradientShadingScale));
   }
 
   if (addTorusVolume) {
@@ -163,7 +172,8 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
             vec3f(1.0, 1.0, 1.0)},
         {0.f, 0.33f, 0.66f, 1.f},
         densityScale,
-        anisotropy));
+        anisotropy,
+        gradientShadingScale));
   }
 
   for (auto volumetricModel : volumetricModels)
@@ -255,6 +265,10 @@ cpp::World PerlinNoiseVolumes::buildWorld() const
 OSP_REGISTER_TESTING_BUILDER(PerlinNoiseVolumes, perlin_noise_volumes);
 OSP_REGISTER_TESTING_BUILDER(
     PerlinNoiseVolumes(true), clip_perlin_noise_volumes);
+OSP_REGISTER_TESTING_BUILDER(
+    PerlinNoiseVolumes(false, true), perlin_noise_volumes_gradient);
+OSP_REGISTER_TESTING_BUILDER(
+    PerlinNoiseVolumes(true, true), clip_perlin_noise_volumes_gradient);
 
 } // namespace testing
 } // namespace ospray

@@ -1,16 +1,48 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "common/World.ih"
+#include "math/random.ih"
 #include "render/Renderer.ih"
 
 struct SciVis
 {
   Renderer super;
+  bool shadowsEnabled;
   int aoSamples;
   float aoRadius;
-  float aoIntensity;
   float volumeSamplingRate;
 };
+
+struct SciVisRenderContext
+{
+  const SciVis *uniform renderer;
+  const FrameBuffer *uniform fb;
+  const World *uniform world;
+  ScreenSample sample;
+  varying LDSampler *uniform ldSampler;
+};
+
+struct LDSampler;
+
+float lightAlpha(const uniform SciVis *uniform self,
+    Ray &ray,
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
+    ScreenSample &sample,
+    varying LDSampler *uniform ldSampler,
+    float weight,
+    float rayOffset,
+    uniform float quality);
+
+float SciVis_computeAO(const uniform SciVis *uniform self,
+    const FrameBuffer *uniform fb,
+    const World *uniform world,
+    ScreenSample &sample,
+    varying LDSampler *uniform ldSampler,
+    const varying DifferentialGeometry &dg,
+    const uniform int sampleCnt,
+    const uniform float aoRadius,
+    const varying vec3i &sampleID);

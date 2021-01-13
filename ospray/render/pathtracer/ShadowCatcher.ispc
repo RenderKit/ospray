@@ -18,7 +18,9 @@ bool shadowCatcher(const PathContext &pathContext,
     ScreenSample &sample)
 
 {
-  if (!pathState.straightPath)
+  if (!(pathContext.context->backgroundRefraction
+              ? pathState.specularTransmissionPath
+              : pathState.straightPath))
     return false;
 
   // TODO use MIS as well
@@ -39,7 +41,7 @@ bool shadowCatcher(const PathContext &pathContext,
     vec3f unshaded = make_vec3f(0.f); // illumination without occluders
     vec3f shaded = make_vec3f(0.f); // illumination including shadows
     for (uniform int i = 0; i < pathContext.numLights; i++) {
-      const uniform Light *uniform light = pathContext.context->lights[i];
+      const Light *uniform light = pathContext.world->pathtracerData.lights[i];
 
       const vec2f s = LDSampler_getFloat2(
           pathContext.ldSampler, pathState.sampleDim + 4 + i * 2);

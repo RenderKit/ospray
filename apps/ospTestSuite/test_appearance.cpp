@@ -119,6 +119,7 @@ void Texture2D::SetUp()
     ospRelease(tmp);
     tex.setParam("data", data);
     tex.commit();
+    ospRelease(data);
     cpp::Material mat(rendererType, "obj");
     mat.setParam("kd", vec3f(0.8));
     mat.setParam(i & 1 ? "map_bump" : "map_kd", tex);
@@ -282,7 +283,7 @@ void RendererMaterialList::SetUp()
       [](const std::string &rendererType, vec3f Kd, vec3f Ks) -> cpp::Material {
     cpp::Material mat(rendererType, "obj");
     mat.setParam("kd", Kd);
-    if (rendererType == "pathtracer")
+    if (rendererType == "pathtracer" || rendererType == "scivis")
       mat.setParam("ks", Ks);
     mat.commit();
 
@@ -338,6 +339,78 @@ void RendererMaterialList::SetUp()
   AddLight(ambient);
 }
 
+PTBackgroundRefraction::PTBackgroundRefraction()
+{
+  rendererType = "pathtracer";
+  samplesPerPixel = 64;
+}
+
+void PTBackgroundRefraction::SetUp()
+{
+  bool backgroundRefraction = GetParam();
+
+  Base::SetUp();
+
+  // Setup geometry //
+  cpp::Geometry boxGeometry("box");
+
+  rkcommon::index_sequence_3D numBoxes(vec3i(2, 2, 1));
+
+  std::vector<box3f> boxes;
+
+  for (auto i : numBoxes) {
+    auto f3 = static_cast<vec3f>(i);
+    auto lower = f3 * vec3f(1.5f, 1.5f, 0.0f) + vec3f(-1.25f, -1.25f, 2.5f);
+    auto upper = lower + vec3f(1.f, 1.f, 0.27f);
+    boxes.emplace_back(lower, upper);
+  }
+
+  boxGeometry.setParam("box", cpp::CopiedData(boxes));
+  boxGeometry.commit();
+
+  cpp::GeometricModel model(boxGeometry);
+
+  std::vector<cpp::Material> materials;
+  materials.emplace_back(cpp::Material(rendererType, "thinGlass"));
+  materials.emplace_back(cpp::Material(rendererType, "glass"));
+  materials.emplace_back(cpp::Material(rendererType, "glass"));
+  materials.back().setParam("eta", 1.2f);
+  materials.emplace_back(cpp::Material(rendererType, "obj"));
+  materials.back().setParam("d", 0.2f);
+  materials.back().setParam("kd", vec3f(0.7f, 0.5f, 0.1f));
+  for (auto &m : materials)
+    m.commit();
+  model.setParam("material", cpp::CopiedData(materials));
+  AddModel(model);
+
+  renderer.setParam("backgroundRefraction", backgroundRefraction);
+
+  { // set up backplate texture
+    std::vector<vec4uc> bpdata;
+    bpdata.push_back(vec4uc(199, 60, 10, 255));
+    bpdata.push_back(vec4uc(60, 199, 40, 255));
+    bpdata.push_back(vec4uc(80, 40, 199, 255));
+    bpdata.push_back(vec4uc(99, 10, 99, 255));
+
+    cpp::CopiedData texData(bpdata.data(), vec2ul(2, 2));
+
+    cpp::Texture backplateTex("texture2d");
+    backplateTex.setParam("format", OSP_TEXTURE_RGBA8);
+    backplateTex.setParam("data", texData);
+    backplateTex.commit();
+
+    renderer.setParam("map_backplate", backplateTex);
+  }
+
+  cpp::Light light("sunSky");
+  light.setParam("turbidity", 8.0f);
+  light.setParam("intensity", 0.2f);
+  AddLight(light);
+  cpp::Light mirrorlight("sunSky");
+  mirrorlight.setParam("up", vec3f(0.0f, -1.0f, 0.0f));
+  AddLight(mirrorlight);
+}
+
 // Test Instantiations //////////////////////////////////////////////////////
 
 TEST_P(RendererMaterialList, material_list)
@@ -376,5 +449,12 @@ TEST_P(Texture2DTransform, simple)
 
 INSTANTIATE_TEST_SUITE_P(
     Appearance, Texture2DTransform, ::testing::Values("scivis"));
+
+TEST_P(PTBackgroundRefraction, backgroundRefraction)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(Appearance, PTBackgroundRefraction, ::testing::Bool());
 
 } // namespace OSPRayTestScenes

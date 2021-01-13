@@ -1,0 +1,49 @@
+// Copyright 2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+// glm
+#include "glm/vec2.hpp"
+#include "glm/vec3.hpp"
+#include "glm/vec4.hpp"
+#include "glm/mat2x2.hpp"
+#include "glm/mat3x2.hpp"
+#include "glm/mat3x3.hpp"
+#include "glm/mat4x3.hpp"
+// ospray
+#include "../Traits.h"
+
+namespace ospray {
+
+OSPTYPEFOR_SPECIALIZATION(glm::vec2, OSP_VEC2F);
+OSPTYPEFOR_SPECIALIZATION(glm::vec3, OSP_VEC3F);
+OSPTYPEFOR_SPECIALIZATION(glm::vec4, OSP_VEC4F);
+OSPTYPEFOR_SPECIALIZATION(glm::ivec2, OSP_VEC2I);
+OSPTYPEFOR_SPECIALIZATION(glm::ivec3, OSP_VEC3I);
+OSPTYPEFOR_SPECIALIZATION(glm::ivec4, OSP_VEC4I);
+OSPTYPEFOR_SPECIALIZATION(glm::uvec2, OSP_VEC2UI);
+OSPTYPEFOR_SPECIALIZATION(glm::uvec3, OSP_VEC3UI);
+OSPTYPEFOR_SPECIALIZATION(glm::uvec4, OSP_VEC4UI);
+OSPTYPEFOR_SPECIALIZATION(glm::mat2x2, OSP_LINEAR2F);
+OSPTYPEFOR_SPECIALIZATION(glm::mat3x3, OSP_LINEAR3F);
+OSPTYPEFOR_SPECIALIZATION(glm::mat3x2, OSP_AFFINE2F);
+OSPTYPEFOR_SPECIALIZATION(glm::mat4x3, OSP_AFFINE3F);
+
+#ifdef OSPRAY_GLM_DEFINITIONS
+OSPTYPEFOR_DEFINITION(glm::vec2);
+OSPTYPEFOR_DEFINITION(glm::vec3);
+OSPTYPEFOR_DEFINITION(glm::vec4);
+OSPTYPEFOR_DEFINITION(glm::ivec2);
+OSPTYPEFOR_DEFINITION(glm::ivec3);
+OSPTYPEFOR_DEFINITION(glm::ivec4);
+OSPTYPEFOR_DEFINITION(glm::uvec2);
+OSPTYPEFOR_DEFINITION(glm::uvec3);
+OSPTYPEFOR_DEFINITION(glm::uvec4);
+OSPTYPEFOR_DEFINITION(glm::mat2x2);
+OSPTYPEFOR_DEFINITION(glm::mat3x3);
+OSPTYPEFOR_DEFINITION(glm::mat3x2);
+OSPTYPEFOR_DEFINITION(glm::mat4x3);
+#endif
+
+} // namespace ospray

@@ -1,7 +1,7 @@
 ## Copyright 2018-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-if (NOT OSPRAY_APPS_TESTING)
+if (NOT OSPRAY_APPS_BENCHMARK)
   return()
 endif()
 
@@ -18,12 +18,19 @@ add_executable(ospBenchmark
   benchmarks/ClippingGeometries.cpp
 )
 
+target_include_directories(ospBenchmark
+PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/../common/arcball_camera
+)
+
 target_link_libraries(ospBenchmark
 PRIVATE
   arcball_camera
   benchmark
   ospray_testing
 )
+
+ospray_sign_target(ospBenchmark)
 
 install(TARGETS ospBenchmark
   DESTINATION ${CMAKE_INSTALL_BINDIR}

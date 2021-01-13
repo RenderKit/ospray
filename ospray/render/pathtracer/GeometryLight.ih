@@ -15,3 +15,5 @@ vec3f evaluateGeometryLights(const PathContext &pathContext,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
     Ray &ray);
+
+void GeometryLight_destroy(void *uniform _self);

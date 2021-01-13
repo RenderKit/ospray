@@ -9,9 +9,8 @@
 #include <vector>
 
 #include "ospray/ospray_cpp.h"
+#include "ospray/ospray_cpp/ext/rkcommon.h"
 using namespace ospray;
-
-#include "rkcommon/math/vec.h"
 using namespace rkcommon::math;
 
 class OSPRayEnvironment : public ::testing::Environment
