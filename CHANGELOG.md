@@ -17,7 +17,9 @@ Version History
     improvements: 
     - Better default sampling rate for scaled volumes, improving
       performance
--   Add colored transparency in SciVis renderer
+-   SciVis renderer improvements:
+    - Colored transparency, colored shadows
+    - Light sources are visible including HDRI Light environment map
 -   The MPI module is now distributed as part of OSPRay in the modules
     directory
 -   Add `intensityQuantity` parameter to light sources to control the

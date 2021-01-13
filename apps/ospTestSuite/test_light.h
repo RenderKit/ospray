@@ -115,4 +115,13 @@ class SpotLight
   OSPIntensityQuantity intensityQuantity{OSP_INTENSITY_QUANTITY_UNKNOWN};
 };
 
+class HDRILight
+    : public LightTest,
+      public ::testing::TestWithParam<const char * /*renderer type*/>
+{
+ public:
+  HDRILight();
+  void SetUp() override;
+};
+
 } // namespace OSPRayTestScenes

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -23,6 +23,9 @@ SSI computeShading(const SciVis *uniform self,
     varying LDSampler *uniform ldSampler,
     const varying vec3f &inDir,
     const float time);
+
+vec3f evaluateLights(
+    const World *uniform world, const DifferentialGeometry &dg, const Ray &ray);
 
 struct SciVisBSDF
 {

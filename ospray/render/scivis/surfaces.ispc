@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "math/random.ih"
@@ -106,4 +106,26 @@ SSI computeShading(const SciVis *uniform self,
   retval.transmission = bsdf.transmission;
 
   return retval;
+}
+
+vec3f evaluateLights(
+    const World *uniform world, const DifferentialGeometry &dg, const Ray &ray)
+{
+  // Exit if no lights
+  vec3f color = make_vec3f(0.f);
+  if (!world->scivisData.lightsVisible)
+    return color;
+
+  // Iterate through all lights
+  for (uniform int i = 0; i < world->scivisData.numLightsVisible; i++) {
+    // Skip lights with disabled visibilty via parameter
+    const uniform Light *uniform l = world->scivisData.lightsVisible[i];
+    if (!l->isVisible)
+      continue;
+
+    // Evaluate light contribution
+    const Light_EvalRes le = l->eval(l, dg, ray.dir, ray.t0, ray.t);
+    color = color + le.radiance;
+  }
+  return color;
 }

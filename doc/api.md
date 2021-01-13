@@ -1574,7 +1574,9 @@ supports the following special parameters:
 
 ![Orientation and Mapping of an HDRI Light.][imgHDRILight]
 
-Note that the currently only the [path tracer] supports the HDRI light.
+Note that the [SciVis renderer] only shows the HDRI light in the
+background (like an environment map) without computing illumination of
+the scene.
 
 ### Ambient Light
 
@@ -1620,6 +1622,9 @@ following special parameters are supported:
   : Special parameters accepted by the `sunSky` light.
 
 The lowest elevation for the sun is restricted to the horizon.
+
+Note that the [SciVis renderer] only computes illumination from the sun
+(yet the sky is still shown in the background, like an environment map).
 
 ### Emissive Objects
 
@@ -1863,19 +1868,24 @@ created by passing the  type string "`scivis`" to `ospNewRenderer`. In
 addition to the [general parameters](#renderer) understood by all
 renderers, the SciVis renderer supports the following parameters:
 
-  ------------- ---------------------- ------------  ----------------------------
-  Type          Name                        Default  Description
-  ------------- ---------------------- ------------  ----------------------------
-  bool          shadows                       false  whether to compute (hard) shadows
+  ------ ------------------- ---------  ----------------------------------
+  Type   Name                  Default  Description
+  ------ ------------------- ---------  ----------------------------------
+  bool   shadows                 false  whether to compute (hard) shadows
 
-  int           aoSamples                         0  number of rays per sample to
-                                                     compute ambient occlusion
+  int    aoSamples                   0  number of rays per sample to
+                                        compute ambient occlusion
 
-  float         aoDistance                   10^20^  maximum distance to consider
-                                                     for ambient occlusion
+  float  aoDistance             10^20^  maximum distance to consider for
+                                        ambient occlusion
 
-  float         volumeSamplingRate                1  sampling rate for volumes
-  ------------- ---------------------- ------------  ----------------------------
+  float  volumeSamplingRate          1  sampling rate for volumes
+
+  bool   visibleLights           false  whether light sources are
+                                        potentially visible (as in the
+                                        [path tracer], regarding each
+                                        light's `visible`)
+  ------ ------------------- ---------  ----------------------------------
   : Special parameters understood by the SciVis renderer.
 
 Note that the intensity (and color) of AO is deduced from an [ambient

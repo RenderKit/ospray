@@ -18,8 +18,10 @@ void LightTest::SetUp()
   // set common renderer parameter
   if (rendererType == "pathtracer")
     renderer.setParam("maxPathLength", 1);
-  if (rendererType == "scivis")
+  if (rendererType == "scivis") {
     renderer.setParam("shadows", true);
+    renderer.setParam("visibleLights", true);
+  }
 
   // build cornell box scene
   auto builder = ospray::testing::newBuilder("cornell_box");
@@ -238,6 +240,74 @@ void SpotLight::SetUp()
   AddLight(light);
 }
 
+HDRILight::HDRILight()
+{
+  rendererType = GetParam();
+}
+
+void HDRILight::SetUp()
+{
+  Base::SetUp();
+
+  // set common renderer parameter
+  if (rendererType == "pathtracer")
+    renderer.setParam("maxPathLength", 1);
+  if (rendererType == "scivis") {
+    renderer.setParam("shadows", true);
+    renderer.setParam("visibleLights", true);
+  }
+
+  // create sphere
+  cpp::Group group;
+  {
+    cpp::Geometry sphere("sphere");
+    sphere.setParam("sphere.position", cpp::CopiedData(vec3f(0.f)));
+    sphere.setParam("radius", 1.f);
+    sphere.commit();
+
+    cpp::GeometricModel model(sphere);
+    cpp::Material material(rendererType, "obj");
+    material.commit();
+    model.setParam("material", material);
+    model.commit();
+
+    group.setParam("geometry", cpp::CopiedData(model));
+    group.commit();
+  }
+  AddInstance(cpp::Instance(group));
+
+  // position camera
+  camera.setParam("position", vec3f(0.f, 0.f, -3.f));
+
+  // prepare environment texture
+  cpp::Texture envTex("texture2d");
+  {
+    std::array<vec3f, 8> data = {vec3f(0.f, 1.f, 1.f),
+        vec3f(1.f, 0.f, 1.f),
+        vec3f(1.f, 1.f, 0.f),
+        vec3f(1.f, 1.f, 1.f),
+        vec3f(1.f, 0.f, 0.f),
+        vec3f(0.f, 1.f, 0.f),
+        vec3f(0.f, 0.f, 1.f),
+        vec3f(0.f, 0.f, 0.f)};
+    cpp::CopiedData texData(data.data(), vec2ul(4, 2));
+    envTex.setParam("format", OSP_TEXTURE_RGB32F);
+    envTex.setParam("filter", OSP_TEXTURE_FILTER_NEAREST);
+    envTex.setParam("data", texData);
+    envTex.commit();
+  }
+
+  // prepare light
+  cpp::Light light("hdri");
+  light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
+  light.setParam("up", vec3f(0.f, 1.f, 0.f));
+  light.setParam("direction", vec3f(0.f, 0.f, 1.f));
+  light.setParam("map", envTex);
+  AddLight(light);
+
+  renderer.setParam("backgroundColor", vec4f(0.f, 0.f, 0.f, 1.0f));
+}
+
 // Test Instantiations //////////////////////////////////////////////////////
 
 TEST_P(SunSky, parameter)
@@ -362,4 +432,13 @@ INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
         ::testing::Values("pathtracer"),
         ::testing::Values(
             OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER)));
+
+TEST_P(HDRILight, parameter)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Light, HDRILight, ::testing::Values("scivis", "pathtracer"));
+
 } // namespace OSPRayTestScenes
