@@ -20,6 +20,9 @@ Version History
 -   Add colored transparency in SciVis renderer
 -   The MPI module is now distributed as part of OSPRay in the modules
     directory
+-   Add `intensityQuantity` parameter to light sources to control the
+    interpretation and convertion of the `intensity` into a radiative
+    quantity
 
 ### Changes in v2.4.0:
 

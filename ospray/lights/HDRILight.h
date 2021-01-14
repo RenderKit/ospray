@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -18,10 +18,13 @@ struct OSPRAY_SDK_INTERFACE HDRILight : public Light
   virtual void commit() override;
 
  private:
+  void processIntensityQuantityType();
+
   vec3f up{0.f, 1.f, 0.f}; //!< up direction of the light in world-space
   vec3f dir{0.f, 0.f, 1.f}; //!< direction to which the center of the envmap
                             //   will be mapped to (analog to panoramic camera)
   Texture2D *map{nullptr}; //!< environment map in latitude / longitude format
+  vec3f radianceScale{1.0f, 1.0f, 1.0f}; //!< scaling factor of emitted radiance
 };
 
 } // namespace ospray

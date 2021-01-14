@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_light.h"
@@ -177,16 +177,17 @@ QuadLight::QuadLight()
   auto params = GetParam();
   size = std::get<0>(params);
   rendererType = std::get<1>(params);
+  intensityQuantity = std::get<2>(params);
 }
 
 void QuadLight::SetUp()
 {
   LightTest::SetUp();
 
-  const float area = size * size;
   cpp::Light light("quad");
   light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
-  light.setParam("intensity", 10.f / area);
+  light.setParam("intensity", 10.f);
+  light.setParam("intensityQuantity", intensityQuantity);
   light.setParam("position", vec3f(size / -2.0f, 0.98f, size / -2.0f));
   light.setParam("edge1", vec3f(size, 0.0f, 0.0f));
   light.setParam("edge2", vec3f(0.0f, 0.0f, size));
@@ -198,6 +199,7 @@ SphereLight::SphereLight()
   auto params = GetParam();
   radius = std::get<0>(params);
   rendererType = std::get<1>(params);
+  intensityQuantity = std::get<2>(params);
 }
 
 void SphereLight::SetUp()
@@ -207,6 +209,7 @@ void SphereLight::SetUp()
   cpp::Light light("sphere");
   light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
   light.setParam("intensity", 2.5f);
+  light.setParam("intensityQuantity", intensityQuantity);
   light.setParam("position", vec3f(0.0f, 0.48f, 0.0f));
   light.setParam("radius", radius);
   AddLight(light);
@@ -217,6 +220,7 @@ SpotLight::SpotLight()
   auto params = GetParam();
   innerOuterRadius = std::get<0>(params);
   rendererType = std::get<1>(params);
+  intensityQuantity = std::get<2>(params);
 }
 
 void SpotLight::SetUp()
@@ -226,6 +230,7 @@ void SpotLight::SetUp()
   cpp::Light light("spot");
   light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
   light.setParam("intensity", 10.f);
+  light.setParam("intensityQuantity", intensityQuantity);
   light.setParam("position", vec3f(0.0f, 0.98f, 0.0f));
   light.setParam("direction", vec3f(0.0f, -1.0f, 0.0f));
   light.setParam("radius", innerOuterRadius[1]);
@@ -306,7 +311,8 @@ TEST_P(QuadLight, parameter)
 INSTANTIATE_TEST_SUITE_P(Light,
     QuadLight,
     ::testing::Combine(::testing::Values(0.2f, 0.4f),
-        ::testing::Values("scivis", "pathtracer")));
+        ::testing::Values("scivis", "pathtracer"),
+        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY)));
 
 TEST_P(SphereLight, parameter)
 {
@@ -316,7 +322,8 @@ TEST_P(SphereLight, parameter)
 INSTANTIATE_TEST_SUITE_P(Light,
     SphereLight,
     ::testing::Combine(::testing::Values(0.0f, 0.2f, 0.3f),
-        ::testing::Values("scivis", "pathtracer")));
+        ::testing::Values("scivis", "pathtracer"),
+        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY)));
 
 TEST_P(SpotLight, parameter)
 {
@@ -330,6 +337,29 @@ INSTANTIATE_TEST_SUITE_P(Light,
                            vec2f(0.0f, 0.4f),
                            vec2f(0.2f, 0.4f),
                            vec2f(0.7f, 0.8f)),
-        ::testing::Values("scivis", "pathtracer")));
+        ::testing::Values("scivis", "pathtracer"),
+        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY)));
 
+INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
+    QuadLight,
+    ::testing::Combine(::testing::Values(0.2f, 0.4f),
+        ::testing::Values("pathtracer"),
+        ::testing::Values(
+            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER)));
+
+INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
+    SphereLight,
+    ::testing::Combine(::testing::Values(0.0f, 0.2f, 0.3f),
+        ::testing::Values("pathtracer"),
+        ::testing::Values(
+            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER)));
+
+INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
+    SpotLight,
+    ::testing::Combine(
+        ::testing::Values(
+            vec2f(0.0f, 0.0f), vec2f(0.0f, 0.2f), vec2f(0.0f, 0.4f)),
+        ::testing::Values("pathtracer"),
+        ::testing::Values(
+            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER)));
 } // namespace OSPRayTestScenes

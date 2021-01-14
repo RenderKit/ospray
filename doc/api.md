@@ -1357,24 +1357,60 @@ To create a new light source of given type `type` use
 
 All light sources accept the following parameters:
 
-  Type      Name        Default  Description
-  --------- ---------- --------  ---------------------------------------
-  vec3f     color         white  color of the light
-  float     intensity         1  intensity of the light (a factor)
-  bool      visible        true  whether the light can be directly seen
-  --------- ---------- --------  ---------------------------------------
+  --------- ------------------ --------  --------------------------------------------
+  Type      Name                Default  Description
+  --------- ------------------ --------  --------------------------------------------
+  vec3f     color                 white  color of the light
+
+  float     intensity                 1  intensity of the light (a factor)
+
+  uchar     intensityQuantity            `OSPIntensityQuantity` to set the radiative
+                                         quantity represented by `intensity`. The
+                                         default value depends on the light source.
+
+  bool      visible                true  whether the light can be directly seen
+  --------- ------------------ --------  --------------------------------------------
   : Parameters accepted by all lights.
+
+In OSPRay the `intensity` parameter of a light source can correspond to
+different types of radiative quantities. The type of the value
+represented by a light's `intensity` parameter is set using
+`intensityQuantity`, which accepts values from the enum type
+`OSPIntensityQuantity`. The supported types of `OSPIntensityQuantity`
+differ between the different light sources (see documentation of each
+specific light source).
+
+  ----------------------------------  ----------------------------------------------------
+  Name                                Description
+  ----------------------------------  ----------------------------------------------------
+  OSP_INTENSITY_QUANTITY_POWER        the overall amount of light energy emitted by the
+                                      light source into the scene, unit is W
+
+  OSP_INTENSITY_QUANTITY_INTENSITY    the overall amount of light emitted by the light in
+                                      a given direction, unit is W/sr
+
+  OSP_INTENSITY_QUANTITY_RADIANCE     the amount of light emitted by a point on the
+                                      light source in a given direction, unit is W/sr/m^2^
+
+  OSP_INTENSITY_QUANTITY_IRRADIANCE   the amount of light arriving at a surface point,
+                                      assuming the light is oriented towards to the
+                                      surface, unit is W/m^2^
+  ----------------------------------  ----------------------------------------------------
+  : Types of radiative quantities used to interpret a light's `intensity` parameter.
 
 The following light types are supported by most OSPRay renderers.
 
 ### Directional Light / Distant Light
 
 The distant light (or traditionally the directional light) is thought to
-be far away (outside of the scene), thus its light arrives (almost)
-as parallel rays. It is created by passing the type string "`distant`"
-to `ospNewLight`. In addition to the [general parameters](#lights)
-understood by all lights the distant light supports the following special
-parameters:
+be far away (outside of the scene), thus its light arrives (almost) as
+parallel rays. It is created by passing the type string "`distant`" to
+`ospNewLight`. The distant light supports
+`OSP_INTENSITY_QUANTITY_RADIANCE` and
+`OSP_INTENSITY_QUANTITY_IRRADIANCE` (default) as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights)
+understood by all lights the distant light supports the following
+special parameters:
 
   Type      Name             Description
   --------- ---------------- ---------------------------------------------
@@ -1390,11 +1426,14 @@ tracer]). For instance, the apparent size of the sun is about 0.53°.
 ### Point Light / Sphere Light
 
 The sphere light (or the special case point light) is a light emitting
-uniformly in all directions from the surface toward the outside.
-It does not emit any light toward the inside of the sphere.
-It is created by passing the type string "`sphere`" to `ospNewLight`.
-In addition to the [general parameters](#lights) understood by all lights
-the sphere light supports the following special parameters:
+uniformly in all directions from the surface toward the outside. It does
+not emit any light toward the inside of the sphere. It is created by
+passing the type string "`sphere`" to `ospNewLight`. The point light
+supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter value.
+In addition to the [general parameters](#lights) understood by all
+lights the sphere light supports the following special parameters:
 
   Type      Name      Description
   --------- --------- -----------------------------------------------
@@ -1410,9 +1449,13 @@ tracer]).
 ### Spotlight / Photometric Light
 
 The spotlight is a light emitting into a cone of directions. It is
-created by passing the type string "`spot`" to `ospNewLight`. In
-addition to the [general parameters](#lights) understood by all lights
-the spotlight supports the special parameters listed in the table.
+created by passing the type string "`spot`" to `ospNewLight`. The
+spotlight supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
+value. In addition to the [general parameters](#lights) understood by
+all lights the spotlight supports the special parameters listed in the
+table.
 
   ---------- --------------------- ----------- ---------------------------------
   Type       Name                      Default Description
@@ -1474,6 +1517,9 @@ are not rotational symmetric around `direction`, but are accordingly
 mapped to the C-halfplanes in [0–2π]; the first "row" of values to 0 and
 2π, the other rows such that they have uniform distance to its
 neighbors. The orientation of the C0-plane is specified via `c0`.
+A combination of using an `intensityDistribution` and
+`OSP_INTENSITY_QUANTITY_POWER` as `intensityQuantity` is not supported
+at the moment.
 
 ![C-γ coordinate system for the mapping of `intensityDistribution` to
 the spotlight.][imgSpotCoords]
@@ -1481,9 +1527,11 @@ the spotlight.][imgSpotCoords]
 ### Quad Light
 
 The quad^[actually a parallelogram] light is a planar, procedural area
-light source emitting
-uniformly on one side into the half-space. It is created by passing the
-type string "`quad`" to `ospNewLight`. In addition to the [general
+light source emitting uniformly on one side into the half-space. It is
+created by passing the type string "`quad`" to `ospNewLight`. The quad
+light supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
+(default) as `intensityQuantity` parameter. In addition to the [general
 parameters](#lights) understood by all lights the quad light supports
 the following special parameters:
 
@@ -1507,9 +1555,10 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-"`hdri`" to `ospNewLight`. In addition to the [general
-parameters](#lights) the HDRI light supports the following special
-parameters:
+"`hdri`" to `ospNewLight`. The HDRI light only accepts
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
+value. In addition to the [general parameters](#lights) the HDRI light
+supports the following special parameters:
 
   ------------ --------- --------------------------------------------------
   Type         Name      Description
@@ -1532,7 +1581,10 @@ Note that the currently only the [path tracer] supports the HDRI light.
 The ambient light surrounds the scene and illuminates it from infinity
 with constant radiance (determined by combining the [parameters `color`
 and `intensity`](#lights)). It is created by passing the type string
-"`ambient`" to `ospNewLight`.
+"`ambient`" to `ospNewLight`. The ambient light supports
+`OSP_INTENSITY_QUANTITY_RADIANCE` and
+`OSP_INTENSITY_QUANTITY_IRRADIANCE` (default) as `intensityQuantity`
+parameter value.
 
 Note that the [SciVis renderer] uses ambient lights to control the color
 and intensity of the computed ambient occlusion (AO).
@@ -1544,9 +1596,10 @@ a procedural `hdri` light for the sky. It is created by passing the type
 string "`sunSky`" to `ospNewLight`. The sun-sky light surrounds the
 scene and illuminates it from infinity and can be used for rendering
 outdoor scenes. The radiance values are calculated using the
-Hošek-Wilkie sky model and solar radiance function. In addition to the
-[general parameters](#lights) the following special parameters are
-supported:
+Hošek-Wilkie sky model and solar radiance function. The sun-sky light
+only accepts `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights) the
+following special parameters are supported:
 
   --------- ---------------- ------------  -------------------------------------
   Type      Name                  Default  Description

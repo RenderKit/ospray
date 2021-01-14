@@ -346,3 +346,16 @@ typedef enum
   OSP_PIXELFILTER_MITCHELL,
   OSP_PIXELFILTER_BLACKMAN_HARRIS
 } OSPPixelFilterTypes;
+
+// OSPRay light quantity types
+typedef enum
+#if __cplusplus >= 201103L
+    : uint8_t
+#endif
+{
+  OSP_INTENSITY_QUANTITY_RADIANCE, // unit W/sr/m^2
+  OSP_INTENSITY_QUANTITY_IRRADIANCE, // unit W/m^2
+  OSP_INTENSITY_QUANTITY_INTENSITY, // radiant intensity, unit W/sr
+  OSP_INTENSITY_QUANTITY_POWER, // radiant flux, unit W
+  OSP_INTENSITY_QUANTITY_UNKNOWN
+} OSPIntensityQuantity;
