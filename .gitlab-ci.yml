@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 stages:
@@ -428,6 +428,7 @@ release-osx-clang:
   tags:
     - clang
     - osx
+    - sign
   script:
     - export CC=clang
     - export CXX=clang++
@@ -497,9 +498,12 @@ bdba:
     - release-windows
   script:
     - scripts/scan/bdba.sh "build_release/ospray*"
+    - scripts/scan/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID bdba "ospray-*.pdf"
+    - scripts/scan/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID bdba "ospray-*.csv"
   artifacts:
     paths:
       - build_release/ospray-*
+      - ospray-*
 
 av:
   <<: *release_job
@@ -511,8 +515,9 @@ av:
     - release-osx-clang
     - release-windows
   script:
-    - freshclam
-    - clamscan -va --max-filesize=256M --max-scansize=1024M --alert-broken --alert-exceeds-max build_release/ospray-*
+    - freshclam | tee -a /tmp/av_scan.log
+    - clamscan -va --max-filesize=256M --max-scansize=1024M --alert-broken --alert-exceeds-max build_release/ospray-* | tee -a /tmp/av_scan.log
+    - scripts/scan/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID av /tmp/av_scan.log
   artifacts:
     paths:
       - build_release/ospray-*
@@ -531,7 +536,7 @@ test-release-osx:
   <<: *test_job
   <<: *release_job
   stage: scan3
-  tags: [osx]
+  tags: [osx, sign]
   needs: [release-osx-clang]
   script:
     - unzip build_release/*.zip
