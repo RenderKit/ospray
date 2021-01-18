@@ -2810,7 +2810,11 @@ function
 
     float ospGetProgress(OSPFuture);
 
-This returns the progress of the task in [0-1].
+This returns the approximated progress of the task in [0-1].
+
+Applications can cancel a currently running asynchronous operation via
+
+    void ospCancel(OSPFuture);
 
 Applications can wait on the result of an asynchronous operation, or
 choose to only synchronize with a specific event. To synchronize with an
