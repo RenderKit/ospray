@@ -115,7 +115,7 @@ build-arch-clang-devel:
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_EMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OIDN_VERSION=devel -DBUILD_OPENVKL_VERSION=devel -DBUILD_RKCOMMON_VERSION=devel 
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_EMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OIDN_VERSION=devel -DBUILD_OPENVKL_VERSION=devel -DBUILD_RKCOMMON_VERSION=devel
   only: [schedules]
 
 build-linux-debug-all:
@@ -333,7 +333,7 @@ test-find-ospray:
     - module load cmake
     - mkdir buildtut
     - cd buildtut
-    - cmake -D ospray_DIR=`echo $CI_PROJECT_DIR/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray 
+    - cmake -D ospray_DIR=`echo $CI_PROJECT_DIR/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray
     - cmake --build .
 
 test-windows-msvc15:
@@ -465,10 +465,11 @@ kw-build:
   needs: []
   script:
     - scripts/build_gitlab/kw.sh
-    - test -s $CI_PROJECT_DIR/kw_build_number
+    - test -s $CI_PROJECT_DIR/klocwork/build.log
+    - test -s $CI_PROJECT_DIR/klocwork/build_name
   artifacts:
     paths:
-        - $CI_PROJECT_DIR/kw_build_number
+        - ./klocwork/*
     expire_in: 3 day
 
 protex:
@@ -485,13 +486,29 @@ kw-scan:
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: [kw-build]
   script:
-    - scripts/scan/kw.sh
+    - scripts/scan/kw-check-issues.sh
+
+kw-gen-report:
+  stage: scan2
+  tags: [docker]
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs: [kw-build]
+  only:
+    - devel
+    - master
+    - /release/
+  script:
+    - scripts/scan/kw-gen-report.sh
+    - scripts/scan/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID klocwork "klocwork/report.log"
+  artifacts:
+    paths:
+      - ./klocwork/report.log
 
 bdba:
   <<: *release_job
   stage: scan3
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs:
     - release-linux
     - release-osx-clang
@@ -526,7 +543,7 @@ test-release-linux:
   <<: *test_job
   <<: *release_job
   stage: scan3
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: [release-linux]
   script:
     - tar xzf build_release/*.gz
