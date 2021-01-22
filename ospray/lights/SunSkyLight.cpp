@@ -112,7 +112,7 @@ void SunSkyLight::commit()
   solarIrradiance =
       xyzToRgb(solarIrradiance) * rcpPdf * intensityScale * coloredIntensity;
 
-  ispc::Light_set(getSecondIE().value(), true);
+  ispc::Light_set(getSecondIE().value(), getParam<bool>("visible", true));
 
   ispc::DirectionalLight_set(getSecondIE().value(),
       (ispc::vec3f &)solarIrradiance,
