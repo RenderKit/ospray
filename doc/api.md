@@ -1003,6 +1003,12 @@ concurrently). To create a volume instance, call
 
     OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
 
+The passed volume can be `NULL` as long as the volume to be used is
+passed as a parameter. If both a volume is specified on object creation and
+as a parameter, the parameter value is used. If the parameter value
+is later removed, the volume object passed on object creation is again
+used.
+
   -------------------- ----------------- --------  --------------------------------------
   Type                 Name               Default  Description
   -------------------- ----------------- --------  --------------------------------------
@@ -1014,7 +1020,10 @@ concurrently). To create a volume instance, call
   float                anisotropy             0.0  anisotropy of the (Henyey-Greenstein)
                                                    phase function in [-1, 1] ([path tracer]
                                                    only), default to isotropic scattering
-  -------------------- --------------------------  ---------------------------------------
+
+  OSPVolume            volume                      optional [volume] object this model
+                                                   references
+  -------------------- ----------------- --------  ---------------------------------------
   : Parameters understood by VolumetricModel.
 
 
@@ -1311,6 +1320,12 @@ and material information. To create a geometric model, call
 
     OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
+The passed geometry can be `NULL` as long as the geometry to be used is
+passed as a parameter. If both a geometry is specified on object creation
+and as a parameter, the parameter value is used. If the parameter value
+is later removed, the geometry object passed on object creation is again
+used.
+
 Color and material are fetched with the primitive ID of the hit (clamped
 to the valid range, thus a single color or material is fine), or mapped
 first via the `index` array (if present). All parameters are optional,
@@ -1344,6 +1359,8 @@ with normals oriented outside clips everything what's inside.
                                           `color` and `material`
 
   bool                     invertNormals  inverts all shading normals (Ns), default false
+
+  OSPGeometry              geometry       optional [geometry] object this model references
   ------------------------ -------------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 

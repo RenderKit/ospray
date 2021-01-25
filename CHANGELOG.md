@@ -25,6 +25,8 @@ Version History
 -   Add `intensityQuantity` parameter to light sources to control the
     interpretation and convertion of the `intensity` into a radiative
     quantity
+-   Both geometric and volumetric models can now have their child
+    geometry/volume objects rebound using an object parameter
 
 ### Changes in v2.4.0:
 

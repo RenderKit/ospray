@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -15,13 +15,8 @@ namespace ospray {
 VolumetricModel::VolumetricModel(Volume *_volume)
 {
   managedObjectType = OSP_VOLUMETRIC_MODEL;
-
-  if (_volume == nullptr)
-    throw std::runtime_error("volumetric model received null volume");
-
-  volume = _volume;
-
-  this->ispcEquivalent = ispc::VolumetricModel_create(this, volume->getIE());
+  volumeAPI = _volume;
+  this->ispcEquivalent = ispc::VolumetricModel_create(this);
 }
 
 VolumetricModel::~VolumetricModel()
@@ -37,6 +32,14 @@ std::string VolumetricModel::toString() const
 
 void VolumetricModel::commit()
 {
+  if (hasParam("volume"))
+    volume = (Volume *)getParamObject("volume");
+  else
+    volume = volumeAPI;
+
+  if (volume.ptr == nullptr)
+    throw std::runtime_error("volumetric model received null volume");
+
   auto *transferFunction =
       (TransferFunction *)getParamObject("transferFunction", nullptr);
 
@@ -64,6 +67,7 @@ void VolumetricModel::commit()
   volumeBounds = volume->bounds;
 
   ispc::VolumetricModel_set(ispcEquivalent,
+      getVolume()->getIE(),
       transferFunction->getIE(),
       (const ispc::box3f &)volumeBounds,
       getParam<float>("densityScale", 1.f),
