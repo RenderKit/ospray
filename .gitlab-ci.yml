@@ -59,24 +59,38 @@ variables:
     expire_in: 1 week
     when: always
 
-.job_template: &test_job_unix
+.job_template: &test_job_unix_avx2
   <<: *test_job
+  tags: [docker, avx2]
   script:
-    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX2
+
+.job_template: &test_job_unix_avx512skx
+  <<: *test_job
+  tags: [docker, avx512vl]
+  script:
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX
 
 .job_template: &test_job_unix_sanitize
   <<: *test_job
+  tags: [docker, avx512vl]
   script:
     - export LSAN_OPTIONS="suppressions=$CI_PROJECT_DIR/scripts/tests/sanitize_ignore.txt"
     - export LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH"
-    - PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
+    - PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX
     - build/install/ospray/bin/ospBenchmark --benchmark_min_time=0
 
-.job_template: &test_job_windows
+.job_template: &test_job_windows_avx2
   <<: *test_job
   script:
     - $env:Path += ";$CI_PROJECT_DIR\build\install\ospray\bin"
-    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR"
+    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX2
+
+.job_template: &test_job_windows_avx512skx
+  <<: *test_job
+  script:
+    - $env:Path += ";$CI_PROJECT_DIR\build\install\ospray\bin"
+    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX512SKX
 
 .job_template: &benchmark_job
   stage: benchmark
@@ -292,38 +306,43 @@ build-windows-mpi:
 
 ### TEST JOBS ###
 
-test-centos7-gcc:
-  <<: *test_job_unix
+test-centos7-gcc-avx2:
+  <<: *test_job_unix_avx2
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: [build-centos7-gcc]
 
-test-centos8:
-  <<: *test_job_unix
+test-centos8-avx512skx:
+  <<: *test_job_unix_avx512skx
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
   needs: [build-centos8]
 
-test-ubuntu1604-gcc:
-  <<: *test_job_unix
+test-ubuntu1604-gcc-avx2:
+  <<: *test_job_unix_avx2
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
   needs: [build-ubuntu1604-gcc]
 
-test-ubuntu1804-gcc:
-  <<: *test_job_unix
+test-ubuntu1804-gcc-avx512skx:
+  <<: *test_job_unix_avx512skx
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   needs: [build-ubuntu1804-gcc]
 
-test-ubuntu2004-gcc:
-  <<: *test_job_unix
+test-ubuntu2004-gcc-avx2:
+  <<: *test_job_unix_avx2
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
+  needs: [build-ubuntu2004-gcc]
+
+test-ubuntu2004-gcc-avx512skx:
+  <<: *test_job_unix_avx512skx
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs: [build-ubuntu2004-gcc]
 
 test-mpi-cluster:
-  <<: *test_job_unix
+  <<: *test_job_unix_avx512skx
   tags: [cluster]
   script:
     - module load impi
     - module load gnu
-    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX
   needs: [build-mpi-cluster]
   only: [schedules]
 
@@ -333,7 +352,7 @@ sanitize-linux-debug:
   needs: [build-linux-debug]
 
 test-linux-debug-all:
-  <<: *test_job_unix
+  <<: *test_job_unix_avx512skx
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs: [build-linux-debug-all]
   only: [schedules]
@@ -343,7 +362,7 @@ test-osx-clang:
   tags: [osx]
   needs: [build-osx-clang]
   script:
-    - DYLD_FALLBACK_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
+    - DYLD_FALLBACK_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX2
 
 test-tutorials:
   stage: test
@@ -367,32 +386,50 @@ test-find-ospray:
     - cmake -D ospray_DIR=`echo $CI_PROJECT_DIR/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray
     - cmake --build .
 
-test-windows-msvc15:
-  <<: *test_job_windows
-  tags:
-    - win
-    - msvc15
+test-windows-msvc15-avx2:
+  <<: *test_job_windows_avx2
+  tags: [win, msvc15, avx2]
+  needs: [build-windows-msvc15]
+  allow_failure: true
+
+test-windows-msvc15-avx512skx:
+  <<: *test_job_windows_avx512skx
+  tags: [win, msvc15, avx512vl]
   needs: [build-windows-msvc15]
 
 test-windows-debug-all:
-  <<: *test_job_windows
-  tags:
-    - win
-    - msvc15
+  <<: *test_job_windows_avx2
+  tags: [win, msvc15, avx2]
   needs: [build-windows-debug-all]
   only: [schedules]
 
-test-windows-msvc16:
-  <<: *test_job_windows
-  tags:
-    - win
-    - msvc16
+test-windows-msvc16-avx2:
+  <<: *test_job_windows_avx2
+  tags: [win, msvc16, avx2]
+  needs: [build-windows-msvc16]
+  allow_failure: true
+
+test-windows-msvc16-avx512skx:
+  <<: *test_job_windows_avx512skx
+  tags: [win, msvc16, avx512vl]
   needs: [build-windows-msvc16]
 
-generate-ci-baseline:
-  <<: *test_job_unix
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
-  needs: [build-ubuntu1804-gcc]
+generate-ci-baseline-avx2:
+  <<: *test_job_unix_avx2
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
+  needs: [build-ubuntu2004-gcc]
+  script:
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/generate_baseline.sh
+  artifacts:
+    paths:
+      - generated_test_images
+    expire_in: 3 day
+  when: manual
+
+generate-ci-baseline-avx512skx:
+  <<: *test_job_unix_avx512skx
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
+  needs: [build-ubuntu2004-gcc]
   script:
     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/generate_baseline.sh
   artifacts:

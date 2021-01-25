@@ -19,10 +19,12 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 
+#include "rkcommon/utility/multidim_index_sequence.h"
+
 using pixelColorValue = unsigned char;
 
 const pixelColorValue pixelThreshold = 10;
-const float errorRate = 0.03;
+const float errorRate = 0.1;
 
 enum class OsprayStatus
 {
@@ -66,5 +68,8 @@ class OSPImageTools
   // helper method to saved rendered file
   OsprayStatus saveTestImage(const void *pixel);
   // helper method to compare gold image with current framebuffer render
+  vec4f getAveragedPixel(const vec4i *image,
+      vec2i pixelIndex,
+      const rkcommon::index_sequence_2D &imageIndices);
   OsprayStatus compareImgWithBaseline(const uint32_t *testImg);
 };
