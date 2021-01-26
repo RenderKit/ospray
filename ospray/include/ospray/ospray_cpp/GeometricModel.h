@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -13,9 +13,8 @@ class GeometricModel
     : public ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>
 {
  public:
-  GeometricModel(const Geometry &geom);
-  GeometricModel(OSPGeometry geom);
-  GeometricModel(const GeometricModel &copy);
+  GeometricModel(const Geometry &);
+  GeometricModel(OSPGeometry);
   GeometricModel(OSPGeometricModel existing = nullptr);
 };
 
@@ -28,15 +27,9 @@ inline GeometricModel::GeometricModel(const Geometry &geom)
     : GeometricModel(geom.handle())
 {}
 
-inline GeometricModel::GeometricModel(OSPGeometry existing)
+inline GeometricModel::GeometricModel(OSPGeometry geom)
 {
-  ospObject = ospNewGeometricModel(existing);
-}
-
-inline GeometricModel::GeometricModel(const GeometricModel &copy)
-    : ManagedObject<OSPGeometricModel, OSP_GEOMETRIC_MODEL>(copy.handle())
-{
-  ospRetain(copy.handle());
+  ospObject = ospNewGeometricModel(geom);
 }
 
 inline GeometricModel::GeometricModel(OSPGeometricModel existing)

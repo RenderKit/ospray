@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -13,7 +13,6 @@ class World : public ManagedObject<OSPWorld, OSP_WORLD>
 {
  public:
   World();
-  World(const World &copy);
   World(OSPWorld existing);
 };
 
@@ -25,12 +24,6 @@ static_assert(
 inline World::World()
 {
   ospObject = ospNewWorld();
-}
-
-inline World::World(const World &copy)
-    : ManagedObject<OSPWorld, OSP_WORLD>(copy.handle())
-{
-  ospRetain(copy.handle());
 }
 
 inline World::World(OSPWorld existing)

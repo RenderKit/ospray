@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -34,7 +34,6 @@ class FrameBuffer : public ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>
       OSPFrameBufferFormat format = OSP_FB_SRGBA,
       int channels = OSP_FB_COLOR);
 
-  FrameBuffer(const FrameBuffer &copy);
   FrameBuffer(OSPFrameBuffer existing);
 
   void resetAccumulation() const;
@@ -63,12 +62,6 @@ inline FrameBuffer::FrameBuffer(
     int size_x, int size_y, OSPFrameBufferFormat format, int channels)
 {
   ospObject = ospNewFrameBuffer(size_x, size_y, format, channels);
-}
-
-inline FrameBuffer::FrameBuffer(const FrameBuffer &copy)
-    : ManagedObject<OSPFrameBuffer, OSP_FRAMEBUFFER>(copy.handle())
-{
-  ospRetain(copy.handle());
 }
 
 inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing)
