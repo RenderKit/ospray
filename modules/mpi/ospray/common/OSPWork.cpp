@@ -624,7 +624,6 @@ void removeParam(
 void setLoadBalancer(
     OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
-  PING;
   NOT_IMPLEMENTED;
   // TODO: We only have one load balancer now
 }
