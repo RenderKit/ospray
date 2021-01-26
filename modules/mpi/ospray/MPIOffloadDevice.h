@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -9,7 +9,6 @@
 #include "common/Managed.h"
 #include "common/OSPWork.h"
 #include "common/Profiling.h"
-#include "common/SocketBcastFabric.h"
 #include "rkcommon/utility/FixedArray.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */

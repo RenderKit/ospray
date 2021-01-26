@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifdef _WIN32
@@ -17,7 +17,6 @@
 #include "common/MPICommon.h"
 #include "common/OSPWork.h"
 #include "common/Profiling.h"
-#include "common/SocketBcastFabric.h"
 #include "rkcommon/utility/getEnvVar.h"
 
 #ifndef HOST_NAME_MAX
@@ -69,7 +68,7 @@ void runWorker(bool useMPIFabric)
   if (useMPIFabric)
     fabric = make_unique<MPIFabric>(mpicommon::world, 0);
   else
-    fabric = make_unique<SocketReaderFabric>(mpicommon::world, 0);
+    throw std::runtime_error("Invalid non-MPI connection mode");
 
   work::OSPState ospState;
 

@@ -3021,35 +3021,13 @@ mpirun -n 1 ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
   : -n <N> ./ospray_mpi_worker
 ```
 
-Finally, you can also run the workers in a server mode on a remote
-machine and connect your application to them over a socket. This allows
-remote rendering on a large cluster while displaying on a local machine
-(e.g., a laptop) where the two devices may not be able to connect over
-MPI. First, launch the workers in `mpi-listen` mode:
-
-```sh
-mpirun -n <N> ./ospray_mpi_worker --osp:device-params=mpiMode:mpi-listen
-```
-
-The workers will print out a port number to connect to, e.g., `#osp:
-Listening on port #####` You can then run your application in the
-`mpi-connect` mode, and pass the host name of the first worker rank and
-this port number to the device:
-
-```sh
-./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
-  --osp:device-params=mpiMode:mpi-connect,host:<worker rank 0 host>,port:<port printed above>
-```
-
 If initializing the `mpiOffload` device manually, or passing parameters through
 the command line, the following parameters can be set:
 
 
 | Type   | Name                    | Default             | Description                                                       |
 |:-------|:------------------------|--------------------:|:------------------------------------------------------------------|
-| string | mpiMode                 | mpi                 | The mode to communicate with the worker ranks. `mpi` will assume you're launching the application and workers in the same mpi command (or split launch command). `mpi-listen` can be passed to the workers, indicating they should wait and listen for a connection from the application. `mpi-connect` can be passed to the application, indicating it should connect to the first worker at `host` and `port` to connect to the workers |
-| string | host                    | none, optional      | On the app rank, specify the host worker 0 is on to connect to in mpi-connect mode |
-| int    | port                    | none, optional      | On the app rank, specify the port worker 0 is listening on to connect in mpi-connect mode |
+| string | mpiMode                 | mpi                 | The mode to communicate with the worker ranks. `mpi` will assume you're launching the application and workers in the same mpi command (or split launch command). `mpi` is the only supported mode  |
 | uint   | maxCommandBufferEntries | 8192                | Set the max number of commands to buffer before submitting the command buffer to the workers |
 | uint   | commandBufferSize       | 512MiB              | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8GiB         |
 | uint   | maxInlineDataSize       | 32MiB               | Set the max size of an OSPData which can be inline'd into the command buffer instead of being sent separately. Max size is half the commandBufferSize. Units are in MiB |

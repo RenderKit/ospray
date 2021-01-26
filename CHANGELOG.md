@@ -22,6 +22,7 @@ Version History
     - Light sources are visible including HDRI Light environment map
 -   The MPI module is now distributed as part of OSPRay in the modules
     directory
+    - The socket-based communication layer has been removed
 -   Add `intensityQuantity` parameter to light sources to control the
     interpretation and convertion of the `intensity` into a radiative
     quantity
