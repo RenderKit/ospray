@@ -1,6 +1,10 @@
 ## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
+if(NOT OSPRAY_MPI_BUILD_TUTORIALS)
+  return()
+endif()
+
 macro(ospray_create_mpi_tutorial tutorial_name)
   add_executable(${tutorial_name} ${OSPRAY_MPI_RESOURCE} ${ARGN})
   target_link_libraries(${tutorial_name} PRIVATE mpi_tutorial_common)
