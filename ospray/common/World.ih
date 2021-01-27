@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -16,7 +16,9 @@ struct SciVisData
 {
   vec3f aoColorPi;
   Light *uniform *uniform lights;
+  Light *uniform *uniform lightsVisible;
   uint32 numLights;
+  uint32 numLightsVisible;
 };
 
 struct PathtracerData

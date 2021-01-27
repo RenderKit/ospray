@@ -1003,6 +1003,12 @@ concurrently). To create a volume instance, call
 
     OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
 
+The passed volume can be `NULL` as long as the volume to be used is
+passed as a parameter. If both a volume is specified on object creation and
+as a parameter, the parameter value is used. If the parameter value
+is later removed, the volume object passed on object creation is again
+used.
+
   -------------------- ----------------- --------  --------------------------------------
   Type                 Name               Default  Description
   -------------------- ----------------- --------  --------------------------------------
@@ -1014,7 +1020,10 @@ concurrently). To create a volume instance, call
   float                anisotropy             0.0  anisotropy of the (Henyey-Greenstein)
                                                    phase function in [-1, 1] ([path tracer]
                                                    only), default to isotropic scattering
-  -------------------- --------------------------  ---------------------------------------
+
+  OSPVolume            volume                      optional [volume] object this model
+                                                   references
+  -------------------- ----------------- --------  ---------------------------------------
   : Parameters understood by VolumetricModel.
 
 
@@ -1311,6 +1320,12 @@ and material information. To create a geometric model, call
 
     OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
+The passed geometry can be `NULL` as long as the geometry to be used is
+passed as a parameter. If both a geometry is specified on object creation
+and as a parameter, the parameter value is used. If the parameter value
+is later removed, the geometry object passed on object creation is again
+used.
+
 Color and material are fetched with the primitive ID of the hit (clamped
 to the valid range, thus a single color or material is fine), or mapped
 first via the `index` array (if present). All parameters are optional,
@@ -1344,6 +1359,8 @@ with normals oriented outside clips everything what's inside.
                                           `color` and `material`
 
   bool                     invertNormals  inverts all shading normals (Ns), default false
+
+  OSPGeometry              geometry       optional [geometry] object this model references
   ------------------------ -------------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
@@ -1357,24 +1374,60 @@ To create a new light source of given type `type` use
 
 All light sources accept the following parameters:
 
-  Type      Name        Default  Description
-  --------- ---------- --------  ---------------------------------------
-  vec3f     color         white  color of the light
-  float     intensity         1  intensity of the light (a factor)
-  bool      visible        true  whether the light can be directly seen
-  --------- ---------- --------  ---------------------------------------
+  --------- ------------------ --------  --------------------------------------------
+  Type      Name                Default  Description
+  --------- ------------------ --------  --------------------------------------------
+  vec3f     color                 white  color of the light
+
+  float     intensity                 1  intensity of the light (a factor)
+
+  uchar     intensityQuantity            `OSPIntensityQuantity` to set the radiative
+                                         quantity represented by `intensity`. The
+                                         default value depends on the light source.
+
+  bool      visible                true  whether the light can be directly seen
+  --------- ------------------ --------  --------------------------------------------
   : Parameters accepted by all lights.
+
+In OSPRay the `intensity` parameter of a light source can correspond to
+different types of radiative quantities. The type of the value
+represented by a light's `intensity` parameter is set using
+`intensityQuantity`, which accepts values from the enum type
+`OSPIntensityQuantity`. The supported types of `OSPIntensityQuantity`
+differ between the different light sources (see documentation of each
+specific light source).
+
+  ----------------------------------  ----------------------------------------------------
+  Name                                Description
+  ----------------------------------  ----------------------------------------------------
+  OSP_INTENSITY_QUANTITY_POWER        the overall amount of light energy emitted by the
+                                      light source into the scene, unit is W
+
+  OSP_INTENSITY_QUANTITY_INTENSITY    the overall amount of light emitted by the light in
+                                      a given direction, unit is W/sr
+
+  OSP_INTENSITY_QUANTITY_RADIANCE     the amount of light emitted by a point on the
+                                      light source in a given direction, unit is W/sr/m^2^
+
+  OSP_INTENSITY_QUANTITY_IRRADIANCE   the amount of light arriving at a surface point,
+                                      assuming the light is oriented towards to the
+                                      surface, unit is W/m^2^
+  ----------------------------------  ----------------------------------------------------
+  : Types of radiative quantities used to interpret a light's `intensity` parameter.
 
 The following light types are supported by most OSPRay renderers.
 
 ### Directional Light / Distant Light
 
 The distant light (or traditionally the directional light) is thought to
-be far away (outside of the scene), thus its light arrives (almost)
-as parallel rays. It is created by passing the type string "`distant`"
-to `ospNewLight`. In addition to the [general parameters](#lights)
-understood by all lights the distant light supports the following special
-parameters:
+be far away (outside of the scene), thus its light arrives (almost) as
+parallel rays. It is created by passing the type string "`distant`" to
+`ospNewLight`. The distant light supports
+`OSP_INTENSITY_QUANTITY_RADIANCE` and
+`OSP_INTENSITY_QUANTITY_IRRADIANCE` (default) as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights)
+understood by all lights the distant light supports the following
+special parameters:
 
   Type      Name             Description
   --------- ---------------- ---------------------------------------------
@@ -1390,11 +1443,14 @@ tracer]). For instance, the apparent size of the sun is about 0.53°.
 ### Point Light / Sphere Light
 
 The sphere light (or the special case point light) is a light emitting
-uniformly in all directions from the surface toward the outside.
-It does not emit any light toward the inside of the sphere.
-It is created by passing the type string "`sphere`" to `ospNewLight`.
-In addition to the [general parameters](#lights) understood by all lights
-the sphere light supports the following special parameters:
+uniformly in all directions from the surface toward the outside. It does
+not emit any light toward the inside of the sphere. It is created by
+passing the type string "`sphere`" to `ospNewLight`. The point light
+supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter value.
+In addition to the [general parameters](#lights) understood by all
+lights the sphere light supports the following special parameters:
 
   Type      Name      Description
   --------- --------- -----------------------------------------------
@@ -1410,9 +1466,13 @@ tracer]).
 ### Spotlight / Photometric Light
 
 The spotlight is a light emitting into a cone of directions. It is
-created by passing the type string "`spot`" to `ospNewLight`. In
-addition to the [general parameters](#lights) understood by all lights
-the spotlight supports the special parameters listed in the table.
+created by passing the type string "`spot`" to `ospNewLight`. The
+spotlight supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
+value. In addition to the [general parameters](#lights) understood by
+all lights the spotlight supports the special parameters listed in the
+table.
 
   ---------- --------------------- ----------- ---------------------------------
   Type       Name                      Default Description
@@ -1474,6 +1534,9 @@ are not rotational symmetric around `direction`, but are accordingly
 mapped to the C-halfplanes in [0–2π]; the first "row" of values to 0 and
 2π, the other rows such that they have uniform distance to its
 neighbors. The orientation of the C0-plane is specified via `c0`.
+A combination of using an `intensityDistribution` and
+`OSP_INTENSITY_QUANTITY_POWER` as `intensityQuantity` is not supported
+at the moment.
 
 ![C-γ coordinate system for the mapping of `intensityDistribution` to
 the spotlight.][imgSpotCoords]
@@ -1481,9 +1544,11 @@ the spotlight.][imgSpotCoords]
 ### Quad Light
 
 The quad^[actually a parallelogram] light is a planar, procedural area
-light source emitting
-uniformly on one side into the half-space. It is created by passing the
-type string "`quad`" to `ospNewLight`. In addition to the [general
+light source emitting uniformly on one side into the half-space. It is
+created by passing the type string "`quad`" to `ospNewLight`. The quad
+light supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
+(default) as `intensityQuantity` parameter. In addition to the [general
 parameters](#lights) understood by all lights the quad light supports
 the following special parameters:
 
@@ -1507,9 +1572,10 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-"`hdri`" to `ospNewLight`. In addition to the [general
-parameters](#lights) the HDRI light supports the following special
-parameters:
+"`hdri`" to `ospNewLight`. The HDRI light only accepts
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
+value. In addition to the [general parameters](#lights) the HDRI light
+supports the following special parameters:
 
   ------------ --------- --------------------------------------------------
   Type         Name      Description
@@ -1525,14 +1591,19 @@ parameters:
 
 ![Orientation and Mapping of an HDRI Light.][imgHDRILight]
 
-Note that the currently only the [path tracer] supports the HDRI light.
+Note that the [SciVis renderer] only shows the HDRI light in the
+background (like an environment map) without computing illumination of
+the scene.
 
 ### Ambient Light
 
 The ambient light surrounds the scene and illuminates it from infinity
 with constant radiance (determined by combining the [parameters `color`
 and `intensity`](#lights)). It is created by passing the type string
-"`ambient`" to `ospNewLight`.
+"`ambient`" to `ospNewLight`. The ambient light supports
+`OSP_INTENSITY_QUANTITY_RADIANCE` and
+`OSP_INTENSITY_QUANTITY_IRRADIANCE` (default) as `intensityQuantity`
+parameter value.
 
 Note that the [SciVis renderer] uses ambient lights to control the color
 and intensity of the computed ambient occlusion (AO).
@@ -1544,9 +1615,10 @@ a procedural `hdri` light for the sky. It is created by passing the type
 string "`sunSky`" to `ospNewLight`. The sun-sky light surrounds the
 scene and illuminates it from infinity and can be used for rendering
 outdoor scenes. The radiance values are calculated using the
-Hošek-Wilkie sky model and solar radiance function. In addition to the
-[general parameters](#lights) the following special parameters are
-supported:
+Hošek-Wilkie sky model and solar radiance function. The sun-sky light
+only accepts `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights) the
+following special parameters are supported:
 
   --------- ---------------- ------------  -------------------------------------
   Type      Name                  Default  Description
@@ -1567,6 +1639,9 @@ supported:
   : Special parameters accepted by the `sunSky` light.
 
 The lowest elevation for the sun is restricted to the horizon.
+
+Note that the [SciVis renderer] only computes illumination from the sun
+(yet the sky is still shown in the background, like an environment map).
 
 ### Emissive Objects
 
@@ -1810,19 +1885,24 @@ created by passing the  type string "`scivis`" to `ospNewRenderer`. In
 addition to the [general parameters](#renderer) understood by all
 renderers, the SciVis renderer supports the following parameters:
 
-  ------------- ---------------------- ------------  ----------------------------
-  Type          Name                        Default  Description
-  ------------- ---------------------- ------------  ----------------------------
-  bool          shadows                       false  whether to compute (hard) shadows
+  ------ ------------------- ---------  ----------------------------------
+  Type   Name                  Default  Description
+  ------ ------------------- ---------  ----------------------------------
+  bool   shadows                 false  whether to compute (hard) shadows
 
-  int           aoSamples                         0  number of rays per sample to
-                                                     compute ambient occlusion
+  int    aoSamples                   0  number of rays per sample to
+                                        compute ambient occlusion
 
-  float         aoDistance                   10^20^  maximum distance to consider
-                                                     for ambient occlusion
+  float  aoDistance             10^20^  maximum distance to consider for
+                                        ambient occlusion
 
-  float         volumeSamplingRate                1  sampling rate for volumes
-  ------------- ---------------------- ------------  ----------------------------
+  float  volumeSamplingRate          1  sampling rate for volumes
+
+  bool   visibleLights           false  whether light sources are
+                                        potentially visible (as in the
+                                        [path tracer], regarding each
+                                        light's `visible`)
+  ------ ------------------- ---------  ----------------------------------
   : Special parameters understood by the SciVis renderer.
 
 Note that the intensity (and color) of AO is deduced from an [ambient
@@ -2810,7 +2890,11 @@ function
 
     float ospGetProgress(OSPFuture);
 
-This returns the progress of the task in [0-1].
+This returns the approximated progress of the task in [0-1].
+
+Applications can cancel a currently running asynchronous operation via
+
+    void ospCancel(OSPFuture);
 
 Applications can wait on the result of an asynchronous operation, or
 choose to only synchronize with a specific event. To synchronize with an
@@ -2937,35 +3021,13 @@ mpirun -n 1 ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
   : -n <N> ./ospray_mpi_worker
 ```
 
-Finally, you can also run the workers in a server mode on a remote
-machine and connect your application to them over a socket. This allows
-remote rendering on a large cluster while displaying on a local machine
-(e.g., a laptop) where the two devices may not be able to connect over
-MPI. First, launch the workers in `mpi-listen` mode:
-
-```sh
-mpirun -n <N> ./ospray_mpi_worker --osp:device-params=mpiMode:mpi-listen
-```
-
-The workers will print out a port number to connect to, e.g., `#osp:
-Listening on port #####` You can then run your application in the
-`mpi-connect` mode, and pass the host name of the first worker rank and
-this port number to the device:
-
-```sh
-./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
-  --osp:device-params=mpiMode:mpi-connect,host:<worker rank 0 host>,port:<port printed above>
-```
-
 If initializing the `mpiOffload` device manually, or passing parameters through
 the command line, the following parameters can be set:
 
 
 | Type   | Name                    | Default             | Description                                                       |
 |:-------|:------------------------|--------------------:|:------------------------------------------------------------------|
-| string | mpiMode                 | mpi                 | The mode to communicate with the worker ranks. `mpi` will assume you're launching the application and workers in the same mpi command (or split launch command). `mpi-listen` can be passed to the workers, indicating they should wait and listen for a connection from the application. `mpi-connect` can be passed to the application, indicating it should connect to the first worker at `host` and `port` to connect to the workers |
-| string | host                    | none, optional      | On the app rank, specify the host worker 0 is on to connect to in mpi-connect mode |
-| int    | port                    | none, optional      | On the app rank, specify the port worker 0 is listening on to connect in mpi-connect mode |
+| string | mpiMode                 | mpi                 | The mode to communicate with the worker ranks. `mpi` will assume you're launching the application and workers in the same mpi command (or split launch command). `mpi` is the only supported mode  |
 | uint   | maxCommandBufferEntries | 8192                | Set the max number of commands to buffer before submitting the command buffer to the workers |
 | uint   | commandBufferSize       | 512MiB              | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8GiB         |
 | uint   | maxInlineDataSize       | 32MiB               | Set the max size of an OSPData which can be inline'd into the command buffer instead of being sent separately. Max size is half the commandBufferSize. Units are in MiB |

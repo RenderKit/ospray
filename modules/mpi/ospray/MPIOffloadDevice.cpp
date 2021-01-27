@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef _WIN32
@@ -18,7 +18,6 @@
 #include "common/MPIBcastFabric.h"
 #include "common/MPICommon.h"
 #include "common/OSPWork.h"
-#include "common/SocketBcastFabric.h"
 #include "common/Util.h"
 #include "common/World.h"
 #include "fb/DistributedFrameBuffer.h"
@@ -27,7 +26,6 @@
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
 #include "rkcommon/networking/DataStreaming.h"
-#include "rkcommon/networking/Socket.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/FixedArrayView.h"
 #include "rkcommon/utility/OwnedArray.h"
@@ -194,8 +192,6 @@ void createMPI_ListenForClient(int *ac, const char **av)
 
 MPIOffloadDevice::~MPIOffloadDevice()
 {
-  // TODO: This test needs to be corrected for handlign offload w/ sockets
-  // in connect/accept mode.
   if (dynamic_cast<MPIFabric *>(fabric.get()) && world.rank == 0) {
     postStatusMsg(OSP_LOG_INFO) << "shutting down mpi device";
 
@@ -254,20 +250,6 @@ void MPIOffloadDevice::initializeDevice()
     fabric = rkcommon::make_unique<MPIFabric>(world, 0);
     maml::init(false);
     maml::start();
-  } else if (mode == "mpi-listen") {
-    createMPI_ListenForClient(&_ac, _av);
-  } else if (mode == "mpi-connect") {
-    const std::string host = getParam<std::string>("host", "");
-    const int port = getParam<int>("port", -1);
-
-    if (host.empty() || port == -1) {
-      throw std::runtime_error(
-          "Error: mpi-connect requires a host and port "
-          "argument to connect to");
-    }
-    postStatusMsg(OSP_LOG_INFO)
-        << "MPIOffloadDevice connecting to " << host << ":" << port;
-    fabric = rkcommon::make_unique<SocketWriterFabric>(host, port);
   } else {
     throw std::runtime_error("Invalid MPI mode!");
   }
@@ -1161,9 +1143,6 @@ void MPIOffloadDevice::submitWork()
 
 int MPIOffloadDevice::rootWorkerRank() const
 {
-  if (dynamic_cast<SocketWriterFabric *>(fabric.get()))
-    return 0;
-
   // TODO: we may also want to support MPI intercomm setups w/ comm
   // accept/connect?
   return 1;

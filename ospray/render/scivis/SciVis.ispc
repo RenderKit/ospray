@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/Renderer.ih"
@@ -71,11 +71,16 @@ void SciVis_renderSample(Renderer *uniform _self,
       outTransmission = outTransmission * volumeColor.w;
     }
 
+    // Add contribution from visible lights, P is used by light
+    // evaluation
+    DifferentialGeometry dg;
+    dg.P = ray.org;
+    outColor = outColor + outTransmission * evaluateLights(world, dg, ray);
+
     // If any geometry has been hit
     const bool hadHit = hadHit(ray);
     if (hadHit) {
       // Prepare differential geometry structure
-      DifferentialGeometry dg;
       postIntersect(world,
           &self->super,
           dg,

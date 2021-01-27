@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "SpotLight.h"
@@ -26,20 +26,6 @@ void SpotLight::commit()
   auto radius = max(0.0f, getParam<float>("radius", 0.f));
   auto innerRadius =
       clamp(getParam<float>("innerRadius", 0.f), 0.0f, 0.999f * radius);
-
-  // for the spot light color * intensity does not parameterize radiance but
-  // radiant intensiy
-  vec3f radIntensity = radiance;
-
-  // converting radiant intensity to radiance for the case that the spot light
-  // represents an area light source with a ring shape
-  if (radius > 0.0f) {
-    vec3f power = 2.0f * M_PI * radIntensity;
-    float ringArea = M_PI * (radius * radius - innerRadius * innerRadius);
-    radiance = power / (M_PI * ringArea);
-    // lagacy code to match old behavior
-    radiance *= 0.5f;
-  }
 
   // per default perpendicular to direction
   vec3f c0 = std::abs(direction.x) < std::abs(direction.y)
@@ -82,6 +68,10 @@ void SpotLight::commit()
   frame.vy = normalize(cross(c0, frame.vz));
   frame.vx = cross(frame.vz, frame.vy);
 
+  queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_INTENSITY);
+  vec3f radIntensity = 0.0f;
+  processIntensityQuantityType(radius, innerRadius, openingAngle, radIntensity);
+
   ispc::SpotLight_set(getIE(),
       (const ispc::vec3f &)position,
       (const ispc::LinearSpace3f &)frame,
@@ -93,6 +83,54 @@ void SpotLight::commit()
       innerRadius,
       (const ispc::vec2i &)size,
       lid ? lid->data() : nullptr);
+}
+
+void SpotLight::processIntensityQuantityType(const float &radius,
+    const float &innerRadius,
+    const float &openingAngle,
+    vec3f &radIntensity)
+{
+  radIntensity = 0.0f;
+  radiance = 0.0f;
+
+  float halfOpeningAngleRad = M_PI * (openingAngle * 0.5f) / 180.0f;
+  float cosHalfOpeningAngle = cos(halfOpeningAngleRad);
+  float ringDiskArea = M_PI * (radius * radius - innerRadius * innerRadius);
+
+  float sphericalCapCosInt =
+      M_PI * (1.0f - cosHalfOpeningAngle * cosHalfOpeningAngle);
+
+  if (intensityQuantity == OSP_INTENSITY_QUANTITY_INTENSITY) {
+    radIntensity = coloredIntensity;
+    if (radius > 0.0f) {
+      radiance = radIntensity / ringDiskArea;
+    }
+  } else if (intensityQuantity == OSP_INTENSITY_QUANTITY_POWER) {
+    // since our spot light implementation includes the cosine term
+    // we need to consider the integrated cosine cap instead of the
+    // usally used integrated cap.
+    radIntensity = coloredIntensity / sphericalCapCosInt;
+    if (radius > 0.0f) {
+      radiance = coloredIntensity / (sphericalCapCosInt * ringDiskArea);
+    }
+    if (lid) {
+      static WarnOnce warning(
+          "The 'intensityQuantity' : 'OSP_INTENSITY_QUANTITY_POWER' is not supported when using an 'intensityDistribution'");
+      radIntensity = 0.0f;
+      radiance = 0.0f;
+    }
+  } else if (intensityQuantity == OSP_INTENSITY_QUANTITY_RADIANCE) {
+    // a virtual spot light has no surface area
+    // therefore radIntensity stays zero and radiance is only
+    // set if radius > 0
+    if (radius > 0.0f) {
+      radiance = coloredIntensity;
+    }
+  } else {
+    static WarnOnce warning(
+        "Unsupported intensityQuantity type for a 'spot' light source");
+    radiance = vec3f(0.0f);
+  }
 }
 
 } // namespace ospray

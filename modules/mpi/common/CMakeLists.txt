@@ -1,11 +1,10 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 add_library(ospray_mpi_common STATIC
     Collectives.cpp
     MPIBcastFabric.cpp
     MPICommon.cpp
-    SocketBcastFabric.cpp
     ObjectHandle.cpp
     maml/maml.cpp
     maml/Context.cpp

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -13,6 +13,7 @@ struct PointLight
 
   vec3f position; //!< light position
   vec3f intensity; //!< RGB color and intensity of light
+  vec3f radiance; //!< emmitted RGB radiance
   float radius; //!< defines the size of the SphereLight
 };
 
@@ -55,7 +56,7 @@ Light_SampleRes PointLight_sample(const uniform Light *uniform super,
           c * res.dist - sqrt_safe(sqr(self->radius) - (1.f - c * c) * dist2);
       // note the sampling PDF is already in solid angle therefore, we do not
       // need to divide it by the squared distance
-      res.weight = self->super.radiance / res.pdf;
+      res.weight = self->radiance / res.pdf;
     } else {
       // emit only from the surface to the outside
       res.weight = make_vec3f(0.f);
@@ -85,7 +86,7 @@ Light_EvalRes PointLight_eval(const uniform Light *uniform super,
             isect.entry.hit)) {
       const float cosTheta = sqrt(1.f - sinTheta2);
       res.pdf = uniformSampleConePDF(cosTheta);
-      res.radiance = self->super.radiance;
+      res.radiance = self->radiance;
     }
   }
   return res;
@@ -103,7 +104,7 @@ export void PointLight_set(void *uniform super,
 {
   uniform PointLight *uniform self = (uniform PointLight * uniform) super;
   self->position = position;
-  self->super.radiance = radiance;
+  self->radiance = radiance;
   self->intensity = intensity;
   self->radius = radius;
 }

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -8,6 +8,7 @@
 struct AmbientLight
 {
   Light super; //!< inherited light fields
+  vec3f radiance; //!< emmitted RGB radiance
 };
 
 // Implementation
@@ -31,7 +32,7 @@ Light_SampleRes AmbientLight_sample(const uniform Light *uniform super,
     res.pdf = uniformSampleSpherePDF(1.f);
   }
   res.dist = inf;
-  res.weight = self->super.radiance * rcp(res.pdf);
+  res.weight = self->radiance * rcp(res.pdf);
 
   return res;
 }
@@ -45,7 +46,7 @@ Light_EvalRes AmbientLight_eval(const uniform Light *uniform super,
   uniform AmbientLight *uniform self = (uniform AmbientLight * uniform) super;
   Light_EvalRes res;
 
-  res.radiance = inf <= maxDist ? self->super.radiance : make_vec3f(0.f);
+  res.radiance = inf <= maxDist ? self->radiance : make_vec3f(0.f);
   if (reduce_max(abs(dg.Ns)) > 0)
     res.pdf = cosineSampleHemispherePDF(max(dot(dg.Ns, dir), 0.f));
   else
@@ -73,7 +74,8 @@ export void *uniform AmbientLight_create()
 }
 
 //! Set the parameters of an ispc-side AmbientLight object
-export void AmbientLight_set(void *uniform super)
+export void AmbientLight_set(void *uniform super, const uniform vec3f &radiance)
 {
   uniform AmbientLight *uniform self = (uniform AmbientLight * uniform) super;
+  self->radiance = radiance;
 }
