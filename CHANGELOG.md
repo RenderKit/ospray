@@ -28,6 +28,8 @@ Version History
     quantity
 -   Both geometric and volumetric models can now have their child
     geometry/volume objects rebound using an object parameter
+-   Dropping support for MSVC14, new minimum compiler on Windows is
+    MSVC15 (Visual Studio 2017)
 
 ### Changes in v2.4.0:
 

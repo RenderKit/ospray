@@ -231,20 +231,11 @@ build-osx-clang:
     - scripts/build_gitlab/macosx.sh
   <<: *build_artifacts
 
-build-windows-msvc14:
-  stage: build
-  tags:
-    - msvc14
-    - win
-  script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "v140" "Release"
-  <<: *build_artifacts
-
 build-windows-msvc15:
   stage: build
   tags:
-    - msvc15
     - win
+    - msvc15
   script:
     - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release"
   <<: *build_artifacts
@@ -252,12 +243,21 @@ build-windows-msvc15:
 build-windows-debug-all:
   stage: build
   tags:
-    - msvc15
     - win
+    - msvc15
   script:
     - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug"
   <<: *build_artifacts
   only: [schedules]
+
+build-windows-msvc16:
+  stage: build
+  tags:
+    - win
+    - msvc16
+  script:
+    - scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release"
+  <<: *build_artifacts
 
 #build-windows-icc:
 #  stage: build
@@ -336,13 +336,6 @@ test-find-ospray:
     - cmake -D ospray_DIR=`echo $CI_PROJECT_DIR/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray 
     - cmake --build .
 
-test-windows-msvc14:
-  <<: *test_job_windows
-  tags:
-    - win
-    - msvc14
-  needs: [build-windows-msvc14]
-
 test-windows-msvc15:
   <<: *test_job_windows
   tags:
@@ -357,6 +350,13 @@ test-windows-debug-all:
     - msvc15
   needs: [build-windows-debug-all]
   only: [schedules]
+
+test-windows-msvc16:
+  <<: *test_job_windows
+  tags:
+    - win
+    - msvc16
+  needs: [build-windows-msvc16]
 
 generate-ci-baseline:
   <<: *test_job_unix
@@ -444,7 +444,7 @@ release-osx-clang:
 release-windows:
   <<: *release_job
   tags:
-    - msvc14
+    - msvc15
     - win
   script:
     - scripts\release\win.ps1 "Visual Studio 15 2017 Win64"
