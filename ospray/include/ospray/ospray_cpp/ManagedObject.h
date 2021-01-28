@@ -110,6 +110,8 @@ template <typename HANDLE_T, OSPDataType TYPE>
 inline ManagedObject<HANDLE_T, TYPE> &ManagedObject<HANDLE_T, TYPE>::operator=(
     ManagedObject<HANDLE_T, TYPE> &&move)
 {
+  if (ospObject)
+    ospRelease(ospObject);
   ospObject = move.handle();
   move.ospObject = nullptr;
   return *this;
