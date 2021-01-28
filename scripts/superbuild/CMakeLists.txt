@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## Global settings ##
@@ -32,6 +32,11 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 else()
   message(STATUS "Proceeding with a 64-bit generator. (${CMAKE_SIZEOF_VOID_P})")
 endif()
+
+if (POLICY CMP0114)
+  # allow old CMake behavior: NO_DEPENDS for ExternalProject_Add_StepTargets
+  cmake_policy(SET CMP0114 OLD) # 3.19
+endif ()
 
 include(ExternalProject)
 include(GNUInstallDirs)
