@@ -102,8 +102,9 @@ inline PickResult FrameBuffer::pick(const Renderer &renderer,
     res.instance = Instance(pick.instance);
     res.model = GeometricModel(pick.model);
     res.primID = pick.primID;
-
-    std::memcpy(res.worldPosition, pick.worldPosition, 3 * sizeof(float));
+    res.worldPosition[0] = pick.worldPosition[0];
+    res.worldPosition[1] = pick.worldPosition[1];
+    res.worldPosition[2] = pick.worldPosition[2];
   }
 
   return res;
