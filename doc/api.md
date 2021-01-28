@@ -11,9 +11,9 @@ where the API is compatible with C99 and C++.
 Initialization and Shutdown
 ---------------------------
 
-To use the API, OSPRay must be initialized with a "device". A
-device is the object which implements the API. Creating and initializing
-a device can be done in either of two ways: command line arguments using
+To use the API, OSPRay must be initialized with a "device". A device is
+the object which implements the API. Creating and initializing a device
+can be done in either of two ways: command line arguments using
 `ospInit` or manually instantiating a device and setting parameters on
 it.
 
@@ -162,7 +162,7 @@ current device, it does not need to be set as current again. Note this
 API call will increment the ref count of the returned device handle, so
 applications must use `ospDeviceRelease` when finished using the handle
 to avoid leaking the underlying device object. If there is no current
-device set, this will return an invalid NULL handle.
+device set, this will return an invalid `NULL` handle.
 
 When a device is created, its reference count is initially `1`. When
 a device is set as the current device, it internally has its reference
@@ -274,7 +274,7 @@ will require that a callback is provided. Note that callbacks for C++
 `std::cout` and `std::cerr` can be alternatively set through `ospInit()`
 or the `OSPRAY_LOG_OUTPUT` environment variable.
 
-Applications can clear either callback by passing `nullptr` instead of an
+Applications can clear either callback by passing `NULL` instead of an
 actual function pointer.
 
 ### Loading OSPRay Extensions at Runtime
@@ -367,7 +367,7 @@ are discussed in future sections.
 Note that `mem` must always be a pointer _to_ the object,
 otherwise accidental type casting can occur. This is especially true for
 pointer types (`OSP_VOID_PTR` and `OSPObject` handles), as they will
-implicitly cast to `void *`, but be incorrectly interpreted. To help
+implicitly cast to `void\ *`, but be incorrectly interpreted. To help
 with some of these issues, there also exist variants of `ospSetParam`
 for specific types, such as `ospSetInt` and `ospSetVec3f` in the OSPRay
 utility library (found in `ospray_util.h`).
@@ -500,17 +500,17 @@ reference counter is incremented.
 An opaque `OSPData` with memory allocated by OSPRay is created with
 
     OSPData ospNewData(OSPDataType,
-        uint32_t numItems1,
-        uint32_t numItems2 = 1,
-        uint32_t numItems3 = 1);
+        uint64_t numItems1,
+        uint64_t numItems2 = 1,
+        uint64_t numItems3 = 1);
 
 To allow for (partial) copies or updates of data arrays use
 
     void ospCopyData(const OSPData source,
         OSPData destination,
-        uint32_t destinationIndex1 = 0,
-        uint32_t destinationIndex2 = 0,
-        uint32_t destinationIndex3 = 0);
+        uint64_t destinationIndex1 = 0,
+        uint64_t destinationIndex2 = 0,
+        uint64_t destinationIndex3 = 0);
 
 which will copy the whole^[The number of items to be copied is defined
 by the size of the source array] content of the `source` array into
@@ -1662,22 +1662,23 @@ create a group call
     OSPGroup ospNewGroup();
 
 Groups take arrays of geometric models, volumetric models and clipping
-geometric models, but they are optional. In other words, there is no need
-to create empty arrays if there are no geometries or volumes in the group.
+geometric models, but they are optional. In other words, there is no
+need to create empty arrays if there are no geometries or volumes in the
+group.
 
-By adding `OSPGeometricModel`s to the `clippingGeometry` array a clipping
-geometry feature is enabled. Geometries assigned to this parameter
-will be used as clipping geometries. Any supported geometry can be used
-for clipping. The only requirement is that it has to distinctly partition
-space into clipping and non-clipping one. These include: spheres, boxes,
-infinite planes, closed meshes, closed subdivisions and curves. All
-geometries and volumes assigned to `geometry` or `volume` will be clipped.
-Use of clipping geometry that is not closed (or infinite) will result in
-rendering artifacts. User can decide which part of space is clipped by
-changing shading normals orientation with the `invertNormals` flag of
-the [GeometricModel]. When more than single clipping geometry is defined
-all clipping areas will be "added" together – an union of these areas
-will be applied.
+By adding `OSPGeometricModel`s to the `clippingGeometry` array a
+clipping geometry feature is enabled. Geometries assigned to this
+parameter will be used as clipping geometries. Any supported geometry
+can be used for clipping. The only requirement is that it has to
+distinctly partition space into clipping and non-clipping one. These
+include: spheres, boxes, infinite planes, closed meshes, closed
+subdivisions and curves. All geometries and volumes assigned to
+`geometry` or `volume` will be clipped. Use of clipping geometry that is
+not closed (or infinite) will result in rendering artifacts. User can
+decide which part of space is clipped by changing shading normals
+orientation with the `invertNormals` flag of the [GeometricModel]. When
+more than single clipping geometry is defined all clipping areas will be
+"added" together – an union of these areas will be applied.
 
   -------------------- ---------------- ----------  --------------------------------------
   Type                 Name                Default  Description
@@ -2383,7 +2384,9 @@ geometric object into a light source^[If `geometryLights` is enabled in
 the [path tracer].]. It is created by passing the type string
 "`luminous`" to `ospNewMaterial`. The amount of constant radiance that
 is emitted is determined by combining the general parameters of lights:
-[`color` and `intensity`](#lights).
+[`color` and `intensity`](#lights) (which essentially means that
+parameter `intensityQuantity` is not needed because it is always
+`OSP_INTENSITY_QUANTITY_RADIANCE`).
 
   Type   Name          Default  Description
   ------ ------------ --------  ---------------------------------------
@@ -3021,21 +3024,41 @@ mpirun -n 1 ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
   : -n <N> ./ospray_mpi_worker
 ```
 
-If initializing the `mpiOffload` device manually, or passing parameters through
-the command line, the following parameters can be set:
+If initializing the `mpiOffload` device manually, or passing parameters
+through the command line, the following parameters can be set:
 
 
-| Type   | Name                    | Default             | Description                                                       |
-|:-------|:------------------------|--------------------:|:------------------------------------------------------------------|
-| string | mpiMode                 | mpi                 | The mode to communicate with the worker ranks. `mpi` will assume you're launching the application and workers in the same mpi command (or split launch command). `mpi` is the only supported mode  |
-| uint   | maxCommandBufferEntries | 8192                | Set the max number of commands to buffer before submitting the command buffer to the workers |
-| uint   | commandBufferSize       | 512MiB              | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8GiB         |
-| uint   | maxInlineDataSize       | 32MiB               | Set the max size of an OSPData which can be inline'd into the command buffer instead of being sent separately. Max size is half the commandBufferSize. Units are in MiB |
+  -------- ------------------------ ---------  ---------------------------------
+  Type     Name                       Default  Description
+  -------- ------------------------ ---------  ---------------------------------
+  string   mpiMode                        mpi  The mode to communicate with the
+                                               worker ranks. `mpi` will assume
+                                               you're launching the application
+                                               and workers in the same mpi
+                                               command (or split launch
+                                               command). `mpi` is the only
+                                               supported mode
 
-: Parameters specific to the `mpiOffload` Device.
+  uint     maxCommandBufferEntries       8192  Set the max number of commands to
+                                               buffer before submitting the
+                                               command buffer to the workers
 
-The `maxCommandBufferEntries`, `commandBufferSize`, and `maxInlineDataSize` can also
-be set via the environment variables: `OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES`,
+  uint     commandBufferSize         512\ MiB  Set the max command buffer size
+                                               to allow. Units are in MiB. Max
+                                               size is 1.8GiB
+
+  uint     maxInlineDataSize          32\ MiB  Set the max size of an OSPData
+                                               which can be inline'd into the
+                                               command buffer instead of being
+                                               sent separately. Max size is half
+                                               the commandBufferSize. Units are
+                                               in MiB
+  -------- ------------------------ ---------  ---------------------------------
+  : Parameters specific to the `mpiOffload` Device.
+
+The `maxCommandBufferEntries`, `commandBufferSize`, and
+`maxInlineDataSize` can also be set via the environment variables:
+`OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES`,
 `OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
 respectively.
 
@@ -3047,15 +3070,13 @@ rendering work without requiring modification to the application, MPI
 Distributed rendering is targetted at use of OSPRay within MPI-parallel
 applications. The MPI distributed device can be selected by loading the
 `mpi` module, and manually creating and using an instance of the
-`mpiDistributed` device.
+`mpiDistributed` device:
 
-```c
-ospLoadModule("mpi");
-
-OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
-ospDeviceCommit(mpiDevice);
-ospSetCurrentDevice(mpiDevice);
-```
+    ospLoadModule("mpi");
+    
+    OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
+    ospDeviceCommit(mpiDevice);
+    ospSetCurrentDevice(mpiDevice);
 
 Your application can either initialize MPI before-hand, ensuring that
 `MPI_THREAD_SERIALIZED` or higher is supported, or allow the device to
@@ -3072,25 +3093,36 @@ however, it can also take a specific MPI communicator to use as the
 world communicator. Only those ranks in the specified communicator will
 participate in rendering.
 
-| Type  | Name              | Default             | Description                |
-|:------|:------------------|--------------------:|:---------------------------|
-| void* | worldCommunicator |    MPI\_COMM\_WORLD | The MPI communicator which the OSPRay workers should treat as their world |
-
-: Parameters specific to the distributed `mpiDistributed` Device.
-
-| Type         | Name    | Default| Description                                |
-|:-------------|:--------|-------:|:-------------------------------------------|
-| OSPBox3f\[\] | region  |    NULL| A list of bounding boxes which bound the owned local data to be rendered by the rank |
-
-: Parameters specific to the distributed `OSPWorld`.
+  -------- ------------------ ----------------  --------------------------------
+  Type     Name                        Default  Description
+  -------- ------------------ ----------------  --------------------------------
+  void\ *  worldCommunicator    MPI_COMM_WORLD  The MPI communicator which the
+                                                OSPRay workers should treat as
+                                                their world
+  -------- ------------------ ----------------  --------------------------------
+  : Parameters specific to the distributed `mpiDistributed` Device.
 
 
-| Type         | Name    | Default| Description                                |
-|:-------------|:--------|-------:|:-------------------------------------------|
-| aoSamples    | int     |      0 | The number of AO samples to take per-pixel |
-| aoRadius     | float   |   1e20f| The AO ray length to use. Note that if the AO ray would have crossed a rank boundary and ghost geometry is not available, there  will be visible artifacts in the shading. |
+  -------- ------- ---------  -----------------------------------------------
+  Type     Name      Default  Description
+  -------- ------- ---------  -----------------------------------------------
+  box3f[]  region       NULL  A list of bounding boxes which bound the owned
+                              local data to be rendered by the rank
+  -------- ------- ---------  -----------------------------------------------
+  : Parameters specific to the distributed `OSPWorld`.
 
-: Parameters specific to the `mpiRaycast` renderer.
+
+  ------ ----------- ---------  ------------------------------------------------
+  Type   Name          Default  Description
+  ------ ----------- ---------  ------------------------------------------------
+  int    aoSamples           0  The number of AO samples to take per-pixel
+
+  float  aoDistance     10^20^  The AO ray length to use. Note that if the AO
+                                ray would have crossed a rank boundary and ghost
+                                geometry is not available, there will be visible
+                                artifacts in the shading
+  ------ ----------- ---------  ------------------------------------------------
+  : Parameters specific to the `mpiRaycast` renderer.
 
 ### Image Parallel Rendering in the MPI Distributed Device
 
@@ -3140,7 +3172,7 @@ Interaction With User Modules
 
 The MPI Offload rendering mode trivially supports user modules, with the
 caveat that attempting to share data directly with the application
-(e.g., passing a `void*` or other tricks to the module) will not work in
+(e.g., passing a `void\ *` or other tricks to the module) will not work in
 a distributed environment. Instead, use the `ospNewSharedData` API to
 share data from the application with OSPRay, which will in turn be
 copied over the network to the workers.
