@@ -317,8 +317,6 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceRelease(OSPDevice _object) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(_object);
-
   auto *object = (Device *)_object;
   if (!object)
     return;
@@ -328,8 +326,6 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceRetain(OSPDevice _object) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(_object);
-
   auto *object = (Device *)_object;
   if (!object)
     return;
@@ -576,8 +572,6 @@ extern "C" void ospRetain(OSPObject _object) OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(_object);
   ASSERT_DEVICE();
-  if (!_object)
-    return;
   currentDevice().retain(_object);
 }
 OSPRAY_CATCH_END()

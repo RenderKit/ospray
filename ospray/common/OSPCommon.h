@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -179,7 +179,10 @@ OSPRAY_CORE_INTERFACE void postStatusMsg(
 struct StatusMsgStream : public std::stringstream
 {
   StatusMsgStream(uint32_t postAtLogLevel = OSP_LOG_DEBUG);
-  StatusMsgStream(StatusMsgStream &&other);
+  StatusMsgStream(const StatusMsgStream &copy) = delete;
+  StatusMsgStream(StatusMsgStream &&move);
+  StatusMsgStream &operator=(const StatusMsgStream &copy) = delete;
+  StatusMsgStream &operator=(StatusMsgStream &&move) = default;
   ~StatusMsgStream() override;
 
  private:
@@ -197,9 +200,9 @@ inline StatusMsgStream::~StatusMsgStream()
     postStatusMsg(msg, logLevel);
 }
 
-inline StatusMsgStream::StatusMsgStream(StatusMsgStream &&other)
+inline StatusMsgStream::StatusMsgStream(StatusMsgStream &&move)
 {
-  this->str(other.str());
+  this->str(move.str());
 }
 
 OSPRAY_CORE_INTERFACE StatusMsgStream postStatusMsg(
