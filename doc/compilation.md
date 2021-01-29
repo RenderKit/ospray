@@ -73,7 +73,7 @@ Under Mac OS\ X these dependencies can be installed using
 
 Under Windows please directly use the appropriate installers for
 [CMake](https://cmake.org/download/),
-[TBB](https://github.com/01org/tbb/releases),
+[TBB](https://github.com/oneapi-src/oneTBB/releases),
 [ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
 version) and [Embree](https://github.com/embree/embree/releases/).
 

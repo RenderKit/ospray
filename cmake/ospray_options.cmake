@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ##############################################################
@@ -11,7 +11,7 @@ include(CMakeDependentOption)
 set(OSPRAY_CMAKECONFIG_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
 
-set(RKCOMMON_VERSION_REQUIRED 1.4.2)
+set(RKCOMMON_VERSION_REQUIRED 1.6.0)
 set(EMBREE_VERSION_REQUIRED 3.12.0)
 set(OPENVKL_VERSION_REQUIRED 0.12.0)
 

@@ -9,25 +9,30 @@ Version History
     Embree's native implementation. Internal surfaces at joints are now
     correctly removed, leading to higher quality renderings with
     transparency, at the cost of intersection performance
--   Fix light leaking artifacts at poles of HDRI (and Sun-Sky) light
--   Removed limit on the number of volumes (both overlapped and separate)
-    that a ray can intersect while rendering. Now it is limited by
-    available memory only.
--   OSPRay now requires minimum Open VKL v0.12.0 to bring the following
-    improvements: 
-    - Better default sampling rate for scaled volumes, improving
-      performance
 -   SciVis renderer improvements:
-    - Colored transparency, colored shadows
-    - Light sources are visible including HDRI Light environment map
+    -   Colored transparency, colored shadows
+    -   Light sources are visible including HDRI Light environment map
 -   The MPI module is now distributed as part of OSPRay in the modules
     directory
-    - The socket-based communication layer has been removed
+    -   The socket-based communication layer has been removed
 -   Add `intensityQuantity` parameter to light sources to control the
     interpretation and convertion of the `intensity` into a radiative
     quantity
+-   OSPRay now requires minimum Open VKL v0.12.0 to bring the following
+    improvements: 
+    -   Better default sampling rate for scaled volumes, improving
+        performance
+    -   Higher robustness for axis-aligned rays
+-   Removed limit on the number of volumes (both overlapped and separate)
+    that a ray can intersect while rendering. Now it is limited by
+    available memory only.
+-   Move to OIDN v1.3.0 to bring the following improvements:
+    -   Improved denoising quality (sharpness of fine details, fewer
+        noisy artifacts)
+    -   Slightly improved performance and lower memory consumption
 -   Both geometric and volumetric models can now have their child
     geometry/volume objects rebound using an object parameter
+-   Fix light leaking artifacts at poles of HDRI (and Sun-Sky) light
 -   Dropping support for MSVC14, new minimum compiler on Windows is
     MSVC15 (Visual Studio 2017)
 
