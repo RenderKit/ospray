@@ -77,6 +77,7 @@ option(BUILD_GLFW "Build glfw for OSPRay examples or use one in existing environ
 option(BUILD_DEPENDENCIES_ONLY "Don't build OSPRay itself, only its dependencies" OFF)
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
+option(BUILD_OSPRAY_APPS "Enable building OSPRay apps" ON)
 option(BUILD_OSPRAY_MODULE_MPI "Enable building module_mpi" OFF)
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES

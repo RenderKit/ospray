@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 cmake_dependent_option(
@@ -12,8 +12,8 @@ cmake_dependent_option(
 cmake_dependent_option(
   OSPRAY_MPI_BUILD_TUTORIALS
   "Enable MPI module sample apps"
-  OFF
-  OSPRAY_MODULE_MPI
+  ON
+  "OSPRAY_MODULE_MPI;OSPRAY_ENABLE_APPS"
   OFF
 )
 
