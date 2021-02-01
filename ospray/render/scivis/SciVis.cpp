@@ -26,6 +26,8 @@ void SciVis::commit()
 {
   Renderer::commit();
 
+  rendererValid = false;
+
   visibleLights = getParam<bool>("visibleLights", false);
   ispc::SciVis_set(getIE(),
       getParam<bool>("shadows", false),
@@ -39,7 +41,7 @@ void *SciVis::beginFrame(FrameBuffer *, World *world)
   if (!world)
     return nullptr;
 
-  if (world->scivisDataValid)
+  if (world->scivisDataValid && rendererValid)
     return nullptr;
 
   std::vector<void *> lightArray;
@@ -91,6 +93,7 @@ void *SciVis::beginFrame(FrameBuffer *, World *world)
       lightVisibleArray.size());
 
   world->scivisDataValid = true;
+  rendererValid = true;
 
   return nullptr;
 }

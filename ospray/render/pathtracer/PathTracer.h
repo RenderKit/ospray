@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -18,6 +18,7 @@ struct PathTracer : public Renderer
  private:
   void generateGeometryLights(const World &, std::vector<void *> &);
   bool useGeometryLights{true};
+  bool rendererValid{false};
 };
 
 } // namespace ospray

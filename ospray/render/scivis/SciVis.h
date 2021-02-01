@@ -15,6 +15,7 @@ struct SciVis : public Renderer
 
  private:
   bool visibleLights{false};
+  bool rendererValid{false};
 };
 
 } // namespace ospray
