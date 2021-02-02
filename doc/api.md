@@ -1286,7 +1286,7 @@ infinite but their extents can be limited by defining optional bounding
 boxes. A planes geometry can be created by calling `ospNewGeometry` with
 type string "`plane`".
 
-  Type       Name       Description
+  Type       Name               Description
   ---------- ------------------ -------------------------------------------------
   vec4f[]    plane.coefficients [data] array of plane coefficients $(a, b, c, d)$
   box3f[]    plane.bounds       optional [data] array of bounding boxes

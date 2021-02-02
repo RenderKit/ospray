@@ -27,6 +27,7 @@ all: www doc pdf
 www: $(webpages) www/stylesheet.css $(webimages) | wwwscripts
 doc: ../README.md
 pdf: ../readme.pdf
+spec: ospray-spec.rst
 checklinks: tmp/brokenlinks.txt
 	@if [[ -s $^ ]] ; then \
 	  echo "Found broken link:" ;\
@@ -37,7 +38,7 @@ checklinks: tmp/brokenlinks.txt
 	fi
 
 
-.PHONY: all www doc pdf clean realclean submodule checklinks
+.PHONY: all www doc pdf clean realclean submodule checklinks spec
 
 submodule:
 	git submodule update --init --remote
@@ -95,6 +96,12 @@ $(process_version) tmp/version ../readme.pdf $(tmptexfiles) $(images_fig2pdf) tm
 tmpdir:
 	@mkdir -p tmp
 
+
+### spec
+########################################################################
+
+ospray-spec.rst: api.md
+	$(PANDOC) --wrap=none --email-obfuscation=none $+ -o $@
 
 ### webpages
 ########################################################################
