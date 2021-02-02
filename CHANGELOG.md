@@ -17,9 +17,19 @@ Version History
     improvements: 
     - Better default sampling rate for scaled volumes, improving
       performance
--   Add colored transparency in SciVis renderer
+-   SciVis renderer improvements:
+    - Colored transparency, colored shadows
+    - Light sources are visible including HDRI Light environment map
 -   The MPI module is now distributed as part of OSPRay in the modules
     directory
+    - The socket-based communication layer has been removed
+-   Add `intensityQuantity` parameter to light sources to control the
+    interpretation and convertion of the `intensity` into a radiative
+    quantity
+-   Both geometric and volumetric models can now have their child
+    geometry/volume objects rebound using an object parameter
+-   Dropping support for MSVC14, new minimum compiler on Windows is
+    MSVC15 (Visual Studio 2017)
 
 ### Changes in v2.4.0:
 

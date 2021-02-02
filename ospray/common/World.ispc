@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "World.ih"
@@ -114,6 +114,9 @@ void World_Constructor(World *uniform world, void *uniform cppE)
   world->numInvertedClippers = 0;
 
   world->scivisData.lights = NULL;
+  world->scivisData.lightsVisible = NULL;
+  world->scivisData.numLights = 0;
+  world->scivisData.numLightsVisible = 0;
 
   world->pathtracerData.numLights = 0;
   world->pathtracerData.numGeoLights = 0;
@@ -141,6 +144,7 @@ export void World_destroy(void *uniform _self)
   World *uniform self = (World * uniform) _self;
 
   delete[] self->scivisData.lights;
+  delete[] self->scivisData.lightsVisible;
   PathtracerData_destroy(&self->pathtracerData);
 
   delete self;
@@ -182,20 +186,34 @@ export void World_set(void *uniform _self,
 export void World_setSciVisData(void *uniform _self,
     const uniform vec3f &aoColor,
     void **uniform lights,
-    const uniform uint32 numLights)
+    const uniform uint32 numLights,
+    void **uniform lightsVisible,
+    const uniform uint32 numLightsVisible)
 {
   World *uniform self = (World * uniform) _self;
 
   delete[] self->scivisData.lights;
   self->scivisData.lights = NULL;
 
+  delete[] self->scivisData.lightsVisible;
+  self->scivisData.lightsVisible = NULL;
+
   self->scivisData.aoColorPi = aoColor * pi;
+
   self->scivisData.numLights = numLights;
   if (numLights) {
     self->scivisData.lights = uniform new LightPtr[numLights];
     LightArray srcLights = (LightArray)lights;
     for (uniform int i = 0; i < numLights; i++)
       self->scivisData.lights[i] = srcLights[i];
+  }
+
+  self->scivisData.numLightsVisible = numLightsVisible;
+  if (numLightsVisible) {
+    self->scivisData.lightsVisible = uniform new LightPtr[numLightsVisible];
+    LightArray srcLights = (LightArray)lightsVisible;
+    for (uniform int i = 0; i < numLightsVisible; i++)
+      self->scivisData.lightsVisible[i] = srcLights[i];
   }
 }
 

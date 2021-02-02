@@ -26,6 +26,7 @@ readme.pdf
 !/modules/pluggableGeometryExample
 !/modules/simdGeometryExample
 !/modules/denoiser
+!/modules/mpi
 *.vim
 .idea/
 premake.local.*

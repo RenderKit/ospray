@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -17,6 +17,7 @@ struct HDRILight
   Distribution2D *uniform
       distribution; // The 2D distribution used to importance sample
   vec2f rcpSize; // precomputed 1/map.size
+  vec3f radianceScale; // scaling factor of emmitted RGB radiance
 };
 
 // Implementation
@@ -61,7 +62,7 @@ Light_SampleRes HDRILight_sample(const uniform Light *uniform super,
       sample2d.uv.y, self->map->halfTexel.y, 1.0f - self->map->halfTexel.y);
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, sample2d.uv);
-  res.weight = get3f(self->map, lookup) * self->super.radiance / res.pdf;
+  res.weight = get3f(self->map, lookup) * self->radianceScale / res.pdf;
 
   return res;
 }
@@ -90,7 +91,7 @@ Light_EvalRes HDRILight_eval(const uniform Light *uniform super,
       u, clamp(v, self->map->halfTexel.y, 1.0f - self->map->halfTexel.y));
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, uvc);
-  res.radiance = get3f(self->map, lookup) * self->super.radiance;
+  res.radiance = get3f(self->map, lookup) * self->radianceScale;
 
   // domain of Distribution2D is shifted by half a texel compared to texture
   // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)
@@ -131,11 +132,13 @@ task unmasked void HDRILight_calcRowImportance(
 //////////////////////////////////////////////////////////////////////////////
 
 //! Set the parameters of an ispc-side HDRILight object
-export void HDRILight_set(
-    void *uniform super, const uniform linear3f &light2world, void *uniform map)
+export void HDRILight_set(void *uniform super,
+    const uniform vec3f &radianceScale,
+    const uniform linear3f &light2world,
+    void *uniform map)
 {
   HDRILight *uniform self = (HDRILight * uniform) super;
-
+  self->radianceScale = radianceScale;
   Distribution2D_destroy(self->distribution);
   self->distribution = NULL;
 
@@ -176,7 +179,7 @@ export void *uniform HDRILight_create()
   self->super.sample = HDRILight_sample_dummy;
   self->distribution = NULL;
 
-  HDRILight_set(self, make_LinearSpace3f_identity(), NULL);
+  HDRILight_set(self, make_vec3f(1.0f), make_LinearSpace3f_identity(), NULL);
 
   return self;
 }

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -71,11 +71,13 @@ void Isosurfaces_intersect_kernel(
   vkl_range1f tRange;
   tRange.lower = ray->t0;
   tRange.upper = ray->t;
+  float time = 0.f;
   uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
   iterator = vklInitHitIteratorV(volume->vklSampler,
       (varying vkl_vec3f *)&ray->org,
       (varying vkl_vec3f *)&ray->dir,
       &tRange,
+      &time,
       self->valueSelector,
       hitIteratorBuffer);
   VKLHit hit;

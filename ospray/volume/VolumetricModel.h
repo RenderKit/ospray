@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -29,6 +29,7 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
  private:
   box3f volumeBounds;
   Ref<Volume> volume;
+  Ref<Volume> volumeAPI;
   VKLValueSelector vklValueSelector{nullptr};
 };
 

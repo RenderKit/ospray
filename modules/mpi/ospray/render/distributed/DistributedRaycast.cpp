@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <chrono>
@@ -59,8 +59,8 @@ void DistributedRaycastRenderer::commit()
 
   ispc::DistributedRaycastRenderer_set(getIE(),
       getParam<int>("aoSamples", 0),
-      getParam<float>("aoRadius", 1e20f),
-      getParam<int>("shadowsEnabled", 0),
+      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f)),
+      getParam<bool>("shadows", getParam<int>("shadowsEnabled", 0)),
       getParam<float>("volumeSamplingRate", 1.f));
 }
 

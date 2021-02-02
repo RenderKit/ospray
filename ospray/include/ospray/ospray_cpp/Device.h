@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -16,9 +16,12 @@ class Device
  public:
   Device(const std::string &type = "cpu");
   Device(const Device &copy);
+  Device(Device &&move);
   Device(OSPDevice existing = nullptr);
-
   ~Device();
+
+  Device &operator=(const Device &copy);
+  Device &operator=(Device &&move);
 
   template <typename FCN_T>
   void setErrorCallback(FCN_T &&fcn);
@@ -60,11 +63,33 @@ inline Device::Device(const Device &copy) : ospHandle(copy.ospHandle)
   ospDeviceRetain(copy.handle());
 }
 
+inline Device::Device(Device &&move)
+{
+  ospHandle = move.handle();
+  move.ospHandle = nullptr;
+}
+
 inline Device::Device(OSPDevice existing) : ospHandle(existing) {}
 
 inline Device::~Device()
 {
   ospDeviceRelease(ospHandle);
+}
+
+inline Device &Device::operator=(const Device &copy)
+{
+  ospDeviceRelease(ospHandle);
+  ospHandle = copy.handle();
+  ospDeviceRetain(copy.handle());
+  return *this;
+}
+
+inline Device &Device::operator=(Device &&move)
+{
+  ospDeviceRelease(ospHandle);
+  ospHandle = move.handle();
+  move.ospHandle = nullptr;
+  return *this;
 }
 
 template <typename FCN_T>

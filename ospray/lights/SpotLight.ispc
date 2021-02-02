@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -13,7 +13,8 @@ struct SpotLight
   linear3f light2world; // coordinate frame, with vz == direction that the
                         // SpotLight is emitting
   linear3f world2light;
-  vec3f intensity; // RGB color and intensity of the SpotLight
+  vec3f intensity; // RGB radiative intensity of the SpotLight
+  vec3f radiance; // emmitted RGB radiance
   float cosAngleMax; // Angular limit of the spot in an easier to use form:
                      // cosine of the half angle in radians
   float cosAngleScale; // 1/(cos(border of the penumbra area) - cosAngleMax);
@@ -89,8 +90,8 @@ Light_SampleRes SpotLight_sample(
     // convert area PDF to solid angle PDF
     res.pdf = self->areaPdf * (dist2 / abs(cosAngle));
     // calculate the attenuated emitted radiance
-    res.weight = self->super.radiance
-        * SpotLight_angularAttenuation(self, cosAngle, res.dir);
+    res.weight =
+        self->radiance * SpotLight_angularAttenuation(self, cosAngle, res.dir);
     if (!self->lid) {
       res.weight = res.weight / res.pdf;
     } else {
@@ -138,7 +139,7 @@ Light_EvalRes SpotLight_eval(const uniform Light *uniform super,
         // inside ring?
         if (and(d2 < sqr(self->radius), d2 > sqr(self->innerRadius))) {
           // calculate the attenuated emitted radiance
-          res.radiance = self->super.radiance
+          res.radiance = self->radiance
               * SpotLight_angularAttenuation(self, cosAngle, dir);
           // since the light distribution function already includes
           // the cosine term we remove it from the  Lambertian area
@@ -174,7 +175,7 @@ export void SpotLight_set(void *uniform super,
   SpotLight *uniform self = (SpotLight * uniform) super;
   self->position = position;
   self->light2world = frame;
-  self->super.radiance = radiance;
+  self->radiance = radiance;
   self->intensity = intensity;
   self->cosAngleMax = cosAngleMax;
   self->cosAngleScale = cosAngleScale;

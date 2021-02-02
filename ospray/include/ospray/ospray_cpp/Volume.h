@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -14,7 +14,6 @@ class Volume : public ManagedObject<OSPVolume, OSP_VOLUME>
 {
  public:
   Volume(const std::string &type);
-  Volume(const Volume &copy);
   Volume(OSPVolume existing = nullptr);
 };
 
@@ -26,12 +25,6 @@ static_assert(sizeof(Volume) == sizeof(OSPVolume),
 inline Volume::Volume(const std::string &type)
 {
   ospObject = ospNewVolume(type.c_str());
-}
-
-inline Volume::Volume(const Volume &copy)
-    : ManagedObject<OSPVolume, OSP_VOLUME>(copy.handle())
-{
-  ospRetain(copy.handle());
 }
 
 inline Volume::Volume(OSPVolume existing)

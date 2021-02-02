@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -11,7 +11,7 @@ struct DirectionalLight
 
   linear3f frame; //!< coordinate frame, with vz == direction *towards* the
                   //!< light source
-  vec3f power; //!< RGB power of light
+  vec3f irradiance; //!< RGB irradiance contribution of the light
   float cosAngle; //!< Angular limit of the cone light in an easier to use form:
                   //!< cosine of the half angle in radians
   float pdf; //!< Probability to sample a direction to the light
@@ -38,7 +38,7 @@ Light_SampleRes DirectionalLight_sample(const uniform Light *uniform super,
   if (self->cosAngle < COS_ANGLE_MAX)
     res.dir = self->frame * uniformSampleCone(self->cosAngle, s);
 
-  res.weight = self->power; // *pdf/pdf cancel
+  res.weight = self->irradiance; // *pdf/pdf cancel
 
   return res;
 }
@@ -56,7 +56,7 @@ Light_EvalRes DirectionalLight_eval(const uniform Light *uniform super,
 
   if (inf <= maxDist && self->cosAngle < COS_ANGLE_MAX
       && dot(self->frame.vz, dir) > self->cosAngle) {
-    res.radiance = self->power * self->pdf;
+    res.radiance = self->irradiance * self->pdf;
     res.pdf = self->pdf;
   }
 
@@ -67,13 +67,15 @@ Light_EvalRes DirectionalLight_eval(const uniform Light *uniform super,
 //////////////////////////////////////////////////////////////////////////////
 
 //! Set the parameters of an ispc-side DirectionalLight object
-export void DirectionalLight_set(
-    void *uniform super, const uniform vec3f &direction, uniform float cosAngle)
+export void DirectionalLight_set(void *uniform super,
+    const uniform vec3f &irradiance,
+    const uniform vec3f &direction,
+    uniform float cosAngle)
 {
   uniform DirectionalLight *uniform self =
       (uniform DirectionalLight * uniform) super;
   self->frame = frame(direction);
-  self->power = self->super.radiance;
+  self->irradiance = irradiance;
   self->cosAngle = cosAngle;
   self->pdf = cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : inf;
 }
@@ -86,6 +88,7 @@ export void *uniform DirectionalLight_create()
   self->super.sample = DirectionalLight_sample;
   self->super.eval = DirectionalLight_eval;
 
-  DirectionalLight_set(self, make_vec3f(0.f, 0.f, 1.f), 1.f);
+  DirectionalLight_set(
+      self, make_vec3f(0.f, 0.f, 0.f), make_vec3f(0.f, 0.f, 1.f), 1.f);
   return self;
 }

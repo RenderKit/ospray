@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // must be first
@@ -258,8 +258,20 @@ size_t sizeOf(OSPDataType type)
     return sizeof(vec3uc);
   case OSP_VEC4UC:
     return sizeof(vec4uc);
+  case OSP_VEC2C:
+    return sizeof(vec2c);
+  case OSP_VEC3C:
+    return sizeof(vec3c);
+  case OSP_VEC4C:
+    return sizeof(vec4c);
   case OSP_SHORT:
     return sizeof(int16);
+  case OSP_VEC2S:
+    return sizeof(vec2s);
+  case OSP_VEC3S:
+    return sizeof(vec3s);
+  case OSP_VEC4S:
+    return sizeof(vec4s);
   case OSP_USHORT:
     return sizeof(uint16);
   case OSP_VEC2US:
@@ -314,6 +326,12 @@ size_t sizeOf(OSPDataType type)
     return sizeof(vec3f);
   case OSP_DOUBLE:
     return sizeof(double);
+  case OSP_VEC2D:
+    return sizeof(vec2d);
+  case OSP_VEC3D:
+    return sizeof(vec3d);
+  case OSP_VEC4D:
+    return sizeof(vec4d);
   case OSP_BOX1I:
     return sizeof(box1i);
   case OSP_BOX2I:
@@ -369,6 +387,12 @@ OSPDataType typeOf(const char *string)
     return (OSP_VEC3F);
   if (strcmp(string, "srgba") == 0)
     return (OSP_VEC4F);
+  if (strcmp(string, "vec2d") == 0)
+    return (OSP_VEC2D);
+  if (strcmp(string, "vec3d") == 0)
+    return (OSP_VEC3D);
+  if (strcmp(string, "vec4d") == 0)
+    return (OSP_VEC4D);
   if (strcmp(string, "int") == 0)
     return (OSP_INT);
   if (strcmp(string, "vec2i") == 0)
@@ -385,8 +409,20 @@ OSPDataType typeOf(const char *string)
     return (OSP_VEC3UC);
   if (strcmp(string, "vec4uc") == 0)
     return (OSP_VEC4UC);
+  if (strcmp(string, "vec2c") == 0)
+    return (OSP_VEC2C);
+  if (strcmp(string, "vec3c") == 0)
+    return (OSP_VEC3C);
+  if (strcmp(string, "vec4c") == 0)
+    return (OSP_VEC4C);
   if (strcmp(string, "short") == 0)
     return (OSP_SHORT);
+  if (strcmp(string, "vec2s") == 0)
+    return (OSP_VEC2S);
+  if (strcmp(string, "vec3s") == 0)
+    return (OSP_VEC3S);
+  if (strcmp(string, "vec4s") == 0)
+    return (OSP_VEC4S);
   if (strcmp(string, "ushort") == 0)
     return (OSP_USHORT);
   if (strcmp(string, "vec2us") == 0)
@@ -463,8 +499,20 @@ std::string stringFor(OSPDataType type)
     return "vec3uc";
   case OSP_VEC4UC:
     return "vec4uc";
+  case OSP_VEC2C:
+    return "vec2c";
+  case OSP_VEC3C:
+    return "vec3c";
+  case OSP_VEC4C:
+    return "vec4c";
   case OSP_SHORT:
     return "short";
+  case OSP_VEC2S:
+    return "vec2s";
+  case OSP_VEC3S:
+    return "vec3s";
+  case OSP_VEC4S:
+    return "vec4s";
   case OSP_USHORT:
     return "ushort";
   case OSP_VEC2US:
@@ -513,6 +561,12 @@ std::string stringFor(OSPDataType type)
     return "vec3f";
   case OSP_VEC4F:
     return "vec4f";
+  case OSP_VEC2D:
+    return "vec2d";
+  case OSP_VEC3D:
+    return "vec3d";
+  case OSP_VEC4D:
+    return "vec4d";
   case OSP_DOUBLE:
     return "double";
   case OSP_BOX1I:
@@ -800,6 +854,9 @@ OSPTYPEFOR_DEFINITION(OSPWorld);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2UC);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3UC);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4UC);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2C);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3C);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4C);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2I);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3I);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4I);
@@ -815,6 +872,9 @@ OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4UL);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2F);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3F);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4F);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2D);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3D);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4D);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX1I);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX2I);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_BOX3I);

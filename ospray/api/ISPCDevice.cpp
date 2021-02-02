@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -142,11 +142,21 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter_string(const char *),
     declare_param_setter(char *),
     declare_param_setter(char),
+    declare_param_setter(vec2c),
+    declare_param_setter(vec3c),
+    declare_param_setter(vec4c),
     declare_param_setter(unsigned char),
     declare_param_setter(vec2uc),
     declare_param_setter(vec3uc),
     declare_param_setter(vec4uc),
     declare_param_setter(short),
+    declare_param_setter(vec2s),
+    declare_param_setter(vec3s),
+    declare_param_setter(vec4s),
+    declare_param_setter(unsigned short),
+    declare_param_setter(vec2us),
+    declare_param_setter(vec3us),
+    declare_param_setter(vec4us),
     declare_param_setter(int),
     declare_param_setter(vec2i),
     declare_param_setter(vec3i),
@@ -168,6 +178,9 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter(vec3f),
     declare_param_setter(vec4f),
     declare_param_setter(double),
+    declare_param_setter(vec2d),
+    declare_param_setter(vec3d),
+    declare_param_setter(vec4d),
     declare_param_setter(box1i),
     declare_param_setter(box2i),
     declare_param_setter(box3i),

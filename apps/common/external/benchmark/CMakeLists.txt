@@ -6,6 +6,7 @@ foreach(p
     CMP0056 # export EXE_LINKER_FLAGS to try_run
     CMP0057 # Support no if() IN_LIST operator
     CMP0063 # Honor visibility properties for all targets
+    CMP0077 # Allow option() overrides in importing projects
     )
   if(POLICY ${p})
     cmake_policy(SET ${p} NEW)
@@ -143,8 +144,9 @@ else()
   add_cxx_compiler_flag(-Werror RELEASE)
   add_cxx_compiler_flag(-Werror RELWITHDEBINFO)
   add_cxx_compiler_flag(-Werror MINSIZEREL)
-  add_cxx_compiler_flag(-pedantic)
-  add_cxx_compiler_flag(-pedantic-errors)
+  # Disabled until googletest (gmock) stops emitting variadic macro warnings
+  #add_cxx_compiler_flag(-pedantic)
+  #add_cxx_compiler_flag(-pedantic-errors)
   add_cxx_compiler_flag(-Wshorten-64-to-32)
   add_cxx_compiler_flag(-fstrict-aliasing)
   # Disable warnings regarding deprecated parts of the library while building
@@ -243,11 +245,17 @@ if (BENCHMARK_USE_LIBCXX)
   endif()
 endif(BENCHMARK_USE_LIBCXX)
 
+set(EXTRA_CXX_FLAGS "")
+if (WIN32 AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  # Clang on Windows fails to compile the regex feature check under C++11
+  set(EXTRA_CXX_FLAGS "-DCMAKE_CXX_STANDARD=14")
+endif()
+
 # C++ feature checks
 # Determine the correct regular expression engine to use
-cxx_feature_check(STD_REGEX)
-cxx_feature_check(GNU_POSIX_REGEX)
-cxx_feature_check(POSIX_REGEX)
+cxx_feature_check(STD_REGEX ${EXTRA_CXX_FLAGS})
+cxx_feature_check(GNU_POSIX_REGEX ${EXTRA_CXX_FLAGS})
+cxx_feature_check(POSIX_REGEX ${EXTRA_CXX_FLAGS})
 if(NOT HAVE_STD_REGEX AND NOT HAVE_GNU_POSIX_REGEX AND NOT HAVE_POSIX_REGEX)
   message(FATAL_ERROR "Failed to determine the source files for the regular expression backend")
 endif()
@@ -255,6 +263,7 @@ if (NOT BENCHMARK_ENABLE_EXCEPTIONS AND HAVE_STD_REGEX
         AND NOT HAVE_GNU_POSIX_REGEX AND NOT HAVE_POSIX_REGEX)
   message(WARNING "Using std::regex with exceptions disabled is not fully supported")
 endif()
+
 cxx_feature_check(STEADY_CLOCK)
 # Ensure we have pthreads
 set(THREADS_PREFER_PTHREAD_FLAG ON)

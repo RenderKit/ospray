@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,7 +12,6 @@ class Group : public ManagedObject<OSPGroup, OSP_GROUP>
 {
  public:
   Group();
-  Group(const Group &copy);
   Group(OSPGroup existing);
 };
 
@@ -24,12 +23,6 @@ static_assert(
 inline Group::Group()
 {
   ospObject = ospNewGroup();
-}
-
-inline Group::Group(const Group &copy)
-    : ManagedObject<OSPGroup, OSP_GROUP>(copy.handle())
-{
-  ospRetain(copy.handle());
 }
 
 inline Group::Group(OSPGroup existing)

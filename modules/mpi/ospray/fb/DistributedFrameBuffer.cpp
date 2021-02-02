@@ -505,8 +505,6 @@ void DFB::incoming(const std::shared_ptr<mpicommon::Message> &message)
   if (!frameIsActive && !(msg->command & PROGRESS_MESSAGE)) {
     std::lock_guard<std::mutex> lock(mutex);
     if (!frameIsActive) {
-      // TODO will: probably remove, but test this for now.
-      PING;
       throw std::runtime_error(
           "Somehow recieved a tile message when frame inactive!?");
     }

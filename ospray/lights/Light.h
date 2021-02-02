@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -24,7 +24,11 @@ struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
   //! get IE of a second light associated with the light type(if available)
   virtual utility::Optional<void *> getSecondIE();
 
-  vec3f radiance{1.0f, 1.0f, 1.0f};
+  vec3f coloredIntensity{1.0f, 1.0f, 1.0f};
+  OSPIntensityQuantity intensityQuantity = OSP_INTENSITY_QUANTITY_UNKNOWN;
+
+ protected:
+  void queryIntensityQuantityType(const OSPIntensityQuantity &defaultIQ);
 
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>

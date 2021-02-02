@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -23,6 +23,7 @@ struct OSPRAY_SDK_INTERFACE GeometricModel : public ManagedObject
 
  private:
   Ref<Geometry> geom;
+  Ref<Geometry> geomAPI;
   Ref<const Data> materialData;
   Ref<const DataT<vec4f>> colorData;
   Ref<const DataT<uint8_t>> indexData;

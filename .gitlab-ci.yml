@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 stages:
@@ -38,7 +38,7 @@ variables:
     paths:
       - build/install/ospray
       - build/CMakeCache.txt
-      - build/ospray/build/CMakeCache.txt
+      - build/*/build/CMakeCache.txt
     expire_in: 3 day
 
 .job_template: &release_job
@@ -115,7 +115,7 @@ build-arch-clang-devel:
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_EMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OIDN_VERSION=devel -DBUILD_OPENVKL_VERSION=devel -DBUILD_RKCOMMON_VERSION=devel 
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_EMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OIDN_VERSION=devel -DBUILD_OPENVKL_VERSION=devel -DBUILD_RKCOMMON_VERSION=devel
   only: [schedules]
 
 build-linux-debug-all:
@@ -231,20 +231,11 @@ build-osx-clang:
     - scripts/build_gitlab/macosx.sh
   <<: *build_artifacts
 
-build-windows-msvc14:
-  stage: build
-  tags:
-    - msvc14
-    - win
-  script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 14 2015 Win64" "v140" "Release"
-  <<: *build_artifacts
-
 build-windows-msvc15:
   stage: build
   tags:
-    - msvc15
     - win
+    - msvc15
   script:
     - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release"
   <<: *build_artifacts
@@ -252,12 +243,21 @@ build-windows-msvc15:
 build-windows-debug-all:
   stage: build
   tags:
-    - msvc15
     - win
+    - msvc15
   script:
     - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug"
   <<: *build_artifacts
   only: [schedules]
+
+build-windows-msvc16:
+  stage: build
+  tags:
+    - win
+    - msvc16
+  script:
+    - scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release"
+  <<: *build_artifacts
 
 #build-windows-icc:
 #  stage: build
@@ -333,15 +333,8 @@ test-find-ospray:
     - module load cmake
     - mkdir buildtut
     - cd buildtut
-    - cmake -D ospray_DIR=`echo $CI_PROJECT_DIR/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray 
+    - cmake -D ospray_DIR=`echo $CI_PROJECT_DIR/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray
     - cmake --build .
-
-test-windows-msvc14:
-  <<: *test_job_windows
-  tags:
-    - win
-    - msvc14
-  needs: [build-windows-msvc14]
 
 test-windows-msvc15:
   <<: *test_job_windows
@@ -357,6 +350,13 @@ test-windows-debug-all:
     - msvc15
   needs: [build-windows-debug-all]
   only: [schedules]
+
+test-windows-msvc16:
+  <<: *test_job_windows
+  tags:
+    - win
+    - msvc16
+  needs: [build-windows-msvc16]
 
 generate-ci-baseline:
   <<: *test_job_unix
@@ -428,6 +428,7 @@ release-osx-clang:
   tags:
     - clang
     - osx
+    - sign
   script:
     - export CC=clang
     - export CXX=clang++
@@ -443,7 +444,7 @@ release-osx-clang:
 release-windows:
   <<: *release_job
   tags:
-    - msvc14
+    - msvc15
     - win
   script:
     - scripts\release\win.ps1 "Visual Studio 15 2017 Win64"
@@ -464,10 +465,11 @@ kw-build:
   needs: []
   script:
     - scripts/build_gitlab/kw.sh
-    - test -s $CI_PROJECT_DIR/kw_build_number
+    - test -s $CI_PROJECT_DIR/klocwork/build.log
+    - test -s $CI_PROJECT_DIR/klocwork/build_name
   artifacts:
     paths:
-        - $CI_PROJECT_DIR/kw_build_number
+        - ./klocwork/*
     expire_in: 3 day
 
 protex:
@@ -484,22 +486,41 @@ kw-scan:
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: [kw-build]
   script:
-    - scripts/scan/kw.sh
+    - scripts/scan/kw-check-issues.sh
+
+kw-gen-report:
+  stage: scan2
+  tags: [docker]
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs: [kw-build]
+  only:
+    - devel
+    - master
+    - /release/
+  script:
+    - scripts/scan/kw-gen-report.sh
+    - scripts/scan/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID klocwork "klocwork/report.log"
+  artifacts:
+    paths:
+      - ./klocwork/report.log
 
 bdba:
   <<: *release_job
   stage: scan3
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs:
     - release-linux
     - release-osx-clang
     - release-windows
   script:
     - scripts/scan/bdba.sh "build_release/ospray*"
+    - scripts/scan/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID bdba "ospray-*.pdf"
+    - scripts/scan/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID bdba "ospray-*.csv"
   artifacts:
     paths:
       - build_release/ospray-*
+      - ospray-*
 
 av:
   <<: *release_job
@@ -511,8 +532,9 @@ av:
     - release-osx-clang
     - release-windows
   script:
-    - freshclam
-    - clamscan -va --max-filesize=256M --max-scansize=1024M --alert-broken --alert-exceeds-max build_release/ospray-*
+    - freshclam | tee -a /tmp/av_scan.log
+    - clamscan -va --max-filesize=256M --max-scansize=1024M --alert-broken --alert-exceeds-max build_release/ospray-* | tee -a /tmp/av_scan.log
+    - scripts/scan/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID av /tmp/av_scan.log
   artifacts:
     paths:
       - build_release/ospray-*
@@ -521,7 +543,7 @@ test-release-linux:
   <<: *test_job
   <<: *release_job
   stage: scan3
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7 
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: [release-linux]
   script:
     - tar xzf build_release/*.gz
@@ -531,7 +553,7 @@ test-release-osx:
   <<: *test_job
   <<: *release_job
   stage: scan3
-  tags: [osx]
+  tags: [osx, sign]
   needs: [release-osx-clang]
   script:
     - unzip build_release/*.zip

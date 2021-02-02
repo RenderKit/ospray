@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -7,6 +7,7 @@ struct QuadLight
 {
   Light super; //!< inherited light fields
 
+  vec3f radiance; //!< emmitted RGB radiance
   vec3f position; //!< world-space corner position of the light
   vec3f edge1; //!< vectors to adjacent corners
   vec3f edge2; //!< vectors to adjacent corners
@@ -48,8 +49,7 @@ Light_SampleRes QuadLight_sample(const uniform Light *uniform super,
   res.pdf = self->ppdf * sqr(dist) / abs(cosd);
 
   // emit only to one side
-  res.weight =
-      cosd > 0.f ? self->super.radiance * rcp(res.pdf) : make_vec3f(0.f);
+  res.weight = cosd > 0.f ? self->radiance * rcp(res.pdf) : make_vec3f(0.f);
 
   return res;
 }
@@ -84,7 +84,7 @@ Light_EvalRes QuadLight_eval(const uniform Light *uniform super,
   if (dist <= minDist | dist > maxDist)
     return res;
 
-  res.radiance = self->super.radiance;
+  res.radiance = self->radiance;
   res.pdf = self->ppdf * sqr(dist) * rcosd;
 
   return res;
@@ -95,11 +95,13 @@ Light_EvalRes QuadLight_eval(const uniform Light *uniform super,
 
 //! Set the parameters of an ispc-side QuadLight object
 export void QuadLight_set(void *uniform super,
+    const uniform vec3f &radiance,
     const uniform vec3f &position,
     const uniform vec3f &edge1,
     const uniform vec3f &edge2)
 {
   uniform QuadLight *uniform self = (uniform QuadLight * uniform) super;
+  self->radiance = radiance;
   self->position = position;
   self->edge1 = edge1;
   self->edge2 = edge2;
@@ -119,6 +121,7 @@ export void *uniform QuadLight_create()
   self->super.eval = QuadLight_eval;
 
   QuadLight_set(self,
+      make_vec3f(0.f),
       make_vec3f(0.f),
       make_vec3f(1.f, 0.f, 0.f),
       make_vec3f(0.f, 1.f, 0.f));

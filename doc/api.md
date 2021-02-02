@@ -11,9 +11,9 @@ where the API is compatible with C99 and C++.
 Initialization and Shutdown
 ---------------------------
 
-To use the API, OSPRay must be initialized with a "device". A
-device is the object which implements the API. Creating and initializing
-a device can be done in either of two ways: command line arguments using
+To use the API, OSPRay must be initialized with a "device". A device is
+the object which implements the API. Creating and initializing a device
+can be done in either of two ways: command line arguments using
 `ospInit` or manually instantiating a device and setting parameters on
 it.
 
@@ -162,7 +162,7 @@ current device, it does not need to be set as current again. Note this
 API call will increment the ref count of the returned device handle, so
 applications must use `ospDeviceRelease` when finished using the handle
 to avoid leaking the underlying device object. If there is no current
-device set, this will return an invalid NULL handle.
+device set, this will return an invalid `NULL` handle.
 
 When a device is created, its reference count is initially `1`. When
 a device is set as the current device, it internally has its reference
@@ -274,7 +274,7 @@ will require that a callback is provided. Note that callbacks for C++
 `std::cout` and `std::cerr` can be alternatively set through `ospInit()`
 or the `OSPRAY_LOG_OUTPUT` environment variable.
 
-Applications can clear either callback by passing `nullptr` instead of an
+Applications can clear either callback by passing `NULL` instead of an
 actual function pointer.
 
 ### Loading OSPRay Extensions at Runtime
@@ -367,7 +367,7 @@ are discussed in future sections.
 Note that `mem` must always be a pointer _to_ the object,
 otherwise accidental type casting can occur. This is especially true for
 pointer types (`OSP_VOID_PTR` and `OSPObject` handles), as they will
-implicitly cast to `void *`, but be incorrectly interpreted. To help
+implicitly cast to `void\ *`, but be incorrectly interpreted. To help
 with some of these issues, there also exist variants of `ospSetParam`
 for specific types, such as `ospSetInt` and `ospSetVec3f` in the OSPRay
 utility library (found in `ospray_util.h`).
@@ -424,45 +424,74 @@ The enum type `OSPDataType` describes the different element types that
 can be represented in OSPRay; valid constants are listed in the table
 below.
 
-  Type/Name              Description
-  ---------------------- -----------------------------------------------
-  OSP_DEVICE             API device object reference
-  OSP_DATA               data reference
-  OSP_OBJECT             generic object reference
-  OSP_CAMERA             camera object reference
-  OSP_FRAMEBUFFER        framebuffer object reference
-  OSP_LIGHT              light object reference
-  OSP_MATERIAL           material object reference
-  OSP_TEXTURE            texture object reference
-  OSP_RENDERER           renderer object reference
-  OSP_WORLD              world object reference
-  OSP_GEOMETRY           geometry object reference
-  OSP_VOLUME             volume object reference
-  OSP_TRANSFER_FUNCTION  transfer function object reference
-  OSP_IMAGE_OPERATION    image operation object reference
-  OSP_STRING             C-style zero-terminated character string
-  OSP_CHAR               8\ bit signed character scalar
-  OSP_UCHAR              8\ bit unsigned character scalar
-  OSP_VEC[234]UC         ... and [234]-element vector
-  OSP_USHORT             16\ bit unsigned integer scalar
-  OSP_VEC[234]US         ... and [234]-element vector
-  OSP_INT                32\ bit signed integer scalar
-  OSP_VEC[234]I          ... and [234]-element vector
-  OSP_UINT               32\ bit unsigned integer scalar
-  OSP_VEC[234]UI         ... and [234]-element vector
-  OSP_LONG               64\ bit signed integer scalar
-  OSP_VEC[234]L          ... and [234]-element vector
-  OSP_ULONG              64\ bit unsigned integer scalar
-  OSP_VEC[234]UL         ... and [234]-element vector
-  OSP_FLOAT              32\ bit single precision floating-point scalar
-  OSP_VEC[234]F          ... and [234]-element vector
-  OSP_DOUBLE             64\ bit double precision floating-point scalar
-  OSP_BOX[1234]I         32\ bit integer box (lower + upper bounds)
-  OSP_BOX[1234]F         32\ bit single precision floating-point box (lower + upper bounds)
-  OSP_LINEAR[23]F        32\ bit single precision floating-point linear transform ([23] vectors)
-  OSP_AFFINE[23]F        32\ bit single precision floating-point affine transform (linear transform plus translation)
-  OSP_VOID_PTR           raw memory address (only found in module extensions)
-  ---------------------- -----------------------------------------------
+  -------------------------- ---------------------------------------------------
+  Type/Name                  Description
+  -------------------------- ---------------------------------------------------
+  OSP_DEVICE                 API device object reference
+
+  OSP_DATA                   data reference
+
+  OSP_OBJECT                 generic object reference
+
+  OSP_CAMERA                 camera object reference
+
+  OSP_FRAMEBUFFER            framebuffer object reference
+
+  OSP_LIGHT                  light object reference
+
+  OSP_MATERIAL               material object reference
+
+  OSP_TEXTURE                texture object reference
+
+  OSP_RENDERER               renderer object reference
+
+  OSP_WORLD                  world object reference
+
+  OSP_GEOMETRY               geometry object reference
+
+  OSP_VOLUME                 volume object reference
+
+  OSP_TRANSFER_FUNCTION      transfer function object reference
+
+  OSP_IMAGE_OPERATION        image operation object reference
+
+  OSP_STRING                 C-style zero-terminated character string
+
+  OSP_CHAR, OSP_VEC[234]C    8\ bit signed character scalar and [234]-element vector
+
+  OSP_UCHAR, OSP_VEC[234]UC  8\ bit unsigned character scalar and [234]-element vector
+
+  OSP_SHORT, OSP_VEC[234]S   16\ bit unsigned integer scalar and [234]-element vector
+
+  OSP_USHORT, OSP_VEC[234]US 16\ bit unsigned integer scalar and [234]-element vector
+
+  OSP_INT, OSP_VEC[234]I     32\ bit signed integer scalar and [234]-element vector
+
+  OSP_UINT, OSP_VEC[234]UI   32\ bit unsigned integer scalar and [234]-element vector
+
+  OSP_LONG, OSP_VEC[234]L    64\ bit signed integer scalar and [234]-element vector
+
+  OSP_ULONG, OSP_VEC[234]UL  64\ bit unsigned integer scalar and [234]-element vector
+
+  OSP_FLOAT, OSP_VEC[234]F   32\ bit single precision floating-point scalar
+                             and [234]-element vector
+
+  OSP_DOUBLE, OSP_VEC[234]D  64\ bit double precision floating-point scalar
+                             and [234]-element vector
+
+  OSP_BOX[1234]I             32\ bit integer box (lower + upper bounds)
+
+  OSP_BOX[1234]F             32\ bit single precision floating-point box
+                             (lower + upper bounds)
+
+  OSP_LINEAR[23]F            32\ bit single precision floating-point linear
+                             transform ([23] vectors)
+
+  OSP_AFFINE[23]F            32\ bit single precision floating-point affine
+                             transform (linear transform plus translation)
+
+  OSP_VOID_PTR               raw memory address (only found in module extensions)
+  -------------------------- ---------------------------------------------------
   : Valid named constants for `OSPDataType`.
 
 If the elements of the array are handles to objects, then their
@@ -471,17 +500,17 @@ reference counter is incremented.
 An opaque `OSPData` with memory allocated by OSPRay is created with
 
     OSPData ospNewData(OSPDataType,
-        uint32_t numItems1,
-        uint32_t numItems2 = 1,
-        uint32_t numItems3 = 1);
+        uint64_t numItems1,
+        uint64_t numItems2 = 1,
+        uint64_t numItems3 = 1);
 
 To allow for (partial) copies or updates of data arrays use
 
     void ospCopyData(const OSPData source,
         OSPData destination,
-        uint32_t destinationIndex1 = 0,
-        uint32_t destinationIndex2 = 0,
-        uint32_t destinationIndex3 = 0);
+        uint64_t destinationIndex1 = 0,
+        uint64_t destinationIndex2 = 0,
+        uint64_t destinationIndex3 = 0);
 
 which will copy the whole^[The number of items to be copied is defined
 by the size of the source array] content of the `source` array into
@@ -974,6 +1003,12 @@ concurrently). To create a volume instance, call
 
     OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
 
+The passed volume can be `NULL` as long as the volume to be used is
+passed as a parameter. If both a volume is specified on object creation and
+as a parameter, the parameter value is used. If the parameter value
+is later removed, the volume object passed on object creation is again
+used.
+
   -------------------- ----------------- --------  --------------------------------------
   Type                 Name               Default  Description
   -------------------- ----------------- --------  --------------------------------------
@@ -985,7 +1020,10 @@ concurrently). To create a volume instance, call
   float                anisotropy             0.0  anisotropy of the (Henyey-Greenstein)
                                                    phase function in [-1, 1] ([path tracer]
                                                    only), default to isotropic scattering
-  -------------------- --------------------------  ---------------------------------------
+
+  OSPVolume            volume                      optional [volume] object this model
+                                                   references
+  -------------------- ----------------- --------  ---------------------------------------
   : Parameters understood by VolumetricModel.
 
 
@@ -1282,6 +1320,12 @@ and material information. To create a geometric model, call
 
     OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 
+The passed geometry can be `NULL` as long as the geometry to be used is
+passed as a parameter. If both a geometry is specified on object creation
+and as a parameter, the parameter value is used. If the parameter value
+is later removed, the geometry object passed on object creation is again
+used.
+
 Color and material are fetched with the primitive ID of the hit (clamped
 to the valid range, thus a single color or material is fine), or mapped
 first via the `index` array (if present). All parameters are optional,
@@ -1315,6 +1359,8 @@ with normals oriented outside clips everything what's inside.
                                           `color` and `material`
 
   bool                     invertNormals  inverts all shading normals (Ns), default false
+
+  OSPGeometry              geometry       optional [geometry] object this model references
   ------------------------ -------------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
@@ -1328,24 +1374,62 @@ To create a new light source of given type `type` use
 
 All light sources accept the following parameters:
 
-  Type      Name        Default  Description
-  --------- ---------- --------  ---------------------------------------
-  vec3f     color         white  linearRGB color of the light
-  float     intensity         1  intensity of the light (a factor)
-  bool      visible        true  whether the light can be directly seen
-  --------- ---------- --------  ---------------------------------------
+
+  --------- ------------------ --------  --------------------------------------------
+  Type      Name                Default  Description
+  --------- ------------------ --------  --------------------------------------------
+  vec3f     color                 white  linearRGB of the light
+
+  float     intensity                 1  intensity of the light (a factor)
+
+  uchar     intensityQuantity            `OSPIntensityQuantity` to set the radiative
+                                         quantity represented by `intensity`. The
+                                         default value depends on the light source.
+
+  bool      visible                true  whether the light can be directly seen
+  --------- ------------------ --------  --------------------------------------------
+
   : Parameters accepted by all lights.
+
+In OSPRay the `intensity` parameter of a light source can correspond to
+different types of radiative quantities. The type of the value
+represented by a light's `intensity` parameter is set using
+`intensityQuantity`, which accepts values from the enum type
+`OSPIntensityQuantity`. The supported types of `OSPIntensityQuantity`
+differ between the different light sources (see documentation of each
+specific light source).
+
+  ----------------------------------  ----------------------------------------------------
+  Name                                Description
+  ----------------------------------  ----------------------------------------------------
+  OSP_INTENSITY_QUANTITY_POWER        the overall amount of light energy emitted by the
+                                      light source into the scene, unit is W
+
+  OSP_INTENSITY_QUANTITY_INTENSITY    the overall amount of light emitted by the light in
+                                      a given direction, unit is W/sr
+
+  OSP_INTENSITY_QUANTITY_RADIANCE     the amount of light emitted by a point on the
+                                      light source in a given direction, unit is W/sr/m^2^
+
+  OSP_INTENSITY_QUANTITY_IRRADIANCE   the amount of light arriving at a surface point,
+                                      assuming the light is oriented towards to the
+                                      surface, unit is W/m^2^
+  ----------------------------------  ----------------------------------------------------
+  : Types of radiative quantities used to interpret a light's `intensity` parameter.
 
 The following light types are supported by most OSPRay renderers.
 
 ### Directional Light / Distant Light
 
 The distant light (or traditionally the directional light) is thought to
-be far away (outside of the scene), thus its light arrives (almost)
-as parallel rays. It is created by passing the type string "`distant`"
-to `ospNewLight`. In addition to the [general parameters](#lights)
-understood by all lights the distant light supports the following special
-parameters:
+be far away (outside of the scene), thus its light arrives (almost) as
+parallel rays. It is created by passing the type string "`distant`" to
+`ospNewLight`. The distant light supports
+`OSP_INTENSITY_QUANTITY_RADIANCE` and
+`OSP_INTENSITY_QUANTITY_IRRADIANCE` (default) as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights)
+understood by all lights the distant light supports the following
+special parameters:
 
   Type      Name             Description
   --------- ---------------- ---------------------------------------------
@@ -1361,11 +1445,14 @@ tracer]). For instance, the apparent size of the sun is about 0.53°.
 ### Point Light / Sphere Light
 
 The sphere light (or the special case point light) is a light emitting
-uniformly in all directions from the surface toward the outside.
-It does not emit any light toward the inside of the sphere.
-It is created by passing the type string "`sphere`" to `ospNewLight`.
-In addition to the [general parameters](#lights) understood by all lights
-the sphere light supports the following special parameters:
+uniformly in all directions from the surface toward the outside. It does
+not emit any light toward the inside of the sphere. It is created by
+passing the type string "`sphere`" to `ospNewLight`. The point light
+supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter value.
+In addition to the [general parameters](#lights) understood by all
+lights the sphere light supports the following special parameters:
 
   Type      Name      Description
   --------- --------- -----------------------------------------------
@@ -1381,9 +1468,13 @@ tracer]).
 ### Spotlight / Photometric Light
 
 The spotlight is a light emitting into a cone of directions. It is
-created by passing the type string "`spot`" to `ospNewLight`. In
-addition to the [general parameters](#lights) understood by all lights
-the spotlight supports the special parameters listed in the table.
+created by passing the type string "`spot`" to `ospNewLight`. The
+spotlight supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
+value. In addition to the [general parameters](#lights) understood by
+all lights the spotlight supports the special parameters listed in the
+table.
 
   ---------- --------------------- ----------- ---------------------------------
   Type       Name                      Default Description
@@ -1445,6 +1536,9 @@ are not rotational symmetric around `direction`, but are accordingly
 mapped to the C-halfplanes in [0–2π]; the first "row" of values to 0 and
 2π, the other rows such that they have uniform distance to its
 neighbors. The orientation of the C0-plane is specified via `c0`.
+A combination of using an `intensityDistribution` and
+`OSP_INTENSITY_QUANTITY_POWER` as `intensityQuantity` is not supported
+at the moment.
 
 ![C-γ coordinate system for the mapping of `intensityDistribution` to
 the spotlight.][imgSpotCoords]
@@ -1452,9 +1546,11 @@ the spotlight.][imgSpotCoords]
 ### Quad Light
 
 The quad^[actually a parallelogram] light is a planar, procedural area
-light source emitting
-uniformly on one side into the half-space. It is created by passing the
-type string "`quad`" to `ospNewLight`. In addition to the [general
+light source emitting uniformly on one side into the half-space. It is
+created by passing the type string "`quad`" to `ospNewLight`. The quad
+light supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
+(default) as `intensityQuantity` parameter. In addition to the [general
 parameters](#lights) understood by all lights the quad light supports
 the following special parameters:
 
@@ -1478,9 +1574,10 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-"`hdri`" to `ospNewLight`. In addition to the [general
-parameters](#lights) the HDRI light supports the following special
-parameters:
+"`hdri`" to `ospNewLight`. The HDRI light only accepts
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
+value. In addition to the [general parameters](#lights) the HDRI light
+supports the following special parameters:
 
   ------------ --------- --------------------------------------------------
   Type         Name      Description
@@ -1496,14 +1593,19 @@ parameters:
 
 ![Orientation and Mapping of an HDRI Light.][imgHDRILight]
 
-Note that the currently only the [path tracer] supports the HDRI light.
+Note that the [SciVis renderer] only shows the HDRI light in the
+background (like an environment map) without computing illumination of
+the scene.
 
 ### Ambient Light
 
 The ambient light surrounds the scene and illuminates it from infinity
 with constant radiance (determined by combining the [parameters `color`
 and `intensity`](#lights)). It is created by passing the type string
-"`ambient`" to `ospNewLight`.
+"`ambient`" to `ospNewLight`. The ambient light supports
+`OSP_INTENSITY_QUANTITY_RADIANCE` and
+`OSP_INTENSITY_QUANTITY_IRRADIANCE` (default) as `intensityQuantity`
+parameter value.
 
 Note that the [SciVis renderer] uses ambient lights to control the color
 and intensity of the computed ambient occlusion (AO).
@@ -1515,9 +1617,10 @@ a procedural `hdri` light for the sky. It is created by passing the type
 string "`sunSky`" to `ospNewLight`. The sun-sky light surrounds the
 scene and illuminates it from infinity and can be used for rendering
 outdoor scenes. The radiance values are calculated using the
-Hošek-Wilkie sky model and solar radiance function. In addition to the
-[general parameters](#lights) the following special parameters are
-supported:
+Hošek-Wilkie sky model and solar radiance function. The sun-sky light
+only accepts `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights) the
+following special parameters are supported:
 
   --------- ---------------- ------------  -------------------------------------
   Type      Name                  Default  Description
@@ -1539,6 +1642,9 @@ supported:
 
 The lowest elevation for the sun is restricted to the horizon.
 
+Note that the [SciVis renderer] only computes illumination from the sun
+(yet the sky is still shown in the background, like an environment map).
+
 ### Emissive Objects
 
 The [path tracer] will consider illumination by [geometries] which have
@@ -1558,22 +1664,23 @@ create a group call
     OSPGroup ospNewGroup();
 
 Groups take arrays of geometric models, volumetric models and clipping
-geometric models, but they are optional. In other words, there is no need
-to create empty arrays if there are no geometries or volumes in the group.
+geometric models, but they are optional. In other words, there is no
+need to create empty arrays if there are no geometries or volumes in the
+group.
 
-By adding `OSPGeometricModel`s to the `clippingGeometry` array a clipping
-geometry feature is enabled. Geometries assigned to this parameter
-will be used as clipping geometries. Any supported geometry can be used
-for clipping. The only requirement is that it has to distinctly partition
-space into clipping and non-clipping one. These include: spheres, boxes,
-infinite planes, closed meshes, closed subdivisions and curves. All
-geometries and volumes assigned to `geometry` or `volume` will be clipped.
-Use of clipping geometry that is not closed (or infinite) will result in
-rendering artifacts. User can decide which part of space is clipped by
-changing shading normals orientation with the `invertNormals` flag of
-the [GeometricModel]. When more than single clipping geometry is defined
-all clipping areas will be "added" together – an union of these areas
-will be applied.
+By adding `OSPGeometricModel`s to the `clippingGeometry` array a
+clipping geometry feature is enabled. Geometries assigned to this
+parameter will be used as clipping geometries. Any supported geometry
+can be used for clipping. The only requirement is that it has to
+distinctly partition space into clipping and non-clipping one. These
+include: spheres, boxes, infinite planes, closed meshes, closed
+subdivisions and curves. All geometries and volumes assigned to
+`geometry` or `volume` will be clipped. Use of clipping geometry that is
+not closed (or infinite) will result in rendering artifacts. User can
+decide which part of space is clipped by changing shading normals
+orientation with the `invertNormals` flag of the [GeometricModel]. When
+more than single clipping geometry is defined all clipping areas will be
+"added" together – an union of these areas will be applied.
 
   -------------------- ---------------- ----------  --------------------------------------
   Type                 Name                Default  Description
@@ -1781,19 +1888,24 @@ created by passing the  type string "`scivis`" to `ospNewRenderer`. In
 addition to the [general parameters](#renderer) understood by all
 renderers, the SciVis renderer supports the following parameters:
 
-  ------------- ---------------------- ------------  ----------------------------
-  Type          Name                        Default  Description
-  ------------- ---------------------- ------------  ----------------------------
-  bool          shadows                       false  whether to compute (hard) shadows
+  ------ ------------------- ---------  ----------------------------------
+  Type   Name                  Default  Description
+  ------ ------------------- ---------  ----------------------------------
+  bool   shadows                 false  whether to compute (hard) shadows
 
-  int           aoSamples                         0  number of rays per sample to
-                                                     compute ambient occlusion
+  int    aoSamples                   0  number of rays per sample to
+                                        compute ambient occlusion
 
-  float         aoDistance                   10^20^  maximum distance to consider
-                                                     for ambient occlusion
+  float  aoDistance             10^20^  maximum distance to consider for
+                                        ambient occlusion
 
-  float         volumeSamplingRate                1  sampling rate for volumes
-  ------------- ---------------------- ------------  ----------------------------
+  float  volumeSamplingRate          1  sampling rate for volumes
+
+  bool   visibleLights           false  whether light sources are
+                                        potentially visible (as in the
+                                        [path tracer], regarding each
+                                        light's `visible`)
+  ------ ------------------- ---------  ----------------------------------
   : Special parameters understood by the SciVis renderer.
 
 Note that the intensity (and color) of AO is deduced from an [ambient
@@ -2274,7 +2386,9 @@ geometric object into a light source^[If `geometryLights` is enabled in
 the [path tracer].]. It is created by passing the type string
 "`luminous`" to `ospNewMaterial`. The amount of constant radiance that
 is emitted is determined by combining the general parameters of lights:
-[`color` and `intensity`](#lights).
+[`color` and `intensity`](#lights) (which essentially means that
+parameter `intensityQuantity` is not needed because it is always
+`OSP_INTENSITY_QUANTITY_RADIANCE`).
 
   Type   Name          Default  Description
   ------ ------------ --------  ---------------------------------------
@@ -2781,7 +2895,11 @@ function
 
     float ospGetProgress(OSPFuture);
 
-This returns the progress of the task in [0-1].
+This returns the approximated progress of the task in [0-1].
+
+Applications can cancel a currently running asynchronous operation via
+
+    void ospCancel(OSPFuture);
 
 Applications can wait on the result of an asynchronous operation, or
 choose to only synchronize with a specific event. To synchronize with an
@@ -2908,43 +3026,41 @@ mpirun -n 1 ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
   : -n <N> ./ospray_mpi_worker
 ```
 
-Finally, you can also run the workers in a server mode on a remote
-machine and connect your application to them over a socket. This allows
-remote rendering on a large cluster while displaying on a local machine
-(e.g., a laptop) where the two devices may not be able to connect over
-MPI. First, launch the workers in `mpi-listen` mode:
-
-```sh
-mpirun -n <N> ./ospray_mpi_worker --osp:device-params=mpiMode:mpi-listen
-```
-
-The workers will print out a port number to connect to, e.g., `#osp:
-Listening on port #####` You can then run your application in the
-`mpi-connect` mode, and pass the host name of the first worker rank and
-this port number to the device:
-
-```sh
-./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
-  --osp:device-params=mpiMode:mpi-connect,host:<worker rank 0 host>,port:<port printed above>
-```
-
-If initializing the `mpiOffload` device manually, or passing parameters through
-the command line, the following parameters can be set:
+If initializing the `mpiOffload` device manually, or passing parameters
+through the command line, the following parameters can be set:
 
 
-| Type   | Name                    | Default             | Description                                                       |
-|:-------|:------------------------|--------------------:|:------------------------------------------------------------------|
-| string | mpiMode                 | mpi                 | The mode to communicate with the worker ranks. `mpi` will assume you're launching the application and workers in the same mpi command (or split launch command). `mpi-listen` can be passed to the workers, indicating they should wait and listen for a connection from the application. `mpi-connect` can be passed to the application, indicating it should connect to the first worker at `host` and `port` to connect to the workers |
-| string | host                    | none, optional      | On the app rank, specify the host worker 0 is on to connect to in mpi-connect mode |
-| int    | port                    | none, optional      | On the app rank, specify the port worker 0 is listening on to connect in mpi-connect mode |
-| uint   | maxCommandBufferEntries | 8192                | Set the max number of commands to buffer before submitting the command buffer to the workers |
-| uint   | commandBufferSize       | 512MiB              | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8GiB         |
-| uint   | maxInlineDataSize       | 32MiB               | Set the max size of an OSPData which can be inline'd into the command buffer instead of being sent separately. Max size is half the commandBufferSize. Units are in MiB |
+  -------- ------------------------ ---------  ---------------------------------
+  Type     Name                       Default  Description
+  -------- ------------------------ ---------  ---------------------------------
+  string   mpiMode                        mpi  The mode to communicate with the
+                                               worker ranks. `mpi` will assume
+                                               you're launching the application
+                                               and workers in the same mpi
+                                               command (or split launch
+                                               command). `mpi` is the only
+                                               supported mode
 
-: Parameters specific to the `mpiOffload` Device.
+  uint     maxCommandBufferEntries       8192  Set the max number of commands to
+                                               buffer before submitting the
+                                               command buffer to the workers
 
-The `maxCommandBufferEntries`, `commandBufferSize`, and `maxInlineDataSize` can also
-be set via the environment variables: `OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES`,
+  uint     commandBufferSize         512\ MiB  Set the max command buffer size
+                                               to allow. Units are in MiB. Max
+                                               size is 1.8GiB
+
+  uint     maxInlineDataSize          32\ MiB  Set the max size of an OSPData
+                                               which can be inline'd into the
+                                               command buffer instead of being
+                                               sent separately. Max size is half
+                                               the commandBufferSize. Units are
+                                               in MiB
+  -------- ------------------------ ---------  ---------------------------------
+  : Parameters specific to the `mpiOffload` Device.
+
+The `maxCommandBufferEntries`, `commandBufferSize`, and
+`maxInlineDataSize` can also be set via the environment variables:
+`OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES`,
 `OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
 respectively.
 
@@ -2956,15 +3072,13 @@ rendering work without requiring modification to the application, MPI
 Distributed rendering is targetted at use of OSPRay within MPI-parallel
 applications. The MPI distributed device can be selected by loading the
 `mpi` module, and manually creating and using an instance of the
-`mpiDistributed` device.
+`mpiDistributed` device:
 
-```c
-ospLoadModule("mpi");
-
-OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
-ospDeviceCommit(mpiDevice);
-ospSetCurrentDevice(mpiDevice);
-```
+    ospLoadModule("mpi");
+    
+    OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
+    ospDeviceCommit(mpiDevice);
+    ospSetCurrentDevice(mpiDevice);
 
 Your application can either initialize MPI before-hand, ensuring that
 `MPI_THREAD_SERIALIZED` or higher is supported, or allow the device to
@@ -2981,25 +3095,36 @@ however, it can also take a specific MPI communicator to use as the
 world communicator. Only those ranks in the specified communicator will
 participate in rendering.
 
-| Type  | Name              | Default             | Description                |
-|:------|:------------------|--------------------:|:---------------------------|
-| void* | worldCommunicator |    MPI\_COMM\_WORLD | The MPI communicator which the OSPRay workers should treat as their world |
-
-: Parameters specific to the distributed `mpiDistributed` Device.
-
-| Type         | Name    | Default| Description                                |
-|:-------------|:--------|-------:|:-------------------------------------------|
-| OSPBox3f\[\] | region  |    NULL| A list of bounding boxes which bound the owned local data to be rendered by the rank |
-
-: Parameters specific to the distributed `OSPWorld`.
+  -------- ------------------ ----------------  --------------------------------
+  Type     Name                        Default  Description
+  -------- ------------------ ----------------  --------------------------------
+  void\ *  worldCommunicator    MPI_COMM_WORLD  The MPI communicator which the
+                                                OSPRay workers should treat as
+                                                their world
+  -------- ------------------ ----------------  --------------------------------
+  : Parameters specific to the distributed `mpiDistributed` Device.
 
 
-| Type         | Name    | Default| Description                                |
-|:-------------|:--------|-------:|:-------------------------------------------|
-| aoSamples    | int     |      0 | The number of AO samples to take per-pixel |
-| aoRadius     | float   |   1e20f| The AO ray length to use. Note that if the AO ray would have crossed a rank boundary and ghost geometry is not available, there  will be visible artifacts in the shading. |
+  -------- ------- ---------  -----------------------------------------------
+  Type     Name      Default  Description
+  -------- ------- ---------  -----------------------------------------------
+  box3f[]  region       NULL  A list of bounding boxes which bound the owned
+                              local data to be rendered by the rank
+  -------- ------- ---------  -----------------------------------------------
+  : Parameters specific to the distributed `OSPWorld`.
 
-: Parameters specific to the `mpiRaycast` renderer.
+
+  ------ ----------- ---------  ------------------------------------------------
+  Type   Name          Default  Description
+  ------ ----------- ---------  ------------------------------------------------
+  int    aoSamples           0  The number of AO samples to take per-pixel
+
+  float  aoDistance     10^20^  The AO ray length to use. Note that if the AO
+                                ray would have crossed a rank boundary and ghost
+                                geometry is not available, there will be visible
+                                artifacts in the shading
+  ------ ----------- ---------  ------------------------------------------------
+  : Parameters specific to the `mpiRaycast` renderer.
 
 ### Image Parallel Rendering in the MPI Distributed Device
 
@@ -3049,7 +3174,7 @@ Interaction With User Modules
 
 The MPI Offload rendering mode trivially supports user modules, with the
 caveat that attempting to share data directly with the application
-(e.g., passing a `void*` or other tricks to the module) will not work in
+(e.g., passing a `void\ *` or other tricks to the module) will not work in
 a distributed environment. Instead, use the `ospNewSharedData` API to
 share data from the application with OSPRay, which will in turn be
 copied over the network to the workers.
