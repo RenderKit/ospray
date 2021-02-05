@@ -2970,7 +2970,7 @@ This version is the equivalent of:
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
 
-Distributed rendering with MPI
+Distributed Rendering with MPI
 ==============================
 
 The purpose of the MPI module for OSPRay is to provide distributed
