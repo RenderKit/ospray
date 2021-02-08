@@ -33,6 +33,8 @@ Version History
 -   Both geometric and volumetric models can now have their child
     geometry/volume objects rebound using an object parameter
 -   Fix light leaking artifacts at poles of HDRI (and Sun-Sky) light
+-   Add sRGB conversion to `ospExamples` such that the color of the
+    widget for `backgroundColor` actually matches 
 -   Dropping support for MSVC14, new minimum compiler on Windows is
     MSVC15 (Visual Studio 2017)
 

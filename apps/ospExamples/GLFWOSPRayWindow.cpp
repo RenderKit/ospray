@@ -1,4 +1,4 @@
-// Copyright 2018-2020 Intel Corporation
+// Copyright 2018-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "GLFWOSPRayWindow.h"
@@ -561,7 +561,11 @@ void GLFWOSPRayWindow::buildUI()
     addObjectToCommit(renderer->handle());
   }
 
-  if (ImGui::ColorEdit3("backgroundColor", bgColor)) {
+  static vec3f bgColorSRGB{0.0f}; // imGUI's widget implicitely uses sRGB
+  if (ImGui::ColorEdit3("backgroundColor", bgColorSRGB)) {
+    bgColor = vec3f(std::pow(bgColorSRGB.x, 2.2f),
+        std::pow(bgColorSRGB.y, 2.2f),
+        std::pow(bgColorSRGB.z, 2.2f)); // approximate
     rendererPT.setParam("backgroundColor", bgColor);
     rendererSV.setParam("backgroundColor", bgColor);
     rendererAO.setParam("backgroundColor", bgColor);
