@@ -985,7 +985,7 @@ to `ospNewTransferFunction` and it is controlled by these parameters:
 
   Type         Name        Description
   ------------ ----------- ----------------------------------------------
-  vec3f[]      color       [data] array of RGB colors
+  vec3f[]      color       [data] array of colors (linear RGB)
   float[]      opacity     [data] array of opacities
   vec2f        valueRange  domain (scalar range) this function maps from
   ------------ ----------- ----------------------------------------------
@@ -1048,7 +1048,7 @@ recognizes the following parameters:
   -------------------- ---------------- -------------------------------------------------
   vec3f[]              vertex.position  [data] array of vertex positions
   vec3f[]              vertex.normal    [data] array of vertex normals
-  vec4f[] / vec3f[]    vertex.color     [data] array of vertex colors (RGBA/RGB)
+  vec4f[] / vec3f[]    vertex.color     [data] array of vertex colors (linear RGBA/RGB)
   vec2f[]              vertex.texcoord  [data] array of vertex texture coordinates
   vec3ui[] / vec4ui[]  index            [data] array of (either triangle or quad) indices (into the vertex array(s))
   -------------------- ---------------- -------------------------------------------------
@@ -1075,7 +1075,8 @@ the following parameters:
   ------- ------------------- --------------------------------------------------
   vec3f[] vertex.position     [data] array of vertex positions
 
-  vec4f[] vertex.color        optional [data] array of vertex colors (RGBA)
+  vec4f[] vertex.color        optional [data] array of vertex colors (linear
+                              RGBA)
 
   vec2f[] vertex.texcoord     optional [data] array of vertex texture
                               coordinates
@@ -1160,7 +1161,7 @@ this geometry are listed in the table below.
   vec2f[]            vertex.texcoord        [data] array of per-vertex texture coordinates
 
   vec4f[]            vertex.color           [data] array of corresponding vertex
-                                            colors (RGBA)
+                                            colors (linear RGBA)
 
   vec3f[]            vertex.normal          [data] array of curve normals (only for
                                             "ribbon" curves)
@@ -1347,13 +1348,15 @@ with normals oriented outside clips everything what's inside.
                                           an index into the `material` parameter on the
                                           [renderer] (if it exists)
 
-  vec4f                    color          optional color assigned to the geometry
+  vec4f                    color          optional color assigned to the geometry (linear
+                                          RGBA)
 
   OSPMaterial[] / uint32[] material       optional [data] array of (per-primitive) materials,
                                           may be an index into the `material` parameter on
                                           the renderer (if it exists)
 
   vec4f[]                  color          optional [data] array of (per-primitive) colors
+                                          (linear RGBA)
 
   uint8[]                  index          optional [data] array of per-primitive indices into
                                           `color` and `material`
@@ -1377,7 +1380,7 @@ All light sources accept the following parameters:
   --------- ------------------ --------  --------------------------------------------
   Type      Name                Default  Description
   --------- ------------------ --------  --------------------------------------------
-  vec3f     color                 white  color of the light
+  vec3f     color                 white  color of the light (linear RGB)
 
   float     intensity                 1  intensity of the light (a factor)
 
@@ -1808,8 +1811,8 @@ General parameters of all renderers are
 
   float          varianceThreshold                        0  threshold for adaptive accumulation
 
-  float /        backgroundColor                     black,  background color and alpha (RGBA), if no
-  vec3f / vec4f                                 transparent  `map_backplate` is set
+  float /        backgroundColor                     black,  background color and alpha (linear
+  vec3f / vec4f                                 transparent  A/RGB/RGBA), if no `map_backplate` is set
 
   OSPTexture     map_backplate                               optional [texture] image used as background
                                                              (use texture type `texture2d`)
@@ -1998,11 +2001,11 @@ files. To create an OBJ material pass the type string "`obj`" to
 
   Type          Name         Default  Description
   ------------- --------- ----------  -----------------------------------------
-  vec3f         kd         white 0.8  diffuse color
-  vec3f         ks             black  specular color
+  vec3f         kd         white 0.8  diffuse color (linear RGB)
+  vec3f         ks             black  specular color (linear RGB)
   float         ns                10  shininess (Phong exponent), usually in [2–10^4^]
   float         d             opaque  opacity
-  vec3f         tf             black  transparency filter color
+  vec3f         tf             black  transparency filter color (linear RGB)
   OSPTexture    map_bump        NULL  normal map
   ------------- --------- ----------  -----------------------------------------
   : Main parameters of the OBJ material.
@@ -2073,12 +2076,13 @@ reflection, and is energy conserving. To create a Principled material, pass
 the type string "`principled`" to `ospNewMaterial`. Its parameters are
 listed in the table below.
 
-  -------------------------------------------------------------------------------------------
+  ------ ----------------- ----------  ------------------------------------------------------
   Type   Name                 Default  Description
   ------ ----------------- ----------  ------------------------------------------------------
-  vec3f  baseColor          white 0.8  base reflectivity (diffuse and/or metallic)
+  vec3f  baseColor          white 0.8  base reflectivity (diffuse and/or metallic, linear
+                                       RGB)
 
-  vec3f  edgeColor              white  edge tint (metallic only)
+  vec3f  edgeColor              white  edge tint (metallic only, linear RGB)
 
   float  metallic                   0  mix between dielectric (diffuse and/or specular)
                                        and metallic (specular only with complex IOR) in [0–1]
@@ -2091,7 +2095,8 @@ listed in the table below.
 
   float  transmission               0  specular transmission weight in [0–1]
 
-  vec3f  transmissionColor      white  attenuated color due to transmission (Beer's law)
+  vec3f  transmissionColor      white  attenuated color due to transmission (Beer's law,
+                                       linear RGB)
 
   float  transmissionDepth          1  distance at which color attenuation is equal to
                                        transmissionColor
@@ -2111,7 +2116,8 @@ listed in the table below.
   bool   thin                   false  flag specifying whether the material is thin or solid
 
   float  thickness                  1  thickness of the material (thin only), affects the
-                                       amount of color attenuation due to specular transmission
+                                       amount of color attenuation due to specular
+                                       transmission
 
   float  backlight                  0  amount of diffuse transmission (thin only) in [0–2],
                                        1 is 50% reflection and 50% transmission, 2 is
@@ -2121,7 +2127,7 @@ listed in the table below.
 
   float  coatIor                  1.5  clear coat index of refraction
 
-  vec3f  coatColor              white  clear coat color tint
+  vec3f  coatColor              white  clear coat color tint (linear RGB)
 
   float  coatThickness              1  clear coat thickness, affects the amount of color
                                        attenuation
@@ -2132,14 +2138,15 @@ listed in the table below.
 
   float  sheen                      0  sheen layer weight in [0–1]
 
-  vec3f  sheenColor             white  sheen color tint
+  vec3f  sheenColor             white  sheen color tint (linear RGB)
 
-  float  sheenTint                  0  how much sheen is tinted from sheenColor toward baseColor
+  float  sheenTint                  0  how much sheen is tinted from sheenColor toward
+                                       baseColor
 
   float  sheenRoughness           0.2  sheen roughness in [0–1], 0 is perfectly smooth
 
   float  opacity                    1  cut-out opacity/transparency, 1 is fully opaque
-  -------------------------------------------------------------------------------------------
+  ------ ----------------- ----------  ------------------------------------------------------
   : Parameters of the Principled material.
 
 All parameters can be textured by passing a [texture] handle, prefixed
@@ -2156,18 +2163,19 @@ rendering different types of car paints. To create a CarPaint material, pass
 the type string "`carPaint`" to `ospNewMaterial`. Its parameters are listed
 in the table below.
 
-  -------------------------------------------------------------------------------------------
+  ------ ----------------- ----------  ------------------------------------------------------
   Type   Name                 Default  Description
   ------ ----------------- ----------  ------------------------------------------------------
-  vec3f  baseColor          white 0.8  diffuse base reflectivity
+  vec3f  baseColor          white 0.8  diffuse base reflectivity (linear RGB)
 
   float  roughness                  0  diffuse roughness in [0–1], 0 is perfectly smooth
 
   float  normal                     1  normal map/scale
 
-  vec3f  flakeColor         Aluminium  color of metallic flakes
-  float  flakeDensity               0  density of metallic flakes in [0–1], 0 disables flakes,
-                                       1 fully covers the surface with flakes
+  vec3f  flakeColor         Aluminium  color of metallic flakes (linear RGB)
+
+  float  flakeDensity               0  density of metallic flakes in [0–1], 0 disables
+                                       flakes, 1 fully covers the surface with flakes
 
   float  flakeScale               100  scale of the flake structure, higher values increase
                                        the amount of flakes
@@ -2182,7 +2190,7 @@ in the table below.
 
   float  coatIor                  1.5  clear coat index of refraction
 
-  vec3f  coatColor              white  clear coat color tint
+  vec3f  coatColor              white  clear coat color tint (linear RGB)
 
   float  coatThickness              1  clear coat thickness, affects the amount of color
                                        attenuation
@@ -2193,6 +2201,7 @@ in the table below.
 
   vec3f  flipflopColor          white  reflectivity of coated flakes at grazing angle, used
                                        together with coatColor produces a pearlescent paint
+                                       (linear RGB)
 
   float  flipflopFalloff            1  flip flop color falloff, 1 disables the flip flop
                                        effect
@@ -2266,11 +2275,11 @@ color. To create an Alloy material pass the type string "`alloy`" to
 `ospNewMaterial`. Its parameters are
 
   Type   Name          Default  Description
-  ------ ---------- ----------  --------------------------------------------
-  vec3f  color       white 0.9  reflectivity at normal incidence (0 degree)
-  vec3f  edgeColor       white  reflectivity at grazing angle (90 degree)
+  ------ ---------- ----------  --------------------------------------------------------
+  vec3f  color       white 0.9  reflectivity at normal incidence (0 degree, linear RGB)
+  vec3f  edgeColor       white  reflectivity at grazing angle (90 degree, linear RGB)
   float  roughness         0.1  roughness, in [0–1], 0 is perfect mirror
-  ------ ---------- ----------  --------------------------------------------
+  ------ ---------- ----------  --------------------------------------------------------
   : Parameters of the Alloy material.
 
 The main appearance of the Alloy material is controlled by the parameter
@@ -2294,11 +2303,11 @@ varies with the geometric thickness). To create a Glass material pass
 the type string "`glass`" to `ospNewMaterial`. Its parameters are
 
   Type   Name                  Default  Description
-  ------ -------------------- --------  -----------------------------------
+  ------ -------------------- --------  -----------------------------------------------
   float  eta                       1.5  index of refraction
-  vec3f  attenuationColor        white  resulting color due to attenuation
+  vec3f  attenuationColor        white  resulting color due to attenuation (linear RGB)
   float  attenuationDistance         1  distance affecting attenuation
-  ------ -------------------- --------  -----------------------------------
+  ------ -------------------- --------  -----------------------------------------------
   : Parameters of the Glass material.
 
 For convenience, the rather counter-intuitive physical attenuation
@@ -2321,12 +2330,12 @@ thickness. To create a such a thin glass material pass the type string
 "`thinGlass`" to `ospNewMaterial`. Its parameters are
 
   Type      Name                  Default  Description
-  --------- -------------------- --------  -----------------------------------
+  --------- -------------------- --------  ------------------------------------------------
   float     eta                       1.5  index of refraction
-  vec3f     attenuationColor        white  resulting color due to attenuation
+  vec3f     attenuationColor        white  resulting color due to attenuation (linear RGB)
   float     attenuationDistance         1  distance affecting attenuation
   float     thickness                   1  virtual thickness
-  --------- -------------------- --------  -----------------------------------
+  --------- -------------------- --------  ------------------------------------------------
   : Parameters of the ThinGlass material.
 
 For convenience the attenuation is controlled the same way as with the
@@ -2354,13 +2363,13 @@ material pass the type string "`metallicPaint`" to `ospNewMaterial`. Its
 parameters are listed in the table below.
 
   Type      Name            Default  Description
-  --------- ------------ ----------  ----------------------------------
-  vec3f     baseColor     white 0.8  color of base coat
+  --------- ------------ ----------  --------------------------------------
+  vec3f     baseColor     white 0.8  color of base coat (linear RGB)
   float     flakeAmount         0.3  amount of flakes, in [0–1]
-  vec3f     flakeColor    Aluminium  color of metallic flakes
+  vec3f     flakeColor    Aluminium  color of metallic flakes (linear RGB)
   float     flakeSpread         0.5  spread of flakes, in [0–1]
   float     eta                 1.5  index of refraction of clear coat
-  --------- ------------ ----------  ----------------------------------
+  --------- ------------ ----------  --------------------------------------
   : Parameters of the MetallicPaint material.
 
 The color of the base coat `baseColor` can be textured by a [texture]
@@ -2390,7 +2399,7 @@ parameter `intensityQuantity` is not needed because it is always
 
   Type   Name          Default  Description
   ------ ------------ --------  ---------------------------------------
-  vec3f  color           white  color of the emitted light
+  vec3f  color           white  color of the emitted light (linear RGB)
   float  intensity           1  intensity of the light (a factor)
   float  transparency        1  material transparency
   ------ ------------ --------  ---------------------------------------

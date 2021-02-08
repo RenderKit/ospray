@@ -136,7 +136,7 @@ sudo port install cmake tbb
 
 Under Windows please directly use the appropriate installers for
 [CMake](https://cmake.org/download/),
-[TBB](https://github.com/01org/tbb/releases),
+[TBB](https://github.com/oneapi-src/oneTBB/releases),
 [ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
 version) and [Embree](https://github.com/embree/embree/releases/).
 
@@ -1189,7 +1189,7 @@ and opacities. It is create by passing the string “`piecewiseLinear`” to
 
 | Type      | Name       | Description                                   |
 |:----------|:-----------|:----------------------------------------------|
-| vec3f\[\] | color      | [data](#data) array of RGB colors             |
+| vec3f\[\] | color      | [data](#data) array of colors (linear RGB)    |
 | float\[\] | opacity    | [data](#data) array of opacities              |
 | vec2f     | valueRange | domain (scalar range) this function maps from |
 
@@ -1247,7 +1247,7 @@ recognizes the following parameters:
 |:------------------------|:----------------|:------------------------------------------------------------------------------------|
 | vec3f\[\]               | vertex.position | [data](#data) array of vertex positions                                             |
 | vec3f\[\]               | vertex.normal   | [data](#data) array of vertex normals                                               |
-| vec4f\[\] / vec3f\[\]   | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)                                     |
+| vec4f\[\] / vec3f\[\]   | vertex.color    | [data](#data) array of vertex colors (linear RGBA/RGB)                              |
 | vec2f\[\]               | vertex.texcoord | [data](#data) array of vertex texture coordinates                                   |
 | vec3ui\[\] / vec4ui\[\] | index           | [data](#data) array of (either triangle or quad) indices (into the vertex array(s)) |
 
@@ -1272,7 +1272,7 @@ the following parameters:
 | Type      | Name                | Description                                                                                                           |
 |:----------|:--------------------|:----------------------------------------------------------------------------------------------------------------------|
 | vec3f\[\] | vertex.position     | [data](#data) array of vertex positions                                                                               |
-| vec4f\[\] | vertex.color        | optional [data](#data) array of vertex colors (RGBA)                                                                  |
+| vec4f\[\] | vertex.color        | optional [data](#data) array of vertex colors (linear RGBA)                                                           |
 | vec2f\[\] | vertex.texcoord     | optional [data](#data) array of vertex texture coordinates                                                            |
 | float     | level               | global level of tessellation, default 5                                                                               |
 | uint\[\]  | index               | [data](#data) array of indices (into the vertex array(s))                                                             |
@@ -1325,7 +1325,7 @@ this geometry are listed in the table below.
 |:-----------|:-----------------------|:---------------------------------------------------------------------------------|
 | vec4f\[\]  | vertex.position_radius | [data](#data) array of vertex position and per-vertex radius                     |
 | vec2f\[\]  | vertex.texcoord        | [data](#data) array of per-vertex texture coordinates                            |
-| vec4f\[\]  | vertex.color           | [data](#data) array of corresponding vertex colors (RGBA)                        |
+| vec4f\[\]  | vertex.color           | [data](#data) array of corresponding vertex colors (linear RGBA)                 |
 | vec3f\[\]  | vertex.normal          | [data](#data) array of curve normals (only for “ribbon” curves)                  |
 | vec4f\[\]  | vertex.tangent         | [data](#data) array of curve tangents (only for “hermite” curves)                |
 | uint32\[\] | index                  | [data](#data) array of indices to the first vertex or tangent of a curve segment |
@@ -1435,7 +1435,7 @@ infinite but their extents can be limited by defining optional bounding
 boxes. A planes geometry can be created by calling `ospNewGeometry` with
 type string “`plane`”.
 
-| Type      | Name Descript      | ion                                                      |
+| Type      | Name               | Description                                              |
 |:----------|:-------------------|:---------------------------------------------------------|
 | vec4f\[\] | plane.coefficients | [data](#data) array of plane coefficients $(a, b, c, d)$ |
 | box3f\[\] | plane.bounds       | optional [data](#data) array of bounding boxes           |
@@ -1494,9 +1494,9 @@ with normals oriented outside clips everything what’s inside.
 | Type                         | Name          | Description                                                                                                                                         |
 |:-----------------------------|:--------------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
 | OSPMaterial / uint32         | material      | optional [material](#materials) applied to the geometry, may be an index into the `material` parameter on the [renderer](#renderers) (if it exists) |
-| vec4f                        | color         | optional color assigned to the geometry                                                                                                             |
+| vec4f                        | color         | optional color assigned to the geometry (linear RGBA)                                                                                               |
 | OSPMaterial\[\] / uint32\[\] | material      | optional [data](#data) array of (per-primitive) materials, may be an index into the `material` parameter on the renderer (if it exists)             |
-| vec4f\[\]                    | color         | optional [data](#data) array of (per-primitive) colors                                                                                              |
+| vec4f\[\]                    | color         | optional [data](#data) array of (per-primitive) colors (linear RGBA)                                                                                |
 | uint8\[\]                    | index         | optional [data](#data) array of per-primitive indices into `color` and `material`                                                                   |
 | bool                         | invertNormals | inverts all shading normals (Ns), default false                                                                                                     |
 | OSPGeometry                  | geometry      | optional \[geometry\] object this model references                                                                                                  |
@@ -1516,7 +1516,7 @@ All light sources accept the following parameters:
 
 | Type  | Name              | Default | Description                                                                                                                     |
 |:------|:------------------|--------:|:--------------------------------------------------------------------------------------------------------------------------------|
-| vec3f | color             |   white | color of the light                                                                                                              |
+| vec3f | color             |   white | color of the light (linear RGB)                                                                                                 |
 | float | intensity         |       1 | intensity of the light (a factor)                                                                                               |
 | uchar | intensityQuantity |         | `OSPIntensityQuantity` to set the radiative quantity represented by `intensity`. The default value depends on the light source. |
 | bool  | visible           |    true | whether the light can be directly seen                                                                                          |
@@ -1867,7 +1867,7 @@ General parameters of all renderers are
 | int                   | maxPathLength     |                      20 | maximum ray recursion depth                                                                                                                 |
 | float                 | minContribution   |                   0.001 | sample contributions below this value will be neglected to speedup rendering                                                                |
 | float                 | varianceThreshold |                       0 | threshold for adaptive accumulation                                                                                                         |
-| float / vec3f / vec4f | backgroundColor   |      black, transparent | background color and alpha (RGBA), if no `map_backplate` is set                                                                             |
+| float / vec3f / vec4f | backgroundColor   |      black, transparent | background color and alpha (linear A/RGB/RGBA), if no `map_backplate` is set                                                                |
 | OSPTexture            | map_backplate     |                         | optional [texture](#texture) image used as background (use texture type `texture2d`)                                                        |
 | OSPTexture            | map_maxDepth      |                         | optional screen-sized float [texture](#texture) with maximum far distance per pixel (use texture type `texture2d`)                          |
 | OSPMaterial\[\]       | material          |                         | optional [data](#data) array of [materials](#materials) which can be indexed by a [GeometricModel](#geometricmodels)’s `material` parameter |
@@ -2013,11 +2013,11 @@ files. To create an OBJ material pass the type string “`obj`” to
 
 | Type       | Name     |   Default | Description                                        |
 |:-----------|:---------|----------:|:---------------------------------------------------|
-| vec3f      | kd       | white 0.8 | diffuse color                                      |
-| vec3f      | ks       |     black | specular color                                     |
+| vec3f      | kd       | white 0.8 | diffuse color (linear RGB)                         |
+| vec3f      | ks       |     black | specular color (linear RGB)                        |
 | float      | ns       |        10 | shininess (Phong exponent), usually in \[2–10^4^\] |
 | float      | d        |    opaque | opacity                                            |
-| vec3f      | tf       |     black | transparency filter color                          |
+| vec3f      | tf       |     black | transparency filter color (linear RGB)             |
 | OSPTexture | map_bump |      NULL | normal map                                         |
 
 : Main parameters of the OBJ material.
@@ -2098,14 +2098,14 @@ table below.
 
 | Type  | Name              |   Default | Description                                                                                                             |
 |:------|:------------------|----------:|:------------------------------------------------------------------------------------------------------------------------|
-| vec3f | baseColor         | white 0.8 | base reflectivity (diffuse and/or metallic)                                                                             |
-| vec3f | edgeColor         |     white | edge tint (metallic only)                                                                                               |
+| vec3f | baseColor         | white 0.8 | base reflectivity (diffuse and/or metallic, linear RGB)                                                                 |
+| vec3f | edgeColor         |     white | edge tint (metallic only, linear RGB)                                                                                   |
 | float | metallic          |         0 | mix between dielectric (diffuse and/or specular) and metallic (specular only with complex IOR) in \[0–1\]               |
 | float | diffuse           |         1 | diffuse reflection weight in \[0–1\]                                                                                    |
 | float | specular          |         1 | specular reflection/transmission weight in \[0–1\]                                                                      |
 | float | ior               |         1 | dielectric index of refraction                                                                                          |
 | float | transmission      |         0 | specular transmission weight in \[0–1\]                                                                                 |
-| vec3f | transmissionColor |     white | attenuated color due to transmission (Beer’s law)                                                                       |
+| vec3f | transmissionColor |     white | attenuated color due to transmission (Beer’s law, linear RGB)                                                           |
 | float | transmissionDepth |         1 | distance at which color attenuation is equal to transmissionColor                                                       |
 | float | roughness         |         0 | diffuse and specular roughness in \[0–1\], 0 is perfectly smooth                                                        |
 | float | anisotropy        |         0 | amount of specular anisotropy in \[0–1\]                                                                                |
@@ -2117,12 +2117,12 @@ table below.
 | float | backlight         |         0 | amount of diffuse transmission (thin only) in \[0–2\], 1 is 50% reflection and 50% transmission, 2 is transmission only |
 | float | coat              |         0 | clear coat layer weight in \[0–1\]                                                                                      |
 | float | coatIor           |       1.5 | clear coat index of refraction                                                                                          |
-| vec3f | coatColor         |     white | clear coat color tint                                                                                                   |
+| vec3f | coatColor         |     white | clear coat color tint (linear RGB)                                                                                      |
 | float | coatThickness     |         1 | clear coat thickness, affects the amount of color attenuation                                                           |
 | float | coatRoughness     |         0 | clear coat roughness in \[0–1\], 0 is perfectly smooth                                                                  |
 | float | coatNormal        |         1 | clear coat normal map/scale (overrides default normal)                                                                  |
 | float | sheen             |         0 | sheen layer weight in \[0–1\]                                                                                           |
-| vec3f | sheenColor        |     white | sheen color tint                                                                                                        |
+| vec3f | sheenColor        |     white | sheen color tint (linear RGB)                                                                                           |
 | float | sheenTint         |         0 | how much sheen is tinted from sheenColor toward baseColor                                                               |
 | float | sheenRoughness    |       0.2 | sheen roughness in \[0–1\], 0 is perfectly smooth                                                                       |
 | float | opacity           |         1 | cut-out opacity/transparency, 1 is fully opaque                                                                         |
@@ -2146,24 +2146,25 @@ material for rendering different types of car paints. To create a
 CarPaint material, pass the type string “`carPaint`” to
 `ospNewMaterial`. Its parameters are listed in the table below.
 
-| Type        | Name                    |     Default | Description                                                                                                               |
-|:------------|:------------------------|------------:|:--------------------------------------------------------------------------------------------------------------------------|
-| vec3f       | baseColor               |   white 0.8 | diffuse base reflectivity                                                                                                 |
-| float       | roughness               |           0 | diffuse roughness in \[0–1\], 0 is perfectly smooth                                                                       |
-| float       | normal                  |           1 | normal map/scale                                                                                                          |
-| vec3f float | flakeColor flakeDensity | Aluminium 0 | color of metallic flakes density of metallic flakes in \[0–1\], 0 disables flakes, 1 fully covers the surface with flakes |
-| float       | flakeScale              |         100 | scale of the flake structure, higher values increase the amount of flakes                                                 |
-| float       | flakeSpread             |         0.3 | flake spread in \[0–1\]                                                                                                   |
-| float       | flakeJitter             |        0.75 | flake randomness in \[0–1\]                                                                                               |
-| float       | flakeRoughness          |         0.3 | flake roughness in \[0–1\], 0 is perfectly smooth                                                                         |
-| float       | coat                    |           1 | clear coat layer weight in \[0–1\]                                                                                        |
-| float       | coatIor                 |         1.5 | clear coat index of refraction                                                                                            |
-| vec3f       | coatColor               |       white | clear coat color tint                                                                                                     |
-| float       | coatThickness           |           1 | clear coat thickness, affects the amount of color attenuation                                                             |
-| float       | coatRoughness           |           0 | clear coat roughness in \[0–1\], 0 is perfectly smooth                                                                    |
-| float       | coatNormal              |           1 | clear coat normal map/scale                                                                                               |
-| vec3f       | flipflopColor           |       white | reflectivity of coated flakes at grazing angle, used together with coatColor produces a pearlescent paint                 |
-| float       | flipflopFalloff         |           1 | flip flop color falloff, 1 disables the flip flop effect                                                                  |
+| Type  | Name            |   Default | Description                                                                                                            |
+|:------|:----------------|----------:|:-----------------------------------------------------------------------------------------------------------------------|
+| vec3f | baseColor       | white 0.8 | diffuse base reflectivity (linear RGB)                                                                                 |
+| float | roughness       |         0 | diffuse roughness in \[0–1\], 0 is perfectly smooth                                                                    |
+| float | normal          |         1 | normal map/scale                                                                                                       |
+| vec3f | flakeColor      | Aluminium | color of metallic flakes (linear RGB)                                                                                  |
+| float | flakeDensity    |         0 | density of metallic flakes in \[0–1\], 0 disables flakes, 1 fully covers the surface with flakes                       |
+| float | flakeScale      |       100 | scale of the flake structure, higher values increase the amount of flakes                                              |
+| float | flakeSpread     |       0.3 | flake spread in \[0–1\]                                                                                                |
+| float | flakeJitter     |      0.75 | flake randomness in \[0–1\]                                                                                            |
+| float | flakeRoughness  |       0.3 | flake roughness in \[0–1\], 0 is perfectly smooth                                                                      |
+| float | coat            |         1 | clear coat layer weight in \[0–1\]                                                                                     |
+| float | coatIor         |       1.5 | clear coat index of refraction                                                                                         |
+| vec3f | coatColor       |     white | clear coat color tint (linear RGB)                                                                                     |
+| float | coatThickness   |         1 | clear coat thickness, affects the amount of color attenuation                                                          |
+| float | coatRoughness   |         0 | clear coat roughness in \[0–1\], 0 is perfectly smooth                                                                 |
+| float | coatNormal      |         1 | clear coat normal map/scale                                                                                            |
+| vec3f | flipflopColor   |     white | reflectivity of coated flakes at grazing angle, used together with coatColor produces a pearlescent paint (linear RGB) |
+| float | flipflopFalloff |         1 | flip flop color falloff, 1 disables the flip flop effect                                                               |
 
 : Parameters of the CarPaint material.
 
@@ -2235,11 +2236,11 @@ similar to [Metal](#metal), but allows for more intuitive and flexible
 control of the color. To create an Alloy material pass the type string
 “`alloy`” to `ospNewMaterial`. Its parameters are
 
-| Type  | Name      |   Default | Description                                 |
-|:------|:----------|----------:|:--------------------------------------------|
-| vec3f | color     | white 0.9 | reflectivity at normal incidence (0 degree) |
-| vec3f | edgeColor |     white | reflectivity at grazing angle (90 degree)   |
-| float | roughness |       0.1 | roughness, in \[0–1\], 0 is perfect mirror  |
+| Type  | Name      |   Default | Description                                             |
+|:------|:----------|----------:|:--------------------------------------------------------|
+| vec3f | color     | white 0.9 | reflectivity at normal incidence (0 degree, linear RGB) |
+| vec3f | edgeColor |     white | reflectivity at grazing angle (90 degree, linear RGB)   |
+| float | roughness |       0.1 | roughness, in \[0–1\], 0 is perfect mirror              |
 
 : Parameters of the Alloy material.
 
@@ -2266,11 +2267,11 @@ supporting refraction and volumetric attenuation (i.e., the transparency
 color varies with the geometric thickness). To create a Glass material
 pass the type string “`glass`” to `ospNewMaterial`. Its parameters are
 
-| Type  | Name                | Default | Description                        |
-|:------|:--------------------|--------:|:-----------------------------------|
-| float | eta                 |     1.5 | index of refraction                |
-| vec3f | attenuationColor    |   white | resulting color due to attenuation |
-| float | attenuationDistance |       1 | distance affecting attenuation     |
+| Type  | Name                | Default | Description                                     |
+|:------|:--------------------|--------:|:------------------------------------------------|
+| float | eta                 |     1.5 | index of refraction                             |
+| vec3f | attenuationColor    |   white | resulting color due to attenuation (linear RGB) |
+| float | attenuationDistance |       1 | distance affecting attenuation                  |
 
 : Parameters of the Glass material.
 
@@ -2296,12 +2297,12 @@ accounts for multiple internal reflections between the interfaces
 (virtual) thickness. To create a such a thin glass material pass the
 type string “`thinGlass`” to `ospNewMaterial`. Its parameters are
 
-| Type  | Name                | Default | Description                        |
-|:------|:--------------------|--------:|:-----------------------------------|
-| float | eta                 |     1.5 | index of refraction                |
-| vec3f | attenuationColor    |   white | resulting color due to attenuation |
-| float | attenuationDistance |       1 | distance affecting attenuation     |
-| float | thickness           |       1 | virtual thickness                  |
+| Type  | Name                | Default | Description                                     |
+|:------|:--------------------|--------:|:------------------------------------------------|
+| float | eta                 |     1.5 | index of refraction                             |
+| vec3f | attenuationColor    |   white | resulting color due to attenuation (linear RGB) |
+| float | attenuationDistance |       1 | distance affecting attenuation                  |
+| float | thickness           |       1 | virtual thickness                               |
 
 : Parameters of the ThinGlass material.
 
@@ -2335,13 +2336,13 @@ consisting of a base coat with optional flakes and a clear coat. To
 create a MetallicPaint material pass the type string “`metallicPaint`”
 to `ospNewMaterial`. Its parameters are listed in the table below.
 
-| Type  | Name        |   Default | Description                       |
-|:------|:------------|----------:|:----------------------------------|
-| vec3f | baseColor   | white 0.8 | color of base coat                |
-| float | flakeAmount |       0.3 | amount of flakes, in \[0–1\]      |
-| vec3f | flakeColor  | Aluminium | color of metallic flakes          |
-| float | flakeSpread |       0.5 | spread of flakes, in \[0–1\]      |
-| float | eta         |       1.5 | index of refraction of clear coat |
+| Type  | Name        |   Default | Description                           |
+|:------|:------------|----------:|:--------------------------------------|
+| vec3f | baseColor   | white 0.8 | color of base coat (linear RGB)       |
+| float | flakeAmount |       0.3 | amount of flakes, in \[0–1\]          |
+| vec3f | flakeColor  | Aluminium | color of metallic flakes (linear RGB) |
+| float | flakeSpread |       0.5 | spread of flakes, in \[0–1\]          |
+| float | eta         |       1.5 | index of refraction of clear coat     |
 
 : Parameters of the MetallicPaint material.
 
@@ -2374,11 +2375,11 @@ parameters of lights: [`color` and `intensity`](#lights) (which
 essentially means that parameter `intensityQuantity` is not needed
 because it is always `OSP_INTENSITY_QUANTITY_RADIANCE`).
 
-| Type  | Name         | Default | Description                       |
-|:------|:-------------|--------:|:----------------------------------|
-| vec3f | color        |   white | color of the emitted light        |
-| float | intensity    |       1 | intensity of the light (a factor) |
-| float | transparency |       1 | material transparency             |
+| Type  | Name         | Default | Description                             |
+|:------|:-------------|--------:|:----------------------------------------|
+| vec3f | color        |   white | color of the emitted light (linear RGB) |
+| float | intensity    |       1 | intensity of the light (a factor)       |
+| float | transparency |       1 | material transparency                   |
 
 : Parameters accepted by the Luminous material.
 
@@ -2966,7 +2967,7 @@ return ospGetVariance(fb)
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
 
-Distributed rendering with MPI
+Distributed Rendering with MPI
 ==============================
 
 The purpose of the MPI module for OSPRay is to provide distributed

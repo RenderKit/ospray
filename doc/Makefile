@@ -180,7 +180,7 @@ tmp/compilation.md: compilation.md tmp/links_local.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
 ../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/tutorials.md
-	$(PANDOC) --file-scope $+ -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
+	$(PANDOC) --file-scope $+ --markdown-headings=setext -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
 
 ### pdf
 ########################################################################
