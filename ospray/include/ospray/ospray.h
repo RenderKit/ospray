@@ -243,8 +243,10 @@ OSPRAY_INTERFACE OSPCamera ospNewCamera(const char *type);
 OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
 
-OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(OSPGeometry geom OSP_DEFAULT_VAL(NULL));
-OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume OSP_DEFAULT_VAL(NULL));
+OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(
+    OSPGeometry geom OSP_DEFAULT_VAL(NULL));
+OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(
+    OSPVolume volume OSP_DEFAULT_VAL(NULL));
 
 // Model Meta-Data //////////////////////////////////////////////////////////
 
@@ -290,7 +292,8 @@ OSPRAY_INTERFACE void ospRetain(OSPObject);
 
 // FrameBuffer Manipulation /////////////////////////////////////////////////
 
-OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(int size_x, int size_y,
+OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(int size_x,
+    int size_y,
     OSPFrameBufferFormat format OSP_DEFAULT_VAL(OSP_FB_SRGBA),
     uint32_t frameBufferChannels OSP_DEFAULT_VAL(OSP_FB_COLOR));
 
