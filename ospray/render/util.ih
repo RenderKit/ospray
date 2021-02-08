@@ -4,7 +4,7 @@
 #pragma once
 
 #include "common/World.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/vec.ih"
 
 inline vec3f make_random_color(const int i)
 {

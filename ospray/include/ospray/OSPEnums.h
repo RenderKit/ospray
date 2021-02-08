@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // This header is shared with ISPC
@@ -72,6 +72,9 @@ typedef enum
 
   // Character scalar type.
   OSP_CHAR = 2000,
+  OSP_VEC2C,
+  OSP_VEC3C,
+  OSP_VEC4C,
 
   // Unsigned character scalar and vector types.
   OSP_UCHAR = 2500,
@@ -83,6 +86,9 @@ typedef enum
 
   // Signed 16-bit integer scalar.
   OSP_SHORT = 3000,
+  OSP_VEC2S,
+  OSP_VEC3S,
+  OSP_VEC4S,
 
   // Unsigned 16-bit integer scalar.
   OSP_USHORT = 3500,
@@ -122,6 +128,9 @@ typedef enum
 
   // Double precision floating point scalar type.
   OSP_DOUBLE = 7000,
+  OSP_VEC2D,
+  OSP_VEC3D,
+  OSP_VEC4D,
 
   // Signed 32-bit integer N-dimensional box types
   OSP_BOX1I = 8000,
@@ -275,6 +284,7 @@ typedef enum
   OSP_ROUND,
   OSP_FLAT,
   OSP_RIBBON,
+  OSP_DISJOINT,
   OSP_UNKNOWN_CURVE_TYPE = 255
 } OSPCurveType;
 
@@ -336,3 +346,16 @@ typedef enum
   OSP_PIXELFILTER_MITCHELL,
   OSP_PIXELFILTER_BLACKMAN_HARRIS
 } OSPPixelFilterTypes;
+
+// OSPRay light quantity types
+typedef enum
+#if __cplusplus >= 201103L
+    : uint8_t
+#endif
+{
+  OSP_INTENSITY_QUANTITY_RADIANCE, // unit W/sr/m^2
+  OSP_INTENSITY_QUANTITY_IRRADIANCE, // unit W/m^2
+  OSP_INTENSITY_QUANTITY_INTENSITY, // radiant intensity, unit W/sr
+  OSP_INTENSITY_QUANTITY_POWER, // radiant flux, unit W
+  OSP_INTENSITY_QUANTITY_UNKNOWN
+} OSPIntensityQuantity;

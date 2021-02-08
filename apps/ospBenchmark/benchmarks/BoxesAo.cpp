@@ -6,13 +6,12 @@
 class Boxes : public BaseFixture
 {
  public:
-  Boxes(const std::string &s, const std::string &r, int ao)
-      : BaseFixture(s, r), aoSamples(ao)
-  {
-    SetName(s + "/ao_" + std::to_string(ao) + "/" + r);
-  }
+  Boxes(
+      const std::string &n, const std::string &s, const std::string &r, int ao)
+      : BaseFixture(n + s + "/ao_" + std::to_string(ao), s, r), aoSamples(ao)
+  {}
 
-  void SetRendererParameters(cpp::Renderer r)
+  void SetRendererParameters(cpp::Renderer r) override
   {
     r.setParam("aoSamples", aoSamples);
   }
@@ -29,3 +28,4 @@ OSPRAY_DEFINE_BENCHMARK(Boxes, "boxes", "scivis", 0);
 OSPRAY_DEFINE_BENCHMARK(Boxes, "boxes", "scivis", 1);
 OSPRAY_DEFINE_BENCHMARK(Boxes, "boxes", "scivis", 16);
 OSPRAY_DEFINE_BENCHMARK(Boxes, "boxes", "scivis", 256);
+OSPRAY_DEFINE_SETUP_BENCHMARK(Boxes, "boxes", "ao", 256);

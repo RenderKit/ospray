@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PathTracer.h"
@@ -86,6 +86,7 @@ void PathTracer::generateGeometryLights(
 void PathTracer::commit()
 {
   Renderer::commit();
+  rendererValid = false;
 
   const int32 rouletteDepth = getParam<int>("roulettePathLength", 5);
   const int32 numLightSamples = getParam<int>("lightSamples", -1);
@@ -107,7 +108,7 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   if (!world)
     return nullptr;
 
-  if (world->pathtracerDataValid)
+  if (world->pathtracerDataValid && rendererValid)
     return nullptr;
 
   std::vector<void *> lightArray;
@@ -131,6 +132,7 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
       world->getIE(), lightPtr, lightArray.size(), geometryLights);
 
   world->pathtracerDataValid = true;
+  rendererValid = true;
 
   return nullptr;
 }

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "math/vec.ih"
+#include "rkcommon/math/vec.ih"
 
 struct PixelFilter;
 

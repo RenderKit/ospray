@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,7 +12,7 @@ struct Ray;
 
 #include "render/pathtracer/PathStructs.ih"
 
-#include "math/vec.ih"
+#include "rkcommon/math/vec.ih"
 #include "volume/VolumetricModel.ih"
 
 float volumeSampleFreePath(const PathState &pathState,

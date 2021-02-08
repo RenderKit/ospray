@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -45,7 +45,6 @@ struct Light
 {
   Light_SampleFunc sample;
   Light_EvalFunc eval;
-  vec3f radiance; // or power; = color * intensity
   bool isVisible; // either directly in camera, or via a straight path (i.e.
                   // through ThinGlass)
   float selectionPDF; // the PDF of selecting the light from the renderers light

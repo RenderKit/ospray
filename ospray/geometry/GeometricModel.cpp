@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -13,7 +13,7 @@ namespace ospray {
 GeometricModel::GeometricModel(Geometry *_geometry)
 {
   managedObjectType = OSP_GEOMETRIC_MODEL;
-  geom = _geometry;
+  geomAPI = _geometry;
   this->ispcEquivalent = ispc::GeometricModel_create(this);
 }
 
@@ -24,6 +24,14 @@ std::string GeometricModel::toString() const
 
 void GeometricModel::commit()
 {
+  if (hasParam("geometry"))
+    geom = (Geometry *)getParamObject("geometry");
+  else
+    geom = geomAPI;
+
+  if (geom.ptr == nullptr)
+    throw std::runtime_error("geometric model received null geometry");
+
   bool useRendererMaterialList = false;
   materialData = getParamDataT<Material *>("material", false, true);
   if (materialData) {

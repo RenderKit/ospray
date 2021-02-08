@@ -4,20 +4,20 @@
 #pragma once
 
 #include "halton.ih"
+#include "rkcommon/math/vec.ih"
 #include "sobol.ih"
-#include "vec.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Hash functions
 
-inline unsigned int MurmurHash3_mix(unsigned int hash, unsigned int k)
+inline uint32 MurmurHash3_mix(uint32 hash, uint32 k)
 {
-  const unsigned int c1 = 0xcc9e2d51;
-  const unsigned int c2 = 0x1b873593;
-  const unsigned int r1 = 15;
-  const unsigned int r2 = 13;
-  const unsigned int m = 5;
-  const unsigned int n = 0xe6546b64;
+  const uint32 c1 = 0xcc9e2d51;
+  const uint32 c2 = 0x1b873593;
+  const uint32 r1 = 15;
+  const uint32 r2 = 13;
+  const uint32 m = 5;
+  const uint32 n = 0xe6546b64;
 
   k *= c1;
   k = (k << r1) | (k >> (32 - r1));
@@ -29,7 +29,7 @@ inline unsigned int MurmurHash3_mix(unsigned int hash, unsigned int k)
   return hash;
 }
 
-inline unsigned int MurmurHash3_finalize(unsigned int hash)
+inline uint32 MurmurHash3_finalize(uint32 hash)
 {
   hash ^= hash >> 16;
   hash *= 0x85ebca6b;
@@ -40,7 +40,7 @@ inline unsigned int MurmurHash3_finalize(unsigned int hash)
   return hash;
 }
 
-inline unsigned int hashToRandom(unsigned int value, unsigned int scramble)
+inline uint32 hashToRandom(uint32 value, uint32 scramble)
 {
   value = (value ^ 61) ^ scramble;
   value += value << 3;
@@ -85,31 +85,28 @@ inline float radicalInverse(uint32 idx, const uint32 base)
 ////////////////////V///////////////////////////////////////////////////////////
 // PCG pseudo-random number generator http://www.pcg-random.org/
 
-typedef unsigned int uint32_t;
-typedef unsigned int64 uint64_t;
-
 struct RandomSampler
 {
-  uint64_t state;
-  uint64_t stream;
+  uint64 state;
+  uint64 stream;
 };
 
-inline uint32_t RandomSampler__pcg32(varying RandomSampler *uniform self)
+inline uint32 RandomSampler__pcg32(varying RandomSampler *uniform self)
 {
-  uint64_t oldstate = self->state;
+  uint64 oldstate = self->state;
   self->state = oldstate * 6364136223846793005ULL + (self->stream | 1u);
-  uint32_t xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
-  uint32_t rot = oldstate >> 59u;
+  uint32 xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
+  uint32 rot = oldstate >> 59u;
   return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
 }
 
 inline float RandomSampler_getFloat(varying RandomSampler *uniform self)
 {
-  return ldexp((double)RandomSampler__pcg32(self), -32);
+  return to_float_unorm(RandomSampler__pcg32(self));
 }
 
 inline void RandomSampler_init(
-    varying RandomSampler *uniform self, uint64_t seed, uint64_t stream)
+    varying RandomSampler *uniform self, uint64 seed, uint64 stream)
 {
   self->state = 0;
   self->stream = (stream << 1u) | 1u;
@@ -123,8 +120,7 @@ inline void RandomSampler_init(
   RandomSampler__pcg32(self);
 }
 
-inline void RandomSampler_init(
-    varying RandomSampler *uniform self, uint64_t seed)
+inline void RandomSampler_init(varying RandomSampler *uniform self, uint64 seed)
 {
   RandomSampler_init(self, seed, 0);
 }
@@ -132,71 +128,73 @@ inline void RandomSampler_init(
 ///////////////////////////////////////////////////////////////////////////////
 // TEA - Random numbers based on Tiny Encryption Algorithm
 
-inline void tea8(unsigned int &v0, unsigned int &v1)
+inline void tea8(uint32 &_v0, uint32 &_v1)
 {
-  unsigned int sum = 0;
+  uint32 v0  = _v0; // operate on registers to avoid slowdown
+  uint32 v1  = _v1;
+  uint32 sum = 0;
 
   for (uniform int i = 0; i < 8; i++) { // just 8 instead of 32 rounds
     sum += 0x9e3779b9;
     v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + sum) ^ ((v1 >> 5) + 0xc8013ea4);
     v1 += ((v0 << 4) + 0xad90777d) ^ (v0 + sum) ^ ((v0 >> 5) + 0x7e95761e);
   }
+  _v0  = v0;
+  _v1  = v1;
 }
 
 struct RandomTEA
 {
-  unsigned int v0, v1;
+  vec2ui state;
 };
 
-inline void RandomTEA__Constructor(varying RandomTEA *uniform this,
-    const unsigned int idx,
-    const unsigned int seed)
+inline void RandomTEA__Constructor(
+    varying RandomTEA *uniform self, const uint32 idx, const uint32 seed)
 {
-  this->v0 = idx;
-  this->v1 = seed;
+  self->state.x = idx;
+  self->state.y = seed;
 }
 
-inline varying vec2f RandomTEA__getFloats(varying RandomTEA *uniform this)
+inline varying vec2f RandomTEA__getFloats(varying RandomTEA *uniform self)
 {
-  tea8(this->v0, this->v1);
-  const float tofloat = 2.3283064365386962890625e-10f; // 1/2^32
-  return make_vec2f(this->v0 * tofloat, this->v1 * tofloat);
+  tea8(self->state.x, self->state.y);
+  return to_float_unorm(self->state);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // LCG - Linear Congruential Generator
 
-inline unsigned int LCG_init(unsigned int pixelID, unsigned int sampleIndex)
+inline uint32 LCG_init(uint32 pixelID, uint32 sampleIndex)
 {
-  unsigned int state = 0;
+  uint32 state = 0;
   state = MurmurHash3_mix(state, pixelID);
   state = MurmurHash3_mix(state, sampleIndex);
   state = MurmurHash3_finalize(state);
   return state;
 }
 
-inline unsigned int LCG_next(unsigned int value)
+inline uint32 LCG_next(uint32 value)
 {
-  const unsigned int m = 1664525;
-  const unsigned int n = 1013904223;
+  const uint32 m = 1664525;
+  const uint32 n = 1013904223;
 
   return value * m + n;
 }
 
-inline float LCG_getFloat(unsigned int &state)
+inline float LCG_getFloat(uint32 &state)
 {
   state = LCG_next(state);
   return to_float_unorm(state);
 }
 
-inline vec2f LCG_getFloat2(unsigned int &state)
+inline vec2f LCG_getFloat2(uint32 &state)
 {
   const float x = LCG_getFloat(state);
   const float y = LCG_getFloat(state);
   return make_vec2f(x, y);
 }
 
-inline vec3f LCG_getFloat3(unsigned int &state)
+inline vec3f LCG_getFloat3(uint32 &state)
 {
   const float x = LCG_getFloat(state);
   const float y = LCG_getFloat(state);
@@ -209,19 +207,18 @@ inline vec3f LCG_getFloat3(unsigned int &state)
 
 struct LDSampler
 {
-  unsigned int index; // sample index
-  unsigned int scramble; // random number for scrambling the samples
-  unsigned int lcg; // LCG used when we run out of dimensions
+  uint32 index; // sample index
+  uint32 scramble; // random number for scrambling the samples
+  uint32 lcg; // LCG used when we run out of dimensions
 };
 
-inline void LDSampler_init(varying LDSampler *uniform self,
-    unsigned int pixelID,
-    unsigned int sampleIndex)
+inline void LDSampler_init(
+    varying LDSampler *uniform self, uint32 pixelID, uint32 sampleIndex)
 {
   // skip the first few samples to reduce correlation artifacts
   self->index = sampleIndex + 64;
 
-  unsigned int hash = 0;
+  uint32 hash = 0;
   hash = MurmurHash3_mix(hash, pixelID);
   self->scramble = MurmurHash3_finalize(hash);
 
@@ -230,7 +227,7 @@ inline void LDSampler_init(varying LDSampler *uniform self,
 }
 
 inline float LDSampler_getFloat(
-    varying LDSampler *uniform self, uniform unsigned int dimension)
+    varying LDSampler *uniform self, uniform uint32 dimension)
 {
   if (dimension >= Sobol_numDimensions)
     return LCG_getFloat(self->lcg);
@@ -244,7 +241,7 @@ inline float LDSampler_getFloat(
 }
 
 inline vec2f LDSampler_getFloat2(
-    varying LDSampler *uniform self, uniform unsigned int dimension)
+    varying LDSampler *uniform self, uniform uint32 dimension)
 {
   const float x = LDSampler_getFloat(self, dimension);
   const float y = LDSampler_getFloat(self, dimension + 1);
@@ -254,7 +251,7 @@ inline vec2f LDSampler_getFloat2(
 ///////////////////////////////////////////////////////////////////////////////
 // Hammersley - low discrepancy random numbers; only two dimensions; no state
 
-inline varying vec2f RandomHammersley2__getFloats(varying unsigned int idx)
+inline varying vec2f RandomHammersley2__getFloats(varying uint32 idx)
 {
   return make_vec2f(rcp((float)idx), Halton_sample2(idx));
 }
@@ -262,7 +259,7 @@ inline varying vec2f RandomHammersley2__getFloats(varying unsigned int idx)
 ///////////////////////////////////////////////////////////////////////////////
 // halton - low discrepancy halton sequence; first two dimensions; no state
 
-inline varying vec2f HaltonSequence_get2D(varying unsigned int idx)
+inline varying vec2f HaltonSequence_get2D(varying uint32 idx)
 {
   return make_vec2f(Halton_sample2(idx), Halton_sample3(idx));
 }

@@ -1,9 +1,9 @@
 # Benchmark
+
 [![Build Status](https://travis-ci.org/google/benchmark.svg?branch=master)](https://travis-ci.org/google/benchmark)
 [![Build status](https://ci.appveyor.com/api/projects/status/u0qsyp7t1tk7cpxs/branch/master?svg=true)](https://ci.appveyor.com/project/google/benchmark/branch/master)
 [![Coverage Status](https://coveralls.io/repos/google/benchmark/badge.svg)](https://coveralls.io/r/google/benchmark)
 [![slackin](https://slackin-iqtfqnpzxd.now.sh/badge.svg)](https://slackin-iqtfqnpzxd.now.sh/)
-
 
 A library to benchmark code snippets, similar to unit tests. Example:
 
@@ -70,13 +70,13 @@ $ git clone https://github.com/google/googletest.git benchmark/googletest
 # Go to the library root directory
 $ cd benchmark
 # Make a build directory to place the build output.
-$ mkdir build && cd build
-# Generate a Makefile with cmake.
-# Use cmake -G <generator> to generate a different file type.
-$ cmake ../
+$ cmake -E make_directory "build"
+# Generate build system files with cmake.
+$ cmake -E chdir "build" cmake -DCMAKE_BUILD_TYPE=Release ../
+# or, starting with CMake 3.13, use a simpler form:
+# cmake -DCMAKE_BUILD_TYPE=Release -S . -B "build"
 # Build the library.
-# Use make -j<number_of_parallel_jobs> to speed up the build process, e.g. make -j8 .
-$ make
+$ cmake --build "build" --config Release
 ```
 This builds the `benchmark` and `benchmark_main` libraries and tests.
 On a unix system, the build directory should now look something like this:
@@ -94,13 +94,13 @@ On a unix system, the build directory should now look something like this:
 Next, you can run the tests to check the build.
 
 ```bash
-$ make test
+$ cmake -E chdir "build" ctest --build-config Release
 ```
 
 If you want to install the library globally, also run:
 
 ```
-sudo make install
+sudo cmake --build "build" --config Release --target install
 ```
 
 Note that Google Benchmark requires Google Test to build and run the tests. This
@@ -117,24 +117,20 @@ to `CMAKE_ARGS`.
 ### Debug vs Release
 
 By default, benchmark builds as a debug library. You will see a warning in the
-output when this is the case. To build it as a release library instead, use:
+output when this is the case. To build it as a release library instead, add
+`-DCMAKE_BUILD_TYPE=Release` when generating the build system files, as shown
+above. The use of `--config Release` in build commands is needed to properly
+support multi-configuration tools (like Visual Studio for example) and can be
+skipped for other build systems (like Makefile).
 
-```
-cmake -DCMAKE_BUILD_TYPE=Release
-```
-
-To enable link-time optimisation, use
-
-```
-cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_LTO=true
-```
+To enable link-time optimisation, also add `-DBENCHMARK_ENABLE_LTO=true` when
+generating the build system files.
 
 If you are using gcc, you might need to set `GCC_AR` and `GCC_RANLIB` cmake
 cache variables, if autodetection fails.
 
 If you are using clang, you may need to set `LLVMAR_EXECUTABLE`,
 `LLVMNM_EXECUTABLE` and `LLVMRANLIB_EXECUTABLE` cmake cache variables.
-
 
 ### Stable and Experimental Library Versions
 
@@ -149,7 +145,9 @@ this branch. However, this branch provides no stability guarantees and reserves
 the right to change and break the API at any time.
 
 ## Usage
+
 ### Basic usage
+
 Define a function that executes the code to measure, register it as a benchmark
 function using the `BENCHMARK` macro, and ensure an appropriate `main` function
 is available:
@@ -176,8 +174,8 @@ BENCHMARK_MAIN();
 ```
 
 To run the benchmark, compile and link against the `benchmark` library
-(libbenchmark.a/.so). If you followed the build steps above, this
-library will be under the build directory you created.
+(libbenchmark.a/.so). If you followed the build steps above, this library will 
+be under the build directory you created.
 
 ```bash
 # Example on linux after running the build steps above. Assumes the
@@ -191,6 +189,26 @@ Alternatively, link against the `benchmark_main` library and remove
 
 The compiled executable will run all benchmarks by default. Pass the `--help`
 flag for option information or see the guide below.
+
+### Usage with CMake
+
+If using CMake, it is recommended to link against the project-provided
+`benchmark::benchmark` and `benchmark::benchmark_main` targets using
+`target_link_libraries`.
+It is possible to use ```find_package``` to import an installed version of the
+library.
+```cmake
+find_package(benchmark REQUIRED)
+```
+Alternatively, ```add_subdirectory``` will incorporate the library directly in
+to one's CMake project.
+```cmake
+add_subdirectory(benchmark)
+```
+Either way, link to the library as follows.
+```cmake
+target_link_libraries(MyTarget benchmark::benchmark)
+```
 
 ## Platform Specific Build Instructions
 
@@ -239,15 +257,19 @@ too (`-lkstat`).
 ## User Guide
 
 ### Command Line
+
 [Output Formats](#output-formats)
 
 [Output Files](#output-files)
+
+[Running Benchmarks](#running-benchmarks)
 
 [Running a Subset of Benchmarks](#running-a-subset-of-benchmarks)
 
 [Result Comparison](#result-comparison)
 
 ### Library
+
 [Runtime and Reporting Considerations](#runtime-and-reporting-considerations)
 
 [Passing Arguments](#passing-arguments)
@@ -282,17 +304,20 @@ too (`-lkstat`).
 
 [Disabling CPU Frequency Scaling](#disabling-cpu-frequency-scaling)
 
+
 <a name="output-formats" />
 
 ### Output Formats
 
 The library supports multiple output formats. Use the
-`--benchmark_format=<console|json|csv>` flag to set the format type. `console`
-is the default format.
+`--benchmark_format=<console|json|csv>` flag (or set the
+`BENCHMARK_FORMAT=<console|json|csv>` environment variable) to set
+the format type. `console` is the default format.
 
 The Console format is intended to be a human readable format. By default
 the format generates color output. Context is output on stderr and the
 tabular data on stdout. Example tabular output looks like:
+
 ```
 Benchmark                               Time(ns)    CPU(ns) Iterations
 ----------------------------------------------------------------------
@@ -306,6 +331,7 @@ The `context` attribute contains information about the run in general, including
 information about the CPU and the date.
 The `benchmarks` attribute contains a list of every benchmark run. Example json
 output looks like:
+
 ```json
 {
   "context": {
@@ -346,6 +372,7 @@ output looks like:
 
 The CSV format outputs comma-separated values. The `context` is output on stderr
 and the CSV itself on stdout. Example CSV output looks like:
+
 ```
 name,iterations,real_time,cpu_time,bytes_per_second,items_per_second,label
 "BM_SetInsert/1024/1",65465,17890.7,8407.45,475768,118942,
@@ -357,16 +384,31 @@ name,iterations,real_time,cpu_time,bytes_per_second,items_per_second,label
 
 ### Output Files
 
-Write benchmark results to a file with the `--benchmark_out=<filename>` option.
-Specify the output format with `--benchmark_out_format={json|console|csv}`. Note that Specifying
+Write benchmark results to a file with the `--benchmark_out=<filename>` option
+(or set `BENCHMARK_OUT`). Specify the output format with
+`--benchmark_out_format={json|console|csv}` (or set
+`BENCHMARK_OUT_FORMAT={json|console|csv}`). Note that specifying
 `--benchmark_out` does not suppress the console output.
+
+<a name="running-benchmarks" />
+
+### Running Benchmarks
+
+Benchmarks are executed by running the produced binaries. Benchmarks binaries,
+by default, accept options that may be specified either through their command
+line interface or by setting environment variables before execution. For every
+`--option_flag=<value>` CLI switch, a corresponding environment variable
+`OPTION_FLAG=<value>` exist and is used as default if set (CLI switches always
+ prevails). A complete list of CLI options is available running benchmarks
+ with the `--help` switch.
 
 <a name="running-a-subset-of-benchmarks" />
 
 ### Running a Subset of Benchmarks
 
-The `--benchmark_filter=<regex>` option can be used to only run the benchmarks
-which match the specified `<regex>`. For example:
+The `--benchmark_filter=<regex>` option (or `BENCHMARK_FILTER=<regex>`
+environment variable) can be used to only run the benchmarks that match
+the specified `<regex>`. For example:
 
 ```bash
 $ ./run_benchmarks.x --benchmark_filter=BM_memcpy/32
@@ -384,7 +426,8 @@ BM_memcpy/32k       1834 ns       1837 ns     357143
 
 ### Result comparison
 
-It is possible to compare the benchmarking results. See [Additional Tooling Documentation](docs/tools.md)
+It is possible to compare the benchmarking results.
+See [Additional Tooling Documentation](docs/tools.md)
 
 <a name="runtime-and-reporting-considerations" />
 
@@ -450,6 +493,7 @@ range multiplier is changed to multiples of two.
 ```c++
 BENCHMARK(BM_memcpy)->RangeMultiplier(2)->Range(8, 8<<10);
 ```
+
 Now arguments generated are [ 8, 16, 32, 64, 128, 256, 512, 1024, 2k, 4k, 8k ].
 
 The preceding code shows a method of defining a sparse range.  The following
@@ -466,6 +510,7 @@ static void BM_DenseRange(benchmark::State& state) {
 }
 BENCHMARK(BM_DenseRange)->DenseRange(0, 1024, 128);
 ```
+
 Now arguments generated are [ 0, 128, 256, 384, 512, 640, 768, 896, 1024 ].
 
 You might have a benchmark that depends on two or more inputs. For example, the
@@ -503,6 +548,29 @@ pair.
 BENCHMARK(BM_SetInsert)->Ranges({{1<<10, 8<<10}, {128, 512}});
 ```
 
+Some benchmarks may require specific argument values that cannot be expressed
+with `Ranges`. In this case, `ArgsProduct` offers the ability to generate a
+benchmark input for each combination in the product of the supplied vectors.
+
+```c++
+BENCHMARK(BM_SetInsert)
+    ->ArgsProduct({{1<<10, 3<<10, 8<<10}, {20, 40, 60, 80}})
+// would generate the same benchmark arguments as
+BENCHMARK(BM_SetInsert)
+    ->Args({1<<10, 20})
+    ->Args({3<<10, 20})
+    ->Args({8<<10, 20})
+    ->Args({3<<10, 40})
+    ->Args({8<<10, 40})
+    ->Args({1<<10, 40})
+    ->Args({1<<10, 60})
+    ->Args({3<<10, 60})
+    ->Args({8<<10, 60})
+    ->Args({1<<10, 80})
+    ->Args({3<<10, 80})
+    ->Args({8<<10, 80});
+```
+
 For more complex patterns of inputs, passing a custom function to `Apply` allows
 programmatic specification of an arbitrary set of arguments on which to run the
 benchmark. The following example enumerates a dense range on one parameter,
@@ -535,6 +603,7 @@ void BM_takes_args(benchmark::State& state, ExtraArgs&&... extra_args) {
 // the specified values to `extra_args`.
 BENCHMARK_CAPTURE(BM_takes_args, int_string_test, 42, std::string("abc"));
 ```
+
 Note that elements of `...args` may refer to global variables. Users should
 avoid modifying global state inside of a benchmark.
 
@@ -572,7 +641,7 @@ that might be used to customize high-order term calculation.
 
 ```c++
 BENCHMARK(BM_StringCompare)->RangeMultiplier(2)
-    ->Range(1<<10, 1<<18)->Complexity([](int64_t n)->double{return n; });
+    ->Range(1<<10, 1<<18)->Complexity([](benchmark::IterationCount n)->double{return n; });
 ```
 
 <a name="templated-benchmarks" />
@@ -659,6 +728,7 @@ Also you can create templated fixture by using the following macros:
 * `BENCHMARK_TEMPLATE_DEFINE_F(ClassName, Method, ...)`
 
 For example:
+
 ```c++
 template<typename T>
 class MyFixture : public benchmark::Fixture {};
@@ -813,6 +883,7 @@ BM_CalculatePiRange/256k   2434095 ns    2434186 ns        288 3.1416
 BM_CalculatePiRange/1024k  9721140 ns    9721413 ns         71 3.14159
 BM_CalculatePi/threads:8      2255 ns       9943 ns      70936
 ```
+
 Note above the additional header printed when the benchmark changes from
 ``BM_UserCounter`` to ``BM_Factorial``. This is because ``BM_Factorial`` does
 not have the same counter set as ``BM_UserCounter``.
@@ -1132,7 +1203,9 @@ Users must explicitly exit the loop, otherwise all iterations will be performed.
 Users may explicitly return to exit the benchmark immediately.
 
 The `SkipWithError(...)` function may be used at any point within the benchmark,
-including before and after the benchmark loop.
+including before and after the benchmark loop. Moreover, if `SkipWithError(...)`
+has been used, it is not required to reach the benchmark loop and one may return
+from the benchmark function early.
 
 For example:
 
@@ -1140,24 +1213,32 @@ For example:
 static void BM_test(benchmark::State& state) {
   auto resource = GetResource();
   if (!resource.good()) {
-      state.SkipWithError("Resource is not good!");
-      // KeepRunning() loop will not be entered.
+    state.SkipWithError("Resource is not good!");
+    // KeepRunning() loop will not be entered.
   }
   while (state.KeepRunning()) {
-      auto data = resource.read_data();
-      if (!resource.good()) {
-        state.SkipWithError("Failed to read data!");
-        break; // Needed to skip the rest of the iteration.
-     }
-     do_stuff(data);
+    auto data = resource.read_data();
+    if (!resource.good()) {
+      state.SkipWithError("Failed to read data!");
+      break; // Needed to skip the rest of the iteration.
+    }
+    do_stuff(data);
   }
 }
 
 static void BM_test_ranged_fo(benchmark::State & state) {
-  state.SkipWithError("test will not be entered");
+  auto resource = GetResource();
+  if (!resource.good()) {
+    state.SkipWithError("Resource is not good!");
+    return; // Early return is allowed when SkipWithError() has been used.
+  }
   for (auto _ : state) {
-    state.SkipWithError("Failed!");
-    break; // REQUIRED to prevent all further iterations.
+    auto data = resource.read_data();
+    if (!resource.good()) {
+      state.SkipWithError("Failed to read data!");
+      break; // REQUIRED to prevent all further iterations.
+    }
+    do_stuff(data);
   }
 }
 ```
@@ -1222,11 +1303,15 @@ the benchmark loop should be preferred.
 <a name="disabling-cpu-frequency-scaling" />
 
 ### Disabling CPU Frequency Scaling
+
 If you see this error:
+
 ```
 ***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
 ```
+
 you might want to disable the CPU frequency scaling while running the benchmark:
+
 ```bash
 sudo cpupower frequency-set --governor performance
 ./mybench

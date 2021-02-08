@@ -99,6 +99,12 @@ endmacro ()
 
 macro (ispc_compile)
   set(ISPC_ADDITIONAL_ARGS "")
+  if (OSPRAY_STRICT_BUILD)
+    list(APPEND ISPC_ADDITIONAL_ARGS --wno-perf)
+  else()
+    list(APPEND ISPC_ADDITIONAL_ARGS --woff)
+  endif()
+
   set(ISPC_TARGETS ${OSPRAY_ISPC_TARGET_LIST})
 
   set(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
@@ -137,11 +143,11 @@ macro (ispc_compile)
   string(REPLACE " " ";" ISPC_OPT_FLAGS "${ISPC_OPT_FLAGS}")
 
   if (NOT WIN32)
-    set(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --pic)
+    list(APPEND ISPC_ADDITIONAL_ARGS --pic)
   endif()
 
   if (NOT OSPRAY_DEBUG_BUILD)
-    set(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=disable-assertions)
+    list(APPEND ISPC_ADDITIONAL_ARGS --opt=disable-assertions)
   endif()
 
   foreach(src ${ARGN})
@@ -193,7 +199,6 @@ macro (ispc_compile)
       --addressing=${OSPRAY_ISPC_ADDRESSING}
       ${ISPC_OPT_FLAGS}
       --target=${ISPC_TARGET_ARGS}
-      --woff
       --opt=fast-math
       ${ISPC_ADDITIONAL_ARGS}
       -h ${ISPC_TARGET_DIR}/${dir}/${fname}_ispc.h

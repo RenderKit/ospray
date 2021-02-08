@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -243,8 +243,8 @@ OSPRAY_INTERFACE OSPCamera ospNewCamera(const char *type);
 OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
 
-OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(OSPGeometry);
-OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(OSPVolume);
+OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(OSPGeometry geom OSP_DEFAULT_VAL(NULL));
+OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume OSP_DEFAULT_VAL(NULL));
 
 // Model Meta-Data //////////////////////////////////////////////////////////
 

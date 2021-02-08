@@ -105,16 +105,16 @@ terms are listed below.
 --------------------------------------------------------------------------------
 
 4.  Embree
-    Copyright 2009-2020 Intel Corporation
+    Copyright 2009-2021 Intel Corporation
 
     Google Benchmark
     Copyright 2014 Google Inc. All rights reserved.
 
     OSPRay
-    Copyright 2009-2020 Intel Corporation
+    Copyright 2009-2021 Intel Corporation
 
-    Threading Building Blocks (TBB)
-    Copyright (c) 2005-2020 Intel Corporation
+    Threading Building Blocks (oneTBB)
+    Copyright 2005-2021 Intel Corporation
 
     Apache License Version 2.0
     January 2004

@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2014-2019 Intel Corporation
+## Copyright 2014-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set -e # terminate if some error occurs
@@ -7,8 +7,8 @@ set -e # terminate if some error occurs
 PACKAGE=$1
 
 primary_bundle_id="com.intel.ospray"
-user=$notarization_user
-password="@env:notarization_password"
+user=$MACOS_NOTARIZATION_USER
+password=$MACOS_NOTARIZATION_PASSWORD
 
 xcrun altool --notarize-app --asc-provider 'IntelCorporationApps' --primary-bundle-id "$primary_bundle_id" --username "$user" --password "$password" --file $PACKAGE 2>&1 | tee notarization_request.log
 

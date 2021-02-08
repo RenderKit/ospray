@@ -17,6 +17,7 @@
 #include "rkcommon/math/range.h"
 #include "rkcommon/math/vec.h"
 #include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/utility/random.h"
 
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -118,15 +119,15 @@ cpp::Group ParticleVolume::buildGroup() const
   range1f weightRange(0.5f, 1.5f);
   const float radiusScale = 1.f / powf(numParticles, 1.f / 3.f);
 
-  std::uniform_real_distribution<float> centerDistribution_x(
+  utility::uniform_real_distribution<float> centerDistribution_x(
       bounds.lower.x, bounds.upper.x);
-  std::uniform_real_distribution<float> centerDistribution_y(
+  utility::uniform_real_distribution<float> centerDistribution_y(
       bounds.lower.y, bounds.upper.y);
-  std::uniform_real_distribution<float> centerDistribution_z(
+  utility::uniform_real_distribution<float> centerDistribution_z(
       bounds.lower.z, bounds.upper.z);
-  std::uniform_real_distribution<float> radiusDistribution(
+  utility::uniform_real_distribution<float> radiusDistribution(
       radiusScale, 2.f * radiusScale);
-  std::uniform_real_distribution<float> weightDistribution(
+  utility::uniform_real_distribution<float> weightDistribution(
       weightRange.lower, weightRange.upper);
 
   // populate the points
@@ -140,8 +141,7 @@ cpp::Group ParticleVolume::buildGroup() const
   }
 
   cpp::Volume volume("particle");
-  volume.setParam(
-      "particle.position", cpp::CopiedData(particles));
+  volume.setParam("particle.position", cpp::CopiedData(particles));
   volume.setParam("particle.radius", cpp::CopiedData(radius));
   volume.setParam("particle.weight", cpp::CopiedData(weights));
   volume.setParam("clampMaxCumulativeValue", clampMaxCumulativeValue);
@@ -212,7 +212,8 @@ cpp::World ParticleVolume::buildWorld() const
     {
       cpp::Geometry planeGeometry("plane");
       std::vector<vec4f> coefficients = {vec4f(1.f, -1.f, 1.f, 0.f)};
-      planeGeometry.setParam("plane.coefficients", cpp::CopiedData(coefficients));
+      planeGeometry.setParam(
+          "plane.coefficients", cpp::CopiedData(coefficients));
       planeGeometry.commit();
 
       cpp::GeometricModel model(planeGeometry);

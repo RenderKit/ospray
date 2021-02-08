@@ -6,6 +6,7 @@
 #include "SciVis.ih"
 #include "common/Clipping.ih"
 #include "common/Ray.ih"
+#include "common/VolumeIntervals.ih"
 #include "math/random.ih"
 #include "volume/VolumetricModel.ih"
 

@@ -5,11 +5,11 @@
 
 #include "fb/FrameBuffer.ih"
 #include "lights/Light.ih"
-#include "math/vec.ih"
 #include "render/Renderer.ih"
 #include "render/util.ih"
+#include "rkcommon/math/vec.ih"
 
-#define MAX_LIGHTS 1000
+#define MAX_LIGHTS 1000u
 
 struct PathTracer
 {

@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,7 +12,6 @@ class Renderer : public ManagedObject<OSPRenderer, OSP_RENDERER>
 {
  public:
   Renderer(const std::string &type);
-  Renderer(const Renderer &copy);
   Renderer(OSPRenderer existing = nullptr);
 };
 
@@ -24,12 +23,6 @@ static_assert(sizeof(Renderer) == sizeof(OSPRenderer),
 inline Renderer::Renderer(const std::string &type)
 {
   ospObject = ospNewRenderer(type.c_str());
-}
-
-inline Renderer::Renderer(const Renderer &copy)
-    : ManagedObject<OSPRenderer, OSP_RENDERER>(copy.handle())
-{
-  ospRetain(copy.handle());
 }
 
 inline Renderer::Renderer(OSPRenderer existing)

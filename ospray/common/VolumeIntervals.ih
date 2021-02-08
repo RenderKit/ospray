@@ -1,0 +1,55 @@
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "../math/AffineSpace.ih"
+#include "OSPCommon.ih"
+#include "rkcommon/math/box.ih"
+
+struct VolumetricModel;
+
+// Volume hit structure ///////////////////////////////////////////////////////
+
+struct VolumeInterval
+{
+  VolumetricModel *volumetricModel;
+  range1f interval;
+  AffineSpace3f xfm;
+  AffineSpace3f rcp_xfm;
+  unsigned int primID;
+  unsigned int geomID;
+  unsigned int instID;
+};
+
+inline void initVolumeInterval(VolumeInterval &hit)
+{
+  hit.volumetricModel = NULL;
+  hit.interval.lower = inf;
+  hit.interval.upper = -inf;
+}
+
+inline bool hasInterval(const VolumeInterval &vi)
+{
+  return !isEmpty(vi.interval);
+}
+
+struct VolumeIntervals
+{
+  unsigned int numVolumeIntervals;
+  uniform unsigned int numAllocated;
+  varying VolumeInterval *uniform intervals;
+};
+
+inline void allocVolumeIntervals(VolumeIntervals &intervals)
+{
+  intervals.numVolumeIntervals = 0;
+  intervals.numAllocated = 0;
+  intervals.intervals = (varying VolumeInterval * uniform) pushTLS(0);
+}
+
+inline void freeVolumeIntervals(VolumeIntervals &intervals)
+{
+  popTLS(intervals.intervals);
+  intervals.intervals = NULL;
+}

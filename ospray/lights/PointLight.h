@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -17,8 +17,11 @@ struct OSPRAY_SDK_INTERFACE PointLight : public Light
   virtual void commit() override;
 
  private:
+  void processIntensityQuantityType(vec3f &radIntensity);
+
   vec3f position{0.f}; //!< world-space position of the light
   float radius{0.f}; //!< Radius of SphereLight
+  vec3f radiance{1.0f, 1.0f, 1.0f}; //!< emitted radiance of the SphereLight
 };
 
 } // namespace ospray

@@ -53,6 +53,8 @@ std::vector<T> mmapRAW(const std::string &fileName, const vec3i &dims)
   throw std::runtime_error("Memory mapping not supported in Windows");
 #else
   FILE *file = fopen(fileName.c_str(), "rb");
+  if (!file)
+    throw std::runtime_error("Could not open file.");
   fseek(file, 0, SEEK_END);
   size_t actualFileSize = ftell(file);
   fclose(file);
@@ -69,7 +71,8 @@ std::vector<T> mmapRAW(const std::string &fileName, const vec3i &dims)
   }
 
   int fd = ::open(fileName.c_str(), O_RDONLY);
-  assert(fd >= 0);
+  if (fd == -1)
+    throw std::runtime_error("Could not open file.");
 
   void *mem = mmap(nullptr,
       fileSize,
@@ -78,7 +81,9 @@ std::vector<T> mmapRAW(const std::string &fileName, const vec3i &dims)
       ,
       fd,
       0);
-  assert(mem != nullptr && (long long)mem != -1LL);
+  ::close(fd);
+  if (mem == MAP_FAILED)
+    throw std::runtime_error("Could not mmap file.");
 
   std::vector<T> volume;
   volume.assign((T *)mem, (T *)mem + dims.product());

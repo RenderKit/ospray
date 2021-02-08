@@ -57,7 +57,7 @@ inline bool filterIntersectionSingle(
 
     // call filter intersection callback
     bool accept = filterCall(args, rtcHitTemp);
-    cif (alwaysReject) {
+    if (alwaysReject) {
       // the hit is always rejected
       ray->t = tOld;
     }
@@ -65,7 +65,7 @@ inline bool filterIntersectionSingle(
     {
       if (accept) {
         // hit has been accepted
-        cif (isOcclusionTest) {
+        if (isOcclusionTest) {
           ray->t = neg_inf;
         }
         else

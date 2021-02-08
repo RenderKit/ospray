@@ -1,9 +1,9 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "math.ih"
+#include "rkcommon/math/math.ih"
 
 // x should be between [0..size-1]
 inline float interp1DLinear(

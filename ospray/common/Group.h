@@ -28,15 +28,12 @@ struct OSPRAY_SDK_INTERFACE Group : public ManagedObject
   // Data members //
 
   Ref<const DataT<GeometricModel *>> geometricModels;
-  std::vector<void *> geometryIEs;
   std::vector<void *> geometricModelIEs;
 
   Ref<const DataT<VolumetricModel *>> volumetricModels;
-  std::vector<void *> volumeIEs;
   std::vector<void *> volumetricModelIEs;
 
   Ref<const DataT<GeometricModel *>> clipModels;
-  std::vector<void *> clipIEs;
   std::vector<void *> clipModelIEs;
   int numInvertedClippers{0};
 

@@ -32,10 +32,10 @@ inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
 
   uint32 idx = primID;
   if (valid(self->index)) {
-    idx = get_uint8(self->index, min(primID, self->index.numItems - 1));
+    idx = get_uint8(self->index, min(idx, self->index.numItems - 1));
   }
 
-  uniform int32 lastMaterial = self->material.numItems - 1;
+  uniform uint32 lastMaterial = self->material.numItems - 1;
   Material **uniform mats = (Material * *uniform) self->material.addr;
   if (self->useRendererMaterialList) {
     idx = get_uint32(self->material, min(idx, lastMaterial));
@@ -62,7 +62,7 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
   if (flags & DG_COLOR && valid(self->color)) {
     uint32 idx = ray.primID;
     if (valid(self->index)) {
-      idx = get_uint8(self->index, min(ray.primID, self->index.numItems - 1));
+      idx = get_uint8(self->index, min(idx, self->index.numItems - 1));
     }
     dg.color = get_vec4f(self->color, min(idx, self->color.numItems - 1));
   }

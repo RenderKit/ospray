@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v2.4.0 of Intel® OSPRay. For changes and new features
+This is release v2.5.0 of Intel® OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
@@ -40,7 +40,7 @@ via [OSPRay’s GitHub Issue
 Tracker](https://github.com/ospray/OSPRay/issues) (or, if you should
 happen to have a fix for it,you can also send us a pull request); for
 missing features please contact us via email at
-<a href="mailto:ospray@googlegroups.com" class="email">ospray@googlegroups.com</a>.
+<ospray@googlegroups.com>.
 
 To receive release announcements simply [“Watch” the OSPRay
 repository](https://github.com/ospray/OSPRay) on GitHub.
@@ -93,12 +93,12 @@ before you can build OSPRay you need the following prerequisites:
     to `OpenMP` or `Internal`.
 
 -   OSPRay also heavily uses Intel [Embree](https://www.embree.org/),
-    installing version 3.8.0 or newer is required. If Embree is not
+    installing version 3.12.0 or newer is required. If Embree is not
     found by CMake its location can be hinted with the variable
     `embree_DIR`.
 
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.11.0 or newer is required. If Open VKL is not
+    installing version 0.12.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 
@@ -136,7 +136,7 @@ sudo port install cmake tbb
 
 Under Windows please directly use the appropriate installers for
 [CMake](https://cmake.org/download/),
-[TBB](https://github.com/01org/tbb/releases),
+[TBB](https://github.com/oneapi-src/oneTBB/releases),
 [ISPC](https://ispc.github.io/downloads.html) (for your Visual Studio
 version) and [Embree](https://github.com/embree/embree/releases/).
 
@@ -187,6 +187,10 @@ BUILD_OIDN_FROM_SOURCE
 
 BUILD_OIDN_VERSION
 :   determines which version of Open Image Denoise to pull down.
+
+BUILD_OSPRAY_MODULE_MPI
+:   set to ON to build OSPRay’s MPI module for data-replicated and
+    distributed parallel rendering on multiple nodes.
 
 For the full set of options, run:
 
@@ -259,7 +263,7 @@ way to configure OSPRay and to create the Visual Studio solution files:
     does not exist yet CMake will create it).
 
 -   Click “Configure” and select as generator the Visual Studio version
-    you have (OSPRay needs Visual Studio 14 2015 or newer), for Win64
+    you have (OSPRay needs Visual Studio 15 2017 or newer), for Win64
     (32 bit builds are not supported by OSPRay), e.g., “Visual Studio 15
     2017 Win64”.
 
@@ -483,7 +487,7 @@ current device, it does not need to be set as current again. Note this
 API call will increment the ref count of the returned device handle, so
 applications must use `ospDeviceRelease` when finished using the handle
 to avoid leaking the underlying device object. If there is no current
-device set, this will return an invalid NULL handle.
+device set, this will return an invalid `NULL` handle.
 
 When a device is created, its reference count is initially `1`. When a
 device is set as the current device, it internally has its reference
@@ -601,8 +605,8 @@ will require that a callback is provided. Note that callbacks for C++
 `std::cout` and `std::cerr` can be alternatively set through `ospInit()`
 or the `OSPRAY_LOG_OUTPUT` environment variable.
 
-Applications can clear either callback by passing `nullptr` instead of
-an actual function pointer.
+Applications can clear either callback by passing `NULL` instead of an
+actual function pointer.
 
 ### Loading OSPRay Extensions at Runtime
 
@@ -707,7 +711,7 @@ are discussed in future sections.
 Note that `mem` must always be a pointer *to* the object, otherwise
 accidental type casting can occur. This is especially true for pointer
 types (`OSP_VOID_PTR` and `OSPObject` handles), as they will implicitly
-cast to `void *`, but be incorrectly interpreted. To help with some of
+cast to `void *`, but be incorrectly interpreted. To help with some of
 these issues, there also exist variants of `ospSetParam` for specific
 types, such as `ospSetInt` and `ospSetVec3f` in the OSPRay utility
 library (found in `ospray_util.h`).
@@ -768,44 +772,38 @@ The enum type `OSPDataType` describes the different element types that
 can be represented in OSPRay; valid constants are listed in the table
 below.
 
-| Type/Name             | Description                                                                                 |
-|:----------------------|:--------------------------------------------------------------------------------------------|
-| OSP_DEVICE            | API device object reference                                                                 |
-| OSP_DATA              | data reference                                                                              |
-| OSP_OBJECT            | generic object reference                                                                    |
-| OSP_CAMERA            | camera object reference                                                                     |
-| OSP_FRAMEBUFFER       | framebuffer object reference                                                                |
-| OSP_LIGHT             | light object reference                                                                      |
-| OSP_MATERIAL          | material object reference                                                                   |
-| OSP_TEXTURE           | texture object reference                                                                    |
-| OSP_RENDERER          | renderer object reference                                                                   |
-| OSP_WORLD             | world object reference                                                                      |
-| OSP_GEOMETRY          | geometry object reference                                                                   |
-| OSP_VOLUME            | volume object reference                                                                     |
-| OSP_TRANSFER_FUNCTION | transfer function object reference                                                          |
-| OSP_IMAGE_OPERATION   | image operation object reference                                                            |
-| OSP_STRING            | C-style zero-terminated character string                                                    |
-| OSP_CHAR              | 8 bit signed character scalar                                                               |
-| OSP_UCHAR             | 8 bit unsigned character scalar                                                             |
-| OSP_VEC\[234\]UC      | … and \[234\]-element vector                                                                |
-| OSP_USHORT            | 16 bit unsigned integer scalar                                                              |
-| OSP_VEC\[234\]US      | … and \[234\]-element vector                                                                |
-| OSP_INT               | 32 bit signed integer scalar                                                                |
-| OSP_VEC\[234\]I       | … and \[234\]-element vector                                                                |
-| OSP_UINT              | 32 bit unsigned integer scalar                                                              |
-| OSP_VEC\[234\]UI      | … and \[234\]-element vector                                                                |
-| OSP_LONG              | 64 bit signed integer scalar                                                                |
-| OSP_VEC\[234\]L       | … and \[234\]-element vector                                                                |
-| OSP_ULONG             | 64 bit unsigned integer scalar                                                              |
-| OSP_VEC\[234\]UL      | … and \[234\]-element vector                                                                |
-| OSP_FLOAT             | 32 bit single precision floating-point scalar                                               |
-| OSP_VEC\[234\]F       | … and \[234\]-element vector                                                                |
-| OSP_DOUBLE            | 64 bit double precision floating-point scalar                                               |
-| OSP_BOX\[1234\]I      | 32 bit integer box (lower + upper bounds)                                                   |
-| OSP_BOX\[1234\]F      | 32 bit single precision floating-point box (lower + upper bounds)                           |
-| OSP_LINEAR\[23\]F     | 32 bit single precision floating-point linear transform (\[23\] vectors)                    |
-| OSP_AFFINE\[23\]F     | 32 bit single precision floating-point affine transform (linear transform plus translation) |
-| OSP_VOID_PTR          | raw memory address (only found in module extensions)                                        |
+| Type/Name                    | Description                                                                                 |
+|:-----------------------------|:--------------------------------------------------------------------------------------------|
+| OSP_DEVICE                   | API device object reference                                                                 |
+| OSP_DATA                     | data reference                                                                              |
+| OSP_OBJECT                   | generic object reference                                                                    |
+| OSP_CAMERA                   | camera object reference                                                                     |
+| OSP_FRAMEBUFFER              | framebuffer object reference                                                                |
+| OSP_LIGHT                    | light object reference                                                                      |
+| OSP_MATERIAL                 | material object reference                                                                   |
+| OSP_TEXTURE                  | texture object reference                                                                    |
+| OSP_RENDERER                 | renderer object reference                                                                   |
+| OSP_WORLD                    | world object reference                                                                      |
+| OSP_GEOMETRY                 | geometry object reference                                                                   |
+| OSP_VOLUME                   | volume object reference                                                                     |
+| OSP_TRANSFER_FUNCTION        | transfer function object reference                                                          |
+| OSP_IMAGE_OPERATION          | image operation object reference                                                            |
+| OSP_STRING                   | C-style zero-terminated character string                                                    |
+| OSP_CHAR, OSP_VEC\[234\]C    | 8 bit signed character scalar and \[234\]-element vector                                    |
+| OSP_UCHAR, OSP_VEC\[234\]UC  | 8 bit unsigned character scalar and \[234\]-element vector                                  |
+| OSP_SHORT, OSP_VEC\[234\]S   | 16 bit unsigned integer scalar and \[234\]-element vector                                   |
+| OSP_USHORT, OSP_VEC\[234\]US | 16 bit unsigned integer scalar and \[234\]-element vector                                   |
+| OSP_INT, OSP_VEC\[234\]I     | 32 bit signed integer scalar and \[234\]-element vector                                     |
+| OSP_UINT, OSP_VEC\[234\]UI   | 32 bit unsigned integer scalar and \[234\]-element vector                                   |
+| OSP_LONG, OSP_VEC\[234\]L    | 64 bit signed integer scalar and \[234\]-element vector                                     |
+| OSP_ULONG, OSP_VEC\[234\]UL  | 64 bit unsigned integer scalar and \[234\]-element vector                                   |
+| OSP_FLOAT, OSP_VEC\[234\]F   | 32 bit single precision floating-point scalar and \[234\]-element vector                    |
+| OSP_DOUBLE, OSP_VEC\[234\]D  | 64 bit double precision floating-point scalar and \[234\]-element vector                    |
+| OSP_BOX\[1234\]I             | 32 bit integer box (lower + upper bounds)                                                   |
+| OSP_BOX\[1234\]F             | 32 bit single precision floating-point box (lower + upper bounds)                           |
+| OSP_LINEAR\[23\]F            | 32 bit single precision floating-point linear transform (\[23\] vectors)                    |
+| OSP_AFFINE\[23\]F            | 32 bit single precision floating-point affine transform (linear transform plus translation) |
+| OSP_VOID_PTR                 | raw memory address (only found in module extensions)                                        |
 
 : Valid named constants for `OSPDataType`.
 
@@ -816,9 +814,9 @@ An opaque `OSPData` with memory allocated by OSPRay is created with
 
 ``` {.cpp}
 OSPData ospNewData(OSPDataType,
-    uint32_t numItems1,
-    uint32_t numItems2 = 1,
-    uint32_t numItems3 = 1);
+    uint64_t numItems1,
+    uint64_t numItems2 = 1,
+    uint64_t numItems3 = 1);
 ```
 
 To allow for (partial) copies or updates of data arrays use
@@ -826,9 +824,9 @@ To allow for (partial) copies or updates of data arrays use
 ``` {.cpp}
 void ospCopyData(const OSPData source,
     OSPData destination,
-    uint32_t destinationIndex1 = 0,
-    uint32_t destinationIndex2 = 0,
-    uint32_t destinationIndex3 = 0);
+    uint64_t destinationIndex1 = 0,
+    uint64_t destinationIndex2 = 0,
+    uint64_t destinationIndex3 = 0);
 ```
 
 which will copy the whole[^3] content of the `source` array into
@@ -1191,7 +1189,7 @@ and opacities. It is create by passing the string “`piecewiseLinear`” to
 
 | Type      | Name       | Description                                   |
 |:----------|:-----------|:----------------------------------------------|
-| vec3f\[\] | color      | [data](#data) array of RGB colors             |
+| vec3f\[\] | color      | [data](#data) array of colors (linear RGB)    |
 | float\[\] | opacity    | [data](#data) array of opacities              |
 | vec2f     | valueRange | domain (scalar range) this function maps from |
 
@@ -1211,11 +1209,18 @@ concurrently). To create a volume instance, call
 OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
 ```
 
+The passed volume can be `NULL` as long as the volume to be used is
+passed as a parameter. If both a volume is specified on object creation
+and as a parameter, the parameter value is used. If the parameter value
+is later removed, the volume object passed on object creation is again
+used.
+
 | Type                | Name             | Default | Description                                                                                                                           |
 |:--------------------|:-----------------|--------:|:--------------------------------------------------------------------------------------------------------------------------------------|
 | OSPTransferFunction | transferFunction |         | [transfer function](#transfer-function) to use                                                                                        |
 | float               | densityScale     |     1.0 | makes volumes uniformly thinner or thicker                                                                                            |
 | float               | anisotropy       |     0.0 | anisotropy of the (Henyey-Greenstein) phase function in \[-1, 1\] ([path tracer](#path-tracer) only), default to isotropic scattering |
+| OSPVolume           | volume           |         | optional [volume](#volumes) object this model references                                                                              |
 
 : Parameters understood by VolumetricModel.
 
@@ -1242,7 +1247,7 @@ recognizes the following parameters:
 |:------------------------|:----------------|:------------------------------------------------------------------------------------|
 | vec3f\[\]               | vertex.position | [data](#data) array of vertex positions                                             |
 | vec3f\[\]               | vertex.normal   | [data](#data) array of vertex normals                                               |
-| vec4f\[\] / vec3f\[\]   | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)                                     |
+| vec4f\[\] / vec3f\[\]   | vertex.color    | [data](#data) array of vertex colors (linear RGBA/RGB)                              |
 | vec2f\[\]               | vertex.texcoord | [data](#data) array of vertex texture coordinates                                   |
 | vec3ui\[\] / vec4ui\[\] | index           | [data](#data) array of (either triangle or quad) indices (into the vertex array(s)) |
 
@@ -1267,7 +1272,7 @@ the following parameters:
 | Type      | Name                | Description                                                                                                           |
 |:----------|:--------------------|:----------------------------------------------------------------------------------------------------------------------|
 | vec3f\[\] | vertex.position     | [data](#data) array of vertex positions                                                                               |
-| vec4f\[\] | vertex.color        | optional [data](#data) array of vertex colors (RGBA)                                                                  |
+| vec4f\[\] | vertex.color        | optional [data](#data) array of vertex colors (linear RGBA)                                                           |
 | vec2f\[\] | vertex.texcoord     | optional [data](#data) array of vertex texture coordinates                                                            |
 | float     | level               | global level of tessellation, default 5                                                                               |
 | uint\[\]  | index               | [data](#data) array of indices (into the vertex array(s))                                                             |
@@ -1319,10 +1324,8 @@ this geometry are listed in the table below.
 | Type       | Name                   | Description                                                                      |
 |:-----------|:-----------------------|:---------------------------------------------------------------------------------|
 | vec4f\[\]  | vertex.position_radius | [data](#data) array of vertex position and per-vertex radius                     |
-| vec3f\[\]  | vertex.position        | [data](#data) array of vertex position                                           |
-| float      | radius                 | global radius of all curves (if per-vertex radius is not used), default 0.01     |
 | vec2f\[\]  | vertex.texcoord        | [data](#data) array of per-vertex texture coordinates                            |
-| vec4f\[\]  | vertex.color           | [data](#data) array of corresponding vertex colors (RGBA)                        |
+| vec4f\[\]  | vertex.color           | [data](#data) array of corresponding vertex colors (linear RGBA)                 |
 | vec3f\[\]  | vertex.normal          | [data](#data) array of curve normals (only for “ribbon” curves)                  |
 | vec4f\[\]  | vertex.tangent         | [data](#data) array of curve tangents (only for “hermite” curves)                |
 | uint32\[\] | index                  | [data](#data) array of indices to the first vertex or tangent of a curve segment |
@@ -1330,6 +1333,7 @@ this geometry are listed in the table below.
 |            |                        | `OSP_FLAT`                                                                       |
 |            |                        | `OSP_ROUND`                                                                      |
 |            |                        | `OSP_RIBBON`                                                                     |
+|            |                        | `OSP_DISJOINT`                                                                   |
 | uchar      | basis                  | `OSPCurveBasis` for defining the curve. Supported bases are:                     |
 |            |                        | `OSP_LINEAR`                                                                     |
 |            |                        | `OSP_BEZIER`                                                                     |
@@ -1339,19 +1343,9 @@ this geometry are listed in the table below.
 
 : Parameters defining a curves geometry.
 
-Depending upon the specified data type of vertex positions, the curves
-will be implemented Embree curves or assembled from rounded and
-linearly-connected segments.
-
-Positions in `vertex.position_radius` format supports per-vertex varying
-radii with data type `vec4f[]` and instantiate Embree curves internally
-for the relevant type/basis mapping.
-
-If a constant `radius` is used and positions are specified in a
-`vec3f[]` type of `vertex.position` format, then type/basis defaults to
-`OSP_ROUND` and `OSP_LINEAR` (this is the fastest and most memory
-efficient mode). Implementation is with round linear segments where each
-segment corresponds to a link between two vertices.
+Positions in `vertex.position_radius` parameter supports per-vertex
+varying radii with data type `vec4f[]` and instantiate Embree curves
+internally for the relevant type/basis mapping.
 
 The following section describes the properties of different curve basis’
 and how they use the data provided in data buffers:
@@ -1413,7 +1407,13 @@ OSP_RIBBON
     normal buffer be specified along with vertex buffer. The curve is
     rendered as a flat band whose center approximately follows the
     provided vertex buffer and whose normal orientation approximately
-    follows the provided normal buffer.
+    follows the provided normal buffer. Not supported for basis
+    `OSP_LINEAR`.
+
+OSP_DISJOINT
+:   Only supported for basis `OSP_LINEAR`; the segments are open and not
+    connected at the joints, i.e., the curve segments are either
+    individual cones or cylinders.
 
 ### Boxes
 
@@ -1435,7 +1435,7 @@ infinite but their extents can be limited by defining optional bounding
 boxes. A planes geometry can be created by calling `ospNewGeometry` with
 type string “`plane`”.
 
-| Type      | Name Descript      | ion                                                      |
+| Type      | Name               | Description                                              |
 |:----------|:-------------------|:---------------------------------------------------------|
 | vec4f\[\] | plane.coefficients | [data](#data) array of plane coefficients $(a, b, c, d)$ |
 | box3f\[\] | plane.bounds       | optional [data](#data) array of bounding boxes           |
@@ -1470,6 +1470,12 @@ and material information. To create a geometric model, call
 OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
 ```
 
+The passed geometry can be `NULL` as long as the geometry to be used is
+passed as a parameter. If both a geometry is specified on object
+creation and as a parameter, the parameter value is used. If the
+parameter value is later removed, the geometry object passed on object
+creation is again used.
+
 Color and material are fetched with the primitive ID of the hit (clamped
 to the valid range, thus a single color or material is fine), or mapped
 first via the `index` array (if present). All parameters are optional,
@@ -1488,11 +1494,12 @@ with normals oriented outside clips everything what’s inside.
 | Type                         | Name          | Description                                                                                                                                         |
 |:-----------------------------|:--------------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
 | OSPMaterial / uint32         | material      | optional [material](#materials) applied to the geometry, may be an index into the `material` parameter on the [renderer](#renderers) (if it exists) |
-| vec4f                        | color         | optional color assigned to the geometry                                                                                                             |
+| vec4f                        | color         | optional color assigned to the geometry (linear RGBA)                                                                                               |
 | OSPMaterial\[\] / uint32\[\] | material      | optional [data](#data) array of (per-primitive) materials, may be an index into the `material` parameter on the renderer (if it exists)             |
-| vec4f\[\]                    | color         | optional [data](#data) array of (per-primitive) colors                                                                                              |
+| vec4f\[\]                    | color         | optional [data](#data) array of (per-primitive) colors (linear RGBA)                                                                                |
 | uint8\[\]                    | index         | optional [data](#data) array of per-primitive indices into `color` and `material`                                                                   |
 | bool                         | invertNormals | inverts all shading normals (Ns), default false                                                                                                     |
+| OSPGeometry                  | geometry      | optional \[geometry\] object this model references                                                                                                  |
 
 : Parameters understood by GeometricModel.
 
@@ -1507,13 +1514,32 @@ OSPLight ospNewLight(const char *type);
 
 All light sources accept the following parameters:
 
-| Type  | Name      | Default | Description                            |
-|:------|:----------|--------:|:---------------------------------------|
-| vec3f | color     |   white | color of the light                     |
-| float | intensity |       1 | intensity of the light (a factor)      |
-| bool  | visible   |    true | whether the light can be directly seen |
+| Type  | Name              | Default | Description                                                                                                                     |
+|:------|:------------------|--------:|:--------------------------------------------------------------------------------------------------------------------------------|
+| vec3f | color             |   white | color of the light (linear RGB)                                                                                                 |
+| float | intensity         |       1 | intensity of the light (a factor)                                                                                               |
+| uchar | intensityQuantity |         | `OSPIntensityQuantity` to set the radiative quantity represented by `intensity`. The default value depends on the light source. |
+| bool  | visible           |    true | whether the light can be directly seen                                                                                          |
 
 : Parameters accepted by all lights.
+
+In OSPRay the `intensity` parameter of a light source can correspond to
+different types of radiative quantities. The type of the value
+represented by a light’s `intensity` parameter is set using
+`intensityQuantity`, which accepts values from the enum type
+`OSPIntensityQuantity`. The supported types of `OSPIntensityQuantity`
+differ between the different light sources (see documentation of each
+specific light source).
+
+| Name                              | Description                                                                                                            |
+|:----------------------------------|:-----------------------------------------------------------------------------------------------------------------------|
+| OSP_INTENSITY_QUANTITY_POWER      | the overall amount of light energy emitted by the light source into the scene, unit is W                               |
+| OSP_INTENSITY_QUANTITY_INTENSITY  | the overall amount of light emitted by the light in a given direction, unit is W/sr                                    |
+| OSP_INTENSITY_QUANTITY_RADIANCE   | the amount of light emitted by a point on the light source in a given direction, unit is W/sr/m^2^                     |
+| OSP_INTENSITY_QUANTITY_IRRADIANCE | the amount of light arriving at a surface point, assuming the light is oriented towards to the surface, unit is W/m^2^ |
+
+: Types of radiative quantities used to interpret a light’s `intensity`
+parameter.
 
 The following light types are supported by most OSPRay renderers.
 
@@ -1522,7 +1548,10 @@ The following light types are supported by most OSPRay renderers.
 The distant light (or traditionally the directional light) is thought to
 be far away (outside of the scene), thus its light arrives (almost) as
 parallel rays. It is created by passing the type string “`distant`” to
-`ospNewLight`. In addition to the [general parameters](#lights)
+`ospNewLight`. The distant light supports
+`OSP_INTENSITY_QUANTITY_RADIANCE` and
+`OSP_INTENSITY_QUANTITY_IRRADIANCE` (default) as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights)
 understood by all lights the distant light supports the following
 special parameters:
 
@@ -1543,9 +1572,12 @@ about 0.53°.
 The sphere light (or the special case point light) is a light emitting
 uniformly in all directions from the surface toward the outside. It does
 not emit any light toward the inside of the sphere. It is created by
-passing the type string “`sphere`” to `ospNewLight`. In addition to the
-[general parameters](#lights) understood by all lights the sphere light
-supports the following special parameters:
+passing the type string “`sphere`” to `ospNewLight`. The point light
+supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
+value. In addition to the [general parameters](#lights) understood by
+all lights the sphere light supports the following special parameters:
 
 | Type  | Name     | Description                                    |
 |:------|:---------|:-----------------------------------------------|
@@ -1561,9 +1593,13 @@ tracer](#path-tracer)).
 ### Spotlight / Photometric Light
 
 The spotlight is a light emitting into a cone of directions. It is
-created by passing the type string “`spot`” to `ospNewLight`. In
-addition to the [general parameters](#lights) understood by all lights
-the spotlight supports the special parameters listed in the table.
+created by passing the type string “`spot`” to `ospNewLight`. The
+spotlight supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
+value. In addition to the [general parameters](#lights) understood by
+all lights the spotlight supports the special parameters listed in the
+table.
 
 | Type      | Name                  |     Default | Description                                                                                                                                                                   |
 |:----------|:----------------------|------------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -1596,7 +1632,10 @@ to be present. If the array has a second dimension then the intensities
 are not rotational symmetric around `direction`, but are accordingly
 mapped to the C-halfplanes in \[0–2π\]; the first “row” of values to 0
 and 2π, the other rows such that they have uniform distance to its
-neighbors. The orientation of the C0-plane is specified via `c0`.
+neighbors. The orientation of the C0-plane is specified via `c0`. A
+combination of using an `intensityDistribution` and
+`OSP_INTENSITY_QUANTITY_POWER` as `intensityQuantity` is not supported
+at the moment.
 
 ![C-γ coordinate system for the mapping of `intensityDistribution` to
 the spotlight.](https://ospray.github.io/images/spot_coords.png)
@@ -1605,9 +1644,11 @@ the spotlight.](https://ospray.github.io/images/spot_coords.png)
 
 The quad[^5] light is a planar, procedural area light source emitting
 uniformly on one side into the half-space. It is created by passing the
-type string “`quad`” to `ospNewLight`. In addition to the [general
-parameters](#lights) understood by all lights the quad light supports
-the following special parameters:
+type string “`quad`” to `ospNewLight`. The quad light supports
+`OSP_INTENSITY_QUANTITY_POWER`, `OSP_INTENSITY_QUANTITY_INTENSITY` and
+`OSP_INTENSITY_QUANTITY_RADIANCE` (default) as `intensityQuantity`
+parameter. In addition to the [general parameters](#lights) understood
+by all lights the quad light supports the following special parameters:
 
 | Type  | Name     | Description                                          |
 |:------|:---------|:-----------------------------------------------------|
@@ -1630,9 +1671,10 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-“`hdri`” to `ospNewLight`. In addition to the [general
-parameters](#lights) the HDRI light supports the following special
-parameters:
+“`hdri`” to `ospNewLight`. The HDRI light only accepts
+`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
+value. In addition to the [general parameters](#lights) the HDRI light
+supports the following special parameters:
 
 | Type       | Name      | Description                                                                                                      |
 |:-----------|:----------|:-----------------------------------------------------------------------------------------------------------------|
@@ -1645,15 +1687,19 @@ parameters:
 ![Orientation and Mapping of an HDRI
 Light.](https://ospray.github.io/images/hdri_light.png)
 
-Note that the currently only the [path tracer](#path-tracer) supports
-the HDRI light.
+Note that the [SciVis renderer](#scivis-renderer) only shows the HDRI
+light in the background (like an environment map) without computing
+illumination of the scene.
 
 ### Ambient Light
 
 The ambient light surrounds the scene and illuminates it from infinity
 with constant radiance (determined by combining the [parameters `color`
 and `intensity`](#lights)). It is created by passing the type string
-“`ambient`” to `ospNewLight`.
+“`ambient`” to `ospNewLight`. The ambient light supports
+`OSP_INTENSITY_QUANTITY_RADIANCE` and
+`OSP_INTENSITY_QUANTITY_IRRADIANCE` (default) as `intensityQuantity`
+parameter value.
 
 Note that the [SciVis renderer](#scivis-renderer) uses ambient lights to
 control the color and intensity of the computed ambient occlusion (AO).
@@ -1665,9 +1711,10 @@ a procedural `hdri` light for the sky. It is created by passing the type
 string “`sunSky`” to `ospNewLight`. The sun-sky light surrounds the
 scene and illuminates it from infinity and can be used for rendering
 outdoor scenes. The radiance values are calculated using the
-Hošek-Wilkie sky model and solar radiance function. In addition to the
-[general parameters](#lights) the following special parameters are
-supported:
+Hošek-Wilkie sky model and solar radiance function. The sun-sky light
+only accepts `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights) the
+following special parameters are supported:
 
 | Type  | Name             |      Default | Description                                                                                          |
 |:------|:-----------------|-------------:|:-----------------------------------------------------------------------------------------------------|
@@ -1680,6 +1727,10 @@ supported:
 : Special parameters accepted by the `sunSky` light.
 
 The lowest elevation for the sun is restricted to the horizon.
+
+Note that the [SciVis renderer](#scivis-renderer) only computes
+illumination from the sun (yet the sky is still shown in the background,
+like an environment map).
 
 ### Emissive Objects
 
@@ -1816,7 +1867,7 @@ General parameters of all renderers are
 | int                   | maxPathLength     |                      20 | maximum ray recursion depth                                                                                                                 |
 | float                 | minContribution   |                   0.001 | sample contributions below this value will be neglected to speedup rendering                                                                |
 | float                 | varianceThreshold |                       0 | threshold for adaptive accumulation                                                                                                         |
-| float / vec3f / vec4f | backgroundColor   |      black, transparent | background color and alpha (RGBA), if no `map_backplate` is set                                                                             |
+| float / vec3f / vec4f | backgroundColor   |      black, transparent | background color and alpha (linear A/RGB/RGBA), if no `map_backplate` is set                                                                |
 | OSPTexture            | map_backplate     |                         | optional [texture](#texture) image used as background (use texture type `texture2d`)                                                        |
 | OSPTexture            | map_maxDepth      |                         | optional screen-sized float [texture](#texture) with maximum far distance per pixel (use texture type `texture2d`)                          |
 | OSPMaterial\[\]       | material          |                         | optional [data](#data) array of [materials](#materials) which can be indexed by a [GeometricModel](#geometricmodels)’s `material` parameter |
@@ -1871,12 +1922,13 @@ created by passing the type string “`scivis`” to `ospNewRenderer`. In
 addition to the [general parameters](#renderer) understood by all
 renderers, the SciVis renderer supports the following parameters:
 
-| Type  | Name               | Default | Description                                            |
-|:------|:-------------------|--------:|:-------------------------------------------------------|
-| bool  | shadows            |   false | whether to compute (hard) shadows                      |
-| int   | aoSamples          |       0 | number of rays per sample to compute ambient occlusion |
-| float | aoDistance         |  10^20^ | maximum distance to consider for ambient occlusion     |
-| float | volumeSamplingRate |       1 | sampling rate for volumes                              |
+| Type  | Name               | Default | Description                                                                                                             |
+|:------|:-------------------|--------:|:------------------------------------------------------------------------------------------------------------------------|
+| bool  | shadows            |   false | whether to compute (hard) shadows                                                                                       |
+| int   | aoSamples          |       0 | number of rays per sample to compute ambient occlusion                                                                  |
+| float | aoDistance         |  10^20^ | maximum distance to consider for ambient occlusion                                                                      |
+| float | volumeSamplingRate |       1 | sampling rate for volumes                                                                                               |
+| bool  | visibleLights      |   false | whether light sources are potentially visible (as in the [path tracer](#path-tracer), regarding each light’s `visible`) |
 
 : Special parameters understood by the SciVis renderer.
 
@@ -1961,11 +2013,11 @@ files. To create an OBJ material pass the type string “`obj`” to
 
 | Type       | Name     |   Default | Description                                        |
 |:-----------|:---------|----------:|:---------------------------------------------------|
-| vec3f      | kd       | white 0.8 | diffuse color                                      |
-| vec3f      | ks       |     black | specular color                                     |
+| vec3f      | kd       | white 0.8 | diffuse color (linear RGB)                         |
+| vec3f      | ks       |     black | specular color (linear RGB)                        |
 | float      | ns       |        10 | shininess (Phong exponent), usually in \[2–10^4^\] |
 | float      | d        |    opaque | opacity                                            |
-| vec3f      | tf       |     black | transparency filter color                          |
+| vec3f      | tf       |     black | transparency filter color (linear RGB)             |
 | OSPTexture | map_bump |      NULL | normal map                                         |
 
 : Main parameters of the OBJ material.
@@ -2012,8 +2064,9 @@ normal map vertically or invert its green channel.
 
 
 
-Note that currently only the path tracer implements colored transparency
-with `Tf` and normal mapping with `map_Bump`.
+Note that `Tf` colored transparency is implemented in the SciVis and the
+path tracer but normal mapping with `map_Bump` is currently supported in
+the path tracer only.
 
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with “`map_`”. The fetched texels
@@ -2045,14 +2098,14 @@ table below.
 
 | Type  | Name              |   Default | Description                                                                                                             |
 |:------|:------------------|----------:|:------------------------------------------------------------------------------------------------------------------------|
-| vec3f | baseColor         | white 0.8 | base reflectivity (diffuse and/or metallic)                                                                             |
-| vec3f | edgeColor         |     white | edge tint (metallic only)                                                                                               |
+| vec3f | baseColor         | white 0.8 | base reflectivity (diffuse and/or metallic, linear RGB)                                                                 |
+| vec3f | edgeColor         |     white | edge tint (metallic only, linear RGB)                                                                                   |
 | float | metallic          |         0 | mix between dielectric (diffuse and/or specular) and metallic (specular only with complex IOR) in \[0–1\]               |
 | float | diffuse           |         1 | diffuse reflection weight in \[0–1\]                                                                                    |
 | float | specular          |         1 | specular reflection/transmission weight in \[0–1\]                                                                      |
 | float | ior               |         1 | dielectric index of refraction                                                                                          |
 | float | transmission      |         0 | specular transmission weight in \[0–1\]                                                                                 |
-| vec3f | transmissionColor |     white | attenuated color due to transmission (Beer’s law)                                                                       |
+| vec3f | transmissionColor |     white | attenuated color due to transmission (Beer’s law, linear RGB)                                                           |
 | float | transmissionDepth |         1 | distance at which color attenuation is equal to transmissionColor                                                       |
 | float | roughness         |         0 | diffuse and specular roughness in \[0–1\], 0 is perfectly smooth                                                        |
 | float | anisotropy        |         0 | amount of specular anisotropy in \[0–1\]                                                                                |
@@ -2064,12 +2117,12 @@ table below.
 | float | backlight         |         0 | amount of diffuse transmission (thin only) in \[0–2\], 1 is 50% reflection and 50% transmission, 2 is transmission only |
 | float | coat              |         0 | clear coat layer weight in \[0–1\]                                                                                      |
 | float | coatIor           |       1.5 | clear coat index of refraction                                                                                          |
-| vec3f | coatColor         |     white | clear coat color tint                                                                                                   |
+| vec3f | coatColor         |     white | clear coat color tint (linear RGB)                                                                                      |
 | float | coatThickness     |         1 | clear coat thickness, affects the amount of color attenuation                                                           |
 | float | coatRoughness     |         0 | clear coat roughness in \[0–1\], 0 is perfectly smooth                                                                  |
 | float | coatNormal        |         1 | clear coat normal map/scale (overrides default normal)                                                                  |
 | float | sheen             |         0 | sheen layer weight in \[0–1\]                                                                                           |
-| vec3f | sheenColor        |     white | sheen color tint                                                                                                        |
+| vec3f | sheenColor        |     white | sheen color tint (linear RGB)                                                                                           |
 | float | sheenTint         |         0 | how much sheen is tinted from sheenColor toward baseColor                                                               |
 | float | sheenRoughness    |       0.2 | sheen roughness in \[0–1\], 0 is perfectly smooth                                                                       |
 | float | opacity           |         1 | cut-out opacity/transparency, 1 is fully opaque                                                                         |
@@ -2093,24 +2146,25 @@ material for rendering different types of car paints. To create a
 CarPaint material, pass the type string “`carPaint`” to
 `ospNewMaterial`. Its parameters are listed in the table below.
 
-| Type        | Name                    |     Default | Description                                                                                                               |
-|:------------|:------------------------|------------:|:--------------------------------------------------------------------------------------------------------------------------|
-| vec3f       | baseColor               |   white 0.8 | diffuse base reflectivity                                                                                                 |
-| float       | roughness               |           0 | diffuse roughness in \[0–1\], 0 is perfectly smooth                                                                       |
-| float       | normal                  |           1 | normal map/scale                                                                                                          |
-| vec3f float | flakeColor flakeDensity | Aluminium 0 | color of metallic flakes density of metallic flakes in \[0–1\], 0 disables flakes, 1 fully covers the surface with flakes |
-| float       | flakeScale              |         100 | scale of the flake structure, higher values increase the amount of flakes                                                 |
-| float       | flakeSpread             |         0.3 | flake spread in \[0–1\]                                                                                                   |
-| float       | flakeJitter             |        0.75 | flake randomness in \[0–1\]                                                                                               |
-| float       | flakeRoughness          |         0.3 | flake roughness in \[0–1\], 0 is perfectly smooth                                                                         |
-| float       | coat                    |           1 | clear coat layer weight in \[0–1\]                                                                                        |
-| float       | coatIor                 |         1.5 | clear coat index of refraction                                                                                            |
-| vec3f       | coatColor               |       white | clear coat color tint                                                                                                     |
-| float       | coatThickness           |           1 | clear coat thickness, affects the amount of color attenuation                                                             |
-| float       | coatRoughness           |           0 | clear coat roughness in \[0–1\], 0 is perfectly smooth                                                                    |
-| float       | coatNormal              |           1 | clear coat normal map/scale                                                                                               |
-| vec3f       | flipflopColor           |       white | reflectivity of coated flakes at grazing angle, used together with coatColor produces a pearlescent paint                 |
-| float       | flipflopFalloff         |           1 | flip flop color falloff, 1 disables the flip flop effect                                                                  |
+| Type  | Name            |   Default | Description                                                                                                            |
+|:------|:----------------|----------:|:-----------------------------------------------------------------------------------------------------------------------|
+| vec3f | baseColor       | white 0.8 | diffuse base reflectivity (linear RGB)                                                                                 |
+| float | roughness       |         0 | diffuse roughness in \[0–1\], 0 is perfectly smooth                                                                    |
+| float | normal          |         1 | normal map/scale                                                                                                       |
+| vec3f | flakeColor      | Aluminium | color of metallic flakes (linear RGB)                                                                                  |
+| float | flakeDensity    |         0 | density of metallic flakes in \[0–1\], 0 disables flakes, 1 fully covers the surface with flakes                       |
+| float | flakeScale      |       100 | scale of the flake structure, higher values increase the amount of flakes                                              |
+| float | flakeSpread     |       0.3 | flake spread in \[0–1\]                                                                                                |
+| float | flakeJitter     |      0.75 | flake randomness in \[0–1\]                                                                                            |
+| float | flakeRoughness  |       0.3 | flake roughness in \[0–1\], 0 is perfectly smooth                                                                      |
+| float | coat            |         1 | clear coat layer weight in \[0–1\]                                                                                     |
+| float | coatIor         |       1.5 | clear coat index of refraction                                                                                         |
+| vec3f | coatColor       |     white | clear coat color tint (linear RGB)                                                                                     |
+| float | coatThickness   |         1 | clear coat thickness, affects the amount of color attenuation                                                          |
+| float | coatRoughness   |         0 | clear coat roughness in \[0–1\], 0 is perfectly smooth                                                                 |
+| float | coatNormal      |         1 | clear coat normal map/scale                                                                                            |
+| vec3f | flipflopColor   |     white | reflectivity of coated flakes at grazing angle, used together with coatColor produces a pearlescent paint (linear RGB) |
+| float | flipflopFalloff |         1 | flip flop color falloff, 1 disables the flip flop effect                                                               |
 
 : Parameters of the CarPaint material.
 
@@ -2182,11 +2236,11 @@ similar to [Metal](#metal), but allows for more intuitive and flexible
 control of the color. To create an Alloy material pass the type string
 “`alloy`” to `ospNewMaterial`. Its parameters are
 
-| Type  | Name      |   Default | Description                                 |
-|:------|:----------|----------:|:--------------------------------------------|
-| vec3f | color     | white 0.9 | reflectivity at normal incidence (0 degree) |
-| vec3f | edgeColor |     white | reflectivity at grazing angle (90 degree)   |
-| float | roughness |       0.1 | roughness, in \[0–1\], 0 is perfect mirror  |
+| Type  | Name      |   Default | Description                                             |
+|:------|:----------|----------:|:--------------------------------------------------------|
+| vec3f | color     | white 0.9 | reflectivity at normal incidence (0 degree, linear RGB) |
+| vec3f | edgeColor |     white | reflectivity at grazing angle (90 degree, linear RGB)   |
+| float | roughness |       0.1 | roughness, in \[0–1\], 0 is perfect mirror              |
 
 : Parameters of the Alloy material.
 
@@ -2213,11 +2267,11 @@ supporting refraction and volumetric attenuation (i.e., the transparency
 color varies with the geometric thickness). To create a Glass material
 pass the type string “`glass`” to `ospNewMaterial`. Its parameters are
 
-| Type  | Name                | Default | Description                        |
-|:------|:--------------------|--------:|:-----------------------------------|
-| float | eta                 |     1.5 | index of refraction                |
-| vec3f | attenuationColor    |   white | resulting color due to attenuation |
-| float | attenuationDistance |       1 | distance affecting attenuation     |
+| Type  | Name                | Default | Description                                     |
+|:------|:--------------------|--------:|:------------------------------------------------|
+| float | eta                 |     1.5 | index of refraction                             |
+| vec3f | attenuationColor    |   white | resulting color due to attenuation (linear RGB) |
+| float | attenuationDistance |       1 | distance affecting attenuation                  |
 
 : Parameters of the Glass material.
 
@@ -2243,12 +2297,12 @@ accounts for multiple internal reflections between the interfaces
 (virtual) thickness. To create a such a thin glass material pass the
 type string “`thinGlass`” to `ospNewMaterial`. Its parameters are
 
-| Type  | Name                | Default | Description                        |
-|:------|:--------------------|--------:|:-----------------------------------|
-| float | eta                 |     1.5 | index of refraction                |
-| vec3f | attenuationColor    |   white | resulting color due to attenuation |
-| float | attenuationDistance |       1 | distance affecting attenuation     |
-| float | thickness           |       1 | virtual thickness                  |
+| Type  | Name                | Default | Description                                     |
+|:------|:--------------------|--------:|:------------------------------------------------|
+| float | eta                 |     1.5 | index of refraction                             |
+| vec3f | attenuationColor    |   white | resulting color due to attenuation (linear RGB) |
+| float | attenuationDistance |       1 | distance affecting attenuation                  |
+| float | thickness           |       1 | virtual thickness                               |
 
 : Parameters of the ThinGlass material.
 
@@ -2282,13 +2336,13 @@ consisting of a base coat with optional flakes and a clear coat. To
 create a MetallicPaint material pass the type string “`metallicPaint`”
 to `ospNewMaterial`. Its parameters are listed in the table below.
 
-| Type  | Name        |   Default | Description                       |
-|:------|:------------|----------:|:----------------------------------|
-| vec3f | baseColor   | white 0.8 | color of base coat                |
-| float | flakeAmount |       0.3 | amount of flakes, in \[0–1\]      |
-| vec3f | flakeColor  | Aluminium | color of metallic flakes          |
-| float | flakeSpread |       0.5 | spread of flakes, in \[0–1\]      |
-| float | eta         |       1.5 | index of refraction of clear coat |
+| Type  | Name        |   Default | Description                           |
+|:------|:------------|----------:|:--------------------------------------|
+| vec3f | baseColor   | white 0.8 | color of base coat (linear RGB)       |
+| float | flakeAmount |       0.3 | amount of flakes, in \[0–1\]          |
+| vec3f | flakeColor  | Aluminium | color of metallic flakes (linear RGB) |
+| float | flakeSpread |       0.5 | spread of flakes, in \[0–1\]          |
+| float | eta         |       1.5 | index of refraction of clear coat     |
 
 : Parameters of the MetallicPaint material.
 
@@ -2317,13 +2371,15 @@ emits light uniformly in all directions and which can thus be used to
 turn any geometric object into a light source[^9]. It is created by
 passing the type string “`luminous`” to `ospNewMaterial`. The amount of
 constant radiance that is emitted is determined by combining the general
-parameters of lights: [`color` and `intensity`](#lights).
+parameters of lights: [`color` and `intensity`](#lights) (which
+essentially means that parameter `intensityQuantity` is not needed
+because it is always `OSP_INTENSITY_QUANTITY_RADIANCE`).
 
-| Type  | Name         | Default | Description                       |
-|:------|:-------------|--------:|:----------------------------------|
-| vec3f | color        |   white | color of the emitted light        |
-| float | intensity    |       1 | intensity of the light (a factor) |
-| float | transparency |       1 | material transparency             |
+| Type  | Name         | Default | Description                             |
+|:------|:-------------|--------:|:----------------------------------------|
+| vec3f | color        |   white | color of the emitted light (linear RGB) |
+| float | intensity    |       1 | intensity of the light (a factor)       |
+| float | transparency |       1 | material transparency                   |
 
 : Parameters accepted by the Luminous material.
 
@@ -2831,7 +2887,13 @@ function
 float ospGetProgress(OSPFuture);
 ```
 
-This returns the progress of the task in \[0-1\].
+This returns the approximated progress of the task in \[0-1\].
+
+Applications can cancel a currently running asynchronous operation via
+
+``` {.cpp}
+void ospCancel(OSPFuture);
+```
 
 Applications can wait on the result of an asynchronous operation, or
 choose to only synchronize with a specific event. To synchronize with an
@@ -2905,12 +2967,186 @@ return ospGetVariance(fb)
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
 
-Distributed rendering with MPI
-------------------------------
+Distributed Rendering with MPI
+==============================
 
-The OSPRay MPI module is now a stand alone repository. It can be found
-on GitHub [here](https://github.com/ospray/module_mpi), where all code
-and documentation can be found.
+The purpose of the MPI module for OSPRay is to provide distributed
+rendering capabilities for OSPRay. The module enables image- and
+data-parallel rendering across HPC clusters using MPI, allowing
+applications to transparently distribute rendering work, or to render
+data sets which are too large to fit in memory on a single machine.
+
+The MPI module provides two OSPRay devices to allow applications to
+leverage distributed rendering capabilities. The `mpiOffload` device
+provides transparent image-parallel rendering, where the same OSPRay
+application written for local rendering can be replicated across
+multiple nodes to distribute the rendering work. The `mpiDistributed`
+device allows MPI distributed applications to use OSPRay for distributed
+rendering, where each rank can render and independent piece of a global
+data set, or hybrid rendering where ranks partially or completely share
+data.
+
+MPI Offload Rendering
+---------------------
+
+The `mpiOffload` device can be used to distribute image rendering tasks
+across a cluster without requiring modifications to the application
+itself. Existing applications using OSPRay for local rendering simply be
+passed command line arguments to load the module and indicate that the
+`mpiOffload` device should be used for image-parallel rendering. To load
+the module, pass `--osp:load-modules=mpi`, to select the
+MPIOffloadDevice, pass `--osp:device=mpiOffload`. For example, the
+`ospExamples` application can be run as:
+
+``` {.sh}
+mpirun -n <N> ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload
+```
+
+and will automatically distribute the image rendering tasks among the
+corresponding `N` nodes. Note that in this configuration rank 0 will act
+as a master/application rank, and will run the user application code but
+not perform rendering locally. Thus, a minimum of 2 ranks are required,
+one master to run the application and one worker to perform the
+rendering. Running with 3 ranks for example would now distribute half
+the image rendering work to rank 1 and half to rank 2.
+
+If more control is required over the placement of ranks to nodes, or you
+want to run a worker rank on the master node as well you can run the
+application and the `ospray_mpi_worker` program through MPI’s MPMD mode.
+The `ospray_mpi_worker` will load the MPI module and select the offload
+device by default.
+
+``` {.sh}
+mpirun -n 1 ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
+  : -n <N> ./ospray_mpi_worker
+```
+
+If initializing the `mpiOffload` device manually, or passing parameters
+through the command line, the following parameters can be set:
+
+| Type   | Name                    | Default | Description                                                                                                                                                                                       |
+|:-------|:------------------------|--------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| string | mpiMode                 |     mpi | The mode to communicate with the worker ranks. `mpi` will assume you’re launching the application and workers in the same mpi command (or split launch command). `mpi` is the only supported mode |
+| uint   | maxCommandBufferEntries |    8192 | Set the max number of commands to buffer before submitting the command buffer to the workers                                                                                                      |
+| uint   | commandBufferSize       | 512 MiB | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8GiB                                                                                                                    |
+| uint   | maxInlineDataSize       |  32 MiB | Set the max size of an OSPData which can be inline’d into the command buffer instead of being sent separately. Max size is half the commandBufferSize. Units are in MiB                           |
+
+: Parameters specific to the `mpiOffload` Device.
+
+The `maxCommandBufferEntries`, `commandBufferSize`, and
+`maxInlineDataSize` can also be set via the environment variables:
+`OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES`,
+`OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
+respectively.
+
+MPI Distributed Rendering
+-------------------------
+
+While MPI Offload rendering is used to transparently distribute
+rendering work without requiring modification to the application, MPI
+Distributed rendering is targetted at use of OSPRay within MPI-parallel
+applications. The MPI distributed device can be selected by loading the
+`mpi` module, and manually creating and using an instance of the
+`mpiDistributed` device:
+
+``` {.cpp}
+ospLoadModule("mpi");
+
+OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
+ospDeviceCommit(mpiDevice);
+ospSetCurrentDevice(mpiDevice);
+```
+
+Your application can either initialize MPI before-hand, ensuring that
+`MPI_THREAD_SERIALIZED` or higher is supported, or allow the device to
+initialize MPI on commit. Thread multiple support is required if your
+application will make MPI calls while rendering asynchronously with
+OSPRay. When using the distributed device each rank can specify
+independent local data using the OSPRay API, as if rendering locally.
+However, when calling `ospRenderFrameAsync` the ranks will work
+collectively to render the data. The distributed device supports both
+image-parallel, where the data is replicated, and data-parallel, where
+the data is distributed, rendering modes. The `mpiDistributed` device
+will by default use each rank in `MPI_COMM_WORLD` as a render worker;
+however, it can also take a specific MPI communicator to use as the
+world communicator. Only those ranks in the specified communicator will
+participate in rendering.
+
+| Type    | Name              |        Default | Description                                                               |
+|:--------|:------------------|---------------:|:--------------------------------------------------------------------------|
+| void \* | worldCommunicator | MPI_COMM_WORLD | The MPI communicator which the OSPRay workers should treat as their world |
+
+: Parameters specific to the distributed `mpiDistributed` Device.
+
+| Type      | Name   | Default | Description                                                                          |
+|:----------|:-------|--------:|:-------------------------------------------------------------------------------------|
+| box3f\[\] | region |    NULL | A list of bounding boxes which bound the owned local data to be rendered by the rank |
+
+: Parameters specific to the distributed `OSPWorld`.
+
+| Type  | Name       | Default | Description                                                                                                                                                              |
+|:------|:-----------|--------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| int   | aoSamples  |       0 | The number of AO samples to take per-pixel                                                                                                                               |
+| float | aoDistance |  10^20^ | The AO ray length to use. Note that if the AO ray would have crossed a rank boundary and ghost geometry is not available, there will be visible artifacts in the shading |
+
+: Parameters specific to the `mpiRaycast` renderer.
+
+### Image Parallel Rendering in the MPI Distributed Device
+
+If all ranks specify exactly the same data, the distributed device can
+be used for image-parallel rendering. This works identical to the
+offload device, except that the MPI-aware application is able to load
+data in parallel on each rank rather than loading on the master and
+shipping data out to the workers. When a parallel file system is
+available, this can improve data load times. Image-parallel rendering is
+selected by specifying the same data on each rank, and using any of the
+existing local renderers (e.g., `scivis`, `pathtracer`). See
+[ospMPIDistributedTutorialReplicatedData](tutorials/ospMPIDistributedTutorialReplicatedData.cpp)
+for an example.
+
+### Data Parallel Rendering in the MPI Distributed Device
+
+The MPI Distributed device also supports data-parallel rendering with
+sort-last compositing. Each rank can specify a different piece of data,
+as long as the bounding boxes of each rank’s data are non-overlapping.
+The rest of the scene setup is similar to local rendering; however, for
+distributed rendering only the `mpiRaycast` renderer is supported. This
+renderer implements a subset of the `scivis` rendering features which
+are suitable for implementation in a distributed environment.
+
+By default the aggregate bounding box of the instances in the local
+world will be used as the bounds of that rank’s data. However, when
+using ghost zones for volume interpolation, geometry or ambient
+occlusion, each rank’s data can overlap. To clip these non-owned overlap
+regions out a set of regions (the `region` parameter) can pass as a
+parameter to the `OSPWorld` being rendered. Each rank can specify one or
+more non-overlapping `box3f`’s which bound the portions of its local
+data which it is reponsible for rendering. See the
+[ospMPIDistributedTutorialStructuredVolume](tutorials/ospMPIDistributedTutorialStructuredVolume.cpp)
+for an example.
+
+Finally, the MPI distributed device also supports hybrid-parallel
+rendering, where multiple ranks can share a single piece of data. For
+each shared piece of data the rendering work will be assigned
+image-parallel among the ranks. Partially-shared regions are determined
+by finding those ranks specifying data with the same bounds (matching
+regions) and merging them. See the
+[ospMPIDistributedTutorialPartiallyReplicatedData](tutorials/ospMPIDistributedTutorialPartiallyReplicatedData.cpp)
+for an example.
+
+Interaction With User Modules
+-----------------------------
+
+The MPI Offload rendering mode trivially supports user modules, with the
+caveat that attempting to share data directly with the application
+(e.g., passing a `void *` or other tricks to the module) will not work
+in a distributed environment. Instead, use the `ospNewSharedData` API to
+share data from the application with OSPRay, which will in turn be
+copied over the network to the workers.
+
+The MPI Distributed device also supports user modules, as all that is
+required for compositing the distributed data are the bounds of each
+rank’s local data.
 
 Tutorials
 =========

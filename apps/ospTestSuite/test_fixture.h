@@ -77,7 +77,8 @@ class Base
 class FromOsprayTesting
     : public Base,
       public ::testing::TestWithParam<std::tuple<const char * /*scene name*/,
-          const char * /*renderer type*/>>
+          const char * /*renderer type*/,
+          unsigned int /*spp*/>>
 {
  public:
   FromOsprayTesting();

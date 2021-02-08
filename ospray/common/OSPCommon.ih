@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -39,3 +39,8 @@ export void delete_uniform(void *uniform uptr);
 /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
 extern "C" void *uniform malloc64(uniform uint64 size);
 extern "C" void free64(void *uniform ptr);
+
+/*! Thread Local Storage functions */
+extern "C" void *uniform pushTLS(uniform uint64 size);
+extern "C" void *uniform reallocTLS(void *uniform ptr, uniform uint64 size);
+extern "C" void popTLS(void *uniform ptr);

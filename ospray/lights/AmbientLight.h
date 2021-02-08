@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -14,6 +14,11 @@ struct OSPRAY_SDK_INTERFACE AmbientLight : public Light
   virtual ~AmbientLight() override = default;
   virtual std::string toString() const override;
   virtual void commit() override;
+
+  vec3f radiance{1.0f, 1.0f, 1.0f}; //!< emitted radiance of the AmbientLight
+
+ private:
+  void processIntensityQuantityType();
 };
 
 } // namespace ospray

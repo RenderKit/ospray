@@ -12,24 +12,18 @@ extern "C" void *ospray_getEmbreeDevice();
 
 // Embree helper functions //////////////////////////////////////////////////
 
-template <typename T>
-inline std::vector<void *> createEmbreeScene(
-    RTCScene &scene, const DataT<T *> &objects, int embreeFlags)
+inline void createEmbreeScene(
+    RTCScene &scene, const DataT<GeometricModel *> &objects, int embreeFlags)
 {
-  std::vector<void *> ptrsToIE;
   for (auto &&obj : objects) {
     Geometry &geom = obj->geometry();
     rtcAttachGeometry(scene, geom.embreeGeometry);
-    ptrsToIE.push_back(geom.getIE());
   }
 
   rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
-
-  return ptrsToIE;
 }
 
-template <>
-inline std::vector<void *> createEmbreeScene<VolumetricModel>(
+inline void createEmbreeScene(
     RTCScene &scene, const DataT<VolumetricModel *> &objects, int embreeFlags)
 {
   for (auto &&obj : objects) {
@@ -38,8 +32,6 @@ inline std::vector<void *> createEmbreeScene<VolumetricModel>(
   }
 
   rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
-
-  return {};
 }
 
 static void freeAndNullifyEmbreeScene(RTCScene &scene)
@@ -76,28 +68,6 @@ void Group::commit()
   volumetricModels = getParamDataT<VolumetricModel *>("volume");
   clipModels = getParamDataT<GeometricModel *>("clippingGeometry");
 
-  // get rid of stride for now
-  if (geometricModels && !geometricModels->compact()) {
-    auto data =
-        new Data(OSP_GEOMETRIC_MODEL, vec3ui(geometricModels->size(), 1, 1));
-    data->copy(*geometricModels, vec3ui(0));
-    geometricModels = &(data->as<GeometricModel *>());
-    data->refDec();
-  }
-  if (volumetricModels && !volumetricModels->compact()) {
-    auto data =
-        new Data(OSP_VOLUMETRIC_MODEL, vec3ui(volumetricModels->size(), 1, 1));
-    data->copy(*volumetricModels, vec3ui(0));
-    volumetricModels = &(data->as<VolumetricModel *>());
-    data->refDec();
-  }
-  if (clipModels && !clipModels->compact()) {
-    auto data = new Data(OSP_GEOMETRIC_MODEL, vec3ui(clipModels->size(), 1, 1));
-    data->copy(*clipModels, vec3ui(0));
-    clipModels = &(data->as<GeometricModel *>());
-    data->refDec();
-  }
-
   size_t numGeometries = geometricModels ? geometricModels->size() : 0;
   size_t numVolumes = volumetricModels ? volumetricModels->size() : 0;
   size_t numClippers = clipModels ? clipModels->size() : 0;
@@ -107,7 +77,7 @@ void Group::commit()
       << "Finalizing instance, which has " << numGeometries << " geometries, "
       << numVolumes << " volumes and " << numClippers << " clipping geometries";
 
-  int sceneFlags = 0;
+  int sceneFlags = RTC_SCENE_FLAG_NONE;
   sceneFlags |=
       (getParam<bool>("dynamicScene", false) ? RTC_SCENE_FLAG_DYNAMIC : 0);
   sceneFlags |=
@@ -119,10 +89,6 @@ void Group::commit()
   freeAndNullifyEmbreeScene(sceneVolumes);
   freeAndNullifyEmbreeScene(sceneClippers);
 
-  geometryIEs.clear();
-  volumeIEs.clear();
-  clipIEs.clear();
-
   geometricModelIEs.clear();
   volumetricModelIEs.clear();
   clipModelIEs.clear();
@@ -132,8 +98,7 @@ void Group::commit()
   if (numGeometries > 0) {
     sceneGeometries = rtcNewScene(embreeDevice);
 
-    geometryIEs = createEmbreeScene<GeometricModel>(
-        sceneGeometries, *geometricModels, sceneFlags);
+    createEmbreeScene(sceneGeometries, *geometricModels, sceneFlags);
     geometricModelIEs = createArrayOfIE(*geometricModels);
 
     rtcCommitScene(sceneGeometries);
@@ -142,8 +107,7 @@ void Group::commit()
   if (numVolumes > 0) {
     sceneVolumes = rtcNewScene(embreeDevice);
 
-    volumeIEs = createEmbreeScene<VolumetricModel>(
-        sceneVolumes, *volumetricModels, sceneFlags);
+    createEmbreeScene(sceneVolumes, *volumetricModels, sceneFlags);
     volumetricModelIEs = createArrayOfIE(*volumetricModels);
 
     rtcCommitScene(sceneVolumes);
@@ -152,9 +116,10 @@ void Group::commit()
   if (numClippers > 0) {
     sceneClippers = rtcNewScene(embreeDevice);
 
-    clipIEs = createEmbreeScene<GeometricModel>(sceneClippers,
+    createEmbreeScene(sceneClippers,
         *clipModels,
-        sceneFlags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
+        sceneFlags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION
+            | RTC_SCENE_FLAG_ROBUST);
     clipModelIEs = createArrayOfIE(*clipModels);
 
     numInvertedClippers = 0;

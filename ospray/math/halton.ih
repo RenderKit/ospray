@@ -40,7 +40,7 @@ inline float Halton_sample2(unsigned int index)
 
 inline float Halton_sample3(const unsigned int index)
 {
-  // mpawlow1 note:
+  // Mirek note:
   // with normalization using 1.f instead of original 0x1.fffffcp-1
   // it generates results closer to the plain iterative implementation,
   // (before results were usually smaller by 1-2 ULPs)

@@ -159,6 +159,7 @@ FromOsprayTesting::FromOsprayTesting()
 
   sceneName = std::get<0>(params);
   rendererType = std::get<1>(params);
+  samplesPerPixel = std::get<2>(params);
 }
 
 void FromOsprayTesting::SetUp()

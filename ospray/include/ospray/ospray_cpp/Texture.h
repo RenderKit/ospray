@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,7 +12,6 @@ class Texture : public ManagedObject<OSPTexture, OSP_TEXTURE>
 {
  public:
   Texture(const std::string &type);
-  Texture(const Texture &copy);
   Texture(OSPTexture existing = nullptr);
 };
 
@@ -24,12 +23,6 @@ static_assert(sizeof(Texture) == sizeof(OSPTexture),
 inline Texture::Texture(const std::string &type)
 {
   ospObject = ospNewTexture(type.c_str());
-}
-
-inline Texture::Texture(const Texture &copy)
-    : ManagedObject<OSPTexture, OSP_TEXTURE>(copy.handle())
-{
-  ospRetain(copy.handle());
 }
 
 inline Texture::Texture(OSPTexture existing)

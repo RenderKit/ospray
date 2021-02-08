@@ -8,8 +8,8 @@
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
-#include "math/box.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 
 // The plane can't be truely infinite because Embree has a limit on object size
 #define PLANE_MAX_SIZE 1e18

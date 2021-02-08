@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,7 +12,6 @@ class Camera : public ManagedObject<OSPCamera, OSP_CAMERA>
 {
  public:
   Camera(const std::string &type);
-  Camera(const Camera &copy);
   Camera(OSPCamera existing = nullptr);
 };
 
@@ -24,12 +23,6 @@ static_assert(sizeof(Camera) == sizeof(OSPCamera),
 inline Camera::Camera(const std::string &type)
 {
   ospObject = ospNewCamera(type.c_str());
-}
-
-inline Camera::Camera(const Camera &copy)
-    : ManagedObject<OSPCamera, OSP_CAMERA>(copy.handle())
-{
-  ospRetain(copy.handle());
 }
 
 inline Camera::Camera(OSPCamera existing)
