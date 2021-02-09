@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedFrameBuffer.h"
@@ -76,28 +76,23 @@ DFB::DistributedFrameBuffer(const vec2i &numPixels,
 void DFB::commit()
 {
   FrameBuffer::commit();
-  tileOperation = nullptr;
-  lastRenderer = nullptr;
-  allTiles.clear();
-  myTiles.clear();
 
   imageOps.clear();
   if (imageOpData) {
     FrameBufferView fbv(localFBonMaster ? localFBonMaster.get()
                                         : static_cast<FrameBuffer *>(this),
         colorBufferFormat,
-	localFBonMaster ? localFBonMaster->colorBuffer.data() : nullptr,
-	localFBonMaster ? localFBonMaster->depthBuffer.data() : nullptr,
-	localFBonMaster ? localFBonMaster->normalBuffer.data() : nullptr,
-	localFBonMaster ? localFBonMaster->albedoBuffer.data() : nullptr);
+        localFBonMaster ? localFBonMaster->colorBuffer.data() : nullptr,
+        localFBonMaster ? localFBonMaster->depthBuffer.data() : nullptr,
+        localFBonMaster ? localFBonMaster->normalBuffer.data() : nullptr,
+        localFBonMaster ? localFBonMaster->albedoBuffer.data() : nullptr);
 
     std::for_each(imageOpData->begin(), imageOpData->end(), [&](ImageOp *i) {
       if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
         imageOps.push_back(i->attach(fbv));
     });
-
-    findFirstFrameOperation();
   }
+  findFirstFrameOperation();
 }
 
 void DFB::startNewFrame(const float errorThreshold)
@@ -211,6 +206,9 @@ size_t DFB::ownerIDFromTileID(size_t tileID) const
 
 void DFB::createTiles()
 {
+  allTiles.clear();
+  myTiles.clear();
+
   size_t tileID = 0;
   vec2i numPixels = getNumPixels();
   for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
@@ -242,8 +240,6 @@ void DFB::setTileOperation(
   tileOperation->attach(this);
   lastRenderer = renderer;
 
-  allTiles.clear();
-  myTiles.clear();
   createTiles();
 }
 
@@ -768,6 +764,9 @@ void DFB::clear()
   if (hasAccumBuffer) {
     tileErrorRegion.clear();
   }
+  if (localFBonMaster) {
+    localFBonMaster->clear();
+  }
 }
 
 int32 DFB::accumID(const vec2i &tile)
@@ -799,10 +798,11 @@ void DFB::endFrame(const float errorThreshold, const Camera *camera)
             fop->process(camera);
         });
   }
-
-  std::for_each(imageOps.begin(),
-      imageOps.end(),
-      [](std::unique_ptr<LiveImageOp> &p) { p->endFrame(); });
+  if (!imageOps.empty()) {
+    std::for_each(imageOps.begin(),
+        imageOps.end(),
+        [](std::unique_ptr<LiveImageOp> &p) { p->endFrame(); });
+  }
 
   // only refine on master
   if (mpicommon::IamTheMaster()) {

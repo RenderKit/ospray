@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Changes in v2.6.0:
+
+-   Fix behavior of committing the framebuffer in distributed rendering
+    to match that of local rendering
+
 ### Changes in v2.5.0:
 
 -   Add native support for cones or cylinders with curves geometry of
