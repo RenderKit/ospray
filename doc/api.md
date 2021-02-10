@@ -946,9 +946,9 @@ traversal, similar to the method in\ [1].
                                              determining the volume's overall value
                                              range. When set to `false`, the user
                                              *must* specify
-                                             `clampMaxCumulativeValue`, and all
-                                             value ranges will be assumed [0,
-                                             `clampMaxCumulativeValue`]. Disabling
+                                             `clampMaxCumulativeValue`, and all value
+                                             ranges will be assumed
+                                             [0–`clampMaxCumulativeValue`]. Disabling
                                              this switch may improve volume commit
                                              time, but will make volume rendering
                                              less efficient.
@@ -1018,7 +1018,7 @@ used.
                                                    thicker
 
   float                anisotropy             0.0  anisotropy of the (Henyey-Greenstein)
-                                                   phase function in [-1, 1] ([path tracer]
+                                                   phase function in [-1–1] ([path tracer]
                                                    only), default to isotropic scattering
 
   OSPVolume            volume                      optional [volume] object this model
@@ -2478,7 +2478,7 @@ parameters are as follows
   Type                Name             Description
   ------------------- ---------------- -----------------------------------------
   OSPVolume           volume           [Volume] used to generate color lookups
-  OSPTransferFunction transferFunction [TransferFunction] applied to `volume`
+  OSPTransferFunction transferFunction [transfer function] applied to `volume`
   ------------------- ---------------- -----------------------------------------
   : Parameters of `volume` texture type.
 
@@ -3143,7 +3143,7 @@ shipping data out to the workers. When a parallel file system is
 available, this can improve data load times. Image-parallel rendering is
 selected by specifying the same data on each rank, and using any of the
 existing local renderers (e.g., `scivis`, `pathtracer`). See
-[ospMPIDistributedTutorialReplicatedData](tutorials/ospMPIDistributedTutorialReplicatedData.cpp)
+[ospMPIDistributedTutorialReplicatedData](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialReplicatedData.cpp)
 for an example.
 
 ### Data Parallel Rendering in the MPI Distributed Device
@@ -3164,7 +3164,7 @@ regions out a set of regions (the `region` parameter) can pass as a
 parameter to the `OSPWorld` being rendered. Each rank can specify one or
 more non-overlapping `box3f`'s which bound the portions of its local
 data which it is reponsible for rendering. See the
-[ospMPIDistributedTutorialStructuredVolume](tutorials/ospMPIDistributedTutorialStructuredVolume.cpp)
+[ospMPIDistributedTutorialStructuredVolume](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialStructuredVolume.cpp)
 for an example.
 
 Finally, the MPI distributed device also supports hybrid-parallel
@@ -3173,7 +3173,7 @@ each shared piece of data the rendering work will be assigned
 image-parallel among the ranks. Partially-shared regions are determined
 by finding those ranks specifying data with the same bounds (matching
 regions) and merging them. See the
-[ospMPIDistributedTutorialPartiallyReplicatedData](tutorials/ospMPIDistributedTutorialPartiallyReplicatedData.cpp)
+[ospMPIDistributedTutorialPartiallyReplicatedData](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialPartiallyReplicatedData.cpp)
 for an example.
 
 Interaction With User Modules

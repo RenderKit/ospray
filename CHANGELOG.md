@@ -16,7 +16,7 @@ Version History
     directory
     -   The socket-based communication layer has been removed
 -   Add `intensityQuantity` parameter to light sources to control the
-    interpretation and convertion of the `intensity` into a radiative
+    interpretation and conversion of the `intensity` into a radiative
     quantity
 -   OSPRay now requires minimum Open VKL v0.12.0 to bring the following
     improvements: 

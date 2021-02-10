@@ -43,7 +43,7 @@ checklinks: tmp/brokenlinks.txt
 submodule:
 	git submodule update --init --remote
 
-if_is_devel_then = if [[ "${CI_BUILD_REF_NAME}" == "devel" || (-d ../.git && "`git rev-parse --abbrev-ref HEAD`" == "devel") ]] ; then
+if_is_devel_then = if [[ "${CI_BUILD_REF_NAME}" == *"devel" || (-d ../.git && "`git rev-parse --abbrev-ref HEAD`" == *"devel") ]] ; then
 
 tmp/version: ../cmake/ospray_version.cmake $(wildcard ../.git/HEAD)
 	sed -n $< -e "s/^set(OSPRAY_VERSION_MAJOR \([0-9]\+\))/\1./ip" | tr -d '\n' > $@
@@ -68,10 +68,10 @@ tmp/links_local.md: tmp/links.md
 	sed -e "s@: [a-z]\+\.html#@: #@" $< > $@
 
 tmp/images_web.md: images.md
-	sed -e "s/\.fig/.png/" -e "s@: @: https://ospray.github.io/images/@" $< > $@
+	sed -e "s/\.fig/.png/" -e "s/vdb_structure\.svg/vdb_structure.png/" -e "s@: @: https://ospray.github.io/images/@" $< > $@
 
 tmp/images_local_png.md: images.md
-	sed -e "s@: @: images/@" -e "s/\.fig/.png/" $< > $@
+	sed -e "s@: @: images/@" -e "s/vdb_structure\.svg/vdb_structure.png/" -e "s/\.fig/.png/" $< > $@
 
 tmp/images_local_pdf.md: images.md
 	sed -e "s@: @: images/@" -e "s@images/\(.*\)\.fig@tmp/\1.pdf@" -e "s@\.svg@.pdf@" $< > $@
@@ -180,7 +180,7 @@ tmp/compilation.md: compilation.md tmp/links_local.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
 ../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/tutorials.md
-	$(PANDOC) --file-scope $+ --markdown-headings=setext -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
+	$(PANDOC) --file-scope $+ --markdown-headings=setext -t gfm | $(convert_nbsp_width) > $@
 
 ### pdf
 ########################################################################
