@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 macro(ospray_create_mpi_tutorial tutorial_name)
@@ -63,8 +63,11 @@ target_include_directories(ospMPIDistributedTutorialAsync PRIVATE
 # MPI Tutorial utilities library
 add_library(mpi_tutorial_common STATIC
   GLFWDistribOSPRayWindow.cpp
-  imgui_impl_glfw_gl3.cpp
+  ${CMAKE_SOURCE_DIR}/apps/ospExamples/imgui_impl_glfw_gl3.cpp
 )
+
+target_include_directories(mpi_tutorial_common PRIVATE
+  ${CMAKE_SOURCE_DIR}/apps/ospExamples/)
 
 target_link_libraries(mpi_tutorial_common PUBLIC
   rkcommon::rkcommon

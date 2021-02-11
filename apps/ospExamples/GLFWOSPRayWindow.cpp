@@ -334,8 +334,7 @@ void GLFWOSPRayWindow::display()
 
   updateTitleBar();
 
-  // Turn on SRGB conversion for OSPRay frame
-  glEnable(GL_FRAMEBUFFER_SRGB);
+  glEnable(GL_FRAMEBUFFER_SRGB); // Turn on sRGB conversion for OSPRay frame
 
   static bool firstFrame = true;
   if (firstFrame || currentFrame.isReady()) {
@@ -385,11 +384,11 @@ void GLFWOSPRayWindow::display()
 
   glEnd();
 
-  // Disable SRGB conversion for UI
-  glDisable(GL_FRAMEBUFFER_SRGB);
-
   if (showUi) {
+    glDisable(GL_FRAMEBUFFER_SRGB); // Disable SRGB conversion for UI
+
     ImGui::Render();
+    ImGui_ImplGlfwGL3_Render();
   }
 
   // swap buffers
