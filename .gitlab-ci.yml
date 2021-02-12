@@ -237,7 +237,7 @@ build-windows-msvc15:
     - win
     - msvc15
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release" "OFF"
   <<: *build_artifacts
 
 build-windows-debug-all:
@@ -246,7 +246,7 @@ build-windows-debug-all:
     - win
     - msvc15
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "OFF"
   <<: *build_artifacts
   only: [schedules]
 
@@ -256,7 +256,17 @@ build-windows-msvc16:
     - win
     - msvc16
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release" "OFF"
+  <<: *build_artifacts
+
+build-windows-mpi:
+  stage: build
+  tags:
+    - win
+    - msvc16
+    - mpi
+  script:
+    - scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release" "ON"
   <<: *build_artifacts
 
 #build-windows-icc:
