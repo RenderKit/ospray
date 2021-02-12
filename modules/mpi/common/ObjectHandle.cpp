@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ObjectHandle.h"
@@ -112,6 +112,6 @@ ObjectHandle ObjectHandle::lookup(ManagedObject *object)
   return (nullHandle);
 }
 
-OSPRAY_SDK_INTERFACE const ObjectHandle nullHandle(0);
+const ObjectHandle nullHandle(0);
 
 } // namespace ospray

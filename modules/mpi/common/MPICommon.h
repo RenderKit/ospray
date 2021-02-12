@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,16 +12,6 @@
 
 #include "ospray/OSPEnums.h"
 #include "rkcommon/common.h"
-
-#ifdef _WIN32
-#ifdef ospray_mpi_common_EXPORTS
-#define OSPRAY_MPI_INTERFACE __declspec(dllexport)
-#else
-#define OSPRAY_MPI_INTERFACE __declspec(dllimport)
-#endif
-#else
-#define OSPRAY_MPI_INTERFACE
-#endif
 
 // IMPI on Windows defines MPI_CALL already, erroneously
 #ifdef MPI_CALL
@@ -49,12 +39,12 @@ using namespace rkcommon;
   (for debugging) _may_ eventually turn this into a real logLevel,
   but for now this is cleaner here than in the MPI device
 */
-OSPRAY_MPI_INTERFACE extern bool mpiIsThreaded;
+extern bool mpiIsThreaded;
 
 //! abstraction for an MPI group.
 /*! it's the responsibility of the respective mpi setup routines to
   fill in the proper values */
-struct OSPRAY_MPI_INTERFACE Group
+struct Group
 {
   /*! constructor. sets the 'comm', 'rank', and 'size' fields */
   Group(MPI_Comm initComm = MPI_COMM_NULL);
@@ -98,7 +88,7 @@ struct OSPRAY_MPI_INTERFACE Group
   pointer to data; the message itself "owns" this pointer, and
   will delete it once the message itself dies. the message itself
   is reference counted using the std::shared_ptr functionality. */
-struct OSPRAY_MPI_INTERFACE Message
+struct Message
 {
   Message() = default;
 
@@ -156,20 +146,20 @@ struct UserMemMessage : public Message
 };
 
 //! MPI_COMM_WORLD
-OSPRAY_MPI_INTERFACE extern Group world;
+extern Group world;
 
 /* The communicator used for the OSPRay workers, may be equivalent to world
  * depending on the launch configuration
  */
-OSPRAY_MPI_INTERFACE extern Group worker;
+extern Group worker;
 
 // Initialize OSPRay's MPI groups, returns false if MPI
 // was already initialized. useCommWorld indicates if MPI_COMM_WORLD
 // should be set as the world group used for communication. If false,
 // it is up to the caller to configure the world group correctly.
-OSPRAY_MPI_INTERFACE bool init(int *ac, const char **av, bool useCommWorld);
+bool init(int *ac, const char **av, bool useCommWorld);
 
-OSPRAY_MPI_INTERFACE bool isManagedObject(OSPDataType type);
+bool isManagedObject(OSPDataType type);
 
 inline int workerRank()
 {

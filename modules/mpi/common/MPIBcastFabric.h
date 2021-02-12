@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -19,7 +19,7 @@ namespace mpicommon {
  *  be duplicated to avoid MPI collective matching issues with other
  *  fabrics and collectives.
  */
-class OSPRAY_MPI_INTERFACE MPIFabric : public networking::Fabric
+class MPIFabric : public networking::Fabric
 {
  public:
   MPIFabric(const Group &parentGroup, int bcastRoot);

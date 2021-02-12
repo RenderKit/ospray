@@ -5,6 +5,7 @@ Version History
 
 -   Fix behavior of committing the framebuffer in distributed rendering
     to match that of local rendering
+-   Fix build of MPI module on Windows
 
 ### Changes in v2.5.0:
 

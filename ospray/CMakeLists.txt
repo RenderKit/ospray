@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # -------------------------------------------------------
@@ -291,7 +291,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
 
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in "${OSPRAY_DEF}")
 
-    # changes ospray.def only if content changed, avoids unnecessary re-linking
+    # changes .def only if content changed, avoids unnecessary re-linking
     configure_file(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_ispc.def.in ospray_module_ispc.def COPYONLY)
 
     list(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_ispc.def)

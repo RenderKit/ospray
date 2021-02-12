@@ -1,4 +1,4 @@
-// Copyright 2016-2020 Intel Corporation
+// Copyright 2016-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Collectives.h"
@@ -23,7 +23,7 @@ std::future<void *> bcast(
   return col->future();
 }
 
-std::future<void *> OSPRAY_MPI_INTERFACE bcast(
+std::future<void *> bcast(
     std::shared_ptr<rkcommon::utility::ArrayView<uint8_t>> &buffer,
     size_t count,
     MPI_Datatype datatype,

@@ -1,4 +1,4 @@
-// Copyright 2016-2020 Intel Corporation
+// Copyright 2016-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -16,10 +16,10 @@ namespace mpicommon {
  * for completion. The caller owns the passed buffer, and must keep it
  * valid until the future completes.
  */
-std::future<void *> OSPRAY_MPI_INTERFACE bcast(
+std::future<void *> bcast(
     void *buffer, size_t count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
-std::future<void *> OSPRAY_MPI_INTERFACE bcast(
+std::future<void *> bcast(
     std::shared_ptr<rkcommon::utility::ArrayView<uint8_t>> &buffer,
     size_t count,
     MPI_Datatype datatype,
@@ -29,14 +29,14 @@ std::future<void *> OSPRAY_MPI_INTERFACE bcast(
 /* Start an asynchronous barrier and return the future to wait on for
  * completion of the barrier
  */
-std::future<void> OSPRAY_MPI_INTERFACE barrier(MPI_Comm comm);
+std::future<void> barrier(MPI_Comm comm);
 
 /* Start an asynchronous gather and return the future to wait on for
  * completion of the gather. The called owns both the send and recv buffers,
  * and must keep them valid until the future completes. The pointer returned
  * in the future is to the receive buffer.
  */
-std::future<void *> OSPRAY_MPI_INTERFACE gather(const void *sendBuffer,
+std::future<void *> gather(const void *sendBuffer,
     int sendCount,
     MPI_Datatype sendType,
     void *recvBuffer,
@@ -51,7 +51,7 @@ std::future<void *> OSPRAY_MPI_INTERFACE gather(const void *sendBuffer,
  * in the future is to the receive buffer. The recvCounts and offsets
  * vectors are copied into the struct.
  */
-std::future<void *> OSPRAY_MPI_INTERFACE gatherv(const void *sendBuffer,
+std::future<void *> gatherv(const void *sendBuffer,
     int sendCount,
     MPI_Datatype sendType,
     void *recvBuffer,
@@ -65,7 +65,7 @@ std::future<void *> OSPRAY_MPI_INTERFACE gatherv(const void *sendBuffer,
  * by the caller and must be kept valid until the future is set, indicating
  * completion of the reduction.
  */
-std::future<void *> OSPRAY_MPI_INTERFACE reduce(const void *sendBuffer,
+std::future<void *> reduce(const void *sendBuffer,
     void *recvBuffer,
     int count,
     MPI_Datatype datatype,
@@ -78,7 +78,7 @@ std::future<void *> OSPRAY_MPI_INTERFACE reduce(const void *sendBuffer,
  * completion of the send.
  * TODO: Chunking
  */
-std::future<void *> OSPRAY_MPI_INTERFACE send(void *buffer,
+std::future<void *> send(void *buffer,
     int count,
     MPI_Datatype datatype,
     int source,
@@ -90,7 +90,7 @@ std::future<void *> OSPRAY_MPI_INTERFACE send(void *buffer,
  * completion of the recv.
  * TODO: Chunking
  */
-std::future<void *> OSPRAY_MPI_INTERFACE recv(void *buffer,
+std::future<void *> recv(void *buffer,
     int count,
     MPI_Datatype datatype,
     int source,
@@ -99,7 +99,7 @@ std::future<void *> OSPRAY_MPI_INTERFACE recv(void *buffer,
 
 // An asynchronously executed collective operation which can be run
 // on the MPI messaging layer
-class OSPRAY_MPI_INTERFACE Collective
+class Collective
 {
  public:
   Collective(MPI_Comm comm);
@@ -117,7 +117,7 @@ class OSPRAY_MPI_INTERFACE Collective
   MPI_Request request;
 };
 
-class OSPRAY_MPI_INTERFACE Barrier : public Collective
+class Barrier : public Collective
 {
  public:
   Barrier(MPI_Comm comm);
@@ -132,7 +132,7 @@ class OSPRAY_MPI_INTERFACE Barrier : public Collective
   std::promise<void> result;
 };
 
-class OSPRAY_MPI_INTERFACE Bcast : public Collective
+class Bcast : public Collective
 {
  public:
   /* Construct an asynchronously run broadcast. The buffer is owned by
@@ -163,7 +163,7 @@ class OSPRAY_MPI_INTERFACE Bcast : public Collective
   std::vector<MPI_Request> requests;
 };
 
-class OSPRAY_MPI_INTERFACE Gather : public Collective
+class Gather : public Collective
 {
  public:
   /* Construct an asynchronously run gather. The send/recv buffers are owned
@@ -202,7 +202,7 @@ class OSPRAY_MPI_INTERFACE Gather : public Collective
   std::promise<void *> result;
 };
 
-class OSPRAY_MPI_INTERFACE Gatherv : public Collective
+class Gatherv : public Collective
 {
  public:
   /* Construct an asynchronously run gatherv. The send/recv buffers are owned
@@ -244,7 +244,7 @@ class OSPRAY_MPI_INTERFACE Gatherv : public Collective
   std::promise<void *> result;
 };
 
-class OSPRAY_MPI_INTERFACE Reduce : public Collective
+class Reduce : public Collective
 {
  public:
   /* Construct an asynchronously run reduce. The send/recv buffers are owned
@@ -287,7 +287,7 @@ class OSPRAY_MPI_INTERFACE Reduce : public Collective
  * fire and forget messaging layer we don't care about this and just queue
  * stuff up and recieve whatever is coming to us.
  */
-class OSPRAY_MPI_INTERFACE Send : public Collective
+class Send : public Collective
 {
  public:
   /* Construct an asynchronously run send. The buffer is owned by
@@ -319,7 +319,7 @@ class OSPRAY_MPI_INTERFACE Send : public Collective
   std::promise<void *> result;
 };
 
-class OSPRAY_MPI_INTERFACE Recv : public Collective
+class Recv : public Collective
 {
  public:
   /* Construct an asynchronously run recv. The buffer is owned by

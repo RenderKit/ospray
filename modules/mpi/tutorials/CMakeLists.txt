@@ -2,7 +2,7 @@
 ## SPDX-License-Identifier: Apache-2.0
 
 macro(ospray_create_mpi_tutorial tutorial_name)
-  add_executable(${tutorial_name} ${OSPRAY_MPI_RESOURCE} ${ARGN})
+  add_executable(${tutorial_name} ${OSPRAY_RESOURCE} ${ARGN})
   target_link_libraries(${tutorial_name} PRIVATE mpi_tutorial_common)
   install(TARGETS ${tutorial_name}
     DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -25,7 +25,7 @@ endif()
 
 # build ospTutorial, for demonstration and API testing
 add_executable(ospMPIDistributedTutorial
-  ${OSPRAY_MPI_RESOURCE} ospMPIDistributedTutorial.c)
+  ${OSPRAY_RESOURCE} ospMPIDistributedTutorial.c)
 
 target_link_libraries(ospMPIDistributedTutorial PRIVATE
   ospray
@@ -36,7 +36,7 @@ target_include_directories(ospMPIDistributedTutorial PRIVATE
 
 # C++ version
 add_executable(ospMPIDistributedTutorialCpp
-  ${OSPRAY_MPI_RESOURCE} ospMPIDistributedTutorial.cpp)
+  ${OSPRAY_RESOURCE} ospMPIDistributedTutorial.cpp)
 
 target_link_libraries(ospMPIDistributedTutorialCpp PRIVATE
   ospray
@@ -49,7 +49,7 @@ target_compile_definitions(ospMPIDistributedTutorialCpp PRIVATE
 
 # async version
 add_executable(ospMPIDistributedTutorialAsync
-  ${OSPRAY_MPI_RESOURCE} ospMPIDistributedTutorialAsync.c)
+  ${OSPRAY_RESOURCE} ospMPIDistributedTutorialAsync.c)
 
 target_link_libraries(ospMPIDistributedTutorialAsync PRIVATE
   ospray

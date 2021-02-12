@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -24,7 +24,7 @@ struct ManagedObject;
   as if they were pointers (and thus, 'null' objects are
   consistent between local and mpi rendering)
 */
-union OSPRAY_MPI_INTERFACE ObjectHandle
+union ObjectHandle
 {
   void free();
 
@@ -67,7 +67,7 @@ union OSPRAY_MPI_INTERFACE ObjectHandle
   int64 i64;
 };
 
-OSPRAY_MPI_INTERFACE extern const ObjectHandle nullHandle;
+extern const ObjectHandle nullHandle;
 
 // Inlined operator definitions /////////////////////////////////////////////
 
