@@ -11,7 +11,7 @@ images_svg := gitter_badge structured_spherical_coords vdb_structure
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_svg2pdf := $(addprefix images/, $(addsuffix .pdf, $(images_svg)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
-webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
+webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, vdb_structure.png $(addsuffix .svg, $(images_svg))))
 pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_svg2pdf)
 
 PANDOC := pandoc
@@ -27,7 +27,7 @@ all: www doc pdf
 www: $(webpages) www/stylesheet.css $(webimages) | wwwscripts
 doc: ../README.md
 pdf: ../readme.pdf
-spec: ospray-spec.rst
+spec: ospray-spec.html ospray-spec.rst $(webimages)
 checklinks: tmp/brokenlinks.txt
 	@if [[ -s $^ ]] ; then \
 	  echo "Found broken link:" ;\
@@ -100,8 +100,11 @@ tmpdir:
 ### spec
 ########################################################################
 
-ospray-spec.rst: api.md
-	$(PANDOC) --wrap=none --email-obfuscation=none $+ -o $@
+ospray-spec.rst: api.md tmp/links_local.md tmp/images_local_png.md
+	$(PANDOC) --wrap=none --indented-code-classes=cpp --email-obfuscation=none $+ -t rst | sed -e 's@½@\\frac{1}{2}@g' > $@
+
+ospray-spec.html: ospray-spec.rst
+	rst2html $+ $@
 
 ### webpages
 ########################################################################
@@ -221,7 +224,7 @@ tmp/brokenlinks.txt: tmp/hypertarget.txt tmp/hyperlink.txt
 ########################################################################
 
 clean:
-	rm -rf www tmp __pycache__
+	rm -rf www tmp __pycache__ ospray-spec.html ospray-spec.rst
 
 realclean: clean
 	rm -irf images

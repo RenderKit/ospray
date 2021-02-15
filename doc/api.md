@@ -2003,7 +2003,7 @@ files. To create an OBJ material pass the type string "`obj`" to
   ------------- --------- ----------  -----------------------------------------
   vec3f         kd         white 0.8  diffuse color (linear RGB)
   vec3f         ks             black  specular color (linear RGB)
-  float         ns                10  shininess (Phong exponent), usually in [2–10^4^]
+  float         ns                10  shininess (Phong exponent), usually in \[2–10^4^\]
   float         d             opaque  opacity
   vec3f         tf             black  transparency filter color (linear RGB)
   OSPTexture    map_bump        NULL  normal map

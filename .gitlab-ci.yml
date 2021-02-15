@@ -408,6 +408,18 @@ web:
       - doc/www/*
     expire_in: 1 week
 
+spec:
+  <<: *doc-defaults
+  script:
+    - cd doc
+    - make spec
+    - mv www/images _images
+  artifacts:
+    paths:
+      - doc/ospray-spec.*
+      - doc/_images/*
+    expire_in: 1 week
+
 
 ### RELEASE JOBS ###
 
