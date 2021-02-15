@@ -27,6 +27,7 @@
 #define lntwo_over_two 0.346573590279972654709f
 
 #define RCP_DELTAVALUE (1.1234567e-19f)
+#define LOG_DELTAVALUE (1e-20f)
 
 /*! c-style reciprocal. required since ispc 1.7 due to type changes in this
  * version */
@@ -131,12 +132,12 @@ inline uniform float expf(const uniform float f)
 /*! c-style log.  */
 inline float logf(const float f)
 {
-  return log(f);
+  return log(f + LOG_DELTAVALUE);
 }
 /*! c-style log */
 inline uniform float logf(const uniform float f)
 {
-  return log(f);
+  return log(f + LOG_DELTAVALUE);
 }
 
 /*! c-style abs.  */
