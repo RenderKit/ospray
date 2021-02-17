@@ -1,0 +1,13 @@
+-How to list remote repositories
+
+git remote -v
+
+github  https://github.com/ospray/ospray.git (fetch)
+github  https://github.com/ospray/ospray.git (push)
+tfs     ssh://tfs.ansys.com:22/tfs/ANSYS_Development/EnSight/_git/OSPRay.git (fetch)
+tfs     ssh://tfs.ansys.com:22/tfs/ANSYS_Development/EnSight/_git/OSPRay.git (push)
+
+
+-How to update a repository, such as tfs
+
+git fetch github

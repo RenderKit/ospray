@@ -242,6 +242,10 @@ set(project_ispc_FILES
     geometry/Planes.ispc
     geometry/Subdivision.ispc
 
+    lights/Light.ih
+    lights/Light.ispc
+    lights/QuadLight.ispc
+
     math/AffineSpace.ih
     math/interpolation.ih
     math/LinearSpace.ih
