@@ -62,7 +62,7 @@ endif()
 add_subdirectory(ospray)
 
 ## OSPRay sample apps ##
-add_subdirectory(apps)
+#add_subdirectory(apps)
 
 ## Modules ##
 add_subdirectory(modules)
