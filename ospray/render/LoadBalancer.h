@@ -68,6 +68,11 @@ struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
       void *perFrameData) override;
 
   std::string toString() const override;
+
+ private:
+  void initAllTileList(const FrameBuffer *fb);
+
+  std::vector<int> allTileIDs;
 };
 
 } // namespace ospray

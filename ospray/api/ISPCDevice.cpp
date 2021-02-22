@@ -3,6 +3,7 @@
 
 // ospray
 #include "ISPCDevice.h"
+#include "MultiDevice.h"
 #include "camera/Camera.h"
 #include "camera/registration.h"
 #include "common/Data.h"
@@ -153,7 +154,7 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 #undef declare_param_setter
 
 ISPCDevice::ISPCDevice()
-    : loadBalacer(std::make_shared<LocalTiledLoadBalancer>())
+    : loadBalancer(std::make_shared<LocalTiledLoadBalancer>())
 {}
 
 ISPCDevice::~ISPCDevice()
@@ -186,10 +187,6 @@ static void vklErrorFunc(void *, const VKLError code, const char *str)
       (code > VKL_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
   handleError(e, "Open VKL internal error '" + std::string(str) + "'");
 }
-
-///////////////////////////////////////////////////////////////////////////
-// ManagedObject Implementation ///////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
 
 void ISPCDevice::commit()
 {
@@ -498,7 +495,7 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   auto *f = new RenderTask(fb, [=]() {
     utility::CodeTimer timer;
     timer.start();
-    loadBalacer->renderFrame(fb, renderer, camera, world);
+    loadBalancer->renderFrame(fb, renderer, camera, world);
     timer.stop();
 
     fb->refDec();
@@ -562,6 +559,9 @@ extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
 
   if (status == OSP_NO_ERROR) {
     Device::registerType<ISPCDevice>("cpu");
+    // WILL TODO: if we split multidevice to its own module it'll
+    // get its own initializer
+    Device::registerType<MultiDevice>("multi");
 
     registerAllCameras();
     registerAllImageOps();

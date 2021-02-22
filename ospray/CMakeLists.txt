@@ -48,6 +48,9 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   api/ISPCDevice.cpp
   api/ISPCDevice.ispc
 
+  api/MultiDevice.h
+  api/MultiDevice.cpp
+
   common/Data.ih
   common/Data.cpp
   common/Future.cpp
@@ -147,6 +150,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   math/halton.ispc
 
   render/LoadBalancer.cpp
+  render/MultiDeviceLoadBalancer.cpp
   render/Material.cpp
   render/Renderer.ispc
   render/Renderer.cpp

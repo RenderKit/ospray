@@ -3,31 +3,33 @@
 
 #pragma once
 
-// ospray
-#include "Device.h"
-// embree
-#include "embree3/rtcore.h"
-// openvkl
-#include "openvkl/openvkl.h"
+#include <unordered_set>
+#include <vector>
+#include "ISPCDevice.h"
+#include "render/MultiDeviceLoadBalancer.h"
 
-/*! \file ISPCDevice.h Implements the "local" device for local rendering */
+/*! \file MultiDevice.h Implements the a multiplexor for ISPCDevices. In the
+ * future, this may become a multiplexor for  */
 
 namespace ospray {
-
-struct LocalTiledLoadBalancer;
-
 namespace api {
 
-struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
+// An object in the multidevice is just a container to hold
+// the handles to the actual objects of each subdevice
+struct OSPRAY_SDK_INTERFACE MultiDeviceObject : public memory::RefCount
 {
-  ISPCDevice();
-  virtual ~ISPCDevice() override;
+  std::vector<OSPObject> objects;
+};
+
+struct OSPRAY_SDK_INTERFACE MultiDevice : public Device
+{
+  MultiDevice() = default;
 
   /////////////////////////////////////////////////////////////////////////
   // ManagedObject Implementation /////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
-  virtual void commit() override;
+  void commit() override;
 
   /////////////////////////////////////////////////////////////////////////
   // Device Implementation ////////////////////////////////////////////////
@@ -125,15 +127,19 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
 
-  std::shared_ptr<LocalTiledLoadBalancer> loadBalancer;
-
  private:
-  RTCDevice embreeDevice = nullptr;
-  VKLDevice vklDevice = nullptr;
+  std::unique_ptr<MultiDeviceLoadBalancer> loadBalancer;
+  std::vector<std::unique_ptr<ISPCDevice>> subdevices;
 };
 
-extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
+// WILL: TODO later if splitting this into its own module
+// For basic development it's simple enough to just toss it
+// in with the ISPC module initializer since it's compiled as
+// part of that module
+#if 0
+extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_multi(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/);
+#endif
 
 } // namespace api
 } // namespace ospray
