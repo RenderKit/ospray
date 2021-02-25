@@ -14,7 +14,6 @@ namespace ospray {
 
 Planes::Planes()
 {
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
   ispcEquivalent = ispc::Planes_create(this);
 }
 
@@ -25,6 +24,16 @@ std::string Planes::toString() const
 
 void Planes::commit()
 {
+  if (!m_device)
+  {
+    return;
+  }
+  if (!embreeGeometry)
+  {
+    ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
+    embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+  }
+
   coeffsData = getParamDataT<vec4f>("plane.coefficients", true);
   boundsData = getParamDataT<box3f>("plane.bounds");
 

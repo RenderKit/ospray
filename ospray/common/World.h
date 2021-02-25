@@ -40,6 +40,10 @@ struct OSPRAY_SDK_INTERFACE World : public ManagedObject
 
   bool scivisDataValid;
   bool pathtracerDataValid;
+
+  void setDevice(OSPDevice);
+private:
+  OSPDevice m_device{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(World *, OSP_WORLD);

@@ -15,7 +15,6 @@ namespace ospray {
 Isosurfaces::Isosurfaces()
 {
   ispcEquivalent = ispc::Isosurfaces_create(this);
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 }
 
 Isosurfaces::~Isosurfaces()
@@ -33,6 +32,15 @@ std::string Isosurfaces::toString() const
 
 void Isosurfaces::commit()
 {
+  if (!m_device)
+  {
+    return;
+  }
+  if (!embreeGeometry)
+  {
+    ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice *)m_device;
+    embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+  }
   isovaluesData = getParamDataT<float>("isovalue", true, true);
   model = nullptr;
 

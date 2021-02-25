@@ -3,16 +3,10 @@
 
 // ospray
 #include "World.h"
-#include "api/ISPCDevice.h"
 // ispc exports
 #include "common/World_ispc.h"
 
 namespace ospray {
-
-extern "C" void *ospray_getEmbreeDevice()
-{
-  return api::ISPCDevice::embreeDevice;
-}
 
 extern "C" void *ospray_getVKLDevice()
 {
@@ -21,11 +15,17 @@ extern "C" void *ospray_getVKLDevice()
 
 // Embree helper functions ///////////////////////////////////////////////////
 
-static void addGeometryInstance(
-    RTCScene &scene, RTCScene instScene, const rkcommon::math::affine3f &xfm)
+static void addGeometryInstance(RTCScene &scene,
+    RTCScene instScene,
+    const rkcommon::math::affine3f &xfm,
+    OSPDevice device)
 {
+  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice *)device;
+  if (!idev)
+    return;
+
   // Create parent scene if not yet created
-  RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+  RTCDevice embreeDevice = (RTCDevice)idev->ispc_embreeDevice();
   if (!scene)
     scene = rtcNewScene(embreeDevice);
 
@@ -105,18 +105,22 @@ void World::commit()
 
       if (inst->group->sceneGeometries) {
         geometriesInstIEs.push_back(inst->getIE());
-        addGeometryInstance(
-            embreeSceneHandleGeometries, inst->group->sceneGeometries, xfm);
+        addGeometryInstance(embreeSceneHandleGeometries,
+            inst->group->sceneGeometries,
+            xfm,
+            m_device);
       }
       if (inst->group->sceneVolumes) {
         volumesInstIEs.push_back(inst->getIE());
         addGeometryInstance(
-            embreeSceneHandleVolumes, inst->group->sceneVolumes, xfm);
+            embreeSceneHandleVolumes, inst->group->sceneVolumes, xfm, m_device);
       }
       if (inst->group->sceneClippers) {
         clippersInstIEs.push_back(inst->getIE());
-        addGeometryInstance(
-            embreeSceneHandleClippers, inst->group->sceneClippers, xfm);
+        addGeometryInstance(embreeSceneHandleClippers,
+            inst->group->sceneClippers,
+            xfm,
+            m_device);
         numInvertedClippers += inst->group->numInvertedClippers;
       }
     }
@@ -172,6 +176,11 @@ box3f World::getBounds() const
   }
 
   return sceneBounds;
+}
+
+void World::setDevice(OSPDevice device)
+{
+  m_device = device;
 }
 
 OSPTYPEFOR_DEFINITION(World *);

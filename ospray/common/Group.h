@@ -40,6 +40,10 @@ struct OSPRAY_SDK_INTERFACE Group : public ManagedObject
   RTCScene sceneGeometries{nullptr};
   RTCScene sceneVolumes{nullptr};
   RTCScene sceneClippers{nullptr};
+
+  void setDevice(OSPDevice);
+ protected:
+  OSPDevice m_device{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Group *, OSP_GROUP);

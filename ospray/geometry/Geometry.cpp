@@ -47,6 +47,11 @@ void Geometry::postCreationInfo(size_t numVerts) const
   postStatusMsg(OSP_LOG_INFO) << ss.str();
 }
 
+void Geometry::setDevice(OSPDevice device)
+{
+  m_device = device;
+}
+
 OSPTYPEFOR_DEFINITION(Geometry *);
 
 } // namespace ospray

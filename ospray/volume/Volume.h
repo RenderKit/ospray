@@ -21,7 +21,9 @@ struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
 
   void commit() override;
 
- private:
+  void setDevice(OSPDevice);
+
+private:
   void checkDataStride(const Data *) const;
   void handleParams();
 
@@ -41,6 +43,7 @@ struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   box3f bounds{empty};
 
   std::string vklType;
+  OSPDevice m_device{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Volume *, OSP_VOLUME);

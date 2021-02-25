@@ -12,8 +12,6 @@
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
 
-extern "C" OSPRAY_SDK_INTERFACE RTCDevice ispc_embreeDevice();
-
 namespace ospray {
 
 struct LocalTiledLoadBalancer;
@@ -128,17 +126,16 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
 
-  // Public Data //
+  RTCDevice ispc_embreeDevice()
+  {
+    return embreeDevice;
+  };
 
   std::shared_ptr<LocalTiledLoadBalancer> loadBalacer;
 
-  // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
-  //             safely assume that a device exists.
-  // TODO: Remove the static embree device, replace with per-device.
-  // Same for VKLDevice
-  static RTCDevice embreeDevice;
-
   static VKLDevice vklDevice;
+ private:
+  RTCDevice embreeDevice = nullptr;
 };
 
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(

@@ -14,8 +14,6 @@ namespace ospray {
 Subdivision::Subdivision()
 {
   ispcEquivalent = ispc::Subdivision_create(this);
-  embreeGeometry =
-      rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
 }
 
 std::string Subdivision::toString() const
@@ -25,6 +23,13 @@ std::string Subdivision::toString() const
 
 void Subdivision::commit()
 {
+  if (!m_device)
+  {
+    return;
+  }
+  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
+  embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
+
   vertexData = getParamDataT<vec3f>("vertex.position", true);
   colorsData = getParamDataT<vec4f>("vertex.color");
   texcoordData = getParamDataT<vec2f>("vertex.texcoord");

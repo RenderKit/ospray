@@ -8,8 +8,6 @@
 
 namespace ospray {
 
-extern "C" void *ospray_getEmbreeDevice();
-
 // Embree helper functions //////////////////////////////////////////////////
 
 inline void createEmbreeScene(
@@ -93,7 +91,12 @@ void Group::commit()
   volumetricModelIEs.clear();
   clipModelIEs.clear();
 
-  RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+  if (!m_device)
+  {
+    return;
+  }
+  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
+  RTCDevice embreeDevice = (RTCDevice)idev->ispc_embreeDevice();
 
   if (numGeometries > 0) {
     sceneGeometries = rtcNewScene(embreeDevice);
@@ -154,6 +157,11 @@ box3f Group::getBounds() const
   }
 
   return sceneBounds;
+}
+
+void Group::setDevice(OSPDevice device)
+{
+  m_device = device;
 }
 
 OSPTYPEFOR_DEFINITION(Group *);

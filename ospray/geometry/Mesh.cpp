@@ -35,7 +35,13 @@ void Mesh::commit()
     rtcReleaseGeometry(embreeGeometry);
 
   const bool isTri = indexData->type == OSP_VEC3UI;
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(),
+
+  if (!m_device)
+  {
+    return;
+  }
+  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
+  embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(),
       isTri ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertexData);
   rtcSetSharedGeometryBuffer(embreeGeometry,

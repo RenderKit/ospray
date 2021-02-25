@@ -31,6 +31,9 @@ struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
 
   RTCGeometry embreeGeometry{nullptr};
 
+  void setDevice(OSPDevice);
+ protected:
+  OSPDevice m_device{nullptr};
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>
   friend void registerTypeHelper(const char *type);

@@ -13,7 +13,6 @@ namespace ospray {
 Spheres::Spheres()
 {
   ispcEquivalent = ispc::Spheres_create(this);
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 }
 
 std::string Spheres::toString() const
@@ -23,6 +22,15 @@ std::string Spheres::toString() const
 
 void Spheres::commit()
 {
+  if (!m_device)
+  {
+    return;
+  }
+  if (!embreeGeometry)
+  {
+    ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice *)m_device;
+    embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+  }
   radius = getParam<float>("radius", 0.01f);
   vertexData = getParamDataT<vec3f>("sphere.position", true);
   radiusData = getParamDataT<float>("sphere.radius");

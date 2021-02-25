@@ -12,7 +12,6 @@ namespace ospray {
 
 Boxes::Boxes()
 {
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
   ispcEquivalent = ispc::Boxes_create(this);
 }
 
@@ -23,6 +22,15 @@ std::string Boxes::toString() const
 
 void Boxes::commit()
 {
+  if (!m_device)
+  {
+    return;
+  }
+  if (!embreeGeometry)
+  {
+    ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
+    embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+  }
   boxData = getParamDataT<box3f>("box", true);
 
   ispc::Boxes_set(getIE(), embreeGeometry, ispc(boxData));

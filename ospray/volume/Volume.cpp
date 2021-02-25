@@ -87,8 +87,12 @@ void Volume::createEmbreeGeometry()
 {
   if (embreeGeometry)
     rtcReleaseGeometry(embreeGeometry);
-
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+  if (!m_device)
+  {
+    return;
+  }
+  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
+  embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 }
 
 void Volume::checkDataStride(const Data *data) const
@@ -202,6 +206,11 @@ void Volume::handleParams()
       param.query = false;
     }
   });
+}
+
+void Volume::setDevice(OSPDevice device)
+{
+  m_device = device;
 }
 
 OSPTYPEFOR_DEFINITION(Volume *);

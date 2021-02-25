@@ -11,8 +11,6 @@
 
 namespace ospray {
 
-extern "C" void *ospray_getEmbreeDevice();
-
 Instance::Instance(Group *_group)
 {
   managedObjectType = OSP_INSTANCE;

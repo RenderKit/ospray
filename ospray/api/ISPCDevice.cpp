@@ -39,11 +39,6 @@
 
 #include "api/ISPCDevice_ispc.h"
 
-extern "C" RTCDevice ispc_embreeDevice()
-{
-  return ospray::api::ISPCDevice::embreeDevice;
-}
-
 namespace ospray {
 namespace api {
 
@@ -157,7 +152,7 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 
 #undef declare_param_setter
 
-RTCDevice ISPCDevice::embreeDevice = nullptr;
+// TODO: Temp for merge
 VKLDevice ISPCDevice::vklDevice = nullptr;
 
 ISPCDevice::ISPCDevice()
@@ -310,12 +305,16 @@ OSPCamera ISPCDevice::newCamera(const char *type)
 
 OSPGeometry ISPCDevice::newGeometry(const char *type)
 {
-  return (OSPGeometry)Geometry::createInstance(type);
+  ospray::Geometry *ret = Geometry::createInstance(type);
+  ret->setDevice((OSPDevice)this);
+  return (OSPGeometry)ret;
 }
 
 OSPVolume ISPCDevice::newVolume(const char *type)
 {
-  return (OSPVolume) new Volume(type);
+  ospray::Volume *ret = new Volume(type);
+  ret->setDevice((OSPDevice)this);
+  return (OSPVolume)ret;
 }
 
 OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
@@ -358,7 +357,9 @@ OSPTexture ISPCDevice::newTexture(const char *type)
 
 OSPGroup ISPCDevice::newGroup()
 {
-  return (OSPGroup) new Group;
+  ospray::Group *ret = new Group;
+  ret->setDevice((OSPDevice)this);
+  return (OSPGroup)ret;
 }
 
 OSPInstance ISPCDevice::newInstance(OSPGroup _group)
@@ -374,7 +375,9 @@ OSPInstance ISPCDevice::newInstance(OSPGroup _group)
 
 OSPWorld ISPCDevice::newWorld()
 {
-  return (OSPWorld) new World;
+  ospray::World *ret = new World;
+  ret->setDevice((OSPDevice)this);
+  return (OSPWorld)ret;
 }
 
 box3f ISPCDevice::getBounds(OSPObject _obj)

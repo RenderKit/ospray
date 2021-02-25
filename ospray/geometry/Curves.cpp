@@ -5,6 +5,7 @@
 #include "Curves.h"
 #include "common/Data.h"
 #include "common/World.h"
+
 // ispc-generated files
 #include "geometry/Curves_ispc.h"
 // std
@@ -127,7 +128,12 @@ void Curves::createEmbreeGeometry()
   if (embreeGeometry)
     rtcReleaseGeometry(embreeGeometry);
 
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
+  if (!m_device)
+  {
+    return;
+  }
+  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
+  embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(), embreeCurveType);
 
   Ref<const DataT<vec4f>> vertex4f(&vertexData->as<vec4f>());
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertex4f);
