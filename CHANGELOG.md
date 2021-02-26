@@ -6,6 +6,7 @@ Version History
 -   Fix behavior of committing the framebuffer in distributed rendering
     to match that of local rendering
 -   Fix build of MPI module on Windows
+-   OSPRay now requires minimum Open VKL v0.13.0
 
 ### Changes in v2.5.0:
 
