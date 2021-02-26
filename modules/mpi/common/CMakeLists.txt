@@ -18,14 +18,13 @@ target_link_libraries(ospray_mpi_common
     rkcommon::rkcommon
     ospray_sdk
     ospray_module_ispc
-    ${MPI_CXX_LIBRARIES}
+    MPI::MPI_CXX
 )
 
 target_include_directories(ospray_mpi_common
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
-    ${MPI_CXX_INCLUDE_PATH}
 )
 
 if (OSPRAY_MPI_ENABLE_PROFILING)

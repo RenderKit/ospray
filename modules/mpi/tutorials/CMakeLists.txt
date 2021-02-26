@@ -41,10 +41,8 @@ add_executable(ospMPIDistributedTutorialCpp
 target_link_libraries(ospMPIDistributedTutorialCpp PRIVATE
   ospray
   rkcommon::rkcommon
-  ${MPI_CXX_LIBRARIES})
-
-target_include_directories(ospMPIDistributedTutorialCpp PRIVATE
-  $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>)
+  MPI::MPI_CXX
+)
 
 target_compile_definitions(ospMPIDistributedTutorialCpp PRIVATE
     -DOSPRAY_CPP_RKCOMMON_TYPES)
@@ -76,12 +74,9 @@ target_link_libraries(mpi_tutorial_common PUBLIC
   glfw
   arcball_camera
   ${OPENGL_LIBRARIES}
-  ${MPI_CXX_LIBRARIES}
+  MPI::MPI_CXX
 )
 
-target_include_directories(mpi_tutorial_common PUBLIC
-  $<BUILD_INTERFACE:${MPI_CXX_INCLUDE_PATH}>
-)
 
 target_compile_definitions(mpi_tutorial_common PUBLIC -DOSPRAY_CPP_RKCOMMON_TYPES)
 
