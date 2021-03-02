@@ -63,6 +63,14 @@ Light_SampleRes HDRILight_sample(const uniform Light *uniform super,
   return res;
 }
 
+inline vec2f get_hdr_spherical_uv(const vec3f &v) {
+    float theta = atan2(v.z, v.x) * one_over_two_pi;
+    float gamma = asin(v.y) * one_over_pi;
+    float u = theta + 0.5f;
+    float v = gamma + 0.5f;
+    return make_vec2f(u, v);
+}
+
 Light_EvalRes HDRILight_eval(const uniform Light *uniform super,
     const DifferentialGeometry &,
     const vec3f &dir,
@@ -78,9 +86,10 @@ Light_EvalRes HDRILight_eval(const uniform Light *uniform super,
 
   const vec3f localDir = self->world2light * dir;
 
-  const float u = atan2(localDir.y, localDir.x) * one_over_two_pi;
-  const float v = acos(localDir.z) * one_over_pi;
-  const vec2f uv = make_vec2f(u, v);
+  //const float u = atan2(localDir.y, localDir.x) * one_over_two_pi;
+  //const float v = acos(localDir.z) * one_over_pi;
+  //const vec2f uv = make_vec2f(u, v);
+  const vec2f uv = get_hdr_spherical_uv(localDir);
 
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, uv);
@@ -91,7 +100,7 @@ Light_EvalRes HDRILight_eval(const uniform Light *uniform super,
   const vec2f uvd = frac(uv + self->map->halfTexel);
   res.pdf = Distribution2D_pdf(self->distribution, uvd);
   res.pdf *= one_over_two_pi_sqr * rsqrt(1.f - sqr(localDir.z));
-
+  res.pdf = 1;
   return res;
 }
 
