@@ -337,6 +337,7 @@ inline void postIntersect(const World *uniform world,
     const varying Ray &ray,
     uniform int64 flags)
 {
+  dg.primID = ray.primID;
   dg.st = make_vec2f(ray.u, ray.v);
 
   dg.material = NULL;
