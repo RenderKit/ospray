@@ -370,7 +370,8 @@ pointer types (`OSP_VOID_PTR` and `OSPObject` handles), as they will
 implicitly cast to `void\ *`, but be incorrectly interpreted. To help
 with some of these issues, there also exist variants of `ospSetParam`
 for specific types, such as `ospSetInt` and `ospSetVec3f` in the OSPRay
-utility library (found in `ospray_util.h`).
+utility library (found in `ospray_util.h`). Note that half precision
+float parameters `OSP_HALF, OSP_VEC[234]H` are not supported.
 
 Users can also remove parameters that have been explicitly set from
 `ospSetParam`. Any parameters which have been removed will go back to
@@ -472,6 +473,9 @@ below.
   OSP_LONG, OSP_VEC[234]L    64\ bit signed integer scalar and [234]-element vector
 
   OSP_ULONG, OSP_VEC[234]UL  64\ bit unsigned integer scalar and [234]-element vector
+
+  OSP_HALF, OSP_VEC[234]H    16\ bit half precision floating-point scalar
+                             and [234]-element vector (IEEE 754 `binary16`)
 
   OSP_FLOAT, OSP_VEC[234]F   32\ bit single precision floating-point scalar
                              and [234]-element vector
@@ -595,7 +599,8 @@ table below.
 
 The size of the volume is inferred from the size of the 3D array `data`,
 as is the type of the voxel values (currently supported are:
-`OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_FLOAT`, and `OSP_DOUBLE`).
+`OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_HALF`, `OSP_FLOAT`, and
+`OSP_DOUBLE`).
 
 ### Structured Spherical Volume
 
@@ -636,7 +641,7 @@ summarized below.
 The dimensions $(r, \theta, \phi)$ of the volume are inferred from the
 size of the 3D array `data`, as is the type of the voxel values
 (currently supported are: `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`,
-`OSP_FLOAT`, and `OSP_DOUBLE`).
+`OSP_HALF`, `OSP_FLOAT`, and `OSP_DOUBLE`).
 
 These grid parameters support flexible specification of spheres,
 hemispheres, spherical shells, spherical wedges, and so forth. The grid

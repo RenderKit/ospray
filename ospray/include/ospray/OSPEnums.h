@@ -120,6 +120,13 @@ typedef enum
   OSP_VEC3UL,
   OSP_VEC4UL,
 
+  // Half precision floating point scalar and vector types (IEEE 754
+  // `binary16`).
+  OSP_HALF = 5800,
+  OSP_VEC2H,
+  OSP_VEC3H,
+  OSP_VEC4H,
+
   // Single precision floating point scalar and vector types.
   OSP_FLOAT = 6000,
   OSP_VEC2F,

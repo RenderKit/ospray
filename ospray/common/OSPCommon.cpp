@@ -312,6 +312,14 @@ size_t sizeOf(OSPDataType type)
     return sizeof(vec3ul);
   case OSP_VEC4UL:
     return sizeof(vec4ul);
+  case OSP_HALF:
+    return sizeof(uint16);
+  case OSP_VEC2H:
+    return sizeof(vec2us);
+  case OSP_VEC3H:
+    return sizeof(vec3us);
+  case OSP_VEC4H:
+    return sizeof(vec4us);
   case OSP_FLOAT:
     return sizeof(float);
   case OSP_VEC2F:
@@ -369,10 +377,18 @@ OSPDataType typeOf(const char *string)
     return (OSP_BOOL);
   if (strcmp(string, "char") == 0)
     return (OSP_CHAR);
-  if (strcmp(string, "double") == 0)
-    return (OSP_DOUBLE);
+  if (strcmp(string, "half") == 0)
+    return (OSP_HALF);
   if (strcmp(string, "float") == 0)
     return (OSP_FLOAT);
+  if (strcmp(string, "double") == 0)
+    return (OSP_DOUBLE);
+  if (strcmp(string, "vec2h") == 0)
+    return (OSP_VEC2H);
+  if (strcmp(string, "vec3h") == 0)
+    return (OSP_VEC3H);
+  if (strcmp(string, "vec4h") == 0)
+    return (OSP_VEC4H);
   if (strcmp(string, "vec2f") == 0)
     return (OSP_VEC2F);
   if (strcmp(string, "vec3f") == 0)
@@ -545,6 +561,14 @@ std::string stringFor(OSPDataType type)
     return "vec3ul";
   case OSP_VEC4UL:
     return "vec4ul";
+  case OSP_HALF:
+    return "half";
+  case OSP_VEC2H:
+    return "vec2h";
+  case OSP_VEC3H:
+    return "vec3h";
+  case OSP_VEC4H:
+    return "vec4h";
   case OSP_FLOAT:
     return "float";
   case OSP_VEC2F:
@@ -861,6 +885,9 @@ OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4L);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2UL);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3UL);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4UL);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2H);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3H);
+OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4H);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC2F);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC3F);
 OSPDIMENSIONALITYOF_DEFINITION(OSP_VEC4F);

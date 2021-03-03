@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v2.6.0 (devel) of Intel® OSPRay. For changes and new
-features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
-for more information.
+This is release v2.6.0 of Intel® OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -98,7 +98,7 @@ before you can build OSPRay you need the following prerequisites:
     `embree_DIR`.
 
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.12.0 or newer is required. If Open VKL is not
+    installing version 0.13.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 
@@ -336,9 +336,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -713,7 +713,8 @@ types (`OSP_VOID_PTR` and `OSPObject` handles), as they will implicitly
 cast to `void *`, but be incorrectly interpreted. To help with some of
 these issues, there also exist variants of `ospSetParam` for specific
 types, such as `ospSetInt` and `ospSetVec3f` in the OSPRay utility
-library (found in `ospray_util.h`).
+library (found in `ospray_util.h`). Note that half precision float
+parameters `OSP_HALF, OSP_VEC[234]H` are not supported.
 
 Users can also remove parameters that have been explicitly set from
 `ospSetParam`. Any parameters which have been removed will go back to
@@ -771,38 +772,39 @@ The enum type `OSPDataType` describes the different element types that
 can be represented in OSPRay; valid constants are listed in the table
 below.
 
-| Type/Name                      | Description                                                                                 |
-|:-------------------------------|:--------------------------------------------------------------------------------------------|
-| OSP\_DEVICE                    | API device object reference                                                                 |
-| OSP\_DATA                      | data reference                                                                              |
-| OSP\_OBJECT                    | generic object reference                                                                    |
-| OSP\_CAMERA                    | camera object reference                                                                     |
-| OSP\_FRAMEBUFFER               | framebuffer object reference                                                                |
-| OSP\_LIGHT                     | light object reference                                                                      |
-| OSP\_MATERIAL                  | material object reference                                                                   |
-| OSP\_TEXTURE                   | texture object reference                                                                    |
-| OSP\_RENDERER                  | renderer object reference                                                                   |
-| OSP\_WORLD                     | world object reference                                                                      |
-| OSP\_GEOMETRY                  | geometry object reference                                                                   |
-| OSP\_VOLUME                    | volume object reference                                                                     |
-| OSP\_TRANSFER\_FUNCTION        | transfer function object reference                                                          |
-| OSP\_IMAGE\_OPERATION          | image operation object reference                                                            |
-| OSP\_STRING                    | C-style zero-terminated character string                                                    |
-| OSP\_CHAR, OSP\_VEC\[234\]C    | 8 bit signed character scalar and \[234\]-element vector                                    |
-| OSP\_UCHAR, OSP\_VEC\[234\]UC  | 8 bit unsigned character scalar and \[234\]-element vector                                  |
-| OSP\_SHORT, OSP\_VEC\[234\]S   | 16 bit unsigned integer scalar and \[234\]-element vector                                   |
-| OSP\_USHORT, OSP\_VEC\[234\]US | 16 bit unsigned integer scalar and \[234\]-element vector                                   |
-| OSP\_INT, OSP\_VEC\[234\]I     | 32 bit signed integer scalar and \[234\]-element vector                                     |
-| OSP\_UINT, OSP\_VEC\[234\]UI   | 32 bit unsigned integer scalar and \[234\]-element vector                                   |
-| OSP\_LONG, OSP\_VEC\[234\]L    | 64 bit signed integer scalar and \[234\]-element vector                                     |
-| OSP\_ULONG, OSP\_VEC\[234\]UL  | 64 bit unsigned integer scalar and \[234\]-element vector                                   |
-| OSP\_FLOAT, OSP\_VEC\[234\]F   | 32 bit single precision floating-point scalar and \[234\]-element vector                    |
-| OSP\_DOUBLE, OSP\_VEC\[234\]D  | 64 bit double precision floating-point scalar and \[234\]-element vector                    |
-| OSP\_BOX\[1234\]I              | 32 bit integer box (lower + upper bounds)                                                   |
-| OSP\_BOX\[1234\]F              | 32 bit single precision floating-point box (lower + upper bounds)                           |
-| OSP\_LINEAR\[23\]F             | 32 bit single precision floating-point linear transform (\[23\] vectors)                    |
-| OSP\_AFFINE\[23\]F             | 32 bit single precision floating-point affine transform (linear transform plus translation) |
-| OSP\_VOID\_PTR                 | raw memory address (only found in module extensions)                                        |
+| Type/Name                      | Description                                                                                  |
+|:-------------------------------|:---------------------------------------------------------------------------------------------|
+| OSP\_DEVICE                    | API device object reference                                                                  |
+| OSP\_DATA                      | data reference                                                                               |
+| OSP\_OBJECT                    | generic object reference                                                                     |
+| OSP\_CAMERA                    | camera object reference                                                                      |
+| OSP\_FRAMEBUFFER               | framebuffer object reference                                                                 |
+| OSP\_LIGHT                     | light object reference                                                                       |
+| OSP\_MATERIAL                  | material object reference                                                                    |
+| OSP\_TEXTURE                   | texture object reference                                                                     |
+| OSP\_RENDERER                  | renderer object reference                                                                    |
+| OSP\_WORLD                     | world object reference                                                                       |
+| OSP\_GEOMETRY                  | geometry object reference                                                                    |
+| OSP\_VOLUME                    | volume object reference                                                                      |
+| OSP\_TRANSFER\_FUNCTION        | transfer function object reference                                                           |
+| OSP\_IMAGE\_OPERATION          | image operation object reference                                                             |
+| OSP\_STRING                    | C-style zero-terminated character string                                                     |
+| OSP\_CHAR, OSP\_VEC\[234\]C    | 8 bit signed character scalar and \[234\]-element vector                                     |
+| OSP\_UCHAR, OSP\_VEC\[234\]UC  | 8 bit unsigned character scalar and \[234\]-element vector                                   |
+| OSP\_SHORT, OSP\_VEC\[234\]S   | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
+| OSP\_USHORT, OSP\_VEC\[234\]US | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
+| OSP\_INT, OSP\_VEC\[234\]I     | 32 bit signed integer scalar and \[234\]-element vector                                      |
+| OSP\_UINT, OSP\_VEC\[234\]UI   | 32 bit unsigned integer scalar and \[234\]-element vector                                    |
+| OSP\_LONG, OSP\_VEC\[234\]L    | 64 bit signed integer scalar and \[234\]-element vector                                      |
+| OSP\_ULONG, OSP\_VEC\[234\]UL  | 64 bit unsigned integer scalar and \[234\]-element vector                                    |
+| OSP\_HALF, OSP\_VEC\[234\]H    | 16 bit half precision floating-point scalar and \[234\]-element vector (IEEE 754 `binary16`) |
+| OSP\_FLOAT, OSP\_VEC\[234\]F   | 32 bit single precision floating-point scalar and \[234\]-element vector                     |
+| OSP\_DOUBLE, OSP\_VEC\[234\]D  | 64 bit double precision floating-point scalar and \[234\]-element vector                     |
+| OSP\_BOX\[1234\]I              | 32 bit integer box (lower + upper bounds)                                                    |
+| OSP\_BOX\[1234\]F              | 32 bit single precision floating-point box (lower + upper bounds)                            |
+| OSP\_LINEAR\[23\]F             | 32 bit single precision floating-point linear transform (\[23\] vectors)                     |
+| OSP\_AFFINE\[23\]F             | 32 bit single precision floating-point affine transform (linear transform plus translation)  |
+| OSP\_VOID\_PTR                 | raw memory address (only found in module extensions)                                         |
 
 Valid named constants for `OSPDataType`.
 
@@ -900,7 +902,8 @@ Configuration parameters for structured regular volumes.
 
 The size of the volume is inferred from the size of the 3D array `data`,
 as is the type of the voxel values (currently supported are:
-`OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_FLOAT`, and `OSP_DOUBLE`).
+`OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_HALF`, `OSP_FLOAT`, and
+`OSP_DOUBLE`).
 
 ### Structured Spherical Volume
 
@@ -930,8 +933,8 @@ Configuration parameters for structured spherical volumes.
 
 The dimensions (*r*, *θ*, *ϕ*) of the volume are inferred from the size
 of the 3D array `data`, as is the type of the voxel values (currently
-supported are: `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_FLOAT`, and
-`OSP_DOUBLE`).
+supported are: `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_HALF`,
+`OSP_FLOAT`, and `OSP_DOUBLE`).
 
 These grid parameters support flexible specification of spheres,
 hemispheres, spherical shells, spherical wedges, and so forth. The grid
