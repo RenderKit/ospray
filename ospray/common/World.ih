@@ -384,10 +384,8 @@ inline void postIntersect(const World *uniform world,
   if (flip)
     ffnng = neg(ffnng);
 
-  if ((flags & DG_NG_FACEFORWARD) == DG_NG_FACEFORWARD && flip) {
-    if (flip)
-      dg.Ng = neg(dg.Ng);
-  }
+  if ((flags & DG_NG_FACEFORWARD) == DG_NG_FACEFORWARD && flip)
+    dg.Ng = neg(dg.Ng);
 
   if ((flags & DG_NS_FACEFORWARD) == DG_NS_FACEFORWARD) {
     if (dot(dg.Ng, dg.Ns) < 0.f)
