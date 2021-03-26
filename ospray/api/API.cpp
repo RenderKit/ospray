@@ -10,6 +10,7 @@
 #include "Device.h"
 #include "common/OSPCommon.h"
 #include "include/ospray/ospray.h"
+#include "common/Managed.h"
 
 #ifdef _WIN32
 #include <process.h> // for getpid
@@ -590,6 +591,16 @@ extern "C" void ospRetain(OSPObject _object) OSPRAY_CATCH_BEGIN
   currentDevice().retain(_object);
 }
 OSPRAY_CATCH_END()
+
+extern "C" long long ospGetCounter(OSPObject _object)
+{
+    long long retval = 0;
+    if (_object) {
+        auto *obj = (ospray::ManagedObject *)_object;
+        retval = obj->useCount();
+    }
+    return retval;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // FrameBuffer Manipulation ///////////////////////////////////////////////////
