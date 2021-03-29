@@ -180,8 +180,18 @@ ISPCDevice::~ISPCDevice()
 
 static void embreeErrorFunc(void *, const RTCError code, const char *str)
 {
-  postStatusMsg() << "#osp: embree internal error " << code << " : " << str;
-  throw std::runtime_error("embree internal error '" + std::string(str) + "'");
+  postStatusMsg() << "#osp: Embree internal error " << code << " : " << str;
+  OSPError e =
+    (code > RTC_ERROR_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
+  handleError(e, "Embree internal error '" + std::string(str) + "'");
+}
+
+static void vklErrorFunc(void *, const VKLError code, const char *str)
+{
+  postStatusMsg() << "#osp: Open VKL internal error " << code << " : " << str;
+  OSPError e =
+    (code > VKL_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
+  handleError(e, "Open VKL internal error '" + std::string(str) + "'");
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -233,13 +243,9 @@ void ISPCDevice::commit()
       break;
     }
 
-    vklDriverSetErrorCallback(driver,
-        [](void *, VKLError, const char *message) {
-          handleError(OSP_UNKNOWN_ERROR, message);
-        },
-        nullptr);
-
-    vklDriverSetLogCallback(driver,
+    vklDriverSetErrorCallback(driver, vklErrorFunc, nullptr);
+    vklDriverSetLogCallback(
+        driver,
         [](void *, const char *message) {
           postStatusMsg(OSP_LOG_INFO) << message;
         },

@@ -3,6 +3,8 @@ Version History
 
 ### Changes in v2.6.0:
 
+-   Open VKL and Embree internal errors are now correctly mapped to
+    their corresponding OSPRay errors
 -   Fix behavior of committing the framebuffer in distributed rendering
     to match that of local rendering
 -   Fix build of MPI module on Windows
