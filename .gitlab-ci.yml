@@ -213,6 +213,17 @@ build-centos8-mpi-mpich:
     - module load mpi/mpich-x86_64
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
+build-mpi-cluster:
+  stage: build
+  tags: [cluster]
+  script:
+    - module load cmake
+    - module load impi
+    - module load gnu
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF
+  <<: *build_artifacts
+  only: [schedules]
+
 build-linux-debug:
   <<: *build_job_docker
   script:
@@ -305,6 +316,16 @@ test-ubuntu2004-gcc:
   <<: *test_job_unix
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs: [build-ubuntu2004-gcc]
+
+test-mpi-cluster:
+  <<: *test_job_unix
+  tags: [cluster]
+  script:
+    - module load impi
+    - module load gnu
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
+  needs: [build-mpi-cluster]
+  only: [schedules]
 
 sanitize-linux-debug:
   <<: *test_job_unix_sanitize
