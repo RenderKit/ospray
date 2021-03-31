@@ -5,6 +5,7 @@
 #define OSPRAY_RKCOMMON_DEFINITIONS
 #include "ospray/ospray_cpp/ext/rkcommon.h"
 
+#include "ISPCMessages.h"
 #include "OSPCommon.h"
 #include "api/Device.h"
 
@@ -761,6 +762,12 @@ OSPError loadLocalModule(const std::string &name)
 StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)
 {
   return StatusMsgStream(postAtLogLevel);
+}
+
+extern "C" void postStatusMsg(uint32_t msgId, uint32_t postAtLogLevel)
+{
+  assert(msgId < ISPC_MSG_MAX);
+  postStatusMsg(ispcMessages[msgId], postAtLogLevel);
 }
 
 void postStatusMsg(const std::stringstream &msg, uint32_t postAtLogLevel)

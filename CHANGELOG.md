@@ -3,6 +3,9 @@ Version History
 
 ### Changes in v2.6.0:
 
+-   Messages issued from ISPC code use the same reporting path as the C++
+    code, thus now the whole OSPRay console output can be consistently
+    filtered with log levels
 -   Open VKL and Embree internal errors are now correctly mapped to
     their corresponding OSPRay errors
 -   Fix behavior of committing the framebuffer in distributed rendering

@@ -1,9 +1,10 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "common/Data.ih"
 #include "common/FilterIntersect.ih"
+#include "common/ISPCMessages.h"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
@@ -125,12 +126,9 @@ void Spheres_getAreas(const Geometry *const uniform _self,
       make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
   const uniform float min_scaling = reduce_min(scaling3);
   const uniform float max_scaling = reduce_max(scaling3);
-  if ((max_scaling - min_scaling) > 1e-4f * min_scaling) {
-    print(
-        "#osp:Spheres_getAreas: Non-uniform scaling in instance "
-        "transformation detected! Importance sampling for emissive "
-        "materials and thus resulting image may be wrong.\n");
-  }
+  if ((max_scaling - min_scaling) > 1e-4f * min_scaling)
+    postStatusMsg(ISPC_MSG_SPHERES, OSP_LOG_WARNING);
+
   // use average as approximation to closest uniform scaling
   const uniform float scale = four_pi * sqr(reduce_add(scaling3) / 3.f);
 

@@ -165,6 +165,9 @@ struct OSPRAY_CORE_INTERFACE WarnOnce
 
 OSPRAY_CORE_INTERFACE uint32_t logLevel();
 
+extern "C" OSPRAY_CORE_INTERFACE void postStatusMsg(
+    uint32_t msgId, uint32_t postAtLogLevel);
+
 OSPRAY_CORE_INTERFACE void postStatusMsg(
     const std::stringstream &msg, uint32_t postAtLogLevel = OSP_LOG_DEBUG);
 
