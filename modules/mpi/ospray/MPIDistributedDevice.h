@@ -147,6 +147,9 @@ struct MPIDistributedDevice : public api::Device
   /*! create a new Texture object */
   OSPTexture newTexture(const char *type) override;
 
+  OSPPickResult pick(
+      OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
+
  private:
   bool initialized{false};
   bool shouldFinalizeMPI{false};

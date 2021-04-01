@@ -557,5 +557,18 @@ OSPTexture MPIDistributedDevice::newTexture(const char *type)
   return createLocalObject<Texture, OSPTexture>(type);
 }
 
+OSPPickResult MPIDistributedDevice::pick(OSPFrameBuffer _fb,
+    OSPRenderer _renderer,
+    OSPCamera _camera,
+    OSPWorld _world,
+    const vec2f &screenPos)
+{
+  auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
+  auto *renderer = lookupDistributedObject<Renderer>(_renderer);
+  auto *camera = lookupObject<Camera>(_camera);
+  auto *world = lookupObject<DistributedWorld>(_world);
+  return renderer->pick(fb, camera, world, screenPos);
+}
+
 } // namespace mpi
 } // namespace ospray
