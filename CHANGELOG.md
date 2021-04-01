@@ -9,6 +9,9 @@ Version History
 -   OSPRay now requires minimum Open VKL v0.13.0 to support half
     precision float (fp16) voxel data in strutured volumes (regular and
     spherical)
+-   The `mpi_offload` and `mpi_distributed` devices now support picking.
+    Picking in the distributed device will only work on each rank's local
+    data, the application can then find the globally closest picked object.
 
 ### Changes in v2.5.0:
 

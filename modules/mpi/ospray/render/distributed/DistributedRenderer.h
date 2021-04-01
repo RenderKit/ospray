@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -38,6 +38,13 @@ struct DistributedRenderer : public Renderer
       size_t jobID) const;
 
   virtual std::shared_ptr<TileOperation> tileOperation() = 0;
+
+  // Picking in the distributed renderer needs to be clipped to the regions
+  // specified to bound the local data
+  OSPPickResult pick(FrameBuffer *fb,
+      Camera *camera,
+      World *world,
+      const vec2f &screenPos) override;
 };
 } // namespace mpi
 } // namespace ospray

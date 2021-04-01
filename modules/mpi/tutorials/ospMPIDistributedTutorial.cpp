@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial how to use OSPRay and the
@@ -30,8 +30,8 @@
 #include <alloca.h>
 #endif
 
-#include "rkcommon/math/vec.h"
 #include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
 // Note: we define OSPRAY_CPP_RKCOMMON_TYPES in CMAke to use rkcommon types
 // natively through the C++ wrappers
 #include "ospray/ospray_cpp.h"
@@ -175,6 +175,18 @@ int main(int argc, char **argv)
         OSP_FB_SRGBA,
         OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
     framebuffer.clear();
+
+    ospray::cpp::PickResult res =
+        framebuffer.pick(renderer, camera, world, 0.5f, 0.5f);
+
+    if (res.hasHit) {
+      std::cout << "Rank " << mpiRank
+                << " picked geometry [instance: " << res.instance.handle()
+                << ", model: " << res.model.handle()
+                << ", primitive: " << res.primID << "]" << std::endl;
+    } else {
+      std::cout << "Rank " << mpiRank << " pick missed" << std::endl;
+    }
 
     // render one frame
     framebuffer.renderFrame(renderer, camera, world);
