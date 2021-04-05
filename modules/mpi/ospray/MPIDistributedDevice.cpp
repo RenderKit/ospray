@@ -185,8 +185,22 @@ MPIDistributedDevice::~MPIDistributedDevice()
     try {
       MPI_CALL(Finalize());
     } catch (...) {
-      // TODO: anything to do here? try-catch added to silence a warning...
+      // Silently move on if finalize fails
     }
+  }
+
+  if (vklDriver) {
+    vklShutdown();
+    vklDriver = nullptr;
+  }
+
+  try {
+    if (api::ISPCDevice::embreeDevice) {
+      rtcReleaseDevice(api::ISPCDevice::embreeDevice);
+      api::ISPCDevice::embreeDevice = nullptr;
+    }
+  } catch (...) {
+    // silently move on, sometimes a pthread mutex lock fails in Embree
   }
 }
 
@@ -224,26 +238,24 @@ void MPIDistributedDevice::commit()
 
     vklLoadModule("ispc_driver");
 
-    VKLDriver driver = nullptr;
-
     int ispc_width = ispc::MPIDistributedDevice_programCount();
     switch (ispc_width) {
     case 4:
-      driver = vklNewDriver("ispc_4");
+      vklDriver = vklNewDriver("ispc_4");
       break;
     case 8:
-      driver = vklNewDriver("ispc_8");
+      vklDriver = vklNewDriver("ispc_8");
       break;
     case 16:
-      driver = vklNewDriver("ispc_16");
+      vklDriver = vklNewDriver("ispc_16");
       break;
     default:
-      driver = vklNewDriver("ispc");
+      vklDriver = vklNewDriver("ispc");
       break;
     }
 
-    vklCommitDriver(driver);
-    vklSetCurrentDriver(driver);
+    vklCommitDriver(vklDriver);
+    vklSetCurrentDriver(vklDriver);
 
     initialized = true;
 

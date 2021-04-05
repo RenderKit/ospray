@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,6 +7,7 @@
 #include "common/MPICommon.h"
 #include "common/Managed.h"
 #include "common/ObjectHandle.h"
+#include "openvkl/openvkl.h"
 
 namespace ospray {
 namespace mpi {
@@ -149,6 +150,8 @@ struct MPIDistributedDevice : public api::Device
  private:
   bool initialized{false};
   bool shouldFinalizeMPI{false};
+
+  VKLDriver vklDriver = nullptr;
 };
 
 } // namespace mpi
