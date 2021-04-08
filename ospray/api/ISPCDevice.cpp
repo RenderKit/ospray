@@ -181,7 +181,14 @@ void ISPCDevice::commit()
 
   TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
 
-  tasking::initTaskingSystem(numThreads, true);
+  //only need to init the tasking system only once
+  {
+    static bool tasking_inited = false;
+    if (!tasking_inited) {
+      tasking_inited = true;
+      tasking::initTaskingSystem(numThreads, true);
+    }
+  }
 
   if (!embreeDevice) {
     // -------------------------------------------------------
