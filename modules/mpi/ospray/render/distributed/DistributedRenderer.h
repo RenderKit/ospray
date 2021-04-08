@@ -21,6 +21,8 @@ struct RegionInfo
 
 struct DistributedRenderer : public Renderer
 {
+  DistributedRenderer();
+
   void computeRegionVisibility(DistributedFrameBuffer *fb,
       Camera *camera,
       DistributedWorld *world,
@@ -45,6 +47,9 @@ struct DistributedRenderer : public Renderer
       Camera *camera,
       World *world,
       const vec2f &screenPos) override;
+
+ private:
+  mpicommon::Group mpiGroup;
 };
 } // namespace mpi
 } // namespace ospray

@@ -3181,8 +3181,17 @@ regions) and merging them. See the
 [ospMPIDistributedTutorialPartiallyReplicatedData](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialPartiallyReplicatedData.cpp)
 for an example.
 
-Interaction With User Modules
-----------------------------
+#### Picking on Distributed Data in the MPI Distributed Device {-}
+
+Calling `ospPick` in the distributed device will find and return the
+closest global object at the screen position on the rank that owns that
+object. The other ranks will report no hit.
+Picking in the distributed device takes into account data clipping
+applied through the `regions` parameter to avoid picking ghost data.
+
+
+Interaction with User Modules
+-----------------------------
 
 The MPI Offload rendering mode trivially supports user modules, with the
 caveat that attempting to share data directly with the application

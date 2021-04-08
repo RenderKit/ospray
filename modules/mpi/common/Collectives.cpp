@@ -124,6 +124,19 @@ std::future<void *> reduce(const void *sendBuffer,
   return col->future();
 }
 
+std::future<void *> allreduce(const void *sendBuffer,
+    void *recvBuffer,
+    int count,
+    MPI_Datatype datatype,
+    MPI_Op operation,
+    MPI_Comm comm)
+{
+  auto col = std::make_shared<AllReduce>(
+      sendBuffer, recvBuffer, count, datatype, operation, comm);
+  maml::queueCollective(col);
+  return col->future();
+}
+
 Collective::Collective(MPI_Comm comm) : comm(comm), request(MPI_REQUEST_NULL) {}
 
 bool Collective::finished()
@@ -332,6 +345,36 @@ void Reduce::start()
 }
 
 void Reduce::onFinish()
+{
+  result.set_value(recvBuffer);
+}
+
+AllReduce::AllReduce(const void *sendBuffer,
+    void *recvBuffer,
+    int count,
+    MPI_Datatype datatype,
+    MPI_Op operation,
+    MPI_Comm comm)
+    : Collective(comm),
+      sendBuffer(sendBuffer),
+      recvBuffer(recvBuffer),
+      count(count),
+      datatype(datatype),
+      operation(operation)
+{}
+
+std::future<void *> AllReduce::future()
+{
+  return result.get_future();
+}
+
+void AllReduce::start()
+{
+  MPI_CALL(Iallreduce(
+      sendBuffer, recvBuffer, count, datatype, operation, comm, &request));
+}
+
+void AllReduce::onFinish()
 {
   result.set_value(recvBuffer);
 }

@@ -7,6 +7,9 @@
 namespace ospray {
 namespace mpi {
 
+DistributedRenderer::DistributedRenderer() : mpiGroup(mpicommon::worker.dup())
+{}
+
 void DistributedRenderer::computeRegionVisibility(DistributedFrameBuffer *fb,
     Camera *camera,
     DistributedWorld *world,
@@ -58,6 +61,7 @@ OSPPickResult DistributedRenderer::pick(
   int instID = -1;
   int geomID = -1;
   int primID = -1;
+  float depth = 1e20f;
 
   ispc::DistributedRenderer_pick(getIE(),
       fb->getIE(),
@@ -68,7 +72,17 @@ OSPPickResult DistributedRenderer::pick(
       instID,
       geomID,
       primID,
+      depth,
       res.hasHit);
+
+  // Find the closest picked object globally, only the rank
+  // with this object will report the pick
+  float globalDepth = 1e20f;
+  mpicommon::allreduce(
+      &depth, &globalDepth, 1, MPI_FLOAT, MPI_MIN, mpiGroup.comm)
+      .wait();
+
+  res.hasHit = globalDepth < 1e20f && globalDepth == depth;
 
   if (res.hasHit) {
     auto *instance = (*world->instances)[instID];

@@ -73,6 +73,17 @@ std::future<void *> reduce(const void *sendBuffer,
     int root,
     MPI_Comm comm);
 
+/* Start an asynchronously run allreduce. The send/recv buffers are owned
+ * by the caller and must be kept valid until the future is set, indicating
+ * completion of the reduction.
+ */
+std::future<void *> allreduce(const void *sendBuffer,
+    void *recvBuffer,
+    int count,
+    MPI_Datatype datatype,
+    MPI_Op operation,
+    MPI_Comm comm);
+
 /* Start an asynchronously run send. The buffer is owned by
  * the caller and must be kept valid until the future is set, indicating
  * completion of the send.
@@ -276,6 +287,40 @@ class Reduce : public Collective
   MPI_Datatype datatype;
   MPI_Op operation;
   int root;
+
+  std::promise<void *> result;
+};
+
+class AllReduce : public Collective
+{
+ public:
+  /* Construct an asynchronously run allreduce. The send/recv buffers are owned
+   * by the caller and must be kept valid until the future is set, indicating
+   * completion of the reduction.
+   */
+  AllReduce(const void *sendBuffer,
+      void *recvBuffer,
+      int count,
+      MPI_Datatype datatype,
+      MPI_Op operation,
+      MPI_Comm comm);
+
+  /* Get the future which will receive the result of this reduction.
+   * The returned pointer will point to the recvBuffer containing the
+   * result of the reduction.
+   */
+  std::future<void *> future();
+  void start() override;
+
+ protected:
+  void onFinish() override;
+
+ private:
+  const void *sendBuffer;
+  void *recvBuffer;
+  int count;
+  MPI_Datatype datatype;
+  MPI_Op operation;
 
   std::promise<void *> result;
 };

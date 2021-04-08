@@ -277,6 +277,7 @@ export void DistributedRenderer_pick(const void *uniform _self,
     uniform int32 &instID,
     uniform int32 &geomID,
     uniform int32 &primID,
+    uniform float &depth,
     uniform int32 &hit)
 {
   const Renderer *uniform self = (const Renderer *uniform)_self;
@@ -325,6 +326,7 @@ export void DistributedRenderer_pick(const void *uniform _self,
         instID = extract(regionRay.instID, 0);
         geomID = extract(regionRay.geomID, 0);
         primID = extract(regionRay.primID, 0);
+        depth = extract(regionRay.t, 0);
       }
     }
   }
