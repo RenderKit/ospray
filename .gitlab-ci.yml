@@ -182,7 +182,7 @@ build-centos7-mpi-impi:
   <<: *build_job_docker_modules
   script:
     - module load cmake
-    - module load intel
+    - module load intel/2021.2
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
 build-centos7-mpi-openmpi:
