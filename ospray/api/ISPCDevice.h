@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -131,7 +131,7 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   //             safely assume that a device exists.
   static RTCDevice embreeDevice;
 
-  static VKLDriver vklDriver;
+  static VKLDevice vklDevice;
 };
 
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(

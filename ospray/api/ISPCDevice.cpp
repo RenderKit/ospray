@@ -159,7 +159,7 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 #undef declare_param_setter
 
 RTCDevice ISPCDevice::embreeDevice = nullptr;
-VKLDriver ISPCDevice::vklDriver = nullptr;
+VKLDevice ISPCDevice::vklDevice = nullptr;
 
 ISPCDevice::~ISPCDevice()
 {
@@ -172,9 +172,9 @@ ISPCDevice::~ISPCDevice()
     // silently move on, sometimes a pthread mutex lock fails in Embree
   }
 
-  if (vklDriver) {
+  if (vklDevice) {
     vklShutdown();
-    vklDriver = nullptr;
+    vklDevice = nullptr;
   }
 }
 
@@ -222,42 +222,42 @@ void ISPCDevice::commit()
     }
   }
 
-  if (!vklDriver) {
-    vklLoadModule("ispc_driver");
+  if (!vklDevice) {
+    vklLoadModule("cpu_device");
 
-    VKLDriver driver = nullptr;
+    VKLDevice device = nullptr;
 
-    int ispc_width = ispc::ISPCDevice_programCount();
-    switch (ispc_width) {
+    int cpu_width = ispc::ISPCDevice_programCount();
+    switch (cpu_width) {
     case 4:
-      driver = vklNewDriver("ispc_4");
+      device = vklNewDevice("cpu_4");
       break;
     case 8:
-      driver = vklNewDriver("ispc_8");
+      device = vklNewDevice("cpu_8");
       break;
     case 16:
-      driver = vklNewDriver("ispc_16");
+      device = vklNewDevice("cpu_16");
       break;
     default:
-      driver = vklNewDriver("ispc");
+      device = vklNewDevice("cpu");
       break;
     }
 
-    vklDriverSetErrorCallback(driver, vklErrorFunc, nullptr);
-    vklDriverSetLogCallback(
-        driver,
+    vklDeviceSetErrorCallback(device, vklErrorFunc, nullptr);
+    vklDeviceSetLogCallback(
+        device,
         [](void *, const char *message) {
           postStatusMsg(OSP_LOG_INFO) << message;
         },
         nullptr);
 
-    vklDriverSetInt(driver, "logLevel", logLevel);
-    vklDriverSetInt(driver, "numThreads", numThreads);
+    vklDeviceSetInt(device, "logLevel", logLevel);
+    vklDeviceSetInt(device, "numThreads", numThreads);
 
-    vklCommitDriver(driver);
-    vklSetCurrentDriver(driver);
+    vklCommitDevice(device);
+    vklSetCurrentDevice(device);
 
-    vklDriver = driver;
+    vklDevice = device;
   }
 }
 

@@ -5,7 +5,7 @@
 
 #pragma once
 
-// Log levels which can be set on a driver via "logLevel" parameter
+// Log levels which can be set on a device via "logLevel" parameter
 typedef enum
 #if __cplusplus >= 201103L
     : uint32_t

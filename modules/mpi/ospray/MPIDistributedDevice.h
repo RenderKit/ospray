@@ -154,7 +154,7 @@ struct MPIDistributedDevice : public api::Device
   bool initialized{false};
   bool shouldFinalizeMPI{false};
 
-  VKLDriver vklDriver = nullptr;
+  VKLDevice vklDevice = nullptr;
 };
 
 } // namespace mpi

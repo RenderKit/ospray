@@ -189,9 +189,9 @@ MPIDistributedDevice::~MPIDistributedDevice()
     }
   }
 
-  if (vklDriver) {
+  if (vklDevice) {
     vklShutdown();
-    vklDriver = nullptr;
+    vklDevice = nullptr;
   }
 
   try {
@@ -236,26 +236,26 @@ void MPIDistributedDevice::commit()
       assert(erc == RTC_ERROR_NONE);
     }
 
-    vklLoadModule("ispc_driver");
+    vklLoadModule("cpu_device");
 
-    int ispc_width = ispc::MPIDistributedDevice_programCount();
-    switch (ispc_width) {
+    int cpu_width = ispc::MPIDistributedDevice_programCount();
+    switch (cpu_width) {
     case 4:
-      vklDriver = vklNewDriver("ispc_4");
+      vklDevice = vklNewDevice("cpu_4");
       break;
     case 8:
-      vklDriver = vklNewDriver("ispc_8");
+      vklDevice = vklNewDevice("cpu_8");
       break;
     case 16:
-      vklDriver = vklNewDriver("ispc_16");
+      vklDevice = vklNewDevice("cpu_16");
       break;
     default:
-      vklDriver = vklNewDriver("ispc");
+      vklDevice = vklNewDevice("cpu");
       break;
     }
 
-    vklCommitDriver(vklDriver);
-    vklSetCurrentDriver(vklDriver);
+    vklCommitDevice(vklDevice);
+    vklSetCurrentDevice(vklDevice);
 
     initialized = true;
 
