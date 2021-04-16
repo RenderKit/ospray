@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2016-2020 Intel Corporation
+## Copyright 2016-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # to run:  ./run_tests.sh <path to ospray source>
@@ -21,6 +21,11 @@ cmake ${SOURCEDIR}/test_image_data
 
 make -j 4 ospray_test_data
 
-ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
+if [ "$MPI" == "ON" ]; then
+    mpirun -n 2 ospTestSuite --osp:load-modules=mpi --osp:device=mpiOffload \
+        --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
+else
+    ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed
+fi
 
 exit $?

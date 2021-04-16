@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(CMAKE_INSTALL_SCRIPTDIR scripts)
@@ -61,8 +61,14 @@ install(FILES ${PROJECT_SOURCE_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDI
 # CPack specific stuff
 ##############################################################
 
-set(CPACK_PACKAGE_NAME "OSPRay")
-set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}.x86_64")
+if (OSPRAY_MODULE_MPI)
+  set(CPACK_PACKAGE_NAME "OSPRay-MPI")
+  set(CPACK_PACKAGE_FILE_NAME "ospray-mpi-${OSPRAY_VERSION}.x86_64")
+else()
+  set(CPACK_PACKAGE_NAME "OSPRay")
+  set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}.x86_64")
+endif()
+
 #set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/ospray-doc/images/icon.png)
 #set(CPACK_PACKAGE_RELOCATABLE TRUE)
 if (APPLE AND OSPRAY_SIGN_FILE)

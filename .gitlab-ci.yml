@@ -459,7 +459,23 @@ release-linux:
   tags: [modules]
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   script:
-    - module load cmake
+    - module load cmake/3.15.2
+    - export OSPRAY_MODULE_MPI=OFF
+    - scripts/release/linux.sh
+  artifacts:
+    paths:
+      - build_release/*.gz
+    expire_in: 3 day
+
+release-linux-mpi:
+  <<: *release_job
+  tags: [modules]
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  script:
+    - source $SPACK_SETUP_ENV
+    - module load cmake/3.15.2
+    - module load mpich/3.2
+    - export OSPRAY_MODULE_MPI=ON
     - scripts/release/linux.sh
   artifacts:
     paths:
@@ -490,7 +506,22 @@ release-windows:
     - msvc15
     - win
   script:
-    - scripts\release\win.ps1 "Visual Studio 15 2017 Win64"
+    - scripts\release\win.ps1 "Visual Studio 15 2017 Win64" "OFF"
+    - ;& $env:SIGN_FILE_WINDOWS ospray*.msi
+  artifacts:
+    paths:
+      - build_release\ospray*.zip
+      - build_release\ospray*.msi
+    expire_in: 3 day
+
+release-windows-mpi:
+  <<: *release_job
+  tags:
+    - msvc16
+    - win
+    - mpi
+  script:
+    - scripts\release\win.ps1 "Visual Studio 16 2019" "OFF"
     - ;& $env:SIGN_FILE_WINDOWS ospray*.msi
   artifacts:
     paths:
@@ -591,6 +622,19 @@ test-release-linux:
   script:
     - tar xzf build_release/*.gz
     - PATH="$CI_PROJECT_DIR/`ls -d1 ospray-*/bin`:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
+
+test-release-linux-mpi:
+  <<: *test_job
+  <<: *release_job
+  stage: scan3
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  needs: [release-linux-mpi]
+  script:
+    - source $SPACK_SETUP_ENV
+    - module load cmake/3.15.2
+    - module load mpich/3.2
+    - tar xzf build_release/*.gz
+    - MPI=ON PATH="$CI_PROJECT_DIR/`ls -d1 ospray-*/bin`:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR"
 
 test-release-osx:
   <<: *test_job

@@ -29,6 +29,13 @@ Version History
     `OSP_INTENSITY_QUANTITY_RADIANCE` is deprecated. When 
     `OSP_INTENSITY_QUANTITY_SCALE` is used for `sunSky` the 
     default value of `intensity` is `0.025` to match the old behaviour.
+-   A release of OSPRay that includes the MPI module is now provided as
+    part of the releases through `ospray-mpi-<version>.x86_64.<os>`.
+    An [MPICH-ABI](https://www.mpich.org/abi/) compatible build is
+    provided for Linux that can be run with the Intel oneAPI
+    HPC Toolki, MPICH, and other MPICH-ABI compatible MPI distributions.
+    The Windows release is built against MPI provided in the
+    Intel oneAPI HPC Toolkit.
 
 ### Changes in v2.5.0:
 

@@ -34,6 +34,8 @@ target_link_libraries(ospMPIDistributedTutorial PRIVATE
 target_include_directories(ospMPIDistributedTutorial PRIVATE
   $<BUILD_INTERFACE:${MPI_C_INCLUDE_PATH}>)
 
+ospray_sign_target(ospMPIDistributedTutorial)
+
 # C++ version
 add_executable(ospMPIDistributedTutorialCpp
   ${OSPRAY_RESOURCE} ospMPIDistributedTutorial.cpp)
@@ -47,6 +49,8 @@ target_link_libraries(ospMPIDistributedTutorialCpp PRIVATE
 target_compile_definitions(ospMPIDistributedTutorialCpp PRIVATE
     -DOSPRAY_CPP_RKCOMMON_TYPES)
 
+ospray_sign_target(ospMPIDistributedTutorialCpp)
+
 # async version
 add_executable(ospMPIDistributedTutorialAsync
   ${OSPRAY_RESOURCE} ospMPIDistributedTutorialAsync.c)
@@ -57,6 +61,8 @@ target_link_libraries(ospMPIDistributedTutorialAsync PRIVATE
 
 target_include_directories(ospMPIDistributedTutorialAsync PRIVATE
   $<BUILD_INTERFACE:${MPI_C_INCLUDE_PATH}>)
+
+ospray_sign_target(ospMPIDistributedTutorialAsync)
 
 # MPI Tutorial utilities library
 add_library(mpi_tutorial_common STATIC
@@ -84,17 +90,24 @@ ospray_create_mpi_tutorial(ospMPIDistributedTutorialSpheres
   ospMPIDistributedTutorialSpheres.cpp
 )
 
+ospray_sign_target(ospMPIDistributedTutorialSpheres)
+
 ospray_create_mpi_tutorial(ospMPIDistributedTutorialStructuredVolume
   ospMPIDistributedTutorialStructuredVolume.cpp
 )
+
+ospray_sign_target(ospMPIDistributedTutorialStructuredVolume)
 
 ospray_create_mpi_tutorial(ospMPIDistributedTutorialPartiallyReplicatedData
   ospMPIDistributedTutorialPartiallyReplicatedData.cpp
 )
 
+ospray_sign_target(ospMPIDistributedTutorialPartiallyReplicatedData)
+
 ospray_create_mpi_tutorial(ospMPIDistributedTutorialReplicatedData
   ospMPIDistributedTutorialReplicatedData.cpp
 )
+ospray_sign_target(ospMPIDistributedTutorialReplicatedData)
 
 target_link_libraries(ospMPIDistributedTutorialReplicatedData PUBLIC
   ospray_testing

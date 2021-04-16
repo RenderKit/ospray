@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## Options ##
@@ -81,4 +81,6 @@ target_link_libraries(ospray_mpi_worker PRIVATE ospray)
 
 install(TARGETS ospray_mpi_worker
   DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+ospray_sign_target(ospray_mpi_worker)
 
