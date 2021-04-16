@@ -86,13 +86,12 @@ void PathTracer::generateGeometryLights(
 void PathTracer::commit()
 {
   Renderer::commit();
-  rendererValid = false;
 
   const int32 rouletteDepth = getParam<int>("roulettePathLength", 5);
   const int32 numLightSamples = getParam<int>("lightSamples", -1);
   const float maxRadiance = getParam<float>("maxContribution", inf);
   vec4f shadowCatcherPlane = getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
-  useGeometryLights = getParam<bool>("geometryLights", true);
+  importanceSampleGeometryLights = getParam<bool>("geometryLights", true);
   const bool bgRefraction = getParam<bool>("backgroundRefraction", false);
 
   ispc::PathTracer_set(getIE(),
@@ -108,13 +107,16 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   if (!world)
     return nullptr;
 
-  if (world->pathtracerDataValid && rendererValid)
+  const bool geometryLightListValid =
+      importanceSampleGeometryLights == scannedGeometryLights;
+
+  if (world->pathtracerDataValid && geometryLightListValid)
     return nullptr;
 
   std::vector<void *> lightArray;
   size_t geometryLights{0};
 
-  if (useGeometryLights) {
+  if (importanceSampleGeometryLights) {
     generateGeometryLights(*world, lightArray);
     geometryLights = lightArray.size();
   }
@@ -132,7 +134,7 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
       world->getIE(), lightPtr, lightArray.size(), geometryLights);
 
   world->pathtracerDataValid = true;
-  rendererValid = true;
+  scannedGeometryLights = importanceSampleGeometryLights;
 
   return nullptr;
 }
