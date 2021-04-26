@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/NextEventEstimation.ih"
@@ -24,9 +24,8 @@ vec3f nextEventEstimation(const PathContext &pathContext,
         pathContext.ldSampler, pathState.sampleDim + 4 + i * 3);
     const Sample1D lSelectSample = Distribution1D_sample(
         pathContext.numLights, pathContext.lightsCDF, 0, s1);
-    const float lightSelectionPDF =
-        (lSelectSample.pdf / (float)pathContext.numLights)
-        * pathContext.numLightSamples;
+    const float lightSelectionProb =
+        lSelectSample.prob * pathContext.numLightSamples;
     const Light *light =
         pathContext.world->pathtracerData.lights[lSelectSample.idx];
     // sample the contribution from the random light source
@@ -36,8 +35,8 @@ vec3f nextEventEstimation(const PathContext &pathContext,
     foreach_unique (l in light)
       ls = l->sample(l, pathVertex.dg, s2);
     // adjust the contibution with the probabiltiy of selecting the light source
-    ls.weight = ls.weight / lightSelectionPDF;
-    ls.pdf = ls.pdf * lightSelectionPDF;
+    ls.weight = ls.weight / lightSelectionProb;
+    ls.pdf = ls.pdf * lightSelectionProb;
 
     // skip when zero contribution from light
     if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)

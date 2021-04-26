@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -14,7 +14,9 @@ struct Sample1D
   int idx; // relative sample index to start
   float frac; // relative prosition of the random sample inside
               // the selected bin (useful for random sample re-using)
-  float pdf; // probability of sampling idx
+  float pdf; // the pdf of sampling the position idx+frac
+             // when frac is sampled uniformly inside the idx^th bin
+  float prob; // the probability of sampling the idx^th bin
 };
 
 inline Sample1D Distribution1D_sample(const uniform int size,
@@ -42,9 +44,10 @@ inline Sample1D Distribution1D_sample(const uniform int size,
   Sample1D ret;
   ret.idx = first - start;
   const float bef = first == start ? 0.0f : cdf[first - 1];
-  const float dcdf = cdf[first] - bef;
-  ret.pdf = dcdf * size;
-  ret.frac = (s - bef) * rcp(dcdf); // rescale
+  const float dpdf = cdf[first] - bef;
+  ret.prob = dpdf;
+  ret.pdf = dpdf * size;
+  ret.frac = (s - bef) * rcp(dpdf); // rescale
 
   return ret;
 }
