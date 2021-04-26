@@ -4,6 +4,7 @@
 // ospray
 #include "ISPCDevice.h"
 #include "camera/Camera.h"
+#include "camera/registration.h"
 #include "common/Data.h"
 #include "common/Group.h"
 #include "common/Instance.h"
@@ -12,23 +13,21 @@
 #include "common/World.h"
 #include "fb/ImageOp.h"
 #include "fb/LocalFB.h"
+#include "fb/registration.h"
 #include "geometry/GeometricModel.h"
+#include "geometry/registration.h"
 #include "lights/Light.h"
+#include "lights/registration.h"
 #include "render/LoadBalancer.h"
 #include "render/Material.h"
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
+#include "render/registration.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
+#include "texture/registration.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
-
-#include "camera/registration.h"
-#include "fb/registration.h"
-#include "geometry/registration.h"
-#include "lights/registration.h"
-#include "render/registration.h"
-#include "texture/registration.h"
 #include "volume/transferFunction/registration.h"
 
 // stl
@@ -161,6 +160,10 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 RTCDevice ISPCDevice::embreeDevice = nullptr;
 VKLDevice ISPCDevice::vklDevice = nullptr;
 
+ISPCDevice::ISPCDevice()
+    : loadBalacer(std::make_shared<LocalTiledLoadBalancer>())
+{}
+
 ISPCDevice::~ISPCDevice()
 {
   try {
@@ -182,7 +185,7 @@ static void embreeErrorFunc(void *, const RTCError code, const char *str)
 {
   postStatusMsg() << "#osp: Embree internal error " << code << " : " << str;
   OSPError e =
-    (code > RTC_ERROR_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
+      (code > RTC_ERROR_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
   handleError(e, "Embree internal error '" + std::string(str) + "'");
 }
 
@@ -190,7 +193,7 @@ static void vklErrorFunc(void *, const VKLError code, const char *str)
 {
   postStatusMsg() << "#osp: Open VKL internal error " << code << " : " << str;
   OSPError e =
-    (code > VKL_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
+      (code > VKL_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
   handleError(e, "Open VKL internal error '" + std::string(str) + "'");
 }
 
@@ -201,8 +204,6 @@ static void vklErrorFunc(void *, const VKLError code, const char *str)
 void ISPCDevice::commit()
 {
   Device::commit();
-
-  TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
 
   tasking::initTaskingSystem(numThreads, true);
 
@@ -501,7 +502,7 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   auto *f = new RenderTask(fb, [=]() {
     utility::CodeTimer timer;
     timer.start();
-    renderer->renderFrame(fb, camera, world);
+    loadBalacer->renderFrame(fb, renderer, camera, world);
     timer.stop();
 
     fb->refDec();

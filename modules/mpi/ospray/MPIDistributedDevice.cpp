@@ -174,7 +174,9 @@ static void embreeErrorFunc(void *, const RTCError code, const char *str)
 
 // MPIDistributedDevice definitions ///////////////////////////////////////
 
-MPIDistributedDevice::MPIDistributedDevice() {}
+MPIDistributedDevice::MPIDistributedDevice()
+    : loadBalancer(std::make_shared<staticLoadBalancer::Distributed>())
+{}
 
 MPIDistributedDevice::~MPIDistributedDevice()
 {
@@ -272,8 +274,6 @@ void MPIDistributedDevice::commit()
     messaging::init(mpicommon::worker);
     maml::start();
   }
-
-  TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Distributed>();
 }
 
 OSPFrameBuffer MPIDistributedDevice::frameBufferCreate(
@@ -441,7 +441,7 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
 #endif
     utility::CodeTimer timer;
     timer.start();
-    renderer->renderFrame(fb, camera, world);
+    loadBalancer->renderFrame(fb, renderer, camera, world);
     timer.stop();
 #ifdef ENABLE_PROFILING
     ProfilingPoint end;

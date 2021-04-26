@@ -15,12 +15,15 @@
 extern "C" OSPRAY_SDK_INTERFACE RTCDevice ispc_embreeDevice();
 
 namespace ospray {
+
+struct LocalTiledLoadBalancer;
+
 namespace api {
 
 struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 {
-  ISPCDevice() = default;
-  ~ISPCDevice() override;
+  ISPCDevice();
+  virtual ~ISPCDevice() override;
 
   /////////////////////////////////////////////////////////////////////////
   // ManagedObject Implementation /////////////////////////////////////////
@@ -127,8 +130,12 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 
   // Public Data //
 
+  std::shared_ptr<LocalTiledLoadBalancer> loadBalacer;
+
   // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
   //             safely assume that a device exists.
+  // TODO: Remove the static embree device, replace with per-device.
+  // Same for VKLDevice
   static RTCDevice embreeDevice;
 
   static VKLDevice vklDevice;

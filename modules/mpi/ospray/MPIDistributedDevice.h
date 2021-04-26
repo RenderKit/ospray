@@ -8,6 +8,7 @@
 #include "common/Managed.h"
 #include "common/ObjectHandle.h"
 #include "openvkl/openvkl.h"
+#include "ospray/render/LoadBalancer.h"
 
 namespace ospray {
 namespace mpi {
@@ -153,6 +154,8 @@ struct MPIDistributedDevice : public api::Device
  private:
   bool initialized{false};
   bool shouldFinalizeMPI{false};
+
+  std::shared_ptr<TiledLoadBalancer> loadBalancer;
 
   VKLDevice vklDevice = nullptr;
 };

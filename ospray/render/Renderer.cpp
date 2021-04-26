@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -99,11 +99,6 @@ void Renderer::renderTile(FrameBuffer *fb,
       perFrameData,
       (ispc::Tile &)tile,
       jobID);
-}
-
-void Renderer::renderFrame(FrameBuffer *fb, Camera *camera, World *world)
-{
-  TiledLoadBalancer::instance->renderFrame(fb, this, camera, world);
 }
 
 OSPPickResult Renderer::pick(

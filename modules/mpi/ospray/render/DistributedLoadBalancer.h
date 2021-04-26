@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -30,6 +30,18 @@ struct Distributed : public TiledLoadBalancer
       Renderer *renderer,
       Camera *camera,
       DistributedWorld *world);
+
+  /* Not implemented by Distributed load balancer currently,
+   * this could potentially be useful to implement later to manage
+   * the actual tile list rendering after computing the list of tiles
+   * to be rendered by this rank in renderFrame
+   */
+  void renderTiles(FrameBuffer *fb,
+      Renderer *renderer,
+      Camera *camera,
+      World *world,
+      const utility::ArrayView<int> &tileIDs,
+      void *perFrameData) override;
 
   std::string toString() const override;
 };
