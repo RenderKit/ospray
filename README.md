@@ -1538,6 +1538,7 @@ specific light source).
 | OSP\_INTENSITY\_QUANTITY\_INTENSITY  | the overall amount of light emitted by the light in a given direction, unit is W/sr                                             |
 | OSP\_INTENSITY\_QUANTITY\_RADIANCE   | the amount of light emitted by a point on the light source in a given direction, unit is W/sr/m<sup>2</sup>                     |
 | OSP\_INTENSITY\_QUANTITY\_IRRADIANCE | the amount of light arriving at a surface point, assuming the light is oriented towards to the surface, unit is W/m<sup>2</sup> |
+| OSP\_INTENSITY\_QUANTITY\_SCALE      | a linear scaling factor for light sources with a built-in quantity (e.g., `HDRI`, or `sun-sky`).                                |
 
 Types of radiative quantities used to interpret a light’s `intensity`
 parameter.
@@ -1672,9 +1673,10 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-“`hdri`” to `ospNewLight`. The HDRI light only accepts
-`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
-value. In addition to the [general parameters](#lights) the HDRI light
+“`hdri`” to `ospNewLight`. The values of the HDRI correspond to radiance
+and therfore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE` 
+as `intensityQuantity` parameter value. 
+In addition to the [general parameters](#lights) the HDRI light
 supports the following special parameters:
 
 | Type       | Name      | Description                                                                                                      |
@@ -1712,8 +1714,9 @@ a procedural `hdri` light for the sky. It is created by passing the type
 string “`sunSky`” to `ospNewLight`. The sun-sky light surrounds the
 scene and illuminates it from infinity and can be used for rendering
 outdoor scenes. The radiance values are calculated using the
-Hošek-Wilkie sky model and solar radiance function. The sun-sky light
-only accepts `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity`
+Hošek-Wilkie sky model and solar radiance function. The underlying model
+of the sun-sky light returns radiance values and therfore the light
+only accepts `zxv` as `intensityQuantity`
 parameter value. In addition to the [general parameters](#lights) the
 following special parameters are supported:
 

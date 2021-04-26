@@ -364,5 +364,6 @@ typedef enum
   OSP_INTENSITY_QUANTITY_IRRADIANCE, // unit W/m^2
   OSP_INTENSITY_QUANTITY_INTENSITY, // radiant intensity, unit W/sr
   OSP_INTENSITY_QUANTITY_POWER, // radiant flux, unit W
+  OSP_INTENSITY_QUANTITY_SCALE, // linear scaling factor for the built-in type
   OSP_INTENSITY_QUANTITY_UNKNOWN
 } OSPIntensityQuantity;

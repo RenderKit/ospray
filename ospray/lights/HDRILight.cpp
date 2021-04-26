@@ -34,7 +34,7 @@ void HDRILight::commit()
   frame.vy = normalize(cross(frame.vx, up));
   frame.vz = cross(frame.vx, frame.vy);
 
-  queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_RADIANCE);
+  queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_SCALE);
   processIntensityQuantityType();
 
   ispc::HDRILight_set(getIE(),
@@ -47,7 +47,8 @@ void HDRILight::processIntensityQuantityType()
 {
   radianceScale = coloredIntensity;
   // validate the correctness of the light quantity type
-  if (intensityQuantity != OSP_INTENSITY_QUANTITY_RADIANCE) {
+  if (intensityQuantity != OSP_INTENSITY_QUANTITY_SCALE
+      && intensityQuantity != OSP_INTENSITY_QUANTITY_RADIANCE) {
     static WarnOnce warning(
         "Unsupported intensityQuantity type for a 'hdri' light source");
     radianceScale = vec3f(0.0f);

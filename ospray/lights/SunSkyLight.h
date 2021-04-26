@@ -48,6 +48,8 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
   Texture2D *map{nullptr};
   void *secondLightIE;
   vec2i skySize;
+  // scaling factor for values provided from model for both sun and sky to be <1
+  float intensityScale{0.025f};
 };
 
 } // namespace ospray

@@ -18,6 +18,12 @@ Version History
     Picking in the distributed device will return the globally closest
     object on the rank that owns that object. Other ranks will report
     no hit.
+-   Added new `intensityQuantity` type `OSP_INTENSITY_QUANTITY_SCALE`
+    for the `hdri` and `sunSky` light source. For the future this is
+    the only supported quantity for these lights. The previous quantity
+    `OSP_INTENSITY_QUANTITY_RADIANCE` is deprecated. When 
+    `OSP_INTENSITY_QUANTITY_SCALE` is used for `sunSky` the 
+    default value of `intensity` is `0.025` to match the old behaviour.
 
 ### Changes in v2.5.0:
 

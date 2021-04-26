@@ -49,8 +49,6 @@ void SunSkyLight::commit()
 
   const float lambdaMin = 320.0f;
   const float lambdaMax = 720.0f;
-  // scaling factor for values provided from model for both sun and sky to be <1
-  const float intensityScale = 0.025f;
 
   const vec3f up = normalize(getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f)));
   vec3f direction =
@@ -170,9 +168,15 @@ void SunSkyLight::commit()
 void SunSkyLight::processIntensityQuantityType()
 {
   // validate the correctness of the light quantity type
-  if (intensityQuantity != OSP_INTENSITY_QUANTITY_RADIANCE) {
+  if (intensityQuantity == OSP_INTENSITY_QUANTITY_SCALE) {
+    coloredIntensity = getParam<vec3f>("color", vec3f(1.f));
+    intensityScale = getParam<float>("intensity", 0.025f);
+  } else if (intensityQuantity == OSP_INTENSITY_QUANTITY_RADIANCE) {
+    coloredIntensity = getParam<vec3f>("color", vec3f(1.f));
+    intensityScale = 0.025f * getParam<float>("intensity", 1.0f);
+  } else {
     static WarnOnce warning(
-        "Unsupported intensityQuantity type for a 'sun-sky' light source");
+        "Unsupported intensityQuantity type for a 'sunSky' light source");
     coloredIntensity = vec3f(0.0f);
   }
 }
