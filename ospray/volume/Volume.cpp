@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -14,6 +14,8 @@
 #include <unordered_map>
 
 namespace ospray {
+
+extern "C" void *ospray_getVKLDevice();
 
 // Volume defintions ////////////////////////////////////////////////////////
 
@@ -50,13 +52,18 @@ std::string Volume::toString() const
 
 void Volume::commit()
 {
+  VKLDevice vklDevice = (VKLDevice)ospray_getVKLDevice();
+
+  if (!vklDevice)
+    throw std::runtime_error("invalid VKL device");
+
   if (vklSampler)
     vklRelease(vklSampler);
 
   if (vklVolume)
     vklRelease(vklVolume);
 
-  vklVolume = vklNewVolume(vklType.c_str());
+  vklVolume = vklNewVolume(vklDevice, vklType.c_str());
 
   if (!vklVolume)
     throw std::runtime_error("unsupported volume type '" + vklType + "'");
@@ -95,6 +102,11 @@ void Volume::checkDataStride(const Data *data) const
 
 void Volume::handleParams()
 {
+  VKLDevice vklDevice = (VKLDevice)ospray_getVKLDevice();
+
+  if (!vklDevice)
+    throw std::runtime_error("invalid VKL device");
+
   // pass all supported parameters through to VKL volume object
   std::for_each(params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
     auto &param = *p;
@@ -132,18 +144,19 @@ void Volume::handleParams()
         vklBlockData.reserve(data->size());
         for (auto &&data : dataD) {
           checkDataStride(data);
-          VKLData vklData = vklNewData(data->size(),
+          VKLData vklData = vklNewData(vklDevice,
+              data->size(),
               (VKLDataType)data->type,
               data->data(),
               VKL_DATA_SHARED_BUFFER,
               data->stride().x);
           vklBlockData.push_back(vklData);
         }
-        VKLData vklData =
-            vklNewData(vklBlockData.size(), VKL_DATA, vklBlockData.data());
+        VKLData vklData = vklNewData(
+            vklDevice, vklBlockData.size(), VKL_DATA, vklBlockData.data());
         vklSetData(vklVolume, param.name.c_str(), vklData);
         vklRelease(vklData);
-        for (VKLData vd: vklBlockData)
+        for (VKLData vd : vklBlockData)
           vklRelease(vd);
 
         if (vklType == "vdb" && param.name == "node.data") {
@@ -161,14 +174,16 @@ void Volume::handleParams()
             format.push_back(
                 isTile ? VKL_FORMAT_TILE : VKL_FORMAT_CONSTANT_ZYX);
           }
-          VKLData vklData = vklNewData(format.size(), VKL_UINT, format.data());
+          VKLData vklData =
+              vklNewData(vklDevice, format.size(), VKL_UINT, format.data());
           vklSetData(vklVolume, "node.format", vklData);
           vklRelease(vklData);
         }
 
       } else {
         checkDataStride(data);
-        VKLData vklData = vklNewData(data->size(),
+        VKLData vklData = vklNewData(vklDevice,
+            data->size(),
             (VKLDataType)data->type,
             data->data(),
             VKL_DATA_SHARED_BUFFER,

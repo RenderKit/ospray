@@ -190,7 +190,7 @@ MPIDistributedDevice::~MPIDistributedDevice()
   }
 
   if (vklDevice) {
-    vklShutdown();
+    vklReleaseDevice(vklDevice);
     vklDevice = nullptr;
   }
 
@@ -255,7 +255,6 @@ void MPIDistributedDevice::commit()
     }
 
     vklCommitDevice(vklDevice);
-    vklSetCurrentDevice(vklDevice);
 
     initialized = true;
 

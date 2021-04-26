@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -12,6 +12,11 @@ namespace ospray {
 extern "C" void *ospray_getEmbreeDevice()
 {
   return api::ISPCDevice::embreeDevice;
+}
+
+extern "C" void *ospray_getVKLDevice()
+{
+  return api::ISPCDevice::vklDevice;
 }
 
 // Embree helper functions ///////////////////////////////////////////////////

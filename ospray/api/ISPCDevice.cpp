@@ -173,7 +173,7 @@ ISPCDevice::~ISPCDevice()
   }
 
   if (vklDevice) {
-    vklShutdown();
+    vklReleaseDevice(vklDevice);
     vklDevice = nullptr;
   }
 }
@@ -255,7 +255,6 @@ void ISPCDevice::commit()
     vklDeviceSetInt(device, "numThreads", numThreads);
 
     vklCommitDevice(device);
-    vklSetCurrentDevice(device);
 
     vklDevice = device;
   }
