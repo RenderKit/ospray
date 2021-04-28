@@ -152,9 +152,6 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 
 #undef declare_param_setter
 
-// TODO: Temp for merge
-VKLDevice ISPCDevice::vklDevice = nullptr;
-
 ISPCDevice::ISPCDevice()
     : loadBalacer(std::make_shared<LocalTiledLoadBalancer>())
 {}
@@ -203,11 +200,6 @@ void ISPCDevice::commit()
   tasking::initTaskingSystem(numThreads, true);
 
   if (!embreeDevice) {
-    // -------------------------------------------------------
-    // initialize embree. (we need to do this here rather than in
-    // ospray::init() because in mpi-mode the latter is also called
-    // in the host-stubs, where it shouldn't.
-    // -------------------------------------------------------
     embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
     rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
     RTCError erc = rtcGetDeviceError(embreeDevice);
@@ -221,38 +213,34 @@ void ISPCDevice::commit()
   if (!vklDevice) {
     vklLoadModule("cpu_device");
 
-    VKLDevice device = nullptr;
-
     int cpu_width = ispc::ISPCDevice_programCount();
     switch (cpu_width) {
     case 4:
-      device = vklNewDevice("cpu_4");
+      vklDevice = vklNewDevice("cpu_4");
       break;
     case 8:
-      device = vklNewDevice("cpu_8");
+      vklDevice = vklNewDevice("cpu_8");
       break;
     case 16:
-      device = vklNewDevice("cpu_16");
+      vklDevice = vklNewDevice("cpu_16");
       break;
     default:
-      device = vklNewDevice("cpu");
+      vklDevice = vklNewDevice("cpu");
       break;
     }
 
-    vklDeviceSetErrorCallback(device, vklErrorFunc, nullptr);
+    vklDeviceSetErrorCallback(vklDevice, vklErrorFunc, nullptr);
     vklDeviceSetLogCallback(
-        device,
+        vklDevice,
         [](void *, const char *message) {
           postStatusMsg(OSP_LOG_INFO) << message;
         },
         nullptr);
 
-    vklDeviceSetInt(device, "logLevel", logLevel);
-    vklDeviceSetInt(device, "numThreads", numThreads);
+    vklDeviceSetInt(vklDevice, "logLevel", logLevel);
+    vklDeviceSetInt(vklDevice, "numThreads", numThreads);
 
-    vklCommitDevice(device);
-
-    vklDevice = device;
+    vklCommitDevice(vklDevice);
   }
 }
 
@@ -306,14 +294,14 @@ OSPCamera ISPCDevice::newCamera(const char *type)
 OSPGeometry ISPCDevice::newGeometry(const char *type)
 {
   ospray::Geometry *ret = Geometry::createInstance(type);
-  ret->setDevice((OSPDevice)this);
+  ret->setDevice(embreeDevice);
   return (OSPGeometry)ret;
 }
 
 OSPVolume ISPCDevice::newVolume(const char *type)
 {
   ospray::Volume *ret = new Volume(type);
-  ret->setDevice((OSPDevice)this);
+  ret->setDevice(embreeDevice, vklDevice);
   return (OSPVolume)ret;
 }
 
@@ -358,7 +346,7 @@ OSPTexture ISPCDevice::newTexture(const char *type)
 OSPGroup ISPCDevice::newGroup()
 {
   ospray::Group *ret = new Group;
-  ret->setDevice((OSPDevice)this);
+  ret->setDevice(embreeDevice);
   return (OSPGroup)ret;
 }
 
@@ -376,7 +364,7 @@ OSPInstance ISPCDevice::newInstance(OSPGroup _group)
 OSPWorld ISPCDevice::newWorld()
 {
   ospray::World *ret = new World;
-  ret->setDevice((OSPDevice)this);
+  ret->setDevice(embreeDevice);
   return (OSPWorld)ret;
 }
 

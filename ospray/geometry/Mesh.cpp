@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -36,12 +36,10 @@ void Mesh::commit()
 
   const bool isTri = indexData->type == OSP_VEC3UI;
 
-  if (!m_device)
-  {
+  if (!embreeDevice) {
     return;
   }
-  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
-  embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(),
+  embreeGeometry = rtcNewGeometry(embreeDevice,
       isTri ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertexData);
   rtcSetSharedGeometryBuffer(embreeGeometry,

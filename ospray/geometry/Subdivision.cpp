@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -23,12 +23,13 @@ std::string Subdivision::toString() const
 
 void Subdivision::commit()
 {
-  if (!m_device)
-  {
+  if (!embreeDevice) {
     return;
   }
-  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
-  embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(), RTC_GEOMETRY_TYPE_SUBDIVISION);
+  if (!embreeGeometry) {
+    embreeGeometry =
+        rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_SUBDIVISION);
+  }
 
   vertexData = getParamDataT<vec3f>("vertex.position", true);
   colorsData = getParamDataT<vec4f>("vertex.color");

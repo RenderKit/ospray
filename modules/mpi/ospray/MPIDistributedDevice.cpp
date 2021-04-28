@@ -172,6 +172,14 @@ static void embreeErrorFunc(void *, const RTCError code, const char *str)
   throw std::runtime_error("embree internal error '" + std::string(str) + "'");
 }
 
+static void vklErrorFunc(void *, const VKLError code, const char *str)
+{
+  postStatusMsg() << "#osp: Open VKL internal error " << code << " : " << str;
+  OSPError e =
+      (code > VKL_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
+  handleError(e, "Open VKL internal error '" + std::string(str) + "'");
+}
+
 // MPIDistributedDevice definitions ///////////////////////////////////////
 
 MPIDistributedDevice::MPIDistributedDevice()
@@ -191,18 +199,18 @@ MPIDistributedDevice::~MPIDistributedDevice()
     }
   }
 
-  if (vklDevice) {
-    vklReleaseDevice(vklDevice);
-    vklDevice = nullptr;
-  }
-
   try {
-    if (api::ISPCDevice::embreeDevice) {
-      rtcReleaseDevice(api::ISPCDevice::embreeDevice);
-      api::ISPCDevice::embreeDevice = nullptr;
+    if (embreeDevice) {
+      rtcReleaseDevice(embreeDevice);
+      embreeDevice = nullptr;
     }
   } catch (...) {
     // silently move on, sometimes a pthread mutex lock fails in Embree
+  }
+
+  if (vklDevice) {
+    vklReleaseDevice(vklDevice);
+    vklDevice = nullptr;
   }
 }
 
@@ -227,36 +235,54 @@ void MPIDistributedDevice::commit()
     else
       mpicommon::worker = mpicommon::world;
 
-    auto &embreeDevice = api::ISPCDevice::embreeDevice;
-
-    embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
-    rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
-    RTCError erc = rtcGetDeviceError(embreeDevice);
-    if (erc != RTC_ERROR_NONE) {
-      // why did the error function not get called !?
-      postStatusMsg() << "#osp:init: embree internal error number " << erc;
-      assert(erc == RTC_ERROR_NONE);
+    if (!embreeDevice) {
+      // -------------------------------------------------------
+      // initialize embree. (we need to do this here rather than in
+      // ospray::init() because in mpi-mode the latter is also called
+      // in the host-stubs, where it shouldn't.
+      // -------------------------------------------------------
+      embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
+      rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
+      RTCError erc = rtcGetDeviceError(embreeDevice);
+      if (erc != RTC_ERROR_NONE) {
+        // why did the error function not get called !?
+        postStatusMsg() << "#osp:init: embree internal error number " << erc;
+        throw std::runtime_error("failed to initialize Embree");
+      }
     }
 
-    vklLoadModule("cpu_device");
+    if (!vklDevice) {
+      vklLoadModule("cpu_device");
 
-    int cpu_width = ispc::MPIDistributedDevice_programCount();
-    switch (cpu_width) {
-    case 4:
-      vklDevice = vklNewDevice("cpu_4");
-      break;
-    case 8:
-      vklDevice = vklNewDevice("cpu_8");
-      break;
-    case 16:
-      vklDevice = vklNewDevice("cpu_16");
-      break;
-    default:
-      vklDevice = vklNewDevice("cpu");
-      break;
+      int cpu_width = ispc::MPIDistributedDevice_programCount();
+      switch (cpu_width) {
+      case 4:
+        vklDevice = vklNewDevice("cpu_4");
+        break;
+      case 8:
+        vklDevice = vklNewDevice("cpu_8");
+        break;
+      case 16:
+        vklDevice = vklNewDevice("cpu_16");
+        break;
+      default:
+        vklDevice = vklNewDevice("cpu");
+        break;
+      }
+
+      vklDeviceSetErrorCallback(vklDevice, vklErrorFunc, nullptr);
+      vklDeviceSetLogCallback(
+          vklDevice,
+          [](void *, const char *message) {
+            postStatusMsg(OSP_LOG_INFO) << message;
+          },
+          nullptr);
+
+      vklDeviceSetInt(vklDevice, "logLevel", logLevel);
+      vklDeviceSetInt(vklDevice, "numThreads", numThreads);
+
+      vklCommitDevice(vklDevice);
     }
-
-    vklCommitDevice(vklDevice);
 
     initialized = true;
 
@@ -311,7 +337,9 @@ void MPIDistributedDevice::resetAccumulation(OSPFrameBuffer _fb)
 
 OSPGroup MPIDistributedDevice::newGroup()
 {
-  return (OSPGroup) new Group;
+  ospray::Group *ret = new Group;
+  ret->setDevice(embreeDevice);
+  return (OSPGroup)ret;
 }
 
 OSPInstance MPIDistributedDevice::newInstance(OSPGroup _group)
@@ -325,6 +353,7 @@ OSPWorld MPIDistributedDevice::newWorld()
 {
   ObjectHandle handle;
   auto *instance = new DistributedWorld;
+  instance->setDevice(embreeDevice);
   handle.assign(instance);
   return (OSPWorld)(int64)(handle);
 }
@@ -377,12 +406,18 @@ OSPCamera MPIDistributedDevice::newCamera(const char *type)
 
 OSPVolume MPIDistributedDevice::newVolume(const char *type)
 {
-  return createLocalObject<Volume, OSPVolume>(type);
+  auto v = createLocalObject<Volume, OSPVolume>(type);
+  auto *volume = lookupObject<Volume>(v);
+  volume->setDevice(embreeDevice, vklDevice);
+  return v;
 }
 
 OSPGeometry MPIDistributedDevice::newGeometry(const char *type)
 {
-  return createLocalObject<Geometry, OSPGeometry>(type);
+  auto g = createLocalObject<Geometry, OSPGeometry>(type);
+  auto *geom = lookupObject<Geometry>(g);
+  geom->setDevice(embreeDevice);
+  return g;
 }
 
 OSPGeometricModel MPIDistributedDevice::newGeometricModel(OSPGeometry _geom)

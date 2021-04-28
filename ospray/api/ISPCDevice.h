@@ -126,16 +126,11 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
 
-  RTCDevice ispc_embreeDevice()
-  {
-    return embreeDevice;
-  };
-
   std::shared_ptr<LocalTiledLoadBalancer> loadBalacer;
 
-  static VKLDevice vklDevice;
  private:
   RTCDevice embreeDevice = nullptr;
+  VKLDevice vklDevice = nullptr;
 };
 
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(

@@ -211,8 +211,6 @@ MPIOffloadDevice::~MPIOffloadDevice()
 
     sendWork([](networking::WriteStream &writer) { writer << work::FINALIZE; },
         true);
-
-    // TODO: if not mpi, don't finalize on head node
     MPI_Finalize();
   }
 }

@@ -157,6 +157,7 @@ struct MPIDistributedDevice : public api::Device
 
   std::shared_ptr<TiledLoadBalancer> loadBalancer;
 
+  RTCDevice embreeDevice = nullptr;
   VKLDevice vklDevice = nullptr;
 };
 

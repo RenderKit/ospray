@@ -765,14 +765,6 @@ void futureGetTaskDuration(OSPState &state,
   }
 }
 
-void finalize(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  maml::stop();
-  MPI_Finalize();
-  std::exit(0);
-}
-
 void dispatchWork(TAG t,
     OSPState &state,
     networking::BufferReader &cmdBuf,
@@ -889,9 +881,6 @@ void dispatchWork(TAG t,
     break;
   case FUTURE_GET_TASK_DURATION:
     futureGetTaskDuration(state, cmdBuf, fabric);
-    break;
-  case FINALIZE:
-    finalize(state, cmdBuf, fabric);
     break;
   case NONE:
   default:

@@ -15,8 +15,6 @@
 
 namespace ospray {
 
-extern "C" void *ospray_getVKLDevice();
-
 // Volume defintions ////////////////////////////////////////////////////////
 
 Volume::Volume(const std::string &type) : vklType(type)
@@ -52,10 +50,12 @@ std::string Volume::toString() const
 
 void Volume::commit()
 {
-  VKLDevice vklDevice = (VKLDevice)ospray_getVKLDevice();
-
-  if (!vklDevice)
+  if (!vklDevice) {
     throw std::runtime_error("invalid VKL device");
+  }
+  if (!embreeDevice) {
+    return;
+  }
 
   if (vklSampler)
     vklRelease(vklSampler);
@@ -68,6 +68,10 @@ void Volume::commit()
   if (!vklVolume)
     throw std::runtime_error("unsupported volume type '" + vklType + "'");
 
+  if (!embreeGeometry) {
+    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
+  }
+
   handleParams();
 
   vklCommit(vklVolume);
@@ -76,23 +80,9 @@ void Volume::commit()
   vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
-  createEmbreeGeometry();
-
   ispc::Volume_set(ispcEquivalent, embreeGeometry);
   ispc::Volume_set_vklVolume(
       ispcEquivalent, vklVolume, vklSampler, (ispc::box3f *)&bounds);
-}
-
-void Volume::createEmbreeGeometry()
-{
-  if (embreeGeometry)
-    rtcReleaseGeometry(embreeGeometry);
-  if (!m_device)
-  {
-    return;
-  }
-  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
-  embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 }
 
 void Volume::checkDataStride(const Data *data) const
@@ -106,10 +96,9 @@ void Volume::checkDataStride(const Data *data) const
 
 void Volume::handleParams()
 {
-  VKLDevice vklDevice = (VKLDevice)ospray_getVKLDevice();
-
-  if (!vklDevice)
+  if (!vklDevice) {
     throw std::runtime_error("invalid VKL device");
+  }
 
   // pass all supported parameters through to VKL volume object
   std::for_each(params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
@@ -208,9 +197,10 @@ void Volume::handleParams()
   });
 }
 
-void Volume::setDevice(OSPDevice device)
+void Volume::setDevice(RTCDevice embreed, VKLDevice vkld)
 {
-  m_device = device;
+  embreeDevice = embreed;
+  vklDevice = vkld;
 }
 
 OSPTYPEFOR_DEFINITION(Volume *);

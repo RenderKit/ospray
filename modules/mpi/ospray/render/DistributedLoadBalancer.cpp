@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedLoadBalancer.h"
@@ -197,8 +197,14 @@ void Distributed::renderFrame(
     if (tileOwner) {
       bgtile.sortOrder = std::numeric_limits<int32_t>::max();
       bgtile.generation = 0;
-      bgtile.children =
-          std::count(regionVisible, regionVisible + numRegions, true);
+      bgtile.children = 0;
+      // Note: not using std::count here as seems to not count properly in debug
+      // builds
+      for (size_t i = 0; i < numRegions; ++i) {
+        if (regionVisible[i]) {
+          ++bgtile.children;
+        }
+      }
       dfb->setTile(bgtile);
     }
 

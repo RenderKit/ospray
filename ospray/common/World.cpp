@@ -8,24 +8,17 @@
 
 namespace ospray {
 
-extern "C" void *ospray_getVKLDevice()
-{
-  return api::ISPCDevice::vklDevice;
-}
-
 // Embree helper functions ///////////////////////////////////////////////////
 
 static void addGeometryInstance(RTCScene &scene,
     RTCScene instScene,
     const rkcommon::math::affine3f &xfm,
-    OSPDevice device)
+    RTCDevice embreeDevice)
 {
-  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice *)device;
-  if (!idev)
+  if (!embreeDevice)
     return;
 
   // Create parent scene if not yet created
-  RTCDevice embreeDevice = (RTCDevice)idev->ispc_embreeDevice();
   if (!scene)
     scene = rtcNewScene(embreeDevice);
 
@@ -108,19 +101,21 @@ void World::commit()
         addGeometryInstance(embreeSceneHandleGeometries,
             inst->group->sceneGeometries,
             xfm,
-            m_device);
+            embreeDevice);
       }
       if (inst->group->sceneVolumes) {
         volumesInstIEs.push_back(inst->getIE());
-        addGeometryInstance(
-            embreeSceneHandleVolumes, inst->group->sceneVolumes, xfm, m_device);
+        addGeometryInstance(embreeSceneHandleVolumes,
+            inst->group->sceneVolumes,
+            xfm,
+            embreeDevice);
       }
       if (inst->group->sceneClippers) {
         clippersInstIEs.push_back(inst->getIE());
         addGeometryInstance(embreeSceneHandleClippers,
             inst->group->sceneClippers,
             xfm,
-            m_device);
+            embreeDevice);
         numInvertedClippers += inst->group->numInvertedClippers;
       }
     }
@@ -178,9 +173,9 @@ box3f World::getBounds() const
   return sceneBounds;
 }
 
-void World::setDevice(OSPDevice device)
+void World::setDevice(RTCDevice device)
 {
-  m_device = device;
+  embreeDevice = device;
 }
 
 OSPTYPEFOR_DEFINITION(World *);

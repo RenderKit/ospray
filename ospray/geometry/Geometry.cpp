@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -47,9 +47,9 @@ void Geometry::postCreationInfo(size_t numVerts) const
   postStatusMsg(OSP_LOG_INFO) << ss.str();
 }
 
-void Geometry::setDevice(OSPDevice device)
+void Geometry::setDevice(RTCDevice device)
 {
-  m_device = device;
+  embreeDevice = device;
 }
 
 OSPTYPEFOR_DEFINITION(Geometry *);

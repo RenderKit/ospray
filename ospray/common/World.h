@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -41,9 +41,10 @@ struct OSPRAY_SDK_INTERFACE World : public ManagedObject
   bool scivisDataValid;
   bool pathtracerDataValid;
 
-  void setDevice(OSPDevice);
-private:
-  OSPDevice m_device{nullptr};
+  void setDevice(RTCDevice embreeDevice);
+
+ private:
+  RTCDevice embreeDevice{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(World *, OSP_WORLD);

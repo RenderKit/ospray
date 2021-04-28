@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -31,9 +31,11 @@ struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
 
   RTCGeometry embreeGeometry{nullptr};
 
-  void setDevice(OSPDevice);
+  void setDevice(RTCDevice embreeDevice);
+
  protected:
-  OSPDevice m_device{nullptr};
+  RTCDevice embreeDevice{nullptr};
+
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>
   friend void registerTypeHelper(const char *type);

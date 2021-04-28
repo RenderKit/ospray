@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -91,12 +91,9 @@ void Group::commit()
   volumetricModelIEs.clear();
   clipModelIEs.clear();
 
-  if (!m_device)
-  {
+  if (!embreeDevice) {
     return;
   }
-  ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
-  RTCDevice embreeDevice = (RTCDevice)idev->ispc_embreeDevice();
 
   if (numGeometries > 0) {
     sceneGeometries = rtcNewScene(embreeDevice);
@@ -159,9 +156,9 @@ box3f Group::getBounds() const
   return sceneBounds;
 }
 
-void Group::setDevice(OSPDevice device)
+void Group::setDevice(RTCDevice device)
 {
-  m_device = device;
+  embreeDevice = device;
 }
 
 OSPTYPEFOR_DEFINITION(Group *);

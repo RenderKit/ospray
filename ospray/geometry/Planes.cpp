@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #undef NDEBUG
@@ -24,14 +24,11 @@ std::string Planes::toString() const
 
 void Planes::commit()
 {
-  if (!m_device)
-  {
+  if (!embreeDevice) {
     return;
   }
-  if (!embreeGeometry)
-  {
-    ospray::api::ISPCDevice *idev = (ospray::api::ISPCDevice*)m_device;
-    embreeGeometry = rtcNewGeometry(idev->ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
+  if (!embreeGeometry) {
+    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
   }
 
   coeffsData = getParamDataT<vec4f>("plane.coefficients", true);
