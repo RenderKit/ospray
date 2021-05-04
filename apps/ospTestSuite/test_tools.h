@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Intel Corporation
+// Copyright 2017-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -46,8 +46,6 @@ class OSPImageTools
   std::string fileFormat;
   std::string imgName;
 
-  // helper method to write the rendered image as PPM file
-  OsprayStatus writePPM(std::string fileName, const uint32_t *pixel);
   // helper method to write the rendered image as PNG file
   OsprayStatus writePNG(std::string fileName, const uint32_t *pixel);
   // helper method to write the rendered image as HDR file

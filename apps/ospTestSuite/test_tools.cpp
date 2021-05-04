@@ -1,10 +1,11 @@
-// Copyright 2017-2019 Intel Corporation
+// Copyright 2017-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 
 #include "test_tools.h"
+#include "rkcommon/utility/SaveImage.h"
 
 extern OSPRayEnvironment *ospEnv;
 
@@ -26,37 +27,6 @@ OSPImageTools::OSPImageTools(
     fileFormat = ".err";
     break;
   }
-}
-
-OsprayStatus OSPImageTools::writePPM(
-    std::string fileName, const uint32_t *pixel)
-{
-  std::ofstream outFile(
-      fileName.c_str(), std::ofstream::out | std::ofstream::binary);
-  if (!outFile.good()) {
-    std::cerr << "Failed to open file " << fileName << std::endl;
-    return OsprayStatus::Error;
-  }
-
-  outFile << "P6\n"
-          << size.x << " " << size.y << "\n"
-          << "std::numeric_limits<pixelColorValue>::max()\n";
-
-  std::vector<pixelColorValue> out_vec(3 * size.x);
-  pixelColorValue *out = out_vec.data();
-
-  for (int y = 0; y < size.y; y++) {
-    const pixelColorValue *in =
-        (const pixelColorValue *)(pixel + (size.y - 1 - y) * size.x);
-
-    for (int x = 0; x < size.x; x++)
-      std::memcpy(out + 3 * x, in + ImgType::RGBA * x, 3);
-
-    outFile.write((const char *)out, 3 * size.x);
-  }
-  outFile << '\n';
-
-  return OsprayStatus::Ok;
 }
 
 OsprayStatus OSPImageTools::writePNG(
@@ -112,7 +82,9 @@ OsprayStatus OSPImageTools::writeImg(std::string fileName, const void *pixel)
   OsprayStatus writeErr = OsprayStatus::Error;
   fileName += GetFileFormat();
   if (GetFileFormat() == ".ppm") {
-    writeErr = writePPM(fileName, (const uint32_t *)pixel);
+    rkcommon::utility::writePPM(
+        fileName, size.x, size.y, (const uint32_t *)pixel);
+    writeErr = OsprayStatus::Ok;
   } else if (GetFileFormat() == ".png") {
     writeErr = writePNG(fileName, (const uint32_t *)pixel);
   } else if (GetFileFormat() == ".hdr") {
