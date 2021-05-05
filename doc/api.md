@@ -2401,11 +2401,10 @@ thus individual flakes are not visible.
 
 The [path tracer] supports the Luminous material which emits light
 uniformly in all directions and which can thus be used to turn any
-geometric object into a light source^[If `geometryLights` is enabled in
-the [path tracer].]. It is created by passing the type string
-"`luminous`" to `ospNewMaterial`. The amount of constant radiance that
-is emitted is determined by combining the general parameters of lights:
-[`color` and `intensity`](#lights) (which essentially means that
+geometric object into a light source. It is created by passing the type 
+string "`luminous`" to `ospNewMaterial`. The amount of constant radiance 
+that is emitted is determined by combining the general parameters of 
+lights: [`color` and `intensity`](#lights) (which essentially means that
 parameter `intensityQuantity` is not needed because it is always
 `OSP_INTENSITY_QUANTITY_RADIANCE`).
 
