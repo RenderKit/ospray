@@ -14,15 +14,7 @@ void LocalTiledLoadBalancer::renderFrame(
   fb->beginFrame();
   void *perFrameData = renderer->beginFrame(fb, world);
 
-  if (fb->getTotalTiles() != static_cast<int>(allTileIDs.size())) {
-    initAllTileList(fb);
-  }
-  renderTiles(fb,
-      renderer,
-      camera,
-      world,
-      utility::ArrayView<int>(allTileIDs),
-      perFrameData);
+  renderTiles(fb, renderer, camera, world, fb->getTileIDs(), perFrameData);
 
   renderer->endFrame(fb, perFrameData);
 
@@ -93,15 +85,6 @@ void LocalTiledLoadBalancer::renderTiles(FrameBuffer *fb,
 std::string LocalTiledLoadBalancer::toString() const
 {
   return "ospray::LocalTiledLoadBalancer";
-}
-
-void LocalTiledLoadBalancer::initAllTileList(const FrameBuffer *fb)
-{
-  allTileIDs.clear();
-  allTileIDs.reserve(fb->getTotalTiles());
-  for (int i = 0; i < fb->getTotalTiles(); ++i) {
-    allTileIDs.push_back(i);
-  }
 }
 
 } // namespace ospray
