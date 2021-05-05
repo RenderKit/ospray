@@ -96,10 +96,6 @@ void Volume::checkDataStride(const Data *data) const
 
 void Volume::handleParams()
 {
-  if (!vklDevice) {
-    throw std::runtime_error("invalid VKL device");
-  }
-
   // pass all supported parameters through to VKL volume object
   std::for_each(params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
     auto &param = *p;

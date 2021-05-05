@@ -202,7 +202,6 @@ MPIDistributedDevice::~MPIDistributedDevice()
   try {
     if (embreeDevice) {
       rtcReleaseDevice(embreeDevice);
-      embreeDevice = nullptr;
     }
   } catch (...) {
     // silently move on, sometimes a pthread mutex lock fails in Embree
@@ -210,7 +209,6 @@ MPIDistributedDevice::~MPIDistributedDevice()
 
   if (vklDevice) {
     vklReleaseDevice(vklDevice);
-    vklDevice = nullptr;
   }
 }
 

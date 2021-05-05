@@ -161,7 +161,6 @@ ISPCDevice::~ISPCDevice()
   try {
     if (embreeDevice) {
       rtcReleaseDevice(embreeDevice);
-      embreeDevice = nullptr;
     }
   } catch (...) {
     // silently move on, sometimes a pthread mutex lock fails in Embree
@@ -169,7 +168,6 @@ ISPCDevice::~ISPCDevice()
 
   if (vklDevice) {
     vklReleaseDevice(vklDevice);
-    vklDevice = nullptr;
   }
 }
 
