@@ -11,9 +11,11 @@ Version History
 -   Fix behavior of committing the framebuffer in distributed rendering
     to match that of local rendering
 -   Fix build of MPI module on Windows
--   OSPRay now requires minimum Open VKL v0.13.0 to support half
-    precision float (fp16) voxel data in strutured volumes (regular and
-    spherical)
+-   OSPRay now requires minimum Open VKL v0.13.0 to bring the
+    following improvements:
+    -   Support half precision float (fp16) voxel data in strutured
+        volumes (regular and spherical)
+    -   Fixed artifacts for isosurfaces of unstructured volumes
 -   The `mpiOffload` and `mpiDistributed` devices now support picking.
     Picking in the distributed device will return the globally closest
     object on the rank that owns that object. Other ranks will report
