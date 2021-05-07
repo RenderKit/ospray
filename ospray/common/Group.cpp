@@ -92,7 +92,7 @@ void Group::commit()
   clipModelIEs.clear();
 
   if (!embreeDevice) {
-    return;
+    throw std::runtime_error("invalid Embree device");
   }
 
   if (numGeometries > 0) {

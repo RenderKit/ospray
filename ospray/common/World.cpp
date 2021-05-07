@@ -16,7 +16,7 @@ static void addGeometryInstance(RTCScene &scene,
     RTCDevice embreeDevice)
 {
   if (!embreeDevice)
-    return;
+    throw std::runtime_error("invalid Embree device");
 
   // Create parent scene if not yet created
   if (!scene)

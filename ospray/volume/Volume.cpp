@@ -25,7 +25,7 @@ Volume::Volume(const std::string &type) : vklType(type)
           || vklVdbLevelNumVoxels(2) != 4096 || vklVdbLevelNumVoxels(3) != 512
           || vklVdbLevelNumVoxels(4) != 0))
     throw std::runtime_error(
-        toString() + " VKL has non-default configuration for VDB volumes.");
+        toString() + " Open VKL has non-default configuration for VDB volumes.");
 
   ispcEquivalent = ispc::Volume_createInstance_vklVolume(this);
   managedObjectType = OSP_VOLUME;
@@ -51,10 +51,10 @@ std::string Volume::toString() const
 void Volume::commit()
 {
   if (!vklDevice) {
-    throw std::runtime_error("invalid VKL device");
+    throw std::runtime_error("invalid Open VKL device");
   }
   if (!embreeDevice) {
-    return;
+    throw std::runtime_error("invalid Embree device");
   }
 
   if (vklSampler)
@@ -90,7 +90,7 @@ void Volume::checkDataStride(const Data *data) const
   if (data->stride().y != int64_t(data->numItems.x) * data->stride().x
       || data->stride().z != int64_t(data->numItems.y) * data->stride().y) {
     throw std::runtime_error(
-        toString() + " VKL only supports 1D strides between elements");
+        toString() + " Open VKL only supports 1D strides between elements");
   }
 }
 

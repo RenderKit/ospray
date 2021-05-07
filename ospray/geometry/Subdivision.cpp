@@ -24,7 +24,7 @@ std::string Subdivision::toString() const
 void Subdivision::commit()
 {
   if (!embreeDevice) {
-    return;
+    throw std::runtime_error("invalid Embree device");
   }
   if (!embreeGeometry) {
     embreeGeometry =

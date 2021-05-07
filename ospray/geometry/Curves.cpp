@@ -131,7 +131,7 @@ void Curves::createEmbreeGeometry()
     rtcReleaseGeometry(embreeGeometry);
 
   if (!embreeDevice) {
-    return;
+    throw std::runtime_error("invalid Embree device");
   }
   embreeGeometry = rtcNewGeometry(embreeDevice, embreeCurveType);
 

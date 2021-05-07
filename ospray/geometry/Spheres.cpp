@@ -23,7 +23,7 @@ std::string Spheres::toString() const
 void Spheres::commit()
 {
   if (!embreeDevice) {
-    return;
+    throw std::runtime_error("invalid Embree device");
   }
   if (!embreeGeometry) {
     embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);

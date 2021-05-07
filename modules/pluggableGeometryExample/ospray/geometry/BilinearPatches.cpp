@@ -36,7 +36,7 @@ void BilinearPatches::commit()
   // The embree device is available on commit, but not in the constructor
   // as it is set by the device creating this geometry
   if (!embreeDevice) {
-    return;
+    throw std::runtime_error("invalid Embree device");
   }
   if (!embreeGeometry) {
     embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
