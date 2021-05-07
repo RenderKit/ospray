@@ -517,11 +517,11 @@ release-windows:
 release-windows-mpi:
   <<: *release_job
   tags:
-    - msvc16
+    - msvc15
     - win
     - mpi
   script:
-    - scripts\release\win.ps1 "Visual Studio 16 2019" "OFF"
+    - scripts\release\win.ps1 "Visual Studio 15 2017 Win64" "ON"
     - ;& $env:SIGN_FILE_WINDOWS ospray*.msi
   artifacts:
     paths:

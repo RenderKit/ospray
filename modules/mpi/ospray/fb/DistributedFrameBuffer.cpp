@@ -217,11 +217,10 @@ void DFB::createTiles()
       const vec2i tileStart(x, y);
       if (ownerID == size_t(mpicommon::workerRank())) {
         auto td = tileOperation->makeTile(this, tileStart, tileID, ownerID);
-        myTiles.push_back(td);
-        allTiles.push_back(td);
+        myTiles.push_back(td.get());
+        allTiles.push_back(std::move(td));
       } else {
-        allTiles.push_back(
-            std::make_shared<TileDesc>(tileStart, tileID, ownerID));
+        allTiles.push_back(make_unique<TileDesc>(tileStart, tileID, ownerID));
       }
     }
   }

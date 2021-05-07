@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -34,7 +34,7 @@ struct TileOperation
   /* The makeTile method is called to make the live tile operation for each
    * live tile owned by the rank.
    */
-  virtual std::shared_ptr<LiveTileOperation> makeTile(
+  virtual std::unique_ptr<LiveTileOperation> makeTile(
       DistributedFrameBuffer *dfb,
       const vec2i &tileBegin,
       size_t tileID,
