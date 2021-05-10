@@ -517,7 +517,7 @@ To allow for (partial) copies or updates of data arrays use
         uint64_t destinationIndex3 = 0);
 
 which will copy the whole^[The number of items to be copied is defined
-by the size of the source array] content of the `source` array into
+by the size of the source array.] content of the `source` array into
 `destination` at the given location `destinationIndex`. The
 `OSPDataType`s of the data objects must match. The region to be copied
 must be valid inside the destination, i.e., in all dimensions,
@@ -1924,7 +1924,7 @@ renderers, the SciVis renderer supports the following parameters:
 
 Note that the intensity (and color) of AO is deduced from an [ambient
 light] in the `lights` array.^[If there are multiple ambient lights then
-their contribution is added] If `aoSamples` is zero (the default) then
+their contribution is added.] If `aoSamples` is zero (the default) then
 ambient lights cause ambient illumination (without occlusion).
 
 ### Ambient Occlusion Renderer
@@ -2565,7 +2565,8 @@ shifted sensor.
 
 The perspective camera implements a simple thin lens camera for
 perspective rendering, supporting optionally depth of field and stereo
-rendering, but no motion blur. It is created by passing the type string
+rendering (with the [path tracer]), but no motion blur. It is created by
+passing the type string
 "`perspective`" to `ospNewCamera`. In addition to the [general
 parameters](#cameras) understood by all cameras the perspective camera
 supports the special parameters listed in the table below.

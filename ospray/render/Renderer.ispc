@@ -104,9 +104,9 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
           (screenSample.sampleID.y + pfSample.y) * fb->rcpSize.y;
       screenSample.pos = cameraSample.screen;
 
-      // TODO: fix correlations / better RNG
-      cameraSample.lens.x = pixel_du;
-      cameraSample.lens.y = pixel_dv;
+      // no DoF per default
+      cameraSample.lens.x = 0.5f;
+      cameraSample.lens.y = 0.5f;
 
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);

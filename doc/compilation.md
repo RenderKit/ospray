@@ -27,7 +27,7 @@ before you can build OSPRay you need the following prerequisites:
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.^[For example, if OSPRay is in
     `~/Projects/ospray`, ISPC will also be searched in
-    `~/Projects/ispc-v1.16.0-linux`] Alternatively set the CMake
+    `~/Projects/ispc-v1.16.0-linux`.] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   OSPRay builds on top of the [Intel oneAPI Rendering Toolkit common
     library (rkcommon)](https://www.github.com/ospray/rkcommon). The
