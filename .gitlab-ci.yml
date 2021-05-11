@@ -671,6 +671,34 @@ test-release-windows-msi:
     - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR"
     - ;& $env:SIGN_FILE_WINDOWS -t $CI_PROJECT_DIR/build_release/*.msi (Get-ChildItem  "$CI_PROJECT_DIR\Intel\OSPRay v2\bin\*" | Select-Object -Expand FullName)
 
+test-release-windows-mpi-zip:
+  <<: *test_job
+  <<: *release_job
+  stage: scan3
+  tags: [win, mpi]
+  needs: [release-windows-mpi]
+  allow_failure: true
+  script:
+    - Expand-Archive build_release/*.zip -DestinationPath .
+    - $env:MPI = "ON"
+    - $env:Path += ";" + (Get-ChildItem $CI_PROJECT_DIR\ospray-*\bin | Select-Object -Expand FullName)
+    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR"
+    - ;& $env:SIGN_FILE_WINDOWS -t (Get-ChildItem $CI_PROJECT_DIR\ospray-*\bin\* | Select-Object -Expand FullName)
+
+test-release-windows-mpi-msi:
+  <<: *test_job
+  <<: *release_job
+  stage: scan3
+  tags: [win, mpi]
+  needs: [release-windows-mpi]
+  allow_failure: true
+  script:
+    - msiexec.exe /a (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName) /qn TARGETDIR=$CI_PROJECT_DIR
+    - $env:MPI = "ON"
+    - $env:Path += ";$CI_PROJECT_DIR\Intel\OSPRay v2\bin"
+    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR"
+    - ;& $env:SIGN_FILE_WINDOWS -t $CI_PROJECT_DIR/build_release/*.msi (Get-ChildItem  "$CI_PROJECT_DIR\Intel\OSPRay v2\bin\*" | Select-Object -Expand FullName)
+
 
 ### Mirror ###
 
