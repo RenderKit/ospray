@@ -16,6 +16,9 @@ Version History
     -   Support half precision float (fp16) voxel data in strutured
         volumes (regular and spherical)
     -   Fixed artifacts for isosurfaces of unstructured volumes
+    -   Performance improvements for isosurfaces when multiple
+        isovalues are selected 
+    -   Better, adaptive sampling of AMR volumes
 -   The `mpiOffload` and `mpiDistributed` devices now support picking.
     Picking in the distributed device will return the globally closest
     object on the rank that owns that object. Other ranks will report
