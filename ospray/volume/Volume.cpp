@@ -161,7 +161,7 @@ void Volume::handleParams()
                     toString() + " VDB leaf node data must have size n^3.");
             }
             format.push_back(
-                isTile ? VKL_FORMAT_TILE : VKL_FORMAT_CONSTANT_ZYX);
+                isTile ? VKL_FORMAT_TILE : VKL_FORMAT_DENSE_ZYX);
           }
           VKLData vklData =
               vklNewData(vklDevice, format.size(), VKL_UINT, format.data());
