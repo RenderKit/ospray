@@ -10,16 +10,17 @@ $testMPI=$args[2]
 
 md build_regression_tests
 cd build_regression_tests
-md failed
 
 cmake -D OSPRAY_TEST_ISA=$testISA $osprayDir/test_image_data
 
 cmake --build . --config Release --target ospray_test_data
 
 if ( $testMPI -eq "TEST_MPI" ) {
-    mpiexec.exe -n 2 ospTestSuite.exe --osp:load-modules=mpi --osp:device=mpiOffload --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi
+  md failed-mpi
+  mpiexec.exe -n 2 ospTestSuite.exe --osp:load-modules=mpi --osp:device=mpiOffload --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi
 }
 
+md failed
 ospTestSuite.exe --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed
 
 exit $LastExitCode

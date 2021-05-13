@@ -334,7 +334,7 @@ test-mpi-cluster:
   script:
     - module load impi
     - module load gnu
-    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX TEST_MPI
   needs: [build-mpi-cluster]
   only: [schedules]
 
