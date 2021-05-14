@@ -1,7 +1,7 @@
 #include "MultiDeviceLoadBalancer.h"
 #include <rkcommon/tasking/parallel_for.h>
 // TODO Note: MultiDeviceObject should move to its own header
-#include "ospray/api/MultiDevice.h"
+#include "MultiDevice.h"
 
 namespace ospray {
 

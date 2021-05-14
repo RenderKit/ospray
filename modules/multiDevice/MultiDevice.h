@@ -5,8 +5,8 @@
 
 #include <unordered_set>
 #include <vector>
-#include "ISPCDevice.h"
-#include "render/MultiDeviceLoadBalancer.h"
+#include "api/ISPCDevice.h"
+#include "MultiDeviceLoadBalancer.h"
 
 /*! \file MultiDevice.h Implements the a multiplexor for ISPCDevices. In the
  * future, this may become a multiplexor for  */
@@ -132,14 +132,8 @@ struct OSPRAY_SDK_INTERFACE MultiDevice : public Device
   std::vector<std::unique_ptr<ISPCDevice>> subdevices;
 };
 
-// WILL: TODO later if splitting this into its own module
-// For basic development it's simple enough to just toss it
-// in with the ISPC module initializer since it's compiled as
-// part of that module
-#if 0
 extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_multi(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/);
-#endif
 
 } // namespace api
 } // namespace ospray

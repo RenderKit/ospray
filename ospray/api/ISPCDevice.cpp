@@ -3,7 +3,6 @@
 
 // ospray
 #include "ISPCDevice.h"
-#include "MultiDevice.h"
 #include "camera/Camera.h"
 #include "camera/registration.h"
 #include "common/Data.h"
@@ -559,9 +558,6 @@ extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
 
   if (status == OSP_NO_ERROR) {
     Device::registerType<ISPCDevice>("cpu");
-    // WILL TODO: if we split multidevice to its own module it'll
-    // get its own initializer
-    Device::registerType<MultiDevice>("multi");
 
     registerAllCameras();
     registerAllImageOps();

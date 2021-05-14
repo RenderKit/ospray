@@ -3,7 +3,6 @@
 
 // ospray
 #include "MultiDevice.h"
-#include "ISPCDevice.h"
 #include "camera/registration.h"
 #include "fb/LocalFB.h"
 #include "fb/registration.h"
@@ -488,26 +487,6 @@ OSPPickResult MultiDevice::pick(OSPFrameBuffer _fb,
       (OSPWorld)multiWorld->objects[0],
       screenPos);
 }
-
-#if 0
-extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_multi(
-    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
-{
-  auto status = moduleVersionCheck(versionMajor, versionMinor);
-
-  if (status == OSP_NO_ERROR) {
-    // Run the ISPC module's initialization function as well to register local
-    // types
-    status = ospLoadModule("ispc");
-  }
-
-  if (status == OSP_NO_ERROR) {
-    Device::registerType<MultiDevice>("multi");
-  }
-
-  return status;
-}
-#endif
 
 } // namespace api
 } // namespace ospray
