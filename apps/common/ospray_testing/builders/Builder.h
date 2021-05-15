@@ -27,7 +27,7 @@ struct Builder : public memory::RefCountedObject,
 {
   using BuilderFcn = std::function<Builder *()>;
 
-  virtual ~Builder() = default;
+  ~Builder() override = default;
 
   virtual void commit();
 

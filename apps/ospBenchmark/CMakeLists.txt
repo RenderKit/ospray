@@ -11,6 +11,7 @@ add_executable(ospBenchmark
   ospBenchmark.cpp
   BaseFixture.cpp
 
+  benchmarks/Simple.cpp
   benchmarks/BoxesAo.cpp
   benchmarks/CornellBoxSpp.cpp
   benchmarks/GravitySpheresVolume.cpp

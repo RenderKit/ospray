@@ -88,7 +88,7 @@ static std::string FlagToEnvVar(const char* flag) {
   for (size_t i = 0; i != flag_str.length(); ++i)
     env_var += static_cast<char>(::toupper(flag_str.c_str()[i]));
 
-  return "BENCHMARK_" + env_var;
+  return env_var;
 }
 
 }  // namespace
@@ -217,8 +217,8 @@ bool IsTruthyFlagValue(const std::string& value) {
            !(v == '0' || v == 'f' || v == 'F' || v == 'n' || v == 'N');
   } else if (!value.empty()) {
     std::string value_lower(value);
-    std::transform(value_lower.begin(), value_lower.end(),
-                   value_lower.begin(), ::tolower);
+    std::transform(value_lower.begin(), value_lower.end(), value_lower.begin(),
+                   [](char c) { return static_cast<char>(::tolower(c)); });
     return !(value_lower == "false" || value_lower == "no" ||
              value_lower == "off");
   } else

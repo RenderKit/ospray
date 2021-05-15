@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -14,6 +14,15 @@ namespace ospray {
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec2uc, OSP_VEC2UC);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec3uc, OSP_VEC3UC);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec4uc, OSP_VEC4UC);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec2c, OSP_VEC2C);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec3c, OSP_VEC3C);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec4c, OSP_VEC4C);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec2us, OSP_VEC2US);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec3us, OSP_VEC3US);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec4us, OSP_VEC4US);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec2s, OSP_VEC2S);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec3s, OSP_VEC3S);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec4s, OSP_VEC4S);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec2i, OSP_VEC2I);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec3i, OSP_VEC3I);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec4i, OSP_VEC4I);
@@ -29,6 +38,9 @@ OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec4ul, OSP_VEC4UL);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec2f, OSP_VEC2F);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec3f, OSP_VEC3F);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec4f, OSP_VEC4F);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec2d, OSP_VEC2D);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec3d, OSP_VEC3D);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::vec4d, OSP_VEC4D);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::box1i, OSP_BOX1I);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::box2i, OSP_BOX2I);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::box3i, OSP_BOX3I);
@@ -46,6 +58,15 @@ OSPTYPEFOR_SPECIALIZATION(rkcommon::math::affine3f, OSP_AFFINE3F);
 OSPTYPEFOR_DEFINITION(rkcommon::math::vec2uc);
 OSPTYPEFOR_DEFINITION(rkcommon::math::vec3uc);
 OSPTYPEFOR_DEFINITION(rkcommon::math::vec4uc);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec2c);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec3c);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec4c);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec2us);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec3us);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec4us);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec2s);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec3s);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec4s);
 OSPTYPEFOR_DEFINITION(rkcommon::math::vec2i);
 OSPTYPEFOR_DEFINITION(rkcommon::math::vec3i);
 OSPTYPEFOR_DEFINITION(rkcommon::math::vec4i);
@@ -61,6 +82,9 @@ OSPTYPEFOR_DEFINITION(rkcommon::math::vec4ul);
 OSPTYPEFOR_DEFINITION(rkcommon::math::vec2f);
 OSPTYPEFOR_DEFINITION(rkcommon::math::vec3f);
 OSPTYPEFOR_DEFINITION(rkcommon::math::vec4f);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec2d);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec3d);
+OSPTYPEFOR_DEFINITION(rkcommon::math::vec4d);
 OSPTYPEFOR_DEFINITION(rkcommon::math::box1i);
 OSPTYPEFOR_DEFINITION(rkcommon::math::box2i);
 OSPTYPEFOR_DEFINITION(rkcommon::math::box3i);

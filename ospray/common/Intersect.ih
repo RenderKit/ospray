@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "math/box.ih"
+#include "rkcommon/math/box.ih"
 
 // Ray intersection structures //////////////////////////////////////////////
 

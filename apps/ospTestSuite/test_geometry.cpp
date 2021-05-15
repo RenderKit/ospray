@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_geometry.h"
+#include "ArcballCamera.h"
+#include "ospray_testing.h"
 
 namespace OSPRayTestScenes {
 
@@ -88,6 +90,35 @@ void SpherePrecision::SetUp()
   AddLight(ambient);
 }
 
+Curves::Curves()
+{
+  auto params = GetParam();
+
+  curveVariant = std::get<0>(params);
+  rendererType = std::get<1>(params);
+}
+
+void Curves::SetUp()
+{
+  Base::SetUp();
+
+  auto builder = ospray::testing::newBuilder("curves");
+  ospray::testing::setParam(builder, "rendererType", rendererType);
+  ospray::testing::setParam(builder, "curveVariant", curveVariant);
+  ospray::testing::commit(builder);
+
+  world = ospray::testing::buildWorld(builder);
+  ospray::testing::release(builder);
+  world.commit();
+
+  auto worldBounds = world.getBounds<box3f>();
+  ArcballCamera arcballCamera(worldBounds, imgSize);
+
+  camera.setParam("position", arcballCamera.eyePos());
+  camera.setParam("direction", arcballCamera.lookDir());
+  camera.setParam("up", arcballCamera.upDir());
+}
+
 // Test Instantiations //////////////////////////////////////////////////////
 
 TEST_P(SpherePrecision, sphere)
@@ -110,7 +141,6 @@ TEST_P(FromOsprayTesting, test_scenes)
 INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("cornell_box",
-                           "curves",
                            "gravity_spheres_isosurface",
                            "empty",
                            "random_spheres",
@@ -118,6 +148,22 @@ INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
                            "subdivision_cube",
                            "planes",
                            "unstructured_volume_isosurface"),
+        ::testing::Values("scivis", "pathtracer", "ao"),
+        ::testing::Values(16)));
+
+TEST_P(Curves, test_scenes)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
+    Curves,
+    ::testing::Combine(::testing::Values("bspline",
+                           "hermite",
+                           "catmull-rom",
+                           "linear_deprecated",
+                           "linear",
+                           "cones"),
         ::testing::Values("scivis", "pathtracer", "ao")));
 
 INSTANTIATE_TEST_SUITE_P(TestScenesClipping,
@@ -131,7 +177,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesClipping,
                            "clip_with_bspline_curves",
                            "clip_gravity_spheres_volume",
                            "clip_perlin_noise_volumes"),
-        ::testing::Values("scivis", "pathtracer", "ao")));
+        ::testing::Values("scivis", "pathtracer", "ao"),
+        ::testing::Values(16)));
 
 TEST_P(FromOsprayTestingMaxDepth, test_scenes)
 {
@@ -143,6 +190,7 @@ INSTANTIATE_TEST_SUITE_P(TestScenesMaxDepth,
     ::testing::Combine(
         ::testing::Values(
             "cornell_box", "clip_with_spheres", "clip_gravity_spheres_volume"),
-        ::testing::Values("ao")));
+        ::testing::Values("ao"),
+        ::testing::Values(16)));
 
 } // namespace OSPRayTestScenes

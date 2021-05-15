@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -13,9 +13,8 @@ class VolumetricModel
     : public ManagedObject<OSPVolumetricModel, OSP_VOLUMETRIC_MODEL>
 {
  public:
-  VolumetricModel(const Volume &geom);
-  VolumetricModel(OSPVolume geom);
-  VolumetricModel(const VolumetricModel &copy);
+  VolumetricModel(const Volume &);
+  VolumetricModel(OSPVolume);
   VolumetricModel(OSPVolumetricModel existing = nullptr);
 };
 
@@ -24,19 +23,13 @@ static_assert(sizeof(VolumetricModel) == sizeof(OSPVolumetricModel),
 
 // Inlined function definitions ///////////////////////////////////////////
 
-inline VolumetricModel::VolumetricModel(const Volume &geom)
-    : VolumetricModel(geom.handle())
+inline VolumetricModel::VolumetricModel(const Volume &vol)
+    : VolumetricModel(vol.handle())
 {}
 
-inline VolumetricModel::VolumetricModel(OSPVolume existing)
+inline VolumetricModel::VolumetricModel(OSPVolume vol)
 {
-  ospObject = ospNewVolumetricModel(existing);
-}
-
-inline VolumetricModel::VolumetricModel(const VolumetricModel &copy)
-    : ManagedObject<OSPVolumetricModel, OSP_VOLUMETRIC_MODEL>(copy.handle())
-{
-  ospRetain(copy.handle());
+  ospObject = ospNewVolumetricModel(vol);
 }
 
 inline VolumetricModel::VolumetricModel(OSPVolumetricModel existing)

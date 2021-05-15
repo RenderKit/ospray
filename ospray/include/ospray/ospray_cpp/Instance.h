@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -13,7 +13,6 @@ class Instance : public ManagedObject<OSPInstance, OSP_INSTANCE>
  public:
   Instance(Group &group);
   Instance(OSPGroup group);
-  Instance(const Instance &copy);
   Instance(OSPInstance existing = nullptr);
 };
 
@@ -27,12 +26,6 @@ inline Instance::Instance(Group &group) : Instance(group.handle()) {}
 inline Instance::Instance(OSPGroup group)
 {
   ospObject = ospNewInstance(group);
-}
-
-inline Instance::Instance(const Instance &copy)
-    : ManagedObject<OSPInstance, OSP_INSTANCE>(copy.handle())
-{
-  ospRetain(copy.handle());
 }
 
 inline Instance::Instance(OSPInstance existing)

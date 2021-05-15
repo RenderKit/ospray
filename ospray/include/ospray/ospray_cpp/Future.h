@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -11,7 +11,6 @@ namespace cpp {
 class Future : public ManagedObject<OSPFuture, OSP_FUTURE>
 {
  public:
-  Future(const Future &copy);
   Future(OSPFuture existing = nullptr);
 
   bool isReady(OSPSyncEvent = OSP_TASK_FINISHED);
@@ -25,12 +24,6 @@ static_assert(sizeof(Future) == sizeof(OSPFuture),
     "cpp::Future can't have data members!");
 
 // Inlined function definitions ///////////////////////////////////////////
-
-inline Future::Future(const Future &copy)
-    : ManagedObject<OSPFuture, OSP_FUTURE>(copy.handle())
-{
-  ospRetain(copy.handle());
-}
 
 inline Future::Future(OSPFuture existing)
     : ManagedObject<OSPFuture, OSP_FUTURE>(existing)

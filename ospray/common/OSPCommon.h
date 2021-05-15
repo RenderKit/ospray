@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -29,6 +29,7 @@ typedef int ssize_t;
 #include "ospray/ospray.h"
 #include "ospray/ospray_cpp/ext/rkcommon.h"
 #include "ospray/version.h"
+
 // std
 #include <cstdint> // for int64_t etc
 #include <map>
@@ -108,6 +109,10 @@ extern "C" {
 OSPRAY_CORE_INTERFACE void *malloc64(size_t size);
 /*! 64-bit malloc. allows for alloc'ing memory larger than 4GB */
 OSPRAY_CORE_INTERFACE void free64(void *ptr);
+/*! Thread Local Storage functions */
+OSPRAY_CORE_INTERFACE void *pushTLS(size_t size);
+OSPRAY_CORE_INTERFACE void *reallocTLS(void *ptr, size_t size);
+OSPRAY_CORE_INTERFACE void popTLS(void *ptr);
 }
 
 OSPRAY_CORE_INTERFACE OSPDataType typeOf(const char *string);
@@ -126,6 +131,7 @@ inline bool isObjectType(OSPDataType type)
 
 OSPRAY_CORE_INTERFACE size_t sizeOf(OSPDataType);
 OSPRAY_CORE_INTERFACE size_t sizeOf(OSPTextureFormat);
+OSPRAY_CORE_INTERFACE size_t sizeOf(OSPFrameBufferFormat);
 
 OSPRAY_CORE_INTERFACE OSPError loadLocalModule(const std::string &name);
 
@@ -173,8 +179,11 @@ OSPRAY_CORE_INTERFACE void postStatusMsg(
 struct StatusMsgStream : public std::stringstream
 {
   StatusMsgStream(uint32_t postAtLogLevel = OSP_LOG_DEBUG);
-  StatusMsgStream(StatusMsgStream &&other);
-  ~StatusMsgStream();
+  StatusMsgStream(const StatusMsgStream &copy) = delete;
+  StatusMsgStream(StatusMsgStream &&move);
+  StatusMsgStream &operator=(const StatusMsgStream &copy) = delete;
+  StatusMsgStream &operator=(StatusMsgStream &&move) = default;
+  ~StatusMsgStream() override;
 
  private:
   uint32_t logLevel{OSP_LOG_DEBUG};
@@ -191,9 +200,9 @@ inline StatusMsgStream::~StatusMsgStream()
     postStatusMsg(msg, logLevel);
 }
 
-inline StatusMsgStream::StatusMsgStream(StatusMsgStream &&other)
+inline StatusMsgStream::StatusMsgStream(StatusMsgStream &&move)
 {
-  this->str(other.str());
+  this->str(move.str());
 }
 
 OSPRAY_CORE_INTERFACE StatusMsgStream postStatusMsg(

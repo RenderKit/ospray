@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "math/vec.ih"
 #include "render/Material.ih"
+#include "rkcommon/math/vec.ih"
 #include "texture/TextureParam.ih"
 
 struct SciVisMaterial
@@ -19,4 +19,5 @@ struct SciVisMaterial
   TextureParam KsMap;
   float Ns;
   TextureParam NsMap;
+  vec3f Tf; // transmission filter
 };

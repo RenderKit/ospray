@@ -114,12 +114,14 @@ static void sampleVolume(SciVisRenderContext &rc,
           rc.ldSampler,
           ray.dir,
           0.f);
-      vc.sample = lerp(gsc, vc.sample, shading.shadedColor);
+      vec4f shadedColor = make_vec4f(
+          shading.shadedColor, 1.f - luminance(shading.transmission));
+      vc.sample = lerp(gsc, vc.sample, shadedColor);
     }
   }
 
   // Weight the opacity with deltaT using Beer law
-  vc.sample.w = 1.f - exp(-vc.sample.w * dt * m->densityScale);
+  vc.sample.w = exp(-vc.sample.w * dt * m->densityScale);
 }
 
 static float sampleAllVolumes(SciVisRenderContext &rc,
@@ -174,7 +176,10 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     const uniform bool shade)
 {
   // Array of volume contexts
-  VolumeContext volumeContexts[NUM_VOLUME_INTERVALS_MAX];
+  varying VolumeContext *uniform volumeContexts =
+      (varying VolumeContext * uniform)
+          pushTLS(reduce_max(volumeIntervals.numVolumeIntervals)
+              * sizeof(varying VolumeContext));
 
   // Sampling position jitter
   const float jitter = LDSampler_getFloat(ldSampler, 0);
@@ -197,12 +202,13 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     vc.dir = transformedRay.dir;
   }
 
-  // Define initial color with alpha
+  // Define initial color and transmission
   vec3f color = make_vec3f(0.f);
-  float alpha = 0.f;
+  float transmission = 1.f;
 
   // Iterate through all ray intervals
-  for (uniform int i = 0; i < reduce_max(rayIntervals.count) && (alpha < .99f);
+  for (uniform int i = 0;
+       i < reduce_max(rayIntervals.count) && (transmission > 0.f);
        i++) {
     if (i >= rayIntervals.count)
       break;
@@ -252,29 +258,33 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     }
 
     // Propagate ray across all volumes till opaque
-    while (alpha < .99f) {
+    while (transmission > 0.f) {
       // Sample across all volumes
-      vec4f sampledColorOpacity;
+      vec4f sampledColor;
       float dist = sampleAllVolumes(rc,
           volumeIntervals,
           volumeContexts,
           ray,
           samplingRate,
-          sampledColorOpacity,
+          sampledColor,
           shade);
 
       // Exit loop if nothing sampled
       if (dist == inf)
         break;
 
-      // Alpha blend sampled color
+      // Blend sampled color
       color = color
-          + ((1.f - alpha) * sampledColorOpacity.w
-              * make_vec3f(sampledColorOpacity));
-      alpha = alpha + ((1.f - alpha) * sampledColorOpacity.w);
+          + transmission * (1.f - sampledColor.w) * make_vec3f(sampledColor);
+      transmission *= sampledColor.w;
+
+      // Stop if we reached min contribution
+      if (transmission < rc.renderer->super.minContribution)
+        transmission = 0.f;
     }
   }
 
   // Return final color
-  return make_vec4f(color, alpha);
+  popTLS(volumeContexts);
+  return make_vec4f(color, transmission);
 }

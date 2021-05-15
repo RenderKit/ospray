@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # NOTE(jda) - Add CMake commands which will be invoked when find_package(ospray)
@@ -22,6 +22,7 @@ endif()
 ispc_include_directories(
   ${OSPRAY_INCLUDE_DIR}
   ${OSPRAY_INCLUDE_DIR}/ospray/SDK
+  ${RKCOMMON_INCLUDE_DIRS}
   ${EMBREE_INCLUDE_DIRS}
   ${OPENVKL_INCLUDE_DIRS}
 )

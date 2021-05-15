@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "rkcommon/os/library.h"
@@ -23,13 +23,6 @@ using ospray::api::deviceIsSet;
 /*! \file api.cpp implements the public ospray api functions by
   routing them to a respective \ref device */
 
-inline std::string getPidString()
-{
-  char s[100];
-  sprintf(s, "(pid %i)", getpid());
-  return s;
-}
-
 #define THROW_IF_NULL(obj, name)                                               \
   if (obj == nullptr)                                                          \
   throw std::runtime_error(std::string("null ") + name                         \
@@ -42,11 +35,9 @@ inline std::string getPidString()
 #define ASSERT_DEVICE()                                                        \
   if (!deviceIsSet())                                                          \
   throw std::runtime_error(                                                    \
-      "OSPRay not yet initialized "                                            \
-      "(most likely this means you tried to "                                  \
-      "call an ospray API function before "                                    \
-      "first calling ospInit())"                                               \
-      + getPidString())
+      "OSPRay not yet initialized (most likely this means you tried to "       \
+      "call an ospray API function before first calling ospInit()), pid: "     \
+      + std::to_string(getpid()))
 
 #define OSPRAY_CATCH_BEGIN                                                     \
   try {                                                                        \
@@ -327,8 +318,6 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceRelease(OSPDevice _object) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(_object);
-
   auto *object = (Device *)_object;
   if (!object)
     return;
@@ -338,8 +327,6 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceRetain(OSPDevice _object) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(_object);
-
   auto *object = (Device *)_object;
   if (!object)
     return;
@@ -586,8 +573,6 @@ extern "C" void ospRetain(OSPObject _object) OSPRAY_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(_object);
   ASSERT_DEVICE();
-  if (!_object)
-    return;
   currentDevice().retain(_object);
 }
 OSPRAY_CATCH_END()

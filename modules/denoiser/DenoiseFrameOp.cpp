@@ -73,13 +73,13 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
     oidnCommitFilter(filter);
   }
 
-  ~LiveDenoiseFrameOp()
+  ~LiveDenoiseFrameOp() override
   {
     oidnReleaseFilter(filter);
     oidnReleaseDevice(device);
   }
 
-  void process(const Camera *)
+  void process(const Camera *) override
   {
     oidnExecuteFilter(filter);
 

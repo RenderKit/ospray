@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(COMPONENT_NAME tbb)
@@ -8,13 +8,21 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
 endif()
 
-if (APPLE)
-  set(TBB_URL "http://github.com/intel/tbb/releases/download/v${TBB_VERSION}/tbb-${TBB_VERSION}-mac.tgz")
-elseif (WIN32)
-  set(TBB_URL "http://github.com/intel/tbb/releases/download/v${TBB_VERSION}/tbb-${TBB_VERSION}-win.zip")
+if (TBB_VERSION VERSION_LESS 2021)
+  set(TBB_FOLDER "tbb")
 else()
-  set(TBB_URL "http://github.com/intel/tbb/releases/download/v${TBB_VERSION}/tbb-${TBB_VERSION}-lin.tgz")
+  set(TBB_PREFIX "oneapi-")
 endif()
+
+if (APPLE)
+  set(TBB_OSSUFFIX "mac.tgz")
+elseif (WIN32)
+  set(TBB_OSSUFFIX "win.zip")
+else()
+  set(TBB_OSSUFFIX "lin.tgz")
+endif()
+
+set(TBB_URL "https://github.com/oneapi-src/oneTBB/releases/download/v${TBB_VERSION}/${TBB_PREFIX}tbb-${TBB_VERSION}-${TBB_OSSUFFIX}")
 
 ExternalProject_Add(${COMPONENT_NAME}
   PREFIX ${COMPONENT_NAME}
@@ -26,9 +34,11 @@ ExternalProject_Add(${COMPONENT_NAME}
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_directory
-    <SOURCE_DIR>/tbb
+    <SOURCE_DIR>/${TBB_FOLDER}
     ${COMPONENT_PATH}
   BUILD_ALWAYS OFF
 )
 
 set(TBB_PATH "${COMPONENT_PATH}")
+list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
+string(REPLACE ";" "|" CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")

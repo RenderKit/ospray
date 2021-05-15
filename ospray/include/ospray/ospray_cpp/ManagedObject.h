@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -73,15 +73,14 @@ inline ManagedObject<HANDLE_T, TYPE>::ManagedObject(HANDLE_T object)
 template <typename HANDLE_T, OSPDataType TYPE>
 inline ManagedObject<HANDLE_T, TYPE>::~ManagedObject()
 {
-  if (ospObject)
-    ospRelease(ospObject);
+  ospRelease(ospObject);
 }
 
 template <typename HANDLE_T, OSPDataType TYPE>
 inline ManagedObject<HANDLE_T, TYPE>::ManagedObject(
     const ManagedObject<HANDLE_T, TYPE> &copy)
+    : ospObject(copy.ospObject)
 {
-  ospObject = copy.handle();
   if (copy.handle())
     ospRetain(copy.handle());
 }
@@ -98,8 +97,7 @@ template <typename HANDLE_T, OSPDataType TYPE>
 inline ManagedObject<HANDLE_T, TYPE> &ManagedObject<HANDLE_T, TYPE>::operator=(
     const ManagedObject<HANDLE_T, TYPE> &copy)
 {
-  if (ospObject)
-    ospRelease(ospObject);
+  ospRelease(ospObject);
   ospObject = copy.handle();
   if (copy.handle())
     ospRetain(copy.handle());
@@ -110,6 +108,7 @@ template <typename HANDLE_T, OSPDataType TYPE>
 inline ManagedObject<HANDLE_T, TYPE> &ManagedObject<HANDLE_T, TYPE>::operator=(
     ManagedObject<HANDLE_T, TYPE> &&move)
 {
+  ospRelease(ospObject);
   ospObject = move.handle();
   move.ospObject = nullptr;
   return *this;

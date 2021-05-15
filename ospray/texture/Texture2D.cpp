@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture2D.h"
+#include "common/OSPCommon_ispc.h"
 #include "texture/Texture2D_ispc.h"
 
 #include "../common/Data.h"

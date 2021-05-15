@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/Intersect.ih"
+#include "common/OSPCommon.ih"
+#include "common/VolumeIntervals.ih"
 #include "volume/Volume.ih"
 
 unmasked void Volume_embreeBounds(
@@ -23,15 +25,6 @@ unmasked void Volume_intersect_kernel(
   Volume *uniform self = (Volume * uniform) args->geometryUserPtr;
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
 
-  EmbreeIntersectionContext *uniform ctx =
-      (EmbreeIntersectionContext * uniform) args->context;
-
-  varying VolumeIntervals *uniform vIntervals =
-      (varying VolumeIntervals * uniform) ctx->userPtr;
-
-  varying VolumeInterval *varying vInterval = (varying VolumeInterval
-      * varying)(vIntervals->intervals + vIntervals->numVolumeIntervals);
-
   uniform int primID = args->primID;
 
   box3f *uniform box = &self->boundingBox;
@@ -46,12 +39,29 @@ unmasked void Volume_intersect_kernel(
     ray->geomID = self->volumeID;
     ray->primID = 0;
 
+    EmbreeIntersectionContext *uniform ctx =
+        (EmbreeIntersectionContext * uniform) args->context;
+    varying VolumeIntervals *uniform vIntervals =
+        (varying VolumeIntervals * uniform) ctx->userPtr;
+
+    // Grow TLS pool if needed
+    uniform unsigned int numNeeded =
+        reduce_max(vIntervals->numVolumeIntervals) + 1;
+    if (numNeeded > vIntervals->numAllocated) {
+      vIntervals->intervals = (varying VolumeInterval * uniform) reallocTLS(
+          vIntervals->intervals, numNeeded * sizeof(varying VolumeInterval));
+      vIntervals->numAllocated = numNeeded;
+    }
+
+    varying VolumeInterval *varying vInterval = (varying VolumeInterval
+        * varying)(vIntervals->intervals + vIntervals->numVolumeIntervals);
+
     vInterval->primID = 0;
     vInterval->geomID = self->volumeID;
     vInterval->instID = args->context->instID[0];
-    vIntervals->numVolumeIntervals++;
     vInterval->interval.lower = t_min;
     vInterval->interval.upper = t_max;
+    vIntervals->numVolumeIntervals++;
   }
 }
 
@@ -101,8 +111,10 @@ export void *uniform Volume_createInstance_vklVolume(
   return self;
 }
 
-export void Volume_set_vklVolume(
-    void *uniform _self, void *uniform vklVolume, void *uniform vklSampler, box3f *uniform bounds)
+export void Volume_set_vklVolume(void *uniform _self,
+    void *uniform vklVolume,
+    void *uniform vklSampler,
+    box3f *uniform bounds)
 {
   Volume *uniform self = (Volume * uniform) _self;
   self->vklVolume = (VKLVolume)vklVolume;

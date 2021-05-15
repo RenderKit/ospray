@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -19,10 +19,9 @@ Light::Light()
 
 void Light::commit()
 {
-  radiance =
+  coloredIntensity =
       getParam<vec3f>("color", vec3f(1.f)) * getParam<float>("intensity", 1.f);
-  ispc::Light_set(
-      getIE(), (ispc::vec3f &)radiance, getParam<bool>("visible", true));
+  ispc::Light_set(getIE(), getParam<bool>("visible", true));
 }
 
 std::string Light::toString() const
@@ -38,6 +37,12 @@ Light *Light::createInstance(const char *type)
 void Light::registerType(const char *type, FactoryFcn<Light> f)
 {
   g_lightsMap[type] = f;
+}
+
+void Light::queryIntensityQuantityType(const OSPIntensityQuantity &defaultIQ)
+{
+  intensityQuantity =
+      (OSPIntensityQuantity)getParam<uint8_t>("intensityQuantity", defaultIQ);
 }
 
 utility::Optional<void *> Light::getSecondIE()

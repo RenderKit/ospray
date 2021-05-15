@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -15,9 +15,9 @@ struct OSPRAY_MODULE_DENOISER_EXPORT DenoiseFrameOp : public FrameOp
 {
   DenoiseFrameOp();
 
-  virtual ~DenoiseFrameOp() override;
+  ~DenoiseFrameOp() override;
 
-  virtual std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
+  std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) override;
 
   std::string toString() const override;
 

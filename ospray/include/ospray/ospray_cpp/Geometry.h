@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,7 +12,6 @@ class Geometry : public ManagedObject<OSPGeometry, OSP_GEOMETRY>
 {
  public:
   Geometry(const std::string &type);
-  Geometry(const Geometry &copy);
   Geometry(OSPGeometry existing = nullptr);
 };
 
@@ -24,12 +23,6 @@ static_assert(sizeof(Geometry) == sizeof(OSPGeometry),
 inline Geometry::Geometry(const std::string &type)
 {
   ospObject = ospNewGeometry(type.c_str());
-}
-
-inline Geometry::Geometry(const Geometry &copy)
-    : ManagedObject<OSPGeometry, OSP_GEOMETRY>(copy.handle())
-{
-  ospRetain(copy.handle());
 }
 
 inline Geometry::Geometry(OSPGeometry existing)

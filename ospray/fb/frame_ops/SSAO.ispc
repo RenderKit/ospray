@@ -5,7 +5,7 @@
 #include "../FrameBufferView.ih"
 #include "../Tile.ih"
 #include "math/LinearSpace.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/vec.ih"
 
 struct LiveSSAOFrameOp
 {

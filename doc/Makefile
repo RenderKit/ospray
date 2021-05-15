@@ -27,6 +27,7 @@ all: www doc pdf
 www: $(webpages) www/stylesheet.css $(webimages) | wwwscripts
 doc: ../README.md
 pdf: ../readme.pdf
+spec: ospray-spec.rst
 checklinks: tmp/brokenlinks.txt
 	@if [[ -s $^ ]] ; then \
 	  echo "Found broken link:" ;\
@@ -37,7 +38,7 @@ checklinks: tmp/brokenlinks.txt
 	fi
 
 
-.PHONY: all www doc pdf clean realclean submodule checklinks
+.PHONY: all www doc pdf clean realclean submodule checklinks spec
 
 submodule:
 	git submodule update --init --remote
@@ -95,6 +96,12 @@ $(process_version) tmp/version ../readme.pdf $(tmptexfiles) $(images_fig2pdf) tm
 tmpdir:
 	@mkdir -p tmp
 
+
+### spec
+########################################################################
+
+ospray-spec.rst: api.md
+	$(PANDOC) --wrap=none --email-obfuscation=none $+ -o $@
 
 ### webpages
 ########################################################################
@@ -173,7 +180,7 @@ tmp/compilation.md: compilation.md tmp/links_local.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
 ../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/tutorials.md
-	$(PANDOC) --file-scope $+ -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
+	$(PANDOC) --file-scope $+ --markdown-headings=setext -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
 
 ### pdf
 ########################################################################

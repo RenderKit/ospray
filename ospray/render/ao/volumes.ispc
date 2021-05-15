@@ -132,7 +132,10 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
     const uniform float samplingRate)
 {
   // Array of volume contexts
-  VolumeContext volumeContexts[NUM_VOLUME_INTERVALS_MAX];
+  varying VolumeContext *uniform volumeContexts =
+      (varying VolumeContext * uniform)
+          pushTLS(reduce_max(volumeIntervals.numVolumeIntervals)
+              * sizeof(varying VolumeContext));
 
   // Sampling position jitter
   const float jitter = LDSampler_getFloat(ldSampler, 0);
@@ -229,5 +232,6 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
   }
 
   // Return final color
+  popTLS(volumeContexts);
   return make_vec4f(color, alpha);
 }

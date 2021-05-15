@@ -135,7 +135,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   lights/sky_model/sky_model.cpp
   lights/registration.cpp
 
-  math/box.ispc
   math/Distribution1D.ispc
   math/Distribution2D.ispc
   math/sobol.ih
@@ -418,6 +417,7 @@ if(OSPRAY_BUILD_ISPC_DEVICE)
     ${CMAKE_SOURCE_DIR}/ospray
     ${CMAKE_SOURCE_DIR}
     ${PROJECT_BINARY_DIR}
+    ${RKCOMMON_INCLUDE_DIRS}
     ${EMBREE_INCLUDE_DIRS}
     ${OPENVKL_INCLUDE_DIRS}
   )

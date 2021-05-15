@@ -413,6 +413,12 @@ void PTBackgroundRefraction::SetUp()
 
 // Test Instantiations //////////////////////////////////////////////////////
 
+INSTANTIATE_TEST_SUITE_P(Transparency,
+    FromOsprayTesting,
+    ::testing::Combine(::testing::Values("transparency"),
+        ::testing::Values("scivis", "pathtracer", "ao"),
+        ::testing::Values(16)));
+
 TEST_P(RendererMaterialList, material_list)
 {
   PerformRenderTest();
@@ -429,7 +435,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesPtMaterials,
                            "test_pt_metal_roughness",
                            "test_pt_metallic_flakes",
                            "test_pt_obj"),
-        ::testing::Values("pathtracer")));
+        ::testing::Values("pathtracer"),
+        ::testing::Values(16)));
 
 TEST_P(Texture2D, filter)
 {

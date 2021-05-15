@@ -71,13 +71,18 @@ SUBSUITE_REGEX="^particle_volume"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
+SUBSUITE_NAME="UnstructuredVolumes"
+SUBSUITE_REGEX="^unstructured_volume"
+./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+
 SUBSUITE_NAME="Clipping"
 SUBSUITE_REGEX="^clip"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
 SUBSUITE_NAME="Other"
-SUBSUITE_REGEX="^(random_spheres|streamlines|planes)"
+SUBSUITE_REGEX="^(random_spheres|streamlines|planes|vdb_volume|gravity_spheres_amr)"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
@@ -88,6 +93,6 @@ benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} .
 SUITE_NAME="Microbenchmarks"
 
 SUBSUITE_NAME="Setup"
-SUBSUITE_REGEX="^ospInit_ospShutdown"
+SUBSUITE_REGEX="^(ospInit_ospShutdown|setup)"
 ./ospBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json

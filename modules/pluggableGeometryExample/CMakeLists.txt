@@ -7,7 +7,7 @@
 # a OSPRAY_MODULE_MODULENAME flag that enables/disables its building.
 #
 cmake_dependent_option(
-  OSPRAY_MODULE_BILINEAR_PATH
+  OSPRAY_MODULE_BILINEAR_PATCH
   "Build pluggable geometry example module  (a Bilinear Patch)"
   OFF
   OSPRAY_ENABLE_MODULES

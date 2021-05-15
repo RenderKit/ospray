@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_fixture.h"
@@ -72,10 +72,10 @@ class PhotometricLight
   float radius{0.0};
 };
 
-class QuadLight
-    : public LightTest,
-      public ::testing::TestWithParam<
-          std::tuple<float /*size*/, const char * /*renderer type*/>>
+class QuadLight : public LightTest,
+                  public ::testing::TestWithParam<std::tuple<float /*size*/,
+                      const char * /*renderer type*/,
+                      OSPIntensityQuantity>>
 {
  public:
   QuadLight();
@@ -83,12 +83,13 @@ class QuadLight
 
  private:
   float size{0.2};
+  OSPIntensityQuantity intensityQuantity{OSP_INTENSITY_QUANTITY_UNKNOWN};
 };
 
-class SphereLight
-    : public LightTest,
-      public ::testing::TestWithParam<
-          std::tuple<float /*radius*/, const char * /*renderer type*/>>
+class SphereLight : public LightTest,
+                    public ::testing::TestWithParam<std::tuple<float /*radius*/,
+                        const char * /*renderer type*/,
+                        OSPIntensityQuantity>>
 {
  public:
   SphereLight();
@@ -96,12 +97,14 @@ class SphereLight
 
  private:
   float radius{0.0};
+  OSPIntensityQuantity intensityQuantity{OSP_INTENSITY_QUANTITY_UNKNOWN};
 };
 
 class SpotLight
     : public LightTest,
       public ::testing::TestWithParam<std::tuple<vec2f /*innerOuterRadius*/,
-          const char * /*renderer type*/>>
+          const char * /*renderer type*/,
+          OSPIntensityQuantity>>
 {
  public:
   SpotLight();
@@ -109,6 +112,16 @@ class SpotLight
 
  private:
   vec2f innerOuterRadius{0.0, 0.2};
+  OSPIntensityQuantity intensityQuantity{OSP_INTENSITY_QUANTITY_UNKNOWN};
+};
+
+class HDRILight
+    : public LightTest,
+      public ::testing::TestWithParam<const char * /*renderer type*/>
+{
+ public:
+  HDRILight();
+  void SetUp() override;
 };
 
 } // namespace OSPRayTestScenes

@@ -5,8 +5,8 @@
 #include "common/Ray.ih"
 #include "geometry/Geometry.ih"
 #include "math/LinearSpace.ih"
-#include "math/box.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 
 /*! input data for a single patch */
 struct Patch
