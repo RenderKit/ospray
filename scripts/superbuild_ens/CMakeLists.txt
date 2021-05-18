@@ -16,6 +16,8 @@ endif()
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
+set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Default build type: Release" FORCE)
+
 if (NOT DEPENDENCIES_BUILD_TYPE)
   set(DEPENDENCIES_BUILD_TYPE Release)
 endif()
