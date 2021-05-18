@@ -21,9 +21,9 @@ before you can build OSPRay you need the following prerequisites:
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
     Linux development tools. To build the interactive tutorials, you
     should also have some version of OpenGL and GLFW.
--   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io), version 1.14.1 or later. Please
-    obtain a release of ISPC from the [ISPC downloads
+-   Additionally you require a copy of the [Intel® Implicit SPMD Program
+    Compiler (ISPC)](http://ispc.github.io), version 1.14.1 or later.
+    Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.^[For example, if OSPRay is in

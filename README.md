@@ -23,7 +23,7 @@ CPU-based, and runs on anything from laptops, to workstations, to
 compute nodes in HPC systems.
 
 OSPRay internally builds on top of [Intel
-Embree](https://www.embree.org/) and [ISPC (Intel SPMD Program
+Embree](https://www.embree.org/) and [Intel ISPC (Implicit SPMD Program
 Compiler)](https://ispc.github.io/), and fully exploits modern
 instruction sets like Intel SSE4, AVX, AVX2, and AVX-512 to achieve high
 rendering performance, thus a CPU with support for at least SSE4.1 is
@@ -74,9 +74,9 @@ before you can build OSPRay you need the following prerequisites:
     Linux development tools. To build the interactive tutorials, you
     should also have some version of OpenGL and GLFW.
 
--   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io), version 1.14.1 or later. Please
-    obtain a release of ISPC from the [ISPC downloads
+-   Additionally you require a copy of the [Intel® Implicit SPMD Program
+    Compiler (ISPC)](http://ispc.github.io), version 1.14.1 or later.
+    Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right “next to” the
     checked-out OSPRay sources.[1] Alternatively set the CMake variable
@@ -1121,7 +1121,7 @@ VDB volumes have the following parameters:
 | uint32\[\]  | node.level       | level on which each input node exists, may be 1, 2 or 3 (levels are counted from the root level = 0 down)                                                                                                                                                                                                                            |
 | vec3i\[\]   | node.origin      | the node origin index (per input node)                                                                                                                                                                                                                                                                                               |
 | OSPData\[\] | node.data        | [data](#data) arrays with the node data (per input node). Nodes that are tiles are expected to have single-item arrays. Leaf-nodes with grid data expected to have compact 3D arrays in zyx layout (z changes most quickly) with the correct number of voxels for the `level`. Only `OSP_FLOAT` is supported as field `OSPDataType`. |
-| int         | filter           | filter used for reconstructing the field, default is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively `OSP_VOLUME_FILTER_NEAREST`.                                                                                                                                                                                                       |
+| int         | filter           | filter used for reconstructing the field, default is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively `OSP_VOLUME_FILTER_NEAREST`, or `OSP_VOLUME_FILTER_TRICUBIC`.                                                                                                                                                                      |
 | int         | gradientFilter   | filter used for reconstructing the field during gradient computations, default same as `filter`                                                                                                                                                                                                                                      |
 
 Configuration parameters for VDB volumes.
@@ -1538,7 +1538,7 @@ specific light source).
 | OSP\_INTENSITY\_QUANTITY\_INTENSITY  | the overall amount of light emitted by the light in a given direction, unit is W/sr                                             |
 | OSP\_INTENSITY\_QUANTITY\_RADIANCE   | the amount of light emitted by a point on the light source in a given direction, unit is W/sr/m<sup>2</sup>                     |
 | OSP\_INTENSITY\_QUANTITY\_IRRADIANCE | the amount of light arriving at a surface point, assuming the light is oriented towards to the surface, unit is W/m<sup>2</sup> |
-| OSP\_INTENSITY\_QUANTITY\_SCALE      | a linear scaling factor for light sources with a built-in quantity (e.g., `HDRI`, or `sun-sky`).                                |
+| OSP\_INTENSITY\_QUANTITY\_SCALE      | a linear scaling factor for light sources with a built-in quantity (e.g., `HDRI`, or `sunSky`).                                 |
 
 Types of radiative quantities used to interpret a light’s `intensity`
 parameter.
@@ -1674,10 +1674,10 @@ shadows.
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
 “`hdri`” to `ospNewLight`. The values of the HDRI correspond to radiance
-and therfore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE` 
-as `intensityQuantity` parameter value. 
-In addition to the [general parameters](#lights) the HDRI light
-supports the following special parameters:
+and therfore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE`
+as `intensityQuantity` parameter value. In addition to the [general
+parameters](#lights) the HDRI light supports the following special
+parameters:
 
 | Type       | Name      | Description                                                                                                      |
 |:-----------|:----------|:-----------------------------------------------------------------------------------------------------------------|
@@ -1715,10 +1715,12 @@ string “`sunSky`” to `ospNewLight`. The sun-sky light surrounds the
 scene and illuminates it from infinity and can be used for rendering
 outdoor scenes. The radiance values are calculated using the
 Hošek-Wilkie sky model and solar radiance function. The underlying model
-of the sun-sky light returns radiance values and therfore the light
-only accepts `zxv` as `intensityQuantity`
-parameter value. In addition to the [general parameters](#lights) the
-following special parameters are supported:
+of the sun-sky light returns radiance values and therfore the light only
+accepts `OSP_INTENSITY_QUANTITY_SCALE` as `intensityQuantity` parameter
+value. To recale the returned radiance of the sky model the default
+value for the `intensity` parameter is set to `0.025`. In addition to
+the [general parameters](#lights) the following special parameters are
+supported:
 
 | Type  | Name             |      Default | Description                                                                                          |
 |:------|:-----------------|-------------:|:-----------------------------------------------------------------------------------------------------|
@@ -2371,9 +2373,9 @@ average, thus individual flakes are not visible.
 
 The [path tracer](#path-tracer) supports the Luminous material which
 emits light uniformly in all directions and which can thus be used to
-turn any geometric object into a light source[9]. It is created by
-passing the type string “`luminous`” to `ospNewMaterial`. The amount of
-constant radiance that is emitted is determined by combining the general
+turn any geometric object into a light source. It is created by passing
+the type string “`luminous`” to `ospNewMaterial`. The amount of constant
+radiance that is emitted is determined by combining the general
 parameters of lights: [`color` and `intensity`](#lights) (which
 essentially means that parameter `intensityQuantity` is not needed
 because it is always `OSP_INTENSITY_QUANTITY_RADIANCE`).
@@ -3137,7 +3139,15 @@ regions) and merging them. See the
 [ospMPIDistributedTutorialPartiallyReplicatedData](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialPartiallyReplicatedData.cpp)
 for an example.
 
-Interaction With User Modules
+#### Picking on Distributed Data in the MPI Distributed Device
+
+Calling `ospPick` in the distributed device will find and return the
+closest global object at the screen position on the rank that owns that
+object. The other ranks will report no hit. Picking in the distributed
+device takes into account data clipping applied through the `regions`
+parameter to avoid picking ghost data.
+
+Interaction with User Modules
 -----------------------------
 
 The MPI Offload rendering mode trivially supports user modules, with the
@@ -3159,7 +3169,7 @@ ospTutorial
 
 A minimal working example demonstrating how to use OSPRay can be found
 at
-[`apps/tutorials/ospTutorial.c`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.c)[10].
+[`apps/tutorials/ospTutorial.c`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.c)[9].
 
 An example of building `ospTutorial.c` with CMake can be found in
 [`apps/tutorials/ospTutorialFindospray/`](https://github.com/ospray/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray).
@@ -3316,10 +3326,8 @@ added
 [8] respectively (127, 127, 255) for 8 bit textures and
 (32767, 32767, 65535) for 16 bit textures
 
-[9] If `geometryLights` is enabled in the [path tracer](#path-tracer).
-
-[10] A C++ version that uses the C++ convenience wrappers of OSPRay’s
-C99 API via
+[9] A C++ version that uses the C++ convenience wrappers of OSPRay’s C99
+API via
 [`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
 is available at
 [`apps/tutorials/ospTutorial.cpp`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.cpp).

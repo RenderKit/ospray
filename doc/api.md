@@ -888,7 +888,8 @@ VDB volumes have the following parameters:
 
   int        filter            filter used for reconstructing the field, default
                                is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively
-                               `OSP_VOLUME_FILTER_NEAREST`.
+                               `OSP_VOLUME_FILTER_NEAREST`, or
+                               `OSP_VOLUME_FILTER_TRICUBIC`.
 
   int        gradientFilter    filter used for reconstructing the field during
                                gradient computations, default same as `filter`

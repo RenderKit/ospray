@@ -90,4 +90,5 @@ Projects that are closely related to OSPRay
     (**o**pen **s**oft**w**are **r**asterizer), a high-performance,
     highly-scalable, software OpenGL implementation that runs entirely
     on CPUs. OpenSWR is now included in [Mesa](http://mesa3d.org/).
--   The [Intel SPMD Program Compiler](http://ispc.github.io) (ISPC)
+-   The [Intel Implicit SPMD Program Compiler](http://ispc.github.io)
+    (ISPC)

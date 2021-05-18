@@ -338,7 +338,8 @@ typedef enum
 #endif
 {
   OSP_VOLUME_FILTER_NEAREST = 0, // treating voxel cell as constant
-  OSP_VOLUME_FILTER_TRILINEAR = 100 // default trilinear interpolation
+  OSP_VOLUME_FILTER_TRILINEAR = 100, // default trilinear interpolation
+  OSP_VOLUME_FILTER_TRICUBIC = 200 // tricubic interpolation
 } OSPVolumeFilter;
 
 // OSPRay pixel filter types
