@@ -184,7 +184,7 @@ set to OFF will download a pre-built version of Embree.
 BUILD\_OIDN\_FROM\_SOURCE  
 set to OFF will download a pre-built version of Open Image Denoise.
 
-BUILD\_OIDN\_VERSION  
+OIDN\_VERSION  
 determines which version of Open Image Denoise to pull down.
 
 BUILD\_OSPRAY\_MODULE\_MPI  

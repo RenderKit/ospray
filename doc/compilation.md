@@ -118,7 +118,7 @@ BUILD_EMBREE_FROM_SOURCE
 BUILD_OIDN_FROM_SOURCE
 : set to OFF will download a pre-built version of Open Image Denoise.
 
-BUILD_OIDN_VERSION
+OIDN_VERSION
 : determines which version of Open Image Denoise to pull down.
 
 BUILD_OSPRAY_MODULE_MPI

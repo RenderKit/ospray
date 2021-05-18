@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(COMPONENT_NAME glfw)
@@ -14,7 +14,8 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  URL "http://github.com/glfw/glfw/archive/3.2.1.zip"
+  URL "https://github.com/glfw/glfw/archive/3.2.1.zip"
+  URL_HASH "SHA256=0c623f65a129c424d0fa45591694fde3719ad4a0955d4835182fda71b255446f"
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}

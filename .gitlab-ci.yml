@@ -129,7 +129,7 @@ build-arch-clang-devel:
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_EMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OIDN_VERSION=devel -DBUILD_OPENVKL_VERSION=devel -DBUILD_RKCOMMON_VERSION=devel
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DOIDN_VERSION=devel -DOPENVKL_VERSION=devel -DRKCOMMON_VERSION=devel
   only: [schedules]
 
 build-linux-debug-all:

@@ -24,6 +24,10 @@ endif()
 
 set(TBB_URL "https://github.com/oneapi-src/oneTBB/releases/download/v${TBB_VERSION}/${TBB_PREFIX}tbb-${TBB_VERSION}-${TBB_OSSUFFIX}")
 
+if (TBB_HASH)
+  set(TBB_URL_HASH URL_HASH SHA256=${TBB_HASH})
+endif()
+
 ExternalProject_Add(${COMPONENT_NAME}
   PREFIX ${COMPONENT_NAME}
   DOWNLOAD_DIR ${COMPONENT_NAME}
@@ -31,6 +35,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}
   URL ${TBB_URL}
+  ${TBB_URL_HASH}
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_directory
