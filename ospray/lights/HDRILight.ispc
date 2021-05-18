@@ -94,6 +94,7 @@ Light_EvalRes HDRILight_eval(const uniform Light *uniform super,
   //const float v = acos(localDir.z) * one_over_pi;
   //const vec2f uv = make_vec2f(u, v);
   const vec2f uv = get_hdr_spherical_uv(localDir);
+  const float u = uv.x, v = uv.y;
 
   // clamp2edge for theta for tex lookup, to prevent light leaks at the poles
   const vec2f uvc = make_vec2f(
@@ -107,7 +108,6 @@ Light_EvalRes HDRILight_eval(const uniform Light *uniform super,
   const vec2f uvd = frac(uv + self->map->halfTexel);
   res.pdf = Distribution2D_pdf(self->distribution, uvd);
   res.pdf *= one_over_two_pi_sqr * rsqrt(1.f - sqr(localDir.z));
-  res.pdf = 1;
   return res;
 }
 

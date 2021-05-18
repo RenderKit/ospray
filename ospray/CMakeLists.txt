@@ -248,8 +248,8 @@ set(project_ispc_FILES
     math/AffineSpace.ih
     math/interpolation.ih
     math/LinearSpace.ih
-    math/math.ih
-    math/vec.ih
+    #math/math.ih
+    #math/vec.ih
 
     render/pathtracer/GeometryLight.ih
     render/pathtracer/GeometryLight.ispc

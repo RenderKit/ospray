@@ -46,7 +46,8 @@ Light_SampleRes QuadLight_sample(const uniform Light *uniform super,
 
   // convert to pdf wrt. solid angle
   const float cosd = dot(self->nnormal, res.dir);
-  res.pdf = self->ppdf * sqr(dist) / abs(cosd);
+  //res.pdf = self->ppdf * sqr(dist) / abs(cosd);
+  res.pdf = 1.0f / (abs(cosd) + 1e-4f);
 
   // emit only to one side
   res.weight = cosd > 0.f ? self->radiance * rcp(res.pdf) : make_vec3f(0.f);
@@ -79,14 +80,14 @@ Light_EvalRes QuadLight_eval(const uniform Light *uniform super,
   if (min(u, v) < 0.f | max(u, v) * self->ppdf > cosd)
     return res;
 
-  const float rcosd = rcp(cosd);
+  const float rcosd = rcp(cosd + 1e-4f);
   const float dist = dot(self->nnormal, c) * rcosd;
   if (dist <= minDist | dist > maxDist)
     return res;
 
   res.radiance = self->radiance;
-  res.pdf = self->ppdf * sqr(dist) * rcosd;
-
+  //res.pdf = self->ppdf * sqr(dist) * rcosd;
+  res.pdf = rcosd;
   return res;
 }
 
