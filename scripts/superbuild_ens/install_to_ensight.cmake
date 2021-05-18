@@ -1,0 +1,10 @@
+set(ENSIGHT_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../..)
+set(APEX_DIR ${ENSIGHT_SRC_DIR}/apex221/machines/win64)
+
+set(EMBREE_INSTALL_DIR ${APEX_DIR}/intel_embree)
+set(EMBREE_FROM_DIR ${CMAKE_INSTALL_PREFIX}/embree)
+
+install(
+	FILES ${EMBREE_FROM_DIR}/bin/embree3.dll
+	DESTINATION ${EMBREE_INSTALL_DIR}/bin
+)

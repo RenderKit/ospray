@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../superbuild/dependencies)
 
 if(NOT CMAKE_INSTALL_PREFIX)
   set(CMAKE_INSTALL_PREFIX
@@ -61,16 +61,16 @@ set(ISPC_VERSION "v1.15.0" CACHE STRING "Which version of ISPC to download?")
 set(BUILD_RKCOMMON_VERSION "v1.6.1" CACHE STRING "Which version of rkcommon to build?")
 
 option(DOWNLOAD_TBB "Download TBB or use the only found in the system environment?" ON)
-set(TBB_VERSION "2021.1.2" CACHE STRING "Which version of TBB to download?")
+set(TBB_VERSION "2021.2.0" CACHE STRING "Which version of TBB to download?")
 
 set(BUILD_EMBREE_VERSION "v3.13.0" CACHE STRING "Which version of Embree to build?")
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
-set(BUILD_OPENVKL_VERSION "v0.13.0" CACHE STRING "Which version of OpenVKL to build?")
+set(BUILD_OPENVKL_VERSION "v0.12.0" CACHE STRING "Which version of OpenVKL to build?") #v0.13.0 has compilation error
 
-option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
+option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." ON)
 set(BUILD_OIDN_VERSION "v1.3.0" CACHE STRING "Which version of OpenImageDenoise to build?")
-option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" ON)
+option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" OFF)
 
 option(BUILD_GLFW "Build glfw for OSPRay examples or use one in existing environment?" OFF)
 
@@ -132,5 +132,8 @@ if (BUILD_OSPRAY_MODULE_MPI)
 endif()
 
 if (NOT BUILD_DEPENDENCIES_ONLY)
-  include(build_ospray.cmake)
+  include(../superbuild/build_ospray.cmake)
 endif()
+
+include(./install_to_ensight.cmake)
+
