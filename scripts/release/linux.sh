@@ -106,7 +106,7 @@ cmake -L \
   -D OSPRAY_ZIP_MODE=ON \
   -D OSPRAY_MODULE_DENOISER=ON \
   -D OSPRAY_INSTALL_DEPENDENCIES=ON \
-  -D OSPRAY_MODULE_MPI=$OSPRAY_MODULE_MPI \
+  -D OSPRAY_MODULE_MPI=ON \
   -D CMAKE_INSTALL_INCLUDEDIR=include \
   -D CMAKE_INSTALL_LIBDIR=lib \
   -D CMAKE_INSTALL_DOCDIR=doc \
@@ -129,34 +129,29 @@ check_symbols libospray_module_ispc.so CXXABI  1 3 7
 check_lib_dependency_error libospray.so libimf.so
 check_lib_dependency_error libospray_module_ispc.so libimf.so
 
-ls
+check_symbols libospray_module_mpi.so GLIBC   2 17 0
+check_symbols libospray_module_mpi.so GLIBCXX 3 4 19
+check_symbols libospray_module_mpi.so CXXABI  1 3 7
 
-if [ -f libospray_module_mpi.so ]; then
-  check_symbols libospray_module_mpi.so GLIBC   2 17 0
-  check_symbols libospray_module_mpi.so GLIBCXX 3 4 19
-  check_symbols libospray_module_mpi.so CXXABI  1 3 7
-  MPICH_ABI_VER=12
+check_lib_dependency_error libospray_module_mpi.so libimf.so
+check_lib_dependency_error libospray_module_mpi.so libmpifort.so
 
-  check_lib_dependency_error libospray_module_mpi.so libimf.so
-  check_lib_dependency_error libospray_module_mpi.so libmpifort.so
+MPICH_ABI_VER=12
+mpi_so_ver=$(get_so_version libospray_module_mpi.so libmpi.so)
+mpicxx_so_ver=$(get_so_version libospray_module_mpi.so libmpicxx.so)
 
-  mpi_so_ver=$(get_so_version libospray_module_mpi.so libmpi.so)
-  mpicxx_so_ver=$(get_so_version libospray_module_mpi.so libmpicxx.so)
-
-  if [ -z "$mpi_so_ver" ] || [ -z "$mpicxx_so_ver" ]; then
-    echo "MPI module is not linked against libmpi.so or libmpicxx.so"
-    exit 3
-  fi
-
-  if [ "$mpi_so_ver" != "$MPICH_ABI_VER" ]; then
-    echo "MPI module is linked against the wrong MPICH ABI: libmpi.so.$mpi_so_ver"
-    exit 3
-  fi
-  if [ "$mpicxx_so_ver" != "$MPICH_ABI_VER" ]; then
-    echo "MPI module is linked against the wrong MPICH ABI: libmpicxx.so.$mpi_so_ver"
-    exit 3
-  fi
+if [ -z "$mpi_so_ver" ] || [ -z "$mpicxx_so_ver" ]; then
+  echo "MPI module is not linked against libmpi.so or libmpicxx.so"
+  exit 3
 fi
 
+if [ "$mpi_so_ver" != "$MPICH_ABI_VER" ]; then
+  echo "MPI module is linked against the wrong MPICH ABI: libmpi.so.$mpi_so_ver"
+  exit 3
+fi
+if [ "$mpicxx_so_ver" != "$MPICH_ABI_VER" ]; then
+  echo "MPI module is linked against the wrong MPICH ABI: libmpicxx.so.$mpi_so_ver"
+  exit 3
+fi
 
 make -j $THREADS package || exit 2

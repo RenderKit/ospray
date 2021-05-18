@@ -6,7 +6,7 @@ macro(ospray_create_mpi_tutorial tutorial_name)
   target_link_libraries(${tutorial_name} PRIVATE mpi_tutorial_common)
   install(TARGETS ${tutorial_name}
     DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT apps
+    COMPONENT mpi
   )
 endmacro()
 
