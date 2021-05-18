@@ -329,22 +329,11 @@ void MultiDevice::retain(OSPObject object)
 OSPFrameBuffer MultiDevice::frameBufferCreate(
     const vec2i &size, const OSPFrameBufferFormat mode, const uint32 channels)
 {
-  // TODO: For the CPU only multidevice development part, they will
-  // all share the same CPU framebuffer, which can be created once
-  // and managed by the multidevice
-  // TODO: framebuffers will need special treatment in the rest of the API calls
-  // or we can pretend it's a multideviceobject but where all objects reference
-  // the same underlying object.
-  // The latter is used right now, and we treat it as a MultiDeviceObject but
-  // just have all subdevices reference the same thing
-  // This does mean that things like setparam calls are called repeatedly
-  // on the same object, but that should be ok
-
-  FrameBuffer::ColorBufferFormat colorBufferFormat = mode;
-  FrameBuffer *fb = new LocalFrameBuffer(size, colorBufferFormat, channels);
+  loadBalancer->setColorBufferFormat(mode);
   MultiDeviceObject *o = new MultiDeviceObject();
   for (size_t i = 0; i < subdevices.size(); ++i) {
-    o->objects.push_back((OSPFrameBuffer)fb);
+    FrameBuffer *fbi = new LocalFrameBuffer(size, mode, channels);
+    o->objects.push_back((OSPFrameBuffer)fbi);
   }
   return (OSPFrameBuffer)o;
 }
@@ -402,36 +391,41 @@ OSPRenderer MultiDevice::newRenderer(const char *type)
   return (OSPRenderer)o;
 }
 
-OSPFuture MultiDevice::renderFrame(OSPFrameBuffer _fb,
+OSPFuture MultiDevice::renderFrame(OSPFrameBuffer _framebuffer,
     OSPRenderer _renderer,
     OSPCamera _camera,
     OSPWorld _world)
 {
-  MultiDeviceObject *multiFb = (MultiDeviceObject *)_fb;
-  FrameBuffer *fb = (FrameBuffer *)multiFb->objects[0];
-  fb->setCompletedEvent(OSP_NONE_FINISHED);
-
+  MultiDeviceObject *multiFb = (MultiDeviceObject *)_framebuffer;
+  FrameBuffer *fb0 = (FrameBuffer *)multiFb->objects[0];
+  fb0->setCompletedEvent(OSP_NONE_FINISHED); //DDM?
   MultiDeviceObject *multiRenderer = (MultiDeviceObject *)_renderer;
   MultiDeviceObject *multiCamera = (MultiDeviceObject *)_camera;
   MultiDeviceObject *multiWorld = (MultiDeviceObject *)_world;
-  fb->refInc();
+#if 0
+  retain((OSPObject)multiFb);
   retain((OSPObject)multiRenderer);
   retain((OSPObject)multiCamera);
   retain((OSPObject)multiWorld);
 
-  auto *f = new RenderTask(fb, [=]() {
+  auto *f = new RenderTask(multiFb, [=]() { //DDM multiFB not compatible with RenderTask arg type
     utility::CodeTimer timer;
     timer.start();
-    loadBalancer->renderFrame(fb, multiRenderer, multiCamera, multiWorld);
+    loadBalancer->renderFrame(multiFb, multiRenderer, multiCamera, multiWorld);
     timer.stop();
 
-    fb->refDec();
+    release((OSPObject)multiFb);
     release((OSPObject)multiRenderer);
     release((OSPObject)multiCamera);
     release((OSPObject)multiWorld);
 
     return timer.seconds();
   });
+#else
+  //TODO: wrap into a RenderTest as above so we can particupate in async
+  loadBalancer->renderFrame(multiFb, multiRenderer, multiCamera, multiWorld);
+  auto *f = new RenderTask(fb0, [=]() { return 0;});
+#endif
 
   return (OSPFuture)f;
 }

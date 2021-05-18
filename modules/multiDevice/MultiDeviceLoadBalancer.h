@@ -19,12 +19,12 @@ struct OSPRAY_SDK_INTERFACE MultiDeviceLoadBalancer
   MultiDeviceLoadBalancer(
       const std::vector<std::shared_ptr<TiledLoadBalancer>> &loadBalancers);
 
-  void renderFrame(FrameBuffer *fb,
+  void renderFrame(api::MultiDeviceObject *framebuffer,
       api::MultiDeviceObject *renderer,
       api::MultiDeviceObject *camera,
       api::MultiDeviceObject *world);
 
-  void renderTiles(FrameBuffer *fb,
+  void renderTiles(api::MultiDeviceObject *framebuffer,
       api::MultiDeviceObject *renderer,
       api::MultiDeviceObject *camera,
       api::MultiDeviceObject *world,
@@ -32,6 +32,10 @@ struct OSPRAY_SDK_INTERFACE MultiDeviceLoadBalancer
       std::vector<void *> &perFrameDatas);
 
   std::string toString() const;
+
+  void setColorBufferFormat(FrameBuffer::ColorBufferFormat mode) {
+    colorBufferFormat = mode;
+  }
 
  private:
   void initAllTileList(const FrameBuffer *fb);
@@ -41,5 +45,7 @@ struct OSPRAY_SDK_INTERFACE MultiDeviceLoadBalancer
   // The subdevice load balancers that this multidevice load balancer will
   // distribute the rendering workload over
   std::vector<std::shared_ptr<TiledLoadBalancer>> loadBalancers;
+
+  FrameBuffer::ColorBufferFormat colorBufferFormat = OSP_FB_NONE;
 };
 } // namespace ospray

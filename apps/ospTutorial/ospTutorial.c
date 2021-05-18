@@ -48,6 +48,29 @@ void writePPM(
   fclose(file);
 }
 
+void writePPMF(
+    const char *fileName, int size_x, int size_y, const float *pixel)
+{
+  FILE *file = fopen(fileName, "wb");
+  if (!file) {
+    fprintf(stderr, "fopen('%s', 'wb') failed: %d", fileName, errno);
+    return;
+  }
+  fprintf(file, "P6\n%i %i\n255\n", size_x, size_y);
+  unsigned char *out = (unsigned char *)alloca(3 * size_x);
+  for (int y = 0; y < size_y; y++) {
+    const float *in = &pixel[(size_y - 1 - y) * size_x *4];
+    for (int x = 0; x < size_x; x++) {
+      out[3 * x + 0] = (unsigned char)(in[4 * x + 0]*255.);
+      out[3 * x + 1] = (unsigned char)(in[4 * x + 1]*255.);
+      out[3 * x + 2] = (unsigned char)(in[4 * x + 2]*255.);
+    }
+    fwrite(out, 3 * size_x, sizeof(char), file);
+  }
+  fprintf(file, "\n");
+  fclose(file);
+}
+
 int main(int argc, const char **argv)
 {
   // image size
@@ -205,7 +228,7 @@ int main(int argc, const char **argv)
   OSPFrameBuffer framebuffer = ospNewFrameBuffer(imgSize_x,
       imgSize_y,
       OSP_FB_SRGBA,
-      OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+      OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM | OSP_FB_ALBEDO | OSP_FB_NORMAL);
   ospResetAccumulation(framebuffer);
 
   printf("rendering initial frame to firstFrame.ppm...");
@@ -214,7 +237,7 @@ int main(int argc, const char **argv)
   ospRenderFrameBlocking(framebuffer, renderer, camera, world);
 
   // access framebuffer and write its content as PPM file
-  const uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
+  const int *fb = (int *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
   writePPM("firstFrame.ppm", imgSize_x, imgSize_y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
@@ -226,7 +249,7 @@ int main(int argc, const char **argv)
   for (int frames = 0; frames < 10; frames++)
     ospRenderFrameBlocking(framebuffer, renderer, camera, world);
 
-  fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
+  fb = (int *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
   writePPM("accumulatedFrame.ppm", imgSize_x, imgSize_y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
