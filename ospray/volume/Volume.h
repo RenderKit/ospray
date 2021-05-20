@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -21,11 +21,11 @@ struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
 
   void commit() override;
 
+  void setDevice(RTCDevice embreeDevice, VKLDevice vklDevice);
+
  private:
   void checkDataStride(const Data *) const;
   void handleParams();
-
-  void createEmbreeGeometry();
 
   // Friends //
 
@@ -41,6 +41,8 @@ struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   box3f bounds{empty};
 
   std::string vklType;
+  RTCDevice embreeDevice{nullptr};
+  VKLDevice vklDevice{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Volume *, OSP_VOLUME);

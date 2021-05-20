@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -15,7 +15,6 @@ namespace ospray {
 Isosurfaces::Isosurfaces()
 {
   ispcEquivalent = ispc::Isosurfaces_create(this);
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 }
 
 Isosurfaces::~Isosurfaces()
@@ -33,6 +32,12 @@ std::string Isosurfaces::toString() const
 
 void Isosurfaces::commit()
 {
+  if (!embreeDevice) {
+    throw std::runtime_error("invalid Embree device");
+  }
+  if (!embreeGeometry) {
+    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
+  }
   isovaluesData = getParamDataT<float>("isovalue", true, true);
   model = nullptr;
 

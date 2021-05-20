@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(CMAKE_INSTALL_SCRIPTDIR scripts)
@@ -47,7 +47,7 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/ospray/include/ospray
 install(FILES
  ${PROJECT_SOURCE_DIR}/LICENSE.txt
  ${PROJECT_SOURCE_DIR}/third-party-programs.txt
- ${PROJECT_SOURCE_DIR}/third-party-programs-TBB.txt
+ ${PROJECT_SOURCE_DIR}/third-party-programs-oneTBB.txt
  ${PROJECT_SOURCE_DIR}/third-party-programs-Embree.txt
  ${PROJECT_SOURCE_DIR}/third-party-programs-OpenVKL.txt
  ${PROJECT_SOURCE_DIR}/third-party-programs-OIDN.txt
@@ -63,6 +63,7 @@ install(FILES ${PROJECT_SOURCE_DIR}/readme.pdf DESTINATION ${CMAKE_INSTALL_DOCDI
 
 set(CPACK_PACKAGE_NAME "OSPRay")
 set(CPACK_PACKAGE_FILE_NAME "ospray-${OSPRAY_VERSION}.x86_64")
+
 #set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/ospray-doc/images/icon.png)
 #set(CPACK_PACKAGE_RELOCATABLE TRUE)
 if (APPLE AND OSPRAY_SIGN_FILE)
@@ -89,12 +90,16 @@ set(CPACK_COMPONENT_DEVEL_DESCRIPTION "Header files for C and C++ required to de
 set(CPACK_COMPONENT_APPS_DISPLAY_NAME "Applications")
 set(CPACK_COMPONENT_APPS_DESCRIPTION "Example, viewer and test applications as well as tutorials demonstrating how to use OSPRay.")
 
+set(CPACK_COMPONENT_MPI_DISPLAY_NAME "MPI Module")
+set(CPACK_COMPONENT_MPI_DESCRIPTION "OSPRay module for MPI-based distributed rendering.")
+
 set(CPACK_COMPONENT_REDIST_DISPLAY_NAME "Redistributables")
 set(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, imgui) that may or may not be already installed on your system.")
 
 # dependencies between components
 set(CPACK_COMPONENT_DEVEL_DEPENDS lib)
 set(CPACK_COMPONENT_APPS_DEPENDS lib)
+set(CPACK_COMPONENT_MPI_DEPENDS lib)
 set(CPACK_COMPONENT_LIB_REQUIRED ON) # always install the libs
 
 # point to readme and license files
@@ -124,6 +129,9 @@ if (WIN32) # Windows specific settings
     set(CPACK_WIX_PROPERTY_ARPURLINFOABOUT http://www.ospray.org/)
     set(CPACK_PACKAGE_NAME "OSPRay v${OSPRAY_VERSION}")
     list(APPEND CPACK_COMPONENTS_ALL redist)
+    if (OSPRAY_MODULE_MPI)
+      list(APPEND CPACK_COMPONENTS_ALL mpi)
+    endif()
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "Intel\\\\OSPRay v${OSPRAY_VERSION_MAJOR}")
     math(EXPR OSPRAY_VERSION_NUMBER "10000*${OSPRAY_VERSION_MAJOR} + 100*${OSPRAY_VERSION_MINOR} + ${OSPRAY_VERSION_PATCH}")
     set(CPACK_WIX_PRODUCT_GUID "9D64D525-2603-4E8C-9108-845A146${OSPRAY_VERSION_NUMBER}")
@@ -151,51 +159,6 @@ elseif(APPLE) # MacOSX specific settings
 else() # Linux specific settings
 
   set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.linux")
-
-  if (OSPRAY_ZIP_MODE)
-    set(CPACK_GENERATOR TGZ)
-  else()
-    set(CPACK_GENERATOR RPM)
-    set(CPACK_RPM_COMPONENT_INSTALL ON)
-
-    # dependencies
-    set(OSPLIB_REQS "embree3-lib >= ${EMBREE_VERSION_REQUIRED}")
-    if (CMAKE_VERSION VERSION_LESS "3.4.0")
-      OSPRAY_WARN_ONCE(RPM_PACKAGING "You need at least v3.4.0 of CMake for generating RPMs")
-      set(CPACK_RPM_PACKAGE_REQUIRES ${OSPLIB_REQS})
-    else()
-      include(ispc) # for ISPC_VERSION_REQUIRED
-      # needs to use COMPONENT names in original capitalization (i.e. lowercase)
-      set(CPACK_RPM_lib_PACKAGE_REQUIRES ${OSPLIB_REQS})
-      set(CPACK_RPM_apps_PACKAGE_REQUIRES "ospray-lib >= ${OSPRAY_VERSION}")
-      set(CPACK_RPM_devel_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}, ispc >= ${ISPC_VERSION_REQUIRED}")
-    endif()
-
-    set(CPACK_RPM_PACKAGE_RELEASE 1)
-    set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
-    set(CPACK_RPM_devel_PACKAGE_ARCHITECTURE noarch)
-    set(CPACK_RPM_PACKAGE_LICENSE "ASL 2.0") # Apache Software License, Version 2.0
-    set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
-
-    set(CPACK_RPM_CHANGELOG_FILE ${CMAKE_BINARY_DIR}/rpm_changelog.txt) # ChangeLog of the RPM
-    if (CMAKE_VERSION VERSION_LESS "3.7.0")
-      execute_process(COMMAND date "+%a %b %d %Y" OUTPUT_VARIABLE CHANGELOG_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
-    else()
-      string(TIMESTAMP CHANGELOG_DATE "%a %b %d %Y")
-    endif()
-    set(RPM_CHANGELOG "* ${CHANGELOG_DATE} Johannes Günther <johannes.guenther@intel.com> - ${OSPRAY_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}\n- First package")
-    file(WRITE ${CPACK_RPM_CHANGELOG_FILE} ${RPM_CHANGELOG})
-
-    set(CPACK_RPM_PACKAGE_URL http://www.ospray.org/)
-    set(CPACK_RPM_DEFAULT_DIR_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-
-    # post install and uninstall scripts
-    set(SCRIPT_FILE_LDCONFIG ${CMAKE_BINARY_DIR}/rpm_ldconfig.sh)
-    file(WRITE ${SCRIPT_FILE_LDCONFIG} "/sbin/ldconfig")
-    set(CPACK_RPM_lib_POST_INSTALL_SCRIPT_FILE ${SCRIPT_FILE_LDCONFIG})
-    set(CPACK_RPM_lib_POST_UNINSTALL_SCRIPT_FILE ${SCRIPT_FILE_LDCONFIG})
-    set(CPACK_RPM_apps_POST_INSTALL_SCRIPT_FILE ${SCRIPT_FILE_LDCONFIG})
-    set(CPACK_RPM_apps_POST_UNINSTALL_SCRIPT_FILE ${SCRIPT_FILE_LDCONFIG})
-  endif()
+  set(CPACK_GENERATOR TGZ)
 
 endif()

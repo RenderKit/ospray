@@ -4,6 +4,7 @@
 // ospray
 #include "ISPCDevice.h"
 #include "camera/Camera.h"
+#include "camera/registration.h"
 #include "common/Data.h"
 #include "common/Group.h"
 #include "common/Instance.h"
@@ -12,23 +13,21 @@
 #include "common/World.h"
 #include "fb/ImageOp.h"
 #include "fb/LocalFB.h"
+#include "fb/registration.h"
 #include "geometry/GeometricModel.h"
+#include "geometry/registration.h"
 #include "lights/Light.h"
+#include "lights/registration.h"
 #include "render/LoadBalancer.h"
 #include "render/Material.h"
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
+#include "render/registration.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
+#include "texture/registration.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
-
-#include "camera/registration.h"
-#include "fb/registration.h"
-#include "geometry/registration.h"
-#include "lights/registration.h"
-#include "render/registration.h"
-#include "texture/registration.h"
 #include "volume/transferFunction/registration.h"
 
 // stl
@@ -39,11 +38,6 @@
 #include "rkcommon/utility/CodeTimer.h"
 
 #include "api/ISPCDevice_ispc.h"
-
-extern "C" RTCDevice ispc_embreeDevice()
-{
-  return ospray::api::ISPCDevice::embreeDevice;
-}
 
 namespace ospray {
 namespace api {
@@ -158,30 +152,39 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 
 #undef declare_param_setter
 
-RTCDevice ISPCDevice::embreeDevice = nullptr;
-VKLDriver ISPCDevice::vklDriver = nullptr;
+ISPCDevice::ISPCDevice()
+    : loadBalacer(std::make_shared<LocalTiledLoadBalancer>())
+{}
 
 ISPCDevice::~ISPCDevice()
 {
   try {
     if (embreeDevice) {
       rtcReleaseDevice(embreeDevice);
-      embreeDevice = nullptr;
     }
   } catch (...) {
     // silently move on, sometimes a pthread mutex lock fails in Embree
   }
 
-  if (vklDriver) {
-    vklShutdown();
-    vklDriver = nullptr;
+  if (vklDevice) {
+    vklReleaseDevice(vklDevice);
   }
 }
 
 static void embreeErrorFunc(void *, const RTCError code, const char *str)
 {
-  postStatusMsg() << "#osp: embree internal error " << code << " : " << str;
-  throw std::runtime_error("embree internal error '" + std::string(str) + "'");
+  postStatusMsg() << "#osp: Embree internal error " << code << " : " << str;
+  OSPError e =
+      (code > RTC_ERROR_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
+  handleError(e, "Embree internal error '" + std::string(str) + "'");
+}
+
+static void vklErrorFunc(void *, const VKLError code, const char *str)
+{
+  postStatusMsg() << "#osp: Open VKL internal error " << code << " : " << str;
+  OSPError e =
+      (code > VKL_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
+  handleError(e, "Open VKL internal error '" + std::string(str) + "'");
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -192,16 +195,9 @@ void ISPCDevice::commit()
 {
   Device::commit();
 
-  TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
-
   tasking::initTaskingSystem(numThreads, true);
 
   if (!embreeDevice) {
-    // -------------------------------------------------------
-    // initialize embree. (we need to do this here rather than in
-    // ospray::init() because in mpi-mode the latter is also called
-    // in the host-stubs, where it shouldn't.
-    // -------------------------------------------------------
     embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
     rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
     RTCError erc = rtcGetDeviceError(embreeDevice);
@@ -212,47 +208,45 @@ void ISPCDevice::commit()
     }
   }
 
-  if (!vklDriver) {
-    vklLoadModule("ispc_driver");
+  if (!vklDevice) {
+    vklLoadModule("cpu_device");
 
-    VKLDriver driver = nullptr;
-
-    int ispc_width = ispc::ISPCDevice_programCount();
-    switch (ispc_width) {
+    int cpu_width = ispc::ISPCDevice_programCount();
+    switch (cpu_width) {
     case 4:
-      driver = vklNewDriver("ispc_4");
+      vklDevice = vklNewDevice("cpu_4");
       break;
     case 8:
-      driver = vklNewDriver("ispc_8");
+      vklDevice = vklNewDevice("cpu_8");
       break;
     case 16:
-      driver = vklNewDriver("ispc_16");
+      vklDevice = vklNewDevice("cpu_16");
       break;
     default:
-      driver = vklNewDriver("ispc");
+      vklDevice = vklNewDevice("cpu");
       break;
     }
 
-    vklDriverSetErrorCallback(driver,
-        [](void *, VKLError, const char *message) {
-          handleError(OSP_UNKNOWN_ERROR, message);
-        },
-        nullptr);
-
-    vklDriverSetLogCallback(driver,
+    vklDeviceSetErrorCallback(vklDevice, vklErrorFunc, nullptr);
+    vklDeviceSetLogCallback(
+        vklDevice,
         [](void *, const char *message) {
           postStatusMsg(OSP_LOG_INFO) << message;
         },
         nullptr);
 
-    vklDriverSetInt(driver, "logLevel", logLevel);
-    vklDriverSetInt(driver, "numThreads", numThreads);
+    vklDeviceSetInt(vklDevice, "logLevel", logLevel);
+    vklDeviceSetInt(vklDevice, "numThreads", numThreads);
 
-    vklCommitDriver(driver);
-    vklSetCurrentDriver(driver);
-
-    vklDriver = driver;
+    vklCommitDevice(vklDevice);
   }
+
+  // Output device info string
+  const char *isaNames[] = {
+      "unknown", "SSE2", "SSE4", "AVX", "AVX2", "AVX512KNL", "AVX512SKX"};
+  postStatusMsg(OSP_LOG_INFO)
+      << "Using ISPC device with " << isaNames[ispc::ISPCDevice_isa()]
+      << " instruction set...";
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -304,12 +298,16 @@ OSPCamera ISPCDevice::newCamera(const char *type)
 
 OSPGeometry ISPCDevice::newGeometry(const char *type)
 {
-  return (OSPGeometry)Geometry::createInstance(type);
+  ospray::Geometry *ret = Geometry::createInstance(type);
+  ret->setDevice(embreeDevice);
+  return (OSPGeometry)ret;
 }
 
 OSPVolume ISPCDevice::newVolume(const char *type)
 {
-  return (OSPVolume) new Volume(type);
+  ospray::Volume *ret = new Volume(type);
+  ret->setDevice(embreeDevice, vklDevice);
+  return (OSPVolume)ret;
 }
 
 OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
@@ -352,7 +350,9 @@ OSPTexture ISPCDevice::newTexture(const char *type)
 
 OSPGroup ISPCDevice::newGroup()
 {
-  return (OSPGroup) new Group;
+  ospray::Group *ret = new Group;
+  ret->setDevice(embreeDevice);
+  return (OSPGroup)ret;
 }
 
 OSPInstance ISPCDevice::newInstance(OSPGroup _group)
@@ -368,7 +368,9 @@ OSPInstance ISPCDevice::newInstance(OSPGroup _group)
 
 OSPWorld ISPCDevice::newWorld()
 {
-  return (OSPWorld) new World;
+  ospray::World *ret = new World;
+  ret->setDevice(embreeDevice);
+  return (OSPWorld)ret;
 }
 
 box3f ISPCDevice::getBounds(OSPObject _obj)
@@ -496,7 +498,7 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   auto *f = new RenderTask(fb, [=]() {
     utility::CodeTimer timer;
     timer.start();
-    renderer->renderFrame(fb, camera, world);
+    loadBalacer->renderFrame(fb, renderer, camera, world);
     timer.stop();
 
     fb->refDec();

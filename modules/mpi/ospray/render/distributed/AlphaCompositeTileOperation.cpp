@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AlphaCompositeTileOperation.h"
@@ -141,14 +141,13 @@ void LiveAlphaCompositeTile::reportCompositingError(const vec2i &tile)
   handleError(OSP_INVALID_OPERATION, str.str());
 }
 
-std::shared_ptr<LiveTileOperation> AlphaCompositeTileOperation::makeTile(
+std::unique_ptr<LiveTileOperation> AlphaCompositeTileOperation::makeTile(
     DistributedFrameBuffer *dfb,
     const vec2i &tileBegin,
     size_t tileID,
     size_t ownerID)
 {
-  return std::make_shared<LiveAlphaCompositeTile>(
-      dfb, tileBegin, tileID, ownerID);
+  return make_unique<LiveAlphaCompositeTile>(dfb, tileBegin, tileID, ownerID);
 }
 
 std::string AlphaCompositeTileOperation::toString() const

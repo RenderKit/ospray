@@ -1,4 +1,4 @@
-// Copyright 2016-2020 Intel Corporation
+// Copyright 2016-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Collectives.h"
@@ -23,7 +23,7 @@ std::future<void *> bcast(
   return col->future();
 }
 
-std::future<void *> OSPRAY_MPI_INTERFACE bcast(
+std::future<void *> bcast(
     std::shared_ptr<rkcommon::utility::ArrayView<uint8_t>> &buffer,
     size_t count,
     MPI_Datatype datatype,
@@ -120,6 +120,19 @@ std::future<void *> reduce(const void *sendBuffer,
 {
   auto col = std::make_shared<Reduce>(
       sendBuffer, recvBuffer, count, datatype, operation, root, comm);
+  maml::queueCollective(col);
+  return col->future();
+}
+
+std::future<void *> allreduce(const void *sendBuffer,
+    void *recvBuffer,
+    int count,
+    MPI_Datatype datatype,
+    MPI_Op operation,
+    MPI_Comm comm)
+{
+  auto col = std::make_shared<AllReduce>(
+      sendBuffer, recvBuffer, count, datatype, operation, comm);
   maml::queueCollective(col);
   return col->future();
 }
@@ -332,6 +345,36 @@ void Reduce::start()
 }
 
 void Reduce::onFinish()
+{
+  result.set_value(recvBuffer);
+}
+
+AllReduce::AllReduce(const void *sendBuffer,
+    void *recvBuffer,
+    int count,
+    MPI_Datatype datatype,
+    MPI_Op operation,
+    MPI_Comm comm)
+    : Collective(comm),
+      sendBuffer(sendBuffer),
+      recvBuffer(recvBuffer),
+      count(count),
+      datatype(datatype),
+      operation(operation)
+{}
+
+std::future<void *> AllReduce::future()
+{
+  return result.get_future();
+}
+
+void AllReduce::start()
+{
+  MPI_CALL(Iallreduce(
+      sendBuffer, recvBuffer, count, datatype, operation, comm, &request));
+}
+
+void AllReduce::onFinish()
 {
   result.set_value(recvBuffer);
 }

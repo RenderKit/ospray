@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -191,13 +191,17 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
    */
   std::mutex numTilesMutex;
 
-  /*! vector of info for *all* tiles. Each logical tile in the
-    screen has an entry here */
-  std::vector<std::shared_ptr<TileDesc>> allTiles;
+  /* vector of info for *all* tiles. Each logical tile in the    screen has an
+   * entry here. allTiles owns the lifetime for tiles in myTiles as well, which
+   * is a subset of those in allTiles containing the live tile operations for
+   * the tiles this rank owns */
+  std::vector<std::unique_ptr<TileDesc>> allTiles;
 
-  /*! list of *our* tiles ('our' as in 'that belong to the given
-      node'), with the actual data of those tiles */
-  std::vector<std::shared_ptr<LiveTileOperation>> myTiles;
+  /* list of *our* tiles ('our' as in 'that belong to the given node'), with the
+    actual data of those tiles. NOTE: for msvc15 issue with shared_ptr, the tile
+    operation lifetime is managed in allTiles which holds a unique_ptr for all
+    tiles (both ones we own, and don't). */
+  std::vector<LiveTileOperation *> myTiles;
 
   std::shared_ptr<TileOperation> tileOperation = nullptr;
   const Renderer *lastRenderer = nullptr;

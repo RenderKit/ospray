@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial how to use OSPRay and the
@@ -211,6 +211,22 @@ int main(int argc, char **argv)
       OSP_FB_SRGBA,
       OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
   ospResetAccumulation(framebuffer);
+
+  // Try picking an object
+  OSPPickResult pickResult;
+  ospPick(&pickResult, framebuffer, renderer, camera, world, 0.5f, 0.5f);
+  if (pickResult.hasHit) {
+    printf(
+        "Rank %d: ospPick() center of screen --> [inst: %p, model: %p, prim: %u]\n",
+        mpiRank,
+        pickResult.instance,
+        pickResult.model,
+        pickResult.primID);
+    ospRelease(pickResult.instance);
+    ospRelease(pickResult.model);
+  } else {
+    printf("Rank %d: ospPick() center of screen did not hit\n", mpiRank);
+  }
 
   // render one frame
   ospRenderFrameBlocking(framebuffer, renderer, camera, world);

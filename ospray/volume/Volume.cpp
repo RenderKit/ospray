@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -25,7 +25,7 @@ Volume::Volume(const std::string &type) : vklType(type)
           || vklVdbLevelNumVoxels(2) != 4096 || vklVdbLevelNumVoxels(3) != 512
           || vklVdbLevelNumVoxels(4) != 0))
     throw std::runtime_error(
-        toString() + " VKL has non-default configuration for VDB volumes.");
+        toString() + " Open VKL has non-default configuration for VDB volumes.");
 
   ispcEquivalent = ispc::Volume_createInstance_vklVolume(this);
   managedObjectType = OSP_VOLUME;
@@ -50,16 +50,27 @@ std::string Volume::toString() const
 
 void Volume::commit()
 {
+  if (!vklDevice) {
+    throw std::runtime_error("invalid Open VKL device");
+  }
+  if (!embreeDevice) {
+    throw std::runtime_error("invalid Embree device");
+  }
+
   if (vklSampler)
     vklRelease(vklSampler);
 
   if (vklVolume)
     vklRelease(vklVolume);
 
-  vklVolume = vklNewVolume(vklType.c_str());
+  vklVolume = vklNewVolume(vklDevice, vklType.c_str());
 
   if (!vklVolume)
     throw std::runtime_error("unsupported volume type '" + vklType + "'");
+
+  if (!embreeGeometry) {
+    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
+  }
 
   handleParams();
 
@@ -69,19 +80,9 @@ void Volume::commit()
   vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
-  createEmbreeGeometry();
-
   ispc::Volume_set(ispcEquivalent, embreeGeometry);
   ispc::Volume_set_vklVolume(
       ispcEquivalent, vklVolume, vklSampler, (ispc::box3f *)&bounds);
-}
-
-void Volume::createEmbreeGeometry()
-{
-  if (embreeGeometry)
-    rtcReleaseGeometry(embreeGeometry);
-
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 }
 
 void Volume::checkDataStride(const Data *data) const
@@ -89,7 +90,7 @@ void Volume::checkDataStride(const Data *data) const
   if (data->stride().y != int64_t(data->numItems.x) * data->stride().x
       || data->stride().z != int64_t(data->numItems.y) * data->stride().y) {
     throw std::runtime_error(
-        toString() + " VKL only supports 1D strides between elements");
+        toString() + " Open VKL only supports 1D strides between elements");
   }
 }
 
@@ -132,18 +133,19 @@ void Volume::handleParams()
         vklBlockData.reserve(data->size());
         for (auto &&data : dataD) {
           checkDataStride(data);
-          VKLData vklData = vklNewData(data->size(),
+          VKLData vklData = vklNewData(vklDevice,
+              data->size(),
               (VKLDataType)data->type,
               data->data(),
               VKL_DATA_SHARED_BUFFER,
               data->stride().x);
           vklBlockData.push_back(vklData);
         }
-        VKLData vklData =
-            vklNewData(vklBlockData.size(), VKL_DATA, vklBlockData.data());
+        VKLData vklData = vklNewData(
+            vklDevice, vklBlockData.size(), VKL_DATA, vklBlockData.data());
         vklSetData(vklVolume, param.name.c_str(), vklData);
         vklRelease(vklData);
-        for (VKLData vd: vklBlockData)
+        for (VKLData vd : vklBlockData)
           vklRelease(vd);
 
         if (vklType == "vdb" && param.name == "node.data") {
@@ -159,16 +161,18 @@ void Volume::handleParams()
                     toString() + " VDB leaf node data must have size n^3.");
             }
             format.push_back(
-                isTile ? VKL_FORMAT_TILE : VKL_FORMAT_CONSTANT_ZYX);
+                isTile ? VKL_FORMAT_TILE : VKL_FORMAT_DENSE_ZYX);
           }
-          VKLData vklData = vklNewData(format.size(), VKL_UINT, format.data());
+          VKLData vklData =
+              vklNewData(vklDevice, format.size(), VKL_UINT, format.data());
           vklSetData(vklVolume, "node.format", vklData);
           vklRelease(vklData);
         }
 
       } else {
         checkDataStride(data);
-        VKLData vklData = vklNewData(data->size(),
+        VKLData vklData = vklNewData(vklDevice,
+            data->size(),
             (VKLDataType)data->type,
             data->data(),
             VKL_DATA_SHARED_BUFFER,
@@ -187,6 +191,12 @@ void Volume::handleParams()
       param.query = false;
     }
   });
+}
+
+void Volume::setDevice(RTCDevice embreed, VKLDevice vkld)
+{
+  embreeDevice = embreed;
+  vklDevice = vkld;
 }
 
 OSPTYPEFOR_DEFINITION(Volume *);

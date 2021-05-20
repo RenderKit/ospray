@@ -1,10 +1,11 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Curves.h"
 #include "common/Data.h"
 #include "common/World.h"
+
 // ispc-generated files
 #include "geometry/Curves_ispc.h"
 // std
@@ -62,7 +63,8 @@ void Curves::commit()
   tangentData = nullptr;
   texcoordData = getParamDataT<vec2f>("vertex.texcoord");
 
-  Ref<const DataT<vec3f>> vertexNoRadiusData = getParamDataT<vec3f>("vertex.position");
+  Ref<const DataT<vec3f>> vertexNoRadiusData =
+      getParamDataT<vec3f>("vertex.position");
   if (vertexNoRadiusData) { // round, linear curves with constant radius
     float radius = getParam<float>("radius", 0.01f);
     curveType = (OSPCurveType)getParam<uint8_t>(
@@ -79,7 +81,8 @@ void Curves::commit()
     // the global 'radius' parameter, a vec4f vertex buffer copy
     // has to be created. It specifies radius on per-vertex basis and
     // is required by Embree. TODO: Refactor for OSPRay 3.x
-    DataT<vec4f> *dataT = (DataT<vec4f>*)new Data(OSP_VEC4F, vertexNoRadiusData->numItems);
+    DataT<vec4f> *dataT =
+        (DataT<vec4f> *)new Data(OSP_VEC4F, vertexNoRadiusData->numItems);
     for (size_t i = 0; i < dataT->size(); i++) {
       const vec3f &v = (*vertexNoRadiusData)[i];
       (*dataT)[i] = vec4f(v.x, v.y, v.z, radius);
@@ -127,14 +130,16 @@ void Curves::createEmbreeGeometry()
   if (embreeGeometry)
     rtcReleaseGeometry(embreeGeometry);
 
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), embreeCurveType);
+  if (!embreeDevice) {
+    throw std::runtime_error("invalid Embree device");
+  }
+  embreeGeometry = rtcNewGeometry(embreeDevice, embreeCurveType);
 
   Ref<const DataT<vec4f>> vertex4f(&vertexData->as<vec4f>());
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertex4f);
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_INDEX, indexData);
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_NORMAL, normalData);
-  setEmbreeGeometryBuffer(
-      embreeGeometry, RTC_BUFFER_TYPE_TANGENT, tangentData);
+  setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_TANGENT, tangentData);
   if (colorData) {
     rtcSetGeometryVertexAttributeCount(embreeGeometry, 1);
     setEmbreeGeometryBuffer(

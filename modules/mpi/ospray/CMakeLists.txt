@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## Options ##
@@ -70,7 +70,7 @@ target_include_directories(ospray_module_mpi
 target_compile_definitions(ospray_module_mpi PUBLIC
   -DOSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD})
 
-ospray_install_library(ospray_module_mpi lib)
+ospray_install_library(ospray_module_mpi mpi)
 
 ## Build the worker executable ##
 
@@ -80,5 +80,8 @@ add_executable(ospray_mpi_worker
 target_link_libraries(ospray_mpi_worker PRIVATE ospray)
 
 install(TARGETS ospray_mpi_worker
-  DESTINATION ${CMAKE_INSTALL_BINDIR})
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT mpi)
+
+ospray_sign_target(ospray_mpi_worker)
 

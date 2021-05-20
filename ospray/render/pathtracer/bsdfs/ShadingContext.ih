@@ -1,8 +1,9 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include "common/ISPCMessages.h"
 #include "math/LinearSpace.ih"
 
 #define SHADINGCONTEXT_SIZE (programCount * programCount * 1024)
@@ -31,7 +32,7 @@ inline void *uniform ShadingContext_alloc(
   self->size = (self->size + size + SHADINGCONTEXT_ALIGNMENT - 1)
       & ((uint32)(-SHADINGCONTEXT_ALIGNMENT));
   if (self->size > SHADINGCONTEXT_SIZE)
-    print("#osp:PT: out of memory for ShadingContext allocation!\n");
+    postStatusMsg(ISPC_MSG_SHADING_CONTEXT, OSP_LOG_ERROR);
   return ptr;
 }
 

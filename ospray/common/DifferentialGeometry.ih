@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,45 +12,41 @@ struct World;
 
 typedef enum
 {
-  DG_FACEFORWARD = (1 << 0), /*!< face-forward normals */
-  DG_NORMALIZE = (1 << 1), /*!< normalize normals */
-  DG_NG = (1 << 2), /*!< need geometry normal Ng */
-  DG_NS = (1 << 3), /*!< need shading normal Ns */
-  DG_COLOR = (1 << 5), /*!< hack for now - need interpolated vertex color */
-  DG_TEXCOORD = (1 << 6), /*!< calculate texture coords st */
-  DG_TANGENTS = (1 << 7), /*!< calculate tangents, i.e. the partial
-                             derivatives of position wrt. texture coordinates */
+  DG_FACEFORWARD = (1 << 0), // face-forward normals
+  DG_NORMALIZE = (1 << 1), // normalize normals
+  DG_NG = (1 << 2), // need geometry normal Ng
+  DG_NS = (1 << 3), // need shading normal Ns
+  DG_COLOR = (1 << 5), // hack for now - need interpolated vertex color
+  DG_TEXCOORD = (1 << 6), // calculate texture coords st
+  DG_TANGENTS = (1 << 7), // calculate tangents, i.e. the partial derivatives of
+                          // position wrt. texture coordinates
 } DG_PostIntersectFlags;
 
-/*! differential geometry information that gives more detailed
-    information on the actual geometry that a ray has hit */
+/* differential geometry information that gives more detailed
+   information on the actual geometry that a ray has hit */
 struct DifferentialGeometry
 {
   vec3f P; // world space location of the hit-point, includes epsilon offset
            // towards front side
   vec3f lP; // local instance space location of the hit-point
-  vec3f Ng; /*!< geometry normal if DG_NG was set, possibly not
-               normalized/facefordwarded if DG_NORMALIZE and/or
-               DG_FACEFORWARD weren't specified */
-  vec3f Ns; /*!< shading normal if DG_NS was set, possibly not
-               normalized/facefordwarded if DG_NORMALIZE and/or
-               DG_FACEFORWARD weren't specified */
-  vec3f dPds; //!< tangent, the partial derivative of the hit-point wrt.
-              //!< texcoord s
-  vec3f dPdt; //!< bi-tangent, the partial derivative of the hit-point wrt.
-              //!< texcoord t
-  vec2f st; //!< texture coordinates if DG_TEXCOORD was set
-  vec4f color; /*! interpolated vertex color (rgba) if DG_COLOR was set;
-                 defaults to vec4f(1.f) if queried but not present in geometry
-                 */
+  vec3f Ng; // geometry normal if DG_NG was set, possibly not
+            // normalized/facefordwarded if DG_NORMALIZE and/or DG_FACEFORWARD
+            // weren't specified
+  vec3f Ns; // shading normal if DG_NS was set, possibly not
+            // normalized/facefordwarded if DG_NORMALIZE and/or DG_FACEFORWARD
+            // weren't specified
+  vec3f dPds; // tangent, the partial derivative of the hit-point wrt. tc s
+  vec3f dPdt; // bi-tangent, the partial derivative of the hit-point wrt. tc t
+  vec2f st; // texture coordinates if DG_TEXCOORD was set
+  vec4f color; // interpolated vertex color (rgba) if DG_COLOR was set; defaults
+               // to vec4f(1.f) if queried but not present in geometry
+  int32 primID; // hit primitive (-1 if no hit), e.g. for Ptex
 
-  float areaPDF;
+  float areaPDF; // for geometryLights
+  float epsilon; // adaptive epsilon, isotropic in object-space
 
-  Material *material; /*! pointer to hit-point's material */
-
-  const Renderer *uniform renderer; /*! pointer to renderer being used */
-
-  float epsilon; //!< adaptive epsilon, isotropic in object-space */
+  Material *material; // pointer to hit-point's material
+  const Renderer *uniform renderer; // pointer to renderer being used
 };
 
 // assumed precision of intersection routines

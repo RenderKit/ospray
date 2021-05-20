@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(COMPONENT_NAME embree)
@@ -8,7 +8,12 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
 endif()
 
+if (EMBREE_HASH)
+  set(EMBREE_URL_HASH URL_HASH SHA256=${EMBREE_HASH})
+endif()
+
 if (BUILD_EMBREE_FROM_SOURCE)
+  string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" EMBREE_ARCHIVE ${EMBREE_VERSION})
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}
     DOWNLOAD_DIR ${COMPONENT_NAME}
@@ -16,7 +21,8 @@ if (BUILD_EMBREE_FROM_SOURCE)
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
     LIST_SEPARATOR | # Use the alternate list separator
-    URL "http://github.com/embree/embree/archive/${BUILD_EMBREE_VERSION}.zip"
+    URL "https://github.com/embree/embree/archive/${EMBREE_ARCHIVE}.zip"
+    ${EMBREE_URL_HASH}
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -42,15 +48,15 @@ if (BUILD_EMBREE_FROM_SOURCE)
     ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ispc)
   endif()
 else()
-  string(REPLACE "v" "" EMBREE_VERSION_NUMBER ${BUILD_EMBREE_VERSION})
-  set(EMBREE_BASE_URL "https://github.com/embree/embree/releases/download")
+
   if (APPLE)
-    set(EMBREE_URL "${EMBREE_BASE_URL}/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.zip")
+    set(EMBREE_OSSUFFIX "x86_64.macosx.zip")
   elseif (WIN32)
-    set(EMBREE_URL "${EMBREE_BASE_URL}/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x64.vc14.windows.zip")
+    set(EMBREE_OSSUFFIX "x64.vc14.windows.zip")
   else()
-    set(EMBREE_URL "${EMBREE_BASE_URL}/${BUILD_EMBREE_VERSION}/embree-${EMBREE_VERSION_NUMBER}.x86_64.linux.tar.gz")
+    set(EMBREE_OSSUFFIX "x86_64.linux.tar.gz")
   endif()
+  set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${EMBREE_VERSION}/embree-${EMBREE_VERSION}.${EMBREE_OSSUFFIX}")
 
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}
@@ -59,6 +65,7 @@ else()
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}
     URL ${EMBREE_URL}
+    ${EMBREE_URL_HASH}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_directory

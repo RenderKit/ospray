@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 macro(ospray_install_namelink NAME)
@@ -66,10 +66,10 @@ if (RKCOMMON_TASKING_TBB)
   ospray_add_dependent_lib(TBB::tbbmalloc)
 endif()
 ospray_add_dependent_lib(openvkl::openvkl)
-ospray_add_dependent_lib(openvkl::openvkl_module_ispc_driver)
-ospray_add_dependent_lib(openvkl::openvkl_module_ispc_driver_4)
-ospray_add_dependent_lib(openvkl::openvkl_module_ispc_driver_8)
-ospray_add_dependent_lib(openvkl::openvkl_module_ispc_driver_16)
+ospray_add_dependent_lib(openvkl::openvkl_module_cpu_device)
+ospray_add_dependent_lib(openvkl::openvkl_module_cpu_device_4)
+ospray_add_dependent_lib(openvkl::openvkl_module_cpu_device_8)
+ospray_add_dependent_lib(openvkl::openvkl_module_cpu_device_16)
 if (OSPRAY_MODULE_DENOISER)
   ospray_add_dependent_lib(OpenImageDenoise)
 endif()

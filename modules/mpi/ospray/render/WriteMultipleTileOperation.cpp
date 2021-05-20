@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "WriteMultipleTileOperation.h"
@@ -144,13 +144,13 @@ void WriteMultipleTileOperation::attach(DistributedFrameBuffer *dfb)
   tileInstances.resize(dfb->getTotalTiles(), 1);
 }
 
-std::shared_ptr<LiveTileOperation> WriteMultipleTileOperation::makeTile(
+std::unique_ptr<LiveTileOperation> WriteMultipleTileOperation::makeTile(
     DistributedFrameBuffer *dfb,
     const vec2i &tileBegin,
     size_t tileID,
     size_t ownerID)
 {
-  return std::make_shared<LiveWriteMultipleTile>(
+  return make_unique<LiveWriteMultipleTile>(
       dfb, tileBegin, tileID, ownerID, this);
 }
 

@@ -561,9 +561,9 @@ OSPRAY_CATCH_END()
 
 extern "C" void ospRelease(OSPObject _object) OSPRAY_CATCH_BEGIN
 {
-  ASSERT_DEVICE();
   if (!_object)
     return;
+  ASSERT_DEVICE();
   currentDevice().release(_object);
 }
 OSPRAY_CATCH_END()

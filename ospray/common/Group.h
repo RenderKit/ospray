@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -40,6 +40,11 @@ struct OSPRAY_SDK_INTERFACE Group : public ManagedObject
   RTCScene sceneGeometries{nullptr};
   RTCScene sceneVolumes{nullptr};
   RTCScene sceneClippers{nullptr};
+
+  void setDevice(RTCDevice embreeDevice);
+
+ protected:
+  RTCDevice embreeDevice{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Group *, OSP_GROUP);

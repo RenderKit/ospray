@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <vector>
@@ -16,7 +16,6 @@
 #include "rkcommon/array3D/for_each.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/OwnedArray.h"
-#include "rkcommon/utility/multidim_index_sequence.h"
 #include "texture/Texture.h"
 #include "volume/VolumetricModel.h"
 
@@ -56,6 +55,15 @@ size_t FrameBufferInfo::pixelSize(uint32_t channel) const
 size_t FrameBufferInfo::getNumPixels() const
 {
   return size.x * size.y;
+}
+
+Data *OSPState::getSharedDataHandle(int64_t handle) const
+{
+  auto fnd = appSharedData.find(handle);
+  if (fnd != appSharedData.end()) {
+    return fnd->second;
+  }
+  return nullptr;
 }
 
 void newRenderer(
@@ -199,7 +207,7 @@ Data *retrieveData(OSPState &state,
     cmdBuf.read(outputData->data(), nbytes);
   } else {
     // All large data is sent before the command buffer using it, and will be
-    // in the state's data transfers list
+    // in the state's data transfers list in order by the command referencing it
     auto data = state.dataTransfers.front();
     state.dataTransfers.pop();
 
@@ -244,6 +252,7 @@ void newSharedData(OSPState &state,
   auto data = retrieveData(state, cmdBuf, fabric, format, numItems, nullptr);
 
   state.objects[handle] = (OSPData)data;
+  state.appSharedData[handle] = data;
 }
 
 void newData(OSPState &state,
@@ -310,9 +319,8 @@ void commit(OSPState &state,
   cmdBuf >> handle;
 
   // If it's a data being committed, we need to retrieve the updated data
-  ManagedObject *m = lookupObject<ManagedObject>(state.objects[handle]);
-  Data *d = dynamic_cast<Data *>(m);
-  if (d && d->isShared()) {
+  Data *d = state.getSharedDataHandle(handle);
+  if (d) {
     retrieveData(state, cmdBuf, fabric, d->type, d->numItems, d);
   }
 
@@ -334,11 +342,18 @@ void release(
     if (fnd != state.framebuffers.end()) {
       OSPObject obj = state.objects[handle];
       ManagedObject *m = lookupDistributedObject<ManagedObject>(obj);
+      // Framebuffers are given an extra ref count by the worker so that
+      // we can track the lifetime of their framebuffer info. Use count == 1
+      // means only the worker rank has a reference to the object
       if (m->useCount() == 1) {
         ospRelease(state.objects[handle]);
         state.framebuffers.erase(fnd);
       }
     }
+  }
+
+  if (state.getSharedDataHandle(handle)) {
+    state.appSharedData.erase(handle);
   }
 }
 
@@ -750,14 +765,6 @@ void futureGetTaskDuration(OSPState &state,
   }
 }
 
-void finalize(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  maml::stop();
-  MPI_Finalize();
-  std::exit(0);
-}
-
 void dispatchWork(TAG t,
     OSPState &state,
     networking::BufferReader &cmdBuf,
@@ -874,9 +881,6 @@ void dispatchWork(TAG t,
     break;
   case FUTURE_GET_TASK_DURATION:
     futureGetTaskDuration(state, cmdBuf, fabric);
-    break;
-  case FINALIZE:
-    finalize(state, cmdBuf, fabric);
     break;
   case NONE:
   default:

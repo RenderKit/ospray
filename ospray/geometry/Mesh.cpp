@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -23,6 +23,13 @@ std::string Mesh::toString() const
 
 void Mesh::commit()
 {
+  if (embreeGeometry)
+    rtcReleaseGeometry(embreeGeometry);
+
+  if (!embreeDevice) {
+    throw std::runtime_error("invalid Embree device");
+  }
+
   vertexData = getParamDataT<vec3f>("vertex.position", true);
   normalData = getParamDataT<vec3f>("vertex.normal");
   colorData = getParam<Data *>("vertex.color");
@@ -31,11 +38,9 @@ void Mesh::commit()
   if (!indexData)
     indexData = getParamDataT<vec4ui>("index", true);
 
-  if (embreeGeometry)
-    rtcReleaseGeometry(embreeGeometry);
-
   const bool isTri = indexData->type == OSP_VEC3UI;
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(),
+
+  embreeGeometry = rtcNewGeometry(embreeDevice,
       isTri ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertexData);
   rtcSetSharedGeometryBuffer(embreeGeometry,

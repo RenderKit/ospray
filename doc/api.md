@@ -370,7 +370,8 @@ pointer types (`OSP_VOID_PTR` and `OSPObject` handles), as they will
 implicitly cast to `void\ *`, but be incorrectly interpreted. To help
 with some of these issues, there also exist variants of `ospSetParam`
 for specific types, such as `ospSetInt` and `ospSetVec3f` in the OSPRay
-utility library (found in `ospray_util.h`).
+utility library (found in `ospray_util.h`). Note that half precision
+float parameters `OSP_HALF, OSP_VEC[234]H` are not supported.
 
 Users can also remove parameters that have been explicitly set from
 `ospSetParam`. Any parameters which have been removed will go back to
@@ -472,6 +473,9 @@ below.
   OSP_LONG, OSP_VEC[234]L    64\ bit signed integer scalar and [234]-element vector
 
   OSP_ULONG, OSP_VEC[234]UL  64\ bit unsigned integer scalar and [234]-element vector
+
+  OSP_HALF, OSP_VEC[234]H    16\ bit half precision floating-point scalar
+                             and [234]-element vector (IEEE 754 `binary16`)
 
   OSP_FLOAT, OSP_VEC[234]F   32\ bit single precision floating-point scalar
                              and [234]-element vector
@@ -595,7 +599,8 @@ table below.
 
 The size of the volume is inferred from the size of the 3D array `data`,
 as is the type of the voxel values (currently supported are:
-`OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_FLOAT`, and `OSP_DOUBLE`).
+`OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_HALF`, `OSP_FLOAT`, and
+`OSP_DOUBLE`).
 
 ### Structured Spherical Volume
 
@@ -636,7 +641,7 @@ summarized below.
 The dimensions $(r, \theta, \phi)$ of the volume are inferred from the
 size of the 3D array `data`, as is the type of the voxel values
 (currently supported are: `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`,
-`OSP_FLOAT`, and `OSP_DOUBLE`).
+`OSP_HALF`, `OSP_FLOAT`, and `OSP_DOUBLE`).
 
 These grid parameters support flexible specification of spheres,
 hemispheres, spherical shells, spherical wedges, and so forth. The grid
@@ -883,7 +888,8 @@ VDB volumes have the following parameters:
 
   int        filter            filter used for reconstructing the field, default
                                is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively
-                               `OSP_VOLUME_FILTER_NEAREST`.
+                               `OSP_VOLUME_FILTER_NEAREST`, or
+                               `OSP_VOLUME_FILTER_TRICUBIC`.
 
   int        gradientFilter    filter used for reconstructing the field during
                                gradient computations, default same as `filter`
@@ -946,9 +952,9 @@ traversal, similar to the method in\ [1].
                                              determining the volume's overall value
                                              range. When set to `false`, the user
                                              *must* specify
-                                             `clampMaxCumulativeValue`, and all
-                                             value ranges will be assumed [0,
-                                             `clampMaxCumulativeValue`]. Disabling
+                                             `clampMaxCumulativeValue`, and all value
+                                             ranges will be assumed
+                                             [0–`clampMaxCumulativeValue`]. Disabling
                                              this switch may improve volume commit
                                              time, but will make volume rendering
                                              less efficient.
@@ -1018,7 +1024,7 @@ used.
                                                    thicker
 
   float                anisotropy             0.0  anisotropy of the (Henyey-Greenstein)
-                                                   phase function in [-1, 1] ([path tracer]
+                                                   phase function in [-1–1] ([path tracer]
                                                    only), default to isotropic scattering
 
   OSPVolume            volume                      optional [volume] object this model
@@ -1415,6 +1421,9 @@ specific light source).
   OSP_INTENSITY_QUANTITY_IRRADIANCE   the amount of light arriving at a surface point,
                                       assuming the light is oriented towards to the
                                       surface, unit is W/m^2^
+                                      
+  OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a 
+                                      built-in quantity (e.g., `HDRI`, or `sunSky`). 
   ----------------------------------  ----------------------------------------------------
   : Types of radiative quantities used to interpret a light's `intensity` parameter.
 
@@ -1575,9 +1584,10 @@ shadows.
 
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
-"`hdri`" to `ospNewLight`. The HDRI light only accepts
-`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
-value. In addition to the [general parameters](#lights) the HDRI light
+"`hdri`" to `ospNewLight`. The values of the HDRI correspond to radiance
+and therfore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE` 
+as `intensityQuantity` parameter value. 
+In addition to the [general parameters](#lights) the HDRI light
 supports the following special parameters:
 
   ------------ --------- --------------------------------------------------
@@ -1618,9 +1628,12 @@ a procedural `hdri` light for the sky. It is created by passing the type
 string "`sunSky`" to `ospNewLight`. The sun-sky light surrounds the
 scene and illuminates it from infinity and can be used for rendering
 outdoor scenes. The radiance values are calculated using the
-Hošek-Wilkie sky model and solar radiance function. The sun-sky light
-only accepts `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity`
-parameter value. In addition to the [general parameters](#lights) the
+Hošek-Wilkie sky model and solar radiance function. The underlying model
+of the sun-sky light returns radiance values and therfore the light
+only accepts `OSP_INTENSITY_QUANTITY_SCALE` as `intensityQuantity`
+parameter value. To recale the returned radiance of the sky model
+the default value for the `intensity` parameter is set to `0.025`.
+In addition to the [general parameters](#lights) the
 following special parameters are supported:
 
   --------- ---------------- ------------  -------------------------------------
@@ -2003,7 +2016,7 @@ files. To create an OBJ material pass the type string "`obj`" to
   ------------- --------- ----------  -----------------------------------------
   vec3f         kd         white 0.8  diffuse color (linear RGB)
   vec3f         ks             black  specular color (linear RGB)
-  float         ns                10  shininess (Phong exponent), usually in [2–10^4^]
+  float         ns                10  shininess (Phong exponent), usually in \[2–10^4^\]
   float         d             opaque  opacity
   vec3f         tf             black  transparency filter color (linear RGB)
   OSPTexture    map_bump        NULL  normal map
@@ -2389,11 +2402,10 @@ thus individual flakes are not visible.
 
 The [path tracer] supports the Luminous material which emits light
 uniformly in all directions and which can thus be used to turn any
-geometric object into a light source^[If `geometryLights` is enabled in
-the [path tracer].]. It is created by passing the type string
-"`luminous`" to `ospNewMaterial`. The amount of constant radiance that
-is emitted is determined by combining the general parameters of lights:
-[`color` and `intensity`](#lights) (which essentially means that
+geometric object into a light source. It is created by passing the type 
+string "`luminous`" to `ospNewMaterial`. The amount of constant radiance 
+that is emitted is determined by combining the general parameters of 
+lights: [`color` and `intensity`](#lights) (which essentially means that
 parameter `intensityQuantity` is not needed because it is always
 `OSP_INTENSITY_QUANTITY_RADIANCE`).
 
@@ -2478,7 +2490,7 @@ parameters are as follows
   Type                Name             Description
   ------------------- ---------------- -----------------------------------------
   OSPVolume           volume           [Volume] used to generate color lookups
-  OSPTransferFunction transferFunction [TransferFunction] applied to `volume`
+  OSPTransferFunction transferFunction [transfer function] applied to `volume`
   ------------------- ---------------- -----------------------------------------
   : Parameters of `volume` texture type.
 
@@ -3143,7 +3155,7 @@ shipping data out to the workers. When a parallel file system is
 available, this can improve data load times. Image-parallel rendering is
 selected by specifying the same data on each rank, and using any of the
 existing local renderers (e.g., `scivis`, `pathtracer`). See
-[ospMPIDistributedTutorialReplicatedData](tutorials/ospMPIDistributedTutorialReplicatedData.cpp)
+[ospMPIDistributedTutorialReplicatedData](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialReplicatedData.cpp)
 for an example.
 
 ### Data Parallel Rendering in the MPI Distributed Device
@@ -3164,7 +3176,7 @@ regions out a set of regions (the `region` parameter) can pass as a
 parameter to the `OSPWorld` being rendered. Each rank can specify one or
 more non-overlapping `box3f`'s which bound the portions of its local
 data which it is reponsible for rendering. See the
-[ospMPIDistributedTutorialStructuredVolume](tutorials/ospMPIDistributedTutorialStructuredVolume.cpp)
+[ospMPIDistributedTutorialStructuredVolume](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialStructuredVolume.cpp)
 for an example.
 
 Finally, the MPI distributed device also supports hybrid-parallel
@@ -3173,11 +3185,20 @@ each shared piece of data the rendering work will be assigned
 image-parallel among the ranks. Partially-shared regions are determined
 by finding those ranks specifying data with the same bounds (matching
 regions) and merging them. See the
-[ospMPIDistributedTutorialPartiallyReplicatedData](tutorials/ospMPIDistributedTutorialPartiallyReplicatedData.cpp)
+[ospMPIDistributedTutorialPartiallyReplicatedData](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialPartiallyReplicatedData.cpp)
 for an example.
 
-Interaction With User Modules
-----------------------------
+#### Picking on Distributed Data in the MPI Distributed Device {-}
+
+Calling `ospPick` in the distributed device will find and return the
+closest global object at the screen position on the rank that owns that
+object. The other ranks will report no hit.
+Picking in the distributed device takes into account data clipping
+applied through the `regions` parameter to avoid picking ghost data.
+
+
+Interaction with User Modules
+-----------------------------
 
 The MPI Offload rendering mode trivially supports user modules, with the
 caveat that attempting to share data directly with the application

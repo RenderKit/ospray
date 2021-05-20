@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #undef NDEBUG
@@ -14,7 +14,6 @@ namespace ospray {
 
 Planes::Planes()
 {
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
   ispcEquivalent = ispc::Planes_create(this);
 }
 
@@ -25,6 +24,13 @@ std::string Planes::toString() const
 
 void Planes::commit()
 {
+  if (!embreeDevice) {
+    throw std::runtime_error("invalid Embree device");
+  }
+  if (!embreeGeometry) {
+    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
+  }
+
   coeffsData = getParamDataT<vec4f>("plane.coefficients", true);
   boundsData = getParamDataT<box3f>("plane.bounds");
 

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
@@ -19,7 +19,9 @@ namespace testing {
 struct PerlinNoiseVolumes : public detail::Builder
 {
   PerlinNoiseVolumes(bool clip = false, bool gradientShading = false);
-  PerlinNoiseVolumes(const vec3ui &volumes, float density);
+  PerlinNoiseVolumes(const vec3ui &numVolumes,
+      const vec3ul &volumeDimensions,
+      float densityScale);
   ~PerlinNoiseVolumes() override = default;
 
   void commit() override;
@@ -29,6 +31,7 @@ struct PerlinNoiseVolumes : public detail::Builder
 
  private:
   vec3ui numVolumes{1, 1, 1};
+  vec3ul volumeDimensions{128};
 
   bool addSphereVolume{true};
   bool addTorusVolume{true};
@@ -58,13 +61,13 @@ cpp::Geometry makeBoxGeometry(const box3f &box)
 
 cpp::VolumetricModel createProceduralVolumetricModel(
     std::function<bool(vec3f p)> D,
-    std::vector<vec3f> colors,
-    std::vector<float> opacities,
+    const std::vector<vec3f> &colors,
+    const std::vector<float> &opacities,
+    const vec3ul &dims,
     float densityScale,
     float anisotropy,
     float gradientShadingScale)
 {
-  vec3ul dims{128}; // should be at least 2
   const float spacing = 3.f / (reduce_max(dims) - 1);
   cpp::Volume volume("structuredRegular");
 
@@ -132,13 +135,21 @@ PerlinNoiseVolumes::PerlinNoiseVolumes(bool clip, bool gradientShading)
     : gradientShadingScale(gradientShading), withClipping(clip)
 {}
 
-PerlinNoiseVolumes::PerlinNoiseVolumes(const vec3ui &volumes, float density)
-    : numVolumes(volumes), addAreaLight(false), densityScale(density)
+PerlinNoiseVolumes::PerlinNoiseVolumes(const vec3ui &numVolumes,
+    const vec3ul &volumeDimensions,
+    float densityScale)
+    : numVolumes(numVolumes),
+      volumeDimensions(volumeDimensions),
+      addAreaLight(false),
+      densityScale(densityScale)
 {}
 
 void PerlinNoiseVolumes::commit()
 {
   Builder::commit();
+
+  // Should be at least 2
+  volumeDimensions = getParam<vec3ul>("volumeDimensions", volumeDimensions);
 
   addSphereVolume = getParam<bool>("addSphereVolume", addSphereVolume);
   addTorusVolume = getParam<bool>("addTorusVolume", addTorusVolume);
@@ -168,6 +179,7 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
             vec3f(0.f, 1.f, 1.f),
             vec3f(1.f, 1.f, 1.f)},
         {0.f, 0.33f, 0.66f, 1.f},
+        volumeDimensions,
         densityScale,
         anisotropy,
         gradientShadingScale));
@@ -181,6 +193,7 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
             vec3f(0.12, 0.6, 1.0),
             vec3f(1.0, 1.0, 1.0)},
         {0.f, 0.33f, 0.66f, 1.f},
+        volumeDimensions,
         densityScale,
         anisotropy,
         gradientShadingScale));
@@ -309,7 +322,7 @@ cpp::World PerlinNoiseVolumes::buildWorld() const
 
 OSP_REGISTER_TESTING_BUILDER(PerlinNoiseVolumes, perlin_noise_volumes);
 OSP_REGISTER_TESTING_BUILDER(
-    PerlinNoiseVolumes({7, 7, 13}, 1.f), perlin_noise_many_volumes);
+    PerlinNoiseVolumes({7, 7, 13}, {8}, .4f), perlin_noise_many_volumes);
 OSP_REGISTER_TESTING_BUILDER(
     PerlinNoiseVolumes(true), clip_perlin_noise_volumes);
 OSP_REGISTER_TESTING_BUILDER(

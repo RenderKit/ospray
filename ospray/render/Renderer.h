@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -31,9 +31,6 @@ struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
 
   virtual void commit() override;
   virtual std::string toString() const override;
-
-  /*! \brief render one frame, and put it into given frame buffer */
-  virtual void renderFrame(FrameBuffer *fb, Camera *camera, World *world);
 
   //! \brief called to initialize a new frame
   /*! this function gets called exactly once (on each node) at the

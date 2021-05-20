@@ -53,7 +53,8 @@ void SunSky::SetUp()
   light.setParam("turbidity", turb);
   light.setParam("albedo", std::get<3>(params));
   // lower brightness with high turbidity
-  light.setParam("intensity", 1.0f / turb);
+  light.setParam("intensityQuantity", OSP_INTENSITY_QUANTITY_SCALE);
+  light.setParam("intensity", 0.025f / turb);
   light.setParam("horizonExtension", std::get<4>(params));
   AddLight(light);
 

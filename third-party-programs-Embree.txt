@@ -251,6 +251,7 @@ tree and in the comment header of each source file.
 3. imgui
    Copyright (c) 2014-2020 Omar Cornut
 
+   SSE2NEON
 
 The MIT License (MIT)
 
@@ -397,4 +398,4 @@ The following third party programs have their own third party program
 files. These additional third party program files are as follows:
 
 1. Intel(R) Threading Building Blocks
-licenses located in the third-party-programs-TBB.txt file.
+licenses located in the third-party-programs-oneTBB.txt file.
