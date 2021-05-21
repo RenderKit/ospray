@@ -63,6 +63,7 @@ install(FILES
   COMPONENT devel
 )
 
+#[[
 if (WIN32)
   set(dllsuffix ".dll")
 else()
@@ -94,3 +95,4 @@ install(
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   COMPONENT devel
 )
+]]
