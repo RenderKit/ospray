@@ -205,7 +205,7 @@ void Bcast::start()
 
 bool Bcast::finished()
 {
-  const int ndone = std::accumulate(
+  const size_t ndone = std::accumulate(
       requests.begin(), requests.end(), 0, [](const int &n, MPI_Request &r) {
         int d = 0;
         MPI_CALL(Test(&r, &d, MPI_STATUS_IGNORE));

@@ -1045,7 +1045,7 @@ OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
       },
       true);
 
-  OSPPickResult result = {0};
+  OSPPickResult result;
   utility::ArrayView<uint8_t> view(
       reinterpret_cast<uint8_t *>(&result), sizeof(OSPPickResult));
   fabric->recv(view, rootWorkerRank());
