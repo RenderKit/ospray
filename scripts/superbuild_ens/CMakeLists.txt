@@ -70,7 +70,13 @@ option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
 set(BUILD_OPENVKL_VERSION "v0.12.0" CACHE STRING "Which version of OpenVKL to build?") #v0.13.0 has compilation error
 
+if(WIN32)
 option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." ON)
+else()
+#met a problem in building OIDN on the Linux platform: 
+#/usr/lib/gcc/x86_64-redhat-linux/4.8.5/include/pmmintrin.h:31:3: error: #error "SSE3 instruction set not enabled"
+option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
+endif()
 set(BUILD_OIDN_VERSION "v1.3.0" CACHE STRING "Which version of OpenImageDenoise to build?")
 option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" ON)
 
