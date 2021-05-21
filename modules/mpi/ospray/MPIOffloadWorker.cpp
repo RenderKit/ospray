@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <unordered_map>
+#include "MPIOffloadDevice.h"
 #include "api/ISPCDevice.h"
 #include "common/Library.h"
 #include "common/MPIBcastFabric.h"
@@ -32,17 +33,18 @@ using namespace mpicommon;
   routine to decide which processes call this function and which
   ones don't. This function will not return.
 
-  TODO: The worker should now actually just act as an OSPRay user app
-  which is using the distributed device, but just receives commands
-  from the user's code.
+  This function takes the offload device that spawned the workers
+  so that it can be cleaned up at exit properly, as the workers are
+  started on commit and do not return back to the application code.
+  ospShutdown is not called as it would unload the shared library
+  with the code and object being used here, and when created explicitly
+  the offload device would not be set as the current device or visible
+  to be cleaned up.
 
   \internal We assume that mpi::worker and mpi::app have already been set up
 */
-void runWorker(bool useMPIFabric)
+void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
 {
-  // Keep a reference to the offload device we came from to keep it alive
-  OSPDevice offloadDevice = ospGetCurrentDevice();
-
   OSPDevice distribDevice = ospNewDevice("mpiDistributed");
   ospDeviceSetParam(
       distribDevice, "worldCommunicator", OSP_VOID_PTR, &worker.comm);
@@ -123,16 +125,18 @@ void runWorker(bool useMPIFabric)
                                    << workTag << ": " << work::tagName(workTag);
     }
   }
-  // We don't call shutdown here since we need to keep the library registered,
-  // so now free the distributed device and offload device
-  ospDeviceRelease(distribDevice);
-  ospDeviceRelease(offloadDevice);
+
+  // The API no longer knows about the offload device and we won't return back
+  // to the app to release it, so we need to free it now
+  offloadDevice->refDec();
+  ospShutdown();
 
   // The offload device initialized MPI, so the distributed device will see the
   // "app" as having already initialized MPI and assume it should not call
   // finalize. So the worker loop must call MPI finalize here as if it was a
   // distributed app.
   MPI_CALL(Finalize());
+
   std::exit(0);
 }
 } // namespace mpi
