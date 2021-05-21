@@ -1,8 +1,18 @@
 set(ENSIGHT_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../..)
-set(APEX_DIR ${ENSIGHT_SRC_DIR}/apex221/machines/win64)
+IF (WIN32)
+  set(PLATFORM win64)
+  set(LIBSUFFIX ".lib")
+ELSEIF(APPLE)
+  set(PLATFORM apple)
+  set(LIBSUFFIX ".dylib")  
+ELSEIF(UNIX)
+  set(PLATFORM linux_2.6_64)
+  set(LIBSUFFIX ".so")  
+ENDIF()
+set(APEX_DIR ${ENSIGHT_SRC_DIR}/apex221/machines/${PLATFORM})
 set(OSPRAY_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
-#embree install commands
+####################embree install commands#######################
 set(EMBREE_INSTALL_DIR ${APEX_DIR}/intel_embree)
 
 IF (WIN32)
@@ -12,23 +22,20 @@ install(
 )
 ENDIF()
 
+IF (WIN32)
+  set(EMBREE_LIB_DIR ${CMAKE_INSTALL_PREFIX}/embree/lib)
+ELSE()
+  set(EMBREE_LIB_DIR ${CMAKE_INSTALL_PREFIX}/embree/lib64)
+ENDIF()
 install(
-	DIRECTORY ${CMAKE_INSTALL_PREFIX}/embree/lib
+	DIRECTORY ${EMBREE_LIB_DIR}
+	          ${CMAKE_BINARY_DIR}/embree/src/common
+	          ${CMAKE_BINARY_DIR}/embree/src/include
 	DESTINATION ${EMBREE_INSTALL_DIR}/
 )
 
-install(
-	DIRECTORY ${CMAKE_BINARY_DIR}/embree/src/common
-	DESTINATION ${EMBREE_INSTALL_DIR}/
-)
 
-install(
-	DIRECTORY ${CMAKE_BINARY_DIR}/embree/src/include
-	DESTINATION ${EMBREE_INSTALL_DIR}/
-)
-
-
-#tbb install commands
+#####################tbb install commands########################
 set(TBB_INSTALL_DIR ${APEX_DIR}/intel_tbb)
 
 IF (WIN32)
@@ -41,25 +48,37 @@ ENDIF()
 
 IF (WIN32)
 install(
-	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbb.lib
-          ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbb12.lib
-          ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbbmalloc.lib	
+	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbb${LIBSUFFIX}
+          ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbb12${LIBSUFFIX}
+          ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbbmalloc${LIBSUFFIX}
 	DESTINATION ${TBB_INSTALL_DIR}/lib/
 )
 install(
-	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbb12.lib
+	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbb12${LIBSUFFIX}
 	DESTINATION ${TBB_INSTALL_DIR}/lib/
-	RENAME tbb12_debug.lib
+	RENAME tbb12_debug${LIBSUFFIX}
 )
 install(
-	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbbmalloc.lib
+	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbbmalloc${LIBSUFFIX}
 	DESTINATION ${TBB_INSTALL_DIR}/lib/
-	RENAME tbbmalloc_debug.lib
+	RENAME tbbmalloc_debug${LIBSUFFIX}
 )
 ELSEIF (APPLE)
-
+install(
+	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbb${LIBSUFFIX}
+	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbmalloc${LIBSUFFIX}
+	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbmalloc_proxy${LIBSUFFIX}
+	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbbind${LIBSUFFIX}
+	DESTINATION ${TBB_INSTALL_DIR}/lib/
+)
 ELSEIF (UNIX)
-
+install(
+	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbb${LIBSUFFIX}
+	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbmalloc${LIBSUFFIX}
+	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbmalloc_proxy${LIBSUFFIX}
+	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbbind${LIBSUFFIX}
+	DESTINATION ${TBB_INSTALL_DIR}/lib/
+)
 ENDIF()
 
 install(
@@ -68,7 +87,7 @@ install(
 )
 
 
-#OIDN install commands
+###########################OIDN install commands###########################
 set(OIDN_INSTALL_DIR ${APEX_DIR}/intel_oidn)
 
 IF (WIN32)
@@ -78,16 +97,10 @@ install(
 )
 ENDIF()
 
-IF (WIN32)
 install(
-	FILES ${CMAKE_INSTALL_PREFIX}/oidn/lib/OpenImageDenoise.lib
+	FILES ${CMAKE_INSTALL_PREFIX}/oidn/lib/OpenImageDenoise${LIBSUFFIX}
 	DESTINATION ${OIDN_INSTALL_DIR}/lib/
 )
-ELSEIF (APPLE)
-
-ELSEIF (UNIX)
-
-ENDIF()
 
 install(
 	DIRECTORY ${CMAKE_BINARY_DIR}/oidn/src/include
@@ -95,7 +108,7 @@ install(
 )
 
 
-#ospray install commands
+#############################ospray install commands########################
 set(OSPRAY_INSTALL_DIR ${APEX_DIR}/intel_ospray)
 
 IF (WIN32)
@@ -114,14 +127,22 @@ ENDIF()
 
 IF (WIN32)
 install(
-	FILES ${CMAKE_BINARY_DIR}/ospray/build/ospray.lib 
-	      ${CMAKE_BINARY_DIR}/ospray/build/ospray_module_ispc.lib
+	FILES ${CMAKE_BINARY_DIR}/ospray/build/ospray${LIBSUFFIX}
+	      ${CMAKE_BINARY_DIR}/ospray/build/ospray_module_ispc${LIBSUFFIX}
 	DESTINATION ${OSPRAY_INSTALL_DIR}/lib/
 )
-ELSEIF (APPLE)
-
-ELSEIF (UNIX)
-
+ELSE()
+install(
+	FILES ${CMAKE_BINARY_DIR}/ospray/build/libopenvkl${LIBSUFFIX}
+	      ${CMAKE_BINARY_DIR}/ospray/build/libopenvkl_module_ispc_driver${LIBSUFFIX}
+	      ${CMAKE_BINARY_DIR}/ospray/build/libopenvkl_module_ispc_driver_4${LIBSUFFIX}
+	      ${CMAKE_BINARY_DIR}/ospray/build/libopenvkl_module_ispc_driver_8${LIBSUFFIX}
+	      ${CMAKE_BINARY_DIR}/ospray/build/libopenvkl_module_ispc_driver_16${LIBSUFFIX}
+	      ${CMAKE_BINARY_DIR}/ospray/build/librkcommon${LIBSUFFIX}
+          ${CMAKE_BINARY_DIR}/ospray/build/libospray${LIBSUFFIX}
+	      ${CMAKE_BINARY_DIR}/ospray/build/libospray_module_ispc${LIBSUFFIX}		  
+	DESTINATION ${OSPRAY_INSTALL_DIR}/lib/
+)
 ENDIF()
 
 install(
@@ -130,14 +151,14 @@ install(
 )
 
 
-#openvkl install commands
+##########################openvkl install commands########################
 set(OPENVKL_INSTALL_DIR ${APEX_DIR}/intl_openvkl)
 install(
 	DIRECTORY ${CMAKE_INSTALL_PREFIX}/openvkl/
 	DESTINATION ${OPENVKL_INSTALL_DIR}/
 )
 
-#rkcommon install commands
+#########################rkcommon install commands########################
 set(RKCOMMON_INSTALL_DIR ${APEX_DIR}/intl_rkcommon)
 install(
 	DIRECTORY ${CMAKE_INSTALL_PREFIX}/rkcommon/
