@@ -71,20 +71,20 @@ install(
 )
 ELSEIF (APPLE)
 install(
-	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbb${LIBSUFFIX}
-	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbmalloc${LIBSUFFIX}
-	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbmalloc_proxy${LIBSUFFIX}
-	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbbind${LIBSUFFIX}
-	DESTINATION ${TBB_INSTALL_DIR}/lib/
-)
+	DIRECTORY ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/
+	DESTINATION ${TBB_INSTALL_DIR}/lib	
+	FILES_MATCHING 
+    PATTERN "libtbb${LIBSUFFIX}*"
+    PATTERN "libtbbmalloc${LIBSUFFIX}*"
+)		  
 ELSEIF (UNIX)
 install(
-	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbb${LIBSUFFIX}
-	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbmalloc${LIBSUFFIX}
-	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbmalloc_proxy${LIBSUFFIX}
-	      ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/libtbbbind${LIBSUFFIX}
-	DESTINATION ${TBB_INSTALL_DIR}/lib/
-)
+	DIRECTORY ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/
+	DESTINATION ${TBB_INSTALL_DIR}/lib	
+	FILES_MATCHING 
+    PATTERN "libtbb${LIBSUFFIX}*"
+    PATTERN "libtbbmalloc${LIBSUFFIX}*"
+)		  
 ENDIF()
 
 install(
@@ -168,6 +168,10 @@ install(
 
 ##########################openvkl install commands########################
 set(OPENVKL_INSTALL_DIR ${APEX_DIR}/intl_openvkl)
+install(
+	DIRECTORY ${CMAKE_INSTALL_PREFIX}/openvkl/
+	DESTINATION ${OPENVKL_INSTALL_DIR}/
+)
 install(
 	DIRECTORY ${CMAKE_INSTALL_PREFIX}/openvkl/
 	DESTINATION ${OPENVKL_INSTALL_DIR}/
