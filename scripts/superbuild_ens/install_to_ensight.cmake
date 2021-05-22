@@ -23,13 +23,19 @@ install(
 ENDIF()
 
 IF (WIN32)
-  set(EMBREE_LIB_DIR ${CMAKE_INSTALL_PREFIX}/embree/lib)
+  install(
+	DIRECTORY ${CMAKE_INSTALL_PREFIX}/embree/lib
+	DESTINATION ${EMBREE_INSTALL_DIR}/
+  )  
 ELSE()
-  set(EMBREE_LIB_DIR ${CMAKE_INSTALL_PREFIX}/embree/lib64)
+  install(
+	DIRECTORY ${CMAKE_INSTALL_PREFIX}/embree/lib64/
+	DESTINATION ${EMBREE_INSTALL_DIR}/lib
+  )    
 ENDIF()
+
 install(
-	DIRECTORY ${EMBREE_LIB_DIR}
-	          ${CMAKE_BINARY_DIR}/embree/src/common
+	DIRECTORY ${CMAKE_BINARY_DIR}/embree/src/common
 	          ${CMAKE_BINARY_DIR}/embree/src/include
 	DESTINATION ${EMBREE_INSTALL_DIR}/
 )
@@ -97,8 +103,13 @@ install(
 )
 ENDIF()
 
+IF (WIN32)
+  set (OIDN_LIB_FILES ${CMAKE_INSTALL_PREFIX}/oidn/lib/OpenImageDenoise${LIBSUFFIX})
+ELSE()
+  set (OIDN_LIB_FILES ${CMAKE_INSTALL_PREFIX}/oidn/lib/libOpenImageDenoise${LIBSUFFIX})
+ENDIF()
 install(
-	FILES ${CMAKE_INSTALL_PREFIX}/oidn/lib/OpenImageDenoise${LIBSUFFIX}
+	FILES ${OIDN_LIB_FILES}
 	DESTINATION ${OIDN_INSTALL_DIR}/lib/
 )
 
@@ -133,15 +144,19 @@ install(
 )
 ELSE()
 install(
-	FILES ${CMAKE_BINARY_DIR}/ospray/build/libopenvkl${LIBSUFFIX}
-	      ${CMAKE_BINARY_DIR}/ospray/build/libopenvkl_module_ispc_driver${LIBSUFFIX}
-	      ${CMAKE_BINARY_DIR}/ospray/build/libopenvkl_module_ispc_driver_4${LIBSUFFIX}
-	      ${CMAKE_BINARY_DIR}/ospray/build/libopenvkl_module_ispc_driver_8${LIBSUFFIX}
-	      ${CMAKE_BINARY_DIR}/ospray/build/libopenvkl_module_ispc_driver_16${LIBSUFFIX}
-	      ${CMAKE_BINARY_DIR}/ospray/build/librkcommon${LIBSUFFIX}
-          ${CMAKE_BINARY_DIR}/ospray/build/libospray${LIBSUFFIX}
-	      ${CMAKE_BINARY_DIR}/ospray/build/libospray_module_ispc${LIBSUFFIX}		  
-	DESTINATION ${OSPRAY_INSTALL_DIR}/lib/
+#fixed symbol link copy issue
+	DIRECTORY ${CMAKE_BINARY_DIR}/ospray/build/
+	DESTINATION ${OSPRAY_INSTALL_DIR}/lib	
+	FILES_MATCHING 
+        PATTERN "lib*so*"
+        PATTERN "CMakeFiles" EXCLUDE
+        PATTERN "cmake" EXCLUDE
+		PATTERN "ospray" EXCLUDE
+		PATTERN "test*" EXCLUDE
+		PATTERN "modules*" EXCLUDE				
+		PATTERN "libOpenImage*" EXCLUDE		
+		PATTERN "libembree*" EXCLUDE		
+		PATTERN "libtbb*" EXCLUDE		
 )
 ENDIF()
 
