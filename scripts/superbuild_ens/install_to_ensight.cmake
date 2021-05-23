@@ -22,7 +22,7 @@ install(
 )
 ENDIF()
 
-IF (WIN32)
+IF (WIN32 OR APPLE)
   install(
 	DIRECTORY ${CMAKE_INSTALL_PREFIX}/embree/lib
 	DESTINATION ${EMBREE_INSTALL_DIR}/
@@ -71,8 +71,8 @@ install(
 )
 ELSEIF (APPLE)
 install(
-	DIRECTORY ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/gcc4.8/
-	DESTINATION ${TBB_INSTALL_DIR}/lib	
+	DIRECTORY ${CMAKE_INSTALL_PREFIX}/tbb/lib
+	DESTINATION ${TBB_INSTALL_DIR}/
 	FILES_MATCHING 
     PATTERN "libtbb${LIBSUFFIX}*"
     PATTERN "libtbbmalloc${LIBSUFFIX}*"
@@ -148,7 +148,7 @@ install(
 	DIRECTORY ${CMAKE_BINARY_DIR}/ospray/build/
 	DESTINATION ${OSPRAY_INSTALL_DIR}/lib	
 	FILES_MATCHING 
-        PATTERN "lib*so*"
+        PATTERN "lib*${LIBSUFFIX}*"
         PATTERN "CMakeFiles" EXCLUDE
         PATTERN "cmake" EXCLUDE
 		PATTERN "ospray" EXCLUDE
