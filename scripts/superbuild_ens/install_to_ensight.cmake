@@ -77,6 +77,7 @@ install(
     PATTERN "libtbb*${LIBSUFFIX}*"
     PATTERN "libtbbmalloc*${LIBSUFFIX}*"
     PATTERN "*_debug*" EXCLUDE
+    PATTERN "*_proxy*" EXCLUDE
     PATTERN "cmake*" EXCLUDE
 )		  
 ELSEIF (UNIX)
