@@ -60,22 +60,24 @@ install(
 	DESTINATION ${TBB_INSTALL_DIR}/lib/
 )
 install(
-	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbb12${LIBSUFFIX}
-	DESTINATION ${TBB_INSTALL_DIR}/lib/
-	RENAME tbb12_debug${LIBSUFFIX}
+    FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbb12${LIBSUFFIX}
+    DESTINATION ${TBB_INSTALL_DIR}/lib/
+    RENAME tbb12_debug${LIBSUFFIX}
 )
 install(
-	FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbbmalloc${LIBSUFFIX}
-	DESTINATION ${TBB_INSTALL_DIR}/lib/
-	RENAME tbbmalloc_debug${LIBSUFFIX}
+    FILES ${CMAKE_INSTALL_PREFIX}/tbb/lib/intel64/vc14/tbbmalloc${LIBSUFFIX}
+    DESTINATION ${TBB_INSTALL_DIR}/lib/
+    RENAME tbbmalloc_debug${LIBSUFFIX}
 )
 ELSEIF (APPLE)
 install(
-	DIRECTORY ${CMAKE_INSTALL_PREFIX}/tbb/lib
-	DESTINATION ${TBB_INSTALL_DIR}/
-	FILES_MATCHING 
-    PATTERN "libtbb${LIBSUFFIX}*"
-    PATTERN "libtbbmalloc${LIBSUFFIX}*"
+    DIRECTORY ${CMAKE_INSTALL_PREFIX}/tbb/lib
+    DESTINATION ${TBB_INSTALL_DIR}/
+    FILES_MATCHING 
+    PATTERN "libtbb*${LIBSUFFIX}*"
+    PATTERN "libtbbmalloc*${LIBSUFFIX}*"
+    PATTERN "*_debug*" EXCLUDE
+    PATTERN "cmake*" EXCLUDE
 )		  
 ELSEIF (UNIX)
 install(
