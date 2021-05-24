@@ -107,14 +107,21 @@ install(
 ENDIF()
 
 IF (WIN32)
-  set (OIDN_LIB_FILES ${CMAKE_INSTALL_PREFIX}/oidn/lib/OpenImageDenoise${LIBSUFFIX})
-ELSE()
-  set (OIDN_LIB_FILES ${CMAKE_INSTALL_PREFIX}/oidn/lib/libOpenImageDenoise${LIBSUFFIX})
-ENDIF()
+set (OIDN_LIB_FILES ${CMAKE_INSTALL_PREFIX}/oidn/lib/OpenImageDenoise${LIBSUFFIX})
 install(
 	FILES ${OIDN_LIB_FILES}
 	DESTINATION ${OIDN_INSTALL_DIR}/lib/
+)  
+ELSE()
+install(
+    DIRECTORY ${CMAKE_INSTALL_PREFIX}/oidn/lib
+    DESTINATION ${OIDN_INSTALL_DIR}/
+    FILES_MATCHING 
+    PATTERN "libOpenImageDenoise*${LIBSUFFIX}*"
+    PATTERN "cmake" EXCLUDE
+    PATTERN "libtbb*" EXCLUDE
 )
+ENDIF()
 
 install(
 	DIRECTORY ${CMAKE_BINARY_DIR}/oidn/src/include
@@ -151,15 +158,15 @@ install(
 	DIRECTORY ${CMAKE_BINARY_DIR}/ospray/build/
 	DESTINATION ${OSPRAY_INSTALL_DIR}/lib	
 	FILES_MATCHING 
-        PATTERN "lib*${LIBSUFFIX}*"
-        PATTERN "CMakeFiles" EXCLUDE
-        PATTERN "cmake" EXCLUDE
-		PATTERN "ospray" EXCLUDE
-		PATTERN "test*" EXCLUDE
-		PATTERN "modules*" EXCLUDE				
-		PATTERN "libOpenImage*" EXCLUDE		
-		PATTERN "libembree*" EXCLUDE		
-		PATTERN "libtbb*" EXCLUDE		
+    PATTERN "lib*${LIBSUFFIX}*"
+    PATTERN "CMakeFiles" EXCLUDE
+    PATTERN "cmake" EXCLUDE
+	PATTERN "ospray" EXCLUDE
+	PATTERN "test*" EXCLUDE
+	PATTERN "modules*" EXCLUDE				
+	PATTERN "libOpenImage*" EXCLUDE		
+	PATTERN "libembree*" EXCLUDE		
+	PATTERN "libtbb*" EXCLUDE		
 )
 ENDIF()
 
