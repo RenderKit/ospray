@@ -71,6 +71,12 @@ variables:
   script:
     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX
 
+.job_template: &test_job_unix_mpi_avx2
+  <<: *test_job
+  tags: [docker, avx2, modules]
+  script:
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX2 TEST_MPI
+
 .job_template: &test_job_unix_sanitize
   <<: *test_job
   tags: [docker, avx512vl]
@@ -198,6 +204,7 @@ build-centos7-mpi-impi:
     - module load cmake
     - module load intel/2021.2
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+  <<: *build_artifacts
 
 build-centos7-mpi-openmpi:
   <<: *build_job_docker_modules
@@ -212,6 +219,7 @@ build-centos7-mpi-mpich:
     - module load cmake
     - module load mpi/mpich-x86_64
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+  <<: *build_artifacts
 
 build-centos8-mpi-openmpi:
   <<: *build_job_docker
@@ -327,6 +335,23 @@ test-ubuntu2004-gcc-avx512skx:
   <<: *test_job_unix_avx512skx
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs: [build-ubuntu2004-gcc]
+
+test-centos7-gcc-mpi-mpich-avx2:
+  <<: *test_job_unix_mpi_avx2
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  needs: [build-centos7-mpi-mpich]
+  before_script:
+    - module load cmake
+    - module load mpi/mpich-x86_64
+
+test-centos7-gcc-mpi-impi-avx2:
+  <<: *test_job_unix_mpi_avx2
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  needs: [build-centos7-mpi-impi]
+  before_script:
+    - module load cmake
+    - module load intel/2021.2
+    - export FI_PROVIDER=sockets
 
 test-mpi-cluster:
   <<: *test_job_unix_avx512skx
