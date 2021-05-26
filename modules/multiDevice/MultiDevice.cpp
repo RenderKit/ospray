@@ -78,8 +78,6 @@ OSPData MultiDevice::newSharedData(const void *sharedData,
   MultiDeviceObject *o = new MultiDeviceObject;
   // Data arrays of OSPRay objects need to populate the corresponding subdevice
   // data arrays with the objects for that subdevice
-  // TODO: This also means we need to keep track of the original data
-  // array pointer because we're going to lose that pointer here
   if (type & OSP_OBJECT) {
     for (size_t i = 0; i < subdevices.size(); ++i) {
       o->objects.push_back((OSPObject) new Data(type, numItems));
@@ -88,10 +86,13 @@ OSPData MultiDevice::newSharedData(const void *sharedData,
     // A little lazy here, but using the Data object to just give me a view
     // + the index sequence iterator to use to step over the stride
     Data *multiData = new Data(sharedData, type, numItems, byteStride);
+    o->SharedData = multiData;
+
+    //DDM - since we do this on commit, do we have to do it here too?
     index_sequence_3D seq(numItems);
     for (auto idx : seq) {
       MultiDeviceObject *mobj = *(MultiDeviceObject **)multiData->data(idx);
-      retain((OSPObject)mobj);
+      retain((OSPObject)mobj); //DDM is this necessary and if so does it leak?
 
       // Copy the subdevice object handles to the data arrays for each subdevice
       for (size_t i = 0; i < subdevices.size(); ++i) {
@@ -100,7 +101,6 @@ OSPData MultiDevice::newSharedData(const void *sharedData,
             subdeviceData->data(idx), &mobj->objects[i], sizeof(OSPObject));
       }
     }
-    multiData->refDec();
   } else {
     for (auto &d : subdevices) {
       o->objects.push_back(
@@ -270,7 +270,6 @@ void MultiDevice::setObjectParam(
   if (type & OSP_OBJECT) {
     MultiDeviceObject *p = *(MultiDeviceObject **)mem;
     for (size_t i = 0; i < subdevices.size(); ++i) {
-      // TODO: I think it should be the address if I remember right
       subdevices[i]->setObjectParam(o->objects[i], name, type, &p->objects[i]);
     }
   } else {
@@ -290,17 +289,34 @@ void MultiDevice::removeObjectParam(OSPObject object, const char *name)
 
 void MultiDevice::commit(OSPObject object)
 {
-  // TODO: Needs to handle updating subdevice shared data for
-  // subdevice object data arrays. While non-object arrays will
-  // work fine on commit, arrays of objects need the handles translated
-  // down to the subdevice specific handle
-  // For this probably do want a multidevicedata that can keep a pointer
-  // to the original data we got and can translate it back down on commit
   MultiDeviceObject *o = (MultiDeviceObject *)object;
+
+  // Applications can change their shared buffer contents directly,
+  // so shared arrays of objects have to do more to ensure that the
+  // contents are up to date. Specifically the handles have to be
+  // translated down to the subdevice specific handles correctly.
+  if (o->SharedData) {
+    Data *multiData = o->SharedData;
+    const vec3ul &numItems = multiData->numItems;
+    index_sequence_3D seq(numItems);
+    for (auto idx : seq) {
+      MultiDeviceObject *mobj = *(MultiDeviceObject **)multiData->data(idx);
+      retain((OSPObject)mobj);
+
+      // Copy the subdevice object handles to the data arrays for each subdevice
+      for (size_t i = 0; i < subdevices.size(); ++i) {
+        Data *subdeviceData = (Data *)o->objects[i];
+        std::memcpy(
+            subdeviceData->data(idx), &mobj->objects[i], sizeof(OSPObject));
+      }
+    }
+  }
+
   for (size_t i = 0; i < subdevices.size(); ++i) {
     subdevices[i]->commit(o->objects[i]);
   }
 }
+
 void MultiDevice::release(OSPObject object)
 {
   memory::RefCount *o = (memory::RefCount *)object;

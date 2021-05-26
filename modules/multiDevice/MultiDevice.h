@@ -19,6 +19,10 @@ namespace api {
 struct OSPRAY_SDK_INTERFACE MultiDeviceObject : public memory::RefCount
 {
   std::vector<OSPObject> objects;
+  Data *SharedData = nullptr;
+  ~MultiDeviceObject() {
+    delete SharedData;
+  }
 };
 
 struct OSPRAY_SDK_INTERFACE MultiDevice : public Device
