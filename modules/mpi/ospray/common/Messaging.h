@@ -34,6 +34,8 @@ struct MessageHandler : public maml::MessageHandler
  */
 void init(mpicommon::Group parentGroup);
 
+void shutdown();
+
 void registerMessageListener(int handleObjID, MessageHandler *listener);
 
 void removeMessageListener(int handleObjID);

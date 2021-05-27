@@ -351,6 +351,8 @@ test-centos7-gcc-mpi-impi-avx2:
   before_script:
     - module load cmake
     - module load intel/2021.2
+    # Note: no omnipath/infiniband/shm comm access for MPI within
+    # Docker container, just use sockets for running validation test
     - export FI_PROVIDER=sockets
 
 test-mpi-cluster:

@@ -188,9 +188,8 @@ MPIDistributedDevice::MPIDistributedDevice()
 
 MPIDistributedDevice::~MPIDistributedDevice()
 {
-  if (maml::isRunning()) {
-    maml::stop();
-  }
+  messaging::shutdown();
+
   if (shouldFinalizeMPI) {
     try {
       MPI_CALL(Finalize());
@@ -291,9 +290,6 @@ void MPIDistributedDevice::commit()
     auto enableCompression = OSPRAY_FORCE_COMPRESSION.value_or(
         mpicommon::workerSize() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
-    // TODO WILL: This will be a problem with the offload/distrib device
-    // combination where maml/messaging gets init with the wrong
-    // communicator
     maml::init(enableCompression);
     messaging::init(mpicommon::worker);
     maml::start();
