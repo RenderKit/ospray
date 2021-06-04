@@ -44,7 +44,7 @@ void MultiDevice::commit()
       subdevices.emplace_back(std::move(d));
       subdeviceLoadBalancers.push_back(subdevices.back()->loadBalancer);
     }
-    loadBalancer = make_unique<MultiDeviceLoadBalancer>(subdeviceLoadBalancers);
+    loadBalancer = rkcommon::make_unique<MultiDeviceLoadBalancer>(subdeviceLoadBalancers);
   }
 
   // ISPCDevice::commit will init the tasking system but here we can reset

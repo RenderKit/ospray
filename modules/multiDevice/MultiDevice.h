@@ -20,7 +20,7 @@ struct OSPRAY_SDK_INTERFACE MultiDeviceObject : public memory::RefCount
 {
   std::vector<OSPObject> objects;
   Data *SharedData = nullptr;
-  ~MultiDeviceObject() {
+  ~MultiDeviceObject() override {
     delete SharedData;
   }
 };

@@ -98,6 +98,12 @@ variables:
     - $env:Path += ";$CI_PROJECT_DIR\build\install\ospray\bin"
     - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX512SKX
 
+.job_template: &test_job_windows_avx512skx_multidevice
+  <<: *test_job
+  script:
+    - $env:Path += ";$CI_PROJECT_DIR\build\install\ospray\bin"
+    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX512SKX TEST_MULTIDEVICE
+
 .job_template: &benchmark_job
   stage: benchmark
   when: manual
@@ -166,6 +172,13 @@ build-ubuntu2004-gcc:
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
+  <<: *build_artifacts
+
+build-multidevice-ubuntu2004-gcc:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
+  script:
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
   <<: *build_artifacts
 
 build-centos8:
@@ -242,7 +255,7 @@ build-mpi-cluster:
     - module load cmake
     - module load impi
     - module load gnu
-    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
   <<: *build_artifacts
   only: [schedules]
 
@@ -264,13 +277,22 @@ build-osx-clang:
     - scripts/build_gitlab/macosx.sh
   <<: *build_artifacts
 
+build-multidevice-osx-clang:
+  stage: build
+  tags:
+    - osx
+    - clang
+  script:
+    - scripts/build_gitlab/macosx.sh -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+  <<: *build_artifacts
+
 build-windows-msvc15:
   stage: build
   tags:
     - win
     - msvc15
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release" "OFF"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release" "OFF" "OFF"
   <<: *build_artifacts
 
 build-windows-debug-all:
@@ -280,7 +302,7 @@ build-windows-debug-all:
     - msvc15
     - mpi
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "ON"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "ON" "OFF"
   <<: *build_artifacts
   only: [schedules]
 
@@ -291,7 +313,17 @@ build-windows-msvc16-mpi:
     - msvc16
     - mpi
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release" "ON"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release" "ON" "OFF"
+  <<: *build_artifacts
+
+build-windows-msvc16-multidevice:
+  stage: build
+  tags:
+    - win
+    - msvc16
+    - mpi
+  script:
+    - scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release" "OFF" "ON"
   <<: *build_artifacts
 
 #build-windows-icc:
@@ -355,13 +387,21 @@ test-centos7-gcc-mpi-impi-avx2:
     # Docker container, just use sockets for running validation test
     - export FI_PROVIDER=sockets
 
+test-multidevice-ubuntu2004-gcc-avx512skx:
+  <<: *test_job_unix_avx512skx
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
+  needs: [build-multidevice-ubuntu2004-gcc]
+  script:
+  script:
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX TEST_MULTIDEVICE
+
 test-mpi-cluster:
   <<: *test_job_unix_avx512skx
   tags: [cluster]
   script:
     - module load impi
     - module load gnu
-    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX TEST_MPI
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX TEST_MPI TEST_MULTIDEVICE
   needs: [build-mpi-cluster]
   only: [schedules]
 
@@ -382,6 +422,13 @@ test-osx-clang:
   needs: [build-osx-clang]
   script:
     - DYLD_FALLBACK_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX2
+
+test-multidevice-osx-clang:
+  <<: *test_job
+  tags: [osx]
+  needs: [build-multidevice-osx-clang]
+  script:
+    - DYLD_FALLBACK_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX2 TEST_MULTIDEVICE
 
 test-tutorials:
   stage: test
@@ -432,6 +479,11 @@ test-windows-msvc16-avx512skx:
   <<: *test_job_windows_avx512skx
   tags: [win, msvc16, avx512vl]
   needs: [build-windows-msvc16-mpi]
+
+test-multidevice-windows-msvc16-avx512skx:
+  <<: *test_job_windows_avx512skx_multidevice
+  tags: [win, msvc16, avx512vl]
+  needs: [build-windows-msvc16-multidevice]
 
 generate-ci-baseline-avx2:
   <<: *test_job_unix_avx2

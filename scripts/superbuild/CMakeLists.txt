@@ -125,6 +125,7 @@ option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
 option(BUILD_OSPRAY_APPS "Enable building OSPRay apps" ON)
 option(BUILD_OSPRAY_MODULE_MPI "Enable building module_mpi" OFF)
+option(BUILD_OSPRAY_MODULE_MULTIDEVICE "Enable building module_multidevice" OFF)
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
@@ -181,6 +182,11 @@ if (BUILD_OSPRAY_MODULE_MPI)
   set(OSPRAY_ENABLE_MODULES ON)
   set(OSPRAY_MODULE_MPI ON)
   include(dep_snappy)
+endif()
+
+if (BUILD_OSPRAY_MODULE_MULTIDEVICE)
+  set(OSPRAY_ENABLE_MODULES ON)
+  set(OSPRAY_MODULE_MULTIDEVICE ON)
 endif()
 
 if (NOT BUILD_DEPENDENCIES_ONLY)

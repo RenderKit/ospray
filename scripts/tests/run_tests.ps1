@@ -6,7 +6,17 @@
 
 $osprayDir=$args[0]
 $testISA=$args[1]
-$testMPI=$args[2]
+
+$testMPI = $FALSE
+$testMultiDevice = $FALSE
+foreach ($arg in $args) {
+  if ( $arg -eq "TEST_MPI" ) {
+    $testMPI = $TRUE
+  }
+  if ( $arg -eq "TEST_MULTIDEVICE" ) {
+    $testMultiDevice = $TRUE
+  }
+}
 
 md build_regression_tests
 cd build_regression_tests
@@ -15,9 +25,23 @@ cmake -D OSPRAY_TEST_ISA=$testISA $osprayDir/test_image_data
 
 cmake --build . --config Release --target ospray_test_data
 
-if ( $testMPI -eq "TEST_MPI" ) {
+if ( $testMultiDevice ) {
+  md failed-multidevice
+  $Env:OSPRAY_NUM_SUBDEVICES = 2
+  ospTestSuite.exe --osp:load-modules=multidevice --osp:device=multidevice --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice
+  $exitCode = $LastExitCode
+  if ( $exitCode) {
+    exit $exitCode
+  }
+}
+
+if ( $testMPI ) {
   md failed-mpi
   mpiexec.exe -n 2 ospTestSuite.exe --osp:load-modules=mpi --osp:device=mpiOffload --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi
+  $exitCode = $LastExitCode
+  if ( $exitCode) {
+    exit $exitCode
+  }
 }
 
 md failed
