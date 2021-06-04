@@ -14,7 +14,7 @@ void LocalTiledLoadBalancer::renderFrame(
   fb->beginFrame();
   void *perFrameData = renderer->beginFrame(fb, world);
 
-  if (fb->getTotalTiles() != allTileIDs.size()) {
+  if (static_cast<size_t>(fb->getTotalTiles()) != allTileIDs.size()) {
     initAllTileList(fb);
   }
   renderTiles(fb,

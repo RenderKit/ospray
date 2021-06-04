@@ -32,7 +32,7 @@ void MultiDeviceLoadBalancer::renderFrame(api::MultiDeviceObject *framebuffer,
   std::vector<void *> perFrameDatas;
   perFrameDatas.resize(loadBalancers.size(), nullptr);
 
-  if (fb0->getTotalTiles() != allTileIDs.size()) {
+  if (static_cast<size_t>(fb0->getTotalTiles()) != allTileIDs.size()) {
     initAllTileList(fb0);
   }
   renderTiles(framebuffer,
@@ -97,7 +97,7 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
       additionalTileOffset =
           std::min(static_cast<int>(subdeviceID), numExtraTiles);
       // Assign extra tiles to the subdevices in order
-      if (subdeviceID < numExtraTiles) {
+      if (static_cast<int>(subdeviceID) < numExtraTiles) {
         tilesForThisDevice++;
       }
     }
@@ -152,7 +152,7 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
     if (numExtraTiles != 0) {
       additionalTileOffset =
           std::min(static_cast<int>(subdeviceID), numExtraTiles);
-      if (subdeviceID < numExtraTiles) {
+      if (static_cast<int>(subdeviceID) < numExtraTiles) {
         tilesForThisDevice++;
       }
     }
@@ -167,7 +167,6 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
       const size_t tile_x = subdeviceTileIDs[taskIndex] - tile_y * numTiles_x;
       const vec2i tileID(tile_x, tile_y);
       const int32 accumID = 0;//fbi->accumID(tileID); this prevents re-accum across source and dest, which is good as dest's accum pixels are not valid (LocalFB.ispc:92)
-      vec2i numPixels = min(vec2i(TILE_SIZE), fbSize - tileID * TILE_SIZE);
 
   #if TILE_SIZE > MAX_TILE_SIZE
       auto tilePtr = make_unique<Tile>(tileID, fbSize, accumID);
@@ -323,15 +322,15 @@ void MultiDeviceLoadBalancer::initAllTileList(const FrameBuffer *fb)
   // Create the tile list in a round-robin ordering among the subdevices
   allTileIDs.clear();
   allTileIDs.reserve(fb->getTotalTiles());
-  for (int j = 0; j < loadBalancers.size(); ++j) {
+  for (unsigned int j = 0; j < loadBalancers.size(); ++j) {
     // Static round robin distribution of tiles among subdevices for now
-    int tilesForSubdevice = fb->getTotalTiles() / loadBalancers.size();
+    unsigned int tilesForSubdevice = static_cast<size_t>(fb->getTotalTiles()) / loadBalancers.size();
     // All tiles may not divide evenly among the subdevices
     if ((fb->getTotalTiles() % loadBalancers.size()) > j) {
       tilesForSubdevice++;
     }
 
-    for (int i = 0; i < tilesForSubdevice; ++i) {
+    for (int i = 0; i < static_cast<int>(tilesForSubdevice); ++i) {
       allTileIDs.push_back(i * loadBalancers.size() + j);
     }
   }
