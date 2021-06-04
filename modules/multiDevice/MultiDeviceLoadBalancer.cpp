@@ -211,8 +211,8 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
                 continue;
             }
             int *cS = colorI+(py*fb0->getNumPixels().x)+px;
-            //SRGBA
-            tile.a[cnt] = pow((float)((*cS&0xFF000000)>>24)/255.0, 2.2f); //see LocalFB.ispc and vec.ih
+            //SRGBA - from LocalFB.ispc
+            tile.a[cnt] = ((*cS&0xFF000000)>>24)/255.0;
             tile.b[cnt] = pow((float)((*cS&0x00FF0000)>>16)/255.0, 2.2f);
             tile.g[cnt] = pow((float)((*cS&0x0000FF00)>>8)/255.0, 2.2f);
             tile.r[cnt] = pow((float)((*cS&0x000000FF))/255.0, 2.2f);

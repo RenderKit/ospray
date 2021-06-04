@@ -30,6 +30,9 @@ make -j 4 ospray_test_data
 mkdir failed
 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed || exit 2
 
+mkdir failed-multidevice
+OSPRAY_NUM_SUBDEVICES=2 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-multidevice --osp:load-modules=multidevice --osp:device=multidevice || exit 2
+
 if [ "$3" == "TEST_MPI" ]; then
   mkdir failed-mpi
   mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi --osp:load-modules=mpi --osp:device=mpiOffload : $MPI_WORKER_CONFIG ospray_mpi_worker
