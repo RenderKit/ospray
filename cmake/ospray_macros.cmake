@@ -87,6 +87,9 @@ macro(ospray_fix_ispc_target_list)
     elseif (EMBREE_ISA_SUPPORTS_AVX512SKX AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512skx-i32x16")
       list(APPEND OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
+    elseif (EMBREE_ISA_SUPPORTS_NEON AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "neon-i32x4")
+      list(APPEND OSPRAY_ISPC_TARGET_LIST neon-i32x4)
     endif()
   endif()
 endmacro()
@@ -95,7 +98,7 @@ endmacro()
 macro(ospray_configure_ispc_isa)
 
   set(OSPRAY_BUILD_ISA "ALL" CACHE STRING
-      "Target ISA (SSE4, AVX, AVX2, AVX512KNL, AVX512SKX, or ALL)")
+    "Target ISA (SSE4, AVX, AVX2, AVX512KNL, AVX512SKX, NEON, or ALL)")
   string(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 
   if(EMBREE_ISA_SUPPORTS_SSE4)
@@ -112,6 +115,9 @@ macro(ospray_configure_ispc_isa)
   endif()
   if(EMBREE_ISA_SUPPORTS_AVX512SKX)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX512SKX)
+  endif()
+  if(EMBREE_ISA_SUPPORTS_NEON)
+    set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} NEON)
   endif()
 
   set_property(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS
@@ -139,6 +145,10 @@ macro(ospray_configure_ispc_isa)
     if(EMBREE_ISA_SUPPORTS_AVX512SKX AND OPENVKL_ISA_AVX512SKX)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512skx-i32x16)
       message(STATUS "OSPRay AVX512SKX ISA target enabled.")
+    endif()
+    if(EMBREE_ISA_SUPPORTS_NEON AND OPENVKL_ISA_NEON)
+      set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} neon-i32x4)
+      message(STATUS "OSPRay NEON ISA target enabled.")
     endif()
 
   elseif (OSPRAY_BUILD_ISA STREQUAL "AVX512SKX")
@@ -191,8 +201,18 @@ macro(ospray_configure_ispc_isa)
     endif()
     set(OSPRAY_ISPC_TARGET_LIST sse4)
 
+  elseif (OSPRAY_BUILD_ISA STREQUAL "NEON")
+
+    if (NOT EMBREE_ISA_SUPPORTS_NEON)
+      message(FATAL_ERROR "Your Embree build does not support NEON!")
+    endif()
+    if (NOT OPENVKL_ISA_NEON)
+      message(FATAL_ERROR "Your OpenVKL build does not support NEON!")
+    endif()
+    set(OSPRAY_ISPC_TARGET_LIST neon-i32x4)
+
   else()
-    message(ERROR "Invalid OSPRAY_BUILD_ISA value. "
+    message(FATAL_ERROR "Invalid OSPRAY_BUILD_ISA value. "
                   "Please select one of ${OSPRAY_SUPPORTED_ISAS}, or ALL.")
   endif()
 
@@ -385,6 +405,7 @@ macro(ospray_determine_embree_isa_support)
     set(EMBREE_ISA_SUPPORTS_AVX2      ${EMBREE_ISA_AVX2})
     set(EMBREE_ISA_SUPPORTS_AVX512KNL ${EMBREE_ISA_AVX512KNL})
     set(EMBREE_ISA_SUPPORTS_AVX512SKX ${EMBREE_ISA_AVX512SKX})
+    set(EMBREE_ISA_SUPPORTS_NEON      ${EMBREE_ISA_NEON})
   else()
     set(EMBREE_ISA_SUPPORTS_SSE2      FALSE)
     set(EMBREE_ISA_SUPPORTS_SSE4      FALSE)
@@ -392,6 +413,7 @@ macro(ospray_determine_embree_isa_support)
     set(EMBREE_ISA_SUPPORTS_AVX2      FALSE)
     set(EMBREE_ISA_SUPPORTS_AVX512KNL FALSE)
     set(EMBREE_ISA_SUPPORTS_AVX512SKX FALSE)
+    set(EMBREE_ISA_SUPPORTS_NEON      FALSE)
 
     if (EMBREE_MAX_ISA STREQUAL "SSE2")
       set(EMBREE_ISA_SUPPORTS_SSE2 TRUE)
@@ -420,6 +442,8 @@ macro(ospray_determine_embree_isa_support)
       set(EMBREE_ISA_SUPPORTS_AVX2      TRUE)
       set(EMBREE_ISA_SUPPORTS_AVX512KNL TRUE)
       set(EMBREE_ISA_SUPPORTS_AVX512SKX TRUE)
+    elseif (EMBREE_MAX_ISA STREQUAL "NEON")
+      set(EMBREE_ISA_SUPPORTS_NEON      TRUE)
     endif()
   endif()
 
@@ -427,9 +451,10 @@ macro(ospray_determine_embree_isa_support)
            OR EMBREE_ISA_SUPPORTS_AVX
            OR EMBREE_ISA_SUPPORTS_AVX2
            OR EMBREE_ISA_SUPPORTS_AVX512KNL
-           OR EMBREE_ISA_SUPPORTS_AVX512SKX))
+           OR EMBREE_ISA_SUPPORTS_AVX512SKX
+           OR EMBREE_ISA_SUPPORTS_NEON))
       message(FATAL_ERROR
-              "Your Embree build needs to support at least one ISA >= SSE4.1!")
+        "Your Embree build needs to support at least one ISA >= SSE4.1 or NEON!")
   endif()
 endmacro()
 

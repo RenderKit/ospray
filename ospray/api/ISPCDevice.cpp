@@ -238,8 +238,14 @@ void ISPCDevice::commit()
   }
 
   // Output device info string
-  const char *isaNames[] = {
-      "unknown", "SSE2", "SSE4", "AVX", "AVX2", "AVX512KNL", "AVX512SKX"};
+  const char *isaNames[] = {"unknown",
+      "SSE2",
+      "SSE4",
+      "AVX",
+      "AVX2",
+      "AVX512KNL",
+      "AVX512SKX",
+      "NEON"};
   postStatusMsg(OSP_LOG_INFO)
       << "Using ISPC device with " << isaNames[ispc::ISPCDevice_isa()]
       << " instruction set...";

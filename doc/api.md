@@ -234,7 +234,7 @@ The following errors are currently used by OSPRay:
   OSP_INVALID_ARGUMENT   an invalid argument was specified
   OSP_INVALID_OPERATION  the operation is not allowed for the specified object
   OSP_OUT_OF_MEMORY      there is not enough memory to execute the command
-  OSP_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1)
+  OSP_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1 on x86_64 and NEON on Arm64)
   OSP_VERSION_MISMATCH   a module could not be loaded due to mismatching version
   ---------------------- -------------------------------------------------------
   : Possible error codes, i.e., valid named constants of type `OSPError`.

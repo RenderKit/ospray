@@ -37,6 +37,9 @@ Version History
 -   The SciVis renderer does not compute depth of field (DoF) anymore,
     as this effect does not align with the SciVis renderer definition
     and exposed artifacts
+-   OSPRay can now be built for ARM64 CPUs with NEON (e.g., Apple M1)
+    using the superbuild. A minimum of ISPC 1.16.0 is required to
+    compile OSPRay for ARM64 CPUs.
 
 ### Changes in v2.6.0:
 
