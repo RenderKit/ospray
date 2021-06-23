@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v2.7.0:
+
+-   New minimum ISPC version is 1.16.0
+
 ### Changes in v2.6.0:
 
 -   Added new `intensityQuantity` type `OSP_INTENSITY_QUANTITY_SCALE`

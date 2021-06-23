@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/volumes/VolumeSampler.ih"
@@ -15,7 +15,7 @@ float delta_tracking(VolumetricModel *uniform vModel,
     float &mu_t, // sampled extinction coefficint
     vec3f &albedo) // sampled albedo (color)
 {
-  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  void *uniform intervalIteratorBuffer = alloca(vklGetIntervalIteratorSizeV(vModel->volume->vklSampler));
   VKLIntervalIterator intervalIterator =
       vklInitIntervalIteratorV(vModel->volume->vklSampler,
           (varying vkl_vec3f *)&o,

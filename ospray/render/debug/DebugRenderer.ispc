@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -274,12 +274,11 @@ void DebugRenderer_volume(Renderer *uniform self,
 
   const float jitter = LDSampler_getFloat(ldSampler, 0);
 
+  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
   foreach_unique (m in model) {
     Volume *uniform volume = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
-    uniform unsigned int8
-        intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
     VKLIntervalIterator intervalIterator =
         vklInitIntervalIteratorV(volume->vklSampler,
             (varying vkl_vec3f *)&ray.org,

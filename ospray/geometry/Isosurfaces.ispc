@@ -72,6 +72,8 @@ void Isosurfaces_intersect_kernel(
   tRange.lower = ray->t0;
   tRange.upper = ray->t;
   float time = 0.f;
+  // do not use alloca: it prevents inlining and thus optimization
+  // wrt. "template arg" isOcclusionTest
   uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
   iterator = vklInitHitIteratorV(volume->vklSampler,
       (varying vkl_vec3f *)&ray->org,
