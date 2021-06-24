@@ -7,23 +7,14 @@
 #include <vector>
 #include "api/ISPCDevice.h"
 #include "MultiDeviceLoadBalancer.h"
+#include "MultiDeviceObject.h"
+#include "MultiDeviceRenderTask.h"
 
 /*! \file MultiDevice.h Implements the a multiplexor for ISPCDevices. In the
  * future, this may become a multiplexor for  */
 
 namespace ospray {
 namespace api {
-
-// An object in the multidevice is just a container to hold
-// the handles to the actual objects of each subdevice
-struct OSPRAY_SDK_INTERFACE MultiDeviceObject : public memory::RefCount
-{
-  std::vector<OSPObject> objects;
-  Data *SharedData = nullptr;
-  ~MultiDeviceObject() override {
-    delete SharedData;
-  }
-};
 
 struct OSPRAY_SDK_INTERFACE MultiDevice : public Device
 {

@@ -3,6 +3,7 @@
 
 // ospray
 #include "MultiDevice.h"
+#include "MultiDeviceRenderTask.h"
 #include "camera/registration.h"
 #include "fb/LocalFB.h"
 #include "fb/registration.h"
@@ -418,13 +419,13 @@ OSPFuture MultiDevice::renderFrame(OSPFrameBuffer _framebuffer,
   MultiDeviceObject *multiRenderer = (MultiDeviceObject *)_renderer;
   MultiDeviceObject *multiCamera = (MultiDeviceObject *)_camera;
   MultiDeviceObject *multiWorld = (MultiDeviceObject *)_world;
-#if 0
+
   retain((OSPObject)multiFb);
   retain((OSPObject)multiRenderer);
   retain((OSPObject)multiCamera);
   retain((OSPObject)multiWorld);
 
-  auto *f = new RenderTask(multiFb, [=]() { //DDM multiFB not compatible with RenderTask arg type
+  auto *f = new MultiDeviceRenderTask(multiFb, [=]() {
     utility::CodeTimer timer;
     timer.start();
     loadBalancer->renderFrame(multiFb, multiRenderer, multiCamera, multiWorld);
@@ -437,11 +438,6 @@ OSPFuture MultiDevice::renderFrame(OSPFrameBuffer _framebuffer,
 
     return timer.seconds();
   });
-#else
-  //TODO: wrap into a RenderTest as above so we can particupate in async
-  loadBalancer->renderFrame(multiFb, multiRenderer, multiCamera, multiWorld);
-  auto *f = new RenderTask(fb0, [=]() { return 0;});
-#endif
 
   return (OSPFuture)f;
 }
