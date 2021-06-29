@@ -104,6 +104,7 @@ SSI computeShading(const SciVis *uniform self,
 
   retval.shadedColor = color;
   retval.transmission = bsdf.transmission;
+  retval.opacity = bsdf.opacity;
 
   return retval;
 }

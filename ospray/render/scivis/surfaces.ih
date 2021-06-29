@@ -11,6 +11,7 @@ struct SurfaceShadingInfo
   vec3f shadedColor;
   vec3f transmission;
   vec3f albedo;
+  float opacity;
 };
 
 typedef SurfaceShadingInfo SSI;
@@ -34,6 +35,7 @@ struct SciVisBSDF
   float shininess;
   vec3f transmission;
   vec3f albedo;
+  float opacity;
 };
 
 inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
@@ -46,6 +48,7 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
   res.specular = make_vec3f(0.0f);
   res.shininess = 10.0f;
   res.transmission = make_vec3f(1.f - dg.color.w);
+  res.opacity = dg.color.w;
 
   foreach_unique (m in mat) {
     if (m != NULL && m->super.type == RENDERER_TYPE_SCIVIS) {
@@ -61,6 +64,7 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
       res.specular = d * m->Ks * get3f(m->KsMap, dg, make_vec3f(1.f));
       res.shininess = m->Ns * get1f(m->NsMap, dg, 1.0f);
       res.transmission = m->Tf * d + make_vec3f(1.f - d);
+      res.opacity = d;
     }
   }
 

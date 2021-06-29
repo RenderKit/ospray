@@ -24,7 +24,7 @@ void SciVis_renderSample(Renderer *uniform _self,
       sample.sampleID.z);
 
   uniform bool firstHit = true;
-  varying bool lastHitWasTransmissive = false;
+  bool allHitsFullyTransmissive = true;
   const float originalRayTFar = sample.ray.t;
 
   // Allocate memory for volume intervals
@@ -95,18 +95,21 @@ void SciVis_renderSample(Renderer *uniform _self,
           self, fb, world, dg, sample, ldSampler, ray.dir, ray.time);
 
       // Initialize other per sample data with first hit values
-      if (firstHit) {
+      // In addition to considering the first hit, all previous, fully
+      // transmissive hits will lead the normal/albedo to be replaced by the
+      // current hit
+      if (firstHit || allHitsFullyTransmissive) {
         sample.z = ray.t;
         sample.albedo = surfaceShading.albedo;
         sample.normal = dg.Ns;
         firstHit = false;
       }
-      if (lastHitWasTransmissive) {
-        sample.albedo = surfaceShading.albedo;
-        sample.normal = dg.Ns;
-      }
-      lastHitWasTransmissive = luminance(surfaceShading.transmission) > 0;
 
+      // A sequence of hits is considered fully transparent if it's total
+      // normalized transmission is close to 1.0f and all previous hits were
+      // fully transmissive
+      allHitsFullyTransmissive = allHitsFullyTransmissive
+          && surfaceShading.opacity < self->super.minContribution;
 
       // Blend with output final color
       outColor = outColor + outTransmission * surfaceShading.shadedColor;
@@ -129,12 +132,10 @@ void SciVis_renderSample(Renderer *uniform _self,
       outTransmission = outTransmission * (1.f - backgroundColor.w);
 
       // Initialize other per sample data with first hit values
-      if (firstHit) {
+      // If the ray hits the background and comes from a fully transmissive
+      // path, we overwrite normals/albedo by background values
+      if (firstHit || allHitsFullyTransmissive) {
         sample.z = ray.t;
-        sample.albedo = make_vec3f(backgroundColor);
-        sample.normal = make_vec3f(0.f);
-      }
-      if (lastHitWasTransmissive) {
         sample.albedo = make_vec3f(backgroundColor);
         sample.normal = make_vec3f(0.f);
       }

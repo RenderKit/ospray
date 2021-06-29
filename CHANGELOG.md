@@ -10,6 +10,12 @@ Version History
 -   The multidevice module contains an new OSPRay Device implementation
     that delegates work to any number of subdevices. This is an
     experimental feature in this release but we invite feedback.
+-   SciVis Renderer now ignores normal/albedo/depth hits on surfaces
+    that are fully transmissive (Material `d = 0`).
+-   Changed the behavior of background rendering in SciVIs Renderer to
+    more closely reflect that of the Path Tracer
+    -   Background hits are rendered black on the normal map
+    -   Background hits are rendered in background color on the albedo map
 
 ### Changes in v2.6.0:
 
