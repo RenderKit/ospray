@@ -24,6 +24,7 @@ void SciVis_renderSample(Renderer *uniform _self,
       sample.sampleID.z);
 
   uniform bool firstHit = true;
+  varying bool lastHitWasTransmissive = false;
   const float originalRayTFar = sample.ray.t;
 
   // Allocate memory for volume intervals
@@ -100,6 +101,12 @@ void SciVis_renderSample(Renderer *uniform _self,
         sample.normal = dg.Ns;
         firstHit = false;
       }
+      if (lastHitWasTransmissive) {
+        sample.albedo = surfaceShading.albedo;
+        sample.normal = dg.Ns;
+      }
+      lastHitWasTransmissive = luminance(surfaceShading.transmission) > 0;
+
 
       // Blend with output final color
       outColor = outColor + outTransmission * surfaceShading.shadedColor;
@@ -125,7 +132,11 @@ void SciVis_renderSample(Renderer *uniform _self,
       if (firstHit) {
         sample.z = ray.t;
         sample.albedo = make_vec3f(backgroundColor);
-        sample.normal = sample.ray.dir;
+        sample.normal = make_vec3f(0.f);
+      }
+      if (lastHitWasTransmissive) {
+        sample.albedo = make_vec3f(backgroundColor);
+        sample.normal = make_vec3f(0.f);
       }
 
       // No more intersections
