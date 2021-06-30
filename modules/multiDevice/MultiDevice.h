@@ -16,7 +16,7 @@
 namespace ospray {
 namespace api {
 
-struct OSPRAY_SDK_INTERFACE MultiDevice : public Device
+struct MultiDevice : public Device
 {
   MultiDevice() = default;
 

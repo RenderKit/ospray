@@ -8,7 +8,7 @@ namespace api {
 
 // An object in the multidevice is just a container to hold
 // the handles to the actual objects of each subdevice
-struct OSPRAY_SDK_INTERFACE MultiDeviceObject : public memory::RefCount
+struct MultiDeviceObject : public memory::RefCount
 {
   std::vector<OSPObject> objects;
   Data *SharedData = nullptr;

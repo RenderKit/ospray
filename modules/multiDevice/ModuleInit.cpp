@@ -5,7 +5,7 @@
 #include "MultiDeviceLoadBalancer.h"
 #include "common/OSPCommon.h"
 
-extern "C" OSPError ospray_module_init_multidevice(
+extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_multidevice(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
   using namespace ospray;

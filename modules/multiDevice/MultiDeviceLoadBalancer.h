@@ -14,7 +14,7 @@ namespace api {
 struct MultiDeviceObject;
 } // namespace api
 
-struct OSPRAY_SDK_INTERFACE MultiDeviceLoadBalancer
+struct MultiDeviceLoadBalancer
 {
   MultiDeviceLoadBalancer(
       const std::vector<std::shared_ptr<TiledLoadBalancer>> &loadBalancers);
