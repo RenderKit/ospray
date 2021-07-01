@@ -4,31 +4,41 @@
 /* This larger example shows how to use the MPIDistributedDevice to write an
  * interactive rendering application, which shows a UI on rank 0 and uses
  * all ranks in the MPI world for data loading and rendering. Each rank
- * generates a local sub-piece of spheres data, e.g., as if rendering some
+ * generates a local sub-brick of volume data, as if rendering some
  * large distributed dataset.
- *
- * Each local brick of data is put into a model, which is given a unique
- * id, to identify it as a piece of data owned uniquely by the process
  */
 
 #include <imgui.h>
 #include <mpi.h>
-#include <array>
 #include <iterator>
 #include <memory>
 #include <random>
 #include "GLFWDistribOSPRayWindow.h"
 #include "ospray/ospray_cpp.h"
 #include "ospray/ospray_cpp/ext/rkcommon.h"
+#include "ospray/ospray_util.h"
 
 using namespace ospray;
 using namespace rkcommon;
 using namespace rkcommon::math;
 
-// Generate the rank's local spheres within its assigned grid cell, and
-// return the bounds of this grid cell
-cpp::Instance makeLocalSpheres(
-    const int mpiRank, const int mpiWorldSize, box3f &bounds);
+struct VolumeBrick
+{
+  // the volume data itself
+  cpp::Volume brick;
+  cpp::VolumetricModel model;
+  cpp::Group group;
+  cpp::Instance instance;
+  // the bounds of the owned portion of data
+  box3f bounds;
+  // the full bounds of the owned portion + ghost voxels
+  box3f ghostBounds;
+};
+
+static box3f worldBounds;
+
+// Generate the rank's local volume brick
+VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize);
 
 int main(int argc, char **argv)
 {
@@ -72,43 +82,28 @@ int main(int argc, char **argv)
 
     // all ranks specify the same rendering parameters, with the exception of
     // the data to be rendered, which is distributed among the ranks
-    box3f regionBounds;
-    cpp::Instance spheres =
-        makeLocalSpheres(mpiRank, mpiWorldSize, regionBounds);
+    VolumeBrick brick = makeLocalVolume(mpiRank, mpiWorldSize);
 
     // create the "world" model which will contain all of our geometries
     cpp::World world;
-    world.setParam("instance", cpp::CopiedData(spheres));
+    world.setParam("instance", cpp::CopiedData(brick.instance));
 
-    /*
-     * Note: We've taken care that all the generated spheres are completely
-     * within the bounds, and we don't have ghost data or portions of speres
-     * to clip off. Thus we actually don't need to set region at all in
-     * this tutorial. Example:
-     * world.setParam("region", cpp::CopiedData(regionBounds));
-     */
-
+    world.setParam("region", cpp::CopiedData(brick.bounds));
     world.commit();
 
     // create OSPRay renderer
     cpp::Renderer renderer("mpiRaycast");
 
     // create and setup an ambient light
-    std::array<cpp::Light, 2> lights = {
-        cpp::Light("ambient"), cpp::Light("distant")};
-    lights[0].commit();
-
-    lights[1].setParam("direction", vec3f(-1.f, -1.f, 0.5f));
-    lights[1].commit();
-
-    renderer.setParam("lights", cpp::CopiedData(lights));
-    renderer.setParam("aoSamples", 1);
+    cpp::Light ambientLight("ambient");
+    ambientLight.commit();
+    renderer.setParam("light", cpp::CopiedData(ambientLight));
 
     // create a GLFW OSPRay window: this object will create and manage the
     // OSPRay frame buffer and camera directly
     auto glfwOSPRayWindow =
         std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
-            vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
+            vec2i{1024, 768}, worldBounds, world, renderer));
 
     int spp = 1;
     int currentSpp = 1;
@@ -132,7 +127,6 @@ int main(int argc, char **argv)
     // start the GLFW main loop, which will continuously render
     glfwOSPRayWindow->mainLoop();
   }
-
   // cleanly shut OSPRay down
   ospShutdown();
 
@@ -172,65 +166,67 @@ vec3i computeGrid(int num)
   return grid;
 }
 
-cpp::Instance makeLocalSpheres(
-    const int mpiRank, const int mpiWorldSize, box3f &bounds)
+VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
 {
-  const float sphereRadius = 0.1;
-  std::vector<vec3f> spheres(50);
-
-  // To simulate loading a shared dataset all ranks generate the same
-  // sphere data.
-  std::random_device rd;
-  std::mt19937 rng(rd());
-
   const vec3i grid = computeGrid(mpiWorldSize);
   const vec3i brickId(mpiRank % grid.x,
       (mpiRank / grid.x) % grid.y,
       mpiRank / (grid.x * grid.y));
+  // The bricks are 64^3 + 1 layer of ghost voxels on each axis
+  const vec3i brickVolumeDims = vec3i(32);
+  const vec3i brickGhostDims = vec3i(brickVolumeDims + 2);
 
-  // The grid is over the [-1, 1] box
-  const vec3f brickSize = vec3f(2.0) / vec3f(grid);
-  const vec3f brickLower = brickSize * brickId - vec3f(1.f);
-  const vec3f brickUpper = brickSize * brickId - vec3f(1.f) + brickSize;
+  // The grid is over the [0, grid * brickVolumeDims] box
+  worldBounds = box3f(vec3f(0.f), vec3f(grid * brickVolumeDims));
+  const vec3f brickLower = brickId * brickVolumeDims;
+  const vec3f brickUpper = brickId * brickVolumeDims + brickVolumeDims;
 
-  bounds.lower = brickLower;
-  bounds.upper = brickUpper;
+  VolumeBrick brick;
+  brick.bounds = box3f(brickLower, brickUpper);
+  // we just put ghost voxels on all sides here, but a real application
+  // would change which faces of each brick have ghost voxels dependent
+  // on the actual data
+  brick.ghostBounds = box3f(brickLower - vec3f(1.f), brickUpper + vec3f(1.f));
 
-  // Generate spheres within the box padded by the radius, so we don't need
-  // to worry about ghost bounds
-  std::uniform_real_distribution<float> distX(
-      brickLower.x + sphereRadius, brickUpper.x - sphereRadius);
-  std::uniform_real_distribution<float> distY(
-      brickLower.y + sphereRadius, brickUpper.y - sphereRadius);
-  std::uniform_real_distribution<float> distZ(
-      brickLower.z + sphereRadius, brickUpper.z - sphereRadius);
+  brick.brick = cpp::Volume("structuredRegular");
 
-  for (auto &s : spheres) {
-    s.x = distX(rng);
-    s.y = distY(rng);
-    s.z = distZ(rng);
-  }
+  brick.brick.setParam("dimensions", brickGhostDims);
 
-  cpp::Geometry sphereGeom("sphere");
-  sphereGeom.setParam("radius", sphereRadius);
-  sphereGeom.setParam("sphere.position", cpp::CopiedData(spheres));
-  sphereGeom.commit();
+  // we use the grid origin to place this brick in the right position inside
+  // the global volume
+  brick.brick.setParam("gridOrigin", brick.ghostBounds.lower);
 
-  vec3f color(0.f, 0.f, (mpiRank + 1.f) / mpiWorldSize);
-  cpp::Material material("scivis", "obj");
-  material.setParam("kd", color);
-  material.commit();
+  // generate the volume data to just be filled with this rank's id
+  const size_t nVoxels = brickGhostDims.x * brickGhostDims.y * brickGhostDims.z;
+  std::vector<uint8_t> volumeData(nVoxels, static_cast<uint8_t>(mpiRank));
+  brick.brick.setParam("data",
+      cpp::CopiedData(static_cast<const uint8_t *>(volumeData.data()),
+          vec3ul(brickVolumeDims)));
 
-  cpp::GeometricModel model(sphereGeom);
-  model.setParam("material", material);
-  model.commit();
+  brick.brick.commit();
 
-  cpp::Group group;
-  group.setParam("geometry", cpp::CopiedData(model));
-  group.commit();
+  brick.model = cpp::VolumetricModel(brick.brick);
+  cpp::TransferFunction tfn("piecewiseLinear");
+  std::vector<vec3f> colors = {vec3f(0.f, 0.f, 1.f), vec3f(1.f, 0.f, 0.f)};
+  std::vector<float> opacities = {0.05f, 1.f};
 
-  cpp::Instance instance(group);
-  instance.commit();
+  tfn.setParam("color", cpp::CopiedData(colors));
+  tfn.setParam("opacity", cpp::CopiedData(opacities));
+  // color the bricks by their rank, we pad the range out a bit to keep
+  // any brick from being completely transparent
+  vec2f valueRange = vec2f(0, mpiWorldSize);
+  tfn.setParam("valueRange", valueRange);
+  tfn.commit();
+  brick.model.setParam("transferFunction", tfn);
+  brick.model.setParam("samplingRate", 0.5f);
+  brick.model.commit();
 
-  return instance;
+  brick.group = cpp::Group();
+  brick.group.setParam("volume", cpp::CopiedData(brick.model));
+  brick.group.commit();
+
+  brick.instance = cpp::Instance(brick.group);
+  brick.instance.commit();
+
+  return brick;
 }

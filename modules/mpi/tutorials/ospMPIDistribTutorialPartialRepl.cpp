@@ -6,12 +6,9 @@
  * all ranks in the MPI world for data loading and rendering. This example
  * also shows how to leverage the support for partially replicated data
  * distributions in the MPIDistributedDevice, by sharing bricks of data,
- * and thus rendering work, between processes.
- *
- * Each shared brick of data is put into a model, and is given a unique
- * the same id on the processes which share it, to identify the model as
- * being shared across the set of processes. In this example every two proceses
- * will share data, so 0 & 1 will share data, 2 & 3, and so on.
+ * and thus rendering work, between processes. Each pair of ranks will
+ * generate the same data, thereby distributing the rendering workload
+ * for the brick between them.
  */
 
 #include <imgui.h>

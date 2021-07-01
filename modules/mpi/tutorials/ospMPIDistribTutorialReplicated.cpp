@@ -33,7 +33,7 @@ void printHelp()
 {
   std::cout <<
       R"description(
-usage: ./ospExamples [-h | --help] [[-s | --scene] scene] [[r | --renderer] renderer_type]
+usage: ./ospMPIDistribTutorialReplicated [-h | --help] [[-s | --scene] scene] [[r | --renderer] renderer_type]
 
 scenes:
 
