@@ -348,11 +348,11 @@ void GLFWOSPRayWindow::display()
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
         0,
-        showAlbedo ? GL_RGB32F : GL_RGBA32F,
+        showDepth ? GL_DEPTH_COMPONENT : (showAlbedo ? GL_RGB32F : GL_RGBA32F),
         windowSize.x,
         windowSize.y,
         0,
-        showDepth ? GL_RED : (showAlbedo ? GL_RGB : GL_RGBA),
+        showDepth ? GL_DEPTH_COMPONENT : (showAlbedo ? GL_RGB : GL_RGBA),
         GL_FLOAT,
         fb);
 
