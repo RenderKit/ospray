@@ -6,13 +6,9 @@
 #include <memory>
 #include "render/LoadBalancer.h"
 #include "rkcommon/utility/ArrayView.h"
+#include "MultiDeviceObject.h"
 
 namespace ospray {
-
-namespace api {
-// TODO: Needs own header
-struct MultiDeviceObject;
-} // namespace api
 
 struct MultiDeviceLoadBalancer
 {

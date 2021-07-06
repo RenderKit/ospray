@@ -11,9 +11,11 @@ namespace api {
 struct MultiDeviceObject : public memory::RefCount
 {
   std::vector<OSPObject> objects;
-  Data *SharedData = nullptr;
+
+  // sharedDataDirtyReference is held temporarily to ensure consistency
+  Data *sharedDataDirtyReference = nullptr;
   ~MultiDeviceObject() override {
-    delete SharedData;
+    delete sharedDataDirtyReference;
   }
 };
 

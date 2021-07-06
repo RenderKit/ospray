@@ -3210,3 +3210,22 @@ copied over the network to the workers.
 The MPI Distributed device also supports user modules, as all that is
 required for compositing the distributed data are the bounds of each
 rank's local data.
+
+MultiDevice Rendering
+==============================
+
+The multidevice module is an experimental OSPRay device type that renders
+images by delegating off pixel tiles to a number of internal delegate OSPRay
+devices. Multidevice is in still in an development stage and is currently
+limited to automatically creating ISPCDevice delegates.
+
+If you wish to try it set the OSPRAY_NUM_SUBDEVICES environmental variable to
+the number of subdevices you want to create and tell OSPRay to both load the
+multidevice extension and create a multidevice for rendering instead of the
+default ISPCDevice.
+
+One example in a bash like shell is as follows:
+
+```sh
+OSPRAY_NUM_SUBDEVICES=6 ./ospTutorial --osp:load-modules=multidevice --osp:device=multidevice
+```

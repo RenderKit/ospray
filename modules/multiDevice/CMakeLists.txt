@@ -15,8 +15,6 @@ endif()
 
 rkcommon_configure_build_type()
 
-## Build the MPI module ##
-
 ispc_include_directories(
   ${PROJECT_SOURCE_DIR}/ospray/include
   ${PROJECT_SOURCE_DIR}/ospray

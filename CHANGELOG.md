@@ -7,6 +7,9 @@ Version History
 -   Fixed rendering of depth buffer in the example apps
 -   Dependencies Google Benchmark, GoggleTest, and Snappy moved
     out-of-source to superbuild ExternalProjects
+-   The multidevice module contains an new OSPRay Device implementation
+    that delegates work to any number of subdevices. This is an
+    experimental feature in this release but we invite feedback.
 
 ### Changes in v2.6.0:
 

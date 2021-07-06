@@ -20,7 +20,6 @@ extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_multidevice(
 
   if (status == OSP_NO_ERROR) {
     api::Device::registerType<ospray::api::MultiDevice>("multidevice");
-    //LoadBalancer::registerType<ospray::MultiDeviceLoadBalancer>("multidevice");
   }
 
   return status;

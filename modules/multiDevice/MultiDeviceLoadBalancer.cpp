@@ -1,7 +1,7 @@
 #include "MultiDeviceLoadBalancer.h"
-#include <rkcommon/tasking/parallel_for.h>
-// TODO Note: MultiDeviceObject should move to its own header
 #include "MultiDevice.h"
+
+#include <rkcommon/tasking/parallel_for.h>
 
 namespace ospray {
 
@@ -131,7 +131,6 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
 
     //TODO: formats taken from LocalFrameBuffer, are these always valid?
     const void *color = fbi->mapBuffer(OSP_FB_COLOR);
-    //TODO: need a way to distinguish OSP_FB_RGBA8, OSP_FB_SRGBA, and OSP_FB_RGBA32F
     int *colorI = (int*)color;
     float *colorF = (float*)color;
     float *depth = (float*)fbi->mapBuffer(OSP_FB_DEPTH);
@@ -144,7 +143,6 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
     */
 
     //get a hold of the list of tiles on this subdevice
-    //TODO: code dedup from above, hopefully without temporary variables
     const int tilesForSubdevice = numTiles / loadBalancers.size();
     const int numExtraTiles = numTiles % loadBalancers.size();
     int tilesForThisDevice = tilesForSubdevice;
@@ -175,11 +173,14 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
       Tile __aligned(64) tile(tileID, fbSize, accumID);
   #endif
 
+      //TODO: think about means to access floats directly and avoid
+      //the repeated conversions into, out of and back into RGB
+      //TODO: these 'getTile' loops are unoptimized. Consider implementing in
+      //ispc to accelerate.
       if (colorI && colorBufferFormat == OSP_FB_RGBA8) {
         int cnt = 0;
         for (int i=0; i < TILE_SIZE; ++i) {
           for (int j=0; j < TILE_SIZE; ++j) {
-            //TODO this is brute force for debugging. There must be an optimized version that I can reuse before merging this (eg LocalFB.ispc)
             int px = tile.region.lower.x+j;
             int py = tile.region.lower.y+i;
             if ((px >= fbSize.x)
@@ -201,7 +202,6 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
         int cnt = 0;
         for (int i=0; i < TILE_SIZE; ++i) {
           for (int j=0; j < TILE_SIZE; ++j) {
-            //TODO this is brute force for debugging. There must be an optimized version that I can reuse before merging this (eg LocalFB.ispc)
             int px = tile.region.lower.x+j;
             int py = tile.region.lower.y+i;
             if ((px >= fbSize.x)

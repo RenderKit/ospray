@@ -87,9 +87,8 @@ OSPData MultiDevice::newSharedData(const void *sharedData,
     // A little lazy here, but using the Data object to just give me a view
     // + the index sequence iterator to use to step over the stride
     Data *multiData = new Data(sharedData, type, numItems, byteStride);
-    o->SharedData = multiData;
+    o->sharedDataDirtyReference = multiData;
 
-    //DDM - since we do this on commit, do we have to do it here too?
     index_sequence_3D seq(numItems);
     for (auto idx : seq) {
       MultiDeviceObject *mobj = *(MultiDeviceObject **)multiData->data(idx);
@@ -296,8 +295,8 @@ void MultiDevice::commit(OSPObject object)
   // so shared arrays of objects have to do more to ensure that the
   // contents are up to date. Specifically the handles have to be
   // translated down to the subdevice specific handles correctly.
-  if (o->SharedData) {
-    Data *multiData = o->SharedData;
+  if (o->sharedDataDirtyReference) {
+    Data *multiData = o->sharedDataDirtyReference;
     const vec3ul &numItems = multiData->numItems;
     index_sequence_3D seq(numItems);
     for (auto idx : seq) {
@@ -415,7 +414,7 @@ OSPFuture MultiDevice::renderFrame(OSPFrameBuffer _framebuffer,
 {
   MultiDeviceObject *multiFb = (MultiDeviceObject *)_framebuffer;
   FrameBuffer *fb0 = (FrameBuffer *)multiFb->objects[0];
-  fb0->setCompletedEvent(OSP_NONE_FINISHED); //DDM?
+  fb0->setCompletedEvent(OSP_NONE_FINISHED);
   MultiDeviceObject *multiRenderer = (MultiDeviceObject *)_renderer;
   MultiDeviceObject *multiCamera = (MultiDeviceObject *)_camera;
   MultiDeviceObject *multiWorld = (MultiDeviceObject *)_world;

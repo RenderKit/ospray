@@ -21,7 +21,7 @@ void LocalTiledLoadBalancer::renderFrame(
       renderer,
       camera,
       world,
-      fb->getTileIDs(), //utility::ArrayView<int>(allTileIDs), DDM MergeConflict Res?
+      fb->getTileIDs(),
       perFrameData);
 
   renderer->endFrame(fb, perFrameData);

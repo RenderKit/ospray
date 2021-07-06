@@ -10,8 +10,8 @@
 #include "MultiDeviceObject.h"
 #include "MultiDeviceRenderTask.h"
 
-/*! \file MultiDevice.h Implements the a multiplexor for ISPCDevices. In the
- * future, this may become a multiplexor for  */
+// MultiDevice.h Implements the a multiplexor for other OSPRay devices which
+// this simply farms work out to in an image parallel fashion.
 
 namespace ospray {
 namespace api {
