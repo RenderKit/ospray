@@ -24,7 +24,7 @@ BEGIN
             VALUE "FileDescription", "OSPRay Ray Tracing Rendering Engine"
             VALUE "FileVersion", OSPRAY_VERSION
             VALUE "ProductVersion", OSPRAY_VERSION
-            VALUE "LegalCopyright", "© 2009-2020 Intel Corporation"
+            VALUE "LegalCopyright", "© 2009-2021 Intel Corporation"
             VALUE "InternalName", "OSPRay"
             VALUE "ProductName", "Intel® OSPRay"
         END

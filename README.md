@@ -3358,7 +3358,7 @@ a module at runtime.
 
 
 <figure>
-<img src="https://ospray.github.io/images/ospMPIDistribTutorial_firstFrame.jpg" width="60.0%" alt="The accumulated frame output by the ospMPIDistribTutorial or C++ tutorial with 4 ranks." /><figcaption aria-hidden="true">The accumulated frame output by the <code>ospMPIDistribTutorial</code> or C++ tutorial with 4 ranks.</figcaption>
+<img src="https://ospray.github.io/images/ospMPIDistribTutorial_accumulatedFrame.jpg" width="60.0%" alt="The accumulated frame output by the ospMPIDistribTutorial or C++ tutorial with 4 ranks." /><figcaption aria-hidden="true">The accumulated frame output by the <code>ospMPIDistribTutorial</code> or C++ tutorial with 4 ranks.</figcaption>
 </figure>
 
 
