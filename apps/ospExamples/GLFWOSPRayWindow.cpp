@@ -8,8 +8,10 @@
 // imgui
 #include "imgui.h"
 // std
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 // on Windows often only GL 1.1 headers are present
 #ifndef GL_CLAMP_TO_BORDER
@@ -345,6 +347,29 @@ void GLFWOSPRayWindow::display()
     auto *fb = framebuffer.map(
         showDepth ? OSP_FB_DEPTH : (showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR));
 
+    // Copy and normalize depth layer if showDepth is on
+    float *depthFb = static_cast<float *>(fb);
+    std::vector<float> depthCopy;
+    if (showDepth) {
+      depthCopy.assign(depthFb, depthFb + (windowSize.x * windowSize.y));
+      depthFb = depthCopy.data();
+
+      float minDepth = rkcommon::math::inf;
+      float maxDepth = rkcommon::math::neg_inf;
+
+      for (int i = 0; i < windowSize.x * windowSize.y; i++) {
+        if (std::isinf(depthFb[i]))
+          continue;
+        minDepth = std::min(minDepth, depthFb[i]);
+        maxDepth = std::max(maxDepth, depthFb[i]);
+      }
+      const float rcpDepthRange = 1.f / (maxDepth - minDepth);
+
+      for (int i = 0; i < windowSize.x * windowSize.y; i++) {
+        depthFb[i] = (depthFb[i] - minDepth) * rcpDepthRange;
+      }
+    }
+
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
         0,
@@ -354,7 +379,7 @@ void GLFWOSPRayWindow::display()
         0,
         showDepth ? GL_DEPTH_COMPONENT : (showAlbedo ? GL_RGB : GL_RGBA),
         GL_FLOAT,
-        fb);
+        showDepth ? depthFb : fb);
 
     framebuffer.unmap(fb);
 
