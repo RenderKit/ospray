@@ -4,6 +4,7 @@ Version History
 ### Changes in v2.7.0:
 
 -   New minimum ISPC version is 1.16.0
+-   Fixed rendering of depth buffer in the example apps
 
 ### Changes in v2.6.0:
 
