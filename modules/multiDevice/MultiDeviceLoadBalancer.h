@@ -34,10 +34,6 @@ struct MultiDeviceLoadBalancer
   }
 
  private:
-  void initAllTileList(const FrameBuffer *fb);
-
-  std::vector<int> allTileIDs;
-
   // The subdevice load balancers that this multidevice load balancer will
   // distribute the rendering workload over
   std::vector<std::shared_ptr<TiledLoadBalancer>> loadBalancers;

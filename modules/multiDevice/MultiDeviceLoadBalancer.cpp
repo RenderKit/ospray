@@ -32,14 +32,11 @@ void MultiDeviceLoadBalancer::renderFrame(api::MultiDeviceObject *framebuffer,
   std::vector<void *> perFrameDatas;
   perFrameDatas.resize(loadBalancers.size(), nullptr);
 
-  if (static_cast<size_t>(fb0->getTotalTiles()) != allTileIDs.size()) {
-    initAllTileList(fb0);
-  }
   renderTiles(framebuffer,
       renderer,
       camera,
       world,
-      utility::ArrayView<int>(allTileIDs),
+      fb0->getTileIDs(),
       perFrameDatas);
 
   for (size_t i = 0; i < loadBalancers.size(); ++i) {
@@ -78,34 +75,44 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
   //investigate unrolling the foreach loadbalancers.size() and loadbalancers->renderTiles() loops
   //that should give tbb finer granularity to work with in its workstealing thing and delay load imbalances
 
+  // Shuffle tile list into a round-robin ordering among the subdevices for better load balance.
+  FrameBuffer *fb0 = (FrameBuffer *)framebuffer->objects[0];
+  std::vector<int> allTileIDs;
+  allTileIDs.reserve(tileIDs.size());
+  for (unsigned int j = 0; j < loadBalancers.size(); ++j) {
+    unsigned int tilesForSubdevice = tileIDs.size() / loadBalancers.size();
+    // All tiles may not divide evenly among the subdevices
+    if ((tileIDs.size() % loadBalancers.size()) > j) {
+       tilesForSubdevice++;
+    }
+    for (int i = 0; i < static_cast<int>(tilesForSubdevice); ++i) {
+      allTileIDs.push_back(i * loadBalancers.size() + j);
+    }
+  }
+
   // Render the whole frame distributing the tiles among the subdevices
   const int numTiles = tileIDs.size();
   tasking::parallel_for(loadBalancers.size(), [&](size_t subdeviceID) {
     // Tiles are assigned contiguously in chunks to the subdevices
-    // from the tileIDs array. The order of the tileIDs array can be
-    // be used to create a round robin or random assignment
-    const int tilesForSubdevice = numTiles / loadBalancers.size();
-    const int numExtraTiles = numTiles % loadBalancers.size();
+    // from the tileIDs array but the contents of the array can
+    // create a round robin or random assignment
 
-    // Tiles for this device may be increased by 1 if we're assigned extra tiles
+    const int tilesForSubdevice = numTiles / loadBalancers.size();
+    // All tiles may not divide evenly among the subdevices
+    const int numExtraTiles = numTiles % loadBalancers.size();
     int tilesForThisDevice = tilesForSubdevice;
     int additionalTileOffset = 0;
-
-    // All tiles may not divide evenly among the subdevices, extra tiles are
-    // assigned to the lower ID subdevices, each taking one extra tile
     if (numExtraTiles != 0) {
       additionalTileOffset =
           std::min(static_cast<int>(subdeviceID), numExtraTiles);
-      // Assign extra tiles to the subdevices in order
       if (static_cast<int>(subdeviceID) < numExtraTiles) {
         tilesForThisDevice++;
       }
     }
-
     const int startTileIndex =
         subdeviceID * tilesForSubdevice + additionalTileOffset;
     utility::ArrayView<int> subdeviceTileIDs(
-        &tileIDs.at(startTileIndex), tilesForThisDevice);
+        &allTileIDs.at(startTileIndex), tilesForThisDevice);
 
     FrameBuffer *fb = (FrameBuffer *)framebuffer->objects[subdeviceID];
     Renderer *r = (Renderer *)renderer->objects[subdeviceID];
@@ -120,7 +127,6 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
   });
 
   //gather individual tiles down to fb 0.
-  FrameBuffer *fb0 = (FrameBuffer *)framebuffer->objects[0];
   const auto fbSize = fb0->getNumPixels();
 
   tasking::parallel_for(loadBalancers.size(), [&](size_t subdeviceID) {
@@ -157,7 +163,7 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
     const int startTileIndex =
         subdeviceID * tilesForSubdevice + additionalTileOffset;
     utility::ArrayView<int> subdeviceTileIDs(
-        &tileIDs.at(startTileIndex), tilesForThisDevice);
+        &allTileIDs.at(startTileIndex), tilesForThisDevice);
 
     tasking::parallel_for(subdeviceTileIDs.size(), [&](size_t taskIndex) {
       const size_t numTiles_x = fbi->getNumTiles().x;
@@ -173,6 +179,11 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
       Tile __aligned(64) tile(tileID, fbSize, accumID);
   #endif
 
+#if 0
+      const float showRanks = (float)subdeviceID/loadBalancers.size();
+#else
+      const float showRanks = 1.f;
+#endif
       //TODO: think about means to access floats directly and avoid
       //the repeated conversions into, out of and back into RGB
       //TODO: these 'getTile' loops are unoptimized. Consider implementing in
@@ -191,9 +202,9 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
             int *cS = colorI+(py*fb0->getNumPixels().x)+px;
             //RGBA8
             tile.a[cnt] = (float)((*cS&0xFF000000)>>24)/255.0;
-            tile.b[cnt] = (float)((*cS&0x00FF0000)>>16)/255.0;
-            tile.g[cnt] = (float)((*cS&0x0000FF00)>>8)/255.0;
-            tile.r[cnt] = (float)((*cS&0x000000FF))/255.0;
+            tile.b[cnt] = (float)((*cS&0x00FF0000)>>16)/255.0*showRanks;
+            tile.g[cnt] = (float)((*cS&0x0000FF00)>>8)/255.0*showRanks;
+            tile.r[cnt] = (float)((*cS&0x000000FF))/255.0*showRanks;
             cnt++;
           }
         }
@@ -212,9 +223,9 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
             int *cS = colorI+(py*fb0->getNumPixels().x)+px;
             //SRGBA - from LocalFB.ispc
             tile.a[cnt] = ((*cS&0xFF000000)>>24)/255.0;
-            tile.b[cnt] = pow((float)((*cS&0x00FF0000)>>16)/255.0, 2.2f);
-            tile.g[cnt] = pow((float)((*cS&0x0000FF00)>>8)/255.0, 2.2f);
-            tile.r[cnt] = pow((float)((*cS&0x000000FF))/255.0, 2.2f);
+            tile.b[cnt] = pow((float)((*cS&0x00FF0000)>>16)/255.0, 2.2f)*showRanks;
+            tile.g[cnt] = pow((float)((*cS&0x0000FF00)>>8)/255.0, 2.2f)*showRanks;
+            tile.r[cnt] = pow((float)((*cS&0x000000FF))/255.0, 2.2f)*showRanks;
             cnt++;
           }
         }
@@ -232,9 +243,9 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
                 continue;
             }
             float *cF = colorF+((py*fb0->getNumPixels().x)+px)*4;
-            tile.r[cnt] = *(cF+0);
-            tile.g[cnt] = *(cF+1);
-            tile.b[cnt] = *(cF+2);
+            tile.r[cnt] = *(cF+0)*showRanks;
+            tile.g[cnt] = *(cF+1)*showRanks;
+            tile.b[cnt] = *(cF+2)*showRanks;
             tile.a[cnt] = *(cF+3);
             cnt++;
           }
@@ -315,24 +326,5 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
 std::string MultiDeviceLoadBalancer::toString() const
 {
   return "ospray::MultiDeviceLoadBalancer";
-}
-
-void MultiDeviceLoadBalancer::initAllTileList(const FrameBuffer *fb)
-{
-  // Create the tile list in a round-robin ordering among the subdevices
-  allTileIDs.clear();
-  allTileIDs.reserve(fb->getTotalTiles());
-  for (unsigned int j = 0; j < loadBalancers.size(); ++j) {
-    // Static round robin distribution of tiles among subdevices for now
-    unsigned int tilesForSubdevice = static_cast<size_t>(fb->getTotalTiles()) / loadBalancers.size();
-    // All tiles may not divide evenly among the subdevices
-    if ((fb->getTotalTiles() % loadBalancers.size()) > j) {
-      tilesForSubdevice++;
-    }
-
-    for (int i = 0; i < static_cast<int>(tilesForSubdevice); ++i) {
-      allTileIDs.push_back(i * loadBalancers.size() + j);
-    }
-  }
 }
 } // namespace ospray
