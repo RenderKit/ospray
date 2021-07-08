@@ -29,15 +29,9 @@ struct MultiDeviceLoadBalancer
 
   std::string toString() const;
 
-  void setColorBufferFormat(FrameBuffer::ColorBufferFormat mode) {
-    colorBufferFormat = mode;
-  }
-
  private:
   // The subdevice load balancers that this multidevice load balancer will
   // distribute the rendering workload over
   std::vector<std::shared_ptr<TiledLoadBalancer>> loadBalancers;
-
-  FrameBuffer::ColorBufferFormat colorBufferFormat = OSP_FB_NONE;
 };
 } // namespace ospray

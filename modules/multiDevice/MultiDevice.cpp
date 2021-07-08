@@ -345,7 +345,6 @@ void MultiDevice::retain(OSPObject object)
 OSPFrameBuffer MultiDevice::frameBufferCreate(
     const vec2i &size, const OSPFrameBufferFormat mode, const uint32 channels)
 {
-  loadBalancer->setColorBufferFormat(mode);
   MultiDeviceObject *o = new MultiDeviceObject();
   for (size_t i = 0; i < subdevices.size(); ++i) {
     FrameBuffer *fbi = new LocalFrameBuffer(size, mode, channels);

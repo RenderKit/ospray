@@ -129,6 +129,8 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
   //gather individual tiles down to fb 0.
   const auto fbSize = fb0->getNumPixels();
 
+  OSPFrameBufferFormat colorBufferFormat = fb0->getColorBufferFormat();
+
   tasking::parallel_for(loadBalancers.size(), [&](size_t subdeviceID) {
     if (subdeviceID == 0) return; //gather of fb0's tiles to fb0 is unecessary
 
