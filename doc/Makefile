@@ -131,6 +131,7 @@ tmp/changelog.md: filter-sectionnumbers.py ../CHANGELOG.md
 
 www/index.html: teaser.html overview.md tmp/changelog.md
 www/tutorials.html: tutorials.md
+	$(markdown2web) --indented-code-classes=sh
 www/gallery.html: gallery.md
 www/downloads.html: tmp/getting_ospray.md tmp/compilation_web.md
 www/related_projects.html: related_projects.md
@@ -182,6 +183,9 @@ tmp/api.md: api.md tmp/links_local.md tmp/images_web.md
 tmp/compilation.md: compilation.md tmp/links_local.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
+tmp/tutorials.md: tutorials.md tmp/links_local.md tmp/images_web.md
+	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
+
 ../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/tutorials.md
 	$(PANDOC) --file-scope $+ --markdown-headings=setext -t gfm | $(convert_nbsp_width) > $@
 
@@ -197,6 +201,9 @@ tmp/api.tex: filter-latex.py api.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=cpp
 
 tmp/compilation.tex: filter-latex.py compilation.md tmp/links_local.md tmp/images_local_pdf.md
+	$(markdown2tex) --indented-code-classes=sh
+
+tmp/tutorials.tex: filter-latex.py tutorials.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=sh
 
 tmp/changelog.tex: filter-latex.py tmp/changelog.md tmp/links_local.md tmp/images_local_pdf.md

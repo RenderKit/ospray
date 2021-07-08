@@ -75,7 +75,7 @@ before you can build OSPRay you need the following prerequisites:
     should also have some version of OpenGL and GLFW.
 
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.14.1 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.16.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right “next to” the
@@ -3176,13 +3176,17 @@ An example of building `ospTutorial.c` with CMake can be found in
 
 To build the tutorial on Linux, build it in a build directory with
 
-    gcc -std=c99 ../apps/ospTutorial/ospTutorial.c \
-    -I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospTutorial
+``` sh
+gcc -std=c99 ../apps/ospTutorial/ospTutorial.c \
+-I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospTutorial
+```
 
 On Windows build it can be build manually in a
 “build\_directory\\$Configuration” directory with
 
-    cl ..\..\apps\ospTutorial\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+``` sh
+cl ..\..\apps\ospTutorial\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+```
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
@@ -3301,8 +3305,139 @@ to change `turbidity` and `sunDirection`.
 
 
 
+MPI Distributed Tutorials
+=========================
+
+The MPI Distributed tutorials demonstrate various ways that distributed
+applications using MPI can leverage OSPRay’s distributed rendering
+capabilities to render distributed, replicated, and partially replicated
+data across the processes. The tutorials will be built as part of OSPRay
+when running cmake with
+
+``` sh
+cmake \
+  -DOSPRAY_ENABLE_APPS=ON \
+  -DOSPRAY_APPS_TUTORIALS=ON \
+  -DOSPRAY_MODULE_MPI=ON \
+  -DOSPRAY_MPI_BUILD_TUTORIALS=ON \
+  <other args>
+```
+
+ospMPIDistribTutorial
+---------------------
+
+A minimal working example demonstrating how to use OSPRay for rendering
+distributed data can be found at
+[`modules/mpi/tutorials/ospMPIDistribTutorial.c`](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.c)[10].
+
+The compilation process via CMake is the similar to
+[`apps/tutorials/ospTutorialFindospray/`](https://github.com/ospray/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray),
+with the addition of finding and linking MPI.
+
+To build the tutorial on Linux, build it in a build directory with
+
+``` sh
+mpicc -std=c99 ../modules/mpi/tutorials/ospMPIDistribTutorial.c \
+-I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospMPIDistribTutorial
+```
+
+On Windows build it can be build manually in a
+“build\_directory\\$Configuration” directory with
+
+``` sh
+cl ..\..\modules\mpi\tutorials\ospMPIDistribTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+```
+
+The MPI module does not need to be linked explicitly, as it is loaded as
+a module at runtime.
+
+<figure>
+<img src="https://ospray.github.io/images/ospMPIDistribTutorial_firstFrame.jpg" width="60.0%" alt="The first frame output by the ospMPIDistribTutorial or C++ tutorial with 4 ranks." /><figcaption aria-hidden="true">The first frame output by the <code>ospMPIDistribTutorial</code> or C++ tutorial with 4 ranks.</figcaption>
+</figure>
+
+
+
+<figure>
+<img src="https://ospray.github.io/images/ospMPIDistribTutorial_firstFrame.jpg" width="60.0%" alt="The accumulated frame output by the ospMPIDistribTutorial or C++ tutorial with 4 ranks." /><figcaption aria-hidden="true">The accumulated frame output by the <code>ospMPIDistribTutorial</code> or C++ tutorial with 4 ranks.</figcaption>
+</figure>
+
+
+
+ospMPIDistribTutorialSpheres and ospMPIDistribTutorialVolume
+------------------------------------------------------------
+
+The spheres and volume distributed tutorials are built as part of the
+MPI tutorials when building OSPRay with the MPI module and tutorials
+enabled. These tutorials demonstrate using OSPRay to render distributed
+data sets where each rank owns some subregion of the data, and
+displaying the output in an interactive window. The domain is
+distributed in a grid among the processes, each of which will generate a
+subset of the data corresponding to its subdomain.
+
+In `ospMPIDistribTutorialSpheres`, each process generates a set of
+spheres within its assigned domain. The spheres are colored from dark to
+light blue, where lighter colors correspond to higher ranks.
+
+<figure>
+<img src="https://ospray.github.io/images/ospMPIDistribTutorialSpheres.jpg" width="60.0%" alt="Running ospMPIDistribTutorialSpheres on 4 ranks." /><figcaption aria-hidden="true">Running <code>ospMPIDistribTutorialSpheres</code> on 4 ranks.</figcaption>
+</figure>
+
+
+
+In `ospMPIDistribTutorialVolume`, each process generates a subbrick of
+volume data, which is colored by its rank.
+
+<figure>
+<img src="https://ospray.github.io/images/ospMPIDistribTutorialVolume.jpg" width="60.0%" alt="Running ospMPIDistribTutorialVolume on 4 ranks." /><figcaption aria-hidden="true">Running <code>ospMPIDistribTutorialVolume</code> on 4 ranks.</figcaption>
+</figure>
+
+
+
+ospMPIDistribTutorialPartialRepl
+--------------------------------
+
+The partially replicated MPI tutorial demonstrates how to use OSPRay’s
+distributed rendering capabilities to render data sets that are
+partially replicated among the processes. Each pair of ranks generates
+the same volume brick, allowing them to subdivide the rendering workload
+between themselves. For example, when run with two ranks, each will
+generate the same brick and be responsible for rendering half of the
+image tiles it projects to. When run with four ranks, the pairs of ranks
+0,1 and 2,3 will generate the same data and divide the rendering
+workload for that data among themselves.
+
+The image work subdivision happens automatically, based on which ranks
+specify the same bounding box for their data, as demonstrated in the
+tutorial.
+
+The partially replicated distribution is useful to support load-balanced
+rendering of data sets that are too large to be fully replicated among
+the processes, but are small enough to be partially replicated among
+them.
+
+ospMPIDistribTutorialReplicated
+-------------------------------
+
+The replicated MPI tutorial demonstrates how OSPRay’s distributed
+rendering capabilities can be used to render data sets that are fully
+replicated among the ranks with advanced illumination effects. In this
+case, although the processes are run MPI parallel, each rank specifies
+the exact same data. OSPRay’s MPI parallel renderer will detect that the
+data is replicated in this case and use the same image-parallel
+rendering algorithms employed in the MPI offload rendering configuration
+to render the data. This image-parallel rendereing algorithm supports
+all rendering configurations that are used in local rendering, e.g.,
+path tracing, to provide high-quality images.
+
+The replicated MPI tutorial supports the same scenes and parameters as
+the [`ospExamples`](#ospexamples) app described above.
+
+This mode can be useful when high-quality rendering is desired and it is
+possible to copy the entire data set on to each rank, or to accelerate
+loading of a large model by leveraging a parallel file system.
+
 [1] For example, if OSPRay is in `~/Projects/ospray`, ISPC will also be
-searched in `~/Projects/ispc-v1.14.1-linux`
+searched in `~/Projects/ispc-v1.16.0-linux`
 
 [2] This file is usually in
 `${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake
@@ -3331,3 +3466,9 @@ API via
 [`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
 is available at
 [`apps/tutorials/ospTutorial.cpp`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.cpp).
+
+[10] A C++ version that uses the C++ convenience wrappers of OSPRay’s
+C99 API via
+[`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
+is available at
+[`modules/mpi/tutorials/ospMPIDistribTutorial.cpp`](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.cpp).
