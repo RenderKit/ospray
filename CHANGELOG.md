@@ -19,6 +19,9 @@ Version History
 -   OSPRay now requires minimum Open VKL v0.14.0 to bring the
     following improvements:
     -   Better default sampling rate for scaled VDB volumes
+-   The first argument to material constructors, ie "renderer_type", is
+    now deprecated and will be removed in a future release. AO and SciVis
+    renderers still assume "obj" like behavior for all material types.
 
 ### Changes in v2.6.0:
 

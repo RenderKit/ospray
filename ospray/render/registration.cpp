@@ -47,9 +47,6 @@ void registerAllMaterials()
   Material::registerType<Principled>("pathtracer", "principled");
   Material::registerType<ThinGlass>("pathtracer", "thinGlass");
   Material::registerType<Velvet>("pathtracer", "velvet");
-
-  Material::registerType<SciVisMaterial>("scivis", "obj");
-  Material::registerType<AOMaterial>("ao", "obj");
 }
 
 } // namespace ospray
