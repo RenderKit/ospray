@@ -1,5 +1,6 @@
 #include "MultiDeviceLoadBalancer.h"
 #include "MultiDevice.h"
+#include "fb/LocalFB.h"
 
 #include <rkcommon/tasking/parallel_for.h>
 
@@ -128,6 +129,7 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
 
   //gather individual tiles down to fb 0.
   const auto fbSize = fb0->getNumPixels();
+  LocalFrameBuffer* fb0asLFB = (LocalFrameBuffer*)fb0; //todo: revise when we support other types
 
   OSPFrameBufferFormat colorBufferFormat = fb0->getColorBufferFormat();
 
@@ -137,18 +139,12 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
     FrameBuffer *fbi = (FrameBuffer *)framebuffer->objects[subdeviceID];
     //get a hold of the pixels
 
-    //TODO: formats taken from LocalFrameBuffer, are these always valid?
     const void *color = fbi->mapBuffer(OSP_FB_COLOR);
     int *colorI = (int*)color;
     float *colorF = (float*)color;
     float *depth = (float*)fbi->mapBuffer(OSP_FB_DEPTH);
     vec3f *normal = (vec3f*)fbi->mapBuffer(OSP_FB_NORMAL);
     vec3f *albedo = (vec3f*)fbi->mapBuffer(OSP_FB_ALBEDO);
-    /*
-    //TODO: ensure LocalFrameBuffer_accumulateTile leaves root with satellites' acc and var
-    vec4f *accum = (vec4f*)fbi->mapBuffer(OSP_FB_ACCUM);
-    vec4f *variance = (vec4f*)fbi->mapBuffer(OSP_FB_VARIANCE);
-    */
 
     //get a hold of the list of tiles on this subdevice
     const int tilesForSubdevice = numTiles / loadBalancers.size();
@@ -311,16 +307,17 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
 
       fb0->setTile(tile);
 
+      //todo: For now we assume LocalFrameBuffer for rank 0 (see MultiDevice).
+      //When that assumption no longer holds asLFB will be invalid and we'll need to
+      //do better.
+      float tileError = fbi->tileError(tileID);
+      fb0asLFB->tileErrorRegion.update(tile.region.lower / TILE_SIZE, tileError);
     });
 
     fbi->unmap(color);
     fbi->unmap(depth);
     fbi->unmap(normal);
     fbi->unmap(albedo);
-    /*
-    fbi->unmap(accum);
-    fbi->unmap(variance);
-    */
 
   });
 }
