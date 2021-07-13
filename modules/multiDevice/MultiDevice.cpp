@@ -92,7 +92,7 @@ OSPData MultiDevice::newSharedData(const void *sharedData,
     index_sequence_3D seq(numItems);
     for (auto idx : seq) {
       MultiDeviceObject *mobj = *(MultiDeviceObject **)multiData->data(idx);
-      retain((OSPObject)mobj); //DDM is this necessary and if so does it leak?
+      retain((OSPObject)mobj);
 
       // Copy the subdevice object handles to the data arrays for each subdevice
       for (size_t i = 0; i < subdevices.size(); ++i) {
@@ -322,12 +322,22 @@ void MultiDevice::release(OSPObject object)
   memory::RefCount *o = (memory::RefCount *)object;
   MultiDeviceObject *mo = dynamic_cast<MultiDeviceObject *>(o);
   if (mo) {
+    if (mo->sharedDataDirtyReference) {
+      Data *multiData = mo->sharedDataDirtyReference;
+      const vec3ul &numItems = multiData->numItems;
+      index_sequence_3D seq(numItems);
+      for (auto idx : seq) {
+        MultiDeviceObject *mobj = *(MultiDeviceObject **)multiData->data(idx);
+        mobj->refDec();
+      }
+    }
     for (size_t i = 0; i < mo->objects.size(); ++i) {
       subdevices[i]->release(mo->objects[i]);
     }
   }
   o->refDec();
 }
+
 void MultiDevice::retain(OSPObject object)
 {
   memory::RefCount *o = (memory::RefCount *)object;
