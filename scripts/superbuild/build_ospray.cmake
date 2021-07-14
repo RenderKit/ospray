@@ -50,6 +50,9 @@ configure
   rkcommon
   embree
   openvkl
+  $<$<BOOL:${BUILD_OSPRAY_APPS}>:benchmark>
+  $<$<BOOL:${BUILD_OSPRAY_APPS}>:gtest>
+  $<$<BOOL:${BUILD_OSPRAY_MODULE_MPI}>:snappy>
   $<$<BOOL:${BUILD_GLFW}>:glfw>
   $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
   $<$<BOOL:${BUILD_OIDN}>:oidn>

@@ -1,0 +1,28 @@
+## Copyright 2021 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+set(COMPONENT_NAME snappy)
+
+if (INSTALL_IN_SEPARATE_DIRECTORIES)
+  set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
+else()
+  set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
+endif()
+
+ExternalProject_Add(${COMPONENT_NAME}
+  URL "https://github.com/google/snappy/archive/refs/tags/1.1.8.zip"
+  URL_HASH "SHA256=38b4aabf88eb480131ed45bfb89c19ca3e2a62daeb081bdf001cfb17ec4cd303"
+
+  # # Skip updating on subsequent builds (faster)
+  UPDATE_COMMAND ""
+
+  CMAKE_ARGS
+    -D CMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
+    -D BUILD_SHARED_LIBS:BOOL=OFF
+    -D SNAPPY_BUILD_TESTS:BOOL=OFF
+    -D SNAPPY_BUILD_BENCHMARKS:BOOL=OFF
+    -D CMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
+)
+
+list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
+string(REPLACE ";" "|" CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")

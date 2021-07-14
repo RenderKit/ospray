@@ -107,14 +107,14 @@ endif()
 
 option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
 option(BUILD_OIDN_FROM_SOURCE "Build OpenImageDenoise or use pre-built version?" OFF)
-set(OIDN_VERSION "1.4.0" CACHE STRING "Which version of OpenImageDenoise to build?")
-if (OIDN_VERSION STREQUAL "1.4.0")
+set(OIDN_VERSION "1.4.1" CACHE STRING "Which version of OpenImageDenoise to build?")
+if (OIDN_VERSION STREQUAL "1.4.1")
   if (APPLE)
-    set(OIDN_HASH "0bbab6ac504fbde2d3b9c247e7a88dc7134f93e64ccaa7f441c6c8e00a0231d5")
+    set(OIDN_HASH "0ac6b2e16ff5f1b7ff75f19e5889f291bb36d66b84446bee06ff169cfe19f265")
   elseif (WIN32)
-    set(OIDN_HASH "52fc7205a09227fc6468eb8fe7f6b8a58cc69c085f8d96088a3e9422ca4dbe32")
+    set(OIDN_HASH "4ea0492de4fc47951ab5fc53b4e3433f39677d3fbfc1541eabc4ccee82bfc4d1")
   else()
-    set(OIDN_HASH "27ea8ec7fddf23a4a27a37fcffa184723d628809451b717bb8a8cb6e289e2f2e")
+    set(OIDN_HASH "efdf8fafb47017d7b1b321cbc88cb1bfcbdbe2746be57ed4a2ae90431fc9eb3a")
   endif()
 endif()
 
@@ -169,12 +169,18 @@ endif()
 
 include(dep_glm)
 
+if (BUILD_OSPRAY_APPS)
+  include(dep_gtest)
+  include(dep_benchmark)
+endif()
+
 ## Build main projects ##
 set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} ${PARALLEL_JOBS_OPTS})
 
 if (BUILD_OSPRAY_MODULE_MPI)
   set(OSPRAY_ENABLE_MODULES ON)
   set(OSPRAY_MODULE_MPI ON)
+  include(dep_snappy)
 endif()
 
 if (NOT BUILD_DEPENDENCIES_ONLY)

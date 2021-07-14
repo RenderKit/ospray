@@ -5,6 +5,8 @@ Version History
 
 -   New minimum ISPC version is 1.16.0
 -   Fixed rendering of depth buffer in the example apps
+-   Dependencies Google Benchmark, GoggleTest, and Snappy moved
+    out-of-source to superbuild ExternalProjects
 
 ### Changes in v2.6.0:
 

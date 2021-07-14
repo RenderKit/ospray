@@ -43,6 +43,7 @@ if (BUILD_OIDN_FROM_SOURCE)
   if (DOWNLOAD_ISPC)
     ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ispc)
   endif()
+
 else()
 
   if (OIDN_HASH)

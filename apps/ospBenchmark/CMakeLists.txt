@@ -1,9 +1,11 @@
-## Copyright 2018-2020 Intel Corporation
+## Copyright 2018-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 if (NOT OSPRAY_APPS_BENCHMARK)
   return()
 endif()
+
+find_package(benchmark REQUIRED)
 
 add_executable(ospBenchmark
   ${OSPRAY_RESOURCE}
@@ -22,7 +24,7 @@ add_executable(ospBenchmark
 target_link_libraries(ospBenchmark
 PRIVATE
   arcball_camera
-  benchmark
+  benchmark::benchmark
   ospray_testing
 )
 

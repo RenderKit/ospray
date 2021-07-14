@@ -50,7 +50,7 @@ ispc_target_add_sources(ospray_module_mpi
 
 target_link_libraries(ospray_module_mpi
   PRIVATE
-    snappy
+    Snappy::snappy
     rkcommon::rkcommon
     ospray_mpi_common
     ospray_pico_bench

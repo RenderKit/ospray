@@ -19,8 +19,7 @@ before you can build OSPRay you need the following prerequisites:
     C++11 compiler (we recommend using GCC, but also support Clang,
     MSVC, and [Intel® C++ Compiler
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
-    Linux development tools. To build the interactive tutorials, you
-    should also have some version of OpenGL and GLFW.
+    Linux development tools.
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
     Compiler (ISPC)](http://ispc.github.io), version 1.16.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
@@ -46,11 +45,18 @@ before you can build OSPRay you need the following prerequisites:
     installing version 0.13.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
--   OSPRay also provides an optional module implementing the `denosier`
+-   OSPRay also provides an optional module implementing the `denoiser`
     image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
     module requires Intel [Open Image Denoise] in version 1.2.3 or
     newer. You may need to hint the location of the library with the
     CMake variable `OpenImageDenoise_DIR`.
+-   For the optional MPI module (enabled by `OSPRAY_MODULE_MPI`), which
+    provides the `mpiOffload` and `mpiDistributed` devices, you need an
+    MPI library and [Google Snappy](https://github.com/google/snappy).
+-   The optional example application, the test suit and benchmarks need
+    some version of OpenGL and GLFW as well as
+    [GoogleTest](https://github.com/google/googletest) and [Google
+    Benchmark](https://github.com/google/benchmark/)
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be
