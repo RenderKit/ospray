@@ -401,8 +401,10 @@ float MultiDevice::getVariance(OSPFrameBuffer _fb)
 void MultiDevice::resetAccumulation(OSPFrameBuffer _fb)
 {
   MultiDeviceObject *o = (MultiDeviceObject *)_fb;
-  LocalFrameBuffer *fb = (LocalFrameBuffer *)o->objects[0];
-  fb->clear();
+  for (size_t i = 0; i < subdevices.size(); ++i) {
+    LocalFrameBuffer *fbi = (LocalFrameBuffer *)o->objects[i];
+    fbi->clear();
+  }
 }
 
 // Frame Rendering //////////////////////////////////////////////////////
