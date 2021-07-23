@@ -178,7 +178,7 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
   #endif
 
 #if 0
-      const float showRanks = (float)subdeviceID/loadBalancers.size();
+      const float showRanks = 0.5+(float)subdeviceID/loadBalancers.size()*0.5;
 #else
       const float showRanks = 1.f;
 #endif

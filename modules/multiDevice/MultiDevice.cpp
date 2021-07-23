@@ -36,7 +36,7 @@ void MultiDevice::commit()
     int numSubdevices =
         OSPRAY_NUM_SUBDEVICES.value_or(getParam("numSubdevices", 1));
 
-    std::cout << "# of subdevices =" << numSubdevices << std::endl;
+    postStatusMsg(OSP_LOG_DEBUG) << "# of subdevices =" << numSubdevices;
 
     std::vector<std::shared_ptr<TiledLoadBalancer>> subdeviceLoadBalancers;
     for (int i = 0; i < numSubdevices; ++i) {
