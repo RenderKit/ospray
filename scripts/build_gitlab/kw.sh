@@ -25,6 +25,9 @@ cmake --version
 cmake -L \
   -DBUILD_DEPENDENCIES_ONLY=ON \
   -DBUILD_EMBREE_FROM_SOURCE=OFF \
+  -DBUILD_OIDN=ON \
+  -DBUILD_OIDN_FROM_SOURCE=OFF \
+  -DBUILD_OSPRAY_MODULE_MPI=ON \
   -DCMAKE_INSTALL_LIBDIR=lib \
   -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   "$@" ../scripts/superbuild
@@ -38,7 +41,7 @@ cd ospray_build
 
 export CMAKE_PREFIX_PATH=${INSTALL_DIR}
 
-cmake -DISPC_EXECUTABLE=$INSTALL_DIR/bin/ispc -DTBB_ROOT=$INSTALL_DIR ../..
+cmake -DISPC_EXECUTABLE=$INSTALL_DIR/bin/ispc -DTBB_ROOT=$INSTALL_DIR -DOSPRAY_MODULE_DENOISER=ON -DOSPRAY_MODULE_BILINEAR_PATCH=ON -DOSPRAY_MODULE_MPI=ON ../..
 
 $KW_CLIENT_PATH/bin/kwinject make -j `nproc` | tee -a $log_file
 $KW_SERVER_PATH/bin/kwbuildproject --classic --url http://$KW_SERVER_IP:$KW_SERVER_PORT/$KW_PROJECT_NAME --tables-directory $CI_PROJECT_DIR/kw_tables kwinject.out | tee -a $log_file

@@ -563,9 +563,11 @@ release-windows:
 kw-build:
   stage: scan1
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   needs: []
   script:
+    - module load cmake
+    - module load intel/2021.2
     - scripts/build_gitlab/kw.sh
     - test -s $CI_PROJECT_DIR/klocwork/build.log
     - test -s $CI_PROJECT_DIR/klocwork/build_name
