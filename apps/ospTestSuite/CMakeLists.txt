@@ -6,7 +6,7 @@ if (NOT OSPRAY_APPS_TESTING)
 endif()
 
 # Note: CMake provides FindGTest which defines target GTest::GTest
-find_package(GTest REQUIRED)
+find_package(GTest REQUIRED CONFIG)
 
 ospray_disable_compiler_warnings()
 
@@ -30,7 +30,7 @@ PRIVATE
   arcball_camera
   ospray_testing
   ospray_module_ispc
-  GTest::GTest
+  GTest::gtest
   stb_image
   $<$<BOOL:${OSPRAY_APPS_ENABLE_GLM}>:${GLM_TARGET}>
 )
