@@ -679,7 +679,7 @@ test-release-windows-zip:
   <<: *test_job
   <<: *release_job
   stage: scan3
-  tags: [win, avx512vl]
+  tags: [win, mpi, avx512vl]
   needs: [release-windows]
   script:
     - Expand-Archive build_release/*.zip -DestinationPath .
@@ -691,7 +691,7 @@ test-release-windows-msi:
   <<: *test_job
   <<: *release_job
   stage: scan3
-  tags: [win, avx512vl]
+  tags: [win, mpi, avx512vl]
   needs: [release-windows]
   script:
     - msiexec.exe /a (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName) /qn TARGETDIR=$CI_PROJECT_DIR
