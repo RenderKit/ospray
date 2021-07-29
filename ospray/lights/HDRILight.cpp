@@ -3,18 +3,25 @@
 
 #include "HDRILight.h"
 #include "lights/HDRILight_ispc.h"
+#include "lights/Light_ispc.h"
 
 namespace ospray {
 
-HDRILight::HDRILight()
-{
-  ispcEquivalent = ispc::HDRILight_create();
-}
-
 HDRILight::~HDRILight()
 {
-  ispc::HDRILight_destroy(getIE());
-  ispcEquivalent = nullptr;
+  ispc::HDRILight_destroyDistribution(distributionIE);
+}
+
+void *HDRILight::createIE(const void *instance) const
+{
+  void *ie = ispc::HDRILight_create();
+  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
+  ispc::HDRILight_set(ie,
+      (ispc::vec3f &)coloredIntensity,
+      (const ispc::LinearSpace3f &)frame,
+      map ? map->getIE() : nullptr,
+      distributionIE);
+  return ie;
 }
 
 std::string HDRILight::toString() const
@@ -25,33 +32,32 @@ std::string HDRILight::toString() const
 void HDRILight::commit()
 {
   Light::commit();
-  up = getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f));
-  dir = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
+  const vec3f up = getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f));
+  const vec3f dir = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
   map = (Texture2D *)getParamObject("map", nullptr);
 
-  linear3f frame;
+  // recreate distribution
+  ispc::HDRILight_destroyDistribution(distributionIE);
+  distributionIE = nullptr;
+  if (map)
+    distributionIE = ispc::HDRILight_createDistribution(map->getIE());
+
   frame.vx = normalize(-dir);
   frame.vy = normalize(cross(frame.vx, up));
   frame.vz = cross(frame.vx, frame.vy);
 
   queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_SCALE);
   processIntensityQuantityType();
-
-  ispc::HDRILight_set(getIE(),
-      (ispc::vec3f &)radianceScale,
-      (const ispc::LinearSpace3f &)frame,
-      map ? map->getIE() : nullptr);
 }
 
 void HDRILight::processIntensityQuantityType()
 {
-  radianceScale = coloredIntensity;
   // validate the correctness of the light quantity type
   if (intensityQuantity != OSP_INTENSITY_QUANTITY_SCALE
       && intensityQuantity != OSP_INTENSITY_QUANTITY_RADIANCE) {
     static WarnOnce warning(
         "Unsupported intensityQuantity type for a 'hdri' light source");
-    radianceScale = vec3f(0.0f);
+    coloredIntensity = vec3f(0.0f);
   }
 }
 

@@ -4,8 +4,10 @@
 #pragma once
 
 #include "common/DifferentialGeometry.ih"
+#include "math/AffineSpace.ih"
 
 struct Light;
+struct Instance;
 
 struct Light_SampleRes
 {
@@ -21,8 +23,8 @@ struct Light_SampleRes
 // by convention, giving (0, 0) as "random" numbers should sample the "center"
 // of the light source (used by the raytracing renderers such as the SciVis
 // renderer)
-typedef Light_SampleRes (*Light_SampleFunc)(const uniform Light *uniform,
-    const DifferentialGeometry &, // point (&normal) to generate the sample
+typedef Light_SampleRes (*Light_SampleFunc)(const Light *uniform self,
+    const DifferentialGeometry &dg, // point (&normal) to generate the sample
     const vec2f &s, // random numbers to generate the sample
     const float time = 0.5f); // generate the sample at time (motion blur)
 
@@ -35,12 +37,12 @@ struct Light_EvalRes
 
 //! compute the radiance and pdf caused by the light source (pointed to by the
 //! given direction up until maxDist)
-typedef Light_EvalRes (*Light_EvalFunc)(const uniform Light *uniform,
-    const DifferentialGeometry &, //! point to evaluate illumination for >*/
-    const vec3f &dir, //! direction towards the light source, normalized >*/
-    const float minDist, //! minimum distance to look for light contribution >*/
-    const float
-        maxDist); //! maximum distance to look for light contribution >*/
+typedef Light_EvalRes (*Light_EvalFunc)(const Light *uniform self,
+    const DifferentialGeometry &dg, // point to evaluate illumination for
+    const vec3f &dir, // direction towards the light source, normalized
+    const float minDist, // minimum distance to look for light contribution
+    const float maxDist, // maximum distance to look for light contribution
+    const float time = 0.5f); // evaluate at time (motion blur)
 
 struct Light
 {
@@ -48,21 +50,22 @@ struct Light
   Light_EvalFunc eval;
   bool isVisible; // either directly in camera, or via a straight path (i.e.
                   // through ThinGlass)
-  float selectionPDF; // the PDF of selecting the light from the renderers light
-                      // list
+  const Instance *instance;
 };
 typedef Light *uniform LightPtr;
 typedef LightPtr *uniform LightArray;
 
-Light_EvalRes Light_eval(const uniform Light *uniform,
+Light_EvalRes Light_eval(const Light *uniform,
     const DifferentialGeometry &,
     const vec3f &,
     const float,
+    const float,
     const float);
 
-inline void Light_Constructor(uniform Light *uniform self)
+inline void Light_Constructor(Light *uniform self)
 {
+  assert(self);
   self->eval = Light_eval;
   self->isVisible = true;
-  self->selectionPDF = 0.f;
+  self->instance = NULL;
 }

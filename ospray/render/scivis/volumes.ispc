@@ -104,7 +104,7 @@ static void sampleVolume(SciVisRenderContext &rc,
       dg.material = NULL;
       dg.epsilon = dt / 2.f;
       // transform to world coords
-      dg.Ns = dg.Ng = normalize(xfmVector(transposed(vi.instance->xfm.l), ns));
+      dg.Ns = dg.Ng = normalize(xfmVector(transposed(vi.instance->rcp_xfm.l), ns));
       dg.P = ray.org + vc.distance * ray.dir;
       SSI shading = computeShading(
           rc.renderer, rc.fb, rc.world, dg, rc.sample, rc.ldSampler, ray.dir);

@@ -1683,16 +1683,16 @@ Scene Hierarchy
 
 ### Groups
 
-Groups in OSPRay represent collections of GeometricModels and
-VolumetricModels which share a common local-space coordinate system. To
+Groups in OSPRay represent collections of GeometricModels, VolumetricModels
+and Lights which share a common local-space coordinate system. To
 create a group call
 
     OSPGroup ospNewGroup();
 
-Groups take arrays of geometric models, volumetric models and clipping
-geometric models, but they are optional. In other words, there is no
-need to create empty arrays if there are no geometries or volumes in the
-group.
+Groups take arrays of geometric models, volumetric models, clipping
+geometric models and lights, but they are all optional. In other words,
+there is no need to create empty arrays if there are no geometries, volumes
+or lights in the group.
 
 By adding `OSPGeometricModel`s to the `clippingGeometry` array a
 clipping geometry feature is enabled. Geometries assigned to this
@@ -1718,6 +1718,8 @@ areas will be applied to all other objects in the [world].
   OSPGeometricModel[]  clippingGeometry       NULL  [data] array of [GeometricModels]
                                                     used for clipping
 
+  OSPLight[]           light                  NULL  [data] array of [lights]
+
   bool                 dynamicScene          false  use RTC_SCENE_DYNAMIC flag (faster
                                                     BVH build, slower ray traversal),
                                                     otherwise uses RTC_SCENE_STATIC flag
@@ -1734,10 +1736,6 @@ areas will be applied to all other objects in the [world].
   -------------------- ---------------- ----------  ---------------------------------------
   : Parameters understood by groups.
 
-Note that groups only need to re re-committed if a geometry or volume
-changes (surface/scalar field representation). Appearance information
-on `OSPGeometricModel` and `OSPVolumetricModel` can be changed freely,
-as internal acceleration structures do not need to be reconstructed.
 
 ### Instances
 

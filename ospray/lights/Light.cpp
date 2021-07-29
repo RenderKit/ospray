@@ -17,11 +17,16 @@ Light::Light()
   managedObjectType = OSP_LIGHT;
 }
 
+void *Light::createSecondIE(const void *) const
+{
+  return nullptr;
+}
+
 void Light::commit()
 {
+  visible = getParam<bool>("visible", true);
   coloredIntensity =
       getParam<vec3f>("color", vec3f(1.f)) * getParam<float>("intensity", 1.f);
-  ispc::Light_set(getIE(), getParam<bool>("visible", true));
 }
 
 std::string Light::toString() const
@@ -43,12 +48,6 @@ void Light::queryIntensityQuantityType(const OSPIntensityQuantity &defaultIQ)
 {
   intensityQuantity =
       (OSPIntensityQuantity)getParam<uint8_t>("intensityQuantity", defaultIQ);
-}
-
-utility::Optional<void *> Light::getSecondIE()
-{
-  utility::Optional<void *> emptyOptional;
-  return emptyOptional;
 }
 
 OSPTYPEFOR_DEFINITION(Light *);

@@ -50,7 +50,8 @@ static const std::vector<std::string> g_scenes = {"boxes_lit",
     "clip_particle_volume",
     "particle_volume",
     "particle_volume_isosurface",
-    "vdb_volume"};
+    "vdb_volume",
+    "instancing"};
 
 static const std::vector<std::string> g_curveVariant = {
     "bspline", "hermite", "catmull-rom", "linear", "cones"};
@@ -687,6 +688,12 @@ void GLFWOSPRayWindow::buildUI()
     static bool shadowsEnabled = false;
     if (ImGui::Checkbox("shadows", &shadowsEnabled)) {
       renderer->setParam("shadows", shadowsEnabled);
+      addObjectToCommit(renderer->handle());
+    }
+
+    static bool visibleLights = false;
+    if (ImGui::Checkbox("visibleLights", &visibleLights)) {
+      renderer->setParam("visibleLights", visibleLights);
       addObjectToCommit(renderer->handle());
     }
 

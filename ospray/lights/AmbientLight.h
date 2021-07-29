@@ -10,12 +10,13 @@ namespace ospray {
 //! an AmbientLight is a constant light that is present everywhere
 struct OSPRAY_SDK_INTERFACE AmbientLight : public Light
 {
-  AmbientLight();
+  AmbientLight() = default;
   virtual ~AmbientLight() override = default;
+  virtual void *createIE(const void *instance) const override;
   virtual std::string toString() const override;
   virtual void commit() override;
 
-  vec3f radiance{1.0f, 1.0f, 1.0f}; //!< emitted radiance of the AmbientLight
+  vec3f radiance{1.f}; //!< emitted radiance of the AmbientLight
 
  private:
   void processIntensityQuantityType();

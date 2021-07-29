@@ -43,7 +43,6 @@ bool shadowCatcher(const PathContext &pathContext,
     vec3f shaded = make_vec3f(0.f); // illumination including shadows
     for (uniform int i = 0; i < pathContext.numLights; i++) {
       const Light *uniform light = pathContext.world->pathtracerData.lights[i];
-
       const vec2f s = LDSampler_getFloat2(
           pathContext.ldSampler, pathState.sampleDim + 4 + i * 2);
       Light_SampleRes ls =

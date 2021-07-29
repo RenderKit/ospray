@@ -3,6 +3,10 @@ Version History
 
 ### Changes in v2.8.0:
 
+-   Lights can be now part of `OSPGroup` and thus instanced like geometries
+    and volumes
+-   Added support for lights Motion Blur (with the path tracer)
+
 ### Changes in v2.7.1:
 
 -   Use Open VKL v1.0.1 to fix sporadic slowdowns when rendering

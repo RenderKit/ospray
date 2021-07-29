@@ -7,27 +7,30 @@
 #include "common/Clipping.ih"
 #include "common/Ray.ih"
 #include "common/VolumeIntervals.ih"
-#include "lights/Light.ih"
 
 struct Renderer;
+struct Light;
 
 struct SciVisData
 {
+  // array containing the scene light sources
+  // the lights are sorted: first lights that are not sampled (visible only),
+  // then lights that are both sampled and visible
+  Light **lights;
+  uint32 numLights; // total number of light sources
+  uint32 numLightsVisibleOnly; // number of lights that are not sampled (visible
+                               // only)
   vec3f aoColorPi;
-  Light *uniform *uniform lights;
-  Light *uniform *uniform lightsVisible;
-  uint32 numLights;
-  uint32 numLightsVisible;
 };
 
 struct PathtracerData
 {
   // array containing the scene light sources
   // the lights are sorted: first geometric, then virtual lights
-  Light *uniform *uniform lights;
+  Light **lights;
   uint32 numLights; // total number of light sources (geometric + virtual)
   uint32 numGeoLights; // number of geometric light sources
-  float *uniform lightsCDF; // CDF used by NEE for randomly picking lights
+  float *lightsCDF; // CDF used by NEE for randomly picking lights
 };
 
 struct World

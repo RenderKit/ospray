@@ -12,10 +12,6 @@ struct SciVis : public Renderer
   std::string toString() const override;
   void commit() override;
   void *beginFrame(FrameBuffer *, World *) override;
-
- private:
-  bool visibleLights{false};
-  bool scannedVisibleLightList{true};
 };
 
 } // namespace ospray

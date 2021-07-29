@@ -147,7 +147,8 @@ INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
                            "streamlines",
                            "subdivision_cube",
                            "planes",
-                           "unstructured_volume_isosurface"),
+                           "unstructured_volume_isosurface",
+                           "instancing"),
         ::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(16)));
 

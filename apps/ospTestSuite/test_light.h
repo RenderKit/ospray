@@ -10,18 +10,24 @@ class LightTest : public Base
  public:
   LightTest();
   void SetUp() override;
-};
+  void AddInstancedLightWithMB(
+      cpp::Light light, const affine3f &xfm1, const affine3f &xfm2);
+  void AddInstancedLightWithTranslateMB(cpp::Light light)
+  {
+    AddInstancedLightWithMB(light,
+        affine3f::translate(vec3f(-0.5, 0, 0)),
+        affine3f::translate(vec3f(0.5, 0, 0)));
+  };
+  void AddInstancedLightWithRotateMB(cpp::Light light)
+  {
+    AddInstancedLightWithMB(light,
+        affine3f::rotate(vec3f(0.f, 0.f, 1.f), -.25f * float(pi)),
+        affine3f::rotate(vec3f(0.f, 0.f, 1.f), .25f * float(pi)));
+  };
 
-class SunSky : public LightTest,
-               public ::testing::TestWithParam<std::tuple<vec3f /*up*/,
-                   vec3f /*direction*/,
-                   float /*turbidity*/,
-                   float /*albedo*/,
-                   float /*"horizonExtension*/>>
-{
- public:
-  SunSky();
-  void SetUp() override;
+ protected:
+  affine3f xfm;
+  bool motionBlur{false};
 };
 
 class AmbientLight
@@ -35,8 +41,9 @@ class AmbientLight
 
 class DistantLight
     : public LightTest,
-      public ::testing::TestWithParam<
-          std::tuple<vec3f /* direction*/, const char * /*renderer type*/>>
+      public ::testing::TestWithParam<std::tuple<vec3f /* direction*/,
+          const char * /*renderer type*/,
+          bool /*motionBlur*/>>
 {
  public:
   DistantLight();
@@ -59,7 +66,6 @@ class GeometricLight
  private:
   float size{0.2};
   bool useMaterialList{true};
-  bool motionBlur{false};
 };
 
 class PhotometricLight
@@ -78,7 +84,8 @@ class PhotometricLight
 class QuadLight : public LightTest,
                   public ::testing::TestWithParam<std::tuple<float /*size*/,
                       const char * /*renderer type*/,
-                      OSPIntensityQuantity>>
+                      OSPIntensityQuantity,
+                      bool /*motionBlur*/>>
 {
  public:
   QuadLight();
@@ -92,7 +99,8 @@ class QuadLight : public LightTest,
 class SphereLight : public LightTest,
                     public ::testing::TestWithParam<std::tuple<float /*radius*/,
                         const char * /*renderer type*/,
-                        OSPIntensityQuantity>>
+                        OSPIntensityQuantity,
+                        bool /*motionBlur*/>>
 {
  public:
   SphereLight();
@@ -107,7 +115,8 @@ class SpotLight
     : public LightTest,
       public ::testing::TestWithParam<std::tuple<vec2f /*innerOuterRadius*/,
           const char * /*renderer type*/,
-          OSPIntensityQuantity>>
+          OSPIntensityQuantity,
+          bool /*motionBlur*/>>
 {
  public:
   SpotLight();
@@ -120,10 +129,24 @@ class SpotLight
 
 class HDRILight
     : public LightTest,
-      public ::testing::TestWithParam<const char * /*renderer type*/>
+      public ::testing::TestWithParam<
+          std::tuple<const char * /*renderer type*/, bool /*motionBlur*/>>
 {
  public:
   HDRILight();
+  void SetUp() override;
+};
+
+class SunSky : public LightTest,
+               public ::testing::TestWithParam<std::tuple<vec3f /*up*/,
+                   vec3f /*direction*/,
+                   float /*turbidity*/,
+                   float /*albedo*/,
+                   float /*horizonExtension*/,
+                   bool /*motionBlur*/>>
+{
+ public:
+  SunSky();
   void SetUp() override;
 };
 

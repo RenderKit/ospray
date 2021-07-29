@@ -1766,18 +1766,18 @@ Scene Hierarchy
 
 ### Groups
 
-Groups in OSPRay represent collections of GeometricModels and
-VolumetricModels which share a common local-space coordinate system. To
-create a group call
+Groups in OSPRay represent collections of GeometricModels,
+VolumetricModels and Lights which share a common local-space coordinate
+system. To create a group call
 
 ``` cpp
 OSPGroup ospNewGroup();
 ```
 
-Groups take arrays of geometric models, volumetric models and clipping
-geometric models, but they are optional. In other words, there is no
-need to create empty arrays if there are no geometries or volumes in the
-group.
+Groups take arrays of geometric models, volumetric models, clipping
+geometric models and lights, but they are all optional. In other words,
+there is no need to create empty arrays if there are no geometries,
+volumes or lights in the group.
 
 By adding `OSPGeometricModel`s to the `clippingGeometry` array a
 clipping geometry feature is enabled. Geometries assigned to this
@@ -1798,16 +1798,12 @@ in the [world](#world).
 | OSPGeometricModel\[\]  | geometry         |    NULL | [data](#data) array of [GeometricModels](#geometricmodels)                                                                                                      |
 | OSPVolumetricModel\[\] | volume           |    NULL | [data](#data) array of [VolumetricModels](#volumetricmodels)                                                                                                    |
 | OSPGeometricModel\[\]  | clippingGeometry |    NULL | [data](#data) array of [GeometricModels](#geometricmodels) used for clipping                                                                                    |
+| OSPLight\[\]           | light            |    NULL | [data](#data) array of [lights](#lights)                                                                                                                        |
 | bool                   | dynamicScene     |   false | use RTC\_SCENE\_DYNAMIC flag (faster BVH build, slower ray traversal), otherwise uses RTC\_SCENE\_STATIC flag (faster ray traversal, slightly slower BVH build) |
 | bool                   | compactMode      |   false | tell Embree to use a more compact BVH in memory by trading ray traversal performance                                                                            |
 | bool                   | robustMode       |   false | tell Embree to enable more robust ray intersection code paths (slightly slower)                                                                                 |
 
 Parameters understood by groups.
-
-Note that groups only need to re re-committed if a geometry or volume
-changes (surface/scalar field representation). Appearance information on
-`OSPGeometricModel` and `OSPVolumetricModel` can be changed freely, as
-internal acceleration structures do not need to be reconstructed.
 
 ### Instances
 

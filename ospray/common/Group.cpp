@@ -3,6 +3,9 @@
 
 // ospray
 #include "Group.h"
+#include "geometry/GeometricModel.h"
+#include "lights/Light.h"
+#include "volume/VolumetricModel.h"
 // ispc exports
 #include "common/Group_ispc.h"
 
@@ -65,15 +68,18 @@ void Group::commit()
   geometricModels = getParamDataT<GeometricModel *>("geometry");
   volumetricModels = getParamDataT<VolumetricModel *>("volume");
   clipModels = getParamDataT<GeometricModel *>("clippingGeometry");
+  lights = getParamDataT<Light *>("light");
 
   size_t numGeometries = geometricModels ? geometricModels->size() : 0;
   size_t numVolumes = volumetricModels ? volumetricModels->size() : 0;
   size_t numClippers = clipModels ? clipModels->size() : 0;
+  size_t numLights = lights ? lights->size() : 0;
 
   postStatusMsg(OSP_LOG_DEBUG)
       << "=======================================================\n"
       << "Finalizing instance, which has " << numGeometries << " geometries, "
-      << numVolumes << " volumes and " << numClippers << " clipping geometries";
+      << numVolumes << " volumes, " << numClippers
+      << " clipping geometries and " << numLights << " lights";
 
   int sceneFlags = RTC_SCENE_FLAG_NONE;
   sceneFlags |=
@@ -127,6 +133,15 @@ void Group::commit()
       numInvertedClippers += obj->invertedNormals() ? 1 : 0;
 
     rtcCommitScene(sceneClippers);
+  }
+
+  // Create empty scene for lights-only group,
+  // it is needed to have rtcGeometry created in Instance object
+  // which in turn is needed for motion blur matrices interpolation
+  if ((numLights > 0) && (numGeometries == 0) && (numVolumes == 0)
+      && (numClippers == 0)) {
+    sceneGeometries = rtcNewScene(embreeDevice);
+    rtcCommitScene(sceneGeometries);
   }
 
   ispc::Group_set(getIE(),

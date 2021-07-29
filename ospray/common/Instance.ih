@@ -21,6 +21,8 @@ struct Instance
   AffineSpace3f rcp_xfm;
   bool motionBlur;
 };
+typedef Instance *uniform InstancePtr;
+typedef InstancePtr *uniform InstanceArray;
 
 inline uniform AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const uniform float time)
