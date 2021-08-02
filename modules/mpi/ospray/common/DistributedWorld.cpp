@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedWorld.h"
@@ -89,7 +89,10 @@ void DistributedWorld::commit()
 {
   World::commit();
 
+  allRegions.clear();
   myRegions.clear();
+  myRegionIds.clear();
+  regionOwners.clear();
 
   localRegions = getParamDataT<box3f>("region");
   if (localRegions) {
@@ -135,8 +138,6 @@ void DistributedWorld::commit()
 
 void DistributedWorld::exchangeRegions()
 {
-  allRegions.clear();
-
   // Exchange regions between the ranks in world to find which other
   // ranks may be sharing a region with this one, and the other regions
   // to expect to be rendered for each tile
