@@ -5,7 +5,7 @@
 
 #include "render/pathtracer/PathStructs.ih"
 
-#include "render/pathtracer/bsdfs/BSDF.ih"
+#include "render/bsdfs/BSDF.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 
 inline bool isSmooth(const PathVertex &pathVertex)

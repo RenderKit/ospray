@@ -4,8 +4,8 @@
 #include "render/pathtracer/PathTracer.ih"
 #include "render/pathtracer/TransparentShadow.ih"
 
-#include "render/pathtracer/materials/Material.ih"
-#include "render/pathtracer/materials/Medium.ih"
+#include "render/materials/Material.ih"
+#include "render/materials/Medium.ih"
 
 #include "common/Ray.ih"
 #include "common/World.ih"

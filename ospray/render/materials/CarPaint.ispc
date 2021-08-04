@@ -7,9 +7,9 @@
 #include "../bsdfs/MicrofacetConductor.ih"
 #include "../bsdfs/MicrofacetDielectricLayer.ih"
 #include "../bsdfs/OrenNayar.ih"
-#include "../shaders/Flakes.ih"
+#include "render/shaders/Flakes.ih"
 #include "Material.ih"
-#include "render/pathtracer/bsdfs/MultiBSDF.ih"
+#include "render/bsdfs/MultiBSDF.ih"
 #include "texture/TextureParam.ih"
 
 struct CarPaint

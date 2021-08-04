@@ -7,11 +7,11 @@
 #include "PathTracerDefines.ih"
 #include "PathTracerUtil.ih"
 
-#include "bsdfs/BSDF.ih"
-#include "bsdfs/MicrofacetAlbedoTables.ih"
+#include "render/bsdfs/BSDF.ih"
+#include "render/bsdfs/MicrofacetAlbedoTables.ih"
 #include "lights/Light.ih"
-#include "materials/Material.ih"
-#include "materials/Medium.ih"
+#include "render/materials/Material.ih"
+#include "render/materials/Medium.ih"
 #include "volumes/VolumeSampler.ih"
 
 #include "camera/Camera.ih"

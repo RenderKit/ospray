@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../bsdfs/BeckmannDistribution.ih"
+#include "render/bsdfs/BeckmannDistribution.ih"
 #include "Noise.ih"
 
 struct Flakes

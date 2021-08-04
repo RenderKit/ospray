@@ -2,27 +2,27 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Material.ih"
-#include "render/pathtracer/bsdfs/Lambert.ih"
-#include "render/pathtracer/bsdfs/MultiBSDF.ih"
-#include "render/pathtracer/bsdfs/Specular.ih"
-#include "render/pathtracer/bsdfs/Transmission.ih"
+#include "render/bsdfs/Lambert.ih"
+#include "render/bsdfs/MultiBSDF.ih"
+#include "render/bsdfs/Specular.ih"
+#include "render/bsdfs/Transmission.ih"
 
 struct OBJ
 {
-  PathTraceMaterial super;
-
-  TextureParam dMap;
   float d; // cut-out opacity
-  TextureParam KdMap;
+  TextureParam dMap;
   vec3f Kd;
-  TextureParam KsMap;
+  TextureParam KdMap;
   vec3f Ks;
-  TextureParam NsMap;
+  TextureParam KsMap;
   float Ns;
+  TextureParam NsMap;
   vec3f Tf; // transmission filter
   TextureParam bumpMap;
   linear2f bumpRot; // just the inverse of rotational/mirror part (must be
                     // orthonormal) of tc xfrom
+  PathTraceMaterial super;
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////

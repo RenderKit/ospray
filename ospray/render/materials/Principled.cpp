@@ -1,11 +1,11 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Principled.h"
 #include "common/Data.h"
 #include "math/spectrum.h"
 // ispc
-#include "render/pathtracer/materials/Principled_ispc.h"
+#include "render/materials/Principled_ispc.h"
 
 namespace ospray {
 namespace pathtracer {

@@ -3,7 +3,7 @@
 
 #include "ThinGlass.h"
 // ispc
-#include "render/pathtracer/materials/ThinGlass_ispc.h"
+#include "render/materials/ThinGlass_ispc.h"
 
 namespace ospray {
 namespace pathtracer {

@@ -51,9 +51,8 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
   res.opacity = dg.color.w;
 
   foreach_unique (m in mat) {
-    if (m != NULL && m->super.type == RENDERER_TYPE_SCIVIS) {
+    if (m != NULL) {// && m->super.type == RENDERER_TYPE_SCIVIS) {
       float d = m->d * get1f(m->dMap, dg, 1.f) * dg.color.w;
-
       res.diffuse = res.diffuse * m->Kd;
       if (valid(m->KdMap)) {
         vec4f Kd_from_map = get4f(m->KdMap, dg);

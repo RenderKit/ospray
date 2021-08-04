@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Material.ih"
-#include "render/pathtracer/bsdfs/RobustDielectric.ih"
+#include "render/bsdfs/RobustDielectric.ih"
 #include "texture/TextureParam.ih"
 
 struct Glass

@@ -1,9 +1,9 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Mix.h"
 // ispc
-#include "render/pathtracer/materials/Mix_ispc.h"
+#include "render/materials/Mix_ispc.h"
 
 namespace ospray {
 namespace pathtracer {

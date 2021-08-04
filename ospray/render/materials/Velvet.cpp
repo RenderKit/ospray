@@ -3,7 +3,7 @@
 
 #include "Velvet.h"
 // ispc
-#include "render/pathtracer/materials/Velvet_ispc.h"
+#include "render/materials/Velvet_ispc.h"
 
 namespace ospray {
 namespace pathtracer {

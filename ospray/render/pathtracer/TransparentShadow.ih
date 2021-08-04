@@ -10,7 +10,7 @@ struct World;
 struct Ray;
 struct RayIntervals;
 
-#include "render/pathtracer/materials/Medium.ih"
+#include "render/materials/Medium.ih"
 
 vec3f transparentShadow(const uniform PathTracer *uniform self,
     const World *uniform world,

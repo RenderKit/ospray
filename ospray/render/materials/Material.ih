@@ -7,8 +7,8 @@
 #include "common/DifferentialGeometry.ih"
 #include "common/Ray.ih"
 #include "render/Material.ih"
-#include "render/pathtracer/bsdfs/BSDF.ih"
-#include "render/pathtracer/bsdfs/ShadingContext.ih"
+#include "render/bsdfs/BSDF.ih"
+#include "render/bsdfs/ShadingContext.ih"
 #include "texture/TextureParam.ih"
 
 #define EPS 1e-5f

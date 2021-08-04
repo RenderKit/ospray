@@ -9,8 +9,6 @@
 
 struct SciVisMaterial
 {
-  Material super;
-
   float d;
   TextureParam dMap;
   vec3f Kd;
@@ -20,4 +18,8 @@ struct SciVisMaterial
   float Ns;
   TextureParam NsMap;
   vec3f Tf; // transmission filter
+  TextureParam bumpMap;
+  linear2f bumpRot; // just the inverse of rotational/mirror part (must be
+                    // orthonormal) of tc xfrom
+  Material super;
 };

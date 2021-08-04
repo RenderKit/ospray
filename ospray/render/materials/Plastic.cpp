@@ -3,7 +3,7 @@
 
 #include "Plastic.h"
 // ispc
-#include "render/pathtracer/materials/Plastic_ispc.h"
+#include "render/materials/Plastic_ispc.h"
 
 namespace ospray {
 namespace pathtracer {

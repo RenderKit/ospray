@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../bsdfs/Conductor.ih"
@@ -16,7 +16,7 @@
 #include "../bsdfs/Transmission.ih"
 #include "Material.ih"
 #include "math/spectrum.ih"
-#include "render/pathtracer/bsdfs/MultiBSDF.ih"
+#include "render/bsdfs/MultiBSDF.ih"
 #include "texture/TextureParam.ih"
 
 struct Principled

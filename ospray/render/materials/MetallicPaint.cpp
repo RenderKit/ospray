@@ -4,7 +4,7 @@
 #include "MetallicPaint.h"
 #include "math/spectrum.h"
 // ispc
-#include "render/pathtracer/materials/MetallicPaint_ispc.h"
+#include "render/materials/MetallicPaint_ispc.h"
 
 namespace ospray {
 namespace pathtracer {

@@ -6,8 +6,8 @@
 #include "render/pathtracer/PathTracer.ih"
 #include "render/pathtracer/Scattering.ih"
 
-#include "render/pathtracer/bsdfs/BSDF.ih"
-#include "render/pathtracer/materials/Medium.ih"
+#include "render/bsdfs/BSDF.ih"
+#include "render/materials/Medium.ih"
 
 #include "common/DifferentialGeometry.ih"
 #include "common/World.ih"

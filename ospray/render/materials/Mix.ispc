@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Material.ih"
-#include "render/pathtracer/bsdfs/MultiBSDF.ih"
+#include "render/bsdfs/MultiBSDF.ih"
 #include "texture/TextureParam.ih"
 
 struct Mix

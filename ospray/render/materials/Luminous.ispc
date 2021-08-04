@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Material.ih"
-#include "render/pathtracer/bsdfs/Transmission.ih"
+#include "render/bsdfs/Transmission.ih"
 
 struct Luminous
 {

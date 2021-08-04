@@ -11,7 +11,7 @@
 #include "common/World_ispc.h"
 #include "render/pathtracer/GeometryLight_ispc.h"
 #include "render/pathtracer/PathTracer_ispc.h"
-#include "render/pathtracer/materials/Material_ispc.h"
+#include "render/materials/Material_ispc.h"
 // std
 #include <map>
 

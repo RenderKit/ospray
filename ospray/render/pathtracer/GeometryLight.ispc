@@ -5,7 +5,7 @@
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
 
-#include "render/pathtracer/materials/Material.ih"
+#include "render/materials/Material.ih"
 
 #include "geometry/GeometricModel.ih"
 #include "lights/Light.ih"
