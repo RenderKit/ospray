@@ -19,9 +19,9 @@ Isosurfaces::Isosurfaces()
 
 Isosurfaces::~Isosurfaces()
 {
-  if (valueSelector) {
-    vklRelease(valueSelector);
-    valueSelector = nullptr;
+  if (vklHitContext) {
+    vklRelease(vklHitContext);
+    vklHitContext = nullptr;
   }
 }
 
@@ -63,23 +63,28 @@ void Isosurfaces::commit()
     data->refDec();
   }
 
-  if (valueSelector) {
-    vklRelease(valueSelector);
-    valueSelector = nullptr;
+  if (vklHitContext) {
+    vklRelease(vklHitContext);
+    vklHitContext = nullptr;
   }
 
+  VKLDevice vklDevice = nullptr;
   if (volume) {
-    valueSelector = vklNewValueSelector(volume->vklVolume);
+    vklHitContext = vklNewHitIteratorContext(volume->vklSampler);
+    vklDevice = volume->vklDevice;
   } else {
-    valueSelector = vklNewValueSelector(model->getVolume()->vklVolume);
+    vklHitContext = vklNewHitIteratorContext(model->getVolume()->vklSampler);
+    vklDevice = model->getVolume()->vklDevice;
   }
 
   if (isovaluesData->size() > 0) {
-    vklValueSelectorSetValues(
-        valueSelector, isovaluesData->size(), isovaluesData->data());
+    VKLData valuesData = vklNewData(
+        vklDevice, isovaluesData->size(), VKL_FLOAT, isovaluesData->data());
+    vklSetData(vklHitContext, "values", valuesData);
+    vklRelease(valuesData);
   }
 
-  vklCommit(valueSelector);
+  vklCommit(vklHitContext);
 
   ispc::Isosurfaces_set(getIE(),
       embreeGeometry,
@@ -87,7 +92,7 @@ void Isosurfaces::commit()
       isovaluesData->data(),
       model ? model->getIE() : nullptr,
       volume ? volume->getIE() : nullptr,
-      valueSelector);
+      vklHitContext);
 
   postCreationInfo();
 }

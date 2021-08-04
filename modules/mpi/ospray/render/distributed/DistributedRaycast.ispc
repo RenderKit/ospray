@@ -1,11 +1,10 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../common/DistributedWorld.ih"
 #include "DistributedRenderer.ih"
 #include "common/Instance.ih"
 #include "common/World.ih"
-#include "rkcommon/math/box.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "openvkl/openvkl.isph"
@@ -13,6 +12,7 @@
 #include "render/scivis/surfaces.ih"
 #include "render/scivis/volumes.ih"
 #include "render/util.ih"
+#include "rkcommon/math/box.ih"
 
 struct DistributedRaycastRenderer
 {
@@ -57,11 +57,11 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
     TransferFunction *uniform tf = vm->transferFunction;
 
     VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(volume->vklSampler,
+        vklInitIntervalIteratorV(vm->vklIntervalContext,
             (varying vkl_vec3f *)&transformedRay.org,
             (varying vkl_vec3f *)&transformedRay.dir,
             (varying vkl_range1f *)&interval.interval,
-            vm->vklValueSelector,
+            &ray.time,
             intervalIteratorBuffer);
 
     VKLInterval interval;

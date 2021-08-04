@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,7 +7,6 @@
 #include "math/AffineSpace.ih"
 #include "rkcommon/math/box.ih"
 // openvkl
-#include "openvkl/value_selector.isph"
 #include "openvkl/openvkl.isph"
 
 struct TransferFunction;

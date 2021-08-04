@@ -6,7 +6,7 @@
 #include "Volume.h"
 #include "common/Data.h"
 
-#include "openvkl/value_selector.h"
+#include "openvkl/openvkl.h"
 
 namespace ospray {
 
@@ -30,7 +30,7 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
   box3f volumeBounds;
   Ref<Volume> volume;
   Ref<Volume> volumeAPI;
-  VKLValueSelector vklValueSelector{nullptr};
+  VKLIntervalIteratorContext vklIntervalContext{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(VolumetricModel *, OSP_VOLUMETRIC_MODEL);

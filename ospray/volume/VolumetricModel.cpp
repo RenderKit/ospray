@@ -21,8 +21,8 @@ VolumetricModel::VolumetricModel(Volume *_volume)
 
 VolumetricModel::~VolumetricModel()
 {
-  if (vklValueSelector)
-    vklRelease(vklValueSelector);
+  if (vklIntervalContext)
+    vklRelease(vklIntervalContext);
 }
 
 std::string VolumetricModel::toString() const
@@ -48,19 +48,22 @@ void VolumetricModel::commit()
 
   // create value selector using transfer function and pass to volume
   if (volume->vklVolume) {
-    if (vklValueSelector) {
-      vklRelease(vklValueSelector);
-      vklValueSelector = nullptr;
+    if (vklIntervalContext) {
+      vklRelease(vklIntervalContext);
+      vklIntervalContext = nullptr;
     }
 
-    vklValueSelector = vklNewValueSelector(volume->vklVolume);
+    vklIntervalContext = vklNewIntervalIteratorContext(volume->vklSampler);
     std::vector<range1f> valueRanges =
         transferFunction->getPositiveOpacityValueRanges();
-    vklValueSelectorSetRanges(vklValueSelector,
-        valueRanges.size(),
-        (const vkl_range1f *)valueRanges.data());
-    vklCommit(vklValueSelector);
-    ispc::VolumetricModel_set_valueSelector(ispcEquivalent, vklValueSelector);
+    VKLData valueRangeData = vklNewData(
+        volume->vklDevice, valueRanges.size(), VKL_BOX1F, valueRanges.data());
+    vklSetData(vklIntervalContext, "valueRanges", valueRangeData);
+    vklRelease(valueRangeData);
+    vklCommit(vklIntervalContext);
+
+    ispc::VolumetricModel_set_intervalContext(
+        ispcEquivalent, vklIntervalContext);
   }
 
   // Finish getting/setting other appearance information //

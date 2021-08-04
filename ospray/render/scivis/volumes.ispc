@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "surfaces.ih"
@@ -248,11 +248,11 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       VolumetricModel *varying model = vi.volumetricModel;
       foreach_unique (m in model) {
         // Create volume interval interator
-        vc.intervalIterator = vklInitIntervalIteratorV(m->volume->vklSampler,
+        vc.intervalIterator = vklInitIntervalIteratorV(m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
-            m->vklValueSelector,
+            &ray.time,
             vc.intervalIteratorBuffer);
       }
     }

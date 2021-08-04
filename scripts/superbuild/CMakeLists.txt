@@ -100,7 +100,7 @@ if (EMBREE_VERSION STREQUAL "3.13.0")
   endif()
 endif()
 
-set(OPENVKL_VERSION "85aea24886834d2e1eb53d56aa13f1e01bfed070" CACHE STRING "Which version of OpenVKL to build?")
+set(OPENVKL_VERSION "devel" CACHE STRING "Which version of OpenVKL to build?")
 if (OPENVKL_VERSION STREQUAL "0.13.0")
   set(OPENVKL_HASH "441c7a9d817ed40aae00b33b4926c2c42a95ffbfc294d922cd78728e2b4fb31d")
 endif()

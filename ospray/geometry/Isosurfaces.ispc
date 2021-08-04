@@ -18,7 +18,7 @@ struct Isosurfaces
   // the volume and color
   VolumetricModel *volumetricModel;
   Volume *volume;
-  VKLValueSelector valueSelector;
+  VKLHitIteratorContext vklHitContext;
 };
 
 int Isosurfaces_primID(const Isosurfaces *uniform self, const float isovalue)
@@ -65,8 +65,6 @@ void Isosurfaces_intersect_kernel(
   // this assumes that the args->rayhit is actually a pointer toa varying ray!
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
 
-  Volume *uniform volume = Isosurfaces_getVolume(self);
-
   VKLHitIterator iterator;
   vkl_range1f tRange;
   tRange.lower = ray->t0;
@@ -75,12 +73,11 @@ void Isosurfaces_intersect_kernel(
   // do not use alloca: it prevents inlining and thus optimization
   // wrt. "template arg" isOcclusionTest
   uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
-  iterator = vklInitHitIteratorV(volume->vklSampler,
+  iterator = vklInitHitIteratorV(self->vklHitContext,
       (varying vkl_vec3f *)&ray->org,
       (varying vkl_vec3f *)&ray->dir,
       &tRange,
       &time,
-      self->valueSelector,
       hitIteratorBuffer);
   VKLHit hit;
   bool gotHit = vklIterateHitV(iterator, &hit);
@@ -149,19 +146,19 @@ export void *uniform Isosurfaces_set(void *uniform _self,
     uniform float *uniform isovalues,
     void *uniform _volumetricModel,
     void *uniform _volume,
-    void *uniform _valueSelector)
+    void *uniform _vklHitContext)
 {
   Isosurfaces *uniform self = (Isosurfaces * uniform) _self;
   VolumetricModel *uniform volumetricModel =
       (VolumetricModel * uniform) _volumetricModel;
   Volume *uniform volume = (Volume * uniform) _volume;
-  VKLValueSelector valueSelector = (VKLValueSelector)_valueSelector;
+  VKLHitIteratorContext vklHitContext = (VKLHitIteratorContext)_vklHitContext;
 
   self->isovalues = isovalues;
   self->volumetricModel = volumetricModel;
   self->volume = volume;
   self->super.numPrimitives = 1; // for embree it is just one prim
-  self->valueSelector = valueSelector;
+  self->vklHitContext = vklHitContext;
 
   Geometry_setEmbreeUserGeometry(&self->super,
       (RTCGeometry)_embreeGeometry,
