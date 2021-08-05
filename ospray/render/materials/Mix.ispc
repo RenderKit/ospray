@@ -89,7 +89,7 @@ export void PathTracer_Mix_set(void *uniform _self,
 
 void Mix_Constructor(uniform Mix *uniform self)
 {
-  PathTraceMaterial_Constructor(&self->super, Mix_getBSDF, Mix_getTransparency);
+  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_MIX, Mix_getBSDF, Mix_getTransparency);
   PathTracer_Mix_set(self, 0.5f, make_TextureParam(), NULL, NULL);
 }
 

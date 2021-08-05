@@ -7,6 +7,7 @@
 #include "common/DifferentialGeometry.ih"
 #include "common/Ray.ih"
 #include "render/Material.ih"
+#include "render/MaterialType.ih"
 #include "render/bsdfs/BSDF.ih"
 #include "render/bsdfs/ShadingContext.ih"
 #include "texture/TextureParam.ih"
@@ -52,6 +53,7 @@ struct PathTraceMaterial
 };
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
+    uniform MaterialType material_type,
     uniform PathTraceMaterial_GetBSDFFunc getBSDF,
     uniform PathTraceMaterial_GetTransparencyFunc getTransparency = NULL,
     uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium = NULL);

@@ -47,7 +47,7 @@ export void PathTracer_Luminous_set(
 void Luminous_Constructor(uniform Luminous *uniform self)
 {
   PathTraceMaterial_Constructor(
-      &self->super, Luminous_getBSDF, Luminous_getTransparency);
+      &self->super, MATERIAL_TYPE_LUMINOUS, Luminous_getBSDF, Luminous_getTransparency);
   PathTracer_Luminous_set(self, make_vec3f(1.f), 0.f);
 }
 

@@ -80,7 +80,7 @@ export void *uniform PathTracer_MetallicPaint_set(void *uniform _self,
 export void *uniform PathTracer_MetallicPaint_create()
 {
   uniform MetallicPaint *uniform self = uniform new uniform MetallicPaint;
-  PathTraceMaterial_Constructor(&self->super, MetallicPaint_getBSDF);
+  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_METALLICPAINT, MetallicPaint_getBSDF);
   const uniform vec3f flakeColor = RGB_AL_COLOR;
 
   PathTracer_MetallicPaint_set(

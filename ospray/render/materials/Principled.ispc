@@ -748,6 +748,7 @@ export void *uniform PathTracer_Principled_create()
   Principled *uniform self = uniform new Principled;
 
   PathTraceMaterial_Constructor(&self->super,
+      MATERIAL_TYPE_PRINCIPLED,
       Principled_getBSDF,
       Principled_getTransparency,
       Principled_selectNextMedium);

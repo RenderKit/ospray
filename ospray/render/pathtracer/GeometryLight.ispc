@@ -21,7 +21,7 @@ vec3f evaluateGeometryLights(const PathContext &pathContext,
   vec3f L = make_vec3f(0.f);
   PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
   foreach_unique (m in material) {
-    if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER
+    if (m != NULL
         && reduce_max(m->emission) > 0.f) {
       // at the moment we only support uniform light selection
       // therfore we can evaluate the selection PDF directly

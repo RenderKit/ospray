@@ -317,7 +317,7 @@ export void *uniform PathTracer_CarPaint_create()
 {
   CarPaint *uniform self = uniform new CarPaint;
 
-  PathTraceMaterial_Constructor(&self->super, CarPaint_getBSDF);
+  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_CARPAINT, CarPaint_getBSDF);
 
   uniform TextureParam tex = make_TextureParam();
   PathTracer_CarPaint_set(self,

@@ -3,8 +3,16 @@
 
 #pragma once
 
-typedef int RendererType;
-#define RENDERER_TYPE_DEBUG      0
-#define RENDERER_TYPE_AO         1
-#define RENDERER_TYPE_SCIVIS     2
-#define RENDERER_TYPE_PATHTRACER 3
+typedef int MaterialType;
+#define MATERIAL_TYPE_ALLOY            0
+#define MATERIAL_TYPE_CARPAINT         1
+#define MATERIAL_TYPE_GLASS            2
+#define MATERIAL_TYPE_LUMINOUS         3
+#define MATERIAL_TYPE_METAL            4
+#define MATERIAL_TYPE_METALLICPAINT    5
+#define MATERIAL_TYPE_MIX              6
+#define MATERIAL_TYPE_OBJ              7
+#define MATERIAL_TYPE_PLASTIC          8
+#define MATERIAL_TYPE_PRINCIPLED       9
+#define MATERIAL_TYPE_THINGLASS       10
+#define MATERIAL_TYPE_VELVET          11

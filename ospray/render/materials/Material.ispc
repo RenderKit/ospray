@@ -20,11 +20,12 @@ void PathTraceMaterial_selectNextMedium(
 }
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
+    uniform MaterialType materialType,
     uniform PathTraceMaterial_GetBSDFFunc getBSDF,
     uniform PathTraceMaterial_GetTransparencyFunc getTransparency,
     uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium)
 {
-  self->material.type = RENDERER_TYPE_PATHTRACER;
+  self->material.type = materialType;
 
   self->getBSDF = getBSDF;
   self->getTransparency =
@@ -37,9 +38,6 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
 export uniform bool PathTraceMaterial_isEmissive(void *uniform _mat)
 {
   PathTraceMaterial *uniform mat = (PathTraceMaterial * uniform) _mat;
-
-  if (mat->material.type != RENDERER_TYPE_PATHTRACER)
-    return false;
 
   return reduce_max(mat->emission) > 0.f;
 }

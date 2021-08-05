@@ -108,7 +108,7 @@ export void PathTracer_OBJ_set(void *uniform _self,
 
 void OBJ_Constructor(uniform OBJ *uniform self)
 {
-  PathTraceMaterial_Constructor(&self->super, OBJ_getBSDF, OBJ_getTransparency);
+  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_OBJ, OBJ_getBSDF, OBJ_getTransparency);
 
   uniform TextureParam tex = make_TextureParam();
   PathTracer_OBJ_set(self,

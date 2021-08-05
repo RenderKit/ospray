@@ -82,7 +82,7 @@ export void *uniform PathTracer_ThinGlass_create()
 {
   ThinGlass *uniform self = uniform new ThinGlass;
   PathTraceMaterial_Constructor(
-      &self->super, ThinGlass_getBSDF, ThinGlass_getTransparency);
+      &self->super, MATERIAL_TYPE_THINGLASS, ThinGlass_getBSDF, ThinGlass_getTransparency);
   PathTracer_ThinGlass_set(
       self, 1.5f, make_vec3f(1.f), make_TextureParam(), 1.f, 1.f);
 

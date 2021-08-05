@@ -80,7 +80,7 @@ export void *uniform PathTracer_Metal_set(void *uniform _self,
 export void *uniform PathTracer_Metal_create()
 {
   Metal *uniform self = uniform new Metal;
-  PathTraceMaterial_Constructor(&self->super, Metal_getBSDF);
+  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_METAL, Metal_getBSDF);
   uniform vec3f etaRGB = RGB_AL_ETA;
   uniform vec3f kRGB = RGB_AL_K;
 

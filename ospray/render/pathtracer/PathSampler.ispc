@@ -196,7 +196,7 @@ void samplePath(const PathContext &pathContext,
     if (pathVertex.type == SURFACE) {
       PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
       foreach_unique (m in material) {
-        if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER) {
+        if (m != NULL) {
           pathVertex.bsdf =
               m->getBSDF(m, &ctx, pathVertex.dg, ray, pathState.currentMedium);
           if (pathVertex.bsdf != NULL)
@@ -256,7 +256,7 @@ void samplePath(const PathContext &pathContext,
         PathTraceMaterial *material =
             (PathTraceMaterial *)pathVertex.dg.material;
         foreach_unique (m in material) {
-          if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER)
+          if (m != NULL)
             m->selectNextMedium(m, pathVertex.dg, pathState.currentMedium);
         }
       }

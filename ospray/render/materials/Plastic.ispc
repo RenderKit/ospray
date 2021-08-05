@@ -54,7 +54,7 @@ void Plastic_Constructor(uniform Plastic *uniform self,
     uniform float ior,
     uniform float roughness)
 {
-  PathTraceMaterial_Constructor(&self->super, Plastic_getBSDF);
+  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_PLASTIC, Plastic_getBSDF);
   self->pigmentColor = pigmentColor;
   self->eta = rcp(ior);
   self->roughness = roughness;

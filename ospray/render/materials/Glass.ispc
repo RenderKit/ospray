@@ -84,6 +84,7 @@ export void *uniform PathTracer_Glass_create()
 {
   uniform Glass *uniform self = uniform new uniform Glass;
   PathTraceMaterial_Constructor(&self->super,
+      MATERIAL_TYPE_GLASS,
       Glass_getBSDF,
       Glass_getTransparency,
       Glass_selectNextMedium);

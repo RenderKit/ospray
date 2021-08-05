@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../bsdfs/Conductor.ih"
@@ -74,7 +74,7 @@ export void *uniform PathTracer_Alloy_set(void *uniform _self,
 export void *uniform PathTracer_Alloy_create()
 {
   Alloy *uniform self = uniform new Alloy;
-  PathTraceMaterial_Constructor(&self->super, Alloy_getBSDF);
+  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_ALLOY, Alloy_getBSDF);
 
   uniform TextureParam tex = make_TextureParam();
   PathTracer_Alloy_set(

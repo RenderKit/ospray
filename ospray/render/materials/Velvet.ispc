@@ -77,5 +77,5 @@ export void *uniform PathTracer_Velvet_set(void *uniform _self,
   self->horizonScatteringColor = horizonScatteringColor;
   self->horizonScatteringFallOff = horizonScatteringFallOff;
   self->backScattering = backScattering;
-  PathTraceMaterial_Constructor(&self->super, Velvet_getBSDF);
+  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_VELVET, Velvet_getBSDF);
 }
