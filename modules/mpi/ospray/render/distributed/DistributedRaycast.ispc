@@ -8,7 +8,7 @@
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "openvkl/openvkl.isph"
-#include "render/scivis/SciVisMaterial.ih"
+#include "render/materials/OBJ.ih"
 #include "render/scivis/surfaces.ih"
 #include "render/scivis/volumes.ih"
 #include "render/util.ih"
@@ -160,7 +160,7 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
 
   vec3f surfaceColor = make_vec3f(dg.color);
   float opacity = 1.f;
-  const SciVisMaterial *mat = (const SciVisMaterial *)dg.material;
+  const OBJ *mat = (const OBJ *)dg.material;
   if (mat) {
     foreach_unique (m in mat) {
       surfaceColor = m->Kd;

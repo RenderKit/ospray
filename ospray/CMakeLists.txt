@@ -158,15 +158,11 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   render/ao/AORenderer.cpp
   render/ao/AORenderer.ispc
-  render/ao/Material.cpp
-  render/ao/Material.ispc
   render/ao/surfaces.ispc
   render/ao/volumes.ispc
 
   render/scivis/SciVis.cpp
   render/scivis/SciVis.ispc
-  render/scivis/SciVisMaterial.cpp
-  render/scivis/SciVisMaterial.ispc
   render/scivis/surfaces.ispc
   render/scivis/volumes.ispc
   render/scivis/lightAlpha.ispc

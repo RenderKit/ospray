@@ -5,7 +5,6 @@
 #include "math/sampling.ih"
 #include "render/util.ih"
 // SciVis renderer
-#include "SciVisMaterial.ih"
 #include "lights/Light.ih"
 #include "surfaces.ih"
 

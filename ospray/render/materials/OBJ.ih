@@ -1,15 +1,13 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#pragma once
+#include "Material.ih"
 
-#include "render/Material.ih"
-#include "rkcommon/math/vec.ih"
-#include "texture/TextureParam.ih"
-
-struct AOMaterial
+struct OBJ
 {
-  float d;
+  PathTraceMaterial super;
+
+  float d; // cut-out opacity
   TextureParam dMap;
   vec3f Kd;
   TextureParam KdMap;
@@ -21,5 +19,4 @@ struct AOMaterial
   TextureParam bumpMap;
   linear2f bumpRot; // just the inverse of rotational/mirror part (must be
                     // orthonormal) of tc xfrom
-  Material super;
 };

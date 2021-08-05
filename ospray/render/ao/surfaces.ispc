@@ -5,12 +5,12 @@
 #include "math/sampling.ih"
 #include "render/util.ih"
 // AO Renderer
-#include "Material.ih"
+#include "render/materials/OBJ.ih"
 #include "surfaces.ih"
 
 inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 {
-  const AOMaterial *mat = (const AOMaterial *)dg.material;
+  const OBJ *mat = (const OBJ *)dg.material;
 
   vec3f surfaceColor = make_vec3f(1.f);
   float opacity = 1.f;

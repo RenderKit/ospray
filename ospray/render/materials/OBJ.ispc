@@ -1,29 +1,11 @@
 // Copyright 2009-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Material.ih"
+#include "OBJ.ih"
 #include "render/bsdfs/Lambert.ih"
 #include "render/bsdfs/MultiBSDF.ih"
 #include "render/bsdfs/Specular.ih"
 #include "render/bsdfs/Transmission.ih"
-
-struct OBJ
-{
-  float d; // cut-out opacity
-  TextureParam dMap;
-  vec3f Kd;
-  TextureParam KdMap;
-  vec3f Ks;
-  TextureParam KsMap;
-  float Ns;
-  TextureParam NsMap;
-  vec3f Tf; // transmission filter
-  TextureParam bumpMap;
-  linear2f bumpRot; // just the inverse of rotational/mirror part (must be
-                    // orthonormal) of tc xfrom
-  PathTraceMaterial super;
-
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
