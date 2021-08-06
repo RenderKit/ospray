@@ -4,6 +4,7 @@
 // ospray
 #include "World.h"
 // ispc exports
+#include "common/Instance_ispc.h"
 #include "common/World_ispc.h"
 
 namespace ospray {
@@ -12,7 +13,7 @@ namespace ospray {
 
 static void addGeometryInstance(RTCScene &scene,
     RTCScene instScene,
-    const rkcommon::math::affine3f &xfm,
+    const Instance *inst,
     RTCDevice embreeDevice)
 {
   if (!embreeDevice)
@@ -25,8 +26,18 @@ static void addGeometryInstance(RTCScene &scene,
   // Create geometry instance
   auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
   rtcSetGeometryInstancedScene(eInst, instScene);
-  rtcSetGeometryTransform(eInst, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+
+  auto &xfm = *inst->instanceXfm;
+  rtcSetGeometryTimeStepCount(eInst, xfm.size());
+  for (size_t i = 0; i < xfm.size(); i++)
+    rtcSetGeometryTransform(
+        eInst, i, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm[i]);
+  if (xfm.size() > 1)
+    rtcSetGeometryTimeRange(eInst, inst->time.lower, inst->time.upper);
+
   rtcCommitGeometry(eInst);
+  ispc::Instance_set_embreeGeom(inst->getIE(), eInst);
+
   rtcAttachGeometry(scene, eInst);
   rtcReleaseGeometry(eInst);
 }
@@ -94,27 +105,25 @@ void World::commit()
   int numInvertedClippers = 0;
   if (instances) {
     for (auto &&inst : *instances) {
-      auto xfm = inst->xfm();
-
       if (inst->group->sceneGeometries) {
         geometriesInstIEs.push_back(inst->getIE());
         addGeometryInstance(embreeSceneHandleGeometries,
             inst->group->sceneGeometries,
-            xfm,
+            inst,
             embreeDevice);
       }
       if (inst->group->sceneVolumes) {
         volumesInstIEs.push_back(inst->getIE());
         addGeometryInstance(embreeSceneHandleVolumes,
             inst->group->sceneVolumes,
-            xfm,
+            inst,
             embreeDevice);
       }
       if (inst->group->sceneClippers) {
         clippersInstIEs.push_back(inst->getIE());
         addGeometryInstance(embreeSceneHandleClippers,
             inst->group->sceneClippers,
-            xfm,
+            inst,
             embreeDevice);
         numInvertedClippers += inst->group->numInvertedClippers;
       }

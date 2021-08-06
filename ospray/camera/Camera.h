@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -48,8 +48,7 @@ struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
   // to simulate sensor shift
   vec2f imageStart; // lower left corner
   vec2f imageEnd; // upper right corner
-  float shutterOpen{0.0f}; // start time of camera shutter
-  float shutterClose{0.0f}; // end time of camera shutter
+  range1f shutter{0.5f, 0.5f}; // start and end time of camera shutter time
 
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>

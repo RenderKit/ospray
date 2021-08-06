@@ -23,6 +23,11 @@ Version History
     `renderer_type`, is now deprecated and will be removed in a future
     release. AO and SciVis renderers still assume "obj" like behavior
     for all material types
+-   Add support for transformation Motion Blur (with the path tracer)
+    via `motion.transform` array and `time` parameter of the instance
+    and `shutter` parameter of the camera
+-   Deprecated the `xfm` parameter of the instance, use `transform`
+    instead
 -   The SciVis renderer does not compute depth of field (DoF) anymore,
     as this effect does not align with the SciVis renderer definition
     and exposed artifacts

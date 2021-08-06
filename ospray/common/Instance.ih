@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -13,11 +13,41 @@ struct Instance
 {
   void *cppEquivalent;
 
+  Group *group;
+  RTCGeometry geom; // only to access rtcGetGeometryTransform
+
   AffineSpace3f xfm;
   AffineSpace3f rcp_xfm;
-
-  Group *group;
+  bool motionBlur;
 };
+
+inline uniform AffineSpace3f Instance_getTransform(
+    const Instance *uniform self, const uniform float time)
+{
+  uniform AffineSpace3f xfm;
+  rtcGetGeometryTransform(
+      self->geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+  return xfm;
+}
+
+inline AffineSpace3f Instance_getTransform(
+    const Instance *uniform self, const float time)
+{
+  varying AffineSpace3f xfm;
+  foreach_unique (utime in time) {
+    uniform AffineSpace3f uxfm;
+    rtcGetGeometryTransform(
+        self->geom, utime, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &uxfm);
+    xfm = uxfm;
+  }
+  /* TODO needs Embree 3.13.2
+
+    varying AffineSpace3f xfm_;
+    rtcGetGeometryTransform(
+        self->geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm_);
+  */
+  return xfm;
+}
 
 inline void Instance_postIntersect(const Instance *uniform self,
     const Renderer *uniform renderer,
@@ -28,20 +58,51 @@ inline void Instance_postIntersect(const Instance *uniform self,
 {
   GeometricModel **uniform models =
       clip ? self->group->clipModels : self->group->geometricModels;
-  foreach_unique (geomID in ray.geomID) {
+  foreach_unique (geomID in ray.geomID)
     GeometricModel_postIntersect(*(models + geomID), renderer, dg, ray, flags);
 
-    dg.lP = xfmPoint(self->rcp_xfm, dg.P);
-    dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
-    dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);
-    // scale dg.epsilon by max (epsilon is scalar and thus assumed to be
-    // isotropic anyway and hence cannot better handle non-uniform scaling)
-    dg.epsilon *= max(abs(self->xfm.l.vx.x),
-        max(abs(self->xfm.l.vy.y), abs(self->xfm.l.vz.z)));
+  uniform AffineSpace3f uxfm = self->xfm;
+  uniform AffineSpace3f rcp_uxfm = self->rcp_xfm;
 
-    if (flags & DG_TANGENTS) {
-      dg.dPds = xfmVector(self->xfm, dg.dPds);
-      dg.dPdt = xfmVector(self->xfm, dg.dPdt);
+  if ((flags & DG_MOTIONBLUR) == DG_MOTIONBLUR && self->motionBlur) {
+    uniform float utime;
+    uniform int cnt = 0;
+    foreach_unique (t in ray.time) {
+      utime = t;
+      cnt++;
     }
+
+    if (cnt > 1) { // varying xfm
+      const AffineSpace3f xfm = Instance_getTransform(self, ray.time);
+      const AffineSpace3f rcp_xfm = rcp(xfm);
+
+      dg.lP = xfmPoint(rcp_xfm, dg.P);
+      dg.Ns = xfmVector(transposed(rcp_xfm.l), dg.Ns);
+      dg.Ng = xfmVector(transposed(rcp_xfm.l), dg.Ng);
+      // scale dg.epsilon by max (epsilon is scalar and thus assumed to be
+      // isotropic anyway and hence cannot better handle non-uniform scaling)
+      dg.epsilon *= max(abs(xfm.l.vx.x), max(abs(xfm.l.vy.y), abs(xfm.l.vz.z)));
+
+      if (flags & DG_TANGENTS) {
+        dg.dPds = xfmVector(xfm, dg.dPds);
+        dg.dPdt = xfmVector(xfm, dg.dPdt);
+      }
+      return;
+    } else { // uniform xfm
+      uxfm = Instance_getTransform(self, utime);
+      rcp_uxfm = rcp(uxfm);
+    }
+  }
+
+  dg.lP = xfmPoint(rcp_uxfm, dg.P);
+  dg.Ns = xfmVector(transposed(rcp_uxfm.l), dg.Ns);
+  dg.Ng = xfmVector(transposed(rcp_uxfm.l), dg.Ng);
+  // scale dg.epsilon by max (epsilon is scalar and thus assumed to be
+  // isotropic anyway and hence cannot better handle non-uniform scaling)
+  dg.epsilon *= max(abs(uxfm.l.vx.x), max(abs(uxfm.l.vy.y), abs(uxfm.l.vz.z)));
+
+  if (flags & DG_TANGENTS) {
+    dg.dPds = xfmVector(uxfm, dg.dPds);
+    dg.dPdt = xfmVector(uxfm, dg.dPdt);
   }
 }

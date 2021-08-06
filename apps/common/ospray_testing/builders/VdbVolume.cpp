@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
@@ -117,7 +117,7 @@ cpp::World VdbVolume::buildWorld() const
   rkcommon::math::AffineSpace3f xform(
       rkcommon::math::LinearSpace3f::scale(8.f / domainRes),
       vec3f(-4.f, 0, -4.f));
-  instance.setParam("xfm", xform);
+  instance.setParam("transform", xform);
   instance.commit();
 
   std::vector<cpp::Instance> inst;

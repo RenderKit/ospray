@@ -91,8 +91,8 @@ void SciVis_renderSample(Renderer *uniform _self,
 
       // Shade geometry
       SSI surfaceShading;
-      surfaceShading = computeShading(
-          self, fb, world, dg, sample, ldSampler, ray.dir, ray.time);
+      surfaceShading =
+          computeShading(self, fb, world, dg, sample, ldSampler, ray.dir);
 
       // Initialize other per sample data with first hit values
       // In addition to considering the first hit, all previous, fully

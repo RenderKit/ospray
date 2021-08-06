@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
@@ -353,7 +353,7 @@ cpp::World UnstructuredVolumeGen::buildWorld() const
   AffineSpace3f xform(LinearSpace3f::rotate(vec3f(2.2f, 1.0f, -0.35f), 0.4f)
           * LinearSpace3f::scale(vec3f(1.0f, 1.0f, 4.0f)),
       vec3f(0.1f, -0.3, 2.f));
-  instance.setParam("xfm", xform);
+  instance.setParam("transform", xform);
   instance.commit();
 
   std::vector<cpp::Instance> inst;

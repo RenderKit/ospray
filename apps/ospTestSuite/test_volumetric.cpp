@@ -1,4 +1,4 @@
-// Copyright 2017-2020 Intel Corporation
+// Copyright 2017-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_volumetric.h"
@@ -127,7 +127,8 @@ void TextureVolumeTransform_deprecated::SetUp()
 
     // Create instance
     cpp::Instance instance(group);
-    instance.setParam("xfm", affine3f::translate(1.25f * vec3f(i.x, i.y, 0.f)));
+    instance.setParam(
+        "transform", affine3f::translate(1.25f * vec3f(i.x, i.y, 0.f)));
     instance.commit();
     AddInstance(instance);
   }
@@ -223,7 +224,8 @@ void TextureVolumeTransform::SetUp()
 
     // Create instance
     cpp::Instance instance(group);
-    instance.setParam("xfm", affine3f::translate(1.25f * vec3f(i.x, i.y, 0.f)));
+    instance.setParam(
+        "transform", affine3f::translate(1.25f * vec3f(i.x, i.y, 0.f)));
     instance.commit();
     AddInstance(instance);
   }

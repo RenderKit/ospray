@@ -4,7 +4,6 @@
 #pragma once
 
 // ospray stuff
-#include "Instance.ih"
 #include "common/Clipping.ih"
 #include "common/Ray.ih"
 #include "common/VolumeIntervals.ih"
@@ -87,13 +86,11 @@ inline void traceVolumeRay(
       (varying RTCRayHit * uniform) & ray);
 
   if (intervals.numVolumeIntervals > 0 && hasInterval(intervals.intervals[0])) {
-    Instance *instance = *(world->volumesInst + intervals.intervals[0].instID);
+    interval.instance = *(world->volumesInst + intervals.intervals[0].instID);
     interval.volumetricModel =
-        instance->group->volumetricModels[intervals.intervals[0].geomID];
-    interval.xfm = instance->xfm;
-    interval.rcp_xfm = instance->rcp_xfm;
-    interval.interval.lower = intervals.intervals[0].interval.lower;
-    interval.interval.upper = intervals.intervals[0].interval.upper;
+        interval.instance->group
+            ->volumetricModels[intervals.intervals[0].geomID];
+    interval.interval = intervals.intervals[0].interval;
   }
   freeVolumeIntervals(intervals);
 }
@@ -112,13 +109,12 @@ inline void traceVolumeRay(
       (varying RTCRayHit * uniform) & ray);
 
   if (intervals.numVolumeIntervals > 0) {
-    for (int i = 0; i < intervals.numVolumeIntervals; ++i) {
-      Instance *instance =
+    for (uniform int i = 0; i < intervals.numVolumeIntervals; ++i) {
+      const Instance *const instance =
           *(world->volumesInst + intervals.intervals[i].instID);
+      intervals.intervals[i].instance = instance;
       intervals.intervals[i].volumetricModel =
           instance->group->volumetricModels[intervals.intervals[i].geomID];
-      intervals.intervals[i].xfm = instance->xfm;
-      intervals.intervals[i].rcp_xfm = instance->rcp_xfm;
     }
   }
 }

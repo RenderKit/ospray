@@ -15,8 +15,7 @@ vec3f directIllumination(const uniform SciVis *uniform self,
     ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
     const varying SciVisBSDF &bsdf,
-    const varying vec3f &inDir,
-    const float time)
+    const varying vec3f &inDir)
 {
   vec3f color = make_vec3f(0.f);
   if (!world->scivisData.lights)
@@ -46,7 +45,7 @@ vec3f directIllumination(const uniform SciVis *uniform self,
             P = P - (2.f * dg.epsilon) * dg.Ng;
 
           Ray shadowRay;
-          setRay(shadowRay, P, light.dir, 0.0f, light.dist, time);
+          setRay(shadowRay, P, light.dir, 0.0f, light.dist);
 
           vec3f light_alpha = lightAlpha(self,
               shadowRay,
@@ -75,16 +74,15 @@ SSI computeShading(const SciVis *uniform self,
     const DifferentialGeometry &dg,
     ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
-    const varying vec3f &inDir,
-    const float time)
+    const varying vec3f &inDir)
 {
   SSI retval;
 
   const SciVisBSDF bsdf = evalMaterial(dg);
   retval.albedo = bsdf.albedo;
 
-  vec3f color = directIllumination(
-      self, fb, world, dg, sample, ldSampler, bsdf, inDir, time);
+  vec3f color =
+      directIllumination(self, fb, world, dg, sample, ldSampler, bsdf, inDir);
 
   vec3f ao = make_vec3f(1.f);
   if (self->aoSamples > 0

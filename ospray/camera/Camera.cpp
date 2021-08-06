@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -45,8 +45,7 @@ void Camera::commit()
   imageStart = getParam<vec2f>("imageStart", vec2f(0.f));
   imageEnd = getParam<vec2f>("imageEnd", vec2f(1.f));
 
-  shutterOpen = getParam<float>("shutterOpen", 0.0f);
-  shutterClose = getParam<float>("shutterClose", 0.0f);
+  shutter = getParam<range1f>("shutter", range1f(0.5f, 0.5f));
 
   linear3f frame;
   frame.vz = -normalize(dir);
@@ -59,8 +58,7 @@ void Camera::commit()
       nearClip,
       (const ispc::vec2f &)imageStart,
       (const ispc::vec2f &)imageEnd,
-      shutterOpen,
-      shutterClose);
+      (const ispc::box1f &)shutter);
 }
 
 ProjectedPoint Camera::projectPoint(const vec3f &) const

@@ -103,8 +103,11 @@ float volumeSampleFreePath(const PathState &pathState,
     if (isEmpty(vInterval))
       continue;
 
+    AffineSpace3f xfm;
+    foreach_unique (inst in volumeIntervals.intervals[i].instance)
+      xfm = Instance_getTransform(inst, volumeRay.time);
     Ray transformedVolumeRay = volumeRay;
-    transformRay(transformedVolumeRay, volumeIntervals.intervals[i].rcp_xfm);
+    transformRay(transformedVolumeRay, rcp(xfm));
 
     VolumetricModel *varying instance =
         volumeIntervals.intervals[i].volumetricModel;
@@ -172,8 +175,11 @@ float volumeTransmittance(const PathState &pathState,
     if (isEmpty(vInterval))
       continue;
 
+    AffineSpace3f xfm;
+    foreach_unique (inst in volumeIntervals.intervals[i].instance)
+      xfm = Instance_getTransform(inst, volumeRay.time);
     Ray transformedVolumeRay = volumeRay;
-    transformRay(transformedVolumeRay, volumeIntervals.intervals[i].rcp_xfm);
+    transformRay(transformedVolumeRay, rcp(xfm));
 
     VolumetricModel *varying instance =
         volumeIntervals.intervals[i].volumetricModel;

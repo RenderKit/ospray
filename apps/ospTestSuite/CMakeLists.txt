@@ -22,6 +22,7 @@ add_executable(ospTestSuite
   test_enums.cpp
   $<$<BOOL:${OSPRAY_APPS_ENABLE_GLM}>:test_glm_compat.cpp>
   test_camera.cpp
+  test_motionblur.cpp
   ospTestSuite.cpp
 )
 

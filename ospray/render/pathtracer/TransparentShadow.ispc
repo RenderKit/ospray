@@ -31,7 +31,8 @@ vec3f transparentShadow(const uniform PathTracer *uniform self,
         &self->super,
         dg,
         shadowRay,
-        DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR);
+        DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
+            | DG_MOTIONBLUR);
 
     uniform PathTraceMaterial *material =
         (uniform PathTraceMaterial *)dg.material;

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -17,7 +17,7 @@ struct Ray
   float t0; /*!< start of valid ray interval */
 
   vec3f dir; /*!< ray direction */
-  float time; //!< Time of this ray for motion blur
+  float time; //!< Time of this ray for motion blur, in 0..1
 
   float t; /*!< end of valid ray interval, or distance to hit point after
               'intersect' */
@@ -61,7 +61,7 @@ inline void setRay(Ray &ray,
     const vec3f &ray_dir,
     const float t0,
     const float t1,
-    const float time = 0.f)
+    const float time = 0.5f)
 {
   ray.org = ray_org;
   ray.dir = ray_dir;
@@ -77,7 +77,7 @@ inline void setRay(Ray &ray,
 inline void setRay(Ray &ray,
     const vec3f &ray_org,
     const vec3f &ray_dir,
-    const float time = 0.f)
+    const float time = 0.5f)
 {
   setRay(ray, ray_org, ray_dir, 0.f, inf, time);
 }

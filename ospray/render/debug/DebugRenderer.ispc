@@ -279,12 +279,13 @@ void DebugRenderer_volume(Renderer *uniform self,
     Volume *uniform volume = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
+    float time = 0.5f;
     VKLIntervalIterator intervalIterator =
         vklInitIntervalIteratorV(m->vklIntervalContext,
             (varying vkl_vec3f *)&ray.org,
             (varying vkl_vec3f *)&ray.dir,
             (varying vkl_range1f *)&vInterval.interval,
-            &ray.time,
+            &time,
             intervalIteratorBuffer);
 
     VKLInterval interval;

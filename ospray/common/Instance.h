@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -21,23 +21,11 @@ struct OSPRAY_SDK_INTERFACE Instance : public ManagedObject
 
   box3f getBounds() const override;
 
-  affine3f xfm();
-
-  // Data //
-
-  affine3f instanceXfm;
-  affine3f rcpXfm;
-
   Ref<Group> group;
+  Ref<const DataT<affine3f>> instanceXfm;
+  range1f time{0.0f, 1.0f};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Instance *, OSP_INSTANCE);
-
-// Inlined definitions //////////////////////////////////////////////////////
-
-inline affine3f Instance::xfm()
-{
-  return instanceXfm;
-}
 
 } // namespace ospray

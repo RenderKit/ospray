@@ -1734,12 +1734,17 @@ via a transform. To create and instance call
 
     OSPInstance ospNewInstance(OSPGroup);
 
-  ------------ ------ ---------- --------------------------------------
-  Type         Name      Default Description
-  ------------ ------ ---------- --------------------------------------
-  affine3f     xfm      identity world-space transform for all attached
-                                 geometries and volumes
-  ------------ ------ ---------- --------------------------------------
+  ------------ ----------------- ---------- --------------------------------------------------------
+  Type         Name                 Default Description
+  ------------ ----------------- ---------- --------------------------------------------------------
+  affine3f     transform           identity world-space transform for all attached geometries and
+                                            volumes, overridden by `motion.transform`
+
+  affine3f[]   motion.transform             uniformly distributed world-space transforms
+
+  box1f        time                  [0, 1] time associated with first and last key in
+                                            `motion.` arrays (for motion blur)
+  ------------ ----------------- ---------- --------------------------------------------------------
   : Parameters understood by instances.
 
 
@@ -2547,6 +2552,7 @@ All cameras accept these parameters:
   float  nearClip    near clipping distance
   vec2f  imageStart  start of image region (lower left corner)
   vec2f  imageEnd    end of image region (upper right corner)
+  box1f  shutter     start and end of shutter time (for motion blur), default [0.5, 0.5]
   ------ ----------- ------------------------------------------
   : Parameters accepted by all cameras.
 
@@ -2959,7 +2965,7 @@ Applications can query whether particular events are complete with
     int ospIsReady(OSPFuture, OSPSyncEvent = OSP_TASK_FINISHED);
 
 As the given running task runs (as tracked by the `OSPFuture`),
-applications can query a boolean [0,1] result if the passed event has
+applications can query a boolean [0, 1] result if the passed event has
 been completed.
 
 Applications can query how long an async task ran with

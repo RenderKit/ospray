@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Camera.ih"
@@ -9,8 +9,7 @@ export void Camera_set(void *uniform _self,
     const uniform float nearClip,
     const uniform vec2f &imageStart,
     const uniform vec2f &imageEnd,
-    const uniform float shutterOpen,
-    const uniform float shutterClose)
+    const uniform box1f &shutter)
 {
   uniform Camera *uniform self = (uniform Camera * uniform) _self;
   self->org = pos;
@@ -18,5 +17,5 @@ export void Camera_set(void *uniform _self,
   self->nearClip = nearClip;
   self->subImage.lower = imageStart;
   self->subImage.upper = imageEnd;
-  self->shutter = make_box1f(shutterOpen, shutterClose);
+  self->shutter = shutter;
 }

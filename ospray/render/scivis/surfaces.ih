@@ -22,8 +22,7 @@ SSI computeShading(const SciVis *uniform self,
     const DifferentialGeometry &dg,
     ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
-    const varying vec3f &inDir,
-    const float time);
+    const varying vec3f &inDir);
 
 vec3f evaluateLights(
     const World *uniform world, const DifferentialGeometry &dg, const Ray &ray);

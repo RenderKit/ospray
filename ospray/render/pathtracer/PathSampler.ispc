@@ -29,7 +29,7 @@ inline void postIntersect(const PathContext &pathContext,
         pathVertex.dg,
         ray,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
-            | DG_TANGENTS);
+            | DG_TANGENTS | DG_MOTIONBLUR);
   }
   if (pathVertex.type == VOLUME) {
     pathVertex.dg.Ng = make_vec3f(0.f);

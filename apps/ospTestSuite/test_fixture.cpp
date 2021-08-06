@@ -1,4 +1,4 @@
-// Copyright 2017-2020 Intel Corporation
+// Copyright 2017-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_fixture.h"
@@ -65,7 +65,7 @@ void Base::AddModel(cpp::GeometricModel model, affine3f xfm)
   group.commit();
 
   cpp::Instance instance(group);
-  instance.setParam("xfm", xfm);
+  instance.setParam("transform", xfm);
 
   AddInstance(instance);
 }
@@ -79,7 +79,7 @@ void Base::AddModel(cpp::VolumetricModel model, affine3f xfm)
   group.commit();
 
   cpp::Instance instance(group);
-  instance.setParam("xfm", xfm);
+  instance.setParam("transform", xfm);
 
   AddInstance(instance);
 }

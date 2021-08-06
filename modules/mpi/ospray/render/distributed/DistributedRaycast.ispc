@@ -46,7 +46,7 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
   VolumetricModel *varying volModel = interval.volumetricModel;
 
   Ray transformedRay = ray;
-  transformRay(transformedRay, interval.rcp_xfm);
+  transformRay(transformedRay, interval.instance->rcp_xfm);
 
   uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 
@@ -56,12 +56,13 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
     Volume *uniform volume = vm->volume;
     TransferFunction *uniform tf = vm->transferFunction;
 
+    float time = 0.5f;
     VKLIntervalIterator intervalIterator =
         vklInitIntervalIteratorV(vm->vklIntervalContext,
             (varying vkl_vec3f *)&transformedRay.org,
             (varying vkl_vec3f *)&transformedRay.dir,
             (varying vkl_range1f *)&interval.interval,
-            &ray.time,
+            &time,
             intervalIteratorBuffer);
 
     VKLInterval interval;
@@ -213,7 +214,7 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
           }
 
           Ray shadowRay;
-          setRay(shadowRay, P, light.dir, 0.0f, light.dist, ray.time);
+          setRay(shadowRay, P, light.dir, 0.0f, light.dist, 0.5f);
           if (!isOccluded(model, shadowRay)
               && !(ghostModel && isOccluded(ghostModel, shadowRay)))
           {
