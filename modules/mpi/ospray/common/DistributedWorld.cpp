@@ -196,7 +196,7 @@ void DistributedWorld::exchangeRegions()
     }
   }
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__linux__)
   // TODO WILL: Remove this eventually? It may be useful for users to debug
   // their code when setting regions. Maybe fix build on Apple? Why did
   // it fail to compile?
