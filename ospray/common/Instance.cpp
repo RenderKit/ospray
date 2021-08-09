@@ -26,22 +26,11 @@ std::string Instance::toString() const
 
 void Instance::commit()
 {
-  instanceXfm = getParamDataT<affine3f>("motion.transform");
-  if (!instanceXfm) { // add single transform
-    auto data = new Data(OSP_AFFINE3F, vec3ul(1));
-    auto &dataA3f = data->as<affine3f>();
-    *dataA3f.data() = getParam<affine3f>(
-        "transform", getParam<affine3f>("xfm", affine3f(one)));
-    instanceXfm = &dataA3f;
-    data->refDec();
-  }
-  const bool motionBlur = instanceXfm->size() > 1;
-  if (motionBlur)
-    time = getParam<range1f>("time", range1f(0.0f, 1.0f));
+  MotionTransform::commit();
 
   ispc::Instance_set(getIE(),
       group->getIE(),
-      (ispc::AffineSpace3f &)(*instanceXfm)[0],
+      (ispc::AffineSpace3f &)(*motionTransforms)[0],
       motionBlur);
 }
 
@@ -58,7 +47,7 @@ box3f Instance::getBounds() const
   //   include motion at all
   // - merge linear bounds from Embree (which is for time [0, 1]), but this
   //   needs a temporary RTCScene just for this instance
-  for (auto &&xfm : *instanceXfm)
+  for (auto &&xfm : *motionTransforms)
     bounds.extend(xfmBounds(xfm, groupBounds));
   return bounds;
 }

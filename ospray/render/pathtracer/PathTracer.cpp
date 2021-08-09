@@ -40,7 +40,7 @@ void PathTracer::generateGeometryLights(
       return;
 
     // TODO correctly handle motion blur of lights
-    affine3f xfm = (*instance->instanceXfm)[0];
+    affine3f xfm = (*instance->motionTransforms)[0];
 
     for (auto &&model : *geometries) {
       if (model->materialData) {

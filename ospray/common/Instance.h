@@ -5,12 +5,13 @@
 
 // ospray stuff
 #include "./Group.h"
+#include "./MotionTransform.h"
 // embree
 #include "embree3/rtcore.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Instance : public ManagedObject
+struct OSPRAY_SDK_INTERFACE Instance : public MotionTransform
 {
   Instance(Group *group);
   ~Instance() override = default;
@@ -22,8 +23,6 @@ struct OSPRAY_SDK_INTERFACE Instance : public ManagedObject
   box3f getBounds() const override;
 
   Ref<Group> group;
-  Ref<const DataT<affine3f>> instanceXfm;
-  range1f time{0.0f, 1.0f};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Instance *, OSP_INSTANCE);

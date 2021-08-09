@@ -141,14 +141,87 @@ void MotionBlurBoxes::SetUp()
   AddLight(ambient);
 }
 
+// Test camera MB (also in combination with stereo) ////////////////////////////
+class MotionCamera : public Base,
+                     public ::testing::TestWithParam<
+                         std::tuple<const char * /*camera*/, OSPStereoMode>>
+{
+ public:
+  MotionCamera();
+  void SetUp() override;
+
+ protected:
+  std::string cameraType;
+  vec3f pos{0.0f, 0.0f, -0.5f};
+  OSPStereoMode stereoMode;
+};
+
+MotionCamera::MotionCamera()
+{
+  rendererType = "pathtracer";
+  samplesPerPixel = 64;
+
+  auto params = GetParam();
+  cameraType = std::get<0>(params);
+  stereoMode = std::get<1>(params);
+}
+
+void MotionCamera::SetUp()
+{
+  Base::SetUp();
+
+  instances.clear();
+
+  auto builder = ospray::testing::newBuilder("cornell_box");
+  ospray::testing::setParam(builder, "rendererType", rendererType);
+  ospray::testing::commit(builder);
+
+  world = ospray::testing::buildWorld(builder);
+  ospray::testing::release(builder);
+  world.commit();
+
+  camera = cpp::Camera(cameraType);
+  if (cameraType != "panoramic") {
+    pos.z = -2.f;
+    camera.setParam("aspect", imgSize.x / (float)imgSize.y);
+  }
+  camera.setParam("position", pos);
+  if (cameraType == "orthographic")
+    camera.setParam("height", 2.0f);
+  else
+    camera.setParam("stereoMode", stereoMode);
+
+  std::vector<affine3f> xfms;
+  xfms.push_back(affine3f::rotate(vec3f(0, 4, 0), vec3f(0, 0, 1), 0.1));
+  xfms.push_back(affine3f::rotate(vec3f(0, 4, 0), vec3f(0, 0, 1), 0.12));
+  camera.setParam("motion.transform", cpp::CopiedData(xfms));
+  camera.setParam("shutter", range1f(0.0f, 1.0f));
+  camera.commit();
+}
+
 // Test Instantiations //////////////////////////////////////////////////////
 
-TEST_P(MotionBlurBoxes, test_mb)
+TEST_P(MotionBlurBoxes, instance_mb)
 {
   PerformRenderTest();
 }
 
 INSTANTIATE_TEST_SUITE_P(
     TestMotionBlur, MotionBlurBoxes, ::testing::Values("scivis", "pathtracer"));
+
+TEST_P(MotionCamera, camera_mb)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(Camera,
+    MotionCamera,
+    ::testing::Combine(::testing::Values("perspective", "panoramic"),
+        ::testing::Values(
+            OSP_STEREO_NONE, OSP_STEREO_RIGHT, OSP_STEREO_SIDE_BY_SIDE)));
+
+INSTANTIATE_TEST_SUITE_P(CameraOrtho,
+    MotionCamera,
+    ::testing::Values(std::make_tuple("orthographic", OSP_STEREO_NONE)));
 
 } // namespace OSPRayTestScenes

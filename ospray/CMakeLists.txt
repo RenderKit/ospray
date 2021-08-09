@@ -55,6 +55,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   common/Group.ispc
   common/Instance.cpp
   common/Instance.ispc
+  common/MotionTransform.cpp
   common/Managed.cpp
   common/OSPCommon.ispc
   common/World.ih

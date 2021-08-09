@@ -395,7 +395,10 @@ OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
 
 OSPCamera MPIDistributedDevice::newCamera(const char *type)
 {
-  return createLocalObject<Camera, OSPCamera>(type);
+  auto c = createLocalObject<Camera, OSPCamera>(type);
+  auto *cam = lookupObject<Camera>(c);
+  cam->setDevice(embreeDevice);
+  return c;
 }
 
 OSPVolume MPIDistributedDevice::newVolume(const char *type)

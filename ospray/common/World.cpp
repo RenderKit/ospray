@@ -27,7 +27,7 @@ static void addGeometryInstance(RTCScene &scene,
   auto eInst = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
   rtcSetGeometryInstancedScene(eInst, instScene);
 
-  auto &xfm = *inst->instanceXfm;
+  auto &xfm = *inst->motionTransforms;
   rtcSetGeometryTimeStepCount(eInst, xfm.size());
   for (size_t i = 0; i < xfm.size(); i++)
     rtcSetGeometryTransform(

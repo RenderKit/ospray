@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "OrthographicCamera.h"
@@ -20,29 +20,17 @@ void OrthographicCamera::commit()
 {
   Camera::commit();
 
-  // ------------------------------------------------------------------
-  // first, "parse" the additional expected parameters
-  // ------------------------------------------------------------------
-  height = getParam<float>("height", 1.f); // imgPlane_size_y
+  height = getParam<float>("height", 1.f);
   aspect = getParam<float>("aspect", 1.f);
 
-  // ------------------------------------------------------------------
-  // now, update the local precomputed values
-  // ------------------------------------------------------------------
-  dir = normalize(dir);
-  vec3f pos_du = normalize(cross(dir, up));
-  vec3f pos_dv = cross(pos_du, dir);
-
-  pos_du *= height * aspect; // imgPlane_size_x
-  pos_dv *= height;
-
-  vec3f pos_00 = pos - 0.5f * pos_du - 0.5f * pos_dv;
+  vec2f size = height;
+  size.x *= aspect;
 
   ispc::OrthographicCamera_set(getIE(),
+      (const ispc::vec3f &)pos,
       (const ispc::vec3f &)dir,
-      (const ispc::vec3f &)pos_00,
-      (const ispc::vec3f &)pos_du,
-      (const ispc::vec3f &)pos_dv);
+      (const ispc::vec3f &)up,
+      (const ispc::vec2f &)size);
 }
 
 } // namespace ospray

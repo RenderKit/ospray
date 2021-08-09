@@ -5,6 +5,7 @@
 
 // ospray stuff
 #include "Group.ih"
+#include "MotionTransform.ih"
 #include "Ray.ih"
 
 struct Renderer;
@@ -24,29 +25,13 @@ struct Instance
 inline uniform AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const uniform float time)
 {
-  uniform AffineSpace3f xfm;
-  rtcGetGeometryTransform(
-      self->geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
-  return xfm;
+  return getInterpolatedTransform(self->geom, time);
 }
 
 inline AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const float time)
 {
-  varying AffineSpace3f xfm;
-  foreach_unique (utime in time) {
-    uniform AffineSpace3f uxfm;
-    rtcGetGeometryTransform(
-        self->geom, utime, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &uxfm);
-    xfm = uxfm;
-  }
-  /* TODO needs Embree 3.13.2
-
-    varying AffineSpace3f xfm_;
-    rtcGetGeometryTransform(
-        self->geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm_);
-  */
-  return xfm;
+  return getInterpolatedTransform(self->geom, time);
 }
 
 inline void Instance_postIntersect(const Instance *uniform self,

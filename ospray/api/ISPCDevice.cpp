@@ -289,7 +289,9 @@ OSPLight ISPCDevice::newLight(const char *type)
 
 OSPCamera ISPCDevice::newCamera(const char *type)
 {
-  return (OSPCamera)Camera::createInstance(type);
+  ospray::Camera *ret = Camera::createInstance(type);
+  ret->setDevice(embreeDevice);
+  return (OSPCamera)ret;
 }
 
 OSPGeometry ISPCDevice::newGeometry(const char *type)

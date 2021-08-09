@@ -2544,25 +2544,35 @@ To create a new camera of given type `type` use
 
 All cameras accept these parameters:
 
-  Type   Name        Description
-  ------ ----------- ------------------------------------------
-  vec3f  position    position of the camera in world-space
-  vec3f  direction   main viewing direction of the camera
-  vec3f  up          up direction of the camera
-  float  nearClip    near clipping distance
-  vec2f  imageStart  start of image region (lower left corner)
-  vec2f  imageEnd    end of image region (upper right corner)
-  box1f  shutter     start and end of shutter time (for motion blur), default [0.5, 0.5]
+  Type        Name              Description
+  ----------- ----------------- ------------------------------------------
+  vec3f       position          position of the camera in world-space
+  vec3f       direction         main viewing direction of the camera
+  vec3f       up                up direction of the camera
+  affine3f    transform         additional world-space transform, overridden by `motion.transform`
+  float       nearClip          near clipping distance
+  vec2f       imageStart        start of image region (lower left corner)
+  vec2f       imageEnd          end of image region (upper right corner)
+  affine3f[]  motion.transform  additional uniformly distributed world-space transforms
+  box1f       time              time associated with first and last key in `motion.` arrays, default [0, 1]
+  box1f       shutter           start and end of shutter time (for motion blur), default [0.5, 0.5]
   ------ ----------- ------------------------------------------
   : Parameters accepted by all cameras.
 
-The camera is placed and oriented in the world with `position`, `direction`
-and `up`. OSPRay uses a right-handed coordinate system. The region of the
-camera sensor that is rendered to the image can be specified in normalized
+The camera is placed and oriented in the world with `position`,
+`direction` and `up`. Additionally, an extra transformation `transform`
+can be specified, which will only be applied to 3D vectors (i.e.
+`position`, `direction` and `up`), but does *not* affect any sizes
+(e.g., `nearClip`, `apertureRadius`, or `height`). The same holds for
+the array of transformations `motion.transform` to achieve camera motion
+blur (in combination with `time` and `shutter`).
+
+OSPRay uses a right-handed coordinate system. The region of the camera
+sensor that is rendered to the image can be specified in normalized
 screen-space coordinates with `imageStart` (lower left corner) and
-`imageEnd` (upper right corner). This can be used, for example, to crop the
-image, to achieve asymmetrical view frusta, or to horizontally flip the
-image to view scenes which are specified in a left-handed coordinate
+`imageEnd` (upper right corner). This can be used, for example, to crop
+the image, to achieve asymmetrical view frusta, or to horizontally flip
+the image to view scenes which are specified in a left-handed coordinate
 system. Note that values outside the default range of [0–1] are valid,
 which is useful to easily realize overscan or film gate, or to emulate a
 shifted sensor.
@@ -2571,9 +2581,8 @@ shifted sensor.
 
 The perspective camera implements a simple thin lens camera for
 perspective rendering, supporting optionally depth of field and stereo
-rendering (with the [path tracer]), but no motion blur. It is created by
-passing the type string
-"`perspective`" to `ospNewCamera`. In addition to the [general
+rendering (with the [path tracer]). It is created by passing the type
+string "`perspective`" to `ospNewCamera`. In addition to the [general
 parameters](#cameras) understood by all cameras the perspective camera
 supports the special parameters listed in the table below.
 
@@ -2641,11 +2650,10 @@ edges.][imgCameraArchitectural]
 #### Orthographic Camera
 
 The orthographic camera implements a simple camera with orthographic
-projection, without support for depth of field or motion blur. It is
-created by passing the type string  "`orthographic`" to `ospNewCamera`.
-In addition to the [general parameters](#cameras) understood by all
-cameras the orthographic camera supports the following special
-parameters:
+projection, without support for depth. It is created by passing the type
+string  "`orthographic`" to `ospNewCamera`. In addition to the [general
+parameters](#cameras) understood by all cameras the orthographic camera
+supports the following special parameters:
 
   Type   Name    Description
   ------ ------- ------------------------------------------------------------

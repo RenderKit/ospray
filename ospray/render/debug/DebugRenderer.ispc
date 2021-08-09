@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
-#include "camera/PerspectiveCamera.ih"
 #include "common/World.ih"
 #include "fb/FrameBuffer.ih"
 #include "math/random.ih"

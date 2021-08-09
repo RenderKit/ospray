@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_camera.h"
@@ -37,6 +37,7 @@ void Stereo::SetUp()
   }
   camera.setParam("position", pos);
   camera.setParam("stereoMode", stereoMode);
+  camera.setParam("transform", affine3f(one));
   camera.commit();
 }
 
