@@ -197,34 +197,29 @@ void DistributedWorld::exchangeRegions()
     }
   }
 
-#ifndef __APPLE__
-  // TODO WILL: Remove this eventually? It may be useful for users to debug
-  // their code when setting regions. Maybe fix build on Apple? Why did
-  // it fail to compile?
   if (logLevel() >= OSP_LOG_DEBUG) {
+    StatusMsgStream debugLog;
     for (int i = 0; i < mpiGroup.size; ++i) {
       if (i == mpiGroup.rank) {
-        postStatusMsg(OSP_LOG_DEBUG)
-            << "Rank " << mpiGroup.rank << ": All regions in world {";
+        debugLog << "Rank " << mpiGroup.rank << ": All regions in world {\n";
         for (const auto &b : allRegions) {
-          postStatusMsg(OSP_LOG_DEBUG) << "\t" << b << ",";
+          debugLog << "\t" << b << ",\n";
         }
-        postStatusMsg(OSP_LOG_DEBUG) << "}\n";
+        debugLog << "}\n\n";
 
-        postStatusMsg(OSP_LOG_DEBUG) << "Ownership Information: {";
+        debugLog << "Ownership Information: {\n";
         for (const auto &r : regionOwners) {
-          postStatusMsg(OSP_LOG_DEBUG) << "(" << r.first << ": [";
+          debugLog << "(" << r.first << ": [";
           for (const auto &i : r.second) {
-            postStatusMsg(OSP_LOG_DEBUG) << i << ", ";
+            debugLog << i << ", ";
           }
-          postStatusMsg(OSP_LOG_DEBUG) << "])";
+          debugLog << "])\n";
         }
-        postStatusMsg(OSP_LOG_DEBUG) << "\n" << std::flush;
+        debugLog << "\n";
       }
       mpicommon::barrier(mpiGroup.comm).wait();
     }
   }
-#endif
 }
 
 } // namespace mpi
