@@ -16,6 +16,9 @@ Version History
     more closely reflect that of the Path Tracer
     -   Background hits are rendered black on the normal map
     -   Background hits are rendered in background color on the albedo map
+-   OSPRay now requires minimum Open VKL v0.14.0 to bring the
+    following improvements:
+    -   Better default sampling rate for scaled VDB volumes
 
 ### Changes in v2.6.0:
 
