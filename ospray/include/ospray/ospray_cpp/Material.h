@@ -21,7 +21,7 @@ static_assert(sizeof(Material) == sizeof(OSPMaterial),
 // Inlined function definitions ///////////////////////////////////////////
 
 inline Material::Material(
-    const std::string &renderer_type, const std::string &mat_type)
+    const std::string &/*ignored*/, const std::string &mat_type)
 {
   ospObject = ospNewMaterial(nullptr, mat_type.c_str());
 }

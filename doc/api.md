@@ -1995,7 +1995,9 @@ Materials describe how light interacts with surfaces, they give objects
 their distinctive look. To let the given renderer create a new material
 of given type `type` call
 
-    OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
+    OSPMaterial ospNewMaterial(const char *, const char *material_type);
+
+Please note that the first argument is ignored.
 
 The returned handle can then be used to assign the material to a given
 geometry with

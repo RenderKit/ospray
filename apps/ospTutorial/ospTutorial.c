@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial how to use OSPRay in an application.
@@ -145,7 +145,8 @@ int main(int argc, const char **argv)
 
   ospCommit(mesh);
 
-  OSPMaterial mat = ospNewMaterial("pathtracer", "obj");
+  OSPMaterial mat =
+    ospNewMaterial("", "obj"); // first argument no longer matters
   ospCommit(mat);
 
   // put the mesh into a model
