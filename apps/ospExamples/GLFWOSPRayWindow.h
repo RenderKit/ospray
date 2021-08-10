@@ -1,4 +1,4 @@
-// Copyright 2018-2020 Intel Corporation
+// Copyright 2018-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -70,6 +70,11 @@ class GLFWOSPRayWindow
 
   // Arcball camera instance
   std::unique_ptr<ArcballCamera> arcballCamera;
+  affine3f lastXfm{one};
+  float cameraMotionBlur{0.0f};
+  // only one frame during movement is rendered with MB,
+  // during accumulation the camera is static and thus no MB
+  bool renderCameraMotionBlur{false};
 
   // OSPRay objects managed by this class
   cpp::Renderer rendererPT{"pathtracer"};
