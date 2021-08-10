@@ -406,14 +406,13 @@ OSPVolumetricModel MPIOffloadDevice::newVolumetricModel(OSPVolume volume)
 ///////////////////////////////////////////////////////////////////////////
 
 OSPMaterial MPIOffloadDevice::newMaterial(
-    const char *renderer_type, const char *material_type)
+    const char *, const char *material_type)
 {
   ObjectHandle handle = allocateHandle();
 
   sendWork(
       [&](networking::WriteStream &writer) {
-        writer << work::NEW_MATERIAL << handle.i64 << renderer_type
-               << material_type;
+        writer << work::NEW_MATERIAL << handle.i64 << material_type;
       },
       false);
 

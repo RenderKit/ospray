@@ -429,9 +429,9 @@ OSPVolumetricModel MPIDistributedDevice::newVolumetricModel(OSPVolume _vol)
 }
 
 OSPMaterial MPIDistributedDevice::newMaterial(
-    const char *renderer_type, const char *material_type)
+    const char *, const char *material_type)
 {
-  auto *instance = Material::createInstance(renderer_type, material_type);
+  auto *instance = Material::createInstance(nullptr, material_type);
   return (OSPMaterial)instance;
 }
 

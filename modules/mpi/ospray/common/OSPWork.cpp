@@ -152,9 +152,9 @@ void newMaterial(
     OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
   int64_t handle = 0;
-  std::string type, rendererType;
-  cmdBuf >> handle >> rendererType >> type;
-  state.objects[handle] = ospNewMaterial(rendererType.c_str(), type.c_str());
+  std::string type;
+  cmdBuf >> handle >> type;
+  state.objects[handle] = ospNewMaterial(nullptr, type.c_str());
 }
 
 void newLight(
