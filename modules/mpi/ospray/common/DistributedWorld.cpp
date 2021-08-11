@@ -71,6 +71,11 @@ DistributedWorld::DistributedWorld() : mpiGroup(mpicommon::worker.dup())
   this->ispcEquivalent = ispc::DistributedWorld_create(this);
 }
 
+DistributedWorld::~DistributedWorld()
+{
+  MPI_Comm_free(&mpiGroup.comm);
+}
+
 box3f DistributedWorld::getBounds() const
 {
   box3f bounds;

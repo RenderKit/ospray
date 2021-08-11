@@ -3085,6 +3085,11 @@ The `maxCommandBufferEntries`, `commandBufferSize`, and
 `OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
 respectively.
 
+The `mpiOffload` device does not support multiple init/shutdown cycles.
+Thus, to run `ospBenchmark` for this device make sure to exclude the
+init/shutdown test by passing `--benchmark_filter=-ospInit_ospShutdown`
+through the command line.
+
 MPI Distributed Rendering
 -------------------------
 
