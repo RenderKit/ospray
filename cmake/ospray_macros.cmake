@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 include(CMakeFindDependencyMacro)
@@ -367,21 +367,12 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
             " set the 'embree_DIR' variable to the installation (or build)"
             " directory.")
   endif()
-  if (TARGET embree)
-    get_target_property(EMBREE_INCLUDE_DIRS embree
-      INTERFACE_INCLUDE_DIRECTORIES)
-    get_target_property(CONFIGURATIONS embree IMPORTED_CONFIGURATIONS)
-    list(GET CONFIGURATIONS 0 CONFIGURATION)
-    get_target_property(EMBREE_LIBRARY embree
-        IMPORTED_LOCATION_${CONFIGURATION})
-  else()
-    add_library(embree INTERFACE) # NOTE(jda) - Cannot be IMPORTED due to CMake
-                                  #             issues found on Ubuntu.
-    target_include_directories(embree
-        INTERFACE $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>)
-    target_link_libraries(embree
-       INTERFACE $<BUILD_INTERFACE:${EMBREE_LIBRARY}>)
-  endif()
+  get_target_property(EMBREE_INCLUDE_DIRS embree
+    INTERFACE_INCLUDE_DIRECTORIES)
+  get_target_property(CONFIGURATIONS embree IMPORTED_CONFIGURATIONS)
+  list(GET CONFIGURATIONS 0 CONFIGURATION)
+  get_target_property(EMBREE_LIBRARY embree
+      IMPORTED_LOCATION_${CONFIGURATION})
   message(STATUS "Found Embree v${embree_VERSION}: ${EMBREE_LIBRARY}")
 endmacro()
 
