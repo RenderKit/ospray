@@ -46,9 +46,11 @@ class DistantLight
   vec3f direction{0.f, 0.f, 1.f};
 };
 
-class GeometricLight : public LightTest,
-                       public ::testing::TestWithParam<
-                           std::tuple<float /*size*/, bool /*useMaterialList*/>>
+class GeometricLight
+    : public LightTest,
+      public ::testing::TestWithParam<std::tuple<float /*size*/,
+          bool /*useMaterialList*/,
+          bool /*motionBlur*/>>
 {
  public:
   GeometricLight();
@@ -57,6 +59,7 @@ class GeometricLight : public LightTest,
  private:
   float size{0.2};
   bool useMaterialList{true};
+  bool motionBlur{false};
 };
 
 class PhotometricLight

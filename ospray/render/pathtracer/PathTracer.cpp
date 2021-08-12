@@ -39,9 +39,6 @@ void PathTracer::generateGeometryLights(
     if (!geometries)
       return;
 
-    // TODO correctly handle motion blur of lights
-    affine3f xfm = (*instance->motionTransforms)[0];
-
     for (auto &&model : *geometries) {
       if (model->materialData) {
         // check whether the model has any emissive materials
@@ -65,8 +62,8 @@ void PathTracer::generateGeometryLights(
 
         if (hasEmissive) {
           if (ispc::GeometryLight_isSupported(model->getIE())) {
-            void *light =
-                ispc::GeometryLight_create(model->getIE(), getIE(), &xfm);
+            void *light = ispc::GeometryLight_create(
+                model->getIE(), getIE(), instance->getIE());
 
             // check whether the geometry has any emissive primitives
             if (light)

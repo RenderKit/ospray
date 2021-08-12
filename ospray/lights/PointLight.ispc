@@ -22,7 +22,8 @@ struct PointLight
 
 Light_SampleRes PointLight_sample(const uniform Light *uniform super,
     const DifferentialGeometry &dg,
-    const vec2f &s)
+    const vec2f &s,
+    const float)
 {
   const PointLight *uniform self = (PointLight * uniform) super;
   Light_SampleRes res;
