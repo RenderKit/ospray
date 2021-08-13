@@ -27,7 +27,7 @@ before you can build OSPRay you need the following prerequisites:
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.^[For example, if OSPRay is in
     `~/Projects/ospray`, ISPC will also be searched in
-    `~/Projects/ispc-v1.16.0-linux`.] Alternatively set the CMake
+    `~/Projects/ispc-v1.16.1-linux`.] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   OSPRay builds on top of the [Intel oneAPI Rendering Toolkit common
     library (rkcommon)](https://www.github.com/ospray/rkcommon). The
@@ -38,11 +38,11 @@ before you can build OSPRay you need the following prerequisites:
     tasking system for performance and flexibility reasons.
     Alternatively you can set CMake variable `RKCOMMON_TASKING_SYSTEM`
     to `OpenMP` or `Internal`.
--   OSPRay also heavily uses Intel [Embree], installing version 3.12.0
+-   OSPRay also heavily uses Intel [Embree], installing version 3.13.1
     or newer is required. If Embree is not found by CMake its location
     can be hinted with the variable `embree_DIR`.
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.14.0 or newer is required. If Open VKL is not
+    installing version 1.0.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 -   OSPRay also provides an optional module implementing the `denoiser`

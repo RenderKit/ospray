@@ -16,9 +16,15 @@ Version History
     more closely reflect that of the Path Tracer
     -   Background hits are rendered black on the normal map
     -   Background hits are rendered in background color on the albedo map
--   OSPRay now requires minimum Open VKL v0.14.0 to bring the
+-   OSPRay now requires minimum Open VKL v1.0.0 to bring the
     following improvements:
-    -   Better default sampling rate for scaled VDB volumes
+    -   Configurable `background` values for all volume types (default
+        `NaN`), defining region outside the volume domain
+    -   Better default sampling rate for scaled VDB volumes, improved
+        robustness
+    -   Structured regular volumes now support tricubic filtering and
+        more accurate gradient computations as well as more robust
+        isosurfaces
 -   The first argument to material constructor `ospNewMaterial`, i.e.,
     `renderer_type`, is now deprecated and will be removed in a future
     release. AO and SciVis renderers still assume "obj" like behavior

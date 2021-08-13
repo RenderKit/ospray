@@ -591,9 +591,15 @@ table below.
                                                         reconstructing the field,
                                                         also allowed is
                                                         `OSP_VOLUME_FILTER_NEAREST`
+                                                        and
+                                                        `OSP_VOLUME_FILTER_TRICUBIC`
 
   int     gradientFilter              same as `filter`  filter used during
                                                         gradient computations
+
+  float   background                             `NaN`  value that is used when
+                                                        sampling an undefined region
+                                                        outside the volume domain
   ------- -------------- -----------------------------  --------------------------
   : Configuration parameters for structured regular volumes.
 
@@ -626,7 +632,7 @@ summarized below.
                                                         units of $(r, \theta,
                                                         \phi)$; angles in degrees
 
-  OSPData  data                                         the actual voxel 3D [data]
+  OSPData data                                          the actual voxel 3D [data]
 
   int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
                                                         reconstructing the field,
@@ -635,6 +641,10 @@ summarized below.
 
   int     gradientFilter              same as `filter`  filter used during
                                                         gradient computations
+
+  float   background                             `NaN`  value that is used when
+                                                        sampling an undefined region
+                                                        outside the volume domain
   ------- -------------- -----------------------------  --------------------------
   : Configuration parameters for structured spherical volumes.
 
@@ -701,6 +711,10 @@ Note that cell widths are defined _per refinement level_, not per block.
 
   vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
                                                     world-space
+
+  float          background                  `NaN`  value that is used when sampling
+                                                    an undefined region outside the
+                                                    volume domain
   -------------- --------------- -----------------  -----------------------------------
   : Configuration parameters for AMR volumes.
 
@@ -825,8 +839,9 @@ the `cell.type` parameter must be omitted).
   bool                precomputedNormals    false  whether to accelerate by precomputing,
                                                    at a cost of 12 bytes/face
 
-  int                   maxIteratorDepth        6  do not descend further than to this BVH
-                                                   depth during interval iteration
+  float               background            `NaN`  value that is used when sampling an
+                                                   undefined region outside the volume
+                                                   domain
   ------------------- ------------------ --------  ---------------------------------------
   : Configuration parameters for unstructured volumes.
 
@@ -865,10 +880,6 @@ VDB volumes have the following parameters:
   ---------- ----------------- -------------------------------------------------
   Type       Name              Description
   ---------- ----------------- -------------------------------------------------
-  int        maxIteratorDepth  do not descend further than to this depth during
-                               interval iteration, the maximum value and the
-                               default is 3
-
   int        maxSamplingDepth  do not descend further than to this depth during
                                sampling, the maximum value and the default is 3
 
@@ -893,6 +904,9 @@ VDB volumes have the following parameters:
 
   int        gradientFilter    filter used for reconstructing the field during
                                gradient computations, default same as `filter`
+
+  float      background        value that is used when sampling an undefined region
+                               outside the volume domain, default `NaN`
   ---------- ----------------- -------------------------------------------------
   : Configuration parameters for VDB volumes.
 
@@ -959,8 +973,6 @@ traversal, similar to the method in\ [1].
                                              time, but will make volume rendering
                                              less efficient.
 
-  int             maxIteratorDepth        6  do not descend further than to this BVH
-                                             depth during interval iteration
   -------- ----------------------- --------  ---------------------------------------
   : Configuration parameters for particle volumes.
 
