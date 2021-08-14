@@ -244,7 +244,7 @@ case, although the processes are run MPI parallel, each rank specifies
 the exact same data. OSPRay's MPI parallel renderer will detect that the
 data is replicated in this case and use the same image-parallel
 rendering algorithms employed in the MPI offload rendering configuration
-to render the data. This image-parallel rendereing algorithm supports
+to render the data. This image-parallel rendering algorithm supports
 all rendering configurations that are used in local rendering, e.g.,
 path tracing, to provide high-quality images.
 

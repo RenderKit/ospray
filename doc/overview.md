@@ -20,7 +20,7 @@ OSPRay internally builds on top of [Intel Embree] and [Intel ISPC
 exploits modern instruction sets like Intel SSE4, AVX, AVX2, AVX-512 and NEON
 to achieve high rendering performance, thus a CPU with support for at
 least SSE4.1 is required to run OSPRay on x86_64 architectures.
-A CPU with support for NEON is required to run OSPRay on Arm64 architectures.
+A CPU with support for NEON is required to run OSPRay on ARM64 architectures.
 
 
 OSPRay Support and Contact

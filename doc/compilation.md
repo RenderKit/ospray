@@ -29,7 +29,6 @@ before you can build OSPRay you need the following prerequisites:
     `~/Projects/ospray`, ISPC will also be searched in
     `~/Projects/ispc-v1.16.1-linux`.] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
-    ISPC 1.16.0 or later is required for Arm support.
 -   OSPRay builds on top of the [Intel oneAPI Rendering Toolkit common
     library (rkcommon)](https://www.github.com/ospray/rkcommon). The
     library provides abstractions for tasking, aligned memory
@@ -37,7 +36,7 @@ before you can build OSPRay you need the following prerequisites:
     to build rkcommon, we recommend the default the Intel [Threading
     Building Blocks (TBB)](https://www.threadingbuildingblocks.org/) as
     tasking system for performance and flexibility reasons.
-    TBB must be built from source when targetting Arm CPUs, or can
+    TBB must be built from source when targeting ARM CPUs, or can
     be built from source as part of the [superbuild](#cmake-superbuild).
     Alternatively you can set CMake variable `RKCOMMON_TASKING_SYSTEM`
     to `OpenMP` or `Internal`.
@@ -135,7 +134,7 @@ BUILD_OSPRAY_MODULE_MPI
 distributed parallel rendering on multiple nodes.
 
 BUILD_TBB_FROM_SOURCE
-: set to ON to build TBB from source (required for Arm support).
+: set to ON to build TBB from source (required for ARM support).
 The default setting is OFF.
 
 For the full set of options, run:
@@ -171,7 +170,7 @@ CMake is easy:
 
         cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
 
-    CMake will now use Clang instead of GCC. If you are ok with using
+    CMake will now use Clang instead of GCC. If you are OK with using
     the default compiler on your system, then simply skip this step.
     Note that the compiler variables cannot be changed after the first
     `cmake` or `ccmake` run.

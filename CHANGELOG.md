@@ -3,19 +3,12 @@ Version History
 
 ### Changes in v2.7.0:
 
--   New minimum ISPC version is 1.16.0
--   Fixed rendering of depth buffer in the example apps
--   Dependencies Google Benchmark, GoggleTest, and Snappy moved
-    out-of-source to superbuild ExternalProjects
--   The multidevice module contains an new OSPRay Device implementation
-    that delegates work to any number of subdevices. This is an
-    experimental feature in this release but we invite feedback.
--   SciVis Renderer now ignores normal/albedo/depth hits on surfaces
-    that are fully transmissive (Material `d = 0`).
--   Changed the behavior of background rendering in SciVIs Renderer to
-    more closely reflect that of the Path Tracer
-    -   Background hits are rendered black on the normal map
-    -   Background hits are rendered in background color on the albedo map
+-   Add support for transformation and camera Motion Blur (with the path
+    tracer) via `shutter` parameter of the camera and `motion.transform`
+    array and `time` parameter of the instance and camera
+-   OSPRay can now be built for ARM64 CPUs with NEON (e.g., Apple M1)
+    using the superbuild. Thus, new minimum versions are for ISPC
+    1.16.0, for Embree 3.13.1 and for rkcommon 1.7.0
 -   OSPRay now requires minimum Open VKL v1.0.0 to bring the
     following improvements:
     -   Configurable `background` values for all volume types (default
@@ -25,21 +18,28 @@ Version History
     -   Structured regular volumes now support tricubic filtering and
         more accurate gradient computations as well as more robust
         isosurfaces
+-   The multidevice module contains a new OSPRay device implementation
+    that delegates work to any number of subdevices. This is an
+    experimental feature in this release but we invite feedback
+-   SciVis Renderer now ignores normal/albedo/depth hits on surfaces
+    that are fully transmissive (material `d = 0`)
+-   Changed the behavior of background rendering in SciVis renderer to
+    more closely reflect that of the path tracer: Background hits are
+    rendered in background color in the albedo buffer and black in the
+    normal buffer
+-   The SciVis renderer does not compute depth of field (DoF) anymore,
+    as this effect does not align with the SciVis renderer definition
+    and exposed artifacts
+-   Fixed crash on exit when using the MPI device
+-   Fixed rendering of depth buffer in the example application
 -   The first argument to material constructor `ospNewMaterial`, i.e.,
     `renderer_type`, is now deprecated and will be removed in a future
     release. AO and SciVis renderers still assume "obj" like behavior
     for all material types
--   Add support for transformation and camera Motion Blur (with the path
-    tracer) via `shutter` parameter of the camera and `motion.transform`
-    array and `time` parameter of the instance and camera
 -   Deprecated the `xfm` parameter of the instance, use `transform`
     instead
--   The SciVis renderer does not compute depth of field (DoF) anymore,
-    as this effect does not align with the SciVis renderer definition
-    and exposed artifacts
--   OSPRay can now be built for ARM64 CPUs with NEON (e.g., Apple M1)
-    using the superbuild. A minimum of ISPC 1.16.0 is required to
-    compile OSPRay for ARM64 CPUs.
+-   Dependencies Google Benchmark, GoggleTest, and Snappy moved
+    out-of-source to superbuild ExternalProjects
 
 ### Changes in v2.6.0:
 

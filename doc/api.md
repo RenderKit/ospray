@@ -234,7 +234,7 @@ The following errors are currently used by OSPRay:
   OSP_INVALID_ARGUMENT   an invalid argument was specified
   OSP_INVALID_OPERATION  the operation is not allowed for the specified object
   OSP_OUT_OF_MEMORY      there is not enough memory to execute the command
-  OSP_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1 on x86_64 and NEON on Arm64)
+  OSP_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1 on x86_64 and NEON on ARM64)
   OSP_VERSION_MISMATCH   a module could not be loaded due to mismatching version
   ---------------------- -------------------------------------------------------
   : Possible error codes, i.e., valid named constants of type `OSPError`.
@@ -1402,7 +1402,7 @@ All light sources accept the following parameters:
 
   float     intensity                 1  intensity of the light (a factor)
 
-  uchar     intensityQuantity            `OSPIntensityQuantity` to set the radiative
+  uchar     intensityQuantity            `OSPIntensityQuantity` to set the radiometric
                                          quantity represented by `intensity`. The
                                          default value depends on the light source.
 
@@ -1411,7 +1411,7 @@ All light sources accept the following parameters:
   : Parameters accepted by all lights.
 
 In OSPRay the `intensity` parameter of a light source can correspond to
-different types of radiative quantities. The type of the value
+different types of radiometric quantities. The type of the value
 represented by a light's `intensity` parameter is set using
 `intensityQuantity`, which accepts values from the enum type
 `OSPIntensityQuantity`. The supported types of `OSPIntensityQuantity`
@@ -1437,7 +1437,7 @@ specific light source).
   OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a 
                                       built-in quantity (e.g., `HDRI`, or `sunSky`). 
   ----------------------------------  ----------------------------------------------------
-  : Types of radiative quantities used to interpret a light's `intensity` parameter.
+  : Types of radiometric quantities used to interpret a light's `intensity` parameter.
 
 The following light types are supported by most OSPRay renderers.
 
@@ -1597,7 +1597,7 @@ shadows.
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
 "`hdri`" to `ospNewLight`. The values of the HDRI correspond to radiance
-and therfore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE` 
+and therefore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE` 
 as `intensityQuantity` parameter value. 
 In addition to the [general parameters](#lights) the HDRI light
 supports the following special parameters:
@@ -1641,9 +1641,9 @@ string "`sunSky`" to `ospNewLight`. The sun-sky light surrounds the
 scene and illuminates it from infinity and can be used for rendering
 outdoor scenes. The radiance values are calculated using the
 Hošek-Wilkie sky model and solar radiance function. The underlying model
-of the sun-sky light returns radiance values and therfore the light
+of the sun-sky light returns radiance values and therefore the light
 only accepts `OSP_INTENSITY_QUANTITY_SCALE` as `intensityQuantity`
-parameter value. To recale the returned radiance of the sky model
+parameter value. To rescale the returned radiance of the sky model
 the default value for the `intensity` parameter is set to `0.025`.
 In addition to the [general parameters](#lights) the
 following special parameters are supported:
@@ -3095,7 +3095,7 @@ through the command line, the following parameters can be set:
 
   uint     commandBufferSize         512\ MiB  Set the max command buffer size
                                                to allow. Units are in MiB. Max
-                                               size is 1.8GiB
+                                               size is 1.8\ GiB
 
   uint     maxInlineDataSize          32\ MiB  Set the max size of an OSPData
                                                which can be inline'd into the
@@ -3122,7 +3122,7 @@ MPI Distributed Rendering
 
 While MPI Offload rendering is used to transparently distribute
 rendering work without requiring modification to the application, MPI
-Distributed rendering is targetted at use of OSPRay within MPI-parallel
+Distributed rendering is targeted at use of OSPRay within MPI-parallel
 applications. The MPI distributed device can be selected by loading the
 `mpi` module, and manually creating and using an instance of the
 `mpiDistributed` device:
@@ -3209,7 +3209,7 @@ occlusion, each rank's data can overlap. To clip these non-owned overlap
 regions out a set of regions (the `region` parameter) can pass as a
 parameter to the `OSPWorld` being rendered. Each rank can specify one or
 more non-overlapping `box3f`'s which bound the portions of its local
-data which it is reponsible for rendering. See the
+data which it is responsible for rendering. See the
 [ospMPIDistributedTutorialStructuredVolume](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialStructuredVolume.cpp)
 for an example.
 

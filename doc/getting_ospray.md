@@ -17,7 +17,7 @@ We recommend the latest version of both TBB and Embree libraries.
 Packages
 --------
 
-Packages for x86_64 are provided, OSPRay can be built for Arm64/NEON
+Packages for x86_64 are provided, OSPRay can be built for ARM64/NEON
 using the superbuild (see [Building and Finding OSPRay](#building-and-finding-ospray)).
 
 For Linux we provide OSPRay precompiled for 64\ bit as a TGZ archive.  
