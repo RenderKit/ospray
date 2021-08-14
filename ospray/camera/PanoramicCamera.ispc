@@ -1,7 +1,8 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Camera.ih"
+#include "common/MotionTransform.ih"
 #include "math/sampling.ih"
 #include "ospray/OSPEnums.h"
 
@@ -9,6 +10,8 @@ struct PanoramicCamera
 {
   Camera super;
 
+  vec3f org;
+  linear3f frame; // union: precomputed frame; or (xxx, up, -dir) if motion blur
   int stereoMode;
   float ipd_offset; // half of the interpupillary distance
 };
@@ -52,12 +55,28 @@ void PanoramicCamera_initRay(const Camera *uniform _self,
   sincos(theta, &sinTheta, &cosTheta);
   const vec3f localDir = cartesian(phi, sinTheta, cosTheta);
 
-  // transform to camera- and then to world-space
-  const vec3f dir =
-      self->super.frame * make_vec3f(-localDir.y, -localDir.z, localDir.x);
-
   const float time = Camera_shutterTime(_self, sample.time);
-  const vec3f org = self->super.org + offset * cross(dir, self->super.frame.vy);
+
+  // transform to camera- and then to world-space
+  vec3f dir;
+  vec3f org;
+  if (self->super.motionBlur) {
+    const affine3f xfm = getInterpolatedTransform(self->super.geom, time);
+
+    // we cannot just transform the final org & dir, because interpolated
+    // transforms can scale (even if original transforms are without scale)
+    linear3f frameMB;
+    frameMB.vz = normalize(xfmVector(xfm, self->frame.vz));
+    frameMB.vx = normalize(cross(xfmVector(xfm, self->frame.vy), frameMB.vz));
+    frameMB.vy = cross(frameMB.vz, frameMB.vx);
+
+    dir = frameMB * make_vec3f(-localDir.y, -localDir.z, localDir.x);
+    org = xfmPoint(xfm, self->org) + offset * cross(dir, frameMB.vy);
+  } else {
+    dir = self->frame * make_vec3f(-localDir.y, -localDir.z, localDir.x);
+    org = self->org + offset * cross(dir, self->frame.vy);
+  }
+
   setRay(ray, org, dir, self->super.nearClip, inf, time);
 }
 
@@ -66,16 +85,31 @@ export void *uniform PanoramicCamera_create(void *uniform cppE)
   PanoramicCamera *uniform self = uniform new PanoramicCamera;
   self->super.cppEquivalent = cppE;
   self->super.initRay = PanoramicCamera_initRay;
-  self->super.doesDOF = false;
   self->stereoMode = OSP_STEREO_NONE;
   self->ipd_offset = 0.f;
   return self;
 }
 
-export void PanoramicCamera_set(
-    void *uniform _self, const uniform int stereoMode, const uniform float ipd)
+export void PanoramicCamera_set(void *uniform _self,
+    const uniform vec3f &org,
+    const uniform vec3f &dir,
+    const uniform vec3f &up,
+    const uniform int stereoMode,
+    const uniform float ipd)
 {
   PanoramicCamera *uniform self = (PanoramicCamera * uniform) _self;
+
+  self->org = org;
+
+  if (self->super.motionBlur) {
+    self->frame.vz = neg(dir);
+    self->frame.vy = up;
+  } else {
+    self->frame.vz = neg(normalize(dir));
+    self->frame.vx = normalize(cross(up, self->frame.vz));
+    self->frame.vy = cross(self->frame.vz, self->frame.vx);
+  }
+
   self->stereoMode = stereoMode;
   self->ipd_offset = 0.5f * ipd;
   // flip offset to have left eye at top (image coord origin at lower left)

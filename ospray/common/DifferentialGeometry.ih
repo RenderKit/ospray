@@ -20,6 +20,7 @@ typedef enum
   DG_TEXCOORD = (1 << 6), // calculate texture coords st
   DG_TANGENTS = (1 << 7), // calculate tangents, i.e. the partial derivatives of
                           // position wrt. texture coordinates
+  DG_MOTIONBLUR = (1 << 8), // calculate interpolated transformations for MB
 } DG_PostIntersectFlags;
 
 /* differential geometry information that gives more detailed

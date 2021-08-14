@@ -62,8 +62,10 @@ static float SpotLight_angularAttenuation(
   return angularAttenuation;
 }
 
-Light_SampleRes SpotLight_sample(
-    const Light *uniform super, const DifferentialGeometry &dg, const vec2f &s)
+Light_SampleRes SpotLight_sample(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec2f &s,
+    const float)
 {
   const SpotLight *uniform self = (SpotLight * uniform) super;
   Light_SampleRes res;

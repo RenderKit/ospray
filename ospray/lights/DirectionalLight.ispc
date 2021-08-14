@@ -26,7 +26,8 @@ struct DirectionalLight
 
 Light_SampleRes DirectionalLight_sample(const uniform Light *uniform super,
     const DifferentialGeometry &dg,
-    const vec2f &s)
+    const vec2f &s,
+    const float)
 {
   const DirectionalLight *uniform self = (DirectionalLight * uniform) super;
   Light_SampleRes res;

@@ -55,6 +55,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   common/Group.ispc
   common/Instance.cpp
   common/Instance.ispc
+  common/MotionTransform.cpp
   common/Managed.cpp
   common/OSPCommon.ispc
   common/World.ih
@@ -158,15 +159,11 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   render/ao/AORenderer.cpp
   render/ao/AORenderer.ispc
-  render/ao/Material.cpp
-  render/ao/Material.ispc
   render/ao/surfaces.ispc
   render/ao/volumes.ispc
 
   render/scivis/SciVis.cpp
   render/scivis/SciVis.ispc
-  render/scivis/SciVisMaterial.cpp
-  render/scivis/SciVisMaterial.ispc
   render/scivis/surfaces.ispc
   render/scivis/volumes.ispc
   render/scivis/lightAlpha.ispc
@@ -179,33 +176,34 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/pathtracer/TransparentShadow.ispc
   render/pathtracer/ShadowCatcher.ispc
   render/pathtracer/NextEventEstimation.ispc
-  render/pathtracer/bsdfs/MicrofacetAlbedoTables.ispc
   render/pathtracer/volumes/VolumeSampler.ispc
-  render/pathtracer/materials/Material.ispc
-  render/pathtracer/materials/OBJ.ispc
-  render/pathtracer/materials/OBJ.cpp
-  render/pathtracer/materials/Principled.ispc
-  render/pathtracer/materials/Principled.cpp
-  render/pathtracer/materials/CarPaint.ispc
-  render/pathtracer/materials/CarPaint.cpp
-  render/pathtracer/materials/Velvet.ispc
-  render/pathtracer/materials/Velvet.cpp
-  render/pathtracer/materials/Metal.ispc
-  render/pathtracer/materials/Metal.cpp
-  render/pathtracer/materials/Alloy.ispc
-  render/pathtracer/materials/Alloy.cpp
-  render/pathtracer/materials/ThinGlass.ispc
-  render/pathtracer/materials/ThinGlass.cpp
-  render/pathtracer/materials/Glass.ispc
-  render/pathtracer/materials/Glass.cpp
-  render/pathtracer/materials/MetallicPaint.ispc
-  render/pathtracer/materials/MetallicPaint.cpp
-  render/pathtracer/materials/Plastic.ispc
-  render/pathtracer/materials/Plastic.cpp
-  render/pathtracer/materials/Luminous.ispc
-  render/pathtracer/materials/Luminous.cpp
-  render/pathtracer/materials/Mix.ispc
-  render/pathtracer/materials/Mix.cpp
+
+  render/bsdfs/MicrofacetAlbedoTables.ispc
+  render/materials/Material.ispc
+  render/materials/OBJ.ispc
+  render/materials/OBJ.cpp
+  render/materials/Principled.ispc
+  render/materials/Principled.cpp
+  render/materials/CarPaint.ispc
+  render/materials/CarPaint.cpp
+  render/materials/Velvet.ispc
+  render/materials/Velvet.cpp
+  render/materials/Metal.ispc
+  render/materials/Metal.cpp
+  render/materials/Alloy.ispc
+  render/materials/Alloy.cpp
+  render/materials/ThinGlass.ispc
+  render/materials/ThinGlass.cpp
+  render/materials/Glass.ispc
+  render/materials/Glass.cpp
+  render/materials/MetallicPaint.ispc
+  render/materials/MetallicPaint.cpp
+  render/materials/Plastic.ispc
+  render/materials/Plastic.cpp
+  render/materials/Luminous.ispc
+  render/materials/Luminous.cpp
+  render/materials/Mix.ispc
+  render/materials/Mix.cpp
 
   texture/Texture.cpp
   texture/Texture2D.cpp

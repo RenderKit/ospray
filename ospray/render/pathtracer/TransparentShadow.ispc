@@ -1,11 +1,11 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/PathTracer.ih"
 #include "render/pathtracer/TransparentShadow.ih"
 
-#include "render/pathtracer/materials/Material.ih"
-#include "render/pathtracer/materials/Medium.ih"
+#include "render/materials/Material.ih"
+#include "render/materials/Medium.ih"
 
 #include "common/Ray.ih"
 #include "common/World.ih"
@@ -31,7 +31,8 @@ vec3f transparentShadow(const uniform PathTracer *uniform self,
         &self->super,
         dg,
         shadowRay,
-        DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR);
+        DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
+            | DG_MOTIONBLUR);
 
     uniform PathTraceMaterial *material =
         (uniform PathTraceMaterial *)dg.material;

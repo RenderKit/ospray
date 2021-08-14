@@ -73,6 +73,11 @@ DFB::DistributedFrameBuffer(const vec2i &numPixels,
   }
 }
 
+DFB::~DistributedFrameBuffer()
+{
+  MPI_Comm_free(&mpiGroup.comm);
+}
+
 void DFB::commit()
 {
   FrameBuffer::commit();

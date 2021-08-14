@@ -1,6 +1,46 @@
 Version History
 ---------------
 
+### Changes in v2.7.0:
+
+-   Add support for transformation and camera Motion Blur (with the path
+    tracer) via `shutter` parameter of the camera and `motion.transform`
+    array and `time` parameter of the instance and camera
+-   OSPRay can now be built for ARM64 CPUs with NEON (e.g., Apple M1)
+    using the superbuild. Thus, new minimum versions are for ISPC
+    1.16.0, for Embree 3.13.1 and for rkcommon 1.7.0
+-   OSPRay now requires minimum Open VKL v1.0.0 to bring the
+    following improvements:
+    -   Configurable `background` values for all volume types (default
+        `NaN`), defining region outside the volume domain
+    -   Better default sampling rate for scaled VDB volumes, improved
+        robustness
+    -   Structured regular volumes now support tricubic filtering and
+        more accurate gradient computations as well as more robust
+        isosurfaces
+-   The multidevice module contains a new OSPRay device implementation
+    that delegates work to any number of subdevices. This is an
+    experimental feature in this release but we invite feedback
+-   SciVis Renderer now ignores normal/albedo/depth hits on surfaces
+    that are fully transmissive (material `d = 0`)
+-   Changed the behavior of background rendering in SciVis renderer to
+    more closely reflect that of the path tracer: Background hits are
+    rendered in background color in the albedo buffer and black in the
+    normal buffer
+-   The SciVis renderer does not compute depth of field (DoF) anymore,
+    as this effect does not align with the SciVis renderer definition
+    and exposed artifacts
+-   Fixed crash on exit when using the MPI device
+-   Fixed rendering of depth buffer in the example application
+-   The first argument to material constructor `ospNewMaterial`, i.e.,
+    `renderer_type`, is now deprecated and will be removed in a future
+    release. AO and SciVis renderers still assume "obj" like behavior
+    for all material types
+-   Deprecated the `xfm` parameter of the instance, use `transform`
+    instead
+-   Dependencies Google Benchmark, GoggleTest, and Snappy moved
+    out-of-source to superbuild ExternalProjects
+
 ### Changes in v2.6.0:
 
 -   Added new `intensityQuantity` type `OSP_INTENSITY_QUANTITY_SCALE`

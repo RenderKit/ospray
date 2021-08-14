@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -10,7 +10,7 @@ struct World;
 struct Ray;
 struct RayIntervals;
 
-#include "render/pathtracer/materials/Medium.ih"
+#include "render/materials/Medium.ih"
 
 vec3f transparentShadow(const uniform PathTracer *uniform self,
     const World *uniform world,

@@ -41,6 +41,14 @@ variables:
       - build/*/build/CMakeCache.txt
     expire_in: 3 day
 
+.job_template: &build_artifacts_all
+  artifacts:
+    paths:
+      - build/install
+      - build/CMakeCache.txt
+      - build/*/build/CMakeCache.txt
+    expire_in: 3 day
+
 .job_template: &release_job
   stage: release
   needs: [pdf]
@@ -70,6 +78,12 @@ variables:
   tags: [docker, avx512vl]
   script:
     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX
+
+.job_template: &test_job_unix_mpi_avx2
+  <<: *test_job
+  tags: [docker, avx2, modules]
+  script:
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX2 TEST_MPI
 
 .job_template: &test_job_unix_sanitize
   <<: *test_job
@@ -137,7 +151,7 @@ build-linux-debug-all:
   script:
     - export CC=clang
     - export CXX=clang++
-    - scripts/build_gitlab/linux.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDEPENDENCIES_BUILD_TYPE=Debug -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON
+    - scripts/build_gitlab/linux.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDEPENDENCIES_BUILD_TYPE=Debug -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
   <<: *build_artifacts
   only: [schedules]
 
@@ -159,7 +173,7 @@ build-ubuntu2004-gcc:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   script:
-    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
+    - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
   <<: *build_artifacts
 
 build-centos8:
@@ -198,6 +212,7 @@ build-centos7-mpi-impi:
     - module load cmake
     - module load intel/2021.2
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+  <<: *build_artifacts
 
 build-centos7-mpi-openmpi:
   <<: *build_job_docker_modules
@@ -212,6 +227,7 @@ build-centos7-mpi-mpich:
     - module load cmake
     - module load mpi/mpich-x86_64
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+  <<: *build_artifacts
 
 build-centos8-mpi-openmpi:
   <<: *build_job_docker
@@ -234,7 +250,7 @@ build-mpi-cluster:
     - module load cmake
     - module load impi
     - module load gnu
-    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF
+    - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
   <<: *build_artifacts
   only: [schedules]
 
@@ -253,8 +269,16 @@ build-osx-clang:
     - osx
     - clang
   script:
-    - scripts/build_gitlab/macosx.sh
+    - scripts/build_gitlab/macosx.sh -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
   <<: *build_artifacts
+
+build-osx-arm:
+  stage: build
+  tags:
+    - mac-arm
+  script:
+    - scripts/build_gitlab/macosx.sh -DBUILD_TBB_FROM_SOURCE=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON
+  <<: *build_artifacts_all
 
 build-windows-msvc15:
   stage: build
@@ -262,7 +286,7 @@ build-windows-msvc15:
     - win
     - msvc15
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release" "OFF"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release" "OFF" "OFF"
   <<: *build_artifacts
 
 build-windows-debug-all:
@@ -272,18 +296,18 @@ build-windows-debug-all:
     - msvc15
     - mpi
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "ON"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "ON" "ON"
   <<: *build_artifacts
   only: [schedules]
 
-build-windows-msvc16-mpi:
+build-windows-msvc16-mpi_and_md:
   stage: build
   tags:
     - win
     - msvc16
     - mpi
   script:
-    - scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release" "ON"
+    - scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release" "ON" "ON"
   <<: *build_artifacts
 
 #build-windows-icc:
@@ -327,6 +351,27 @@ test-ubuntu2004-gcc-avx512skx:
   <<: *test_job_unix_avx512skx
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs: [build-ubuntu2004-gcc]
+  script:
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX TEST_MULTIDEVICE
+
+test-centos7-gcc-mpi-mpich-avx2:
+  <<: *test_job_unix_mpi_avx2
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  needs: [build-centos7-mpi-mpich]
+  before_script:
+    - module load cmake
+    - module load mpi/mpich-x86_64
+
+test-centos7-gcc-mpi-impi-avx2:
+  <<: *test_job_unix_mpi_avx2
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  needs: [build-centos7-mpi-impi]
+  before_script:
+    - module load cmake
+    - module load intel/2021.2
+    # Note: no omnipath/infiniband/shm comm access for MPI within
+    # Docker container, just use sockets for running validation test
+    - export FI_PROVIDER=sockets
 
 test-mpi-cluster:
   <<: *test_job_unix_avx512skx
@@ -334,7 +379,7 @@ test-mpi-cluster:
   script:
     - module load impi
     - module load gnu
-    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX
+    - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX TEST_MPI TEST_MULTIDEVICE
   needs: [build-mpi-cluster]
   only: [schedules]
 
@@ -353,6 +398,13 @@ test-osx-clang:
   <<: *test_job
   tags: [osx]
   needs: [build-osx-clang]
+  script:
+    - DYLD_FALLBACK_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX2 TEST_MULTIDEVICE
+
+test-osx-arm:
+  <<: *test_job
+  tags: [mac-arm]
+  needs: [build-osx-arm]
   script:
     - DYLD_FALLBACK_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX2
 
@@ -398,13 +450,19 @@ test-windows-debug-all:
 test-windows-msvc16-avx2:
   <<: *test_job_windows_avx2
   tags: [win, msvc16, avx2]
-  needs: [build-windows-msvc16-mpi]
+  needs: [build-windows-msvc16-mpi_and_md]
   allow_failure: true
+  script:
+    - $env:Path += ";$CI_PROJECT_DIR\build\install\ospray\bin"
+    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX2 TEST_MULTIDEVICE
 
 test-windows-msvc16-avx512skx:
   <<: *test_job_windows_avx512skx
   tags: [win, msvc16, avx512vl]
-  needs: [build-windows-msvc16-mpi]
+  needs: [build-windows-msvc16-mpi_and_md]
+  script:
+    - $env:Path += ";$CI_PROJECT_DIR\build\install\ospray\bin"
+    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX512SKX TEST_MULTIDEVICE
 
 generate-ci-baseline-avx2:
   <<: *test_job_unix_avx2
@@ -536,9 +594,11 @@ release-windows:
 kw-build:
   stage: scan1
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   needs: []
   script:
+    - module load cmake
+    - module load intel/2021.2
     - scripts/build_gitlab/kw.sh
     - test -s $CI_PROJECT_DIR/klocwork/build.log
     - test -s $CI_PROJECT_DIR/klocwork/build_name
@@ -642,7 +702,7 @@ test-release-windows-zip:
   <<: *test_job
   <<: *release_job
   stage: scan3
-  tags: [win, avx512vl]
+  tags: [win, mpi, avx512vl]
   needs: [release-windows]
   script:
     - Expand-Archive build_release/*.zip -DestinationPath .
@@ -654,7 +714,7 @@ test-release-windows-msi:
   <<: *test_job
   <<: *release_job
   stage: scan3
-  tags: [win, avx512vl]
+  tags: [win, mpi, avx512vl]
   needs: [release-windows]
   script:
     - msiexec.exe /a (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName) /qn TARGETDIR=$CI_PROJECT_DIR

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "volumes.ih"
@@ -150,7 +150,7 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
     // Transform ray into the volume local space
     const VolumeInterval &vi = volumeIntervals.intervals[i];
     Ray transformedRay = ray;
-    transformRay(transformedRay, vi.rcp_xfm);
+    transformRay(transformedRay, vi.instance->rcp_xfm);
 
     // Set volume context initial values
     VolumeContext &vc = volumeContexts[i];
@@ -200,14 +200,15 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
 
       // There might be different volumetric models used across vector lanes
       // so we must iterate over them
+      float time = 0.5f;
       VolumetricModel *varying model = vi.volumetricModel;
       foreach_unique (m in model) {
         // Create volume interval interator
-        vc.intervalIterator = vklInitIntervalIteratorV(m->volume->vklSampler,
+        vc.intervalIterator = vklInitIntervalIteratorV(m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
-            m->vklValueSelector,
+            &time,
             vc.intervalIteratorBuffer);
       }
     }

@@ -17,9 +17,10 @@ compute nodes in HPC systems.
 
 OSPRay internally builds on top of [Intel Embree] and [Intel ISPC
 (Implicit SPMD Program Compiler)](https://ispc.github.io/), and fully
-exploits modern instruction sets like Intel SSE4, AVX, AVX2, and AVX-512
+exploits modern instruction sets like Intel SSE4, AVX, AVX2, AVX-512 and NEON
 to achieve high rendering performance, thus a CPU with support for at
-least SSE4.1 is required to run OSPRay.
+least SSE4.1 is required to run OSPRay on x86_64 architectures.
+A CPU with support for NEON is required to run OSPRay on ARM64 architectures.
 
 
 OSPRay Support and Contact

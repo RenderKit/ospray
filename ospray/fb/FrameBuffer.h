@@ -46,6 +46,9 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject
   //! get number of pixels in x and y diretion
   vec2i getNumPixels() const;
 
+  //! get the color format type for this Buffer
+  ColorBufferFormat getColorBufferFormat() const;
+
   float getVariance() const;
 
   utility::ArrayView<int> getTileIDs();

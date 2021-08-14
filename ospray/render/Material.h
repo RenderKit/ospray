@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -42,10 +42,10 @@ struct OSPRAY_SDK_INTERFACE Material : public ManagedObject
     material types specified in special modules, make sure to call
     ospLoadModule first. */
   static Material *createInstance(
-      const char *renderer_type, const char *material_type);
+      const char */*ignored*/, const char *material_type);
   template <typename T>
   static void registerType(
-      const char *renderer_type, const char *material_type);
+      const char */*ignored*/, const char *material_type);
 
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>
@@ -79,14 +79,10 @@ OSPTYPEFOR_SPECIALIZATION(Material *, OSP_MATERIAL);
 
 template <typename T>
 inline void Material::registerType(
-    const char *renderer_type, const char *material_type)
+    const char */*ignored*/, const char *material_type)
 {
-  std::string rType(renderer_type);
-  std::string mType(material_type);
-
-  std::string name = rType + "_" + mType;
+  std::string name(material_type);
 
   registerTypeHelper<Material, T>(name.c_str());
 }
-
 } // namespace ospray

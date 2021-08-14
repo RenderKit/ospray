@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -27,7 +27,7 @@ struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
   // the volume and color
   Ref<VolumetricModel> model;
   Ref<Volume> volume;
-  VKLValueSelector valueSelector{nullptr};
+  VKLHitIteratorContext vklHitContext{nullptr};
 };
 
 } // namespace ospray

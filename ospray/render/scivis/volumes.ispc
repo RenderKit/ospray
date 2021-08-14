@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "surfaces.ih"
@@ -104,16 +104,10 @@ static void sampleVolume(SciVisRenderContext &rc,
       dg.material = NULL;
       dg.epsilon = dt / 2.f;
       // transform to world coords
-      dg.Ns = dg.Ng = normalize(xfmVector(transposed(vi.xfm.l), ns));
+      dg.Ns = dg.Ng = normalize(xfmVector(transposed(vi.instance->xfm.l), ns));
       dg.P = ray.org + vc.distance * ray.dir;
-      SSI shading = computeShading(rc.renderer,
-          rc.fb,
-          rc.world,
-          dg,
-          rc.sample,
-          rc.ldSampler,
-          ray.dir,
-          0.f);
+      SSI shading = computeShading(
+          rc.renderer, rc.fb, rc.world, dg, rc.sample, rc.ldSampler, ray.dir);
       vec4f shadedColor = make_vec4f(
           shading.shadedColor, 1.f - luminance(shading.transmission));
       vc.sample = lerp(gsc, vc.sample, shadedColor);
@@ -194,7 +188,7 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     // Transform ray into the volume local space
     const VolumeInterval &vi = volumeIntervals.intervals[i];
     Ray transformedRay = ray;
-    transformRay(transformedRay, vi.rcp_xfm);
+    transformRay(transformedRay, vi.instance->rcp_xfm);
 
     // Set volume context initial values
     VolumeContext &vc = volumeContexts[i];
@@ -245,14 +239,15 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
 
       // There might be different volumetric models used across vector lanes
       // so we must iterate over them
+      float time = 0.5f;
       VolumetricModel *varying model = vi.volumetricModel;
       foreach_unique (m in model) {
         // Create volume interval interator
-        vc.intervalIterator = vklInitIntervalIteratorV(m->volume->vklSampler,
+        vc.intervalIterator = vklInitIntervalIteratorV(m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
-            m->vklValueSelector,
+            &time,
             vc.intervalIteratorBuffer);
       }
     }

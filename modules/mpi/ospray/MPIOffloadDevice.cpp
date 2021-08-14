@@ -46,7 +46,7 @@ using namespace rkcommon;
 /*! it's up to the proper init routine to decide which processes
   call this function and which ones don't. This function will not
   return. */
-void runWorker(bool useMPIFabric);
+void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice);
 
 ///////////////////////////////////////////////////////////////////////////
 // Misc helper functions //////////////////////////////////////////////////
@@ -146,7 +146,8 @@ static inline void setupWorker()
     - this fct is called from ospInit (with ranksBecomeWorkers=true) or
       from ospdMpiInit (w/ ranksBecomeWorkers = false)
 */
-void createMPI_RanksBecomeWorkers(int *ac, const char **av)
+void createMPI_RanksBecomeWorkers(
+    int *ac, const char **av, MPIOffloadDevice *offloadDevice)
 {
   mpi::init(ac, av, true);
 
@@ -166,13 +167,14 @@ void createMPI_RanksBecomeWorkers(int *ac, const char **av)
 
     // now, all workers will enter their worker loop (ie, they will *not*
     // return)
-    mpi::runWorker(true);
+    mpi::runWorker(true, offloadDevice);
     throw std::runtime_error("should never reach here!");
     /* no return here - 'runWorker' will never return */
   }
 }
 
-void createMPI_ListenForClient(int *ac, const char **av)
+void createMPI_ListenForClient(
+    int *ac, const char **av, MPIOffloadDevice *offloadDevice)
 {
   mpi::init(ac, av, true);
 
@@ -183,7 +185,7 @@ void createMPI_ListenForClient(int *ac, const char **av)
   worker.comm = world.comm;
   worker.makeIntraComm();
 
-  mpi::runWorker(false);
+  mpi::runWorker(false, offloadDevice);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -231,7 +233,7 @@ void MPIOffloadDevice::initializeDevice()
   std::string mode = getParam<std::string>("mpiMode", "mpi");
 
   if (mode == "mpi") {
-    createMPI_RanksBecomeWorkers(&_ac, _av);
+    createMPI_RanksBecomeWorkers(&_ac, _av, this);
 
 #ifdef ENABLE_PROFILING
     char hostname[512] = {0};
@@ -404,14 +406,13 @@ OSPVolumetricModel MPIOffloadDevice::newVolumetricModel(OSPVolume volume)
 ///////////////////////////////////////////////////////////////////////////
 
 OSPMaterial MPIOffloadDevice::newMaterial(
-    const char *renderer_type, const char *material_type)
+    const char *, const char *material_type)
 {
   ObjectHandle handle = allocateHandle();
 
   sendWork(
       [&](networking::WriteStream &writer) {
-        writer << work::NEW_MATERIAL << handle.i64 << renderer_type
-               << material_type;
+        writer << work::NEW_MATERIAL << handle.i64 << material_type;
       },
       false);
 
@@ -1043,7 +1044,7 @@ OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
       },
       true);
 
-  OSPPickResult result = {0};
+  OSPPickResult result;
   utility::ArrayView<uint8_t> view(
       reinterpret_cast<uint8_t *>(&result), sizeof(OSPPickResult));
   fabric->recv(view, rootWorkerRank());

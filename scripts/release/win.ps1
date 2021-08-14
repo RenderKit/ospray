@@ -19,6 +19,7 @@ cmake -L `
   -D BUILD_EMBREE_FROM_SOURCE=OFF `
   -D BUILD_OIDN=ON `
   -D BUILD_OIDN_FROM_SOURCE=OFF `
+  -D BUILD_OSPRAY_MODULE_MPI=ON `
   -D INSTALL_IN_SEPARATE_DIRECTORIES=OFF `
   ../scripts/superbuild
 
@@ -31,12 +32,8 @@ cd $ROOT_DIR
 md build_release
 cd build_release
 
-# Setup environment variables for dependencies
-$env:rkcommon_DIR = $DEP_DIR
-$env:embree_DIR = $DEP_DIR
-$env:glfw3_DIR = $DEP_DIR
-$env:openvkl_DIR = $DEP_DIR
-$env:OpenImageDenoise_DIR = $DEP_DIR
+# Setup environment for dependencies
+$env:CMAKE_PREFIX_PATH = $DEP_DIR
 
 # set release settings
 cmake -L `

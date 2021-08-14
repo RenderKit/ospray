@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedWorld.h"
@@ -71,6 +71,11 @@ DistributedWorld::DistributedWorld() : mpiGroup(mpicommon::worker.dup())
   this->ispcEquivalent = ispc::DistributedWorld_create(this);
 }
 
+DistributedWorld::~DistributedWorld()
+{
+  MPI_Comm_free(&mpiGroup.comm);
+}
+
 box3f DistributedWorld::getBounds() const
 {
   box3f bounds;
@@ -89,7 +94,10 @@ void DistributedWorld::commit()
 {
   World::commit();
 
+  allRegions.clear();
   myRegions.clear();
+  myRegionIds.clear();
+  regionOwners.clear();
 
   localRegions = getParamDataT<box3f>("region");
   if (localRegions) {
@@ -135,8 +143,6 @@ void DistributedWorld::commit()
 
 void DistributedWorld::exchangeRegions()
 {
-  allRegions.clear();
-
   // Exchange regions between the ranks in world to find which other
   // ranks may be sharing a region with this one, and the other regions
   // to expect to be rendered for each tile
@@ -196,34 +202,29 @@ void DistributedWorld::exchangeRegions()
     }
   }
 
-#ifndef __APPLE__
-  // TODO WILL: Remove this eventually? It may be useful for users to debug
-  // their code when setting regions. Maybe fix build on Apple? Why did
-  // it fail to compile?
   if (logLevel() >= OSP_LOG_DEBUG) {
+    StatusMsgStream debugLog;
     for (int i = 0; i < mpiGroup.size; ++i) {
       if (i == mpiGroup.rank) {
-        postStatusMsg(OSP_LOG_DEBUG)
-            << "Rank " << mpiGroup.rank << ": All regions in world {";
+        debugLog << "Rank " << mpiGroup.rank << ": All regions in world {\n";
         for (const auto &b : allRegions) {
-          postStatusMsg(OSP_LOG_DEBUG) << "\t" << b << ",";
+          debugLog << "\t" << b << ",\n";
         }
-        postStatusMsg(OSP_LOG_DEBUG) << "}\n";
+        debugLog << "}\n\n";
 
-        postStatusMsg(OSP_LOG_DEBUG) << "Ownership Information: {";
+        debugLog << "Ownership Information: {\n";
         for (const auto &r : regionOwners) {
-          postStatusMsg(OSP_LOG_DEBUG) << "(" << r.first << ": [";
+          debugLog << "(" << r.first << ": [";
           for (const auto &i : r.second) {
-            postStatusMsg(OSP_LOG_DEBUG) << i << ", ";
+            debugLog << i << ", ";
           }
-          postStatusMsg(OSP_LOG_DEBUG) << "])";
+          debugLog << "])\n";
         }
-        postStatusMsg(OSP_LOG_DEBUG) << "\n" << std::flush;
+        debugLog << "\n";
       }
       mpicommon::barrier(mpiGroup.comm).wait();
     }
   }
-#endif
 }
 
 } // namespace mpi

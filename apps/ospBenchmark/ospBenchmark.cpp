@@ -1,4 +1,4 @@
-// Copyright 2018-2020 Intel Corporation
+// Copyright 2018-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "BaseFixture.h"
@@ -14,6 +14,10 @@
 #include <iostream>
 #include <string>
 
+namespace {
+std::vector<const char *> cmdArg;
+} // end namespace
+
 // Test init/shutdown cycle time //////////////////////////////////////////////
 
 static void ospInit_ospShutdown(benchmark::State &state)
@@ -21,12 +25,18 @@ static void ospInit_ospShutdown(benchmark::State &state)
   ospShutdown();
 
   for (auto _ : state) {
-    ospInit();
+    // Those temp variable are needed because the call to ospInit changes the
+    // number and order of arguments
+    std::vector<const char *> cmdArgCpy(cmdArg);
+    int argc = cmdArgCpy.size();
+    ospInit(&argc, cmdArgCpy.data());
     ospShutdown();
   }
   state.SetItemsProcessed(state.iterations());
 
-  ospInit();
+  std::vector<const char *> cmdArgCpy(cmdArg);
+  int argc = cmdArgCpy.size();
+  ospInit(&argc, cmdArgCpy.data());
 }
 
 BENCHMARK(ospInit_ospShutdown)->Unit(benchmark::kMillisecond);
@@ -87,6 +97,10 @@ int main(int argc, char **argv)
       std::cout << "The list of all supported parameters:" << std::endl;
     }
   }
+
+  // save original cmdline args for multiple init/shutdown cycles
+  for (int i = 0; i < argc; i++)
+    cmdArg.push_back(argv[i]);
 
   ospInit(&argc, (const char **)argv);
 

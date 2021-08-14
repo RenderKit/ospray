@@ -102,6 +102,7 @@ GeometricLight::GeometricLight()
   auto params = GetParam();
   size = std::get<0>(params);
   useMaterialList = std::get<1>(params);
+  motionBlur = std::get<2>(params);
 }
 
 void GeometricLight::SetUp()
@@ -135,7 +136,22 @@ void GeometricLight::SetUp()
   } else {
     lightModel.setParam("material", lightMaterial);
   }
-  AddModel(lightModel);
+
+  if (motionBlur) {
+    lightModel.commit();
+    cpp::Group group;
+    group.setParam("geometry", cpp::CopiedData(lightModel));
+    group.commit();
+    cpp::Instance instance(group);
+    std::vector<affine3f> xfms;
+    xfms.push_back(affine3f::translate(vec3f(-0.5, 0, 0)));
+    xfms.push_back(affine3f::translate(vec3f(0.5, 0, 0)));
+    instance.setParam("motion.transform", cpp::CopiedData(xfms));
+    AddInstance(instance);
+
+    camera.setParam("shutter", range1f(0, 1));
+  } else
+    AddModel(lightModel);
 }
 
 PhotometricLight::PhotometricLight()
@@ -362,7 +378,13 @@ TEST_P(GeometricLight, parameter)
 
 INSTANTIATE_TEST_SUITE_P(Light,
     GeometricLight,
-    ::testing::Combine(::testing::Values(0.2f, 0.4f), ::testing::Bool()));
+    ::testing::Combine(::testing::Values(0.2f, 0.4f),
+        ::testing::Bool(),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
+    GeometricLight,
+    ::testing::Values(std::make_tuple(0.2f, false, true)));
 
 TEST_P(PhotometricLight, parameter)
 {

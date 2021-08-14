@@ -2,7 +2,7 @@
 ## SPDX-License-Identifier: Apache-2.0
 
 # ISPC versions to look for, in decending order (newest first)
-set(ISPC_VERSION_WORKING "1.15.0" "1.14.1")
+set(ISPC_VERSION_WORKING "1.16.1" "1.16.0")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 if (NOT ISPC_EXECUTABLE)
@@ -111,7 +111,11 @@ macro (ispc_compile)
   string(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
 
   if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(ISPC_ARCHITECTURE "x86-64")
+    if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
+      set(ISPC_ARCHITECTURE "aarch64")
+    else()
+      set(ISPC_ARCHITECTURE "x86-64")
+    endif()
   else()
     set(ISPC_ARCHITECTURE "x86")
   endif()

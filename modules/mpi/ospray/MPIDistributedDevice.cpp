@@ -188,9 +188,8 @@ MPIDistributedDevice::MPIDistributedDevice()
 
 MPIDistributedDevice::~MPIDistributedDevice()
 {
-  if (maml::isRunning()) {
-    maml::stop();
-  }
+  messaging::shutdown();
+
   if (shouldFinalizeMPI) {
     try {
       MPI_CALL(Finalize());
@@ -291,9 +290,6 @@ void MPIDistributedDevice::commit()
     auto enableCompression = OSPRAY_FORCE_COMPRESSION.value_or(
         mpicommon::workerSize() >= OSP_MPI_COMPRESSION_THRESHOLD);
 
-    // TODO WILL: This will be a problem with the offload/distrib device
-    // combination where maml/messaging gets init with the wrong
-    // communicator
     maml::init(enableCompression);
     messaging::init(mpicommon::worker);
     maml::start();
@@ -399,7 +395,10 @@ OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
 
 OSPCamera MPIDistributedDevice::newCamera(const char *type)
 {
-  return createLocalObject<Camera, OSPCamera>(type);
+  auto c = createLocalObject<Camera, OSPCamera>(type);
+  auto *cam = lookupObject<Camera>(c);
+  cam->setDevice(embreeDevice);
+  return c;
 }
 
 OSPVolume MPIDistributedDevice::newVolume(const char *type)
@@ -433,9 +432,9 @@ OSPVolumetricModel MPIDistributedDevice::newVolumetricModel(OSPVolume _vol)
 }
 
 OSPMaterial MPIDistributedDevice::newMaterial(
-    const char *renderer_type, const char *material_type)
+    const char *, const char *material_type)
 {
-  auto *instance = Material::createInstance(renderer_type, material_type);
+  auto *instance = Material::createInstance(nullptr, material_type);
   return (OSPMaterial)instance;
 }
 

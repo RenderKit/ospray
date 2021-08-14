@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2014-2020 Intel Corporation
+## Copyright 2014-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 #### Helper functions ####
@@ -63,12 +63,8 @@ cd build_release
 # Clean out build directory to be sure we are doing a fresh build
 rm -rf *
 
-# Setup environment variables for dependencies
-export rkcommon_DIR=$DEP_DIR
-export embree_DIR=$DEP_DIR
-export glfw3_DIR=$DEP_DIR
-export openvkl_DIR=$DEP_DIR
-export OpenImageDenoise_DIR=$DEP_DIR
+# Setup environment for dependencies
+export CMAKE_PREFIX_PATH=$DEP_DIR
 
 # set release and installer settings
 cmake -L \

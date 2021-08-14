@@ -1,14 +1,14 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "RendererType.ih"
+#include "MaterialType.ih"
 
 /*! ISPC-side abstraction for a material. */
 struct Material
 {
   //! pointer back to the C++-equivalent of this class
   void *uniform cppEquivalent;
-  uniform RendererType type;
+  uniform MaterialType type;
 };

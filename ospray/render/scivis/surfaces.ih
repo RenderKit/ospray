@@ -4,13 +4,14 @@
 #pragma once
 
 #include "SciVis.ih"
-#include "SciVisMaterial.ih"
+#include "render/materials/OBJ.ih"
 
 struct SurfaceShadingInfo
 {
   vec3f shadedColor;
   vec3f transmission;
   vec3f albedo;
+  float opacity;
 };
 
 typedef SurfaceShadingInfo SSI;
@@ -21,8 +22,7 @@ SSI computeShading(const SciVis *uniform self,
     const DifferentialGeometry &dg,
     ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
-    const varying vec3f &inDir,
-    const float time);
+    const varying vec3f &inDir);
 
 vec3f evaluateLights(
     const World *uniform world, const DifferentialGeometry &dg, const Ray &ray);
@@ -34,11 +34,12 @@ struct SciVisBSDF
   float shininess;
   vec3f transmission;
   vec3f albedo;
+  float opacity;
 };
 
 inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
 {
-  const SciVisMaterial *mat = (const SciVisMaterial *)dg.material;
+  const OBJ *mat = (const OBJ *)dg.material;
 
   // defaults
   SciVisBSDF res;
@@ -46,11 +47,11 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
   res.specular = make_vec3f(0.0f);
   res.shininess = 10.0f;
   res.transmission = make_vec3f(1.f - dg.color.w);
+  res.opacity = dg.color.w;
 
   foreach_unique (m in mat) {
-    if (m != NULL && m->super.type == RENDERER_TYPE_SCIVIS) {
+    if (m != NULL && m->super.material.type == MATERIAL_TYPE_OBJ) {
       float d = m->d * get1f(m->dMap, dg, 1.f) * dg.color.w;
-
       res.diffuse = res.diffuse * m->Kd;
       if (valid(m->KdMap)) {
         vec4f Kd_from_map = get4f(m->KdMap, dg);
@@ -61,6 +62,7 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
       res.specular = d * m->Ks * get3f(m->KsMap, dg, make_vec3f(1.f));
       res.shininess = m->Ns * get1f(m->NsMap, dg, 1.0f);
       res.transmission = m->Tf * d + make_vec3f(1.f - d);
+      res.opacity = d;
     }
   }
 

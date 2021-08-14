@@ -12,10 +12,10 @@
 #include "render/pathtracer/VirtualLight.ih"
 
 #include "common/Intersect.ih"
-#include "render/pathtracer/bsdfs/BSDF.ih"
-#include "render/pathtracer/bsdfs/MicrofacetAlbedoTables.ih"
-#include "render/pathtracer/materials/Material.ih"
-#include "render/pathtracer/materials/Medium.ih"
+#include "render/bsdfs/BSDF.ih"
+#include "render/bsdfs/MicrofacetAlbedoTables.ih"
+#include "render/materials/Material.ih"
+#include "render/materials/Medium.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 
 inline void postIntersect(const PathContext &pathContext,
@@ -29,7 +29,7 @@ inline void postIntersect(const PathContext &pathContext,
         pathVertex.dg,
         ray,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
-            | DG_TANGENTS);
+            | DG_TANGENTS | DG_MOTIONBLUR);
   }
   if (pathVertex.type == VOLUME) {
     pathVertex.dg.Ng = make_vec3f(0.f);
@@ -196,7 +196,7 @@ void samplePath(const PathContext &pathContext,
     if (pathVertex.type == SURFACE) {
       PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
       foreach_unique (m in material) {
-        if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER) {
+        if (m != NULL) {
           pathVertex.bsdf =
               m->getBSDF(m, &ctx, pathVertex.dg, ray, pathState.currentMedium);
           if (pathVertex.bsdf != NULL)
@@ -256,7 +256,7 @@ void samplePath(const PathContext &pathContext,
         PathTraceMaterial *material =
             (PathTraceMaterial *)pathVertex.dg.material;
         foreach_unique (m in material) {
-          if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER)
+          if (m != NULL)
             m->selectNextMedium(m, pathVertex.dg, pathState.currentMedium);
         }
       }

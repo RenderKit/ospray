@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/volumes/VolumeSampler.ih"
@@ -12,16 +12,18 @@ float delta_tracking(VolumetricModel *uniform vModel,
     varying RandomSampler *uniform randomSampler,
     const vec3f &o,
     const vec3f &w,
+    const float &time,
     float &mu_t, // sampled extinction coefficint
     vec3f &albedo) // sampled albedo (color)
 {
-  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  void *uniform intervalIteratorBuffer =
+      alloca(vklGetIntervalIteratorSizeV(vModel->vklIntervalContext));
   VKLIntervalIterator intervalIterator =
-      vklInitIntervalIteratorV(vModel->volume->vklSampler,
+      vklInitIntervalIteratorV(vModel->vklIntervalContext,
           (varying vkl_vec3f *)&o,
           (varying vkl_vec3f *)&w,
           (varying vkl_range1f *)&rInterval,
-          vModel->vklValueSelector,
+          &time,
           intervalIteratorBuffer);
 
   float t = 0.f;
@@ -101,8 +103,11 @@ float volumeSampleFreePath(const PathState &pathState,
     if (isEmpty(vInterval))
       continue;
 
+    AffineSpace3f xfm;
+    foreach_unique (inst in volumeIntervals.intervals[i].instance)
+      xfm = Instance_getTransform(inst, volumeRay.time);
     Ray transformedVolumeRay = volumeRay;
-    transformRay(transformedVolumeRay, volumeIntervals.intervals[i].rcp_xfm);
+    transformRay(transformedVolumeRay, rcp(xfm));
 
     VolumetricModel *varying instance =
         volumeIntervals.intervals[i].volumetricModel;
@@ -126,6 +131,7 @@ float volumeSampleFreePath(const PathState &pathState,
             randomSampler,
             transformedVolumeRay.org,
             transformedVolumeRay.dir,
+            transformedVolumeRay.time,
             extinctionCoefficient,
             albedo);
         if (dist < inf) {
@@ -169,8 +175,11 @@ float volumeTransmittance(const PathState &pathState,
     if (isEmpty(vInterval))
       continue;
 
+    AffineSpace3f xfm;
+    foreach_unique (inst in volumeIntervals.intervals[i].instance)
+      xfm = Instance_getTransform(inst, volumeRay.time);
     Ray transformedVolumeRay = volumeRay;
-    transformRay(transformedVolumeRay, volumeIntervals.intervals[i].rcp_xfm);
+    transformRay(transformedVolumeRay, rcp(xfm));
 
     VolumetricModel *varying instance =
         volumeIntervals.intervals[i].volumetricModel;
@@ -194,6 +203,7 @@ float volumeTransmittance(const PathState &pathState,
             randomSampler,
             transformedVolumeRay.org,
             transformedVolumeRay.dir,
+            transformedVolumeRay.time,
             extinctionCoefficient,
             albedo);
         transmittance = transmittance * ((dist < rInterval.upper) ? 0.f : 1.f);

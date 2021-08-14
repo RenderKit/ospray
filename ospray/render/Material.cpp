@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -20,12 +20,9 @@ Material::Material()
 }
 
 Material *Material::createInstance(
-    const char *_renderer_type, const char *_material_type)
+    const char */*ignored*/, const char *_material_type)
 {
-  std::string renderer_type = _renderer_type;
-  std::string material_type = _material_type;
-
-  std::string name = renderer_type + "_" + material_type;
+  std::string name = _material_type;
   return createInstanceHelper(name, g_materialsMap[name]);
 }
 

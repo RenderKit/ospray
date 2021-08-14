@@ -33,6 +33,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
       ObjectHandle myHandle,
       ColorBufferFormat,
       const uint32 channels);
+  ~DistributedFrameBuffer() override;
 
   // ==================================================================
   // framebuffer / device interface

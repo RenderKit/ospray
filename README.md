@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v2.6.0 of Intel® OSPRay. For changes and new features
+This is release v2.7.0 of Intel® OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
@@ -25,9 +25,10 @@ compute nodes in HPC systems.
 OSPRay internally builds on top of [Intel
 Embree](https://www.embree.org/) and [Intel ISPC (Implicit SPMD Program
 Compiler)](https://ispc.github.io/), and fully exploits modern
-instruction sets like Intel SSE4, AVX, AVX2, and AVX-512 to achieve high
-rendering performance, thus a CPU with support for at least SSE4.1 is
-required to run OSPRay.
+instruction sets like Intel SSE4, AVX, AVX2, AVX-512 and NEON to achieve
+high rendering performance, thus a CPU with support for at least SSE4.1
+is required to run OSPRay on x86\_64 architectures. A CPU with support
+for NEON is required to run OSPRay on ARM64 architectures.
 
 OSPRay Support and Contact
 --------------------------
@@ -71,11 +72,10 @@ before you can build OSPRay you need the following prerequisites:
     C++11 compiler (we recommend using GCC, but also support Clang,
     MSVC, and [Intel® C++ Compiler
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
-    Linux development tools. To build the interactive tutorials, you
-    should also have some version of OpenGL and GLFW.
+    Linux development tools.
 
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.14.1 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.16.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right “next to” the
@@ -88,26 +88,37 @@ before you can build OSPRay you need the following prerequisites:
     allocation, vector math types, among others. For users who also need
     to build rkcommon, we recommend the default the Intel [Threading
     Building Blocks (TBB)](https://www.threadingbuildingblocks.org/) as
-    tasking system for performance and flexibility reasons.
-    Alternatively you can set CMake variable `RKCOMMON_TASKING_SYSTEM`
-    to `OpenMP` or `Internal`.
+    tasking system for performance and flexibility reasons. TBB must be
+    built from source when targeting ARM CPUs, or can be built from
+    source as part of the [superbuild](#cmake-superbuild). Alternatively
+    you can set CMake variable `RKCOMMON_TASKING_SYSTEM` to `OpenMP` or
+    `Internal`.
 
 -   OSPRay also heavily uses Intel [Embree](https://www.embree.org/),
-    installing version 3.12.0 or newer is required. If Embree is not
+    installing version 3.13.1 or newer is required. If Embree is not
     found by CMake its location can be hinted with the variable
     `embree_DIR`.
 
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.13.0 or newer is required. If Open VKL is not
+    installing version 1.0.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 
--   OSPRay also provides an optional module implementing the `denosier`
+-   OSPRay also provides an optional module implementing the `denoiser`
     image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
     module requires Intel [Open Image
     Denoise](https://openimagedenoise.github.io/) in version 1.2.3 or
     newer. You may need to hint the location of the library with the
     CMake variable `OpenImageDenoise_DIR`.
+
+-   For the optional MPI module (enabled by `OSPRAY_MODULE_MPI`), which
+    provides the `mpiOffload` and `mpiDistributed` devices, you need an
+    MPI library and [Google Snappy](https://github.com/google/snappy).
+
+-   The optional example application, the test suit and benchmarks need
+    some version of OpenGL and GLFW as well as
+    [GoogleTest](https://github.com/google/googletest) and [Google
+    Benchmark](https://github.com/google/benchmark/)
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be
@@ -191,6 +202,10 @@ BUILD\_OSPRAY\_MODULE\_MPI
 set to ON to build OSPRay’s MPI module for data-replicated and
 distributed parallel rendering on multiple nodes.
 
+BUILD\_TBB\_FROM\_SOURCE  
+set to ON to build TBB from source (required for ARM support). The
+default setting is OFF.
+
 For the full set of options, run:
 
 ``` sh
@@ -231,7 +246,7 @@ CMake is easy:
     cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
     ```
 
-    CMake will now use Clang instead of GCC. If you are ok with using
+    CMake will now use Clang instead of GCC. If you are OK with using
     the default compiler on your system, then simply skip this step.
     Note that the compiler variables cannot be changed after the first
     `cmake` or `ccmake` run.
@@ -545,15 +560,15 @@ specified through `ospInit` or manually set device parameters.
 
 The following errors are currently used by OSPRay:
 
-| Name                    | Description                                             |
-|:------------------------|:--------------------------------------------------------|
-| OSP\_NO\_ERROR          | no error occurred                                       |
-| OSP\_UNKNOWN\_ERROR     | an unknown error occurred                               |
-| OSP\_INVALID\_ARGUMENT  | an invalid argument was specified                       |
-| OSP\_INVALID\_OPERATION | the operation is not allowed for the specified object   |
-| OSP\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command       |
-| OSP\_UNSUPPORTED\_CPU   | the CPU is not supported (minimum ISA is SSE4.1)        |
-| OSP\_VERSION\_MISMATCH  | a module could not be loaded due to mismatching version |
+| Name                    | Description                                                                   |
+|:------------------------|:------------------------------------------------------------------------------|
+| OSP\_NO\_ERROR          | no error occurred                                                             |
+| OSP\_UNKNOWN\_ERROR     | an unknown error occurred                                                     |
+| OSP\_INVALID\_ARGUMENT  | an invalid argument was specified                                             |
+| OSP\_INVALID\_OPERATION | the operation is not allowed for the specified object                         |
+| OSP\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command                             |
+| OSP\_UNSUPPORTED\_CPU   | the CPU is not supported (minimum ISA is SSE4.1 on x86\_64 and NEON on ARM64) |
+| OSP\_VERSION\_MISMATCH  | a module could not be loaded due to mismatching version                       |
 
 Possible error codes, i.e., valid named constants of type `OSPError`.
 
@@ -890,13 +905,14 @@ strides between scanlines (2D, `byteStride2`) and slices (3D,
 The parameters understood by structured volumes are summarized in the
 table below.
 
-| Type    | Name           |                       Default | Description                                                                           |
-|:--------|:---------------|------------------------------:|:--------------------------------------------------------------------------------------|
-| vec3f   | gridOrigin     |                     (0, 0, 0) | origin of the grid in object-space                                                    |
-| vec3f   | gridSpacing    |                     (1, 1, 1) | size of the grid cells in object-space                                                |
-| OSPData | data           |                               | the actual voxel 3D [data](#data)                                                     |
-| int     | filter         | `OSP_VOLUME_FILTER_TRILINEAR` | filter used for reconstructing the field, also allowed is `OSP_VOLUME_FILTER_NEAREST` |
-| int     | gradientFilter |              same as `filter` | filter used during gradient computations                                              |
+| Type    | Name           |                       Default | Description                                                                                                            |
+|:--------|:---------------|------------------------------:|:-----------------------------------------------------------------------------------------------------------------------|
+| vec3f   | gridOrigin     |                     (0, 0, 0) | origin of the grid in object-space                                                                                     |
+| vec3f   | gridSpacing    |                     (1, 1, 1) | size of the grid cells in object-space                                                                                 |
+| OSPData | data           |                               | the actual voxel 3D [data](#data)                                                                                      |
+| int     | filter         | `OSP_VOLUME_FILTER_TRILINEAR` | filter used for reconstructing the field, also allowed is `OSP_VOLUME_FILTER_NEAREST` and `OSP_VOLUME_FILTER_TRICUBIC` |
+| int     | gradientFilter |              same as `filter` | filter used during gradient computations                                                                               |
+| float   | background     |                         `NaN` | value that is used when sampling an undefined region outside the volume domain                                         |
 
 Configuration parameters for structured regular volumes.
 
@@ -928,6 +944,7 @@ below.
 | OSPData | data           |                               | the actual voxel 3D [data](#data)                                                     |
 | int     | filter         | `OSP_VOLUME_FILTER_TRILINEAR` | filter used for reconstructing the field, also allowed is `OSP_VOLUME_FILTER_NEAREST` |
 | int     | gradientFilter |              same as `filter` | filter used during gradient computations                                              |
+| float   | background     |                         `NaN` | value that is used when sampling an undefined region outside the volume domain        |
 
 Configuration parameters for structured spherical volumes.
 
@@ -978,6 +995,7 @@ Note that cell widths are defined *per refinement level*, not per block.
 | OSPData\[\]    | block.data   |              NULL | [data](#data) array of OSPData containing the actual scalar voxel data, only `OSP_FLOAT` is supported as `OSPDataType` |
 | vec3f          | gridOrigin   |         (0, 0, 0) | origin of the grid in world-space                                                                                      |
 | vec3f          | gridSpacing  |         (1, 1, 1) | size of the grid cells in world-space                                                                                  |
+| float          | background   |             `NaN` | value that is used when sampling an undefined region outside the volume domain                                         |
 
 Configuration parameters for AMR volumes.
 
@@ -1074,7 +1092,7 @@ omitted).
 |                         |                    |         | `OSP_PYRAMID`                                                                                                                                           |
 | bool                    | hexIterative       |   false | hexahedron interpolation method, defaults to fast non-iterative version which could have rendering inaccuracies may appear if hex is not parallelepiped |
 | bool                    | precomputedNormals |   false | whether to accelerate by precomputing, at a cost of 12 bytes/face                                                                                       |
-| int                     | maxIteratorDepth   |       6 | do not descend further than to this BVH depth during interval iteration                                                                                 |
+| float                   | background         |   `NaN` | value that is used when sampling an undefined region outside the volume domain                                                                          |
 
 Configuration parameters for unstructured volumes.
 
@@ -1116,13 +1134,13 @@ VDB volumes have the following parameters:
 
 | Type        | Name             | Description                                                                                                                                                                                                                                                                                                                          |
 |:------------|:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| int         | maxIteratorDepth | do not descend further than to this depth during interval iteration, the maximum value and the default is 3                                                                                                                                                                                                                          |
 | int         | maxSamplingDepth | do not descend further than to this depth during sampling, the maximum value and the default is 3                                                                                                                                                                                                                                    |
 | uint32\[\]  | node.level       | level on which each input node exists, may be 1, 2 or 3 (levels are counted from the root level = 0 down)                                                                                                                                                                                                                            |
 | vec3i\[\]   | node.origin      | the node origin index (per input node)                                                                                                                                                                                                                                                                                               |
 | OSPData\[\] | node.data        | [data](#data) arrays with the node data (per input node). Nodes that are tiles are expected to have single-item arrays. Leaf-nodes with grid data expected to have compact 3D arrays in zyx layout (z changes most quickly) with the correct number of voxels for the `level`. Only `OSP_FLOAT` is supported as field `OSPDataType`. |
 | int         | filter           | filter used for reconstructing the field, default is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively `OSP_VOLUME_FILTER_NEAREST`, or `OSP_VOLUME_FILTER_TRICUBIC`.                                                                                                                                                                      |
 | int         | gradientFilter   | filter used for reconstructing the field during gradient computations, default same as `filter`                                                                                                                                                                                                                                      |
+| float       | background       | value that is used when sampling an undefined region outside the volume domain, default `NaN`                                                                                                                                                                                                                                        |
 
 Configuration parameters for VDB volumes.
 
@@ -1157,7 +1175,6 @@ traversal, similar to the method in \[1\].
 | float     | radiusSupportFactor     |     3.0 | The multiplier of the particle radius required for support. Larger radii ensure smooth results at the cost of performance. In the Gaussian kernel, the radius is one standard deviation (*σ*), so a value of 3 corresponds to 3*σ*.                                                                                                                                                                            |
 | float     | clampMaxCumulativeValue |       0 | The maximum cumulative value possible, set by user. All cumulative values will be clamped to this, and further traversal (RBF summation) of particle contributions will halt when this value is reached. A value of zero or less turns this off.                                                                                                                                                               |
 | bool      | estimateValueRanges     |    true | Enable heuristic estimation of value ranges which are used in internal acceleration structures as well as for determining the volume’s overall value range. When set to `false`, the user *must* specify `clampMaxCumulativeValue`, and all value ranges will be assumed \[0–`clampMaxCumulativeValue`\]. Disabling this switch may improve volume commit time, but will make volume rendering less efficient. |
-| int       | maxIteratorDepth        |       6 | do not descend further than to this BVH depth during interval iteration                                                                                                                                                                                                                                                                                                                                        |
 
 Configuration parameters for particle volumes.
 
@@ -1515,17 +1532,17 @@ OSPLight ospNewLight(const char *type);
 
 All light sources accept the following parameters:
 
-| Type  | Name              | Default | Description                                                                                                                     |
-|:------|:------------------|--------:|:--------------------------------------------------------------------------------------------------------------------------------|
-| vec3f | color             |   white | color of the light (linear RGB)                                                                                                 |
-| float | intensity         |       1 | intensity of the light (a factor)                                                                                               |
-| uchar | intensityQuantity |         | `OSPIntensityQuantity` to set the radiative quantity represented by `intensity`. The default value depends on the light source. |
-| bool  | visible           |    true | whether the light can be directly seen                                                                                          |
+| Type  | Name              | Default | Description                                                                                                                       |
+|:------|:------------------|--------:|:----------------------------------------------------------------------------------------------------------------------------------|
+| vec3f | color             |   white | color of the light (linear RGB)                                                                                                   |
+| float | intensity         |       1 | intensity of the light (a factor)                                                                                                 |
+| uchar | intensityQuantity |         | `OSPIntensityQuantity` to set the radiometric quantity represented by `intensity`. The default value depends on the light source. |
+| bool  | visible           |    true | whether the light can be directly seen                                                                                            |
 
 Parameters accepted by all lights.
 
 In OSPRay the `intensity` parameter of a light source can correspond to
-different types of radiative quantities. The type of the value
+different types of radiometric quantities. The type of the value
 represented by a light’s `intensity` parameter is set using
 `intensityQuantity`, which accepts values from the enum type
 `OSPIntensityQuantity`. The supported types of `OSPIntensityQuantity`
@@ -1540,7 +1557,7 @@ specific light source).
 | OSP\_INTENSITY\_QUANTITY\_IRRADIANCE | the amount of light arriving at a surface point, assuming the light is oriented towards to the surface, unit is W/m<sup>2</sup> |
 | OSP\_INTENSITY\_QUANTITY\_SCALE      | a linear scaling factor for light sources with a built-in quantity (e.g., `HDRI`, or `sunSky`).                                 |
 
-Types of radiative quantities used to interpret a light’s `intensity`
+Types of radiometric quantities used to interpret a light’s `intensity`
 parameter.
 
 The following light types are supported by most OSPRay renderers.
@@ -1674,7 +1691,7 @@ shadows.
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
 “`hdri`” to `ospNewLight`. The values of the HDRI correspond to radiance
-and therfore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE`
+and therefore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE`
 as `intensityQuantity` parameter value. In addition to the [general
 parameters](#lights) the HDRI light supports the following special
 parameters:
@@ -1715,12 +1732,12 @@ string “`sunSky`” to `ospNewLight`. The sun-sky light surrounds the
 scene and illuminates it from infinity and can be used for rendering
 outdoor scenes. The radiance values are calculated using the
 Hošek-Wilkie sky model and solar radiance function. The underlying model
-of the sun-sky light returns radiance values and therfore the light only
-accepts `OSP_INTENSITY_QUANTITY_SCALE` as `intensityQuantity` parameter
-value. To recale the returned radiance of the sky model the default
-value for the `intensity` parameter is set to `0.025`. In addition to
-the [general parameters](#lights) the following special parameters are
-supported:
+of the sun-sky light returns radiance values and therefore the light
+only accepts `OSP_INTENSITY_QUANTITY_SCALE` as `intensityQuantity`
+parameter value. To rescale the returned radiance of the sky model the
+default value for the `intensity` parameter is set to `0.025`. In
+addition to the [general parameters](#lights) the following special
+parameters are supported:
 
 | Type  | Name             |      Default | Description                                                                                          |
 |:------|:-----------------|-------------:|:-----------------------------------------------------------------------------------------------------|
@@ -1802,9 +1819,11 @@ via a transform. To create and instance call
 OSPInstance ospNewInstance(OSPGroup);
 ```
 
-| Type     | Name |  Default | Description                                                   |
-|:---------|:-----|---------:|:--------------------------------------------------------------|
-| affine3f | xfm  | identity | world-space transform for all attached geometries and volumes |
+| Type         | Name             |  Default | Description                                                                                     |
+|:-------------|:-----------------|---------:|:------------------------------------------------------------------------------------------------|
+| affine3f     | transform        | identity | world-space transform for all attached geometries and volumes, overridden by `motion.transform` |
+| affine3f\[\] | motion.transform |          | uniformly distributed world-space transforms                                                    |
+| box1f        | time             | \[0, 1\] | time associated with first and last key in `motion.` arrays (for motion blur)                   |
 
 Parameters understood by instances.
 
@@ -1995,8 +2014,10 @@ their distinctive look. To let the given renderer create a new material
 of given type `type` call
 
 ``` cpp
-OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
+OSPMaterial ospNewMaterial(const char *, const char *material_type);
 ```
+
+Please note that the first argument is ignored.
 
 The returned handle can then be used to assign the material to a given
 geometry with
@@ -2517,36 +2538,48 @@ OSPCamera ospNewCamera(const char *type);
 
 All cameras accept these parameters:
 
-| Type  | Name       | Description                               |
-|:------|:-----------|:------------------------------------------|
-| vec3f | position   | position of the camera in world-space     |
-| vec3f | direction  | main viewing direction of the camera      |
-| vec3f | up         | up direction of the camera                |
-| float | nearClip   | near clipping distance                    |
-| vec2f | imageStart | start of image region (lower left corner) |
-| vec2f | imageEnd   | end of image region (upper right corner)  |
+| Type         | Name             | Description                                                                   |
+|:-------------|:-----------------|:------------------------------------------------------------------------------|
+| vec3f        | position         | position of the camera in world-space                                         |
+| vec3f        | direction        | main viewing direction of the camera                                          |
+| vec3f        | up               | up direction of the camera                                                    |
+| affine3f     | transform        | additional world-space transform, overridden by `motion.transform`            |
+| float        | nearClip         | near clipping distance                                                        |
+| vec2f        | imageStart       | start of image region (lower left corner)                                     |
+| vec2f        | imageEnd         | end of image region (upper right corner)                                      |
+| affine3f\[\] | motion.transform | additional uniformly distributed world-space transforms                       |
+| box1f        | time             | time associated with first and last key in `motion.` arrays, default \[0, 1\] |
+| box1f        | shutter          | start and end of shutter time (for motion blur), default \[0.5, 0.5\]         |
 
 Parameters accepted by all cameras.
 
 The camera is placed and oriented in the world with `position`,
-`direction` and `up`. OSPRay uses a right-handed coordinate system. The
-region of the camera sensor that is rendered to the image can be
-specified in normalized screen-space coordinates with `imageStart`
-(lower left corner) and `imageEnd` (upper right corner). This can be
-used, for example, to crop the image, to achieve asymmetrical view
-frusta, or to horizontally flip the image to view scenes which are
-specified in a left-handed coordinate system. Note that values outside
-the default range of \[0–1\] are valid, which is useful to easily
-realize overscan or film gate, or to emulate a shifted sensor.
+`direction` and `up`. Additionally, an extra transformation `transform`
+can be specified, which will only be applied to 3D vectors (i.e.
+`position`, `direction` and `up`), but does *not* affect any sizes
+(e.g., `nearClip`, `apertureRadius`, or `height`). The same holds for
+the array of transformations `motion.transform` to achieve camera motion
+blur (in combination with `time` and `shutter`).
+
+OSPRay uses a right-handed coordinate system. The region of the camera
+sensor that is rendered to the image can be specified in normalized
+screen-space coordinates with `imageStart` (lower left corner) and
+`imageEnd` (upper right corner). This can be used, for example, to crop
+the image, to achieve asymmetrical view frusta, or to horizontally flip
+the image to view scenes which are specified in a left-handed coordinate
+system. Note that values outside the default range of \[0–1\] are valid,
+which is useful to easily realize overscan or film gate, or to emulate a
+shifted sensor.
 
 #### Perspective Camera
 
 The perspective camera implements a simple thin lens camera for
 perspective rendering, supporting optionally depth of field and stereo
-rendering, but no motion blur. It is created by passing the type string
-“`perspective`” to `ospNewCamera`. In addition to the [general
-parameters](#cameras) understood by all cameras the perspective camera
-supports the special parameters listed in the table below.
+rendering (with the [path tracer](#path-tracer)). It is created by
+passing the type string “`perspective`” to `ospNewCamera`. In addition
+to the [general parameters](#cameras) understood by all cameras the
+perspective camera supports the special parameters listed in the table
+below.
 
 | Type  | Name                   | Description                                                                |
 |:------|:-----------------------|:---------------------------------------------------------------------------|
@@ -2602,11 +2635,10 @@ altered by `imageStart`/`imageEnd`.
 #### Orthographic Camera
 
 The orthographic camera implements a simple camera with orthographic
-projection, without support for depth of field or motion blur. It is
-created by passing the type string “`orthographic`” to `ospNewCamera`.
-In addition to the [general parameters](#cameras) understood by all
-cameras the orthographic camera supports the following special
-parameters:
+projection, without support for depth. It is created by passing the type
+string “`orthographic`” to `ospNewCamera`. In addition to the [general
+parameters](#cameras) understood by all cameras the orthographic camera
+supports the following special parameters:
 
 | Type  | Name   | Description                                                 |
 |:------|:-------|:------------------------------------------------------------|
@@ -2727,7 +2759,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
 | OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float; for multiple samples per pixel their minimum is taken |
 | OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                                                                                             |
 | OSP\_FB\_VARIANCE | for estimation of the current noise level if OSP\_FB\_ACCUM is also present, see [rendering](#rendering)                                   |
-| OSP\_FB\_NORMAL   | accumulated world-space normal of the first hit, as vec3f                                                                                  |
+| OSP\_FB\_NORMAL   | accumulated world-space normal of the first non-specular hit, as vec3f                                                                     |
 | OSP\_FB\_ALBEDO   | accumulated material albedo (color without illumination) at the first hit, as vec3f                                                        |
 
 Framebuffer channels constants (of type `OSPFrameBufferChannel`), naming
@@ -2931,7 +2963,7 @@ int ospIsReady(OSPFuture, OSPSyncEvent = OSP_TASK_FINISHED);
 ```
 
 As the given running task runs (as tracked by the `OSPFuture`),
-applications can query a boolean \[0,1\] result if the passed event has
+applications can query a boolean \[0, 1\] result if the passed event has
 been completed.
 
 Applications can query how long an async task ran with
@@ -3033,7 +3065,7 @@ through the command line, the following parameters can be set:
 |:-------|:------------------------|--------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | string | mpiMode                 |     mpi | The mode to communicate with the worker ranks. `mpi` will assume you’re launching the application and workers in the same mpi command (or split launch command). `mpi` is the only supported mode |
 | uint   | maxCommandBufferEntries |    8192 | Set the max number of commands to buffer before submitting the command buffer to the workers                                                                                                      |
-| uint   | commandBufferSize       | 512 MiB | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8GiB                                                                                                                    |
+| uint   | commandBufferSize       | 512 MiB | Set the max command buffer size to allow. Units are in MiB. Max size is 1.8 GiB                                                                                                                   |
 | uint   | maxInlineDataSize       |  32 MiB | Set the max size of an OSPData which can be inline’d into the command buffer instead of being sent separately. Max size is half the commandBufferSize. Units are in MiB                           |
 
 Parameters specific to the `mpiOffload` Device.
@@ -3044,12 +3076,17 @@ The `maxCommandBufferEntries`, `commandBufferSize`, and
 `OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
 respectively.
 
+The `mpiOffload` device does not support multiple init/shutdown cycles.
+Thus, to run `ospBenchmark` for this device make sure to exclude the
+init/shutdown test by passing `--benchmark_filter=-ospInit_ospShutdown`
+through the command line.
+
 MPI Distributed Rendering
 -------------------------
 
 While MPI Offload rendering is used to transparently distribute
 rendering work without requiring modification to the application, MPI
-Distributed rendering is targetted at use of OSPRay within MPI-parallel
+Distributed rendering is targeted at use of OSPRay within MPI-parallel
 applications. The MPI distributed device can be selected by loading the
 `mpi` module, and manually creating and using an instance of the
 `mpiDistributed` device:
@@ -3126,7 +3163,7 @@ occlusion, each rank’s data can overlap. To clip these non-owned overlap
 regions out a set of regions (the `region` parameter) can pass as a
 parameter to the `OSPWorld` being rendered. Each rank can specify one or
 more non-overlapping `box3f`’s which bound the portions of its local
-data which it is reponsible for rendering. See the
+data which it is responsible for rendering. See the
 [ospMPIDistributedTutorialStructuredVolume](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialStructuredVolume.cpp)
 for an example.
 
@@ -3161,6 +3198,25 @@ The MPI Distributed device also supports user modules, as all that is
 required for compositing the distributed data are the bounds of each
 rank’s local data.
 
+MultiDevice Rendering
+=====================
+
+The multidevice module is an experimental OSPRay device type that
+renders images by delegating off pixel tiles to a number of internal
+delegate OSPRay devices. Multidevice is in still in an development stage
+and is currently limited to automatically creating ISPCDevice delegates.
+
+If you wish to try it set the OSPRAY\_NUM\_SUBDEVICES environmental
+variable to the number of subdevices you want to create and tell OSPRay
+to both load the multidevice extension and create a multidevice for
+rendering instead of the default ISPCDevice.
+
+One example in a bash like shell is as follows:
+
+``` sh
+OSPRAY_NUM_SUBDEVICES=6 ./ospTutorial --osp:load-modules=multidevice --osp:device=multidevice
+```
+
 Tutorials
 =========
 
@@ -3176,13 +3232,17 @@ An example of building `ospTutorial.c` with CMake can be found in
 
 To build the tutorial on Linux, build it in a build directory with
 
-    gcc -std=c99 ../apps/ospTutorial/ospTutorial.c \
-    -I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospTutorial
+``` sh
+gcc -std=c99 ../apps/ospTutorial/ospTutorial.c \
+-I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospTutorial
+```
 
 On Windows build it can be build manually in a
 “build\_directory\\$Configuration” directory with
 
-    cl ..\..\apps\ospTutorial\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+``` sh
+cl ..\..\apps\ospTutorial\ospTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+```
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
@@ -3301,8 +3361,139 @@ to change `turbidity` and `sunDirection`.
 
 
 
+MPI Distributed Tutorials
+=========================
+
+The MPI Distributed tutorials demonstrate various ways that distributed
+applications using MPI can leverage OSPRay’s distributed rendering
+capabilities to render distributed, replicated, and partially replicated
+data across the processes. The tutorials will be built as part of OSPRay
+when running cmake with
+
+``` sh
+cmake \
+  -DOSPRAY_ENABLE_APPS=ON \
+  -DOSPRAY_APPS_TUTORIALS=ON \
+  -DOSPRAY_MODULE_MPI=ON \
+  -DOSPRAY_MPI_BUILD_TUTORIALS=ON \
+  <other args>
+```
+
+ospMPIDistribTutorial
+---------------------
+
+A minimal working example demonstrating how to use OSPRay for rendering
+distributed data can be found at
+[`modules/mpi/tutorials/ospMPIDistribTutorial.c`](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.c)[10].
+
+The compilation process via CMake is the similar to
+[`apps/tutorials/ospTutorialFindospray/`](https://github.com/ospray/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray),
+with the addition of finding and linking MPI.
+
+To build the tutorial on Linux, build it in a build directory with
+
+``` sh
+mpicc -std=c99 ../modules/mpi/tutorials/ospMPIDistribTutorial.c \
+-I ../ospray/include -L . -lospray -Wl,-rpath,. -o ospMPIDistribTutorial
+```
+
+On Windows build it can be build manually in a
+“build\_directory\\$Configuration” directory with
+
+``` sh
+cl ..\..\modules\mpi\tutorials\ospMPIDistribTutorial.c -I ..\..\ospray\include -I ..\.. ospray.lib
+```
+
+The MPI module does not need to be linked explicitly, as it is loaded as
+a module at runtime.
+
+<figure>
+<img src="https://ospray.github.io/images/ospMPIDistribTutorial_firstFrame.jpg" width="60.0%" alt="The first frame output by the ospMPIDistribTutorial or C++ tutorial with 4 ranks." /><figcaption aria-hidden="true">The first frame output by the <code>ospMPIDistribTutorial</code> or C++ tutorial with 4 ranks.</figcaption>
+</figure>
+
+
+
+<figure>
+<img src="https://ospray.github.io/images/ospMPIDistribTutorial_accumulatedFrame.jpg" width="60.0%" alt="The accumulated frame output by the ospMPIDistribTutorial or C++ tutorial with 4 ranks." /><figcaption aria-hidden="true">The accumulated frame output by the <code>ospMPIDistribTutorial</code> or C++ tutorial with 4 ranks.</figcaption>
+</figure>
+
+
+
+ospMPIDistribTutorialSpheres and ospMPIDistribTutorialVolume
+------------------------------------------------------------
+
+The spheres and volume distributed tutorials are built as part of the
+MPI tutorials when building OSPRay with the MPI module and tutorials
+enabled. These tutorials demonstrate using OSPRay to render distributed
+data sets where each rank owns some subregion of the data, and
+displaying the output in an interactive window. The domain is
+distributed in a grid among the processes, each of which will generate a
+subset of the data corresponding to its subdomain.
+
+In `ospMPIDistribTutorialSpheres`, each process generates a set of
+spheres within its assigned domain. The spheres are colored from dark to
+light blue, where lighter colors correspond to higher ranks.
+
+<figure>
+<img src="https://ospray.github.io/images/ospMPIDistribTutorialSpheres.jpg" width="60.0%" alt="Running ospMPIDistribTutorialSpheres on 4 ranks." /><figcaption aria-hidden="true">Running <code>ospMPIDistribTutorialSpheres</code> on 4 ranks.</figcaption>
+</figure>
+
+
+
+In `ospMPIDistribTutorialVolume`, each process generates a subbrick of
+volume data, which is colored by its rank.
+
+<figure>
+<img src="https://ospray.github.io/images/ospMPIDistribTutorialVolume.jpg" width="60.0%" alt="Running ospMPIDistribTutorialVolume on 4 ranks." /><figcaption aria-hidden="true">Running <code>ospMPIDistribTutorialVolume</code> on 4 ranks.</figcaption>
+</figure>
+
+
+
+ospMPIDistribTutorialPartialRepl
+--------------------------------
+
+The partially replicated MPI tutorial demonstrates how to use OSPRay’s
+distributed rendering capabilities to render data sets that are
+partially replicated among the processes. Each pair of ranks generates
+the same volume brick, allowing them to subdivide the rendering workload
+between themselves. For example, when run with two ranks, each will
+generate the same brick and be responsible for rendering half of the
+image tiles it projects to. When run with four ranks, the pairs of ranks
+0,1 and 2,3 will generate the same data and divide the rendering
+workload for that data among themselves.
+
+The image work subdivision happens automatically, based on which ranks
+specify the same bounding box for their data, as demonstrated in the
+tutorial.
+
+The partially replicated distribution is useful to support load-balanced
+rendering of data sets that are too large to be fully replicated among
+the processes, but are small enough to be partially replicated among
+them.
+
+ospMPIDistribTutorialReplicated
+-------------------------------
+
+The replicated MPI tutorial demonstrates how OSPRay’s distributed
+rendering capabilities can be used to render data sets that are fully
+replicated among the ranks with advanced illumination effects. In this
+case, although the processes are run MPI parallel, each rank specifies
+the exact same data. OSPRay’s MPI parallel renderer will detect that the
+data is replicated in this case and use the same image-parallel
+rendering algorithms employed in the MPI offload rendering configuration
+to render the data. This image-parallel rendering algorithm supports all
+rendering configurations that are used in local rendering, e.g., path
+tracing, to provide high-quality images.
+
+The replicated MPI tutorial supports the same scenes and parameters as
+the [`ospExamples`](#ospexamples) app described above.
+
+This mode can be useful when high-quality rendering is desired and it is
+possible to copy the entire data set on to each rank, or to accelerate
+loading of a large model by leveraging a parallel file system.
+
 [1] For example, if OSPRay is in `~/Projects/ospray`, ISPC will also be
-searched in `~/Projects/ispc-v1.14.1-linux`
+searched in `~/Projects/ispc-v1.16.1-linux`.
 
 [2] This file is usually in
 `${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake
@@ -3310,7 +3501,7 @@ does not find it automatically, then specify its location in variable
 `ospray_DIR` (either an environment variable or CMake variable).
 
 [3] The number of items to be copied is defined by the size of the
-source array
+source array.
 
 [4] For consecutive memory addresses the x-index of the corresponding
 voxel changes the quickest.
@@ -3321,7 +3512,7 @@ voxel changes the quickest.
 [`OSPDataType`](#data).
 
 [7] If there are multiple ambient lights then their contribution is
-added
+added.
 
 [8] respectively (127, 127, 255) for 8 bit textures and
 (32767, 32767, 65535) for 16 bit textures
@@ -3331,3 +3522,9 @@ API via
 [`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
 is available at
 [`apps/tutorials/ospTutorial.cpp`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.cpp).
+
+[10] A C++ version that uses the C++ convenience wrappers of OSPRay’s
+C99 API via
+[`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
+is available at
+[`modules/mpi/tutorials/ospMPIDistribTutorial.cpp`](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.cpp).

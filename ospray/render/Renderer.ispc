@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
@@ -104,12 +104,18 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
           (screenSample.sampleID.y + pfSample.y) * fb->rcpSize.y;
       screenSample.pos = cameraSample.screen;
 
-      // TODO: fix correlations / better RNG
-      cameraSample.lens.x = pixel_du;
-      cameraSample.lens.y = pixel_dv;
+      // no DoF or MB per default
+      cameraSample.lens.x = 0.5f;
+      cameraSample.lens.y = 0.5f;
+      cameraSample.time = 0.5f;
 
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);
+
+      screenSample.z = inf;
+      screenSample.albedo =
+          make_vec3f(Renderer_getBackground(self, screenSample.pos));
+      screenSample.normal = make_vec3f(0.f);
 
       self->renderSample(self, fb, world, perFrameData, screenSample);
       col = col + screenSample.rgb;

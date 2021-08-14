@@ -58,6 +58,11 @@ vec2i FrameBuffer::getNumPixels() const
   return size;
 }
 
+OSPFrameBufferFormat FrameBuffer::getColorBufferFormat() const
+{
+  return colorBufferFormat;
+}
+
 float FrameBuffer::getVariance() const
 {
   return frameVariance;

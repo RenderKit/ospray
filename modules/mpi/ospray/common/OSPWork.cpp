@@ -152,9 +152,9 @@ void newMaterial(
     OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
   int64_t handle = 0;
-  std::string type, rendererType;
-  cmdBuf >> handle >> rendererType >> type;
-  state.objects[handle] = ospNewMaterial(rendererType.c_str(), type.c_str());
+  std::string type;
+  cmdBuf >> handle >> type;
+  state.objects[handle] = ospNewMaterial(nullptr, type.c_str());
 }
 
 void newLight(
@@ -188,7 +188,7 @@ void dataTransfer(OSPState &state,
 
 Data *retrieveData(OSPState &state,
     networking::BufferReader &cmdBuf,
-    networking::Fabric &fabric,
+    networking::Fabric &,
     const OSPDataType type,
     const vec3ul numItems,
     Data *outputData)
@@ -255,9 +255,8 @@ void newSharedData(OSPState &state,
   state.appSharedData[handle] = data;
 }
 
-void newData(OSPState &state,
-    networking::BufferReader &cmdBuf,
-    networking::Fabric &fabric)
+void newData(
+    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
   int64_t handle = 0;
   OSPDataType format;
@@ -268,9 +267,8 @@ void newData(OSPState &state,
       ospNewData(format, numItems.x, numItems.y, numItems.z);
 }
 
-void copyData(OSPState &state,
-    networking::BufferReader &cmdBuf,
-    networking::Fabric &fabric)
+void copyData(
+    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
   int64_t sourceHandle = 0;
   int64_t destinationHandle = 0;
@@ -366,7 +364,7 @@ void retain(
 }
 
 void loadModule(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
+    OSPState &, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
   std::string module;
   cmdBuf >> module;
@@ -636,13 +634,6 @@ void removeParam(
   ospRemoveParam(state.objects[handle], param.c_str());
 }
 
-void setLoadBalancer(
-    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
-{
-  NOT_IMPLEMENTED;
-  // TODO: We only have one load balancer now
-}
-
 void pick(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &fabric)
@@ -655,7 +646,7 @@ void pick(OSPState &state,
   cmdBuf >> fbHandle >> rendererHandle >> cameraHandle >> worldHandle
       >> screenPos;
 
-  OSPPickResult res = {0};
+  OSPPickResult res;
   ospPick(&res,
       state.getObject<OSPFrameBuffer>(fbHandle),
       state.getObject<OSPRenderer>(rendererHandle),
@@ -724,9 +715,8 @@ void futureWait(OSPState &state,
   }
 }
 
-void futureCancel(OSPState &state,
-    networking::BufferReader &cmdBuf,
-    networking::Fabric &fabric)
+void futureCancel(
+    OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
 {
   int64_t handle = 0;
   cmdBuf >> handle;
@@ -858,9 +848,6 @@ void dispatchWork(TAG t,
   case REMOVE_PARAM:
     removeParam(state, cmdBuf, fabric);
     break;
-  case SET_LOAD_BALANCER:
-    setLoadBalancer(state, cmdBuf, fabric);
-    break;
   case PICK:
     pick(state, cmdBuf, fabric);
     break;
@@ -885,7 +872,6 @@ void dispatchWork(TAG t,
   case NONE:
   default:
     throw std::runtime_error("Invalid work tag!");
-    break;
   }
 }
 
@@ -950,8 +936,6 @@ const char *tagName(work::TAG t)
     return "SET_PARAM";
   case REMOVE_PARAM:
     return "REMOVE_PARAM";
-  case SET_LOAD_BALANCER:
-    return "SET_LOAD_BALANCER";
   case PICK:
     return "PICK";
   case GET_BOUNDS:
