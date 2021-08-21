@@ -7,7 +7,7 @@ if (OSPRAY_ZIP_MODE)
   set(CMAKE_SKIP_INSTALL_RPATH OFF)
   if (APPLE)
     set(CMAKE_MACOSX_RPATH ON)
-    set(CMAKE_INSTALL_RPATH "@executable_path/" "@executable_path/../${CMAKE_INSTALL_LIBDIR}")
+    set(CMAKE_INSTALL_RPATH "@loader_path/" "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
   else()
     set(CMAKE_INSTALL_RPATH "\$ORIGIN:\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
     # on per target basis:
