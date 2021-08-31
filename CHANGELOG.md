@@ -4,6 +4,7 @@ Version History
 ### Changes in v2.7.1:
 
 -   Fix CMake variables and logic
+-   Fix crash when transferfunction.opacity = 0
 
 ### Changes in v2.7.0:
 
