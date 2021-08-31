@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v2.8.0:
+
+-   Fix crash when transferfunction.opacity = 0
+
 ### Changes in v2.7.0:
 
 -   Add support for transformation and camera Motion Blur (with the path
