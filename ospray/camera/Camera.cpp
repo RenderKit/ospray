@@ -57,6 +57,10 @@ void Camera::commit()
   clamp(shutter.upper);
   if (shutter.lower > shutter.upper)
     shutter.lower = shutter.upper;
+  shutterType =
+      (OSPShutterType)getParam<uint8_t>("shutterType", OSP_SHUTTER_GLOBAL);
+  rollingShutterDuration = clamp(
+      getParam<float>("rollingShutterDuration", 0.0f), 0.0f, shutter.size());
 
   affine3f single_xfm = (*motionTransforms)[0];
   if (motionBlur) { // create dummy RTCGeometry for transform interpolation
@@ -90,11 +94,22 @@ void Camera::commit()
     up = normalize(xfmVector(single_xfm, up));
   }
 
+  if (shutterType != OSP_SHUTTER_GLOBAL) { // rolling shutter
+    shutter.upper -= rollingShutterDuration;
+    if (shutterType == OSP_SHUTTER_ROLLING_LEFT
+        || shutterType == OSP_SHUTTER_ROLLING_DOWN)
+      std::swap(shutter.lower, shutter.upper);
+  }
+
   ispc::Camera_set(getIE(),
       nearClip,
       (const ispc::vec2f &)imageStart,
       (const ispc::vec2f &)imageEnd,
       (const ispc::box1f &)shutter,
+      shutterType == OSP_SHUTTER_GLOBAL,
+      rollingShutterDuration,
+      shutterType == OSP_SHUTTER_ROLLING_RIGHT
+          || shutterType == OSP_SHUTTER_ROLLING_LEFT,
       motionBlur,
       embreeGeometry);
 }

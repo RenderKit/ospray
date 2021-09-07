@@ -55,7 +55,7 @@ void PanoramicCamera_initRay(const Camera *uniform _self,
   sincos(theta, &sinTheta, &cosTheta);
   const vec3f localDir = cartesian(phi, sinTheta, cosTheta);
 
-  const float time = Camera_shutterTime(_self, sample.time);
+  const float time = Camera_shutterTime(_self, screen, sample.time);
 
   // transform to camera- and then to world-space
   vec3f dir;

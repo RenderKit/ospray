@@ -26,7 +26,7 @@ void OrthographicCamera_initRay(const Camera *uniform _self,
       (const OrthographicCamera *uniform)_self;
 
   const vec2f screen = Camera_subRegion(_self, sample.screen);
-  const float time = Camera_shutterTime(_self, sample.time);
+  const float time = Camera_shutterTime(_self, screen, sample.time);
 
   vec3f dir;
   vec3f org;

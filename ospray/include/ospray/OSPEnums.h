@@ -288,6 +288,19 @@ typedef enum
     : uint8_t
 #endif
 {
+  OSP_SHUTTER_GLOBAL,
+  OSP_SHUTTER_ROLLING_RIGHT,
+  OSP_SHUTTER_ROLLING_LEFT,
+  OSP_SHUTTER_ROLLING_DOWN,
+  OSP_SHUTTER_ROLLING_UP,
+  OSP_SHUTTER_UNKNOWN = 255
+} OSPShutterType;
+
+typedef enum
+#if __cplusplus >= 201103L
+    : uint8_t
+#endif
+{
   OSP_ROUND,
   OSP_FLAT,
   OSP_RIBBON,

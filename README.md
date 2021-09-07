@@ -2533,18 +2533,25 @@ OSPCamera ospNewCamera(const char *type);
 
 All cameras accept these parameters:
 
-| Type         | Name             | Description                                                                   |
-|:-------------|:-----------------|:------------------------------------------------------------------------------|
-| vec3f        | position         | position of the camera in world-space                                         |
-| vec3f        | direction        | main viewing direction of the camera                                          |
-| vec3f        | up               | up direction of the camera                                                    |
-| affine3f     | transform        | additional world-space transform, overridden by `motion.transform`            |
-| float        | nearClip         | near clipping distance                                                        |
-| vec2f        | imageStart       | start of image region (lower left corner)                                     |
-| vec2f        | imageEnd         | end of image region (upper right corner)                                      |
-| affine3f\[\] | motion.transform | additional uniformly distributed world-space transforms                       |
-| box1f        | time             | time associated with first and last key in `motion.` arrays, default \[0, 1\] |
-| box1f        | shutter          | start and end of shutter time (for motion blur), default \[0.5, 0.5\]         |
+| Type         | Name                   | Description                                                                                                                 |
+|:-------------|:-----------------------|:----------------------------------------------------------------------------------------------------------------------------|
+| vec3f        | position               | position of the camera in world-space                                                                                       |
+| vec3f        | direction              | main viewing direction of the camera                                                                                        |
+| vec3f        | up                     | up direction of the camera                                                                                                  |
+| affine3f     | transform              | additional world-space transform, overridden by `motion.transform`                                                          |
+| float        | nearClip               | near clipping distance                                                                                                      |
+| vec2f        | imageStart             | start of image region (lower left corner)                                                                                   |
+| vec2f        | imageEnd               | end of image region (upper right corner)                                                                                    |
+| affine3f\[\] | motion.transform       | additional uniformly distributed world-space transforms                                                                     |
+| box1f        | time                   | time associated with first and last key in `motion.` arrays, default \[0, 1\]                                               |
+| box1f        | shutter                | start and end of shutter time (for motion blur), in \[0, 1\], default \[0.5, 0.5\]                                          |
+| uchar        | shutterType            | `OSPShutterType` for motion blur, possible values are:                                                                      |
+|              |                        | `OSP_SHUTTER_GLOBAL` (default)                                                                                              |
+|              |                        | `OSP_SHUTTER_ROLLING_RIGHT`                                                                                                 |
+|              |                        | `OSP_SHUTTER_ROLLING_LEFT`                                                                                                  |
+|              |                        | `OSP_SHUTTER_ROLLING_DOWN`                                                                                                  |
+|              |                        | `OSP_SHUTTER_ROLLING_UP`                                                                                                    |
+| float        | rollingShutterDuration | for a rolling shutter (see `shutterType`) the “open” time per line, in \[0, `shutter`.upper-`shutter`.lower\], default 0.0f |
 
 Parameters accepted by all cameras.
 

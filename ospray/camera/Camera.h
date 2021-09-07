@@ -43,6 +43,8 @@ struct OSPRAY_SDK_INTERFACE Camera : public MotionTransform
   vec2f imageStart; // lower left corner
   vec2f imageEnd; // upper right corner
   range1f shutter{0.5f, 0.5f}; // start and end time of camera shutter time
+  float rollingShutterDuration{0.0f};
+  OSPShutterType shutterType{OSP_SHUTTER_GLOBAL};
 
   void setDevice(RTCDevice embreeDevice);
 

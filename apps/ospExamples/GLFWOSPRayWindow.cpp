@@ -283,6 +283,7 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
 void GLFWOSPRayWindow::updateCamera()
 {
   camera.setParam("aspect", windowSize.x / float(windowSize.y));
+  camera.setParam("stereoMode", cameraStereoMode);
   const auto xfm = arcballCamera->transform();
   if (rendererType == OSPRayRendererType::PATHTRACER && cameraMotionBlur) {
     camera.removeParam("transform");
@@ -291,6 +292,8 @@ void GLFWOSPRayWindow::updateCamera()
     xfms.push_back(xfm);
     camera.setParam("motion.transform", cpp::CopiedData(xfms));
     camera.setParam("shutter", range1f(1.0f - cameraMotionBlur, 1.0f));
+    camera.setParam("shutterType", cameraShutterType);
+    camera.setParam("rollingShutterDuration", cameraRollingShutter);
     renderCameraMotionBlur = true;
   } else {
     camera.removeParam("motion.transform");
@@ -656,6 +659,35 @@ void GLFWOSPRayWindow::buildUI()
       addObjectToCommit(camera.handle());
     }
 
+    if (cameraMotionBlur > 0.0f) {
+      static const char *cameraShutterTypes[] = {"global",
+          "rolling right",
+          "rolling left",
+          "rolling down",
+          "rolling up"};
+      if (ImGui::BeginCombo("shutterType##cameraShutterType",
+              cameraShutterTypes[cameraShutterType])) {
+        for (int n = 0; n < 5; n++) {
+          bool is_selected = (cameraShutterType == n);
+          if (ImGui::Selectable(cameraShutterTypes[n], is_selected))
+            cameraShutterType = (OSPShutterType)n;
+          if (is_selected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+
+      updateCamera();
+      addObjectToCommit(camera.handle());
+    }
+
+    if (cameraShutterType != OSP_SHUTTER_GLOBAL
+        && ImGui::SliderFloat(
+            "rollingShutterDuration", &cameraRollingShutter, 0.f, 1.0f)) {
+      updateCamera();
+      addObjectToCommit(camera.handle());
+    }
+
     if (ImGui::Checkbox("renderSunSky", &renderSunSky)) {
       if (renderSunSky) {
         sunSky.setParam("direction", sunDirection);
@@ -726,6 +758,23 @@ void GLFWOSPRayWindow::buildUI()
       renderer->setParam("volumeSamplingRate", samplingRate);
       addObjectToCommit(renderer->handle());
     }
+  }
+
+  static const char *cameraStereoModes[] = {
+      "none", "left", "right", "side-by-side", "top/bottom"};
+  if (ImGui::BeginCombo("camera stereoMode##cameraStereoMode",
+          cameraStereoModes[cameraStereoMode])) {
+    for (int n = 0; n < 5; n++) {
+      bool is_selected = (cameraStereoMode == n);
+      if (ImGui::Selectable(cameraStereoModes[n], is_selected))
+        cameraStereoMode = (OSPStereoMode)n;
+      if (is_selected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+
+    updateCamera();
+    addObjectToCommit(camera.handle());
   }
 
   if (uiCallback) {

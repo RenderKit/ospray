@@ -65,7 +65,7 @@ void PerspectiveCamera_initRay(const Camera *uniform _self,
     dir = dir - lp;
   }
 
-  const float time = Camera_shutterTime(_self, sample.time);
+  const float time = Camera_shutterTime(_self, screen, sample.time);
   setRay(ray, org, normalize(dir), self->super.nearClip, inf, time);
 }
 
@@ -76,7 +76,21 @@ void PerspectiveCamera_initRayMB(const Camera *uniform _self,
   const PerspectiveCamera *uniform self =
       (const PerspectiveCamera *uniform)_self;
 
-  const float time = Camera_shutterTime(_self, sample.time);
+  vec2f screen = sample.screen;
+  float ipd_offset1 = self->ipd_offset.x;
+
+  const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
+  varying float *uniform split = sbs ? &screen.x : &screen.y;
+  if (or (sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
+    *split *= 2.f;
+    if (*split < 1.f)
+      ipd_offset1 = -ipd_offset1;
+    else
+      *split -= 1.f;
+  }
+
+  screen = Camera_subRegion(_self, screen);
+  const float time = Camera_shutterTime(_self, screen, sample.time);
   const affine3f xfm = getInterpolatedTransform(self->super.geom, time);
 
   vec3f org = xfmPoint(xfm, self->org);
@@ -89,18 +103,16 @@ void PerspectiveCamera_initRayMB(const Camera *uniform _self,
   else // rotate film to be perpendicular to 'dir'
     dv = cross(du, dir);
 
-  vec3f ipd_offset = self->ipd_offset.x * du;
+  vec3f ipd_offset = ipd_offset1 * du;
 
   switch (self->stereoMode) {
   case OSP_STEREO_LEFT:
+  case OSP_STEREO_TOP_BOTTOM: // flipped to have left eye at top
     org = org - ipd_offset;
     break;
   case OSP_STEREO_RIGHT:
+  case OSP_STEREO_SIDE_BY_SIDE:
     org = org + ipd_offset;
-    break;
-  case OSP_STEREO_TOP_BOTTOM:
-    // flip offset to have left eye at top (image coord origin at lower left)
-    ipd_offset = neg(ipd_offset);
     break;
   default:
     break;
@@ -116,22 +128,6 @@ void PerspectiveCamera_initRayMB(const Camera *uniform _self,
     dv = dv * self->ipd_offset.y; // focusDistance
     dir = dir * self->ipd_offset.y; // focusDistance
   }
-
-  vec2f screen = sample.screen;
-
-  const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
-  varying float *uniform split = sbs ? &screen.x : &screen.y;
-  if (or (sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
-    *split *= 2.f;
-    if (*split < 1.f) {
-      org = org - ipd_offset;
-    } else {
-      org = org + ipd_offset;
-      *split -= 1.f;
-    }
-  }
-
-  screen = Camera_subRegion(_self, screen);
 
   dir = dir + screen.x * du + screen.y * dv;
 
