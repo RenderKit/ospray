@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedWorld.ih"
@@ -11,10 +11,13 @@ export void *uniform DistributedWorld_create(void *uniform cppE)
   return (void *uniform)world;
 }
 
-export void DistributedWorld_set(
-    void *uniform _world, void *uniform _regions, uniform int numRegions)
+export void DistributedWorld_set(void *uniform _world,
+    void *uniform _regions,
+    uniform int numRegions,
+    void *uniform _regionScene)
 {
   DistributedWorld *uniform world = (DistributedWorld * uniform) _world;
-  world->regions = (uniform Region * uniform) _regions;
+  world->regions = (box3f * uniform) _regions;
   world->numRegions = numRegions;
+  world->regionScene = (RTCScene)_regionScene;
 }

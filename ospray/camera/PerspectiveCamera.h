@@ -1,9 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "camera/Camera.h"
+#include "rkcommon/math/box.h"
 
 namespace ospray {
 
@@ -14,7 +15,13 @@ struct OSPRAY_SDK_INTERFACE PerspectiveCamera : public Camera
 
   virtual std::string toString() const override;
   virtual void commit() override;
-  virtual ProjectedPoint projectPoint(const vec3f &p) const override;
+
+  // Project the bounding box to the screen. Does not support motion blur,
+  // depth of field, or steroe. The projected box will be returned in normalized
+  // [0, 1] coordinates in the framebuffer, the z coordinate will store the min
+  // and max depth, in box.lower, box.upper respectively
+  // TODO: we can support this in the future.
+  box3f projectBox(const box3f &b) const;
 
   // Data members //
 
@@ -24,10 +31,6 @@ struct OSPRAY_SDK_INTERFACE PerspectiveCamera : public Camera
   float focusDistance;
   bool architectural; // orient image plane to be parallel to 'up' and shift the
                       // lens
-  vec3f dir_00;
-  vec3f dir_du;
-  vec3f dir_dv;
-  vec2f imgPlaneSize;
 
   OSPStereoMode stereoMode;
   float interpupillaryDistance; // distance between the two cameras (stereo)

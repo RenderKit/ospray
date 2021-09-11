@@ -4,9 +4,29 @@
 #include "DistributedRenderer.ih"
 #include "common/DistributedWorld.ih"
 #include "common/Intersect.ih"
+#include "common/Ray.ih"
 #include "common/World.ih"
 #include "math/random.ih"
 #include "render/util.ih"
+
+void markRegionVisibleFilterFunction(
+    const RTCFilterFunctionNArguments *uniform args)
+{
+  if (!args->valid[programIndex]) {
+    return;
+  }
+
+  EmbreeIntersectionContext *uniform ctx =
+      (EmbreeIntersectionContext * uniform) args->context;
+
+  bool *uniform regionVisible = (bool *uniform)ctx->userPtr;
+  varying RTCHit *uniform hit = (varying RTCHit * uniform) args->hit;
+  regionVisible[hit->primID] = true;
+
+  // Reject all hits, we want to find all intersections along the ray to find
+  // all visible regions
+  args->valid[programIndex] = 0;
+}
 
 unmasked void DR_default_computeRegionVisibility(
     DistributedRenderer *uniform self,
@@ -76,17 +96,14 @@ unmasked void DR_default_computeRegionVisibility(
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
-      for (uniform int r = 0; r < world->numRegions; ++r) {
-        if (!regionVisible[r] && !isEmpty(world->regions[r].bounds)) {
-          Intersections isect = intersectBox(screenSample.ray.org,
-              screenSample.ray.dir,
-              world->regions[r].bounds);
-          if (isect.entry.t < isect.exit.t
-              && isect.exit.t >= screenSample.ray.t0
-              && isect.entry.t <= screenSample.ray.t) {
-            regionVisible[r] = true;
-          }
-        }
+      if (world->regionScene) {
+        uniform EmbreeIntersectionContext context;
+        rtcInitIntersectContext(&context.ectx);
+        context.ectx.filter = markRegionVisibleFilterFunction;
+        context.userPtr = regionVisible;
+        rtcIntersectV(world->regionScene,
+            &context.ectx,
+            (varying RTCRayHit * uniform) & screenSample.ray);
       }
     }
 
@@ -102,7 +119,7 @@ unmasked void DR_default_computeRegionVisibility(
 void DR_default_renderRegionSample(DistributedRenderer *uniform self,
     FrameBuffer *uniform fb,
     DistributedWorld *uniform world,
-    const Region *uniform region,
+    const box3f *uniform region,
     const vec2f &regionInterval,
     void *uniform perFrameData,
     varying ScreenSample &sample)
@@ -117,7 +134,7 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     DistributedWorld *uniform world,
-    const Region *uniform region,
+    const box3f *uniform region,
     void *uniform perFrameData,
     uniform Tile &tile,
     uniform int taskIndex)
@@ -184,8 +201,8 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
 
       // TODO: We could store and use the region t intervals from when
       // we did the visibility test?
-      Intersections isect = intersectBox(
-          screenSample.ray.org, screenSample.ray.dir, region->bounds);
+      Intersections isect =
+          intersectBox(screenSample.ray.org, screenSample.ray.dir, *region);
 
       if (isect.entry.t < isect.exit.t && isect.exit.t >= screenSample.ray.t0
           && isect.entry.t <= screenSample.ray.t) {
@@ -262,7 +279,7 @@ export void DistributedRenderer_renderRegionToTile(void *uniform _self,
       (FrameBuffer * uniform) fb,
       (Camera * uniform) camera,
       (DistributedWorld * uniform) world,
-      (const Region *uniform)region,
+      (const box3f *uniform)region,
       perFrameData,
       tile,
       taskIndex);
@@ -307,7 +324,7 @@ export void DistributedRenderer_pick(const void *uniform _self,
     regionRay.t = min(ray.t, closestHit);
 
     const Intersections isect =
-        intersectBox(regionRay.org, regionRay.dir, world->regions[i].bounds);
+        intersectBox(regionRay.org, regionRay.dir, world->regions[i]);
 
     cif (isect.entry.t < isect.exit.t && isect.exit.t >= regionRay.t0
         && isect.entry.t <= regionRay.t) {
