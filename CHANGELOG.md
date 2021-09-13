@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Changes in v2.7.1:
+
+-   Fix CMake variables and logic
+
 ### Changes in v2.7.0:
 
 -   Add support for transformation and camera Motion Blur (with the path
