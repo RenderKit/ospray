@@ -116,9 +116,9 @@ if (EMBREE_VERSION STREQUAL "3.13.1")
   endif()
 endif()
 
-set(OPENVKL_VERSION "1.0.0" CACHE STRING "Which version of OpenVKL to build?")
-if (OPENVKL_VERSION STREQUAL "1.0.0")
-  set(OPENVKL_HASH "c2df70bec784a5ae42e2931d76d4feae51700c0b42cd5c2428b8ce6a64fffc34")
+set(OPENVKL_VERSION "1.0.1" CACHE STRING "Which version of OpenVKL to build?")
+if (OPENVKL_VERSION STREQUAL "1.0.1")
+  set(OPENVKL_HASH "dc37113adb7de12e503202633e54854b88dd612c3f914c1b9a5ae195c4c6c1be")
 endif()
 
 option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)

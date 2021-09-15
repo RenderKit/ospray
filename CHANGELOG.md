@@ -3,6 +3,8 @@ Version History
 
 ### Changes in v2.7.1:
 
+-   Use Open VKL v1.0.1 to fix sporadic slowdowns when rendering
+    structured regular and VDB volumes with the SciVis renderer
 -   Fix CMake variables and logic
 -   Fix crash when transferfunction.opacity = 0
 -   Fix bug in MPI data-parallel rendering that caused rendering to hang
