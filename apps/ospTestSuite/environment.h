@@ -40,7 +40,7 @@ class OSPRayEnvironment : public ::testing::Environment
     return failedDir;
   }
 
-  void ParsArgs(int argc, char **argv);
+  void ParseArgs(int argc, char **argv);
   std::string GetStrArgValue(std::string *arg) const;
   int GetNumArgValue(std::string *arg) const;
 
