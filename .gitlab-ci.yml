@@ -457,20 +457,20 @@ test-windows-debug-all:
 
 test-windows-msvc16-avx2:
   <<: *test_job_windows_avx2
-  tags: [win, msvc16, avx2]
+  tags: [win, msvc16, avx2, mpi]
   needs: [build-windows-msvc16-mpi_and_md]
   allow_failure: true
   script:
     - $env:Path += ";$CI_PROJECT_DIR\build\install\ospray\bin"
-    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX2 TEST_MULTIDEVICE
+    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX2 TEST_MULTIDEVICE TEST_MPI
 
 test-windows-msvc16-avx512skx:
   <<: *test_job_windows_avx512skx
-  tags: [win, msvc16, avx512vl]
+  tags: [win, msvc16, avx512vl, mpi]
   needs: [build-windows-msvc16-mpi_and_md]
   script:
     - $env:Path += ";$CI_PROJECT_DIR\build\install\ospray\bin"
-    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX512SKX TEST_MULTIDEVICE
+    - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX512SKX TEST_MULTIDEVICE TEST_MPI
 
 generate-ci-baseline-avx2:
   <<: *test_job_unix_avx2
