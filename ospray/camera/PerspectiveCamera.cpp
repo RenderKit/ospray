@@ -60,6 +60,9 @@ void PerspectiveCamera::commit()
 
 box3f PerspectiveCamera::projectBox(const box3f &b) const
 {
+  if (motionBlur || stereoMode != OSP_STEREO_NONE || focusDistance != 1.f) {
+    return box3f(vec3f(0.f), vec3f(1.f));
+  }
   box3f projection;
   ispc::PerspectiveCamera_projectBox(
       getIE(), (const ispc::box3f &)b, (ispc::box3f &)projection);

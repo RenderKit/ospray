@@ -7,7 +7,7 @@
 #include <map>
 #include "../fb/DistributedFrameBuffer.h"
 #include "WriteMultipleTileOperation.h"
-#include "camera/PerspectiveCamera.h"
+#include "camera/Camera.h"
 #include "common/MPICommon.h"
 #include "common/Profiling.h"
 #include "distributed/DistributedRenderer.h"
@@ -42,13 +42,6 @@ void Distributed::renderFrame(
     }
   }
 
-  PerspectiveCamera *perspectiveCamera =
-      reinterpret_cast<PerspectiveCamera *>(camera);
-  if (!perspectiveCamera) {
-    throw std::runtime_error(
-        "DistributedRaycastRender only supports PerspectiveCamera");
-  }
-
   if (dfb->getLastRenderer() != renderer) {
     dfb->setTileOperation(renderer->tileOperation(), renderer);
   }
@@ -75,7 +68,7 @@ void Distributed::renderFrame(
   const vec2i fbSize = dfb->getNumPixels();
   for (const auto &id : world->myRegionIds) {
     const auto &r = world->allRegions[id];
-    box3f proj = perspectiveCamera->projectBox(r);
+    box3f proj = camera->projectBox(r);
     box2f screenRegion(vec2f(proj.lower) * fbSize, vec2f(proj.upper) * fbSize);
 
     // Pad the region a bit

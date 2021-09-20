@@ -36,6 +36,11 @@ std::string Camera::toString() const
   return "ospray::Camera";
 }
 
+box3f Camera::projectBox(const box3f &) const
+{
+  return box3f(vec3f(0.f), vec3f(1.f));
+}
+
 void Camera::commit()
 {
   MotionTransform::commit();

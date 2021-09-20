@@ -19,6 +19,8 @@ struct OSPRAY_SDK_INTERFACE Camera : public MotionTransform
   std::string toString() const override;
   void commit() override;
 
+  virtual box3f projectBox(const box3f &b) const;
+
   static Camera *createInstance(const char *identifier);
   template <typename T>
   static void registerType(const char *type);

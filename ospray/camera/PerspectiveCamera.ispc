@@ -298,10 +298,8 @@ export void PerspectiveCamera_projectBox(
     projection.upper.y = reduce_max(projectedPt.y);
     projection.upper.z = reduce_max(projectedPt.z);
   }
-  // TODO: I think if points go behind the eye, we can don't need to just bail
-  // out to mark all tiles as touched but could project those points using an
-  // orthographic projection on to the plane to still have some tile overlap
-  // reduction.
+  // If some points are behind and some are in front mark the box
+  // as covering the full screen
   if (projection.lower.z < 0.f && projection.upper.z > 0.f) {
     projection.lower.x = 0.f;
     projection.lower.y = 0.f;
