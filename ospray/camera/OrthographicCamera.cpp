@@ -33,4 +33,15 @@ void OrthographicCamera::commit()
       (const ispc::vec2f &)size);
 }
 
+box3f OrthographicCamera::projectBox(const box3f &b) const
+{
+  if (motionBlur) {
+    return box3f(vec3f(0.f), vec3f(1.f));
+  }
+  box3f projection;
+  ispc::OrthographicCamera_projectBox(
+      getIE(), (const ispc::box3f &)b, (ispc::box3f &)projection);
+  return projection;
+}
+
 } // namespace ospray

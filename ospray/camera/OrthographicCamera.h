@@ -40,6 +40,8 @@ struct OSPRAY_SDK_INTERFACE OrthographicCamera : public Camera
   virtual std::string toString() const override;
   virtual void commit() override;
 
+  box3f projectBox(const box3f &b) const override;
+
   // Data members //
 
   float height; // size of the camera's image plane in y, in world coordinates
