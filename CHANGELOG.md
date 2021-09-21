@@ -5,6 +5,12 @@ Version History
 
 -   Fix CMake variables and logic
 -   Fix crash when transferfunction.opacity = 0
+-   Fix bug in data-parallel rendering that caused rendering to hang
+-   Improved performance of data-parallel rendering for scenes with
+    a large number of regions.
+-   Expanded camera model support of the data-parallel renderer,
+    data-parallel rendering can now use all the camera models supported
+    by the scivis renderer.
 
 ### Changes in v2.7.0:
 
