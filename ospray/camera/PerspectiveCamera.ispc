@@ -226,8 +226,8 @@ export void PerspectiveCamera_projectBox(
   // The original viewing direction along the camera
   const uniform vec3f dir =
       normalize(self->dir_00 + 0.5f * self->du_size + 0.5f * self->dv_up);
-  const uniform vec3f du = normalize(self->du_size);
-  const uniform vec3f dv = normalize(self->dv_up);
+  const uniform vec3f dun = normalize(self->du_size) / self->imgPlaneSize.x;
+  const uniform vec3f dvn = normalize(self->dv_up) / self->imgPlaneSize.y;
 
   vec3f projectedPt = make_vec3f(-1.f, -1.f, 1e20f);
   foreach (i = 0 ... 8) {
@@ -282,8 +282,8 @@ export void PerspectiveCamera_projectBox(
     if (denom != 0.f) {
       float t = 1.f / denom;
       const vec3f screenDir = r * t - self->dir_00;
-      projectedPt.x = dot(screenDir, du) / self->imgPlaneSize.x;
-      projectedPt.y = dot(screenDir, dv) / self->imgPlaneSize.y;
+      projectedPt.x = dot(screenDir, dun);
+      projectedPt.y = dot(screenDir, dvn);
       projectedPt.z = signbits(t) ? -length(v) : length(v);
     }
   }

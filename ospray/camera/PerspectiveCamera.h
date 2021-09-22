@@ -16,11 +16,6 @@ struct OSPRAY_SDK_INTERFACE PerspectiveCamera : public Camera
   virtual std::string toString() const override;
   virtual void commit() override;
 
-  // Project the bounding box to the screen. Will fall back to reporting the
-  // entire screen in the case of motion blur, depth of field, and stereo for
-  // now. The projected box will be returned in normalized [0, 1] coordinates in
-  // the framebuffer, the z coordinate will store the min and max depth, in
-  // box.lower, box.upper respectively
   box3f projectBox(const box3f &b) const override;
 
   // Data members //

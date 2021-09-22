@@ -19,6 +19,11 @@ struct OSPRAY_SDK_INTERFACE Camera : public MotionTransform
   std::string toString() const override;
   void commit() override;
 
+  // Project the bounding box to the screen
+  // The projected box will be returned in normalized [0, 1] coordinates in
+  // the framebuffer, the z coordinate will store the min and max depth, in
+  // box.lower, box.upper respectively
+  // Assume no motion blur nor depth of field (true for SciVis)
   virtual box3f projectBox(const box3f &b) const;
 
   static Camera *createInstance(const char *identifier);

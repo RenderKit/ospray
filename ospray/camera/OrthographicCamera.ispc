@@ -86,11 +86,9 @@ export void OrthographicCamera_projectBox(
     void *uniform _self, const uniform box3f &box, uniform box3f &projection)
 {
   OrthographicCamera *uniform self = (OrthographicCamera * uniform) _self;
-  const uniform vec3f du = normalize(self->du_size);
-  const uniform vec3f dv = normalize(self->dv_up);
-
-  const uniform float imgPlaneSizeX = length(self->du_size);
-  const uniform float imgPlaneSizeY = length(self->dv_up);
+  // normalize to image plane size
+  const uniform vec3f dun = self->du_size / dot(self->du_size, self->du_size);
+  const uniform vec3f dvn = self->dv_up / dot(self->dv_up, self->dv_up);
 
   vec3f projectedPt = make_vec3f(-1.f, -1.f, 1e20f);
   foreach (i = 0 ... 8) {
@@ -139,8 +137,8 @@ export void OrthographicCamera_projectBox(
     const float depth = dot(p - self->org, self->dir);
     const vec3f screenPt = p - depth * self->dir;
     const vec3f screenDir = screenPt - self->org;
-    projectedPt.x = dot(screenDir, du) / imgPlaneSizeX;
-    projectedPt.y = dot(screenDir, dv) / imgPlaneSizeY;
+    projectedPt.x = dot(screenDir, dun);
+    projectedPt.y = dot(screenDir, dvn);
     projectedPt.z = depth;
   }
 

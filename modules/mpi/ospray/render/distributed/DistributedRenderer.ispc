@@ -89,9 +89,10 @@ unmasked void DR_default_computeRegionVisibility(
       cameraSample.screen.y =
           (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
-      // TODO: fix correlations / better RNG
-      cameraSample.lens.x = pixel_du;
-      cameraSample.lens.y = pixel_dv;
+      // no DoF or MB per default
+      cameraSample.lens.x = 0.0f;
+      cameraSample.lens.y = 0.0f;
+      cameraSample.time = 0.5f;
 
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);
@@ -192,9 +193,10 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
       cameraSample.screen.y =
           (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
-      // TODO: fix correlations / better RNG
-      cameraSample.lens.x = pixel_du;
-      cameraSample.lens.y = pixel_dv;
+      // no DoF or MB per default
+      cameraSample.lens.x = 0.0f;
+      cameraSample.lens.y = 0.0f;
+      cameraSample.time = 0.5f;
 
       camera->initRay(camera, screenSample.ray, cameraSample);
       screenSample.ray.t = min(screenSample.ray.t, tMax);
