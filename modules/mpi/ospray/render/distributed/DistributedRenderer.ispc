@@ -9,7 +9,7 @@
 #include "math/random.ih"
 #include "render/util.ih"
 
-void markRegionVisibleFilterFunction(
+unmasked void markRegionVisibleFilterFunction(
     const RTCFilterFunctionNArguments *uniform args)
 {
   if (!args->valid[programIndex]) {
@@ -47,14 +47,16 @@ unmasked void DR_default_computeRegionVisibility(
 
   CameraSample cameraSample;
 
+  const z_order_t *uniform zOrder = get_zorder();
+
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
   const uniform int end = begin + RENDERTILE_PIXELS_PER_JOB;
   const uniform int startSampleID = max(tile.accumID, 0) * spp;
 
   for (uniform uint32 i = begin; i < end; i += programCount) {
     const uint32 index = i + programIndex;
-    screenSample.sampleID.x = tile.region.lower.x + z_order.xs[index];
-    screenSample.sampleID.y = tile.region.lower.y + z_order.ys[index];
+    screenSample.sampleID.x = tile.region.lower.x + zOrder->xs[index];
+    screenSample.sampleID.y = tile.region.lower.y + zOrder->ys[index];
 
     if ((screenSample.sampleID.x >= fb->size.x)
         || (screenSample.sampleID.y >= fb->size.y))
@@ -74,7 +76,7 @@ unmasked void DR_default_computeRegionVisibility(
       tMax = min(get1f(self->super.maxDepthTexture, lookup), inf);
     }
 
-    const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
+    const uint32 pixel = zOrder->xs[index] + (zOrder->ys[index] * TILE_SIZE);
 
     // TODO: Does spp still show some block boundary artifacts? Check
     // and maybe just support spp = 1 in DR
@@ -148,14 +150,16 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
 
   CameraSample cameraSample;
 
+  const z_order_t *uniform zOrder = get_zorder();
+
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
   const uniform int end = begin + RENDERTILE_PIXELS_PER_JOB;
   const uniform int startSampleID = max(tile.accumID, 0) * spp;
 
   for (uniform uint32 i = begin; i < end; i += programCount) {
     const uint32 index = i + programIndex;
-    screenSample.sampleID.x = tile.region.lower.x + z_order.xs[index];
-    screenSample.sampleID.y = tile.region.lower.y + z_order.ys[index];
+    screenSample.sampleID.x = tile.region.lower.x + zOrder->xs[index];
+    screenSample.sampleID.y = tile.region.lower.y + zOrder->ys[index];
 
     if ((screenSample.sampleID.x >= fb->size.x)
         || (screenSample.sampleID.y >= fb->size.y))
@@ -179,7 +183,7 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
     vec3f normal = make_vec3f(0.f);
     vec3f albedo = make_vec3f(0.f);
 
-    const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
+    const uint32 pixel = zOrder->xs[index] + (zOrder->ys[index] * TILE_SIZE);
 
     // TODO: same note on spp > 1 issues
     for (uniform uint32 s = 0; s < spp; s++) {
