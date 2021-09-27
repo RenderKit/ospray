@@ -45,17 +45,6 @@ include(CMakeDependentOption)
 
 ## Superbuild options ##
 
-## Include imported target headers with -I rather than -isystem to ensure they're
-## included prior to any CPATH headers
-cmake_dependent_option(
-  CMAKE_NO_SYSTEM_FROM_IMPORTED
-  "Disable -isystem for dependency include paths"
-  ON
-  "NOT BUILD_OSPRAY_CI_EXTRAS"
-  OFF
-)
-mark_as_advanced(CMAKE_NO_SYSTEM_FROM_IMPORTED)
-
 ProcessorCount(PROCESSOR_COUNT)
 
 if(NOT PROCESSOR_COUNT EQUAL 0)
