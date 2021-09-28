@@ -10,6 +10,7 @@ Version History
 -   Fix bug in MPI data-parallel rendering that caused rendering to hang
 -   Workaround dynamic linking issue on Windows in MPI distributed
     rendering
+-   Correctly initialize renderFrame progress
 -   Improved performance of data-parallel rendering for scenes with
     a large number of regions
 -   Expanded camera model support of the data-parallel renderer,
