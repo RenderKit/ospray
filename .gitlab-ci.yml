@@ -106,9 +106,17 @@ variables:
     - $env:Path += ";$CI_PROJECT_DIR\build\install\ospray\bin"
     - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX512SKX
 
-.job_template: &benchmark_job
+.job_template: &benchmark_manual_job
   stage: benchmark
   when: manual
+  script:
+    - scripts/tests/run-benchmarks.sh
+
+.job_template: &benchmark_scheduled_job
+  stage: benchmark
+  only:
+    variables:
+      - $RUN_SCHEDULE_BENCHMARKS
   script:
     - scripts/tests/run-benchmarks.sh
 
@@ -488,11 +496,48 @@ generate-ci-baseline-avx512skx:
     expire_in: 3 day
   when: manual
 
-### Benchmarks ###
+### Benchmarks (Manual Runs) ###
 
 benchmark-x8280-1:
-  <<: *benchmark_job
+  <<: *benchmark_manual_job
   tags: [vis-perf-x8280-1]
+  needs: [build-centos8]
+
+benchmark-a-1:
+  <<: *benchmark_manual_job
+  tags: [vis-perf-a-1]
+  needs: [build-centos8]
+
+benchmark-adl-1:
+  <<: *benchmark_manual_job
+  tags: [vis-sdp-adl-1-perf]
+  needs: [build-centos8]
+
+benchmark-tgl-1:
+  <<: *benchmark_manual_job
+  tags: [vis-sdp-dg2-01-perf]
+  needs: [build-centos8]
+
+### Benchmarks (Scheduled Runs) ###
+
+benchmark-x8280-1-schedule:
+  <<: *benchmark_scheduled_job
+  tags: [vis-perf-x8280-1]
+  needs: [build-centos8]
+
+benchmark-a-1-schedule:
+  <<: *benchmark_scheduled_job
+  tags: [vis-perf-a-1]
+  needs: [build-centos8]
+
+benchmark-adl-1-schedule:
+  <<: *benchmark_scheduled_job
+  tags: [vis-sdp-adl-1-perf]
+  needs: [build-centos8]
+
+benchmark-tgl-1-schedule:
+  <<: *benchmark_scheduled_job
+  tags: [vis-sdp-dg2-01-perf]
   needs: [build-centos8]
 
 ### Documentation ###
