@@ -16,6 +16,7 @@ Version History
 -   Expanded camera model support of the data-parallel renderer,
     data-parallel rendering can now use all the camera models supported
     by the scivis renderer
+-   Clarify documentation and error messages
 
 ### Changes in v2.7.0:
 

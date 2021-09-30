@@ -811,7 +811,7 @@ void handleError(OSPError e, const std::string &message)
   } else {
     // NOTE: No device, but something should still get printed for the user to
     //       debug the calling application.
-    std::cerr << "#ospray: INITIALIZATION ERROR --> " << message << std::endl;
+    std::cerr << "#ospray: INVALID device --> " << message << std::endl;
   }
 }
 
