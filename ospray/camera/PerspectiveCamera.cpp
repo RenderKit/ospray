@@ -43,13 +43,15 @@ void PerspectiveCamera::commit()
 
   imgPlaneSize.y = 2.f * tanf(deg2rad(0.5f * fovy));
   imgPlaneSize.x = imgPlaneSize.y * aspect;
+  float scaledAperture = imgPlaneSize.x * focusDistance;
+  scaledAperture = scaledAperture < 1e-6 ? 0.0f : apertureRadius / scaledAperture;
 
   ispc::PerspectiveCamera_set(getIE(),
       (const ispc::vec3f &)pos,
       (const ispc::vec3f &)dir,
       (const ispc::vec3f &)up,
       (const ispc::vec2f &)imgPlaneSize,
-      apertureRadius / (imgPlaneSize.x * focusDistance),
+      scaledAperture,
       focusDistance,
       aspect,
       architectural,
