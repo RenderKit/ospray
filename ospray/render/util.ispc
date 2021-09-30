@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/World.ih"
@@ -59,4 +59,9 @@ float computeAO(const World *uniform world,
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
   // cancel
   return 1.0f - (hits / (float)sampleCnt);
+}
+
+const z_order_t *uniform get_zorder()
+{
+  return &z_order;
 }

@@ -1697,16 +1697,16 @@ group.
 By adding `OSPGeometricModel`s to the `clippingGeometry` array a
 clipping geometry feature is enabled. Geometries assigned to this
 parameter will be used as clipping geometries. Any supported geometry
-can be used for clipping. The only requirement is that it has to
-distinctly partition space into clipping and non-clipping one. These
-include: spheres, boxes, infinite planes, closed meshes, closed
-subdivisions and curves. All geometries and volumes assigned to
-`geometry` or `volume` will be clipped. Use of clipping geometry that is
-not closed (or infinite) will result in rendering artifacts. User can
-decide which part of space is clipped by changing shading normals
-orientation with the `invertNormals` flag of the [GeometricModel]. When
-more than single clipping geometry is defined all clipping areas will be
-"added" together – an union of these areas will be applied.
+can be used for clipping^[including spheres, boxes, infinite planes,
+closed meshes, closed subdivisions and curves], the only requirement is
+that it has to distinctly partition space into clipping and non-clipping
+one. The use of clipping geometry that is not closed or infinite could
+result in rendering artifacts. User can decide which part of space is
+clipped by changing shading normals orientation with the `invertNormals`
+flag of the [GeometricModel]. All geometries and volumes assigned to
+`geometry` or `volume` will be clipped. All clipping geometries from all
+groups and [Instances] will be combined together – a union of these
+areas will be applied to all other objects in the [world].
 
   -------------------- ---------------- ----------  --------------------------------------
   Type                 Name                Default  Description

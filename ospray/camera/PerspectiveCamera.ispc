@@ -22,6 +22,8 @@ struct PerspectiveCamera
   vec3f ipd_offset; // shift of camera position for left/right eye (only when
                     // SIDE_BY_SIDE or TOP_BOTTOM); (0.5*ipd, focusDistance, 0)
 
+  vec2f imgPlaneSize;
+
   float scaledAperture; // radius of aperture prescaled to focal plane, i.e.,
                         // divided by horizontal image plane size
   float aspect; // image plane size x / y
@@ -40,7 +42,7 @@ void PerspectiveCamera_initRay(const Camera *uniform _self,
 
   const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
   varying float *uniform split = sbs ? &screen.x : &screen.y;
-  if (or(sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
+  if (or (sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
     *split *= 2.f;
     if (*split < 1.f) {
       org = org - self->ipd_offset;
@@ -172,6 +174,7 @@ export void PerspectiveCamera_set(void *uniform _self,
   self->stereoMode = stereoMode;
   self->dir_00 = normalize(dir);
   self->org = org;
+  self->imgPlaneSize = imgPlaneSize;
 
   if (self->super.motionBlur) {
     self->super.initRay = PerspectiveCamera_initRayMB;
@@ -213,5 +216,95 @@ export void PerspectiveCamera_set(void *uniform _self,
       self->dv_up = self->dv_up * focusDistance;
       self->dir_00 = self->dir_00 * focusDistance;
     }
+  }
+}
+
+export void PerspectiveCamera_projectBox(
+    void *uniform _self, const uniform box3f &box, uniform box3f &projection)
+{
+  PerspectiveCamera *uniform self = (PerspectiveCamera * uniform) _self;
+  // The original viewing direction along the camera
+  const uniform vec3f dir =
+      normalize(self->dir_00 + 0.5f * self->du_size + 0.5f * self->dv_up);
+  const uniform vec3f dun = normalize(self->du_size) / self->imgPlaneSize.x;
+  const uniform vec3f dvn = normalize(self->dv_up) / self->imgPlaneSize.y;
+
+  vec3f projectedPt = make_vec3f(-1.f, -1.f, 1e20f);
+  foreach (i = 0 ... 8) {
+    // Get the point we should be projecting
+    vec3f p;
+    switch (i) {
+    case 0:
+      p = box.lower;
+      break;
+    case 1:
+      p.x = box.upper.x;
+      p.y = box.lower.y;
+      p.z = box.lower.z;
+      break;
+    case 2:
+      p.x = box.upper.x;
+      p.y = box.upper.y;
+      p.z = box.lower.z;
+      break;
+    case 3:
+      p.x = box.lower.x;
+      p.y = box.upper.y;
+      p.z = box.lower.z;
+      break;
+    case 4:
+      p.x = box.lower.x;
+      p.y = box.lower.y;
+      p.z = box.upper.z;
+      break;
+    case 5:
+      p.x = box.upper.x;
+      p.y = box.lower.y;
+      p.z = box.upper.z;
+      break;
+    case 6:
+      p = box.upper;
+      break;
+    case 7:
+      p.x = box.lower.x;
+      p.y = box.upper.y;
+      p.z = box.upper.z;
+      break;
+    }
+
+    // We find the intersection of the ray through the point with the virtual
+    // film plane, then find the vector to this point from the origin of the
+    // film plane (screenDir) and project this point onto the x/y axes of
+    // the plane.
+    const vec3f v = p - self->org;
+    const vec3f r = normalize(v);
+    const float denom = dot(neg(r), neg(dir));
+    if (denom != 0.f) {
+      float t = 1.f / denom;
+      const vec3f screenDir = r * t - self->dir_00;
+      projectedPt.x = dot(screenDir, dun);
+      projectedPt.y = dot(screenDir, dvn);
+      projectedPt.z = signbits(t) ? -length(v) : length(v);
+    }
+  }
+
+  // Find the projection of all points that projected to the screen
+  if (projectedPt.z < 1e20f) {
+    projection.lower.x = reduce_min(projectedPt.x);
+    projection.lower.y = reduce_min(projectedPt.y);
+    projection.lower.z = reduce_min(projectedPt.z);
+
+    projection.upper.x = reduce_max(projectedPt.x);
+    projection.upper.y = reduce_max(projectedPt.y);
+    projection.upper.z = reduce_max(projectedPt.z);
+  }
+  // If some points are behind and some are in front mark the box
+  // as covering the full screen
+  if (projection.lower.z < 0.f && projection.upper.z > 0.f) {
+    projection.lower.x = 0.f;
+    projection.lower.y = 0.f;
+
+    projection.upper.x = 1.f;
+    projection.upper.y = 1.f;
   }
 }

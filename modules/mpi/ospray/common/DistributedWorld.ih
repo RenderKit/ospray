@@ -1,20 +1,15 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "ospray/common/World.ih"
 
-struct Region
-{
-  box3f bounds;
-  int id;
-};
-
 struct DistributedWorld
 {
   World super;
 
-  uniform Region *uniform regions;
-  uniform int numRegions;
+  box3f *uniform regions;
+  int numRegions;
+  RTCScene regionScene;
 };

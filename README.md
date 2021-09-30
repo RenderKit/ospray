@@ -100,7 +100,7 @@ before you can build OSPRay you need the following prerequisites:
     `embree_DIR`.
 
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 1.0.0 or newer is required. If Open VKL is not
+    installing version 1.0.1 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 
@@ -1782,17 +1782,16 @@ group.
 By adding `OSPGeometricModel`s to the `clippingGeometry` array a
 clipping geometry feature is enabled. Geometries assigned to this
 parameter will be used as clipping geometries. Any supported geometry
-can be used for clipping. The only requirement is that it has to
-distinctly partition space into clipping and non-clipping one. These
-include: spheres, boxes, infinite planes, closed meshes, closed
-subdivisions and curves. All geometries and volumes assigned to
-`geometry` or `volume` will be clipped. Use of clipping geometry that is
-not closed (or infinite) will result in rendering artifacts. User can
-decide which part of space is clipped by changing shading normals
-orientation with the `invertNormals` flag of the
-[GeometricModel](#geometricmodels). When more than single clipping
-geometry is defined all clipping areas will be “added” together – an
-union of these areas will be applied.
+can be used for clipping[6], the only requirement is that it has to
+distinctly partition space into clipping and non-clipping one. The use
+of clipping geometry that is not closed or infinite could result in
+rendering artifacts. User can decide which part of space is clipped by
+changing shading normals orientation with the `invertNormals` flag of
+the [GeometricModel](#geometricmodels). All geometries and volumes
+assigned to `geometry` or `volume` will be clipped. All clipping
+geometries from all groups and [Instances](#instances) will be combined
+together – a union of these areas will be applied to all other objects
+in the [world](#world).
 
 | Type                   | Name             | Default | Description                                                                                                                                                     |
 |:-----------------------|:-----------------|--------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -1848,7 +1847,7 @@ world has been committed. To get this information, call
 OSPBounds ospGetBounds(OSPObject);
 ```
 
-The result is returned in the provided `OSPBounds`[6] struct:
+The result is returned in the provided `OSPBounds`[7] struct:
 
 ``` cpp
 typedef struct {
@@ -1957,7 +1956,7 @@ renderers, the SciVis renderer supports the following parameters:
 Special parameters understood by the SciVis renderer.
 
 Note that the intensity (and color) of AO is deduced from an [ambient
-light](#ambient-light) in the `lights` array.[7] If `aoSamples` is zero
+light](#ambient-light) in the `lights` array.[8] If `aoSamples` is zero
 (the default) then ambient lights cause ambient illumination (without
 occlusion).
 
@@ -2074,7 +2073,7 @@ the opacity `d`.
 Normal mapping can simulate small geometric features via the texture
 `map_Bump`. The normals *n* in the normal map are with respect to the
 local tangential shading coordinate system and are encoded as
-½(*n* + 1), thus a texel (0.5, 0.5, 1)[8] represents the unperturbed
+½(*n* + 1), thus a texel (0.5, 0.5, 1)[9] represents the unperturbed
 shading normal (0, 0, 1). Because of this encoding an sRGB gamma
 [texture](#texture) format is ignored and normals are always fetched as
 linear from a normal map. Note that the orientation of normal maps is
@@ -3225,7 +3224,7 @@ ospTutorial
 
 A minimal working example demonstrating how to use OSPRay can be found
 at
-[`apps/tutorials/ospTutorial.c`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.c)[9].
+[`apps/tutorials/ospTutorial.c`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.c)[10].
 
 An example of building `ospTutorial.c` with CMake can be found in
 [`apps/tutorials/ospTutorialFindospray/`](https://github.com/ospray/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray).
@@ -3384,7 +3383,7 @@ ospMPIDistribTutorial
 
 A minimal working example demonstrating how to use OSPRay for rendering
 distributed data can be found at
-[`modules/mpi/tutorials/ospMPIDistribTutorial.c`](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.c)[10].
+[`modules/mpi/tutorials/ospMPIDistribTutorial.c`](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorial.c)[11].
 
 The compilation process via CMake is the similar to
 [`apps/tutorials/ospTutorialFindospray/`](https://github.com/ospray/ospray/tree/master/apps/ospTutorial/ospTutorialFindospray),
@@ -3508,22 +3507,25 @@ voxel changes the quickest.
 
 [5] actually a parallelogram
 
-[6] `OSPBounds` has essentially the same layout as the `OSP_BOX3F`
+[6] including spheres, boxes, infinite planes, closed meshes, closed
+subdivisions and curves
+
+[7] `OSPBounds` has essentially the same layout as the `OSP_BOX3F`
 [`OSPDataType`](#data).
 
-[7] If there are multiple ambient lights then their contribution is
+[8] If there are multiple ambient lights then their contribution is
 added.
 
-[8] respectively (127, 127, 255) for 8 bit textures and
+[9] respectively (127, 127, 255) for 8 bit textures and
 (32767, 32767, 65535) for 16 bit textures
 
-[9] A C++ version that uses the C++ convenience wrappers of OSPRay’s C99
-API via
+[10] A C++ version that uses the C++ convenience wrappers of OSPRay’s
+C99 API via
 [`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
 is available at
 [`apps/tutorials/ospTutorial.cpp`](https://github.com/ospray/ospray/blob/master/apps/ospTutorial/ospTutorial.cpp).
 
-[10] A C++ version that uses the C++ convenience wrappers of OSPRay’s
+[11] A C++ version that uses the C++ convenience wrappers of OSPRay’s
 C99 API via
 [`include/ospray/ospray_cpp.h`](https://github.com/ospray/ospray/blob/master/ospray/include/ospray/ospray_cpp.h)
 is available at

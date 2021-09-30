@@ -15,7 +15,7 @@ namespace mpi {
 struct RegionInfo
 {
   int numRegions = 0;
-  Region *regions = nullptr;
+  box3f *regions = nullptr;
   bool *regionVisible = nullptr;
 };
 
@@ -35,7 +35,7 @@ struct DistributedRenderer : public Renderer
   void renderRegionToTile(DistributedFrameBuffer *fb,
       Camera *camera,
       DistributedWorld *world,
-      const Region &region,
+      const box3f &region,
       void *perFrameData,
       Tile &tile,
       size_t jobID) const;

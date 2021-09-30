@@ -7,7 +7,7 @@
 #include <map>
 #include "../fb/DistributedFrameBuffer.h"
 #include "WriteMultipleTileOperation.h"
-#include "camera/PerspectiveCamera.h"
+#include "camera/Camera.h"
 #include "common/MPICommon.h"
 #include "common/Profiling.h"
 #include "distributed/DistributedRenderer.h"
@@ -42,85 +42,58 @@ void Distributed::renderFrame(
     }
   }
 
-  if (!reinterpret_cast<PerspectiveCamera *>(camera)) {
-    throw std::runtime_error(
-        "DistributedRaycastRender only supports PerspectiveCamera");
-  }
-
   if (dfb->getLastRenderer() != renderer) {
     dfb->setTileOperation(renderer->tileOperation(), renderer);
   }
 
   dfb->startNewFrame(renderer->errorThreshold);
-
   void *perFrameData = renderer->beginFrame(dfb, world);
-
-  const auto fbSize = dfb->getNumPixels();
   const size_t numRegions = world->allRegions.size();
 
-  // Do a prepass and project each region's box to the screen to see
-  // which tiles it touches, and at what depth.
-  std::multimap<float, size_t> regionOrdering;
-  std::vector<RegionScreenBounds> projectedRegions(
-      numRegions, RegionScreenBounds());
-  for (size_t i = 0; i < projectedRegions.size(); ++i) {
-    const auto &r = world->allRegions[i];
-    auto &proj = projectedRegions[i];
-    if (!r.bounds.empty()) {
-      proj = r.project(camera);
-      // Note that these bounds are very conservative, the bounds we
-      // compute below are much tighter, and better. We just use the depth
-      // from the projection to sort the tiles later
-      proj.bounds.lower =
-          max(proj.bounds.lower * fbSize - TILE_SIZE, vec2f(0.f));
-      proj.bounds.upper =
-          min(proj.bounds.upper * fbSize + TILE_SIZE, vec2f(fbSize - 1.f));
-      regionOrdering.insert(std::make_pair(proj.depth, i));
-    } else {
-      proj = RegionScreenBounds();
-      proj.depth = std::numeric_limits<float>::infinity();
-      regionOrdering.insert(
-          std::make_pair(std::numeric_limits<float>::infinity(), i));
+#ifdef ENABLE_PROFILING
+  ProfilingPoint start = ProfilingPoint();
+#endif
+  std::set<int> tilesForFrame;
+  for (int i = workerRank(); i < dfb->getTotalTiles(); i += workerSize()) {
+    const uint32_t tile_y = i / dfb->getNumTiles().x;
+    const uint32_t tile_x = i - tile_y * dfb->getNumTiles().x;
+    const vec2i tileID(tile_x, tile_y);
+    // Skip tiles that have been rendered to satisfactory error level
+    if (dfb->tileError(tileID) > renderer->errorThreshold) {
+      tilesForFrame.insert(i);
     }
   }
 
-  // Compute the sort order for the regions
-  std::vector<int> sortOrder(numRegions, 0);
-  int depthIndex = 0;
-  for (const auto &e : regionOrdering) {
-    sortOrder[e.second] = depthIndex++;
-  }
+  const vec2i numTiles = dfb->getNumTiles();
+  const vec2i fbSize = dfb->getNumPixels();
+  for (const auto &id : world->myRegionIds) {
+    const auto &r = world->allRegions[id];
+    box3f proj = camera->projectBox(r);
+    box2f screenRegion(vec2f(proj.lower) * fbSize, vec2f(proj.upper) * fbSize);
 
-  // Pre-compute the list of tiles that we actually need to render to,
-  // so we can get a better thread assignment when doing the real work
-  // TODO Will: is this going to help much? Going through all the rays
-  // to do this pre-pass may be too expensive, and instead we want
-  // to just do something coarser based on the projected regions
-  std::vector<int> tilesForFrame;
-  for (const auto &region : world->allRegions) {
-    const auto &projection = projectedRegions[region.id];
-    if (projection.bounds.empty() || projection.depth < 0) {
+    // Pad the region a bit
+    screenRegion.lower = max(screenRegion.lower - TILE_SIZE, vec2f(0.f));
+    screenRegion.upper = min(screenRegion.upper + TILE_SIZE, vec2f(fbSize));
+
+    // Skip regions that are completely behind the camera
+    if (proj.upper.z < 0.f) {
       continue;
     }
-    // TODO: Should we push back by a few pixels as well just in case
-    // for the random sampling? May need to spill +/- a pixel? I'm not
-    // sure
-    const vec2i minTile(projection.bounds.lower.x / TILE_SIZE,
-        projection.bounds.lower.y / TILE_SIZE);
-    const vec2i numTiles = dfb->getNumTiles();
-    const vec2i maxTile(
-        std::min(std::ceil(projection.bounds.upper.x / TILE_SIZE),
-            float(numTiles.x)),
-        std::min(std::ceil(projection.bounds.upper.y / TILE_SIZE),
-            float(numTiles.y)));
 
-    tilesForFrame.reserve((maxTile.x - minTile.x) * (maxTile.y - minTile.y));
-    for (int y = minTile.y; y < maxTile.y; ++y) {
-      for (int x = minTile.x; x < maxTile.x; ++x) {
-        // If we share ownership of this region but aren't responsible
-        // for rendering it to this tile, don't render it.
-        const size_t tileIndex = size_t(x) + size_t(y) * numTiles.x;
-        const auto &owners = world->regionOwners[region.id];
+    box2i tileRegion;
+    tileRegion.lower = screenRegion.lower / TILE_SIZE;
+    tileRegion.upper = vec2i(std::ceil(screenRegion.upper.x / TILE_SIZE),
+        std::ceil(screenRegion.upper.y / TILE_SIZE));
+    tileRegion.upper = min(tileRegion.upper, numTiles);
+    for (int y = tileRegion.lower.y; y < tileRegion.upper.y; ++y) {
+      for (int x = tileRegion.lower.x; x < tileRegion.upper.x; ++x) {
+        // Skip tiles that have been rendered to satisfactory error level
+        if (dfb->tileError(vec2i(x, y)) <= renderer->errorThreshold) {
+          continue;
+        }
+
+        const int tileIndex = x + y * numTiles.x;
+        const auto &owners = world->regionOwners[id];
         const size_t numRegionOwners = owners.size();
         const size_t ownerRank =
             std::distance(owners.begin(), owners.find(workerRank()));
@@ -129,43 +102,24 @@ void Distributed::renderFrame(
         // the workload.
         const bool regionTileOwner = (tileIndex % numRegionOwners) == ownerRank;
         if (regionTileOwner) {
-          tilesForFrame.push_back(tileIndex);
+          tilesForFrame.insert(tileIndex);
         }
       }
     }
   }
+#ifdef ENABLE_PROFILING
+  ProfilingPoint end = ProfilingPoint();
+  std::cout << "Initial tile for frame determination "
+            << elapsedTimeMs(start, end) << "ms\n";
+#endif
 
-  // Be sure to include all the tiles that we're the owner for as well,
-  // in some cases none of our data might project to them.
-  for (int i = workerRank(); i < dfb->getTotalTiles(); i += workerSize()) {
-    tilesForFrame.push_back(i);
-  }
-
-  std::sort(tilesForFrame.begin(), tilesForFrame.end());
-  {
-    // Filter out any duplicate tiles, e.g. we double-count the background
-    // tile we have to render as the owner and our data projects to the
-    // same tile.
-    auto end = std::unique(tilesForFrame.begin(), tilesForFrame.end());
-    tilesForFrame.erase(end, tilesForFrame.end());
-
-    // Filter any tiles which are finished due to reaching the
-    // error threshold. This should let TBB better allocate threads only
-    // to tiles that actually need work.
-    end = std::partition(
-        tilesForFrame.begin(), tilesForFrame.end(), [&](const int &i) {
-          const uint32_t tile_y = i / dfb->getNumTiles().x;
-          const uint32_t tile_x = i - tile_y * dfb->getNumTiles().x;
-          const vec2i tileID(tile_x, tile_y);
-          return dfb->tileError(tileID) > renderer->errorThreshold;
-        });
-    tilesForFrame.erase(end, tilesForFrame.end());
-  }
-
-  // Render the tiles we've got to do now
-  tasking::parallel_for(tilesForFrame.size(), [&](size_t taskIndex) {
-    const int tileIndex = tilesForFrame[taskIndex];
-
+#ifdef ENABLE_PROFILING
+  start = ProfilingPoint();
+#endif
+  tasking::parallel_for(tilesForFrame.size(), [&](size_t taskId) {
+    auto tileIter = tilesForFrame.begin();
+    std::advance(tileIter, taskId);
+    const int tileIndex = *tileIter;
     const uint32_t numTiles_x = static_cast<uint32_t>(dfb->getNumTiles().x);
     const uint32_t tile_y = tileIndex / numTiles_x;
     const uint32_t tile_x = tileIndex - tile_y * numTiles_x;
@@ -217,6 +171,10 @@ void Distributed::renderFrame(
         myVisibleRegions.push_back(rid);
       }
     }
+    // If none of our regions are visible, we're done
+    if (myVisibleRegions.empty()) {
+      return;
+    }
 
     // TODO: Will it really be much benefit to run the regions in parallel
     // as well? We already are running in parallel on the tiles and the
@@ -225,10 +183,10 @@ void Distributed::renderFrame(
 #define PARALLEL_REGION_RENDERING 1
 #if PARALLEL_REGION_RENDERING
     tasking::parallel_for(myVisibleRegions.size(), [&](size_t vid) {
-      const size_t i = myVisibleRegions[vid];
+      const size_t rid = myVisibleRegions[vid];
       Tile __aligned(64) tile(tileID, fbSize, accumID);
 #else
-      for (const size_t &i : myVisibleRegions) {
+      for (const size_t &rid : myVisibleRegions) {
         Tile &tile = bgtile;
 #endif
       tile.generation = 1;
@@ -238,8 +196,7 @@ void Distributed::renderFrame(
       // Note that we do need to double check here, since we could have
       // multiple shared regions projecting to the same tile, and we
       // could be the region tile owner for only some of those
-      const auto &region = world->allRegions[i];
-      const auto &owners = world->regionOwners[region.id];
+      const auto &owners = world->regionOwners[rid];
       const size_t numRegionOwners = owners.size();
       const size_t ownerRank =
           std::distance(owners.begin(), owners.find(workerRank()));
@@ -249,12 +206,13 @@ void Distributed::renderFrame(
           renderer->renderRegionToTile(dfb,
               camera,
               world,
-              world->allRegions[i],
+              world->allRegions[rid],
               perFrameData,
               tile,
               tIdx);
         });
-        tile.sortOrder = sortOrder[region.id];
+        // Unused
+        // tile.sortOrder = sortOrder[rid];
         dfb->setTile(tile);
       }
 #if PARALLEL_REGION_RENDERING
@@ -263,6 +221,11 @@ void Distributed::renderFrame(
     }
 #endif
   });
+#ifdef ENABLE_PROFILING
+  end = ProfilingPoint();
+  std::cout << "Local rendering for frame " << elapsedTimeMs(start, end)
+            << "ms\n";
+#endif
 
   dfb->waitUntilFinished();
   renderer->endFrame(dfb, perFrameData);

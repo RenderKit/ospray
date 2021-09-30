@@ -43,7 +43,7 @@ struct OSPRAY_SDK_INTERFACE World : public ManagedObject
 
   void setDevice(RTCDevice embreeDevice);
 
- private:
+ protected:
   RTCDevice embreeDevice{nullptr};
 };
 

@@ -8,16 +8,6 @@
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE ProjectedPoint
-{
-  //! The screen space position and depth
-  vec3f screenPos;
-  //! The radius of the projected disk, in the case of depth of field
-  float radius;
-
-  ProjectedPoint(const vec3f &pos, float radius);
-};
-
 //! base camera class abstraction
 /*! the base class itself does not do anything useful; look into
     perspectivecamera etc for that */
@@ -29,9 +19,12 @@ struct OSPRAY_SDK_INTERFACE Camera : public MotionTransform
   std::string toString() const override;
   void commit() override;
 
-  // Project the world space point to the screen, and return the screen-space
-  // point (in normalized screen-space coordinates) along with the depth
-  virtual ProjectedPoint projectPoint(const vec3f &p) const;
+  // Project the bounding box to the screen
+  // The projected box will be returned in normalized [0, 1] coordinates in
+  // the framebuffer, the z coordinate will store the min and max depth, in
+  // box.lower, box.upper respectively
+  // Assume no motion blur nor depth of field (true for SciVis)
+  virtual box3f projectBox(const box3f &b) const;
 
   static Camera *createInstance(const char *identifier);
   template <typename T>
