@@ -10,10 +10,6 @@ namespace ospray {
 
 static FactoryMap<Camera> g_cameraMap;
 
-ProjectedPoint::ProjectedPoint(const vec3f &pos, float radius)
-    : screenPos(pos), radius(radius)
-{}
-
 Camera::Camera()
 {
   managedObjectType = OSP_CAMERA;
@@ -38,6 +34,11 @@ void Camera::registerType(const char *type, FactoryFcn<Camera> f)
 std::string Camera::toString() const
 {
   return "ospray::Camera";
+}
+
+box3f Camera::projectBox(const box3f &) const
+{
+  return box3f(vec3f(0.f), vec3f(1.f));
 }
 
 void Camera::commit()
@@ -85,8 +86,8 @@ void Camera::commit()
 
   if (!motionBlur) { // apply transform right away
     pos = xfmPoint(single_xfm, pos);
-    dir = xfmVector(single_xfm, dir);
-    up = xfmVector(single_xfm, up);
+    dir = normalize(xfmVector(single_xfm, dir));
+    up = normalize(xfmVector(single_xfm, up));
   }
 
   ispc::Camera_set(getIE(),
@@ -96,11 +97,6 @@ void Camera::commit()
       (const ispc::box1f &)shutter,
       motionBlur,
       embreeGeometry);
-}
-
-ProjectedPoint Camera::projectPoint(const vec3f &) const
-{
-  NOT_IMPLEMENTED;
 }
 
 void Camera::setDevice(RTCDevice device)

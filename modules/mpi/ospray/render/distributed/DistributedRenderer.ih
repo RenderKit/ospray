@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -24,7 +24,7 @@ typedef unmasked void (*DR_ComputeRegionVisibility)(
 typedef void (*DR_RenderRegionSampleFct)(DistributedRenderer *uniform self,
     FrameBuffer *uniform fb,
     DistributedWorld *uniform world,
-    const Region *uniform region,
+    const box3f *uniform region,
     const vec2f &regionInterval,
     void *uniform perFrameData,
     varying ScreenSample &sample);
@@ -34,7 +34,7 @@ typedef unmasked void (*DR_RenderRegionTileFct)(
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     DistributedWorld *uniform world,
-    const Region *uniform region,
+    const box3f *uniform region,
     void *uniform perFrameData,
     uniform Tile &tile,
     uniform int taskIndex);

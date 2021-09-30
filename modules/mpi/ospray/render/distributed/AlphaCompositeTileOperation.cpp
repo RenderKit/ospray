@@ -105,12 +105,16 @@ void LiveAlphaCompositeTile::process(const ospray::Tile &tile)
 
   if (missingInCurrentGeneration == 0) {
     // Sort for back-to-front blending
-    std::sort(bufferedTiles.begin(),
-        bufferedTiles.end(),
-        [](const std::unique_ptr<BufferedTile> &a,
-            const std::unique_ptr<BufferedTile> &b) {
-          return a->tile.sortOrder > b->tile.sortOrder;
-        });
+    // TODO: This is redundant with sortAndBlend. We should actually just do
+    // this tile level sort, not sorting each pixel
+    /*
+  std::sort(bufferedTiles.begin(),
+      bufferedTiles.end(),
+      [](const std::unique_ptr<BufferedTile> &a,
+          const std::unique_ptr<BufferedTile> &b) {
+        return a->tile.sortOrder > b->tile.sortOrder;
+      });
+      */
 
     Tile **tileArray = STACK_BUFFER(Tile *, bufferedTiles.size());
     std::transform(bufferedTiles.begin(),

@@ -1,6 +1,23 @@
 Version History
 ---------------
 
+### Changes in v2.7.1:
+
+-   Use Open VKL v1.0.1 to fix sporadic slowdowns when rendering
+    structured regular and VDB volumes with the SciVis renderer
+-   Fix CMake variables and logic
+-   Fix crash when transferfunction.opacity = 0
+-   Fix bug in MPI data-parallel rendering that caused rendering to hang
+-   Workaround dynamic linking issue on Windows in MPI distributed
+    rendering
+-   Correctly initialize renderFrame progress
+-   Improved performance of data-parallel rendering for scenes with
+    a large number of regions
+-   Expanded camera model support of the data-parallel renderer,
+    data-parallel rendering can now use all the camera models supported
+    by the scivis renderer
+-   Clarify documentation and error messages
+
 ### Changes in v2.7.0:
 
 -   Add support for transformation and camera Motion Blur (with the path

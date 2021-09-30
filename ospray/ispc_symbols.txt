@@ -15,3 +15,4 @@ clippingIntersectionFilterV___UM_un_3C_s_5B__c_unRTCFilterFunctionNArguments_5D_
 delete_uniform___un_3C_unv_3E_,
 delete_uniform_,
 precomputedZOrder_create___,
+get_zorder___,

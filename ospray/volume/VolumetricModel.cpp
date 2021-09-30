@@ -56,6 +56,13 @@ void VolumetricModel::commit()
     vklIntervalContext = vklNewIntervalIteratorContext(volume->vklSampler);
     std::vector<range1f> valueRanges =
         transferFunction->getPositiveOpacityValueRanges();
+    if (valueRanges.empty()) {
+      // volume made completely transparent and could be removed, which is
+      // awkward here
+      // set an "empty" interesting value range instead, which will lead to a
+      // quick out during volume interation
+      valueRanges.push_back(range1f(neg_inf, neg_inf));
+    }
     VKLData valueRangeData = vklNewData(
         volume->vklDevice, valueRanges.size(), VKL_BOX1F, valueRanges.data());
     vklSetData(vklIntervalContext, "valueRanges", valueRangeData);

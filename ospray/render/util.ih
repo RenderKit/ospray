@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -94,3 +94,5 @@ inline void precomputeZOrder()
   if (!z_order_initialized)
     precomputedZOrder_create();
 }
+
+extern const z_order_t *uniform get_zorder();
