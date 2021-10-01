@@ -23,7 +23,11 @@ void DirectionalLight::commit()
   angularDiameter = getParam<float>("angularDiameter", .0f);
 
   // the ispc::DirLight expects direction towards light source
-  direction = -normalize(direction);
+  if (direction.z > 1e-6) {
+    direction = -normalize(direction);
+  } else {
+    direction = -direction;
+  }
   angularDiameter = clamp(angularDiameter, 0.f, 180.f);
   const float cosAngle = std::cos(deg2rad(0.5f * angularDiameter));
 
