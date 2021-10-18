@@ -448,7 +448,7 @@ INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
 INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
     QuadLight,
     ::testing::Values(std::make_tuple(
-        0.4f, "pathtracer", OSP_INTENSITY_QUANTITY_RADIANCE, true)));
+        0.2f, "pathtracer", OSP_INTENSITY_QUANTITY_INTENSITY, true)));
 
 // Sphere Light
 
