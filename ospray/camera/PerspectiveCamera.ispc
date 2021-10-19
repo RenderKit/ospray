@@ -142,11 +142,10 @@ void PerspectiveCamera_initRayMB(const Camera *uniform _self,
   setRay(ray, org, normalize(dir), self->super.nearClip, inf, time);
 }
 
-export void *uniform PerspectiveCamera_create(void *uniform cppE)
+export void *uniform PerspectiveCamera_create()
 {
   uniform PerspectiveCamera *uniform self =
       uniform new uniform PerspectiveCamera;
-  self->super.cppEquivalent = cppE;
   self->super.initRay = PerspectiveCamera_initRay;
   return self;
 }

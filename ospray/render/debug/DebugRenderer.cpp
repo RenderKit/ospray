@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -49,7 +49,7 @@ static DebugRendererType typeFromString(const std::string &name)
 
 DebugRenderer::DebugRenderer()
 {
-  ispcEquivalent = ispc::DebugRenderer_create(this);
+  ispcEquivalent = ispc::DebugRenderer_create();
 }
 
 std::string DebugRenderer::toString() const

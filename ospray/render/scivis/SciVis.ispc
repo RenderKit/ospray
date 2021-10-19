@@ -154,10 +154,10 @@ void SciVis_renderSample(Renderer *uniform _self,
 
 // SciVis C++ interface /////////////////////////////////////////////////////
 
-export void *uniform SciVis_create(void *uniform cppE)
+export void *uniform SciVis_create()
 {
   uniform SciVis *uniform self = uniform new uniform SciVis;
-  Renderer_Constructor(&self->super, cppE);
+  Renderer_Constructor(&self->super);
   self->super.renderSample = SciVis_renderSample;
   return self;
 }

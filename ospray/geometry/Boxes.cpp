@@ -12,7 +12,7 @@ namespace ospray {
 
 Boxes::Boxes()
 {
-  ispcEquivalent = ispc::Boxes_create(this);
+  ispcEquivalent = ispc::Boxes_create();
 }
 
 std::string Boxes::toString() const

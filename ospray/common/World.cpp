@@ -56,7 +56,7 @@ World::~World()
 World::World()
 {
   managedObjectType = OSP_WORLD;
-  this->ispcEquivalent = ispc::World_create(this);
+  this->ispcEquivalent = ispc::World_create();
 }
 
 std::string World::toString() const

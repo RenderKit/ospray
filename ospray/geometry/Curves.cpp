@@ -48,7 +48,7 @@ static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
 
 Curves::Curves()
 {
-  ispcEquivalent = ispc::Curves_create(this);
+  ispcEquivalent = ispc::Curves_create();
 }
 
 std::string Curves::toString() const

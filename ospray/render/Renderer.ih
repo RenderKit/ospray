@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -69,8 +69,6 @@ struct Renderer
   Renderer_RenderSampleFct renderSample;
   Renderer_RenderTileFct renderTile;
 
-  void *cppEquivalent;
-
   int32 spp;
   vec4f bgColor; // background color and alpha
   Texture2D *backplate;
@@ -90,4 +88,4 @@ vec4f Renderer_getBackground(
 float Renderer_getMaxDepth(
     const Renderer *uniform self, const vec2f &screenPos);
 
-void Renderer_Constructor(Renderer *uniform self, void *uniform cppE);
+void Renderer_Constructor(Renderer *uniform self);

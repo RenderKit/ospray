@@ -48,5 +48,4 @@ struct DistributedRenderer
   DR_RenderRegionTileFct renderRegionToTile;
 };
 
-void DistributedRenderer_Constructor(
-    uniform DistributedRenderer *uniform self, void *uniform cppE);
+void DistributedRenderer_Constructor(uniform DistributedRenderer *uniform self);

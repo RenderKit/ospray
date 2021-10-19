@@ -132,11 +132,10 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
   }
 }
 
-export void *uniform Isosurfaces_create(void *uniform cppEquivalent)
+export void *uniform Isosurfaces_create()
 {
   uniform Isosurfaces *uniform isosurfaces = uniform new uniform Isosurfaces;
-  Geometry_Constructor(
-      &isosurfaces->super, cppEquivalent, Isosurfaces_postIntersect);
+  Geometry_Constructor(&isosurfaces->super, Isosurfaces_postIntersect);
   return isosurfaces;
 }
 

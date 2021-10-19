@@ -19,7 +19,7 @@ namespace ospray {
 
 PathTracer::PathTracer()
 {
-  ispcEquivalent = ispc::PathTracer_create(this);
+  ispcEquivalent = ispc::PathTracer_create();
 }
 
 std::string PathTracer::toString() const

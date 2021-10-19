@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -66,11 +66,11 @@ static void Boxes_postIntersect(const Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 }
 
-export void *uniform Boxes_create(void *uniform cppEquivalent)
+export void *uniform Boxes_create()
 {
   Boxes *uniform self = uniform new Boxes;
 
-  Geometry_Constructor(&self->super, cppEquivalent, Boxes_postIntersect);
+  Geometry_Constructor(&self->super, Boxes_postIntersect);
   Data1D_Constructor(&self->boxes);
 
   return self;

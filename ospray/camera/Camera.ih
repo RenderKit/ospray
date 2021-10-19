@@ -28,7 +28,6 @@ typedef void (*Camera_initRay)(const Camera *uniform,
 struct Camera
 {
   Camera_initRay initRay; /*!< the 'virtual' initRay() method */
-  void *cppEquivalent;
 
   bool motionBlur; // for the camera itself only, not in general
 

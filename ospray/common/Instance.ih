@@ -12,8 +12,6 @@ struct Renderer;
 
 struct Instance
 {
-  void *cppEquivalent;
-
   Group *group;
   RTCGeometry geom; // only to access rtcGetGeometryTransform
 

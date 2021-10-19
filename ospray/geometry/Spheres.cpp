@@ -12,7 +12,7 @@ namespace ospray {
 
 Spheres::Spheres()
 {
-  ispcEquivalent = ispc::Spheres_create(this);
+  ispcEquivalent = ispc::Spheres_create();
 }
 
 std::string Spheres::toString() const

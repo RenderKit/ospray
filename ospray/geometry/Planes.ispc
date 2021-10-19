@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -113,11 +113,11 @@ static void Planes_postIntersect(const Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 }
 
-export void *uniform Planes_create(void *uniform cppEquivalent)
+export void *uniform Planes_create()
 {
   Planes *uniform self = uniform new Planes;
 
-  Geometry_Constructor(&self->super, cppEquivalent, Planes_postIntersect);
+  Geometry_Constructor(&self->super, Planes_postIntersect);
   Data1D_Constructor(&self->coeffs);
   Data1D_Constructor(&self->bounds);
 

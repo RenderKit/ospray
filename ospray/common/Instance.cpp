@@ -14,7 +14,7 @@ namespace ospray {
 Instance::Instance(Group *_group)
 {
   managedObjectType = OSP_INSTANCE;
-  this->ispcEquivalent = ispc::Instance_create(this);
+  this->ispcEquivalent = ispc::Instance_create();
 
   group = _group;
 }

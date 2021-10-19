@@ -7,7 +7,7 @@
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 
-export void *uniform VolumetricModel_create(void *uniform cppE)
+export void *uniform VolumetricModel_create()
 {
   VolumetricModel *uniform self = uniform new VolumetricModel;
   return self;

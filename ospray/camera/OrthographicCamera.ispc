@@ -51,11 +51,10 @@ void OrthographicCamera_initRay(const Camera *uniform _self,
   setRay(ray, org, dir, self->super.nearClip, inf, time);
 }
 
-export void *uniform OrthographicCamera_create(void *uniform cppE)
+export void *uniform OrthographicCamera_create()
 {
   uniform OrthographicCamera *uniform cam =
       uniform new uniform OrthographicCamera;
-  cam->super.cppEquivalent = cppE;
   cam->super.initRay = OrthographicCamera_initRay;
   return cam;
 }

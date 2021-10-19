@@ -98,9 +98,8 @@ unmasked void clippingIntersectionFilterV(
   context->hitsCount++;
 }
 
-void World_Constructor(World *uniform world, void *uniform cppE)
+void World_Constructor(World *uniform world)
 {
-  world->cppEquivalent = cppE;
   world->geometriesInst = NULL;
   world->numGeometriesInst = 0;
   world->volumesInst = NULL;
@@ -145,10 +144,10 @@ inline void PathtracerData_destroy(PathtracerData *uniform self)
   delete[] self->lightsCDF;
 }
 
-export void *uniform World_create(void *uniform cppE)
+export void *uniform World_create()
 {
   World *uniform world = uniform new World;
-  World_Constructor(world, cppE);
+  World_Constructor(world);
   return (void *uniform)world;
 }
 

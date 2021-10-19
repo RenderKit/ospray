@@ -332,10 +332,10 @@ void DebugRenderer_volume(Renderer *uniform self,
 
 // DebugRenderer C++ interface ////////////////////////////////////////////////
 
-export void *uniform DebugRenderer_create(void *uniform cppE)
+export void *uniform DebugRenderer_create()
 {
   Renderer *uniform self = uniform new Renderer;
-  Renderer_Constructor(self, cppE);
+  Renderer_Constructor(self);
   self->renderSample = DebugRenderer_testFrame;
   return self;
 }

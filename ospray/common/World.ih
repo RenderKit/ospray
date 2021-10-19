@@ -35,8 +35,6 @@ struct PathtracerData
 
 struct World
 {
-  void *cppEquivalent;
-
   Instance **geometriesInst;
   int32 numGeometriesInst;
 
@@ -56,7 +54,7 @@ struct World
   PathtracerData pathtracerData;
 };
 
-void World_Constructor(World *uniform world, void *uniform cppE);
+void World_Constructor(World *uniform world);
 
 inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
 {

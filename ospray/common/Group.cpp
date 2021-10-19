@@ -48,7 +48,7 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
 Group::Group()
 {
   managedObjectType = OSP_GROUP;
-  this->ispcEquivalent = ispc::Group_create(this);
+  this->ispcEquivalent = ispc::Group_create();
 }
 
 Group::~Group()

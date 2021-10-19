@@ -24,10 +24,10 @@ Volume::Volume(const std::string &type) : vklType(type)
       && (vklVdbLevelNumVoxels(0) != 262144 || vklVdbLevelNumVoxels(1) != 32768
           || vklVdbLevelNumVoxels(2) != 4096 || vklVdbLevelNumVoxels(3) != 512
           || vklVdbLevelNumVoxels(4) != 0))
-    throw std::runtime_error(
-        toString() + " Open VKL has non-default configuration for VDB volumes.");
+    throw std::runtime_error(toString()
+        + " Open VKL has non-default configuration for VDB volumes.");
 
-  ispcEquivalent = ispc::Volume_createInstance_vklVolume(this);
+  ispcEquivalent = ispc::Volume_createInstance_vklVolume();
   managedObjectType = OSP_VOLUME;
 }
 
@@ -160,8 +160,7 @@ void Volume::handleParams()
                 throw std::runtime_error(
                     toString() + " VDB leaf node data must have size n^3.");
             }
-            format.push_back(
-                isTile ? VKL_FORMAT_TILE : VKL_FORMAT_DENSE_ZYX);
+            format.push_back(isTile ? VKL_FORMAT_TILE : VKL_FORMAT_DENSE_ZYX);
           }
           VKLData vklData =
               vklNewData(vklDevice, format.size(), VKL_UINT, format.data());

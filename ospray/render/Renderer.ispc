@@ -91,9 +91,9 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
       const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
 
       vec2f pfSample = pixelSample;
-      if (self->pixelFilter)
-      {
-        pfSample = self->pixelFilter->sample(self->pixelFilter, pixelSample) + make_vec2f(0.5f);
+      if (self->pixelFilter) {
+        pfSample = self->pixelFilter->sample(self->pixelFilter, pixelSample)
+            + make_vec2f(0.5f);
       }
 
       screenSample.sampleID.z = startSampleID + s;
@@ -146,9 +146,8 @@ export void Renderer_set(void *uniform _self,
     void *uniform _maxDepthTexture,
     void *uniform pixelFilter);
 
-void Renderer_Constructor(Renderer *uniform self, void *uniform cppE)
+void Renderer_Constructor(Renderer *uniform self)
 {
-  self->cppEquivalent = cppE;
   self->renderSample = Renderer_default_renderSample;
   self->renderTile = Renderer_default_renderTile;
   Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), NULL, 0, NULL, NULL, NULL);

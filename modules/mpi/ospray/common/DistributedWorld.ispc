@@ -4,10 +4,10 @@
 #include "DistributedWorld.ih"
 #include "common/World.ih"
 
-export void *uniform DistributedWorld_create(void *uniform cppE)
+export void *uniform DistributedWorld_create()
 {
   DistributedWorld *uniform world = uniform new DistributedWorld;
-  World_Constructor(&world->super, cppE);
+  World_Constructor(&world->super);
   return (void *uniform)world;
 }
 

@@ -70,7 +70,7 @@ vec3f addLightsToArray(std::vector<void *> &lightIEs,
 
 SciVis::SciVis()
 {
-  ispcEquivalent = ispc::SciVis_create(this);
+  ispcEquivalent = ispc::SciVis_create();
 }
 
 std::string SciVis::toString() const

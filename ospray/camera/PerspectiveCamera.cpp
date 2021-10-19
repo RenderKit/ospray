@@ -8,7 +8,7 @@ namespace ospray {
 
 PerspectiveCamera::PerspectiveCamera()
 {
-  ispcEquivalent = ispc::PerspectiveCamera_create(this);
+  ispcEquivalent = ispc::PerspectiveCamera_create();
 }
 
 std::string PerspectiveCamera::toString() const

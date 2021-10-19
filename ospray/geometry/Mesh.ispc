@@ -253,9 +253,9 @@ void Mesh_getAreas(const Geometry *const uniform _self,
   }
 }
 
-void Mesh_Constructor(Mesh *uniform self, void *uniform cppEquivalent)
+void Mesh_Constructor(Mesh *uniform self)
 {
-  Geometry_Constructor(&self->super, cppEquivalent, NULL);
+  Geometry_Constructor(&self->super, NULL);
   self->super.getAreas = Mesh_getAreas;
   self->super.sampleArea = Mesh_sampleArea;
   Data1D_Constructor(&self->index);
@@ -265,10 +265,10 @@ void Mesh_Constructor(Mesh *uniform self, void *uniform cppEquivalent)
   Data1D_Constructor(&self->texcoord);
 }
 
-export void *uniform Mesh_create(void *uniform cppEquivalent)
+export void *uniform Mesh_create()
 {
   Mesh *uniform self = uniform new Mesh;
-  Mesh_Constructor(self, cppEquivalent);
+  Mesh_Constructor(self);
   return self;
 }
 

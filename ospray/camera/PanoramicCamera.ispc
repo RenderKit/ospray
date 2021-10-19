@@ -80,10 +80,9 @@ void PanoramicCamera_initRay(const Camera *uniform _self,
   setRay(ray, org, dir, self->super.nearClip, inf, time);
 }
 
-export void *uniform PanoramicCamera_create(void *uniform cppE)
+export void *uniform PanoramicCamera_create()
 {
   PanoramicCamera *uniform self = uniform new PanoramicCamera;
-  self->super.cppEquivalent = cppE;
   self->super.initRay = PanoramicCamera_initRay;
   self->stereoMode = OSP_STEREO_NONE;
   self->ipd_offset = 0.f;
