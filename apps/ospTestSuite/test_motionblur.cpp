@@ -218,7 +218,7 @@ INSTANTIATE_TEST_SUITE_P(Camera,
     MotionCamera,
     ::testing::Combine(::testing::Values("perspective", "panoramic"),
         ::testing::Values(
-            OSP_STEREO_NONE, OSP_STEREO_RIGHT, OSP_STEREO_SIDE_BY_SIDE)));
+            OSP_STEREO_NONE, OSP_STEREO_RIGHT, OSP_STEREO_LEFT, OSP_STEREO_SIDE_BY_SIDE, OSP_STEREO_TOP_BOTTOM)));
 
 INSTANTIATE_TEST_SUITE_P(CameraOrtho,
     MotionCamera,
