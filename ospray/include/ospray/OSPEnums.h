@@ -157,6 +157,8 @@ typedef enum
   OSP_AFFINE2F,
   OSP_AFFINE3F,
 
+  OSP_QUATF,
+
   // Guard value.
   OSP_UNKNOWN = 9999999
 } OSPDataType;

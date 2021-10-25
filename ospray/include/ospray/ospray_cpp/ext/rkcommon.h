@@ -53,6 +53,7 @@ OSPTYPEFOR_SPECIALIZATION(rkcommon::math::linear2f, OSP_LINEAR2F);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::linear3f, OSP_LINEAR3F);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::affine2f, OSP_AFFINE2F);
 OSPTYPEFOR_SPECIALIZATION(rkcommon::math::affine3f, OSP_AFFINE3F);
+OSPTYPEFOR_SPECIALIZATION(rkcommon::math::quatf, OSP_QUATF);
 
 #ifdef OSPRAY_RKCOMMON_DEFINITIONS
 OSPTYPEFOR_DEFINITION(rkcommon::math::vec2uc);
@@ -97,6 +98,7 @@ OSPTYPEFOR_DEFINITION(rkcommon::math::linear2f);
 OSPTYPEFOR_DEFINITION(rkcommon::math::linear3f);
 OSPTYPEFOR_DEFINITION(rkcommon::math::affine2f);
 OSPTYPEFOR_DEFINITION(rkcommon::math::affine3f);
+OSPTYPEFOR_DEFINITION(rkcommon::math::quatf);
 #endif
 
 } // namespace ospray

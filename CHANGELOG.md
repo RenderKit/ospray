@@ -3,10 +3,11 @@ Version History
 
 ### Changes in v2.8.0:
 
--   Lights can be now part of `OSPGroup` and thus instanced like geometries
-    and volumes
+-   Lights can be now part of `OSPGroup` and thus instanced like
+    geometries and volumes
 -   Added support for lights Motion Blur (with the path tracer)
 -   Support rolling shutter effect
+-   Support quaternion motion blur for smoothly interpolated rotations
 -   Fix illumination from emissive quad meshes
 
 ### Changes in v2.7.1:

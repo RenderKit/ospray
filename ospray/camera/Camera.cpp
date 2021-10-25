@@ -62,14 +62,14 @@ void Camera::commit()
   rollingShutterDuration = clamp(
       getParam<float>("rollingShutterDuration", 0.0f), 0.0f, shutter.size());
 
-  if (motionTransform
-          .motionBlur) { // create dummy RTCGeometry for transform interpolation
+  if (motionTransform.motionBlur || motionTransform.quaternion) {
+    // create dummy RTCGeometry for transform interpolation or conversion
     if (!embreeGeometry)
       embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
 
     motionTransform.setEmbreeTransform(embreeGeometry);
 
-    if (shutter.lower == shutter.upper) {
+    if (shutter.lower == shutter.upper || !motionTransform.motionBlur) {
       // directly interpolate to single shutter time
       rtcGetGeometryTransform(embreeGeometry,
           shutter.lower,
@@ -77,12 +77,14 @@ void Camera::commit()
           &motionTransform.transform);
       motionTransform.motionBlur = false;
     }
-  } else if (embreeGeometry) {
-    rtcReleaseGeometry(embreeGeometry);
-    embreeGeometry = nullptr;
   }
 
-  if (!motionTransform.motionBlur) { // apply transform right away
+  if (!motionTransform.motionBlur) {
+    if (embreeGeometry) {
+      rtcReleaseGeometry(embreeGeometry);
+      embreeGeometry = nullptr;
+    }
+    // apply transform right away
     pos = xfmPoint(motionTransform.transform, pos);
     dir = normalize(xfmVector(motionTransform.transform, dir));
     up = normalize(xfmVector(motionTransform.transform, up));

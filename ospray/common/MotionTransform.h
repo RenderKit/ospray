@@ -16,9 +16,11 @@ struct OSPRAY_SDK_INTERFACE MotionTransform
   void setEmbreeTransform(RTCGeometry) const;
   affine3f transform{one};
   bool motionBlur{false};
+  bool quaternion{false};
 
  private:
   Ref<const DataT<affine3f>> transforms;
+  std::vector<RTCQuaternionDecomposition> quaternions;
   range1f time{0.0f, 1.0f};
 };
 

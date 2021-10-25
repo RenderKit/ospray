@@ -494,6 +494,9 @@ below.
   OSP_AFFINE[23]F            32\ bit single precision floating-point affine
                              transform (linear transform plus translation)
 
+  OSP_QUATF                  32\ bit single precision floating-point quaternion,
+                             in (i, j, k, w) layout
+
   OSP_VOID_PTR               raw memory address (only found in module extensions)
   -------------------------- ---------------------------------------------------
   : Valid named constants for `OSPDataType`.
@@ -1748,12 +1751,25 @@ via a transform. To create and instance call
   Type         Name                 Default Description
   ------------ ----------------- ---------- --------------------------------------------------------
   affine3f     transform           identity world-space transform for all attached geometries and
-                                            volumes, overridden by `motion.transform`
+                                            volumes, overridden by `motion.` arrays
 
   affine3f[]   motion.transform             uniformly distributed world-space transforms
 
-  box1f        time                  [0, 1] time associated with first and last key in
-                                            `motion.` arrays (for motion blur)
+  vec3f[]      motion.scale                 uniformly distributed world-space scale, overridden
+                                            by `motion.transform`
+
+  vec3f[]      motion.pivot                 uniformly distributed world-space translation which is
+                                            applied before `motion.rotation` (i.e., the rotation
+                                            center), overridden by `motion.transform`
+
+  quatf[]      motion.rotation              uniformly distributed world-space quaternion rotation,
+                                            overridden by `motion.transform`
+
+  vec3f[]      motion.translation           uniformly distributed world-space translation,
+                                            overridden by `motion.transform`
+
+  box1f        time                  [0, 1] time associated with first and last key in `motion.`
+                                            arrays (for motion blur)
   ------------ ----------------- ---------- --------------------------------------------------------
   : Parameters understood by instances.
 
@@ -2559,11 +2575,15 @@ All cameras accept these parameters:
   vec3f       position                position of the camera in world-space
   vec3f       direction               main viewing direction of the camera
   vec3f       up                      up direction of the camera
-  affine3f    transform               additional world-space transform, overridden by `motion.transform`
+  affine3f    transform               additional world-space transform, overridden by `motion.` arrays
   float       nearClip                near clipping distance
   vec2f       imageStart              start of image region (lower left corner)
   vec2f       imageEnd                end of image region (upper right corner)
   affine3f[]  motion.transform        additional uniformly distributed world-space transforms
+  vec3f[]     motion.scale            additional uniformly distributed world-space scale, overridden by `motion.transform`
+  vec3f[]     motion.pivot            additional uniformly distributed world-space translation which is applied before `motion.rotation` (i.e., the rotation center), overridden by `motion.transform`
+  quatf[]     motion.rotation         additional uniformly distributed world-space quaternion rotation, overridden by `motion.transform`
+  vec3f[]     motion.translation      additional uniformly distributed world-space translation, overridden by `motion.transform`
   box1f       time                    time associated with first and last key in `motion.` arrays, default [0, 1]
   box1f       shutter                 start and end of shutter time (for motion blur), in [0, 1], default [0.5, 0.5]
   uchar       shutterType             `OSPShutterType` for motion blur, possible values are:

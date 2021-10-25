@@ -143,6 +143,26 @@ void MotionBlurBoxes::SetUp()
     AddInstance(instance);
   }
 
+  { // quaternion
+    cpp::Instance instance(group);
+    std::vector<vec3f> ss;
+    ss.push_back(vec3f(0, -4, 0));
+    ss.push_back(vec3f(0, -4, 0));
+    ss.push_back(vec3f(0, -4, 0));
+    instance.setParam("motion.pivot", cpp::CopiedData(ss));
+    std::vector<quatf> qs;
+    qs.push_back(quatf::rotate(vec3f(0, 0, 1), -0.8));
+    qs.push_back(quatf::rotate(vec3f(0, 0, 1), -1.2));
+    qs.push_back(quatf::rotate(vec3f(0, 0, 1), -1.6));
+    instance.setParam("motion.rotation", cpp::CopiedData(qs));
+    std::vector<vec3f> ts;
+    ts.push_back(vec3f(0, 4, 0));
+    ts.push_back(vec3f(0, 4, 0));
+    ts.push_back(vec3f(0, 4, 0));
+    instance.setParam("motion.translation", cpp::CopiedData(ts));
+    AddInstance(instance);
+  }
+
   cpp::Light distant("distant");
   distant.setParam("intensity", 3.0f);
   distant.setParam("direction", vec3f(0.3f, -4.0f, 2.8f));

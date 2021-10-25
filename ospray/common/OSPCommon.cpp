@@ -361,6 +361,8 @@ size_t sizeOf(OSPDataType type)
     return sizeof(affine2f);
   case OSP_AFFINE3F:
     return sizeof(affine3f);
+  case OSP_QUATF:
+    return sizeof(quatf);
   case OSP_UNKNOWN:
     return 0;
   }
@@ -610,6 +612,8 @@ std::string stringFor(OSPDataType type)
     return "affine2f";
   case OSP_AFFINE3F:
     return "affine3f";
+  case OSP_QUATF:
+    return "quatf";
   case OSP_UNKNOWN:
     return "unknown";
   }
