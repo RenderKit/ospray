@@ -28,7 +28,7 @@ bool hitBackground(
 
 float eyeLight(varying ScreenSample &sample)
 {
-  return 0.2f + 0.8f * dot(normalize(sample.ray.Ng), neg(sample.ray.dir));
+  return 0.2f + 0.8f * abs(dot(normalize(sample.ray.Ng), sample.ray.dir));
 }
 
 /* a simple test-frame renderer that doesn't even trace a ray, just
