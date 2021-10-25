@@ -11,7 +11,7 @@
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Instance : public MotionTransform
+struct OSPRAY_SDK_INTERFACE Instance : public ManagedObject
 {
   Instance(Group *group);
   ~Instance() override = default;
@@ -23,6 +23,7 @@ struct OSPRAY_SDK_INTERFACE Instance : public MotionTransform
   box3f getBounds() const override;
 
   Ref<Group> group;
+  MotionTransform motionTransform;
 };
 
 OSPTYPEFOR_SPECIALIZATION(Instance *, OSP_INSTANCE);

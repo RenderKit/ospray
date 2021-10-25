@@ -10,13 +10,16 @@
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE MotionTransform : public ManagedObject
+struct OSPRAY_SDK_INTERFACE MotionTransform
 {
-  void commit() override;
-
-  Ref<const DataT<affine3f>> motionTransforms;
-  range1f time{0.0f, 1.0f};
+  void readParams(ManagedObject &);
+  void setEmbreeTransform(RTCGeometry) const;
+  affine3f transform{one};
   bool motionBlur{false};
+
+ private:
+  Ref<const DataT<affine3f>> transforms;
+  range1f time{0.0f, 1.0f};
 };
 
 } // namespace ospray

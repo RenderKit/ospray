@@ -6,20 +6,39 @@
 
 namespace ospray {
 
-void MotionTransform::commit()
+void MotionTransform::readParams(ManagedObject &obj)
 {
-  motionTransforms = getParamDataT<affine3f>("motion.transform");
-  if (!motionTransforms) { // add single transform
+  transforms = obj.getParamDataT<affine3f>("motion.transform");
+  if (!transforms) { // add single transform
     auto data = new Data(OSP_AFFINE3F, vec3ul(1));
     auto &dataA3f = data->as<affine3f>();
-    *dataA3f.data() = getParam<affine3f>(
-        "transform", getParam<affine3f>("xfm", affine3f(one)));
-    motionTransforms = &dataA3f;
+    transform = obj.getParam<affine3f>(
+        "transform", obj.getParam<affine3f>("xfm", affine3f(one)));
+    *dataA3f.data() = transform;
+    transforms = &dataA3f;
     data->refDec();
   }
-  motionBlur = motionTransforms->size() > 1;
+  motionBlur = transforms->size() > 1;
   if (motionBlur)
-    time = getParam<range1f>("time", range1f(0.0f, 1.0f));
+    time = obj.getParam<range1f>("time", range1f(0.0f, 1.0f));
+}
+
+void MotionTransform::setEmbreeTransform(RTCGeometry embreeGeometry) const
+{
+  if (motionBlur) {
+    rtcSetGeometryTimeStepCount(embreeGeometry, transforms->size());
+    for (size_t i = 0; i < transforms->size(); i++)
+      rtcSetGeometryTransform(embreeGeometry,
+          i,
+          RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+          &(*transforms)[i]);
+    rtcSetGeometryTimeRange(embreeGeometry, time.lower, time.upper);
+  } else {
+    rtcSetGeometryTimeStepCount(embreeGeometry, 1);
+    rtcSetGeometryTransform(
+        embreeGeometry, 0, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, transform);
+  }
+  rtcCommitGeometry(embreeGeometry);
 }
 
 } // namespace ospray

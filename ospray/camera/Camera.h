@@ -11,7 +11,7 @@ namespace ospray {
 //! base camera class abstraction
 /*! the base class itself does not do anything useful; look into
     perspectivecamera etc for that */
-struct OSPRAY_SDK_INTERFACE Camera : public MotionTransform
+struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
 {
   Camera();
   ~Camera() override;
@@ -54,6 +54,7 @@ struct OSPRAY_SDK_INTERFACE Camera : public MotionTransform
   static void registerType(const char *type, FactoryFcn<Camera> f);
   RTCDevice embreeDevice{nullptr};
   RTCGeometry embreeGeometry{nullptr};
+  MotionTransform motionTransform;
 };
 
 OSPTYPEFOR_SPECIALIZATION(Camera *, OSP_CAMERA);
