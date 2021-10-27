@@ -5,7 +5,7 @@
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
 
-#include "render/materials/Material.ih"
+#include "render/Material.ih"
 
 #include "geometry/GeometricModel.ih"
 #include "lights/Light.ih"
@@ -19,7 +19,7 @@ vec3f evaluateGeometryLights(const PathContext &pathContext,
     Ray &ray)
 {
   vec3f L = make_vec3f(0.f);
-  PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
+  Material *material = (Material *)pathVertex.dg.material;
   foreach_unique (m in material) {
     if (m != NULL && reduce_max(m->emission) > 0.f) {
       // at the moment we only support uniform light selection
@@ -105,8 +105,8 @@ Light_SampleRes GeometryLight_sample(const Light *uniform super,
   res.pdf = self->pdf * sqr(dist) / abs(cosd);
 
   // get radiance
-  PathTraceMaterial *mat = (PathTraceMaterial *)GeometricModel_getMaterial(
-      model, dg.renderer, primID);
+  Material *mat =
+      (Material *)GeometricModel_getMaterial(model, dg.renderer, primID);
   const vec3f radiance = mat ? mat->emission : make_vec3f(0.f);
 
   res.weight = radiance * rcp(res.pdf);
@@ -150,8 +150,8 @@ export void *uniform GeometryLight_create(
   self->primIDs = uniform new uniform int32[geo->numPrimitives];
   uniform int32 numEmissivePrims = 0;
   foreach (primID = 0 ... geo->numPrimitives) {
-    PathTraceMaterial *mat = (PathTraceMaterial *)GeometricModel_getMaterial(
-        model, renderer, primID);
+    Material *mat =
+        (Material *)GeometricModel_getMaterial(model, renderer, primID);
     const vec3f emission = mat->emission;
     if (reduce_max(emission) > 0.f) {
       int offset = exclusive_scan_add(1);

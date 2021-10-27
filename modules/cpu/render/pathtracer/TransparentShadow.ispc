@@ -4,7 +4,7 @@
 #include "render/pathtracer/PathTracer.ih"
 #include "render/pathtracer/TransparentShadow.ih"
 
-#include "render/materials/Material.ih"
+#include "render/Material.ih"
 #include "render/materials/Medium.ih"
 
 #include "common/Ray.ih"
@@ -34,8 +34,7 @@ vec3f transparentShadow(const uniform PathTracer *uniform self,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
             | DG_MOTIONBLUR);
 
-    uniform PathTraceMaterial *material =
-        (uniform PathTraceMaterial *)dg.material;
+    uniform Material *material = (uniform Material *)dg.material;
     vec3f transparency;
     foreach_unique (m in material)
       if (m != NULL)

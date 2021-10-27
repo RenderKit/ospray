@@ -4,11 +4,6 @@
 // ospray
 #include "VolumetricModel.h"
 #include "transferFunction/TransferFunction.h"
-// openvkl
-#include "openvkl/openvkl.h"
-// ispc exports
-#include "volume/Volume_ispc.h"
-#include "volume/VolumetricModel_ispc.h"
 
 namespace ospray {
 
@@ -16,7 +11,6 @@ VolumetricModel::VolumetricModel(Volume *_volume)
 {
   managedObjectType = OSP_VOLUMETRIC_MODEL;
   volumeAPI = _volume;
-  this->ispcEquivalent = ispc::VolumetricModel_create();
 }
 
 VolumetricModel::~VolumetricModel()
@@ -69,20 +63,20 @@ void VolumetricModel::commit()
     vklRelease(valueRangeData);
     vklCommit(vklIntervalContext);
 
-    ispc::VolumetricModel_set_intervalContext(
-        ispcEquivalent, vklIntervalContext);
+    // Pass interval contex to ISPC
+    getSh()->vklIntervalContext = vklIntervalContext;
   }
 
-  // Finish getting/setting other appearance information //
+  // Finish getting/setting other appearance information
   volumeBounds = volume->bounds;
 
-  ispc::VolumetricModel_set(ispcEquivalent,
-      getVolume()->getIE(),
-      transferFunction->getIE(),
-      (const ispc::box3f &)volumeBounds,
-      getParam<float>("densityScale", 1.f),
-      getParam<float>("anisotropy", 0.f),
-      getParam<float>("gradientShadingScale", 0.f));
+  // Initialize shared structure
+  getSh()->volume = getVolume()->getSh();
+  getSh()->transferFunction = transferFunction->getSh();
+  getSh()->boundingBox = volumeBounds;
+  getSh()->densityScale = getParam<float>("densityScale", 1.f);
+  getSh()->anisotropy = getParam<float>("anisotropy", 0.f);
+  getSh()->gradientShadingScale = getParam<float>("gradientShadingScale", 0.f);
 }
 
 RTCGeometry VolumetricModel::embreeGeometryHandle() const
@@ -98,11 +92,6 @@ box3f VolumetricModel::bounds() const
 Ref<Volume> VolumetricModel::getVolume() const
 {
   return volume;
-}
-
-void VolumetricModel::setGeomID(int geomID)
-{
-  ispc::Volume_set_geomID(volume->getIE(), geomID);
 }
 
 OSPTYPEFOR_DEFINITION(VolumetricModel *);

@@ -130,6 +130,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   render/LoadBalancer.cpp
   render/Material.cpp
+  render/Material.ispc
   render/Renderer.ispc
   render/Renderer.cpp
   render/util.ispc
@@ -160,7 +161,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/pathtracer/volumes/VolumeSampler.ispc
 
   render/bsdfs/MicrofacetAlbedoTables.ispc
-  render/materials/Material.ispc
   render/materials/OBJ.ispc
   render/materials/OBJ.cpp
   render/materials/Principled.ispc
@@ -191,17 +191,14 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   texture/Texture2D.ispc
   texture/TextureVolume.cpp
   texture/TextureVolume.ispc
-  texture/TextureParam.ispc
   texture/registration.cpp
 
   volume/Volume.ispc
   volume/Volume.cpp
-  volume/VolumetricModel.ispc
   volume/VolumetricModel.cpp
 
   volume/transferFunction/LinearTransferFunction.ispc
   volume/transferFunction/LinearTransferFunction.cpp
-  volume/transferFunction/TransferFunction.ispc
   volume/transferFunction/TransferFunction.cpp
   volume/transferFunction/registration.cpp
 )

@@ -57,7 +57,7 @@ void Renderer::commit()
   setupPixelFilter();
 
   if (materialData)
-    ispcMaterialPtrs = createArrayOfIE(*materialData);
+    ispcMaterialPtrs = createArrayOfSh(*materialData);
   else
     ispcMaterialPtrs.clear();
 
@@ -67,10 +67,10 @@ void Renderer::commit()
         maxDepth,
         minContribution,
         (ispc::vec4f &)bgColor,
-        backplate ? backplate->getIE() : nullptr,
+        backplate ? backplate->getSh() : nullptr,
         ispcMaterialPtrs.size(),
         ispcMaterialPtrs.data(),
-        maxDepthTexture ? maxDepthTexture->getIE() : nullptr,
+        maxDepthTexture ? maxDepthTexture->getSh() : nullptr,
         pixelFilter ? pixelFilter->getIE() : nullptr);
   }
 }

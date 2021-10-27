@@ -8,14 +8,15 @@
 namespace ospray {
 namespace pathtracer {
 
+Velvet::Velvet()
+{
+  getSh()->super.type = ispc::MATERIAL_TYPE_VELVET;
+  getSh()->super.getBSDF = ispc::Velvet_getBSDF_addr();
+}
+
 std::string Velvet::toString() const
 {
   return "ospray::pathtracer::Velvet";
-}
-
-Velvet::Velvet()
-{
-  ispcEquivalent = ispc::PathTracer_Velvet_create();
 }
 
 void Velvet::commit()
@@ -27,11 +28,10 @@ void Velvet::commit()
   float horizonScatteringFallOff =
       getParam<float>("horizonScatteringFallOff", 10);
 
-  ispc::PathTracer_Velvet_set(getIE(),
-      (const ispc::vec3f &)reflectance,
-      (const ispc::vec3f &)horizonScatteringColor,
-      horizonScatteringFallOff,
-      backScattering);
+  getSh()->reflectance = reflectance;
+  getSh()->backScattering = backScattering;
+  getSh()->horizonScatteringColor = horizonScatteringColor;
+  getSh()->horizonScatteringFallOff = horizonScatteringFallOff;
 }
 
 } // namespace pathtracer

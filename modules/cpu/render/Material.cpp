@@ -4,9 +4,9 @@
 // ospray
 #include "Material.h"
 #include "common/Util.h"
-#include "texture/Texture2D.h"
-
-#include "texture/TextureParam_ispc.h"
+#include "texture/Texture.h"
+// ispc
+#include "render/Material_ispc.h"
 
 namespace ospray {
 
@@ -17,10 +17,12 @@ static FactoryMap<Material> g_materialsMap;
 Material::Material()
 {
   managedObjectType = OSP_MATERIAL;
+  getSh()->getTransparency = ispc::Material_getTransparency_addr();
+  getSh()->selectNextMedium = ispc::Material_selectNextMedium_addr();
 }
 
 Material *Material::createInstance(
-    const char */*ignored*/, const char *_material_type)
+    const char * /*ignored*/, const char *_material_type)
 {
   std::string name = _material_type;
   return createInstanceHelper(name, g_materialsMap[name]);
@@ -41,7 +43,7 @@ void Material::commit() {}
 ispc::TextureParam Material::getTextureParam(const char *texture_name)
 {
   // Get texture pointer
-  Texture2D *ptr = (Texture2D *)getParamObject(texture_name);
+  Texture *ptr = (Texture *)getParamObject(texture_name);
 
   // Get 2D transformation if exists
   int transformFlags = ispc::TRANSFORM_FLAG_NONE;
@@ -63,11 +65,10 @@ ispc::TextureParam Material::getTextureParam(const char *texture_name)
 
   // Initialize ISPC structure
   ispc::TextureParam param;
-  TextureParam_set(&param,
-      ptr ? ptr->getIE() : nullptr,
-      (ispc::TransformFlags)transformFlags,
-      (const ispc::AffineSpace2f &)xfm2f,
-      (const ispc::AffineSpace3f &)xfm3f);
+  param.ptr = ptr ? ptr->getSh() : nullptr;
+  param.transformFlags = (ispc::TransformFlags)transformFlags;
+  param.xform2f = xfm2f;
+  param.xform3f = xfm3f;
 
   // Done
   return param;

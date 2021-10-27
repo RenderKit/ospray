@@ -10,9 +10,10 @@
 #include "lights/Light.ih"
 #include "render/bsdfs/BSDF.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"
-#include "render/materials/Material.ih"
 #include "render/materials/Medium.ih"
 #include "volumes/VolumeSampler.ih"
+
+#include "render/MaterialShared.h"
 
 #include "camera/Camera.ih"
 #include "fb/LocalFB.ih"

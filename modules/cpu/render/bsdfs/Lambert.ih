@@ -1,9 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "BSDF.ih"
+#include "ShadingContext.ih"
 
 inline BSDF_EvalRes Lambert_eval(
     const varying BSDF *uniform self, const vec3f &wo, const vec3f &wi)

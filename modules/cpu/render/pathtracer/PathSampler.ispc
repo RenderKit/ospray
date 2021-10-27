@@ -12,9 +12,9 @@
 #include "render/pathtracer/VirtualLight.ih"
 
 #include "common/Intersect.ih"
+#include "render/Material.ih"
 #include "render/bsdfs/BSDF.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"
-#include "render/materials/Material.ih"
 #include "render/materials/Medium.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 
@@ -165,7 +165,7 @@ void samplePath(const PathContext &pathContext,
         && pathVertex.type != VOLUME) {
       pathState.contribution = pathState.contribution
           + evaluateVirtualLights(
-                pathContext, pathState, lastVertex, pathVertex, ray);
+              pathContext, pathState, lastVertex, pathVertex, ray);
     }
 
     if (pathVertex.type == ENVIRONMENT)
@@ -194,7 +194,7 @@ void samplePath(const PathContext &pathContext,
     // shade surface
     ShadingContext_Constructor(&ctx);
     if (pathVertex.type == SURFACE) {
-      PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
+      Material *material = (Material *)pathVertex.dg.material;
       foreach_unique (m in material) {
         if (m != NULL) {
           pathVertex.bsdf =
@@ -253,8 +253,7 @@ void samplePath(const PathContext &pathContext,
       // TODO: support nested dielectrics
       if (fs.type & SCATTERING_TRANSMISSION) {
         ray_org = ray_org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
-        PathTraceMaterial *material =
-            (PathTraceMaterial *)pathVertex.dg.material;
+        Material *material = (Material *)pathVertex.dg.material;
         foreach_unique (m in material) {
           if (m != NULL)
             m->selectNextMedium(m, pathVertex.dg, pathState.currentMedium);

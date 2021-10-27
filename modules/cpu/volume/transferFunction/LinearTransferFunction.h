@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,13 +7,15 @@
 #include "TransferFunction.h"
 #include "common/Data.h"
 
+#include "LinearTransferFunctionShared.h"
+
 namespace ospray {
 
 // piecewise linear transfer function
-struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
+struct OSPRAY_SDK_INTERFACE LinearTransferFunction
+    : public AddStructShared<TransferFunction, ispc::LinearTransferFunction>
 {
   LinearTransferFunction();
-  virtual ~LinearTransferFunction() override = default;
 
   virtual void commit() override;
 
@@ -25,6 +27,8 @@ struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
  private:
   Ref<const DataT<vec3f>> colorValues;
   Ref<const DataT<float>> opacityValues;
+
+  void precomputeMaxOpacityRanges();
 };
 
 } // namespace ospray

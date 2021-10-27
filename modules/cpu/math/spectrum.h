@@ -1,12 +1,20 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+// ==> 430..675
 #define SPECTRUM_SAMPLES 8
 #define SPECTRUM_FIRSTWL 430.f
 #define SPECTRUM_SPACING 35.f
-// ==> 430..675
+
+#ifdef __cplusplus
+#include <array>
+struct alignas(SPECTRUM_SAMPLES * sizeof(float)) spectrum
+    : public std::array<float, SPECTRUM_SAMPLES>
+{
+};
+#endif // __cplusplus
 
 #define SPECTRUM_AL_ETA                                                        \
   {                                                                            \

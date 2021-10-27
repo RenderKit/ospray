@@ -1,12 +1,14 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/Material.h"
 
+#include "LuminousShared.h"
+
 namespace ospray {
 namespace pathtracer {
 
-struct Luminous : public ospray::Material
+struct Luminous : public AddStructShared<Material, ispc::Luminous>
 {
   Luminous();
 

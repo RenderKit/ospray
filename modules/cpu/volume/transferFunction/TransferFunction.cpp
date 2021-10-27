@@ -1,10 +1,9 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "TransferFunction.h"
 #include "common/Util.h"
-#include "volume/transferFunction/TransferFunction_ispc.h"
 
 namespace ospray {
 
@@ -21,7 +20,7 @@ void TransferFunction::commit()
 {
   auto param = getParam<vec2f>("valueRange", vec2f(0.0f, 1.0f));
   valueRange = range1f(param.x, param.y);
-  ispc::TransferFunction_set(ispcEquivalent, (const ispc::box1f &)(valueRange));
+  getSh()->valueRange = valueRange;
 }
 
 std::string TransferFunction::toString() const

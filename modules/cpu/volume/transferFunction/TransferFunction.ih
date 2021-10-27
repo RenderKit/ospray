@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,24 +7,4 @@
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 
-typedef vec4f (*TransferFunction_getFct)(const void *uniform self, float value);
-
-typedef float (*TransferFunction_getMaxOpacityFct)(
-    const void *uniform self, const range1f &valueRange);
-
-struct TransferFunction
-{
-  range1f valueRange;
-
-  TransferFunction_getFct get;
-  TransferFunction_getMaxOpacityFct getMaxOpacity;
-};
-
-inline void TransferFunction_Constructor(TransferFunction *uniform self,
-    uniform TransferFunction_getFct get,
-    uniform TransferFunction_getMaxOpacityFct getMaxOpacity)
-{
-  self->valueRange = make_box1f(0.0f, 1.0f);
-  self->get = get;
-  self->getMaxOpacity = getMaxOpacity;
-}
+#include "TransferFunctionShared.h"

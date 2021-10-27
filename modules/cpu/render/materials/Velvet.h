@@ -1,12 +1,14 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/Material.h"
 
+#include "VelvetShared.h"
+
 namespace ospray {
 namespace pathtracer {
 
-struct Velvet : public ospray::Material
+struct Velvet : public AddStructShared<Material, ispc::Velvet>
 {
   Velvet();
 

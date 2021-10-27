@@ -1,17 +1,20 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "common/Managed.h"
+#include "common/StructShared.h"
 #include "common/Util.h"
+
+#include "TransferFunctionShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE TransferFunction : public ManagedObject
+struct OSPRAY_SDK_INTERFACE TransferFunction
+    : public AddStructShared<ManagedObject, ispc::TransferFunction>
 {
   TransferFunction();
-  virtual ~TransferFunction() override = default;
   virtual void commit() override;
   virtual std::string toString() const override;
 

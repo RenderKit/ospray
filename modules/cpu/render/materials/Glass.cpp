@@ -10,7 +10,10 @@ namespace pathtracer {
 
 Glass::Glass()
 {
-  ispcEquivalent = ispc::PathTracer_Glass_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_GLASS;
+  getSh()->super.getBSDF = ispc::Glass_getBSDF_addr();
+  getSh()->super.getTransparency = ispc::Glass_getTransparency_addr();
+  getSh()->super.selectNextMedium = ispc::Glass_selectNextMedium_addr();
 }
 
 std::string Glass::toString() const
@@ -35,12 +38,16 @@ void Glass::commit()
   const float attenuationDistance =
       getParam<float>("attenuationDistance", 1.0f);
 
-  ispc::PathTracer_Glass_set(ispcEquivalent,
-      etaInside,
-      (const ispc::vec3f &)attenuationColorInside,
-      etaOutside,
-      (const ispc::vec3f &)attenuationColorOutside,
-      attenuationDistance);
+  getSh()->mediumInside.ior = etaInside;
+  getSh()->mediumInside.attenuation = vec3f(log(attenuationColorInside.x),
+                                          log(attenuationColorInside.y),
+                                          log(attenuationColorInside.z))
+      / std::max(attenuationDistance, EPS);
+  getSh()->mediumOutside.ior = etaOutside;
+  getSh()->mediumOutside.attenuation = vec3f(log(attenuationColorOutside.x),
+                                           log(attenuationColorOutside.y),
+                                           log(attenuationColorOutside.z))
+      / std::max(attenuationDistance, EPS);
 }
 
 } // namespace pathtracer

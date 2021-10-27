@@ -5,7 +5,6 @@
 #include "volume/Volume.h"
 #include "common/Data.h"
 #include "common/Util.h"
-#include "transferFunction/TransferFunction.h"
 #include "volume/Volume_ispc.h"
 
 #include "openvkl/openvkl.h"
@@ -27,7 +26,6 @@ Volume::Volume(const std::string &type) : vklType(type)
     throw std::runtime_error(toString()
         + " Open VKL has non-default configuration for VDB volumes.");
 
-  ispcEquivalent = ispc::Volume_createInstance_vklVolume();
   managedObjectType = OSP_VOLUME;
 }
 
@@ -80,9 +78,19 @@ void Volume::commit()
   vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
-  ispc::Volume_set(ispcEquivalent, embreeGeometry);
-  ispc::Volume_set_vklVolume(
-      ispcEquivalent, vklVolume, vklSampler, (ispc::box3f *)&bounds);
+  // Setup Embree user-defined geometry
+  rtcSetGeometryUserData(embreeGeometry, getSh());
+  rtcSetGeometryUserPrimitiveCount(embreeGeometry, 1);
+  rtcSetGeometryBoundsFunction(
+      embreeGeometry, (RTCBoundsFunction)&ispc::Volume_embreeBounds, getSh());
+  rtcSetGeometryIntersectFunction(
+      embreeGeometry, (RTCIntersectFunctionN)&ispc::Volume_intersect_kernel);
+  rtcCommitGeometry(embreeGeometry);
+
+  // Initialize shared structure
+  getSh()->vklVolume = vklVolume;
+  getSh()->vklSampler = vklSampler;
+  getSh()->boundingBox = *(box3f *)&bounds;
 }
 
 void Volume::checkDataStride(const Data *data) const
@@ -196,6 +204,11 @@ void Volume::setDevice(RTCDevice embreed, VKLDevice vkld)
 {
   embreeDevice = embreed;
   vklDevice = vkld;
+}
+
+void Volume::setGeomID(int geomID)
+{
+  getSh()->volumeID = geomID;
 }
 
 OSPTYPEFOR_DEFINITION(Volume *);

@@ -5,23 +5,25 @@
 
 #include "ISPCDevice.h"
 #include "common/Managed.h"
+#include "common/StructShared.h"
 // embree
 #include "embree3/rtcore.h"
 
 #include "openvkl/volume.h"
+#include "volume/VolumeShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
+struct OSPRAY_SDK_INTERFACE Volume
+    : public AddStructShared<ManagedObject, ispc::Volume>
 {
   Volume(const std::string &vklType);
   ~Volume() override;
 
   std::string toString() const override;
-
   void commit() override;
-
   void setDevice(RTCDevice embreeDevice, VKLDevice vklDevice);
+  void setGeomID(int geomID);
 
  private:
   void checkDataStride(const Data *) const;
@@ -33,7 +35,6 @@ struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   friend struct VolumetricModel;
 
   // Data //
-
   RTCGeometry embreeGeometry{nullptr};
   VKLVolume vklVolume{nullptr};
   VKLSampler vklSampler{nullptr};

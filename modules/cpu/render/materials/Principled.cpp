@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Principled.h"
-#include "common/Data.h"
-#include "math/spectrum.h"
 // ispc
 #include "render/materials/Principled_ispc.h"
 
@@ -12,7 +10,10 @@ namespace pathtracer {
 
 Principled::Principled()
 {
-  ispcEquivalent = ispc::PathTracer_Principled_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_PRINCIPLED;
+  getSh()->super.getBSDF = ispc::Principled_getBSDF_addr();
+  getSh()->super.getTransparency = ispc::Principled_getTransparency_addr();
+  getSh()->super.selectNextMedium = ispc::Principled_selectNextMedium_addr();
 }
 
 std::string Principled::toString() const
@@ -63,73 +64,69 @@ void Principled::commit()
   float outsideTransmissionDepth =
       getParam<float>("outsideTransmissionDepth", 1.f);
 
-  ispc::PathTracer_Principled_set(getIE(),
-      (const ispc::vec3f &)baseColor.factor,
-      baseColor.tex,
-      (const ispc::vec3f &)edgeColor.factor,
-      edgeColor.tex,
-      metallic.factor,
-      metallic.tex,
-      diffuse.factor,
-      diffuse.tex,
-      specular.factor,
-      specular.tex,
-      ior.factor,
-      ior.tex,
-      transmission.factor,
-      transmission.tex,
-      (const ispc::vec3f &)transmissionColor.factor,
-      transmissionColor.tex,
-      transmissionDepth.factor,
-      transmissionDepth.tex,
-      roughness.factor,
-      roughness.tex,
-      anisotropy.factor,
-      anisotropy.tex,
-      rotation.factor,
-      rotation.tex,
-      normal.factor,
-      normal.tex,
-      (const ispc::LinearSpace2f &)normal.rot,
-      baseNormal.factor,
-      baseNormal.tex,
-      (const ispc::LinearSpace2f &)baseNormal.rot,
-
-      coat.factor,
-      coat.tex,
-      coatIor.factor,
-      coatIor.tex,
-      (const ispc::vec3f &)coatColor.factor,
-      coatColor.tex,
-      coatThickness.factor,
-      coatThickness.tex,
-      coatRoughness.factor,
-      coatRoughness.tex,
-      coatNormal.factor,
-      coatNormal.tex,
-      (const ispc::LinearSpace2f &)coatNormal.rot,
-
-      sheen.factor,
-      sheen.tex,
-      (const ispc::vec3f &)sheenColor.factor,
-      sheenColor.tex,
-      sheenTint.factor,
-      sheenTint.tex,
-      sheenRoughness.factor,
-      sheenRoughness.tex,
-
-      opacity.factor,
-      opacity.tex,
-
-      thin,
-      backlight.factor,
-      backlight.tex,
-      thickness.factor,
-      thickness.tex,
-
-      outsideIor,
-      (const ispc::vec3f &)outsideTransmissionColor,
-      outsideTransmissionDepth);
+  getSh()->baseColor = baseColor.factor;
+  getSh()->baseColorMap = baseColor.tex;
+  getSh()->edgeColor = edgeColor.factor;
+  getSh()->edgeColorMap = edgeColor.tex;
+  getSh()->metallic = metallic.factor;
+  getSh()->metallicMap = metallic.tex;
+  getSh()->diffuse = diffuse.factor;
+  getSh()->diffuseMap = diffuse.tex;
+  getSh()->specular = specular.factor;
+  getSh()->specularMap = specular.tex;
+  getSh()->ior = ior.factor;
+  getSh()->iorMap = ior.tex;
+  getSh()->transmission = transmission.factor;
+  getSh()->transmissionMap = transmission.tex;
+  getSh()->transmissionColor = transmissionColor.factor;
+  getSh()->transmissionColorMap = transmissionColor.tex;
+  getSh()->transmissionDepth = transmissionDepth.factor;
+  getSh()->transmissionDepthMap = transmissionDepth.tex;
+  getSh()->roughness = roughness.factor;
+  getSh()->roughnessMap = roughness.tex;
+  getSh()->anisotropy = anisotropy.factor;
+  getSh()->anisotropyMap = anisotropy.tex;
+  getSh()->rotation = rotation.factor;
+  getSh()->rotationMap = rotation.tex;
+  getSh()->normal = normal.factor;
+  getSh()->normalMap = normal.tex;
+  getSh()->normalRot = normal.rot;
+  getSh()->baseNormal = baseNormal.factor;
+  getSh()->baseNormalMap = baseNormal.tex;
+  getSh()->baseNormalRot = baseNormal.rot;
+  getSh()->coat = coat.factor;
+  getSh()->coatMap = coat.tex;
+  getSh()->coatIor = coatIor.factor;
+  getSh()->coatIorMap = coatIor.tex;
+  getSh()->coatColor = coatColor.factor;
+  getSh()->coatColorMap = coatColor.tex;
+  getSh()->coatThickness = coatThickness.factor;
+  getSh()->coatThicknessMap = coatThickness.tex;
+  getSh()->coatRoughness = coatRoughness.factor;
+  getSh()->coatRoughnessMap = coatRoughness.tex;
+  getSh()->coatNormal = coatNormal.factor;
+  getSh()->coatNormalMap = coatNormal.tex;
+  getSh()->coatNormalRot = coatNormal.rot;
+  getSh()->sheen = sheen.factor;
+  getSh()->sheenMap = sheen.tex;
+  getSh()->sheenColor = sheenColor.factor;
+  getSh()->sheenColorMap = sheenColor.tex;
+  getSh()->sheenTint = sheenTint.factor;
+  getSh()->sheenTintMap = sheenTint.tex;
+  getSh()->sheenRoughness = sheenRoughness.factor;
+  getSh()->sheenRoughnessMap = sheenRoughness.tex;
+  getSh()->opacity = opacity.factor;
+  getSh()->opacityMap = opacity.tex;
+  getSh()->thin = thin;
+  getSh()->backlight = backlight.factor;
+  getSh()->backlightMap = backlight.tex;
+  getSh()->thickness = thickness.factor;
+  getSh()->thicknessMap = thickness.tex;
+  getSh()->outsideMedium.ior = outsideIor >= 1.f ? outsideIor : rcp(outsideIor);
+  vec3f otc = vec3f(log(outsideTransmissionColor.x),
+      log(outsideTransmissionColor.y),
+      log(outsideTransmissionColor.z));
+  getSh()->outsideMedium.attenuation = otc / outsideTransmissionDepth;
 }
 
 } // namespace pathtracer

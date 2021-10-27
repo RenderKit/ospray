@@ -4,8 +4,11 @@
 #pragma once
 
 #include "common/Managed.h"
+#include "common/StructShared.h"
 #include "common/Util.h"
-#include "texture/TextureParam_ispc.h"
+
+#include "MaterialShared.h"
+#include "texture/TextureParamShared.h"
 
 namespace ospray {
 
@@ -21,7 +24,8 @@ struct MaterialParam
 using MaterialParam1f = MaterialParam<float>;
 using MaterialParam3f = MaterialParam<vec3f>;
 
-struct OSPRAY_SDK_INTERFACE Material : public ManagedObject
+struct OSPRAY_SDK_INTERFACE Material
+    : public AddStructShared<ManagedObject, ispc::Material>
 {
   Material();
   virtual ~Material() override = default;
@@ -42,10 +46,9 @@ struct OSPRAY_SDK_INTERFACE Material : public ManagedObject
     material types specified in special modules, make sure to call
     ospLoadModule first. */
   static Material *createInstance(
-      const char */*ignored*/, const char *material_type);
+      const char * /*ignored*/, const char *material_type);
   template <typename T>
-  static void registerType(
-      const char */*ignored*/, const char *material_type);
+  static void registerType(const char * /*ignored*/, const char *material_type);
 
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>
@@ -79,7 +82,7 @@ OSPTYPEFOR_SPECIALIZATION(Material *, OSP_MATERIAL);
 
 template <typename T>
 inline void Material::registerType(
-    const char */*ignored*/, const char *material_type)
+    const char * /*ignored*/, const char *material_type)
 {
   std::string name(material_type);
 

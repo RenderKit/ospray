@@ -10,7 +10,9 @@ namespace pathtracer {
 
 OBJMaterial::OBJMaterial()
 {
-  ispcEquivalent = ispc::PathTracer_OBJ_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_OBJ;
+  getSh()->super.getBSDF = ispc::OBJ_getBSDF_addr();
+  getSh()->super.getTransparency = ispc::OBJ_getTransparency_addr();
 }
 
 std::string OBJMaterial::toString() const
@@ -40,18 +42,17 @@ void OBJMaterial::commit()
     Tf /= color_total;
   }
 
-  ispc::PathTracer_OBJ_set(ispcEquivalent,
-      d.tex,
-      d.factor,
-      Kd.tex,
-      (const ispc::vec3f &)Kd.factor,
-      Ks.tex,
-      (const ispc::vec3f &)Ks.factor,
-      Ns.tex,
-      Ns.factor,
-      (const ispc::vec3f &)Tf,
-      bumpTex,
-      (const ispc::LinearSpace2f &)bumpRot);
+  getSh()->dMap = d.tex;
+  getSh()->d = d.factor;
+  getSh()->KdMap = Kd.tex;
+  getSh()->Kd = Kd.factor;
+  getSh()->KsMap = Ks.tex;
+  getSh()->Ks = Ks.factor;
+  getSh()->NsMap = Ns.tex;
+  getSh()->Ns = Ns.factor;
+  getSh()->Tf = Tf;
+  getSh()->bumpMap = bumpTex;
+  getSh()->bumpRot = bumpRot;
 }
 
 } // namespace pathtracer

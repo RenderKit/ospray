@@ -1,14 +1,18 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "common/Managed.h"
+#include "common/StructShared.h"
 #include "common/Util.h"
+
+#include "TextureShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Texture : public ManagedObject
+struct OSPRAY_SDK_INTERFACE Texture
+    : AddStructShared<ManagedObject, ispc::Texture>
 {
   Texture();
   virtual ~Texture() override = default;

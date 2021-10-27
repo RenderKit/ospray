@@ -1,141 +1,31 @@
 // Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../bsdfs/Conductor.ih"
-#include "../bsdfs/Dielectric.ih"
-#include "../bsdfs/DielectricLayer.ih"
-#include "../bsdfs/Lambert.ih"
-#include "../bsdfs/LambertTransmission.ih"
-#include "../bsdfs/MicrofacetConductor.ih"
-#include "../bsdfs/MicrofacetDielectric.ih"
-#include "../bsdfs/MicrofacetDielectricLayer.ih"
-#include "../bsdfs/MicrofacetSheenLayer.ih"
-#include "../bsdfs/OrenNayar.ih"
-#include "../bsdfs/ThinDielectric.ih"
-#include "../bsdfs/ThinMicrofacetDielectric.ih"
-#include "../bsdfs/Transmission.ih"
-#include "Material.ih"
-#include "math/spectrum.ih"
+#include "Medium.ih"
+#include "render/Material.ih"
+#include "render/bsdfs/Conductor.ih"
+#include "render/bsdfs/Dielectric.ih"
+#include "render/bsdfs/DielectricLayer.ih"
+#include "render/bsdfs/Lambert.ih"
+#include "render/bsdfs/LambertTransmission.ih"
+#include "render/bsdfs/MicrofacetConductor.ih"
+#include "render/bsdfs/MicrofacetDielectric.ih"
+#include "render/bsdfs/MicrofacetDielectricLayer.ih"
+#include "render/bsdfs/MicrofacetSheenLayer.ih"
 #include "render/bsdfs/MultiBSDF.ih"
+#include "render/bsdfs/OrenNayar.ih"
+#include "render/bsdfs/ThinDielectric.ih"
+#include "render/bsdfs/ThinMicrofacetDielectric.ih"
+#include "render/bsdfs/Transmission.ih"
 #include "texture/TextureParam.ih"
 
-struct Principled
-{
-  PathTraceMaterial super;
-
-  vec3f baseColor;
-  TextureParam baseColorMap;
-
-  // metallic reflectivity at grazing angle (90 deg) / edge tint
-  vec3f edgeColor;
-  TextureParam edgeColorMap;
-
-  float metallic;
-  TextureParam metallicMap;
-
-  // diffuse weight in [0, 1]
-  float diffuse;
-  TextureParam diffuseMap;
-
-  // specular weight in [0, 1]
-  float specular;
-  TextureParam specularMap;
-
-  // index of refraction
-  float ior;
-  TextureParam iorMap;
-
-  // specular transmission in [0, 1]
-  float transmission;
-  TextureParam transmissionMap;
-
-  vec3f transmissionColor;
-  TextureParam transmissionColorMap;
-
-  float transmissionDepth;
-  TextureParam transmissionDepthMap;
-
-  // roughness in [0, 1]; 0 = ideally smooth (mirror)
-  float roughness;
-  TextureParam roughnessMap;
-
-  // degree of anisotropy in [0, 1]; 0 = isotropic, 1 = maximally anisotropic
-  float anisotropy;
-  TextureParam anisotropyMap;
-
-  // anisotropic rotation in [0, 1];
-  float rotation;
-  TextureParam rotationMap;
-
-  // default normal map for all layers
-  float normal; // scale
-  TextureParam normalMap;
-  linear2f normalRot;
-
-  // base normal map (overrides default normal)
-  float baseNormal; // scale
-  TextureParam baseNormalMap;
-  linear2f baseNormalRot;
-
-  // dielectric clear coat weight in [0, 1]
-  float coat;
-  TextureParam coatMap;
-
-  // dielectric clear coat index of refraction
-  float coatIor;
-  TextureParam coatIorMap;
-
-  vec3f coatColor;
-  TextureParam coatColorMap;
-
-  float coatThickness;
-  TextureParam coatThicknessMap;
-
-  float coatRoughness;
-  TextureParam coatRoughnessMap;
-
-  // clear coat normal map (overrides default normal)
-  float coatNormal; // scale
-  TextureParam coatNormalMap;
-  linear2f coatNormalRot;
-
-  // sheen weight in [0, 1]
-  float sheen;
-  TextureParam sheenMap;
-
-  vec3f sheenColor;
-  TextureParam sheenColorMap;
-
-  // sheen tint in [0, 1]
-  float sheenTint;
-  TextureParam sheenTintMap;
-
-  float sheenRoughness;
-  TextureParam sheenRoughnessMap;
-
-  // cut-out opacity in [0, 1]
-  float opacity;
-  TextureParam opacityMap;
-
-  // solid or thin mode flag
-  bool thin;
-
-  // diffuse transmission in [0, 2] (thin only)
-  float backlight;
-  TextureParam backlightMap;
-
-  // thickness (thin only)
-  float thickness;
-  TextureParam thicknessMap;
-
-  Medium outsideMedium;
-};
+#include "PrincipledShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
 const varying BSDF *varying Principled_getBSDF(
-    const uniform PathTraceMaterial *uniform super,
+    const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -213,9 +103,8 @@ const varying BSDF *varying Principled_getBSDF(
             clamp(self->diffuse * get1f(self->diffuseMap, dg, 1.f));
         const vec3f diffuseColor = baseColor * diffuse;
         const float backlight = self->thin
-            ? clamp(self->backlight * get1f(self->backlightMap, dg, 1.f),
-                  0.f,
-                  2.f)
+            ? clamp(
+                self->backlight * get1f(self->backlightMap, dg, 1.f), 0.f, 2.f)
             : 0.f;
         const float diffuseTransmission = backlight * 0.5f;
         const float diffuseReflection = 1.f - diffuseTransmission;
@@ -417,8 +306,7 @@ const varying BSDF *varying Principled_getBSDF(
   return bsdf;
 }
 
-vec3f Principled_getTransparency(
-    const uniform PathTraceMaterial *uniform material,
+vec3f Principled_getTransparency(const uniform Material *uniform material,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium)
@@ -521,16 +409,16 @@ vec3f Principled_getTransparency(
             if (coatRoughness < EPS) {
               T = T
                   * DielectricLayer_getTransparency(
-                        cosThetaO, coatEta, coatColor, coatThickness, coat);
+                      cosThetaO, coatEta, coatColor, coatThickness, coat);
             } else {
               T = T
                   * MicrofacetDielectricLayer_getTransparency(cosThetaO,
-                        coatEta,
-                        coatColor,
-                        coatThickness,
-                        coatRoughness,
-                        0.f,
-                        coat);
+                      coatEta,
+                      coatColor,
+                      coatThickness,
+                      coatRoughness,
+                      0.f,
+                      coat);
             }
           }
         }
@@ -543,7 +431,7 @@ vec3f Principled_getTransparency(
 
           T = T
               * MicrofacetSheenLayer_getTransparency(
-                    cosThetaO, sheenRoughness, sheen);
+                  cosThetaO, sheenRoughness, sheen);
         }
 
         T = T * glass;
@@ -557,7 +445,7 @@ vec3f Principled_getTransparency(
   return T;
 }
 
-void Principled_selectNextMedium(const uniform PathTraceMaterial *uniform super,
+void Principled_selectNextMedium(const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     Medium &currentMedium)
 {
@@ -587,236 +475,17 @@ void Principled_selectNextMedium(const uniform PathTraceMaterial *uniform super,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void *uniform PathTracer_Principled_set(void *uniform _self,
-    const uniform vec3f &baseColor,
-    const uniform TextureParam &baseColorMap,
-    const uniform vec3f &edgeColor,
-    const uniform TextureParam &edgeColorMap,
-    uniform float metallic,
-    const uniform TextureParam &metallicMap,
-    uniform float diffuse,
-    const uniform TextureParam &diffuseMap,
-    uniform float specular,
-    const uniform TextureParam &specularMap,
-    uniform float ior,
-    const uniform TextureParam &iorMap,
-    uniform float transmission,
-    const uniform TextureParam &transmissionMap,
-    const uniform vec3f &transmissionColor,
-    const uniform TextureParam &transmissionColorMap,
-    uniform float transmissionDepth,
-    const uniform TextureParam &transmissionDepthMap,
-    uniform float roughness,
-    const uniform TextureParam &roughnessMap,
-    uniform float anisotropy,
-    const uniform TextureParam &anisotropyMap,
-    uniform float rotation,
-    const uniform TextureParam &rotationMap,
-    uniform float normal,
-    const uniform TextureParam &normalMap,
-    const uniform linear2f &normalRot,
-    uniform float baseNormal,
-    const uniform TextureParam &baseNormalMap,
-    const uniform linear2f &baseNormalRot,
-    uniform float coat,
-    const uniform TextureParam &coatMap,
-    uniform float coatIor,
-    const uniform TextureParam &coatIorMap,
-    const uniform vec3f &coatColor,
-    const uniform TextureParam &coatColorMap,
-    uniform float coatThickness,
-    const uniform TextureParam &coatThicknessMap,
-    uniform float coatRoughness,
-    const uniform TextureParam &coatRoughnessMap,
-    uniform float coatNormal,
-    const uniform TextureParam &coatNormalMap,
-    const uniform linear2f &coatNormalRot,
-    uniform float sheen,
-    const uniform TextureParam &sheenMap,
-    const uniform vec3f &sheenColor,
-    const uniform TextureParam &sheenColorMap,
-    uniform float sheenTint,
-    const uniform TextureParam &sheenTintMap,
-    uniform float sheenRoughness,
-    const uniform TextureParam &sheenRoughnessMap,
-    uniform float opacity,
-    const uniform TextureParam &opacityMap,
-    uniform bool thin,
-    uniform float backlight,
-    const uniform TextureParam &backlightMap,
-    uniform float thickness,
-    const uniform TextureParam &thicknessMap,
-    uniform float outsideIor,
-    const uniform vec3f &outsideTransmissionColor,
-    uniform float outsideTransmissionDepth)
+export void *uniform Principled_getBSDF_addr()
 {
-  Principled *uniform self = (Principled * uniform) _self;
-
-  self->baseColor = baseColor;
-  self->baseColorMap = baseColorMap;
-
-  self->edgeColor = edgeColor;
-  self->edgeColorMap = edgeColorMap;
-
-  self->metallic = metallic;
-  self->metallicMap = metallicMap;
-
-  self->diffuse = diffuse;
-  self->diffuseMap = diffuseMap;
-
-  self->specular = specular;
-  self->specularMap = specularMap;
-
-  self->ior = ior;
-  self->iorMap = iorMap;
-
-  self->transmission = transmission;
-  self->transmissionMap = transmissionMap;
-
-  self->transmissionColor = transmissionColor;
-  self->transmissionColorMap = transmissionColorMap;
-
-  self->transmissionDepth = transmissionDepth;
-  self->transmissionDepthMap = transmissionDepthMap;
-
-  self->roughness = roughness;
-  self->roughnessMap = roughnessMap;
-
-  self->anisotropy = anisotropy;
-  self->anisotropyMap = anisotropyMap;
-
-  self->rotation = rotation;
-  self->rotationMap = rotationMap;
-
-  self->normal = normal;
-  self->normalMap = normalMap;
-  self->normalRot = normalRot;
-
-  self->baseNormal = baseNormal;
-  self->baseNormalMap = baseNormalMap;
-  self->baseNormalRot = baseNormalRot;
-
-  self->coat = coat;
-  self->coatMap = coatMap;
-
-  self->coatIor = coatIor;
-  self->coatIorMap = coatIorMap;
-
-  self->coatColor = coatColor;
-  self->coatColorMap = coatColorMap;
-
-  self->coatThickness = coatThickness;
-  self->coatThicknessMap = coatThicknessMap;
-
-  self->coatRoughness = coatRoughness;
-  self->coatRoughnessMap = coatRoughnessMap;
-
-  self->coatNormal = coatNormal;
-  self->coatNormalMap = coatNormalMap;
-  self->coatNormalRot = coatNormalRot;
-
-  self->sheen = sheen;
-  self->sheenMap = sheenMap;
-
-  self->sheenColor = sheenColor;
-  self->sheenColorMap = sheenColorMap;
-
-  self->sheenTint = sheenTint;
-  self->sheenTintMap = sheenTintMap;
-
-  self->sheenRoughness = sheenRoughness;
-  self->sheenRoughnessMap = sheenRoughnessMap;
-
-  self->opacity = opacity;
-  self->opacityMap = opacityMap;
-
-  self->thin = thin;
-
-  self->backlight = backlight;
-  self->backlightMap = backlightMap;
-
-  self->thickness = thickness;
-  self->thicknessMap = thicknessMap;
-
-  self->outsideMedium.ior = outsideIor >= 1.f ? outsideIor : rcp(outsideIor);
-  self->outsideMedium.attenuation =
-      logf(outsideTransmissionColor) / outsideTransmissionDepth;
+  return Principled_getBSDF;
 }
 
-export void *uniform PathTracer_Principled_create()
+export void *uniform Principled_getTransparency_addr()
 {
-  Principled *uniform self = uniform new Principled;
+  return Principled_getTransparency;
+}
 
-  PathTraceMaterial_Constructor(&self->super,
-      MATERIAL_TYPE_PRINCIPLED,
-      Principled_getBSDF,
-      Principled_getTransparency,
-      Principled_selectNextMedium);
-
-  uniform TextureParam tex = make_TextureParam();
-  PathTracer_Principled_set(self,
-      make_vec3f(0.8f),
-      tex, // baseColor
-      make_vec3f(1.f),
-      tex, // edgeColor
-      0.f,
-      tex, // metallic
-      1.f,
-      tex, // diffuse
-      1.f,
-      tex, // specular
-      1.f,
-      tex, // ior
-      0.f,
-      tex, // transmission
-      make_vec3f(1.f),
-      tex, // transmissionColor
-      1.f,
-      tex, // transmissionDepth
-      0.f,
-      tex, // roughness
-      0.f,
-      tex, // anisotropy
-      0.f,
-      tex, // rotation
-      1.f,
-      tex,
-      make_LinearSpace2f_identity(), // normal
-      1.f,
-      tex,
-      make_LinearSpace2f_identity(), // baseNormal
-      0.f,
-      tex, // coat
-      1.5f,
-      tex, // coatIor
-      make_vec3f(1.f),
-      tex, // coatColor
-      1.f,
-      tex, // coatThickness
-      0.f,
-      tex, // coatRoughness
-      1.f,
-      tex,
-      make_LinearSpace2f_identity(), // coatNormal
-      0.f,
-      tex, // sheen
-      make_vec3f(1.f),
-      tex, // sheenColor
-      0.f,
-      tex, // sheenTint
-      0.2f,
-      tex, // sheenRoughness
-      1.f,
-      tex, // opacity
-      false, // thin
-      0.f,
-      tex, // backlight
-      1.f,
-      tex, // thickness
-      1.f, // outsideIor
-      make_vec3f(1.f), // outsideTransmissionColor
-      1.f // outsideTransmissionDepth
-  );
-
-  return self;
+export void *uniform Principled_selectNextMedium_addr()
+{
+  return Principled_selectNextMedium;
 }

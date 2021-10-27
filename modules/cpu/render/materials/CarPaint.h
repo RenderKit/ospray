@@ -1,12 +1,14 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/Material.h"
 
+#include "CarPaintShared.h"
+
 namespace ospray {
 namespace pathtracer {
 
-struct CarPaint : public ospray::Material
+struct CarPaint : public AddStructShared<Material, ispc::CarPaint>
 {
   CarPaint();
 

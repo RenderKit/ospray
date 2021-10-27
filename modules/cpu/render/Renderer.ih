@@ -3,12 +3,13 @@
 
 #pragma once
 
-#include "Material.ih"
 #include "camera/Camera.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/Tile.ih"
 #include "pf/PixelFilter.ih"
 #include "texture/Texture2D.ih"
+
+#include "MaterialShared.h"
 
 struct Renderer;
 struct World;

@@ -35,7 +35,7 @@ void GeometricModel::commit()
   bool useRendererMaterialList = false;
   materialData = getParamDataT<Material *>("material", false, true);
   if (materialData) {
-    ispcMaterialPtrs = createArrayOfIE(materialData->as<Material *>());
+    ispcMaterialPtrs = createArrayOfSh(materialData->as<Material *>());
 
     auto *data = new Data(ispcMaterialPtrs.data(),
         OSP_VOID_PTR,

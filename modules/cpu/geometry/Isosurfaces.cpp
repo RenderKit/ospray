@@ -91,7 +91,7 @@ void Isosurfaces::commit()
       isovaluesData->size(),
       isovaluesData->data(),
       model ? model->getIE() : nullptr,
-      volume ? volume->getIE() : nullptr,
+      volume ? volume->getSh() : nullptr,
       vklHitContext);
 
   postCreationInfo();

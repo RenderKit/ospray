@@ -50,7 +50,7 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
   res.opacity = dg.color.w;
 
   foreach_unique (m in mat) {
-    if (m != NULL && m->super.material.type == MATERIAL_TYPE_OBJ) {
+    if (m != NULL && m->super.type == MATERIAL_TYPE_OBJ) {
       float d = m->d * get1f(m->dMap, dg, 1.f) * dg.color.w;
       res.diffuse = res.diffuse * m->Kd;
       if (valid(m->KdMap)) {

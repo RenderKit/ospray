@@ -4,13 +4,15 @@
 #pragma once
 
 #include "Volume.h"
-#include "common/Data.h"
-
+#include "common/StructShared.h"
 #include "openvkl/openvkl.h"
+
+#include "volume/VolumetricModelShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
+struct OSPRAY_SDK_INTERFACE VolumetricModel
+    : public AddStructShared<ManagedObject, ispc::VolumetricModel>
 {
   VolumetricModel(Volume *geometry);
   ~VolumetricModel() override;
@@ -24,7 +26,10 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel : public ManagedObject
 
   Ref<Volume> getVolume() const;
 
-  void setGeomID(int geomID);
+  void setGeomID(int geomID)
+  {
+    volume->setGeomID(geomID);
+  }
 
  private:
   box3f volumeBounds;

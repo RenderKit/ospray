@@ -1,37 +1,12 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "Texture2D.ih"
+#include "Texture.ih"
 #include "math/AffineSpace.ih"
 
-//! Texture2D including coordinate transformation, plus helpers
-
-enum TransformFlags
-{
-  TRANSFORM_FLAG_NONE = 0x0,
-  TRANSFORM_FLAG_2D = 0x1,
-  TRANSFORM_FLAG_3D = 0x2
-};
-
-struct TextureParam
-{
-  Texture2D *ptr;
-  TransformFlags transformFlags;
-  affine2f xform2f;
-  affine3f xform3f;
-};
-
-inline uniform TextureParam make_TextureParam()
-{
-  uniform TextureParam t;
-  t.ptr = NULL;
-  t.transformFlags = TRANSFORM_FLAG_NONE;
-  t.xform2f = make_AffineSpace2f_identity();
-  t.xform3f = make_AffineSpace3f_identity();
-  return t;
-}
+#include "TextureParamShared.h"
 
 inline uniform bool valid(const uniform TextureParam uniform &tex)
 {

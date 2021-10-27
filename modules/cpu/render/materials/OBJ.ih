@@ -2,22 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
-#include "Material.ih"
+#include "texture/TextureParam.ih"
 
-struct OBJ
-{
-  PathTraceMaterial super;
-
-  float d; // cut-out opacity
-  TextureParam dMap;
-  vec3f Kd;
-  TextureParam KdMap;
-  vec3f Ks;
-  TextureParam KsMap;
-  float Ns;
-  TextureParam NsMap;
-  vec3f Tf; // transmission filter
-  TextureParam bumpMap;
-  linear2f bumpRot; // just the inverse of rotational/mirror part (must be
-                    // orthonormal) of tc xfrom
-};
+#include "OBJShared.h"

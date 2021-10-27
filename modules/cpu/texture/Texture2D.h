@@ -1,15 +1,19 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Texture.h"
 #include "common/Data.h"
+#include "common/StructShared.h"
+
+#include "Texture2DShared.h"
 
 namespace ospray {
 
-/*! \brief A Texture defined through a 2D Image. */
-struct OSPRAY_SDK_INTERFACE Texture2D : public Texture
+// A Texture defined through a 2D Image
+struct OSPRAY_SDK_INTERFACE Texture2D
+    : public AddStructShared<Texture, ispc::Texture2D>
 {
   virtual ~Texture2D() override = default;
 

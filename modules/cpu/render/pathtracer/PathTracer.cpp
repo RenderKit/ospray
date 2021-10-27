@@ -7,9 +7,9 @@
 #include "common/Instance.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
+#include "render/Material.h"
 // ispc exports
 #include "common/World_ispc.h"
-#include "render/materials/Material_ispc.h"
 #include "render/pathtracer/GeometryLight_ispc.h"
 #include "render/pathtracer/PathTracer_ispc.h"
 // std
@@ -44,7 +44,7 @@ void PathTracer::generateGeometryLights(
         // check whether the model has any emissive materials
         bool hasEmissive = false;
         for (auto mat : model->ispcMaterialPtrs) {
-          if (mat && ispc::PathTraceMaterial_isEmissive(mat)) {
+          if (mat && ((ispc::Material *)mat)->isEmissive()) {
             hasEmissive = true;
             break;
           }
@@ -54,8 +54,7 @@ void PathTracer::generateGeometryLights(
         if (numRendererMaterials > 0 && model->ispcMaterialPtrs.size() == 0)
           for (auto matIdx : model->materialData->as<uint32_t>())
             if (matIdx < numRendererMaterials
-                && ispc::PathTraceMaterial_isEmissive(
-                    ispcMaterialPtrs[matIdx])) {
+                && ((ispc::Material *)ispcMaterialPtrs[matIdx])->isEmissive()) {
               hasEmissive = true;
               break;
             }

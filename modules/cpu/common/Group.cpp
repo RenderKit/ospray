@@ -114,7 +114,7 @@ void Group::commit()
     sceneVolumes = rtcNewScene(embreeDevice);
 
     createEmbreeScene(sceneVolumes, *volumetricModels, sceneFlags);
-    volumetricModelIEs = createArrayOfIE(*volumetricModels);
+    volumetricModelIEs = createArrayOfSh(*volumetricModels);
 
     rtcCommitScene(sceneVolumes);
   }

@@ -1,7 +1,8 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture2D.ih"
+#include "ospray/OSPEnums.h"
 
 // Low-level texel accessors
 //////////////////////////////////////////////////////////////////////////////
@@ -260,7 +261,7 @@ inline vec4f bilerp(const vec2f frac,
 
 __foreach_fetcher(__define_tex_get);
 
-static uniform Texture2D_get Texture2D_get_addr(
+export void *uniform Texture2D_get_addr(
     const uniform uint32 type, const uniform bool filter_nearest)
 {
   switch (type) {
@@ -294,7 +295,7 @@ __define_tex_getN(RGBA32F, 2.f);
 __define_tex_getN(RGB16, (65535.f / 32767.f));
 __define_tex_getN(RGBA16, (65535.f / 32767.f));
 
-static uniform Texture2D_getN Texture2D_getN_addr(
+export void *uniform Texture2D_getN_addr(
     const uniform uint32 type, const uniform bool filter_nearest)
 {
   switch (type) {
@@ -321,32 +322,3 @@ static uniform Texture2D_getN Texture2D_getN_addr(
 
 #undef BYTE2FLOAT
 #undef SHORT2FLOAT
-
-// Exports (called from C++)
-//////////////////////////////////////////////////////////////////////////////
-
-export void *uniform Texture2D_create(uniform vec2i &size,
-    void *uniform data,
-    uniform uint32 type,
-    uniform uint32 flags)
-{
-  Texture2D *uniform self = uniform new Texture2D;
-  self->size = size;
-
-  // Due to float rounding frac(x) can be exactly 1.0f (e.g. for very small
-  // negative x), although it should be strictly smaller than 1.0f. We handle
-  // this case by having sizef slightly smaller than size, such that
-  // frac(x)*sizef is always < size.
-  self->sizef = make_vec2f(
-      nextafter((float)size.x, -1.0f), nextafter((float)size.y, -1.0f));
-  self->halfTexel = make_vec2f(0.5f / size.x, 0.5f / size.y);
-  self->data = data;
-  self->get = Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
-  self->getNormal =
-      Texture2D_getN_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
-  self->hasAlpha = type == OSP_TEXTURE_RGBA8 || type == OSP_TEXTURE_SRGBA
-      || type == OSP_TEXTURE_RA8 || type == OSP_TEXTURE_LA8
-      || type == OSP_TEXTURE_RGBA32F || type == OSP_TEXTURE_RGBA16
-      || type == OSP_TEXTURE_RA16;
-  return self;
-}

@@ -4,7 +4,8 @@
 #pragma once
 
 #include <iterator>
-#include "./Managed.h"
+#include "Managed.h"
+#include "StructShared.h"
 
 // including "Data_ispc.h" breaks app code using SDK headers
 #ifndef __ISPC_STRUCT_Data1D__
@@ -354,10 +355,24 @@ inline typename std::enable_if<std::is_base_of<ManagedObject, T>::value,
 createArrayOfIE(const DataT<T *, DIM> &data)
 {
   std::vector<void *> retval;
+  retval.reserve(data.size());
 
   for (auto &&obj : data)
     retval.push_back(obj->getIE());
 
   return retval;
 }
+
+template <typename T, int DIM>
+std::vector<void *> createArrayOfSh(const DataT<T *, DIM> &data)
+{
+  std::vector<void *> retval;
+  retval.reserve(data.size());
+
+  for (auto &&obj : data)
+    retval.push_back(obj->getSh());
+
+  return retval;
+}
+
 } // namespace ospray

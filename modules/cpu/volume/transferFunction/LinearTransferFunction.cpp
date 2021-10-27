@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LinearTransferFunction.h"
@@ -8,7 +8,10 @@ namespace ospray {
 
 LinearTransferFunction::LinearTransferFunction()
 {
-  ispcEquivalent = ispc::LinearTransferFunction_create();
+  getSh()->super.get = ispc::LinearTransferFunction_get_addr();
+  getSh()->super.getMaxOpacity =
+      ispc::LinearTransferFunction_getMaxOpacity_addr();
+  getSh()->super.valueRange = range1f(0.0f, 1.0f);
 }
 
 void LinearTransferFunction::commit()
@@ -18,8 +21,10 @@ void LinearTransferFunction::commit()
   colorValues = getParamDataT<vec3f>("color", true);
   opacityValues = getParamDataT<float>("opacity", true);
 
-  ispc::LinearTransferFunction_set(
-      ispcEquivalent, ispc(colorValues), ispc(opacityValues));
+  getSh()->color = *ispc(colorValues);
+  getSh()->opacity = *ispc(opacityValues);
+
+  precomputeMaxOpacityRanges();
 }
 
 std::string LinearTransferFunction::toString() const
@@ -95,6 +100,53 @@ std::vector<range1f> LinearTransferFunction::getPositiveOpacityValueRanges()
   }
 
   return valueRanges;
+}
+
+void LinearTransferFunction::precomputeMaxOpacityRanges()
+{
+  const DataT<float> &opacities = *opacityValues;
+  const int maxOpacityDim = opacities.size() - 1;
+  const int maxPrecomputedDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
+
+  // compute the diagonal
+  for (int i = 0; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT; i++) {
+    // figure out the range of array indices we are going to compare; this is a
+    // conservative range of feasible indices that may be used to lookup
+    // opacities for any data value within the value range corresponding to [i,
+    // i].
+    const int checkRangeLow =
+        floor(maxOpacityDim * (float)i / maxPrecomputedDim);
+    const int checkRangeHigh =
+        ceil(maxOpacityDim * (float)i / maxPrecomputedDim);
+
+    float maxOpacity = opacities[checkRangeLow];
+    for (int opacityIDX = checkRangeLow; opacityIDX <= checkRangeHigh;
+         opacityIDX++)
+      maxOpacity = std::max(maxOpacity, opacities[opacityIDX]);
+
+    getSh()->maxOpacityInRange[i][i] = maxOpacity;
+  }
+
+  // fill out each column from the diagonal up
+  for (int i = 0; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT; i++) {
+    for (int j = i + 1; j < PRECOMPUTED_OPACITY_SUBRANGE_COUNT; j++) {
+      // figure out the range of array indices we are going to compare; this is
+      // a conservative range of feasible indices that may be used to lookup
+      // opacities for any data value within the value range corresponding to
+      // [i, j].
+      const int checkRangeLow =
+          floor(maxOpacityDim * (float)i / maxPrecomputedDim);
+      const int checkRangeHigh =
+          ceil(maxOpacityDim * (float)j / maxPrecomputedDim);
+
+      float maxOpacity = getSh()->maxOpacityInRange[i][i];
+      for (int opacityIDX = checkRangeLow; opacityIDX <= checkRangeHigh;
+           opacityIDX++)
+        maxOpacity = std::max(maxOpacity, opacities[opacityIDX]);
+
+      getSh()->maxOpacityInRange[i][j] = maxOpacity;
+    }
+  }
 }
 
 } // namespace ospray

@@ -1,29 +1,20 @@
 // Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../bsdfs/DielectricLayer.ih"
-#include "../bsdfs/Lambert.ih"
-#include "../bsdfs/MicrofacetConductor.ih"
-#include "../bsdfs/MultiBSDF.ih"
-#include "Material.ih"
+#include "render/Material.ih"
+#include "render/bsdfs/DielectricLayer.ih"
+#include "render/bsdfs/Lambert.ih"
+#include "render/bsdfs/MicrofacetConductor.ih"
+#include "render/bsdfs/MultiBSDF.ih"
 #include "texture/TextureParam.ih"
 
-struct MetallicPaint
-{
-  PathTraceMaterial super;
-  vec3f baseColor;
-  TextureParam baseColorMap;
-  float flakeAmount;
-  vec3f flakeColor;
-  float flakeSpread;
-  float eta;
-};
+#include "MetallicPaintShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
 const varying BSDF *varying MetallicPaint_getBSDF(
-    const uniform PathTraceMaterial *uniform super,
+    const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -60,30 +51,7 @@ const varying BSDF *varying MetallicPaint_getBSDF(
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void *uniform PathTracer_MetallicPaint_set(void *uniform _self,
-    const uniform vec3f &baseColor,
-    const uniform TextureParam &baseColorMap,
-    const uniform float flakeAmount,
-    const uniform vec3f &flakeColor,
-    const uniform float flakeSpread,
-    const uniform float ior)
+export void *uniform MetallicPaint_getBSDF_addr()
 {
-  MetallicPaint *uniform self = (MetallicPaint * uniform) _self;
-  self->flakeAmount = flakeAmount;
-  self->baseColor = baseColor * (1.f - flakeAmount);
-  self->baseColorMap = baseColorMap;
-  self->flakeColor = flakeColor * flakeAmount;
-  self->flakeSpread = flakeSpread;
-  self->eta = rcp(ior);
-}
-
-export void *uniform PathTracer_MetallicPaint_create()
-{
-  uniform MetallicPaint *uniform self = uniform new uniform MetallicPaint;
-  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_METALLICPAINT, MetallicPaint_getBSDF);
-  const uniform vec3f flakeColor = RGB_AL_COLOR;
-
-  PathTracer_MetallicPaint_set(
-      self, make_vec3f(0.5), make_TextureParam(), 0.5f, flakeColor, 0.5f, 1.6f);
-  return self;
+  return MetallicPaint_getBSDF;
 }

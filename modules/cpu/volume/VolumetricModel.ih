@@ -10,24 +10,7 @@
 #include "../common/DifferentialGeometry.ih"
 #include "../common/Ray.ih"
 
-struct VolumetricModel
-{
-  Volume *volume; //!< instanced Volume
-
-  //! Color and opacity transfer function.
-  TransferFunction *transferFunction;
-
-  //! interval iterator context
-  VKLIntervalIteratorContext vklIntervalContext;
-
-  box3f boundingBox;
-
-  //! Volume parameters understood by the pathtracer
-  float densityScale;
-  float anisotropy; // the anisotropy of the volume's phase function
-                    // (Heyney-Greenstein)
-  float gradientShadingScale;
-};
+#include "VolumetricModelShared.h"
 
 inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
     varying DifferentialGeometry &dg,

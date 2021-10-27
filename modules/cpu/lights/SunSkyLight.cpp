@@ -8,7 +8,7 @@
 #include "lights/DirectionalLight_ispc.h"
 #include "lights/HDRILight_ispc.h"
 #include "lights/Light_ispc.h"
-#include "texture/Texture2D_ispc.h"
+#include "texture/Texture2D.h"
 
 namespace ospray {
 
@@ -20,13 +20,11 @@ SunSkyLight::SunSkyLight()
   static auto format = static_cast<OSPTextureFormat>(OSP_TEXTURE_RGB32F);
   static auto filter =
       static_cast<OSPTextureFilter>(OSP_TEXTURE_FILTER_BILINEAR);
-  mapIE = ispc::Texture2D_create(
-      (ispc::vec2i &)skySize, skyImage.data(), format, filter);
+  mapIE.Set(skySize, skyImage.data(), format, filter);
 }
 
 SunSkyLight::~SunSkyLight()
 {
-  ispc::delete_uniform(mapIE);
   ispc::HDRILight_destroyDistribution(distributionIE);
 }
 
@@ -37,7 +35,7 @@ void *SunSkyLight::createIE(const void *instance) const
   ispc::HDRILight_set(ie,
       (ispc::vec3f &)coloredIntensity,
       (const ispc::LinearSpace3f &)frame,
-      mapIE,
+      &mapIE,
       distributionIE);
   return ie;
 }
@@ -165,7 +163,7 @@ void SunSkyLight::commit()
 
   // recreate distribution
   ispc::HDRILight_destroyDistribution(distributionIE);
-  distributionIE = ispc::HDRILight_createDistribution(mapIE);
+  distributionIE = ispc::HDRILight_createDistribution(&mapIE);
 }
 
 void SunSkyLight::processIntensityQuantityType()

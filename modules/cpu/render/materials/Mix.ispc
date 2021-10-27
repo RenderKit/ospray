@@ -1,25 +1,16 @@
 // Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Material.ih"
+#include "render/Material.ih"
 #include "render/bsdfs/MultiBSDF.ih"
 #include "texture/TextureParam.ih"
 
-struct Mix
-{
-  PathTraceMaterial super;
-
-  float factor;
-  TextureParam factorMap;
-  PathTraceMaterial *mat1;
-  PathTraceMaterial *mat2;
-};
+#include "MixShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying Mix_getBSDF(
-    const uniform PathTraceMaterial *uniform super,
+const varying BSDF *varying Mix_getBSDF(const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -45,7 +36,7 @@ const varying BSDF *varying Mix_getBSDF(
   return bsdf;
 }
 
-vec3f Mix_getTransparency(const uniform PathTraceMaterial *uniform super,
+vec3f Mix_getTransparency(const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium)
@@ -67,35 +58,12 @@ vec3f Mix_getTransparency(const uniform PathTraceMaterial *uniform super,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void PathTracer_Mix_set(void *uniform _self,
-    uniform float factor,
-    const uniform TextureParam &factorMap,
-    void *uniform _mat1,
-    void *uniform _mat2)
+export void *uniform Mix_getBSDF_addr()
 {
-  Mix *uniform self = (Mix * uniform) _self;
-  self->factor = clamp(factor);
-  self->factorMap = factorMap;
-  self->mat1 = (PathTraceMaterial * uniform) _mat1;
-  self->mat2 = (PathTraceMaterial * uniform) _mat2;
-
-  uniform vec3f emission = make_vec3f(0.f);
-  if (self->mat1)
-    emission = (1.f - self->factor) * self->mat1->emission;
-  if (self->mat2)
-    emission = emission + self->factor * self->mat2->emission;
-  self->super.emission = emission;
+  return Mix_getBSDF;
 }
 
-void Mix_Constructor(uniform Mix *uniform self)
+export void *uniform Mix_getTransparency_addr()
 {
-  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_MIX, Mix_getBSDF, Mix_getTransparency);
-  PathTracer_Mix_set(self, 0.5f, make_TextureParam(), NULL, NULL);
-}
-
-export void *uniform PathTracer_Mix_create()
-{
-  Mix *uniform self = uniform new uniform Mix;
-  Mix_Constructor(self);
-  return self;
+  return Mix_getTransparency;
 }

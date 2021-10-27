@@ -1,35 +1,18 @@
 // Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../bsdfs/Minneart.ih"
-#include "../bsdfs/MultiBSDF.ih"
-#include "../bsdfs/Velvety.ih"
-#include "Material.ih"
+#include "render/Material.ih"
+#include "render/bsdfs/Minneart.ih"
+#include "render/bsdfs/MultiBSDF.ih"
+#include "render/bsdfs/Velvety.ih"
 
-struct Velvet
-{
-  PathTraceMaterial super;
-
-  /*! Diffuse reflectance of the surface. The range is from 0
-   *  (black) to 1 (white). */
-  vec3f reflectance;
-
-  /*! Amount of back scattering. The range is from 0 (no back
-   *  scattering) to inf (maximum back scattering). */
-  float backScattering;
-
-  /*! Color of horizon scattering. */
-  vec3f horizonScatteringColor;
-
-  /*! Fall-off of horizon scattering. */
-  float horizonScatteringFallOff;
-};
+#include "VelvetShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
 const varying BSDF *varying Velvet_getBSDF(
-    const uniform PathTraceMaterial *uniform super,
+    const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -57,25 +40,10 @@ const varying BSDF *varying Velvet_getBSDF(
   return bsdf;
 }
 
-export void *uniform PathTracer_Velvet_create()
-{
-  uniform Velvet *uniform self = uniform new uniform Velvet;
-  return self;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void *uniform PathTracer_Velvet_set(void *uniform _self,
-    const uniform vec3f &reflectance,
-    const uniform vec3f &horizonScatteringColor,
-    uniform float horizonScatteringFallOff,
-    uniform float backScattering)
+export void *uniform Velvet_getBSDF_addr()
 {
-  uniform Velvet *uniform self = (uniform Velvet * uniform) _self;
-  self->reflectance = reflectance;
-  self->horizonScatteringColor = horizonScatteringColor;
-  self->horizonScatteringFallOff = horizonScatteringFallOff;
-  self->backScattering = backScattering;
-  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_VELVET, Velvet_getBSDF);
+  return Velvet_getBSDF;
 }

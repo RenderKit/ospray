@@ -19,7 +19,7 @@ void *HDRILight::createIE(const void *instance) const
   ispc::HDRILight_set(ie,
       (ispc::vec3f &)coloredIntensity,
       (const ispc::LinearSpace3f &)frame,
-      map ? map->getIE() : nullptr,
+      map ? map->getSh() : nullptr,
       distributionIE);
   return ie;
 }
@@ -40,7 +40,7 @@ void HDRILight::commit()
   ispc::HDRILight_destroyDistribution(distributionIE);
   distributionIE = nullptr;
   if (map)
-    distributionIE = ispc::HDRILight_createDistribution(map->getIE());
+    distributionIE = ispc::HDRILight_createDistribution(map->getSh());
 
   frame.vx = normalize(-dir);
   frame.vy = normalize(cross(frame.vx, up));

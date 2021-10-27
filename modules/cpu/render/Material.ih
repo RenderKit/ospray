@@ -3,10 +3,68 @@
 
 #pragma once
 
-#include "MaterialType.ih"
+#include "common/DifferentialGeometry.ih"
+#include "common/Ray.ih"
+#include "render/MaterialShared.h"
+#include "render/bsdfs/BSDF.ih"
+#include "render/bsdfs/ShadingContext.ih"
+#include "texture/TextureParam.ih"
 
-/*! ISPC-side abstraction for a material. */
-struct Material
+#include "MaterialShared.h"
+
+inline linear3f makeShadingFrame(const DifferentialGeometry &dg)
 {
-  uniform MaterialType type;
-};
+  vec3f N = dg.Ns;
+  vec3f U = normalize(dg.dPds);
+  vec3f V = cross(N, U);
+  if (dot(V, V) > 0.f) {
+    V = normalize(V);
+    U = cross(V, N);
+    return make_LinearSpace3f(U, V, N);
+  } else {
+    return frame(N);
+  }
+}
+
+inline linear3f makeShadingFrame(const linear3f &f, const vec3f &localN)
+{
+  // in general f is not ortho-normal, thus need to re-normalize
+  vec3f N = normalize(f * localN); // transform normal to world space
+  vec3f U = f.vx;
+  vec3f V = cross(N, U);
+  if (dot(V, V) > 0.f) {
+    V = normalize(V);
+    U = cross(V, N);
+    return make_LinearSpace3f(U, V, N);
+  } else {
+    return frame(N);
+  }
+}
+
+inline linear3f makeShadingFrame(
+    const DifferentialGeometry &dg, const vec3f &localN)
+{
+  linear3f f = makeShadingFrame(dg);
+  return makeShadingFrame(f, localN);
+}
+
+inline linear3f makeShadingFrame(const DifferentialGeometry &dg,
+    const uniform TextureParam &normalMap,
+    const uniform linear2f &normalRot,
+    uniform float normalScale = 1.f)
+{
+  if (valid(normalMap)) {
+    linear3f f =
+        make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
+    // get normal from texture
+    vec3f localN =
+        getNormal(normalMap, dg) * make_vec3f(normalScale, normalScale, 1.f);
+    // rotate in 2D (tangent space) to account for tc transformations
+    vec2f rotN = normalRot * make_vec2f(localN.x, localN.y);
+    localN.x = rotN.x;
+    localN.y = rotN.y;
+    return makeShadingFrame(f, localN);
+  } else {
+    return makeShadingFrame(dg);
+  }
+}

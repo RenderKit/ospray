@@ -1,15 +1,11 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+
 #include "rkcommon/math/vec.ih"
 
-struct Medium
-{
-  vec3f attenuation; //!< negative Napierian attenuation coefficient,
-                     // i.e. wrt. the natural base e
-  float ior; //!< Refraction index of medium.
-};
+#include "MediumShared.h"
 
 inline Medium make_Medium(const vec3f attenuation, const float ior)
 {

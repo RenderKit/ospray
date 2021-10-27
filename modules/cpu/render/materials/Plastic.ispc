@@ -1,24 +1,18 @@
 // Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../bsdfs/DielectricLayer.ih"
-#include "../bsdfs/Lambert.ih"
-#include "../bsdfs/MicrofacetDielectricLayer.ih"
-#include "Material.ih"
+#include "render/Material.ih"
+#include "render/bsdfs/DielectricLayer.ih"
+#include "render/bsdfs/Lambert.ih"
+#include "render/bsdfs/MicrofacetDielectricLayer.ih"
 
-struct Plastic
-{
-  PathTraceMaterial super;
-  vec3f pigmentColor;
-  float eta;
-  float roughness;
-};
+#include "PlasticShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
 const varying BSDF *varying Plastic_getBSDF(
-    const uniform PathTraceMaterial *uniform super,
+    const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -49,32 +43,10 @@ const varying BSDF *varying Plastic_getBSDF(
   return bsdf;
 }
 
-void Plastic_Constructor(uniform Plastic *uniform self,
-    const uniform vec3f &pigmentColor,
-    uniform float ior,
-    uniform float roughness)
-{
-  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_PLASTIC, Plastic_getBSDF);
-  self->pigmentColor = pigmentColor;
-  self->eta = rcp(ior);
-  self->roughness = roughness;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void *uniform PathTracer_Plastic_create()
+export void *uniform Plastic_getBSDF_addr()
 {
-  uniform Plastic *uniform self = uniform new uniform Plastic;
-  return self;
-}
-
-export void *uniform PathTracer_Plastic_set(void *uniform _self,
-    const uniform vec3f &pigmentColor,
-    uniform float ior,
-    uniform float roughness)
-{
-  uniform Plastic *uniform self = (uniform Plastic * uniform) _self;
-  Plastic_Constructor(self, pigmentColor, ior, roughness);
-  return self;
+  return Plastic_getBSDF;
 }
