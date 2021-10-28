@@ -1436,7 +1436,7 @@ specific light source).
   OSP_INTENSITY_QUANTITY_IRRADIANCE   the amount of light arriving at a surface point,
                                       assuming the light is oriented towards to the
                                       surface, unit is W/m^2^
-                                      
+
   OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a 
                                       built-in quantity (e.g., `HDRI`, or `sunSky`). 
   ----------------------------------  ----------------------------------------------------
@@ -1594,6 +1594,35 @@ Note that only renderers that use stochastic sampling (like the path
 tracer) will compute soft shadows from the quad light. Other renderers
 will just sample the center of the quad light, which results in hard
 shadows.
+
+### Cylinder Light
+
+The cylinder light is a cylinderical, procedural area light source 
+emitting uniformly outwardly into the space beyond the boundary. It is
+created by passing the type string "`cylinder`" to `ospNewLight`. The 
+cylinder light supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
+(default) as `intensityQuantity` parameter. In addition to the [general
+parameters](#lights) understood by all lights the cylinder light supports
+the following special parameters:
+
+  ---------- --------------------- ----------- ---------------------------------
+  Type       Name                      Default Description
+  ---------- --------------------- ----------- ---------------------------------
+  vec3f      position0               (0, 0, 0) position of the bottom centroid
+                                               of the cylinder
+
+  vec3f      position1               (0, 0, 1) position of the top centroid of
+                                               the cylinder
+
+  float      radius                          1 radius of the cylinder
+  ---------- --------------------- ----------- ---------------------------------
+  : Special parameters accepted by the cylinder light.
+
+Note that only renderers that use stochastic sampling (like the path
+tracer) will compute soft shadows from the cylinder light. Other renderers
+will just sample the closest point on the cylinder light, which results in 
+hard shadows.
 
 ### HDRI Light
 

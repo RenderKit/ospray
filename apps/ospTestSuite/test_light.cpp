@@ -227,6 +227,32 @@ void QuadLight::SetUp()
   AddInstancedLightWithTranslateMB(light);
 }
 
+CylinderLight::CylinderLight()
+{
+  auto params = GetParam();
+  size = std::get<0>(params);
+  rendererType = std::get<1>(params);
+  intensityQuantity = std::get<2>(params);
+  motionBlur = std::get<3>(params);
+}
+
+void CylinderLight::SetUp()
+{
+  LightTest::SetUp();
+
+  cpp::Light light("cylinder");
+  light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
+  light.setParam("intensity", 5.0f);
+  light.setParam("intensityQuantity", intensityQuantity);
+  light.setParam(
+      "position0", xfmPoint(xfm, vec3f(-0.2f - 2.0 * size, 0.65f, 0.0f)));
+  light.setParam(
+      "position1", xfmPoint(xfm, vec3f(0.2f + 2.0 * size, 0.65f, 0.0f)));
+  light.setParam("radius", size);
+
+  AddInstancedLightWithTranslateMB(light);
+}
+
 SphereLight::SphereLight()
 {
   auto params = GetParam();
@@ -449,6 +475,33 @@ INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
     QuadLight,
     ::testing::Values(std::make_tuple(
         0.2f, "pathtracer", OSP_INTENSITY_QUANTITY_INTENSITY, true)));
+
+// Cylinder Light
+
+TEST_P(CylinderLight, parameter)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(Light,
+    CylinderLight,
+    ::testing::Combine(::testing::Values(0.02f, 0.15f),
+        ::testing::Values("scivis", "pathtracer"),
+        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
+    CylinderLight,
+    ::testing::Combine(::testing::Values(0.02f, 0.15),
+        ::testing::Values("pathtracer"),
+        ::testing::Values(
+            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
+    CylinderLight,
+    ::testing::Values(std::make_tuple(
+        0.02f, "pathtracer", OSP_INTENSITY_QUANTITY_INTENSITY, true)));
 
 // Sphere Light
 

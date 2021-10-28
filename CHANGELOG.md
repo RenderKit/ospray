@@ -8,6 +8,7 @@ Version History
 -   Added support for lights Motion Blur (with the path tracer)
 -   Support rolling shutter effect
 -   Support quaternion motion blur for smoothly interpolated rotations
+-   Support for cylinder lights
 -   Fix illumination from emissive quad meshes
 
 ### Changes in v2.7.1:

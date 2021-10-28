@@ -1,0 +1,222 @@
+// Copyright 2009-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "Light.ih"
+
+struct SphericalQuad
+{
+  vec3f e0, e1, z;
+  float S, k, n0z, n0z2, n2z, x0, x1, y0, y02, y1, y12, z0, z02;
+};
+
+SphericalQuad SphericalQuad_create(const vec3f &q0,
+    const vec3f &e0,
+    const float e0l,
+    const vec3f &e1,
+    const float e1l,
+    const vec3f &n,
+    const vec3f &P)
+{
+  SphericalQuad quad;
+  quad.e0 = e0;
+  quad.e1 = e1;
+  quad.z = n;
+
+  // compute rectangle coords in local reference system
+  vec3f d = q0 - P;
+  quad.z0 = dot(d, quad.z);
+
+  // flip ’z’ to make it point against ’Q’
+  quad.z = quad.z0 > 0.f ? neg(quad.z) : quad.z;
+  quad.z0 = -abs(quad.z0);
+
+  quad.z02 = sqr(quad.z0);
+
+  quad.x0 = dot(d, quad.e0);
+  quad.y0 = dot(d, quad.e1);
+  quad.y02 = sqr(quad.y0);
+  quad.x1 = quad.x0 + e0l;
+  quad.y1 = quad.y0 + e1l;
+  quad.y12 = sqr(quad.y1) * quad.y1;
+
+  // create vectors to four vertices
+  vec3f v00 = make_vec3f(quad.x0, quad.y0, quad.z0);
+  vec3f v01 = make_vec3f(quad.x0, quad.y1, quad.z0);
+  vec3f v10 = make_vec3f(quad.x1, quad.y0, quad.z0);
+  vec3f v11 = make_vec3f(quad.x1, quad.y1, quad.z0);
+
+  // compute normals to edges
+  vec3f n0 = normalize(cross(v00, v10));
+  quad.n0z = n0.z;
+  quad.n0z2 = n0.z * n0.z;
+  vec3f n1 = normalize(cross(v10, v11));
+  vec3f n2 = normalize(cross(v11, v01));
+  quad.n2z = n2.z;
+  vec3f n3 = normalize(cross(v01, v00));
+
+  // compute internal angles (gamma_i)
+  float g0 = acos(clamp(-dot(n0, n1), -1.f, 1.f));
+  float g1 = acos(clamp(-dot(n1, n2), -1.f, 1.f));
+  float g2 = acos(clamp(-dot(n2, n3), -1.f, 1.f));
+  float g3 = acos(clamp(-dot(n3, n0), -1.f, 1.f));
+
+  // compute predefined constants
+  quad.k = (float)two_pi - g2 - g3;
+
+  // compute solid angle from internal angles
+  quad.S = max(0.f, g0 + g1 - quad.k);
+
+  return quad;
+}
+
+inline float sign(float x)
+{
+  return ((float)(0.f < x) - (float)(x < 0.f));
+}
+
+vec3f sampleSphericalQuad(const SphericalQuad &quad, const vec2f &s)
+{
+  // 1. compute ’cu’
+  const float au = s.x * quad.S + quad.k;
+  float cosau, sinau;
+  sincos(au, &sinau, &cosau);
+  const float fu = (cosau * quad.n0z - quad.n2z) * rcp(sinau);
+  const float cu = clamp(rsqrt(fu * fu + sqr(quad.n0z)) * sign(fu), -1.f, 1.f);
+
+  // 2. compute ’xu’
+  const float x0 = -(cu * quad.z0) * rsqrt(1.f - cu * cu);
+  const float xu = clamp(x0, quad.x0, quad.x1);
+
+  // 3. compute ’yv’
+  const float ds = sqrt(sqr(xu) + sqr(quad.z0));
+  const float ds2 = sqr(ds);
+  const float h0 = quad.y0 * rsqrt(ds2 + sqr(quad.y0));
+  const float h1 = quad.y1 * rsqrt(ds2 + sqr(quad.y1));
+  const float hv = s.y * (h1 - h0) + h0;
+  const float hv2 = sqr(hv);
+  const float yv = (hv2 < 1.f - 1e-4f) ? (hv * ds) * rsqrt(1.f - hv2) : quad.y1;
+
+  // 4. transform (xu,yv,z0) to world coords
+  return (xu * quad.e0 + yv * quad.e1 + quad.z0 * quad.z);
+}
+
+float solve_quadratic(float A, float B, float C)
+{
+  // see https://people.csail.mit.edu/bkph/articles/Quadratics.pdf
+  if (A == 0.f)
+    return -C / B;
+
+  float rad = B * B - 4.f * A * C;
+  if (rad < 0.f)
+    return 0.f;
+
+  rad = sqrt(rad);
+  float root;
+  if (B >= 0.f) {
+    root = (-B - rad) / (2.f * A);
+    if (root < 0.f || root > 1.f)
+      root = 2.f * C / (-B - rad);
+  } else {
+    root = 2.f * C / (-B + rad);
+    if (root < 0.f || root > 1.f)
+      root = (-B + rad) / (2.f * A);
+  }
+  return root;
+}
+
+// These functions correspond to the bilinear row of table 3 in the paper
+// https://diglib.eg.org/bitstream/handle/10.1111/cgf14060/v39i4pp149-158.pdf
+
+inline float fu(float r, float W00, float W01, float W10, float W11)
+{
+  const float A = W10 + W11 - W01 - W00;
+  const float B = 2.f * (W01 + W00);
+  if (A + B == 0.f)
+    return r;
+  const float C = -(W00 + W01 + W10 + W11) * r;
+  return solve_quadratic(A, B, C);
+}
+
+inline float fv(float r, float u, float W00, float W01, float W10, float W11)
+{
+  const float A = (1.f - u) * W01 + u * W11 - (1.f - u) * W00 - u * W10;
+  const float B = 2.f * (1.f - u) * W00 + 2.f * u * W10;
+  if (A + B == 0.f)
+    return r;
+  const float C = -((1.f - u) * W01 + u * W11 + (1.f - u) * W00 + u * W10) * r;
+  return solve_quadratic(A, B, C);
+}
+
+vec3f computeCosineWeightedRNG(const vec3f &q0,
+    const vec3f &e0,
+    const vec3f e1,
+    const vec3f &P,
+    const vec3f &Ng,
+    const vec2f &s)
+{
+  // code from
+  // https://casual-effects.com/research/Hart2020Sampling/Hart2020Sampling.pdf
+  vec3f wpn[4], wp[4];
+  float prob[4];
+  wp[0] = q0;
+  wp[1] = q0 + e0;
+  wp[2] = q0 + e1;
+  wp[3] = wp[1] + e1;
+  for (int i = 0; i < 4; i++) {
+    wpn[i] = normalize(wp[i] - P);
+    // cosine term of ray with illuminated surface
+    prob[i] = max(0.f, dot(wpn[i], Ng));
+  }
+
+  if ((prob[0] + prob[2]) == 0.f) {
+    return make_vec3f(s.x, s.y, 1.f);
+  }
+
+  const float totProb = prob[0] + prob[2] + prob[1] + prob[3];
+  const float u = fu(s.x, prob[0], prob[2], prob[1], prob[3]);
+  const float v = fv(s.y, u, prob[0], prob[2], prob[1], prob[3]);
+
+  const float pdf = 4.f
+      * ((1.f - u) * (1.f - v) * prob[0] + u * (1.f - v) * prob[1]
+          + u * v * prob[3] + (1.f - u) * v * prob[2])
+      / totProb;
+
+  return make_vec3f(u, v, pdf);
+}
+
+float computeCosineWeightedPDF(const vec3f &q0,
+    const vec3f &e0,
+    const vec3f e1,
+    const vec3f &P,
+    const vec3f &Ng,
+    const vec2f &uv)
+{
+  // code from
+  // https://casual-effects.com/research/Hart2020Sampling/Hart2020Sampling.pdf
+  vec3f wpn[4], wp[4];
+  float prob[4];
+  wp[0] = q0;
+  wp[1] = q0 + e0;
+  wp[2] = q0 + e1;
+  wp[3] = wp[1] + e1;
+  for (int i = 0; i < 4; i++) {
+    wpn[i] = normalize(wp[i] - P);
+    // cosine term of ray with illuminated surface
+    prob[i] = max(0.f, dot(wpn[i], Ng));
+  }
+
+  if ((prob[0] + prob[2]) == 0.f) {
+    return 1.f;
+  }
+
+  const float totProb = prob[0] + prob[2] + prob[1] + prob[3];
+
+  const float pdf = 4.f
+      * ((1.f - uv.x) * (1.f - uv.y) * prob[0] + uv.x * (1.f - uv.y) * prob[1]
+          + uv.x * uv.y * prob[3] + (1.f - uv.x) * uv.y * prob[2])
+      / totProb;
+
+  return pdf;
+}

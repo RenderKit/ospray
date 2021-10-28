@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -75,7 +75,6 @@ inline Intersections intersectSphere(const vec3f &rayOrg,
   return isect;
 }
 
-// robust ray-cylinder intersection
 inline Intersections intersectCylinder(const vec3f &rayOrg,
     const vec3f &rayDir,
     const uniform vec3f &v0,
@@ -88,52 +87,66 @@ inline Intersections intersectCylinder(const vec3f &rayOrg,
   isect.entry.t = inf;
   isect.exit.t = -inf;
 
-  const vec3f d = rayDir;
-  const uniform vec3f s = v1 - v0; // axis
-  const vec3f sxd = cross(s, d);
-  const float a = dot(sxd, sxd); // (s x d)^2
-  if (a == 0.f)
+  const uniform vec3f cZ = v1 - v0;
+  const vec3f q = rayOrg - v0;
+
+  const uniform float z2 = dot(cZ, cZ);
+  const float d = dot(cZ, rayDir);
+  const float c = dot(cZ, q);
+
+  const float A = z2 - sqr(d);
+  const float B = z2 * dot(q, rayDir) - c * d;
+  const float C = z2 * dot(q, q) - sqr(c) - sqr(radius) * z2;
+
+  float radical = B * B - A * C;
+  if (radical < 0.f) {
     return isect;
-  const vec3f f = v0 - rayOrg;
-  const vec3f sxf = cross(s, f);
-  const float ra = 1.0f / a;
-  const float ts =
-      dot(sxd, sxf) * ra; // (s x d)(s x f) / (s x d)^2, in ray-space
-  const vec3f fp = f - ts * d; // f' = v0 - closest point to axis
+  }
 
-  const uniform float s2 = dot(s, s); // s^2
-  const vec3f perp = cross(s, fp); // s x f'
-  const float c = sqr(radius) * s2 - dot(perp, perp); //  r^2 s^2 - (s x f')^2
-  if (c < 0.f)
-    return isect;
+  radical = sqrt(radical);
 
-  float td = sqrt(c * ra);
-  const float tin = ts - td;
-  const float tout = ts + td;
+  const float tin = (-B - radical) / A;
+  const float tout = (-B + radical) / A;
 
-  // clip to cylinder caps
-  const float sf = dot(s, f);
-  const float sd = dot(s, d);
-  const float rsd = rcp(sd);
-  const float tA = sf * rsd;
-  const float tB = tA + s2 * rsd;
-
-  const float cap_tin = min(tA, tB);
-  const float cap_tout = max(tA, tB);
-
-  isect.entry.hit = and(tin > cap_tin, tin < cap_tout);
-  if (isect.entry.hit)
+  // first hit
+  const float yin = c + tin * d;
+  if (yin > 0.f && yin < z2) {
+    // body hit
+    isect.entry.hit = true;
     isect.entry.t = tin;
-  isect.exit.hit = and(tout > cap_tin, tout < cap_tout);
-  if (isect.exit.hit)
-    isect.exit.t = tout;
+    isect.entry.u = yin * rcp(z2);
+    isect.entry.N = (q + tin * rayDir - cZ * yin * rcp(z2)) * rcp(radius);
+  } else {
+    const float tcapin = (((yin < 0.f) ? 0.f : z2) - c) / d;
+    if (abs(B + A * tcapin) < radical) {
+      // cap hit
+      isect.entry.hit = false;
+      isect.entry.t = tin;
+      isect.entry.u = (yin < 0.f) ? 0.f : 1.f;
+      const float us = signbits(yin) ? -1. : 1.;
+      isect.entry.N = cZ * us / z2;
+    }
+  }
 
-  // cannot easily be moved to postIntersect
-  // we need hit in object-space, in postIntersect it is in world-space
-  isect.entry.u = (tin * sd - sf) * rcp(s2);
-  isect.entry.N = -td * d - fp - isect.entry.u * s;
-  isect.exit.u = (tout * sd - sf) * rcp(s2);
-  isect.exit.N = td * d - fp - isect.exit.u * s;
+  // second hit
+  const float yout = c + tout * d;
+  if (yout > 0.f && yout < z2) {
+    // body hit
+    isect.exit.hit = true;
+    isect.exit.t = tout;
+    isect.exit.u = yout * rcp(z2);
+    isect.exit.N = (q + tout * rayDir - cZ * yout * rcp(z2)) * rcp(radius);
+  } else {
+    const float tcapout = (((yout < 0.f) ? 0.f : z2) - c) / d;
+    if (abs(B + A * tcapout) < radical) {
+      // cap hit
+      isect.exit.hit = false;
+      isect.exit.t = tout;
+      isect.exit.u = (yout < 0.f) ? 0.f : 1.f;
+      const float us = signbits(yout) ? -1. : 1.;
+      isect.exit.N = cZ * us / z2;
+    }
+  }
 
   return isect;
 }

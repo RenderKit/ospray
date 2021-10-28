@@ -96,6 +96,21 @@ class QuadLight : public LightTest,
   OSPIntensityQuantity intensityQuantity{OSP_INTENSITY_QUANTITY_UNKNOWN};
 };
 
+class CylinderLight : public LightTest,
+                      public ::testing::TestWithParam<std::tuple<float /*size*/,
+                          const char * /*renderer type*/,
+                          OSPIntensityQuantity,
+                          bool /*motionBlur*/>>
+{
+ public:
+  CylinderLight();
+  void SetUp() override;
+
+ private:
+  float size{0.2};
+  OSPIntensityQuantity intensityQuantity{OSP_INTENSITY_QUANTITY_UNKNOWN};
+};
+
 class SphereLight : public LightTest,
                     public ::testing::TestWithParam<std::tuple<float /*radius*/,
                         const char * /*renderer type*/,
