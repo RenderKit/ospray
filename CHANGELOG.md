@@ -4,11 +4,12 @@ Version History
 ### Changes in v2.8.0:
 
 -   Lights can be now part of `OSPGroup` and thus instanced like
-    geometries and volumes
--   Added support for lights Motion Blur (with the path tracer)
--   Support rolling shutter effect
--   Support quaternion motion blur for smoothly interpolated rotations
--   Support for cylinder lights
+    geometries and volumes and thus lights also support motion blur
+    (with the path tracer)
+-   Add cylinder light (with solid area sampling)
+-   Add support for rolling shutter of cameras
+-   Add support for quaternion motion blur for instance and camera to
+    allow for smoothly interpolated rotations
 -   Fix illumination from emissive quad meshes
 
 ### Changes in v2.7.1:
@@ -30,7 +31,7 @@ Version History
 
 ### Changes in v2.7.0:
 
--   Add support for transformation and camera Motion Blur (with the path
+-   Add support for transformation and camera motion blur (with the path
     tracer) via `shutter` parameter of the camera and `motion.transform`
     array and `time` parameter of the instance and camera
 -   OSPRay can now be built for ARM64 CPUs with NEON (e.g., Apple M1)

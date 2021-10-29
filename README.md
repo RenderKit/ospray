@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v2.8.0 (devel) of Intel® OSPRay. For changes and new
-features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
-for more information.
+This is release v2.8.0 of Intel® OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -351,9 +351,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -819,6 +819,7 @@ below.
 | OSP_BOX\[1234\]F             | 32 bit single precision floating-point box (lower + upper bounds)                            |
 | OSP_LINEAR\[23\]F            | 32 bit single precision floating-point linear transform (\[23\] vectors)                     |
 | OSP_AFFINE\[23\]F            | 32 bit single precision floating-point affine transform (linear transform plus translation)  |
+| OSP_QUATF                    | 32 bit single precision floating-point quaternion, in (*i*,*j*,*k*,*w*) layout               |
 | OSP_VOID_PTR                 | raw memory address (only found in module extensions)                                         |
 
 Valid named constants for `OSPDataType`.
@@ -993,8 +994,8 @@ Note that cell widths are defined *per refinement level*, not per block.
 | box3i\[\]      | block.bounds |              NULL | [data](#data) array of grid sizes (in voxels) for each AMR block                                                       |
 | int\[\]        | block.level  |              NULL | array of each block’s refinement level                                                                                 |
 | OSPData\[\]    | block.data   |              NULL | [data](#data) array of OSPData containing the actual scalar voxel data, only `OSP_FLOAT` is supported as `OSPDataType` |
-| vec3f          | gridOrigin   |           (0,0,0) | origin of the grid in world-space                                                                                      |
-| vec3f          | gridSpacing  |           (1,1,1) | size of the grid cells in world-space                                                                                  |
+| vec3f          | gridOrigin   |           (0,0,0) | origin of the grid                                                                                                     |
+| vec3f          | gridSpacing  |           (1,1,1) | size of the grid cells                                                                                                 |
 | float          | background   |             `NaN` | value that is used when sampling an undefined region outside the volume domain                                         |
 
 Configuration parameters for AMR volumes.
@@ -1574,10 +1575,10 @@ parameter value. In addition to the [general parameters](#lights)
 understood by all lights the distant light supports the following
 special parameters:
 
-| Type  | Name            | Description                                  |
-|:------|:----------------|:---------------------------------------------|
-| vec3f | direction       | main emission direction of the distant light |
-| float | angularDiameter | apparent size (angle in degree) of the light |
+| Type  | Name            | Default | Description                                  |
+|:------|:----------------|--------:|:---------------------------------------------|
+| vec3f | direction       | (0,0,1) | main emission direction of the distant light |
+| float | angularDiameter |       0 | apparent size (angle in degree) of the light |
 
 Special parameters accepted by the distant light.
 
@@ -1598,10 +1599,10 @@ supports `OSP_INTENSITY_QUANTITY_POWER`,
 value. In addition to the [general parameters](#lights) understood by
 all lights the sphere light supports the following special parameters:
 
-| Type  | Name     | Description                                    |
-|:------|:---------|:-----------------------------------------------|
-| vec3f | position | the center of the sphere light, in world-space |
-| float | radius   | the size of the sphere light                   |
+| Type  | Name     | Default | Description                    |
+|:------|:---------|--------:|:-------------------------------|
+| vec3f | position | (0,0,0) | the center of the sphere light |
+| float | radius   |       0 | the size of the sphere light   |
 
 Special parameters accepted by the sphere light.
 
@@ -1622,7 +1623,7 @@ table.
 
 | Type      | Name                  | Default | Description                                                                                                                                                                   |
 |:----------|:----------------------|--------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| vec3f     | position              | (0,0,0) | the center of the spotlight, in world-space                                                                                                                                   |
+| vec3f     | position              | (0,0,0) | the center of the spotlight                                                                                                                                                   |
 | vec3f     | direction             | (0,0,1) | main emission direction of the spot                                                                                                                                           |
 | float     | openingAngle          |     180 | full opening angle (in degree) of the spot; outside of this cone is no illumination                                                                                           |
 | float     | penumbraAngle         |       5 | size (angle in degree) of the “penumbra”, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of `openingAngle` |
@@ -1669,11 +1670,11 @@ type string “`quad`” to `ospNewLight`. The quad light supports
 parameter. In addition to the [general parameters](#lights) understood
 by all lights the quad light supports the following special parameters:
 
-| Type  | Name     | Description                                          |
-|:------|:---------|:-----------------------------------------------------|
-| vec3f | position | world-space position of one vertex of the quad light |
-| vec3f | edge1    | vector to one adjacent vertex                        |
-| vec3f | edge2    | vector to the other adjacent vertex                  |
+| Type  | Name     | Default | Description                              |
+|:------|:---------|--------:|:-----------------------------------------|
+| vec3f | position | (0,0,0) | position of one vertex of the quad light |
+| vec3f | edge1    | (1,0,0) | vector to one adjacent vertex            |
+| vec3f | edge2    | (0,1,0) | vector to the other adjacent vertex      |
 
 Special parameters accepted by the quad light.
 
@@ -1686,6 +1687,30 @@ tracer) will compute soft shadows from the quad light. Other renderers
 will just sample the center of the quad light, which results in hard
 shadows.
 
+### Cylinder Light
+
+The cylinder light is a cylinderical, procedural area light source
+emitting uniformly outwardly into the space beyond the boundary. It is
+created by passing the type string “`cylinder`” to `ospNewLight`. The
+cylinder light supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
+(default) as `intensityQuantity` parameter. In addition to the [general
+parameters](#lights) understood by all lights the cylinder light
+supports the following special parameters:
+
+| Type  | Name      | Default | Description                           |
+|:------|:----------|--------:|:--------------------------------------|
+| vec3f | position0 | (0,0,0) | position of the start of the cylinder |
+| vec3f | position1 | (0,0,1) | position of the end of the cylinder   |
+| float | radius    |       1 | radius of the cylinder                |
+
+Special parameters accepted by the cylinder light.
+
+Note that only renderers that use stochastic sampling (like the path
+tracer) will compute soft shadows from the cylinder light. Other
+renderers will just sample the closest point on the cylinder light,
+which results in hard shadows.
+
 ### HDRI Light
 
 The HDRI light is a textured light source surrounding the scene and
@@ -1696,11 +1721,11 @@ as `intensityQuantity` parameter value. In addition to the [general
 parameters](#lights) the HDRI light supports the following special
 parameters:
 
-| Type       | Name      | Description                                                                                                      |
-|:-----------|:----------|:-----------------------------------------------------------------------------------------------------------------|
-| vec3f      | up        | up direction of the light in world-space                                                                         |
-| vec3f      | direction | direction to which the center of the texture will be mapped to (analog to [panoramic camera](#panoramic-camera)) |
-| OSPTexture | map       | environment map in latitude / longitude format                                                                   |
+| Type       | Name      | Default | Description                                                                                                      |
+|:-----------|:----------|--------:|:-----------------------------------------------------------------------------------------------------------------|
+| vec3f      | up        | (0,1,0) | up direction of the light                                                                                        |
+| vec3f      | direction | (0,0,1) | direction to which the center of the texture will be mapped to (analog to [panoramic camera](#panoramic-camera)) |
+| OSPTexture | map       |         | environment map in latitude / longitude format                                                                   |
 
 Special parameters accepted by the HDRI light.
 
@@ -1741,7 +1766,7 @@ parameters are supported:
 
 | Type  | Name             |  Default | Description                                                                                          |
 |:------|:-----------------|---------:|:-----------------------------------------------------------------------------------------------------|
-| vec3f | up               |  (0,1,0) | zenith of sky in world-space                                                                         |
+| vec3f | up               |  (0,1,0) | zenith of sky                                                                                        |
 | vec3f | direction        | (0,−1,0) | main emission direction of the sun                                                                   |
 | float | turbidity        |        3 | atmospheric turbidity due to particles, in \[1–10\]                                                  |
 | float | albedo           |      0.3 | ground reflectance, in \[0–1\]                                                                       |
@@ -1814,11 +1839,15 @@ via a transform. To create and instance call
 OSPInstance ospNewInstance(OSPGroup);
 ```
 
-| Type         | Name             |  Default | Description                                                                                     |
-|:-------------|:-----------------|---------:|:------------------------------------------------------------------------------------------------|
-| affine3f     | transform        | identity | world-space transform for all attached geometries and volumes, overridden by `motion.transform` |
-| affine3f\[\] | motion.transform |          | uniformly distributed world-space transforms                                                    |
-| box1f        | time             | \[0, 1\] | time associated with first and last key in `motion.` arrays (for motion blur)                   |
+| Type         | Name               |  Default | Description                                                                                                                                           |
+|:-------------|:-------------------|---------:|:------------------------------------------------------------------------------------------------------------------------------------------------------|
+| affine3f     | transform          | identity | world-space transform for all attached geometries and volumes, overridden by `motion.*` arrays                                                        |
+| affine3f\[\] | motion.transform   |          | uniformly distributed world-space transforms                                                                                                          |
+| vec3f\[\]    | motion.scale       |          | uniformly distributed world-space scale, overridden by `motion.transform`                                                                             |
+| vec3f\[\]    | motion.pivot       |          | uniformly distributed world-space translation which is applied before `motion.rotation` (i.e., the rotation center), overridden by `motion.transform` |
+| quatf\[\]    | motion.rotation    |          | uniformly distributed world-space quaternion rotation, overridden by `motion.transform`                                                               |
+| vec3f\[\]    | motion.translation |          | uniformly distributed world-space translation, overridden by `motion.transform`                                                                       |
+| box1f        | time               | \[0, 1\] | time associated with first and last key in `motion.*` arrays (for motion blur)                                                                        |
 
 Parameters understood by instances.
 
@@ -2497,13 +2526,13 @@ different transfer function than that of the sliced volume.
 All materials with textures also offer to manipulate the placement of
 these textures with the help of texture transformations. If so, this
 convention shall be used: the following parameters are prefixed with
-“`texture_name.`”).
+“`texture_name.*`”).
 
 | Type     | Name        | Description                                      |
 |:---------|:------------|:-------------------------------------------------|
 | linear2f | transform   | linear transformation (rotation, scale)          |
 | float    | rotation    | angle in degree, counterclockwise, around center |
-| vec2f    | scale       | enlarge texture, relative to center (0.5, 0.5)   |
+| vec2f    | scale       | enlarge texture, relative to center (0.5,0.5)    |
 | vec2f    | translation | move texture in positive direction (right/up)    |
 
 Parameters to define 2D texture coordinate transformations.
@@ -2533,25 +2562,28 @@ OSPCamera ospNewCamera(const char *type);
 
 All cameras accept these parameters:
 
-| Type         | Name                   | Description                                                                                                                 |
-|:-------------|:-----------------------|:----------------------------------------------------------------------------------------------------------------------------|
-| vec3f        | position               | position of the camera in world-space                                                                                       |
-| vec3f        | direction              | main viewing direction of the camera                                                                                        |
-| vec3f        | up                     | up direction of the camera                                                                                                  |
-| affine3f     | transform              | additional world-space transform, overridden by `motion.transform`                                                          |
-| float        | nearClip               | near clipping distance                                                                                                      |
-| vec2f        | imageStart             | start of image region (lower left corner)                                                                                   |
-| vec2f        | imageEnd               | end of image region (upper right corner)                                                                                    |
-| affine3f\[\] | motion.transform       | additional uniformly distributed world-space transforms                                                                     |
-| box1f        | time                   | time associated with first and last key in `motion.` arrays, default \[0, 1\]                                               |
-| box1f        | shutter                | start and end of shutter time (for motion blur), in \[0, 1\], default \[0.5, 0.5\]                                          |
-| uchar        | shutterType            | `OSPShutterType` for motion blur, possible values are:                                                                      |
-|              |                        | `OSP_SHUTTER_GLOBAL` (default)                                                                                              |
-|              |                        | `OSP_SHUTTER_ROLLING_RIGHT`                                                                                                 |
-|              |                        | `OSP_SHUTTER_ROLLING_LEFT`                                                                                                  |
-|              |                        | `OSP_SHUTTER_ROLLING_DOWN`                                                                                                  |
-|              |                        | `OSP_SHUTTER_ROLLING_UP`                                                                                                    |
-| float        | rollingShutterDuration | for a rolling shutter (see `shutterType`) the “open” time per line, in \[0, `shutter`.upper-`shutter`.lower\], default 0.0f |
+| Type         | Name                   |              Default | Description                                                                                                                                                      |
+|:-------------|:-----------------------|---------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vec3f        | position               |              (0,0,0) | position of the camera                                                                                                                                           |
+| vec3f        | direction              |              (0,0,1) | main viewing direction of the camera                                                                                                                             |
+| vec3f        | up                     |              (0,1,0) | up direction of the camera                                                                                                                                       |
+| affine3f     | transform              |             identity | additional world-space transform, overridden by `motion.*` arrays                                                                                                |
+| float        | nearClip               |      10<sup>-6</sup> | near clipping distance                                                                                                                                           |
+| vec2f        | imageStart             |                (0,0) | start of image region (lower left corner)                                                                                                                        |
+| vec2f        | imageEnd               |                (1,1) | end of image region (upper right corner)                                                                                                                         |
+| affine3f\[\] | motion.transform       |                      | additional uniformly distributed world-space transforms                                                                                                          |
+| vec3f\[\]    | motion.scale           |                      | additional uniformly distributed world-space scale, overridden by `motion.transform`                                                                             |
+| vec3f\[\]    | motion.pivot           |                      | additional uniformly distributed world-space translation which is applied before `motion.rotation` (i.e., the rotation center), overridden by `motion.transform` |
+| quatf\[\]    | motion.rotation        |                      | additional uniformly distributed world-space quaternion rotation, overridden by `motion.transform`                                                               |
+| vec3f\[\]    | motion.translation     |                      | additional uniformly distributed world-space translation, overridden by `motion.transform`                                                                       |
+| box1f        | time                   |             \[0, 1\] | time associated with first and last key in `motion.*` arrays                                                                                                     |
+| box1f        | shutter                |         \[0.5, 0.5\] | start and end of shutter time (for motion blur), in \[0, 1\]                                                                                                     |
+| uchar        | shutterType            | `OSP_SHUTTER_GLOBAL` | `OSPShutterType` for motion blur, also allowed are:                                                                                                              |
+|              |                        |                      | `OSP_SHUTTER_ROLLING_RIGHT`                                                                                                                                      |
+|              |                        |                      | `OSP_SHUTTER_ROLLING_LEFT`                                                                                                                                       |
+|              |                        |                      | `OSP_SHUTTER_ROLLING_DOWN`                                                                                                                                       |
+|              |                        |                      | `OSP_SHUTTER_ROLLING_UP`                                                                                                                                         |
+| float        | rollingShutterDuration |                    0 | for a rolling shutter (see `shutterType`) the “open” time per line, in \[0, `shutter`.upper-`shutter`.lower\]                                                    |
 
 Parameters accepted by all cameras.
 
@@ -2583,20 +2615,19 @@ to the [general parameters](#cameras) understood by all cameras the
 perspective camera supports the special parameters listed in the table
 below.
 
-| Type  | Name                   | Description                                                                |
-|:------|:-----------------------|:---------------------------------------------------------------------------|
-| float | fovy                   | the field of view (angle in degree) of the frame’s height                  |
-| float | aspect                 | ratio of width by height of the frame (and image region)                   |
-| float | apertureRadius         | size of the aperture, controls the depth of field                          |
-| float | focusDistance          | distance at where the image is sharpest when depth of field is enabled     |
-| bool  | architectural          | vertical edges are projected to be parallel                                |
-| uchar | stereoMode             | `OSPStereoMode` for stereo rendering, possible values are:                 |
-|       |                        | `OSP_STEREO_NONE` (default)                                                |
-|       |                        | `OSP_STEREO_LEFT`                                                          |
-|       |                        | `OSP_STEREO_RIGHT`                                                         |
-|       |                        | `OSP_STEREO_SIDE_BY_SIDE`                                                  |
-|       |                        | `OSP_STEREO_TOP_BOTTOM` (left eye at top half)                             |
-| float | interpupillaryDistance | distance between left and right eye when stereo is enabled, default 0.0635 |
+| Type  | Name                   |           Default | Description                                                            |
+|:------|:-----------------------|------------------:|:-----------------------------------------------------------------------|
+| float | fovy                   |                60 | the field of view (angle in degree) of the frame’s height              |
+| float | aspect                 |                 1 | ratio of width by height of the frame (and image region)               |
+| float | apertureRadius         |                 0 | size of the aperture, controls the depth of field                      |
+| float | focusDistance          |                 1 | distance at where the image is sharpest when depth of field is enabled |
+| bool  | architectural          |             false | vertical edges are projected to be parallel                            |
+| uchar | stereoMode             | `OSP_STEREO_NONE` | `OSPStereoMode` for stereo rendering, also allowed are:                |
+|       |                        |                   | `OSP_STEREO_LEFT`                                                      |
+|       |                        |                   | `OSP_STEREO_RIGHT`                                                     |
+|       |                        |                   | `OSP_STEREO_SIDE_BY_SIDE`                                              |
+|       |                        |                   | `OSP_STEREO_TOP_BOTTOM` (left eye at top half)                         |
+| float | interpupillaryDistance |            0.0635 | distance between left and right eye when stereo is enabled             |
 
 Additional parameters accepted by the perspective camera.
 
@@ -2861,14 +2892,14 @@ tone mapping curve can be customized using the parameters listed in the
 table below.
 
 | Type  | Name      | Default | Description                                                              |
-|:------|:----------|:--------|:-------------------------------------------------------------------------|
-| float | exposure  | 1.0     | amount of light per unit area                                            |
-| float | contrast  | 1.6773  | contrast (toe of the curve); typically is in \[1–2\]                     |
-| float | shoulder  | 0.9714  | highlight compression (shoulder of the curve); typically is in \[0.9–1\] |
-| float | midIn     | 0.18    | mid-level anchor input; default is 18% gray                              |
-| float | midOut    | 0.18    | mid-level anchor output; default is 18% gray                             |
+|:------|:----------|--------:|:-------------------------------------------------------------------------|
+| float | exposure  |     1.0 | amount of light per unit area                                            |
+| float | contrast  |  1.6773 | contrast (toe of the curve); typically is in \[1–2\]                     |
+| float | shoulder  |  0.9714 | highlight compression (shoulder of the curve); typically is in \[0.9–1\] |
+| float | midIn     |    0.18 | mid-level anchor input; default is 18% gray                              |
+| float | midOut    |    0.18 | mid-level anchor output; default is 18% gray                             |
 | float | hdrMax    | 11.0785 | maximum HDR input that is not clipped                                    |
-| bool  | acesColor | true    | apply the ACES color transforms                                          |
+| bool  | acesColor |    true | apply the ACES color transforms                                          |
 
 Parameters accepted by the tone mapper.
 
