@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
+#include "common/Instance.ih"
 #include "math/Distribution2D.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
@@ -13,8 +14,9 @@ struct HDRILight
 
   linear3f light2world;
   linear3f world2light;
-  Texture2D *uniform map; // Environment map in latitude / longitude format
-  Distribution2D *uniform
+  const Texture2D *uniform
+      map; // Environment map in latitude / longitude format
+  const Distribution2D *uniform
       distribution; // The 2D distribution used to importance sample
   vec2f rcpSize; // precomputed 1/map.size
   vec3f radianceScale; // scaling factor of emmitted RGB radiance
@@ -24,7 +26,7 @@ struct HDRILight
 //////////////////////////////////////////////////////////////////////////////
 
 // sample function used when no environment map is given: black
-Light_SampleRes HDRILight_sample_dummy(const uniform Light *uniform,
+Light_SampleRes HDRILight_sample_dummy(const Light *uniform,
     const DifferentialGeometry &,
     const vec2f &,
     const float)
@@ -34,12 +36,10 @@ Light_SampleRes HDRILight_sample_dummy(const uniform Light *uniform,
   return res;
 }
 
-Light_SampleRes HDRILight_sample(const uniform Light *uniform super,
-    const DifferentialGeometry &,
-    const vec2f &s,
-    const float)
+inline Light_SampleRes Sample(const HDRILight *uniform self,
+    const uniform linear3f &light2world,
+    const vec2f &s)
 {
-  uniform HDRILight *uniform self = (uniform HDRILight * uniform) super;
   Light_SampleRes res;
 
   Sample2D sample2d = Distribution2D_sample(self->distribution, s);
@@ -54,7 +54,7 @@ Light_SampleRes HDRILight_sample(const uniform Light *uniform super,
   sincos(theta, &sinTheta, &cosTheta);
   const vec3f localDir = cartesian(phi, sinTheta, cosTheta);
 
-  res.dir = self->light2world * localDir;
+  res.dir = light2world * localDir;
 
   res.pdf = sample2d.pdf * one_over_two_pi_sqr * rcp(sinTheta);
 
@@ -70,20 +70,47 @@ Light_SampleRes HDRILight_sample(const uniform Light *uniform super,
   return res;
 }
 
-Light_EvalRes HDRILight_eval(const uniform Light *uniform super,
+Light_SampleRes HDRILight_sample(const Light *uniform super,
     const DifferentialGeometry &,
+    const vec2f &s,
+    const float)
+{
+  const HDRILight *uniform self = (HDRILight * uniform) super;
+  assert(self);
+  return Sample(self, self->light2world, s);
+}
+
+Light_SampleRes HDRILight_sample_instanced(const Light *uniform super,
+    const DifferentialGeometry &,
+    const vec2f &s,
+    const float time)
+{
+  const HDRILight *uniform self = (HDRILight * uniform) super;
+  assert(self);
+
+  const Instance *uniform instance = self->super.instance;
+  assert(instance);
+
+  Light_SampleRes res;
+  foreach_unique (utime in time) {
+    const uniform affine3f xfm = Instance_getTransform(instance, utime);
+    res = Sample(self, xfm.l * self->light2world, s);
+  }
+  return res;
+}
+
+inline Light_EvalRes Eval(HDRILight *uniform self,
+    const uniform linear3f &world2light,
     const vec3f &dir,
-    const float,
     const float maxDist)
 {
-  uniform HDRILight *uniform self = (uniform HDRILight * uniform) super;
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
 
   if (inf > maxDist)
     return res;
 
-  const vec3f localDir = self->world2light * dir;
+  const vec3f localDir = world2light * dir;
 
   const float u = atan2(localDir.y, localDir.x) * one_over_two_pi;
   const float v = acos(localDir.z) * one_over_pi;
@@ -105,6 +132,39 @@ Light_EvalRes HDRILight_eval(const uniform Light *uniform super,
   return res;
 }
 
+Light_EvalRes HDRILight_eval(const Light *uniform super,
+    const DifferentialGeometry &,
+    const vec3f &dir,
+    const float,
+    const float maxDist,
+    const float)
+{
+  const HDRILight *uniform self = (HDRILight * uniform) super;
+  assert(self);
+  return Eval(self, self->world2light, dir, maxDist);
+}
+
+Light_EvalRes HDRILight_eval_instanced(const Light *uniform super,
+    const DifferentialGeometry &,
+    const vec3f &dir,
+    const float,
+    const float maxDist,
+    const float time)
+{
+  const HDRILight *uniform self = (HDRILight * uniform) super;
+  assert(self);
+
+  const Instance *uniform instance = self->super.instance;
+  assert(instance);
+
+  Light_EvalRes res;
+  foreach_unique (utime in time) {
+    const uniform affine3f xfm = Instance_getTransform(instance, utime);
+    res = Eval(self, self->world2light * rcp(xfm.l), dir, maxDist);
+  }
+  return res;
+}
+
 // bin i represents the average contribution of (i-0.5, i+0.5) when we sample
 // the texture bilinearly at i
 // for i==0 we have a wrap-around, which is wanted for x (phi), but actually
@@ -112,20 +172,21 @@ Light_EvalRes HDRILight_eval(const uniform Light *uniform super,
 // leaking to the north-pole
 // however, sin(theta) is zero then, thus we will never sample there
 task unmasked void HDRILight_calcRowImportance(
-    const HDRILight *uniform const self,
+    const Texture2D *uniform const map,
     float *uniform const importance,
     float *uniform const row_importance)
 {
   const uniform int y = taskIndex;
-  const uniform float fy = y * self->rcpSize.y;
-  const uniform int width = self->map->size.x;
+  const uniform vec2f rcpSize = 1.f / map->sizef;
+  const uniform float fy = y * rcpSize.y;
+  const uniform int width = map->size.x;
   const uniform float sinTheta = sin(fy * M_PI);
   foreach (x = 0 ... width) {
-    const vec2f coord = make_vec2f(x * self->rcpSize.x, fy);
+    const vec2f coord = make_vec2f(x * rcpSize.x, fy);
     // using bilinear filtering is indeed what we want
     DifferentialGeometry lookup;
     initDgFromTexCoord(lookup, coord);
-    const vec3f col = get3f(self->map, lookup);
+    const vec3f col = get3f(map, lookup);
     importance[y * width + x] = sinTheta * luminance(col);
   }
   row_importance[y] = Distribution1D_create(width, importance + y * width);
@@ -138,35 +199,32 @@ task unmasked void HDRILight_calcRowImportance(
 export void HDRILight_set(void *uniform super,
     const uniform vec3f &radianceScale,
     const uniform linear3f &light2world,
-    void *uniform map)
+    const void *uniform map,
+    const void *uniform distribution)
 {
   HDRILight *uniform self = (HDRILight * uniform) super;
   self->radianceScale = radianceScale;
-  Distribution2D_destroy(self->distribution);
-  self->distribution = NULL;
 
   if (map) {
-    self->light2world = light2world;
-    self->world2light = rcp(light2world);
-
     self->map = (uniform Texture2D * uniform) map;
+    self->distribution = (const uniform Distribution2D *uniform)distribution;
 
     self->rcpSize = 1.f / self->map->sizef;
-    const uniform int height = self->map->size.y;
-
-    // calculate importance in parallel
-    float *uniform cdf_x = uniform new float[self->map->size.x * height];
-    float *uniform row_importance = uniform new float[height];
-    launch[height] HDRILight_calcRowImportance(self, cdf_x, row_importance);
-    sync;
-
-    // create distribution
-    self->distribution =
-        Distribution2D_create(self->map->size, cdf_x, row_importance);
-    // no delete[] (row_)importance: ownership was transferred to Distribution2D
-
+    self->light2world = light2world;
     self->super.sample = HDRILight_sample;
     self->super.eval = HDRILight_eval;
+
+    // Enable dynamic runtime instancing or apply static transformation
+    const Instance *uniform instance = self->super.instance;
+    if (instance) {
+      if (instance->motionBlur) {
+        self->super.sample = HDRILight_sample_instanced;
+        self->super.eval = HDRILight_eval_instanced;
+      } else {
+        self->light2world = instance->xfm.l * self->light2world;
+      }
+    }
+    self->world2light = rcp(self->light2world);
   } else {
     self->super.sample = HDRILight_sample_dummy;
     self->super.eval = Light_eval;
@@ -180,17 +238,27 @@ export void *uniform HDRILight_create()
 
   Light_Constructor(&self->super);
   self->super.sample = HDRILight_sample_dummy;
-  self->distribution = NULL;
-
-  HDRILight_set(self, make_vec3f(1.0f), make_LinearSpace3f_identity(), NULL);
-
+  HDRILight_set(
+      self, make_vec3f(1.0f), make_LinearSpace3f_identity(), NULL, NULL);
   return self;
 }
 
-//! Destroy an ispc-side HDRILight object
-export void HDRILight_destroy(void *uniform super)
+export void *uniform HDRILight_createDistribution(const void *uniform map)
 {
-  HDRILight *uniform self = (HDRILight * uniform) super;
-  Distribution2D_destroy(self->distribution);
-  delete self;
+  // calculate importance in parallel
+  const Texture2D *uniform m = (const Texture2D *uniform)map;
+  const uniform int height = m->size.y;
+  float *uniform cdf_x = uniform new float[m->size.x * height];
+  float *uniform row_importance = uniform new float[height];
+  launch[height] HDRILight_calcRowImportance(m, cdf_x, row_importance);
+  sync;
+
+  // create distribution
+  return Distribution2D_create(m->size, cdf_x, row_importance);
+  // no delete[] (row_)importance: ownership was transferred to Distribution2D
+}
+
+export void HDRILight_destroyDistribution(void *uniform distribution)
+{
+  Distribution2D_destroy((Distribution2D * uniform) distribution);
 }

@@ -1,13 +1,11 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Geometry.ih"
 
-void Geometry_Constructor(Geometry *uniform self,
-    void *uniform cppEquivalent,
-    uniform Geometry_postIntersectFct postIntersect)
+void Geometry_Constructor(
+    Geometry *uniform self, uniform Geometry_postIntersectFct postIntersect)
 {
-  self->cppEquivalent = cppEquivalent;
   self->numPrimitives = 0;
   self->postIntersect = postIntersect;
   self->sampleArea = NULL;

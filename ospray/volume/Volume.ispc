@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/Intersect.ih"
@@ -65,9 +65,8 @@ unmasked void Volume_intersect_kernel(
   }
 }
 
-void Volume_Constructor(Volume *uniform self, void *uniform cppEquivalent)
+void Volume_Constructor(Volume *uniform self)
 {
-  self->cppEquivalent = cppEquivalent;
   self->boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
   self->volumeID = -1;
   self->vklVolume = NULL;
@@ -103,11 +102,10 @@ export void Volume_set_geomID(void *uniform _self, uniform int32 geomID)
   self->volumeID = geomID;
 }
 
-export void *uniform Volume_createInstance_vklVolume(
-    void *uniform cppEquivalent)
+export void *uniform Volume_createInstance_vklVolume()
 {
   Volume *uniform self = uniform new Volume;
-  Volume_Constructor(self, cppEquivalent);
+  Volume_Constructor(self);
   return self;
 }
 

@@ -345,12 +345,12 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
 
 // Exported functions /////////////////////////////////////////////////////////
 
-export void *uniform DistributedRaycastRenderer_create(void *uniform cppE)
+export void *uniform DistributedRaycastRenderer_create()
 {
   DistributedRaycastRenderer *uniform self =
       uniform new uniform DistributedRaycastRenderer;
 
-  DistributedRenderer_Constructor(&self->super, cppE);
+  DistributedRenderer_Constructor(&self->super);
   self->super.renderRegionSample = DRR_renderRegionSample;
   self->aoSamples = 0;
   self->shadowsEnabled = false;

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AORenderer.h"
@@ -8,7 +8,7 @@ namespace ospray {
 
 AORenderer::AORenderer(int defaultNumSamples) : aoSamples(defaultNumSamples)
 {
-  ispcEquivalent = ispc::AORenderer_create(this);
+  ispcEquivalent = ispc::AORenderer_create();
 }
 
 std::string AORenderer::toString() const

@@ -16,7 +16,7 @@ VolumetricModel::VolumetricModel(Volume *_volume)
 {
   managedObjectType = OSP_VOLUMETRIC_MODEL;
   volumeAPI = _volume;
-  this->ispcEquivalent = ispc::VolumetricModel_create(this);
+  this->ispcEquivalent = ispc::VolumetricModel_create();
 }
 
 VolumetricModel::~VolumetricModel()

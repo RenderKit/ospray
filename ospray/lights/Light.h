@@ -18,12 +18,12 @@ struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
   template <typename T>
   static void registerType(const char *type);
 
+  virtual void *createIE(const void *instance = nullptr) const = 0;
+  virtual void *createSecondIE(const void *instance = nullptr) const;
   virtual void commit() override;
   virtual std::string toString() const override;
 
-  //! get IE of a second light associated with the light type(if available)
-  virtual utility::Optional<void *> getSecondIE();
-
+  bool visible{true};
   vec3f coloredIntensity{1.0f, 1.0f, 1.0f};
   OSPIntensityQuantity intensityQuantity = OSP_INTENSITY_QUANTITY_UNKNOWN;
 

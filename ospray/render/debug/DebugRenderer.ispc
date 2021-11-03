@@ -28,7 +28,7 @@ bool hitBackground(
 
 float eyeLight(varying ScreenSample &sample)
 {
-  return 0.2f + 0.8f * dot(normalize(sample.ray.Ng), neg(sample.ray.dir));
+  return 0.2f + 0.8f * abs(dot(normalize(sample.ray.Ng), sample.ray.dir));
 }
 
 /* a simple test-frame renderer that doesn't even trace a ray, just
@@ -332,10 +332,10 @@ void DebugRenderer_volume(Renderer *uniform self,
 
 // DebugRenderer C++ interface ////////////////////////////////////////////////
 
-export void *uniform DebugRenderer_create(void *uniform cppE)
+export void *uniform DebugRenderer_create()
 {
   Renderer *uniform self = uniform new Renderer;
-  Renderer_Constructor(self, cppE);
+  Renderer_Constructor(self);
   self->renderSample = DebugRenderer_testFrame;
   return self;
 }

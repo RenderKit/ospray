@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
+#include "common/Instance.ih"
 
 struct QuadLight
 {
@@ -20,12 +21,15 @@ struct QuadLight
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-Light_SampleRes QuadLight_sample(const uniform Light *uniform super,
+inline Light_SampleRes Sample(const QuadLight *uniform self,
+    const uniform vec3f &pos,
+    const uniform vec3f &edge1,
+    const uniform vec3f &edge2,
+    const uniform float ppdf,
+    const uniform vec3f &nnormal,
     const DifferentialGeometry &dg,
-    const vec2f &sp,
-    const float)
+    const vec2f &sp)
 {
-  const QuadLight *uniform self = (QuadLight * uniform) super;
   Light_SampleRes res;
 
   // (0, 0) should sample center --> add 0.5 CranleyPatterson rotation
@@ -35,10 +39,10 @@ Light_SampleRes QuadLight_sample(const uniform Light *uniform super,
 
   // sample position on light with density ppdf = 1/area
   // TODO: use solid angle sampling
-  const vec3f pos = self->position + self->edge1 * s.x + self->edge2 * s.y;
+  const vec3f p = pos + edge1 * s.x + edge2 * s.y;
 
   // extant light vector from the hit point
-  const vec3f dir = pos - dg.P;
+  const vec3f dir = p - dg.P;
   const float dist = length(dir);
 
   // normalized light vector
@@ -46,8 +50,8 @@ Light_SampleRes QuadLight_sample(const uniform Light *uniform super,
   res.dist = dist;
 
   // convert to pdf wrt. solid angle
-  const float cosd = dot(self->nnormal, res.dir);
-  res.pdf = self->ppdf * sqr(dist) / abs(cosd);
+  const float cosd = dot(nnormal, res.dir);
+  res.pdf = ppdf * sqr(dist) / abs(cosd);
 
   // emit only to one side
   res.weight = cosd > 0.f ? self->radiance * rcp(res.pdf) : make_vec3f(0.f);
@@ -55,39 +59,146 @@ Light_SampleRes QuadLight_sample(const uniform Light *uniform super,
   return res;
 }
 
-Light_EvalRes QuadLight_eval(const uniform Light *uniform super,
+Light_SampleRes QuadLight_sample(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec2f &sp,
+    const float)
+{
+  const QuadLight *uniform self = (QuadLight * uniform) super;
+  assert(self);
+  return Sample(self,
+      self->position,
+      self->edge1,
+      self->edge2,
+      self->ppdf,
+      self->nnormal,
+      dg,
+      sp);
+}
+
+Light_SampleRes QuadLight_sample_instanced(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec2f &sp,
+    const float time)
+{
+  const QuadLight *uniform self = (QuadLight * uniform) super;
+  assert(self);
+
+  const Instance *uniform instance = self->super.instance;
+  assert(instance);
+
+  Light_SampleRes res;
+  foreach_unique (utime in time) {
+    const uniform affine3f xfm = Instance_getTransform(instance, utime);
+
+    // transform light into the world space
+    const uniform vec3f pos = xfmPoint(xfm, self->position);
+    const uniform vec3f edge1 = xfmVector(xfm, self->edge1);
+    const uniform vec3f edge2 = xfmVector(xfm, self->edge2);
+
+    // calculate quad normal vector
+    const uniform vec3f ndirection = cross(edge2, edge1);
+    const uniform float ppdf = rcp(length(ndirection)); // 1/area
+    const uniform vec3f nnormal = ndirection * ppdf; // normalize
+
+    // sample light
+    res = Sample(self, pos, edge1, edge2, ppdf, nnormal, dg, sp);
+  }
+  return res;
+}
+
+inline Light_EvalRes Eval(const QuadLight *uniform self,
+    const uniform vec3f &pos,
+    const uniform vec3f &edge1,
+    const uniform vec3f &edge2,
+    const uniform float ppdf,
+    const uniform vec3f &nnormal,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
     const float maxDist)
 {
-  uniform QuadLight *uniform self = (uniform QuadLight * uniform) super;
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
 
   // backfacing?
-  const float cosd = dot(self->nnormal, dir);
+  const float cosd = dot(nnormal, dir);
   // denominator = dot(cross(edge1, edge2), dir) == cosd/ppdf
   if (cosd <= 0.f)
     return res;
 
-  const vec3f c = self->position - dg.P;
+  const vec3f c = pos - dg.P;
   const vec3f r = cross(c, dir);
-  const float u = dot(r, self->edge1);
-  const float v = -dot(r, self->edge2);
+  const float u = dot(r, edge1);
+  const float v = -dot(r, edge2);
 
   // u/denominator > 1?
-  if (min(u, v) < 0.f | max(u, v) * self->ppdf > cosd)
+  if (min(u, v) < 0.f | max(u, v) * ppdf > cosd)
     return res;
 
   const float rcosd = rcp(cosd);
-  const float dist = dot(self->nnormal, c) * rcosd;
+  const float dist = dot(nnormal, c) * rcosd;
   if (dist <= minDist | dist > maxDist)
     return res;
 
   res.radiance = self->radiance;
-  res.pdf = self->ppdf * sqr(dist) * rcosd;
+  res.pdf = ppdf * sqr(dist) * rcosd;
 
+  return res;
+}
+
+Light_EvalRes QuadLight_eval(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec3f &dir,
+    const float minDist,
+    const float maxDist,
+    const float)
+{
+  const QuadLight *uniform self = (QuadLight * uniform) super;
+  assert(self);
+  return Eval(self,
+      self->position,
+      self->edge1,
+      self->edge2,
+      self->ppdf,
+      self->nnormal,
+      dg,
+      dir,
+      minDist,
+      maxDist);
+}
+
+Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec3f &dir,
+    const float minDist,
+    const float maxDist,
+    const float time)
+{
+  const QuadLight *uniform self = (QuadLight * uniform) super;
+  assert(self);
+
+  const Instance *uniform instance = self->super.instance;
+  assert(instance);
+
+  Light_EvalRes res;
+  foreach_unique (utime in time) {
+    const uniform affine3f xfm = Instance_getTransform(instance, utime);
+
+    // transform light into the world space
+    const uniform vec3f pos = xfmPoint(xfm, self->position);
+    const uniform vec3f edge1 = xfmVector(xfm, self->edge1);
+    const uniform vec3f edge2 = xfmVector(xfm, self->edge2);
+
+    // calculate quad normal vector
+    const uniform vec3f ndirection = cross(edge2, edge1);
+    const uniform float ppdf = rcp(length(ndirection)); // 1/area
+    const uniform vec3f nnormal = ndirection * ppdf; // normalize
+
+    // evaluate light
+    res =
+        Eval(self, pos, edge1, edge2, ppdf, nnormal, dg, dir, minDist, maxDist);
+  }
   return res;
 }
 
@@ -107,7 +218,20 @@ export void QuadLight_set(void *uniform super,
   self->edge1 = edge1;
   self->edge2 = edge2;
 
-  const uniform vec3f ndirection = cross(edge2, edge1);
+  // Enable dynamic runtime instancing or apply static transformation
+  const Instance *uniform instance = self->super.instance;
+  if (instance) {
+    if (instance->motionBlur) {
+      self->super.sample = QuadLight_sample_instanced;
+      self->super.eval = QuadLight_eval_instanced;
+    } else {
+      self->position = xfmPoint(instance->xfm, self->position);
+      self->edge1 = xfmVector(instance->xfm, self->edge1);
+      self->edge2 = xfmVector(instance->xfm, self->edge2);
+    }
+  }
+
+  const uniform vec3f ndirection = cross(self->edge2, self->edge1);
   self->ppdf = rcp(length(ndirection)); // 1/area
   self->nnormal = ndirection * self->ppdf; // normalize
 }

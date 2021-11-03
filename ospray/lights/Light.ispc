@@ -3,9 +3,10 @@
 
 #include "Light.ih"
 
-Light_EvalRes Light_eval(const uniform Light *uniform,
+Light_EvalRes Light_eval(const Light *uniform,
     const DifferentialGeometry &,
     const vec3f &,
+    const float,
     const float,
     const float)
 {
@@ -19,8 +20,10 @@ Light_EvalRes Light_eval(const uniform Light *uniform,
 
 //! Set the parameters of an ispc-side Light object
 export void Light_set(void *uniform _self,
-    const uniform bool isVisible)
+    const uniform bool isVisible,
+    const Instance *uniform instance)
 {
   Light *uniform self = (Light * uniform) _self;
   self->isVisible = isVisible;
+  self->instance = instance;
 }

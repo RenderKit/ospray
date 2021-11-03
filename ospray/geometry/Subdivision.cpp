@@ -13,7 +13,7 @@ namespace ospray {
 
 Subdivision::Subdivision()
 {
-  ispcEquivalent = ispc::Subdivision_create(this);
+  ispcEquivalent = ispc::Subdivision_create();
 }
 
 std::string Subdivision::toString() const

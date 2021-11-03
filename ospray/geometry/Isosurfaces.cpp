@@ -14,7 +14,7 @@ namespace ospray {
 
 Isosurfaces::Isosurfaces()
 {
-  ispcEquivalent = ispc::Isosurfaces_create(this);
+  ispcEquivalent = ispc::Isosurfaces_create();
 }
 
 Isosurfaces::~Isosurfaces()

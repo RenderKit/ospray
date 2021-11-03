@@ -1,11 +1,10 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "fb/FrameBuffer.ih"
 
-void FrameBuffer_Constructor(FrameBuffer *uniform self, void *uniform cClassPtr)
+void FrameBuffer_Constructor(FrameBuffer *uniform self)
 {
-  self->cClassPtr = cClassPtr;
   self->size.x = 0;
   self->size.y = 0;
   self->rcpSize.x = 0.f;

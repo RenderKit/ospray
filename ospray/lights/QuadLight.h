@@ -11,8 +11,9 @@ namespace ospray {
  * area into the positive half space */
 struct OSPRAY_SDK_INTERFACE QuadLight : public Light
 {
-  QuadLight();
+  QuadLight() = default;
   virtual ~QuadLight() override = default;
+  virtual void *createIE(const void *instance) const override;
   virtual std::string toString() const override;
   virtual void commit() override;
 
@@ -22,7 +23,7 @@ struct OSPRAY_SDK_INTERFACE QuadLight : public Light
   vec3f position{0.f}; //!< world-space corner position of the light
   vec3f edge1{1.f, 0.f, 0.f}; //!< vectors to adjacent corners
   vec3f edge2{0.f, 1.f, 0.f}; //!< vectors to adjacent corners
-  vec3f radiance{1.0f, 1.0f, 1.0f}; //!< emitted radiance of the QuadLight
+  vec3f radiance{1.f}; //!< emitted radiance of the QuadLight
 };
 
 } // namespace ospray

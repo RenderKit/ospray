@@ -8,7 +8,7 @@ namespace ospray {
 
 OrthographicCamera::OrthographicCamera()
 {
-  ispcEquivalent = ispc::OrthographicCamera_create(this);
+  ispcEquivalent = ispc::OrthographicCamera_create();
 }
 
 std::string OrthographicCamera::toString() const

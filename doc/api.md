@@ -494,6 +494,9 @@ below.
   OSP_AFFINE[23]F            32\ bit single precision floating-point affine
                              transform (linear transform plus translation)
 
+  OSP_QUATF                  32\ bit single precision floating-point quaternion,
+                             in $(i, j, k, w)$ layout
+
   OSP_VOID_PTR               raw memory address (only found in module extensions)
   -------------------------- ---------------------------------------------------
   : Valid named constants for `OSPDataType`.
@@ -707,10 +710,9 @@ Note that cell widths are defined _per refinement level_, not per block.
                                                     `OSP_FLOAT` is supported as
                                                     `OSPDataType`
 
-  vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid in world-space
+  vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid
 
-  vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
-                                                    world-space
+  vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells
 
   float          background                  `NaN`  value that is used when sampling
                                                     an undefined region outside the
@@ -1433,7 +1435,7 @@ specific light source).
   OSP_INTENSITY_QUANTITY_IRRADIANCE   the amount of light arriving at a surface point,
                                       assuming the light is oriented towards to the
                                       surface, unit is W/m^2^
-                                      
+
   OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a 
                                       built-in quantity (e.g., `HDRI`, or `sunSky`). 
   ----------------------------------  ----------------------------------------------------
@@ -1453,11 +1455,11 @@ parameter value. In addition to the [general parameters](#lights)
 understood by all lights the distant light supports the following
 special parameters:
 
-  Type      Name             Description
-  --------- ---------------- ---------------------------------------------
-  vec3f     direction        main emission direction of the distant light
-  float     angularDiameter  apparent size (angle in degree) of the light
-  --------- ---------------- ---------------------------------------------
+  Type      Name                  Default Description
+  --------- ---------------- ------------ ---------------------------------------------
+  vec3f     direction         $(0, 0, 1)$ main emission direction of the distant light
+  float     angularDiameter             0 apparent size (angle in degree) of the light
+  --------- ---------------- ------------ ---------------------------------------------
   : Special parameters accepted by the distant light.
 
 Setting the angular diameter to a value greater than zero will result in
@@ -1476,11 +1478,11 @@ supports `OSP_INTENSITY_QUANTITY_POWER`,
 In addition to the [general parameters](#lights) understood by all
 lights the sphere light supports the following special parameters:
 
-  Type      Name      Description
-  --------- --------- -----------------------------------------------
-  vec3f     position  the center of the sphere light, in world-space
-  float     radius    the size of the sphere light
-  --------- --------- -----------------------------------------------
+  Type    Name            Default Description
+  ------- ---------- ------------ --------------------------------
+  vec3f   position    $(0, 0, 0)$ the center of the sphere light
+  float   radius                0 the size of the sphere light
+  ------- ---------- ------------ --------------------------------
   : Special parameters accepted by the sphere light.
 
 Setting the radius to a value greater than zero will result in soft
@@ -1501,8 +1503,7 @@ table.
   ---------- --------------------- ----------- ---------------------------------
   Type       Name                      Default Description
   ---------- --------------------- ----------- ---------------------------------
-  vec3f      position              $(0, 0, 0)$ the center of the spotlight, in
-                                               world-space
+  vec3f      position              $(0, 0, 0)$ the center of the spotlight
 
   vec3f      direction             $(0, 0, 1)$ main emission direction of the
                                                spot
@@ -1576,12 +1577,12 @@ light supports `OSP_INTENSITY_QUANTITY_POWER`,
 parameters](#lights) understood by all lights the quad light supports
 the following special parameters:
 
-  Type   Name      Description
-  ------ --------- -----------------------------------------------------
-  vec3f  position  world-space position of one vertex of the quad light
-  vec3f  edge1     vector to one adjacent vertex
-  vec3f  edge2     vector to the other adjacent vertex
-  ------ --------- -----------------------------------------------------
+  Type   Name           Default Description
+  ------ --------- ------------ -----------------------------------------
+  vec3f  position   $(0, 0, 0)$ position of one vertex of the quad light
+  vec3f  edge1      $(1, 0, 0)$ vector to one adjacent vertex
+  vec3f  edge2      $(0, 1, 0)$ vector to the other adjacent vertex
+  ------ --------- ------------ -----------------------------------------
   : Special parameters accepted by the quad light.
 
 ![Defining a quad light which emits toward the reader.][imgQuadLight]
@@ -1591,6 +1592,30 @@ Note that only renderers that use stochastic sampling (like the path
 tracer) will compute soft shadows from the quad light. Other renderers
 will just sample the center of the quad light, which results in hard
 shadows.
+
+### Cylinder Light
+
+The cylinder light is a cylinderical, procedural area light source 
+emitting uniformly outwardly into the space beyond the boundary. It is
+created by passing the type string "`cylinder`" to `ospNewLight`. The 
+cylinder light supports `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
+(default) as `intensityQuantity` parameter. In addition to the [general
+parameters](#lights) understood by all lights the cylinder light supports
+the following special parameters:
+
+  Type    Name             Default Description
+  ------- ----------- ------------ --------------------------------------
+  vec3f   position0    $(0, 0, 0)$ position of the start of the cylinder
+  vec3f   position1    $(0, 0, 1)$ position of the end of the cylinder
+  float   radius                 1 radius of the cylinder
+  ------- ----------- ------------ --------------------------------------
+  : Special parameters accepted by the cylinder light.
+
+Note that only renderers that use stochastic sampling (like the path
+tracer) will compute soft shadows from the cylinder light. Other renderers
+will just sample the closest point on the cylinder light, which results in 
+hard shadows.
 
 ### HDRI Light
 
@@ -1602,16 +1627,16 @@ as `intensityQuantity` parameter value.
 In addition to the [general parameters](#lights) the HDRI light
 supports the following special parameters:
 
-  ------------ --------- --------------------------------------------------
-  Type         Name      Description
-  ------------ --------- --------------------------------------------------
-  vec3f        up        up direction of the light in world-space
+  ------------ --------- ------------ --------------------------------------------------
+  Type         Name           Default Description
+  ------------ --------- ------------ --------------------------------------------------
+  vec3f        up         $(0, 1, 0)$ up direction of the light
 
-  vec3f        direction direction to which the center of the texture will
-                         be mapped to (analog to [panoramic camera])
+  vec3f        direction  $(0, 0, 1)$ direction to which the center of the texture will
+                                      be mapped to (analog to [panoramic camera])
 
-  OSPTexture   map       environment map in latitude / longitude format
-  ------------ --------- --------------------------------------------------
+  OSPTexture   map                    environment map in latitude / longitude format
+  ------------ --------- ------------ --------------------------------------------------
   : Special parameters accepted by the HDRI light.
 
 ![Orientation and Mapping of an HDRI Light.][imgHDRILight]
@@ -1651,7 +1676,7 @@ following special parameters are supported:
   --------- ---------------- ------------  -------------------------------------
   Type      Name                  Default  Description
   --------- ---------------- ------------  -------------------------------------
-  vec3f     up                $(0, 1, 0)$  zenith of sky in world-space
+  vec3f     up                $(0, 1, 0)$  zenith of sky
 
   vec3f     direction        $(0, -1, 0)$  main emission direction of the sun
 
@@ -1683,16 +1708,16 @@ Scene Hierarchy
 
 ### Groups
 
-Groups in OSPRay represent collections of GeometricModels and
-VolumetricModels which share a common local-space coordinate system. To
+Groups in OSPRay represent collections of GeometricModels, VolumetricModels
+and Lights which share a common local-space coordinate system. To
 create a group call
 
     OSPGroup ospNewGroup();
 
-Groups take arrays of geometric models, volumetric models and clipping
-geometric models, but they are optional. In other words, there is no
-need to create empty arrays if there are no geometries or volumes in the
-group.
+Groups take arrays of geometric models, volumetric models, clipping
+geometric models and lights, but they are all optional. In other words,
+there is no need to create empty arrays if there are no geometries, volumes
+or lights in the group.
 
 By adding `OSPGeometricModel`s to the `clippingGeometry` array a
 clipping geometry feature is enabled. Geometries assigned to this
@@ -1718,6 +1743,8 @@ areas will be applied to all other objects in the [world].
   OSPGeometricModel[]  clippingGeometry       NULL  [data] array of [GeometricModels]
                                                     used for clipping
 
+  OSPLight[]           light                  NULL  [data] array of [lights]
+
   bool                 dynamicScene          false  use RTC_SCENE_DYNAMIC flag (faster
                                                     BVH build, slower ray traversal),
                                                     otherwise uses RTC_SCENE_STATIC flag
@@ -1734,10 +1761,6 @@ areas will be applied to all other objects in the [world].
   -------------------- ---------------- ----------  ---------------------------------------
   : Parameters understood by groups.
 
-Note that groups only need to re re-committed if a geometry or volume
-changes (surface/scalar field representation). Appearance information
-on `OSPGeometricModel` and `OSPVolumetricModel` can be changed freely,
-as internal acceleration structures do not need to be reconstructed.
 
 ### Instances
 
@@ -1750,12 +1773,25 @@ via a transform. To create and instance call
   Type         Name                 Default Description
   ------------ ----------------- ---------- --------------------------------------------------------
   affine3f     transform           identity world-space transform for all attached geometries and
-                                            volumes, overridden by `motion.transform`
+                                            volumes, overridden by `motion.*` arrays
 
   affine3f[]   motion.transform             uniformly distributed world-space transforms
 
-  box1f        time                  [0, 1] time associated with first and last key in
-                                            `motion.` arrays (for motion blur)
+  vec3f[]      motion.scale                 uniformly distributed world-space scale, overridden
+                                            by `motion.transform`
+
+  vec3f[]      motion.pivot                 uniformly distributed world-space translation which is
+                                            applied before `motion.rotation` (i.e., the rotation
+                                            center), overridden by `motion.transform`
+
+  quatf[]      motion.rotation              uniformly distributed world-space quaternion rotation,
+                                            overridden by `motion.transform`
+
+  vec3f[]      motion.translation           uniformly distributed world-space translation,
+                                            overridden by `motion.transform`
+
+  box1f        time                  [0, 1] time associated with first and last key in `motion.*`
+                                            arrays (for motion blur)
   ------------ ----------------- ---------- --------------------------------------------------------
   : Parameters understood by instances.
 
@@ -2522,13 +2558,13 @@ different transfer function than that of the sliced volume.
 All materials with textures also offer to manipulate the placement of
 these textures with the help of texture transformations. If so, this
 convention shall be used: the following parameters are prefixed with
-"`texture_name.`").
+"`texture_name.*`").
 
   Type      Name         Description
   --------- ------------ -------------------------------------------------
   linear2f  transform    linear transformation (rotation, scale)
   float     rotation     angle in degree, counterclockwise, around center
-  vec2f     scale        enlarge texture, relative to center (0.5, 0.5)
+  vec2f     scale        enlarge texture, relative to center $(0.5, 0.5)$
   vec2f     translation  move texture in positive direction (right/up)
   --------- ------------ -------------------------------------------------
   : Parameters to define 2D texture coordinate transformations.
@@ -2556,19 +2592,63 @@ To create a new camera of given type `type` use
 
 All cameras accept these parameters:
 
-  Type        Name              Description
-  ----------- ----------------- ------------------------------------------
-  vec3f       position          position of the camera in world-space
-  vec3f       direction         main viewing direction of the camera
-  vec3f       up                up direction of the camera
-  affine3f    transform         additional world-space transform, overridden by `motion.transform`
-  float       nearClip          near clipping distance
-  vec2f       imageStart        start of image region (lower left corner)
-  vec2f       imageEnd          end of image region (upper right corner)
-  affine3f[]  motion.transform  additional uniformly distributed world-space transforms
-  box1f       time              time associated with first and last key in `motion.` arrays, default [0, 1]
-  box1f       shutter           start and end of shutter time (for motion blur), default [0.5, 0.5]
-  ------ ----------- ------------------------------------------
+  ----------- ----------------------- ---------------------  ------------------------------------------
+  Type        Name                                  Default  Description
+  ----------- ----------------------- ---------------------  ------------------------------------------
+  vec3f       position                          $(0, 0, 0)$  position of the camera
+
+  vec3f       direction                         $(0, 0, 1)$  main viewing direction of the camera
+
+  vec3f       up                                $(0, 1, 0)$  up direction of the camera
+
+  affine3f    transform                            identity  additional world-space transform, overridden
+                                                             by `motion.*` arrays
+
+  float       nearClip                               10^-6^  near clipping distance
+
+  vec2f       imageStart                           $(0, 0)$  start of image region (lower left corner)
+
+  vec2f       imageEnd                             $(1, 1)$  end of image region (upper right corner)
+
+  affine3f[]  motion.transform                               additional uniformly distributed world-space
+                                                             transforms
+
+  vec3f[]     motion.scale                                   additional uniformly distributed world-space
+                                                             scale, overridden by `motion.transform`
+
+  vec3f[]     motion.pivot                                   additional uniformly distributed world-space
+                                                             translation which is applied before
+                                                             `motion.rotation` (i.e., the rotation
+                                                             center), overridden by `motion.transform`
+
+  quatf[]     motion.rotation                                additional uniformly distributed world-space
+                                                             quaternion rotation, overridden by
+                                                             `motion.transform`
+
+  vec3f[]     motion.translation                             additional uniformly distributed world-space
+                                                             translation, overridden by `motion.transform`
+
+  box1f       time                                   [0, 1]  time associated with first and last key in
+                                                             `motion.*` arrays
+
+  box1f       shutter                            [0.5, 0.5]  start and end of shutter time (for motion
+                                                             blur), in [0, 1]
+
+  uchar       shutterType              `OSP_SHUTTER_GLOBAL`  `OSPShutterType` for motion blur, also
+                                                             allowed are:
+
+                                                             `OSP_SHUTTER_ROLLING_RIGHT`
+
+                                                             `OSP_SHUTTER_ROLLING_LEFT`
+
+                                                             `OSP_SHUTTER_ROLLING_DOWN`
+
+                                                             `OSP_SHUTTER_ROLLING_UP`
+
+  float       rollingShutterDuration                      0  for a rolling shutter (see `shutterType`)
+                                                             the "open" time per line, in [0,
+                                                             `shutter`.upper-`shutter`.lower]
+  ----------- ----------------------- ---------------------  ------------------------------------------
   : Parameters accepted by all cameras.
 
 The camera is placed and oriented in the world with `position`,
@@ -2598,40 +2678,38 @@ string "`perspective`" to `ospNewCamera`. In addition to the [general
 parameters](#cameras) understood by all cameras the perspective camera
 supports the special parameters listed in the table below.
 
-  ----- ---------------------- -----------------------------------------
-  Type  Name                   Description
-  ----- ---------------------- -----------------------------------------
-  float fovy                   the field of view (angle in degree) of
-                               the frame's height
+  ----- ----------------------- -----------------  -----------------------------------------
+  Type  Name                              Default  Description
+  ----- ----------------------- -----------------  -----------------------------------------
+  float fovy                                   60  the field of view (angle in degree) of
+                                                   the frame's height
 
-  float aspect                 ratio of width by height of the frame
-                               (and image region)
+  float aspect                                  1  ratio of width by height of the frame
+                                                   (and image region)
 
-  float apertureRadius         size of the aperture, controls the depth
-                               of field
+  float apertureRadius                          0  size of the aperture, controls the depth
+                                                   of field
 
-  float focusDistance          distance at where the image is sharpest
-                               when depth of field is enabled
+  float focusDistance                           1  distance at where the image is sharpest
+                                                   when depth of field is enabled
 
-  bool  architectural          vertical edges are projected to be
-                               parallel
+  bool  architectural                       false  vertical edges are projected to be
+                                                   parallel
 
-  uchar stereoMode             `OSPStereoMode` for stereo rendering,
-                               possible values are:
+  uchar stereoMode              `OSP_STEREO_NONE`  `OSPStereoMode` for stereo rendering,
+                                                   also allowed are:
 
-                               `OSP_STEREO_NONE` (default)
+                                                   `OSP_STEREO_LEFT`
 
-                               `OSP_STEREO_LEFT`
+                                                   `OSP_STEREO_RIGHT`
 
-                               `OSP_STEREO_RIGHT`
+                                                   `OSP_STEREO_SIDE_BY_SIDE`
 
-                               `OSP_STEREO_SIDE_BY_SIDE`
+                                                   `OSP_STEREO_TOP_BOTTOM` (left eye at top half)
 
-                               `OSP_STEREO_TOP_BOTTOM` (left eye at top half)
-
-  float interpupillaryDistance distance between left and right eye when
-                               stereo is enabled, default 0.0635
-  ----- ---------------------- -----------------------------------------
+  float interpupillaryDistance             0.0635  distance between left and right eye when
+                                                   stereo is enabled
+  ----- ----------------------- -----------------  -----------------------------------------
   : Additional parameters accepted by the perspective camera.
 
 Note that when computing the `aspect` ratio a potentially set image region
@@ -2869,27 +2947,27 @@ Color Encoding System (ACES). The tone mapper is created by passing the type
 string "`tonemapper`" to `ospNewImageOperation`. The tone mapping curve can be
 customized using the parameters listed in the table below.
 
-  ----- ---------  --------    -----------------------------------------
-  Type  Name       Default     Description
-  ----- ---------  --------    -----------------------------------------
-  float exposure   1.0         amount of light per unit area
+  ------ ---------- ---------  -----------------------------------------
+  Type   Name         Default  Description
+  ------ ---------- ---------  -----------------------------------------
+  float  exposure         1.0  amount of light per unit area
 
-  float contrast   1.6773      contrast (toe of the curve); typically is
+  float  contrast      1.6773  contrast (toe of the curve); typically is
                                in [1–2]
 
-  float shoulder   0.9714      highlight compression (shoulder of the
+  float  shoulder      0.9714  highlight compression (shoulder of the
                                curve); typically is in [0.9–1]
 
-  float midIn      0.18        mid-level anchor input; default is 18%
+  float  midIn           0.18  mid-level anchor input; default is 18%
                                gray
 
-  float midOut     0.18        mid-level anchor output; default is 18%
+  float  midOut          0.18  mid-level anchor output; default is 18%
                                gray
 
-  float hdrMax     11.0785     maximum HDR input that is not clipped
+  float  hdrMax       11.0785  maximum HDR input that is not clipped
 
-  bool  acesColor  true        apply the ACES color transforms
-  ----- ---------  --------    -----------------------------------------
+  bool   acesColor       true  apply the ACES color transforms
+  ------ ---------- ---------  -----------------------------------------
   : Parameters accepted by the tone mapper.
 
 To use the popular "Uncharted 2" filmic tone mapping curve instead, set the
@@ -3189,7 +3267,7 @@ shipping data out to the workers. When a parallel file system is
 available, this can improve data load times. Image-parallel rendering is
 selected by specifying the same data on each rank, and using any of the
 existing local renderers (e.g., `scivis`, `pathtracer`). See
-[ospMPIDistributedTutorialReplicatedData](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialReplicatedData.cpp)
+[ospMPIDistribTutorialReplicated](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialReplicated.cpp)
 for an example.
 
 ### Data Parallel Rendering in the MPI Distributed Device
@@ -3210,7 +3288,7 @@ regions out a set of regions (the `region` parameter) can pass as a
 parameter to the `OSPWorld` being rendered. Each rank can specify one or
 more non-overlapping `box3f`'s which bound the portions of its local
 data which it is responsible for rendering. See the
-[ospMPIDistributedTutorialStructuredVolume](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialStructuredVolume.cpp)
+[ospMPIDistribTutorialVolume](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialVolume.cpp)
 for an example.
 
 Finally, the MPI distributed device also supports hybrid-parallel
@@ -3219,7 +3297,7 @@ each shared piece of data the rendering work will be assigned
 image-parallel among the ranks. Partially-shared regions are determined
 by finding those ranks specifying data with the same bounds (matching
 regions) and merging them. See the
-[ospMPIDistributedTutorialPartiallyReplicatedData](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialPartiallyReplicatedData.cpp)
+[ospMPIDistribTutorialPartialRepl](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistribTutorialPartialRepl.cpp)
 for an example.
 
 #### Picking on Distributed Data in the MPI Distributed Device {-}

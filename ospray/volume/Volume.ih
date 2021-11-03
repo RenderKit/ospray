@@ -18,9 +18,6 @@ struct TransferFunction;
 //!
 struct Volume
 {
-  /*! pointer to the c++-equivalent class of this entity */
-  void *cppEquivalent;
-
   int32 volumeID;
 
   VKLVolume vklVolume;
@@ -42,7 +39,7 @@ struct Volume
   box3f boundingBox;
 };
 
-void Volume_Constructor(Volume *uniform volume, void *uniform cppEquivalent);
+void Volume_Constructor(Volume *uniform volume);
 
 // Helper functions ///////////////////////////////////////////////////////////
 
@@ -57,9 +54,12 @@ inline vec3f Volume_getGradient(const Volume *uniform volume, const vec3f &P)
       vklComputeGradientV(volume->vklSampler, &((const vkl_vec3f &)P));
 
   // TODO: remove it once VKL no longer returns sporadic NaNs
-  if (isnan(result.x)) result.x = 1.f;
-  if (isnan(result.y)) result.y = 1.f;
-  if (isnan(result.z)) result.z = 1.f;
+  if (isnan(result.x))
+    result.x = 1.f;
+  if (isnan(result.y))
+    result.y = 1.f;
+  if (isnan(result.z))
+    result.z = 1.f;
 
   return *((varying vec3f *)&result);
 }

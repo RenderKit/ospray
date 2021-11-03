@@ -13,7 +13,7 @@ namespace ospray {
 
 Mesh::Mesh()
 {
-  ispcEquivalent = ispc::Mesh_create(this);
+  ispcEquivalent = ispc::Mesh_create();
 }
 
 std::string Mesh::toString() const

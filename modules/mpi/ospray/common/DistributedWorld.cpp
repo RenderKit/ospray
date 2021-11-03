@@ -19,7 +19,7 @@ using namespace rkcommon;
 DistributedWorld::DistributedWorld() : mpiGroup(mpicommon::worker.dup())
 {
   managedObjectType = OSP_WORLD;
-  this->ispcEquivalent = ispc::DistributedWorld_create(this);
+  this->ispcEquivalent = ispc::DistributedWorld_create();
 }
 
 DistributedWorld::~DistributedWorld()
@@ -95,7 +95,7 @@ void DistributedWorld::commit()
   if (allRegions.size() > 0) {
     // Setup the boxes geometry which we'll use to leverage Embree for
     // accurately determining region visibility
-    Data* allRegionsData = new Data(allRegions.data(),
+    Data *allRegionsData = new Data(allRegions.data(),
         OSP_BOX3F,
         vec3ul(allRegions.size(), 1, 1),
         vec3l(0));
@@ -205,4 +205,3 @@ void DistributedWorld::exchangeRegions()
 
 } // namespace mpi
 } // namespace ospray
-

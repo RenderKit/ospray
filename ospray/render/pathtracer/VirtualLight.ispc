@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/PathStructs.ih"
@@ -44,6 +44,8 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
   box1f intervalLightDist = getMinMaxDistForVirtualLights(
       pathContext, pathState, lastVertex, pathVertex, ray);
 
+  const uniform float selectionPDF = rcp((uniform float)pathContext.numLights
+      - pathContext.world->pathtracerData.numGeoLights);
   for (uniform int i = pathContext.world->pathtracerData.numGeoLights;
        i < pathContext.numLights;
        i++) {
@@ -57,7 +59,8 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
           lastVertex.dg,
           ray.dir,
           intervalLightDist.lower,
-          intervalLightDist.upper);
+          intervalLightDist.upper,
+          pathState.time);
       if (reduce_max(le.radiance) > 0.0f) {
         Ray shadowRay;
         setRay(shadowRay,
@@ -81,7 +84,7 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
             + pathState.throughput * le.radiance
                 * misHeuristic(pathState,
                     lastVertex.pdf_w * T,
-                    light->selectionPDF * pathContext.numLightSamples * le.pdf);
+                    selectionPDF * pathContext.numLightSamples * le.pdf);
       }
     }
   }

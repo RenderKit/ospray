@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -50,19 +50,19 @@ static void Curves_postIntersect(const Geometry *uniform _self,
   }
 }
 
-void Curves_Constructor(Curves *uniform self, void *uniform cppEquivalent)
+void Curves_Constructor(Curves *uniform self)
 {
-  Geometry_Constructor(&self->super, cppEquivalent, NULL);
+  Geometry_Constructor(&self->super, NULL);
   Data1D_Constructor(&self->index);
   Data1D_Constructor(&self->vertex);
   Data1D_Constructor(&self->color);
   Data1D_Constructor(&self->texcoord);
 }
 
-export void *uniform Curves_create(void *uniform cppEquivalent)
+export void *uniform Curves_create()
 {
   Curves *uniform self = uniform new Curves;
-  Curves_Constructor(self, cppEquivalent);
+  Curves_Constructor(self);
   return self;
 }
 

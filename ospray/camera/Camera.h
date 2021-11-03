@@ -11,7 +11,7 @@ namespace ospray {
 //! base camera class abstraction
 /*! the base class itself does not do anything useful; look into
     perspectivecamera etc for that */
-struct OSPRAY_SDK_INTERFACE Camera : public MotionTransform
+struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
 {
   Camera();
   ~Camera() override;
@@ -43,6 +43,8 @@ struct OSPRAY_SDK_INTERFACE Camera : public MotionTransform
   vec2f imageStart; // lower left corner
   vec2f imageEnd; // upper right corner
   range1f shutter{0.5f, 0.5f}; // start and end time of camera shutter time
+  float rollingShutterDuration{0.0f};
+  OSPShutterType shutterType{OSP_SHUTTER_GLOBAL};
 
   void setDevice(RTCDevice embreeDevice);
 
@@ -52,6 +54,7 @@ struct OSPRAY_SDK_INTERFACE Camera : public MotionTransform
   static void registerType(const char *type, FactoryFcn<Camera> f);
   RTCDevice embreeDevice{nullptr};
   RTCGeometry embreeGeometry{nullptr};
+  MotionTransform motionTransform;
 };
 
 OSPTYPEFOR_SPECIALIZATION(Camera *, OSP_CAMERA);

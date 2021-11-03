@@ -59,7 +59,7 @@ DFB::DistributedFrameBuffer(const vec2i &numPixels,
       frameIsActive(false),
       frameIsDone(false)
 {
-  this->ispcEquivalent = ispc::DFB_create(this);
+  this->ispcEquivalent = ispc::DFB_create();
   ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
 
   // TODO: accumID is eventually only needed on master once static

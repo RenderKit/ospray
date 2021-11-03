@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -67,9 +67,6 @@ struct Geometry
   Geometry_GetAreasFct getAreas;
   Geometry_SampleAreaFct sampleArea;
 
-  //! pointer back to the C++-equivalent of this class
-  void *cppEquivalent;
-
   //! number of primitives this geometry has
   int32 numPrimitives;
 };
@@ -90,5 +87,4 @@ inline void Geometry_setEmbreeUserGeometry(Geometry *uniform self,
 
 //! constructor for ispc-side Geometry object
 void Geometry_Constructor(Geometry *uniform geometry,
-    void *uniform cppEquivalent,
     uniform Geometry_postIntersectFct postIntersect);

@@ -8,6 +8,9 @@ export void Camera_set(void *uniform _self,
     const uniform vec2f &imageStart,
     const uniform vec2f &imageEnd,
     const uniform box1f &shutter,
+    const uniform bool globalShutter,
+    const uniform float rollingShutterDuration,
+    const uniform bool rollingShutterHorizontal,
     const uniform bool motionBlur,
     RTCGeometry geom)
 {
@@ -18,4 +21,7 @@ export void Camera_set(void *uniform _self,
   self->shutter = shutter;
   self->motionBlur = motionBlur;
   self->geom = geom;
+  self->globalShutter = globalShutter;
+  self->rollingShutterHorizontal = rollingShutterHorizontal;
+  self->rollingShutterDuration = rollingShutterDuration;
 }

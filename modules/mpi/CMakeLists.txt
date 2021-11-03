@@ -49,3 +49,6 @@ if (OSPRAY_MPI_BUILD_TUTORIALS)
   add_subdirectory(tutorials)
 endif()
 
+if (OSPRAY_APPS_TESTING)
+    add_subdirectory(testing)
+endif()

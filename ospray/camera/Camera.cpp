@@ -43,7 +43,7 @@ box3f Camera::projectBox(const box3f &) const
 
 void Camera::commit()
 {
-  MotionTransform::commit();
+  motionTransform.readParams(*this);
 
   // "parse" the general expected parameters
   pos = getParam<vec3f>("position", vec3f(0.f));
@@ -57,37 +57,44 @@ void Camera::commit()
   clamp(shutter.upper);
   if (shutter.lower > shutter.upper)
     shutter.lower = shutter.upper;
+  shutterType =
+      (OSPShutterType)getParam<uint8_t>("shutterType", OSP_SHUTTER_GLOBAL);
+  rollingShutterDuration = clamp(
+      getParam<float>("rollingShutterDuration", 0.0f), 0.0f, shutter.size());
 
-  affine3f single_xfm = (*motionTransforms)[0];
-  if (motionBlur) { // create dummy RTCGeometry for transform interpolation
+  if (motionTransform.motionBlur || motionTransform.quaternion) {
+    // create dummy RTCGeometry for transform interpolation or conversion
     if (!embreeGeometry)
       embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
 
-    auto &xfm = *motionTransforms;
-    rtcSetGeometryTimeStepCount(embreeGeometry, xfm.size());
-    for (size_t i = 0; i < xfm.size(); i++)
-      rtcSetGeometryTransform(
-          embreeGeometry, i, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm[i]);
-    rtcSetGeometryTimeRange(embreeGeometry, time.lower, time.upper);
-    rtcCommitGeometry(embreeGeometry);
+    motionTransform.setEmbreeTransform(embreeGeometry);
 
-    if (shutter.lower == shutter.upper) {
+    if (shutter.lower == shutter.upper || !motionTransform.motionBlur) {
       // directly interpolate to single shutter time
       rtcGetGeometryTransform(embreeGeometry,
           shutter.lower,
           RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
-          &single_xfm);
-      motionBlur = false;
+          &motionTransform.transform);
+      motionTransform.motionBlur = false;
     }
-  } else if (embreeGeometry) {
-    rtcReleaseGeometry(embreeGeometry);
-    embreeGeometry = nullptr;
   }
 
-  if (!motionBlur) { // apply transform right away
-    pos = xfmPoint(single_xfm, pos);
-    dir = normalize(xfmVector(single_xfm, dir));
-    up = normalize(xfmVector(single_xfm, up));
+  if (!motionTransform.motionBlur) {
+    if (embreeGeometry) {
+      rtcReleaseGeometry(embreeGeometry);
+      embreeGeometry = nullptr;
+    }
+    // apply transform right away
+    pos = xfmPoint(motionTransform.transform, pos);
+    dir = normalize(xfmVector(motionTransform.transform, dir));
+    up = normalize(xfmVector(motionTransform.transform, up));
+  }
+
+  if (shutterType != OSP_SHUTTER_GLOBAL) { // rolling shutter
+    shutter.upper -= rollingShutterDuration;
+    if (shutterType == OSP_SHUTTER_ROLLING_LEFT
+        || shutterType == OSP_SHUTTER_ROLLING_DOWN)
+      std::swap(shutter.lower, shutter.upper);
   }
 
   ispc::Camera_set(getIE(),
@@ -95,7 +102,11 @@ void Camera::commit()
       (const ispc::vec2f &)imageStart,
       (const ispc::vec2f &)imageEnd,
       (const ispc::box1f &)shutter,
-      motionBlur,
+      shutterType == OSP_SHUTTER_GLOBAL,
+      rollingShutterDuration,
+      shutterType == OSP_SHUTTER_ROLLING_RIGHT
+          || shutterType == OSP_SHUTTER_ROLLING_LEFT,
+      motionTransform.motionBlur,
       embreeGeometry);
 }
 

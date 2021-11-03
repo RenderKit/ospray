@@ -3,6 +3,7 @@
 
 #include "DistributedRenderer.h"
 #include "render/distributed/DistributedRenderer_ispc.h"
+#include "geometry/GeometricModel.h"
 
 namespace ospray {
 namespace mpi {

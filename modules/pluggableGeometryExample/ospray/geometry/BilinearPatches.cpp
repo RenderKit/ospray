@@ -23,7 +23,7 @@ BilinearPatches::BilinearPatches()
   /*! create the 'ispc equivalent': ie, the ispc-side class that
     implements all the ispc-side code for intersection,
     postintersect, etc. See BilinearPatches.ispc */
-  ispcEquivalent = ispc::BilinearPatches_create(this);
+  ispcEquivalent = ispc::BilinearPatches_create();
 }
 
 /*! commit - this is the function that parses all the parameters

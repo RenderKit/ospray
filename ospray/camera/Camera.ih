@@ -28,13 +28,15 @@ typedef void (*Camera_initRay)(const Camera *uniform,
 struct Camera
 {
   Camera_initRay initRay; /*!< the 'virtual' initRay() method */
-  void *cppEquivalent;
 
-  bool motionBlur;
+  bool motionBlur; // for the camera itself only, not in general
 
   float nearClip;
   box2f subImage; // viewable tile / subrange to compute, in [0..1]^2 x [0..1]^2
   range1f shutter; // camera shutter open start and end time, in [0..1]
+  bool globalShutter;
+  bool rollingShutterHorizontal;
+  float rollingShutterDuration;
   RTCGeometry geom; // only to access rtcGetGeometryTransform
 };
 
@@ -43,7 +45,13 @@ inline vec2f Camera_subRegion(const Camera *uniform self, const vec2f &screen)
   return lerp(screen, self->subImage.lower, self->subImage.upper);
 }
 
-inline float Camera_shutterTime(const Camera *uniform self, const float time)
+inline float Camera_shutterTime(
+    const Camera *uniform self, const vec2f &screen, float time)
 {
-  return lerp(time, self->shutter.lower, self->shutter.upper);
+  if (self->globalShutter)
+    return lerp(time, self->shutter.lower, self->shutter.upper);
+
+  time *= self->rollingShutterDuration;
+  const float pos = self->rollingShutterHorizontal ? screen.x : screen.y;
+  return clamp(time + lerp(pos, self->shutter.lower, self->shutter.upper));
 }

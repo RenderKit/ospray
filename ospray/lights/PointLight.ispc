@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
+#include "common/Instance.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "math/LinearSpace.ih"
@@ -20,16 +21,15 @@ struct PointLight
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-Light_SampleRes PointLight_sample(const uniform Light *uniform super,
+inline Light_SampleRes Sample(const PointLight *uniform self,
+    const uniform vec3f &pos,
     const DifferentialGeometry &dg,
-    const vec2f &s,
-    const float)
+    const vec2f &s)
 {
-  const PointLight *uniform self = (PointLight * uniform) super;
   Light_SampleRes res;
 
   // extant light vector from the hit point
-  const vec3f dir = self->position - dg.P;
+  const vec3f dir = pos - dg.P;
   const float dist2 = dot(dir, dir);
   const float invdist = rsqrt(dist2);
 
@@ -66,29 +66,90 @@ Light_SampleRes PointLight_sample(const uniform Light *uniform super,
   return res;
 }
 
-Light_EvalRes PointLight_eval(const uniform Light *uniform super,
+Light_SampleRes PointLight_sample(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec2f &s,
+    const float)
+{
+  const PointLight *uniform self = (PointLight * uniform) super;
+  assert(self);
+  return Sample(self, self->position, dg, s);
+}
+
+Light_SampleRes PointLight_sample_instanced(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec2f &s,
+    const float time)
+{
+  const PointLight *uniform self = (PointLight * uniform) super;
+  assert(self);
+
+  const Instance *uniform instance = self->super.instance;
+  assert(instance);
+
+  Light_SampleRes res;
+  foreach_unique (utime in time) {
+    const uniform affine3f xfm = Instance_getTransform(instance, utime);
+    res = Sample(self, xfmPoint(xfm, self->position), dg, s);
+  }
+  return res;
+}
+
+inline Light_EvalRes Eval(const PointLight *uniform self,
+    const uniform vec3f &pos,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
     const float maxDist)
 {
-  const PointLight *uniform self = (PointLight * uniform) super;
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
 
-  const vec3f A = self->position - dg.P;
+  const vec3f A = pos - dg.P;
   const float centerDist2 = dot(A, A);
   const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
 
   if (and(self->radius > 0.f, sqrt(sinTheta2) > 0.005f)) {
-    const Intersections isect =
-        intersectSphere(dg.P, dir, self->position, self->radius);
+    const Intersections isect = intersectSphere(dg.P, dir, pos, self->radius);
     if (and(and(isect.entry.t > minDist, isect.entry.t < maxDist),
             isect.entry.hit)) {
       const float cosTheta = sqrt(1.f - sinTheta2);
       res.pdf = uniformSampleConePDF(cosTheta);
       res.radiance = self->radiance;
     }
+  }
+  return res;
+}
+
+Light_EvalRes PointLight_eval(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec3f &dir,
+    const float minDist,
+    const float maxDist,
+    const float)
+{
+  const PointLight *uniform self = (PointLight * uniform) super;
+  assert(self);
+  return Eval(self, self->position, dg, dir, minDist, maxDist);
+}
+
+Light_EvalRes PointLight_eval_instanced(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec3f &dir,
+    const float minDist,
+    const float maxDist,
+    const float time)
+{
+  const PointLight *uniform self = (PointLight * uniform) super;
+  assert(self);
+
+  const Instance *uniform instance = self->super.instance;
+  assert(instance);
+
+  Light_EvalRes res;
+  foreach_unique (utime in time) {
+    const uniform affine3f xfm = Instance_getTransform(instance, utime);
+    res = Eval(self, xfmPoint(xfm, self->position), dg, dir, minDist, maxDist);
   }
   return res;
 }
@@ -108,6 +169,17 @@ export void PointLight_set(void *uniform super,
   self->radiance = radiance;
   self->intensity = intensity;
   self->radius = radius;
+
+  // Enable dynamic runtime instancing or apply static transformation
+  const Instance *uniform instance = self->super.instance;
+  if (instance) {
+    if (instance->motionBlur) {
+      self->super.sample = PointLight_sample_instanced;
+      self->super.eval = PointLight_eval_instanced;
+    } else {
+      self->position = xfmPoint(instance->xfm, self->position);
+    }
+  }
 }
 
 //! Create an ispc-side PointLight object

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -11,6 +11,7 @@ struct SciVis
 {
   Renderer super;
   bool shadowsEnabled;
+  bool visibleLights;
   int aoSamples;
   float aoRadius;
   float volumeSamplingRate;

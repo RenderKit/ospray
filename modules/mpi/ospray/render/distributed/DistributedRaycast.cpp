@@ -32,7 +32,7 @@ static bool DETAILED_LOGGING = false;
 DistributedRaycastRenderer::DistributedRaycastRenderer()
     : mpiGroup(mpicommon::worker.dup())
 {
-  ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
+  ispcEquivalent = ispc::DistributedRaycastRenderer_create();
 
   DETAILED_LOGGING =
       utility::getEnvVar<int>("OSPRAY_DP_API_TRACING").value_or(0);

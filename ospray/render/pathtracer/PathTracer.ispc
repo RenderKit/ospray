@@ -7,9 +7,9 @@
 #include "PathTracerDefines.ih"
 #include "PathTracerUtil.ih"
 
+#include "lights/Light.ih"
 #include "render/bsdfs/BSDF.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"
-#include "lights/Light.ih"
 #include "render/materials/Material.ih"
 #include "render/materials/Medium.ih"
 #include "volumes/VolumeSampler.ih"
@@ -217,10 +217,10 @@ export void PathTracer_set(void *uniform _self,
   self->shadowCatcherPlane = make_vec4f(normal * rl, shadowCatcherPlane.w * rl);
 }
 
-export void *uniform PathTracer_create(void *uniform cppE)
+export void *uniform PathTracer_create()
 {
   uniform PathTracer *uniform self = uniform new uniform PathTracer;
-  Renderer_Constructor(&self->super, cppE);
+  Renderer_Constructor(&self->super);
   self->super.renderTile = PathTracer_renderTile;
 
   PathTracer_set(self, 5, inf, make_vec4f(0.f), 1, false);
@@ -230,4 +230,3 @@ export void *uniform PathTracer_create(void *uniform cppE)
 
   return self;
 }
-

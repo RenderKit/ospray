@@ -3,12 +3,16 @@
 
 #include "AmbientLight.h"
 #include "lights/AmbientLight_ispc.h"
+#include "lights/Light_ispc.h"
 
 namespace ospray {
 
-AmbientLight::AmbientLight()
+void *AmbientLight::createIE(const void *instance) const
 {
-  ispcEquivalent = ispc::AmbientLight_create();
+  void *ie = ispc::AmbientLight_create();
+  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
+  ispc::AmbientLight_set(ie, (ispc::vec3f &)radiance);
+  return ie;
 }
 
 std::string AmbientLight::toString() const
@@ -21,7 +25,6 @@ void AmbientLight::commit()
   Light::commit();
   queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_RADIANCE);
   processIntensityQuantityType();
-  ispc::AmbientLight_set(getIE(), (ispc::vec3f &)radiance);
 }
 
 void AmbientLight::processIntensityQuantityType()

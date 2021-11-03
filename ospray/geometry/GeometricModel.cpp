@@ -14,7 +14,7 @@ GeometricModel::GeometricModel(Geometry *_geometry)
 {
   managedObjectType = OSP_GEOMETRIC_MODEL;
   geomAPI = _geometry;
-  this->ispcEquivalent = ispc::GeometricModel_create(this);
+  this->ispcEquivalent = ispc::GeometricModel_create();
 }
 
 std::string GeometricModel::toString() const

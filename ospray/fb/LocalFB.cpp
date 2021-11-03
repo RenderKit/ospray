@@ -48,8 +48,7 @@ LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
   if (hasAlbedoBuffer)
     albedoBuffer.resize(numPixels);
 
-  ispcEquivalent = ispc::LocalFrameBuffer_create(this,
-      size.x,
+  ispcEquivalent = ispc::LocalFrameBuffer_create(size.x,
       size.y,
       colorBufferFormat,
       getDataSafe(colorBuffer),

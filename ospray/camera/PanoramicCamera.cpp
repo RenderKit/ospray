@@ -8,7 +8,7 @@ namespace ospray {
 
 PanoramicCamera::PanoramicCamera()
 {
-  ispcEquivalent = ispc::PanoramicCamera_create(this);
+  ispcEquivalent = ispc::PanoramicCamera_create();
 }
 
 std::string PanoramicCamera::toString() const

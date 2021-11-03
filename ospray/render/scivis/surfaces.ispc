@@ -22,8 +22,10 @@ vec3f directIllumination(const uniform SciVis *uniform self,
     return color;
 
   // calculate shading for all lights
-  for (uniform int i = 0; i < world->scivisData.numLights; i++) {
-    const uniform Light *uniform l = world->scivisData.lights[i];
+  for (uniform int i = world->scivisData.numLightsVisibleOnly;
+       i < world->scivisData.numLights;
+       i++) {
+    const Light *uniform l = world->scivisData.lights[i];
     const vec2f s = make_vec2f(0.0f); // sample center of area lights
     const Light_SampleRes light = l->sample(l, dg, s);
 
@@ -109,15 +111,11 @@ SSI computeShading(const SciVis *uniform self,
 vec3f evaluateLights(
     const World *uniform world, const DifferentialGeometry &dg, const Ray &ray)
 {
-  // Exit if no lights
-  vec3f color = make_vec3f(0.f);
-  if (!world->scivisData.lightsVisible)
-    return color;
-
   // Iterate through all lights
-  for (uniform int i = 0; i < world->scivisData.numLightsVisible; i++) {
+  vec3f color = make_vec3f(0.f);
+  for (uniform int i = 0; i < world->scivisData.numLights; i++) {
     // Skip lights with disabled visibilty via parameter
-    const uniform Light *uniform l = world->scivisData.lightsVisible[i];
+    const Light *uniform l = world->scivisData.lights[i];
     if (!l->isVisible)
       continue;
 

@@ -157,6 +157,8 @@ typedef enum
   OSP_AFFINE2F,
   OSP_AFFINE3F,
 
+  OSP_QUATF,
+
   // Guard value.
   OSP_UNKNOWN = 9999999
 } OSPDataType;
@@ -282,6 +284,19 @@ typedef enum
   OSP_STEREO_TOP_BOTTOM,
   OSP_STEREO_UNKNOWN = 255
 } OSPStereoMode;
+
+typedef enum
+#if __cplusplus >= 201103L
+    : uint8_t
+#endif
+{
+  OSP_SHUTTER_GLOBAL,
+  OSP_SHUTTER_ROLLING_RIGHT,
+  OSP_SHUTTER_ROLLING_LEFT,
+  OSP_SHUTTER_ROLLING_DOWN,
+  OSP_SHUTTER_ROLLING_UP,
+  OSP_SHUTTER_UNKNOWN = 255
+} OSPShutterType;
 
 typedef enum
 #if __cplusplus >= 201103L

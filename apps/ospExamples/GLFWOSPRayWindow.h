@@ -71,7 +71,10 @@ class GLFWOSPRayWindow
   // Arcball camera instance
   std::unique_ptr<ArcballCamera> arcballCamera;
   affine3f lastXfm{one};
+  OSPStereoMode cameraStereoMode{OSP_STEREO_NONE};
   float cameraMotionBlur{0.0f};
+  float cameraRollingShutter{0.0f};
+  OSPShutterType cameraShutterType{OSP_SHUTTER_GLOBAL};
   // only one frame during movement is rendered with MB,
   // during accumulation the camera is static and thus no MB
   bool renderCameraMotionBlur{false};

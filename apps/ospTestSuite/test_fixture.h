@@ -1,4 +1,4 @@
-// Copyright 2017-2020 Intel Corporation
+// Copyright 2017-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -34,9 +34,9 @@ class Base
   void AddLight(cpp::Light new_light);
   void AddModel(cpp::GeometricModel model, affine3f xfm = one);
   void AddModel(cpp::VolumetricModel model, affine3f xfm = one);
-  void AddInstance(cpp::Instance instance);
+  virtual void AddInstance(cpp::Instance instance);
 
-  void PerformRenderTest();
+  virtual void PerformRenderTest();
 
   vec2i GetImgSize() const
   {

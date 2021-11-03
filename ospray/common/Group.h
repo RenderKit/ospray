@@ -4,8 +4,6 @@
 #pragma once
 
 // ospray stuff
-#include "../geometry/GeometricModel.h"
-#include "../volume/VolumetricModel.h"
 #include "./Data.h"
 #include "./Managed.h"
 // stl
@@ -14,6 +12,10 @@
 #include "embree3/rtcore.h"
 
 namespace ospray {
+
+struct GeometricModel;
+struct VolumetricModel;
+struct Light;
 
 struct OSPRAY_SDK_INTERFACE Group : public ManagedObject
 {
@@ -36,6 +38,8 @@ struct OSPRAY_SDK_INTERFACE Group : public ManagedObject
   Ref<const DataT<GeometricModel *>> clipModels;
   std::vector<void *> clipModelIEs;
   int numInvertedClippers{0};
+
+  Ref<const DataT<Light *>> lights;
 
   RTCScene sceneGeometries{nullptr};
   RTCScene sceneVolumes{nullptr};

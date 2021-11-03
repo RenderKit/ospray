@@ -2,12 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PointLight.h"
+#include "lights/Light_ispc.h"
 #include "lights/PointLight_ispc.h"
 
 namespace ospray {
-PointLight::PointLight()
+
+void *PointLight::createIE(const void *instance) const
 {
-  ispcEquivalent = ispc::PointLight_create();
+  void *ie = ispc::PointLight_create();
+  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
+  ispc::PointLight_set(ie,
+      (ispc::vec3f &)position,
+      (ispc::vec3f &)radiance,
+      (ispc::vec3f &)radIntensity,
+      radius);
+  return ie;
 }
 
 std::string PointLight::toString() const
@@ -22,17 +31,10 @@ void PointLight::commit()
   radius = getParam<float>("radius", 0.f);
 
   queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_INTENSITY);
-  vec3f radIntensity = 0.0f;
-  processIntensityQuantityType(radIntensity);
-
-  ispc::PointLight_set(getIE(),
-      (ispc::vec3f &)position,
-      (ispc::vec3f &)radiance,
-      (ispc::vec3f &)radIntensity,
-      radius);
+  processIntensityQuantityType();
 }
 
-void PointLight::processIntensityQuantityType(vec3f &radIntensity)
+void PointLight::processIntensityQuantityType()
 {
   radIntensity = 0.0f;
   radiance = 0.0f;
