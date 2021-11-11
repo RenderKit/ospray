@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <assert.h>
@@ -10,8 +10,17 @@ namespace rkcommon {
 #define __dllexport /**/
 
 /* Signature of ispc-generated 'task' functions */
-using ISPCTaskFunc = void (*)(
-    void *data, int threadIndex, int threadCount, int taskIndex, int taskCount);
+using ISPCTaskFunc = void (*)(void *data,
+    int threadIndex,
+    int threadCount,
+    int taskIndex,
+    int taskCount,
+    int taskIndex0,
+    int taskIndex1,
+    int taskIndex2,
+    int taskCount0,
+    int taskCount1,
+    int taskCount2);
 
 extern "C" __dllexport void *ISPCAlloc(
     void **taskPtr, int64_t size, int32_t alignment)
@@ -32,13 +41,30 @@ extern "C" __dllexport void ISPCSync(void *task)
   delete lst;
 }
 
-extern "C" __dllexport void ISPCLaunch(
-    void ** /*taskPtr*/, void *func, void *data, int count)
+extern "C" __dllexport void ISPCLaunch(void ** /*taskPtr*/,
+    void *func,
+    void *data,
+    int taskCount0,
+    int taskCount1,
+    int taskCount2)
 {
-  tasking::parallel_for(count, [&](const int i) {
-    const int threadIndex = i; //(int) TaskScheduler::threadIndex();
-    const int threadCount = count; //(int) TaskScheduler::threadCount();
-    ((ISPCTaskFunc)func)(data, threadIndex, threadCount, i, count);
+  const size_t nTasks =
+      size_t(taskCount0) * size_t(taskCount1) * size_t(taskCount2);
+  tasking::parallel_for(nTasks, [&](const size_t i) {
+    const int taskIndex0 = i % taskCount0;
+    const int taskIndex1 = (i / taskCount0) % taskCount1;
+    const int taskIndex2 = i / (taskCount0 * taskCount1);
+    ((ISPCTaskFunc)func)(data,
+        i,
+        nTasks,
+        i,
+        nTasks,
+        taskIndex0,
+        taskIndex1,
+        taskIndex2,
+        taskCount0,
+        taskCount1,
+        taskCount2);
   });
 }
 } // namespace rkcommon
