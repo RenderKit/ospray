@@ -84,10 +84,11 @@ Light_SampleRes GeometryLight_sample(const Light *uniform super,
   if (instance->motionBlur)
     foreach_unique (utime in time) {
       const uniform affine3f xfm = Instance_getTransform(instance, utime);
-      as = geo->sampleArea(geo, primID, xfm, rcp(xfm), ns);
+      as = geo->sampleArea(geo, primID, xfm, rcp(xfm), ns, time);
     }
   else {
-    as = geo->sampleArea(geo, primID, instance->xfm, instance->rcp_xfm, ns);
+    as = geo->sampleArea(
+        geo, primID, instance->xfm, instance->rcp_xfm, ns, time);
   }
   // note that sample.pdf/primitives * sampleArea(worldspace).pdf == self->pdf
 

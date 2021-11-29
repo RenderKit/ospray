@@ -121,8 +121,18 @@ void GeometricLight::SetUp()
   std::vector<vec4ui> lightIndices = {{0, 1, 2, 3}};
 
   cpp::Geometry lightMesh("mesh");
-  lightMesh.setParam("vertex.position", cpp::CopiedData(lightVertices));
   lightMesh.setParam("index", cpp::CopiedData(lightIndices));
+  if (motionBlur == 2) { // deformation
+    for (vec3f &p : lightVertices)
+      p.x -= 0.5f;
+    std::vector<cpp::CopiedData> mposdata;
+    mposdata.push_back(cpp::CopiedData(lightVertices));
+    for (vec3f &p : lightVertices)
+      p.x += 1.0f;
+    mposdata.push_back(cpp::CopiedData(lightVertices));
+    lightMesh.setParam("motion.vertex.position", cpp::CopiedData(mposdata));
+  } else
+    lightMesh.setParam("vertex.position", cpp::CopiedData(lightVertices));
   lightMesh.commit();
   cpp::GeometricModel lightModel(lightMesh);
 
@@ -140,7 +150,7 @@ void GeometricLight::SetUp()
     lightModel.setParam("material", lightMaterial);
   }
 
-  if (motionBlur) {
+  if (motionBlur == 1) { // instance
     lightModel.commit();
     cpp::Group group;
     group.setParam("geometry", cpp::CopiedData(lightModel));
@@ -151,10 +161,11 @@ void GeometricLight::SetUp()
     xfms.push_back(affine3f::translate(vec3f(0.5, 0, 0)));
     instance.setParam("motion.transform", cpp::CopiedData(xfms));
     AddInstance(instance);
-
-    camera.setParam("shutter", range1f(0, 1));
   } else
     AddModel(lightModel);
+
+  if (motionBlur)
+    camera.setParam("shutter", range1f(0, 1));
 }
 
 PhotometricLight::PhotometricLight()
@@ -443,11 +454,13 @@ INSTANTIATE_TEST_SUITE_P(Light,
     GeometricLight,
     ::testing::Combine(::testing::Values(0.2f, 0.4f),
         ::testing::Bool(),
-        ::testing::Values(false)));
+        ::testing::Values(0)));
 
 INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
     GeometricLight,
-    ::testing::Values(std::make_tuple(0.2f, false, true)));
+    ::testing::Combine(::testing::Values(0.2f),
+        ::testing::Values(false),
+        ::testing::Values(1, 2)));
 
 // Quad Light
 

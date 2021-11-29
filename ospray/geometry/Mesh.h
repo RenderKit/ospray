@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -25,6 +25,12 @@ struct OSPRAY_SDK_INTERFACE Mesh : public Geometry
   Ref<const Data> colorData;
   Ref<const DataT<vec2f>> texcoordData;
   Ref<const Data> indexData;
+  bool motionBlur{false};
+  Ref<const DataT<const DataT<vec3f> *>> motionVertexData;
+  std::vector<vec3f *> motionVertexAddr;
+  Ref<const DataT<const DataT<vec3f> *>> motionNormalData;
+  std::vector<vec3f *> motionNormalAddr;
+  range1f time{0.0f, 1.0f};
 };
 
 } // namespace ospray

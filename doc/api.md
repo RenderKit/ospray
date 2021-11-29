@@ -1064,14 +1064,17 @@ A mesh consisting of either triangles or quads is created by calling
 `ospNewGeometry` with type string "`mesh`". Once created, a mesh
 recognizes the following parameters:
 
-  Type                 Name             Description
-  -------------------- ---------------- -------------------------------------------------
-  vec3f[]              vertex.position  [data] array of vertex positions
-  vec3f[]              vertex.normal    [data] array of vertex normals
-  vec4f[] / vec3f[]    vertex.color     [data] array of vertex colors (linear RGBA/RGB)
-  vec2f[]              vertex.texcoord  [data] array of vertex texture coordinates
-  vec3ui[] / vec4ui[]  index            [data] array of (either triangle or quad) indices (into the vertex array(s))
-  -------------------- ---------------- -------------------------------------------------
+  Type                 Name                    Description
+  -------------------- ----------------------- -------------------------------------------------
+  vec3f[]              vertex.position         [data] array of vertex positions, overridden by `motion.*` arrays
+  vec3f[]              vertex.normal           [data] array of vertex normals, overridden by `motion.*` arrays
+  vec4f[] / vec3f[]    vertex.color            [data] array of vertex colors (linear RGBA/RGB)
+  vec2f[]              vertex.texcoord         [data] array of vertex texture coordinates
+  vec3ui[] / vec4ui[]  index                   [data] array of (either triangle or quad) indices (into the vertex array(s))
+  vec3f[][]            motion.vertex.position  [data] array of vertex position arrays (uniformly distributed keys for deformation motion blur)
+  vec3f[][]            motion.vertex.normal    [data] array of vertex normal arrays (uniformly distributed keys for deformation motion blur)
+  box1f                time                    time associated with first and last key in `motion.*` arrays (for deformation motion blur), default [0, 1] 
+  -------------------- ----------------------- -------------------------------------------------
   : Parameters defining a mesh geometry.
 
 The data type of index arrays differentiates between the underlying

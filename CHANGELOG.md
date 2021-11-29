@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Changes in v2.9.0:
+
+-   Add support for multi-segment deformation motion blur for `mesh`
+    geometry
+
 ### Changes in v2.8.0:
 
 -   Lights can be now part of `OSPGroup` and thus instanced like

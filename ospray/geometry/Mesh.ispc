@@ -16,6 +16,10 @@ struct Mesh
   Data1D normal;
   Data1D color;
   Data1D texcoord;
+  uint8 **motionVertex;
+  uint8 **motionNormal;
+  uint32 motionKeys;
+  box1f time;
   int64 flagMask; // which attributes are missing and cannot be interpolated
   bool has_alpha; // 4th color component is valid
   bool is_triangleMesh;
@@ -32,6 +36,30 @@ struct Mesh
 __define_quad_interpolate(vec2f);
 __define_quad_interpolate(vec3f);
 __define_quad_interpolate(vec4f);
+
+inline float Mesh_calcKey(Mesh *uniform self, float time, int &idx)
+{
+  // should only get hits within time interval, just to be sure...
+  float t = clamp(time, self->time.lower, self->time.upper);
+  t = (t - self->time.lower) * rcp(box_size(self->time))
+      * (self->motionKeys - 1);
+  idx = clamp((int)t, 0, self->motionKeys - 2);
+  t = clamp(t - idx);
+  return t;
+}
+
+inline vec3f interpolate_vec3f(const uniform int64 byteStride,
+    uint8 *a0,
+    uint8 *a1,
+    const int index,
+    const float t)
+{
+  vec3f v0, v1;
+  int64 offs = byteStride * index;
+  v0 = *((const vec3f *)(a0 + offs));
+  v1 = *((const vec3f *)(a1 + offs));
+  return lerp(t, v0, v1);
+}
 
 static void QuadMesh_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
@@ -59,11 +87,24 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
   flags &= self->flagMask;
 
   if (flags & DG_NS) {
-    const vec3f a = get_vec3f(self->normal, index.x);
-    const vec3f b = get_vec3f(self->normal, index.y);
-    const vec3f c = get_vec3f(self->normal, index.z);
-    const vec3f d = get_vec3f(self->normal, index.w);
-    dg.Ns = quad_interpolate(uv, a, b, c, d);
+    if (self->motionKeys) {
+      int idx;
+      const float t = Mesh_calcKey(self, ray.time, idx);
+      const uniform int64 byteStride = self->normal.byteStride;
+      const uint8 *a0 = self->motionNormal[idx];
+      const uint8 *a1 = self->motionNormal[idx + 1];
+      const vec3f a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
+      const vec3f b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
+      const vec3f c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
+      const vec3f d = interpolate_vec3f(byteStride, a0, a1, index.w, t);
+      dg.Ns = quad_interpolate(uv, a, b, c, d);
+    } else {
+      const vec3f a = get_vec3f(self->normal, index.x);
+      const vec3f b = get_vec3f(self->normal, index.y);
+      const vec3f c = get_vec3f(self->normal, index.z);
+      const vec3f d = get_vec3f(self->normal, index.w);
+      dg.Ns = quad_interpolate(uv, a, b, c, d);
+    }
   }
 
   if (flags & DG_COLOR) {
@@ -93,9 +134,21 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
 
       if (det != 0.f) {
         const float invDet = rcp(det);
-        const vec3f a = get_vec3f(self->vertex, index.x);
-        const vec3f b = get_vec3f(self->vertex, index.y);
-        const vec3f d = get_vec3f(self->vertex, index.w);
+        vec3f a, b, d;
+        if (self->motionKeys) {
+          int idx;
+          const float t = Mesh_calcKey(self, ray.time, idx);
+          const uniform int64 byteStride = self->vertex.byteStride;
+          const uint8 *a0 = self->motionVertex[idx];
+          const uint8 *a1 = self->motionVertex[idx + 1];
+          a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
+          b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
+          d = interpolate_vec3f(byteStride, a0, a1, index.w, t);
+        } else {
+          a = get_vec3f(self->vertex, index.x);
+          b = get_vec3f(self->vertex, index.y);
+          d = get_vec3f(self->vertex, index.w);
+        }
         const vec3f dp02 = a - d;
         const vec3f dp12 = b - d;
         dg.dPds = (dst12.y * dp02 - dst02.y * dp12) * invDet;
@@ -124,10 +177,22 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
   flags &= self->flagMask;
 
   if (flags & DG_NS) {
-    const vec3f a = get_vec3f(self->normal, index.x);
-    const vec3f b = get_vec3f(self->normal, index.y);
-    const vec3f c = get_vec3f(self->normal, index.z);
-    dg.Ns = interpolate(uv, a, b, c);
+    if (self->motionKeys) {
+      int idx;
+      const float t = Mesh_calcKey(self, ray.time, idx);
+      const uniform int64 byteStride = self->normal.byteStride;
+      const uint8 *a0 = self->motionNormal[idx];
+      const uint8 *a1 = self->motionNormal[idx + 1];
+      const vec3f a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
+      const vec3f b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
+      const vec3f c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
+      dg.Ns = interpolate(uv, a, b, c);
+    } else {
+      const vec3f a = get_vec3f(self->normal, index.x);
+      const vec3f b = get_vec3f(self->normal, index.y);
+      const vec3f c = get_vec3f(self->normal, index.z);
+      dg.Ns = interpolate(uv, a, b, c);
+    }
   }
 
   if (flags & DG_COLOR) {
@@ -154,9 +219,21 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
 
       if (det != 0.f) {
         const float invDet = rcp(det);
-        const vec3f a = get_vec3f(self->vertex, index.x);
-        const vec3f b = get_vec3f(self->vertex, index.y);
-        const vec3f c = get_vec3f(self->vertex, index.z);
+        vec3f a, b, c;
+        if (self->motionKeys) {
+          int idx;
+          const float t = Mesh_calcKey(self, ray.time, idx);
+          const uniform int64 byteStride = self->vertex.byteStride;
+          const uint8 *a0 = self->motionVertex[idx];
+          const uint8 *a1 = self->motionVertex[idx + 1];
+          a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
+          b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
+          c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
+        } else {
+          a = get_vec3f(self->vertex, index.x);
+          b = get_vec3f(self->vertex, index.y);
+          c = get_vec3f(self->vertex, index.z);
+        }
         const vec3f dp02 = a - c;
         const vec3f dp12 = b - c;
         dg.dPds = (dst12.y * dp02 - dst02.y * dp12) * invDet;
@@ -176,21 +253,41 @@ SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
     const int32 primID,
     const uniform affine3f &xfm,
     const uniform affine3f &,
-    const vec2f &s)
+    const vec2f &s,
+    const float time)
 {
   const Mesh *const uniform self = (const Mesh *uniform)_self;
   SampleAreaRes res;
   vec4ui index4;
+  bool quad = false;
   if (self->is_triangleMesh) {
     const vec3ui index3 = get_vec3ui(self->index, primID);
     index4 = make_vec4ui(index3.x, index3.y, index3.z, index3.z);
-  } else
+  } else {
     index4 = get_vec4ui(self->index, primID);
+    quad = index4.z != index4.w;
+  }
   const vec4ui index = index4;
 
-  const vec3f a = get_vec3f(self->vertex, index.x);
-  const vec3f b = get_vec3f(self->vertex, index.y);
-  const vec3f c = get_vec3f(self->vertex, index.z);
+  vec3f a, b, c, d;
+  if (self->motionKeys) {
+    int idx;
+    const float t = Mesh_calcKey(self, time, idx);
+    const uniform int64 byteStride = self->vertex.byteStride;
+    const uint8 *a0 = self->motionVertex[idx];
+    const uint8 *a1 = self->motionVertex[idx + 1];
+    a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
+    b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
+    c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
+    if (quad)
+      d = interpolate_vec3f(byteStride, a0, a1, index.w, t);
+  } else {
+    a = get_vec3f(self->vertex, index.x);
+    b = get_vec3f(self->vertex, index.y);
+    c = get_vec3f(self->vertex, index.z);
+    if (quad)
+      d = get_vec3f(self->vertex, index.w);
+  }
   const vec3f e1 = xfmVector(xfm, a - c);
   const vec3f e2 = xfmVector(xfm, b - c);
   const vec3f m1 = cross(e1, e2);
@@ -201,8 +298,7 @@ SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
   vec3f v2 = c;
   vec2f sp = s;
 
-  if (index.z != index.w) {
-    const vec3f d = get_vec3f(self->vertex, index.w);
+  if (quad) {
     // painfully slow: re-calculate areas to decide which triangle to sample
     const vec3f e3 = xfmVector(xfm, d - c);
     const vec3f m2 = cross(e2, e3);
@@ -235,6 +331,8 @@ void Mesh_getAreas(const Geometry *const uniform _self,
 {
   const Mesh *const uniform self = (const Mesh *uniform)_self;
   // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
+  // XXX for deformation motion blur the areas (i.e. selection probabilities)
+  // are calculated using the first key only
   for (uniform int32 i = 0; i < numPrims; i++) {
     const uniform vec4ui index = self->is_triangleMesh
         ? make_vec4ui(get_vec3ui(self->index, primIDs[i]))
@@ -278,6 +376,10 @@ export void *uniform Mesh_set(void *uniform _self,
     const Data1D *uniform normal,
     const Data1D *uniform color,
     const Data1D *uniform texcoord,
+    void *uniform motionVertex,
+    void *uniform motionNormal,
+    uniform unsigned int motionKeys,
+    const uniform box1f &time,
     uniform bool has_alpha,
     uniform bool is_triangleMesh)
 {
@@ -287,6 +389,10 @@ export void *uniform Mesh_set(void *uniform _self,
   self->normal = *normal;
   self->color = *color;
   self->texcoord = *texcoord;
+  self->motionVertex = (uint8 * *uniform) motionVertex;
+  self->motionNormal = (uint8 * *uniform) motionNormal;
+  self->motionKeys = motionKeys;
+  self->time = time;
   self->has_alpha = has_alpha;
   self->super.numPrimitives = index->numItems;
   self->is_triangleMesh = is_triangleMesh;

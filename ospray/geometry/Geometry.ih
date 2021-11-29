@@ -48,16 +48,13 @@ typedef void (*Geometry_GetAreasFct)(const Geometry *const uniform,
 
 // sample the given primitive uniformly wrt. area
 typedef SampleAreaRes (*Geometry_SampleAreaFct)(const Geometry *const uniform,
-    const int32 primID //!< primitive to sample
-    ,
-    const uniform affine3f &xfm //!< instance transformation (obj2world)
-    ,
-    const uniform affine3f &rcp_xfm //!< inverse transformation (world2obj)
-    ,
-    const vec2f &s //!< random numbers to generate the sample
+    const int32 primID,
+    const uniform affine3f &xfm, // instance transformation (obj2world)
+    const uniform affine3f &rcp_xfm, // inverse transformation (world2obj)
+    const vec2f &s, // random numbers to generate the sample
+    const float time // for deformation motion blur
 );
 
-/*! ispc-side equivalent of a geometry */
 struct Geometry
 {
   /*! 'virtual' post-intersect function that fills in a

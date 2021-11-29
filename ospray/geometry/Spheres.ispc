@@ -95,7 +95,8 @@ SampleAreaRes Spheres_sampleArea(const Geometry *uniform const _self,
     const int32 primID,
     const uniform affine3f &xfm,
     const uniform affine3f &rcp_xfm,
-    const vec2f &s)
+    const vec2f &s,
+    const float)
 {
   const Spheres *const uniform self = (const Spheres *uniform)_self;
 

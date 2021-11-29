@@ -96,7 +96,7 @@ RTCFORMATFOR_SPECIALIZATION(affine2f, RTC_FORMAT_FLOAT2X3_COLUMN_MAJOR);
 RTCFORMATFOR_SPECIALIZATION(affine3f, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR);
 #undef RTCFORMATFOR_SPECIALIZATION
 
-// ... via ospData, NoOp when data is invalid
+// ... via Ref<ospData>, NoOp when data is invalid
 template <typename T>
 void setEmbreeGeometryBuffer(RTCGeometry geom,
     enum RTCBufferType type,
@@ -113,6 +113,24 @@ void setEmbreeGeometryBuffer(RTCGeometry geom,
       0,
       dataRef->stride(),
       dataRef->size());
+}
+// ... via *ospData, NoOp when data is invalid
+template <typename T>
+void setEmbreeGeometryBuffer(RTCGeometry geom,
+    enum RTCBufferType type,
+    const DataT<T, 1> *dataPtr,
+    unsigned int slot = 0)
+{
+  if (!dataPtr)
+    return;
+  rtcSetSharedGeometryBuffer(geom,
+      type,
+      slot,
+      RTCFormatFor<T>::value,
+      dataPtr->data(),
+      0,
+      dataPtr->stride(),
+      dataPtr->size());
 }
 // ... via an std::vector
 template <typename T>

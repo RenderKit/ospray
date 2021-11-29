@@ -57,7 +57,7 @@ class GeometricLight
     : public LightTest,
       public ::testing::TestWithParam<std::tuple<float /*size*/,
           bool /*useMaterialList*/,
-          bool /*motionBlur*/>>
+          int /*motionBlur 1=instance, 2=deformation*/>>
 {
  public:
   GeometricLight();
@@ -66,6 +66,7 @@ class GeometricLight
  private:
   float size{0.2};
   bool useMaterialList{true};
+  int motionBlur{0};
 };
 
 class PhotometricLight

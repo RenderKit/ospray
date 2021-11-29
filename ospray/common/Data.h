@@ -217,6 +217,12 @@ struct DataT<T, 1> : public Data
   }
 };
 
+template <typename T>
+struct OSPTypeFor<DataT<T> *>
+{
+  static constexpr OSPDataType value = OSP_DATA;
+};
+
 // Inlined definitions //////////////////////////////////////////////////////
 
 inline const ispc::Data1D *ispc(Ref<const Data> &dataRef)
@@ -260,7 +266,8 @@ template <typename T, int DIM>
 inline typename std::enable_if<std::is_pointer<T>::value, bool>::type Data::is()
     const
 {
-  auto toType = OSPTypeFor<T>::value;
+  auto toType = OSPTypeFor<typename std::remove_const<
+      typename std::remove_pointer<T>::type>::type *>::value;
   return (type == toType || (toType == OSP_OBJECT && isObjectType(type)))
       && dimensions <= DIM; // can iterate with higher dimensionality
 }
