@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
+#include "SphericalQuadSampling.ih"
 #include "common/Instance.ih"
 
 struct QuadLight
@@ -37,12 +38,16 @@ inline Light_SampleRes Sample(const QuadLight *uniform self,
   s.x = sp.x > 0.5f ? sp.x - 0.5f : sp.x + 0.5f;
   s.y = sp.y > 0.5f ? sp.y - 0.5f : sp.y + 0.5f;
 
-  // sample position on light with density ppdf = 1/area
-  // TODO: use solid angle sampling
-  const vec3f p = pos + edge1 * s.x + edge2 * s.y;
+  // create spherical quad for solid angle sampling
+  SphericalQuad quad =
+      SphericalQuad_create(pos, edge1, edge2, neg(nnormal), dg.P);
 
-  // extant light vector from the hit point
-  const vec3f dir = p - dg.P;
+  // bilinear warped cosine weight approximation
+  const vec3f cosW =
+      computeCosineWeightedRNG(pos, edge1, edge2, dg.P, dg.Ng, s);
+
+  // sample quad
+  const vec3f dir = sampleSphericalQuad(quad, make_vec2f(cosW.x, cosW.y));
   const float dist = length(dir);
 
   // normalized light vector
@@ -51,10 +56,11 @@ inline Light_SampleRes Sample(const QuadLight *uniform self,
 
   // convert to pdf wrt. solid angle
   const float cosd = dot(nnormal, res.dir);
-  res.pdf = ppdf * sqr(dist) / abs(cosd);
+  res.pdf = quad.S == 0.f ? 0.f : cosW.z / quad.S;
 
   // emit only to one side
-  res.weight = cosd > 0.f ? self->radiance * rcp(res.pdf) : make_vec3f(0.f);
+  res.weight = (cosd > 0.f) && (res.pdf != 0.f) ? self->radiance * rcp(res.pdf)
+                                                : make_vec3f(0.f);
 
   return res;
 }
@@ -141,8 +147,12 @@ inline Light_EvalRes Eval(const QuadLight *uniform self,
   if (dist <= minDist | dist > maxDist)
     return res;
 
-  res.radiance = self->radiance;
-  res.pdf = ppdf * sqr(dist) * rcosd;
+  SphericalQuad quad =
+      SphericalQuad_create(pos, edge1, edge2, neg(nnormal), dg.P);
+  if (quad.S > 0.f) {
+    res.radiance = self->radiance;
+    res.pdf = rcp(quad.S);
+  }
 
   return res;
 }

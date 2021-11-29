@@ -102,12 +102,8 @@ inline void cylinderSampleSolidAngle(const DifferentialGeometry &dg,
   // compute spherical quad bounding cylinder
   vec3f q0, e0, e1;
   cylinderComputeRectBounds(position0, position1, radius, dg.P, q0, e0, e1, S);
-  const float e0l = length(e0);
-  const float e1l = length(e1);
-  const vec3f e0n = e0 / e0l;
-  const vec3f e1n = e1 / e1l;
-  const vec3f n = normalize(cross(e0n, e1n));
-  SphericalQuad quad = SphericalQuad_create(q0, e0n, e0l, e1n, e1l, n, dg.P);
+  const vec3f n = normalize(cross(e0, e1));
+  SphericalQuad quad = SphericalQuad_create(q0, e0, e1, n, dg.P);
 
   // warped samples in solid angle space
   const vec3f cosW = computeCosineWeightedRNG(q0, e0, e1, dg.P, dg.Ng, sp);

@@ -12,6 +12,8 @@ Version History
     - OSPRAY_APPS_EXAMPLES refactored to OSPRAY_ENABLE_APPS_EXAMPLES
     - OSPRAY_APPS_TUTORIALS refactored to OSPRAY_ENABLE_APPS_TUTORIALS
     - OSPRAY_APPS_TESTING refactored to OSPRAY_ENABLE_APPS_TESTING
+-   Changed from area sampling to solid angle sampling for quad lights
+    in the pathtracer
 
 ### Changes in v2.8.0:
 
