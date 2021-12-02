@@ -88,7 +88,8 @@ void World::commit()
 
   postStatusMsg(OSP_LOG_DEBUG)
       << "=======================================================\n"
-      << "Committing world, which has " << numInstances << " instances";
+      << "Committing world, which has " << numInstances << " instances and "
+      << (lights ? lights->size() : 0) << " lights";
 
   geometriesInstIEs.clear();
   volumesInstIEs.clear();

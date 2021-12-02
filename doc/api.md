@@ -27,7 +27,7 @@ calling
 OSPRay parses (and removes) its known command line parameters from your
 application's `main` function. For an example see the [tutorial]. For
 possible error codes see section [Error Handling and Status Messages].
-It is important to note that the arguments passed to `ospInit()` are
+It is important to note that the arguments passed to `ospInit` are
 processed in order they are listed. The following parameters (which are
 prefixed by convention with "`--osp:`") are understood:
 
@@ -271,7 +271,7 @@ in order to register a callback function of type
 which OSPRay will use to emit status messages. By default, OSPRay uses a
 callback which does nothing, so any output desired by an application
 will require that a callback is provided. Note that callbacks for C++
-`std::cout` and `std::cerr` can be alternatively set through `ospInit()`
+`std::cout` and `std::cerr` can be alternatively set through `ospInit`
 or the `OSPRAY_LOG_OUTPUT` environment variable.
 
 Applications can clear either callback by passing `NULL` instead of an
@@ -298,7 +298,7 @@ exit), the OSPRay API should be finalized with
 
 This API call ensures that the current device is cleaned up
 appropriately. Due to static object allocation having non-deterministic
-ordering, it is recommended that applications call `ospShutdown()`
+ordering, it is recommended that applications call `ospShutdown`
 before the calling application process terminates.
 
 Objects
@@ -3079,13 +3079,6 @@ for applications to query exactly how long an asynchronous task executed without
 the overhead of measuring both task execution + synchronization by the calling
 application.
 
-### Asynchronously Rendering and ospCommit()
-
-The use of either `ospRenderFrame` or `ospRenderFrame` requires
-that all objects in the scene being rendered have been committed before
-rendering occurs. If a call to `ospCommit()` happens while a frame is
-rendered, the result is undefined behavior and should be avoided.
-
 ### Synchronous Rendering
 
 For convenience in certain use cases, `ospray_util.h` provides a
@@ -3100,6 +3093,13 @@ This version is the equivalent of:
     return ospGetVariance(fb)
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
+
+### Rendering and ospCommit
+
+The use of either `ospRenderFrame` or `ospRenderFrameBlocking` requires
+that all objects in the scene being rendered have been committed before
+rendering occurs. If a call to `ospCommit` happens while a frame is
+rendered, the result is undefined behavior and should be avoided.
 
 Distributed Rendering with MPI
 ==============================
