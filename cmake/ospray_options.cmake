@@ -57,6 +57,39 @@ option(OSPRAY_ENABLE_TARGET_CLANGFORMAT
        "Enable 'format' target, requires clang-format too")
 mark_as_advanced(OSPRAY_ENABLE_TARGET_CLANGFORMAT)
 
+# Dependent options
+cmake_dependent_option(
+  OSPRAY_ENABLE_APPS_BENCHMARK
+  "Enable building, installing, and packaging of benchmark tools."
+  ON
+  OSPRAY_ENABLE_APPS
+  OFF
+)
+
+cmake_dependent_option(
+  OSPRAY_ENABLE_APPS_EXAMPLES
+  "Enable building, installing, and packaging of ospExamples."
+  ON
+  OSPRAY_ENABLE_APPS
+  OFF
+)
+
+cmake_dependent_option(
+  OSPRAY_ENABLE_APPS_TUTORIALS
+  "Enable building, installing, and packaging of tutorial apps."
+  ON
+  OSPRAY_ENABLE_APPS
+  OFF
+)
+
+cmake_dependent_option(
+  OSPRAY_ENABLE_APPS_TESTING
+  "Enable building, installing, and packaging of test tools."
+  ON
+  OSPRAY_ENABLE_APPS
+  OFF
+)
+
 #####################################################################
 # Binary package options, before any install() invocation/definition
 #####################################################################

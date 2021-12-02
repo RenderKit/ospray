@@ -5,15 +5,7 @@ cmake_dependent_option(
   OSPRAY_MODULE_MPI
   "Build the MPI module (Requires ISPC module)"
   OFF
-  OSPRAY_ENABLE_MODULES
-  OFF
-)
-
-cmake_dependent_option(
-  OSPRAY_MPI_BUILD_TUTORIALS
-  "Enable MPI module sample apps"
-  ON
-  "OSPRAY_MODULE_MPI;OSPRAY_ENABLE_APPS;OSPRAY_APPS_EXAMPLES"
+  OSPRAY_MODULE_CPU
   OFF
 )
 
@@ -45,10 +37,10 @@ add_subdirectory(common)
 add_subdirectory(external)
 add_subdirectory(ospray)
 
-if (OSPRAY_MPI_BUILD_TUTORIALS)
+if (OSPRAY_ENABLE_APPS_EXAMPLES)
   add_subdirectory(tutorials)
 endif()
 
-if (OSPRAY_APPS_TESTING)
+if (OSPRAY_ENABLE_APPS_TESTING)
     add_subdirectory(testing)
 endif()

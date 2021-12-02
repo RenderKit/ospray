@@ -16,8 +16,7 @@ target_link_libraries(ospray_mpi_common
     Snappy::snappy
   PUBLIC
     rkcommon::rkcommon
-    ospray_sdk
-    ospray_module_ispc
+    ospray_module_cpu
     MPI::MPI_CXX
 )
 

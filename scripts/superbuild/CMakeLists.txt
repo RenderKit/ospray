@@ -159,6 +159,7 @@ option(BUILD_DEPENDENCIES_ONLY "Don't build OSPRay itself, only its dependencies
 option(BUILD_OSPRAY_CI_EXTRAS "Enable OSPRay's extra compiler checks." OFF)
 
 option(BUILD_OSPRAY_APPS "Enable building OSPRay apps" ON)
+option(BUILD_OSPRAY_MODULE_CPU "Enable building module_cpu" ON)
 option(BUILD_OSPRAY_MODULE_MPI "Enable building module_mpi" OFF)
 option(BUILD_OSPRAY_MODULE_MULTIDEVICE "Enable building module_multidevice" OFF)
 
@@ -213,7 +214,7 @@ endif()
 ## Build main projects ##
 set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} ${PARALLEL_JOBS_OPTS})
 
-if (BUILD_OIDN OR BUILD_OSPRAY_MODULE_MPI)
+if (BUILD_OIDN OR BUILD_OSPRAY_MODULE_CPU OR BUILD_OSPRAY_MODULE_MPI)
   set(OSPRAY_ENABLE_MODULES ON)
 endif()
 

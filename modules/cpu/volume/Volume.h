@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "api/ISPCDevice.h"
+#include "ISPCDevice.h"
 #include "common/Managed.h"
 // embree
 #include "embree3/rtcore.h"

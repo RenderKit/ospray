@@ -147,7 +147,7 @@ when running cmake with
 
     cmake \
       -DOSPRAY_ENABLE_APPS=ON \
-      -DOSPRAY_APPS_TUTORIALS=ON \
+      -DOSPRAY_ENABLE_APPS_TUTORIALS=ON \
       -DOSPRAY_MODULE_MPI=ON \
       -DOSPRAY_MPI_BUILD_TUTORIALS=ON \
       <other args>

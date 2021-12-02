@@ -4,7 +4,7 @@
 #include "MPIDistributedDevice.h"
 #include <map>
 #include "MPIDistributedDevice_ispc.h"
-#include "api/ISPCDevice.h"
+#include "ISPCDevice.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
 #include "common/DistributedWorld.h"

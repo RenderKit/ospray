@@ -160,7 +160,7 @@ OSPRAY_INTERFACE void ospShutdown();
 
 // Create an OSPRay engine backend using explicit device string.
 OSPRAY_INTERFACE OSPDevice ospNewDevice(
-    const char *deviceType OSP_DEFAULT_VAL("default"));
+    const char *deviceType OSP_DEFAULT_VAL("cpu"));
 
 // Set current device the API responds to
 OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice);

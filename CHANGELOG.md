@@ -5,6 +5,13 @@ Version History
 
 -   Add support for multi-segment deformation motion blur for `mesh`
     geometry
+-   Moved ISPC module to `modules/` folder and renamed the module to
+    `cpu`
+-   Refactored CMake variable names for enabling app categories
+    - OSPRAY_APPS_BENCHMARK refactored to OSPRAY_ENABLE_APPS_BENCHMARK
+    - OSPRAY_APPS_EXAMPLES refactored to OSPRAY_ENABLE_APPS_EXAMPLES
+    - OSPRAY_APPS_TUTORIALS refactored to OSPRAY_ENABLE_APPS_TUTORIALS
+    - OSPRAY_APPS_TESTING refactored to OSPRAY_ENABLE_APPS_TESTING
 
 ### Changes in v2.8.0:
 

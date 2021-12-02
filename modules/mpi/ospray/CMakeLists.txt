@@ -54,8 +54,7 @@ target_link_libraries(ospray_module_mpi
     rkcommon::rkcommon
     ospray_mpi_common
     ospray_pico_bench
-    ospray_sdk
-    ospray_module_ispc
+    ospray_module_cpu
 )
 
 target_include_directories(ospray_module_mpi

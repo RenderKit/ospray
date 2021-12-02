@@ -5,7 +5,7 @@
 
 #include <unordered_set>
 #include <vector>
-#include "api/ISPCDevice.h"
+#include "ISPCDevice.h"
 #include "MultiDeviceLoadBalancer.h"
 #include "MultiDeviceObject.h"
 #include "MultiDeviceRenderTask.h"

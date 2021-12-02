@@ -28,7 +28,7 @@ SphericalQuad SphericalQuad_create(const vec3f &q0,
   vec3f d = q0 - P;
   quad.z0 = dot(d, quad.z);
 
-  // flip ’z’ to make it point against ’Q’
+  // flip z to make it point against Q
   quad.z = quad.z0 > 0.f ? neg(quad.z) : quad.z;
   quad.z0 = -abs(quad.z0);
 
@@ -78,18 +78,18 @@ inline float sign(float x)
 
 vec3f sampleSphericalQuad(const SphericalQuad &quad, const vec2f &s)
 {
-  // 1. compute ’cu’
+  // 1. compute cu
   const float au = s.x * quad.S + quad.k;
   float cosau, sinau;
   sincos(au, &sinau, &cosau);
   const float fu = (cosau * quad.n0z - quad.n2z) * rcp(sinau);
   const float cu = clamp(rsqrt(fu * fu + sqr(quad.n0z)) * sign(fu), -1.f, 1.f);
 
-  // 2. compute ’xu’
+  // 2. compute xu
   const float x0 = -(cu * quad.z0) * rsqrt(1.f - cu * cu);
   const float xu = clamp(x0, quad.x0, quad.x1);
 
-  // 3. compute ’yv’
+  // 3. compute yv
   const float ds = sqrt(sqr(xu) + sqr(quad.z0));
   const float ds2 = sqr(ds);
   const float h0 = quad.y0 * rsqrt(ds2 + sqr(quad.y0));

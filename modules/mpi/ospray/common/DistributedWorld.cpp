@@ -7,7 +7,7 @@
 #include "DistributedWorld.h"
 #include "MPICommon.h"
 #include "Messaging.h"
-#include "api/ISPCDevice.h"
+#include "ISPCDevice.h"
 #include "common/Data.h"
 #include "common/DistributedWorld_ispc.h"
 

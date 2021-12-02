@@ -341,8 +341,8 @@ Advanced users may want to link to additional targets which are exported
 in OSPRay’s CMake config, which includes all installed modules. All
 targets built with OSPRay are exported in the `ospray::` namespace,
 therefore all targets locally used in the OSPRay source tree can be
-accessed from an install. For example, `ospray_module_ispc` can be
-consumed directly via the `ospray::ospray_module_ispc` target. All
+accessed from an install. For example, `ospray_module_cpu` can be
+consumed directly via the `ospray::ospray_module_cpu` target. All
 targets have their libraries, includes, and definitions attached to them
 for public consumption (please [report
 bugs](#ospray-support-and-contact) if this is broken!).
@@ -3406,7 +3406,7 @@ when running cmake with
 ``` sh
 cmake \
   -DOSPRAY_ENABLE_APPS=ON \
-  -DOSPRAY_APPS_TUTORIALS=ON \
+  -DOSPRAY_ENABLE_APPS_TUTORIALS=ON \
   -DOSPRAY_MODULE_MPI=ON \
   -DOSPRAY_MPI_BUILD_TUTORIALS=ON \
   <other args>

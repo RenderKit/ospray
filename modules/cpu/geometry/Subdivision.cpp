@@ -3,7 +3,7 @@
 
 // ospray
 #include "Subdivision.h"
-#include "../include/ospray/ospray.h"
+#include "ospray/ospray.h"
 #include "common/World.h"
 // ispc exports
 #include <cmath>

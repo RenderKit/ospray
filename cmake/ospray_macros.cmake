@@ -21,13 +21,17 @@ macro(get_subdirectories result curdir)
 endmacro()
 
 ## Get all subdirectories and call add_subdirectory() if it has a CMakeLists.txt
-macro(add_all_subdirectories)
+macro(add_all_subdirectories_except except)
+  set(e ${except})
   file(GLOB dirs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/ *)
   foreach(dir ${dirs})
-    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/CMakeLists.txt)
+    if (NOT "${dir}X" STREQUAL "${except}X" AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/CMakeLists.txt)
       add_subdirectory(${dir})
-    endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/CMakeLists.txt)
-  endforeach(dir ${dirs})
+    endif()
+  endforeach()
+endmacro()
+macro(add_all_subdirectories)
+  add_all_subdirectories_except("")
 endmacro()
 
 ## Setup CMAKE_BUILD_TYPE to have a default + cycle between options in UI

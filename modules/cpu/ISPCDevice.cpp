@@ -37,7 +37,7 @@
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/CodeTimer.h"
 
-#include "api/ISPCDevice_ispc.h"
+#include "ISPCDevice_ispc.h"
 
 namespace ospray {
 namespace api {
@@ -559,7 +559,7 @@ OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
   return renderer->pick(fb, camera, world, screenPos);
 }
 
-extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
+extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_cpu(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
   auto status = moduleVersionCheck(versionMajor, versionMinor);

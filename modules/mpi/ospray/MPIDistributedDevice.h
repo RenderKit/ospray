@@ -8,7 +8,7 @@
 #include "common/Managed.h"
 #include "common/ObjectHandle.h"
 #include "openvkl/openvkl.h"
-#include "ospray/render/LoadBalancer.h"
+#include "render/LoadBalancer.h"
 
 namespace ospray {
 namespace mpi {
