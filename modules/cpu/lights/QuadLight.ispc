@@ -21,22 +21,49 @@ struct QuadLight
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
-
-inline Light_SampleRes Sample(const QuadLight *uniform self,
-    const uniform vec3f &pos,
+inline Light_SampleRes SampleCenter(const uniform vec3f &pos,
     const uniform vec3f &edge1,
     const uniform vec3f &edge2,
     const uniform float ppdf,
     const uniform vec3f &nnormal,
+    const uniform vec3f &radiance,
+    const DifferentialGeometry &dg)
+{
+  Light_SampleRes res;
+  const vec3f p = pos + edge1 * 0.5f + edge2 * 0.5f;
+
+  // extant light vector from the hit point
+  const vec3f dir = p - dg.P;
+  const float dist = length(dir);
+
+  // normalized light vector
+  res.dir = dir / dist;
+  res.dist = dist;
+
+  // convert to pdf wrt. solid angle
+  const float cosd = dot(nnormal, res.dir);
+  res.pdf = ppdf * sqr(dist) / abs(cosd);
+
+  // emit only to one side
+  res.weight = cosd > 0.f ? radiance * rcp(res.pdf) : make_vec3f(0.f);
+
+  return res;
+}
+
+inline Light_SampleRes Sample(const uniform vec3f &pos,
+    const uniform vec3f &edge1,
+    const uniform vec3f &edge2,
+    const uniform float ppdf,
+    const uniform vec3f &nnormal,
+    const uniform vec3f &radiance,
     const DifferentialGeometry &dg,
-    const vec2f &sp)
+    const vec2f &s)
 {
   Light_SampleRes res;
 
-  // (0, 0) should sample center --> add 0.5 CranleyPatterson rotation
-  vec2f s;
-  s.x = sp.x > 0.5f ? sp.x - 0.5f : sp.x + 0.5f;
-  s.y = sp.y > 0.5f ? sp.y - 0.5f : sp.y + 0.5f;
+  if (s.x == 0.0f && s.y == 0.0f) { // XXX SciVis
+    return SampleCenter(pos, edge1, edge2, ppdf, nnormal, radiance, dg);
+  }
 
   // create spherical quad for solid angle sampling
   SphericalQuad quad =
@@ -59,7 +86,7 @@ inline Light_SampleRes Sample(const QuadLight *uniform self,
   res.pdf = quad.S == 0.f ? 0.f : cosW.z / quad.S;
 
   // emit only to one side
-  res.weight = (cosd > 0.f) && (res.pdf != 0.f) ? self->radiance * rcp(res.pdf)
+  res.weight = (cosd > 0.f) && (res.pdf != 0.f) ? radiance * rcp(res.pdf)
                                                 : make_vec3f(0.f);
 
   return res;
@@ -72,12 +99,12 @@ Light_SampleRes QuadLight_sample(const Light *uniform super,
 {
   const QuadLight *uniform self = (QuadLight * uniform) super;
   assert(self);
-  return Sample(self,
-      self->position,
+  return Sample(self->position,
       self->edge1,
       self->edge2,
       self->ppdf,
       self->nnormal,
+      self->radiance,
       dg,
       sp);
 }
@@ -108,7 +135,7 @@ Light_SampleRes QuadLight_sample_instanced(const Light *uniform super,
     const uniform vec3f nnormal = ndirection * ppdf; // normalize
 
     // sample light
-    res = Sample(self, pos, edge1, edge2, ppdf, nnormal, dg, sp);
+    res = Sample(pos, edge1, edge2, ppdf, nnormal, self->radiance, dg, sp);
   }
   return res;
 }
