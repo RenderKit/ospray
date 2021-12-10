@@ -90,7 +90,7 @@ void Volume::commit()
   // Initialize shared structure
   getSh()->vklVolume = vklVolume;
   getSh()->vklSampler = vklSampler;
-  getSh()->boundingBox = *(box3f *)&bounds;
+  getSh()->boundingBox = bounds;
 }
 
 void Volume::checkDataStride(const Data *data) const

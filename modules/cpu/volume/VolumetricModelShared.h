@@ -13,15 +13,9 @@ struct TransferFunction;
 
 struct VolumetricModel
 {
-  // instanced Volume
   Volume *volume;
-
-  // Color and opacity transfer function.
   TransferFunction *transferFunction;
-
-  // interval iterator context
   VKLIntervalIteratorContext vklIntervalContext;
-
   box3f boundingBox;
 
   // Volume parameters understood by the pathtracer
