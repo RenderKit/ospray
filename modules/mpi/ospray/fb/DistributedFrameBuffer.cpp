@@ -37,7 +37,7 @@ void DistributedTileError::sync()
   if (tiles <= 0)
     return;
 
-  mpicommon::bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, group.comm).wait();
+  mpicommon::bcast(tileErrorBuffer.data(), tiles, MPI_FLOAT, 0, group.comm).wait();
 }
 
 // DistributedFrameBuffer definitions ///////////////////////////////////////

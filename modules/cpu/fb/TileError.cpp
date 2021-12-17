@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "TileError.h"
@@ -7,21 +7,13 @@
 namespace ospray {
 
 TileError::TileError(const vec2i &_numTiles)
-    : numTiles(_numTiles), tiles(_numTiles.x * _numTiles.y)
+    : numTiles(_numTiles),
+      tiles(_numTiles.x * _numTiles.y),
+      tileErrorBuffer(tiles)
 {
-  if (tiles > 0)
-    tileErrorBuffer = alignedMalloc<float>(tiles);
-  else
-    tileErrorBuffer = nullptr;
-
   // maximum number of regions: all regions are of size 3 are split in half
   errorRegion.reserve(divRoundUp(tiles * 2, 3));
   clear();
-}
-
-TileError::~TileError()
-{
-  alignedFree(tileErrorBuffer);
 }
 
 void TileError::clear()
