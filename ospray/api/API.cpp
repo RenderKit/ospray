@@ -437,7 +437,6 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPGeometricModel ospNewGeometricModel(
     OSPGeometry geom) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(geom);
   ASSERT_DEVICE();
   OSPGeometricModel instance = currentDevice().newGeometricModel(geom);
   return instance;
@@ -447,7 +446,6 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPVolumetricModel ospNewVolumetricModel(
     OSPVolume volume) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(volume);
   ASSERT_DEVICE();
   OSPVolumetricModel instance = currentDevice().newVolumetricModel(volume);
   return instance;
@@ -503,7 +501,6 @@ OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPInstance ospNewInstance(OSPGroup group) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(group);
   ASSERT_DEVICE();
   return currentDevice().newInstance(group);
 }

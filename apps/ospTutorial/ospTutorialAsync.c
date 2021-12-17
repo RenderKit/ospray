@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial of how to use OSPRay's async API in an
@@ -374,7 +374,8 @@ void buildScene2(OSPCamera *camera,
 
   // put the mesh into a model
   static OSPGeometricModel model;
-  model = ospNewGeometricModel(mesh);
+  model = ospNewGeometricModel(NULL);
+  ospSetObject(model, "geometry", mesh);
   ospCommit(model);
   ospRelease(mesh);
 
@@ -388,7 +389,8 @@ void buildScene2(OSPCamera *camera,
 
   // put the group into an instance (give the group a world transform)
   static OSPInstance instance;
-  instance = ospNewInstance(group);
+  instance = ospNewInstance(NULL);
+  ospSetObject(instance, "group", group);
   ospCommit(instance);
   ospRelease(group);
 

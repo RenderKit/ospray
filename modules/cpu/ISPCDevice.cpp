@@ -83,6 +83,7 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter_object(Data *),
     declare_param_setter_object(FrameBuffer *),
     declare_param_setter_object(Future *),
+    declare_param_setter_object(Geometry *),
     declare_param_setter_object(GeometricModel *),
     declare_param_setter_object(Group *),
     declare_param_setter_object(ImageOp *),

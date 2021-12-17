@@ -23,7 +23,7 @@ struct OSPRAY_SDK_INTERFACE GeometricModel : public ManagedObject
 
  private:
   Ref<Geometry> geom;
-  Ref<Geometry> geomAPI;
+  const Ref<Geometry> geomAPI;
   Ref<const Data> materialData;
   Ref<const DataT<vec4f>> colorData;
   Ref<const DataT<uint8_t>> indexData;

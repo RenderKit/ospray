@@ -244,14 +244,14 @@ OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
 
 OSPRAY_INTERFACE OSPGeometricModel ospNewGeometricModel(
-    OSPGeometry geom OSP_DEFAULT_VAL(NULL));
+    OSPGeometry OSP_DEFAULT_VAL(NULL));
 OSPRAY_INTERFACE OSPVolumetricModel ospNewVolumetricModel(
-    OSPVolume volume OSP_DEFAULT_VAL(NULL));
+    OSPVolume OSP_DEFAULT_VAL(NULL));
 
 // Model Meta-Data //////////////////////////////////////////////////////////
 
 OSPRAY_INTERFACE OSPMaterial ospNewMaterial(
-    const char */*ignored*/, const char *materialType);
+    const char * /*ignored*/, const char *materialType);
 
 OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char *type);
 
@@ -260,7 +260,7 @@ OSPRAY_INTERFACE OSPTexture ospNewTexture(const char *type);
 // Instancing ///////////////////////////////////////////////////////////////
 
 OSPRAY_INTERFACE OSPGroup ospNewGroup();
-OSPRAY_INTERFACE OSPInstance ospNewInstance(OSPGroup);
+OSPRAY_INTERFACE OSPInstance ospNewInstance(OSPGroup OSP_DEFAULT_VAL(NULL));
 
 // Top-level Worlds /////////////////////////////////////////////////////////
 

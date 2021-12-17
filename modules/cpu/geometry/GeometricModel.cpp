@@ -10,10 +10,9 @@
 
 namespace ospray {
 
-GeometricModel::GeometricModel(Geometry *_geometry)
+GeometricModel::GeometricModel(Geometry *_geometry) : geomAPI(_geometry)
 {
   managedObjectType = OSP_GEOMETRIC_MODEL;
-  geomAPI = _geometry;
   this->ispcEquivalent = ispc::GeometricModel_create();
 }
 
@@ -24,13 +23,10 @@ std::string GeometricModel::toString() const
 
 void GeometricModel::commit()
 {
-  if (hasParam("geometry"))
-    geom = (Geometry *)getParamObject("geometry");
-  else
-    geom = geomAPI;
-
-  if (geom.ptr == nullptr)
-    throw std::runtime_error("geometric model received null geometry");
+  geom =
+      hasParam("geometry") ? (Geometry *)getParamObject("geometry") : geomAPI;
+  if (!geom)
+    throw std::runtime_error(toString() + " received NULL 'geometry'");
 
   bool useRendererMaterialList = false;
   materialData = getParamDataT<Material *>("material", false, true);
@@ -54,7 +50,8 @@ void GeometricModel::commit()
   size_t maxItems = geom->numPrimitives();
   if (indexData && indexData->size() < maxItems) {
     postStatusMsg(OSP_LOG_INFO)
-        << toString() << " not enough 'index' elements for geometry, clamping";
+        << toString()
+        << " not enough 'index' elements for 'geometry', clamping";
   }
 
   if (indexData)
@@ -65,13 +62,13 @@ void GeometricModel::commit()
     postStatusMsg(OSP_LOG_INFO)
         << toString()
         << " potentially not enough 'material' elements for "
-           "geometry, clamping";
+           "'geometry', clamping";
   }
 
   if (colorData && colorData->size() > 1 && colorData->size() < maxItems) {
     postStatusMsg(OSP_LOG_INFO)
         << toString()
-        << " potentially not enough 'color' elements for geometry, clamping";
+        << " potentially not enough 'color' elements for 'geometry', clamping";
   }
 
   invertNormals = getParam<bool>("invertNormals");

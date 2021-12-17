@@ -7,10 +7,9 @@
 
 namespace ospray {
 
-VolumetricModel::VolumetricModel(Volume *_volume)
+VolumetricModel::VolumetricModel(Volume *_volume) : volumeAPI(_volume)
 {
   managedObjectType = OSP_VOLUMETRIC_MODEL;
-  volumeAPI = _volume;
 }
 
 VolumetricModel::~VolumetricModel()
@@ -26,19 +25,15 @@ std::string VolumetricModel::toString() const
 
 void VolumetricModel::commit()
 {
-  if (hasParam("volume"))
-    volume = (Volume *)getParamObject("volume");
-  else
-    volume = volumeAPI;
-
-  if (volume.ptr == nullptr)
-    throw std::runtime_error("volumetric model received null volume");
+  volume = hasParam("volume") ? (Volume *)getParamObject("volume") : volumeAPI;
+  if (!volume)
+    throw std::runtime_error(toString() + " received NULL 'volume'");
 
   auto *transferFunction =
       (TransferFunction *)getParamObject("transferFunction", nullptr);
 
   if (transferFunction == nullptr)
-    throw std::runtime_error("volumetric model must have 'transferFunction'");
+    throw std::runtime_error(toString() + " must have 'transferFunction'");
 
   // create value selector using transfer function and pass to volume
   if (volume->vklVolume) {

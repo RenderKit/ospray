@@ -1021,17 +1021,20 @@ the volume (and possible acceleration structures it contains) to
 rendering-specific parameters (where more than one set may exist
 concurrently). To create a volume instance, call
 
-    OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
+    OSPVolumetricModel ospNewVolumetricModel(OSPVolume);
 
 The passed volume can be `NULL` as long as the volume to be used is
-passed as a parameter. If both a volume is specified on object creation and
-as a parameter, the parameter value is used. If the parameter value
+passed as a parameter. If both a volume is specified on object creation
+and as a parameter, the parameter value is used. If the parameter value
 is later removed, the volume object passed on object creation is again
 used.
 
   -------------------- ----------------- --------  --------------------------------------
   Type                 Name               Default  Description
   -------------------- ----------------- --------  --------------------------------------
+  OSPVolume            volume                      optional [volume] object this model
+                                                   references
+
   OSPTransferFunction  transferFunction            [transfer function] to use
 
   float                densityScale           1.0  makes volumes uniformly thinner or
@@ -1040,9 +1043,6 @@ used.
   float                anisotropy             0.0  anisotropy of the (Henyey-Greenstein)
                                                    phase function in [-1–1] ([path tracer]
                                                    only), default to isotropic scattering
-
-  OSPVolume            volume                      optional [volume] object this model
-                                                   references
   -------------------- ----------------- --------  ---------------------------------------
   : Parameters understood by VolumetricModel.
 
@@ -1342,7 +1342,7 @@ GeometricModels. These take a geometry, which defines the surface
 representation, and applies either full-object or per-primitive color
 and material information. To create a geometric model, call
 
-    OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
+    OSPGeometricModel ospNewGeometricModel(OSPGeometry);
 
 The passed geometry can be `NULL` as long as the geometry to be used is
 passed as a parameter. If both a geometry is specified on object creation
@@ -1367,6 +1367,8 @@ with normals oriented outside clips everything what's inside.
   ------------------------ -------------- ----------------------------------------------------
   Type                     Name           Description
   ------------------------ -------------- ----------------------------------------------------
+  OSPGeometry              geometry       optional [geometry] object this model references
+
   OSPMaterial / uint32     material       optional [material] applied to the geometry, may be
                                           an index into the `material` parameter on the
                                           [renderer] (if it exists)
@@ -1385,8 +1387,6 @@ with normals oriented outside clips everything what's inside.
                                           `color` and `material`
 
   bool                     invertNormals  inverts all shading normals (Ns), default false
-
-  OSPGeometry              geometry       optional [geometry] object this model references
   ------------------------ -------------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
@@ -1772,9 +1772,17 @@ via a transform. To create and instance call
 
     OSPInstance ospNewInstance(OSPGroup);
 
+The passed group can be `NULL` as long as the group to be instanced is
+passed as a parameter. If both a group is specified on object creation
+and as a parameter, the parameter value is used. If the parameter value
+is later removed, the group object passed on object creation is again
+used.
+
   ------------ ----------------- ---------- --------------------------------------------------------
   Type         Name                 Default Description
   ------------ ----------------- ---------- --------------------------------------------------------
+  OSPGroup     group                        optional [group] object to be instanced
+
   affine3f     transform           identity world-space transform for all attached geometries and
                                             volumes, overridden by `motion.*` arrays
 

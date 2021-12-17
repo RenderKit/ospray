@@ -23,6 +23,7 @@ struct OSPRAY_SDK_INTERFACE Instance : public ManagedObject
   box3f getBounds() const override;
 
   Ref<Group> group;
+  const Ref<Group> groupAPI;
   MotionTransform motionTransform;
 };
 

@@ -11,12 +11,10 @@
 
 namespace ospray {
 
-Instance::Instance(Group *_group)
+Instance::Instance(Group *_group) : groupAPI(_group)
 {
   managedObjectType = OSP_INSTANCE;
   this->ispcEquivalent = ispc::Instance_create();
-
-  group = _group;
 }
 
 std::string Instance::toString() const
@@ -26,6 +24,10 @@ std::string Instance::toString() const
 
 void Instance::commit()
 {
+  group = hasParam("group") ? (Group *)getParamObject("group") : groupAPI;
+  if (!group)
+    throw std::runtime_error(toString() + " received NULL 'group'");
+
   motionTransform.readParams(*this);
 
   ispc::Instance_set(getIE(),

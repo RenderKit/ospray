@@ -34,7 +34,7 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
  private:
   box3f volumeBounds;
   Ref<Volume> volume;
-  Ref<Volume> volumeAPI;
+  const Ref<Volume> volumeAPI;
   VKLIntervalIteratorContext vklIntervalContext{nullptr};
 };
 

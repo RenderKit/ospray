@@ -14,6 +14,7 @@ Version History
     - OSPRAY_APPS_TESTING refactored to OSPRAY_ENABLE_APPS_TESTING
 -   Changed from area sampling to solid angle sampling for quad lights
     in the pathtracer
+-   Instances can now have the group object rebound via a parameter
 
 ### Changes in v2.8.0:
 
