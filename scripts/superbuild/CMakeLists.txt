@@ -228,6 +228,10 @@ if (BUILD_OSPRAY_MODULE_MULTIDEVICE)
   set(OSPRAY_MODULE_MULTIDEVICE ON)
 endif()
 
+if (BUILD_OSPRAY_ANARI)
+  include(anari-ospray.cmake)
+endif()
+
 if (NOT BUILD_DEPENDENCIES_ONLY)
   include(build_ospray.cmake)
 endif()
