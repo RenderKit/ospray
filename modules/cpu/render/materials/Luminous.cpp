@@ -29,11 +29,16 @@ std::string Luminous::toString() const
 
 void Luminous::commit()
 {
-  const vec3f radiance =
-      getParam<vec3f>("color", vec3f(1.f)) * getParam<float>("intensity", 1.f);
+  // emissiveColor can be constant and/or texture to modulate the radiance,
+  // original constant params color and intensity work as before
+  MaterialParam3f emissiveColor = getMaterialParam3f("emissiveColor", 1.f);
+  const vec3f radiance = emissiveColor.factor
+      * getParam<vec3f>("color", vec3f(1.f))
+      * getParam<float>("intensity", 1.f);
   const float transparency = getParam<float>("transparency", 0.f);
 
   getSh()->super.emission = radiance;
+  getSh()->super.emissionMap = emissiveColor.tex;
   getSh()->transparency = transparency;
 }
 

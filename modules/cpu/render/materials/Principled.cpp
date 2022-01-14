@@ -74,6 +74,13 @@ void Principled::commit()
   float outsideTransmissionDepth =
       getParam<float>("outsideTransmissionDepth", 1.f);
 
+  // emissiveColor can be constant and/or texture to modulate the radiance,
+  // intensity is a constant factor
+  MaterialParam3f emissiveColor = getMaterialParam3f("emissiveColor", 0.f);
+  emissiveColor.factor *= getParam<float>("intensity", 1.f);
+  getSh()->super.emission = emissiveColor.factor;
+  getSh()->super.emissionMap = emissiveColor.tex;
+
   getSh()->baseColor = baseColor.factor;
   getSh()->baseColorMap = baseColor.tex;
   getSh()->edgeColor = edgeColor.factor;

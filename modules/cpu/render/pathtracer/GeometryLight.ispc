@@ -6,6 +6,7 @@
 #include "render/pathtracer/PathTracerUtil.ih"
 
 #include "render/Material.ih"
+#include "texture/TextureParam.ih"
 
 #include "common/Instance.ih"
 #include "geometry/GeometricModel.ih"
@@ -45,6 +46,7 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
       const float lePdf = pathVertex.dg.areaPDF * sqr(ray.t) / abs(cosd);
       L = L
           + pathState.throughput * m->emission
+              * get3f(m->emissionMap, pathVertex.dg, make_vec3f(1.f))
               * misHeuristic(
                   pathState, lastVertex.pdf_w, lightSelectionPDF * lePdf);
     }
