@@ -1,8 +1,9 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include "IntensityDistribution.h"
 #include "Light.h"
 
 namespace ospray {
@@ -24,6 +25,7 @@ struct OSPRAY_SDK_INTERFACE QuadLight : public Light
   vec3f edge1{1.f, 0.f, 0.f}; //!< vectors to adjacent corners
   vec3f edge2{0.f, 1.f, 0.f}; //!< vectors to adjacent corners
   vec3f radiance{1.f}; //!< emitted radiance of the QuadLight
+  IntensityDistribution intensityDistribution;
 };
 
 } // namespace ospray

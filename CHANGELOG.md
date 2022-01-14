@@ -19,6 +19,10 @@ Version History
     offload device.
 -   MPI: Resolve possible race condition in assigning IDs to distributed
     objects
+-   Support for photometric lights (e.g., IES or EULUMDAT) also for
+    `sphere` and `quad` lights. When setting `intensityDistribution`,
+    other values for `intensityQuantity` than
+    `OSP_INTENSITY_QUANTITY_SCALE` are deprecated
 
 ### Changes in v2.8.0:
 

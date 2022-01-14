@@ -1,4 +1,4 @@
-## Copyright 2009-2021 Intel Corporation
+## Copyright 2009-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 cmake_dependent_option(
@@ -105,6 +105,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   lights/DirectionalLight.ispc
   lights/PointLight.cpp
   lights/PointLight.ispc
+  lights/IntensityDistribution.cpp
   lights/SpotLight.cpp
   lights/SpotLight.ispc
   lights/QuadLight.cpp

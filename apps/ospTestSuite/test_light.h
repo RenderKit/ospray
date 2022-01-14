@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_fixture.h"
@@ -71,15 +71,17 @@ class GeometricLight
 
 class PhotometricLight
     : public LightTest,
-      public ::testing::TestWithParam<
-          std::tuple<float /*radius*/, const char * /*renderer type*/>>
+      public ::testing::TestWithParam<std::tuple<const char * /*light type*/,
+          float /*size*/,
+          const char * /*renderer type*/>>
 {
  public:
   PhotometricLight();
   void SetUp() override;
 
  private:
-  float radius{0.0};
+  std::string lightType;
+  float size{0.0};
 };
 
 class QuadLight : public LightTest,

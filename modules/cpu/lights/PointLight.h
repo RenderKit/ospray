@@ -1,8 +1,9 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include "IntensityDistribution.h"
 #include "Light.h"
 
 namespace ospray {
@@ -24,6 +25,8 @@ struct OSPRAY_SDK_INTERFACE PointLight : public Light
   float radius{0.f}; //!< Radius of SphereLight
   vec3f radiance{1.f}; //!< emitted radiance of the SphereLight
   vec3f radIntensity{0.f};
+  IntensityDistribution intensityDistribution;
+  vec3f direction{0.f, 0.f, 1.f};
 };
 
 } // namespace ospray

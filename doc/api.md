@@ -1440,9 +1440,48 @@ specific light source).
                                       surface, unit is W/m^2^
 
   OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a 
-                                      built-in quantity (e.g., `HDRI`, or `sunSky`). 
+                                      built-in quantity (e.g., `HDRI`, or `sunSky`, or
+                                      when using `intensityDistribution`).
   ----------------------------------  ----------------------------------------------------
   : Types of radiometric quantities used to interpret a light's `intensity` parameter.
+
+### Photometric Lights
+
+Measured light sources (IES, EULUMDAT, ...) are supported by the
+`sphere`, `spot`, and `quad` lights when setting an
+`intensityDistribution` [data] array to modulate the intensity per
+direction. The mapping is using the C-γ coordinate system (see also
+below figure): the values of the first (or only) dimension of
+`intensityDistribution` are uniformly mapped to γ in [0–π]; the first
+intensity value to 0, the last value to π, thus at least two values need
+to be present.
+
+![C-γ coordinate system for the mapping of `intensityDistribution` with
+photometric lights.][imgCGammaCoords]
+
+If the array has a second dimension then the intensities are not
+rotational symmetric around the main direction (where angle γ is zero),
+but are accordingly mapped to the C-halfplanes in [0–2π]; the first
+"row" of values to 0 and 2π, the other rows such that they have uniform
+distance to its neighbors. The orientation of the C0-plane is specified
+via `c0`.
+
+  ---------- --------------------- ---------------------------------------------
+  Type       Name                  Description
+  ---------- --------------------- ---------------------------------------------
+  float[]    intensityDistribution luminous intensity distribution for
+                                   photometric lights; can be 2D for asymmetric
+                                   illumination; values are assumed to be
+                                   uniformly distributed
+
+  vec3f      c0                    orientation, i.e., direction of the
+                                   C0-(half)plane (only needed if illumination
+                                   via `intensityDistribution` is asymmetric)
+  ---------- --------------------- ---------------------------------------------
+  : Special parameters for photometric lights.
+
+When using an `intensityDistribution` then the default and only valid
+value for `intensityQuantity` is `OSP_INTENSITY_QUANTITY_SCALE`.
 
 The following light types are supported by most OSPRay renderers.
 
@@ -1475,16 +1514,20 @@ The sphere light (or the special case point light) is a light emitting
 uniformly in all directions from the surface toward the outside. It does
 not emit any light toward the inside of the sphere. It is created by
 passing the type string "`sphere`" to `ospNewLight`. The point light
-supports `OSP_INTENSITY_QUANTITY_POWER`,
-`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
-`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter value.
-In addition to the [general parameters](#lights) understood by all
-lights the sphere light supports the following special parameters:
+supports only `OSP_INTENSITY_QUANTITY_SCALE` when
+`intensityDistribution` is set, or otherwise
+`OSP_INTENSITY_QUANTITY_POWER`, `OSP_INTENSITY_QUANTITY_INTENSITY` (then
+default) and `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights)
+understood by all lights and the [photometric
+parameters](#photometric-lights) the sphere light supports the following
+special parameters:
 
   Type    Name            Default Description
   ------- ---------- ------------ --------------------------------
   vec3f   position    $(0, 0, 0)$ the center of the sphere light
   float   radius                0 the size of the sphere light
+  vec3f   direction   $(0, 0, 1)$ main orientation of `intensityDistribution`
   ------- ---------- ------------ --------------------------------
   : Special parameters accepted by the sphere light.
 
@@ -1492,16 +1535,19 @@ Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer]).
 
-### Spotlight / Photometric Light
+### Spotlight / Ring Light
 
 The spotlight is a light emitting into a cone of directions. It is
 created by passing the type string "`spot`" to `ospNewLight`. The
-spotlight supports `OSP_INTENSITY_QUANTITY_POWER`,
-`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
+spotlight 
+supports only `OSP_INTENSITY_QUANTITY_SCALE` when
+`intensityDistribution` is set, or otherwise
+`OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` (then default) and
 `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
 value. In addition to the [general parameters](#lights) understood by
-all lights the spotlight supports the special parameters listed in the
-table.
+all lights and the [photometric parameters](#photometric-lights) the
+spotlight supports the special parameters listed in the table.
 
   ---------- --------------------- ----------- ---------------------------------
   Type       Name                      Default Description
@@ -1529,18 +1575,6 @@ table.
   float      innerRadius                     0 in combination with
                                                `radius` turns the disk
                                                into a ring
-
-  float[]    intensityDistribution             luminous intensity distribution
-                                               for photometric lights; can be 2D
-                                               for asymmetric illumination;
-                                               values are assumed to be
-                                               uniformly distributed
-
-  vec3f      c0                                orientation, i.e., direction of
-                                               the C0-(half)plane (only needed
-                                               if illumination via
-                                               `intensityDistribution` is
-                                               asymmetric)
   ---------- --------------------- ----------- ---------------------------------
   : Special parameters accepted by the spotlight.
 
@@ -1551,34 +1585,18 @@ shadows when the renderer uses stochastic sampling (like the [path
 tracer]). Additionally setting the inner radius will result in a ring
 instead of a disk emitting the light.
 
-Measured light sources (IES, EULUMDAT, ...) are supported by providing
-an `intensityDistribution` [data] array to modulate the intensity per
-direction. The mapping is using the C-γ coordinate system (see also
-below figure): the values of the first (or only) dimension of
-`intensityDistribution` are uniformly mapped to γ in [0–π]; the first
-intensity value to 0, the last value to π, thus at least two values need
-to be present. If the array has a second dimension then the intensities
-are not rotational symmetric around `direction`, but are accordingly
-mapped to the C-halfplanes in [0–2π]; the first "row" of values to 0 and
-2π, the other rows such that they have uniform distance to its
-neighbors. The orientation of the C0-plane is specified via `c0`.
-A combination of using an `intensityDistribution` and
-`OSP_INTENSITY_QUANTITY_POWER` as `intensityQuantity` is not supported
-at the moment.
-
-![C-γ coordinate system for the mapping of `intensityDistribution` to
-the spotlight.][imgSpotCoords]
-
 ### Quad Light
 
 The quad^[actually a parallelogram] light is a planar, procedural area
 light source emitting uniformly on one side into the half-space. It is
 created by passing the type string "`quad`" to `ospNewLight`. The quad
-light supports `OSP_INTENSITY_QUANTITY_POWER`,
-`OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
-(default) as `intensityQuantity` parameter. In addition to the [general
-parameters](#lights) understood by all lights the quad light supports
-the following special parameters:
+light supports only `OSP_INTENSITY_QUANTITY_SCALE` when
+`intensityDistribution` is set, or otherwise
+`OSP_INTENSITY_QUANTITY_POWER`, `OSP_INTENSITY_QUANTITY_INTENSITY` and
+`OSP_INTENSITY_QUANTITY_RADIANCE` (then default) as `intensityQuantity`
+parameter. In addition to the [general parameters](#lights) understood
+by all lights and the [photometric parameters](#photometric-lights) the
+quad light supports the following special parameters:
 
   Type   Name           Default Description
   ------ --------- ------------ -----------------------------------------
@@ -1591,6 +1609,7 @@ the following special parameters:
 ![Defining a quad light which emits toward the reader.][imgQuadLight]
 
 The emission side is determined by the cross product of `edge1`×`edge2`.
+which is also the main emission direction for `intensityDistribution`.
 Note that only renderers that use stochastic sampling (like the path
 tracer) will compute soft shadows from the quad light. Other renderers
 will just sample the center of the quad light, which results in hard
@@ -1598,7 +1617,7 @@ shadows.
 
 ### Cylinder Light
 
-The cylinder light is a cylinderical, procedural area light source 
+The cylinder light is a cylinderical, procedural area light source
 emitting uniformly outwardly into the space beyond the boundary. It is
 created by passing the type string "`cylinder`" to `ospNewLight`. The 
 cylinder light supports `OSP_INTENSITY_QUANTITY_POWER`,

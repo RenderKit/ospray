@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "HDRILight.h"
@@ -55,8 +55,8 @@ void HDRILight::processIntensityQuantityType()
   // validate the correctness of the light quantity type
   if (intensityQuantity != OSP_INTENSITY_QUANTITY_SCALE
       && intensityQuantity != OSP_INTENSITY_QUANTITY_RADIANCE) {
-    static WarnOnce warning(
-        "Unsupported intensityQuantity type for a 'hdri' light source");
+    postStatusMsg(OSP_LOG_WARNING)
+        << toString() << " unsupported 'intensityQuantity' value";
     coloredIntensity = vec3f(0.0f);
   }
 }

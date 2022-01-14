@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AmbientLight.h"
@@ -35,8 +35,8 @@ void AmbientLight::processIntensityQuantityType()
   } else if (intensityQuantity == OSP_INTENSITY_QUANTITY_RADIANCE) {
     radiance = coloredIntensity;
   } else {
-    static WarnOnce warning(
-        "Unsupported intensityQuantity type for a 'ambient' light source");
+    postStatusMsg(OSP_LOG_WARNING)
+        << toString() << " unsupported 'intensityQuantity' value";
     radiance = vec3f(0.0f);
   }
 }

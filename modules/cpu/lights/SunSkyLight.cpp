@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -176,8 +176,8 @@ void SunSkyLight::processIntensityQuantityType()
     coloredIntensity = getParam<vec3f>("color", vec3f(1.f));
     intensityScale = 0.025f * getParam<float>("intensity", 1.0f);
   } else {
-    static WarnOnce warning(
-        "Unsupported intensityQuantity type for a 'sunSky' light source");
+    postStatusMsg(OSP_LOG_WARNING)
+        << toString() << " unsupported 'intensityQuantity' value";
     coloredIntensity = vec3f(0.0f);
   }
 }

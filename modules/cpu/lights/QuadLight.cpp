@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "QuadLight.h"
@@ -15,7 +15,10 @@ void *QuadLight::createIE(const void *instance) const
       (ispc::vec3f &)radiance,
       (ispc::vec3f &)position,
       (ispc::vec3f &)edge1,
-      (ispc::vec3f &)edge2);
+      (ispc::vec3f &)edge2,
+      intensityDistribution.data(),
+      (const ispc::vec2i &)intensityDistribution.size,
+      (const ispc::vec3f &)intensityDistribution.c0);
   return ie;
 }
 
@@ -31,25 +34,39 @@ void QuadLight::commit()
   edge1 = getParam<vec3f>("edge1", vec3f(1.f, 0.f, 0.f));
   edge2 = getParam<vec3f>("edge2", vec3f(0.f, 1.f, 0.f));
 
-  queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_RADIANCE);
+  intensityDistribution.c0 = edge2;
+  intensityDistribution.readParams(*this);
+
+  queryIntensityQuantityType(intensityDistribution
+          ? OSP_INTENSITY_QUANTITY_SCALE
+          : OSP_INTENSITY_QUANTITY_RADIANCE);
   processIntensityQuantityType();
 }
 
 void QuadLight::processIntensityQuantityType()
 {
-  float quadArea = length(cross(edge1, edge2));
-  /// converting from the chosen intensity quantity type to radiance
-  if (intensityQuantity == OSP_INTENSITY_QUANTITY_POWER) {
-    radiance = coloredIntensity / (M_PI * quadArea);
-  } else if (intensityQuantity == OSP_INTENSITY_QUANTITY_INTENSITY) {
+  const float quadArea = length(cross(edge1, edge2));
+
+  // converting from the chosen intensity quantity type to radiance
+  if (intensityDistribution
+          ? intensityQuantity == OSP_INTENSITY_QUANTITY_SCALE
+          : intensityQuantity == OSP_INTENSITY_QUANTITY_INTENSITY) {
     radiance = coloredIntensity / quadArea;
-  } else if (intensityQuantity == OSP_INTENSITY_QUANTITY_RADIANCE) {
-    radiance = coloredIntensity;
-  } else {
-    static WarnOnce warning(
-        "Unsupported intensityQuantity type for a 'quad' light source");
-    radiance = vec3f(0.0f);
+    return;
   }
+  if (!intensityDistribution) {
+    if (intensityQuantity == OSP_INTENSITY_QUANTITY_POWER) {
+      radiance = coloredIntensity / (M_PI * quadArea);
+      return;
+    }
+    if (intensityQuantity == OSP_INTENSITY_QUANTITY_RADIANCE) {
+      radiance = coloredIntensity;
+      return;
+    }
+  }
+  postStatusMsg(OSP_LOG_WARNING)
+      << toString() << " unsupported 'intensityQuantity' value";
+  radiance = vec3f(0.0f);
 }
 
 } // namespace ospray

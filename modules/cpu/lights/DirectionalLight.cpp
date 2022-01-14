@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DirectionalLight.h"
@@ -46,8 +46,8 @@ void DirectionalLight::processIntensityQuantityType()
   } else if (intensityQuantity == OSP_INTENSITY_QUANTITY_IRRADIANCE) {
     irradiance = coloredIntensity;
   } else {
-    static WarnOnce warning(
-        "Unsupported intensityQuantity type for a 'distant' light source");
+    postStatusMsg(OSP_LOG_WARNING)
+        << toString() << " unsupported 'intensityQuantity' value";
     irradiance = vec3f(0.0f);
   }
 }

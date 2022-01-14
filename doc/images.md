@@ -6,8 +6,8 @@
 [imgMPIDistribTutorial2]: ospMPIDistribTutorial_accumulatedFrame.jpg { width=60% }
 [imgMPIDistribTutorialSpheres]: ospMPIDistribTutorialSpheres.jpg { width=60% }
 [imgMPIDistribTutorialVolume]: ospMPIDistribTutorialVolume.jpg { width=60% }
+[imgCGammaCoords]: c-gamma_coords.fig
 [imgSpotLight]: spot_light.fig
-[imgSpotCoords]: spot_coords.fig
 [imgQuadLight]: quad_light.fig
 [imgHDRILight]: hdri_light.fig
 [imgCameraPerspective]: camera_perspective.jpg { width=60% }
