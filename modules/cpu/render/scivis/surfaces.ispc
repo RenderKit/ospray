@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "math/random.ih"
@@ -114,7 +114,7 @@ vec3f evaluateLights(
   // Iterate through all lights
   vec3f color = make_vec3f(0.f);
   for (uniform int i = 0; i < world->scivisData.numLights; i++) {
-    // Skip lights with disabled visibilty via parameter
+    // Skip lights with disabled visibility via parameter
     const Light *uniform l = world->scivisData.lights[i];
     if (!l->isVisible)
       continue;

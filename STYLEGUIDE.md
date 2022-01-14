@@ -157,7 +157,7 @@ The following are concerns specific to ISPC:
     ```
 
 -   Prefer omitting `uniform`/`varying` qualifiers for structs. Only
-    apply them if they need to be consistenly the same for both
+    apply them if they need to be consistently the same for both
     `uniform` and `varying` instances of the struct.
 
 ### OSPRay ISPCDevice Specific Design Choices

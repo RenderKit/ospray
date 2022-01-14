@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -19,7 +19,7 @@ struct HDRILight
   const Distribution2D *uniform
       distribution; // The 2D distribution used to importance sample
   vec2f rcpSize; // precomputed 1/map.size
-  vec3f radianceScale; // scaling factor of emmitted RGB radiance
+  vec3f radianceScale; // scaling factor of emitted RGB radiance
 };
 
 // Implementation

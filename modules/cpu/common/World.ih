@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -154,7 +154,7 @@ inline void traceClippingRay(const World *uniform world,
 
   // Intersect all geometry along given ray,
   // we have to temporarily extend the ray to inf because
-  // even distant intersections affect visibilty of close objects
+  // even distant intersections affect visibility of close objects
   float origT = ray.t;
   ray.t = inf;
   rtcIntersectV(world->embreeSceneHandleClippers,
@@ -185,7 +185,7 @@ inline void traceClippingRay(const World *uniform world,
     if (absT > ray.t)
       break;
 
-    // Check if comming into or out of clipping area
+    // Check if coming into or out of clipping area
     if (t < 0.0f) {
       clippingDepth--; // out of clipping area
     } else {

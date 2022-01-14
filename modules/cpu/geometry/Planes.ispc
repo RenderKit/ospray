@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -11,7 +11,7 @@
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 
-// The plane can't be truely infinite because Embree has a limit on object size
+// The plane can't be truly infinite because Embree has a limit on object size
 #define PLANE_MAX_SIZE 1e18
 
 struct Planes

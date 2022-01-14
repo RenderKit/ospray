@@ -399,7 +399,7 @@ Version History
     is required to build OSPRay
 -   The MPI module is now a separate repository, which also contains all
     MPI distributed rendering documentation
--   Log levels are now controled with enums and named strings (where
+-   Log levels are now controlled with enums and named strings (where
     applicable)
     -   A new flag was also introduced which turns all OSP_LOG_WARNING
         messages into errors, which are submitted to the error callback

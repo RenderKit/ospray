@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -86,7 +86,7 @@ export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
     pixelPosCamera = pixelPosCamera * ((pointDepth) / (length(pixelPosCamera)));
     pixelPosCamera = xfmPoint(rcp(self->cameraSpace), pixelPosCamera);
 
-    // apply kernal
+    // apply kernel
     for (uint32 k = 0; k < kernelSize; ++k) {
       // calculate TBN matrix
       vec3f tangent = normalize(self->randomVecs[k]

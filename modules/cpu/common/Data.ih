@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -11,7 +11,7 @@ struct Data1D
   uint8 *addr;
   int64 byteStride;
   uint32 numItems;
-  bool huge; // 64bit address calculation neccessary
+  bool huge; // 64bit address calculation necessary
 };
 
 inline void Data1D_Constructor(Data1D *uniform self)

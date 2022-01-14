@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -16,7 +16,7 @@ struct SpotLight
                         // SpotLight is emitting
   linear3f world2light;
   vec3f intensity; // RGB radiative intensity of the SpotLight
-  vec3f radiance; // emmitted RGB radiance
+  vec3f radiance; // emitted RGB radiance
   float cosAngleMax; // Angular limit of the spot in an easier to use form:
                      // cosine of the half angle in radians
   float cosAngleScale; // 1/(cos(border of the penumbra area) - cosAngleMax);

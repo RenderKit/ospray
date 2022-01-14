@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -43,7 +43,7 @@ struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
 
 OSPTYPEFOR_SPECIALIZATION(Geometry *, OSP_GEOMETRY);
 
-// Inlined defintions /////////////////////////////////////////////////////////
+// Inlined definitions /////////////////////////////////////////////////////////
 
 template <typename T>
 inline void Geometry::registerType(const char *type)

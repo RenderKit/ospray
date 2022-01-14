@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -38,7 +38,7 @@ struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
 
 OSPTYPEFOR_SPECIALIZATION(Light *, OSP_LIGHT);
 
-// Inlined defintions /////////////////////////////////////////////////////////
+// Inlined definitions /////////////////////////////////////////////////////////
 
 template <typename T>
 inline void Light::registerType(const char *type)

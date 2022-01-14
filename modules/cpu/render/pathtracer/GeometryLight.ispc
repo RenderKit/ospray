@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/GeometryLight.ih"
@@ -23,7 +23,7 @@ vec3f evaluateGeometryLights(const PathContext &pathContext,
   foreach_unique (m in material) {
     if (m != NULL && reduce_max(m->emission) > 0.f) {
       // at the moment we only support uniform light selection
-      // therfore we can evaluate the selection PDF directly
+      // therefore we can evaluate the selection PDF directly
       float lightSelectionPDF = 0.0f;
       if (pathContext.numLights > 0) {
         lightSelectionPDF =

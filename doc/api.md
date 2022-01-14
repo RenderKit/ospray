@@ -2392,7 +2392,7 @@ the type string "`glass`" to `ospNewMaterial`. Its parameters are
 For convenience, the rather counter-intuitive physical attenuation
 coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
-trough a glass of thickness `attenuationDistance`.
+through a glass of thickness `attenuationDistance`.
 
 ![Rendering of a Glass material with orange
 attenuation.][imgMaterialGlass]

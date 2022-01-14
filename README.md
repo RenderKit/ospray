@@ -2328,7 +2328,7 @@ Parameters of the Glass material.
 For convenience, the rather counter-intuitive physical attenuation
 coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
-trough a glass of thickness `attenuationDistance`.
+through a glass of thickness `attenuationDistance`.
 
 <figure>
 <img src="https://ospray.github.io/images/material_Glass.jpg" width="60.0%" alt="Rendering of a Glass material with orange attenuation." /><figcaption aria-hidden="true">Rendering of a Glass material with orange attenuation.</figcaption>

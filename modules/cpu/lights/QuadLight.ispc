@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -9,7 +9,7 @@ struct QuadLight
 {
   Light super; //!< inherited light fields
 
-  vec3f radiance; //!< emmitted RGB radiance
+  vec3f radiance; //!< emitted RGB radiance
   vec3f position; //!< world-space corner position of the light
   vec3f edge1; //!< vectors to adjacent corners
   vec3f edge2; //!< vectors to adjacent corners

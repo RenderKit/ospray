@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -14,7 +14,7 @@ struct PointLight
 
   vec3f position; //!< light position
   vec3f intensity; //!< RGB color and intensity of light
-  vec3f radiance; //!< emmitted RGB radiance
+  vec3f radiance; //!< emitted RGB radiance
   float radius; //!< defines the size of the SphereLight
 };
 

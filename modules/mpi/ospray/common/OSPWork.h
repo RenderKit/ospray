@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -96,7 +96,7 @@ struct OSPState
 
   std::unordered_map<int64_t, FrameBufferInfo> framebuffers;
 
-  // Large data which is transfered separately from the command buffer,
+  // Large data which is transferred separately from the command buffer,
   // prior to sending the command buffer
   std::queue<Data *> dataTransfers;
 

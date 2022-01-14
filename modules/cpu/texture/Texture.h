@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -31,7 +31,7 @@ struct OSPRAY_SDK_INTERFACE Texture
 
 OSPTYPEFOR_SPECIALIZATION(Texture *, OSP_TEXTURE);
 
-// Inlined defintions /////////////////////////////////////////////////////////
+// Inlined definitions /////////////////////////////////////////////////////////
 
 template <typename T>
 inline void Texture::registerType(const char *type)

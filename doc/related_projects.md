@@ -76,7 +76,7 @@ is integrated as one its renderers. For more information see VMD's
 
 pCon.planner
 ---
-[pCon.planner](https://pcon-planner.com/en/) is an architectural design and rendering applicaiton that
+[pCon.planner](https://pcon-planner.com/en/) is an architectural design and rendering application that
 utilizes OSPRay for path traced photorealistic renderings.
 
 

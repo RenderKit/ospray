@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -195,7 +195,7 @@ OSPRAY_CORE_INTERFACE Device &currentDevice();
 OSPRAY_CORE_INTERFACE
 std::string generateEmbreeDeviceCfg(const Device &device);
 
-// Inlined defintions /////////////////////////////////////////////////////////
+// Inlined definitions /////////////////////////////////////////////////////////
 
 template <typename T>
 inline void Device::registerType(const char *type)

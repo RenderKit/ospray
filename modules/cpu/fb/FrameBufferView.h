@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -9,7 +9,7 @@ namespace ospray {
 
 struct FrameBuffer;
 
-/*! A view into a portion of the frambuffer to run the frame operation on
+/*! A view into a portion of the framebuffer to run the frame operation on
  */
 struct OSPRAY_SDK_INTERFACE FrameBufferView
 {

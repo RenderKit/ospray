@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -14,7 +14,7 @@ struct Isosurfaces
 {
   Geometry super; //!< inherited geometry fields
   float *isovalues;
-  // For backwards compatability, a volumetric model was used to set
+  // For backwards compatibility, a volumetric model was used to set
   // the volume and color
   VolumetricModel *volumetricModel;
   Volume *volume;
@@ -31,7 +31,7 @@ int Isosurfaces_primID(const Isosurfaces *uniform self, const float isovalue)
   return -1;
 }
 
-// A wrapper for backwards compatability with the old VolumetricModel API
+// A wrapper for backwards compatibility with the old VolumetricModel API
 Volume *uniform Isosurfaces_getVolume(const Isosurfaces *uniform self)
 {
   if (self->volume) {

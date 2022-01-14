@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "SpotLight.h"
@@ -101,7 +101,7 @@ void SpotLight::processIntensityQuantityType(const float openingAngle)
   } else if (intensityQuantity == OSP_INTENSITY_QUANTITY_POWER) {
     // since our spot light implementation includes the cosine term
     // we need to consider the integrated cosine cap instead of the
-    // usally used integrated cap.
+    // usually used integrated cap.
     radIntensity = coloredIntensity / sphericalCapCosInt;
     if (radius > 0.0f) {
       radiance = coloredIntensity / (sphericalCapCosInt * ringDiskArea);

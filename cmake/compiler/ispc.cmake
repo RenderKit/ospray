@@ -1,7 +1,7 @@
-## Copyright 2009-2021 Intel Corporation
+## Copyright 2009-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-# ISPC versions to look for, in decending order (newest first)
+# ISPC versions to look for, in descending order (newest first)
 set(ISPC_VERSION_WORKING "1.16.1" "1.16.0")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 

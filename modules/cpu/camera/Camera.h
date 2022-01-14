@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -59,7 +59,7 @@ struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
 
 OSPTYPEFOR_SPECIALIZATION(Camera *, OSP_CAMERA);
 
-// Inlined defintions /////////////////////////////////////////////////////////
+// Inlined definitions /////////////////////////////////////////////////////////
 
 template <typename T>
 inline void Camera::registerType(const char *type)

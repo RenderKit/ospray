@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -14,7 +14,7 @@
 
 namespace ospray {
 
-// Volume defintions ////////////////////////////////////////////////////////
+// Volume definitions ////////////////////////////////////////////////////////
 
 Volume::Volume(const std::string &type) : vklType(type)
 {

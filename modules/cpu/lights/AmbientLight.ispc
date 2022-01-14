@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Light.ih"
@@ -8,7 +8,7 @@
 struct AmbientLight
 {
   Light super; //!< inherited light fields
-  vec3f radiance; //!< emmitted RGB radiance
+  vec3f radiance; //!< emitted RGB radiance
 };
 
 // Implementation

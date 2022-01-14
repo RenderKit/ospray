@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedFrameBuffer.h"
@@ -506,7 +506,7 @@ void DFB::incoming(const std::shared_ptr<mpicommon::Message> &message)
     std::lock_guard<std::mutex> lock(mutex);
     if (!frameIsActive) {
       throw std::runtime_error(
-          "Somehow recieved a tile message when frame inactive!?");
+          "Somehow received a tile message when frame inactive!?");
     }
   }
 

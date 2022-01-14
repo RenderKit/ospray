@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -49,7 +49,7 @@ void VolumetricModel::commit()
       // volume made completely transparent and could be removed, which is
       // awkward here
       // set an "empty" interesting value range instead, which will lead to a
-      // quick out during volume interation
+      // quick out during volume iteration
       valueRanges.push_back(range1f(neg_inf, neg_inf));
     }
     VKLData valueRangeData = vklNewData(
@@ -58,7 +58,7 @@ void VolumetricModel::commit()
     vklRelease(valueRangeData);
     vklCommit(vklIntervalContext);
 
-    // Pass interval contex to ISPC
+    // Pass interval context to ISPC
     getSh()->vklIntervalContext = vklIntervalContext;
   }
 

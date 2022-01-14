@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -157,7 +157,7 @@ struct DataT : public Data
 {
   static_assert(DIM == 2 || DIM == 3, "only 1D, 2D or 3D DataT supported");
   using value_type = T;
-  using interator = Iter<T>;
+  using iterator = Iter<T>;
 
   Iter<T> begin() const
   {
@@ -187,7 +187,7 @@ template <typename T>
 struct DataT<T, 1> : public Data
 {
   using value_type = T;
-  using interator = Iter1D<T>;
+  using iterator = Iter1D<T>;
 
   Iter1D<T> begin() const
   {

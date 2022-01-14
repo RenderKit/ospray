@@ -28,7 +28,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 // with slight modifications
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 
 /* ============================================================================
 
@@ -452,7 +452,7 @@ ArHosekSkyModelState *arhosekskymodelstate_alienworld_alloc_init(
   //   more sensitive to could be introduced here - think V(lambda). But
   //   given that the whole effort is not *that* accurate to begin with (we
   //   are talking about the appearance of alien worlds, after all), simple
-  //   averaging over the visible wavelenghts (! - this is why we start at
+  //   averaging over the visible wavelengths (! - this is why we start at
   //   WL #2, and only use 2-11) seems like a sane first approximation.
 
   float correctionFactor = 0.0;

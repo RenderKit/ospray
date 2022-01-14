@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "surfaces.ih"
@@ -51,7 +51,7 @@ static void sampleVolume(SciVisRenderContext &rc,
         // Make it local for the next interval
         vc.iuDistance -= vc.iuLength;
 
-        // Calulate how many steps can be made within this interval
+        // Calculate how many steps can be made within this interval
         const float samplingStep = vc.interval.nominalDeltaT / samplingRate;
         vc.iuLength = (vc.interval.tRange.upper - vc.interval.tRange.lower)
             / samplingStep;
@@ -242,7 +242,7 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       float time = 0.5f;
       VolumetricModel *varying model = vi.volumetricModel;
       foreach_unique (m in model) {
-        // Create volume interval interator
+        // Create volume interval iterator
         vc.intervalIterator = vklInitIntervalIteratorV(m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,

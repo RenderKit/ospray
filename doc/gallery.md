@@ -60,7 +60,7 @@ Moran of NASA Ames.
 <div class="exhibit">
 [![Stellar Radiation Video](gallery/thumbnails/stellar_video-thumb.jpg)](https://vimeo.com/417360212 "Stellar Radiation Video")
 <div class="caption">
-Stellar Radation. Visualization by Greg P. Johnson, Intel, and Joseph
+Stellar Radiation. Visualization by Greg P. Johnson, Intel, and Joseph
 Insley, Argonne National Lab, using OSPRay. Simulation provided by the
 University of California, Santa Barbara (team leads Yan-Fei Jiang and
 Lars Bildsten).

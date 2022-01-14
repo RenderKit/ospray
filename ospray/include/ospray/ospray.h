@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -43,7 +43,7 @@
 #define OSP_DEFAULT_VAL(a)
 #endif
 
-// Give OSPRay handle types a concrete defintion to enable C++ type checking
+// Give OSPRay handle types a concrete definition to enable C++ type checking
 #ifdef __cplusplus
 namespace osp {
 struct Device;
