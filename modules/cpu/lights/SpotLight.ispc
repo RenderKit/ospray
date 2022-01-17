@@ -11,10 +11,6 @@ struct SpotLight
 
   vec3f position; // Position of the SpotLight
   vec3f direction;
-  vec3f c0;
-  linear3f light2world; // coordinate frame, with vz == direction that the
-                        // SpotLight is emitting
-  linear3f world2light;
   vec3f intensity; // RGB radiative intensity of the SpotLight
   vec3f radiance; // emitted RGB radiance
   float cosAngleMax; // Angular limit of the spot in an easier to use form:
@@ -26,9 +22,12 @@ struct SpotLight
   float innerRadius; // defines the size of the inner cut out of the DiskLight
                      // to represent a RingLight
   float areaPdf; // pdf of disk/ring with radius/innerRadius
+
   float *lid; // luminance intensity distribution
   vec2i size;
   vec2f scale;
+  vec3f c0; // orientation of lid
+  vec3f c90;
 };
 
 // Implementation
@@ -38,8 +37,11 @@ inline float AngularAttenuation(const SpotLight *uniform self, float cosAngle)
   return clamp((cosAngle - self->cosAngleMax) * self->cosAngleScale);
 }
 
-inline float IntensityDistr(
-    const SpotLight *uniform self, float cosAngle, const vec3f &localDir)
+inline float IntensityDistr(const SpotLight *uniform self,
+    float cosAngle,
+    const uniform vec3f &c0,
+    const uniform vec3f &c90,
+    const vec3f &dir)
 {
   const float u = acos(cosAngle) * self->scale.x;
   const float u_frac = frac(u);
@@ -50,7 +52,7 @@ inline float IntensityDistr(
   if (self->size.y == 1) { // 1D
     intensity = lerp(u_frac, self->lid[u0], self->lid[u1]);
   } else { // 2D
-    const float v = (atan2(localDir.y, localDir.x) + pi) * self->scale.y;
+    const float v = (atan2(dot(dir, c90), dot(dir, c0)) + pi) * self->scale.y;
     const float v_frac = frac(v);
     const int v0 = v;
     const int v1 = (v0 + 1 >= self->size.y) ? 0 : v0 + 1;
@@ -65,8 +67,9 @@ inline float IntensityDistr(
 
 inline Light_SampleRes Sample(const SpotLight *uniform self,
     const uniform vec3f &pos,
-    const uniform linear3f &l2w,
-    const uniform linear3f &w2l,
+    const uniform vec3f &dir,
+    const uniform vec3f &c0,
+    const uniform vec3f &c90,
     const DifferentialGeometry &dg,
     const vec2f &s)
 {
@@ -75,9 +78,14 @@ inline Light_SampleRes Sample(const SpotLight *uniform self,
   // extant light vector from the hit point
   res.dir = pos - dg.P;
 
-  if (self->radius > 0.)
+  if (self->radius > 0.0f) {
+    uniform linear3f l2w;
+    l2w.vx = c0;
+    l2w.vy = c90;
+    l2w.vz = dir;
     res.dir =
         l2w * uniformSampleRing(self->radius, self->innerRadius, s) + res.dir;
+  }
 
   const float dist2 = dot(res.dir, res.dir);
   const float invdist = rsqrt(dist2);
@@ -87,36 +95,34 @@ inline Light_SampleRes Sample(const SpotLight *uniform self,
   res.dist = dist2 * invdist;
 
   // cosine of the negated light direction and light vector.
-  const float cosAngle = -dot(l2w.vz, res.dir);
+  const float cosAngle = -dot(dir, res.dir);
 
-  if (self->radius > 0.) {
+  float weight = AngularAttenuation(self, cosAngle);
+  if (self->lid)
+    weight *= IntensityDistr(self, cosAngle, c0, c90, res.dir);
+  if (self->radius > 0.0f) {
     // convert area PDF to solid angle PDF
     res.pdf = self->areaPdf * (dist2 / abs(cosAngle));
-    // calculate the attenuated emitted radiance
-    float attenuation = AngularAttenuation(self, cosAngle);
-    if (!self->lid) {
-      res.weight = (self->radiance * attenuation) / res.pdf;
-    } else {
+    if (self->lid) {
       // when an light distribution function is used we want to
       // remove the cosine term. To avoid numerical issues
       // at cosineAngle = 0 we use the fact that the division
       // of radiance with the cosine cancels out.
-      attenuation *= IntensityDistr(self, cosAngle, w2l * res.dir);
-      res.weight = (self->radiance * attenuation) / (self->areaPdf * dist2);
+      weight /= self->areaPdf * dist2;
+    } else {
+      weight /= res.pdf;
     }
+    res.weight = self->radiance * weight;
   } else {
     res.pdf = inf; // we always take this sample
-    float attenuation = AngularAttenuation(self, cosAngle);
-    if (self->lid) {
-      attenuation *= IntensityDistr(self, cosAngle, w2l * res.dir);
-    } else {
+    if (!self->lid) {
       // if the spotlight does not use a measured LDF we
       // simulate Lambertian behavior by multiplication with cosineAngle
-      attenuation *= abs(cosAngle);
+      weight *= abs(cosAngle);
     }
     // convert from intensity to radiance by attenuating by distance^2;
     // attenuate by angle
-    res.weight = self->intensity * (sqr(invdist) * attenuation);
+    res.weight = self->intensity * (sqr(invdist) * weight);
   }
   return res;
 }
@@ -129,7 +135,7 @@ Light_SampleRes SpotLight_sample(const Light *uniform super,
   const SpotLight *uniform self = (SpotLight * uniform) super;
   assert(self);
   return Sample(
-      self, self->position, self->light2world, self->world2light, dg, s);
+      self, self->position, self->direction, self->c0, self->c90, dg, s);
 }
 
 Light_SampleRes SpotLight_sample_instanced(const Light *uniform super,
@@ -150,20 +156,11 @@ Light_SampleRes SpotLight_sample_instanced(const Light *uniform super,
     // transform light into the world space
     const uniform vec3f pos = xfmPoint(xfm, self->position);
     const uniform vec3f dir = normalize(xfmVector(xfm, self->direction));
-    const uniform vec3f c0 = normalize(xfmVector(xfm, self->c0));
-
-    // prepare spotlight to world transformation matrix
-    uniform linear3f l2w;
-    l2w.vz = dir;
-    l2w.vy = normalize(cross(c0, l2w.vz));
-    l2w.vx = cross(l2w.vz, l2w.vy);
-
-    // prepare world to spotlight transformation matrix,
-    // this is orthonormal transformation so transposing is enough
-    const uniform linear3f w2l = transposed(l2w);
+    const uniform vec3f c90 = normalize(cross(xfmVector(xfm, self->c0), dir));
+    const uniform vec3f c0 = cross(dir, c90);
 
     // sample light
-    res = Sample(self, pos, l2w, w2l, dg, s);
+    res = Sample(self, pos, dir, c0, c90, dg, s);
   }
   return res;
 }
@@ -171,7 +168,8 @@ Light_SampleRes SpotLight_sample_instanced(const Light *uniform super,
 inline Light_EvalRes Eval(const SpotLight *uniform self,
     const uniform vec3f &position,
     const uniform vec3f &direction,
-    const uniform linear3f &w2l,
+    const uniform vec3f &c0,
+    const uniform vec3f &c90,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
@@ -193,7 +191,7 @@ inline Light_EvalRes Eval(const SpotLight *uniform self,
         if (and(d2<sqr(self->radius), d2> sqr(self->innerRadius))) {
           float attenuation = AngularAttenuation(self, cosAngle);
           if (self->lid) {
-            attenuation *= IntensityDistr(self, cosAngle, w2l * dir);
+            attenuation *= IntensityDistr(self, cosAngle, c0, c90, dir);
 
             // since the light distribution function already includes
             // the cosine term we remove it from the Lambertian area
@@ -225,7 +223,8 @@ Light_EvalRes SpotLight_eval(const Light *uniform super,
   return Eval(self,
       self->position,
       self->direction,
-      self->world2light,
+      self->c0,
+      self->c90,
       dg,
       dir,
       minDist,
@@ -252,19 +251,11 @@ Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
     // transform light into the world space
     const uniform vec3f position = xfmPoint(xfm, self->position);
     const uniform vec3f direction = normalize(xfmVector(xfm, self->direction));
+    const uniform vec3f c90 =
+        normalize(cross(xfmVector(xfm, self->c0), direction));
+    const uniform vec3f c0 = cross(direction, c90);
 
-    // prepare world to spotlight transformation matrix,
-    // this is orthonormal transformation so transposing is enough
-    const uniform vec3f c0 = normalize(xfmVector(xfm, self->c0));
-    const uniform vec3f vy = normalize(cross(c0, direction));
-    const uniform vec3f vx = cross(direction, vy);
-    uniform linear3f w2l;
-    w2l.vx = make_vec3f(vx.x, vy.x, direction.x);
-    w2l.vy = make_vec3f(vx.y, vy.y, direction.y);
-    w2l.vz = make_vec3f(vx.z, vy.z, direction.z);
-
-    // evaluate light
-    res = Eval(self, position, direction, w2l, dg, dir, minDist, maxDist);
+    res = Eval(self, position, direction, c0, c90, dg, dir, minDist, maxDist);
   }
   return res;
 }
@@ -289,7 +280,7 @@ export void SpotLight_set(void *uniform super,
 
   self->position = position;
   self->direction = normalize(direction);
-  self->c0 = normalize(c0);
+  self->c0 = c0;
 
   // Enable dynamic runtime instancing or apply static transformation
   const Instance *uniform instance = self->super.instance;
@@ -300,13 +291,12 @@ export void SpotLight_set(void *uniform super,
     } else {
       self->position = xfmPoint(instance->xfm, self->position);
       self->direction = normalize(xfmVector(instance->xfm, self->direction));
-      self->c0 = normalize(xfmVector(instance->xfm, self->c0));
+      self->c0 = xfmVector(instance->xfm, c0);
     }
   }
 
-  self->light2world.vz = self->direction;
-  self->light2world.vy = normalize(cross(self->c0, self->light2world.vz));
-  self->light2world.vx = cross(self->light2world.vz, self->light2world.vy);
+  self->c90 = normalize(cross(self->c0, self->direction));
+  self->c0 = cross(self->direction, self->c90);
 
   self->radiance = radiance;
   self->intensity = intensity;
@@ -317,7 +307,6 @@ export void SpotLight_set(void *uniform super,
   self->areaPdf = uniformSampleRingPDF(radius, innerRadius);
   self->lid = lid;
   if (self->lid) {
-    self->world2light = rcp(self->light2world);
     self->size = size;
     self->scale = make_vec2f(nextafter((size.x - 1) * one_over_pi, -1.0f),
         nextafter(self->size.y * one_over_two_pi, -1.0f));
