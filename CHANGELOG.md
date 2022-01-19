@@ -15,6 +15,10 @@ Version History
 -   Changed from area sampling to solid angle sampling for quad lights
     in the pathtracer
 -   Instances can now have the group object rebound via a parameter
+-   MPI: Resolve issue where framebuffers would be leaked in the MPI
+    offload device.
+-   MPI: Resolve possible race condition in assigning IDs to distributed
+    objects
 
 ### Changes in v2.8.0:
 

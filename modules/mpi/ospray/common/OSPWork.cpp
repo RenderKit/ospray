@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <vector>
@@ -340,13 +340,7 @@ void release(
     if (fnd != state.framebuffers.end()) {
       OSPObject obj = state.objects[handle];
       ManagedObject *m = lookupDistributedObject<ManagedObject>(obj);
-      // Framebuffers are given an extra ref count by the worker so that
-      // we can track the lifetime of their framebuffer info. Use count == 1
-      // means only the worker rank has a reference to the object
-      if (m->useCount() == 1) {
-        ospRelease(state.objects[handle]);
-        state.framebuffers.erase(fnd);
-      }
+      state.framebuffers.erase(fnd);
     }
   }
 
@@ -383,9 +377,6 @@ void createFramebuffer(
       ospNewFrameBuffer(size.x, size.y, (OSPFrameBufferFormat)format, channels);
   state.framebuffers[handle] =
       FrameBufferInfo(size, (OSPFrameBufferFormat)format, channels);
-
-  // Offload device keeps +1 ref for tracking the lifetime of the framebuffer
-  ospRetain(state.objects[handle]);
 }
 
 void mapFramebuffer(OSPState &state,

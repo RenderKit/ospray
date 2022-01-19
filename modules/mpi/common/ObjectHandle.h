@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -26,15 +26,18 @@ struct ManagedObject;
 */
 union ObjectHandle
 {
-  void free();
-
   ObjectHandle();
   ObjectHandle(int64 i);
   ObjectHandle(const ObjectHandle &other);
   ObjectHandle &operator=(const ObjectHandle &other);
 
+  void free();
+
   /*! look up an object by handle, and return it. must be a defined handle */
   ManagedObject *lookup() const;
+
+  /* Allocate a local ObjectHandle */
+  static ObjectHandle allocateLocalHandle();
 
   /*! Return the handle associated with the given object. */
   static ObjectHandle lookup(ManagedObject *object);

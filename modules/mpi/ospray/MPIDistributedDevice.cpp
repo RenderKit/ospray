@@ -1,10 +1,10 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "MPIDistributedDevice.h"
 #include <map>
-#include "MPIDistributedDevice_ispc.h"
 #include "ISPCDevice.h"
+#include "MPIDistributedDevice_ispc.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
 #include "common/DistributedWorld.h"
@@ -157,13 +157,10 @@ inline OSPVolume createLocalObject<Volume, OSPVolume>(const char *type)
 }
 
 template <typename OSPRAY_TYPE, typename API_TYPE>
-inline API_TYPE createDistributedObject(const char *type)
+inline API_TYPE createDistributedObject(const char *type, ObjectHandle handle)
 {
   auto *instance = OSPRAY_TYPE::createInstance(type);
-
-  ObjectHandle handle;
   handle.assign(instance);
-
   return (API_TYPE)(int64)handle;
 }
 
@@ -300,7 +297,7 @@ void MPIDistributedDevice::commit()
 OSPFrameBuffer MPIDistributedDevice::frameBufferCreate(
     const vec2i &size, const OSPFrameBufferFormat mode, const uint32 channels)
 {
-  ObjectHandle handle;
+  ObjectHandle handle = allocateHandle();
   auto *instance = new DistributedFrameBuffer(size, handle, mode, channels);
   handle.assign(instance);
   return (OSPFrameBuffer)(int64)handle;
@@ -346,7 +343,7 @@ OSPInstance MPIDistributedDevice::newInstance(OSPGroup _group)
 
 OSPWorld MPIDistributedDevice::newWorld()
 {
-  ObjectHandle handle;
+  ObjectHandle handle = allocateHandle();
   auto *instance = new DistributedWorld;
   instance->setDevice(embreeDevice);
   handle.assign(instance);
@@ -391,7 +388,8 @@ OSPImageOperation MPIDistributedDevice::newImageOp(const char *type)
 
 OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
 {
-  return createDistributedObject<Renderer, OSPRenderer>(type);
+  ObjectHandle handle = allocateHandle();
+  return createDistributedObject<Renderer, OSPRenderer>(type, handle);
 }
 
 OSPCamera MPIDistributedDevice::newCamera(const char *type)
@@ -600,6 +598,37 @@ OSPPickResult MPIDistributedDevice::pick(OSPFrameBuffer _fb,
   auto *camera = lookupObject<Camera>(_camera);
   auto *world = lookupObject<DistributedWorld>(_world);
   return renderer->pick(fb, camera, world, screenPos);
+}
+
+ObjectHandle MPIDistributedDevice::allocateHandle()
+{
+  mpicommon::barrier(mpicommon::worker.comm).wait();
+  ObjectHandle handle = ObjectHandle::allocateLocalHandle();
+
+  // For debugging check that all ranks did in fact allocate the same handle.
+  // Typically we assume this is the case, as the app should be creating
+  // distributed objects in lock-step, even if their local objects differ.
+  if (logLevel == OSP_LOG_DEBUG) {
+    int maxID = handle.i32.ID;
+    int minID = handle.i32.ID;
+
+    auto reduceMax = mpicommon::reduce(
+        &handle.i32.ID, &maxID, 1, MPI_INT, MPI_MAX, 0, mpicommon::worker.comm);
+    auto reduceMin = mpicommon::reduce(
+        &handle.i32.ID, &minID, 1, MPI_INT, MPI_MIN, 0, mpicommon::worker.comm);
+    reduceMax.wait();
+    reduceMin.wait();
+
+    if (maxID != minID) {
+      // Log it, but this is a fatal error
+      postStatusMsg(
+          "Error allocating distributed handles: Ranks do not all have the same handle!");
+      throw std::runtime_error(
+          "Error allocating distributed handles: Ranks do not all have the same handle!");
+    }
+  }
+
+  return handle;
 }
 
 } // namespace mpi

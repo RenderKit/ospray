@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef _WIN32
@@ -1148,7 +1148,7 @@ int MPIOffloadDevice::rootWorkerRank() const
 
 ObjectHandle MPIOffloadDevice::allocateHandle() const
 {
-  return ObjectHandle();
+  return ObjectHandle::allocateLocalHandle();
 }
 
 } // namespace mpi

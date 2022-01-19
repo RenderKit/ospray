@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ObjectHandle.h"
@@ -21,16 +21,7 @@ void ObjectHandle::free()
   freedHandles.push((int64) * this);
 }
 
-ObjectHandle::ObjectHandle()
-{
-  if (freedHandles.empty()) {
-    i32.ID = nextFreeLocalID++;
-    i32.owner = 0;
-  } else {
-    i64 = freedHandles.top();
-    freedHandles.pop();
-  }
-}
+ObjectHandle::ObjectHandle() : i64(NULL_HANDLE) {}
 
 ObjectHandle::ObjectHandle(int64 i) : i64(i) {}
 
@@ -80,6 +71,19 @@ ospray::ObjectHandle::operator int64() const
 bool ObjectHandle::defined() const
 {
   return objectByHandle.find(i64) != objectByHandle.end();
+}
+
+ObjectHandle ObjectHandle::allocateLocalHandle()
+{
+  ObjectHandle handle;
+  if (freedHandles.empty()) {
+    handle.i32.ID = nextFreeLocalID++;
+    handle.i32.owner = 0;
+  } else {
+    handle.i64 = freedHandles.top();
+    freedHandles.pop();
+  }
+  return handle;
 }
 
 ManagedObject *ObjectHandle::lookup() const
