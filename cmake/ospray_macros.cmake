@@ -1,4 +1,4 @@
-## Copyright 2009-2021 Intel Corporation
+## Copyright 2009-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 include(CMakeFindDependencyMacro)
@@ -316,6 +316,7 @@ macro(ospray_configure_compiler)
   set(OSPRAY_COMPILER_GCC   FALSE)
   set(OSPRAY_COMPILER_CLANG FALSE)
   set(OSPRAY_COMPILER_MSVC  FALSE)
+  set(OSPRAY_COMPILER_DPCPP FALSE)
 
   if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     set(OSPRAY_COMPILER_ICC TRUE)
@@ -334,6 +335,9 @@ macro(ospray_configure_compiler)
   elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(OSPRAY_COMPILER_MSVC TRUE)
     include(msvc)
+  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM")
+    set(OSPRAY_COMPILER_DPCPP TRUE)
+    include(dpcpp)
   else()
     message(FATAL_ERROR
             "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
