@@ -2,7 +2,7 @@ Version History
 ---------------
 
 ### Changes in v2.9.0:
-
+-   Add support for dynamic load balancing in Offload device 
 -   Add support for multi-segment deformation motion blur for `mesh`
     geometry
 -   Moved ISPC module to `modules/` folder and renamed the module to
@@ -1148,4 +1148,3 @@ changes.
 -   Corrected memory management for shared data buffers
 -   Updated to ISPC 1.8.1
 -   Resolved issue in XML parser
-

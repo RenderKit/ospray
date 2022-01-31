@@ -76,6 +76,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   std::shared_ptr<TileOperation> getTileOperation();
   const Renderer *getLastRenderer() const;
 
+  mpicommon::Group getMPIGroup();
   // ==================================================================
   // interface for maml messaging, enables communication between
   // different instances of same object

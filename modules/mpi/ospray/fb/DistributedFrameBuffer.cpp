@@ -101,6 +101,10 @@ void DFB::commit()
   findFirstFrameOperation();
 }
 
+mpicommon::Group DFB::getMPIGroup()
+{
+  return mpiGroup;
+}
 void DFB::startNewFrame(const float errorThreshold)
 {
   {

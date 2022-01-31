@@ -3201,6 +3201,10 @@ The `maxCommandBufferEntries`, `commandBufferSize`, and
 `OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
 respectively.
 
+The `mpiOffload` device uses a dynamic load balancer by default. If you
+wish to use a static load balancer you can do so by setting the
+`OSPRAY_STATIC_BALANCER` environment variable to 1.
+
 The `mpiOffload` device does not support multiple init/shutdown cycles.
 Thus, to run `ospBenchmark` for this device make sure to exclude the
 init/shutdown test by passing `--benchmark_filter=-ospInit_ospShutdown`

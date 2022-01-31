@@ -180,9 +180,7 @@ static void vklErrorFunc(void *, const VKLError code, const char *str)
 
 // MPIDistributedDevice definitions ///////////////////////////////////////
 
-MPIDistributedDevice::MPIDistributedDevice()
-    : loadBalancer(std::make_shared<staticLoadBalancer::Distributed>())
-{}
+MPIDistributedDevice::MPIDistributedDevice() {}
 
 MPIDistributedDevice::~MPIDistributedDevice()
 {
@@ -458,6 +456,11 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   auto *camera = lookupObject<Camera>(_camera);
   auto *world = lookupObject<DistributedWorld>(_world);
 
+  ObjectHandle handle = allocateHandle();
+  std::shared_ptr<staticLoadBalancer::Distributed> loadBalancer =
+      std::make_shared<staticLoadBalancer::Distributed>();
+  loadBalancer->setObjectHandle(handle);
+
   fb->setCompletedEvent(OSP_NONE_FINISHED);
 
   fb->refInc();
@@ -465,7 +468,7 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   camera->refInc();
   world->refInc();
 
-  auto *f = new ThreadedRenderTask(fb, [=]() {
+  auto *f = new ThreadedRenderTask(fb, loadBalancer, [=]() {
 #ifdef ENABLE_PROFILING
     using namespace mpicommon;
     ProfilingPoint start;

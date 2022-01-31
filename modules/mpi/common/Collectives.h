@@ -92,7 +92,7 @@ std::future<void *> allreduce(const void *sendBuffer,
 std::future<void *> send(void *buffer,
     int count,
     MPI_Datatype datatype,
-    int source,
+    int destination,
     int tag,
     MPI_Comm comm);
 

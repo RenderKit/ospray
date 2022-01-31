@@ -1,4 +1,4 @@
-## Copyright 2009-2021 Intel Corporation
+## Copyright 2009-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## Options ##
@@ -33,6 +33,7 @@ ispc_target_add_sources(ospray_module_mpi
 
   common/OSPWork.cpp
   common/Messaging.cpp
+  common/DynamicLoadBalancer.cpp
 
   fb/DistributedFrameBuffer.cpp
   fb/DistributedFrameBuffer.ispc
