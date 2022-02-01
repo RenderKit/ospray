@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../math/AffineSpace.ih"
@@ -8,18 +8,31 @@
 #include "common/Instance.ih"
 #include "common/Intersect.ih"
 
+// state that changes under transformations
+struct CylinderLightDynamic
+{
+  vec3f position0;
+  vec3f position1;
+};
+
 struct CylinderLight
 {
   Light super;
-
-  vec3f position0;
-  vec3f position1;
   vec3f radiance;
   float radius;
+  CylinderLightDynamic pre; // un- or pre-transformed state
 };
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
+inline void Transform(const CylinderLight *uniform self,
+    const uniform affine3f xfm,
+    uniform CylinderLightDynamic &dyn)
+{
+  dyn.position0 = xfmPoint(xfm, self->pre.position0);
+  dyn.position1 = xfmPoint(xfm, self->pre.position1);
+}
+
 inline float cylinderAxialSolidAngle(
     float c, float b, float h0, float h1, float b2c2)
 {
@@ -113,12 +126,10 @@ inline void cylinderSampleSolidAngle(const DifferentialGeometry &dg,
   pdf = cosW.z;
 }
 
-inline Light_SampleRes Sample(const DifferentialGeometry &dg,
-    const vec2f &sp,
-    const uniform vec3f &position0,
-    const uniform vec3f &position1,
-    const uniform float radius,
-    const uniform vec3f &radiance)
+inline Light_SampleRes Sample(const CylinderLight *uniform self,
+    const uniform CylinderLightDynamic &dyn,
+    const DifferentialGeometry &dg,
+    const vec2f &sp)
 {
   Light_SampleRes res;
   res.weight = make_vec3f(0.f);
@@ -127,16 +138,17 @@ inline Light_SampleRes Sample(const DifferentialGeometry &dg,
   float S, pdf;
   vec3f dir;
   if (sp.x == 0.0f && sp.y == 0.0f) { // XXX SciVis
-    dir = 0.5f * (position0 + position1) - dg.P; // to center
+    dir = 0.5f * (dyn.position0 + dyn.position1) - dg.P; // to center
 
     vec3f q0, e0, e1;
     cylinderComputeRectBounds(
-        position0, position1, radius, dg.P, q0, e0, e1, S);
+        dyn.position0, dyn.position1, self->radius, dg.P, q0, e0, e1, S);
     if (S > 0.f) {
       pdf = 1.f;
     }
   } else {
-    cylinderSampleSolidAngle(dg, sp, position0, position1, radius, dir, pdf, S);
+    cylinderSampleSolidAngle(
+        dg, sp, dyn.position0, dyn.position1, self->radius, dir, pdf, S);
   }
 
   if (S <= 0.f || pdf == 0.f) {
@@ -147,11 +159,11 @@ inline Light_SampleRes Sample(const DifferentialGeometry &dg,
 
   // rejection sampling of the cylinder sample direction (through out cap hits
   // and rare misses)
-  Intersections isect =
-      intersectCylinder(dg.P, res.dir, position0, position1, radius);
+  Intersections isect = intersectCylinder(
+      dg.P, res.dir, dyn.position0, dyn.position1, self->radius);
   if (isect.entry.hit) {
     res.pdf = pdf / S;
-    res.weight = radiance * rcp(res.pdf);
+    res.weight = self->radiance * rcp(res.pdf);
     res.dist = isect.entry.t;
   }
 
@@ -160,18 +172,17 @@ inline Light_SampleRes Sample(const DifferentialGeometry &dg,
 
 Light_SampleRes CylinderLight_sample(const uniform Light *uniform super,
     const DifferentialGeometry &dg,
-    const vec2f &sp,
+    const vec2f &s,
     const float)
 {
   const CylinderLight *uniform self = (CylinderLight * uniform) super;
   assert(self);
-  return Sample(
-      dg, sp, self->position0, self->position1, self->radius, self->radiance);
+  return Sample(self, self->pre, dg, s);
 }
 
 Light_SampleRes CylinderLight_sample_instanced(const Light *uniform super,
     const DifferentialGeometry &dg,
-    const vec2f &sp,
+    const vec2f &s,
     const float time)
 {
   const CylinderLight *uniform self = (CylinderLight * uniform) super;
@@ -183,41 +194,35 @@ Light_SampleRes CylinderLight_sample_instanced(const Light *uniform super,
   Light_SampleRes res;
   foreach_unique (utime in time) {
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
-
-    // transform light into the world space
-    const uniform vec3f position0 = xfmPoint(xfm, self->position0);
-    const uniform vec3f position1 = xfmPoint(xfm, self->position1);
-
-    // sample light
-    res = Sample(dg, sp, position0, position1, self->radius, self->radiance);
+    uniform CylinderLightDynamic dyn;
+    Transform(self, xfm, dyn);
+    res = Sample(self, dyn, dg, s);
   }
   return res;
 }
 
-inline Light_EvalRes Eval(const DifferentialGeometry &dg,
+inline Light_EvalRes Eval(const CylinderLight *uniform self,
+    const uniform CylinderLightDynamic &dyn,
+    const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
-    const float maxDist,
-    const uniform vec3f &position0,
-    const uniform vec3f &position1,
-    const uniform float radius,
-    const uniform vec3f &radiance)
+    const float maxDist)
 {
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
 
   // check if intersecting cylinder
   Intersections isect =
-      intersectCylinder(dg.P, dir, position0, position1, radius);
+      intersectCylinder(dg.P, dir, dyn.position0, dyn.position1, self->radius);
   if (isect.entry.hit) {
     if ((minDist < isect.entry.t && isect.entry.t <= maxDist)) {
       // compute bounding rectangle solid angle
       vec3f q0, e0, e1;
       float S;
       cylinderComputeRectBounds(
-          position0, position1, radius, dg.P, q0, e0, e1, S);
+          dyn.position0, dyn.position1, self->radius, dg.P, q0, e0, e1, S);
       if (S > 0.f) {
-        res.radiance = radiance;
+        res.radiance = self->radiance;
         res.pdf = rcp(S);
       }
     }
@@ -233,16 +238,9 @@ Light_EvalRes CylinderLight_eval(const uniform Light *uniform super,
     const float maxDist,
     const float)
 {
-  uniform CylinderLight *uniform self = (uniform CylinderLight * uniform) super;
+  CylinderLight *uniform self = (CylinderLight * uniform) super;
   assert(self);
-  return Eval(dg,
-      dir,
-      minDist,
-      maxDist,
-      self->position0,
-      self->position1,
-      self->radius,
-      self->radiance);
+  return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
 Light_EvalRes CylinderLight_eval_instanced(const Light *uniform super,
@@ -261,20 +259,9 @@ Light_EvalRes CylinderLight_eval_instanced(const Light *uniform super,
   Light_EvalRes res;
   foreach_unique (utime in time) {
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
-
-    // transform light into the world space
-    const uniform vec3f position0 = xfmPoint(xfm, self->position0);
-    const uniform vec3f position1 = xfmPoint(xfm, self->position1);
-
-    // evaluate light
-    res = Eval(dg,
-        dir,
-        minDist,
-        maxDist,
-        position0,
-        position1,
-        self->radius,
-        self->radiance);
+    uniform CylinderLightDynamic dyn;
+    Transform(self, xfm, dyn);
+    res = Eval(self, dyn, dg, dir, minDist, maxDist);
   }
   return res;
 }
@@ -288,15 +275,17 @@ export void CylinderLight_set(void *uniform super,
     const uniform vec3f &position1,
     const uniform float radius)
 {
-  uniform CylinderLight *uniform self = (uniform CylinderLight * uniform) super;
-  self->radiance = make_vec3f(0.f);
+  CylinderLight *uniform self = (CylinderLight * uniform) super;
   uniform float zMax = length(position1 - position0);
-  if (and(zMax > 0.f, radius > 0.f)) {
-    self->radiance = radiance;
-    self->radius = radius;
-    self->position0 = position0;
-    self->position1 = position1;
+  if (zMax <= 0.f | radius <= 0.f) {
+    self->radiance = make_vec3f(0.f);
+    return;
   }
+
+  self->radiance = radiance;
+  self->radius = radius;
+  self->pre.position0 = position0;
+  self->pre.position1 = position1;
 
   // Enable dynamic runtime instancing or apply static transformation
   const Instance *uniform instance = self->super.instance;
@@ -304,16 +293,14 @@ export void CylinderLight_set(void *uniform super,
     if (instance->motionBlur) {
       self->super.sample = CylinderLight_sample_instanced;
       self->super.eval = CylinderLight_eval_instanced;
-    } else {
-      self->position0 = xfmPoint(instance->xfm, position0);
-      self->position1 = xfmPoint(instance->xfm, position1);
-    }
+    } else
+      Transform(self, instance->xfm, self->pre);
   }
 }
 
 export void *uniform CylinderLight_create()
 {
-  uniform CylinderLight *uniform self = uniform new uniform CylinderLight;
+  CylinderLight *uniform self = uniform new CylinderLight;
 
   Light_Constructor(&self->super);
   self->super.sample = CylinderLight_sample;
