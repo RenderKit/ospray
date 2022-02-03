@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/PathStructs.ih"
@@ -34,6 +34,7 @@ bool shadowCatcher(const PathContext &pathContext,
     if (dot(ray.dir, pathVertex.dg.Ng) >= 0.f)
       pathVertex.dg.Ns = pathVertex.dg.Ng = neg(pathVertex.dg.Ng);
 
+    pathVertex.dg.renderer = &pathContext.context->super;
     pathVertex.dg.P = ray.org + pathState.shadowCatcherDist * ray.dir;
     const float eps =
         calcEpsilon(pathVertex.dg.P, ray.dir, pathState.shadowCatcherDist);
