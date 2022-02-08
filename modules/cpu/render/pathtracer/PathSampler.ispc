@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/GeometryLight.ih"
@@ -128,7 +128,7 @@ void samplePath(const PathContext &pathContext,
       sample.z = ray.t;
 
     if (shadowCatcher(pathContext, pathState, pathVertex, ray, sample))
-      break;
+      pathVertex.type = ENVIRONMENT;
 
     pathVertex.wo = neg(ray.dir);
 

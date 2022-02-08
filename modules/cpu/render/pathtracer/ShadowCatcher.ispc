@@ -83,15 +83,11 @@ bool shadowCatcher(const PathContext &pathContext,
     // order of args important to filter NaNs (in case unshaded.X is zero)
     const vec3f ratio = min(
         pathState.throughput * shaded * rcp(unshaded), pathState.throughput);
-#ifdef COLORED_SHADOW_HACK
-    const float rm = reduce_min(ratio);
-    sample.alpha = 1.0f - rm;
-    pathState.contribution = ratio - rm;
-#else
+
     // alpha blend-in black shadow
-    sample.alpha = 1.0f - luminance(ratio);
+    pathState.throughput = ratio;
     pathState.contribution = make_vec3f(0.f);
-#endif
+
     return true;
   }
 
