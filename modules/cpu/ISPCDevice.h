@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -126,6 +126,11 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
 
   std::shared_ptr<LocalTiledLoadBalancer> loadBalancer;
+
+  RTCDevice getEmbreeDevice()
+  {
+    return embreeDevice;
+  }
 
  private:
   RTCDevice embreeDevice = nullptr;

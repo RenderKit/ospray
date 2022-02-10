@@ -251,7 +251,14 @@ void newSharedData(OSPState &state,
 
   auto data = retrieveData(state, cmdBuf, fabric, format, numItems, nullptr);
 
-  state.objects[handle] = (OSPData)data;
+  // gives an opportunity to pass off to internal device(s)
+  auto forsubs = ospNewSharedData(
+      data->data(), format, numItems.x, 0, numItems.y, 0, numItems.z, 0);
+  auto subscopy = ospNewData(format, numItems.x, numItems.y, numItems.z);
+  ospCopyData(forsubs, subscopy);
+  ospCommit(subscopy);
+  ospRelease(forsubs);
+  state.objects[handle] = (OSPData)subscopy;
   state.appSharedData[handle] = data;
 }
 
@@ -320,6 +327,21 @@ void commit(OSPState &state,
   Data *d = state.getSharedDataHandle(handle);
   if (d) {
     retrieveData(state, cmdBuf, fabric, d->type, d->numItems, d);
+
+    auto subscopy = (OSPData)state.objects[handle];
+
+    // gives an opportunity to pass off to internal device(s)
+    auto forsubs = ospNewSharedData(d->data(),
+        d->type,
+        d->numItems.x,
+        0,
+        d->numItems.y,
+        0,
+        d->numItems.z,
+        0);
+    ospCopyData(forsubs, subscopy);
+    ospCommit(subscopy);
+    ospRelease(forsubs);
   }
 
   ospCommit(state.objects[handle]);
@@ -344,7 +366,9 @@ void release(
     }
   }
 
-  if (state.getSharedDataHandle(handle)) {
+  Data *appData = state.getSharedDataHandle(handle);
+  if (appData) {
+    appData->refDec();
     state.appSharedData.erase(handle);
   }
 }

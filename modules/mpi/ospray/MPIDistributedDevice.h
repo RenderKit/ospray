@@ -158,8 +158,7 @@ struct MPIDistributedDevice : public api::Device
   bool initialized{false};
   bool shouldFinalizeMPI{false};
 
-  RTCDevice embreeDevice = nullptr;
-  VKLDevice vklDevice = nullptr;
+  std::shared_ptr<Device> internalDevice = nullptr;
 };
 
 } // namespace mpi

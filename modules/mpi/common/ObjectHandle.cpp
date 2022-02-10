@@ -48,7 +48,7 @@ void ObjectHandle::freeObject() const
 {
   auto it = objectByHandle.find(i64);
   if (it != objectByHandle.end()) {
-    it->second->refDec();
+    // let internal device handle this -> it->second->refDec();
     objectByHandle.erase(it);
   }
 }
