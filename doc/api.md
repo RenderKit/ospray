@@ -575,7 +575,6 @@ have a stride between voxels, specified through the
 supported, additional strides between scanlines (2D, `byteStride2`) and
 slices (3D, `byteStride3`) are not.
 
-
 The parameters understood by structured volumes are summarized in the
 table below.
 
@@ -589,6 +588,10 @@ table below.
                                                         in object-space
 
   OSPData data                                          the actual voxel 3D [data]
+  
+  bool    cellCentered                           false  whether the data is provided
+                                                        per cell (as opposed to per
+                                                        vertex)
 
   int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
                                                         reconstructing the field,
@@ -609,7 +612,10 @@ table below.
 The size of the volume is inferred from the size of the 3D array `data`,
 as is the type of the voxel values (currently supported are:
 `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_HALF`, `OSP_FLOAT`, and
-`OSP_DOUBLE`).
+`OSP_DOUBLE`). Data can be provided either per cell or per vertex (the
+default), selectable via the `cellCentered` parameter (which will also
+affect the computed bounding box).
+
 
 ### Structured Spherical Volume
 

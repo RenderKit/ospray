@@ -2,27 +2,37 @@ Version History
 ---------------
 
 ### Changes in v2.9.0:
--   Add support for dynamic load balancing in Offload device 
+
 -   Add support for multi-segment deformation motion blur for `mesh`
     geometry
--   Moved ISPC module to `modules/` folder and renamed the module to
-    `cpu`
--   Refactored CMake variable names for enabling app categories
-    - OSPRAY_APPS_BENCHMARK refactored to OSPRAY_ENABLE_APPS_BENCHMARK
-    - OSPRAY_APPS_EXAMPLES refactored to OSPRAY_ENABLE_APPS_EXAMPLES
-    - OSPRAY_APPS_TUTORIALS refactored to OSPRAY_ENABLE_APPS_TUTORIALS
-    - OSPRAY_APPS_TESTING refactored to OSPRAY_ENABLE_APPS_TESTING
--   Changed from area sampling to solid angle sampling for quad lights
-    in the pathtracer
--   Instances can now have the group object rebound via a parameter
--   MPI: Resolve issue where framebuffers would be leaked in the MPI
-    offload device.
--   MPI: Resolve possible race condition in assigning IDs to distributed
-    objects
+-   OSPRay now requires minimum Open VKL v1.2.0 to bring the following
+    improvements:
+    -   Structured regular volumes support for cell-centered data via
+        the `cellCentered` parameter (vertex-centered remains the
+        default)
+    -   Particle volumes ignore particles with zero radius
+-   Add support for dynamic load balancing in MPI Offload device 
 -   Support for photometric lights (e.g., IES or EULUMDAT) also for
     `sphere` and `quad` lights. When setting `intensityDistribution`,
     other values for `intensityQuantity` than
     `OSP_INTENSITY_QUANTITY_SCALE` are deprecated
+-   Changed CMake variables for enabling app categories:
+    -   `OSPRAY_ENABLE_APPS_BENCHMARK` replaces `OSPRAY_APPS_BENCHMARK`
+    -   `OSPRAY_ENABLE_APPS_EXAMPLES` replaces `OSPRAY_APPS_EXAMPLES`
+    -   `OSPRAY_ENABLE_APPS_TUTORIALS` replaces `OSPRAY_APPS_TUTORIALS`
+    -   `OSPRAY_ENABLE_APPS_TESTING` replaces `OSPRAY_APPS_TESTING`
+-   Improve sampling of quad lights in the pathtracer (solid angle
+    instead of area)
+-   Instances can now have the group object rebound via a parameter
+-   Fix leaking framebuffers in the MPI Offload device
+-   Resolve possible race condition in assigning IDs to distributed
+    objects in the MPI device
+-   Move ISPC module to `modules/` folder and renamed the module to
+    `cpu`
+-   Minimum version of rkcommon is 1.9.0, which brings the following
+    improvements:
+    -   Add support for Intel oneAPI DPCPP compiler
+    -   Fix memory leak
 
 ### Changes in v2.8.0:
 
@@ -45,8 +55,8 @@ Version History
 -   Workaround dynamic linking issue on Windows in MPI distributed
     rendering
 -   Correctly initialize `renderFrame` progress
--   Improved performance of data-parallel rendering for scenes with
-    a large number of regions
+-   Improved performance of data-parallel rendering for scenes with a
+    large number of regions
 -   Expanded camera model support of the data-parallel renderer,
     data-parallel rendering can now use all the camera models supported
     by the SciVis renderer
@@ -60,8 +70,8 @@ Version History
 -   OSPRay can now be built for ARM64 CPUs with NEON (e.g., Apple M1)
     using the superbuild. Thus, new minimum versions are for ISPC
     1.16.0, for Embree 3.13.1 and for rkcommon 1.7.0
--   OSPRay now requires minimum Open VKL v1.0.0 to bring the
-    following improvements:
+-   OSPRay now requires minimum Open VKL v1.0.0 to bring the following
+    improvements:
     -   Configurable `background` values for all volume types (default
         `NaN`), defining region outside the volume domain
     -   Better default sampling rate for scaled VDB volumes, improved
@@ -106,23 +116,23 @@ Version History
     and other MPICH-ABI compatible MPI distributions. The Windows
     release is built against MPI provided in the Intel oneAPI HPC
     Toolkit
--   OSPRay now requires minimum Open VKL v0.13.0 to bring the
-    following improvements:
+-   OSPRay now requires minimum Open VKL v0.13.0 to bring the following
+    improvements:
     -   Support half precision float (fp16) voxel data in strutured
         volumes (regular and spherical) and VDB volume
     -   Supporting tricubic filtering via `VKL_FILTER_TRICUBIC` filter
         for VDB volume
     -   Fixed artifacts for isosurfaces of unstructured volumes
-    -   Performance improvements for isosurfaces when multiple
-        isovalues are selected 
+    -   Performance improvements for isosurfaces when multiple isovalues
+        are selected 
     -   Better, adaptive sampling of AMR volumes
 -   The `mpiOffload` and `mpiDistributed` devices now support picking.
     Picking in the distributed device will return the globally closest
-    object on the rank that owns that object. Other ranks will report
-    no hit
--   Messages issued from ISPC code use the same reporting path as the C++
-    code, thus now the whole OSPRay console output can be consistently
-    filtered with log levels
+    object on the rank that owns that object. Other ranks will report no
+    hit
+-   Messages issued from ISPC code use the same reporting path as the
+    C++ code, thus now the whole OSPRay console output can be
+    consistently filtered with log levels
 -   Open VKL and Embree internal errors are now correctly mapped to
     their corresponding OSPRay errors
 -   Fix behavior of committing the framebuffer in distributed rendering
@@ -409,7 +419,7 @@ Version History
     MPI distributed rendering documentation
 -   Log levels are now controlled with enums and named strings (where
     applicable)
-    -   A new flag was also introduced which turns all OSP_LOG_WARNING
+    -   A new flag was also introduced which turns all `OSP_LOG_WARNING`
         messages into errors, which are submitted to the error callback
         instead of the message callback
     -   Any unused parameters an object ignores now emit a warning
