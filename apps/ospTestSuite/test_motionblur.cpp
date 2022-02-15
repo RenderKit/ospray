@@ -163,6 +163,58 @@ void MotionBlurBoxes::SetUp()
     AddInstance(instance);
   }
 
+  { // deformation
+    std::vector<vec3f> pos = {vec3f(-3.0f, -3.5f, -0.5f),
+        vec3f(-2.0f, -3.5f, -0.5f),
+        vec3f(-2.0f, -2.5f, -0.5f),
+        vec3f(-3.0f, -2.5f, -0.5f)};
+    std::vector<vec3f> nor(4, vec3f(0.0f, 0.0f, -1.0f));
+    std::vector<cpp::CopiedData> mposdata;
+    mposdata.push_back(cpp::CopiedData(pos));
+    std::vector<cpp::CopiedData> mnordata;
+    mnordata.push_back(cpp::CopiedData(nor));
+    for (vec3f &p : pos)
+      p.x -= 1.5f;
+    mposdata.push_back(cpp::CopiedData(pos));
+    for (vec3f &n : nor)
+      n.x += 1.0f;
+    mnordata.push_back(cpp::CopiedData(nor));
+    for (vec3f &p : pos)
+      p = xfmPoint(quatf::rotate(vec3f(0.4, 0, 1), -0.1), p);
+    mposdata.push_back(cpp::CopiedData(pos));
+    for (vec3f &n : nor)
+      n.x -= 0.5f;
+    mnordata.push_back(cpp::CopiedData(nor));
+    cpp::CopiedData mpos(mposdata);
+    cpp::CopiedData mnor(mnordata);
+    { // triangle
+      cpp::Geometry geom("mesh");
+      geom.setParam("motion.vertex.position", mpos);
+      geom.setParam("motion.vertex.normal", mnor);
+      geom.setParam("index", cpp::CopiedData(vec3ui(0, 1, 2)));
+      geom.commit();
+      cpp::GeometricModel model(geom);
+      model.setParam("material", material);
+      AddModel(model);
+    }
+    { // quad
+      cpp::Geometry geom("mesh");
+      geom.setParam("motion.vertex.position", mpos);
+      geom.setParam("motion.vertex.normal", mnor);
+      geom.setParam("index", cpp::CopiedData(vec4ui(0, 1, 2, 3)));
+      geom.commit();
+      cpp::GeometricModel model(geom);
+      model.setParam("material", material);
+      model.commit();
+      cpp::Group group;
+      group.setParam("geometry", cpp::CopiedData(model));
+      group.commit();
+      cpp::Instance instance(group);
+      instance.setParam("transform", affine3f::translate(vec3f(0, 1.5, 0)));
+      AddInstance(instance);
+    }
+  }
+
   cpp::Light distant("distant");
   distant.setParam("intensity", 3.0f);
   distant.setParam("direction", vec3f(0.3f, -4.0f, 2.8f));

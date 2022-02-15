@@ -1,0 +1,76 @@
+// Copyright 2009-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "Texture.ih"
+
+#include "Texture2DShared.h"
+
+// XXX won't work with MIPmapping: clean implementation with clamping on integer
+// coords needed then
+inline vec2f clamp2edge(const uniform Texture2D *uniform self, const vec2f p)
+{
+  return clamp(p, self->halfTexel, 1.0f - self->halfTexel);
+}
+
+inline float get1f(const uniform Texture2D *uniform self,
+    const varying DifferentialGeometry &dg)
+{
+  return get1f(&self->super, dg);
+}
+
+inline vec3f get3f(const uniform Texture2D *uniform self,
+    const varying DifferentialGeometry &dg)
+{
+  return get3f(&self->super, dg);
+}
+
+inline vec4f get4f(const uniform Texture2D *uniform self,
+    const varying DifferentialGeometry &dg)
+{
+  return get4f(&self->super, dg);
+}
+
+inline vec3f getNormal(const uniform Texture2D *uniform self,
+    const varying DifferentialGeometry &dg)
+{
+  return getNormal(&self->super, dg);
+}
+
+inline float get1f(const uniform Texture2D *uniform self,
+    const varying DifferentialGeometry &dg,
+    const varying float defaultValue)
+{
+  return get1f(&self->super, dg, defaultValue);
+}
+
+inline vec3f get3f(const uniform Texture2D *uniform self,
+    const varying DifferentialGeometry &dg,
+    const varying vec3f defaultValue)
+{
+  return get3f(&self->super, dg, defaultValue);
+}
+
+inline vec4f get4f(const uniform Texture2D *uniform self,
+    const varying DifferentialGeometry &dg,
+    const varying vec4f defaultValue)
+{
+  return get4f(&self->super, dg, defaultValue);
+}
+
+#if 0 // crashes ISPC!
+inline DifferentialGeometry dgFromTexCoord(const varying vec2f &c)
+{
+  DifferentialGeometry dg;
+  dg.primID = -1;
+  dg.st = c;
+  return dg;
+}
+#else
+inline void initDgFromTexCoord(DifferentialGeometry &dg, const varying vec2f &c)
+{
+  dg.primID = -1;
+  dg.st = c;
+}
+#endif

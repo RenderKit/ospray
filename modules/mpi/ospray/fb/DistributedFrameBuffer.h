@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -76,6 +76,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   std::shared_ptr<TileOperation> getTileOperation();
   const Renderer *getLastRenderer() const;
 
+  mpicommon::Group getMPIGroup();
   // ==================================================================
   // interface for maml messaging, enables communication between
   // different instances of same object
@@ -110,7 +111,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
 
   /*! this function gets called whenever one of our tiles is done
       writing/compositing/blending/etc; i.e., as soon as we know
-      that all the ingredient tile datas for that tile have been
+      that all the ingredient tile data for that tile have been
       received from the client(s) that generated them. By the time
       the tile gets called we do know that 'accum' field of the tile
       has been set; it is this function's job to make sure we

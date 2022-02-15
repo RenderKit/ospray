@@ -1,0 +1,22 @@
+// Copyright 2009-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#include "math/spectrum.h"
+#include "render/Material.h"
+
+#include "MetallicPaintShared.h"
+
+namespace ospray {
+namespace pathtracer {
+
+struct MetallicPaint : public AddStructShared<Material, ispc::MetallicPaint>
+{
+  MetallicPaint();
+
+  virtual std::string toString() const override;
+
+  virtual void commit() override;
+};
+
+} // namespace pathtracer
+} // namespace ospray

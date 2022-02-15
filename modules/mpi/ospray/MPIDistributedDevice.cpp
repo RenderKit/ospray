@@ -1,10 +1,10 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "MPIDistributedDevice.h"
 #include <map>
+#include "ISPCDevice.h"
 #include "MPIDistributedDevice_ispc.h"
-#include "api/ISPCDevice.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
 #include "common/DistributedWorld.h"
@@ -31,37 +31,58 @@ namespace mpi {
 
 // Helper functions ///////////////////////////////////////////////////////
 
-using SetParamFcn = void(OSPObject, const char *, const void *);
+using SetParamFcn = void(std::shared_ptr<ospray::api::Device>,
+    OSPObject,
+    const char *,
+    const void *m,
+    OSPDataType);
 
 template <typename T>
-static void setParamOnObject(OSPObject _obj, const char *p, const T &v)
+static void setParamOnObject(std::shared_ptr<ospray::api::Device> d,
+    OSPObject _obj,
+    const char *p,
+    const T &v,
+    OSPDataType t)
 {
   auto *obj = lookupObject<ManagedObject>(_obj);
-  obj->setParam(p, v);
+  d->setObjectParam((OSPObject)obj, p, t, &v);
 }
 
 #define declare_param_setter(TYPE)                                             \
   {                                                                            \
-    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) {   \
-      setParamOnObject(o, p, *(TYPE *)v);                                      \
-    }                                                                          \
+    OSPTypeFor<TYPE>::value,                                                   \
+        [](std::shared_ptr<ospray::api::Device> d,                             \
+            OSPObject o,                                                       \
+            const char *p,                                                     \
+            const void *v,                                                     \
+            OSPDataType t) { setParamOnObject(d, o, p, *(TYPE *)v, t); }       \
   }
 
 #define declare_param_setter_object(TYPE)                                      \
   {                                                                            \
-    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) {   \
-      auto *obj = lookupObject<ManagedObject>(                                 \
-          *reinterpret_cast<const OSPObject *>(v));                            \
-      setParamOnObject(o, p, obj);                                             \
-    }                                                                          \
+    OSPTypeFor<TYPE>::value,                                                   \
+        [](std::shared_ptr<ospray::api::Device> d,                             \
+            OSPObject o,                                                       \
+            const char *p,                                                     \
+            const void *v,                                                     \
+            OSPDataType t) {                                                   \
+          auto *obj = lookupObject<ManagedObject>(                             \
+              *reinterpret_cast<const OSPObject *>(v));                        \
+          setParamOnObject(d, o, p, obj, t);                                   \
+        }                                                                      \
   }
 
 #define declare_param_setter_string(TYPE)                                      \
   {                                                                            \
-    OSPTypeFor<TYPE>::value, [](OSPObject o, const char *p, const void *v) {   \
-      const char *str = (const char *)v;                                       \
-      setParamOnObject(o, p, std::string(str));                                \
-    }                                                                          \
+    OSPTypeFor<TYPE>::value,                                                   \
+        [](std::shared_ptr<ospray::api::Device> d,                             \
+            OSPObject o,                                                       \
+            const char *p,                                                     \
+            const void *v,                                                     \
+            OSPDataType t) {                                                   \
+          const char *str = (const char *)v;                                   \
+          setParamOnObject(d, o, p, std::string(str), t);                      \
+        }                                                                      \
   }
 
 static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
@@ -73,6 +94,7 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter_object(Data *),
     declare_param_setter_object(FrameBuffer *),
     declare_param_setter_object(Future *),
+    declare_param_setter_object(Geometry *),
     declare_param_setter_object(GeometricModel *),
     declare_param_setter_object(Group *),
     declare_param_setter_object(ImageOp *),
@@ -143,48 +165,19 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 #undef declare_param_setter
 
 template <typename OSPRAY_TYPE, typename API_TYPE>
-inline API_TYPE createLocalObject(const char *type)
+inline API_TYPE createDistributedObject(const char *type, ObjectHandle handle)
 {
   auto *instance = OSPRAY_TYPE::createInstance(type);
-  return (API_TYPE)instance;
-}
-
-template <>
-inline OSPVolume createLocalObject<Volume, OSPVolume>(const char *type)
-{
-  return (OSPVolume) new Volume(type);
-}
-
-template <typename OSPRAY_TYPE, typename API_TYPE>
-inline API_TYPE createDistributedObject(const char *type)
-{
-  auto *instance = OSPRAY_TYPE::createInstance(type);
-
-  ObjectHandle handle;
   handle.assign(instance);
-
   return (API_TYPE)(int64)handle;
-}
-
-static void embreeErrorFunc(void *, const RTCError code, const char *str)
-{
-  postStatusMsg() << "#osp: embree internal error " << code << " : " << str;
-  throw std::runtime_error("embree internal error '" + std::string(str) + "'");
-}
-
-static void vklErrorFunc(void *, const VKLError code, const char *str)
-{
-  postStatusMsg() << "#osp: Open VKL internal error " << code << " : " << str;
-  OSPError e =
-      (code > VKL_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
-  handleError(e, "Open VKL internal error '" + std::string(str) + "'");
 }
 
 // MPIDistributedDevice definitions ///////////////////////////////////////
 
 MPIDistributedDevice::MPIDistributedDevice()
-    : loadBalancer(std::make_shared<staticLoadBalancer::Distributed>())
-{}
+{
+  internalDevice = std::make_shared<ospray::api::ISPCDevice>();
+}
 
 MPIDistributedDevice::~MPIDistributedDevice()
 {
@@ -197,18 +190,15 @@ MPIDistributedDevice::~MPIDistributedDevice()
       // Silently move on if finalize fails
     }
   }
+}
 
-  try {
-    if (embreeDevice) {
-      rtcReleaseDevice(embreeDevice);
-    }
-  } catch (...) {
-    // silently move on, sometimes a pthread mutex lock fails in Embree
-  }
-
-  if (vklDevice) {
-    vklReleaseDevice(vklDevice);
-  }
+static void internalDeviceErrorFunc(
+    void *, const OSPError code, const char *str)
+{
+  postStatusMsg() << "#OSPRay MPI InternalDevice: internal error " << code
+                  << " : " << str;
+  throw std::runtime_error(
+      "OSPRay MPIInternalDevice internal error '" + std::string(str) + "'");
 }
 
 void MPIDistributedDevice::commit()
@@ -220,7 +210,10 @@ void MPIDistributedDevice::commit()
   }
 
   if (!initialized) {
+    internalDevice->error_fcn = internalDeviceErrorFunc;
+
     int _ac = 1;
+
     const char *_av[] = {"ospray_mpi_distributed_device"};
 
     auto *setComm =
@@ -231,55 +224,6 @@ void MPIDistributedDevice::commit()
       mpicommon::worker.setTo(*setComm);
     else
       mpicommon::worker = mpicommon::world;
-
-    if (!embreeDevice) {
-      // -------------------------------------------------------
-      // initialize embree. (we need to do this here rather than in
-      // ospray::init() because in mpi-mode the latter is also called
-      // in the host-stubs, where it shouldn't.
-      // -------------------------------------------------------
-      embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
-      rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
-      RTCError erc = rtcGetDeviceError(embreeDevice);
-      if (erc != RTC_ERROR_NONE) {
-        // why did the error function not get called !?
-        postStatusMsg() << "#osp:init: embree internal error number " << erc;
-        throw std::runtime_error("failed to initialize Embree");
-      }
-    }
-
-    if (!vklDevice) {
-      vklLoadModule("cpu_device");
-
-      int cpu_width = ispc::MPIDistributedDevice_programCount();
-      switch (cpu_width) {
-      case 4:
-        vklDevice = vklNewDevice("cpu_4");
-        break;
-      case 8:
-        vklDevice = vklNewDevice("cpu_8");
-        break;
-      case 16:
-        vklDevice = vklNewDevice("cpu_16");
-        break;
-      default:
-        vklDevice = vklNewDevice("cpu");
-        break;
-      }
-
-      vklDeviceSetErrorCallback(vklDevice, vklErrorFunc, nullptr);
-      vklDeviceSetLogCallback(
-          vklDevice,
-          [](void *, const char *message) {
-            postStatusMsg(OSP_LOG_INFO) << message;
-          },
-          nullptr);
-
-      vklDeviceSetInt(vklDevice, "logLevel", logLevel);
-      vklDeviceSetInt(vklDevice, "numThreads", numThreads);
-
-      vklCommitDevice(vklDevice);
-    }
 
     initialized = true;
 
@@ -294,12 +238,14 @@ void MPIDistributedDevice::commit()
     messaging::init(mpicommon::worker);
     maml::start();
   }
+
+  internalDevice->commit();
 }
 
 OSPFrameBuffer MPIDistributedDevice::frameBufferCreate(
     const vec2i &size, const OSPFrameBufferFormat mode, const uint32 channels)
 {
-  ObjectHandle handle;
+  ObjectHandle handle = allocateHandle();
   auto *instance = new DistributedFrameBuffer(size, handle, mode, channels);
   handle.assign(instance);
   return (OSPFrameBuffer)(int64)handle;
@@ -331,23 +277,20 @@ void MPIDistributedDevice::resetAccumulation(OSPFrameBuffer _fb)
 
 OSPGroup MPIDistributedDevice::newGroup()
 {
-  ospray::Group *ret = new Group;
-  ret->setDevice(embreeDevice);
-  return (OSPGroup)ret;
+  return internalDevice->newGroup();
 }
 
 OSPInstance MPIDistributedDevice::newInstance(OSPGroup _group)
 {
-  auto *group = (Group *)_group;
-  auto *instance = new Instance(group);
-  return (OSPInstance)instance;
+  return internalDevice->newInstance(_group);
 }
 
 OSPWorld MPIDistributedDevice::newWorld()
 {
-  ObjectHandle handle;
+  ObjectHandle handle = allocateHandle();
   auto *instance = new DistributedWorld;
-  instance->setDevice(embreeDevice);
+  instance->setDevice(
+      ((ospray::api::ISPCDevice *)internalDevice.get())->getEmbreeDevice());
   handle.assign(instance);
   return (OSPWorld)(int64)(handle);
 }
@@ -355,7 +298,7 @@ OSPWorld MPIDistributedDevice::newWorld()
 box3f MPIDistributedDevice::getBounds(OSPObject _obj)
 {
   auto *obj = lookupObject<ManagedObject>(_obj);
-  return obj->getBounds();
+  return internalDevice->getBounds((OSPObject)obj);
 }
 
 OSPData MPIDistributedDevice::newSharedData(const void *sharedData,
@@ -363,19 +306,18 @@ OSPData MPIDistributedDevice::newSharedData(const void *sharedData,
     const vec3ul &numItems,
     const vec3l &byteStride)
 {
-  return (OSPData) new Data(sharedData, type, numItems, byteStride);
+  return internalDevice->newSharedData(sharedData, type, numItems, byteStride);
 }
 
 OSPData MPIDistributedDevice::newData(OSPDataType type, const vec3ul &numItems)
 {
-  return (OSPData) new Data(type, numItems);
+  return internalDevice->newData(type, numItems);
 }
 
 void MPIDistributedDevice::copyData(
     const OSPData source, OSPData destination, const vec3ul &destinationIndex)
 {
-  Data *dst = (Data *)destination;
-  dst->copy(*(Data *)source, destinationIndex);
+  internalDevice->copyData(source, destination, destinationIndex);
 }
 
 int MPIDistributedDevice::loadModule(const char *name)
@@ -385,67 +327,56 @@ int MPIDistributedDevice::loadModule(const char *name)
 
 OSPImageOperation MPIDistributedDevice::newImageOp(const char *type)
 {
-  return createLocalObject<ImageOp, OSPImageOperation>(type);
+  return internalDevice->newImageOp(type);
 }
 
 OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
 {
-  return createDistributedObject<Renderer, OSPRenderer>(type);
+  ObjectHandle handle = allocateHandle();
+  return createDistributedObject<Renderer, OSPRenderer>(type, handle);
 }
 
 OSPCamera MPIDistributedDevice::newCamera(const char *type)
 {
-  auto c = createLocalObject<Camera, OSPCamera>(type);
-  auto *cam = lookupObject<Camera>(c);
-  cam->setDevice(embreeDevice);
-  return c;
+  return internalDevice->newCamera(type);
 }
 
 OSPVolume MPIDistributedDevice::newVolume(const char *type)
 {
-  auto v = createLocalObject<Volume, OSPVolume>(type);
-  auto *volume = lookupObject<Volume>(v);
-  volume->setDevice(embreeDevice, vklDevice);
-  return v;
+  return internalDevice->newVolume(type);
 }
 
 OSPGeometry MPIDistributedDevice::newGeometry(const char *type)
 {
-  auto g = createLocalObject<Geometry, OSPGeometry>(type);
-  auto *geom = lookupObject<Geometry>(g);
-  geom->setDevice(embreeDevice);
-  return g;
+  return internalDevice->newGeometry(type);
 }
 
 OSPGeometricModel MPIDistributedDevice::newGeometricModel(OSPGeometry _geom)
 {
   auto *geom = lookupObject<Geometry>(_geom);
-  auto *instance = new GeometricModel(geom);
-  return (OSPGeometricModel)instance;
+  return internalDevice->newGeometricModel((OSPGeometry)geom);
 }
 
 OSPVolumetricModel MPIDistributedDevice::newVolumetricModel(OSPVolume _vol)
 {
   auto *volume = lookupObject<Volume>(_vol);
-  auto *instance = new VolumetricModel(volume);
-  return (OSPVolumetricModel)instance;
+  return internalDevice->newVolumetricModel((OSPVolume)volume);
 }
 
 OSPMaterial MPIDistributedDevice::newMaterial(
-    const char *, const char *material_type)
+    const char *unused, const char *material_type)
 {
-  auto *instance = Material::createInstance(nullptr, material_type);
-  return (OSPMaterial)instance;
+  return internalDevice->newMaterial(unused, material_type);
 }
 
 OSPTransferFunction MPIDistributedDevice::newTransferFunction(const char *type)
 {
-  return createLocalObject<TransferFunction, OSPTransferFunction>(type);
+  return internalDevice->newTransferFunction(type);
 }
 
 OSPLight MPIDistributedDevice::newLight(const char *type)
 {
-  return createLocalObject<Light, OSPLight>(type);
+  return internalDevice->newLight(type);
 }
 
 OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
@@ -459,6 +390,11 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   auto *camera = lookupObject<Camera>(_camera);
   auto *world = lookupObject<DistributedWorld>(_world);
 
+  ObjectHandle handle = allocateHandle();
+  std::shared_ptr<staticLoadBalancer::Distributed> loadBalancer =
+      std::make_shared<staticLoadBalancer::Distributed>();
+  loadBalancer->setObjectHandle(handle);
+
   fb->setCompletedEvent(OSP_NONE_FINISHED);
 
   fb->refInc();
@@ -466,7 +402,7 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   camera->refInc();
   world->refInc();
 
-  auto *f = new ThreadedRenderTask(fb, [=]() {
+  auto *f = new ThreadedRenderTask(fb, loadBalancer, [=]() {
 #ifdef ENABLE_PROFILING
     using namespace mpicommon;
     ProfilingPoint start;
@@ -518,14 +454,13 @@ float MPIDistributedDevice::getProgress(OSPFuture _task)
 
 float MPIDistributedDevice::getTaskDuration(OSPFuture _task)
 {
-  auto *task = (Future *)_task;
-  return task->getTaskDuration();
+  return internalDevice->getTaskDuration(_task);
 }
 
 float MPIDistributedDevice::getVariance(OSPFrameBuffer _fb)
 {
   auto *fb = lookupDistributedObject<FrameBuffer>(_fb);
-  return fb->getVariance();
+  return internalDevice->getVariance((OSPFrameBuffer)fb);
 }
 
 void MPIDistributedDevice::setObjectParam(
@@ -535,28 +470,24 @@ void MPIDistributedDevice::setObjectParam(
     throw std::runtime_error("cannot set OSP_UNKNOWN parameter type");
 
   if (type == OSP_BYTE || type == OSP_RAW) {
-    setParamOnObject(object, name, *(const byte_t *)mem);
+    setParamOnObject(internalDevice, object, name, *(const byte_t *)mem, type);
     return;
   }
 
-  setParamFcns[type](object, name, mem);
+  setParamFcns[type](internalDevice, object, name, mem, type);
 }
 
 void MPIDistributedDevice::removeObjectParam(
     OSPObject _object, const char *name)
 {
   auto *object = lookupObject<ManagedObject>(_object);
-  auto *existing = object->getParam<ManagedObject *>(name, nullptr);
-  if (existing) {
-    existing->refDec();
-  }
-  object->removeParam(name);
+  return internalDevice->removeObjectParam((OSPObject)object, name);
 }
 
 void MPIDistributedDevice::commit(OSPObject _object)
 {
   auto *object = lookupObject<ManagedObject>(_object);
-  object->commit();
+  internalDevice->commit((OSPObject)object);
 }
 
 void MPIDistributedDevice::release(OSPObject _obj)
@@ -585,7 +516,7 @@ void MPIDistributedDevice::retain(OSPObject _obj)
 
 OSPTexture MPIDistributedDevice::newTexture(const char *type)
 {
-  return createLocalObject<Texture, OSPTexture>(type);
+  return internalDevice->newTexture(type);
 }
 
 OSPPickResult MPIDistributedDevice::pick(OSPFrameBuffer _fb,
@@ -599,6 +530,37 @@ OSPPickResult MPIDistributedDevice::pick(OSPFrameBuffer _fb,
   auto *camera = lookupObject<Camera>(_camera);
   auto *world = lookupObject<DistributedWorld>(_world);
   return renderer->pick(fb, camera, world, screenPos);
+}
+
+ObjectHandle MPIDistributedDevice::allocateHandle()
+{
+  mpicommon::barrier(mpicommon::worker.comm).wait();
+  ObjectHandle handle = ObjectHandle::allocateLocalHandle();
+
+  // For debugging check that all ranks did in fact allocate the same handle.
+  // Typically we assume this is the case, as the app should be creating
+  // distributed objects in lock-step, even if their local objects differ.
+  if (logLevel == OSP_LOG_DEBUG) {
+    int maxID = handle.i32.ID;
+    int minID = handle.i32.ID;
+
+    auto reduceMax = mpicommon::reduce(
+        &handle.i32.ID, &maxID, 1, MPI_INT, MPI_MAX, 0, mpicommon::worker.comm);
+    auto reduceMin = mpicommon::reduce(
+        &handle.i32.ID, &minID, 1, MPI_INT, MPI_MIN, 0, mpicommon::worker.comm);
+    reduceMax.wait();
+    reduceMin.wait();
+
+    if (maxID != minID) {
+      // Log it, but this is a fatal error
+      postStatusMsg(
+          "Error allocating distributed handles: Ranks do not all have the same handle!");
+      throw std::runtime_error(
+          "Error allocating distributed handles: Ranks do not all have the same handle!");
+    }
+  }
+
+  return handle;
 }
 
 } // namespace mpi

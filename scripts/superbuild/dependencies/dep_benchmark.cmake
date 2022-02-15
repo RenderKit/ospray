@@ -1,4 +1,4 @@
-## Copyright 2021 Intel Corporation
+## Copyright 2021-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(COMPONENT_NAME benchmark)
@@ -10,8 +10,8 @@ else()
 endif()
 
 ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/benchmark/archive/refs/tags/v1.5.5.zip"
-  URL_HASH "SHA256=30f2e5156de241789d772dd8b130c1cb5d33473cc2f29e4008eab680df7bd1f0"
+  URL "https://github.com/google/benchmark/archive/refs/tags/v1.6.1.zip"
+  URL_HASH "SHA256=367e963b8620080aff8c831e24751852cffd1f74ea40f25d9cc1b667a9dd5e45"
 
   # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""

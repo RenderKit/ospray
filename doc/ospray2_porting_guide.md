@@ -111,7 +111,7 @@ provides more fine control over appearance information and instance
 transformations.
 
 In OSPRay v1.x, geometries and volumes contained both structural and
-appearance information which limited their reuse in other objets. For
+appearance information which limited their reuse in other objects. For
 example, the volume's transfer function can now be different between an
 isosurface, slice, and rendered volume all in the same scene without
 duplicating the actual volume itself.

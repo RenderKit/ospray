@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.1)
@@ -54,11 +54,11 @@ endif()
 ## Main OSPRay library ##
 add_subdirectory(ospray)
 
-## OSPRay sample apps ##
-add_subdirectory(apps)
-
 ## Modules ##
 add_subdirectory(modules)
+
+## OSPRay sample apps ##
+add_subdirectory(apps)
 
 ## Regression test images target ##
 add_subdirectory(test_image_data)

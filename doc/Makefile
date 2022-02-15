@@ -5,7 +5,7 @@ process_version := $(addprefix tmp/, $(addsuffix .md, tutorials getting_ospray r
 tmptexfiles := $(addprefix tmp/, $(addsuffix .tex, overview changelog compilation api tutorials))
 images_jpg := $(addprefix images/, $(addsuffix .jpg, exampleViewer $(addprefix camera_, perspective architectural stereo orthographic panoramic) $(addprefix material_, OBJ Principled CarPaint Metal Alloy Glass ThinGlass MetallicPaint Luminous) ColoredWindow $(addprefix ospMPIDistribTutorial, Volume Spheres _firstFrame _accumulatedFrame)))
 images_png := $(addprefix images/, $(addsuffix .png, diffuse_rooms normalmap_frustum tutorial_accumulatedframe tutorial_firstframe ospExamples renderSunSky))
-images_fig := spot_light spot_coords quad_light hdri_light 
+images_fig := spot_light c-gamma_coords quad_light hdri_light 
 images_svg := gitter_badge structured_spherical_coords vdb_structure
 
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))

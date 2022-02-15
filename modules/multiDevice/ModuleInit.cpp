@@ -15,7 +15,7 @@ extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_multidevice(
   if (status == OSP_NO_ERROR) {
     // Run the ISPC module's initialization function as well to register local
     // types
-    status = ospLoadModule("ispc");
+    status = ospLoadModule("cpu");
   }
 
   if (status == OSP_NO_ERROR) {

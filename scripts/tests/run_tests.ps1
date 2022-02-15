@@ -1,4 +1,4 @@
-## Copyright 2009-2021 Intel Corporation
+## Copyright 2009-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # to run:  ./run_tests.ps1 <path to ospray source> <reference images ISA> [TEST_MPI]
@@ -43,7 +43,7 @@ if ( $testMPI ) {
     exit $exitCode
   }
 
-  # TODO: reenable tests failing with MSVC15
+  # TODO: re-enable tests failing with MSVC15
   md failed-mpi-data-parallel
   #mpiexec.exe -n 2 ospMPIDistribTestSuite.exe --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi-data-parallel
   $exitCode = $LastExitCode

@@ -1,4 +1,4 @@
-// Copyright 2016-2021 Intel Corporation
+// Copyright 2016-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -92,7 +92,7 @@ std::future<void *> allreduce(const void *sendBuffer,
 std::future<void *> send(void *buffer,
     int count,
     MPI_Datatype datatype,
-    int source,
+    int destination,
     int tag,
     MPI_Comm comm);
 
@@ -330,7 +330,7 @@ class AllReduce : public Collective
  * With these we actually want the ability to wait for a specific send to
  * finish, and a specific recv from a process to be completed. With the
  * fire and forget messaging layer we don't care about this and just queue
- * stuff up and recieve whatever is coming to us.
+ * stuff up and receive whatever is coming to us.
  */
 class Send : public Collective
 {

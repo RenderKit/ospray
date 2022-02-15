@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,7 +6,7 @@
 // oidn
 #include "OpenImageDenoise/oidn.h"
 // ospray
-#include "ospray/fb/ImageOp.h"
+#include "fb/ImageOp.h"
 #include "ospray_module_denoiser_export.h"
 
 namespace ospray {

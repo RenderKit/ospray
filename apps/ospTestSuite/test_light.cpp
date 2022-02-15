@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_light.h"
@@ -121,8 +121,18 @@ void GeometricLight::SetUp()
   std::vector<vec4ui> lightIndices = {{0, 1, 2, 3}};
 
   cpp::Geometry lightMesh("mesh");
-  lightMesh.setParam("vertex.position", cpp::CopiedData(lightVertices));
   lightMesh.setParam("index", cpp::CopiedData(lightIndices));
+  if (motionBlur == 2) { // deformation
+    for (vec3f &p : lightVertices)
+      p.x -= 0.5f;
+    std::vector<cpp::CopiedData> mposdata;
+    mposdata.push_back(cpp::CopiedData(lightVertices));
+    for (vec3f &p : lightVertices)
+      p.x += 1.0f;
+    mposdata.push_back(cpp::CopiedData(lightVertices));
+    lightMesh.setParam("motion.vertex.position", cpp::CopiedData(mposdata));
+  } else
+    lightMesh.setParam("vertex.position", cpp::CopiedData(lightVertices));
   lightMesh.commit();
   cpp::GeometricModel lightModel(lightMesh);
 
@@ -140,7 +150,7 @@ void GeometricLight::SetUp()
     lightModel.setParam("material", lightMaterial);
   }
 
-  if (motionBlur) {
+  if (motionBlur == 1) { // instance
     lightModel.commit();
     cpp::Group group;
     group.setParam("geometry", cpp::CopiedData(lightModel));
@@ -151,46 +161,84 @@ void GeometricLight::SetUp()
     xfms.push_back(affine3f::translate(vec3f(0.5, 0, 0)));
     instance.setParam("motion.transform", cpp::CopiedData(xfms));
     AddInstance(instance);
-
-    camera.setParam("shutter", range1f(0, 1));
   } else
     AddModel(lightModel);
+
+  if (motionBlur)
+    camera.setParam("shutter", range1f(0, 1));
 }
 
 PhotometricLight::PhotometricLight()
 {
   auto params = GetParam();
-  radius = std::get<0>(params);
-  rendererType = std::get<1>(params);
+  lightType = std::get<0>(params);
+  size = std::get<1>(params);
+  rendererType = std::get<2>(params);
+
+  // area lights need a minimum size
+  if (lightType == "quad")
+    size = std::max(0.01f, size);
 }
 
 void PhotometricLight::SetUp()
 {
   LightTest::SetUp();
 
-  cpp::Light light1d("spot");
+  const vec3f pos1 = xfmPoint(xfm, vec3f(-0.6f, 0.8f, -0.5f));
+  const vec3f pos2 = xfmPoint(xfm, vec3f(0.3f, 0.6f, 0.f));
+  const vec3f dir = xfmVector(xfm, vec3f(0.0f, -1.0f, 0.0f));
+  const vec3f edge1 = xfmVector(xfm, vec3f(1.0f, 0.0f, 0.0f));
+  const vec3f edge2 = xfmVector(xfm, vec3f(0.0f, 0.0f, 1.0f));
+
+  cpp::Light light1d(lightType);
   light1d.setParam("intensity", 5.f);
-  light1d.setParam("position", xfmPoint(xfm, vec3f(-0.6f, 0.8f, -0.5f)));
-  light1d.setParam("direction", xfmVector(xfm, vec3f(0.0f, -1.0f, 0.0f)));
-  light1d.setParam("openingAngle", 360.f);
-  light1d.setParam("penumbraAngle", 0.f);
-  light1d.setParam("radius", radius);
+  light1d.setParam("intensityQuantity", OSP_INTENSITY_QUANTITY_SCALE);
   float lid1d[] = {2.5f, 0.4f, 0.2f, 0.1f, 0.03f, 0.01f, 0.01f};
   light1d.setParam("intensityDistribution", cpp::CopiedData(lid1d, 7));
+
+  if (lightType == "spot") {
+    light1d.setParam("position", pos1);
+    light1d.setParam("direction", dir);
+    light1d.setParam("openingAngle", 360.f);
+    light1d.setParam("penumbraAngle", 0.f);
+    light1d.setParam("radius", size);
+  } else if (lightType == "quad") {
+    light1d.setParam("position", pos1 - size * edge1 - size * edge2);
+    light1d.setParam("edge1", 2.0f * size * edge1);
+    light1d.setParam("edge2", 2.0f * size * edge2);
+  } else if (lightType == "sphere") {
+    light1d.setParam("position", pos1);
+    light1d.setParam("radius", size);
+    light1d.setParam("direction", dir);
+  }
+
   light1d.commit();
 
-  cpp::Light light2d("spot");
+  cpp::Light light2d(lightType);
   light2d.setParam("intensity", 1.f);
-  light2d.setParam("position", xfmPoint(xfm, vec3f(0.3f, 0.6f, 0.f)));
-  light2d.setParam("direction", xfmVector(xfm, vec3f(0.0f, -1.0f, 0.0f)));
-  light2d.setParam("openingAngle", 270.f);
-  light2d.setParam("penumbraAngle", 10.f);
-  light2d.setParam("radius", radius);
+  light2d.setParam("intensityQuantity", OSP_INTENSITY_QUANTITY_SCALE);
   float lid2d[60] = {
       1.5f, 5.0f, 6.0f, 0.3f, 0.01f, 0.15f, 0.5f, 1.6f, 0.1f, 0.01f};
   light2d.setParam(
       "intensityDistribution", cpp::CopiedData(lid2d, vec2ul(5, 12)));
   light2d.setParam("c0", xfmVector(xfm, vec3f(1.0f, 0.0f, 0.0f)));
+
+  if (lightType == "spot") {
+    light2d.setParam("position", pos2);
+    light2d.setParam("direction", dir);
+    light2d.setParam("openingAngle", 270.f);
+    light2d.setParam("penumbraAngle", 10.f);
+    light2d.setParam("radius", size);
+  } else if (lightType == "quad") {
+    light2d.setParam("position", pos2 - size * edge1 - size * edge2);
+    light2d.setParam("edge1", 2.0f * size * edge1);
+    light2d.setParam("edge2", 2.0f * size * edge2);
+  } else if (lightType == "sphere") {
+    light2d.setParam("position", pos2);
+    light2d.setParam("radius", size);
+    light2d.setParam("direction", dir);
+  }
+
   light2d.commit();
 
   cpp::Group group;
@@ -443,11 +491,13 @@ INSTANTIATE_TEST_SUITE_P(Light,
     GeometricLight,
     ::testing::Combine(::testing::Values(0.2f, 0.4f),
         ::testing::Bool(),
-        ::testing::Values(false)));
+        ::testing::Values(0)));
 
 INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
     GeometricLight,
-    ::testing::Values(std::make_tuple(0.2f, false, true)));
+    ::testing::Combine(::testing::Values(0.2f),
+        ::testing::Values(false),
+        ::testing::Values(1, 2)));
 
 // Quad Light
 
@@ -574,7 +624,8 @@ TEST_P(PhotometricLight, parameter)
 
 INSTANTIATE_TEST_SUITE_P(Light,
     PhotometricLight,
-    ::testing::Combine(::testing::Values(0.0f, 0.1f),
+    ::testing::Combine(::testing::Values("spot", "quad", "sphere"),
+        ::testing::Values(0.0f, 0.1f),
         ::testing::Values("scivis", "pathtracer")));
 
 // HDRI Light

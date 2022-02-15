@@ -1,7 +1,7 @@
 ## Copyright 2017-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-if (NOT OSPRAY_APPS_TESTING)
+if (NOT OSPRAY_ENABLE_APPS_TESTING)
   return()
 endif()
 
@@ -45,7 +45,7 @@ add_executable(ospTestSuite
 target_link_libraries(ospTestSuite
 PRIVATE
   ospray_testing
-  ospray_module_ispc
+  ospray_module_cpu
   ospray_gtest_utils
   $<$<BOOL:${OSPRAY_APPS_ENABLE_GLM}>:${GLM_TARGET}>
 )

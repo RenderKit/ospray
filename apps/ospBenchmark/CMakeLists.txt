@@ -1,7 +1,7 @@
 ## Copyright 2018-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-if (NOT OSPRAY_APPS_BENCHMARK)
+if (NOT OSPRAY_ENABLE_APPS_BENCHMARK)
   return()
 endif()
 

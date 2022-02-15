@@ -5,7 +5,7 @@ cmake_dependent_option(
   OSPRAY_MODULE_MULTIDEVICE
   "Build the multidevice module"
   OFF
-  OSPRAY_ENABLE_MODULES
+  OSPRAY_MODULE_CPU
   OFF
 )
 
@@ -37,8 +37,7 @@ ispc_target_add_sources(ospray_module_multidevice
 target_link_libraries(ospray_module_multidevice
   PRIVATE
     rkcommon::rkcommon
-    ospray_sdk
-    ospray_module_ispc
+    ospray_module_cpu
 )
 
 target_include_directories(ospray_module_multidevice

@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial how to use OSPRay and the
@@ -142,7 +142,7 @@ int main(int argc, char **argv)
 
     world.commit();
 
-    // create the mpi_raycast renderer (requred for distributed rendering)
+    // create the mpi_raycast renderer (required for distributed rendering)
     cpp::Renderer renderer("mpiRaycast");
     renderer.commit();
 

@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v2.8.0 of Intel® OSPRay. For changes and new features
+This is release v2.9.0 of Intel® OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
@@ -100,7 +100,7 @@ before you can build OSPRay you need the following prerequisites:
     `embree_DIR`.
 
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 1.0.1 or newer is required. If Open VKL is not
+    installing version 1.2.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 
@@ -341,8 +341,8 @@ Advanced users may want to link to additional targets which are exported
 in OSPRay’s CMake config, which includes all installed modules. All
 targets built with OSPRay are exported in the `ospray::` namespace,
 therefore all targets locally used in the OSPRay source tree can be
-accessed from an install. For example, `ospray_module_ispc` can be
-consumed directly via the `ospray::ospray_module_ispc` target. All
+accessed from an install. For example, `ospray_module_cpu` can be
+consumed directly via the `ospray::ospray_module_cpu` target. All
 targets have their libraries, includes, and definitions attached to them
 for public consumption (please [report
 bugs](#ospray-support-and-contact) if this is broken!).
@@ -398,7 +398,7 @@ OSPRay parses (and removes) its known command line parameters from your
 application’s `main` function. For an example see the
 [tutorial](#osptutorial). For possible error codes see section [Error
 Handling and Status Messages](#error-handling-and-status-messages). It
-is important to note that the arguments passed to `ospInit()` are
+is important to note that the arguments passed to `ospInit` are
 processed in order they are listed. The following parameters (which are
 prefixed by convention with “`--osp:`”) are understood:
 
@@ -616,7 +616,7 @@ typedef void (*OSPStatusCallback)(void *userData, const char* messageText);
 which OSPRay will use to emit status messages. By default, OSPRay uses a
 callback which does nothing, so any output desired by an application
 will require that a callback is provided. Note that callbacks for C++
-`std::cout` and `std::cerr` can be alternatively set through `ospInit()`
+`std::cout` and `std::cerr` can be alternatively set through `ospInit`
 or the `OSPRAY_LOG_OUTPUT` environment variable.
 
 Applications can clear either callback by passing `NULL` instead of an
@@ -647,8 +647,8 @@ void ospShutdown();
 
 This API call ensures that the current device is cleaned up
 appropriately. Due to static object allocation having non-deterministic
-ordering, it is recommended that applications call `ospShutdown()`
-before the calling application process terminates.
+ordering, it is recommended that applications call `ospShutdown` before
+the calling application process terminates.
 
 Objects
 -------
@@ -911,6 +911,7 @@ table below.
 | vec3f   | gridOrigin     |                       (0,0,0) | origin of the grid in object-space                                                                                     |
 | vec3f   | gridSpacing    |                       (1,1,1) | size of the grid cells in object-space                                                                                 |
 | OSPData | data           |                               | the actual voxel 3D [data](#data)                                                                                      |
+| bool    | cellCentered   |                         false | whether the data is provided per cell (as opposed to per vertex)                                                       |
 | int     | filter         | `OSP_VOLUME_FILTER_TRILINEAR` | filter used for reconstructing the field, also allowed is `OSP_VOLUME_FILTER_NEAREST` and `OSP_VOLUME_FILTER_TRICUBIC` |
 | int     | gradientFilter |              same as `filter` | filter used during gradient computations                                                                               |
 | float   | background     |                         `NaN` | value that is used when sampling an undefined region outside the volume domain                                         |
@@ -920,7 +921,9 @@ Configuration parameters for structured regular volumes.
 The size of the volume is inferred from the size of the 3D array `data`,
 as is the type of the voxel values (currently supported are:
 `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_HALF`, `OSP_FLOAT`, and
-`OSP_DOUBLE`).
+`OSP_DOUBLE`). Data can be provided either per cell or per vertex (the
+default), selectable via the `cellCentered` parameter (which will also
+affect the computed bounding box).
 
 ### Structured Spherical Volume
 
@@ -1227,7 +1230,7 @@ rendering-specific parameters (where more than one set may exist
 concurrently). To create a volume instance, call
 
 ``` cpp
-OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
+OSPVolumetricModel ospNewVolumetricModel(OSPVolume);
 ```
 
 The passed volume can be `NULL` as long as the volume to be used is
@@ -1238,10 +1241,10 @@ used.
 
 | Type                | Name             | Default | Description                                                                                                                          |
 |:--------------------|:-----------------|--------:|:-------------------------------------------------------------------------------------------------------------------------------------|
+| OSPVolume           | volume           |         | optional [volume](#volumes) object this model references                                                                             |
 | OSPTransferFunction | transferFunction |         | [transfer function](#transfer-function) to use                                                                                       |
 | float               | densityScale     |     1.0 | makes volumes uniformly thinner or thicker                                                                                           |
 | float               | anisotropy       |     0.0 | anisotropy of the (Henyey-Greenstein) phase function in \[-1–1\] ([path tracer](#path-tracer) only), default to isotropic scattering |
-| OSPVolume           | volume           |         | optional [volume](#volumes) object this model references                                                                             |
 
 Parameters understood by VolumetricModel.
 
@@ -1264,13 +1267,16 @@ A mesh consisting of either triangles or quads is created by calling
 `ospNewGeometry` with type string “`mesh`”. Once created, a mesh
 recognizes the following parameters:
 
-| Type                    | Name            | Description                                                                         |
-|:------------------------|:----------------|:------------------------------------------------------------------------------------|
-| vec3f\[\]               | vertex.position | [data](#data) array of vertex positions                                             |
-| vec3f\[\]               | vertex.normal   | [data](#data) array of vertex normals                                               |
-| vec4f\[\] / vec3f\[\]   | vertex.color    | [data](#data) array of vertex colors (linear RGBA/RGB)                              |
-| vec2f\[\]               | vertex.texcoord | [data](#data) array of vertex texture coordinates                                   |
-| vec3ui\[\] / vec4ui\[\] | index           | [data](#data) array of (either triangle or quad) indices (into the vertex array(s)) |
+| Type                    | Name                   | Description                                                                                                  |
+|:------------------------|:-----------------------|:-------------------------------------------------------------------------------------------------------------|
+| vec3f\[\]               | vertex.position        | [data](#data) array of vertex positions, overridden by `motion.*` arrays                                     |
+| vec3f\[\]               | vertex.normal          | [data](#data) array of vertex normals, overridden by `motion.*` arrays                                       |
+| vec4f\[\] / vec3f\[\]   | vertex.color           | [data](#data) array of vertex colors (linear RGBA/RGB)                                                       |
+| vec2f\[\]               | vertex.texcoord        | [data](#data) array of vertex texture coordinates                                                            |
+| vec3ui\[\] / vec4ui\[\] | index                  | [data](#data) array of (either triangle or quad) indices (into the vertex array(s))                          |
+| vec3f\[\]\[\]           | motion.vertex.position | [data](#data) array of vertex position arrays (uniformly distributed keys for deformation motion blur)       |
+| vec3f\[\]\[\]           | motion.vertex.normal   | [data](#data) array of vertex normal arrays (uniformly distributed keys for deformation motion blur)         |
+| box1f                   | time                   | time associated with first and last key in `motion.*` arrays (for deformation motion blur), default \[0, 1\] |
 
 Parameters defining a mesh geometry.
 
@@ -1486,7 +1492,7 @@ representation, and applies either full-object or per-primitive color
 and material information. To create a geometric model, call
 
 ``` cpp
-OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
+OSPGeometricModel ospNewGeometricModel(OSPGeometry);
 ```
 
 The passed geometry can be `NULL` as long as the geometry to be used is
@@ -1512,13 +1518,13 @@ with normals oriented outside clips everything what’s inside.
 
 | Type                         | Name          | Description                                                                                                                                         |
 |:-----------------------------|:--------------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSPGeometry                  | geometry      | optional [geometry](#geometries) object this model references                                                                                       |
 | OSPMaterial / uint32         | material      | optional [material](#materials) applied to the geometry, may be an index into the `material` parameter on the [renderer](#renderers) (if it exists) |
 | vec4f                        | color         | optional color assigned to the geometry (linear RGBA)                                                                                               |
 | OSPMaterial\[\] / uint32\[\] | material      | optional [data](#data) array of (per-primitive) materials, may be an index into the `material` parameter on the renderer (if it exists)             |
 | vec4f\[\]                    | color         | optional [data](#data) array of (per-primitive) colors (linear RGBA)                                                                                |
 | uint8\[\]                    | index         | optional [data](#data) array of per-primitive indices into `color` and `material`                                                                   |
 | bool                         | invertNormals | inverts all shading normals (Ns), default false                                                                                                     |
-| OSPGeometry                  | geometry      | optional \[geometry\] object this model references                                                                                                  |
 
 Parameters understood by GeometricModel.
 
@@ -1550,16 +1556,46 @@ represented by a light’s `intensity` parameter is set using
 differ between the different light sources (see documentation of each
 specific light source).
 
-| Name                              | Description                                                                                                                     |
-|:----------------------------------|:--------------------------------------------------------------------------------------------------------------------------------|
-| OSP_INTENSITY_QUANTITY_POWER      | the overall amount of light energy emitted by the light source into the scene, unit is W                                        |
-| OSP_INTENSITY_QUANTITY_INTENSITY  | the overall amount of light emitted by the light in a given direction, unit is W/sr                                             |
-| OSP_INTENSITY_QUANTITY_RADIANCE   | the amount of light emitted by a point on the light source in a given direction, unit is W/sr/m<sup>2</sup>                     |
-| OSP_INTENSITY_QUANTITY_IRRADIANCE | the amount of light arriving at a surface point, assuming the light is oriented towards to the surface, unit is W/m<sup>2</sup> |
-| OSP_INTENSITY_QUANTITY_SCALE      | a linear scaling factor for light sources with a built-in quantity (e.g., `HDRI`, or `sunSky`).                                 |
+| Name                              | Description                                                                                                                            |
+|:----------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|
+| OSP_INTENSITY_QUANTITY_POWER      | the overall amount of light energy emitted by the light source into the scene, unit is W                                               |
+| OSP_INTENSITY_QUANTITY_INTENSITY  | the overall amount of light emitted by the light in a given direction, unit is W/sr                                                    |
+| OSP_INTENSITY_QUANTITY_RADIANCE   | the amount of light emitted by a point on the light source in a given direction, unit is W/sr/m<sup>2</sup>                            |
+| OSP_INTENSITY_QUANTITY_IRRADIANCE | the amount of light arriving at a surface point, assuming the light is oriented towards to the surface, unit is W/m<sup>2</sup>        |
+| OSP_INTENSITY_QUANTITY_SCALE      | a linear scaling factor for light sources with a built-in quantity (e.g., `HDRI`, or `sunSky`, or when using `intensityDistribution`). |
 
 Types of radiometric quantities used to interpret a light’s `intensity`
 parameter.
+
+### Photometric Lights
+
+Measured light sources (IES, EULUMDAT, …) are supported by the `sphere`,
+`spot`, and `quad` lights when setting an `intensityDistribution`
+[data](#data) array to modulate the intensity per direction. The mapping
+is using the C-γ coordinate system (see also below figure): the values
+of the first (or only) dimension of `intensityDistribution` are
+uniformly mapped to γ in \[0–π\]; the first intensity value to 0, the
+last value to π, thus at least two values need to be present.
+
+![C-γ coordinate system for the mapping of `intensityDistribution` with
+photometric lights.](https://ospray.github.io/images/c-gamma_coords.png)
+
+If the array has a second dimension then the intensities are not
+rotational symmetric around the main direction (where angle γ is zero),
+but are accordingly mapped to the C-halfplanes in \[0–2π\]; the first
+“row” of values to 0 and 2π, the other rows such that they have uniform
+distance to its neighbors. The orientation of the C0-plane is specified
+via `c0`.
+
+| Type      | Name                  | Description                                                                                                                                   |
+|:----------|:----------------------|:----------------------------------------------------------------------------------------------------------------------------------------------|
+| float\[\] | intensityDistribution | luminous intensity distribution for photometric lights; can be 2D for asymmetric illumination; values are assumed to be uniformly distributed |
+| vec3f     | c0                    | orientation, i.e., direction of the C0-(half)plane (only needed if illumination via `intensityDistribution` is asymmetric)                    |
+
+Special parameters for photometric lights.
+
+When using an `intensityDistribution` then the default and only valid
+value for `intensityQuantity` is `OSP_INTENSITY_QUANTITY_SCALE`.
 
 The following light types are supported by most OSPRay renderers.
 
@@ -1593,16 +1629,20 @@ The sphere light (or the special case point light) is a light emitting
 uniformly in all directions from the surface toward the outside. It does
 not emit any light toward the inside of the sphere. It is created by
 passing the type string “`sphere`” to `ospNewLight`. The point light
-supports `OSP_INTENSITY_QUANTITY_POWER`,
-`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
-`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
-value. In addition to the [general parameters](#lights) understood by
-all lights the sphere light supports the following special parameters:
+supports only `OSP_INTENSITY_QUANTITY_SCALE` when
+`intensityDistribution` is set, or otherwise
+`OSP_INTENSITY_QUANTITY_POWER`, `OSP_INTENSITY_QUANTITY_INTENSITY` (then
+default) and `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights)
+understood by all lights and the [photometric
+parameters](#photometric-lights) the sphere light supports the following
+special parameters:
 
-| Type  | Name     | Default | Description                    |
-|:------|:---------|--------:|:-------------------------------|
-| vec3f | position | (0,0,0) | the center of the sphere light |
-| float | radius   |       0 | the size of the sphere light   |
+| Type  | Name      | Default | Description                                 |
+|:------|:----------|--------:|:--------------------------------------------|
+| vec3f | position  | (0,0,0) | the center of the sphere light              |
+| float | radius    |       0 | the size of the sphere light                |
+| vec3f | direction | (0,0,1) | main orientation of `intensityDistribution` |
 
 Special parameters accepted by the sphere light.
 
@@ -1610,27 +1650,27 @@ Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer](#path-tracer)).
 
-### Spotlight / Photometric Light
+### Spotlight / Ring Light
 
 The spotlight is a light emitting into a cone of directions. It is
 created by passing the type string “`spot`” to `ospNewLight`. The
-spotlight supports `OSP_INTENSITY_QUANTITY_POWER`,
-`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
-`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
-value. In addition to the [general parameters](#lights) understood by
-all lights the spotlight supports the special parameters listed in the
-table.
+spotlight supports only `OSP_INTENSITY_QUANTITY_SCALE` when
+`intensityDistribution` is set, or otherwise
+`OSP_INTENSITY_QUANTITY_POWER`, `OSP_INTENSITY_QUANTITY_INTENSITY` (then
+default) and `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights)
+understood by all lights and the [photometric
+parameters](#photometric-lights) the spotlight supports the special
+parameters listed in the table.
 
-| Type      | Name                  | Default | Description                                                                                                                                                                   |
-|:----------|:----------------------|--------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| vec3f     | position              | (0,0,0) | the center of the spotlight                                                                                                                                                   |
-| vec3f     | direction             | (0,0,1) | main emission direction of the spot                                                                                                                                           |
-| float     | openingAngle          |     180 | full opening angle (in degree) of the spot; outside of this cone is no illumination                                                                                           |
-| float     | penumbraAngle         |       5 | size (angle in degree) of the “penumbra”, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of `openingAngle` |
-| float     | radius                |       0 | the size of the spotlight, the radius of a disk with normal `direction`                                                                                                       |
-| float     | innerRadius           |       0 | in combination with `radius` turns the disk into a ring                                                                                                                       |
-| float\[\] | intensityDistribution |         | luminous intensity distribution for photometric lights; can be 2D for asymmetric illumination; values are assumed to be uniformly distributed                                 |
-| vec3f     | c0                    |         | orientation, i.e., direction of the C0-(half)plane (only needed if illumination via `intensityDistribution` is asymmetric)                                                    |
+| Type  | Name          | Default | Description                                                                                                                                                                   |
+|:------|:--------------|--------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vec3f | position      | (0,0,0) | the center of the spotlight                                                                                                                                                   |
+| vec3f | direction     | (0,0,1) | main emission direction of the spot                                                                                                                                           |
+| float | openingAngle  |     180 | full opening angle (in degree) of the spot; outside of this cone is no illumination                                                                                           |
+| float | penumbraAngle |       5 | size (angle in degree) of the “penumbra”, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of `openingAngle` |
+| float | radius        |       0 | the size of the spotlight, the radius of a disk with normal `direction`                                                                                                       |
+| float | innerRadius   |       0 | in combination with `radius` turns the disk into a ring                                                                                                                       |
 
 Special parameters accepted by the spotlight.
 
@@ -1642,33 +1682,18 @@ shadows when the renderer uses stochastic sampling (like the [path
 tracer](#path-tracer)). Additionally setting the inner radius will
 result in a ring instead of a disk emitting the light.
 
-Measured light sources (IES, EULUMDAT, …) are supported by providing an
-`intensityDistribution` [data](#data) array to modulate the intensity
-per direction. The mapping is using the C-γ coordinate system (see also
-below figure): the values of the first (or only) dimension of
-`intensityDistribution` are uniformly mapped to γ in \[0–π\]; the first
-intensity value to 0, the last value to π, thus at least two values need
-to be present. If the array has a second dimension then the intensities
-are not rotational symmetric around `direction`, but are accordingly
-mapped to the C-halfplanes in \[0–2π\]; the first “row” of values to 0
-and 2π, the other rows such that they have uniform distance to its
-neighbors. The orientation of the C0-plane is specified via `c0`. A
-combination of using an `intensityDistribution` and
-`OSP_INTENSITY_QUANTITY_POWER` as `intensityQuantity` is not supported
-at the moment.
-
-![C-γ coordinate system for the mapping of `intensityDistribution` to
-the spotlight.](https://ospray.github.io/images/spot_coords.png)
-
 ### Quad Light
 
 The quad[5] light is a planar, procedural area light source emitting
 uniformly on one side into the half-space. It is created by passing the
-type string “`quad`” to `ospNewLight`. The quad light supports
-`OSP_INTENSITY_QUANTITY_POWER`, `OSP_INTENSITY_QUANTITY_INTENSITY` and
-`OSP_INTENSITY_QUANTITY_RADIANCE` (default) as `intensityQuantity`
-parameter. In addition to the [general parameters](#lights) understood
-by all lights the quad light supports the following special parameters:
+type string “`quad`” to `ospNewLight`. The quad light supports only
+`OSP_INTENSITY_QUANTITY_SCALE` when `intensityDistribution` is set, or
+otherwise `OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
+(then default) as `intensityQuantity` parameter. In addition to the
+[general parameters](#lights) understood by all lights and the
+[photometric parameters](#photometric-lights) the quad light supports
+the following special parameters:
 
 | Type  | Name     | Default | Description                              |
 |:------|:---------|--------:|:-----------------------------------------|
@@ -1682,6 +1707,7 @@ Special parameters accepted by the quad light.
 reader.](https://ospray.github.io/images/quad_light.png)
 
 The emission side is determined by the cross product of `edge1`×`edge2`.
+which is also the main emission direction for `intensityDistribution`.
 Note that only renderers that use stochastic sampling (like the path
 tracer) will compute soft shadows from the quad light. Other renderers
 will just sample the center of the quad light, which results in hard
@@ -1839,8 +1865,15 @@ via a transform. To create and instance call
 OSPInstance ospNewInstance(OSPGroup);
 ```
 
+The passed group can be `NULL` as long as the group to be instanced is
+passed as a parameter. If both a group is specified on object creation
+and as a parameter, the parameter value is used. If the parameter value
+is later removed, the group object passed on object creation is again
+used.
+
 | Type         | Name               |  Default | Description                                                                                                                                           |
 |:-------------|:-------------------|---------:|:------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSPGroup     | group              |          | optional [group](#groups) object to be instanced                                                                                                      |
 | affine3f     | transform          | identity | world-space transform for all attached geometries and volumes, overridden by `motion.*` arrays                                                        |
 | affine3f\[\] | motion.transform   |          | uniformly distributed world-space transforms                                                                                                          |
 | vec3f\[\]    | motion.scale       |          | uniformly distributed world-space scale, overridden by `motion.transform`                                                                             |
@@ -2328,7 +2361,7 @@ Parameters of the Glass material.
 For convenience, the rather counter-intuitive physical attenuation
 coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
-trough a glass of thickness `attenuationDistance`.
+through a glass of thickness `attenuationDistance`.
 
 <figure>
 <img src="https://ospray.github.io/images/material_Glass.jpg" width="60.0%" alt="Rendering of a Glass material with orange attenuation." /><figcaption aria-hidden="true">Rendering of a Glass material with orange attenuation.</figcaption>
@@ -3011,13 +3044,6 @@ This is useful for applications to query exactly how long an
 asynchronous task executed without the overhead of measuring both task
 execution + synchronization by the calling application.
 
-### Asynchronously Rendering and ospCommit()
-
-The use of either `ospRenderFrame` or `ospRenderFrame` requires that all
-objects in the scene being rendered have been committed before rendering
-occurs. If a call to `ospCommit()` happens while a frame is rendered,
-the result is undefined behavior and should be avoided.
-
 ### Synchronous Rendering
 
 For convenience in certain use cases, `ospray_util.h` provides a
@@ -3036,6 +3062,13 @@ return ospGetVariance(fb)
 ```
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
+
+### Rendering and ospCommit
+
+The use of either `ospRenderFrame` or `ospRenderFrameBlocking` requires
+that all objects in the scene being rendered have been committed before
+rendering occurs. If a call to `ospCommit` happens while a frame is
+rendered, the result is undefined behavior and should be avoided.
 
 Distributed Rendering with MPI
 ==============================
@@ -3108,6 +3141,10 @@ The `maxCommandBufferEntries`, `commandBufferSize`, and
 `OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES`,
 `OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
 respectively.
+
+The `mpiOffload` device uses a dynamic load balancer by default. If you
+wish to use a static load balancer you can do so by setting the
+`OSPRAY_STATIC_BALANCER` environment variable to 1.
 
 The `mpiOffload` device does not support multiple init/shutdown cycles.
 Thus, to run `ospBenchmark` for this device make sure to exclude the
@@ -3406,7 +3443,7 @@ when running cmake with
 ``` sh
 cmake \
   -DOSPRAY_ENABLE_APPS=ON \
-  -DOSPRAY_APPS_TUTORIALS=ON \
+  -DOSPRAY_ENABLE_APPS_TUTORIALS=ON \
   -DOSPRAY_MODULE_MPI=ON \
   -DOSPRAY_MPI_BUILD_TUTORIALS=ON \
   <other args>
@@ -3526,7 +3563,7 @@ possible to copy the entire data set on to each rank, or to accelerate
 loading of a large model by leveraging a parallel file system.
 
 [1] For example, if OSPRay is in `~/Projects/ospray`, ISPC will also be
-searched in `~/Projects/ispc-v1.16.1-linux`.
+searched in `~/Projects/ispc-v1.17.0-linux`.
 
 [2] This file is usually in
 `${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake

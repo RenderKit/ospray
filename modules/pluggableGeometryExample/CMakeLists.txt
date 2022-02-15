@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # Define an option to enable/disable this module.
@@ -10,7 +10,7 @@ cmake_dependent_option(
   OSPRAY_MODULE_BILINEAR_PATCH
   "Build pluggable geometry example module  (a Bilinear Patch)"
   OFF
-  OSPRAY_ENABLE_MODULES
+  OSPRAY_MODULE_CPU
   OFF
 )
 

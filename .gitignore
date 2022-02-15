@@ -23,11 +23,12 @@ ispc
 readme.pdf
 !/modules
 /modules/*
-!/modules/pluggableGeometryExample
-!/modules/simdGeometryExample
+!/modules/cpu
 !/modules/denoiser
 !/modules/mpi
 !/modules/multiDevice
+!/modules/pluggableGeometryExample
+!/modules/simdGeometryExample
 *.vim
 .idea/
 premake.local.*

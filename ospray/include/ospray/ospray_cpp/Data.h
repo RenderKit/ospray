@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -184,7 +184,7 @@ inline void Data<SHARED>::validate_element_type()
   static_assert(OSPTypeFor<T>::value != OSP_UNKNOWN,
       "Only types corresponding to OSPDataType values can be set "
       "as elements in OSPRay Data arrays. NOTE: Math types (vec, "
-      "box, linear, affine) must be inferrable as OSP_* enums, which are "
+      "box, linear, affine) must be inferable as OSP_* enums, which are "
       "defined by the OSPTYPEFOR_SPECIALIZATION() macro.");
 }
 

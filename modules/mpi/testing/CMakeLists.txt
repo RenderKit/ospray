@@ -13,7 +13,7 @@ target_link_libraries(ospMPIDistribTestSuite
 PRIVATE
   arcball_camera
   ospray_testing
-  ospray_module_ispc
+  ospray_module_cpu
   ospray_gtest_utils
   MPI::MPI_CXX
 )

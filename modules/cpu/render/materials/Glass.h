@@ -1,0 +1,21 @@
+// Copyright 2020-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#include "render/Material.h"
+
+#include "GlassShared.h"
+
+namespace ospray {
+namespace pathtracer {
+
+struct Glass : public AddStructShared<Material, ispc::Glass>
+{
+  Glass();
+
+  virtual std::string toString() const override;
+
+  virtual void commit() override;
+};
+
+} // namespace pathtracer
+} // namespace ospray

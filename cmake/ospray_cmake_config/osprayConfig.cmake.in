@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # Called if we failed to find OSPRay or any of it's required dependencies,
@@ -169,7 +169,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/ospray_Exports.cmake)
 # Add missing targets to libraries
 set_target_properties(ospray::ospray PROPERTIES
   INTERFACE_LINK_LIBRARIES "${RKCOMMON_LIBRARY}")
-set_target_properties(ospray::ospray_module_ispc PROPERTIES
+set_target_properties(ospray::ospray_module_cpu PROPERTIES
   INTERFACE_LINK_LIBRARIES "ospray::ospray;${OPENVKL_LIBRARY};${EMBREE_LIBRARY}")
 
 # Reset CMake module path to its state when this script was called.

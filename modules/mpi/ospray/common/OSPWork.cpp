@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <vector>
@@ -251,7 +251,14 @@ void newSharedData(OSPState &state,
 
   auto data = retrieveData(state, cmdBuf, fabric, format, numItems, nullptr);
 
-  state.objects[handle] = (OSPData)data;
+  // gives an opportunity to pass off to internal device(s)
+  auto forsubs = ospNewSharedData(
+      data->data(), format, numItems.x, 0, numItems.y, 0, numItems.z, 0);
+  auto subscopy = ospNewData(format, numItems.x, numItems.y, numItems.z);
+  ospCopyData(forsubs, subscopy);
+  ospCommit(subscopy);
+  ospRelease(forsubs);
+  state.objects[handle] = (OSPData)subscopy;
   state.appSharedData[handle] = data;
 }
 
@@ -320,6 +327,21 @@ void commit(OSPState &state,
   Data *d = state.getSharedDataHandle(handle);
   if (d) {
     retrieveData(state, cmdBuf, fabric, d->type, d->numItems, d);
+
+    auto subscopy = (OSPData)state.objects[handle];
+
+    // gives an opportunity to pass off to internal device(s)
+    auto forsubs = ospNewSharedData(d->data(),
+        d->type,
+        d->numItems.x,
+        0,
+        d->numItems.y,
+        0,
+        d->numItems.z,
+        0);
+    ospCopyData(forsubs, subscopy);
+    ospCommit(subscopy);
+    ospRelease(forsubs);
   }
 
   ospCommit(state.objects[handle]);
@@ -340,17 +362,13 @@ void release(
     if (fnd != state.framebuffers.end()) {
       OSPObject obj = state.objects[handle];
       ManagedObject *m = lookupDistributedObject<ManagedObject>(obj);
-      // Framebuffers are given an extra ref count by the worker so that
-      // we can track the lifetime of their framebuffer info. Use count == 1
-      // means only the worker rank has a reference to the object
-      if (m->useCount() == 1) {
-        ospRelease(state.objects[handle]);
-        state.framebuffers.erase(fnd);
-      }
+      state.framebuffers.erase(fnd);
     }
   }
 
-  if (state.getSharedDataHandle(handle)) {
+  Data *appData = state.getSharedDataHandle(handle);
+  if (appData) {
+    appData->refDec();
     state.appSharedData.erase(handle);
   }
 }
@@ -383,9 +401,6 @@ void createFramebuffer(
       ospNewFrameBuffer(size.x, size.y, (OSPFrameBufferFormat)format, channels);
   state.framebuffers[handle] =
       FrameBufferInfo(size, (OSPFrameBufferFormat)format, channels);
-
-  // Offload device keeps +1 ref for tracking the lifetime of the framebuffer
-  ospRetain(state.objects[handle]);
 }
 
 void mapFramebuffer(OSPState &state,
