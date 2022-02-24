@@ -51,7 +51,7 @@ ispc::Light *SunSkyLight::createSh(
   }
 
   default:
-    assert(("Incorrect SunSky sublight index", false));
+    assert(false && "Incorrect SunSky sublight index");
   }
   return nullptr;
 }

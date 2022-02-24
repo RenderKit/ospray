@@ -47,7 +47,7 @@ struct DynamicLBSendWorkMessage : DynamicLBMessage
 struct DynamicLoadBalancer : public mpi::messaging::MessageHandler
 {
   DynamicLoadBalancer(ObjectHandle myHandle, int numTasks);
-  virtual ~DynamicLoadBalancer() = default;
+  ~DynamicLoadBalancer() override = default;
 
   void setActiveTasks(int numTasks);
   void updateActiveTasks(int term);
@@ -96,7 +96,7 @@ struct DynamicLoadBalancer : public mpi::messaging::MessageHandler
   */
   std::vector<int> rankToCoords(
       int rank, unsigned int base, unsigned int power);
-  unsigned int coordsToRank(std::vector<int> &coords,
+  int coordsToRank(std::vector<int> &coords,
       unsigned int base,
       unsigned int power,
       int numRanks);
@@ -126,7 +126,7 @@ std::vector<Work> DynamicLoadBalancer::getWorkItems(
   if (numReqWorkItems == 0 || numReqWorkItems > workQueue.size()) {
     return reqWorkItems;
   }
-  for (int i = 0; i < numReqWorkItems; i++) {
+  for (size_t i = 0; i < numReqWorkItems; i++) {
     Work workItem = workQueue.back();
     workQueue.pop_back();
     reqWorkItems.push_back(workItem);

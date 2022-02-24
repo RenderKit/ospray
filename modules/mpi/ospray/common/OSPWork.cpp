@@ -360,8 +360,6 @@ void release(
   {
     auto fnd = state.framebuffers.find(handle);
     if (fnd != state.framebuffers.end()) {
-      OSPObject obj = state.objects[handle];
-      ManagedObject *m = lookupDistributedObject<ManagedObject>(obj);
       state.framebuffers.erase(fnd);
     }
   }
