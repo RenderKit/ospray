@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AlphaCompositeTileOperation.h"
@@ -34,9 +34,9 @@ struct LiveAlphaCompositeTile : public LiveTileOperation
 
  private:
   std::vector<std::unique_ptr<BufferedTile>> bufferedTiles;
-  int currentGeneration;
-  int expectedInNextGeneration;
-  int missingInCurrentGeneration;
+  int currentGeneration{0};
+  int expectedInNextGeneration{0};
+  int missingInCurrentGeneration{1};
   std::mutex mutex;
 
   void reportCompositingError(const vec2i &tile);

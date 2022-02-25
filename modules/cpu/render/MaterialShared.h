@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -73,7 +73,8 @@ struct Material
                   // radiance; TODO SV-EDFs
 #ifdef __cplusplus
   Material(const vec3f &emission = vec3f(0.f))
-      : getBSDF(nullptr),
+      : type(MATERIAL_TYPE_OBJ),
+        getBSDF(nullptr),
         getTransparency(nullptr),
         selectNextMedium(nullptr),
         emission(emission)

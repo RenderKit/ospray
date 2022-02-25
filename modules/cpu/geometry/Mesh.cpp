@@ -123,11 +123,11 @@ void Mesh::commit()
 
   getSh()->flagMask = -1;
   if (!normalData)
-    getSh()->flagMask &= ~DG_NS;
+    getSh()->flagMask &= ispc::int64(~DG_NS);
   if (!colorData)
-    getSh()->flagMask &= ~DG_COLOR;
+    getSh()->flagMask &= ispc::int64(~DG_COLOR);
   if (!texcoordData)
-    getSh()->flagMask &= ~DG_TEXCOORD;
+    getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
 
   postCreationInfo(vertexData->size());
 }

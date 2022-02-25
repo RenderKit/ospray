@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -104,7 +104,7 @@ struct LiveTileOperation : public TileDesc
   DistributedFrameBuffer *dfb;
 
   // estimated variance of this tile
-  float error;
+  float error{0.f};
 
   // TODO: dynamically allocate to save memory when no ACCUM or VARIANCE
   // even more TODO: Tile contains much more data (e.g. AUX), but using only

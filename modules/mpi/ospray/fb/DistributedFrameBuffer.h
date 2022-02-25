@@ -100,7 +100,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   std::vector<char> compressedResults;
   // Locations of the compressed tiles in the tileGatherBuffer
   std::vector<uint32_t> tileBufferOffsets;
-  uint32_t nextTileWrite;
+  uint32_t nextTileWrite{0};
   std::mutex finalTileBufferMutex;
 
   friend struct LiveTileOperation;
@@ -178,13 +178,13 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
       (used to track when current node is done with this frame - we are done
       exactly once we've completed sending / receiving the last tile to / by
       the master) */
-  size_t numTilesCompletedThisFrame;
+  size_t numTilesCompletedThisFrame{0};
 
   /*! The total number of tiles completed by all workers during this frame,
       to track progress for the user's progress callback. NOTE: This is
       not the numTilesCompletedThisFrame , which tracks how many tiles
       this rank has finished of the ones it's responsible for completing */
-  size_t globalTilesCompletedThisFrame;
+  size_t globalTilesCompletedThisFrame{0};
 
   /*! The number of tiles the master is expecting to receive from each rank */
   std::vector<int> numTilesExpected;
@@ -220,7 +220,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
       frame */
   bool frameIsDone;
 
-  int renderingProgressTiles;
+  int renderingProgressTiles{0};
   std::chrono::steady_clock::time_point lastProgressReport;
 
   //! condition that gets triggered when the frame is done

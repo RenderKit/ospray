@@ -36,7 +36,7 @@ struct OSPRAY_SDK_INTERFACE Subdivision
   Ref<const DataT<uint32_t>> vertex_crease_indicesData;
   Ref<const DataT<float>> vertex_crease_weightsData;
 
-  OSPSubdivisionMode mode;
+  OSPSubdivisionMode mode{OSP_SUBDIVISION_SMOOTH_BOUNDARY};
 };
 
 } // namespace ospray

@@ -120,9 +120,9 @@ void Curves::commit()
   getSh()->geom = embreeGeometry;
   getSh()->flagMask = -1;
   if (!colorData)
-    getSh()->flagMask &= ~DG_COLOR;
+    getSh()->flagMask &= ispc::int64(~DG_COLOR);
   if (!texcoordData)
-    getSh()->flagMask &= ~DG_TEXCOORD;
+    getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
   getSh()->super.numPrimitives = numPrimitives();
 
   postCreationInfo(vertexData->size());

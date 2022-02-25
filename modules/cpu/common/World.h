@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -34,8 +34,8 @@ struct OSPRAY_SDK_INTERFACE World
   Ref<const DataT<Instance *>> instances;
   Ref<const DataT<Light *>> lights;
 
-  bool scivisDataValid;
-  bool pathtracerDataValid;
+  bool scivisDataValid{false};
+  bool pathtracerDataValid{false};
 
   void setDevice(RTCDevice embreeDevice);
 

@@ -32,8 +32,9 @@ struct OSPRAY_SDK_INTERFACE OrthographicCamera
 
   // Data members //
 
-  float height; // size of the camera's image plane in y, in world coordinates
-  float aspect;
+  float height{
+      1.f}; // size of the camera's image plane in y, in world coordinates
+  float aspect{1.f};
 };
 
 } // namespace ospray

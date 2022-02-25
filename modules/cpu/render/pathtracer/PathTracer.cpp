@@ -75,18 +75,18 @@ void PathTracer::generateGeometryLights(
                     distribution.data(),
                     pdf);
 
-            ispc::GeometryLight *light =
-                StructSharedCreate<ispc::GeometryLight>();
-            light->create(instance->getSh(),
-                model->getSh(),
-                numPrimIDs,
-                primIDs.data(),
-                distribution.data(),
-                pdf);
-
             // check whether the geometry has any emissive primitives
-            if (light)
+            if (numPrimIDs) {
+              ispc::GeometryLight *light =
+                  StructSharedCreate<ispc::GeometryLight>();
+              light->create(instance->getSh(),
+                  model->getSh(),
+                  numPrimIDs,
+                  primIDs.data(),
+                  distribution.data(),
+                  pdf);
               lightArray.push_back(&light->super);
+            }
           } else {
             postStatusMsg(OSP_LOG_WARNING)
                 << "#osp:pt Geometry " << model->toString()

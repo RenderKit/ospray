@@ -29,7 +29,7 @@ struct OSPRAY_SDK_INTERFACE Curves
   Ref<const DataT<vec4f>> colorData;
   Ref<const DataT<vec2f>> texcoordData;
 
-  RTCGeometryType embreeCurveType;
+  RTCGeometryType embreeCurveType{(RTCGeometryType)-1};
 
   OSPCurveType curveType{OSP_UNKNOWN_CURVE_TYPE};
   OSPCurveBasis curveBasis{OSP_UNKNOWN_CURVE_BASIS};
