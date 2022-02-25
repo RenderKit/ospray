@@ -28,7 +28,7 @@ variables:
   tags:
     - docker
     - modules
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/centos:7
   script:
     - scripts/build_gitlab/linux.sh
 
@@ -210,7 +210,7 @@ build-centos7-icc15:
 
 build-centos7-gcc:
   <<: *build_job_docker
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/centos:7
   <<: *build_artifacts
 
 build-centos7-mpi-impi:
@@ -331,7 +331,7 @@ build-windows-msvc16-mpi_and_md:
 
 test-centos7-gcc-avx2:
   <<: *test_job_unix_avx2
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/centos:7
   needs: [build-centos7-gcc]
 
 test-centos8-avx512skx:
@@ -363,7 +363,7 @@ test-ubuntu2004-gcc-avx512skx:
 
 test-centos7-gcc-mpi-mpich-avx2:
   <<: *test_job_unix_mpi_avx2
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/centos:7
   needs: [build-centos7-mpi-mpich]
   before_script:
     - module load cmake
@@ -371,7 +371,7 @@ test-centos7-gcc-mpi-mpich-avx2:
 
 test-centos7-gcc-mpi-impi-avx2:
   <<: *test_job_unix_mpi_avx2
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/centos:7
   needs: [build-centos7-mpi-impi]
   before_script:
     - module load cmake
@@ -418,7 +418,7 @@ test-osx-arm:
 test-tutorials:
   stage: test
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/centos:7
   needs: [build-centos7-gcc]
   script:
     - scripts/tests/run_tutorials.sh
@@ -428,7 +428,7 @@ test-find-ospray:
   tags:
     - docker
     - modules
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/centos:7
   needs: [build-centos7-gcc]
   script:
     - module load cmake
@@ -588,7 +588,7 @@ spec:
 release-linux:
   <<: *release_job
   tags: [modules]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/centos:7
   script:
     - source $SPACK_SETUP_ENV
     - module load cmake/3.15.2
@@ -638,7 +638,7 @@ release-windows:
 kw-build:
   stage: scan1
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/centos:7
   needs: []
   script:
     - module load cmake
@@ -654,7 +654,7 @@ kw-build:
 protex:
   stage: scan1
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/centos:7
   needs: []
   script:
     - scripts/scan/protex.sh
@@ -662,7 +662,7 @@ protex:
 kw-scan:
   stage: scan2
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/centos:7
   needs: [kw-build]
   script:
     - scripts/scan/kw-check-issues.sh
@@ -670,7 +670,7 @@ kw-scan:
 kw-gen-report:
   stage: scan2
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/centos:7
   needs: [kw-build]
   only:
     - devel
@@ -687,7 +687,7 @@ bdba:
   <<: *release_job
   stage: scan3
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/centos:7
   needs:
     - release-linux
     - release-osx-clang
@@ -722,7 +722,7 @@ test-release-linux:
   <<: *test_job_unix_avx512skx
   <<: *release_job
   stage: scan3
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/centos:7
   needs: [release-linux]
   script:
     - source $SPACK_SETUP_ENV
@@ -772,7 +772,7 @@ test-release-windows-msi:
 mirror:
   stage: mirror
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/centos:7
   only: [devel]
   dependencies: []
   script:
