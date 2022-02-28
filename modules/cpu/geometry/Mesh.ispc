@@ -1,29 +1,13 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Geometry.ih"
 #include "common/Data.ih"
-#include "common/World.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
-
-struct Mesh
-{
-  Geometry super;
-  Data1D index;
-  Data1D vertex;
-  Data1D normal;
-  Data1D color;
-  Data1D texcoord;
-  uint8 **motionVertex;
-  uint8 **motionNormal;
-  uint32 motionKeys;
-  box1f time;
-  int64 flagMask; // which attributes are missing and cannot be interpolated
-  bool has_alpha; // 4th color component is valid
-  bool is_triangleMesh;
-};
+// c++ shared
+#include "MeshShared.h"
 
 // Create quad_interpolate for vec2f, vec3f, and vec4f types
 #define __define_quad_interpolate(T)                                           \
@@ -61,7 +45,7 @@ inline vec3f interpolate_vec3f(const uniform int64 byteStride,
   return lerp(t, v0, v1);
 }
 
-static void QuadMesh_postIntersect(const Geometry *uniform _self,
+void QuadMesh_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -164,7 +148,7 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
   }
 }
 
-static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
+void TriangleMesh_PostIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -351,59 +335,22 @@ void Mesh_getAreas(const Geometry *const uniform _self,
   }
 }
 
-void Mesh_Constructor(Mesh *uniform self)
+export void *uniform QuadMesh_postIntersect_addr()
 {
-  Geometry_Constructor(&self->super, NULL);
-  self->super.getAreas = Mesh_getAreas;
-  self->super.sampleArea = Mesh_sampleArea;
-  Data1D_Constructor(&self->index);
-  Data1D_Constructor(&self->vertex);
-  Data1D_Constructor(&self->normal);
-  Data1D_Constructor(&self->color);
-  Data1D_Constructor(&self->texcoord);
+  return QuadMesh_postIntersect;
 }
 
-export void *uniform Mesh_create()
+export void *uniform TriangleMesh_PostIntersect_addr()
 {
-  Mesh *uniform self = uniform new Mesh;
-  Mesh_Constructor(self);
-  return self;
+  return TriangleMesh_PostIntersect;
 }
 
-export void *uniform Mesh_set(void *uniform _self,
-    const Data1D *uniform index,
-    const Data1D *uniform vertex,
-    const Data1D *uniform normal,
-    const Data1D *uniform color,
-    const Data1D *uniform texcoord,
-    void *uniform motionVertex,
-    void *uniform motionNormal,
-    uniform unsigned int motionKeys,
-    const uniform box1f &time,
-    uniform bool has_alpha,
-    uniform bool is_triangleMesh)
+export void *uniform Mesh_sampleArea_addr()
 {
-  Mesh *uniform self = (Mesh * uniform) _self;
-  self->index = *index;
-  self->vertex = *vertex;
-  self->normal = *normal;
-  self->color = *color;
-  self->texcoord = *texcoord;
-  self->motionVertex = (uint8 * *uniform) motionVertex;
-  self->motionNormal = (uint8 * *uniform) motionNormal;
-  self->motionKeys = motionKeys;
-  self->time = time;
-  self->has_alpha = has_alpha;
-  self->super.numPrimitives = index->numItems;
-  self->is_triangleMesh = is_triangleMesh;
-  self->super.postIntersect = self->is_triangleMesh ? TriangleMesh_PostIntersect
-                                                    : QuadMesh_postIntersect;
+  return Mesh_sampleArea;
+}
 
-  self->flagMask = -1;
-  if (!valid(self->normal))
-    self->flagMask &= ~DG_NS;
-  if (!valid(self->color))
-    self->flagMask &= ~DG_COLOR;
-  if (!valid(self->texcoord))
-    self->flagMask &= ~DG_TEXCOORD;
+export void *uniform Mesh_getAreas_addr()
+{
+  return Mesh_getAreas;
 }

@@ -1,15 +1,17 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 // ospray stuff
-#include "./Data.h"
-#include "./Managed.h"
+#include "Data.h"
+#include "Managed.h"
 // stl
 #include <vector>
 // embree
 #include "embree3/rtcore.h"
+// ispc shared
+#include "GroupShared.h"
 
 namespace ospray {
 
@@ -17,7 +19,8 @@ struct GeometricModel;
 struct VolumetricModel;
 struct Light;
 
-struct OSPRAY_SDK_INTERFACE Group : public ManagedObject
+struct OSPRAY_SDK_INTERFACE Group
+    : public AddStructShared<ManagedObject, ispc::Group>
 {
   Group();
   ~Group() override;
@@ -30,13 +33,8 @@ struct OSPRAY_SDK_INTERFACE Group : public ManagedObject
   // Data members //
 
   Ref<const DataT<GeometricModel *>> geometricModels;
-  std::vector<void *> geometricModelIEs;
-
   Ref<const DataT<VolumetricModel *>> volumetricModels;
-  std::vector<void *> volumetricModelIEs;
-
   Ref<const DataT<GeometricModel *>> clipModels;
-  std::vector<void *> clipModelIEs;
   int numInvertedClippers{0};
 
   Ref<const DataT<Light *>> lights;

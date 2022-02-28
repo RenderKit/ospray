@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AORenderer.h"
@@ -8,7 +8,7 @@ namespace ospray {
 
 AORenderer::AORenderer(int defaultNumSamples) : aoSamples(defaultNumSamples)
 {
-  ispcEquivalent = ispc::AORenderer_create();
+  getSh()->super.renderSample = ispc::AORenderer_renderSample_addr();
 }
 
 std::string AORenderer::toString() const
@@ -20,11 +20,11 @@ void AORenderer::commit()
 {
   Renderer::commit();
 
-  ispc::AORenderer_set(getIE(),
-      getParam<int>("aoSamples", aoSamples),
-      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f)),
-      getParam<float>("aoIntensity", 1.f),
-      getParam<float>("volumeSamplingRate", 1.f));
+  getSh()->aoSamples = getParam<int>("aoSamples", aoSamples);
+  getSh()->aoRadius =
+      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f));
+  getSh()->aoIntensity = getParam<float>("aoIntensity", 1.f);
+  getSh()->volumeSamplingRate = getParam<float>("volumeSamplingRate", 1.f);
 }
 
 } // namespace ospray

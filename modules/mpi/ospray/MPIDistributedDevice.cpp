@@ -1,10 +1,10 @@
 // Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "MPIDistributedDevice.h"
 #include <map>
+
 #include "ISPCDevice.h"
-#include "MPIDistributedDevice_ispc.h"
+#include "MPIDistributedDevice.h"
 #include "camera/Camera.h"
 #include "common/Data.h"
 #include "common/DistributedWorld.h"
@@ -17,6 +17,7 @@
 #include "lights/Light.h"
 #include "openvkl/openvkl.h"
 #include "render/DistributedLoadBalancer.h"
+#include "render/Material.h"
 #include "render/ThreadedRenderTask.h"
 #include "render/distributed/DistributedRaycast.h"
 #include "rkcommon/tasking/tasking_system_init.h"
@@ -25,6 +26,8 @@
 #include "volume/Volume.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
+// ispc exports
+#include "MPIDistributedDevice_ispc.h"
 
 namespace ospray {
 namespace mpi {

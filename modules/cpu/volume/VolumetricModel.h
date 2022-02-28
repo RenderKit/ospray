@@ -4,9 +4,8 @@
 #pragma once
 
 #include "Volume.h"
-#include "common/StructShared.h"
 #include "openvkl/openvkl.h"
-
+// ispc shared
 #include "volume/VolumetricModelShared.h"
 
 namespace ospray {

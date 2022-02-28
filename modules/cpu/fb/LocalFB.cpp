@@ -1,9 +1,10 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LocalFB.h"
 #include <iterator>
 #include "ImageOp.h"
+// ispc exports
 #include "fb/LocalFB_ispc.h"
 
 namespace ospray {
@@ -17,17 +18,11 @@ static T *getDataSafe(std::vector<T, A> &v)
 LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
-    : FrameBuffer(_size, _colorBufferFormat, channels),
+    : AddStructShared(_size, _colorBufferFormat, channels),
       tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0))
 {
-  if (size.x <= 0 || size.y <= 0) {
-    throw std::runtime_error(
-        "local framebuffer has invalid size. Dimensions must be greater than "
-        "0");
-  }
-
-  const size_t pixelBytes = sizeOf(colorBufferFormat);
-  const size_t numPixels = size.long_product();
+  const size_t pixelBytes = sizeOf(_colorBufferFormat);
+  const size_t numPixels = _size.long_product();
 
   colorBuffer.resize(pixelBytes * numPixels);
 
@@ -48,16 +43,14 @@ LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
   if (hasAlbedoBuffer)
     albedoBuffer.resize(numPixels);
 
-  ispcEquivalent = ispc::LocalFrameBuffer_create(size.x,
-      size.y,
-      colorBufferFormat,
-      getDataSafe(colorBuffer),
-      getDataSafe(depthBuffer),
-      getDataSafe(accumBuffer),
-      getDataSafe(varianceBuffer),
-      getDataSafe(normalBuffer),
-      getDataSafe(albedoBuffer),
-      getDataSafe(tileAccumID));
+  getSh()->colorBuffer = getDataSafe(colorBuffer);
+  getSh()->depthBuffer = getDataSafe(depthBuffer);
+  getSh()->accumBuffer = getDataSafe(accumBuffer);
+  getSh()->varianceBuffer = getDataSafe(varianceBuffer);
+  getSh()->normalBuffer = getDataSafe(normalBuffer);
+  getSh()->albedoBuffer = getDataSafe(albedoBuffer);
+  getSh()->tileAccumID = getDataSafe(tileAccumID);
+  getSh()->numTiles = getNumTiles();
 }
 
 void LocalFrameBuffer::commit()
@@ -67,7 +60,7 @@ void LocalFrameBuffer::commit()
   imageOps.clear();
   if (imageOpData) {
     FrameBufferView fbv(this,
-        colorBufferFormat,
+        getColorBufferFormat(),
         getDataSafe(colorBuffer),
         getDataSafe(depthBuffer),
         getDataSafe(normalBuffer),
@@ -87,7 +80,7 @@ std::string LocalFrameBuffer::toString() const
 
 void LocalFrameBuffer::clear()
 {
-  frameID = -1; // we increment at the start of the frame
+  getSh()->super.frameID = -1; // we increment at the start of the frame
   // it is only necessary to reset the accumID,
   // LocalFrameBuffer_accumulateTile takes care of clearing the
   // accumulating buffers
@@ -103,18 +96,18 @@ void LocalFrameBuffer::setTile(Tile &tile)
 {
   if (hasAccumBuffer) {
     const float err =
-        ispc::LocalFrameBuffer_accumulateTile(getIE(), (ispc::Tile &)tile);
+        ispc::LocalFrameBuffer_accumulateTile(getSh(), (ispc::Tile &)tile);
     if ((tile.accumID & 1) == 1)
       tileErrorRegion.update(tile.region.lower / TILE_SIZE, err);
   }
 
   if (hasDepthBuffer) {
     ispc::LocalFrameBuffer_accumulateWriteDepthTile(
-        getIE(), (ispc::Tile &)tile);
+        getSh(), (ispc::Tile &)tile);
   }
 
   if (hasAlbedoBuffer) {
-    ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),
+    ispc::LocalFrameBuffer_accumulateAuxTile(getSh(),
         (ispc::Tile &)tile,
         (ispc::vec3f *)albedoBuffer.data(),
         tile.ar,
@@ -123,7 +116,7 @@ void LocalFrameBuffer::setTile(Tile &tile)
   }
 
   if (hasNormalBuffer)
-    ispc::LocalFrameBuffer_accumulateAuxTile(getIE(),
+    ispc::LocalFrameBuffer_accumulateAuxTile(getSh(),
         (ispc::Tile &)tile,
         (ispc::vec3f *)normalBuffer.data(),
         tile.nx,
@@ -144,15 +137,15 @@ void LocalFrameBuffer::setTile(Tile &tile)
   }
 
   if (!colorBuffer.empty()) {
-    switch (colorBufferFormat) {
+    switch (getColorBufferFormat()) {
     case OSP_FB_RGBA8:
-      ispc::LocalFrameBuffer_writeTile_RGBA8(getIE(), (ispc::Tile &)tile);
+      ispc::LocalFrameBuffer_writeTile_RGBA8(getSh(), (ispc::Tile &)tile);
       break;
     case OSP_FB_SRGBA:
-      ispc::LocalFrameBuffer_writeTile_SRGBA(getIE(), (ispc::Tile &)tile);
+      ispc::LocalFrameBuffer_writeTile_SRGBA(getSh(), (ispc::Tile &)tile);
       break;
     case OSP_FB_RGBA32F:
-      ispc::LocalFrameBuffer_writeTile_RGBA32F(getIE(), (ispc::Tile &)tile);
+      ispc::LocalFrameBuffer_writeTile_RGBA32F(getSh(), (ispc::Tile &)tile);
       break;
     default:
       NOT_IMPLEMENTED;

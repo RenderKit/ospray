@@ -6,7 +6,7 @@
 #define EPS 1e-5f
 
 #ifdef __cplusplus
-using namespace rkcommon::math;
+#include "common/StructShared.h"
 namespace ispc {
 typedef void *Material_GetBSDFFunc;
 typedef void *Material_GetTransparencyFunc;

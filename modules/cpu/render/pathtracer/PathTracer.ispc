@@ -1,24 +1,29 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PathSampler.ih"
 #include "PathStructs.ih"
-#include "PathTracer.ih"
 #include "PathTracerDefines.ih"
 #include "PathTracerUtil.ih"
 
-#include "lights/Light.ih"
+#include "render/Renderer.ih"
 #include "render/bsdfs/BSDF.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"
 #include "render/materials/Medium.ih"
+#include "render/util.ih"
 #include "volumes/VolumeSampler.ih"
 
-#include "render/MaterialShared.h"
-
 #include "camera/Camera.ih"
-#include "fb/LocalFB.ih"
+#include "common/World.ih"
 #include "math/Distribution1D.ih"
 #include "math/random.ih"
+#include "pf/PixelFilter.ih"
+// c++ shared
+#include "PathTracerShared.h"
+#include "fb/FrameBufferShared.h"
+#include "render/MaterialShared.h"
+
+#define MAX_LIGHTS 1000u
 
 ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
     const World *uniform world,
@@ -114,10 +119,9 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
 
     vec2f pfSample = pixelSample;
-    if (self->super.pixelFilter) {
-      pfSample =
-          self->super.pixelFilter->sample(self->super.pixelFilter, pixelSample)
-          + make_vec2f(0.5f);
+    PixelFilter *uniform pf = self->super.pixelFilter;
+    if (pf) {
+      pfSample = pf->sample(pf, pixelSample) + make_vec2f(0.5f);
     }
 
     cameraSample.screen.x =
@@ -158,10 +162,11 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   return screenSample;
 }
 
-void PathTracer_renderTileJob(PathTracer *uniform self,
+unmasked void PathTracer_renderTile(PathTracer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
+    void *uniform perFrameData,
     uniform Tile &tile,
     uniform int taskIndex)
 {
@@ -183,51 +188,9 @@ void PathTracer_renderTileJob(PathTracer *uniform self,
   }
 }
 
-unmasked void PathTracer_renderTile(Renderer *uniform _self,
-    FrameBuffer *uniform fb,
-    Camera *uniform camera,
-    World *uniform world,
-    void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int jobID)
-{
-  PathTracer *uniform self = (PathTracer * uniform) _self;
-  PathTracer_renderTileJob(self, fb, camera, world, tile, jobID);
-}
-
 // Exports (called from C++) //////////////////////////////////////////////////
 
-export void PathTracer_set(void *uniform _self,
-    const uniform int32 rouletteDepth,
-    const uniform float maxRadiance,
-    const uniform vec4f &shadowCatcherPlane,
-    const uniform int32 numLightSamples,
-    const uniform bool backgroundRefraction)
+export void *uniform PathTracer_renderTile_addr()
 {
-  PathTracer *uniform self = (PathTracer * uniform) _self;
-
-  self->rouletteDepth = rouletteDepth;
-  self->maxRadiance = maxRadiance;
-  self->numLightSamples = numLightSamples;
-  self->backgroundRefraction = backgroundRefraction;
-
-  uniform vec3f normal = make_vec3f(shadowCatcherPlane);
-  const uniform float l = length(normal);
-  self->shadowCatcher = l > 0.f;
-  const uniform float rl = rcp(l);
-  self->shadowCatcherPlane = make_vec4f(normal * rl, shadowCatcherPlane.w * rl);
-}
-
-export void *uniform PathTracer_create()
-{
-  uniform PathTracer *uniform self = uniform new uniform PathTracer;
-  Renderer_Constructor(&self->super);
-  self->super.renderTile = PathTracer_renderTile;
-
-  PathTracer_set(self, 5, inf, make_vec4f(0.f), 1, false);
-
-  precomputeMicrofacetAlbedoTables();
-  precomputeZOrder();
-
-  return self;
+  return PathTracer_renderTile;
 }

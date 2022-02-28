@@ -1,13 +1,17 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Geometry.h"
+#include "common/Data.h"
+// ispc shared
+#include "CurvesShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Curves : public Geometry
+struct OSPRAY_SDK_INTERFACE Curves
+    : public AddStructShared<Geometry, ispc::Curves>
 {
   Curves();
   virtual ~Curves() override = default;

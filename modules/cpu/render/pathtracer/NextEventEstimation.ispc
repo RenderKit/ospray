@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/NextEventEstimation.ih"
@@ -9,8 +9,11 @@
 
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 
+#include "common/World.ih"
 #include "math/Distribution1D.ih"
 #include "math/sampling.ih"
+// c++ shared
+#include "lights/LightShared.h"
 
 vec3f nextEventEstimation(const PathContext &pathContext,
     const PathState &pathState,
@@ -26,8 +29,8 @@ vec3f nextEventEstimation(const PathContext &pathContext,
         pathContext.numLights, pathContext.lightsCDF, 0, s1);
     const float lightSelectionProb =
         lSelectSample.prob * pathContext.numLightSamples;
-    const Light *light =
-        pathContext.world->pathtracerData.lights[lSelectSample.idx];
+    const World *uniform world = pathContext.world;
+    const Light *light = world->pathtracerData.lights[lSelectSample.idx];
     // sample the contribution from the random light source
     const vec2f s2 = LDSampler_getFloat2(
         pathContext.ldSampler, pathState.sampleDim + 4 + i * 3 + 1);

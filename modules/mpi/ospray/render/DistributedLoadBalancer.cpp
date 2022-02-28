@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <limits>
 #include <map>
+#include "../common/DistributedWorld.h"
+#include "../common/DynamicLoadBalancer.h"
 #include "../fb/DistributedFrameBuffer.h"
 #include "WriteMultipleTileOperation.h"
 #include "camera/Camera.h"

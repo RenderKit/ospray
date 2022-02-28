@@ -1,10 +1,9 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Curves.h"
-#include "common/Data.h"
-#include "common/World.h"
+#include "common/DGEnum.h"
 
 // ispc-generated files
 #include "geometry/Curves_ispc.h"
@@ -48,7 +47,8 @@ static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
 
 Curves::Curves()
 {
-  ispcEquivalent = ispc::Curves_create();
+  getSh()->super.postIntersect = ispc::Curves_postIntersect_addr();
+  // TODO implement area sampling of OldCurves for geometry lights
 }
 
 std::string Curves::toString() const
@@ -117,6 +117,14 @@ void Curves::commit()
 
   createEmbreeGeometry();
 
+  getSh()->geom = embreeGeometry;
+  getSh()->flagMask = -1;
+  if (!colorData)
+    getSh()->flagMask &= ~DG_COLOR;
+  if (!texcoordData)
+    getSh()->flagMask &= ~DG_TEXCOORD;
+  getSh()->super.numPrimitives = numPrimitives();
+
   postCreationInfo(vertexData->size());
 }
 
@@ -127,13 +135,7 @@ size_t Curves::numPrimitives() const
 
 void Curves::createEmbreeGeometry()
 {
-  if (embreeGeometry)
-    rtcReleaseGeometry(embreeGeometry);
-
-  if (!embreeDevice) {
-    throw std::runtime_error("invalid Embree device");
-  }
-  embreeGeometry = rtcNewGeometry(embreeDevice, embreeCurveType);
+  Geometry::createEmbreeGeometry(embreeCurveType);
 
   Ref<const DataT<vec4f>> vertex4f(&vertexData->as<vec4f>());
   setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertex4f);
@@ -150,9 +152,6 @@ void Curves::createEmbreeGeometry()
     setEmbreeGeometryBuffer(
         embreeGeometry, RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, texcoordData, 1);
   }
-
-  ispc::Curves_set(
-      getIE(), embreeGeometry, colorData, texcoordData, indexData->size());
 
   rtcCommitGeometry(embreeGeometry);
 }

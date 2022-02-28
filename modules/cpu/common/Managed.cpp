@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Managed.h"
@@ -9,9 +9,6 @@ namespace ospray {
 
 ManagedObject::~ManagedObject()
 {
-  ispc::delete_uniform(ispcEquivalent);
-  ispcEquivalent = nullptr;
-
   std::for_each(params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
     auto &param = *p;
     if (param.data.is<OSP_PTR>()) {

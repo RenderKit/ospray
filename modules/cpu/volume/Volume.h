@@ -5,12 +5,12 @@
 
 #include "ISPCDevice.h"
 #include "common/Managed.h"
-#include "common/StructShared.h"
 // embree
 #include "embree3/rtcore.h"
-
+// openvkl
 #include "openvkl/volume.h"
-#include "volume/VolumeShared.h"
+// ispc shared
+#include "VolumeShared.h"
 
 namespace ospray {
 

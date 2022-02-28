@@ -3,7 +3,7 @@
 
 #include "math/spectrum.h"
 #include "render/Material.h"
-
+// ispc shared
 #include "MetalShared.h"
 
 namespace ospray {

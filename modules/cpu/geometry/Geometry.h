@@ -8,10 +8,13 @@
 #include "common/Util.h"
 // embree
 #include "embree3/rtcore.h"
+// ispc shared
+#include "GeometryShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
+struct OSPRAY_SDK_INTERFACE Geometry
+    : public AddStructShared<ManagedObject, ispc::Geometry>
 {
   Geometry();
   virtual ~Geometry() override;
@@ -22,18 +25,25 @@ struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
 
   void postCreationInfo(size_t numVerts = 0) const;
 
-  // Object factory //
-
+  // Object factory
   static Geometry *createInstance(const char *type);
   template <typename T>
   static void registerType(const char *type);
 
-  RTCGeometry embreeGeometry{nullptr};
-
   void setDevice(RTCDevice embreeDevice);
+
+  RTCGeometry getEmbreeGeometry();
+
+  bool supportAreaLighting() const;
 
  protected:
   RTCDevice embreeDevice{nullptr};
+  RTCGeometry embreeGeometry{nullptr};
+
+  void createEmbreeGeometry(RTCGeometryType type);
+  void createEmbreeUserGeometry(RTCBoundsFunction boundsFn,
+      RTCIntersectFunctionN intersectFn,
+      RTCOccludedFunctionN occludedFn);
 
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>
@@ -49,6 +59,16 @@ template <typename T>
 inline void Geometry::registerType(const char *type)
 {
   registerTypeHelper<Geometry, T>(type);
+}
+
+inline RTCGeometry Geometry::getEmbreeGeometry()
+{
+  return embreeGeometry;
+}
+
+inline bool Geometry::supportAreaLighting() const
+{
+  return (getSh()->sampleArea != nullptr) && (getSh()->getAreas != nullptr);
 }
 
 // convenience wrappers to set Embree buffer //////////////////////////////////

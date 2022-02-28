@@ -1,20 +1,14 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Instance.h"
-#include "Data.h"
-// ispc exports
-#include "common/Instance_ispc.h"
-#include "common/OSPCommon_ispc.h"
-#include "geometry/Geometry_ispc.h"
 
 namespace ospray {
 
 Instance::Instance(Group *_group) : groupAPI(_group)
 {
   managedObjectType = OSP_INSTANCE;
-  this->ispcEquivalent = ispc::Instance_create();
 }
 
 std::string Instance::toString() const
@@ -30,10 +24,11 @@ void Instance::commit()
 
   motionTransform.readParams(*this);
 
-  ispc::Instance_set(getIE(),
-      group->getIE(),
-      (ispc::AffineSpace3f &)motionTransform.transform[0],
-      motionTransform.motionBlur);
+  // Initialize shared structure
+  getSh()->group = group->getSh();
+  getSh()->xfm = motionTransform.transform;
+  getSh()->rcp_xfm = rcp(getSh()->xfm);
+  getSh()->motionBlur = motionTransform.motionBlur;
 }
 
 box3f Instance::getBounds() const
@@ -52,6 +47,19 @@ box3f Instance::getBounds() const
   //     lead to leaving the bounds of keys
   bounds.extend(xfmBounds(motionTransform.transform, groupBounds));
   return bounds;
+}
+
+void Instance::setEmbreeGeom(RTCGeometry geom)
+{
+  motionTransform.setEmbreeTransform(geom);
+  getSh()->geom = geom;
+  if (getSh()->motionBlur) {
+    rtcGetGeometryTransform(geom,
+        .5f,
+        RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+        &getSh()->xfm); // for SciVis
+    getSh()->rcp_xfm = rcp(getSh()->xfm);
+  }
 }
 
 OSPTYPEFOR_DEFINITION(Instance *);

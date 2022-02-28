@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -11,6 +11,8 @@
 #include "embree3/rtcore.h"
 #include "geometry/Boxes.h"
 #include "rkcommon/math/box.h"
+// ispc shared
+#include "DistributedWorldShared.h"
 
 namespace ospray {
 namespace mpi {
@@ -22,7 +24,7 @@ namespace mpi {
  * some mix of volumes and geometries to be rendered, with rays clipped
  * against the bounds of this box.
  */
-struct DistributedWorld : public World
+struct DistributedWorld : public AddStructShared<World, ispc::DistributedWorld>
 {
   DistributedWorld();
   ~DistributedWorld() override;
@@ -60,4 +62,3 @@ struct DistributedWorld : public World
 };
 } // namespace mpi
 } // namespace ospray
-

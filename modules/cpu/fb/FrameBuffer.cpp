@@ -1,31 +1,30 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FrameBuffer.h"
-#include "fb/FrameBuffer_ispc.h"
 
 namespace ospray {
 
 FrameBuffer::FrameBuffer(const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
-    : size(_size),
-      numTiles(divRoundUp(size, getTileSize())),
-      maxValidPixelID(size - vec2i(1)),
-      colorBufferFormat(_colorBufferFormat),
+    : numTiles(divRoundUp(_size, getTileSize())),
+      maxValidPixelID(_size - vec2i(1)),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
       hasAccumBuffer(channels & OSP_FB_ACCUM),
       hasVarianceBuffer(
           (channels & OSP_FB_VARIANCE) && (channels & OSP_FB_ACCUM)),
       hasNormalBuffer(channels & OSP_FB_NORMAL),
-      hasAlbedoBuffer(channels & OSP_FB_ALBEDO),
-      frameID(-1)
+      hasAlbedoBuffer(channels & OSP_FB_ALBEDO)
 {
   managedObjectType = OSP_FRAMEBUFFER;
-  if (size.x <= 0 || size.y <= 0) {
+  if (_size.x <= 0 || _size.y <= 0) {
     throw std::runtime_error(
         "framebuffer has invalid size. Dimensions must be greater than 0");
   }
+  getSh()->colorBufferFormat = _colorBufferFormat;
+  getSh()->size = _size;
+  getSh()->rcpSize = vec2f(1.f) / vec2f(_size);
 
   tileIDs.reserve(getTotalTiles());
   for (int i = 0; i < getTotalTiles(); ++i) {
@@ -55,12 +54,12 @@ int FrameBuffer::getTotalTiles() const
 
 vec2i FrameBuffer::getNumPixels() const
 {
-  return size;
+  return getSh()->size;
 }
 
 OSPFrameBufferFormat FrameBuffer::getColorBufferFormat() const
 {
-  return colorBufferFormat;
+  return getSh()->colorBufferFormat;
 }
 
 float FrameBuffer::getVariance() const
@@ -77,8 +76,7 @@ void FrameBuffer::beginFrame()
 {
   frameProgress = 0.0f;
   cancelRender = false;
-  frameID++;
-  ispc::FrameBuffer_set_frameID(getIE(), frameID);
+  getSh()->frameID++;
 }
 
 std::string FrameBuffer::toString() const

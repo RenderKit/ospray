@@ -1,9 +1,13 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "AORenderer.ih"
+#include "common/World.ih"
+// c++ shared
+#include "AORendererShared.h"
+
+struct DifferentialGeometry;
 
 struct SurfaceShadingInfo
 {

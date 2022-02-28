@@ -1,7 +1,6 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "render/pathtracer/PathTracer.ih"
 #include "render/pathtracer/TransparentShadow.ih"
 
 #include "render/Material.ih"
@@ -9,6 +8,9 @@
 
 #include "common/Ray.ih"
 #include "common/World.ih"
+
+// c++ shared
+#include "PathTracerShared.h"
 
 vec3f transparentShadow(const uniform PathTracer *uniform self,
     const World *uniform world,

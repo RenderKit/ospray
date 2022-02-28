@@ -7,10 +7,12 @@
 
 #include "render/Material.ih"
 
+#include "common/Instance.ih"
 #include "geometry/GeometricModel.ih"
-#include "lights/Light.ih"
 #include "math/AffineSpace.ih"
 #include "math/Distribution1D.ih"
+// c++ shared
+#include "GeometryLightShared.h"
 
 vec3f evaluateGeometryLights(const PathContext &pathContext,
     const PathState &pathState,
@@ -40,22 +42,6 @@ vec3f evaluateGeometryLights(const PathContext &pathContext,
   }
   return L;
 }
-
-/* The GeometryLight is a proxy object fulfilling the Light.ih API.
-   It is generated internally for each emitting geometry modelance to facilitate
-   explicit importance sampling (currently wrt. the surface area).
-*/
-
-struct GeometryLight
-{
-  Light super; // inherited light fields
-
-  GeometricModel *model; // underlying geometry
-  int32 numPrimitives; // number of emissive primitives
-  int32 *primIDs; // IDs of emissive primitives to sample
-  float *distribution; // pdf over prims proportional to (world-space) area
-  float pdf; // probability density to sample point on surface := 1/area
-};
 
 // Implementation /////////////////////////////////////////////////////////////
 
@@ -116,85 +102,7 @@ Light_SampleRes GeometryLight_sample(const Light *uniform super,
 
 // Exports (called from C++) //////////////////////////////////////////////////
 
-export bool uniform GeometryLight_isSupported(const void *uniform _model)
+export void *uniform GeometryLight_sample_addr()
 {
-  GeometricModel *uniform model = (GeometricModel * uniform) _model;
-  const Geometry *uniform geo = model->geom;
-  return geo->sampleArea && geo->getAreas;
-}
-
-export void *uniform GeometryLight_create(
-    void *uniform _model, void *uniform _renderer, void *uniform _instance)
-{
-  GeometricModel *uniform model = (GeometricModel * uniform) _model;
-
-  if (!GeometryLight_isSupported(model)) {
-    // set pdf to zero, indicating that this emissive geometry cannot be
-    // sampled, but only be hit (and thus MIS weight for BSDF samples will be 1)
-    model->areaPDF = 0.f;
-    return NULL;
-  }
-
-  GeometryLight *uniform self = uniform new GeometryLight;
-  const Renderer *uniform renderer = (Renderer * uniform) _renderer;
-  const Geometry *uniform geo = model->geom;
-  const Instance *uniform instance = (Instance * uniform) _instance;
-
-  Light_Constructor(&self->super);
-  self->super.sample = GeometryLight_sample;
-  self->super.eval = NULL; // geometry lights are hit and explicitly handled
-  self->super.instance = instance;
-  self->model = model;
-
-  // create the list of emissive primitive IDs
-  self->primIDs = uniform new uniform int32[geo->numPrimitives];
-  uniform int32 numEmissivePrims = 0;
-  foreach (primID = 0 ... geo->numPrimitives) {
-    Material *mat =
-        (Material *)GeometricModel_getMaterial(model, renderer, primID);
-    const vec3f emission = mat->emission;
-    if (reduce_max(emission) > 0.f) {
-      int offset = exclusive_scan_add(1);
-
-      self->primIDs[numEmissivePrims + offset] = primID;
-      numEmissivePrims += reduce_add(1);
-    }
-  }
-
-  if (numEmissivePrims == 0) {
-    // no emissive primitives, return NULL
-    delete[] self->primIDs;
-    model->areaPDF = 0.f;
-    return NULL;
-  } else if (numEmissivePrims < geo->numPrimitives) {
-    // save memory
-    int32 *uniform newPrimIDs = uniform new uniform int32[numEmissivePrims];
-    memcpy(newPrimIDs, self->primIDs, numEmissivePrims * sizeof(uniform int32));
-    delete[] self->primIDs;
-    self->primIDs = newPrimIDs;
-  }
-
-  self->numPrimitives = numEmissivePrims;
-
-  // create the sampling distribution
-  // TODO: use emissive power instead of just area
-  // TODO: motion blur can introduce scale, which means areas cannot accurately
-  // be precomputed
-  self->distribution = uniform new uniform float[numEmissivePrims];
-  geo->getAreas(
-      geo, self->primIDs, numEmissivePrims, instance->xfm, self->distribution);
-  self->pdf = 1.f / Distribution1D_create(numEmissivePrims, self->distribution);
-  model->areaPDF = self->pdf;
-
-  return self;
-}
-
-void GeometryLight_destroy(void *uniform _self)
-{
-  GeometryLight *uniform self = (GeometryLight * uniform) _self;
-  if (self) {
-    delete[] self->primIDs;
-    delete[] self->distribution;
-  }
-  delete self;
+  return GeometryLight_sample;
 }

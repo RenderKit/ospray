@@ -12,20 +12,24 @@
 #include "render/pathtracer/VirtualLight.ih"
 
 #include "common/Intersect.ih"
+#include "common/World.ih"
 #include "render/Material.ih"
-#include "render/bsdfs/BSDF.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"
 #include "render/materials/Medium.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
+
+// c++ shared
+#include "PathTracerShared.h"
 
 inline void postIntersect(const PathContext &pathContext,
     const PathState &pathState,
     PathVertex &pathVertex,
     Ray &ray)
 {
+  const PathTracer *uniform pt = pathContext.context;
   if (pathVertex.type == SURFACE) {
     postIntersect(pathContext.world,
-        &pathContext.context->super,
+        &pt->super,
         pathVertex.dg,
         ray,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
@@ -42,7 +46,7 @@ inline void postIntersect(const PathContext &pathContext,
     pathVertex.dg.areaPDF = 0.f;
     pathVertex.dg.epsilon = 0.f;
     pathVertex.dg.material = NULL;
-    pathVertex.dg.renderer = &pathContext.context->super;
+    pathVertex.dg.renderer = &pt->super;
   }
 }
 
@@ -174,8 +178,9 @@ void samplePath(const PathContext &pathContext,
     // terminate after evaluation of lights and before next shading to always
     // have both samples for MIS except if we have geometry lights (which we
     // still need to evaluate for MIS)
+    const World *uniform w = pathContext.world;
     if (pathState.depth >= pathContext.context->super.maxDepth
-        && pathContext.world->pathtracerData.numGeoLights == 0)
+        && w->pathtracerData.numGeoLights == 0)
       break;
 
     postIntersect(pathContext, pathState, pathVertex, ray);

@@ -4,6 +4,7 @@
 #pragma once
 
 #ifdef __cplusplus
+#include "common/StructShared.h"
 namespace ispc {
 typedef void *Texture_get;
 typedef void *Texture_getN;

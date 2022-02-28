@@ -1,13 +1,17 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "DistributedRenderer.ih"
-#include "common/DistributedWorld.ih"
+#include "camera/Camera.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "math/random.ih"
 #include "render/util.ih"
+#include "texture/Texture2D.ih"
+// c++ shared
+#include "DistributedRendererShared.h"
+#include "common/DistributedWorldShared.h"
+#include "fb/FrameBufferShared.h"
 
 unmasked void markRegionVisibleFilterFunction(
     const RTCFilterFunctionNArguments *uniform args)
@@ -239,15 +243,6 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
   }
 }
 
-void DistributedRenderer_Constructor(uniform DistributedRenderer *uniform self)
-{
-  Renderer_Constructor(&self->super);
-
-  self->computeRegionVisibility = DR_default_computeRegionVisibility;
-  self->renderRegionSample = DR_default_renderRegionSample;
-  self->renderRegionToTile = DR_default_renderRegionToTile;
-}
-
 export void DistributedRenderer_computeRegionVisibility(void *uniform _self,
     void *uniform fb,
     void *uniform camera,
@@ -352,4 +347,19 @@ export void DistributedRenderer_pick(const void *uniform _self,
       }
     }
   }
+}
+
+export void *uniform DR_default_computeRegionVisibility_addr()
+{
+  return DR_default_computeRegionVisibility;
+}
+
+export void *uniform DR_default_renderRegionSample_addr()
+{
+  return DR_default_renderRegionSample;
+}
+
+export void *uniform DR_default_renderRegionToTile_addr()
+{
+  return DR_default_renderRegionToTile;
 }

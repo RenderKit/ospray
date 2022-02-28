@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -7,26 +7,10 @@
 #include "math/LinearSpace.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
+// c++ shared
+#include "BilinearPatchesShared.h"
 
-/*! input data for a single patch */
-struct Patch
-{
-  vec3f v00, v01, v10, v11;
-};
-
-struct BilinearPatches
-{
-  /*! inherit from "Geometry" class: since ISPC doesn't support
-      inheritance we simply put the "parent" class as the first
-      member; this way any typecast to the parent class will get the
-      right members (including 'virtual' function pointers, etc) */
-  Geometry super;
-
-  size_t numPatches;
-  Patch *uniform patchArray;
-};
-
-static void BilinearPatches_postIntersect(const Geometry *uniform geometry,
+void BilinearPatches_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -36,28 +20,11 @@ static void BilinearPatches_postIntersect(const Geometry *uniform geometry,
   dg.Ng = dg.Ns = normalize(ray.Ng);
 }
 
-/*! create a new ispc equivalent for the C++ class (this returns a void * that
-   the c++ side can use to call back to us when needed. Note this return values
-   _has_ to be a untyped 'void*' because ISPC cannot currently export 'real'
-   class types - with function pointers etcpp - to a c header file */
-export void *uniform BilinearPatches_create()
-{
-  BilinearPatches *uniform self = uniform new uniform BilinearPatches;
-
-  /* recursively call the 'inherited' constructor, and pass our
-     'overridden' functions for intersect and postintersect. note we
-     do not have to set the 'intersect' and 'occluded' functions
-     because we use embree to do the traversal for us (see
-     BilinearPatches_set()) below */
-  Geometry_Constructor(&self->super, BilinearPatches_postIntersect);
-  return self;
-}
-
-/*! to be able to have embree build a data structure over us we have
-    to be able to tell it the bounding box for each primitimve. this
-    is the callback embree calls for querying the (uniform) bounding
-    box for a single given primitmive 'primID' */
-unmasked void BilinearPatches_bounds(
+// to be able to have embree build a data structure over us we have
+// to be able to tell it the bounding box for each primitimve. this
+// is the callback embree calls for querying the (uniform) bounding
+// box for a single given primitmive 'primID'
+export void BilinearPatches_bounds(
     const RTCBoundsFunctionArguments *uniform args)
 {
   uniform BilinearPatches *uniform self =
@@ -204,11 +171,11 @@ bool recursiveBisection(varying Ray &ray,
   }
 }
 
-/*! this is the function callback the embree calls to compute a single
-  ray-primitive intersection. For sake of simplicity we'll use a very,
-  very simple recursive test here - this is neither fast nor elegant,
-  but does show that you can do mere arbitrary stuff in a ISPC kernel,
-  including 'true' recursion. */
+// this is the function callback the embree calls to compute a single
+// ray-primitive intersection. For sake of simplicity we'll use a very,
+// very simple recursive test here - this is neither fast nor elegant,
+// but does show that you can do mere arbitrary stuff in a ISPC kernel,
+// including 'true' recursion.
 void BilinearPatches_intersect_kernel(
     const RTCIntersectFunctionNArguments *uniform args,
     const uniform bool isOcclusionTest)
@@ -254,51 +221,19 @@ void BilinearPatches_intersect_kernel(
   }
 }
 
-unmasked void BilinearPatches_intersect(
+export void BilinearPatches_intersect(
     const struct RTCIntersectFunctionNArguments *uniform args)
 {
   BilinearPatches_intersect_kernel(args, false);
 }
 
-unmasked void BilinearPatches_occluded(
+export void BilinearPatches_occluded(
     const struct RTCIntersectFunctionNArguments *uniform args)
 {
   BilinearPatches_intersect_kernel(args, true);
 }
 
-/*! the function called by BilinearPatches::commit() to pass the
-  actual user data over. for simplicity we assume that this functoin
-  gets called exactly once; in practice a user may also _change_ an
-  existing class'es data members, but handling this would make this
-  code significantly larger */
-export void BilinearPatches_finalize(void *uniform _self,
-    void *uniform _embreeGeometry,
-    float *uniform patchesDataMemory,
-    uniform size_t numPatches)
+export void *uniform BilinearPatches_postIntersect_addr()
 {
-  // first, typecast to our 'real' type. since ispc can't export real
-  // types to c we have to pass 'self' in as a void*, and typecast
-  // here.
-  BilinearPatches *uniform self = (BilinearPatches * uniform) _self;
-
-  // set our internal data.
-  self->numPatches = numPatches;
-  self->patchArray = (Patch * uniform) patchesDataMemory;
-
-  RTCGeometry geom = (RTCGeometry)_embreeGeometry;
-
-  rtcSetGeometryUserPrimitiveCount(geom, numPatches);
-
-  // set 'us' as user data (this will be the first arg in intersect()
-  // and computebounds() callbacks
-  rtcSetGeometryUserData(geom, self);
-
-  // set function pointers:
-  rtcSetGeometryBoundsFunction(
-      geom, (uniform RTCBoundsFunction)&BilinearPatches_bounds, self);
-  rtcSetGeometryIntersectFunction(
-      geom, (uniform RTCIntersectFunctionN)&BilinearPatches_intersect);
-  rtcSetGeometryOccludedFunction(
-      geom, (uniform RTCOccludedFunctionN)&BilinearPatches_occluded);
-  rtcCommitGeometry(geom);
+  return BilinearPatches_postIntersect;
 }

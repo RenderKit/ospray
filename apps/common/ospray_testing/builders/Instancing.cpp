@@ -149,7 +149,6 @@ cpp::Group Instancing::buildGroupB() const
   cpp::Light light("spot");
   light.setParam("position", vec3f(0.f, 6.f, 0.f));
   light.setParam("direction", vec3f(0.f, -1.f, 0.f));
-  light.setParam("c0", vec3f(0.f, 1.f, 0.f));
   light.setParam("openingAngle", 180.f);
   light.setParam("penumbraAngle", 0.f);
   light.setParam("radius", 0.3f);

@@ -1,14 +1,16 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Geometry.h"
 #include "common/Data.h"
+// ispc shared
+#include "MeshShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Mesh : public Geometry
+struct OSPRAY_SDK_INTERFACE Mesh : public AddStructShared<Geometry, ispc::Mesh>
 {
   Mesh();
   virtual ~Mesh() override = default;

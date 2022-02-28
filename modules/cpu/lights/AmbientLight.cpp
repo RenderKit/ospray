@@ -3,16 +3,21 @@
 
 #include "AmbientLight.h"
 #include "lights/AmbientLight_ispc.h"
-#include "lights/Light_ispc.h"
+// ispc shared
+#include "AmbientLightShared.h"
 
 namespace ospray {
 
-void *AmbientLight::createIE(const void *instance) const
+ispc::Light *AmbientLight::createSh(
+    uint32_t, const ispc::Instance *instance) const
 {
-  void *ie = ispc::AmbientLight_create();
-  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
-  ispc::AmbientLight_set(ie, (ispc::vec3f &)radiance);
-  return ie;
+  ispc::AmbientLight *sh = StructSharedCreate<ispc::AmbientLight>();
+  sh->super.sample = ispc::AmbientLight_sample_addr();
+  sh->super.eval = ispc::AmbientLight_eval_addr();
+  sh->super.isVisible = visible;
+  sh->super.instance = instance;
+  sh->radiance = radiance;
+  return &sh->super;
 }
 
 std::string AmbientLight::toString() const

@@ -1,11 +1,15 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
 #include "camera/Camera.ih"
 #include "common/World.ih"
 #include "math/random.ih"
+#include "pf/PixelFilter.ih"
 #include "render/util.ih"
+#include "texture/Texture2D.ih"
+// c++ shared
+#include "fb/FrameBufferShared.h"
 
 vec4f Renderer_getBackground(
     const Renderer *uniform self, const vec2f &screenPos)
@@ -90,10 +94,10 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
           1.f / 6.f); // rotate to sample center (0.5) of pixel for sampleID=0
       const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
 
+      const PixelFilter *uniform pf = self->pixelFilter;
       vec2f pfSample = pixelSample;
-      if (self->pixelFilter) {
-        pfSample = self->pixelFilter->sample(self->pixelFilter, pixelSample)
-            + make_vec2f(0.5f);
+      if (pf) {
+        pfSample = pf->sample(pf, pixelSample) + make_vec2f(0.5f);
       }
 
       screenSample.sampleID.z = startSampleID + s;
@@ -135,25 +139,17 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
   }
 }
 
-export void Renderer_set(void *uniform _self,
-    const uniform int32 spp,
-    const uniform int32 maxDepth,
-    const uniform float minContribution,
-    const uniform vec4f &bgColor,
-    void *uniform backplate,
-    const uniform int32 numMaterials,
-    void *uniform materials,
-    void *uniform _maxDepthTexture,
-    void *uniform pixelFilter);
+// Exports (called from C++) //////////////////////////////////////////////////
 
-void Renderer_Constructor(Renderer *uniform self)
+export void *uniform Renderer_default_renderSample_addr()
 {
-  self->renderSample = Renderer_default_renderSample;
-  self->renderTile = Renderer_default_renderTile;
-  Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), NULL, 0, NULL, NULL, NULL);
+  return Renderer_default_renderSample;
 }
 
-// Exports (called from C++) //////////////////////////////////////////////////
+export void *uniform Renderer_default_renderTile_addr()
+{
+  return Renderer_default_renderTile;
+}
 
 export void Renderer_renderTile(void *uniform _self,
     void *uniform _fb,
@@ -168,32 +164,6 @@ export void Renderer_renderTile(void *uniform _self,
   Camera *uniform camera = (Camera * uniform) _camera;
   World *uniform world = (World * uniform) _world;
   self->renderTile(self, fb, camera, world, perFrameData, tile, jobID);
-}
-
-export void Renderer_set(void *uniform _self,
-    const uniform int32 spp,
-    const uniform int32 maxDepth,
-    const uniform float minContribution,
-    const uniform vec4f &bgColor,
-    void *uniform backplate,
-    const uniform int32 numMaterials,
-    void *uniform materials,
-    void *uniform _maxDepthTexture,
-    void *uniform pixelFilter)
-{
-  uniform Renderer *uniform self = (uniform Renderer * uniform) _self;
-
-  self->spp = spp;
-  self->maxDepth = maxDepth;
-  self->minContribution = minContribution;
-  self->bgColor = bgColor;
-  self->backplate = (uniform Texture2D * uniform) backplate;
-  self->numMaterials = numMaterials;
-  self->material = (Material * *uniform) materials;
-  self->maxDepthTexture = (Texture2D * uniform) _maxDepthTexture;
-  self->pixelFilter = (PixelFilter * uniform) pixelFilter;
-
-  precomputeZOrder();
 }
 
 export void Renderer_pick(const void *uniform _self,

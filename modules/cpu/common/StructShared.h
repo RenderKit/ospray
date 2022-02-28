@@ -1,10 +1,24 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <cstdlib>
+#include <new>
 #include <type_traits>
+
+namespace ispc {
+
+// Shared structure members may use types from rkcommon
+using namespace rkcommon;
+using namespace rkcommon::math;
+
+// Shared structure members may use ispc specific types
+using uint8 = uint8_t;
+using int32 = int32_t;
+using uint32 = uint32_t;
+using int64 = int64_t;
+} // namespace ispc
 
 namespace ospray {
 
@@ -20,6 +34,31 @@ namespace ospray {
    final classes can be C-style casted to ManagedObject* (this pointer stays
    the same).
 */
+
+inline void *BufferSharedCreate(size_t size)
+{
+  return malloc(size);
+}
+
+inline void BufferSharedDelete(void *ptr)
+{
+  free(ptr);
+}
+
+template <typename T>
+T *BufferSharedCreate(size_t count, const T *data)
+{
+  T *ptr = (T *)BufferSharedCreate(sizeof(T) * count);
+  if (data)
+    memcpy(ptr, data, sizeof(T) * count);
+  return ptr;
+}
+
+template <typename T>
+inline T *StructSharedCreate()
+{
+  return new (BufferSharedCreate(sizeof(T))) T;
+}
 
 struct StructSharedPtr
 {
@@ -91,8 +130,12 @@ struct AddStructShared
       std::is_same<typename get_base_structshared_or<Base, Struct>::type,
           typename get_super_or<Struct>::type>::value,
       "StructShared_t needs to have 'super' member of type Base::StructShared_t");
-  AddStructShared()
-      : StructSharedGet<Struct, AddStructShared<Base, Struct>>(&structSharedPtr)
+
+  template <typename... Args>
+  AddStructShared(Args... args)
+      : StructSharedGet<Struct, AddStructShared<Base, Struct>>(
+          &structSharedPtr),
+        Base(args...)
   {}
 };
 
@@ -100,14 +143,14 @@ struct AddStructShared
 
 inline StructSharedPtr::~StructSharedPtr()
 {
-  free(structSharedPtr);
+  BufferSharedDelete(structSharedPtr);
 }
 
 template <typename T, typename B>
 StructSharedGet<T, B>::StructSharedGet(void **ptr)
 {
   if (!*ptr)
-    *ptr = new (malloc(sizeof(T))) T;
+    *ptr = StructSharedCreate<T>();
 }
 
 template <typename T, typename B>

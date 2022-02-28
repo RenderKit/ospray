@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,6 +8,7 @@
 #include "rkcommon/tasking/parallel_for.h"
 #include "sky_model/color_info.h"
 #include "sky_model/sky_model.h"
+// ispc shared
 #include "texture/Texture2DShared.h"
 
 // Sun and sky environment lights
@@ -37,8 +38,9 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
 {
   SunSkyLight();
   virtual ~SunSkyLight() override;
-  virtual void *createIE(const void *instance = nullptr) const override;
-  virtual void *createSecondIE(const void *instance = nullptr) const override;
+  virtual uint32_t getShCount() const override;
+  virtual ispc::Light *createSh(
+      uint32_t index, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;
 
@@ -46,7 +48,7 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
   void processIntensityQuantityType();
 
   std::vector<vec3f> skyImage;
-  ispc::Texture2D mapIE;
+  ispc::Texture2D mapSh;
   void *distributionIE{nullptr};
   vec2i skySize;
   linear3f frame{one}; // sky orientation
@@ -56,5 +58,12 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
   // scaling factor for values provided from model for both sun and sky to be <1
   float intensityScale{0.025f};
 };
+
+// Inlined defintions /////////////////////////////////////////////////////////
+
+inline uint32_t SunSkyLight::getShCount() const
+{
+  return 2;
+}
 
 } // namespace ospray

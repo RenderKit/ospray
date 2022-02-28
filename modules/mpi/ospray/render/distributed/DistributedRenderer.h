@@ -1,16 +1,19 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "../../common/DistributedWorld.h"
 #include "../../fb/DistributedFrameBuffer.h"
 #include "../../fb/TileOperation.h"
 #include "camera/Camera.h"
 #include "render/Renderer.h"
+// ispc shared
+#include "DistributedRendererShared.h"
 
 namespace ospray {
 namespace mpi {
+
+struct DistributedWorld;
 
 struct RegionInfo
 {
@@ -19,7 +22,8 @@ struct RegionInfo
   bool *regionVisible = nullptr;
 };
 
-struct DistributedRenderer : public Renderer
+struct DistributedRenderer
+    : public AddStructShared<Renderer, ispc::DistributedRenderer>
 {
   DistributedRenderer();
   ~DistributedRenderer() override;

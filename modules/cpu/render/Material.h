@@ -4,9 +4,8 @@
 #pragma once
 
 #include "common/Managed.h"
-#include "common/StructShared.h"
 #include "common/Util.h"
-
+// ispc shared
 #include "MaterialShared.h"
 #include "texture/TextureParamShared.h"
 

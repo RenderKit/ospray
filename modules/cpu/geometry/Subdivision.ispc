@@ -1,18 +1,10 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Geometry.ih"
-#include "common/World.ih"
-#include "math/LinearSpace.ih"
-#include "math/sampling.ih"
-
-struct Subdivision
-{
-  Geometry super;
-  RTCGeometry geom;
-  int64 flagMask; // which attributes are missing and cannot be interpolated
-};
+// c++ shared
+#include "SubdivisionShared.h"
 
 static void Subdivision_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
@@ -66,31 +58,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
   }
 }
 
-void Subdivision_Constructor(uniform Subdivision *uniform mesh)
+export void *uniform Subdivision_postIntersect_addr()
 {
-  Geometry_Constructor(&mesh->super, Subdivision_postIntersect);
-
-  mesh->geom = NULL;
-  mesh->flagMask = 0;
-}
-
-export void *uniform Subdivision_create()
-{
-  Subdivision *uniform mesh = uniform new Subdivision;
-  Subdivision_Constructor(mesh);
-  return mesh;
-}
-
-export void *uniform Subdivision_set(void *uniform _mesh,
-    RTCGeometry geom,
-    uniform bool haveColor,
-    uniform bool haveTC)
-{
-  Subdivision *uniform mesh = (Subdivision * uniform) _mesh;
-  mesh->geom = geom;
-  mesh->flagMask = -1;
-  if (!haveColor)
-    mesh->flagMask &= ~DG_COLOR;
-  if (!haveTC)
-    mesh->flagMask &= ~DG_TEXCOORD;
+  return Subdivision_postIntersect;
 }

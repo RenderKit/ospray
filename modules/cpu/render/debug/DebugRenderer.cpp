@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -49,7 +49,7 @@ static DebugRendererType typeFromString(const std::string &name)
 
 DebugRenderer::DebugRenderer()
 {
-  ispcEquivalent = ispc::DebugRenderer_create();
+  getSh()->renderSample = ispc::DebugRenderer_testFrame_addr();
 }
 
 std::string DebugRenderer::toString() const
@@ -60,8 +60,56 @@ std::string DebugRenderer::toString() const
 void DebugRenderer::commit()
 {
   Renderer::commit();
+
   std::string method = getParam<std::string>("method", "eyeLight");
-  ispc::DebugRenderer_set(getIE(), typeFromString(method));
+  switch (typeFromString(method)) {
+  case RAY_DIR:
+    getSh()->renderSample = ispc::DebugRenderer_rayDir_addr();
+    break;
+  case EYE_LIGHT:
+    getSh()->renderSample = ispc::DebugRenderer_eyeLight_addr();
+    break;
+  case NG:
+    getSh()->renderSample = ispc::DebugRenderer_Ng_addr();
+    break;
+  case NS:
+    getSh()->renderSample = ispc::DebugRenderer_Ns_addr();
+    break;
+  case COLOR:
+    getSh()->renderSample = ispc::DebugRenderer_vertexColor_addr();
+    break;
+  case TEX_COORD:
+    getSh()->renderSample = ispc::DebugRenderer_texCoord_addr();
+    break;
+  case DPDS:
+    getSh()->renderSample = ispc::DebugRenderer_dPds_addr();
+    break;
+  case DPDT:
+    getSh()->renderSample = ispc::DebugRenderer_dPdt_addr();
+    break;
+  case PRIM_ID:
+    getSh()->renderSample = ispc::DebugRenderer_primID_addr();
+    break;
+  case GEOM_ID:
+    getSh()->renderSample = ispc::DebugRenderer_geomID_addr();
+    break;
+  case INST_ID:
+    getSh()->renderSample = ispc::DebugRenderer_instID_addr();
+    break;
+  case BACKFACING_NG:
+    getSh()->renderSample = ispc::DebugRenderer_backfacing_Ng_addr();
+    break;
+  case BACKFACING_NS:
+    getSh()->renderSample = ispc::DebugRenderer_backfacing_Ns_addr();
+    break;
+  case VOLUME:
+    getSh()->renderSample = ispc::DebugRenderer_volume_addr();
+    break;
+  case TEST_FRAME:
+  default:
+    getSh()->renderSample = ispc::DebugRenderer_testFrame_addr();
+    break;
+  }
 }
 
 } // namespace ospray

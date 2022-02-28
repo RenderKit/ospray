@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -69,8 +69,6 @@ extern uniform float
     MicrofacetSheenAlbedoTable_dir[MICROFACET_SHEEN_ALBEDO_TABLE_SIZE
         * MICROFACET_SHEEN_ALBEDO_TABLE_SIZE]; // directional 2D table
                                                // (cosThetaO, roughness)
-
-void precomputeMicrofacetAlbedoTables();
 
 inline float MicrofacetAlbedoTable_eval(float cosThetaO, float roughness)
 {

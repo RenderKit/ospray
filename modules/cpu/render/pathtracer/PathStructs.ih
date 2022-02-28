@@ -1,18 +1,18 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "render/pathtracer/PathTracer.ih"
-#include "render/pathtracer/Scattering.ih"
-
+#include "common/DifferentialGeometry.ih"
 #include "render/bsdfs/BSDF.ih"
 #include "render/materials/Medium.ih"
-
-#include "common/DifferentialGeometry.ih"
-#include "common/World.ih"
-#include "math/random.ih"
 #include "volume/VolumetricModel.ih"
+// c++ shared
+#include "PathTracerShared.h"
+
+struct World;
+struct LDSampler;
+struct RandomSampler;
 
 enum PathVertexType
 {

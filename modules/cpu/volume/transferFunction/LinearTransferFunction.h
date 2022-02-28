@@ -6,7 +6,7 @@
 // ospray
 #include "TransferFunction.h"
 #include "common/Data.h"
-
+// ispc shared
 #include "LinearTransferFunctionShared.h"
 
 namespace ospray {

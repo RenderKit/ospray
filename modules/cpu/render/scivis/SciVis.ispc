@@ -1,13 +1,14 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "render/Renderer.ih"
-// ao renderer
 #include "SciVis.ih"
+#include "common/World.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "surfaces.ih"
 #include "volumes.ih"
+// c++ shared
+#include "fb/FrameBufferShared.h"
 
 void SciVis_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
@@ -152,33 +153,6 @@ void SciVis_renderSample(Renderer *uniform _self,
   sample.alpha = 1.f - luminance(outTransmission);
 }
 
-// SciVis C++ interface /////////////////////////////////////////////////////
-
-export void *uniform SciVis_create()
-{
-  uniform SciVis *uniform self = uniform new uniform SciVis;
-  Renderer_Constructor(&self->super);
-  self->super.renderSample = SciVis_renderSample;
-  return self;
-}
-
-export void SciVis_set(void *uniform _self,
-    uniform bool shadowsEnabled,
-    uniform bool visibleLights,
-    uniform int aoSamples,
-    uniform float aoRadius,
-    uniform float volumeSamplingRate)
-{
-  uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
-
-  self->shadowsEnabled = shadowsEnabled;
-  self->visibleLights = visibleLights;
-  self->aoSamples = aoSamples;
-  self->aoRadius = aoRadius;
-
-  self->volumeSamplingRate = volumeSamplingRate;
-}
-
 vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
@@ -233,4 +207,11 @@ vec3f SciVis_computeAO(const uniform SciVis *uniform self,
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
   // cancel
   return 1.0f - (hits / (float)sampleCnt);
+}
+
+// SciVis C++ interface /////////////////////////////////////////////////////
+
+export void *uniform SciVis_renderSample_addr()
+{
+  return SciVis_renderSample;
 }

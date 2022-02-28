@@ -1,4 +1,4 @@
-## Copyright 2009-2021 Intel Corporation
+## Copyright 2009-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 stages:
@@ -413,7 +413,7 @@ test-osx-arm:
   tags: [mac-arm]
   needs: [build-osx-arm]
   script:
-    - DYLD_FALLBACK_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX2
+    - DYLD_FALLBACK_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX
 
 test-tutorials:
   stage: test
@@ -439,7 +439,7 @@ test-find-ospray:
 
 test-windows-msvc15-avx2:
   <<: *test_job_windows_avx2
-  tags: [win, msvc15, avx2]
+  tags: [win, msvc15, only-avx2]
   needs: [build-windows-msvc15]
   allow_failure: true
 
@@ -450,13 +450,13 @@ test-windows-msvc15-avx512skx:
 
 test-windows-debug-all:
   <<: *test_job_windows_avx2
-  tags: [win, msvc15, avx2]
+  tags: [win, msvc15, only-avx2]
   needs: [build-windows-debug-all]
   only: [schedules]
 
 test-windows-msvc16-avx2:
   <<: *test_job_windows_avx2
-  tags: [win, msvc16, avx2, mpi]
+  tags: [win, msvc16, only-avx2, mpi]
   needs: [build-windows-msvc16-mpi_and_md]
   allow_failure: true
   script:

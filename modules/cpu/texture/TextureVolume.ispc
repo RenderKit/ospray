@@ -3,8 +3,8 @@
 
 #include "Texture.ih"
 #include "volume/Volume.ih"
-#include "volume/transferFunction/TransferFunction.ih"
-
+#include "volume/transferFunction/TransferFunctionShared.h"
+// c++ shared
 #include "TextureVolumeShared.h"
 
 vec4f TextureVolume_get(

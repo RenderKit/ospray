@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -31,8 +31,6 @@ struct OSPRAY_SDK_INTERFACE ManagedObject : public memory::RefCount,
 
   virtual std::string toString() const;
 
-  void *getIE() const;
-
   template <typename T>
   T getParam(const char *name, T valIfNotFound = T());
 
@@ -52,7 +50,6 @@ struct OSPRAY_SDK_INTERFACE ManagedObject : public memory::RefCount,
 
   // Data members //
 
-  void *ispcEquivalent{nullptr};
   OSPDataType managedObjectType{OSP_OBJECT};
 
  private:
@@ -63,11 +60,6 @@ struct OSPRAY_SDK_INTERFACE ManagedObject : public memory::RefCount,
 OSPTYPEFOR_SPECIALIZATION(ManagedObject *, OSP_OBJECT);
 
 // Inlined ManagedObject definitions ////////////////////////////////////////
-
-inline void *ManagedObject::getIE() const
-{
-  return ispcEquivalent;
-}
 
 template <typename T>
 inline T ManagedObject::getParam(const char *name, T valIfNotFound)

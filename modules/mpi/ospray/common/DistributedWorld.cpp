@@ -1,15 +1,13 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedWorld.h"
 #include <algorithm>
 #include <iterator>
-#include "DistributedWorld.h"
 #include "MPICommon.h"
 #include "Messaging.h"
 #include "ISPCDevice.h"
 #include "common/Data.h"
-#include "common/DistributedWorld_ispc.h"
 
 namespace ospray {
 namespace mpi {
@@ -19,7 +17,6 @@ using namespace rkcommon;
 DistributedWorld::DistributedWorld() : mpiGroup(mpicommon::worker.dup())
 {
   managedObjectType = OSP_WORLD;
-  this->ispcEquivalent = ispc::DistributedWorld_create();
 }
 
 DistributedWorld::~DistributedWorld()
@@ -60,16 +57,18 @@ void DistributedWorld::commit()
     // either for data-parallel rendering or to switch to replicated
     // rendering
     box3f localBounds;
-    if (embreeSceneHandleGeometries) {
+    if (getSh()->super.embreeSceneHandleGeometries) {
       box4f b;
-      rtcGetSceneBounds(embreeSceneHandleGeometries, (RTCBounds *)&b);
+      rtcGetSceneBounds(
+          getSh()->super.embreeSceneHandleGeometries, (RTCBounds *)&b);
       localBounds.extend(box3f(vec3f(b.lower.x, b.lower.y, b.lower.z),
           vec3f(b.upper.x, b.upper.y, b.upper.z)));
     }
 
-    if (embreeSceneHandleVolumes) {
+    if (getSh()->super.embreeSceneHandleVolumes) {
       box4f b;
-      rtcGetSceneBounds(embreeSceneHandleVolumes, (RTCBounds *)&b);
+      rtcGetSceneBounds(
+          getSh()->super.embreeSceneHandleVolumes, (RTCBounds *)&b);
       localBounds.extend(box3f(vec3f(b.lower.x, b.lower.y, b.lower.z),
           vec3f(b.upper.x, b.upper.y, b.upper.z)));
     }
@@ -105,7 +104,7 @@ void DistributedWorld::commit()
     regionGeometry->commit();
 
     regionScene = rtcNewScene(embreeDevice);
-    rtcAttachGeometry(regionScene, regionGeometry->embreeGeometry);
+    rtcAttachGeometry(regionScene, regionGeometry->getEmbreeGeometry());
     rtcSetSceneFlags(regionScene, RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
     rtcCommitScene(regionScene);
 
@@ -113,8 +112,9 @@ void DistributedWorld::commit()
     allRegionsData->refDec();
   }
 
-  ispc::DistributedWorld_set(
-      getIE(), allRegions.data(), allRegions.size(), regionScene);
+  getSh()->regions = allRegions.data();
+  getSh()->numRegions = allRegions.size();
+  getSh()->regionScene = regionScene;
 }
 
 void DistributedWorld::exchangeRegions()

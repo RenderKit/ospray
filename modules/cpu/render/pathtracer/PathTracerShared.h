@@ -1,15 +1,13 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "fb/FrameBuffer.ih"
-#include "lights/Light.ih"
-#include "render/Renderer.ih"
-#include "render/util.ih"
-#include "rkcommon/math/vec.ih"
+#include "render/RendererShared.h"
 
-#define MAX_LIGHTS 1000u
+#ifdef __cplusplus
+namespace ispc {
+#endif // __cplusplus
 
 struct PathTracer
 {
@@ -23,4 +21,18 @@ struct PathTracer
   bool shadowCatcher; // preprocessed
   bool backgroundRefraction;
   int32 numLightSamples; // number of light samples used for NEE
+
+#ifdef __cplusplus
+  PathTracer()
+      : rouletteDepth(5),
+        maxRadiance(inf),
+        shadowCatcherPlane(0.f),
+        shadowCatcher(false),
+        backgroundRefraction(false),
+        numLightSamples(1)
+  {}
 };
+} // namespace ispc
+#else
+};
+#endif // __cplusplus

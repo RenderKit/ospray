@@ -1,19 +1,15 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "GeometricModel.h"
-#include "../render/Material.h"
-// ispc exports
-#include "geometry/GeometricModel_ispc.h"
-#include "geometry/Geometry_ispc.h"
+#include "render/Material.h"
 
 namespace ospray {
 
 GeometricModel::GeometricModel(Geometry *_geometry) : geomAPI(_geometry)
 {
   managedObjectType = OSP_GEOMETRIC_MODEL;
-  this->ispcEquivalent = ispc::GeometricModel_create();
 }
 
 std::string GeometricModel::toString() const
@@ -31,7 +27,8 @@ void GeometricModel::commit()
   bool useRendererMaterialList = false;
   materialData = getParamDataT<Material *>("material", false, true);
   if (materialData) {
-    ispcMaterialPtrs = createArrayOfSh(materialData->as<Material *>());
+    ispcMaterialPtrs =
+        createArrayOfSh<ispc::Material>(materialData->as<Material *>());
 
     auto *data = new Data(ispcMaterialPtrs.data(),
         OSP_VOID_PTR,
@@ -71,15 +68,12 @@ void GeometricModel::commit()
         << " potentially not enough 'color' elements for 'geometry', clamping";
   }
 
-  invertNormals = getParam<bool>("invertNormals");
-
-  ispc::GeometricModel_set(getIE(),
-      geometry().getIE(),
-      ispc(colorData),
-      ispc(indexData),
-      ispc(materialData),
-      useRendererMaterialList,
-      invertNormals);
+  getSh()->geom = geom->getSh();
+  getSh()->color = *ispc(colorData);
+  getSh()->index = *ispc(indexData);
+  getSh()->material = *ispc(materialData);
+  getSh()->useRendererMaterialList = useRendererMaterialList;
+  getSh()->invertedNormals = getParam<bool>("invertNormals", false);
 }
 
 OSPTYPEFOR_DEFINITION(GeometricModel *);

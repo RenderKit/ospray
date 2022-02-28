@@ -3,34 +3,29 @@
 
 #include "../math/AffineSpace.ih"
 #include "CylinderCapSolidAngleTable.ih"
-#include "Light.ih"
 #include "SphericalQuadSampling.ih"
+#include "common/DifferentialGeometry.ih"
 #include "common/Instance.ih"
 #include "common/Intersect.ih"
-
-// state that changes under transformations
-struct CylinderLightDynamic
-{
-  vec3f position0;
-  vec3f position1;
-};
-
-struct CylinderLight
-{
-  Light super;
-  vec3f radiance;
-  float radius;
-  CylinderLightDynamic pre; // un- or pre-transformed state
-};
+// c++ shared
+#include "CylinderLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 inline void Transform(const CylinderLight *uniform self,
-    const uniform affine3f xfm,
+    const uniform affine3f &xfm,
     uniform CylinderLightDynamic &dyn)
 {
   dyn.position0 = xfmPoint(xfm, self->pre.position0);
   dyn.position1 = xfmPoint(xfm, self->pre.position1);
+}
+
+export void CylinderLight_Transform(
+    const void *uniform self, const void *uniform xfm, void *uniform dyn)
+{
+  Transform((CylinderLight * uniform) self,
+      *((affine3f * uniform) xfm),
+      *((CylinderLightDynamic * uniform) dyn));
 }
 
 inline float cylinderAxialSolidAngle(
@@ -269,45 +264,22 @@ Light_EvalRes CylinderLight_eval_instanced(const Light *uniform super,
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-export void CylinderLight_set(void *uniform super,
-    const uniform vec3f &radiance,
-    const uniform vec3f &position0,
-    const uniform vec3f &position1,
-    const uniform float radius)
+export void *uniform CylinderLight_sample_addr()
 {
-  CylinderLight *uniform self = (CylinderLight * uniform) super;
-  uniform float zMax = length(position1 - position0);
-  if (zMax <= 0.f | radius <= 0.f) {
-    self->radiance = make_vec3f(0.f);
-    return;
-  }
-
-  self->radiance = radiance;
-  self->radius = radius;
-  self->pre.position0 = position0;
-  self->pre.position1 = position1;
-
-  // Enable dynamic runtime instancing or apply static transformation
-  const Instance *uniform instance = self->super.instance;
-  if (instance) {
-    if (instance->motionBlur) {
-      self->super.sample = CylinderLight_sample_instanced;
-      self->super.eval = CylinderLight_eval_instanced;
-    } else
-      Transform(self, instance->xfm, self->pre);
-  }
+  return CylinderLight_sample;
 }
 
-export void *uniform CylinderLight_create()
+export void *uniform CylinderLight_sample_instanced_addr()
 {
-  CylinderLight *uniform self = uniform new CylinderLight;
+  return CylinderLight_sample_instanced;
+}
 
-  Light_Constructor(&self->super);
-  self->super.sample = CylinderLight_sample;
-  self->super.eval = CylinderLight_eval;
+export void *uniform CylinderLight_eval_addr()
+{
+  return CylinderLight_eval;
+}
 
-  CylinderLight_set(
-      self, make_vec3f(0.f), make_vec3f(0.f), make_vec3f(0.f, 0.f, 1.f), 1.f);
-
-  return self;
+export void *uniform CylinderLight_eval_instanced_addr()
+{
+  return CylinderLight_eval_instanced;
 }

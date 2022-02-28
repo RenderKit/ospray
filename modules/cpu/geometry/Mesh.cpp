@@ -1,19 +1,20 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Mesh.h"
-#include "ospray/ospray.h"
-#include "common/World.h"
+#include "common/DGEnum.h"
 // ispc exports
-#include <cmath>
 #include "geometry/Mesh_ispc.h"
+// std
+#include <cmath>
 
 namespace ospray {
 
 Mesh::Mesh()
 {
-  ispcEquivalent = ispc::Mesh_create();
+  getSh()->super.getAreas = ispc::Mesh_getAreas_addr();
+  getSh()->super.sampleArea = ispc::Mesh_sampleArea_addr();
 }
 
 std::string Mesh::toString() const
@@ -23,13 +24,6 @@ std::string Mesh::toString() const
 
 void Mesh::commit()
 {
-  if (embreeGeometry)
-    rtcReleaseGeometry(embreeGeometry);
-
-  if (!embreeDevice) {
-    throw std::runtime_error("invalid Embree device");
-  }
-
   motionVertexAddr.clear();
   motionNormalAddr.clear();
 
@@ -83,7 +77,7 @@ void Mesh::commit()
 
   const bool isTri = indexData->type == OSP_VEC3UI;
 
-  embreeGeometry = rtcNewGeometry(embreeDevice,
+  createEmbreeGeometry(
       isTri ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
 
   time = range1f(0.0f, 1.0f);
@@ -112,18 +106,28 @@ void Mesh::commit()
       indexData->size());
   rtcCommitGeometry(embreeGeometry);
 
-  ispc::Mesh_set(getIE(),
-      ispc(indexData),
-      ispc(vertexData),
-      ispc(normalData),
-      ispc(colorData),
-      ispc(texcoordData),
-      motionVertexAddr.data(),
-      motionNormalAddr.data(),
-      motionBlur ? motionVertexData->size() : 0,
-      (const ispc::box1f &)time,
-      colorData && colorData->type == OSP_VEC4F,
-      isTri);
+  getSh()->index = *ispc(indexData);
+  getSh()->vertex = *ispc(vertexData);
+  getSh()->normal = *ispc(normalData);
+  getSh()->color = *ispc(colorData);
+  getSh()->texcoord = *ispc(texcoordData);
+  getSh()->motionVertex = (uint8_t **)motionVertexAddr.data();
+  getSh()->motionNormal = (uint8_t **)motionNormalAddr.data();
+  getSh()->motionKeys = motionBlur ? motionVertexData->size() : 0;
+  getSh()->time = time;
+  getSh()->has_alpha = colorData && colorData->type == OSP_VEC4F;
+  getSh()->is_triangleMesh = isTri;
+  getSh()->super.numPrimitives = numPrimitives();
+  getSh()->super.postIntersect = isTri ? ispc::TriangleMesh_PostIntersect_addr()
+                                       : ispc::QuadMesh_postIntersect_addr();
+
+  getSh()->flagMask = -1;
+  if (!normalData)
+    getSh()->flagMask &= ~DG_NS;
+  if (!colorData)
+    getSh()->flagMask &= ~DG_COLOR;
+  if (!texcoordData)
+    getSh()->flagMask &= ~DG_TEXCOORD;
 
   postCreationInfo(vertexData->size());
 }

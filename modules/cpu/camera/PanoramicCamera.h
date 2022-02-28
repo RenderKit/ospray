@@ -1,14 +1,17 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "camera/Camera.h"
+// ispc shared
+#include "PanoramicCameraShared.h"
 
 namespace ospray {
 
 // Implements a panoramic camera with latitude/longitude mapping
-struct OSPRAY_SDK_INTERFACE PanoramicCamera : public Camera
+struct OSPRAY_SDK_INTERFACE PanoramicCamera
+    : public AddStructShared<Camera, ispc::PanoramicCamera>
 {
   PanoramicCamera();
   virtual ~PanoramicCamera() override = default;

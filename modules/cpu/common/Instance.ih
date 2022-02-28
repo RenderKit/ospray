@@ -1,26 +1,18 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 // ospray stuff
-#include "Group.ih"
+#include "../geometry/GeometricModel.ih"
+#include "DifferentialGeometry.ih"
 #include "MotionTransform.ih"
 #include "Ray.ih"
+// c++ shared
+#include "GroupShared.h"
+#include "InstanceShared.h"
 
 struct Renderer;
-
-struct Instance
-{
-  Group *group;
-  RTCGeometry geom; // only to access rtcGetGeometryTransform
-
-  AffineSpace3f xfm;
-  AffineSpace3f rcp_xfm;
-  bool motionBlur;
-};
-typedef Instance *uniform InstancePtr;
-typedef InstancePtr *uniform InstanceArray;
 
 inline uniform AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const uniform float time)

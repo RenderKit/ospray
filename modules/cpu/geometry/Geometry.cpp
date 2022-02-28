@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -50,6 +50,33 @@ void Geometry::postCreationInfo(size_t numVerts) const
 void Geometry::setDevice(RTCDevice device)
 {
   embreeDevice = device;
+}
+
+void Geometry::createEmbreeGeometry(RTCGeometryType type)
+{
+  if (embreeGeometry)
+    rtcReleaseGeometry(embreeGeometry);
+
+  if (!embreeDevice) {
+    throw std::runtime_error("invalid Embree device");
+  }
+
+  embreeGeometry = rtcNewGeometry(embreeDevice, type);
+}
+
+void Geometry::createEmbreeUserGeometry(RTCBoundsFunction boundsFn,
+    RTCIntersectFunctionN intersectFn,
+    RTCOccludedFunctionN occludedFn)
+{
+  createEmbreeGeometry(RTC_GEOMETRY_TYPE_USER);
+
+  // Setup Embree user-defined geometry
+  rtcSetGeometryUserData(embreeGeometry, getSh());
+  rtcSetGeometryUserPrimitiveCount(embreeGeometry, numPrimitives());
+  rtcSetGeometryBoundsFunction(embreeGeometry, boundsFn, getSh());
+  rtcSetGeometryIntersectFunction(embreeGeometry, intersectFn);
+  rtcSetGeometryOccludedFunction(embreeGeometry, occludedFn);
+  rtcCommitGeometry(embreeGeometry);
 }
 
 OSPTYPEFOR_DEFINITION(Geometry *);

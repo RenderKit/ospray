@@ -1,34 +1,12 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Camera.ih"
 #include "common/MotionTransform.ih"
 #include "math/sampling.ih"
 #include "ospray/OSPEnums.h"
-
-struct PerspectiveCamera
-{
-  Camera super;
-
-  vec3f org; // position of camera, already contains shift when
-             // STEREO_{LEFT|RIGHT}
-  vec3f dir_00; // direction of ray with screenSample=(0,0); scaled to
-                // focusDistance if no motionBlur
-  // below are essentially unions: 1. if no motionBlur; 2. if motionBlur
-  vec3f du_size; // delta of ray direction between two pixels in x, scaled to
-                 // focusDistance; sensor size (in x and y) and architectural
-  vec3f dv_up; // delta of ray direction between two pixels in y, scaled to
-               // focusDistance; up direction of camera
-  vec3f ipd_offset; // shift of camera position for left/right eye (only when
-                    // SIDE_BY_SIDE or TOP_BOTTOM); (0.5*ipd, focusDistance, 0)
-
-  vec2f imgPlaneSize;
-
-  float scaledAperture; // radius of aperture prescaled to focal plane, i.e.,
-                        // divided by horizontal image plane size
-  float aspect; // image plane size x / y
-  int stereoMode;
-};
+// c++ shared
+#include "PerspectiveCameraShared.h"
 
 void PerspectiveCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
@@ -142,76 +120,16 @@ void PerspectiveCamera_initRayMB(const Camera *uniform _self,
   setRay(ray, org, normalize(dir), self->super.nearClip, inf, time);
 }
 
-export void *uniform PerspectiveCamera_create()
+// Exports (called from C++) //////////////////////////////////////////////////
+
+export void *uniform PerspectiveCamera_initRay_addr()
 {
-  uniform PerspectiveCamera *uniform self =
-      uniform new uniform PerspectiveCamera;
-  self->super.initRay = PerspectiveCamera_initRay;
-  return self;
+  return PerspectiveCamera_initRay;
 }
 
-export void PerspectiveCamera_set(void *uniform _self,
-    const uniform vec3f &org,
-    const uniform vec3f &dir,
-    const uniform vec3f &up,
-    const uniform vec2f &imgPlaneSize,
-    const uniform float scaledAperture,
-    const uniform float focusDistance,
-    const uniform float aspect,
-    const uniform bool architectural,
-    const uniform int stereoMode,
-    const uniform float ipd)
+export void *uniform PerspectiveCamera_initRayMB_addr()
 {
-  PerspectiveCamera *uniform self = (PerspectiveCamera * uniform) _self;
-
-  self->scaledAperture = scaledAperture;
-  self->aspect = aspect;
-  self->stereoMode = stereoMode;
-  self->dir_00 = normalize(dir);
-  self->org = org;
-  self->imgPlaneSize = imgPlaneSize;
-
-  if (self->super.motionBlur) {
-    self->super.initRay = PerspectiveCamera_initRayMB;
-    self->du_size = make_vec3f(imgPlaneSize.x, imgPlaneSize.y, architectural);
-    self->dv_up = up;
-    self->ipd_offset = make_vec3f(0.5f * ipd, focusDistance, 0.0f);
-  } else {
-    self->super.initRay = PerspectiveCamera_initRay;
-    self->du_size = normalize(cross(self->dir_00, up));
-    if (architectural) // orient film to be parallel to 'up'
-      self->dv_up = normalize(up);
-    else // rotate film to be perpendicular to 'dir'
-      self->dv_up = cross(self->du_size, self->dir_00);
-
-    self->ipd_offset = 0.5f * ipd * self->du_size;
-
-    switch (stereoMode) {
-    case OSP_STEREO_LEFT:
-      self->org = self->org - self->ipd_offset;
-      break;
-    case OSP_STEREO_RIGHT:
-      self->org = self->org + self->ipd_offset;
-      break;
-    case OSP_STEREO_TOP_BOTTOM:
-      // flip offset to have left eye at top (image coord origin at lower left)
-      self->ipd_offset = neg(self->ipd_offset);
-      break;
-    default:
-      break;
-    }
-
-    self->du_size = self->du_size * imgPlaneSize.x;
-    self->dv_up = self->dv_up * imgPlaneSize.y;
-    self->dir_00 = self->dir_00 - 0.5f * self->du_size - 0.5f * self->dv_up;
-
-    // prescale to focal plane
-    if (scaledAperture > 0.f) {
-      self->du_size = self->du_size * focusDistance;
-      self->dv_up = self->dv_up * focusDistance;
-      self->dir_00 = self->dir_00 * focusDistance;
-    }
-  }
+  return PerspectiveCamera_initRayMB;
 }
 
 export void PerspectiveCamera_projectBox(

@@ -1,13 +1,11 @@
 // Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "volumes.ih"
-// ispc device
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"
-
-#include "openvkl/openvkl.isph"
+#include "volume/VolumetricModel.ih"
+#include "volumes.ih"
 
 struct VolumeContext
 {

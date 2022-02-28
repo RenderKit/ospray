@@ -8,18 +8,9 @@
 #include "openvkl/iterator.isph"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
-#include "volume/Volume.ih"
-
-struct Isosurfaces
-{
-  Geometry super; //!< inherited geometry fields
-  float *isovalues;
-  // For backwards compatibility, a volumetric model was used to set
-  // the volume and color
-  VolumetricModel *volumetricModel;
-  Volume *volume;
-  VKLHitIteratorContext vklHitContext;
-};
+#include "volume/VolumetricModel.ih"
+// c++ shared
+#include "IsosurfacesShared.h"
 
 int Isosurfaces_primID(const Isosurfaces *uniform self, const float isovalue)
 {
@@ -40,7 +31,7 @@ Volume *uniform Isosurfaces_getVolume(const Isosurfaces *uniform self)
   return self->volumetricModel->volume;
 }
 
-unmasked void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
+export void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   uniform Isosurfaces *uniform self =
       (uniform Isosurfaces * uniform) args->geometryUserPtr;
@@ -97,20 +88,20 @@ void Isosurfaces_intersect_kernel(
   }
 }
 
-unmasked void Isosurfaces_intersect(
+export void Isosurfaces_intersect(
     const struct RTCIntersectFunctionNArguments *uniform args)
 {
   Isosurfaces_intersect_kernel(args, false);
 }
 
-unmasked void Isosurfaces_occluded(
+export void Isosurfaces_occluded(
     const struct RTCOccludedFunctionNArguments *uniform args)
 {
   Isosurfaces_intersect_kernel(
       (RTCIntersectFunctionNArguments * uniform) args, true);
 }
 
-static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
+void Isosurfaces_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -132,38 +123,7 @@ static void Isosurfaces_postIntersect(const Geometry *uniform geometry,
   }
 }
 
-export void *uniform Isosurfaces_create()
+export void *uniform Isosurfaces_postIntersect_addr()
 {
-  uniform Isosurfaces *uniform isosurfaces = uniform new uniform Isosurfaces;
-  Geometry_Constructor(&isosurfaces->super, Isosurfaces_postIntersect);
-  return isosurfaces;
-}
-
-export void *uniform Isosurfaces_set(void *uniform _self,
-    void *uniform _embreeGeometry,
-    int32 uniform numIsovalues,
-    uniform float *uniform isovalues,
-    void *uniform _volumetricModel,
-    void *uniform _volume,
-    void *uniform _vklHitContext)
-{
-  Isosurfaces *uniform self = (Isosurfaces * uniform) _self;
-  VolumetricModel *uniform volumetricModel =
-      (VolumetricModel * uniform) _volumetricModel;
-  Volume *uniform volume = (Volume * uniform) _volume;
-  VKLHitIteratorContext vklHitContext = (VKLHitIteratorContext)_vklHitContext;
-
-  self->isovalues = isovalues;
-  self->volumetricModel = volumetricModel;
-  self->volume = volume;
-  self->super.numPrimitives = 1; // for embree it is just one prim
-  self->vklHitContext = vklHitContext;
-
-  Geometry_setEmbreeUserGeometry(&self->super,
-      (RTCGeometry)_embreeGeometry,
-      Isosurfaces_bounds,
-      Isosurfaces_intersect,
-      Isosurfaces_occluded);
-
-  self->super.numPrimitives = numIsovalues;
+  return Isosurfaces_postIntersect;
 }

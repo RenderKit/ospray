@@ -1,10 +1,10 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #ifdef __cplusplus
-using namespace rkcommon::math;
+#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 
@@ -14,7 +14,7 @@ namespace ispc {
 // representing a "derived" class to allow casting to that class).
 struct Volume
 {
-  int volumeID;
+  int32 volumeID;
 
   VKLVolume vklVolume;
   VKLSampler vklSampler;
@@ -23,8 +23,16 @@ struct Volume
   // This is an internal derived parameter and not meant to be
   // redefined externally.
   box3f boundingBox;
-};
 
 #ifdef __cplusplus
+  Volume()
+      : volumeID(0),
+        vklVolume(nullptr),
+        vklSampler(nullptr),
+        boundingBox(0.f, 0.f)
+  {}
+};
 } // namespace ispc
+#else
+};
 #endif // __cplusplus

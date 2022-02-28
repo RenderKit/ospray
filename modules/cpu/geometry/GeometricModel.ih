@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,21 +7,8 @@
 #include "common/Data.ih"
 #include "math/AffineSpace.ih"
 #include "render/Renderer.ih"
-
-struct GeometricModel
-{
-  Geometry *geom;
-
-  Data1D color;
-  Data1D index; // per-primitive property mapping
-  Data1D material;
-
-  bool useRendererMaterialList;
-
-  bool invertedNormals;
-
-  float areaPDF;
-};
+// c++ shared
+#include "GeometricModelShared.h"
 
 inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
     const Renderer *uniform renderer,

@@ -31,9 +31,7 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   common/Data.cpp
   common/Future.cpp
   common/Group.cpp
-  common/Group.ispc
   common/Instance.cpp
-  common/Instance.ispc
   common/MotionTransform.cpp
   common/Managed.cpp
   common/OSPCommon.ispc
@@ -41,7 +39,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   common/World.ispc
   common/World.cpp
 
-  fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
   fb/FrameBufferView.cpp
   fb/LocalFB.ispc
@@ -68,7 +65,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   pf/PixelFilter.cpp
 
   camera/Camera.cpp
-  camera/Camera.ispc
   camera/PerspectiveCamera.ispc
   camera/PerspectiveCamera.cpp
   camera/OrthographicCamera.ispc
@@ -77,7 +73,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   camera/PanoramicCamera.cpp
   camera/registration.cpp
 
-  geometry/Geometry.ispc
   geometry/Geometry.cpp
   geometry/GeometricModel.ispc
   geometry/GeometricModel.cpp
@@ -147,14 +142,17 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
 
   render/scivis/SciVis.cpp
   render/scivis/SciVis.ispc
+  render/scivis/SciVisData.cpp
   render/scivis/surfaces.ispc
   render/scivis/volumes.ispc
   render/scivis/lightAlpha.ispc
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
+  render/pathtracer/PathTracerData.cpp
   render/pathtracer/PathSampler.ispc
   render/pathtracer/GeometryLight.ispc
+  render/pathtracer/GeometryLight.cpp
   render/pathtracer/VirtualLight.ispc
   render/pathtracer/TransparentShadow.ispc
   render/pathtracer/ShadowCatcher.ispc

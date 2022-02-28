@@ -6,7 +6,6 @@
 #include "TextureShared.h"
 
 #ifdef __cplusplus
-using namespace rkcommon::math;
 namespace ispc {
 #endif // __cplusplus
 

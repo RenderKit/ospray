@@ -1,14 +1,17 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "camera/Camera.h"
 #include "rkcommon/math/box.h"
+// ispc shared
+#include "PerspectiveCameraShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE PerspectiveCamera : public Camera
+struct OSPRAY_SDK_INTERFACE PerspectiveCamera
+    : public AddStructShared<Camera, ispc::PerspectiveCamera>
 {
   PerspectiveCamera();
   virtual ~PerspectiveCamera() override = default;

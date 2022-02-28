@@ -1,12 +1,14 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "math/random.ih"
 #include "render/Renderer.ih"
 // AO renderer
-#include "AORenderer.ih"
 #include "surfaces.ih"
 #include "volumes.ih"
+// c++ shared
+#include "AORendererShared.h"
+#include "fb/FrameBufferShared.h"
 
 void AORenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
@@ -108,25 +110,7 @@ void AORenderer_renderSample(Renderer *uniform _self,
 
 // AORenderer C++ interface ////////////////////////////////////////////////////
 
-export void *uniform AORenderer_create()
+export void *uniform AORenderer_renderSample_addr()
 {
-  uniform AORenderer *uniform self = uniform new uniform AORenderer;
-  Renderer_Constructor(&self->super);
-  self->super.renderSample = AORenderer_renderSample;
-  return self;
-}
-
-export void AORenderer_set(void *uniform _self,
-    uniform int aoSamples,
-    uniform float aoRadius,
-    uniform float aoIntensity,
-    uniform float volumeSamplingRate)
-{
-  uniform AORenderer *uniform self = (uniform AORenderer * uniform) _self;
-
-  self->aoSamples = aoSamples;
-  self->aoRadius = aoRadius;
-  self->aoIntensity = aoIntensity;
-
-  self->volumeSamplingRate = volumeSamplingRate;
+  return AORenderer_renderSample;
 }

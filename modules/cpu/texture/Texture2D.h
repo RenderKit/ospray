@@ -5,8 +5,7 @@
 
 #include "Texture.h"
 #include "common/Data.h"
-#include "common/StructShared.h"
-
+// ispc shared
 #include "Texture2DShared.h"
 
 namespace ospray {

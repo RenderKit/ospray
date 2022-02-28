@@ -1,15 +1,11 @@
 // Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Light.ih"
+#include "common/DifferentialGeometry.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
-
-struct AmbientLight
-{
-  Light super; //!< inherited light fields
-  vec3f radiance; //!< emitted RGB radiance
-};
+// c++ shared
+#include "AmbientLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
@@ -57,27 +53,15 @@ Light_EvalRes AmbientLight_eval(const Light *uniform super,
   return res;
 }
 
-void AmbientLight_Constructor(uniform AmbientLight *uniform self)
-{
-  Light_Constructor(&self->super);
-  self->super.sample = AmbientLight_sample;
-  self->super.eval = AmbientLight_eval;
-}
-
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-//! Create an ispc-side AmbientLight object
-export void *uniform AmbientLight_create()
+export void *uniform AmbientLight_sample_addr()
 {
-  uniform AmbientLight *uniform self = uniform new uniform AmbientLight;
-  AmbientLight_Constructor(self);
-  return self;
+  return AmbientLight_sample;
 }
 
-//! Set the parameters of an ispc-side AmbientLight object
-export void AmbientLight_set(void *uniform super, const uniform vec3f &radiance)
+export void *uniform AmbientLight_eval_addr()
 {
-  uniform AmbientLight *uniform self = (uniform AmbientLight * uniform) super;
-  self->radiance = radiance;
+  return AmbientLight_eval;
 }

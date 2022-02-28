@@ -1,14 +1,12 @@
 // Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "surfaces.ih"
-#include "volumes.ih"
-// ispc device
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"
-
-#include "openvkl/openvkl.isph"
+#include "surfaces.ih"
+#include "volume/VolumetricModel.ih"
+#include "volumes.ih"
 
 struct VolumeContext
 {
@@ -86,7 +84,8 @@ static void sampleVolume(SciVisRenderContext &rc,
   }
 
   // Apply transfer function to get color with alpha
-  vc.sample = m->transferFunction->get(m->transferFunction, sampleVal);
+  TransferFunction *uniform tf = m->transferFunction;
+  vc.sample = tf->get(tf, sampleVal);
 
   // compute gradient shading lighting
   if (gsc > 0.0f) {
@@ -104,7 +103,8 @@ static void sampleVolume(SciVisRenderContext &rc,
       dg.material = NULL;
       dg.epsilon = dt / 2.f;
       // transform to world coords
-      dg.Ns = dg.Ng = normalize(xfmVector(transposed(vi.instance->rcp_xfm.l), ns));
+      dg.Ns = dg.Ng =
+          normalize(xfmVector(transposed(vi.instance->rcp_xfm.l), ns));
       dg.P = ray.org + vc.distance * ray.dir;
       SSI shading = computeShading(
           rc.renderer, rc.fb, rc.world, dg, rc.sample, rc.ldSampler, ray.dir);

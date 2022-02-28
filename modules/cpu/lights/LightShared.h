@@ -1,25 +1,28 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "common/DifferentialGeometry.ih"
-#include "math/AffineSpace.ih"
-
+#ifdef __cplusplus
+#include "common/StructShared.h"
+namespace ispc {
+typedef void *Light_SampleFunc;
+typedef void *Light_EvalFunc;
+#else
 struct Light;
-struct Instance;
+struct DifferentialGeometry;
 
 struct Light_SampleRes
 {
-  vec3f weight; //!< radiance that arrives at the given point divided by pdf
-  vec3f dir; //!< direction towards the light source, normalized
-  float dist; //!< largest valid t_far value for a shadow ray, including epsilon
-              //!< to avoid self-intersection
-  float pdf; //!< probability density that this sample was taken
+  vec3f weight; // radiance that arrives at the given point divided by pdf
+  vec3f dir; // direction towards the light source, normalized
+  float dist; // largest valid t_far value for a shadow ray, including epsilon
+              // to avoid self-intersection
+  float pdf; // probability density that this sample was taken
 };
 
-//! compute the weighted radiance at a point caused by a sample on the light
-//! source
+// compute the weighted radiance at a point caused by a sample on the light
+// source
 // by convention, giving (0, 0) as "random" numbers should sample the "center"
 // of the light source (used by the raytracing renderers such as the SciVis
 // renderer)
@@ -30,9 +33,9 @@ typedef Light_SampleRes (*Light_SampleFunc)(const Light *uniform self,
 
 struct Light_EvalRes
 {
-  vec3f radiance; //!< radiance that arrives at the given point (not weighted by
-                  //!< pdf)
-  float pdf; //!< probability density that the direction would have been sampled
+  vec3f radiance; // radiance that arrives at the given point (not weighted by
+                  // pdf)
+  float pdf; // probability density that the direction would have been sampled
 };
 
 //! compute the radiance and pdf caused by the light source (pointed to by the
@@ -43,6 +46,9 @@ typedef Light_EvalRes (*Light_EvalFunc)(const Light *uniform self,
     const float minDist, // minimum distance to look for light contribution
     const float maxDist, // maximum distance to look for light contribution
     const float time = 0.5f); // evaluate at time (motion blur)
+#endif // __cplusplus
+
+struct Instance;
 
 struct Light
 {
@@ -51,21 +57,12 @@ struct Light
   bool isVisible; // either directly in camera, or via a straight path (i.e.
                   // through ThinGlass)
   const Instance *instance;
+
+#ifdef __cplusplus
+  Light() : sample(nullptr), eval(nullptr), isVisible(true), instance(nullptr)
+  {}
 };
-typedef Light *uniform LightPtr;
-typedef LightPtr *uniform LightArray;
-
-Light_EvalRes Light_eval(const Light *uniform,
-    const DifferentialGeometry &,
-    const vec3f &,
-    const float,
-    const float,
-    const float);
-
-inline void Light_Constructor(Light *uniform self)
-{
-  assert(self);
-  self->eval = Light_eval;
-  self->isVisible = true;
-  self->instance = NULL;
-}
+} // namespace ispc
+#else
+};
+#endif // __cplusplus

@@ -1,14 +1,17 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "camera/Camera.ih"
-#include "common/DistributedWorld.ih"
-#include "fb/FrameBuffer.ih"
-#include "fb/Tile.ih"
-#include "render/Renderer.ih"
+#include "render/RendererShared.h"
 
+#ifdef __cplusplus
+namespace ispc {
+typedef void *DR_ComputeRegionVisibility;
+typedef void *DR_RenderRegionSampleFct;
+typedef void *DR_RenderRegionTileFct;
+#else
+struct DistributedWorld;
 struct DistributedRenderer;
 
 typedef unmasked void (*DR_ComputeRegionVisibility)(
@@ -38,6 +41,7 @@ typedef unmasked void (*DR_RenderRegionTileFct)(
     void *uniform perFrameData,
     uniform Tile &tile,
     uniform int taskIndex);
+#endif // __cplusplus
 
 struct DistributedRenderer
 {
@@ -46,6 +50,15 @@ struct DistributedRenderer
   DR_ComputeRegionVisibility computeRegionVisibility;
   DR_RenderRegionSampleFct renderRegionSample;
   DR_RenderRegionTileFct renderRegionToTile;
-};
 
-void DistributedRenderer_Constructor(uniform DistributedRenderer *uniform self);
+#ifdef __cplusplus
+  DistributedRenderer()
+      : computeRegionVisibility(nullptr),
+        renderRegionSample(nullptr),
+        renderRegionToTile(nullptr)
+  {}
+};
+} // namespace ispc
+#else
+};
+#endif // __cplusplus

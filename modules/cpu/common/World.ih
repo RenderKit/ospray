@@ -7,54 +7,10 @@
 #include "common/Clipping.ih"
 #include "common/Ray.ih"
 #include "common/VolumeIntervals.ih"
+// c++ shared
+#include "WorldShared.h"
 
 struct Renderer;
-struct Light;
-
-struct SciVisData
-{
-  // array containing the scene light sources
-  // the lights are sorted: first lights that are not sampled (visible only),
-  // then lights that are both sampled and visible
-  Light **lights;
-  uint32 numLights; // total number of light sources
-  uint32 numLightsVisibleOnly; // number of lights that are not sampled (visible
-                               // only)
-  vec3f aoColorPi;
-};
-
-struct PathtracerData
-{
-  // array containing the scene light sources
-  // the lights are sorted: first geometric, then virtual lights
-  Light **lights;
-  uint32 numLights; // total number of light sources (geometric + virtual)
-  uint32 numGeoLights; // number of geometric light sources
-  float *lightsCDF; // CDF used by NEE for randomly picking lights
-};
-
-struct World
-{
-  Instance **geometriesInst;
-  int32 numGeometriesInst;
-
-  Instance **volumesInst;
-  int32 numVolumesInst;
-
-  Instance **clippersInst;
-  int32 numClippersInst;
-
-  RTCScene embreeSceneHandleGeometries;
-  RTCScene embreeSceneHandleVolumes;
-  RTCScene embreeSceneHandleClippers;
-
-  int32 numInvertedClippers;
-
-  SciVisData scivisData;
-  PathtracerData pathtracerData;
-};
-
-void World_Constructor(World *uniform world);
 
 inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
 {

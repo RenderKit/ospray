@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,10 +8,13 @@
 #include "fb/TileError.h"
 // rkcommon
 #include "rkcommon/containers/AlignedVector.h"
+// ispc shared
+#include "LocalFBShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE LocalFrameBuffer : public FrameBuffer
+struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
+    : public AddStructShared<FrameBuffer, ispc::LocalFB>
 {
   LocalFrameBuffer(const vec2i &size,
       ColorBufferFormat colorBufferFormat,
@@ -20,8 +23,8 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer : public FrameBuffer
 
   virtual void commit() override;
 
-  //! \brief common function to help printf-debugging
-  /*! \detailed Every derived class should override this! */
+  // common function to help printf-debugging, every derived class should
+  // override this!
   virtual std::string toString() const override;
 
   void setTile(Tile &tile) override;

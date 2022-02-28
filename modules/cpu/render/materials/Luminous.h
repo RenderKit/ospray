@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/Material.h"
-
+// ispc shared
 #include "LuminousShared.h"
 
 namespace ospray {

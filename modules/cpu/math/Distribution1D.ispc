@@ -3,7 +3,7 @@
 
 #include "Distribution1D.ih"
 
-uniform float Distribution1D_create(
+export uniform float Distribution1D_create(
     const uniform int size, uniform float *uniform cdf)
 {
   // accumulate the function

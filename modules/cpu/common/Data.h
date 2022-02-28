@@ -349,24 +349,10 @@ inline const Ref<const DataT<T, DIM>> ManagedObject::getParamDataT(
   }
 }
 
-template <typename T, int DIM>
-inline typename std::enable_if<std::is_base_of<ManagedObject, T>::value,
-    std::vector<void *>>::type
-createArrayOfIE(const DataT<T *, DIM> &data)
+template <typename T, typename U, int DIM>
+std::vector<T *> createArrayOfSh(const DataT<U *, DIM> &data)
 {
-  std::vector<void *> retval;
-  retval.reserve(data.size());
-
-  for (auto &&obj : data)
-    retval.push_back(obj->getIE());
-
-  return retval;
-}
-
-template <typename T, int DIM>
-std::vector<void *> createArrayOfSh(const DataT<T *, DIM> &data)
-{
-  std::vector<void *> retval;
+  std::vector<T *> retval;
   retval.reserve(data.size());
 
   for (auto &&obj : data)

@@ -1,10 +1,10 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Subdivision.h"
-#include "ospray/ospray.h"
-#include "common/World.h"
+#include "common/DGEnum.h"
+
 // ispc exports
 #include <cmath>
 #include "geometry/Subdivision_ispc.h"
@@ -13,7 +13,7 @@ namespace ospray {
 
 Subdivision::Subdivision()
 {
-  ispcEquivalent = ispc::Subdivision_create();
+  getSh()->super.postIntersect = ispc::Subdivision_postIntersect_addr();
 }
 
 std::string Subdivision::toString() const
@@ -23,13 +23,7 @@ std::string Subdivision::toString() const
 
 void Subdivision::commit()
 {
-  if (!embreeDevice) {
-    throw std::runtime_error("invalid Embree device");
-  }
-  if (!embreeGeometry) {
-    embreeGeometry =
-        rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_SUBDIVISION);
-  }
+  createEmbreeGeometry(RTC_GEOMETRY_TYPE_SUBDIVISION);
 
   vertexData = getParamDataT<vec3f>("vertex.position", true);
   colorsData = getParamDataT<vec4f>("vertex.color");
@@ -126,7 +120,13 @@ void Subdivision::commit()
 
   rtcCommitGeometry(embreeGeometry);
 
-  ispc::Subdivision_set(getIE(), embreeGeometry, colorsData, texcoordData);
+  getSh()->geom = embreeGeometry;
+  getSh()->flagMask = -1;
+  if (!colorsData)
+    getSh()->flagMask &= ~DG_COLOR;
+  if (!texcoordData)
+    getSh()->flagMask &= ~DG_TEXCOORD;
+  getSh()->super.numPrimitives = numPrimitives();
 
   postCreationInfo(vertexData->size());
 }

@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -15,11 +15,6 @@ static FactoryMap<Light> g_lightsMap;
 Light::Light()
 {
   managedObjectType = OSP_LIGHT;
-}
-
-void *Light::createSecondIE(const void *) const
-{
-  return nullptr;
 }
 
 void Light::commit()

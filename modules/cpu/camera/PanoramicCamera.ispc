@@ -1,20 +1,12 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Camera.ih"
 #include "common/MotionTransform.ih"
 #include "math/sampling.ih"
 #include "ospray/OSPEnums.h"
-
-struct PanoramicCamera
-{
-  Camera super;
-
-  vec3f org;
-  linear3f frame; // union: precomputed frame; or (xxx, up, -dir) if motion blur
-  int stereoMode;
-  float ipd_offset; // half of the interpupillary distance
-};
+// c++ shared
+#include "PanoramicCameraShared.h"
 
 void PanoramicCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
@@ -80,38 +72,9 @@ void PanoramicCamera_initRay(const Camera *uniform _self,
   setRay(ray, org, dir, self->super.nearClip, inf, time);
 }
 
-export void *uniform PanoramicCamera_create()
+// Exports (called from C++) //////////////////////////////////////////////////
+
+export void *uniform PanoramicCamera_initRay_addr()
 {
-  PanoramicCamera *uniform self = uniform new PanoramicCamera;
-  self->super.initRay = PanoramicCamera_initRay;
-  self->stereoMode = OSP_STEREO_NONE;
-  self->ipd_offset = 0.f;
-  return self;
-}
-
-export void PanoramicCamera_set(void *uniform _self,
-    const uniform vec3f &org,
-    const uniform vec3f &dir,
-    const uniform vec3f &up,
-    const uniform int stereoMode,
-    const uniform float ipd)
-{
-  PanoramicCamera *uniform self = (PanoramicCamera * uniform) _self;
-
-  self->org = org;
-
-  if (self->super.motionBlur) {
-    self->frame.vz = neg(dir);
-    self->frame.vy = up;
-  } else {
-    self->frame.vz = neg(normalize(dir));
-    self->frame.vx = normalize(cross(up, self->frame.vz));
-    self->frame.vy = cross(self->frame.vz, self->frame.vx);
-  }
-
-  self->stereoMode = stereoMode;
-  self->ipd_offset = 0.5f * ipd;
-  // flip offset to have left eye at top (image coord origin at lower left)
-  if (stereoMode == OSP_STEREO_TOP_BOTTOM)
-    self->ipd_offset = -self->ipd_offset;
+  return PanoramicCamera_initRay;
 }

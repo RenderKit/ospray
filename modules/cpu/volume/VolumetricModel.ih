@@ -1,15 +1,15 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "Volume.ih"
-#include "math/AffineSpace.ih"
-#include "transferFunction/TransferFunction.ih"
-
 #include "../common/DifferentialGeometry.ih"
 #include "../common/Ray.ih"
-
+#include "Volume.ih"
+#include "transferFunction/TransferFunctionShared.h"
+// openvkl
+#include "openvkl/openvkl.isph"
+// c++ shared
 #include "VolumetricModelShared.h"
 
 inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,

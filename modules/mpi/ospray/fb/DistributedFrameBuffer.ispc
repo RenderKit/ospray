@@ -1,13 +1,8 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "fb/FrameBuffer.ih"
+#include "fb/Tile.ih"
 #include "rkcommon/math/vec.ih"
-
-struct DistributedFrameBuffer
-{
-  FrameBuffer super;
-};
 
 // accumulates the colors in a tile, writes the final normalized colors into a
 // separate tile, and computes the error
@@ -228,24 +223,6 @@ export void DFB_zComposite(
     current->a[i] = closer ? delta->a[i] : current->a[i];
     current->z[i] = closer ? delta->z[i] : current->z[i];
   }
-}
-
-export void *uniform DFB_create()
-{
-  DistributedFrameBuffer *uniform self =
-      uniform new uniform DistributedFrameBuffer;
-  FrameBuffer_Constructor(&self->super);
-
-  return self;
-}
-
-export void DFB_set(void *uniform _self,
-    const uniform uint32 size_x,
-    const uniform uint32 size_y,
-    uniform int32 colorBufferFormat)
-{
-  DistributedFrameBuffer *uniform self = (DistributedFrameBuffer *)_self;
-  FrameBuffer_set(&self->super, size_x, size_y, colorBufferFormat);
 }
 
 inline void swapFragments(

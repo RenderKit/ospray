@@ -5,13 +5,16 @@
 
 #include "common/MotionTransform.h"
 #include "common/Util.h"
+// ispc shared
+#include "CameraShared.h"
 
 namespace ospray {
 
-//! base camera class abstraction
-/*! the base class itself does not do anything useful; look into
-    perspectivecamera etc for that */
-struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
+// base camera class abstraction
+// the base class itself does not do anything useful; look into
+// perspectivecamera etc for that
+struct OSPRAY_SDK_INTERFACE Camera
+    : public AddStructShared<ManagedObject, ispc::Camera>
 {
   Camera();
   ~Camera() override;

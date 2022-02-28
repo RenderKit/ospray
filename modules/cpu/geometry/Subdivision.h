@@ -1,14 +1,17 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Geometry.h"
 #include "common/Data.h"
+// ispc shared
+#include "SubdivisionShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Subdivision : public Geometry
+struct OSPRAY_SDK_INTERFACE Subdivision
+    : public AddStructShared<Geometry, ispc::Subdivision>
 {
   Subdivision();
   virtual ~Subdivision() override = default;

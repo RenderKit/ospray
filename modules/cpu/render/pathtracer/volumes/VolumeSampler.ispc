@@ -1,11 +1,8 @@
 // Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "render/pathtracer/volumes/VolumeSampler.ih"
-
 #include "common/World.ih"
-
-#include "openvkl/openvkl.isph"
+#include "render/pathtracer/volumes/VolumeSampler.ih"
 
 float delta_tracking(VolumetricModel *uniform vModel,
     const range1f &rInterval,

@@ -60,9 +60,6 @@ DFB::DistributedFrameBuffer(const vec2i &numPixels,
       frameIsActive(false),
       frameIsDone(false)
 {
-  this->ispcEquivalent = ispc::DFB_create();
-  ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
-
   // TODO: accumID is eventually only needed on master once static
   // loadbalancing is removed
   tileAccumID.resize(getTotalTiles(), 0);
@@ -87,7 +84,7 @@ void DFB::commit()
   if (imageOpData) {
     FrameBufferView fbv(localFBonMaster ? localFBonMaster.get()
                                         : static_cast<FrameBuffer *>(this),
-        colorBufferFormat,
+        getSh()->colorBufferFormat,
         localFBonMaster ? localFBonMaster->colorBuffer.data() : nullptr,
         localFBonMaster ? localFBonMaster->depthBuffer.data() : nullptr,
         localFBonMaster ? localFBonMaster->normalBuffer.data() : nullptr,
@@ -112,11 +109,13 @@ void DFB::startNewFrame(const float errorThreshold)
     nextTileWrite = 0;
     tileBufferOffsets.clear();
   }
-  if (colorBufferFormat != OSP_FB_NONE) {
+  if (getSh()->colorBufferFormat != OSP_FB_NONE) {
     // Allocate a conservative upper bound of space which we'd need to
     // store the compressed tiles
-    const size_t uncompressedSize = masterMsgSize(
-        colorBufferFormat, hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer);
+    const size_t uncompressedSize = masterMsgSize(getSh()->colorBufferFormat,
+        hasDepthBuffer,
+        hasNormalBuffer,
+        hasAlbedoBuffer);
     const size_t compressedSize = snappy::MaxCompressedLength(uncompressedSize);
     tileGatherBuffer.resize(myTiles.size() * compressedSize, 0);
   }
@@ -141,7 +140,7 @@ void DFB::startNewFrame(const float errorThreshold)
 
     tileErrorRegion.sync();
 
-    if (colorBufferFormat == OSP_FB_NONE) {
+    if (getSh()->colorBufferFormat == OSP_FB_NONE) {
       std::lock_guard<std::mutex> errsLock(tileErrorsMutex);
       tileIDs.clear();
       tileErrors.clear();
@@ -199,7 +198,7 @@ bool DFB::isFrameComplete(const size_t numTiles)
     ProgressMessage *msgData = reinterpret_cast<ProgressMessage *>(msg->data);
     msgData->command = PROGRESS_MESSAGE;
     msgData->numCompleted = renderingProgressTiles;
-    msgData->frameID = frameID;
+    msgData->frameID = getSh()->frameID;
     mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg);
 
     renderingProgressTiles = 0;
@@ -313,7 +312,7 @@ void DFB::waitUntilFinished()
 #ifdef ENABLE_PROFILING
   start = ProfilingPoint();
 #endif
-  if (colorBufferFormat != OSP_FB_NONE) {
+  if (getSh()->colorBufferFormat != OSP_FB_NONE) {
     gatherFinalTiles();
   } else if (hasVarianceBuffer) {
     gatherFinalErrors();
@@ -402,9 +401,9 @@ void DFB::tileIsFinished(LiveTileOperation *tile)
 
   // Write the final colors into the color buffer
   // normalize and write final color, and compute error
-  if (colorBufferFormat != OSP_FB_NONE) {
+  if (getSh()->colorBufferFormat != OSP_FB_NONE) {
     auto DFB_writeTile = &ispc::DFB_writeTile_RGBA32F;
-    switch (colorBufferFormat) {
+    switch (getSh()->colorBufferFormat) {
     case OSP_FB_RGBA8:
       DFB_writeTile = &ispc::DFB_writeTile_RGBA8;
       break;
@@ -418,7 +417,7 @@ void DFB::tileIsFinished(LiveTileOperation *tile)
   }
 
   auto msg = [&] {
-    MasterTileMessageBuilder msg(colorBufferFormat,
+    MasterTileMessageBuilder msg(getSh()->colorBufferFormat,
         hasDepthBuffer,
         hasNormalBuffer,
         hasAlbedoBuffer,
@@ -432,7 +431,7 @@ void DFB::tileIsFinished(LiveTileOperation *tile)
   };
 
   // TODO still send normal & albedo?
-  if (colorBufferFormat == OSP_FB_NONE) {
+  if (getSh()->colorBufferFormat == OSP_FB_NONE) {
     std::lock_guard<std::mutex> lock(tileErrorsMutex);
     tileIDs.push_back(tile->begin / TILE_SIZE);
     tileErrors.push_back(tile->error);
@@ -545,8 +544,10 @@ void DFB::gatherFinalTiles()
   ProfilingPoint preGatherComputeStart;
 #endif
 
-  const size_t tileSize = masterMsgSize(
-      colorBufferFormat, hasDepthBuffer, hasNormalBuffer, hasAlbedoBuffer);
+  const size_t tileSize = masterMsgSize(getSh()->colorBufferFormat,
+      hasDepthBuffer,
+      hasNormalBuffer,
+      hasAlbedoBuffer);
 
   const int totalTilesExpected =
       std::accumulate(numTilesExpected.begin(), numTilesExpected.end(), 0);
@@ -767,7 +768,7 @@ void DFB::setTile(ospray::Tile &tile)
 
 void DFB::clear()
 {
-  frameID = -1; // we increment at the start of the frame
+  getSh()->frameID = -1; // we increment at the start of the frame
   std::fill(tileAccumID.begin(), tileAccumID.end(), 0);
 
   if (hasAccumBuffer) {

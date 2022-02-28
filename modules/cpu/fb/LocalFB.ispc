@@ -1,11 +1,13 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "LocalFB.ih"
+#include "fb/Tile.ih"
+// c++ shared
+#include "LocalFBShared.h"
 
-//! \brief write tile into the given frame buffer's color buffer
-/*! \detailed this buffer _must_ exist when this fct is called, and it
-    _must_ have format 'name' */
+// write tile into the given frame buffer's color buffer,
+// this buffer _must_ exist when this fct is called, and it
+// _must_ have format 'name'
 #define template_writeTile(name, type, cvt)                                    \
   export void LocalFrameBuffer_writeTile_##name(                               \
       void *uniform _fb, uniform Tile &tile)                                   \
@@ -49,15 +51,14 @@ inline vec4f cvt_nop(const vec4f &v)
 template_writeTile(RGBA32F, vec4f, cvt_nop);
 #undef template_writeTile
 
-//! \brief accumulate tile into BOTH accum buffer AND tile.
-/*! \detailed After this call, the frame buffer will contain 'prev
-    accum value + tile value', while the tile will contain '(prev
-    accum value + tile value)/numAccums'
-   return tile error
-
-Implementation based on
-Dammertz et al., "A Hierarchical Automatic Stopping Condition for Monte Carlo
-Global Illumination", WSCG 2010 */
+// Accumulate tile into BOTH accum buffer AND tile.
+// After this call, the frame buffer will contain 'prev
+// accum value + tile value', while the tile will contain '(prev
+// accum value + tile value)/numAccums', returns tile error
+//
+// Implementation based on
+// Dammertz et al., "A Hierarchical Automatic Stopping Condition for Monte Carlo
+// Global Illumination", WSCG 2010
 export uniform float LocalFrameBuffer_accumulateTile(
     void *uniform _fb, uniform Tile &tile)
 {
@@ -221,31 +222,4 @@ export void LocalFrameBuffer_accumulateAuxTile(void *uniform _fb,
 
     aux += fb->super.size.x;
   }
-}
-
-export void *uniform LocalFrameBuffer_create(const uniform uint32 size_x,
-    const uniform uint32 size_y,
-    uniform int32 colorBufferFormat,
-    void *uniform colorBuffer,
-    void *uniform depthBuffer,
-    void *uniform accumBuffer,
-    void *uniform varianceBuffer,
-    void *uniform normalBuffer,
-    void *uniform albedoBuffer,
-    void *uniform tileAccumID)
-{
-  uniform LocalFB *uniform self = uniform new uniform LocalFB;
-  FrameBuffer_Constructor(&self->super);
-  FrameBuffer_set(&self->super, size_x, size_y, colorBufferFormat);
-
-  self->colorBuffer = colorBuffer;
-  self->depthBuffer = (uniform float *uniform)depthBuffer;
-  self->accumBuffer = (uniform vec4f * uniform) accumBuffer;
-  self->varianceBuffer = (uniform vec4f * uniform) varianceBuffer;
-  self->normalBuffer = (uniform vec3f * uniform) normalBuffer;
-  self->albedoBuffer = (uniform vec3f * uniform) albedoBuffer;
-  self->numTiles = (self->super.size + (TILE_SIZE - 1)) / TILE_SIZE;
-  self->tileAccumID = (uniform int32 * uniform) tileAccumID;
-
-  return self;
 }

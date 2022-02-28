@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -10,14 +10,17 @@
 #include "fb/ImageOp.h"
 #include "ospray/ospray.h"
 #include "rkcommon/utility/ArrayView.h"
+// ispc shared
+#include "FrameBufferShared.h"
 
 namespace ospray {
 
-/*! abstract frame buffer class */
-struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject
+// abstract frame buffer class
+struct OSPRAY_SDK_INTERFACE FrameBuffer
+    : public AddStructShared<ManagedObject, ispc::FrameBuffer>
 {
-  /*! app-mappable format of the color buffer. make sure that this
-      matches the definition on the ISPC side */
+  // app-mappable format of the color buffer. make sure that this
+  // matches the definition on the ISPC side
   using ColorBufferFormat = OSPFrameBufferFormat;
 
   FrameBuffer(const vec2i &size,
@@ -32,41 +35,41 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject
   virtual void unmap(const void *mappedMem) = 0;
   virtual void setTile(Tile &tile) = 0;
 
-  /*! \brief clear (the specified channels of) this frame buffer */
+  // clear (the specified channels of) this frame buffer
   virtual void clear() = 0;
 
-  //! get number of pixels per tile, in x and y direction
+  // get number of pixels per tile, in x and y direction
   vec2i getTileSize() const;
 
-  //! return number of tiles in x and y direction
+  // return number of tiles in x and y direction
   vec2i getNumTiles() const;
 
   int getTotalTiles() const;
 
-  //! get number of pixels in x and y diretion
+  // get number of pixels in x and y diretion
   vec2i getNumPixels() const;
 
-  //! get the color format type for this Buffer
+  // get the color format type for this Buffer
   ColorBufferFormat getColorBufferFormat() const;
 
   float getVariance() const;
 
   utility::ArrayView<int> getTileIDs();
 
-  /*! how often has been accumulated into that tile
-      Note that it is up to the application to properly
-      reset the accumulationIDs (using ospClearAccum(fb)) if anything
-      changes that requires clearing the accumulation buffer. */
+  // how often has been accumulated into that tile
+  // Note that it is up to the application to properly
+  // reset the accumulationIDs (using ospClearAccum(fb)) if anything
+  // changes that requires clearing the accumulation buffer.
   virtual int32 accumID(const vec2i &tile) = 0;
   virtual float tileError(const vec2i &tile) = 0;
 
   virtual void beginFrame();
 
-  //! end the frame and run any final post-processing frame ops
+  // end the frame and run any final post-processing frame ops
   virtual void endFrame(const float errorThreshold, const Camera *camera) = 0;
 
-  //! \brief common function to help printf-debugging
-  /*! \detailed Every derived class should override this! */
+  // common function to help printf-debugging, every derived class should
+  // override this
   virtual std::string toString() const override;
 
   void setCompletedEvent(OSPSyncEvent event);
@@ -85,31 +88,22 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject
   bool hasAlbedoBuf() const;
 
  protected:
-  /*! Find the index of the first frameoperation included in
-   * the imageop pipeline
-   */
+  // Find the index of the first frameoperation included in
+  // the imageop pipeline
   void findFirstFrameOperation();
 
-  const vec2i size;
   vec2i numTiles;
   vec2i maxValidPixelID;
 
-  /*! buffer format of the color buffer */
-  ColorBufferFormat colorBufferFormat;
-
-  /*! indicates whether the app requested this frame buffer to have
-      an (application-mappable) depth buffer */
+  // indicates whether the app requested this frame buffer to have
+  // an (application-mappable) depth buffer
   bool hasDepthBuffer;
-  /*! indicates whether the app requested this frame buffer to have
-      an accumulation buffer */
+  // indicates whether the app requested this frame buffer to have
+  // an accumulation buffer
   bool hasAccumBuffer;
   bool hasVarianceBuffer;
   bool hasNormalBuffer;
   bool hasAlbedoBuffer;
-
-  //! This marks the global number of frames that have been rendered since
-  //! the last ospFramebufferClear() has been called.
-  int32 frameID;
 
   float frameVariance{0.f};
 

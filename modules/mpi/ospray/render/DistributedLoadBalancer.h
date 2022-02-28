@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "../common/DistributedWorld.h"
-#include "../common/DynamicLoadBalancer.h"
 #include "../fb/DistributedFrameBuffer.h"
 #include "camera/Camera.h"
 #include "common/World.h"
@@ -12,6 +10,9 @@
 
 namespace ospray {
 namespace mpi {
+
+struct DistributedWorld;
+
 namespace staticLoadBalancer {
 
 /* The distributed load balancer manages both data and image

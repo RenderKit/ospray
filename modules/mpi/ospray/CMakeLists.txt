@@ -29,7 +29,6 @@ ispc_target_add_sources(ospray_module_mpi
   MPIDistributedDevice.ispc
   ModuleInit.cpp
   common/DistributedWorld.cpp
-  common/DistributedWorld.ispc
 
   common/OSPWork.cpp
   common/Messaging.cpp

@@ -1,45 +1,46 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "SciVis.h"
+#include "common/Instance.h"
+#include "common/World.h"
 #include "lights/AmbientLight.h"
 #include "lights/HDRILight.h"
 #include "lights/SunSkyLight.h"
 // ispc exports
-#include "common/World_ispc.h"
 #include "render/scivis/SciVis_ispc.h"
 
 namespace ospray {
 
 namespace {
 
-void addVisibleOnlyToArray(
-    std::vector<void *> &lightIEs, uint32_t &visibleOnly, void *lightIE)
+void addVisibleOnlyToArray(std::vector<ispc::Light *> &lightShs,
+    uint32_t &visibleOnly,
+    ispc::Light *lightSh)
 {
-  if (visibleOnly == lightIEs.size())
-    lightIEs.push_back(lightIE);
+  if (visibleOnly == lightShs.size())
+    lightShs.push_back(lightSh);
   else {
-    lightIEs.push_back(lightIEs[visibleOnly]);
-    lightIEs[visibleOnly] = lightIE;
+    // insert light at the visibleOnly index
+    lightShs.push_back(lightShs[visibleOnly]);
+    lightShs[visibleOnly] = lightSh;
   }
   visibleOnly++;
 }
 
-vec3f addLightsToArray(std::vector<void *> &lightIEs,
+vec3f addLightsToArray(std::vector<ispc::Light *> &lightShs,
     uint32_t &visibleOnly,
     Ref<const DataT<Light *>> &lights,
-    const void *instanceIE)
+    const ispc::Instance *instanceSh)
 {
   vec3f aoColor = vec3f(0.f);
   for (auto &&light : *lights) {
-    // create ISPC equivalent for the light
-    void *lightIE = light->createIE(instanceIE);
-
     // just extract color from ambient lights
     const auto ambient = dynamic_cast<const AmbientLight *>(light);
     if (ambient) {
-      addVisibleOnlyToArray(lightIEs, visibleOnly, lightIE);
+      addVisibleOnlyToArray(
+          lightShs, visibleOnly, light->createSh(0, instanceSh));
       aoColor += ambient->radiance;
       continue;
     }
@@ -47,21 +48,24 @@ vec3f addLightsToArray(std::vector<void *> &lightIEs,
     // no illumination from HDRI lights
     const auto hdri = dynamic_cast<const HDRILight *>(light);
     if (hdri) {
-      addVisibleOnlyToArray(lightIEs, visibleOnly, lightIE);
+      addVisibleOnlyToArray(
+          lightShs, visibleOnly, light->createSh(0, instanceSh));
       continue;
     }
 
     // sun-sky: only sun illuminates
     const auto sunsky = dynamic_cast<const SunSkyLight *>(light);
     if (sunsky) {
-      // just sky visible
-      addVisibleOnlyToArray(lightIEs, visibleOnly, lightIE);
-      lightIEs.push_back(light->createSecondIE(instanceIE)); // sun
+      addVisibleOnlyToArray(lightShs,
+          visibleOnly,
+          light->createSh(0, instanceSh)); // sky visible only
+      lightShs.push_back(light->createSh(1, instanceSh)); // sun
       continue;
     }
 
     // handle the remaining types of lights
-    lightIEs.push_back(lightIE);
+    for (uint32_t id = 0; id < light->getShCount(); id++)
+      lightShs.push_back(light->createSh(id, instanceSh));
   }
   return aoColor;
 }
@@ -70,7 +74,7 @@ vec3f addLightsToArray(std::vector<void *> &lightIEs,
 
 SciVis::SciVis()
 {
-  ispcEquivalent = ispc::SciVis_create();
+  getSh()->super.renderSample = ispc::SciVis_renderSample_addr();
 }
 
 std::string SciVis::toString() const
@@ -82,12 +86,12 @@ void SciVis::commit()
 {
   Renderer::commit();
 
-  ispc::SciVis_set(getIE(),
-      getParam<bool>("shadows", false),
-      getParam<bool>("visibleLights", false),
-      getParam<int>("aoSamples", 0),
-      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f)),
-      getParam<float>("volumeSamplingRate", 1.f));
+  getSh()->shadowsEnabled = getParam<bool>("shadows", false);
+  getSh()->visibleLights = getParam<bool>("visibleLights", false);
+  getSh()->aoSamples = getParam<int>("aoSamples", 0);
+  getSh()->aoRadius =
+      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f));
+  getSh()->volumeSamplingRate = getParam<float>("volumeSamplingRate", 1.f);
 }
 
 void *SciVis::beginFrame(FrameBuffer *, World *world)
@@ -98,7 +102,7 @@ void *SciVis::beginFrame(FrameBuffer *, World *world)
   if (world->scivisDataValid)
     return nullptr;
 
-  std::vector<void *> lightArray;
+  std::vector<ispc::Light *> lightArray;
   vec3f aoColor = vec3f(0.f);
   uint32_t visibleOnly = 0;
 
@@ -116,17 +120,16 @@ void *SciVis::beginFrame(FrameBuffer *, World *world)
 
       // Add instance lights to array
       aoColor += addLightsToArray(
-          lightArray, visibleOnly, inst->group->lights, inst->getIE());
+          lightArray, visibleOnly, inst->group->lights, inst->getSh());
     }
   }
 
-  ispc::World_setSciVisData(world->getIE(),
-      (ispc::vec3f &)aoColor,
-      lightArray.empty() ? nullptr : lightArray.data(),
-      lightArray.size(),
-      visibleOnly);
-
+  // Prepare scivis data structure
+  ispc::SciVisData &sd = world->getSh()->scivisData;
+  sd.destroy();
+  sd.create(lightArray.data(), lightArray.size(), visibleOnly, aoColor);
   world->scivisDataValid = true;
+
   return nullptr;
 }
 

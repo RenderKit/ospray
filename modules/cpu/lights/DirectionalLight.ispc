@@ -1,26 +1,11 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Light.ih"
 #include "common/Instance.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
-
-struct DirectionalLight
-{
-  Light super; //!< inherited light fields
-
-  linear3f frame; //!< coordinate frame, with vz == direction *towards* the
-                  //!< light source
-  vec3f irradiance; //!< RGB irradiance contribution of the light
-  float cosAngle; //!< Angular limit of the cone light in an easier to use form:
-                  //!< cosine of the half angle in radians
-  float pdf; //!< Probability to sample a direction to the light
-};
-
-// for very small cones treat as singular light, because float precision is not
-// good enough
-#define COS_ANGLE_MAX 0.99999988f
+// c++ shared
+#include "DirectionalLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
@@ -125,39 +110,22 @@ Light_EvalRes DirectionalLight_eval_instanced(const Light *uniform super,
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-//! Set the parameters of an ispc-side DirectionalLight object
-export void DirectionalLight_set(void *uniform super,
-    const uniform vec3f &irradiance,
-    const uniform vec3f &direction,
-    uniform float cosAngle)
+export void *uniform DirectionalLight_sample_addr()
 {
-  DirectionalLight *uniform self = (DirectionalLight * uniform) super;
-  self->frame = frame(direction);
-  self->irradiance = irradiance;
-  self->cosAngle = cosAngle;
-  self->pdf = cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : inf;
-
-  // Enable dynamic runtime instancing or apply static transformation
-  const Instance *uniform instance = self->super.instance;
-  if (instance) {
-    if (instance->motionBlur) {
-      self->super.sample = DirectionalLight_sample_instanced;
-      self->super.eval = DirectionalLight_eval_instanced;
-    } else {
-      self->frame = instance->xfm.l * self->frame;
-    }
-  }
+  return DirectionalLight_sample;
 }
 
-//! Create an ispc-side DirectionalLight object
-export void *uniform DirectionalLight_create()
+export void *uniform DirectionalLight_sample_instanced_addr()
 {
-  DirectionalLight *uniform self = uniform new uniform DirectionalLight;
-  Light_Constructor(&self->super);
-  self->super.sample = DirectionalLight_sample;
-  self->super.eval = DirectionalLight_eval;
+  return DirectionalLight_sample_instanced;
+}
 
-  DirectionalLight_set(
-      self, make_vec3f(0.f, 0.f, 0.f), make_vec3f(0.f, 0.f, 1.f), 1.f);
-  return self;
+export void *uniform DirectionalLight_eval_addr()
+{
+  return DirectionalLight_eval;
+}
+
+export void *uniform DirectionalLight_eval_instanced_addr()
+{
+  return DirectionalLight_eval_instanced;
 }

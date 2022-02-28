@@ -4,11 +4,10 @@
 #pragma once
 
 #include "Texture.h"
-#include "common/StructShared.h"
 #include "volume/Volume.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
-
+// ispc shared
 #include "TextureVolumeShared.h"
 
 namespace ospray {

@@ -1,23 +1,18 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "common/Data.ih"
+#include "common/DifferentialGeometry.ih"
 #include "common/FilterIntersect.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
-#include "common/World.ih"
-#include "geometry/Geometry.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
+// c++ shared
+#include "BoxesShared.h"
 
-struct Boxes
-{
-  Geometry super;
-  Data1D boxes;
-};
-
-unmasked void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
+export void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   Boxes *uniform self = (Boxes * uniform) args->geometryUserPtr;
   uniform int primID = args->primID;
@@ -46,19 +41,19 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   filterIntersectionBoth(args, isect, isOcclusionTest);
 }
 
-unmasked void Boxes_intersect(
+export void Boxes_intersect(
     const struct RTCIntersectFunctionNArguments *uniform args)
 {
   Boxes_intersect_kernel(args, false);
 }
 
-unmasked void Boxes_occluded(
+export void Boxes_occluded(
     const struct RTCOccludedFunctionNArguments *uniform args)
 {
   Boxes_intersect_kernel((RTCIntersectFunctionNArguments * uniform) args, true);
 }
 
-static void Boxes_postIntersect(const Geometry *uniform geometry,
+void Boxes_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -66,28 +61,7 @@ static void Boxes_postIntersect(const Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 }
 
-export void *uniform Boxes_create()
+export void *uniform Boxes_postIntersect_addr()
 {
-  Boxes *uniform self = uniform new Boxes;
-
-  Geometry_Constructor(&self->super, Boxes_postIntersect);
-  Data1D_Constructor(&self->boxes);
-
-  return self;
-}
-
-export void *uniform Boxes_set(void *uniform _self,
-    void *uniform _embreeGeometry,
-    const Data1D *uniform boxes)
-{
-  Boxes *uniform self = (Boxes * uniform) _self;
-
-  self->boxes = *boxes;
-  self->super.numPrimitives = boxes->numItems;
-
-  Geometry_setEmbreeUserGeometry(&self->super,
-      (RTCGeometry)_embreeGeometry,
-      Boxes_bounds,
-      Boxes_intersect,
-      Boxes_occluded);
+  return Boxes_postIntersect;
 }
