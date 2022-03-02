@@ -647,7 +647,7 @@ release-windows:
 kw-build:
   stage: scan1
   tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   needs: []
   script:
     - module load cmake
