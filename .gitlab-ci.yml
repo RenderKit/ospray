@@ -16,21 +16,29 @@ variables:
   GIT_DEPTH: "15"
   ErrorActionPreference: STOP
 
-.job_template: &build_job_docker
-  stage: build
-  tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:arch  # default image
-  script:
-    - scripts/build_gitlab/linux.sh
-
-.job_template: &build_job_docker_modules
-  stage: build
+.job_template: &docker
   tags:
     - docker
-    - modules
+
+.job_template: &archlinux
+  <<: *docker
+  stage: build
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch  # default image
+
+.job_template: &centos7-gcc4
+  <<: *docker
+  stage: build
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+
+.job_template: &centos7-gcc7
+  <<: *docker
+  stage: build
   image: $DOCKER_REGISTRY/centos:7
-  script:
-    - scripts/build_gitlab/linux.sh
+
+.job_template: &centos8
+  <<: *docker
+  stage: build
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
 
 .job_template: &build_artifacts
   artifacts:
@@ -122,31 +130,31 @@ variables:
 ### BUILD JOBS ###
 
 build-arch-gcc:
-  <<: *build_job_docker
+  <<: *archlinux
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
 
 build-arch-clang:
-  <<: *build_job_docker
+  <<: *archlinux
   script:
     - export CC=clang
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
 
 build-arch-gcc-extras:
-  <<: *build_job_docker
+  <<: *archlinux
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
 
 build-arch-clang-extras:
-  <<: *build_job_docker
+  <<: *archlinux
   script:
     - export CC=clang
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
 
 build-arch-clang-devel:
-  <<: *build_job_docker
+  <<: *archlinux
   script:
     - export CC=clang
     - export CXX=clang++
@@ -154,7 +162,7 @@ build-arch-clang-devel:
   only: [schedules]
 
 build-linux-debug-all:
-  <<: *build_job_docker
+  <<: *archlinux
   script:
     - export CC=clang
     - export CXX=clang++
@@ -163,35 +171,37 @@ build-linux-debug-all:
   only: [schedules]
 
 build-ubuntu1604-gcc:
-  <<: *build_job_docker
+  <<: *docker
+  stage: build
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja
   <<: *build_artifacts
 
 build-ubuntu1804-gcc:
-  <<: *build_job_docker
+  <<: *docker
+  stage: build
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
   <<: *build_artifacts
 
 build-ubuntu2004-gcc:
-  <<: *build_job_docker
+  <<: *docker
+  stage: build
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
   <<: *build_artifacts
 
 build-centos8:
-  <<: *build_job_docker
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  <<: *centos8
   script:
     - scripts/build_gitlab/linux.sh -G Ninja
   <<: *build_artifacts
 
 build-centos7-icc:
-  <<: *build_job_docker_modules
+  <<: *centos7-gcc4
   script:
     - module load cmake
     - module load intel
@@ -200,7 +210,7 @@ build-centos7-icc:
     - scripts/build_gitlab/linux.sh
 
 build-centos7-icc15:
-  <<: *build_job_docker_modules
+  <<: *centos7-gcc4
   script:
     - module load cmake
     - module load intel/2015
@@ -209,12 +219,13 @@ build-centos7-icc15:
     - scripts/build_gitlab/linux.sh
 
 build-centos7-gcc:
-  <<: *build_job_docker
-  image: $DOCKER_REGISTRY/centos:7
+  <<: *centos7-gcc7
+  script:
+    - scripts/build_gitlab/linux.sh
   <<: *build_artifacts
 
 build-centos7-mpi-impi:
-  <<: *build_job_docker_modules
+  <<: *centos7-gcc7
   script:
     - module load cmake
     - module load intel/2021.2
@@ -222,14 +233,14 @@ build-centos7-mpi-impi:
   <<: *build_artifacts
 
 build-centos7-mpi-openmpi:
-  <<: *build_job_docker_modules
+  <<: *centos7-gcc7
   script:
     - module load cmake
     - module load mpi/openmpi-x86_64
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
 build-centos7-mpi-mpich:
-  <<: *build_job_docker_modules
+  <<: *centos7-gcc7
   script:
     - module load cmake
     - module load mpi/mpich-x86_64
@@ -237,15 +248,13 @@ build-centos7-mpi-mpich:
   <<: *build_artifacts
 
 build-centos8-mpi-openmpi:
-  <<: *build_job_docker
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  <<: *centos8
   script:
     - module load mpi/openmpi-x86_64
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
 build-centos8-mpi-mpich:
-  <<: *build_job_docker
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  <<: *centos8
   script:
     - module load mpi/mpich-x86_64
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
@@ -262,7 +271,7 @@ build-mpi-cluster:
   only: [schedules]
 
 build-linux-debug:
-  <<: *build_job_docker
+  <<: *archlinux
   script:
     - export CFLAGS=-fsanitize=address
     - export CXXFLAGS=-fsanitize=address
@@ -638,7 +647,7 @@ release-windows:
 kw-build:
   stage: scan1
   tags: [docker]
-  image: $DOCKER_REGISTRY/centos:7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: []
   script:
     - module load cmake
@@ -662,7 +671,7 @@ protex:
 kw-scan:
   stage: scan2
   tags: [docker]
-  image: $DOCKER_REGISTRY/centos:7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: [kw-build]
   script:
     - scripts/scan/kw-check-issues.sh
@@ -670,7 +679,7 @@ kw-scan:
 kw-gen-report:
   stage: scan2
   tags: [docker]
-  image: $DOCKER_REGISTRY/centos:7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: [kw-build]
   only:
     - devel
