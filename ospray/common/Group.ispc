@@ -1,13 +1,11 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Group.ih"
 
-export void *uniform Group_create(void *uniform cppE)
+export void *uniform Group_create()
 {
   Group *uniform group = uniform new Group;
-
-  group->cppEquivalent = cppE;
 
   group->geometricModels = NULL;
   group->numGeometricModels = 0;

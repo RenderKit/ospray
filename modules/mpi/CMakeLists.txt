@@ -13,7 +13,7 @@ cmake_dependent_option(
   OSPRAY_MPI_BUILD_TUTORIALS
   "Enable MPI module sample apps"
   ON
-  "OSPRAY_MODULE_MPI;OSPRAY_ENABLE_APPS"
+  "OSPRAY_MODULE_MPI;OSPRAY_ENABLE_APPS;OSPRAY_APPS_EXAMPLES"
   OFF
 )
 
@@ -49,3 +49,6 @@ if (OSPRAY_MPI_BUILD_TUTORIALS)
   add_subdirectory(tutorials)
 endif()
 
+if (OSPRAY_APPS_TESTING)
+    add_subdirectory(testing)
+endif()

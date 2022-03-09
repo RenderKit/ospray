@@ -3,11 +3,10 @@
 
 #include "Instance.ih"
 
-export void *uniform Instance_create(void *uniform cppE)
+export void *uniform Instance_create()
 {
   Instance *uniform inst = uniform new Instance;
 
-  inst->cppEquivalent = cppE;
   inst->group = NULL;
 
   return (void *uniform)inst;

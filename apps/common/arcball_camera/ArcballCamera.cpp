@@ -84,7 +84,7 @@ void ArcballCamera::updateCamera()
   invCamera = rcp(camera);
 }
 
-void ArcballCamera::setRotation(rkcommon::math::quaternionf q)
+void ArcballCamera::setRotation(rkcommon::math::quatf q)
 {
   rotation = q;
   updateCamera();
@@ -95,16 +95,16 @@ void ArcballCamera::updateWindowSize(const rkcommon::math::vec2i &windowSize)
   invWindowSize = rkcommon::math::vec2f(1) / rkcommon::math::vec2f(windowSize);
 }
 
-rkcommon::math::quaternionf ArcballCamera::screenToArcball(
+rkcommon::math::quatf ArcballCamera::screenToArcball(
     const rkcommon::math::vec2f &p)
 {
   const float dist = dot(p, p);
   // If we're on/in the sphere return the point on it
   if (dist <= 1.f) {
-    return rkcommon::math::quaternionf(0, p.x, p.y, std::sqrt(1.f - dist));
+    return rkcommon::math::quatf(0, p.x, p.y, std::sqrt(1.f - dist));
   } else {
     // otherwise we project the point onto the sphere
     const rkcommon::math::vec2f unitDir = normalize(p);
-    return rkcommon::math::quaternionf(0, unitDir.x, unitDir.y, 0);
+    return rkcommon::math::quatf(0, unitDir.x, unitDir.y, 0);
   }
 }

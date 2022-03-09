@@ -23,7 +23,7 @@ class ArcballCamera
   rkcommon::math::vec3f upDir() const;
   rkcommon::math::AffineSpace3f transform() const;
 
-  void setRotation(rkcommon::math::quaternionf);
+  void setRotation(rkcommon::math::quatf);
 
   void updateWindowSize(const rkcommon::math::vec2i &windowSize);
 
@@ -31,10 +31,10 @@ class ArcballCamera
   void updateCamera();
 
   // Project the point in [-1, 1] screen space onto the arcball sphere
-  rkcommon::math::quaternionf screenToArcball(const rkcommon::math::vec2f &p);
+  rkcommon::math::quatf screenToArcball(const rkcommon::math::vec2f &p);
 
   float zoomSpeed;
   rkcommon::math::vec2f invWindowSize;
   rkcommon::math::AffineSpace3f centerTranslation, translation, invCamera;
-  rkcommon::math::quaternionf rotation;
+  rkcommon::math::quatf rotation;
 };

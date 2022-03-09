@@ -23,18 +23,6 @@ struct DistributedRaycastRenderer
   float volumeSamplingRate;
 };
 
-struct RegionInfo
-{
-  int numRegions;
-  int currentRegion;
-  bool computeVisibility;
-  // TODO: If the IDs are not "array indices" this gets a bit goofed up
-  // We should probably just remap the IDs when we move to generating them for
-  // the user
-  Region *uniform regions;
-  bool *uniform regionVisible;
-};
-
 // The distributed raycast renderer uses its own volume interval integration
 // because we want to apply the jitter before offsetting our step size to stay
 // inside the region, not after.
@@ -233,7 +221,7 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
 void DRR_renderRegionSample(DistributedRenderer *uniform _self,
     FrameBuffer *uniform fb,
     DistributedWorld *uniform world,
-    const Region *uniform region,
+    const box3f *uniform region,
     const vec2f &regionInterval,
     void *uniform perFrameData,
     varying ScreenSample &sample)
@@ -357,12 +345,12 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
 
 // Exported functions /////////////////////////////////////////////////////////
 
-export void *uniform DistributedRaycastRenderer_create(void *uniform cppE)
+export void *uniform DistributedRaycastRenderer_create()
 {
   DistributedRaycastRenderer *uniform self =
       uniform new uniform DistributedRaycastRenderer;
 
-  DistributedRenderer_Constructor(&self->super, cppE);
+  DistributedRenderer_Constructor(&self->super);
   self->super.renderRegionSample = DRR_renderRegionSample;
   self->aoSamples = 0;
   self->shadowsEnabled = false;

@@ -3,6 +3,7 @@
 
 #include "DistributedRenderer.h"
 #include "render/distributed/DistributedRenderer_ispc.h"
+#include "geometry/GeometricModel.h"
 
 namespace ospray {
 namespace mpi {
@@ -37,7 +38,7 @@ void DistributedRenderer::computeRegionVisibility(DistributedFrameBuffer *fb,
 void DistributedRenderer::renderRegionToTile(DistributedFrameBuffer *fb,
     Camera *camera,
     DistributedWorld *world,
-    const Region &region,
+    const box3f &region,
     void *perFrameData,
     Tile &tile,
     size_t jobID) const

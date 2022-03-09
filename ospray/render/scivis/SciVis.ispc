@@ -75,8 +75,10 @@ void SciVis_renderSample(Renderer *uniform _self,
     // Add contribution from visible lights, P is used by light
     // evaluation
     DifferentialGeometry dg;
-    dg.P = ray.org;
-    outColor = outColor + outTransmission * evaluateLights(world, dg, ray);
+    if (self->visibleLights) {
+      dg.P = ray.org;
+      outColor = outColor + outTransmission * evaluateLights(world, dg, ray);
+    }
 
     // If any geometry has been hit
     const bool hadHit = hadHit(ray);
@@ -152,16 +154,17 @@ void SciVis_renderSample(Renderer *uniform _self,
 
 // SciVis C++ interface /////////////////////////////////////////////////////
 
-export void *uniform SciVis_create(void *uniform cppE)
+export void *uniform SciVis_create()
 {
   uniform SciVis *uniform self = uniform new uniform SciVis;
-  Renderer_Constructor(&self->super, cppE);
+  Renderer_Constructor(&self->super);
   self->super.renderSample = SciVis_renderSample;
   return self;
 }
 
 export void SciVis_set(void *uniform _self,
     uniform bool shadowsEnabled,
+    uniform bool visibleLights,
     uniform int aoSamples,
     uniform float aoRadius,
     uniform float volumeSamplingRate)
@@ -169,6 +172,7 @@ export void SciVis_set(void *uniform _self,
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
   self->shadowsEnabled = shadowsEnabled;
+  self->visibleLights = visibleLights;
   self->aoSamples = aoSamples;
   self->aoRadius = aoRadius;
 

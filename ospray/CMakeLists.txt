@@ -130,6 +130,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   lights/SpotLight.ispc
   lights/QuadLight.cpp
   lights/QuadLight.ispc
+  lights/CylinderLight.cpp
+  lights/CylinderLight.ispc
   lights/HDRILight.cpp
   lights/HDRILight.ispc
   lights/SunSkyLight.cpp

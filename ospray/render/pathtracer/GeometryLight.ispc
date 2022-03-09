@@ -21,15 +21,13 @@ vec3f evaluateGeometryLights(const PathContext &pathContext,
   vec3f L = make_vec3f(0.f);
   PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
   foreach_unique (m in material) {
-    if (m != NULL
-        && reduce_max(m->emission) > 0.f) {
+    if (m != NULL && reduce_max(m->emission) > 0.f) {
       // at the moment we only support uniform light selection
       // therfore we can evaluate the selection PDF directly
       float lightSelectionPDF = 0.0f;
-      if(pathContext.numLights > 0)
-      {
+      if (pathContext.numLights > 0) {
         lightSelectionPDF =
-          (1.0f / (float)pathContext.numLights) * pathContext.numLightSamples;
+            (1.0f / (float)pathContext.numLights) * pathContext.numLightSamples;
       }
       // convert pdf wrt. area to pdf wrt. solid angle
       const float cosd = dot(pathVertex.dg.Ng, ray.dir);
@@ -53,7 +51,6 @@ struct GeometryLight
   Light super; // inherited light fields
 
   GeometricModel *model; // underlying geometry
-  Instance *instance;
   int32 numPrimitives; // number of emissive primitives
   int32 *primIDs; // IDs of emissive primitives to sample
   float *distribution; // pdf over prims proportional to (world-space) area
@@ -82,14 +79,15 @@ Light_SampleRes GeometryLight_sample(const Light *uniform super,
   // sample position on primitive
   // TODO maybe should already be done wrt. solid angle
   SampleAreaRes as;
-  if (self->instance->motionBlur)
+  const Instance *uniform instance = self->super.instance;
+  assert(instance);
+  if (instance->motionBlur)
     foreach_unique (utime in time) {
-      const uniform affine3f xfm = Instance_getTransform(self->instance, utime);
+      const uniform affine3f xfm = Instance_getTransform(instance, utime);
       as = geo->sampleArea(geo, primID, xfm, rcp(xfm), ns);
     }
   else {
-    as = geo->sampleArea(
-        geo, primID, self->instance->xfm, self->instance->rcp_xfm, ns);
+    as = geo->sampleArea(geo, primID, instance->xfm, instance->rcp_xfm, ns);
   }
   // note that sample.pdf/primitives * sampleArea(worldspace).pdf == self->pdf
 
@@ -144,8 +142,8 @@ export void *uniform GeometryLight_create(
   Light_Constructor(&self->super);
   self->super.sample = GeometryLight_sample;
   self->super.eval = NULL; // geometry lights are hit and explicitly handled
+  self->super.instance = instance;
   self->model = model;
-  self->instance = instance;
 
   // create the list of emissive primitive IDs
   self->primIDs = uniform new uniform int32[geo->numPrimitives];

@@ -11,36 +11,49 @@
 #include "texture/Texture2D_ispc.h"
 
 namespace ospray {
+
 SunSkyLight::SunSkyLight()
 {
-  ispcEquivalent = ispc::HDRILight_create();
-  secondLightIE = ispc::DirectionalLight_create();
   static const int skyResolution = 512;
   skySize = vec2i(skyResolution, skyResolution / 2);
   skyImage.resize(skySize.product());
   static auto format = static_cast<OSPTextureFormat>(OSP_TEXTURE_RGB32F);
   static auto filter =
       static_cast<OSPTextureFilter>(OSP_TEXTURE_FILTER_BILINEAR);
-  map = (Texture2D *)ispc::Texture2D_create(
+  mapIE = ispc::Texture2D_create(
       (ispc::vec2i &)skySize, skyImage.data(), format, filter, nullptr);
+}
+
+SunSkyLight::~SunSkyLight()
+{
+  ispc::delete_uniform(mapIE);
+  ispc::HDRILight_destroyDistribution(distributionIE);
+}
+
+void *SunSkyLight::createIE(const void *instance) const
+{
+  void *ie = ispc::HDRILight_create();
+  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
+  ispc::HDRILight_set(ie,
+      (ispc::vec3f &)coloredIntensity,
+      (const ispc::LinearSpace3f &)frame,
+      mapIE,
+      distributionIE);
+  return ie;
+}
+
+void *SunSkyLight::createSecondIE(const void *instance) const
+{
+  void *ie = ispc::DirectionalLight_create();
+  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
+  ispc::DirectionalLight_set(
+      ie, (ispc::vec3f &)solarIrradiance, (ispc::vec3f &)direction, cosAngle);
+  return ie;
 }
 
 std::string SunSkyLight::toString() const
 {
   return "ospray::SunSkyLight";
-}
-
-SunSkyLight::~SunSkyLight()
-{
-  ispc::HDRILight_destroy(getIE());
-  ispcEquivalent = nullptr;
-  ispc::delete_uniform(secondLightIE);
-  ispc::delete_uniform(map);
-}
-
-utility::Optional<void *> SunSkyLight::getSecondIE()
-{
-  return secondLightIE;
 }
 
 void SunSkyLight::commit()
@@ -51,8 +64,7 @@ void SunSkyLight::commit()
   const float lambdaMax = 720.0f;
 
   const vec3f up = normalize(getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f)));
-  vec3f direction =
-      -normalize(getParam<vec3f>("direction", vec3f(0.f, -1.f, 0.f)));
+  direction = -normalize(getParam<vec3f>("direction", vec3f(0.f, -1.f, 0.f)));
   const float albedo = clamp(getParam<float>("albedo", 0.3f), 0.1f, 1.f);
   const float turbidity = clamp(getParam<float>("turbidity", 3.f), 1.f, 10.f);
   const float horizon =
@@ -62,7 +74,6 @@ void SunSkyLight::commit()
   queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_RADIANCE);
   processIntensityQuantityType();
 
-  linear3f frame;
   frame.vz = up;
   if (std::abs(sunTheta) > 0.99f) {
     const vec3f dx0 = vec3f(0.0f, up.z, -up.y);
@@ -90,7 +101,7 @@ void SunSkyLight::commit()
   // using this value produces matching solar irradiance results from the model
   // and directional light
   const float angularDiameter = 0.53;
-  vec3f solarIrradiance = zero;
+  solarIrradiance = zero;
 
   // calculate solar radiance
   for (int i = 0; i < cieSize; ++i) {
@@ -103,19 +114,12 @@ void SunSkyLight::commit()
 
   arhosekskymodelstate_free(spectralModel);
 
-  const float cosAngle = std::cos(deg2rad(0.5f * angularDiameter));
+  cosAngle = std::cos(deg2rad(0.5f * angularDiameter));
   const float rcpPdf = 2 * (float)pi * (1 - cosAngle);
 
   // convert solar radiance to solar irradiance
   solarIrradiance =
       xyzToRgb(solarIrradiance) * rcpPdf * intensityScale * coloredIntensity;
-
-  ispc::Light_set(getSecondIE().value(), getParam<bool>("visible", true));
-
-  ispc::DirectionalLight_set(getSecondIE().value(),
-      (ispc::vec3f &)solarIrradiance,
-      (ispc::vec3f &)direction,
-      cosAngle);
 
   ArHosekSkyModelState *rgbModel =
       arhosek_rgb_skymodelstate_alloc_init(turbidity, albedo, sunElevation);
@@ -157,12 +161,11 @@ void SunSkyLight::commit()
       skyImage[index] = max(skyRadiance, vec3f(0.0f));
     }
   });
-
-  ispc::HDRILight_set(getIE(),
-      (ispc::vec3f &)coloredIntensity,
-      (const ispc::LinearSpace3f &)frame,
-      map);
   arhosekskymodelstate_free(rgbModel);
+
+  // recreate distribution
+  ispc::HDRILight_destroyDistribution(distributionIE);
+  distributionIE = ispc::HDRILight_createDistribution(mapIE);
 }
 
 void SunSkyLight::processIntensityQuantityType()

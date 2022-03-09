@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -321,14 +321,20 @@ inline const Ref<const DataT<T, DIM>> ManagedObject::getParamDataT(
     }
   }
 
-  if (required)
-    throw std::runtime_error(toString() + " must have '" + name
-        + "' array with element type " + stringFor(OSPTypeFor<T>::value));
-  else {
+  if (required) {
+    std::string msg(toString() + " must have '" + name + "' "
+        + std::to_string(DIM) + "D array with element type "
+        + stringFor(OSPTypeFor<T>::value));
+    if (data)
+      msg.append(", found " + std::to_string(data->dimensions)
+          + "D array with element type " + stringFor(data->type));
+    throw std::runtime_error(msg);
+  } else {
     if (data) {
       postStatusMsg(OSP_LOG_DEBUG)
-          << toString() << " ignoring '" << name
-          << "' array with wrong element type (should be "
+          << toString() << " ignoring '" << name << "' " << data->dimensions
+          << "D array with element type " << stringFor(data->type)
+          << " (while looking for " << DIM << "D array of "
           << stringFor(OSPTypeFor<T>::value) << ")";
     }
     return nullptr;

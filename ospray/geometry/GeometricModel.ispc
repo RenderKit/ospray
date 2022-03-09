@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -7,7 +7,7 @@
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 
-export void *uniform GeometricModel_create(void *uniform cppE)
+export void *uniform GeometricModel_create()
 {
   GeometricModel *uniform self = uniform new GeometricModel;
 

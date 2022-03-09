@@ -32,11 +32,12 @@ using ospray::api::deviceIsSet;
 #define THROW_IF_NULL_OBJECT(obj) THROW_IF_NULL(obj, "handle")
 #define THROW_IF_NULL_STRING(str) THROW_IF_NULL(str, "string")
 
-#define ASSERT_DEVICE()                                                        \
-  if (!deviceIsSet())                                                          \
-  throw std::runtime_error(                                                    \
-      "OSPRay not yet initialized (most likely this means you tried to "       \
-      "call an ospray API function before first calling ospInit()), pid: "     \
+#define ASSERT_DEVICE()                                                               \
+  if (!deviceIsSet())                                                                 \
+  throw std::runtime_error(                                                           \
+      "no valid OSPRay device while calling an API function, likely"                  \
+      " either before calling ospInit() / ospNewDevice() plus ospSetCurrentDevice()," \
+      " or after calling ospShutdown() / ospDeviceRelease(); pid: "                   \
       + std::to_string(getpid()))
 
 #define OSPRAY_CATCH_BEGIN                                                     \

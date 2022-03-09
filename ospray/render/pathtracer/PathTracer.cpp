@@ -9,9 +9,9 @@
 #include "lights/Light.h"
 // ispc exports
 #include "common/World_ispc.h"
+#include "render/materials/Material_ispc.h"
 #include "render/pathtracer/GeometryLight_ispc.h"
 #include "render/pathtracer/PathTracer_ispc.h"
-#include "render/materials/Material_ispc.h"
 // std
 #include <map>
 
@@ -19,7 +19,7 @@ namespace ospray {
 
 PathTracer::PathTracer()
 {
-  ispcEquivalent = ispc::PathTracer_create(this);
+  ispcEquivalent = ispc::PathTracer_create();
 }
 
 std::string PathTracer::toString() const
@@ -121,9 +121,27 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
 
   if (world->lights) {
     for (auto &&obj : *world->lights) {
-      lightArray.push_back(obj->getIE());
-      if (obj->getSecondIE().has_value())
-        lightArray.push_back(obj->getSecondIE().value());
+      lightArray.push_back(obj->createIE());
+      void *secondIE = obj->createSecondIE();
+      if (secondIE)
+        lightArray.push_back(secondIE);
+    }
+  }
+
+  // Iterate through all world instances
+  if (world->instances) {
+    for (auto &&inst : *world->instances) {
+      // Skip instances without lights
+      if (!inst->group->lights)
+        continue;
+
+      // Add instance lights to array
+      for (auto &&obj : *inst->group->lights) {
+        lightArray.push_back(obj->createIE(inst->getIE()));
+        void *secondIE = obj->createSecondIE(inst->getIE());
+        if (secondIE)
+          lightArray.push_back(secondIE);
+      }
     }
   }
 

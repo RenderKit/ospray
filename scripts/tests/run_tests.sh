@@ -56,7 +56,10 @@ fi
 
 if [ $TEST_MPI ]; then
   mkdir failed-mpi
-  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi --osp:load-modules=mpi --osp:device=mpiOffload : $MPI_WORKER_CONFIG ospray_mpi_worker
+  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi --osp:load-modules=mpi --osp:device=mpiOffload : $MPI_WORKER_CONFIG ospray_mpi_worker || exit 2
+
+  mkdir failed-mpi-data-parallel
+  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-data-parallel || exit 2
 fi
 
 exit $?

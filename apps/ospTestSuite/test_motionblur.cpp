@@ -8,17 +8,29 @@ namespace OSPRayTestScenes {
 
 class MotionBlurBoxes
     : public Base,
-      public ::testing::TestWithParam<const char * /*renderer*/>
+      public ::testing::TestWithParam<std::tuple<const char * /*renderer*/,
+          OSPStereoMode,
+          OSPShutterType,
+          float /*rollingShutterDuration*/>>
 {
  public:
   MotionBlurBoxes();
   void SetUp() override;
+
+ protected:
+  OSPStereoMode stereoMode{OSP_STEREO_NONE};
+  OSPShutterType shutterType{OSP_SHUTTER_GLOBAL};
+  float rollingShutterDuration{0.f};
 };
 
 MotionBlurBoxes::MotionBlurBoxes()
 {
-  rendererType = GetParam();
-  samplesPerPixel = 64;
+  auto params = GetParam();
+  rendererType = std::get<0>(params);
+  stereoMode = std::get<1>(params);
+  shutterType = std::get<2>(params);
+  rollingShutterDuration = std::get<3>(params);
+  samplesPerPixel = rendererType == "pathtracer" ? 64 : 16;
 }
 
 void MotionBlurBoxes::SetUp()
@@ -26,7 +38,10 @@ void MotionBlurBoxes::SetUp()
   Base::SetUp();
   renderer.setParam("backgroundColor", vec4f(0.2, 0.2, 0.2, 1.0f));
   camera.setParam("position", vec3f(0, 0, -9));
+  camera.setParam("stereoMode", stereoMode);
   camera.setParam("shutter", range1f(0.0f, 1.0f));
+  camera.setParam("shutterType", shutterType);
+  camera.setParam("rollingShutterDuration", rollingShutterDuration);
 
   cpp::Geometry boxGeometry("box");
   boxGeometry.setParam(
@@ -128,6 +143,26 @@ void MotionBlurBoxes::SetUp()
     AddInstance(instance);
   }
 
+  { // quaternion
+    cpp::Instance instance(group);
+    std::vector<vec3f> ss;
+    ss.push_back(vec3f(0, -4, 0));
+    ss.push_back(vec3f(0, -4, 0));
+    ss.push_back(vec3f(0, -4, 0));
+    instance.setParam("motion.pivot", cpp::CopiedData(ss));
+    std::vector<quatf> qs;
+    qs.push_back(quatf::rotate(vec3f(0, 0, 1), -0.8));
+    qs.push_back(quatf::rotate(vec3f(0, 0, 1), -1.2));
+    qs.push_back(quatf::rotate(vec3f(0, 0, 1), -1.6));
+    instance.setParam("motion.rotation", cpp::CopiedData(qs));
+    std::vector<vec3f> ts;
+    ts.push_back(vec3f(0, 4, 0));
+    ts.push_back(vec3f(0, 4, 0));
+    ts.push_back(vec3f(0, 4, 0));
+    instance.setParam("motion.translation", cpp::CopiedData(ts));
+    AddInstance(instance);
+  }
+
   cpp::Light distant("distant");
   distant.setParam("intensity", 3.0f);
   distant.setParam("direction", vec3f(0.3f, -4.0f, 2.8f));
@@ -142,9 +177,10 @@ void MotionBlurBoxes::SetUp()
 }
 
 // Test camera MB (also in combination with stereo) ////////////////////////////
-class MotionCamera : public Base,
-                     public ::testing::TestWithParam<
-                         std::tuple<const char * /*camera*/, OSPStereoMode>>
+class MotionCamera
+    : public Base,
+      public ::testing::TestWithParam<
+          std::tuple<const char * /*camera*/, OSPStereoMode, OSPShutterType>>
 {
  public:
   MotionCamera();
@@ -153,7 +189,8 @@ class MotionCamera : public Base,
  protected:
   std::string cameraType;
   vec3f pos{0.0f, 0.0f, -0.5f};
-  OSPStereoMode stereoMode;
+  OSPStereoMode stereoMode{OSP_STEREO_NONE};
+  OSPShutterType shutterType{OSP_SHUTTER_GLOBAL};
 };
 
 MotionCamera::MotionCamera()
@@ -164,6 +201,7 @@ MotionCamera::MotionCamera()
   auto params = GetParam();
   cameraType = std::get<0>(params);
   stereoMode = std::get<1>(params);
+  shutterType = std::get<2>(params);
 }
 
 void MotionCamera::SetUp()
@@ -178,7 +216,6 @@ void MotionCamera::SetUp()
 
   world = ospray::testing::buildWorld(builder);
   ospray::testing::release(builder);
-  world.commit();
 
   camera = cpp::Camera(cameraType);
   if (cameraType != "panoramic") {
@@ -196,7 +233,7 @@ void MotionCamera::SetUp()
   xfms.push_back(affine3f::rotate(vec3f(0, 4, 0), vec3f(0, 0, 1), 0.12));
   camera.setParam("motion.transform", cpp::CopiedData(xfms));
   camera.setParam("shutter", range1f(0.0f, 1.0f));
-  camera.commit();
+  camera.setParam("shutterType", shutterType);
 }
 
 // Test Instantiations //////////////////////////////////////////////////////
@@ -206,8 +243,29 @@ TEST_P(MotionBlurBoxes, instance_mb)
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    TestMotionBlur, MotionBlurBoxes, ::testing::Values("scivis", "pathtracer"));
+INSTANTIATE_TEST_SUITE_P(TestMotionBlur,
+    MotionBlurBoxes,
+    ::testing::Combine(::testing::Values("scivis", "pathtracer"),
+        ::testing::Values(OSP_STEREO_NONE),
+        ::testing::Values(OSP_SHUTTER_GLOBAL),
+        ::testing::Values(0.f)));
+
+INSTANTIATE_TEST_SUITE_P(CameraRollingShutter,
+    MotionBlurBoxes,
+    ::testing::Combine(::testing::Values("pathtracer"),
+        ::testing::Values(OSP_STEREO_NONE),
+        ::testing::Values(OSP_SHUTTER_ROLLING_RIGHT,
+            OSP_SHUTTER_ROLLING_LEFT,
+            OSP_SHUTTER_ROLLING_DOWN,
+            OSP_SHUTTER_ROLLING_UP),
+        ::testing::Values(0.f, 0.1f)));
+
+INSTANTIATE_TEST_SUITE_P(CameraStereoRollingShutter,
+    MotionBlurBoxes,
+    ::testing::Combine(::testing::Values("pathtracer"),
+        ::testing::Values(OSP_STEREO_TOP_BOTTOM),
+        ::testing::Values(OSP_SHUTTER_ROLLING_DOWN),
+        ::testing::Values(0.f)));
 
 TEST_P(MotionCamera, camera_mb)
 {
@@ -217,11 +275,22 @@ TEST_P(MotionCamera, camera_mb)
 INSTANTIATE_TEST_SUITE_P(Camera,
     MotionCamera,
     ::testing::Combine(::testing::Values("perspective", "panoramic"),
-        ::testing::Values(
-            OSP_STEREO_NONE, OSP_STEREO_RIGHT, OSP_STEREO_SIDE_BY_SIDE)));
+        ::testing::Values(OSP_STEREO_NONE,
+            OSP_STEREO_RIGHT,
+            OSP_STEREO_LEFT,
+            OSP_STEREO_SIDE_BY_SIDE,
+            OSP_STEREO_TOP_BOTTOM),
+        ::testing::Values(OSP_SHUTTER_GLOBAL)));
 
 INSTANTIATE_TEST_SUITE_P(CameraOrtho,
     MotionCamera,
-    ::testing::Values(std::make_tuple("orthographic", OSP_STEREO_NONE)));
+    ::testing::Values(
+        std::make_tuple("orthographic", OSP_STEREO_NONE, OSP_SHUTTER_GLOBAL)));
+
+INSTANTIATE_TEST_SUITE_P(CameraStereoRollingShutter,
+    MotionCamera,
+    ::testing::Combine(::testing::Values("perspective"),
+        ::testing::Values(OSP_STEREO_TOP_BOTTOM),
+        ::testing::Values(OSP_SHUTTER_ROLLING_DOWN)));
 
 } // namespace OSPRayTestScenes

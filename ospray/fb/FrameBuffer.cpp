@@ -75,6 +75,7 @@ utility::ArrayView<int> FrameBuffer::getTileIDs()
 
 void FrameBuffer::beginFrame()
 {
+  frameProgress = 0.0f;
   cancelRender = false;
   frameID++;
   ispc::FrameBuffer_set_frameID(getIE(), frameID);
@@ -87,6 +88,10 @@ std::string FrameBuffer::toString() const
 
 void FrameBuffer::setCompletedEvent(OSPSyncEvent event)
 {
+  if (event == OSP_NONE_FINISHED)
+    frameProgress = 0.0f;
+  if (event == OSP_FRAME_FINISHED)
+    frameProgress = 1.0f;
   stagesCompleted = event;
 }
 

@@ -83,7 +83,6 @@ target_link_libraries(mpi_tutorial_common PUBLIC
   MPI::MPI_CXX
 )
 
-
 target_compile_definitions(mpi_tutorial_common PUBLIC -DOSPRAY_CPP_RKCOMMON_TYPES)
 
 ospray_create_mpi_tutorial(ospMPIDistribTutorialSpheres
@@ -110,6 +109,15 @@ ospray_create_mpi_tutorial(ospMPIDistribTutorialReplicated
 ospray_sign_target(ospMPIDistribTutorialReplicated)
 
 target_link_libraries(ospMPIDistribTutorialReplicated PUBLIC
+  ospray_testing
+)
+
+ospray_create_mpi_tutorial(ospMPIDistributedExamples
+    ospMPIDistributedExamples.cpp
+)
+ospray_sign_target(ospMPIDistributedExamples)
+
+target_link_libraries(ospMPIDistributedExamples PUBLIC
   ospray_testing
 )
 

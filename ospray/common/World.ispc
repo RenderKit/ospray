@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "World.ih"
+#include "lights/Light.ih"
 #include "math/Distribution1D.ih"
 #include "render/pathtracer/GeometryLight.ih"
 
@@ -97,9 +98,8 @@ unmasked void clippingIntersectionFilterV(
   context->hitsCount++;
 }
 
-void World_Constructor(World *uniform world, void *uniform cppE)
+void World_Constructor(World *uniform world)
 {
-  world->cppEquivalent = cppE;
   world->geometriesInst = NULL;
   world->numGeometriesInst = 0;
   world->volumesInst = NULL;
@@ -114,9 +114,8 @@ void World_Constructor(World *uniform world, void *uniform cppE)
   world->numInvertedClippers = 0;
 
   world->scivisData.lights = NULL;
-  world->scivisData.lightsVisible = NULL;
   world->scivisData.numLights = 0;
-  world->scivisData.numLightsVisible = 0;
+  world->scivisData.numLightsVisibleOnly = 0;
 
   world->pathtracerData.numLights = 0;
   world->pathtracerData.numGeoLights = 0;
@@ -124,18 +123,31 @@ void World_Constructor(World *uniform world, void *uniform cppE)
   world->pathtracerData.lightsCDF = NULL;
 }
 
+inline void SciVisData_destroy(SciVisData *uniform self)
+{
+  // Delete all lights
+  for (uniform int i = 0; i < self->numLights; i++)
+    delete self->lights[i];
+
+  delete[] self->lights;
+}
+
 inline void PathtracerData_destroy(PathtracerData *uniform self)
 {
   for (uniform int i = 0; i < self->numGeoLights; i++)
     GeometryLight_destroy(self->lights[i]);
+
+  for (uniform int i = self->numGeoLights; i < self->numLights; i++)
+    delete self->lights[i];
+
   delete[] self->lights;
   delete[] self->lightsCDF;
 }
 
-export void *uniform World_create(void *uniform cppE)
+export void *uniform World_create()
 {
   World *uniform world = uniform new World;
-  World_Constructor(world, cppE);
+  World_Constructor(world);
   return (void *uniform)world;
 }
 
@@ -143,8 +155,7 @@ export void World_destroy(void *uniform _self)
 {
   World *uniform self = (World * uniform) _self;
 
-  delete[] self->scivisData.lights;
-  delete[] self->scivisData.lightsVisible;
+  SciVisData_destroy(&self->scivisData);
   PathtracerData_destroy(&self->pathtracerData);
 
   delete self;
@@ -187,33 +198,22 @@ export void World_setSciVisData(void *uniform _self,
     const uniform vec3f &aoColor,
     void **uniform lights,
     const uniform uint32 numLights,
-    void **uniform lightsVisible,
-    const uniform uint32 numLightsVisible)
+    const uniform uint32 numLightsVisibleOnly)
 {
   World *uniform self = (World * uniform) _self;
+  SciVisData *uniform svData = &self->scivisData;
 
-  delete[] self->scivisData.lights;
-  self->scivisData.lights = NULL;
+  SciVisData_destroy(svData);
 
-  delete[] self->scivisData.lightsVisible;
-  self->scivisData.lightsVisible = NULL;
-
-  self->scivisData.aoColorPi = aoColor * pi;
-
-  self->scivisData.numLights = numLights;
+  svData->aoColorPi = aoColor * pi;
+  svData->lights = NULL;
+  svData->numLights = numLights;
+  svData->numLightsVisibleOnly = numLightsVisibleOnly;
   if (numLights) {
-    self->scivisData.lights = uniform new LightPtr[numLights];
+    svData->lights = uniform new uniform LightPtr[numLights];
     LightArray srcLights = (LightArray)lights;
     for (uniform int i = 0; i < numLights; i++)
-      self->scivisData.lights[i] = srcLights[i];
-  }
-
-  self->scivisData.numLightsVisible = numLightsVisible;
-  if (numLightsVisible) {
-    self->scivisData.lightsVisible = uniform new LightPtr[numLightsVisible];
-    LightArray srcLights = (LightArray)lightsVisible;
-    for (uniform int i = 0; i < numLightsVisible; i++)
-      self->scivisData.lightsVisible[i] = srcLights[i];
+      svData->lights[i] = srcLights[i];
   }
 }
 
@@ -232,17 +232,12 @@ export void World_setPathtracerData(void *uniform _self,
   ptData->numLights = numLights;
   ptData->numGeoLights = numGeoLights;
   if (numLights) {
-    ptData->lights = uniform new LightPtr[numLights];
-    ptData->lightsCDF = uniform new float[numLights];
+    ptData->lights = uniform new uniform LightPtr[numLights];
+    ptData->lightsCDF = uniform new uniform float[numLights];
     LightArray srcLights = (LightArray)lights;
-    uniform float uniformLightSelectionPDF = 1.0f / numLights;
     for (uniform int i = 0; i < numLights; i++) {
       ptData->lights[i] = srcLights[i];
-
-      // naive implementation of a stochastic light selection
-      // assigning each light source the same probability
       ptData->lightsCDF[i] = 1.0f;
-      ptData->lights[i]->selectionPDF = uniformLightSelectionPDF;
     }
     Distribution1D_create(numLights, ptData->lightsCDF);
   }

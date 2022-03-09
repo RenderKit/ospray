@@ -9,6 +9,12 @@ namespace OSPRayTestScenes {
 LightTest::LightTest()
 {
   samplesPerPixel = 16;
+
+  // due to the way c0 in SpotLight is calculated we must rotate around X axis
+  // to get the same result with SciVis and ring light (because its
+  // approximation in SciVis is not rotation invariant)
+  xfm = affine3f::translate(vec3f(1.f, 2.f, 3.f))
+      * affine3f::rotate(vec3f(1.f, 0.f, 0.f), pi);
 }
 
 void LightTest::SetUp()
@@ -35,30 +41,25 @@ void LightTest::SetUp()
   camera.setParam("position", vec3f(0, 0, -2.4641));
 }
 
-SunSky::SunSky()
+void LightTest::AddInstancedLightWithMB(
+    cpp::Light light, const affine3f &xfm1, const affine3f &xfm2)
 {
-  rendererType = "pathtracer";
-  samplesPerPixel = 1;
-}
+  light.commit();
+  cpp::Group group;
+  group.setParam("light", cpp::CopiedData(light));
+  group.commit();
+  cpp::Instance instance(group);
+  const affine3f xfmR = rcp(xfm);
+  if (motionBlur) {
+    std::vector<affine3f> xfms;
+    xfms.push_back(xfmR * xfm1);
+    xfms.push_back(xfmR * xfm2);
+    instance.setParam("motion.transform", cpp::CopiedData(xfms));
+    camera.setParam("shutter", range1f(0, 1));
+  } else
+    instance.setParam("transform", xfmR);
 
-void SunSky::SetUp()
-{
-  Base::SetUp();
-  auto params = GetParam();
-
-  cpp::Light light("sunSky");
-  float turb = std::get<2>(params);
-  light.setParam("up", std::get<0>(params));
-  light.setParam("direction", std::get<1>(params));
-  light.setParam("turbidity", turb);
-  light.setParam("albedo", std::get<3>(params));
-  // lower brightness with high turbidity
-  light.setParam("intensityQuantity", OSP_INTENSITY_QUANTITY_SCALE);
-  light.setParam("intensity", 0.025f / turb);
-  light.setParam("horizonExtension", std::get<4>(params));
-  AddLight(light);
-
-  renderer.setParam("backgroundColor", vec4f(0.f, 0.f, 0.f, 1.0f));
+  AddInstance(instance);
 }
 
 AmbientLight::AmbientLight()
@@ -83,6 +84,7 @@ DistantLight::DistantLight()
   auto params = GetParam();
   direction = std::get<0>(params);
   rendererType = std::get<1>(params);
+  motionBlur = std::get<2>(params);
 }
 
 void DistantLight::SetUp()
@@ -90,10 +92,11 @@ void DistantLight::SetUp()
   LightTest::SetUp();
 
   cpp::Light distant("distant");
-  distant.setParam("direction", direction);
+  distant.setParam("direction", xfmVector(xfm, direction));
   distant.setParam("color", vec3f(1.0f, 0.75f, 0.25f));
   distant.setParam("angularDiameter", 1.0f);
-  AddLight(distant);
+
+  AddInstancedLightWithRotateMB(distant);
 }
 
 GeometricLight::GeometricLight()
@@ -167,19 +170,19 @@ void PhotometricLight::SetUp()
 
   cpp::Light light1d("spot");
   light1d.setParam("intensity", 5.f);
-  light1d.setParam("position", vec3f(-0.6f, 0.8f, -0.5f));
-  light1d.setParam("direction", vec3f(0.0f, -1.0f, 0.0f));
+  light1d.setParam("position", xfmPoint(xfm, vec3f(-0.6f, 0.8f, -0.5f)));
+  light1d.setParam("direction", xfmVector(xfm, vec3f(0.0f, -1.0f, 0.0f)));
   light1d.setParam("openingAngle", 360.f);
   light1d.setParam("penumbraAngle", 0.f);
   light1d.setParam("radius", radius);
   float lid1d[] = {2.5f, 0.4f, 0.2f, 0.1f, 0.03f, 0.01f, 0.01f};
   light1d.setParam("intensityDistribution", cpp::CopiedData(lid1d, 7));
-  AddLight(light1d);
+  light1d.commit();
 
   cpp::Light light2d("spot");
   light2d.setParam("intensity", 1.f);
-  light2d.setParam("position", vec3f(0.3f, 0.6f, 0.f));
-  light2d.setParam("direction", vec3f(0.0f, -1.0f, 0.0f));
+  light2d.setParam("position", xfmPoint(xfm, vec3f(0.3f, 0.6f, 0.f)));
+  light2d.setParam("direction", xfmVector(xfm, vec3f(0.0f, -1.0f, 0.0f)));
   light2d.setParam("openingAngle", 270.f);
   light2d.setParam("penumbraAngle", 10.f);
   light2d.setParam("radius", radius);
@@ -187,8 +190,16 @@ void PhotometricLight::SetUp()
       1.5f, 5.0f, 6.0f, 0.3f, 0.01f, 0.15f, 0.5f, 1.6f, 0.1f, 0.01f};
   light2d.setParam(
       "intensityDistribution", cpp::CopiedData(lid2d, vec2ul(5, 12)));
-  light2d.setParam("c0", vec3f(1.0f, 0.0f, 0.0f));
-  AddLight(light2d);
+  light2d.setParam("c0", xfmVector(xfm, vec3f(1.0f, 0.0f, 0.0f)));
+  light2d.commit();
+
+  cpp::Group group;
+  std::vector<cpp::Light> lights{light1d, light2d};
+  group.setParam("light", cpp::CopiedData(lights));
+  group.commit();
+  cpp::Instance instance(group);
+  instance.setParam("transform", rcp(xfm));
+  AddInstance(instance);
 }
 
 QuadLight::QuadLight()
@@ -197,6 +208,7 @@ QuadLight::QuadLight()
   size = std::get<0>(params);
   rendererType = std::get<1>(params);
   intensityQuantity = std::get<2>(params);
+  motionBlur = std::get<3>(params);
 }
 
 void QuadLight::SetUp()
@@ -207,10 +219,38 @@ void QuadLight::SetUp()
   light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
   light.setParam("intensity", 10.f);
   light.setParam("intensityQuantity", intensityQuantity);
-  light.setParam("position", vec3f(size / -2.0f, 0.98f, size / -2.0f));
-  light.setParam("edge1", vec3f(size, 0.0f, 0.0f));
-  light.setParam("edge2", vec3f(0.0f, 0.0f, size));
-  AddLight(light);
+  light.setParam(
+      "position", xfmPoint(xfm, vec3f(size / -2.0f, 0.98f, size / -2.0f)));
+  light.setParam("edge1", xfmVector(xfm, vec3f(size, 0.0f, 0.0f)));
+  light.setParam("edge2", xfmVector(xfm, vec3f(0.0f, 0.0f, size)));
+
+  AddInstancedLightWithTranslateMB(light);
+}
+
+CylinderLight::CylinderLight()
+{
+  auto params = GetParam();
+  size = std::get<0>(params);
+  rendererType = std::get<1>(params);
+  intensityQuantity = std::get<2>(params);
+  motionBlur = std::get<3>(params);
+}
+
+void CylinderLight::SetUp()
+{
+  LightTest::SetUp();
+
+  cpp::Light light("cylinder");
+  light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
+  light.setParam("intensity", 5.0f);
+  light.setParam("intensityQuantity", intensityQuantity);
+  light.setParam(
+      "position0", xfmPoint(xfm, vec3f(-0.2f - 2.0 * size, 0.65f, 0.0f)));
+  light.setParam(
+      "position1", xfmPoint(xfm, vec3f(0.2f + 2.0 * size, 0.65f, 0.0f)));
+  light.setParam("radius", size);
+
+  AddInstancedLightWithTranslateMB(light);
 }
 
 SphereLight::SphereLight()
@@ -219,6 +259,7 @@ SphereLight::SphereLight()
   radius = std::get<0>(params);
   rendererType = std::get<1>(params);
   intensityQuantity = std::get<2>(params);
+  motionBlur = std::get<3>(params);
 }
 
 void SphereLight::SetUp()
@@ -229,9 +270,10 @@ void SphereLight::SetUp()
   light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
   light.setParam("intensity", 2.5f);
   light.setParam("intensityQuantity", intensityQuantity);
-  light.setParam("position", vec3f(0.0f, 0.48f, 0.0f));
+  light.setParam("position", xfmPoint(xfm, vec3f(0.0f, 0.48f, 0.0f)));
   light.setParam("radius", radius);
-  AddLight(light);
+
+  AddInstancedLightWithTranslateMB(light);
 }
 
 SpotLight::SpotLight()
@@ -240,6 +282,7 @@ SpotLight::SpotLight()
   innerOuterRadius = std::get<0>(params);
   rendererType = std::get<1>(params);
   intensityQuantity = std::get<2>(params);
+  motionBlur = std::get<3>(params);
 }
 
 void SpotLight::SetUp()
@@ -250,16 +293,19 @@ void SpotLight::SetUp()
   light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
   light.setParam("intensity", 10.f);
   light.setParam("intensityQuantity", intensityQuantity);
-  light.setParam("position", vec3f(0.0f, 0.98f, 0.0f));
-  light.setParam("direction", vec3f(0.0f, -1.0f, 0.0f));
+  light.setParam("position", xfmPoint(xfm, vec3f(0.0f, 0.98f, 0.0f)));
+  light.setParam("direction", xfmVector(xfm, vec3f(0.0f, -1.0f, 0.0f)));
   light.setParam("radius", innerOuterRadius[1]);
   light.setParam("innerRadius", innerOuterRadius[0]);
-  AddLight(light);
+
+  AddInstancedLightWithTranslateMB(light);
 }
 
 HDRILight::HDRILight()
 {
-  rendererType = GetParam();
+  auto params = GetParam();
+  rendererType = std::get<0>(params);
+  motionBlur = std::get<1>(params);
 }
 
 void HDRILight::SetUp()
@@ -317,40 +363,47 @@ void HDRILight::SetUp()
   // prepare light
   cpp::Light light("hdri");
   light.setParam("color", vec3f(0.78f, 0.551f, 0.183f));
-  light.setParam("up", vec3f(0.f, 1.f, 0.f));
-  light.setParam("direction", vec3f(0.f, 0.f, 1.f));
+  light.setParam("up", xfmVector(xfm, vec3f(0.f, 1.f, 0.f)));
+  light.setParam("direction", xfmVector(xfm, vec3f(0.f, 0.f, 1.f)));
   light.setParam("map", envTex);
-  AddLight(light);
+
+  AddInstancedLightWithRotateMB(light);
+
+  renderer.setParam("backgroundColor", vec4f(0.f, 0.f, 0.f, 1.0f));
+}
+
+SunSky::SunSky()
+{
+  rendererType = "pathtracer";
+  samplesPerPixel = 1;
+  auto params = GetParam();
+  motionBlur = std::get<5>(params);
+}
+
+void SunSky::SetUp()
+{
+  Base::SetUp();
+  auto params = GetParam();
+
+  cpp::Light light("sunSky");
+  float turb = std::get<2>(params);
+  light.setParam("up", xfmVector(xfm, std::get<0>(params)));
+  light.setParam("direction", xfmVector(xfm, std::get<1>(params)));
+  light.setParam("turbidity", turb);
+  light.setParam("albedo", std::get<3>(params));
+  // lower brightness with high turbidity
+  light.setParam("intensityQuantity", OSP_INTENSITY_QUANTITY_SCALE);
+  light.setParam("intensity", 0.025f / turb);
+  light.setParam("horizonExtension", std::get<4>(params));
+
+  AddInstancedLightWithRotateMB(light);
 
   renderer.setParam("backgroundColor", vec4f(0.f, 0.f, 0.f, 1.0f));
 }
 
 // Test Instantiations //////////////////////////////////////////////////////
 
-TEST_P(SunSky, parameter)
-{
-  PerformRenderTest();
-}
-
-INSTANTIATE_TEST_SUITE_P(Light,
-    SunSky,
-    ::testing::Combine(::testing::Values(vec3f(0.f, 0.8f, 0.4f)),
-        ::testing::Values(vec3f(0.f, 0.7f, -1.f),
-            vec3f(0.f, 0.4f, -1.f),
-            vec3f(0.f, 0.1f, -1.f),
-            vec3f(0.f, -0.3f, -1.f),
-            vec3f(0.f, -0.8f, 0.4f)),
-        ::testing::Values(1.0f, 3.0f, 10.0f),
-        ::testing::Values(0.0f),
-        ::testing::Values(0.01f)));
-
-INSTANTIATE_TEST_SUITE_P(Light2,
-    SunSky,
-    ::testing::Combine(::testing::Values(vec3f(0.2f, -0.5f, 0.f)),
-        ::testing::Values(vec3f(0.2f, 0.4f, -1.f), vec3f(0.f, 0.f, -1.f)),
-        ::testing::Values(2.0f),
-        ::testing::Values(0.0f, 1.0f),
-        ::testing::Values(0.1f)));
+// Ambient Light
 
 TEST_P(AmbientLight, parameter)
 {
@@ -359,6 +412,8 @@ TEST_P(AmbientLight, parameter)
 
 INSTANTIATE_TEST_SUITE_P(
     Light, AmbientLight, ::testing::Values("scivis", "pathtracer"));
+
+// Distant Light
 
 TEST_P(DistantLight, parameter)
 {
@@ -369,7 +424,15 @@ INSTANTIATE_TEST_SUITE_P(Light,
     DistantLight,
     ::testing::Combine(
         ::testing::Values(vec3f(0.0f, 0.0f, 1.0f), vec3f(-0.5f, 1.0f, 3.0f)),
-        ::testing::Values("scivis", "pathtracer")));
+        ::testing::Values("scivis", "pathtracer"),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
+    DistantLight,
+    ::testing::Values(
+        std::make_tuple(vec3f(-0.5f, 1.0f, 3.0f), "pathtracer", true)));
+
+// Geometric Light
 
 TEST_P(GeometricLight, parameter)
 {
@@ -386,15 +449,7 @@ INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
     GeometricLight,
     ::testing::Values(std::make_tuple(0.2f, false, true)));
 
-TEST_P(PhotometricLight, parameter)
-{
-  PerformRenderTest();
-}
-
-INSTANTIATE_TEST_SUITE_P(Light,
-    PhotometricLight,
-    ::testing::Combine(::testing::Values(0.0f, 0.1f),
-        ::testing::Values("scivis", "pathtracer")));
+// Quad Light
 
 TEST_P(QuadLight, parameter)
 {
@@ -405,7 +460,50 @@ INSTANTIATE_TEST_SUITE_P(Light,
     QuadLight,
     ::testing::Combine(::testing::Values(0.2f, 0.4f),
         ::testing::Values("scivis", "pathtracer"),
-        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY)));
+        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
+    QuadLight,
+    ::testing::Combine(::testing::Values(0.2f, 0.4f),
+        ::testing::Values("pathtracer"),
+        ::testing::Values(
+            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
+    QuadLight,
+    ::testing::Values(std::make_tuple(
+        0.2f, "pathtracer", OSP_INTENSITY_QUANTITY_INTENSITY, true)));
+
+// Cylinder Light
+
+TEST_P(CylinderLight, parameter)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(Light,
+    CylinderLight,
+    ::testing::Combine(::testing::Values(0.02f, 0.15f),
+        ::testing::Values("scivis", "pathtracer"),
+        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
+    CylinderLight,
+    ::testing::Combine(::testing::Values(0.02f, 0.15),
+        ::testing::Values("pathtracer"),
+        ::testing::Values(
+            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
+    CylinderLight,
+    ::testing::Values(std::make_tuple(
+        0.02f, "pathtracer", OSP_INTENSITY_QUANTITY_INTENSITY, true)));
+
+// Sphere Light
 
 TEST_P(SphereLight, parameter)
 {
@@ -416,7 +514,23 @@ INSTANTIATE_TEST_SUITE_P(Light,
     SphereLight,
     ::testing::Combine(::testing::Values(0.0f, 0.2f, 0.3f),
         ::testing::Values("scivis", "pathtracer"),
-        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY)));
+        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
+    SphereLight,
+    ::testing::Combine(::testing::Values(0.0f, 0.2f, 0.3f),
+        ::testing::Values("pathtracer"),
+        ::testing::Values(
+            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
+    SphereLight,
+    ::testing::Values(std::make_tuple(
+        0.3f, "pathtracer", OSP_INTENSITY_QUANTITY_RADIANCE, true)));
+
+// Spot Light
 
 TEST_P(SpotLight, parameter)
 {
@@ -431,21 +545,8 @@ INSTANTIATE_TEST_SUITE_P(Light,
                            vec2f(0.2f, 0.4f),
                            vec2f(0.7f, 0.8f)),
         ::testing::Values("scivis", "pathtracer"),
-        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY)));
-
-INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
-    QuadLight,
-    ::testing::Combine(::testing::Values(0.2f, 0.4f),
-        ::testing::Values("pathtracer"),
-        ::testing::Values(
-            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER)));
-
-INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
-    SphereLight,
-    ::testing::Combine(::testing::Values(0.0f, 0.2f, 0.3f),
-        ::testing::Values("pathtracer"),
-        ::testing::Values(
-            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER)));
+        ::testing::Values(OSP_INTENSITY_QUANTITY_INTENSITY),
+        ::testing::Values(false)));
 
 INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
     SpotLight,
@@ -454,14 +555,80 @@ INSTANTIATE_TEST_SUITE_P(LightIntensityQuantity,
             vec2f(0.0f, 0.0f), vec2f(0.0f, 0.2f), vec2f(0.0f, 0.4f)),
         ::testing::Values("pathtracer"),
         ::testing::Values(
-            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER)));
+            OSP_INTENSITY_QUANTITY_RADIANCE, OSP_INTENSITY_QUANTITY_POWER),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
+    SpotLight,
+    ::testing::Values(std::make_tuple(vec2f(0.0f, 0.4f),
+        "pathtracer",
+        OSP_INTENSITY_QUANTITY_RADIANCE,
+        true)));
+
+// Photometric (Spot) Light
+
+TEST_P(PhotometricLight, parameter)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(Light,
+    PhotometricLight,
+    ::testing::Combine(::testing::Values(0.0f, 0.1f),
+        ::testing::Values("scivis", "pathtracer")));
+
+// HDRI Light
 
 TEST_P(HDRILight, parameter)
 {
   PerformRenderTest();
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    Light, HDRILight, ::testing::Values("scivis", "pathtracer"));
+INSTANTIATE_TEST_SUITE_P(Light,
+    HDRILight,
+    ::testing::Combine(
+        ::testing::Values("scivis", "pathtracer"), ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
+    HDRILight,
+    ::testing::Values(std::make_tuple("pathtracer", true)));
+
+// SunSky Light
+
+TEST_P(SunSky, parameter)
+{
+  PerformRenderTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(Light,
+    SunSky,
+    ::testing::Combine(::testing::Values(vec3f(0.f, 0.8f, 0.4f)),
+        ::testing::Values(vec3f(0.f, 0.7f, -1.f),
+            vec3f(0.f, 0.4f, -1.f),
+            vec3f(0.f, 0.1f, -1.f),
+            vec3f(0.f, -0.3f, -1.f),
+            vec3f(0.f, -0.8f, 0.4f)),
+        ::testing::Values(1.0f, 3.0f, 10.0f),
+        ::testing::Values(0.0f),
+        ::testing::Values(0.01f),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(Light2,
+    SunSky,
+    ::testing::Combine(::testing::Values(vec3f(0.2f, -0.5f, 0.f)),
+        ::testing::Values(vec3f(0.2f, 0.4f, -1.f), vec3f(0.f, 0.f, -1.f)),
+        ::testing::Values(2.0f),
+        ::testing::Values(0.0f, 1.0f),
+        ::testing::Values(0.1f),
+        ::testing::Values(false)));
+
+INSTANTIATE_TEST_SUITE_P(LightMotionBlur,
+    SunSky,
+    ::testing::Values(std::make_tuple(vec3f(0.2f, -0.5f, 0.f),
+        vec3f(0.2f, 0.4f, -1.f),
+        2.0f,
+        0.0f,
+        0.1f,
+        true)));
 
 } // namespace OSPRayTestScenes

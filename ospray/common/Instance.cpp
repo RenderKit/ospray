@@ -14,7 +14,7 @@ namespace ospray {
 Instance::Instance(Group *_group)
 {
   managedObjectType = OSP_INSTANCE;
-  this->ispcEquivalent = ispc::Instance_create(this);
+  this->ispcEquivalent = ispc::Instance_create();
 
   group = _group;
 }
@@ -26,12 +26,12 @@ std::string Instance::toString() const
 
 void Instance::commit()
 {
-  MotionTransform::commit();
+  motionTransform.readParams(*this);
 
   ispc::Instance_set(getIE(),
       group->getIE(),
-      (ispc::AffineSpace3f &)(*motionTransforms)[0],
-      motionBlur);
+      (ispc::AffineSpace3f &)motionTransform.transform[0],
+      motionTransform.motionBlur);
 }
 
 box3f Instance::getBounds() const
@@ -39,16 +39,16 @@ box3f Instance::getBounds() const
   box3f bounds;
   const box3f groupBounds = group->getBounds();
   // TODO get better bounds:
-  // - this is too big, because keys outside of time [0, 1] are included
-  // - yet is is also too small, because interpolated transformations can lead
-  //   to leaving the bounds of keys
-  // alternatives:
-  // - use bounds at time 0.5, wrong if different shutter is used and does not
+  // - uses bounds at time 0.5, wrong if different shutter is used and does not
   //   include motion at all
+  // alternatives:
   // - merge linear bounds from Embree (which is for time [0, 1]), but this
   //   needs a temporary RTCScene just for this instance
-  for (auto &&xfm : *motionTransforms)
-    bounds.extend(xfmBounds(xfm, groupBounds));
+  // - extend over all transformed bounds
+  //   - this is too big, because keys outside of time [0, 1] are included
+  //   - yet is is also too small, because interpolated transformations can
+  //     lead to leaving the bounds of keys
+  bounds.extend(xfmBounds(motionTransform.transform, groupBounds));
   return bounds;
 }
 

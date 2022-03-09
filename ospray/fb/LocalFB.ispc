@@ -223,8 +223,7 @@ export void LocalFrameBuffer_accumulateAuxTile(void *uniform _fb,
   }
 }
 
-export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
-    const uniform uint32 size_x,
+export void *uniform LocalFrameBuffer_create(const uniform uint32 size_x,
     const uniform uint32 size_y,
     uniform int32 colorBufferFormat,
     void *uniform colorBuffer,
@@ -236,7 +235,7 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
     void *uniform tileAccumID)
 {
   uniform LocalFB *uniform self = uniform new uniform LocalFB;
-  FrameBuffer_Constructor(&self->super, cClassPtr);
+  FrameBuffer_Constructor(&self->super);
   FrameBuffer_set(&self->super, size_x, size_y, colorBufferFormat);
 
   self->colorBuffer = colorBuffer;

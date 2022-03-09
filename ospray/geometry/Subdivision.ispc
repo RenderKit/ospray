@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -66,19 +66,18 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
   }
 }
 
-void Subdivision_Constructor(
-    uniform Subdivision *uniform mesh, void *uniform cppEquivalent)
+void Subdivision_Constructor(uniform Subdivision *uniform mesh)
 {
-  Geometry_Constructor(&mesh->super, cppEquivalent, Subdivision_postIntersect);
+  Geometry_Constructor(&mesh->super, Subdivision_postIntersect);
 
   mesh->geom = NULL;
   mesh->flagMask = 0;
 }
 
-export void *uniform Subdivision_create(void *uniform cppEquivalent)
+export void *uniform Subdivision_create()
 {
   Subdivision *uniform mesh = uniform new Subdivision;
-  Subdivision_Constructor(mesh, cppEquivalent);
+  Subdivision_Constructor(mesh);
   return mesh;
 }
 

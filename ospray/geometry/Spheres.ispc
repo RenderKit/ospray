@@ -150,9 +150,9 @@ void Spheres_getAreas(const Geometry *const uniform _self,
   }
 }
 
-void Spheres_Constructor(Spheres *uniform self, void *uniform cppEquivalent)
+void Spheres_Constructor(Spheres *uniform self)
 {
-  Geometry_Constructor(&self->super, cppEquivalent, Spheres_postIntersect);
+  Geometry_Constructor(&self->super, Spheres_postIntersect);
   self->super.getAreas = Spheres_getAreas;
   self->super.sampleArea = Spheres_sampleArea;
   Data1D_Constructor(&self->vertex);
@@ -163,10 +163,10 @@ void Spheres_Constructor(Spheres *uniform self, void *uniform cppEquivalent)
   self->global_radius = 0.01;
 }
 
-export void *uniform Spheres_create(void *uniform cppEquivalent)
+export void *uniform Spheres_create()
 {
   Spheres *uniform self = uniform new Spheres;
-  Spheres_Constructor(self, cppEquivalent);
+  Spheres_Constructor(self);
   return self;
 }
 

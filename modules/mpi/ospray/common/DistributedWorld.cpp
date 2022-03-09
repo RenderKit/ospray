@@ -16,59 +16,10 @@ namespace mpi {
 
 using namespace rkcommon;
 
-void RegionScreenBounds::extend(const vec3f &p)
-{
-  if (p.z < 0) {
-    bounds = box2f(vec2f(0), vec2f(1));
-  } else {
-    bounds.extend(vec2f(p.x * sign(p.z), p.y * sign(p.z)));
-    bounds.lower.x = clamp(bounds.lower.x);
-    bounds.upper.x = clamp(bounds.upper.x);
-    bounds.lower.y = clamp(bounds.lower.y);
-    bounds.upper.y = clamp(bounds.upper.y);
-  }
-}
-
-Region::Region(const box3f &bounds, int id) : bounds(bounds), id(id) {}
-
-RegionScreenBounds Region::project(const Camera *camera) const
-{
-  RegionScreenBounds screen;
-  for (int k = 0; k < 2; ++k) {
-    vec3f pt;
-    pt.z = k == 0 ? bounds.lower.z : bounds.upper.z;
-
-    for (int j = 0; j < 2; ++j) {
-      pt.y = j == 0 ? bounds.lower.y : bounds.upper.y;
-
-      for (int i = 0; i < 2; ++i) {
-        pt.x = i == 0 ? bounds.lower.x : bounds.upper.x;
-
-        ProjectedPoint proj = camera->projectPoint(pt);
-        screen.extend(proj.screenPos);
-        screen.depth = std::max(length(pt - camera->pos), screen.depth);
-      }
-    }
-  }
-  return screen;
-}
-
-bool Region::operator==(const Region &b) const
-{
-  // TODO: Do we want users to specify the ID explitly? Or should we just
-  // assume that two objects with the same bounds have the same id?
-  return id == b.id;
-}
-
-bool Region::operator<(const Region &b) const
-{
-  return id < b.id;
-}
-
 DistributedWorld::DistributedWorld() : mpiGroup(mpicommon::worker.dup())
 {
   managedObjectType = OSP_WORLD;
-  this->ispcEquivalent = ispc::DistributedWorld_create(this);
+  this->ispcEquivalent = ispc::DistributedWorld_create();
 }
 
 DistributedWorld::~DistributedWorld()
@@ -79,8 +30,8 @@ DistributedWorld::~DistributedWorld()
 box3f DistributedWorld::getBounds() const
 {
   box3f bounds;
-  for (const auto &r : allRegions) {
-    bounds.extend(r.bounds);
+  for (const auto &b : allRegions) {
+    bounds.extend(b);
   }
   return bounds;
 }
@@ -129,16 +80,41 @@ void DistributedWorld::commit()
   // to the others to build the distributed world
   std::sort(
       myRegions.begin(), myRegions.end(), [](const box3f &a, const box3f &b) {
-        std::less<vec3f> op;
-        return op(a.lower, b.lower)
-            || (a.lower == b.lower && op(a.upper, b.upper));
+        return a.lower < b.lower || (a.lower == b.lower && a.upper < b.upper);
       });
   auto last = std::unique(myRegions.begin(), myRegions.end());
   myRegions.erase(last, myRegions.end());
 
   exchangeRegions();
 
-  ispc::DistributedWorld_set(getIE(), allRegions.data(), allRegions.size());
+  if (regionScene) {
+    rtcReleaseScene(regionScene);
+    regionScene = nullptr;
+  }
+
+  if (allRegions.size() > 0) {
+    // Setup the boxes geometry which we'll use to leverage Embree for
+    // accurately determining region visibility
+    Data *allRegionsData = new Data(allRegions.data(),
+        OSP_BOX3F,
+        vec3ul(allRegions.size(), 1, 1),
+        vec3l(0));
+    regionGeometry = new Boxes();
+    regionGeometry->setParam("box", (ManagedObject *)allRegionsData);
+    regionGeometry->setDevice(embreeDevice);
+    regionGeometry->commit();
+
+    regionScene = rtcNewScene(embreeDevice);
+    rtcAttachGeometry(regionScene, regionGeometry->embreeGeometry);
+    rtcSetSceneFlags(regionScene, RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
+    rtcCommitScene(regionScene);
+
+    regionGeometry->refDec();
+    allRegionsData->refDec();
+  }
+
+  ispc::DistributedWorld_set(
+      getIE(), allRegions.data(), allRegions.size(), regionScene);
 }
 
 void DistributedWorld::exchangeRegions()
@@ -160,11 +136,11 @@ void DistributedWorld::exchangeRegions()
       for (const auto &b : myRegions) {
         auto fnd = std::find_if(allRegions.begin(),
             allRegions.end(),
-            [&](const Region &r) { return r.bounds == b; });
+            [&](const box3f &r) { return r == b; });
         int id = -1;
         if (fnd == allRegions.end()) {
           id = allRegions.size();
-          allRegions.push_back(Region(b, id));
+          allRegions.push_back(b);
         } else {
           id = std::distance(allRegions.begin(), fnd);
         }
@@ -189,11 +165,11 @@ void DistributedWorld::exchangeRegions()
       for (const auto &b : recv) {
         auto fnd = std::find_if(allRegions.begin(),
             allRegions.end(),
-            [&](const Region &r) { return r.bounds == b; });
+            [&](const box3f &r) { return r == b; });
         int id = -1;
         if (fnd == allRegions.end()) {
           id = allRegions.size();
-          allRegions.push_back(Region(b, id));
+          allRegions.push_back(b);
         } else {
           id = std::distance(allRegions.begin(), fnd);
         }
@@ -229,11 +205,3 @@ void DistributedWorld::exchangeRegions()
 
 } // namespace mpi
 } // namespace ospray
-
-using namespace ospray::mpi;
-
-std::ostream &operator<<(std::ostream &os, const Region &r)
-{
-  os << "Region { id = " << r.id << ", bounds = " << r.bounds << " }";
-  return os;
-}

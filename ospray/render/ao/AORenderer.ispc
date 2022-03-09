@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "math/random.ih"
@@ -108,10 +108,10 @@ void AORenderer_renderSample(Renderer *uniform _self,
 
 // AORenderer C++ interface ////////////////////////////////////////////////////
 
-export void *uniform AORenderer_create(void *uniform cppE)
+export void *uniform AORenderer_create()
 {
   uniform AORenderer *uniform self = uniform new uniform AORenderer;
-  Renderer_Constructor(&self->super, cppE);
+  Renderer_Constructor(&self->super);
   self->super.renderSample = AORenderer_renderSample;
   return self;
 }

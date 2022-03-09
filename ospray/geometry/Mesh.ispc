@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -253,8 +253,8 @@ SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
   if (index.z != index.w) {
     const vec3f d = get_vec3f(self->vertex, index.w);
     // painfully slow: re-calculate areas to decide which triangle to sample
-    const vec3f e3 = xfmVector(xfm, d - b);
-    const vec3f m2 = cross(e3, e2);
+    const vec3f e3 = xfmVector(xfm, d - c);
+    const vec3f m2 = cross(e2, e3);
     const float a1 = length(m1);
     const float a2 = length(m2);
     const float p1 = a1 * rcp(a1 + a2);
@@ -265,7 +265,7 @@ SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
       sp.x = (s.x - p1) * rcp(1.f - p1); // reproject
       v0 = d;
       v1 = c;
-      v2 = b;
+      v2 = a;
       res.normal = m2;
     }
   }
@@ -296,15 +296,15 @@ void Mesh_getAreas(const Geometry *const uniform _self,
     areas[i] = 0.5f * length(cross(e1, e2));
     if (!self->is_triangleMesh) {
       const uniform vec3f d = get_vec3f(self->vertex, index.w);
-      const uniform vec3f e3 = xfmVector(xfm, d - b);
+      const uniform vec3f e3 = xfmVector(xfm, d - c);
       areas[i] += 0.5f * length(cross(e2, e3));
     }
   }
 }
 
-void Mesh_Constructor(Mesh *uniform self, void *uniform cppEquivalent)
+void Mesh_Constructor(Mesh *uniform self)
 {
-  Geometry_Constructor(&self->super, cppEquivalent, NULL);
+  Geometry_Constructor(&self->super, NULL);
   self->super.getAreas = Mesh_getAreas;
   self->super.sampleArea = Mesh_sampleArea;
   Data1D_Constructor(&self->index);
@@ -314,10 +314,10 @@ void Mesh_Constructor(Mesh *uniform self, void *uniform cppEquivalent)
   Data1D_Constructor(&self->texcoord);
 }
 
-export void *uniform Mesh_create(void *uniform cppEquivalent)
+export void *uniform Mesh_create()
 {
   Mesh *uniform self = uniform new Mesh;
-  Mesh_Constructor(self, cppEquivalent);
+  Mesh_Constructor(self);
   return self;
 }
 

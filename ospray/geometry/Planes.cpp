@@ -14,7 +14,7 @@ namespace ospray {
 
 Planes::Planes()
 {
-  ispcEquivalent = ispc::Planes_create(this);
+  ispcEquivalent = ispc::Planes_create();
 }
 
 std::string Planes::toString() const

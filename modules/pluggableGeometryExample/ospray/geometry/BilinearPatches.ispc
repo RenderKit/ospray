@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -36,13 +36,11 @@ static void BilinearPatches_postIntersect(const Geometry *uniform geometry,
   dg.Ng = dg.Ns = normalize(ray.Ng);
 }
 
-/*! create a new ispc equivalent for the C++ class (cppEquivalent
-    points back, if we ever need this. this returns a void * that the
-    c++ side can use to call back to us when needed. Note this return
-    values _has_ to be a untyped 'void*' because ISPC cannot currently
-    export 'real' class types - with function pointers etcpp - to a c
-    header file */
-export void *uniform BilinearPatches_create(void *uniform cppEquivalent)
+/*! create a new ispc equivalent for the C++ class (this returns a void * that
+   the c++ side can use to call back to us when needed. Note this return values
+   _has_ to be a untyped 'void*' because ISPC cannot currently export 'real'
+   class types - with function pointers etcpp - to a c header file */
+export void *uniform BilinearPatches_create()
 {
   BilinearPatches *uniform self = uniform new uniform BilinearPatches;
 
@@ -51,8 +49,7 @@ export void *uniform BilinearPatches_create(void *uniform cppEquivalent)
      do not have to set the 'intersect' and 'occluded' functions
      because we use embree to do the traversal for us (see
      BilinearPatches_set()) below */
-  Geometry_Constructor(
-      &self->super, cppEquivalent, BilinearPatches_postIntersect);
+  Geometry_Constructor(&self->super, BilinearPatches_postIntersect);
   return self;
 }
 

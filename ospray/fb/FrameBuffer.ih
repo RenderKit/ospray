@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -31,12 +31,10 @@ struct FrameBuffer
   int32 frameID;
 
   FrameBuffer_ColorBufferFormat colorBufferFormat;
-
-  void *cClassPtr; /*!< pointer back to c++-side of this class */
 };
 
 void FrameBuffer_Constructor(
-    FrameBuffer *uniform self, void *uniform cClassPtr);
+    FrameBuffer *uniform self);
 
 void FrameBuffer_set(FrameBuffer *uniform self,
     const uniform uint32 size_x,

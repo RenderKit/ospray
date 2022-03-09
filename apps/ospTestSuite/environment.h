@@ -1,4 +1,4 @@
-// Copyright 2017-2020 Intel Corporation
+// Copyright 2017-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -40,7 +40,7 @@ class OSPRayEnvironment : public ::testing::Environment
     return failedDir;
   }
 
-  void ParsArgs(int argc, char **argv);
+  void ParseArgs(int argc, char **argv);
   std::string GetStrArgValue(std::string *arg) const;
   int GetNumArgValue(std::string *arg) const;
 

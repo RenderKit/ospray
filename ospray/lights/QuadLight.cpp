@@ -2,13 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "QuadLight.h"
+#include "lights/Light_ispc.h"
 #include "lights/QuadLight_ispc.h"
 
 namespace ospray {
 
-QuadLight::QuadLight()
+void *QuadLight::createIE(const void *instance) const
 {
-  ispcEquivalent = ispc::QuadLight_create();
+  void *ie = ispc::QuadLight_create();
+  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
+  ispc::QuadLight_set(ie,
+      (ispc::vec3f &)radiance,
+      (ispc::vec3f &)position,
+      (ispc::vec3f &)edge1,
+      (ispc::vec3f &)edge2);
+  return ie;
 }
 
 std::string QuadLight::toString() const
@@ -25,12 +33,6 @@ void QuadLight::commit()
 
   queryIntensityQuantityType(OSP_INTENSITY_QUANTITY_RADIANCE);
   processIntensityQuantityType();
-
-  ispc::QuadLight_set(getIE(),
-      (ispc::vec3f &)radiance,
-      (ispc::vec3f &)position,
-      (ispc::vec3f &)edge1,
-      (ispc::vec3f &)edge2);
 }
 
 void QuadLight::processIntensityQuantityType()

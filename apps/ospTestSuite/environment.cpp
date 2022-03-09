@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Intel Corporation
+// Copyright 2017-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "environment.h"
@@ -9,10 +9,10 @@ OSPRayEnvironment::OSPRayEnvironment(int argc, char **argv)
       baselineDir("regression_test_baseline"),
       failedDir("failed")
 {
-  ParsArgs(argc, argv);
+  ParseArgs(argc, argv);
 }
 
-void OSPRayEnvironment::ParsArgs(int argc, char **argv)
+void OSPRayEnvironment::ParseArgs(int argc, char **argv)
 {
   std::vector<std::string> testArgs;
   for (int idx = 0; idx < argc; ++idx) {

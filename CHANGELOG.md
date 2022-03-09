@@ -1,9 +1,37 @@
 Version History
 ---------------
 
+### Changes in v2.8.0:
+
+-   Lights can be now part of `OSPGroup` and thus instanced like
+    geometries and volumes and thus lights also support motion blur
+    (with the path tracer)
+-   Add cylinder light (with solid area sampling)
+-   Add support for rolling shutter of cameras
+-   Add support for quaternion motion blur for instance and camera to
+    allow for smoothly interpolated rotations
+-   Fix illumination from emissive quad meshes
+
+### Changes in v2.7.1:
+
+-   Use Open VKL v1.0.1 to fix sporadic slowdowns when rendering
+    structured regular and VDB volumes with the SciVis renderer
+-   Fix CMake variables and logic
+-   Fix crash when `transferfunction.opacity = 0`
+-   Fix bug in MPI data-parallel rendering that caused rendering to hang
+-   Workaround dynamic linking issue on Windows in MPI distributed
+    rendering
+-   Correctly initialize `renderFrame` progress
+-   Improved performance of data-parallel rendering for scenes with
+    a large number of regions
+-   Expanded camera model support of the data-parallel renderer,
+    data-parallel rendering can now use all the camera models supported
+    by the SciVis renderer
+-   Clarify documentation and error messages
+
 ### Changes in v2.7.0:
 
--   Add support for transformation and camera Motion Blur (with the path
+-   Add support for transformation and camera motion blur (with the path
     tracer) via `shutter` parameter of the camera and `motion.transform`
     array and `time` parameter of the instance and camera
 -   OSPRay can now be built for ARM64 CPUs with NEON (e.g., Apple M1)

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "fb/FrameBuffer.ih"
@@ -230,11 +230,11 @@ export void DFB_zComposite(
   }
 }
 
-export void *uniform DFB_create(void *uniform cClassPtr)
+export void *uniform DFB_create()
 {
   DistributedFrameBuffer *uniform self =
       uniform new uniform DistributedFrameBuffer;
-  FrameBuffer_Constructor(&self->super, cClassPtr);
+  FrameBuffer_Constructor(&self->super);
 
   return self;
 }
