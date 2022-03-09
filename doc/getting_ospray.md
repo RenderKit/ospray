@@ -4,7 +4,7 @@ Download Precompiled OSPRay Binary Packages
 Prerequisites
 -------------
 
-Your CPU must support at least SSE4.1 to run OSPRay. The TGZ/ZIP
+Your CPU must support at least SSE4.1 or NEON to run OSPRay. The TGZ/ZIP
 packages contain most needed 3rd party dependencies. Additionally you
 need
 
@@ -16,6 +16,9 @@ We recommend the latest version of both TBB and Embree libraries.
 
 Packages
 --------
+
+Packages for x86_64 are provided, OSPRay can be built for ARM64/NEON
+using the superbuild (see [Building and Finding OSPRay](#building-and-finding-ospray)).
 
 For Linux we provide OSPRay precompiled for 64\ bit as a TGZ archive.  
 [ospray-<OSPRAY_VERSION>.x86_64.linux.tar.gz](https://github.com/ospray/OSPRay/releases/download/v<OSPRAY_VERSION>/ospray-<OSPRAY_VERSION>.x86_64.linux.tar.gz)

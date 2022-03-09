@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "TileOperation.h"
@@ -9,7 +9,7 @@ namespace ospray {
 
 using DFB = DistributedFrameBuffer;
 
-void TileOperation::attach(DistributedFrameBuffer *dfb) {}
+void TileOperation::attach(DistributedFrameBuffer *) {}
 
 TileDesc::TileDesc(const vec2i &begin, size_t tileID, size_t ownerID)
     : begin(begin), tileID(tileID), ownerID(ownerID)

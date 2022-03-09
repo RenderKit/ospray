@@ -1,4 +1,4 @@
-// Copyright 2018-2020 Intel Corporation
+// Copyright 2018-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -27,7 +27,7 @@ inline void initializeOSPRay(
   if (errorsFatal) {
     ospDeviceSetErrorCallback(
         device,
-        [](void *data, OSPError error, const char *errorDetails) {
+        [](void *, OSPError error, const char *errorDetails) {
           std::cerr << "OSPRay error: " << errorDetails << std::endl;
           exit(error);
         },
@@ -35,14 +35,14 @@ inline void initializeOSPRay(
   } else {
     ospDeviceSetErrorCallback(
         device,
-        [](void *data, OSPError error, const char *errorDetails) {
+        [](void *, OSPError, const char *errorDetails) {
           std::cerr << "OSPRay error: " << errorDetails << std::endl;
         },
         nullptr);
   }
 
   ospDeviceSetStatusCallback(
-      device, [](void *data, const char *msg) { std::cout << msg; }, nullptr);
+      device, [](void *, const char *msg) { std::cout << msg; }, nullptr);
 
   bool warnAsErrors = true;
   auto logLevel = OSP_LOG_WARNING;

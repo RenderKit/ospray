@@ -139,7 +139,7 @@ struct UserMemMessage : public Message
   }
 
   /* set data to null to keep the parent from deleting it */
-  virtual ~UserMemMessage()
+  virtual ~UserMemMessage() override
   {
     data = nullptr;
   }

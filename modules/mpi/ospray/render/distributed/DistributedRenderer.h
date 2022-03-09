@@ -22,6 +22,7 @@ struct RegionInfo
 struct DistributedRenderer : public Renderer
 {
   DistributedRenderer();
+  ~DistributedRenderer() override;
 
   void computeRegionVisibility(DistributedFrameBuffer *fb,
       Camera *camera,

@@ -1,9 +1,12 @@
-## Copyright 2017-2020 Intel Corporation
+## Copyright 2017-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 if (NOT OSPRAY_APPS_TESTING)
   return()
 endif()
+
+# Note: CMake provides FindGTest which defines target GTest::GTest
+find_package(GTest REQUIRED CONFIG)
 
 ospray_disable_compiler_warnings()
 
@@ -19,6 +22,7 @@ add_executable(ospTestSuite
   test_enums.cpp
   $<$<BOOL:${OSPRAY_APPS_ENABLE_GLM}>:test_glm_compat.cpp>
   test_camera.cpp
+  test_motionblur.cpp
   ospTestSuite.cpp
 )
 
@@ -27,7 +31,7 @@ PRIVATE
   arcball_camera
   ospray_testing
   ospray_module_ispc
-  gtest_main
+  GTest::gtest
   stb_image
   $<$<BOOL:${OSPRAY_APPS_ENABLE_GLM}>:${GLM_TARGET}>
 )

@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "api/ISPCDevice.h"
 #include "common/Data.h"
 #include "common/Managed.h"
 #include "common/Util.h"

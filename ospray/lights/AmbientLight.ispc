@@ -18,7 +18,8 @@ struct AmbientLight
 // ==> poor support for translucent materials
 Light_SampleRes AmbientLight_sample(const uniform Light *uniform super,
     const DifferentialGeometry &dg,
-    const vec2f &s)
+    const vec2f &s,
+    const float)
 {
   uniform AmbientLight *uniform self = (uniform AmbientLight * uniform) super;
   Light_SampleRes res;

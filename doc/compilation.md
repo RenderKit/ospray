@@ -19,16 +19,15 @@ before you can build OSPRay you need the following prerequisites:
     C++11 compiler (we recommend using GCC, but also support Clang,
     MSVC, and [Intel® C++ Compiler
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
-    Linux development tools. To build the interactive tutorials, you
-    should also have some version of OpenGL and GLFW.
+    Linux development tools.
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.14.1 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.16.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.^[For example, if OSPRay is in
     `~/Projects/ospray`, ISPC will also be searched in
-    `~/Projects/ispc-v1.14.1-linux`] Alternatively set the CMake
+    `~/Projects/ispc-v1.16.1-linux`.] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   OSPRay builds on top of the [Intel oneAPI Rendering Toolkit common
     library (rkcommon)](https://www.github.com/ospray/rkcommon). The
@@ -37,20 +36,29 @@ before you can build OSPRay you need the following prerequisites:
     to build rkcommon, we recommend the default the Intel [Threading
     Building Blocks (TBB)](https://www.threadingbuildingblocks.org/) as
     tasking system for performance and flexibility reasons.
+    TBB must be built from source when targeting ARM CPUs, or can
+    be built from source as part of the [superbuild](#cmake-superbuild).
     Alternatively you can set CMake variable `RKCOMMON_TASKING_SYSTEM`
     to `OpenMP` or `Internal`.
--   OSPRay also heavily uses Intel [Embree], installing version 3.12.0
+-   OSPRay also heavily uses Intel [Embree], installing version 3.13.1
     or newer is required. If Embree is not found by CMake its location
     can be hinted with the variable `embree_DIR`.
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.13.0 or newer is required. If Open VKL is not
+    installing version 1.0.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
--   OSPRay also provides an optional module implementing the `denosier`
+-   OSPRay also provides an optional module implementing the `denoiser`
     image operation, which is enabled by `OSPRAY_MODULE_DENOISER`. This
     module requires Intel [Open Image Denoise] in version 1.2.3 or
     newer. You may need to hint the location of the library with the
     CMake variable `OpenImageDenoise_DIR`.
+-   For the optional MPI module (enabled by `OSPRAY_MODULE_MPI`), which
+    provides the `mpiOffload` and `mpiDistributed` devices, you need an
+    MPI library and [Google Snappy](https://github.com/google/snappy).
+-   The optional example application, the test suit and benchmarks need
+    some version of OpenGL and GLFW as well as
+    [GoogleTest](https://github.com/google/googletest) and [Google
+    Benchmark](https://github.com/google/benchmark/)
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be
@@ -125,6 +133,10 @@ BUILD_OSPRAY_MODULE_MPI
 : set to ON to build OSPRay's MPI module for data-replicated and
 distributed parallel rendering on multiple nodes.
 
+BUILD_TBB_FROM_SOURCE
+: set to ON to build TBB from source (required for ARM support).
+The default setting is OFF.
+
 For the full set of options, run:
 
     ccmake [<OSPRAY_SOURCE_LOC>/scripts/superbuild]
@@ -158,7 +170,7 @@ CMake is easy:
 
         cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
 
-    CMake will now use Clang instead of GCC. If you are ok with using
+    CMake will now use Clang instead of GCC. If you are OK with using
     the default compiler on your system, then simply skip this step.
     Note that the compiler variables cannot be changed after the first
     `cmake` or `ccmake` run.

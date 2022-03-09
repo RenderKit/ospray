@@ -89,7 +89,6 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   void removeObjectParam(OSPObject object, const char *name) override;
 
   void commit(OSPObject object) override;
-
   void release(OSPObject _obj) override;
   void retain(OSPObject _obj) override;
 
@@ -126,7 +125,7 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   OSPPickResult pick(
       OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
 
-  std::shared_ptr<LocalTiledLoadBalancer> loadBalacer;
+  std::shared_ptr<LocalTiledLoadBalancer> loadBalancer;
 
  private:
   RTCDevice embreeDevice = nullptr;

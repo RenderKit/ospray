@@ -1,9 +1,9 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "common/Managed.h"
+#include "common/MotionTransform.h"
 #include "common/Util.h"
 
 namespace ospray {
@@ -21,14 +21,13 @@ struct OSPRAY_SDK_INTERFACE ProjectedPoint
 //! base camera class abstraction
 /*! the base class itself does not do anything useful; look into
     perspectivecamera etc for that */
-struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
+struct OSPRAY_SDK_INTERFACE Camera : public MotionTransform
 {
   Camera();
-  virtual ~Camera() override = default;
+  ~Camera() override;
 
-  virtual std::string toString() const override;
-
-  virtual void commit() override;
+  std::string toString() const override;
+  void commit() override;
 
   // Project the world space point to the screen, and return the screen-space
   // point (in normalized screen-space coordinates) along with the depth
@@ -40,21 +39,26 @@ struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
 
   // Data members //
 
-  vec3f pos; // position of the camera in world-space
-  vec3f dir; // main direction of the camera in world-space
-  vec3f up; // up direction of the camera in world-space
+  // if motionBlur in local camera space; otherwise in world-space:
+  vec3f pos; // position of the camera
+  vec3f dir; // main direction of the camera
+  vec3f up; // up direction of the camera
+
   float nearClip{1e-6f}; // near clipping distance
   // definition of the image region, may even be outside of [0..1]^2
   // to simulate sensor shift
   vec2f imageStart; // lower left corner
   vec2f imageEnd; // upper right corner
-  float shutterOpen{0.0f}; // start time of camera shutter
-  float shutterClose{0.0f}; // end time of camera shutter
+  range1f shutter{0.5f, 0.5f}; // start and end time of camera shutter time
+
+  void setDevice(RTCDevice embreeDevice);
 
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>
   friend void registerTypeHelper(const char *type);
   static void registerType(const char *type, FactoryFcn<Camera> f);
+  RTCDevice embreeDevice{nullptr};
+  RTCGeometry embreeGeometry{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Camera *, OSP_CAMERA);

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -17,8 +17,8 @@ struct VolumetricModel
   //! Color and opacity transfer function.
   TransferFunction *transferFunction;
 
-  //! value selector
-  VKLValueSelector vklValueSelector;
+  //! interval iterator context
+  VKLIntervalIteratorContext vklIntervalContext;
 
   box3f boundingBox;
 

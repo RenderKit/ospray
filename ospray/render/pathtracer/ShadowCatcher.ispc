@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/PathStructs.ih"
@@ -46,7 +46,8 @@ bool shadowCatcher(const PathContext &pathContext,
 
       const vec2f s = LDSampler_getFloat2(
           pathContext.ldSampler, pathState.sampleDim + 4 + i * 2);
-      Light_SampleRes ls = light->sample(light, pathVertex.dg, s);
+      Light_SampleRes ls =
+          light->sample(light, pathVertex.dg, s, pathState.time);
 
       // skip when zero contribution from light
       if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)

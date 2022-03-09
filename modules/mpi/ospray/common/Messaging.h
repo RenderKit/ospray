@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -19,7 +19,7 @@ struct MessageHandler : public maml::MessageHandler
   //! NOTE: automatically register/de-registers itself
 
   MessageHandler(ObjectHandle handle);
-  virtual ~MessageHandler();
+  virtual ~MessageHandler() override;
 
  protected:
   ObjectHandle myId;
@@ -33,6 +33,8 @@ struct MessageHandler : public maml::MessageHandler
  * conflicting with other messaging.
  */
 void init(mpicommon::Group parentGroup);
+
+void shutdown();
 
 void registerMessageListener(int handleObjID, MessageHandler *listener);
 

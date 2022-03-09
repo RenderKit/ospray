@@ -234,7 +234,7 @@ The following errors are currently used by OSPRay:
   OSP_INVALID_ARGUMENT   an invalid argument was specified
   OSP_INVALID_OPERATION  the operation is not allowed for the specified object
   OSP_OUT_OF_MEMORY      there is not enough memory to execute the command
-  OSP_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1)
+  OSP_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1 on x86_64 and NEON on ARM64)
   OSP_VERSION_MISMATCH   a module could not be loaded due to mismatching version
   ---------------------- -------------------------------------------------------
   : Possible error codes, i.e., valid named constants of type `OSPError`.
@@ -517,7 +517,7 @@ To allow for (partial) copies or updates of data arrays use
         uint64_t destinationIndex3 = 0);
 
 which will copy the whole^[The number of items to be copied is defined
-by the size of the source array] content of the `source` array into
+by the size of the source array.] content of the `source` array into
 `destination` at the given location `destinationIndex`. The
 `OSPDataType`s of the data objects must match. The region to be copied
 must be valid inside the destination, i.e., in all dimensions,
@@ -591,9 +591,15 @@ table below.
                                                         reconstructing the field,
                                                         also allowed is
                                                         `OSP_VOLUME_FILTER_NEAREST`
+                                                        and
+                                                        `OSP_VOLUME_FILTER_TRICUBIC`
 
   int     gradientFilter              same as `filter`  filter used during
                                                         gradient computations
+
+  float   background                             `NaN`  value that is used when
+                                                        sampling an undefined region
+                                                        outside the volume domain
   ------- -------------- -----------------------------  --------------------------
   : Configuration parameters for structured regular volumes.
 
@@ -626,7 +632,7 @@ summarized below.
                                                         units of $(r, \theta,
                                                         \phi)$; angles in degrees
 
-  OSPData  data                                         the actual voxel 3D [data]
+  OSPData data                                          the actual voxel 3D [data]
 
   int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
                                                         reconstructing the field,
@@ -635,6 +641,10 @@ summarized below.
 
   int     gradientFilter              same as `filter`  filter used during
                                                         gradient computations
+
+  float   background                             `NaN`  value that is used when
+                                                        sampling an undefined region
+                                                        outside the volume domain
   ------- -------------- -----------------------------  --------------------------
   : Configuration parameters for structured spherical volumes.
 
@@ -701,6 +711,10 @@ Note that cell widths are defined _per refinement level_, not per block.
 
   vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
                                                     world-space
+
+  float          background                  `NaN`  value that is used when sampling
+                                                    an undefined region outside the
+                                                    volume domain
   -------------- --------------- -----------------  -----------------------------------
   : Configuration parameters for AMR volumes.
 
@@ -825,8 +839,9 @@ the `cell.type` parameter must be omitted).
   bool                precomputedNormals    false  whether to accelerate by precomputing,
                                                    at a cost of 12 bytes/face
 
-  int                   maxIteratorDepth        6  do not descend further than to this BVH
-                                                   depth during interval iteration
+  float               background            `NaN`  value that is used when sampling an
+                                                   undefined region outside the volume
+                                                   domain
   ------------------- ------------------ --------  ---------------------------------------
   : Configuration parameters for unstructured volumes.
 
@@ -865,10 +880,6 @@ VDB volumes have the following parameters:
   ---------- ----------------- -------------------------------------------------
   Type       Name              Description
   ---------- ----------------- -------------------------------------------------
-  int        maxIteratorDepth  do not descend further than to this depth during
-                               interval iteration, the maximum value and the
-                               default is 3
-
   int        maxSamplingDepth  do not descend further than to this depth during
                                sampling, the maximum value and the default is 3
 
@@ -893,6 +904,9 @@ VDB volumes have the following parameters:
 
   int        gradientFilter    filter used for reconstructing the field during
                                gradient computations, default same as `filter`
+
+  float      background        value that is used when sampling an undefined region
+                               outside the volume domain, default `NaN`
   ---------- ----------------- -------------------------------------------------
   : Configuration parameters for VDB volumes.
 
@@ -959,8 +973,6 @@ traversal, similar to the method in\ [1].
                                              time, but will make volume rendering
                                              less efficient.
 
-  int             maxIteratorDepth        6  do not descend further than to this BVH
-                                             depth during interval iteration
   -------- ----------------------- --------  ---------------------------------------
   : Configuration parameters for particle volumes.
 
@@ -1390,7 +1402,7 @@ All light sources accept the following parameters:
 
   float     intensity                 1  intensity of the light (a factor)
 
-  uchar     intensityQuantity            `OSPIntensityQuantity` to set the radiative
+  uchar     intensityQuantity            `OSPIntensityQuantity` to set the radiometric
                                          quantity represented by `intensity`. The
                                          default value depends on the light source.
 
@@ -1399,7 +1411,7 @@ All light sources accept the following parameters:
   : Parameters accepted by all lights.
 
 In OSPRay the `intensity` parameter of a light source can correspond to
-different types of radiative quantities. The type of the value
+different types of radiometric quantities. The type of the value
 represented by a light's `intensity` parameter is set using
 `intensityQuantity`, which accepts values from the enum type
 `OSPIntensityQuantity`. The supported types of `OSPIntensityQuantity`
@@ -1425,7 +1437,7 @@ specific light source).
   OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a 
                                       built-in quantity (e.g., `HDRI`, or `sunSky`). 
   ----------------------------------  ----------------------------------------------------
-  : Types of radiative quantities used to interpret a light's `intensity` parameter.
+  : Types of radiometric quantities used to interpret a light's `intensity` parameter.
 
 The following light types are supported by most OSPRay renderers.
 
@@ -1585,7 +1597,7 @@ shadows.
 The HDRI light is a textured light source surrounding the scene and
 illuminating it from infinity. It is created by passing the type string
 "`hdri`" to `ospNewLight`. The values of the HDRI correspond to radiance
-and therfore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE` 
+and therefore the HDRI light only accepts `OSP_INTENSITY_QUANTITY_SCALE` 
 as `intensityQuantity` parameter value. 
 In addition to the [general parameters](#lights) the HDRI light
 supports the following special parameters:
@@ -1629,9 +1641,9 @@ string "`sunSky`" to `ospNewLight`. The sun-sky light surrounds the
 scene and illuminates it from infinity and can be used for rendering
 outdoor scenes. The radiance values are calculated using the
 Hošek-Wilkie sky model and solar radiance function. The underlying model
-of the sun-sky light returns radiance values and therfore the light
+of the sun-sky light returns radiance values and therefore the light
 only accepts `OSP_INTENSITY_QUANTITY_SCALE` as `intensityQuantity`
-parameter value. To recale the returned radiance of the sky model
+parameter value. To rescale the returned radiance of the sky model
 the default value for the `intensity` parameter is set to `0.025`.
 In addition to the [general parameters](#lights) the
 following special parameters are supported:
@@ -1734,12 +1746,17 @@ via a transform. To create and instance call
 
     OSPInstance ospNewInstance(OSPGroup);
 
-  ------------ ------ ---------- --------------------------------------
-  Type         Name      Default Description
-  ------------ ------ ---------- --------------------------------------
-  affine3f     xfm      identity world-space transform for all attached
-                                 geometries and volumes
-  ------------ ------ ---------- --------------------------------------
+  ------------ ----------------- ---------- --------------------------------------------------------
+  Type         Name                 Default Description
+  ------------ ----------------- ---------- --------------------------------------------------------
+  affine3f     transform           identity world-space transform for all attached geometries and
+                                            volumes, overridden by `motion.transform`
+
+  affine3f[]   motion.transform             uniformly distributed world-space transforms
+
+  box1f        time                  [0, 1] time associated with first and last key in
+                                            `motion.` arrays (for motion blur)
+  ------------ ----------------- ---------- --------------------------------------------------------
   : Parameters understood by instances.
 
 
@@ -1924,7 +1941,7 @@ renderers, the SciVis renderer supports the following parameters:
 
 Note that the intensity (and color) of AO is deduced from an [ambient
 light] in the `lights` array.^[If there are multiple ambient lights then
-their contribution is added] If `aoSamples` is zero (the default) then
+their contribution is added.] If `aoSamples` is zero (the default) then
 ambient lights cause ambient illumination (without occlusion).
 
 ### Ambient Occlusion Renderer
@@ -1995,7 +2012,9 @@ Materials describe how light interacts with surfaces, they give objects
 their distinctive look. To let the given renderer create a new material
 of given type `type` call
 
-    OSPMaterial ospNewMaterial(const char *renderer_type, const char *material_type);
+    OSPMaterial ospNewMaterial(const char *, const char *material_type);
+
+Please note that the first argument is ignored.
 
 The returned handle can then be used to assign the material to a given
 geometry with
@@ -2537,24 +2556,35 @@ To create a new camera of given type `type` use
 
 All cameras accept these parameters:
 
-  Type   Name        Description
-  ------ ----------- ------------------------------------------
-  vec3f  position    position of the camera in world-space
-  vec3f  direction   main viewing direction of the camera
-  vec3f  up          up direction of the camera
-  float  nearClip    near clipping distance
-  vec2f  imageStart  start of image region (lower left corner)
-  vec2f  imageEnd    end of image region (upper right corner)
+  Type        Name              Description
+  ----------- ----------------- ------------------------------------------
+  vec3f       position          position of the camera in world-space
+  vec3f       direction         main viewing direction of the camera
+  vec3f       up                up direction of the camera
+  affine3f    transform         additional world-space transform, overridden by `motion.transform`
+  float       nearClip          near clipping distance
+  vec2f       imageStart        start of image region (lower left corner)
+  vec2f       imageEnd          end of image region (upper right corner)
+  affine3f[]  motion.transform  additional uniformly distributed world-space transforms
+  box1f       time              time associated with first and last key in `motion.` arrays, default [0, 1]
+  box1f       shutter           start and end of shutter time (for motion blur), default [0.5, 0.5]
   ------ ----------- ------------------------------------------
   : Parameters accepted by all cameras.
 
-The camera is placed and oriented in the world with `position`, `direction`
-and `up`. OSPRay uses a right-handed coordinate system. The region of the
-camera sensor that is rendered to the image can be specified in normalized
+The camera is placed and oriented in the world with `position`,
+`direction` and `up`. Additionally, an extra transformation `transform`
+can be specified, which will only be applied to 3D vectors (i.e.
+`position`, `direction` and `up`), but does *not* affect any sizes
+(e.g., `nearClip`, `apertureRadius`, or `height`). The same holds for
+the array of transformations `motion.transform` to achieve camera motion
+blur (in combination with `time` and `shutter`).
+
+OSPRay uses a right-handed coordinate system. The region of the camera
+sensor that is rendered to the image can be specified in normalized
 screen-space coordinates with `imageStart` (lower left corner) and
-`imageEnd` (upper right corner). This can be used, for example, to crop the
-image, to achieve asymmetrical view frusta, or to horizontally flip the
-image to view scenes which are specified in a left-handed coordinate
+`imageEnd` (upper right corner). This can be used, for example, to crop
+the image, to achieve asymmetrical view frusta, or to horizontally flip
+the image to view scenes which are specified in a left-handed coordinate
 system. Note that values outside the default range of [0–1] are valid,
 which is useful to easily realize overscan or film gate, or to emulate a
 shifted sensor.
@@ -2563,8 +2593,8 @@ shifted sensor.
 
 The perspective camera implements a simple thin lens camera for
 perspective rendering, supporting optionally depth of field and stereo
-rendering, but no motion blur. It is created by passing the type string
-"`perspective`" to `ospNewCamera`. In addition to the [general
+rendering (with the [path tracer]). It is created by passing the type
+string "`perspective`" to `ospNewCamera`. In addition to the [general
 parameters](#cameras) understood by all cameras the perspective camera
 supports the special parameters listed in the table below.
 
@@ -2632,11 +2662,10 @@ edges.][imgCameraArchitectural]
 #### Orthographic Camera
 
 The orthographic camera implements a simple camera with orthographic
-projection, without support for depth of field or motion blur. It is
-created by passing the type string  "`orthographic`" to `ospNewCamera`.
-In addition to the [general parameters](#cameras) understood by all
-cameras the orthographic camera supports the following special
-parameters:
+projection, without support for depth. It is created by passing the type
+string  "`orthographic`" to `ospNewCamera`. In addition to the [general
+parameters](#cameras) understood by all cameras the orthographic camera
+supports the following special parameters:
 
   Type   Name    Description
   ------ ------- ------------------------------------------------------------
@@ -2753,7 +2782,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
   OSP_FB_DEPTH     euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float; for multiple samples per pixel their minimum is taken
   OSP_FB_ACCUM     accumulation buffer for progressive refinement
   OSP_FB_VARIANCE  for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering]
-  OSP_FB_NORMAL    accumulated world-space normal of the first hit, as vec3f
+  OSP_FB_NORMAL    accumulated world-space normal of the first non-specular hit, as vec3f
   OSP_FB_ALBEDO    accumulated material albedo (color without illumination) at the first hit, as vec3f
   ---------------- -----------------------------------------------------------
   : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
@@ -2956,7 +2985,7 @@ Applications can query whether particular events are complete with
     int ospIsReady(OSPFuture, OSPSyncEvent = OSP_TASK_FINISHED);
 
 As the given running task runs (as tracked by the `OSPFuture`),
-applications can query a boolean [0,1] result if the passed event has
+applications can query a boolean [0, 1] result if the passed event has
 been completed.
 
 Applications can query how long an async task ran with
@@ -3066,7 +3095,7 @@ through the command line, the following parameters can be set:
 
   uint     commandBufferSize         512\ MiB  Set the max command buffer size
                                                to allow. Units are in MiB. Max
-                                               size is 1.8GiB
+                                               size is 1.8\ GiB
 
   uint     maxInlineDataSize          32\ MiB  Set the max size of an OSPData
                                                which can be inline'd into the
@@ -3083,12 +3112,17 @@ The `maxCommandBufferEntries`, `commandBufferSize`, and
 `OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
 respectively.
 
+The `mpiOffload` device does not support multiple init/shutdown cycles.
+Thus, to run `ospBenchmark` for this device make sure to exclude the
+init/shutdown test by passing `--benchmark_filter=-ospInit_ospShutdown`
+through the command line.
+
 MPI Distributed Rendering
 -------------------------
 
 While MPI Offload rendering is used to transparently distribute
 rendering work without requiring modification to the application, MPI
-Distributed rendering is targetted at use of OSPRay within MPI-parallel
+Distributed rendering is targeted at use of OSPRay within MPI-parallel
 applications. The MPI distributed device can be selected by loading the
 `mpi` module, and manually creating and using an instance of the
 `mpiDistributed` device:
@@ -3175,7 +3209,7 @@ occlusion, each rank's data can overlap. To clip these non-owned overlap
 regions out a set of regions (the `region` parameter) can pass as a
 parameter to the `OSPWorld` being rendered. Each rank can specify one or
 more non-overlapping `box3f`'s which bound the portions of its local
-data which it is reponsible for rendering. See the
+data which it is responsible for rendering. See the
 [ospMPIDistributedTutorialStructuredVolume](https://github.com/ospray/ospray/blob/master/modules/mpi/tutorials/ospMPIDistributedTutorialStructuredVolume.cpp)
 for an example.
 
@@ -3210,3 +3244,22 @@ copied over the network to the workers.
 The MPI Distributed device also supports user modules, as all that is
 required for compositing the distributed data are the bounds of each
 rank's local data.
+
+MultiDevice Rendering
+==============================
+
+The multidevice module is an experimental OSPRay device type that renders
+images by delegating off pixel tiles to a number of internal delegate OSPRay
+devices. Multidevice is in still in an development stage and is currently
+limited to automatically creating ISPCDevice delegates.
+
+If you wish to try it set the OSPRAY_NUM_SUBDEVICES environmental variable to
+the number of subdevices you want to create and tell OSPRay to both load the
+multidevice extension and create a multidevice for rendering instead of the
+default ISPCDevice.
+
+One example in a bash like shell is as follows:
+
+```sh
+OSPRAY_NUM_SUBDEVICES=6 ./ospTutorial --osp:load-modules=multidevice --osp:device=multidevice
+```

@@ -10,6 +10,11 @@ namespace mpi {
 DistributedRenderer::DistributedRenderer() : mpiGroup(mpicommon::worker.dup())
 {}
 
+DistributedRenderer::~DistributedRenderer()
+{
+  MPI_Comm_free(&mpiGroup.comm);
+}
+
 void DistributedRenderer::computeRegionVisibility(DistributedFrameBuffer *fb,
     Camera *camera,
     DistributedWorld *world,

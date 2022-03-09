@@ -1,21 +1,21 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"
 // AO Renderer
-#include "Material.ih"
+#include "render/materials/OBJ.ih"
 #include "surfaces.ih"
 
 inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 {
-  const AOMaterial *mat = (const AOMaterial *)dg.material;
+  const OBJ *mat = (const OBJ *)dg.material;
 
   vec3f surfaceColor = make_vec3f(1.f);
   float opacity = 1.f;
   foreach_unique (m in mat) {
-    if (m != NULL && m->super.type == RENDERER_TYPE_AO) {
+    if (m != NULL && m->super.material.type == MATERIAL_TYPE_OBJ) {
       surfaceColor = m->Kd;
       if (valid(m->KdMap)) {
         vec4f Kd_from_map = get4f(m->KdMap, dg);

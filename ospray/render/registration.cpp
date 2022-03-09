@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ao/AORenderer.h"
@@ -6,22 +6,19 @@
 #include "pathtracer/PathTracer.h"
 #include "scivis/SciVis.h"
 
-#include "pathtracer/materials/Alloy.h"
-#include "pathtracer/materials/CarPaint.h"
-#include "pathtracer/materials/Glass.h"
-#include "pathtracer/materials/Luminous.h"
-#include "pathtracer/materials/Metal.h"
-#include "pathtracer/materials/MetallicPaint.h"
-#include "pathtracer/materials/Mix.h"
-#include "pathtracer/materials/OBJ.h"
-#include "pathtracer/materials/Plastic.h"
-#include "pathtracer/materials/Principled.h"
-#include "pathtracer/materials/ThinGlass.h"
-#include "pathtracer/materials/Velvet.h"
+#include "materials/Alloy.h"
+#include "materials/CarPaint.h"
+#include "materials/Glass.h"
+#include "materials/Luminous.h"
+#include "materials/Metal.h"
+#include "materials/MetallicPaint.h"
+#include "materials/Mix.h"
+#include "materials/OBJ.h"
+#include "materials/Plastic.h"
+#include "materials/Principled.h"
+#include "materials/ThinGlass.h"
+#include "materials/Velvet.h"
 using namespace ospray::pathtracer;
-
-#include "ao/Material.h"
-#include "scivis/SciVisMaterial.h"
 
 namespace ospray {
 
@@ -47,9 +44,6 @@ void registerAllMaterials()
   Material::registerType<Principled>("pathtracer", "principled");
   Material::registerType<ThinGlass>("pathtracer", "thinGlass");
   Material::registerType<Velvet>("pathtracer", "velvet");
-
-  Material::registerType<SciVisMaterial>("scivis", "obj");
-  Material::registerType<AOMaterial>("ao", "obj");
 }
 
 } // namespace ospray

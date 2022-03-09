@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -58,7 +58,7 @@ struct Region
 struct DistributedWorld : public World
 {
   DistributedWorld();
-  virtual ~DistributedWorld() override = default;
+  ~DistributedWorld() override;
 
   box3f getBounds() const override;
 

@@ -102,7 +102,7 @@ struct MPIDistributedDevice : public api::Device
 
   /*! have given renderer create a new material */
   OSPMaterial newMaterial(
-      const char *renderer_type, const char *material_type) override;
+      const char * /*ignored*/, const char *material_type) override;
 
   /*! create a new camera object (out of list of registered cameras) */
   OSPCamera newCamera(const char *type) override;

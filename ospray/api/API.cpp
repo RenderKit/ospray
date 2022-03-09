@@ -457,7 +457,6 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPMaterial ospNewMaterial(
     const char *renderer_type, const char *material_type) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_STRING(renderer_type);
   THROW_IF_NULL_STRING(material_type);
 
   ASSERT_DEVICE();

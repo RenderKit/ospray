@@ -54,7 +54,7 @@ vec3f nextEventEstimation(const PathContext &pathContext,
         pathContext.ldSampler, pathState.sampleDim + 4 + i * 3 + 1);
     Light_SampleRes ls;
     foreach_unique (l in light)
-      ls = l->sample(l, pathVertex.dg, s2);
+      ls = l->sample(l, pathVertex.dg, s2, pathState.time);
     // adjust the contibution with the probabiltiy of selecting the light source
     ls.weight = ls.weight / lightSelectionProb;
     ls.pdf = ls.pdf * lightSelectionProb;

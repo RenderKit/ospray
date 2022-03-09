@@ -1,4 +1,4 @@
-// Copyright 2017-2020 Intel Corporation
+// Copyright 2017-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ArcballCamera.h"
@@ -68,6 +68,11 @@ rkcommon::math::vec3f ArcballCamera::lookDir() const
 rkcommon::math::vec3f ArcballCamera::upDir() const
 {
   return xfmVector(invCamera, rkcommon::math::vec3f(0, 1, 0));
+}
+
+rkcommon::math::AffineSpace3f ArcballCamera::transform() const
+{
+  return invCamera;
 }
 
 void ArcballCamera::updateCamera()

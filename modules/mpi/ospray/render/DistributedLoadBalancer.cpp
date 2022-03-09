@@ -370,12 +370,12 @@ std::string Distributed::toString() const
   return "ospray::mpi::staticLoadBalancer::Distributed";
 }
 
-void Distributed::renderTiles(FrameBuffer *fb,
-    Renderer *renderer,
-    Camera *camera,
-    World *world,
-    const utility::ArrayView<int> &tileIDs,
-    void *perFrameData)
+void Distributed::renderTiles(FrameBuffer *,
+    Renderer *,
+    Camera *,
+    World *,
+    const utility::ArrayView<int> &,
+    void *)
 {
   NOT_IMPLEMENTED;
 }

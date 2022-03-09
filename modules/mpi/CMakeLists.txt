@@ -37,6 +37,8 @@ if(NOT TARGET MPI::MPI_CXX) # pre CMake 3.9
   set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES ${MPI_CXX_LINK_FLAGS} ${MPI_CXX_LIBRARIES})
 endif()
 
+find_package(Snappy REQUIRED)
+
 rkcommon_configure_build_type()
 
 add_subdirectory(common)

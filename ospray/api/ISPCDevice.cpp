@@ -153,7 +153,7 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 #undef declare_param_setter
 
 ISPCDevice::ISPCDevice()
-    : loadBalacer(std::make_shared<LocalTiledLoadBalancer>())
+    : loadBalancer(std::make_shared<LocalTiledLoadBalancer>())
 {}
 
 ISPCDevice::~ISPCDevice()
@@ -186,10 +186,6 @@ static void vklErrorFunc(void *, const VKLError code, const char *str)
       (code > VKL_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
   handleError(e, "Open VKL internal error '" + std::string(str) + "'");
 }
-
-///////////////////////////////////////////////////////////////////////////
-// ManagedObject Implementation ///////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
 
 void ISPCDevice::commit()
 {
@@ -249,8 +245,14 @@ void ISPCDevice::commit()
   }
 
   // Output device info string
-  const char *isaNames[] = {
-      "unknown", "SSE2", "SSE4", "AVX", "AVX2", "AVX512KNL", "AVX512SKX"};
+  const char *isaNames[] = {"unknown",
+      "SSE2",
+      "SSE4",
+      "AVX",
+      "AVX2",
+      "AVX512KNL",
+      "AVX512SKX",
+      "NEON"};
   postStatusMsg(OSP_LOG_INFO)
       << "Using ISPC device with " << isaNames[ispc::ISPCDevice_isa()]
       << " instruction set...";
@@ -300,7 +302,9 @@ OSPLight ISPCDevice::newLight(const char *type)
 
 OSPCamera ISPCDevice::newCamera(const char *type)
 {
-  return (OSPCamera)Camera::createInstance(type);
+  ospray::Camera *ret = Camera::createInstance(type);
+  ret->setDevice(embreeDevice);
+  return (OSPCamera)ret;
 }
 
 OSPGeometry ISPCDevice::newGeometry(const char *type)
@@ -505,7 +509,7 @@ OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
   auto *f = new RenderTask(fb, [=]() {
     utility::CodeTimer timer;
     timer.start();
-    loadBalacer->renderFrame(fb, renderer, camera, world);
+    loadBalancer->renderFrame(fb, renderer, camera, world);
     timer.stop();
 
     fb->refDec();

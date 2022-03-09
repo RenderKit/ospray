@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,8 +6,8 @@
 #include "render/pathtracer/PathTracer.ih"
 #include "render/pathtracer/Scattering.ih"
 
-#include "render/pathtracer/bsdfs/BSDF.ih"
-#include "render/pathtracer/materials/Medium.ih"
+#include "render/bsdfs/BSDF.ih"
+#include "render/materials/Medium.ih"
 
 #include "common/DifferentialGeometry.ih"
 #include "common/World.ih"

@@ -8,8 +8,10 @@
 // imgui
 #include "imgui.h"
 // std
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 // on Windows often only GL 1.1 headers are present
 #ifndef GL_CLAMP_TO_BORDER
@@ -280,9 +282,20 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
 void GLFWOSPRayWindow::updateCamera()
 {
   camera.setParam("aspect", windowSize.x / float(windowSize.y));
-  camera.setParam("position", arcballCamera->eyePos());
-  camera.setParam("direction", arcballCamera->lookDir());
-  camera.setParam("up", arcballCamera->upDir());
+  const auto xfm = arcballCamera->transform();
+  if (rendererType == OSPRayRendererType::PATHTRACER && cameraMotionBlur) {
+    camera.removeParam("transform");
+    std::vector<affine3f> xfms;
+    xfms.push_back(lastXfm);
+    xfms.push_back(xfm);
+    camera.setParam("motion.transform", cpp::CopiedData(xfms));
+    camera.setParam("shutter", range1f(1.0f - cameraMotionBlur, 1.0f));
+    renderCameraMotionBlur = true;
+  } else {
+    camera.removeParam("motion.transform");
+    camera.setParam("transform", xfm);
+    camera.setParam("shutter", range1f(0.5f));
+  }
 }
 
 void GLFWOSPRayWindow::motion(const vec2f &position)
@@ -345,16 +358,39 @@ void GLFWOSPRayWindow::display()
     auto *fb = framebuffer.map(
         showDepth ? OSP_FB_DEPTH : (showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR));
 
+    // Copy and normalize depth layer if showDepth is on
+    float *depthFb = static_cast<float *>(fb);
+    std::vector<float> depthCopy;
+    if (showDepth) {
+      depthCopy.assign(depthFb, depthFb + (windowSize.x * windowSize.y));
+      depthFb = depthCopy.data();
+
+      float minDepth = rkcommon::math::inf;
+      float maxDepth = rkcommon::math::neg_inf;
+
+      for (int i = 0; i < windowSize.x * windowSize.y; i++) {
+        if (std::isinf(depthFb[i]))
+          continue;
+        minDepth = std::min(minDepth, depthFb[i]);
+        maxDepth = std::max(maxDepth, depthFb[i]);
+      }
+      const float rcpDepthRange = 1.f / (maxDepth - minDepth);
+
+      for (int i = 0; i < windowSize.x * windowSize.y; i++) {
+        depthFb[i] = (depthFb[i] - minDepth) * rcpDepthRange;
+      }
+    }
+
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
         0,
-        showAlbedo ? GL_RGB32F : GL_RGBA32F,
+        showDepth ? GL_DEPTH_COMPONENT : (showAlbedo ? GL_RGB32F : GL_RGBA32F),
         windowSize.x,
         windowSize.y,
         0,
-        showDepth ? GL_RED : (showAlbedo ? GL_RGB : GL_RGBA),
+        showDepth ? GL_DEPTH_COMPONENT : (showAlbedo ? GL_RGB : GL_RGBA),
         GL_FLOAT,
-        fb);
+        showDepth ? depthFb : fb);
 
     framebuffer.unmap(fb);
 
@@ -401,7 +437,14 @@ void GLFWOSPRayWindow::startNewOSPRayFrame()
     refreshFrameOperations();
     updateFrameOpsNextFrame = false;
   }
+  lastXfm = arcballCamera->transform();
   currentFrame = framebuffer.renderFrame(*renderer, camera, world);
+  if (renderCameraMotionBlur) {
+    camera.removeParam("motion.transform");
+    camera.setParam("transform", lastXfm);
+    addObjectToCommit(camera.handle());
+    renderCameraMotionBlur = false;
+  }
 }
 
 void GLFWOSPRayWindow::waitOnOSPRayFrame()
@@ -589,6 +632,29 @@ void GLFWOSPRayWindow::buildUI()
   }
 
   if (rendererType == OSPRayRendererType::PATHTRACER) {
+    static int maxDepth = 20;
+    if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {
+      renderer->setParam("maxPathLength", maxDepth);
+      addObjectToCommit(renderer->handle());
+    }
+
+    static int rouletteDepth = 1;
+    if (ImGui::SliderInt("roulettePathLength", &rouletteDepth, 1, 64)) {
+      renderer->setParam("roulettePathLength", rouletteDepth);
+      addObjectToCommit(renderer->handle());
+    }
+
+    static float minContribution = 0.001f;
+    if (ImGui::SliderFloat("minContribution", &minContribution, 0.f, 1.f)) {
+      renderer->setParam("minContribution", minContribution);
+      addObjectToCommit(renderer->handle());
+    }
+
+    if (ImGui::SliderFloat("camera motion blur", &cameraMotionBlur, 0.f, 1.f)) {
+      updateCamera();
+      addObjectToCommit(camera.handle());
+    }
+
     if (ImGui::Checkbox("renderSunSky", &renderSunSky)) {
       if (renderSunSky) {
         sunSky.setParam("direction", sunDirection);
@@ -616,23 +682,6 @@ void GLFWOSPRayWindow::buildUI()
         sunSky.setParam("horizonExtension", horizonExtension);
         addObjectToCommit(sunSky.handle());
       }
-    }
-    static int maxDepth = 20;
-    if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {
-      renderer->setParam("maxPathLength", maxDepth);
-      addObjectToCommit(renderer->handle());
-    }
-
-    static int rouletteDepth = 1;
-    if (ImGui::SliderInt("roulettePathLength", &rouletteDepth, 1, 64)) {
-      renderer->setParam("roulettePathLength", rouletteDepth);
-      addObjectToCommit(renderer->handle());
-    }
-
-    static float minContribution = 0.001f;
-    if (ImGui::SliderFloat("minContribution", &minContribution, 0.f, 1.f)) {
-      renderer->setParam("minContribution", minContribution);
-      addObjectToCommit(renderer->handle());
     }
   } else if (rendererType == OSPRayRendererType::SCIVIS) {
     static bool shadowsEnabled = false;
@@ -733,8 +782,10 @@ void GLFWOSPRayWindow::refreshScene(bool resetCamera)
     // create the arcball camera model
     arcballCamera.reset(
         new ArcballCamera(world.getBounds<box3f>(), windowSize));
+    lastXfm = arcballCamera->transform();
 
     // init camera
+    camera.setParam("position", vec3f(0.0f, 0.0f, 1.0f));
     updateCamera();
     camera.commit();
   }

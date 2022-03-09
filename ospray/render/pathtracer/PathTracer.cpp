@@ -11,7 +11,7 @@
 #include "common/World_ispc.h"
 #include "render/pathtracer/GeometryLight_ispc.h"
 #include "render/pathtracer/PathTracer_ispc.h"
-#include "render/pathtracer/materials/Material_ispc.h"
+#include "render/materials/Material_ispc.h"
 // std
 #include <map>
 
@@ -39,8 +39,6 @@ void PathTracer::generateGeometryLights(
     if (!geometries)
       return;
 
-    affine3f xfm = instance->xfm();
-
     for (auto &&model : *geometries) {
       if (model->materialData) {
         // check whether the model has any emissive materials
@@ -64,8 +62,8 @@ void PathTracer::generateGeometryLights(
 
         if (hasEmissive) {
           if (ispc::GeometryLight_isSupported(model->getIE())) {
-            void *light =
-                ispc::GeometryLight_create(model->getIE(), getIE(), &xfm);
+            void *light = ispc::GeometryLight_create(
+                model->getIE(), getIE(), instance->getIE());
 
             // check whether the geometry has any emissive primitives
             if (light)

@@ -31,9 +31,9 @@ export void VolumetricModel_set(void *uniform _self,
   self->volume = (Volume * uniform) volume;
 }
 
-export void VolumetricModel_set_valueSelector(
-    void *uniform _self, void *uniform valueSelector)
+export void VolumetricModel_set_intervalContext(
+    void *uniform _self, void *uniform intervalContext)
 {
   VolumetricModel *uniform self = (VolumetricModel * uniform) _self;
-  self->vklValueSelector = (VKLValueSelector)valueSelector;
+  self->vklIntervalContext = (VKLIntervalIteratorContext)intervalContext;
 }

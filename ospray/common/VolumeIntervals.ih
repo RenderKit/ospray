@@ -1,9 +1,10 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "../math/AffineSpace.ih"
+#include "Instance.ih"
 #include "OSPCommon.ih"
 #include "rkcommon/math/box.ih"
 
@@ -14,9 +15,8 @@ struct VolumetricModel;
 struct VolumeInterval
 {
   VolumetricModel *volumetricModel;
+  Instance *instance;
   range1f interval;
-  AffineSpace3f xfm;
-  AffineSpace3f rcp_xfm;
   unsigned int primID;
   unsigned int geomID;
   unsigned int instID;

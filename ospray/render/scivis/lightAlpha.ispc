@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "lights/Light.ih"
@@ -6,7 +6,6 @@
 #include "math/sampling.ih"
 #include "render/util.ih"
 // SciVis renderer
-#include "SciVisMaterial.ih"
 #include "surfaces.ih"
 #include "volumes.ih"
 

@@ -83,7 +83,9 @@ terms are listed below.
     Copyright (c) 2014-2020 Omar Cornut
 
     half
-    Copyright (c) 2012-2019 Christian Rau <rauy@users.sourceforge.net>
+    Copyright (c) 2012-2021 Christian Rau <rauy@users.sourceforge.net>
+
+    SSE2NEON
 
     The MIT License (MIT)
 

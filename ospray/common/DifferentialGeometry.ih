@@ -20,10 +20,11 @@ typedef enum
   DG_TEXCOORD = (1 << 6), // calculate texture coords st
   DG_TANGENTS = (1 << 7), // calculate tangents, i.e. the partial derivatives of
                           // position wrt. texture coordinates
-  DG_TEX1D = (1 << 8),      /*per vertex 1D texture, raw variable value */
-  DG_TEX1D_ELM = (1 << 9),  /*per element 1D texture, raw variable value */
-  DG_ALPHATEX1D = (1 << 10),    /*per vertex 1D alpha texture, raw variable value */
-  DG_ALPHATEX1D_ELM = (1 << 11),/*per element 1D alpha texture, raw variable value */
+  DG_MOTIONBLUR = (1 << 8), // calculate interpolated transformations for MB
+  DG_TEX1D = (1 << 9),      //per vertex 1D texture, raw variable value
+  DG_TEX1D_ELM = (1 << 10),  //per element 1D texture, raw variable value
+  DG_ALPHATEX1D = (1 << 11),    //per vertex 1D alpha texture, raw variable value
+  DG_ALPHATEX1D_ELM = (1 << 12),//per element 1D alpha texture, raw variable value
 }
 DG_PostIntersectFlags;
 

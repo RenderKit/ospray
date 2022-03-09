@@ -1,8 +1,7 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
-#include "camera/PerspectiveCamera.ih"
 #include "common/World.ih"
 #include "fb/FrameBuffer.ih"
 #include "math/random.ih"
@@ -274,18 +273,18 @@ void DebugRenderer_volume(Renderer *uniform self,
 
   const float jitter = LDSampler_getFloat(ldSampler, 0);
 
+  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
   foreach_unique (m in model) {
     Volume *uniform volume = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
-    uniform unsigned int8
-        intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+    float time = 0.5f;
     VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(volume->vklSampler,
+        vklInitIntervalIteratorV(m->vklIntervalContext,
             (varying vkl_vec3f *)&ray.org,
             (varying vkl_vec3f *)&ray.dir,
             (varying vkl_range1f *)&vInterval.interval,
-            m->vklValueSelector,
+            &time,
             intervalIteratorBuffer);
 
     VKLInterval interval;

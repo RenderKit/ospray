@@ -26,18 +26,30 @@ std::string Instance::toString() const
 
 void Instance::commit()
 {
-  instanceXfm = getParam<affine3f>("xfm", affine3f(one));
-  rcpXfm = rcp(instanceXfm);
+  MotionTransform::commit();
 
   ispc::Instance_set(getIE(),
       group->getIE(),
-      (ispc::AffineSpace3f &)instanceXfm,
-      (ispc::AffineSpace3f &)rcpXfm);
+      (ispc::AffineSpace3f &)(*motionTransforms)[0],
+      motionBlur);
 }
 
 box3f Instance::getBounds() const
 {
-  return xfmBounds(instanceXfm, group->getBounds());
+  box3f bounds;
+  const box3f groupBounds = group->getBounds();
+  // TODO get better bounds:
+  // - this is too big, because keys outside of time [0, 1] are included
+  // - yet is is also too small, because interpolated transformations can lead
+  //   to leaving the bounds of keys
+  // alternatives:
+  // - use bounds at time 0.5, wrong if different shutter is used and does not
+  //   include motion at all
+  // - merge linear bounds from Embree (which is for time [0, 1]), but this
+  //   needs a temporary RTCScene just for this instance
+  for (auto &&xfm : *motionTransforms)
+    bounds.extend(xfmBounds(xfm, groupBounds));
+  return bounds;
 }
 
 OSPTYPEFOR_DEFINITION(Instance *);

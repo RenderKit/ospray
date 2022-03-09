@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
@@ -242,7 +242,7 @@ cpp::World ClippingGeometries::buildWorld() const
     group.commit();
 
     cpp::Instance instance(group);
-    instance.setParam("xfm", affine3f::translate(cPos));
+    instance.setParam("transform", affine3f::translate(cPos));
     instance.commit();
 
     inst.push_back(instance);

@@ -13,7 +13,7 @@ add_library(ospray_mpi_common STATIC
 
 target_link_libraries(ospray_mpi_common
   PRIVATE
-    snappy
+    Snappy::snappy
   PUBLIC
     rkcommon::rkcommon
     ospray_sdk

@@ -1,0 +1,33 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "embree3/rtcore.isph"
+#include "math/AffineSpace.ih"
+
+inline uniform AffineSpace3f getInterpolatedTransform(
+    const RTCGeometry geom, const uniform float time)
+{
+  uniform AffineSpace3f xfm;
+  rtcGetGeometryTransform(geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+  return xfm;
+}
+
+inline AffineSpace3f getInterpolatedTransform(
+    const RTCGeometry geom, const float time)
+{
+  varying AffineSpace3f xfm;
+  foreach_unique (utime in time) {
+    uniform AffineSpace3f uxfm;
+    rtcGetGeometryTransform(
+        geom, utime, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &uxfm);
+    xfm = uxfm;
+  }
+  /* TODO needs Embree 3.13.2
+
+    varying AffineSpace3f xfm;
+    rtcGetGeometryTransform(geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+  */
+  return xfm;
+}

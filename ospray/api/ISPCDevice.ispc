@@ -20,6 +20,8 @@ export uniform int ISPCDevice_isa()
   return 5;
 #elif defined(ISPC_TARGET_AVX512SKX)
   return 6;
+#elif defined(ISPC_TARGET_NEON)
+  return 7;
 #else
   return 0;
 #endif

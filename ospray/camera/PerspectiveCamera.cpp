@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PerspectiveCamera.h"
@@ -20,9 +20,6 @@ void PerspectiveCamera::commit()
 {
   Camera::commit();
 
-  // ------------------------------------------------------------------
-  // first, "parse" the additional expected parameters
-  // ------------------------------------------------------------------
   fovy = getParam<float>("fovy", 60.f);
   aspect = getParam<float>("aspect", 1.f);
   apertureRadius = getParam<float>("apertureRadius", 0.f);
@@ -33,65 +30,31 @@ void PerspectiveCamera::commit()
   // the default 63.5mm represents the average human IPD
   interpupillaryDistance = getParam<float>("interpupillaryDistance", 0.0635f);
 
-  // ------------------------------------------------------------------
-  // now, update the local precomputed values
-  // ------------------------------------------------------------------
-  dir = normalize(dir);
-  dir_du = normalize(cross(dir, up)); // right-handed coordinate system
-  if (architectural)
-    dir_dv = normalize(up); // orient film to be parallel to 'up' and shift such
-                            // that 'dir' is centered
-  else
-    dir_dv = cross(dir_du, dir); // rotate film to be perpendicular to 'dir'
-
-  vec3f org = pos;
-  const vec3f ipd_offset = 0.5f * interpupillaryDistance * dir_du;
-
   switch (stereoMode) {
-  case OSP_STEREO_LEFT:
-    org -= ipd_offset;
-    break;
-  case OSP_STEREO_RIGHT:
-    org += ipd_offset;
-    break;
   case OSP_STEREO_SIDE_BY_SIDE:
     aspect *= 0.5f;
     break;
   case OSP_STEREO_TOP_BOTTOM:
     aspect *= 2.f;
     break;
-  case OSP_STEREO_NONE:
+  default:
     break;
-  case OSP_STEREO_UNKNOWN:
-    throw std::runtime_error(toString() + ": invalid 'stereoMode'");
   }
 
   imgPlaneSize.y = 2.f * tanf(deg2rad(0.5f * fovy));
   imgPlaneSize.x = imgPlaneSize.y * aspect;
 
-  dir_du *= imgPlaneSize.x;
-  dir_dv *= imgPlaneSize.y;
-
-  dir_00 = dir - .5f * dir_du - .5f * dir_dv;
-
-  float scaledAperture = 0.f;
-  // prescale to focal plane
-  if (apertureRadius > 0.f) {
-    dir_du *= focusDistance;
-    dir_dv *= focusDistance;
-    dir_00 *= focusDistance;
-    scaledAperture = apertureRadius / (imgPlaneSize.x * focusDistance);
-  }
-
   ispc::PerspectiveCamera_set(getIE(),
-      (const ispc::vec3f &)org,
-      (const ispc::vec3f &)dir_00,
-      (const ispc::vec3f &)dir_du,
-      (const ispc::vec3f &)dir_dv,
-      scaledAperture,
+      (const ispc::vec3f &)pos,
+      (const ispc::vec3f &)dir,
+      (const ispc::vec3f &)up,
+      (const ispc::vec2f &)imgPlaneSize,
+      apertureRadius / (imgPlaneSize.x * focusDistance),
+      focusDistance,
       aspect,
+      architectural,
       stereoMode,
-      (const ispc::vec3f &)ipd_offset);
+      interpupillaryDistance);
 }
 
 ProjectedPoint PerspectiveCamera::projectPoint(const vec3f &p) const

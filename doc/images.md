@@ -1,7 +1,11 @@
 [imgTutorial1]: tutorial_firstframe.png
 [imgTutorial2]: tutorial_accumulatedframe.png
-[renderSunSky]: renderSunSky.png { width=90% }
-[ospExamples]: ospExamples.png { width=90% }
+[imgRenderSunSky]: renderSunSky.png { width=90% }
+[imgOspExamples]: ospExamples.png { width=90% }
+[imgMPIDistribTutorial1]: ospMPIDistribTutorial_firstFrame.jpg { width=60% }
+[imgMPIDistribTutorial2]: ospMPIDistribTutorial_accumulatedFrame.jpg { width=60% }
+[imgMPIDistribTutorialSpheres]: ospMPIDistribTutorialSpheres.jpg { width=60% }
+[imgMPIDistribTutorialVolume]: ospMPIDistribTutorialVolume.jpg { width=60% }
 [imgSpotLight]: spot_light.fig
 [imgSpotCoords]: spot_coords.fig
 [imgQuadLight]: quad_light.fig

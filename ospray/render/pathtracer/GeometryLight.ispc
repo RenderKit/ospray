@@ -1,11 +1,11 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/GeometryLight.ih"
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
 
-#include "render/pathtracer/materials/Material.ih"
+#include "render/materials/Material.ih"
 
 #include "geometry/GeometricModel.ih"
 #include "lights/Light.ih"
@@ -21,7 +21,7 @@ vec3f evaluateGeometryLights(const PathContext &pathContext,
   vec3f L = make_vec3f(0.f);
   PathTraceMaterial *material = (PathTraceMaterial *)pathVertex.dg.material;
   foreach_unique (m in material) {
-    if (m != NULL && m->material.type == RENDERER_TYPE_PATHTRACER
+    if (m != NULL
         && reduce_max(m->emission) > 0.f) {
       // at the moment we only support uniform light selection
       // therfore we can evaluate the selection PDF directly
@@ -53,8 +53,7 @@ struct GeometryLight
   Light super; // inherited light fields
 
   GeometricModel *model; // underlying geometry
-  AffineSpace3f xfm;
-  AffineSpace3f rcp_xfm;
+  Instance *instance;
   int32 numPrimitives; // number of emissive primitives
   int32 *primIDs; // IDs of emissive primitives to sample
   float *distribution; // pdf over prims proportional to (world-space) area
@@ -63,8 +62,10 @@ struct GeometryLight
 
 // Implementation /////////////////////////////////////////////////////////////
 
-Light_SampleRes GeometryLight_sample(
-    const Light *uniform super, const DifferentialGeometry &dg, const vec2f &s)
+Light_SampleRes GeometryLight_sample(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec2f &s,
+    const float time)
 {
   const GeometryLight *uniform self = (GeometryLight * uniform) super;
   const GeometricModel *uniform model = self->model;
@@ -80,8 +81,16 @@ Light_SampleRes GeometryLight_sample(
   const vec2f ns = make_vec2f(sample.frac, s.y);
   // sample position on primitive
   // TODO maybe should already be done wrt. solid angle
-  const SampleAreaRes as =
-      geo->sampleArea(geo, primID, self->xfm, self->rcp_xfm, ns);
+  SampleAreaRes as;
+  if (self->instance->motionBlur)
+    foreach_unique (utime in time) {
+      const uniform affine3f xfm = Instance_getTransform(self->instance, utime);
+      as = geo->sampleArea(geo, primID, xfm, rcp(xfm), ns);
+    }
+  else {
+    as = geo->sampleArea(
+        geo, primID, self->instance->xfm, self->instance->rcp_xfm, ns);
+  }
   // note that sample.pdf/primitives * sampleArea(worldspace).pdf == self->pdf
 
   // extant light vector from the hit point
@@ -116,13 +125,9 @@ export bool uniform GeometryLight_isSupported(const void *uniform _model)
 }
 
 export void *uniform GeometryLight_create(
-    void *uniform _model, void *uniform _renderer, void *uniform _xfm)
+    void *uniform _model, void *uniform _renderer, void *uniform _instance)
 {
   GeometricModel *uniform model = (GeometricModel * uniform) _model;
-  Renderer *uniform renderer = (Renderer * uniform) _renderer;
-  const Geometry *uniform geo = model->geom;
-
-  AffineSpace3f *uniform xfm = (AffineSpace3f * uniform) _xfm;
 
   if (!GeometryLight_isSupported(model)) {
     // set pdf to zero, indicating that this emissive geometry cannot be
@@ -132,14 +137,15 @@ export void *uniform GeometryLight_create(
   }
 
   GeometryLight *uniform self = uniform new GeometryLight;
+  const Renderer *uniform renderer = (Renderer * uniform) _renderer;
+  const Geometry *uniform geo = model->geom;
+  const Instance *uniform instance = (Instance * uniform) _instance;
 
   Light_Constructor(&self->super);
   self->super.sample = GeometryLight_sample;
   self->super.eval = NULL; // geometry lights are hit and explicitly handled
   self->model = model;
-
-  self->xfm = *xfm;
-  self->rcp_xfm = rcp(*xfm);
+  self->instance = instance;
 
   // create the list of emissive primitive IDs
   self->primIDs = uniform new uniform int32[geo->numPrimitives];
@@ -172,9 +178,12 @@ export void *uniform GeometryLight_create(
   self->numPrimitives = numEmissivePrims;
 
   // create the sampling distribution
-  // TODO: use emissive power modelead of just area
+  // TODO: use emissive power instead of just area
+  // TODO: motion blur can introduce scale, which means areas cannot accurately
+  // be precomputed
   self->distribution = uniform new uniform float[numEmissivePrims];
-  geo->getAreas(geo, self->primIDs, numEmissivePrims, *xfm, self->distribution);
+  geo->getAreas(
+      geo, self->primIDs, numEmissivePrims, instance->xfm, self->distribution);
   self->pdf = 1.f / Distribution1D_create(numEmissivePrims, self->distribution);
   model->areaPDF = self->pdf;
 
