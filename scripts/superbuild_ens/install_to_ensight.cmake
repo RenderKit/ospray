@@ -135,10 +135,10 @@ set(OSPRAY_INSTALL_DIR ${APEX_DIR}/intel_ospray-2.1.1)
 IF (WIN32)
 install(
 	FILES ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl.dll
-	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_ispc_driver.dll
-	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_ispc_driver_4.dll
-	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_ispc_driver_8.dll
-	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_ispc_driver_16.dll
+	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_driver.dll
+	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_driver_4.dll
+	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_driver_8.dll
+	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_driver_16.dll
 	      ${CMAKE_INSTALL_PREFIX}/rkcommon/bin/rkcommon.dll
 	      ${CMAKE_BINARY_DIR}/ospray/build/ospray.dll
 	      ${CMAKE_BINARY_DIR}/ospray/build/ospray_module_ispc.dll
