@@ -133,7 +133,7 @@ if (OPENVKL_VERSION STREQUAL "1.1.0")
   set(OPENVKL_HASH "2fd751f5eaa37342bd4574d3fdc0cf82e36b67646442a71c3ebe3aa859ccbc13")
 endif()
 
-option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
+option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." ON)
 if (BUILD_OIDN)
   set(OIDN_VERSION "1.4.2" CACHE STRING "Which version of OpenImageDenoise to build?")
   mark_as_advanced(CLEAR OIDN_VERSION)
