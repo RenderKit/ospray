@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -13,7 +13,6 @@ namespace ospray {
 Spheres::Spheres()
 {
   ispcEquivalent = ispc::Spheres_create(this);
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 }
 
 std::string Spheres::toString() const
@@ -23,6 +22,12 @@ std::string Spheres::toString() const
 
 void Spheres::commit()
 {
+  if (!embreeDevice) {
+    throw std::runtime_error("invalid Embree device");
+  }
+  if (!embreeGeometry) {
+    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
+  }
   radius = getParam<float>("radius", 0.01f);
   vertexData = getParamDataT<vec3f>("sphere.position", true);
   radiusData = getParamDataT<float>("sphere.radius");

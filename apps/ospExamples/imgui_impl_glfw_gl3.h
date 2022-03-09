@@ -12,6 +12,7 @@
 struct GLFWwindow;
 
 bool ImGui_ImplGlfwGL3_Init(GLFWwindow *window, bool install_callbacks);
+void ImGui_ImplGlfwGL3_Render();
 void ImGui_ImplGlfwGL3_Shutdown();
 void ImGui_ImplGlfwGL3_NewFrame();
 

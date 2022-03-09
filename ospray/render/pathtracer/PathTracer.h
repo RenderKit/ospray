@@ -17,8 +17,12 @@ struct PathTracer : public Renderer
 
  private:
   void generateGeometryLights(const World &, std::vector<void *> &);
-  bool useGeometryLights{true};
-  bool rendererValid{false};
+  bool importanceSampleGeometryLights{
+      true}; // if geometry lights are importance
+             // sampled using NEE (requires scanning
+             // the scene for geometric lights)
+  bool scannedGeometryLights{
+      false}; // if the scene was scanned for geometric lights
 };
 
 } // namespace ospray

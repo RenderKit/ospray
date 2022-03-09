@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/pathtracer/GeometryLight.ih"
@@ -38,6 +38,7 @@ inline void postIntersect(const PathContext &pathContext,
     pathVertex.dg.dPdt = make_vec3f(0.f);
     pathVertex.dg.st = make_vec2f(0);
     pathVertex.dg.color = make_vec4f(0.f);
+    pathVertex.dg.primID = RTC_INVALID_GEOMETRY_ID;
     pathVertex.dg.areaPDF = 0.f;
     pathVertex.dg.epsilon = 0.f;
     pathVertex.dg.material = NULL;

@@ -1,4 +1,4 @@
-// Copyright 2018-2020 Intel Corporation
+// Copyright 2018-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This larger example shows how to use the MPIDistributedDevice to write an
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
     // OSPRay frame buffer and camera directly
     auto glfwOSPRayWindow =
         std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
-            vec2i{1024, 768}, worldBounds, world.handle(), renderer.handle()));
+            vec2i{1024, 768}, worldBounds, world, renderer));
 
     int spp = 1;
     int currentSpp = 1;

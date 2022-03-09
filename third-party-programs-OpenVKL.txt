@@ -82,6 +82,9 @@ terms are listed below.
 3.  Dear ImGui
     Copyright (c) 2014-2020 Omar Cornut
 
+    half
+    Copyright (c) 2012-2019 Christian Rau <rauy@users.sourceforge.net>
+
     The MIT License (MIT)
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -704,7 +707,7 @@ additional third party program files are as follows:
 
 1. Embree: ./third-party-programs-Embree.txt
 2. OSPRay: ./third-party-programs.txt
-3. Threading Building Blocks (TBB): ./third-party-programs-TBB.txt
+3. Threading Building Blocks (TBB): ./third-party-programs-oneTBB.txt
 
 --------------------------------------------------------------------------------
 

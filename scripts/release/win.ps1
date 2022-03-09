@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 $ROOT_DIR = pwd
@@ -12,7 +12,7 @@ cd deps_build
 cmake --version
 
 cmake -L `
-  -G $args[0] `
+  -G $($args[0]) `
   -D BUILD_DEPENDENCIES_ONLY=ON `
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR `
   -D CMAKE_INSTALL_LIBDIR=lib `
@@ -40,7 +40,7 @@ $env:OpenImageDenoise_DIR = $DEP_DIR
 
 # set release settings
 cmake -L `
-  -G $args[0] `
+  -G $($args[0]) `
   -D CMAKE_PREFIX_PATH="$DEP_DIR\lib\cmake" `
   -D OSPRAY_BUILD_ISA=ALL `
   -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc.exe `
@@ -55,6 +55,7 @@ cmake -L `
   -D CMAKE_INSTALL_DOCDIR=doc `
   -D CMAKE_INSTALL_BINDIR=bin `
   -D CMAKE_BUILD_WITH_INSTALL_RPATH=bin `
+  -D OSPRAY_MODULE_MPI=ON `
   -D OSPRAY_SIGN_FILE=$env:SIGN_FILE_WINDOWS `
   ..
 

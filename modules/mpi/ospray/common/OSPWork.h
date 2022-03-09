@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -92,6 +92,8 @@ struct FrameBufferInfo
 struct OSPState
 {
   std::unordered_map<int64_t, OSPObject> objects;
+  // Data objects that are conceptually "shared" by the application
+  std::unordered_map<int64_t, Data *> appSharedData;
 
   std::unordered_map<int64_t, FrameBufferInfo> framebuffers;
 
@@ -104,6 +106,11 @@ struct OSPState
   {
     return reinterpret_cast<T>(objects[handle]);
   }
+
+  // Lookup the handle to see if it represents an application shared
+  // data handle. Returns the data object if the handle is a shared
+  // data, and null if not
+  Data *getSharedDataHandle(int64_t handle) const;
 };
 
 void dispatchWork(TAG t,

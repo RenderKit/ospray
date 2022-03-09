@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -10,8 +10,6 @@
 #include "geometry/Geometry_ispc.h"
 
 namespace ospray {
-
-extern "C" void *ospray_getEmbreeDevice();
 
 Instance::Instance(Group *_group)
 {

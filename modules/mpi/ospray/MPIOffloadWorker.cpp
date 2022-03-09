@@ -41,13 +41,15 @@ using namespace mpicommon;
 void runWorker(bool useMPIFabric)
 {
   // Keep a reference to the offload device we came from to keep it alive
-  auto offloadDevice = ospray::api::Device::current;
+  OSPDevice offloadDevice = ospGetCurrentDevice();
 
   OSPDevice distribDevice = ospNewDevice("mpiDistributed");
   ospDeviceSetParam(
       distribDevice, "worldCommunicator", OSP_VOID_PTR, &worker.comm);
   ospDeviceCommit(distribDevice);
   ospSetCurrentDevice(distribDevice);
+  // Release our local reference to the device
+  ospDeviceRelease(distribDevice);
 
   char hostname[HOST_NAME_MAX] = {0};
   gethostname(hostname, HOST_NAME_MAX);
@@ -82,7 +84,8 @@ void runWorker(bool useMPIFabric)
 #ifdef ENABLE_PROFILING
   ProfilingPoint workerStart;
 #endif
-  while (1) {
+  bool exitWorker = false;
+  while (!exitWorker) {
     fabric->recvBcast(cmdView);
 
     recvBuffer->resize(commandSize, 0);
@@ -110,12 +113,27 @@ void runWorker(bool useMPIFabric)
       }
 #endif
 
-      dispatchWork(workTag, ospState, reader, *fabric);
+      if (workTag == work::FINALIZE) {
+        exitWorker = true;
+      } else {
+        dispatchWork(workTag, ospState, reader, *fabric);
+      }
 
       postStatusMsg(OSP_LOG_DEBUG) << "#osp.mpi.worker: completed work "
                                    << workTag << ": " << work::tagName(workTag);
     }
   }
+  // We don't call shutdown here since we need to keep the library registered,
+  // so now free the distributed device and offload device
+  ospDeviceRelease(distribDevice);
+  ospDeviceRelease(offloadDevice);
+
+  // The offload device initialized MPI, so the distributed device will see the
+  // "app" as having already initialized MPI and assume it should not call
+  // finalize. So the worker loop must call MPI finalize here as if it was a
+  // distributed app.
+  MPI_CALL(Finalize());
+  std::exit(0);
 }
 } // namespace mpi
 } // namespace ospray

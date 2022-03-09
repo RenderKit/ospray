@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -29,9 +29,6 @@ typedef unsigned int8 uint8;
       extract(get(x, 0), count_trailing_zeros(lanemask())),                    \
       extract(get(x, 1), count_trailing_zeros(lanemask())),                    \
       extract(get(x, 2), count_trailing_zeros(lanemask())))
-
-/*! ispc copy of embree error handling callback */
-void error_handler(const RTCError code, const int8 *str);
 
 /*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
 export void delete_uniform(void *uniform uptr);

@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FrameBuffer.h"
@@ -25,6 +25,11 @@ FrameBuffer::FrameBuffer(const vec2i &_size,
   if (size.x <= 0 || size.y <= 0) {
     throw std::runtime_error(
         "framebuffer has invalid size. Dimensions must be greater than 0");
+  }
+
+  tileIDs.reserve(getTotalTiles());
+  for (int i = 0; i < getTotalTiles(); ++i) {
+    tileIDs.push_back(i);
   }
 }
 
@@ -56,6 +61,11 @@ vec2i FrameBuffer::getNumPixels() const
 float FrameBuffer::getVariance() const
 {
   return frameVariance;
+}
+
+utility::ArrayView<int> FrameBuffer::getTileIDs()
+{
+  return utility::ArrayView<int>(tileIDs);
 }
 
 void FrameBuffer::beginFrame()

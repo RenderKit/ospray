@@ -1,9 +1,10 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedRenderer.ih"
 #include "common/DistributedWorld.ih"
 #include "common/Intersect.ih"
+#include "common/World.ih"
 #include "math/random.ih"
 #include "render/util.ih"
 
@@ -265,4 +266,68 @@ export void DistributedRenderer_renderRegionToTile(void *uniform _self,
       perFrameData,
       tile,
       taskIndex);
+}
+
+export void DistributedRenderer_pick(const void *uniform _self,
+    const void *uniform _fb,
+    const void *uniform _camera,
+    const void *uniform _world,
+    const uniform vec2f &screenPos,
+    uniform vec3f &pos,
+    uniform int32 &instID,
+    uniform int32 &geomID,
+    uniform int32 &primID,
+    uniform float &depth,
+    uniform int32 &hit)
+{
+  const Renderer *uniform self = (const Renderer *uniform)_self;
+  const FrameBuffer *uniform fb = (const FrameBuffer *uniform)_fb;
+  const Camera *uniform camera = (const Camera *uniform)_camera;
+  const DistributedWorld *uniform world =
+      (const DistributedWorld *uniform)_world;
+
+  CameraSample cameraSample;
+  cameraSample.screen.x = screenPos.x;
+  cameraSample.screen.y = screenPos.y;
+  // use center of lens and shutter time
+  cameraSample.lens.x = 0.0f;
+  cameraSample.lens.y = 0.0f;
+  cameraSample.time = 0.5f;
+
+  Ray ray;
+  camera->initRay(camera, ray, cameraSample);
+  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen));
+
+  // Clip the ray to each region and trace the clipped ray to find the picked
+  // object
+  float closestHit = 1e20f;
+  for (uniform int i = 0; i < world->numRegions; ++i) {
+    // Separate ray per-region to allow clipping by the region's bounds
+    Ray regionRay = ray;
+    regionRay.t = min(ray.t, closestHit);
+
+    const Intersections isect =
+        intersectBox(regionRay.org, regionRay.dir, world->regions[i].bounds);
+
+    cif (isect.entry.t < isect.exit.t && isect.exit.t >= regionRay.t0
+        && isect.entry.t <= regionRay.t) {
+      regionRay.t0 = isect.entry.t;
+      regionRay.t = min(regionRay.t, isect.exit.t);
+      traceRay(&world->super, regionRay);
+
+      cif (hadHit(regionRay)) {
+        closestHit = regionRay.t;
+        vec3f p = regionRay.org + regionRay.dir * regionRay.t;
+
+        pos.x = extract(p.x, 0);
+        pos.y = extract(p.y, 0);
+        pos.z = extract(p.z, 0);
+        hit = extract((int)(hadHit(regionRay)), 0);
+        instID = extract(regionRay.instID, 0);
+        geomID = extract(regionRay.geomID, 0);
+        primID = extract(regionRay.primID, 0);
+        depth = extract(regionRay.t, 0);
+      }
+    }
+  }
 }

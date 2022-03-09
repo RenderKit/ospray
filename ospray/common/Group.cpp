@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -7,8 +7,6 @@
 #include "common/Group_ispc.h"
 
 namespace ospray {
-
-extern "C" void *ospray_getEmbreeDevice();
 
 // Embree helper functions //////////////////////////////////////////////////
 
@@ -93,7 +91,9 @@ void Group::commit()
   volumetricModelIEs.clear();
   clipModelIEs.clear();
 
-  RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+  if (!embreeDevice) {
+    throw std::runtime_error("invalid Embree device");
+  }
 
   if (numGeometries > 0) {
     sceneGeometries = rtcNewScene(embreeDevice);
@@ -154,6 +154,11 @@ box3f Group::getBounds() const
   }
 
   return sceneBounds;
+}
+
+void Group::setDevice(RTCDevice device)
+{
+  embreeDevice = device;
 }
 
 OSPTYPEFOR_DEFINITION(Group *);

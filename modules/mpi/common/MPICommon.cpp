@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "MPICommon.h"
@@ -6,10 +6,10 @@
 namespace mpicommon {
 static std::mutex mpiMutex;
 
-OSPRAY_MPI_INTERFACE bool mpiIsThreaded = false;
+bool mpiIsThreaded = false;
 
-OSPRAY_MPI_INTERFACE Group world;
-OSPRAY_MPI_INTERFACE Group worker;
+Group world;
+Group worker;
 
 // Group definitions ////////////////////////////////////////////////////////
 

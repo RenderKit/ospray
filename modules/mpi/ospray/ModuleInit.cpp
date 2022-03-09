@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "MPIDistributedDevice.h"
@@ -6,7 +6,7 @@
 #include "common/OSPCommon.h"
 #include "render/distributed/DistributedRaycast.h"
 
-extern "C" OSPError ospray_module_init_mpi(
+extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_mpi(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
   using namespace ospray;

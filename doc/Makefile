@@ -11,7 +11,7 @@ images_svg := gitter_badge structured_spherical_coords vdb_structure
 images_fig2pdf := $(addprefix tmp/, $(addsuffix .pdf, $(images_fig)))
 images_svg2pdf := $(addprefix images/, $(addsuffix .pdf, $(images_svg)))
 images_fig2png := $(addprefix images/, $(addsuffix .png, $(images_fig)))
-webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, $(addsuffix .svg, $(images_svg))))
+webimages := $(addprefix www/, $(images_jpg) $(images_png) $(images_fig2png) $(addprefix images/, vdb_structure.png $(addsuffix .svg, $(images_svg))))
 pdfimages := $(images_jpg) $(images_png) $(images_fig2pdf) $(images_svg2pdf)
 
 PANDOC := pandoc
@@ -27,7 +27,7 @@ all: www doc pdf
 www: $(webpages) www/stylesheet.css $(webimages) | wwwscripts
 doc: ../README.md
 pdf: ../readme.pdf
-spec: ospray-spec.rst
+spec: ospray-spec.html ospray-spec.rst $(webimages)
 checklinks: tmp/brokenlinks.txt
 	@if [[ -s $^ ]] ; then \
 	  echo "Found broken link:" ;\
@@ -43,7 +43,7 @@ checklinks: tmp/brokenlinks.txt
 submodule:
 	git submodule update --init --remote
 
-if_is_devel_then = if [[ "${CI_BUILD_REF_NAME}" == "devel" || (-d ../.git && "`git rev-parse --abbrev-ref HEAD`" == "devel") ]] ; then
+if_is_devel_then = if [[ "${CI_BUILD_REF_NAME}" == *"devel" || (-d ../.git && "`git rev-parse --abbrev-ref HEAD`" == *"devel") ]] ; then
 
 tmp/version: ../cmake/ospray_version.cmake $(wildcard ../.git/HEAD)
 	sed -n $< -e "s/^set(OSPRAY_VERSION_MAJOR \([0-9]\+\))/\1./ip" | tr -d '\n' > $@
@@ -68,10 +68,10 @@ tmp/links_local.md: tmp/links.md
 	sed -e "s@: [a-z]\+\.html#@: #@" $< > $@
 
 tmp/images_web.md: images.md
-	sed -e "s/\.fig/.png/" -e "s@: @: https://ospray.github.io/images/@" $< > $@
+	sed -e "s/\.fig/.png/" -e "s/vdb_structure\.svg/vdb_structure.png/" -e "s@: @: https://ospray.github.io/images/@" $< > $@
 
 tmp/images_local_png.md: images.md
-	sed -e "s@: @: images/@" -e "s/\.fig/.png/" $< > $@
+	sed -e "s@: @: images/@" -e "s/vdb_structure\.svg/vdb_structure.png/" -e "s/\.fig/.png/" $< > $@
 
 tmp/images_local_pdf.md: images.md
 	sed -e "s@: @: images/@" -e "s@images/\(.*\)\.fig@tmp/\1.pdf@" -e "s@\.svg@.pdf@" $< > $@
@@ -100,8 +100,11 @@ tmpdir:
 ### spec
 ########################################################################
 
-ospray-spec.rst: api.md
-	$(PANDOC) --wrap=none --email-obfuscation=none $+ -o $@
+ospray-spec.rst: api.md tmp/links_local.md tmp/images_local_png.md
+	$(PANDOC) --wrap=none --indented-code-classes=cpp --email-obfuscation=none $+ -t rst | sed -e 's@½@\\frac{1}{2}@g' > $@
+
+ospray-spec.html: ospray-spec.rst
+	rst2html $+ $@
 
 ### webpages
 ########################################################################
@@ -180,7 +183,7 @@ tmp/compilation.md: compilation.md tmp/links_local.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
 ../README.md: tmp/readme_head.md tmp/overview.md gitter.md tmp/compilation.md tmp/documentation.md tmp/api.md tmp/tutorials.md
-	$(PANDOC) --file-scope $+ --markdown-headings=setext -t markdown-smart+pipe_tables-simple_tables-multiline_tables-grid_tables-link_attributes | $(convert_nbsp_width) > $@
+	$(PANDOC) --file-scope $+ --markdown-headings=setext -t gfm | $(convert_nbsp_width) > $@
 
 ### pdf
 ########################################################################
@@ -221,7 +224,7 @@ tmp/brokenlinks.txt: tmp/hypertarget.txt tmp/hyperlink.txt
 ########################################################################
 
 clean:
-	rm -rf www tmp __pycache__
+	rm -rf www tmp __pycache__ ospray-spec.html ospray-spec.rst
 
 realclean: clean
 	rm -irf images

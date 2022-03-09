@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -14,7 +14,7 @@ struct WriteMultipleTileOperation : public TileOperation
 {
   void attach(DistributedFrameBuffer *dfb) override;
 
-  std::shared_ptr<LiveTileOperation> makeTile(DistributedFrameBuffer *dfb,
+  std::unique_ptr<LiveTileOperation> makeTile(DistributedFrameBuffer *dfb,
       const vec2i &tileBegin,
       size_t tileID,
       size_t ownerID) override;

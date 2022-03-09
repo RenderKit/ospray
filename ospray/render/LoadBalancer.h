@@ -1,24 +1,38 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include "camera/Camera.h"
 #include "common/OSPCommon.h"
+#include "common/World.h"
 #include "fb/FrameBuffer.h"
 #include "render/Renderer.h"
+#include "rkcommon/utility/ArrayView.h"
 
 namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE TiledLoadBalancer
 {
-  static std::unique_ptr<TiledLoadBalancer> instance;
-
   virtual ~TiledLoadBalancer() = default;
 
   virtual std::string toString() const = 0;
 
+  /*! Render the entire framebuffer using the given renderer, camera and
+   * world configuration using the load balancer to parallelize the work
+   */
   virtual void renderFrame(
       FrameBuffer *fb, Renderer *renderer, Camera *camera, World *world) = 0;
+
+  /*! Render the specified subset of tiles using the given renderer, camera and
+   * world configuration using the load balancer to parallelize the work
+   */
+  virtual void renderTiles(FrameBuffer *fb,
+      Renderer *renderer,
+      Camera *camera,
+      World *world,
+      const utility::ArrayView<int> &tileIDs,
+      void *perFrameData) = 0;
 
   static size_t numJobs(const int spp, int accumID);
 };
@@ -45,6 +59,13 @@ struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
       Renderer *renderer,
       Camera *camera,
       World *world) override;
+
+  void renderTiles(FrameBuffer *fb,
+      Renderer *renderer,
+      Camera *camera,
+      World *world,
+      const utility::ArrayView<int> &tileIDs,
+      void *perFrameData) override;
 
   std::string toString() const override;
 };

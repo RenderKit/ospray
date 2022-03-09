@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(COMPONENT_NAME oidn)
@@ -8,7 +8,12 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
 endif()
 
+if (OIDN_HASH)
+  set(OIDN_URL_HASH URL_HASH SHA256=${OIDN_HASH})
+endif()
+
 if (BUILD_OIDN_FROM_SOURCE)
+  string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" OIDN_ARCHIVE ${OIDN_VERSION})
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}
     DOWNLOAD_DIR ${COMPONENT_NAME}
@@ -16,8 +21,8 @@ if (BUILD_OIDN_FROM_SOURCE)
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
     LIST_SEPARATOR | # Use the alternate list separator
-    GIT_REPOSITORY "https://www.github.com/OpenImageDenoise/oidn.git"
-    GIT_SHALLOW ON
+    URL "https://github.com/OpenImageDenoise/oidn/archive/${OIDN_ARCHIVE}.zip"
+    ${OIDN_URL_HASH}
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -42,15 +47,15 @@ if (BUILD_OIDN_FROM_SOURCE)
     ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure ispc)
   endif()
 else()
-  string(REPLACE "v" "" OIDN_VERSION_NUMBER ${BUILD_OIDN_VERSION})
 
   if (APPLE)
-    set(OIDN_URL "http://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x86_64.macos.tar.gz")
+    set(OIDN_OSSUFFIX "x86_64.macos.tar.gz")
   elseif (WIN32)
-    set(OIDN_URL "http://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x64.vc14.windows.zip")
+    set(OIDN_OSSUFFIX "x64.vc14.windows.zip")
   else()
-    set(OIDN_URL "http://github.com/OpenImageDenoise/oidn/releases/download/${BUILD_OIDN_VERSION}/oidn-${OIDN_VERSION_NUMBER}.x86_64.linux.tar.gz")
+    set(OIDN_OSSUFFIX "x86_64.linux.tar.gz")
   endif()
+  set(OIDN_URL "https://github.com/OpenImageDenoise/oidn/releases/download/v${OIDN_VERSION}/oidn-${OIDN_VERSION}.${OIDN_OSSUFFIX}")
 
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}
@@ -59,6 +64,7 @@ else()
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}
     URL ${OIDN_URL}
+    ${OIDN_URL_HASH}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_directory

@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This is a small example tutorial how to use OSPRay in an application using
@@ -23,31 +23,7 @@
 #include "ospray/ospray_cpp.h"
 #define OSPRAY_GLM_DEFINITIONS
 #include "ospray/ospray_cpp/ext/glm.h"
-
-// helper function to write the rendered image as PPM file
-void writePPM(
-    const char *fileName, const glm::ivec2 &size, const uint32_t *pixel)
-{
-  FILE *file = fopen(fileName, "wb");
-  if (file == nullptr) {
-    fprintf(stderr, "fopen('%s', 'wb') failed: %d", fileName, errno);
-    return;
-  }
-  fprintf(file, "P6\n%i %i\n255\n", size.x, size.y);
-  unsigned char *out = (unsigned char *)alloca(3 * size.x);
-  for (int y = 0; y < size.y; y++) {
-    const unsigned char *in =
-        (const unsigned char *)&pixel[(size.y - 1 - y) * size.x];
-    for (int x = 0; x < size.x; x++) {
-      out[3 * x + 0] = in[4 * x + 0];
-      out[3 * x + 1] = in[4 * x + 1];
-      out[3 * x + 2] = in[4 * x + 2];
-    }
-    fwrite(out, 3 * size.x, sizeof(char), file);
-  }
-  fprintf(file, "\n");
-  fclose(file);
-}
+#include "rkcommon/utility/SaveImage.h"
 
 int main(int argc, const char **argv)
 {
@@ -139,7 +115,7 @@ int main(int argc, const char **argv)
 
     // access framebuffer and write its content as PPM file
     uint32_t *fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
-    writePPM("firstFrameCpp.ppm", imgSize, fb);
+    rkcommon::utility::writePPM("firstFrameCpp.ppm", imgSize.x, imgSize.y, fb);
     framebuffer.unmap(fb);
 
     // render 10 more frames, which are accumulated to result in a better
@@ -148,7 +124,8 @@ int main(int argc, const char **argv)
       framebuffer.renderFrame(renderer, camera, world);
 
     fb = (uint32_t *)framebuffer.map(OSP_FB_COLOR);
-    writePPM("accumulatedFrameCpp.ppm", imgSize, fb);
+    rkcommon::utility::writePPM(
+        "accumulatedFrameCpp.ppm", imgSize.x, imgSize.y, fb);
     framebuffer.unmap(fb);
 
     ospray::cpp::PickResult res =

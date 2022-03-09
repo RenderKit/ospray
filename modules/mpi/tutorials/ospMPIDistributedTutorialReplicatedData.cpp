@@ -1,4 +1,4 @@
-// Copyright 2018-2020 Intel Corporation
+// Copyright 2018-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* This tutorial demonstrates how MPI-parallel applications can be
@@ -118,11 +118,9 @@ int main(int argc, char **argv)
 
     // create a GLFW OSPRay window: this object will create and manage the
     // OSPRay frame buffer and camera directly
-    auto glfwOSPRayWindow = std::unique_ptr<GLFWDistribOSPRayWindow>(
-        new GLFWDistribOSPRayWindow(vec2i{1024, 768},
-            box3f(vec3f(-1.f), vec3f(1.f)),
-            world.handle(),
-            renderer.handle()));
+    auto glfwOSPRayWindow =
+        std::unique_ptr<GLFWDistribOSPRayWindow>(new GLFWDistribOSPRayWindow(
+            vec2i{1024, 768}, box3f(vec3f(-1.f), vec3f(1.f)), world, renderer));
 
     // start the GLFW main loop, which will continuously render
     glfwOSPRayWindow->mainLoop();

@@ -211,8 +211,6 @@ MPIOffloadDevice::~MPIOffloadDevice()
 
     sendWork([](networking::WriteStream &writer) { writer << work::FINALIZE; },
         true);
-
-    // TODO: if not mpi, don't finalize on head node
     MPI_Finalize();
   }
 }
@@ -255,8 +253,7 @@ void MPIOffloadDevice::initializeDevice()
   }
 
   // Setup the command buffer on the app rank
-  maxCommandBufferEntries =
-      getParam<uint32_t>("maxCommandBufferEntries", 8192);
+  maxCommandBufferEntries = getParam<uint32_t>("maxCommandBufferEntries", 8192);
   commandBufferSize = getParam<uint32_t>("commandBufferSize", 512) * (1 << 20);
   maxInlineDataSize = getParam<uint32_t>("maxInlineDataSize", 32) * (1 << 20);
 

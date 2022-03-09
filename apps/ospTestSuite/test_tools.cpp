@@ -1,10 +1,11 @@
-// Copyright 2017-2019 Intel Corporation
+// Copyright 2017-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 
 #include "test_tools.h"
+#include "rkcommon/utility/SaveImage.h"
 
 extern OSPRayEnvironment *ospEnv;
 
@@ -26,37 +27,6 @@ OSPImageTools::OSPImageTools(
     fileFormat = ".err";
     break;
   }
-}
-
-OsprayStatus OSPImageTools::writePPM(
-    std::string fileName, const uint32_t *pixel)
-{
-  std::ofstream outFile(
-      fileName.c_str(), std::ofstream::out | std::ofstream::binary);
-  if (!outFile.good()) {
-    std::cerr << "Failed to open file " << fileName << std::endl;
-    return OsprayStatus::Error;
-  }
-
-  outFile << "P6\n"
-          << size.x << " " << size.y << "\n"
-          << "std::numeric_limits<pixelColorValue>::max()\n";
-
-  std::vector<pixelColorValue> out_vec(3 * size.x);
-  pixelColorValue *out = out_vec.data();
-
-  for (int y = 0; y < size.y; y++) {
-    const pixelColorValue *in =
-        (const pixelColorValue *)(pixel + (size.y - 1 - y) * size.x);
-
-    for (int x = 0; x < size.x; x++)
-      std::memcpy(out + 3 * x, in + ImgType::RGBA * x, 3);
-
-    outFile.write((const char *)out, 3 * size.x);
-  }
-  outFile << '\n';
-
-  return OsprayStatus::Ok;
 }
 
 OsprayStatus OSPImageTools::writePNG(
@@ -112,7 +82,9 @@ OsprayStatus OSPImageTools::writeImg(std::string fileName, const void *pixel)
   OsprayStatus writeErr = OsprayStatus::Error;
   fileName += GetFileFormat();
   if (GetFileFormat() == ".ppm") {
-    writeErr = writePPM(fileName, (const uint32_t *)pixel);
+    rkcommon::utility::writePPM(
+        fileName, size.x, size.y, (const uint32_t *)pixel);
+    writeErr = OsprayStatus::Ok;
   } else if (GetFileFormat() == ".png") {
     writeErr = writePNG(fileName, (const uint32_t *)pixel);
   } else if (GetFileFormat() == ".hdr") {
@@ -130,62 +102,76 @@ OsprayStatus OSPImageTools::saveTestImage(const void *pixel)
   return writeImg(ospEnv->GetBaselineDir() + "/" + imgName, pixel);
 }
 
+vec4f OSPImageTools::getAveragedPixel(const vec4i *image,
+    vec2i pixelIndex,
+    const rkcommon::index_sequence_2D &imageIndices)
+{
+  vec4i p(0);
+  unsigned int count = 0;
+  rkcommon::index_sequence_2D indices(vec2i(5));
+  for (vec2i id : indices) {
+    vec2i pid = pixelIndex + (id - vec2i(2));
+    if ((reduce_min(pid) < 0) || (reduce_min(size - pid) < 1))
+      continue;
+
+    p += image[imageIndices.flatten(pid)];
+    count++;
+  }
+  return p / float(count);
+}
+
 // compare the baseline image with the values form the framebuffer
 OsprayStatus OSPImageTools::compareImgWithBaseline(const uint32_t *testImg)
 {
-  pixelColorValue *testImage = (pixelColorValue *)testImg;
+  vec4uc *testImage = (vec4uc *)testImg;
   std::string baselineName =
       ospEnv->GetBaselineDir() + "/" + imgName + GetFileFormat();
 
   int dataX, dataY, dataN;
-  pixelColorValue *baselineData =
-      stbi_load(baselineName.c_str(), &dataX, &dataY, &dataN, ImgType::RGBA);
-  if (!baselineData) {
+  stbi_set_flip_vertically_on_load(true);
+  vec4uc *baselineImage = (vec4uc *)stbi_load(
+      baselineName.c_str(), &dataX, &dataY, &dataN, ImgType::RGBA);
+  if (!baselineImage) {
     std::cerr << "Failed to load image: " << baselineName << std::endl;
     return OsprayStatus::Fail;
   } else if (dataX != size.x || dataY != size.y) {
     std::cerr << "Wrong image loaded for: " << baselineName << std::endl;
-    stbi_image_free(baselineData);
+    stbi_image_free(baselineImage);
     return OsprayStatus::Fail;
   }
 
-  unsigned int bufferLen = ImgType::RGBA * size.x * size.y;
-  std::vector<pixelColorValue> baselineImage(
-      bufferLen, std::numeric_limits<pixelColorValue>::max());
-  std::vector<pixelColorValue> diffImage(
-      bufferLen, std::numeric_limits<pixelColorValue>::max());
-
-  for (int y = 0; y < size.y; ++y) {
-    pixelColorValue *lineAdrr =
-        &(baselineImage[ImgType::RGBA * size.x * (size.y - 1 - y)]);
-    std::memcpy(lineAdrr,
-        &(baselineData[ImgType::RGBA * size.x * y]),
-        ImgType::RGBA * sizeof(pixelColorValue) * size.x);
-  }
-
   bool notPerfect = false;
-  unsigned incorrectPixels = 0;
-  pixelColorValue maxError = 0;
-  pixelColorValue minError = std::numeric_limits<pixelColorValue>::max();
   long long totalError = 0;
+  rkcommon::index_sequence_2D imageIndices(size);
+  std::vector<vec4uc> diffAbsImage(imageIndices.total_indices());
+  {
+    // Prepare temporary diff image with signed integers
+    std::vector<vec4i> diffImage(imageIndices.total_indices());
+    for (vec2i i : imageIndices) {
+      const unsigned int pixelIndex = imageIndices.flatten(i);
+      const vec4i baselineValue = baselineImage[pixelIndex];
+      const vec4i renderedValue = testImage[pixelIndex];
+      diffImage[pixelIndex] = baselineValue - renderedValue;
+    }
 
-  for (int pixel = 0; pixel < size.x * size.y; ++pixel) {
-    for (int channel = 0; channel < 3; ++channel) {
-      pixelColorValue baselineValue =
-          baselineImage[ImgType::RGBA * pixel + channel];
-      pixelColorValue renderedValue =
-          testImage[ImgType::RGBA * pixel + channel];
-      pixelColorValue diffValue =
-          std::abs((int)baselineValue - (int)renderedValue);
+    for (vec2i i : imageIndices) {
+      const unsigned int pixelIndex = imageIndices.flatten(i);
+      const vec4uc diffValue = abs(diffImage[pixelIndex]);
+      const vec4i diffAvgValue =
+          abs(getAveragedPixel(diffImage.data(), i, imageIndices));
 
-      notPerfect = notPerfect || diffValue;
-      maxError = std::max(maxError, diffValue);
-      minError = std::min(minError, diffValue);
-      totalError += diffValue;
-      if (diffValue > pixelThreshold)
-        incorrectPixels++;
+      // Only count errors if above specified threshold, this removes blurred
+      // noise
+      const int pixelError = reduce_add(diffAvgValue);
+      if (pixelError > pixelThreshold)
+        totalError += pixelError;
 
-      diffImage[ImgType::RGBA * pixel + channel] = diffValue;
+      // Not a perfect match if any difference detected
+      notPerfect = notPerfect || reduce_add(diffValue);
+
+      // Set values for output diff image
+      diffAbsImage[pixelIndex] = diffValue;
+      diffAbsImage[pixelIndex].w = std::numeric_limits<unsigned char>::max();
     }
   }
 
@@ -193,37 +179,23 @@ OsprayStatus OSPImageTools::compareImgWithBaseline(const uint32_t *testImg)
     std::cerr << "[ WARNING  ] " << baselineName << " is not pixel perfect"
               << std::endl;
 
-  if (incorrectPixels > 0) {
-    double meanError = totalError / double(3 * size.x * size.y);
-    double variance = 0.0;
-    for (int pixel = 0; pixel < size.x * size.y; ++pixel)
-      for (int channel = 0; channel < 3; ++channel) {
-        double diff = diffImage[ImgType::RGBA * pixel + channel] - meanError;
-        variance += diff * diff;
-      }
-    variance /= (3 * size.x * size.y);
-    double stdDev = sqrt(variance);
-
-    std::cerr << "[ STATISTIC] Number of errors: " << incorrectPixels
-              << std::endl;
-    std::cerr << "[ STATISTIC] Min/Max/Mean/StdDev: " << (int)minError << "/"
-              << (int)maxError << "/" << std::fixed << std::setprecision(2)
-              << meanError << "/" << std::fixed << std::setprecision(2)
-              << stdDev << std::endl;
+  double meanError = totalError / double(4 * size.x * size.y);
+  if (totalError) {
+    std::cerr << "[ STATISTIC] Total/mean error: " << totalError << "/"
+              << std::fixed << std::setprecision(3) << meanError << std::endl;
   }
 
-  bool failed = (incorrectPixels / double(3 * size.x * size.y)) > errorRate;
-
+  bool failed = meanError > errorRate;
   if (failed) {
     writeImg(ospEnv->GetFailedDir() + "/" + imgName + "_baseline",
-        (const uint32_t *)baselineImage.data());
+        (const uint32_t *)baselineImage);
     writeImg(ospEnv->GetFailedDir() + "/" + imgName + "_rendered",
         (const uint32_t *)testImage);
     writeImg(ospEnv->GetFailedDir() + "/" + imgName + "_diff",
-        (const uint32_t *)diffImage.data());
+        (const uint32_t *)diffAbsImage.data());
   }
 
-  stbi_image_free(baselineData);
+  stbi_image_free(baselineImage);
   if (failed)
     return OsprayStatus::Fail;
   else

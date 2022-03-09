@@ -21,9 +21,9 @@ before you can build OSPRay you need the following prerequisites:
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
     Linux development tools. To build the interactive tutorials, you
     should also have some version of OpenGL and GLFW.
--   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io), version 1.14.1 or later. Please
-    obtain a release of ISPC from the [ISPC downloads
+-   Additionally you require a copy of the [Intel® Implicit SPMD Program
+    Compiler (ISPC)](http://ispc.github.io), version 1.14.1 or later.
+    Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.^[For example, if OSPRay is in
@@ -43,7 +43,7 @@ before you can build OSPRay you need the following prerequisites:
     or newer is required. If Embree is not found by CMake its location
     can be hinted with the variable `embree_DIR`.
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 0.12.0 or newer is required. If Open VKL is not
+    installing version 0.13.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 -   OSPRay also provides an optional module implementing the `denosier`
@@ -118,7 +118,7 @@ BUILD_EMBREE_FROM_SOURCE
 BUILD_OIDN_FROM_SOURCE
 : set to OFF will download a pre-built version of Open Image Denoise.
 
-BUILD_OIDN_VERSION
+OIDN_VERSION
 : determines which version of Open Image Denoise to pull down.
 
 BUILD_OSPRAY_MODULE_MPI

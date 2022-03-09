@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "BilinearPatches.h"
@@ -24,7 +24,6 @@ BilinearPatches::BilinearPatches()
     implements all the ispc-side code for intersection,
     postintersect, etc. See BilinearPatches.ispc */
   ispcEquivalent = ispc::BilinearPatches_create(this);
-  embreeGeometry = rtcNewGeometry(ispc_embreeDevice(), RTC_GEOMETRY_TYPE_USER);
 }
 
 /*! commit - this is the function that parses all the parameters
@@ -34,6 +33,15 @@ BilinearPatches::BilinearPatches()
   control points */
 void BilinearPatches::commit()
 {
+  // The embree device is available on commit, but not in the constructor
+  // as it is set by the device creating this geometry
+  if (!embreeDevice) {
+    throw std::runtime_error("invalid Embree device");
+  }
+  if (!embreeGeometry) {
+    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
+  }
+
   this->patchesData = getParamDataT<vec3f>("vertices", true);
 
   if (!patchesData && !patchesData->compact())

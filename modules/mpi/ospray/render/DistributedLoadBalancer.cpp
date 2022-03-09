@@ -1,7 +1,6 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "common/Profiling.h"
 #include "DistributedLoadBalancer.h"
 #include <algorithm>
 #include <limits>
@@ -10,6 +9,7 @@
 #include "WriteMultipleTileOperation.h"
 #include "camera/PerspectiveCamera.h"
 #include "common/MPICommon.h"
+#include "common/Profiling.h"
 #include "distributed/DistributedRenderer.h"
 #include "rkcommon/tasking/parallel_for.h"
 
@@ -197,8 +197,14 @@ void Distributed::renderFrame(
     if (tileOwner) {
       bgtile.sortOrder = std::numeric_limits<int32_t>::max();
       bgtile.generation = 0;
-      bgtile.children =
-          std::count(regionVisible, regionVisible + numRegions, true);
+      bgtile.children = 0;
+      // Note: not using std::count here as seems to not count properly in debug
+      // builds
+      for (size_t i = 0; i < numRegions; ++i) {
+        if (regionVisible[i]) {
+          ++bgtile.children;
+        }
+      }
       dfb->setTile(bgtile);
     }
 
@@ -302,6 +308,9 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
 #ifdef ENABLE_PROFILING
   start = ProfilingPoint();
 #endif
+  /* TODO WILL: This can dispatch back to LocalTiledLoadBalancer::renderTiles
+   * to render the tiles instead of repeating this loop here ourselves.
+   */
   tasking::parallel_for(NTASKS, [&](int taskIndex) {
     const size_t tileID = taskIndex * workerSize() + workerRank();
     const size_t numTiles_x = fb->getNumTiles().x;
@@ -330,8 +339,8 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
   });
 #ifdef ENABLE_PROFILING
   end = ProfilingPoint();
-  std::cout << "Render loop took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
-    << cpuUtilization(start, end) << "%\n";
+  std::cout << "Render loop took: " << elapsedTimeMs(start, end)
+            << "ms, CPU %: " << cpuUtilization(start, end) << "%\n";
 
   start = ProfilingPoint();
 #endif
@@ -340,8 +349,8 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
 
 #ifdef ENABLE_PROFILING
   end = ProfilingPoint();
-  std::cout << "Wait finished took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
-    << cpuUtilization(start, end) << "%\n";
+  std::cout << "Wait finished took: " << elapsedTimeMs(start, end)
+            << "ms, CPU %: " << cpuUtilization(start, end) << "%\n";
 
   start = ProfilingPoint();
 #endif
@@ -351,8 +360,8 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
 
 #ifdef ENABLE_PROFILING
   end = ProfilingPoint();
-  std::cout << "End frame took: " << elapsedTimeMs(start, end) << "ms, CPU %: "
-    << cpuUtilization(start, end) << "%\n";
+  std::cout << "End frame took: " << elapsedTimeMs(start, end)
+            << "ms, CPU %: " << cpuUtilization(start, end) << "%\n";
 #endif
 }
 
@@ -360,6 +369,17 @@ std::string Distributed::toString() const
 {
   return "ospray::mpi::staticLoadBalancer::Distributed";
 }
+
+void Distributed::renderTiles(FrameBuffer *fb,
+    Renderer *renderer,
+    Camera *camera,
+    World *world,
+    const utility::ArrayView<int> &tileIDs,
+    void *perFrameData)
+{
+  NOT_IMPLEMENTED;
+}
+
 } // namespace staticLoadBalancer
 } // namespace mpi
 } // namespace ospray

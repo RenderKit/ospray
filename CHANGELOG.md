@@ -1,6 +1,42 @@
 Version History
 ---------------
 
+### Changes in v2.6.0:
+
+-   Added new `intensityQuantity` type `OSP_INTENSITY_QUANTITY_SCALE`
+    for the `hdri` and `sunSky` light source. For the future this is the
+    only supported quantity for these lights, the value
+    `OSP_INTENSITY_QUANTITY_RADIANCE` is deprecated. When
+    `OSP_INTENSITY_QUANTITY_SCALE` is used for `sunSky` the default
+    value of `intensity` is `0.025` to match the old behaviour
+-   The MPI module is included in the releases packages. An
+    [MPICH-ABI](https://www.mpich.org/abi/) compatible build is provided
+    for Linux that can be run with the Intel oneAPI HPC Toolki, MPICH,
+    and other MPICH-ABI compatible MPI distributions. The Windows
+    release is built against MPI provided in the Intel oneAPI HPC
+    Toolkit
+-   OSPRay now requires minimum Open VKL v0.13.0 to bring the
+    following improvements:
+    -   Support half precision float (fp16) voxel data in strutured
+        volumes (regular and spherical) and VDB volume
+    -   Supporting tricubic filtering via `VKL_FILTER_TRICUBIC` filter
+        for VDB volume
+    -   Fixed artifacts for isosurfaces of unstructured volumes
+    -   Performance improvements for isosurfaces when multiple
+        isovalues are selected 
+    -   Better, adaptive sampling of AMR volumes
+-   The `mpiOffload` and `mpiDistributed` devices now support picking.
+    Picking in the distributed device will return the globally closest
+    object on the rank that owns that object. Other ranks will report
+    no hit
+-   Messages issued from ISPC code use the same reporting path as the C++
+    code, thus now the whole OSPRay console output can be consistently
+    filtered with log levels
+-   Open VKL and Embree internal errors are now correctly mapped to
+    their corresponding OSPRay errors
+-   Fix behavior of committing the framebuffer in distributed rendering
+    to match that of local rendering
+
 ### Changes in v2.5.0:
 
 -   Add native support for cones or cylinders with curves geometry of
@@ -16,7 +52,7 @@ Version History
     directory
     -   The socket-based communication layer has been removed
 -   Add `intensityQuantity` parameter to light sources to control the
-    interpretation and convertion of the `intensity` into a radiative
+    interpretation and conversion of the `intensity` into a radiative
     quantity
 -   OSPRay now requires minimum Open VKL v0.12.0 to bring the following
     improvements: 

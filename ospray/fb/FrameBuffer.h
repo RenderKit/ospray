@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -9,6 +9,7 @@
 #include "common/Managed.h"
 #include "fb/ImageOp.h"
 #include "ospray/ospray.h"
+#include "rkcommon/utility/ArrayView.h"
 
 namespace ospray {
 
@@ -46,6 +47,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject
   vec2i getNumPixels() const;
 
   float getVariance() const;
+
+  utility::ArrayView<int> getTileIDs();
 
   /*! how often has been accumulated into that tile
       Note that it is up to the application to properly
@@ -115,6 +118,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject
   Ref<const DataT<ImageOp *>> imageOpData;
   std::vector<std::unique_ptr<LiveImageOp>> imageOps;
   size_t firstFrameOperation = -1;
+
+  std::vector<int> tileIDs;
 };
 
 OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);

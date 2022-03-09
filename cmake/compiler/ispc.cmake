@@ -1,8 +1,8 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # ISPC versions to look for, in decending order (newest first)
-set(ISPC_VERSION_WORKING "1.14.1")
+set(ISPC_VERSION_WORKING "1.15.0" "1.14.1")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 if (NOT ISPC_EXECUTABLE)
@@ -40,7 +40,7 @@ if (NOT ISPC_EXECUTABLE)
     message("********************************************")
     message(FATAL_ERROR "Could not find ISPC. Exiting.")
   else()
-    message(STATUS "Found Intel SPMD Compiler (ISPC): ${ISPC_EXECUTABLE}")
+    message(STATUS "Found Intel Implicit SPMD Program Compiler (ISPC): ${ISPC_EXECUTABLE}")
   endif()
 endif()
 
@@ -50,7 +50,7 @@ if(NOT ISPC_VERSION)
   set(ISPC_VERSION ${CMAKE_MATCH_1})
 
   if (ISPC_VERSION VERSION_LESS ISPC_VERSION_REQUIRED)
-    message(FATAL_ERROR "Need at least version ${ISPC_VERSION_REQUIRED} of Intel SPMD Compiler (ISPC).")
+    message(FATAL_ERROR "Need at least version ${ISPC_VERSION_REQUIRED} of Intel Implicit SPMD Compiler (ISPC).")
   endif()
 
   set(ISPC_VERSION ${ISPC_VERSION} CACHE STRING "ISPC Version")
@@ -61,7 +61,7 @@ endif()
 message(STATUS "Found ISPC v${ISPC_VERSION}: ${ISPC_EXECUTABLE}")
 list(FIND ISPC_VERSION_WORKING ${ISPC_VERSION} ISPC_VERSION_TESTED)
 if (ISPC_VERSION_TESTED EQUAL -1)
-  message(WARNING "Using untested version ${ISPC_VERSION} of Intel SPMD Compiler (ISPC), proceed at own risk. Supported versions are ${ISPC_VERSION_WORKING}.")
+  message(WARNING "Using untested version ${ISPC_VERSION} of Intel Implicit SPMD Compiler (ISPC), proceed at own risk. Supported versions are ${ISPC_VERSION_WORKING}.")
 endif()
 
 set(OSPRAY_ISPC_ADDRESSING 32 CACHE STRING "32 vs 64 bit addressing in ispc")

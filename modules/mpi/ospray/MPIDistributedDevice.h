@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,6 +7,8 @@
 #include "common/MPICommon.h"
 #include "common/Managed.h"
 #include "common/ObjectHandle.h"
+#include "openvkl/openvkl.h"
+#include "ospray/render/LoadBalancer.h"
 
 namespace ospray {
 namespace mpi {
@@ -146,9 +148,17 @@ struct MPIDistributedDevice : public api::Device
   /*! create a new Texture object */
   OSPTexture newTexture(const char *type) override;
 
+  OSPPickResult pick(
+      OSPFrameBuffer, OSPRenderer, OSPCamera, OSPWorld, const vec2f &) override;
+
  private:
   bool initialized{false};
   bool shouldFinalizeMPI{false};
+
+  std::shared_ptr<TiledLoadBalancer> loadBalancer;
+
+  RTCDevice embreeDevice = nullptr;
+  VKLDevice vklDevice = nullptr;
 };
 
 } // namespace mpi
