@@ -9,11 +9,11 @@ ELSEIF(UNIX)
   set(PLATFORM linux_2.6_64)
   set(LIBSUFFIX ".so")  
 ENDIF()
-set(APEX_DIR ${ENSIGHT_SRC_DIR}/apex221/machines/${PLATFORM})
+set(APEX_DIR ${ENSIGHT_SRC_DIR}/apex222/machines/${PLATFORM})
 set(OSPRAY_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
 ####################embree install commands#######################
-set(EMBREE_INSTALL_DIR ${APEX_DIR}/intel_embree)
+set(EMBREE_INSTALL_DIR ${APEX_DIR}/intel_embree-3.10.0)
 
 IF (WIN32)
 install(
@@ -42,7 +42,7 @@ install(
 
 
 #####################tbb install commands########################
-set(TBB_INSTALL_DIR ${APEX_DIR}/intel_tbb)
+set(TBB_INSTALL_DIR ${APEX_DIR}/intel_tbb-2020)
 
 IF (WIN32)
 install(
@@ -97,7 +97,7 @@ install(
 
 
 ###########################OIDN install commands###########################
-set(OIDN_INSTALL_DIR ${APEX_DIR}/intel_oidn)
+set(OIDN_INSTALL_DIR ${APEX_DIR}/intel_oidn-1.2.1)
 
 IF (WIN32)
 install(
@@ -130,7 +130,7 @@ install(
 
 
 #############################ospray install commands########################
-set(OSPRAY_INSTALL_DIR ${APEX_DIR}/intel_ospray)
+set(OSPRAY_INSTALL_DIR ${APEX_DIR}/intel_ospray-2.1.1)
 
 IF (WIN32)
 install(
@@ -177,7 +177,7 @@ install(
 
 
 ##########################openvkl install commands########################
-set(OPENVKL_INSTALL_DIR ${APEX_DIR}/intl_openvkl)
+set(OPENVKL_INSTALL_DIR ${APEX_DIR}/intl_openvkl-1.1.0)
 install(
 	DIRECTORY ${CMAKE_INSTALL_PREFIX}/openvkl/
 	DESTINATION ${OPENVKL_INSTALL_DIR}/
@@ -188,7 +188,7 @@ install(
 )
 
 #########################rkcommon install commands########################
-set(RKCOMMON_INSTALL_DIR ${APEX_DIR}/intl_rkcommon)
+set(RKCOMMON_INSTALL_DIR ${APEX_DIR}/intl_rkcommon-1.8.0)
 install(
 	DIRECTORY ${CMAKE_INSTALL_PREFIX}/rkcommon/
 	DESTINATION ${RKCOMMON_INSTALL_DIR}/
