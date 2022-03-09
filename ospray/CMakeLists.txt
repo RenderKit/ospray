@@ -270,20 +270,20 @@ set(project_ispc_FILES
     render/pathtracer/VirtualLight.ih
     render/pathtracer/VirtualLight.ispc
 
-    render/pathtracer/materials/Alloy.ispc
-    render/pathtracer/materials/CarPaint.ispc
-    render/pathtracer/materials/Glass.ispc
-    render/pathtracer/materials/Luminous.ispc
-    render/pathtracer/materials/Material.ih
-    render/pathtracer/materials/Material.ispc
-    render/pathtracer/materials/Medium.ih
-    render/pathtracer/materials/Metal.ispc
-    render/pathtracer/materials/MetallicPaint.ispc    
-    render/pathtracer/materials/OBJ.ispc
-    render/pathtracer/materials/Plastic.ispc
-    render/pathtracer/materials/Principled.ispc
-    render/pathtracer/materials/ThinGlass.ispc
-    render/pathtracer/materials/Velvet.ispc
+    render/materials/Alloy.ispc
+    render/materials/CarPaint.ispc
+    render/materials/Glass.ispc
+    render/materials/Luminous.ispc
+    render/materials/Material.ih
+    render/materials/Material.ispc
+    render/materials/Medium.ih
+    render/materials/Metal.ispc
+    render/materials/MetallicPaint.ispc    
+    render/materials/OBJ.ispc
+    render/materials/Plastic.ispc
+    render/materials/Principled.ispc
+    render/materials/ThinGlass.ispc
+    render/materials/Velvet.ispc
 
     texture/Mapping.ih
     texture/Mapping.ispc
