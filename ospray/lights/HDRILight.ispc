@@ -112,11 +112,9 @@ inline Light_EvalRes Eval(HDRILight *uniform self,
 
   const vec3f localDir = world2light * dir;
 
-  //const float u = atan2(localDir.y, localDir.x) * one_over_two_pi;
-  //const float v = acos(localDir.z) * one_over_pi;
-  //const vec2f uv = make_vec2f(u, v);
-  const vec2f uv = get_hdr_spherical_uv(localDir);
-  const float u = uv.x, v = uv.y;
+  const float u = atan2(localDir.y, localDir.x) * one_over_two_pi;
+  const float v = acos(localDir.z) * one_over_pi;
+  const vec2f uv = make_vec2f(u, v);
 
   // clamp2edge for theta for tex lookup, to prevent light leaks at the poles
   const vec2f uvc = make_vec2f(
@@ -130,6 +128,7 @@ inline Light_EvalRes Eval(HDRILight *uniform self,
   const vec2f uvd = frac(uv + self->map->halfTexel);
   res.pdf = Distribution2D_pdf(self->distribution, uvd);
   res.pdf *= one_over_two_pi_sqr * rsqrt(1.f - sqr(localDir.z));
+
   return res;
 }
 
@@ -221,7 +220,7 @@ export void HDRILight_set(void *uniform super,
       if (instance->motionBlur) {
         self->super.sample = HDRILight_sample_instanced;
         self->super.eval = HDRILight_eval_instanced;
-  } else {
+      } else {
         self->light2world = instance->xfm.l * self->light2world;
       }
     }
