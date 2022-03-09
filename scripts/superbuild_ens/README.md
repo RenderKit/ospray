@@ -22,3 +22,5 @@ CMake options to note (all have sensible defaults):
 - `BUILD_EMBREE_FROM_SOURCE` set to OFF will download a pre-built version of Embree.
 - `BUILD_OIDN_FROM_SOURCE` set to OFF will download a pre-built version of OpenImageDenoise.
 - `BUILD_OIDN_VERSION` determines which verison of OpenImageDenoise to pull down.
+- `BUILD_TBB_FROM_SOURCE` set to ON to build TBB from source (required for ARM support).
+   The default setting is OFF.
