@@ -115,7 +115,7 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
   }
 }
 
-#include "render/pathtracer/materials/Material.ih"
+#include "render/materials/Material.ih"
 #include "texture/Texture2D.ih"
 float sampleAlphaTexture1D(const DifferentialGeometry &dg)
 {
