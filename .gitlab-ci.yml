@@ -16,29 +16,41 @@ variables:
   GIT_DEPTH: "15"
   ErrorActionPreference: STOP
 
-.job_template: &docker
-  tags:
-    - docker
-
 .job_template: &archlinux
-  <<: *docker
-  stage: build
-  image: $DOCKER_REGISTRY/ospray/docker-images:arch  # default image
+  tags: [ docker ]
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
 
-.job_template: &centos7-gcc4
-  <<: *docker
-  stage: build
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
-
-.job_template: &centos7-gcc7
-  <<: *docker
-  stage: build
+.job_template: &centos7
+  tags: [ docker, modules ]
   image: $DOCKER_REGISTRY/centos:7
 
+.job_template: &centos7-gcc4
+  tags: [ docker, modules ]
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+
 .job_template: &centos8
-  <<: *docker
-  stage: build
+  tags: [ docker ]
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+
+.job_template: &ubuntu1604
+  tags: [ docker ]
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
+
+.job_template: &ubuntu1804
+  tags: [ docker ]
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
+
+.job_template: &ubuntu2004
+  tags: [ docker ]
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
+
+.job_template: &docu
+  tags: [docker]
+  image: $DOCKER_REGISTRY/ospray/docker-images:docu
+
+.job_template: &clamav
+  tags: [docker]
+  image: $DOCKER_REGISTRY/clamav:ubuntu20.04
 
 .job_template: &build_artifacts
   artifacts:
@@ -131,11 +143,13 @@ variables:
 
 build-arch-gcc:
   <<: *archlinux
+  stage: build
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
 
 build-arch-clang:
   <<: *archlinux
+  stage: build
   script:
     - export CC=clang
     - export CXX=clang++
@@ -143,11 +157,13 @@ build-arch-clang:
 
 build-arch-gcc-extras:
   <<: *archlinux
+  stage: build
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
 
 build-arch-clang-extras:
   <<: *archlinux
+  stage: build
   script:
     - export CC=clang
     - export CXX=clang++
@@ -155,6 +171,7 @@ build-arch-clang-extras:
 
 build-arch-clang-devel:
   <<: *archlinux
+  stage: build
   script:
     - export CC=clang
     - export CXX=clang++
@@ -163,6 +180,7 @@ build-arch-clang-devel:
 
 build-linux-debug-all:
   <<: *archlinux
+  stage: build
   script:
     - export CC=clang
     - export CXX=clang++
@@ -171,37 +189,36 @@ build-linux-debug-all:
   only: [schedules]
 
 build-ubuntu1604-gcc:
-  <<: *docker
+  <<: *ubuntu1604
   stage: build
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja
   <<: *build_artifacts
 
 build-ubuntu1804-gcc:
-  <<: *docker
+  <<: *ubuntu1804
   stage: build
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
   <<: *build_artifacts
 
 build-ubuntu2004-gcc:
-  <<: *docker
+  <<: *ubuntu2004
   stage: build
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   script:
     - scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
   <<: *build_artifacts
 
 build-centos8:
   <<: *centos8
+  stage: build
   script:
     - scripts/build_gitlab/linux.sh -G Ninja
   <<: *build_artifacts
 
 build-centos7-icc:
   <<: *centos7-gcc4
+  stage: build
   script:
     - module load cmake
     - module load intel
@@ -211,6 +228,7 @@ build-centos7-icc:
 
 build-centos7-icc15:
   <<: *centos7-gcc4
+  stage: build
   script:
     - module load cmake
     - module load intel/2015
@@ -219,13 +237,15 @@ build-centos7-icc15:
     - scripts/build_gitlab/linux.sh
 
 build-centos7-gcc:
-  <<: *centos7-gcc7
+  <<: *centos7
+  stage: build
   script:
     - scripts/build_gitlab/linux.sh
   <<: *build_artifacts
 
 build-centos7-mpi-impi:
-  <<: *centos7-gcc7
+  <<: *centos7
+  stage: build
   script:
     - module load cmake
     - module load intel/2021.2
@@ -233,14 +253,16 @@ build-centos7-mpi-impi:
   <<: *build_artifacts
 
 build-centos7-mpi-openmpi:
-  <<: *centos7-gcc7
+  <<: *centos7
+  stage: build
   script:
     - module load cmake
     - module load mpi/openmpi-x86_64
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
 build-centos7-mpi-mpich:
-  <<: *centos7-gcc7
+  <<: *centos7
+  stage: build
   script:
     - module load cmake
     - module load mpi/mpich-x86_64
@@ -249,12 +271,14 @@ build-centos7-mpi-mpich:
 
 build-centos8-mpi-openmpi:
   <<: *centos8
+  stage: build
   script:
     - module load mpi/openmpi-x86_64
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
 
 build-centos8-mpi-mpich:
   <<: *centos8
+  stage: build
   script:
     - module load mpi/mpich-x86_64
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
@@ -272,6 +296,7 @@ build-mpi-cluster:
 
 build-linux-debug:
   <<: *archlinux
+  stage: build
   script:
     - export CFLAGS=-fsanitize=address
     - export CXXFLAGS=-fsanitize=address
@@ -339,48 +364,48 @@ build-windows-msvc16-mpi_and_md:
 ### TEST JOBS ###
 
 test-centos7-gcc-avx2:
+  <<: *centos7
   <<: *test_job_unix_avx2
-  image: $DOCKER_REGISTRY/centos:7
   needs: [build-centos7-gcc]
 
 test-centos8-avx512skx:
+  <<: *centos8
   <<: *test_job_unix_avx512skx
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
   needs: [build-centos8]
 
 test-ubuntu1604-gcc-avx2:
+  <<: *ubuntu1604
   <<: *test_job_unix_avx2
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
   needs: [build-ubuntu1604-gcc]
 
 test-ubuntu1804-gcc-avx512skx:
+  <<: *ubuntu1804
   <<: *test_job_unix_avx512skx
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   needs: [build-ubuntu1804-gcc]
 
 test-ubuntu2004-gcc-avx2:
+  <<: *ubuntu2004
   <<: *test_job_unix_avx2
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs: [build-ubuntu2004-gcc]
 
 test-ubuntu2004-gcc-avx512skx:
+  <<: *ubuntu2004
   <<: *test_job_unix_avx512skx
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs: [build-ubuntu2004-gcc]
   script:
     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX TEST_MULTIDEVICE
 
 test-centos7-gcc-mpi-mpich-avx2:
+  <<: *centos7
   <<: *test_job_unix_mpi_avx2
-  image: $DOCKER_REGISTRY/centos:7
   needs: [build-centos7-mpi-mpich]
   before_script:
     - module load cmake
     - module load mpi/mpich-x86_64
 
 test-centos7-gcc-mpi-impi-avx2:
+  <<: *centos7
   <<: *test_job_unix_mpi_avx2
-  image: $DOCKER_REGISTRY/centos:7
   needs: [build-centos7-mpi-impi]
   before_script:
     - module load cmake
@@ -400,13 +425,13 @@ test-mpi-cluster:
   only: [schedules]
 
 sanitize-linux-debug:
+  <<: *archlinux
   <<: *test_job_unix_sanitize
-  image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs: [build-linux-debug]
 
 test-linux-debug-all:
+  <<: *archlinux
   <<: *test_job_unix_avx512skx
-  image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs: [build-linux-debug-all]
   only: [schedules]
 
@@ -425,19 +450,15 @@ test-osx-arm:
     - DYLD_FALLBACK_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX
 
 test-tutorials:
+  <<: *centos7
   stage: test
-  tags: [docker]
-  image: $DOCKER_REGISTRY/centos:7
   needs: [build-centos7-gcc]
   script:
     - scripts/tests/run_tutorials.sh
 
 test-find-ospray:
+  <<: *centos7
   stage: test
-  tags:
-    - docker
-    - modules
-  image: $DOCKER_REGISTRY/centos:7
   needs: [build-centos7-gcc]
   script:
     - module load cmake
@@ -481,8 +502,8 @@ test-windows-msvc16-avx512skx:
     - scripts\tests\run_tests.ps1 "$CI_PROJECT_DIR" AVX512SKX TEST_MULTIDEVICE TEST_MPI
 
 generate-ci-baseline-avx2:
+  <<: *ubuntu2004
   <<: *test_job_unix_avx2
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs: [build-ubuntu2004-gcc]
   script:
     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/generate_baseline.sh
@@ -493,8 +514,8 @@ generate-ci-baseline-avx2:
   when: manual
 
 generate-ci-baseline-avx512skx:
+  <<: *ubuntu2004
   <<: *test_job_unix_avx512skx
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs: [build-ubuntu2004-gcc]
   script:
     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/generate_baseline.sh
@@ -551,9 +572,8 @@ benchmark-tgl-1-schedule:
 ### Documentation ###
 
 .job_template: &doc-defaults
+  <<: *docu
   stage: docu
-  tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:docu
   needs: []
   variables:
     GIT_SUBMODULE_STRATEGY: normal
@@ -595,9 +615,8 @@ spec:
 ### RELEASE JOBS ###
 
 release-linux:
+  <<: *centos7
   <<: *release_job
-  tags: [modules]
-  image: $DOCKER_REGISTRY/centos:7
   script:
     - source $SPACK_SETUP_ENV
     - module load cmake/3.15.2
@@ -645,9 +664,8 @@ release-windows:
 ### SCAN JOBS ###
 
 kw-build:
+  <<: *centos7-gcc4
   stage: scan1
-  tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   needs: []
   script:
     - module load cmake
@@ -661,25 +679,22 @@ kw-build:
     expire_in: 3 day
 
 protex:
+  <<: *centos7
   stage: scan1
-  tags: [docker]
-  image: $DOCKER_REGISTRY/centos:7
   needs: []
   script:
     - scripts/scan/protex.sh
 
 kw-scan:
+  <<: *centos7-gcc4
   stage: scan2
-  tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: [kw-build]
   script:
     - scripts/scan/kw-check-issues.sh
 
 kw-gen-report:
+  <<: *centos7-gcc4
   stage: scan2
-  tags: [docker]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: [kw-build]
   only:
     - devel
@@ -693,10 +708,9 @@ kw-gen-report:
       - ./klocwork/report.log
 
 bdba:
+  <<: *centos7
   <<: *release_job
   stage: scan3
-  tags: [docker]
-  image: $DOCKER_REGISTRY/centos:7
   needs:
     - release-linux
     - release-osx-clang
@@ -711,10 +725,9 @@ bdba:
       - ospray-*
 
 av:
+  <<: *clamav
   <<: *release_job
   stage: scan3
-  tags: [docker]
-  image: $DOCKER_REGISTRY/clamav:ubuntu20.04
   needs:
     - release-linux
     - release-osx-clang
@@ -728,10 +741,10 @@ av:
       - build_release/ospray-*
 
 test-release-linux:
+  <<: *centos7
   <<: *test_job_unix_avx512skx
   <<: *release_job
   stage: scan3
-  image: $DOCKER_REGISTRY/centos:7
   needs: [release-linux]
   script:
     - source $SPACK_SETUP_ENV
@@ -779,9 +792,8 @@ test-release-windows-msi:
 ### Mirror ###
 
 mirror:
+  <<: *centos7
   stage: mirror
-  tags: [docker]
-  image: $DOCKER_REGISTRY/centos:7
   only: [devel]
   dependencies: []
   script:
