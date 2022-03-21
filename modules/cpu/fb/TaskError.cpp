@@ -1,61 +1,61 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "TileError.h"
+#include "TaskError.h"
 #include <vector>
 
 namespace ospray {
 
-TileError::TileError(const vec2i &_numTiles)
-    : numTiles(_numTiles),
-      tiles(_numTiles.x * _numTiles.y),
-      tileErrorBuffer(tiles)
+TaskError::TaskError(const vec2i &_numTasks)
+    : numTasks(_numTasks), taskErrorBuffer(numTasks.long_product())
 {
   // maximum number of regions: all regions are of size 3 are split in half
-  errorRegion.reserve(divRoundUp(tiles * 2, 3));
+  errorRegion.reserve(divRoundUp(taskErrorBuffer.size() * 2, size_t(3)));
   clear();
 }
 
-void TileError::clear()
+void TaskError::clear()
 {
-  for (int i = 0; i < tiles; i++)
-    tileErrorBuffer[i] = inf;
+  std::fill(taskErrorBuffer.begin(), taskErrorBuffer.end(), inf);
 
   errorRegion.clear();
-  // initially create one region covering the complete image
-  errorRegion.push_back(box2i(vec2i(0), numTiles));
+  // initially create one region covering the complete tile/image
+  errorRegion.push_back(box2i(vec2i(0), numTasks));
 }
 
-float TileError::operator[](const vec2i &tile) const
+float TaskError::operator[](const int id) const
 {
-  if (tiles <= 0)
+  if (taskErrorBuffer.empty()) {
     return inf;
+  }
 
-  return tileErrorBuffer[tile.y * numTiles.x + tile.x];
+  return taskErrorBuffer[id];
 }
 
-void TileError::update(const vec2i &tile, const float err)
+void TaskError::update(const vec2i &task, const float err)
 {
-  if (tiles > 0)
-    tileErrorBuffer[tile.y * numTiles.x + tile.x] = err;
+  if (!taskErrorBuffer.empty()) {
+    taskErrorBuffer[task.y * numTasks.x + task.x] = err;
+  }
 }
 
-float TileError::refine(const float errorThreshold)
+float TaskError::refine(const float errorThreshold)
 {
-  if (tiles <= 0)
+  if (taskErrorBuffer.empty()) {
     return inf;
+  }
 
   float maxErr = 0.f;
   float sumActErr = 0.f;
-  int actTiles = 0;
-  for (int i = 0; i < tiles; i++) {
-    maxErr = std::max(maxErr, tileErrorBuffer[i]);
-    if (tileErrorBuffer[i] > errorThreshold) {
-      sumActErr += tileErrorBuffer[i];
-      actTiles++;
+  int activeTasks = 0;
+  for (const auto &err : taskErrorBuffer) {
+    maxErr = std::max(maxErr, err);
+    if (err > errorThreshold) {
+      sumActErr += err;
+      activeTasks++;
     }
   }
-  const float error = actTiles ? sumActErr / actTiles : maxErr;
+  const float error = activeTasks ? sumActErr / activeTasks : maxErr;
 
   // process regions first, but don't process newly split regions again
   int regions = errorThreshold > 0.f ? errorRegion.size() : 0;
@@ -65,25 +65,25 @@ float TileError::refine(const float errorThreshold)
     float maxErr = 0.f;
     for (int y = region.lower.y; y < region.upper.y; y++)
       for (int x = region.lower.x; x < region.upper.x; x++) {
-        int idx = y * numTiles.x + x;
-        err += tileErrorBuffer[idx];
-        maxErr = std::max(maxErr, tileErrorBuffer[idx]);
+        int idx = y * numTasks.x + x;
+        err += taskErrorBuffer[idx];
+        maxErr = std::max(maxErr, taskErrorBuffer[idx]);
       }
     if (maxErr > errorThreshold) {
-      // set all tiles of this region to >errorThreshold to enforce their
+      // set all tasks of this region to >errorThreshold to enforce their
       // refinement as a group
       const float minErr = nextafter(errorThreshold, inf);
       for (int y = region.lower.y; y < region.upper.y; y++)
         for (int x = region.lower.x; x < region.upper.x; x++) {
-          int idx = y * numTiles.x + x;
-          tileErrorBuffer[idx] = std::max(tileErrorBuffer[idx], minErr);
+          int idx = y * numTasks.x + x;
+          taskErrorBuffer[idx] = std::max(taskErrorBuffer[idx], minErr);
         }
     }
     const vec2i size = region.size();
     const int area = reduce_mul(size);
     err /= area; // == avg
     if (err <= 4.f * errorThreshold) { // split region?
-      // if would just contain single tile after split or wholly done: remove
+      // if would just contain single task after split or wholly done: remove
       if (area <= 2 || maxErr <= errorThreshold) {
         regions--;
         errorRegion[i] = errorRegion[regions];
@@ -104,7 +104,15 @@ float TileError::refine(const float errorThreshold)
       }
     }
   }
-
   return error;
 }
+
+float *TaskError::errorBuffer()
+{
+  if (taskErrorBuffer.empty()) {
+    return nullptr;
+  }
+  return taskErrorBuffer.data();
+}
+
 } // namespace ospray

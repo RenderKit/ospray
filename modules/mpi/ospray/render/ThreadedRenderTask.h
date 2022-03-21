@@ -17,7 +17,7 @@ namespace mpi {
 struct ThreadedRenderTask : public Future
 {
   ThreadedRenderTask(FrameBuffer *,
-      const std::shared_ptr<staticLoadBalancer::Distributed> &,
+      const std::shared_ptr<DistributedLoadBalancer> &,
       std::function<float()> fcn);
   ~ThreadedRenderTask() override;
 
@@ -31,7 +31,7 @@ struct ThreadedRenderTask : public Future
 
  private:
   Ref<FrameBuffer> fb;
-  std::shared_ptr<staticLoadBalancer::Distributed> loadBalancer;
+  std::shared_ptr<DistributedLoadBalancer> loadBalancer;
   std::atomic<float> taskDuration{0.f};
   std::atomic<bool> finished;
   std::thread thread;
@@ -40,7 +40,7 @@ struct ThreadedRenderTask : public Future
 // Inlined definitions //////////////////////////////////////////////////////
 
 inline ThreadedRenderTask::ThreadedRenderTask(FrameBuffer *_fb,
-    const std::shared_ptr<staticLoadBalancer::Distributed> &_loadBalancer,
+    const std::shared_ptr<DistributedLoadBalancer> &_loadBalancer,
     std::function<float()> fcn)
     : fb(_fb), loadBalancer(_loadBalancer), finished(false)
 {

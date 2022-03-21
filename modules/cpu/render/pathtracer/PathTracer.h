@@ -15,10 +15,15 @@ namespace ospray {
 
 struct PathTracer : public AddStructShared<Renderer, ispc::PathTracer>
 {
-  PathTracer();
   virtual std::string toString() const override;
   virtual void commit() override;
   virtual void *beginFrame(FrameBuffer *, World *) override;
+
+  virtual void renderTasks(FrameBuffer *fb,
+      Camera *camera,
+      World *world,
+      void *perFrameData,
+      const utility::ArrayView<uint32_t> &taskIDs) const override;
 
  private:
   void generateGeometryLights(const World &, std::vector<ispc::Light *> &);

@@ -162,35 +162,46 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   return screenSample;
 }
 
-unmasked void PathTracer_renderTile(PathTracer *uniform self,
+task void PathTracer_renderTask(PathTracer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int taskIndex)
+    const uint32 *uniform taskIDs)
 {
-  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end =
-      min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE * TILE_SIZE);
+  uniform RenderTaskDesc taskDesc =
+      fb->getRenderTaskDesc(fb, taskIDs[taskIndex0]);
 
-  for (uint32 i = begin + programIndex; i < end; i += programCount) {
-    const uint32 ix = tile.region.lower.x + z_order.xs[i];
-    const uint32 iy = tile.region.lower.y + z_order.ys[i];
-    if (ix >= fb->size.x || iy >= fb->size.y)
-      continue;
-
-    ScreenSample screenSample =
-        PathTracer_renderPixel(self, fb, camera, world, ix, iy, tile.accumID);
-
-    const uint32 pixel = z_order.xs[i] + (z_order.ys[i] * TILE_SIZE);
-    setTile(tile, pixel, screenSample);
+  if (fb->cancelRender || isEmpty(taskDesc.region)) {
+    return;
   }
+
+  foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
+      x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
+    ScreenSample screenSample =
+        PathTracer_renderPixel(self, fb, camera, world, x, y, taskDesc.accumID);
+
+    fb->accumulateSample(fb, screenSample, taskDesc);
+  }
+  fb->completeTask(fb, taskDesc);
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////
 
-export void *uniform PathTracer_renderTile_addr()
+export void PathTracer_renderTasks(void *uniform _self,
+    void *uniform _fb,
+    void *uniform _camera,
+    void *uniform _world,
+    void *uniform perFrameData,
+    void *uniform _taskIDs,
+    uniform uint32 numTasks)
 {
-  return PathTracer_renderTile;
+  PathTracer *uniform self = (PathTracer * uniform) _self;
+  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
+  Camera *uniform camera = (Camera * uniform) _camera;
+  World *uniform world = (World * uniform) _world;
+  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+
+  launch[numTasks] PathTracer_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs);
 }

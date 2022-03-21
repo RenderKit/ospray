@@ -4,6 +4,7 @@
 #pragma once
 
 #include "pf/PixelFilter.h"
+#include "rkcommon/utility/ArrayView.h"
 #include "texture/Texture2D.h"
 // ispc shared
 #include "RendererShared.h"
@@ -12,7 +13,6 @@ namespace ospray {
 
 struct Camera;
 struct World;
-struct Tile;
 struct Material;
 struct FrameBuffer;
 struct PixelFilter;
@@ -51,13 +51,12 @@ struct OSPRAY_SDK_INTERFACE Renderer
   // called exactly once (on each node) at the end of each frame
   virtual void endFrame(FrameBuffer *fb, void *perFrameData);
 
-  // called by the load balancer to render one tile of "samples"
-  virtual void renderTile(FrameBuffer *fb,
+  // called by the load balancer to render one "sample" for each task
+  virtual void renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
-      Tile &tile,
-      size_t jobID) const;
+      const utility::ArrayView<uint32_t> &taskIDs) const;
 
   virtual OSPPickResult pick(
       FrameBuffer *fb, Camera *camera, World *world, const vec2f &screenPos);

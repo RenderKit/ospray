@@ -13,18 +13,16 @@ namespace mpi {
 
 struct DistributedWorld;
 
-namespace staticLoadBalancer {
-
 /* The distributed load balancer manages both data and image
  * parallel distributed rendering, based on the renderer and
  * world configuration. Distributed renderers will use distributed
  * rendering, while a non-distributed renderer with a world with
  * one global region will give image-parallel rendering
  */
-struct Distributed : public TiledLoadBalancer
+struct DistributedLoadBalancer : public TiledLoadBalancer
 {
-  Distributed();
-  ~Distributed() override;
+  DistributedLoadBalancer();
+  ~DistributedLoadBalancer() override;
   void renderFrame(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
@@ -42,19 +40,30 @@ struct Distributed : public TiledLoadBalancer
    * the actual tile list rendering after computing the list of tiles
    * to be rendered by this rank in renderFrame
    */
-  void renderTiles(FrameBuffer *fb,
+  void runRenderTasks(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
       World *world,
-      const utility::ArrayView<int> &tileIDs,
+      const utility::ArrayView<uint32_t> &renderTaskIDs,
       void *perFrameData) override;
 
   std::string toString() const override;
 
  private:
+  void renderFrameReplicatedDynamicLB(DistributedFrameBuffer *dfb,
+      Renderer *renderer,
+      Camera *camera,
+      DistributedWorld *world,
+      void *perFrameData);
+
+  void renderFrameReplicatedStaticLB(DistributedFrameBuffer *dfb,
+      Renderer *renderer,
+      Camera *camera,
+      DistributedWorld *world,
+      void *perFrameData);
+
   ObjectHandle handle;
 };
 
-} // namespace staticLoadBalancer
 } // namespace mpi
 } // namespace ospray

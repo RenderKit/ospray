@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -27,26 +27,15 @@ struct OSPRAY_SDK_INTERFACE TiledLoadBalancer
   /*! Render the specified subset of tiles using the given renderer, camera and
    * world configuration using the load balancer to parallelize the work
    */
-  virtual void renderTiles(FrameBuffer *fb,
+  virtual void runRenderTasks(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
       World *world,
-      const utility::ArrayView<int> &tileIDs,
+      const utility::ArrayView<uint32_t> &renderTaskIDs,
       void *perFrameData) = 0;
-
-  static size_t numJobs(const int spp, int accumID);
 };
 
 // Inlined definitions //////////////////////////////////////////////////////
-
-inline size_t TiledLoadBalancer::numJobs(const int spp, int accumID)
-{
-  const int blocks = (accumID > 0 || spp > 0)
-      ? 1
-      : std::min(1 << -2 * spp, TILE_SIZE * TILE_SIZE);
-  return divRoundUp(
-      (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB, blocks);
-}
 
 //! tiled load balancer for local rendering on the given machine
 /*! a tiled load balancer that orchestrates (multi-threaded)
@@ -60,11 +49,11 @@ struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
       Camera *camera,
       World *world) override;
 
-  void renderTiles(FrameBuffer *fb,
+  void runRenderTasks(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
       World *world,
-      const utility::ArrayView<int> &tileIDs,
+      const utility::ArrayView<uint32_t> &renderTaskIDs,
       void *perFrameData) override;
 
   std::string toString() const override;

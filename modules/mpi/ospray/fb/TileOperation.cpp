@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "TileOperation.h"
@@ -20,7 +20,7 @@ LiveTileOperation::LiveTileOperation(
     : TileDesc(begin, tileID, ownerID), dfb(dfb)
 {}
 
-void LiveTileOperation::accumulate(const ospray::Tile &tile)
+void LiveTileOperation::accumulate(const ispc::Tile &tile)
 {
   // accumulate, compute the finished normalized colors, and compute the
   // error, but don't write the finished colors into the color buffer yet

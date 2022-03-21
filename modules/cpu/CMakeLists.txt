@@ -39,13 +39,15 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   common/World.ispc
   common/World.cpp
 
+  fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
   fb/FrameBufferView.cpp
   fb/LocalFB.ispc
   fb/LocalFB.cpp
+  fb/SparseFB.cpp
+  fb/SparseFB.ispc
   fb/ImageOp.cpp
-  fb/Tile.h
-  fb/TileError.cpp
+  fb/TaskError.cpp
   fb/registration.cpp
 
   fb/frame_ops/Blur.cpp
@@ -54,9 +56,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   fb/frame_ops/SSAO.cpp
   fb/frame_ops/SSAO.ispc
 
-  fb/tile_ops/SaveTiles.cpp
-  fb/tile_ops/ToneMapper.cpp
-  fb/tile_ops/ToneMapper.ispc
+  fb/pixel_ops/ToneMapper.cpp
+  fb/pixel_ops/ToneMapper.ispc
 
   pf/PixelFilter.ih
   pf/PixelFilter.ispc
@@ -234,6 +235,11 @@ set(OSPRAY_TILE_SIZE 64 CACHE STRING "Tile size (x,y dimensions)")
 set_property(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
 mark_as_advanced(OSPRAY_TILE_SIZE)
 
+set(OSPRAY_RENDER_TASK_SIZE 8 CACHE STRING
+    "Render task size (x,y dimensions). 8 is the default, -1 indicates to use a SIMD-width render task size determined at runtime. Must be less than OSPRAY_TILE_SIZE.")
+set_property(CACHE OSPRAY_RENDER_TASK_SIZE PROPERTY STRINGS -1 2 4 8 16 32 64)
+mark_as_advanced(OSPRAY_RENDER_TASK_SIZE)
+
 if (WIN32)
   set(TILE_STACK_DEFAULT_SIZE 64)
 elseif (APPLE)
@@ -246,10 +252,6 @@ set(OSPRAY_MAX_STACK_TILE_SIZE ${TILE_STACK_DEFAULT_SIZE} CACHE STRING
     "Max size for tile to remain allocated on the stack")
 set_property(CACHE OSPRAY_MAX_STACK_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
 mark_as_advanced(OSPRAY_MAX_STACK_TILE_SIZE)
-
-set(OSPRAY_PIXELS_PER_JOB 64 CACHE STRING
-    "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
-mark_as_advanced(OSPRAY_PIXELS_PER_JOB)
 
 option(OSPRAY_DEBUG_NO_TASKING
         "Remove tasking parallelism system for debugging"
@@ -307,7 +309,6 @@ target_compile_definitions(ospray_module_cpu
 PUBLIC
   TILE_SIZE=${OSPRAY_TILE_SIZE}
   MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
-  RENDERTILE_PIXELS_PER_JOB=${OSPRAY_PIXELS_PER_JOB}
   $<$<BOOL:${OSPRAY_DEBUG_NO_TASKING}>:OSPRAY_SERIAL_RENDERING>
 )
 

@@ -23,9 +23,9 @@ enum MSG
 
 struct Work
 {
-  int ntasks;
-  int offset;
-  int ownerRank;
+  int ntasks = 0;
+  int offset = 0;
+  int ownerRank = -1;
 };
 
 struct DynamicLBMessage

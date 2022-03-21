@@ -1,8 +1,8 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ToneMapper.h"
-#include "fb/tile_ops/ToneMapper_ispc.h"
+#include "fb/pixel_ops/ToneMapper_ispc.h"
 
 using namespace rkcommon;
 
@@ -49,9 +49,8 @@ void ToneMapper::commit()
 
 std::unique_ptr<LiveImageOp> ToneMapper::attach(FrameBufferView &fbView)
 {
-  void *ispcEquiv = ispc::ToneMapper_create();
-  ispc::ToneMapper_set(ispcEquiv, exposure, a, b, c, d, acesColor);
-  return rkcommon::make_unique<LiveToneMapper>(fbView, ispcEquiv);
+  return rkcommon::make_unique<LiveToneMapper>(
+      fbView, exposure, a, b, c, d, acesColor);
 }
 
 std::string ToneMapper::toString() const
@@ -59,18 +58,22 @@ std::string ToneMapper::toString() const
   return "ospray::ToneMapper";
 }
 
-LiveToneMapper::LiveToneMapper(FrameBufferView &_fbView, void *ispcEquiv)
-    : LiveTileOp(_fbView), ispcEquiv(ispcEquiv)
-{}
-
-LiveToneMapper::~LiveToneMapper()
+LiveToneMapper::LiveToneMapper(FrameBufferView &_fbView,
+    float exposure,
+    float a,
+    float b,
+    float c,
+    float d,
+    bool acesColor)
+    : AddStructShared(_fbView)
 {
-  // TODO WILL: Release the ISPC equiv
-}
-
-void LiveToneMapper::process(Tile &tile)
-{
-  ToneMapper_apply(ispcEquiv, (ispc::Tile &)tile);
+  getSh()->super.processPixel = ispc::LiveToneMapper_processPixel_addr();
+  getSh()->exposure = exposure;
+  getSh()->a = a;
+  getSh()->b = b;
+  getSh()->c = c;
+  getSh()->d = d;
+  getSh()->acesColor = acesColor;
 }
 
 } // namespace ospray

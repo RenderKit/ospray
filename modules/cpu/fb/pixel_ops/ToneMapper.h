@@ -1,14 +1,15 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../ImageOp.h"
+#include "ToneMapperShared.h"
 
 using namespace rkcommon;
 
 namespace ospray {
 
 /*! \brief Generic tone mapping operator approximating ACES by default. */
-struct OSPRAY_SDK_INTERFACE ToneMapper : public TileOp
+struct OSPRAY_SDK_INTERFACE ToneMapper : public PixelOp
 {
   void commit() override;
 
@@ -22,15 +23,16 @@ struct OSPRAY_SDK_INTERFACE ToneMapper : public TileOp
   float exposure;
 };
 
-struct OSPRAY_SDK_INTERFACE LiveToneMapper : public LiveTileOp
+struct OSPRAY_SDK_INTERFACE LiveToneMapper
+    : public AddStructShared<LivePixelOp, ispc::LiveToneMapper>
 {
-  LiveToneMapper(FrameBufferView &fbView, void *ispcEquiv);
-
-  ~LiveToneMapper() override;
-
-  void process(Tile &t) override;
-
-  void *ispcEquiv;
+  LiveToneMapper(FrameBufferView &fbView,
+      float exposure,
+      float a,
+      float b,
+      float c,
+      float d,
+      bool acesColor);
 };
 
 } // namespace ospray

@@ -33,3 +33,5 @@ readme.pdf
 .idea/
 premake.local.*
 cmake-build*/
+.clangd
+compile_commands.json

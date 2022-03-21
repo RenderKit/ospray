@@ -17,12 +17,15 @@ struct LocalFB
   void *colorBuffer;
   float *depthBuffer;
   vec4f *accumBuffer;
-  vec4f *varianceBuffer; // accumulates every other sample, for variance
-                         // estimation / stopping
+
+  // accumulates every other sample, for variance estimation / stopping
+  vec4f *varianceBuffer;
   vec3f *normalBuffer;
   vec3f *albedoBuffer;
-  int32 *tileAccumID; // holds accumID per tile, for adaptive accumulation
-  vec2i numTiles;
+  // holds accumID per tile, for adaptive accumulation
+  int32 *taskAccumID;
+  float *taskRegionError;
+  vec2i numRenderTasks;
 
 #ifdef __cplusplus
   LocalFB()
@@ -32,8 +35,9 @@ struct LocalFB
         varianceBuffer(nullptr),
         normalBuffer(nullptr),
         albedoBuffer(nullptr),
-        tileAccumID(nullptr),
-        numTiles(0)
+        taskAccumID(nullptr),
+        taskRegionError(nullptr),
+        numRenderTasks(0)
   {}
 };
 } // namespace ispc

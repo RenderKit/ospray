@@ -3,6 +3,12 @@ Version History
 
 ### Changes in v2.10.0:
 
+-   OSPRay now requires minimum ISPC v1.17.0 which includes a fix for
+    parallel dispatch of uniform function pointers
+-   Replace CMake variable `OSPRAY_PIXELS_PER_JOB` by
+    `OSPRAY_RENDER_TASK_SIZE`; variance tracking for adaptive
+    accumulation is now per task instead of per tile, allowing for more
+    granular adaptation
 -   MPI Offload: resolve object life time tracking issue that would
     result in framebuffer and data info being release too early, leading
     to a crash.

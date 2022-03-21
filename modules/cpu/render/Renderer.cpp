@@ -24,7 +24,6 @@ Renderer::Renderer()
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;
   getSh()->renderSample = ispc::Renderer_default_renderSample_addr();
-  getSh()->renderTile = ispc::Renderer_default_renderTile_addr();
 }
 
 std::string Renderer::toString() const
@@ -90,20 +89,19 @@ void Renderer::registerType(const char *type, FactoryFcn<Renderer> f)
   g_renderersMap[type] = f;
 }
 
-void Renderer::renderTile(FrameBuffer *fb,
+void Renderer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
     void *perFrameData,
-    Tile &tile,
-    size_t jobID) const
+    const utility::ArrayView<uint32_t> &taskIDs) const
 {
-  ispc::Renderer_renderTile(getSh(),
+  ispc::Renderer_renderTasks(getSh(),
       fb->getSh(),
       camera->getSh(),
       world->getSh(),
       perFrameData,
-      (ispc::Tile &)tile,
-      jobID);
+      taskIDs.data(),
+      taskIDs.size());
 }
 
 OSPPickResult Renderer::pick(

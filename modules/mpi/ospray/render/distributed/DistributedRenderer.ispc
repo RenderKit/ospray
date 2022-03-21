@@ -5,6 +5,7 @@
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
+#include "fb/SparseFB.ih"
 #include "math/random.ih"
 #include "render/util.ih"
 #include "texture/Texture2D.ih"
@@ -12,6 +13,7 @@
 #include "DistributedRendererShared.h"
 #include "common/DistributedWorldShared.h"
 #include "fb/FrameBufferShared.h"
+#include "fb/SparseFBShared.h"
 
 unmasked void markRegionVisibleFilterFunction(
     const RTCFilterFunctionNArguments *uniform args)
@@ -23,24 +25,22 @@ unmasked void markRegionVisibleFilterFunction(
   EmbreeIntersectionContext *uniform ctx =
       (EmbreeIntersectionContext * uniform) args->context;
 
-  bool *uniform regionVisible = (bool *uniform)ctx->userPtr;
+  uint8 *uniform regionVisible = (uint8 * uniform) ctx->userPtr;
   varying RTCHit *uniform hit = (varying RTCHit * uniform) args->hit;
-  regionVisible[hit->primID] = true;
+  regionVisible[hit->primID] = 0xff;
 
   // Reject all hits, we want to find all intersections along the ray to find
   // all visible regions
   args->valid[programIndex] = 0;
 }
 
-unmasked void DR_default_computeRegionVisibility(
-    DistributedRenderer *uniform self,
-    FrameBuffer *uniform fb,
+task void DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
+    SparseFB *uniform fb,
     Camera *uniform camera,
     DistributedWorld *uniform world,
-    bool *uniform regionVisible,
+    uint8 *uniform regionVisible,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int taskIndex)
+    const int *uniform taskIDs)
 {
   // TODO: merge the copy-paste here somewhat?
   const uniform int32 spp = self->super.spp;
@@ -51,20 +51,41 @@ unmasked void DR_default_computeRegionVisibility(
 
   CameraSample cameraSample;
 
-  const z_order_t *uniform zOrder = get_zorder();
+  uniform RenderTaskDesc taskDesc =
+      fb->super.getRenderTaskDesc(&fb->super, taskIDs[taskIndex0]);
 
-  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end = begin + RENDERTILE_PIXELS_PER_JOB;
-  const uniform int startSampleID = max(tile.accumID, 0) * spp;
+  if (fb->super.cancelRender || isEmpty(taskDesc.region)) {
+    return;
+  }
 
-  for (uniform uint32 i = begin; i < end; i += programCount) {
-    const uint32 index = i + programIndex;
-    screenSample.sampleID.x = tile.region.lower.x + zOrder->xs[index];
-    screenSample.sampleID.y = tile.region.lower.y + zOrder->ys[index];
+  // Get the region visibility info for this tile
+  uint8 *uniform tileRegionVisible = regionVisible
+      + world->numRegions * SparseFB_getTileIndexForTask(fb, taskDesc.taskID);
 
-    if ((screenSample.sampleID.x >= fb->size.x)
-        || (screenSample.sampleID.y >= fb->size.y))
-      continue;
+  // Take fixed, consistent samples to determine if a region is really visible
+  // for a tile. We can trace up to 5 rays, one through the center of the pixel
+  // and one through each corner, or 4 (one through each corner), or just 1
+  // (through the middle). Tracing 5 against the boxes may be a bit much? It
+  // shouldn't impact performance too badly, but is actually a lot of rays being
+  // traced Alternatively we could just base this on the region projection, and
+  // accept the more conservative bounds. This would require some benchmarking
+  // to see where the scaling trade off hits of sending tiles we don't actually
+  // need.
+  // Right now just taking 1 sample, can benchmark this in the future and/or
+  // refactor code further to use this result to do a scan/compaction on the
+  // render task IDs to reduce tasks launched. Then the accumIDs can be sync'd
+  // up again
+  const uniform int nVisibilitySamples = 1;
+  const uniform vec2f visibilitySamples[5] = {make_vec2f(0.5f, 0.5f),
+      make_vec2f(0.0f, 0.0f),
+      make_vec2f(1.0f, 0.0f),
+      make_vec2f(0.0f, 1.0f),
+      make_vec2f(1.0f, 1.0f)};
+
+  foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
+      x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
+    screenSample.sampleID.x = x;
+    screenSample.sampleID.y = y;
 
     float tMax = inf;
     // set ray t value for early ray termination if we have a maximum depth
@@ -72,28 +93,21 @@ unmasked void DR_default_computeRegionVisibility(
     if (self->super.maxDepthTexture) {
       // always sample center of pixel
       vec2f depthTexCoord;
-      depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
-      depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
+      depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->super.rcpSize.x;
+      depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->super.rcpSize.y;
 
       DifferentialGeometry lookup;
       initDgFromTexCoord(lookup, depthTexCoord);
       tMax = min(get1f(self->super.maxDepthTexture, lookup), inf);
     }
 
-    const uint32 pixel = zOrder->xs[index] + (zOrder->ys[index] * TILE_SIZE);
+    for (uniform uint32 s = 0; s < nVisibilitySamples; s++) {
+      screenSample.sampleID.z = s;
 
-    // TODO: Does spp still show some block boundary artifacts? Check
-    // and maybe just support spp = 1 in DR
-    for (uniform uint32 s = 0; s < spp; s++) {
-      const float pixel_du = Halton_sample2(startSampleID + s);
-      const float pixel_dv = CranleyPattersonRotation(
-          Halton_sample3(startSampleID + s), 1.f / 6.f);
-      screenSample.sampleID.z = startSampleID + s;
-
-      cameraSample.screen.x =
-          (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
-      cameraSample.screen.y =
-          (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+      cameraSample.screen.x = (screenSample.sampleID.x + visibilitySamples[s].x)
+          * fb->super.rcpSize.x;
+      cameraSample.screen.y = (screenSample.sampleID.y + visibilitySamples[s].y)
+          * fb->super.rcpSize.y;
 
       // no DoF or MB per default
       cameraSample.lens.x = 0.0f;
@@ -106,25 +120,19 @@ unmasked void DR_default_computeRegionVisibility(
       if (world->regionScene) {
         uniform EmbreeIntersectionContext context;
         rtcInitIntersectContext(&context.ectx);
+        context.ectx.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
         context.ectx.filter = markRegionVisibleFilterFunction;
-        context.userPtr = regionVisible;
+        context.userPtr = tileRegionVisible;
         rtcIntersectV(world->regionScene,
             &context.ectx,
             (varying RTCRayHit * uniform) & screenSample.ray);
       }
     }
-
-    screenSample.rgb = make_vec3f(
-        self->super.bgColor.x, self->super.bgColor.y, self->super.bgColor.z);
-    screenSample.alpha = self->super.bgColor.z;
-    screenSample.normal = make_vec3f(0.f);
-    screenSample.albedo = make_vec3f(0.f);
-    setTile(tile, pixel, screenSample);
   }
 }
 
 void DR_default_renderRegionSample(DistributedRenderer *uniform self,
-    FrameBuffer *uniform fb,
+    SparseFB *uniform fb,
     DistributedWorld *uniform world,
     const box3f *uniform region,
     const vec2f &regionInterval,
@@ -137,14 +145,13 @@ void DR_default_renderRegionSample(DistributedRenderer *uniform self,
       + (sample.sampleID.y << 14) + (sample.sampleID.z << 28));
 }
 
-unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
-    FrameBuffer *uniform fb,
+task void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
+    SparseFB *uniform fb,
     Camera *uniform camera,
     DistributedWorld *uniform world,
     const box3f *uniform region,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int taskIndex)
+    const int *uniform taskIDs)
 {
   const uniform int32 spp = self->super.spp;
 
@@ -154,20 +161,19 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
 
   CameraSample cameraSample;
 
-  const z_order_t *uniform zOrder = get_zorder();
+  uniform RenderTaskDesc taskDesc =
+      fb->super.getRenderTaskDesc(&fb->super, taskIDs[taskIndex0]);
 
-  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end = begin + RENDERTILE_PIXELS_PER_JOB;
-  const uniform int startSampleID = max(tile.accumID, 0) * spp;
+  const uniform int startSampleID = max(taskDesc.accumID, 0) * spp;
 
-  for (uniform uint32 i = begin; i < end; i += programCount) {
-    const uint32 index = i + programIndex;
-    screenSample.sampleID.x = tile.region.lower.x + zOrder->xs[index];
-    screenSample.sampleID.y = tile.region.lower.y + zOrder->ys[index];
+  if (isEmpty(taskDesc.region)) {
+    return;
+  }
 
-    if ((screenSample.sampleID.x >= fb->size.x)
-        || (screenSample.sampleID.y >= fb->size.y))
-      continue;
+  foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
+      x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
+    screenSample.sampleID.x = x;
+    screenSample.sampleID.y = y;
 
     float tMax = inf;
     // set ray t value for early ray termination if we have a maximum depth
@@ -175,8 +181,8 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
     if (self->super.maxDepthTexture) {
       // always sample center of pixel
       vec2f depthTexCoord;
-      depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
-      depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
+      depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->super.rcpSize.x;
+      depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->super.rcpSize.y;
 
       DifferentialGeometry lookup;
       initDgFromTexCoord(lookup, depthTexCoord);
@@ -187,8 +193,6 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
     vec3f normal = make_vec3f(0.f);
     vec3f albedo = make_vec3f(0.f);
 
-    const uint32 pixel = zOrder->xs[index] + (zOrder->ys[index] * TILE_SIZE);
-
     // TODO: same note on spp > 1 issues
     for (uniform uint32 s = 0; s < spp; s++) {
       const float pixel_du = Halton_sample2(startSampleID + s);
@@ -197,9 +201,9 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
       screenSample.sampleID.z = startSampleID + s;
 
       cameraSample.screen.x =
-          (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
+          (screenSample.sampleID.x + pixel_du) * fb->super.rcpSize.x;
       cameraSample.screen.y =
-          (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+          (screenSample.sampleID.y + pixel_dv) * fb->super.rcpSize.y;
 
       // no DoF or MB per default
       cameraSample.lens.x = 0.0f;
@@ -239,29 +243,31 @@ unmasked void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
     screenSample.alpha = alpha * rspp;
     screenSample.normal = normal * rspp;
     screenSample.albedo = albedo * rspp;
-    setTile(tile, pixel, screenSample);
+
+    fb->super.accumulateSample(&fb->super, screenSample, taskDesc);
   }
+  fb->super.completeTask(&fb->super, taskDesc);
 }
 
 export void DistributedRenderer_computeRegionVisibility(void *uniform _self,
     void *uniform fb,
     void *uniform camera,
     void *uniform world,
-    bool *uniform regionVisible,
+    uint8 *uniform regionVisible,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int taskIndex)
+    void *uniform _taskIDs,
+    uniform int numTasks)
 {
   DistributedRenderer *uniform self =
       (uniform DistributedRenderer * uniform) _self;
-  self->computeRegionVisibility(self,
-      (FrameBuffer * uniform) fb,
+  const int *uniform taskIDs = (const int *uniform)_taskIDs;
+  launch[numTasks] self->computeRegionVisibility(self,
+      (SparseFB * uniform) fb,
       (Camera * uniform) camera,
       (DistributedWorld * uniform) world,
       regionVisible,
       perFrameData,
-      tile,
-      taskIndex);
+      taskIDs);
 }
 
 export void DistributedRenderer_renderRegionToTile(void *uniform _self,
@@ -270,19 +276,19 @@ export void DistributedRenderer_renderRegionToTile(void *uniform _self,
     void *uniform world,
     const void *uniform region,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int taskIndex)
+    void *uniform _taskIDs,
+    uniform int numTasks)
 {
   DistributedRenderer *uniform self =
       (uniform DistributedRenderer * uniform) _self;
-  self->renderRegionToTile(self,
-      (FrameBuffer * uniform) fb,
+  const int *uniform taskIDs = (const int *uniform)_taskIDs;
+  launch[numTasks] self->renderRegionToTile(self,
+      (SparseFB * uniform) fb,
       (Camera * uniform) camera,
       (DistributedWorld * uniform) world,
       (const box3f *uniform)region,
       perFrameData,
-      tile,
-      taskIndex);
+      taskIDs);
 }
 
 export void DistributedRenderer_pick(const void *uniform _self,

@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LocalFB.h"
+#include <algorithm>
+#include <iostream>
 #include <iterator>
 #include "ImageOp.h"
-// ispc exports
+#include "SparseFB.h"
 #include "fb/LocalFB_ispc.h"
+#include "render/util.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 namespace ospray {
 
@@ -19,7 +23,8 @@ LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
     : AddStructShared(_size, _colorBufferFormat, channels),
-      tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0))
+      numRenderTasks(divRoundUp(size, getRenderTaskSize())),
+      taskErrorRegion(hasVarianceBuffer ? getNumRenderTasks() : vec2i(0))
 {
   const size_t pixelBytes = sizeOf(_colorBufferFormat);
   const size_t numPixels = _size.long_product();
@@ -29,10 +34,11 @@ LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
   if (hasDepthBuffer)
     depthBuffer.resize(numPixels);
 
-  if (hasAccumBuffer)
+  if (hasAccumBuffer) {
     accumBuffer.resize(numPixels);
 
-  tileAccumID.resize(getTotalTiles(), 0);
+    taskAccumID.resize(getTotalRenderTasks(), 0);
+  }
 
   if (hasVarianceBuffer)
     varianceBuffer.resize(numPixels);
@@ -43,14 +49,39 @@ LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
   if (hasAlbedoBuffer)
     albedoBuffer.resize(numPixels);
 
+  // TODO: Better way to pass the task IDs that doesn't require just storing
+  // them all? Maybe as blocks/tiles similar to when we just had tiles? Will
+  // make task ID lookup more expensive for sparse case though
+  renderTaskIDs.reserve(getTotalRenderTasks());
+  for (uint32_t i = 0; i < getTotalRenderTasks(); ++i) {
+    renderTaskIDs.push_back(i);
+  }
+
+  // TODO: Could use TBB parallel sort here if it's exposed through the rkcommon
+  // tasking system
+  std::sort(renderTaskIDs.begin(),
+      renderTaskIDs.end(),
+      [&](const uint32_t &a, const uint32_t &b) {
+        const vec2i p_a = getTaskStartPos(a);
+        const vec2i p_b = getTaskStartPos(b);
+        return interleaveZOrder(p_a.x, p_a.y) < interleaveZOrder(p_b.x, p_b.y);
+      });
+
+  getSh()->super.accumulateSample =
+      ispc::LocalFrameBuffer_accumulateSample_addr();
+  getSh()->super.getRenderTaskDesc =
+      ispc::LocalFrameBuffer_getRenderTaskDesc_addr();
+  getSh()->super.completeTask = ispc::LocalFrameBuffer_completeTask_addr();
+
   getSh()->colorBuffer = getDataSafe(colorBuffer);
   getSh()->depthBuffer = getDataSafe(depthBuffer);
   getSh()->accumBuffer = getDataSafe(accumBuffer);
   getSh()->varianceBuffer = getDataSafe(varianceBuffer);
   getSh()->normalBuffer = getDataSafe(normalBuffer);
   getSh()->albedoBuffer = getDataSafe(albedoBuffer);
-  getSh()->tileAccumID = getDataSafe(tileAccumID);
-  getSh()->numTiles = getNumTiles();
+  getSh()->taskAccumID = getDataSafe(taskAccumID);
+  getSh()->taskRegionError = taskErrorRegion.errorBuffer();
+  getSh()->numRenderTasks = numRenderTasks;
 }
 
 void LocalFrameBuffer::commit()
@@ -68,9 +99,23 @@ void LocalFrameBuffer::commit()
 
     for (auto &&obj : *imageOpData)
       imageOps.push_back(obj->attach(fbv));
-
-    findFirstFrameOperation();
   }
+  prepareImageOps();
+}
+
+vec2i LocalFrameBuffer::getNumRenderTasks() const
+{
+  return numRenderTasks;
+}
+
+uint32_t LocalFrameBuffer::getTotalRenderTasks() const
+{
+  return numRenderTasks.long_product();
+}
+
+utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs()
+{
+  return utility::ArrayView<uint32_t>(renderTaskIDs);
 }
 
 std::string LocalFrameBuffer::toString() const
@@ -84,83 +129,97 @@ void LocalFrameBuffer::clear()
   // it is only necessary to reset the accumID,
   // LocalFrameBuffer_accumulateTile takes care of clearing the
   // accumulating buffers
-  std::fill(tileAccumID.begin(), tileAccumID.end(), 0);
+  std::fill(taskAccumID.begin(), taskAccumID.end(), 0);
 
   // always also clear error buffer (if present)
   if (hasVarianceBuffer) {
-    tileErrorRegion.clear();
+    taskErrorRegion.clear();
   }
 }
 
-void LocalFrameBuffer::setTile(Tile &tile)
+void LocalFrameBuffer::writeTiles(const containers::AlignedVector<Tile> &tiles)
 {
-  if (hasAccumBuffer) {
-    const float err =
-        ispc::LocalFrameBuffer_accumulateTile(getSh(), (ispc::Tile &)tile);
-    if ((tile.accumID & 1) == 1)
-      tileErrorRegion.update(tile.region.lower / TILE_SIZE, err);
+  // TODO: The parallel dispatch part of this should be moved into ISPC as an
+  // ISPC launch that calls the individual (currently) exported functions that
+  // we call below in this loop
+  tasking::parallel_for(tiles.size(), [&](const size_t i) {
+    const Tile *tile = &tiles[i];
+    if (hasDepthBuffer) {
+      ispc::LocalFrameBuffer_writeDepthTile(getSh(), tile);
+    }
+
+    if (hasAlbedoBuffer) {
+      ispc::LocalFrameBuffer_writeAuxTile(getSh(),
+          tile,
+          (ispc::vec3f *)albedoBuffer.data(),
+          tile->ar,
+          tile->ag,
+          tile->ab);
+    }
+
+    if (hasNormalBuffer)
+      ispc::LocalFrameBuffer_writeAuxTile(getSh(),
+          tile,
+          (ispc::vec3f *)normalBuffer.data(),
+          tile->nx,
+          tile->ny,
+          tile->nz);
+
+    if (!colorBuffer.empty()) {
+      switch (getColorBufferFormat()) {
+      case OSP_FB_RGBA8:
+        ispc::LocalFrameBuffer_writeTile_RGBA8(getSh(), tile);
+        break;
+      case OSP_FB_SRGBA:
+        ispc::LocalFrameBuffer_writeTile_SRGBA(getSh(), tile);
+        break;
+      case OSP_FB_RGBA32F:
+        ispc::LocalFrameBuffer_writeTile_RGBA32F(getSh(), tile);
+        break;
+      default:
+        NOT_IMPLEMENTED;
+      }
+    }
+  });
+}
+
+void LocalFrameBuffer::writeTiles(const SparseFrameBuffer *sparseFb)
+{
+  const auto &tiles = sparseFb->getTiles();
+  writeTiles(tiles);
+
+  assert(getRenderTaskSize() == sparseFb->getRenderTaskSize());
+  const vec2i renderTaskSize = getRenderTaskSize();
+
+  if (!hasVarianceBuffer) {
+    return;
   }
 
-  if (hasDepthBuffer) {
-    ispc::LocalFrameBuffer_accumulateWriteDepthTile(
-        getSh(), (ispc::Tile &)tile);
-  }
-
-  if (hasAlbedoBuffer) {
-    ispc::LocalFrameBuffer_accumulateAuxTile(getSh(),
-        (ispc::Tile &)tile,
-        (ispc::vec3f *)albedoBuffer.data(),
-        tile.ar,
-        tile.ag,
-        tile.ab);
-  }
-
-  if (hasNormalBuffer)
-    ispc::LocalFrameBuffer_accumulateAuxTile(getSh(),
-        (ispc::Tile &)tile,
-        (ispc::vec3f *)normalBuffer.data(),
-        tile.nx,
-        tile.ny,
-        tile.nz);
-
-  if (!imageOps.empty()) {
-    std::for_each(imageOps.begin(),
-        imageOps.begin() + firstFrameOperation,
-        [&](std::unique_ptr<LiveImageOp> &iop) {
-          LiveTileOp *top = dynamic_cast<LiveTileOp *>(iop.get());
-          if (top) {
-            top->process(tile);
-          }
-          // TODO: For now, frame operations must be last
-          // in the pipeline
-        });
-  }
-
-  if (!colorBuffer.empty()) {
-    switch (getColorBufferFormat()) {
-    case OSP_FB_RGBA8:
-      ispc::LocalFrameBuffer_writeTile_RGBA8(getSh(), (ispc::Tile &)tile);
-      break;
-    case OSP_FB_SRGBA:
-      ispc::LocalFrameBuffer_writeTile_SRGBA(getSh(), (ispc::Tile &)tile);
-      break;
-    case OSP_FB_RGBA32F:
-      ispc::LocalFrameBuffer_writeTile_RGBA32F(getSh(), (ispc::Tile &)tile);
-      break;
-    default:
-      NOT_IMPLEMENTED;
+  uint32_t renderTaskID = 0;
+  for (size_t i = 0; i < tiles.size(); ++i) {
+    const auto &tile = tiles[i];
+    const box2i taskRegion(
+        tile.region.lower / renderTaskSize, tile.region.upper / renderTaskSize);
+    for (int y = taskRegion.lower.y; y < taskRegion.upper.y; ++y) {
+      for (int x = taskRegion.lower.x; x < taskRegion.upper.x;
+           ++x, ++renderTaskID) {
+        const vec2i task(x, y);
+        taskErrorRegion.update(task, sparseFb->taskError(renderTaskID));
+      }
     }
   }
 }
 
-int32 LocalFrameBuffer::accumID(const vec2i &tile)
+vec2i LocalFrameBuffer::getTaskStartPos(const uint32_t taskID) const
 {
-  return tileAccumID[tile.y * numTiles.x + tile.x];
+  const vec2i numRenderTasks = getNumRenderTasks();
+  vec2i taskStart(taskID % numRenderTasks.x, taskID / numRenderTasks.x);
+  return taskStart * getRenderTaskSize();
 }
 
-float LocalFrameBuffer::tileError(const vec2i &tile)
+float LocalFrameBuffer::taskError(const uint32_t taskID) const
 {
-  return tileErrorRegion[tile];
+  return taskErrorRegion[taskID];
 }
 
 void LocalFrameBuffer::beginFrame()
@@ -189,7 +248,7 @@ void LocalFrameBuffer::endFrame(
       imageOps.end(),
       [](std::unique_ptr<LiveImageOp> &p) { p->endFrame(); });
 
-  frameVariance = tileErrorRegion.refine(errorThreshold);
+  frameVariance = taskErrorRegion.refine(errorThreshold);
 }
 
 const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)

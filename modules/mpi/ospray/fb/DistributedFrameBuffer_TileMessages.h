@@ -5,6 +5,7 @@
 
 #include "../common/Messaging.h"
 #include "fb/LocalFB.h"
+#include "fb/TileShared.h"
 
 namespace ospray {
 
@@ -101,10 +102,10 @@ struct WriteTileMessage : public TileMessage
 };
 
 std::shared_ptr<mpicommon::Message> makeWriteTileMessage(
-    const ospray::Tile &tile, bool hasAux);
+    const ispc::Tile &tile, bool hasAux);
 
 void unpackWriteTileMessage(
-    WriteTileMessage *msg, ospray::Tile &tile, bool hasAux);
+    WriteTileMessage *msg, ispc::Tile &tile, bool hasAux);
 
 size_t masterMsgSize(
     OSPFrameBufferFormat fmt, bool hasDepth, bool hasNormal, bool hasAlbedo);

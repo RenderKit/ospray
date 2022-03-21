@@ -16,6 +16,7 @@
 #include "../../common/DistributedWorldShared.h"
 #include "DistributedRaycastShared.h"
 #include "fb/FrameBufferShared.h"
+#include "fb/SparseFBShared.h"
 
 // The distributed raycast renderer uses its own volume interval integration
 // because we want to apply the jitter before offsetting our step size to stay
@@ -213,7 +214,7 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
 }
 
 void DRR_renderRegionSample(DistributedRenderer *uniform _self,
-    FrameBuffer *uniform fb,
+    SparseFB *uniform fb,
     DistributedWorld *uniform world,
     const box3f *uniform region,
     const vec2f &regionInterval,
@@ -264,8 +265,8 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
           geomRay,
           DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
               | DG_TEXCOORD);
-      surfaceColor =
-          DRR_shadeSurface(self, fb, world, sample.sampleID, geomRay, dg);
+      surfaceColor = DRR_shadeSurface(
+          self, &fb->super, world, sample.sampleID, geomRay, dg);
     }
 
     // Always just integrate the volume when it comes in front of the geometry

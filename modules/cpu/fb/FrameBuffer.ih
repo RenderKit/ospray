@@ -1,0 +1,44 @@
+// Copyright 2009-2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "FrameBufferShared.h"
+#include "common/OSPCommon.ih"
+
+extern "C" uint32 *uniform getThreadNumPixelsRendered();
+
+extern "C" int *uniform getThreadLastFrameID();
+
+// Run the chain of pixel ops (if any) to produce the final color to be written
+// into the framebuffer
+vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
+    const vec4f &color,
+    const float depth,
+    const vec3f &normal,
+    const vec3f &albedo);
+
+inline void FrameBuffer_updateProgress(
+    FrameBuffer *uniform self, const uniform uint32 numPixelsRendered)
+{
+  uint32 *uniform pixelsRendered = getThreadNumPixelsRendered();
+
+  // Reset the pixels rendered counter for each new frame
+  int *uniform lastFrameID = getThreadLastFrameID();
+  if (self->frameID != *lastFrameID) {
+    *pixelsRendered = 0;
+    *lastFrameID = self->frameID;
+  }
+
+  // Update the pixels rendered count and report back to the atomic if we've
+  // reached the reporting threshold
+  *pixelsRendered += numPixelsRendered;
+
+  // Report rendering results at the same frequency they would have been
+  // reported (each tile) when using the old nested parallel fors over tiles
+  // then pixels.
+  if (*pixelsRendered >= TILE_SIZE * TILE_SIZE) {
+    atomic_add_global(&self->numPixelsRendered, *pixelsRendered);
+    *pixelsRendered = 0;
+  }
+}

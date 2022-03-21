@@ -1,17 +1,18 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "FrameBufferView.h"
+#include "ImageOpShared.h"
 #include "common/Util.h"
-#include "fb/Tile.h"
+#include "fb/TileShared.h"
 
 namespace ospray {
 
 struct Camera;
 
-/*! An instance of an image op which is actually attached to a framebuffer */
+// An instance of an image op that is actually attached to a framebuffer
 struct OSPRAY_SDK_INTERFACE LiveImageOp
 {
   FrameBufferView fbView;
@@ -21,6 +22,7 @@ struct OSPRAY_SDK_INTERFACE LiveImageOp
   virtual ~LiveImageOp() = default;
 
   virtual void beginFrame() {}
+
   virtual void endFrame() {}
 };
 
@@ -57,9 +59,9 @@ struct OSPRAY_SDK_INTERFACE ImageOp : public ManagedObject
 
 OSPTYPEFOR_SPECIALIZATION(ImageOp *, OSP_IMAGE_OPERATION);
 
-struct OSPRAY_SDK_INTERFACE TileOp : public ImageOp
+struct OSPRAY_SDK_INTERFACE PixelOp : public ImageOp
 {
-  ~TileOp() override = default;
+  ~PixelOp() override = default;
 };
 
 struct OSPRAY_SDK_INTERFACE FrameOp : public ImageOp
@@ -71,17 +73,11 @@ struct OSPRAY_SDK_INTERFACE FrameOp : public ImageOp
   }
 };
 
-struct OSPRAY_SDK_INTERFACE LiveTileOp : public LiveImageOp
+struct OSPRAY_SDK_INTERFACE LivePixelOp
+    : public AddStructShared<LiveImageOp, ispc::LivePixelOp>
 {
-  LiveTileOp(FrameBufferView &fbView);
-  ~LiveTileOp() override = default;
-
-  /*! called right after the tile got accumulated; i.e., the
-    tile's RGBA values already contain the accu-buffer blended
-    values (assuming an accubuffer exists), and this function
-    defines how these pixels are being processed before written
-    into the color buffer */
-  virtual void process(Tile &) = 0;
+  LivePixelOp(FrameBufferView &fbView);
+  ~LivePixelOp() override = default;
 };
 
 struct OSPRAY_SDK_INTERFACE LiveFrameOp : public LiveImageOp

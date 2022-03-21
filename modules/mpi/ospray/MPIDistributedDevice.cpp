@@ -394,8 +394,7 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   auto *world = lookupObject<DistributedWorld>(_world);
 
   ObjectHandle handle = allocateHandle();
-  std::shared_ptr<staticLoadBalancer::Distributed> loadBalancer =
-      std::make_shared<staticLoadBalancer::Distributed>();
+  auto loadBalancer = std::make_shared<DistributedLoadBalancer>();
   loadBalancer->setObjectHandle(handle);
 
   fb->setCompletedEvent(OSP_NONE_FINISHED);

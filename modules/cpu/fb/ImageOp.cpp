@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ImageOp.h"
@@ -33,7 +33,7 @@ std::string ImageOp::toString() const
   return "ospray::ImageOp(base class)";
 }
 
-LiveTileOp::LiveTileOp(FrameBufferView &_fbView) : LiveImageOp(_fbView) {}
+LivePixelOp::LivePixelOp(FrameBufferView &_fbView) : AddStructShared(_fbView) {}
 
 LiveFrameOp::LiveFrameOp(FrameBufferView &_fbView) : LiveImageOp(_fbView) {}
 

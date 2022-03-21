@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "../common/Messaging.h"
@@ -6,10 +6,9 @@
 namespace ospray {
 
 std::shared_ptr<mpicommon::Message> makeWriteTileMessage(
-    const ospray::Tile &tile, bool hasAux)
+    const ispc::Tile &tile, bool hasAux)
 {
-  const size_t msgSize =
-      hasAux ? sizeof(ospray::Tile) : sizeof(WriteTileMessage);
+  const size_t msgSize = hasAux ? sizeof(ispc::Tile) : sizeof(WriteTileMessage);
   auto msg = std::make_shared<mpicommon::Message>(msgSize + sizeof(int));
   const static int header = WORKER_WRITE_TILE;
   std::memcpy(msg->data, &header, sizeof(int));
@@ -18,10 +17,9 @@ std::shared_ptr<mpicommon::Message> makeWriteTileMessage(
 }
 
 void unpackWriteTileMessage(
-    WriteTileMessage *msg, ospray::Tile &tile, bool hasAux)
+    WriteTileMessage *msg, ispc::Tile &tile, bool hasAux)
 {
-  const size_t msgSize =
-      hasAux ? sizeof(ospray::Tile) : sizeof(WriteTileMessage);
+  const size_t msgSize = hasAux ? sizeof(ispc::Tile) : sizeof(WriteTileMessage);
   std::memcpy(&tile, reinterpret_cast<char *>(msg) + sizeof(int), msgSize);
 }
 

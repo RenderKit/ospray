@@ -7,7 +7,6 @@
 #include "common/StructShared.h"
 namespace ispc {
 typedef void *Renderer_RenderSampleFct;
-typedef void *Renderer_RenderTileFct;
 #else
 struct Renderer;
 struct World;
@@ -32,14 +31,6 @@ typedef void (*Renderer_RenderSampleFct)(Renderer *uniform self,
     World *uniform model,
     void *uniform perFrameData,
     varying ScreenSample &retValue);
-
-typedef unmasked void (*Renderer_RenderTileFct)(Renderer *uniform self,
-    FrameBuffer *uniform fb,
-    Camera *uniform camera,
-    World *uniform model,
-    void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int taskIndex);
 #endif // __cplusplus
 
 struct Texture2D;
@@ -49,7 +40,6 @@ struct PixelFilter;
 struct Renderer
 {
   Renderer_RenderSampleFct renderSample;
-  Renderer_RenderTileFct renderTile;
 
   int32 spp;
   vec4f bgColor; // background color and alpha
@@ -67,7 +57,6 @@ struct Renderer
 #ifdef __cplusplus
   Renderer()
       : renderSample(nullptr),
-        renderTile(nullptr),
         spp(1),
         bgColor(0.f),
         backplate(nullptr),

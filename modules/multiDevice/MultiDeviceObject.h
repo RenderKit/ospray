@@ -1,7 +1,9 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+
+#include "common/Data.h"
 
 namespace ospray {
 namespace api {
@@ -14,10 +16,11 @@ struct MultiDeviceObject : public memory::RefCount
 
   // sharedDataDirtyReference is held temporarily to ensure consistency
   Data *sharedDataDirtyReference = nullptr;
-  ~MultiDeviceObject() override {
+  virtual ~MultiDeviceObject() override
+  {
     delete sharedDataDirtyReference;
   }
 };
 
-}
-}
+} // namespace api
+} // namespace ospray

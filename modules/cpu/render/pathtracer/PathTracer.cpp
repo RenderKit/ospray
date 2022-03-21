@@ -3,9 +3,11 @@
 
 #include "PathTracer.h"
 // ospray
+#include "camera/Camera.h"
 #include "common/Data.h"
 #include "common/Instance.h"
 #include "common/World.h"
+#include "fb/FrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 #include "render/Material.h"
@@ -19,11 +21,6 @@
 #include <map>
 
 namespace ospray {
-
-PathTracer::PathTracer()
-{
-  getSh()->super.renderTile = ispc::PathTracer_renderTile_addr();
-}
 
 std::string PathTracer::toString() const
 {
@@ -178,6 +175,21 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   scannedGeometryLights = importanceSampleGeometryLights;
 
   return nullptr;
+}
+
+void PathTracer::renderTasks(FrameBuffer *fb,
+    Camera *camera,
+    World *world,
+    void *perFrameData,
+    const utility::ArrayView<uint32_t> &taskIDs) const
+{
+  ispc::PathTracer_renderTasks(getSh(),
+      fb->getSh(),
+      camera->getSh(),
+      world->getSh(),
+      perFrameData,
+      taskIDs.data(),
+      taskIDs.size());
 }
 
 } // namespace ospray

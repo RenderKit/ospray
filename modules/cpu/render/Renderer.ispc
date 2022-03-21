@@ -45,13 +45,12 @@ void Renderer_default_renderSample(Renderer *uniform self,
   sample.rgb = make_vec3f(bg);
 }
 
-unmasked void Renderer_default_renderTile(Renderer *uniform self,
+task void Renderer_default_renderTask(Renderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int taskIndex)
+    const uint32 *uniform taskIDs)
 {
   const uniform int32 spp = self->spp;
 
@@ -61,18 +60,19 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
 
   CameraSample cameraSample;
 
-  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end = begin + RENDERTILE_PIXELS_PER_JOB;
-  const uniform int startSampleID = max(tile.accumID, 0) * spp;
+  uniform RenderTaskDesc taskDesc =
+      fb->getRenderTaskDesc(fb, taskIDs[taskIndex0]);
 
-  for (uniform uint32 i = begin; i < end; i += programCount) {
-    const uint32 index = i + programIndex;
-    screenSample.sampleID.x = tile.region.lower.x + z_order.xs[index];
-    screenSample.sampleID.y = tile.region.lower.y + z_order.ys[index];
+  const uniform int startSampleID = max(taskDesc.accumID, 0) * spp;
 
-    if ((screenSample.sampleID.x >= fb->size.x)
-        | (screenSample.sampleID.y >= fb->size.y))
-      continue;
+  if (fb->cancelRender || isEmpty(taskDesc.region)) {
+    return;
+  }
+
+  foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
+      x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
+    screenSample.sampleID.x = x;
+    screenSample.sampleID.y = y;
 
     // set ray t value for early ray termination (from maximum depth texture)
     vec2f center =
@@ -84,8 +84,6 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
     float depth = inf;
     vec3f normal = make_vec3f(0.f);
     vec3f albedo = make_vec3f(0.f);
-
-    const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
 
     for (uniform uint32 s = 0; s < spp; s++) {
       const float pixel_du = Halton_sample2(startSampleID + s);
@@ -135,8 +133,13 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
     screenSample.z = depth;
     screenSample.normal = normal * rspp;
     screenSample.albedo = albedo * rspp;
-    setTile(tile, pixel, screenSample);
+
+    // Accumulate rendering result directly into the framebuffer, to remove
+    // the need to call setTile separately on the CPU (but image ops needs
+    // handling separately, etc.)
+    fb->accumulateSample(fb, screenSample, taskDesc);
   }
+  fb->completeTask(fb, taskDesc);
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////
@@ -146,24 +149,21 @@ export void *uniform Renderer_default_renderSample_addr()
   return Renderer_default_renderSample;
 }
 
-export void *uniform Renderer_default_renderTile_addr()
-{
-  return Renderer_default_renderTile;
-}
-
-export void Renderer_renderTile(void *uniform _self,
+export void Renderer_renderTasks(void *uniform _self,
     void *uniform _fb,
     void *uniform _camera,
     void *uniform _world,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int jobID)
+    void *uniform _taskIDs,
+    uniform uint32 numTasks)
 {
   Renderer *uniform self = (Renderer * uniform) _self;
   FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
   Camera *uniform camera = (Camera * uniform) _camera;
   World *uniform world = (World * uniform) _world;
-  self->renderTile(self, fb, camera, world, perFrameData, tile, jobID);
+  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  launch[numTasks] Renderer_default_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs);
 }
 
 export void Renderer_pick(const void *uniform _self,

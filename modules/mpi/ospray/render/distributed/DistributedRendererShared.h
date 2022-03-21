@@ -13,34 +13,32 @@ typedef void *DR_RenderRegionTileFct;
 #else
 struct DistributedWorld;
 struct DistributedRenderer;
+struct SparseFB;
 
-typedef unmasked void (*DR_ComputeRegionVisibility)(
+typedef task void (*DR_ComputeRegionVisibility)(
     DistributedRenderer *uniform self,
-    FrameBuffer *uniform fb,
+    SparseFB *uniform fb,
     Camera *uniform camera,
     DistributedWorld *uniform world,
-    bool *uniform regionVisible,
+    uint8 *uniform regionVisible,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int taskIndex);
+    const int *uniform taskIDs);
 
 typedef void (*DR_RenderRegionSampleFct)(DistributedRenderer *uniform self,
-    FrameBuffer *uniform fb,
+    SparseFB *uniform fb,
     DistributedWorld *uniform world,
     const box3f *uniform region,
     const vec2f &regionInterval,
     void *uniform perFrameData,
     varying ScreenSample &sample);
 
-typedef unmasked void (*DR_RenderRegionTileFct)(
-    DistributedRenderer *uniform self,
-    FrameBuffer *uniform fb,
+typedef task void (*DR_RenderRegionTileFct)(DistributedRenderer *uniform self,
+    SparseFB *uniform fb,
     Camera *uniform camera,
     DistributedWorld *uniform world,
     const box3f *uniform region,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int taskIndex);
+    const int *uniform taskIDs);
 #endif // __cplusplus
 
 struct DistributedRenderer

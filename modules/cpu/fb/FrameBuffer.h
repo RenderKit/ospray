@@ -26,6 +26,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   FrameBuffer(const vec2i &size,
       ColorBufferFormat colorBufferFormat,
       const uint32 channels);
+
   virtual ~FrameBuffer() override = default;
 
   virtual void commit() override;
@@ -33,18 +34,20 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual const void *mapBuffer(OSPFrameBufferChannel channel) = 0;
 
   virtual void unmap(const void *mappedMem) = 0;
-  virtual void setTile(Tile &tile) = 0;
 
   // clear (the specified channels of) this frame buffer
   virtual void clear() = 0;
 
-  // get number of pixels per tile, in x and y direction
-  vec2i getTileSize() const;
+  // Get number of pixels per render task, in x and y direction
+  vec2i getRenderTaskSize() const;
 
-  // return number of tiles in x and y direction
-  vec2i getNumTiles() const;
+  // Return the number of render tasks in the x and y direction
+  // This is the kernel launch dims to render the image
+  virtual vec2i getNumRenderTasks() const = 0;
 
-  int getTotalTiles() const;
+  virtual uint32_t getTotalRenderTasks() const = 0;
+
+  virtual utility::ArrayView<uint32_t> getRenderTaskIDs() = 0;
 
   // get number of pixels in x and y diretion
   vec2i getNumPixels() const;
@@ -54,14 +57,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   float getVariance() const;
 
-  utility::ArrayView<int> getTileIDs();
-
-  // how often has been accumulated into that tile
-  // Note that it is up to the application to properly
-  // reset the accumulationIDs (using ospClearAccum(fb)) if anything
-  // changes that requires clearing the accumulation buffer.
-  virtual int32 accumID(const vec2i &tile) = 0;
-  virtual float tileError(const vec2i &tile) = 0;
+  virtual float taskError(const uint32_t taskID) const = 0;
 
   virtual void beginFrame();
 
@@ -76,10 +72,9 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   OSPSyncEvent getLatestCompleteEvent() const;
   void waitForEvent(OSPSyncEvent event) const;
 
-  void reportProgress(float newValue);
-  float getCurrentProgress();
+  virtual float getCurrentProgress() const;
 
-  void cancelFrame();
+  virtual void cancelFrame();
   bool frameCancelled() const;
 
   bool hasAccumBuf() const;
@@ -87,13 +82,23 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   bool hasNormalBuf() const;
   bool hasAlbedoBuf() const;
 
+  uint32 getChannelFlags() const;
+
+  int32 getFrameID() const;
+
  protected:
-  // Find the index of the first frameoperation included in
-  // the imageop pipeline
+  // Finalize the pixel op and frame op state for rendering on commit
+  void prepareImageOps();
+
+  /*! Find the index of the first frameoperation included in
+   * the imageop pipeline
+   */
   void findFirstFrameOperation();
 
-  vec2i numTiles;
-  vec2i maxValidPixelID;
+  // Find all the LivePixelOps and set their ISPC-side data on the FrameBuffer
+  void setPixelOpShs();
+
+  const vec2i size;
 
   // indicates whether the app requested this frame buffer to have
   // an (application-mappable) depth buffer
@@ -107,16 +112,14 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   float frameVariance{0.f};
 
-  std::atomic<float> frameProgress{1.f};
   std::atomic<bool> cancelRender{false};
 
   std::atomic<OSPSyncEvent> stagesCompleted{OSP_FRAME_FINISHED};
 
   Ref<const DataT<ImageOp *>> imageOpData;
   std::vector<std::unique_ptr<LiveImageOp>> imageOps;
+  std::vector<ispc::LivePixelOp *> pixelOpShs;
   size_t firstFrameOperation = -1;
-
-  std::vector<int> tileIDs;
 };
 
 OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);

@@ -24,13 +24,12 @@ DistributedRenderer::~DistributedRenderer()
   MPI_Comm_free(&mpiGroup.comm);
 }
 
-void DistributedRenderer::computeRegionVisibility(DistributedFrameBuffer *fb,
+void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
     Camera *camera,
     DistributedWorld *world,
-    bool *regionVisible,
+    uint8_t *regionVisible,
     void *perFrameData,
-    Tile &tile,
-    size_t jobID) const
+    const utility::ArrayView<uint32_t> &taskIDs) const
 {
   // TODO this needs an exported function
   ispc::DistributedRenderer_computeRegionVisibility(getSh(),
@@ -39,17 +38,16 @@ void DistributedRenderer::computeRegionVisibility(DistributedFrameBuffer *fb,
       world->getSh(),
       regionVisible,
       perFrameData,
-      (ispc::Tile &)tile,
-      jobID);
+      taskIDs.data(),
+      taskIDs.size());
 }
 
-void DistributedRenderer::renderRegionToTile(DistributedFrameBuffer *fb,
+void DistributedRenderer::renderRegionTasks(SparseFrameBuffer *fb,
     Camera *camera,
     DistributedWorld *world,
     const box3f &region,
     void *perFrameData,
-    Tile &tile,
-    size_t jobID) const
+    const utility::ArrayView<uint32_t> &taskIDs) const
 {
   // TODO: exported fcn
   ispc::DistributedRenderer_renderRegionToTile(getSh(),
@@ -58,8 +56,8 @@ void DistributedRenderer::renderRegionToTile(DistributedFrameBuffer *fb,
       world->getSh(),
       &region,
       perFrameData,
-      (ispc::Tile &)tile,
-      jobID);
+      taskIDs.data(),
+      taskIDs.size());
 }
 
 OSPPickResult DistributedRenderer::pick(
