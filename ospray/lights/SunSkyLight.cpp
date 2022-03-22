@@ -32,9 +32,13 @@ SunSkyLight::~SunSkyLight()
 
 void *SunSkyLight::createIE(const void *instance) const
 {
+  const vec3f position(0, 0, 0);
+  const float radius = 1e19f;
   void *ie = ispc::HDRILight_create();
   ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
   ispc::HDRILight_set(ie,
+      (ispc::vec3f &)position,
+      radius,
       (ispc::vec3f &)coloredIntensity,
       (const ispc::LinearSpace3f &)frame,
       mapIE,

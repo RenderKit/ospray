@@ -17,6 +17,8 @@ void *HDRILight::createIE(const void *instance) const
   void *ie = ispc::HDRILight_create();
   ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
   ispc::HDRILight_set(ie,
+      (ispc::vec3f &)position,
+      radius,
       (ispc::vec3f &)coloredIntensity,
       (const ispc::LinearSpace3f &)frame,
       map ? map->getIE() : nullptr,
@@ -34,6 +36,8 @@ void HDRILight::commit()
   Light::commit();
   const vec3f up = getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f));
   const vec3f dir = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
+  position = getParam<vec3f>("position", vec3f(0.f, 0.f, 0.f));
+  radius = getParam<float>("radius", 10.f);
   map = (Texture2D *)getParamObject("map", nullptr);
 
   // recreate distribution

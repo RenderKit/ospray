@@ -22,6 +22,8 @@ struct OSPRAY_SDK_INTERFACE HDRILight : public Light
   void processIntensityQuantityType();
 
   linear3f frame{one}; // light orientation
+  vec3f position{0.0f};
+  float radius{10.0f};
   Texture2D *map{nullptr}; //!< environment map in latitude / longitude format
   void *distributionIE{nullptr};
 };
