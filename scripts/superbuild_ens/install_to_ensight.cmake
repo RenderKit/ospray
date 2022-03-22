@@ -22,7 +22,34 @@ install(
 )
 ENDIF()
 
-IF (WIN32 OR APPLE)
+IF (WIN32)
+  set(EMBREE_LIB_SRC_DIR ${CMAKE_BINARY_DIR}/embree/build/Release/)
+  install(
+	FILES ${EMBREE_LIB_SRC_DIR}embree3.lib
+          ${EMBREE_LIB_SRC_DIR}embree_avx.lib
+          ${EMBREE_LIB_SRC_DIR}embree_avx2.lib
+          ${EMBREE_LIB_SRC_DIR}embree_sse42.lib
+          ${EMBREE_LIB_SRC_DIR}lexers.lib
+          ${EMBREE_LIB_SRC_DIR}math.lib
+          ${EMBREE_LIB_SRC_DIR}simd.lib
+          ${EMBREE_LIB_SRC_DIR}sys.lib
+          ${EMBREE_LIB_SRC_DIR}tasking.lib			
+	DESTINATION ${EMBREE_INSTALL_DIR}/lib/Release/
+  )
+  set(EMBREE_LIB_DEBSRC_DIR ${CMAKE_BINARY_DIR}/embree/build/Debug/)
+  install(
+	FILES ${EMBREE_LIB_DEBSRC_DIR}embree3.lib
+          ${EMBREE_LIB_DEBSRC_DIR}embree_avx.lib
+          ${EMBREE_LIB_DEBSRC_DIR}embree_avx2.lib
+          ${EMBREE_LIB_DEBSRC_DIR}embree_sse42.lib
+          ${EMBREE_LIB_DEBSRC_DIR}lexers.lib
+          ${EMBREE_LIB_DEBSRC_DIR}math.lib
+          ${EMBREE_LIB_DEBSRC_DIR}simd.lib
+          ${EMBREE_LIB_DEBSRC_DIR}sys.lib
+          ${EMBREE_LIB_DEBSRC_DIR}tasking.lib			
+	DESTINATION ${EMBREE_INSTALL_DIR}/lib/Debug/
+  )    
+ELSEIF (APPLE)
   install(
 	DIRECTORY ${CMAKE_INSTALL_PREFIX}/embree/lib
 	DESTINATION ${EMBREE_INSTALL_DIR}/
@@ -45,9 +72,12 @@ install(
 set(TBB_INSTALL_DIR ${APEX_DIR}/intel_tbb-2020)
 
 IF (WIN32)
+set(TBB_SRC_BIN_DIR ${CMAKE_INSTALL_PREFIX}/tbb/redist/intel64/vc14/)
 install(
-	FILES ${CMAKE_INSTALL_PREFIX}/tbb/redist/intel64/vc14/tbb12.dll
-		  ${CMAKE_INSTALL_PREFIX}/tbb/redist/intel64/vc14/tbbmalloc.dll
+	FILES ${TBB_SRC_BIN_DIR}tbb12.dll
+	      ${TBB_SRC_BIN_DIR}tbb12_debug.dll
+		  ${TBB_SRC_BIN_DIR}tbbmalloc.dll
+		  ${TBB_SRC_BIN_DIR}tbbmalloc_debug.dll
 	DESTINATION ${TBB_INSTALL_DIR}/bin/
 )
 ENDIF()
@@ -135,21 +165,21 @@ set(OSPRAY_INSTALL_DIR ${APEX_DIR}/intel_ospray-2.1.1)
 IF (WIN32)
 install(
 	FILES ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl.dll
-	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_driver.dll
-	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_driver_4.dll
-	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_driver_8.dll
-	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_driver_16.dll
-	      ${CMAKE_INSTALL_PREFIX}/rkcommon/bin/rkcommon.dll
-	      ${CMAKE_BINARY_DIR}/ospray/build/ospray.dll
-	      ${CMAKE_BINARY_DIR}/ospray/build/ospray_module_ispc.dll
+	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_device.dll
+	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_device_4.dll
+	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_device_8.dll
+	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_device_16.dll
+	      ${CMAKE_BINARY_DIR}/rkcommon/build/Release/rkcommon.dll
+	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray.dll
+	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray_module_ispc.dll
 	DESTINATION ${OSPRAY_INSTALL_DIR}/bin/
 )
 ENDIF()
 
 IF (WIN32)
 install(
-	FILES ${CMAKE_BINARY_DIR}/ospray/build/ospray${LIBSUFFIX}
-	      ${CMAKE_BINARY_DIR}/ospray/build/ospray_module_ispc${LIBSUFFIX}
+	FILES ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray${LIBSUFFIX}
+	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray_module_ispc${LIBSUFFIX}
 	DESTINATION ${OSPRAY_INSTALL_DIR}/lib/
 )
 ELSE()
@@ -178,10 +208,6 @@ install(
 
 ##########################openvkl install commands########################
 set(OPENVKL_INSTALL_DIR ${APEX_DIR}/intl_openvkl-1.1.0)
-install(
-	DIRECTORY ${CMAKE_INSTALL_PREFIX}/openvkl/
-	DESTINATION ${OPENVKL_INSTALL_DIR}/
-)
 install(
 	DIRECTORY ${CMAKE_INSTALL_PREFIX}/openvkl/
 	DESTINATION ${OPENVKL_INSTALL_DIR}/
