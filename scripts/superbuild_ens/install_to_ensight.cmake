@@ -184,21 +184,39 @@ install(
 )
 ELSE()
 install(
-#fixed symbol link copy issue
-	DIRECTORY ${CMAKE_BINARY_DIR}/ospray/build/
-	DESTINATION ${OSPRAY_INSTALL_DIR}/lib	
-	FILES_MATCHING 
+    DIRECTORY ${CMAKE_INSTALL_PREFIX}/openvkl/lib64/
+    DESTINATION ${OSPRAY_INSTALL_DIR}/lib
+    FILES_MATCHING
     PATTERN "lib*${LIBSUFFIX}*"
     PATTERN "CMakeFiles" EXCLUDE
     PATTERN "cmake" EXCLUDE
-	PATTERN "ospray" EXCLUDE
-	PATTERN "test*" EXCLUDE
-	PATTERN "modules*" EXCLUDE				
-	PATTERN "libOpenImage*" EXCLUDE		
-	PATTERN "libembree*" EXCLUDE		
-	PATTERN "libtbb*" EXCLUDE		
 )
+install(
+    DIRECTORY ${CMAKE_INSTALL_PREFIX}/rkcommon/
+    DESTINATION ${OSPRAY_INSTALL_DIR}/lib
+    FILES_MATCHING
+    PATTERN "lib*${LIBSUFFIX}*"
+    PATTERN "CMakeFiles" EXCLUDE
+    PATTERN "cmake" EXCLUDE
+)
+install(
+#fixed symbol link copy issue
+    DIRECTORY ${CMAKE_BINARY_DIR}/ospray/build/
+    DESTINATION ${OSPRAY_INSTALL_DIR}/lib
+    FILES_MATCHING
+    PATTERN "lib*${LIBSUFFIX}*"
+    PATTERN "CMakeFiles" EXCLUDE
+    PATTERN "cmake" EXCLUDE
+    PATTERN "ospray" EXCLUDE
+    PATTERN "test*" EXCLUDE
+    PATTERN "modules*" EXCLUDE
+    PATTERN "libOpenImage*" EXCLUDE
+    PATTERN "libembree*" EXCLUDE
+    PATTERN "libtbb*" EXCLUDE
+)
+
 ENDIF()
+
 
 install(
 	DIRECTORY ${OSPRAY_SRC_DIR}/ospray/include
@@ -207,15 +225,15 @@ install(
 
 
 ##########################openvkl install commands########################
-set(OPENVKL_INSTALL_DIR ${APEX_DIR}/intl_openvkl-1.1.0)
-install(
-	DIRECTORY ${CMAKE_INSTALL_PREFIX}/openvkl/
-	DESTINATION ${OPENVKL_INSTALL_DIR}/
-)
+#set(OPENVKL_INSTALL_DIR ${APEX_DIR}/intl_openvkl-1.1.0)
+#install(
+#	DIRECTORY ${CMAKE_INSTALL_PREFIX}/openvkl/
+#	DESTINATION ${OPENVKL_INSTALL_DIR}/
+#)
 
 #########################rkcommon install commands########################
-set(RKCOMMON_INSTALL_DIR ${APEX_DIR}/intl_rkcommon-1.8.0)
-install(
-	DIRECTORY ${CMAKE_INSTALL_PREFIX}/rkcommon/
-	DESTINATION ${RKCOMMON_INSTALL_DIR}/
-)
+#set(RKCOMMON_INSTALL_DIR ${APEX_DIR}/intl_rkcommon-1.8.0)
+#install(
+#	DIRECTORY ${CMAKE_INSTALL_PREFIX}/rkcommon/
+#	DESTINATION ${RKCOMMON_INSTALL_DIR}/
+#)
