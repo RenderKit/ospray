@@ -192,7 +192,7 @@ install(
     PATTERN "cmake" EXCLUDE
 )
 install(
-    DIRECTORY ${CMAKE_INSTALL_PREFIX}/rkcommon/
+    DIRECTORY ${CMAKE_INSTALL_PREFIX}/rkcommon/lib64/
     DESTINATION ${OSPRAY_INSTALL_DIR}/lib
     FILES_MATCHING
     PATTERN "lib*${LIBSUFFIX}*"
