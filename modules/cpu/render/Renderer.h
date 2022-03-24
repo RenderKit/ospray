@@ -73,7 +73,7 @@ struct OSPRAY_SDK_INTERFACE Renderer
   std::unique_ptr<PixelFilter> pixelFilter;
 
   Ref<const DataT<Material *>> materialData;
-  std::vector<ispc::Material *> ispcMaterialPtrs;
+  std::unique_ptr<BufferShared<ispc::Material *>> materialArray;
 
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>

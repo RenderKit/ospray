@@ -14,6 +14,8 @@ struct Material;
 
 namespace ospray {
 
+struct Material;
+
 struct OSPRAY_SDK_INTERFACE GeometricModel
     : public AddStructShared<ManagedObject, ispc::GeometricModel>
 {
@@ -29,16 +31,17 @@ struct OSPRAY_SDK_INTERFACE GeometricModel
 
   bool invertedNormals() const;
 
+  bool hasEmissiveMaterials(
+      Ref<const DataT<Material *>> rendererMaterials) const;
+
  private:
   Ref<Geometry> geom;
   const Ref<Geometry> geomAPI;
   Ref<const Data> materialData;
   Ref<const DataT<vec4f>> colorData;
   Ref<const DataT<uint8_t>> indexData;
-  std::vector<ispc::Material *> ispcMaterialPtrs;
-
-  friend struct PathTracer; // TODO: fix this!
-  friend struct Renderer;
+  std::unique_ptr<BufferShared<ispc::Material *>> materialArray;
+  std::unique_ptr<BufferShared<uint32_t>> materialIDArray;
 };
 
 OSPTYPEFOR_SPECIALIZATION(GeometricModel *, OSP_GEOMETRIC_MODEL);

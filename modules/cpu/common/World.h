@@ -17,6 +17,8 @@ namespace ospray {
 
 struct Instance;
 struct Light;
+struct PathTracerData;
+struct SciVisData;
 
 struct OSPRAY_SDK_INTERFACE World
     : public AddStructShared<ManagedObject, ispc::World>
@@ -34,8 +36,10 @@ struct OSPRAY_SDK_INTERFACE World
   Ref<const DataT<Instance *>> instances;
   Ref<const DataT<Light *>> lights;
 
-  bool scivisDataValid{false};
-  bool pathtracerDataValid{false};
+  std::unique_ptr<BufferShared<ispc::Instance *>> instanceArray;
+
+  std::unique_ptr<SciVisData> scivisData;
+  std::unique_ptr<PathTracerData> pathtracerData;
 
   void setDevice(RTCDevice embreeDevice);
 

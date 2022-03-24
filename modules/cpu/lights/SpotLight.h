@@ -14,7 +14,7 @@ struct OSPRAY_SDK_INTERFACE SpotLight : public Light
 {
   SpotLight() = default;
   virtual ~SpotLight() override = default;
-  virtual ispc::Light *createSh(
+  virtual ISPCRTMemoryView createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;

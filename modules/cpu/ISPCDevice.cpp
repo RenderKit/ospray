@@ -154,7 +154,8 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 #undef declare_param_setter
 
 ISPCDevice::ISPCDevice()
-    : loadBalancer(std::make_shared<LocalTiledLoadBalancer>())
+    : loadBalancer(std::make_shared<LocalTiledLoadBalancer>()),
+      ispcrtDevice(ISPCRT_DEVICE_TYPE_CPU)
 {}
 
 ISPCDevice::~ISPCDevice()

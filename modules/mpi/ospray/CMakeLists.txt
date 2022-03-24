@@ -9,7 +9,7 @@ mark_as_advanced(OSPRAY_MPI_COMPRESSION_THRESHOLD)
 
 ## Build the MPI module ##
 
-ispc_include_directories(
+include_directories_ispc(
   ${PROJECT_SOURCE_DIR}/ospray/include
   ${PROJECT_SOURCE_DIR}/ospray
   ${PROJECT_SOURCE_DIR}

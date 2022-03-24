@@ -19,7 +19,7 @@ if (NOT TARGET openvkl::openvkl OR NOT TARGET embree)
   OSPRay!")
 endif()
 
-ispc_include_directories(
+include_directories_ispc(
   ${OSPRAY_INCLUDE_DIR}
   ${OSPRAY_INCLUDE_DIR}/ospray/SDK
   ${RKCOMMON_INCLUDE_DIRS}

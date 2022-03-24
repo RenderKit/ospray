@@ -5,6 +5,8 @@
 
 // ospray
 #include "Device.h"
+// ispcrt
+#include "ispcrt.hpp"
 // embree
 #include "embree3/rtcore.h"
 // openvkl
@@ -132,7 +134,13 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     return embreeDevice;
   }
 
+  ispcrt::Device &getIspcrtDevice()
+  {
+    return ispcrtDevice;
+  }
+
  private:
+  ispcrt::Device ispcrtDevice;
   RTCDevice embreeDevice = nullptr;
   VKLDevice vklDevice = nullptr;
 };

@@ -15,7 +15,7 @@ endif()
 
 rkcommon_configure_build_type()
 
-ispc_include_directories(
+include_directories_ispc(
   ${PROJECT_SOURCE_DIR}/ospray/include
   ${PROJECT_SOURCE_DIR}/ospray
   ${PROJECT_SOURCE_DIR}

@@ -13,9 +13,11 @@
 
 namespace ospray {
 
-ispc::Light *SpotLight::createSh(uint32_t, const ispc::Instance *instance) const
+ISPCRTMemoryView SpotLight::createSh(
+    uint32_t, const ispc::Instance *instance) const
 {
-  ispc::SpotLight *sh = StructSharedCreate<ispc::SpotLight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::SpotLight>();
+  ispc::SpotLight *sh = (ispc::SpotLight *)ispcrtSharedPtr(view);
   sh->super.sample = ispc::SpotLight_sample_addr();
   sh->super.eval = ispc::SpotLight_eval_addr();
   sh->super.isVisible = visible;
@@ -47,7 +49,7 @@ ispc::Light *SpotLight::createSh(uint32_t, const ispc::Instance *instance) const
   sh->innerRadius = innerRadius;
   sh->areaPdf = uniformSampleRingPDF(radius, innerRadius);
 
-  return &sh->super;
+  return view;
 }
 
 std::string SpotLight::toString() const

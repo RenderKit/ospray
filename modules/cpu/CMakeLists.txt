@@ -153,7 +153,6 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/pathtracer/PathTracerData.cpp
   render/pathtracer/PathSampler.ispc
   render/pathtracer/GeometryLight.ispc
-  render/pathtracer/GeometryLight.cpp
   render/pathtracer/VirtualLight.ispc
   render/pathtracer/TransparentShadow.ispc
   render/pathtracer/ShadowCatcher.ispc
@@ -271,7 +270,7 @@ install(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
 
 ## Build the module ##
 
-ispc_include_directories(
+include_directories_ispc(
   ${PROJECT_SOURCE_DIR}/ospray/include
   ${PROJECT_SOURCE_DIR}/ospray
   ${PROJECT_SOURCE_DIR}
@@ -290,6 +289,7 @@ target_link_libraries(ospray_module_cpu
 PUBLIC
   ospray
   rkcommon::rkcommon
+  $<BUILD_INTERFACE:ispcrt::ispcrt>
   $<BUILD_INTERFACE:embree>
   $<BUILD_INTERFACE:openvkl::openvkl>
 )
@@ -303,6 +303,7 @@ target_include_directories(ospray_module_cpu
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
     # NOTE(jda) - the following includes are missing despite PUBLIC linking
+    $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
     $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
     #######################################################################

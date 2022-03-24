@@ -14,7 +14,7 @@ struct OSPRAY_SDK_INTERFACE HDRILight : public Light
 {
   HDRILight() = default;
   virtual ~HDRILight() override;
-  virtual ispc::Light *createSh(
+  virtual ISPCRTMemoryView createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;

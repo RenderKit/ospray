@@ -47,6 +47,11 @@ struct OSPRAY_SDK_INTERFACE Group
 
  protected:
   RTCDevice embreeDevice{nullptr};
+
+ private:
+  std::unique_ptr<BufferShared<ispc::GeometricModel *>> geometricModelsArray;
+  std::unique_ptr<BufferShared<ispc::VolumetricModel *>> volumetricModelsArray;
+  std::unique_ptr<BufferShared<ispc::GeometricModel *>> clipModelsArray;
 };
 
 OSPTYPEFOR_SPECIALIZATION(Group *, OSP_GROUP);

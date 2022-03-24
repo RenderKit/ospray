@@ -30,24 +30,27 @@ SunSkyLight::~SunSkyLight()
   ispc::HDRILight_destroyDistribution(distributionIE);
 }
 
-ispc::Light *SunSkyLight::createSh(
+ISPCRTMemoryView SunSkyLight::createSh(
     uint32_t index, const ispc::Instance *instance) const
 {
   switch (index) {
   case 0: {
-    ispc::HDRILight *sh = StructSharedCreate<ispc::HDRILight>();
+    ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>();
+    ispc::HDRILight *sh = (ispc::HDRILight *)ispcrtSharedPtr(view);
     sh->set(visible,
         instance,
         coloredIntensity,
         frame,
         &mapSh,
         (const ispc::Distribution2D *)distributionIE);
-    return &sh->super;
+    return view;
   }
   case 1: {
-    ispc::DirectionalLight *sh = StructSharedCreate<ispc::DirectionalLight>();
+    ISPCRTMemoryView view = StructSharedCreate<ispc::DirectionalLight>();
+    ispc::DirectionalLight *sh =
+        (ispc::DirectionalLight *)ispcrtSharedPtr(view);
     sh->set(visible, instance, direction, solarIrradiance, cosAngle);
-    return &sh->super;
+    return view;
   }
 
   default:

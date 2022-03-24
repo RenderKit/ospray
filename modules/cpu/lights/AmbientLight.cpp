@@ -8,16 +8,17 @@
 
 namespace ospray {
 
-ispc::Light *AmbientLight::createSh(
+ISPCRTMemoryView AmbientLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ispc::AmbientLight *sh = StructSharedCreate<ispc::AmbientLight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::AmbientLight>();
+  ispc::AmbientLight *sh = (ispc::AmbientLight *)ispcrtSharedPtr(view);
   sh->super.sample = ispc::AmbientLight_sample_addr();
   sh->super.eval = ispc::AmbientLight_eval_addr();
   sh->super.isVisible = visible;
   sh->super.instance = instance;
   sh->radiance = radiance;
-  return &sh->super;
+  return view;
 }
 
 std::string AmbientLight::toString() const

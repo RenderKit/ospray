@@ -79,11 +79,6 @@ struct Material
         selectNextMedium(nullptr),
         emission(emission)
   {}
-
-  bool isEmissive()
-  {
-    return reduce_max(emission) > 0.f;
-  }
 };
 } // namespace ispc
 #else

@@ -12,10 +12,11 @@
 
 namespace ospray {
 
-ispc::Light *PointLight::createSh(
+ISPCRTMemoryView PointLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ispc::PointLight *sh = StructSharedCreate<ispc::PointLight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::PointLight>();
+  ispc::PointLight *sh = (ispc::PointLight *)ispcrtSharedPtr(view);
   sh->super.sample = ispc::PointLight_sample_addr();
   sh->super.eval = ispc::PointLight_eval_addr();
   sh->super.isVisible = visible;
@@ -41,7 +42,7 @@ ispc::Light *PointLight::createSh(
     sh->pre.c0 = cross(sh->pre.direction, sh->pre.c90);
   }
 
-  return &sh->super;
+  return view;
 }
 
 std::string PointLight::toString() const

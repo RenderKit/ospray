@@ -38,6 +38,8 @@ struct OSPRAY_SDK_INTERFACE Material
   MaterialParam1f getMaterialParam1f(const char *name, float valIfNotFound);
   MaterialParam3f getMaterialParam3f(const char *name, vec3f valIfNotFound);
 
+  bool isEmissive() const;
+
   /*! \brief creates an abstract material class of given type
 
     The respective material type must be a registered material type
@@ -78,6 +80,11 @@ struct OSPRAY_SDK_INTERFACE Material
 OSPTYPEFOR_SPECIALIZATION(Material *, OSP_MATERIAL);
 
 // Inlined definitions /////////////////////////////////////////////////////////
+
+inline bool Material::isEmissive() const
+{
+  return reduce_max(getSh()->emission) > 0.f;
+}
 
 template <typename T>
 inline void Material::registerType(

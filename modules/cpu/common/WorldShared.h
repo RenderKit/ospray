@@ -22,8 +22,8 @@ struct World
   RTCScene embreeSceneHandleVolumes;
   RTCScene embreeSceneHandleClippers;
 
-  SciVisData scivisData;
-  PathtracerData pathtracerData;
+  SciVisData *scivisData;
+  PathTracerData *pathtracerData;
 
 #ifdef __cplusplus
   World()
@@ -31,7 +31,9 @@ struct World
         numInvertedClippers(0),
         embreeSceneHandleGeometries(nullptr),
         embreeSceneHandleVolumes(nullptr),
-        embreeSceneHandleClippers(nullptr)
+        embreeSceneHandleClippers(nullptr),
+        scivisData(nullptr),
+        pathtracerData(nullptr)
   {}
 };
 } // namespace ispc

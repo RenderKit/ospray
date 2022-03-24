@@ -12,9 +12,11 @@
 
 namespace ospray {
 
-ispc::Light *QuadLight::createSh(uint32_t, const ispc::Instance *instance) const
+ISPCRTMemoryView QuadLight::createSh(
+    uint32_t, const ispc::Instance *instance) const
 {
-  ispc::QuadLight *sh = StructSharedCreate<ispc::QuadLight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::QuadLight>();
+  ispc::QuadLight *sh = (ispc::QuadLight *)ispcrtSharedPtr(view);
   sh->super.sample = ispc::QuadLight_sample_addr();
   sh->super.eval = ispc::QuadLight_eval_addr();
   sh->super.isVisible = visible;
@@ -44,7 +46,7 @@ ispc::Light *QuadLight::createSh(uint32_t, const ispc::Instance *instance) const
     sh->pre.c0 = cross(sh->pre.c90, sh->pre.nnormal);
   }
 
-  return &sh->super;
+  return view;
 }
 
 std::string QuadLight::toString() const

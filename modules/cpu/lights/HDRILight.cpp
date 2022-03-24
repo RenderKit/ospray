@@ -56,16 +56,18 @@ HDRILight::~HDRILight()
   ispc::HDRILight_destroyDistribution(distributionIE);
 }
 
-ispc::Light *HDRILight::createSh(uint32_t, const ispc::Instance *instance) const
+ISPCRTMemoryView HDRILight::createSh(
+    uint32_t, const ispc::Instance *instance) const
 {
-  ispc::HDRILight *sh = StructSharedCreate<ispc::HDRILight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>();
+  ispc::HDRILight *sh = (ispc::HDRILight *)ispcrtSharedPtr(view);
   sh->set(visible,
       instance,
       coloredIntensity,
       frame,
       map->getSh(),
       (const ispc::Distribution2D *)distributionIE);
-  return &sh->super;
+  return view;
 }
 
 std::string HDRILight::toString() const

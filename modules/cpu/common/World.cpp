@@ -5,6 +5,8 @@
 #include "World.h"
 #include "Instance.h"
 #include "lights/Light.h"
+#include "render/pathtracer/PathTracerData.h"
+#include "render/scivis/SciVisData.h"
 
 namespace ospray {
 
@@ -48,13 +50,6 @@ World::~World()
   freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleGeometries);
   freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleVolumes);
   freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleClippers);
-
-  // Release instances arrays
-  BufferSharedDelete(getSh()->instances);
-
-  // Release renderers data
-  getSh()->scivisData.destroy();
-  getSh()->pathtracerData.destroy();
 }
 
 World::World()
@@ -77,8 +72,8 @@ void World::commit()
   freeAndNullifyEmbreeScene(esVol);
   freeAndNullifyEmbreeScene(esClip);
 
-  scivisDataValid = false;
-  pathtracerDataValid = false;
+  scivisData = nullptr;
+  pathtracerData = nullptr;
 
   instances = getParamDataT<Instance *>("instance");
   lights = getParamDataT<Light *>("light");
@@ -101,8 +96,7 @@ void World::commit()
       << "Committing world, which has " << numInstances << " instances and "
       << (lights ? lights->size() : 0) << " lights";
 
-  BufferSharedDelete(getSh()->instances);
-  getSh()->instances = nullptr;
+  instanceArray = nullptr;
   getSh()->numInvertedClippers = 0;
 
   if (instances) {
@@ -111,8 +105,9 @@ void World::commit()
         getSh()->numInvertedClippers += inst->group->numInvertedClippers;
 
     // Create shared buffers for instance pointers
-    getSh()->instances = (ispc::Instance **)BufferSharedCreate(
+    instanceArray = make_buffer_shared_unique<ispc::Instance *>(
         sizeof(ispc::Instance *) * numInstances);
+    getSh()->instances = instanceArray->sharedPtr();
 
     // Populate shared buffer with instance pointers,
     // create Embree instances

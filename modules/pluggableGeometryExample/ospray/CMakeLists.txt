@@ -28,7 +28,7 @@
 #
 add_library(ospray_module_bilinear_patches SHARED)
 
-ispc_include_directories(${RKCOMMON_INCLUDE_DIRS})
+include_directories_ispc(${RKCOMMON_INCLUDE_DIRS})
 
 ispc_target_add_sources(ospray_module_bilinear_patches
   # the cpp file that contains all the plugin code - parsing

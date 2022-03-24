@@ -55,24 +55,26 @@ void Renderer::commit()
       "backgroundColor", vec3f(getParam<float>("backgroundColor", 0.f)));
   bgColor = getParam<vec4f>("backgroundColor", vec4f(bgColor3, 0.f));
 
+  // Handle materials assigned to renderer
+  materialArray = nullptr;
+  getSh()->material = nullptr;
   materialData = getParamDataT<Material *>("material");
-
-  setupPixelFilter();
-
-  if (materialData)
-    ispcMaterialPtrs = createArrayOfSh<ispc::Material>(*materialData);
-  else
-    ispcMaterialPtrs.clear();
+  if (materialData) {
+    materialArray = make_buffer_shared_unique<ispc::Material *>(
+        createArrayOfSh<ispc::Material>(*materialData));
+    getSh()->numMaterials = materialArray->size();
+    getSh()->material = materialArray->sharedPtr();
+  }
 
   getSh()->spp = spp;
   getSh()->maxDepth = maxDepth;
   getSh()->minContribution = minContribution;
   getSh()->bgColor = bgColor;
   getSh()->backplate = backplate ? backplate->getSh() : nullptr;
-  getSh()->numMaterials = ispcMaterialPtrs.size();
-  getSh()->material = ispcMaterialPtrs.data();
   getSh()->maxDepthTexture =
       maxDepthTexture ? maxDepthTexture->getSh() : nullptr;
+
+  setupPixelFilter();
   getSh()->pixelFilter =
       (ispc::PixelFilter *)(pixelFilter ? pixelFilter->getIE() : nullptr);
 

@@ -5,6 +5,7 @@
 
 #include "common/Managed.h"
 #include "common/Util.h"
+#include "ispcrt.h"
 
 namespace ispc {
 struct Light;
@@ -24,7 +25,7 @@ struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
   static void registerType(const char *type);
 
   virtual uint32_t getShCount() const;
-  virtual ispc::Light *createSh(
+  virtual ISPCRTMemoryView createSh(
       uint32_t index, const ispc::Instance *instance = nullptr) const = 0;
   virtual void commit() override;
   virtual std::string toString() const override;

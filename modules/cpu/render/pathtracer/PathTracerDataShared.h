@@ -10,7 +10,7 @@ namespace ispc {
 
 struct Light;
 
-struct PathtracerData
+struct PathTracerData
 {
   // array containing the scene light sources
   // the lights are sorted: first geometric, then virtual lights
@@ -20,12 +20,9 @@ struct PathtracerData
   float *lightsCDF; // CDF used by NEE for randomly picking lights
 
 #ifdef __cplusplus
-  PathtracerData()
+  PathTracerData()
       : lights(nullptr), numLights(0), numGeoLights(0), lightsCDF(nullptr)
   {}
-  void create(
-      Light **lights, uint32 numLights, uint32 numGeoLights, float *lightsCDF);
-  void destroy();
 };
 } // namespace ispc
 #else

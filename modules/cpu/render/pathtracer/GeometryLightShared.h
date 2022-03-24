@@ -32,13 +32,6 @@ struct GeometryLight
         distribution(nullptr),
         pdf(inf)
   {}
-  void create(const Instance *instance,
-      const GeometricModel *model,
-      int32 numPrimitives,
-      int32 *primIDs,
-      float *distribution,
-      float pdf);
-  void destroy();
 };
 } // namespace ispc
 #else

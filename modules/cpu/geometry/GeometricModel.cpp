@@ -24,22 +24,26 @@ void GeometricModel::commit()
   if (!geom)
     throw std::runtime_error(toString() + " received NULL 'geometry'");
 
-  bool useRendererMaterialList = false;
   materialData = getParamDataT<Material *>("material", false, true);
-  if (materialData) {
-    ispcMaterialPtrs =
-        createArrayOfSh<ispc::Material>(materialData->as<Material *>());
 
-    auto *data = new Data(ispcMaterialPtrs.data(),
-        OSP_VOID_PTR,
-        vec3ui(ispcMaterialPtrs.size(), 1, 1),
-        vec3l(0));
-    materialData = data;
-    data->refDec();
+  materialArray = nullptr;
+  materialIDArray = nullptr;
+  getSh()->material = nullptr;
+  getSh()->materialID = nullptr;
+  getSh()->numMaterials = 0;
+  if (materialData) {
+    materialArray = make_buffer_shared_unique<ispc::Material *>(
+        createArrayOfSh<ispc::Material>(materialData->as<Material *>()));
+    getSh()->material = materialArray->sharedPtr();
+    getSh()->numMaterials = materialArray->size();
   } else {
-    ispcMaterialPtrs.clear();
     materialData = getParamDataT<uint32_t>("material", false, true);
-    useRendererMaterialList = true;
+    if (materialData) {
+      materialIDArray = make_buffer_shared_unique<uint32_t>(
+          materialData->as<uint32_t>().data(), materialData->size());
+      getSh()->materialID = materialIDArray->sharedPtr();
+      getSh()->numMaterials = materialIDArray->size();
+    }
   }
   colorData = getParamDataT<vec4f>("color", false, true);
   indexData = getParamDataT<uint8_t>("index");
@@ -71,10 +75,38 @@ void GeometricModel::commit()
   getSh()->geom = geom->getSh();
   getSh()->color = *ispc(colorData);
   getSh()->index = *ispc(indexData);
-  getSh()->material = *ispc(materialData);
-  getSh()->useRendererMaterialList = useRendererMaterialList;
   getSh()->invertedNormals = getParam<bool>("invertNormals", false);
   getSh()->userID = getParam<uint32>("id", RTC_INVALID_GEOMETRY_ID);
+}
+
+bool GeometricModel::hasEmissiveMaterials(
+    Ref<const DataT<Material *>> rendererMaterials) const
+{
+  // No materials used - nothing to check
+  if (!materialData)
+    return false;
+
+  // Check geometry model materials
+  bool hasEmissive = false;
+  if (materialArray) {
+    for (auto &&mat : materialData->as<Material *>())
+      if (mat->isEmissive()) {
+        hasEmissive = true;
+        break;
+      }
+  }
+  // Check renderer materials referenced from geometry model
+  else if (materialIDArray) {
+    for (auto matIdx : materialData->as<uint32_t>())
+      if ((matIdx < rendererMaterials->size())
+          && ((*rendererMaterials)[matIdx]->isEmissive())) {
+        hasEmissive = true;
+        break;
+      }
+  }
+
+  // Done
+  return hasEmissive;
 }
 
 OSPTYPEFOR_DEFINITION(GeometricModel *);

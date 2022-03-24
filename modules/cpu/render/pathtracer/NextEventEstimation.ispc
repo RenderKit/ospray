@@ -13,6 +13,7 @@
 #include "math/Distribution1D.ih"
 #include "math/sampling.ih"
 // c++ shared
+#include "PathTracerDataShared.h"
 #include "lights/LightShared.h"
 
 vec3f nextEventEstimation(const PathContext &pathContext,
@@ -21,6 +22,9 @@ vec3f nextEventEstimation(const PathContext &pathContext,
 {
   // direct lighting including shadows and MIS
   vec3f L = make_vec3f(0.f);
+  const World *uniform world = pathContext.world;
+  const uniform PathTracerData &pathtracerData =
+      *((const uniform PathTracerData *)world->pathtracerData);
   for (uniform int i = 0; i < pathContext.numLightSamples; i++) {
     // select a random light source from the list
     const float s1 = LDSampler_getFloat(
@@ -29,8 +33,7 @@ vec3f nextEventEstimation(const PathContext &pathContext,
         pathContext.numLights, pathContext.lightsCDF, 0, s1);
     const float lightSelectionProb =
         lSelectSample.prob * pathContext.numLightSamples;
-    const World *uniform world = pathContext.world;
-    const Light *light = world->pathtracerData.lights[lSelectSample.idx];
+    const Light *light = pathtracerData.lights[lSelectSample.idx];
     // sample the contribution from the random light source
     const vec2f s2 = LDSampler_getFloat2(
         pathContext.ldSampler, pathState.sampleDim + 4 + i * 3 + 1);

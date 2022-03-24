@@ -19,6 +19,7 @@
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 
 // c++ shared
+#include "PathTracerDataShared.h"
 #include "PathTracerShared.h"
 
 inline void postIntersect(const PathContext &pathContext,
@@ -181,8 +182,10 @@ void samplePath(const PathContext &pathContext,
     // have both samples for MIS except if we have geometry lights (which we
     // still need to evaluate for MIS)
     const World *uniform w = pathContext.world;
+    const uniform PathTracerData &pathtracerData =
+        *((const uniform PathTracerData *)w->pathtracerData);
     if (pathState.depth >= pathContext.context->super.maxDepth
-        && w->pathtracerData.numGeoLights == 0)
+        && pathtracerData.numGeoLights == 0)
       break;
 
     postIntersect(pathContext, pathState, pathVertex, ray);

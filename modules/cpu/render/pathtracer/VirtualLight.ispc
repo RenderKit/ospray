@@ -7,6 +7,7 @@
 #include "render/pathtracer/VirtualLight.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 // c++ shared
+#include "PathTracerDataShared.h"
 #include "lights/LightShared.h"
 
 inline box1f getMinMaxDistForVirtualLights(const PathContext &pathContext,
@@ -42,18 +43,19 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
   vec3f L = make_vec3f(0.f);
 
   const World *uniform w = pathContext.world;
-  if (pathContext.numLights <= w->pathtracerData.numGeoLights)
+  const uniform PathTracerData &pathtracerData =
+      *((const uniform PathTracerData *)w->pathtracerData);
+  if (pathContext.numLights <= pathtracerData.numGeoLights)
     return L; // return if no virtual lights at all
 
   box1f intervalLightDist = getMinMaxDistForVirtualLights(
       pathContext, pathState, lastVertex, pathVertex, ray);
 
-  const uniform float selectionPDF = rcp(
-      (uniform float)pathContext.numLights - w->pathtracerData.numGeoLights);
-  for (uniform int i = w->pathtracerData.numGeoLights;
-       i < pathContext.numLights;
+  const uniform float selectionPDF =
+      rcp((uniform float)pathContext.numLights - pathtracerData.numGeoLights);
+  for (uniform int i = pathtracerData.numGeoLights; i < pathContext.numLights;
        i++) {
-    const Light *uniform light = w->pathtracerData.lights[i];
+    const Light *uniform light = pathtracerData.lights[i];
     if (!pathState.straightPath || light->isVisible) {
       // to correctly handle MIS through transparencies the light pdf needs to
       // be calculated wrt. lastVertex.dg however, we only have a valid

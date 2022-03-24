@@ -12,7 +12,7 @@ struct OSPRAY_SDK_INTERFACE AmbientLight : public Light
 {
   AmbientLight() = default;
   virtual ~AmbientLight() override = default;
-  virtual ispc::Light *createSh(
+  virtual ISPCRTMemoryView createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;
