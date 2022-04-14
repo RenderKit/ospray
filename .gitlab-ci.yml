@@ -664,7 +664,7 @@ release-windows:
 ### SCAN JOBS ###
 
 kw-build:
-  <<: *centos7-gcc4
+  <<: *centos7
   stage: scan1
   needs: []
   script:
@@ -686,14 +686,14 @@ protex:
     - scripts/scan/protex.sh
 
 kw-scan:
-  <<: *centos7-gcc4
+  <<: *centos7
   stage: scan2
   needs: [kw-build]
   script:
     - scripts/scan/kw-check-issues.sh
 
 kw-gen-report:
-  <<: *centos7-gcc4
+  <<: *centos7
   stage: scan2
   needs: [kw-build]
   only:
