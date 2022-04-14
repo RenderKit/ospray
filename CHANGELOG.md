@@ -6,6 +6,7 @@ Version History
 -   MPI Offload: resolve object life time tracking issue that would
     result in framebuffer and data info being release too early, leading
     to a crash.
+-   Fix crash with OpenMPI due to argument handling
 
 ### Changes in v2.9.0:
 

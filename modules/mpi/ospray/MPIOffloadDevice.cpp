@@ -227,8 +227,8 @@ void MPIOffloadDevice::initializeDevice()
 
   initialized = true;
 
-  int _ac = 2;
-  const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
+  int _ac = 1;
+  const char *_av[] = {"ospray_mpi_worker"};
 
   std::string mode = getParam<std::string>("mpiMode", "mpi");
 
