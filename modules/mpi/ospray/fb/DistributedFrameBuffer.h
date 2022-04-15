@@ -129,7 +129,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
 
   void cancelFrame() override;
 
-  float getCurrentProgress() const;
+  float getCurrentProgress() const override;
 
  private:
   friend struct LiveTileOperation;
