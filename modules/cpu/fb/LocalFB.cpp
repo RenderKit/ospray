@@ -9,15 +9,10 @@
 #include "SparseFB.h"
 #include "fb/LocalFB_ispc.h"
 #include "render/util.h"
+#include "rkcommon/common.h"
 #include "rkcommon/tasking/parallel_for.h"
 
 namespace ospray {
-
-template <typename T, typename A>
-static T *getDataSafe(std::vector<T, A> &v)
-{
-  return v.empty() ? nullptr : v.data();
-}
 
 LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,

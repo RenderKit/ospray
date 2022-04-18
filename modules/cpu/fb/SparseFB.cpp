@@ -7,15 +7,9 @@
 #include "ImageOp.h"
 #include "fb/SparseFB_ispc.h"
 #include "render/util.h"
+#include "rkcommon/common.h"
 
 namespace ospray {
-
-// TODO: Share somewhere in the code?
-template <typename T, typename A>
-static T *getDataSafe(std::vector<T, A> &v)
-{
-  return v.empty() ? nullptr : v.data();
-}
 
 SparseFrameBuffer::SparseFrameBuffer(const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
