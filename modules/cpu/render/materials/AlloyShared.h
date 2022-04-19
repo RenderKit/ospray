@@ -22,7 +22,10 @@ struct Alloy
   TextureParam roughnessMap;
 
 #ifdef __cplusplus
-  Alloy() : color(.9f), edgeColor(1.f), roughness(.1f) {}
+  Alloy() : color(.9f), edgeColor(1.f), roughness(.1f)
+  {
+    super.type = ispc::MATERIAL_TYPE_ALLOY;
+  }
 };
 } // namespace ispc
 #else

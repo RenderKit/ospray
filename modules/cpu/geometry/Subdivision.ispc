@@ -7,7 +7,13 @@
 // c++ shared
 #include "SubdivisionShared.h"
 
-static void Subdivision_postIntersect(const Geometry *uniform _self,
+#ifdef OSPRAY_TARGET_DPCPP
+using namespace ospray;
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+void Subdivision_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -57,5 +63,7 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
 
 export void *uniform Subdivision_postIntersect_addr()
 {
-  return Subdivision_postIntersect;
+  return (void *uniform)Subdivision_postIntersect;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

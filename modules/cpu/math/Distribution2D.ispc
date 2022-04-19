@@ -3,6 +3,8 @@
 
 #include "Distribution2D.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 Sample2D Distribution2D_sample(
     const uniform Distribution2D *uniform self, const vec2f &s)
 {
@@ -73,3 +75,4 @@ Distribution2D *uniform Distribution2D_create(
 
   return Distribution2D_create(size, f, row_importance);
 }
+OSPRAY_END_ISPC_NAMESPACE

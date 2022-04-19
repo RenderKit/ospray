@@ -1,5 +1,6 @@
 // Copyright 2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
@@ -22,9 +23,13 @@ struct TextureVolume
   const TransferFunction *transferFunction;
 
 #ifdef __cplusplus
-  TextureVolume() : super(true), volume(nullptr), transferFunction(nullptr) {}
+  TextureVolume() : super(true), volume(nullptr), transferFunction(nullptr)
+  {
+    super.type = TEXTURE_TYPE_VOLUME;
+  }
 };
 } // namespace ispc
 #else
 };
 #endif // __cplusplus
+#endif

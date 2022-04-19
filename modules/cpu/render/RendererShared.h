@@ -3,17 +3,32 @@
 
 #pragma once
 
+#include "RendererType.ih"
+
 #ifdef __cplusplus
 #include "common/StructShared.h"
+#ifdef OSPRAY_TARGET_DPCPP
+#include "camera/Camera.ih"
+#include "camera/CameraShared.h"
+#include "common/WorldShared.h"
+#include "fb/FrameBufferShared.h"
+#include "fb/TileShared.h"
+#include "render/ScreenSample.ih"
+#endif
 namespace ispc {
+#endif // __cplusplus
+
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_DPCPP)
 typedef void *Renderer_RenderSampleFct;
 #else
+#ifndef OSPRAY_TARGET_DPCPP
 struct Renderer;
 struct World;
 struct Camera;
 struct FrameBuffer;
 struct ScreenSample;
 struct Tile;
+#endif
 
 // Render a given screen sample (as specified in sampleID), and
 // returns the radiance in 'retVal'. sampleID.x and .y refer to the
@@ -31,14 +46,16 @@ typedef void (*Renderer_RenderSampleFct)(Renderer *uniform self,
     World *uniform model,
     void *uniform perFrameData,
     varying ScreenSample &retValue);
-#endif // __cplusplus
+#endif
 
 struct Texture2D;
 struct Material;
 struct PixelFilter;
+struct MathConstants;
 
 struct Renderer
 {
+  RendererType type;
   Renderer_RenderSampleFct renderSample;
 
   int32 spp;
@@ -53,21 +70,42 @@ struct Renderer
   Material **material;
 
   PixelFilter *pixelFilter;
+  MathConstants *mathConstants;
 
 #ifdef __cplusplus
   Renderer()
-      : renderSample(nullptr),
+      : type(RENDERER_TYPE_UNKNOWN),
+        renderSample(nullptr),
         spp(1),
         bgColor(0.f),
         backplate(nullptr),
         maxDepthTexture(nullptr),
         maxDepth(20),
-        minContribution(.001f),
+        minContribution(0.001f),
         numMaterials(0),
         material(nullptr),
-        pixelFilter(nullptr)
+        pixelFilter(nullptr),
+        mathConstants(nullptr)
   {}
 };
+#ifdef OSPRAY_TARGET_DPCPP
+SYCL_EXTERNAL void Renderer_default_renderSample(Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    World *uniform model,
+    void *uniform perFrameData,
+    varying ScreenSample &sample);
+
+void Renderer_pick(const void *_self,
+    const void *_fb,
+    const void *_camera,
+    const void *_world,
+    const vec2f &screenPos,
+    vec3f &pos,
+    int32 &instID,
+    int32 &geomID,
+    int32 &primID,
+    int32 &hit);
+#endif
 } // namespace ispc
 #else
 };

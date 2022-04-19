@@ -18,6 +18,9 @@ struct Curves
 #ifdef __cplusplus
   Curves() : geom(nullptr), flagMask(-1) {}
 };
+#ifdef OSPRAY_TARGET_DPCPP
+void *Curves_postIntersect_addr();
+#endif
 } // namespace ispc
 #else
 };

@@ -6,9 +6,13 @@
 #include "common/DifferentialGeometry.ih"
 #include "render/bsdfs/BSDF.ih"
 #include "render/materials/Medium.ih"
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/VolumetricModel.ih"
+#endif
 // c++ shared
 #include "PathTracerShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct World;
 struct LDSampler;
@@ -31,8 +35,14 @@ struct PathVertex
 
   vec3f albedo;
 
-  const varying BSDF *bsdf; // only valid if path vertex is surface vertex
-  VolumetricModel *volume; // only valid if path vertex is volume vertex
+  // only valid if path vertex is surface vertex
+  const varying BSDF *bsdf;
+#ifdef OSPRAY_ENABLE_VOLUMES
+  // only valid if path vertex is volume vertex
+  VolumetricModel *volume;
+#else
+  void *volume;
+#endif
 
   float pdf_w; // the pdf of sampling wo in solid angle measure
   PathVertexType type;
@@ -70,3 +80,5 @@ struct PathState
   Medium currentMedium;
   float shadowCatcherDist;
 };
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -5,9 +5,20 @@
 
 #define EPS 1e-5f
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#elif defined(ISPC)
+#include "rkcommon/math/vec.ih"
+#endif
+
 #ifdef __cplusplus
 #include "common/StructShared.h"
 namespace ispc {
+#endif // __cplusplus
+
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_DPCPP)
 typedef void *Material_GetBSDFFunc;
 typedef void *Material_GetTransparencyFunc;
 typedef void *Material_SelectNextMediumFunc;
@@ -44,7 +55,7 @@ typedef void (*Material_SelectNextMediumFunc)(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
     Medium &currentMedium);
-#endif // __cplusplus
+#endif
 
 enum MaterialType
 {
@@ -59,7 +70,8 @@ enum MaterialType
   MATERIAL_TYPE_PLASTIC = 8,
   MATERIAL_TYPE_PRINCIPLED = 9,
   MATERIAL_TYPE_THINGLASS = 10,
-  MATERIAL_TYPE_VELVET = 11
+  MATERIAL_TYPE_VELVET = 11,
+  MATERIAL_TYPE_UNKNOWN = 12
 };
 
 // ISPC-side abstraction for a material.
@@ -73,7 +85,7 @@ struct Material
                   // radiance; TODO SV-EDFs
 #ifdef __cplusplus
   Material(const vec3f &emission = vec3f(0.f))
-      : type(MATERIAL_TYPE_OBJ),
+      : type(MATERIAL_TYPE_UNKNOWN),
         getBSDF(nullptr),
         getTransparency(nullptr),
         selectNextMedium(nullptr),

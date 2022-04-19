@@ -3,8 +3,17 @@
 
 #pragma once
 
-#include "Distribution1D.ih"
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/vec.ih"
+#endif
+
+#include "Distribution1D.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct Distribution2D
 {
@@ -34,3 +43,5 @@ struct Sample2D
 // inline?
 Sample2D Distribution2D_sample(const Distribution2D *uniform, const vec2f &s);
 float Distribution2D_pdf(const Distribution2D *uniform, const vec2f &uv);
+
+OSPRAY_END_ISPC_NAMESPACE

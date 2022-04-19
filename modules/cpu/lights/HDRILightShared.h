@@ -40,6 +40,15 @@ struct HDRILight
       const Texture2D *map,
       const Distribution2D *distribution);
 };
+#ifdef OSPRAY_TARGET_DPCPP
+void *HDRILight_sample_dummy_addr();
+void *HDRILight_sample_addr();
+void *HDRILight_sample_instanced_addr();
+void *HDRILight_eval_addr();
+void *HDRILight_eval_instanced_addr();
+void *HDRILight_createDistribution(const void *map);
+void HDRILight_destroyDistribution(void *distribution);
+#endif
 } // namespace ispc
 #else
 };

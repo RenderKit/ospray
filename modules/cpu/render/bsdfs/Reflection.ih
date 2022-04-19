@@ -5,6 +5,8 @@
 
 #include "BSDF.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline BSDF_EvalRes Reflection_eval(
     const varying BSDF *uniform self, const vec3f &wo, const vec3f &wi)
 {
@@ -33,8 +35,16 @@ inline varying BSDF *uniform Reflection_create(
   BSDF_Constructor(self,
       reflectance,
       BSDF_SPECULAR_REFLECTION,
+      BSDF_TYPE_REFLECTION,
+#ifdef OSPRAY_TARGET_DPCPP
+      NULL,
+      NULL,
+#else
       Reflection_eval,
       Reflection_sample,
+#endif
       frame);
   return self;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

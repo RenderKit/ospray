@@ -3,15 +3,26 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/vec.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct PathContext;
 struct PathState;
 struct PathVertex;
 struct Ray;
 
-vec3f evaluateVirtualLights(const PathContext &pathContext,
+SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
     const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
     Ray &ray);
+
+OSPRAY_END_ISPC_NAMESPACE

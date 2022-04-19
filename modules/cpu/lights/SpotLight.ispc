@@ -7,6 +7,8 @@
 // c++ shared
 #include "SpotLightShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 inline void Transform(const uniform SpotLightDynamic &pre,
@@ -114,7 +116,13 @@ Light_SampleRes SpotLight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    // DPC++ execution in a thread is scalar
+    const float utime = time;
+#else
   foreach_unique (utime in time) {
+#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform SpotLightDynamic dyn;
     Transform(self->pre, xfm, dyn);
@@ -143,7 +151,11 @@ inline Light_EvalRes Eval(const SpotLight *uniform self,
         const vec3f vd = vp + t * dir;
         const float d2 = dot(vd, vd);
         // inside ring?
+#ifdef OSPRAY_TARGET_DPCPP
+        if (d2 < sqr(self->radius) && d2 > sqr(self->innerRadius)) {
+#else
         if (and(d2<sqr(self->radius), d2> sqr(self->innerRadius))) {
+#endif
           float attenuation = AngularAttenuation(self, cosAngle);
           if (self->intensityDistribution.lid) {
             attenuation *= IntensityDistribution_eval(
@@ -191,7 +203,13 @@ Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    // DPC++ execution in a thread is scalar
+    const float utime = time;
+#else
   foreach_unique (utime in time) {
+#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform SpotLightDynamic dyn;
     Transform(self->pre, xfm, dyn);
@@ -205,20 +223,22 @@ Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
 
 export void *uniform SpotLight_sample_addr()
 {
-  return SpotLight_sample;
+  return (void *uniform)SpotLight_sample;
 }
 
 export void *uniform SpotLight_sample_instanced_addr()
 {
-  return SpotLight_sample_instanced;
+  return (void *uniform)SpotLight_sample_instanced;
 }
 
 export void *uniform SpotLight_eval_addr()
 {
-  return SpotLight_eval;
+  return (void *uniform)SpotLight_eval;
 }
 
 export void *uniform SpotLight_eval_instanced_addr()
 {
-  return SpotLight_eval_instanced;
+  return (void *uniform)SpotLight_eval_instanced;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

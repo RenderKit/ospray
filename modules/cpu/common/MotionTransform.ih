@@ -3,17 +3,30 @@
 
 #pragma once
 
-#include "embree3/rtcore.isph"
-#include "math/AffineSpace.ih"
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/AffineSpace.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
+#include "embree4/rtcore.h"
+#else
+#include "embree4/rtcore.isph"
+#include "rkcommon/math/AffineSpace.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline uniform AffineSpace3f getInterpolatedTransform(
     const RTCGeometry geom, const uniform float time)
 {
   uniform AffineSpace3f xfm;
-  rtcGetGeometryTransform(geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+  // TODO: This function is missing the SYCL_EXTERNAL attribute?
+  // rtcGetGeometryTransform(geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+  // &xfm);
   return xfm;
 }
 
+#ifndef OSPRAY_TARGET_DPCPP
 inline AffineSpace3f getInterpolatedTransform(
     const RTCGeometry geom, const float time)
 {
@@ -31,3 +44,5 @@ inline AffineSpace3f getInterpolatedTransform(
   */
   return xfm;
 }
+#endif
+OSPRAY_END_ISPC_NAMESPACE

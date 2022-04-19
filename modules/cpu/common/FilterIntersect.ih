@@ -6,16 +6,23 @@
 #include "Intersect.ih"
 #include "Ray.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline bool filterCall(const RTCIntersectFunctionNArguments *uniform args,
     const RTCHit &rtcHitTemp)
 {
   // prepare execution mask
+#ifdef OSPRAY_TARGET_DPCPP
+  // We can't #define __mask because it conflicts with some stuff in C++
+  int imask = -1;
+#else
   varying int imask;
   varying bool mask = __mask;
   unmasked
   {
     imask = mask ? -1 : 0;
   }
+#endif
 
   // call filter intersection callback
   uniform RTCFilterFunctionNArguments filterArgs;
@@ -28,7 +35,7 @@ inline bool filterCall(const RTCIntersectFunctionNArguments *uniform args,
   rtcFilterIntersection(args, &filterArgs);
 
   // return true if hit has been accepted
-  return (imask == -1);
+  return imask == -1;
 }
 
 inline bool filterIntersectionSingle(
@@ -39,7 +46,11 @@ inline bool filterIntersectionSingle(
 {
   // if there is a hit
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
+#ifdef OSPRAY_TARGET_DPCPP
+  if (hit.hit && hit.t > ray->t0 && hit.t <= ray->t) {
+#else
   if (and(hit.hit, and(hit.t > ray->t0, hit.t <= ray->t))) {
+#endif
     // set a new hit value
     const float tOld = ray->t;
     ray->t = hit.t;
@@ -60,19 +71,22 @@ inline bool filterIntersectionSingle(
     if (alwaysReject) {
       // the hit is always rejected
       ray->t = tOld;
-    }
-    else
-    {
+    } else {
       if (accept) {
         // hit has been accepted
         if (isOcclusionTest) {
           ray->t = neg_inf;
-        }
-        else
-        {
-          varying RTCHit *uniform rtcHit =
-              (varying RTCHit * uniform) & ray->Ng.x;
-          *rtcHit = rtcHitTemp;
+        } else {
+          ray->Ng.x = hit.N.x;
+          ray->Ng.y = hit.N.y;
+          ray->Ng.z = hit.N.z;
+
+          ray->u = hit.u;
+          ray->v = 0.f;
+
+          ray->primID = args->primID;
+          ray->geomID = args->geomID;
+          ray->instID = args->context->instID[0];
         }
         return true;
       } else {
@@ -93,6 +107,8 @@ inline bool filterIntersectionBoth(
     const uniform bool isOcclusionTest)
 {
   if (!filterIntersectionSingle(args, isect.entry, isOcclusionTest, false)) {
-    filterIntersectionSingle(args, isect.exit, isOcclusionTest, false);
+    return filterIntersectionSingle(args, isect.exit, isOcclusionTest, false);
   }
+  return true;
 }
+OSPRAY_END_ISPC_NAMESPACE

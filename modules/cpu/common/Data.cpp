@@ -21,7 +21,17 @@ Data::Data(api::ISPCDevice &device,
 {
   if (sharedData == nullptr)
     throw std::runtime_error("OSPData: shared buffer is NULL");
-  addr = (char *)sharedData;
+  // addr = (char *)sharedData;
+
+  // TODO: Here we need to check if it's a GPU pointer or not and do the
+  // alloc/copy Shared data on GPU needs a way to share the USM context from
+  // OSPRay. What about the ANARI mapping stuff? This is a hack right now to
+  // copy all data into USM so that we can run the ospExamples
+  shared = false;
+  view = BufferSharedCreate(
+      device.getIspcrtDevice().handle(), size() * sizeOf(type) + 16);
+  addr = (char *)ispcrtSharedPtr(view);
+  std::memcpy(addr, sharedData, size() * sizeOf(type));
   init();
 
   if (isObjectType(type)) {

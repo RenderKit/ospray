@@ -29,7 +29,14 @@
 // The tabulated direction numbers are available here:
 // http://web.maths.unsw.edu.au/~fkuo/sobol/new-joe-kuo-6.21201
 
+#ifndef OSPRAY_TARGET_DPCPP
 #include "sobol.ih"
+#else
+#define Sobol_numDimensions 1024
+#define Sobol_numBits 52
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 const uniform unsigned int Sobol_matrices[Sobol_numDimensions * Sobol_numBits] =
     {
@@ -53282,3 +53289,4 @@ const uniform unsigned int Sobol_matrices[Sobol_numDimensions * Sobol_numBits] =
         0x34a32b93U,
         0x1397876eU,
 };
+OSPRAY_END_ISPC_NAMESPACE

@@ -14,7 +14,9 @@
 #include "PathTracerDataShared.h"
 #include "lights/LightShared.h"
 
-bool shadowCatcher(const PathContext &pathContext,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
     PathState &pathState,
     PathVertex &pathVertex,
     const Ray &ray,
@@ -53,7 +55,7 @@ bool shadowCatcher(const PathContext &pathContext,
       const vec2f s = LDSampler_getFloat2(
           pathContext.ldSampler, pathState.sampleDim + 4 + i * 2);
       Light_SampleRes ls =
-          light->sample(light, pathVertex.dg, s, pathState.time);
+          Light_dispatch_sample(light, pathVertex.dg, s, pathState.time);
 
       // skip when zero contribution from light
       if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -101,3 +103,5 @@ bool shadowCatcher(const PathContext &pathContext,
   pathState.shadowCatcherDist -= ray.t;
   return false;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

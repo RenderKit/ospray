@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "CarPaint.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc
 #include "render/materials/CarPaint_ispc.h"
+#endif
 
 namespace ospray {
 namespace pathtracer {
@@ -11,8 +13,10 @@ namespace pathtracer {
 CarPaint::CarPaint(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.type = ispc::MATERIAL_TYPE_CARPAINT;
-  getSh()->super.getBSDF = ispc::CarPaint_getBSDF_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(
+      ispc::CarPaint_getBSDF_addr());
+#endif
 }
 
 std::string CarPaint::toString() const

@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LinearTransferFunction.h"
+#ifndef OSPRAY_TARGET_DPCPP
 #include "volume/transferFunction/LinearTransferFunction_ispc.h"
+#endif
 
 namespace ospray {
 
 LinearTransferFunction::LinearTransferFunction(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.get = ispc::LinearTransferFunction_get_addr();
+  getSh()->super.get = reinterpret_cast<ispc::TransferFunction_getFct>(
+      ispc::LinearTransferFunction_get_addr());
   getSh()->super.getMaxOpacity =
-      ispc::LinearTransferFunction_getMaxOpacity_addr();
+      reinterpret_cast<ispc::TransferFunction_getMaxOpacityFct>(
+          ispc::LinearTransferFunction_getMaxOpacity_addr());
   getSh()->super.valueRange = range1f(0.0f, 1.0f);
 }
 

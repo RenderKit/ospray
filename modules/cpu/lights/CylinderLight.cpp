@@ -3,9 +3,11 @@
 
 #include "CylinderLight.h"
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
 
+#ifndef OSPRAY_TARGET_DPCPP
 #include "lights/CylinderLight_ispc.h"
+#endif
 
 #include "CylinderLightShared.h"
 #include "common/InstanceShared.h"
@@ -18,8 +20,10 @@ ISPCRTMemoryView CylinderLight::createSh(
   ISPCRTMemoryView view = StructSharedCreate<ispc::CylinderLight>(
       getISPCDevice().getIspcrtDevice().handle());
   ispc::CylinderLight *sh = (ispc::CylinderLight *)ispcrtSharedPtr(view);
-  sh->super.sample = ispc::CylinderLight_sample_addr();
-  sh->super.eval = ispc::CylinderLight_eval_addr();
+  sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+      ispc::CylinderLight_sample_addr());
+  sh->super.eval =
+      reinterpret_cast<ispc::Light_EvalFunc>(ispc::CylinderLight_eval_addr());
   sh->super.isVisible = visible;
   sh->super.instance = instance;
 
@@ -37,8 +41,10 @@ ISPCRTMemoryView CylinderLight::createSh(
   // Enable dynamic runtime instancing or apply static transformation
   if (instance) {
     if (instance->motionBlur) {
-      sh->super.sample = ispc::CylinderLight_sample_instanced_addr();
-      sh->super.eval = ispc::CylinderLight_eval_instanced_addr();
+      sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+          ispc::CylinderLight_sample_instanced_addr());
+      sh->super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+          ispc::CylinderLight_eval_instanced_addr());
     } else
       ispc::CylinderLight_Transform(sh, instance->xfm, &sh->pre);
   }

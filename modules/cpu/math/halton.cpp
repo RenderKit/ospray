@@ -21,9 +21,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "halton.ih"
+#include "math/halton.h"
 
-const uniform unsigned int perm3[243] = {0,
+namespace ospray {
+
+const unsigned int halton_perm3[243] = {0,
     81,
     162,
     27,
@@ -267,7 +269,7 @@ const uniform unsigned int perm3[243] = {0,
     161,
     242};
 
-const uniform unsigned int perm5[125] = {0,
+const unsigned int halton_perm5[125] = {0,
     75,
     50,
     25,
@@ -393,7 +395,7 @@ const uniform unsigned int perm5[125] = {0,
     49,
     124};
 
-const uniform unsigned int perm7[343] = {0,
+const unsigned int halton_perm7[343] = {0,
     98,
     245,
     147,
@@ -736,3 +738,4 @@ const uniform unsigned int perm7[343] = {0,
     97,
     244,
     342};
+} // namespace ospray

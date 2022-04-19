@@ -5,23 +5,30 @@
 
 #include "math/interpolation.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+// TODO: Tables should move to USM and not be in the kernel taking up registers
+
 // Directional and average albedo tables for microfacet BSDFs
 // [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
 
 // Microfacet GGX albedo table
 #define MICROFACET_ALBEDO_TABLE_SIZE 32
+#if 0
 extern uniform float MicrofacetAlbedoTable_dir[MICROFACET_ALBEDO_TABLE_SIZE
     * MICROFACET_ALBEDO_TABLE_SIZE]; // directional 2D table (cosThetaO,
                                      // roughness)
 extern uniform float
     MicrofacetAlbedoTable_avg[MICROFACET_ALBEDO_TABLE_SIZE]; // average 1D table
                                                              // (roughness)
+#endif
 
 // Microfacet GGX dielectric albedo table
 #define MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE 16
 #define MICROFACET_DIELECTRIC_ALBEDO_TABLE_MIN_IOR 1.f
 #define MICROFACET_DIELECTRIC_ALBEDO_TABLE_MAX_IOR 3.f
 // eta in [1/3, 1]
+#if 0
 extern uniform float
     MicrofacetDielectricAlbedoTable_dir[MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
         * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
@@ -56,6 +63,7 @@ extern uniform float MicrofacetDielectricReflectionAlbedoTable_avg
     [MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE
         * MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE]; // average 2D table (eta,
                                                     // roughness)
+#endif
 // eta in [1, 3]
 // extern uniform float* uniform
 // MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir; // directional 3D table
@@ -65,28 +73,38 @@ extern uniform float MicrofacetDielectricReflectionAlbedoTable_avg
 
 // Microfacet sheen albedo table
 #define MICROFACET_SHEEN_ALBEDO_TABLE_SIZE 16
+#if 0
 extern uniform float
     MicrofacetSheenAlbedoTable_dir[MICROFACET_SHEEN_ALBEDO_TABLE_SIZE
         * MICROFACET_SHEEN_ALBEDO_TABLE_SIZE]; // directional 2D table
                                                // (cosThetaO, roughness)
+#endif
 
 inline float MicrofacetAlbedoTable_eval(float cosThetaO, float roughness)
 {
+  return 0.5f;
+#if 0
   const uniform int size = MICROFACET_ALBEDO_TABLE_SIZE;
   const vec2f p = make_vec2f(cosThetaO, roughness) * (size - 1);
   return interp2DLinear(p, MicrofacetAlbedoTable_dir, make_vec2i(size));
+#endif
 }
 
 inline float MicrofacetAlbedoTable_evalAvg(float roughness)
 {
+  return 0.5f;
+#if 0
   const uniform int size = MICROFACET_ALBEDO_TABLE_SIZE;
   const float x = roughness * (size - 1);
   return interp1DLinear(x, MicrofacetAlbedoTable_avg, size);
+#endif
 }
 
 inline float MicrofacetDielectricAlbedoTable_eval(
     float cosThetaO, float eta, float roughness)
 {
+  return 0.5f;
+#if 0
   const uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
 
   if (eta <= 1.f) {
@@ -106,10 +124,13 @@ inline float MicrofacetDielectricAlbedoTable_eval(
     return interp3DLinear(
         p, MicrofacetDielectricRcpEtaAlbedoTable_dir, make_vec3i(size));
   }
+#endif
 }
 
 inline float MicrofacetDielectricAlbedoTable_evalAvg(float eta, float roughness)
 {
+  return 0.5f;
+#if 0
   const uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
 
   if (eta <= 1.f) {
@@ -129,11 +150,14 @@ inline float MicrofacetDielectricAlbedoTable_evalAvg(float eta, float roughness)
     return interp2DLinear(
         p, MicrofacetDielectricRcpEtaAlbedoTable_avg, make_vec2i(size));
   }
+#endif
 }
 
 inline float MicrofacetDielectricReflectionAlbedoTable_eval(
     float cosThetaO, float eta, float roughness)
 {
+  return 0.5f;
+#if 0
   const uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
 
   // if (eta <= 1.f)
@@ -158,11 +182,14 @@ inline float MicrofacetDielectricReflectionAlbedoTable_eval(
   MicrofacetDielectricReflectionRcpEtaAlbedoTable_dir, make_vec3i(size));
   }
   */
+#endif
 }
 
 inline float MicrofacetDielectricReflectionAlbedoTable_evalAvg(
     float eta, float roughness)
 {
+  return 0.5f;
+#if 0
   const uniform int size = MICROFACET_DIELECTRIC_ALBEDO_TABLE_SIZE;
 
   // if (eta <= 1.f)
@@ -187,11 +214,19 @@ inline float MicrofacetDielectricReflectionAlbedoTable_evalAvg(
   MicrofacetDielectricReflectionRcpEtaAlbedoTable_avg, make_vec2i(size));
   }
   */
+#endif
 }
 
 inline float MicrofacetSheenAlbedoTable_eval(float cosThetaO, float roughness)
 {
+  return 0.5f;
+#if 0
   const uniform int size = MICROFACET_SHEEN_ALBEDO_TABLE_SIZE;
   const vec2f p = make_vec2f(cosThetaO, roughness) * (size - 1);
   return interp2DLinear(p, MicrofacetSheenAlbedoTable_dir, make_vec2i(size));
+#endif
 }
+
+export void precomputeMicrofacetAlbedoTables();
+
+OSPRAY_END_ISPC_NAMESPACE

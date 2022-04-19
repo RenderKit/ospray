@@ -1,16 +1,29 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
+
+#ifdef OSPRAY_TARGET_DPCPP
+// Currently not used b/c we need OpenVKL on GPU/DPC++ but we will use this
+// later, so keep this in for now
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+#endif
 
 // ospray
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
 #include "openvkl/iterator.isph"
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
 #include "volume/VolumetricModel.ih"
 // c++ shared
 #include "IsosurfacesShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 int Isosurfaces_primID(const Isosurfaces *uniform self, const float isovalue)
 {
@@ -42,7 +55,7 @@ export void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
   *out = make_box3fa(volume->boundingBox);
 }
 
-void Isosurfaces_intersect_kernel(
+void unmasked Isosurfaces_intersect_kernel(
     const RTCIntersectFunctionNArguments *uniform args,
     const uniform bool isOcclusionTest)
 {
@@ -53,7 +66,7 @@ void Isosurfaces_intersect_kernel(
   Isosurfaces *uniform self = (Isosurfaces * uniform) args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
 
-  // this assumes that the args->rayhit is actually a pointer toa varying ray!
+  // this assumes that the args->rayhit is actually a pointer to a varying ray!
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
 
   VKLHitIterator iterator;
@@ -88,19 +101,6 @@ void Isosurfaces_intersect_kernel(
   }
 }
 
-export void Isosurfaces_intersect(
-    const struct RTCIntersectFunctionNArguments *uniform args)
-{
-  Isosurfaces_intersect_kernel(args, false);
-}
-
-export void Isosurfaces_occluded(
-    const struct RTCOccludedFunctionNArguments *uniform args)
-{
-  Isosurfaces_intersect_kernel(
-      (RTCIntersectFunctionNArguments * uniform) args, true);
-}
-
 void Isosurfaces_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
@@ -125,5 +125,8 @@ void Isosurfaces_postIntersect(const Geometry *uniform geometry,
 
 export void *uniform Isosurfaces_postIntersect_addr()
 {
-  return Isosurfaces_postIntersect;
+  return (void *uniform)Isosurfaces_postIntersect;
 }
+
+OSPRAY_END_ISPC_NAMESPACE
+#endif

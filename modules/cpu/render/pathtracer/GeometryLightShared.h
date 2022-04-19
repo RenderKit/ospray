@@ -33,6 +33,9 @@ struct GeometryLight
         pdf(inf)
   {}
 };
+#ifdef OSPRAY_TARGET_DPCPP
+void *GeometryLight_sample_addr();
+#endif
 } // namespace ispc
 #else
 };

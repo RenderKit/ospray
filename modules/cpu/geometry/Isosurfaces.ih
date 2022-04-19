@@ -1,0 +1,25 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
+
+#include "geometry/Geometry.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args);
+
+// Note: Currently not supported in DPCPP b/c we need OpenvKL on DPCPP,
+// but eventually we will need the SYCL_EXTERNAL annotation here
+SYCL_EXTERNAL void Isosurfaces_postIntersect(const Geometry *uniform geometry,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags);
+
+SYCL_EXTERNAL void unmasked Isosurfaces_intersect_kernel(
+    const RTCIntersectFunctionNArguments *uniform args,
+    const uniform bool isOcclusionTest);
+
+OSPRAY_END_ISPC_NAMESPACE
+
+#endif
+

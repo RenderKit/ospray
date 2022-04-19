@@ -6,6 +6,12 @@
 // c++ shared
 #include "CurvesShared.h"
 
+#ifdef OSPRAY_TARGET_DPCPP
+using namespace ospray;
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 static void Curves_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
@@ -42,5 +48,7 @@ static void Curves_postIntersect(const Geometry *uniform _self,
 
 export void *uniform Curves_postIntersect_addr()
 {
-  return Curves_postIntersect;
+  return (void *uniform)Curves_postIntersect;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

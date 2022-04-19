@@ -21,8 +21,14 @@ struct PanoramicCamera
 #ifdef __cplusplus
   PanoramicCamera()
       : org(0.f), frame(one), stereoMode(OSP_STEREO_NONE), ipd_offset(0.f)
-  {}
+  {
+    super.type = CAMERA_TYPE_PANORAMIC;
+  }
 };
+
+#ifdef OSPRAY_TARGET_DPCPP
+void *PanoramicCamera_initRay_addr();
+#endif
 } // namespace ispc
 #else
 };

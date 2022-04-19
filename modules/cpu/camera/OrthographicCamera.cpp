@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "OrthographicCamera.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc exports
 #include "camera/OrthographicCamera_ispc.h"
+#endif
 
 namespace ospray {
 
 OrthographicCamera::OrthographicCamera(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.initRay = ispc::OrthographicCamera_initRay_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->super.initRay = reinterpret_cast<ispc::Camera_initRay>(
+      ispc::OrthographicCamera_initRay_addr());
+#endif
 }
 
 std::string OrthographicCamera::toString() const

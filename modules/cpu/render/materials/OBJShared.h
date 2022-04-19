@@ -28,7 +28,10 @@ struct OBJ
                     // orthonormal) of tc xfrom
 
 #ifdef __cplusplus
-  OBJ() : d(1.f), Kd(.8f), Ks(0.f), Ns(2.f), Tf(0.f), bumpRot(one) {}
+  OBJ() : d(1.f), Kd(.8f), Ks(0.f), Ns(2.f), Tf(0.f), bumpRot(one)
+  {
+    super.type = MATERIAL_TYPE_OBJ;
+  }
 };
 } // namespace ispc
 #else

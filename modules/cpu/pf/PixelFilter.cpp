@@ -3,9 +3,13 @@
 
 // ospray
 #include "PixelFilter.h"
+#ifndef OSPRAY_TARGET_DPCPP
 #include "common/OSPCommon_ispc.h"
 #include "pf/LUTPixelFilter_ispc.h"
 #include "pf/PixelFilter_ispc.h"
+#else
+#include "common/OSPCommon.ih"
+#endif
 
 namespace ospray {
 

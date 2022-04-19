@@ -3,7 +3,15 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/vec.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct PixelFilter;
 
@@ -39,3 +47,5 @@ inline void PixelFilter_Constructor(PixelFilter *uniform self,
 inline vec2f Point_sample(const PixelFilter *uniform self, const vec2f &s);
 
 inline vec2f Box_sample(const PixelFilter *uniform self, const vec2f &s);
+
+OSPRAY_END_ISPC_NAMESPACE

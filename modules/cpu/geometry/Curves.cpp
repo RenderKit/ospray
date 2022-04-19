@@ -5,8 +5,10 @@
 #include "Curves.h"
 #include "common/DGEnum.h"
 
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc-generated files
 #include "geometry/Curves_ispc.h"
+#endif
 // std
 #include <map>
 
@@ -48,7 +50,9 @@ static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
 Curves::Curves(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.postIntersect = ispc::Curves_postIntersect_addr();
+  getSh()->super.postIntersect =
+      reinterpret_cast<ispc::Geometry_postIntersectFct>(
+          ispc::Curves_postIntersect_addr());
   // TODO implement area sampling of OldCurves for geometry lights
 }
 

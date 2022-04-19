@@ -3,7 +3,15 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/box.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/box.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct RenderTaskDesc
 {
@@ -12,3 +20,4 @@ struct RenderTaskDesc
   int accumID;
   float error;
 };
+OSPRAY_END_ISPC_NAMESPACE

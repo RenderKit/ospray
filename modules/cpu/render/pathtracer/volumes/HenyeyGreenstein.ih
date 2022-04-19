@@ -1,17 +1,27 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/LinearSpace.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/LinearSpace.ih"
+#endif
+
 #include "render/pathtracer/Scattering.ih"
 
-#include "math/LinearSpace.ih"
 #include "math/sampling.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline float hg(float cosTheta, float g)
 {
   float denom = 1.f + g * g - 2.f * g * cosTheta;
-  return rcp(4.f * pi) * (1.f - g * g) * rcp(denom * sqrt(denom));
+  return rcp(4.f * (float)pi) * (1.f - g * g) * rcp(denom * sqrt(denom));
 }
 
 inline bool HenyeyGreenstein_isSmooth(float anisotropy)
@@ -69,3 +79,6 @@ inline Scattering_SampleRes HenyeyGreenstein_sample(
   res.pdf = hg(cosTheta, g);
   return res;
 }
+
+OSPRAY_END_ISPC_NAMESPACE
+#endif

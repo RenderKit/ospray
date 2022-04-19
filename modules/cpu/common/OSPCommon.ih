@@ -3,16 +3,51 @@
 
 #pragma once
 
-#include "embree3/rtcore.isph"
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#include "embree4/rtcore.h"
+#else
+#include "embree4/rtcore.isph"
+#endif
 
 #include "OSPConfig.h"
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include <cstdint>
+#include "rkcommon/math/math.h"
+
+typedef uint64_t uint64;
+typedef uint32_t uint32;
+typedef uint16_t uint16;
+typedef uint8_t uint8;
+
+typedef int64_t int64;
+typedef int32_t int32;
+typedef int16_t int16;
+typedef int8_t int8;
+#else
 #ifndef ISPC_UINT_IS_DEFINED
 typedef unsigned int64 uint64;
 typedef unsigned int32 uint32;
 typedef unsigned int16 uint16;
 typedef unsigned int8 uint8;
 #endif
+#endif
+
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/platform.h"
+
+#define LOG(x)
+
+//#define PRINT(x)
+
+//#define PRINT3(x)
+
+#define PRINTU(x)
+
+#define PRINT3U(x)
+
+#else
 
 #define LOG(x)
 
@@ -29,10 +64,16 @@ typedef unsigned int8 uint8;
       extract(get(x, 0), count_trailing_zeros(lanemask())),                    \
       extract(get(x, 1), count_trailing_zeros(lanemask())),                    \
       extract(get(x, 2), count_trailing_zeros(lanemask())))
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 /*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
 export void delete_uniform(void *uniform uptr);
 
+OSPRAY_END_ISPC_NAMESPACE
+
+#ifndef OSPRAY_TARGET_DPCPP
 /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
 extern "C" void *uniform malloc64(uniform uint64 size);
 extern "C" void free64(void *uniform ptr);
@@ -41,3 +82,4 @@ extern "C" void free64(void *uniform ptr);
 extern "C" void *uniform pushTLS(uniform uint64 size);
 extern "C" void *uniform reallocTLS(void *uniform ptr, uniform uint64 size);
 extern "C" void popTLS(void *uniform ptr);
+#endif

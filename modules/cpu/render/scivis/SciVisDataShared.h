@@ -3,6 +3,12 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "common/rkcommonDPCPPWrappers.h"
+#elif defined(ISPC)
+#include "rkcommon/math/vec.ih"
+#endif
+
 #ifdef __cplusplus
 #include "common/StructShared.h"
 namespace ispc {

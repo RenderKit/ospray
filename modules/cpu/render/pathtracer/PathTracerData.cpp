@@ -9,9 +9,13 @@
 #include "lights/Light.h"
 #include "render/Material.h"
 #include "render/Renderer.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc exports
 #include "geometry/GeometricModel_ispc.h"
 #include "render/pathtracer/GeometryLight_ispc.h"
+#else
+#include "math/Distribution1D.ih"
+#endif
 // ispc shared
 #include "GeometryLightShared.h"
 
@@ -92,7 +96,8 @@ ISPCRTMemoryView PathTracerData::createGeometryLight(const Instance *instance,
   ispc::GeometryLight *sh = (ispc::GeometryLight *)ispcrtSharedPtr(view);
 
   sh->super.instance = instance->getSh();
-  sh->super.sample = ispc::GeometryLight_sample_addr();
+  sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+      ispc::GeometryLight_sample_addr());
   sh->super.eval = nullptr; // geometry lights are hit and explicitly handled
 
   sh->model = model->getSh();

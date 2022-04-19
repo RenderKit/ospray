@@ -23,7 +23,9 @@ static_assert(TILE_SIZE > 0 && (TILE_SIZE & (TILE_SIZE - 1)) == 0,
 // Extra defines to hide some differences between ISPC/C++ to unify the
 // declaration
 #ifdef __cplusplus
+#ifndef OSPRAY_TARGET_DPCPP
 #define uniform
+#endif
 #else
 #define OSPRAY_SDK_INTERFACE
 #endif
@@ -86,7 +88,7 @@ struct OSPRAY_SDK_INTERFACE Tile
 #endif
 };
 
-#ifndef __cplusplus
+#if !defined(__cplusplus) || defined(OSPRAY_TARGET_DPCPP)
 struct VaryingTile
 {
   uniform range2i region; // 4 ints
@@ -117,7 +119,9 @@ struct VaryingTile
 #endif
 
 #ifdef __cplusplus
+#ifndef OSPRAY_TARGET_DPCPP
 #undef uniform
+#endif
 #else
 #undef OSPRAY_SDK_INTERFACE
 #endif

@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <cstring>
+#include <memory>
 #include "ispcrt.hpp"
 
 namespace ospray {
@@ -31,6 +33,18 @@ struct BufferShared : public ispcrt::Array<T, ispcrt::AllocType::Shared>
   BufferShared(ispcrt::Device &device, size_t size);
   BufferShared(ispcrt::Device &device, const std::vector<T> &v);
   BufferShared(ispcrt::Device &device, const T *data, size_t size);
+
+  // TODO WILL: Probably best to put these methods/operators in ISPCRT
+  T *data();
+
+  T *begin();
+  T *end();
+
+  const T *cbegin() const;
+  const T *cend() const;
+
+  T &operator[](const size_t i);
+  const T &operator[](const size_t i) const;
 };
 
 template <typename T>
@@ -58,9 +72,51 @@ BufferShared<T>::BufferShared(
   std::memcpy(sharedPtr(), data, sizeof(T) * size);
 }
 
+template <typename T>
+T *BufferShared<T>::data()
+{
+  return begin();
+}
+
+template <typename T>
+T *BufferShared<T>::begin()
+{
+  return sharedPtr();
+}
+
+template <typename T>
+T *BufferShared<T>::end()
+{
+  return begin() + ispcrt::Array<T, ispcrt::AllocType::Shared>::size();
+}
+
+template <typename T>
+const T *BufferShared<T>::cbegin() const
+{
+  return sharedPtr();
+}
+
+template <typename T>
+const T *BufferShared<T>::cend() const
+{
+  return cbegin() + ispcrt::Array<T, ispcrt::AllocType::Shared>::size();
+}
+
+template <typename T>
+T &BufferShared<T>::operator[](const size_t i)
+{
+  return *(sharedPtr() + i);
+}
+
+template <typename T>
+const T &BufferShared<T>::operator[](const size_t i) const
+{
+  return *(sharedPtr() + i);
+}
+
 template <typename T, typename... Args>
 inline std::unique_ptr<BufferShared<T>> make_buffer_shared_unique(
-    Args &&... args)
+    Args &&...args)
 {
   return std::unique_ptr<BufferShared<T>>(
       new BufferShared<T>(std::forward<Args>(args)...));

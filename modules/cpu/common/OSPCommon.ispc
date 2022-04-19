@@ -3,7 +3,11 @@
 
 #include "OSPCommon.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 export void delete_uniform(void *uniform uptr)
 {
   delete uptr;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

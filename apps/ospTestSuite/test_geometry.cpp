@@ -172,14 +172,20 @@ TEST_P(FromOsprayTesting, test_scenes)
 INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("cornell_box",
+#ifdef OSPRAY_ENABLE_VOLUMES
                            "gravity_spheres_isosurface",
+#endif
                            "empty",
                            "random_spheres",
                            "streamlines",
                            "subdivision_cube",
-                           "planes",
+                           "planes"
+#ifdef OSPRAY_ENABLE_VOLUMES
+                           ,
                            "unstructured_volume_isosurface",
-                           "instancing"),
+                           "instancing"
+#endif
+                           ),
         ::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(16)));
 
@@ -223,9 +229,13 @@ INSTANTIATE_TEST_SUITE_P(TestScenesClipping,
                            "clip_with_meshes",
                            "clip_with_subdivisions",
                            "clip_with_linear_curves",
-                           "clip_with_bspline_curves",
+                           "clip_with_bspline_curves"
+#ifdef OSPRAY_ENABLE_VOLUMES
+                           ,
                            "clip_gravity_spheres_volume",
-                           "clip_perlin_noise_volumes"),
+                           "clip_perlin_noise_volumes"
+#endif
+                           ),
         ::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(16)));
 
@@ -241,9 +251,13 @@ TEST_P(FromOsprayTestingMaxDepth, test_scenes)
 
 INSTANTIATE_TEST_SUITE_P(TestScenesMaxDepth,
     FromOsprayTestingMaxDepth,
-    ::testing::Combine(
-        ::testing::Values(
-            "cornell_box", "clip_with_spheres", "clip_gravity_spheres_volume"),
+    ::testing::Combine(::testing::Values("cornell_box",
+                           "clip_with_spheres"
+#ifdef OSPRAY_ENABLE_VOLUMES
+                           ,
+                           "clip_gravity_spheres_volume"
+#endif
+                           ),
         ::testing::Values("ao"),
         ::testing::Values(16)));
 

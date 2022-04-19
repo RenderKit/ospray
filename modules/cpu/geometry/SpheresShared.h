@@ -12,13 +12,15 @@ namespace ispc {
 struct Spheres
 {
   Geometry super;
-  Data1D vertex;
-  Data1D radius;
+  Data1D sphere;
   Data1D texcoord;
   float global_radius;
 
 #ifdef __cplusplus
-  Spheres() : global_radius(.01f) {}
+  Spheres() : global_radius(.01f)
+  {
+    super.type = GEOMETRY_TYPE_SPHERES;
+  }
 };
 } // namespace ispc
 #else

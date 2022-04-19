@@ -3,9 +3,18 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "common/rkcommonDPCPPWrappers.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/vec.ih"
+#endif
 
 #include "MediumShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline Medium make_Medium(const vec3f attenuation, const float ior)
 {
@@ -20,6 +29,9 @@ inline Medium make_Medium_vacuum()
   return make_Medium(make_vec3f(0.0f), 1.0f);
 }
 
+OSPRAY_END_ISPC_NAMESPACE
+
+#ifndef OSPRAY_TARGET_DPCPP
 inline bool eq(const Medium &a, const Medium &b)
 {
   return (a.ior == b.ior) & eq(a.attenuation, b.attenuation);
@@ -34,3 +46,13 @@ inline uniform bool eq(const uniform Medium &a, const uniform Medium &b)
 {
   return (a.ior == b.ior) & eq(a.attenuation, b.attenuation);
 }
+#else
+// Keep this eq in the global namespace so it doesn't break the vector eq
+// function by taking precedence in the ispc namespace scope
+inline uniform bool eq(
+    const uniform ispc::Medium &a, const uniform ispc::Medium &b)
+{
+  return (a.ior == b.ior) & eq(a.attenuation, b.attenuation);
+}
+#endif
+

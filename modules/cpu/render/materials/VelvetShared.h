@@ -33,7 +33,9 @@ struct Velvet
         backScattering(.5f),
         horizonScatteringColor(.75f, .1f, .1f),
         horizonScatteringFallOff(10)
-  {}
+  {
+    super.type = ispc::MATERIAL_TYPE_VELVET;
+  }
 };
 } // namespace ispc
 #else

@@ -3,12 +3,28 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "common/DGEnum.h"
+#include "common/rkcommonDPCPPWrappers.h"
+#include "rkcommon/math/AffineSpace.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+using namespace ospray;
+#else
+#include "rkcommon/math/AffineSpace.ih"
+#endif
+
 #include "Geometry.ih"
 #include "common/Data.ih"
-#include "math/AffineSpace.ih"
 #include "render/Renderer.ih"
 // c++ shared
 #include "GeometricModelShared.h"
+
+#ifdef OSPRAY_TARGET_DPCPP
+#include "geometry/MeshShared.h"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
     const Renderer *uniform renderer,
@@ -44,7 +60,7 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
 {
   Geometry *uniform geom = self->geom;
 
-  geom->postIntersect(geom, dg, ray, flags);
+  Geometry_dispatch_postIntersect(geom, dg, ray, flags);
 
   dg.areaPDF = self->areaPDF;
   dg.objID =
@@ -65,3 +81,5 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
   if (flags & DG_NS && self->invertedNormals)
     dg.Ns = neg(dg.Ns);
 }
+
+OSPRAY_END_ISPC_NAMESPACE

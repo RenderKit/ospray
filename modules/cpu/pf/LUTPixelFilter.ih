@@ -6,6 +6,8 @@
 #include "PixelFilter.ih"
 #include "math/Distribution2D.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 #define LUTPIXELFILTER_PER_PIXEL_BINS 5
 
 struct LUTPixelFilter;
@@ -17,7 +19,7 @@ struct LUTPixelFilter
 {
   PixelFilter super;
 
-   // The 2D distribution used to importance sample
+  // The 2D distribution used to importance sample
   Distribution2D *uniform distribution;
 
   PixelFilter_EvalFunc eval;
@@ -26,18 +28,30 @@ struct LUTPixelFilter
 inline vec2f LUTPixelFilter_sample(
     const PixelFilter *uniform self, const vec2f &s);
 
-task unmasked void LUTPixelFilter_calcRowImportance(
-    const LUTPixelFilter *uniform const self,
-    int uniform const lut_width,
-    float *uniform const importance,
-    float *uniform const row_importance)
+#ifndef OSPRAY_TARGET_DPCPP
+task
+#endif
+    unmasked void
+    LUTPixelFilter_calcRowImportance(const LUTPixelFilter *uniform const self,
+        int uniform const lut_width,
+        float *uniform const importance,
+        float *uniform const row_importance
+#ifdef OSPRAY_TARGET_DPCPP
+        ,
+        const int taskIndex
+#endif
+    )
 {
   const uniform float filter_width = self->super.width;
 
   const uniform int y = taskIndex;
   const uniform float fy = (y + 0.5f) * (1.0f / (float)lut_width);
 
+#ifdef OSPRAY_TARGET_DPCPP
+  for (int x = 0; x < lut_width; ++x) {
+#else
   foreach (x = 0 ... lut_width) {
+#endif
     const varying float fx = (x + 0.5f) * (1.0f / (float)lut_width);
     const vec2f coord = make_vec2f(fx, fy) - make_vec2f(0.5);
 
@@ -59,9 +73,18 @@ inline void LUTPixelFilter_buildLUT(LUTPixelFilter *uniform self)
 
   float *uniform cdf_x = uniform new float[lut_width * lut_width];
   float *uniform row_importance = uniform new float[lut_width];
+#ifdef OSPRAY_TARGET_DPCPP
+  // TODO: This should become a kernel launch via DPC++
+  // This serial loop is just for testing an initial C++ migration of the ISPC
+  // code
+  for (int i = 0; i < lut_width; ++i) {
+    LUTPixelFilter_calcRowImportance(self, lut_width, cdf_x, row_importance, i);
+  }
+#else
   launch[lut_width] LUTPixelFilter_calcRowImportance(
       self, lut_width, cdf_x, row_importance);
   sync;
+#endif
 
   const uniform vec2i size = make_vec2i(lut_width);
   // create distribution
@@ -89,3 +112,5 @@ inline float Mitchell_Netravali_eval(
 
 inline float Blackman_Harris_eval(
     const PixelFilter *uniform self, const vec2f &x);
+
+OSPRAY_END_ISPC_NAMESPACE

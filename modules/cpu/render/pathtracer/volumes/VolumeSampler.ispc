@@ -1,8 +1,11 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #include "common/World.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 float delta_tracking(VolumetricModel *uniform vModel,
     const range1f &rInterval,
@@ -65,7 +68,7 @@ float delta_tracking(VolumetricModel *uniform vModel,
   return inf;
 }
 
-float volumeSampleFreePath(const PathState &pathState,
+SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
     const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
@@ -101,14 +104,25 @@ float volumeSampleFreePath(const PathState &pathState,
       continue;
 
     AffineSpace3f xfm;
-    foreach_unique (inst in volumeIntervals.intervals[i].instance)
+#ifdef OSPRAY_TARGET_DPCPP
+    {
+      const Instance *inst = volumeIntervals.intervals[i].instance;
+#else
+    foreach_unique (inst in volumeIntervals.intervals[i].instance) {
+#endif
       xfm = Instance_getTransform(inst, volumeRay.time);
+    }
     Ray transformedVolumeRay = volumeRay;
     transformRay(transformedVolumeRay, rcp(xfm));
 
     VolumetricModel *varying instance =
         volumeIntervals.intervals[i].volumetricModel;
+#ifdef OSPRAY_TARGET_DPCPP
+    {
+      const Instance *inst = volumeIntervals.intervals[i].instance;
+#else
     foreach_unique (inst in instance) {
+#endif
       for (int j = 0; j < rayIntervals.count; j++) {
         range1f rInterval = rayIntervals.intervals[j];
 
@@ -151,7 +165,7 @@ float volumeSampleFreePath(const PathState &pathState,
   return min_dist;
 }
 
-float volumeTransmittance(const PathState &pathState,
+SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
     const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
@@ -177,14 +191,25 @@ float volumeTransmittance(const PathState &pathState,
       continue;
 
     AffineSpace3f xfm;
-    foreach_unique (inst in volumeIntervals.intervals[i].instance)
+#ifdef OSPRAY_TARGET_DPCPP
+    {
+      const Instance *inst = volumeIntervals.intervals[i].instance;
+#else
+    foreach_unique (inst in volumeIntervals.intervals[i].instance) {
+#endif
       xfm = Instance_getTransform(inst, volumeRay.time);
+    }
     Ray transformedVolumeRay = volumeRay;
     transformRay(transformedVolumeRay, rcp(xfm));
 
     VolumetricModel *varying instance =
         volumeIntervals.intervals[i].volumetricModel;
+#ifdef OSPRAY_TARGET_DPCPP
+    {
+      const Instance *inst = volumeIntervals.intervals[i].instance;
+#else
     foreach_unique (inst in instance) {
+#endif
       for (int j = 0; and(j<rayIntervals.count, transmittance> 0.f); j++) {
         range1f rInterval = rayIntervals.intervals[j];
 
@@ -214,3 +239,6 @@ float volumeTransmittance(const PathState &pathState,
   freeVolumeIntervals(volumeIntervals);
   return transmittance;
 }
+
+OSPRAY_END_ISPC_NAMESPACE
+#endif

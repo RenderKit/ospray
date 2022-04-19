@@ -16,8 +16,13 @@ struct Glass
 
   Medium mediumInside;
   Medium mediumOutside;
+#ifdef __cplusplus
+  Glass()
+  {
+    super.type = ispc::MATERIAL_TYPE_GLASS;
+  }
+#endif
 };
-
 #ifdef __cplusplus
 } // namespace ispc
 #endif // __cplusplus

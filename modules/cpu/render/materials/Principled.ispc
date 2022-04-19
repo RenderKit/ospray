@@ -19,12 +19,14 @@
 #include "render/bsdfs/Transmission.ih"
 #include "texture/TextureParam.ih"
 
-#include "PrincipledShared.h"
+#include "Principled.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying Principled_getBSDF(
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -40,7 +42,7 @@ const varying BSDF *varying Principled_getBSDF(
       makeShadingFrame(dg, self->normalMap, self->normalRot, self->normal));
   const float rotation =
       clamp(self->rotation * get1f(self->rotationMap, dg, 1.f));
-  const float theta = 2.f * pi * rotation;
+  const float theta = 2.f * (float)pi * rotation;
   if (theta > 0.f) {
     frame->vx = rotate(frame->vx, frame->vz, theta);
     frame->vy = cross(frame->vz, frame->vx);
@@ -306,7 +308,8 @@ const varying BSDF *varying Principled_getBSDF(
   return bsdf;
 }
 
-vec3f Principled_getTransparency(const uniform Material *uniform material,
+SYCL_EXTERNAL vec3f Principled_getTransparency(
+    const uniform Material *uniform material,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium)
@@ -445,7 +448,8 @@ vec3f Principled_getTransparency(const uniform Material *uniform material,
   return T;
 }
 
-void Principled_selectNextMedium(const uniform Material *uniform super,
+SYCL_EXTERNAL void Principled_selectNextMedium(
+    const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     Medium &currentMedium)
 {
@@ -477,15 +481,17 @@ void Principled_selectNextMedium(const uniform Material *uniform super,
 
 export void *uniform Principled_getBSDF_addr()
 {
-  return Principled_getBSDF;
+  return (void *uniform)Principled_getBSDF;
 }
 
 export void *uniform Principled_getTransparency_addr()
 {
-  return Principled_getTransparency;
+  return (void *uniform)Principled_getTransparency;
 }
 
 export void *uniform Principled_selectNextMedium_addr()
 {
-  return Principled_selectNextMedium;
+  return (void *uniform)Principled_selectNextMedium;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

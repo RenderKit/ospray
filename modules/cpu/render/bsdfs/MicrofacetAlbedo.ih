@@ -7,6 +7,8 @@
 #include "GGXDistribution.ih"
 #include "SheenDistribution.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline float MicrofacetAlbedo_sample(
     float cosThetaO, const GGXDistribution &microfacet, const vec2f &s)
 {
@@ -210,3 +212,5 @@ inline float MicrofacetSheenAlbedo_integrate(
 
   return min(sum / (n * n), 1.f);
 }
+
+OSPRAY_END_ISPC_NAMESPACE

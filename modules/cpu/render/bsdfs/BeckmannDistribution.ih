@@ -5,6 +5,8 @@
 
 #include "MicrofacetDistribution.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Beckmann distribution
 struct BeckmannDistribution
 {
@@ -26,10 +28,10 @@ inline vec3f sample(
   float cosTheta = rsqrt(1.f + tanTheta2);
   float sinTheta = cos2sin(cosTheta);
 
-  float phi = 2.f * pi * s.y;
+  float phi = 2.f * (float)pi * s.y;
 
   float cosTheta3 = sqr(cosTheta) * cosTheta;
-  pdf = (1.f - s.x) * rcp(pi * alpha2 * cosTheta3);
+  pdf = (1.f - s.x) * rcp((float)pi * alpha2 * cosTheta3);
 
   float sinPhi, cosPhi;
   sincos(phi, &sinPhi, &cosPhi);
@@ -39,3 +41,5 @@ inline vec3f sample(
   float z = cosTheta;
   return make_vec3f(x, y, z);
 }
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -3,8 +3,18 @@
 
 #pragma once
 
-#include "DGEnum.h"
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/vec.ih"
+#endif
+
+#include "DGEnum.h"
+#include "common/OSPCommon.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct Material;
 struct Renderer;
@@ -39,7 +49,7 @@ struct DifferentialGeometry
 };
 
 // assumed precision of intersection routines
-#define ulpEpsilon 0x1.fp-21
+#define ulpEpsilon 0x1.0fp-21
 
 inline float calcEpsilon(const vec3f &P, const vec3f &dir, float t)
 {
@@ -53,3 +63,4 @@ inline float calcEpsilon(const vec3f &P, float dist)
   const vec3f dummy_dir = make_vec3f(1.0f);
   return calcEpsilon(P, dummy_dir, dist);
 }
+OSPRAY_END_ISPC_NAMESPACE

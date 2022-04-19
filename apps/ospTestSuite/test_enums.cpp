@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <gtest/gtest.h>
-#include "embree3/rtcore.h"
-#include "openvkl/openvkl.h"
+#include "embree4/rtcore.h"
 #include "ospray/OSPEnums.h"
+
+#ifdef OSPRAY_ENABLE_VOLUMES
+#include "openvkl/openvkl.h"
 
 TEST(Enums, VKLLogLevel)
 {
@@ -128,6 +130,7 @@ TEST(Enums, VKLError)
   ASSERT_EQ(OSP_OUT_OF_MEMORY, VKL_OUT_OF_MEMORY);
   ASSERT_EQ(OSP_UNSUPPORTED_CPU, VKL_UNSUPPORTED_CPU);
 }
+#endif
 
 TEST(Enums, RTCSubdivisionMode)
 {

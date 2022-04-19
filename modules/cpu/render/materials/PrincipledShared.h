@@ -155,7 +155,9 @@ struct Principled
         thin(false),
         backlight(0.f),
         thickness(1.f)
-  {}
+  {
+    super.type = ispc::MATERIAL_TYPE_PRINCIPLED;
+  }
 };
 } // namespace ispc
 #else

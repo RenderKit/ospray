@@ -4,6 +4,8 @@
 #include "MicrofacetAlbedo.ih"
 #include "MicrofacetAlbedoTables.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 uniform bool MicrofacetAlbedoTable_initialized = false;
 uniform float MicrofacetAlbedoTable_dir[MICROFACET_ALBEDO_TABLE_SIZE
     * MICROFACET_ALBEDO_TABLE_SIZE];
@@ -43,7 +45,11 @@ static inline uniform float MicrofacetAlbedoTable_integrateAvg(
   // Trapezoidal rule
   const uniform int n = numSamples + 1;
   float sum = 0.f;
+#ifdef OSPRAY_TARGET_DPCPP
+  for (int i = 0; i < n; ++i) {
+#else
   foreach (i = 0 ... n) {
+#endif
     const float cosThetaO = (float)i / (n - 1);
     const float x = cosThetaO * (size - 1);
     sum += interp1DLinear(x, f, size) * cosThetaO
@@ -64,7 +70,11 @@ static void MicrofacetAlbedoTable_precompute()
   for (uniform int j = 0; j < size; j++) {
     const float roughness = (float)j / (size - 1);
     // compute the direction albedo for each cosThetaO
+#ifdef OSPRAY_TARGET_DPCPP
+    for (int i = 0; i < size; ++i) {
+#else
     foreach (i = 0 ... size) {
+#endif
       const float cosThetaO = (float)i / (size - 1);
       dirPtr[i] = MicrofacetAlbedo_integrate(cosThetaO, roughness);
     }
@@ -98,7 +108,11 @@ static void MicrofacetDielectricAlbedoTable_precompute(
     for (uniform int j = 0; j < size; j++) {
       const float eta = lerp((float)j / (size - 1), minEta, maxEta);
       // compute the direction albedo for each cosThetaO
+#ifdef OSPRAY_TARGET_DPCPP
+      for (int i = 0; i < size; ++i) {
+#else
       foreach (i = 0 ... size) {
+#endif
         const float cosThetaO = (float)i / (size - 1);
         dirPtr[i] = func(cosThetaO, eta, roughness, numSamples);
       }
@@ -169,7 +183,11 @@ static void MicrofacetSheenAlbedoTable_precompute()
   for (uniform int j = 0; j < size; j++) {
     const float roughness = (float)j / (size - 1);
     // compute the direction albedo for each cosThetaO
+#ifdef OSPRAY_TARGET_DPCPP
+    for (int i = 0; i < size; ++i) {
+#else
     foreach (i = 0 ... size) {
+#endif
       const float cosThetaO = (float)i / (size - 1);
       dirPtr[i] = MicrofacetSheenAlbedo_integrate(cosThetaO, roughness);
     }
@@ -190,3 +208,5 @@ export void precomputeMicrofacetAlbedoTables()
 
   MicrofacetAlbedoTable_initialized = true;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

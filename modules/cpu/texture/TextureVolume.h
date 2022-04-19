@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
@@ -33,3 +34,4 @@ struct OSPRAY_SDK_INTERFACE TextureVolume
 };
 
 } // namespace ospray
+#endif

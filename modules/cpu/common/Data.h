@@ -8,6 +8,9 @@
 #include "StructShared.h"
 #include "ispcrt.hpp"
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "Data.ih"
+#else
 // including "Data_ispc.h" breaks app code using SDK headers
 #ifndef __ISPC_STRUCT_Data1D__
 #define __ISPC_STRUCT_Data1D__
@@ -20,6 +23,7 @@ struct Data1D
   bool huge;
 };
 } // namespace ispc
+#endif
 #endif
 
 namespace ospray {
@@ -53,6 +57,9 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
   template <typename T, int DIM = 1>
   const DataT<T, DIM> &as() const;
 
+  template <typename T, int DIM = 1>
+  DataT<T, DIM> &as();
+
   template <typename T, int DIM>
   typename std::enable_if<std::is_pointer<T>::value, bool>::type is() const;
 
@@ -60,6 +67,10 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
   typename std::enable_if<!std::is_pointer<T>::value, bool>::type is() const;
 
  protected:
+  // The actual buffer storing the data
+  // TODO: What to do with OSPRay shared data that is not in USM?
+  // we need to detect & copy, we also need an API for apps to pass us USM
+  // and this USM has to be in the same L0 context...
   ISPCRTMemoryView view{nullptr};
   char *addr{nullptr};
   bool shared;
@@ -245,6 +256,12 @@ const ispc::Data1D *ispc(Ref<const DataT<T, 1>> &dataRef)
   return dataRef ? &dataRef->ispc : &Data::emptyData1D;
 }
 
+template <typename T>
+ispc::Data1D *ispc(Ref<DataT<T, 1>> &dataRef)
+{
+  return dataRef ? &dataRef->ispc : &Data::emptyData1D;
+}
+
 inline size_t Data::size() const
 {
   return numItems.x * numItems.y * numItems.z;
@@ -286,6 +303,20 @@ Data::is() const
 
 template <typename T, int DIM>
 inline const DataT<T, DIM> &Data::as() const
+{
+  if (is<T, DIM>())
+    return (DataT<T, DIM> &)*this;
+  else {
+    std::stringstream ss;
+    ss << "Incompatible type or dimension for DataT; requested type[dim]: "
+       << stringFor(OSPTypeFor<T>::value) << "[" << DIM
+       << "], actual: " << stringFor(type) << "[" << dimensions << "].";
+    throw std::runtime_error(ss.str());
+  }
+}
+
+template <typename T, int DIM>
+inline DataT<T, DIM> &Data::as()
 {
   if (is<T, DIM>())
     return (DataT<T, DIM> &)*this;

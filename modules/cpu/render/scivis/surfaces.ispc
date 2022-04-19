@@ -8,6 +8,9 @@
 // c++ shared
 #include "SciVisDataShared.h"
 #include "lights/LightShared.h"
+#include "lights/LightType.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 vec3f directIllumination(const uniform SciVis *uniform self,
     const FrameBuffer *uniform fb,
@@ -31,7 +34,9 @@ vec3f directIllumination(const uniform SciVis *uniform self,
        i++) {
     const Light *uniform l = scivisData.lights[i];
     const vec2f s = make_vec2f(0.0f); // sample center of area lights
-    const Light_SampleRes light = l->sample(l, dg, s);
+
+    const Light_SampleRes light =
+        Light_dispatch_sample(l, dg, s, sample.ray.time);
 
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
       const float cosNL = dot(light.dir, dg.Ns);
@@ -74,7 +79,7 @@ vec3f directIllumination(const uniform SciVis *uniform self,
   return color;
 }
 
-SSI computeShading(const SciVis *uniform self,
+SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
@@ -114,11 +119,12 @@ SSI computeShading(const SciVis *uniform self,
   return retval;
 }
 
-vec3f evaluateLights(
+SYCL_EXTERNAL vec3f evaluateLights(
     const World *uniform world, const DifferentialGeometry &dg, const Ray &ray)
 {
   // Iterate through all lights
   vec3f color = make_vec3f(0.f);
+  /*
   const uniform SciVisData &scivisData =
       *((const uniform SciVisData *)world->scivisData);
   for (uniform int i = 0; i < scivisData.numLights; i++) {
@@ -128,8 +134,11 @@ vec3f evaluateLights(
       continue;
 
     // Evaluate light contribution
-    const Light_EvalRes le = l->eval(l, dg, ray.dir, ray.t0, ray.t);
+    const Light_EvalRes le = l->eval(l, dg, ray.dir, ray.t0, ray.t, ray.time);
     color = color + le.radiance;
   }
+  */
   return color;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

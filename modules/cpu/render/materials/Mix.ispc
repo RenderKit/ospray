@@ -5,12 +5,15 @@
 #include "render/bsdfs/MultiBSDF.ih"
 #include "texture/TextureParam.ih"
 
-#include "MixShared.h"
+#include "Mix.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying Mix_getBSDF(const uniform Material *uniform super,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying Mix_getBSDF(
+    const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -23,12 +26,16 @@ const varying BSDF *varying Mix_getBSDF(const uniform Material *uniform super,
 
   if (self->mat1)
     MultiBSDF_add(bsdf,
+        // TODO: this needs to call the dispatch
+        // Also: this can/will have nested MultiBSDFs...
         self->mat1->getBSDF(self->mat1, ctx, dg, ray, currentMedium),
         1.0f - factor,
         1.0f - factor);
 
   if (self->mat2)
     MultiBSDF_add(bsdf,
+        // TODO: this needs to call the dispatch
+        // Also: this can/will have nested MultiBSDFs...
         self->mat2->getBSDF(self->mat2, ctx, dg, ray, currentMedium),
         factor,
         factor);
@@ -36,7 +43,7 @@ const varying BSDF *varying Mix_getBSDF(const uniform Material *uniform super,
   return bsdf;
 }
 
-vec3f Mix_getTransparency(const uniform Material *uniform super,
+SYCL_EXTERNAL vec3f Mix_getTransparency(const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium)
@@ -60,10 +67,12 @@ vec3f Mix_getTransparency(const uniform Material *uniform super,
 
 export void *uniform Mix_getBSDF_addr()
 {
-  return Mix_getBSDF;
+  return (void *uniform)Mix_getBSDF;
 }
 
 export void *uniform Mix_getTransparency_addr()
 {
-  return Mix_getTransparency;
+  return (void *uniform)Mix_getTransparency;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

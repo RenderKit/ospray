@@ -3,6 +3,8 @@
 
 #pragma once
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 const uniform float CylCapSolidAngleTable[] = {0.000000000000000000e+00,
     0.000000000000000000e+00,
     0.000000000000000000e+00,
@@ -1379,3 +1381,5 @@ float sampleCylSolidAngleTable(float u, float v, float w)
 
   return (1. - v) * p0 + v * p1;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -1,10 +1,14 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 // ospray
 #include "volume/Volume.h"
 #include "common/Data.h"
+#include "common/Util.h"
+#ifndef OSPRAY_TARGET_DPCPP
 #include "volume/Volume_ispc.h"
+#endif
 
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
@@ -85,8 +89,8 @@ void Volume::commit()
   rtcSetGeometryUserPrimitiveCount(embreeGeometry, 1);
   rtcSetGeometryBoundsFunction(
       embreeGeometry, (RTCBoundsFunction)&ispc::Volume_embreeBounds, getSh());
-  rtcSetGeometryIntersectFunction(
-      embreeGeometry, (RTCIntersectFunctionN)&ispc::Volume_intersect_kernel);
+  // rtcSetGeometryIntersectFunction(
+  //   embreeGeometry, (RTCIntersectFunctionN)&ispc::Volume_intersect_kernel);
   rtcCommitGeometry(embreeGeometry);
 
   // Initialize shared structure
@@ -211,3 +215,4 @@ void Volume::handleParams()
 OSPTYPEFOR_DEFINITION(Volume *);
 
 } // namespace ospray
+#endif

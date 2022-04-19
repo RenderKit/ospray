@@ -3,7 +3,7 @@
 
 #pragma once
 
-typedef enum
+enum DebugRendererType
 {
   TEST_FRAME,
   RAY_DIR,
@@ -20,4 +20,4 @@ typedef enum
   BACKFACING_NG,
   BACKFACING_NS,
   VOLUME
-} DebugRendererType;
+};

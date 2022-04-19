@@ -21,6 +21,10 @@ struct OSPRAY_SDK_INTERFACE Mesh : public AddStructShared<Geometry, ispc::Mesh>
 
   virtual size_t numPrimitives() const override;
 
+#ifdef OSPRAY_TARGET_DPCPP
+  // virtual void setGPUFunctionPtrs(sycl::queue &syclQueue) override;
+#endif
+
  protected:
   Ref<const DataT<vec3f>> vertexData;
   Ref<const DataT<vec3f>> normalData;

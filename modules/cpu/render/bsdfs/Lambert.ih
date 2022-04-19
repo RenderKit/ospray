@@ -6,13 +6,15 @@
 #include "BSDF.ih"
 #include "ShadingContext.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline BSDF_EvalRes Lambert_eval(
     const varying BSDF *uniform self, const vec3f &wo, const vec3f &wi)
 {
   BSDF_EvalRes res;
   float cosThetaI = max(dot(wi, getN(self)), 0.f);
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
-  res.value = self->albedo * one_over_pi * cosThetaI;
+  res.value = self->albedo * (float)one_over_pi * cosThetaI;
   return res;
 }
 
@@ -34,7 +36,19 @@ inline varying BSDF *uniform Lambert_create(uniform ShadingContext *uniform ctx,
 {
   varying BSDF *uniform self =
       (varying BSDF * uniform) ShadingContext_alloc(ctx, sizeof(BSDF));
-  BSDF_Constructor(
-      self, R, BSDF_DIFFUSE_REFLECTION, Lambert_eval, Lambert_sample, frame);
+  BSDF_Constructor(self,
+      R,
+      BSDF_DIFFUSE_REFLECTION,
+      BSDF_TYPE_LAMBERT,
+#ifdef OSPRAY_TARGET_DPCPP
+      NULL,
+      NULL,
+#else
+      Lambert_eval,
+      Lambert_sample,
+#endif
+      frame);
   return self;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

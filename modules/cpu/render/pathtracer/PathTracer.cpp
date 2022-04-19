@@ -6,11 +6,25 @@
 #include "camera/Camera.h"
 #include "common/World.h"
 #include "fb/FrameBuffer.h"
+#include "geometry/GeometricModel.h"
+#include "lights/Light.h"
+#include "render/Material.h"
+
+#ifdef OSPRAY_TARGET_DPCPP
+#include "PathTracer.ih"
+#include "render/bsdfs/MicrofacetAlbedoTables.ih"
+#else
 // ispc exports
+#include "math/Distribution1D_ispc.h"
 #include "render/bsdfs/MicrofacetAlbedoTables_ispc.h"
 #include "render/pathtracer/PathTracer_ispc.h"
+#endif
 
 namespace ospray {
+
+PathTracer::PathTracer(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
+{}
 
 std::string PathTracer::toString() const
 {
@@ -61,6 +75,50 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   return nullptr;
 }
 
+#ifdef OSPRAY_TARGET_DPCPP
+void PathTracer::renderTasks(FrameBuffer *fb,
+    Camera *camera,
+    World *world,
+    void *perFrameData,
+    const utility::ArrayView<uint32_t> &taskIDs,
+    sycl::queue &syclQueue) const
+{
+  auto *rendererSh = getSh();
+  auto *fbSh = fb->getSh();
+  auto *cameraSh = camera->getSh();
+  auto *worldSh = world->getSh();
+  const uint32_t *taskIDsPtr = taskIDs.data();
+  const size_t numTasks = taskIDs.size();
+
+  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+    const cl::sycl::nd_range<1> dispatchRange =
+        computeDispatchRange(numTasks, RTC_SYCL_SIMD_WIDTH);
+    cgh.parallel_for(
+        dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) RTC_SYCL_KERNEL {
+          if (taskIndex.get_global_id(0) < numTasks) {
+#if 0
+          // Needed for DPC++ prints to work around issue with print in deeper
+          // indirect called functions (see JIRA
+          // https://jira.devtools.intel.com/browse/XDEPS-4729)
+          if (taskIndex.get_global_id(0) == 0) {
+            cl::sycl::ext::oneapi::experimental::printf("pt\n");
+          }
+#endif
+            ispc::PathTracer_renderTask(&rendererSh->super,
+                fbSh,
+                cameraSh,
+                worldSh,
+                perFrameData,
+                taskIDsPtr,
+                taskIndex.get_global_id(0));
+          }
+        });
+  });
+  event.wait_and_throw();
+  // For prints we have to flush the entire queue, because other stuff is queued
+  syclQueue.wait_and_throw();
+}
+#else
 void PathTracer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
@@ -75,5 +133,6 @@ void PathTracer::renderTasks(FrameBuffer *fb,
       taskIDs.data(),
       taskIDs.size());
 }
+#endif
 
 } // namespace ospray

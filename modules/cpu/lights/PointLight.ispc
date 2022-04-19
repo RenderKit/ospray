@@ -1,17 +1,26 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/LinearSpace.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/LinearSpace.ih"
+#endif
+
 #include "IntensityDistribution.ih"
 #include "common/Instance.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
-#include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 // c++ shared
 #include "PointLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline void Transform(const PointLight *uniform self,
     const uniform affine3f &xfm,
     uniform PointLightDynamic &dyn)
@@ -109,7 +118,13 @@ Light_SampleRes PointLight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    // DPC++ execution in a thread is scalar
+    const float utime = time;
+#else
   foreach_unique (utime in time) {
+#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform PointLightDynamic dyn;
     Transform(self, xfm, dyn);
@@ -132,11 +147,20 @@ inline Light_EvalRes Eval(const PointLight *uniform self,
   const float centerDist2 = dot(A, A);
   const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
 
+#ifdef OSPRAY_TARGET_DPCPP
+  if (self->radius > 0.f && sqrt(sinTheta2) > 0.005f) {
+#else
   if (and(self->radius > 0.f, sqrt(sinTheta2) > 0.005f)) {
+#endif
     const Intersections isect =
         intersectSphere(dg.P, dir, dyn.position, self->radius);
+
+#ifdef OSPRAY_TARGET_DPCPP
+    if (isect.entry.t > minDist && isect.entry.t < maxDist && isect.entry.hit) {
+#else
     if (and(and(isect.entry.t > minDist, isect.entry.t < maxDist),
             isect.entry.hit)) {
+#endif
       const float cosTheta = sqrt(1.f - sinTheta2);
       res.pdf = uniformSampleConePDF(cosTheta);
       res.radiance = self->radiance;
@@ -177,7 +201,13 @@ Light_EvalRes PointLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    // DPC++ execution in a thread is scalar
+    const float utime = time;
+#else
   foreach_unique (utime in time) {
+#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform PointLightDynamic dyn;
     Transform(self, xfm, dyn);
@@ -191,20 +221,21 @@ Light_EvalRes PointLight_eval_instanced(const Light *uniform super,
 
 export void *uniform PointLight_sample_addr()
 {
-  return PointLight_sample;
+  return (void *uniform)PointLight_sample;
 }
 
 export void *uniform PointLight_sample_instanced_addr()
 {
-  return PointLight_sample_instanced;
+  return (void *uniform)PointLight_sample_instanced;
 }
 
 export void *uniform PointLight_eval_addr()
 {
-  return PointLight_eval;
+  return (void *uniform)PointLight_eval;
 }
 
 export void *uniform PointLight_eval_instanced_addr()
 {
-  return PointLight_eval_instanced;
+  return (void *uniform)PointLight_eval_instanced;
 }
+OSPRAY_END_ISPC_NAMESPACE

@@ -3,9 +3,11 @@
 
 #include "QuadLight.h"
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
 
+#ifndef OSPRAY_TARGET_DPCPP
 #include "lights/QuadLight_ispc.h"
+#endif
 
 #include "QuadLightShared.h"
 #include "common/InstanceShared.h"
@@ -18,8 +20,12 @@ ISPCRTMemoryView QuadLight::createSh(
   ISPCRTMemoryView view = StructSharedCreate<ispc::QuadLight>(
       getISPCDevice().getIspcrtDevice().handle());
   ispc::QuadLight *sh = (ispc::QuadLight *)ispcrtSharedPtr(view);
-  sh->super.sample = ispc::QuadLight_sample_addr();
-  sh->super.eval = ispc::QuadLight_eval_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  sh->super.sample =
+      reinterpret_cast<ispc::Light_SampleFunc>(ispc::QuadLight_sample_addr());
+  sh->super.eval =
+      reinterpret_cast<ispc::Light_EvalFunc>(ispc::QuadLight_eval_addr());
+#endif
   sh->super.isVisible = visible;
   sh->super.instance = instance;
 
@@ -35,8 +41,13 @@ ISPCRTMemoryView QuadLight::createSh(
   if (instance) {
     sh->pre.c0 = intensityDistribution.c0;
     if (instance->motionBlur) {
-      sh->super.sample = ispc::QuadLight_sample_instanced_addr();
-      sh->super.eval = ispc::QuadLight_eval_instanced_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+      // TODO: QuadLight sample/eval dispatch needs to handle this case now
+      sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+          ispc::QuadLight_sample_instanced_addr());
+      sh->super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+          ispc::QuadLight_eval_instanced_addr());
+#endif
     } else
       ispc::QuadLight_Transform(sh, instance->xfm, &sh->pre);
   } else {
@@ -46,6 +57,29 @@ ISPCRTMemoryView QuadLight::createSh(
     sh->pre.c90 = normalize(cross(sh->pre.nnormal, intensityDistribution.c0));
     sh->pre.c0 = cross(sh->pre.c90, sh->pre.nnormal);
   }
+
+#ifdef OSPRAY_TARGET_DPCPP
+  /*
+  // TODO: Objects need to know the device they were created on
+  // Probably push this into ManagedObject?
+  api::ISPCDevice *device = (api::ISPCDevice *)api::Device::current.ptr;
+
+  const bool motionBlur = instance && instance->motionBlur;
+
+  auto event = device->getSyclQueue().submit([&](sycl::handler &cgh) {
+    cgh.parallel_for(1, [=](cl::sycl::id<1>) RTC_SYCL_KERNEL {
+      if (!motionBlur) {
+        sh->super.sample = ispc::QuadLight_sample;
+        sh->super.eval = ispc::QuadLight_eval;
+      } else {
+        sh->super.sample = ispc::QuadLight_sample_instanced;
+        sh->super.eval = ispc::QuadLight_eval_instanced;
+      }
+    });
+  });
+  event.wait();
+  */
+#endif
 
   return view;
 }

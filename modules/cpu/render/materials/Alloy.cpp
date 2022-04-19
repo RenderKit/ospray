@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Alloy.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc
 #include "render/materials/Alloy_ispc.h"
+#endif
 
 namespace ospray {
 namespace pathtracer {
@@ -11,8 +13,10 @@ namespace pathtracer {
 Alloy::Alloy(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.type = ispc::MATERIAL_TYPE_ALLOY;
-  getSh()->super.getBSDF = ispc::Alloy_getBSDF_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->super.getBSDF =
+      reinterpret_cast<ispc::Material_GetBSDFFunc>(ispc::Alloy_getBSDF_addr());
+#endif
 }
 
 std::string Alloy::toString() const
@@ -23,9 +27,9 @@ std::string Alloy::toString() const
 //! \brief commit the material's parameters
 void Alloy::commit()
 {
-  MaterialParam3f color = getMaterialParam3f("color", vec3f(.9f));
+  MaterialParam3f color = getMaterialParam3f("color", vec3f(0.9f));
   MaterialParam3f edgeColor = getMaterialParam3f("edgeColor", vec3f(1.f));
-  MaterialParam1f roughness = getMaterialParam1f("roughness", .1f);
+  MaterialParam1f roughness = getMaterialParam1f("roughness", 0.1f);
 
   getSh()->color = color.factor;
   getSh()->colorMap = color.tex;

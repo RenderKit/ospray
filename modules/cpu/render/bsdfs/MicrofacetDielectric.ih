@@ -8,6 +8,8 @@
 #include "GGXDistribution.ih"
 #include "MicrofacetAlbedoTables.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Microfacet dielectric BSDF with the Smith microsurface model and approximate
 // multiple scattering. [Walter et al., 2007, "Microfacet Models for Refraction
 // through Rough Surfaces"] [Kulla and Conty, 2017, "Revisiting Physically Based
@@ -116,7 +118,7 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(
         cosThetaI, self->eta, self->roughness);
     fms.pdf = self->fmsRatio * cosineSampleHemispherePDF(cosThetaI);
     fms.value = make_vec3f(self->fmsRatio * (1.f - Eo) * (1.f - Ei)
-        * rcp(pi * (1.f - self->EavgEta)) * cosThetaI);
+        * rcp((float)pi * (1.f - self->EavgEta)) * cosThetaI);
   } else {
     // Transmission
     float Ei = MicrofacetDielectricAlbedoTable_eval(
@@ -124,7 +126,7 @@ inline BSDF_EvalRes MicrofacetDielectric_eval(
     fms.pdf =
         (1.f - self->fmsRatio) * cosineSampleHemispherePDF(abs(cosThetaI));
     fms.value = make_vec3f((1.f - self->fmsRatio) * (1.f - Eo) * (1.f - Ei)
-        * rcp(pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI));
+        * rcp((float)pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI));
   }
 
   // Evaluate the single-scattering lobe
@@ -215,7 +217,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(
         cosThetaI, self->eta, self->roughness);
     fms.pdf = self->fmsRatio * cosineSampleHemispherePDF(cosThetaI);
     fms.value = make_vec3f(self->fmsRatio * (1.f - Eo) * (1.f - Ei)
-        * rcp(pi * (1.f - self->EavgEta)) * cosThetaI);
+        * rcp((float)pi * (1.f - self->EavgEta)) * cosThetaI);
   } else {
     // Transmission
     float Ei = MicrofacetDielectricAlbedoTable_eval(
@@ -223,7 +225,7 @@ inline BSDF_SampleRes MicrofacetDielectric_sample(
     fms.pdf =
         (1.f - self->fmsRatio) * cosineSampleHemispherePDF(abs(cosThetaI));
     fms.value = make_vec3f((1.f - self->fmsRatio) * (1.f - Eo) * (1.f - Ei)
-        * rcp(pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI));
+        * rcp((float)pi * (1.f - self->EavgRcpEta)) * abs(cosThetaI));
   }
 
   // Evaluate the single-scattering lobe
@@ -245,8 +247,14 @@ inline void MicrofacetDielectric_Constructor(
   BSDF_Constructor(&self->super,
       make_vec3f(0.9f), // TODO better estimate
       BSDF_GLOSSY | BSDF_DIFFUSE,
+      BSDF_TYPE_MICROFACET_DIELECTRIC,
+#ifdef OSPRAY_TARGET_DPCPP
+      NULL,
+      NULL,
+#else
       MicrofacetDielectric_eval,
       MicrofacetDielectric_sample,
+#endif
       frame);
 
   self->eta = eta;
@@ -281,3 +289,5 @@ inline varying BSDF *uniform MicrofacetDielectric_create(
   MicrofacetDielectric_Constructor(self, frame, eta, roughness, anisotropy);
   return &self->super;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

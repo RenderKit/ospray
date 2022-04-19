@@ -1,12 +1,23 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
-#include "../math/AffineSpace.ih"
 #include "Instance.ih"
 #include "OSPCommon.ih"
+
+#ifdef OSPRAY_TARGET_DPCPP
+// Note: Keep this here for now since we will need these includes later
+#include "common/rkcommonDPCPPWrappers.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#else
+#include "rkcommon/math/AffineSpace.ih"
 #include "rkcommon/math/box.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct VolumetricModel;
 
@@ -26,7 +37,7 @@ inline void initVolumeInterval(VolumeInterval &hit)
 {
   hit.volumetricModel = NULL;
   hit.interval.lower = inf;
-  hit.interval.upper = -inf;
+  hit.interval.upper = -hit.interval.lower;
 }
 
 inline bool hasInterval(const VolumeInterval &vi)
@@ -53,3 +64,6 @@ inline void freeVolumeIntervals(VolumeIntervals &intervals)
   popTLS(intervals.intervals);
   intervals.intervals = NULL;
 }
+
+OSPRAY_END_ISPC_NAMESPACE
+#endif

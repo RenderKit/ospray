@@ -1,39 +1,56 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+// TODO: Seems like ISPC bug: if Renderer.ih included before
+// Texture2D.ih I get an error that the Texture2D type is declared but not
+// defined
+#include "texture/Texture2D.ih"
+
 #include "Renderer.ih"
 #include "camera/Camera.ih"
+#include "camera/CameraType.ih"
 #include "common/World.ih"
+#include "fb/FrameBufferType.ih"
 #include "math/random.ih"
 #include "pf/PixelFilter.ih"
 #include "render/util.ih"
-#include "texture/Texture2D.ih"
 // c++ shared
 #include "fb/FrameBufferShared.h"
 
-vec4f Renderer_getBackground(
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/math.h"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL vec4f Renderer_getBackground(
     const Renderer *uniform self, const vec2f &screenPos)
 {
   if (!self->backplate)
     return self->bgColor;
 
+  // TODO: Now for GPU making a whole DifferentialGeometry object
+  // just to set up the texture coords we want to sample for the background
+  // seems very wasteful
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, clamp2edge(self->backplate, screenPos));
-
   return get4f(self->backplate, lookup);
 }
 
-float Renderer_getMaxDepth(const Renderer *uniform self, const vec2f &screenPos)
+SYCL_EXTERNAL float Renderer_getMaxDepth(
+    const Renderer *uniform self, const vec2f &screenPos)
 {
-  if (!self->maxDepthTexture)
-    return inf;
+  // if (!self->maxDepthTexture)
+  return inf;
 
+  /*
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, screenPos);
   return max(0.f, get1f(self->maxDepthTexture, lookup));
+  */
 }
 
-void Renderer_default_renderSample(Renderer *uniform self,
+SYCL_EXTERNAL void Renderer_default_renderSample(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform model,
     void *uniform perFrameData,
@@ -45,111 +62,16 @@ void Renderer_default_renderSample(Renderer *uniform self,
   sample.rgb = make_vec3f(bg);
 }
 
-task void Renderer_default_renderTask(Renderer *uniform self,
-    FrameBuffer *uniform fb,
-    Camera *uniform camera,
-    World *uniform world,
-    void *uniform perFrameData,
-    const uint32 *uniform taskIDs)
-{
-  const uniform int32 spp = self->spp;
-
-  ScreenSample screenSample;
-  screenSample.z = inf;
-  screenSample.alpha = 0.f;
-
-  CameraSample cameraSample;
-
-  uniform RenderTaskDesc taskDesc =
-      fb->getRenderTaskDesc(fb, taskIDs[taskIndex0]);
-
-  const uniform int startSampleID = max(taskDesc.accumID, 0) * spp;
-
-  if (fb->cancelRender || isEmpty(taskDesc.region)) {
-    return;
-  }
-
-  foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
-      x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
-    screenSample.sampleID.x = x;
-    screenSample.sampleID.y = y;
-
-    // set ray t value for early ray termination (from maximum depth texture)
-    vec2f center =
-        make_vec2f(screenSample.sampleID.x, screenSample.sampleID.y) + 0.5f;
-    const float tMax = Renderer_getMaxDepth(self, center * fb->rcpSize);
-
-    vec3f col = make_vec3f(0.f);
-    float alpha = 0.f;
-    float depth = inf;
-    vec3f normal = make_vec3f(0.f);
-    vec3f albedo = make_vec3f(0.f);
-
-    for (uniform uint32 s = 0; s < spp; s++) {
-      const float pixel_du = Halton_sample2(startSampleID + s);
-      const float pixel_dv = CranleyPattersonRotation(
-          Halton_sample3(startSampleID + s),
-          1.f / 6.f); // rotate to sample center (0.5) of pixel for sampleID=0
-      const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
-
-      const PixelFilter *uniform pf = self->pixelFilter;
-      vec2f pfSample = pixelSample;
-      if (pf) {
-        pfSample = pf->sample(pf, pixelSample) + make_vec2f(0.5f);
-      }
-
-      screenSample.sampleID.z = startSampleID + s;
-
-      cameraSample.screen.x =
-          (screenSample.sampleID.x + pfSample.x) * fb->rcpSize.x;
-      cameraSample.screen.y =
-          (screenSample.sampleID.y + pfSample.y) * fb->rcpSize.y;
-      screenSample.pos = cameraSample.screen;
-
-      // no DoF or MB per default
-      cameraSample.lens.x = 0.0f;
-      cameraSample.lens.y = 0.0f;
-      cameraSample.time = 0.5f;
-
-      camera->initRay(camera, screenSample.ray, cameraSample);
-      screenSample.ray.t = min(screenSample.ray.t, tMax);
-
-      screenSample.z = inf;
-      screenSample.primID = RTC_INVALID_GEOMETRY_ID;
-      screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
-      screenSample.instID = RTC_INVALID_GEOMETRY_ID;
-      screenSample.albedo =
-          make_vec3f(Renderer_getBackground(self, screenSample.pos));
-      screenSample.normal = make_vec3f(0.f);
-
-      self->renderSample(self, fb, world, perFrameData, screenSample);
-      col = col + screenSample.rgb;
-      alpha += screenSample.alpha;
-      depth = min(depth, screenSample.z);
-      normal = normal + screenSample.normal;
-      albedo = albedo + screenSample.albedo;
-    }
-
-    const float rspp = rcpf(spp);
-    screenSample.rgb = col * rspp;
-    screenSample.alpha = alpha * rspp;
-    screenSample.z = depth;
-    screenSample.normal = normal * rspp;
-    screenSample.albedo = albedo * rspp;
-
-    // Accumulate rendering result directly into the framebuffer, to remove
-    // the need to call setTile separately on the CPU (but image ops needs
-    // handling separately, etc.)
-    fb->accumulateSample(fb, screenSample, taskDesc);
-  }
-  fb->completeTask(fb, taskDesc);
-}
+#ifndef OSPRAY_TARGET_DPCPP
+#include "RendererRenderTaskFn.inl"
+#endif
 
 // Exports (called from C++) //////////////////////////////////////////////////
 
+#ifndef OSPRAY_TARGET_DPCPP
 export void *uniform Renderer_default_renderSample_addr()
 {
-  return Renderer_default_renderSample;
+  return (void *uniform)Renderer_default_renderSample;
 }
 
 export void Renderer_renderTasks(void *uniform _self,
@@ -167,7 +89,9 @@ export void Renderer_renderTasks(void *uniform _self,
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
   launch[numTasks] Renderer_default_renderTask(
       self, fb, camera, world, perFrameData, taskIDs);
+  sync;
 }
+#endif
 
 export void Renderer_pick(const void *uniform _self,
     const void *uniform _fb,
@@ -209,3 +133,5 @@ export void Renderer_pick(const void *uniform _self,
   geomID = extract(ray.geomID, 0);
   primID = extract(ray.primID, 0);
 }
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -15,18 +15,27 @@ namespace ospray {
 
 struct PathTracer : public AddStructShared<Renderer, ispc::PathTracer>
 {
-  PathTracer(api::ISPCDevice &device)
-      : AddStructShared(device.getIspcrtDevice(), device)
-  {}
+  PathTracer(api::ISPCDevice &device);
   virtual std::string toString() const override;
   virtual void commit() override;
   virtual void *beginFrame(FrameBuffer *, World *) override;
 
+#ifdef OSPRAY_TARGET_DPCPP
+  void renderTasks(FrameBuffer *fb,
+      Camera *camera,
+      World *world,
+      void *perFrameData,
+      const utility::ArrayView<uint32_t> &taskIDs,
+      sycl::queue &syclQueue) const override;
+
+  // virtual void setGPUFunctionPtrs(sycl::queue &syclQueue) override;
+#else
   virtual void renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
       const utility::ArrayView<uint32_t> &taskIDs) const override;
+#endif
 
  private:
   void generateGeometryLights(const World &, std::vector<ispc::Light *> &);

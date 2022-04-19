@@ -6,6 +6,8 @@
 #include "BSDF.ih"
 #include "Fresnel.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // FIXME: improve robustness
 struct Dielectric
 {
@@ -61,8 +63,14 @@ inline void Dielectric_Constructor(varying Dielectric *uniform self,
   BSDF_Constructor(&self->super,
       make_vec3f(1.0f),
       BSDF_SPECULAR,
+      BSDF_TYPE_DIELECTRIC,
+#ifdef OSPRAY_TARGET_DPCPP
+      NULL,
+      NULL,
+#else
       Dielectric_eval,
       Dielectric_sample,
+#endif
       frame);
   self->eta = eta;
 }
@@ -84,3 +92,5 @@ inline vec3f Dielectric_getTransparency(float cosThetaO, float eta)
   float T = 1.f - fresnelDielectric(cosThetaO, eta);
   return make_vec3f(T);
 }
+
+OSPRAY_END_ISPC_NAMESPACE

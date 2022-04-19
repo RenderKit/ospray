@@ -30,7 +30,9 @@ struct PathTracer
         shadowCatcher(false),
         backgroundRefraction(false),
         numLightSamples(1)
-  {}
+  {
+    super.type = RENDERER_TYPE_PATHTRACER;
+  }
 };
 } // namespace ispc
 #else

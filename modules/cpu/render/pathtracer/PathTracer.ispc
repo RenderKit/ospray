@@ -24,6 +24,14 @@
 #include "fb/FrameBufferShared.h"
 #include "render/MaterialShared.h"
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "math/random.ih"
+#include "math/sampling.ih"
+#include "render/util.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 #define MAX_LIGHTS 1000u
 
 ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
@@ -80,7 +88,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathState.contribution = make_vec3f(0.f);
   pathState.time = ray.time;
   pathState.currentMedium = make_Medium_vacuum();
-  pathState.shadowCatcherDist = -inf;
+  pathState.shadowCatcherDist = -(float)inf;
 
   pathState.debug = false;
 
@@ -117,7 +125,9 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   varying RandomSampler *uniform randomSampler = &randomSamplerObj;
   const int spp = max(1, self->super.spp);
 
-  for (uniform int s = 0; s < spp; s++) {
+  // for (uniform int s = 0; s < spp; s++)
+  //{
+    uniform int s = 0;
     // init RNG
     const uint32 sampleID = accumID * spp + s;
     screenSample.sampleID.z = sampleID;
@@ -128,10 +138,12 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
 
     vec2f pfSample = pixelSample;
+#if 0
     PixelFilter *uniform pf = self->super.pixelFilter;
     if (pf) {
       pfSample = pf->sample(pf, pixelSample) + make_vec2f(0.5f);
     }
+#endif
 
     cameraSample.screen.x =
         (screenSample.sampleID.x + pfSample.x) * fb->rcpSize.x;
@@ -141,9 +153,11 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     cameraSample.lens = LDSampler_getFloat2(ldSampler, 2);
     cameraSample.time = LDSampler_getFloat(ldSampler, 4);
 
-    camera->initRay(camera, screenSample.ray, cameraSample);
-    const float tMax = Renderer_getMaxDepth(&self->super, cameraSample.screen);
-    screenSample.ray.t = min(screenSample.ray.t, tMax);
+    Camera_dispatch_initRay(camera, screenSample.ray, cameraSample);
+    // const float tMax = Renderer_getMaxDepth(&self->super,
+    // cameraSample.screen);
+
+    // screenSample.ray.t = min(screenSample.ray.t, tMax);
 
     ScreenSample sample = PathTraceIntegrator_Li(self,
         world,
@@ -154,6 +168,7 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
         screenSample.ray,
         ldSampler,
         randomSampler);
+
     screenSample.rgb =
         screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
     screenSample.alpha = screenSample.alpha + sample.alpha;
@@ -165,7 +180,7 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
       screenSample.geomID = sample.geomID;
       screenSample.instID = sample.instID;
     }
-  }
+  //}
 
   const float rspp = rcpf(spp);
   screenSample.rgb = screenSample.rgb * rspp;
@@ -176,32 +191,48 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   return screenSample;
 }
 
-task void PathTracer_renderTask(PathTracer *uniform self,
-    FrameBuffer *uniform fb,
-    Camera *uniform camera,
-    World *uniform world,
-    void *uniform perFrameData,
-    const uint32 *uniform taskIDs)
+#ifndef OSPRAY_TARGET_DPCPP
+task
+#endif
+    SYCL_EXTERNAL void
+    PathTracer_renderTask(Renderer *uniform _self,
+        FrameBuffer *uniform fb,
+        Camera *uniform camera,
+        World *uniform world,
+        void *uniform perFrameData,
+        const uint32 *uniform taskIDs
+#ifdef OSPRAY_TARGET_DPCPP
+        ,
+        const int taskIndex0
+#endif
+    )
 {
+  PathTracer *uniform self = (PathTracer * uniform) _self;
   uniform RenderTaskDesc taskDesc =
-      fb->getRenderTaskDesc(fb, taskIDs[taskIndex0]);
+      FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[taskIndex0]);
 
   if (fb->cancelRender || isEmpty(taskDesc.region)) {
     return;
   }
 
+#ifdef OSPRAY_TARGET_DPCPP
+  for (uint32 y = taskDesc.region.lower.y; y < taskDesc.region.upper.y; ++y)
+    for (uint32 x = taskDesc.region.lower.x; x < taskDesc.region.upper.x; ++x) {
+#else
   foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
       x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
-    ScreenSample screenSample =
-        PathTracer_renderPixel(self, fb, camera, world, x, y, taskDesc.accumID);
+#endif
+      ScreenSample screenSample= PathTracer_renderPixel(self, fb, camera,
+       world, x, y, taskDesc.accumID);
 
-    fb->accumulateSample(fb, screenSample, taskDesc);
-  }
-  fb->completeTask(fb, taskDesc);
+      FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc);
+    }
+  FrameBuffer_dispatch_completeTask(fb, taskDesc);
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////
 
+#ifndef OSPRAY_TARGET_DPCPP
 export void PathTracer_renderTasks(void *uniform _self,
     void *uniform _fb,
     void *uniform _camera,
@@ -210,7 +241,7 @@ export void PathTracer_renderTasks(void *uniform _self,
     void *uniform _taskIDs,
     uniform uint32 numTasks)
 {
-  PathTracer *uniform self = (PathTracer * uniform) _self;
+  Renderer *uniform self = (Renderer * uniform) _self;
   FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
   Camera *uniform camera = (Camera * uniform) _camera;
   World *uniform world = (World * uniform) _world;
@@ -219,3 +250,6 @@ export void PathTracer_renderTasks(void *uniform _self,
   launch[numTasks] PathTracer_renderTask(
       self, fb, camera, world, perFrameData, taskIDs);
 }
+#endif
+
+OSPRAY_END_ISPC_NAMESPACE

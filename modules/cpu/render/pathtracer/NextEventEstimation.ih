@@ -3,12 +3,23 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/vec.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct PathContext;
 struct PathState;
 struct PathVertex;
 
-vec3f nextEventEstimation(const PathContext &pathContext,
+SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const PathState &pathState,
     PathVertex &pathVertex);
+
+OSPRAY_END_ISPC_NAMESPACE

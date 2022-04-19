@@ -3,9 +3,18 @@
 
 #pragma once
 
-#include "math/AffineSpace.ih"
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/AffineSpace.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/AffineSpace.ih"
+#endif
+
 // c++ shared
 #include "FrameBufferShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct FrameBufferView
 {
@@ -28,3 +37,4 @@ struct FrameBufferView
   // accumulated albedo, one RGBF32 per pixel
   vec3f *albedoBuffer;
 };
+OSPRAY_END_ISPC_NAMESPACE

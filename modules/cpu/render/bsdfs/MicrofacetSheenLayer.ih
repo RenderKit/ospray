@@ -7,6 +7,8 @@
 #include "MicrofacetAlbedoTables.ih"
 #include "SheenDistribution.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Microfacet sheen BSDF for cloth-like materials.
 // [Conty and Kulla, 2017, "Production Friendly Microfacet Sheen BRDF"]
 // [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
@@ -35,8 +37,21 @@ inline BSDF_EvalRes MicrofacetSheenLayer_eval(
 
   // Evaluate the substrate
   BSDF_EvalRes substrate;
-  foreach_unique (f in self->substrate)
-    substrate = f->eval(f, wo, wi);
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    const BSDF *f = self->substrate;
+#else
+  foreach_unique (f in self->substrate) {
+#endif
+    // Because of how the dispatches are unrolled to hide the potential
+    // recursion (that we know will terminate) from the SYCL compiler we have
+    // to call MultiBSDF directly here if we have a layer over a MultiBSDF
+    if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
+      substrate = MultiBSDF_eval(f, wo, wi); // f->eval(f, wo, wi);
+    } else {
+      substrate = BSDF_dispatch_eval_base(f, wo, wi); // f->eval(f, wo, wi);
+    }
+  }
 
   // Energy conservation
   float Ro = MicrofacetSheenAlbedoTable_eval(cosThetaO, self->roughness)
@@ -107,14 +122,41 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
     res.wi = getFrame(super) * uniformSampleHemisphere(s);
 
     // Evaluate the substrate
-    foreach_unique (f in self->substrate)
-      substrate = f->eval(f, wo, res.wi);
+#ifdef OSPRAY_TARGET_DPCPP
+    {
+      const BSDF *f = self->substrate;
+#else
+    foreach_unique (f in self->substrate) {
+#endif
+      // Because of how the dispatches are unrolled to hide the potential
+      // recursion (that we know will terminate) from the SYCL compiler we have
+      // to call MultiBSDF directly here if we have a layer over a MultiBSDF
+      if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
+        substrate = MultiBSDF_eval(f, wo, res.wi); // f->eval(f, wo, wi);
+      } else {
+        substrate = BSDF_dispatch_eval_base(f, wo, res.wi); // f->eval(f, wo, wi);
+      }
+    }
   } else {
     // Sample the substrate
     float ss1 =
         (ss - coatPickProb) * rcp(substratePickProb); // reallocate sample
-    foreach_unique (f in self->substrate)
-      res = f->sample(f, wo, s, ss1);
+#ifdef OSPRAY_TARGET_DPCPP
+    {
+      const BSDF *f = self->substrate;
+#else
+    foreach_unique (f in self->substrate) {
+#endif
+      // Because of how the dispatches are unrolled to hide the potential
+      // recursion (that we know will terminate) from the SYCL compiler we have
+      // to call MultiBSDF directly here if we have a layer over a MultiBSDF
+      if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
+        res = MultiBSDF_sample(f, wo, s, ss1); // f->sample(f, wo, s, ss1);
+      } else {
+        res = BSDF_dispatch_sample_base(
+            f, wo, s, ss1); // f->sample(f, wo, s, ss1);
+      }
+    }
     if (reduce_max(res.weight) <= 0.f)
       return res;
     substrate.pdf = res.pdf;
@@ -178,9 +220,15 @@ inline void MicrofacetSheenLayer_Constructor(
       lerp(weight * 0.1f,
           substrate->albedo,
           R), // lean towards substrate (sheen is only at edge)
-      BSDF_DIFFUSE_REFLECTION | substrate->type,
+      BSDF_DIFFUSE_REFLECTION | substrate->scatteringType,
+      BSDF_TYPE_MICROFACET_SHEEN_LAYER,
+#ifdef OSPRAY_TARGET_DPCPP
+      NULL,
+      NULL,
+#else
       MicrofacetSheenLayer_eval,
       MicrofacetSheenLayer_sample,
+#endif
       frame);
 
   self->substrate = substrate;
@@ -215,3 +263,5 @@ inline vec3f MicrofacetSheenLayer_getTransparency(
   float T = 1.f - Ro;
   return make_vec3f(T);
 }
+
+OSPRAY_END_ISPC_NAMESPACE

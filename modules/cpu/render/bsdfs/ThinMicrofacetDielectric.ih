@@ -5,6 +5,8 @@
 
 #include "MicrofacetDielectric.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Thin microfacet dielectric BSDF with the Smith microsurface model.
 // It represents a transparent slab with unit thickness, and ignores refraction.
 // [Walter et al., 2007, "Microfacet Models for Refraction through Rough
@@ -60,7 +62,8 @@ inline BSDF_EvalRes ThinMicrofacetDielectric_eval(
     float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
     float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
     float fms = self->fmsScale
-        * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+        * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - self->Eavg))
+            * cosThetaI);
 
     // Energy conservation
     float R = MicrofacetDielectricReflectionAlbedoTable_eval(
@@ -120,7 +123,8 @@ inline BSDF_SampleRes ThinMicrofacetDielectric_sample(
     // Energy compensation
     float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
     float fms = self->fmsScale
-        * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+        * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - self->Eavg))
+            * cosThetaI);
 
     res.type = BSDF_GLOSSY_REFLECTION;
     res.pdf = whPdf * rcp(4.f * abs(cosThetaOH)) * R;
@@ -154,8 +158,14 @@ inline void ThinMicrofacetDielectric_Constructor(
   BSDF_Constructor(&self->super,
       expf(attenuation),
       BSDF_GLOSSY_REFLECTION | BSDF_SPECULAR_TRANSMISSION,
+      BSDF_TYPE_THIN_MICROFACET_DIELECTRIC,
+#ifdef OSPRAY_TARGET_DPCPP
+      NULL,
+      NULL,
+#else
       ThinMicrofacetDielectric_eval,
       ThinMicrofacetDielectric_sample,
+#endif
       frame);
 
   self->eta = eta;
@@ -206,3 +216,5 @@ inline vec3f ThinMicrofacetDielectric_getTransparency(
 
   return (1.f - R) * A;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

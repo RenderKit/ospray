@@ -4,17 +4,27 @@
 // ospray
 #include "Spheres.h"
 #include "common/Data.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc-generated files
 #include "geometry/Spheres_ispc.h"
+#else
+#include "geometry/Spheres.ih"
+#endif
 
 namespace ospray {
 
 Spheres::Spheres(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.postIntersect = ispc::Spheres_postIntersect_addr();
-  getSh()->super.getAreas = ispc::Spheres_getAreas_addr();
-  getSh()->super.sampleArea = ispc::Spheres_sampleArea_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->super.postIntersect =
+      reinterpret_cast<ispc::Geometry_postIntersectFct>(
+          ispc::Spheres_postIntersect_addr());
+  getSh()->super.getAreas = reinterpret_cast<ispc::Geometry_GetAreasFct>(
+      ispc::Spheres_getAreas_addr());
+  getSh()->super.sampleArea = reinterpret_cast<ispc::Geometry_SampleAreaFct>(
+      ispc::Spheres_sampleArea_addr());
+#endif
 }
 
 std::string Spheres::toString() const
@@ -29,21 +39,48 @@ void Spheres::commit()
   radiusData = getParamDataT<float>("sphere.radius");
   texcoordData = getParamDataT<vec2f>("sphere.texcoord");
 
-  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Spheres_bounds,
-      (RTCIntersectFunctionN)&ispc::Spheres_intersect,
-      (RTCOccludedFunctionN)&ispc::Spheres_occluded);
-  getSh()->vertex = *ispc(vertexData);
-  getSh()->radius = *ispc(radiusData);
+  // TODO: Param name for the new interleaved array?
+  // sphere or sphere.data is a bit too generic because it kind of
+  // implies the texcoord data is part of it? or isn't "data"?
+  auto interleaved = new Data(getISPCDevice(), OSP_VEC4F, vertexData->numItems);
+  sphereData = &interleaved->as<vec4f, 1>();
+  interleaved->refDec();
+  // For now default to always create the interleaved buffer since we
+  // don't expose the interleaved data yet
+  for (size_t i = 0; i < vertexData->size(); ++i) {
+    float ptRadius = radius;
+    if (radiusData) {
+      ptRadius = (*radiusData)[i];
+    }
+    (*sphereData)[i] = vec4f((*vertexData)[i], ptRadius);
+  }
+
+#if 0
+  createEmbreeGeometry(RTC_GEOMETRY_TYPE_SPHERE_POINT);
+  rtcSetSharedGeometryBuffer(embreeGeometry,
+      RTC_BUFFER_TYPE_VERTEX,
+      0,
+      RTC_FORMAT_FLOAT4,
+      sphereData->data(),
+      0,
+      sizeof(vec4f),
+      sphereData->size());
+  rtcCommitGeometry(embreeGeometry);
+#else
+  // Testing user geometry issue on GPU
+  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Spheres_bounds);
+#endif
+
+  getSh()->sphere = *ispc(sphereData);
   getSh()->texcoord = *ispc(texcoordData);
-  getSh()->global_radius = radius;
   getSh()->super.numPrimitives = numPrimitives();
 
-  postCreationInfo();
+  postCreationInfo(numPrimitives());
 }
 
 size_t Spheres::numPrimitives() const
 {
-  return vertexData ? vertexData->size() : 0;
+  return sphereData ? sphereData->size() : 0;
 }
 
 } // namespace ospray

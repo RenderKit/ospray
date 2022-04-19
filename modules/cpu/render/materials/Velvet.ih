@@ -1,0 +1,17 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+#pragma once
+
+#include "VelvetShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying Velvet_getBSDF(
+    const uniform Material *uniform super,
+    uniform ShadingContext *uniform ctx,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const Medium &currentMedium);
+
+OSPRAY_END_ISPC_NAMESPACE
+

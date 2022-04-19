@@ -5,6 +5,9 @@
 
 // convolutions of: normalization * D65 * CIE_XYZ * xyz2sRGB
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifdef ISPC
 spectrum spectrum_sRGB_r = {0.0598548,
     -0.0234574,
     -0.220138,
@@ -31,3 +34,6 @@ spectrum spectrum_sRGB_b = {0.420693,
     -0.0167536,
     -0.00295686,
     -0.000314818};
+#endif
+
+OSPRAY_END_ISPC_NAMESPACE

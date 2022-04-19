@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PerspectiveCamera.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc exports
 #include "camera/PerspectiveCamera_ispc.h"
+#endif
 
 namespace ospray {
 
 PerspectiveCamera::PerspectiveCamera(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.initRay = ispc::PerspectiveCamera_initRay_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->super.initRay = reinterpret_cast<ispc::Camera_initRay>(
+      ispc::PerspectiveCamera_initRay_addr());
+#endif
 }
 
 std::string PerspectiveCamera::toString() const
@@ -57,13 +62,19 @@ void PerspectiveCamera::commit()
     getSh()->imgPlaneSize = imgPlaneSize;
 
     if (getSh()->super.motionBlur) {
-      getSh()->super.initRay = ispc::PerspectiveCamera_initRayMB_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+      getSh()->super.initRay = reinterpret_cast<ispc::Camera_initRay>(
+          ispc::PerspectiveCamera_initRayMB_addr());
+#endif
       getSh()->du_size = vec3f(imgPlaneSize.x, imgPlaneSize.y, architectural);
       getSh()->dv_up = up;
       getSh()->ipd_offset =
           vec3f(0.5f * interpupillaryDistance, focusDistance, 0.0f);
     } else {
-      getSh()->super.initRay = ispc::PerspectiveCamera_initRay_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+      getSh()->super.initRay = reinterpret_cast<ispc::Camera_initRay>(
+          ispc::PerspectiveCamera_initRay_addr());
+#endif
       getSh()->du_size = normalize(cross(getSh()->dir_00, up));
       if (architectural) // orient film to be parallel to 'up'
         getSh()->dv_up = normalize(up);
@@ -102,6 +113,30 @@ void PerspectiveCamera::commit()
     }
   }
 }
+
+#ifdef OSPRAY_TARGET_DPCPP
+/*
+void PerspectiveCamera::setGPUFunctionPtrs(sycl::queue &syclQueue)
+{
+  auto *sSh = getSh();
+  if (sSh->super.motionBlur) {
+    throw std::runtime_error(
+        "TODO Motion blur not supported in SYCL mode see
+rtcGetGeometryTransform");
+  }
+  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+    cgh.parallel_for(1, [=](cl::sycl::id<1>) RTC_SYCL_KERNEL {
+      // if (sSh->super.motionBlur) {
+      // sSh->super.initRay = ispc::PerspectiveCamera_initRayMB;
+      //} else {
+      sSh->super.initRay = ispc::PerspectiveCamera_initRay;
+      //}
+    });
+  });
+  event.wait();
+}
+*/
+#endif
 
 box3f PerspectiveCamera::projectBox(const box3f &b) const
 {

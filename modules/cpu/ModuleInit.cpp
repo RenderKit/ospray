@@ -15,17 +15,28 @@
 #include "lights/registration.h"
 #include "render/registration.h"
 #include "texture/registration.h"
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/transferFunction/registration.h"
+#endif
 
 using namespace ospray;
 
-extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_cpu(
-    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
+extern "C" OSPError OSPRAY_DLLEXPORT
+#ifdef OSPRAY_TARGET_DPCPP
+ospray_module_init_gpu
+#else
+ospray_module_init_cpu
+#endif
+    (int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
   auto status = moduleVersionCheck(versionMajor, versionMinor);
 
   if (status == OSP_NO_ERROR) {
-    api::Device::registerType<api::ISPCDevice>("cpu");
+#ifdef OSPRAY_TARGET_DPCPP
+    api::Device::registerType<ospray::api::ISPCDevice>("gpu");
+#else
+    api::Device::registerType<ospray::api::ISPCDevice>("cpu");
+#endif
 
     registerAllCameras();
     registerAllImageOps();
@@ -34,7 +45,9 @@ extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_cpu(
     registerAllMaterials();
     registerAllRenderers();
     registerAllTextures();
+#ifdef OSPRAY_ENABLE_VOLUMES
     registerAllTransferFunctions();
+#endif
   }
 
   return status;

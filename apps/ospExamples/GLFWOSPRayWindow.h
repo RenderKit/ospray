@@ -100,12 +100,12 @@ class GLFWOSPRayWindow
   float turbidity{3.f};
   float horizonExtension{0.1f};
 
-  std::string scene{"boxes_lit"};
+  std::string scene{"cornell_box"};
 
   std::string curveVariant{"bspline"};
 
-  OSPRayRendererType rendererType{OSPRayRendererType::SCIVIS};
-  std::string rendererTypeStr{"scivis"};
+  OSPRayRendererType rendererType{OSPRayRendererType::PATHTRACER};
+  std::string rendererTypeStr{"pathtracer"};
 
   std::string pixelFilterTypeStr{"gaussian"};
 

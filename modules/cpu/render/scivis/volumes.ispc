@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #include "math/random.ih"
 #include "math/sampling.ih"
@@ -7,6 +8,8 @@
 #include "surfaces.ih"
 #include "volume/VolumetricModel.ih"
 #include "volumes.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct VolumeContext
 {
@@ -106,7 +109,7 @@ static void sampleVolume(SciVisRenderContext &rc,
       dg.Ns = dg.Ng =
           normalize(xfmVector(transposed(vi.instance->rcp_xfm.l), ns));
       dg.P = ray.org + vc.distance * ray.dir;
-      SSI shading = computeShading(
+      SSI shading = SciVis_computeShading(
           rc.renderer, rc.fb, rc.world, dg, rc.sample, rc.ldSampler, ray.dir);
       vec4f shadedColor = make_vec4f(
           shading.shadedColor, 1.f - luminance(shading.transmission));
@@ -138,7 +141,12 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
     VolumeContext &vc = volumeContexts[i];
     if (vc.ready == 0) {
       const VolumeInterval &vi = volumeIntervals.intervals[i];
+#ifdef OSPRAY_TARGET_DPCPP
+      {
+        const VolumetricModel *m = vi.volumetricModel;
+#else
       foreach_unique (m in vi.volumetricModel) {
+#endif
         sampleVolume(rc, vc, m, ray, vi, samplingRate, shade);
       }
       vc.ready = 1;
@@ -247,7 +255,12 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       // so we must iterate over them
       float time = 0.5f;
       VolumetricModel *varying model = vi.volumetricModel;
+#ifdef OSPRAY_TARGET_DPCPP
+      {
+        const VolumetricModel *m = model;
+#else
       foreach_unique (m in model) {
+#endif
         // Create volume interval iterator
         vc.intervalIterator = vklInitIntervalIteratorV(m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
@@ -289,3 +302,7 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
   popTLS(volumeContexts);
   return make_vec4f(color, transmission);
 }
+
+OSPRAY_END_ISPC_NAMESPACE
+
+#endif

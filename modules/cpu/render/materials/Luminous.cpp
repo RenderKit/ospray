@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Luminous.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc
 #include "render/materials/Luminous_ispc.h"
+#endif
 
 namespace ospray {
 namespace pathtracer {
@@ -11,9 +13,13 @@ namespace pathtracer {
 Luminous::Luminous(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.type = ispc::MATERIAL_TYPE_LUMINOUS;
-  getSh()->super.getBSDF = ispc::Luminous_getBSDF_addr();
-  getSh()->super.getTransparency = ispc::Luminous_getTransparency_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(
+      ispc::Luminous_getBSDF_addr());
+  getSh()->super.getTransparency =
+      reinterpret_cast<ispc::Material_GetTransparencyFunc>(
+          ispc::Luminous_getTransparency_addr());
+#endif
 }
 
 std::string Luminous::toString() const

@@ -3,16 +3,29 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#endif
+
 // ospray
 #include "Device.h"
 // ispcrt
 #include "ispcrt.hpp"
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
+#ifdef OSPRAY_ENABLE_VOLUMES
 // openvkl
 #include "openvkl/openvkl.h"
+#endif
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
+
+#ifdef OSPRAY_TARGET_DPCPP
+namespace ispc {
+int ISPCDevice_programCount();
+int ISPCDevice_isa();
+} // namespace ispc
+#endif
 
 namespace ospray {
 
@@ -134,20 +147,40 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     return embreeDevice;
   }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   VKLDevice getVklDevice()
   {
     return vklDevice;
   }
+#endif
 
   ispcrt::Device &getIspcrtDevice()
   {
     return ispcrtDevice;
   }
 
+#ifdef OSPRAY_TARGET_DPCPP
+  sycl::queue &getSyclQueue()
+  {
+    return syclQueue;
+  }
+#endif
+
  private:
   ispcrt::Device ispcrtDevice;
+  ispcrt::TaskQueue ispcrtQueue;
+
   RTCDevice embreeDevice = nullptr;
+#ifdef OSPRAY_ENABLE_VOLUMES
   VKLDevice vklDevice = nullptr;
+#endif
+
+#ifdef OSPRAY_TARGET_DPCPP
+  sycl::platform syclPlatform;
+  sycl::device syclDevice;
+  sycl::context syclContext;
+  sycl::queue syclQueue;
+#endif
 };
 
 } // namespace api

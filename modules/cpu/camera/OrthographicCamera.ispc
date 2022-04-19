@@ -6,7 +6,9 @@
 // c++ shared
 #include "OrthographicCameraShared.h"
 
-void OrthographicCamera_initRay(const Camera *uniform _self,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL void OrthographicCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
     const varying CameraSample &sample)
 {
@@ -43,7 +45,7 @@ void OrthographicCamera_initRay(const Camera *uniform _self,
 
 export void *uniform OrthographicCamera_initRay_addr()
 {
-  return OrthographicCamera_initRay;
+  return (void *uniform)OrthographicCamera_initRay;
 }
 
 export void OrthographicCamera_projectBox(
@@ -55,7 +57,11 @@ export void OrthographicCamera_projectBox(
   const uniform vec3f dvn = self->dv_up / dot(self->dv_up, self->dv_up);
 
   vec3f projectedPt = make_vec3f(-1.f, -1.f, 1e20f);
+#ifdef OSPRAY_TARGET_DPCPP
+  for (uint32 i = 0; i < 8; ++i) {
+#else
   foreach (i = 0 ... 8) {
+#endif
     // Get the point we should be projecting
     vec3f p;
     switch (i) {
@@ -117,3 +123,5 @@ export void OrthographicCamera_projectBox(
     projection.upper.z = reduce_max(projectedPt.z);
   }
 }
+
+OSPRAY_END_ISPC_NAMESPACE

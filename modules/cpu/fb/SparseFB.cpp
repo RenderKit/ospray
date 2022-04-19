@@ -5,7 +5,9 @@
 #include <rkcommon/tasking/parallel_for.h>
 #include <cstdlib>
 #include "ImageOp.h"
+#ifndef OSPRAY_TARGET_DPCPP
 #include "fb/SparseFB_ispc.h"
+#endif
 #include "render/util.h"
 #include "rkcommon/common.h"
 
@@ -228,11 +230,17 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
 
   clear();
 
+#ifndef OSPRAY_TARGET_DPCPP
   getSh()->super.accumulateSample =
-      ispc::SparseFrameBuffer_accumulateSample_addr();
+      reinterpret_cast<ispc::FrameBuffer_accumulateSampleFct>(
+          ispc::SparseFrameBuffer_accumulateSample_addr());
   getSh()->super.getRenderTaskDesc =
-      ispc::SparseFrameBuffer_getRenderTaskDesc_addr();
-  getSh()->super.completeTask = ispc::SparseFrameBuffer_completeTask_addr();
+      reinterpret_cast<ispc::FrameBuffer_getRenderTaskDescFct>(
+          ispc::SparseFrameBuffer_getRenderTaskDesc_addr());
+  getSh()->super.completeTask =
+      reinterpret_cast<ispc::FrameBuffer_completeTaskFct>(
+          ispc::SparseFrameBuffer_completeTask_addr());
+#endif
 
   getSh()->numRenderTasks = numRenderTasks;
   getSh()->totalTiles = totalTiles;

@@ -6,7 +6,7 @@
 #include "common/Data.h"
 #include "common/ObjectFactory.h"
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
 // ispc shared
 #include "GeometryShared.h"
 
@@ -33,9 +33,9 @@ struct OSPRAY_SDK_INTERFACE Geometry
   RTCGeometry embreeGeometry{nullptr};
 
   void createEmbreeGeometry(RTCGeometryType type);
-  void createEmbreeUserGeometry(RTCBoundsFunction boundsFn,
-      RTCIntersectFunctionN intersectFn,
-      RTCOccludedFunctionN occludedFn);
+  // NOTE: We now pass intersection functions through Embree RTCIntersectionArgs
+  // context parameter so that they can be inlined in DPC++
+  void createEmbreeUserGeometry(RTCBoundsFunction boundsFn);
 };
 
 OSPTYPEFOR_SPECIALIZATION(Geometry *, OSP_GEOMETRY);
@@ -102,6 +102,28 @@ void setEmbreeGeometryBuffer(RTCGeometry geom,
     Ref<const DataT<T, 1>> &dataRef,
     unsigned int slot = 0)
 {
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    api::ISPCDevice *device = (api::ISPCDevice *)api::Device::current.ptr;
+    ispcrt::Device &ispcrtDevice = device->getIspcrtDevice();
+    auto memType =
+        ispcrtGetMemoryAllocType(ispcrtDevice.handle(), dataRef->data());
+    switch (memType) {
+    case ISPCRT_ALLOC_TYPE_DEVICE:
+      break;
+    case ISPCRT_ALLOC_TYPE_SHARED:
+      break;
+    case ISPCRT_ALLOC_TYPE_HOST:
+      break;
+    default:
+      break;
+    }
+    if (memType != ISPCRT_ALLOC_TYPE_SHARED) {
+      throw std::runtime_error("Mem type must be shared!");
+    }
+  }
+#endif
+
   if (!dataRef)
     return;
   rtcSetSharedGeometryBuffer(geom,

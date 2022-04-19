@@ -1,7 +1,14 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../math/AffineSpace.ih"
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/AffineSpace.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/AffineSpace.ih"
+#endif
+
 #include "CylinderCapSolidAngleTable.ih"
 #include "SphericalQuadSampling.ih"
 #include "common/DifferentialGeometry.ih"
@@ -12,6 +19,8 @@
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline void Transform(const CylinderLight *uniform self,
     const uniform affine3f &xfm,
     uniform CylinderLightDynamic &dyn)
@@ -130,7 +139,8 @@ inline Light_SampleRes Sample(const CylinderLight *uniform self,
   res.weight = make_vec3f(0.f);
   res.pdf = 0.f;
 
-  float S, pdf;
+  float S = 0.f;
+  float pdf = 0.f;
   vec3f dir;
   if (sp.x == 0.0f && sp.y == 0.0f) { // XXX SciVis
     dir = 0.5f * (dyn.position0 + dyn.position1) - dg.P; // to center
@@ -187,7 +197,13 @@ Light_SampleRes CylinderLight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    // DPC++ execution in a thread is scalar
+    const float utime = time;
+#else
   foreach_unique (utime in time) {
+#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform CylinderLightDynamic dyn;
     Transform(self, xfm, dyn);
@@ -252,7 +268,13 @@ Light_EvalRes CylinderLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    // DPC++ execution in a thread is scalar
+    const float utime = time;
+#else
   foreach_unique (utime in time) {
+#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform CylinderLightDynamic dyn;
     Transform(self, xfm, dyn);
@@ -266,20 +288,22 @@ Light_EvalRes CylinderLight_eval_instanced(const Light *uniform super,
 
 export void *uniform CylinderLight_sample_addr()
 {
-  return CylinderLight_sample;
+  return (void *uniform)CylinderLight_sample;
 }
 
 export void *uniform CylinderLight_sample_instanced_addr()
 {
-  return CylinderLight_sample_instanced;
+  return (void *uniform)CylinderLight_sample_instanced;
 }
 
 export void *uniform CylinderLight_eval_addr()
 {
-  return CylinderLight_eval;
+  return (void *uniform)CylinderLight_eval;
 }
 
 export void *uniform CylinderLight_eval_instanced_addr()
 {
-  return CylinderLight_eval_instanced;
+  return (void *uniform)CylinderLight_eval_instanced;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AmbientLight.h"
+#ifndef OSPRAY_TARGET_DPCPP
 #include "lights/AmbientLight_ispc.h"
+#endif
 // ispc shared
 #include "AmbientLightShared.h"
 
@@ -14,8 +16,10 @@ ISPCRTMemoryView AmbientLight::createSh(
   ISPCRTMemoryView view = StructSharedCreate<ispc::AmbientLight>(
       getISPCDevice().getIspcrtDevice().handle());
   ispc::AmbientLight *sh = (ispc::AmbientLight *)ispcrtSharedPtr(view);
-  sh->super.sample = ispc::AmbientLight_sample_addr();
-  sh->super.eval = ispc::AmbientLight_eval_addr();
+  sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+      ispc::AmbientLight_sample_addr());
+  sh->super.eval =
+      reinterpret_cast<ispc::Light_EvalFunc>(ispc::AmbientLight_eval_addr());
   sh->super.isVisible = visible;
   sh->super.instance = instance;
   sh->radiance = radiance;

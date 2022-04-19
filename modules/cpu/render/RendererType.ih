@@ -1,0 +1,41 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#include "rkcommon/platform.h"
+#endif
+#include "embree4/rtcore_config.h"
+
+#ifdef __cplusplus
+namespace ispc {
+#endif // __cplusplus
+
+struct Renderer;
+struct FrameBuffer;
+struct World;
+struct ScreenSample;
+
+enum RendererType
+{
+  RENDERER_TYPE_DEBUG,
+  RENDERER_TYPE_AO,
+  RENDERER_TYPE_SCIVIS,
+  RENDERER_TYPE_PATHTRACER,
+  RENDERER_TYPE_UNKNOWN,
+};
+
+#if defined(ISPC) || defined(OSPRAY_TARGET_DPCPP)
+RTC_SYCL_INDIRECTLY_CALLABLE void Renderer_dispatch_renderSample(
+    Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    World *uniform model,
+    void *uniform perFrameData,
+    varying ScreenSample &sample);
+#endif
+
+#ifdef __cplusplus
+}
+#endif

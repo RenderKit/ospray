@@ -6,12 +6,13 @@
 #include "render/bsdfs/MultiBSDF.ih"
 #include "render/bsdfs/Velvety.ih"
 
-#include "VelvetShared.h"
+#include "Velvet.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
-const varying BSDF *varying Velvet_getBSDF(
+SYCL_EXTERNAL const varying BSDF *varying Velvet_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -45,5 +46,7 @@ const varying BSDF *varying Velvet_getBSDF(
 
 export void *uniform Velvet_getBSDF_addr()
 {
-  return Velvet_getBSDF;
+  return (void *uniform)Velvet_getBSDF;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

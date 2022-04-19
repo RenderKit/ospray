@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
@@ -30,3 +31,5 @@ inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
   dg.epsilon = 0.f;
   dg.material = NULL;
 }
+
+#endif

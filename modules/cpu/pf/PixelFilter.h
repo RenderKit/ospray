@@ -5,6 +5,19 @@
 
 #include "common/Managed.h"
 
+#ifdef OSPRAY_TARGET_DPCPP
+namespace ispc {
+void *Point_create();
+void *Box_create();
+void LUTPixelFilter_update(void *_self);
+void LUTPixelFilter_destroy(void *_self);
+void *BoxLUT_create();
+void *GaussianLUT_create();
+void *MitchellNetravaliLUT_create();
+void *BlackmanHarrisLUT_create();
+} // namespace ispc
+#endif
+
 namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE PixelFilter

@@ -3,6 +3,10 @@
 
 #pragma once
 
+#include "common/rkcommonDPCPPWrappers.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // input: importance in 'cdf'
 // output: cdf of importance in 'cdf'
 //         return sum
@@ -51,3 +55,4 @@ inline Sample1D Distribution1D_sample(const uniform int size,
 
   return ret;
 }
+OSPRAY_END_ISPC_NAMESPACE

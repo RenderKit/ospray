@@ -6,12 +6,14 @@
 #include "render/bsdfs/Lambert.ih"
 #include "render/bsdfs/MicrofacetDielectricLayer.ih"
 
-#include "PlasticShared.h"
+#include "Plastic.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying Plastic_getBSDF(
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying Plastic_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -39,7 +41,6 @@ const varying BSDF *varying Plastic_getBSDF(
         0.f,
         1.0f);
   }
-
   return bsdf;
 }
 
@@ -48,5 +49,7 @@ const varying BSDF *varying Plastic_getBSDF(
 
 export void *uniform Plastic_getBSDF_addr()
 {
-  return Plastic_getBSDF;
+  return (void *uniform)Plastic_getBSDF;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

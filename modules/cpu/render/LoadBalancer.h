@@ -3,6 +3,10 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#endif
+
 #include "camera/Camera.h"
 #include "common/OSPCommon.h"
 #include "common/World.h"
@@ -57,6 +61,13 @@ struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
       void *perFrameData) override;
 
   std::string toString() const override;
+
+#ifdef OSPRAY_TARGET_DPCPP
+  void setQueue(sycl::queue *syclQueue);
+
+ private:
+  sycl::queue *syclQueue = nullptr;
+#endif
 };
 
 } // namespace ospray

@@ -1,0 +1,20 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+// ospray
+#include "common/World.ih"
+#include "render/Renderer.ih"
+// c++ shared
+#include "fb/FrameBufferShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+RTC_SYCL_INDIRECTLY_CALLABLE void DebugRenderer_renderSample(
+    Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample);
+
+OSPRAY_END_ISPC_NAMESPACE
+

@@ -4,8 +4,10 @@
 // ospray
 #include "Material.h"
 #include "texture/Texture.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc
 #include "render/Material_ispc.h"
+#endif
 
 namespace ospray {
 
@@ -15,8 +17,14 @@ Material::Material(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_MATERIAL;
-  getSh()->getTransparency = ispc::Material_getTransparency_addr();
-  getSh()->selectNextMedium = ispc::Material_selectNextMedium_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->getTransparency =
+      reinterpret_cast<ispc::Material_GetTransparencyFunc>(
+          ispc::Material_getTransparency_addr());
+  getSh()->selectNextMedium =
+      reinterpret_cast<ispc::Material_SelectNextMediumFunc>(
+          ispc::Material_selectNextMedium_addr());
+#endif
 }
 
 std::string Material::toString() const

@@ -3,7 +3,15 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/math.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/math.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct PowerCosineDistribution
 {
@@ -33,3 +41,5 @@ inline PowerCosineDistribution make_PowerCosineDistribution(float _exp)
   m.exp = _exp;
   return m;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

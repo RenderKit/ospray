@@ -3,6 +3,8 @@
 
 #include "pf/PixelFilter.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 vec2f Point_sample(const PixelFilter *uniform self, const vec2f &s)
 {
   return make_vec2f(0.0f);
@@ -30,3 +32,5 @@ export void *uniform Box_create()
   PixelFilter_Constructor(self, 1.0f, Box_sample);
   return self;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

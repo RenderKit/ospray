@@ -11,7 +11,9 @@
 // c++ shared
 #include "fb/FrameBufferShared.h"
 
-void SciVis_renderSample(Renderer *uniform _self,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+RTC_SYCL_INDIRECTLY_CALLABLE void SciVis_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -29,9 +31,11 @@ void SciVis_renderSample(Renderer *uniform _self,
   bool allHitsFullyTransmissive = true;
   const float originalRayTFar = sample.ray.t;
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   // Allocate memory for volume intervals
   VolumeIntervals volumeIntervals;
   allocVolumeIntervals(volumeIntervals);
+#endif
 
   // This is our main ray
   Ray &ray = sample.ray;
@@ -50,6 +54,7 @@ void SciVis_renderSample(Renderer *uniform _self,
     // if hit ray.t will be updated
     traceGeometryRayIntervals(world, ray, rayIntervals);
 
+#ifdef OSPRAY_ENABLE_VOLUMES
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
     traceVolumeRay(world, volumeRay, volumeIntervals);
@@ -92,6 +97,7 @@ void SciVis_renderSample(Renderer *uniform _self,
           }
       }
     }
+#endif
 
     // Add contribution from visible lights, P is used by light
     // evaluation
@@ -102,8 +108,8 @@ void SciVis_renderSample(Renderer *uniform _self,
     }
 
     // If any geometry has been hit
-    const bool hadHit = hadHit(ray);
-    if (hadHit) {
+    const bool rayHadHit = hadHit(ray);
+    if (rayHadHit) {
       // Prepare differential geometry structure
       postIntersect(world,
           &self->super,
@@ -114,15 +120,17 @@ void SciVis_renderSample(Renderer *uniform _self,
 
       // Shade geometry
       SSI surfaceShading;
-      surfaceShading =
-          computeShading(self, fb, world, dg, sample, ldSampler, ray.dir);
+      surfaceShading = SciVis_computeShading(
+          self, fb, world, dg, sample, ldSampler, ray.dir);
 
       // Initialize other per sample data with first hit values
       // In addition to considering the first hit, all previous, fully
       // transmissive hits will lead the normal/albedo to be replaced by the
       // current hit
       if (firstHit || allHitsFullyTransmissive) {
+#ifdef OSPRAY_ENABLE_VOLUMES
         sample.z = min(ray.t, volumeRay.t);
+#endif
         sample.albedo = surfaceShading.albedo;
         sample.normal = dg.Ns;
         if (sample.geomID == RTC_INVALID_GEOMETRY_ID) {
@@ -163,7 +171,9 @@ void SciVis_renderSample(Renderer *uniform _self,
       // If the ray hits the background and comes from a fully transmissive
       // path, we overwrite normals/albedo by background values
       if (firstHit || allHitsFullyTransmissive) {
+#ifdef OSPRAY_ENABLE_VOLUMES
         sample.z = min(ray.t, volumeRay.t);
+#endif
         sample.albedo = make_vec3f(backgroundColor); // TODO volume albedo
         sample.normal = make_vec3f(0.f);
       }
@@ -173,12 +183,14 @@ void SciVis_renderSample(Renderer *uniform _self,
     }
   }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   freeVolumeIntervals(volumeIntervals);
+#endif
   sample.rgb = outColor;
   sample.alpha = 1.f - luminance(outTransmission);
 }
 
-vec3f SciVis_computeAO(const uniform SciVis *uniform self,
+SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     ScreenSample &sample,
@@ -193,8 +205,8 @@ vec3f SciVis_computeAO(const uniform SciVis *uniform self,
   // init TEA RNG //
   RandomTEA rng_state;
   varying RandomTEA *const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, sampleID.x, sampleID.y);
-  const vec2f rot = RandomTEA__getFloats(rng);
+  RandomTEA_Constructor(rng, sampleID.x, sampleID.y);
+  const vec2f rot = RandomTEA_getFloats(rng);
 
   vec3f hits = make_vec3f(0.f);
 
@@ -202,8 +214,9 @@ vec3f SciVis_computeAO(const uniform SciVis *uniform self,
 
   for (uniform int i = 0; i < sampleCnt; i++) {
     // Use base-5 and base-7 Halton to avoid correlation with sample position
-    const vec2f halton = make_vec2f(
-        PermHalton_sample5(accumID + i), PermHalton_sample7(accumID + i));
+    const vec2f halton =
+        make_vec2f(PermHalton_sample5(self->super.mathConstants, accumID + i),
+            PermHalton_sample7(self->super.mathConstants, accumID + i));
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
@@ -238,5 +251,7 @@ vec3f SciVis_computeAO(const uniform SciVis *uniform self,
 
 export void *uniform SciVis_renderSample_addr()
 {
-  return SciVis_renderSample;
+  return (void *uniform)SciVis_renderSample;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

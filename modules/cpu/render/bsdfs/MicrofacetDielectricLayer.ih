@@ -6,6 +6,8 @@
 #include "MicrofacetAlbedoTables.ih"
 #include "MicrofacetDielectric.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Simplified, energy conserving Weidlich-Wilkie microfacet coating BSDF with
 // the Smith microsurface model. Refraction is ignored, but absorption is
 // computed from the refracted ray lengths.
@@ -20,6 +22,7 @@ struct MicrofacetDielectricLayer
 {
   BSDF super;
 
+  // TODO: Need to split the dispatch more to support substrate
   varying BSDF *varying substrate;
   float eta;
   vec3f transmittance;
@@ -49,8 +52,21 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(
   // Evaluate the substrate
   // Ignore refraction
   BSDF_EvalRes substrate;
-  foreach_unique (f in self->substrate)
-    substrate = f->eval(f, wo, wi);
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    const BSDF *f = self->substrate;
+#else
+  foreach_unique (f in self->substrate) {
+#endif
+    // Because of how the dispatches are unrolled to hide the potential
+    // recursion (that we know will terminate) from the SYCL compiler we have
+    // to call MultiBSDF directly here if we have a layer over a MultiBSDF
+    if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
+      substrate = MultiBSDF_eval(f, wo, wi); // f->eval(f, wo, wi);
+    } else {
+      substrate = BSDF_dispatch_eval_base(f, wo, wi); // f->eval(f, wo, wi);
+    }
+  }
 
   // Apply the coating medium absorption
   // Use refracted angles for computing the absorption path length
@@ -75,7 +91,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(
                  + self->fmsScale * (1.f - Ei))
       * self->weight; // add missing energy
   float T;
-  if (self->substrate->type & ~BSDF_DIFFUSE)
+  if (self->substrate->scatteringType & ~BSDF_DIFFUSE)
     T = min(1.f - Ro, 1.f - Ri); // for generic (non-diffuse) substrates [Kulla
                                  // and Conty, 2017]
   else
@@ -110,7 +126,8 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(
 
     // Energy compensation
     float fms = self->fmsScale
-        * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+        * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - self->Eavg))
+            * cosThetaI);
 
     BSDF_EvalRes coat;
     coat.pdf = whPdf * rcp(4.f * cosThetaOH);
@@ -171,15 +188,43 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
 
     // Evaluate the substrate
     // Ignore refraction
-    foreach_unique (f in self->substrate)
-      substrate = f->eval(f, wo, res.wi);
+#ifdef OSPRAY_TARGET_DPCPP
+    {
+      const BSDF *f = self->substrate;
+#else
+    foreach_unique (f in self->substrate) {
+#endif
+      // Because of how the dispatches are unrolled to hide the potential
+      // recursion (that we know will terminate) from the SYCL compiler we have
+      // to call MultiBSDF directly here if we have a layer over a MultiBSDF
+      if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
+        substrate = MultiBSDF_eval(f, wo, res.wi); // f->eval(f, wo, wi);
+      } else {
+        substrate =
+            BSDF_dispatch_eval_base(f, wo, res.wi); // f->eval(f, wo, wi);
+      }
+    }
   } else {
     // Sample the substrate
     // Ignore refraction
     float ss1 =
         (ss - coatPickProb) * rcp(substratePickProb); // reallocate sample
-    foreach_unique (f in self->substrate)
-      res = f->sample(f, wo, s, ss1);
+#ifdef OSPRAY_TARGET_DPCPP
+    {
+      const BSDF *f = self->substrate;
+#else
+    foreach_unique (f in self->substrate) {
+#endif
+      // Because of how the dispatches are unrolled to hide the potential
+      // recursion (that we know will terminate) from the SYCL compiler we have
+      // to call MultiBSDF directly here if we have a layer over a MultiBSDF
+      if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
+        res = MultiBSDF_sample(f, wo, s, ss1); // f->sample(f, wo, s, ss1);
+      } else {
+        res = BSDF_dispatch_sample_base(
+            f, wo, s, ss1); // f->sample(f, wo, s, ss1);
+      }
+    }
     if (reduce_max(res.weight) <= 0.f)
       return res;
     substrate.pdf = res.pdf;
@@ -213,7 +258,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
                  + self->fmsScale * (1.f - Ei))
       * self->weight; // add missing energy
   float T;
-  if (self->substrate->type & ~BSDF_DIFFUSE)
+  if (self->substrate->scatteringType & ~BSDF_DIFFUSE)
     T = min(1.f - Ro, 1.f - Ri); // for generic (non-diffuse) substrates [Kulla
                                  // and Conty, 2017]
   else
@@ -249,7 +294,8 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
 
     // Energy compensation
     float fms = self->fmsScale
-        * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+        * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - self->Eavg))
+            * cosThetaI);
 
     BSDF_EvalRes coat;
     coat.pdf = whPdf * rcp(4.f * cosThetaOH);
@@ -287,9 +333,15 @@ inline void MicrofacetDielectricLayer_Constructor(
       * ((1.0f - weight) + pow(transmittance, thickness) * (1.f - Favg));
   BSDF_Constructor(&self->super,
       albedo,
-      BSDF_GLOSSY_REFLECTION | substrate->type,
+      BSDF_GLOSSY_REFLECTION | substrate->scatteringType,
+      BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER,
+#ifdef OSPRAY_TARGET_DPCPP
+      NULL,
+      NULL,
+#else
       MicrofacetDielectricLayer_eval,
       MicrofacetDielectricLayer_sample,
+#endif
       frame);
 
   self->substrate = substrate;
@@ -361,3 +413,5 @@ inline vec3f MicrofacetDielectricLayer_getTransparency(float cosThetaO,
   value = value * T;
   return value;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

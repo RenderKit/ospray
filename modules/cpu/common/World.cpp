@@ -46,9 +46,13 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
 
 World::~World()
 {
+  // TODO WILL :Debugging other issues and just using the group's scene for now,
+  // so this would double-free the geom scene
   // Release Embree scenes
   freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleGeometries);
+#ifdef OSPRAY_ENABLE_VOLUMES
   freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleVolumes);
+#endif
   freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleClippers);
 }
 
@@ -66,11 +70,15 @@ std::string World::toString() const
 void World::commit()
 {
   RTCScene &esGeom = getSh()->embreeSceneHandleGeometries;
+#ifdef OSPRAY_ENABLE_VOLUMES
   RTCScene &esVol = getSh()->embreeSceneHandleVolumes;
+#endif
   RTCScene &esClip = getSh()->embreeSceneHandleClippers;
 
   freeAndNullifyEmbreeScene(esGeom);
+#ifdef OSPRAY_ENABLE_VOLUMES
   freeAndNullifyEmbreeScene(esVol);
+#endif
   freeAndNullifyEmbreeScene(esClip);
 
   scivisData = nullptr;
@@ -117,15 +125,20 @@ void World::commit()
     unsigned int id = 0;
     for (auto &&inst : *instances) {
       getSh()->instances[id] = inst->getSh();
-      if (inst->group->sceneGeometries)
+      if (inst->group->sceneGeometries) {
         addGeometryInstance(
             esGeom, inst->group->sceneGeometries, inst, embreeDevice, id);
-      if (inst->group->sceneVolumes)
+      }
+#ifdef OSPRAY_ENABLE_VOLUMES
+      if (inst->group->sceneVolumes) {
         addGeometryInstance(
             esVol, inst->group->sceneVolumes, inst, embreeDevice, id);
-      if (inst->group->sceneClippers)
+      }
+#endif
+      if (inst->group->sceneClippers) {
         addGeometryInstance(
             esClip, inst->group->sceneClippers, inst, embreeDevice, id);
+      }
       id++;
     }
   }
@@ -135,11 +148,13 @@ void World::commit()
     rtcSetSceneBuildQuality(esGeom, buildQuality);
     rtcCommitScene(esGeom);
   }
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (esVol) {
     rtcSetSceneFlags(esVol, static_cast<RTCSceneFlags>(sceneFlags));
     rtcSetSceneBuildQuality(esVol, buildQuality);
     rtcCommitScene(esVol);
   }
+#endif
   if (esClip) {
     rtcSetSceneFlags(esClip,
         static_cast<RTCSceneFlags>(
@@ -160,10 +175,12 @@ box3f World::getBounds() const
     sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
   }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (getSh()->embreeSceneHandleVolumes) {
     rtcGetSceneBounds(getSh()->embreeSceneHandleVolumes, (RTCBounds *)&bounds);
     sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
   }
+#endif
 
   return sceneBounds;
 }

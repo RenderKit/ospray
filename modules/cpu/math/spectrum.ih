@@ -4,16 +4,54 @@
 #pragma once
 
 #include "math/spectrum.h"
+
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/vec.ih"
-
 typedef uniform float<SPECTRUM_SAMPLES> spectrum;
+#endif
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifdef ISPC
 extern spectrum spectrum_sRGB_r;
 extern spectrum spectrum_sRGB_g;
 extern spectrum spectrum_sRGB_b;
+#endif
 
 inline uniform vec3f spectrum_sRGB(const uniform int l)
 {
+#ifdef OSPRAY_TARGET_DPCPP
+  const spectrum spectrum_sRGB_r = {0.0598548,
+      -0.0234574,
+      -0.220138,
+      -0.238902,
+      0.316327,
+      0.738315,
+      0.323302,
+      0.0446981};
+
+  const spectrum spectrum_sRGB_g = {-0.0567346,
+      -0.0160361,
+      0.223861,
+      0.531185,
+      0.337221,
+      0.0149718,
+      -0.0296053,
+      -0.00486239};
+
+  const spectrum spectrum_sRGB_b = {0.420693,
+      0.616597,
+      0.0796766,
+      -0.0496266,
+      -0.0473149,
+      -0.0167536,
+      -0.00295686,
+      -0.000314818};
+#endif
   return make_vec3f(spectrum_sRGB_r[l], spectrum_sRGB_g[l], spectrum_sRGB_b[l]);
 }
 
@@ -26,3 +64,4 @@ inline uniform vec3f spectrum2rgb(const spectrum &s)
 
   return rgb;
 }
+OSPRAY_END_ISPC_NAMESPACE

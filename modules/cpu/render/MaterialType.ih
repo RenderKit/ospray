@@ -1,0 +1,54 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "render/MaterialShared.h"
+
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#include "common/rkcommonDPCPPWrappers.h"
+#include "embree4/rtcore.h"
+#include "rkcommon/math/vec.h"
+#elif defined(ISPC)
+#include "embree4/rtcore.isph"
+#include "rkcommon/math/vec.ih"
+#else
+#include "embree4/rtcore.h"
+#include "rkcommon/math/vec.h"
+#endif
+
+#ifdef __cplusplus
+namespace ispc {
+#endif // __cplusplus
+
+#if defined(ISPC) || defined(OSPRAY_TARGET_DPCPP)
+SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
+    const uniform Material *uniform self,
+    uniform ShadingContext *uniform ctx,
+    // The point to shade on a surface.
+    const DifferentialGeometry &dg,
+    // The ray arriving at the point to shade.
+    const Ray &ray,
+    // The medium this ray travels inside.
+    const Medium &currentMedium);
+
+SYCL_EXTERNAL __noinline vec3f Material_dispatch_getTransparency(
+    const uniform Material *uniform self,
+    // The point to shade on a surface.
+    const DifferentialGeometry &dg,
+    // The ray arriving at the point to shade.
+    const Ray &ray,
+    // The medium this ray travels inside.
+    const Medium &currentMedium);
+
+SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
+    const uniform Material *uniform self,
+    const DifferentialGeometry &dg,
+    Medium &currentMedium);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+

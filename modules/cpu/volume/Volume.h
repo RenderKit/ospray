@@ -1,11 +1,12 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
 #include "ISPCDeviceObject.h"
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
 // openvkl
 #include "openvkl/volume.h"
 // ispc shared
@@ -44,3 +45,4 @@ struct OSPRAY_SDK_INTERFACE Volume
 OSPTYPEFOR_SPECIALIZATION(Volume *, OSP_VOLUME);
 
 } // namespace ospray
+#endif

@@ -3,10 +3,18 @@
 
 #pragma once
 
-#include "Texture.ih"
-#include "math/AffineSpace.ih"
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/AffineSpace.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/AffineSpace.ih"
+#endif
 
+#include "Texture.ih"
 #include "TextureParamShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline uniform bool valid(const uniform TextureParam uniform &tex)
 {
@@ -24,7 +32,7 @@ inline uniform bool hasAlpha(const uniform TextureParam uniform &tex)
                                                                                \
   DifferentialGeometry xfmDg = dg;                                             \
   if (tp.transformFlags & TRANSFORM_FLAG_2D)                                   \
-    xfmDg.st = tp.xform2f * dg.st;                                             \
+    xfmDg.st = xfmPoint(tp.xform2f, dg.st);                                    \
   if (tp.transformFlags & TRANSFORM_FLAG_3D)                                   \
     xfmDg.lP = xfmPoint(tp.xform3f, dg.lP);                                    \
   return fn(tp.ptr, xfmDg)
@@ -39,6 +47,7 @@ inline float get1f(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg,
     const varying float defaultValue)
 {
+  return defaultValue;
   if (!valid(tp))
     return defaultValue;
 
@@ -55,10 +64,55 @@ inline vec3f get3f(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg,
     const varying vec3f defaultValue)
 {
+  return defaultValue;
+  // TODO: for bug: The result of valid is wrong here, or something is corrupted
+  // and we go to the is valid case
   if (!valid(tp))
     return defaultValue;
 
+  // This line should not fix the hang, but it does, so we are clearly
+  // incorrectly running this code path
+  // return make_vec3f(0.5f);
   TEXTURE_TRANSFORM(get3f);
+}
+
+inline vec3f get3fp(const uniform TextureParam uniform &tp,
+    const varying DifferentialGeometry *uniform dg,
+    const varying vec3f defaultValue)
+{
+  // TODO: for bug: The result of valid is wrong here, or something is corrupted
+  // and we go to the is valid case
+  if (!tp.ptr)
+    return defaultValue;
+
+    // This line should not fix the hang, but it does, so we are clearly
+    // incorrectly running this code path
+    // return make_vec3f(0.5f);
+
+#ifdef ISPC
+  DifferentialGeometry xfmDg;
+  xfmDg.P = dg->P;
+  xfmDg.lP = dg->lP;
+  xfmDg.Ng = dg->Ng;
+  xfmDg.Ns = dg->Ns;
+  xfmDg.dPds = dg->dPds;
+  xfmDg.dPdt = dg->dPdt;
+  xfmDg.st = dg->st;
+#else
+  DifferentialGeometry xfmDg = *dg;
+#endif
+  // Note: The calls below will probably also hang since they don't
+  // pass the DifferentialGeometry by ptr, but they won't be called
+  // in the test scenes
+  if (!tp.transformFlags)
+    return get3f(tp.ptr, xfmDg);
+
+  if (tp.transformFlags & TRANSFORM_FLAG_2D)
+    xfmDg.st = xfmPoint(tp.xform2f, dg->st);
+  if (tp.transformFlags & TRANSFORM_FLAG_3D)
+    xfmDg.lP = xfmPoint(tp.xform3f, dg->lP);
+  return get3f(tp.ptr, xfmDg);
+  // TEXTURE_TRANSFORM(get3f);
 }
 
 inline vec4f get4f(const uniform TextureParam uniform &tp,
@@ -71,6 +125,7 @@ inline vec4f get4f(const uniform TextureParam uniform &tp,
     const varying DifferentialGeometry &dg,
     const varying vec4f defaultValue)
 {
+  return defaultValue;
   if (!valid(tp))
     return defaultValue;
 
@@ -82,3 +137,4 @@ inline vec3f getNormal(const uniform TextureParam uniform &tp,
 {
   TEXTURE_TRANSFORM(getNormal);
 }
+OSPRAY_END_ISPC_NAMESPACE

@@ -29,6 +29,13 @@ PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
 )
 
+if (OSPRAY_ENABLE_VOLUMES)
+  target_compile_definitions(ospray_gtest_utils
+    PUBLIC
+    -DOSPRAY_ENABLE_VOLUMES
+  )
+endif()
+
 add_executable(ospTestSuite
   ${OSPRAY_RESOURCE}
   test_geometry.cpp

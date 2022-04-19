@@ -7,7 +7,9 @@
 #include "render/pathtracer/PathTracerUtil.ih"
 #include "render/pathtracer/TransparentShadow.ih"
 
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "render/pathtracer/volumes/VolumeSampler.ih"
+#endif
 
 #include "common/World.ih"
 #include "math/Distribution1D.ih"
@@ -16,12 +18,15 @@
 #include "PathTracerDataShared.h"
 #include "lights/LightShared.h"
 
-vec3f nextEventEstimation(const PathContext &pathContext,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const PathState &pathState,
     PathVertex &pathVertex)
 {
   // direct lighting including shadows and MIS
   vec3f L = make_vec3f(0.f);
+
   const World *uniform world = pathContext.world;
   const uniform PathTracerData &pathtracerData =
       *((const uniform PathTracerData *)world->pathtracerData);
@@ -38,8 +43,14 @@ vec3f nextEventEstimation(const PathContext &pathContext,
     const vec2f s2 = LDSampler_getFloat2(
         pathContext.ldSampler, pathState.sampleDim + 4 + i * 3 + 1);
     Light_SampleRes ls;
-    foreach_unique (l in light)
-      ls = l->sample(l, pathVertex.dg, s2, pathState.time);
+#ifdef OSPRAY_TARGET_DPCPP
+    {
+      const Light *l = light;
+#else
+    foreach_unique (l in light) {
+#endif
+      ls = Light_dispatch_sample(l, pathVertex.dg, s2, pathState.time);
+    }
     // adjust the contibution with the probabiltiy of selecting the light source
     ls.weight = ls.weight / lightSelectionProb;
     ls.pdf = ls.pdf * lightSelectionProb;
@@ -51,15 +62,22 @@ vec3f nextEventEstimation(const PathContext &pathContext,
     // evaluate BSDF
     Scattering_EvalRes fe;
     if (pathVertex.type == SURFACE) {
+#ifdef OSPRAY_TARGET_DPCPP
+      {
+        const BSDF *f = pathVertex.bsdf;
+#else
       foreach_unique (f in pathVertex.bsdf) {
+#endif
         if (f != NULL)
-          fe = f->eval(f, pathVertex.wo, ls.dir);
+          fe = BSDF_dispatch_eval(f, pathVertex.wo, ls.dir);
       }
     } else {
+#ifdef OSPRAY_ENABLE_VOLUMES
       foreach_unique (v in pathVertex.volume) {
         if (v != NULL)
           fe = HenyeyGreenstein_eval(v->anisotropy, pathVertex.wo, ls.dir);
       }
+#endif
     }
 
     // skip when zero contribution from material
@@ -98,6 +116,9 @@ vec3f nextEventEstimation(const PathContext &pathContext,
         rayIntervals,
         pathState.currentMedium);
     if (reduce_max(lightContrib) > 0) {
+#ifndef OSPRAY_ENABLE_VOLUMES
+      L = L + lightContrib * misHeuristic(pathState, ls.pdf, fe.pdf);
+#else
       const float T = volumeTransmittance(pathState,
           pathContext.world,
           shadowRay,
@@ -105,8 +126,8 @@ vec3f nextEventEstimation(const PathContext &pathContext,
           pathContext.ldSampler,
           pathContext.randomSampler);
       if (reduce_max(T) > 0) {
-        // we have to use an independent transmittance estimate for MIS to get a
-        // correct result
+        // we have to use an independent transmittance estimate for MIS to get
+        // a correct result
         const float T_mis = pathState.disableFWD || pathState.disableNEE
             ? 1.f
             : volumeTransmittance(pathState,
@@ -119,7 +140,10 @@ vec3f nextEventEstimation(const PathContext &pathContext,
             + T * lightContrib
                 * misHeuristic(pathState, ls.pdf, fe.pdf * T_mis);
       }
+#endif
     }
   }
   return L;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

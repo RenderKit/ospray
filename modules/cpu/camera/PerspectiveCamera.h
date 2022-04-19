@@ -19,6 +19,10 @@ struct OSPRAY_SDK_INTERFACE PerspectiveCamera
   virtual std::string toString() const override;
   virtual void commit() override;
 
+#ifdef OSPRAY_TARGET_DPCPP
+  // virtual void setGPUFunctionPtrs(sycl::queue &syclQueue) override;
+#endif
+
   box3f projectBox(const box3f &b) const override;
 
   // Data members //

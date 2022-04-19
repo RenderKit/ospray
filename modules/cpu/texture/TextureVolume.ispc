@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #include "Texture.ih"
 #include "volume/Volume.ih"
@@ -7,9 +8,12 @@
 // c++ shared
 #include "TextureVolumeShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 vec4f TextureVolume_get(
-    const TextureVolume *uniform self, const varying DifferentialGeometry &dg)
+    const Texture *uniform _self, const varying DifferentialGeometry &dg)
 {
+  const TextureVolume *uniform self = (const TextureVolume *uniform)_self;
   const Volume *uniform volume = self->volume;
   const uniform box3f bounds = volume->boundingBox;
 
@@ -21,8 +25,8 @@ vec4f TextureVolume_get(
     return make_vec4f(0.f);
 }
 
-vec3f TextureVolume_getN(
-    const TextureVolume *uniform self, const varying DifferentialGeometry &dg)
+vec3f TextureVolume_getNormal(
+    const Texture *uniform self, const varying DifferentialGeometry &dg)
 {
   // TODO
   return make_vec3f(0.f, 0.0f, 1.0f);
@@ -32,10 +36,14 @@ vec3f TextureVolume_getN(
 
 export void *uniform TextureVolume_get_addr()
 {
-  return TextureVolume_get;
+  return (void *uniform)TextureVolume_get;
 }
 
 export void *uniform TextureVolume_getN_addr()
 {
-  return TextureVolume_getN;
+  return (void *uniform)TextureVolume_getNormal;
 }
+
+OSPRAY_END_ISPC_NAMESPACE
+
+#endif

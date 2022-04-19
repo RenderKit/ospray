@@ -3,7 +3,15 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "common/rkcommonDPCPPWrappers.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/math.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline float roughnessToAlpha(float roughness)
 {
@@ -18,3 +26,5 @@ inline vec2f roughnessToAlpha(float roughness, float anisotropy)
   return make_vec2f(max(sqr(roughness) / aspect, 0.001f),
       max(sqr(roughness) * aspect, 0.001f));
 }
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -12,12 +12,14 @@
 #include "render/shaders/Flakes.ih"
 #include "texture/TextureParam.ih"
 
-#include "CarPaintShared.h"
+#include "CarPaint.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying CarPaint_getBSDF(
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying CarPaint_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -158,5 +160,7 @@ const varying BSDF *varying CarPaint_getBSDF(
 
 export void *uniform CarPaint_getBSDF_addr()
 {
-  return CarPaint_getBSDF;
+  return (void *uniform)CarPaint_getBSDF;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

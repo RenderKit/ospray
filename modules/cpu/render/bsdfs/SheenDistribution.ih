@@ -6,6 +6,8 @@
 #include "MicrofacetDistribution.ih"
 #include "math/sampling.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Cylindrical microfiber distribution for sheen
 // [Conty and Kulla, 2017, "Production Friendly Microfacet Sheen BRDF"]
 // [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
@@ -25,7 +27,7 @@ inline float eval(const SheenDistribution &self, float cosTheta)
 {
   float sinTheta = cos2sin(cosTheta);
   float invr = rcp(self.r);
-  return (2.f + invr) * pow(sinTheta, invr) * one_over_two_pi;
+  return (2.f + invr) * pow(sinTheta, invr) * (float)one_over_two_pi;
 }
 
 // Helper function for computing Lambda
@@ -86,3 +88,5 @@ inline float evalG2(const SheenDistribution &self,
   // cosThetaI));
   return rcp(1.f + evalLambda(self, cosThetaO) + evalLambdaI(self, cosThetaI));
 }
+
+OSPRAY_END_ISPC_NAMESPACE

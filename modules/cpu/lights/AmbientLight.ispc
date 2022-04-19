@@ -1,14 +1,22 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/LinearSpace.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/LinearSpace.ih"
+#endif
+
 #include "common/DifferentialGeometry.ih"
-#include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 // c++ shared
 #include "AmbientLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // XXX importance sampling is only done into the positive hemisphere
 // ==> poor support for translucent materials
@@ -44,7 +52,7 @@ Light_EvalRes AmbientLight_eval(const Light *uniform super,
   uniform AmbientLight *uniform self = (uniform AmbientLight * uniform) super;
   Light_EvalRes res;
 
-  res.radiance = inf <= maxDist ? self->radiance : make_vec3f(0.f);
+  res.radiance = (float)inf <= maxDist ? self->radiance : make_vec3f(0.f);
   if (reduce_max(abs(dg.Ns)) > 0)
     res.pdf = cosineSampleHemispherePDF(max(dot(dg.Ns, dir), 0.f));
   else
@@ -58,10 +66,12 @@ Light_EvalRes AmbientLight_eval(const Light *uniform super,
 
 export void *uniform AmbientLight_sample_addr()
 {
-  return AmbientLight_sample;
+  return (void *uniform)AmbientLight_sample;
 }
 
 export void *uniform AmbientLight_eval_addr()
 {
-  return AmbientLight_eval;
+  return (void *uniform)AmbientLight_eval;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -3,7 +3,9 @@
 
 // ospray
 #include "Light.h"
+#ifndef OSPRAY_TARGET_DPCPP
 #include "lights/Light_ispc.h"
+#endif
 
 namespace ospray {
 

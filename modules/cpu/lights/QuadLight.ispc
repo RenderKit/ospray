@@ -8,6 +8,8 @@
 // c++ shared
 #include "QuadLightShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 inline void Transform(const QuadLight *uniform self,
@@ -59,6 +61,7 @@ inline Light_SampleRes SampleArea(const QuadLight *uniform self,
   res.pdf = dyn.ppdf * sqr(dist) / abs(cosd);
 
   float weight;
+#if 0
   if (self->intensityDistribution.lid) {
     weight = IntensityDistribution_eval(
         &self->intensityDistribution, dyn.c0, dyn.c90, cosd, res.dir);
@@ -68,9 +71,10 @@ inline Light_SampleRes SampleArea(const QuadLight *uniform self,
     // of radiance with the cosine cancels out.
     weight /= dyn.ppdf * sqr(dist);
   } else {
+#endif
     // emit only to one side
     weight = cosd > 0.f ? rcp(res.pdf) : 0.f;
-  }
+  //}
   res.weight = self->radiance * weight;
 
   return res;
@@ -108,6 +112,7 @@ inline Light_SampleRes Sample(const QuadLight *uniform self,
   const float cosd = dot(dyn.nnormal, res.dir);
   res.pdf = quad.S == 0.f ? 0.f : cosW.z / quad.S;
 
+#if 0
   if (self->intensityDistribution.lid) {
     if (abs(cosd) < 0.005f) // handle numerical edge case
       return SampleArea(self, dyn, dg, s);
@@ -122,16 +127,17 @@ inline Light_SampleRes Sample(const QuadLight *uniform self,
       res.weight = res.pdf != 0.f ? self->radiance * weight : make_vec3f(0.f);
     }
   } else {
+#endif
     // emit only to one side
     res.weight = (cosd > 0.f) && (res.pdf != 0.f)
         ? self->radiance * rcp(res.pdf)
         : make_vec3f(0.f);
-  }
-
+  //}
   return res;
 }
 
-Light_SampleRes QuadLight_sample(const Light *uniform super,
+SYCL_EXTERNAL Light_SampleRes QuadLight_sample(
+    const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &sp,
     const float)
@@ -141,7 +147,8 @@ Light_SampleRes QuadLight_sample(const Light *uniform super,
   return Sample(self, self->pre, dg, sp);
 }
 
-Light_SampleRes QuadLight_sample_instanced(const Light *uniform super,
+SYCL_EXTERNAL Light_SampleRes QuadLight_sample_instanced(
+    const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &sp,
     const float time)
@@ -153,7 +160,13 @@ Light_SampleRes QuadLight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    // DPC++ execution in a thread is scalar
+    const float utime = time;
+#else
   foreach_unique (utime in time) {
+#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform QuadLightDynamic dyn;
     Transform(self, xfm, dyn);
@@ -185,17 +198,18 @@ inline Light_EvalRes Eval(const QuadLight *uniform self,
   const float v = -dot(r, dyn.edge2) * rcosd;
 
   // u/denominator > 1?
-  if (min(u, v) < 0.f | max(u, v) * dyn.ppdf > 1.0f)
+  if (min(u, v) < 0.f || max(u, v) * dyn.ppdf > 1.0f)
     return res;
 
   const float dist = dot(dyn.nnormal, c) * rcosd;
-  if (dist <= minDist | dist > maxDist)
+  if (dist <= minDist || dist > maxDist)
     return res;
 
   SphericalQuad quad = SphericalQuad_create(
       dyn.position, dyn.edge1, dyn.edge2, neg(dyn.nnormal), dg.P);
   if (quad.S > 0.f) {
     res.radiance = self->radiance;
+#if 0
     if (self->intensityDistribution.lid) {
       // convert from intensity to radiance by canceling the the cosine
       // term introduced by the Lambertian area light
@@ -204,13 +218,15 @@ inline Light_EvalRes Eval(const QuadLight *uniform self,
                  &self->intensityDistribution, dyn.c0, dyn.c90, cosd, dir)
               / abs(cosd));
     }
+#endif
     res.pdf = rcp(quad.S);
   }
 
   return res;
 }
 
-Light_EvalRes QuadLight_eval(const Light *uniform super,
+SYCL_EXTERNAL Light_EvalRes QuadLight_eval(
+    const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
@@ -222,7 +238,8 @@ Light_EvalRes QuadLight_eval(const Light *uniform super,
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
-Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
+SYCL_EXTERNAL Light_EvalRes QuadLight_eval_instanced(
+    const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
@@ -236,7 +253,13 @@ Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    // DPC++ execution in a thread is scalar
+    const float utime = time;
+#else
   foreach_unique (utime in time) {
+#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform QuadLightDynamic dyn;
     Transform(self, xfm, dyn);
@@ -250,20 +273,22 @@ Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
 
 export void *uniform QuadLight_sample_addr()
 {
-  return QuadLight_sample;
+  return (void *uniform)QuadLight_sample;
 }
 
 export void *uniform QuadLight_sample_instanced_addr()
 {
-  return QuadLight_sample_instanced;
+  return (void *uniform)QuadLight_sample_instanced;
 }
 
 export void *uniform QuadLight_eval_addr()
 {
-  return QuadLight_eval;
+  return (void *uniform)QuadLight_eval;
 }
 
 export void *uniform QuadLight_eval_instanced_addr()
 {
-  return QuadLight_eval_instanced;
+  return (void *uniform)QuadLight_eval_instanced;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

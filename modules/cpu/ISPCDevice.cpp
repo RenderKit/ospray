@@ -1,6 +1,12 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include <level_zero/ze_api.h>
+// ze_api and sycl level zero backend must be in this order
+#include <sycl/ext/oneapi/backend/level_zero.hpp>
+#endif
+
 // ospray
 #include "ISPCDevice.h"
 #include "camera/Camera.h"
@@ -19,8 +25,10 @@
 #include "render/Renderer.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
+#endif
 
 // stl
 #include <algorithm>
@@ -29,7 +37,9 @@
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/CodeTimer.h"
 
+#ifndef OSPRAY_TARGET_DPCPP
 #include "ISPCDevice_ispc.h"
+#endif
 
 namespace ospray {
 namespace api {
@@ -84,9 +94,11 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter_object(Material *),
     declare_param_setter_object(Renderer *),
     declare_param_setter_object(Texture *),
+#ifdef OSPRAY_ENABLE_VOLUMES
     declare_param_setter_object(TransferFunction *),
     declare_param_setter_object(Volume *),
     declare_param_setter_object(VolumetricModel *),
+#endif
     declare_param_setter_object(World *),
     declare_param_setter_string(const char *),
     declare_param_setter(char *),
@@ -147,8 +159,36 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 
 ISPCDevice::ISPCDevice()
     : loadBalancer(std::make_shared<LocalTiledLoadBalancer>()),
-      ispcrtDevice(ISPCRT_DEVICE_TYPE_CPU)
-{}
+#ifdef OSPRAY_TARGET_DPCPP
+      ispcrtDevice(ISPCRT_DEVICE_TYPE_GPU),
+#else
+      ispcrtDevice(ISPCRT_DEVICE_TYPE_CPU),
+#endif
+      ispcrtQueue(ispcrtDevice)
+{
+#ifdef OSPRAY_TARGET_DPCPP
+  syclPlatform = sycl::ext::oneapi::level_zero::make_platform(
+      reinterpret_cast<pi_native_handle>(ispcrtDevice.nativePlatformHandle()));
+  syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
+      reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeDeviceHandle()));
+
+  std::cout << "Using GPU device from ISPCRT: "
+            << syclDevice.get_info<sycl::info::device::name>() << std::endl;
+
+  syclContext = sycl::ext::oneapi::level_zero::make_context(
+      std::vector<sycl::device>{syclDevice},
+      reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeContextHandle()),
+      true);
+
+  syclQueue = sycl::ext::oneapi::level_zero::make_queue(syclContext,
+      syclDevice,
+      reinterpret_cast<pi_native_handle>(ispcrtQueue.nativeTaskQueueHandle()),
+      true);
+  // TODO needed?
+  setenv("SYCL_PI_LEVEL_ZERO_USM_ALLOCATOR", "1;0;shared:64K,0,2M", 1);
+  loadBalancer->setQueue(&syclQueue);
+#endif
+} // namespace api
 
 ISPCDevice::~ISPCDevice()
 {
@@ -160,9 +200,11 @@ ISPCDevice::~ISPCDevice()
     // silently move on, sometimes a pthread mutex lock fails in Embree
   }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (vklDevice) {
     vklReleaseDevice(vklDevice);
   }
+#endif
 }
 
 static void embreeErrorFunc(void *, const RTCError code, const char *str)
@@ -173,6 +215,7 @@ static void embreeErrorFunc(void *, const RTCError code, const char *str)
   handleError(e, "Embree internal error '" + std::string(str) + "'");
 }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
 static void vklErrorFunc(void *, const VKLError code, const char *str)
 {
   postStatusMsg() << "#osp: Open VKL internal error " << code << " : " << str;
@@ -180,6 +223,7 @@ static void vklErrorFunc(void *, const VKLError code, const char *str)
       (code > VKL_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
   handleError(e, "Open VKL internal error '" + std::string(str) + "'");
 }
+#endif
 
 void ISPCDevice::commit()
 {
@@ -188,7 +232,12 @@ void ISPCDevice::commit()
   tasking::initTaskingSystem(numThreads, true);
 
   if (!embreeDevice) {
+#ifdef OSPRAY_TARGET_DPCPP
+    embreeDevice = rtcNewSYCLDevice(
+        &syclContext, &syclQueue, generateEmbreeDeviceCfg(*this).c_str());
+#else
     embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
+#endif
     rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
     RTCError erc = rtcGetDeviceError(embreeDevice);
     if (erc != RTC_ERROR_NONE) {
@@ -198,6 +247,7 @@ void ISPCDevice::commit()
     }
   }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (!vklDevice) {
     vklLoadModule("cpu_device");
 
@@ -230,7 +280,9 @@ void ISPCDevice::commit()
 
     vklCommitDevice(vklDevice);
   }
+#endif
 
+#ifndef OSPRAY_TARGET_DPCPP
   // Output device info string
   const char *isaNames[] = {"unknown",
       "SSE2",
@@ -243,6 +295,7 @@ void ISPCDevice::commit()
   postStatusMsg(OSP_LOG_INFO)
       << "Using ISPC device with " << isaNames[ispc::ISPCDevice_isa()]
       << " instruction set...";
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -299,7 +352,11 @@ OSPGeometry ISPCDevice::newGeometry(const char *type)
 
 OSPVolume ISPCDevice::newVolume(const char *type)
 {
+#ifdef OSPRAY_ENABLE_VOLUMES
   return (OSPVolume) new Volume(*this, type);
+#else
+  return (OSPVolume) nullptr;
+#endif
 }
 
 OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
@@ -311,9 +368,13 @@ OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
 
 OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
 {
+#ifdef OSPRAY_ENABLE_VOLUMES
   auto *volume = (Volume *)_volume;
   auto *model = new VolumetricModel(*this, volume);
   return (OSPVolumetricModel)model;
+#else
+  return (OSPVolumetricModel) nullptr;
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -328,7 +389,11 @@ OSPMaterial ISPCDevice::newMaterial(
 
 OSPTransferFunction ISPCDevice::newTransferFunction(const char *type)
 {
+#ifdef OSPRAY_ENABLE_VOLUMES
   return (OSPTransferFunction)TransferFunction::createInstance(type, *this);
+#else
+  return (OSPTransferFunction) nullptr;
+#endif
 }
 
 OSPTexture ISPCDevice::newTexture(const char *type)
@@ -430,7 +495,8 @@ OSPFrameBuffer ISPCDevice::frameBufferCreate(
 
 OSPImageOperation ISPCDevice::newImageOp(const char *type)
 {
-  return (OSPImageOperation)ImageOp::createInstance(type);
+  ospray::ImageOp *ret = ImageOp::createInstance(type);
+  return (OSPImageOperation)ret;
 }
 
 const void *ISPCDevice::frameBufferMap(

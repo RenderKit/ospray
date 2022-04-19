@@ -13,7 +13,7 @@ set(OSPRAY_CMAKECONFIG_DIR
 
 set(ISPC_VERSION_REQUIRED 1.18.0)
 set(RKCOMMON_VERSION_REQUIRED 1.10.0)
-set(EMBREE_VERSION_REQUIRED 3.13.1)
+set(EMBREE_VERSION_REQUIRED 4.0.0)
 set(OPENVKL_VERSION_REQUIRED 1.3.0)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
@@ -38,7 +38,9 @@ ospray_verify_embree_features()
 ospray_determine_embree_isa_support()
 
 # Open VKL
-ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
+if (OSPRAY_ENABLE_VOLUMES)
+  ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
+endif()
 
 # OpenImageDenoise
 if (OSPRAY_MODULE_DENOISER)

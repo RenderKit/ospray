@@ -8,10 +8,13 @@
 // c++ shared
 #include "PerspectiveCameraShared.h"
 
-void PerspectiveCamera_initRay(const Camera *uniform _self,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
     const varying CameraSample &sample)
 {
+  // TODO: We need ot call initRayMB if we have motionBlur
   const PerspectiveCamera *uniform self =
       (const PerspectiveCamera *uniform)_self;
 
@@ -20,7 +23,11 @@ void PerspectiveCamera_initRay(const Camera *uniform _self,
 
   const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
   varying float *uniform split = sbs ? &screen.x : &screen.y;
+#ifdef OSPRAY_TARGET_DPCPP
+  if (sbs || self->stereoMode == OSP_STEREO_TOP_BOTTOM) {
+#else
   if (or (sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
+#endif
     *split *= 2.f;
     if (*split < 1.f) {
       org = org - self->ipd_offset;
@@ -47,7 +54,7 @@ void PerspectiveCamera_initRay(const Camera *uniform _self,
   setRay(ray, org, normalize(dir), self->super.nearClip, inf, time);
 }
 
-void PerspectiveCamera_initRayMB(const Camera *uniform _self,
+SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
     varying Ray &ray,
     const varying CameraSample &sample)
 {
@@ -59,7 +66,11 @@ void PerspectiveCamera_initRayMB(const Camera *uniform _self,
 
   const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
   varying float *uniform split = sbs ? &screen.x : &screen.y;
+#ifdef OSPRAY_TARGET_DPCPP
+  if (sbs || self->stereoMode == OSP_STEREO_TOP_BOTTOM) {
+#else
   if (or (sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
+#endif
     *split *= 2.f;
     if (*split < 1.f)
       ipd_offset1 = -ipd_offset1;
@@ -69,6 +80,7 @@ void PerspectiveCamera_initRayMB(const Camera *uniform _self,
 
   screen = Camera_subRegion(_self, screen);
   const float time = Camera_shutterTime(_self, screen, sample.time);
+  // TODO: rtcGetGeometryTransform not callable on device?
   const affine3f xfm = getInterpolatedTransform(self->super.geom, time);
 
   vec3f org = xfmPoint(xfm, self->org);
@@ -124,12 +136,12 @@ void PerspectiveCamera_initRayMB(const Camera *uniform _self,
 
 export void *uniform PerspectiveCamera_initRay_addr()
 {
-  return PerspectiveCamera_initRay;
+  return (void *uniform)PerspectiveCamera_initRay;
 }
 
 export void *uniform PerspectiveCamera_initRayMB_addr()
 {
-  return PerspectiveCamera_initRayMB;
+  return (void *uniform)PerspectiveCamera_initRayMB;
 }
 
 export void PerspectiveCamera_projectBox(
@@ -143,7 +155,11 @@ export void PerspectiveCamera_projectBox(
   const uniform vec3f dvn = normalize(self->dv_up) / self->imgPlaneSize.y;
 
   vec3f projectedPt = make_vec3f(-1.f, -1.f, 1e20f);
+#ifdef OSPRAY_TARGET_DPCPP
+  for (uint32 i = 0; i < 8; ++i) {
+#else
   foreach (i = 0 ... 8) {
+#endif
     // Get the point we should be projecting
     vec3f p;
     switch (i) {
@@ -221,3 +237,5 @@ export void PerspectiveCamera_projectBox(
     projection.upper.y = 1.f;
   }
 }
+
+OSPRAY_END_ISPC_NAMESPACE

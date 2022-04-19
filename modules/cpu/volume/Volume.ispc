@@ -1,9 +1,12 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #include "common/Intersect.ih"
 #include "common/VolumeIntervals.ih"
 #include "volume/Volume.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 export void Volume_embreeBounds(const RTCBoundsFunctionArguments *uniform args)
 {
@@ -13,8 +16,8 @@ export void Volume_embreeBounds(const RTCBoundsFunctionArguments *uniform args)
   *out = make_box3fa(self->boundingBox);
 }
 
-export void Volume_intersect_kernel(
-    const RTCIntersectFunctionNArguments *uniform args)
+unmasked void Volume_intersect_kernel(
+    RTCIntersectFunctionNArguments *uniform args)
 {
   // make sure to set the mask
   if (!args->valid[programIndex])
@@ -60,3 +63,6 @@ export void Volume_intersect_kernel(
     vIntervals->numVolumeIntervals++;
   }
 }
+
+OSPRAY_END_ISPC_NAMESPACE
+#endif

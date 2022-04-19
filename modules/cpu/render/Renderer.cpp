@@ -7,10 +7,15 @@
 #include "Material.h"
 #include "common/Instance.h"
 #include "geometry/GeometricModel.h"
-#include "pf/PixelFilter.h"
+#ifdef OSPRAY_TARGET_DPCPP
+#include "render/RendererRenderTaskFn.inl"
+#include "render/RendererType.ih"
+#include "render/util.ih"
+#else
 // ispc exports
 #include "render/Renderer_ispc.h"
 #include "render/util_ispc.h"
+#endif
 
 namespace ospray {
 
@@ -21,7 +26,12 @@ Renderer::Renderer(api::ISPCDevice &device)
 {
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;
-  getSh()->renderSample = ispc::Renderer_default_renderSample_addr();
+  mathConstants = std::make_unique<MathConstants>(device);
+  getSh()->mathConstants = mathConstants->getSh();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->renderSample = reinterpret_cast<ispc::Renderer_RenderSampleFct>(
+      ispc::Renderer_default_renderSample_addr());
+#endif
 }
 
 std::string Renderer::toString() const
@@ -73,13 +83,34 @@ void Renderer::commit()
   getSh()->maxDepthTexture =
       maxDepthTexture ? maxDepthTexture->getSh() : nullptr;
 
+  /*
   setupPixelFilter();
   getSh()->pixelFilter =
       (ispc::PixelFilter *)(pixelFilter ? pixelFilter->getIE() : nullptr);
+      */
+  std::cout << "NOTE: PixelFilter disabled currently\n";
+  getSh()->pixelFilter = nullptr;
 
   ispc::precomputeZOrder();
 }
 
+#ifdef OSPRAY_TARGET_DPCPP
+/*
+void Renderer::setGPUFunctionPtrs(sycl::queue &syclQueue)
+{
+  auto *sSh = getSh();
+  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+    cgh.parallel_for(1, [=](cl::sycl::id<1>) RTC_SYCL_KERNEL {
+      sSh->renderSample = ispc::Renderer_default_renderSample;
+      sSh->renderTask = ispc::Renderer_default_renderTask;
+    });
+  });
+  event.wait();
+}
+*/
+#endif
+
+#ifndef OSPRAY_TARGET_DPCPP
 void Renderer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
@@ -94,6 +125,51 @@ void Renderer::renderTasks(FrameBuffer *fb,
       taskIDs.data(),
       taskIDs.size());
 }
+#else
+void Renderer::renderTasks(FrameBuffer *fb,
+    Camera *camera,
+    World *world,
+    void *perFrameData,
+    const utility::ArrayView<uint32_t> &taskIDs,
+    sycl::queue &syclQueue) const
+{
+  auto *rendererSh = getSh();
+  auto *fbSh = fb->getSh();
+  auto *cameraSh = camera->getSh();
+  auto *worldSh = world->getSh();
+  const uint32_t *taskIDsPtr = taskIDs.data();
+  const size_t numTasks = taskIDs.size();
+
+  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+    const cl::sycl::nd_range<1> dispatchRange =
+        computeDispatchRange(numTasks, RTC_SYCL_SIMD_WIDTH);
+    cgh.parallel_for(
+        dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) RTC_SYCL_KERNEL {
+          if (taskIndex.get_global_id(0) < numTasks) {
+            ispc::Renderer_default_renderTask(rendererSh,
+                fbSh,
+                cameraSh,
+                worldSh,
+                perFrameData,
+                taskIDsPtr,
+                taskIndex.get_global_id(0),
+                ispc::Renderer_dispatch_renderSample);
+          }
+        });
+  });
+  event.wait_and_throw();
+  // For prints we have to flush the entire queue, because other stuff is queued
+  syclQueue.wait_and_throw();
+}
+
+cl::sycl::nd_range<1> Renderer::computeDispatchRange(
+    const size_t globalSize, const size_t workgroupSize) const
+{
+  const size_t roundedRange =
+      ((globalSize + workgroupSize - 1) / workgroupSize) * workgroupSize;
+  return cl::sycl::nd_range<1>(roundedRange, workgroupSize);
+}
+#endif
 
 OSPPickResult Renderer::pick(
     FrameBuffer *fb, Camera *camera, World *world, const vec2f &screenPos)

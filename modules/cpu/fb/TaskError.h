@@ -4,7 +4,9 @@
 #pragma once
 
 #include <vector>
+#include "common/BufferShared.h"
 #include "common/OSPCommon.h"
+#include "ispcrt.hpp"
 #include "rkcommon/containers/AlignedVector.h"
 
 namespace ospray {
@@ -15,7 +17,7 @@ namespace ospray {
 class OSPRAY_SDK_INTERFACE TaskError
 {
  public:
-  TaskError(const vec2i &numTasks);
+  TaskError(ispcrt::Device &ispcrtDevice, const vec2i &numTasks);
 
   // The default constructor will make an empty task error region
   TaskError() = default;
@@ -35,7 +37,7 @@ class OSPRAY_SDK_INTERFACE TaskError
  protected:
   vec2i numTasks = vec2i(0);
   // holds error per task
-  containers::AlignedVector<float> taskErrorBuffer;
+  std::unique_ptr<BufferShared<float>> taskErrorBuffer;
   // image regions (in #tasks) that do not yet estimate the error on
   // per-task basis
   std::vector<box2i> errorRegion;

@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 // ospray
 #include "VolumetricModel.h"
@@ -96,3 +97,4 @@ Ref<Volume> VolumetricModel::getVolume() const
 OSPTYPEFOR_DEFINITION(VolumetricModel *);
 
 } // namespace ospray
+#endif

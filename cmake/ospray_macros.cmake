@@ -331,7 +331,11 @@ macro(ospray_configure_compiler)
   elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
           "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     set(OSPRAY_COMPILER_CLANG TRUE)
-    include(clang)
+    #include(clang)
+    # TODO WILL: We need to distinguish "clang" being real clang
+    # and "clang" being dpcpp nightly
+    message(WARNING "TODO WILL: We need to distinguish 'clang' = real clang vs. nightly dpcpp")
+    include(dpcpp)
   elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(OSPRAY_COMPILER_MSVC TRUE)
     include(msvc)
@@ -377,10 +381,12 @@ endfunction()
 
 function(ospray_verify_embree_features)
   ospray_check_embree_feature(ISPC_SUPPORT ISPC)
-  ospray_check_embree_feature(FILTER_FUNCTION "intersection filter")
+  # TODO: Having Function pointers enabled has a massive performance impact on GPU
+  #ospray_check_embree_feature(FILTER_FUNCTION "intersection filter")
   ospray_check_embree_feature(GEOMETRY_TRIANGLE "triangle geometries")
   ospray_check_embree_feature(GEOMETRY_CURVE "spline curve geometries")
-  ospray_check_embree_feature(GEOMETRY_USER "user geometries")
+  # TODO: Having Function pointers enabled has a massive performance impact on GPU
+  #ospray_check_embree_feature(GEOMETRY_USER "user geometries")
   ospray_check_embree_feature(RAY_PACKETS "ray packets")
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
 endfunction()
@@ -395,12 +401,19 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
             " set the 'embree_DIR' variable to the installation (or build)"
             " directory.")
   endif()
+  # Get Embree CPU info
   get_target_property(EMBREE_INCLUDE_DIRS embree
     INTERFACE_INCLUDE_DIRECTORIES)
   get_target_property(CONFIGURATIONS embree IMPORTED_CONFIGURATIONS)
   list(GET CONFIGURATIONS 0 CONFIGURATION)
   get_target_property(EMBREE_LIBRARY embree
       IMPORTED_LOCATION_${CONFIGURATION})
+  # Get Embree SYCL info
+  get_target_property(CONFIGURATIONS embree_sycl IMPORTED_CONFIGURATIONS)
+  list(GET CONFIGURATIONS 0 CONFIGURATION)
+  get_target_property(EMBREE_SYCL_LIBRARY embree_sycl
+      IMPORTED_LOCATION_${CONFIGURATION})
+
   message(STATUS "Found Embree v${embree_VERSION}: ${EMBREE_LIBRARY}")
 endmacro()
 

@@ -3,7 +3,9 @@
 
 #include "fb/FrameBuffer.ih"
 
-vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
     const vec4f &color,
     const float depth,
     const vec3f &normal,
@@ -16,3 +18,4 @@ vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
   }
   return outColor;
 }
+OSPRAY_END_ISPC_NAMESPACE

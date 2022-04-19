@@ -6,15 +6,19 @@
 #ifdef __cplusplus
 #include "common/StructShared.h"
 namespace ispc {
+#endif // __cplusplus
+
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_DPCPP)
 typedef void *TransferFunction_getFct;
 typedef void *TransferFunction_getMaxOpacityFct;
 #else
 struct TransferFunction;
+
 typedef vec4f (*TransferFunction_getFct)(
     const TransferFunction *uniform self, float value);
 typedef float (*TransferFunction_getMaxOpacityFct)(
     const TransferFunction *uniform self, const range1f &valueRange);
-#endif // __cplusplus
+#endif
 
 struct TransferFunction
 {

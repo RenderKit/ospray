@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture2D.ih"
+#include "common/rkcommonDPCPPWrappers.h"
 #include "ospray/OSPEnums.h"
 
 // Low-level texel accessors
 //////////////////////////////////////////////////////////////////////////////
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #define BYTE2FLOAT (1.f / 255.f)
 #define SHORT2FLOAT (1.f / 65535.f)
@@ -237,7 +240,17 @@ inline vec4f bilerp(const vec2f frac,
 
 #define __define_tex_case(NAME, FMT)                                           \
   case OSP_TEXTURE_##FMT:                                                      \
-    return filter_nearest ? &NAME##_nearest_##FMT : &NAME##_bilinear_##FMT
+    return filter_nearest ? (void *uniform) & NAME##_nearest_##FMT             \
+                          : (void *uniform) & NAME##_bilinear_##FMT
+
+#define __define_call_tex_case(NAME, FMT)                                      \
+  case OSP_TEXTURE_##FMT:                                                      \
+    return filter_nearest ? NAME##_nearest_##FMT(self, dg)                     \
+                          : NAME##_bilinear_##FMT(self, dg)
+
+#define __define_tex_call_tex_case(FMT) __define_call_tex_case(Texture2D, FMT)
+#define __define_tex_callN_tex_case(FMT)                                       \
+  __define_call_tex_case(Texture2D_N, FMT)
 
 #define __define_tex_get_case(FMT) __define_tex_case(Texture2D, FMT)
 #define __define_tex_getN_case(FMT) __define_tex_case(Texture2D_N, FMT)
@@ -269,6 +282,24 @@ export void *uniform Texture2D_get_addr(
   }
   return NULL;
 };
+
+SYCL_EXTERNAL __noinline vec4f Texture2D_get(
+    const uniform Texture *uniform _self, const DifferentialGeometry &dg)
+{
+#if 0
+  return make_vec4f(1.f);
+#else
+  const uniform Texture2D *uniform self =
+      (const uniform Texture2D *uniform)_self;
+  const uniform bool filter_nearest =
+      self->filter == OSP_TEXTURE_FILTER_NEAREST;
+
+  switch (self->format) {
+    __foreach_fetcher(__define_tex_call_tex_case);
+  }
+  return make_vec4f(0.f);
+#endif
+}
 
 static vec3f Texture2D_Normal_neutral(
     const Texture2D *uniform self, const DifferentialGeometry &)
@@ -307,18 +338,44 @@ export void *uniform Texture2D_getN_addr(
     __define_tex_getN_case(RGB32F);
     __define_tex_getN_case(RGBA16);
     __define_tex_getN_case(RGB16);
+  default:
+    break;
   }
-  return &Texture2D_Normal_neutral;
+  return (void *uniform) & Texture2D_Normal_neutral;
 };
+
+SYCL_EXTERNAL __noinline vec3f Texture2D_getNormal(
+    const uniform Texture *uniform _self, const DifferentialGeometry &dg)
+{
+  const uniform Texture2D *uniform self =
+      (const uniform Texture2D *uniform)_self;
+  const uniform bool filter_nearest =
+      self->filter == OSP_TEXTURE_FILTER_NEAREST;
+  switch (self->format) {
+  case OSP_TEXTURE_SRGBA: /* fallthrough, sRGB ignored for normals */
+    __define_tex_callN_tex_case(RGBA8);
+  case OSP_TEXTURE_SRGB: /* fallthrough, sRGB ignored for normals */
+    __define_tex_callN_tex_case(RGB8);
+    __define_tex_callN_tex_case(RGBA32F);
+    __define_tex_callN_tex_case(RGB32F);
+    __define_tex_callN_tex_case(RGBA16);
+    __define_tex_callN_tex_case(RGB16);
+  default:
+    break;
+  }
+  return Texture2D_Normal_neutral(self, dg);
+}
 
 #undef __define_tex_get
 #undef __define_tex_getN
 #undef __define_tex_getN_flt
 #undef __define_tex_get_addr
 #undef __define_tex_case
+#undef __define_call_tex_case
 #undef __define_tex_get_case
 #undef __define_tex_getN_case
 #undef __foreach_fetcher
 
 #undef BYTE2FLOAT
 #undef SHORT2FLOAT
+OSPRAY_END_ISPC_NAMESPACE

@@ -1,11 +1,21 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/LinearSpace.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/LinearSpace.ih"
+#include "rkcommon/math/vec.ih"
+#endif
+
 // ospray
 #include "../FrameBufferView.ih"
 #include "../Tile.ih"
-#include "math/LinearSpace.ih"
-#include "rkcommon/math/vec.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct LiveSSAOFrameOp
 {
@@ -155,3 +165,4 @@ export int8 uniform getProgramCount()
 {
   return programCount;
 }
+OSPRAY_END_ISPC_NAMESPACE

@@ -47,9 +47,7 @@ void Geometry::createEmbreeGeometry(RTCGeometryType type)
   embreeGeometry = rtcNewGeometry(getISPCDevice().getEmbreeDevice(), type);
 }
 
-void Geometry::createEmbreeUserGeometry(RTCBoundsFunction boundsFn,
-    RTCIntersectFunctionN intersectFn,
-    RTCOccludedFunctionN occludedFn)
+void Geometry::createEmbreeUserGeometry(RTCBoundsFunction boundsFn)
 {
   createEmbreeGeometry(RTC_GEOMETRY_TYPE_USER);
 
@@ -57,8 +55,6 @@ void Geometry::createEmbreeUserGeometry(RTCBoundsFunction boundsFn,
   rtcSetGeometryUserData(embreeGeometry, getSh());
   rtcSetGeometryUserPrimitiveCount(embreeGeometry, numPrimitives());
   rtcSetGeometryBoundsFunction(embreeGeometry, boundsFn, getSh());
-  rtcSetGeometryIntersectFunction(embreeGeometry, intersectFn);
-  rtcSetGeometryOccludedFunction(embreeGeometry, occludedFn);
   rtcCommitGeometry(embreeGeometry);
 }
 

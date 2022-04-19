@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "LightShared.h"
 #include "IntensityDistributionShared.h"
+#include "LightShared.h"
 
 #ifdef __cplusplus
 namespace ispc {
@@ -56,6 +56,13 @@ struct SpotLight
         areaPdf(inf)
   {}
 };
+#ifdef OSPRAY_TARGET_DPCPP
+void SpotLight_Transform(const void *self, const void *xfm, void *dyn);
+void *SpotLight_sample_addr();
+void *SpotLight_sample_instanced_addr();
+void *SpotLight_eval_addr();
+void *SpotLight_eval_instanced_addr();
+#endif
 } // namespace ispc
 #else
 };

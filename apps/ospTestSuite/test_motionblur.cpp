@@ -290,6 +290,7 @@ void MotionCamera::SetUp()
 
 // Test Instantiations //////////////////////////////////////////////////////
 
+#if 0
 TEST_P(MotionBlurBoxes, instance_mb)
 {
   PerformRenderTest();
@@ -318,7 +319,7 @@ INSTANTIATE_TEST_SUITE_P(CameraStereoRollingShutter,
         ::testing::Values(OSP_STEREO_TOP_BOTTOM),
         ::testing::Values(OSP_SHUTTER_ROLLING_DOWN),
         ::testing::Values(0.f)));
-
+#endif
 TEST_P(MotionCamera, camera_mb)
 {
   PerformRenderTest();

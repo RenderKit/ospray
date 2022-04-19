@@ -41,7 +41,9 @@ struct SparseFB
         accumulationBuffer(nullptr),
         varianceBuffer(nullptr),
         taskRegionError(nullptr)
-  {}
+  {
+    super.type = FRAMEBUFFER_TYPE_SPARSE;
+  }
 };
 } // namespace ispc
 #else

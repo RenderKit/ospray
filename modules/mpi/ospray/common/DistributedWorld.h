@@ -8,7 +8,7 @@
 #include "camera/Camera.h"
 #include "common/MPICommon.h"
 #include "common/World.h"
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
 #include "geometry/Boxes.h"
 #include "rkcommon/math/box.h"
 // ispc shared

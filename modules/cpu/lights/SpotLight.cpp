@@ -4,9 +4,11 @@
 #include "SpotLight.h"
 #include "math/sampling.h"
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
 
+#ifndef OSPRAY_TARGET_DPCPP
 #include "lights/SpotLight_ispc.h"
+#endif
 
 #include "SpotLightShared.h"
 #include "common/InstanceShared.h"
@@ -19,8 +21,10 @@ ISPCRTMemoryView SpotLight::createSh(
   ISPCRTMemoryView view = StructSharedCreate<ispc::SpotLight>(
       getISPCDevice().getIspcrtDevice().handle());
   ispc::SpotLight *sh = (ispc::SpotLight *)ispcrtSharedPtr(view);
-  sh->super.sample = ispc::SpotLight_sample_addr();
-  sh->super.eval = ispc::SpotLight_eval_addr();
+  sh->super.sample =
+      reinterpret_cast<ispc::Light_SampleFunc>(ispc::SpotLight_sample_addr());
+  sh->super.eval =
+      reinterpret_cast<ispc::Light_EvalFunc>(ispc::SpotLight_eval_addr());
   sh->super.isVisible = visible;
   sh->super.instance = instance;
 
@@ -33,8 +37,10 @@ ISPCRTMemoryView SpotLight::createSh(
   if (instance) {
     sh->pre.c0 = intensityDistribution.c0;
     if (instance->motionBlur) {
-      sh->super.sample = ispc::SpotLight_sample_instanced_addr();
-      sh->super.eval = ispc::SpotLight_eval_instanced_addr();
+      sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+          ispc::SpotLight_sample_instanced_addr());
+      sh->super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+          ispc::SpotLight_eval_instanced_addr());
     } else
       ispc::SpotLight_Transform(&sh->pre, instance->xfm, &sh->pre);
   } else {

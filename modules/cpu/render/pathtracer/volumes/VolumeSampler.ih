@@ -1,11 +1,22 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/vec.ih"
+#endif
+
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/volumes/HenyeyGreenstein.ih"
-#include "rkcommon/math/vec.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct World;
 struct LDSampler;
@@ -13,7 +24,7 @@ struct RandomSampler;
 struct Ray;
 struct RayIntervals;
 
-float volumeSampleFreePath(const PathState &pathState,
+SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
     const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
@@ -23,7 +34,7 @@ float volumeSampleFreePath(const PathState &pathState,
     float &sampledExtinctionCoefficient,
     vec3f &sampledAlbedo);
 
-float volumeTransmittance(const PathState &pathState,
+SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
     const World *uniform world,
     Ray &ray,
     RayIntervals &rayIntervals,
@@ -34,3 +45,7 @@ inline bool isSmoothVolumeVertex(const PathVertex &pathVertex)
 {
   return HenyeyGreenstein_isSmooth(pathVertex.volume->anisotropy);
 }
+
+OSPRAY_END_ISPC_NAMESPACE
+
+#endif

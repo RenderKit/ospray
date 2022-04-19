@@ -7,11 +7,15 @@
 #include "render/bsdfs/MultiBSDF.ih"
 #include "render/bsdfs/Specular.ih"
 #include "render/bsdfs/Transmission.ih"
+#include "texture/TextureParam.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying OBJ_getBSDF(const uniform Material *uniform super,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
+    const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -35,10 +39,12 @@ const varying BSDF *varying OBJ_getBSDF(const uniform Material *uniform super,
     Kd = Kd * make_vec3f(Kd_from_map);
     d *= Kd_from_map.w;
   }
+
   Kd = Kd * d * make_vec3f(dg.color);
-  if (reduce_max(Kd) > 0.0f)
+  if (reduce_max(Kd) > 0.0f) {
     MultiBSDF_add(
         bsdf, Lambert_create(ctx, shadingFrame, Kd), 1.f, luminance(Kd));
+  }
 
   /*! transmission component */
   vec3f T = self->Tf * d + make_vec3f(1.f - d);
@@ -49,14 +55,14 @@ const varying BSDF *varying OBJ_getBSDF(const uniform Material *uniform super,
   /*! specular component */
   float Ns = self->Ns * get1f(self->NsMap, dg, 1.0f);
   vec3f Ks = d * self->Ks * get3f(self->KsMap, dg, make_vec3f(1.f));
-  if (reduce_max(Ks) > 0.0f)
+  if (reduce_max(Ks) > 0.0f) {
     MultiBSDF_add(
         bsdf, Specular_create(ctx, shadingFrame, Ks, Ns), 1.f, luminance(Ks));
-
+  }
   return bsdf;
 }
 
-vec3f OBJ_getTransparency(const uniform Material *uniform super,
+SYCL_EXTERNAL vec3f OBJ_getTransparency(const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium)
@@ -81,10 +87,12 @@ vec3f OBJ_getTransparency(const uniform Material *uniform super,
 
 export void *uniform OBJ_getBSDF_addr()
 {
-  return OBJ_getBSDF;
+  return (void *uniform)OBJ_getBSDF;
 }
 
 export void *uniform OBJ_getTransparency_addr()
 {
-  return OBJ_getTransparency;
+  return (void *uniform)OBJ_getTransparency;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

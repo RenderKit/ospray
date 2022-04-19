@@ -4,6 +4,9 @@
 #include "common/Data.ih"
 // c++ shared
 #include "LinearTransferFunctionShared.h"
+#include "common/rkcommonDPCPPWrappers.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 vec4f LinearTransferFunction_get(const void *uniform _self, float value)
 {
@@ -57,10 +60,11 @@ float LinearTransferFunction_getMaxOpacity(
 
 export void *uniform LinearTransferFunction_get_addr()
 {
-  return LinearTransferFunction_get;
+  return (void *uniform)LinearTransferFunction_get;
 }
 
 export void *uniform LinearTransferFunction_getMaxOpacity_addr()
 {
-  return LinearTransferFunction_getMaxOpacity;
+  return (void *uniform)LinearTransferFunction_getMaxOpacity;
 }
+OSPRAY_END_ISPC_NAMESPACE

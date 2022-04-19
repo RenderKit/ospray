@@ -3,13 +3,28 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "common/rkcommonDPCPPWrappers.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/vec.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct SphericalQuad
 {
   vec3f e0, e1, z;
   float S, k, n0z, n0z2, n2z, x0, x1, y0, y02, y1, y12, z0, z02;
 };
+
+#ifdef OSPRAY_TARGET_DPCPP
+#define kernel_acos sycl::acos
+#else
+#define kernel_acos acos
+#endif
 
 #define template_SphericalQuad_create(univary)                                 \
   inline SphericalQuad SphericalQuad_create(const univary vec3f &q0,           \
@@ -58,10 +73,10 @@ struct SphericalQuad
     vec3f n3 = normalize(cross(v01, v00));                                     \
                                                                                \
     /* compute internal angles (gamma_i)  */                                   \
-    float g0 = acos(clamp(-dot(n0, n1), -1.f, 1.f));                           \
-    float g1 = acos(clamp(-dot(n1, n2), -1.f, 1.f));                           \
-    float g2 = acos(clamp(-dot(n2, n3), -1.f, 1.f));                           \
-    float g3 = acos(clamp(-dot(n3, n0), -1.f, 1.f));                           \
+    float g0 = kernel_acos(clamp(-dot(n0, n1), -1.f, 1.f));                    \
+    float g1 = kernel_acos(clamp(-dot(n1, n2), -1.f, 1.f));                    \
+    float g2 = kernel_acos(clamp(-dot(n2, n3), -1.f, 1.f));                    \
+    float g3 = kernel_acos(clamp(-dot(n3, n0), -1.f, 1.f));                    \
                                                                                \
     /* compute predefined constants */                                         \
     quad.k = (float)two_pi - g2 - g3;                                          \
@@ -72,9 +87,12 @@ struct SphericalQuad
     return quad;                                                               \
   }
 
+#ifndef OSPRAY_TARGET_DPCPP
 template_SphericalQuad_create(varying);
+#endif
 template_SphericalQuad_create(uniform);
 #undef template_SphericalQuad_create
+#undef kernel_acos
 
 inline float sign(float x)
 {
@@ -193,6 +211,10 @@ inline float fv(float r, float u, float W00, float W01, float W10, float W11)
     return make_vec3f(u, v, pdf);                                               \
   }
 
+#ifndef OSPRAY_TARGET_DPCPP
 template_computeCosineWeightedRNG(varying);
+#endif
 template_computeCosineWeightedRNG(uniform);
 #undef template_computeCosineWeightedRNG
+
+OSPRAY_END_ISPC_NAMESPACE

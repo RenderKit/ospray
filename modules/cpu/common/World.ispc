@@ -1,15 +1,20 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "fb/Tile.ih"
+
 #include "World.ih"
 #include "math/Distribution1D.ih"
 #include "render/pathtracer/GeometryLight.ih"
 // c++ shared
 #include "lights/LightShared.h"
 
-unmasked void clippingIntersectionFilterV(
-    const struct RTCFilterFunctionNArguments *uniform args)
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+unmasked void clippingIntersectionFilterV(const void *uniform _args)
 {
+  const struct RTCFilterFunctionNArguments *uniform args =
+      (const struct RTCFilterFunctionNArguments *uniform)_args;
   // Set execution mask
   varying int *uniform valid = (varying int *uniform)args->valid;
   if (*valid == 0)
@@ -43,8 +48,14 @@ unmasked void clippingIntersectionFilterV(
     ray->primID = hit->primID;
     ray->geomID = hit->geomID;
 
-    // We need to call postIntersect on clipping geometry
+// We need to call postIntersect on clipping geometry
+#ifdef OSPRAY_TARGET_DPCPP
+    {
+      // DPC++ execution in a thread is scalar
+      const uint32 instID = hit->instID[0];
+#else
     foreach_unique (instID in hit->instID[0]) {
+#endif
       // Call postIntersect to get shading normal
       Instance *uniform instance = *(context->world->instances + instID);
       Instance_postIntersect(instance, NULL, dg, *ray, DG_NG | DG_NS, true);
@@ -98,3 +109,5 @@ unmasked void clippingIntersectionFilterV(
   context->hits[context->hitsCount] = cHit;
   context->hitsCount++;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

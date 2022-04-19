@@ -4,9 +4,11 @@
 #include "DirectionalLight.h"
 #include "math/sampling.h"
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc exports
 #include "lights/DirectionalLight_ispc.h"
+#endif
 // ispc shared
 #include "DirectionalLightShared.h"
 #include "common/InstanceShared.h"
@@ -21,8 +23,10 @@ void DirectionalLight::set(bool isVisible,
 {
   super.isVisible = isVisible;
   super.instance = instance;
-  super.sample = ispc::DirectionalLight_sample_addr();
-  super.eval = ispc::DirectionalLight_eval_addr();
+  super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+      ispc::DirectionalLight_sample_addr());
+  super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+      ispc::DirectionalLight_eval_addr());
 
   frame = rkcommon::math::frame(direction);
   this->irradiance = irradiance;
@@ -32,8 +36,10 @@ void DirectionalLight::set(bool isVisible,
   // Enable dynamic runtime instancing or apply static transformation
   if (instance) {
     if (instance->motionBlur) {
-      super.sample = ispc::DirectionalLight_sample_instanced_addr();
-      super.eval = ispc::DirectionalLight_eval_instanced_addr();
+      super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+          ispc::DirectionalLight_sample_instanced_addr());
+      super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+          ispc::DirectionalLight_eval_instanced_addr());
     } else {
       frame = instance->xfm.l * frame;
     }

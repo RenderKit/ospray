@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Principled.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc
 #include "render/materials/Principled_ispc.h"
+#endif
 
 namespace ospray {
 namespace pathtracer {
@@ -11,10 +13,16 @@ namespace pathtracer {
 Principled::Principled(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.type = ispc::MATERIAL_TYPE_PRINCIPLED;
-  getSh()->super.getBSDF = ispc::Principled_getBSDF_addr();
-  getSh()->super.getTransparency = ispc::Principled_getTransparency_addr();
-  getSh()->super.selectNextMedium = ispc::Principled_selectNextMedium_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(
+      ispc::Principled_getBSDF_addr());
+  getSh()->super.getTransparency =
+      reinterpret_cast<ispc::Material_GetTransparencyFunc>(
+          ispc::Principled_getTransparency_addr());
+  getSh()->super.selectNextMedium =
+      reinterpret_cast<ispc::Material_SelectNextMediumFunc>(
+          ispc::Principled_selectNextMedium_addr());
+#endif
 }
 
 std::string Principled::toString() const

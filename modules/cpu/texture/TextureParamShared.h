@@ -4,6 +4,13 @@
 #pragma once
 
 #include "TextureShared.h"
+#ifdef __cplusplus
+#include "rkcommon/math/AffineSpace.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/AffineSpace.ih"
+#endif
 
 #ifdef __cplusplus
 namespace ispc {

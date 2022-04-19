@@ -4,11 +4,16 @@
 #pragma once
 
 #include "ISPCDeviceObject.h"
+#include "math/MathConstants.h"
 #include "pf/PixelFilter.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "texture/Texture2D.h"
 // ispc shared
 #include "RendererShared.h"
+
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#endif
 
 namespace ospray {
 
@@ -16,7 +21,6 @@ struct Camera;
 struct World;
 struct Material;
 struct FrameBuffer;
-struct PixelFilter;
 
 // abstract base class for all ospray renderers.
 //
@@ -32,6 +36,11 @@ struct OSPRAY_SDK_INTERFACE Renderer
   virtual ~Renderer() override = default;
 
   virtual void commit() override;
+
+#ifdef OSPRAY_TARGET_DPCPP
+  // virtual void setGPUFunctionPtrs(sycl::queue &syclQueue) override;
+#endif
+
   virtual std::string toString() const override;
 
   // called to initialize a new frame
@@ -49,12 +58,30 @@ struct OSPRAY_SDK_INTERFACE Renderer
   // called exactly once (on each node) at the end of each frame
   virtual void endFrame(FrameBuffer *fb, void *perFrameData);
 
+#ifndef OSPRAY_TARGET_DPCPP
   // called by the load balancer to render one "sample" for each task
   virtual void renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
       const utility::ArrayView<uint32_t> &taskIDs) const;
+#else
+  virtual void renderTasks(FrameBuffer *fb,
+      Camera *camera,
+      World *world,
+      void *perFrameData,
+      const utility::ArrayView<uint32_t> &taskIDs,
+      sycl::queue &syclQueue) const;
+
+  /* Compute the rounded dispatch global size for the given work group size.
+   * SYCL requires that globalSize % workgroupSize == 0, ths function will
+   * round up globalSize and return nd_range(roundedSize, workgroupSize).
+   * The kernel being launched must discard tasks that are out of bounds
+   * bounds due to this rounding
+   */
+  cl::sycl::nd_range<1> computeDispatchRange(
+      const size_t globalSize, const size_t workgroupSize) const;
+#endif
 
   virtual OSPPickResult pick(
       FrameBuffer *fb, Camera *camera, World *world, const vec2f &screenPos);
@@ -69,6 +96,10 @@ struct OSPRAY_SDK_INTERFACE Renderer
   Ref<Texture2D> backplate;
 
   std::unique_ptr<PixelFilter> pixelFilter;
+  // TODO: This could be shared among multiple renderers but we need to be
+  // careful about making sure it's released before the ISPCDevice so that we
+  // can still release the USM allocations
+  std::unique_ptr<MathConstants> mathConstants;
 
   Ref<const DataT<Material *>> materialData;
   std::unique_ptr<BufferShared<ispc::Material *>> materialArray;

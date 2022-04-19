@@ -3,10 +3,12 @@
 
 #include "HDRILight.h"
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc exports
 #include "lights/HDRILight_ispc.h"
 #include "lights/Light_ispc.h"
+#endif
 // ispc shared
 #include "HDRILightShared.h"
 #include "common/InstanceShared.h"
@@ -21,8 +23,12 @@ void HDRILight::set(bool isVisible,
 {
   super.isVisible = isVisible;
   super.instance = instance;
-  super.sample = ispc::HDRILight_sample_addr();
-  super.eval = ispc::HDRILight_eval_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  super.sample =
+      reinterpret_cast<ispc::Light_SampleFunc>(ispc::HDRILight_sample_addr());
+  super.eval =
+      reinterpret_cast<ispc::Light_EvalFunc>(ispc::HDRILight_eval_addr());
+#endif
 
   this->radianceScale = radianceScale;
   if (map) {
@@ -35,16 +41,24 @@ void HDRILight::set(bool isVisible,
     // Enable dynamic runtime instancing or apply static transformation
     if (instance) {
       if (instance->motionBlur) {
-        super.sample = ispc::HDRILight_sample_instanced_addr();
-        super.eval = ispc::HDRILight_eval_instanced_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+        super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+            ispc::HDRILight_sample_instanced_addr());
+        super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+            ispc::HDRILight_eval_instanced_addr());
+#endif
       } else {
         this->light2world = instance->xfm.l * this->light2world;
       }
     }
     world2light = rcp(this->light2world);
   } else {
-    super.sample = ispc::HDRILight_sample_dummy_addr();
-    super.eval = ispc::Light_eval_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+    super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+        ispc::HDRILight_sample_dummy_addr());
+    super.eval =
+        reinterpret_cast<ispc::Light_EvalFunc>(ispc::Light_eval_addr());
+#endif
   }
 }
 } // namespace ispc

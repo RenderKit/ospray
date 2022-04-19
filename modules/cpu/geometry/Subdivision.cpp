@@ -5,16 +5,22 @@
 #include "Subdivision.h"
 #include "common/DGEnum.h"
 
-// ispc exports
 #include <cmath>
+#ifndef OSPRAY_TARGET_DPCPP
+// ispc exports
 #include "geometry/Subdivision_ispc.h"
+#endif
 
 namespace ospray {
 
 Subdivision::Subdivision(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.postIntersect = ispc::Subdivision_postIntersect_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->super.postIntersect =
+      reinterpret_cast<ispc::Geometry_postIntersectFct>(
+          ispc::Subdivision_postIntersect_addr());
+#endif
 }
 
 std::string Subdivision::toString() const

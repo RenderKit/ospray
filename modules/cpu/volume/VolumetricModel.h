@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
@@ -35,3 +36,4 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
 OSPTYPEFOR_SPECIALIZATION(VolumetricModel *, OSP_VOLUMETRIC_MODEL);
 
 } // namespace ospray
+#endif

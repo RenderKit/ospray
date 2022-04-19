@@ -3,6 +3,10 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#endif
+
 #include "rkcommon/utility/Any.h"
 #include "rkcommon/utility/Optional.h"
 #include "rkcommon/utility/ParameterizedObject.h"
@@ -28,6 +32,10 @@ struct OSPRAY_SDK_INTERFACE ManagedObject : public memory::RefCount,
   virtual ~ManagedObject() override;
 
   virtual void commit();
+
+#ifdef OSPRAY_TARGET_DPCPP
+  // virtual void setGPUFunctionPtrs(sycl::queue &syclQueue);
+#endif
 
   virtual std::string toString() const;
 

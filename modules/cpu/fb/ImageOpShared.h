@@ -5,10 +5,15 @@
 
 #ifdef __cplusplus
 #include "common/StructShared.h"
+#include "rkcommon/math/vec.h"
 namespace ispc {
-typedef void *LivePixelOp_processPixel;
 #else
 #include "rkcommon/math/vec.ih"
+#endif
+
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_DPCPP)
+typedef void *LivePixelOp_processPixel;
+#else
 struct LivePixelOp;
 
 typedef vec4f (*LivePixelOp_processPixel)(const LivePixelOp *uniform self,

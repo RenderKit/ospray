@@ -1,14 +1,22 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/LinearSpace.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
+#include "rkcommon/math/LinearSpace.ih"
+#endif
+
 #include "common/Instance.ih"
-#include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 // c++ shared
 #include "DirectionalLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline Light_SampleRes Sample(const DirectionalLight *uniform self,
     const uniform linear3f &frame,
@@ -50,7 +58,13 @@ Light_SampleRes DirectionalLight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    // DPC++ execution in a thread is scalar
+    const float utime = time;
+#else
   foreach_unique (utime in time) {
+#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     res = Sample(self, xfm.l * self->frame, s);
   }
@@ -65,7 +79,7 @@ inline Light_EvalRes Eval(const DirectionalLight *uniform self,
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
 
-  if (inf <= maxDist && self->cosAngle < COS_ANGLE_MAX
+  if ((float)inf <= maxDist && self->cosAngle < COS_ANGLE_MAX
       && dot(frame.vz, dir) > self->cosAngle) {
     res.radiance = self->irradiance * self->pdf;
     res.pdf = self->pdf;
@@ -100,7 +114,13 @@ Light_EvalRes DirectionalLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
+#ifdef OSPRAY_TARGET_DPCPP
+  {
+    // DPC++ execution in a thread is scalar
+    const float utime = time;
+#else
   foreach_unique (utime in time) {
+#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     res = Eval(self, xfm.l * self->frame, dir, maxDist);
   }
@@ -112,20 +132,22 @@ Light_EvalRes DirectionalLight_eval_instanced(const Light *uniform super,
 
 export void *uniform DirectionalLight_sample_addr()
 {
-  return DirectionalLight_sample;
+  return (void *uniform)DirectionalLight_sample;
 }
 
 export void *uniform DirectionalLight_sample_instanced_addr()
 {
-  return DirectionalLight_sample_instanced;
+  return (void *uniform)DirectionalLight_sample_instanced;
 }
 
 export void *uniform DirectionalLight_eval_addr()
 {
-  return DirectionalLight_eval;
+  return (void *uniform)DirectionalLight_eval;
 }
 
 export void *uniform DirectionalLight_eval_instanced_addr()
 {
-  return DirectionalLight_eval_instanced;
+  return (void *uniform)DirectionalLight_eval_instanced;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

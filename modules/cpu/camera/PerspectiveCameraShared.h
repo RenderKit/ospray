@@ -43,8 +43,16 @@ struct PerspectiveCamera
         scaledAperture(0.f),
         aspect(1.f),
         stereoMode(OSP_STEREO_NONE)
-  {}
+  {
+    super.type = CAMERA_TYPE_PERSPECTIVE;
+  }
 };
+
+#ifdef OSPRAY_TARGET_DPCPP
+void PerspectiveCamera_projectBox(
+    void *_self, const box3f &box, box3f &projection);
+#endif
+
 } // namespace ispc
 #else
 };

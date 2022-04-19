@@ -1,0 +1,21 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#include "geometry/Geometry.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+// Only used on the host
+void Planes_bounds(const RTCBoundsFunctionArguments *uniform args);
+
+SYCL_EXTERNAL void Planes_postIntersect(const Geometry *uniform _self,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags);
+
+SYCL_EXTERNAL unmasked void Planes_intersect_kernel(
+    const RTCIntersectFunctionNArguments *uniform args,
+    const uniform bool isOcclusionTest);
+
+OSPRAY_END_ISPC_NAMESPACE
+

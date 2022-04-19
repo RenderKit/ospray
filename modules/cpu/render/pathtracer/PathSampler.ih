@@ -3,12 +3,20 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include <CL/sycl.hpp>
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct PathContext;
 struct PathState;
 struct Ray;
 struct ScreenSample;
 
-void samplePath(const PathContext &pathContext,
+SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     PathState &pathState,
     Ray &ray,
     ScreenSample &sample);
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -52,7 +52,7 @@ typedef int ssize_t;
 #define OSPRAY_CORE_INTERFACE OSPRAY_INTERFACE
 
 #ifdef _WIN32
-#ifdef ospray_module_cpu_EXPORTS
+#if defined(ospray_module_cpu_EXPORTS) or defined(ospray_module_gpu_EXPORTS)
 #define OSPRAY_MODULE_ISPC_INTERFACE __declspec(dllexport)
 #else
 #define OSPRAY_MODULE_ISPC_INTERFACE __declspec(dllimport)

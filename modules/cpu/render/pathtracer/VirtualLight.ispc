@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/World.ih"
+#include "common/rkcommonDPCPPWrappers.h"
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
 #include "render/pathtracer/VirtualLight.ih"
-#include "render/pathtracer/volumes/VolumeSampler.ih"
+//#include "render/pathtracer/volumes/VolumeSampler.ih"
 // c++ shared
 #include "PathTracerDataShared.h"
 #include "lights/LightShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline box1f getMinMaxDistForVirtualLights(const PathContext &pathContext,
     const PathState &pathState,
@@ -33,7 +36,7 @@ inline box1f getMinMaxDistForVirtualLights(const PathContext &pathContext,
   return interval;
 }
 
-vec3f evaluateVirtualLights(const PathContext &pathContext,
+SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
     const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
@@ -61,7 +64,7 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
       // be calculated wrt. lastVertex.dg however, we only have a valid
       // intersection with the light in [minLightDist, maxLightDist], otherwise
       // light could be added twice
-      Light_EvalRes le = light->eval(light,
+      Light_EvalRes le = Light_dispatch_eval(light,
           lastVertex.dg,
           ray.dir,
           intervalLightDist.lower,
@@ -80,12 +83,16 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
         RayIntervals rayIntervals;
         traceClippingRay(pathContext.world, shadowRay, rayIntervals);
 
+#ifdef OSPRAY_ENABLE_VOLUMES
         const float T = volumeTransmittance(pathState,
             pathContext.world,
             shadowRay,
             rayIntervals,
             pathContext.ldSampler,
             pathContext.randomSampler);
+#else
+        const float T = 1.f;
+#endif
         L = L
             + pathState.throughput * le.radiance
                 * misHeuristic(pathState,
@@ -96,3 +103,5 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
   }
   return L;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

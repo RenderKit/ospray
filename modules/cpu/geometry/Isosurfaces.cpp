@@ -1,20 +1,25 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 // ospray
 #include "Isosurfaces.h"
 #include "common/Data.h"
 // openvkl
 #include "openvkl/openvkl.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc-generated files
 #include "geometry/Isosurfaces_ispc.h"
+#endif
 
 namespace ospray {
 
 Isosurfaces::Isosurfaces(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
+#ifndef OSPRAY_TARGET_DPCPP
   getSh()->super.postIntersect = ispc::Isosurfaces_postIntersect_addr();
+#endif
 }
 
 Isosurfaces::~Isosurfaces()
@@ -78,9 +83,7 @@ void Isosurfaces::commit()
 
   vklCommit(vklHitContext);
 
-  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Isosurfaces_bounds,
-      (RTCIntersectFunctionN)&ispc::Isosurfaces_intersect,
-      (RTCOccludedFunctionN)&ispc::Isosurfaces_occluded);
+  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Isosurfaces_bounds);
   getSh()->isovalues = isovaluesData->data();
   getSh()->volumetricModel = model ? model->getSh() : nullptr;
   getSh()->volume = volume ? volume->getSh() : nullptr;
@@ -96,3 +99,5 @@ size_t Isosurfaces::numPrimitives() const
 }
 
 } // namespace ospray
+
+#endif

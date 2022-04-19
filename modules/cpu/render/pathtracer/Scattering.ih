@@ -3,7 +3,14 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "common/rkcommonDPCPPWrappers.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/vec.ih"
+#endif
 
 #define SCATTERING_SPECULAR_REFLECTION                                         \
   (1 << 0) /*!< perfect specular reflection   */
@@ -49,6 +56,8 @@
 /*! all components set */
 #define SCATTERING_ALL (SCATTERING_REFLECTION | SCATTERING_TRANSMISSION)
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 typedef uint32 Scattering_Type;
 
 struct Scattering_EvalRes
@@ -69,3 +78,5 @@ struct Scattering_SampleRes
   float pdf;
   Scattering_Type type;
 };
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -62,7 +62,101 @@ if (APPLE)
 endif()
 
 # enable -static-intel
-set(CMAKE_EXE_LINKER_FLAGS "-static-intel ${CMAKE_EXE_LINKER_FLAGS}")
-set(CMAKE_SHARED_LINKER_FLAGS "-static-intel ${CMAKE_SHARED_LINKER_FLAGS}")
-set(CMAKE_STATIC_LINKER_FLAGS "-static-intel ${CMAKE_STATIC_LINKER_FLAGS}")
-set(CMAKE_MODULE_LINKER_FLAGS "-static-intel ${CMAKE_MODULE_LINKER_FLAGS}")
+# Note: this doesn't seem to be used/relevant to the DPC++ compiler? Maybe just the
+# DPCPP release one? The nightly clang compiler doesn't recognize this flag
+#set(CMAKE_EXE_LINKER_FLAGS "-static-intel ${CMAKE_EXE_LINKER_FLAGS}")
+#set(CMAKE_SHARED_LINKER_FLAGS "-static-intel ${CMAKE_SHARED_LINKER_FLAGS}")
+#set(CMAKE_STATIC_LINKER_FLAGS "-static-intel ${CMAKE_STATIC_LINKER_FLAGS}")
+#set(CMAKE_MODULE_LINKER_FLAGS "-static-intel ${CMAKE_MODULE_LINKER_FLAGS}")
+
+# TODO: These flags aren't recognized by IntelLLVM (the nightly dpcpp compiler)
+# but at least the nan one does show up in the released dpcpp compiler.
+# Are they being removed? or added?
+#set(CMAKE_CXX_FLAGS "-fhonor-nan-compares -fhonor-infinities ${CMAKE_CXX_FLAGS}")
+
+# SYCL flags to match Embree
+list(APPEND OSPRAY_CXX_FLAGS_SYCL
+  -Wno-mismatched-tags
+  -Wno-pessimizing-move
+  -Wno-reorder
+  -Wno-unneeded-internal-declaration
+  -Wno-delete-non-abstract-non-virtual-dtor
+  -Wno-dangling-field
+  -Wno-unknown-pragmas
+  -Wno-logical-op-parentheses
+  -fsycl
+  -fsycl-unnamed-lambda
+  -Xclang -fsycl-allow-func-ptr)
+
+# FIXME: debug information generation takes forever in SYCL
+# TODO: Still true?
+list(APPEND OSPRAY_CXX_FLAGS_SYCL -g0)
+# FIXME: assertion still not working in SYCL
+# TODO: Still true?
+#list(APPEND OSPRAY_CXX_FLAGS_SYCL -UDEBUG -DNDEBUG)
+
+# IGC options from Embree
+# Enable __noinline
+list(APPEND OSPRAY_IGC_OPTIONS "EnableOCLNoInlineAttr=0")
+# This works around some IGC bug in spill compression
+# TODO: Still true?
+list(APPEND OSPRAY_IGC_OPTIONS "VISAOptions=-scratchAllocForStackInKB 128 -nospillcompression")
+
+# Allow printf inside indirectly callable function, right now I have this in all for testing
+# TODO: Should only enable for debug builds, and this needs to be done using a generator expression
+# if we want to support it in VS
+list(APPEND OSPRAY_IGC_OPTIONS "ForceInlineStackCallWithImplArg=0" "EnableGlobalStateBuffer=1")
+
+# This significantly improves compile times on 17028 and up, though also impacts performance some
+option(OSPRAY_IGC_FAST_COMPILE
+    "Pass flags to improve compilation speed at the cost of some optimization" OFF)
+if (OSPRAY_IGC_FAST_COMPILE)
+    list(APPEND OSPRAY_IGC_OPTIONS "PartitionUnit=1")
+    list(APPEND OSPRAY_IGC_OPTIONS "UnitSizeThreshold=20000")
+endif()
+#list(APPEND OSPRAY_IGC_OPTIONS "ForceOCLSIMDWidth=8")
+
+# Development option to dump shaders, when we compile AOT this has to be done at build time
+option(OSPRAY_IGC_DUMP_SHADERS "Dump IGC shaders during build" OFF)
+if (OSPRAY_IGC_DUMP_SHADERS)
+  list(APPEND OSPRAY_IGC_OPTIONS
+    "ShaderDumpEnable=1"
+    "ShowFullVectorsInShaderDumps=1"
+    "DumpToCustomDir=${PROJECT_BINARY_DIR}/ospray_igc_shader_dump")
+endif()
+
+# enables support for buffers larger than 4GB
+list(APPEND OSPRAY_OCL_OPTIONS -cl-intel-greater-than-4GB-buffer-required)
+list(APPEND OSPRAY_OCL_OTHER_OPTIONS
+  -cl-intel-force-global-mem-allocation
+  -cl-intel-no-local-to-generic)
+
+# Large GRF mode
+option(OSPRAY_DPCPP_LARGEGRF "Enable DPC++ Large GRF Support" OFF)
+if (OSPRAY_DPCPP_LARGEGRF)
+  list(APPEND CMAKE_OCL_OPTIONS "-internal_options -cl-intel-256-GRF-per-thread")
+endif()
+
+# SYCL options for AOT/JIT compilation
+set(OSPRAY_DPCPP_AOT_DEVICES "none" CACHE STRING
+  "SYCL devices to use for AOT compilation. Selecting none will compile to SPV for JIT compilation")
+set_property(CACHE OSPRAY_DPCPP_AOT_DEVICES PROPERTY STRINGS none dg2 pvc)
+
+# TODO: Is this revision info going to be visible to end users? In the end the public release
+# of the code should probably just have one revision it targets right? The final consumer release rev.
+set(OSPRAY_DPCPP_AOT_DEVICE_REVISION "8" CACHE STRING "AOT target device revision")
+
+string(REPLACE ";" "," OSPRAY_IGC_OPTIONS_STR "${OSPRAY_IGC_OPTIONS}")
+
+set(OSPRAY_OCL_OPTIONS_STR "${OSPRAY_OCL_OPTIONS}")
+string(REPLACE ";" " " OSPRAY_OCL_OPTIONS_STR "${OSPRAY_OCL_OPTIONS}")
+
+set(OSPRAY_OCL_OTHER_OPTIONS_STR "${OSPRAY_OCL_OTHER_OPTIONS}")
+string(REPLACE ";" " " OSPRAY_OCL_OTHER_OPTIONS_STR "${OSPRAY_OCL_OTHER_OPTIONS}")
+
+if (OSPRAY_DPCPP_AOT_DEVICES STREQUAL "none")
+  set(OSPRAY_SYCL_TARGET spir64)
+else()
+  set(OSPRAY_SYCL_TARGET spir64_gen)
+endif()
+

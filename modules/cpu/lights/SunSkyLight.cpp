@@ -5,9 +5,11 @@
 #include "SunSkyLight.h"
 #include "texture/Texture2D.h"
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc exports
 #include "lights/HDRILight_ispc.h"
+#endif
 // ispc shared
 #include "DirectionalLightShared.h"
 #include "HDRILightShared.h"
@@ -157,7 +159,7 @@ void SunSkyLight::commit()
         float cosGamma = cos(theta) * cos(sunThetaMax)
             + sin(theta) * sin(sunThetaMax) * cos(phi - sunPhi);
 
-        float gamma = acos(clamp(cosGamma, -1.f, 1.f));
+        float gamma = std::acos(clamp(cosGamma, -1.f, 1.f));
 
         float rgbData[3];
         for (int i = 0; i < 3; ++i) {

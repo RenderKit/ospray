@@ -23,7 +23,10 @@ struct ThinGlass
   TextureParam attenuationColorMap;
 
 #ifdef __cplusplus
-  ThinGlass() : eta(1.5f), attenuation(0.f), attenuationScale(1.f) {}
+  ThinGlass() : eta(1.5f), attenuation(0.f), attenuationScale(1.f)
+  {
+    super.type = ispc::MATERIAL_TYPE_THINGLASS;
+  }
 };
 } // namespace ispc
 #else

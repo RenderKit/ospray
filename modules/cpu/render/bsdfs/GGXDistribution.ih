@@ -5,6 +5,8 @@
 
 #include "MicrofacetDistribution.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // GGX (Trowbridge-Reitz) microfacet distribution
 // [Walter et al., 2007, "Microfacet Models for Refraction through Rough
 // Surfaces"] [Heitz, 2014, "Understanding the Masking-Shadowing Function in
@@ -33,7 +35,8 @@ inline float eval(const GGXDistribution &self, const vec3f &wh)
   float cosTheta2 = sqr(cosTheta);
 
   float e = (sqr(wh.x / self.alpha.x) + sqr(wh.y / self.alpha.y)) / cosTheta2;
-  return rcp(pi * self.alpha.x * self.alpha.y * sqr(cosTheta2 * (1.f + e)));
+  return rcp(
+      (float)pi * self.alpha.x * self.alpha.y * sqr(cosTheta2 * (1.f + e)));
 }
 
 // p(\omega_m) = D(\omega_m) \cos\theta_m
@@ -52,11 +55,12 @@ inline vec3f sample(const GGXDistribution &self, float &pdf, const vec2f &s)
 {
   float phi;
   if (self.alpha.x == self.alpha.y) {
-    phi = 2.f * pi * s.y;
+    phi = 2.f * (float)pi * s.y;
   } else {
-    phi = atan(self.alpha.y / self.alpha.x * tan(pi * (2.f * s.y + 0.5f)));
+    phi =
+        atan(self.alpha.y / self.alpha.x * tan((float)pi * (2.f * s.y + 0.5f)));
     if (s.y > 0.5f)
-      phi += pi;
+      phi += (float)pi;
   }
 
   float sinPhi, cosPhi;
@@ -74,7 +78,7 @@ inline vec3f sample(const GGXDistribution &self, float &pdf, const vec2f &s)
   float sinTheta = cos2sin(cosTheta);
 
   float e = tanTheta2 / alpha2;
-  pdf = rcp(pi * self.alpha.x * self.alpha.y * cosTheta3 * sqr(1.f + e));
+  pdf = rcp((float)pi * self.alpha.x * self.alpha.y * cosTheta3 * sqr(1.f + e));
 
   float x = cosPhi * sinTheta;
   float y = sinPhi * sinTheta;
@@ -152,7 +156,8 @@ inline vec3f sampleVisible(
   // Sample point with polar coordinates (r, phi)
   float a = 1.f / (1.f + V.z);
   float r = sqrt(s.x);
-  float phi = (s.y < a) ? s.y / a * pi : pi + (s.y - a) / (1.f - a) * pi;
+  float phi = (s.y < a) ? s.y / a * (float)pi
+                        : (float)pi + (s.y - a) / (1.f - a) * (float)pi;
   float P1 = r * cos(phi);
   float P2 = r * sin(phi) * ((s.y < a) ? 1.f : V.z);
 
@@ -169,3 +174,5 @@ inline vec3f sampleVisible(
       / abs(cosThetaO);
   return wh;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

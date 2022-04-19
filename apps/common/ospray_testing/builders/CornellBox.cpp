@@ -229,9 +229,16 @@ cpp::Group CornellBox::buildGroup() const
 {
   cpp::Geometry quadMesh("mesh");
 
+  // TODO: Temporarily try triangulating the scene
+  std::vector<vec3ui> triangleIndices;
+  for (const auto &idx : indices) {
+    triangleIndices.push_back(vec3ui(idx.x, idx.y, idx.z));
+    triangleIndices.push_back(vec3ui(idx.z, idx.w, idx.x));
+  }
+
   quadMesh.setParam("vertex.position", cpp::CopiedData(vertices));
   quadMesh.setParam("vertex.color", cpp::CopiedData(colors));
-  quadMesh.setParam("index", cpp::CopiedData(indices));
+  quadMesh.setParam("index", cpp::CopiedData(triangleIndices));
   quadMesh.commit();
 
   cpp::GeometricModel model(quadMesh);

@@ -9,25 +9,33 @@ namespace ispc {
 #endif // __cplusplus
 
 struct GeometricModel;
+#ifdef OSPRAY_ENABLE_VOLUMES
 struct VolumetricModel;
+#endif
 
 struct Group
 {
   GeometricModel **geometricModels;
   int32 numGeometricModels;
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   VolumetricModel **volumetricModels;
   int32 numVolumetricModels;
+#endif
 
   GeometricModel **clipModels;
   int32 numClipModels;
+
+  RTCScene testScene;
 
 #ifdef __cplusplus
   Group()
       : geometricModels(nullptr),
         numGeometricModels(0),
+#ifdef OSPRAY_ENABLE_VOLUMES
         volumetricModels(nullptr),
         numVolumetricModels(0),
+#endif
         clipModels(nullptr),
         numClipModels(0)
   {}

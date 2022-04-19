@@ -23,13 +23,32 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "common/rkcommonDPCPPWrappers.h"
+#include "rkcommon/math/rkmath.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/math.ih"
+#endif
+
+#ifdef OSPRAY_TARGET_DPCPP
+// TODO: Experiment with storing Sobol_matrices in a separate USM buffer
+// instead of in global memory. Storing it in global memory like this
+// will likely bloat the kernel size and register use, which will impact
+// utilization and performance.
+#include "math/sobol.ispc"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #define Sobol_numDimensions 1024
 #define Sobol_numBits 52
 
+#ifndef OSPRAY_TARGET_DPCPP
 extern const uniform unsigned int
     Sobol_matrices[Sobol_numDimensions * Sobol_numBits];
+#endif
 
 // Compute one component of the Sobol'-sequence, where the component
 // corresponds to the dimension parameter, and the index specifies
@@ -51,3 +70,4 @@ inline float Sobol_sample(unsigned int index,
 
   return to_float_unorm(result);
 }
+OSPRAY_END_ISPC_NAMESPACE

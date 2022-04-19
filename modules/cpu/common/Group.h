@@ -9,14 +9,16 @@
 // stl
 #include <vector>
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
 // ispc shared
 #include "GroupShared.h"
 
 namespace ospray {
 
 struct GeometricModel;
+#ifdef OSPRAY_ENABLE_VOLUMES
 struct VolumetricModel;
+#endif
 struct Light;
 
 struct OSPRAY_SDK_INTERFACE Group
@@ -33,19 +35,25 @@ struct OSPRAY_SDK_INTERFACE Group
   // Data members //
 
   Ref<const DataT<GeometricModel *>> geometricModels;
+#ifdef OSPRAY_ENABLE_VOLUMES
   Ref<const DataT<VolumetricModel *>> volumetricModels;
+#endif
   Ref<const DataT<GeometricModel *>> clipModels;
   int numInvertedClippers{0};
 
   Ref<const DataT<Light *>> lights;
 
   RTCScene sceneGeometries{nullptr};
+#ifdef OSPRAY_ENABLE_VOLUMES
   RTCScene sceneVolumes{nullptr};
+#endif
   RTCScene sceneClippers{nullptr};
 
  private:
   std::unique_ptr<BufferShared<ispc::GeometricModel *>> geometricModelsArray;
+#ifdef OSPRAY_ENABLE_VOLUMES
   std::unique_ptr<BufferShared<ispc::VolumetricModel *>> volumetricModelsArray;
+#endif
   std::unique_ptr<BufferShared<ispc::GeometricModel *>> clipModelsArray;
 };
 

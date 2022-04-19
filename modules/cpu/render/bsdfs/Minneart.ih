@@ -6,6 +6,8 @@
 #include "BSDF.ih"
 #include "ShadingContext.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct Minneart
 {
   BSDF super;
@@ -23,7 +25,8 @@ inline BSDF_EvalRes Minneart_eval(
   const float cosThetaI = clamp(dot(wi, getN(super)));
   const float backScatter = pow(clamp(dot(wo, wi)), self->b);
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
-  res.value = (backScatter * cosThetaI * one_over_pi) * self->super.albedo;
+  res.value =
+      (backScatter * cosThetaI * (float)one_over_pi) * self->super.albedo;
   return res;
 }
 
@@ -52,8 +55,14 @@ inline void Minneart_Constructor(varying Minneart *uniform self,
   BSDF_Constructor(&self->super,
       R,
       BSDF_DIFFUSE_REFLECTION,
+      BSDF_TYPE_MINNEART,
+#ifdef OSPRAY_TARGET_DPCPP
+      NULL,
+      NULL,
+#else
       Minneart_eval,
       Minneart_sample,
+#endif
       frame);
 
   self->b = b;
@@ -70,3 +79,5 @@ inline varying BSDF *uniform Minneart_create(
   Minneart_Constructor(self, frame, R, b);
   return &self->super;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

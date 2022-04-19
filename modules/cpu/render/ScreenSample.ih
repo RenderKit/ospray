@@ -3,8 +3,17 @@
 
 #pragma once
 
-#include "common/Ray.ih"
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/vec.ih"
+#endif
+
+#include "common/Ray.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct ScreenSample
 {
@@ -25,3 +34,5 @@ struct ScreenSample
   unsigned int geomID;
   unsigned int instID;
 };
+
+OSPRAY_END_ISPC_NAMESPACE

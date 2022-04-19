@@ -3,6 +3,8 @@
 
 #include "pf/LUTPixelFilter.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline vec2f LUTPixelFilter_sample(
     const PixelFilter *uniform _self, const vec2f &s)
 {
@@ -116,3 +118,5 @@ export void *uniform BlackmanHarrisLUT_create()
   LUTPixelFilter_Constructor(self, 3.0f, BlackmanHarris_eval);
   return self;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

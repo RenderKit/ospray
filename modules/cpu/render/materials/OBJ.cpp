@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "OBJ.h"
+#ifndef OSPRAY_TARGET_DPCPP
 // ispc
 #include "render/materials/OBJ_ispc.h"
+#endif
 
 namespace ospray {
 namespace pathtracer {
@@ -11,9 +13,13 @@ namespace pathtracer {
 OBJMaterial::OBJMaterial(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.type = ispc::MATERIAL_TYPE_OBJ;
-  getSh()->super.getBSDF = ispc::OBJ_getBSDF_addr();
-  getSh()->super.getTransparency = ispc::OBJ_getTransparency_addr();
+#ifndef OSPRAY_TARGET_DPCPP
+  getSh()->super.getBSDF =
+      reinterpret_cast<ispc::Material_GetBSDFFunc>(ispc::OBJ_getBSDF_addr());
+  getSh()->super.getTransparency =
+      reinterpret_cast<ispc::Material_GetTransparencyFunc>(
+          ispc::OBJ_getTransparency_addr());
+#endif
 }
 
 std::string OBJMaterial::toString() const
@@ -24,7 +30,7 @@ std::string OBJMaterial::toString() const
 void OBJMaterial::commit()
 {
   MaterialParam1f d = getMaterialParam1f("d", 1.f);
-  MaterialParam3f Kd = getMaterialParam3f("kd", vec3f(.8f));
+  MaterialParam3f Kd = getMaterialParam3f("kd", vec3f(0.8f));
   MaterialParam3f Ks = getMaterialParam3f("ks", vec3f(0.f));
   MaterialParam1f Ns = getMaterialParam1f("ns", 10.f);
 

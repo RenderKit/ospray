@@ -14,7 +14,18 @@ struct Planes
   Geometry super;
   Data1D coeffs;
   Data1D bounds;
+
+#ifdef __cplusplus
+  Planes()
+  {
+    super.type = GEOMETRY_TYPE_PLANES;
+  }
+#endif
 };
+
+#ifdef OSPRAY_TARGET_DPCPP
+void Planes_bounds(const RTCBoundsFunctionArguments *args);
+#endif
 
 #ifdef __cplusplus
 } // namespace ispc

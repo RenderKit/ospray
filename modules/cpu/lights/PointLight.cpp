@@ -3,9 +3,11 @@
 
 #include "PointLight.h"
 // embree
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
 
+#ifndef OSPRAY_TARGET_DPCPP
 #include "lights/PointLight_ispc.h"
+#endif
 
 #include "PointLightShared.h"
 #include "common/InstanceShared.h"
@@ -18,8 +20,10 @@ ISPCRTMemoryView PointLight::createSh(
   ISPCRTMemoryView view = StructSharedCreate<ispc::PointLight>(
       getISPCDevice().getIspcrtDevice().handle());
   ispc::PointLight *sh = (ispc::PointLight *)ispcrtSharedPtr(view);
-  sh->super.sample = ispc::PointLight_sample_addr();
-  sh->super.eval = ispc::PointLight_eval_addr();
+  sh->super.sample =
+      reinterpret_cast<ispc::Light_SampleFunc>(ispc::PointLight_sample_addr());
+  sh->super.eval =
+      reinterpret_cast<ispc::Light_EvalFunc>(ispc::PointLight_eval_addr());
   sh->super.isVisible = visible;
   sh->super.instance = instance;
 
@@ -34,8 +38,10 @@ ISPCRTMemoryView PointLight::createSh(
   if (instance) {
     sh->pre.c0 = intensityDistribution.c0;
     if (instance->motionBlur) {
-      sh->super.sample = ispc::PointLight_sample_instanced_addr();
-      sh->super.eval = ispc::PointLight_eval_instanced_addr();
+      sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+          ispc::PointLight_sample_instanced_addr());
+      sh->super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+          ispc::PointLight_eval_instanced_addr());
     } else
       ispc::PointLight_Transform(sh, instance->xfm, &sh->pre);
   } else {

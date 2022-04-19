@@ -6,6 +6,8 @@
 #include "BSDF.ih"
 #include "Fresnel.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct Conductor
 {
   BSDF super;
@@ -30,7 +32,7 @@ inline BSDF_SampleRes Conductor_sample(const varying BSDF *uniform super,
   res.wi = reflect(wo, getN(super));
   res.pdf = inf;
   res.type = BSDF_SPECULAR_REFLECTION;
-  res.weight = self->fresnel->eval(self->fresnel, dot(wo, getN(super)));
+  res.weight = Fresnel_dispatch_eval(self->fresnel, dot(wo, getN(super)));
   return res;
 }
 
@@ -39,10 +41,16 @@ inline void Conductor_Constructor(varying Conductor *uniform self,
     Fresnel *uniform fresnel)
 {
   BSDF_Constructor(&self->super,
-      fresnel->evalAvg(fresnel),
+      Fresnel_dispatch_evalAvg(fresnel),
       BSDF_SPECULAR_REFLECTION,
+      BSDF_TYPE_CONDUCTOR,
+#ifdef OSPRAY_TARGET_DPCPP
+      NULL,
+      NULL,
+#else
       Conductor_eval,
       Conductor_sample,
+#endif
       frame);
   self->fresnel = fresnel;
 }
@@ -57,3 +65,5 @@ inline varying BSDF *uniform Conductor_create(
   Conductor_Constructor(self, frame, fresnel);
   return &self->super;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

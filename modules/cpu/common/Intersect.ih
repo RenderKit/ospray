@@ -3,9 +3,18 @@
 
 #pragma once
 
+#ifdef OSPRAY_TARGET_DPCPP
+#include "common/rkcommonDPCPPWrappers.h"
+#include "rkcommon/math/box.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#else
 #include "rkcommon/math/box.ih"
+#endif
 
 // Ray intersection structures //////////////////////////////////////////////
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct Hit
 {
@@ -33,7 +42,7 @@ inline Intersections intersectSphere(const vec3f &rayOrg,
   isect.entry.hit = false;
   isect.exit.hit = false;
   isect.entry.t = inf;
-  isect.exit.t = -inf;
+  isect.exit.t = -(float)inf;
 
   const vec3f d = rayDir;
   const float rd2 = 1.0f / dot(d, d); // 1/a
@@ -85,7 +94,7 @@ inline Intersections intersectCylinder(const vec3f &rayOrg,
   isect.entry.hit = false;
   isect.exit.hit = false;
   isect.entry.t = inf;
-  isect.exit.t = -inf;
+  isect.exit.t = -(float)inf;
 
   const uniform vec3f cZ = v1 - v0;
   const vec3f q = rayOrg - v0;
@@ -233,3 +242,4 @@ inline Hit intersectPlane(
 
   return hit;
 }
+OSPRAY_END_ISPC_NAMESPACE

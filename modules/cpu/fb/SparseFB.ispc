@@ -9,6 +9,8 @@
 #include "render/Renderer.ih"
 #include "render/util.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 /* Return the position of the screen sample within its tile
  */
 inline vec2i SparseFB_getTilePixelPos(SparseFB *uniform fb,
@@ -141,7 +143,9 @@ void SparseFB_accumulateSample(FrameBuffer *uniform _fb,
   SparseFB_accumulateTileSample(
       fb, screenSample, tileIdx, sampleTilePos, taskDesc);
 
+#ifndef OSPRAY_TARGET_DPCPP
   FrameBuffer_updateProgress(&fb->super, popcnt(lanemask()));
+#endif
 }
 
 uniform RenderTaskDesc SparseFB_getRenderTaskDesc(
@@ -207,15 +211,16 @@ void SparseFB_completeTask(
 
 export void *uniform SparseFrameBuffer_accumulateSample_addr()
 {
-  return SparseFB_accumulateSample;
+  return (void *uniform)SparseFB_accumulateSample;
 }
 
 export void *uniform SparseFrameBuffer_getRenderTaskDesc_addr()
 {
-  return SparseFB_getRenderTaskDesc;
+  return (void *uniform)SparseFB_getRenderTaskDesc;
 }
 
 export void *uniform SparseFrameBuffer_completeTask_addr()
 {
-  return SparseFB_completeTask;
+  return (void *uniform)SparseFB_completeTask;
 }
+OSPRAY_END_ISPC_NAMESPACE

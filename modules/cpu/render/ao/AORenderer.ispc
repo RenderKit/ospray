@@ -10,7 +10,10 @@
 #include "AORendererShared.h"
 #include "fb/FrameBufferShared.h"
 
-void AORenderer_renderSample(Renderer *uniform _self,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+RTC_SYCL_INDIRECTLY_CALLABLE void AORenderer_renderSample(
+    Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -28,8 +31,10 @@ void AORenderer_renderSample(Renderer *uniform _self,
   const float originalRayTFar = sample.ray.t;
 
   // Allocate memory for volume intervals
+#ifdef OSPRAY_ENABLE_VOLUMES
   VolumeIntervals volumeIntervals;
   allocVolumeIntervals(volumeIntervals);
+#endif
 
   // This is our main ray
   Ray &ray = sample.ray;
@@ -37,15 +42,22 @@ void AORenderer_renderSample(Renderer *uniform _self,
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
   RayIntervals rayIntervals;
-  traceClippingRay(world, ray, rayIntervals);
+  // traceClippingRay(world, ray, rayIntervals);
+  rayIntervals.count = 1;
+  rayIntervals.intervals[0].lower = ray.t0;
+  rayIntervals.intervals[0].upper = ray.t;
 
   // Iterate over all translucent geometry till we are fully opaque
   vec4f outputColor = make_vec4f(0.f);
   while (outputColor.w < 0.99f) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
-    traceGeometryRayIntervals(world, ray, rayIntervals);
+    // TODO: Hitting an odd bug only with AO renderer when using
+    // traceGeometryRayIntervals on GPU (including PVC)
+    traceGeometryRay(world, ray);
+    // traceGeometryRayIntervals(world, ray, rayIntervals);
 
+#ifdef OSPRAY_ENABLE_VOLUMES
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
     traceVolumeRay(world, volumeRay, volumeIntervals);
@@ -59,18 +71,19 @@ void AORenderer_renderSample(Renderer *uniform _self,
           self->volumeSamplingRate);
       outputColor = outputColor + (1.f - outputColor.w) * volumeColor;
     }
+#endif
 
     // If any geometry has been hit
     vec4f blendedColor;
-    const bool hadHit = hadHit(ray);
-    if (hadHit) {
+    const bool rayHadHit = hadHit(ray);
+    if (rayHadHit) {
       // Prepare differential geometry structure
       DifferentialGeometry dg;
       computeDG(world, self, ray, dg);
 
       // Shade geometry
       SSI surfaceShading;
-      surfaceShading = computeShading(self, fb, world, dg, sample);
+      surfaceShading = AORenderer_computeShading(self, fb, world, dg, sample);
 
       // Use shaded color for blending
       blendedColor = surfaceShading.shadedColor;
@@ -98,12 +111,14 @@ void AORenderer_renderSample(Renderer *uniform _self,
     // Blend with output final color
     outputColor = outputColor + (1.f - outputColor.w) * blendedColor;
     firstHit = false;
-    if (!hadHit) {
+    if (!rayHadHit) {
       break;
     }
   }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   freeVolumeIntervals(volumeIntervals);
+#endif
   sample.rgb = make_vec3f(outputColor);
   sample.alpha = outputColor.w;
 }
@@ -112,5 +127,7 @@ void AORenderer_renderSample(Renderer *uniform _self,
 
 export void *uniform AORenderer_renderSample_addr()
 {
-  return AORenderer_renderSample;
+  return (void *uniform)AORenderer_renderSample;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

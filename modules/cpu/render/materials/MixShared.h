@@ -20,7 +20,10 @@ struct Mix
   Material *mat2;
 
 #ifdef __cplusplus
-  Mix() : factor(.5f), mat1(nullptr), mat2(nullptr) {}
+  Mix() : factor(.5f), mat1(nullptr), mat2(nullptr)
+  {
+    super.type = ispc::MATERIAL_TYPE_MIX;
+  }
 };
 } // namespace ispc
 #else

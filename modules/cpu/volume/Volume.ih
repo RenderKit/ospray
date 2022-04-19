@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
@@ -30,3 +31,8 @@ inline vec3f Volume_getGradient(const Volume *uniform volume, const vec3f &P)
 
   return *((varying vec3f *)&result);
 }
+
+unmasked void Volume_intersect_kernel(
+    RTCIntersectFunctionNArguments *uniform args);
+
+#endif

@@ -1,9 +1,20 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "fb/pixel_ops/ToneMapperShared.h"
-#include "math/LinearSpace.ih"
+#ifdef OSPRAY_TARGET_DPCPP
+#include "rkcommon/math/LinearSpace.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+#include "common/rkcommonDPCPPWrappers.h"
+#else
+#include "rkcommon/math/LinearSpace.ih"
 #include "rkcommon/math/vec.ih"
+#endif
+
+#include "fb/pixel_ops/ToneMapperShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // ACES input transform matrix = RRT_SAT_MAT * XYZ_2_AP1_MAT * D65_2_D60_CAT *
 // REC709_2_XYZ_PRI_MAT
@@ -45,5 +56,6 @@ vec4f LiveToneMapper_processPixel(void *uniform _self,
 
 export void *uniform LiveToneMapper_processPixel_addr()
 {
-  return LiveToneMapper_processPixel;
+  return (void *uniform)LiveToneMapper_processPixel;
 }
+OSPRAY_END_ISPC_NAMESPACE
