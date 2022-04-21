@@ -13,6 +13,7 @@ Version History
     result in framebuffer and data info being release too early, leading
     to a crash.
 -   Fix crash with OpenMPI due to argument handling
+-   Fix clipping when rays are parallel to clipping planes
 
 ### Changes in v2.9.0:
 

@@ -1,4 +1,4 @@
-// Copyright 2017-2021 Intel Corporation
+// Copyright 2017-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_geometry.h"
@@ -119,6 +119,37 @@ void Curves::SetUp()
   camera.setParam("up", arcballCamera.upDir());
 }
 
+class ClippingParallel : public Base, public ::testing::Test
+{
+ public:
+  ClippingParallel();
+  void SetUp() override;
+};
+
+ClippingParallel::ClippingParallel()
+{
+  rendererType = "pathtracer";
+}
+
+void ClippingParallel::SetUp()
+{
+  Base::SetUp();
+
+  instances.clear();
+
+  auto builder = ospray::testing::newBuilder("clip_with_planes");
+  ospray::testing::setParam(builder, "rendererType", rendererType);
+  ospray::testing::commit(builder);
+
+  world = ospray::testing::buildWorld(builder);
+  ospray::testing::release(builder);
+
+  camera = cpp::Camera("orthographic");
+  camera.setParam("height", 2.5f);
+  camera.setParam("direction", vec3f(-0.5f, -0.5f, 1.0f));
+  camera.setParam("position", vec3f(1.0f, 1.0f, -2.0f));
+}
+
 // Test Instantiations //////////////////////////////////////////////////////
 
 TEST_P(SpherePrecision, sphere)
@@ -180,6 +211,11 @@ INSTANTIATE_TEST_SUITE_P(TestScenesClipping,
                            "clip_perlin_noise_volumes"),
         ::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(16)));
+
+TEST_F(ClippingParallel, planes)
+{
+  PerformRenderTest();
+}
 
 TEST_P(FromOsprayTestingMaxDepth, test_scenes)
 {

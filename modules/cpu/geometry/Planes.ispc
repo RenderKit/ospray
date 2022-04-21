@@ -15,6 +15,7 @@
 
 // The plane can't be truly infinite because Embree has a limit on object size
 #define PLANE_MAX_SIZE 1e18
+#define DUMMY_MAX_T 1e38
 
 export void Planes_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
@@ -69,6 +70,19 @@ void Planes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   // we are done if first intersection accepted
   if (filterIntersectionSingle(args, hit, isOcclusionTest, false))
     return;
+
+  // handle plane parallel to ray, which breaks interval logic for clipping
+  if (!hit.hit) {
+    const uniform vec3f normal = make_vec3f(coeffs);
+    if (coeffs.w > dot(ray->org, normal)) { // within clipping half-space?
+      Hit hitExitDummy;
+      hitExitDummy.hit = true;
+      hitExitDummy.t = DUMMY_MAX_T;
+      hitExitDummy.N = ray->dir;
+      filterIntersectionSingle(args, hitExitDummy, isOcclusionTest, true);
+    }
+    return;
+  }
 
   // The second implicit plane is needed just for infinite planes
   if (valid(self->bounds))
