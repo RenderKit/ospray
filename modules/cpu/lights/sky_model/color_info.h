@@ -1,5 +1,5 @@
 // Copyright 2010-2020 Attila T. Afra
-// Copyright 2015-2020 Intel Corporation
+// Copyright 2015 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 namespace ospray {

@@ -1,4 +1,4 @@
-## Copyright 2017-2021 Intel Corporation
+## Copyright 2017 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 if (NOT OSPRAY_ENABLE_APPS_TESTING)
