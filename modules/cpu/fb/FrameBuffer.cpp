@@ -33,7 +33,10 @@ FrameBuffer::FrameBuffer(const vec2i &_size,
       hasVarianceBuffer(
           (channels & OSP_FB_VARIANCE) && (channels & OSP_FB_ACCUM)),
       hasNormalBuffer(channels & OSP_FB_NORMAL),
-      hasAlbedoBuffer(channels & OSP_FB_ALBEDO)
+      hasAlbedoBuffer(channels & OSP_FB_ALBEDO),
+      hasPrimitiveIDBuffer(channels & OSP_FB_ID_PRIMITIVE),
+      hasObjectIDBuffer(channels & OSP_FB_ID_OBJECT),
+      hasInstanceIDBuffer(channels & OSP_FB_ID_INSTANCE)
 {
   managedObjectType = OSP_FRAMEBUFFER;
   if (_size.x <= 0 || _size.y <= 0) {
@@ -224,6 +227,21 @@ uint32 FrameBuffer::getChannelFlags() const
 int32 FrameBuffer::getFrameID() const
 {
   return getSh()->frameID;
+}
+
+bool FrameBuffer::hasPrimitiveIDBuf() const
+{
+  return hasPrimitiveIDBuffer;
+}
+
+bool FrameBuffer::hasObjectIDBuf() const
+{
+  return hasObjectIDBuffer;
+}
+
+bool FrameBuffer::hasInstanceIDBuf() const
+{
+  return hasInstanceIDBuffer;
 }
 
 OSPTYPEFOR_DEFINITION(FrameBuffer *);

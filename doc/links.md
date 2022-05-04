@@ -10,6 +10,7 @@
 [volume]: documentation.html#volumes
 [curves]: documentation.html#curves
 [group]: documentation.html#groups
+[instance]: documentation.html#instances
 [world]: documentation.html#world
 [data]: documentation.html#data
 [GeometricModel]: documentation.html#geometricmodels

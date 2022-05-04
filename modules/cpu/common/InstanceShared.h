@@ -18,6 +18,8 @@ struct Instance
   AffineSpace3f xfm;
   AffineSpace3f rcp_xfm;
   bool motionBlur;
+  // user defined id.  Typically used for picking
+  uint32 userID;
 
 #ifdef __cplusplus
   Instance()

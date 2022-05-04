@@ -23,6 +23,7 @@ struct VolumetricModel
   float anisotropy; // the anisotropy of the volume's phase function
                     // (Heyney-Greenstein)
   float gradientShadingScale;
+  unsigned int userID;
 
 #ifdef __cplusplus
   VolumetricModel()
@@ -32,7 +33,8 @@ struct VolumetricModel
         boundingBox(0.f, 0.f),
         densityScale(1.f),
         anisotropy(0.f),
-        gradientShadingScale(0.f)
+        gradientShadingScale(0.f),
+        userID(RTC_INVALID_GEOMETRY_ID)
   {}
 };
 } // namespace ispc

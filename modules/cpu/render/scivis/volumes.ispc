@@ -149,6 +149,12 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
       minDist = vc.distance;
       sampledColor = vc.sample;
       usedSampleId = i;
+      if (minDist < ray.t
+          && sampledColor.w < 1.0f - rc.renderer->super.minContribution) {
+        ray.t = minDist;
+        ray.geomID = volumeIntervals.intervals[i].geomID;
+        ray.instID = volumeIntervals.intervals[i].instID;
+      }
     }
   }
 

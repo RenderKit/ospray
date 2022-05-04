@@ -137,6 +137,10 @@ float volumeSampleFreePath(const PathState &pathState,
             *sampledInstance = inst;
             sampledExtinctionCoefficient = extinctionCoefficient;
             sampledAlbedo = albedo;
+            ray.t = dist;
+            ray.primID = 0;
+            ray.geomID = volumeIntervals.intervals[i].geomID;
+            ray.instID = volumeIntervals.intervals[i].instID;
           }
           break;
         }

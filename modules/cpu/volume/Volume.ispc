@@ -23,8 +23,6 @@ export void Volume_intersect_kernel(
   Volume *uniform self = (Volume * uniform) args->geometryUserPtr;
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
 
-  uniform int primID = args->primID;
-
   box3f *uniform box = &self->boundingBox;
 
   const Intersections isect = intersectBox(ray->org, ray->dir, *box);

@@ -17,6 +17,16 @@ inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
     const varying Ray &ray,
     uniform int64 flags)
 {
-  dg.areaPDF = 0.f;
+  dg.Ng = make_vec3f(0.f);
+  dg.Ns = make_vec3f(0.f);
+  dg.dPds = make_vec3f(0.f);
+  dg.dPdt = make_vec3f(0.f);
+  dg.st = make_vec2f(0);
   dg.color = make_vec4f(0.f);
+  dg.primID = 0;
+  dg.objID =
+      (self->userID == RTC_INVALID_GEOMETRY_ID) ? ray.geomID : self->userID;
+  dg.areaPDF = 0.f;
+  dg.epsilon = 0.f;
+  dg.material = NULL;
 }

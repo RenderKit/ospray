@@ -426,7 +426,7 @@ can be represented in OSPRay; valid constants are listed in the table
 below.
 
   -------------------------- ---------------------------------------------------
-  Type/Name                  Description
+  Type / Name                Description
   -------------------------- ---------------------------------------------------
   OSP_DEVICE                 API device object reference
 
@@ -1049,6 +1049,8 @@ used.
   float                anisotropy             0.0  anisotropy of the (Henyey-Greenstein)
                                                    phase function in [-1–1] ([path tracer]
                                                    only), default to isotropic scattering
+
+  uint32               id                     -1u  optional user ID, for [framebuffer] channel `OSP_FB_ID_OBJECT`
   -------------------- ----------------- --------  ---------------------------------------
   : Parameters understood by VolumetricModel.
 
@@ -1370,30 +1372,26 @@ normal vectors orientation one can control whether inside or outside of
 the clipping geometry is being removed. For example, a clipping geometry
 with normals oriented outside clips everything what's inside.
 
-  ------------------------ -------------- ----------------------------------------------------
-  Type                     Name           Description
-  ------------------------ -------------- ----------------------------------------------------
-  OSPGeometry              geometry       optional [geometry] object this model references
+  ----------------------------------------------- ------------- ----------------------------------------------------
+  Type                                            Name          Description
+  ----------------------------------------------- ------------- ----------------------------------------------------
+  OSPGeometry                                     geometry      optional [geometry] object this model references
 
-  OSPMaterial / uint32     material       optional [material] applied to the geometry, may be
-                                          an index into the `material` parameter on the
-                                          [renderer] (if it exists)
+  OSPMaterial / OSPMaterial[] / uint32 / uint32[] material      optional ([data] array of per-primitive) [material],
+                                                                may be an index into the `material` parameter on
+                                                                the renderer (if it exists)
 
-  vec4f                    color          optional color assigned to the geometry (linear
-                                          RGBA)
+  vec4f / vec4f[]                                 color         optional ([data] array of per-primitive) color
+                                                                assigned to the geometry (linear RGBA)
 
-  OSPMaterial[] / uint32[] material       optional [data] array of (per-primitive) materials,
-                                          may be an index into the `material` parameter on
-                                          the renderer (if it exists)
+  uint8[]                                         index         optional [data] array of per-primitive indices into
+                                                                `color` and `material`
 
-  vec4f[]                  color          optional [data] array of (per-primitive) colors
-                                          (linear RGBA)
+  bool                                            invertNormals inverts all shading normals (Ns), default false
 
-  uint8[]                  index          optional [data] array of per-primitive indices into
-                                          `color` and `material`
-
-  bool                     invertNormals  inverts all shading normals (Ns), default false
-  ------------------------ -------------- ----------------------------------------------------
+  uint32                                          id            optional user ID, for [framebuffer] channel
+                                                                `OSP_FB_ID_OBJECT`, default -1u
+  ----------------------------------------------- ------------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
 
@@ -1828,6 +1826,8 @@ used.
 
   box1f        time                  [0, 1] time associated with first and last key in `motion.*`
                                             arrays (for motion blur)
+
+  uint32       id                       -1u optional user ID, for [framebuffer] channel `OSP_FB_ID_INSTANCE`
   ------------ ----------------- ---------- --------------------------------------------------------
   : Parameters understood by instances.
 
@@ -2890,15 +2890,18 @@ The parameter `frameBufferChannels` specifies which channels the
 framebuffer holds, and can be combined together by bitwise OR from the
 values of `OSPFrameBufferChannel` listed in the table below.
 
-  Name             Description
-  ---------------- -----------------------------------------------------------
-  OSP_FB_COLOR     RGB color including alpha
-  OSP_FB_DEPTH     euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float; for multiple samples per pixel their minimum is taken
-  OSP_FB_ACCUM     accumulation buffer for progressive refinement
-  OSP_FB_VARIANCE  for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering]
-  OSP_FB_NORMAL    accumulated world-space normal of the first non-specular hit, as vec3f
-  OSP_FB_ALBEDO    accumulated material albedo (color without illumination) at the first hit, as vec3f
-  ---------------- -----------------------------------------------------------
+  Name                Description
+  ------------------- ----------------------------------------------------------
+  OSP_FB_COLOR        RGB color including alpha
+  OSP_FB_DEPTH        euclidean distance to the camera (_not_ to the image plane), as linear 32\ bit float; for multiple samples per pixel their minimum is taken
+  OSP_FB_ACCUM        accumulation buffer for progressive refinement
+  OSP_FB_VARIANCE     for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering]
+  OSP_FB_NORMAL       accumulated world-space normal of the first non-specular hit, as vec3f
+  OSP_FB_ALBEDO       accumulated material albedo (color without illumination) at the first hit, as vec3f
+  OSP_FB_ID_PRIMITIVE primitive index of the first hit, as uint32
+  OSP_FB_ID_OBJECT    geometric/volumetric model `id`, if specified, or index in [group] of first hit, as uint32
+  OSP_FB_ID_INSTANCE  user defined [instance] `id`, if specified, or instance index of first hit, as uint32
+  ------------------- ----------------------------------------------------------
   : Framebuffer channels constants (of type `OSPFrameBufferChannel`),
   naming optional information the framebuffer can store. These values
   can be combined by bitwise OR when passed to `ospNewFrameBuffer`.

@@ -81,6 +81,9 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   bool hasVarianceBuf() const;
   bool hasNormalBuf() const;
   bool hasAlbedoBuf() const;
+  bool hasPrimitiveIDBuf() const;
+  bool hasObjectIDBuf() const;
+  bool hasInstanceIDBuf() const;
 
   uint32 getChannelFlags() const;
 
@@ -109,6 +112,9 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   bool hasVarianceBuffer;
   bool hasNormalBuffer;
   bool hasAlbedoBuffer;
+  bool hasPrimitiveIDBuffer;
+  bool hasObjectIDBuffer;
+  bool hasInstanceIDBuffer;
 
   float frameVariance{0.f};
 

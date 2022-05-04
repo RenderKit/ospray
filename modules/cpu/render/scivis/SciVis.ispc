@@ -6,6 +6,7 @@
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "surfaces.ih"
+#include "volume/VolumetricModel.ih"
 #include "volumes.ih"
 // c++ shared
 #include "fb/FrameBufferShared.h"
@@ -43,6 +44,7 @@ void SciVis_renderSample(Renderer *uniform _self,
   // Iterate over all translucent geometry till we are fully opaque
   vec3f outColor = make_vec3f(0.f);
   vec3f outTransmission = make_vec3f(1.f);
+  int minVolIndex = 0; // interval index of closest volume
   while (true) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
@@ -60,6 +62,7 @@ void SciVis_renderSample(Renderer *uniform _self,
       rc.world = world;
       rc.sample = sample;
       rc.ldSampler = ldSampler;
+      volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
       vec4f volumeColor = integrateVolumeIntervalsGradient(rc,
           volumeIntervals,
           rayIntervals,
@@ -71,6 +74,23 @@ void SciVis_renderSample(Renderer *uniform _self,
       // Blend volume
       outColor = outColor + outTransmission * make_vec3f(volumeColor);
       outTransmission = outTransmission * volumeColor.w;
+
+      if (hadHit(volumeRay) && sample.geomID == RTC_INVALID_GEOMETRY_ID) {
+        sample.primID = 0;
+        foreach_unique (instID in volumeRay.instID)
+          if (instID != RTC_INVALID_GEOMETRY_ID) {
+            const Instance *uniform instance = *(world->volumesInst + instID);
+            sample.instID = (instance->userID == RTC_INVALID_GEOMETRY_ID)
+                ? instID
+                : instance->userID;
+            const VolumetricModel *volms =
+                *(instance->group->volumetricModels + volumeRay.geomID);
+            foreach_unique (volm in volms)
+              sample.geomID = (volm->userID == RTC_INVALID_GEOMETRY_ID)
+                  ? volumeRay.geomID
+                  : volm->userID;
+          }
+      }
     }
 
     // Add contribution from visible lights, P is used by light
@@ -102,9 +122,14 @@ void SciVis_renderSample(Renderer *uniform _self,
       // transmissive hits will lead the normal/albedo to be replaced by the
       // current hit
       if (firstHit || allHitsFullyTransmissive) {
-        sample.z = ray.t;
+        sample.z = min(ray.t, volumeRay.t);
         sample.albedo = surfaceShading.albedo;
         sample.normal = dg.Ns;
+        if (sample.geomID == RTC_INVALID_GEOMETRY_ID) {
+          sample.instID = dg.instID;
+          sample.geomID = dg.objID;
+          sample.primID = ray.primID;
+        }
         firstHit = false;
       }
 
@@ -138,8 +163,8 @@ void SciVis_renderSample(Renderer *uniform _self,
       // If the ray hits the background and comes from a fully transmissive
       // path, we overwrite normals/albedo by background values
       if (firstHit || allHitsFullyTransmissive) {
-        sample.z = ray.t;
-        sample.albedo = make_vec3f(backgroundColor);
+        sample.z = min(ray.t, volumeRay.t);
+        sample.albedo = make_vec3f(backgroundColor); // TODO volume albedo
         sample.normal = make_vec3f(0.f);
       }
 

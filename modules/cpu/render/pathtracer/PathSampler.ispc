@@ -36,17 +36,20 @@ inline void postIntersect(const PathContext &pathContext,
             | DG_TANGENTS | DG_MOTIONBLUR);
   }
   if (pathVertex.type == VOLUME) {
-    pathVertex.dg.Ng = make_vec3f(0.f);
-    pathVertex.dg.Ns = make_vec3f(0.f);
-    pathVertex.dg.dPds = make_vec3f(0.f);
-    pathVertex.dg.dPdt = make_vec3f(0.f);
-    pathVertex.dg.st = make_vec2f(0);
-    pathVertex.dg.color = make_vec4f(0.f);
-    pathVertex.dg.primID = RTC_INVALID_GEOMETRY_ID;
-    pathVertex.dg.areaPDF = 0.f;
-    pathVertex.dg.epsilon = 0.f;
-    pathVertex.dg.material = NULL;
+    pathVertex.dg.P = ray.org + ray.t * ray.dir;
     pathVertex.dg.renderer = &pt->super;
+
+    pathVertex.dg.instID = ray.instID;
+    foreach_unique (instID in ray.instID)
+      if (instID != RTC_INVALID_GEOMETRY_ID) {
+        const World *uniform world = pathContext.world;
+        const Instance *uniform instance = *(world->volumesInst + instID);
+        if (instance->userID != RTC_INVALID_GEOMETRY_ID)
+          pathVertex.dg.instID = instance->userID;
+      }
+
+    foreach_unique (volm in pathVertex.volume)
+      VolumetricModel_postIntersect(volm, pathVertex.dg, ray, 0);
   }
 }
 
@@ -127,10 +130,6 @@ void samplePath(const PathContext &pathContext,
       pathVertex.type = SURFACE;
     }
 
-    // record depth of primary rays
-    if (pathState.depth == 0)
-      sample.z = ray.t;
-
     if (shadowCatcher(pathContext, pathState, pathVertex, ray, sample))
       pathVertex.type = ENVIRONMENT;
 
@@ -148,9 +147,12 @@ void samplePath(const PathContext &pathContext,
         pathVertex.albedo);
     if (freePath < inf) {
       pathVertex.type = VOLUME;
-      pathVertex.dg.P = make_vec3f(ray.org + ray.dir * freePath);
       pathState.throughput = pathState.throughput * pathVertex.albedo;
     }
+
+    // record depth of primary rays
+    if (pathState.depth == 0)
+      sample.z = ray.t;
 
     // background handling
     if (pathVertex.type == ENVIRONMENT
@@ -189,6 +191,13 @@ void samplePath(const PathContext &pathContext,
       pathState.contribution = pathState.contribution
           + evaluateGeometryLights(
               pathContext, pathState, lastVertex, pathVertex, ray);
+    }
+
+    // record IDs of primary rays
+    if (pathState.depth == 0) {
+      sample.primID = pathVertex.dg.primID;
+      sample.geomID = pathVertex.dg.objID;
+      sample.instID = pathVertex.dg.instID;
     }
 
     // terminate after evaluation of lights and before next shading to always

@@ -29,6 +29,7 @@ void Instance::commit()
   getSh()->xfm = motionTransform.transform;
   getSh()->rcp_xfm = rcp(getSh()->xfm);
   getSh()->motionBlur = motionTransform.motionBlur;
+  getSh()->userID = getParam<uint32>("id", RTC_INVALID_GEOMETRY_ID);
 }
 
 box3f Instance::getBounds() const

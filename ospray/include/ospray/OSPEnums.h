@@ -241,7 +241,10 @@ typedef enum
   OSP_FB_ACCUM = (1 << 2),
   OSP_FB_VARIANCE = (1 << 3),
   OSP_FB_NORMAL = (1 << 4), // in world-space
-  OSP_FB_ALBEDO = (1 << 5)
+  OSP_FB_ALBEDO = (1 << 5),
+  OSP_FB_ID_PRIMITIVE = (1 << 6),
+  OSP_FB_ID_OBJECT = (1 << 7),
+  OSP_FB_ID_INSTANCE = (1 << 8)
 } OSPFrameBufferChannel;
 
 // OSPRay events which can be waited on via ospWait()

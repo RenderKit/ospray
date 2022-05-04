@@ -74,6 +74,7 @@ void GeometricModel::commit()
   getSh()->material = *ispc(materialData);
   getSh()->useRendererMaterialList = useRendererMaterialList;
   getSh()->invertedNormals = getParam<bool>("invertNormals", false);
+  getSh()->userID = getParam<uint32>("id", RTC_INVALID_GEOMETRY_ID);
 }
 
 OSPTYPEFOR_DEFINITION(GeometricModel *);

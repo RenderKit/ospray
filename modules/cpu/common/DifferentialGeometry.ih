@@ -34,6 +34,8 @@ struct DifferentialGeometry
 
   Material *material; // pointer to hit-point's material
   const Renderer *uniform renderer; // pointer to renderer being used
+  unsigned int objID; // user definable model id (0xffff none)
+  unsigned int instID; // user definable instance id (0xffff none)
 };
 
 // assumed precision of intersection routines

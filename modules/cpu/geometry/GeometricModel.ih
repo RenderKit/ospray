@@ -45,6 +45,8 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
   geom->postIntersect(geom, dg, ray, flags);
 
   dg.areaPDF = self->areaPDF;
+  dg.objID =
+      (self->userID == RTC_INVALID_GEOMETRY_ID) ? ray.geomID : self->userID;
 
   if (flags & DG_COLOR && valid(self->color)) {
     uint32 idx = ray.primID;

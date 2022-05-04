@@ -67,12 +67,12 @@ OSPPickResult DistributedRenderer::pick(
 
   res.instance = nullptr;
   res.model = nullptr;
-  res.primID = -1;
+  res.primID = RTC_INVALID_GEOMETRY_ID;
   res.hasHit = false;
 
-  int instID = -1;
-  int geomID = -1;
-  int primID = -1;
+  int instID = RTC_INVALID_GEOMETRY_ID;
+  int geomID = RTC_INVALID_GEOMETRY_ID;
+  int primID = RTC_INVALID_GEOMETRY_ID;
   float depth = 1e20f;
 
   ispc::DistributedRenderer_pick(getSh(),

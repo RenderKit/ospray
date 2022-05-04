@@ -201,6 +201,21 @@ void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
     albedo = fb->albedoBuffer[pixelID];
   }
 
+  if (fb->primitiveIDBuffer) {
+    if (taskDesc.accumID == 0)
+      fb->primitiveIDBuffer[pixelID] = screenSample.primID;
+  }
+
+  if (fb->objectIDBuffer) {
+    if (taskDesc.accumID == 0)
+      fb->objectIDBuffer[pixelID] = screenSample.geomID;
+  }
+
+  if (fb->instanceIDBuffer) {
+    if (taskDesc.accumID == 0)
+      fb->instanceIDBuffer[pixelID] = screenSample.instID;
+  }
+
   // Run any pixel ops for this pixel
   // TODO: Best as inline in this kernel? Or a separate kernel?
   finalColor =
@@ -289,6 +304,42 @@ export void LocalFrameBuffer_writeDepthTile(
       depth[iix] = varyTile->z[chunkID];
     }
     depth += fb->super.size.x;
+  }
+}
+
+// "accumulate" first frame only and write into buffer
+export void LocalFrameBuffer_writeIDTile(void *uniform _fb,
+    const void *uniform _tile,
+    uniform uint32 *uniform dst,
+    const void *uniform src)
+{
+  uniform LocalFB *uniform fb = (uniform LocalFB * uniform) _fb;
+  const Tile *uniform tile = (const Tile *uniform)_tile;
+  VaryingTile *uniform varyTile = (VaryingTile * uniform) tile;
+  uniform uint32 *uniform buffer =
+      dst; //(uniform uint32 *uniform)fb->primitiveIDBuffer;
+  buffer += (uniform uint64)tile->region.lower.y * fb->super.size.x;
+  const void *uniform upid = src; //(const void* uniform)tile->pid;
+  const varying int32 *uniform pid = (const varying int32 *uniform)upid;
+
+  for (uniform uint32 iiy = tile->region.lower.y; iiy < tile->region.upper.y;
+       iiy++) {
+    uniform uint32 chunkID =
+        (iiy - tile->region.lower.y) * (TILE_SIZE / programCount);
+
+    for (uint32 iix = tile->region.lower.x + programIndex;
+         iix < tile->region.upper.x;
+         iix += programCount, chunkID++) {
+      if (tile->accumID == 0) {
+        varying uint32 val = -1;
+        unmasked
+        {
+          val = pid[chunkID];
+        }
+        buffer[iix] = val;
+      }
+    }
+    buffer += fb->super.size.x;
   }
 }
 

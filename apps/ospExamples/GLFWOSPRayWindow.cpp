@@ -5,6 +5,7 @@
 #include "imgui_impl_glfw_gl3.h"
 // ospray_testing
 #include "ospray_testing.h"
+#include "rkcommon/utility/random.h"
 // imgui
 #include "imgui.h"
 // std
@@ -74,6 +75,9 @@ static const std::vector<std::string> g_debugRendererTypes = {"eyeLight",
 static const std::vector<std::string> g_pixelFilterTypes = {
     "point", "box", "gaussian", "mitchell", "blackmanHarris"};
 
+static const std::vector<std::string> g_AOVs = {
+    "color", "depth", "albedo", "primID", "objID", "instID"};
+
 bool sceneUI_callback(void *, int index, const char **out_text)
 {
   *out_text = g_scenes[index].c_str();
@@ -101,6 +105,12 @@ bool debugTypeUI_callback(void *, int index, const char **out_text)
 bool pixelFilterTypeUI_callback(void *, int index, const char **out_text)
 {
   *out_text = g_pixelFilterTypes[index].c_str();
+  return true;
+}
+
+bool AOVUI_callback(void *, int index, const char **out_text)
+{
+  *out_text = g_AOVs[index].c_str();
   return true;
 }
 
@@ -260,7 +270,8 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
 
   // create new frame buffer
   auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO
-      | OSP_FB_NORMAL;
+      | OSP_FB_NORMAL | OSP_FB_ID_PRIMITIVE | OSP_FB_ID_OBJECT
+      | OSP_FB_ID_INSTANCE;
   framebuffer =
       cpp::FrameBuffer(windowSize.x, windowSize.y, OSP_FB_RGBA32F, buffers);
 
@@ -359,8 +370,18 @@ void GLFWOSPRayWindow::display()
 
     latestFPS = 1.f / currentFrame.duration();
 
-    auto *fb = framebuffer.map(
-        showDepth ? OSP_FB_DEPTH : (showAlbedo ? OSP_FB_ALBEDO : OSP_FB_COLOR));
+    auto fbChannel = OSP_FB_COLOR;
+    if (showDepth)
+      fbChannel = OSP_FB_DEPTH;
+    if (showAlbedo)
+      fbChannel = OSP_FB_ALBEDO;
+    if (showPrimID)
+      fbChannel = OSP_FB_ID_PRIMITIVE;
+    if (showGeomID)
+      fbChannel = OSP_FB_ID_OBJECT;
+    if (showInstID)
+      fbChannel = OSP_FB_ID_INSTANCE;
+    auto *fb = framebuffer.map(fbChannel);
 
     // Copy and normalize depth layer if showDepth is on
     float *depthFb = static_cast<float *>(fb);
@@ -384,17 +405,34 @@ void GLFWOSPRayWindow::display()
         depthFb[i] = (depthFb[i] - minDepth) * rcpDepthRange;
       }
     }
+    unsigned int *ids = static_cast<unsigned int *>(fb);
+    std::vector<vec3f> idFbArray(windowSize.x * windowSize.y);
+    float *idFb = reinterpret_cast<float *>(idFbArray.data());
+    if (showPrimID || showGeomID || showInstID) {
+      for (int i = 0; i < windowSize.x * windowSize.y; i++) {
+        const unsigned int id = ids[i];
+        idFbArray[i] =
+            id == -1u ? vec3f(0.f) : rkcommon::utility::makeRandomColor(id);
+      }
+    }
 
     glBindTexture(GL_TEXTURE_2D, framebufferTexture);
     glTexImage2D(GL_TEXTURE_2D,
         0,
-        showDepth ? GL_DEPTH_COMPONENT : (showAlbedo ? GL_RGB32F : GL_RGBA32F),
+        showDepth ? GL_DEPTH_COMPONENT
+                  : ((showAlbedo || showPrimID || showGeomID || showInstID)
+                          ? GL_RGB32F
+                          : GL_RGBA32F),
         windowSize.x,
         windowSize.y,
         0,
-        showDepth ? GL_DEPTH_COMPONENT : (showAlbedo ? GL_RGB : GL_RGBA),
+        showDepth ? GL_DEPTH_COMPONENT
+                  : ((showAlbedo || showPrimID || showGeomID || showInstID)
+                          ? GL_RGB
+                          : GL_RGBA),
         GL_FLOAT,
-        showDepth ? depthFb : fb);
+        showDepth ? depthFb
+                  : ((showPrimID || showGeomID || showInstID) ? idFb : fb));
 
     framebuffer.unmap(fb);
 
@@ -554,11 +592,28 @@ void GLFWOSPRayWindow::buildUI()
   }
 
   ImGui::Checkbox("cancel frame on interaction", &cancelFrameOnInteraction);
-  ImGui::Checkbox("show depth", &showDepth);
-  if (showDepth)
-    showAlbedo = false;
-  else
-    ImGui::Checkbox("show albedo", &showAlbedo);
+
+  static int whichAOV = 0;
+  if (ImGui::Combo("AOV Display##whichAOV",
+          &whichAOV,
+          AOVUI_callback,
+          nullptr,
+          g_AOVs.size())) {
+    auto aovStr = g_AOVs[whichAOV];
+    showDepth = showAlbedo = showPrimID = showGeomID = showInstID = false;
+    if (aovStr == "depth")
+      showDepth = true;
+    if (aovStr == "albedo")
+      showAlbedo = true;
+    if (aovStr == "primID")
+      showPrimID = true;
+    if (aovStr == "objID")
+      showGeomID = true;
+    if (aovStr == "instID")
+      showInstID = true;
+  }
+
+  ImGui::Separator();
   if (denoiserAvailable) {
     if (ImGui::Checkbox("denoiser", &denoiserEnabled))
       updateFrameOpsNextFrame = true;

@@ -115,6 +115,9 @@ task void Renderer_default_renderTask(Renderer *uniform self,
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
       screenSample.z = inf;
+      screenSample.primID = RTC_INVALID_GEOMETRY_ID;
+      screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
+      screenSample.instID = RTC_INVALID_GEOMETRY_ID;
       screenSample.albedo =
           make_vec3f(Renderer_getBackground(self, screenSample.pos));
       screenSample.normal = make_vec3f(0.f);

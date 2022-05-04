@@ -62,6 +62,9 @@ struct OSPRAY_SDK_INTERFACE Tile
   uniform float ar[TILE_SIZE * TILE_SIZE]; // albedo red
   uniform float ag[TILE_SIZE * TILE_SIZE]; // albedo green
   uniform float ab[TILE_SIZE * TILE_SIZE]; // albedo blue
+  uniform uint32 pid[TILE_SIZE * TILE_SIZE]; // primID
+  uniform uint32 gid[TILE_SIZE * TILE_SIZE]; // objID
+  uniform uint32 iid[TILE_SIZE * TILE_SIZE]; // instanceID
 
 #ifdef __cplusplus
   Tile()
@@ -107,6 +110,9 @@ struct VaryingTile
   varying float ar[TILE_SIZE * TILE_SIZE / programCount];
   varying float ag[TILE_SIZE * TILE_SIZE / programCount];
   varying float ab[TILE_SIZE * TILE_SIZE / programCount];
+  varying uint32 pid[TILE_SIZE * TILE_SIZE / programCount]; // primID
+  varying uint32 gid[TILE_SIZE * TILE_SIZE / programCount]; // objID
+  varying uint32 iid[TILE_SIZE * TILE_SIZE / programCount]; // instanceID
 };
 #endif
 

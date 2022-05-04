@@ -61,6 +61,9 @@ class GLFWOSPRayWindow
   bool denoiserEnabled{false};
   bool showAlbedo{false};
   bool showDepth{false};
+  bool showPrimID{false};
+  bool showGeomID{false};
+  bool showInstID{false};
   bool renderSunSky{false};
   bool cancelFrameOnInteraction{false};
   bool showUnstructuredCells{false};

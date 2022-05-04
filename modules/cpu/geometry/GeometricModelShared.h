@@ -21,13 +21,15 @@ struct GeometricModel
   bool invertedNormals;
 
   float areaPDF;
+  unsigned int userID;
 
 #ifdef __cplusplus
   GeometricModel()
       : geom(nullptr),
         useRendererMaterialList(false),
         invertedNormals(false),
-        areaPDF(0.f)
+        areaPDF(0.f),
+        userID(RTC_INVALID_GEOMETRY_ID)
   {}
 };
 } // namespace ispc

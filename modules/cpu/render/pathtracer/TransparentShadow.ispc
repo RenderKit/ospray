@@ -60,10 +60,6 @@ vec3f transparentShadow(const uniform PathTracer *uniform self,
       if (m != NULL)
         m->selectNextMedium(m, dg, medium);
 
-    shadowRay.t0 = shadowRay.t + dg.epsilon;
-    shadowRay.t = tOriginal;
-    shadowRay.primID = -1;
-    shadowRay.geomID = -1;
-    shadowRay.instID = -1;
+    setRay(shadowRay, shadowRay.t + dg.epsilon, tOriginal);
   }
 }

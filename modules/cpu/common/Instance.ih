@@ -38,6 +38,9 @@ inline void Instance_postIntersect(const Instance *uniform self,
   foreach_unique (geomID in ray.geomID)
     GeometricModel_postIntersect(*(models + geomID), renderer, dg, ray, flags);
 
+  dg.instID =
+      (self->userID == RTC_INVALID_GEOMETRY_ID) ? ray.instID : self->userID;
+
   uniform AffineSpace3f uxfm = self->xfm;
   uniform AffineSpace3f rcp_uxfm = self->rcp_xfm;
 

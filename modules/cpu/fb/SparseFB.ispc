@@ -100,6 +100,10 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   tile->ag[tilePixelIdx] = albedo.y;
   tile->ab[tilePixelIdx] = albedo.z;
 
+  tile->pid[tilePixelIdx] = screenSample.primID;
+  tile->gid[tilePixelIdx] = screenSample.geomID;
+  tile->iid[tilePixelIdx] = screenSample.instID;
+
   // Variance and error accumulates every other frame  to ensure we get a
   // monotonically decreasing sequence of error values
   if (variance && (taskDesc.accumID & 1)) {

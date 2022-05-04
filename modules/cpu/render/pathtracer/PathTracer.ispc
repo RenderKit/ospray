@@ -40,6 +40,9 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   sample.alpha = 1.f;
   sample.normal = make_vec3f(0.0f);
   sample.albedo = make_vec3f(0.0f);
+  sample.primID = RTC_INVALID_GEOMETRY_ID;
+  sample.geomID = RTC_INVALID_GEOMETRY_ID;
+  sample.instID = RTC_INVALID_GEOMETRY_ID;
 
   const uniform int numLights = world->pathtracerData.lights
       ? min(MAX_LIGHTS, world->pathtracerData.numLights)
@@ -102,6 +105,10 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   screenSample.sampleID.x = ix;
   screenSample.sampleID.y = iy;
 
+  screenSample.primID = RTC_INVALID_GEOMETRY_ID;
+  screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
+  screenSample.instID = RTC_INVALID_GEOMETRY_ID;
+
   LDSampler ldSamplerObj;
   RandomSampler randomSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
@@ -148,9 +155,14 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     screenSample.rgb =
         screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
     screenSample.alpha = screenSample.alpha + sample.alpha;
-    screenSample.z = min(screenSample.z, sample.z);
     screenSample.normal = screenSample.normal + sample.normal;
     screenSample.albedo = screenSample.albedo + sample.albedo;
+    if (sample.z < screenSample.z) {
+      screenSample.z = sample.z;
+      screenSample.primID = sample.primID;
+      screenSample.geomID = sample.geomID;
+      screenSample.instID = sample.instID;
+    }
   }
 
   const float rspp = rcpf(spp);

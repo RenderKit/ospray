@@ -111,11 +111,11 @@ OSPPickResult Renderer::pick(
 
   res.instance = nullptr;
   res.model = nullptr;
-  res.primID = -1;
+  res.primID = RTC_INVALID_GEOMETRY_ID;
 
-  int instID = -1;
-  int geomID = -1;
-  int primID = -1;
+  int instID = RTC_INVALID_GEOMETRY_ID;
+  int geomID = RTC_INVALID_GEOMETRY_ID;
+  int primID = RTC_INVALID_GEOMETRY_ID;
 
   ispc::Renderer_pick(getSh(),
       fb->getSh(),

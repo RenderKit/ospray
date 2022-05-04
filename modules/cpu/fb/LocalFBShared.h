@@ -26,6 +26,9 @@ struct LocalFB
   int32 *taskAccumID;
   float *taskRegionError;
   vec2i numRenderTasks;
+  uint32 *primitiveIDBuffer;
+  uint32 *objectIDBuffer;
+  uint32 *instanceIDBuffer;
 
 #ifdef __cplusplus
   LocalFB()
@@ -37,7 +40,10 @@ struct LocalFB
         albedoBuffer(nullptr),
         taskAccumID(nullptr),
         taskRegionError(nullptr),
-        numRenderTasks(0)
+        numRenderTasks(0),
+        primitiveIDBuffer(nullptr),
+        objectIDBuffer(nullptr),
+        instanceIDBuffer(nullptr)
   {}
 };
 } // namespace ispc

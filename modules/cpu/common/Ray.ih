@@ -69,9 +69,9 @@ inline void setRay(Ray &ray,
   ray.t = t1;
   ray.time = time;
   ray.mask = -1;
-  ray.geomID = -1;
-  ray.primID = -1;
-  ray.instID = -1;
+  ray.geomID = RTC_INVALID_GEOMETRY_ID;
+  ray.primID = RTC_INVALID_GEOMETRY_ID;
+  ray.instID = RTC_INVALID_GEOMETRY_ID;
 }
 
 inline void setRay(Ray &ray,

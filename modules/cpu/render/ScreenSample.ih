@@ -19,4 +19,9 @@ struct ScreenSample
   float z;
   vec3f normal;
   vec3f albedo;
+
+  // IDs of primary ray hits. Invalid: unsigned RTC_INVALID_GEOMETRY_ID, 0xffff
+  unsigned int primID;
+  unsigned int geomID;
+  unsigned int instID;
 };
