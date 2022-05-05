@@ -6,7 +6,7 @@
 #include "common/World.ih"
 #include "math/random.ih"
 #include "render/Renderer.ih"
-#include "render/util.ih"
+#include "rkcommon/utility/random.ih"
 #include "volume/VolumetricModel.ih"
 // c++ shared
 #include "fb/FrameBufferShared.h"

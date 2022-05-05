@@ -7,7 +7,7 @@
 #include "common/World.ih"
 #include "fb/SparseFB.ih"
 #include "math/random.ih"
-#include "render/util.ih"
+#include "rkcommon/utility/random.ih"
 #include "texture/Texture2D.ih"
 // c++ shared
 #include "DistributedRendererShared.h"
