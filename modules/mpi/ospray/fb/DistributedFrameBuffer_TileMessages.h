@@ -25,14 +25,16 @@ enum COMMANDTAG
       to let the master know when we're done. */
   MASTER_WRITE_TILE_I8 = 1 << 2,
   MASTER_WRITE_TILE_F32 = 1 << 3,
-  // Modifier to indicate the tile also has depth values
+  // Modifier to indicate the tile has depth values
   MASTER_TILE_HAS_DEPTH = 1 << 4,
-  // Indicates that the tile additionally also has normal and/or albedo values
+  // Indicates that the tile has normal and/or albedo values
   MASTER_TILE_HAS_AUX = 1 << 5,
+  // Indicates that the tile has ID buffer values
+  MASTER_TILE_HAS_ID = 1 << 6,
   // abort rendering the current frame
-  CANCEL_RENDERING = 1 << 6,
+  CANCEL_RENDERING = 1 << 7,
   // Worker updating us on tiles completed
-  PROGRESS_MESSAGE = 1 << 7
+  PROGRESS_MESSAGE = 1 << 8
 };
 
 struct TileMessage
@@ -107,8 +109,11 @@ std::shared_ptr<mpicommon::Message> makeWriteTileMessage(
 void unpackWriteTileMessage(
     WriteTileMessage *msg, ispc::Tile &tile, bool hasAux);
 
-size_t masterMsgSize(
-    OSPFrameBufferFormat fmt, bool hasDepth, bool hasNormal, bool hasAlbedo);
+size_t masterMsgSize(OSPFrameBufferFormat fmt,
+    bool hasDepth,
+    bool hasNormal,
+    bool hasAlbedo,
+    bool hasIDBuffers);
 
 /*! The message builder lets us abstractly fill messages of different
  * types, while keeping the underlying message structs POD so they're
@@ -120,6 +125,7 @@ class MasterTileMessageBuilder
   bool hasDepth;
   bool hasNormal;
   bool hasAlbedo;
+  bool hasIDBuffers;
   size_t pixelSize;
   MasterTileMessage_NONE *header;
 
@@ -130,11 +136,42 @@ class MasterTileMessageBuilder
       bool hasDepth,
       bool hasNormal,
       bool hasAlbedo,
+      bool hasIDBuffers,
       vec2i coords,
       float error);
+
   void setColor(const vec4f *color);
+
   void setDepth(const float *depth);
+
   void setNormal(const vec3f *normal);
+
   void setAlbedo(const vec3f *albedo);
+
+  void setPrimitiveID(const uint32 *primID);
+
+  void setObjectID(const uint32 *geomID);
+
+  void setInstanceID(const uint32 *instID);
+
+ private:
+  // Return the size in bytes of the color data in the message
+  size_t colorBufferSize() const;
+
+  // Return the size in bytes of the depth data in the message. Returns 0 if
+  // depth is not being sent
+  size_t depthBufferSize() const;
+
+  // Return the size in bytes of the normal data in the message. Returns 0 if
+  // normals are not being sent
+  size_t normalBufferSize() const;
+
+  // Return the size in bytes of the albedo data in the message. Returns 0 if
+  // albedo is not being sent
+  size_t albedoBufferSize() const;
+
+  // Return the size in bytes of the ID data in the message. Returns 0 if
+  // IDs are not being sent
+  size_t idBufferSize() const;
 };
 } // namespace ospray

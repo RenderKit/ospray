@@ -36,6 +36,11 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
       final->b[i] = col.z;
       final->a[i] = col.w;
       final->z[i] = tile->z[i];
+
+      // ID buffers only written on the first frame
+      final->pid[i] = tile->pid[i];
+      final->gid[i] = tile->gid[i];
+      final->iid[i] = tile->iid[i];
     }
   } else {
     const uniform float rcpAccumID = rcpf(accumID + 1);
@@ -240,18 +245,58 @@ inline void swapFragments(
   float r = t0->r[fragID];
   t0->r[fragID] = t1->r[fragID];
   t1->r[fragID] = r;
+
   float g = t0->g[fragID];
   t0->g[fragID] = t1->g[fragID];
   t1->g[fragID] = g;
+
   float b = t0->b[fragID];
   t0->b[fragID] = t1->b[fragID];
   t1->b[fragID] = b;
+
   float a = t0->a[fragID];
   t0->a[fragID] = t1->a[fragID];
   t1->a[fragID] = a;
+
   float z = t0->z[fragID];
   t0->z[fragID] = t1->z[fragID];
   t1->z[fragID] = z;
+
+  float nx = t0->nx[fragID];
+  t0->nx[fragID] = t1->nx[fragID];
+  t1->nx[fragID] = nx;
+
+  float ny = t0->ny[fragID];
+  t0->ny[fragID] = t1->ny[fragID];
+  t1->ny[fragID] = ny;
+
+  float nz = t0->nz[fragID];
+  t0->nz[fragID] = t1->nz[fragID];
+  t1->nz[fragID] = nz;
+
+  float ar = t0->ar[fragID];
+  t0->ar[fragID] = t1->ar[fragID];
+  t1->ar[fragID] = ar;
+
+  float ag = t0->ag[fragID];
+  t0->ag[fragID] = t1->ag[fragID];
+  t1->ag[fragID] = ag;
+
+  float ab = t0->ab[fragID];
+  t0->ab[fragID] = t1->ab[fragID];
+  t1->ab[fragID] = ab;
+
+  uint32 pid = t0->pid[fragID];
+  t0->pid[fragID] = t1->pid[fragID];
+  t1->pid[fragID] = pid;
+
+  uint32 gid = t0->gid[fragID];
+  t0->gid[fragID] = t1->gid[fragID];
+  t1->gid[fragID] = gid;
+
+  uint32 iid = t0->iid[fragID];
+  t0->iid[fragID] = t1->iid[fragID];
+  t1->iid[fragID] = iid;
 }
 
 #define PIXELS_PER_BLEND_JOB 64

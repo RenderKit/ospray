@@ -868,6 +868,10 @@ const void *MPIOffloadDevice::frameBufferMap(
       ArrayView<uint8_t>(reinterpret_cast<uint8_t *>(&nbytes), sizeof(nbytes));
 
   fabric->recv(bytesView, rootWorkerRank());
+  if (nbytes == 0) {
+    throw std::runtime_error(
+        "Attempt to map framebuffer channel which does not exist!");
+  }
 
   auto mapping = rkcommon::make_unique<OwnedArray<uint8_t>>();
   mapping->resize(nbytes, 0);

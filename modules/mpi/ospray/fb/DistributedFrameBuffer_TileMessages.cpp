@@ -23,8 +23,11 @@ void unpackWriteTileMessage(
   std::memcpy(&tile, reinterpret_cast<char *>(msg) + sizeof(int), msgSize);
 }
 
-size_t masterMsgSize(
-    OSPFrameBufferFormat fmt, bool hasDepth, bool hasNormal, bool hasAlbedo)
+size_t masterMsgSize(OSPFrameBufferFormat fmt,
+    bool hasDepth,
+    bool hasNormal,
+    bool hasAlbedo,
+    bool hasIDBuffers)
 {
   size_t msgSize = 0;
   switch (fmt) {
@@ -46,6 +49,10 @@ size_t masterMsgSize(
   if (hasNormal || hasAlbedo) {
     msgSize += 2 * sizeof(vec3f) * TILE_SIZE * TILE_SIZE;
   }
+  // If any ID buffer is present we allocate space for all of them to be sent
+  if (hasIDBuffers) {
+    msgSize += 3 * sizeof(uint32) * TILE_SIZE * TILE_SIZE;
+  }
   return msgSize;
 }
 
@@ -53,15 +60,18 @@ MasterTileMessageBuilder::MasterTileMessageBuilder(OSPFrameBufferFormat fmt,
     bool hasDepth,
     bool hasNormal,
     bool hasAlbedo,
+    bool hasIDBuffers,
     vec2i coords,
     float error)
     : colorFormat(fmt),
       hasDepth(hasDepth),
       hasNormal(hasNormal),
-      hasAlbedo(hasAlbedo)
+      hasAlbedo(hasAlbedo),
+      hasIDBuffers(hasIDBuffers)
 {
   int command = 0;
-  const size_t msgSize = masterMsgSize(fmt, hasDepth, hasNormal, hasAlbedo);
+  const size_t msgSize =
+      masterMsgSize(fmt, hasDepth, hasNormal, hasAlbedo, hasIDBuffers);
   switch (fmt) {
   case OSP_FB_NONE:
     throw std::runtime_error(
@@ -77,11 +87,14 @@ MasterTileMessageBuilder::MasterTileMessageBuilder(OSPFrameBufferFormat fmt,
     break;
   }
   // AUX also includes depth
-  if (hasDepth) {
+  if (hasDepth || hasNormal || hasAlbedo) {
     command |= MASTER_TILE_HAS_DEPTH;
   }
   if (hasNormal || hasAlbedo) {
     command |= MASTER_TILE_HAS_AUX;
+  }
+  if (hasIDBuffers) {
+    command |= MASTER_TILE_HAS_ID;
   }
   message = std::make_shared<mpicommon::Message>(msgSize);
   header = reinterpret_cast<MasterTileMessage_NONE *>(message->data);
@@ -89,6 +102,7 @@ MasterTileMessageBuilder::MasterTileMessageBuilder(OSPFrameBufferFormat fmt,
   header->coords = coords;
   header->error = error;
 }
+
 void MasterTileMessageBuilder::setColor(const vec4f *color)
 {
   if (colorFormat != OSP_FB_NONE) {
@@ -97,32 +111,93 @@ void MasterTileMessageBuilder::setColor(const vec4f *color)
     std::copy(input, input + pixelSize * TILE_SIZE * TILE_SIZE, out);
   }
 }
+
 void MasterTileMessageBuilder::setDepth(const float *depth)
 {
   if (hasDepth) {
-    float *out = reinterpret_cast<float *>(message->data
-        + sizeof(MasterTileMessage_NONE) + pixelSize * TILE_SIZE * TILE_SIZE);
+    float *out = reinterpret_cast<float *>(
+        message->data + sizeof(MasterTileMessage_NONE) + colorBufferSize());
     std::copy(depth, depth + TILE_SIZE * TILE_SIZE, out);
   }
 }
+
 void MasterTileMessageBuilder::setNormal(const vec3f *normal)
 {
   if (hasNormal) {
-    auto out = reinterpret_cast<vec3f *>(message->data
-        + sizeof(MasterTileMessage_NONE) + pixelSize * TILE_SIZE * TILE_SIZE
-        + sizeof(float) * TILE_SIZE * TILE_SIZE);
+    vec3f *out =
+        reinterpret_cast<vec3f *>(message->data + sizeof(MasterTileMessage_NONE)
+            + colorBufferSize() + depthBufferSize());
     std::copy(normal, normal + TILE_SIZE * TILE_SIZE, out);
   }
 }
+
 void MasterTileMessageBuilder::setAlbedo(const vec3f *albedo)
 {
   if (hasAlbedo) {
-    auto out = reinterpret_cast<vec3f *>(message->data
-        + sizeof(MasterTileMessage_NONE) + pixelSize * TILE_SIZE * TILE_SIZE
-        + sizeof(float) * TILE_SIZE * TILE_SIZE
-        + sizeof(vec3f) * TILE_SIZE * TILE_SIZE);
+    vec3f *out =
+        reinterpret_cast<vec3f *>(message->data + sizeof(MasterTileMessage_NONE)
+            + colorBufferSize() + depthBufferSize() + normalBufferSize());
     std::copy(albedo, albedo + TILE_SIZE * TILE_SIZE, out);
   }
+}
+
+void MasterTileMessageBuilder::setPrimitiveID(const uint32 *primID)
+{
+  if (hasIDBuffers) {
+    size_t offset = sizeof(MasterTileMessage_NONE) + colorBufferSize()
+        + depthBufferSize() + normalBufferSize() + albedoBufferSize();
+    uint32 *out = reinterpret_cast<uint32 *>(message->data + offset);
+    std::copy(primID, primID + TILE_SIZE * TILE_SIZE, out);
+  }
+}
+
+void MasterTileMessageBuilder::setObjectID(const uint32 *geomID)
+{
+  if (hasIDBuffers) {
+    size_t offset = sizeof(MasterTileMessage_NONE) + colorBufferSize()
+        + depthBufferSize() + normalBufferSize() + albedoBufferSize()
+        + sizeof(uint32) * TILE_SIZE * TILE_SIZE;
+    uint32 *out = reinterpret_cast<uint32 *>(message->data + offset);
+    std::copy(geomID, geomID + TILE_SIZE * TILE_SIZE, out);
+  }
+}
+
+void MasterTileMessageBuilder::setInstanceID(const uint32 *instID)
+{
+  if (hasIDBuffers) {
+    size_t offset = sizeof(MasterTileMessage_NONE) + colorBufferSize()
+        + depthBufferSize() + normalBufferSize() + albedoBufferSize()
+        + 2 * sizeof(uint32) * TILE_SIZE * TILE_SIZE;
+    uint32 *out = reinterpret_cast<uint32 *>(message->data + offset);
+    std::copy(instID, instID + TILE_SIZE * TILE_SIZE, out);
+  }
+}
+
+size_t MasterTileMessageBuilder::colorBufferSize() const
+{
+  return pixelSize * TILE_SIZE * TILE_SIZE;
+}
+
+size_t MasterTileMessageBuilder::depthBufferSize() const
+{
+  return hasDepth || hasNormal || hasAlbedo
+      ? sizeof(float) * TILE_SIZE * TILE_SIZE
+      : 0;
+}
+
+size_t MasterTileMessageBuilder::normalBufferSize() const
+{
+  return (hasNormal || hasAlbedo) ? sizeof(vec3f) * TILE_SIZE * TILE_SIZE : 0;
+}
+
+size_t MasterTileMessageBuilder::albedoBufferSize() const
+{
+  return (hasNormal || hasAlbedo) ? sizeof(vec3f) * TILE_SIZE * TILE_SIZE : 0;
+}
+
+size_t MasterTileMessageBuilder::idBufferSize() const
+{
+  return hasIDBuffers ? 3 * sizeof(uint32) * TILE_SIZE * TILE_SIZE : 0;
 }
 
 } // namespace ospray

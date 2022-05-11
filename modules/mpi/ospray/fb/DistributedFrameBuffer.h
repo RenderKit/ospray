@@ -134,6 +134,8 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
  private:
   friend struct LiveTileOperation;
 
+  bool hasIDBuf() const;
+
   // ==================================================================
   // internal helper functions
   // ==================================================================
