@@ -1075,12 +1075,16 @@ recognizes the following parameters:
   Type                 Name                    Description
   -------------------- ----------------------- -------------------------------------------------
   vec3f[]              vertex.position         [data] array of vertex positions, overridden by `motion.*` arrays
-  vec3f[]              vertex.normal           [data] array of vertex normals, overridden by `motion.*` arrays
-  vec4f[] / vec3f[]    vertex.color            [data] array of vertex colors (linear RGBA/RGB)
-  vec2f[]              vertex.texcoord         [data] array of vertex texture coordinates
+  vec3f[]              normal                  [data] array of face-varying normals, overridden by `motion.*` arrays
+  vec3f[]              vertex.normal           [data] array of vertex-varying normals, overridden by `motion.*` arrays
+  vec4f[] / vec3f[]    color                   [data] array of face-varying colors (linear RGBA/RGB)
+  vec4f[] / vec3f[]    vertex.color            [data] array of vertex-varying colors (linear RGBA/RGB)
+  vec2f[]              texcoord                [data] array of face-varying texture coordinates
+  vec2f[]              vertex.texcoord         [data] array of vertex-varying texture coordinates
   vec3ui[] / vec4ui[]  index                   [data] array of (either triangle or quad) indices (into the vertex array(s))
   vec3f[][]            motion.vertex.position  [data] array of vertex position arrays (uniformly distributed keys for deformation motion blur)
-  vec3f[][]            motion.vertex.normal    [data] array of vertex normal arrays (uniformly distributed keys for deformation motion blur)
+  vec3f[][]            motion.normal           [data] array of face-varying normal arrays (uniformly distributed keys for deformation motion blur)
+  vec3f[][]            motion.vertex.normal    [data] array of vertex-varying normal arrays (uniformly distributed keys for deformation motion blur)
   box1f                time                    time associated with first and last key in `motion.*` arrays (for deformation motion blur), default [0, 1] 
   -------------------- ----------------------- -------------------------------------------------
   : Parameters defining a mesh geometry.
@@ -1106,10 +1110,16 @@ the following parameters:
   ------- ------------------- --------------------------------------------------
   vec3f[] vertex.position     [data] array of vertex positions
 
-  vec4f[] vertex.color        optional [data] array of vertex colors (linear
+  vec4f[] color               optional [data] array of face-varying colors (linear
                               RGBA)
 
-  vec2f[] vertex.texcoord     optional [data] array of vertex texture
+  vec4f[] vertex.color        optional [data] array of vertex-varying colors (linear
+                              RGBA)
+
+  vec2f[] texcoord            optional [data] array of vertex-varying texture
+                              coordinates
+
+  vec2f[] vertex.texcoord     optional [data] array of vertex-varying texture
                               coordinates
 
   float   level               global level of tessellation, default 5

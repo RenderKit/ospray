@@ -3,6 +3,7 @@ Version History
 
 ### Changes in v2.10.0:
 
+-   Face-varying attributes added to Mesh and Subdivision geometry
 -   OSPRay now requires minimum ISPC v1.17.0 which includes a fix for
     parallel dispatch of uniform function pointers
 -   Replace CMake variable `OSPRAY_PIXELS_PER_JOB` by

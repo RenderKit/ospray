@@ -183,6 +183,23 @@ INSTANTIATE_TEST_SUITE_P(TestScenesGeometry,
         ::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(16)));
 
+// INSTANTIATE_TEST_SUITE_P(TestScenesInterpolation,
+//     FromOsprayTesting,
+//     ::testing::Combine(::testing::Values("interpolation_quads_color_fv",
+//                            "interpolation_subd_color_fv",
+//                            "interpolation_quads_color_vv",
+//                            "interpolation_subd_color_vv",
+//                            "interpolation_quads_color_u",
+//                            "interpolation_subd_color_u",
+//                            "interpolation_quads_color_c",
+//                            "interpolation_subd_color_c",
+//                            "interpolation_quads_tex_fv",
+//                            "interpolation_subd_tex_fv",
+//                            "interpolation_quads_tex_vv",
+//                            "interpolation_subd_tex_vv"),
+//         ::testing::Values("scivis"),
+//         ::testing::Values(1)));
+
 TEST_P(Curves, test_scenes)
 {
   PerformRenderTest();

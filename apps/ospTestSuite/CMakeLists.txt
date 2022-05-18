@@ -40,6 +40,7 @@ add_executable(ospTestSuite
   test_camera.cpp
   test_motionblur.cpp
   test_framebuffer.cpp
+  test_interpolation.cpp
   ospTestSuite.cpp
 )
 

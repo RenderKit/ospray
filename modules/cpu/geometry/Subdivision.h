@@ -27,8 +27,11 @@ struct OSPRAY_SDK_INTERFACE Subdivision
 
   Ref<const DataT<vec3f>> vertexData;
   Ref<const DataT<vec4f>> colorsData;
+  size_t generatedIndicesSize{0}; // indices for face varying params
+  Ref<const DataT<uint32_t>> generatedIndicesData;
   Ref<const DataT<vec2f>> texcoordData;
   Ref<const DataT<uint32_t>> indexData;
+  Ref<const DataT<uint32_t>> colorIndexData;
   Ref<const DataT<float>> indexLevelData;
   Ref<const DataT<uint32_t>> facesData;
   Ref<const DataT<vec2ui>> edge_crease_indicesData;

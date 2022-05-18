@@ -24,6 +24,9 @@ struct Mesh
   int64 flagMask; // which attributes are missing and cannot be interpolated
   bool has_alpha; // 4th color component is valid
   bool is_triangleMesh;
+  bool isColorFaceVarying;
+  bool isTexcoordFaceVarying;
+  bool isNormalFaceVarying;
 
 #ifdef __cplusplus
   Mesh()
@@ -33,7 +36,10 @@ struct Mesh
         time(0.f, 1.f),
         flagMask(-1),
         has_alpha(false),
-        is_triangleMesh(false)
+        is_triangleMesh(false),
+        isColorFaceVarying(false),
+        isTexcoordFaceVarying(false),
+        isNormalFaceVarying(false)
   {}
 };
 } // namespace ispc

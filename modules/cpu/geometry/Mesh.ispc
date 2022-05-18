@@ -53,6 +53,9 @@ void QuadMesh_postIntersect(const Geometry *uniform _self,
   Mesh *uniform self = (Mesh * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   const vec4ui index = get_vec4ui(self->index, ray.primID);
+  const iOffset = ray.primID * 4;
+  const vec4ui findex = make_vec4ui(
+      iOffset, iOffset + 1, iOffset + 2, iOffset + 3); // face indices
   const float u = ray.u;
   const float v = ray.v;
   vec4f uv;
@@ -71,31 +74,33 @@ void QuadMesh_postIntersect(const Geometry *uniform _self,
   flags &= self->flagMask;
 
   if (flags & DG_NS) {
+    const vec4ui tindex = self->isNormalFaceVarying ? findex : index;
     if (self->motionKeys) {
       int idx;
       const float t = Mesh_calcKey(self, ray.time, idx);
       const uniform int64 byteStride = self->normal.byteStride;
       const uint8 *a0 = self->motionNormal[idx];
       const uint8 *a1 = self->motionNormal[idx + 1];
-      const vec3f a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
-      const vec3f b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
-      const vec3f c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
-      const vec3f d = interpolate_vec3f(byteStride, a0, a1, index.w, t);
+      const vec3f a = interpolate_vec3f(byteStride, a0, a1, tindex.x, t);
+      const vec3f b = interpolate_vec3f(byteStride, a0, a1, tindex.y, t);
+      const vec3f c = interpolate_vec3f(byteStride, a0, a1, tindex.z, t);
+      const vec3f d = interpolate_vec3f(byteStride, a0, a1, tindex.w, t);
       dg.Ns = quad_interpolate(uv, a, b, c, d);
     } else {
-      const vec3f a = get_vec3f(self->normal, index.x);
-      const vec3f b = get_vec3f(self->normal, index.y);
-      const vec3f c = get_vec3f(self->normal, index.z);
-      const vec3f d = get_vec3f(self->normal, index.w);
+      const vec3f a = get_vec3f(self->normal, tindex.x);
+      const vec3f b = get_vec3f(self->normal, tindex.y);
+      const vec3f c = get_vec3f(self->normal, tindex.z);
+      const vec3f d = get_vec3f(self->normal, tindex.w);
       dg.Ns = quad_interpolate(uv, a, b, c, d);
     }
   }
 
   if (flags & DG_COLOR) {
-    const vec4f a = get_vec4f(self->color, index.x);
-    const vec4f b = get_vec4f(self->color, index.y);
-    const vec4f c = get_vec4f(self->color, index.z);
-    const vec4f d = get_vec4f(self->color, index.w);
+    const vec4ui tindex = self->isColorFaceVarying ? findex : index;
+    const vec4f a = get_vec4f(self->color, tindex.x);
+    const vec4f b = get_vec4f(self->color, tindex.y);
+    const vec4f c = get_vec4f(self->color, tindex.z);
+    const vec4f d = get_vec4f(self->color, tindex.w);
     dg.color = quad_interpolate(uv, a, b, c, d);
     if (!self->has_alpha)
       dg.color.w = 1.f;
@@ -104,11 +109,12 @@ void QuadMesh_postIntersect(const Geometry *uniform _self,
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
   if (and(or (compute_texcoord, compute_tangents), valid(self->texcoord))) {
-    const vec2f a = get_vec2f(self->texcoord, index.x);
-    const vec2f b = get_vec2f(self->texcoord, index.y);
-    const vec2f d = get_vec2f(self->texcoord, index.w);
+    const vec4ui tindex = self->isTexcoordFaceVarying ? findex : index;
+    const vec2f a = get_vec2f(self->texcoord, tindex.x);
+    const vec2f b = get_vec2f(self->texcoord, tindex.y);
+    const vec2f d = get_vec2f(self->texcoord, tindex.w);
     if (compute_texcoord) {
-      const vec2f c = get_vec2f(self->texcoord, index.z);
+      const vec2f c = get_vec2f(self->texcoord, tindex.z);
       dg.st = quad_interpolate(uv, a, b, c, d);
     }
     if (compute_tangents) {
@@ -156,33 +162,38 @@ void TriangleMesh_PostIntersect(const Geometry *uniform _self,
   Mesh *uniform self = (Mesh * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   const vec3ui index = get_vec3ui(self->index, ray.primID);
+  const iOffset = ray.primID * 3;
+  const vec3ui findex =
+      make_vec3ui(iOffset, iOffset + 1, iOffset + 2); // face indices
   const vec3f uv = make_vec3f(1.0f - ray.u - ray.v, ray.u, ray.v);
 
   flags &= self->flagMask;
 
   if (flags & DG_NS) {
+    const vec3ui tindex = self->isNormalFaceVarying ? findex : index;
     if (self->motionKeys) {
       int idx;
       const float t = Mesh_calcKey(self, ray.time, idx);
       const uniform int64 byteStride = self->normal.byteStride;
       const uint8 *a0 = self->motionNormal[idx];
       const uint8 *a1 = self->motionNormal[idx + 1];
-      const vec3f a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
-      const vec3f b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
-      const vec3f c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
+      const vec3f a = interpolate_vec3f(byteStride, a0, a1, tindex.x, t);
+      const vec3f b = interpolate_vec3f(byteStride, a0, a1, tindex.y, t);
+      const vec3f c = interpolate_vec3f(byteStride, a0, a1, tindex.z, t);
       dg.Ns = interpolate(uv, a, b, c);
     } else {
-      const vec3f a = get_vec3f(self->normal, index.x);
-      const vec3f b = get_vec3f(self->normal, index.y);
-      const vec3f c = get_vec3f(self->normal, index.z);
+      const vec3f a = get_vec3f(self->normal, tindex.x);
+      const vec3f b = get_vec3f(self->normal, tindex.y);
+      const vec3f c = get_vec3f(self->normal, tindex.z);
       dg.Ns = interpolate(uv, a, b, c);
     }
   }
 
   if (flags & DG_COLOR) {
-    const vec4f a = get_vec4f(self->color, index.x);
-    const vec4f b = get_vec4f(self->color, index.y);
-    const vec4f c = get_vec4f(self->color, index.z);
+    const vec3ui tindex = self->isColorFaceVarying ? findex : index;
+    const vec4f a = get_vec4f(self->color, tindex.x);
+    const vec4f b = get_vec4f(self->color, tindex.y);
+    const vec4f c = get_vec4f(self->color, tindex.z);
     dg.color = interpolate(uv, a, b, c);
     if (!self->has_alpha)
       dg.color.w = 1.f;
@@ -191,9 +202,10 @@ void TriangleMesh_PostIntersect(const Geometry *uniform _self,
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
   if (and(or (compute_texcoord, compute_tangents), valid(self->texcoord))) {
-    const vec2f a = get_vec2f(self->texcoord, index.x);
-    const vec2f b = get_vec2f(self->texcoord, index.y);
-    const vec2f c = get_vec2f(self->texcoord, index.z);
+    const vec3ui tindex = self->isTexcoordFaceVarying ? findex : index;
+    const vec2f a = get_vec2f(self->texcoord, tindex.x);
+    const vec2f b = get_vec2f(self->texcoord, tindex.y);
+    const vec2f c = get_vec2f(self->texcoord, tindex.z);
     if (compute_texcoord)
       dg.st = interpolate(uv, a, b, c);
     if (compute_tangents) {

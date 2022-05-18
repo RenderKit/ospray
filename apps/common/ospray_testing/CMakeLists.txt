@@ -9,6 +9,7 @@ add_library(ospray_testing SHARED
   ospray_testing.cpp
 
   builders/Boxes.cpp
+  builders/Interpolation.cpp
   builders/Builder.cpp
   builders/CornellBox.cpp
   builders/Curves.cpp

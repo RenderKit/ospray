@@ -3,6 +3,7 @@
 
 // ospray
 #include "Geometry.ih"
+#include "common/Data.ih"
 // c++ shared
 #include "SubdivisionShared.h"
 
@@ -32,28 +33,24 @@ static void Subdivision_postIntersect(const Geometry *uniform _self,
   }
 
   if (flags & DG_COLOR) {
-    rtcInterpolateV1(self->geom,
+    rtcInterpolateV0(self->geom,
         ray.primID,
         ray.u,
         ray.v,
         RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
         0,
         &dg.color.x,
-        NULL,
-        NULL,
         4);
   }
 
   if (flags & DG_TEXCOORD) {
-    rtcInterpolateV1(self->geom,
+    rtcInterpolateV0(self->geom,
         ray.primID,
         ray.u,
         ray.v,
         RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE,
         1,
         &dg.st.x,
-        NULL,
-        NULL,
         2);
   }
 }

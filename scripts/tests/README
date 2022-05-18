@@ -24,16 +24,21 @@ To make new images for all tests, In ${OSPRAY_BUILD_DIR}, run the
 
 This will output generated images in a folder named generated_test_images.
 These images will not automatically be used as baseline images for the tests
-unless put into the correct folder or the update script is used (5).
+unless put into the correct folder (<OSPRAY_BUILD_DIR>/build_regression_tests/regression_test_baseline/)
+or the update script is used (5).
 
 3. Run regression tests
 
 To verify whether a change to the codebase broke anything, run
 
-% ${OSPRAY_SOURCE_DIR}/scripts/tests/run_tests.sh ${OSPRAY_SOURCE_DIR}
+% ${OSPRAY_SOURCE_DIR}/scripts/tests/run_tests.sh ${OSPRAY_SOURCE_DIR} <ISA>
 
-This will download baseline images and run tests to compare them
-in a folder named build_regression_tests.
+* where ISA is empty if using own generated images, or "AVX2" or "AVX512SKX" to 
+* download golden images for that ISA target
+
+This will download golden baseline images into a folder named
+build_regression_tests/regression_test_baseline in
+the current working directory (OSPRAY_BUILD_DIR) and run tests to compare them.
 
 4.  To run an individual test
 ./ospTestSuite --gtest_list_tests

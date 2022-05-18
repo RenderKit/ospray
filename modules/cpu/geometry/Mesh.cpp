@@ -26,6 +26,7 @@ void Mesh::commit()
 {
   motionVertexAddr.clear();
   motionNormalAddr.clear();
+  bool isNormalFaceVarying = true;
 
   motionVertexData =
       getParamDataT<const DataT<vec3f> *>("motion.vertex.position");
@@ -43,12 +44,16 @@ void Mesh::commit()
             " of same size and stride and have type vec3f");
       motionVertexAddr.push_back(vtxData->data());
     }
-    motionNormalData =
-        getParamDataT<const DataT<vec3f> *>("motion.vertex.normal");
+    motionNormalData = getParamDataT<const DataT<vec3f> *>("motion.normal");
+    if (!motionNormalData) {
+      motionNormalData =
+          getParamDataT<const DataT<vec3f> *>("motion.vertex.normal");
+      isNormalFaceVarying = false;
+    }
     if (motionNormalData) {
       if (motionNormalData->size() < motionVertexData->size())
         throw std::runtime_error(
-            "Mesh 'motion.vertex.normal' array has less keys than"
+            "Mesh 'motion*.normal' array has less keys than"
             " 'motion.vertex.position'");
       // check types and strides
       normalData = (*motionNormalData)[0]; // use 1st key as fallback
@@ -57,7 +62,7 @@ void Mesh::commit()
         if (norData->type != OSP_VEC3F || norData->ispc.numItems != size
             || norData->ispc.byteStride != stride)
           throw std::runtime_error(
-              "Mesh 'motion.vertex.normal' arrays need to be"
+              "Mesh 'motion*.normal' arrays need to be"
               " of same size and stride and have type vec3f");
         motionNormalAddr.push_back(norData->data());
       }
@@ -66,11 +71,25 @@ void Mesh::commit()
   } else {
     motionBlur = false;
     vertexData = getParamDataT<vec3f>("vertex.position", true);
-    normalData = getParamDataT<vec3f>("vertex.normal");
+    normalData = getParamDataT<vec3f>("normal");
+    if (!normalData) {
+      normalData = getParamDataT<vec3f>("vertex.normal");
+      isNormalFaceVarying = false;
+    }
   }
 
-  colorData = getParam<Data *>("vertex.color");
-  texcoordData = getParamDataT<vec2f>("vertex.texcoord");
+  colorData = getParam<Data *>("color");
+  bool isColorFaceVarying = true;
+  if (!colorData) {
+    colorData = getParam<Data *>("vertex.color");
+    isColorFaceVarying = false;
+  }
+  bool isTexcoordFaceVarying = true;
+  texcoordData = getParamDataT<vec2f>("texcoord");
+  if (!texcoordData) {
+    texcoordData = getParamDataT<vec2f>("vertex.texcoord");
+    isTexcoordFaceVarying = false;
+  }
   indexData = getParamDataT<vec3ui>("index");
   if (!indexData)
     indexData = getParamDataT<vec4ui>("index", true);
@@ -106,6 +125,9 @@ void Mesh::commit()
       indexData->size());
   rtcCommitGeometry(embreeGeometry);
 
+  getSh()->isColorFaceVarying = isColorFaceVarying;
+  getSh()->isTexcoordFaceVarying = isTexcoordFaceVarying;
+  getSh()->isNormalFaceVarying = isNormalFaceVarying;
   getSh()->index = *ispc(indexData);
   getSh()->vertex = *ispc(vertexData);
   getSh()->normal = *ispc(normalData);
