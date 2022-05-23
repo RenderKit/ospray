@@ -6,6 +6,7 @@
 #include <iterator>
 #include "Managed.h"
 #include "StructShared.h"
+#include "ispcrt.hpp"
 
 // including "Data_ispc.h" breaks app code using SDK headers
 #ifndef __ISPC_STRUCT_Data1D__
@@ -60,6 +61,7 @@ struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
  protected:
   char *addr{nullptr};
   bool shared;
+  ISPCRTMemoryView view;
 
  public:
   OSPDataType type{OSP_UNKNOWN};

@@ -31,8 +31,9 @@ Data::Data(const void *sharedData,
 Data::Data(OSPDataType type, const vec3ul &numItems)
     : shared(false), type(type), numItems(numItems), byteStride(0)
 {
-  addr =
-      (char *)alignedMalloc(size() * sizeOf(type) + 16); // XXX padding needed?
+  view = BufferSharedCreate(size() * sizeOf(type) + 16);
+  addr = (char *)ispcrtSharedPtr(view);
+
   init();
   if (isObjectType(type)) // XXX initialize always? or never?
     memset(addr, 0, size() * sizeOf(type));
@@ -48,7 +49,7 @@ Data::~Data()
   }
 
   if (!shared)
-    alignedFree(addr);
+    BufferSharedDelete(view);
 }
 
 ispc::Data1D Data::emptyData1D;
