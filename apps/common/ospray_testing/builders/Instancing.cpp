@@ -31,6 +31,7 @@ struct Instancing : public detail::Builder
 
  private:
   vec2ui numInstances{10, 10};
+  bool useIDs{false};
 };
 
 // Inlined definitions ////////////////////////////////////////////////////
@@ -46,8 +47,10 @@ cpp::Geometry makeBoxGeometry(const box3f &box)
   return ospGeometry;
 }
 
-cpp::GeometricModel makeGeometricModel(
-    cpp::Geometry geo, const std::string &rendererType, const vec3f &kd)
+cpp::GeometricModel makeGeometricModel(cpp::Geometry geo,
+    const std::string &rendererType,
+    const vec3f &kd,
+    bool useIDs)
 {
   cpp::GeometricModel geometricModel(geo);
 
@@ -58,6 +61,8 @@ cpp::GeometricModel makeGeometricModel(
     objMaterial.commit();
     geometricModel.setParam("material", objMaterial);
   }
+  if (useIDs)
+    geometricModel.setParam("id", 44u);
   geometricModel.commit();
 
   return geometricModel;
@@ -81,7 +86,7 @@ cpp::Volume makeVolume(const vec3f &center)
   return volume;
 }
 
-cpp::VolumetricModel makeVolumetricModel(cpp::Volume volume)
+cpp::VolumetricModel makeVolumetricModel(cpp::Volume volume, bool useIDs)
 {
   cpp::VolumetricModel vModel(volume);
   {
@@ -99,6 +104,8 @@ cpp::VolumetricModel makeVolumetricModel(cpp::Volume volume)
     vModel.setParam("transferFunction", transferFunction);
     vModel.setParam("densityScale", .5f);
     vModel.setParam("gradientShadingScale", 1.f);
+    if (useIDs)
+      vModel.setParam("id", 3u);
     vModel.commit();
   }
   return vModel;
@@ -113,6 +120,7 @@ void Instancing::commit()
   Builder::commit();
 
   numInstances = getParam<vec2ui>("numInstances", numInstances);
+  useIDs = getParam<bool>("useIDs", useIDs);
 }
 
 cpp::Group Instancing::buildGroupA() const
@@ -121,7 +129,7 @@ cpp::Group Instancing::buildGroupA() const
 
   cpp::Geometry box = makeBoxGeometry(box3f(vec3f(-1.f), vec3f(1.f)));
   cpp::GeometricModel geometricModel =
-      makeGeometricModel(box, rendererType, vec3f(.1f, .4f, .8f));
+      makeGeometricModel(box, rendererType, vec3f(.1f, .4f, .8f), useIDs);
   group.setParam("geometry", cpp::CopiedData(geometricModel));
 
   cpp::Light light("quad");
@@ -140,11 +148,15 @@ cpp::Group Instancing::buildGroupA() const
 cpp::Group Instancing::buildGroupB() const
 {
   cpp::Group group;
+  std::vector<cpp::GeometricModel> models;
 
-  cpp::Geometry box = makeBoxGeometry(box3f(vec3f(-1.f), vec3f(1.f)));
-  cpp::GeometricModel geometricModel =
-      makeGeometricModel(box, rendererType, vec3f(.1f, .4f, .8f));
-  group.setParam("geometry", cpp::CopiedData(geometricModel));
+  cpp::Geometry box = makeBoxGeometry(box3f(vec3f(-1.f), vec3f(0.f, 1.f, 1.f)));
+  models.emplace_back(
+      makeGeometricModel(box, rendererType, vec3f(.1f, .4f, .8f), useIDs));
+  box = makeBoxGeometry(box3f(vec3f(0.f, -1.f, -1.f), vec3f(1.f)));
+  models.emplace_back(
+      makeGeometricModel(box, rendererType, vec3f(.1f, .4f, .8f), useIDs));
+  group.setParam("geometry", cpp::CopiedData(models));
 
   cpp::Light light("spot");
   light.setParam("position", vec3f(0.f, 6.f, 0.f));
@@ -168,8 +180,8 @@ cpp::Group Instancing::buildGroupC() const
   cpp::Group group;
 
   // Create volumetric model
-  group.setParam(
-      "volume", cpp::CopiedData(makeVolumetricModel(makeVolume(vec3f(0.f)))));
+  group.setParam("volume",
+      cpp::CopiedData(makeVolumetricModel(makeVolume(vec3f(0.f)), useIDs)));
 
   cpp::Light light("sphere");
   light.setParam("position", vec3f(0.f, 2.f, 0.f));
@@ -205,6 +217,8 @@ cpp::World Instancing::buildWorld() const
       const float d = length(vec2f(position.x, position.z));
       const int gId = int(.18f * d) % groups.size();
       cpp::Instance instance(groups[gId]);
+      if (useIDs)
+        instance.setParam("id", i.y + 1);
       const affine3f xfm = affine3f::translate(position)
           * affine3f::rotate(vec3f(0.f, 1.f, 0.f), .03f * (15.f - d));
       instance.setParam("transform",
