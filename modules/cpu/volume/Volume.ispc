@@ -32,7 +32,7 @@ export void Volume_intersect_kernel(
 
   if (t_min < t_max) {
     ray->instID = args->context->instID[0];
-    ray->geomID = self->volumeID;
+    ray->geomID = args->geomID;
     ray->primID = 0;
 
     EmbreeIntersectionContext *uniform ctx =
@@ -53,7 +53,7 @@ export void Volume_intersect_kernel(
         * varying)(vIntervals->intervals + vIntervals->numVolumeIntervals);
 
     vInterval->primID = 0;
-    vInterval->geomID = self->volumeID;
+    vInterval->geomID = args->geomID;
     vInterval->instID = args->context->instID[0];
     vInterval->interval.lower = t_min;
     vInterval->interval.upper = t_max;

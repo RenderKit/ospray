@@ -25,11 +25,6 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
 
   Ref<Volume> getVolume() const;
 
-  void setGeomID(int geomID)
-  {
-    volume->setGeomID(geomID);
-  }
-
  private:
   box3f volumeBounds;
   Ref<Volume> volume;

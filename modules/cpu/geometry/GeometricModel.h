@@ -25,6 +25,7 @@ struct OSPRAY_SDK_INTERFACE GeometricModel
   void commit() override;
 
   Geometry &geometry();
+  RTCGeometry embreeGeometryHandle() const;
 
   bool invertedNormals() const;
 
@@ -47,6 +48,11 @@ OSPTYPEFOR_SPECIALIZATION(GeometricModel *, OSP_GEOMETRIC_MODEL);
 inline Geometry &GeometricModel::geometry()
 {
   return *geom;
+}
+
+inline RTCGeometry GeometricModel::embreeGeometryHandle() const
+{
+  return geom->getEmbreeGeometry();
 }
 
 inline bool GeometricModel::invertedNormals() const

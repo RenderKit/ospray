@@ -11,24 +11,12 @@ namespace ospray {
 
 // Embree helper functions //////////////////////////////////////////////////
 
+template <class MODEL>
 inline void createEmbreeScene(
-    RTCScene &scene, const DataT<GeometricModel *> &objects, int embreeFlags)
+    RTCScene &scene, const DataT<MODEL *> &objects, int embreeFlags)
 {
-  for (auto &&obj : objects) {
-    Geometry &geom = obj->geometry();
-    rtcAttachGeometry(scene, geom.getEmbreeGeometry());
-  }
-
-  rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
-}
-
-inline void createEmbreeScene(
-    RTCScene &scene, const DataT<VolumetricModel *> &objects, int embreeFlags)
-{
-  for (auto &&obj : objects) {
-    auto geomID = rtcAttachGeometry(scene, obj->embreeGeometryHandle());
-    obj->setGeomID(geomID);
-  }
+  for (auto &&obj : objects)
+    rtcAttachGeometry(scene, obj->embreeGeometryHandle());
 
   rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
 }

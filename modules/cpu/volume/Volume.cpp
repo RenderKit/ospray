@@ -206,11 +206,6 @@ void Volume::setDevice(RTCDevice embreed, VKLDevice vkld)
   vklDevice = vkld;
 }
 
-void Volume::setGeomID(int geomID)
-{
-  getSh()->volumeID = geomID;
-}
-
 OSPTYPEFOR_DEFINITION(Volume *);
 
 } // namespace ospray

@@ -23,7 +23,6 @@ struct OSPRAY_SDK_INTERFACE Volume
   std::string toString() const override;
   void commit() override;
   void setDevice(RTCDevice embreeDevice, VKLDevice vklDevice);
-  void setGeomID(int geomID);
 
  private:
   void checkDataStride(const Data *) const;

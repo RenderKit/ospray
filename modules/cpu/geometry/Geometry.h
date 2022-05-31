@@ -32,7 +32,7 @@ struct OSPRAY_SDK_INTERFACE Geometry
 
   void setDevice(RTCDevice embreeDevice);
 
-  RTCGeometry getEmbreeGeometry();
+  RTCGeometry getEmbreeGeometry() const;
 
   bool supportAreaLighting() const;
 
@@ -61,7 +61,7 @@ inline void Geometry::registerType(const char *type)
   registerTypeHelper<Geometry, T>(type);
 }
 
-inline RTCGeometry Geometry::getEmbreeGeometry()
+inline RTCGeometry Geometry::getEmbreeGeometry() const
 {
   return embreeGeometry;
 }
