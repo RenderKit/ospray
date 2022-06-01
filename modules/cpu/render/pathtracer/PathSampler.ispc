@@ -43,7 +43,7 @@ inline void postIntersect(const PathContext &pathContext,
     foreach_unique (instID in ray.instID)
       if (instID != RTC_INVALID_GEOMETRY_ID) {
         const World *uniform world = pathContext.world;
-        const Instance *uniform instance = *(world->volumesInst + instID);
+        const Instance *uniform instance = *(world->instances + instID);
         if (instance->userID != RTC_INVALID_GEOMETRY_ID)
           pathVertex.dg.instID = instance->userID;
       }

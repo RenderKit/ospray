@@ -46,7 +46,7 @@ unmasked void clippingIntersectionFilterV(
     // We need to call postIntersect on clipping geometry
     foreach_unique (instID in hit->instID[0]) {
       // Call postIntersect to get shading normal
-      Instance *uniform instance = *(context->world->clippersInst + instID);
+      Instance *uniform instance = *(context->world->instances + instID);
       Instance_postIntersect(instance, NULL, dg, *ray, DG_NG | DG_NS, true);
 
       // Use geometry normal for clipping

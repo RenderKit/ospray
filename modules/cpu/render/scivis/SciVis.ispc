@@ -79,7 +79,7 @@ void SciVis_renderSample(Renderer *uniform _self,
         sample.primID = 0;
         foreach_unique (instID in volumeRay.instID)
           if (instID != RTC_INVALID_GEOMETRY_ID) {
-            const Instance *uniform instance = *(world->volumesInst + instID);
+            const Instance *uniform instance = *(world->instances + instID);
             sample.instID = (instance->userID == RTC_INVALID_GEOMETRY_ID)
                 ? instID
                 : instance->userID;

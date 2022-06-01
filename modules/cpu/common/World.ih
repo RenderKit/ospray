@@ -43,7 +43,7 @@ inline void traceVolumeRay(
       (varying RTCRayHit * uniform) & ray);
 
   if (intervals.numVolumeIntervals > 0 && hasInterval(intervals.intervals[0])) {
-    interval.instance = *(world->volumesInst + intervals.intervals[0].instID);
+    interval.instance = *(world->instances + intervals.intervals[0].instID);
     interval.volumetricModel =
         interval.instance->group
             ->volumetricModels[intervals.intervals[0].geomID];
@@ -68,7 +68,7 @@ inline void traceVolumeRay(
   if (intervals.numVolumeIntervals > 0) {
     for (uniform int i = 0; i < intervals.numVolumeIntervals; ++i) {
       const Instance *const instance =
-          *(world->volumesInst + intervals.intervals[i].instID);
+          *(world->instances + intervals.intervals[i].instID);
       intervals.intervals[i].instance = instance;
       intervals.intervals[i].volumetricModel =
           instance->group->volumetricModels[intervals.intervals[i].geomID];
@@ -309,7 +309,7 @@ inline void postIntersect(const World *uniform world,
 
   foreach_unique (instID in ray.instID) {
     if (instID != RTC_INVALID_GEOMETRY_ID) {
-      Instance *uniform instance = *(world->geometriesInst + instID);
+      Instance *uniform instance = *(world->instances + instID);
       Instance_postIntersect(instance, renderer, dg, ray, flags);
     } else {
       dg.Ns = dg.Ng = ray.Ng;
