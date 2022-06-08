@@ -40,7 +40,6 @@ cmake -L `
   -G $($args[0]) `
   -D CMAKE_PREFIX_PATH="$DEP_DIR\lib\cmake" `
   -D OSPRAY_BUILD_ISA=ALL `
-  -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc.exe `
   -D TBB_ROOT=$DEP_DIR `
   -D OSPRAY_ZIP_MODE=OFF `
   -D OSPRAY_MODULE_DENOISER=ON `

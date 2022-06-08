@@ -60,6 +60,7 @@ macro(ospray_add_dependent_lib TARGET_NAME)
   endif()
 endmacro()
 
+ospray_add_dependent_lib(ispcrt::ispcrt)
 ospray_add_dependent_lib(rkcommon::rkcommon)
 if (RKCOMMON_TASKING_TBB)
   ospray_add_dependent_lib(TBB::tbb)

@@ -11,6 +11,7 @@ include(CMakeDependentOption)
 set(OSPRAY_CMAKECONFIG_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
 
+set(ISPC_VERSION_REQUIRED 1.18.0)
 set(RKCOMMON_VERSION_REQUIRED 1.10.0)
 set(EMBREE_VERSION_REQUIRED 3.13.1)
 set(OPENVKL_VERSION_REQUIRED 1.3.0)
@@ -44,12 +45,17 @@ if (OSPRAY_MODULE_DENOISER)
   find_package(OpenImageDenoise 1.2.3 REQUIRED)
 endif()
 
+# ISPC
+find_package(ispcrt ${ISPC_VERSION_REQUIRED} REQUIRED)
+set(ISPC_FAST_MATH ON)
+
 ###########################################################
 # OSPRay specific build options and configuration selection
 ###########################################################
 
 # Configure OSPRay ISA last after we've detected what we got w/ Embree
 ospray_configure_ispc_isa()
+set(ISPC_TARGET_CPU ${OSPRAY_ISPC_TARGET_LIST})
 
 option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 option(OSPRAY_ENABLE_MODULES "Enable the 'modules' subtree in the build." ON)
