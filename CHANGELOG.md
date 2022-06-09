@@ -16,6 +16,7 @@ Version History
 -   Fix crash with OpenMPI due to argument handling
 -   Fix clipping when rays are parallel to clipping planes
 -   Add support for primitive, object, and instance ID buffers in framebuffer
+-   Fix missing SDK headers from CPU and MPI module
 
 ### Changes in v2.9.0:
 

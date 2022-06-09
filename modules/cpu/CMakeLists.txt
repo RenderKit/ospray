@@ -320,21 +320,19 @@ PUBLIC
 get_subdirectories(SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
 
 foreach(dir ${SUBDIRS})
-  if (NOT "${dir}" STREQUAL include)
-    install(DIRECTORY ${dir}
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/modules/cpu
-      COMPONENT devel
-      FILES_MATCHING
-      PATTERN *.h
-      PATTERN *.ih
-    )
-    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${dir}
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/modules/cpu
-      COMPONENT devel
-      FILES_MATCHING
-      PATTERN *_ispc.h
-    )
-  endif()
+  install(DIRECTORY ${dir}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/modules/cpu
+    COMPONENT devel
+    FILES_MATCHING
+    PATTERN *.h
+    PATTERN *.ih
+  )
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${dir}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/modules/cpu
+    COMPONENT devel
+    FILES_MATCHING
+    PATTERN *_ispc.h
+  )
 endforeach()
 
 ##############################################################

@@ -51,13 +51,6 @@ foreach(dir ${SUBDIRS})
       COMPONENT devel
       FILES_MATCHING
       PATTERN *.h
-      PATTERN *.ih
-    )
-    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${dir}
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
-      COMPONENT devel
-      FILES_MATCHING
-      PATTERN *_ispc.h
     )
   endif()
 endforeach()
