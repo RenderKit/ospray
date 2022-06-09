@@ -98,7 +98,7 @@ cpp::VolumetricModel createProceduralVolumetricModel(
   volume.commit();
 
   cpp::TransferFunction tfn("piecewiseLinear");
-  tfn.setParam("valueRange", voxelRange.toVec2());
+  tfn.setParam("value", voxelRange);
   tfn.setParam("color", cpp::CopiedData(colors));
   tfn.setParam("opacity", cpp::CopiedData(opacities));
   tfn.commit();

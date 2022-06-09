@@ -1013,7 +1013,7 @@ to `ospNewTransferFunction` and it is controlled by these parameters:
   ------------ ----------- ----------------------------------------------
   vec3f[]      color       [data] array of colors (linear RGB)
   float[]      opacity     [data] array of opacities
-  vec2f        valueRange  domain (scalar range) this function maps from
+  box1f        value       domain (scalar range) this function maps from
   ------------ ----------- ----------------------------------------------
   : Parameters accepted by the linear transfer function.
 

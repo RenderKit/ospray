@@ -17,6 +17,9 @@ Version History
 -   Fix clipping when rays are parallel to clipping planes
 -   Add support for primitive, object, and instance ID buffers in framebuffer
 -   Fix missing SDK headers from CPU and MPI module
+-   Deprecated the `vec2f valueRange` parameter of the `piecewiseLinear`
+    transfer function, use `box1f value` instead
+
 
 ### Changes in v2.9.0:
 
