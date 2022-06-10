@@ -1,7 +1,7 @@
-## Copyright 2009 Intel Corporation
+## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-set(OSPRAY_CXX_FLAGS "-fno-strict-aliasing -Wno-narrowing")
+set(OSPRAY_CXX_FLAGS "-fno-strict-aliasing -Wno-narrowing -fhonor-infinities -fhonor-nans")
 
 if(OSPRAY_STRICT_BUILD)
   # OK to turn off.
@@ -60,3 +60,9 @@ set(CMAKE_CXX_FLAGS "${OSPRAY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
 if (APPLE)
   set(CMAKE_CXX_FLAGS "-mmacosx-version-min=10.9 ${CMAKE_CXX_FLAGS}") # we only use MacOSX 10.9 features
 endif()
+
+# enable -static-intel
+set(CMAKE_EXE_LINKER_FLAGS "-static-intel ${CMAKE_EXE_LINKER_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "-static-intel ${CMAKE_SHARED_LINKER_FLAGS}")
+set(CMAKE_STATIC_LINKER_FLAGS "-static-intel ${CMAKE_STATIC_LINKER_FLAGS}")
+set(CMAKE_MODULE_LINKER_FLAGS "-static-intel ${CMAKE_MODULE_LINKER_FLAGS}")
