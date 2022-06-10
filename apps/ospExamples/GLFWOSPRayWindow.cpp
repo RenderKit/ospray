@@ -690,6 +690,38 @@ void GLFWOSPRayWindow::buildUI()
     addObjectToCommit(renderer->handle());
   }
 
+  if (ImGui::Checkbox("renderSunSky", &renderSunSky)) {
+    if (renderSunSky) {
+      sunSky.setParam("direction", sunDirection);
+      world.setParam("light", cpp::CopiedData(sunSky));
+      addObjectToCommit(sunSky.handle());
+    } else {
+      cpp::Light light("ambient");
+      light.setParam("visible", false);
+      light.commit();
+      world.setParam("light", cpp::CopiedData(light));
+    }
+    addObjectToCommit(world.handle());
+  }
+  if (renderSunSky) {
+    if (ImGui::DragFloat3("sunDirection", sunDirection, 0.01f, -1.f, 1.f)) {
+      sunSky.setParam("direction", sunDirection);
+      addObjectToCommit(sunSky.handle());
+      addObjectToCommit(world.handle());
+    }
+    if (ImGui::DragFloat("turbidity", &turbidity, 0.1f, 1.f, 10.f)) {
+      sunSky.setParam("turbidity", turbidity);
+      addObjectToCommit(sunSky.handle());
+      addObjectToCommit(world.handle());
+    }
+    if (ImGui::DragFloat(
+            "horizonExtension", &horizonExtension, 0.01f, 0.f, 1.f)) {
+      sunSky.setParam("horizonExtension", horizonExtension);
+      addObjectToCommit(sunSky.handle());
+      addObjectToCommit(world.handle());
+    }
+  }
+
   if (rendererType == OSPRayRendererType::PATHTRACER) {
     static int maxDepth = 20;
     if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {
@@ -741,35 +773,6 @@ void GLFWOSPRayWindow::buildUI()
             "rollingShutterDuration", &cameraRollingShutter, 0.f, 1.0f)) {
       updateCamera();
       addObjectToCommit(camera.handle());
-    }
-
-    if (ImGui::Checkbox("renderSunSky", &renderSunSky)) {
-      if (renderSunSky) {
-        sunSky.setParam("direction", sunDirection);
-        world.setParam("light", cpp::CopiedData(sunSky));
-        addObjectToCommit(sunSky.handle());
-      } else {
-        cpp::Light light("ambient");
-        light.setParam("visible", false);
-        light.commit();
-        world.setParam("light", cpp::CopiedData(light));
-      }
-      addObjectToCommit(world.handle());
-    }
-    if (renderSunSky) {
-      if (ImGui::DragFloat3("sunDirection", sunDirection, 0.01f, -1.f, 1.f)) {
-        sunSky.setParam("direction", sunDirection);
-        addObjectToCommit(sunSky.handle());
-      }
-      if (ImGui::DragFloat("turbidity", &turbidity, 0.1f, 1.f, 10.f)) {
-        sunSky.setParam("turbidity", turbidity);
-        addObjectToCommit(sunSky.handle());
-      }
-      if (ImGui::DragFloat(
-              "horizonExtension", &horizonExtension, 0.01f, 0.f, 1.f)) {
-        sunSky.setParam("horizonExtension", horizonExtension);
-        addObjectToCommit(sunSky.handle());
-      }
     }
   } else if (rendererType == OSPRayRendererType::SCIVIS) {
     static bool shadowsEnabled = false;
