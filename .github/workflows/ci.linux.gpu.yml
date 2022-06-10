@@ -19,6 +19,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
       dpcpp-version: sycl-nightly/20221214
       install-gfx-driver: true
@@ -37,6 +38,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
       dpcpp-version: sycl-nightly/20221214
       install-gfx-driver: true
@@ -55,6 +57,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/support_oneapi_icx
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
       dpcpp-version: intel/2023.0
       install-gfx-driver: true

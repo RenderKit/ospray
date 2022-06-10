@@ -19,6 +19,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ospray/docker-images:arch
       cmd: |
         export CC=clang
@@ -29,6 +30,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ospray/docker-images:arch
       cmd: |
         export CC=clang
@@ -39,6 +41,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ospray/docker-images:arch
       cmd: |
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF
@@ -47,6 +50,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ospray/docker-images:arch
       cmd: |
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
@@ -56,6 +60,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
         scripts/build/linux.sh -DBUILD_ISA_AVX512=OFF
@@ -67,6 +72,7 @@ jobs:
 #    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
 #    secrets: inherit
 #    with:
+#      force-delete: true    # guarantees .gitattributes are respected in working dir
 #      image: centos:7-devenv
 #      cmd: |
 #        module load cmake
@@ -80,6 +86,7 @@ jobs:
 #    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
 #    secrets: inherit
 #    with:
+#      force-delete: true    # guarantees .gitattributes are respected in working dir
 #      image: centos:7-devenv
 #      cmd: |
 #        module load cmake
@@ -92,6 +99,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
         module load cmake
@@ -109,6 +117,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
         module load cmake
@@ -122,6 +131,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
         module load cmake
@@ -135,6 +145,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
         module load cmake
@@ -145,6 +156,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:8
       cmd: |
         scripts/build/linux.sh -G Ninja
@@ -155,6 +167,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:8
       cmd: |
         module load mpi/mpich-x86_64
@@ -164,6 +177,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:8
       cmd: |
         module load mpi/openmpi-x86_64
@@ -173,6 +187,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ospray/docker-images:arch
       cmd: |
         export CFLAGS=-fsanitize=address
@@ -187,6 +202,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:18.04
       cmd: |
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_ISA_AVX512=OFF
@@ -197,6 +213,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: ubuntu:20.04
       cmd: |
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON

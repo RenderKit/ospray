@@ -20,6 +20,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:8
       cmd: |
         scripts/build/linux.sh -G Ninja

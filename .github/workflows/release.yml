@@ -38,6 +38,7 @@ jobs:
     needs: pdf
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
         module load cmake/3.15.2
@@ -56,6 +57,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '[ "macOS", "sign", "x86_64" ]'
       cmd: |
         export CC=clang
@@ -70,6 +72,7 @@ jobs:
     needs: pdf
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["Windows", "build", "mpi"]'
       cmd: |
         scripts\release\win.ps1 "Visual Studio 15 2017 Win64"
@@ -126,7 +129,7 @@ jobs:
       artifact-in-windows: release-windows
       path: build_release/ospray-*
 
-### BUILD JOBS ###
+### TEST JOBS ###
 
   test-release-linux:
     needs: release-linux

@@ -19,6 +19,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       cmd: |
         scripts\build\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release" "OFF" "OFF"
       artifact-out: build-windows-msvc15
@@ -29,6 +30,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '["Windows", "build", "mpi"]'
       cmd: |
         scripts\build\win.ps1 "Visual Studio 16 2019" "v142" "Release" "ON" "ON"
