@@ -9,11 +9,17 @@ else()
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
 endif()
 
-ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/snappy/archive/refs/tags/1.1.8.zip"
-  URL_HASH "SHA256=38b4aabf88eb480131ed45bfb89c19ca3e2a62daeb081bdf001cfb17ec4cd303"
+if (NOT WIN32)
+  set(PATCH sed -ie "s/size_t AdvanceToNextTag/inline \\0/" snappy.cc)
+endif()
 
-  # # Skip updating on subsequent builds (faster)
+ExternalProject_Add(${COMPONENT_NAME}
+  URL "https://github.com/google/snappy/archive/refs/tags/1.1.9.zip"
+  URL_HASH "SHA256=e170ce0def2c71d0403f5cda61d6e2743373f9480124bcfcd0fa9b3299d428d9"
+
+  PATCH_COMMAND ${PATCH}
+
+  # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""
 
   CMAKE_ARGS
