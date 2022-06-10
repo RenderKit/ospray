@@ -905,6 +905,19 @@ VDB volumes have the following parameters:
                                of voxels for the `level`. Only `OSP_FLOAT` is
                                supported as field `OSPDataType`.
 
+  OSPData[]  nodesPackedDense  Optionally provided instead of `node.data`, for
+                               each attribute a single array of all dense node
+                               data in a contiguous zyx layout, provided in the
+                               same order as the corresponding `node.*`
+                               parameters. This packed layout may be more
+                               performant.
+
+  OSPData[]  nodesPackedTile   Optionally provided instead of `node.data`, for
+                               each attribute a single array of all tile node
+                               data in a contiguous layout, provided in the same
+                               order as the corresponding `node.*` parameters.
+                               This packed layout may be more performant.
+
   int        filter            filter used for reconstructing the field, default
                                is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively
                                `OSP_VOLUME_FILTER_NEAREST`, or
@@ -917,6 +930,10 @@ VDB volumes have the following parameters:
                                outside the volume domain, default `NaN`
   ---------- ----------------- -------------------------------------------------
   : Configuration parameters for VDB volumes.
+
+The `nodesPackedDense` and `nodesPackedTile` parameters may be provided
+instead of `node.data`; this packed data layout may provide better
+performance.
 
 
 1. Museth, K. VDB: High-Resolution Sparse Volumes with Dynamic Topology.

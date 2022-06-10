@@ -21,13 +21,13 @@ before you can build OSPRay you need the following prerequisites:
     (icc)](https://software.intel.com/en-us/c-compilers)), and standard
     Linux development tools.
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.17.0 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.18.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.^[For example, if OSPRay is in
     `~/Projects/ospray`, ISPC will also be searched in
-    `~/Projects/ispc-v1.17.0-linux`.] Alternatively set the CMake
+    `~/Projects/ispc-v1.18.0-linux`.] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   OSPRay builds on top of the [Intel oneAPI Rendering Toolkit common
     library (rkcommon)](https://www.github.com/ospray/rkcommon). The
@@ -44,7 +44,7 @@ before you can build OSPRay you need the following prerequisites:
     or newer is required. If Embree is not found by CMake its location
     can be hinted with the variable `embree_DIR`.
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 1.2.0 or newer is required. If Open VKL is not
+    installing version 1.3.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 -   OSPRay also provides an optional module implementing the `denoiser`

@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v2.10.0 (devel) of Intel® OSPRay. For changes and new
-features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
-for more information.
+This is release v2.10.0 of Intel® OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -75,7 +75,7 @@ before you can build OSPRay you need the following prerequisites:
     Linux development tools.
 
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.17.0 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.18.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right “next to” the
@@ -100,7 +100,7 @@ before you can build OSPRay you need the following prerequisites:
     `embree_DIR`.
 
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 1.2.0 or newer is required. If Open VKL is not
+    installing version 1.3.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 
@@ -351,9 +351,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -1142,11 +1142,17 @@ VDB volumes have the following parameters:
 | uint32\[\]  | node.level       | level on which each input node exists, may be 1, 2 or 3 (levels are counted from the root level = 0 down)                                                                                                                                                                                                                            |
 | vec3i\[\]   | node.origin      | the node origin index (per input node)                                                                                                                                                                                                                                                                                               |
 | OSPData\[\] | node.data        | [data](#data) arrays with the node data (per input node). Nodes that are tiles are expected to have single-item arrays. Leaf-nodes with grid data expected to have compact 3D arrays in zyx layout (z changes most quickly) with the correct number of voxels for the `level`. Only `OSP_FLOAT` is supported as field `OSPDataType`. |
+| OSPData\[\] | nodesPackedDense | Optionally provided instead of `node.data`, for each attribute a single array of all dense node data in a contiguous zyx layout, provided in the same order as the corresponding `node.*` parameters. This packed layout may be more performant.                                                                                     |
+| OSPData\[\] | nodesPackedTile  | Optionally provided instead of `node.data`, for each attribute a single array of all tile node data in a contiguous layout, provided in the same order as the corresponding `node.*` parameters. This packed layout may be more performant.                                                                                          |
 | int         | filter           | filter used for reconstructing the field, default is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively `OSP_VOLUME_FILTER_NEAREST`, or `OSP_VOLUME_FILTER_TRICUBIC`.                                                                                                                                                                      |
 | int         | gradientFilter   | filter used for reconstructing the field during gradient computations, default same as `filter`                                                                                                                                                                                                                                      |
 | float       | background       | value that is used when sampling an undefined region outside the volume domain, default `NaN`                                                                                                                                                                                                                                        |
 
 Configuration parameters for VDB volumes.
+
+The `nodesPackedDense` and `nodesPackedTile` parameters may be provided
+instead of `node.data`; this packed data layout may provide better
+performance.
 
 1.  Museth, K. VDB: High-Resolution Sparse Volumes with Dynamic
     Topology. ACM Transactions on Graphics 32(3), 2013. DOI:
@@ -1211,11 +1217,11 @@ transfer function, which interpolates between given equidistant colors
 and opacities. It is create by passing the string “`piecewiseLinear`” to
 `ospNewTransferFunction` and it is controlled by these parameters:
 
-| Type      | Name       | Description                                   |
-|:----------|:-----------|:----------------------------------------------|
-| vec3f\[\] | color      | [data](#data) array of colors (linear RGB)    |
-| float\[\] | opacity    | [data](#data) array of opacities              |
-| vec2f     | valueRange | domain (scalar range) this function maps from |
+| Type      | Name    | Description                                   |
+|:----------|:--------|:----------------------------------------------|
+| vec3f\[\] | color   | [data](#data) array of colors (linear RGB)    |
+| float\[\] | opacity | [data](#data) array of opacities              |
+| box1f     | value   | domain (scalar range) this function maps from |
 
 Parameters accepted by the linear transfer function.
 
@@ -1271,12 +1277,16 @@ recognizes the following parameters:
 | Type                    | Name                   | Description                                                                                                  |
 |:------------------------|:-----------------------|:-------------------------------------------------------------------------------------------------------------|
 | vec3f\[\]               | vertex.position        | [data](#data) array of vertex positions, overridden by `motion.*` arrays                                     |
-| vec3f\[\]               | vertex.normal          | [data](#data) array of vertex normals, overridden by `motion.*` arrays                                       |
-| vec4f\[\] / vec3f\[\]   | vertex.color           | [data](#data) array of vertex colors (linear RGBA/RGB)                                                       |
-| vec2f\[\]               | vertex.texcoord        | [data](#data) array of vertex texture coordinates                                                            |
+| vec3f\[\]               | normal                 | [data](#data) array of face-varying normals, overridden by `motion.*` arrays                                 |
+| vec3f\[\]               | vertex.normal          | [data](#data) array of vertex-varying normals, overridden by `motion.*` arrays                               |
+| vec4f\[\] / vec3f\[\]   | color                  | [data](#data) array of face-varying colors (linear RGBA/RGB)                                                 |
+| vec4f\[\] / vec3f\[\]   | vertex.color           | [data](#data) array of vertex-varying colors (linear RGBA/RGB)                                               |
+| vec2f\[\]               | texcoord               | [data](#data) array of face-varying texture coordinates                                                      |
+| vec2f\[\]               | vertex.texcoord        | [data](#data) array of vertex-varying texture coordinates                                                    |
 | vec3ui\[\] / vec4ui\[\] | index                  | [data](#data) array of (either triangle or quad) indices (into the vertex array(s))                          |
 | vec3f\[\]\[\]           | motion.vertex.position | [data](#data) array of vertex position arrays (uniformly distributed keys for deformation motion blur)       |
-| vec3f\[\]\[\]           | motion.vertex.normal   | [data](#data) array of vertex normal arrays (uniformly distributed keys for deformation motion blur)         |
+| vec3f\[\]\[\]           | motion.normal          | [data](#data) array of face-varying normal arrays (uniformly distributed keys for deformation motion blur)   |
+| vec3f\[\]\[\]           | motion.vertex.normal   | [data](#data) array of vertex-varying normal arrays (uniformly distributed keys for deformation motion blur) |
 | box1f                   | time                   | time associated with first and last key in `motion.*` arrays (for deformation motion blur), default \[0, 1\] |
 
 Parameters defining a mesh geometry.
@@ -1300,8 +1310,10 @@ the following parameters:
 | Type      | Name                | Description                                                                                                           |
 |:----------|:--------------------|:----------------------------------------------------------------------------------------------------------------------|
 | vec3f\[\] | vertex.position     | [data](#data) array of vertex positions                                                                               |
-| vec4f\[\] | vertex.color        | optional [data](#data) array of vertex colors (linear RGBA)                                                           |
-| vec2f\[\] | vertex.texcoord     | optional [data](#data) array of vertex texture coordinates                                                            |
+| vec4f\[\] | color               | optional [data](#data) array of face-varying colors (linear RGBA)                                                     |
+| vec4f\[\] | vertex.color        | optional [data](#data) array of vertex-varying colors (linear RGBA)                                                   |
+| vec2f\[\] | texcoord            | optional [data](#data) array of vertex-varying texture coordinates                                                    |
+| vec2f\[\] | vertex.texcoord     | optional [data](#data) array of vertex-varying texture coordinates                                                    |
 | float     | level               | global level of tessellation, default 5                                                                               |
 | uint\[\]  | index               | [data](#data) array of indices (into the vertex array(s))                                                             |
 | float\[\] | index.level         | optional [data](#data) array of per-edge levels of tessellation, overrides global level                               |
@@ -3567,7 +3579,7 @@ possible to copy the entire data set on to each rank, or to accelerate
 loading of a large model by leveraging a parallel file system.
 
 [1] For example, if OSPRay is in `~/Projects/ospray`, ISPC will also be
-searched in `~/Projects/ispc-v1.17.0-linux`.
+searched in `~/Projects/ispc-v1.18.0-linux`.
 
 [2] This file is usually in
 `${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake
