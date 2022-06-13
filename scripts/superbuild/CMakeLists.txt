@@ -163,6 +163,24 @@ option(BUILD_OSPRAY_MODULE_CPU "Enable building module_cpu" ON)
 option(BUILD_OSPRAY_MODULE_MPI "Enable building module_mpi" OFF)
 option(BUILD_OSPRAY_MODULE_MULTIDEVICE "Enable building module_multidevice" OFF)
 
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
+  set(ISA_X86 OFF)
+  set(ISA_NEON ON)
+else()
+  set(ISA_X86 ON)
+  set(ISA_NEON OFF)
+endif()
+option(BUILD_ISA_SSE4 "Build for SSE4" ${ISA_X86})
+mark_as_advanced(BUILD_ISA_SSE4)
+option(BUILD_ISA_AVX "Build for AVX" ${ISA_X86})
+mark_as_advanced(BUILD_ISA_AVX)
+option(BUILD_ISA_AVX2 "Build for AVX2" ${ISA_X86})
+mark_as_advanced(BUILD_ISA_AVX2)
+option(BUILD_ISA_AVX512 "Build for AVX512" ${ISA_X86})
+mark_as_advanced(BUILD_ISA_AVX512)
+option(BUILD_ISA_NEON "Build for NEON" ${ISA_NEON})
+mark_as_advanced(BUILD_ISA_NEON)
+
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
   ON
