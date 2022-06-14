@@ -126,8 +126,8 @@ void World::commit()
         addGeometryInstance(
             esClip, inst->group->sceneClippers, inst, embreeDevice, id);
       id++;
-      }
     }
+  }
 
   if (esGeom) {
     rtcSetSceneFlags(esGeom, static_cast<RTCSceneFlags>(sceneFlags));

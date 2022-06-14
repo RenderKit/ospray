@@ -349,7 +349,7 @@ typedef enum
   OSP_AMR_OCTANT
 } OSPAMRMethod;
 
-// Filter modes that can be set on 'VDB' type OSPVolume, compatible with VKL
+// Filter modes for VDB and structured volumes, compatible with VKL
 typedef enum
 #if __cplusplus >= 201103L
     : uint32_t
@@ -359,6 +359,16 @@ typedef enum
   OSP_VOLUME_FILTER_TRILINEAR = 100, // default trilinear interpolation
   OSP_VOLUME_FILTER_TRICUBIC = 200 // tricubic interpolation
 } OSPVolumeFilter;
+
+// VDB node data format
+typedef enum
+#if __cplusplus > 201103L
+    : uint32_t
+#endif
+{
+  OSP_VOLUME_FORMAT_TILE = 0, // node with no spatial variation.
+  OSP_VOLUME_FORMAT_DENSE_ZYX // a dense grid of voxels in zyx layout
+} OSPVolumeFormat;
 
 // OSPRay pixel filter types
 typedef enum

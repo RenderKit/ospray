@@ -191,6 +191,12 @@ void Volume::handleParams()
           vklSetVec3i(vklVolume, "dimensions", dim.x, dim.y, dim.z);
           vklSetInt(vklVolume, "voxelType", (VKLDataType)data->type);
         }
+        if (name == "nodesPackedDense" || name == "nodesPackedTile") {
+          // packed VDB volumes: wrap attribute
+          VKLData vklDataWrapper = vklNewData(vklDevice, 1, VKL_DATA, &vklData);
+          vklRelease(vklData);
+          vklData = vklDataWrapper;
+        }
         vklSetData(vklVolume, name.c_str(), vklData);
         vklRelease(vklData);
       }

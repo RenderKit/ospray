@@ -14,7 +14,7 @@ namespace testing {
 
 struct VdbVolume : public detail::Builder
 {
-  VdbVolume() = default;
+  VdbVolume(bool packed = false) : packed(packed) {}
   ~VdbVolume() override = default;
 
   void commit() override;
@@ -25,6 +25,7 @@ struct VdbVolume : public detail::Builder
  private:
   float densityScale{1.f};
   float anisotropy{0.f};
+  bool packed{false};
   static constexpr uint32_t domainRes = 128;
 };
 
@@ -42,17 +43,17 @@ cpp::Group VdbVolume::buildGroup() const
 {
   cpp::Volume volume("vdb");
 
-  std::vector<uint32_t> level;
   std::vector<vec3i> origin;
   std::vector<cpp::CopiedData> data;
+  std::vector<float> dataPacked;
 
   constexpr uint32_t leafRes = 8;
   constexpr uint32_t N = domainRes / leafRes;
   constexpr size_t numLeaves = N * static_cast<size_t>(N) * N;
 
-  level.reserve(numLeaves);
   origin.reserve(numLeaves);
-  data.reserve(numLeaves);
+  if (!packed)
+    data.reserve(numLeaves);
 
   std::vector<float> leaf(leafRes * (size_t)leafRes * leafRes, 0.f);
   for (uint32_t z = 0; z < N; ++z)
@@ -80,21 +81,30 @@ cpp::Group VdbVolume::buildGroup() const
           leafValueRange[0].extend(vr);
 
         if (leafValueRange[0].lower != 0.f || leafValueRange[0].upper != 0.f) {
-          level.push_back(3);
           origin.push_back(vec3i(x * leafRes, y * leafRes, z * leafRes));
-          data.emplace_back(
-              cpp::CopiedData(leaf.data(), vec3ul(leafRes, leafRes, leafRes)));
+          if (packed)
+            std::copy(leaf.begin(), leaf.end(), std::back_inserter(dataPacked));
+          else
+            data.emplace_back(cpp::CopiedData(
+                leaf.data(), vec3ul(leafRes, leafRes, leafRes)));
         }
       }
 
-  if (level.empty())
+  if (origin.empty())
     throw std::runtime_error("vdb volume is empty.");
 
   volume.setParam("filter", (int)OSP_VOLUME_FILTER_TRILINEAR);
   volume.setParam("gradientFilter", (int)OSP_VOLUME_FILTER_TRILINEAR);
-  volume.setParam("node.level", cpp::CopiedData(level));
+  volume.setParam(
+      "node.level", cpp::CopiedData(std::vector<uint32_t>(origin.size(), 3)));
   volume.setParam("node.origin", cpp::CopiedData(origin));
-  volume.setParam("node.data", cpp::CopiedData(data));
+  if (packed) {
+    volume.setParam("nodesPackedDense", cpp::CopiedData(dataPacked));
+    volume.setParam("node.format",
+        cpp::CopiedData(std::vector<OSPVolumeFormat>(
+            origin.size(), OSP_VOLUME_FORMAT_DENSE_ZYX)));
+  } else
+    volume.setParam("node.data", cpp::CopiedData(data));
   volume.commit();
 
   cpp::VolumetricModel model(volume);
@@ -145,6 +155,7 @@ cpp::World VdbVolume::buildWorld() const
 }
 
 OSP_REGISTER_TESTING_BUILDER(VdbVolume, vdb_volume);
+OSP_REGISTER_TESTING_BUILDER(VdbVolume(true), vdb_volume_packed);
 
 } // namespace testing
 } // namespace ospray

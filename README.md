@@ -1142,17 +1142,18 @@ VDB volumes have the following parameters:
 | uint32\[\]  | node.level       | level on which each input node exists, may be 1, 2 or 3 (levels are counted from the root level = 0 down)                                                                                                                                                                                                                            |
 | vec3i\[\]   | node.origin      | the node origin index (per input node)                                                                                                                                                                                                                                                                                               |
 | OSPData\[\] | node.data        | [data](#data) arrays with the node data (per input node). Nodes that are tiles are expected to have single-item arrays. Leaf-nodes with grid data expected to have compact 3D arrays in zyx layout (z changes most quickly) with the correct number of voxels for the `level`. Only `OSP_FLOAT` is supported as field `OSPDataType`. |
-| OSPData\[\] | nodesPackedDense | Optionally provided instead of `node.data`, for each attribute a single array of all dense node data in a contiguous zyx layout, provided in the same order as the corresponding `node.*` parameters. This packed layout may be more performant.                                                                                     |
-| OSPData\[\] | nodesPackedTile  | Optionally provided instead of `node.data`, for each attribute a single array of all tile node data in a contiguous layout, provided in the same order as the corresponding `node.*` parameters. This packed layout may be more performant.                                                                                          |
+| OSPData     | nodesPackedDense | optionally provided instead of `node.data`, a single array of all dense node data in a contiguous zyx layout, provided in the same order as the corresponding `node.*` parameters                                                                                                                                                    |
+| OSPData     | nodesPackedTile  | optionally provided instead of `node.data`, a single array of all tile node data in a contiguous layout, provided in the same order as the corresponding `node.*` parameters                                                                                                                                                         |
+| uint32\[\]  | node.format      | for each input node, whether it is of format `OSP_VOLUME_FORMAT_DENSE_ZYX` (and thus stored in `nodesPackedDense`), or `OSP_VOLUME_FORMAT_TILE` (stored in `nodesPackedTile`)                                                                                                                                                        |
 | int         | filter           | filter used for reconstructing the field, default is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively `OSP_VOLUME_FILTER_NEAREST`, or `OSP_VOLUME_FILTER_TRICUBIC`.                                                                                                                                                                      |
 | int         | gradientFilter   | filter used for reconstructing the field during gradient computations, default same as `filter`                                                                                                                                                                                                                                      |
 | float       | background       | value that is used when sampling an undefined region outside the volume domain, default `NaN`                                                                                                                                                                                                                                        |
 
 Configuration parameters for VDB volumes.
 
-The `nodesPackedDense` and `nodesPackedTile` parameters may be provided
-instead of `node.data`; this packed data layout may provide better
-performance.
+The `nodesPackedDense` and `nodesPackedTile` together with `node.format`
+parameters may be provided instead of `node.data`; this packed data
+layout may provide better performance.
 
 1.  Museth, K. VDB: High-Resolution Sparse Volumes with Dynamic
     Topology. ACM Transactions on Graphics 32(3), 2013. DOI:
