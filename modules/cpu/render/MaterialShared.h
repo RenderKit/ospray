@@ -6,7 +6,7 @@
 #define EPS 1e-5f
 
 #ifdef __cplusplus
-using namespace rkcommon::math;
+#include "common/StructShared.h"
 namespace ispc {
 typedef void *Material_GetBSDFFunc;
 typedef void *Material_GetTransparencyFunc;
@@ -73,7 +73,8 @@ struct Material
                   // radiance; TODO SV-EDFs
 #ifdef __cplusplus
   Material(const vec3f &emission = vec3f(0.f))
-      : getBSDF(nullptr),
+      : type(MATERIAL_TYPE_OBJ),
+        getBSDF(nullptr),
         getTransparency(nullptr),
         selectNextMedium(nullptr),
         emission(emission)

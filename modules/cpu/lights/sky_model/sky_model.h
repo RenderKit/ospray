@@ -28,7 +28,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 // with slight modifications
-// Copyright 2020-2022 Intel Corporation
+// Copyright 2020 Intel Corporation
 
 /* ============================================================================
 

@@ -1,44 +1,46 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "../../common/DistributedWorld.h"
 #include "../../fb/DistributedFrameBuffer.h"
 #include "../../fb/TileOperation.h"
 #include "camera/Camera.h"
 #include "render/Renderer.h"
+// ispc shared
+#include "DistributedRendererShared.h"
 
 namespace ospray {
 namespace mpi {
+
+struct DistributedWorld;
 
 struct RegionInfo
 {
   int numRegions = 0;
   box3f *regions = nullptr;
-  bool *regionVisible = nullptr;
+  uint8_t *regionVisible = nullptr;
 };
 
-struct DistributedRenderer : public Renderer
+struct DistributedRenderer
+    : public AddStructShared<Renderer, ispc::DistributedRenderer>
 {
   DistributedRenderer();
   ~DistributedRenderer() override;
 
-  void computeRegionVisibility(DistributedFrameBuffer *fb,
+  void computeRegionVisibility(SparseFrameBuffer *fb,
       Camera *camera,
       DistributedWorld *world,
-      bool *regionVisible,
+      uint8_t *regionVisible,
       void *perFrameData,
-      Tile &tile,
-      size_t jobID) const;
+      const utility::ArrayView<uint32_t> &taskIDs) const;
 
-  void renderRegionToTile(DistributedFrameBuffer *fb,
+  void renderRegionTasks(SparseFrameBuffer *fb,
       Camera *camera,
       DistributedWorld *world,
       const box3f &region,
       void *perFrameData,
-      Tile &tile,
-      size_t jobID) const;
+      const utility::ArrayView<uint32_t> &taskIDs) const;
 
   virtual std::shared_ptr<TileOperation> tileOperation() = 0;
 

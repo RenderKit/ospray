@@ -1,24 +1,29 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PathSampler.ih"
 #include "PathStructs.ih"
-#include "PathTracer.ih"
 #include "PathTracerDefines.ih"
 #include "PathTracerUtil.ih"
 
-#include "lights/Light.ih"
+#include "render/Renderer.ih"
 #include "render/bsdfs/BSDF.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"
 #include "render/materials/Medium.ih"
+#include "render/util.ih"
 #include "volumes/VolumeSampler.ih"
 
-#include "render/MaterialShared.h"
-
 #include "camera/Camera.ih"
-#include "fb/LocalFB.ih"
+#include "common/World.ih"
 #include "math/Distribution1D.ih"
 #include "math/random.ih"
+#include "pf/PixelFilter.ih"
+// c++ shared
+#include "PathTracerShared.h"
+#include "fb/FrameBufferShared.h"
+#include "render/MaterialShared.h"
+
+#define MAX_LIGHTS 1000u
 
 ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
     const World *uniform world,
@@ -35,6 +40,9 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   sample.alpha = 1.f;
   sample.normal = make_vec3f(0.0f);
   sample.albedo = make_vec3f(0.0f);
+  sample.primID = RTC_INVALID_GEOMETRY_ID;
+  sample.geomID = RTC_INVALID_GEOMETRY_ID;
+  sample.instID = RTC_INVALID_GEOMETRY_ID;
 
   const uniform int numLights = world->pathtracerData.lights
       ? min(MAX_LIGHTS, world->pathtracerData.numLights)
@@ -97,6 +105,10 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   screenSample.sampleID.x = ix;
   screenSample.sampleID.y = iy;
 
+  screenSample.primID = RTC_INVALID_GEOMETRY_ID;
+  screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
+  screenSample.instID = RTC_INVALID_GEOMETRY_ID;
+
   LDSampler ldSamplerObj;
   RandomSampler randomSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
@@ -114,10 +126,9 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
 
     vec2f pfSample = pixelSample;
-    if (self->super.pixelFilter) {
-      pfSample =
-          self->super.pixelFilter->sample(self->super.pixelFilter, pixelSample)
-          + make_vec2f(0.5f);
+    PixelFilter *uniform pf = self->super.pixelFilter;
+    if (pf) {
+      pfSample = pf->sample(pf, pixelSample) + make_vec2f(0.5f);
     }
 
     cameraSample.screen.x =
@@ -144,9 +155,14 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     screenSample.rgb =
         screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
     screenSample.alpha = screenSample.alpha + sample.alpha;
-    screenSample.z = min(screenSample.z, sample.z);
     screenSample.normal = screenSample.normal + sample.normal;
     screenSample.albedo = screenSample.albedo + sample.albedo;
+    if (sample.z < screenSample.z) {
+      screenSample.z = sample.z;
+      screenSample.primID = sample.primID;
+      screenSample.geomID = sample.geomID;
+      screenSample.instID = sample.instID;
+    }
   }
 
   const float rspp = rcpf(spp);
@@ -158,76 +174,46 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   return screenSample;
 }
 
-void PathTracer_renderTileJob(PathTracer *uniform self,
-    FrameBuffer *uniform fb,
-    Camera *uniform camera,
-    World *uniform world,
-    uniform Tile &tile,
-    uniform int taskIndex)
-{
-  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end =
-      min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE * TILE_SIZE);
-
-  for (uint32 i = begin + programIndex; i < end; i += programCount) {
-    const uint32 ix = tile.region.lower.x + z_order.xs[i];
-    const uint32 iy = tile.region.lower.y + z_order.ys[i];
-    if (ix >= fb->size.x || iy >= fb->size.y)
-      continue;
-
-    ScreenSample screenSample =
-        PathTracer_renderPixel(self, fb, camera, world, ix, iy, tile.accumID);
-
-    const uint32 pixel = z_order.xs[i] + (z_order.ys[i] * TILE_SIZE);
-    setTile(tile, pixel, screenSample);
-  }
-}
-
-unmasked void PathTracer_renderTile(Renderer *uniform _self,
+task void PathTracer_renderTask(PathTracer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int jobID)
+    const uint32 *uniform taskIDs)
 {
-  PathTracer *uniform self = (PathTracer * uniform) _self;
-  PathTracer_renderTileJob(self, fb, camera, world, tile, jobID);
+  uniform RenderTaskDesc taskDesc =
+      fb->getRenderTaskDesc(fb, taskIDs[taskIndex0]);
+
+  if (fb->cancelRender || isEmpty(taskDesc.region)) {
+    return;
+  }
+
+  foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
+      x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
+    ScreenSample screenSample =
+        PathTracer_renderPixel(self, fb, camera, world, x, y, taskDesc.accumID);
+
+    fb->accumulateSample(fb, screenSample, taskDesc);
+  }
+  fb->completeTask(fb, taskDesc);
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////
 
-export void PathTracer_set(void *uniform _self,
-    const uniform int32 rouletteDepth,
-    const uniform float maxRadiance,
-    const uniform vec4f &shadowCatcherPlane,
-    const uniform int32 numLightSamples,
-    const uniform bool backgroundRefraction)
+export void PathTracer_renderTasks(void *uniform _self,
+    void *uniform _fb,
+    void *uniform _camera,
+    void *uniform _world,
+    void *uniform perFrameData,
+    void *uniform _taskIDs,
+    uniform uint32 numTasks)
 {
   PathTracer *uniform self = (PathTracer * uniform) _self;
+  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
+  Camera *uniform camera = (Camera * uniform) _camera;
+  World *uniform world = (World * uniform) _world;
+  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
 
-  self->rouletteDepth = rouletteDepth;
-  self->maxRadiance = maxRadiance;
-  self->numLightSamples = numLightSamples;
-  self->backgroundRefraction = backgroundRefraction;
-
-  uniform vec3f normal = make_vec3f(shadowCatcherPlane);
-  const uniform float l = length(normal);
-  self->shadowCatcher = l > 0.f;
-  const uniform float rl = rcp(l);
-  self->shadowCatcherPlane = make_vec4f(normal * rl, shadowCatcherPlane.w * rl);
-}
-
-export void *uniform PathTracer_create()
-{
-  uniform PathTracer *uniform self = uniform new uniform PathTracer;
-  Renderer_Constructor(&self->super);
-  self->super.renderTile = PathTracer_renderTile;
-
-  PathTracer_set(self, 5, inf, make_vec4f(0.f), 1, false);
-
-  precomputeMicrofacetAlbedoTables();
-  precomputeZOrder();
-
-  return self;
+  launch[numTasks] PathTracer_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs);
 }

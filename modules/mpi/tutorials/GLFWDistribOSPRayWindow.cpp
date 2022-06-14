@@ -1,4 +1,4 @@
-// Copyright 2018-2020 Intel Corporation
+// Copyright 2018 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "GLFWDistribOSPRayWindow.h"
@@ -362,7 +362,7 @@ void GLFWDistribOSPRayWindow::startNewOSPRayFrame()
   }
 
   if (fbNeedsClear) {
-    framebuffer.resetAccumulation();
+    resetAccumulation();
   }
 
   currentFrame = framebuffer.renderFrame(renderer, camera, world);

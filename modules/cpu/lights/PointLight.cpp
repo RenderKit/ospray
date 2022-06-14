@@ -1,26 +1,47 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PointLight.h"
-#include "lights/Light_ispc.h"
+// embree
+#include "embree3/rtcore.h"
+
 #include "lights/PointLight_ispc.h"
+
+#include "PointLightShared.h"
+#include "common/InstanceShared.h"
 
 namespace ospray {
 
-void *PointLight::createIE(const void *instance) const
+ispc::Light *PointLight::createSh(
+    uint32_t, const ispc::Instance *instance) const
 {
-  void *ie = ispc::PointLight_create();
-  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
-  ispc::PointLight_set(ie,
-      (ispc::vec3f &)position,
-      (ispc::vec3f &)radiance,
-      (ispc::vec3f &)radIntensity,
-      radius,
-      intensityDistribution.data(),
-      (const ispc::vec2i &)intensityDistribution.size,
-      (ispc::vec3f &)direction,
-      (const ispc::vec3f &)intensityDistribution.c0);
-  return ie;
+  ispc::PointLight *sh = StructSharedCreate<ispc::PointLight>();
+  sh->super.sample = ispc::PointLight_sample_addr();
+  sh->super.eval = ispc::PointLight_eval_addr();
+  sh->super.isVisible = visible;
+  sh->super.instance = instance;
+
+  sh->radiance = radiance;
+  sh->intensity = radIntensity;
+  sh->radius = radius;
+  sh->pre.position = position;
+  sh->pre.direction = normalize(direction);
+  intensityDistribution.setSh(sh->intensityDistribution);
+
+  // Enable dynamic runtime instancing or apply static transformation
+  if (instance) {
+    sh->pre.c0 = intensityDistribution.c0;
+    if (instance->motionBlur) {
+      sh->super.sample = ispc::PointLight_sample_instanced_addr();
+      sh->super.eval = ispc::PointLight_eval_instanced_addr();
+    } else
+      ispc::PointLight_Transform(sh, instance->xfm, &sh->pre);
+  } else {
+    sh->pre.c90 = normalize(cross(intensityDistribution.c0, sh->pre.direction));
+    sh->pre.c0 = cross(sh->pre.direction, sh->pre.c90);
+  }
+
+  return &sh->super;
 }
 
 std::string PointLight::toString() const

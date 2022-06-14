@@ -1,10 +1,9 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Spheres.h"
 #include "common/Data.h"
-#include "common/World.h"
 // ispc-generated files
 #include "geometry/Spheres_ispc.h"
 
@@ -12,7 +11,9 @@ namespace ospray {
 
 Spheres::Spheres()
 {
-  ispcEquivalent = ispc::Spheres_create();
+  getSh()->super.postIntersect = ispc::Spheres_postIntersect_addr();
+  getSh()->super.getAreas = ispc::Spheres_getAreas_addr();
+  getSh()->super.sampleArea = ispc::Spheres_sampleArea_addr();
 }
 
 std::string Spheres::toString() const
@@ -22,23 +23,19 @@ std::string Spheres::toString() const
 
 void Spheres::commit()
 {
-  if (!embreeDevice) {
-    throw std::runtime_error("invalid Embree device");
-  }
-  if (!embreeGeometry) {
-    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
-  }
   radius = getParam<float>("radius", 0.01f);
   vertexData = getParamDataT<vec3f>("sphere.position", true);
   radiusData = getParamDataT<float>("sphere.radius");
   texcoordData = getParamDataT<vec2f>("sphere.texcoord");
 
-  ispc::SpheresGeometry_set(getIE(),
-      embreeGeometry,
-      ispc(vertexData),
-      ispc(radiusData),
-      ispc(texcoordData),
-      radius);
+  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Spheres_bounds,
+      (RTCIntersectFunctionN)&ispc::Spheres_intersect,
+      (RTCOccludedFunctionN)&ispc::Spheres_occluded);
+  getSh()->vertex = *ispc(vertexData);
+  getSh()->radius = *ispc(radiusData);
+  getSh()->texcoord = *ispc(texcoordData);
+  getSh()->global_radius = radius;
+  getSh()->super.numPrimitives = numPrimitives();
 
   postCreationInfo();
 }

@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "rkcommon/os/library.h"
@@ -176,7 +176,7 @@ extern "C" void ospSetCurrentDevice(OSPDevice _device) OSPRAY_CATCH_BEGIN
 {
   auto *device = (Device *)_device;
 
-  if (!device->isCommitted()) {
+  if ((device) && (!device->isCommitted())) {
     throw std::runtime_error("You must commit the device before using it!");
   }
 

@@ -1,0 +1,18 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "SparseFBShared.h"
+#include "fb/Tile.ih"
+
+inline uniform uint32 SparseFB_getTileIndexForTask(
+    const SparseFB *uniform fb, const uniform uint32 taskID)
+{
+  // Find which tile this task falls into
+  const uniform vec2i tileDims = make_vec2i(TILE_SIZE);
+  const uniform vec2i tasksPerTile = tileDims / fb->super.renderTaskSize;
+  const uniform int nTasksPerTile = tasksPerTile.x * tasksPerTile.y;
+  // tileIdx -> index in the SparseFB's list of tiles
+  return taskID / nTasksPerTile;
+}

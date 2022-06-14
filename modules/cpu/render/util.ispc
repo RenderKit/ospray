@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/World.ih"
@@ -9,14 +9,16 @@
 uniform z_order_t z_order;
 uniform bool z_order_initialized = false;
 
-void precomputedZOrder_create()
+// precompute a per-pixel z-order to be used within a tile
+export void precomputeZOrder()
 {
-  for (uniform uint32 i = 0; i < TILE_SIZE * TILE_SIZE; i++) {
-    deinterleaveZOrder(i, &z_order.xs[i], &z_order.ys[i]);
-    z_order.xyIdx[i] = z_order.xs[i] | (z_order.ys[i] << 16);
+  if (!z_order_initialized) {
+    for (uniform uint32 i = 0; i < TILE_SIZE * TILE_SIZE; i++) {
+      deinterleaveZOrder(i, &z_order.xs[i], &z_order.ys[i]);
+      z_order.xyIdx[i] = z_order.xs[i] | (z_order.ys[i] << 16);
+    }
+    z_order_initialized = true;
   }
-
-  z_order_initialized = true;
 }
 
 float computeAO(const World *uniform world,

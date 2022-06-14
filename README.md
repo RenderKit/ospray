@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v2.9.0 of Intel® OSPRay. For changes and new features
+This is release v2.10.0 of Intel® OSPRay. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
 information.
 
@@ -75,7 +75,7 @@ before you can build OSPRay you need the following prerequisites:
     Linux development tools.
 
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (ISPC)](http://ispc.github.io), version 1.16.0 or later.
+    Compiler (ISPC)](http://ispc.github.io), version 1.18.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html). The build system looks
     for ISPC in the `PATH` and in the directory right “next to” the
@@ -100,7 +100,7 @@ before you can build OSPRay you need the following prerequisites:
     `embree_DIR`.
 
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 1.2.0 or newer is required. If Open VKL is not
+    installing version 1.3.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 
@@ -787,7 +787,7 @@ The enum type `OSPDataType` describes the different element types that
 can be represented in OSPRay; valid constants are listed in the table
 below.
 
-| Type/Name                    | Description                                                                                  |
+| Type / Name                  | Description                                                                                  |
 |:-----------------------------|:---------------------------------------------------------------------------------------------|
 | OSP_DEVICE                   | API device object reference                                                                  |
 | OSP_DATA                     | data reference                                                                               |
@@ -1142,11 +1142,18 @@ VDB volumes have the following parameters:
 | uint32\[\]  | node.level       | level on which each input node exists, may be 1, 2 or 3 (levels are counted from the root level = 0 down)                                                                                                                                                                                                                            |
 | vec3i\[\]   | node.origin      | the node origin index (per input node)                                                                                                                                                                                                                                                                                               |
 | OSPData\[\] | node.data        | [data](#data) arrays with the node data (per input node). Nodes that are tiles are expected to have single-item arrays. Leaf-nodes with grid data expected to have compact 3D arrays in zyx layout (z changes most quickly) with the correct number of voxels for the `level`. Only `OSP_FLOAT` is supported as field `OSPDataType`. |
+| OSPData     | nodesPackedDense | optionally provided instead of `node.data`, a single array of all dense node data in a contiguous zyx layout, provided in the same order as the corresponding `node.*` parameters                                                                                                                                                    |
+| OSPData     | nodesPackedTile  | optionally provided instead of `node.data`, a single array of all tile node data in a contiguous layout, provided in the same order as the corresponding `node.*` parameters                                                                                                                                                         |
+| uint32\[\]  | node.format      | for each input node, whether it is of format `OSP_VOLUME_FORMAT_DENSE_ZYX` (and thus stored in `nodesPackedDense`), or `OSP_VOLUME_FORMAT_TILE` (stored in `nodesPackedTile`)                                                                                                                                                        |
 | int         | filter           | filter used for reconstructing the field, default is `OSP_VOLUME_FILTER_TRILINEAR`, alternatively `OSP_VOLUME_FILTER_NEAREST`, or `OSP_VOLUME_FILTER_TRICUBIC`.                                                                                                                                                                      |
 | int         | gradientFilter   | filter used for reconstructing the field during gradient computations, default same as `filter`                                                                                                                                                                                                                                      |
 | float       | background       | value that is used when sampling an undefined region outside the volume domain, default `NaN`                                                                                                                                                                                                                                        |
 
 Configuration parameters for VDB volumes.
+
+The `nodesPackedDense` and `nodesPackedTile` together with `node.format`
+parameters may be provided instead of `node.data`; this packed data
+layout may provide better performance.
 
 1.  Museth, K. VDB: High-Resolution Sparse Volumes with Dynamic
     Topology. ACM Transactions on Graphics 32(3), 2013. DOI:
@@ -1211,11 +1218,11 @@ transfer function, which interpolates between given equidistant colors
 and opacities. It is create by passing the string “`piecewiseLinear`” to
 `ospNewTransferFunction` and it is controlled by these parameters:
 
-| Type      | Name       | Description                                   |
-|:----------|:-----------|:----------------------------------------------|
-| vec3f\[\] | color      | [data](#data) array of colors (linear RGB)    |
-| float\[\] | opacity    | [data](#data) array of opacities              |
-| vec2f     | valueRange | domain (scalar range) this function maps from |
+| Type      | Name    | Description                                   |
+|:----------|:--------|:----------------------------------------------|
+| vec3f\[\] | color   | [data](#data) array of colors (linear RGB)    |
+| float\[\] | opacity | [data](#data) array of opacities              |
+| box1f     | value   | domain (scalar range) this function maps from |
 
 Parameters accepted by the linear transfer function.
 
@@ -1245,6 +1252,7 @@ used.
 | OSPTransferFunction | transferFunction |         | [transfer function](#transfer-function) to use                                                                                       |
 | float               | densityScale     |     1.0 | makes volumes uniformly thinner or thicker                                                                                           |
 | float               | anisotropy       |     0.0 | anisotropy of the (Henyey-Greenstein) phase function in \[-1–1\] ([path tracer](#path-tracer) only), default to isotropic scattering |
+| uint32              | id               |     -1u | optional user ID, for [framebuffer](#framebuffer) channel `OSP_FB_ID_OBJECT`                                                         |
 
 Parameters understood by VolumetricModel.
 
@@ -1270,12 +1278,16 @@ recognizes the following parameters:
 | Type                    | Name                   | Description                                                                                                  |
 |:------------------------|:-----------------------|:-------------------------------------------------------------------------------------------------------------|
 | vec3f\[\]               | vertex.position        | [data](#data) array of vertex positions, overridden by `motion.*` arrays                                     |
-| vec3f\[\]               | vertex.normal          | [data](#data) array of vertex normals, overridden by `motion.*` arrays                                       |
-| vec4f\[\] / vec3f\[\]   | vertex.color           | [data](#data) array of vertex colors (linear RGBA/RGB)                                                       |
-| vec2f\[\]               | vertex.texcoord        | [data](#data) array of vertex texture coordinates                                                            |
+| vec3f\[\]               | normal                 | [data](#data) array of face-varying normals, overridden by `motion.*` arrays                                 |
+| vec3f\[\]               | vertex.normal          | [data](#data) array of vertex-varying normals, overridden by `motion.*` arrays                               |
+| vec4f\[\] / vec3f\[\]   | color                  | [data](#data) array of face-varying colors (linear RGBA/RGB)                                                 |
+| vec4f\[\] / vec3f\[\]   | vertex.color           | [data](#data) array of vertex-varying colors (linear RGBA/RGB)                                               |
+| vec2f\[\]               | texcoord               | [data](#data) array of face-varying texture coordinates                                                      |
+| vec2f\[\]               | vertex.texcoord        | [data](#data) array of vertex-varying texture coordinates                                                    |
 | vec3ui\[\] / vec4ui\[\] | index                  | [data](#data) array of (either triangle or quad) indices (into the vertex array(s))                          |
 | vec3f\[\]\[\]           | motion.vertex.position | [data](#data) array of vertex position arrays (uniformly distributed keys for deformation motion blur)       |
-| vec3f\[\]\[\]           | motion.vertex.normal   | [data](#data) array of vertex normal arrays (uniformly distributed keys for deformation motion blur)         |
+| vec3f\[\]\[\]           | motion.normal          | [data](#data) array of face-varying normal arrays (uniformly distributed keys for deformation motion blur)   |
+| vec3f\[\]\[\]           | motion.vertex.normal   | [data](#data) array of vertex-varying normal arrays (uniformly distributed keys for deformation motion blur) |
 | box1f                   | time                   | time associated with first and last key in `motion.*` arrays (for deformation motion blur), default \[0, 1\] |
 
 Parameters defining a mesh geometry.
@@ -1299,8 +1311,10 @@ the following parameters:
 | Type      | Name                | Description                                                                                                           |
 |:----------|:--------------------|:----------------------------------------------------------------------------------------------------------------------|
 | vec3f\[\] | vertex.position     | [data](#data) array of vertex positions                                                                               |
-| vec4f\[\] | vertex.color        | optional [data](#data) array of vertex colors (linear RGBA)                                                           |
-| vec2f\[\] | vertex.texcoord     | optional [data](#data) array of vertex texture coordinates                                                            |
+| vec4f\[\] | color               | optional [data](#data) array of face-varying colors (linear RGBA)                                                     |
+| vec4f\[\] | vertex.color        | optional [data](#data) array of vertex-varying colors (linear RGBA)                                                   |
+| vec2f\[\] | texcoord            | optional [data](#data) array of vertex-varying texture coordinates                                                    |
+| vec2f\[\] | vertex.texcoord     | optional [data](#data) array of vertex-varying texture coordinates                                                    |
 | float     | level               | global level of tessellation, default 5                                                                               |
 | uint\[\]  | index               | [data](#data) array of indices (into the vertex array(s))                                                             |
 | float\[\] | index.level         | optional [data](#data) array of per-edge levels of tessellation, overrides global level                               |
@@ -1516,15 +1530,14 @@ normal vectors orientation one can control whether inside or outside of
 the clipping geometry is being removed. For example, a clipping geometry
 with normals oriented outside clips everything what’s inside.
 
-| Type                         | Name          | Description                                                                                                                                         |
-|:-----------------------------|:--------------|:----------------------------------------------------------------------------------------------------------------------------------------------------|
-| OSPGeometry                  | geometry      | optional [geometry](#geometries) object this model references                                                                                       |
-| OSPMaterial / uint32         | material      | optional [material](#materials) applied to the geometry, may be an index into the `material` parameter on the [renderer](#renderers) (if it exists) |
-| vec4f                        | color         | optional color assigned to the geometry (linear RGBA)                                                                                               |
-| OSPMaterial\[\] / uint32\[\] | material      | optional [data](#data) array of (per-primitive) materials, may be an index into the `material` parameter on the renderer (if it exists)             |
-| vec4f\[\]                    | color         | optional [data](#data) array of (per-primitive) colors (linear RGBA)                                                                                |
-| uint8\[\]                    | index         | optional [data](#data) array of per-primitive indices into `color` and `material`                                                                   |
-| bool                         | invertNormals | inverts all shading normals (Ns), default false                                                                                                     |
+| Type                                                | Name          | Description                                                                                                                                          |
+|:----------------------------------------------------|:--------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSPGeometry                                         | geometry      | optional [geometry](#geometries) object this model references                                                                                        |
+| OSPMaterial / OSPMaterial\[\] / uint32 / uint32\[\] | material      | optional ([data](#data) array of per-primitive) [material](#materials), may be an index into the `material` parameter on the renderer (if it exists) |
+| vec4f / vec4f\[\]                                   | color         | optional ([data](#data) array of per-primitive) color assigned to the geometry (linear RGBA)                                                         |
+| uint8\[\]                                           | index         | optional [data](#data) array of per-primitive indices into `color` and `material`                                                                    |
+| bool                                                | invertNormals | inverts all shading normals (Ns), default false                                                                                                      |
+| uint32                                              | id            | optional user ID, for [framebuffer](#framebuffer) channel `OSP_FB_ID_OBJECT`, default -1u                                                            |
 
 Parameters understood by GeometricModel.
 
@@ -1881,6 +1894,7 @@ used.
 | quatf\[\]    | motion.rotation    |          | uniformly distributed world-space quaternion rotation, overridden by `motion.transform`                                                               |
 | vec3f\[\]    | motion.translation |          | uniformly distributed world-space translation, overridden by `motion.transform`                                                                       |
 | box1f        | time               | \[0, 1\] | time associated with first and last key in `motion.*` arrays (for motion blur)                                                                        |
+| uint32       | id                 |      -1u | optional user ID, for [framebuffer](#framebuffer) channel `OSP_FB_ID_INSTANCE`                                                                        |
 
 Parameters understood by instances.
 
@@ -2819,14 +2833,17 @@ The parameter `frameBufferChannels` specifies which channels the
 framebuffer holds, and can be combined together by bitwise OR from the
 values of `OSPFrameBufferChannel` listed in the table below.
 
-| Name            | Description                                                                                                                                |
-|:----------------|:-------------------------------------------------------------------------------------------------------------------------------------------|
-| OSP_FB_COLOR    | RGB color including alpha                                                                                                                  |
-| OSP_FB_DEPTH    | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float; for multiple samples per pixel their minimum is taken |
-| OSP_FB_ACCUM    | accumulation buffer for progressive refinement                                                                                             |
-| OSP_FB_VARIANCE | for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering](#rendering)                                     |
-| OSP_FB_NORMAL   | accumulated world-space normal of the first non-specular hit, as vec3f                                                                     |
-| OSP_FB_ALBEDO   | accumulated material albedo (color without illumination) at the first hit, as vec3f                                                        |
+| Name                | Description                                                                                                                                |
+|:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------------|
+| OSP_FB_COLOR        | RGB color including alpha                                                                                                                  |
+| OSP_FB_DEPTH        | euclidean distance to the camera (*not* to the image plane), as linear 32 bit float; for multiple samples per pixel their minimum is taken |
+| OSP_FB_ACCUM        | accumulation buffer for progressive refinement                                                                                             |
+| OSP_FB_VARIANCE     | for estimation of the current noise level if OSP_FB_ACCUM is also present, see [rendering](#rendering)                                     |
+| OSP_FB_NORMAL       | accumulated world-space normal of the first non-specular hit, as vec3f                                                                     |
+| OSP_FB_ALBEDO       | accumulated material albedo (color without illumination) at the first hit, as vec3f                                                        |
+| OSP_FB_ID_PRIMITIVE | primitive index of the first hit, as uint32                                                                                                |
+| OSP_FB_ID_OBJECT    | geometric/volumetric model `id`, if specified, or index in [group](#groups) of first hit, as uint32                                        |
+| OSP_FB_ID_INSTANCE  | user defined [instance](#instances) `id`, if specified, or instance index of first hit, as uint32                                          |
 
 Framebuffer channels constants (of type `OSPFrameBufferChannel`), naming
 optional information the framebuffer can store. These values can be
@@ -3563,7 +3580,7 @@ possible to copy the entire data set on to each rank, or to accelerate
 loading of a large model by leveraging a parallel file system.
 
 [1] For example, if OSPRay is in `~/Projects/ospray`, ISPC will also be
-searched in `~/Projects/ispc-v1.17.0-linux`.
+searched in `~/Projects/ispc-v1.18.0-linux`.
 
 [2] This file is usually in
 `${install_location}/[lib|lib64]/cmake/ospray-${version}/`. If CMake

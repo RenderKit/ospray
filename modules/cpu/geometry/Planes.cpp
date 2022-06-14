@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #undef NDEBUG
@@ -6,7 +6,6 @@
 // ospray
 #include "Planes.h"
 #include "common/Data.h"
-#include "common/World.h"
 // ispc-generated files
 #include "geometry/Planes_ispc.h"
 
@@ -14,7 +13,7 @@ namespace ospray {
 
 Planes::Planes()
 {
-  ispcEquivalent = ispc::Planes_create();
+  getSh()->super.postIntersect = ispc::Planes_postIntersect_addr();
 }
 
 std::string Planes::toString() const
@@ -24,17 +23,15 @@ std::string Planes::toString() const
 
 void Planes::commit()
 {
-  if (!embreeDevice) {
-    throw std::runtime_error("invalid Embree device");
-  }
-  if (!embreeGeometry) {
-    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
-  }
-
   coeffsData = getParamDataT<vec4f>("plane.coefficients", true);
   boundsData = getParamDataT<box3f>("plane.bounds");
 
-  ispc::Planes_set(getIE(), embreeGeometry, ispc(coeffsData), ispc(boundsData));
+  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Planes_bounds,
+      (RTCIntersectFunctionN)&ispc::Planes_intersect,
+      (RTCOccludedFunctionN)&ispc::Planes_occluded);
+  getSh()->coeffs = *ispc(coeffsData);
+  getSh()->bounds = *ispc(boundsData);
+  getSh()->super.numPrimitives = numPrimitives();
 
   postCreationInfo();
 }

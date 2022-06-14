@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,7 +6,7 @@
 // input: importance in 'cdf'
 // output: cdf of importance in 'cdf'
 //         return sum
-uniform float Distribution1D_create(
+export uniform float Distribution1D_create(
     const uniform int size, uniform float *uniform cdf);
 
 struct Sample1D

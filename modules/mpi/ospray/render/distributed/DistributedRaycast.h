@@ -1,4 +1,4 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -10,6 +10,8 @@
 #include "DistributedRenderer.h"
 #include "camera/PerspectiveCamera.h"
 #include "common/MPICommon.h"
+// ispc shared
+#include "DistributedRaycastShared.h"
 
 namespace ospray {
 namespace mpi {
@@ -25,7 +27,8 @@ namespace mpi {
  * Also see apps/ospRandSciVisTest.cpp and apps/ospRandSphereTest.cpp for
  * example usage.
  */
-struct DistributedRaycastRenderer : public DistributedRenderer
+struct DistributedRaycastRenderer : public AddStructShared<DistributedRenderer,
+                                        ispc::DistributedRaycastRenderer>
 {
   DistributedRaycastRenderer();
   virtual ~DistributedRaycastRenderer() override;

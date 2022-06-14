@@ -1,19 +1,54 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DirectionalLight.h"
+#include "math/sampling.h"
+// embree
+#include "embree3/rtcore.h"
+// ispc exports
 #include "lights/DirectionalLight_ispc.h"
-#include "lights/Light_ispc.h"
+// ispc shared
+#include "DirectionalLightShared.h"
+#include "common/InstanceShared.h"
+
+namespace ispc {
+
+void DirectionalLight::set(bool isVisible,
+    const Instance *instance,
+    const vec3f &direction,
+    const vec3f &irradiance,
+    float cosAngle)
+{
+  super.isVisible = isVisible;
+  super.instance = instance;
+  super.sample = ispc::DirectionalLight_sample_addr();
+  super.eval = ispc::DirectionalLight_eval_addr();
+
+  frame = rkcommon::math::frame(direction);
+  this->irradiance = irradiance;
+  this->cosAngle = cosAngle;
+  pdf = cosAngle < COS_ANGLE_MAX ? ospray::uniformSampleConePDF(cosAngle) : inf;
+
+  // Enable dynamic runtime instancing or apply static transformation
+  if (instance) {
+    if (instance->motionBlur) {
+      super.sample = ispc::DirectionalLight_sample_instanced_addr();
+      super.eval = ispc::DirectionalLight_eval_instanced_addr();
+    } else {
+      frame = instance->xfm.l * frame;
+    }
+  }
+}
+} // namespace ispc
 
 namespace ospray {
 
-void *DirectionalLight::createIE(const void *instance) const
+ispc::Light *DirectionalLight::createSh(
+    uint32_t, const ispc::Instance *instance) const
 {
-  void *ie = ispc::DirectionalLight_create();
-  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
-  ispc::DirectionalLight_set(
-      ie, (ispc::vec3f &)irradiance, (ispc::vec3f &)direction, cosAngle);
-  return ie;
+  ispc::DirectionalLight *sh = StructSharedCreate<ispc::DirectionalLight>();
+  sh->set(visible, instance, direction, irradiance, cosAngle);
+  return &sh->super;
 }
 
 std::string DirectionalLight::toString() const

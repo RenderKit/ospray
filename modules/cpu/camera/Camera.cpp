@@ -1,9 +1,8 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Camera.h"
-#include "camera/Camera_ispc.h"
 #include "common/Util.h"
 
 namespace ospray {
@@ -97,17 +96,16 @@ void Camera::commit()
       std::swap(shutter.lower, shutter.upper);
   }
 
-  ispc::Camera_set(getIE(),
-      nearClip,
-      (const ispc::vec2f &)imageStart,
-      (const ispc::vec2f &)imageEnd,
-      (const ispc::box1f &)shutter,
-      shutterType == OSP_SHUTTER_GLOBAL,
-      rollingShutterDuration,
-      shutterType == OSP_SHUTTER_ROLLING_RIGHT
-          || shutterType == OSP_SHUTTER_ROLLING_LEFT,
-      motionTransform.motionBlur,
-      embreeGeometry);
+  getSh()->nearClip = nearClip;
+  getSh()->subImage.lower = imageStart;
+  getSh()->subImage.upper = imageEnd;
+  getSh()->shutter = shutter;
+  getSh()->motionBlur = motionTransform.motionBlur;
+  getSh()->geom = embreeGeometry;
+  getSh()->globalShutter = shutterType == OSP_SHUTTER_GLOBAL;
+  getSh()->rollingShutterHorizontal = (shutterType == OSP_SHUTTER_ROLLING_RIGHT
+      || shutterType == OSP_SHUTTER_ROLLING_LEFT);
+  getSh()->rollingShutterDuration = rollingShutterDuration;
 }
 
 void Camera::setDevice(RTCDevice device)

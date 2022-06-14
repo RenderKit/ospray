@@ -1,15 +1,17 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Renderer.h"
+#include "LoadBalancer.h"
+#include "Material.h"
 #include "common/Instance.h"
 #include "common/Util.h"
 #include "geometry/GeometricModel.h"
+#include "pf/PixelFilter.h"
 // ispc exports
 #include "render/Renderer_ispc.h"
-// ospray
-#include "LoadBalancer.h"
+#include "render/util_ispc.h"
 
 namespace ospray {
 
@@ -21,6 +23,7 @@ Renderer::Renderer()
 {
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;
+  getSh()->renderSample = ispc::Renderer_default_renderSample_addr();
 }
 
 std::string Renderer::toString() const
@@ -57,22 +60,23 @@ void Renderer::commit()
   setupPixelFilter();
 
   if (materialData)
-    ispcMaterialPtrs = createArrayOfSh(*materialData);
+    ispcMaterialPtrs = createArrayOfSh<ispc::Material>(*materialData);
   else
     ispcMaterialPtrs.clear();
 
-  if (getIE()) {
-    ispc::Renderer_set(getIE(),
-        spp,
-        maxDepth,
-        minContribution,
-        (ispc::vec4f &)bgColor,
-        backplate ? backplate->getSh() : nullptr,
-        ispcMaterialPtrs.size(),
-        ispcMaterialPtrs.data(),
-        maxDepthTexture ? maxDepthTexture->getSh() : nullptr,
-        pixelFilter ? pixelFilter->getIE() : nullptr);
-  }
+  getSh()->spp = spp;
+  getSh()->maxDepth = maxDepth;
+  getSh()->minContribution = minContribution;
+  getSh()->bgColor = bgColor;
+  getSh()->backplate = backplate ? backplate->getSh() : nullptr;
+  getSh()->numMaterials = ispcMaterialPtrs.size();
+  getSh()->material = ispcMaterialPtrs.data();
+  getSh()->maxDepthTexture =
+      maxDepthTexture ? maxDepthTexture->getSh() : nullptr;
+  getSh()->pixelFilter =
+      (ispc::PixelFilter *)(pixelFilter ? pixelFilter->getIE() : nullptr);
+
+  ispc::precomputeZOrder();
 }
 
 Renderer *Renderer::createInstance(const char *type)
@@ -85,20 +89,19 @@ void Renderer::registerType(const char *type, FactoryFcn<Renderer> f)
   g_renderersMap[type] = f;
 }
 
-void Renderer::renderTile(FrameBuffer *fb,
+void Renderer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
     void *perFrameData,
-    Tile &tile,
-    size_t jobID) const
+    const utility::ArrayView<uint32_t> &taskIDs) const
 {
-  ispc::Renderer_renderTile(getIE(),
-      fb->getIE(),
-      camera->getIE(),
-      world->getIE(),
+  ispc::Renderer_renderTasks(getSh(),
+      fb->getSh(),
+      camera->getSh(),
+      world->getSh(),
       perFrameData,
-      (ispc::Tile &)tile,
-      jobID);
+      taskIDs.data(),
+      taskIDs.size());
 }
 
 OSPPickResult Renderer::pick(
@@ -108,16 +111,16 @@ OSPPickResult Renderer::pick(
 
   res.instance = nullptr;
   res.model = nullptr;
-  res.primID = -1;
+  res.primID = RTC_INVALID_GEOMETRY_ID;
 
-  int instID = -1;
-  int geomID = -1;
-  int primID = -1;
+  int instID = RTC_INVALID_GEOMETRY_ID;
+  int geomID = RTC_INVALID_GEOMETRY_ID;
+  int primID = RTC_INVALID_GEOMETRY_ID;
 
-  ispc::Renderer_pick(getIE(),
-      fb->getIE(),
-      camera->getIE(),
-      world->getIE(),
+  ispc::Renderer_pick(getSh(),
+      fb->getSh(),
+      camera->getSh(),
+      world->getSh(),
       (const ispc::vec2f &)screenPos,
       (ispc::vec3f &)res.worldPosition[0],
       instID,

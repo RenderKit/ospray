@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "MicrofacetAlbedo.ih"
@@ -178,7 +178,7 @@ static void MicrofacetSheenAlbedoTable_precompute()
   }
 }
 
-void precomputeMicrofacetAlbedoTables()
+export void precomputeMicrofacetAlbedoTables()
 {
   if (MicrofacetAlbedoTable_initialized)
     return;

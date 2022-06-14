@@ -1,10 +1,10 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Messaging.h"
-#include "rkcommon/memory/DeletedUniquePtr.h"
-// stl
+#include <mutex>
 #include <unordered_map>
+#include "rkcommon/memory/DeletedUniquePtr.h"
 
 namespace ospray {
 namespace mpi {
@@ -31,6 +31,7 @@ struct ObjectMessageHandler : maml::MessageHandler
   mpicommon::Group group;
 
  private:
+  std::mutex objectListenersMutex;
   std::unordered_map<int, MessageHandler *> objectListeners;
 };
 
@@ -39,6 +40,8 @@ struct ObjectMessageHandler : maml::MessageHandler
 inline void ObjectMessageHandler::registerMessageListener(
     int handleObjID, MessageHandler *listener)
 {
+  std::lock_guard<std::mutex> lock(objectListenersMutex);
+
   if (objectListeners.find(handleObjID) != objectListeners.end())
     postStatusMsg() << "WARNING: overwriting an existing listener!";
 
@@ -47,12 +50,14 @@ inline void ObjectMessageHandler::registerMessageListener(
 
 inline void ObjectMessageHandler::removeMessageListener(int handleObjID)
 {
+  std::lock_guard<std::mutex> lock(objectListenersMutex);
   objectListeners.erase(handleObjID);
 }
 
 inline void ObjectMessageHandler::incoming(
     const std::shared_ptr<Message> &message)
 {
+  std::lock_guard<std::mutex> lock(objectListenersMutex);
   auto obj = objectListeners.find(message->tag);
   if (obj != objectListeners.end()) {
     obj->second->incoming(message);

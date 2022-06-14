@@ -1,4 +1,4 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // This code is for DynamicLoadBalancer using the lifeline scheduling method
@@ -98,7 +98,7 @@ std::vector<int> DynamicLoadBalancer::rankToCoords(
 
 // --------------------------------------------------------------------
 // This function Takes coords of a rank and returns the rank id
-unsigned int DynamicLoadBalancer::coordsToRank(std::vector<int> &coords,
+int DynamicLoadBalancer::coordsToRank(std::vector<int> &coords,
     unsigned int base,
     unsigned int power,
     int numRanks)
@@ -109,14 +109,12 @@ unsigned int DynamicLoadBalancer::coordsToRank(std::vector<int> &coords,
     return -1;
   }
 
-  unsigned int result = 0;
+  int result = 0;
   for (unsigned int i = 0; i < power; i++)
     result += coords[i] * pow(base, power - i - 1);
 
   if (numRanks <= result)
-    result = result - numRanks;
-  if (result < 0)
-    result = 0;
+    result -= numRanks;
 
   return result;
 }
@@ -142,7 +140,7 @@ std::vector<unsigned int> DynamicLoadBalancer::getLifelineID(
     // loop over coords of lifeline i
     for (unsigned int j = 0; j < power; j++) {
       if (i == j) {
-        if (base - 1 <= rankCoords[i])
+        if (int(base - 1) <= rankCoords[i])
           lifelineCoords[j] = 0;
         else
           lifelineCoords[j] = rankCoords[i] + 1;
@@ -186,12 +184,9 @@ void DynamicLoadBalancer::incoming(
   else if (header->type == RECV_WORK) {
     auto *workMsg = (DynamicLBSendWorkMessage *)message->data;
     int numRecvWork = workMsg->numWorkItems;
-    const int recvBuffSize =
-        sizeof(DynamicLBSendWorkMessage) + numRecvWork * sizeof(Work);
     auto *workItems =
         (Work *)(message->data + sizeof(DynamicLBSendWorkMessage));
     Work myWork;
-    int senderRank = header->senderRank;
     int workSize;
     for (int i = 0; i < numRecvWork; i++) {
       myWork.ntasks = workItems[i].ntasks;
@@ -223,11 +218,10 @@ void DynamicLoadBalancer::requestWork()
   else
     power = int(p) + 1;
 
-  int victimID = 0;
   myLifelines = getMyLifeLines(workerRank(), workerSize(), base, power);
 
-  for (int i = 0; i < myLifelines.size(); i++) {
-    if (myLifelines[i] == workerRank())
+  for (size_t i = 0; i < myLifelines.size(); i++) {
+    if (myLifelines[i] == (unsigned int)workerRank())
       continue;
     else {
       auto msg = std::make_shared<mpicommon::Message>(msgSize);

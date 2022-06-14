@@ -1,8 +1,6 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../../common/DistributedWorld.ih"
-#include "DistributedRenderer.ih"
 #include "common/Instance.ih"
 #include "common/World.ih"
 #include "math/random.ih"
@@ -13,15 +11,12 @@
 #include "render/scivis/volumes.ih"
 #include "render/util.ih"
 #include "rkcommon/math/box.ih"
-
-struct DistributedRaycastRenderer
-{
-  DistributedRenderer super;
-  int aoSamples;
-  float aoRadius;
-  bool shadowsEnabled;
-  float volumeSamplingRate;
-};
+#include "volume/VolumetricModel.ih"
+// c++ shared
+#include "../../common/DistributedWorldShared.h"
+#include "DistributedRaycastShared.h"
+#include "fb/FrameBufferShared.h"
+#include "fb/SparseFBShared.h"
 
 // The distributed raycast renderer uses its own volume interval integration
 // because we want to apply the jitter before offsetting our step size to stay
@@ -219,7 +214,7 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
 }
 
 void DRR_renderRegionSample(DistributedRenderer *uniform _self,
-    FrameBuffer *uniform fb,
+    SparseFB *uniform fb,
     DistributedWorld *uniform world,
     const box3f *uniform region,
     const vec2f &regionInterval,
@@ -270,8 +265,8 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
           geomRay,
           DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
               | DG_TEXCOORD);
-      surfaceColor =
-          DRR_shadeSurface(self, fb, world, sample.sampleID, geomRay, dg);
+      surfaceColor = DRR_shadeSurface(
+          self, &fb->super, world, sample.sampleID, geomRay, dg);
     }
 
     // Always just integrate the volume when it comes in front of the geometry
@@ -345,30 +340,7 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
 
 // Exported functions /////////////////////////////////////////////////////////
 
-export void *uniform DistributedRaycastRenderer_create()
+export void *uniform DRR_renderRegionSample_addr()
 {
-  DistributedRaycastRenderer *uniform self =
-      uniform new uniform DistributedRaycastRenderer;
-
-  DistributedRenderer_Constructor(&self->super);
-  self->super.renderRegionSample = DRR_renderRegionSample;
-  self->aoSamples = 0;
-  self->shadowsEnabled = false;
-
-  return self;
-}
-
-export void DistributedRaycastRenderer_set(void *uniform _self,
-    const uniform int aoSamples,
-    const uniform float aoRadius,
-    const uniform bool shadowsEnabled,
-    const uniform float volumeSamplingRate)
-{
-  DistributedRaycastRenderer *uniform self =
-      (DistributedRaycastRenderer * uniform) _self;
-
-  self->aoSamples = aoSamples;
-  self->aoRadius = aoRadius;
-  self->shadowsEnabled = shadowsEnabled;
-  self->volumeSamplingRate = volumeSamplingRate;
+  return DRR_renderRegionSample;
 }

@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AlphaCompositeTileOperation.h"
@@ -10,7 +10,7 @@ namespace ospray {
 
 struct BufferedTile
 {
-  ospray::Tile tile;
+  ispc::Tile tile;
 
   /*! determines order of this tile relative to other tiles.
     Tiles will get blended with the 'over' operator in
@@ -30,13 +30,13 @@ struct LiveAlphaCompositeTile : public LiveTileOperation
 
   void newFrame() override;
 
-  void process(const ospray::Tile &tile) override;
+  void process(const ispc::Tile &tile) override;
 
  private:
   std::vector<std::unique_ptr<BufferedTile>> bufferedTiles;
-  int currentGeneration;
-  int expectedInNextGeneration;
-  int missingInCurrentGeneration;
+  int currentGeneration{0};
+  int expectedInNextGeneration{0};
+  int missingInCurrentGeneration{1};
   std::mutex mutex;
 
   void reportCompositingError(const vec2i &tile);
@@ -63,7 +63,7 @@ void LiveAlphaCompositeTile::newFrame()
   }
 }
 
-void LiveAlphaCompositeTile::process(const ospray::Tile &tile)
+void LiveAlphaCompositeTile::process(const ispc::Tile &tile)
 {
   std::lock_guard<std::mutex> lock(mutex);
   {
@@ -139,9 +139,9 @@ void LiveAlphaCompositeTile::reportCompositingError(const vec2i &tile)
 {
   std::stringstream str;
   str << "negative missing on " << mpicommon::workerRank()
-      << ", missing = " << missingInCurrentGeneration
-      << ", expectedInNex = " << expectedInNextGeneration
-      << ", current generation = " << currentGeneration << ", tile = " << tile;
+      << ", missingInCurrent = " << missingInCurrentGeneration
+      << ", expectedInNext = " << expectedInNextGeneration
+      << ", currentGeneration = " << currentGeneration << ", tile = " << tile;
   handleError(OSP_INVALID_OPERATION, str.str());
 }
 

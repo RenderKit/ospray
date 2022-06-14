@@ -1,4 +1,4 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <vector>
@@ -47,6 +47,12 @@ size_t FrameBufferInfo::pixelSize(uint32_t channel) const
     return channels & OSP_FB_NORMAL ? sizeof(vec3f) : 0;
   case OSP_FB_ALBEDO:
     return channels & OSP_FB_ALBEDO ? sizeof(vec3f) : 0;
+  case OSP_FB_ID_PRIMITIVE:
+    return channels & OSP_FB_ID_PRIMITIVE ? sizeof(uint32) : 0;
+  case OSP_FB_ID_OBJECT:
+    return channels & OSP_FB_ID_OBJECT ? sizeof(uint32) : 0;
+  case OSP_FB_ID_INSTANCE:
+    return channels & OSP_FB_ID_INSTANCE ? sizeof(uint32) : 0;
   default:
     return 0;
   }
@@ -61,7 +67,7 @@ Data *OSPState::getSharedDataHandle(int64_t handle) const
 {
   auto fnd = appSharedData.find(handle);
   if (fnd != appSharedData.end()) {
-    return fnd->second;
+    return fnd->second.ptr;
   }
   return nullptr;
 }
@@ -211,12 +217,15 @@ Data *retrieveData(OSPState &state,
     auto data = state.dataTransfers.front();
     state.dataTransfers.pop();
 
-    if (outputData) {
+    if (!outputData) {
+      outputData = data;
+    } else {
       // All data on the workers is compact, with the compaction done by the
       // app rank before sending
       std::memcpy(outputData->data(), data->data(), nbytes);
-    } else {
-      outputData = data;
+
+      // Release the temporary data transfer object
+      data->refDec();
     }
   }
 
@@ -260,6 +269,9 @@ void newSharedData(OSPState &state,
   ospRelease(forsubs);
   state.objects[handle] = (OSPData)subscopy;
   state.appSharedData[handle] = data;
+
+  // Need to release the local scope's ref count, see issue about Ref<T>
+  data->refDec();
 }
 
 void newData(
@@ -356,22 +368,30 @@ void release(
   // Note: we keep the handle in the state.objects list as it may be referenced
   // by other objects in the scene as a parameter or data.
 
-  // Check if we can release a referenced framebuffer info
+  // Check if we should release a framebuffer info for this object
   {
     auto fnd = state.framebuffers.find(handle);
     if (fnd != state.framebuffers.end()) {
-      OSPObject obj = state.objects[handle];
-      ManagedObject *m = lookupDistributedObject<ManagedObject>(obj);
-      state.framebuffers.erase(fnd);
+      if (fnd->second->useCount() == 1) {
+        state.framebuffers.erase(fnd);
+      } else {
+        fnd->second->refDec();
+      }
     }
   }
 
-  Data *appData = state.getSharedDataHandle(handle);
-  if (appData) {
-    appData->refDec();
-    state.appSharedData.erase(handle);
+  // Check if we should release a shared data info for this object
+  {
+    auto fnd = state.appSharedData.find(handle);
+    if (fnd != state.appSharedData.end()) {
+      if (fnd->second->useCount() == 1) {
+        state.appSharedData.erase(fnd);
+      } else {
+        fnd->second->refDec();
+      }
+    }
   }
-}
+} // namespace work
 
 void retain(
     OSPState &state, networking::BufferReader &cmdBuf, networking::Fabric &)
@@ -379,6 +399,22 @@ void retain(
   int64_t handle = 0;
   cmdBuf >> handle;
   ospRetain(state.objects[handle]);
+
+  // Mirror the app's ref count for framebuffer info
+  {
+    auto fnd = state.framebuffers.find(handle);
+    if (fnd != state.framebuffers.end()) {
+      fnd->second->refInc();
+    }
+  }
+
+  // Mirror the app's ref count for shared data transfer buffers
+  {
+    auto fnd = state.appSharedData.find(handle);
+    if (fnd != state.appSharedData.end()) {
+      fnd->second->refInc();
+    }
+  }
 }
 
 void loadModule(
@@ -399,8 +435,12 @@ void createFramebuffer(
   cmdBuf >> handle >> size >> format >> channels;
   state.objects[handle] =
       ospNewFrameBuffer(size.x, size.y, (OSPFrameBufferFormat)format, channels);
-  state.framebuffers[handle] =
-      FrameBufferInfo(size, (OSPFrameBufferFormat)format, channels);
+
+  Ref<FrameBufferInfo> fbInfo =
+      new FrameBufferInfo(size, (OSPFrameBufferFormat)format, channels);
+  state.framebuffers[handle] = fbInfo;
+  // Release the local scope ref (see open issue about Ref<T>)
+  fbInfo->refDec();
 }
 
 void mapFramebuffer(OSPState &state,
@@ -415,8 +455,8 @@ void mapFramebuffer(OSPState &state,
   if (mpicommon::worker.rank == 0) {
     using namespace utility;
 
-    const FrameBufferInfo &fbInfo = state.framebuffers[handle];
-    uint64_t nbytes = fbInfo.pixelSize(channel) * fbInfo.getNumPixels();
+    const FrameBufferInfo *fbInfo = state.framebuffers[handle].ptr;
+    uint64_t nbytes = fbInfo->pixelSize(channel) * fbInfo->getNumPixels();
 
     auto bytesView = std::make_shared<OwnedArray<uint8_t>>(
         reinterpret_cast<uint8_t *>(&nbytes), sizeof(nbytes));

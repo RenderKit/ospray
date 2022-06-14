@@ -1,11 +1,13 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "MultiDevice.h"
+#include "MultiDeviceFrameBuffer.h"
 #include "MultiDeviceRenderTask.h"
 #include "camera/registration.h"
 #include "fb/LocalFB.h"
+#include "fb/SparseFB.h"
 #include "fb/registration.h"
 #include "geometry/registration.h"
 #include "lights/registration.h"
@@ -357,9 +359,22 @@ void MultiDevice::retain(OSPObject object)
 OSPFrameBuffer MultiDevice::frameBufferCreate(
     const vec2i &size, const OSPFrameBufferFormat mode, const uint32 channels)
 {
-  MultiDeviceObject *o = new MultiDeviceObject();
+  MultiDeviceFrameBuffer *o = new MultiDeviceFrameBuffer();
+  o->rowmajorFb = new LocalFrameBuffer(size, mode, channels);
+  // Need one refDec here for the local scope ref (see issue about Ref<>)
+  o->rowmajorFb->refDec();
+
+  const vec2i totalTiles = divRoundUp(size, vec2i(TILE_SIZE));
   for (size_t i = 0; i < subdevices.size(); ++i) {
-    FrameBuffer *fbi = new LocalFrameBuffer(size, mode, channels);
+    // Assign tiles round-robin among the subdevices
+    std::vector<uint32_t> tileIDs;
+    for (uint32_t tid = 0; tid < totalTiles.long_product(); ++tid) {
+      if (tid % subdevices.size() == i) {
+        tileIDs.push_back(tid);
+      }
+    }
+
+    FrameBuffer *fbi = new SparseFrameBuffer(size, mode, channels, tileIDs);
     o->objects.push_back((OSPFrameBuffer)fbi);
   }
   return (OSPFrameBuffer)o;
@@ -381,30 +396,28 @@ OSPImageOperation MultiDevice::newImageOp(const char *type)
 const void *MultiDevice::frameBufferMap(
     OSPFrameBuffer _fb, const OSPFrameBufferChannel channel)
 {
-  MultiDeviceObject *o = (MultiDeviceObject *)_fb;
-  LocalFrameBuffer *fb = (LocalFrameBuffer *)o->objects[0];
-  return fb->mapBuffer(channel);
+  MultiDeviceFrameBuffer *o = (MultiDeviceFrameBuffer *)_fb;
+  return o->rowmajorFb->mapBuffer(channel);
 }
 
 void MultiDevice::frameBufferUnmap(const void *mapped, OSPFrameBuffer _fb)
 {
-  MultiDeviceObject *o = (MultiDeviceObject *)_fb;
-  LocalFrameBuffer *fb = (LocalFrameBuffer *)o->objects[0];
-  fb->unmap(mapped);
+  MultiDeviceFrameBuffer *o = (MultiDeviceFrameBuffer *)_fb;
+  o->rowmajorFb->unmap(mapped);
 }
 
 float MultiDevice::getVariance(OSPFrameBuffer _fb)
 {
-  MultiDeviceObject *o = (MultiDeviceObject *)_fb;
-  LocalFrameBuffer *fb = (LocalFrameBuffer *)o->objects[0];
-  return fb->getVariance();
+  MultiDeviceFrameBuffer *o = (MultiDeviceFrameBuffer *)_fb;
+  return o->rowmajorFb->getVariance();
 }
 
 void MultiDevice::resetAccumulation(OSPFrameBuffer _fb)
 {
-  MultiDeviceObject *o = (MultiDeviceObject *)_fb;
+  MultiDeviceFrameBuffer *o = (MultiDeviceFrameBuffer *)_fb;
+  o->rowmajorFb->clear();
   for (size_t i = 0; i < subdevices.size(); ++i) {
-    LocalFrameBuffer *fbi = (LocalFrameBuffer *)o->objects[i];
+    SparseFrameBuffer *fbi = (SparseFrameBuffer *)o->objects[i];
     fbi->clear();
   }
 }
@@ -425,9 +438,13 @@ OSPFuture MultiDevice::renderFrame(OSPFrameBuffer _framebuffer,
     OSPCamera _camera,
     OSPWorld _world)
 {
-  MultiDeviceObject *multiFb = (MultiDeviceObject *)_framebuffer;
-  FrameBuffer *fb0 = (FrameBuffer *)multiFb->objects[0];
-  fb0->setCompletedEvent(OSP_NONE_FINISHED);
+  MultiDeviceFrameBuffer *multiFb = (MultiDeviceFrameBuffer *)_framebuffer;
+  multiFb->rowmajorFb->setCompletedEvent(OSP_NONE_FINISHED);
+  for (size_t i = 0; i < multiFb->objects.size(); ++i) {
+    SparseFrameBuffer *fbi = (SparseFrameBuffer *)multiFb->objects[i];
+    fbi->setCompletedEvent(OSP_NONE_FINISHED);
+  }
+
   MultiDeviceObject *multiRenderer = (MultiDeviceObject *)_renderer;
   MultiDeviceObject *multiCamera = (MultiDeviceObject *)_camera;
   MultiDeviceObject *multiWorld = (MultiDeviceObject *)_world;

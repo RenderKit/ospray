@@ -1,8 +1,26 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FrameBuffer.h"
-#include "fb/FrameBuffer_ispc.h"
+#include "ISPCDevice_ispc.h"
+#include "OSPConfig.h"
+
+namespace {
+// Internal utilities for thread local progress tracking
+thread_local int threadLastFrameID = -1;
+thread_local uint32_t threadNumPixelsRendered = 0;
+
+extern "C" uint32_t *getThreadNumPixelsRendered()
+{
+  return &threadNumPixelsRendered;
+}
+
+extern "C" int *getThreadLastFrameID()
+{
+  return &threadLastFrameID;
+}
+
+}; // namespace
 
 namespace ospray {
 
@@ -10,27 +28,41 @@ FrameBuffer::FrameBuffer(const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
     : size(_size),
-      numTiles(divRoundUp(size, getTileSize())),
-      maxValidPixelID(size - vec2i(1)),
-      colorBufferFormat(_colorBufferFormat),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
       hasAccumBuffer(channels & OSP_FB_ACCUM),
       hasVarianceBuffer(
           (channels & OSP_FB_VARIANCE) && (channels & OSP_FB_ACCUM)),
       hasNormalBuffer(channels & OSP_FB_NORMAL),
       hasAlbedoBuffer(channels & OSP_FB_ALBEDO),
-      frameID(-1)
+      hasPrimitiveIDBuffer(channels & OSP_FB_ID_PRIMITIVE),
+      hasObjectIDBuffer(channels & OSP_FB_ID_OBJECT),
+      hasInstanceIDBuffer(channels & OSP_FB_ID_INSTANCE)
 {
   managedObjectType = OSP_FRAMEBUFFER;
-  if (size.x <= 0 || size.y <= 0) {
+  if (_size.x <= 0 || _size.y <= 0) {
     throw std::runtime_error(
         "framebuffer has invalid size. Dimensions must be greater than 0");
   }
+  getSh()->size = _size;
+  getSh()->rcpSize = vec2f(1.f) / vec2f(_size);
+  getSh()->channels = channels;
+  getSh()->colorBufferFormat = _colorBufferFormat;
 
-  tileIDs.reserve(getTotalTiles());
-  for (int i = 0; i < getTotalTiles(); ++i) {
-    tileIDs.push_back(i);
+#if OSPRAY_RENDER_TASK_SIZE == -1
+  // Compute render task size based on the simd width to get as "square" as
+  // possible a task size that has simdWidth pixels
+  const int simdWidth = ispc::ISPCDevice_programCount();
+  vec2i renderTaskSize(simdWidth, 1);
+  while (renderTaskSize.x / 2 > renderTaskSize.y) {
+    renderTaskSize.y *= 2;
+    renderTaskSize.x /= 2;
   }
+#else
+  // Note: we could also allow changing this at runtime if we want to add this
+  // to the API
+  vec2i renderTaskSize(OSPRAY_RENDER_TASK_SIZE);
+#endif
+  getSh()->renderTaskSize = renderTaskSize;
 }
 
 void FrameBuffer::commit()
@@ -38,29 +70,19 @@ void FrameBuffer::commit()
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
 }
 
-vec2i FrameBuffer::getTileSize() const
+vec2i FrameBuffer::getRenderTaskSize() const
 {
-  return vec2i(TILE_SIZE);
-}
-
-vec2i FrameBuffer::getNumTiles() const
-{
-  return numTiles;
-}
-
-int FrameBuffer::getTotalTiles() const
-{
-  return numTiles.x * numTiles.y;
+  return getSh()->renderTaskSize;
 }
 
 vec2i FrameBuffer::getNumPixels() const
 {
-  return size;
+  return getSh()->size;
 }
 
 OSPFrameBufferFormat FrameBuffer::getColorBufferFormat() const
 {
-  return colorBufferFormat;
+  return getSh()->colorBufferFormat;
 }
 
 float FrameBuffer::getVariance() const
@@ -68,17 +90,12 @@ float FrameBuffer::getVariance() const
   return frameVariance;
 }
 
-utility::ArrayView<int> FrameBuffer::getTileIDs()
-{
-  return utility::ArrayView<int>(tileIDs);
-}
-
 void FrameBuffer::beginFrame()
 {
-  frameProgress = 0.0f;
   cancelRender = false;
-  frameID++;
-  ispc::FrameBuffer_set_frameID(getIE(), frameID);
+  getSh()->cancelRender = 0;
+  getSh()->numPixelsRendered = 0;
+  getSh()->frameID++;
 }
 
 std::string FrameBuffer::toString() const
@@ -88,10 +105,12 @@ std::string FrameBuffer::toString() const
 
 void FrameBuffer::setCompletedEvent(OSPSyncEvent event)
 {
+  // We won't be running ISPC-side rendering tasks when updating the
+  // progress values here in C++
   if (event == OSP_NONE_FINISHED)
-    frameProgress = 0.0f;
+    getSh()->numPixelsRendered = 0;
   if (event == OSP_FRAME_FINISHED)
-    frameProgress = 1.0f;
+    getSh()->numPixelsRendered = getNumPixels().long_product();
   stagesCompleted = event;
 }
 
@@ -107,24 +126,27 @@ void FrameBuffer::waitForEvent(OSPSyncEvent event) const
     ;
 }
 
-void FrameBuffer::reportProgress(float newValue)
+float FrameBuffer::getCurrentProgress() const
 {
-  frameProgress = clamp(newValue, 0.f, 1.f);
-}
-
-float FrameBuffer::getCurrentProgress()
-{
-  return frameProgress;
+  return static_cast<float>(getSh()->numPixelsRendered)
+      / getNumPixels().long_product();
 }
 
 void FrameBuffer::cancelFrame()
 {
   cancelRender = true;
+  getSh()->cancelRender = 1;
 }
 
 bool FrameBuffer::frameCancelled() const
 {
   return cancelRender;
+}
+
+void FrameBuffer::prepareImageOps()
+{
+  findFirstFrameOperation();
+  setPixelOpShs();
 }
 
 void FrameBuffer::findFirstFrameOperation()
@@ -141,11 +163,24 @@ void FrameBuffer::findFirstFrameOperation()
     if (firstFrameOperation == imageOps.size() && isFrameOp)
       firstFrameOperation = i;
     else if (firstFrameOperation < imageOps.size() && !isFrameOp) {
-      throw std::runtime_error(
-          "frame operation must be before pixel and tile operations in the "
-          "image operation pipeline");
+      postStatusMsg(OSP_LOG_WARNING)
+          << "Invalid pixel/frame op pipeline: all frame operations "
+             "must come after all pixel operations";
     }
   }
+}
+
+void FrameBuffer::setPixelOpShs()
+{
+  pixelOpShs.clear();
+  for (auto &op : imageOps) {
+    LivePixelOp *pop = dynamic_cast<LivePixelOp *>(op.get());
+    if (pop) {
+      pixelOpShs.push_back(pop->getSh());
+    }
+  }
+  getSh()->pixelOps = pixelOpShs.empty() ? nullptr : pixelOpShs.data();
+  getSh()->numPixelOps = pixelOpShs.size();
 }
 
 bool FrameBuffer::hasAccumBuf() const
@@ -166,6 +201,47 @@ bool FrameBuffer::hasNormalBuf() const
 bool FrameBuffer::hasAlbedoBuf() const
 {
   return hasAlbedoBuffer;
+}
+
+uint32 FrameBuffer::getChannelFlags() const
+{
+  uint32 channels = 0;
+  if (hasDepthBuffer) {
+    channels |= OSP_FB_DEPTH;
+  }
+  if (hasAccumBuffer) {
+    channels |= OSP_FB_ACCUM;
+  }
+  if (hasVarianceBuffer) {
+    channels |= OSP_FB_VARIANCE;
+  }
+  if (hasNormalBuffer) {
+    channels |= OSP_FB_NORMAL;
+  }
+  if (hasAlbedoBuffer) {
+    channels |= OSP_FB_ALBEDO;
+  }
+  return channels;
+}
+
+int32 FrameBuffer::getFrameID() const
+{
+  return getSh()->frameID;
+}
+
+bool FrameBuffer::hasPrimitiveIDBuf() const
+{
+  return hasPrimitiveIDBuffer;
+}
+
+bool FrameBuffer::hasObjectIDBuf() const
+{
+  return hasObjectIDBuffer;
+}
+
+bool FrameBuffer::hasInstanceIDBuf() const
+{
+  return hasInstanceIDBuffer;
 }
 
 OSPTYPEFOR_DEFINITION(FrameBuffer *);

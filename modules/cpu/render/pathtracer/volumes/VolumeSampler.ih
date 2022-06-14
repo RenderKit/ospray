@@ -1,19 +1,17 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+
+#include "render/pathtracer/PathStructs.ih"
+#include "render/pathtracer/volumes/HenyeyGreenstein.ih"
+#include "rkcommon/math/vec.ih"
 
 struct World;
 struct LDSampler;
 struct RandomSampler;
 struct Ray;
-
-#include "render/pathtracer/volumes/HenyeyGreenstein.ih"
-
-#include "render/pathtracer/PathStructs.ih"
-
-#include "rkcommon/math/vec.ih"
-#include "volume/VolumetricModel.ih"
+struct RayIntervals;
 
 float volumeSampleFreePath(const PathState &pathState,
     const World *uniform world,

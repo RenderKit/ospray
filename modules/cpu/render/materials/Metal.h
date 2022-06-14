@@ -1,9 +1,9 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "math/spectrum.h"
 #include "render/Material.h"
-
+// ispc shared
 #include "MetalShared.h"
 
 namespace ospray {

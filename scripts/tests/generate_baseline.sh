@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2016-2020 Intel Corporation
+## Copyright 2016 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # results are put in a new folder called generated_test_images

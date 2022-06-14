@@ -1,4 +1,4 @@
-## Copyright 2009-2022 Intel Corporation
+## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # to run:  ./run_tests.ps1 <path to ospray source> <reference images ISA> [TEST_MPI]

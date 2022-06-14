@@ -1,10 +1,15 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "common/Managed.h"
 #include "common/Util.h"
+
+namespace ispc {
+struct Light;
+struct Instance;
+} // namespace ispc
 
 namespace ospray {
 
@@ -18,8 +23,9 @@ struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
   template <typename T>
   static void registerType(const char *type);
 
-  virtual void *createIE(const void *instance = nullptr) const = 0;
-  virtual void *createSecondIE(const void *instance = nullptr) const;
+  virtual uint32_t getShCount() const;
+  virtual ispc::Light *createSh(
+      uint32_t index, const ispc::Instance *instance = nullptr) const = 0;
   virtual void commit() override;
   virtual std::string toString() const override;
 
@@ -39,6 +45,11 @@ struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
 OSPTYPEFOR_SPECIALIZATION(Light *, OSP_LIGHT);
 
 // Inlined definitions /////////////////////////////////////////////////////////
+
+inline uint32_t Light::getShCount() const
+{
+  return 1;
+}
 
 template <typename T>
 inline void Light::registerType(const char *type)

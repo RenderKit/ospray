@@ -1,48 +1,30 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "IntensityDistribution.ih"
-#include "Light.ih"
 #include "common/Instance.ih"
 #include "math/sampling.ih"
-
-// state that changes under transformations
-struct SpotLightDynamic
-{
-  vec3f position;
-  vec3f direction;
-  vec3f c0;
-  vec3f c90;
-};
-
-struct SpotLight
-{
-  Light super;
-  vec3f intensity; // RGB radiative intensity of the SpotLight
-  vec3f radiance; // emitted RGB radiance
-  float cosAngleMax; // Angular limit of the spot in an easier to use form:
-                     // cosine of the half angle in radians
-  float cosAngleScale; // 1/(cos(border of the penumbra area) - cosAngleMax);
-                       // positive
-  float radius; // defines the size of the DiskLight represented using
-                // the (extended) SpotLight
-  float innerRadius; // defines the size of the inner cut out of the DiskLight
-                     // to represent a RingLight
-  float areaPdf; // pdf of disk/ring with radius/innerRadius
-  IntensityDistribution intensityDistribution;
-  SpotLightDynamic pre; // un- or pre-transformed state
-};
+// c++ shared
+#include "SpotLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 inline void Transform(const uniform SpotLightDynamic &pre,
-    const uniform affine3f xfm,
+    const uniform affine3f &xfm,
     uniform SpotLightDynamic &dyn)
 {
   dyn.position = xfmPoint(xfm, pre.position);
   dyn.direction = normalize(xfmVector(xfm, pre.direction));
   dyn.c90 = normalize(cross(xfmVector(xfm, pre.c0), dyn.direction));
   dyn.c0 = cross(dyn.direction, dyn.c90);
+}
+
+export void SpotLight_Transform(
+    const void *uniform self, const void *uniform xfm, void *uniform dyn)
+{
+  Transform(*((const SpotLightDynamic *uniform)self),
+      *((affine3f * uniform) xfm),
+      *((SpotLightDynamic * uniform) dyn));
 }
 
 inline float AngularAttenuation(const SpotLight *uniform self, float cosAngle)
@@ -221,69 +203,22 @@ Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-export void SpotLight_set(void *uniform super,
-    const uniform vec3f &position,
-    const uniform vec3f &direction,
-    const uniform vec3f &c0,
-    const uniform vec3f &radiance,
-    const uniform vec3f &intensity,
-    uniform float cosAngleMax,
-    uniform float cosAngleScale,
-    uniform float radius,
-    uniform float innerRadius,
-    const uniform vec2i &size,
-    float *uniform lid)
+export void *uniform SpotLight_sample_addr()
 {
-  SpotLight *uniform self = (SpotLight * uniform) super;
-
-  self->pre.position = position;
-  self->pre.direction = normalize(direction);
-
-  IntensityDistribution_set(&self->intensityDistribution, lid, size);
-
-  // Enable dynamic runtime instancing or apply static transformation
-  const Instance *uniform instance = self->super.instance;
-  if (instance) {
-    self->pre.c0 = c0;
-    if (instance->motionBlur) {
-      self->super.sample = SpotLight_sample_instanced;
-      self->super.eval = SpotLight_eval_instanced;
-    } else
-      Transform(self->pre, instance->xfm, self->pre);
-  } else {
-    self->pre.c90 = normalize(cross(c0, self->pre.direction));
-    self->pre.c0 = cross(self->pre.direction, self->pre.c90);
-  }
-
-  self->radiance = radiance;
-  self->intensity = intensity;
-  self->cosAngleMax = cosAngleMax;
-  self->cosAngleScale = cosAngleScale;
-  self->radius = radius;
-  self->innerRadius = innerRadius;
-  self->areaPdf = uniformSampleRingPDF(radius, innerRadius);
+  return SpotLight_sample;
 }
 
-export void *uniform SpotLight_create()
+export void *uniform SpotLight_sample_instanced_addr()
 {
-  SpotLight *uniform self = uniform new SpotLight;
+  return SpotLight_sample_instanced;
+}
 
-  Light_Constructor(&self->super);
-  self->super.sample = SpotLight_sample;
-  self->super.eval = SpotLight_eval;
+export void *uniform SpotLight_eval_addr()
+{
+  return SpotLight_eval;
+}
 
-  SpotLight_set(self,
-      make_vec3f(0.f),
-      make_vec3f(0.f, 0.f, 1.f),
-      make_vec3f(0.f, 1.f, 0.f),
-      make_vec3f(1.f),
-      make_vec3f(1.f),
-      0.f,
-      100.f,
-      0.f,
-      0.f,
-      make_vec2i(0),
-      NULL);
-
-  return self;
+export void *uniform SpotLight_eval_instanced_addr()
+{
+  return SpotLight_eval_instanced;
 }

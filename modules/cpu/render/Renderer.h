@@ -1,26 +1,30 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "Material.h"
-#include "camera/Camera.h"
-#include "common/Util.h"
-#include "common/World.h"
-#include "fb/FrameBuffer.h"
 #include "pf/PixelFilter.h"
+#include "rkcommon/utility/ArrayView.h"
 #include "texture/Texture2D.h"
+// ispc shared
+#include "RendererShared.h"
 
 namespace ospray {
 
-/*! \brief abstract base class for all ospray renderers.
+struct Camera;
+struct World;
+struct Material;
+struct FrameBuffer;
+struct PixelFilter;
 
-  \detailed Tthis base renderer abstraction only knows about
-  'rendering a frame'; most actual renderers will be derived from a
-  tile renderer, but this abstraction level also allows for frame
-  compositing or even projection/splatting based approaches
- */
-struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
+// abstract base class for all ospray renderers.
+//
+// This base renderer abstraction only knows about
+// 'rendering a frame'; most actual renderers will be derived from a
+// tile renderer, but this abstraction level also allows for frame
+// compositing or even projection/splatting based approaches
+struct OSPRAY_SDK_INTERFACE Renderer
+    : public AddStructShared<ManagedObject, ispc::Renderer>
 {
   Renderer();
   virtual ~Renderer() override = default;
@@ -32,28 +36,27 @@ struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
   virtual void commit() override;
   virtual std::string toString() const override;
 
-  //! \brief called to initialize a new frame
-  /*! this function gets called exactly once (on each node) at the
-    beginning of each frame, and allows the renderer to do whatever
-    is required to initialize a new frame. In particular, this
-    function _can_ return a pointer to some "per-frame-data"; this
-    pointer (can be NULL) is then passed to 'renderFrame' and
-    'endFrame' to do with as they please
-
-    \returns pointer to per-frame data, or NULL if this does not apply
-   */
+  // called to initialize a new frame
+  //
+  // this function gets called exactly once (on each node) at the
+  // beginning of each frame, and allows the renderer to do whatever
+  // is required to initialize a new frame. In particular, this
+  // function _can_ return a pointer to some "per-frame-data"; this
+  // pointer (can be NULL) is then passed to 'renderFrame' and
+  // 'endFrame' to do with as they please
+  //
+  // returns pointer to per-frame data, or NULL if this does not apply
   virtual void *beginFrame(FrameBuffer *fb, World *world);
 
-  /*! \brief called exactly once (on each node) at the end of each frame */
+  // called exactly once (on each node) at the end of each frame
   virtual void endFrame(FrameBuffer *fb, void *perFrameData);
 
-  /*! \brief called by the load balancer to render one tile of "samples" */
-  virtual void renderTile(FrameBuffer *fb,
+  // called by the load balancer to render one "sample" for each task
+  virtual void renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
-      Tile &tile,
-      size_t jobID) const;
+      const utility::ArrayView<uint32_t> &taskIDs) const;
 
   virtual OSPPickResult pick(
       FrameBuffer *fb, Camera *camera, World *world, const vec2f &screenPos);
@@ -70,7 +73,7 @@ struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
   std::unique_ptr<PixelFilter> pixelFilter;
 
   Ref<const DataT<Material *>> materialData;
-  std::vector<void *> ispcMaterialPtrs;
+  std::vector<ispc::Material *> ispcMaterialPtrs;
 
  private:
   template <typename BASE_CLASS, typename CHILD_CLASS>

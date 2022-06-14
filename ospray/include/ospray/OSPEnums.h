@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // This header is shared with ISPC
@@ -241,7 +241,10 @@ typedef enum
   OSP_FB_ACCUM = (1 << 2),
   OSP_FB_VARIANCE = (1 << 3),
   OSP_FB_NORMAL = (1 << 4), // in world-space
-  OSP_FB_ALBEDO = (1 << 5)
+  OSP_FB_ALBEDO = (1 << 5),
+  OSP_FB_ID_PRIMITIVE = (1 << 6),
+  OSP_FB_ID_OBJECT = (1 << 7),
+  OSP_FB_ID_INSTANCE = (1 << 8)
 } OSPFrameBufferChannel;
 
 // OSPRay events which can be waited on via ospWait()
@@ -346,7 +349,7 @@ typedef enum
   OSP_AMR_OCTANT
 } OSPAMRMethod;
 
-// Filter modes that can be set on 'VDB' type OSPVolume, compatible with VKL
+// Filter modes for VDB and structured volumes, compatible with VKL
 typedef enum
 #if __cplusplus >= 201103L
     : uint32_t
@@ -356,6 +359,16 @@ typedef enum
   OSP_VOLUME_FILTER_TRILINEAR = 100, // default trilinear interpolation
   OSP_VOLUME_FILTER_TRICUBIC = 200 // tricubic interpolation
 } OSPVolumeFilter;
+
+// VDB node data format
+typedef enum
+#if __cplusplus > 201103L
+    : uint32_t
+#endif
+{
+  OSP_VOLUME_FORMAT_TILE = 0, // node with no spatial variation.
+  OSP_VOLUME_FORMAT_DENSE_ZYX // a dense grid of voxels in zyx layout
+} OSPVolumeFormat;
 
 // OSPRay pixel filter types
 typedef enum

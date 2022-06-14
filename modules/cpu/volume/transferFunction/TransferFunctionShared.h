@@ -4,7 +4,7 @@
 #pragma once
 
 #ifdef __cplusplus
-using namespace rkcommon::math;
+#include "common/StructShared.h"
 namespace ispc {
 typedef void *TransferFunction_getFct;
 typedef void *TransferFunction_getMaxOpacityFct;
@@ -22,8 +22,13 @@ struct TransferFunction
 
   TransferFunction_getFct get;
   TransferFunction_getMaxOpacityFct getMaxOpacity;
-};
 
 #ifdef __cplusplus
+  TransferFunction()
+      : valueRange(0.f, 1.f), get(nullptr), getMaxOpacity(nullptr)
+  {}
+};
 } // namespace ispc
+#else
+};
 #endif // __cplusplus

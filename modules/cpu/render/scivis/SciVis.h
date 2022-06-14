@@ -1,12 +1,14 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
-#include "../Renderer.h"
+#include "render/Renderer.h"
+// ispc shared
+#include "SciVisShared.h"
 
 namespace ospray {
 
-struct SciVis : public Renderer
+struct SciVis : public AddStructShared<Renderer, ispc::SciVis>
 {
   SciVis();
   std::string toString() const override;

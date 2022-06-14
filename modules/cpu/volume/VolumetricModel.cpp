@@ -1,4 +1,4 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -72,6 +72,7 @@ void VolumetricModel::commit()
   getSh()->densityScale = getParam<float>("densityScale", 1.f);
   getSh()->anisotropy = getParam<float>("anisotropy", 0.f);
   getSh()->gradientShadingScale = getParam<float>("gradientShadingScale", 0.f);
+  getSh()->userID = getParam<uint32>("id", RTC_INVALID_GEOMETRY_ID);
 }
 
 RTCGeometry VolumetricModel::embreeGeometryHandle() const

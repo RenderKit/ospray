@@ -1,37 +1,19 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "IntensityDistribution.ih"
-#include "Light.ih"
 #include "common/Instance.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
-
-// state that changes under transformations
-struct PointLightDynamic
-{
-  vec3f position;
-  vec3f direction;
-  vec3f c0; // orientation for intensityDistribution: direction of the C0-
-  vec3f c90; // and the C90-(half)plane
-};
-
-struct PointLight
-{
-  Light super;
-  vec3f intensity; // RGB color and intensity of light
-  vec3f radiance; // emitted RGB radiance
-  float radius; // defines the size of the SphereLight
-  IntensityDistribution intensityDistribution;
-  PointLightDynamic pre; // un- or pre-transformed state
-};
+// c++ shared
+#include "PointLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 inline void Transform(const PointLight *uniform self,
-    const uniform affine3f xfm,
+    const uniform affine3f &xfm,
     uniform PointLightDynamic &dyn)
 {
   dyn.position = xfmPoint(xfm, self->pre.position);
@@ -41,6 +23,14 @@ inline void Transform(const PointLight *uniform self,
     dyn.c90 = normalize(cross(xfmVector(xfm, self->pre.c0), dyn.direction));
     dyn.c0 = cross(dyn.direction, dyn.c90);
   }
+}
+
+export void PointLight_Transform(
+    const void *uniform self, const void *uniform xfm, void *uniform dyn)
+{
+  Transform((PointLight * uniform) self,
+      *((affine3f * uniform) xfm),
+      *((PointLightDynamic * uniform) dyn));
 }
 
 inline Light_SampleRes Sample(const PointLight *uniform self,
@@ -199,59 +189,22 @@ Light_EvalRes PointLight_eval_instanced(const Light *uniform super,
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-//! Set the parameters of an ispc-side PointLight object
-export void PointLight_set(void *uniform super,
-    const uniform vec3f &position,
-    const uniform vec3f &radiance,
-    const uniform vec3f &intensity,
-    uniform float radius,
-    float *uniform lid,
-    const uniform vec2i &size,
-    const uniform vec3f &direction,
-    const uniform vec3f &c0)
+export void *uniform PointLight_sample_addr()
 {
-  PointLight *uniform self = (PointLight * uniform) super;
-
-  self->radiance = radiance;
-  self->intensity = intensity;
-  self->radius = radius;
-  self->pre.position = position;
-  self->pre.direction = normalize(direction);
-
-  IntensityDistribution_set(&self->intensityDistribution, lid, size);
-
-  // Enable dynamic runtime instancing or apply static transformation
-  const Instance *uniform instance = self->super.instance;
-  if (instance) {
-    self->pre.c0 = c0;
-    if (instance->motionBlur) {
-      self->super.sample = PointLight_sample_instanced;
-      self->super.eval = PointLight_eval_instanced;
-    } else
-      Transform(self, instance->xfm, self->pre);
-  } else {
-    self->pre.c90 = normalize(cross(c0, self->pre.direction));
-    self->pre.c0 = cross(self->pre.direction, self->pre.c90);
-  }
+  return PointLight_sample;
 }
 
-//! Create an ispc-side PointLight object
-export void *uniform PointLight_create()
+export void *uniform PointLight_sample_instanced_addr()
 {
-  PointLight *uniform self = uniform new PointLight;
-  Light_Constructor(&self->super);
-  self->super.sample = PointLight_sample;
-  self->super.eval = PointLight_eval;
+  return PointLight_sample_instanced;
+}
 
-  PointLight_set(self,
-      make_vec3f(0.f),
-      make_vec3f(1.f),
-      make_vec3f(1.f),
-      0.f,
-      NULL,
-      make_vec2i(0),
-      make_vec3f(0.f, 1.f, 0.f),
-      make_vec3f(0.f, 0.f, 1.f));
+export void *uniform PointLight_eval_addr()
+{
+  return PointLight_eval;
+}
 
-  return self;
+export void *uniform PointLight_eval_instanced_addr()
+{
+  return PointLight_eval_instanced;
 }

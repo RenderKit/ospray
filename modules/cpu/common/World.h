@@ -1,21 +1,25 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 // ospray stuff
-#include "./Data.h"
-#include "./Managed.h"
-#include "Instance.h"
-#include "lights/Light.h"
+#include "Data.h"
+#include "Managed.h"
 // stl
 #include <vector>
 // embree
 #include "embree3/rtcore.h"
+// ispc shared
+#include "WorldShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE World : public ManagedObject
+struct Instance;
+struct Light;
+
+struct OSPRAY_SDK_INTERFACE World
+    : public AddStructShared<ManagedObject, ispc::World>
 {
   World();
   virtual ~World() override;
@@ -29,17 +33,9 @@ struct OSPRAY_SDK_INTERFACE World : public ManagedObject
 
   Ref<const DataT<Instance *>> instances;
   Ref<const DataT<Light *>> lights;
-  std::vector<void *> geometriesInstIEs;
-  std::vector<void *> volumesInstIEs;
-  std::vector<void *> clippersInstIEs;
 
-  //! \brief the embree scene handle for this geometry
-  RTCScene embreeSceneHandleGeometries{nullptr};
-  RTCScene embreeSceneHandleVolumes{nullptr};
-  RTCScene embreeSceneHandleClippers{nullptr};
-
-  bool scivisDataValid;
-  bool pathtracerDataValid;
+  bool scivisDataValid{false};
+  bool pathtracerDataValid{false};
 
   void setDevice(RTCDevice embreeDevice);
 

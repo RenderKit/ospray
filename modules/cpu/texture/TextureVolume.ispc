@@ -1,10 +1,10 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture.ih"
 #include "volume/Volume.ih"
-#include "volume/transferFunction/TransferFunction.ih"
-
+#include "volume/transferFunction/TransferFunctionShared.h"
+// c++ shared
 #include "TextureVolumeShared.h"
 
 vec4f TextureVolume_get(

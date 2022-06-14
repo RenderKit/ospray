@@ -1,26 +1,18 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 // ospray stuff
-#include "Group.ih"
+#include "../geometry/GeometricModel.ih"
+#include "DifferentialGeometry.ih"
 #include "MotionTransform.ih"
 #include "Ray.ih"
+// c++ shared
+#include "GroupShared.h"
+#include "InstanceShared.h"
 
 struct Renderer;
-
-struct Instance
-{
-  Group *group;
-  RTCGeometry geom; // only to access rtcGetGeometryTransform
-
-  AffineSpace3f xfm;
-  AffineSpace3f rcp_xfm;
-  bool motionBlur;
-};
-typedef Instance *uniform InstancePtr;
-typedef InstancePtr *uniform InstanceArray;
 
 inline uniform AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const uniform float time)
@@ -45,6 +37,9 @@ inline void Instance_postIntersect(const Instance *uniform self,
       clip ? self->group->clipModels : self->group->geometricModels;
   foreach_unique (geomID in ray.geomID)
     GeometricModel_postIntersect(*(models + geomID), renderer, dg, ray, flags);
+
+  dg.instID =
+      (self->userID == RTC_INVALID_GEOMETRY_ID) ? ray.instID : self->userID;
 
   uniform AffineSpace3f uxfm = self->xfm;
   uniform AffineSpace3f rcp_uxfm = self->rcp_xfm;

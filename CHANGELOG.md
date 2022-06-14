@@ -1,6 +1,34 @@
 Version History
 ---------------
 
+### Changes in v2.10.0:
+
+-   Add support for primitive, object, and instance ID buffers as
+    framebuffer channels
+-   Support face-varying attributes for Mesh and Subdivision geometry
+-   Replace CMake variable `OSPRAY_PIXELS_PER_JOB` by
+    `OSPRAY_RENDER_TASK_SIZE`; variance tracking for adaptive
+    accumulation is now per task instead of per tile, allowing for more
+    granular adaptation
+-   OSPRay now requires minimum Open VKL v1.3.0 to bring the following
+    improvements:
+    -   VDB volumes added support for contiguous data layouts, which can
+        provide improved performance (`nodesPackedDense`,
+        `nodesPackedTile` parameters)
+    -   Particle volumes are more memory efficiency and improved
+        performance
+-   OSPRay now requires minimum ISPC v1.18.0 for Open VKL and to include
+    a fix for parallel dispatch of uniform function pointers
+-   MPI Offload: resolve object life time tracking issue that would
+    result in framebuffer and data info being release too early, leading
+    to a crash
+-   Fix crash with OpenMPI due to argument handling
+-   Fix clipping when rays are parallel to clipping planes
+-   Fix missing SDK headers from CPU and MPI module
+-   Deprecated the `vec2f valueRange` parameter of the `piecewiseLinear`
+    transfer function, use `box1f value` instead
+
+
 ### Changes in v2.9.0:
 
 -   Add support for multi-segment deformation motion blur for `mesh`
@@ -31,7 +59,7 @@ Version History
     `cpu`
 -   Minimum version of rkcommon is 1.9.0, which brings the following
     improvements:
-    -   Add support for Intel oneAPI DPCPP compiler
+    -   Add detection of Intel oneAPI DPC++/C++ compiler
     -   Fix memory leak
 
 ### Changes in v2.8.0:

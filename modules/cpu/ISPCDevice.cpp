@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -452,7 +452,7 @@ OSPImageOperation ISPCDevice::newImageOp(const char *type)
 const void *ISPCDevice::frameBufferMap(
     OSPFrameBuffer _fb, OSPFrameBufferChannel channel)
 {
-  LocalFrameBuffer *fb = (LocalFrameBuffer *)_fb;
+  FrameBuffer *fb = (FrameBuffer *)_fb;
   return fb->mapBuffer(channel);
 }
 
@@ -470,7 +470,7 @@ float ISPCDevice::getVariance(OSPFrameBuffer _fb)
 
 void ISPCDevice::resetAccumulation(OSPFrameBuffer _fb)
 {
-  LocalFrameBuffer *fb = (LocalFrameBuffer *)_fb;
+  FrameBuffer *fb = (FrameBuffer *)_fb;
   fb->clear();
 }
 

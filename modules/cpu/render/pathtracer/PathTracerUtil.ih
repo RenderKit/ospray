@@ -1,11 +1,10 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include "render/Renderer.ih"
 #include "render/pathtracer/PathStructs.ih"
-
-#include "render/bsdfs/BSDF.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 
 inline bool isSmooth(const PathVertex &pathVertex)

@@ -1,4 +1,4 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef _WIN32
@@ -227,8 +227,8 @@ void MPIOffloadDevice::initializeDevice()
 
   initialized = true;
 
-  int _ac = 2;
-  const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
+  int _ac = 1;
+  const char *_av[] = {"ospray_mpi_worker"};
 
   std::string mode = getParam<std::string>("mpiMode", "mpi");
 
@@ -521,23 +521,25 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
 {
   ObjectHandle handle = allocateHandle();
 
-  ApplicationData appData;
-  appData.workerType = format;
+  Ref<ApplicationData> appData = new ApplicationData;
+  appData->workerType = format;
   if (mpicommon::isManagedObject(format)) {
     format = OSP_ULONG;
   }
-  appData.data = new Data(sharedData, format, numItems, byteStride);
+  appData->data = new Data(sharedData, format, numItems, byteStride);
   this->sharedData[handle.i64] = appData;
 
   sendWork(
       [&](networking::WriteStream &writer) {
         // Data on the workers is always compact, so we don't send the stride
-        writer << work::NEW_SHARED_DATA << handle.i64 << appData.workerType
+        writer << work::NEW_SHARED_DATA << handle.i64 << appData->workerType
                << numItems;
-        sendDataWork(writer, this->sharedData[handle.i64]);
+        sendDataWork(writer, *this->sharedData[handle.i64]);
       },
       false);
 
+  // Release the local ref to the appData, see issue about Ref<T>
+  appData->refDec();
   return (OSPData)(int64)handle;
 }
 
@@ -756,7 +758,7 @@ void MPIOffloadDevice::commit(OSPObject _object)
       [&](networking::WriteStream &writer) {
         writer << work::COMMIT << handle.i64;
         if (d != sharedData.end()) {
-          sendDataWork(writer, d->second);
+          sendDataWork(writer, *d->second);
         }
       },
       false);
@@ -783,13 +785,19 @@ void MPIOffloadDevice::release(OSPObject _object)
   // buffer we aren't actually sharing the pointer with the app anymore
   auto d = sharedData.find(handle.i64);
   if (d != sharedData.end()) {
-    if (d->second.releaseHazard) {
-      postStatusMsg(OSP_LOG_DEBUG)
-          << "#osp.mpi.app: ospRelease: data reference hazard exists, "
-          << " flushing pending sends";
-      fabric->flushBcastSends();
+    if (d->second->useCount() == 1) {
+      // Make sure there's no pending send referencing this data if we're going
+      // to delete it
+      if (d->second->releaseHazard) {
+        postStatusMsg(OSP_LOG_DEBUG)
+            << "#osp.mpi.app: ospRelease: data reference hazard exists, "
+            << " flushing pending sends";
+        fabric->flushBcastSends();
+      }
+      sharedData.erase(handle.i64);
+    } else {
+      d->second->refDec();
     }
-    sharedData.erase(handle.i64);
   }
 }
 
@@ -802,6 +810,12 @@ void MPIOffloadDevice::retain(OSPObject _obj)
         writer << work::RETAIN << handle.i64;
       },
       false);
+
+  // Increment the local shared data ref count so we match the app
+  auto d = sharedData.find(handle.i64);
+  if (d != sharedData.end()) {
+    d->second->refInc();
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -854,6 +868,10 @@ const void *MPIOffloadDevice::frameBufferMap(
       ArrayView<uint8_t>(reinterpret_cast<uint8_t *>(&nbytes), sizeof(nbytes));
 
   fabric->recv(bytesView, rootWorkerRank());
+  if (nbytes == 0) {
+    throw std::runtime_error(
+        "Attempt to map framebuffer channel which does not exist!");
+  }
 
   auto mapping = rkcommon::make_unique<OwnedArray<uint8_t>>();
   mapping->resize(nbytes, 0);

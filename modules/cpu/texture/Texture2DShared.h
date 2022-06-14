@@ -6,7 +6,6 @@
 #include "TextureShared.h"
 
 #ifdef __cplusplus
-using namespace rkcommon::math;
 namespace ispc {
 #endif // __cplusplus
 
@@ -22,7 +21,7 @@ struct Texture2D
 
 #ifdef __cplusplus
   Texture2D() : size(0), sizef(0.f), halfTexel(0.f), data(nullptr) {}
-  void Set(const vec2i &aSize,
+  void set(const vec2i &aSize,
       void *aData,
       OSPTextureFormat type,
       OSPTextureFilter flags);

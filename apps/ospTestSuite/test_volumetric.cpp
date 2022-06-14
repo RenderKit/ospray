@@ -1,4 +1,4 @@
-// Copyright 2017-2021 Intel Corporation
+// Copyright 2017 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "test_volumetric.h"
@@ -342,6 +342,7 @@ INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
                            "unstructured_volume_simple",
                            "particle_volume",
                            "vdb_volume",
+                           "vdb_volume_packed",
                            "gravity_spheres_amr"),
         ::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(16)));

@@ -1,7 +1,9 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Light.ih"
+#include "common/DifferentialGeometry.ih"
+// c++ shared
+#include "LightShared.h"
 
 Light_EvalRes Light_eval(const Light *uniform,
     const DifferentialGeometry &,
@@ -18,12 +20,7 @@ Light_EvalRes Light_eval(const Light *uniform,
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-//! Set the parameters of an ispc-side Light object
-export void Light_set(void *uniform _self,
-    const uniform bool isVisible,
-    const Instance *uniform instance)
+export void *uniform Light_eval_addr()
 {
-  Light *uniform self = (Light * uniform) _self;
-  self->isVisible = isVisible;
-  self->instance = instance;
+  return Light_eval;
 }

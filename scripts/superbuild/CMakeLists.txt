@@ -1,4 +1,4 @@
-## Copyright 2009-2022 Intel Corporation
+## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## Global settings ##
@@ -68,24 +68,24 @@ option(ALWAYS_REBUILD "Force every project to always be rebuilt?" OFF)
 
 option(DOWNLOAD_ISPC "Download ISPC or use the one found in the system environment?" ON)
 if (DOWNLOAD_ISPC)
-  set(ISPC_VERSION "1.17.0" CACHE STRING "Which version of ISPC to download?")
+  set(ISPC_VERSION "1.18.0" CACHE STRING "Which version of ISPC to download?")
   mark_as_advanced(CLEAR ISPC_VERSION)
-  if (ISPC_VERSION STREQUAL "1.17.0")
+  if (ISPC_VERSION STREQUAL "1.18.0")
     if (APPLE)
-      set(ISPC_HASH "e7fdcdbd5c272955249148c452ccd7295d7cf77b35ca1dec377e72b49c847bff")
+      set(ISPC_HASH "d1435b541182406ff6b18446d31ecceef0eae3aed7654391ae676d3142e0000d")
     elseif (WIN32)
-      set(ISPC_HASH "e9a7cc98f69357482985bcbf69fa006632cee7b3606069b4d5e16dc62092d660")
+      set(ISPC_HASH "9210bb2d9d3711367faccb37acf49966696132560b565471c1c6121f4924a17e")
     else()
-      set(ISPC_HASH "6acc5df75efdce437f79b1b6489be8567c6d009e19dcc4851b9b37012afce1f7")
+      set(ISPC_HASH "6c379bb97962e9de7d24fd48b3f7e647dc42be898e9d187948220268c646b692")
     endif()
   endif()
 else()
   mark_as_advanced(FORCE ISPC_VERSION)
 endif()
 
-set(RKCOMMON_VERSION "1.9.0" CACHE STRING "Which version of rkcommon to build?")
-if (RKCOMMON_VERSION STREQUAL "1.9.0")
-  set(RKCOMMON_HASH "54ef58226b5f2b6eb80091d806b94d563ce748a6c8d04db7836c20945fd99929")
+set(RKCOMMON_VERSION "1.10.0" CACHE STRING "Which version of rkcommon to build?")
+if (RKCOMMON_VERSION STREQUAL "1.10.0")
+  set(RKCOMMON_HASH "eb968868b85254680c59ff3e091e9a7634d407cf0375d2b52840bf9044716a48")
 endif()
 
 option(DOWNLOAD_TBB "Download TBB or use the one found in the system environment?" ON)
@@ -128,9 +128,9 @@ if (EMBREE_VERSION STREQUAL "3.13.3")
   endif()
 endif()
 
-set(OPENVKL_VERSION "1.2.0" CACHE STRING "Which version of OpenVKL to build?")
-if (OPENVKL_VERSION STREQUAL "1.2.0")
-  set(OPENVKL_HASH "5a3ae6cf4fc1379d326d929e91d3a95409d6e79773544ca12a02e28476ad905b")
+set(OPENVKL_VERSION "1.3.0" CACHE STRING "Which version of OpenVKL to build?")
+if (OPENVKL_VERSION STREQUAL "1.3.0")
+  set(OPENVKL_HASH "4e456dfa566a57e5f00da91a24ecbf76223d4e0722d12d978a9c07e0af26785d")
 endif()
 
 option(BUILD_OIDN "Build OpenImageDenoise as a part of the superbuild." OFF)
@@ -162,6 +162,24 @@ option(BUILD_OSPRAY_APPS "Enable building OSPRay apps" ON)
 option(BUILD_OSPRAY_MODULE_CPU "Enable building module_cpu" ON)
 option(BUILD_OSPRAY_MODULE_MPI "Enable building module_mpi" OFF)
 option(BUILD_OSPRAY_MODULE_MULTIDEVICE "Enable building module_multidevice" OFF)
+
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
+  set(ISA_X86 OFF)
+  set(ISA_NEON ON)
+else()
+  set(ISA_X86 ON)
+  set(ISA_NEON OFF)
+endif()
+option(BUILD_ISA_SSE4 "Build for SSE4" ${ISA_X86})
+mark_as_advanced(BUILD_ISA_SSE4)
+option(BUILD_ISA_AVX "Build for AVX" ${ISA_X86})
+mark_as_advanced(BUILD_ISA_AVX)
+option(BUILD_ISA_AVX2 "Build for AVX2" ${ISA_X86})
+mark_as_advanced(BUILD_ISA_AVX2)
+option(BUILD_ISA_AVX512 "Build for AVX512" ${ISA_X86})
+mark_as_advanced(BUILD_ISA_AVX512)
+option(BUILD_ISA_NEON "Build for NEON" ${ISA_NEON})
+mark_as_advanced(BUILD_ISA_NEON)
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"

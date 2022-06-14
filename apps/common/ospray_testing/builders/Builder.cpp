@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Builder.h"
@@ -166,10 +166,13 @@ cpp::Instance Builder::makeGroundPlane(const box3f &bounds) const
     // z-direction stripes
     startingIndex = v_position.size();
 
-    v_position.emplace_back(coord - stripeWidth, yLevel, -paddedExtent);
-    v_position.emplace_back(coord + stripeWidth, yLevel, -paddedExtent);
-    v_position.emplace_back(coord + stripeWidth, yLevel, paddedExtent);
-    v_position.emplace_back(coord - stripeWidth, yLevel, paddedExtent);
+    // offset another epsilon to avoid z-figthing for primID AOV
+    const float yLevel2 = yLevel + 1e-4f;
+
+    v_position.emplace_back(coord - stripeWidth, yLevel2, -paddedExtent);
+    v_position.emplace_back(coord + stripeWidth, yLevel2, -paddedExtent);
+    v_position.emplace_back(coord + stripeWidth, yLevel2, paddedExtent);
+    v_position.emplace_back(coord - stripeWidth, yLevel2, paddedExtent);
 
     v_normal.push_back(up);
     v_normal.push_back(up);

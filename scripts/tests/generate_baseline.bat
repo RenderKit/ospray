@@ -1,5 +1,5 @@
 @echo off
-rem Copyright 2016-2020 Intel Corporation
+rem Copyright 2016 Intel Corporation
 rem SPDX-License-Identifier: Apache-2.0
 
 setlocal

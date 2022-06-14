@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2014-2019 Intel Corporation
+## Copyright 2014 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 dest=$HOME/devtools-2
