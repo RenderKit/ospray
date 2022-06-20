@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v2.10.0 of Intel® OSPRay. For changes and new features
-see the [changelog](CHANGELOG.md). Visit http://www.ospray.org for more
-information.
+This is release v2.11.0 (devel) of Intel® OSPRay. For changes and new
+features see the [changelog](CHANGELOG.md). Visit http://www.ospray.org
+for more information.
 
 OSPRay Overview
 ===============
@@ -351,9 +351,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
+document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
