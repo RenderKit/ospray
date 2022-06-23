@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // must be first
@@ -144,35 +144,35 @@ void initFromCommandLine(int *_ac, const char ***_av)
     }
 
     for (int i = 1; i < ac;) {
-      std::string parm = av[i];
+      std::string param = av[i];
       // flag-style arguments
-      if (parm == "--osp:debug") {
+      if (param == "--osp:debug") {
         device->setParam("debug", true);
         device->setParam("logOutput", std::string("cout"));
         device->setParam("errorOutput", std::string("cerr"));
         removeArgs(ac, av, i, 1);
-      } else if (parm == "--osp:warn-as-error") {
+      } else if (param == "--osp:warn-as-error") {
         device->setParam("warnAsError", true);
         removeArgs(ac, av, i, 1);
-      } else if (parm == "--osp:verbose") {
+      } else if (param == "--osp:verbose") {
         device->setParam("logLevel", OSP_LOG_INFO);
         device->setParam("logOutput", std::string("cout"));
         device->setParam("errorOutput", std::string("cerr"));
         removeArgs(ac, av, i, 1);
-      } else if (parm == "--osp:vv") {
+      } else if (param == "--osp:vv") {
         device->setParam("logLevel", OSP_LOG_DEBUG);
         device->setParam("logOutput", std::string("cout"));
         device->setParam("errorOutput", std::string("cerr"));
         removeArgs(ac, av, i, 1);
       }
       // arguments taking required values
-      else if (beginsWith(parm, "--osp:log-level")) {
-        std::string str = getArgString(parm);
+      else if (beginsWith(param, "--osp:log-level")) {
+        std::string str = getArgString(param);
         auto level = api::Device::logLevelFromString(str);
         device->setParam("logLevel", level.value_or(0));
         removeArgs(ac, av, i, 1);
-      } else if (beginsWith(parm, "--osp:log-output")) {
-        std::string dst = getArgString(parm);
+      } else if (beginsWith(param, "--osp:log-output")) {
+        std::string dst = getArgString(param);
         if (dst == "cout" || dst == "cerr") {
           device->setParam("logOutput", dst);
         } else {
@@ -182,8 +182,8 @@ void initFromCommandLine(int *_ac, const char ***_av)
           postStatusMsg(ss);
         }
         removeArgs(ac, av, i, 1);
-      } else if (beginsWith(parm, "--osp:error-output")) {
-        std::string dst = getArgString(parm);
+      } else if (beginsWith(param, "--osp:error-output")) {
+        std::string dst = getArgString(param);
         if (dst == "cout" || dst == "cerr") {
           device->setParam("errorOutput", dst);
         } else {
@@ -193,12 +193,12 @@ void initFromCommandLine(int *_ac, const char ***_av)
           postStatusMsg(ss);
         }
         removeArgs(ac, av, i, 1);
-      } else if (beginsWith(parm, "--osp:num-threads")) {
-        int nt = std::max(1, getArgInt(parm));
+      } else if (beginsWith(param, "--osp:num-threads")) {
+        int nt = std::max(1, getArgInt(param));
         device->setParam("numThreads", nt);
         removeArgs(ac, av, i, 1);
-      } else if (beginsWith(parm, "--osp:set-affinity")) {
-        int val = getArgInt(parm);
+      } else if (beginsWith(param, "--osp:set-affinity")) {
+        int val = getArgInt(param);
         if (val == 0 || val == 1) {
           device->setParam<int>("setAffinity", val);
         } else {

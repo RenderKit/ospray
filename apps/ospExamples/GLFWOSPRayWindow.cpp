@@ -1,4 +1,4 @@
-// Copyright 2018-2021 Intel Corporation
+// Copyright 2018-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "GLFWOSPRayWindow.h"
@@ -566,7 +566,7 @@ void GLFWOSPRayWindow::buildUI()
 
   ImGui::Separator();
 
-  // the gaussian pixel fiter is the default,
+  // the gaussian pixel filter is the default,
   // which is at position 2 in the list
   static int whichPixelFilter = 2;
   if (ImGui::Combo("pixelfilter##whichPixelFilter",
@@ -607,7 +607,7 @@ void GLFWOSPRayWindow::buildUI()
     addObjectToCommit(renderer->handle());
   }
 
-  static vec3f bgColorSRGB{0.0f}; // imGUI's widget implicitely uses sRGB
+  static vec3f bgColorSRGB{0.0f}; // imGUI's widget implicitly uses sRGB
   if (ImGui::ColorEdit3("backgroundColor", bgColorSRGB)) {
     bgColor = vec3f(std::pow(bgColorSRGB.x, 2.2f),
         std::pow(bgColorSRGB.y, 2.2f),

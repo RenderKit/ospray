@@ -1,23 +1,16 @@
 // Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Material.ih"
+#include "Medium.ih"
+#include "render/Material.ih"
 #include "render/bsdfs/RobustDielectric.ih"
-#include "texture/TextureParam.ih"
 
-struct Glass
-{
-  PathTraceMaterial super;
-
-  Medium mediumInside;
-  Medium mediumOutside;
-};
+#include "GlassShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying Glass_getBSDF(
-    const uniform PathTraceMaterial *uniform super,
+const varying BSDF *varying Glass_getBSDF(const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -33,7 +26,7 @@ const varying BSDF *varying Glass_getBSDF(
   return bsdf;
 }
 
-vec3f Glass_getTransparency(const uniform PathTraceMaterial *uniform material,
+vec3f Glass_getTransparency(const uniform Material *uniform material,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium)
@@ -48,7 +41,7 @@ vec3f Glass_getTransparency(const uniform PathTraceMaterial *uniform material,
   return make_vec3f(1.0f - fresnelDielectric(cosThetaO, eta));
 }
 
-void Glass_selectNextMedium(const uniform PathTraceMaterial *uniform super,
+void Glass_selectNextMedium(const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     Medium &currentMedium)
 {
@@ -63,35 +56,17 @@ void Glass_selectNextMedium(const uniform PathTraceMaterial *uniform super,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void PathTracer_Glass_set(void *uniform _self,
-    const uniform float iorInside,
-    const uniform vec3f &attenuationColorInside,
-    const uniform float outsideIor,
-    const uniform vec3f &attenuationColorOutside,
-    const uniform float attenuationDistance,
-    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
-    )
+export void *uniform Glass_getBSDF_addr()
 {
-  uniform Glass *uniform self = (uniform Glass * uniform) _self;
-
-  self->mediumInside.ior = iorInside;
-  self->mediumInside.attenuation =
-      logf(attenuationColorInside) / max(attenuationDistance, EPS);
-  self->mediumOutside.ior = outsideIor;
-  self->mediumOutside.attenuation =
-      logf(attenuationColorOutside) / max(attenuationDistance, EPS);
-
-  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
+  return Glass_getBSDF;
 }
 
-export void *uniform PathTracer_Glass_create()
+export void *uniform Glass_getTransparency_addr()
 {
-  uniform Glass *uniform self = uniform new uniform Glass;
-  PathTraceMaterial_Constructor(&self->super,
-      MATERIAL_TYPE_GLASS,
-      Glass_getBSDF,
-      Glass_getTransparency,
-      Glass_selectNextMedium);
+  return Glass_getTransparency;
+}
 
-  return self;
+export void *uniform Glass_selectNextMedium_addr()
+{
+  return Glass_selectNextMedium;
 }

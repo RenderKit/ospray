@@ -1,12 +1,14 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "render/Material.h"
 
+#include "PrincipledShared.h"
+
 namespace ospray {
 namespace pathtracer {
 
-struct Principled : public ospray::Material
+struct Principled : public AddStructShared<Material, ispc::Principled>
 {
   Principled();
 

@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Alloy.h"
-#include "common/Data.h"
-#include "math/spectrum.h"
 // ispc
 #include "render/materials/Alloy_ispc.h"
 
@@ -12,7 +10,8 @@ namespace pathtracer {
 
 Alloy::Alloy()
 {
-  ispcEquivalent = ispc::PathTracer_Alloy_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_ALLOY;
+  getSh()->super.getBSDF = ispc::Alloy_getBSDF_addr();
 }
 
 std::string Alloy::toString() const
@@ -27,17 +26,14 @@ void Alloy::commit()
   MaterialParam3f edgeColor = getMaterialParam3f("edgeColor", vec3f(1.f));
   MaterialParam1f roughness = getMaterialParam1f("roughness", .1f);
 
+  getSh()->color = color.factor;
+  getSh()->colorMap = color.tex;
+  getSh()->edgeColor = edgeColor.factor;
+  getSh()->edgeColorMap = edgeColor.tex;
+  getSh()->roughness = roughness.factor;
+  getSh()->roughnessMap = roughness.tex;
+  
   ADD_ENSIGHT_TEXTURES;
-
-  ispc::PathTracer_Alloy_set(getIE(),
-      (const ispc::vec3f &)color.factor,
-      color.tex,
-      (const ispc::vec3f &)edgeColor.factor,
-      edgeColor.tex,
-      roughness.factor,
-      roughness.tex,
-      ENSIGHT_TEXTURE_PARAMETERS
-      );
 }
 
 } // namespace pathtracer

@@ -10,7 +10,9 @@ namespace pathtracer {
 
 MixMaterial::MixMaterial()
 {
-  ispcEquivalent = ispc::PathTracer_Mix_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_MIX;
+  getSh()->super.getBSDF = ispc::Mix_getBSDF_addr();
+  getSh()->super.getTransparency = ispc::Mix_getTransparency_addr();
 }
 
 std::string MixMaterial::toString() const
@@ -26,15 +28,19 @@ void MixMaterial::commit()
   ospray::Material *mat2 =
       (ospray::Material *)getParamObject("material2", nullptr);
 
-  ADD_ENSIGHT_TEXTURES;
+  getSh()->factor = clamp(factor.factor);
+  getSh()->factorMap = factor.tex;
+  getSh()->mat1 = mat1 ? mat1->getSh() : nullptr;
+  getSh()->mat2 = mat2 ? mat2->getSh() : nullptr;
 
-  ispc::PathTracer_Mix_set(ispcEquivalent,
-      factor.factor,
-      factor.tex,
-      mat1 ? mat1->getIE() : nullptr,
-      mat2 ? mat2->getIE() : nullptr,
-      ENSIGHT_TEXTURE_PARAMETERS
-      );
+  vec3f emission = vec3f(0.f);
+  if (mat1)
+    emission = (1.f - getSh()->factor) * getSh()->mat1->emission;
+  if (mat2)
+    emission = emission + getSh()->factor * getSh()->mat2->emission;
+  getSh()->super.emission = emission;
+
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

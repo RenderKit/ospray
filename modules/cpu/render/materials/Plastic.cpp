@@ -10,7 +10,8 @@ namespace pathtracer {
 
 Plastic::Plastic()
 {
-  ispcEquivalent = ispc::PathTracer_Plastic_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_PLASTIC;
+  getSh()->super.getBSDF = ispc::Plastic_getBSDF_addr();
 }
 
 std::string Plastic::toString() const
@@ -24,12 +25,11 @@ void Plastic::commit()
   const float eta = getParam<float>("eta", 1.4f);
   const float roughness = getParam<float>("roughness", 0.01f);
 
-  ADD_ENSIGHT_TEXTURES;
+  getSh()->pigmentColor = pigmentColor;
+  getSh()->eta = rcp(eta);
+  getSh()->roughness = roughness;
 
-  ispc::PathTracer_Plastic_set(
-      getIE(), (const ispc::vec3f &)pigmentColor, eta, roughness,
-      ENSIGHT_TEXTURE_PARAMETERS
-      );
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

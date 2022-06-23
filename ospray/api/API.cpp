@@ -137,7 +137,7 @@ extern "C" OSPError ospInit(int *_ac, const char **_av) OSPRAY_CATCH_BEGIN
       auto device_name = OSPRAY_DEVICE.value();
       currentDevice = Device::createDevice(device_name.c_str());
     } else {
-      ospLoadModule("ispc");
+      ospLoadModule("cpu");
       currentDevice = Device::createDevice("cpu");
     }
   }
@@ -335,12 +335,16 @@ extern "C" void ospDeviceRetain(OSPDevice _object) OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
-extern "C" OSPError ospLoadModule(const char *moduleName) OSPRAY_CATCH_BEGIN
+extern "C" OSPError ospLoadModule(const char *module_name) OSPRAY_CATCH_BEGIN
 {
+  std::string moduleName(module_name);
+  if (moduleName == "ispc") // XXX backwards compatibility
+    moduleName = "cpu";
+
   if (deviceIsSet()) {
-    return (OSPError)currentDevice().loadModule(moduleName);
+    return (OSPError)currentDevice().loadModule(moduleName.c_str());
   } else {
-    return loadLocalModule(moduleName);
+    return loadLocalModule(moduleName.c_str());
   }
 }
 OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
@@ -434,7 +438,6 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPGeometricModel ospNewGeometricModel(
     OSPGeometry geom) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(geom);
   ASSERT_DEVICE();
   OSPGeometricModel instance = currentDevice().newGeometricModel(geom);
   return instance;
@@ -444,7 +447,6 @@ OSPRAY_CATCH_END(nullptr)
 extern "C" OSPVolumetricModel ospNewVolumetricModel(
     OSPVolume volume) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(volume);
   ASSERT_DEVICE();
   OSPVolumetricModel instance = currentDevice().newVolumetricModel(volume);
   return instance;
@@ -500,7 +502,6 @@ OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPInstance ospNewInstance(OSPGroup group) OSPRAY_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(group);
   ASSERT_DEVICE();
   return currentDevice().newInstance(group);
 }

@@ -1,0 +1,22 @@
+// Copyright 2009-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "Volume.ih"
+#include "math/AffineSpace.ih"
+#include "transferFunction/TransferFunction.ih"
+
+#include "../common/DifferentialGeometry.ih"
+#include "../common/Ray.ih"
+
+#include "VolumetricModelShared.h"
+
+inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags)
+{
+  dg.areaPDF = 0.f;
+  dg.color = make_vec4f(0.f);
+}

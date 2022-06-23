@@ -45,7 +45,8 @@ void MultiDevice::commit()
       subdevices.emplace_back(std::move(d));
       subdeviceLoadBalancers.push_back(subdevices.back()->loadBalancer);
     }
-    loadBalancer = rkcommon::make_unique<MultiDeviceLoadBalancer>(subdeviceLoadBalancers);
+    loadBalancer =
+        rkcommon::make_unique<MultiDeviceLoadBalancer>(subdeviceLoadBalancers);
   }
 
   // ISPCDevice::commit will init the tasking system but here we can reset
@@ -173,8 +174,9 @@ OSPGeometricModel MultiDevice::newGeometricModel(OSPGeometry geom)
   MultiDeviceObject *g = (MultiDeviceObject *)geom;
   MultiDeviceObject *o = new MultiDeviceObject;
   for (size_t i = 0; i < subdevices.size(); ++i) {
-    o->objects.push_back(
-        subdevices[i]->newGeometricModel((OSPGeometry)g->objects[i]));
+    OSPGeometry subdeviceObj =
+        g ? (OSPGeometry)g->objects[i] : (OSPGeometry) nullptr;
+    o->objects.push_back(subdevices[i]->newGeometricModel(subdeviceObj));
   }
   return (OSPGeometricModel)o;
 }
@@ -183,8 +185,8 @@ OSPVolumetricModel MultiDevice::newVolumetricModel(OSPVolume volume)
   MultiDeviceObject *v = (MultiDeviceObject *)volume;
   MultiDeviceObject *o = new MultiDeviceObject;
   for (size_t i = 0; i < subdevices.size(); ++i) {
-    o->objects.push_back(
-        subdevices[i]->newVolumetricModel((OSPVolume)v->objects[i]));
+    OSPVolume subdeviceObj = v ? (OSPVolume)v->objects[i] : (OSPVolume) nullptr;
+    o->objects.push_back(subdevices[i]->newVolumetricModel(subdeviceObj));
   }
   return (OSPVolumetricModel)o;
 }
@@ -234,7 +236,8 @@ OSPInstance MultiDevice::newInstance(OSPGroup group)
   MultiDeviceObject *g = (MultiDeviceObject *)group;
   MultiDeviceObject *o = new MultiDeviceObject;
   for (size_t i = 0; i < subdevices.size(); ++i) {
-    o->objects.push_back(subdevices[i]->newInstance((OSPGroup)g->objects[i]));
+    OSPGroup subdeviceObj = g ? (OSPGroup)g->objects[i] : (OSPGroup) nullptr;
+    o->objects.push_back(subdevices[i]->newInstance(subdeviceObj));
   }
   return (OSPInstance)o;
 }

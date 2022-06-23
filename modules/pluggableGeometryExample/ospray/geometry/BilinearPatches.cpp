@@ -5,7 +5,7 @@
 // 'export'ed functions from the ispc file:
 #include "geometry/BilinearPatches_ispc.h"
 // ospray core:
-#include <ospray/common/Data.h>
+#include <common/Data.h>
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */

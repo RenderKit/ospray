@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -16,7 +16,9 @@ namespace mpi {
  */
 struct ThreadedRenderTask : public Future
 {
-  ThreadedRenderTask(FrameBuffer *, std::function<float()> fcn);
+  ThreadedRenderTask(FrameBuffer *,
+      const std::shared_ptr<staticLoadBalancer::Distributed> &,
+      std::function<float()> fcn);
   ~ThreadedRenderTask() override;
 
   bool isFinished(OSPSyncEvent event = OSP_TASK_FINISHED) override;
@@ -29,6 +31,7 @@ struct ThreadedRenderTask : public Future
 
  private:
   Ref<FrameBuffer> fb;
+  std::shared_ptr<staticLoadBalancer::Distributed> loadBalancer;
   std::atomic<float> taskDuration{0.f};
   std::atomic<bool> finished;
   std::thread thread;
@@ -36,9 +39,10 @@ struct ThreadedRenderTask : public Future
 
 // Inlined definitions //////////////////////////////////////////////////////
 
-inline ThreadedRenderTask::ThreadedRenderTask(
-    FrameBuffer *_fb, std::function<float()> fcn)
-    : fb(_fb), finished(false)
+inline ThreadedRenderTask::ThreadedRenderTask(FrameBuffer *_fb,
+    const std::shared_ptr<staticLoadBalancer::Distributed> &_loadBalancer,
+    std::function<float()> fcn)
+    : fb(_fb), loadBalancer(_loadBalancer), finished(false)
 {
   thread = std::thread([this, fcn]() {
     taskDuration = fcn();
@@ -80,7 +84,7 @@ inline float ThreadedRenderTask::getProgress()
 
 inline float ThreadedRenderTask::getTaskDuration()
 {
-    return taskDuration.load();
+  return taskDuration.load();
 }
 
 } // namespace mpi

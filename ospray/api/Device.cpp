@@ -1,4 +1,4 @@
-﻿// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -45,8 +45,8 @@ Device *Device::createDevice(const char *type)
   if (!repo.libraryExists("ospray"))
     repo.addDefaultLibrary();
 
-  if (!repo.libraryExists("ospray_module_ispc") && type == std::string("cpu"))
-    repo.add("ospray_module_ispc");
+  if (!repo.libraryExists("ospray_module_cpu") && type == std::string("cpu"))
+    repo.add("ospray_module_cpu");
 
   return createInstanceHelper(type, g_devicesMap[type]);
 }

@@ -119,12 +119,12 @@ check_symbols libospray.so GLIBC   2 17 0
 check_symbols libospray.so GLIBCXX 3 4 19
 check_symbols libospray.so CXXABI  1 3 7
 
-check_symbols libospray_module_ispc.so GLIBC   2 17 0
-check_symbols libospray_module_ispc.so GLIBCXX 3 4 19
-check_symbols libospray_module_ispc.so CXXABI  1 3 7
+check_symbols libospray_module_cpu.so GLIBC   2 17 0
+check_symbols libospray_module_cpu.so GLIBCXX 3 4 19
+check_symbols libospray_module_cpu.so CXXABI  1 3 7
 
 check_lib_dependency_error libospray.so libimf.so
-check_lib_dependency_error libospray_module_ispc.so libimf.so
+check_lib_dependency_error libospray_module_cpu.so libimf.so
 
 check_symbols libospray_module_mpi.so GLIBC   2 17 0
 check_symbols libospray_module_mpi.so GLIBCXX 3 4 19

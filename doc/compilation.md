@@ -27,7 +27,7 @@ before you can build OSPRay you need the following prerequisites:
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.^[For example, if OSPRay is in
     `~/Projects/ospray`, ISPC will also be searched in
-    `~/Projects/ispc-v1.16.1-linux`.] Alternatively set the CMake
+    `~/Projects/ispc-v1.17.0-linux`.] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   OSPRay builds on top of the [Intel oneAPI Rendering Toolkit common
     library (rkcommon)](https://www.github.com/ospray/rkcommon). The
@@ -44,7 +44,7 @@ before you can build OSPRay you need the following prerequisites:
     or newer is required. If Embree is not found by CMake its location
     can be hinted with the variable `embree_DIR`.
 -   OSPRay also heavily uses Intel [Open VKL](https://www.openvkl.org/),
-    installing version 1.0.1 or newer is required. If Open VKL is not
+    installing version 1.2.0 or newer is required. If Open VKL is not
     found by CMake its location can be hinted with the variable
     `openvkl_DIR`.
 -   OSPRay also provides an optional module implementing the `denoiser`
@@ -260,7 +260,7 @@ Advanced users may want to link to additional targets which are exported
 in OSPRay's CMake config, which includes all installed modules. All
 targets built with OSPRay are exported in the `ospray::` namespace,
 therefore all targets locally used in the OSPRay source tree can be
-accessed from an install. For example, `ospray_module_ispc` can be
-consumed directly via the `ospray::ospray_module_ispc` target. All
+accessed from an install. For example, `ospray_module_cpu` can be
+consumed directly via the `ospray::ospray_module_cpu` target. All
 targets have their libraries, includes, and definitions attached to them
 for public consumption (please [report bugs] if this is broken!).

@@ -14,7 +14,6 @@ stages:
 
 variables:
   GIT_DEPTH: "15"
-  KW_PROJECT_NAME: ospray
   ErrorActionPreference: STOP
 
 .job_template: &build_job_docker

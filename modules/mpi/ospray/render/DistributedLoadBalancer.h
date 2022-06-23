@@ -1,9 +1,10 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "../common/DistributedWorld.h"
+#include "../common/DynamicLoadBalancer.h"
 #include "../fb/DistributedFrameBuffer.h"
 #include "camera/Camera.h"
 #include "common/World.h"
@@ -21,6 +22,8 @@ namespace staticLoadBalancer {
  */
 struct Distributed : public TiledLoadBalancer
 {
+  Distributed();
+  ~Distributed() override;
   void renderFrame(FrameBuffer *fb,
       Renderer *renderer,
       Camera *camera,
@@ -30,6 +33,8 @@ struct Distributed : public TiledLoadBalancer
       Renderer *renderer,
       Camera *camera,
       DistributedWorld *world);
+
+  void setObjectHandle(ObjectHandle &handle_);
 
   /* Not implemented by Distributed load balancer currently,
    * this could potentially be useful to implement later to manage
@@ -44,6 +49,9 @@ struct Distributed : public TiledLoadBalancer
       void *perFrameData) override;
 
   std::string toString() const override;
+
+ private:
+  ObjectHandle handle;
 };
 
 } // namespace staticLoadBalancer

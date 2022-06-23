@@ -1,0 +1,32 @@
+// Copyright 2009-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "openvkl/openvkl.isph"
+#include "rkcommon/math/box.ih"
+
+#include "VolumeShared.h"
+
+// Helper functions ///////////////////////////////////////////////////////////
+
+inline float Volume_getSample(const Volume *uniform volume, const vec3f &P)
+{
+  return vklComputeSampleV(volume->vklSampler, &((const vkl_vec3f &)P));
+}
+
+inline vec3f Volume_getGradient(const Volume *uniform volume, const vec3f &P)
+{
+  vkl_vec3f result =
+      vklComputeGradientV(volume->vklSampler, &((const vkl_vec3f &)P));
+
+  // TODO: remove it once VKL no longer returns sporadic NaNs
+  if (isnan(result.x))
+    result.x = 1.f;
+  if (isnan(result.y))
+    result.y = 1.f;
+  if (isnan(result.z))
+    result.z = 1.f;
+
+  return *((varying vec3f *)&result);
+}

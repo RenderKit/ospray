@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "ospray/common/World.ih"
+#include "common/World.ih"
 
 struct DistributedWorld
 {

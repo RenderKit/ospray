@@ -10,7 +10,9 @@ namespace pathtracer {
 
 ThinGlass::ThinGlass()
 {
-  ispcEquivalent = ispc::PathTracer_ThinGlass_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_THINGLASS;
+  getSh()->super.getBSDF = ispc::ThinGlass_getBSDF_addr();
+  getSh()->super.getTransparency = ispc::ThinGlass_getTransparency_addr();
 }
 
 std::string ThinGlass::toString() const
@@ -26,16 +28,15 @@ void ThinGlass::commit()
   const float attenuationDistance = getParam<float>("attenuationDistance", 1.f);
   const float thickness = getParam<float>("thickness", 1.f);
 
-  ADD_ENSIGHT_TEXTURES;
+  getSh()->eta = rcp(eta);
+  getSh()->attenuationScale =
+      thickness * rcp(std::max(attenuationDistance, EPS));
+  const vec3f &acf = attenuationColor.factor;
+  getSh()->attenuation =
+      vec3f(log(acf.x), log(acf.y), log(acf.z)) * getSh()->attenuationScale;
+  getSh()->attenuationColorMap = attenuationColor.tex;
 
-  ispc::PathTracer_ThinGlass_set(getIE(),
-      eta,
-      (const ispc::vec3f &)attenuationColor,
-      attenuationColor.tex,
-      attenuationDistance,
-      thickness,
-      ENSIGHT_TEXTURE_PARAMETERS
-      );
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

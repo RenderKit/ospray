@@ -3,7 +3,7 @@
 
 ospray_disable_compiler_warnings()
 
-if (OSPRAY_APPS_EXAMPLES)
+if (OSPRAY_ENABLE_APPS_EXAMPLES)
   add_subdirectory(imgui)
 endif()
 

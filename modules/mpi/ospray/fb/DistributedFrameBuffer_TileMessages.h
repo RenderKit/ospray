@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -19,7 +19,7 @@ enum COMMANDTAG
   WORKER_WRITE_TILE = 1 << 1,
   /*! command tag used for sending 'final' tiles from the tile
       owner to the master frame buffer. Note that we *do* send a
-      message back ot the master even in cases where the master
+      message back to the master even in cases where the master
       does not actually care about the pixel data - we still have
       to let the master know when we're done. */
   MASTER_WRITE_TILE_I8 = 1 << 2,

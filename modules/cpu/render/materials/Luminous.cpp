@@ -10,7 +10,9 @@ namespace pathtracer {
 
 Luminous::Luminous()
 {
-  ispcEquivalent = ispc::PathTracer_Luminous_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_LUMINOUS;
+  getSh()->super.getBSDF = ispc::Luminous_getBSDF_addr();
+  getSh()->super.getTransparency = ispc::Luminous_getTransparency_addr();
 }
 
 std::string Luminous::toString() const
@@ -24,11 +26,10 @@ void Luminous::commit()
       getParam<vec3f>("color", vec3f(1.f)) * getParam<float>("intensity", 1.f);
   const float transparency = getParam<float>("transparency", 0.f);
 
-  ADD_ENSIGHT_TEXTURES;
+  getSh()->super.emission = radiance;
+  getSh()->transparency = transparency;
 
-  ispc::PathTracer_Luminous_set(
-      getIE(), (const ispc::vec3f &)radiance, transparency,
-      ENSIGHT_TEXTURE_PARAMETERS);
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

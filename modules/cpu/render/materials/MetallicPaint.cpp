@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "MetallicPaint.h"
-#include "math/spectrum.h"
 // ispc
 #include "render/materials/MetallicPaint_ispc.h"
 
@@ -11,7 +10,8 @@ namespace pathtracer {
 
 MetallicPaint::MetallicPaint()
 {
-  ispcEquivalent = ispc::PathTracer_MetallicPaint_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_METALLICPAINT;
+  getSh()->super.getBSDF = ispc::MetallicPaint_getBSDF_addr();
 }
 
 std::string MetallicPaint::toString() const
@@ -27,17 +27,14 @@ void MetallicPaint::commit()
   const float flakeSpread = getParam<float>("flakeSpread", 0.5f);
   const float eta = getParam<float>("eta", 1.5f);
 
-  ADD_ENSIGHT_TEXTURES;
+  getSh()->baseColor = color.factor * (1.f - flakeAmount);
+  getSh()->baseColorMap = color.tex;
+  getSh()->flakeAmount = flakeAmount;
+  getSh()->flakeColor = flakeColor * flakeAmount;
+  getSh()->flakeSpread = flakeSpread;
+  getSh()->eta = rcp(eta);
 
-  ispc::PathTracer_MetallicPaint_set(getIE(),
-      (const ispc::vec3f &)color.factor,
-      color.tex,
-      flakeAmount,
-      (const ispc::vec3f &)flakeColor,
-      flakeSpread,
-      eta,
-      ENSIGHT_TEXTURE_PARAMETERS
-      );
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

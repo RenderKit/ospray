@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include "MPIOffloadDevice.h"
-#include "api/ISPCDevice.h"
+#include "ISPCDevice.h"
 #include "common/Library.h"
 #include "common/MPIBcastFabric.h"
 #include "common/MPICommon.h"

@@ -27,7 +27,7 @@ calling
 OSPRay parses (and removes) its known command line parameters from your
 application's `main` function. For an example see the [tutorial]. For
 possible error codes see section [Error Handling and Status Messages].
-It is important to note that the arguments passed to `ospInit()` are
+It is important to note that the arguments passed to `ospInit` are
 processed in order they are listed. The following parameters (which are
 prefixed by convention with "`--osp:`") are understood:
 
@@ -271,7 +271,7 @@ in order to register a callback function of type
 which OSPRay will use to emit status messages. By default, OSPRay uses a
 callback which does nothing, so any output desired by an application
 will require that a callback is provided. Note that callbacks for C++
-`std::cout` and `std::cerr` can be alternatively set through `ospInit()`
+`std::cout` and `std::cerr` can be alternatively set through `ospInit`
 or the `OSPRAY_LOG_OUTPUT` environment variable.
 
 Applications can clear either callback by passing `NULL` instead of an
@@ -298,7 +298,7 @@ exit), the OSPRay API should be finalized with
 
 This API call ensures that the current device is cleaned up
 appropriately. Due to static object allocation having non-deterministic
-ordering, it is recommended that applications call `ospShutdown()`
+ordering, it is recommended that applications call `ospShutdown`
 before the calling application process terminates.
 
 Objects
@@ -575,7 +575,6 @@ have a stride between voxels, specified through the
 supported, additional strides between scanlines (2D, `byteStride2`) and
 slices (3D, `byteStride3`) are not.
 
-
 The parameters understood by structured volumes are summarized in the
 table below.
 
@@ -589,6 +588,10 @@ table below.
                                                         in object-space
 
   OSPData data                                          the actual voxel 3D [data]
+  
+  bool    cellCentered                           false  whether the data is provided
+                                                        per cell (as opposed to per
+                                                        vertex)
 
   int     filter         `OSP_VOLUME_FILTER_TRILINEAR`  filter used for
                                                         reconstructing the field,
@@ -609,7 +612,10 @@ table below.
 The size of the volume is inferred from the size of the 3D array `data`,
 as is the type of the voxel values (currently supported are:
 `OSP_UCHAR`, `OSP_SHORT`, `OSP_USHORT`, `OSP_HALF`, `OSP_FLOAT`, and
-`OSP_DOUBLE`).
+`OSP_DOUBLE`). Data can be provided either per cell or per vertex (the
+default), selectable via the `cellCentered` parameter (which will also
+affect the computed bounding box).
+
 
 ### Structured Spherical Volume
 
@@ -1021,17 +1027,20 @@ the volume (and possible acceleration structures it contains) to
 rendering-specific parameters (where more than one set may exist
 concurrently). To create a volume instance, call
 
-    OSPVolumetricModel ospNewVolumetricModel(OSPVolume volume);
+    OSPVolumetricModel ospNewVolumetricModel(OSPVolume);
 
 The passed volume can be `NULL` as long as the volume to be used is
-passed as a parameter. If both a volume is specified on object creation and
-as a parameter, the parameter value is used. If the parameter value
+passed as a parameter. If both a volume is specified on object creation
+and as a parameter, the parameter value is used. If the parameter value
 is later removed, the volume object passed on object creation is again
 used.
 
   -------------------- ----------------- --------  --------------------------------------
   Type                 Name               Default  Description
   -------------------- ----------------- --------  --------------------------------------
+  OSPVolume            volume                      optional [volume] object this model
+                                                   references
+
   OSPTransferFunction  transferFunction            [transfer function] to use
 
   float                densityScale           1.0  makes volumes uniformly thinner or
@@ -1040,9 +1049,6 @@ used.
   float                anisotropy             0.0  anisotropy of the (Henyey-Greenstein)
                                                    phase function in [-1–1] ([path tracer]
                                                    only), default to isotropic scattering
-
-  OSPVolume            volume                      optional [volume] object this model
-                                                   references
   -------------------- ----------------- --------  ---------------------------------------
   : Parameters understood by VolumetricModel.
 
@@ -1064,14 +1070,17 @@ A mesh consisting of either triangles or quads is created by calling
 `ospNewGeometry` with type string "`mesh`". Once created, a mesh
 recognizes the following parameters:
 
-  Type                 Name             Description
-  -------------------- ---------------- -------------------------------------------------
-  vec3f[]              vertex.position  [data] array of vertex positions
-  vec3f[]              vertex.normal    [data] array of vertex normals
-  vec4f[] / vec3f[]    vertex.color     [data] array of vertex colors (linear RGBA/RGB)
-  vec2f[]              vertex.texcoord  [data] array of vertex texture coordinates
-  vec3ui[] / vec4ui[]  index            [data] array of (either triangle or quad) indices (into the vertex array(s))
-  -------------------- ---------------- -------------------------------------------------
+  Type                 Name                    Description
+  -------------------- ----------------------- -------------------------------------------------
+  vec3f[]              vertex.position         [data] array of vertex positions, overridden by `motion.*` arrays
+  vec3f[]              vertex.normal           [data] array of vertex normals, overridden by `motion.*` arrays
+  vec4f[] / vec3f[]    vertex.color            [data] array of vertex colors (linear RGBA/RGB)
+  vec2f[]              vertex.texcoord         [data] array of vertex texture coordinates
+  vec3ui[] / vec4ui[]  index                   [data] array of (either triangle or quad) indices (into the vertex array(s))
+  vec3f[][]            motion.vertex.position  [data] array of vertex position arrays (uniformly distributed keys for deformation motion blur)
+  vec3f[][]            motion.vertex.normal    [data] array of vertex normal arrays (uniformly distributed keys for deformation motion blur)
+  box1f                time                    time associated with first and last key in `motion.*` arrays (for deformation motion blur), default [0, 1] 
+  -------------------- ----------------------- -------------------------------------------------
   : Parameters defining a mesh geometry.
 
 The data type of index arrays differentiates between the underlying
@@ -1339,7 +1348,7 @@ GeometricModels. These take a geometry, which defines the surface
 representation, and applies either full-object or per-primitive color
 and material information. To create a geometric model, call
 
-    OSPGeometricModel ospNewGeometricModel(OSPGeometry geometry);
+    OSPGeometricModel ospNewGeometricModel(OSPGeometry);
 
 The passed geometry can be `NULL` as long as the geometry to be used is
 passed as a parameter. If both a geometry is specified on object creation
@@ -1364,6 +1373,8 @@ with normals oriented outside clips everything what's inside.
   ------------------------ -------------- ----------------------------------------------------
   Type                     Name           Description
   ------------------------ -------------- ----------------------------------------------------
+  OSPGeometry              geometry       optional [geometry] object this model references
+
   OSPMaterial / uint32     material       optional [material] applied to the geometry, may be
                                           an index into the `material` parameter on the
                                           [renderer] (if it exists)
@@ -1382,8 +1393,6 @@ with normals oriented outside clips everything what's inside.
                                           `color` and `material`
 
   bool                     invertNormals  inverts all shading normals (Ns), default false
-
-  OSPGeometry              geometry       optional [geometry] object this model references
   ------------------------ -------------- ----------------------------------------------------
   : Parameters understood by GeometricModel.
 
@@ -1437,9 +1446,48 @@ specific light source).
                                       surface, unit is W/m^2^
 
   OSP_INTENSITY_QUANTITY_SCALE        a linear scaling factor for light sources with a 
-                                      built-in quantity (e.g., `HDRI`, or `sunSky`). 
+                                      built-in quantity (e.g., `HDRI`, or `sunSky`, or
+                                      when using `intensityDistribution`).
   ----------------------------------  ----------------------------------------------------
   : Types of radiometric quantities used to interpret a light's `intensity` parameter.
+
+### Photometric Lights
+
+Measured light sources (IES, EULUMDAT, ...) are supported by the
+`sphere`, `spot`, and `quad` lights when setting an
+`intensityDistribution` [data] array to modulate the intensity per
+direction. The mapping is using the C-γ coordinate system (see also
+below figure): the values of the first (or only) dimension of
+`intensityDistribution` are uniformly mapped to γ in [0–π]; the first
+intensity value to 0, the last value to π, thus at least two values need
+to be present.
+
+![C-γ coordinate system for the mapping of `intensityDistribution` with
+photometric lights.][imgCGammaCoords]
+
+If the array has a second dimension then the intensities are not
+rotational symmetric around the main direction (where angle γ is zero),
+but are accordingly mapped to the C-halfplanes in [0–2π]; the first
+"row" of values to 0 and 2π, the other rows such that they have uniform
+distance to its neighbors. The orientation of the C0-plane is specified
+via `c0`.
+
+  ---------- --------------------- ---------------------------------------------
+  Type       Name                  Description
+  ---------- --------------------- ---------------------------------------------
+  float[]    intensityDistribution luminous intensity distribution for
+                                   photometric lights; can be 2D for asymmetric
+                                   illumination; values are assumed to be
+                                   uniformly distributed
+
+  vec3f      c0                    orientation, i.e., direction of the
+                                   C0-(half)plane (only needed if illumination
+                                   via `intensityDistribution` is asymmetric)
+  ---------- --------------------- ---------------------------------------------
+  : Special parameters for photometric lights.
+
+When using an `intensityDistribution` then the default and only valid
+value for `intensityQuantity` is `OSP_INTENSITY_QUANTITY_SCALE`.
 
 The following light types are supported by most OSPRay renderers.
 
@@ -1472,16 +1520,20 @@ The sphere light (or the special case point light) is a light emitting
 uniformly in all directions from the surface toward the outside. It does
 not emit any light toward the inside of the sphere. It is created by
 passing the type string "`sphere`" to `ospNewLight`. The point light
-supports `OSP_INTENSITY_QUANTITY_POWER`,
-`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
-`OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter value.
-In addition to the [general parameters](#lights) understood by all
-lights the sphere light supports the following special parameters:
+supports only `OSP_INTENSITY_QUANTITY_SCALE` when
+`intensityDistribution` is set, or otherwise
+`OSP_INTENSITY_QUANTITY_POWER`, `OSP_INTENSITY_QUANTITY_INTENSITY` (then
+default) and `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity`
+parameter value. In addition to the [general parameters](#lights)
+understood by all lights and the [photometric
+parameters](#photometric-lights) the sphere light supports the following
+special parameters:
 
   Type    Name            Default Description
   ------- ---------- ------------ --------------------------------
   vec3f   position    $(0, 0, 0)$ the center of the sphere light
   float   radius                0 the size of the sphere light
+  vec3f   direction   $(0, 0, 1)$ main orientation of `intensityDistribution`
   ------- ---------- ------------ --------------------------------
   : Special parameters accepted by the sphere light.
 
@@ -1489,16 +1541,19 @@ Setting the radius to a value greater than zero will result in soft
 shadows when the renderer uses stochastic sampling (like the [path
 tracer]).
 
-### Spotlight / Photometric Light
+### Spotlight / Ring Light
 
 The spotlight is a light emitting into a cone of directions. It is
 created by passing the type string "`spot`" to `ospNewLight`. The
-spotlight supports `OSP_INTENSITY_QUANTITY_POWER`,
-`OSP_INTENSITY_QUANTITY_INTENSITY` (default) and
+spotlight 
+supports only `OSP_INTENSITY_QUANTITY_SCALE` when
+`intensityDistribution` is set, or otherwise
+`OSP_INTENSITY_QUANTITY_POWER`,
+`OSP_INTENSITY_QUANTITY_INTENSITY` (then default) and
 `OSP_INTENSITY_QUANTITY_RADIANCE` as `intensityQuantity` parameter
 value. In addition to the [general parameters](#lights) understood by
-all lights the spotlight supports the special parameters listed in the
-table.
+all lights and the [photometric parameters](#photometric-lights) the
+spotlight supports the special parameters listed in the table.
 
   ---------- --------------------- ----------- ---------------------------------
   Type       Name                      Default Description
@@ -1526,18 +1581,6 @@ table.
   float      innerRadius                     0 in combination with
                                                `radius` turns the disk
                                                into a ring
-
-  float[]    intensityDistribution             luminous intensity distribution
-                                               for photometric lights; can be 2D
-                                               for asymmetric illumination;
-                                               values are assumed to be
-                                               uniformly distributed
-
-  vec3f      c0                                orientation, i.e., direction of
-                                               the C0-(half)plane (only needed
-                                               if illumination via
-                                               `intensityDistribution` is
-                                               asymmetric)
   ---------- --------------------- ----------- ---------------------------------
   : Special parameters accepted by the spotlight.
 
@@ -1548,34 +1591,18 @@ shadows when the renderer uses stochastic sampling (like the [path
 tracer]). Additionally setting the inner radius will result in a ring
 instead of a disk emitting the light.
 
-Measured light sources (IES, EULUMDAT, ...) are supported by providing
-an `intensityDistribution` [data] array to modulate the intensity per
-direction. The mapping is using the C-γ coordinate system (see also
-below figure): the values of the first (or only) dimension of
-`intensityDistribution` are uniformly mapped to γ in [0–π]; the first
-intensity value to 0, the last value to π, thus at least two values need
-to be present. If the array has a second dimension then the intensities
-are not rotational symmetric around `direction`, but are accordingly
-mapped to the C-halfplanes in [0–2π]; the first "row" of values to 0 and
-2π, the other rows such that they have uniform distance to its
-neighbors. The orientation of the C0-plane is specified via `c0`.
-A combination of using an `intensityDistribution` and
-`OSP_INTENSITY_QUANTITY_POWER` as `intensityQuantity` is not supported
-at the moment.
-
-![C-γ coordinate system for the mapping of `intensityDistribution` to
-the spotlight.][imgSpotCoords]
-
 ### Quad Light
 
 The quad^[actually a parallelogram] light is a planar, procedural area
 light source emitting uniformly on one side into the half-space. It is
 created by passing the type string "`quad`" to `ospNewLight`. The quad
-light supports `OSP_INTENSITY_QUANTITY_POWER`,
-`OSP_INTENSITY_QUANTITY_INTENSITY` and `OSP_INTENSITY_QUANTITY_RADIANCE`
-(default) as `intensityQuantity` parameter. In addition to the [general
-parameters](#lights) understood by all lights the quad light supports
-the following special parameters:
+light supports only `OSP_INTENSITY_QUANTITY_SCALE` when
+`intensityDistribution` is set, or otherwise
+`OSP_INTENSITY_QUANTITY_POWER`, `OSP_INTENSITY_QUANTITY_INTENSITY` and
+`OSP_INTENSITY_QUANTITY_RADIANCE` (then default) as `intensityQuantity`
+parameter. In addition to the [general parameters](#lights) understood
+by all lights and the [photometric parameters](#photometric-lights) the
+quad light supports the following special parameters:
 
   Type   Name           Default Description
   ------ --------- ------------ -----------------------------------------
@@ -1588,6 +1615,7 @@ the following special parameters:
 ![Defining a quad light which emits toward the reader.][imgQuadLight]
 
 The emission side is determined by the cross product of `edge1`×`edge2`.
+which is also the main emission direction for `intensityDistribution`.
 Note that only renderers that use stochastic sampling (like the path
 tracer) will compute soft shadows from the quad light. Other renderers
 will just sample the center of the quad light, which results in hard
@@ -1595,7 +1623,7 @@ shadows.
 
 ### Cylinder Light
 
-The cylinder light is a cylinderical, procedural area light source 
+The cylinder light is a cylinderical, procedural area light source
 emitting uniformly outwardly into the space beyond the boundary. It is
 created by passing the type string "`cylinder`" to `ospNewLight`. The 
 cylinder light supports `OSP_INTENSITY_QUANTITY_POWER`,
@@ -1769,9 +1797,17 @@ via a transform. To create and instance call
 
     OSPInstance ospNewInstance(OSPGroup);
 
+The passed group can be `NULL` as long as the group to be instanced is
+passed as a parameter. If both a group is specified on object creation
+and as a parameter, the parameter value is used. If the parameter value
+is later removed, the group object passed on object creation is again
+used.
+
   ------------ ----------------- ---------- --------------------------------------------------------
   Type         Name                 Default Description
   ------------ ----------------- ---------- --------------------------------------------------------
+  OSPGroup     group                        optional [group] object to be instanced
+
   affine3f     transform           identity world-space transform for all attached geometries and
                                             volumes, overridden by `motion.*` arrays
 
@@ -2381,7 +2417,7 @@ the type string "`glass`" to `ospNewMaterial`. Its parameters are
 For convenience, the rather counter-intuitive physical attenuation
 coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
-trough a glass of thickness `attenuationDistance`.
+through a glass of thickness `attenuationDistance`.
 
 ![Rendering of a Glass material with orange
 attenuation.][imgMaterialGlass]
@@ -3076,13 +3112,6 @@ for applications to query exactly how long an asynchronous task executed without
 the overhead of measuring both task execution + synchronization by the calling
 application.
 
-### Asynchronously Rendering and ospCommit()
-
-The use of either `ospRenderFrame` or `ospRenderFrame` requires
-that all objects in the scene being rendered have been committed before
-rendering occurs. If a call to `ospCommit()` happens while a frame is
-rendered, the result is undefined behavior and should be avoided.
-
 ### Synchronous Rendering
 
 For convenience in certain use cases, `ospray_util.h` provides a
@@ -3097,6 +3126,13 @@ This version is the equivalent of:
     return ospGetVariance(fb)
 
 This version is closest to `ospRenderFrame` from OSPRay v1.x.
+
+### Rendering and ospCommit
+
+The use of either `ospRenderFrame` or `ospRenderFrameBlocking` requires
+that all objects in the scene being rendered have been committed before
+rendering occurs. If a call to `ospCommit` happens while a frame is
+rendered, the result is undefined behavior and should be avoided.
 
 Distributed Rendering with MPI
 ==============================
@@ -3189,6 +3225,10 @@ The `maxCommandBufferEntries`, `commandBufferSize`, and
 `OSPRAY_MPI_MAX_COMMAND_BUFFER_ENTRIES`,
 `OSPRAY_MPI_COMMAND_BUFFER_SIZE`, and `OSPRAY_MPI_MAX_INLINE_DATA_SIZE`,
 respectively.
+
+The `mpiOffload` device uses a dynamic load balancer by default. If you
+wish to use a static load balancer you can do so by setting the
+`OSPRAY_STATIC_BALANCER` environment variable to 1.
 
 The `mpiOffload` device does not support multiple init/shutdown cycles.
 Thus, to run `ospBenchmark` for this device make sure to exclude the

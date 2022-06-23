@@ -3,7 +3,6 @@
 
 #include "Metal.h"
 #include "common/Data.h"
-#include "math/spectrum.h"
 // ispc
 #include "render/materials/Metal_ispc.h"
 
@@ -12,7 +11,8 @@ namespace pathtracer {
 
 Metal::Metal()
 {
-  ispcEquivalent = ispc::PathTracer_Metal_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_METAL;
+  getSh()->super.getBSDF = ispc::Metal_getBSDF_addr();
 }
 
 std::string Metal::toString() const
@@ -23,12 +23,14 @@ std::string Metal::toString() const
 void Metal::commit()
 {
   auto ior = getParamDataT<vec3f>("ior");
-  float etaResampled[SPECTRUM_SAMPLES];
-  float kResampled[SPECTRUM_SAMPLES];
-  float *etaSpectral = nullptr;
-  float *kSpectral = nullptr;
+  const vec3f &eta = getParam<vec3f>("eta", vec3f(RGB_AL_ETA));
+  const vec3f &k = getParam<vec3f>("k", vec3f(RGB_AL_K));
+  MaterialParam1f roughness = getMaterialParam1f("roughness", .1f);
+
   if (ior) {
     // resample, relies on ordered samples
+    spectrum etaResampled;
+    spectrum kResampled;
     auto iorP = ior->begin();
     auto iorPrev = *iorP;
     const auto iorLast = ior->end();
@@ -45,27 +47,20 @@ void Metal::commit()
         kResampled[l] = (1.f - f) * iorPrev.z + f * iorP->z;
       }
     }
-    etaSpectral = etaResampled;
-    kSpectral = kResampled;
+    getSh()->spectral = true;
+    getSh()->eta = etaResampled;
+    getSh()->k = kResampled;
+  } else {
+    // default to Aluminium, used when ior not given
+    getSh()->spectral = false;
+    getSh()->etaRGB = eta;
+    getSh()->kRGB = k;
   }
 
-  // default to Aluminium, used when ior not given
-  const vec3f &eta = getParam<vec3f>("eta", vec3f(RGB_AL_ETA));
-  const vec3f &k = getParam<vec3f>("k", vec3f(RGB_AL_K));
-
-  MaterialParam1f roughness = getMaterialParam1f("roughness", .1f);
+  getSh()->roughness = roughness.factor;
+  getSh()->roughnessMap = roughness.tex;
 
   ADD_ENSIGHT_TEXTURES;
-
-  ispc::PathTracer_Metal_set(getIE(),
-      etaSpectral,
-      kSpectral,
-      (const ispc::vec3f &)eta,
-      (const ispc::vec3f &)k,
-      roughness.factor,
-      roughness.tex,
-      ENSIGHT_TEXTURE_PARAMETERS
-      );
 }
 
 } // namespace pathtracer

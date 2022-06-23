@@ -1,3 +1,6 @@
+// Copyright 2021-2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 #include "MultiDeviceLoadBalancer.h"
 #include "MultiDevice.h"
 #include "fb/LocalFB.h"
@@ -134,7 +137,8 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
   OSPFrameBufferFormat colorBufferFormat = fb0->getColorBufferFormat();
 
   tasking::parallel_for(loadBalancers.size(), [&](size_t subdeviceID) {
-    if (subdeviceID == 0) return; //gather of fb0's tiles to fb0 is unecessary
+    if (subdeviceID == 0)
+      return; // gather of fb0's tiles to fb0 is unnecessary
 
     FrameBuffer *fbi = (FrameBuffer *)framebuffer->objects[subdeviceID];
     //get a hold of the pixels
@@ -170,7 +174,7 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
       const vec2i tileID(tile_x, tile_y);
       const int32 accumID = 0;//fbi->accumID(tileID); this prevents re-accum across source and dest, which is good as dest's accum pixels are not valid (LocalFB.ispc:92)
 
-  #if TILE_SIZE > MAX_TILE_SIZE
+#if TILE_SIZE > MAX_TILE_SIZE
       auto tilePtr = make_unique<Tile>(tileID, fbSize, accumID);
       auto &tile = *tilePtr;
   #else
@@ -318,7 +322,6 @@ void MultiDeviceLoadBalancer::renderTiles(api::MultiDeviceObject *framebuffer,
     fbi->unmap(depth);
     fbi->unmap(normal);
     fbi->unmap(albedo);
-
   });
 }
 

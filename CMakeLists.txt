@@ -1,4 +1,4 @@
-## Copyright 2009-2020 Intel Corporation
+## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.1)
@@ -20,13 +20,6 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-
-include(../../../cmake/ensight_cmake_config.cmake)
-set(embree_DIR "${APEX_PLATFORM_DIR}intel_embree-3.10.0/" CACHE PATH "embree_DIR" FORCE)
-set(rkcommon_DIR "${APEX_PLATFORM_DIR}intl_rkcommon-1.6.0/lib/cmake/rkcommon-1.6.0/" CACHE PATH "rkcommon_DIR" FORCE)
-set(openvkl_DIR "${APEX_PLATFORM_DIR}intl_openvkl-0.11.0/lib/cmake/openvkl-0.11.0/" CACHE PATH "openvkl_DIR" FORCE)
-set(CMAKE_INSTALL_PREFIX "${APEX_PLATFORM_DIR}intel_ospray-2.1.1/" CACHE PATH "CMAKE_INSTALL_PREFIX" FORCE)
 
 ##############################################################
 # Establish project
@@ -61,11 +54,11 @@ endif()
 ## Main OSPRay library ##
 add_subdirectory(ospray)
 
-## OSPRay sample apps ##
-#add_subdirectory(apps)
-
 ## Modules ##
 add_subdirectory(modules)
+
+## OSPRay sample apps ##
+add_subdirectory(apps)
 
 ## Regression test images target ##
 add_subdirectory(test_image_data)
