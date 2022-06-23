@@ -94,17 +94,20 @@ inline Light_SampleRes Sample(const SpotLight *uniform self,
   return res;
 }
 
-Light_SampleRes SpotLight_sample(const Light *uniform super,
+
+SYCL_EXTERNAL Light_SampleRes SpotLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float)
+    const float time)
 {
   const SpotLight *uniform self = (SpotLight * uniform) super;
   assert(self);
   return Sample(self, self->pre, dg, s);
 }
 
-Light_SampleRes SpotLight_sample_instanced(const Light *uniform super,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_SampleRes SpotLight_sample_instanced(
+    const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
     const float time)
@@ -116,13 +119,7 @@ Light_SampleRes SpotLight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const float utime = time;
-#else
   foreach_unique (utime in time) {
-#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform SpotLightDynamic dyn;
     Transform(self->pre, xfm, dyn);
@@ -130,6 +127,7 @@ Light_SampleRes SpotLight_sample_instanced(const Light *uniform super,
   }
   return res;
 }
+#endif
 
 inline Light_EvalRes Eval(const SpotLight *uniform self,
     const uniform SpotLightDynamic &dyn,
@@ -177,19 +175,20 @@ inline Light_EvalRes Eval(const SpotLight *uniform self,
   return res;
 }
 
-Light_EvalRes SpotLight_eval(const Light *uniform super,
+SYCL_EXTERNAL Light_EvalRes SpotLight_eval(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
     const float maxDist,
-    const float)
+    const float time)
 {
   const SpotLight *uniform self = (SpotLight * uniform) super;
   assert(self);
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
-Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
@@ -203,13 +202,7 @@ Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const float utime = time;
-#else
   foreach_unique (utime in time) {
-#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform SpotLightDynamic dyn;
     Transform(self->pre, xfm, dyn);
@@ -217,6 +210,7 @@ Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
   }
   return res;
 }
+#endif
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
@@ -226,19 +220,22 @@ export void *uniform SpotLight_sample_addr()
   return (void *uniform)SpotLight_sample;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform SpotLight_sample_instanced_addr()
 {
   return (void *uniform)SpotLight_sample_instanced;
 }
+#endif
 
 export void *uniform SpotLight_eval_addr()
 {
   return (void *uniform)SpotLight_eval;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform SpotLight_eval_instanced_addr()
 {
   return (void *uniform)SpotLight_eval_instanced;
 }
-
+#endif
 OSPRAY_END_ISPC_NAMESPACE

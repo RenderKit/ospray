@@ -22,10 +22,12 @@ ISPCRTMemoryView AmbientLight::createSh(
   ISPCRTMemoryView view = StructSharedCreate<ispc::AmbientLight>(
       getISPCDevice().getIspcrtDevice().handle());
   ispc::AmbientLight *sh = (ispc::AmbientLight *)ispcrtSharedPtr(view);
+#ifndef OSPRAY_TARGET_SYCL
   sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
       ispc::AmbientLight_sample_addr());
   sh->super.eval =
       reinterpret_cast<ispc::Light_EvalFunc>(ispc::AmbientLight_eval_addr());
+#endif
   sh->super.isVisible = visible;
   sh->super.instance = instance;
   sh->radiance = radiance;

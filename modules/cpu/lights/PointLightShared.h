@@ -37,7 +37,10 @@ struct PointLight
   PointLightDynamic pre; // un- or pre-transformed state
 
 #ifdef __cplusplus
-  PointLight() : intensity(1.f), radiance(1.f), radius(0.f) {}
+  PointLight() : intensity(1.f), radiance(1.f), radius(0.f)
+  {
+    super.type = LIGHT_TYPE_POINT;
+  }
 };
 } // namespace ispc
 #else

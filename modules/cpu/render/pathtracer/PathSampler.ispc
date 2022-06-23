@@ -332,9 +332,10 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     }
 
     // continue the path
-    pathState.straightPath &= eq(ray.dir, fs.wi);
-    pathState.specularTransmissionPath &=
-        fs.type & SCATTERING_SPECULAR_TRANSMISSION;
+    if (!eq(ray.dir, fs.wi))
+      pathState.straightPath = false;
+    if (!(fs.type & SCATTERING_SPECULAR_TRANSMISSION))
+      pathState.specularTransmissionPath = false;
 
     setRay(ray, ray_org, fs.wi, pathState.time);
     pathState.depth++;

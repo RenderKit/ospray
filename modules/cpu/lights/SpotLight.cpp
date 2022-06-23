@@ -26,10 +26,12 @@ ISPCRTMemoryView SpotLight::createSh(
   ISPCRTMemoryView view = StructSharedCreate<ispc::SpotLight>(
       getISPCDevice().getIspcrtDevice().handle());
   ispc::SpotLight *sh = (ispc::SpotLight *)ispcrtSharedPtr(view);
+#ifndef OSPRAY_TARGET_SYCL
   sh->super.sample =
       reinterpret_cast<ispc::Light_SampleFunc>(ispc::SpotLight_sample_addr());
   sh->super.eval =
       reinterpret_cast<ispc::Light_EvalFunc>(ispc::SpotLight_eval_addr());
+#endif
   sh->super.isVisible = visible;
   sh->super.instance = instance;
 
@@ -42,10 +44,12 @@ ISPCRTMemoryView SpotLight::createSh(
   if (instance) {
     sh->pre.c0 = intensityDistribution.c0;
     if (instance->motionBlur) {
+#ifndef OSPRAY_TARGET_SYCL
       sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
           ispc::SpotLight_sample_instanced_addr());
       sh->super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
           ispc::SpotLight_eval_instanced_addr());
+#endif
     } else
       ispc::SpotLight_Transform(&sh->pre, instance->xfm, &sh->pre);
   } else {

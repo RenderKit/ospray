@@ -14,7 +14,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // XXX importance sampling is only done into the positive hemisphere
 // ==> poor support for translucent materials
-Light_SampleRes AmbientLight_sample(const Light *uniform super,
+SYCL_EXTERNAL Light_SampleRes AmbientLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
     const float)
@@ -36,7 +36,7 @@ Light_SampleRes AmbientLight_sample(const Light *uniform super,
   return res;
 }
 
-Light_EvalRes AmbientLight_eval(const Light *uniform super,
+SYCL_EXTERNAL Light_EvalRes AmbientLight_eval(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float,

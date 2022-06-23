@@ -54,7 +54,7 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
 
 // Implementation /////////////////////////////////////////////////////////////
 
-Light_SampleRes GeometryLight_sample(const Light *uniform super,
+SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
     const float time)

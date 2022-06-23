@@ -29,18 +29,22 @@ inline Light_SampleRes Sample(const DirectionalLight *uniform self,
   return res;
 }
 
-Light_SampleRes DirectionalLight_sample(const Light *uniform super,
-    const DifferentialGeometry &,
+
+SYCL_EXTERNAL Light_SampleRes DirectionalLight_sample(
+    const Light *uniform super,
+    const DifferentialGeometry &dg,
     const vec2f &s,
-    const float)
+    const float time)
 {
   const DirectionalLight *uniform self = (DirectionalLight * uniform) super;
   assert(self);
   return Sample(self, self->frame, s);
 }
 
-Light_SampleRes DirectionalLight_sample_instanced(const Light *uniform super,
-    const DifferentialGeometry &,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_SampleRes DirectionalLight_sample_instanced(
+    const Light *uniform super,
+    const DifferentialGeometry &dg,
     const vec2f &s,
     const float time)
 {
@@ -51,18 +55,13 @@ Light_SampleRes DirectionalLight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const float utime = time;
-#else
   foreach_unique (utime in time) {
-#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     res = Sample(self, xfm.l * self->frame, s);
   }
   return res;
 }
+#endif
 
 inline Light_EvalRes Eval(const DirectionalLight *uniform self,
     const uniform linear3f &frame,
@@ -81,22 +80,25 @@ inline Light_EvalRes Eval(const DirectionalLight *uniform self,
   return res;
 }
 
-Light_EvalRes DirectionalLight_eval(const Light *uniform super,
-    const DifferentialGeometry &,
+
+SYCL_EXTERNAL Light_EvalRes DirectionalLight_eval(const Light *uniform super,
+    const DifferentialGeometry &dg,
     const vec3f &dir,
-    const float,
+    const float minDist,
     const float maxDist,
-    const float)
+    const float time)
 {
   const DirectionalLight *uniform self = (DirectionalLight * uniform) super;
   assert(self);
   return Eval(self, self->frame, dir, maxDist);
 }
 
-Light_EvalRes DirectionalLight_eval_instanced(const Light *uniform super,
-    const DifferentialGeometry &,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_EvalRes DirectionalLight_eval_instanced(
+    const Light *uniform super,
+    const DifferentialGeometry &dg,
     const vec3f &dir,
-    const float,
+    const float minDist,
     const float maxDist,
     const float time)
 {
@@ -107,18 +109,13 @@ Light_EvalRes DirectionalLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const float utime = time;
-#else
   foreach_unique (utime in time) {
-#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     res = Eval(self, xfm.l * self->frame, dir, maxDist);
   }
   return res;
 }
+#endif
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
@@ -128,19 +125,22 @@ export void *uniform DirectionalLight_sample_addr()
   return (void *uniform)DirectionalLight_sample;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform DirectionalLight_sample_instanced_addr()
 {
   return (void *uniform)DirectionalLight_sample_instanced;
 }
+#endif
 
 export void *uniform DirectionalLight_eval_addr()
 {
   return (void *uniform)DirectionalLight_eval;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform DirectionalLight_eval_instanced_addr()
 {
   return (void *uniform)DirectionalLight_eval_instanced;
 }
-
+#endif
 OSPRAY_END_ISPC_NAMESPACE

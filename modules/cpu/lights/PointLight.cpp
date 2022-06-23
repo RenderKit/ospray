@@ -25,12 +25,15 @@ ISPCRTMemoryView PointLight::createSh(
   ISPCRTMemoryView view = StructSharedCreate<ispc::PointLight>(
       getISPCDevice().getIspcrtDevice().handle());
   ispc::PointLight *sh = (ispc::PointLight *)ispcrtSharedPtr(view);
+
+  sh->super.isVisible = visible;
+  sh->super.instance = instance;
+#ifndef OSPRAY_TARGET_SYCL
   sh->super.sample =
       reinterpret_cast<ispc::Light_SampleFunc>(ispc::PointLight_sample_addr());
   sh->super.eval =
       reinterpret_cast<ispc::Light_EvalFunc>(ispc::PointLight_eval_addr());
-  sh->super.isVisible = visible;
-  sh->super.instance = instance;
+#endif
 
   sh->radiance = radiance;
   sh->intensity = radIntensity;
@@ -43,10 +46,12 @@ ISPCRTMemoryView PointLight::createSh(
   if (instance) {
     sh->pre.c0 = intensityDistribution.c0;
     if (instance->motionBlur) {
+#ifndef OSPRAY_TARGET_SYCL
       sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
           ispc::PointLight_sample_instanced_addr());
       sh->super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
           ispc::PointLight_eval_instanced_addr());
+#endif
     } else
       ispc::PointLight_Transform(sh, instance->xfm, &sh->pre);
   } else {

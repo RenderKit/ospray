@@ -37,7 +37,7 @@ inline Light_SampleRes Sample(const HDRILight *uniform self,
   sample2d.uv = sample2d.uv - self->map->halfTexel;
 
   const float phi = (float)two_pi * sample2d.uv.x;
-  const float theta = M_PI * sample2d.uv.y;
+  const float theta = (float)pi * sample2d.uv.y;
 
   float sinTheta, cosTheta;
   sincos(theta, &sinTheta, &cosTheta);
@@ -59,17 +59,19 @@ inline Light_SampleRes Sample(const HDRILight *uniform self,
   return res;
 }
 
-Light_SampleRes HDRILight_sample(const Light *uniform super,
-    const DifferentialGeometry &,
+SYCL_EXTERNAL Light_SampleRes HDRILight_sample(const Light *uniform super,
+    const DifferentialGeometry &dg,
     const vec2f &s,
-    const float)
+    const float time)
 {
   const HDRILight *uniform self = (HDRILight * uniform) super;
   assert(self);
   return Sample(self, self->light2world, s);
 }
 
-Light_SampleRes HDRILight_sample_instanced(const Light *uniform super,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_SampleRes HDRILight_sample_instanced(
+    const Light *uniform super,
     const DifferentialGeometry &,
     const vec2f &s,
     const float time)
@@ -81,18 +83,13 @@ Light_SampleRes HDRILight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const float utime = time;
-#else
   foreach_unique (utime in time) {
-#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     res = Sample(self, xfm.l * self->light2world, s);
   }
   return res;
 }
+#endif
 
 inline Light_EvalRes Eval(const HDRILight *uniform self,
     const uniform linear3f &world2light,
@@ -127,19 +124,20 @@ inline Light_EvalRes Eval(const HDRILight *uniform self,
   return res;
 }
 
-Light_EvalRes HDRILight_eval(const Light *uniform super,
-    const DifferentialGeometry &,
+SYCL_EXTERNAL Light_EvalRes HDRILight_eval(const Light *uniform super,
+    const DifferentialGeometry &dg,
     const vec3f &dir,
-    const float,
+    const float minDist,
     const float maxDist,
-    const float)
+    const float time)
 {
   const HDRILight *uniform self = (HDRILight * uniform) super;
   assert(self);
   return Eval(self, self->world2light, dir, maxDist);
 }
 
-Light_EvalRes HDRILight_eval_instanced(const Light *uniform super,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_EvalRes HDRILight_eval_instanced(const Light *uniform super,
     const DifferentialGeometry &,
     const vec3f &dir,
     const float,
@@ -153,18 +151,13 @@ Light_EvalRes HDRILight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const float utime = time;
-#else
   foreach_unique (utime in time) {
-#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     res = Eval(self, self->world2light * rcp(xfm.l), dir, maxDist);
   }
   return res;
 }
+#endif
 
 // bin i represents the average contribution of (i-0.5, i+0.5) when we sample
 // the texture bilinearly at i
@@ -218,20 +211,24 @@ export void *uniform HDRILight_sample_addr()
   return (void *uniform)HDRILight_sample;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform HDRILight_sample_instanced_addr()
 {
   return (void *uniform)HDRILight_sample_instanced;
 }
+#endif
 
 export void *uniform HDRILight_eval_addr()
 {
   return (void *uniform)HDRILight_eval;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform HDRILight_eval_instanced_addr()
 {
   return (void *uniform)HDRILight_eval_instanced;
 }
+#endif
 
 export void HDRILight_initDistribution(
     const void *uniform _map, void *uniform _distribution)

@@ -135,13 +135,14 @@ inline Light_SampleRes Sample(const QuadLight *uniform self,
 SYCL_EXTERNAL Light_SampleRes QuadLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &sp,
-    const float)
+    const float time)
 {
   const QuadLight *uniform self = (QuadLight * uniform) super;
   assert(self);
   return Sample(self, self->pre, dg, sp);
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_SampleRes QuadLight_sample_instanced(
     const Light *uniform super,
     const DifferentialGeometry &dg,
@@ -155,13 +156,7 @@ SYCL_EXTERNAL Light_SampleRes QuadLight_sample_instanced(
   assert(instance);
 
   Light_SampleRes res;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const float utime = time;
-#else
   foreach_unique (utime in time) {
-#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform QuadLightDynamic dyn;
     Transform(self, xfm, dyn);
@@ -169,6 +164,7 @@ SYCL_EXTERNAL Light_SampleRes QuadLight_sample_instanced(
   }
   return res;
 }
+#endif
 
 inline Light_EvalRes Eval(const QuadLight *uniform self,
     const uniform QuadLightDynamic &dyn,
@@ -223,13 +219,14 @@ SYCL_EXTERNAL Light_EvalRes QuadLight_eval(const Light *uniform super,
     const vec3f &dir,
     const float minDist,
     const float maxDist,
-    const float)
+    const float time)
 {
   const QuadLight *uniform self = (QuadLight * uniform) super;
   assert(self);
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
@@ -244,13 +241,7 @@ SYCL_EXTERNAL Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
-#ifdef OSPRAY_TARGET_SYCL
-  {
-    // SYCL execution in a thread is scalar
-    const float utime = time;
-#else
   foreach_unique (utime in time) {
-#endif
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform QuadLightDynamic dyn;
     Transform(self, xfm, dyn);
@@ -258,6 +249,7 @@ SYCL_EXTERNAL Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
   }
   return res;
 }
+#endif
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
@@ -267,19 +259,23 @@ export void *uniform QuadLight_sample_addr()
   return (void *uniform)QuadLight_sample;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform QuadLight_sample_instanced_addr()
 {
   return (void *uniform)QuadLight_sample_instanced;
 }
+#endif
 
 export void *uniform QuadLight_eval_addr()
 {
   return (void *uniform)QuadLight_eval;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform QuadLight_eval_instanced_addr()
 {
   return (void *uniform)QuadLight_eval_instanced;
 }
+#endif
 
 OSPRAY_END_ISPC_NAMESPACE

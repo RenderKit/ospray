@@ -25,7 +25,10 @@ struct DirectionalLight
   float pdf; // Probability to sample a direction to the light
 
 #ifdef __cplusplus
-  DirectionalLight() : frame(one), irradiance(0.f), cosAngle(1.f), pdf(inf) {}
+  DirectionalLight() : frame(one), irradiance(0.f), cosAngle(1.f), pdf(inf)
+  {
+    super.type = LIGHT_TYPE_DIRECTIONAL;
+  }
   void set(bool isVisible,
       const Instance *instance,
       const vec3f &direction,

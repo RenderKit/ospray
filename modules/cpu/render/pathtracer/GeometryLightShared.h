@@ -31,7 +31,9 @@ struct GeometryLight
         primIDs(nullptr),
         distribution(nullptr),
         pdf(inf)
-  {}
+  {
+    super.type = LIGHT_TYPE_GEOMETRY;
+  }
 };
 } // namespace ispc
 #else

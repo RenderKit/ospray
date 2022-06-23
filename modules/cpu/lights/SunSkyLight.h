@@ -10,7 +10,7 @@
 #include "sky_model/color_info.h"
 #include "sky_model/sky_model.h"
 // ispc shared
-#include "texture/Texture2DShared.h"
+#include "texture/Texture2D.h"
 
 // Sun and sky environment lights
 // [Hosek and Wilkie 2012, "An Analytic Model for Full Spectral Sky-Dome
@@ -47,8 +47,8 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
  private:
   void processIntensityQuantityType();
 
-  std::vector<vec3f> skyImage;
-  ispc::Texture2D mapSh;
+  std::unique_ptr<BufferShared<vec3f>> skyImage;
+  Ref<Texture2D> map = nullptr;
   Ref<Distribution2D> distribution = nullptr;
   vec2i skySize;
   linear3f frame{one}; // sky orientation

@@ -123,14 +123,14 @@ inline vec3f uniformSampleRing(
 
 inline float uniformSampleRingPDF(const float radius, const float innerRadius)
 {
-  return rcp(M_PI * (sqr(radius) - sqr(innerRadius)));
+  return rcp((float)pi * (sqr(radius) - sqr(innerRadius)));
 }
 
 #ifndef OSPRAY_TARGET_SYCL
 inline uniform float uniformSampleRingPDF(
     const uniform float radius, const uniform float innerRadius)
 {
-  return rcp(M_PI * (sqr(radius) - sqr(innerRadius)));
+  return rcp((float)pi * (sqr(radius) - sqr(innerRadius)));
 }
 #endif
 
@@ -149,13 +149,13 @@ inline vec3f uniformSampleDisk(const float radius, const vec2f &s)
 
 inline float uniformSampleDiskPDF(const float radius)
 {
-  return rcp(M_PI * sqr(radius));
+  return rcp((float)pi * sqr(radius));
 }
 
 #ifndef OSPRAY_TARGET_SYCL
 inline uniform float uniformSampleDiskPDF(const uniform float radius)
 {
-  return rcp(M_PI * sqr(radius));
+  return rcp((float)pi * sqr(radius));
 }
 #endif
 
