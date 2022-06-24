@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "CarPaint.h"
-#include "common/Data.h"
-#include "math/spectrum.h"
 // ispc
 #include "render/materials/CarPaint_ispc.h"
 
@@ -12,7 +10,8 @@ namespace pathtracer {
 
 CarPaint::CarPaint()
 {
-  ispcEquivalent = ispc::PathTracer_CarPaint_create();
+  getSh()->super.type = ispc::MATERIAL_TYPE_CARPAINT;
+  getSh()->super.getBSDF = ispc::CarPaint_getBSDF_addr();
 }
 
 std::string CarPaint::toString() const
@@ -44,50 +43,45 @@ void CarPaint::commit()
       getMaterialParam3f("flipflopColor", vec3f(1.f));
   MaterialParam1f flipflopFalloff = getMaterialParam1f("flipflopFalloff", 1.f);
 
+  getSh()->baseColor = baseColor.factor;
+  getSh()->baseColorMap = baseColor.tex;
+  getSh()->roughness = roughness.factor;
+  getSh()->roughnessMap = roughness.tex;
+  getSh()->normal = normal.factor;
+  getSh()->normalMap = normal.tex;
+  getSh()->normalRot = normal.rot;
+  getSh()->useFlakeColor = useFlakeColor;
+  getSh()->flakeColor = flakeColor.factor;
+  getSh()->flakeColorMap = flakeColor.tex;
+  getSh()->flakeScale = flakeScale.factor;
+  getSh()->flakeScaleMap = flakeScale.tex;
+  getSh()->flakeDensity = flakeDensity.factor;
+  getSh()->flakeDensityMap = flakeDensity.tex;
+  getSh()->flakeSpread = flakeSpread.factor;
+  getSh()->flakeSpreadMap = flakeSpread.tex;
+  getSh()->flakeJitter = flakeJitter.factor;
+  getSh()->flakeJitterMap = flakeJitter.tex;
+  getSh()->flakeRoughness = flakeRoughness.factor;
+  getSh()->flakeRoughnessMap = flakeRoughness.tex;
+  getSh()->coat = coat.factor;
+  getSh()->coatMap = coat.tex;
+  getSh()->coatIor = coatIor.factor;
+  getSh()->coatIorMap = coatIor.tex;
+  getSh()->coatColor = coatColor.factor;
+  getSh()->coatColorMap = coatColor.tex;
+  getSh()->coatThickness = coatThickness.factor;
+  getSh()->coatThicknessMap = coatThickness.tex;
+  getSh()->coatRoughness = coatRoughness.factor;
+  getSh()->coatRoughnessMap = coatRoughness.tex;
+  getSh()->coatNormal = coatNormal.factor;
+  getSh()->coatNormalMap = coatNormal.tex;
+  getSh()->coatNormalRot = coatNormal.rot;
+  getSh()->flipflopColor = flipflopColor.factor;
+  getSh()->flipflopColorMap = flipflopColor.tex;
+  getSh()->flipflopFalloff = flipflopFalloff.factor;
+  getSh()->flipflopFalloffMap = flipflopFalloff.tex;
+
   ADD_ENSIGHT_TEXTURES;
-
-  ispc::PathTracer_CarPaint_set(getIE(),
-      (const ispc::vec3f &)baseColor.factor,
-      baseColor.tex,
-      roughness.factor,
-      roughness.tex,
-      normal.factor,
-      normal.tex,
-      (const ispc::LinearSpace2f &)normal.rot,
-      useFlakeColor,
-      (const ispc::vec3f &)flakeColor.factor,
-      flakeColor.tex,
-      flakeScale.factor,
-      flakeScale.tex,
-      flakeDensity.factor,
-      flakeDensity.tex,
-      flakeSpread.factor,
-      flakeSpread.tex,
-      flakeJitter.factor,
-      flakeJitter.tex,
-      flakeRoughness.factor,
-      flakeRoughness.tex,
-
-      coat.factor,
-      coat.tex,
-      coatIor.factor,
-      coatIor.tex,
-      (const ispc::vec3f &)coatColor.factor,
-      coatColor.tex,
-      coatThickness.factor,
-      coatThickness.tex,
-      coatRoughness.factor,
-      coatRoughness.tex,
-      coatNormal.factor,
-      coatNormal.tex,
-      (const ispc::LinearSpace2f &)coatNormal.rot,
-
-      (const ispc::vec3f &)flipflopColor.factor,
-      flipflopColor.tex,
-      flipflopFalloff.factor,
-      flipflopFalloff.tex,
-      ENSIGHT_TEXTURE_PARAMETERS
-      );
 }
 
 } // namespace pathtracer

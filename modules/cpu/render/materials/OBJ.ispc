@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "OBJ.ih"
+#include "render/Material.ih"
 #include "render/bsdfs/Lambert.ih"
 #include "render/bsdfs/MultiBSDF.ih"
 #include "render/bsdfs/Specular.ih"
@@ -10,8 +11,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying OBJ_getBSDF(
-    const uniform PathTraceMaterial *uniform super,
+const varying BSDF *varying OBJ_getBSDF(const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -27,7 +27,6 @@ const varying BSDF *varying OBJ_getBSDF(
 
   /*! cut-out opacity */
   float d = self->d * get1f(self->dMap, dg, 1.f) * dg.color.w;
-  d *= sampleAlphaTexture1DByRawVar(super->alphabyMap.ptr, dg.atex1d);
 
   /*! diffuse component */
   vec3f Kd = self->Kd;
@@ -37,7 +36,6 @@ const varying BSDF *varying OBJ_getBSDF(
     d *= Kd_from_map.w;
   }
   Kd = Kd * d * make_vec3f(dg.color);
-
   if (reduce_max(Kd) > 0.0f)
     MultiBSDF_add(
         bsdf, Lambert_create(ctx, shadingFrame, Kd), 1.f, luminance(Kd));
@@ -58,7 +56,7 @@ const varying BSDF *varying OBJ_getBSDF(
   return bsdf;
 }
 
-vec3f OBJ_getTransparency(const uniform PathTraceMaterial *uniform super,
+vec3f OBJ_getTransparency(const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium)
@@ -67,8 +65,6 @@ vec3f OBJ_getTransparency(const uniform PathTraceMaterial *uniform super,
 
   /*! cut-out opacity */
   float d = self->d * get1f(self->dMap, dg, 1.f) * dg.color.w;
-  d *= sampleAlphaTexture1DByRawVar(super->alphabyMap.ptr, dg.atex1d);
-
   if (hasAlpha(self->KdMap)) {
     vec4f Kd_from_map = get4f(self->KdMap, dg);
     d *= Kd_from_map.w;
@@ -83,59 +79,12 @@ vec3f OBJ_getTransparency(const uniform PathTraceMaterial *uniform super,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void PathTracer_OBJ_set(void *uniform _self,
-    const uniform TextureParam &dMap,
-    const uniform float d,
-    const uniform TextureParam &KdMap,
-    const uniform vec3f &Kd,
-    const uniform TextureParam &KsMap,
-    const uniform vec3f &Ks,
-    const uniform TextureParam &NsMap,
-    const uniform float Ns,
-    const uniform vec3f &Tf,
-    const uniform TextureParam &bumpMap,
-    const uniform linear2f &bumpRot,
-    PATHTRACEMATERIAL_ENSIGHT_TEXTURE_PARAMETERS
-    )
+export void *uniform OBJ_getBSDF_addr()
 {
-  uniform OBJ *uniform self = (uniform OBJ * uniform) _self;
-  self->dMap = dMap;
-  self->d = d;
-  self->KdMap = KdMap;
-  self->Kd = Kd;
-  self->KsMap = KsMap;
-  self->Ks = Ks;
-  self->NsMap = NsMap;
-  self->Ns = Ns;
-  self->Tf = Tf;
-  self->bumpMap = bumpMap;
-  self->bumpRot = bumpRot;
-
-  PATHTRACEMATERIAL_APPLY_ENSIGHT_TEXTURES;
+  return OBJ_getBSDF;
 }
 
-void OBJ_Constructor(uniform OBJ *uniform self)
+export void *uniform OBJ_getTransparency_addr()
 {
-  PathTraceMaterial_Constructor(&self->super, MATERIAL_TYPE_OBJ, OBJ_getBSDF, OBJ_getTransparency);
-
-  uniform TextureParam tex = make_TextureParam();
-  PathTracer_OBJ_set(self,
-      tex,
-      1.0f,
-      tex,
-      make_vec3f(0.8f),
-      tex,
-      make_vec3f(0.f),
-      tex,
-      2.0f,
-      make_vec3f(0.f),
-      tex,
-      make_LinearSpace2f_identity());
-}
-
-export void *uniform PathTracer_OBJ_create()
-{
-  uniform OBJ *uniform self = uniform new uniform OBJ;
-  OBJ_Constructor(self);
-  return self;
+  return OBJ_getTransparency;
 }
