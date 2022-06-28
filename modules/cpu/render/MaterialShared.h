@@ -103,10 +103,10 @@ struct Material
       const TextureParam *colorbyMap, const TextureParam *alphabyMap)
   {
     if (colorbyMap) {
-      self->colorbyMap = *colorbyMap;
+      this->colorbyMap = *colorbyMap;
     }
     if (alphabyMap) {
-      self->alphabyMap = *alphabyMap;
+      this->alphabyMap = *alphabyMap;
     }
   }
 
@@ -114,10 +114,10 @@ struct Material
       const TextureParam *tex2dMap, int tex2dImageWrap, int tex2dImageMode)
   {
     if (tex2dMap) {
-      self->tex2dMap = *tex2dMap;
+      this->tex2dMap = *tex2dMap;
     }
-    self->tex2dImageWrap = tex2dImageWrap,
-    self->tex2dImageMode = tex2dImageMode;
+    this->tex2dImageWrap = tex2dImageWrap,
+    this->tex2dImageMode = tex2dImageMode;
   }
 
   inline void ApplyEnsightTextures(
@@ -128,7 +128,7 @@ struct Material
       int tex2dImageMode)
   {
     SetEnsightTex1D(colorbyMap, alphabyMap);
-    SetEnsightTex2D(&self->super, tex2dMap, tex2dImageWrap, tex2dImageMode);
+    SetEnsightTex2D(tex2dMap, tex2dImageWrap, tex2dImageMode);
   }
 };
 } // namespace ispc

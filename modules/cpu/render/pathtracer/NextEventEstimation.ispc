@@ -13,18 +13,18 @@
 #include "math/sampling.ih"
 
 // EnSight's customized 1D & 2D texture mapping impl.
-#include "render/materials/Material.ih"
-#include "texture/TextureParam.ih"
+#include "../Material.ih"
+#include "../../texture/TextureParam.ih"
 static vec3f addSideEffects(const DifferentialGeometry &dg, const vec3f &le)
 {
   vec3f out = le;
-  PathTraceMaterial *mat = (PathTraceMaterial *)dg.material;
+  Material *mat = (Material *)dg.material;
   //if (valid(mat->colorbyMap)) {
-  const Texture2D *colorbyTex = mat->colorbyMap.ptr;
+  const Texture2D *colorbyTex = (const Texture2D *)mat->colorbyMap.ptr;
   if (colorbyTex) {
     out = le * sampleTexture1DByRawVar(colorbyTex, dg.tex1d);
   }
-  const Texture2D *tex2dTex = mat->tex2dMap.ptr;
+  const Texture2D *tex2dTex = (const Texture2D *)mat->tex2dMap.ptr;
   if (tex2dTex) {
     const int imgwrap = mat->tex2dImageWrap;
     const int imgmode = mat->tex2dImageMode;

@@ -353,7 +353,7 @@ inline vec3f sampleTexture1D(const Texture2D *tex, float t, bool isbanded) {
 
 vec3f sampleTexture1DByRawVar(const Texture2D *tex, float t)
 {
-    const EnsightTex1dMappingOut out = EnsightTex1dMapping_getT(tex->map1d, t);
+    const EnsightTex1dMappingOut out = EnsightTex1dMapping_getT(&tex->map1d, t);
     vec3f ret;
     if (out.usergba){
         ret.x = out.rgba[0], ret.y = out.rgba[1], ret.z = out.rgba[2];
@@ -369,7 +369,7 @@ float sampleAlphaTexture1DByRawVar(const Texture2D *tex, float t)
     if (NULL == tex) {
         return 1.0f;
     }
-    const EnsightTex1dMappingOut out = EnsightTex1dMapping_getT(tex->map1d, t);
+    const EnsightTex1dMappingOut out = EnsightTex1dMapping_getT(&tex->map1d, t);
     if (out.usergba){
         return 1.0f;
     }

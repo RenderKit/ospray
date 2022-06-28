@@ -168,12 +168,12 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
   }
 }
 
-#include "render/materials/Material.ih"
-#include "texture/Texture2D.ih"
+#include "../render/Material.ih"
+#include "../texture/Texture2D.ih"
 float sampleAlphaTexture1D(const DifferentialGeometry &dg)
 {
-  const PathTraceMaterial* pmat = (const PathTraceMaterial *)dg.material;
-  return pmat ? sampleAlphaTexture1DByRawVar(pmat->alphabyMap.ptr, dg.atex1d) : 1;
+  const Material* pmat = (const Material *)dg.material;
+  return pmat ? sampleAlphaTexture1DByRawVar((Texture2D *)pmat->alphabyMap.ptr, dg.atex1d) : 1;
 }
 
 static void TriangleMesh_PostIntersect(const Geometry *uniform _self,

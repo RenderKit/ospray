@@ -20,7 +20,7 @@ SunSkyLight::SunSkyLight()
   static auto format = static_cast<OSPTextureFormat>(OSP_TEXTURE_RGB32F);
   static auto filter =
       static_cast<OSPTextureFilter>(OSP_TEXTURE_FILTER_BILINEAR);
-  mapIE.Set(skySize, skyImage.data(), format, filter);
+  mapIE.Set(skySize, skyImage.data(), EnsightTex1dMappingData(), format, filter);
 }
 
 SunSkyLight::~SunSkyLight()
