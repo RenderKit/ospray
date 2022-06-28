@@ -32,10 +32,6 @@ variables:
   tags: [ docker ]
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
 
-.job_template: &ubuntu1604
-  tags: [ docker ]
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
-
 .job_template: &ubuntu1804
   tags: [ docker ]
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
@@ -187,13 +183,6 @@ build-linux-debug-all:
     - scripts/build_gitlab/linux.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDEPENDENCIES_BUILD_TYPE=Debug -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
   <<: *build_artifacts
   only: [schedules]
-
-build-ubuntu1604-gcc:
-  <<: *ubuntu1604
-  stage: build
-  script:
-    - scripts/build_gitlab/linux.sh -G Ninja
-  <<: *build_artifacts
 
 build-ubuntu1804-gcc:
   <<: *ubuntu1804
@@ -390,11 +379,6 @@ test-centos8-avx512skx:
   <<: *centos8
   <<: *test_job_unix_avx512skx
   needs: [build-centos8]
-
-test-ubuntu1604-gcc-avx2:
-  <<: *ubuntu1604
-  <<: *test_job_unix_avx2
-  needs: [build-ubuntu1604-gcc]
 
 test-ubuntu1804-gcc-avx512skx:
   <<: *ubuntu1804
