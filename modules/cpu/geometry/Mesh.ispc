@@ -172,7 +172,7 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
 #include "../texture/Texture2D.ih"
 float sampleAlphaTexture1D(const DifferentialGeometry &dg)
 {
-  const Material* pmat = (const Material *)dg.material;
+  const Material* pmat = dg.material;
   return pmat ? sampleAlphaTexture1DByRawVar((Texture2D *)pmat->alphabyMap.ptr, dg.atex1d) : 1;
 }
 

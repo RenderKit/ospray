@@ -18,8 +18,7 @@
 static vec3f addSideEffects(const DifferentialGeometry &dg, const vec3f &le)
 {
   vec3f out = le;
-  Material *mat = (Material *)dg.material;
-  //if (valid(mat->colorbyMap)) {
+  Material *mat = dg.material;
   const Texture2D *colorbyTex = (const Texture2D *)mat->colorbyMap.ptr;
   if (colorbyTex) {
     out = le * sampleTexture1DByRawVar(colorbyTex, dg.tex1d);

@@ -373,7 +373,7 @@ float sampleAlphaTexture1DByRawVar(const Texture2D *tex, float t)
     if (out.usergba){
         return 1.0f;
     }
-    const vec3f ret = sampleTexture1D(tex, out.t, false);    
+    const vec3f ret = sampleTexture1D(tex, out.t, false);
     return ret.x;
 }
 
