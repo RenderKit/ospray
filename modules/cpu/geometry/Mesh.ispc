@@ -168,8 +168,8 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
   }
 }
 
-#include "../render/Material.ih"
-#include "../texture/Texture2D.ih"
+#include "render/Material.ih"
+#include "texture/Texture2D.ih"
 float sampleAlphaTexture1D(const DifferentialGeometry &dg)
 {
   const Material* pmat = dg.material;

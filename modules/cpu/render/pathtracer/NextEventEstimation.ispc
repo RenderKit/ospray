@@ -13,8 +13,8 @@
 #include "math/sampling.ih"
 
 // EnSight's customized 1D & 2D texture mapping impl.
-#include "../Material.ih"
-#include "../../texture/TextureParam.ih"
+#include "Material.ih"
+#include "texture/TextureParam.ih"
 static vec3f addSideEffects(const DifferentialGeometry &dg, const vec3f &le)
 {
   vec3f out = le;
