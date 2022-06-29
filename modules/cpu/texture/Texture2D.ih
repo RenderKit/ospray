@@ -90,7 +90,7 @@ enum ImageMode{
   NO_OF_TEXTURE_MODES
 };
 
-extern vec3f sampleTexture1DByRawVar(const Texture2D *tex, float t);
-extern float sampleAlphaTexture1DByRawVar(const Texture2D *tex, float t);
+extern vec3f sampleTexture1DByRawVar(const Texture *tex, float t);
+extern float sampleAlphaTexture1DByRawVar(const Texture *tex, float t);
 extern vec3f sampleTexture2DEnsight(const Texture2D *tex, int imgwrap, int imgmode, const DifferentialGeometry &dg, const vec3f &le);
 

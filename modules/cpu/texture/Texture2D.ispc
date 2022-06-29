@@ -351,8 +351,9 @@ inline vec3f sampleTexture1D(const Texture2D *tex, float t, bool isbanded) {
     return out;
 };
 
-vec3f sampleTexture1DByRawVar(const Texture2D *tex, float t)
+vec3f sampleTexture1DByRawVar(const Texture *tex1, float t)
 {
+    const Texture2D *tex = (const Texture2D *)tex1;
     const EnsightTex1dMappingOut out = EnsightTex1dMapping_getT(&tex->map1d, t);
     vec3f ret;
     if (out.usergba){
@@ -364,8 +365,9 @@ vec3f sampleTexture1DByRawVar(const Texture2D *tex, float t)
     return ret;
 }
 
-float sampleAlphaTexture1DByRawVar(const Texture2D *tex, float t)
+float sampleAlphaTexture1DByRawVar(const Texture *tex1, float t)
 {
+    const Texture2D *tex = (const Texture2D *)tex1;
     if (NULL == tex) {
         return 1.0f;
     }

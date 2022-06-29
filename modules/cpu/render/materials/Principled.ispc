@@ -18,6 +18,7 @@
 #include "render/bsdfs/ThinMicrofacetDielectric.ih"
 #include "render/bsdfs/Transmission.ih"
 #include "texture/TextureParam.ih"
+#include "texture/Texture2D.ih"
 
 #include "PrincipledShared.h"
 
@@ -46,7 +47,8 @@ const varying BSDF *varying Principled_getBSDF(
     frame->vy = cross(frame->vz, frame->vx);
   }
 
-  float opacity = clamp(self->opacity * get1f(self->opacityMap, dg, 1.f));
+  float opacity = clamp(self->opacity * get1f(self->opacityMap, dg, 1.f)) *
+    sampleAlphaTexture1DByRawVar(super->alphabyMap.ptr, dg.atex1d);
   if (hasAlpha(self->baseColorMap)) {
     vec4f baseColorSample = get4f(self->baseColorMap, dg, make_vec4f(1.f));
     opacity *= baseColorSample.w;
@@ -315,7 +317,8 @@ vec3f Principled_getTransparency(const uniform Material *uniform material,
       (const uniform Principled *uniform)material;
   vec3f T = make_vec3f(0.f);
 
-  float opacity = clamp(self->opacity * get1f(self->opacityMap, dg, 1.f));
+  float opacity = clamp(self->opacity * get1f(self->opacityMap, dg, 1.f)) *
+    sampleAlphaTexture1DByRawVar(material->alphabyMap.ptr, dg.atex1d);
   if (hasAlpha(self->baseColorMap)) {
     vec4f baseColorSample = get4f(self->baseColorMap, dg, make_vec4f(1.f));
     opacity *= baseColorSample.w;
