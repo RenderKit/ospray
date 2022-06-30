@@ -27,7 +27,7 @@ ospray_configure_compiler()
 ###########################################################
 
 # rkcommon
-find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
+find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} EXACT REQUIRED)
 get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)
 
