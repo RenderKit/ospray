@@ -23,7 +23,7 @@ install(
 ENDIF()
 
 IF (WIN32)
-  set(EMBREE_LIB_SRC_DIR ${CMAKE_BINARY_DIR}/embree/build/Release/)
+  set(EMBREE_LIB_SRC_DIR ${CMAKE_BINARY_DIR}/embree/build/)
   install(
 	FILES ${EMBREE_LIB_SRC_DIR}embree3.lib
           ${EMBREE_LIB_SRC_DIR}embree_avx.lib
@@ -36,7 +36,7 @@ IF (WIN32)
           ${EMBREE_LIB_SRC_DIR}tasking.lib			
 	DESTINATION ${EMBREE_INSTALL_DIR}/lib/Release/
   )
-  set(EMBREE_LIB_DEBSRC_DIR ${CMAKE_BINARY_DIR}/embree/build/Debug/)
+  set(EMBREE_LIB_DEBSRC_DIR ${CMAKE_BINARY_DIR}/embree/build/)
   install(
 	FILES ${EMBREE_LIB_DEBSRC_DIR}embree3.lib
           ${EMBREE_LIB_DEBSRC_DIR}embree_avx.lib
@@ -169,17 +169,17 @@ install(
 	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_device_4.dll
 	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_device_8.dll
 	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_device_16.dll
-	      ${CMAKE_BINARY_DIR}/rkcommon/build/Release/rkcommon.dll
-	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray.dll
-	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray_module_cpu.dll
+	      ${CMAKE_BINARY_DIR}/rkcommon/build/rkcommon.dll
+	      ${CMAKE_BINARY_DIR}/ospray/build/ospray.dll
+	      ${CMAKE_BINARY_DIR}/ospray/build/ospray_module_cpu.dll
 	DESTINATION ${OSPRAY_INSTALL_DIR}/bin/
 )
 ENDIF()
 
 IF (WIN32)
 install(
-	FILES ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray${LIBSUFFIX}
-	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray_module_cpu${LIBSUFFIX}
+	FILES ${CMAKE_BINARY_DIR}/ospray/build/ospray${LIBSUFFIX}
+	      ${CMAKE_BINARY_DIR}/ospray/build/ospray_module_cpu${LIBSUFFIX}
 	DESTINATION ${OSPRAY_INSTALL_DIR}/lib/
 )
 ELSE()
