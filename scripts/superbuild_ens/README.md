@@ -24,3 +24,10 @@ CMake options to note (all have sensible defaults):
 - `BUILD_OIDN_VERSION` determines which verison of OpenImageDenoise to pull down.
 - `BUILD_TBB_FROM_SOURCE` set to ON to build TBB from source (required for ARM support).
    The default setting is OFF.
+
+Actual command line used for build ospray & dependencies on Windows:
+(1) Goto a command shell with nmake support:
+(2) Run the following command:
+\cmake322\bin\cmake  ..\OSPRay.git\scripts\superbuild_ens -G "NMake Makefiles" 
+You can use -DCMAKE_BUILD_TYPE=Release for release build
+(3) nmake install

@@ -9,7 +9,7 @@ ELSEIF(UNIX)
   set(PLATFORM linux_2.6_64)
   set(LIBSUFFIX ".so")  
 ENDIF()
-set(APEX_DIR ${ENSIGHT_SRC_DIR}/apex222/machines/${PLATFORM})
+set(APEX_DIR ${ENSIGHT_SRC_DIR}/apex231/machines/${PLATFORM})
 set(OSPRAY_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
 ####################embree install commands#######################
@@ -171,7 +171,7 @@ install(
 	      ${CMAKE_INSTALL_PREFIX}/openvkl/bin/openvkl_module_cpu_device_16.dll
 	      ${CMAKE_BINARY_DIR}/rkcommon/build/Release/rkcommon.dll
 	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray.dll
-	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray_module_ispc.dll
+	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray_module_cpu.dll
 	DESTINATION ${OSPRAY_INSTALL_DIR}/bin/
 )
 ENDIF()
@@ -179,7 +179,7 @@ ENDIF()
 IF (WIN32)
 install(
 	FILES ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray${LIBSUFFIX}
-	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray_module_ispc${LIBSUFFIX}
+	      ${CMAKE_BINARY_DIR}/ospray/build/Release/ospray_module_cpu${LIBSUFFIX}
 	DESTINATION ${OSPRAY_INSTALL_DIR}/lib/
 )
 ELSE()
