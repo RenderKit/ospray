@@ -45,6 +45,7 @@ string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" ISPCRT_ARCHIVE ${ISPC_V
 ExternalProject_Add(ispcrt
   PREFIX ${COMPONENT_NAME_ispcrt}
   STAMP_DIR ${COMPONENT_NAME_ispcrt}/stamp
+  PATCH_COMMAND git apply --ignore-whitespace -p0 -v ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/ispcrt.patch
   SOURCE_DIR ${COMPONENT_NAME_ispcrt}/src
   BINARY_DIR ${COMPONENT_NAME_ispcrt}
   SOURCE_SUBDIR "ispcrt"
