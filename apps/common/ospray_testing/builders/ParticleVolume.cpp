@@ -87,7 +87,7 @@ void ParticleVolume::commit()
 {
   Builder::commit();
 
-  numParticles = getParam<int>("numParticles", 1000);
+  numParticles = getParam<int>("numParticles", numParticles);
   withVolume = getParam<bool>("withVolume", withVolume);
   withIsosurface = getParam<bool>("withIsosurface", withIsosurface);
   isovalue = getParam<float>("isovalue", 0.5f);
