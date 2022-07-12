@@ -168,9 +168,10 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 #undef declare_param_setter
 
 template <typename OSPRAY_TYPE, typename API_TYPE>
-inline API_TYPE createDistributedObject(const char *type, ObjectHandle handle)
+inline API_TYPE createDistributedObject(
+    const char *type, api::ISPCDevice &device, ObjectHandle handle)
 {
-  auto *instance = OSPRAY_TYPE::createInstance(type);
+  auto *instance = OSPRAY_TYPE::createInstance(type, device);
   handle.assign(instance);
   return (API_TYPE)(int64)handle;
 }
@@ -249,7 +250,12 @@ OSPFrameBuffer MPIDistributedDevice::frameBufferCreate(
     const vec2i &size, const OSPFrameBufferFormat mode, const uint32 channels)
 {
   ObjectHandle handle = allocateHandle();
-  auto *instance = new DistributedFrameBuffer(size, handle, mode, channels);
+  auto *instance = new DistributedFrameBuffer(
+      *(ospray::api::ISPCDevice *)internalDevice.get(),
+      size,
+      handle,
+      mode,
+      channels);
   handle.assign(instance);
   return (OSPFrameBuffer)(int64)handle;
 }
@@ -291,9 +297,8 @@ OSPInstance MPIDistributedDevice::newInstance(OSPGroup _group)
 OSPWorld MPIDistributedDevice::newWorld()
 {
   ObjectHandle handle = allocateHandle();
-  auto *instance = new DistributedWorld;
-  instance->setDevice(
-      ((ospray::api::ISPCDevice *)internalDevice.get())->getEmbreeDevice());
+  auto *instance =
+      new DistributedWorld(*(ospray::api::ISPCDevice *)internalDevice.get());
   handle.assign(instance);
   return (OSPWorld)(int64)(handle);
 }
@@ -336,7 +341,8 @@ OSPImageOperation MPIDistributedDevice::newImageOp(const char *type)
 OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
 {
   ObjectHandle handle = allocateHandle();
-  return createDistributedObject<Renderer, OSPRenderer>(type, handle);
+  return createDistributedObject<Renderer, OSPRenderer>(
+      type, *(api::ISPCDevice *)internalDevice.get(), handle);
 }
 
 OSPCamera MPIDistributedDevice::newCamera(const char *type)

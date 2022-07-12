@@ -24,10 +24,12 @@ extern "C" int *getThreadLastFrameID()
 
 namespace ospray {
 
-FrameBuffer::FrameBuffer(const vec2i &_size,
+FrameBuffer::FrameBuffer(api::ISPCDevice &device,
+    const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
-    : size(_size),
+    : AddStructShared(device.getIspcrtDevice(), device),
+      size(_size),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
       hasAccumBuffer(channels & OSP_FB_ACCUM),
       hasVarianceBuffer(

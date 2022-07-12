@@ -8,7 +8,8 @@
 namespace ospray {
 namespace pathtracer {
 
-Glass::Glass()
+Glass::Glass(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.type = ispc::MATERIAL_TYPE_GLASS;
   getSh()->super.getBSDF = ispc::Glass_getBSDF_addr();

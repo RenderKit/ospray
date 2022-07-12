@@ -14,7 +14,7 @@
 
 namespace ospray {
 
-SunSkyLight::SunSkyLight()
+SunSkyLight::SunSkyLight(api::ISPCDevice &device) : Light(device)
 {
   static const int skyResolution = 512;
   skySize = vec2i(skyResolution, skyResolution / 2);
@@ -35,7 +35,8 @@ ISPCRTMemoryView SunSkyLight::createSh(
 {
   switch (index) {
   case 0: {
-    ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>();
+    ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>(
+        getISPCDevice().getIspcrtDevice().handle());
     ispc::HDRILight *sh = (ispc::HDRILight *)ispcrtSharedPtr(view);
     sh->set(visible,
         instance,
@@ -46,7 +47,8 @@ ISPCRTMemoryView SunSkyLight::createSh(
     return view;
   }
   case 1: {
-    ISPCRTMemoryView view = StructSharedCreate<ispc::DirectionalLight>();
+    ISPCRTMemoryView view = StructSharedCreate<ispc::DirectionalLight>(
+        getISPCDevice().getIspcrtDevice().handle());
     ispc::DirectionalLight *sh =
         (ispc::DirectionalLight *)ispcrtSharedPtr(view);
     sh->set(visible, instance, direction, solarIrradiance, cosAngle);

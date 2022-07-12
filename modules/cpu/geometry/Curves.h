@@ -13,7 +13,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE Curves
     : public AddStructShared<Geometry, ispc::Curves>
 {
-  Curves();
+  Curves(api::ISPCDevice &device);
   virtual ~Curves() override = default;
   virtual std::string toString() const override;
 

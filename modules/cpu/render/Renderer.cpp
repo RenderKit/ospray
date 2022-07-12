@@ -6,7 +6,6 @@
 #include "LoadBalancer.h"
 #include "Material.h"
 #include "common/Instance.h"
-#include "common/Util.h"
 #include "geometry/GeometricModel.h"
 #include "pf/PixelFilter.h"
 // ispc exports
@@ -15,11 +14,10 @@
 
 namespace ospray {
 
-static FactoryMap<Renderer> g_renderersMap;
-
 // Renderer definitions ///////////////////////////////////////////////////////
 
-Renderer::Renderer()
+Renderer::Renderer(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;
@@ -61,6 +59,7 @@ void Renderer::commit()
   materialData = getParamDataT<Material *>("material");
   if (materialData) {
     materialArray = make_buffer_shared_unique<ispc::Material *>(
+        getISPCDevice().getIspcrtDevice(),
         createArrayOfSh<ispc::Material>(*materialData));
     getSh()->numMaterials = materialArray->size();
     getSh()->material = materialArray->sharedPtr();
@@ -79,16 +78,6 @@ void Renderer::commit()
       (ispc::PixelFilter *)(pixelFilter ? pixelFilter->getIE() : nullptr);
 
   ispc::precomputeZOrder();
-}
-
-Renderer *Renderer::createInstance(const char *type)
-{
-  return createInstanceHelper(type, g_renderersMap[type]);
-}
-
-void Renderer::registerType(const char *type, FactoryFcn<Renderer> f)
-{
-  g_renderersMap[type] = f;
 }
 
 void Renderer::renderTasks(FrameBuffer *fb,

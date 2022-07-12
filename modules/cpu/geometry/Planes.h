@@ -12,7 +12,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE Planes
     : public AddStructShared<Geometry, ispc::Planes>
 {
-  Planes();
+  Planes(api::ISPCDevice &device);
   virtual ~Planes() override = default;
 
   virtual std::string toString() const override;

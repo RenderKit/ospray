@@ -10,7 +10,7 @@ namespace ospray {
 
 struct SciVis : public AddStructShared<Renderer, ispc::SciVis>
 {
-  SciVis();
+  SciVis(api::ISPCDevice &device);
   std::string toString() const override;
   void commit() override;
   void *beginFrame(FrameBuffer *, World *) override;

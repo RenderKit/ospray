@@ -4,7 +4,7 @@
 #pragma once
 
 #include <iterator>
-#include "Managed.h"
+#include "ISPCDeviceObject.h"
 #include "StructShared.h"
 #include "ispcrt.hpp"
 
@@ -29,13 +29,14 @@ struct DataT;
 
 /*! \brief defines a data array (aka "buffer") type that contains
     'n' items of a given type */
-struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
+struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
 {
-  Data(const void *sharedData,
+  Data(api::ISPCDevice &device,
+      const void *sharedData,
       OSPDataType,
       const vec3ul &numItems,
       const vec3l &byteStride);
-  Data(OSPDataType, const vec3ul &numItems);
+  Data(api::ISPCDevice &device, OSPDataType, const vec3ul &numItems);
 
   virtual ~Data() override;
   virtual std::string toString() const override;
@@ -59,9 +60,9 @@ struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   typename std::enable_if<!std::is_pointer<T>::value, bool>::type is() const;
 
  protected:
+  ISPCRTMemoryView view{nullptr};
   char *addr{nullptr};
   bool shared;
-  ISPCRTMemoryView view;
 
  public:
   OSPDataType type{OSP_UNKNOWN};
@@ -298,7 +299,7 @@ inline const DataT<T, DIM> &Data::as() const
 }
 
 template <typename T, int DIM>
-inline const Ref<const DataT<T, DIM>> ManagedObject::getParamDataT(
+inline const Ref<const DataT<T, DIM>> ISPCDeviceObject::getParamDataT(
     const char *name, bool required, bool promoteScalar)
 {
   Data *data = getParam<Data *>(name);
@@ -311,7 +312,7 @@ inline const Ref<const DataT<T, DIM>> ManagedObject::getParamDataT(
     auto item = getOptParam<T>(name);
     if (item) {
       // create data array and its reference object
-      data = new Data(OSPTypeFor<T>::value, vec3ul(1));
+      data = new Data(getISPCDevice(), OSPTypeFor<T>::value, vec3ul(1));
       Ref<const DataT<T, DIM>> refDataT = &data->as<T, DIM>();
 
       // 'data' reference counter equals to 2 now,

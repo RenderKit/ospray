@@ -25,7 +25,7 @@ struct RegionInfo
 struct DistributedRenderer
     : public AddStructShared<Renderer, ispc::DistributedRenderer>
 {
-  DistributedRenderer();
+  DistributedRenderer(api::ISPCDevice &device);
   ~DistributedRenderer() override;
 
   void computeRegionVisibility(SparseFrameBuffer *fb,

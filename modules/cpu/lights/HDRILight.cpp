@@ -59,7 +59,8 @@ HDRILight::~HDRILight()
 ISPCRTMemoryView HDRILight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>(
+      getISPCDevice().getIspcrtDevice().handle());
   ispc::HDRILight *sh = (ispc::HDRILight *)ispcrtSharedPtr(view);
   sh->set(visible,
       instance,

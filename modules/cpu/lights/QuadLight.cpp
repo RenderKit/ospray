@@ -15,7 +15,8 @@ namespace ospray {
 ISPCRTMemoryView QuadLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::QuadLight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::QuadLight>(
+      getISPCDevice().getIspcrtDevice().handle());
   ispc::QuadLight *sh = (ispc::QuadLight *)ispcrtSharedPtr(view);
   sh->super.sample = ispc::QuadLight_sample_addr();
   sh->super.eval = ispc::QuadLight_eval_addr();

@@ -30,7 +30,7 @@ namespace mpi {
 struct DistributedRaycastRenderer : public AddStructShared<DistributedRenderer,
                                         ispc::DistributedRaycastRenderer>
 {
-  DistributedRaycastRenderer();
+  DistributedRaycastRenderer(api::ISPCDevice &device);
   virtual ~DistributedRaycastRenderer() override;
 
   void commit() override;

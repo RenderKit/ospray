@@ -11,7 +11,8 @@
 
 namespace ospray {
 
-Planes::Planes()
+Planes::Planes(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.postIntersect = ispc::Planes_postIntersect_addr();
 }

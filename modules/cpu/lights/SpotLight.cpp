@@ -16,7 +16,8 @@ namespace ospray {
 ISPCRTMemoryView SpotLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::SpotLight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::SpotLight>(
+      getISPCDevice().getIspcrtDevice().handle());
   ispc::SpotLight *sh = (ispc::SpotLight *)ispcrtSharedPtr(view);
   sh->super.sample = ispc::SpotLight_sample_addr();
   sh->super.eval = ispc::SpotLight_eval_addr();

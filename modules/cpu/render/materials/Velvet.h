@@ -10,7 +10,7 @@ namespace pathtracer {
 
 struct Velvet : public AddStructShared<Material, ispc::Velvet>
 {
-  Velvet();
+  Velvet(api::ISPCDevice &device);
 
   virtual std::string toString() const override;
 

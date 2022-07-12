@@ -86,18 +86,6 @@ using uint8 = std::uint8_t;
 
 using index_t = std::int64_t;
 
-template <typename T>
-using FactoryFcn = T *(*)();
-
-template <typename T>
-using FactoryMap = std::map<std::string, FactoryFcn<T>>;
-
-template <typename B, typename T>
-inline B *allocate_object()
-{
-  return new T;
-}
-
 // Argument parsing functions
 std::string getArgString(const std::string &s);
 int getArgInt(const std::string &s);

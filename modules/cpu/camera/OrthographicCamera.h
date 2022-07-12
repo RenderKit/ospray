@@ -22,7 +22,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE OrthographicCamera
     : public AddStructShared<Camera, ispc::OrthographicCamera>
 {
-  OrthographicCamera();
+  OrthographicCamera(api::ISPCDevice &device);
   ~OrthographicCamera() override = default;
 
   virtual std::string toString() const override;

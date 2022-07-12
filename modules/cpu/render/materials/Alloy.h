@@ -10,7 +10,7 @@ namespace pathtracer {
 
 struct Alloy : public AddStructShared<Material, ispc::Alloy>
 {
-  Alloy();
+  Alloy(api::ISPCDevice &device);
 
   virtual std::string toString() const override;
 

@@ -53,7 +53,7 @@ struct BilinearPatches : public AddStructShared<Geometry, ispc::BilinearPatches>
   //   vec3f controlPoint[2][2];
   // };
 
-  BilinearPatches();
+  BilinearPatches(api::ISPCDevice &);
   virtual ~BilinearPatches() override = default;
 
   // the commit() message that gets called upon the app calling

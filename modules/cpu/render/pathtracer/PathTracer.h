@@ -15,6 +15,9 @@ namespace ospray {
 
 struct PathTracer : public AddStructShared<Renderer, ispc::PathTracer>
 {
+  PathTracer(api::ISPCDevice &device)
+      : AddStructShared(device.getIspcrtDevice(), device)
+  {}
   virtual std::string toString() const override;
   virtual void commit() override;
   virtual void *beginFrame(FrameBuffer *, World *) override;

@@ -11,7 +11,7 @@ namespace pathtracer {
 
 struct MetallicPaint : public AddStructShared<Material, ispc::MetallicPaint>
 {
-  MetallicPaint();
+  MetallicPaint(api::ISPCDevice &device);
 
   virtual std::string toString() const override;
 

@@ -2,15 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture.h"
-#include "common/Util.h"
 
 namespace ospray {
 
-static FactoryMap<Texture> g_texMap;
-
 // Texture definitions ////////////////////////////////////////////////////////
 
-Texture::Texture()
+Texture::Texture(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_TEXTURE;
 }
@@ -18,16 +16,6 @@ Texture::Texture()
 std::string Texture::toString() const
 {
   return "ospray::Texture";
-}
-
-Texture *Texture::createInstance(const char *type)
-{
-  return createInstanceHelper(type, g_texMap[type]);
-}
-
-void Texture::registerType(const char *type, FactoryFcn<Texture> f)
-{
-  g_texMap[type] = f;
 }
 
 OSPTYPEFOR_DEFINITION(Texture *);

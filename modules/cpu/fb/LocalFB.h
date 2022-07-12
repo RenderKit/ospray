@@ -19,7 +19,8 @@ struct SparseFrameBuffer;
 struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
     : public AddStructShared<FrameBuffer, ispc::LocalFB>
 {
-  LocalFrameBuffer(const vec2i &size,
+  LocalFrameBuffer(api::ISPCDevice &device,
+      const vec2i &size,
       ColorBufferFormat colorBufferFormat,
       const uint32 channels);
 

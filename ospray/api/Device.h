@@ -8,7 +8,7 @@
 #include "rkcommon/utility/ParameterizedObject.h"
 // ospray
 #include "../common/OSPCommon.h"
-#include "../common/Util.h"
+#include "../common/ObjectFactory.h"
 #include "ospray/version.h"
 // std
 #include <functional>
@@ -21,7 +21,8 @@ namespace api {
 
 /*! abstract base class of all 'devices' that implement the ospray API */
 struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
-                                      public utility::ParameterizedObject
+                                      public utility::ParameterizedObject,
+                                      public ObjectFactory<Device>
 {
   /*! singleton that points to currently active device */
   static memory::IntrusivePtr<Device> current;
@@ -30,8 +31,6 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
   virtual ~Device() override = default;
 
   static Device *createDevice(const char *type);
-  template <typename T>
-  static void registerType(const char *type);
 
   /*! gets a device property */
   virtual int64_t getProperty(const OSPDeviceProperty prop);
@@ -180,10 +179,6 @@ struct OSPRAY_CORE_INTERFACE Device : public memory::RefCountedObject,
   std::string lastErrorMsg = "no error"; // no braced initializer for MSVC12
 
  private:
-  template <typename BASE_CLASS, typename CHILD_CLASS>
-  friend void ospray::registerTypeHelper(const char *type);
-  static void registerType(const char *type, FactoryFcn<Device> f);
-
   bool committed{false};
 };
 
@@ -194,14 +189,6 @@ OSPRAY_CORE_INTERFACE Device &currentDevice();
 
 OSPRAY_CORE_INTERFACE
 std::string generateEmbreeDeviceCfg(const Device &device);
-
-// Inlined definitions /////////////////////////////////////////////////////////
-
-template <typename T>
-inline void Device::registerType(const char *type)
-{
-  registerTypeHelper<Device, T>(type);
-}
 
 } // namespace api
 

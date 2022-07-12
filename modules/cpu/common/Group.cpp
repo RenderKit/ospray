@@ -35,7 +35,8 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
 
 // Group definitions ////////////////////////////////////////////////////////
 
-Group::Group()
+Group::Group(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_GROUP;
 }
@@ -96,15 +97,18 @@ void Group::commit()
   getSh()->volumetricModels = nullptr;
   getSh()->clipModels = nullptr;
 
+  RTCDevice embreeDevice = getISPCDevice().getEmbreeDevice();
   if (!embreeDevice) {
     throw std::runtime_error("invalid Embree device");
   }
 
   if (numGeometries > 0) {
     sceneGeometries = rtcNewScene(embreeDevice);
-    createEmbreeScene(sceneGeometries, *geometricModels, sceneFlags, buildQuality);
+    createEmbreeScene(
+        sceneGeometries, *geometricModels, sceneFlags, buildQuality);
 
     geometricModelsArray = make_buffer_shared_unique<ispc::GeometricModel *>(
+        getISPCDevice().getIspcrtDevice(),
         createArrayOfSh<ispc::GeometricModel>(*geometricModels));
     getSh()->geometricModels = geometricModelsArray->sharedPtr();
 
@@ -113,9 +117,11 @@ void Group::commit()
 
   if (numVolumes > 0) {
     sceneVolumes = rtcNewScene(embreeDevice);
-    createEmbreeScene(sceneVolumes, *volumetricModels, sceneFlags, buildQuality);
+    createEmbreeScene(
+        sceneVolumes, *volumetricModels, sceneFlags, buildQuality);
 
     volumetricModelsArray = make_buffer_shared_unique<ispc::VolumetricModel *>(
+        getISPCDevice().getIspcrtDevice(),
         createArrayOfSh<ispc::VolumetricModel>(*volumetricModels));
     getSh()->volumetricModels = volumetricModelsArray->sharedPtr();
 
@@ -127,9 +133,11 @@ void Group::commit()
     createEmbreeScene(sceneClippers,
         *clipModels,
         sceneFlags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION
-            | RTC_SCENE_FLAG_ROBUST, buildQuality);
+            | RTC_SCENE_FLAG_ROBUST,
+        buildQuality);
 
     clipModelsArray = make_buffer_shared_unique<ispc::GeometricModel *>(
+        getISPCDevice().getIspcrtDevice(),
         createArrayOfSh<ispc::GeometricModel>(*clipModels));
     getSh()->clipModels = clipModelsArray->sharedPtr();
 
@@ -170,11 +178,6 @@ box3f Group::getBounds() const
   }
 
   return sceneBounds;
-}
-
-void Group::setDevice(RTCDevice device)
-{
-  embreeDevice = device;
 }
 
 OSPTYPEFOR_DEFINITION(Group *);

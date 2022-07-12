@@ -14,10 +14,12 @@
 
 namespace ospray {
 
-LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
+LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
+    const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
-    : AddStructShared(_size, _colorBufferFormat, channels),
+    : AddStructShared(
+        device.getIspcrtDevice(), device, _size, _colorBufferFormat, channels),
       numRenderTasks(divRoundUp(size, getRenderTaskSize())),
       taskErrorRegion(hasVarianceBuffer ? getNumRenderTasks() : vec2i(0))
 {

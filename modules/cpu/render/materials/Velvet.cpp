@@ -8,7 +8,8 @@
 namespace ospray {
 namespace pathtracer {
 
-Velvet::Velvet()
+Velvet::Velvet(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.type = ispc::MATERIAL_TYPE_VELVET;
   getSh()->super.getBSDF = ispc::Velvet_getBSDF_addr();

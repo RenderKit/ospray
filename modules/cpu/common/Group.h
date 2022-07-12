@@ -5,7 +5,7 @@
 
 // ospray stuff
 #include "Data.h"
-#include "Managed.h"
+#include "ISPCDeviceObject.h"
 // stl
 #include <vector>
 // embree
@@ -20,9 +20,9 @@ struct VolumetricModel;
 struct Light;
 
 struct OSPRAY_SDK_INTERFACE Group
-    : public AddStructShared<ManagedObject, ispc::Group>
+    : public AddStructShared<ISPCDeviceObject, ispc::Group>
 {
-  Group();
+  Group(api::ISPCDevice &device);
   ~Group() override;
 
   std::string toString() const override;
@@ -42,11 +42,6 @@ struct OSPRAY_SDK_INTERFACE Group
   RTCScene sceneGeometries{nullptr};
   RTCScene sceneVolumes{nullptr};
   RTCScene sceneClippers{nullptr};
-
-  void setDevice(RTCDevice embreeDevice);
-
- protected:
-  RTCDevice embreeDevice{nullptr};
 
  private:
   std::unique_ptr<BufferShared<ispc::GeometricModel *>> geometricModelsArray;

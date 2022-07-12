@@ -13,7 +13,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE PerspectiveCamera
     : public AddStructShared<Camera, ispc::PerspectiveCamera>
 {
-  PerspectiveCamera();
+  PerspectiveCamera(api::ISPCDevice &device);
   virtual ~PerspectiveCamera() override = default;
 
   virtual std::string toString() const override;

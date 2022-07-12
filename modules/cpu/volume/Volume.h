@@ -3,8 +3,7 @@
 
 #pragma once
 
-#include "ISPCDevice.h"
-#include "common/Managed.h"
+#include "ISPCDeviceObject.h"
 // embree
 #include "embree3/rtcore.h"
 // openvkl
@@ -15,14 +14,13 @@
 namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE Volume
-    : public AddStructShared<ManagedObject, ispc::Volume>
+    : public AddStructShared<ISPCDeviceObject, ispc::Volume>
 {
-  Volume(const std::string &vklType);
+  Volume(api::ISPCDevice &device, const std::string &vklType);
   ~Volume() override;
 
   std::string toString() const override;
   void commit() override;
-  void setDevice(RTCDevice embreeDevice, VKLDevice vklDevice);
 
  private:
   void checkDataStride(const Data *) const;
@@ -41,8 +39,6 @@ struct OSPRAY_SDK_INTERFACE Volume
   box3f bounds{empty};
 
   std::string vklType;
-  RTCDevice embreeDevice{nullptr};
-  VKLDevice vklDevice{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Volume *, OSP_VOLUME);

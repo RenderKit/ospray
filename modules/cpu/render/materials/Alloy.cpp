@@ -8,7 +8,8 @@
 namespace ospray {
 namespace pathtracer {
 
-Alloy::Alloy()
+Alloy::Alloy(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.type = ispc::MATERIAL_TYPE_ALLOY;
   getSh()->super.getBSDF = ispc::Alloy_getBSDF_addr();

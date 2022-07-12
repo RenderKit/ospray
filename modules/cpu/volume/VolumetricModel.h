@@ -11,9 +11,9 @@
 namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE VolumetricModel
-    : public AddStructShared<ManagedObject, ispc::VolumetricModel>
+    : public AddStructShared<ISPCDeviceObject, ispc::VolumetricModel>
 {
-  VolumetricModel(Volume *geometry);
+  VolumetricModel(api::ISPCDevice &device, Volume *geometry);
   ~VolumetricModel() override;
   std::string toString() const override;
 

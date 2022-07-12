@@ -29,8 +29,9 @@ static bool DETAILED_LOGGING = false;
 
 // DistributedRaycastRenderer definitions /////////////////////////////////
 
-DistributedRaycastRenderer::DistributedRaycastRenderer()
-    : mpiGroup(mpicommon::worker.dup())
+DistributedRaycastRenderer::DistributedRaycastRenderer(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device),
+      mpiGroup(mpicommon::worker.dup())
 {
   getSh()->super.renderRegionSample = ispc::DRR_renderRegionSample_addr();
 

@@ -46,7 +46,8 @@ namespace ospray {
 ISPCRTMemoryView DirectionalLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::DirectionalLight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::DirectionalLight>(
+      getISPCDevice().getIspcrtDevice().handle());
   ispc::DirectionalLight *sh = (ispc::DirectionalLight *)ispcrtSharedPtr(view);
   sh->set(visible, instance, direction, irradiance, cosAngle);
   return view;

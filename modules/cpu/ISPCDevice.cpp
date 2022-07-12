@@ -4,31 +4,23 @@
 // ospray
 #include "ISPCDevice.h"
 #include "camera/Camera.h"
-#include "camera/registration.h"
 #include "common/Data.h"
 #include "common/Group.h"
 #include "common/Instance.h"
 #include "common/Library.h"
-#include "common/Util.h"
 #include "common/World.h"
 #include "fb/ImageOp.h"
 #include "fb/LocalFB.h"
-#include "fb/registration.h"
 #include "geometry/GeometricModel.h"
-#include "geometry/registration.h"
 #include "lights/Light.h"
-#include "lights/registration.h"
 #include "render/LoadBalancer.h"
 #include "render/Material.h"
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
-#include "render/registration.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
-#include "texture/registration.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
-#include "volume/transferFunction/registration.h"
 
 // stl
 #include <algorithm>
@@ -271,12 +263,12 @@ OSPData ISPCDevice::newSharedData(const void *sharedData,
     const vec3ul &numItems,
     const vec3l &byteStride)
 {
-  return (OSPData) new Data(sharedData, type, numItems, byteStride);
+  return (OSPData) new Data(*this, sharedData, type, numItems, byteStride);
 }
 
 OSPData ISPCDevice::newData(OSPDataType type, const vec3ul &numItems)
 {
-  return (OSPData) new Data(type, numItems);
+  return (OSPData) new Data(*this, type, numItems);
 }
 
 void ISPCDevice::copyData(
@@ -292,41 +284,35 @@ void ISPCDevice::copyData(
 
 OSPLight ISPCDevice::newLight(const char *type)
 {
-  return (OSPLight)Light::createInstance(type);
+  return (OSPLight)Light::createInstance(type, *this);
 }
 
 OSPCamera ISPCDevice::newCamera(const char *type)
 {
-  ospray::Camera *ret = Camera::createInstance(type);
-  ret->setDevice(embreeDevice);
-  return (OSPCamera)ret;
+  return (OSPCamera)Camera::createInstance(type, *this);
 }
 
 OSPGeometry ISPCDevice::newGeometry(const char *type)
 {
-  ospray::Geometry *ret = Geometry::createInstance(type);
-  ret->setDevice(embreeDevice);
-  return (OSPGeometry)ret;
+  return (OSPGeometry)Geometry::createInstance(type, *this);
 }
 
 OSPVolume ISPCDevice::newVolume(const char *type)
 {
-  ospray::Volume *ret = new Volume(type);
-  ret->setDevice(embreeDevice, vklDevice);
-  return (OSPVolume)ret;
+  return (OSPVolume) new Volume(*this, type);
 }
 
 OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
 {
   auto *geom = (Geometry *)_geom;
-  auto *model = new GeometricModel(geom);
+  auto *model = new GeometricModel(*this, geom);
   return (OSPGeometricModel)model;
 }
 
 OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
 {
   auto *volume = (Volume *)_volume;
-  auto *model = new VolumetricModel(volume);
+  auto *model = new VolumetricModel(*this, volume);
   return (OSPVolumetricModel)model;
 }
 
@@ -335,19 +321,19 @@ OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
 ///////////////////////////////////////////////////////////////////////////
 
 OSPMaterial ISPCDevice::newMaterial(
-    const char *renderer_type, const char *material_type)
+    const char * /*renderer_type - unused*/, const char *material_type)
 {
-  return (OSPMaterial)Material::createInstance(renderer_type, material_type);
+  return (OSPMaterial)Material::createInstance(material_type, *this);
 }
 
 OSPTransferFunction ISPCDevice::newTransferFunction(const char *type)
 {
-  return (OSPTransferFunction)TransferFunction::createInstance(type);
+  return (OSPTransferFunction)TransferFunction::createInstance(type, *this);
 }
 
 OSPTexture ISPCDevice::newTexture(const char *type)
 {
-  return (OSPTexture)Texture::createInstance(type);
+  return (OSPTexture)Texture::createInstance(type, *this);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -356,15 +342,13 @@ OSPTexture ISPCDevice::newTexture(const char *type)
 
 OSPGroup ISPCDevice::newGroup()
 {
-  ospray::Group *ret = new Group;
-  ret->setDevice(embreeDevice);
-  return (OSPGroup)ret;
+  return (OSPGroup) new Group(*this);
 }
 
 OSPInstance ISPCDevice::newInstance(OSPGroup _group)
 {
   auto *group = (Group *)_group;
-  auto *instance = new Instance(group);
+  auto *instance = new Instance(*this, group);
   return (OSPInstance)instance;
 }
 
@@ -374,9 +358,7 @@ OSPInstance ISPCDevice::newInstance(OSPGroup _group)
 
 OSPWorld ISPCDevice::newWorld()
 {
-  ospray::World *ret = new World;
-  ret->setDevice(embreeDevice);
-  return (OSPWorld)ret;
+  return (OSPWorld) new World(*this);
 }
 
 box3f ISPCDevice::getBounds(OSPObject _obj)
@@ -441,7 +423,8 @@ OSPFrameBuffer ISPCDevice::frameBufferCreate(
 {
   FrameBuffer::ColorBufferFormat colorBufferFormat = mode;
 
-  FrameBuffer *fb = new LocalFrameBuffer(size, colorBufferFormat, channels);
+  FrameBuffer *fb =
+      new LocalFrameBuffer(*this, size, colorBufferFormat, channels);
   return (OSPFrameBuffer)fb;
 }
 
@@ -481,7 +464,7 @@ void ISPCDevice::resetAccumulation(OSPFrameBuffer _fb)
 
 OSPRenderer ISPCDevice::newRenderer(const char *type)
 {
-  return (OSPRenderer)Renderer::createInstance(type);
+  return (OSPRenderer)Renderer::createInstance(type, *this);
 }
 
 OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
@@ -559,27 +542,6 @@ OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
   Camera *camera = (Camera *)_camera;
   World *world = (World *)_world;
   return renderer->pick(fb, camera, world, screenPos);
-}
-
-extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_cpu(
-    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
-{
-  auto status = moduleVersionCheck(versionMajor, versionMinor);
-
-  if (status == OSP_NO_ERROR) {
-    Device::registerType<ISPCDevice>("cpu");
-
-    registerAllCameras();
-    registerAllImageOps();
-    registerAllGeometries();
-    registerAllLights();
-    registerAllMaterials();
-    registerAllRenderers();
-    registerAllTextures();
-    registerAllTransferFunctions();
-  }
-
-  return status;
 }
 
 } // namespace api

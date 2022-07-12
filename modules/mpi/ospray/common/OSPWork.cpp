@@ -182,7 +182,7 @@ void dataTransfer(OSPState &state,
   vec3ul numItems = 0;
   cmdBuf >> type >> numItems;
 
-  Data *data = new Data(type, numItems);
+  Data *data = new Data(state.hostDevice, type, numItems);
 
   const uint64_t nbytes = data->size() * sizeOf(type);
   auto view = std::make_shared<ArrayView<uint8_t>>(
@@ -208,7 +208,7 @@ Data *retrieveData(OSPState &state,
     // a fixed array, since the command buffer will be destroyed after
     // processing it
     if (!outputData) {
-      outputData = new Data(type, numItems);
+      outputData = new Data(state.hostDevice, type, numItems);
     }
     cmdBuf.read(outputData->data(), nbytes);
   } else {

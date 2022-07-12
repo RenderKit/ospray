@@ -8,12 +8,16 @@
 
 namespace ospray {
 
-Data::Data(const void *sharedData,
+Data::Data(api::ISPCDevice &device,
+    const void *sharedData,
     OSPDataType type,
     const vec3ul &numItems,
     const vec3l &byteStride)
-    : shared(true), type(type), numItems(numItems), byteStride(byteStride)
-
+    : ISPCDeviceObject(device),
+      shared(true),
+      type(type),
+      numItems(numItems),
+      byteStride(byteStride)
 {
   if (sharedData == nullptr)
     throw std::runtime_error("OSPData: shared buffer is NULL");
@@ -28,10 +32,15 @@ Data::Data(const void *sharedData,
   }
 }
 
-Data::Data(OSPDataType type, const vec3ul &numItems)
-    : shared(false), type(type), numItems(numItems), byteStride(0)
+Data::Data(api::ISPCDevice &device, OSPDataType type, const vec3ul &numItems)
+    : ISPCDeviceObject(device),
+      shared(false),
+      type(type),
+      numItems(numItems),
+      byteStride(0)
 {
-  view = BufferSharedCreate(size() * sizeOf(type) + 16);
+  view = BufferSharedCreate(
+      device.getIspcrtDevice().handle(), size() * sizeOf(type) + 16);
   addr = (char *)ispcrtSharedPtr(view);
 
   init();

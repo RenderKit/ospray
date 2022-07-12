@@ -187,6 +187,8 @@ struct MPIOffloadDevice : public api::Device
 
   rkcommon::networking::FixedBufferWriter commandBuffer;
 
+  api::ISPCDevice hostDevice;
+
   bool initialized{false};
 
 #ifdef ENABLE_PROFILING

@@ -10,7 +10,7 @@ namespace ospray {
 
 struct DebugRenderer : public Renderer
 {
-  DebugRenderer();
+  DebugRenderer(api::ISPCDevice &device);
   virtual ~DebugRenderer() override = default;
 
   virtual std::string toString() const override;

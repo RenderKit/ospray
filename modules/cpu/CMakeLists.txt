@@ -21,6 +21,7 @@ endif()
 set(OSPRAY_ISPC_DEVICE_SOURCES
   ${OSPRAY_RESOURCE}
 
+  ModuleInit.cpp
   ispc_tasksys.cpp
 
   ISPCDevice.h

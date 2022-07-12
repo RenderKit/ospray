@@ -15,7 +15,8 @@ namespace ospray {
 ISPCRTMemoryView CylinderLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::CylinderLight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::CylinderLight>(
+      getISPCDevice().getIspcrtDevice().handle());
   ispc::CylinderLight *sh = (ispc::CylinderLight *)ispcrtSharedPtr(view);
   sh->super.sample = ispc::CylinderLight_sample_addr();
   sh->super.eval = ispc::CylinderLight_eval_addr();

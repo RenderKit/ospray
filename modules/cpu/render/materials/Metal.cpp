@@ -9,7 +9,8 @@
 namespace ospray {
 namespace pathtracer {
 
-Metal::Metal()
+Metal::Metal(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.type = ispc::MATERIAL_TYPE_METAL;
   getSh()->super.getBSDF = ispc::Metal_getBSDF_addr();

@@ -18,7 +18,6 @@
 #include "common/MPIBcastFabric.h"
 #include "common/MPICommon.h"
 #include "common/OSPWork.h"
-#include "common/Util.h"
 #include "common/World.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "fb/LocalFB.h"
@@ -526,7 +525,8 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
   if (mpicommon::isManagedObject(format)) {
     format = OSP_ULONG;
   }
-  appData->data = new Data(sharedData, format, numItems, byteStride);
+  appData->data =
+      new Data(hostDevice, sharedData, format, numItems, byteStride);
   this->sharedData[handle.i64] = appData;
 
   sendWork(
@@ -1087,7 +1087,8 @@ void MPIOffloadDevice::sendDataWork(
         // Reserve space and copy the compact data into the buffer
         auto *bufWriter =
             dynamic_cast<networking::FixedBufferWriter *>(&writer);
-        Data compact(bufWriter->reserve(compactSize),
+        Data compact(hostDevice,
+            bufWriter->reserve(compactSize),
             data->type,
             data->numItems,
             vec3ul(0));
@@ -1119,7 +1120,8 @@ void MPIOffloadDevice::sendDataWork(
         // Allocate space to store the compact data and compact into it,
         // we send from this compacted buffer directly
         auto mem = std::make_shared<utility::FixedArray<uint8_t>>(compactSize);
-        Data compact(mem->begin(), data->type, data->numItems, vec3ul(0));
+        Data compact(
+            hostDevice, mem->begin(), data->type, data->numItems, vec3ul(0));
         compact.copy(*data, vec3ul(0));
 
         dataView = mem;

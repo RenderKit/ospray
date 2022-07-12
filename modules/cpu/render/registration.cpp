@@ -32,18 +32,18 @@ void registerAllRenderers()
 
 void registerAllMaterials()
 {
-  Material::registerType<Alloy>("pathtracer", "alloy");
-  Material::registerType<CarPaint>("pathtracer", "carPaint");
-  Material::registerType<Glass>("pathtracer", "glass");
-  Material::registerType<Luminous>("pathtracer", "luminous");
-  Material::registerType<Metal>("pathtracer", "metal");
-  Material::registerType<MetallicPaint>("pathtracer", "metallicPaint");
-  Material::registerType<MixMaterial>("pathtracer", "mix");
-  Material::registerType<OBJMaterial>("pathtracer", "obj");
-  Material::registerType<Plastic>("pathtracer", "plastic");
-  Material::registerType<Principled>("pathtracer", "principled");
-  Material::registerType<ThinGlass>("pathtracer", "thinGlass");
-  Material::registerType<Velvet>("pathtracer", "velvet");
+  Material::registerType<Alloy>("alloy");
+  Material::registerType<CarPaint>("carPaint");
+  Material::registerType<Glass>("glass");
+  Material::registerType<Luminous>("luminous");
+  Material::registerType<Metal>("metal");
+  Material::registerType<MetallicPaint>("metallicPaint");
+  Material::registerType<MixMaterial>("mix");
+  Material::registerType<OBJMaterial>("obj");
+  Material::registerType<Plastic>("plastic");
+  Material::registerType<Principled>("principled");
+  Material::registerType<ThinGlass>("thinGlass");
+  Material::registerType<Velvet>("velvet");
 }
 
 } // namespace ospray

@@ -9,7 +9,8 @@
 
 namespace ospray {
 
-Spheres::Spheres()
+Spheres::Spheres(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.postIntersect = ispc::Spheres_postIntersect_addr();
   getSh()->super.getAreas = ispc::Spheres_getAreas_addr();

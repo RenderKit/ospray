@@ -8,7 +8,8 @@
 namespace ospray {
 namespace pathtracer {
 
-MetallicPaint::MetallicPaint()
+MetallicPaint::MetallicPaint(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.type = ispc::MATERIAL_TYPE_METALLICPAINT;
   getSh()->super.getBSDF = ispc::MetallicPaint_getBSDF_addr();

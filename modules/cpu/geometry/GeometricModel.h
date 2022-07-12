@@ -17,9 +17,9 @@ namespace ospray {
 struct Material;
 
 struct OSPRAY_SDK_INTERFACE GeometricModel
-    : public AddStructShared<ManagedObject, ispc::GeometricModel>
+    : public AddStructShared<ISPCDeviceObject, ispc::GeometricModel>
 {
-  GeometricModel(Geometry *geometry);
+  GeometricModel(api::ISPCDevice &device, Geometry *geometry);
   ~GeometricModel() override = default;
 
   std::string toString() const override;

@@ -7,7 +7,8 @@
 
 namespace ospray {
 
-PerspectiveCamera::PerspectiveCamera()
+PerspectiveCamera::PerspectiveCamera(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.initRay = ispc::PerspectiveCamera_initRay_addr();
 }

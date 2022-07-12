@@ -3,15 +3,13 @@
 
 // ospray
 #include "TransferFunction.h"
-#include "common/Util.h"
 
 namespace ospray {
 
-static FactoryMap<TransferFunction> g_tfnsMap;
-
 // TransferFunction definitions ///////////////////////////////////////////////
 
-TransferFunction::TransferFunction()
+TransferFunction::TransferFunction(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_TRANSFER_FUNCTION;
 }
@@ -26,17 +24,6 @@ void TransferFunction::commit()
 std::string TransferFunction::toString() const
 {
   return "ospray::TransferFunction";
-}
-
-TransferFunction *TransferFunction::createInstance(const std::string &type)
-{
-  return createInstanceHelper(type, g_tfnsMap[type]);
-}
-
-void TransferFunction::registerType(
-    const char *type, FactoryFcn<TransferFunction> f)
-{
-  g_tfnsMap[type] = f;
 }
 
 OSPTYPEFOR_DEFINITION(TransferFunction *);

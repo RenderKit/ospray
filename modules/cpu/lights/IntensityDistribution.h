@@ -12,7 +12,7 @@ namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE IntensityDistribution
 {
-  void readParams(ManagedObject &);
+  void readParams(ISPCDeviceObject &);
 
   operator bool() const
   {

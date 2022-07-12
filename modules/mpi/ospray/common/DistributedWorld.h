@@ -26,7 +26,7 @@ namespace mpi {
  */
 struct DistributedWorld : public AddStructShared<World, ispc::DistributedWorld>
 {
-  DistributedWorld();
+  DistributedWorld(api::ISPCDevice &device);
   ~DistributedWorld() override;
 
   box3f getBounds() const override;

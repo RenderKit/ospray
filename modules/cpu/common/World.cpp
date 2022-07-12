@@ -52,7 +52,8 @@ World::~World()
   freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleClippers);
 }
 
-World::World()
+World::World(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_WORLD;
 }
@@ -99,6 +100,7 @@ void World::commit()
   instanceArray = nullptr;
   getSh()->numInvertedClippers = 0;
 
+  RTCDevice embreeDevice = getISPCDevice().getEmbreeDevice();
   if (instances) {
     for (auto &&inst : *instances)
       if (inst->group->sceneClippers)
@@ -106,6 +108,7 @@ void World::commit()
 
     // Create shared buffers for instance pointers
     instanceArray = make_buffer_shared_unique<ispc::Instance *>(
+        getISPCDevice().getIspcrtDevice(),
         sizeof(ispc::Instance *) * numInstances);
     getSh()->instances = instanceArray->sharedPtr();
 
@@ -163,11 +166,6 @@ box3f World::getBounds() const
   }
 
   return sceneBounds;
-}
-
-void World::setDevice(RTCDevice device)
-{
-  embreeDevice = device;
 }
 
 OSPTYPEFOR_DEFINITION(World *);

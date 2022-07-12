@@ -11,7 +11,8 @@
 
 namespace ospray {
 
-Subdivision::Subdivision()
+Subdivision::Subdivision(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.postIntersect = ispc::Subdivision_postIntersect_addr();
 }
@@ -62,7 +63,8 @@ void Subdivision::commit()
             ": if no 'face' array is present then a pure quad mesh is assumed "
             "(the number of indices must be a multiple of 4)");
 
-    auto data = new Data(OSP_UINT, vec3ui(indexData->size() / 4, 1, 1));
+    auto data = new Data(
+        getISPCDevice(), OSP_UINT, vec3ui(indexData->size() / 4, 1, 1));
     facesData = &(data->as<uint32_t>());
     data->refDec();
     for (auto &&face : *facesData)
@@ -112,7 +114,8 @@ void Subdivision::commit()
   if ((colorsData && isColorsFaceVarying)
       || (texcoordData && isTexcoordFaceVarying)) {
     if (generatedIndicesSize != indexData->size()) {
-      auto data = new Data(OSP_UINT, vec3ui(indexData->size(), 1, 1));
+      auto data =
+          new Data(getISPCDevice(), OSP_UINT, vec3ui(indexData->size(), 1, 1));
       generatedIndicesData = &(data->as<uint32_t>());
       data->refDec();
       uint32_t *dataptr = static_cast<uint32_t *>(generatedIndicesData->data());

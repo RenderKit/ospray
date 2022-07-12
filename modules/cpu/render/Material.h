@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "common/Managed.h"
-#include "common/Util.h"
+#include "ISPCDeviceObject.h"
+#include "common/ObjectFactory.h"
 // ispc shared
 #include "MaterialShared.h"
 #include "texture/TextureParamShared.h"
@@ -24,9 +24,10 @@ using MaterialParam1f = MaterialParam<float>;
 using MaterialParam3f = MaterialParam<vec3f>;
 
 struct OSPRAY_SDK_INTERFACE Material
-    : public AddStructShared<ManagedObject, ispc::Material>
+    : public AddStructShared<ISPCDeviceObject, ispc::Material>,
+      public ObjectFactory<Material, api::ISPCDevice &>
 {
-  Material();
+  Material(api::ISPCDevice &device);
   virtual ~Material() override = default;
   virtual std::string toString() const override;
   virtual void commit() override;
@@ -40,22 +41,7 @@ struct OSPRAY_SDK_INTERFACE Material
 
   bool isEmissive() const;
 
-  /*! \brief creates an abstract material class of given type
-
-    The respective material type must be a registered material type
-    in either ospray proper or any already loaded module. For
-    material types specified in special modules, make sure to call
-    ospLoadModule first. */
-  static Material *createInstance(
-      const char * /*ignored*/, const char *material_type);
-  template <typename T>
-  static void registerType(const char * /*ignored*/, const char *material_type);
-
  private:
-  template <typename BASE_CLASS, typename CHILD_CLASS>
-  friend void registerTypeHelper(const char *type);
-  static void registerType(const char *name, FactoryFcn<Material> f);
-
   /*! \brief helper function to combine multiple texture transformation
      parameters
 
@@ -84,14 +70,5 @@ OSPTYPEFOR_SPECIALIZATION(Material *, OSP_MATERIAL);
 inline bool Material::isEmissive() const
 {
   return reduce_max(getSh()->emission) > 0.f;
-}
-
-template <typename T>
-inline void Material::registerType(
-    const char * /*ignored*/, const char *material_type)
-{
-  std::string name(material_type);
-
-  registerTypeHelper<Material, T>(name.c_str());
 }
 } // namespace ospray

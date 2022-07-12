@@ -7,7 +7,8 @@
 
 namespace ospray {
 
-VolumetricModel::VolumetricModel(Volume *_volume) : volumeAPI(_volume)
+VolumetricModel::VolumetricModel(api::ISPCDevice &device, Volume *_volume)
+    : AddStructShared(device.getIspcrtDevice(), device), volumeAPI(_volume)
 {
   managedObjectType = OSP_VOLUMETRIC_MODEL;
 }
@@ -52,8 +53,10 @@ void VolumetricModel::commit()
       // quick out during volume iteration
       valueRanges.push_back(range1f(neg_inf, neg_inf));
     }
-    VKLData valueRangeData = vklNewData(
-        volume->vklDevice, valueRanges.size(), VKL_BOX1F, valueRanges.data());
+    VKLData valueRangeData = vklNewData(getISPCDevice().getVklDevice(),
+        valueRanges.size(),
+        VKL_BOX1F,
+        valueRanges.data());
     vklSetData(vklIntervalContext, "valueRanges", valueRangeData);
     vklRelease(valueRangeData);
     vklCommit(vklIntervalContext);

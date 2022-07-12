@@ -45,7 +45,8 @@ void DistributedTileError::sync()
 
 // DistributedFrameBuffer definitions ///////////////////////////////////////
 
-DFB::DistributedFrameBuffer(const vec2i &numPixels,
+DFB::DistributedFrameBuffer(api::ISPCDevice &device,
+    const vec2i &numPixels,
     ObjectHandle myId,
     ColorBufferFormat colorBufferFormat,
     const uint32 channels)
@@ -55,7 +56,7 @@ DFB::DistributedFrameBuffer(const vec2i &numPixels,
     // be set from the object handle but pulled from some other ID pool
     // specific to those objects using the messaging layer
     : MessageHandler(myId),
-      FrameBuffer(numPixels, colorBufferFormat, channels),
+      FrameBuffer(device, numPixels, colorBufferFormat, channels),
       mpiGroup(mpicommon::worker.dup()),
       totalTiles(divRoundUp(size, vec2i(TILE_SIZE))),
       numRenderTasks((totalTiles * TILE_SIZE) / getRenderTaskSize()),
@@ -65,7 +66,8 @@ DFB::DistributedFrameBuffer(const vec2i &numPixels,
       frameIsDone(false)
 {
   if (mpicommon::IamTheMaster() && colorBufferFormat != OSP_FB_NONE) {
-    localFBonMaster = rkcommon::make_unique<LocalFrameBuffer>(numPixels,
+    localFBonMaster = rkcommon::make_unique<LocalFrameBuffer>(device,
+        numPixels,
         colorBufferFormat,
         channels & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE));
   }
@@ -229,8 +231,11 @@ void DistributedFrameBuffer::setSparseFBLayerCount(size_t numLayers)
   // Allocate any new layers that have been added to the DFB
   for (size_t i = 1; i < layers.size(); ++i) {
     if (!layers[i]) {
-      layers[i] = rkcommon::make_unique<SparseFrameBuffer>(
-          size, getColorBufferFormat(), channelFlags, sparseFbTrackAccumIDs);
+      layers[i] = rkcommon::make_unique<SparseFrameBuffer>(getISPCDevice(),
+          size,
+          getColorBufferFormat(),
+          channelFlags,
+          sparseFbTrackAccumIDs);
     }
   }
 }
@@ -298,8 +303,12 @@ void DFB::createTiles()
 
   const bool sparseFbTrackAccumIDs = getChannelFlags() & OSP_FB_ACCUM;
   if (layers.empty()) {
-    layers.push_back(rkcommon::make_unique<SparseFrameBuffer>(
-        size, OSP_FB_NONE, channels, myTileIDs, sparseFbTrackAccumIDs));
+    layers.push_back(rkcommon::make_unique<SparseFrameBuffer>(getISPCDevice(),
+        size,
+        OSP_FB_NONE,
+        channels,
+        myTileIDs,
+        sparseFbTrackAccumIDs));
   } else {
     layers[0]->setTiles(myTileIDs);
     layers[0]->clear();

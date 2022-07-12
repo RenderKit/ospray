@@ -12,7 +12,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE Spheres
     : public AddStructShared<Geometry, ispc::Spheres>
 {
-  Spheres();
+  Spheres(api::ISPCDevice &device);
   virtual ~Spheres() override = default;
 
   virtual std::string toString() const override;

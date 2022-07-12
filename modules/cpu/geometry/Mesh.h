@@ -12,7 +12,7 @@ namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE Mesh : public AddStructShared<Geometry, ispc::Mesh>
 {
-  Mesh();
+  Mesh(api::ISPCDevice &device);
   virtual ~Mesh() override = default;
 
   virtual std::string toString() const override;

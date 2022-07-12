@@ -28,7 +28,8 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
    * overrideUseTaskAccumIDs specifies whether task accumIDs should still
    * be used even if the sparsefb is not performing accumulation buffering
    */
-  SparseFrameBuffer(const vec2i &size,
+  SparseFrameBuffer(api::ISPCDevice &device,
+      const vec2i &size,
       ColorBufferFormat colorBufferFormat,
       const uint32 channels,
       const std::vector<uint32_t> &tileIDs,
@@ -39,7 +40,8 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
    * overrideUseTaskAccumIDs specifies whether task accumIDs should still
    * be used even if the sparsefb is not performing accumulation buffering
    */
-  SparseFrameBuffer(const vec2i &size,
+  SparseFrameBuffer(api::ISPCDevice &device,
+      const vec2i &size,
       ColorBufferFormat colorBufferFormat,
       const uint32 channels,
       const bool overrideUseTaskAccumIDs = false);

@@ -3,42 +3,26 @@
 
 #pragma once
 
-#include "common/Managed.h"
-#include "common/Util.h"
+#include "ISPCDeviceObject.h"
+#include "common/ObjectFactory.h"
 // ispc shared
 #include "TransferFunctionShared.h"
 
 namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE TransferFunction
-    : public AddStructShared<ManagedObject, ispc::TransferFunction>
+    : public AddStructShared<ISPCDeviceObject, ispc::TransferFunction>,
+      public ObjectFactory<TransferFunction, api::ISPCDevice &>
 {
-  TransferFunction();
+  TransferFunction(api::ISPCDevice &device);
   virtual void commit() override;
   virtual std::string toString() const override;
-
-  static TransferFunction *createInstance(const std::string &type);
-  template <typename T>
-  static void registerType(const char *type);
 
   range1f valueRange;
   virtual std::vector<range1f> getPositiveOpacityValueRanges() const = 0;
   virtual std::vector<range1i> getPositiveOpacityIndexRanges() const = 0;
-
- private:
-  template <typename BASE_CLASS, typename CHILD_CLASS>
-  friend void registerTypeHelper(const char *type);
-  static void registerType(const char *type, FactoryFcn<TransferFunction> f);
 };
 
 OSPTYPEFOR_SPECIALIZATION(TransferFunction *, OSP_TRANSFER_FUNCTION);
-
-// Inlined definitions /////////////////////////////////////////////////////////
-
-template <typename T>
-inline void TransferFunction::registerType(const char *type)
-{
-  registerTypeHelper<TransferFunction, T>(type);
-}
 
 } // namespace ospray

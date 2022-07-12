@@ -1,4 +1,4 @@
-// Copyright 2009 Intel Corporation
+// Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Windows specific note: The 'Device::registerType<>()' static method that
@@ -12,28 +12,34 @@
 #include "common/ObjectFactory.h"
 #endif
 
-#include "MPIDistributedDevice.h"
-#include "MPIOffloadDevice.h"
-#include "common/OSPCommon.h"
-#include "render/distributed/DistributedRaycast.h"
+#include "ISPCDevice.h"
+#include "OSPCommon.h"
+#include "camera/registration.h"
+#include "fb/registration.h"
+#include "geometry/registration.h"
+#include "lights/registration.h"
+#include "render/registration.h"
+#include "texture/registration.h"
+#include "volume/transferFunction/registration.h"
 
-extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_mpi(
+using namespace ospray;
+
+extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_cpu(
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
-  using namespace ospray;
-
   auto status = moduleVersionCheck(versionMajor, versionMinor);
 
   if (status == OSP_NO_ERROR) {
-    // Run the ISPC module's initialization function as well to register local
-    // types
-    status = ospLoadModule("cpu");
-  }
+    api::Device::registerType<api::ISPCDevice>("cpu");
 
-  if (status == OSP_NO_ERROR) {
-    api::Device::registerType<mpi::MPIDistributedDevice>("mpiDistributed");
-    api::Device::registerType<mpi::MPIOffloadDevice>("mpiOffload");
-    Renderer::registerType<mpi::DistributedRaycastRenderer>("mpiRaycast");
+    registerAllCameras();
+    registerAllImageOps();
+    registerAllGeometries();
+    registerAllLights();
+    registerAllMaterials();
+    registerAllRenderers();
+    registerAllTextures();
+    registerAllTransferFunctions();
   }
 
   return status;

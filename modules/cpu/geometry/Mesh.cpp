@@ -11,7 +11,8 @@
 
 namespace ospray {
 
-Mesh::Mesh()
+Mesh::Mesh(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.getAreas = ispc::Mesh_getAreas_addr();
   getSh()->super.sampleArea = ispc::Mesh_sampleArea_addr();

@@ -7,7 +7,8 @@
 
 namespace ospray {
 
-PanoramicCamera::PanoramicCamera()
+PanoramicCamera::PanoramicCamera(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.initRay = ispc::PanoramicCamera_initRay_addr();
 }

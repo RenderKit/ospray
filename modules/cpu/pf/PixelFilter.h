@@ -4,7 +4,6 @@
 #pragma once
 
 #include "common/Managed.h"
-#include "common/Util.h"
 
 namespace ospray {
 

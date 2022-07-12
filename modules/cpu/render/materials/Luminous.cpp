@@ -8,7 +8,8 @@
 namespace ospray {
 namespace pathtracer {
 
-Luminous::Luminous()
+Luminous::Luminous(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.type = ispc::MATERIAL_TYPE_LUMINOUS;
   getSh()->super.getBSDF = ispc::Luminous_getBSDF_addr();

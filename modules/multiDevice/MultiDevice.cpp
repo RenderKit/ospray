@@ -84,12 +84,14 @@ OSPData MultiDevice::newSharedData(const void *sharedData,
   // data arrays with the objects for that subdevice
   if (type & OSP_OBJECT) {
     for (size_t i = 0; i < subdevices.size(); ++i) {
-      o->objects.push_back((OSPObject) new Data(type, numItems));
+      o->objects.push_back(
+          (OSPObject) new Data(*subdevices[i], type, numItems));
     }
 
     // A little lazy here, but using the Data object to just give me a view
     // + the index sequence iterator to use to step over the stride
-    Data *multiData = new Data(sharedData, type, numItems, byteStride);
+    Data *multiData =
+        new Data(hostDevice, sharedData, type, numItems, byteStride);
     o->sharedDataDirtyReference = multiData;
 
     index_sequence_3D seq(numItems);
@@ -360,7 +362,7 @@ OSPFrameBuffer MultiDevice::frameBufferCreate(
     const vec2i &size, const OSPFrameBufferFormat mode, const uint32 channels)
 {
   MultiDeviceFrameBuffer *o = new MultiDeviceFrameBuffer();
-  o->rowmajorFb = new LocalFrameBuffer(size, mode, channels);
+  o->rowmajorFb = new LocalFrameBuffer(hostDevice, size, mode, channels);
   // Need one refDec here for the local scope ref (see issue about Ref<>)
   o->rowmajorFb->refDec();
 
@@ -374,7 +376,8 @@ OSPFrameBuffer MultiDevice::frameBufferCreate(
       }
     }
 
-    FrameBuffer *fbi = new SparseFrameBuffer(size, mode, channels, tileIDs);
+    FrameBuffer *fbi =
+        new SparseFrameBuffer(*subdevices[i], size, mode, channels, tileIDs);
     o->objects.push_back((OSPFrameBuffer)fbi);
   }
   return (OSPFrameBuffer)o;

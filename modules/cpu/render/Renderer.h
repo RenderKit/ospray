@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ISPCDeviceObject.h"
 #include "pf/PixelFilter.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "texture/Texture2D.h"
@@ -24,14 +25,11 @@ struct PixelFilter;
 // tile renderer, but this abstraction level also allows for frame
 // compositing or even projection/splatting based approaches
 struct OSPRAY_SDK_INTERFACE Renderer
-    : public AddStructShared<ManagedObject, ispc::Renderer>
+    : public AddStructShared<ISPCDeviceObject, ispc::Renderer>,
+      public ObjectFactory<Renderer, api::ISPCDevice &>
 {
-  Renderer();
+  Renderer(api::ISPCDevice &device);
   virtual ~Renderer() override = default;
-
-  static Renderer *createInstance(const char *identifier);
-  template <typename T>
-  static void registerType(const char *type);
 
   virtual void commit() override;
   virtual std::string toString() const override;
@@ -76,21 +74,10 @@ struct OSPRAY_SDK_INTERFACE Renderer
   std::unique_ptr<BufferShared<ispc::Material *>> materialArray;
 
  private:
-  template <typename BASE_CLASS, typename CHILD_CLASS>
-  friend void registerTypeHelper(const char *type);
-  static void registerType(const char *type, FactoryFcn<Renderer> f);
   void setupPixelFilter();
 };
 
 OSPTYPEFOR_SPECIALIZATION(Renderer *, OSP_RENDERER);
-
-// Inlined definitions ////////////////////////////////////////////////////////
-
-template <typename T>
-inline void Renderer::registerType(const char *type)
-{
-  registerTypeHelper<Renderer, T>(type);
-}
 
 inline void *Renderer::beginFrame(FrameBuffer *, World *)
 {

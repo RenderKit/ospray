@@ -10,7 +10,8 @@
 
 namespace ospray {
 
-SciVis::SciVis()
+SciVis::SciVis(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.renderSample = ispc::SciVis_renderSample_addr();
 }

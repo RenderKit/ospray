@@ -101,6 +101,8 @@ struct OSPState
   // prior to sending the command buffer
   std::queue<Data *> dataTransfers;
 
+  api::ISPCDevice hostDevice;
+
   template <typename T>
   T getObject(int64_t handle)
   {

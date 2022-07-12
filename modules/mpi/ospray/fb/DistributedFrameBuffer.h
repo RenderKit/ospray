@@ -31,7 +31,8 @@ class DistributedTileError : public TaskError
 struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
                                 public FrameBuffer
 {
-  DistributedFrameBuffer(const vec2i &numPixels,
+  DistributedFrameBuffer(api::ISPCDevice &device,
+      const vec2i &numPixels,
       ObjectHandle myHandle,
       ColorBufferFormat,
       const uint32 channels);

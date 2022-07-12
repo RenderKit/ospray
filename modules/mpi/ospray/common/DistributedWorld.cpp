@@ -4,9 +4,9 @@
 #include "DistributedWorld.h"
 #include <algorithm>
 #include <iterator>
+#include "ISPCDevice.h"
 #include "MPICommon.h"
 #include "Messaging.h"
-#include "ISPCDevice.h"
 #include "common/Data.h"
 
 namespace ospray {
@@ -14,7 +14,9 @@ namespace mpi {
 
 using namespace rkcommon;
 
-DistributedWorld::DistributedWorld() : mpiGroup(mpicommon::worker.dup())
+DistributedWorld::DistributedWorld(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device),
+      mpiGroup(mpicommon::worker.dup())
 {
   managedObjectType = OSP_WORLD;
 }
@@ -94,16 +96,16 @@ void DistributedWorld::commit()
   if (allRegions.size() > 0) {
     // Setup the boxes geometry which we'll use to leverage Embree for
     // accurately determining region visibility
-    Data *allRegionsData = new Data(allRegions.data(),
+    Data *allRegionsData = new Data(getISPCDevice(),
+        allRegions.data(),
         OSP_BOX3F,
         vec3ul(allRegions.size(), 1, 1),
         vec3l(0));
-    regionGeometry = new Boxes();
+    regionGeometry = new Boxes(getISPCDevice());
     regionGeometry->setParam("box", (ManagedObject *)allRegionsData);
-    regionGeometry->setDevice(embreeDevice);
     regionGeometry->commit();
 
-    regionScene = rtcNewScene(embreeDevice);
+    regionScene = rtcNewScene(getISPCDevice().getEmbreeDevice());
     rtcAttachGeometry(regionScene, regionGeometry->getEmbreeGeometry());
     rtcSetSceneFlags(regionScene, RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
     rtcCommitScene(regionScene);

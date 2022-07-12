@@ -6,7 +6,9 @@
 
 namespace ospray {
 
-AORenderer::AORenderer(int defaultNumSamples) : aoSamples(defaultNumSamples)
+AORenderer::AORenderer(api::ISPCDevice &device, int defaultNumSamples)
+    : AddStructShared(device.getIspcrtDevice(), device),
+      aoSamples(defaultNumSamples)
 {
   getSh()->super.renderSample = ispc::AORenderer_renderSample_addr();
 }

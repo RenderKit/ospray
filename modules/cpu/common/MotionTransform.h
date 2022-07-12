@@ -12,7 +12,7 @@ namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE MotionTransform
 {
-  void readParams(ManagedObject &);
+  void readParams(ISPCDeviceObject &);
   void setEmbreeTransform(RTCGeometry) const;
   affine3f transform{one};
   bool motionBlur{false};

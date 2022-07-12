@@ -64,8 +64,8 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 
   // Model Meta-Data //////////////////////////////////////////////////////
 
-  OSPMaterial newMaterial(
-      const char *renderer_type, const char *material_type) override;
+  OSPMaterial newMaterial(const char * /*renderer_type - unused*/,
+      const char *material_type) override;
 
   OSPTransferFunction newTransferFunction(const char *type) override;
 
@@ -134,6 +134,11 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     return embreeDevice;
   }
 
+  VKLDevice getVklDevice()
+  {
+    return vklDevice;
+  }
+
   ispcrt::Device &getIspcrtDevice()
   {
     return ispcrtDevice;
@@ -144,9 +149,6 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   RTCDevice embreeDevice = nullptr;
   VKLDevice vklDevice = nullptr;
 };
-
-extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
-    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/);
 
 } // namespace api
 } // namespace ospray

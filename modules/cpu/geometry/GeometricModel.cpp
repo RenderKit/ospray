@@ -7,7 +7,8 @@
 
 namespace ospray {
 
-GeometricModel::GeometricModel(Geometry *_geometry) : geomAPI(_geometry)
+GeometricModel::GeometricModel(api::ISPCDevice &device, Geometry *_geometry)
+    : AddStructShared(device.getIspcrtDevice(), device), geomAPI(_geometry)
 {
   managedObjectType = OSP_GEOMETRIC_MODEL;
 }
@@ -33,14 +34,17 @@ void GeometricModel::commit()
   getSh()->numMaterials = 0;
   if (materialData) {
     materialArray = make_buffer_shared_unique<ispc::Material *>(
+        getISPCDevice().getIspcrtDevice(),
         createArrayOfSh<ispc::Material>(materialData->as<Material *>()));
     getSh()->material = materialArray->sharedPtr();
     getSh()->numMaterials = materialArray->size();
   } else {
     materialData = getParamDataT<uint32_t>("material", false, true);
     if (materialData) {
-      materialIDArray = make_buffer_shared_unique<uint32_t>(
-          materialData->as<uint32_t>().data(), materialData->size());
+      materialIDArray =
+          make_buffer_shared_unique<uint32_t>(getISPCDevice().getIspcrtDevice(),
+              materialData->as<uint32_t>().data(),
+              materialData->size());
       getSh()->materialID = materialIDArray->sharedPtr();
       getSh()->numMaterials = materialIDArray->size();
     }

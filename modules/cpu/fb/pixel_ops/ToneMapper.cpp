@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ToneMapper.h"
+#include "fb/FrameBuffer.h"
 #include "fb/pixel_ops/ToneMapper_ispc.h"
 
 using namespace rkcommon;
@@ -65,7 +66,8 @@ LiveToneMapper::LiveToneMapper(FrameBufferView &_fbView,
     float c,
     float d,
     bool acesColor)
-    : AddStructShared(_fbView)
+    : AddStructShared(
+        _fbView.originalFB->getISPCDevice().getIspcrtDevice(), _fbView)
 {
   getSh()->super.processPixel = ispc::LiveToneMapper_processPixel_addr();
   getSh()->exposure = exposure;

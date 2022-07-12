@@ -9,7 +9,8 @@
 
 namespace ospray {
 
-Boxes::Boxes()
+Boxes::Boxes(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.postIntersect = ispc::Boxes_postIntersect_addr();
 }

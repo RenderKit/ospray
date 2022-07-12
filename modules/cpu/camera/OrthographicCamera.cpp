@@ -7,7 +7,8 @@
 
 namespace ospray {
 
-OrthographicCamera::OrthographicCamera()
+OrthographicCamera::OrthographicCamera(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.initRay = ispc::OrthographicCamera_initRay_addr();
 }

@@ -20,6 +20,7 @@ namespace ospray {
 PathTracerData::PathTracerData(const World &world,
     bool importanceSampleGeometryLights,
     const Renderer &renderer)
+    : AddStructShared(world.getISPCDevice().getIspcrtDevice())
 {
   size_t geometryLights{0};
 
@@ -61,8 +62,9 @@ PathTracerData::PathTracerData(const World &world,
     lights[i] = (ispc::Light *)ispcrtSharedPtr(lightViews[i]);
 
   // Then create shared buffer from the temporary std::vector
-  lightArray = make_buffer_shared_unique<ispc::Light *>(lights);
-  lightCDFArray = make_buffer_shared_unique<float>(lightsCDF);
+  ispcrt::Device &device = world.getISPCDevice().getIspcrtDevice();
+  lightArray = make_buffer_shared_unique<ispc::Light *>(device, lights);
+  lightCDFArray = make_buffer_shared_unique<float>(device, lightsCDF);
   getSh()->lights = lightArray->sharedPtr();
   getSh()->lightsCDF = lightCDFArray->sharedPtr();
   getSh()->numLights = lights.size();
@@ -82,7 +84,9 @@ ISPCRTMemoryView PathTracerData::createGeometryLight(const Instance *instance,
     const std::vector<float> &distribution,
     float pdf)
 {
-  ISPCRTMemoryView view = StructSharedCreate<ispc::GeometryLight>();
+  ispcrt::Device &device = instance->getISPCDevice().getIspcrtDevice();
+  ISPCRTMemoryView view =
+      StructSharedCreate<ispc::GeometryLight>(device.handle());
   ispc::GeometryLight *sh = (ispc::GeometryLight *)ispcrtSharedPtr(view);
 
   sh->super.instance = instance->getSh();
@@ -93,9 +97,9 @@ ISPCRTMemoryView PathTracerData::createGeometryLight(const Instance *instance,
   sh->numPrimitives = primIDs.size();
   sh->pdf = pdf;
 
-  geoLightPrimIDArray.emplace_back(primIDs);
+  geoLightPrimIDArray.emplace_back(device, primIDs);
   sh->primIDs = geoLightPrimIDArray.back().sharedPtr();
-  geoLightDistrArray.emplace_back(distribution);
+  geoLightDistrArray.emplace_back(device, distribution);
   sh->distribution = geoLightDistrArray.back().sharedPtr();
   return view;
 }

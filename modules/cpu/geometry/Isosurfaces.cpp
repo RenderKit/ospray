@@ -11,7 +11,8 @@
 
 namespace ospray {
 
-Isosurfaces::Isosurfaces()
+Isosurfaces::Isosurfaces(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.postIntersect = ispc::Isosurfaces_postIntersect_addr();
 }
@@ -50,7 +51,8 @@ void Isosurfaces::commit()
 
   if (!isovaluesData->compact()) {
     // get rid of stride
-    auto data = new Data(OSP_FLOAT, vec3ui(isovaluesData->size(), 1, 1));
+    auto data = new Data(
+        getISPCDevice(), OSP_FLOAT, vec3ui(isovaluesData->size(), 1, 1));
     data->copy(*isovaluesData, vec3ui(0));
     isovaluesData = &(data->as<float>());
     data->refDec();
@@ -61,18 +63,15 @@ void Isosurfaces::commit()
     vklHitContext = nullptr;
   }
 
-  VKLDevice vklDevice = nullptr;
-  if (volume) {
-    vklHitContext = vklNewHitIteratorContext(volume->vklSampler);
-    vklDevice = volume->vklDevice;
-  } else {
-    vklHitContext = vklNewHitIteratorContext(model->getVolume()->vklSampler);
-    vklDevice = model->getVolume()->vklDevice;
-  }
+  vklHitContext = (volume)
+      ? vklNewHitIteratorContext(volume->vklSampler)
+      : vklNewHitIteratorContext(model->getVolume()->vklSampler);
 
   if (isovaluesData->size() > 0) {
-    VKLData valuesData = vklNewData(
-        vklDevice, isovaluesData->size(), VKL_FLOAT, isovaluesData->data());
+    VKLData valuesData = vklNewData(getISPCDevice().getVklDevice(),
+        isovaluesData->size(),
+        VKL_FLOAT,
+        isovaluesData->data());
     vklSetData(vklHitContext, "values", valuesData);
     vklRelease(valuesData);
   }

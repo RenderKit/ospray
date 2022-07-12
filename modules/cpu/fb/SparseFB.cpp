@@ -11,12 +11,14 @@
 
 namespace ospray {
 
-SparseFrameBuffer::SparseFrameBuffer(const vec2i &_size,
+SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
+    const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels,
     const std::vector<uint32_t> &_tileIDs,
     const bool overrideUseTaskAccumIDs)
-    : AddStructShared(_size, _colorBufferFormat, channels),
+    : AddStructShared(
+        device.getIspcrtDevice(), device, _size, _colorBufferFormat, channels),
       useTaskAccumIDs((channels & OSP_FB_ACCUM) || overrideUseTaskAccumIDs),
       totalTiles(divRoundUp(size, vec2i(TILE_SIZE)))
 {
@@ -31,11 +33,13 @@ SparseFrameBuffer::SparseFrameBuffer(const vec2i &_size,
   }
 }
 
-SparseFrameBuffer::SparseFrameBuffer(const vec2i &_size,
+SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
+    const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels,
     const bool overrideUseTaskAccumIDs)
-    : AddStructShared(_size, _colorBufferFormat, channels),
+    : AddStructShared(
+        device.getIspcrtDevice(), device, _size, _colorBufferFormat, channels),
       useTaskAccumIDs((channels & OSP_FB_ACCUM) || overrideUseTaskAccumIDs),
       totalTiles(divRoundUp(size, vec2i(TILE_SIZE)))
 {

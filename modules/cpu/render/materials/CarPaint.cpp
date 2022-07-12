@@ -8,7 +8,8 @@
 namespace ospray {
 namespace pathtracer {
 
-CarPaint::CarPaint()
+CarPaint::CarPaint(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.type = ispc::MATERIAL_TYPE_CARPAINT;
   getSh()->super.getBSDF = ispc::CarPaint_getBSDF_addr();

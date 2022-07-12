@@ -4,7 +4,7 @@
 #pragma once
 
 // ospray
-#include "./OSPCommon.h"
+#include "OSPCommon.h"
 
 namespace ospray {
 

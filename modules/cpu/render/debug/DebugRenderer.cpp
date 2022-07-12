@@ -47,7 +47,7 @@ static DebugRendererType typeFromString(const std::string &name)
 
 // DebugRenderer definitions ////////////////////////////////////////////////
 
-DebugRenderer::DebugRenderer()
+DebugRenderer::DebugRenderer(api::ISPCDevice &device) : Renderer(device)
 {
   getSh()->renderSample = ispc::DebugRenderer_testFrame_addr();
 }

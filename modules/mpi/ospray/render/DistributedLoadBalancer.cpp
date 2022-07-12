@@ -381,7 +381,8 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
       dfb->getChannelFlags() & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE);
   const bool sparseFbTrackAccumIDs = dfb->getChannelFlags() & OSP_FB_ACCUM;
 
-  auto sparseFb = rkcommon::make_unique<SparseFrameBuffer>(dfb->getNumPixels(),
+  auto sparseFb = rkcommon::make_unique<SparseFrameBuffer>(dfb->getISPCDevice(),
+      dfb->getNumPixels(),
       dfb->getColorBufferFormat(),
       sparseFbChannelFlags,
       sparseFbTrackAccumIDs);

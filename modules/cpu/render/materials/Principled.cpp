@@ -8,7 +8,8 @@
 namespace ospray {
 namespace pathtracer {
 
-Principled::Principled()
+Principled::Principled(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.type = ispc::MATERIAL_TYPE_PRINCIPLED;
   getSh()->super.getBSDF = ispc::Principled_getBSDF_addr();

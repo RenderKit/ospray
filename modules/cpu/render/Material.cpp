@@ -3,34 +3,20 @@
 
 // ospray
 #include "Material.h"
-#include "common/Util.h"
 #include "texture/Texture.h"
 // ispc
 #include "render/Material_ispc.h"
 
 namespace ospray {
 
-static FactoryMap<Material> g_materialsMap;
-
 // Material definitions ///////////////////////////////////////////////////////
 
-Material::Material()
+Material::Material(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_MATERIAL;
   getSh()->getTransparency = ispc::Material_getTransparency_addr();
   getSh()->selectNextMedium = ispc::Material_selectNextMedium_addr();
-}
-
-Material *Material::createInstance(
-    const char * /*ignored*/, const char *_material_type)
-{
-  std::string name = _material_type;
-  return createInstanceHelper(name, g_materialsMap[name]);
-}
-
-void Material::registerType(const char *name, FactoryFcn<Material> f)
-{
-  g_materialsMap[name] = f;
 }
 
 std::string Material::toString() const

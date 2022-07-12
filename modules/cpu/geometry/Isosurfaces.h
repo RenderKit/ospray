@@ -13,7 +13,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE Isosurfaces
     : public AddStructShared<Geometry, ispc::Isosurfaces>
 {
-  Isosurfaces();
+  Isosurfaces(api::ISPCDevice &device);
   virtual ~Isosurfaces() override;
 
   virtual std::string toString() const override;

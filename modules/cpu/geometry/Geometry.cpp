@@ -4,15 +4,13 @@
 // ospray
 #include "Geometry.h"
 #include "common/Data.h"
-#include "common/Util.h"
 
 namespace ospray {
 
-static FactoryMap<Geometry> g_geomMap;
-
 // Geometry definitions ///////////////////////////////////////////////////////
 
-Geometry::Geometry()
+Geometry::Geometry(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_GEOMETRY;
 }
@@ -28,16 +26,6 @@ std::string Geometry::toString() const
   return "ospray::Geometry";
 }
 
-Geometry *Geometry::createInstance(const char *type)
-{
-  return createInstanceHelper(type, g_geomMap[type]);
-}
-
-void Geometry::registerType(const char *type, FactoryFcn<Geometry> f)
-{
-  g_geomMap[type] = f;
-}
-
 void Geometry::postCreationInfo(size_t numVerts) const
 {
   std::stringstream ss;
@@ -47,21 +35,16 @@ void Geometry::postCreationInfo(size_t numVerts) const
   postStatusMsg(OSP_LOG_INFO) << ss.str();
 }
 
-void Geometry::setDevice(RTCDevice device)
-{
-  embreeDevice = device;
-}
-
 void Geometry::createEmbreeGeometry(RTCGeometryType type)
 {
   if (embreeGeometry)
     rtcReleaseGeometry(embreeGeometry);
 
-  if (!embreeDevice) {
+  if (!getISPCDevice().getEmbreeDevice()) {
     throw std::runtime_error("invalid Embree device");
   }
 
-  embreeGeometry = rtcNewGeometry(embreeDevice, type);
+  embreeGeometry = rtcNewGeometry(getISPCDevice().getEmbreeDevice(), type);
 }
 
 void Geometry::createEmbreeUserGeometry(RTCBoundsFunction boundsFn,

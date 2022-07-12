@@ -40,10 +40,6 @@ struct OSPRAY_SDK_INTERFACE ManagedObject : public memory::RefCount,
   ManagedObject *getParamObject(
       const char *name, ManagedObject *valIfNotFound = nullptr);
 
-  template <typename T, int DIM = 1>
-  const Ref<const DataT<T, DIM>> getParamDataT(
-      const char *name, bool required = false, bool promoteScalar = false);
-
   void checkUnused();
 
   virtual box3f getBounds() const;

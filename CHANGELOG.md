@@ -9,6 +9,8 @@ Version History
     is enabled (improving BVH build performance)
 -   Support single ISPC target on Windows
 -   Various documentation fixes
+-   OSPRay now has a new dependecy, which is ISPC Run Time (ISPCRT) in
+    minimum 1.19.0 version
 
 
 ### Changes in v2.10.0:

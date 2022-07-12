@@ -11,7 +11,9 @@
 namespace ospray {
 namespace mpi {
 
-DistributedRenderer::DistributedRenderer() : mpiGroup(mpicommon::worker.dup())
+DistributedRenderer::DistributedRenderer(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device),
+      mpiGroup(mpicommon::worker.dup())
 {
   getSh()->computeRegionVisibility =
       ispc::DR_default_computeRegionVisibility_addr();

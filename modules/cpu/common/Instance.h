@@ -14,9 +14,9 @@
 namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE Instance
-    : public AddStructShared<ManagedObject, ispc::Instance>
+    : public AddStructShared<ISPCDeviceObject, ispc::Instance>
 {
-  Instance(Group *group);
+  Instance(api::ISPCDevice &device, Group *group);
   ~Instance() override = default;
 
   std::string toString() const override;

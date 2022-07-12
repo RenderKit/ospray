@@ -10,7 +10,7 @@ namespace ospray {
 
 struct AORenderer : public AddStructShared<Renderer, ispc::AORenderer>
 {
-  AORenderer(int defaultAORendererSamples = 1);
+  AORenderer(api::ISPCDevice &device, int defaultAORendererSamples = 1);
   std::string toString() const override;
   void commit() override;
 

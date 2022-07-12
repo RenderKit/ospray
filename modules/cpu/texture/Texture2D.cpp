@@ -58,7 +58,7 @@ void Texture2D::commit()
         << toString()
         << " does currently not support strides, copying texture data.";
 
-    auto data = new Data(texData->type, texData->numItems);
+    auto data = new Data(getISPCDevice(), texData->type, texData->numItems);
     data->copy(*texData, vec3ui(0));
     texData = data;
     data->refDec();

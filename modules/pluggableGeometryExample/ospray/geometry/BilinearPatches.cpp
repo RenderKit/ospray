@@ -18,7 +18,8 @@ namespace ospray {
 // 'bilinar_patch' etc would all work equally well.
 namespace blp {
 
-BilinearPatches::BilinearPatches()
+BilinearPatches::BilinearPatches(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.postIntersect = ispc::BilinearPatches_postIntersect_addr();
 }

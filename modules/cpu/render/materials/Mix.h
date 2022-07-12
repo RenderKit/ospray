@@ -10,7 +10,7 @@ namespace pathtracer {
 
 struct MixMaterial : public AddStructShared<Material, ispc::Mix>
 {
-  MixMaterial();
+  MixMaterial(api::ISPCDevice &device);
 
   virtual std::string toString() const override;
 

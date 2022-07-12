@@ -6,7 +6,8 @@
 
 namespace ospray {
 
-LinearTransferFunction::LinearTransferFunction()
+LinearTransferFunction::LinearTransferFunction(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.get = ispc::LinearTransferFunction_get_addr();
   getSh()->super.getMaxOpacity =

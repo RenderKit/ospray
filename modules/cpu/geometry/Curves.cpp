@@ -45,7 +45,8 @@ static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
 
 // Curves definitions ///////////////////////////////////////////////////////
 
-Curves::Curves()
+Curves::Curves(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.postIntersect = ispc::Curves_postIntersect_addr();
   // TODO implement area sampling of OldCurves for geometry lights
@@ -81,8 +82,8 @@ void Curves::commit()
     // the global 'radius' parameter, a vec4f vertex buffer copy
     // has to be created. It specifies radius on per-vertex basis and
     // is required by Embree. TODO: Refactor for OSPRay 3.x
-    DataT<vec4f> *dataT =
-        (DataT<vec4f> *)new Data(OSP_VEC4F, vertexNoRadiusData->numItems);
+    DataT<vec4f> *dataT = (DataT<vec4f> *)new Data(
+        getISPCDevice(), OSP_VEC4F, vertexNoRadiusData->numItems);
     for (size_t i = 0; i < dataT->size(); i++) {
       const vec3f &v = (*vertexNoRadiusData)[i];
       (*dataT)[i] = vec4f(v.x, v.y, v.z, radius);
