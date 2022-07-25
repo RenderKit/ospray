@@ -2147,11 +2147,11 @@ In particular when using the path tracer it is important to adhere to
 the principle of energy conservation, i.e., that the amount of light
 reflected by a surface is not larger than the light arriving. Therefore
 the path tracer issues a warning and renormalizes the color parameters
-if the sum of `Kd`, `Ks`, and `Tf` is larger than one in any color
+if the sum of `kd`, `ks`, and `tf` is larger than one in any color
 channel. Similarly important to mention is that almost all materials of
 the real world reflect at most only about 80% of the incoming light. So
 even for a white sheet of paper or white wall paint do better not set
-`Kd` larger than 0.8; otherwise rendering times are unnecessary long and
+`kd` larger than 0.8; otherwise rendering times are unnecessary long and
 the contrast in the final images is low (for example, the corners of a
 white room would hardly be discernible, as can be seen in the figure
 below).
@@ -2162,11 +2162,11 @@ higher overall contrast. Note that exposure has been adjusted to achieve
 similar brightness levels.][imgDiffuseRooms]
 
 If present, the color component of [geometries] is also used for the
-diffuse color `Kd` and the alpha component is also used for the opacity
+diffuse color `kd` and the alpha component is also used for the opacity
 `d`.
 
 Normal mapping can simulate small geometric features via the texture
-`map_Bump`. The normals $n$ in the normal map are with respect to the
+`map_bump`. The normals $n$ in the normal map are with respect to the
 local tangential shading coordinate system and are encoded as $½(n+1)$,
 thus a texel $(0.5, 0.5, 1)$^[respectively $(127, 127, 255)$ for 8\ bit
 textures and $(32767, 32767, 65535)$ for 16\ bit textures] represents
@@ -2182,17 +2182,17 @@ normal map vertically or invert its green channel.
 ![Normal map representing an exalted square pyramidal
 frustum.][imgNormalMap]
 
-Note that `Tf` colored transparency is implemented in the SciVis and
-the path tracer but normal mapping with `map_Bump` is currently supported
+Note that `tf` colored transparency is implemented in the SciVis and
+the path tracer but normal mapping with `map_bump` is currently supported
 in the path tracer only.
 
-All parameters (except `Tf`) can be textured by passing a [texture]
+All parameters (except `tf`) can be textured by passing a [texture]
 handle, prefixed with "`map_`". The fetched texels are multiplied by the
 respective parameter value. If only the texture is given (but not the
 corresponding parameter), only the texture is used (the default value of
-the parameter is *not* multiplied). The color textures `map_Kd` and
-`map_Ks` are typically in one of the sRGB gamma encoded formats, whereas
-textures `map_Ns` and `map_d` are usually in a linear format (and only
+the parameter is *not* multiplied). The color textures `map_kd` and
+`map_ks` are typically in one of the sRGB gamma encoded formats, whereas
+textures `map_ns` and `map_d` are usually in a linear format (and only
 the first component is used). Additionally, all textures support
 [texture transformations].
 
