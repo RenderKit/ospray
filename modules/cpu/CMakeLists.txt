@@ -214,10 +214,15 @@ if (WIN32)
   file(READ def_header.txt OSPRAY_DEF)
   file(READ ispc_symbols.txt OSPRAY_ISPC_SYMBOLS_IN)
 
+  list(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
   foreach(isa ${OSPRAY_ISPC_TARGET_LIST})
     string(REPLACE "-i32x16" "" isa ${isa}) # strip avx512(knl|skx)-i32x16
+    if (NUM_TARGETS EQUAL 1)
+      set(isa "") # for single target no suffix
+      string(REPLACE "delete_uniform_," "delete_uniform," OSPRAY_ISPC_SYMBOLS_IN ${OSPRAY_ISPC_SYMBOLS_IN})
+    endif()
     # add isa suffix
-    string(REPLACE "," ${isa} OSPRAY_ISPC_SYMBOLS ${OSPRAY_ISPC_SYMBOLS_IN})
+    string(REPLACE "," "${isa}" OSPRAY_ISPC_SYMBOLS ${OSPRAY_ISPC_SYMBOLS_IN})
     string(APPEND OSPRAY_DEF ${OSPRAY_ISPC_SYMBOLS})
   endforeach()
 
