@@ -85,9 +85,12 @@ void World::commit()
 
   auto numInstances = instances ? instances->size() : 0;
 
-  int sceneFlags = 0;
-  sceneFlags |=
-      (getParam<bool>("dynamicScene", false) ? RTC_SCENE_FLAG_DYNAMIC : 0);
+  int sceneFlags = RTC_SCENE_FLAG_NONE;
+  RTCBuildQuality buildQuality = RTC_BUILD_QUALITY_HIGH;
+  if (getParam<bool>("dynamicScene", false)) {
+    sceneFlags |= RTC_SCENE_FLAG_DYNAMIC;
+    buildQuality = RTC_BUILD_QUALITY_LOW;
+  }
   sceneFlags |=
       (getParam<bool>("compactMode", false) ? RTC_SCENE_FLAG_COMPACT : 0);
   sceneFlags |=
@@ -131,16 +134,19 @@ void World::commit()
 
   if (esGeom) {
     rtcSetSceneFlags(esGeom, static_cast<RTCSceneFlags>(sceneFlags));
+    rtcSetSceneBuildQuality(esGeom, buildQuality);
     rtcCommitScene(esGeom);
   }
   if (esVol) {
     rtcSetSceneFlags(esVol, static_cast<RTCSceneFlags>(sceneFlags));
+    rtcSetSceneBuildQuality(esVol, buildQuality);
     rtcCommitScene(esVol);
   }
   if (esClip) {
     rtcSetSceneFlags(esClip,
         static_cast<RTCSceneFlags>(
             sceneFlags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION));
+    rtcSetSceneBuildQuality(esClip, buildQuality);
     rtcCommitScene(esClip);
   }
 }

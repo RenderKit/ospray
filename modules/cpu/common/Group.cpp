@@ -12,13 +12,16 @@ namespace ospray {
 // Embree helper functions //////////////////////////////////////////////////
 
 template <class MODEL>
-inline void createEmbreeScene(
-    RTCScene &scene, const DataT<MODEL *> &objects, int embreeFlags)
+inline void createEmbreeScene(RTCScene &scene,
+    const DataT<MODEL *> &objects,
+    const int embreeFlags,
+    const RTCBuildQuality buildQuality)
 {
   for (auto &&obj : objects)
     rtcAttachGeometry(scene, obj->embreeGeometryHandle());
 
   rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
+  rtcSetSceneBuildQuality(scene, buildQuality);
 }
 
 static void freeAndNullifyEmbreeScene(RTCScene &scene)
@@ -74,8 +77,11 @@ void Group::commit()
       << " clipping geometries and " << numLights << " lights";
 
   int sceneFlags = RTC_SCENE_FLAG_NONE;
-  sceneFlags |=
-      (getParam<bool>("dynamicScene", false) ? RTC_SCENE_FLAG_DYNAMIC : 0);
+  RTCBuildQuality buildQuality = RTC_BUILD_QUALITY_HIGH;
+  if (getParam<bool>("dynamicScene", false)) {
+    sceneFlags |= RTC_SCENE_FLAG_DYNAMIC;
+    buildQuality = RTC_BUILD_QUALITY_LOW;
+  }
   sceneFlags |=
       (getParam<bool>("compactMode", false) ? RTC_SCENE_FLAG_COMPACT : 0);
   sceneFlags |=
@@ -99,7 +105,8 @@ void Group::commit()
   if (numGeometries > 0) {
     sceneGeometries = rtcNewScene(embreeDevice);
 
-    createEmbreeScene(sceneGeometries, *geometricModels, sceneFlags);
+    createEmbreeScene(
+        sceneGeometries, *geometricModels, sceneFlags, buildQuality);
     getSh()->geometricModels =
         BufferSharedCreate<ispc::GeometricModel *>(numGeometries,
             createArrayOfSh<ispc::GeometricModel>(*geometricModels).data());
@@ -110,7 +117,8 @@ void Group::commit()
   if (numVolumes > 0) {
     sceneVolumes = rtcNewScene(embreeDevice);
 
-    createEmbreeScene(sceneVolumes, *volumetricModels, sceneFlags);
+    createEmbreeScene(
+        sceneVolumes, *volumetricModels, sceneFlags, buildQuality);
     getSh()->volumetricModels =
         BufferSharedCreate<ispc::VolumetricModel *>(numVolumes,
             createArrayOfSh<ispc::VolumetricModel>(*volumetricModels).data());
@@ -124,7 +132,8 @@ void Group::commit()
     createEmbreeScene(sceneClippers,
         *clipModels,
         sceneFlags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION
-            | RTC_SCENE_FLAG_ROBUST);
+            | RTC_SCENE_FLAG_ROBUST,
+        buildQuality);
     getSh()->clipModels = BufferSharedCreate<ispc::GeometricModel *>(
         numClippers, createArrayOfSh<ispc::GeometricModel>(*clipModels).data());
 

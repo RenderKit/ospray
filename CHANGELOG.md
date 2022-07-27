@@ -1,6 +1,16 @@
 Version History
 ---------------
 
+### Changes in v2.11.0:
+
+-   Fix `dynamicScene` flag on World and Group to influence BVH quality
+    again: default is now "high", which should improve rendering
+    performance, depending on the scene; and "low" when `dynamicScene`
+    is enabled (improving BVH build performance)
+-   Support single ISPC target on Windows
+-   Various documentation fixes
+
+
 ### Changes in v2.10.0:
 
 -   Add support for primitive, object, and instance ID buffers as

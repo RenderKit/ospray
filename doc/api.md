@@ -1800,11 +1800,10 @@ areas will be applied to all other objects in the [world].
 
   OSPLight[]           light                  NULL  [data] array of [lights]
 
-  bool                 dynamicScene          false  use RTC_SCENE_DYNAMIC flag (faster
-                                                    BVH build, slower ray traversal),
-                                                    otherwise uses RTC_SCENE_STATIC flag
-                                                    (faster ray traversal, slightly
-                                                    slower BVH build)
+  bool                 dynamicScene          false  tell Embree to use faster BVH build
+                                                    (slower ray traversal), otherwise
+                                                    optimized for faster ray traversal
+                                                    (slightly slower BVH build)
 
   bool                 compactMode           false  tell Embree to use a more compact BVH
                                                     in memory by trading ray traversal
@@ -1902,11 +1901,10 @@ feature/performance trade-offs (similar to groups).
   OSPLight[]    light                NULL  [data] array with handles of the
                                            [lights]
 
-  bool          dynamicScene        false  use RTC_SCENE_DYNAMIC flag (faster
-                                           BVH build, slower ray traversal),
-                                           otherwise uses RTC_SCENE_STATIC flag
-                                           (faster ray traversal, slightly
-                                           slower BVH build)
+  bool          dynamicScene        false  tell Embree to use faster BVH build
+                                           (slower ray traversal), otherwise
+                                           optimized for faster ray traversal
+                                           (slightly slower BVH build)
 
   bool          compactMode         false  tell Embree to use a more compact BVH
                                            in memory by trading ray traversal
