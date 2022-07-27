@@ -4,13 +4,7 @@
 #pragma once
 
 #include "rkcommon/math/vec.ih"
-
-struct IntensityDistribution
-{
-  float *lid; // luminance intensity distribution
-  vec2i size;
-  vec2f scale;
-};
+#include "IntensityDistributionShared.h"
 
 inline float IntensityDistribution_eval(
     const IntensityDistribution *uniform self,
@@ -39,14 +33,4 @@ inline float IntensityDistribution_eval(
     intensity = lerp(v_frac, li0, li1);
   }
   return intensity;
-}
-
-inline float IntensityDistribution_set(IntensityDistribution *uniform self,
-    float *uniform lid,
-    const uniform vec2i &size)
-{
-  self->lid = lid;
-  self->size = size;
-  self->scale = make_vec2f(nextafter((size.x - 1) * one_over_pi, -1.0f),
-      nextafter(self->size.y * one_over_two_pi, -1.0f));
 }

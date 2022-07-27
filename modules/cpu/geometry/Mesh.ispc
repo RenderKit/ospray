@@ -1,33 +1,13 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Geometry.ih"
 #include "common/Data.ih"
-#include "common/World.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
-
-struct Mesh
-{
-  Geometry super;
-  Data1D index;
-  Data1D vertex;
-  Data1D normal;
-  Data1D color;
-  Data1D texcoord;
-  Data1D tex1d;
-  Data1D tex1d_elm;
-  Data1D atex1d;
-  Data1D atex1d_elm;
-  uint8 **motionVertex;
-  uint8 **motionNormal;
-  uint32 motionKeys;
-  box1f time;
-  int64 flagMask; // which attributes are missing and cannot be interpolated
-  bool has_alpha; // 4th color component is valid
-  bool is_triangleMesh;
-};
+// c++ shared
+#include "MeshShared.h"
 
 // Create quad_interpolate for vec2f, vec3f, and vec4f types
 #define __define_quad_interpolate(T)                                           \
@@ -65,7 +45,7 @@ inline vec3f interpolate_vec3f(const uniform int64 byteStride,
   return lerp(t, v0, v1);
 }
 
-static void QuadMesh_postIntersect(const Geometry *uniform _self,
+void QuadMesh_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -73,6 +53,9 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
   Mesh *uniform self = (Mesh * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   const vec4ui index = get_vec4ui(self->index, ray.primID);
+  const iOffset = ray.primID * 4;
+  const vec4ui findex = make_vec4ui(
+      iOffset, iOffset + 1, iOffset + 2, iOffset + 3); // face indices
   const float u = ray.u;
   const float v = ray.v;
   vec4f uv;
@@ -91,31 +74,33 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
   flags &= self->flagMask;
 
   if (flags & DG_NS) {
+    const vec4ui tindex = self->isNormalFaceVarying ? findex : index;
     if (self->motionKeys) {
       int idx;
       const float t = Mesh_calcKey(self, ray.time, idx);
       const uniform int64 byteStride = self->normal.byteStride;
       const uint8 *a0 = self->motionNormal[idx];
       const uint8 *a1 = self->motionNormal[idx + 1];
-      const vec3f a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
-      const vec3f b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
-      const vec3f c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
-      const vec3f d = interpolate_vec3f(byteStride, a0, a1, index.w, t);
+      const vec3f a = interpolate_vec3f(byteStride, a0, a1, tindex.x, t);
+      const vec3f b = interpolate_vec3f(byteStride, a0, a1, tindex.y, t);
+      const vec3f c = interpolate_vec3f(byteStride, a0, a1, tindex.z, t);
+      const vec3f d = interpolate_vec3f(byteStride, a0, a1, tindex.w, t);
       dg.Ns = quad_interpolate(uv, a, b, c, d);
     } else {
-    const vec3f a = get_vec3f(self->normal, index.x);
-    const vec3f b = get_vec3f(self->normal, index.y);
-    const vec3f c = get_vec3f(self->normal, index.z);
-    const vec3f d = get_vec3f(self->normal, index.w);
-    dg.Ns = quad_interpolate(uv, a, b, c, d);
-  }
+      const vec3f a = get_vec3f(self->normal, tindex.x);
+      const vec3f b = get_vec3f(self->normal, tindex.y);
+      const vec3f c = get_vec3f(self->normal, tindex.z);
+      const vec3f d = get_vec3f(self->normal, tindex.w);
+      dg.Ns = quad_interpolate(uv, a, b, c, d);
+    }
   }
 
   if (flags & DG_COLOR) {
-    const vec4f a = get_vec4f(self->color, index.x);
-    const vec4f b = get_vec4f(self->color, index.y);
-    const vec4f c = get_vec4f(self->color, index.z);
-    const vec4f d = get_vec4f(self->color, index.w);
+    const vec4ui tindex = self->isColorFaceVarying ? findex : index;
+    const vec4f a = get_vec4f(self->color, tindex.x);
+    const vec4f b = get_vec4f(self->color, tindex.y);
+    const vec4f c = get_vec4f(self->color, tindex.z);
+    const vec4f d = get_vec4f(self->color, tindex.w);
     dg.color = quad_interpolate(uv, a, b, c, d);
     if (!self->has_alpha)
       dg.color.w = 1.f;
@@ -124,11 +109,12 @@ static void QuadMesh_postIntersect(const Geometry *uniform _self,
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
   if (and(or (compute_texcoord, compute_tangents), valid(self->texcoord))) {
-    const vec2f a = get_vec2f(self->texcoord, index.x);
-    const vec2f b = get_vec2f(self->texcoord, index.y);
-    const vec2f d = get_vec2f(self->texcoord, index.w);
+    const vec4ui tindex = self->isTexcoordFaceVarying ? findex : index;
+    const vec2f a = get_vec2f(self->texcoord, tindex.x);
+    const vec2f b = get_vec2f(self->texcoord, tindex.y);
+    const vec2f d = get_vec2f(self->texcoord, tindex.w);
     if (compute_texcoord) {
-      const vec2f c = get_vec2f(self->texcoord, index.z);
+      const vec2f c = get_vec2f(self->texcoord, tindex.z);
       dg.st = quad_interpolate(uv, a, b, c, d);
     }
     if (compute_tangents) {
@@ -176,7 +162,7 @@ float sampleAlphaTexture1D(const DifferentialGeometry &dg)
   return pmat ? sampleAlphaTexture1DByRawVar(pmat->alphabyMap.ptr, dg.atex1d) : 1.0f;
 }
 
-static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
+void TriangleMesh_PostIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -184,40 +170,41 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
   Mesh *uniform self = (Mesh * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   const vec3ui index = get_vec3ui(self->index, ray.primID);
+  const iOffset = ray.primID * 3;
+  const vec3ui findex =
+      make_vec3ui(iOffset, iOffset + 1, iOffset + 2); // face indices
   const vec3f uv = make_vec3f(1.0f - ray.u - ray.v, ray.u, ray.v);
 
   flags &= self->flagMask;
 
   if (flags & DG_NS) {
+    const vec3ui tindex = self->isNormalFaceVarying ? findex : index;
     if (self->motionKeys) {
       int idx;
       const float t = Mesh_calcKey(self, ray.time, idx);
       const uniform int64 byteStride = self->normal.byteStride;
       const uint8 *a0 = self->motionNormal[idx];
       const uint8 *a1 = self->motionNormal[idx + 1];
-      const vec3f a = interpolate_vec3f(byteStride, a0, a1, index.x, t);
-      const vec3f b = interpolate_vec3f(byteStride, a0, a1, index.y, t);
-      const vec3f c = interpolate_vec3f(byteStride, a0, a1, index.z, t);
+      const vec3f a = interpolate_vec3f(byteStride, a0, a1, tindex.x, t);
+      const vec3f b = interpolate_vec3f(byteStride, a0, a1, tindex.y, t);
+      const vec3f c = interpolate_vec3f(byteStride, a0, a1, tindex.z, t);
       dg.Ns = interpolate(uv, a, b, c);
     } else {
-    const vec3f a = get_vec3f(self->normal, index.x);
-    const vec3f b = get_vec3f(self->normal, index.y);
-    const vec3f c = get_vec3f(self->normal, index.z);
-    dg.Ns = interpolate(uv, a, b, c);
-  }
+      const vec3f a = get_vec3f(self->normal, tindex.x);
+      const vec3f b = get_vec3f(self->normal, tindex.y);
+      const vec3f c = get_vec3f(self->normal, tindex.z);
+      dg.Ns = interpolate(uv, a, b, c);
+    }
   }
 
   if (flags & DG_COLOR) {
-    const vec4f a = get_vec4f(self->color, index.x);
-    const vec4f b = get_vec4f(self->color, index.y);
-    const vec4f c = get_vec4f(self->color, index.z);
+    const vec3ui tindex = self->isColorFaceVarying ? findex : index;
+    const vec4f a = get_vec4f(self->color, tindex.x);
+    const vec4f b = get_vec4f(self->color, tindex.y);
+    const vec4f c = get_vec4f(self->color, tindex.z);
     dg.color = interpolate(uv, a, b, c);
     if (!self->has_alpha)
       dg.color.w = 1.f;
-  }
-  else {
-    //NOTE: sampleAlphaTexture1D() only support pathtracing!!!
-    //dg.color.w = sampleAlphaTexture1D(dg);
   }
 
   const bool is_pervert_tex1d = valid(self->tex1d);
@@ -256,9 +243,10 @@ static void TriangleMesh_PostIntersect(const Geometry *uniform _self,
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
   if (and(or (compute_texcoord, compute_tangents), valid(self->texcoord))) {
-    const vec2f a = get_vec2f(self->texcoord, index.x);
-    const vec2f b = get_vec2f(self->texcoord, index.y);
-    const vec2f c = get_vec2f(self->texcoord, index.z);
+    const vec3ui tindex = self->isTexcoordFaceVarying ? findex : index;
+    const vec2f a = get_vec2f(self->texcoord, tindex.x);
+    const vec2f b = get_vec2f(self->texcoord, tindex.y);
+    const vec2f c = get_vec2f(self->texcoord, tindex.z);
     if (compute_texcoord)
       dg.st = interpolate(uv, a, b, c);
     if (compute_tangents) {
@@ -400,80 +388,22 @@ void Mesh_getAreas(const Geometry *const uniform _self,
   }
 }
 
-void Mesh_Constructor(Mesh *uniform self)
+export void *uniform QuadMesh_postIntersect_addr()
 {
-  Geometry_Constructor(&self->super, NULL);
-  self->super.getAreas = Mesh_getAreas;
-  self->super.sampleArea = Mesh_sampleArea;
-  Data1D_Constructor(&self->index);
-  Data1D_Constructor(&self->vertex);
-  Data1D_Constructor(&self->normal);
-  Data1D_Constructor(&self->color);
-  Data1D_Constructor(&self->texcoord);
+  return QuadMesh_postIntersect;
 }
 
-export void *uniform Mesh_create()
+export void *uniform TriangleMesh_PostIntersect_addr()
 {
-  Mesh *uniform self = uniform new Mesh;
-  Mesh_Constructor(self);
-  return self;
+  return TriangleMesh_PostIntersect;
 }
 
-export void *uniform Mesh_set(void *uniform _self,
-    const Data1D *uniform index,
-    const Data1D *uniform vertex,
-    const Data1D *uniform normal,
-    const Data1D *uniform color,
-    const Data1D *uniform texcoord,
-    const Data1D *uniform tex1d,
-    const Data1D *uniform tex1d_elm,
-    const Data1D *uniform atex1d,
-    const Data1D *uniform atex1d_elm,
-    void *uniform motionVertex,
-    void *uniform motionNormal,
-    uniform unsigned int motionKeys,
-    const uniform box1f &time,
-    uniform bool has_alpha,
-    uniform bool is_triangleMesh)
+export void *uniform Mesh_sampleArea_addr()
 {
-  Mesh *uniform self = (Mesh * uniform) _self;
-  self->index = *index;
-  self->vertex = *vertex;
-  self->normal = *normal;
-  self->color = *color;
-  self->texcoord = *texcoord;
-  self->tex1d = *tex1d;
-  self->tex1d_elm = *tex1d_elm;
-  self->atex1d = *atex1d;
-  self->atex1d_elm = *atex1d_elm;
-  self->motionVertex = (uint8 * *uniform) motionVertex;
-  self->motionNormal = (uint8 * *uniform) motionNormal;
-  self->motionKeys = motionKeys;
-  self->time = time;
-  self->has_alpha = has_alpha;
-  self->super.numPrimitives = index->numItems;
-  self->is_triangleMesh = is_triangleMesh;
-  self->super.postIntersect = self->is_triangleMesh ? TriangleMesh_PostIntersect
-                                                    : QuadMesh_postIntersect;
+  return Mesh_sampleArea;
+}
 
-  self->flagMask = -1;
-  if (!valid(self->normal))
-    self->flagMask &= ~DG_NS;
-  if (!valid(self->color))
-    self->flagMask &= ~DG_COLOR;
-  if (!valid(self->texcoord))
-    self->flagMask &= ~DG_TEXCOORD;
-
-  if (!valid(self->tex1d)) {
-    self->flagMask &= ~DG_TEX1D;
-  }
-  if (!valid(self->tex1d_elm)) {
-    self->flagMask &= ~DG_TEX1D_ELM;
-  }
-  if (!valid(self->atex1d)) {
-    self->flagMask &= ~DG_ALPHATEX1D;
-  }
-  if (!valid(self->atex1d_elm)) {
-    self->flagMask &= ~DG_ALPHATEX1D_ELM;
-  }
+export void *uniform Mesh_getAreas_addr()
+{
+  return Mesh_getAreas;
 }

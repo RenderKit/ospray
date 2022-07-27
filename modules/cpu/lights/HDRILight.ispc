@@ -1,29 +1,14 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Light.ih"
 #include "common/Instance.ih"
 #include "common/Intersect.ih"
 #include "math/Distribution2D.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
 #include "texture/Texture2D.ih"
-
-struct HDRILight
-{
-  Light super;
-
-  linear3f light2world;
-  linear3f world2light;
-  const Texture2D *uniform
-      map; // Environment map in latitude / longitude format
-  const Distribution2D *uniform
-      distribution; // The 2D distribution used to importance sample
-  vec2f rcpSize; // precomputed 1/map.size
-  vec3f radianceScale; // scaling factor of emitted RGB radiance
-  vec3f position;  //HDRILight center position
-  float radius;    //HDRILight sphere radius
-};
+// c++ shared
+#include "HDRILightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
@@ -209,56 +194,29 @@ task unmasked void HDRILight_calcRowImportance(
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-//! Set the parameters of an ispc-side HDRILight object
-export void HDRILight_set(void *uniform super,
-    const uniform vec3f &position,
-    const uniform float &radius,
-    const uniform vec3f &radianceScale,
-    const uniform linear3f &light2world,
-    const void *uniform map,
-    const void *uniform distribution)
+export void *uniform HDRILight_sample_dummy_addr()
 {
-  HDRILight *uniform self = (HDRILight * uniform) super;
-  self->radianceScale = radianceScale;
-  self->position = position;
-  self->radius = radius;
-
-  if (map) {
-    self->map = (uniform Texture2D * uniform) map;
-    self->distribution = (const uniform Distribution2D *uniform)distribution;
-
-    self->rcpSize = 1.f / self->map->sizef;
-    self->light2world = light2world;
-    self->super.sample = HDRILight_sample;
-    self->super.eval = HDRILight_eval;
-
-    // Enable dynamic runtime instancing or apply static transformation
-    const Instance *uniform instance = self->super.instance;
-    if (instance) {
-      if (instance->motionBlur) {
-        self->super.sample = HDRILight_sample_instanced;
-        self->super.eval = HDRILight_eval_instanced;
-      } else {
-        self->light2world = instance->xfm.l * self->light2world;
-      }
-    }
-    self->world2light = rcp(self->light2world);
-  } else {
-    self->super.sample = HDRILight_sample_dummy;
-    self->super.eval = Light_eval;
-  }
+  return HDRILight_sample_dummy;
 }
 
-//! Create an ispc-side HDRILight object
-export void *uniform HDRILight_create()
+export void *uniform HDRILight_sample_addr()
 {
-  HDRILight *uniform self = uniform new HDRILight;
+  return HDRILight_sample;
+}
 
-  Light_Constructor(&self->super);
-  self->super.sample = HDRILight_sample_dummy;
-  HDRILight_set(
-      self, make_vec3f(0.0f), 10.0f, make_vec3f(1.0f), make_LinearSpace3f_identity(), NULL, NULL);
-  return self;
+export void *uniform HDRILight_sample_instanced_addr()
+{
+  return HDRILight_sample_instanced;
+}
+
+export void *uniform HDRILight_eval_addr()
+{
+  return HDRILight_eval;
+}
+
+export void *uniform HDRILight_eval_instanced_addr()
+{
+  return HDRILight_eval_instanced;
 }
 
 export void *uniform HDRILight_createDistribution(const void *uniform map)

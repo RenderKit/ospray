@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture2D.h"
@@ -9,7 +9,7 @@
 
 namespace ispc {
 
-void Texture2D::Set(const vec2i &aSize,
+void Texture2D::set(const vec2i &aSize,
     void *aData,
     const EnsightTex1dMappingData &aMap1d,
     OSPTextureFormat type,
@@ -100,7 +100,7 @@ void Texture2D::commit()
     }
   }
 
-  getSh()->Set(size, texData->data(), map1d, format, filter);
+  getSh()->set(size, texData->data(), map1d, format, filter);
 }
 
 } // namespace ospray

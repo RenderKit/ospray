@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,7 +6,7 @@
 // ospray
 #include "TransferFunction.h"
 #include "common/Data.h"
-
+// ispc shared
 #include "LinearTransferFunctionShared.h"
 
 namespace ospray {

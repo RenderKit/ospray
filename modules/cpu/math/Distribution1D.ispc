@@ -1,9 +1,9 @@
-// Copyright 2009-2019 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Distribution1D.ih"
 
-uniform float Distribution1D_create(
+export uniform float Distribution1D_create(
     const uniform int size, uniform float *uniform cdf)
 {
   // accumulate the function

@@ -1,13 +1,16 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Geometry.h"
+// ispc shared
+#include "PlanesShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Planes : public Geometry
+struct OSPRAY_SDK_INTERFACE Planes
+    : public AddStructShared<Geometry, ispc::Planes>
 {
   Planes();
   virtual ~Planes() override = default;

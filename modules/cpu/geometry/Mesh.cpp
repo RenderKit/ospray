@@ -1,19 +1,20 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Mesh.h"
-#include "ospray/ospray.h"
-#include "common/World.h"
+#include "common/DGEnum.h"
 // ispc exports
-#include <cmath>
 #include "geometry/Mesh_ispc.h"
+// std
+#include <cmath>
 
 namespace ospray {
 
 Mesh::Mesh()
 {
-  ispcEquivalent = ispc::Mesh_create();
+  getSh()->super.getAreas = ispc::Mesh_getAreas_addr();
+  getSh()->super.sampleArea = ispc::Mesh_sampleArea_addr();
 }
 
 std::string Mesh::toString() const
@@ -23,15 +24,9 @@ std::string Mesh::toString() const
 
 void Mesh::commit()
 {
-  if (embreeGeometry)
-    rtcReleaseGeometry(embreeGeometry);
-
-  if (!embreeDevice) {
-    throw std::runtime_error("invalid Embree device");
-  }
-
   motionVertexAddr.clear();
   motionNormalAddr.clear();
+  bool isNormalFaceVarying = true;
 
   motionVertexData =
       getParamDataT<const DataT<vec3f> *>("motion.vertex.position");
@@ -49,12 +44,16 @@ void Mesh::commit()
             " of same size and stride and have type vec3f");
       motionVertexAddr.push_back(vtxData->data());
     }
-    motionNormalData =
-        getParamDataT<const DataT<vec3f> *>("motion.vertex.normal");
+    motionNormalData = getParamDataT<const DataT<vec3f> *>("motion.normal");
+    if (!motionNormalData) {
+      motionNormalData =
+          getParamDataT<const DataT<vec3f> *>("motion.vertex.normal");
+      isNormalFaceVarying = false;
+    }
     if (motionNormalData) {
       if (motionNormalData->size() < motionVertexData->size())
         throw std::runtime_error(
-            "Mesh 'motion.vertex.normal' array has less keys than"
+            "Mesh 'motion*.normal' array has less keys than"
             " 'motion.vertex.position'");
       // check types and strides
       normalData = (*motionNormalData)[0]; // use 1st key as fallback
@@ -63,7 +62,7 @@ void Mesh::commit()
         if (norData->type != OSP_VEC3F || norData->ispc.numItems != size
             || norData->ispc.byteStride != stride)
           throw std::runtime_error(
-              "Mesh 'motion.vertex.normal' arrays need to be"
+              "Mesh 'motion*.normal' arrays need to be"
               " of same size and stride and have type vec3f");
         motionNormalAddr.push_back(norData->data());
       }
@@ -72,24 +71,36 @@ void Mesh::commit()
   } else {
     motionBlur = false;
     vertexData = getParamDataT<vec3f>("vertex.position", true);
-    normalData = getParamDataT<vec3f>("vertex.normal");
+    normalData = getParamDataT<vec3f>("normal");
+    if (!normalData) {
+      normalData = getParamDataT<vec3f>("vertex.normal");
+      isNormalFaceVarying = false;
+    }
   }
 
-  colorData = getParam<Data *>("vertex.color");
-  texcoordData = getParamDataT<vec2f>("vertex.texcoord");
-
+  colorData = getParam<Data *>("color");
+  bool isColorFaceVarying = true;
+  if (!colorData) {
+    colorData = getParam<Data *>("vertex.color");
+    isColorFaceVarying = false;
+  }
+  bool isTexcoordFaceVarying = true;
+  texcoordData = getParamDataT<vec2f>("texcoord");
+  if (!texcoordData) {
+    texcoordData = getParamDataT<vec2f>("vertex.texcoord");
+    isTexcoordFaceVarying = false;
+  }
   tex1dData = getParamDataT<float>("vertex.texcoord1d");
   tex1dData_elm = getParamDataT<float>("vertex.texcoord1d_elm");
   atex1dData = getParamDataT<float>("vertex.alphatexcoord1d");
   atex1dData_elm = getParamDataT<float>("vertex.alphatexcoord1d_elm");
-
   indexData = getParamDataT<vec3ui>("index");
   if (!indexData)
     indexData = getParamDataT<vec4ui>("index", true);
 
   const bool isTri = indexData->type == OSP_VEC3UI;
 
-  embreeGeometry = rtcNewGeometry(embreeDevice,
+  createEmbreeGeometry(
       isTri ? RTC_GEOMETRY_TYPE_TRIANGLE : RTC_GEOMETRY_TYPE_QUAD);
 
   time = range1f(0.0f, 1.0f);
@@ -118,22 +129,44 @@ void Mesh::commit()
       indexData->size());
   rtcCommitGeometry(embreeGeometry);
 
-  ispc::Mesh_set(getIE(),
-      ispc(indexData),
-      ispc(vertexData),
-      ispc(normalData),
-      ispc(colorData),
-      ispc(texcoordData),
-      ispc(tex1dData),
-      ispc(tex1dData_elm),
-      ispc(atex1dData),
-      ispc(atex1dData_elm),
-      motionVertexAddr.data(),
-      motionNormalAddr.data(),
-      motionBlur ? motionVertexData->size() : 0,
-      (const ispc::box1f &)time,
-      colorData && colorData->type == OSP_VEC4F,
-      isTri);
+  getSh()->isColorFaceVarying = isColorFaceVarying;
+  getSh()->isTexcoordFaceVarying = isTexcoordFaceVarying;
+  getSh()->isNormalFaceVarying = isNormalFaceVarying;
+  getSh()->index = *ispc(indexData);
+  getSh()->vertex = *ispc(vertexData);
+  getSh()->normal = *ispc(normalData);
+  getSh()->color = *ispc(colorData);
+  getSh()->texcoord = *ispc(texcoordData);
+  getSh()->tex1d = *ispc(tex1dData);
+  getSh()->tex1d_elm = *ispc(tex1dData_elm);
+  getSh()->atex1d = *ispc(atex1dData);
+  getSh()->atex1d_elm = *ispc(atex1dData_elm);  
+  getSh()->motionVertex = (uint8_t **)motionVertexAddr.data();
+  getSh()->motionNormal = (uint8_t **)motionNormalAddr.data();
+  getSh()->motionKeys = motionBlur ? motionVertexData->size() : 0;
+  getSh()->time = time;
+  getSh()->has_alpha = colorData && colorData->type == OSP_VEC4F;
+  getSh()->is_triangleMesh = isTri;
+  getSh()->super.numPrimitives = numPrimitives();
+  getSh()->super.postIntersect = isTri ? ispc::TriangleMesh_PostIntersect_addr()
+                                       : ispc::QuadMesh_postIntersect_addr();
+
+  getSh()->flagMask = -1;
+  if (!normalData)
+    getSh()->flagMask &= ispc::int64(~DG_NS);
+  if (!colorData)
+    getSh()->flagMask &= ispc::int64(~DG_COLOR);
+  if (!texcoordData)
+    getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
+
+  if (!tex1dData)
+    getSh()->flagMask &= ispc::int64(~DG_TEX1D);
+  if (!tex1dData_elm)
+    getSh()->flagMask &= ispc::int64(~DG_TEX1D_ELM);
+  if (!atex1dData)
+    getSh()->flagMask &= ispc::int64(~DG_ALPHATEX1D);
+  if (!atex1dData_elm)
+    getSh()->flagMask &= ispc::int64(~DG_ALPHATEX1D_ELM);
 
   postCreationInfo(vertexData->size());
 }

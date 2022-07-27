@@ -1,10 +1,9 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Isosurfaces.h"
 #include "common/Data.h"
-#include "common/World.h"
 // openvkl
 #include "openvkl/openvkl.h"
 // ispc-generated files
@@ -14,7 +13,7 @@ namespace ospray {
 
 Isosurfaces::Isosurfaces()
 {
-  ispcEquivalent = ispc::Isosurfaces_create();
+  getSh()->super.postIntersect = ispc::Isosurfaces_postIntersect_addr();
 }
 
 Isosurfaces::~Isosurfaces()
@@ -32,12 +31,6 @@ std::string Isosurfaces::toString() const
 
 void Isosurfaces::commit()
 {
-  if (!embreeDevice) {
-    throw std::runtime_error("invalid Embree device");
-  }
-  if (!embreeGeometry) {
-    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
-  }
   isovaluesData = getParamDataT<float>("isovalue", true, true);
   model = nullptr;
 
@@ -86,13 +79,14 @@ void Isosurfaces::commit()
 
   vklCommit(vklHitContext);
 
-  ispc::Isosurfaces_set(getIE(),
-      embreeGeometry,
-      isovaluesData->size(),
-      isovaluesData->data(),
-      model ? model->getIE() : nullptr,
-      volume ? volume->getSh() : nullptr,
-      vklHitContext);
+  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Isosurfaces_bounds,
+      (RTCIntersectFunctionN)&ispc::Isosurfaces_intersect,
+      (RTCOccludedFunctionN)&ispc::Isosurfaces_occluded);
+  getSh()->isovalues = isovaluesData->data();
+  getSh()->volumetricModel = model ? model->getSh() : nullptr;
+  getSh()->volume = volume ? volume->getSh() : nullptr;
+  getSh()->super.numPrimitives = numPrimitives();
+  getSh()->vklHitContext = vklHitContext;
 
   postCreationInfo();
 }

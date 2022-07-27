@@ -1,4 +1,4 @@
-## Copyright 2009-2022 Intel Corporation
+## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## Options ##
@@ -29,7 +29,6 @@ ispc_target_add_sources(ospray_module_mpi
   MPIDistributedDevice.ispc
   ModuleInit.cpp
   common/DistributedWorld.cpp
-  common/DistributedWorld.ispc
 
   common/OSPWork.cpp
   common/Messaging.cpp
@@ -84,4 +83,27 @@ install(TARGETS ospray_mpi_worker
   COMPONENT mpi)
 
 ospray_sign_target(ospray_mpi_worker)
+
+# -------------------------------------------------------
+# Install SDK headers
+# -------------------------------------------------------
+
+get_subdirectories(SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
+
+foreach(dir ${SUBDIRS})
+  install(DIRECTORY ${dir}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/modules/mpi
+    COMPONENT devel
+    FILES_MATCHING
+    PATTERN *.h
+    PATTERN *.ih
+  )
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${dir}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/modules/mpi
+    COMPONENT devel
+    FILES_MATCHING
+    PATTERN *_ispc.h
+  )
+endforeach()
+
 

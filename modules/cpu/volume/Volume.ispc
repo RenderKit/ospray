@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/Intersect.ih"
@@ -23,8 +23,6 @@ export void Volume_intersect_kernel(
   Volume *uniform self = (Volume * uniform) args->geometryUserPtr;
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
 
-  uniform int primID = args->primID;
-
   box3f *uniform box = &self->boundingBox;
 
   const Intersections isect = intersectBox(ray->org, ray->dir, *box);
@@ -34,7 +32,7 @@ export void Volume_intersect_kernel(
 
   if (t_min < t_max) {
     ray->instID = args->context->instID[0];
-    ray->geomID = self->volumeID;
+    ray->geomID = args->geomID;
     ray->primID = 0;
 
     EmbreeIntersectionContext *uniform ctx =
@@ -55,7 +53,7 @@ export void Volume_intersect_kernel(
         * varying)(vIntervals->intervals + vIntervals->numVolumeIntervals);
 
     vInterval->primID = 0;
-    vInterval->geomID = self->volumeID;
+    vInterval->geomID = args->geomID;
     vInterval->instID = args->context->instID[0];
     vInterval->interval.lower = t_min;
     vInterval->interval.upper = t_max;

@@ -1,30 +1,21 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "common/Data.ih"
+#include "common/DifferentialGeometry.ih"
 #include "common/FilterIntersect.ih"
 #include "common/ISPCMessages.h"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
-#include "common/World.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
+// c++ shared
+#include "SpheresShared.h"
 
-struct Spheres
-{
-  Geometry super;
-  Data1D vertex;
-  Data1D radius;
-  Data1D texcoord;
-  Data1D tex1d;     //ensight's colorby attribute
-  Data1D atex1d;    //ensight's alphaby attribute
-  float global_radius;
-};
-
-static void Spheres_postIntersect(const Geometry *uniform geometry,
+void Spheres_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -50,7 +41,7 @@ static void Spheres_postIntersect(const Geometry *uniform geometry,
     dg.atex1d = get_float(self->atex1d, ray.primID);
 }
 
-unmasked void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
+export void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   Spheres *uniform self = (Spheres * uniform) args->geometryUserPtr;
   uniform int primID = args->primID;
@@ -86,13 +77,13 @@ void Spheres_intersect_kernel(
   filterIntersectionBoth(args, isect, isOcclusionTest);
 }
 
-unmasked void Spheres_intersect(
+export void Spheres_intersect(
     const struct RTCIntersectFunctionNArguments *uniform args)
 {
   Spheres_intersect_kernel(args, false);
 }
 
-unmasked void Spheres_occluded(
+export void Spheres_occluded(
     const struct RTCOccludedFunctionNArguments *uniform args)
 {
   Spheres_intersect_kernel((RTCIntersectFunctionNArguments *)args, true);
@@ -151,48 +142,17 @@ void Spheres_getAreas(const Geometry *const uniform _self,
   }
 }
 
-void Spheres_Constructor(Spheres *uniform self)
+export void *uniform Spheres_postIntersect_addr()
 {
-  Geometry_Constructor(&self->super, Spheres_postIntersect);
-  self->super.getAreas = Spheres_getAreas;
-  self->super.sampleArea = Spheres_sampleArea;
-  Data1D_Constructor(&self->vertex);
-  Data1D_Constructor(&self->radius);
-  Data1D_Constructor(&self->texcoord);
-  Data1D_Constructor(&self->tex1d);
-  Data1D_Constructor(&self->atex1d);
-  self->global_radius = 0.01;
+  return Spheres_postIntersect;
 }
 
-export void *uniform Spheres_create()
+export void *uniform Spheres_sampleArea_addr()
 {
-  Spheres *uniform self = uniform new Spheres;
-  Spheres_Constructor(self);
-  return self;
+  return Spheres_sampleArea;
 }
 
-export void SpheresGeometry_set(void *uniform _self,
-    void *uniform _embreeGeometry,
-    const Data1D *uniform vertex,
-    const Data1D *uniform radius,
-    const Data1D *uniform texcoord,
-    const Data1D *uniform tex1d,
-    const Data1D *uniform atex1d,
-    uniform float global_radius)
+export void *uniform Spheres_getAreas_addr()
 {
-  Spheres *uniform self = (Spheres * uniform) _self;
-
-  self->vertex = *vertex;
-  self->radius = *radius;
-  self->texcoord = *texcoord;
-  self->tex1d = *tex1d;
-  self->atex1d = *atex1d;
-  self->global_radius = global_radius;
-  self->super.numPrimitives = vertex->numItems;
-
-  Geometry_setEmbreeUserGeometry(&self->super,
-      (RTCGeometry)_embreeGeometry,
-      Spheres_bounds,
-      Spheres_intersect,
-      Spheres_occluded);
+  return Spheres_getAreas;
 }

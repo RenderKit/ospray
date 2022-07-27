@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -14,7 +14,8 @@ struct OSPRAY_SDK_INTERFACE HDRILight : public Light
 {
   HDRILight() = default;
   virtual ~HDRILight() override;
-  virtual void *createIE(const void *instance) const override;
+  virtual ispc::Light *createSh(
+      uint32_t, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;
 

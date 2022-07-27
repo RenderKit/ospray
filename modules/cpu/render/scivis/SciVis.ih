@@ -1,21 +1,14 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "common/World.ih"
-#include "math/random.ih"
 #include "render/Renderer.ih"
+// c++ shared
+#include "SciVisShared.h"
 
-struct SciVis
-{
-  Renderer super;
-  bool shadowsEnabled;
-  bool visibleLights;
-  int aoSamples;
-  float aoRadius;
-  float volumeSamplingRate;
-};
+struct LDSampler;
+struct DifferentialGeometry;
 
 struct SciVisRenderContext
 {
@@ -25,8 +18,6 @@ struct SciVisRenderContext
   ScreenSample sample;
   varying LDSampler *uniform ldSampler;
 };
-
-struct LDSampler;
 
 vec3f lightAlpha(const uniform SciVis *uniform self,
     Ray &ray,

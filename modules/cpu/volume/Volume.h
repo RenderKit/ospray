@@ -1,16 +1,16 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "ISPCDevice.h"
 #include "common/Managed.h"
-#include "common/StructShared.h"
 // embree
 #include "embree3/rtcore.h"
-
+// openvkl
 #include "openvkl/volume.h"
-#include "volume/VolumeShared.h"
+// ispc shared
+#include "VolumeShared.h"
 
 namespace ospray {
 
@@ -23,7 +23,6 @@ struct OSPRAY_SDK_INTERFACE Volume
   std::string toString() const override;
   void commit() override;
   void setDevice(RTCDevice embreeDevice, VKLDevice vklDevice);
-  void setGeomID(int geomID);
 
  private:
   void checkDataStride(const Data *) const;

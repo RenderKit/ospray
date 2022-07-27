@@ -1,7 +1,9 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "LinearTransferFunction.ih"
+#include "common/Data.ih"
+// c++ shared
+#include "LinearTransferFunctionShared.h"
 
 vec4f LinearTransferFunction_get(const void *uniform _self, float value)
 {

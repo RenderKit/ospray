@@ -1,10 +1,12 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedLoadBalancer.h"
 #include <algorithm>
 #include <limits>
 #include <map>
+#include "../common/DistributedWorld.h"
+#include "../common/DynamicLoadBalancer.h"
 #include "../fb/DistributedFrameBuffer.h"
 #include "WriteMultipleTileOperation.h"
 #include "camera/Camera.h"
@@ -16,17 +18,16 @@
 
 namespace ospray {
 namespace mpi {
-namespace staticLoadBalancer {
 using namespace mpicommon;
 using namespace rkcommon;
 
-Distributed::Distributed() {}
+DistributedLoadBalancer::DistributedLoadBalancer() {}
 
-Distributed::~Distributed()
+DistributedLoadBalancer::~DistributedLoadBalancer()
 {
   handle.free();
 }
-void Distributed::renderFrame(
+void DistributedLoadBalancer::renderFrame(
     FrameBuffer *_fb, Renderer *_renderer, Camera *camera, World *_world)
 {
   auto *dfb = dynamic_cast<DistributedFrameBuffer *>(_fb);
@@ -48,7 +49,6 @@ void Distributed::renderFrame(
           "distributed renderer!");
     }
   }
-
   if (dfb->getLastRenderer() != renderer) {
     dfb->setTileOperation(renderer->tileOperation(), renderer);
   }
@@ -60,20 +60,12 @@ void Distributed::renderFrame(
 #ifdef ENABLE_PROFILING
   ProfilingPoint start = ProfilingPoint();
 #endif
-  std::set<int> tilesForFrame;
-  for (int i = workerRank(); i < dfb->getTotalTiles(); i += workerSize()) {
-    const uint32_t tile_y = i / dfb->getNumTiles().x;
-    const uint32_t tile_x = i - tile_y * dfb->getNumTiles().x;
-    const vec2i tileID(tile_x, tile_y);
-    // Skip tiles that have been rendered to satisfactory error level
-    if (dfb->tileError(tileID) > renderer->errorThreshold) {
-      tilesForFrame.insert(i);
-    }
-  }
 
-  const vec2i numTiles = dfb->getNumTiles();
+  std::vector<std::vector<uint32_t>> regionTileIds(world->myRegionIds.size());
+  const vec2i numTiles = dfb->getGlobalNumTiles();
   const vec2i fbSize = dfb->getNumPixels();
-  for (const auto &id : world->myRegionIds) {
+  for (size_t i = 0; i < world->myRegionIds.size(); ++i) {
+    const size_t id = world->myRegionIds[i];
     const auto &r = world->allRegions[id];
     box3f proj = camera->projectBox(r);
     box2f screenRegion(vec2f(proj.lower) * fbSize, vec2f(proj.upper) * fbSize);
@@ -94,291 +86,206 @@ void Distributed::renderFrame(
     tileRegion.upper = min(tileRegion.upper, numTiles);
     for (int y = tileRegion.lower.y; y < tileRegion.upper.y; ++y) {
       for (int x = tileRegion.lower.x; x < tileRegion.upper.x; ++x) {
-        // Skip tiles that have been rendered to satisfactory error level
-        if (dfb->tileError(vec2i(x, y)) <= renderer->errorThreshold) {
-          continue;
-        }
-
-        const int tileIndex = x + y * numTiles.x;
+        const uint32_t tileIndex = x + y * numTiles.x;
         const auto &owners = world->regionOwners[id];
         const size_t numRegionOwners = owners.size();
         const size_t ownerRank =
             std::distance(owners.begin(), owners.find(workerRank()));
+
         // TODO: Can we do a better than round-robin over all tiles
         // assignment here? It could be that we end up not evenly dividing
         // the workload.
         const bool regionTileOwner = (tileIndex % numRegionOwners) == ownerRank;
+
+        // If we're the owner and this tile isn't completed by adaptive
+        // refinement, we need to render it
         if (regionTileOwner) {
-          tilesForFrame.insert(tileIndex);
+          regionTileIds[i].push_back(tileIndex);
         }
       }
     }
   }
+
+  // Set up the DFB sparse layers for each region we're rendering locally
+  // We need one SparseFB layer in the DFB per region we're rendering locally
+  dfb->setSparseFBLayerCount(world->myRegionIds.size());
+  for (size_t i = 0; i < world->myRegionIds.size(); ++i) {
+    // Layer 0 is the base "background" tiles, regions are rendered to
+    // layers 1..# regions + 1
+    auto *layer = dfb->getSparseFBLayer(i + 1);
+    // Check if this layer already stores the tiles we want, and if so don't
+    // reset it
+    const auto &layerTiles = layer->getTileIDs();
+    // TODO: it'd be nice if we had some other change tracking that would let us
+    // know when we have different tiles rather than having to check the lists
+    // of IDs against each other.
+    // If this is a new FB, or the camera/scene has changed, we should set the
+    // new tiles because they've probably changed. If nothing in the scene is
+    // different from the previous render, then we don't need to set new tiles
+    // because we're just accumulating.
+    if (layerTiles.size() != regionTileIds[i].size()
+        || !std::equal(
+            layerTiles.begin(), layerTiles.end(), regionTileIds[i].begin())) {
+      layer->setTiles(regionTileIds[i]);
+    }
+  }
+
 #ifdef ENABLE_PROFILING
   ProfilingPoint end = ProfilingPoint();
   std::cout << "Initial tile for frame determination "
             << elapsedTimeMs(start, end) << "ms\n";
 #endif
 
-#ifdef ENABLE_PROFILING
-  start = ProfilingPoint();
-#endif
-  tasking::parallel_for(tilesForFrame.size(), [&](size_t taskId) {
-    auto tileIter = tilesForFrame.begin();
-    std::advance(tileIter, taskId);
-    const int tileIndex = *tileIter;
-    const uint32_t numTiles_x = static_cast<uint32_t>(dfb->getNumTiles().x);
-    const uint32_t tile_y = tileIndex / numTiles_x;
-    const uint32_t tile_x = tileIndex - tile_y * numTiles_x;
-    const vec2i tileID(tile_x, tile_y);
-    const int32 accumID = dfb->accumID(tileID);
-    const bool tileOwner = (tileIndex % workerSize()) == workerRank();
-    const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
+  // Note: Later this will be a set of tasks we enqueue at the same time and
+  // want to run in parallel to each other. For now this still runs as a
+  // parallel for here so we don't end up having to do a more sync/blocking
+  // style render
+  tasking::parallel_for(dfb->getSparseLayerCount(), [&](size_t layer) {
+    // Just render the background color and compute visibility information for
+    // the tiles we own for layer "0"
+    SparseFrameBuffer *sparseFb = dfb->getSparseFBLayer(layer);
 
-    const auto fbSize = dfb->getNumPixels();
+    // Explicitly avoiding std::vector<bool> because we need to match ISPC's
+    // memory layout
+    const auto &tiles = sparseFb->getTiles();
+    const auto &tileIDs = sparseFb->getTileIDs();
 
-    Tile __aligned(64) bgtile(tileID, fbSize, accumID);
+    // We use uint8 instead of bool to avoid hitting UB with differing "true"
+    // values used by ISPC and C++
+    std::vector<uint8_t> regionVisible(numRegions * tiles.size(), 0);
 
-    // The visibility entries are sorted by the region id, matching
-    // the order of the allRegions vector.
-    bool *regionVisible = STACK_BUFFER(bool, numRegions);
-    std::fill(regionVisible, regionVisible + numRegions, false);
+    // Compute visibility for the tasks we're rendering
+    auto renderTaskIDs = sparseFb->getRenderTaskIDs();
 
-    // The first renderTile doesn't actually do any rendering, and instead
-    // just computes which tiles the region projects to, giving us the
-    // exact bounds of the region's projection onto the image
-    tasking::parallel_for(static_cast<size_t>(NUM_JOBS), [&](size_t tIdx) {
-      renderer->computeRegionVisibility(
-          dfb, camera, world, regionVisible, perFrameData, bgtile, tIdx);
-    });
+    renderer->computeRegionVisibility(sparseFb,
+        camera,
+        world,
+        regionVisible.data(),
+        perFrameData,
+        renderTaskIDs);
 
-    // If we own the tile send the background color and the count of
-    // children for the number of regions projecting to it that will be
-    // sent.
-    if (tileOwner) {
-      bgtile.sortOrder = std::numeric_limits<int32_t>::max();
-      bgtile.generation = 0;
-      bgtile.children = 0;
-      // Note: not using std::count here as seems to not count properly in debug
-      // builds
-      for (size_t i = 0; i < numRegions; ++i) {
-        if (regionVisible[i]) {
-          ++bgtile.children;
+    // If we're rendering the background tiles send them over now
+    if (layer == 0) {
+      tasking::parallel_for(tiles.size(), [&](size_t i) {
+        // Don't send anything if this tile was finished due to adaptive
+        // refinement
+        if (dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
+          return;
         }
-      }
-      dfb->setTile(bgtile);
-    }
 
-    // Render our regions that project to this tile and ship them off
-    // to the tile owner.
-    std::vector<size_t> myVisibleRegions;
-    myVisibleRegions.reserve(world->myRegionIds.size());
-    for (const auto &rid : world->myRegionIds) {
-      if (regionVisible[rid]) {
-        myVisibleRegions.push_back(rid);
-      }
-    }
-    // If none of our regions are visible, we're done
-    if (myVisibleRegions.empty()) {
-      return;
-    }
+        // TODO: Would be nice to not copy here, but not sure about makign the
+        // tiles modifiable either in SparseFrameBuffer::getTile.
+        Tile bgtile = tiles[i];
 
-    // TODO: Will it really be much benefit to run the regions in parallel
-    // as well? We already are running in parallel on the tiles and the
-    // pixels within the tiles, so adding another level may actually just
-    // give us worse cache coherence.
-#define PARALLEL_REGION_RENDERING 1
-#if PARALLEL_REGION_RENDERING
-    tasking::parallel_for(myVisibleRegions.size(), [&](size_t vid) {
-      const size_t rid = myVisibleRegions[vid];
-      Tile __aligned(64) tile(tileID, fbSize, accumID);
-#else
-      for (const size_t &rid : myVisibleRegions) {
-        Tile &tile = bgtile;
-#endif
-      tile.generation = 1;
-      tile.children = 0;
-      // If we share ownership of this region but aren't responsible
-      // for rendering it to this tile, don't render it.
-      // Note that we do need to double check here, since we could have
-      // multiple shared regions projecting to the same tile, and we
-      // could be the region tile owner for only some of those
-      const auto &owners = world->regionOwners[rid];
-      const size_t numRegionOwners = owners.size();
-      const size_t ownerRank =
-          std::distance(owners.begin(), owners.find(workerRank()));
-      const bool regionTileOwner = (tileIndex % numRegionOwners) == ownerRank;
-      if (regionTileOwner) {
-        tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
-          renderer->renderRegionToTile(dfb,
-              camera,
-              world,
-              world->allRegions[rid],
-              perFrameData,
-              tile,
-              tIdx);
-        });
-        // Unused
-        // tile.sortOrder = sortOrder[rid];
-        dfb->setTile(tile);
-      }
-#if PARALLEL_REGION_RENDERING
-    });
-#else
+        bgtile.sortOrder = std::numeric_limits<int32_t>::max();
+        bgtile.generation = 0;
+        bgtile.children = 0;
+        bgtile.accumID = dfb->getFrameID();
+        for (size_t r = 0; r < numRegions; ++r) {
+          if (regionVisible[numRegions * i + r]) {
+            ++bgtile.children;
+          }
+        }
+        // Fill the tile with the background color
+        // TODO: Should replace this with a smaller metadata message so we don't
+        // need to send a full tile
+        std::fill(
+            bgtile.r, bgtile.r + TILE_SIZE * TILE_SIZE, renderer->bgColor.x);
+        std::fill(
+            bgtile.g, bgtile.g + TILE_SIZE * TILE_SIZE, renderer->bgColor.y);
+        std::fill(
+            bgtile.b, bgtile.b + TILE_SIZE * TILE_SIZE, renderer->bgColor.z);
+        std::fill(
+            bgtile.a, bgtile.a + TILE_SIZE * TILE_SIZE, renderer->bgColor.w);
+        std::fill(bgtile.z,
+            bgtile.z + TILE_SIZE * TILE_SIZE,
+            std::numeric_limits<float>::infinity());
+        dfb->setTile(bgtile);
+      });
+    } else {
+      // If we're rendering a region, render it and send over the tile data
+
+      // Remove any tasks for tiles that we found the region isn't actually
+      // visible to. The region projection is conservative in its bounds, so
+      // we can often remove a substantial number of tasks, resulting in better
+      // utilization. This also removes tasks that have completed due to
+      // adaptive refinement
+      const size_t rid = world->myRegionIds[layer - 1];
+      std::vector<uint32_t> activeTasks(
+          renderTaskIDs.begin(), renderTaskIDs.end());
+      auto removeTasks = std::partition(
+          activeTasks.begin(), activeTasks.end(), [&](const uint32_t taskID) {
+            const uint32_t tileIdx = sparseFb->getTileIndexForTask(taskID);
+            return regionVisible[numRegions * tileIdx + rid]
+                && dfb->tileError(tileIDs[tileIdx]) > renderer->errorThreshold;
+          });
+      activeTasks.erase(removeTasks, activeTasks.end());
+
+      renderer->renderRegionTasks(sparseFb,
+          camera,
+          world,
+          world->allRegions[rid],
+          perFrameData,
+          utility::ArrayView<uint32_t>(activeTasks));
+
+      tasking::parallel_for(tiles.size(), [&](size_t i) {
+        if (!regionVisible[numRegions * i + rid]
+            || dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
+          return;
+        }
+        // TODO: Would be nice to not copy here, but not sure about making
+        // the tiles modifiable either in SparseFrameBuffer::getTile.
+        Tile regionTile = tiles[i];
+
+        regionTile.generation = 1;
+        regionTile.children = 0;
+        regionTile.accumID = dfb->getFrameID();
+        dfb->setTile(regionTile);
+      });
     }
-#endif
   });
-#ifdef ENABLE_PROFILING
-  end = ProfilingPoint();
-  std::cout << "Local rendering for frame " << elapsedTimeMs(start, end)
-            << "ms\n";
-#endif
 
   dfb->waitUntilFinished();
   renderer->endFrame(dfb, perFrameData);
 
   dfb->endFrame(renderer->errorThreshold, camera);
-} // end func
+}
 
-// ***************************************************************************
-void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
+void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
     Renderer *renderer,
     Camera *camera,
     DistributedWorld *world)
 {
-  bool askedForWork = false;
-  int enableStaticBalancer;
+  int enableStaticBalancer = 0;
   auto OSPRAY_STATIC_BALANCER =
       utility::getEnvVar<int>("OSPRAY_STATIC_BALANCER");
 
   enableStaticBalancer = OSPRAY_STATIC_BALANCER.value_or(0);
 
   std::shared_ptr<TileOperation> tileOperation = nullptr;
-  if (fb->getLastRenderer() != renderer) {
+  if (dfb->getLastRenderer() != renderer) {
     tileOperation = std::make_shared<WriteMultipleTileOperation>();
-    fb->setTileOperation(tileOperation, renderer);
+    dfb->setTileOperation(tileOperation, renderer);
   } else {
-    tileOperation = fb->getTileOperation();
+    tileOperation = dfb->getTileOperation();
   }
 
 #ifdef ENABLE_PROFILING
   ProfilingPoint start;
 #endif
-  fb->startNewFrame(renderer->errorThreshold);
-  void *perFrameData = renderer->beginFrame(fb, world);
+  dfb->startNewFrame(renderer->errorThreshold);
+  void *perFrameData = renderer->beginFrame(dfb, world);
 #ifdef ENABLE_PROFILING
   ProfilingPoint end;
   std::cout << "Start new frame took: " << elapsedTimeMs(start, end) << "ms\n";
 #endif
 
-  const auto fbSize = fb->getNumPixels();
-
-  const int ALLTASKS = fb->getTotalTiles();
-  int NTASKS = ALLTASKS / workerSize();
-  // NOTE(jda) - If all tiles do not divide evenly among all worker ranks
-  //             (a.k.a. ALLTASKS / worker.size has a remainder), then
-  //             some ranks will have one extra tile to do. Thus NTASKS
-  //             is incremented if we are one of those ranks.
-  if ((ALLTASKS % workerSize()) > workerRank())
-    NTASKS++;
-
-  // do not pass all tasks at once, this way if other ranks want to steal work,
-  // they can
-  int maxTasksPerRound = 20;
-  int numRounds = std::max(NTASKS / maxTasksPerRound, 1);
-  int tasksPerRound = NTASKS / numRounds;
-  int remainTasks = NTASKS % numRounds;
-  int terminatedTasks = 0;
-  int minActiveTasks = (ALLTASKS / workerSize()) * 0.25;
-
-  std::unique_ptr<DynamicLoadBalancer> dynamicLB =
-      make_unique<DynamicLoadBalancer>(handle, ALLTASKS);
-
-  mpicommon::barrier(fb->getMPIGroup().comm).wait();
-  int totalActiveTasks = ALLTASKS;
-  // push current work to workQueue
-  for (int i = 0; i < numRounds; i++) {
-    Work myWork;
-    myWork.ntasks = tasksPerRound;
-    myWork.offset = i * tasksPerRound;
-    myWork.ownerRank = workerRank();
-    dynamicLB->addWork(myWork);
+  if (enableStaticBalancer) {
+    renderFrameReplicatedStaticLB(dfb, renderer, camera, world, perFrameData);
+  } else {
+    renderFrameReplicatedDynamicLB(dfb, renderer, camera, world, perFrameData);
   }
 
-  // Extra round for any remainder tasks
-  if (remainTasks > 0) {
-    Work myWork;
-    myWork.ntasks = remainTasks;
-    myWork.offset = numRounds * tasksPerRound;
-    myWork.ownerRank = workerRank();
-    dynamicLB->addWork(myWork);
-  }
-#ifdef ENABLE_PROFILING
-  start = ProfilingPoint();
-#endif
-  /* TODO WILL: This can dispatch back to LocalTiledLoadBalancer::renderTiles
-   * to render the tiles instead of repeating this loop here ourselves.
-   */
-
-  while (0 < totalActiveTasks) {
-    int currentTasks = 0;
-    int offset = 0;
-    int ownerRank;
-    if (0 < dynamicLB->getWorkSize()) {
-      Work currWorkItem = dynamicLB->getWorkItemFront();
-      currentTasks = currWorkItem.ntasks;
-      offset = currWorkItem.offset;
-      ownerRank = currWorkItem.ownerRank;
-
-      askedForWork = false;
-    }
-
-    if (0 < currentTasks) {
-      tasking::parallel_for(currentTasks, [&](int taskIndex) {
-        const size_t tileID = (taskIndex + offset) * workerSize() + ownerRank;
-        const size_t numTiles_x = fb->getNumTiles().x;
-        const size_t tile_y = tileID / numTiles_x;
-        const size_t tile_x = tileID - tile_y * numTiles_x;
-        const vec2i tileId(tile_x, tile_y);
-        const int32 accumID = fb->accumID(tileId);
-
-        if (fb->tileError(tileId) <= renderer->errorThreshold)
-          return;
-
-#if TILE_SIZE > MAX_TILE_SIZE
-        auto tilePtr = make_unique<Tile>(tileId, fbSize, accumID);
-        auto &tile = *tilePtr;
-#else
-          Tile __aligned(64) tile(tileId, fbSize, accumID);
-#endif
-
-        if (!fb->frameCancelled()) {
-          tasking::parallel_for(
-              numJobs(renderer->spp, accumID), [&](size_t tid) {
-                renderer->renderTile(
-                    fb, camera, world, perFrameData, tile, tid);
-              });
-        }
-
-        fb->setTile(tile);
-      });
-    }
-    dynamicLB->sendTerm(currentTasks);
-    terminatedTasks = terminatedTasks + currentTasks;
-
-    if (0 < terminatedTasks)
-      dynamicLB->updateActiveTasks(terminatedTasks);
-    totalActiveTasks = dynamicLB->getActiveTasks();
-    terminatedTasks = 0;
-
-    // if the total active tasks over all workers is more than some min, request
-    // work
-    if (currentTasks <= 0 && minActiveTasks < totalActiveTasks && !askedForWork
-        && !enableStaticBalancer) {
-      dynamicLB->requestWork();
-      askedForWork = true;
-    }
-  }
 #ifdef ENABLE_PROFILING
   end = ProfilingPoint();
   std::cout << "Render loop took: " << elapsedTimeMs(start, end)
@@ -387,7 +294,7 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
   start = ProfilingPoint();
 #endif
 
-  fb->waitUntilFinished();
+  dfb->waitUntilFinished();
 
 #ifdef ENABLE_PROFILING
   end = ProfilingPoint();
@@ -397,8 +304,8 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
   start = ProfilingPoint();
 #endif
 
-  renderer->endFrame(fb, perFrameData);
-  fb->endFrame(renderer->errorThreshold, camera);
+  renderer->endFrame(dfb, perFrameData);
+  dfb->endFrame(renderer->errorThreshold, camera);
 
 #ifdef ENABLE_PROFILING
   end = ProfilingPoint();
@@ -407,26 +314,210 @@ void Distributed::renderFrameReplicated(DistributedFrameBuffer *fb,
 #endif
 }
 
-// ***************************************************************************
-std::string Distributed::toString() const
+std::string DistributedLoadBalancer::toString() const
 {
-  return "ospray::mpi::staticLoadBalancer::Distributed";
+  return "ospray::mpi::Distributed";
 }
 
-void Distributed::setObjectHandle(ObjectHandle &handle_)
+void DistributedLoadBalancer::setObjectHandle(ObjectHandle &handle_)
 {
   handle = handle_;
 }
-void Distributed::renderTiles(FrameBuffer *,
+
+void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
+    DistributedFrameBuffer *dfb,
+    Renderer *renderer,
+    Camera *camera,
+    DistributedWorld *world,
+    void *perFrameData)
+{
+  bool askedForWork = false;
+
+  const int ALLTILES = dfb->getGlobalTotalTiles();
+  int NTILES = ALLTILES / workerSize();
+  // NOTE(jda) - If all tiles do not divide evenly among all worker ranks
+  //             (a.k.a. ALLTILES / worker.size has a remainder), then
+  //             some ranks will have one extra tile to do. Thus NTILES
+  //             is incremented if we are one of those ranks.
+  if ((ALLTILES % workerSize()) > workerRank())
+    NTILES++;
+
+  // Do not pass all tiles at once, this way if other ranks want to steal work,
+  // they can
+  const int maxTilesPerRound = 20;
+  const int numRounds = std::max(NTILES / maxTilesPerRound, 1);
+  const int tilesPerRound = NTILES / numRounds;
+  const int remainTiles = NTILES % numRounds;
+  const int minActiveTiles = (ALLTILES / workerSize()) * 0.25;
+  int terminatedTiles = 0;
+
+  auto dynamicLB = make_unique<DynamicLoadBalancer>(handle, ALLTILES);
+
+  mpicommon::barrier(dfb->getMPIGroup().comm).wait();
+  int totalActiveTiles = ALLTILES;
+  // push current work to workQueue
+  for (int i = 0; i < numRounds; i++) {
+    Work myWork;
+    myWork.ntasks = tilesPerRound;
+    myWork.offset = i * tilesPerRound;
+    myWork.ownerRank = workerRank();
+    dynamicLB->addWork(myWork);
+  }
+
+  // Extra round for any remainder tiles
+  if (remainTiles > 0) {
+    Work myWork;
+    myWork.ntasks = remainTiles;
+    myWork.offset = numRounds * tilesPerRound;
+    myWork.ownerRank = workerRank();
+    dynamicLB->addWork(myWork);
+  }
+
+#ifdef ENABLE_PROFILING
+  start = ProfilingPoint();
+#endif
+
+  const int sparseFbChannelFlags =
+      dfb->getChannelFlags() & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE);
+  const bool sparseFbTrackAccumIDs = dfb->getChannelFlags() & OSP_FB_ACCUM;
+
+  auto sparseFb = rkcommon::make_unique<SparseFrameBuffer>(dfb->getNumPixels(),
+      dfb->getColorBufferFormat(),
+      sparseFbChannelFlags,
+      sparseFbTrackAccumIDs);
+
+  while (0 < totalActiveTiles) {
+    Work currentWorkItem;
+    if (0 < dynamicLB->getWorkSize()) {
+      currentWorkItem = dynamicLB->getWorkItemFront();
+      askedForWork = false;
+    }
+
+    if (0 < currentWorkItem.ntasks) {
+      // Allocate a sparse framebuffer to hold the render output data
+      std::vector<uint32_t> taskTileIDs;
+      taskTileIDs.reserve(currentWorkItem.ntasks);
+      for (int i = 0; i < currentWorkItem.ntasks; ++i) {
+        const int tileID = (i + currentWorkItem.offset) * workerSize()
+            + currentWorkItem.ownerRank;
+        // Only render tiles if they haven't reached the error threshold
+        if (dfb->tileError(tileID) > renderer->errorThreshold) {
+          taskTileIDs.push_back(tileID);
+        }
+      }
+      sparseFb->setTiles(taskTileIDs);
+
+      // Set the right accumID for the tiles we're going to render
+      // TODO: would be nice if there was a more efficient way to run this as
+      // well.
+      if (sparseFbTrackAccumIDs) {
+        for (uint32_t i = 0; i < sparseFb->getTotalRenderTasks(); ++i) {
+          sparseFb->setTaskAccumID(i, dfb->getFrameID());
+        }
+      }
+
+      renderer->renderTasks(sparseFb.get(),
+          camera,
+          world,
+          perFrameData,
+          sparseFb->getRenderTaskIDs());
+
+      // TODO: Now the tile setting happens as a bulk-sync operation after
+      // rendering, because we still need to send them through the compositing
+      // pipeline. The ISPC-side rendering code doesn't know about this and in
+      // the future wouldn't be able to do it
+      // One option with the Dynamic LB would be to at least ping-poing
+      // sparseFb's, one is being rendered into while tiles from the previous
+      // task set are sent out
+      const auto &tiles = sparseFb->getTiles();
+      tasking::serial_for(tiles.size(), [&](size_t i) {
+        // TODO: Same note as distributed case, would be nice here to not have
+        // to copy the tile to change the accum ID.
+        Tile tile = tiles[i];
+        tile.accumID = dfb->getFrameID();
+        dfb->setTile(tile);
+      });
+      dynamicLB->sendTerm(currentWorkItem.ntasks);
+      terminatedTiles = terminatedTiles + currentWorkItem.ntasks;
+    }
+
+    if (0 < terminatedTiles) {
+      dynamicLB->updateActiveTasks(terminatedTiles);
+    }
+
+    totalActiveTiles = dynamicLB->getActiveTasks();
+    terminatedTiles = 0;
+
+    // if the total active tiles over all workers is more than some min,
+    // request work
+    if (currentWorkItem.ntasks <= 0 && minActiveTiles < totalActiveTiles
+        && !askedForWork) {
+      dynamicLB->requestWork();
+      askedForWork = true;
+    }
+  }
+  // We need to wait for the other ranks to finish here to keep our local DLB
+  // alive to respond to any work requests that come in while other ranks finish
+  // their final local set of tasks
+  mpicommon::barrier(dfb->getMPIGroup().comm).wait();
+}
+
+void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
+    DistributedFrameBuffer *dfb,
+    Renderer *renderer,
+    Camera *camera,
+    DistributedWorld *world,
+    void *perFrameData)
+{
+  SparseFrameBuffer *ownedTilesFb = dfb->getSparseFBLayer(0);
+
+  const auto &tiles = ownedTilesFb->getTiles();
+  const auto &tileIDs = ownedTilesFb->getTileIDs();
+  auto renderTaskIDs = ownedTilesFb->getRenderTaskIDs();
+
+  if (renderer->errorThreshold > 0.f) {
+    std::vector<uint32_t> activeTasks;
+    for (auto &i : renderTaskIDs) {
+      const uint32_t tileID = tileIDs[ownedTilesFb->getTileIndexForTask(i)];
+      const float error = dfb->tileError(tileID);
+      if (error > renderer->errorThreshold) {
+        activeTasks.push_back(i);
+      }
+    }
+
+    renderer->renderTasks(ownedTilesFb,
+        camera,
+        world,
+        perFrameData,
+        utility::ArrayView<uint32_t>(activeTasks));
+  } else {
+    renderer->renderTasks(
+        ownedTilesFb, camera, world, perFrameData, renderTaskIDs);
+  }
+
+  // TODO: Now the tile setting happens as a bulk-sync operation after
+  // rendering, because we still need to send them through the compositing
+  // pipeline. The ISPC-side rendering code doesn't know about this and in the
+  // future wouldn't be able to do it
+  tasking::parallel_for(tiles.size(), [&](size_t i) {
+    // Don't send anything if this tile was finished due to adaptive
+    // refinement
+    if (dfb->tileError(tileIDs[i]) <= renderer->errorThreshold) {
+      return;
+    }
+    dfb->setTile(tiles[i]);
+  });
+}
+
+void DistributedLoadBalancer::runRenderTasks(FrameBuffer *,
     Renderer *,
     Camera *,
     World *,
-    const utility::ArrayView<int> &,
+    const utility::ArrayView<uint32_t> &,
     void *)
 {
   NOT_IMPLEMENTED;
 }
 
-} // namespace staticLoadBalancer
 } // namespace mpi
 } // namespace ospray

@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2017-2019 Intel Corporation
+## Copyright 2017 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # This script should be called from build directory (OSPRay root should be in ../)

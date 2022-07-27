@@ -1,4 +1,4 @@
-## Copyright 2009-2019 Intel Corporation
+## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(OSPRAY_CXX_FLAGS "-fno-strict-aliasing -Wno-narrowing -Wno-unknown-pragmas")

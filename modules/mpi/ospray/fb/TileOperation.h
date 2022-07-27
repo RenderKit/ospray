@@ -1,11 +1,11 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <memory>
 #include <vector>
-#include "fb/Tile.h"
+#include "fb/TileShared.h"
 
 namespace ospray {
 
@@ -84,17 +84,17 @@ struct LiveTileOperation : public TileDesc
     return true;
   }
 
-  /* Called for each ospray::Tile rendered locally or received over the
+  /* Called for each Tile rendered locally or received over the
    * network for this image tile.
    */
-  virtual void process(const ospray::Tile &tile) = 0;
+  virtual void process(const ispc::Tile &tile) = 0;
 
   /* Utility method provided to accumulate the finished tile data from the
    * passed tile into the "finished" tile data, which will be passed on to any
    * ImageOps or written to the framebuffer.
    * TODO: Maybe just manage this on the DFB side?
    */
-  void accumulate(const ospray::Tile &tile);
+  void accumulate(const ispc::Tile &tile);
 
   /* Method to be called when the tile operation is finished and the computed
    * image written to the "finished" member of the struct
@@ -104,22 +104,21 @@ struct LiveTileOperation : public TileDesc
   DistributedFrameBuffer *dfb;
 
   // estimated variance of this tile
-  float error;
+  float error{0.f};
 
   // TODO: dynamically allocate to save memory when no ACCUM or VARIANCE
   // even more TODO: Tile contains much more data (e.g. AUX), but using only
   // the color buffer here ==> much wasted memory
   // also holds accumulated normal&albedo
-  ospray::Tile __aligned(64) accum;
-  ospray::Tile __aligned(64) variance;
+  ispc::Tile __aligned(64) accum;
+  ispc::Tile __aligned(64) variance;
 
-  /* iw: TODO - have to change this. right now, to be able to give
+  /* To be able to give
      the 'postaccum' pixel op a readily normalized tile we have to
      create a local copy (the tile stores only the accum value,
      and we cannot change this) */
   // also holds normalized normal&albedo in AOS format
-  // TODO WILL: Is this really such a big deal?
-  ospray::Tile __aligned(64) finished;
+  ispc::Tile __aligned(64) finished;
 
   //! the rbga32-converted colors
   // TODO: dynamically allocate to save memory when only uint32 / I8 colors

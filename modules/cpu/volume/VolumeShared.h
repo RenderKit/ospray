@@ -4,7 +4,7 @@
 #pragma once
 
 #ifdef __cplusplus
-using namespace rkcommon::math;
+#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 
@@ -14,8 +14,6 @@ namespace ispc {
 // representing a "derived" class to allow casting to that class).
 struct Volume
 {
-  int volumeID;
-
   VKLVolume vklVolume;
   VKLSampler vklSampler;
 
@@ -23,8 +21,11 @@ struct Volume
   // This is an internal derived parameter and not meant to be
   // redefined externally.
   box3f boundingBox;
-};
 
 #ifdef __cplusplus
+  Volume() : vklVolume(nullptr), vklSampler(nullptr), boundingBox(0.f, 0.f) {}
+};
 } // namespace ispc
+#else
+};
 #endif // __cplusplus

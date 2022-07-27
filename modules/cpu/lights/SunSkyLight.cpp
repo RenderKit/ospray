@@ -1,14 +1,16 @@
-// Copyright 2020-2022 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "SunSkyLight.h"
-
-#include "common/OSPCommon_ispc.h"
-#include "lights/DirectionalLight_ispc.h"
-#include "lights/HDRILight_ispc.h"
-#include "lights/Light_ispc.h"
 #include "texture/Texture2D.h"
+// embree
+#include "embree3/rtcore.h"
+// ispc exports
+#include "lights/HDRILight_ispc.h"
+// ispc shared
+#include "DirectionalLightShared.h"
+#include "HDRILightShared.h"
 
 namespace ospray {
 
@@ -20,7 +22,7 @@ SunSkyLight::SunSkyLight()
   static auto format = static_cast<OSPTextureFormat>(OSP_TEXTURE_RGB32F);
   static auto filter =
       static_cast<OSPTextureFilter>(OSP_TEXTURE_FILTER_BILINEAR);
-  mapIE.Set(skySize, skyImage.data(), EnsightTex1dMappingData(), format, filter);
+  mapSh.set(skySize, skyImage.data(), EnsightTex1dMappingData(), format, filter);
 }
 
 SunSkyLight::~SunSkyLight()
@@ -28,29 +30,34 @@ SunSkyLight::~SunSkyLight()
   ispc::HDRILight_destroyDistribution(distributionIE);
 }
 
-void *SunSkyLight::createIE(const void *instance) const
+ispc::Light *SunSkyLight::createSh(
+    uint32_t index, const ispc::Instance *instance) const
 {
   const vec3f position(0, 0, 0);
-  const float radius = 1e19f;
-  void *ie = ispc::HDRILight_create();
-  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
-  ispc::HDRILight_set(ie,
-      (ispc::vec3f &)position,
-      radius,
-      (ispc::vec3f &)coloredIntensity,
-      (const ispc::LinearSpace3f &)frame,
-      &mapIE,
-      distributionIE);
-  return ie;
-}
+  const float radius = 1e18f;
+  switch (index) {
+  case 0: {
+    ispc::HDRILight *sh = StructSharedCreate<ispc::HDRILight>();
+    sh->set(visible,
+        instance,
+        position,
+        radius,
+        coloredIntensity,
+        frame,
+        &mapSh,
+        (const ispc::Distribution2D *)distributionIE);
+    return &sh->super;
+  }
+  case 1: {
+    ispc::DirectionalLight *sh = StructSharedCreate<ispc::DirectionalLight>();
+    sh->set(visible, instance, direction, solarIrradiance, cosAngle);
+    return &sh->super;
+  }
 
-void *SunSkyLight::createSecondIE(const void *instance) const
-{
-  void *ie = ispc::DirectionalLight_create();
-  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
-  ispc::DirectionalLight_set(
-      ie, (ispc::vec3f &)solarIrradiance, (ispc::vec3f &)direction, cosAngle);
-  return ie;
+  default:
+    assert(false && "Incorrect SunSky sublight index");
+  }
+  return nullptr;
 }
 
 std::string SunSkyLight::toString() const
@@ -167,7 +174,7 @@ void SunSkyLight::commit()
 
   // recreate distribution
   ispc::HDRILight_destroyDistribution(distributionIE);
-  distributionIE = ispc::HDRILight_createDistribution(&mapIE);
+  distributionIE = ispc::HDRILight_createDistribution(&mapSh);
 }
 
 void SunSkyLight::processIntensityQuantityType()

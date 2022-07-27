@@ -1,29 +1,53 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "SpotLight.h"
-#include "lights/Light_ispc.h"
+#include "math/sampling.h"
+// embree
+#include "embree3/rtcore.h"
+
 #include "lights/SpotLight_ispc.h"
+
+#include "SpotLightShared.h"
+#include "common/InstanceShared.h"
 
 namespace ospray {
 
-void *SpotLight::createIE(const void *instance) const
+ispc::Light *SpotLight::createSh(uint32_t, const ispc::Instance *instance) const
 {
-  void *ie = ispc::SpotLight_create();
-  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
-  ispc::SpotLight_set(ie,
-      (const ispc::vec3f &)position,
-      (const ispc::vec3f &)direction,
-      (const ispc::vec3f &)intensityDistribution.c0,
-      (const ispc::vec3f &)radiance,
-      (const ispc::vec3f &)radIntensity,
-      cosAngleMax,
-      cosAngleScale,
-      radius,
-      innerRadius,
-      (const ispc::vec2i &)intensityDistribution.size,
-      intensityDistribution.data());
-  return ie;
+  ispc::SpotLight *sh = StructSharedCreate<ispc::SpotLight>();
+  sh->super.sample = ispc::SpotLight_sample_addr();
+  sh->super.eval = ispc::SpotLight_eval_addr();
+  sh->super.isVisible = visible;
+  sh->super.instance = instance;
+
+  sh->pre.position = position;
+  sh->pre.direction = normalize(direction);
+
+  intensityDistribution.setSh(sh->intensityDistribution);
+
+  // Enable dynamic runtime instancing or apply static transformation
+  if (instance) {
+    sh->pre.c0 = intensityDistribution.c0;
+    if (instance->motionBlur) {
+      sh->super.sample = ispc::SpotLight_sample_instanced_addr();
+      sh->super.eval = ispc::SpotLight_eval_instanced_addr();
+    } else
+      ispc::SpotLight_Transform(&sh->pre, instance->xfm, &sh->pre);
+  } else {
+    sh->pre.c90 = normalize(cross(intensityDistribution.c0, sh->pre.direction));
+    sh->pre.c0 = cross(sh->pre.direction, sh->pre.c90);
+  }
+
+  sh->radiance = radiance;
+  sh->intensity = radIntensity;
+  sh->cosAngleMax = cosAngleMax;
+  sh->cosAngleScale = cosAngleScale;
+  sh->radius = radius;
+  sh->innerRadius = innerRadius;
+  sh->areaPdf = uniformSampleRingPDF(radius, innerRadius);
+
+  return &sh->super;
 }
 
 std::string SpotLight::toString() const

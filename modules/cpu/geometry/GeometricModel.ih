@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,21 +7,8 @@
 #include "common/Data.ih"
 #include "math/AffineSpace.ih"
 #include "render/Renderer.ih"
-
-struct GeometricModel
-{
-  Geometry *geom;
-
-  Data1D color;
-  Data1D index; // per-primitive property mapping
-  Data1D material;
-
-  bool useRendererMaterialList;
-
-  bool invertedNormals;
-
-  float areaPDF;
-};
+// c++ shared
+#include "GeometricModelShared.h"
 
 inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
     const Renderer *uniform renderer,
@@ -62,6 +49,8 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
   geom->postIntersect(geom, dg, ray, flags);
 
   dg.areaPDF = self->areaPDF;
+  dg.objID =
+      (self->userID == RTC_INVALID_GEOMETRY_ID) ? ray.geomID : self->userID;
 
   if (flags & DG_COLOR && valid(self->color)) {
     uint32 idx = ray.primID;

@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <chrono>
@@ -17,7 +17,7 @@
 #include "../../fb/DistributedFrameBuffer.h"
 #include "AlphaCompositeTileOperation.h"
 #include "DistributedRaycast.h"
-
+// ispc exports
 #include "render/distributed/DistributedRaycast_ispc.h"
 
 namespace ospray {
@@ -32,7 +32,7 @@ static bool DETAILED_LOGGING = false;
 DistributedRaycastRenderer::DistributedRaycastRenderer()
     : mpiGroup(mpicommon::worker.dup())
 {
-  ispcEquivalent = ispc::DistributedRaycastRenderer_create();
+  getSh()->super.renderRegionSample = ispc::DRR_renderRegionSample_addr();
 
   DETAILED_LOGGING =
       utility::getEnvVar<int>("OSPRAY_DP_API_TRACING").value_or(0);
@@ -57,11 +57,12 @@ void DistributedRaycastRenderer::commit()
 {
   Renderer::commit();
 
-  ispc::DistributedRaycastRenderer_set(getIE(),
-      getParam<int>("aoSamples", 0),
-      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f)),
-      getParam<bool>("shadows", getParam<int>("shadowsEnabled", 0)),
-      getParam<float>("volumeSamplingRate", 1.f));
+  getSh()->aoSamples = getParam<int>("aoSamples", 0);
+  getSh()->aoRadius =
+      getParam<float>("aoDistance", getParam<float>("aoRadius", 1e20f));
+  getSh()->shadowsEnabled =
+      getParam<bool>("shadows", getParam<int>("shadowsEnabled", 0));
+  getSh()->volumeSamplingRate = getParam<float>("volumeSamplingRate", 1.f);
 }
 
 std::shared_ptr<TileOperation> DistributedRaycastRenderer::tileOperation()

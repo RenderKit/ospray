@@ -1,4 +1,4 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,11 +6,8 @@
 #include "common/Clipping.ih"
 #include "common/Ray.ih"
 #include "common/VolumeIntervals.ih"
-#include "math/random.ih"
-#include "volume/VolumetricModel.ih"
 
 struct LDSampler;
-struct RandomSampler;
 
 vec4f integrateVolumeIntervals(const VolumeIntervals &intervals,
     const RayIntervals &rayIntervals,

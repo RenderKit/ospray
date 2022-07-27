@@ -1,7 +1,6 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "render/pathtracer/PathTracer.ih"
 #include "render/pathtracer/TransparentShadow.ih"
 
 #include "render/Material.ih"
@@ -9,6 +8,9 @@
 
 #include "common/Ray.ih"
 #include "common/World.ih"
+
+// c++ shared
+#include "PathTracerShared.h"
 
 vec3f transparentShadow(const uniform PathTracer *uniform self,
     const World *uniform world,
@@ -58,10 +60,6 @@ vec3f transparentShadow(const uniform PathTracer *uniform self,
       if (m != NULL)
         m->selectNextMedium(m, dg, medium);
 
-    shadowRay.t0 = shadowRay.t + dg.epsilon;
-    shadowRay.t = tOriginal;
-    shadowRay.primID = -1;
-    shadowRay.geomID = -1;
-    shadowRay.instID = -1;
+    setRay(shadowRay, shadowRay.t + dg.epsilon, tOriginal);
   }
 }

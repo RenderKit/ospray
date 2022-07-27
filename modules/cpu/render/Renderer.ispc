@@ -1,11 +1,15 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
 #include "camera/Camera.ih"
 #include "common/World.ih"
 #include "math/random.ih"
+#include "pf/PixelFilter.ih"
 #include "render/util.ih"
+#include "texture/Texture2D.ih"
+// c++ shared
+#include "fb/FrameBufferShared.h"
 
 vec4f Renderer_getBackground(
     const Renderer *uniform self, const vec2f &screenPos)
@@ -41,13 +45,12 @@ void Renderer_default_renderSample(Renderer *uniform self,
   sample.rgb = make_vec3f(bg);
 }
 
-unmasked void Renderer_default_renderTile(Renderer *uniform self,
+task void Renderer_default_renderTask(Renderer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int taskIndex)
+    const uint32 *uniform taskIDs)
 {
   const uniform int32 spp = self->spp;
 
@@ -57,18 +60,19 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
 
   CameraSample cameraSample;
 
-  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end = begin + RENDERTILE_PIXELS_PER_JOB;
-  const uniform int startSampleID = max(tile.accumID, 0) * spp;
+  uniform RenderTaskDesc taskDesc =
+      fb->getRenderTaskDesc(fb, taskIDs[taskIndex0]);
 
-  for (uniform uint32 i = begin; i < end; i += programCount) {
-    const uint32 index = i + programIndex;
-    screenSample.sampleID.x = tile.region.lower.x + z_order.xs[index];
-    screenSample.sampleID.y = tile.region.lower.y + z_order.ys[index];
+  const uniform int startSampleID = max(taskDesc.accumID, 0) * spp;
 
-    if ((screenSample.sampleID.x >= fb->size.x)
-        | (screenSample.sampleID.y >= fb->size.y))
-      continue;
+  if (fb->cancelRender || isEmpty(taskDesc.region)) {
+    return;
+  }
+
+  foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
+      x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
+    screenSample.sampleID.x = x;
+    screenSample.sampleID.y = y;
 
     // set ray t value for early ray termination (from maximum depth texture)
     vec2f center =
@@ -81,8 +85,6 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
     vec3f normal = make_vec3f(0.f);
     vec3f albedo = make_vec3f(0.f);
 
-    const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
-
     for (uniform uint32 s = 0; s < spp; s++) {
       const float pixel_du = Halton_sample2(startSampleID + s);
       const float pixel_dv = CranleyPattersonRotation(
@@ -90,10 +92,10 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
           1.f / 6.f); // rotate to sample center (0.5) of pixel for sampleID=0
       const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
 
+      const PixelFilter *uniform pf = self->pixelFilter;
       vec2f pfSample = pixelSample;
-      if (self->pixelFilter) {
-        pfSample = self->pixelFilter->sample(self->pixelFilter, pixelSample)
-            + make_vec2f(0.5f);
+      if (pf) {
+        pfSample = pf->sample(pf, pixelSample) + make_vec2f(0.5f);
       }
 
       screenSample.sampleID.z = startSampleID + s;
@@ -113,6 +115,9 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
       screenSample.z = inf;
+      screenSample.primID = RTC_INVALID_GEOMETRY_ID;
+      screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
+      screenSample.instID = RTC_INVALID_GEOMETRY_ID;
       screenSample.albedo =
           make_vec3f(Renderer_getBackground(self, screenSample.pos));
       screenSample.normal = make_vec3f(0.f);
@@ -131,69 +136,37 @@ unmasked void Renderer_default_renderTile(Renderer *uniform self,
     screenSample.z = depth;
     screenSample.normal = normal * rspp;
     screenSample.albedo = albedo * rspp;
-    setTile(tile, pixel, screenSample);
+
+    // Accumulate rendering result directly into the framebuffer, to remove
+    // the need to call setTile separately on the CPU (but image ops needs
+    // handling separately, etc.)
+    fb->accumulateSample(fb, screenSample, taskDesc);
   }
-}
-
-export void Renderer_set(void *uniform _self,
-    const uniform int32 spp,
-    const uniform int32 maxDepth,
-    const uniform float minContribution,
-    const uniform vec4f &bgColor,
-    void *uniform backplate,
-    const uniform int32 numMaterials,
-    void *uniform materials,
-    void *uniform _maxDepthTexture,
-    void *uniform pixelFilter);
-
-void Renderer_Constructor(Renderer *uniform self)
-{
-  self->renderSample = Renderer_default_renderSample;
-  self->renderTile = Renderer_default_renderTile;
-  Renderer_set(self, 1, 20, 0.001f, make_vec4f(0.f), NULL, 0, NULL, NULL, NULL);
+  fb->completeTask(fb, taskDesc);
 }
 
 // Exports (called from C++) //////////////////////////////////////////////////
 
-export void Renderer_renderTile(void *uniform _self,
+export void *uniform Renderer_default_renderSample_addr()
+{
+  return Renderer_default_renderSample;
+}
+
+export void Renderer_renderTasks(void *uniform _self,
     void *uniform _fb,
     void *uniform _camera,
     void *uniform _world,
     void *uniform perFrameData,
-    uniform Tile &tile,
-    uniform int jobID)
+    void *uniform _taskIDs,
+    uniform uint32 numTasks)
 {
   Renderer *uniform self = (Renderer * uniform) _self;
   FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
   Camera *uniform camera = (Camera * uniform) _camera;
   World *uniform world = (World * uniform) _world;
-  self->renderTile(self, fb, camera, world, perFrameData, tile, jobID);
-}
-
-export void Renderer_set(void *uniform _self,
-    const uniform int32 spp,
-    const uniform int32 maxDepth,
-    const uniform float minContribution,
-    const uniform vec4f &bgColor,
-    void *uniform backplate,
-    const uniform int32 numMaterials,
-    void *uniform materials,
-    void *uniform _maxDepthTexture,
-    void *uniform pixelFilter)
-{
-  uniform Renderer *uniform self = (uniform Renderer * uniform) _self;
-
-  self->spp = spp;
-  self->maxDepth = maxDepth;
-  self->minContribution = minContribution;
-  self->bgColor = bgColor;
-  self->backplate = (uniform Texture2D * uniform) backplate;
-  self->numMaterials = numMaterials;
-  self->material = (Material * *uniform) materials;
-  self->maxDepthTexture = (Texture2D * uniform) _maxDepthTexture;
-  self->pixelFilter = (PixelFilter * uniform) pixelFilter;
-
-  precomputeZOrder();
+  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  launch[numTasks] Renderer_default_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs);
 }
 
 export void Renderer_pick(const void *uniform _self,

@@ -1,25 +1,50 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "QuadLight.h"
-#include "lights/Light_ispc.h"
+// embree
+#include "embree3/rtcore.h"
+
 #include "lights/QuadLight_ispc.h"
+
+#include "QuadLightShared.h"
+#include "common/InstanceShared.h"
 
 namespace ospray {
 
-void *QuadLight::createIE(const void *instance) const
+ispc::Light *QuadLight::createSh(uint32_t, const ispc::Instance *instance) const
 {
-  void *ie = ispc::QuadLight_create();
-  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
-  ispc::QuadLight_set(ie,
-      (ispc::vec3f &)radiance,
-      (ispc::vec3f &)position,
-      (ispc::vec3f &)edge1,
-      (ispc::vec3f &)edge2,
-      intensityDistribution.data(),
-      (const ispc::vec2i &)intensityDistribution.size,
-      (const ispc::vec3f &)intensityDistribution.c0);
-  return ie;
+  ispc::QuadLight *sh = StructSharedCreate<ispc::QuadLight>();
+  sh->super.sample = ispc::QuadLight_sample_addr();
+  sh->super.eval = ispc::QuadLight_eval_addr();
+  sh->super.isVisible = visible;
+  sh->super.instance = instance;
+
+  sh->radiance = radiance;
+
+  sh->pre.position = position;
+  sh->pre.edge1 = edge1;
+  sh->pre.edge2 = edge2;
+
+  intensityDistribution.setSh(sh->intensityDistribution);
+
+  // Enable dynamic runtime instancing or apply static transformation
+  if (instance) {
+    sh->pre.c0 = intensityDistribution.c0;
+    if (instance->motionBlur) {
+      sh->super.sample = ispc::QuadLight_sample_instanced_addr();
+      sh->super.eval = ispc::QuadLight_eval_instanced_addr();
+    } else
+      ispc::QuadLight_Transform(sh, instance->xfm, &sh->pre);
+  } else {
+    const vec3f ndirection = cross(edge2, edge1);
+    sh->pre.ppdf = rcp(length(ndirection)); // 1/area
+    sh->pre.nnormal = ndirection * sh->pre.ppdf; // normalize
+    sh->pre.c90 = normalize(cross(sh->pre.nnormal, intensityDistribution.c0));
+    sh->pre.c0 = cross(sh->pre.c90, sh->pre.nnormal);
+  }
+
+  return &sh->super;
 }
 
 std::string QuadLight::toString() const

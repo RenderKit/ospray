@@ -15,19 +15,19 @@ terms are listed below.
 --------------------------------------------------------------------------------
 
 1.  Intel(R) Embree
-    Copyright 2009-2021 Intel Corporation
+    Copyright 2009 Intel Corporation
 
     Google Benchmark
     Copyright 2014 Google Inc. All rights reserved.
 
     Intel(R) Open Image Denoise
-    Copyright 2009-2021 Intel Corporation
+    Copyright 2009 Intel Corporation
 
     Intel(R) Open VKL
-    Copyright 2019-2021 Intel Corporation
+    Copyright 2019 Intel Corporation
 
     Intel(R) oneAPI Threading Building Blocks (oneTBB)
-    Copyright 2005-2021 Intel Corporation
+    Copyright 2005 Intel Corporation
 
     Apache License Version 2.0
     January 2004

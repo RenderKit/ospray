@@ -5,6 +5,9 @@
 
 #include "common/Data.h"
 
+namespace ispc {
+struct IntensityDistribution;
+}
 namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE IntensityDistribution
@@ -15,10 +18,7 @@ struct OSPRAY_SDK_INTERFACE IntensityDistribution
   {
     return lid;
   }
-  float *data() const
-  {
-    return lid ? lid->data() : nullptr;
-  }
+  void setSh(ispc::IntensityDistribution &sh) const;
 
   vec2i size{0};
   vec3f c0{1.f, 0.f, 0.f};

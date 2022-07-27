@@ -1,26 +1,26 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PathTracer.h"
 // ospray
+#include "camera/Camera.h"
 #include "common/Data.h"
 #include "common/Instance.h"
+#include "common/World.h"
+#include "fb/FrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 #include "render/Material.h"
 // ispc exports
-#include "common/World_ispc.h"
-#include "render/pathtracer/GeometryLight_ispc.h"
+#include "geometry/GeometricModel_ispc.h"
+#include "render/bsdfs/MicrofacetAlbedoTables_ispc.h"
 #include "render/pathtracer/PathTracer_ispc.h"
+// ispc shared
+#include "render/pathtracer/GeometryLightShared.h"
 // std
 #include <map>
 
 namespace ospray {
-
-PathTracer::PathTracer()
-{
-  ispcEquivalent = ispc::PathTracer_create();
-}
 
 std::string PathTracer::toString() const
 {
@@ -28,7 +28,7 @@ std::string PathTracer::toString() const
 }
 
 void PathTracer::generateGeometryLights(
-    const World &world, std::vector<void *> &lightArray)
+    const World &world, std::vector<ispc::Light *> &lightArray)
 {
   if (!world.instances)
     return;
@@ -44,7 +44,7 @@ void PathTracer::generateGeometryLights(
         // check whether the model has any emissive materials
         bool hasEmissive = false;
         for (auto mat : model->ispcMaterialPtrs) {
-          if (mat && ((ispc::Material *)mat)->isEmissive()) {
+          if (mat && mat->isEmissive()) {
             hasEmissive = true;
             break;
           }
@@ -60,13 +60,30 @@ void PathTracer::generateGeometryLights(
             }
 
         if (hasEmissive) {
-          if (ispc::GeometryLight_isSupported(model->getIE())) {
-            void *light = ispc::GeometryLight_create(
-                model->getIE(), getIE(), instance->getIE());
+          if (model->geometry().supportAreaLighting()) {
+            std::vector<int> primIDs(model->geometry().numPrimitives());
+            std::vector<float> distribution(model->geometry().numPrimitives());
+            float pdf = 0.f;
+            unsigned int numPrimIDs =
+                ispc::GeometricModel_gatherEmissivePrimIDs(model->getSh(),
+                    getSh(),
+                    instance->getSh(),
+                    primIDs.data(),
+                    distribution.data(),
+                    pdf);
 
             // check whether the geometry has any emissive primitives
-            if (light)
-              lightArray.push_back(light);
+            if (numPrimIDs) {
+              ispc::GeometryLight *light =
+                  StructSharedCreate<ispc::GeometryLight>();
+              light->create(instance->getSh(),
+                  model->getSh(),
+                  numPrimIDs,
+                  primIDs.data(),
+                  distribution.data(),
+                  pdf);
+              lightArray.push_back(&light->super);
+            }
           } else {
             postStatusMsg(OSP_LOG_WARNING)
                 << "#osp:pt Geometry " << model->toString()
@@ -84,19 +101,23 @@ void PathTracer::commit()
 {
   Renderer::commit();
 
-  const int32 rouletteDepth = getParam<int>("roulettePathLength", 5);
-  const int32 numLightSamples = getParam<int>("lightSamples", -1);
-  const float maxRadiance = getParam<float>("maxContribution", inf);
-  vec4f shadowCatcherPlane = getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
-  importanceSampleGeometryLights = getParam<bool>("geometryLights", true);
-  const bool bgRefraction = getParam<bool>("backgroundRefraction", false);
+  getSh()->rouletteDepth = getParam<int>("roulettePathLength", 5);
+  getSh()->maxRadiance = getParam<float>("maxContribution", inf);
+  getSh()->numLightSamples = getParam<int>("lightSamples", -1);
 
-  ispc::PathTracer_set(getIE(),
-      rouletteDepth,
-      maxRadiance,
-      (ispc::vec4f &)shadowCatcherPlane,
-      numLightSamples,
-      bgRefraction);
+  // Set shadow catcher plane
+  const vec4f shadowCatcherPlane =
+      getParam<vec4f>("shadowCatcherPlane", vec4f(0.f));
+  const vec3f normal = vec3f(shadowCatcherPlane);
+  const float l = length(normal);
+  getSh()->shadowCatcher = l > 0.f;
+  const float rl = rcp(l);
+  getSh()->shadowCatcherPlane = vec4f(normal * rl, shadowCatcherPlane.w * rl);
+
+  importanceSampleGeometryLights = getParam<bool>("geometryLights", true);
+  getSh()->backgroundRefraction = getParam<bool>("backgroundRefraction", false);
+
+  ispc::precomputeMicrofacetAlbedoTables();
 }
 
 void *PathTracer::beginFrame(FrameBuffer *, World *world)
@@ -110,7 +131,7 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   if (world->pathtracerDataValid && geometryLightListValid)
     return nullptr;
 
-  std::vector<void *> lightArray;
+  std::vector<ispc::Light *> lightArray;
   size_t geometryLights{0};
 
   if (importanceSampleGeometryLights) {
@@ -120,10 +141,8 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
 
   if (world->lights) {
     for (auto &&obj : *world->lights) {
-      lightArray.push_back(obj->createIE());
-      void *secondIE = obj->createSecondIE();
-      if (secondIE)
-        lightArray.push_back(secondIE);
+      for (uint32_t id = 0; id < obj->getShCount(); id++)
+        lightArray.push_back(obj->createSh(id));
     }
   }
 
@@ -136,22 +155,41 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
 
       // Add instance lights to array
       for (auto &&obj : *inst->group->lights) {
-        lightArray.push_back(obj->createIE(inst->getIE()));
-        void *secondIE = obj->createSecondIE(inst->getIE());
-        if (secondIE)
-          lightArray.push_back(secondIE);
+        for (uint32_t id = 0; id < obj->getShCount(); id++)
+          lightArray.push_back(obj->createSh(id, inst->getSh()));
       }
     }
   }
 
-  void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
-  ispc::World_setPathtracerData(
-      world->getIE(), lightPtr, lightArray.size(), geometryLights);
+  // Prepare light cumulative distribution function
+  std::vector<float> lightsCDF(lightArray.size(), 1.f);
+  ispc::Distribution1D_create(lightsCDF.size(), lightsCDF.data());
+
+  // Prepare pathtracer data structure
+  ispc::PathtracerData &pd = world->getSh()->pathtracerData;
+  pd.destroy();
+  pd.create(
+      lightArray.data(), lightArray.size(), geometryLights, lightsCDF.data());
 
   world->pathtracerDataValid = true;
   scannedGeometryLights = importanceSampleGeometryLights;
 
   return nullptr;
+}
+
+void PathTracer::renderTasks(FrameBuffer *fb,
+    Camera *camera,
+    World *world,
+    void *perFrameData,
+    const utility::ArrayView<uint32_t> &taskIDs) const
+{
+  ispc::PathTracer_renderTasks(getSh(),
+      fb->getSh(),
+      camera->getSh(),
+      world->getSh(),
+      perFrameData,
+      taskIDs.data(),
+      taskIDs.size());
 }
 
 } // namespace ospray

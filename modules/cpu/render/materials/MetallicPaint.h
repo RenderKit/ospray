@@ -1,9 +1,9 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "math/spectrum.h"
 #include "render/Material.h"
-
+// ispc shared
 #include "MetallicPaintShared.h"
 
 namespace ospray {

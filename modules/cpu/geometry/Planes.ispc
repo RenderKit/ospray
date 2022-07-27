@@ -1,27 +1,23 @@
-// Copyright 2019-2022 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "common/Data.ih"
+#include "common/DifferentialGeometry.ih"
 #include "common/FilterIntersect.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
-#include "common/World.ih"
 #include "geometry/Geometry.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
+// c++ shared
+#include "PlanesShared.h"
 
 // The plane can't be truly infinite because Embree has a limit on object size
 #define PLANE_MAX_SIZE 1e18
+#define DUMMY_MAX_T 1e38
 
-struct Planes
-{
-  Geometry super;
-  Data1D coeffs;
-  Data1D bounds;
-};
-
-unmasked void Planes_bounds(const RTCBoundsFunctionArguments *uniform args)
+export void Planes_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   const uniform vec3f lo =
       make_vec3f(-PLANE_MAX_SIZE, -PLANE_MAX_SIZE, -PLANE_MAX_SIZE);
@@ -75,6 +71,19 @@ void Planes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   if (filterIntersectionSingle(args, hit, isOcclusionTest, false))
     return;
 
+  // handle plane parallel to ray, which breaks interval logic for clipping
+  if (!hit.hit) {
+    const uniform vec3f normal = make_vec3f(coeffs);
+    if (coeffs.w > dot(ray->org, normal)) { // within clipping half-space?
+      Hit hitExitDummy;
+      hitExitDummy.hit = true;
+      hitExitDummy.t = DUMMY_MAX_T;
+      hitExitDummy.N = ray->dir;
+      filterIntersectionSingle(args, hitExitDummy, isOcclusionTest, true);
+    }
+    return;
+  }
+
   // The second implicit plane is needed just for infinite planes
   if (valid(self->bounds))
     return;
@@ -92,20 +101,20 @@ void Planes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   filterIntersectionSingle(args, hitImplicit, isOcclusionTest, true);
 }
 
-unmasked void Planes_intersect(
+export void Planes_intersect(
     const struct RTCIntersectFunctionNArguments *uniform args)
 {
   Planes_intersect_kernel(args, false);
 }
 
-unmasked void Planes_occluded(
+export void Planes_occluded(
     const struct RTCOccludedFunctionNArguments *uniform args)
 {
   Planes_intersect_kernel(
       (RTCIntersectFunctionNArguments * uniform) args, true);
 }
 
-static void Planes_postIntersect(const Geometry *uniform geometry,
+void Planes_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -113,31 +122,7 @@ static void Planes_postIntersect(const Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 }
 
-export void *uniform Planes_create()
+export void *uniform Planes_postIntersect_addr()
 {
-  Planes *uniform self = uniform new Planes;
-
-  Geometry_Constructor(&self->super, Planes_postIntersect);
-  Data1D_Constructor(&self->coeffs);
-  Data1D_Constructor(&self->bounds);
-
-  return self;
-}
-
-export void *uniform Planes_set(void *uniform _self,
-    void *uniform _embreeGeometry,
-    const Data1D *uniform coeffs,
-    const Data1D *uniform bounds)
-{
-  Planes *uniform self = (Planes * uniform) _self;
-
-  self->coeffs = *coeffs;
-  self->bounds = *bounds;
-  self->super.numPrimitives = coeffs->numItems;
-
-  Geometry_setEmbreeUserGeometry(&self->super,
-      (RTCGeometry)_embreeGeometry,
-      Planes_bounds,
-      Planes_intersect,
-      Planes_occluded);
+  return Planes_postIntersect;
 }

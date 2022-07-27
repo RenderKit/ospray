@@ -1,13 +1,16 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Geometry.h"
+// ispc shared
+#include "SpheresShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Spheres : public Geometry
+struct OSPRAY_SDK_INTERFACE Spheres
+    : public AddStructShared<Geometry, ispc::Spheres>
 {
   Spheres();
   virtual ~Spheres() override = default;
@@ -19,7 +22,7 @@ struct OSPRAY_SDK_INTERFACE Spheres : public Geometry
   virtual size_t numPrimitives() const override;
 
  protected:
-  float radius{0.01}; // default radius, if no per-sphere radius
+  float radius{.01f}; // default radius, if no per-sphere radius
   Ref<const DataT<vec3f>> vertexData;
   Ref<const DataT<float>> radiusData;
   Ref<const DataT<vec2f>> texcoordData;

@@ -1,4 +1,4 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -135,12 +135,12 @@ export void LiveSSAOFrameOp_applyOcclusion(void *uniform _self,
   for (uint32 pixelID = 0; pixelID < fb->fbDims.x * fb->fbDims.y; pixelID++) {
     if (occlusionBuffer[pixelID] >= 0) {
       for (uint32 c = 0; c < 3; ++c) {
-        if ((fb->colorBufferFormat == ColorBufferFormat_RGB_UINT8)
-            || (fb->colorBufferFormat == ColorBufferFormat_RGBA_UINT8)) {
+        if ((fb->colorBufferFormat == OSP_FB_RGBA8)
+            || (fb->colorBufferFormat == OSP_FB_SRGBA)) {
           uint8 *uniform color = (uint8 * uniform) _color;
           color[pixelID * 4 + c] =
               color[pixelID * 4 + c] * (occlusionBuffer[pixelID]);
-        } else if (fb->colorBufferFormat == ColorBufferFormat_RGBA_FLOAT32) {
+        } else if (fb->colorBufferFormat == OSP_FB_RGBA32F) {
           float *uniform color = (float *uniform)_color;
           color[pixelID * 4 + c] *= (occlusionBuffer[pixelID]);
         } else {

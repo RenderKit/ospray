@@ -1,10 +1,9 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
 #include "Boxes.h"
 #include "common/Data.h"
-#include "common/World.h"
 // ispc-generated files
 #include "geometry/Boxes_ispc.h"
 
@@ -12,7 +11,7 @@ namespace ospray {
 
 Boxes::Boxes()
 {
-  ispcEquivalent = ispc::Boxes_create();
+  getSh()->super.postIntersect = ispc::Boxes_postIntersect_addr();
 }
 
 std::string Boxes::toString() const
@@ -22,15 +21,13 @@ std::string Boxes::toString() const
 
 void Boxes::commit()
 {
-  if (!embreeDevice) {
-    throw std::runtime_error("invalid Embree device");
-  }
-  if (!embreeGeometry) {
-    embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_USER);
-  }
   boxData = getParamDataT<box3f>("box", true);
 
-  ispc::Boxes_set(getIE(), embreeGeometry, ispc(boxData));
+  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Boxes_bounds,
+      (RTCIntersectFunctionN)&ispc::Boxes_intersect,
+      (RTCOccludedFunctionN)&ispc::Boxes_occluded);
+  getSh()->boxes = *ispc(boxData);
+  getSh()->super.numPrimitives = numPrimitives();
 
   postCreationInfo();
 }

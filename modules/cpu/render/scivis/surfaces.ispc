@@ -1,12 +1,12 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"
-// SciVis renderer
-#include "lights/Light.ih"
 #include "surfaces.ih"
+// c++ shared
+#include "lights/LightShared.h"
 
 vec3f directIllumination(const uniform SciVis *uniform self,
     const FrameBuffer *uniform fb,

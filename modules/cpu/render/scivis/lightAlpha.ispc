@@ -1,7 +1,6 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "lights/Light.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"

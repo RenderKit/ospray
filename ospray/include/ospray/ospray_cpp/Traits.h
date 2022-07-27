@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -78,6 +78,7 @@ OSPTYPEFOR_SPECIALIZATION(OSPAMRMethod, OSP_UCHAR);
 OSPTYPEFOR_SPECIALIZATION(OSPSubdivisionMode, OSP_UCHAR);
 OSPTYPEFOR_SPECIALIZATION(OSPPixelFilterTypes, OSP_UCHAR);
 OSPTYPEFOR_SPECIALIZATION(OSPIntensityQuantity, OSP_UCHAR);
+OSPTYPEFOR_SPECIALIZATION(OSPVolumeFormat, OSP_UINT);
 
 #define OSPTYPEFOR_DEFINITION(type)                                            \
   constexpr OSPDataType OSPTypeFor<type>::value

@@ -1,7 +1,9 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+
+#include "OSPCommon.h"
 
 namespace ospray {
 

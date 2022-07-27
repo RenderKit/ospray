@@ -1,12 +1,11 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Texture.h"
 #include "common/Data.h"
-#include "common/StructShared.h"
-
+// ispc shared
 #include "Texture2DShared.h"
 
 namespace ospray {

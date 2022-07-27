@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2016-2020 Intel Corporation
+## Copyright 2016 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 export LD_LIBRARY_PATH=`pwd`/build/install/ospray/lib:$LD_LIBRARY_PATH

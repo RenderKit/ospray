@@ -1,13 +1,13 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <assert.h>
 #include <vector>
+#include "common/OSPCommon.h"
 #include "rkcommon/memory/malloc.h"
 #include "rkcommon/tasking/parallel_for.h"
 
 namespace rkcommon {
-#define __dllexport /**/
 
 /* Signature of ispc-generated 'task' functions */
 using ISPCTaskFunc = void (*)(void *data,
@@ -22,7 +22,7 @@ using ISPCTaskFunc = void (*)(void *data,
     int taskCount1,
     int taskCount2);
 
-extern "C" __dllexport void *ISPCAlloc(
+extern "C" OSPRAY_SDK_INTERFACE void *ISPCAlloc(
     void **taskPtr, int64_t size, int32_t alignment)
 {
   if (*taskPtr == nullptr)
@@ -33,7 +33,7 @@ extern "C" __dllexport void *ISPCAlloc(
   return ptr;
 }
 
-extern "C" __dllexport void ISPCSync(void *task)
+extern "C" OSPRAY_SDK_INTERFACE void ISPCSync(void *task)
 {
   std::vector<void *> *lst = (std::vector<void *> *)task;
   for (size_t i = 0; i < lst->size(); i++)
@@ -41,7 +41,7 @@ extern "C" __dllexport void ISPCSync(void *task)
   delete lst;
 }
 
-extern "C" __dllexport void ISPCLaunch(void ** /*taskPtr*/,
+extern "C" OSPRAY_SDK_INTERFACE void ISPCLaunch(void ** /*taskPtr*/,
     void *func,
     void *data,
     int taskCount0,

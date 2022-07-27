@@ -1,9 +1,57 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "HDRILight.h"
+// embree
+#include "embree3/rtcore.h"
+// ispc exports
 #include "lights/HDRILight_ispc.h"
 #include "lights/Light_ispc.h"
+// ispc shared
+#include "HDRILightShared.h"
+#include "common/InstanceShared.h"
+
+namespace ispc {
+void HDRILight::set(bool isVisible,
+    const Instance *instance,
+    const vec3f &pos,
+    const float radi,
+    const vec3f &radianceScale,
+    const linear3f &light2world,
+    const Texture2D *map,
+    const Distribution2D *distribution)
+{
+  super.isVisible = isVisible;
+  super.instance = instance;
+  super.sample = ispc::HDRILight_sample_addr();
+  super.eval = ispc::HDRILight_eval_addr();
+
+  this->position = pos;
+  this->radius = radi;
+  this->radianceScale = radianceScale;
+  if (map) {
+    this->map = map;
+    this->distribution = distribution;
+
+    this->rcpSize = 1.f / this->map->sizef;
+    this->light2world = light2world;
+
+    // Enable dynamic runtime instancing or apply static transformation
+    if (instance) {
+      if (instance->motionBlur) {
+        super.sample = ispc::HDRILight_sample_instanced_addr();
+        super.eval = ispc::HDRILight_eval_instanced_addr();
+      } else {
+        this->light2world = instance->xfm.l * this->light2world;
+      }
+    }
+    world2light = rcp(this->light2world);
+  } else {
+    super.sample = ispc::HDRILight_sample_dummy_addr();
+    super.eval = ispc::Light_eval_addr();
+  }
+}
+} // namespace ispc
 
 namespace ospray {
 
@@ -12,18 +60,18 @@ HDRILight::~HDRILight()
   ispc::HDRILight_destroyDistribution(distributionIE);
 }
 
-void *HDRILight::createIE(const void *instance) const
+ispc::Light *HDRILight::createSh(uint32_t, const ispc::Instance *instance) const
 {
-  void *ie = ispc::HDRILight_create();
-  ispc::Light_set(ie, visible, (const ispc::Instance *)instance);
-  ispc::HDRILight_set(ie,
-      (ispc::vec3f &)position,
+  ispc::HDRILight *sh = StructSharedCreate<ispc::HDRILight>();
+  sh->set(visible,
+      instance,
+      position,
       radius,
-      (ispc::vec3f &)coloredIntensity,
-      (const ispc::LinearSpace3f &)frame,
-      map ? map->getSh() : nullptr,
-      distributionIE);
-  return ie;
+      coloredIntensity,
+      frame,
+      map->getSh(),
+      (const ispc::Distribution2D *)distributionIE);
+  return &sh->super;
 }
 
 std::string HDRILight::toString() const

@@ -1,0 +1,14 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "rkcommon/math/box.ih"
+
+struct RenderTaskDesc
+{
+  box2i region; // screen region that this corresponds to
+  uint32 taskID;
+  int accumID;
+  float error;
+};

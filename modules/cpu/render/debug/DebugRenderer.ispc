@@ -1,17 +1,15 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
+#include "DebugRendererType.h"
 #include "common/World.ih"
-#include "fb/FrameBuffer.ih"
 #include "math/random.ih"
 #include "render/Renderer.ih"
-#include "render/util.ih"
+#include "rkcommon/utility/random.ih"
 #include "volume/VolumetricModel.ih"
-
-#include "DebugRendererType.h"
-
-#include "openvkl/openvkl.isph"
+// c++ shared
+#include "fb/FrameBufferShared.h"
 
 // common utility function, traces ray and handles default and background
 bool hitBackground(
@@ -332,64 +330,24 @@ void DebugRenderer_volume(Renderer *uniform self,
 
 // DebugRenderer C++ interface ////////////////////////////////////////////////
 
-export void *uniform DebugRenderer_create()
-{
-  Renderer *uniform self = uniform new Renderer;
-  Renderer_Constructor(self);
-  self->renderSample = DebugRenderer_testFrame;
-  return self;
-}
-
-export void DebugRenderer_set(void *uniform _self, uniform int type)
-{
-  Renderer *uniform self = (Renderer * uniform) _self;
-
-  switch (type) {
-  case RAY_DIR:
-    self->renderSample = DebugRenderer_rayDir;
-    break;
-  case EYE_LIGHT:
-    self->renderSample = DebugRenderer_eyeLight;
-    break;
-  case NG:
-    self->renderSample = DebugRenderer_Ng;
-    break;
-  case NS:
-    self->renderSample = DebugRenderer_Ns;
-    break;
-  case COLOR:
-    self->renderSample = DebugRenderer_vertexColor;
-    break;
-  case TEX_COORD:
-    self->renderSample = DebugRenderer_texCoord;
-    break;
-  case DPDS:
-    self->renderSample = DebugRenderer_dPds;
-    break;
-  case DPDT:
-    self->renderSample = DebugRenderer_dPdt;
-    break;
-  case PRIM_ID:
-    self->renderSample = DebugRenderer_primID;
-    break;
-  case GEOM_ID:
-    self->renderSample = DebugRenderer_geomID;
-    break;
-  case INST_ID:
-    self->renderSample = DebugRenderer_instID;
-    break;
-  case BACKFACING_NG:
-    self->renderSample = DebugRenderer_backfacing_Ng;
-    break;
-  case BACKFACING_NS:
-    self->renderSample = DebugRenderer_backfacing_Ns;
-    break;
-  case VOLUME:
-    self->renderSample = DebugRenderer_volume;
-    break;
-  case TEST_FRAME:
-  default:
-    self->renderSample = DebugRenderer_testFrame;
-    break;
+#define EXPORT_FN_ADDR(name)                                                   \
+  export void *uniform name##_addr()                                           \
+  {                                                                            \
+    return name;                                                               \
   }
-}
+
+EXPORT_FN_ADDR(DebugRenderer_testFrame);
+EXPORT_FN_ADDR(DebugRenderer_rayDir);
+EXPORT_FN_ADDR(DebugRenderer_eyeLight);
+EXPORT_FN_ADDR(DebugRenderer_Ng);
+EXPORT_FN_ADDR(DebugRenderer_Ns);
+EXPORT_FN_ADDR(DebugRenderer_vertexColor);
+EXPORT_FN_ADDR(DebugRenderer_texCoord);
+EXPORT_FN_ADDR(DebugRenderer_dPds);
+EXPORT_FN_ADDR(DebugRenderer_dPdt);
+EXPORT_FN_ADDR(DebugRenderer_primID);
+EXPORT_FN_ADDR(DebugRenderer_geomID);
+EXPORT_FN_ADDR(DebugRenderer_instID);
+EXPORT_FN_ADDR(DebugRenderer_backfacing_Ng);
+EXPORT_FN_ADDR(DebugRenderer_backfacing_Ns);
+EXPORT_FN_ADDR(DebugRenderer_volume);

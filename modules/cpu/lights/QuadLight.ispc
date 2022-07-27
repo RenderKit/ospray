@@ -1,36 +1,17 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "IntensityDistribution.ih"
-#include "Light.ih"
 #include "SphericalQuadSampling.ih"
+#include "common/DifferentialGeometry.ih"
 #include "common/Instance.ih"
-
-// state that changes under transformations
-struct QuadLightDynamic
-{
-  vec3f position;
-  vec3f edge1;
-  vec3f edge2;
-  vec3f nnormal; // negated normal, the direction that the QuadLight is not
-                 // emitting; normalized
-  float ppdf; // probability to sample point on light = 1/area
-  vec3f c0; // orientation for intensityDistribution: direction of the C0-
-  vec3f c90; // and the C90-(half)plane
-};
-
-struct QuadLight
-{
-  Light super;
-  vec3f radiance; // emitted RGB radiance
-  IntensityDistribution intensityDistribution;
-  QuadLightDynamic pre; // un- or pre-transformed state
-};
+// c++ shared
+#include "QuadLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 inline void Transform(const QuadLight *uniform self,
-    const uniform affine3f xfm,
+    const uniform affine3f &xfm,
     uniform QuadLightDynamic &dyn)
 {
   // transform light into the world space
@@ -47,6 +28,14 @@ inline void Transform(const QuadLight *uniform self,
     dyn.c90 = normalize(cross(dyn.nnormal, xfmVector(xfm, self->pre.c0)));
     dyn.c0 = cross(dyn.c90, dyn.nnormal);
   }
+}
+
+export void QuadLight_Transform(
+    const void *uniform self, const void *uniform xfm, void *uniform dyn)
+{
+  Transform((QuadLight * uniform) self,
+      *((affine3f * uniform) xfm),
+      *((QuadLightDynamic * uniform) dyn));
 }
 
 inline Light_SampleRes SampleArea(const QuadLight *uniform self,
@@ -259,59 +248,22 @@ Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-export void QuadLight_set(void *uniform super,
-    const uniform vec3f &radiance,
-    const uniform vec3f &position,
-    const uniform vec3f &edge1,
-    const uniform vec3f &edge2,
-    float *uniform lid,
-    const uniform vec2i &size,
-    const uniform vec3f &c0)
+export void *uniform QuadLight_sample_addr()
 {
-  QuadLight *uniform self = (QuadLight * uniform) super;
-  self->radiance = radiance;
-
-  self->pre.position = position;
-  self->pre.edge1 = edge1;
-  self->pre.edge2 = edge2;
-
-  IntensityDistribution_set(&self->intensityDistribution, lid, size);
-
-  // Enable dynamic runtime instancing or apply static transformation
-  const Instance *uniform instance = self->super.instance;
-  if (instance) {
-    self->pre.c0 = c0;
-    if (instance->motionBlur) {
-      self->super.sample = QuadLight_sample_instanced;
-      self->super.eval = QuadLight_eval_instanced;
-    } else
-      Transform(self, instance->xfm, self->pre);
-  } else {
-    const uniform vec3f ndirection = cross(edge2, edge1);
-    self->pre.ppdf = rcp(length(ndirection)); // 1/area
-    self->pre.nnormal = ndirection * self->pre.ppdf; // normalize
-    self->pre.c90 = normalize(cross(self->pre.nnormal, c0));
-    self->pre.c0 = cross(self->pre.c90, self->pre.nnormal);
-  }
+  return QuadLight_sample;
 }
 
-//! Create an ispc-side QuadLight object
-export void *uniform QuadLight_create()
+export void *uniform QuadLight_sample_instanced_addr()
 {
-  QuadLight *uniform self = uniform new QuadLight;
+  return QuadLight_sample_instanced;
+}
 
-  Light_Constructor(&self->super);
-  self->super.sample = QuadLight_sample;
-  self->super.eval = QuadLight_eval;
+export void *uniform QuadLight_eval_addr()
+{
+  return QuadLight_eval;
+}
 
-  QuadLight_set(self,
-      make_vec3f(0.f),
-      make_vec3f(0.f),
-      make_vec3f(1.f, 0.f, 0.f),
-      make_vec3f(0.f, 1.f, 0.f),
-      NULL,
-      make_vec2i(0),
-      make_vec3f(0.f, 1.f, 0.f));
-
-  return self;
+export void *uniform QuadLight_eval_instanced_addr()
+{
+  return QuadLight_eval_instanced;
 }

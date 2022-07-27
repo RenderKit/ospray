@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "WriteMultipleTileOperation.h"
@@ -22,14 +22,14 @@ struct LiveWriteMultipleTile : public LiveTileOperation
   void newFrame() override;
 
   // accumulate into ACCUM and VARIANCE, and for last tile read-out
-  void process(const ospray::Tile &tile) override;
+  void process(const ispc::Tile &tile) override;
 
  private:
   int maxAccumID = 0;
   size_t instances = 1;
   bool writeOnceTile = true;
   // defer accumulation to get correct variance estimate
-  ospray::Tile bufferedTile;
+  ispc::Tile bufferedTile;
   bool tileBuffered = false;
   WriteMultipleTileOperation *parent = nullptr;
   // serialize when multiple instances of this tile arrive at the same time
@@ -52,7 +52,7 @@ void LiveWriteMultipleTile::newFrame()
   tileBuffered = false;
 }
 
-void LiveWriteMultipleTile::process(const ospray::Tile &tile)
+void LiveWriteMultipleTile::process(const ispc::Tile &tile)
 {
   if (writeOnceTile) {
     finished.region = tile.region;
@@ -78,7 +78,7 @@ void LiveWriteMultipleTile::process(const ospray::Tile &tile)
     std::lock_guard<std::mutex> lock(mutex);
     maxAccumID = std::max(maxAccumID, tile.accumID);
     if (!tileBuffered && (tile.accumID & 1) == 0) {
-      memcpy(&bufferedTile, &tile, sizeof(ospray::Tile));
+      memcpy(&bufferedTile, &tile, sizeof(ispc::Tile));
       tileBuffered = true;
     } else {
       ispc::DFB_accumulateTileSimple((const ispc::VaryingTile *)&tile,
@@ -141,7 +141,7 @@ void LiveWriteMultipleTile::process(const ospray::Tile &tile)
 void WriteMultipleTileOperation::attach(DistributedFrameBuffer *dfb)
 {
   mpiGroup = mpicommon::worker.dup();
-  tileInstances.resize(dfb->getTotalTiles(), 1);
+  tileInstances.resize(dfb->getGlobalTotalTiles(), 1);
 }
 
 std::unique_ptr<LiveTileOperation> WriteMultipleTileOperation::makeTile(

@@ -1,4 +1,4 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -11,6 +11,7 @@
 #include "MPICommon.h"
 #include "common/ObjectHandle.h"
 
+#include "rkcommon/memory/RefCount.h"
 #include "rkcommon/networking/DataStreaming.h"
 #include "rkcommon/networking/Fabric.h"
 #include "rkcommon/utility/ArrayView.h"
@@ -74,7 +75,7 @@ enum TAG
   FINALIZE
 };
 
-struct FrameBufferInfo
+struct FrameBufferInfo : rkcommon::memory::RefCountedObject
 {
   vec2i size = vec2i(0, 0);
   OSPFrameBufferFormat format = OSP_FB_NONE;
@@ -92,9 +93,9 @@ struct OSPState
 {
   std::unordered_map<int64_t, OSPObject> objects;
   // Data objects that are conceptually "shared" by the application
-  std::unordered_map<int64_t, Data *> appSharedData;
+  std::unordered_map<int64_t, Ref<Data>> appSharedData;
 
-  std::unordered_map<int64_t, FrameBufferInfo> framebuffers;
+  std::unordered_map<int64_t, Ref<FrameBufferInfo>> framebuffers;
 
   // Large data which is transferred separately from the command buffer,
   // prior to sending the command buffer

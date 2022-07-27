@@ -1,32 +1,18 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "fb/FrameBuffer.ih"
 
-void FrameBuffer_Constructor(FrameBuffer *uniform self)
+vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
+    const vec4f &color,
+    const float depth,
+    const vec3f &normal,
+    const vec3f &albedo)
 {
-  self->size.x = 0;
-  self->size.y = 0;
-  self->rcpSize.x = 0.f;
-  self->rcpSize.y = 0.f;
-  self->colorBufferFormat = ColorBufferFormat_NONE;
-}
-
-void FrameBuffer_set(FrameBuffer *uniform self,
-    const uniform uint32 size_x,
-    const uniform uint32 size_y,
-    uniform int32 colorBufferFormat)
-{
-  self->size.x = size_x;
-  self->size.y = size_y;
-  self->rcpSize.x = 1.f / size_x;
-  self->rcpSize.y = 1.f / size_y;
-  self->colorBufferFormat =
-      (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
-}
-
-export void FrameBuffer_set_frameID(void *uniform _self, uniform int32 frameID)
-{
-  uniform FrameBuffer *uniform self = (uniform FrameBuffer * uniform) _self;
-  self->frameID = frameID;
+  vec4f outColor = color;
+  for (uniform int i = 0; i < self->numPixelOps; ++i) {
+    outColor = self->pixelOps[i]->processPixel(
+        self->pixelOps[i], outColor, depth, normal, albedo);
+  }
+  return outColor;
 }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "IntensityDistribution.h"
+#include "IntensityDistributionShared.h"
 
 namespace ospray {
 
@@ -28,6 +29,14 @@ void IntensityDistribution::readParams(ManagedObject &obj)
       data->refDec();
     }
   }
+}
+
+void IntensityDistribution::setSh(ispc::IntensityDistribution &sh) const
+{
+  sh.lid = lid ? lid->data() : nullptr;
+  sh.size = size;
+  sh.scale.x = nextafter(float(size.x - 1) * float(one_over_pi), -1.0f);
+  sh.scale.y = nextafter(float(size.y) * float(one_over_two_pi), -1.0f);
 }
 
 } // namespace ospray

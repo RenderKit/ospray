@@ -1,14 +1,17 @@
-// Copyright 2009-2022 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Geometry.h"
 #include "volume/VolumetricModel.h"
+// ispc shared
+#include "IsosurfacesShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
+struct OSPRAY_SDK_INTERFACE Isosurfaces
+    : public AddStructShared<Geometry, ispc::Isosurfaces>
 {
   Isosurfaces();
   virtual ~Isosurfaces() override;

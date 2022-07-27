@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,31 +6,20 @@
 #include "common/World.ih"
 #include "rkcommon/math/vec.ih"
 
-inline vec3f make_random_color(const int i)
-{
-  const int mx = 13 * 17 * 43;
-  const int my = 11 * 29;
-  const int mz = 7 * 23 * 63;
-  const uint32 g = (i * (3 * 5 * 127) + 12312314);
-  return make_vec3f((g % mx) * (1.f / (mx - 1)),
-      (g % my) * (1.f / (my - 1)),
-      (g % mz) * (1.f / (mz - 1)));
-}
-
 float computeAO(const World *uniform,
     const varying DifferentialGeometry &,
     const uniform int sampleCnt,
     const uniform float aoRadius,
     const varying vec3i &sampleID);
 
-/*! struct that stores a precomputed z-order for tiles of TILE_SIZE x TILE_SIZE
- * pixels */
+// struct that stores a precomputed z-order for tiles of TILE_SIZE x TILE_SIZE
+// pixels
 struct z_order_t
 {
-  /*! 32-bit field specifying both x and y coordinate of the z-order,
-      with upper 16 bits for the y coordinate, and lower 16 for the x
-      coordinate. Compared to using two uint32-arrays, this saves on
-      gather-loop */
+  // 32-bit field specifying both x and y coordinate of the z-order,
+  // with upper 16 bits for the y coordinate, and lower 16 for the x
+  // coordinate. Compared to using two uint32-arrays, this saves on
+  // gather-loop
   uniform uint32 xyIdx[TILE_SIZE * TILE_SIZE];
   uniform uint32 xs[TILE_SIZE * TILE_SIZE];
   uniform uint32 ys[TILE_SIZE * TILE_SIZE];
@@ -83,16 +72,6 @@ inline void deinterleaveZOrder(
   *x = *y = 0;
   *x = unpartitionZOrder(z);
   *y = unpartitionZOrder(z >> 1);
-}
-
-/*! precompute a per-pixel z-order to be used within a tile */
-extern void precomputedZOrder_create();
-
-/*! precompute a per-pixel z-order to be used within a tile */
-inline void precomputeZOrder()
-{
-  if (!z_order_initialized)
-    precomputedZOrder_create();
 }
 
 extern const z_order_t *uniform get_zorder();

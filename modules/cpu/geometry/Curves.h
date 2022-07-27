@@ -1,13 +1,17 @@
-// Copyright 2009-2020 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Geometry.h"
+#include "common/Data.h"
+// ispc shared
+#include "CurvesShared.h"
 
 namespace ospray {
 
-struct OSPRAY_SDK_INTERFACE Curves : public Geometry
+struct OSPRAY_SDK_INTERFACE Curves
+    : public AddStructShared<Geometry, ispc::Curves>
 {
   Curves();
   virtual ~Curves() override = default;
@@ -25,7 +29,7 @@ struct OSPRAY_SDK_INTERFACE Curves : public Geometry
   Ref<const DataT<vec4f>> colorData;
   Ref<const DataT<vec2f>> texcoordData;
 
-  RTCGeometryType embreeCurveType;
+  RTCGeometryType embreeCurveType{(RTCGeometryType)-1};
 
   OSPCurveType curveType{OSP_UNKNOWN_CURVE_TYPE};
   OSPCurveBasis curveBasis{OSP_UNKNOWN_CURVE_BASIS};

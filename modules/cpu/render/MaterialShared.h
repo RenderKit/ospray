@@ -8,7 +8,7 @@
 #include "texture/TextureParamShared.h"
 
 #ifdef __cplusplus
-using namespace rkcommon::math;
+#include "common/StructShared.h"
 namespace ispc {
 typedef void *Material_GetBSDFFunc;
 typedef void *Material_GetTransparencyFunc;
@@ -83,7 +83,8 @@ struct Material
 
 #ifdef __cplusplus
   Material(const vec3f &emission = vec3f(0.f))
-      : getBSDF(nullptr),
+      : type(MATERIAL_TYPE_OBJ),
+        getBSDF(nullptr),
         getTransparency(nullptr),
         selectNextMedium(nullptr),
         emission(emission),

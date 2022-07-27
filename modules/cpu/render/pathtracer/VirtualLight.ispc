@@ -1,10 +1,13 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/World.ih"
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
 #include "render/pathtracer/VirtualLight.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
+// c++ shared
+#include "lights/LightShared.h"
 
 inline box1f getMinMaxDistForVirtualLights(const PathContext &pathContext,
     const PathState &pathState,
@@ -38,18 +41,19 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
   // add light from *virtual* lights by intersecting them
   vec3f L = make_vec3f(0.f);
 
-  if (pathContext.numLights <= pathContext.world->pathtracerData.numGeoLights)
+  const World *uniform w = pathContext.world;
+  if (pathContext.numLights <= w->pathtracerData.numGeoLights)
     return L; // return if no virtual lights at all
 
   box1f intervalLightDist = getMinMaxDistForVirtualLights(
       pathContext, pathState, lastVertex, pathVertex, ray);
 
-  const uniform float selectionPDF = rcp((uniform float)pathContext.numLights
-      - pathContext.world->pathtracerData.numGeoLights);
-  for (uniform int i = pathContext.world->pathtracerData.numGeoLights;
+  const uniform float selectionPDF = rcp(
+      (uniform float)pathContext.numLights - w->pathtracerData.numGeoLights);
+  for (uniform int i = w->pathtracerData.numGeoLights;
        i < pathContext.numLights;
        i++) {
-    const Light *uniform light = pathContext.world->pathtracerData.lights[i];
+    const Light *uniform light = w->pathtracerData.lights[i];
     if (!pathState.straightPath || light->isVisible) {
       // to correctly handle MIS through transparencies the light pdf needs to
       // be calculated wrt. lastVertex.dg however, we only have a valid

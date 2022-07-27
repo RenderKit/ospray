@@ -1,4 +1,4 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
@@ -19,7 +19,7 @@ TransferFunction::TransferFunction()
 void TransferFunction::commit()
 {
   auto param = getParam<vec2f>("valueRange", vec2f(0.0f, 1.0f));
-  valueRange = range1f(param.x, param.y);
+  valueRange = getParam<range1f>("value", range1f(param.x, param.y));
   getSh()->valueRange = valueRange;
 }
 

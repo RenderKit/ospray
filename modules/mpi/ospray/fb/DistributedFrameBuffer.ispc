@@ -1,13 +1,11 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "fb/FrameBuffer.ih"
+#include "fb/Tile.ih"
 #include "rkcommon/math/vec.ih"
 
-struct DistributedFrameBuffer
-{
-  FrameBuffer super;
-};
+#include "fb/FrameBufferShared.h"
 
 // accumulates the colors in a tile, writes the final normalized colors into a
 // separate tile, and computes the error
@@ -38,6 +36,11 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
       final->b[i] = col.z;
       final->a[i] = col.w;
       final->z[i] = tile->z[i];
+
+      // ID buffers only written on the first frame
+      final->pid[i] = tile->pid[i];
+      final->gid[i] = tile->gid[i];
+      final->iid[i] = tile->iid[i];
     }
   } else {
     const uniform float rcpAccumID = rcpf(accumID + 1);
@@ -82,8 +85,11 @@ export uniform float DFB_accumulateTile(const VaryingTile *uniform tile,
     }
     /* error is also only updated every other frame to avoid alternating
      * error (get a monotone sequence) */
-    if (accumulateVariance)
-      errf = reduce_add(err) * rsqrtf(size.x * size.y);
+    if (accumulateVariance) {
+      uniform float cntu = (uniform float)size.x * size.y;
+      // scaling factor to stay backward compatible to default TILE_SIZE=64
+      errf = reduce_add(err) * rcp(cntu) * 64.f;
+    }
   }
   return errf;
 }
@@ -119,9 +125,10 @@ export void DFB_accumulateTileSimple(const VaryingTile *uniform tile,
 
 // accumulate normal and albedo
 export void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
-    Tile *uniform final,
+    void *uniform _final,
     VaryingTile *uniform accum)
 {
+  Tile *uniform final = (Tile * uniform) _final;
   const uniform vec2i size = box_size(tile->region);
   const uniform int maxi = size.y * (TILE_SIZE / programCount);
   if (tile->accumID < 1)
@@ -172,7 +179,7 @@ export uniform float DFB_computeErrorForTile(const uniform vec2i &size,
 {
   const uniform int maxi = size.y * (TILE_SIZE / programCount);
   const uniform float rcpAccumID = rcpf(accumID + 1);
-  const uniform float accHalfScale = rcpf((accumID + 1) / 2);
+  const uniform float accHalfScale = rcpf(accumID / 2 + 1);
   float err = 0.f;
   for (uniform int i = 0; i < maxi; i++) {
     vec4f acc = make_vec4f(accum->r[i], accum->g[i], accum->b[i], accum->a[i]);
@@ -188,7 +195,9 @@ export uniform float DFB_computeErrorForTile(const uniform vec2i &size,
         err += reduce_add(diff) * rsqrtf(den2);
     }
   }
-  return reduce_add(err) * rsqrtf(size.x * size.y);
+  uniform float cntu = (uniform float)size.x * size.y;
+  // scaling factor to stay backward compatible to default TILE_SIZE=64
+  return reduce_add(err) * rcp(cntu) * 64.f;
 }
 
 // writes the final normalized colors in a tile into a color buffer
@@ -230,42 +239,64 @@ export void DFB_zComposite(
   }
 }
 
-export void *uniform DFB_create()
-{
-  DistributedFrameBuffer *uniform self =
-      uniform new uniform DistributedFrameBuffer;
-  FrameBuffer_Constructor(&self->super);
-
-  return self;
-}
-
-export void DFB_set(void *uniform _self,
-    const uniform uint32 size_x,
-    const uniform uint32 size_y,
-    uniform int32 colorBufferFormat)
-{
-  DistributedFrameBuffer *uniform self = (DistributedFrameBuffer *)_self;
-  FrameBuffer_set(&self->super, size_x, size_y, colorBufferFormat);
-}
-
 inline void swapFragments(
     VaryingTile *uniform t0, VaryingTile *uniform t1, uniform int fragID)
 {
   float r = t0->r[fragID];
   t0->r[fragID] = t1->r[fragID];
   t1->r[fragID] = r;
+
   float g = t0->g[fragID];
   t0->g[fragID] = t1->g[fragID];
   t1->g[fragID] = g;
+
   float b = t0->b[fragID];
   t0->b[fragID] = t1->b[fragID];
   t1->b[fragID] = b;
+
   float a = t0->a[fragID];
   t0->a[fragID] = t1->a[fragID];
   t1->a[fragID] = a;
+
   float z = t0->z[fragID];
   t0->z[fragID] = t1->z[fragID];
   t1->z[fragID] = z;
+
+  float nx = t0->nx[fragID];
+  t0->nx[fragID] = t1->nx[fragID];
+  t1->nx[fragID] = nx;
+
+  float ny = t0->ny[fragID];
+  t0->ny[fragID] = t1->ny[fragID];
+  t1->ny[fragID] = ny;
+
+  float nz = t0->nz[fragID];
+  t0->nz[fragID] = t1->nz[fragID];
+  t1->nz[fragID] = nz;
+
+  float ar = t0->ar[fragID];
+  t0->ar[fragID] = t1->ar[fragID];
+  t1->ar[fragID] = ar;
+
+  float ag = t0->ag[fragID];
+  t0->ag[fragID] = t1->ag[fragID];
+  t1->ag[fragID] = ag;
+
+  float ab = t0->ab[fragID];
+  t0->ab[fragID] = t1->ab[fragID];
+  t1->ab[fragID] = ab;
+
+  uint32 pid = t0->pid[fragID];
+  t0->pid[fragID] = t1->pid[fragID];
+  t1->pid[fragID] = pid;
+
+  uint32 gid = t0->gid[fragID];
+  t0->gid[fragID] = t1->gid[fragID];
+  t1->gid[fragID] = gid;
+
+  uint32 iid = t0->iid[fragID];
+  t0->iid[fragID] = t1->iid[fragID];
+  t1->iid[fragID] = iid;
 }
 
 #define PIXELS_PER_BLEND_JOB 64
@@ -317,4 +348,36 @@ export void DFB_sortAndBlendFragments(
 {
   sortAndBlendFragments(
       tileArray, numTiles, 0, TILE_SIZE * TILE_SIZE / programCount);
+}
+
+task void DFB_runPixelOpsTask(
+    FrameBuffer *uniform fb, VaryingTile *uniform tile)
+{
+  const uniform int chunk = taskIndex0;
+  vec4f color = make_vec4f(
+      tile->r[chunk], tile->g[chunk], tile->b[chunk], tile->a[chunk]);
+
+  const float depth = tile->z[chunk];
+
+  const vec3f normal =
+      make_vec3f(tile->nx[chunk], tile->ny[chunk], tile->nz[chunk]);
+
+  const vec3f albedo =
+      make_vec3f(tile->ar[chunk], tile->ag[chunk], tile->ab[chunk]);
+
+  color = FrameBuffer_runPixelOps(fb, color, depth, normal, albedo);
+
+  tile->r[chunk] = color.x;
+  tile->g[chunk] = color.y;
+  tile->b[chunk] = color.z;
+  tile->a[chunk] = color.w;
+}
+
+export void DFB_runPixelOpsForTile(void *uniform _self, void *uniform _tile)
+{
+  Tile *uniform tile = (Tile * uniform) _tile;
+  FrameBuffer *uniform fb = (FrameBuffer * uniform) _self;
+  // Each task processes programCount pixels
+  const uniform int ntasks = TILE_SIZE * TILE_SIZE / programCount;
+  launch[ntasks] DFB_runPixelOpsTask(fb, (VaryingTile * uniform) tile);
 }

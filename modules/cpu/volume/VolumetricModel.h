@@ -1,12 +1,11 @@
-// Copyright 2009-2021 Intel Corporation
+// Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Volume.h"
-#include "common/StructShared.h"
 #include "openvkl/openvkl.h"
-
+// ispc shared
 #include "volume/VolumetricModelShared.h"
 
 namespace ospray {
@@ -25,11 +24,6 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
   box3f bounds() const;
 
   Ref<Volume> getVolume() const;
-
-  void setGeomID(int geomID)
-  {
-    volume->setGeomID(geomID);
-  }
 
  private:
   box3f volumeBounds;
