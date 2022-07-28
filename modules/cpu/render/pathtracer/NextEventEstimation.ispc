@@ -16,8 +16,9 @@
 #include "lights/LightShared.h"
 
 // EnSight's customized 1D & 2D texture mapping impl.
-#include "Material.ih"
+#include "../Material.ih"
 #include "texture/TextureParam.ih"
+#include "texture/Texture2D.ih"
 static vec3f addSideEffects(const DifferentialGeometry &dg, const vec3f &le)
 {
   vec3f out = le;
