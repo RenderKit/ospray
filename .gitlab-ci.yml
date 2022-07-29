@@ -250,7 +250,7 @@ build-centos7-mpi-impi:
   stage: build
   script:
     - module load cmake
-    - module load intel/2021.2
+    - module load impi/2021.6
     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
   <<: *build_artifacts
 
@@ -411,7 +411,11 @@ test-centos7-gcc-mpi-impi-avx2:
   needs: [build-centos7-mpi-impi]
   before_script:
     - module load cmake
-    - module load intel/2021.2
+
+    # Load Intel MPI 2021.6.0 and disable usage of libfabric
+    # shipped with the Intel MPI
+    - I_MPI_OFI_LIBRARY_INTERNAL=no module load impi/2021.6
+
     # Note: no omnipath/infiniband/shm comm access for MPI within
     # Docker container, just use sockets for running validation test
     - export FI_PROVIDER=sockets
