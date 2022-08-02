@@ -15,7 +15,7 @@ endif()
 
 include(GenerateExportHeader)
 
-add_library(ospray_module_denoiser SHARED ${OSPRAY_RESOURCE} DenoiseFrameOp.cpp)
+add_library(ospray_module_denoiser SHARED ${OSPRAY_RESOURCE} ModuleInit.cpp DenoiseFrameOp.cpp)
 
 generate_export_header(ospray_module_denoiser)
 
