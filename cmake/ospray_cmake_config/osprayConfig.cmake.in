@@ -137,7 +137,7 @@ if (OSPRAY_INSTALL_DEPENDENCIES)
 else()
   # Find existing Dependencies on the machine
   if (NOT TARGET embree)
-    ospray_find_embree(${EMBREE_VERSION_REQUIRED})
+    ospray_find_embree(${EMBREE_VERSION_REQUIRED} TRUE)
     ospray_verify_embree_features()
   endif()
 
@@ -149,7 +149,7 @@ else()
 
   if (OSPRAY_ENABLE_VOLUMES)
     if (NOT TARGET openvkl::openvkl)
-      ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
+      ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} TRUE)
     endif()
     set(OPENVKL_LIBRARY openvkl::openvkl)
   endif()

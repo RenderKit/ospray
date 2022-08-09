@@ -5,7 +5,6 @@
 // ospray
 #include "volume/Volume.h"
 #include "common/Data.h"
-#include "common/Util.h"
 #ifndef OSPRAY_TARGET_DPCPP
 #include "volume/Volume_ispc.h"
 #endif

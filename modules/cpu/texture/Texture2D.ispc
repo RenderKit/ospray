@@ -279,6 +279,8 @@ export void *uniform Texture2D_get_addr(
 {
   switch (type) {
     __foreach_fetcher(__define_tex_get_case);
+  default:
+    break;
   }
   return NULL;
 };
@@ -296,6 +298,8 @@ SYCL_EXTERNAL __noinline vec4f Texture2D_get(
 
   switch (self->format) {
     __foreach_fetcher(__define_tex_call_tex_case);
+  default:
+    break;
   }
   return make_vec4f(0.f);
 #endif

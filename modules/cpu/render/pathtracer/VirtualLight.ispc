@@ -6,7 +6,9 @@
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
 #include "render/pathtracer/VirtualLight.ih"
-//#include "render/pathtracer/volumes/VolumeSampler.ih"
+#ifdef OSPRAY_ENABLE_VOLUMES
+#include "render/pathtracer/volumes/VolumeSampler.ih"
+#endif
 // c++ shared
 #include "PathTracerDataShared.h"
 #include "lights/LightShared.h"

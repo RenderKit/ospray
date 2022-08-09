@@ -125,9 +125,7 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   varying RandomSampler *uniform randomSampler = &randomSamplerObj;
   const int spp = max(1, self->super.spp);
 
-  // for (uniform int s = 0; s < spp; s++)
-  //{
-    uniform int s = 0;
+  for (uniform int s = 0; s < spp; s++) {
     // init RNG
     const uint32 sampleID = accumID * spp + s;
     screenSample.sampleID.z = sampleID;
@@ -154,10 +152,9 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     cameraSample.time = LDSampler_getFloat(ldSampler, 4);
 
     Camera_dispatch_initRay(camera, screenSample.ray, cameraSample);
-    // const float tMax = Renderer_getMaxDepth(&self->super,
-    // cameraSample.screen);
+    const float tMax = Renderer_getMaxDepth(&self->super, cameraSample.screen);
 
-    // screenSample.ray.t = min(screenSample.ray.t, tMax);
+    screenSample.ray.t = min(screenSample.ray.t, tMax);
 
     ScreenSample sample = PathTraceIntegrator_Li(self,
         world,
@@ -180,7 +177,7 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
       screenSample.geomID = sample.geomID;
       screenSample.instID = sample.instID;
     }
-  //}
+  }
 
   const float rspp = rcpf(spp);
   screenSample.rgb = screenSample.rgb * rspp;
@@ -222,8 +219,8 @@ task
   foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
       x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
 #endif
-      ScreenSample screenSample= PathTracer_renderPixel(self, fb, camera,
-       world, x, y, taskDesc.accumID);
+      ScreenSample screenSample = PathTracer_renderPixel(
+          self, fb, camera, world, x, y, taskDesc.accumID);
 
       FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc);
     }

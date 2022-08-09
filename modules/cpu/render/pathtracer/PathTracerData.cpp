@@ -96,8 +96,10 @@ ISPCRTMemoryView PathTracerData::createGeometryLight(const Instance *instance,
   ispc::GeometryLight *sh = (ispc::GeometryLight *)ispcrtSharedPtr(view);
 
   sh->super.instance = instance->getSh();
+#ifndef OSPRAY_TARGET_DPCPP
   sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
       ispc::GeometryLight_sample_addr());
+#endif
   sh->super.eval = nullptr; // geometry lights are hit and explicitly handled
 
   sh->model = model->getSh();

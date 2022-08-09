@@ -5,7 +5,9 @@
 
 #include "render/Renderer.ih"
 #include "render/pathtracer/PathStructs.ih"
-//#include "render/pathtracer/volumes/VolumeSampler.ih"
+#ifdef OSPRAY_ENABLE_VOLUMES
+#include "render/pathtracer/volumes/VolumeSampler.ih"
+#endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -39,7 +41,7 @@ inline void updateAuxilliaryData(
     PathState &pathState, const PathVertex &pathVertex, ScreenSample &sample)
 {
   sample.albedo = pathVertex.albedo;
-  if (false /*pathVertex.type == VOLUME*/) {
+  if (pathVertex.type == VOLUME) {
     sample.normal = make_vec3f(0.f);
   } else if (pathVertex.type == SURFACE) {
     vec3f Ns = pathVertex.dg.Ns;

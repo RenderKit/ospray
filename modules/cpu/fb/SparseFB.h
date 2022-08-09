@@ -3,7 +3,10 @@
 
 #pragma once
 
+#include <rkcommon/utility/ArrayView.h>
+#include <memory>
 #include "TileShared.h"
+#include "common/BufferShared.h"
 #include "fb/FrameBuffer.h"
 #include "fb/LocalFB.h"
 #include "fb/SparseFBShared.h"
@@ -83,9 +86,9 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   void clear() override;
 
-  const containers::AlignedVector<Tile> &getTiles() const;
+  const utility::ArrayView<Tile> getTiles() const;
 
-  const std::vector<uint32_t> &getTileIDs() const;
+  const utility::ArrayView<uint32_t> getTileIDs() const;
 
   // Get the index of the tile in the tile ID and Tiles lists that this task
   // falls into
@@ -105,26 +108,26 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   uint32_t getNumTasksPerTile() const;
 
   // The tiles in this framebuffer
-  containers::AlignedVector<Tile> tiles;
+  std::unique_ptr<BufferShared<Tile>> tiles;
 
   // Accumulation buffer for the tile colors for accumulation buffering. The
   // rgba data in the Tiles stores the final color for display in float format,
   // while the accumulation buffer is used for progressive refinement
-  std::vector<vec4f> accumulationBuffer;
+  std::unique_ptr<BufferShared<vec4f>> accumulationBuffer;
 
   // Variance data for the image, stored in tiled order with one RGBA value per
   // pixel, accumulates every other sample, for variance estimation
-  std::vector<vec4f> varianceBuffer;
+  std::unique_ptr<BufferShared<vec4f>> varianceBuffer;
 
   // holds accumID per render task, for adaptive accumulation
-  std::vector<int> taskAccumID;
+  std::unique_ptr<BufferShared<int>> taskAccumID;
 
   // The sparsefb can also use task accum IDs without accumulation buffering,
   // when it's being used as a component of another framebuffer.
   // this is true by default when created with OSP_FB_ACCUM
   bool useTaskAccumIDs;
 
-  std::vector<uint32_t> tileIDs;
+  std::unique_ptr<BufferShared<uint32_t>> tileIDs;
 
   // Total number of tiles that the framebuffer is divided into, including those
   // not owned by this sparsefb
@@ -137,8 +140,8 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   // holds error per task for each tile, stored in tiled order.
   // The SparseFB doesn't do its own error refinement since it doesn't have
   // access to error data for the entire framebuffer
-  std::vector<float> taskErrorBuffer;
+  std::unique_ptr<BufferShared<float>> taskErrorBuffer;
 
-  std::vector<uint32_t> renderTaskIDs;
+  std::unique_ptr<BufferShared<uint32_t>> renderTaskIDs;
 };
 } // namespace ospray

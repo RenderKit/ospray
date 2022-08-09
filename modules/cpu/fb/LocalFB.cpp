@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LocalFB.h"
+#include <rkcommon/utility/ArrayView.h>
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -190,7 +191,7 @@ void LocalFrameBuffer::clear()
   }
 }
 
-void LocalFrameBuffer::writeTiles(const containers::AlignedVector<Tile> &tiles)
+void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
 {
   // TODO: The parallel dispatch part of this should be moved into ISPC as an
   // ISPC launch that calls the individual (currently) exported functions that

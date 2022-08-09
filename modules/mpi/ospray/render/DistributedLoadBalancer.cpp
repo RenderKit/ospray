@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedLoadBalancer.h"
+#include <rkcommon/utility/ArrayView.h>
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <map>
 #include "../common/DistributedWorld.h"
@@ -115,7 +117,7 @@ void DistributedLoadBalancer::renderFrame(
     auto *layer = dfb->getSparseFBLayer(i + 1);
     // Check if this layer already stores the tiles we want, and if so don't
     // reset it
-    const auto &layerTiles = layer->getTileIDs();
+    const utility::ArrayView<uint32_t> layerTiles = layer->getTileIDs();
     // TODO: it'd be nice if we had some other change tracking that would let us
     // know when we have different tiles rather than having to check the lists
     // of IDs against each other.
@@ -147,8 +149,8 @@ void DistributedLoadBalancer::renderFrame(
 
     // Explicitly avoiding std::vector<bool> because we need to match ISPC's
     // memory layout
-    const auto &tiles = sparseFb->getTiles();
-    const auto &tileIDs = sparseFb->getTileIDs();
+    const utility::ArrayView<Tile> tiles = sparseFb->getTiles();
+    const utility::ArrayView<uint32_t> tileIDs = sparseFb->getTileIDs();
 
     // We use uint8 instead of bool to avoid hitting UB with differing "true"
     // values used by ISPC and C++
@@ -430,7 +432,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
       // One option with the Dynamic LB would be to at least ping-poing
       // sparseFb's, one is being rendered into while tiles from the previous
       // task set are sent out
-      const auto &tiles = sparseFb->getTiles();
+      const utility::ArrayView<Tile> tiles = sparseFb->getTiles();
       tasking::serial_for(tiles.size(), [&](size_t i) {
         // TODO: Same note as distributed case, would be nice here to not have
         // to copy the tile to change the accum ID.
@@ -472,8 +474,8 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
 {
   SparseFrameBuffer *ownedTilesFb = dfb->getSparseFBLayer(0);
 
-  const auto &tiles = ownedTilesFb->getTiles();
-  const auto &tileIDs = ownedTilesFb->getTileIDs();
+  const utility::ArrayView<Tile> tiles = ownedTilesFb->getTiles();
+  const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
   auto renderTaskIDs = ownedTilesFb->getRenderTaskIDs();
 
   if (renderer->errorThreshold > 0.f) {

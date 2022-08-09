@@ -93,6 +93,9 @@ RTC_SYCL_INDIRECTLY_CALLABLE void AORenderer_renderSample(
         sample.z = ray.t;
         sample.albedo = surfaceShading.albedo;
         sample.normal = dg.Ns;
+        sample.instID = dg.instID;
+        sample.geomID = dg.objID;
+        sample.primID = ray.primID;
       }
 
       // Prepare ray for next loop iteration,

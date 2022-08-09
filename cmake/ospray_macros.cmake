@@ -237,7 +237,6 @@ macro(ospray_configure_dpcpp_target)
   # TODO: We'll have similar DPC++ and device target checks for OpenVKL
 
   set(OSPRAY_DPCPP_AOT_DEVICES ${EMBREE_DPCPP_AOT_DEVICES})
-  message("OSPRay target DPCPP device ${EMBREE_DPCPP_AOT_DEVICES}")
 
   # TODO: Is this revision info going to be visible to end users?
   # In the end the public release
@@ -425,8 +424,12 @@ function(ospray_verify_embree_features)
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
 endfunction()
 
-macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
-  find_dependency(embree ${EMBREE_VERSION_REQUIRED})
+macro(ospray_find_embree EMBREE_VERSION_REQUIRED FIND_AS_DEPENDENCY)
+  if (FIND_AS_DEPENDENCY)
+    find_dependency(embree ${EMBREE_VERSION_REQUIRED})
+  else()
+    find_package(embree ${EMBREE_VERSION_REQUIRED})
+  endif()
   if (NOT embree_FOUND)
     message(FATAL_ERROR
             "We did not find Embree installed on your system. OSPRay requires"
@@ -513,8 +516,12 @@ macro(ospray_determine_embree_isa_support)
   endif()
 endmacro()
 
-macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED)
-  find_dependency(openvkl ${OPENVKL_VERSION_REQUIRED})
+macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED FIND_AS_DEPENDENCY)
+  if (FIND_AS_DEPENDENCY)
+    find_dependency(openvkl ${OPENVKL_VERSION_REQUIRED})
+  else()
+    find_package(openvkl ${OPENVKL_VERSION_REQUIRED})
+  endif()
   if(NOT openvkl_FOUND)
     message(FATAL_ERROR
             "We did not find Open VKL installed on your system. OSPRay requires"

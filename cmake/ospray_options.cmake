@@ -33,13 +33,13 @@ get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)
 
 # Embree
-ospray_find_embree(${EMBREE_VERSION_REQUIRED})
+ospray_find_embree(${EMBREE_VERSION_REQUIRED} TRUE)
 ospray_verify_embree_features()
 ospray_determine_embree_isa_support()
 
 # Open VKL
 if (OSPRAY_ENABLE_VOLUMES)
-  ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
+  ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} TRUE)
 endif()
 
 # OpenImageDenoise

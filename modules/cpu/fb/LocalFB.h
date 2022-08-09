@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <rkcommon/utility/ArrayView.h>
 #ifdef OSPRAY_TARGET_DPCPP
 #include <CL/sycl.hpp>
 #endif
@@ -67,7 +68,7 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
    * Safe to call in parallel from multiple threads, as long as each thread is
    * writing different tiles
    */
-  void writeTiles(const containers::AlignedVector<Tile> &tiles);
+  void writeTiles(const utility::ArrayView<Tile> &tiles);
 
   /* Write the tiles of the sparse fb into this framebuffer's row-major storage.
    * Will also copy error data from the sparseFb the full framebuffer task error

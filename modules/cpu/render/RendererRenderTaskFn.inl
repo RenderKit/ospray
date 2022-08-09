@@ -49,8 +49,8 @@ template <typename RenderSampleFn>
   }
 
 #ifdef OSPRAY_TARGET_DPCPP
-  for (uint32 y = taskDesc.region.lower.y; y < taskDesc.region.upper.y; ++y)
-    for (uint32 x = taskDesc.region.lower.x; x < taskDesc.region.upper.x; ++x) {
+  for (int32 y = taskDesc.region.lower.y; y < taskDesc.region.upper.y; ++y)
+    for (int32 x = taskDesc.region.lower.x; x < taskDesc.region.upper.x; ++x) {
 #else
   foreach_tiled (y = taskDesc.region.lower.y... taskDesc.region.upper.y,
       x = taskDesc.region.lower.x... taskDesc.region.upper.x) {
@@ -59,7 +59,6 @@ template <typename RenderSampleFn>
       screenSample.sampleID.y = y;
 
       // set ray t value for early ray termination (from maximum depth texture)
-      /*
       vec2f center =
           make_vec2f(screenSample.sampleID.x, screenSample.sampleID.y) + 0.5f;
       const float tMax = Renderer_getMaxDepth(self, center * fb->rcpSize);
@@ -70,22 +69,16 @@ template <typename RenderSampleFn>
       float depth = inf;
       vec3f normal = make_vec3f(0.f);
       vec3f albedo = make_vec3f(0.f);
-      */
 
-      /*for (uniform uint32 s = 0; s < spp; s++)*/ //{
-                                                   // TODO: sampling init/etc
-                                                   // needs to happen in SYCL
-                                                   // kernel
-      const uniform uint32 s = 0;
+      for (uniform int32 s = 0; s < spp; s++) {
+        const float pixel_du = Halton_sample2(startSampleID + s);
+        const float pixel_dv = CranleyPattersonRotation(
+            Halton_sample3(self->mathConstants, startSampleID + s),
+            1.f / 6.f); // rotate to sample center
+        // (0.5) of pixel for sampleID=0
+        const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
 
-      const float pixel_du = Halton_sample2(startSampleID + s);
-      const float pixel_dv = CranleyPattersonRotation(
-          Halton_sample3(self->mathConstants, startSampleID + s),
-          1.f / 6.f); // rotate to sample center
-      // (0.5) of pixel for sampleID=0
-      const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
-
-      vec2f pfSample = pixelSample;
+        vec2f pfSample = pixelSample;
 #if 0
         const PixelFilter *uniform pf = self->pixelFilter;
         if (pf) {
@@ -93,29 +86,29 @@ template <typename RenderSampleFn>
         }
 #endif
 
-      screenSample.sampleID.z = startSampleID + s;
+        screenSample.sampleID.z = startSampleID + s;
 
-      cameraSample.screen.x =
-          (screenSample.sampleID.x + pfSample.x) * fb->rcpSize.x;
-      cameraSample.screen.y =
-          (screenSample.sampleID.y + pfSample.y) * fb->rcpSize.y;
-      screenSample.pos = cameraSample.screen;
+        cameraSample.screen.x =
+            (screenSample.sampleID.x + pfSample.x) * fb->rcpSize.x;
+        cameraSample.screen.y =
+            (screenSample.sampleID.y + pfSample.y) * fb->rcpSize.y;
+        screenSample.pos = cameraSample.screen;
 
-      // no DoF or MB per default
-      cameraSample.lens.x = 0.0f;
-      cameraSample.lens.y = 0.0f;
-      cameraSample.time = 0.5f;
+        // no DoF or MB per default
+        cameraSample.lens.x = 0.0f;
+        cameraSample.lens.y = 0.0f;
+        cameraSample.time = 0.5f;
 
-      Camera_dispatch_initRay(camera, screenSample.ray, cameraSample);
-      // screenSample.ray.t = min(screenSample.ray.t, tMax);
+        Camera_dispatch_initRay(camera, screenSample.ray, cameraSample);
+        screenSample.ray.t = min(screenSample.ray.t, tMax);
 
-      screenSample.z = inf;
-      screenSample.primID = RTC_INVALID_GEOMETRY_ID;
-      screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
-      screenSample.instID = RTC_INVALID_GEOMETRY_ID;
-      screenSample.albedo =
-          make_vec3f(Renderer_getBackground(self, screenSample.pos));
-      screenSample.normal = make_vec3f(0.f);
+        screenSample.z = inf;
+        screenSample.primID = RTC_INVALID_GEOMETRY_ID;
+        screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
+        screenSample.instID = RTC_INVALID_GEOMETRY_ID;
+        screenSample.albedo =
+            make_vec3f(Renderer_getBackground(self, screenSample.pos));
+        screenSample.normal = make_vec3f(0.f);
 
 #ifdef OSPRAY_TARGET_DPCPP
 #if 0
@@ -126,10 +119,25 @@ template <typename RenderSampleFn>
 #endif
 
 #ifdef OSPRAY_TARGET_DPCPP
-      renderSample(self, fb, world, perFrameData, screenSample);
+        renderSample(self, fb, world, perFrameData, screenSample);
 #else
-    Renderer_dispatch_renderSample(self, fb, world, perFrameData, screenSample);
+      Renderer_dispatch_renderSample(
+          self, fb, world, perFrameData, screenSample);
 #endif
+        col = col + screenSample.rgb;
+        alpha += screenSample.alpha;
+        depth = min(depth, screenSample.z);
+        normal = normal + screenSample.normal;
+        albedo = albedo + screenSample.albedo;
+      }
+
+      const float rspp = rcpf(spp);
+      screenSample.rgb = col * rspp;
+      screenSample.alpha = alpha * rspp;
+      screenSample.z = depth;
+      screenSample.normal = normal * rspp;
+      screenSample.albedo = albedo * rspp;
+
       FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc);
     }
   FrameBuffer_dispatch_completeTask(fb, taskDesc);

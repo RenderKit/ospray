@@ -25,7 +25,7 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
   uniform int maxDepth = self->super.maxDepth;
   const float tOriginal = shadowRay.t;
 
-  // while (1) {
+  while (1) {
     traceGeometryRayIntervals(world, shadowRay, rayIntervals);
 
     if (noHit(shadowRay))
@@ -56,9 +56,7 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     }
 
     lightContrib = lightContrib * transparency;
-    return lightContrib;
 
-#if 0
     // compute attenuation with Beer's law
     if (ne(medium.attenuation, 0.f))
       lightContrib = lightContrib
@@ -84,13 +82,7 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     }
 
     setRay(shadowRay, shadowRay.t + dg.epsilon, tOriginal);
-    shadowRay.t0 = shadowRay.t + dg.epsilon;
-    shadowRay.t = tOriginal;
-    shadowRay.primID = -1;
-    shadowRay.geomID = -1;
-    shadowRay.instID = -1;
-#endif
-  //}
+  }
 }
 
 OSPRAY_END_ISPC_NAMESPACE
