@@ -26,7 +26,7 @@ Renderer::Renderer(api::ISPCDevice &device)
 {
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;
-  mathConstants = std::make_unique<MathConstants>(device);
+  mathConstants = rkcommon::make_unique<MathConstants>(device);
   getSh()->mathConstants = mathConstants->getSh();
 #ifndef OSPRAY_TARGET_DPCPP
   getSh()->renderSample = reinterpret_cast<ispc::Renderer_RenderSampleFct>(

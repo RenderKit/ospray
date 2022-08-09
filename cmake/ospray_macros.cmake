@@ -223,6 +223,40 @@ macro(ospray_configure_ispc_isa)
   ospray_fix_ispc_target_list()
 endmacro()
 
+macro(ospray_configure_dpcpp_target)
+  if (NOT EMBREE_GEOMETRY_USER_IN_CONTEXT)
+    message(FATAL_ERROR
+      "Your Embree build does not support EMBREE_GEOMETRY_USER_IN_CONTEXT, which is required for DPC++")
+  endif()
+
+  if (NOT EMBREE_FILTER_FUNCTION_IN_CONTEXT)
+    message(FATAL_ERROR
+      "Your Embree build does not support EMBREE_FILTER_FUNCTION, which is required for DPC++")
+  endif()
+
+  # TODO: We'll have similar DPC++ and device target checks for OpenVKL
+
+  set(OSPRAY_DPCPP_AOT_DEVICES ${EMBREE_DPCPP_AOT_DEVICES})
+  message("OSPRay target DPCPP device ${EMBREE_DPCPP_AOT_DEVICES}")
+
+  # TODO: Is this revision info going to be visible to end users?
+  # In the end the public release
+  # of the code should probably just have one revision it targets right?
+  # The final consumer release rev.
+  if (OSPRAY_DPCPP_AOT_DEVICES STREQUAL "dg2")
+    set(OSPRAY_DPCPP_AOT_DEVICE_REVISION 8)
+  elseif (OSPRAY_DPCPP_AOT_DEVICES STREQUAL "pvc")
+    # What final rev to pick here?
+    set(OSPRAY_DPCPP_AOT_DEVICE_REVISION 5)
+  endif()
+
+  if (OSPRAY_DPCPP_AOT_DEVICES STREQUAL "none")
+    set(OSPRAY_SYCL_TARGET spir64)
+  else()
+    set(OSPRAY_SYCL_TARGET spir64_gen)
+  endif()
+endmacro()
+
 ## Target creation macros ##
 
 set(OSPRAY_SIGN_FILE_ARGS -q)

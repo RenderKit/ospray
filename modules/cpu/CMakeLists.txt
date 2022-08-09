@@ -415,12 +415,18 @@ if (OSPRAY_MODULE_CPU)
 endif()
 
 if (OSPRAY_MODULE_GPU)
+  ospray_configure_dpcpp_target()
+
   # Have CMake's build infrastructure treat the ISPC files as C++ for DPC++
   set_source_files_properties(${OSPRAY_ISPC_SOURCES} PROPERTIES
       LANGUAGE CXX)
 
   add_library(ospray_module_gpu SHARED
       ${OSPRAY_CPP_SOURCES} ${OSPRAY_ISPC_SOURCES})
+
+  set_target_properties(ospray_module_gpu PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON)
 
   target_link_libraries(ospray_module_gpu
   PUBLIC
@@ -468,11 +474,19 @@ if (OSPRAY_MODULE_GPU)
     -fsycl-targets=${OSPRAY_SYCL_TARGET}
   )
 
-  target_link_options(ospray_module_gpu PRIVATE
-    -fsycl
-    -fsycl-targets=${OSPRAY_SYCL_TARGET}
-    -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_DPCPP_AOT_DEVICES} -revision_id ${OSPRAY_DPCPP_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-  )
+  if (OSPRAY_DPCPP_AOT_DEVICES STREQUAL "none")
+    target_link_options(ospray_module_gpu PRIVATE
+      -fsycl
+      -fsycl-targets=${OSPRAY_SYCL_TARGET}
+      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
+    )
+  else()
+    target_link_options(ospray_module_gpu PRIVATE
+      -fsycl
+      -fsycl-targets=${OSPRAY_SYCL_TARGET}
+      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_DPCPP_AOT_DEVICES} -revision_id ${OSPRAY_DPCPP_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
+    )
+  endif()
 
 
   target_compile_definitions(ospray_module_gpu

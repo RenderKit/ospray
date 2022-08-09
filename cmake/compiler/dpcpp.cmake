@@ -137,15 +137,6 @@ if (OSPRAY_DPCPP_LARGEGRF)
   list(APPEND CMAKE_OCL_OPTIONS "-internal_options -cl-intel-256-GRF-per-thread")
 endif()
 
-# SYCL options for AOT/JIT compilation
-set(OSPRAY_DPCPP_AOT_DEVICES "none" CACHE STRING
-  "SYCL devices to use for AOT compilation. Selecting none will compile to SPV for JIT compilation")
-set_property(CACHE OSPRAY_DPCPP_AOT_DEVICES PROPERTY STRINGS none dg2 pvc)
-
-# TODO: Is this revision info going to be visible to end users? In the end the public release
-# of the code should probably just have one revision it targets right? The final consumer release rev.
-set(OSPRAY_DPCPP_AOT_DEVICE_REVISION "8" CACHE STRING "AOT target device revision")
-
 string(REPLACE ";" "," OSPRAY_IGC_OPTIONS_STR "${OSPRAY_IGC_OPTIONS}")
 
 set(OSPRAY_OCL_OPTIONS_STR "${OSPRAY_OCL_OPTIONS}")
@@ -154,9 +145,4 @@ string(REPLACE ";" " " OSPRAY_OCL_OPTIONS_STR "${OSPRAY_OCL_OPTIONS}")
 set(OSPRAY_OCL_OTHER_OPTIONS_STR "${OSPRAY_OCL_OTHER_OPTIONS}")
 string(REPLACE ";" " " OSPRAY_OCL_OTHER_OPTIONS_STR "${OSPRAY_OCL_OTHER_OPTIONS}")
 
-if (OSPRAY_DPCPP_AOT_DEVICES STREQUAL "none")
-  set(OSPRAY_SYCL_TARGET spir64)
-else()
-  set(OSPRAY_SYCL_TARGET spir64_gen)
-endif()
 
