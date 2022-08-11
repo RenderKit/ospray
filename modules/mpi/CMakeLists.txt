@@ -3,7 +3,7 @@
 
 cmake_dependent_option(
   OSPRAY_MODULE_MPI
-  "Build the MPI module"
+  "Build the MPI module (Requires the CPU module)"
   OFF
   OSPRAY_MODULE_CPU
   OFF

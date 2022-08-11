@@ -131,6 +131,10 @@ list(APPEND OSPRAY_OCL_OTHER_OPTIONS
   -cl-intel-force-global-mem-allocation
   -cl-intel-no-local-to-generic)
 
+if (CMAKE_BUILD_TYPE MATCHES "Release")
+  list(APPEND OSPRAY_OCL_OTHER_OPTIONS -O2)
+endif()
+
 # Large GRF mode
 option(OSPRAY_DPCPP_LARGEGRF "Enable DPC++ Large GRF Support" OFF)
 if (OSPRAY_DPCPP_LARGEGRF)

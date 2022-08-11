@@ -162,11 +162,17 @@ void SparseFrameBuffer::clear()
 
 const utility::ArrayView<Tile> SparseFrameBuffer::getTiles() const
 {
+  if (!tiles) {
+    return utility::ArrayView<Tile>(nullptr, 0);
+  }
   return utility::ArrayView<Tile>(tiles->data(), tiles->size());
 }
 
 const utility::ArrayView<uint32_t> SparseFrameBuffer::getTileIDs() const
 {
+  if (!tileIDs) {
+    return utility::ArrayView<uint32_t>(nullptr, 0);
+  }
   return utility::ArrayView<uint32_t>(tileIDs->data(), tileIDs->size());
 }
 

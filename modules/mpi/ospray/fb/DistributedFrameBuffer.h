@@ -7,6 +7,7 @@
 #include <memory>
 #include "../common/Messaging.h"
 #include "DistributedFrameBuffer_TileMessages.h"
+#include "ISPCDevice.h"
 #include "fb/LocalFB.h"
 #include "fb/SparseFB.h"
 #include "render/Renderer.h"
@@ -22,7 +23,8 @@ class DistributedTileError : public TaskError
   mpicommon::Group group;
 
  public:
-  DistributedTileError(const vec2i &numTiles, mpicommon::Group group);
+  DistributedTileError(
+      api::ISPCDevice &device, const vec2i &numTiles, mpicommon::Group group);
 
   // broadcast tileErrorBuffer to all workers in this group
   void sync();

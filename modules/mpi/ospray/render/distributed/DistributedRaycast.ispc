@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/Instance.ih"
+#include "common/VolumeIntervals.ih"
 #include "common/World.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
@@ -104,15 +105,16 @@ inline float computeAO(const DistributedRaycastRenderer *uniform self,
   // init TEA RNG //
   RandomTEA rng_state;
   varying RandomTEA *const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, 0x290374, (fb->size.x * sampleID.y) + sampleID.x);
-  const vec2f rot = RandomTEA__getFloats(rng);
+  RandomTEA_Constructor(rng, 0x290374, (fb->size.x * sampleID.y) + sampleID.x);
+  const vec2f rot = RandomTEA_getFloats(rng);
 
   int hits = 0;
 
   const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < sampleCnt; i++) {
-    const vec2f halton = HaltonSequence_get2D(accumID + i);
+    const vec2f halton =
+        HaltonSequence_get2D(self->super.super.mathConstants, accumID + i);
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
@@ -291,7 +293,7 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
       int iy = sample.sampleID.y % 4;
 
       int patternID = ix + 4 * iy;
-      jitter += Halton_sample3(patternID);
+      jitter += Halton_sample3(self->super.super.mathConstants, patternID);
       if (jitter > 1.f) {
         jitter -= 1.f;
       }

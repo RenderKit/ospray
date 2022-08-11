@@ -350,7 +350,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
   const int numRounds = std::max(NTILES / maxTilesPerRound, 1);
   const int tilesPerRound = NTILES / numRounds;
   const int remainTiles = NTILES % numRounds;
-  const int minActiveTiles = (ALLTILES / workerSize()) * 0.25;
+  const int minActiveTiles = (ALLTILES / workerSize()) * 0.25f;
   int terminatedTiles = 0;
 
   auto dynamicLB = make_unique<DynamicLoadBalancer>(handle, ALLTILES);

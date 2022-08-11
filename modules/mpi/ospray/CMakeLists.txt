@@ -20,6 +20,15 @@ include_directories_ispc(
 
 add_library(ospray_module_mpi SHARED)
 
+add_definitions_ispc(
+  -DOSPRAY_BEGIN_ISPC_NAMESPACE=
+  -DOSPRAY_END_ISPC_NAMESPACE=
+  -DSYCL_EXTERNAL=
+  -D__noinline=
+  # TODO: MPI with no volumes mode?
+  -DOSPRAY_ENABLE_VOLUMES
+)
+
 ispc_target_add_sources(ospray_module_mpi
   ${OSPRAY_RESOURCE}
 

@@ -6,6 +6,7 @@
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "fb/SparseFB.ih"
+#include "geometry/GeometryType.ih"
 #include "math/random.ih"
 #include "rkcommon/utility/random.ih"
 #include "texture/Texture2D.ih"
@@ -118,14 +119,26 @@ task void DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
       if (world->regionScene) {
+        uniform RTCIntersectArguments intersectArgs;
+        rtcInitIntersectArguments(&intersectArgs);
+        intersectArgs.intersect =
+            (RTCIntersectFunctionN)Geometry_dispatch_intersect;
+        intersectArgs.filter =
+            (RTCFilterFunctionN)markRegionVisibleFilterFunction;
+
+        // TODO: The RTCIntersectContext also takes the intersect and filter
+        // parameters Setting them there vs. in the arguments?
+
         uniform EmbreeIntersectionContext context;
         rtcInitIntersectContext(&context.ectx);
         context.ectx.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
-        context.ectx.filter = markRegionVisibleFilterFunction;
+        context.ectx.filter = 
+            (RTCFilterFunctionN)markRegionVisibleFilterFunction;
         context.userPtr = tileRegionVisible;
-        rtcIntersectV(world->regionScene,
+        rtcIntersectExV(world->regionScene,
             &context.ectx,
-            (varying RTCRayHit * uniform) & screenSample.ray);
+            (varying RTCRayHit * uniform) & screenSample.ray,
+            &intersectArgs);
       }
     }
   }
@@ -141,7 +154,7 @@ void DR_default_renderRegionSample(DistributedRenderer *uniform self,
 {
   sample.z = inf;
   sample.alpha = 1.f;
-  sample.rgb = make_random_color((sample.sampleID.x << 0)
+  sample.rgb = makeRandomColor((sample.sampleID.x << 0)
       + (sample.sampleID.y << 14) + (sample.sampleID.z << 28));
 }
 
@@ -197,7 +210,8 @@ task void DR_default_renderRegionToTile(DistributedRenderer *uniform self,
     for (uniform uint32 s = 0; s < spp; s++) {
       const float pixel_du = Halton_sample2(startSampleID + s);
       const float pixel_dv = CranleyPattersonRotation(
-          Halton_sample3(startSampleID + s), 1.f / 6.f);
+          Halton_sample3(self->super.mathConstants, startSampleID + s),
+          1.f / 6.f);
       screenSample.sampleID.z = startSampleID + s;
 
       cameraSample.screen.x =

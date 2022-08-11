@@ -5,6 +5,7 @@
 #include <snappy.h>
 #include <thread>
 #include "DistributedFrameBuffer_TileMessages.h"
+#include "ISPCDevice.h"
 #include "TileOperation.h"
 #include "common/Profiling.h"
 #include "fb/DistributedFrameBuffer_ispc.h"
@@ -28,18 +29,24 @@ using DFB = DistributedFrameBuffer;
 // DistributedTileError definitions /////////////////////////////////////////
 
 DistributedTileError::DistributedTileError(
-    const vec2i &numTiles, mpicommon::Group group)
-    : TaskError(numTiles), group(group)
-{}
+    api::ISPCDevice &device, const vec2i &numTiles, mpicommon::Group group)
+    : TaskError(device.getIspcrtDevice(), numTiles), group(group)
+{
+  PRINT(numTiles);
+}
 
 void DistributedTileError::sync()
 {
-  if (taskErrorBuffer.empty()) {
+  if (!taskErrorBuffer || taskErrorBuffer->size() == 0) {
     return;
   }
 
-  mpicommon::bcast(
-      taskErrorBuffer.data(), taskErrorBuffer.size(), MPI_FLOAT, 0, group.comm)
+  // TODO: USM thrashing every frame!
+  mpicommon::bcast(taskErrorBuffer->data(),
+      taskErrorBuffer->size(),
+      MPI_FLOAT,
+      0,
+      group.comm)
       .wait();
 }
 
@@ -60,7 +67,8 @@ DFB::DistributedFrameBuffer(api::ISPCDevice &device,
       mpiGroup(mpicommon::worker.dup()),
       totalTiles(divRoundUp(size, vec2i(TILE_SIZE))),
       numRenderTasks((totalTiles * TILE_SIZE) / getRenderTaskSize()),
-      tileErrorRegion(hasVarianceBuffer ? totalTiles : vec2i(0), mpiGroup),
+      tileErrorRegion(
+          device, hasVarianceBuffer ? totalTiles : vec2i(0), mpiGroup),
       localFBonMaster(nullptr),
       frameIsActive(false),
       frameIsDone(false)
@@ -87,10 +95,10 @@ void DFB::commit()
     FrameBufferView fbv(localFBonMaster ? localFBonMaster.get()
                                         : static_cast<FrameBuffer *>(this),
         getSh()->colorBufferFormat,
-        localFBonMaster ? localFBonMaster->colorBuffer.data() : nullptr,
-        localFBonMaster ? localFBonMaster->depthBuffer.data() : nullptr,
-        localFBonMaster ? localFBonMaster->normalBuffer.data() : nullptr,
-        localFBonMaster ? localFBonMaster->albedoBuffer.data() : nullptr);
+        localFBonMaster ? localFBonMaster->colorBuffer->data() : nullptr,
+        localFBonMaster ? localFBonMaster->depthBuffer->data() : nullptr,
+        localFBonMaster ? localFBonMaster->normalBuffer->data() : nullptr,
+        localFBonMaster ? localFBonMaster->albedoBuffer->data() : nullptr);
 
     std::for_each(imageOpData->begin(), imageOpData->end(), [&](ImageOp *i) {
       if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
@@ -468,7 +476,10 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
     }
   }
 
-  ColorT *color = reinterpret_cast<ColorT *>(&localFBonMaster->colorBuffer[0]);
+  // TODO: Here we're just accessing the local fb on the host, but have it
+  // allocated in USM. Will work, but maybe wasting some USM space?
+  ColorT *color =
+      reinterpret_cast<ColorT *>(localFBonMaster->colorBuffer->data());
   for (int iy = 0; iy < TILE_SIZE; iy++) {
     int iiy = iy + msg->coords.y;
     if (iiy >= numPixels.y) {
@@ -483,27 +494,27 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
 
       color[iix + iiy * numPixels.x] = msg->color[ix + iy * TILE_SIZE];
       if (depth) {
-        localFBonMaster->depthBuffer[iix + iiy * numPixels.x] =
+        (*localFBonMaster->depthBuffer)[iix + iiy * numPixels.x] =
             depth->depth[ix + iy * TILE_SIZE];
       }
       if (aux) {
         if (hasNormalBuffer)
-          localFBonMaster->normalBuffer[iix + iiy * numPixels.x] =
+          (*localFBonMaster->normalBuffer)[iix + iiy * numPixels.x] =
               aux->normal[ix + iy * TILE_SIZE];
         if (hasAlbedoBuffer)
-          localFBonMaster->albedoBuffer[iix + iiy * numPixels.x] =
+          (*localFBonMaster->albedoBuffer)[iix + iiy * numPixels.x] =
               aux->albedo[ix + iy * TILE_SIZE];
       }
       if (pidBuf) {
-        localFBonMaster->primitiveIDBuffer[iix + iiy * numPixels.x] =
+        (*localFBonMaster->primitiveIDBuffer)[iix + iiy * numPixels.x] =
             pidBuf[ix + iy * TILE_SIZE];
       }
       if (gidBuf) {
-        localFBonMaster->objectIDBuffer[iix + iiy * numPixels.x] =
+        (*localFBonMaster->objectIDBuffer)[iix + iiy * numPixels.x] =
             gidBuf[ix + iy * TILE_SIZE];
       }
       if (iidBuf) {
-        localFBonMaster->instanceIDBuffer[iix + iiy * numPixels.x] =
+        (*localFBonMaster->instanceIDBuffer)[iix + iiy * numPixels.x] =
             iidBuf[ix + iy * TILE_SIZE];
       }
     }
