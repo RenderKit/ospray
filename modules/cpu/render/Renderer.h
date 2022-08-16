@@ -95,7 +95,7 @@ struct OSPRAY_SDK_INTERFACE Renderer
   Ref<Texture2D> maxDepthTexture;
   Ref<Texture2D> backplate;
 
-  std::unique_ptr<PixelFilter> pixelFilter;
+  Ref<PixelFilter> pixelFilter;
   // TODO: This could be shared among multiple renderers but we need to be
   // careful about making sure it's released before the ISPCDevice so that we
   // can still release the USM allocations

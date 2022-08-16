@@ -6,25 +6,22 @@
 #ifdef __cplusplus
 #include "common/StructShared.h"
 namespace ispc {
-typedef const unsigned int *ConstantsDataUint;
-#else
-typedef const uniform unsigned int *uniform ConstantsDataUint;
 #endif // __cplusplus
 
 struct MathConstants
 {
-  ConstantsDataUint halton_perm3;
-  ConstantsDataUint halton_perm5;
-  ConstantsDataUint halton_perm7;
+  unsigned int *haltonPerm3;
+  unsigned int *haltonPerm5;
+  unsigned int *haltonPerm7;
 
-  ConstantsDataUint sobol_matrices;
+  unsigned int *sobolMatrices;
 
 #ifdef __cplusplus
   MathConstants()
-      : halton_perm3(nullptr),
-        halton_perm5(nullptr),
-        halton_perm7(nullptr),
-        sobol_matrices(nullptr)
+      : haltonPerm3(nullptr),
+        haltonPerm5(nullptr),
+        haltonPerm7(nullptr),
+        sobolMatrices(nullptr)
   {}
 };
 } // namespace ispc

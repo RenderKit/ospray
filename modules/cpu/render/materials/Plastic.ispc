@@ -32,6 +32,7 @@ SYCL_EXTERNAL const varying BSDF *varying Plastic_getBSDF(
         ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f, 1.0f);
   } else {
     bsdf = MicrofacetDielectricLayer_create(ctx,
+        super->microfacetAlbedoTables,
         shadingFrame,
         bsdf,
         self->eta,

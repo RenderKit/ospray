@@ -7,6 +7,7 @@
 #include "common/ObjectFactory.h"
 // ispc shared
 #include "MaterialShared.h"
+#include "bsdfs/MicrofacetAlbedoTables.h"
 #include "texture/TextureParamShared.h"
 
 namespace ospray {
@@ -28,7 +29,7 @@ struct OSPRAY_SDK_INTERFACE Material
       public ObjectFactory<Material, api::ISPCDevice &>
 {
   Material(api::ISPCDevice &device);
-  virtual ~Material() override = default;
+  virtual ~Material() override;
   virtual std::string toString() const override;
   virtual void commit() override;
 
@@ -61,6 +62,11 @@ struct OSPRAY_SDK_INTERFACE Material
    */
   utility::Optional<affine2f> getTextureTransform2f(const char *_texname);
   utility::Optional<affine3f> getTextureTransform3f(const char *_texname);
+
+  // Microfacet albedo tables data, shared by all materials. New materials
+  // increment the use count, and decrement it on destruction to ensure
+  // the data will be released before the device
+  static Ref<MicrofacetAlbedoTables> microfacetAlbedoTables;
 };
 
 OSPTYPEFOR_SPECIALIZATION(Material *, OSP_MATERIAL);

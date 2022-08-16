@@ -11,6 +11,7 @@ using namespace rkcommon::math;
 #endif
 
 #include "common/Instance.ih"
+#include "math/Distribution1D.ih"
 #include "math/Distribution2D.ih"
 #include "math/sampling.ih"
 #include "texture/Texture2D.ih"
@@ -244,13 +245,16 @@ export void *uniform HDRILight_eval_instanced_addr()
   return (void *uniform)HDRILight_eval_instanced;
 }
 
-export void *uniform HDRILight_createDistribution(const void *uniform map)
+export void HDRILight_initDistribution(
+    const void *uniform _map, void *uniform _distribution)
 {
   // calculate importance in parallel
-  const Texture2D *uniform m = (const Texture2D *uniform)map;
+  const Texture2D *uniform m = (const Texture2D *uniform)_map;
+  Distribution2D *uniform distribution =
+      (Distribution2D * uniform) _distribution;
   const uniform int height = m->size.y;
-  float *uniform cdf_x = uniform new float[m->size.x * height];
-  float *uniform row_importance = uniform new float[height];
+  float *uniform cdf_x = distribution->cdf_x;
+  float *uniform row_importance = distribution->cdf_y;
 #ifdef OSPRAY_TARGET_DPCPP
   // TODO: Should become a kernel launch in DPC++
   for (int i = 0; i < height; ++i) {
@@ -261,13 +265,8 @@ export void *uniform HDRILight_createDistribution(const void *uniform map)
   sync;
 #endif
 
-  // create distribution
-  return Distribution2D_create(m->size, cdf_x, row_importance);
-  // no delete[] (row_)importance: ownership was transferred to Distribution2D
+  // Initialize the distribution with the computed cdf/f values
+  Distribution2D_init(distribution);
 }
 
-export void HDRILight_destroyDistribution(void *uniform distribution)
-{
-  Distribution2D_destroy((Distribution2D * uniform) distribution);
-}
 OSPRAY_END_ISPC_NAMESPACE

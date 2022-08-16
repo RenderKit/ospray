@@ -13,6 +13,8 @@ using namespace rkcommon::math;
 #include "rkcommon/math/vec.ih"
 #endif
 
+#include "bsdfs/MicrofacetAlbedoTablesShared.h"
+
 #ifdef __cplusplus
 #include "common/StructShared.h"
 namespace ispc {
@@ -83,13 +85,17 @@ struct Material
   Material_SelectNextMediumFunc selectNextMedium;
   vec3f emission; // simple constant (spatially and angular) emission, returns
                   // radiance; TODO SV-EDFs
+
+  MicrofacetAlbedoTables *microfacetAlbedoTables;
+
 #ifdef __cplusplus
   Material(const vec3f &emission = vec3f(0.f))
       : type(MATERIAL_TYPE_UNKNOWN),
         getBSDF(nullptr),
         getTransparency(nullptr),
         selectNextMedium(nullptr),
-        emission(emission)
+        emission(emission),
+        microfacetAlbedoTables(nullptr)
   {}
 };
 } // namespace ispc

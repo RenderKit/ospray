@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Light.h"
+#include "math/Distribution2D.h"
 #include "math/spectrum.h"
 #include "rkcommon/tasking/parallel_for.h"
 #include "sky_model/color_info.h"
@@ -37,7 +38,6 @@ inline vec3f xyzToRgb(const vec3f &c)
 struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
 {
   SunSkyLight(api::ISPCDevice &device);
-  virtual ~SunSkyLight() override;
   virtual uint32_t getShCount() const override;
   virtual ISPCRTMemoryView createSh(
       uint32_t index, const ispc::Instance *instance = nullptr) const override;
@@ -49,7 +49,7 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
 
   std::vector<vec3f> skyImage;
   ispc::Texture2D mapSh;
-  void *distributionIE{nullptr};
+  Ref<Distribution2D> distribution = nullptr;
   vec2i skySize;
   linear3f frame{one}; // sky orientation
   vec3f direction{0.f, 0.f, 1.f};

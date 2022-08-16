@@ -27,11 +27,6 @@ SunSkyLight::SunSkyLight(api::ISPCDevice &device) : Light(device)
   mapSh.set(skySize, skyImage.data(), format, filter);
 }
 
-SunSkyLight::~SunSkyLight()
-{
-  ispc::HDRILight_destroyDistribution(distributionIE);
-}
-
 ISPCRTMemoryView SunSkyLight::createSh(
     uint32_t index, const ispc::Instance *instance) const
 {
@@ -45,7 +40,7 @@ ISPCRTMemoryView SunSkyLight::createSh(
         coloredIntensity,
         frame,
         &mapSh,
-        (const ispc::Distribution2D *)distributionIE);
+        distribution->getSh());
     return view;
   }
   case 1: {
@@ -176,8 +171,11 @@ void SunSkyLight::commit()
   arhosekskymodelstate_free(rgbModel);
 
   // recreate distribution
-  ispc::HDRILight_destroyDistribution(distributionIE);
-  distributionIE = ispc::HDRILight_createDistribution(&mapSh);
+  distribution = new Distribution2D(skySize, getISPCDevice());
+  // Release extra local ref
+  distribution->refDec();
+
+  ispc::HDRILight_initDistribution(&mapSh, distribution->getSh());
 }
 
 void SunSkyLight::processIntensityQuantityType()

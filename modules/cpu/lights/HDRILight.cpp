@@ -65,11 +65,6 @@ void HDRILight::set(bool isVisible,
 
 namespace ospray {
 
-HDRILight::~HDRILight()
-{
-  ispc::HDRILight_destroyDistribution(distributionIE);
-}
-
 ISPCRTMemoryView HDRILight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
@@ -81,7 +76,7 @@ ISPCRTMemoryView HDRILight::createSh(
       coloredIntensity,
       frame,
       map->getSh(),
-      (const ispc::Distribution2D *)distributionIE);
+      distribution->getSh());
   return view;
 }
 
@@ -98,10 +93,16 @@ void HDRILight::commit()
   map = (Texture2D *)getParamObject("map", nullptr);
 
   // recreate distribution
-  ispc::HDRILight_destroyDistribution(distributionIE);
-  distributionIE = nullptr;
-  if (map)
-    distributionIE = ispc::HDRILight_createDistribution(map->getSh());
+  distribution = nullptr;
+  if (map) {
+    // TODO: probably don't want to read the size from the map shared struct b/c
+    // USM thrasing
+    distribution = new Distribution2D(map->getSh()->size, getISPCDevice());
+    // Release extra local ref
+    distribution->refDec();
+
+    ispc::HDRILight_initDistribution(map->getSh(), distribution->getSh());
+  }
 
   frame.vx = normalize(-dir);
   frame.vy = normalize(cross(frame.vx, up));

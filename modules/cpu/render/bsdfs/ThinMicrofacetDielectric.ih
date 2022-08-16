@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "MicrofacetAlbedoTablesShared.h"
 #include "MicrofacetDielectric.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -22,6 +23,7 @@ struct ThinMicrofacetDielectric
   GGXDistribution microfacet;
   float roughness;
   vec3f attenuation;
+  const MicrofacetAlbedoTables *uniform microfacetAlbedoTables;
 
   // Energy compensation [Kulla and Conty, 2017]
   float Eavg;
@@ -59,15 +61,18 @@ inline BSDF_EvalRes ThinMicrofacetDielectric_eval(
     float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
     // Energy compensation
-    float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
-    float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
+    float Eo = MicrofacetAlbedoTable_eval(
+        self->microfacetAlbedoTables, cosThetaO, self->roughness);
+    float Ei = MicrofacetAlbedoTable_eval(
+        self->microfacetAlbedoTables, cosThetaI, self->roughness);
     float fms = self->fmsScale
         * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - self->Eavg))
             * cosThetaI);
 
     // Energy conservation
-    float R = MicrofacetDielectricReflectionAlbedoTable_eval(
-                  cosThetaO, self->eta, self->roughness)
+    float R =
+        MicrofacetDielectricReflectionAlbedoTable_eval(
+            self->microfacetAlbedoTables, cosThetaO, self->eta, self->roughness)
         + self->fmsScale * (1.f - Eo); // add missing energy
 
     BSDF_EvalRes res;
@@ -94,9 +99,11 @@ inline BSDF_SampleRes ThinMicrofacetDielectric_sample(
     return make_BSDF_SampleRes_zero();
 
   // Energy conservation
-  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
-  float R = MicrofacetDielectricReflectionAlbedoTable_eval(
-                cosThetaO, self->eta, self->roughness)
+  float Eo = MicrofacetAlbedoTable_eval(
+      self->microfacetAlbedoTables, cosThetaO, self->roughness);
+  float R =
+      MicrofacetDielectricReflectionAlbedoTable_eval(
+          self->microfacetAlbedoTables, cosThetaO, self->eta, self->roughness)
       + self->fmsScale * (1.f - Eo); // add missing energy
 
   if (ss < R) {
@@ -121,7 +128,8 @@ inline BSDF_SampleRes ThinMicrofacetDielectric_sample(
     float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
     // Energy compensation
-    float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
+    float Ei = MicrofacetAlbedoTable_eval(
+        self->microfacetAlbedoTables, cosThetaI, self->roughness);
     float fms = self->fmsScale
         * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - self->Eavg))
             * cosThetaI);
@@ -149,6 +157,7 @@ inline BSDF_SampleRes ThinMicrofacetDielectric_sample(
 
 inline void ThinMicrofacetDielectric_Constructor(
     varying ThinMicrofacetDielectric *uniform self,
+    const MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
     const varying linear3f *uniform frame,
     float eta,
     float roughness,
@@ -173,15 +182,18 @@ inline void ThinMicrofacetDielectric_Constructor(
       make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   self->roughness = roughness;
   self->attenuation = attenuation;
+  self->microfacetAlbedoTables = microfacetAlbedoTables;
 
   // Energy compensation
-  self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
+  self->Eavg =
+      MicrofacetAlbedoTable_evalAvg(self->microfacetAlbedoTables, roughness);
   float Favg = fresnelDielectricAvg(eta);
   self->fmsScale = Favg * (1.f - self->Eavg) * rcp(1.f - Favg * self->Eavg);
 }
 
 inline varying BSDF *uniform ThinMicrofacetDielectric_create(
     uniform ShadingContext *uniform ctx,
+    const MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
     const varying linear3f *uniform frame,
     float eta,
     float roughness,
@@ -191,23 +203,33 @@ inline varying BSDF *uniform ThinMicrofacetDielectric_create(
   varying ThinMicrofacetDielectric *uniform self =
       (varying ThinMicrofacetDielectric * uniform)
           ShadingContext_alloc(ctx, sizeof(ThinMicrofacetDielectric));
-  ThinMicrofacetDielectric_Constructor(
-      self, frame, eta, roughness, anisotropy, attenuation);
+  ThinMicrofacetDielectric_Constructor(self,
+      microfacetAlbedoTables,
+      frame,
+      eta,
+      roughness,
+      anisotropy,
+      attenuation);
   return &self->super;
 }
 
 // Helper function for transparent shadow rays
 inline vec3f ThinMicrofacetDielectric_getTransparency(
-    float cosThetaO, float eta, float roughness, vec3f attenuation)
+    const MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
+    float cosThetaO,
+    float eta,
+    float roughness,
+    vec3f attenuation)
 {
   // Energy conservation/compensation
-  float Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
+  float Eavg = MicrofacetAlbedoTable_evalAvg(microfacetAlbedoTables, roughness);
   float Favg = fresnelDielectricAvg(eta);
   float fmsScale = Favg * (1.f - Eavg) * rcp(1.f - Favg * Eavg);
 
-  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, roughness);
-  float R =
-      MicrofacetDielectricReflectionAlbedoTable_eval(cosThetaO, eta, roughness)
+  float Eo =
+      MicrofacetAlbedoTable_eval(microfacetAlbedoTables, cosThetaO, roughness);
+  float R = MicrofacetDielectricReflectionAlbedoTable_eval(
+                microfacetAlbedoTables, cosThetaO, eta, roughness)
       + fmsScale * (1.f - Eo); // add missing energy
 
   // Attenuation for crossing the slab once

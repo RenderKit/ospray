@@ -1,33 +1,44 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 #include "math/MathConstants.h"
 #include "math/halton.h"
+#include "math/sobol.h"
 
 namespace ospray {
 
 MathConstants::MathConstants(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice())
 {
-  halton_perm3_buf =
+  haltonPerm3Buf =
       make_buffer_shared_unique<unsigned int>(device.getIspcrtDevice(), 243);
-  halton_perm5_buf =
+  haltonPerm5Buf =
       make_buffer_shared_unique<unsigned int>(device.getIspcrtDevice(), 125);
-  halton_perm7_buf =
+  haltonPerm7Buf =
       make_buffer_shared_unique<unsigned int>(device.getIspcrtDevice(), 343);
+  sobolMatricesBuf = make_buffer_shared_unique<unsigned int>(
+      device.getIspcrtDevice(), Sobol_numDimensions * Sobol_numBits);
 
-  std::memcpy(halton_perm3_buf->begin(),
+  std::memcpy(haltonPerm3Buf->begin(),
       halton_perm3,
-      halton_perm3_buf->size() * sizeof(unsigned int));
+      haltonPerm3Buf->size() * sizeof(unsigned int));
 
-  std::memcpy(halton_perm5_buf->begin(),
+  std::memcpy(haltonPerm5Buf->begin(),
       halton_perm5,
-      halton_perm5_buf->size() * sizeof(unsigned int));
+      haltonPerm5Buf->size() * sizeof(unsigned int));
 
-  std::memcpy(halton_perm7_buf->begin(),
+  std::memcpy(haltonPerm7Buf->begin(),
       halton_perm7,
-      halton_perm7_buf->size() * sizeof(unsigned int));
+      haltonPerm7Buf->size() * sizeof(unsigned int));
 
-  getSh()->halton_perm3 = halton_perm3_buf->data();
-  getSh()->halton_perm5 = halton_perm5_buf->data();
-  getSh()->halton_perm7 = halton_perm7_buf->data();
+  std::memcpy(sobolMatricesBuf->begin(),
+      Sobol_matrices,
+      sobolMatricesBuf->size() * sizeof(unsigned int));
+
+  getSh()->haltonPerm3 = haltonPerm3Buf->data();
+  getSh()->haltonPerm5 = haltonPerm5Buf->data();
+  getSh()->haltonPerm7 = haltonPerm7Buf->data();
+  getSh()->sobolMatrices = sobolMatricesBuf->data();
 }
 
 std::string MathConstants::toString() const

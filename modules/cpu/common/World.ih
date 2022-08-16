@@ -216,27 +216,41 @@ inline void traceClippingRay(const World *uniform world,
 #endif
 }
 
-inline void traceGeometryRayIntervals(const World *uniform world,
-    varying Ray &ray,
-    varying RayIntervals &rayIntervals)
+inline void traceGeometryRayIntervals(
+    const World *uniform world, Ray &ray, RayIntervals &rayIntervals)
 {
   // Save the ray
   const float t0 = ray.t0;
   const float t = ray.t;
 
+#if 0 // def OSPRAY_TARGET_DPCPP
+  cl::sycl::ext::oneapi::experimental::printf(
+      "intervals = %d\n", rayIntervals.count);
+#endif
+
   // Iterate through ray intervals
-  for (uint32 i = 0; i < rayIntervals.count; i++) {
+  // for (uint32 i = 0; i < rayIntervals.count; i++)
+  {
+    uint32 i = 0;
     // Set ray interval
     ray.t0 = rayIntervals.intervals[i].lower;
     ray.t = rayIntervals.intervals[i].upper;
 
-    // Skip intervals outside of the ray range
-#ifdef OSPRAY_TARGET_DPCPP
-    if (t < ray.t0 || ray.t < t0)
-#else
-    if (or (t < ray.t0, ray.t < t0))
+#if 0 // def OSPRAY_TARGET_DPCPP
+    cl::sycl::ext::oneapi::experimental::printf(
+        "interval[%d] = %f, %f\n", i, ray.t0, ray.t);
 #endif
-      continue;
+
+    // Skip intervals outside of the ray range
+    // TODO: This branch is being taken on the GPU when it shouldn't be (CPU
+    // doesn't take it). So the ray interval data is wrong or corrupted? Or the
+    // branch is taken incorrectly due to a bug error
+    if (t < ray.t0 || ray.t < t0) {
+      ray.t0 = t0;
+      ray.t = t;
+      return;
+      // continue;
+    }
 
     // Clip interval to the ray range
     ray.t0 = max(ray.t0, t0);

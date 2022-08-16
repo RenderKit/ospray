@@ -24,6 +24,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE void SciVis_renderSample(Renderer *uniform _self,
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
   LDSampler_init(ldSampler,
+      self->super.mathConstants,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 
@@ -222,7 +223,7 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
     if (dot(ao_dir, dg.Ns) < 0.01f) { // check below surface
-      hits = hits + make_vec3f(1.f);
+      hits = hits + 1.f;
       continue;
     }
 

@@ -37,8 +37,12 @@ SYCL_EXTERNAL const varying BSDF *varying Alloy_getBSDF(
   if (roughness == 0.0f)
     return Conductor_create(ctx, shadingframe, fresnel);
   else
-    return MicrofacetConductor_create(
-        ctx, shadingframe, fresnel, roughness, 0.f);
+    return MicrofacetConductor_create(ctx,
+        super->microfacetAlbedoTables,
+        shadingframe,
+        fresnel,
+        roughness,
+        0.f);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

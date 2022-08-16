@@ -104,8 +104,8 @@ class GLFWOSPRayWindow
 
   std::string curveVariant{"bspline"};
 
-  OSPRayRendererType rendererType{OSPRayRendererType::PATHTRACER};
-  std::string rendererTypeStr{"pathtracer"};
+  OSPRayRendererType rendererType{OSPRayRendererType::SCIVIS};
+  std::string rendererTypeStr{"scivis"};
 
   std::string pixelFilterTypeStr{"gaussian"};
 

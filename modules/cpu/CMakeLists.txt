@@ -104,7 +104,9 @@ set(OSPRAY_CPP_SOURCES
 
   math/spectrum.h
   math/halton.cpp
+  math/sobol.cpp
   math/MathConstants.cpp
+  math/Distribution2D.cpp
 
   render/LoadBalancer.cpp
   render/Material.cpp
@@ -134,6 +136,8 @@ set(OSPRAY_CPP_SOURCES
   render/materials/Luminous.cpp
   render/materials/Mix.cpp
 
+  render/bsdfs/MicrofacetAlbedoTables.cpp
+
   texture/Texture.cpp
   texture/Texture2D.cpp
   texture/registration.cpp
@@ -154,7 +158,7 @@ set(OSPRAY_ISPC_SOURCES
 
   fb/pixel_ops/ToneMapper.ispc
 
-  pf/PixelFilter.ispc
+  pf/PixelFilterType.ispc
   pf/LUTPixelFilter.ispc
 
   camera/CameraType.ispc
@@ -182,7 +186,6 @@ set(OSPRAY_ISPC_SOURCES
 
   math/Distribution1D.ispc
   math/Distribution2D.ispc
-  math/sobol.ispc
   math/spectrum.ispc
 
   render/Material.ispc

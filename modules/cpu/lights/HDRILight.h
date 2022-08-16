@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Light.h"
+#include "math/Distribution2D.h"
 #include "texture/Texture2D.h"
 
 namespace ospray {
@@ -13,7 +14,6 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE HDRILight : public Light
 {
   HDRILight(api::ISPCDevice &device) : Light(device) {}
-  virtual ~HDRILight() override;
   virtual ISPCRTMemoryView createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
@@ -24,7 +24,7 @@ struct OSPRAY_SDK_INTERFACE HDRILight : public Light
 
   linear3f frame{one}; // light orientation
   Texture2D *map{nullptr}; //!< environment map in latitude / longitude format
-  void *distributionIE{nullptr};
+  Ref<Distribution2D> distribution = nullptr;
 };
 
 } // namespace ospray

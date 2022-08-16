@@ -3,6 +3,7 @@
 
 // ospray
 #include "Material.h"
+#include "render/bsdfs/MicrofacetAlbedoTables.h"
 #include "texture/Texture.h"
 #ifndef OSPRAY_TARGET_DPCPP
 // ispc
@@ -12,6 +13,8 @@
 namespace ospray {
 
 // Material definitions ///////////////////////////////////////////////////////
+
+Ref<MicrofacetAlbedoTables> Material::microfacetAlbedoTables = nullptr;
 
 Material::Material(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
@@ -25,6 +28,31 @@ Material::Material(api::ISPCDevice &device)
       reinterpret_cast<ispc::Material_SelectNextMediumFunc>(
           ispc::Material_selectNextMedium_addr());
 #endif
+
+  if (!microfacetAlbedoTables) {
+    microfacetAlbedoTables = new MicrofacetAlbedoTables(device);
+    // Release the extra local ref
+    microfacetAlbedoTables->refDec();
+  } else {
+    microfacetAlbedoTables->refInc();
+  }
+
+  getSh()->microfacetAlbedoTables = microfacetAlbedoTables->getSh();
+}
+
+Material::~Material()
+{
+  if (microfacetAlbedoTables) {
+    const bool lastReference = microfacetAlbedoTables->useCount() == 1;
+    // The last material referencing the albedo tables should null out the
+    // pointer so we don't try to call refDec again and know to re-create it
+    // when a new material is made
+    if (lastReference) {
+      microfacetAlbedoTables = nullptr;
+    } else {
+      microfacetAlbedoTables->refDec();
+    }
+  }
 }
 
 std::string Material::toString() const

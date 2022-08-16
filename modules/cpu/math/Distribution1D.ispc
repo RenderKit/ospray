@@ -11,7 +11,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-export uniform float Distribution1D_create(
+SYCL_EXTERNAL export uniform float Distribution1D_create(
     const uniform int size, uniform float *uniform cdf)
 {
   // accumulate the function

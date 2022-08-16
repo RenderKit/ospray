@@ -39,7 +39,12 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
   while (true) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
+    // WA for https://jira.devtools.intel.com/browse/XDEPS-4875
+#if 0
     traceGeometryRayIntervals(world, ray, rayIntervals);
+#else
+    traceGeometryRay(world, ray);
+#endif
 
 #ifdef OSPRAY_ENABLE_VOLUMES
     // Determine volume intervals by tracing ray in the volume scene
@@ -92,6 +97,13 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
 
 #ifdef OSPRAY_ENABLE_VOLUMES
   freeVolumeIntervals(volumeIntervals);
+#endif
+
+#ifdef OSPRAY_TARGET_DPCPP
+  // cl::sycl::ext::oneapi::experimental::printf(
+  //    "alpha = %f, %f, %f\n", alpha.x, alpha.y, alpha.z);
+#else
+  // print("alpha = %, %, %\n", alpha.x, alpha.y, alpha.z);
 #endif
   return alpha;
 }

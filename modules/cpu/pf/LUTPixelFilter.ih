@@ -3,114 +3,13 @@
 
 #pragma once
 
+#include "LUTPixelFilterShared.h"
 #include "PixelFilter.ih"
 #include "math/Distribution2D.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-#define LUTPIXELFILTER_PER_PIXEL_BINS 5
-
-struct LUTPixelFilter;
-
-typedef float (*PixelFilter_EvalFunc)(
-    const PixelFilter *uniform self, const vec2f &x);
-
-struct LUTPixelFilter
-{
-  PixelFilter super;
-
-  // The 2D distribution used to importance sample
-  Distribution2D *uniform distribution;
-
-  PixelFilter_EvalFunc eval;
-};
-
-inline vec2f LUTPixelFilter_sample(
+SYCL_EXTERNAL vec2f LUTPixelFilter_sample(
     const PixelFilter *uniform self, const vec2f &s);
-
-#ifndef OSPRAY_TARGET_DPCPP
-task
-#endif
-    unmasked void
-    LUTPixelFilter_calcRowImportance(const LUTPixelFilter *uniform const self,
-        int uniform const lut_width,
-        float *uniform const importance,
-        float *uniform const row_importance
-#ifdef OSPRAY_TARGET_DPCPP
-        ,
-        const int taskIndex
-#endif
-    )
-{
-  const uniform float filter_width = self->super.width;
-
-  const uniform int y = taskIndex;
-  const uniform float fy = (y + 0.5f) * (1.0f / (float)lut_width);
-
-#ifdef OSPRAY_TARGET_DPCPP
-  for (int x = 0; x < lut_width; ++x) {
-#else
-  foreach (x = 0 ... lut_width) {
-#endif
-    const varying float fx = (x + 0.5f) * (1.0f / (float)lut_width);
-    const vec2f coord = make_vec2f(fx, fy) - make_vec2f(0.5);
-
-    const float filterEval =
-        self->eval(&self->super, coord * make_vec2f(filter_width));
-    // clamp the evaluation of the filter
-    // to avoid negative values
-    importance[y * lut_width + x] = max(0.0f, filterEval);
-  }
-  row_importance[y] =
-      Distribution1D_create(lut_width, importance + y * lut_width);
-}
-
-inline void LUTPixelFilter_buildLUT(LUTPixelFilter *uniform self)
-{
-  const uniform float filter_width = self->super.width;
-  const uniform int lut_width =
-      ceil(filter_width) * LUTPIXELFILTER_PER_PIXEL_BINS;
-
-  float *uniform cdf_x = uniform new float[lut_width * lut_width];
-  float *uniform row_importance = uniform new float[lut_width];
-#ifdef OSPRAY_TARGET_DPCPP
-  // TODO: This should become a kernel launch via DPC++
-  // This serial loop is just for testing an initial C++ migration of the ISPC
-  // code
-  for (int i = 0; i < lut_width; ++i) {
-    LUTPixelFilter_calcRowImportance(self, lut_width, cdf_x, row_importance, i);
-  }
-#else
-  launch[lut_width] LUTPixelFilter_calcRowImportance(
-      self, lut_width, cdf_x, row_importance);
-  sync;
-#endif
-
-  const uniform vec2i size = make_vec2i(lut_width);
-  // create distribution
-  self->distribution = Distribution2D_create(size, cdf_x, row_importance);
-  // no delete[] (row_)importance: ownership was transferred to Distribution2D
-}
-
-inline void LUTPixelFilter_Constructor(LUTPixelFilter *uniform self,
-    uniform float width,
-    uniform PixelFilter_EvalFunc eval)
-{
-  self->super.width = width;
-  self->super.sample = LUTPixelFilter_sample;
-  self->eval = eval;
-
-  LUTPixelFilter_buildLUT(self);
-}
-
-inline float Box_eval(const PixelFilter *uniform self, const vec2f &x);
-
-inline float Gaussian_eval(const PixelFilter *uniform self, const vec2f &x);
-
-inline float Mitchell_Netravali_eval(
-    const PixelFilter *uniform self, const vec2f &x);
-
-inline float Blackman_Harris_eval(
-    const PixelFilter *uniform self, const vec2f &x);
 
 OSPRAY_END_ISPC_NAMESPACE

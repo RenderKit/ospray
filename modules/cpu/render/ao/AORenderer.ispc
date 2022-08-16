@@ -24,6 +24,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE void AORenderer_renderSample(
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
   LDSampler_init(ldSampler,
+      self->super.mathConstants,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 

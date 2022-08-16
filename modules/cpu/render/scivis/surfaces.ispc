@@ -124,7 +124,6 @@ SYCL_EXTERNAL vec3f evaluateLights(
 {
   // Iterate through all lights
   vec3f color = make_vec3f(0.f);
-  /*
   const uniform SciVisData &scivisData =
       *((const uniform SciVisData *)world->scivisData);
   for (uniform int i = 0; i < scivisData.numLights; i++) {
@@ -134,10 +133,10 @@ SYCL_EXTERNAL vec3f evaluateLights(
       continue;
 
     // Evaluate light contribution
-    const Light_EvalRes le = l->eval(l, dg, ray.dir, ray.t0, ray.t, ray.time);
+    const Light_EvalRes le =
+        Light_dispatch_eval(l, dg, ray.dir, ray.t0, ray.t, ray.time);
     color = color + le.radiance;
   }
-  */
   return color;
 }
 

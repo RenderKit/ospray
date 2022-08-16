@@ -20,6 +20,7 @@ struct MicrofacetSheenLayer
   vec3f R;
   SheenDistribution microfacet;
   float roughness;
+  const MicrofacetAlbedoTables *uniform microfacetAlbedoTables;
 
   float weight;
 };
@@ -54,9 +55,11 @@ inline BSDF_EvalRes MicrofacetSheenLayer_eval(
   }
 
   // Energy conservation
-  float Ro = MicrofacetSheenAlbedoTable_eval(cosThetaO, self->roughness)
+  float Ro = MicrofacetSheenAlbedoTable_eval(
+                 self->microfacetAlbedoTables, cosThetaO, self->roughness)
       * self->weight;
-  float Ri = MicrofacetSheenAlbedoTable_eval(abs(cosThetaI), self->roughness)
+  float Ri = MicrofacetSheenAlbedoTable_eval(
+                 self->microfacetAlbedoTables, abs(cosThetaI), self->roughness)
       * self->weight;
   float T = min(1.f - Ro, 1.f - Ri);
   substrate.value = substrate.value * T;
@@ -107,7 +110,8 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
     return make_BSDF_SampleRes_zero();
 
   // Energy conservation
-  float Ro = MicrofacetSheenAlbedoTable_eval(cosThetaO, self->roughness)
+  float Ro = MicrofacetSheenAlbedoTable_eval(
+                 self->microfacetAlbedoTables, cosThetaO, self->roughness)
       * self->weight;
 
   // Sample the coating or the substrate
@@ -134,7 +138,8 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
       if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
         substrate = MultiBSDF_eval(f, wo, res.wi); // f->eval(f, wo, wi);
       } else {
-        substrate = BSDF_dispatch_eval_base(f, wo, res.wi); // f->eval(f, wo, wi);
+        substrate =
+            BSDF_dispatch_eval_base(f, wo, res.wi); // f->eval(f, wo, wi);
       }
     }
   } else {
@@ -169,7 +174,8 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
   float cosThetaI = dot(res.wi, getN(super));
 
   // Energy conservation
-  float Ri = MicrofacetSheenAlbedoTable_eval(abs(cosThetaI), self->roughness)
+  float Ri = MicrofacetSheenAlbedoTable_eval(
+                 self->microfacetAlbedoTables, abs(cosThetaI), self->roughness)
       * self->weight;
   float T = min(1.f - Ro, 1.f - Ri);
   substrate.value = substrate.value * T;
@@ -210,6 +216,7 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
 
 inline void MicrofacetSheenLayer_Constructor(
     varying MicrofacetSheenLayer *uniform self,
+    const MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
     const varying linear3f *uniform frame,
     varying BSDF *varying substrate,
     vec3f R,
@@ -236,10 +243,12 @@ inline void MicrofacetSheenLayer_Constructor(
   self->microfacet = make_SheenDistribution(roughnessToAlpha(roughness));
   self->roughness = roughness;
   self->weight = weight;
+  self->microfacetAlbedoTables = microfacetAlbedoTables;
 }
 
 inline varying BSDF *uniform MicrofacetSheenLayer_create(
     uniform ShadingContext *uniform ctx,
+    const MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
     const varying linear3f *uniform frame,
     varying BSDF *varying substrate,
     vec3f R,
@@ -250,16 +259,21 @@ inline varying BSDF *uniform MicrofacetSheenLayer_create(
       (varying MicrofacetSheenLayer * uniform)
           ShadingContext_alloc(ctx, sizeof(MicrofacetSheenLayer));
   MicrofacetSheenLayer_Constructor(
-      self, frame, substrate, R, roughness, weight);
+      self, microfacetAlbedoTables, frame, substrate, R, roughness, weight);
   return &self->super;
 }
 
 // Helper function for transparent shadow rays
 inline vec3f MicrofacetSheenLayer_getTransparency(
-    float cosThetaO, float roughness, float weight)
+    const MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
+    float cosThetaO,
+    float roughness,
+    float weight)
 {
   // Energy conservation
-  float Ro = MicrofacetSheenAlbedoTable_eval(cosThetaO, roughness) * weight;
+  float Ro = MicrofacetSheenAlbedoTable_eval(
+                 microfacetAlbedoTables, cosThetaO, roughness)
+      * weight;
   float T = 1.f - Ro;
   return make_vec3f(T);
 }

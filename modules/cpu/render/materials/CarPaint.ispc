@@ -76,8 +76,12 @@ SYCL_EXTERNAL const varying BSDF *varying CarPaint_getBSDF(
       if (flakeRoughness < EPS)
         bsdf = Conductor_create(ctx, flakeFrame, flakeFresnel);
       else
-        bsdf = MicrofacetConductor_create(
-            ctx, flakeFrame, flakeFresnel, flakeRoughness, 0.f);
+        bsdf = MicrofacetConductor_create(ctx,
+            super->microfacetAlbedoTables,
+            flakeFrame,
+            flakeFresnel,
+            flakeRoughness,
+            0.f);
     }
   }
 
@@ -140,6 +144,7 @@ SYCL_EXTERNAL const varying BSDF *varying CarPaint_getBSDF(
             coat);
       } else {
         bsdf = MicrofacetDielectricLayer_create(ctx,
+            super->microfacetAlbedoTables,
             coatFrame,
             bsdf,
             rcp(coatIor),

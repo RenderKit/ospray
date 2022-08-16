@@ -12,7 +12,7 @@
 #include "common/World.ih"
 #include "fb/FrameBufferType.ih"
 #include "math/random.ih"
-#include "pf/PixelFilter.ih"
+#include "pf/PixelFilterType.ih"
 #include "render/util.ih"
 // c++ shared
 #include "fb/FrameBufferShared.h"

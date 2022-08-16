@@ -17,7 +17,7 @@
 #include "common/World.ih"
 #include "math/Distribution1D.ih"
 #include "math/random.ih"
-#include "pf/PixelFilter.ih"
+#include "pf/PixelFilterType.ih"
 // c++ shared
 #include "PathTracerDataShared.h"
 #include "PathTracerShared.h"
@@ -129,17 +129,19 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     // init RNG
     const uint32 sampleID = accumID * spp + s;
     screenSample.sampleID.z = sampleID;
-    LDSampler_init(ldSampler, fb->size.x * iy + ix, sampleID);
+    LDSampler_init(
+        ldSampler, self->super.mathConstants, fb->size.x * iy + ix, sampleID);
     RandomSampler_init(randomSampler, fb->size.x * iy + ix, sampleID);
 
     CameraSample cameraSample;
     const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
 
     vec2f pfSample = pixelSample;
-#if 0
-    PixelFilter *uniform pf = self->super.pixelFilter;
+#if 1
+    const PixelFilter *uniform pf = self->super.pixelFilter;
     if (pf) {
-      pfSample = pf->sample(pf, pixelSample) + make_vec2f(0.5f);
+      pfSample =
+          PixelFilter_dispatch_sample(pf, pixelSample) + make_vec2f(0.5f);
     }
 #endif
 

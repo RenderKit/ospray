@@ -1,4 +1,4 @@
-// Copyright 2009 Intel Corporation
+// Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Copyright (c) 2012 Leonhard Gruenschloss (leonhard@gruenschloss.org)
@@ -23,40 +23,11 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
-#include "rkcommon/math/rkmath.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/math.ih"
+#define Sobol_numDimensions 1024
+#define Sobol_numBits 52
+
+#ifdef __cplusplus
+namespace ospray {
+extern const unsigned int Sobol_matrices[Sobol_numDimensions * Sobol_numBits];
+} // namespace ospray
 #endif
-
-#include "math/sobol.h"
-
-OSPRAY_BEGIN_ISPC_NAMESPACE
-
-// Compute one component of the Sobol'-sequence, where the component
-// corresponds to the dimension parameter, and the index specifies
-// the point inside the sequence. The scramble parameter can be used
-// to permute elementary intervals, and might be chosen randomly to
-// generate a randomized QMC sequence.
-inline float Sobol_sample(const unsigned int *uniform sobol_matrices,
-    unsigned int index,
-    uniform unsigned int dimension,
-    unsigned int scramble = 0)
-{
-#ifndef OSPRAY_TARGET_DPCPP
-  assert(dimension < Sobol_numDimensions);
-#endif
-
-  unsigned int result = scramble;
-  for (uniform unsigned int i = dimension * Sobol_numBits; index;
-       index >>= 1, ++i) {
-    if (index & 1)
-      result ^= sobol_matrices[i];
-  }
-
-  return to_float_unorm(result);
-}
-OSPRAY_END_ISPC_NAMESPACE

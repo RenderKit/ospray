@@ -220,10 +220,13 @@ struct LDSampler
   uint32 index; // sample index
   uint32 scramble; // random number for scrambling the samples
   uint32 lcg; // LCG used when we run out of dimensions
+  const unsigned int *uniform sobolMatrices;
 };
 
-inline void LDSampler_init(
-    varying LDSampler *uniform self, uint32 pixelID, uint32 sampleIndex)
+inline void LDSampler_init(varying LDSampler *uniform self,
+    const MathConstants *uniform mathConstants,
+    uint32 pixelID,
+    uint32 sampleIndex)
 {
   // skip the first few samples to reduce correlation artifacts
   self->index = sampleIndex + 64;
@@ -234,6 +237,8 @@ inline void LDSampler_init(
 
   hash = MurmurHash3_mix(hash, sampleIndex);
   self->lcg = MurmurHash3_finalize(hash);
+
+  self->sobolMatrices = mathConstants->sobolMatrices;
 }
 
 inline float LDSampler_getFloat(
@@ -243,7 +248,7 @@ inline float LDSampler_getFloat(
     return LCG_getFloat(self->lcg);
 
   // Sample the Sobol sequence
-  const float s = Sobol_sample(self->index, dimension);
+  const float s = Sobol_sample(self->sobolMatrices, self->index, dimension);
 
   // Apply Cranley-Patterson rotation to reduce correlation artifacts
   const float shift = to_float_unorm(hashToRandom(dimension, self->scramble));

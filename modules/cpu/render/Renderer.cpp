@@ -7,6 +7,8 @@
 #include "Material.h"
 #include "common/Instance.h"
 #include "geometry/GeometricModel.h"
+#include "ospray/OSPEnums.h"
+#include "pf/PixelFilter.h"
 #ifdef OSPRAY_TARGET_DPCPP
 #include "render/RendererRenderTaskFn.inl"
 #include "render/RendererType.ih"
@@ -83,13 +85,8 @@ void Renderer::commit()
   getSh()->maxDepthTexture =
       maxDepthTexture ? maxDepthTexture->getSh() : nullptr;
 
-  /*
   setupPixelFilter();
-  getSh()->pixelFilter =
-      (ispc::PixelFilter *)(pixelFilter ? pixelFilter->getIE() : nullptr);
-      */
-  std::cout << "NOTE: PixelFilter disabled currently\n";
-  getSh()->pixelFilter = nullptr;
+  getSh()->pixelFilter = pixelFilter ? pixelFilter->getSh() : nullptr;
 
   ispc::precomputeZOrder();
 }
@@ -224,27 +221,30 @@ void Renderer::setupPixelFilter()
   pixelFilter = nullptr;
   switch (pixelFilterType) {
   case OSPPixelFilterTypes::OSP_PIXELFILTER_BOX: {
-    pixelFilter = rkcommon::make_unique<ospray::BoxPixelFilter>();
-    break;
-  }
-  case OSPPixelFilterTypes::OSP_PIXELFILTER_BLACKMAN_HARRIS: {
-    pixelFilter = rkcommon::make_unique<ospray::BlackmanHarrisLUTPixelFilter>();
-    break;
-  }
-  case OSPPixelFilterTypes::OSP_PIXELFILTER_MITCHELL: {
-    pixelFilter =
-        rkcommon::make_unique<ospray::MitchellNetravaliLUTPixelFilter>();
+    pixelFilter = new BoxPixelFilter(getISPCDevice());
     break;
   }
   case OSPPixelFilterTypes::OSP_PIXELFILTER_POINT: {
-    pixelFilter = rkcommon::make_unique<ospray::PointPixelFilter>();
+    pixelFilter = new PointPixelFilter(getISPCDevice());
+    break;
+  }
+  case OSPPixelFilterTypes::OSP_PIXELFILTER_BLACKMAN_HARRIS: {
+    pixelFilter = new BlackmanHarrisLUTPixelFilter(getISPCDevice());
+    break;
+  }
+  case OSPPixelFilterTypes::OSP_PIXELFILTER_MITCHELL: {
+    pixelFilter = new MitchellNetravaliLUTPixelFilter(getISPCDevice());
     break;
   }
   case OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS:
   default: {
-    pixelFilter = rkcommon::make_unique<ospray::GaussianLUTPixelFilter>();
+    pixelFilter = new GaussianLUTPixelFilter(getISPCDevice());
     break;
   }
+  }
+  if (pixelFilter) {
+    // Need to remove extra local ref
+    pixelFilter->refDec();
   }
 }
 

@@ -21,12 +21,11 @@ struct OSPRAY_SDK_INTERFACE MathConstants
   virtual std::string toString() const override;
 
  private:
-  // need buffershared members here
-  std::unique_ptr<BufferShared<unsigned int>> halton_perm3_buf;
-  std::unique_ptr<BufferShared<unsigned int>> halton_perm5_buf;
-  std::unique_ptr<BufferShared<unsigned int>> halton_perm7_buf;
+  std::unique_ptr<BufferShared<unsigned int>> haltonPerm3Buf;
+  std::unique_ptr<BufferShared<unsigned int>> haltonPerm5Buf;
+  std::unique_ptr<BufferShared<unsigned int>> haltonPerm7Buf;
 
-  // std::unique_ptr<BufferShared<unsigned int>> sobol_matrices_buf;
+  std::unique_ptr<BufferShared<unsigned int>> sobolMatricesBuf;
 };
 
 } // namespace ospray

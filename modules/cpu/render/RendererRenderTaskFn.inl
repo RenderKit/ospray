@@ -8,6 +8,7 @@
 #ifdef OSPRAY_TARGET_DPCPP
 #include "math/random.ih"
 #include "math/sampling.ih"
+#include "pf/PixelFilterType.ih"
 #include "render/util.ih"
 #endif
 
@@ -79,10 +80,11 @@ template <typename RenderSampleFn>
         const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
 
         vec2f pfSample = pixelSample;
-#if 0
+#if 1
         const PixelFilter *uniform pf = self->pixelFilter;
         if (pf) {
-          pfSample = pf->sample(pf, pixelSample) + make_vec2f(0.5f);
+          pfSample =
+              PixelFilter_dispatch_sample(pf, pixelSample) + make_vec2f(0.5f);
         }
 #endif
 
@@ -111,10 +113,12 @@ template <typename RenderSampleFn>
         screenSample.normal = make_vec3f(0.f);
 
 #ifdef OSPRAY_TARGET_DPCPP
-#if 0
-      // Dummy top level print so that prints at lower levels of the kernel will work
-      // See JIRA https://jira.devtools.intel.com/browse/XDEPS-4729
-      cl::sycl::ext::oneapi::experimental::printf("");
+#if 1
+        // Dummy top level print so that prints at lower levels of the kernel
+        // will work See JIRA https://jira.devtools.intel.com/browse/XDEPS-4729
+        if (taskIndex0 == 0) {
+          cl::sycl::ext::oneapi::experimental::printf("");
+        }
 #endif
 #endif
 

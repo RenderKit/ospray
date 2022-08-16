@@ -112,7 +112,7 @@ option(OSPRAY_IGC_FAST_COMPILE
     "Pass flags to improve compilation speed at the cost of some optimization" OFF)
 if (OSPRAY_IGC_FAST_COMPILE)
     list(APPEND OSPRAY_IGC_OPTIONS "PartitionUnit=1")
-    list(APPEND OSPRAY_IGC_OPTIONS "UnitSizeThreshold=20000")
+    list(APPEND OSPRAY_IGC_OPTIONS "UnitSizeThreshold=15000")
 endif()
 #list(APPEND OSPRAY_IGC_OPTIONS "ForceOCLSIMDWidth=8")
 
