@@ -93,7 +93,6 @@ SciVisData::SciVisData(const World &world)
           lightViews, visibleOnly, inst->group->lights, inst->getSh());
     }
   }
-  aoColor = vec3f(1.f);
 
   // Retrieve shared memory pointer from each light view and store them
   // in a temporary local std::vector

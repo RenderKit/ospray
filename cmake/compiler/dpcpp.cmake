@@ -107,12 +107,20 @@ list(APPEND OSPRAY_IGC_OPTIONS "VISAOptions=-scratchAllocForStackInKB 128 -nospi
 # if we want to support it in VS
 list(APPEND OSPRAY_IGC_OPTIONS "ForceInlineStackCallWithImplArg=0" "EnableGlobalStateBuffer=1")
 
+option(OSPRAY_IGC_ENABLE_ZE_BINARY "Enable ZEBinary (for GTPin)" OFF)
+if (OSPRAY_IGC_ENABLE_ZE_BINARY)
+  list(APPEND OSPRAY_IGC_OPTIONS "EnableZEBinary=1")
+endif()
+
 # This significantly improves compile times on 17028 and up, though also impacts performance some
 option(OSPRAY_IGC_FAST_COMPILE
-    "Pass flags to improve compilation speed at the cost of some optimization" OFF)
+  "Pass flags to improve compilation speed at the cost of some optimization" OFF)
 if (OSPRAY_IGC_FAST_COMPILE)
-    list(APPEND OSPRAY_IGC_OPTIONS "PartitionUnit=1")
-    list(APPEND OSPRAY_IGC_OPTIONS "UnitSizeThreshold=15000")
+  set(OSPRAY_IGC_FAST_COMPILE_UNIT_SIZE_THRESHOLD 15000 CACHE NUMBER
+    "Set the partition unit unit size threshold (default 15000)")
+
+  list(APPEND OSPRAY_IGC_OPTIONS "PartitionUnit=1")
+  list(APPEND OSPRAY_IGC_OPTIONS "UnitSizeThreshold=${OSPRAY_IGC_FAST_COMPILE_UNIT_SIZE_THRESHOLD}")
 endif()
 #list(APPEND OSPRAY_IGC_OPTIONS "ForceOCLSIMDWidth=8")
 
