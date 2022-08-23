@@ -288,13 +288,9 @@ export void *uniform Texture2D_get_addr(
 SYCL_EXTERNAL __noinline vec4f Texture2D_get(
     const uniform Texture *uniform _self, const DifferentialGeometry &dg)
 {
-#if 0
-  return make_vec4f(1.f);
-#else
   const uniform Texture2D *uniform self =
       (const uniform Texture2D *uniform)_self;
-  const uniform bool filter_nearest =
-      self->filter == OSP_TEXTURE_FILTER_NEAREST;
+  const uniform bool filter_nearest = self->filter & OSP_TEXTURE_FILTER_NEAREST;
 
   switch (self->format) {
     __foreach_fetcher(__define_tex_call_tex_case);
@@ -302,7 +298,6 @@ SYCL_EXTERNAL __noinline vec4f Texture2D_get(
     break;
   }
   return make_vec4f(0.f);
-#endif
 }
 
 static vec3f Texture2D_Normal_neutral(
@@ -353,8 +348,7 @@ SYCL_EXTERNAL __noinline vec3f Texture2D_getNormal(
 {
   const uniform Texture2D *uniform self =
       (const uniform Texture2D *uniform)_self;
-  const uniform bool filter_nearest =
-      self->filter == OSP_TEXTURE_FILTER_NEAREST;
+  const uniform bool filter_nearest = self->filter & OSP_TEXTURE_FILTER_NEAREST;
   switch (self->format) {
   case OSP_TEXTURE_SRGBA: /* fallthrough, sRGB ignored for normals */
     __define_tex_callN_tex_case(RGBA8);

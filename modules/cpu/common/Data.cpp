@@ -3,6 +3,7 @@
 
 // ospray
 #include "Data.h"
+#include "common/BufferShared.h"
 #include "ospray/ospray.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 
@@ -21,17 +22,7 @@ Data::Data(api::ISPCDevice &device,
 {
   if (sharedData == nullptr)
     throw std::runtime_error("OSPData: shared buffer is NULL");
-  // addr = (char *)sharedData;
-
-  // TODO: Here we need to check if it's a GPU pointer or not and do the
-  // alloc/copy Shared data on GPU needs a way to share the USM context from
-  // OSPRay. What about the ANARI mapping stuff? This is a hack right now to
-  // copy all data into USM so that we can run the ospExamples
-  shared = false;
-  view = BufferSharedCreate(
-      device.getIspcrtDevice().handle(), size() * sizeOf(type) + 16);
-  addr = (char *)ispcrtSharedPtr(view);
-  std::memcpy(addr, sharedData, size() * sizeOf(type));
+  addr = (char *)sharedData;
   init();
 
   if (isObjectType(type)) {
@@ -49,9 +40,10 @@ Data::Data(api::ISPCDevice &device, OSPDataType type, const vec3ul &numItems)
       numItems(numItems),
       byteStride(0)
 {
-  view = BufferSharedCreate(
-      device.getIspcrtDevice().handle(), size() * sizeOf(type) + 16);
-  addr = (char *)ispcrtSharedPtr(view);
+  // TODO: is this pad out by 16 still needed?
+  view = make_buffer_shared_unique<char>(
+      device.getIspcrtDevice(), size() * sizeOf(type) + 16);
+  addr = view->data();
 
   init();
   if (isObjectType(type)) // XXX initialize always? or never?
@@ -66,9 +58,6 @@ Data::~Data()
         child->refDec();
     }
   }
-
-  if (!shared)
-    BufferSharedDelete(view);
 }
 
 ispc::Data1D Data::emptyData1D;
@@ -88,6 +77,21 @@ void Data::init()
   if (byteStride.z == 0)
     byteStride.z = numItems.y * byteStride.y;
 
+  // TODO: Here we need to check if it's a GPU pointer or not and do the
+  // alloc/copy Shared data on GPU needs a way to share the USM context from
+  // OSPRay. What about the ANARI mapping stuff? This is a hack right now to
+  // copy all data into USM so that we can run the ospExamples
+  // Right now this just always copies data the app told us was shared
+  if (shared) {
+    const size_t sizeBytes = byteStride.z * numItems.z;
+    shared = false;
+    view = make_buffer_shared_unique<char>(
+        getISPCDevice().getIspcrtDevice(), sizeBytes);
+    const char *appSharedData = addr;
+    addr = view->data();
+    std::memcpy(addr, appSharedData, sizeBytes);
+  }
+
   // precompute dominant axis and set at ispc-side proxy
   if (dimensions != 1)
     return;
@@ -101,6 +105,7 @@ void Data::init()
     ispc.byteStride = byteStride.z;
     numItems1D = numItems.z;
   }
+
   // finalize ispc-side
   ispc.addr = reinterpret_cast<decltype(ispc.addr)>(addr);
   ispc.huge = std::abs(ispc.byteStride) * numItems1D

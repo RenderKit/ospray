@@ -61,7 +61,6 @@ inline Light_SampleRes SampleArea(const QuadLight *uniform self,
   res.pdf = dyn.ppdf * sqr(dist) / abs(cosd);
 
   float weight;
-#if 0
   if (self->intensityDistribution.lid) {
     weight = IntensityDistribution_eval(
         &self->intensityDistribution, dyn.c0, dyn.c90, cosd, res.dir);
@@ -71,10 +70,9 @@ inline Light_SampleRes SampleArea(const QuadLight *uniform self,
     // of radiance with the cosine cancels out.
     weight /= dyn.ppdf * sqr(dist);
   } else {
-#endif
     // emit only to one side
     weight = cosd > 0.f ? rcp(res.pdf) : 0.f;
-  //}
+  }
   res.weight = self->radiance * weight;
 
   return res;
@@ -112,7 +110,6 @@ inline Light_SampleRes Sample(const QuadLight *uniform self,
   const float cosd = dot(dyn.nnormal, res.dir);
   res.pdf = quad.S == 0.f ? 0.f : cosW.z / quad.S;
 
-#if 0
   if (self->intensityDistribution.lid) {
     if (abs(cosd) < 0.005f) // handle numerical edge case
       return SampleArea(self, dyn, dg, s);
@@ -127,17 +124,15 @@ inline Light_SampleRes Sample(const QuadLight *uniform self,
       res.weight = res.pdf != 0.f ? self->radiance * weight : make_vec3f(0.f);
     }
   } else {
-#endif
     // emit only to one side
     res.weight = (cosd > 0.f) && (res.pdf != 0.f)
         ? self->radiance * rcp(res.pdf)
         : make_vec3f(0.f);
-  //}
+  }
   return res;
 }
 
-SYCL_EXTERNAL Light_SampleRes QuadLight_sample(
-    const Light *uniform super,
+SYCL_EXTERNAL Light_SampleRes QuadLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &sp,
     const float)
@@ -225,8 +220,7 @@ inline Light_EvalRes Eval(const QuadLight *uniform self,
   return res;
 }
 
-SYCL_EXTERNAL Light_EvalRes QuadLight_eval(
-    const Light *uniform super,
+SYCL_EXTERNAL Light_EvalRes QuadLight_eval(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
@@ -238,8 +232,7 @@ SYCL_EXTERNAL Light_EvalRes QuadLight_eval(
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
-SYCL_EXTERNAL Light_EvalRes QuadLight_eval_instanced(
-    const Light *uniform super,
+SYCL_EXTERNAL Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,

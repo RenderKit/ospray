@@ -116,8 +116,8 @@ endif()
 option(OSPRAY_IGC_FAST_COMPILE
   "Pass flags to improve compilation speed at the cost of some optimization" OFF)
 if (OSPRAY_IGC_FAST_COMPILE)
-  set(OSPRAY_IGC_FAST_COMPILE_UNIT_SIZE_THRESHOLD 15000 CACHE NUMBER
-    "Set the partition unit unit size threshold (default 15000)")
+  set(OSPRAY_IGC_FAST_COMPILE_UNIT_SIZE_THRESHOLD 18000 CACHE NUMBER
+    "Set the partition unit unit size threshold (default 18000)")
 
   list(APPEND OSPRAY_IGC_OPTIONS "PartitionUnit=1")
   list(APPEND OSPRAY_IGC_OPTIONS "UnitSizeThreshold=${OSPRAY_IGC_FAST_COMPILE_UNIT_SIZE_THRESHOLD}")

@@ -50,8 +50,6 @@ void PathTracer::commit()
 
   importanceSampleGeometryLights = getParam<bool>("geometryLights", true);
   getSh()->backgroundRefraction = getParam<bool>("backgroundRefraction", false);
-
-  // ispc::precomputeMicrofacetAlbedoTables();
 }
 
 void *PathTracer::beginFrame(FrameBuffer *, World *world)
@@ -96,7 +94,7 @@ void PathTracer::renderTasks(FrameBuffer *fb,
     cgh.parallel_for(
         dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) RTC_SYCL_KERNEL {
           if (taskIndex.get_global_id(0) < numTasks) {
-#if 1
+#if 0
           // Needed for DPC++ prints to work around issue with print in deeper
           // indirect called functions (see JIRA
           // https://jira.devtools.intel.com/browse/XDEPS-4729)

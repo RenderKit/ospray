@@ -40,14 +40,12 @@ SYCL_EXTERNAL vec4f Renderer_getBackground(
 SYCL_EXTERNAL float Renderer_getMaxDepth(
     const Renderer *uniform self, const vec2f &screenPos)
 {
-  // if (!self->maxDepthTexture)
-  return inf;
+  if (!self->maxDepthTexture)
+    return inf;
 
-  /*
   DifferentialGeometry lookup;
   initDgFromTexCoord(lookup, screenPos);
   return max(0.f, get1f(self->maxDepthTexture, lookup));
-  */
 }
 
 SYCL_EXTERNAL void Renderer_default_renderSample(Renderer *uniform self,

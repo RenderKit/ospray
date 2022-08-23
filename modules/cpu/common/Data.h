@@ -4,8 +4,10 @@
 #pragma once
 
 #include <iterator>
+#include <memory>
 #include "ISPCDeviceObject.h"
 #include "StructShared.h"
+#include "common/BufferShared.h"
 #include "ispcrt.hpp"
 
 #ifdef OSPRAY_TARGET_DPCPP
@@ -68,10 +70,9 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
 
  protected:
   // The actual buffer storing the data
-  // TODO: What to do with OSPRay shared data that is not in USM?
-  // we need to detect & copy, we also need an API for apps to pass us USM
+  // TODO: we need to detect & copy, we also need an API for apps to pass us USM
   // and this USM has to be in the same L0 context...
-  ISPCRTMemoryView view{nullptr};
+  std::unique_ptr<BufferShared<char>> view;
   char *addr{nullptr};
   bool shared;
 

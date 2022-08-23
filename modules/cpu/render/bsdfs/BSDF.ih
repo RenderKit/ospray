@@ -99,7 +99,7 @@ struct BSDF
 {
   varying vec3f albedo;
   varying BSDFScatteringType scatteringType;
-  varying BSDFType bsdfType;
+  uniform BSDFType bsdfType;
   // TODO: We probably want to remove these to reduce the size of the BSDF
   // object
   uniform BSDF_EvalFunc eval;
@@ -110,7 +110,7 @@ struct BSDF
 inline void BSDF_Constructor(varying BSDF *uniform self,
     varying vec3f albedo,
     varying BSDFScatteringType scatteringType,
-    varying BSDFType bsdfType,
+    uniform BSDFType bsdfType,
     uniform BSDF_EvalFunc eval,
     uniform BSDF_SampleFunc sample,
     const varying linear3f *uniform frame)
