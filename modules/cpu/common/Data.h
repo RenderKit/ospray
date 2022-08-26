@@ -54,6 +54,10 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
   bool compact() const; // all strides are natural
   void copy(const Data &source, const vec3ul &destinationIndex);
 
+#ifdef OSPRAY_TARGET_DPCPP
+  void commit() override;
+#endif
+
   bool isShared() const;
 
   template <typename T, int DIM = 1>
@@ -74,6 +78,10 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
   // and this USM has to be in the same L0 context...
   std::unique_ptr<BufferShared<char>> view;
   char *addr{nullptr};
+  // We track the appSharedPtr separately for the GPU backend because if we were
+  // passed a shared ptr to memory that was not in USM we make a copy that we
+  // need to keep in sync
+  char *appSharedPtr{nullptr};
   bool shared;
 
  public:

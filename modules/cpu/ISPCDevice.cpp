@@ -158,37 +158,8 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 #undef declare_param_setter
 
 ISPCDevice::ISPCDevice()
-    : loadBalancer(std::make_shared<LocalTiledLoadBalancer>()),
-#ifdef OSPRAY_TARGET_DPCPP
-      ispcrtDevice(ISPCRT_DEVICE_TYPE_GPU),
-#else
-      ispcrtDevice(ISPCRT_DEVICE_TYPE_CPU),
-#endif
-      ispcrtQueue(ispcrtDevice)
-{
-#ifdef OSPRAY_TARGET_DPCPP
-  syclPlatform = sycl::ext::oneapi::level_zero::make_platform(
-      reinterpret_cast<pi_native_handle>(ispcrtDevice.nativePlatformHandle()));
-  syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
-      reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeDeviceHandle()));
-
-  std::cout << "Using GPU device from ISPCRT: "
-            << syclDevice.get_info<sycl::info::device::name>() << std::endl;
-
-  syclContext = sycl::ext::oneapi::level_zero::make_context(
-      std::vector<sycl::device>{syclDevice},
-      reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeContextHandle()),
-      true);
-
-  syclQueue = sycl::ext::oneapi::level_zero::make_queue(syclContext,
-      syclDevice,
-      reinterpret_cast<pi_native_handle>(ispcrtQueue.nativeTaskQueueHandle()),
-      true);
-  // TODO needed?
-  setenv("SYCL_PI_LEVEL_ZERO_USM_ALLOCATOR", "1;0;shared:64K,0,2M", 1);
-  loadBalancer->setQueue(&syclQueue);
-#endif
-} // namespace api
+    : loadBalancer(std::make_shared<LocalTiledLoadBalancer>())
+{}
 
 ISPCDevice::~ISPCDevice()
 {
@@ -228,6 +199,102 @@ static void vklErrorFunc(void *, const VKLError code, const char *str)
 void ISPCDevice::commit()
 {
   Device::commit();
+
+  // TODO: Should this somehow report an error if app trying to change and
+  // recommit these params?
+  if (!ispcrtContext) {
+#ifdef OSPRAY_TARGET_DPCPP
+    sycl::context *appSyclCtx =
+        static_cast<sycl::context *>(getParam<void *>("syclContext", nullptr));
+    sycl::device *appSyclDevice =
+        static_cast<sycl::device *>(getParam<void *>("syclDevice", nullptr));
+    if ((appSyclCtx && !appSyclDevice) || (!appSyclCtx && appSyclDevice)) {
+      handleError(OSP_INVALID_OPERATION,
+          "OSPRay ISPCDevice invalid configuration: if providing a syclContext and syclDevice both must be provided");
+      // TODO: No throw here right? Would it make more sense to add an
+      // OSPRayError we can throw internally to throw + communicate the right
+      // error code back up?
+      return;
+    }
+
+    ze_context_handle_t *appZeCtx = static_cast<ze_context_handle_t *>(
+        getParam<void *>("zeContext", nullptr));
+    ze_device_handle_t *appZeDevice = static_cast<ze_device_handle_t *>(
+        getParam<void *>("zeDevice", nullptr));
+    if ((appZeCtx && !appZeDevice) || (!appZeCtx && appZeDevice)) {
+      handleError(OSP_INVALID_OPERATION,
+          "OSPRay ISPCDevice invalid configuration: if providing a zeContext and zeDevice both must be provided");
+      // TODO: No throw here right? Would it make more sense to add an
+      // OSPRayError we can throw internally to throw + communicate the right
+      // error code back up?
+      return;
+    }
+
+    if (appSyclCtx && appZeCtx) {
+      handleError(OSP_INVALID_OPERATION,
+          "OSPRay ISPCDevice invalid configuration: For SYCL or Level Zero context interopability only a SYCL or Level Zero context & device can be provided, not both.");
+      // TODO: No throw here right? Would it make more sense to add an
+      // OSPRayError we can throw internally to throw + communicate the right
+      // error code back up?
+      return;
+    }
+
+    // If we got a SYCL context just get the native handles and set the "app" L0
+    // context/device to them, since we can take the same code path from there
+    ze_context_handle_t syclZeCtxHandle;
+    ze_device_handle_t syclZeDeviceHandle;
+    if (appSyclCtx) {
+      syclZeCtxHandle =
+          sycl::get_native<sycl::backend::ext_oneapi_level_zero>(*appSyclCtx);
+      syclZeDeviceHandle =
+          sycl::get_native<sycl::backend::ext_oneapi_level_zero>(
+              *appSyclDevice);
+
+      appZeCtx = &syclZeCtxHandle;
+      appZeDevice = &syclZeDeviceHandle;
+    }
+
+    if (appZeCtx) {
+      // TODO: These APIs need to be merged into ISPCRT
+      ispcrtContext = ispcrt::Context(
+          ISPCRT_DEVICE_TYPE_GPU, (ISPCRTGenericHandle)*appZeCtx);
+      ispcrtDevice =
+          ispcrt::Device(ispcrtContext, (ISPCRTGenericHandle)*appZeDevice);
+    } else {
+      ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU);
+      ispcrtDevice = ispcrt::Device(ispcrtContext);
+    }
+#else
+    ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
+    ispcrtDevice = ispcrt::Device(ispcrtContext);
+#endif
+    ispcrtQueue = ispcrt::TaskQueue(ispcrtDevice);
+
+#ifdef OSPRAY_TARGET_DPCPP
+    syclPlatform = sycl::ext::oneapi::level_zero::make_platform(
+        reinterpret_cast<pi_native_handle>(
+            ispcrtDevice.nativePlatformHandle()));
+    syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
+        reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeDeviceHandle()));
+
+    std::cout << "Using GPU device from ISPCRT: "
+              << syclDevice.get_info<sycl::info::device::name>() << std::endl;
+
+    syclContext = sycl::ext::oneapi::level_zero::make_context(
+        std::vector<sycl::device>{syclDevice},
+        reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeContextHandle()),
+        true);
+
+    syclQueue = sycl::ext::oneapi::level_zero::make_queue(syclContext,
+        syclDevice,
+        reinterpret_cast<pi_native_handle>(ispcrtQueue.nativeTaskQueueHandle()),
+        true);
+
+    // TODO needed?
+    setenv("SYCL_PI_LEVEL_ZERO_USM_ALLOCATOR", "1;0;shared:64K,0,2M", 1);
+    loadBalancer->setQueue(&syclQueue);
+#endif
+  }
 
   tasking::initTaskingSystem(numThreads, true);
 

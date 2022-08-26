@@ -3,6 +3,7 @@
 
 #include "GLFWOSPRayWindow.h"
 #include "example_common.h"
+#include "ospray/ospray.h"
 
 using namespace ospray;
 using rkcommon::make_unique;

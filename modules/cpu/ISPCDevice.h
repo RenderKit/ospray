@@ -167,6 +167,7 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 #endif
 
  private:
+  ispcrt::Context ispcrtContext;
   ispcrt::Device ispcrtDevice;
   ispcrt::TaskQueue ispcrtQueue;
 

@@ -18,10 +18,12 @@ Data::Data(api::ISPCDevice &device,
       shared(true),
       type(type),
       numItems(numItems),
-      byteStride(byteStride)
+      byteStride(byteStride),
+      appSharedPtr((char *)sharedData)
 {
-  if (sharedData == nullptr)
+  if (sharedData == nullptr) {
     throw std::runtime_error("OSPData: shared buffer is NULL");
+  }
   addr = (char *)sharedData;
   init();
 
@@ -83,13 +85,17 @@ void Data::init()
   // copy all data into USM so that we can run the ospExamples
   // Right now this just always copies data the app told us was shared
   if (shared) {
-    const size_t sizeBytes = byteStride.z * numItems.z;
-    shared = false;
-    view = make_buffer_shared_unique<char>(
-        getISPCDevice().getIspcrtDevice(), sizeBytes);
-    const char *appSharedData = addr;
-    addr = view->data();
-    std::memcpy(addr, appSharedData, sizeBytes);
+    ispcrt::Device &ispcrtDevice = getISPCDevice().getIspcrtDevice();
+    auto memType = ispcrtDevice.getMemoryAllocType(addr);
+
+    if (memType != ISPCRT_ALLOC_TYPE_SHARED) {
+      const size_t sizeBytes = byteStride.z * numItems.z;
+      shared = false;
+      view = make_buffer_shared_unique<char>(
+          getISPCDevice().getIspcrtDevice(), sizeBytes);
+      addr = view->data();
+      std::memcpy(addr, appSharedPtr, sizeBytes);
+    }
   }
 
   // precompute dominant axis and set at ispc-side proxy
@@ -163,6 +169,18 @@ void Data::copy(const Data &source, const vec3ul &destinationIndex)
     }
   }
 }
+
+#ifdef OSPRAY_TARGET_DPCPP
+void Data::commit()
+{
+  // If we were passed "shared" data that was not actually in USM we made a USM
+  // copy of it, and need to update that copy on commit
+  if (addr != appSharedPtr) {
+    const size_t sizeBytes = byteStride.z * numItems.z;
+    std::memcpy(addr, appSharedPtr, sizeBytes);
+  }
+}
+#endif
 
 bool Data::isShared() const
 {

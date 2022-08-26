@@ -125,28 +125,6 @@ void Mesh::commit()
     setEmbreeGeometryBuffer(embreeGeometry, RTC_BUFFER_TYPE_VERTEX, vertexData);
   }
 
-#ifdef OSPRAY_TARGET_DPCPP
-  {
-    api::ISPCDevice *device = (api::ISPCDevice *)api::Device::current.ptr;
-    ispcrt::Device &ispcrtDevice = device->getIspcrtDevice();
-    // TODO: we need the get mem alloc type on the C++ device wrapper too
-    auto memType =
-        ispcrtGetMemoryAllocType(ispcrtDevice.handle(), indexData->data());
-    switch (memType) {
-    case ISPCRT_ALLOC_TYPE_DEVICE:
-      break;
-    case ISPCRT_ALLOC_TYPE_SHARED:
-      break;
-    case ISPCRT_ALLOC_TYPE_HOST:
-      break;
-    default:
-      break;
-    }
-    if (memType != ISPCRT_ALLOC_TYPE_SHARED) {
-      throw std::runtime_error("Mem type must be shared!");
-    }
-  }
-#endif
   rtcSetSharedGeometryBuffer(embreeGeometry,
       RTC_BUFFER_TYPE_INDEX,
       0,
