@@ -435,14 +435,9 @@ inline vec4f texture2d(const Texture2D * self, const DifferentialGeometry &dg, i
     return bilerp(cs.frac, c00, c01, c10, c11);                                
 }                                                                            
 
-inline float get_y(const vec3f &c){
-    const float YWeight[3] = { 0.212671f, 0.715160f, 0.072169f };
-    return YWeight[0] * c.x + YWeight[1] * c.y + YWeight[2] * c.z;
-}
-
-vec3f sampleTexture2DEnsight(const Texture2D *tex, int imgwrap, int texmode, const DifferentialGeometry &dg, const vec3f &le)
+vec3f sampleTexture2DEnsight(const Texture2D *tex, int imgwrap, int texmode, float texscale, const DifferentialGeometry &dg, const vec3f &le)
 {
-    vec3f L = le;
+    vec3f L = le * texscale;
     const vec4f pixel = texture2d(tex, dg, imgwrap);
     const vec3f k = make_vec3f(pixel.x, pixel.y, pixel.z);
     if (TEXTURE_MODE_MODULATE == texmode){
@@ -450,13 +445,13 @@ vec3f sampleTexture2DEnsight(const Texture2D *tex, int imgwrap, int texmode, con
     }
     else if (TEXTURE_MODE_DECAL == texmode){
         const float t = pixel.w;
-        L = (1.0f - t) * L + (t * get_y(L)) * k;
+        L = (1.0f - t) * L + (t * reduce_max(L)) * k;
     }
     else if (TEXTURE_MODE_REPLACE == texmode){
         //we have to consider whether point is under shadow or not, but we don't want 
         //to sample the texture multiple times for each light source. So we use the luminance 
         //of the computed result instead to approximate
-        L = get_y(L) * k;
+        L = reduce_max(L) * k;
     }
     return L;
 }
