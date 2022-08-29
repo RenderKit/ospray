@@ -78,8 +78,10 @@ struct Material
   TextureParam colorbyMap; // EnSight's 1D texture mapping colorby
   TextureParam alphabyMap; // EnSight's 1D texture mapping alphaby
   TextureParam tex2dMap;   // EnSight's 2D texture mapping
-  int tex2dImageWrap; // ImageWrap value
-  int tex2dImageMode; // ImageMode value
+  int tex2dImageWrap;      // ImageWrap value
+  int tex2dImageMode;      // ImageMode value
+  float tex2dImageScale;   // ImageScale value
+  int unused;
 
 #ifdef __cplusplus
   Material(const vec3f &emission = vec3f(0.f))
@@ -92,7 +94,9 @@ struct Material
         alphabyMap(),
         tex2dMap(),
         tex2dImageWrap(0),
-        tex2dImageMode(0)
+        tex2dImageMode(0),
+        tex2dImageScale(1),
+        unused(0)
   {}
 
   bool isEmissive()
@@ -100,36 +104,19 @@ struct Material
     return reduce_max(emission) > 0.f;
   }
 
-  inline void SetEnsightTex1D(
-      const TextureParam *colorbyMap, const TextureParam *alphabyMap)
+  void ApplyEnsightTextures(const TextureParam *colorbyMap_,
+      const TextureParam *alphabyMap_,
+      const TextureParam *tex2dMap_,
+      int tex2dImageWrap_,
+      int tex2dImageMode_,
+      float tex2dImageScale_)
   {
-    if (colorbyMap) {
-      this->colorbyMap = *colorbyMap;
-    }
-    if (alphabyMap) {
-      this->alphabyMap = *alphabyMap;
-    }
-  }
-
-  inline void SetEnsightTex2D(
-      const TextureParam *tex2dMap, int tex2dImageWrap, int tex2dImageMode)
-  {
-    if (tex2dMap) {
-      this->tex2dMap = *tex2dMap;
-    }
-    this->tex2dImageWrap = tex2dImageWrap,
-    this->tex2dImageMode = tex2dImageMode;
-  }
-
-  inline void ApplyEnsightTextures(
-      const TextureParam *colorbyMap,
-      const TextureParam *alphabyMap,
-      const TextureParam *tex2dMap,
-      int tex2dImageWrap,
-      int tex2dImageMode)
-  {
-    SetEnsightTex1D(colorbyMap, alphabyMap);
-    SetEnsightTex2D(tex2dMap, tex2dImageWrap, tex2dImageMode);
+    this->colorbyMap = colorbyMap_ ? *colorbyMap_ : TextureParam();
+    this->alphabyMap = alphabyMap_ ? *alphabyMap_ : TextureParam();
+    this->tex2dMap = tex2dMap_ ? *tex2dMap_ : TextureParam();
+    this->tex2dImageWrap = tex2dImageWrap_,
+    this->tex2dImageMode = tex2dImageMode_;
+    this->tex2dImageScale = tex2dImageScale_;
   }
 };
 } // namespace ispc

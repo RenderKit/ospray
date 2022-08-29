@@ -95,5 +95,6 @@ inline void Material::registerType(
   ispc::TextureParam tex2dTex = getTextureParam("map_texture2d");               \
   const int tex2dimagewrap = getParam<int>("texture2d_imagewrap", 0);           \
   const int tex2dimagemode = getParam<int>("texture2d_imagemode", 0);           \
-  getSh()->super.ApplyEnsightTextures(&colorbyTex, &alphabyTex, &tex2dTex, tex2dimagewrap, tex2dimagemode);\
+  const float tex2dimagescale = getParam<float>("texture2d_imagescale", 1);     \
+  getSh()->super.ApplyEnsightTextures(&colorbyTex, &alphabyTex, &tex2dTex, tex2dimagewrap, tex2dimagemode, tex2dimagescale);\
 }

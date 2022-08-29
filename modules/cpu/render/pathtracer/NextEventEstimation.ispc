@@ -31,7 +31,8 @@ static vec3f addSideEffects(const DifferentialGeometry &dg, const vec3f &le)
   if (tex2dTex) {
     const int imgwrap = mat->tex2dImageWrap;
     const int imgmode = mat->tex2dImageMode;
-    out = sampleTexture2DEnsight(tex2dTex, imgwrap, imgmode, dg, out);
+    const float imgscale = mat->tex2dImageScale;
+    out = sampleTexture2DEnsight(tex2dTex, imgwrap, imgmode, imgscale, dg, out);
   }
   return out;
 }
@@ -83,9 +84,6 @@ vec3f nextEventEstimation(const PathContext &pathContext,
     // skip when zero contribution from material
     if (reduce_max(fe.value) <= 0.0f)
       continue;
-
-    // implement ensight customized 1D and 2D texture mapping here!
-    fe.value = addSideEffects(pathVertex.dg, fe.value);
 
     // test for shadows
     Ray shadowRay;
@@ -142,5 +140,9 @@ vec3f nextEventEstimation(const PathContext &pathContext,
       }
     }
   }
+
+  // implement ensight customized 1D and 2D texture mapping here!
+  L = addSideEffects(pathVertex.dg, L);
+
   return L;
 }

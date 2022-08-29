@@ -112,7 +112,7 @@ else()
   mark_as_advanced(FORCE BUILD_TBB_FROM_SOURCE)
 endif()
 
-option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
+option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" OFF)
 set(EMBREE_VERSION "3.13.3" CACHE STRING "Which version of Embree to build?")
 if (EMBREE_VERSION STREQUAL "3.13.3")
   if (BUILD_EMBREE_FROM_SOURCE)
