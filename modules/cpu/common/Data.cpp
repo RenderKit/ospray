@@ -24,7 +24,7 @@ Data::Data(api::ISPCDevice &device,
   if (sharedData == nullptr) {
     throw std::runtime_error("OSPData: shared buffer is NULL");
   }
-  addr = (char *)sharedData;
+  addr = appSharedPtr;
   init();
 
   if (isObjectType(type)) {
@@ -79,6 +79,7 @@ void Data::init()
   if (byteStride.z == 0)
     byteStride.z = numItems.y * byteStride.y;
 
+#ifdef OSPRAY_TARGET_DPCPP
   // TODO: Here we need to check if it's a GPU pointer or not and do the
   // alloc/copy Shared data on GPU needs a way to share the USM context from
   // OSPRay. What about the ANARI mapping stuff? This is a hack right now to
@@ -97,6 +98,7 @@ void Data::init()
       std::memcpy(addr, appSharedPtr, sizeBytes);
     }
   }
+#endif
 
   // precompute dominant axis and set at ispc-side proxy
   if (dimensions != 1)

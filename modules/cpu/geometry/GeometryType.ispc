@@ -4,6 +4,7 @@
 #include "common/DifferentialGeometry.ih"
 #include "common/Ray.ih"
 #include "geometry/Boxes.ih"
+#include "geometry/Curves.ih"
 #include "geometry/GeometryShared.h"
 #include "geometry/GeometryType.ih"
 #include "geometry/Mesh.ih"
@@ -37,6 +38,9 @@ SYCL_EXTERNAL __noinline void Geometry_dispatch_postIntersect(
     break;
   case GEOMETRY_TYPE_PLANES:
     Planes_postIntersect(self, dg, ray, flags);
+    break;
+  case GEOMETRY_TYPE_CURVES:
+    Curves_postIntersect(self, dg, ray, flags);
     break;
 #ifdef OSPRAY_ENABLE_VOLUMES
   case GEOMETRY_TYPE_ISOSURFACES:

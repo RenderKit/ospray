@@ -102,28 +102,6 @@ void setEmbreeGeometryBuffer(RTCGeometry geom,
     Ref<const DataT<T, 1>> &dataRef,
     unsigned int slot = 0)
 {
-#ifdef OSPRAY_TARGET_DPCPP
-  {
-    api::ISPCDevice *device = (api::ISPCDevice *)api::Device::current.ptr;
-    ispcrt::Device &ispcrtDevice = device->getIspcrtDevice();
-    auto memType =
-        ispcrtGetMemoryAllocType(ispcrtDevice.handle(), dataRef->data());
-    switch (memType) {
-    case ISPCRT_ALLOC_TYPE_DEVICE:
-      break;
-    case ISPCRT_ALLOC_TYPE_SHARED:
-      break;
-    case ISPCRT_ALLOC_TYPE_HOST:
-      break;
-    default:
-      break;
-    }
-    if (memType != ISPCRT_ALLOC_TYPE_SHARED) {
-      throw std::runtime_error("Mem type must be shared!");
-    }
-  }
-#endif
-
   if (!dataRef)
     return;
   rtcSetSharedGeometryBuffer(geom,

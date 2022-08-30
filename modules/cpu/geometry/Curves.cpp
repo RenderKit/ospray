@@ -50,9 +50,11 @@ static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
 Curves::Curves(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
+#ifndef OSPRAY_TARGET_DPCPP
   getSh()->super.postIntersect =
       reinterpret_cast<ispc::Geometry_postIntersectFct>(
           ispc::Curves_postIntersect_addr());
+#endif
   // TODO implement area sampling of OldCurves for geometry lights
 }
 
@@ -124,11 +126,28 @@ void Curves::commit()
 
   getSh()->geom = embreeGeometry;
   getSh()->flagMask = -1;
-  if (!colorData)
-    getSh()->flagMask &= ispc::int64(~DG_COLOR);
-  if (!texcoordData)
-    getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
   getSh()->super.numPrimitives = numPrimitives();
+  getSh()->curveType = curveType;
+  getSh()->curveBasis = curveBasis;
+#ifdef OSPRAY_TARGET_DPCPP
+  getSh()->index = *ispc(indexData);
+#endif
+
+  if (!colorData) {
+    getSh()->flagMask &= ispc::int64(~DG_COLOR);
+  } else {
+#ifdef OSPRAY_TARGET_DPCPP
+    getSh()->color = *ispc(colorData);
+#endif
+  }
+
+  if (!texcoordData) {
+    getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
+  } else {
+#ifdef OSPRAY_TARGET_DPCPP
+    getSh()->texcoord = *ispc(texcoordData);
+#endif
+  }
 
   postCreationInfo(vertexData->size());
 }
