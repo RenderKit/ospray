@@ -48,7 +48,7 @@ inline void Scale_Constructor(varying Scale *uniform self,
       base->albedo * factor,
       base->bsdfType,
       BSDF_TYPE_SCALE,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

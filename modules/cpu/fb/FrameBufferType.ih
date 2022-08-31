@@ -3,9 +3,9 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
-#include "common/rkcommonDPCPPWrappers.h"
+#include "common/rkcommonSYCLWrappers.h"
 #include "rkcommon/platform.h"
 #endif
 
@@ -24,7 +24,7 @@ enum FrameBufferType
   FRAMEBUFFER_TYPE_UNKNOWN,
 };
 
-#if defined(ISPC) || defined(OSPRAY_TARGET_DPCPP)
+#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 SYCL_EXTERNAL __noinline uniform RenderTaskDesc
 FrameBuffer_dispatch_getRenderTaskDesc(
     FrameBuffer *uniform fb, const uniform uint32 taskID);

@@ -3,7 +3,7 @@
 
 #include "Distribution1D.ih"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <limits>
 #endif
 
@@ -23,14 +23,14 @@ SYCL_EXTERNAL export uniform float Distribution1D_create(
   // compute reciprocal sum
   const uniform float rcpSum = 1.0f / sum;
   // next representable number in float greater than 1.0f
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   const float nextAfter1 = 1.f + std::numeric_limits<float>::epsilon();
 #else
   const uniform float nextAfter1 = 0x1.000002p+0f;
 #endif
 
   // normalize
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   for (int i = 0; i < size; ++i) {
 #else
   foreach (i = 0 ... size) {

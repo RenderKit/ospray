@@ -74,7 +74,7 @@ inline void Specular_Constructor(varying Specular *uniform self,
       R,
       BSDF_GLOSSY_REFLECTION,
       BSDF_TYPE_SPECULAR,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

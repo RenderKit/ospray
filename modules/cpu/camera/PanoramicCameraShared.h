@@ -26,7 +26,7 @@ struct PanoramicCamera
   }
 };
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void *PanoramicCamera_initRay_addr();
 #endif
 } // namespace ispc

@@ -22,7 +22,7 @@ struct LinearTransferFunction
   float maxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT]
                          [PRECOMPUTED_OPACITY_SUBRANGE_COUNT];
 };
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void *LinearTransferFunction_get_addr();
 void *LinearTransferFunction_getMaxOpacity_addr();
 #endif

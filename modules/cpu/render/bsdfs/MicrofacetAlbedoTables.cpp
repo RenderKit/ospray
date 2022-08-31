@@ -1,7 +1,7 @@
 #include "MicrofacetAlbedoTables.h"
 #include "common/BufferShared.h"
 #include "render/bsdfs/MicrofacetAlbedoTablesShared.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "render/bsdfs/MicrofacetAlbedoTables_ispc.h"
 #endif
 
@@ -64,7 +64,7 @@ MicrofacetAlbedoTables::MicrofacetAlbedoTables(api::ISPCDevice &device)
 
   getSh()->sheenAlbedo_dir = sheenAlbedo_dir->data();
 
-  // TODO: Could be a kernel dispatch for DPCPP, right now it's run serially on
+  // TODO: Could be a kernel dispatch for SYCL, right now it's run serially on
   // the host
   ispc::precomputeMicrofacetAlbedoTables(getSh());
 }

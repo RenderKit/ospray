@@ -155,9 +155,9 @@ SYCL_EXTERNAL Light_SampleRes QuadLight_sample_instanced(
   assert(instance);
 
   Light_SampleRes res;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const float utime = time;
 #else
   foreach_unique (utime in time) {
@@ -246,9 +246,9 @@ SYCL_EXTERNAL Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const float utime = time;
 #else
   foreach_unique (utime in time) {

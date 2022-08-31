@@ -8,7 +8,7 @@
 namespace ispc {
 #endif // __cplusplus
 
-#if defined(__cplusplus) && !defined(OSPRAY_TARGET_DPCPP)
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *TransferFunction_getFct;
 typedef void *TransferFunction_getMaxOpacityFct;
 #else

@@ -1,7 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/AffineSpace.h"
 #include "rkcommon/math/vec.h"
 using namespace rkcommon;
@@ -33,9 +33,9 @@ SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
   vec3f L = make_vec3f(0.f);
   Material *material = (Material *)pathVertex.dg.material;
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const Material *m = material;
 #else
   foreach_unique (m in material) {
@@ -85,9 +85,9 @@ Light_SampleRes GeometryLight_sample(const Light *uniform super,
   const Instance *uniform instance = self->super.instance;
   assert(instance);
   if (instance->motionBlur) {
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
-      // DPC++ execution in a thread is scalar
+      // SYCL execution in a thread is scalar
       const float utime = time;
 #else
     foreach_unique (utime in time) {

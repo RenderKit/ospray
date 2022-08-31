@@ -4,7 +4,7 @@
 #pragma once
 
 // ospray
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/AffineSpace.h"
 #include "rkcommon/math/box.h"
 using namespace rkcommon;

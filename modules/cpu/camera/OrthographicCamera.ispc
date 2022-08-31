@@ -57,7 +57,7 @@ export void OrthographicCamera_projectBox(
   const uniform vec3f dvn = self->dv_up / dot(self->dv_up, self->dv_up);
 
   vec3f projectedPt = make_vec3f(-1.f, -1.f, 1e20f);
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   for (uint32 i = 0; i < 8; ++i) {
 #else
   foreach (i = 0 ... 8) {

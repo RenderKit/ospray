@@ -62,7 +62,7 @@ inline void OrenNayar_Constructor(varying OrenNayar *uniform self,
       R,
       BSDF_DIFFUSE_REFLECTION,
       BSDF_TYPE_OREN_NAYAR,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

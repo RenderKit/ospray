@@ -11,7 +11,7 @@
 namespace ispc {
 #endif // __cplusplus
 
-#if defined(__cplusplus) && !defined(OSPRAY_TARGET_DPCPP)
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *Light_SampleFunc;
 typedef void *Light_EvalFunc;
 #else

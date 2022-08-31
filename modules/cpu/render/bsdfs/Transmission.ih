@@ -36,7 +36,7 @@ inline varying BSDF *uniform Transmission_create(
       T,
       BSDF_SPECULAR_TRANSMISSION,
       BSDF_TYPE_TRANSMISSION,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

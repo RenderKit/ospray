@@ -15,7 +15,7 @@ SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
     const varying Ray &ray,
     uniform int64 flags);
 
-SYCL_EXTERNAL void Mesh_getAreas(const Geometry *const uniform _self,
+void Mesh_getAreas(const Geometry *const uniform _self,
     const int32 *const uniform primIDs,
     const uniform int32 numPrims,
     const uniform affine3f &xfm,

@@ -3,17 +3,18 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 int ISPCDevice_programCount()
 {
   // TODO: This should query the GPU width for ISPC,
-  // But for DPC++ we're in a scalar context
+  // But for SYCL we're in a scalar context, so just 1 program wide
   return 1;
 }
 
 int ISPCDevice_isa()
 {
   // TODO: GPU ISA/width detection
+  // Not relevant for SYCL
   return 0;
 }
 

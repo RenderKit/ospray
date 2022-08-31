@@ -17,7 +17,7 @@
 // c++ shared
 #include "fb/FrameBufferShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/math.h"
 #endif
 
@@ -60,13 +60,13 @@ SYCL_EXTERNAL void Renderer_default_renderSample(Renderer *uniform self,
   sample.rgb = make_vec3f(bg);
 }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "RendererRenderTaskFn.inl"
 #endif
 
 // Exports (called from C++) //////////////////////////////////////////////////
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform Renderer_default_renderSample_addr()
 {
   return (void *uniform)Renderer_default_renderSample;

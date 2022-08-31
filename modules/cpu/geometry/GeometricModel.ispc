@@ -1,7 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/math.h"
 #endif
 
@@ -28,8 +28,8 @@ export uniform int GeometricModel_gatherEmissivePrimIDs(void *uniform _model,
 
   // create the list of emissive primitive IDs
   uniform int32 numEmissivePrims = 0;
-#ifdef OSPRAY_TARGET_DPCPP
-  // DPC++ execution in a thread is scalar
+#ifdef OSPRAY_TARGET_SYCL
+  // SYCL execution in a thread is scalar
   for (int primID = 0; primID < geo->numPrimitives; ++primID) {
 #else
   foreach (primID = 0 ... geo->numPrimitives) {
@@ -49,7 +49,7 @@ export uniform int GeometricModel_gatherEmissivePrimIDs(void *uniform _model,
   // TODO: use emissive power instead of just area
   // TODO: motion blur can introduce scale, which means areas cannot
   // accurately be precomputed
-  // TODO: Can stay as a ptr call if not moved to GPU
+  // Note: Can stay as a ptr call if not moved to GPU
   geo->getAreas(geo, primIDs, numEmissivePrims, instance->xfm, distribution);
   pdf = model->areaPDF =
       1.f / Distribution1D_create(numEmissivePrims, distribution);

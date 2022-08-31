@@ -47,38 +47,15 @@ SYCL_EXTERNAL __noinline void Geometry_dispatch_postIntersect(
     Isosurfaces_postIntersect(self, dg, ray, flags);
     break;
 #endif
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     // Subdivision surfaces not supported on the GPU right now
   case GEOMETRY_TYPE_SUBDIVISION:
     Subdivision_postIntersect(self, dg, ray, flags);
     break;
 #endif
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     self->postIntersect(self, dg, ray, flags);
-#endif
-    break;
-  }
-}
-
-SYCL_EXTERNAL __noinline void Geometry_dispatch_getAreas(
-    const Geometry *const uniform self,
-    const int32 *const uniform primIDs,
-    const uniform int32 numPrims,
-    const uniform affine3f &xfm,
-    float *const uniform areas)
-{
-  switch (self->type) {
-  case GEOMETRY_TYPE_QUAD_MESH:
-  case GEOMETRY_TYPE_TRIANGLE_MESH:
-    Mesh_getAreas(self, primIDs, numPrims, xfm, areas);
-    break;
-  case GEOMETRY_TYPE_SPHERES:
-    Spheres_getAreas(self, primIDs, numPrims, xfm, areas);
-    break;
-  default:
-#ifndef OSPRAY_TARGET_DPCPP
-    self->getAreas(self, primIDs, numPrims, xfm, areas);
 #endif
     break;
   }
@@ -100,12 +77,12 @@ SYCL_EXTERNAL __noinline SampleAreaRes Geometry_dispatch_sampleArea(
   case GEOMETRY_TYPE_SPHERES:
     return Spheres_sampleArea(self, primID, xfm, rcp_xfm, s, time);
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     return self->sampleArea(self, primID, xfm, rcp_xfm, s, time);
 #endif
     break;
   }
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   SampleAreaRes res;
   res.pos = make_vec3f(0.f);
   res.normal = make_vec3f(0.f);

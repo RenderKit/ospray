@@ -4,9 +4,11 @@
 // ospray
 #include "Mesh.h"
 #include "common/DGEnum.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "geometry/Mesh_ispc.h"
+#else
+#include "geometry/Mesh.ih"
 #endif
 // std
 #include <cmath>
@@ -16,11 +18,19 @@ namespace ospray {
 Mesh::Mesh(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getAreas =
       reinterpret_cast<ispc::Geometry_GetAreasFct>(ispc::Mesh_getAreas_addr());
   getSh()->super.sampleArea = reinterpret_cast<ispc::Geometry_SampleAreaFct>(
       ispc::Mesh_sampleArea_addr());
+#else
+  getSh()->super.getAreas =
+      reinterpret_cast<ispc::Geometry_GetAreasFct>(ispc::Mesh_getAreas);
+  // We also set the sampleArea function ptr so that
+  // Geometry::supportAreaLighting will be true, but in SYCL we'll never call it
+  // through the function pointer on the device
+  getSh()->super.sampleArea =
+      reinterpret_cast<ispc::Geometry_SampleAreaFct>(ispc::Mesh_sampleArea);
 #endif
 }
 
@@ -133,7 +143,6 @@ void Mesh::commit()
       0,
       isTri ? sizeof(vec3ui) : sizeof(vec4ui),
       indexData->size());
-
   rtcCommitGeometry(embreeGeometry);
 
   getSh()->isColorFaceVarying = isColorFaceVarying;
@@ -172,32 +181,5 @@ size_t Mesh::numPrimitives() const
 {
   return indexData->size();
 }
-
-#ifdef OSPRAY_TARGET_DPCPP
-/*
-void Mesh::setGPUFunctionPtrs(sycl::queue &syclQueue)
-{
-  if (!indexData) {
-    return;
-  }
-  const bool isTri = indexData->type == OSP_VEC3UI;
-  auto *sSh = getSh();
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    cgh.parallel_for(1, [=](cl::sycl::id<1>) RTC_SYCL_KERNEL {
-      if (isTri) {
-        sSh->super.postIntersect = ispc::TriangleMesh_postIntersect;
-      } else {
-        sSh->super.postIntersect = ispc::QuadMesh_postIntersect;
-      }
-
-      sSh->super.getAreas = ispc::Mesh_getAreas;
-      sSh->super.sampleArea = ispc::Mesh_sampleArea;
-    });
-  });
-  event.wait();
-  syclQueue.wait_and_throw();
-}
-*/
-#endif
 
 } // namespace ospray

@@ -52,7 +52,7 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
   res.transmission = make_vec3f(1.f - dg.color.w);
   res.opacity = dg.color.w;
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
     const OBJ *m = mat;
 #else

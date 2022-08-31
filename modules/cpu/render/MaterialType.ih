@@ -5,9 +5,9 @@
 
 #include "render/MaterialShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
-#include "common/rkcommonDPCPPWrappers.h"
+#include "common/rkcommonSYCLWrappers.h"
 #include "embree4/rtcore.h"
 #include "rkcommon/math/vec.h"
 #elif defined(ISPC)
@@ -22,7 +22,7 @@
 namespace ispc {
 #endif // __cplusplus
 
-#if defined(ISPC) || defined(OSPRAY_TARGET_DPCPP)
+#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
     const uniform Material *uniform self,
     uniform ShadingContext *uniform ctx,

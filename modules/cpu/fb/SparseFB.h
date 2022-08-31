@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <rkcommon/utility/ArrayView.h>
-#include <memory>
 #include "TileShared.h"
 #include "common/BufferShared.h"
 #include "fb/FrameBuffer.h"
@@ -12,6 +10,7 @@
 #include "fb/SparseFBShared.h"
 #include "fb/TaskError.h"
 #include "rkcommon/containers/AlignedVector.h"
+#include "rkcommon/utility/ArrayView.h"
 
 namespace ospray {
 /* The sparse framebuffer stores a subset of tiles of a larger framebuffer

@@ -3,7 +3,7 @@
 #ifdef OSPRAY_ENABLE_VOLUMES
 
 #include "TextureVolume.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "texture/TextureVolume_ispc.h"
 #endif
 
@@ -33,7 +33,7 @@ void TextureVolume::commit()
     getSh()->volume = volumetricModel->getSh()->volume;
     getSh()->transferFunction = volumetricModel->getSh()->transferFunction;
   }
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.get =
       reinterpret_cast<ispc::Texture_get>(ispc::TextureVolume_get_addr());
   getSh()->super.getNormal =

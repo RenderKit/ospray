@@ -5,7 +5,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-// Not supported/used in DPC++/GPU
+// Not supported/used in SYCL/GPU
 void Subdivision_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,

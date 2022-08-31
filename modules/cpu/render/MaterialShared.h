@@ -5,7 +5,7 @@
 
 #define EPS 1e-5f
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/vec.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -20,7 +20,7 @@ using namespace rkcommon::math;
 namespace ispc {
 #endif // __cplusplus
 
-#if defined(__cplusplus) && !defined(OSPRAY_TARGET_DPCPP)
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *Material_GetBSDFFunc;
 typedef void *Material_GetTransparencyFunc;
 typedef void *Material_SelectNextMediumFunc;

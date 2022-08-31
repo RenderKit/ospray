@@ -5,7 +5,7 @@
 
 #include "common/OSPCommon.ih"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "common/OSPCommon.h"
 #include "rkcommon/math/LinearSpace.h"
 using namespace rkcommon;
@@ -44,7 +44,7 @@ inline void *uniform ShadingContext_alloc(
   void *uniform ptr = &self->data[self->size];
   self->size = (self->size + size + SHADINGCONTEXT_ALIGNMENT - 1)
       & ((uint32)(-SHADINGCONTEXT_ALIGNMENT));
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   if (self->size > SHADINGCONTEXT_SIZE)
     postStatusMsg(ISPC_MSG_SHADING_CONTEXT, OSP_LOG_ERROR);
 #endif

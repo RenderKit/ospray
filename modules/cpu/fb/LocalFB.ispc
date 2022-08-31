@@ -6,8 +6,8 @@
 // c++ shared
 #include "LocalFBShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -169,8 +169,7 @@ inline void LocalFB_accumulateAux(uniform vec3f *uniform auxBuffer,
  * enabled) and writes aux channels (depth, normal, albedo) that the framebuffer
  * has and writes the accumulated color in to the framebuffer for display.
  */
-SYCL_EXTERNAL void LocalFB_accumulateSample(
-    FrameBuffer *uniform _fb,
+SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
     const varying ScreenSample &screenSample,
     uniform RenderTaskDesc &taskDesc)
 {
@@ -226,11 +225,8 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(
 
   // Run any pixel ops for this pixel
   // TODO: Best as inline in this kernel? Or a separate kernel?
-  // TODO also needs sycl external
-  /*
   finalColor =
       FrameBuffer_runPixelOps(&fb->super, finalColor, depth, normal, albedo);
-      */
 
   // Write the final color out to the color buffer in the color format
   // requested by the app
@@ -251,7 +247,7 @@ SYCL_EXTERNAL void LocalFB_accumulateSample(
     }
   }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   FrameBuffer_updateProgress(&fb->super, popcnt(lanemask()));
 #endif
 }

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #ifdef OSPRAY_ENABLE_VOLUMES
 
-#ifdef OSPRAY_TARGET_DPCPP
-// Currently not used b/c we need OpenVKL on GPU/DPC++ but we will use this
+#ifdef OSPRAY_TARGET_SYCL
+// Currently not used b/c we need OpenVKL on GPU/SYCL but we will use this
 // later, so keep this in for now
 #include "rkcommon/math/box.h"
 #include "rkcommon/math/vec.h"

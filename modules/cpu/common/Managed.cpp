@@ -3,7 +3,7 @@
 
 #include "Managed.h"
 #include "Data.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "common/OSPCommon_ispc.h"
 #endif
 
@@ -22,16 +22,6 @@ ManagedObject::~ManagedObject()
 }
 
 void ManagedObject::commit() {}
-
-#ifdef OSPRAY_TARGET_DPCPP
-/*
-void ManagedObject::setGPUFunctionPtrs(sycl::queue &)
-{
-  std::cout << "MOST LIKELY TODO: " << toString()
-            << " does not override setGPUFunctionPtrs\n";
-}
-*/
-#endif
 
 std::string ManagedObject::toString() const
 {

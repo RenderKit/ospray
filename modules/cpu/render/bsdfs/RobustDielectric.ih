@@ -199,7 +199,7 @@ inline void RobustDielectric_Constructor(varying RobustDielectric *uniform self,
       make_vec3f(1.0f),
       BSDF_SPECULAR,
       BSDF_TYPE_ROBUST_DIELECTRIC,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

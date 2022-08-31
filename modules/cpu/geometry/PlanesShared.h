@@ -23,7 +23,7 @@ struct Planes
 #endif
 };
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void Planes_bounds(const RTCBoundsFunctionArguments *args);
 #endif
 

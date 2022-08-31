@@ -43,7 +43,7 @@ struct Mesh
   {}
 };
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void *QuadMesh_postIntersect_addr();
 void *TriangleMesh_postIntersect_addr();
 void *Mesh_sampleArea_addr();

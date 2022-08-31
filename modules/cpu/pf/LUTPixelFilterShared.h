@@ -30,12 +30,12 @@ struct LUTPixelFilter
   LUTPixelFilterType lutFilterType;
 
 #ifdef __cplusplus
-  LUTPixelFilter() //: distribution(nullptr)
+  LUTPixelFilter() : distribution(nullptr)
   {
     super.type = PIXEL_FILTER_TYPE_LUT;
   }
 };
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void LUTPixelFilter_buildLUT(void *self);
 #endif
 }

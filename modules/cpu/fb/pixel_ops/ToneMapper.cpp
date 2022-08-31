@@ -3,7 +3,7 @@
 
 #include "ToneMapper.h"
 #include "fb/FrameBuffer.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "fb/pixel_ops/ToneMapper_ispc.h"
 #endif
 

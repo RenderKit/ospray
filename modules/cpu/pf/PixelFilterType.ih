@@ -3,9 +3,9 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
-#include "common/rkcommonDPCPPWrappers.h"
+#include "common/rkcommonSYCLWrappers.h"
 #elif defined(ISPC)
 #include "rkcommon/math/vec.ih"
 #else
@@ -26,7 +26,7 @@ enum PixelFilterType
   PIXEL_FILTER_TYPE_UNKNOWN,
 };
 
-#if defined(ISPC) || defined(OSPRAY_TARGET_DPCPP)
+#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 /* Samples a relative pixel position proportional to the kernel of a
    pixel filter.
 

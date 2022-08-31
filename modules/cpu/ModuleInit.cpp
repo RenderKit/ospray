@@ -22,7 +22,7 @@
 using namespace ospray;
 
 extern "C" OSPError OSPRAY_DLLEXPORT
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 ospray_module_init_gpu
 #else
 ospray_module_init_cpu
@@ -32,7 +32,7 @@ ospray_module_init_cpu
   auto status = moduleVersionCheck(versionMajor, versionMinor);
 
   if (status == OSP_NO_ERROR) {
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     api::Device::registerType<ospray::api::ISPCDevice>("gpu");
 #else
     api::Device::registerType<ospray::api::ISPCDevice>("cpu");

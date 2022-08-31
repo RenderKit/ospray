@@ -4,7 +4,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/LinearSpace.h"
 using namespace rkcommon;
 using namespace rkcommon::math;

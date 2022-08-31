@@ -7,7 +7,7 @@
 // c++ shared
 #include "SubdivisionShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
 #endif
 

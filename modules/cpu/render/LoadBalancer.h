@@ -3,7 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
 #endif
 
@@ -62,7 +62,7 @@ struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
 
   std::string toString() const override;
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   void setQueue(sycl::queue *syclQueue);
 
  private:

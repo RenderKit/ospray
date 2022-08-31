@@ -5,7 +5,7 @@
 #include "Material.h"
 #include "render/bsdfs/MicrofacetAlbedoTables.h"
 #include "texture/Texture.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc
 #include "render/Material_ispc.h"
 #endif
@@ -20,7 +20,7 @@ Material::Material(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_MATERIAL;
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->getTransparency =
       reinterpret_cast<ispc::Material_GetTransparencyFunc>(
           ispc::Material_getTransparency_addr());

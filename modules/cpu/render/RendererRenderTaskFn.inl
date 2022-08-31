@@ -1,11 +1,11 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// This is shared between ISPC and DPC++, in ISPC it's compiled
-// as a function in Renderer.ispc but in DPC++ it's a template function in the
+// This is shared between ISPC and SYCL, in ISPC it's compiled
+// as a function in Renderer.ispc but in SYCL it's a template function in the
 // RendererShared header.
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "pf/PixelFilterType.ih"
@@ -14,7 +14,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 task
 #else
 template <typename RenderSampleFn>
@@ -26,7 +26,7 @@ template <typename RenderSampleFn>
         World *uniform world,
         void *uniform perFrameData,
         const uint32 *uniform taskIDs
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
         ,
         const int taskIndex0,
         const RenderSampleFn renderSample
@@ -49,7 +49,7 @@ template <typename RenderSampleFn>
     return;
   }
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   for (int32 y = taskDesc.region.lower.y; y < taskDesc.region.upper.y; ++y)
     for (int32 x = taskDesc.region.lower.x; x < taskDesc.region.upper.x; ++x) {
 #else
@@ -80,13 +80,11 @@ template <typename RenderSampleFn>
         const vec2f pixelSample = make_vec2f(pixel_du, pixel_dv);
 
         vec2f pfSample = pixelSample;
-#if 1
         const PixelFilter *uniform pf = self->pixelFilter;
         if (pf) {
           pfSample =
               PixelFilter_dispatch_sample(pf, pixelSample) + make_vec2f(0.5f);
         }
-#endif
 
         screenSample.sampleID.z = startSampleID + s;
 
@@ -112,7 +110,7 @@ template <typename RenderSampleFn>
             make_vec3f(Renderer_getBackground(self, screenSample.pos));
         screenSample.normal = make_vec3f(0.f);
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #if 1
         // Dummy top level print so that prints at lower levels of the kernel
         // will work See JIRA https://jira.devtools.intel.com/browse/XDEPS-4729
@@ -122,7 +120,7 @@ template <typename RenderSampleFn>
 #endif
 #endif
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
         renderSample(self, fb, world, perFrameData, screenSample);
 #else
       Renderer_dispatch_renderSample(

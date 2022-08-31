@@ -9,7 +9,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL __noinline void Camera_dispatch_initRay(const Camera *uniform self,
+SYCL_EXTERNAL __noinline void Camera_dispatch_initRay(
+    const Camera *uniform self,
     varying Ray &ray,
     const varying CameraSample &sample)
 {
@@ -24,9 +25,7 @@ SYCL_EXTERNAL __noinline void Camera_dispatch_initRay(const Camera *uniform self
     PanoramicCamera_initRay(self, ray, sample);
     break;
   default:
-    // TODO: No function pointer for DPCPP version because it'll hang.
-    // Should we have an error here or still allow it to be called?
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     self->initRay(self, ray, sample);
     break;
 #else

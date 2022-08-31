@@ -9,7 +9,7 @@
 #include <numeric>
 #include "ImageOp.h"
 #include "SparseFB.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "fb/LocalFB_ispc.h"
 #endif
 #include "render/util.h"
@@ -90,7 +90,7 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
         return interleaveZOrder(p_a.x, p_a.y) < interleaveZOrder(p_b.x, p_b.y);
       });
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.accumulateSample =
       reinterpret_cast<ispc::FrameBuffer_accumulateSampleFct>(
           ispc::LocalFrameBuffer_accumulateSample_addr());
@@ -136,23 +136,6 @@ void LocalFrameBuffer::commit()
   }
   prepareImageOps();
 }
-
-#ifdef OSPRAY_TARGET_DPCPP
-/*
-void LocalFrameBuffer::setGPUFunctionPtrs(sycl::queue &syclQueue)
-{
-  auto *sSh = getSh();
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    cgh.parallel_for(1, [=](cl::sycl::id<1>) RTC_SYCL_KERNEL {
-      sSh->super.accumulateSample = ispc::LocalFB_accumulateSample;
-      sSh->super.getRenderTaskDesc = ispc::LocalFB_getRenderTaskDesc;
-      sSh->super.completeTask = ispc::LocalFB_completeTask;
-    });
-  });
-  event.wait();
-}
-*/
-#endif
 
 vec2i LocalFrameBuffer::getNumRenderTasks() const
 {

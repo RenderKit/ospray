@@ -5,8 +5,8 @@
 #include "common/MotionTransform.ih"
 #include "math/sampling.ih"
 #include "ospray/OSPEnums.h"
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #endif
 // c++ shared
 #include "PanoramicCameraShared.h"

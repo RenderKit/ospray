@@ -12,10 +12,13 @@ SYCL_EXTERNAL vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
     const vec3f &albedo)
 {
   vec4f outColor = color;
+#ifndef OSPRAY_TARGET_SYCL
   for (uniform int i = 0; i < self->numPixelOps; ++i) {
+    // TODO: PixelOps need porting to run via dispatch
     outColor = self->pixelOps[i]->processPixel(
         self->pixelOps[i], outColor, depth, normal, albedo);
   }
+#endif
   return outColor;
 }
 OSPRAY_END_ISPC_NAMESPACE

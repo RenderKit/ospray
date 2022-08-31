@@ -9,7 +9,7 @@
 #include "Mesh.h"
 #include "Planes.h"
 #include "Spheres.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "Subdivision.h"
 #endif
 
@@ -24,7 +24,7 @@ void registerAllGeometries()
 #endif
   Geometry::registerType<Mesh>("mesh");
   Geometry::registerType<Spheres>("sphere");
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   // Subdivision surfaces not supported on the GPU
   Geometry::registerType<Subdivision>("subdivision");
 #endif

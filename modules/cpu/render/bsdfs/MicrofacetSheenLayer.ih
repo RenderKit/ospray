@@ -38,7 +38,7 @@ inline BSDF_EvalRes MicrofacetSheenLayer_eval(
 
   // Evaluate the substrate
   BSDF_EvalRes substrate;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
     const BSDF *f = self->substrate;
 #else
@@ -126,7 +126,7 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
     res.wi = getFrame(super) * uniformSampleHemisphere(s);
 
     // Evaluate the substrate
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const BSDF *f = self->substrate;
 #else
@@ -146,7 +146,7 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
     // Sample the substrate
     float ss1 =
         (ss - coatPickProb) * rcp(substratePickProb); // reallocate sample
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const BSDF *f = self->substrate;
 #else
@@ -229,7 +229,7 @@ inline void MicrofacetSheenLayer_Constructor(
           R), // lean towards substrate (sheen is only at edge)
       BSDF_DIFFUSE_REFLECTION | substrate->scatteringType,
       BSDF_TYPE_MICROFACET_SHEEN_LAYER,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

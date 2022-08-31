@@ -21,8 +21,6 @@ RTC_SYCL_INDIRECTLY_CALLABLE void Renderer_dispatch_renderSample(
 {
   switch (self->type) {
   case RENDERER_TYPE_DEBUG:
-    // TODO: Cannot have call to both debug renderer and AO renderer here
-    // because it leads to a hang
     DebugRenderer_renderSample(self, fb, model, perFrameData, sample);
     break;
   case RENDERER_TYPE_AO:
@@ -32,9 +30,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE void Renderer_dispatch_renderSample(
     SciVis_renderSample(self, fb, model, perFrameData, sample);
     break;
   default:
-    // TODO: No function pointer for DPCPP version because it'll hang.
-    // Should we have an error here or still allow it to be called?
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     self->renderSample(self, fb, model, perFrameData, sample);
 #endif
     break;

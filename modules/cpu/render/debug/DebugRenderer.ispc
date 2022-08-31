@@ -13,8 +13,8 @@
 #include "DebugRendererShared.h"
 #include "fb/FrameBufferShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #include "geometry/MeshShared.h"
 #else
 #include "rkcommon/utility/random.ih"

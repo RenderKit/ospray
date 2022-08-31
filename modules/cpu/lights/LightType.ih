@@ -3,7 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
 #include "rkcommon/platform.h"
 #endif
@@ -27,7 +27,7 @@ enum LightType
   LIGHT_TYPE_UNKNOWN,
 };
 
-#if defined(ISPC) || defined(OSPRAY_TARGET_DPCPP)
+#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 // compute the weighted radiance at a point caused by a sample on the light
 // source
 // by convention, giving (0, 0) as "random" numbers should sample the "center"

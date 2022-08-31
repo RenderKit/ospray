@@ -7,7 +7,7 @@
 // c++ shared
 #include "CurvesShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
 #endif
 
@@ -22,7 +22,7 @@ SYCL_EXTERNAL void Curves_postIntersect(const Geometry *uniform _self,
   dg.Ng = dg.Ns = ray.Ng;
   flags &= self->flagMask;
   if (flags & DG_COLOR) {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     rtcInterpolateV1(self->geom,
         ray.primID,
         ray.u,
@@ -44,7 +44,7 @@ SYCL_EXTERNAL void Curves_postIntersect(const Geometry *uniform _self,
 #endif
   }
   if (flags & DG_TEXCOORD) {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     rtcInterpolateV1(self->geom,
         ray.primID,
         ray.u,

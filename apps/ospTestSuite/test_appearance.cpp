@@ -424,8 +424,7 @@ void PTBackgroundRefraction::SetUp()
 }
 
 // Test Instantiations //////////////////////////////////////////////////////
-
-#if 0
+#ifdef OSPRAY_ENABLE_VOLUMES
 INSTANTIATE_TEST_SUITE_P(Transparency,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("transparency"),

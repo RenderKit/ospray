@@ -19,7 +19,7 @@ SYCL_EXTERNAL __noinline vec4f Texture_dispatch_get(
     return TextureVolume_get(self, dg);
 #endif
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     return self->get(self, dg);
 #else
     break;
@@ -39,7 +39,7 @@ SYCL_EXTERNAL __noinline vec3f Texture_dispatch_getNormal(
     return TextureVolume_getNormal(self, dg);
 #endif
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     return self->getNormal(self, dg);
 #else
     break;

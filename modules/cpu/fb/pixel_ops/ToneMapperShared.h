@@ -22,7 +22,7 @@ struct LiveToneMapper
   bool acesColor;
 };
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void *LiveToneMapper_processPixel_addr();
 #endif
 

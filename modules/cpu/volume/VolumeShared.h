@@ -26,7 +26,7 @@ struct Volume
 #ifdef __cplusplus
   Volume() : vklVolume(nullptr), vklSampler(nullptr), boundingBox(0.f, 0.f) {}
 };
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void Volume_embreeBounds(const RTCBoundsFunctionArguments *args);
 void Volume_intersect_kernel(const RTCIntersectFunctionNArguments *args);
 #endif

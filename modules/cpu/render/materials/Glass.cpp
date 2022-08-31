@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Glass.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc
 #include "render/materials/Glass_ispc.h"
 #endif
@@ -13,7 +13,7 @@ namespace pathtracer {
 Glass::Glass(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF =
       reinterpret_cast<ispc::Material_GetBSDFFunc>(ispc::Glass_getBSDF_addr());
   getSh()->super.getTransparency =

@@ -79,12 +79,9 @@ void Data::init()
   if (byteStride.z == 0)
     byteStride.z = numItems.y * byteStride.y;
 
-#ifdef OSPRAY_TARGET_DPCPP
-  // TODO: Here we need to check if it's a GPU pointer or not and do the
-  // alloc/copy Shared data on GPU needs a way to share the USM context from
-  // OSPRay. What about the ANARI mapping stuff? This is a hack right now to
-  // copy all data into USM so that we can run the ospExamples
-  // Right now this just always copies data the app told us was shared
+#ifdef OSPRAY_TARGET_SYCL
+  // Check if the shared data the app gave is actually in USM, if not we still
+  // need to make a copy of it internally so it's accessible on the GPU
   if (shared) {
     ispcrt::Device &ispcrtDevice = getISPCDevice().getIspcrtDevice();
     auto memType = ispcrtDevice.getMemoryAllocType(addr);
@@ -92,8 +89,9 @@ void Data::init()
     if (memType != ISPCRT_ALLOC_TYPE_SHARED) {
       const size_t sizeBytes = byteStride.z * numItems.z;
       shared = false;
+      // TODO: is the padding still needed?
       view = make_buffer_shared_unique<char>(
-          getISPCDevice().getIspcrtDevice(), sizeBytes);
+          getISPCDevice().getIspcrtDevice(), sizeBytes + 16);
       addr = view->data();
       std::memcpy(addr, appSharedPtr, sizeBytes);
     }
@@ -113,7 +111,6 @@ void Data::init()
     ispc.byteStride = byteStride.z;
     numItems1D = numItems.z;
   }
-
   // finalize ispc-side
   ispc.addr = reinterpret_cast<decltype(ispc.addr)>(addr);
   ispc.huge = std::abs(ispc.byteStride) * numItems1D
@@ -172,12 +169,12 @@ void Data::copy(const Data &source, const vec3ul &destinationIndex)
   }
 }
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void Data::commit()
 {
   // If we were passed "shared" data that was not actually in USM we made a USM
   // copy of it, and need to update that copy on commit
-  if (addr != appSharedPtr) {
+  if (appSharedPtr && addr != appSharedPtr) {
     const size_t sizeBytes = byteStride.z * numItems.z;
     std::memcpy(addr, appSharedPtr, sizeBytes);
   }

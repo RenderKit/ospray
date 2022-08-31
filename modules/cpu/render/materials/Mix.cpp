@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Mix.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc
 #include "render/materials/Mix_ispc.h"
 #endif
@@ -13,7 +13,7 @@ namespace pathtracer {
 MixMaterial::MixMaterial(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF =
       reinterpret_cast<ispc::Material_GetBSDFFunc>(ispc::Mix_getBSDF_addr());
   getSh()->super.getTransparency =

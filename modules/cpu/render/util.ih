@@ -3,7 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/vec.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -87,7 +87,7 @@ inline void deinterleaveZOrder(
   *y = unpartitionZOrder(z >> 1);
 }
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 const z_order_t *get_zorder();
 #else
 extern const z_order_t *uniform get_zorder();

@@ -98,13 +98,6 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
 #ifdef OSPRAY_ENABLE_VOLUMES
   freeVolumeIntervals(volumeIntervals);
 #endif
-
-#ifdef OSPRAY_TARGET_DPCPP
-  // cl::sycl::ext::oneapi::experimental::printf(
-  //    "alpha = %f, %f, %f\n", alpha.x, alpha.y, alpha.z);
-#else
-  // print("alpha = %, %, %\n", alpha.x, alpha.y, alpha.z);
-#endif
   return alpha;
 }
 

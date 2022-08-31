@@ -3,7 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "common/OSPCommon.ih"
 #include "rkcommon/math/LinearSpace.h"
 #include "rkcommon/math/box.h"
@@ -42,8 +42,8 @@ inline uniform bool valid(const uniform Data1D data)
 #define BITS 20
 
 // ok to pass-by-value, will be inlined and optimized
-#ifdef OSPRAY_TARGET_DPCPP
-// DPC++ execution in a thread is scalar
+#ifdef OSPRAY_TARGET_SYCL
+// SYCL execution in a thread is scalar
 #define __define_get(T)                                                        \
   inline uniform T get_##T(const uniform Data1D data, const uniform int index) \
   {                                                                            \

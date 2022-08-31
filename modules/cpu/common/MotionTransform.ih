@@ -3,7 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/AffineSpace.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -20,13 +20,14 @@ inline uniform AffineSpace3f getInterpolatedTransform(
     const RTCGeometry geom, const uniform float time)
 {
   uniform AffineSpace3f xfm;
-  // TODO: This function is missing the SYCL_EXTERNAL attribute?
-  // rtcGetGeometryTransform(geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
-  // &xfm);
+#ifndef OSPRAY_TARGET_SYCL
+  // TODO: rtcGetGeometryTransform is not callable on the device yet
+  rtcGetGeometryTransform(geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+#endif
   return xfm;
 }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 inline AffineSpace3f getInterpolatedTransform(
     const RTCGeometry geom, const float time)
 {

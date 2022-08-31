@@ -6,8 +6,8 @@
 // c++ shared
 #include "LocalFBShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE

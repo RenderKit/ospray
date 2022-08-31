@@ -9,7 +9,7 @@
 #include "geometry/GeometricModel.h"
 #include "ospray/OSPEnums.h"
 #include "pf/PixelFilter.h"
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "render/RendererRenderTaskFn.inl"
 #include "render/RendererType.ih"
 #include "render/util.ih"
@@ -30,7 +30,7 @@ Renderer::Renderer(api::ISPCDevice &device)
   pixelFilter = nullptr;
   mathConstants = rkcommon::make_unique<MathConstants>(device);
   getSh()->mathConstants = mathConstants->getSh();
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->renderSample = reinterpret_cast<ispc::Renderer_RenderSampleFct>(
       ispc::Renderer_default_renderSample_addr());
 #endif
@@ -91,23 +91,7 @@ void Renderer::commit()
   ispc::precomputeZOrder();
 }
 
-#ifdef OSPRAY_TARGET_DPCPP
-/*
-void Renderer::setGPUFunctionPtrs(sycl::queue &syclQueue)
-{
-  auto *sSh = getSh();
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    cgh.parallel_for(1, [=](cl::sycl::id<1>) RTC_SYCL_KERNEL {
-      sSh->renderSample = ispc::Renderer_default_renderSample;
-      sSh->renderTask = ispc::Renderer_default_renderTask;
-    });
-  });
-  event.wait();
-}
-*/
-#endif
-
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 void Renderer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,

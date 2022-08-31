@@ -41,7 +41,7 @@ void DistributedTileError::sync()
     return;
   }
 
-  // TODO: USM thrashing every frame!
+  // TODO: USM thrashing possible issue
   mpicommon::bcast(taskErrorBuffer->data(),
       taskErrorBuffer->size(),
       MPI_FLOAT,

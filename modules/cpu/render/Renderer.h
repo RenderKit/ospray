@@ -11,7 +11,7 @@
 // ispc shared
 #include "RendererShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
 #endif
 
@@ -37,10 +37,6 @@ struct OSPRAY_SDK_INTERFACE Renderer
 
   virtual void commit() override;
 
-#ifdef OSPRAY_TARGET_DPCPP
-  // virtual void setGPUFunctionPtrs(sycl::queue &syclQueue) override;
-#endif
-
   virtual std::string toString() const override;
 
   // called to initialize a new frame
@@ -58,7 +54,7 @@ struct OSPRAY_SDK_INTERFACE Renderer
   // called exactly once (on each node) at the end of each frame
   virtual void endFrame(FrameBuffer *fb, void *perFrameData);
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   // called by the load balancer to render one "sample" for each task
   virtual void renderTasks(FrameBuffer *fb,
       Camera *camera,

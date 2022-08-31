@@ -5,7 +5,7 @@
 // embree
 #include "embree4/rtcore.h"
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "lights/QuadLight_ispc.h"
 #endif
 
@@ -20,7 +20,7 @@ ISPCRTMemoryView QuadLight::createSh(
   ISPCRTMemoryView view = StructSharedCreate<ispc::QuadLight>(
       getISPCDevice().getIspcrtDevice().handle());
   ispc::QuadLight *sh = (ispc::QuadLight *)ispcrtSharedPtr(view);
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   sh->super.sample =
       reinterpret_cast<ispc::Light_SampleFunc>(ispc::QuadLight_sample_addr());
   sh->super.eval =
@@ -41,7 +41,7 @@ ISPCRTMemoryView QuadLight::createSh(
   if (instance) {
     sh->pre.c0 = intensityDistribution.c0;
     if (instance->motionBlur) {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
       // TODO: QuadLight sample/eval dispatch needs to handle this case now
       sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
           ispc::QuadLight_sample_instanced_addr());
@@ -58,7 +58,7 @@ ISPCRTMemoryView QuadLight::createSh(
     sh->pre.c0 = cross(sh->pre.c90, sh->pre.nnormal);
   }
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   /*
   // TODO: Objects need to know the device they were created on
   // Probably push this into ManagedObject?

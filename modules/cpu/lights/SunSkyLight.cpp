@@ -6,7 +6,7 @@
 #include "texture/Texture2D.h"
 // embree
 #include "embree4/rtcore.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "lights/HDRILight_ispc.h"
 #endif

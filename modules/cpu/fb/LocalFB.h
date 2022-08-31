@@ -4,7 +4,7 @@
 #pragma once
 
 #include <rkcommon/utility/ArrayView.h>
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
 #endif
 
@@ -33,10 +33,6 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   virtual ~LocalFrameBuffer() override = default;
 
   virtual void commit() override;
-
-#ifdef OSPRAY_TARGET_DPCPP
-  // void setGPUFunctionPtrs(sycl::queue &syclQueue) override;
-#endif
 
   // Return the number of render tasks in the x and y direction
   // This is the kernel launch dims to render the image

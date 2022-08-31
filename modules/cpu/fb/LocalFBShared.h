@@ -49,7 +49,7 @@ struct LocalFB
     super.type = FRAMEBUFFER_TYPE_LOCAL;
   }
 };
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void LocalFrameBuffer_writeTile_RGBA8(void *_fb, const void *_tile);
 void LocalFrameBuffer_writeTile_SRGBA(void *_fb, const void *_tile);
 void LocalFrameBuffer_writeTile_RGBA32F(void *_fb, const void *_tile);

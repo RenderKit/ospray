@@ -5,7 +5,7 @@
 #include "camera/Camera.h"
 #include "common/World.h"
 #include "fb/FrameBuffer.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "render/ao/AORenderer_ispc.h"
 #else
 #include "AORenderer.ih"
@@ -18,7 +18,7 @@ AORenderer::AORenderer(api::ISPCDevice &device, int defaultNumSamples)
     : AddStructShared(device.getIspcrtDevice(), device),
       aoSamples(defaultNumSamples)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.renderSample =
       reinterpret_cast<ispc::Renderer_RenderSampleFct>(
           ispc::AORenderer_renderSample_addr());
@@ -41,7 +41,7 @@ void AORenderer::commit()
   getSh()->volumeSamplingRate = getParam<float>("volumeSamplingRate", 1.f);
 }
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void AORenderer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
@@ -77,21 +77,6 @@ void AORenderer::renderTasks(FrameBuffer *fb,
   // For prints we have to flush the entire queue, because other stuff is queued
   syclQueue.wait_and_throw();
 }
-
-/*
-void AORenderer::setGPUFunctionPtrs(sycl::queue &syclQueue)
-{
-  Renderer::setGPUFunctionPtrs(syclQueue);
-
-  auto *sSh = getSh();
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    cgh.parallel_for(1, [=](cl::sycl::id<1>) RTC_SYCL_KERNEL {
-      sSh->super.renderSample = ispc::AORenderer_renderSample;
-    });
-  });
-  event.wait();
-}
-*/
 #endif
 
 } // namespace ospray

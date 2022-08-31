@@ -141,7 +141,7 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
     VolumeContext &vc = volumeContexts[i];
     if (vc.ready == 0) {
       const VolumeInterval &vi = volumeIntervals.intervals[i];
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       {
         const VolumetricModel *m = vi.volumetricModel;
 #else
@@ -255,7 +255,7 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       // so we must iterate over them
       float time = 0.5f;
       VolumetricModel *varying model = vi.volumetricModel;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       {
         const VolumetricModel *m = model;
 #else

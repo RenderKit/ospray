@@ -6,7 +6,7 @@
 // embree
 #include "embree4/rtcore.h"
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "lights/SpotLight_ispc.h"
 #endif
 

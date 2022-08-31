@@ -48,7 +48,7 @@ inline BSDF_EvalRes DielectricLayer_eval(
   // Evaluate the substrate
   // Ignore refraction
   BSDF_EvalRes substrate;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
     const BSDF *f = self->substrate;
 #else
@@ -122,7 +122,7 @@ inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF *uniform super,
     // Sample the substrate
     // Ignore refraction
     float ss1 = (ss - Fo) * rcp(1.f - Fo); // reallocate sample
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const BSDF *f = self->substrate;
 #else
@@ -190,7 +190,7 @@ inline void DielectricLayer_Constructor(varying DielectricLayer *uniform self,
       albedo,
       BSDF_SPECULAR_REFLECTION | substrate->scatteringType,
       BSDF_TYPE_DIELECTRIC_LAYER,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

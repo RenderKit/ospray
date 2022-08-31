@@ -1,7 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/LinearSpace.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -118,9 +118,9 @@ Light_SampleRes PointLight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const float utime = time;
 #else
   foreach_unique (utime in time) {
@@ -147,7 +147,7 @@ inline Light_EvalRes Eval(const PointLight *uniform self,
   const float centerDist2 = dot(A, A);
   const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   if (self->radius > 0.f && sqrt(sinTheta2) > 0.005f) {
 #else
   if (and(self->radius > 0.f, sqrt(sinTheta2) > 0.005f)) {
@@ -155,7 +155,7 @@ inline Light_EvalRes Eval(const PointLight *uniform self,
     const Intersections isect =
         intersectSphere(dg.P, dir, dyn.position, self->radius);
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     if (isect.entry.t > minDist && isect.entry.t < maxDist && isect.entry.hit) {
 #else
     if (and(and(isect.entry.t > minDist, isect.entry.t < maxDist),
@@ -201,9 +201,9 @@ Light_EvalRes PointLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const float utime = time;
 #else
   foreach_unique (utime in time) {

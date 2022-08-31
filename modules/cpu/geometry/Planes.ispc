@@ -1,7 +1,7 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/box.h"
 #include "rkcommon/math/vec.h"
 using namespace rkcommon;
@@ -113,7 +113,7 @@ SYCL_EXTERNAL unmasked void Planes_intersect_kernel(
   // we don't want the second plane to be drawn so this intersection is never
   // accepted
   filterIntersectionSingle(args, hitImplicit, isOcclusionTest, true);
-  // TODO: should we also set args->valid[programIndex] = -1 here only if not
+  // TODO: should we also set args->valid[programIndex] = -1 here only if
   // clipping?
 }
 

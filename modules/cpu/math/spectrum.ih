@@ -5,7 +5,7 @@
 
 #include "math/spectrum.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/vec.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -24,7 +24,7 @@ extern spectrum spectrum_sRGB_b;
 
 inline uniform vec3f spectrum_sRGB(const uniform int l)
 {
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   const spectrum spectrum_sRGB_r = {0.0598548,
       -0.0234574,
       -0.220138,

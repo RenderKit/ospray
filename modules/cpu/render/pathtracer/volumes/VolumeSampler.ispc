@@ -104,7 +104,7 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
       continue;
 
     AffineSpace3f xfm;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const Instance *inst = volumeIntervals.intervals[i].instance;
 #else
@@ -117,7 +117,7 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
 
     VolumetricModel *varying instance =
         volumeIntervals.intervals[i].volumetricModel;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const Instance *inst = volumeIntervals.intervals[i].instance;
 #else
@@ -191,7 +191,7 @@ SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
       continue;
 
     AffineSpace3f xfm;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const Instance *inst = volumeIntervals.intervals[i].instance;
 #else
@@ -204,7 +204,7 @@ SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
 
     VolumetricModel *varying instance =
         volumeIntervals.intervals[i].volumetricModel;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const Instance *inst = volumeIntervals.intervals[i].instance;
 #else

@@ -138,7 +138,7 @@ inline void MicrofacetConductor_Constructor(
       Favg * self->Eavg, // TODO better estimate
       BSDF_GLOSSY_REFLECTION,
       BSDF_TYPE_MICROFACET_CONDUCTOR,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

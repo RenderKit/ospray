@@ -36,7 +36,7 @@ inline varying BSDF *uniform Reflection_create(
       reflectance,
       BSDF_SPECULAR_REFLECTION,
       BSDF_TYPE_REFLECTION,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

@@ -2,18 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "SparseFB.h"
-#include <rkcommon/tasking/parallel_for.h>
-#include <rkcommon/utility/ArrayView.h>
-#include <cstdint>
 #include <cstdlib>
-#include <cstring>
 #include "ImageOp.h"
-#include "common/BufferShared.h"
-#ifndef OSPRAY_TARGET_DPCPP
-#include "fb/SparseFB_ispc.h"
-#endif
 #include "render/util.h"
 #include "rkcommon/common.h"
+#include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/utility/ArrayView.h"
+#ifndef OSPRAY_TARGET_SYCL
+#include "fb/SparseFB_ispc.h"
+#endif
 
 namespace ospray {
 
@@ -100,19 +97,19 @@ std::string SparseFrameBuffer::toString() const
 
 float SparseFrameBuffer::taskError(const uint32_t taskID) const
 {
-  // TODO: When called? USM thrashing
+  // Note: USM migration?
   return (*taskErrorBuffer)[taskID];
 }
 
 void SparseFrameBuffer::setTaskError(const uint32_t taskID, const float error)
 {
-  // TODO: When called? USM thrashing
+  // Note: USM migration?
   (*taskErrorBuffer)[taskID] = error;
 }
 
 void SparseFrameBuffer::setTaskAccumID(const uint32_t taskID, const int accumID)
 {
-  // TODO: When called? USM thrashing
+  // Note: USM migration?
   (*taskAccumID)[taskID] = accumID;
 }
 
@@ -120,7 +117,7 @@ void SparseFrameBuffer::beginFrame()
 {
   FrameBuffer::beginFrame();
 
-  // TODO: USM thrashing! We should launch a kernel here!
+  // TODO We could launch a kernel here
   for (auto &tile : *tiles) {
     tile.accumID = getFrameID();
   }
@@ -258,7 +255,7 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
 
   clear();
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.accumulateSample =
       reinterpret_cast<ispc::FrameBuffer_accumulateSampleFct>(
           ispc::SparseFrameBuffer_accumulateSample_addr());

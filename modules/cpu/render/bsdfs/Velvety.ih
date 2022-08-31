@@ -58,7 +58,7 @@ inline void Velvety_Constructor(varying Velvety *uniform self,
       R,
       BSDF_DIFFUSE_REFLECTION,
       BSDF_TYPE_VELVETY,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

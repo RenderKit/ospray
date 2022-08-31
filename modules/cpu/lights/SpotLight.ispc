@@ -116,9 +116,9 @@ Light_SampleRes SpotLight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const float utime = time;
 #else
   foreach_unique (utime in time) {
@@ -151,7 +151,7 @@ inline Light_EvalRes Eval(const SpotLight *uniform self,
         const vec3f vd = vp + t * dir;
         const float d2 = dot(vd, vd);
         // inside ring?
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
         if (d2 < sqr(self->radius) && d2 > sqr(self->innerRadius)) {
 #else
         if (and(d2<sqr(self->radius), d2> sqr(self->innerRadius))) {
@@ -203,9 +203,9 @@ Light_EvalRes SpotLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const float utime = time;
 #else
   foreach_unique (utime in time) {

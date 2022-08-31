@@ -23,7 +23,7 @@ SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
 
   const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
   varying float *uniform split = sbs ? &screen.x : &screen.y;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   if (sbs || self->stereoMode == OSP_STEREO_TOP_BOTTOM) {
 #else
   if (or (sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
@@ -66,7 +66,7 @@ SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
 
   const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
   varying float *uniform split = sbs ? &screen.x : &screen.y;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   if (sbs || self->stereoMode == OSP_STEREO_TOP_BOTTOM) {
 #else
   if (or (sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
@@ -80,7 +80,6 @@ SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
 
   screen = Camera_subRegion(_self, screen);
   const float time = Camera_shutterTime(_self, screen, sample.time);
-  // TODO: rtcGetGeometryTransform not callable on device?
   const affine3f xfm = getInterpolatedTransform(self->super.geom, time);
 
   vec3f org = xfmPoint(xfm, self->org);
@@ -155,7 +154,7 @@ export void PerspectiveCamera_projectBox(
   const uniform vec3f dvn = normalize(self->dv_up) / self->imgPlaneSize.y;
 
   vec3f projectedPt = make_vec3f(-1.f, -1.f, 1e20f);
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   for (uint32 i = 0; i < 8; ++i) {
 #else
   foreach (i = 0 ... 8) {

@@ -49,9 +49,9 @@ unmasked void clippingIntersectionFilterV(const void *uniform _args)
     ray->geomID = hit->geomID;
 
 // We need to call postIntersect on clipping geometry
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
-      // DPC++ execution in a thread is scalar
+      // SYCL execution in a thread is scalar
       const uint32 instID = hit->instID[0];
 #else
     foreach_unique (instID in hit->instID[0]) {

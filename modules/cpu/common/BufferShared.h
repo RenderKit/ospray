@@ -34,7 +34,7 @@ struct BufferShared : public ispcrt::Array<T, ispcrt::AllocType::Shared>
   BufferShared(ispcrt::Device &device, const std::vector<T> &v);
   BufferShared(ispcrt::Device &device, const T *data, size_t size);
 
-  // TODO WILL: Probably best to put these methods/operators in ISPCRT
+  // TODO: We should move these up into the ISPCRT wrapper
   T *data();
 
   T *begin();

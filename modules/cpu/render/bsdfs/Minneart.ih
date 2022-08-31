@@ -56,7 +56,7 @@ inline void Minneart_Constructor(varying Minneart *uniform self,
       R,
       BSDF_DIFFUSE_REFLECTION,
       BSDF_TYPE_MINNEART,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

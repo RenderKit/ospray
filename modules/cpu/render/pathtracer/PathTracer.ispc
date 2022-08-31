@@ -24,7 +24,7 @@
 #include "fb/FrameBufferShared.h"
 #include "render/MaterialShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"
@@ -137,13 +137,11 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     const vec2f pixelSample = LDSampler_getFloat2(ldSampler, 0);
 
     vec2f pfSample = pixelSample;
-#if 1
     const PixelFilter *uniform pf = self->super.pixelFilter;
     if (pf) {
       pfSample =
           PixelFilter_dispatch_sample(pf, pixelSample) + make_vec2f(0.5f);
     }
-#endif
 
     cameraSample.screen.x =
         (screenSample.sampleID.x + pfSample.x) * fb->rcpSize.x;
@@ -190,7 +188,7 @@ inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
   return screenSample;
 }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 task
 #endif
     SYCL_EXTERNAL void
@@ -200,7 +198,7 @@ task
         World *uniform world,
         void *uniform perFrameData,
         const uint32 *uniform taskIDs
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
         ,
         const int taskIndex0
 #endif
@@ -214,7 +212,7 @@ task
     return;
   }
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   for (uint32 y = taskDesc.region.lower.y; y < taskDesc.region.upper.y; ++y)
     for (uint32 x = taskDesc.region.lower.x; x < taskDesc.region.upper.x; ++x) {
 #else
@@ -231,7 +229,7 @@ task
 
 // Exports (called from C++) //////////////////////////////////////////////////
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 export void PathTracer_renderTasks(void *uniform _self,
     void *uniform _fb,
     void *uniform _camera,

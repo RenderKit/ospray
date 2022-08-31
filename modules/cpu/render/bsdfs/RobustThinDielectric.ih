@@ -81,7 +81,7 @@ inline void RobustThinDielectric_Constructor(
       expf(attenuation),
       BSDF_SPECULAR,
       BSDF_TYPE_ROBUST_THIN_DIELECTRIC,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

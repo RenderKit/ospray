@@ -168,7 +168,7 @@ inline void ThinMicrofacetDielectric_Constructor(
       expf(attenuation),
       BSDF_GLOSSY_REFLECTION | BSDF_SPECULAR_TRANSMISSION,
       BSDF_TYPE_THIN_MICROFACET_DIELECTRIC,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

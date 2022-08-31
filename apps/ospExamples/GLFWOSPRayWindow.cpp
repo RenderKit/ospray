@@ -565,7 +565,7 @@ void GLFWOSPRayWindow::buildUI()
     rendererTypeStr = g_renderers[whichRenderer];
 
     if (rendererType == OSPRayRendererType::DEBUGGER)
-      whichDebuggerType = 1; // reset UI if switching away from debug renderer
+      whichDebuggerType = 0; // reset UI if switching away from debug renderer
 
     if (rendererTypeStr == "scivis")
       rendererType = OSPRayRendererType::SCIVIS;

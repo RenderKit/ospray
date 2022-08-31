@@ -3,9 +3,9 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
-#include "common/rkcommonDPCPPWrappers.h"
+#include "common/rkcommonSYCLWrappers.h"
 #include "rkcommon/math/vec.h"
 #elif defined(ISPC)
 #include "rkcommon/math/vec.ih"
@@ -29,7 +29,7 @@ enum TextureType
   TEXTURE_TYPE_UNKNOWN,
 };
 
-#if defined(ISPC) || defined(OSPRAY_TARGET_DPCPP)
+#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 SYCL_EXTERNAL __noinline vec4f Texture_dispatch_get(
     const uniform Texture *uniform self, const DifferentialGeometry &dg);
 

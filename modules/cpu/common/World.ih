@@ -16,7 +16,7 @@
 // c++ shared
 #include "WorldShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
 #endif
 
@@ -24,8 +24,6 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct Renderer;
 
-// TODO: Test/Remove: will making this SYCL_EXTERNAL help
-// with the bad compile times?
 inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
 {
   // Skip if no geometries scene
@@ -184,7 +182,7 @@ inline void traceClippingRay(const World *uniform world,
     }
 
     // Start interval if previous one is closed and we are not in clipping area
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     if (clippingDepth == 0 && intervalCompleted) {
 #else
     if (and(clippingDepth == 0, intervalCompleted)) {
@@ -194,7 +192,7 @@ inline void traceClippingRay(const World *uniform world,
     }
 
     // End interval if current one is not closed and we enter clipping area
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     if (clippingDepth > 0 && !intervalCompleted) {
 #else
     if (and(clippingDepth > 0, !intervalCompleted)) {
@@ -223,33 +221,21 @@ inline void traceGeometryRayIntervals(
   const float t0 = ray.t0;
   const float t = ray.t;
 
-#if 0 // def OSPRAY_TARGET_DPCPP
-  cl::sycl::ext::oneapi::experimental::printf(
-      "intervals = %d\n", rayIntervals.count);
-#endif
-
   // Iterate through ray intervals
-  // for (uint32 i = 0; i < rayIntervals.count; i++)
-  {
-    uint32 i = 0;
+  for (uint32 i = 0; i < rayIntervals.count; i++) {
     // Set ray interval
     ray.t0 = rayIntervals.intervals[i].lower;
     ray.t = rayIntervals.intervals[i].upper;
 
-#if 0 // def OSPRAY_TARGET_DPCPP
-    cl::sycl::ext::oneapi::experimental::printf(
-        "interval[%d] = %f, %f\n", i, ray.t0, ray.t);
-#endif
-
     // Skip intervals outside of the ray range
-    // TODO: This branch is being taken on the GPU when it shouldn't be (CPU
-    // doesn't take it). So the ray interval data is wrong or corrupted? Or the
-    // branch is taken incorrectly due to a bug error
+#ifdef OSPRAY_TARGET_SYCL
     if (t < ray.t0 || ray.t < t0) {
+#else
+    if (or (t < ray.t0, ray.t < t0)) {
+#endif
       ray.t0 = t0;
       ray.t = t;
-      return;
-      // continue;
+      continue;
     }
 
     // Clip interval to the ray range
@@ -273,6 +259,10 @@ inline void traceGeometryRayIntervals(
 
 inline void traceRay(const World *uniform world, varying Ray &ray)
 {
+#if 1
+  // Clipping disabled for now
+  traceGeometryRay(world, ray);
+#else
   // Fast path if no clipping geometry
   if (!world->embreeSceneHandleClippers) {
     traceGeometryRay(world, ray);
@@ -280,11 +270,12 @@ inline void traceRay(const World *uniform world, varying Ray &ray)
   }
 
   // Trace ray in clipping geometries scene, fill array with ray intervals
-  // varying RayIntervals rayIntervals;
-  // traceClippingRay(world, ray, rayIntervals);
+  varying RayIntervals rayIntervals;
+  traceClippingRay(world, ray, rayIntervals);
 
   // Trace ray intervals
-  // traceGeometryRayIntervals(world, ray, rayIntervals);
+  traceGeometryRayIntervals(world, ray, rayIntervals);
+#endif
 }
 
 inline bool isOccludedNoClipping(const World *uniform world, varying Ray &ray)
@@ -335,24 +326,26 @@ inline bool areIntervalsOccluded(const World *uniform world,
 
 inline bool isOccluded(const World *uniform world, varying Ray &ray)
 {
+#if 1
+  // Clipping disabled for now
+  return isOccludedNoClipping(world, ray);
+#else
   // Fast path if no clipping geometry
-  // if (!world->embreeSceneHandleClippers) {
-  if (true) {
+  if (!world->embreeSceneHandleClippers) {
     return isOccludedNoClipping(world, ray);
   }
 
   // TODO: use new Embree4 callback setup for clipping
-  /*
-// Allocate array for ray intervals
-varying RayIntervals rayIntervals;
-rayIntervals.count = 0;
+  // Allocate array for ray intervals
+  varying RayIntervals rayIntervals;
+  rayIntervals.count = 0;
 
-// Trace ray in clipping geometries scene, fill array with ray intervals
-traceClippingRay(world, ray, rayIntervals);
+  // Trace ray in clipping geometries scene, fill array with ray intervals
+  traceClippingRay(world, ray, rayIntervals);
 
-// Is there any occluder within given ray intervals
-return areIntervalsOccluded(world, ray, rayIntervals);
-*/
+  // Is there any occluder within given ray intervals
+  return areIntervalsOccluded(world, ray, rayIntervals);
+#endif
 }
 
 /*! Perform post-intersect computations, i.e. fill the members of
@@ -385,9 +378,9 @@ inline void postIntersect(const World *uniform world,
   dg.P = ray.org + ray.t * ray.dir;
   dg.epsilon = 0.f; // per default no geometry-type specific epsilon
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const uint32 instID = ray.instID;
 #else
   foreach_unique (instID in ray.instID) {

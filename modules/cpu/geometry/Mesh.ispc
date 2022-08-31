@@ -1,8 +1,8 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #include "rkcommon/math/LinearSpace.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -18,7 +18,7 @@ using namespace rkcommon::math;
 #include "Mesh.ih"
 #include "MeshShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
 #endif
 
@@ -123,7 +123,7 @@ SYCL_EXTERNAL void QuadMesh_postIntersect(const Geometry *uniform _self,
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   if ((compute_texcoord || compute_tangents) && valid(self->texcoord)) {
 #else
   if (and(or (compute_texcoord, compute_tangents), valid(self->texcoord))) {
@@ -222,7 +222,7 @@ SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   if ((compute_texcoord || compute_tangents) && valid(self->texcoord)) {
 #else
   if (and(or (compute_texcoord, compute_tangents), valid(self->texcoord))) {
@@ -346,7 +346,7 @@ SYCL_EXTERNAL SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
   return res;
 }
 
-SYCL_EXTERNAL void Mesh_getAreas(const Geometry *const uniform _self,
+void Mesh_getAreas(const Geometry *const uniform _self,
     const int32 *const uniform primIDs,
     const uniform int32 numPrims,
     const uniform affine3f &xfm,

@@ -8,7 +8,7 @@
 // std
 #include <algorithm>
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "common/OSPCommon.ih"
 namespace ispc {
 void *LiveSSAOFrameOp_create();

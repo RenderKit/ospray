@@ -42,9 +42,9 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     uniform Material *material = (uniform Material *)dg.material;
     vec3f transparency;
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
-      // DPC++ execution in a thread is scalar
+      // SYCL execution in a thread is scalar
       const Material *m = material;
 #else
     foreach_unique (m in material) {
@@ -69,9 +69,9 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
       return make_vec3f(0.f);
 
       /*! Tracking medium if we hit a medium interface. */
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
-      // DPC++ execution in a thread is scalar
+      // SYCL execution in a thread is scalar
       const Material *m = material;
 #else
     foreach_unique (m in material) {

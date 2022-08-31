@@ -3,7 +3,7 @@
 
 #include "Metal.h"
 #include "common/Data.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc
 #include "render/materials/Metal_ispc.h"
 #endif
@@ -14,7 +14,7 @@ namespace pathtracer {
 Metal::Metal(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF =
       reinterpret_cast<ispc::Material_GetBSDFFunc>(ispc::Metal_getBSDF_addr());
 #endif

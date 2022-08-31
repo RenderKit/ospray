@@ -15,7 +15,7 @@ static inline uniform float MicrofacetAlbedoTable_integrateAvg(
   // Trapezoidal rule
   const uniform int n = numSamples + 1;
   float sum = 0.f;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   for (int i = 0; i < n; ++i) {
 #else
   foreach (i = 0 ... n) {
@@ -41,7 +41,7 @@ static void MicrofacetAlbedoTable_precompute(
   for (uniform int j = 0; j < size; j++) {
     const float roughness = (float)j / (size - 1);
     // compute the direction albedo for each cosThetaO
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     for (int i = 0; i < size; ++i) {
 #else
     foreach (i = 0 ... size) {
@@ -79,7 +79,7 @@ static void MicrofacetDielectricAlbedoTable_precompute(
     for (uniform int j = 0; j < size; j++) {
       const float eta = lerp((float)j / (size - 1), minEta, maxEta);
       // compute the direction albedo for each cosThetaO
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       for (int i = 0; i < size; ++i) {
 #else
       foreach (i = 0 ... size) {
@@ -147,7 +147,7 @@ static void MicrofacetSheenAlbedoTable_precompute(
   for (uniform int j = 0; j < size; j++) {
     const float roughness = (float)j / (size - 1);
     // compute the direction albedo for each cosThetaO
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     for (int i = 0; i < size; ++i) {
 #else
     foreach (i = 0 ... size) {

@@ -37,7 +37,7 @@ struct GeometricModel
         userID(RTC_INVALID_GEOMETRY_ID)
   {}
 };
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 int GeometricModel_gatherEmissivePrimIDs(void *_model,
     void *_renderer,
     void *_instance,

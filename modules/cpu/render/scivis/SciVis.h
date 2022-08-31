@@ -15,15 +15,13 @@ struct SciVis : public AddStructShared<Renderer, ispc::SciVis>
   void commit() override;
   void *beginFrame(FrameBuffer *, World *) override;
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   void renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
       const utility::ArrayView<uint32_t> &taskIDs,
       sycl::queue &syclQueue) const override;
-
-  // virtual void setGPUFunctionPtrs(sycl::queue &syclQueue) override;
 #endif
 };
 

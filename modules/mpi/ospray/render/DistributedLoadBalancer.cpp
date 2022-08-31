@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DistributedLoadBalancer.h"
-#include <rkcommon/utility/ArrayView.h>
 #include <algorithm>
-#include <cstdint>
 #include <limits>
 #include <map>
 #include "../common/DistributedWorld.h"
@@ -16,6 +14,7 @@
 #include "common/Profiling.h"
 #include "distributed/DistributedRenderer.h"
 #include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/getEnvVar.h"
 
 namespace ospray {

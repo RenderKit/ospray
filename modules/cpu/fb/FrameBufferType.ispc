@@ -21,7 +21,7 @@ FrameBuffer_dispatch_getRenderTaskDesc(
   case FRAMEBUFFER_TYPE_SPARSE:
     return SparseFB_getRenderTaskDesc(fb, taskID);
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     return fb->getRenderTaskDesc(fb, taskID);
 #else
     break;
@@ -47,7 +47,7 @@ SYCL_EXTERNAL __noinline void FrameBuffer_dispatch_accumulateSample(
     SparseFB_accumulateSample(fb, screenSample, taskDesc);
     break;
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     fb->accumulateSample(fb, screenSample, taskDesc);
 #endif
     break;
@@ -65,7 +65,7 @@ SYCL_EXTERNAL __noinline void FrameBuffer_dispatch_completeTask(
     SparseFB_completeTask(fb, taskDesc);
     break;
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     fb->completeTask(fb, taskDesc);
 #endif
     break;

@@ -22,7 +22,6 @@ struct MicrofacetDielectricLayer
 {
   BSDF super;
 
-  // TODO: Need to split the dispatch more to support substrate
   varying BSDF *varying substrate;
   float eta;
   vec3f transmittance;
@@ -53,7 +52,7 @@ inline BSDF_EvalRes MicrofacetDielectricLayer_eval(
   // Evaluate the substrate
   // Ignore refraction
   BSDF_EvalRes substrate;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
     const BSDF *f = self->substrate;
 #else
@@ -196,7 +195,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
 
     // Evaluate the substrate
     // Ignore refraction
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const BSDF *f = self->substrate;
 #else
@@ -217,7 +216,7 @@ inline BSDF_SampleRes MicrofacetDielectricLayer_sample(
     // Ignore refraction
     float ss1 =
         (ss - coatPickProb) * rcp(substratePickProb); // reallocate sample
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const BSDF *f = self->substrate;
 #else
@@ -348,7 +347,7 @@ inline void MicrofacetDielectricLayer_Constructor(
       albedo,
       BSDF_GLOSSY_REFLECTION | substrate->scatteringType,
       BSDF_TYPE_MICROFACET_DIELECTRIC_LAYER,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

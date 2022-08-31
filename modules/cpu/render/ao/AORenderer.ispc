@@ -53,8 +53,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE void AORenderer_renderSample(
   while (outputColor.w < 0.99f) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
-    // TODO: Hitting an odd bug only with AO renderer when using
-    // traceGeometryRayIntervals on GPU (including PVC)
+    // Note: work around for bug when using traceGeometryRayIntervals on GPU
     traceGeometryRay(world, ray);
     // traceGeometryRayIntervals(world, ray, rayIntervals);
 

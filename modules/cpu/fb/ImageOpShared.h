@@ -11,7 +11,7 @@ namespace ispc {
 #include "rkcommon/math/vec.ih"
 #endif
 
-#if defined(__cplusplus) && !defined(OSPRAY_TARGET_DPCPP)
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *LivePixelOp_processPixel;
 #else
 struct LivePixelOp;

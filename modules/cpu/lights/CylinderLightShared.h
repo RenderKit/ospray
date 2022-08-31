@@ -30,7 +30,7 @@ struct CylinderLight
 #ifdef __cplusplus
   CylinderLight() : radiance(1.f), radius(1.f) {}
 };
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void CylinderLight_Transform(const void *self, const void *xfm, void *dyn);
 void *uniform CylinderLight_sample_addr();
 void *uniform CylinderLight_sample_instanced_addr();

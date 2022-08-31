@@ -1,9 +1,14 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/box.h"
 #include "rkcommon/math/vec.h"
+
+#ifndef __SYCL_DEVICE_ONLY__
+// Include postStatusMsg on the host
+#include "common/OSPCommon.h"
+#endif
 using namespace rkcommon;
 using namespace rkcommon::math;
 #else
@@ -23,7 +28,7 @@ using namespace rkcommon::math;
 // c++ shared
 #include "SpheresShared.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
 #endif
 
@@ -44,7 +49,7 @@ SYCL_EXTERNAL void Spheres_postIntersect(const Geometry *uniform geometry,
   // |CO| = |center-ray.org| ~ radius for 2ndary rays
   dg.epsilon = vertex.w * ulpEpsilon;
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   if (flags & DG_TEXCOORD && valid(self->texcoord))
 #else
   if (and(flags & DG_TEXCOORD, valid(self->texcoord)))
@@ -74,7 +79,7 @@ SYCL_EXTERNAL SampleAreaRes Spheres_sampleArea(
   return res;
 }
 
-SYCL_EXTERNAL void Spheres_getAreas(const Geometry *const uniform _self,
+void Spheres_getAreas(const Geometry *const uniform _self,
     const int32 *const uniform primIDs,
     const uniform int32 numPrims,
     const uniform affine3f &xfm,
@@ -87,10 +92,11 @@ SYCL_EXTERNAL void Spheres_getAreas(const Geometry *const uniform _self,
       make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
   const uniform float min_scaling = reduce_min(scaling3);
   const uniform float max_scaling = reduce_max(scaling3);
-  // TODO: This warning has to be handled on the host now?
-  // When is getAreas called?
-  // if ((max_scaling - min_scaling) > 1e-4f * min_scaling)
-  // postStatusMsg(ISPC_MSG_SPHERES, OSP_LOG_WARNING);
+#ifndef __SYCL_DEVICE_ONLY__
+  if ((max_scaling - min_scaling) > 1e-4f * min_scaling) {
+    postStatusMsg(ISPC_MSG_SPHERES, OSP_LOG_WARNING);
+  }
+#endif
 
   // use average as approximation to closest uniform scaling
   const uniform float scale = (float)four_pi * sqr(reduce_add(scaling3) / 3.f);
@@ -136,8 +142,8 @@ SYCL_EXTERNAL unmasked void Spheres_intersect_kernel(
       intersectSphere(ray->org, ray->dir, center, radius);
 
   // call intersection filtering callback and setup hit if accepted
-  if (filterIntersectionBoth(args, isect, isOcclusionTest)){
-      args->valid[programIndex] = -1;
+  if (filterIntersectionBoth(args, isect, isOcclusionTest)) {
+    args->valid[programIndex] = -1;
   }
 }
 

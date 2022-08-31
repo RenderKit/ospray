@@ -3,7 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
 #endif
 
@@ -20,7 +20,7 @@
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 namespace ispc {
 int ISPCDevice_programCount();
 int ISPCDevice_isa();
@@ -159,7 +159,7 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     return ispcrtDevice;
   }
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   sycl::queue &getSyclQueue()
   {
     return syclQueue;
@@ -176,7 +176,7 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   VKLDevice vklDevice = nullptr;
 #endif
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   sycl::platform syclPlatform;
   sycl::device syclDevice;
   sycl::context syclContext;

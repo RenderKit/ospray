@@ -143,7 +143,7 @@ void SparseFB_accumulateSample(FrameBuffer *uniform _fb,
   SparseFB_accumulateTileSample(
       fb, screenSample, tileIdx, sampleTilePos, taskDesc);
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   FrameBuffer_updateProgress(&fb->super, popcnt(lanemask()));
 #endif
 }

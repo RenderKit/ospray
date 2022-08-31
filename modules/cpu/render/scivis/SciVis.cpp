@@ -7,7 +7,7 @@
 #include "camera/Camera.h"
 #include "common/World.h"
 #include "fb/FrameBuffer.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "render/scivis/SciVis_ispc.h"
 #else
@@ -20,7 +20,7 @@ namespace ospray {
 SciVis::SciVis(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.renderSample =
       reinterpret_cast<ispc::Renderer_RenderSampleFct>(
           ispc::SciVis_renderSample_addr());
@@ -60,7 +60,7 @@ void *SciVis::beginFrame(FrameBuffer *, World *world)
   return nullptr;
 }
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void SciVis::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
@@ -96,21 +96,6 @@ void SciVis::renderTasks(FrameBuffer *fb,
   // For prints we have to flush the entire queue, because other stuff is queued
   syclQueue.wait_and_throw();
 }
-
-/*
-void SciVis::setGPUFunctionPtrs(sycl::queue &syclQueue)
-{
-  Renderer::setGPUFunctionPtrs(syclQueue);
-
-  auto *sSh = getSh();
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    cgh.parallel_for(1, [=](cl::sycl::id<1>) RTC_SYCL_KERNEL {
-      sSh->super.renderSample = ispc::SciVis_renderSample;
-    });
-  });
-  event.wait();
-}
-*/
 #endif
 
 } // namespace ospray

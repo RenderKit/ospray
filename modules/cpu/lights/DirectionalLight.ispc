@@ -1,7 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/LinearSpace.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -58,9 +58,9 @@ Light_SampleRes DirectionalLight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const float utime = time;
 #else
   foreach_unique (utime in time) {
@@ -114,9 +114,9 @@ Light_EvalRes DirectionalLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const float utime = time;
 #else
   foreach_unique (utime in time) {

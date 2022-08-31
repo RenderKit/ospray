@@ -43,7 +43,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const vec2f s2 = LDSampler_getFloat2(
         pathContext.ldSampler, pathState.sampleDim + 4 + i * 3 + 1);
     Light_SampleRes ls;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const Light *l = light;
 #else
@@ -62,7 +62,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     // evaluate BSDF
     Scattering_EvalRes fe;
     if (pathVertex.type == SURFACE) {
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       {
         const BSDF *f = pathVertex.bsdf;
 #else

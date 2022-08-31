@@ -64,7 +64,7 @@ inline float BlackmanHarris_eval(
   return value;
 }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 task
 #endif
     unmasked void
@@ -72,7 +72,7 @@ task
         int uniform const lut_width,
         float *uniform const importance,
         float *uniform const row_importance
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
         ,
         const int taskIndex
 #endif
@@ -83,7 +83,7 @@ task
   const uniform int y = taskIndex;
   const uniform float fy = (y + 0.5f) * (1.0f / (float)lut_width);
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   for (int x = 0; x < lut_width; ++x) {
 #else
   foreach (x = 0 ... lut_width) {
@@ -124,8 +124,8 @@ export void LUTPixelFilter_buildLUT(void *uniform _self)
 
   float *uniform cdf_x = self->distribution->cdf_x;
   float *uniform row_importance = self->distribution->cdf_y;
-#ifdef OSPRAY_TARGET_DPCPP
-  // TODO: This could become a kernel launch via DPC++
+#ifdef OSPRAY_TARGET_SYCL
+  // TODO: This could become a kernel launch via SYCL
   // This serial loop is just for testing an initial C++ migration of the ISPC
   // code
   for (int i = 0; i < lut_width; ++i) {

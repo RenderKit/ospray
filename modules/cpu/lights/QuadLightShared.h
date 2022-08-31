@@ -46,7 +46,7 @@ struct QuadLight
     super.type = LIGHT_TYPE_QUAD;
   }
 };
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void QuadLight_Transform(const void *self, const void *xfm, void *dyn);
 #endif
 } // namespace ispc

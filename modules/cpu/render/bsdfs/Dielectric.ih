@@ -64,7 +64,7 @@ inline void Dielectric_Constructor(varying Dielectric *uniform self,
       make_vec3f(1.0f),
       BSDF_SPECULAR,
       BSDF_TYPE_DIELECTRIC,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

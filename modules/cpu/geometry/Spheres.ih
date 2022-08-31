@@ -10,7 +10,8 @@ SYCL_EXTERNAL void Spheres_postIntersect(const Geometry *uniform _self,
     const varying Ray &ray,
     uniform int64 flags);
 
-SYCL_EXTERNAL void Spheres_getAreas(const Geometry *const uniform _self,
+// Called on the host only
+void Spheres_getAreas(const Geometry *const uniform _self,
     const int32 *const uniform primIDs,
     const uniform int32 numPrims,
     const uniform affine3f &xfm,

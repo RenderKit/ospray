@@ -8,8 +8,6 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args);
 
-// Note: Currently not supported in DPCPP b/c we need OpenvKL on DPCPP,
-// but eventually we will need the SYCL_EXTERNAL annotation here
 SYCL_EXTERNAL void Isosurfaces_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,

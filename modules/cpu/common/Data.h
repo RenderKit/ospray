@@ -10,7 +10,7 @@
 #include "common/BufferShared.h"
 #include "ispcrt.hpp"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "Data.ih"
 #else
 // including "Data_ispc.h" breaks app code using SDK headers
@@ -54,7 +54,7 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
   bool compact() const; // all strides are natural
   void copy(const Data &source, const vec3ul &destinationIndex);
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   void commit() override;
 #endif
 
@@ -74,13 +74,12 @@ struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
 
  protected:
   // The actual buffer storing the data
-  // TODO: we need to detect & copy, we also need an API for apps to pass us USM
-  // and this USM has to be in the same L0 context...
   std::unique_ptr<BufferShared<char>> view;
   char *addr{nullptr};
-  // We track the appSharedPtr separately for the GPU backend because if we were
-  // passed a shared ptr to memory that was not in USM we make a copy that we
-  // need to keep in sync
+  // We need to track the appSharedPtr separately for the GPU backend, if we
+  // were passed a shared ptr to memory that was not in USM we made a copy that
+  // addr points to and we need to keep it in sync with the shared data from the
+  // app.
   char *appSharedPtr{nullptr};
   bool shared;
 

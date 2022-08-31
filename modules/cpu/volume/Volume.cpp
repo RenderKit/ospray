@@ -5,7 +5,7 @@
 // ospray
 #include "volume/Volume.h"
 #include "common/Data.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "volume/Volume_ispc.h"
 #endif
 
@@ -88,8 +88,6 @@ void Volume::commit()
   rtcSetGeometryUserPrimitiveCount(embreeGeometry, 1);
   rtcSetGeometryBoundsFunction(
       embreeGeometry, (RTCBoundsFunction)&ispc::Volume_embreeBounds, getSh());
-  // rtcSetGeometryIntersectFunction(
-  //   embreeGeometry, (RTCIntersectFunctionN)&ispc::Volume_intersect_kernel);
   rtcCommitGeometry(embreeGeometry);
 
   // Initialize shared structure

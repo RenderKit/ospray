@@ -83,9 +83,6 @@ SYCL_EXTERNAL BSDF_SampleRes BSDF_dispatch_sample_nomulti(
   }
 }
 
-/* TODO: There's tons of BSDF types and having them all inlined into the kernel
- * in a huge switch is not going to be good for spill spize
- */
 SYCL_EXTERNAL BSDF_EvalRes BSDF_dispatch_eval_base(
     const varying BSDF *uniform self, const vec3f &wo, const vec3f &wi)
 {
@@ -125,7 +122,7 @@ SYCL_EXTERNAL BSDF_EvalRes BSDF_dispatch_eval_base(
   case BSDF_TYPE_VELVETY:
     return Velvety_eval(self, wo, wi);
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     return self->eval(self, wo, wi);
 #else
     break;
@@ -171,7 +168,7 @@ SYCL_EXTERNAL BSDF_SampleRes BSDF_dispatch_sample_base(
   case BSDF_TYPE_VELVETY:
     return Velvety_sample(self, wo, s, ss);
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     return self->sample(self, wo, s, ss);
 #else
     break;

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
 #endif
 
@@ -32,10 +32,6 @@ struct OSPRAY_SDK_INTERFACE ManagedObject : public memory::RefCount,
   virtual ~ManagedObject() override;
 
   virtual void commit();
-
-#ifdef OSPRAY_TARGET_DPCPP
-  // virtual void setGPUFunctionPtrs(sycl::queue &syclQueue);
-#endif
 
   virtual std::string toString() const;
 

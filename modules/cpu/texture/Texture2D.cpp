@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture2D.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "common/OSPCommon_ispc.h"
 #include "texture/Texture2D_ispc.h"
 #endif
@@ -33,7 +33,7 @@ void Texture2D::set(const vec2i &aSize,
       || aFormat == OSP_TEXTURE_RA8 || aFormat == OSP_TEXTURE_LA8
       || aFormat == OSP_TEXTURE_RGBA32F || aFormat == OSP_TEXTURE_RGBA16
       || aFormat == OSP_TEXTURE_RA16;
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   super.get = reinterpret_cast<ispc::Texture_get>(
       ispc::Texture2D_get_addr(aFormat, aFilter & OSP_TEXTURE_FILTER_NEAREST));
   super.getNormal = reinterpret_cast<ispc::Texture_getN>(

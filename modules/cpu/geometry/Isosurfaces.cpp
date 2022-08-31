@@ -7,7 +7,7 @@
 #include "common/Data.h"
 // openvkl
 #include "openvkl/openvkl.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc-generated files
 #include "geometry/Isosurfaces_ispc.h"
 #endif
@@ -17,7 +17,7 @@ namespace ospray {
 Isosurfaces::Isosurfaces(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect = ispc::Isosurfaces_postIntersect_addr();
 #endif
 }

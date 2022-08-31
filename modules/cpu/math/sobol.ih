@@ -23,8 +23,8 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #include "rkcommon/math/rkmath.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -46,7 +46,7 @@ inline float Sobol_sample(const unsigned int *uniform sobol_matrices,
     uniform unsigned int dimension,
     unsigned int scramble = 0)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   assert(dimension < Sobol_numDimensions);
 #endif
 

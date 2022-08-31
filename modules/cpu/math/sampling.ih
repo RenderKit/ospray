@@ -10,7 +10,7 @@
 // pdf (needed later for MIS) good reference is "Total Compendium" by Philip
 // Dutre http://people.cs.kuleuven.be/~philip.dutre/GI/
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/math.h"
 #include "rkcommon/math/vec.h"
 using namespace rkcommon;
@@ -108,7 +108,7 @@ inline float uniformSampleConePDF(const float cosAngle)
   return rcp((float)two_pi * (1.0f - cosAngle));
 }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 inline uniform float uniformSampleConePDF(const uniform float cosAngle)
 {
   return rcp((float)two_pi * (1.0f - cosAngle));
@@ -133,7 +133,7 @@ inline float uniformSampleRingPDF(const float radius, const float innerRadius)
   return rcp(M_PI * (sqr(radius) - sqr(innerRadius)));
 }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 inline uniform float uniformSampleRingPDF(
     const uniform float radius, const uniform float innerRadius)
 {
@@ -159,7 +159,7 @@ inline float uniformSampleDiskPDF(const float radius)
   return rcp(M_PI * sqr(radius));
 }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 inline uniform float uniformSampleDiskPDF(const uniform float radius)
 {
   return rcp(M_PI * sqr(radius));
@@ -198,7 +198,7 @@ inline float uniformSampleSpherePDF(const float radius)
   return rcp((float)four_pi * sqr(radius));
 }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 inline uniform float uniformSampleSpherePDF(const uniform float radius)
 {
   return rcp((float)four_pi * sqr(radius));

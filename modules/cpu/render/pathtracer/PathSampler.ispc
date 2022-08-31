@@ -21,8 +21,8 @@
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #endif
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #else
 #include "rkcommon/utility/random.ih"
 #endif
@@ -53,7 +53,7 @@ inline void postIntersect(const PathContext &pathContext,
     pathVertex.dg.renderer = &pt->super;
 
     pathVertex.dg.instID = ray.instID;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const int instID = ray.instID;
 #else
@@ -67,7 +67,7 @@ inline void postIntersect(const PathContext &pathContext,
       }
     }
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const VolumetricModel *uniform volm = pathVertex.volume;
 #else
@@ -90,7 +90,7 @@ inline Scattering_SampleRes sampleDirection(const PathContext &pathContext,
   Scattering_SampleRes fs;
   if (pathVertex.type == SURFACE) {
     vec3f Ns = pathVertex.dg.Ns;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
       const BSDF *f = pathVertex.bsdf;
 #else
@@ -249,7 +249,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     ShadingContext_Constructor(&ctx);
     if (pathVertex.type == SURFACE) {
       Material *material = (Material *)pathVertex.dg.material;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       {
         const Material *m = material;
 #else
@@ -316,7 +316,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
       if (fs.type & SCATTERING_TRANSMISSION) {
         ray_org = ray_org - (2.0f * pathVertex.dg.epsilon) * pathVertex.dg.Ng;
         Material *material = (Material *)pathVertex.dg.material;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
         {
           const Material *m = material;
 #else

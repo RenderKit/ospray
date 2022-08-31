@@ -6,7 +6,7 @@
 #include "ISPCDevice.h"
 #include "ISPCDeviceObject.h"
 #include "math/Distribution2D.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "pf/LUTPixelFilter_ispc.h"
 #endif
 

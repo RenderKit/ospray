@@ -3,9 +3,9 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
-#include "common/rkcommonDPCPPWrappers.h"
+#include "common/rkcommonSYCLWrappers.h"
 #include "embree4/rtcore.h"
 #include "rkcommon/math/vec.h"
 #elif defined(ISPC)
@@ -39,7 +39,7 @@ enum GeometryType
   GEOMETRY_TYPE_UNKNOWN,
 };
 
-#if defined(ISPC) || defined(OSPRAY_TARGET_DPCPP)
+#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 // Geometries are supposed to fill certain members of DifferentialGeometry:
 // calculate Ng, Ns, st, color, and materialID if the respective bit DG_NG,
 // DG_NS, DG_TEXCOORD, DG_COLOR, and DG_MATERIALID, in flags is set.
@@ -56,15 +56,6 @@ SYCL_EXTERNAL __noinline void Geometry_dispatch_postIntersect(
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags);
-
-SYCL_EXTERNAL __noinline void Geometry_dispatch_getAreas(
-    const Geometry *const uniform,
-    const int32 *const uniform primIDs, // primitive IDs
-    const uniform int32 numPrims, // number of primitives
-    const uniform affine3f &xfm, // instance transformation (obj2world)
-    float *const uniform
-        areas // array to return area per primitive in world-space
-);
 
 struct SampleAreaRes
 {

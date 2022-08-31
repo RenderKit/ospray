@@ -5,12 +5,12 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/box.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
 
-#include "common/rkcommonDPCPPWrappers.h"
+#include "common/rkcommonSYCLWrappers.h"
 #else
 #include "rkcommon/math/box.ih"
 #endif

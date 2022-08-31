@@ -52,7 +52,7 @@ SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
   case MATERIAL_TYPE_VELVET:
     return Velvet_getBSDF(self, ctx, dg, ray, currentMedium);
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     return self->getBSDF(self, ctx, dg, ray, currentMedium);
 #else
     return NULL;
@@ -81,7 +81,7 @@ SYCL_EXTERNAL __noinline vec3f Material_dispatch_getTransparency(
   case MATERIAL_TYPE_THINGLASS:
     return ThinGlass_getTransparency(self, dg, ray, currentMedium);
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     return self->getTransparency(self, dg, ray, currentMedium);
 #else
     return Material_getTransparency(self, dg, ray, currentMedium);
@@ -102,7 +102,7 @@ SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
     Principled_selectNextMedium(self, dg, currentMedium);
     break;
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     self->selectNextMedium(self, dg, currentMedium);
 #else
     Material_selectNextMedium(self, dg, currentMedium);

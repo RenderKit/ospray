@@ -4,7 +4,7 @@
 #include "HDRILight.h"
 // embree
 #include "embree4/rtcore.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "lights/HDRILight_ispc.h"
 #include "lights/Light_ispc.h"
@@ -23,7 +23,7 @@ void HDRILight::set(bool isVisible,
 {
   super.isVisible = isVisible;
   super.instance = instance;
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   super.sample =
       reinterpret_cast<ispc::Light_SampleFunc>(ispc::HDRILight_sample_addr());
   super.eval =
@@ -41,7 +41,7 @@ void HDRILight::set(bool isVisible,
     // Enable dynamic runtime instancing or apply static transformation
     if (instance) {
       if (instance->motionBlur) {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
         super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
             ispc::HDRILight_sample_instanced_addr());
         super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
@@ -53,7 +53,7 @@ void HDRILight::set(bool isVisible,
     }
     world2light = rcp(this->light2world);
   } else {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
         ispc::HDRILight_sample_dummy_addr());
     super.eval =
@@ -95,8 +95,6 @@ void HDRILight::commit()
   // recreate distribution
   distribution = nullptr;
   if (map) {
-    // TODO: probably don't want to read the size from the map shared struct b/c
-    // USM thrasing
     distribution = new Distribution2D(map->getSh()->size, getISPCDevice());
     // Release extra local ref
     distribution->refDec();

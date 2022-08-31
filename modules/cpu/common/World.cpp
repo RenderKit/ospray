@@ -46,8 +46,6 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
 
 World::~World()
 {
-  // TODO WILL :Debugging other issues and just using the group's scene for now,
-  // so this would double-free the geom scene
   // Release Embree scenes
   freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleGeometries);
 #ifdef OSPRAY_ENABLE_VOLUMES

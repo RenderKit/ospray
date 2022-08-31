@@ -4,7 +4,7 @@
 // ospray
 #include "Spheres.h"
 #include "common/Data.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc-generated files
 #include "geometry/Spheres_ispc.h"
 #else
@@ -16,7 +16,7 @@ namespace ospray {
 Spheres::Spheres(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =
       reinterpret_cast<ispc::Geometry_postIntersectFct>(
           ispc::Spheres_postIntersect_addr());
@@ -24,6 +24,14 @@ Spheres::Spheres(api::ISPCDevice &device)
       ispc::Spheres_getAreas_addr());
   getSh()->super.sampleArea = reinterpret_cast<ispc::Geometry_SampleAreaFct>(
       ispc::Spheres_sampleArea_addr());
+#else
+  getSh()->super.getAreas =
+      reinterpret_cast<ispc::Geometry_GetAreasFct>(ispc::Spheres_getAreas);
+  // We also set the sampleArea function ptr so that
+  // Geometry::supportAreaLighting will be true, but in SYCL we'll never call it
+  // through the function pointer on the device
+  getSh()->super.sampleArea =
+      reinterpret_cast<ispc::Geometry_SampleAreaFct>(ispc::Spheres_sampleArea);
 #endif
 }
 

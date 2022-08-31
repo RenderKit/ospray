@@ -34,7 +34,7 @@ struct OSPRAY_SDK_INTERFACE Geometry
 
   void createEmbreeGeometry(RTCGeometryType type);
   // NOTE: We now pass intersection functions through Embree RTCIntersectionArgs
-  // context parameter so that they can be inlined in DPC++
+  // context parameter so that they can be inlined in SYCL
   void createEmbreeUserGeometry(RTCBoundsFunction boundsFn);
 };
 
@@ -47,6 +47,7 @@ inline RTCGeometry Geometry::getEmbreeGeometry() const
 
 inline bool Geometry::supportAreaLighting() const
 {
+
   return (getSh()->sampleArea != nullptr) && (getSh()->getAreas != nullptr);
 }
 

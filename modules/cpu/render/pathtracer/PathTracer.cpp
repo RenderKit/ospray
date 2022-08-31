@@ -10,7 +10,7 @@
 #include "lights/Light.h"
 #include "render/Material.h"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "PathTracer.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"
 #else
@@ -73,7 +73,7 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   return nullptr;
 }
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void PathTracer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
@@ -95,7 +95,7 @@ void PathTracer::renderTasks(FrameBuffer *fb,
         dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) RTC_SYCL_KERNEL {
           if (taskIndex.get_global_id(0) < numTasks) {
 #if 0
-          // Needed for DPC++ prints to work around issue with print in deeper
+          // Needed for SYCL prints to work around issue with print in deeper
           // indirect called functions (see JIRA
           // https://jira.devtools.intel.com/browse/XDEPS-4729)
           if (taskIndex.get_global_id(0) == 0) {

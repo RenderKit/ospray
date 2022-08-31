@@ -12,8 +12,8 @@ inline bool filterCall(const RTCIntersectFunctionNArguments *uniform args,
     const RTCHit &rtcHitTemp)
 {
   // prepare execution mask
-#ifdef OSPRAY_TARGET_DPCPP
-  // We can't #define __mask because it conflicts with some stuff in C++
+#ifdef OSPRAY_TARGET_SYCL
+  // We can't #define __mask because it conflicts with other stuff
   int imask = -1;
 #else
   varying int imask;
@@ -46,7 +46,7 @@ inline bool filterIntersectionSingle(
 {
   // if there is a hit
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   if (hit.hit && hit.t > ray->t0 && hit.t <= ray->t) {
 #else
   if (and(hit.hit, and(hit.t > ray->t0, hit.t <= ray->t))) {

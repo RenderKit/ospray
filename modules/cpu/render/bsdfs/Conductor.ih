@@ -44,7 +44,7 @@ inline void Conductor_Constructor(varying Conductor *uniform self,
       Fresnel_dispatch_evalAvg(fresnel),
       BSDF_SPECULAR_REFLECTION,
       BSDF_TYPE_CONDUCTOR,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else

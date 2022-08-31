@@ -19,13 +19,15 @@ struct Renderer;
 inline uniform AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const uniform float time)
 {
-  // TODO: rtcGetGeometryTransform is missing the SYCL_EXTERNAL attribute
-  // Is there a different function we should call?
+#ifndef OSPRAY_TARGET_SYCL
+  // TODO: rtcGetGeometryTransform is not callable on the device yet
+  return getInterpolatedTransform(self->geom, time);
+#else
   return self->xfm;
-  // return getInterpolatedTransform(self->geom, time);
+#endif
 }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 inline AffineSpace3f Instance_getTransform(
     const Instance *uniform self, const float time)
 {
@@ -42,9 +44,9 @@ inline void Instance_postIntersect(const Instance *uniform self,
 {
   GeometricModel **uniform models =
       clip ? self->group->clipModels : self->group->geometricModels;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const uint32 geomID = ray.geomID;
 #else
   foreach_unique (geomID in ray.geomID) {
@@ -58,13 +60,15 @@ inline void Instance_postIntersect(const Instance *uniform self,
   uniform AffineSpace3f uxfm = self->xfm;
   uniform AffineSpace3f rcp_uxfm = self->rcp_xfm;
 
-#if 0
+  // TODO: rtcGetGeometryTransform is not callable on the device yet, so motion
+  // blur not supported
+#ifndef OSPRAY_TARGET_SYCL
   if ((flags & DG_MOTIONBLUR) == DG_MOTIONBLUR && self->motionBlur) {
     uniform float utime;
     uniform int cnt = 0;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     {
-      // DPC++ execution in a thread is scalar
+      // SYCL execution in a thread is scalar
       const float t = ray.time;
 #else
     foreach_unique (t in ray.time) {

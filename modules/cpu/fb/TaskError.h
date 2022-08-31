@@ -6,7 +6,6 @@
 #include <vector>
 #include "common/BufferShared.h"
 #include "common/OSPCommon.h"
-#include "ispcrt.hpp"
 #include "rkcommon/containers/AlignedVector.h"
 
 namespace ospray {

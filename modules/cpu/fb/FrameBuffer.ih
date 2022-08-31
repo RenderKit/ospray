@@ -6,7 +6,7 @@
 #include "FrameBufferShared.h"
 #include "common/OSPCommon.ih"
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 extern "C" uint32 *uniform getThreadNumPixelsRendered();
 
 extern "C" int *uniform getThreadLastFrameID();
@@ -22,7 +22,7 @@ SYCL_EXTERNAL vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
     const vec3f &normal,
     const vec3f &albedo);
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 inline void FrameBuffer_updateProgress(
     FrameBuffer *uniform self, const uniform uint32 numPixelsRendered)
 {

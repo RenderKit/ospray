@@ -19,13 +19,13 @@ SYCL_EXTERNAL __noinline Light_SampleRes Light_dispatch_sample(
   case LIGHT_TYPE_QUAD:
     return QuadLight_sample(self, dg, s, time);
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     return self->sample(self, dg, s, time);
 #else
     break;
 #endif
   }
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   Light_SampleRes res;
   res.weight = make_vec3f(0.f);
   res.dir = make_vec3f(0.f);
@@ -47,13 +47,13 @@ SYCL_EXTERNAL __noinline Light_EvalRes Light_dispatch_eval(
   case LIGHT_TYPE_QUAD:
     return QuadLight_eval(self, dg, dir, minDist, maxDist, time);
   default:
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
     return self->eval(self, dg, dir, minDist, maxDist, time);
 #else
     break;
 #endif
   }
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
   res.pdf = 0.f;

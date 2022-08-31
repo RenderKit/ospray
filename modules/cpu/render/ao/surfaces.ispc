@@ -17,7 +17,7 @@ inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 
   vec3f surfaceColor = make_vec3f(1.f);
   float opacity = 1.f;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
     const OBJ *m = mat;
 #else

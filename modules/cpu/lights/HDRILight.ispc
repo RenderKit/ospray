@@ -1,8 +1,8 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #include "rkcommon/math/LinearSpace.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -89,9 +89,9 @@ Light_SampleRes HDRILight_sample_instanced(const Light *uniform super,
   assert(instance);
 
   Light_SampleRes res;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const float utime = time;
 #else
   foreach_unique (utime in time) {
@@ -116,7 +116,7 @@ inline Light_EvalRes Eval(const HDRILight *uniform self,
   const vec3f localDir = world2light * dir;
 
   const float u = atan2(localDir.y, localDir.x) * (float)one_over_two_pi;
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   const float v = acos(localDir.z) * (float)one_over_pi;
 #else
   const float v = sycl::acos(localDir.z) * (float)one_over_pi;
@@ -165,9 +165,9 @@ Light_EvalRes HDRILight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   {
-    // DPC++ execution in a thread is scalar
+    // SYCL execution in a thread is scalar
     const float utime = time;
 #else
   foreach_unique (utime in time) {
@@ -184,14 +184,14 @@ Light_EvalRes HDRILight_eval_instanced(const Light *uniform super,
 // not for y (theta), because then light (importance) from the south-pole is
 // leaking to the north-pole
 // however, sin(theta) is zero then, thus we will never sample there
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 task
 #endif
     unmasked void
     HDRILight_calcRowImportance(const Texture2D *uniform const map,
         float *uniform const importance,
         float *uniform const row_importance
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
         ,
         const int taskIndex
 #endif
@@ -202,7 +202,7 @@ task
   const uniform float fy = y * rcpSize.y;
   const uniform int width = map->size.x;
   const uniform float sinTheta = sin(fy * M_PI);
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   for (int x = 0; x < width; ++x) {
 #else
   foreach (x = 0 ... width) {
@@ -255,8 +255,8 @@ export void HDRILight_initDistribution(
   const uniform int height = m->size.y;
   float *uniform cdf_x = distribution->cdf_x;
   float *uniform row_importance = distribution->cdf_y;
-#ifdef OSPRAY_TARGET_DPCPP
-  // TODO: Should become a kernel launch in DPC++
+#ifdef OSPRAY_TARGET_SYCL
+  // TODO: Should become a kernel launch in SYCL
   for (int i = 0; i < height; ++i) {
     HDRILight_calcRowImportance(m, cdf_x, row_importance, i);
   }

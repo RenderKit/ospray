@@ -7,7 +7,7 @@
 #include "fb/ImageOpShared.h"
 #include "ospray/OSPEnums.h"
 
-#if !defined(__cplusplus) || defined(OSPRAY_TARGET_DPCPP)
+#if !defined(__cplusplus) || defined(OSPRAY_TARGET_SYCL)
 #include "fb/RenderTaskDesc.ih"
 #include "render/ScreenSample.ih"
 #endif
@@ -17,7 +17,7 @@
 namespace ispc {
 #endif // __cplusplus
 
-#if defined(__cplusplus) && !defined(OSPRAY_TARGET_DPCPP)
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *FrameBuffer_accumulateSampleFct;
 typedef void *FrameBuffer_getRenderTaskDescFct;
 typedef void *FrameBuffer_completeTaskFct;

@@ -3,8 +3,8 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #include "rkcommon/math/vec.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -20,7 +20,7 @@ struct SphericalQuad
   float S, k, n0z, n0z2, n2z, x0, x1, y0, y02, y1, y12, z0, z02;
 };
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #define kernel_acos sycl::acos
 #else
 #define kernel_acos acos
@@ -87,7 +87,7 @@ struct SphericalQuad
     return quad;                                                               \
   }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 template_SphericalQuad_create(varying);
 #endif
 template_SphericalQuad_create(uniform);
@@ -211,7 +211,7 @@ inline float fv(float r, float u, float W00, float W01, float W10, float W11)
     return make_vec3f(u, v, pdf);                                               \
   }
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 template_computeCosineWeightedRNG(varying);
 #endif
 template_computeCosineWeightedRNG(uniform);

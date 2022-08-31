@@ -31,11 +31,6 @@ cmake_dependent_option(
   OFF
 )
 
-include(${ISPCRT_DIR}/interop.cmake)
-if (NOT "${CMAKE_CXX_COMPILER}" STREQUAL "${DPCPP_COMPILER}")
-    message(FATAL_ERROR "CMAKE_CXX_COMPILER should be set to '${DPCPP_COMPILER}' for DPC++")
-endif()
-
 # -------------------------------------------------------
 # Setup module include directories and source files
 # -------------------------------------------------------
@@ -412,9 +407,14 @@ if (OSPRAY_MODULE_CPU)
 endif()
 
 if (OSPRAY_MODULE_GPU)
+  include(${ISPCRT_DIR}/interop.cmake)
+  if (NOT "${CMAKE_CXX_COMPILER}" STREQUAL "${DPCPP_COMPILER}")
+    message(FATAL_ERROR "CMAKE_CXX_COMPILER should be set to '${DPCPP_COMPILER}' for SYCL")
+  endif()
+
   ospray_configure_dpcpp_target()
 
-  # Have CMake's build infrastructure treat the ISPC files as C++ for DPC++
+  # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
   set_source_files_properties(${OSPRAY_ISPC_SOURCES} PROPERTIES
       LANGUAGE CXX)
 
@@ -487,7 +487,7 @@ if (OSPRAY_MODULE_GPU)
 
   target_compile_definitions(ospray_module_gpu
   PUBLIC
-    OSPRAY_TARGET_DPCPP
+    OSPRAY_TARGET_SYCL
     __SYCL_USE_NON_VARIADIC_SPIRV_OCL_PRINTF__
     OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
     OSPRAY_END_ISPC_NAMESPACE=}

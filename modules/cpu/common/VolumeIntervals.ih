@@ -7,9 +7,9 @@
 #include "Instance.ih"
 #include "OSPCommon.ih"
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 // Note: Keep this here for now since we will need these includes later
-#include "common/rkcommonDPCPPWrappers.h"
+#include "common/rkcommonSYCLWrappers.h"
 #include "rkcommon/math/AffineSpace.h"
 #include "rkcommon/math/box.h"
 #else

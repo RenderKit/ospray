@@ -58,7 +58,7 @@ struct MicrofacetAlbedoTables
         sheenAlbedo_dir(nullptr)
   {}
 };
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void precomputeMicrofacetAlbedoTables(void *uniform _tables);
 #endif
 } // namespace ispc

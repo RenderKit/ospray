@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FrameBuffer.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "ISPCDevice_ispc.h"
 #endif
 #include "OSPConfig.h"
@@ -52,7 +52,7 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
   getSh()->channels = channels;
   getSh()->colorBufferFormat = _colorBufferFormat;
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   // Note: using 2x2, 4x4, etc doesn't change perf much
   vec2i renderTaskSize(1);
 #else
@@ -86,7 +86,7 @@ vec2i FrameBuffer::getRenderTaskSize() const
 
 vec2i FrameBuffer::getNumPixels() const
 {
-  return getSh()->size;
+  return size;
 }
 
 OSPFrameBufferFormat FrameBuffer::getColorBufferFormat() const
@@ -138,7 +138,7 @@ void FrameBuffer::waitForEvent(OSPSyncEvent event) const
 
 float FrameBuffer::getCurrentProgress() const
 {
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
   // TODO: Continually polling this will cause a lot of USM thrashing
   return 0.f;
 #else

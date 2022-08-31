@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "common/rkcommonDPCPPWrappers.h"
+#include "common/rkcommonSYCLWrappers.h"
 
 #ifdef __cplusplus
 #include "common/StructShared.h"

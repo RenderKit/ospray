@@ -3,8 +3,8 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #include "rkcommon/math/vec.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
@@ -31,7 +31,7 @@ inline Medium make_Medium_vacuum()
 
 OSPRAY_END_ISPC_NAMESPACE
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 inline bool eq(const Medium &a, const Medium &b)
 {
   return (a.ior == b.ior) & eq(a.attenuation, b.attenuation);

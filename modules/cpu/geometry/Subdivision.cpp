@@ -6,7 +6,7 @@
 #include "common/DGEnum.h"
 
 #include <cmath>
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "geometry/Subdivision_ispc.h"
 #endif
@@ -16,7 +16,7 @@ namespace ospray {
 Subdivision::Subdivision(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =
       reinterpret_cast<ispc::Geometry_postIntersectFct>(
           ispc::Subdivision_postIntersect_addr());

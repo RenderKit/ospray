@@ -7,7 +7,7 @@
 
 #ifdef __cplusplus
 #include "common/StructShared.h"
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include "camera/Camera.ih"
 #include "camera/CameraShared.h"
 #include "common/WorldShared.h"
@@ -18,10 +18,10 @@
 namespace ispc {
 #endif // __cplusplus
 
-#if defined(__cplusplus) && !defined(OSPRAY_TARGET_DPCPP)
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *Renderer_RenderSampleFct;
 #else
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 struct Renderer;
 struct World;
 struct Camera;
@@ -88,7 +88,7 @@ struct Renderer
         mathConstants(nullptr)
   {}
 };
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL void Renderer_default_renderSample(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform model,

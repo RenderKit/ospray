@@ -3,8 +3,8 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_DPCPP
-#include "common/rkcommonDPCPPWrappers.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include "common/rkcommonSYCLWrappers.h"
 #elif defined(ISPC)
 #include "rkcommon/math/vec.ih"
 #endif

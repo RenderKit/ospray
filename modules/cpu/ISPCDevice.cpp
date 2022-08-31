@@ -1,7 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 #include <level_zero/ze_api.h>
 // ze_api and sycl level zero backend must be in this order
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
@@ -37,7 +37,7 @@
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/CodeTimer.h"
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 #include "ISPCDevice_ispc.h"
 #endif
 
@@ -203,7 +203,7 @@ void ISPCDevice::commit()
   // TODO: Should this somehow report an error if app trying to change and
   // recommit these params?
   if (!ispcrtContext) {
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     sycl::context *appSyclCtx =
         static_cast<sycl::context *>(getParam<void *>("syclContext", nullptr));
     sycl::device *appSyclDevice =
@@ -255,7 +255,6 @@ void ISPCDevice::commit()
     }
 
     if (appZeCtx) {
-      // TODO: These APIs need to be merged into ISPCRT
       ispcrtContext = ispcrt::Context(
           ISPCRT_DEVICE_TYPE_GPU, (ISPCRTGenericHandle)*appZeCtx);
       ispcrtDevice =
@@ -270,15 +269,12 @@ void ISPCDevice::commit()
 #endif
     ispcrtQueue = ispcrt::TaskQueue(ispcrtDevice);
 
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     syclPlatform = sycl::ext::oneapi::level_zero::make_platform(
         reinterpret_cast<pi_native_handle>(
             ispcrtDevice.nativePlatformHandle()));
     syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
         reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeDeviceHandle()));
-
-    std::cout << "Using GPU device from ISPCRT: "
-              << syclDevice.get_info<sycl::info::device::name>() << std::endl;
 
     syclContext = sycl::ext::oneapi::level_zero::make_context(
         std::vector<sycl::device>{syclDevice},
@@ -299,7 +295,7 @@ void ISPCDevice::commit()
   tasking::initTaskingSystem(numThreads, true);
 
   if (!embreeDevice) {
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
     embreeDevice = rtcNewSYCLDevice(
         &syclContext, &syclQueue, generateEmbreeDeviceCfg(*this).c_str());
 #else
@@ -349,7 +345,7 @@ void ISPCDevice::commit()
   }
 #endif
 
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   // Output device info string
   const char *isaNames[] = {"unknown",
       "SSE2",

@@ -40,7 +40,7 @@ struct HDRILight
       const Texture2D *map,
       const Distribution2D *distribution);
 };
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
 void HDRILight_initDistribution(const void *map, void *distribution);
 #endif
 } // namespace ispc

@@ -4,7 +4,7 @@
 // ospray
 #include "Planes.h"
 #include "common/Data.h"
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
 // ispc-generated files
 #include "geometry/Planes_ispc.h"
 #else
@@ -16,7 +16,7 @@ namespace ospray {
 Planes::Planes(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-#ifndef OSPRAY_TARGET_DPCPP
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =
       reinterpret_cast<ispc::Geometry_postIntersectFct>(
           ispc::Planes_postIntersect_addr());

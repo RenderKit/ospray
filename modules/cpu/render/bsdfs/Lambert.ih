@@ -40,7 +40,7 @@ inline varying BSDF *uniform Lambert_create(uniform ShadingContext *uniform ctx,
       R,
       BSDF_DIFFUSE_REFLECTION,
       BSDF_TYPE_LAMBERT,
-#ifdef OSPRAY_TARGET_DPCPP
+#ifdef OSPRAY_TARGET_SYCL
       NULL,
       NULL,
 #else
