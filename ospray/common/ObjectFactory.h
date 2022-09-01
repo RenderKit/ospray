@@ -9,11 +9,15 @@
 #include <stdexcept>
 #include <string>
 
-#ifdef OBJECTFACTORY_DLLIMPORT
+#if defined(OBJECTFACTORY_IMPORT) && defined(_WIN32)
 #define OF_DECLSPEC __declspec(dllimport)
 #else
 #define OF_DECLSPEC
-#endif // OBJECTFACTORY_IMPORT
+#endif
+
+// 'fcns' member is not defined when imported from other library
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundefined-var-template"
 
 namespace ospray {
 
@@ -58,10 +62,12 @@ struct OF_DECLSPEC ObjectFactory
   }
 };
 
-#ifndef OBJECTFACTORY_DLLIMPORT
+#ifndef OBJECTFACTORY_IMPORT
 template <typename T, typename... Args>
 typename ObjectFactory<T, Args...>::FactoryMap ObjectFactory<T, Args...>::fcns;
 #endif
 } // namespace ospray
+
+#pragma clang diagnostic pop
 
 #undef OF_DECLSPEC
