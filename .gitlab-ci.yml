@@ -23,6 +23,8 @@ variables:
 .job_template: &centos7
   tags: [ docker, modules ]
   image: $DOCKER_REGISTRY/centos:7
+  before_script:
+    - git config --global --add safe.directory $CI_PROJECT_DIR  
 
 .job_template: &centos7-gcc4
   tags: [ docker, modules ]
