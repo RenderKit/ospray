@@ -414,12 +414,12 @@ endfunction()
 
 function(ospray_verify_embree_features)
   ospray_check_embree_feature(ISPC_SUPPORT ISPC)
-  # TODO: Having Function pointers enabled has a massive performance impact on GPU
-  #ospray_check_embree_feature(FILTER_FUNCTION "intersection filter")
+  ospray_check_embree_feature(FILTER_FUNCTION "intersection filter")
+  ospray_check_embree_feature(FILTER_FUNCTION_IN_CONTEXT "intersection filter")
   ospray_check_embree_feature(GEOMETRY_TRIANGLE "triangle geometries")
   ospray_check_embree_feature(GEOMETRY_CURVE "spline curve geometries")
-  # TODO: Having Function pointers enabled has a massive performance impact on GPU
-  #ospray_check_embree_feature(GEOMETRY_USER "user geometries")
+  ospray_check_embree_feature(GEOMETRY_USER "user geometries")
+  ospray_check_embree_feature(GEOMETRY_USER_IN_CONTEXT "user geometries")
   ospray_check_embree_feature(RAY_PACKETS "ray packets")
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
 endfunction()

@@ -407,6 +407,13 @@ if (OSPRAY_MODULE_CPU)
 endif()
 
 if (OSPRAY_MODULE_GPU)
+  # We want to make sure these options are disabled on the GPU as they aren't used and result in
+  # extremely long compile times and decreased performance.
+  ospray_check_embree_feature(GEOMETRY_USER_IN_GEOMETRY
+                              "user geometry in geometry unused, causes long compile times for GPU" OFF)
+  ospray_check_embree_feature(FILTER_FUNCTION_IN_GEOMETRY
+                              "filter function in geometry unused, causes long compile times for GPU" OFF)
+
   include(${ISPCRT_DIR}/interop.cmake)
   if (NOT "${CMAKE_CXX_COMPILER}" STREQUAL "${DPCPP_COMPILER}")
     message(FATAL_ERROR "CMAKE_CXX_COMPILER should be set to '${DPCPP_COMPILER}' for SYCL")
