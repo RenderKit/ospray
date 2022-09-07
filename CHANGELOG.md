@@ -12,7 +12,8 @@ Version History
 -   OSPRay now has a new dependecy, which is ISPC Run Time (ISPCRT) in
     minimum 1.19.0 version
 -   Fix a crash in pathtracer when there are no lights
-
+-   OSPRay's superbuild can now be provided a CMake Toolchain file for
+    cross-compilation.
 
 ### Changes in v2.10.0:
 
