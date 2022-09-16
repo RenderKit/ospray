@@ -6,11 +6,7 @@
 #include "render/pathtracer/PathTracerDataShared.h"
 #include "render/scivis/SciVisDataShared.h"
 
-#ifdef __cplusplus
-#include "embree4/rtcore.h"
-#else
-#include "embree4/rtcore.isph"
-#endif
+#include "OSPConfig.h"
 
 #ifdef __cplusplus
 #include "common/StructShared.h"

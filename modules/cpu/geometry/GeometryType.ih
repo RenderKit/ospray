@@ -6,15 +6,14 @@
 #ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
 #include "common/rkcommonSYCLWrappers.h"
-#include "embree4/rtcore.h"
 #include "rkcommon/math/vec.h"
 #elif defined(ISPC)
-#include "embree4/rtcore.isph"
 #include "rkcommon/math/vec.ih"
 #else
-#include "embree4/rtcore.h"
 #include "rkcommon/math/vec.h"
 #endif
+
+#include "OSPConfig.h"
 
 #ifdef __cplusplus
 namespace ispc {
@@ -78,7 +77,6 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
 
 RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_occluded(
     RTCOccludedFunctionNArguments *uniform args);
-
 #endif
 
 #ifdef __cplusplus

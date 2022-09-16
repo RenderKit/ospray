@@ -7,7 +7,7 @@
 #include <CL/sycl.hpp>
 #include "rkcommon/platform.h"
 #endif
-#include "embree4/rtcore_config.h"
+#include "OSPConfig.h"
 
 #ifdef __cplusplus
 namespace ispc {

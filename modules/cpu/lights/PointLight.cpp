@@ -3,7 +3,7 @@
 
 #include "PointLight.h"
 // embree
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/PointLight_ispc.h"

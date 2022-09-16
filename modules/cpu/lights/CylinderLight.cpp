@@ -3,7 +3,7 @@
 
 #include "CylinderLight.h"
 // embree
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/CylinderLight_ispc.h"

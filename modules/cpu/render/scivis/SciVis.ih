@@ -6,7 +6,7 @@
 #include "render/Renderer.ih"
 // c++ shared
 #include "SciVisShared.h"
-#include "embree4/rtcore_config.h"
+#include "OSPConfig.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

@@ -415,25 +415,78 @@ endfunction()
 function(ospray_verify_embree_features)
   ospray_check_embree_feature(ISPC_SUPPORT ISPC)
   ospray_check_embree_feature(FILTER_FUNCTION "intersection filter")
-  ospray_check_embree_feature(FILTER_FUNCTION_IN_CONTEXT "intersection filter")
   ospray_check_embree_feature(GEOMETRY_TRIANGLE "triangle geometries")
   ospray_check_embree_feature(GEOMETRY_CURVE "spline curve geometries")
   ospray_check_embree_feature(GEOMETRY_USER "user geometries")
-  ospray_check_embree_feature(GEOMETRY_USER_IN_CONTEXT "user geometries")
   ospray_check_embree_feature(RAY_PACKETS "ray packets")
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
 endfunction()
 
-macro(ospray_find_embree EMBREE_VERSION_REQUIRED FIND_AS_DEPENDENCY)
-  if (FIND_AS_DEPENDENCY)
-    find_dependency(embree ${EMBREE_VERSION_REQUIRED})
+function(ospray_verify_embree_gpu_features)
+  # TODO: We may still want to support Embree4 without DPCPP support for CPU only
+  ospray_check_embree_feature(DPCPP_SUPPORT "DPC++/SYCL support")
+  # Embree4 specific cmake options for user geometry and filter function
+  ospray_check_embree_feature(GEOMETRY_USER_IN_CONTEXT "user geometries")
+  ospray_check_embree_feature(FILTER_FUNCTION_IN_CONTEXT "intersection filter")
+  # We want to make sure these options are disabled on the GPU as they aren't used
+  # and result in extremely long compile times and decreased performance.
+  ospray_check_embree_feature(GEOMETRY_USER_IN_GEOMETRY
+                  "user geometry in geometry unused, causes long compile times for GPU" OFF)
+  ospray_check_embree_feature(FILTER_FUNCTION_IN_GEOMETRY
+                  "filter function in geometry unused, causes long compile times for GPU" OFF)
+endfunction()
+
+macro(ospray_find_embree_gpu EMBREE_GPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
+  # We need to preserve embree_DIR if it was specified because find_package/find_dependency
+  # will set it to embree_DIR-NOTFOUND if it fails here
+  set(embree_DIR_PARAM ${embree_DIR})
+  if (${FIND_AS_DEPENDENCY})
+    find_dependency(embree ${EMBREE_GPU_VERSION_REQUIRED})
   else()
-    find_package(embree ${EMBREE_VERSION_REQUIRED})
+    find_package(embree ${EMBREE_GPU_VERSION_REQUIRED})
+  endif()
+  if (NOT embree_FOUND)
+    # Reset embree_DIR to the original param, or unset it if no param was passed
+    if (embree_DIR_PARAM)
+      set(embree_DIR ${embree_DIR_PARAM})
+    else()
+      set(embree_DIR "")
+    endif()
+    # Should we warn at all while GPU support has not had its initial release?
+    message(WARNING
+            "We did not find Embree w/ GPU support installed on your system. OSPRay"
+            " required an Embree installation >= v${EMBREE_GPU_VERSION_REQUIRED}"
+            " for GPU support. OSPRay will search for Embree 3 for CPU-only rendering.")
+  else()
+    # Get Embree CPU info
+    get_target_property(EMBREE_INCLUDE_DIRS embree
+      INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(CONFIGURATIONS embree IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION)
+    get_target_property(EMBREE_LIBRARY embree
+      IMPORTED_LOCATION_${CONFIGURATION})
+    # Get Embree SYCL info
+    # TODO: If we want to support Embree4 w/ CPU only we should check if
+    # EMBREE_DPCPP_SUPPORT is on before trying to read stuff from the sycl target
+    get_target_property(CONFIGURATIONS embree_sycl IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION)
+    get_target_property(EMBREE_SYCL_LIBRARY embree_sycl
+      IMPORTED_LOCATION_${CONFIGURATION})
+
+    message(STATUS "Found Embree v${embree_VERSION}: ${EMBREE_LIBRARY}")
+  endif()
+endmacro()
+
+macro(ospray_find_embree EMBREE_CPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
+  if (${FIND_AS_DEPENDENCY})
+    find_dependency(embree ${EMBREE_CPU_VERSION_REQUIRED})
+  else()
+    find_package(embree ${EMBREE_CPU_VERSION_REQUIRED})
   endif()
   if (NOT embree_FOUND)
     message(FATAL_ERROR
             "We did not find Embree installed on your system. OSPRay requires"
-            " an Embree installation >= v${EMBREE_VERSION_REQUIRED}, please"
+            " an Embree installation >= v${EMBREE_CPU_VERSION_REQUIRED}, please"
             " download and extract Embree (or compile Embree from source), then"
             " set the 'embree_DIR' variable to the installation (or build)"
             " directory.")
@@ -444,11 +497,6 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED FIND_AS_DEPENDENCY)
   get_target_property(CONFIGURATIONS embree IMPORTED_CONFIGURATIONS)
   list(GET CONFIGURATIONS 0 CONFIGURATION)
   get_target_property(EMBREE_LIBRARY embree
-      IMPORTED_LOCATION_${CONFIGURATION})
-  # Get Embree SYCL info
-  get_target_property(CONFIGURATIONS embree_sycl IMPORTED_CONFIGURATIONS)
-  list(GET CONFIGURATIONS 0 CONFIGURATION)
-  get_target_property(EMBREE_SYCL_LIBRARY embree_sycl
       IMPORTED_LOCATION_${CONFIGURATION})
 
   message(STATUS "Found Embree v${embree_VERSION}: ${EMBREE_LIBRARY}")
@@ -517,7 +565,7 @@ macro(ospray_determine_embree_isa_support)
 endmacro()
 
 macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED FIND_AS_DEPENDENCY)
-  if (FIND_AS_DEPENDENCY)
+  if (${FIND_AS_DEPENDENCY})
     find_dependency(openvkl ${OPENVKL_VERSION_REQUIRED})
   else()
     find_package(openvkl ${OPENVKL_VERSION_REQUIRED})

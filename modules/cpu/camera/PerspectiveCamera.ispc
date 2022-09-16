@@ -10,11 +10,24 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
+SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
+    varying Ray &ray,
+    const varying CameraSample &sample);
+
 SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
     varying Ray &ray,
     const varying CameraSample &sample)
 {
-  // TODO: We need ot call initRayMB if we have motionBlur
+#ifndef OSPRAY_TARGET_SYCL
+  // Motion blur not supported in SYCL yet, when it is we'd do better calling
+  // initRayMB directly instead of calling into this function first to reduce
+  // our register usage
+  if (_self->motionBlur) {
+    PerspectiveCamera_initRayMB(_self, ray, sample);
+    return;
+  }
+#endif
+
   const PerspectiveCamera *uniform self =
       (const PerspectiveCamera *uniform)_self;
 

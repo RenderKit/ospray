@@ -6,7 +6,7 @@
 #include "common/Data.h"
 #include "common/ObjectFactory.h"
 // embree
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 // ispc shared
 #include "GeometryShared.h"
 

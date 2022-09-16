@@ -142,4 +142,16 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_occluded(
   }
 }
 
+#if EMBREE_VERSION_MAJOR == 3
+export unmasked void Geometry_dispatch_intersect_export(void *uniform _args)
+{
+  Geometry_dispatch_intersect((RTCIntersectFunctionNArguments * uniform) _args);
+}
+
+export unmasked void Geometry_dispatch_occluded_export(void *uniform _args)
+{
+  Geometry_dispatch_occluded((RTCOccludedFunctionNArguments * uniform) _args);
+}
+#endif
+
 OSPRAY_END_ISPC_NAMESPACE

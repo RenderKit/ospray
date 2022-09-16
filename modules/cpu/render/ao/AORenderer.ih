@@ -5,7 +5,7 @@
 #include "common/World.ih"
 #include "render/Renderer.ih"
 // c++ shared
-#include "embree4/rtcore_config.h"
+#include "OSPConfig.h"
 #include "fb/FrameBufferShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE

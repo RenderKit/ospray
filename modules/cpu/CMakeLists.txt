@@ -14,7 +14,7 @@ cmake_dependent_option(
   OSPRAY_MODULE_GPU
   "Build the GPU module"
   ON
-  OSPRAY_ENABLE_MODULES
+  "OSPRAY_ENABLE_MODULES;EMBREE_DPCPP_SUPPORT"
   OFF
 )
 mark_as_advanced(OSPRAY_MODULE_GPU)
@@ -22,14 +22,6 @@ mark_as_advanced(OSPRAY_MODULE_GPU)
 if ((NOT OSPRAY_MODULE_CPU) AND (NOT OSPRAY_MODULE_GPU))
   return()
 endif()
-
-cmake_dependent_option(
-  OSPRAY_ENABLE_VOLUMES
-  "Enable volume rendering using OpenVKL in the CPU module"
-  ON
-  OSPRAY_MODULE_CPU
-  OFF
-)
 
 # -------------------------------------------------------
 # Setup module include directories and source files
@@ -407,13 +399,6 @@ if (OSPRAY_MODULE_CPU)
 endif()
 
 if (OSPRAY_MODULE_GPU)
-  # We want to make sure these options are disabled on the GPU as they aren't used and result in
-  # extremely long compile times and decreased performance.
-  ospray_check_embree_feature(GEOMETRY_USER_IN_GEOMETRY
-                              "user geometry in geometry unused, causes long compile times for GPU" OFF)
-  ospray_check_embree_feature(FILTER_FUNCTION_IN_GEOMETRY
-                              "filter function in geometry unused, causes long compile times for GPU" OFF)
-
   include(${ISPCRT_DIR}/interop.cmake)
   if (NOT "${CMAKE_CXX_COMPILER}" STREQUAL "${DPCPP_COMPILER}")
     message(FATAL_ERROR "CMAKE_CXX_COMPILER should be set to '${DPCPP_COMPILER}' for SYCL")
@@ -435,7 +420,7 @@ if (OSPRAY_MODULE_GPU)
   target_link_libraries(ospray_module_gpu
   PUBLIC
     ospray
-    rkcommon::rkcommon_sycl
+    rkcommon::rkcommon
     $<BUILD_INTERFACE:ispcrt::ispcrt>
     $<BUILD_INTERFACE:embree>
     # TODO: needs OpenVKL GPU port
@@ -464,6 +449,8 @@ if (OSPRAY_MODULE_GPU)
   PUBLIC
     TILE_SIZE=${OSPRAY_TILE_SIZE}
     MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
+    RKCOMMON_SYCL
+    RKCOMMON_NO_SIMD
   )
 
   target_compile_options(ospray_module_gpu

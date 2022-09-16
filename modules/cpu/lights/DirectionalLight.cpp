@@ -4,7 +4,7 @@
 #include "DirectionalLight.h"
 #include "math/sampling.h"
 // embree
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 #ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "lights/DirectionalLight_ispc.h"

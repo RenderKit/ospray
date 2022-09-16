@@ -43,10 +43,13 @@ RTC_SYCL_INDIRECTLY_CALLABLE void AORenderer_renderSample(
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
   RayIntervals rayIntervals;
-  // traceClippingRay(world, ray, rayIntervals);
+#ifndef OSPRAY_TARGET_SYCL
+  traceClippingRay(world, ray, rayIntervals);
+#else
   rayIntervals.count = 1;
   rayIntervals.intervals[0].lower = ray.t0;
   rayIntervals.intervals[0].upper = ray.t;
+#endif
 
   // Iterate over all translucent geometry till we are fully opaque
   vec4f outputColor = make_vec4f(0.f);
@@ -54,8 +57,11 @@ RTC_SYCL_INDIRECTLY_CALLABLE void AORenderer_renderSample(
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
     // Note: work around for bug when using traceGeometryRayIntervals on GPU
+#ifdef OSPRAY_TARGET_SYCL
     traceGeometryRay(world, ray);
-    // traceGeometryRayIntervals(world, ray, rayIntervals);
+#else
+    traceGeometryRayIntervals(world, ray, rayIntervals);
+#endif
 
 #ifdef OSPRAY_ENABLE_VOLUMES
     // Determine volume intervals by tracing ray in the volume scene

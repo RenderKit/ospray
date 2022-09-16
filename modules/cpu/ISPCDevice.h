@@ -12,7 +12,7 @@
 // ispcrt
 #include "ispcrt.hpp"
 // embree
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 #ifdef OSPRAY_ENABLE_VOLUMES
 // openvkl
 #include "openvkl/openvkl.h"

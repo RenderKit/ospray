@@ -4,7 +4,7 @@
 #pragma once
 
 #include "FrameBufferShared.h"
-#include "embree4/rtcore_config.h"
+#include "OSPConfig.h"
 
 #ifdef __cplusplus
 namespace ispc {

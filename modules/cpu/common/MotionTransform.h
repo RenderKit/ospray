@@ -6,7 +6,7 @@
 // ospray stuff
 #include "./Group.h"
 // embree
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 
 namespace ospray {
 

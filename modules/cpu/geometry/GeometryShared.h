@@ -3,10 +3,10 @@
 
 #pragma once
 
+#include "OSPConfig.h"
 #include "geometry/GeometryType.ih"
 
 #ifdef __cplusplus
-#include <embree4/rtcore.h>
 #include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus

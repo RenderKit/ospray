@@ -3,7 +3,7 @@
 
 #include "QuadLight.h"
 // embree
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/QuadLight_ispc.h"

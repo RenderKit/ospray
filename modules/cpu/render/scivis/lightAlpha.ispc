@@ -34,13 +34,15 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
   RayIntervals rayIntervals;
+#ifndef OSPRAY_TARGET_SYCL
   traceClippingRay(world, ray, rayIntervals);
+#endif
 
   while (true) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
     // WA for https://jira.devtools.intel.com/browse/XDEPS-4875
-#if 0
+#ifndef OSPRAY_TARGET_SYCL
     traceGeometryRayIntervals(world, ray, rayIntervals);
 #else
     traceGeometryRay(world, ray);

@@ -9,7 +9,7 @@
 // stl
 #include <vector>
 // embree
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 // ispc shared
 #include "WorldShared.h"
 

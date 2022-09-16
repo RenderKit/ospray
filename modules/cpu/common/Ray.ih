@@ -10,16 +10,14 @@
 #include "rkcommon/math/box.h"
 #include "rkcommon/math/vec.h"
 
-#include "embree4/rtcore.h"
-
 using namespace rkcommon;
 using namespace rkcommon::math;
 #else
 #include "rkcommon/math/AffineSpace.ih"
 #include "rkcommon/math/vec.ih"
-// embree
-#include "embree4/rtcore.isph"
 #endif
+
+#include "OSPConfig.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

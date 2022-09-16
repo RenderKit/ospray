@@ -32,7 +32,7 @@ inline vec3f Volume_getGradient(const Volume *uniform volume, const vec3f &P)
   return *((varying vec3f *)&result);
 }
 
-unmasked void Volume_intersect_kernel(
+RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Volume_intersect_kernel(
     RTCIntersectFunctionNArguments *uniform args);
 
 #endif

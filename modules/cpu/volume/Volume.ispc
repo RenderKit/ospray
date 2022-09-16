@@ -16,7 +16,7 @@ export void Volume_embreeBounds(const RTCBoundsFunctionArguments *uniform args)
   *out = make_box3fa(self->boundingBox);
 }
 
-unmasked void Volume_intersect_kernel(
+RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Volume_intersect_kernel(
     RTCIntersectFunctionNArguments *uniform args)
 {
   // make sure to set the mask
@@ -63,6 +63,13 @@ unmasked void Volume_intersect_kernel(
     vIntervals->numVolumeIntervals++;
   }
 }
+
+#if EMBREE_VERSION_MAJOR == 3
+export unmasked void Volume_intersect_kernel_export(void *uniform _args)
+{
+  Volume_intersect_kernel((RTCIntersectFunctionNArguments * uniform) _args);
+}
+#endif
 
 OSPRAY_END_ISPC_NAMESPACE
 #endif

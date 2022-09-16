@@ -13,7 +13,8 @@ set(OSPRAY_CMAKECONFIG_DIR
 
 set(ISPC_VERSION_REQUIRED 1.18.0)
 set(RKCOMMON_VERSION_REQUIRED 1.10.0)
-set(EMBREE_VERSION_REQUIRED 4.0.0)
+set(EMBREE_GPU_VERSION_REQUIRED 4.0.0)
+set(EMBREE_CPU_VERSION_REQUIRED 3.13.1)
 set(OPENVKL_VERSION_REQUIRED 1.3.0)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
@@ -33,14 +34,19 @@ get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)
 
 # Embree
-ospray_find_embree(${EMBREE_VERSION_REQUIRED} TRUE)
+# Try to find Embree GPU first, and fall back to CPU-only if it's not found
+ospray_find_embree_gpu(${EMBREE_GPU_VERSION_REQUIRED} FALSE)
+if (embree_FOUND)
+  set(EMBREE_VERSION_REQUIRED ${EMBREE_GPU_VERSION_REQUIRED})
+  set(EMBREE_VERSION_MAJOR 4)
+  ospray_verify_embree_gpu_features()
+else()
+  ospray_find_embree(${EMBREE_CPU_VERSION_REQUIRED} FALSE)
+  set(EMBREE_VERSION_REQUIRED ${EMBREE_CPU_VERSION_REQUIRED})
+  set(EMBREE_VERSION_MAJOR 3)
+endif()
 ospray_verify_embree_features()
 ospray_determine_embree_isa_support()
-
-# Open VKL
-if (OSPRAY_ENABLE_VOLUMES)
-  ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} TRUE)
-endif()
 
 # OpenImageDenoise
 if (OSPRAY_MODULE_DENOISER)
@@ -97,6 +103,22 @@ cmake_dependent_option(
   OSPRAY_ENABLE_APPS
   OFF
 )
+
+cmake_dependent_option(
+  OSPRAY_ENABLE_VOLUMES
+  "Enable volume rendering using OpenVKL in the CPU module"
+  ON
+  OSPRAY_ENABLE_MODULES
+  OFF
+)
+
+# Open VKL
+if (OSPRAY_ENABLE_VOLUMES)
+    message(WARNING "Gonna look for OpenVKL")
+  ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} FALSE)
+else()
+    message(WARNING "Not looking for OpenVKL")
+endif()
 
 #####################################################################
 # Binary package options, before any install() invocation/definition

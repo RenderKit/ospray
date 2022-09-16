@@ -6,4 +6,24 @@
 #define TILE_SIZE @OSPRAY_TILE_SIZE@
 #define MAX_TILE_SIZE @OSPRAY_MAX_STACK_TILE_SIZE@
 #define OSPRAY_RENDER_TASK_SIZE @OSPRAY_RENDER_TASK_SIZE@
+#define EMBREE_VERSION_MAJOR @EMBREE_VERSION_MAJOR@
+
+#if EMBREE_VERSION_MAJOR == 3
+
+#define RTC_SYCL_INDIRECTLY_CALLABLE
+#ifdef ISPC
+#include "embree3/rtcore.isph"
+#else
+#include "embree3/rtcore.h"
+#endif
+
+#else
+
+#ifdef ISPC
+#include "embree4/rtcore.isph"
+#else
+#include "embree4/rtcore.h"
+#endif
+
+#endif
 

@@ -4,7 +4,7 @@
 #include "SpotLight.h"
 #include "math/sampling.h"
 // embree
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/SpotLight_ispc.h"

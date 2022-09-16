@@ -3,7 +3,11 @@
 
 #pragma once
 
-#include "embree4/rtcore_config.h"
+#ifdef OSPRAY_TARGET_SYCL
+#include <CL/sycl.hpp>
+#endif
+
+#include "OSPConfig.h"
 
 // ospray stuff
 #include "common/Clipping.ih"
@@ -33,6 +37,7 @@ inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
 
+#if EMBREE_VERSION_MAJOR == 4
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.intersect = (RTCIntersectFunctionN)Geometry_dispatch_intersect;
@@ -41,6 +46,11 @@ inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
       &context.ectx,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
+#else
+  rtcIntersectV(world->embreeSceneHandleGeometries,
+      &context.ectx,
+      (varying RTCRayHit * uniform) & ray);
+#endif
 }
 
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -58,6 +68,7 @@ inline void traceVolumeRay(
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = &intervals;
 
+#if EMBREE_VERSION_MAJOR == 4
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.intersect = (RTCIntersectFunctionN)Volume_intersect_kernel;
@@ -66,6 +77,11 @@ inline void traceVolumeRay(
       &context.ectx,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
+#else
+  rtcIntersectV(world->embreeSceneHandleVolumes,
+      &context.ectx,
+      (varying RTCRayHit * uniform) & ray);
+#endif
 
   if (intervals.numVolumeIntervals > 0 && hasInterval(intervals.intervals[0])) {
     interval.instance = *(world->instances + intervals.intervals[0].instID);
@@ -87,6 +103,7 @@ inline void traceVolumeRay(
   rtcInitIntersectContext(&context.ectx);
   context.userPtr = &intervals;
 
+#if EMBREE_VERSION_MAJOR == 4
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.intersect = (RTCIntersectFunctionN)Volume_intersect_kernel;
@@ -95,6 +112,11 @@ inline void traceVolumeRay(
       &context.ectx,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
+#else
+  rtcIntersectV(world->embreeSceneHandleVolumes,
+      &context.ectx,
+      (varying RTCRayHit * uniform) & ray);
+#endif
 
   if (intervals.numVolumeIntervals > 0) {
     for (uniform int i = 0; i < intervals.numVolumeIntervals; ++i) {
@@ -124,15 +146,20 @@ inline void traceClippingRay(const World *uniform world,
     varying Ray &ray,
     varying RayIntervals &rayIntervals)
 {
-  // A scene with clipping geometries has to exist
-  // if (!world->embreeSceneHandleClippers) {
+  // Clipping disabled on Embree4 for now, the callback isn't enabled (need to
+  // get it enabled for CPU at least)
+#if EMBREE_VERSION_MAJOR == 4
   rayIntervals.intervals[0] = make_box1f(ray.t0, ray.t);
   rayIntervals.count = 1;
   return;
-  //}
+#else
+  // A scene with clipping geometries has to exist
+  if (!world->embreeSceneHandleClippers) {
+    rayIntervals.intervals[0] = make_box1f(ray.t0, ray.t);
+    rayIntervals.count = 1;
+    return;
+  }
 
-  // TODO:Clipping disabled for now
-#if 0
   // Create and initialize intersection context
   UserIntersectionContextForClipping context;
   rtcInitIntersectContext(&context.ectx);
@@ -259,7 +286,7 @@ inline void traceGeometryRayIntervals(
 
 inline void traceRay(const World *uniform world, varying Ray &ray)
 {
-#if 1
+#if EMBREE_VERSION_MAJOR == 4
   // Clipping disabled for now
   traceGeometryRay(world, ray);
 #else
@@ -269,6 +296,7 @@ inline void traceRay(const World *uniform world, varying Ray &ray)
     return;
   }
 
+  // TODO: use new Embree4 callback setup for clipping when it's enabled
   // Trace ray in clipping geometries scene, fill array with ray intervals
   varying RayIntervals rayIntervals;
   traceClippingRay(world, ray, rayIntervals);
@@ -287,6 +315,7 @@ inline bool isOccludedNoClipping(const World *uniform world, varying Ray &ray)
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
 
+#if EMBREE_VERSION_MAJOR == 4
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
 #ifdef ISPC
@@ -301,6 +330,11 @@ inline bool isOccludedNoClipping(const World *uniform world, varying Ray &ray)
       &context.ectx,
       (varying RTCRay * uniform) & ray,
       &intersectArgs);
+#else
+  rtcOccludedV(world->embreeSceneHandleGeometries,
+      &context.ectx,
+      (varying RTCRay * uniform) & ray);
+#endif
 
   return ray.t < ray.t0;
 }
@@ -326,7 +360,7 @@ inline bool areIntervalsOccluded(const World *uniform world,
 
 inline bool isOccluded(const World *uniform world, varying Ray &ray)
 {
-#if 1
+#if EMBREE_VERSION_MAJOR == 4
   // Clipping disabled for now
   return isOccludedNoClipping(world, ray);
 #else
@@ -335,7 +369,7 @@ inline bool isOccluded(const World *uniform world, varying Ray &ray)
     return isOccludedNoClipping(world, ray);
   }
 
-  // TODO: use new Embree4 callback setup for clipping
+  // TODO: use new Embree4 callback setup for clipping when it's enabled
   // Allocate array for ray intervals
   varying RayIntervals rayIntervals;
   rayIntervals.count = 0;

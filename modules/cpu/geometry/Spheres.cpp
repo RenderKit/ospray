@@ -64,6 +64,7 @@ void Spheres::commit()
   }
 
 #if 0
+  // TODO: This also won't be supported in Embree3
   createEmbreeGeometry(RTC_GEOMETRY_TYPE_SPHERE_POINT);
   rtcSetSharedGeometryBuffer(embreeGeometry,
       RTC_BUFFER_TYPE_VERTEX,

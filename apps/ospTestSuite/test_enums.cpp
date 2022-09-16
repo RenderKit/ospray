@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <gtest/gtest.h>
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 #include "ospray/OSPEnums.h"
 
 #ifdef OSPRAY_ENABLE_VOLUMES

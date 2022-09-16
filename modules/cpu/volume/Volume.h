@@ -6,7 +6,7 @@
 
 #include "ISPCDeviceObject.h"
 // embree
-#include "embree4/rtcore.h"
+#include "OSPConfig.h"
 // openvkl
 #include "openvkl/volume.h"
 // ispc shared
