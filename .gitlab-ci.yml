@@ -32,7 +32,7 @@ variables:
 
 .job_template: &centos8
   tags: [ docker ]
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  image: $DOCKER_REGISTRY/centos:8
 
 .job_template: &ubuntu1804
   tags: [ docker ]

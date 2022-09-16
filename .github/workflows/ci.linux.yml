@@ -1,0 +1,319 @@
+## Copyright 2009 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: CI Linux
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+### BUILD JOBS ###
+
+  build-arch-clang:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ospray/docker-images:arch
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
+
+  build-arch-clang-extras:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ospray/docker-images:arch
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
+
+  build-arch-gcc:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ospray/docker-images:arch
+      cmd: |
+        scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
+
+  build-arch-gcc-extras:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ospray/docker-images:arch
+      cmd: |
+        scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
+
+  build-centos7-gcc:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      cmd: |
+        scripts/build_gitlab/linux.sh
+      artifact-out: build-centos7-gcc
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  build-centos7-icc:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7-devenv
+      cmd: |
+        module load cmake
+        module load intel
+        export CC=icc
+        export CXX=icpc
+        scripts/build_gitlab/linux.sh
+
+  build-centos7-icc15:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7-devenv
+      cmd: |
+        module load cmake
+        module load intel/2015
+        export CC=icc
+        export CXX=icpc
+        scripts/build_gitlab/linux.sh
+
+  build-centos7-icx:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      cmd: |
+        module load cmake
+        module load intel/2022.1
+        export CC=icx
+        export CXX=icpx
+        export CXXFLAGS="-fhonor-infinities -fhonor-nans"
+        export LDFLAGS="-static-intel"
+        scripts/build_gitlab/linux.sh
+      artifact-out: build-centos7-icx
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  build-centos7-mpi-impi:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      cmd: |
+        module load cmake
+        module load impi/2021.6
+        scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+      artifact-out: build-centos7-mpi-impi
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  build-centos7-mpi-mpich:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      cmd: |
+        module load cmake
+        module load mpi/mpich-x86_64
+        scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+      artifact-out: build-centos7-mpi-mpich
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  build-centos7-mpi-openmpi:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      cmd: |
+        module load cmake
+        module load mpi/openmpi-x86_64
+        scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+
+  build-centos8:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:8
+      cmd: |
+        scripts/build_gitlab/linux.sh -G Ninja
+      artifact-out: build-centos8
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  build-centos8-mpi-mpich:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:8
+      cmd: |
+        module load mpi/mpich-x86_64
+        scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+
+  build-centos8-mpi-openmpi:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:8
+      cmd: |
+        module load mpi/openmpi-x86_64
+        scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+
+  build-linux-debug:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ospray/docker-images:arch
+      cmd: |
+        export CFLAGS=-fsanitize=address
+        export CXXFLAGS=-fsanitize=address
+        export LDFLAGS=-fsanitize=address
+        scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DCMAKE_BUILD_TYPE=Debug
+      artifact-out: build-linux-debug
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  build-ubuntu1804-gcc:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ubuntu:18.04
+      cmd: |
+        scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF
+      artifact-out: build-ubuntu1804-gcc
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  build-ubuntu2004-gcc:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ubuntu:20.04
+      cmd: |
+        scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+      artifact-out: build-ubuntu2004-gcc
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+### TEST JOBS ###
+
+  test-centos7-gcc-avx2:
+    needs: build-centos7-gcc
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      runs-on: '["Linux", "avx2"]'
+      cmd: |
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
+      artifact-in: build-centos7-gcc
+      artifact-out: test-centos7-gcc-avx2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+
+  test-centos7-gcc-mpi-impi-avx2:
+    needs: build-centos7-mpi-impi
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      runs-on: '["Linux", "avx2"]'
+      cmd: |
+        module load cmake
+        I_MPI_OFI_LIBRARY_INTERNAL=no module load impi/2021.6
+        export FI_PROVIDER=sockets
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
+      artifact-in: build-centos7-mpi-impi
+      artifact-out: test-centos7-gcc-mpi-impi-avx2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+
+  test-centos7-gcc-mpi-mpich-avx2:
+    needs: build-centos7-mpi-mpich
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      runs-on: '["Linux", "avx2"]'
+      cmd: |
+        module load cmake
+        module load mpi/mpich-x86_64
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2 TEST_MPI
+      artifact-in: build-centos7-mpi-mpich
+      artifact-out: test-centos7-gcc-mpi-mpich-avx2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+
+  test-centos7-icx-avx2:
+    needs: build-centos7-icx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      runs-on: '["Linux", "avx2"]'
+      cmd: |
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
+      artifact-in: build-centos7-icx
+      artifact-out: test-centos7-icx-avx2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+
+  test-centos8-avx512skx:
+    needs: build-centos8
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:8
+      runs-on: '["Linux", "avx512"]'
+      cmd: |
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+      artifact-in: build-centos8
+      artifact-out: test-centos8-avx512skx
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+
+  test-find-ospray:
+    needs: build-centos7-gcc
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      cmd: |
+        module load cmake
+        mkdir buildtut
+        cd buildtut
+        cmake -D ospray_DIR=`echo $GITHUB_WORKSPACE/build/install/ospray/lib/cmake/ospray-*` ../apps/ospTutorial/ospTutorialFindospray
+        cmake --build .
+      artifact-in: build-centos7-gcc
+
+  test-ubuntu1804-gcc-avx512skx:
+    needs: build-ubuntu1804-gcc
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ubuntu:18.04
+      runs-on: '["Linux", "avx512"]'
+      cmd: |
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+      artifact-in: build-ubuntu1804-gcc
+      artifact-out: test-ubuntu1804-gcc-avx512skx
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+
+  test-ubuntu2004-gcc-avx2:
+    needs: build-ubuntu2004-gcc
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ubuntu:20.04
+      runs-on: '["Linux", "avx2"]'
+      cmd: |
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
+      artifact-in: build-ubuntu2004-gcc
+      artifact-out: test-ubuntu2004-gcc-avx2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+
+  test-ubuntu2004-gcc-avx512skx:
+    needs: build-ubuntu2004-gcc
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ubuntu:20.04
+      runs-on: '["Linux", "avx512"]'
+      cmd: |
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX TEST_MULTIDEVICE
+      artifact-in: build-ubuntu2004-gcc
+      artifact-out: test-ubuntu2004-gcc-avx512skx
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+
+  test-tutorials:
+    needs: build-centos7-gcc
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      cmd: scripts/tests/run_tutorials.sh
+      artifact-in: build-centos7-gcc
+
+  sanitize-linux-debug:
+    needs: build-linux-debug
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ospray/docker-images:arch
+      cmd: |
+        export LSAN_OPTIONS="suppressions=$GITHUB_WORKSPACE/scripts/tests/sanitize_ignore.txt"
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
+        export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+        build/install/ospray/bin/ospBenchmark --benchmark_min_time=0
+      artifact-in: build-linux-debug
+
+

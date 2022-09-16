@@ -18,8 +18,7 @@ set(ExternalData_URL_TEMPLATES
 
 set(ExternalData_OBJECT_STORES
   "${CMAKE_BINARY_DIR}/regression_test_baseline"
-  "/opt/ospray/test-data"
-  "//sdvis-nas/NAS/OSPRay/test-data"
+  "${PROJECT_STORE_ROOT}/OSPRay/test-data"
 )
 
 set(ExternalData_BINARY_ROOT ${CMAKE_BINARY_DIR}/regression_test_baseline)
