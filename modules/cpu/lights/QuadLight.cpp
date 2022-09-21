@@ -58,29 +58,6 @@ ISPCRTMemoryView QuadLight::createSh(
     sh->pre.c0 = cross(sh->pre.c90, sh->pre.nnormal);
   }
 
-#ifdef OSPRAY_TARGET_SYCL
-  /*
-  // TODO: Objects need to know the device they were created on
-  // Probably push this into ManagedObject?
-  api::ISPCDevice *device = (api::ISPCDevice *)api::Device::current.ptr;
-
-  const bool motionBlur = instance && instance->motionBlur;
-
-  auto event = device->getSyclQueue().submit([&](sycl::handler &cgh) {
-    cgh.parallel_for(1, [=](cl::sycl::id<1>) RTC_SYCL_KERNEL {
-      if (!motionBlur) {
-        sh->super.sample = ispc::QuadLight_sample;
-        sh->super.eval = ispc::QuadLight_eval;
-      } else {
-        sh->super.sample = ispc::QuadLight_sample_instanced;
-        sh->super.eval = ispc::QuadLight_eval_instanced;
-      }
-    });
-  });
-  event.wait();
-  */
-#endif
-
   return view;
 }
 

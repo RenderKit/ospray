@@ -204,7 +204,6 @@ inline Light_EvalRes Eval(const QuadLight *uniform self,
       dyn.position, dyn.edge1, dyn.edge2, neg(dyn.nnormal), dg.P);
   if (quad.S > 0.f) {
     res.radiance = self->radiance;
-#if 0
     if (self->intensityDistribution.lid) {
       // convert from intensity to radiance by canceling the the cosine
       // term introduced by the Lambertian area light
@@ -213,7 +212,6 @@ inline Light_EvalRes Eval(const QuadLight *uniform self,
                  &self->intensityDistribution, dyn.c0, dyn.c90, cosd, dir)
               / abs(cosd));
     }
-#endif
     res.pdf = rcp(quad.S);
   }
 
