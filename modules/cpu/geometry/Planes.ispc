@@ -53,7 +53,9 @@ SYCL_EXTERNAL unmasked void Planes_intersect_kernel(
   // make sure to set the mask
   if (!args->valid[programIndex])
     return;
+#if EMBREE_VERSION_MAJOR == 4
   args->valid[programIndex] = 0;
+#endif
 
   // get geometry pointers
   Planes *uniform self = (Planes * uniform) args->geometryUserPtr;
@@ -81,7 +83,9 @@ SYCL_EXTERNAL unmasked void Planes_intersect_kernel(
 
   // we are done if first intersection accepted
   if (filterIntersectionSingle(args, hit, isOcclusionTest, false)) {
+#if EMBREE_VERSION_MAJOR == 4
     args->valid[programIndex] = -1;
+#endif
     return;
   }
 

@@ -114,10 +114,7 @@ cmake_dependent_option(
 
 # Open VKL
 if (OSPRAY_ENABLE_VOLUMES)
-    message(WARNING "Gonna look for OpenVKL")
   ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} FALSE)
-else()
-    message(WARNING "Not looking for OpenVKL")
 endif()
 
 #####################################################################

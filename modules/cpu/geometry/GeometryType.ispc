@@ -101,9 +101,11 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
   case GEOMETRY_TYPE_PLANES:
     Planes_intersect_kernel(args, false);
     break;
+#if 0
   case GEOMETRY_TYPE_SPHERES:
     Spheres_intersect_kernel(args, false);
     break;
+#endif
 #ifdef OSPRAY_ENABLE_VOLUMES
   case GEOMETRY_TYPE_ISOSURFACES:
     Isosurfaces_intersect_kernel(args, false);
@@ -127,10 +129,12 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_occluded(
     Planes_intersect_kernel(
         (RTCIntersectFunctionNArguments * uniform) args, true);
     break;
+#if 0
   case GEOMETRY_TYPE_SPHERES:
     Spheres_intersect_kernel(
         (RTCIntersectFunctionNArguments * uniform) args, true);
     break;
+#endif
 #ifdef OSPRAY_ENABLE_VOLUMES
   case GEOMETRY_TYPE_ISOSURFACES:
     Isosurfaces_intersect_kernel(

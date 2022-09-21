@@ -47,24 +47,42 @@ void Spheres::commit()
   radiusData = getParamDataT<float>("sphere.radius");
   texcoordData = getParamDataT<vec2f>("sphere.texcoord");
 
-  // TODO: Param name for the new interleaved array?
-  // sphere or sphere.data is a bit too generic because it kind of
-  // implies the texcoord data is part of it? or isn't "data"?
-  auto interleaved = new Data(getISPCDevice(), OSP_VEC4F, vertexData->numItems);
-  sphereData = &interleaved->as<vec4f, 1>();
-  interleaved->refDec();
-  // For now default to always create the interleaved buffer since we
-  // don't expose the interleaved data yet
-  for (size_t i = 0; i < vertexData->size(); ++i) {
-    float ptRadius = radius;
-    if (radiusData) {
-      ptRadius = (*radiusData)[i];
+  // If the application's data is already interleaved and they just passed us
+  // separate views into the interleaved data to make the sphere.position and
+  // sphere.radius arrays we can detect this and use the interleaved array
+  // directly to avoid copying it. If not, we need to make a new interleaved
+  // data array for Embree
+  if (radiusData && vertexData
+      && reinterpret_cast<uint8_t *>(vertexData->data()) + sizeof(vec3f)
+          == reinterpret_cast<uint8_t *>(radiusData->data())
+      && vertexData->stride() == radiusData->stride()) {
+    auto interleaved = new Data(getISPCDevice(),
+        vertexData->data(),
+        OSP_VEC4F,
+        vertexData->numItems,
+        vec3l(sizeof(vec4f), 0, 0));
+    sphereData = &interleaved->as<vec4f, 1>();
+    interleaved->refDec();
+  } else {
+    // To maintain OSPRay 2.x compatibility we need to create the interleaved
+    // position/radius array that Embree expects from the separate
+    // position/radius (or global radius) that the OSPRay geometry takes
+    auto interleaved =
+        new Data(getISPCDevice(), OSP_VEC4F, vertexData->numItems);
+    sphereData = &interleaved->as<vec4f, 1>();
+    interleaved->refDec();
+    // For now default to always create the interleaved buffer since we
+    // don't expose the interleaved data yet
+    for (size_t i = 0; i < vertexData->size(); ++i) {
+      float ptRadius = radius;
+      if (radiusData) {
+        ptRadius = (*radiusData)[i];
+      }
+      (*sphereData)[i] = vec4f((*vertexData)[i], ptRadius);
     }
-    (*sphereData)[i] = vec4f((*vertexData)[i], ptRadius);
   }
 
-#if 0
-  // TODO: This also won't be supported in Embree3
+#if 1
   createEmbreeGeometry(RTC_GEOMETRY_TYPE_SPHERE_POINT);
   rtcSetSharedGeometryBuffer(embreeGeometry,
       RTC_BUFFER_TYPE_VERTEX,
@@ -76,7 +94,7 @@ void Spheres::commit()
       sphereData->size());
   rtcCommitGeometry(embreeGeometry);
 #else
-  // Testing user geometry issue on GPU
+  // Test the spheres as the old user geometry
   createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Spheres_bounds);
 #endif
 

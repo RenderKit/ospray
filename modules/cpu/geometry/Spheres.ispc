@@ -119,6 +119,7 @@ export void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)
   *out = make_box3fa(center - radius, center + radius);
 }
 
+#if 0
 SYCL_EXTERNAL unmasked void Spheres_intersect_kernel(
     const RTCIntersectFunctionNArguments *uniform args,
     const uniform bool isOcclusionTest)
@@ -126,7 +127,9 @@ SYCL_EXTERNAL unmasked void Spheres_intersect_kernel(
   // make sure to set the mask
   if (!args->valid[programIndex])
     return;
+#if EMBREE_VERSION_MAJOR == 4
   args->valid[programIndex] = 0;
+#endif
 
   Spheres *uniform self = (Spheres * uniform) args->geometryUserPtr;
   uniform int primID = args->primID;
@@ -143,9 +146,12 @@ SYCL_EXTERNAL unmasked void Spheres_intersect_kernel(
 
   // call intersection filtering callback and setup hit if accepted
   if (filterIntersectionBoth(args, isect, isOcclusionTest)) {
+#if EMBREE_VERSION_MAJOR == 4
     args->valid[programIndex] = -1;
+#endif
   }
 }
+#endif
 
 export void *uniform Spheres_postIntersect_addr()
 {

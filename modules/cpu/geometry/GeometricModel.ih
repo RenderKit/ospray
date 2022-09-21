@@ -20,10 +20,6 @@ using namespace ospray;
 // c++ shared
 #include "GeometricModelShared.h"
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "geometry/MeshShared.h"
-#endif
-
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
