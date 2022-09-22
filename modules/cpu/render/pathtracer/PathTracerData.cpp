@@ -53,7 +53,9 @@ PathTracerData::PathTracerData(const World &world,
 
   // Prepare light cumulative distribution function
   std::vector<float> lightsCDF(lightViews.size(), 1.f);
-  ispc::Distribution1D_create(lightsCDF.size(), lightsCDF.data());
+  if (lightsCDF.size()) {
+    ispc::Distribution1D_create(lightsCDF.size(), lightsCDF.data());
+  }
 
   // Retrieve shared memory pointer from each light view and store them
   // in a temporary local std::vector

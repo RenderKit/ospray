@@ -3,6 +3,8 @@
 
 #include "Distribution1D.ih"
 
+// Pre-condition: size > 0
+
 export uniform float Distribution1D_create(
     const uniform int size, uniform float *uniform cdf)
 {

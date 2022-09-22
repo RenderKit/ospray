@@ -11,6 +11,7 @@ Version History
 -   Various documentation fixes
 -   OSPRay now has a new dependecy, which is ISPC Run Time (ISPCRT) in
     minimum 1.19.0 version
+-   Fix a crash in pathtracer when there are no lights
 
 
 ### Changes in v2.10.0:
