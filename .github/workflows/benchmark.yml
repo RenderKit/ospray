@@ -4,8 +4,8 @@
 name: Benchmark
 
 on:
-  # schedule:
-  #   - cron: '30 0 * * *'
+  schedule:
+    - cron: '30 0 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -21,7 +21,7 @@ jobs:
     with:
       image: centos:8
       cmd: |
-        scripts/build_gitlab/linux.sh -G Ninja
+        scripts/build/linux.sh -G Ninja
       artifact-out: build-centos8
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 

@@ -4,8 +4,8 @@
 name: Scheduled
 
 on:
-  # schedule:
-  #   - cron: '30 0 * * *'
+  schedule:
+    - cron: '30 0 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -23,7 +23,7 @@ jobs:
       cmd: |
         export CC=clang
         export CXX=clang++
-        scripts/build_gitlab/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DOIDN_VERSION=devel -DOPENVKL_VERSION=devel -DRKCOMMON_VERSION=devel
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DOIDN_VERSION=devel -DOPENVKL_VERSION=devel -DRKCOMMON_VERSION=devel
 
   build-linux-debug-all:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -32,7 +32,7 @@ jobs:
       cmd: |
         export CC=clang
         export CXX=clang++
-        scripts/build_gitlab/linux.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDEPENDENCIES_BUILD_TYPE=Debug -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+        scripts/build/linux.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDEPENDENCIES_BUILD_TYPE=Debug -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-linux-debug-all
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -43,7 +43,7 @@ jobs:
   #     - module load cmake
   #     - module load impi
   #     - module load gnu
-  #     - scripts/build_gitlab/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+  #     - scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
   #   <<: *build_artifacts
 
   build-windows-debug-all:
@@ -51,7 +51,7 @@ jobs:
     with:
       runs-on: '["Windows", "build", "NAS"]'
       cmd: |
-        scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "ON" "ON"
+        scripts\build\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "ON" "ON"
       artifact-out: build-windows-debug-all
       # artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt

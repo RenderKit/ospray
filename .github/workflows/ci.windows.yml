@@ -19,7 +19,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       cmd: |
-        scripts\build_gitlab\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release" "OFF" "OFF"
+        scripts\build\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release" "OFF" "OFF"
       artifact-out: build-windows-msvc15
       # artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
@@ -29,7 +29,7 @@ jobs:
     with:
       runs-on: '["Windows", "build", "mpi"]'
       cmd: |
-        scripts\build_gitlab\win.ps1 "Visual Studio 16 2019" "v142" "Release" "ON" "ON"
+        scripts\build\win.ps1 "Visual Studio 16 2019" "v142" "Release" "ON" "ON"
       artifact-out: build-windows-msvc16-mpi_and_md
       # artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
       artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt

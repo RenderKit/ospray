@@ -56,7 +56,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "sign" ]'
+      runs-on: '[ "macOS", "sign", "x86_64" ]'
       cmd: |
         export CC=clang
         export CXX=clang++
@@ -155,7 +155,7 @@ jobs:
     needs: release-osx-clang
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "sign" ]'
+      runs-on: '[ "macOS", "sign", "x86_64" ]'
       cmd: |
         unzip build_release/*.zip
         $SIGN_FILE_MAC -t ./ospray-*/bin/* ./ospray-*/lib/*.dylib ./build_release/*.pkg
