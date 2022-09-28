@@ -357,7 +357,11 @@ void ISPCDevice::commit()
       "NEON"};
   postStatusMsg(OSP_LOG_INFO)
       << "Using ISPC device with " << isaNames[ispc::ISPCDevice_isa()]
-      << " instruction set...";
+      << " instruction set";
+#else
+  postStatusMsg(OSP_LOG_INFO)
+      << "Using SYCL GPU device on "
+      << syclDevice.get_info<cl::sycl::info::device::name>() << " device";
 #endif
 }
 

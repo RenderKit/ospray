@@ -335,7 +335,6 @@ void UnstructuredVolume::SetUp()
 
 // Test Instantiations //////////////////////////////////////////////////////
 
-#ifdef OSPRAY_ENABLE_VOLUMES
 INSTANTIATE_TEST_SUITE_P(TestScenesVolumes,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("gravity_spheres_volume",
@@ -392,6 +391,5 @@ INSTANTIATE_TEST_SUITE_P(Renderers,
             vec4f(1.f),
             vec4f(0.f, 0.f, 0.f, 1.f),
             vec4f(1.f, 0.f, 0.f, 0.5f))));
-#endif
 
 } // namespace OSPRayTestScenes

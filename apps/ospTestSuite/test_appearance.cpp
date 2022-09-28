@@ -424,13 +424,11 @@ void PTBackgroundRefraction::SetUp()
 }
 
 // Test Instantiations //////////////////////////////////////////////////////
-#ifdef OSPRAY_ENABLE_VOLUMES
 INSTANTIATE_TEST_SUITE_P(Transparency,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("transparency"),
         ::testing::Values("scivis", "pathtracer", "ao"),
         ::testing::Values(16)));
-#endif
 
 TEST_P(RendererMaterialList, material_list)
 {

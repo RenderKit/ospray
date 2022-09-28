@@ -24,7 +24,9 @@ struct World
 #ifdef OSPRAY_ENABLE_VOLUMES
   RTCScene embreeSceneHandleVolumes;
 #endif
+#ifndef OSPRAY_TARGET_SYCL
   RTCScene embreeSceneHandleClippers;
+#endif
 
   SciVisData *scivisData;
   PathTracerData *pathtracerData;
@@ -37,7 +39,9 @@ struct World
 #ifdef OSPRAY_ENABLE_VOLUMES
         embreeSceneHandleVolumes(nullptr),
 #endif
+#ifndef OSPRAY_TARGET_SYCL
         embreeSceneHandleClippers(nullptr),
+#endif
         scivisData(nullptr),
         pathtracerData(nullptr)
   {}

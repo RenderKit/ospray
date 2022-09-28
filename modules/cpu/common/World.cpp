@@ -51,7 +51,9 @@ World::~World()
 #ifdef OSPRAY_ENABLE_VOLUMES
   freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleVolumes);
 #endif
+#ifndef OSPRAY_TARGET_SYCL
   freeAndNullifyEmbreeScene(getSh()->embreeSceneHandleClippers);
+#endif
 }
 
 World::World(api::ISPCDevice &device)
@@ -71,13 +73,17 @@ void World::commit()
 #ifdef OSPRAY_ENABLE_VOLUMES
   RTCScene &esVol = getSh()->embreeSceneHandleVolumes;
 #endif
+#ifndef OSPRAY_TARGET_SYCL
   RTCScene &esClip = getSh()->embreeSceneHandleClippers;
+#endif
 
   freeAndNullifyEmbreeScene(esGeom);
 #ifdef OSPRAY_ENABLE_VOLUMES
   freeAndNullifyEmbreeScene(esVol);
 #endif
+#ifndef OSPRAY_TARGET_SYCL
   freeAndNullifyEmbreeScene(esClip);
+#endif
 
   scivisData = nullptr;
   pathtracerData = nullptr;
@@ -109,8 +115,10 @@ void World::commit()
   RTCDevice embreeDevice = getISPCDevice().getEmbreeDevice();
   if (instances) {
     for (auto &&inst : *instances)
+#ifndef OSPRAY_TARGET_SYCL
       if (inst->group->sceneClippers)
         getSh()->numInvertedClippers += inst->group->numInvertedClippers;
+#endif
 
     // Create shared buffers for instance pointers
     instanceArray = make_buffer_shared_unique<ispc::Instance *>(
@@ -133,10 +141,12 @@ void World::commit()
             esVol, inst->group->sceneVolumes, inst, embreeDevice, id);
       }
 #endif
+#ifndef OSPRAY_TARGET_SYCL
       if (inst->group->sceneClippers) {
         addGeometryInstance(
             esClip, inst->group->sceneClippers, inst, embreeDevice, id);
       }
+#endif
       id++;
     }
   }
@@ -153,6 +163,7 @@ void World::commit()
     rtcCommitScene(esVol);
   }
 #endif
+#ifndef OSPRAY_TARGET_SYCL
   if (esClip) {
     rtcSetSceneFlags(esClip,
         static_cast<RTCSceneFlags>(
@@ -160,6 +171,7 @@ void World::commit()
     rtcSetSceneBuildQuality(esClip, buildQuality);
     rtcCommitScene(esClip);
   }
+#endif
 }
 
 box3f World::getBounds() const
