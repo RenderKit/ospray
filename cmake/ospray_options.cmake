@@ -35,13 +35,15 @@ get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
 
 # Embree
 # Try to find Embree GPU first, and fall back to CPU-only if it's not found
-ospray_find_embree_gpu(${EMBREE_GPU_VERSION_REQUIRED} FALSE)
+ospray_find_embree4(${EMBREE_GPU_VERSION_REQUIRED} FALSE)
 if (embree_FOUND)
   set(EMBREE_VERSION_REQUIRED ${EMBREE_GPU_VERSION_REQUIRED})
   set(EMBREE_VERSION_MAJOR 4)
-  ospray_verify_embree_gpu_features()
+  if (EMBREE_DPCPP_SUPPORT)
+    ospray_verify_embree_gpu_features()
+  endif()
 else()
-  ospray_find_embree(${EMBREE_CPU_VERSION_REQUIRED} FALSE)
+  ospray_find_embree3(${EMBREE_CPU_VERSION_REQUIRED} FALSE)
   set(EMBREE_VERSION_REQUIRED ${EMBREE_CPU_VERSION_REQUIRED})
   set(EMBREE_VERSION_MAJOR 3)
 endif()

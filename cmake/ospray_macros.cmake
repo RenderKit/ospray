@@ -436,7 +436,7 @@ function(ospray_verify_embree_gpu_features)
                   "filter function in geometry unused, causes long compile times for GPU" OFF)
 endfunction()
 
-macro(ospray_find_embree_gpu EMBREE_GPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
+macro(ospray_find_embree4 EMBREE_GPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
   # We need to preserve embree_DIR if it was specified because find_package/find_dependency
   # will set it to embree_DIR-NOTFOUND if it fails here
   set(embree_DIR_PARAM ${embree_DIR})
@@ -465,19 +465,19 @@ macro(ospray_find_embree_gpu EMBREE_GPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
     list(GET CONFIGURATIONS 0 CONFIGURATION)
     get_target_property(EMBREE_LIBRARY embree
       IMPORTED_LOCATION_${CONFIGURATION})
-    # Get Embree SYCL info
-    # TODO: If we want to support Embree4 w/ CPU only we should check if
-    # EMBREE_DPCPP_SUPPORT is on before trying to read stuff from the sycl target
-    get_target_property(CONFIGURATIONS embree_sycl IMPORTED_CONFIGURATIONS)
-    list(GET CONFIGURATIONS 0 CONFIGURATION)
-    get_target_property(EMBREE_SYCL_LIBRARY embree_sycl
-      IMPORTED_LOCATION_${CONFIGURATION})
-
+    # Get Embree SYCL info if DPCPP was enabled
+    if (EMBREE_DPCPP_SUPPORT)
+      get_target_property(CONFIGURATIONS embree_sycl IMPORTED_CONFIGURATIONS)
+      list(GET CONFIGURATIONS 0 CONFIGURATION)
+      get_target_property(EMBREE_SYCL_LIBRARY embree_sycl
+        IMPORTED_LOCATION_${CONFIGURATION})
+    endif()
     message(STATUS "Found Embree v${embree_VERSION}: ${EMBREE_LIBRARY}")
   endif()
 endmacro()
 
-macro(ospray_find_embree EMBREE_CPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
+# Note: Embree3 support will be removed once Embree4 is released
+macro(ospray_find_embree3 EMBREE_CPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
   if (${FIND_AS_DEPENDENCY})
     find_dependency(embree ${EMBREE_CPU_VERSION_REQUIRED})
   else()

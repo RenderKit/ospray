@@ -141,13 +141,16 @@ else()
   # Find existing Dependencies on the machine
   if (NOT TARGET embree)
     if ("${EMBREE_VERSION_REQUIRED}" STREQUAL "${EMBREE_GPU_VERSION_REQUIRED}")
-      ospray_find_embree_gpu(${EMBREE_VERSION_REQUIRED} TRUE)
-      ospray_verify_embree_features()
-      ospray_verify_embree_gpu_features()
+      ospray_find_embree4(${EMBREE_VERSION_REQUIRED} TRUE)
+      # TODO: Should we check if OSPRay's GPU module was built and require
+      # DPCPP support from Embree?
+      if (EMBREE_DPCPP_SUPPORT)
+        ospray_verify_embree_gpu_features()
+      endif()
     else()
-      ospray_find_embree(${EMBREE_VERSION_REQUIRED} TRUE)
-      ospray_verify_embree_features()
+      ospray_find_embree3(${EMBREE_VERSION_REQUIRED} TRUE)
     endif()
+    ospray_verify_embree_features()
   endif()
 
   if (NOT TARGET rkcommon::rkcommon)
