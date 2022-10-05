@@ -142,6 +142,11 @@ list(APPEND OSPRAY_OCL_OTHER_OPTIONS
 
 if (CMAKE_BUILD_TYPE MATCHES "Release")
   list(APPEND OSPRAY_OCL_OTHER_OPTIONS -O2)
+elseif (CMAKE_BUILD_TYPE MATCHES "Debug")
+  # SYCL applies some optimization flags by default, make sure we're
+  # really building with no optimizations for debug builds. RelWithDebInfo
+  # builds currently hit a compiler crash.
+  list(APPEND OSPRAY_OCL_OTHER_OPTIONS -O0)
 endif()
 
 # Large GRF mode
