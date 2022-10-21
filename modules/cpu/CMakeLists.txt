@@ -14,7 +14,7 @@ cmake_dependent_option(
   OSPRAY_MODULE_GPU
   "Build the GPU module"
   ON
-  OSPRAY_ENABLE_MODULES
+  "OSPRAY_ENABLE_MODULES;EMBREE_SYCL_SUPPORT"
   OFF
 )
 mark_as_advanced(OSPRAY_MODULE_GPU)
