@@ -12,7 +12,9 @@
 #include "render/debug/DebugRenderer_ispc.h"
 #else
 #include "DebugRenderer.ih"
+#define renderSampleFn ispc::DebugRenderer_renderSample
 #include "render/RendererRenderTaskFn.inl"
+#undef renderSampleFn
 #endif
 
 namespace ospray {
@@ -177,7 +179,7 @@ void DebugRenderer::renderTasks(FrameBuffer *fb,
 
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
     const cl::sycl::nd_range<1> dispatchRange =
-        computeDispatchRange(numTasks, RTC_SYCL_SIMD_WIDTH);
+        computeDispatchRange(numTasks, 16);
     cgh.parallel_for(dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) {
       if (taskIndex.get_global_id(0) < numTasks) {
         ispc::Renderer_default_renderTask(&rendererSh->super,
@@ -186,8 +188,7 @@ void DebugRenderer::renderTasks(FrameBuffer *fb,
             worldSh,
             perFrameData,
             taskIDsPtr,
-            taskIndex.get_global_id(0),
-            ispc::DebugRenderer_renderSample);
+            taskIndex.get_global_id(0));
       }
     });
   });

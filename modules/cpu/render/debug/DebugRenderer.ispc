@@ -343,7 +343,7 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
 #endif
 }
 
-RTC_SYCL_INDIRECTLY_CALLABLE void DebugRenderer_renderSample(
+SYCL_EXTERNAL void DebugRenderer_renderSample(
     Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,

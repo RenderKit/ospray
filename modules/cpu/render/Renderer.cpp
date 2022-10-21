@@ -10,7 +10,6 @@
 #include "ospray/OSPEnums.h"
 #include "pf/PixelFilter.h"
 #ifdef OSPRAY_TARGET_SYCL
-#include "render/RendererRenderTaskFn.inl"
 #include "render/RendererType.ih"
 #include "render/util.ih"
 #else
@@ -107,42 +106,6 @@ void Renderer::renderTasks(FrameBuffer *fb,
       taskIDs.size());
 }
 #else
-void Renderer::renderTasks(FrameBuffer *fb,
-    Camera *camera,
-    World *world,
-    void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs,
-    sycl::queue &syclQueue) const
-{
-  auto *rendererSh = getSh();
-  auto *fbSh = fb->getSh();
-  auto *cameraSh = camera->getSh();
-  auto *worldSh = world->getSh();
-  const uint32_t *taskIDsPtr = taskIDs.data();
-  const size_t numTasks = taskIDs.size();
-
-  auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    const cl::sycl::nd_range<1> dispatchRange =
-        computeDispatchRange(numTasks, RTC_SYCL_SIMD_WIDTH);
-    cgh.parallel_for(
-        dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) RTC_SYCL_KERNEL {
-          if (taskIndex.get_global_id(0) < numTasks) {
-            ispc::Renderer_default_renderTask(rendererSh,
-                fbSh,
-                cameraSh,
-                worldSh,
-                perFrameData,
-                taskIDsPtr,
-                taskIndex.get_global_id(0),
-                ispc::Renderer_dispatch_renderSample);
-          }
-        });
-  });
-  event.wait_and_throw();
-  // For prints we have to flush the entire queue, because other stuff is queued
-  syclQueue.wait_and_throw();
-}
-
 cl::sycl::nd_range<1> Renderer::computeDispatchRange(
     const size_t globalSize, const size_t workgroupSize) const
 {

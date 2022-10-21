@@ -12,7 +12,9 @@
 #include "render/scivis/SciVis_ispc.h"
 #else
 #include "SciVis.ih"
+#define renderSampleFn ispc::SciVis_renderSample
 #include "render/RendererRenderTaskFn.inl"
+#undef renderSampleFn
 #endif
 
 namespace ospray {
@@ -77,9 +79,9 @@ void SciVis::renderTasks(FrameBuffer *fb,
 
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
     const cl::sycl::nd_range<1> dispatchRange =
-        computeDispatchRange(numTasks, RTC_SYCL_SIMD_WIDTH);
+        computeDispatchRange(numTasks, 16);
     cgh.parallel_for(
-        dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) RTC_SYCL_KERNEL {
+        dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) {
           if (taskIndex.get_global_id(0) < numTasks) {
             ispc::Renderer_default_renderTask(&rendererSh->super,
                 fbSh,
@@ -87,8 +89,7 @@ void SciVis::renderTasks(FrameBuffer *fb,
                 worldSh,
                 perFrameData,
                 taskIDsPtr,
-                taskIndex.get_global_id(0),
-                ispc::SciVis_renderSample);
+                taskIndex.get_global_id(0));
           }
         });
   });

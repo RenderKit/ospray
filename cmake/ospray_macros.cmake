@@ -236,20 +236,20 @@ macro(ospray_configure_dpcpp_target)
 
   # TODO: We'll have similar DPC++ and device target checks for OpenVKL
 
-  set(OSPRAY_DPCPP_AOT_DEVICES ${EMBREE_DPCPP_AOT_DEVICES})
+  set(OSPRAY_SYCL_AOT_DEVICES ${EMBREE_SYCL_AOT_DEVICES})
 
   # TODO: Is this revision info going to be visible to end users?
   # In the end the public release
   # of the code should probably just have one revision it targets right?
   # The final consumer release rev.
-  if (OSPRAY_DPCPP_AOT_DEVICES STREQUAL "dg2")
-    set(OSPRAY_DPCPP_AOT_DEVICE_REVISION 8)
-  elseif (OSPRAY_DPCPP_AOT_DEVICES STREQUAL "pvc")
+  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "dg2")
+    set(OSPRAY_SYCL_AOT_DEVICE_REVISION 8)
+  elseif (OSPRAY_SYCL_AOT_DEVICES STREQUAL "pvc")
     # What final rev to pick here?
-    set(OSPRAY_DPCPP_AOT_DEVICE_REVISION 5)
+    set(OSPRAY_SYCL_AOT_DEVICE_REVISION 5)
   endif()
 
-  if (OSPRAY_DPCPP_AOT_DEVICES STREQUAL "none")
+  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
     set(OSPRAY_SYCL_TARGET spir64)
   else()
     set(OSPRAY_SYCL_TARGET spir64_gen)

@@ -13,7 +13,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-RTC_SYCL_INDIRECTLY_CALLABLE void SciVis_renderSample(Renderer *uniform _self,
+SYCL_EXTERNAL void SciVis_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,

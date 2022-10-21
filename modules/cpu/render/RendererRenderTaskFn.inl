@@ -16,10 +16,8 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #ifndef OSPRAY_TARGET_SYCL
 task
-#else
-template <typename RenderSampleFn>
 #endif
-    SYCL_EXTERNAL void
+static void
     Renderer_default_renderTask(Renderer *uniform self,
         FrameBuffer *uniform fb,
         Camera *uniform camera,
@@ -28,8 +26,7 @@ template <typename RenderSampleFn>
         const uint32 *uniform taskIDs
 #ifdef OSPRAY_TARGET_SYCL
         ,
-        const int taskIndex0,
-        const RenderSampleFn renderSample
+        const int taskIndex0
 #endif
     )
 {
@@ -111,7 +108,7 @@ template <typename RenderSampleFn>
         screenSample.normal = make_vec3f(0.f);
 
 #ifdef OSPRAY_TARGET_SYCL
-#if 1
+#if 0
         // Dummy top level print so that prints at lower levels of the kernel
         // will work See JIRA https://jira.devtools.intel.com/browse/XDEPS-4729
         if (taskIndex0 == 0) {
@@ -120,12 +117,8 @@ template <typename RenderSampleFn>
 #endif
 #endif
 
-#ifdef OSPRAY_TARGET_SYCL
-        renderSample(self, fb, world, perFrameData, screenSample);
-#else
-      Renderer_dispatch_renderSample(
-          self, fb, world, perFrameData, screenSample);
-#endif
+        renderSampleFn(self, fb, world, perFrameData, screenSample);
+
         col = col + screenSample.rgb;
         alpha += screenSample.alpha;
         depth = min(depth, screenSample.z);

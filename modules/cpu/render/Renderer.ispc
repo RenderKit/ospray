@@ -61,7 +61,9 @@ SYCL_EXTERNAL void Renderer_default_renderSample(Renderer *uniform self,
 }
 
 #ifndef OSPRAY_TARGET_SYCL
+#define renderSampleFn Renderer_dispatch_renderSample
 #include "RendererRenderTaskFn.inl"
+#undef renderSampleFn
 #endif
 
 // Exports (called from C++) //////////////////////////////////////////////////

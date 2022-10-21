@@ -12,7 +12,8 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-RTC_SYCL_INDIRECTLY_CALLABLE void Renderer_dispatch_renderSample(
+#ifndef OSPRAY_TARGET_SYCL
+void Renderer_dispatch_renderSample(
     Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform model,
@@ -30,12 +31,11 @@ RTC_SYCL_INDIRECTLY_CALLABLE void Renderer_dispatch_renderSample(
     SciVis_renderSample(self, fb, model, perFrameData, sample);
     break;
   default:
-#ifndef OSPRAY_TARGET_SYCL
     self->renderSample(self, fb, model, perFrameData, sample);
-#endif
     break;
   }
 }
+#endif
 
 OSPRAY_END_ISPC_NAMESPACE
 

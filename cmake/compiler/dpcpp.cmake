@@ -152,7 +152,7 @@ endif()
 # Large GRF mode
 option(OSPRAY_DPCPP_LARGEGRF "Enable DPC++ Large GRF Support" OFF)
 if (OSPRAY_DPCPP_LARGEGRF)
-  list(APPEND CMAKE_OCL_OPTIONS "-internal_options -cl-intel-256-GRF-per-thread")
+  list(APPEND OSPRAY_OCL_OPTIONS "-internal_options -cl-intel-256-GRF-per-thread")
 endif()
 
 string(REPLACE ";" "," OSPRAY_IGC_OPTIONS_STR "${OSPRAY_IGC_OPTIONS}")

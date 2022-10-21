@@ -9,7 +9,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-RTC_SYCL_INDIRECTLY_CALLABLE void DebugRenderer_renderSample(
+SYCL_EXTERNAL void DebugRenderer_renderSample(
     Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,

@@ -14,7 +14,7 @@ cmake_dependent_option(
   OSPRAY_MODULE_GPU
   "Build the GPU module"
   ON
-  "OSPRAY_ENABLE_MODULES;EMBREE_DPCPP_SUPPORT"
+  OSPRAY_ENABLE_MODULES
   OFF
 )
 mark_as_advanced(OSPRAY_MODULE_GPU)
@@ -464,7 +464,7 @@ if (OSPRAY_MODULE_GPU)
     -fsycl-targets=${OSPRAY_SYCL_TARGET}
   )
 
-  if (OSPRAY_DPCPP_AOT_DEVICES STREQUAL "none")
+  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
     target_link_options(ospray_module_gpu PRIVATE
       -fsycl
       -fsycl-targets=${OSPRAY_SYCL_TARGET}
@@ -474,7 +474,7 @@ if (OSPRAY_MODULE_GPU)
     target_link_options(ospray_module_gpu PRIVATE
       -fsycl
       -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_DPCPP_AOT_DEVICES} -revision_id ${OSPRAY_DPCPP_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
+      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
     )
   endif()
 

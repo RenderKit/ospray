@@ -67,7 +67,7 @@ struct OSPRAY_SDK_INTERFACE Renderer
       World *world,
       void *perFrameData,
       const utility::ArrayView<uint32_t> &taskIDs,
-      sycl::queue &syclQueue) const;
+      sycl::queue &syclQueue) const = 0;
 
   /* Compute the rounded dispatch global size for the given work group size.
    * SYCL requires that globalSize % workgroupSize == 0, ths function will

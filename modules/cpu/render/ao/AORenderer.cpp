@@ -9,7 +9,9 @@
 #include "render/ao/AORenderer_ispc.h"
 #else
 #include "AORenderer.ih"
+#define renderSampleFn ispc::AORenderer_renderSample
 #include "render/RendererRenderTaskFn.inl"
+#undef renderSampleFn
 #endif
 
 namespace ospray {
@@ -58,9 +60,9 @@ void AORenderer::renderTasks(FrameBuffer *fb,
 
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
     const cl::sycl::nd_range<1> dispatchRange =
-        computeDispatchRange(numTasks, RTC_SYCL_SIMD_WIDTH);
+        computeDispatchRange(numTasks, 16);
     cgh.parallel_for(
-        dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) RTC_SYCL_KERNEL {
+        dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) {
           if (taskIndex.get_global_id(0) < numTasks) {
             ispc::Renderer_default_renderTask(&rendererSh->super,
                 fbSh,
@@ -68,8 +70,7 @@ void AORenderer::renderTasks(FrameBuffer *fb,
                 worldSh,
                 perFrameData,
                 taskIDsPtr,
-                taskIndex.get_global_id(0),
-                ispc::AORenderer_renderSample);
+                taskIndex.get_global_id(0));
           }
         });
   });

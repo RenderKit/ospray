@@ -27,8 +27,8 @@ enum RendererType
   RENDERER_TYPE_UNKNOWN,
 };
 
-#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
-RTC_SYCL_INDIRECTLY_CALLABLE void Renderer_dispatch_renderSample(
+#ifdef ISPC
+void Renderer_dispatch_renderSample(
     Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform model,

@@ -90,9 +90,9 @@ void PathTracer::renderTasks(FrameBuffer *fb,
 
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
     const cl::sycl::nd_range<1> dispatchRange =
-        computeDispatchRange(numTasks, RTC_SYCL_SIMD_WIDTH);
+        computeDispatchRange(numTasks, 16);
     cgh.parallel_for(
-        dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) RTC_SYCL_KERNEL {
+        dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) {
           if (taskIndex.get_global_id(0) < numTasks) {
 #if 0
           // Needed for SYCL prints to work around issue with print in deeper

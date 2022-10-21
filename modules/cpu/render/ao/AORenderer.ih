@@ -10,7 +10,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-RTC_SYCL_INDIRECTLY_CALLABLE void AORenderer_renderSample(
+SYCL_EXTERNAL void AORenderer_renderSample(
     Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,

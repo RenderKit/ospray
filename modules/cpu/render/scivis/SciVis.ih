@@ -46,7 +46,7 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(
     const uniform float aoRadius,
     const varying vec3i &sampleID);
 
-RTC_SYCL_INDIRECTLY_CALLABLE void SciVis_renderSample(Renderer *uniform _self,
+SYCL_EXTERNAL void SciVis_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
