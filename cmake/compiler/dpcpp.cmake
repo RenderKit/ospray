@@ -86,7 +86,6 @@ list(APPEND OSPRAY_CXX_FLAGS_SYCL
   -Wno-logical-op-parentheses
   -fsycl
   -fsycl-unnamed-lambda
-  -fsycl-device-code-split=per_kernel
   -Xclang -fsycl-allow-func-ptr)
 
 # FIXME: debug information generation takes forever in SYCL

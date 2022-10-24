@@ -15,6 +15,7 @@ namespace ispc {
 typedef void *Geometry_postIntersectFct;
 typedef void *Geometry_GetAreasFct;
 typedef void *Geometry_SampleAreaFct;
+typedef void *Geometry_IntersectFct;
 #else
 struct Geometry;
 struct DifferentialGeometry;
@@ -52,6 +53,10 @@ typedef SampleAreaRes (*Geometry_SampleAreaFct)(const Geometry *const uniform,
     const vec2f &s, // random numbers to generate the sample
     const float time // for deformation motion blur
 );
+
+typedef void unmasked (*Geometry_IntersectFct)(
+    const struct RTCIntersectFunctionNArguments *uniform args,
+    const uniform bool isOcclusionTest);
 #endif
 
 struct Geometry
@@ -63,6 +68,12 @@ struct Geometry
 
   Geometry_GetAreasFct getAreas;
   Geometry_SampleAreaFct sampleArea;
+
+  // TODO: Maybe behind a define? Custom user geometry w/ fcn ptr callbacks will
+  // only be on the CPU for now for perf limitations
+#ifndef OSPRAY_TARGET_SYCL
+  Geometry_IntersectFct intersect;
+#endif
 
   // number of primitives this geometry has
   int32 numPrimitives;

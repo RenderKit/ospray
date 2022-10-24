@@ -17,6 +17,7 @@ jobs:
 
   build-osx-clang:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    secrets: inherit
     with:
       cmd: |
         scripts/build/macosx.sh -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
@@ -25,6 +26,7 @@ jobs:
 
   build-osx-arm:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    secrets: inherit
     with:
       runs-on: '["macOS", "arm", "build"]'
       cmd: |

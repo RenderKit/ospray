@@ -20,8 +20,10 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_ARCHIVE}.zip"
-  ${RKCOMMON_URL_HASH}
+  #URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_ARCHIVE}.zip"
+  #${RKCOMMON_URL_HASH}
+  GIT_REPOSITORY https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git
+  GIT_TAG "will/rkmath-tweaks"
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}

@@ -424,7 +424,7 @@ endfunction()
 
 function(ospray_verify_embree_gpu_features)
   # TODO: We may still want to support Embree4 without DPCPP support for CPU only
-  ospray_check_embree_feature(DPCPP_SUPPORT "DPC++/SYCL support")
+  ospray_check_embree_feature(SYCL_SUPPORT "DPC++/SYCL support")
   # Embree4 specific cmake options for user geometry and filter function
   ospray_check_embree_feature(GEOMETRY_USER_IN_CONTEXT "user geometries")
   ospray_check_embree_feature(FILTER_FUNCTION_IN_CONTEXT "intersection filter")
@@ -466,7 +466,7 @@ macro(ospray_find_embree4 EMBREE_GPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
     get_target_property(EMBREE_LIBRARY embree
       IMPORTED_LOCATION_${CONFIGURATION})
     # Get Embree SYCL info if DPCPP was enabled
-    if (EMBREE_DPCPP_SUPPORT)
+    if (EMBREE_SYCL_SUPPORT)
       get_target_property(CONFIGURATIONS embree_sycl IMPORTED_CONFIGURATIONS)
       list(GET CONFIGURATIONS 0 CONFIGURATION)
       get_target_property(EMBREE_SYCL_LIBRARY embree_sycl

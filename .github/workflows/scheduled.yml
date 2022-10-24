@@ -18,6 +18,7 @@ jobs:
 
   build-arch-clang-devel:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
     with:
       image: ospray/docker-images:arch
       cmd: |
@@ -27,6 +28,7 @@ jobs:
 
   build-linux-debug-all:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
     with:
       image: ospray/docker-images:arch
       cmd: |
@@ -48,6 +50,7 @@ jobs:
 
   build-windows-debug-all:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    secrets: inherit
     with:
       runs-on: '["Windows", "build", "NAS"]'
       cmd: |

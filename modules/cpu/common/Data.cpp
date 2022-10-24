@@ -15,11 +15,11 @@ Data::Data(api::ISPCDevice &device,
     const vec3ul &numItems,
     const vec3l &byteStride)
     : ISPCDeviceObject(device),
+      appSharedPtr((char *)sharedData),
       shared(true),
       type(type),
       numItems(numItems),
-      byteStride(byteStride),
-      appSharedPtr((char *)sharedData)
+      byteStride(byteStride)
 {
   if (sharedData == nullptr) {
     throw std::runtime_error("OSPData: shared buffer is NULL");

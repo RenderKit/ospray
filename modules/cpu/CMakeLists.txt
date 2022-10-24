@@ -464,15 +464,27 @@ if (OSPRAY_MODULE_GPU)
     -fsycl-targets=${OSPRAY_SYCL_TARGET}
   )
 
+  #include(ProcessorCount)
+  #ProcessorCount(PROCESSOR_COUNT)
+  #if (NOT PROCESSOR_COUNT EQUAL 0)
+  #  set(SYCL_MAX_LINK_JOBS ${PROCESSOR_COUNT})
+  #else()
+  #  set(SYCL_MAX_LINK_JOBS 4)
+  #endif()
+
   if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
     target_link_options(ospray_module_gpu PRIVATE
       -fsycl
+      #-fsycl-device-code-split=per_kernel
+      #-fsycl-max-parallel-link-jobs=${SYCL_MAX_LINK_JOBS}
       -fsycl-targets=${OSPRAY_SYCL_TARGET}
       -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
     )
   else()
     target_link_options(ospray_module_gpu PRIVATE
       -fsycl
+      #-fsycl-device-code-split=per_kernel
+      #-fsycl-max-parallel-link-jobs=${SYCL_MAX_LINK_JOBS}
       -fsycl-targets=${OSPRAY_SYCL_TARGET}
       -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
     )

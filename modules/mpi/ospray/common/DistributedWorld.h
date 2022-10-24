@@ -8,11 +8,15 @@
 #include "camera/Camera.h"
 #include "common/MPICommon.h"
 #include "common/World.h"
-#include "embree4/rtcore.h"
 #include "geometry/Boxes.h"
 #include "rkcommon/math/box.h"
 // ispc shared
 #include "DistributedWorldShared.h"
+#if EMBREE_VERSION_MAJOR == 4
+#include "embree4/rtcore.h"
+#else
+#include "embree3/rtcore.h"
+#endif
 
 namespace ospray {
 namespace mpi {

@@ -78,6 +78,11 @@ target_include_directories(ospray_module_mpi
 target_compile_definitions(ospray_module_mpi PUBLIC
   -DOSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD})
 
+if (WIN32)
+  target_compile_definitions(ospray_module_mpi PUBLIC
+    -DNOMINMAX)
+endif()
+
 ospray_install_library(ospray_module_mpi mpi)
 
 ## Build the worker executable ##

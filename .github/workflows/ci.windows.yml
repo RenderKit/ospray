@@ -17,6 +17,7 @@ jobs:
 
   build-windows-msvc15:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    secrets: inherit
     with:
       cmd: |
         scripts\build\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Release" "OFF" "OFF"
@@ -26,6 +27,7 @@ jobs:
 
   build-windows-msvc16-mpi_and_md:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    secrets: inherit
     with:
       runs-on: '["Windows", "build", "mpi"]'
       cmd: |

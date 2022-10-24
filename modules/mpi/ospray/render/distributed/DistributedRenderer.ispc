@@ -119,6 +119,11 @@ task void DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
       if (world->regionScene) {
+        uniform EmbreeIntersectionContext context;
+        rtcInitIntersectContext(&context.ectx);
+        context.ectx.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
+        context.userPtr = tileRegionVisible;
+#if EMBREE_VERSION_MAJOR == 4
         uniform RTCIntersectArguments intersectArgs;
         rtcInitIntersectArguments(&intersectArgs);
         intersectArgs.intersect =
@@ -126,19 +131,19 @@ task void DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
         intersectArgs.filter =
             (RTCFilterFunctionN)markRegionVisibleFilterFunction;
 
-        // TODO: The RTCIntersectContext also takes the intersect and filter
-        // parameters Setting them there vs. in the arguments?
-
-        uniform EmbreeIntersectionContext context;
-        rtcInitIntersectContext(&context.ectx);
-        context.ectx.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
-        context.ectx.filter = 
-            (RTCFilterFunctionN)markRegionVisibleFilterFunction;
-        context.userPtr = tileRegionVisible;
+        // TODO: rtcIntersectExV not calling filter functions right now so this
+        // doesn't work
         rtcIntersectExV(world->regionScene,
             &context.ectx,
             (varying RTCRayHit * uniform) & screenSample.ray,
             &intersectArgs);
+#else
+        context.ectx.filter =
+            (RTCFilterFunctionN)markRegionVisibleFilterFunction;
+        rtcIntersectV(world->regionScene,
+            &context.ectx,
+            (varying RTCRayHit * uniform) & screenSample.ray);
+#endif
       }
     }
   }

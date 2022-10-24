@@ -45,11 +45,13 @@ string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" ISPCRT_ARCHIVE ${ISPC_V
 ExternalProject_Add(ispcrt
   PREFIX ${COMPONENT_NAME_ispcrt}
   STAMP_DIR ${COMPONENT_NAME_ispcrt}/stamp
-  PATCH_COMMAND git apply --ignore-whitespace -p0 -v ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/ispcrt.patch
+  #PATCH_COMMAND git apply --ignore-whitespace -p0 -v ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/ispcrt.patch
   SOURCE_DIR ${COMPONENT_NAME_ispcrt}/src
   BINARY_DIR ${COMPONENT_NAME_ispcrt}
   SOURCE_SUBDIR "ispcrt"
-  URL "https://github.com/ispc/ispc/archive/refs/tags/${ISPCRT_ARCHIVE}.zip"
+  #URL "https://github.com/ispc/ispc/archive/refs/tags/${ISPCRT_ARCHIVE}.zip"
+  GIT_REPOSITORY https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git
+  GIT_TAG "gen"
   LIST_SEPARATOR |
   CMAKE_ARGS
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
@@ -62,7 +64,8 @@ ExternalProject_Add(ispcrt
     -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
     -DCMAKE_BUILD_TYPE=${DEPENDENCIES_BUILD_TYPE}
     -DISPCRT_BUILD_TASKING=OFF
-    -DISPCRT_BUILD_GPU=OFF
+    -DISPCRT_BUILD_GPU=${BUILD_GPU_SUPPORT}
+    -DISPCRT_BUILD_TESTS=OFF
     -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
     -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
   BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}

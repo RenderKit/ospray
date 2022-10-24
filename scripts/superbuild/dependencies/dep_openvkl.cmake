@@ -13,6 +13,9 @@ if (OPENVKL_HASH)
 endif()
 
 string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" OPENVKL_ARCHIVE ${OPENVKL_VERSION})
+if (BUILD_GPU_SUPPORT)
+  set(OPENVKL_ARCHIVE "will/embree4")
+endif()
 
 ExternalProject_Add(${COMPONENT_NAME}
   PREFIX ${COMPONENT_NAME}
@@ -21,8 +24,10 @@ ExternalProject_Add(${COMPONENT_NAME}
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
   LIST_SEPARATOR | # Use the alternate list separator
-  URL "https://github.com/openvkl/openvkl/archive/${OPENVKL_ARCHIVE}.zip"
-  ${OPENVKL_URL_HASH}
+  #URL "https://github.com/openvkl/openvkl/archive/${OPENVKL_ARCHIVE}.zip"
+  #${OPENVKL_URL_HASH}
+  GIT_REPOSITORY https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git
+  GIT_TAG ${OPENVKL_ARCHIVE}
   CMAKE_ARGS
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}

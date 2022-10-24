@@ -18,6 +18,7 @@ jobs:
 
   build-centos8:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
     with:
       image: centos:8
       cmd: |

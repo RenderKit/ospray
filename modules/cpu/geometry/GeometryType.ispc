@@ -112,6 +112,9 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
     break;
 #endif
   default:
+#ifndef OSPRAY_TARGET_SYCL
+    geom->intersect((RTCIntersectFunctionNArguments * uniform) args, false);
+#endif
     break;
   }
 }
@@ -142,6 +145,9 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_occluded(
     break;
 #endif
   default:
+#ifndef OSPRAY_TARGET_SYCL
+    geom->intersect((RTCIntersectFunctionNArguments * uniform) args, true);
+#endif
     break;
   }
 }

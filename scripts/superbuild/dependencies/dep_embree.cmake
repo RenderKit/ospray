@@ -14,6 +14,10 @@ endif()
 
 if (BUILD_EMBREE_FROM_SOURCE)
   string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" EMBREE_ARCHIVE ${EMBREE_VERSION})
+  # We're actually using EMBREE_ARCHIVE as the git tag for this test
+  if (EMBREE_VERSION STREQUAL "4.0.0")
+    set(EMBREE_ARCHIVE "devel")
+  endif()
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}
     DOWNLOAD_DIR ${COMPONENT_NAME}
@@ -21,8 +25,10 @@ if (BUILD_EMBREE_FROM_SOURCE)
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
     LIST_SEPARATOR | # Use the alternate list separator
-    URL "https://github.com/embree/embree/archive/${EMBREE_ARCHIVE}.zip"
-    ${EMBREE_URL_HASH}
+    #URL "https://github.com/embree/embree/archive/${EMBREE_ARCHIVE}.zip"
+    #${EMBREE_URL_HASH}
+    GIT_REPOSITORY https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git
+    GIT_TAG ${EMBREE_ARCHIVE}
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -45,6 +51,14 @@ if (BUILD_EMBREE_FROM_SOURCE)
       -DEMBREE_ISA_AVX2=${BUILD_ISA_AVX2}
       -DEMBREE_ISA_AVX512=${BUILD_ISA_AVX512}
       -DEMBREE_ISA_NEON=${BUILD_ISA_NEON}
+      # No dpcpp compiler in CI right now
+      -DEMBREE_SYCL_SUPPORT=${BUILD_GPU_SUPPORT}
+      # WA for bug
+      -DEMBREE_SYCL_IMPLICIT_DISPATCH_GLOBALS=OFF
+      # Maybe none as the default?
+      -DEMBREE_SYCL_AOT_DEVICES=dg2-b0
+      -DEMBREE_FILTER_FUNCTION_IN_GEOMETRY=OFF
+      -DEMBREE_GEOMETRY_USER_IN_GEOMETRY=OFF
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS ${ALWAYS_REBUILD}
   )

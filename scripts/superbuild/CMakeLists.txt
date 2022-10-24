@@ -162,6 +162,7 @@ option(BUILD_OSPRAY_APPS "Enable building OSPRay apps" ON)
 option(BUILD_OSPRAY_MODULE_CPU "Enable building module_cpu" ON)
 option(BUILD_OSPRAY_MODULE_MPI "Enable building module_mpi" OFF)
 option(BUILD_OSPRAY_MODULE_MULTIDEVICE "Enable building module_multidevice" OFF)
+option(BUILD_GPU_SUPPORT "Build GPU support" OFF)
 
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
   set(ISA_X86 OFF)
