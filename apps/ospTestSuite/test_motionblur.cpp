@@ -67,7 +67,7 @@ void MotionBlurBoxes::SetUp()
   volume.commit();
 
   cpp::TransferFunction transferFun("piecewiseLinear");
-  transferFun.setParam("valueRange", vec2f(0.f, 7.f));
+  transferFun.setParam("value", range1f(0.f, 7.f));
   std::vector<vec3f> colors = {vec3f(1.0f, 0.5f, 0.5f),
       vec3f(0.5f, 1.0f, 0.5f),
       vec3f(0.5f, 1.0f, 1.0f),

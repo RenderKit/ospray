@@ -153,8 +153,8 @@ cpp::Group ParticleVolume::buildGroup() const
 
   // AMK: VKL will set the correct valueRange, but we don't have a good way to
   // get that to OSPRay yet. Use the weightRange instead.
-  model.setParam(
-      "transferFunction", makeTransferFunction(vec2f(0.f, weightRange.upper)));
+  model.setParam("transferFunction",
+      makeTransferFunction(range1f(0.f, weightRange.upper)));
   model.commit();
 
   cpp::Group group;

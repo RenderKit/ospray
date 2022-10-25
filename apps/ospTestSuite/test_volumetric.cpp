@@ -65,7 +65,7 @@ void TextureVolumeTransform_deprecated::SetUp()
         vec3f(1.f, 0.f, 1.f)};
     std::vector<float> opacities = {1.f, 1.f};
 
-    transferFun.setParam("valueRange", vec2f(-10000.f, 100.f));
+    transferFun.setParam("value", range1f(-10000.f, 100.f));
     transferFun.setParam("color", cpp::CopiedData(colors));
     transferFun.setParam("opacity", cpp::CopiedData(opacities));
     transferFun.commit();
@@ -162,7 +162,7 @@ void TextureVolumeTransform::SetUp()
         vec3f(1.f, 0.f, 1.f)};
     std::vector<float> opacities = {1.f, 1.f};
 
-    transferFun.setParam("valueRange", vec2f(-10000.f, 100.f));
+    transferFun.setParam("value", range1f(-10000.f, 100.f));
     transferFun.setParam("color", cpp::CopiedData(colors));
     transferFun.setParam("opacity", cpp::CopiedData(opacities));
     transferFun.commit();
@@ -254,7 +254,7 @@ void DepthCompositeVolume::SetUp()
   cpp::VolumetricModel volumetricModel(torus);
 
   cpp::TransferFunction transferFun("piecewiseLinear");
-  transferFun.setParam("valueRange", vec2f(-10000.f, 10000.f));
+  transferFun.setParam("value", range1f(-10000.f, 10000.f));
 
   std::vector<vec3f> colors = {
       vec3f(1.0f, 0.0f, 0.0f), vec3f(0.0f, 1.0f, 0.0f)};

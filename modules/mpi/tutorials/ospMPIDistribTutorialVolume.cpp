@@ -214,8 +214,8 @@ VolumeBrick makeLocalVolume(const int mpiRank, const int mpiWorldSize)
   tfn.setParam("opacity", cpp::CopiedData(opacities));
   // color the bricks by their rank, we pad the range out a bit to keep
   // any brick from being completely transparent
-  vec2f valueRange = vec2f(0, mpiWorldSize);
-  tfn.setParam("valueRange", valueRange);
+  range1f valueRange = range1f(0, mpiWorldSize);
+  tfn.setParam("value", valueRange);
   tfn.commit();
   brick.model.setParam("transferFunction", tfn);
   brick.model.setParam("samplingRate", 0.5f);

@@ -330,7 +330,8 @@ cpp::Group UnstructuredVolumeGen::buildGroup() const
   } else {
     cpp::VolumetricModel model(volume);
     model.setParam("transferFunction",
-        makeTransferFunction(showCells ? vec2f{0.f, 1.f} : vec2f{-.4f, -.05f}));
+        makeTransferFunction(
+            showCells ? range1f{0.f, 1.f} : range1f{-.4f, -.05f}));
     model.setParam("densityScale", densityScale);
     model.commit();
 

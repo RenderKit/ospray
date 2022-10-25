@@ -83,7 +83,7 @@ void GravitySpheres::commit()
 cpp::Group GravitySpheres::buildGroup() const
 {
   auto voxels = generateVoxels();
-  auto voxelRange = vec2f(0.f, 10.f);
+  auto voxelRange = range1f(0.f, 10.f);
 
   cpp::Volume volume =
       createAsAMR ? createAMRVolume(voxels) : createStructuredVolume(voxels);
