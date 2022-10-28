@@ -148,9 +148,11 @@ void QuadMesh_postIntersect(const Geometry *uniform _self,
     }
   }
   if (compute_tangents) {
-    linear3f f = frame(dg.Ng);
-    dg.dPds = f.vx;
-    dg.dPdt = f.vy;
+    const vec3f a = get_vec3f(self->vertex, index.x);
+    const vec3f b = get_vec3f(self->vertex, index.y);
+    const vec3f d = get_vec3f(self->vertex, index.w);
+    dg.dPds = b - a;
+    dg.dPdt = d - a;
   }
 }
 
@@ -239,9 +241,11 @@ void TriangleMesh_PostIntersect(const Geometry *uniform _self,
     }
   }
   if (compute_tangents) {
-    linear3f f = frame(dg.Ng);
-    dg.dPds = f.vx;
-    dg.dPdt = f.vy;
+    const vec3f a = get_vec3f(self->vertex, index.x);
+    const vec3f b = get_vec3f(self->vertex, index.y);
+    const vec3f c = get_vec3f(self->vertex, index.z);
+    dg.dPds = b - a;
+    dg.dPdt = c - a;
   }
 }
 
