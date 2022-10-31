@@ -53,6 +53,8 @@ void OBJMaterial::commit()
   getSh()->Tf = Tf;
   getSh()->bumpMap = bumpTex;
   getSh()->bumpRot = bumpRot;
+
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

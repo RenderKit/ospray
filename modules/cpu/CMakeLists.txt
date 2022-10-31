@@ -186,6 +186,8 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   render/materials/Mix.ispc
   render/materials/Mix.cpp
 
+  texture/Mapping.cpp
+  texture/Mapping.ispc
   texture/Texture.cpp
   texture/Texture2D.cpp
   texture/Texture2D.ispc

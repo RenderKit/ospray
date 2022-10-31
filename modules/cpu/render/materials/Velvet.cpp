@@ -32,6 +32,8 @@ void Velvet::commit()
   getSh()->backScattering = backScattering;
   getSh()->horizonScatteringColor = horizonScatteringColor;
   getSh()->horizonScatteringFallOff = horizonScatteringFallOff;
+
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

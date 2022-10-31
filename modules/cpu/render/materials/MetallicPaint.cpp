@@ -33,6 +33,8 @@ void MetallicPaint::commit()
   getSh()->flakeColor = flakeColor * flakeAmount;
   getSh()->flakeSpread = flakeSpread;
   getSh()->eta = rcp(eta);
+
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

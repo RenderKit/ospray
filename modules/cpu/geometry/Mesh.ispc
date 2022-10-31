@@ -154,6 +154,14 @@ void QuadMesh_postIntersect(const Geometry *uniform _self,
   }
 }
 
+#include "render/Material.ih"
+#include "texture/Texture2D.ih"
+float sampleAlphaTexture1D(const DifferentialGeometry &dg)
+{
+  const Material* pmat = dg.material;
+  return pmat ? sampleAlphaTexture1DByRawVar(pmat->alphabyMap.ptr, dg.atex1d) : 1.0f;
+}
+
 void TriangleMesh_PostIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
@@ -197,6 +205,39 @@ void TriangleMesh_PostIntersect(const Geometry *uniform _self,
     dg.color = interpolate(uv, a, b, c);
     if (!self->has_alpha)
       dg.color.w = 1.f;
+  }
+
+  const bool is_pervert_tex1d = valid(self->tex1d);
+  const bool is_perelem_tex1d = valid(self->tex1d_elm);
+  if (is_pervert_tex1d || is_perelem_tex1d) {
+    if (is_pervert_tex1d) {
+        const float a = get_float(self->tex1d, index.x);
+        const float b = get_float(self->tex1d, index.y);
+        const float c = get_float(self->tex1d, index.z);
+        const vec2f a2 = {a, 0}, b2 = {b, 0}, c2 = {c, 0};
+        const vec2f out = interpolate(uv, a2, b2, c2);
+        dg.tex1d = out.x;
+    }
+    else {
+        dg.tex1d = get_float(self->tex1d_elm, ray.primID);
+    }
+  }
+
+  const bool is_pervert_atex1d = valid(self->atex1d);
+  const bool is_perelem_atex1d = valid(self->atex1d_elm);
+  if (is_pervert_atex1d || is_perelem_atex1d){
+    float a, b, c;
+    if (is_pervert_atex1d) {
+        a = get_float(self->atex1d, index.x);
+        b = get_float(self->atex1d, index.y);
+        c = get_float(self->atex1d, index.z);
+        const vec2f a2 = {a, 0}, b2 = {b, 0}, c2 = {c, 0};
+        const vec2f out = interpolate(uv, a2, b2, c2);
+        dg.atex1d = out.x;
+    }
+    else {
+        dg.atex1d = get_float(self->atex1d_elm, ray.primID);
+    }
   }
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;

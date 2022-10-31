@@ -80,6 +80,8 @@ void CarPaint::commit()
   getSh()->flipflopColorMap = flipflopColor.tex;
   getSh()->flipflopFalloff = flipflopFalloff.factor;
   getSh()->flipflopFalloffMap = flipflopFalloff.tex;
+
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

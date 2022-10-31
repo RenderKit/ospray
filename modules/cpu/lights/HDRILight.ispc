@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/Instance.ih"
+#include "common/Intersect.ih"
 #include "math/Distribution2D.ih"
 #include "math/LinearSpace.ih"
 #include "math/sampling.ih"
@@ -120,7 +121,7 @@ inline Light_EvalRes Eval(HDRILight *uniform self,
 }
 
 Light_EvalRes HDRILight_eval(const Light *uniform super,
-    const DifferentialGeometry &,
+    const DifferentialGeometry &dg,
     const vec3f &dir,
     const float,
     const float maxDist,
@@ -128,7 +129,18 @@ Light_EvalRes HDRILight_eval(const Light *uniform super,
 {
   const HDRILight *uniform self = (HDRILight * uniform) super;
   assert(self);
-  return Eval(self, self->world2light, dir, maxDist);
+
+  //EnSight extension of the HDRILight: using position and radius for sphere clipping first
+  const Intersections isect = intersectSphere(dg.P, dir, self->position, self->radius);
+  if (and(and(isect.exit.t > 0.0f, isect.exit.t < 1e38f), isect.exit.hit)) {
+      const vec3f intp = dg.P + isect.exit.t * dir;
+      const vec3f dir2 = normalize(intp - self->position);
+      return Eval(self, self->world2light, dir2, maxDist);
+  }
+
+  Light_EvalRes res;
+  res.radiance = make_vec3f(0.f);
+  return res;
 }
 
 Light_EvalRes HDRILight_eval_instanced(const Light *uniform super,

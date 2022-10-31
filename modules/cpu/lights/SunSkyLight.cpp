@@ -22,7 +22,7 @@ SunSkyLight::SunSkyLight()
   static auto format = static_cast<OSPTextureFormat>(OSP_TEXTURE_RGB32F);
   static auto filter =
       static_cast<OSPTextureFilter>(OSP_TEXTURE_FILTER_BILINEAR);
-  mapSh.set(skySize, skyImage.data(), format, filter);
+  mapSh.set(skySize, skyImage.data(), EnsightTex1dMappingData(), format, filter);
 }
 
 SunSkyLight::~SunSkyLight()
@@ -33,11 +33,15 @@ SunSkyLight::~SunSkyLight()
 ispc::Light *SunSkyLight::createSh(
     uint32_t index, const ispc::Instance *instance) const
 {
+  const vec3f position(0, 0, 0);
+  const float radius = 1e18f;
   switch (index) {
   case 0: {
     ispc::HDRILight *sh = StructSharedCreate<ispc::HDRILight>();
     sh->set(visible,
         instance,
+        position,
+        radius,
         coloredIntensity,
         frame,
         &mapSh,

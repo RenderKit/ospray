@@ -34,6 +34,11 @@ void Spheres_postIntersect(const Geometry *uniform geometry,
 
   if (and(flags & DG_TEXCOORD, valid(self->texcoord)))
     dg.st = get_vec2f(self->texcoord, ray.primID);
+
+  if (valid(self->tex1d))
+    dg.tex1d = get_float(self->tex1d, ray.primID);
+  if (valid(self->atex1d))
+    dg.atex1d = get_float(self->atex1d, ray.primID);
 }
 
 export void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args)

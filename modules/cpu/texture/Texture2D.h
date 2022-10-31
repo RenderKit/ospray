@@ -28,3 +28,4 @@ struct OSPRAY_SDK_INTERFACE Texture2D
 };
 
 } // namespace ospray
+  

@@ -1,0 +1,30 @@
+-How to list remote repositories
+
+git remote -v
+
+github  https://github.com/ospray/ospray.git (fetch)
+github  https://github.com/ospray/ospray.git (push)
+tfs     ssh://tfs.ansys.com:22/tfs/ANSYS_Development/EnSight/_git/OSPRay.git (fetch)
+tfs     ssh://tfs.ansys.com:22/tfs/ANSYS_Development/EnSight/_git/OSPRay.git (push)
+
+
+-How to update a repository, such as tfs
+
+git fetch github
+
+
+-How to fetch the submodules
+$ git submodule init
+$ git submodule update
+
+
+-Compilation
+For Windows, open a console window of MSVC 2017 build
+For Linux, remember to set the compiler to g++ 6 first:
+   scl enable devtoolset-6 bash
+   
+Then, just run cmake in the current directory
+   cmake .
+   make -j22
+   make install
+After this, the supporting packages and ospray will be installed inside apex221 folder

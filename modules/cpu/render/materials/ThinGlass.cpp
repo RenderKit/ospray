@@ -35,6 +35,8 @@ void ThinGlass::commit()
   getSh()->attenuation =
       vec3f(log(acf.x), log(acf.y), log(acf.z)) * getSh()->attenuationScale;
   getSh()->attenuationColorMap = attenuationColor.tex;
+
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

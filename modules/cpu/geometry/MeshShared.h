@@ -17,6 +17,10 @@ struct Mesh
   Data1D normal;
   Data1D color;
   Data1D texcoord;
+  Data1D tex1d;
+  Data1D tex1d_elm;
+  Data1D atex1d;
+  Data1D atex1d_elm;
   uint8 **motionVertex;
   uint8 **motionNormal;
   uint32 motionKeys;

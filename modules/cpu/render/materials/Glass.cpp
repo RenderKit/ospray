@@ -48,6 +48,8 @@ void Glass::commit()
                                            log(attenuationColorOutside.y),
                                            log(attenuationColorOutside.z))
       / std::max(attenuationDistance, EPS);
+  
+  ADD_ENSIGHT_TEXTURES;	 
 }
 
 } // namespace pathtracer

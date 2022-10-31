@@ -289,6 +289,8 @@ OSPRAY_INTERFACE void ospCommit(OSPObject);
 OSPRAY_INTERFACE void ospRelease(OSPObject);
 // Increace the application-side object ref count by 1
 OSPRAY_INTERFACE void ospRetain(OSPObject);
+// Return reference count value, useful in debugging memory leak
+OSPRAY_INTERFACE long long ospGetCounter(OSPObject);
 
 // FrameBuffer Manipulation /////////////////////////////////////////////////
 

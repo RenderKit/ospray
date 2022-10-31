@@ -23,6 +23,9 @@ struct HDRILight
       *distribution; // The 2D distribution used to importance sample
   vec2f rcpSize; // precomputed 1/map.size
   vec3f radianceScale; // scaling factor of emitted RGB radiance
+  //============ensight's extension as finite sphere=============
+  vec3f position; //sphere position
+  float radius;   //sphere radius
 
 #ifdef __cplusplus
   HDRILight()
@@ -31,10 +34,14 @@ struct HDRILight
         map(nullptr),
         distribution(nullptr),
         rcpSize(0.f),
-        radianceScale(1.f)
+        radianceScale(1.f),
+		position(1E18f),
+		radius(10.0f)
   {}
   void set(bool isVisible,
       const Instance *instance,
+	  const vec3f &pos,
+	  const float radi,
       const vec3f &radianceScale,
       const linear3f &light2world,
       const Texture2D *map,

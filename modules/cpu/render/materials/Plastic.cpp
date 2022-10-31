@@ -28,6 +28,8 @@ void Plastic::commit()
   getSh()->pigmentColor = pigmentColor;
   getSh()->eta = rcp(eta);
   getSh()->roughness = roughness;
+
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

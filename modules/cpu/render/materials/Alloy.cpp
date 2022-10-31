@@ -32,6 +32,8 @@ void Alloy::commit()
   getSh()->edgeColorMap = edgeColor.tex;
   getSh()->roughness = roughness.factor;
   getSh()->roughnessMap = roughness.tex;
+  
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

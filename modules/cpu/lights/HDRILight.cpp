@@ -14,6 +14,8 @@
 namespace ispc {
 void HDRILight::set(bool isVisible,
     const Instance *instance,
+    const vec3f &pos,
+    const float radi,
     const vec3f &radianceScale,
     const linear3f &light2world,
     const Texture2D *map,
@@ -24,6 +26,8 @@ void HDRILight::set(bool isVisible,
   super.sample = ispc::HDRILight_sample_addr();
   super.eval = ispc::HDRILight_eval_addr();
 
+  this->position = pos;
+  this->radius = radi;
   this->radianceScale = radianceScale;
   if (map) {
     this->map = map;
@@ -61,6 +65,8 @@ ispc::Light *HDRILight::createSh(uint32_t, const ispc::Instance *instance) const
   ispc::HDRILight *sh = StructSharedCreate<ispc::HDRILight>();
   sh->set(visible,
       instance,
+      position,
+      radius,
       coloredIntensity,
       frame,
       map->getSh(),
@@ -78,6 +84,8 @@ void HDRILight::commit()
   Light::commit();
   const vec3f up = getParam<vec3f>("up", vec3f(0.f, 1.f, 0.f));
   const vec3f dir = getParam<vec3f>("direction", vec3f(0.f, 0.f, 1.f));
+  position = getParam<vec3f>("position", vec3f(0.f, 0.f, 0.f));
+  radius = getParam<float>("radius", 10.f);
   map = (Texture2D *)getParamObject("map", nullptr);
 
   // recreate distribution

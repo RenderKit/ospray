@@ -21,6 +21,11 @@ add_executable(ospBenchmark
   benchmarks/ClippingGeometries.cpp
 )
 
+target_include_directories(ospBenchmark
+PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/../common/arcball_camera
+)
+
 target_link_libraries(ospBenchmark
 PRIVATE
   arcball_camera

@@ -127,6 +127,8 @@ void Principled::commit()
       log(outsideTransmissionColor.y),
       log(outsideTransmissionColor.z));
   getSh()->outsideMedium.attenuation = otc / outsideTransmissionDepth;
+
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

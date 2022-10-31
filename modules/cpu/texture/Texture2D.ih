@@ -74,3 +74,23 @@ inline void initDgFromTexCoord(DifferentialGeometry &dg, const varying vec2f &c)
   dg.st = c;
 }
 #endif
+
+/*! sample 1D texture using a raw variable as input */
+enum ImageWrap{
+  TEXTURE_REPEAT = 0,
+  TEXTURE_BLACK,
+  TEXTURE_CLAMP,
+  TEXTURE_CLAMP_TO_TEXTURE
+};
+
+enum ImageMode{
+  TEXTURE_MODE_REPLACE = 0,
+  TEXTURE_MODE_DECAL,
+  TEXTURE_MODE_MODULATE,
+  NO_OF_TEXTURE_MODES
+};
+
+extern vec3f sampleTexture1DByRawVar(const Texture *tex, float t);
+extern float sampleAlphaTexture1DByRawVar(const Texture *tex, float t);
+extern vec3f sampleTexture2DEnsight(const Texture2D *tex, int imgwrap, int imgmode, float texscale, const DifferentialGeometry &dg, const vec3f &le);
+

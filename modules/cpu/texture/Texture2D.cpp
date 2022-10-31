@@ -11,6 +11,7 @@ namespace ispc {
 
 void Texture2D::set(const vec2i &aSize,
     void *aData,
+    const EnsightTex1dMappingData &aMap1d,
     OSPTextureFormat type,
     OSPTextureFilter flags)
 {
@@ -24,6 +25,8 @@ void Texture2D::set(const vec2i &aSize,
       vec2f(nextafter((float)size.x, -1.0f), nextafter((float)size.y, -1.0f));
   halfTexel = vec2f(0.5f / size.x, 0.5f / size.y);
   data = aData;
+  map1d = aMap1d;
+
   super.get =
       ispc::Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
   super.getNormal =
@@ -77,8 +80,27 @@ void Texture2D::commit()
         + "' does not match type of 'data'='" + stringFor(texData->type)
         + "'!");
 
-  // Initialize ispc shared structure
-  getSh()->set(size, texData->data(), format, filter);
+  EnsightTex1dMappingData map1d;
+  bool hascolorby = false;
+  {
+    const auto strmapping = getParam<std::string>("tex1dcolormapping", "");
+    if (!strmapping.empty()) {
+      EnsightTex1dMapping mapping(strmapping.c_str());
+      map1d = mapping.d;
+      hascolorby = true;
+    }
+  }
+
+  //we only allow one mapping approach--colorby or alphaby, not both
+  if (!hascolorby) {
+    const auto strmapping = getParam<std::string>("tex1dalphamapping", "");
+    if (!strmapping.empty()) {
+      EnsightTex1dMapping mapping(strmapping.c_str());
+      map1d = mapping.d;
+    }
+  }
+
+  getSh()->set(size, texData->data(), map1d, format, filter);
 }
 
 } // namespace ospray

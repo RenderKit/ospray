@@ -39,6 +39,8 @@ void MixMaterial::commit()
   if (mat2)
     emission = emission + getSh()->factor * getSh()->mat2->emission;
   getSh()->super.emission = emission;
+
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

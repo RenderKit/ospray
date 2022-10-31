@@ -26,6 +26,10 @@ struct OSPRAY_SDK_INTERFACE Mesh : public AddStructShared<Geometry, ispc::Mesh>
   Ref<const DataT<vec3f>> normalData;
   Ref<const Data> colorData;
   Ref<const DataT<vec2f>> texcoordData;
+  Ref<const DataT<float>> tex1dData;
+  Ref<const DataT<float>> tex1dData_elm;
+  Ref<const DataT<float>> atex1dData;
+  Ref<const DataT<float>> atex1dData_elm;
   Ref<const Data> indexData;
   bool motionBlur{false};
   Ref<const DataT<const DataT<vec3f> *>> motionVertexData;

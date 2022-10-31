@@ -25,6 +25,8 @@ struct DifferentialGeometry
   vec3f dPds; // tangent, the partial derivative of the hit-point wrt. tc s
   vec3f dPdt; // bi-tangent, the partial derivative of the hit-point wrt. tc t
   vec2f st; // texture coordinates if DG_TEXCOORD was set
+  float tex1d; // texture coordinate 1D (raw variable value)
+  float atex1d;// alpha texture coordinate 1D (raw variable value)
   vec4f color; // interpolated vertex color (rgba) if DG_COLOR was set; defaults
                // to vec4f(1.f) if queried but not present in geometry
   int32 primID; // hit primitive (-1 if no hit), e.g. for Ptex

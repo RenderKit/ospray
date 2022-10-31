@@ -27,6 +27,8 @@ void Spheres::commit()
   vertexData = getParamDataT<vec3f>("sphere.position", true);
   radiusData = getParamDataT<float>("sphere.radius");
   texcoordData = getParamDataT<vec2f>("sphere.texcoord");
+  tex1dData = getParamDataT<float>("sphere.texcoord1d");
+  atex1dData = getParamDataT<float>("sphere.alphatexcoord1d");
 
   createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Spheres_bounds,
       (RTCIntersectFunctionN)&ispc::Spheres_intersect,
@@ -34,6 +36,8 @@ void Spheres::commit()
   getSh()->vertex = *ispc(vertexData);
   getSh()->radius = *ispc(radiusData);
   getSh()->texcoord = *ispc(texcoordData);
+  getSh()->tex1d = *ispc(tex1dData);
+  getSh()->atex1d = *ispc(atex1dData);
   getSh()->global_radius = radius;
   getSh()->super.numPrimitives = numPrimitives();
 

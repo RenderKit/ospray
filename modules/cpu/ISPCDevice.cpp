@@ -192,7 +192,14 @@ void ISPCDevice::commit()
 {
   Device::commit();
 
-  tasking::initTaskingSystem(numThreads, true);
+  //only need to init the tasking system only once
+  {
+    static bool tasking_inited = false;
+    if (!tasking_inited) {
+      tasking_inited = true;
+      tasking::initTaskingSystem(numThreads, true);
+    }
+  }
 
   if (!embreeDevice) {
     embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());

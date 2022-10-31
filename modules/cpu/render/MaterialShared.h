@@ -5,6 +5,8 @@
 
 #define EPS 1e-5f
 
+#include "texture/TextureParamShared.h"
+
 #ifdef __cplusplus
 #include "common/StructShared.h"
 namespace ispc {
@@ -44,6 +46,7 @@ typedef void (*Material_SelectNextMediumFunc)(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
     Medium &currentMedium);
+
 #endif // __cplusplus
 
 enum MaterialType
@@ -71,21 +74,53 @@ struct Material
   Material_SelectNextMediumFunc selectNextMedium;
   vec3f emission; // simple constant (spatially and angular) emission, returns
                   // radiance; TODO SV-EDFs
+
+  TextureParam colorbyMap; // EnSight's 1D texture mapping colorby
+  TextureParam alphabyMap; // EnSight's 1D texture mapping alphaby
+  TextureParam tex2dMap;   // EnSight's 2D texture mapping
+  int tex2dImageWrap;      // ImageWrap value
+  int tex2dImageMode;      // ImageMode value
+  float tex2dImageScale;   // ImageScale value
+  int unused;
+
 #ifdef __cplusplus
   Material(const vec3f &emission = vec3f(0.f))
       : type(MATERIAL_TYPE_OBJ),
         getBSDF(nullptr),
         getTransparency(nullptr),
         selectNextMedium(nullptr),
-        emission(emission)
+        emission(emission),
+        colorbyMap(),
+        alphabyMap(),
+        tex2dMap(),
+        tex2dImageWrap(0),
+        tex2dImageMode(0),
+        tex2dImageScale(1),
+        unused(0)
   {}
 
   bool isEmissive()
   {
     return reduce_max(emission) > 0.f;
   }
+
+  void ApplyEnsightTextures(const TextureParam *colorbyMap_,
+      const TextureParam *alphabyMap_,
+      const TextureParam *tex2dMap_,
+      int tex2dImageWrap_,
+      int tex2dImageMode_,
+      float tex2dImageScale_)
+  {
+    this->colorbyMap = colorbyMap_ ? *colorbyMap_ : TextureParam();
+    this->alphabyMap = alphabyMap_ ? *alphabyMap_ : TextureParam();
+    this->tex2dMap = tex2dMap_ ? *tex2dMap_ : TextureParam();
+    this->tex2dImageWrap = tex2dImageWrap_,
+    this->tex2dImageMode = tex2dImageMode_;
+    this->tex2dImageScale = tex2dImageScale_;
+  }
 };
 } // namespace ispc
 #else
 };
+
 #endif // __cplusplus

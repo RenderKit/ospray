@@ -90,6 +90,10 @@ void Mesh::commit()
     texcoordData = getParamDataT<vec2f>("vertex.texcoord");
     isTexcoordFaceVarying = false;
   }
+  tex1dData = getParamDataT<float>("vertex.texcoord1d");
+  tex1dData_elm = getParamDataT<float>("vertex.texcoord1d_elm");
+  atex1dData = getParamDataT<float>("vertex.alphatexcoord1d");
+  atex1dData_elm = getParamDataT<float>("vertex.alphatexcoord1d_elm");
   indexData = getParamDataT<vec3ui>("index");
   if (!indexData)
     indexData = getParamDataT<vec4ui>("index", true);
@@ -133,6 +137,10 @@ void Mesh::commit()
   getSh()->normal = *ispc(normalData);
   getSh()->color = *ispc(colorData);
   getSh()->texcoord = *ispc(texcoordData);
+  getSh()->tex1d = *ispc(tex1dData);
+  getSh()->tex1d_elm = *ispc(tex1dData_elm);
+  getSh()->atex1d = *ispc(atex1dData);
+  getSh()->atex1d_elm = *ispc(atex1dData_elm);  
   getSh()->motionVertex = (uint8_t **)motionVertexAddr.data();
   getSh()->motionNormal = (uint8_t **)motionNormalAddr.data();
   getSh()->motionKeys = motionBlur ? motionVertexData->size() : 0;
@@ -150,6 +158,15 @@ void Mesh::commit()
     getSh()->flagMask &= ispc::int64(~DG_COLOR);
   if (!texcoordData)
     getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
+
+  if (!tex1dData)
+    getSh()->flagMask &= ispc::int64(~DG_TEX1D);
+  if (!tex1dData_elm)
+    getSh()->flagMask &= ispc::int64(~DG_TEX1D_ELM);
+  if (!atex1dData)
+    getSh()->flagMask &= ispc::int64(~DG_ALPHATEX1D);
+  if (!atex1dData_elm)
+    getSh()->flagMask &= ispc::int64(~DG_ALPHATEX1D_ELM);
 
   postCreationInfo(vertexData->size());
 }

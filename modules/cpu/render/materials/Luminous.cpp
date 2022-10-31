@@ -28,6 +28,8 @@ void Luminous::commit()
 
   getSh()->super.emission = radiance;
   getSh()->transparency = transparency;
+
+  ADD_ENSIGHT_TEXTURES;
 }
 
 } // namespace pathtracer

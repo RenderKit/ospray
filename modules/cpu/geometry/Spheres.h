@@ -26,6 +26,8 @@ struct OSPRAY_SDK_INTERFACE Spheres
   Ref<const DataT<vec3f>> vertexData;
   Ref<const DataT<float>> radiusData;
   Ref<const DataT<vec2f>> texcoordData;
+  Ref<const DataT<float>> tex1dData;
+  Ref<const DataT<float>> atex1dData;
 };
 
 } // namespace ospray

@@ -15,6 +15,8 @@ struct Spheres
   Data1D vertex;
   Data1D radius;
   Data1D texcoord;
+  Data1D tex1d;   //ensight's colorby attribute
+  Data1D atex1d;  //ensight's alphaby attribute
   float global_radius;
 
 #ifdef __cplusplus
