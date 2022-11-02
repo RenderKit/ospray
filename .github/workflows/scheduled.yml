@@ -69,6 +69,7 @@ jobs:
       artifact-in: build-linux-debug-all
       artifact-out: test-linux-debug-all
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
 
   # test-mpi-cluster:
   #   <<: *test_job_unix_avx512skx
@@ -90,3 +91,6 @@ jobs:
         $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
         scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX2
       artifact-in: build-windows-debug-all
+      artifact-out: test-windows-debug-all-avx2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true

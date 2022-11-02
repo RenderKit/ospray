@@ -45,6 +45,7 @@ jobs:
       artifact-in: build-osx-clang
       artifact-out: test-osx-clang
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
 
   test-osx-arm:
     needs: build-osx-arm
@@ -58,3 +59,4 @@ jobs:
       artifact-in: build-osx-arm
       artifact-out: test-osx-arm
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true

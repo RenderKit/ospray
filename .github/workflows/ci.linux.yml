@@ -192,6 +192,7 @@ jobs:
       artifact-in: build-centos7-gcc
       artifact-out: test-centos7-gcc-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
 
   test-centos7-gcc-mpi-impi-avx2:
     needs: build-centos7-mpi-impi
@@ -207,6 +208,7 @@ jobs:
       artifact-in: build-centos7-mpi-impi
       artifact-out: test-centos7-gcc-mpi-impi-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
 
   test-centos7-gcc-mpi-mpich-avx2:
     needs: build-centos7-mpi-mpich
@@ -221,6 +223,7 @@ jobs:
       artifact-in: build-centos7-mpi-mpich
       artifact-out: test-centos7-gcc-mpi-mpich-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
 
   test-centos7-icx-avx2:
     needs: build-centos7-icx
@@ -233,6 +236,7 @@ jobs:
       artifact-in: build-centos7-icx
       artifact-out: test-centos7-icx-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
 
   test-centos8-avx512skx:
     needs: build-centos8
@@ -245,6 +249,7 @@ jobs:
       artifact-in: build-centos8
       artifact-out: test-centos8-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
 
   test-find-ospray:
     needs: build-centos7-gcc
@@ -270,6 +275,7 @@ jobs:
       artifact-in: build-ubuntu1804-gcc
       artifact-out: test-ubuntu1804-gcc-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
 
   test-ubuntu2004-gcc-avx2:
     needs: build-ubuntu2004-gcc
@@ -282,6 +288,7 @@ jobs:
       artifact-in: build-ubuntu2004-gcc
       artifact-out: test-ubuntu2004-gcc-avx2
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
 
   test-ubuntu2004-gcc-avx512skx:
     needs: build-ubuntu2004-gcc
@@ -294,6 +301,7 @@ jobs:
       artifact-in: build-ubuntu2004-gcc
       artifact-out: test-ubuntu2004-gcc-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
 
   test-tutorials:
     needs: build-centos7-gcc
