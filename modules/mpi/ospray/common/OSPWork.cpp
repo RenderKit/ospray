@@ -182,6 +182,10 @@ void dataTransfer(OSPState &state,
   vec3ul numItems = 0;
   cmdBuf >> type >> numItems;
 
+  // TODO: Here we make an allocation using the hostDevice. It would be better
+  // to just pass an ISPCRTDevice here so we don't need to kind of abuse the
+  // ISPCDevice like this anymore, because we create a lot of other objects in
+  // it that we don't care about here. We just use it for its "alloc"
   Data *data = new Data(state.hostDevice, type, numItems);
 
   const uint64_t nbytes = data->size() * sizeOf(type);
