@@ -121,23 +121,24 @@ task void DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
       if (world->regionScene) {
         uniform EmbreeIntersectionContext context;
         rtcInitIntersectContext(&context.ectx);
-        context.ectx.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
         context.userPtr = tileRegionVisible;
 #if EMBREE_VERSION_MAJOR == 4
         uniform RTCIntersectArguments intersectArgs;
         rtcInitIntersectArguments(&intersectArgs);
         intersectArgs.intersect =
             (RTCIntersectFunctionN)Geometry_dispatch_intersect;
+        // TODO: Need to manage this differently, filter function won't be
+        // supported?
         intersectArgs.filter =
             (RTCFilterFunctionN)markRegionVisibleFilterFunction;
+        intersectArgs.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
 
-        // TODO: rtcIntersectExV not calling filter functions right now so this
-        // doesn't work
-        rtcIntersectExV(world->regionScene,
+        rtcIntersectV(world->regionScene,
             &context.ectx,
             (varying RTCRayHit * uniform) & screenSample.ray,
             &intersectArgs);
 #else
+        context.ectx.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
         context.ectx.filter =
             (RTCFilterFunctionN)markRegionVisibleFilterFunction;
         rtcIntersectV(world->regionScene,

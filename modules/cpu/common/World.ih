@@ -42,7 +42,7 @@ inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.intersect = (RTCIntersectFunctionN)Geometry_dispatch_intersect;
 
-  rtcIntersectExV(world->embreeSceneHandleGeometries,
+  rtcIntersectV(world->embreeSceneHandleGeometries,
       &context.ectx,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
@@ -73,7 +73,7 @@ inline void traceVolumeRay(
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.intersect = (RTCIntersectFunctionN)Volume_intersect_kernel;
 
-  rtcIntersectExV(world->embreeSceneHandleVolumes,
+  rtcIntersectV(world->embreeSceneHandleVolumes,
       &context.ectx,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
@@ -108,7 +108,7 @@ inline void traceVolumeRay(
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.intersect = (RTCIntersectFunctionN)Volume_intersect_kernel;
 
-  rtcIntersectExV(world->embreeSceneHandleVolumes,
+  rtcIntersectV(world->embreeSceneHandleVolumes,
       &context.ectx,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
@@ -326,7 +326,7 @@ inline bool isOccludedNoClipping(const World *uniform world, varying Ray &ray)
   intersectArgs.occluded = (RTCOccludedFunctionN)Geometry_dispatch_occluded;
 #endif
 
-  rtcOccludedExV(world->embreeSceneHandleGeometries,
+  rtcOccludedV(world->embreeSceneHandleGeometries,
       &context.ectx,
       (varying RTCRay * uniform) & ray,
       &intersectArgs);

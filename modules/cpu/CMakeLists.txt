@@ -518,9 +518,7 @@ if (OSPRAY_MODULE_GPU)
     make_LinearSpace3f=LinearSpace3f
     make_LinearSpace3f_varying_identity=LinearSpace3f
     rtcIntersectV=rtcIntersect1
-    rtcIntersectExV=rtcIntersectEx1
     rtcOccludedV=rtcOccluded1
-    rtcOccludedExV=rtcOccludedEx1
     rtcInterpolateV1=rtcInterpolate1
     programCount=1
     programIndex=0
