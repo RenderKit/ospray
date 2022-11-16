@@ -6,13 +6,15 @@
 #include <condition_variable>
 #include <memory>
 #include "../common/Messaging.h"
-#include "DistributedFrameBufferShared.h"
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "ISPCDevice.h"
 #include "fb/LocalFB.h"
 #include "fb/SparseFB.h"
 #include "render/Renderer.h"
 #include "rkcommon/containers/AlignedVector.h"
+#include "rkcommon/math/vec.h"
+
+#include "DistributedFrameBufferShared.h"
 
 namespace ospray {
 struct TileDesc;

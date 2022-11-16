@@ -1,21 +1,25 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/box.ih"
-#else
-#include "common/rkcommonSYCLWrappers.h"
-#endif
 
+#include "camera/Camera.ih"
+#include "camera/CameraDispatch.ih"
 #include "common/Instance.ih"
+#include "common/Intersect.ih"
 #include "common/VolumeIntervals.ih"
 #include "common/World.ih"
+#include "fb/FrameBufferDispatch.ih"
+#include "fb/RenderTaskDesc.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
+#include "render/Renderer.ih"
+#include "render/ScreenSample.ih"
 #include "render/materials/OBJ.ih"
 #include "render/scivis/surfaces.ih"
 #include "render/scivis/volumes.ih"
 #include "render/util.ih"
+#include "texture/Texture2D.ih"
 #include "volume/VolumetricModel.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
 #include "openvkl/openvkl.isph"
@@ -230,7 +234,7 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
 #endif
 }
 
-void DRR_renderRegionSample(DistributedRenderer *uniform _self,
+SYCL_EXTERNAL void DRR_renderRegionSample(DistributedRenderer *uniform _self,
     SparseFB *uniform fb,
     DistributedWorld *uniform world,
     const box3f *uniform region,
@@ -351,7 +355,7 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
     outputColor = outputColor + (1.0f - outputColor.w) * blendedColor;
 
     if (haveGeometryHit)
-      setRay(geomRay, geomRay.t + dg.epsilon, regionInterval.y + 0.0001);
+      setRay(geomRay, geomRay.t + dg.epsilon, regionInterval.y + 0.0001f);
     else
       setRay(geomRay, geomRay.t, geomRay.t0);
 
@@ -369,8 +373,44 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
 
 // Exported functions /////////////////////////////////////////////////////////
 
-export void *uniform DRR_renderRegionSample_addr()
+#define renderRegionSampleFn DRR_renderRegionSample
+#include "render/distributed/DistributedRendererRenderTaskFn.inl"
+#undef renderRegionSampleFn
+
+#ifdef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(
+    DistributedRenderer *uniform self,
+    SparseFB *uniform fb,
+    Camera *uniform camera,
+    DistributedWorld *uniform world,
+    const box3f *uniform region,
+    void *uniform perFrameData,
+    const uint32 *uniform taskIDs,
+    const int taskIndex0)
 {
-  return (void *uniform)DRR_renderRegionSample;
+  DR_default_renderRegionToTile(
+      self, fb, camera, world, region, perFrameData, taskIDs, taskIndex0);
 }
+#else
+export void DistributedRaycast_renderRegionToTileTask(void *uniform _self,
+    void *uniform _fb,
+    void *uniform _camera,
+    void *uniform _world,
+    void *uniform _region,
+    void *uniform perFrameData,
+    void *uniform _taskIDs,
+    uniform uint32 numTasks)
+{
+  DistributedRenderer *uniform self = (DistributedRenderer * uniform) _self;
+  SparseFB *uniform fb = (SparseFB * uniform) _fb;
+  Camera *uniform camera = (Camera * uniform) _camera;
+  DistributedWorld *uniform world = (DistributedWorld * uniform) _world;
+  const box3f *uniform region = (const box3f *uniform)_region;
+  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  launch[numTasks] DR_default_renderRegionToTile(
+      self, fb, camera, world, region, perFrameData, taskIDs);
+  sync;
+}
+#endif
+
 OSPRAY_END_ISPC_NAMESPACE

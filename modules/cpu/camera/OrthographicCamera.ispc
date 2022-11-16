@@ -110,18 +110,29 @@ export void OrthographicCamera_projectBox(
     projectedPt.x = dot(screenDir, dun);
     projectedPt.y = dot(screenDir, dvn);
     projectedPt.z = depth;
+#ifdef OSPRAY_TARGET_SYCL
+    // In SYCL/C++ points are computed iteratively and we need to do min/max
+    // reduction here
+    projection.lower.x = min(projectedPt.x, projection.lower.x);
+    projection.lower.y = min(projectedPt.y, projection.lower.y);
+    projection.lower.z = min(projectedPt.z, projection.lower.z);
+
+    projection.upper.x = max(projectedPt.x, projection.upper.x);
+    projection.upper.y = max(projectedPt.y, projection.upper.y);
+    projection.upper.z = max(projectedPt.z, projection.upper.z);
+#endif
   }
 
+#ifndef OSPRAY_TARGET_SYCL
   // Find the projection of all points that projected to the screen
-  if (projectedPt.z < 1e20f) {
-    projection.lower.x = reduce_min(projectedPt.x);
-    projection.lower.y = reduce_min(projectedPt.y);
-    projection.lower.z = reduce_min(projectedPt.z);
+  projection.lower.x = reduce_min(projectedPt.x);
+  projection.lower.y = reduce_min(projectedPt.y);
+  projection.lower.z = reduce_min(projectedPt.z);
 
-    projection.upper.x = reduce_max(projectedPt.x);
-    projection.upper.y = reduce_max(projectedPt.y);
-    projection.upper.z = reduce_max(projectedPt.z);
-  }
+  projection.upper.x = reduce_max(projectedPt.x);
+  projection.upper.y = reduce_max(projectedPt.y);
+  projection.upper.z = reduce_max(projectedPt.z);
+#endif
 }
 
 OSPRAY_END_ISPC_NAMESPACE

@@ -405,19 +405,122 @@ if (OSPRAY_MODULE_GPU)
   set_source_files_properties(${OSPRAY_ISPC_SOURCES} PROPERTIES
       LANGUAGE CXX)
 
+  add_library(ospray_module_gpu_kernels STATIC
+      ${OSPRAY_ISPC_SOURCES})
+
+  set_target_properties(ospray_module_gpu_kernels PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON)
+
+  target_link_libraries(ospray_module_gpu_kernels
+  PUBLIC
+    ospray
+    rkcommon::rkcommon
+    $<BUILD_INTERFACE:ispcrt::ispcrt>
+    $<BUILD_INTERFACE:embree>
+  )
+
+  target_include_directories(ospray_module_gpu_kernels
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/api>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/common>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+      # NOTE(jda) - the following includes are missing despite PUBLIC linking
+      $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
+      # TODO: needs OpenVKL GPU port
+      #$<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
+      $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
+      #######################################################################
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
+
+  target_compile_definitions(ospray_module_gpu_kernels
+  PUBLIC
+    TILE_SIZE=${OSPRAY_TILE_SIZE}
+    MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
+    RKCOMMON_SYCL
+    RKCOMMON_NO_SIMD
+  )
+
+  target_compile_options(ospray_module_gpu_kernels
+  PRIVATE
+    -x c++
+  )
+
+  target_compile_options(ospray_module_gpu_kernels PRIVATE
+    -fsycl
+    ${OSPRAY_CXX_FLAGS_SYCL}
+    -fsycl-targets=${OSPRAY_SYCL_TARGET}
+  )
+
+  #include(ProcessorCount)
+  #ProcessorCount(PROCESSOR_COUNT)
+  #if (NOT PROCESSOR_COUNT EQUAL 0)
+  #  set(SYCL_MAX_LINK_JOBS ${PROCESSOR_COUNT})
+  #else()
+  #  set(SYCL_MAX_LINK_JOBS 4)
+  #endif()
+
+  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
+    target_link_options(ospray_module_gpu_kernels PRIVATE
+      -fsycl
+      #-fsycl-device-code-split=per_kernel
+      #-fsycl-max-parallel-link-jobs=${SYCL_MAX_LINK_JOBS}
+      -fsycl-targets=${OSPRAY_SYCL_TARGET}
+      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
+    )
+  else()
+    target_link_options(ospray_module_gpu_kernels PRIVATE
+      -fsycl
+      #-fsycl-device-code-split=per_kernel
+      #-fsycl-max-parallel-link-jobs=${SYCL_MAX_LINK_JOBS}
+      -fsycl-targets=${OSPRAY_SYCL_TARGET}
+      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
+    )
+  endif()
+
+
+  target_compile_definitions(ospray_module_gpu_kernels
+  PUBLIC
+    OSPRAY_TARGET_SYCL
+    __SYCL_USE_NON_VARIADIC_SPIRV_OCL_PRINTF__
+    OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
+    OSPRAY_END_ISPC_NAMESPACE=}
+    uniform=
+    varying=
+    unmasked=
+    export=
+    rtcIntersectV=rtcIntersect1
+    rtcOccludedV=rtcOccluded1
+    rtcInterpolateV1=rtcInterpolate1
+    programCount=1
+    programIndex=0
+  )
+
   add_library(ospray_module_gpu SHARED
-      ${OSPRAY_CPP_SOURCES} ${OSPRAY_ISPC_SOURCES})
+      ${OSPRAY_CPP_SOURCES})
 
   set_target_properties(ospray_module_gpu PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON)
 
   target_link_libraries(ospray_module_gpu
-  PUBLIC
-    ospray
-    rkcommon::rkcommon
-    $<BUILD_INTERFACE:ispcrt::ispcrt>
-    $<BUILD_INTERFACE:embree>
+    PRIVATE
+      ospray_module_gpu_kernels
+  )
+
+  target_link_libraries(ospray_module_gpu
+    PUBLIC
+      ospray
+      rkcommon::rkcommon
+      $<BUILD_INTERFACE:ispcrt::ispcrt>
+      $<BUILD_INTERFACE:embree>
+      # TODO: needs OpenVKL GPU port
+      #$<BUILD_INTERFACE:openvkl::openvkl>
   )
 
   target_include_directories(ospray_module_gpu
@@ -475,15 +578,6 @@ if (OSPRAY_MODULE_GPU)
     __SYCL_USE_NON_VARIADIC_SPIRV_OCL_PRINTF__
     OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
     OSPRAY_END_ISPC_NAMESPACE=}
-    uniform=
-    varying=
-    unmasked=
-    export=
-    rtcIntersectV=rtcIntersect1
-    rtcOccludedV=rtcOccluded1
-    rtcInterpolateV1=rtcInterpolate1
-    programCount=1
-    programIndex=0
   )
 
   ospray_install_library(ospray_module_gpu lib)

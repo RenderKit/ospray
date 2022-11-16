@@ -144,7 +144,13 @@ void DistributedLoadBalancer::renderFrame(
   // want to run in parallel to each other. For now this still runs as a
   // parallel for here so we don't end up having to do a more sync/blocking
   // style render
+#ifdef OSPRAY_TARGET_SYCL
+  // TODO For GPU: Just testing initial move to GPU so we run this serially to
+  // not have thread conflicts on the sycl queue
+  tasking::serial_for(dfb->getSparseLayerCount(), [&](size_t layer) {
+#else
   tasking::parallel_for(dfb->getSparseLayerCount(), [&](size_t layer) {
+#endif
     // Just render the background color and compute visibility information for
     // the tiles we own for layer "0"
     SparseFrameBuffer *sparseFb = dfb->getSparseFBLayer(layer);
@@ -156,17 +162,30 @@ void DistributedLoadBalancer::renderFrame(
 
     // We use uint8 instead of bool to avoid hitting UB with differing "true"
     // values used by ISPC and C++
-    std::vector<uint8_t> regionVisible(numRegions * tiles.size(), 0);
+    // std::vector<uint8_t> regionVisible(numRegions * tiles.size(), 0);
+    BufferShared<uint8_t> regionVisible(
+        sparseFb->getISPCDevice().getIspcrtDevice(), numRegions * tiles.size());
+    std::memset(regionVisible.sharedPtr(), 0, regionVisible.size());
 
     // Compute visibility for the tasks we're rendering
     auto renderTaskIDs = sparseFb->getRenderTaskIDs();
 
+    /* TODO: this needs to run on the GPU because we'll have GPU Embree & GPU
+     * BVH. Then layer 0 populating its background tiles can be run in parallel
+     * to the GPU rendering, and I want to still keep the partitions that are
+     * run to build up the task ID lists also run in parallel.
+     */
     renderer->computeRegionVisibility(sparseFb,
         camera,
         world,
-        regionVisible.data(),
+        regionVisible.sharedPtr(),
         perFrameData,
-        renderTaskIDs);
+        renderTaskIDs
+#ifdef OSPRAY_TARGET_SYCL
+        ,
+        *syclQueue
+#endif
+    );
 
     // If we're rendering the background tiles send them over now
     if (layer == 0) {
@@ -215,6 +234,12 @@ void DistributedLoadBalancer::renderFrame(
       // utilization. This also removes tasks that have completed due to
       // adaptive refinement
       const size_t rid = world->myRegionIds[layer - 1];
+      /* TODO GPU: Now activeTasks needs to be in a BufferShared, and to keep
+       * the partition/taskID build in parallel I can do a separate parallel
+       * loop ahead of time to build the buffer shared of active tasks for each
+       * layer. Then all the rendering kernels for each layer can be submitted
+       * on the queue and we wait on all them to finish.
+       */
       std::vector<uint32_t> activeTasks(
           renderTaskIDs.begin(), renderTaskIDs.end());
       auto removeTasks = std::partition(
@@ -224,13 +249,21 @@ void DistributedLoadBalancer::renderFrame(
                 && dfb->tileError(tileIDs[tileIdx]) > renderer->errorThreshold;
           });
       activeTasks.erase(removeTasks, activeTasks.end());
+      BufferShared<uint32_t> activeTasksShared(
+          sparseFb->getISPCDevice().getIspcrtDevice(), activeTasks);
 
       renderer->renderRegionTasks(sparseFb,
           camera,
           world,
           world->allRegions[rid],
           perFrameData,
-          utility::ArrayView<uint32_t>(activeTasks));
+          utility::ArrayView<uint32_t>(
+              activeTasksShared.data(), activeTasksShared.size())
+#ifdef OSPRAY_TARGET_SYCL
+              ,
+          *syclQueue
+#endif
+      );
 
       tasking::parallel_for(tiles.size(), [&](size_t i) {
         if (!regionVisible[numRegions * i + rid]

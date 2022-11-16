@@ -29,8 +29,6 @@
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
 #endif
-// ispc exports
-#include "MPIDistributedDevice_ispc.h"
 
 namespace ospray {
 namespace mpi {

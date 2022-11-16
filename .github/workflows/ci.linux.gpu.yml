@@ -51,6 +51,24 @@ jobs:
       artifact-out: build-ubuntu2204-DG2-JIT
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
+  build-ubuntu2204-DG2-AOT-mpi:
+    needs: download-dpcpp-gfx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
+      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
+      # Would help to have a module that we can load for specific gfx/agama versions
+      cmd: |
+        apt install -y mpich libmpich-dev
+        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
+        export CC=clang
+        export CXX=clang++
+        scripts/build/linux.sh -G Ninja -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git -DEMBREE_BRANCH=devel -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=will/embree4 -DRKCOMMON_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git -DRKCOMMON_BRANCH=will/rkmath-tweaks -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
+      artifact-out: build-ubuntu2204-DG2-AOT-mpi
+      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+
 ### TEST JOBS ###
 
   test-ubuntu2204-DG2-AOT:

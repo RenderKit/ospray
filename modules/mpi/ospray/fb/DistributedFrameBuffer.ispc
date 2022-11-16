@@ -1,13 +1,12 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/vec.ih"
+#include "rkcommon/math/box.ih"
+
 #include "fb/FrameBuffer.ih"
 #include "fb/TileShared.h"
-#ifndef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/vec.ih"
-#else
-#include "common/rkcommonSYCLWrappers.h"
-#endif
 
 #include "fb/FrameBufferShared.h"
 
@@ -369,6 +368,8 @@ export void DFB_sortAndBlendFragments(
 
 #ifndef OSPRAY_TARGET_SYCL
 task
+#else
+SYCL_EXTERNAL
 #endif
     void
     DFB_runPixelOpsTask(FrameBuffer *uniform fb,

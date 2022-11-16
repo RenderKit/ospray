@@ -169,6 +169,7 @@ if (OSPRAY_MODULE_GPU)
     ospray_mpi_common
     ospray_pico_bench
     ospray_module_gpu
+    ospray_module_gpu_kernels
     # Is build interface going to export to link here?
     #$<BUILD_INTERFACE:ispcrt::ispcrt>
     #$<BUILD_INTERFACE:embree>

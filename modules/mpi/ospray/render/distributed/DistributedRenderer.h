@@ -33,14 +33,38 @@ struct DistributedRenderer
       DistributedWorld *world,
       uint8_t *regionVisible,
       void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs) const;
+      const utility::ArrayView<uint32_t> &taskIDs
+#ifdef OSPRAY_TARGET_SYCL
+      ,
+      sycl::queue &syclQueue
+#endif
+  ) const;
 
-  void renderRegionTasks(SparseFrameBuffer *fb,
+#ifndef OSPRAY_TARGET_SYCL
+  virtual void renderRegionTasks(SparseFrameBuffer *fb,
       Camera *camera,
       DistributedWorld *world,
       const box3f &region,
       void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs) const;
+      const utility::ArrayView<uint32_t> &taskIDs) const = 0;
+#else
+  // Not used by distributed renderers
+  void renderTasks(FrameBuffer *fb,
+      Camera *camera,
+      World *world,
+      void *perFrameData,
+      const utility::ArrayView<uint32_t> &taskIDs,
+      sycl::queue &syclQueue) const override
+  {}
+
+  virtual void renderRegionTasks(SparseFrameBuffer *fb,
+      Camera *camera,
+      DistributedWorld *world,
+      const box3f &region,
+      void *perFrameData,
+      const utility::ArrayView<uint32_t> &taskIDs,
+      sycl::queue &syclQueue) const = 0;
+#endif
 
   virtual std::shared_ptr<TileOperation> tileOperation() = 0;
 

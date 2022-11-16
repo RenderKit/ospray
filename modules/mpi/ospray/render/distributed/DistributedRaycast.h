@@ -23,9 +23,6 @@ namespace mpi {
  * others. The renderer uses the 'regions' data set on the distributed world
  * from the MPIDistributedDevice to determine the number of tiles to
  * render and expect for compositing.
- *
- * Also see apps/ospRandSciVisTest.cpp and apps/ospRandSphereTest.cpp for
- * example usage.
  */
 struct DistributedRaycastRenderer : public AddStructShared<DistributedRenderer,
                                         ispc::DistributedRaycastRenderer>
@@ -39,16 +36,21 @@ struct DistributedRaycastRenderer : public AddStructShared<DistributedRenderer,
 
   std::shared_ptr<TileOperation> tileOperation() override;
 
-#ifdef OSPRAY_TARGET_SYCL
-  void renderTasks(FrameBuffer *fb,
+#ifndef OSPRAY_TARGET_SYCL
+  void renderRegionTasks(SparseFrameBuffer *fb,
       Camera *camera,
-      World *world,
+      DistributedWorld *world,
+      const box3f &region,
+      void *perFrameData,
+      const utility::ArrayView<uint32_t> &taskIDs) const override;
+#else
+  void renderRegionTasks(SparseFrameBuffer *fb,
+      Camera *camera,
+      DistributedWorld *world,
+      const box3f &region,
       void *perFrameData,
       const utility::ArrayView<uint32_t> &taskIDs,
-      sycl::queue &syclQueue) const
-  {
-    // TODO
-  }
+      sycl::queue &syclQueue) const override;
 #endif
 
  private:

@@ -8,6 +8,18 @@
 // ispc exports
 #ifndef OSPRAY_TARGET_SYCL
 #include "render/distributed/DistributedRenderer_ispc.h"
+#else
+namespace ispc {
+SYCL_EXTERNAL void DR_default_computeRegionVisibility(
+    DistributedRenderer *uniform self,
+    SparseFB *uniform fb,
+    Camera *uniform camera,
+    DistributedWorld *uniform world,
+    uint8 *uniform regionVisible,
+    void *uniform perFrameData,
+    const uint32 *uniform taskIDs,
+    const int taskIndex0);
+}
 #endif
 
 namespace ospray {
@@ -16,14 +28,7 @@ namespace mpi {
 DistributedRenderer::DistributedRenderer(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device),
       mpiGroup(mpicommon::worker.dup())
-{
-#ifndef OSPRAY_TARGET_SYCL
-  getSh()->computeRegionVisibility =
-      ispc::DR_default_computeRegionVisibility_addr();
-  getSh()->renderRegionSample = ispc::DR_default_renderRegionSample_addr();
-  getSh()->renderRegionToTile = ispc::DR_default_renderRegionToTile_addr();
-#endif
-}
+{}
 
 DistributedRenderer::~DistributedRenderer()
 {
@@ -35,9 +40,13 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
     DistributedWorld *world,
     uint8_t *regionVisible,
     void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs) const
+    const utility::ArrayView<uint32_t> &taskIDs
+#ifdef OSPRAY_TARGET_SYCL
+    ,
+    sycl::queue &syclQueue
+#endif
+) const
 {
-  // TODO this needs an exported function
 #ifndef OSPRAY_TARGET_SYCL
   ispc::DistributedRenderer_computeRegionVisibility(getSh(),
       fb->getSh(),
@@ -47,26 +56,32 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
       perFrameData,
       taskIDs.data(),
       taskIDs.size());
-#endif
-}
+#else
+  auto *rendererSh = getSh();
+  auto *fbSh = fb->getSh();
+  auto *cameraSh = camera->getSh();
+  auto *worldSh = world->getSh();
+  const uint32_t *taskIDsPtr = taskIDs.data();
+  const size_t numTasks = taskIDs.size();
 
-void DistributedRenderer::renderRegionTasks(SparseFrameBuffer *fb,
-    Camera *camera,
-    DistributedWorld *world,
-    const box3f &region,
-    void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs) const
-{
-  // TODO: exported fcn
-#ifndef OSPRAY_TARGET_SYCL
-  ispc::DistributedRenderer_renderRegionToTile(getSh(),
-      fb->getSh(),
-      camera->getSh(),
-      world->getSh(),
-      &region,
-      perFrameData,
-      taskIDs.data(),
-      taskIDs.size());
+  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+    const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
+    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
+      if (taskIndex.get_global_id(0) < numTasks) {
+        ispc::DR_default_computeRegionVisibility(rendererSh,
+            fbSh,
+            cameraSh,
+            worldSh,
+            regionVisible,
+            perFrameData,
+            taskIDsPtr,
+            taskIndex.get_global_id(0));
+      }
+    });
+  });
+  event.wait_and_throw();
+  // For prints we have to flush the entire queue, because other stuff is queued
+  syclQueue.wait_and_throw();
 #endif
 }
 

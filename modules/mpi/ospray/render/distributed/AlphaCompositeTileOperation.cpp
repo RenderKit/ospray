@@ -124,6 +124,10 @@ void LiveAlphaCompositeTile::process(const ispc::Tile &tile)
         tileArray,
         [](std::unique_ptr<BufferedTile> &t) { return &t->tile; });
 
+    // TODO: Later we will still want to run this as ISPC on the CPU, even in
+    // the GPU module. It doesn't make sense to transfer the data to the GPU
+    // just to do a cheap-ish kernel that sorts & blends the data, it'll
+    // probabaly still run best keeping it on the CPU and just using ISPC
     ispc::DFB_sortAndBlendFragments(
         (ispc::VaryingTile **)tileArray, bufferedTiles.size());
 
