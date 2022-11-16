@@ -107,7 +107,13 @@ void DistributedWorld::commit()
 
     regionScene = rtcNewScene(getISPCDevice().getEmbreeDevice());
     rtcAttachGeometry(regionScene, regionGeometry->getEmbreeGeometry());
-    rtcSetSceneFlags(regionScene, RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
+    rtcSetSceneFlags(regionScene,
+#if EMBREE_VERSION_MAJOR == 4
+        RTC_SCENE_FLAG_FILTER_FUNCTION_IN_ARGUMENTS
+#else
+        RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION
+#endif
+    );
     rtcCommitScene(regionScene);
 
     regionGeometry->refDec();
