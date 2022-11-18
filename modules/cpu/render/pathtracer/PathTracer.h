@@ -20,20 +20,16 @@ struct PathTracer : public AddStructShared<Renderer, ispc::PathTracer>
   virtual void commit() override;
   virtual void *beginFrame(FrameBuffer *, World *) override;
 
-#ifdef OSPRAY_TARGET_SYCL
-  void renderTasks(FrameBuffer *fb,
-      Camera *camera,
-      World *world,
-      void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs,
-      sycl::queue &syclQueue) const override;
-#else
   virtual void renderTasks(FrameBuffer *fb,
       Camera *camera,
       World *world,
       void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs) const override;
+      const utility::ArrayView<uint32_t> &taskIDs
+#ifdef OSPRAY_TARGET_SYCL
+      ,
+      sycl::queue &syclQueue
 #endif
+  ) const override;
 
  private:
   void generateGeometryLights(const World &, std::vector<ispc::Light *> &);

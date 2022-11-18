@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
-#include "DebugRendererType.h"
+#include "camera/Camera.ih"
 #include "common/World.ih"
+#include "math/random.ih"
+#include "pf/PixelFilterType.ih"
 #include "render/Renderer.ih"
 #include "render/util.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -15,12 +17,14 @@
 
 #ifdef OSPRAY_TARGET_SYCL
 #include "common/rkcommonSYCLWrappers.h"
-#include "geometry/MeshShared.h"
 #else
 #include "rkcommon/utility/random.ih"
 #endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
+
+// TODO: All `SYCL_EXTERNAL __noinline` are here just to prevent IGC ocloc
+// from crashing. We should use `inline` or `static` instead.
 
 // common utility function, traces ray and handles default and background
 SYCL_EXTERNAL __noinline bool hitBackground(
@@ -343,7 +347,7 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
 #endif
 }
 
-SYCL_EXTERNAL void DebugRenderer_renderSample(
+static void DebugRenderer_renderSample(
     Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
@@ -403,28 +407,40 @@ SYCL_EXTERNAL void DebugRenderer_renderSample(
   };
 }
 
-// DebugRenderer C++ interface ////////////////////////////////////////////////
+#define renderSampleFn DebugRenderer_renderSample
+#include "render/RendererRenderTaskFn.inl"
+#undef renderSampleFn
 
-#define EXPORT_FN_ADDR(name)                                                   \
-  export void *uniform name##_addr()                                           \
-  {                                                                            \
-    return (void *uniform)name;                                                \
-  }
-
-EXPORT_FN_ADDR(DebugRenderer_testFrame);
-EXPORT_FN_ADDR(DebugRenderer_rayDir);
-EXPORT_FN_ADDR(DebugRenderer_eyeLight);
-EXPORT_FN_ADDR(DebugRenderer_Ng);
-EXPORT_FN_ADDR(DebugRenderer_Ns);
-EXPORT_FN_ADDR(DebugRenderer_vertexColor);
-EXPORT_FN_ADDR(DebugRenderer_texCoord);
-EXPORT_FN_ADDR(DebugRenderer_dPds);
-EXPORT_FN_ADDR(DebugRenderer_dPdt);
-EXPORT_FN_ADDR(DebugRenderer_primID);
-EXPORT_FN_ADDR(DebugRenderer_geomID);
-EXPORT_FN_ADDR(DebugRenderer_instID);
-EXPORT_FN_ADDR(DebugRenderer_backfacing_Ng);
-EXPORT_FN_ADDR(DebugRenderer_backfacing_Ns);
-EXPORT_FN_ADDR(DebugRenderer_volume);
+#ifdef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL void DebugRenderer_renderTask(Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    World *uniform world,
+    void *uniform perFrameData,
+    const uint32 *uniform taskIDs,
+    const int taskIndex0)
+{
+  Renderer_default_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs, taskIndex0);
+}
+#else
+export void DebugRenderer_renderTasks(void *uniform _self,
+    void *uniform _fb,
+    void *uniform _camera,
+    void *uniform _world,
+    void *uniform perFrameData,
+    void *uniform _taskIDs,
+    uniform uint32 numTasks)
+{
+  Renderer *uniform self = (Renderer * uniform) _self;
+  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
+  Camera *uniform camera = (Camera * uniform) _camera;
+  World *uniform world = (World * uniform) _world;
+  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  launch[numTasks] Renderer_default_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs);
+  sync;
+}
+#endif
 
 OSPRAY_END_ISPC_NAMESPACE

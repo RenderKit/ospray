@@ -9,6 +9,8 @@
 #ifdef OSPRAY_ENABLE_VOLUMES
 #include "volumes.ih"
 #endif
+// c++ shared
+#include "SciVisShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

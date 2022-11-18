@@ -10,7 +10,6 @@
 #include "ospray/OSPEnums.h"
 #include "pf/PixelFilter.h"
 #ifdef OSPRAY_TARGET_SYCL
-#include "render/RendererType.ih"
 #include "render/util.ih"
 #else
 // ispc exports
@@ -29,10 +28,6 @@ Renderer::Renderer(api::ISPCDevice &device)
   pixelFilter = nullptr;
   mathConstants = rkcommon::make_unique<MathConstants>(device);
   getSh()->mathConstants = mathConstants->getSh();
-#ifndef OSPRAY_TARGET_SYCL
-  getSh()->renderSample = reinterpret_cast<ispc::Renderer_RenderSampleFct>(
-      ispc::Renderer_default_renderSample_addr());
-#endif
 }
 
 std::string Renderer::toString() const
@@ -90,22 +85,7 @@ void Renderer::commit()
   ispc::precomputeZOrder();
 }
 
-#ifndef OSPRAY_TARGET_SYCL
-void Renderer::renderTasks(FrameBuffer *fb,
-    Camera *camera,
-    World *world,
-    void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs) const
-{
-  ispc::Renderer_renderTasks(getSh(),
-      fb->getSh(),
-      camera->getSh(),
-      world->getSh(),
-      perFrameData,
-      taskIDs.data(),
-      taskIDs.size());
-}
-#else
+#ifdef OSPRAY_TARGET_SYCL
 cl::sycl::nd_range<1> Renderer::computeDispatchRange(
     const size_t globalSize, const size_t workgroupSize) const
 {
@@ -124,6 +104,7 @@ OSPPickResult Renderer::pick(
   res.model = nullptr;
   res.primID = RTC_INVALID_GEOMETRY_ID;
 
+#ifndef OSPRAY_TARGET_SYCL
   int instID = RTC_INVALID_GEOMETRY_ID;
   int geomID = RTC_INVALID_GEOMETRY_ID;
   int primID = RTC_INVALID_GEOMETRY_ID;
@@ -155,6 +136,7 @@ OSPPickResult Renderer::pick(
     res.model = (OSPGeometricModel)model;
     res.primID = static_cast<uint32_t>(primID);
   }
+#endif
 
   return res;
 }

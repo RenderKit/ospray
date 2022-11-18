@@ -1,7 +1,9 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "camera/Camera.ih"
 #include "math/random.ih"
+#include "pf/PixelFilterType.ih"
 #include "render/Renderer.ih"
 // AO renderer
 #include "surfaces.ih"
@@ -12,8 +14,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL void AORenderer_renderSample(
-    Renderer *uniform _self,
+static void AORenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -132,11 +133,40 @@ SYCL_EXTERNAL void AORenderer_renderSample(
   sample.alpha = outputColor.w;
 }
 
-// AORenderer C++ interface ////////////////////////////////////////////////////
+#define renderSampleFn AORenderer_renderSample
+#include "render/RendererRenderTaskFn.inl"
+#undef renderSampleFn
 
-export void *uniform AORenderer_renderSample_addr()
+#ifdef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL void AORenderer_renderTask(Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    World *uniform world,
+    void *uniform perFrameData,
+    const uint32 *uniform taskIDs,
+    const int taskIndex0)
 {
-  return (void *uniform)AORenderer_renderSample;
+  Renderer_default_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs, taskIndex0);
 }
+#else
+export void AORenderer_renderTasks(void *uniform _self,
+    void *uniform _fb,
+    void *uniform _camera,
+    void *uniform _world,
+    void *uniform perFrameData,
+    void *uniform _taskIDs,
+    uniform uint32 numTasks)
+{
+  Renderer *uniform self = (Renderer * uniform) _self;
+  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
+  Camera *uniform camera = (Camera * uniform) _camera;
+  World *uniform world = (World * uniform) _world;
+  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  launch[numTasks] Renderer_default_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs);
+  sync;
+}
+#endif
 
 OSPRAY_END_ISPC_NAMESPACE

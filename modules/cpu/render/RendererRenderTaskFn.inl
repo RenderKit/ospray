@@ -5,19 +5,10 @@
 // as a function in Renderer.ispc but in SYCL it's a template function in the
 // RendererShared header.
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "math/random.ih"
-#include "math/sampling.ih"
-#include "pf/PixelFilterType.ih"
-#include "render/util.ih"
-#endif
-
-OSPRAY_BEGIN_ISPC_NAMESPACE
-
 #ifndef OSPRAY_TARGET_SYCL
 task
 #endif
-static void
+    static void
     Renderer_default_renderTask(Renderer *uniform self,
         FrameBuffer *uniform fb,
         Camera *uniform camera,
@@ -137,6 +128,3 @@ static void
     }
   FrameBuffer_dispatch_completeTask(fb, taskDesc);
 }
-
-OSPRAY_END_ISPC_NAMESPACE
-

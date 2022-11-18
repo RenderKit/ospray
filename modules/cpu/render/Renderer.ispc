@@ -48,50 +48,7 @@ SYCL_EXTERNAL float Renderer_getMaxDepth(
   return max(0.f, get1f(self->maxDepthTexture, lookup));
 }
 
-SYCL_EXTERNAL void Renderer_default_renderSample(Renderer *uniform self,
-    FrameBuffer *uniform fb,
-    World *uniform model,
-    void *uniform perFrameData,
-    varying ScreenSample &sample)
-{
-  sample.z = sample.ray.t;
-  vec4f bg = Renderer_getBackground(self, sample.pos);
-  sample.alpha = bg.w;
-  sample.rgb = make_vec3f(bg);
-}
-
-#ifndef OSPRAY_TARGET_SYCL
-#define renderSampleFn Renderer_dispatch_renderSample
-#include "RendererRenderTaskFn.inl"
-#undef renderSampleFn
-#endif
-
 // Exports (called from C++) //////////////////////////////////////////////////
-
-#ifndef OSPRAY_TARGET_SYCL
-export void *uniform Renderer_default_renderSample_addr()
-{
-  return (void *uniform)Renderer_default_renderSample;
-}
-
-export void Renderer_renderTasks(void *uniform _self,
-    void *uniform _fb,
-    void *uniform _camera,
-    void *uniform _world,
-    void *uniform perFrameData,
-    void *uniform _taskIDs,
-    uniform uint32 numTasks)
-{
-  Renderer *uniform self = (Renderer * uniform) _self;
-  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
-  Camera *uniform camera = (Camera * uniform) _camera;
-  World *uniform world = (World * uniform) _world;
-  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
-  launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs);
-  sync;
-}
-#endif
 
 export void Renderer_pick(const void *uniform _self,
     const void *uniform _fb,

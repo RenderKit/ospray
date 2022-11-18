@@ -25,9 +25,7 @@ struct SciVis
         aoSamples(0),
         aoRadius(1e20f),
         volumeSamplingRate(1.f)
-  {
-    super.type = RENDERER_TYPE_SCIVIS;
-  }
+  {}
 };
 } // namespace ispc
 #else

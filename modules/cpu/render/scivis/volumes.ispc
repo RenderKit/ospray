@@ -8,6 +8,8 @@
 #include "surfaces.ih"
 #include "volume/VolumetricModel.ih"
 #include "volumes.ih"
+// c++ shared
+#include "SciVisShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -157,8 +159,9 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
       minDist = vc.distance;
       sampledColor = vc.sample;
       usedSampleId = i;
+      SciVis *scivis = rc.renderer;
       if (minDist < ray.t
-          && sampledColor.w < 1.0f - rc.renderer->super.minContribution) {
+          && sampledColor.w < 1.0f - scivis->super.minContribution) {
         ray.t = minDist;
         ray.geomID = volumeIntervals.intervals[i].geomID;
         ray.instID = volumeIntervals.intervals[i].instID;
@@ -293,7 +296,8 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       transmission *= sampledColor.w;
 
       // Stop if we reached min contribution
-      if (transmission < rc.renderer->super.minContribution)
+      SciVis *scivis = rc.renderer;
+      if (transmission < scivis->super.minContribution)
         transmission = 0.f;
     }
   }

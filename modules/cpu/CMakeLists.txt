@@ -178,7 +178,6 @@ set(OSPRAY_ISPC_SOURCES
   render/Material.ispc
   render/MaterialType.ispc
   render/Renderer.ispc
-  render/RendererType.ispc
   render/util.ispc
 
   render/debug/DebugRenderer.ispc

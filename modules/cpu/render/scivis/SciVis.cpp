@@ -12,22 +12,13 @@
 #include "render/scivis/SciVis_ispc.h"
 #else
 #include "SciVis.ih"
-#define renderSampleFn ispc::SciVis_renderSample
-#include "render/RendererRenderTaskFn.inl"
-#undef renderSampleFn
 #endif
 
 namespace ospray {
 
 SciVis::SciVis(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
-{
-#ifndef OSPRAY_TARGET_SYCL
-  getSh()->super.renderSample =
-      reinterpret_cast<ispc::Renderer_RenderSampleFct>(
-          ispc::SciVis_renderSample_addr());
-#endif
-}
+{}
 
 std::string SciVis::toString() const
 {
@@ -62,41 +53,52 @@ void *SciVis::beginFrame(FrameBuffer *, World *world)
   return nullptr;
 }
 
-#ifdef OSPRAY_TARGET_SYCL
 void SciVis::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
     void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs,
-    sycl::queue &syclQueue) const
+    const utility::ArrayView<uint32_t> &taskIDs
+#ifdef OSPRAY_TARGET_SYCL
+    ,
+    sycl::queue &syclQueue
+#endif
+) const
 {
   auto *rendererSh = getSh();
   auto *fbSh = fb->getSh();
   auto *cameraSh = camera->getSh();
   auto *worldSh = world->getSh();
-  const uint32_t *taskIDsPtr = taskIDs.data();
   const size_t numTasks = taskIDs.size();
 
+#ifdef OSPRAY_TARGET_SYCL
+  const uint32_t *taskIDsPtr = taskIDs.data();
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
     const cl::sycl::nd_range<1> dispatchRange =
         computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(
-        dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) {
-          if (taskIndex.get_global_id(0) < numTasks) {
-            ispc::Renderer_default_renderTask(&rendererSh->super,
-                fbSh,
-                cameraSh,
-                worldSh,
-                perFrameData,
-                taskIDsPtr,
-                taskIndex.get_global_id(0));
-          }
-        });
+    cgh.parallel_for(dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) {
+      if (taskIndex.get_global_id(0) < numTasks) {
+        ispc::SciVis_renderTask(&rendererSh->super,
+            fbSh,
+            cameraSh,
+            worldSh,
+            perFrameData,
+            taskIDsPtr,
+            taskIndex.get_global_id(0));
+      }
+    });
   });
   event.wait_and_throw();
   // For prints we have to flush the entire queue, because other stuff is queued
   syclQueue.wait_and_throw();
-}
+#else
+  ispc::SciVis_renderTasks(&rendererSh->super,
+      fbSh,
+      cameraSh,
+      worldSh,
+      perFrameData,
+      taskIDs.data(),
+      numTasks);
 #endif
+}
 
 } // namespace ospray

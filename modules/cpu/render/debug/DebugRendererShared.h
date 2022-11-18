@@ -3,12 +3,30 @@
 
 #pragma once
 
-#include "DebugRendererType.h"
 #include "render/RendererShared.h"
 
 #ifdef __cplusplus
 namespace ispc {
 #endif // __cplusplus
+
+enum DebugRendererType
+{
+  TEST_FRAME,
+  RAY_DIR,
+  EYE_LIGHT,
+  NG,
+  NS,
+  COLOR,
+  TEX_COORD,
+  DPDS,
+  DPDT,
+  PRIM_ID,
+  GEOM_ID,
+  INST_ID,
+  BACKFACING_NG,
+  BACKFACING_NS,
+  VOLUME
+};
 
 struct DebugRenderer
 {
@@ -16,10 +34,7 @@ struct DebugRenderer
   DebugRendererType type;
 
 #ifdef __cplusplus
-  DebugRenderer() : type(TEST_FRAME)
-  {
-    super.type = RENDERER_TYPE_DEBUG;
-  }
+  DebugRenderer() : type(TEST_FRAME) {}
 #endif
 };
 #ifdef __cplusplus

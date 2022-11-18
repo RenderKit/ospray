@@ -39,6 +39,7 @@ void LocalTiledLoadBalancer::runRenderTasks(FrameBuffer *fb,
   // We'll only have error data to check against the renderer's threshold if the
   // framebuffer has a variance channel, if it doesn't we'll just end up
   // rendering all tasks anyway.
+  const utility::ArrayView<uint32_t> *pRenderTaskIDs = &renderTaskIDs;
   if (renderer->errorThreshold > 0.f && fb->hasVarianceBuf()) {
     std::vector<uint32_t> activeTasks;
     for (auto &i : renderTaskIDs) {
@@ -53,30 +54,21 @@ void LocalTiledLoadBalancer::runRenderTasks(FrameBuffer *fb,
     // tasks vector in USM instead of copying it here
     BufferShared<uint32_t> activeTasksShared(
         fb->getISPCDevice().getIspcrtDevice(), activeTasks);
-
-    renderer->renderTasks(fb,
-        camera,
-        world,
-        perFrameData,
-        utility::ArrayView<uint32_t>(
-            activeTasksShared.data(), activeTasksShared.size())
-#ifdef OSPRAY_TARGET_SYCL
-            ,
-        *syclQueue
-#endif
-    );
-  } else {
-    renderer->renderTasks(fb,
-        camera,
-        world,
-        perFrameData,
-        renderTaskIDs
-#ifdef OSPRAY_TARGET_SYCL
-        ,
-        *syclQueue
-#endif
-    );
+    utility::ArrayView<uint32_t> activeTasksView(
+        activeTasksShared.data(), activeTasksShared.size());
+    pRenderTaskIDs = &activeTasksView;
   }
+
+  renderer->renderTasks(fb,
+      camera,
+      world,
+      perFrameData,
+      *pRenderTaskIDs
+#ifdef OSPRAY_TARGET_SYCL
+      ,
+      *syclQueue
+#endif
+  );
 }
 
 #ifdef OSPRAY_TARGET_SYCL

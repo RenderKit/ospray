@@ -14,6 +14,7 @@ typedef void *DR_RenderRegionTileFct;
 struct DistributedWorld;
 struct DistributedRenderer;
 struct SparseFB;
+struct Camera;
 
 typedef task void (*DR_ComputeRegionVisibility)(
     DistributedRenderer *uniform self,

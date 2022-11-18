@@ -3,13 +3,15 @@
 
 #pragma once
 
-#include "render/Renderer.ih"
-// c++ shared
-#include "SciVisShared.h"
-#include "OSPConfig.h"
+#include "render/ScreenSample.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
+struct Renderer;
+struct SciVis;
+struct FrameBuffer;
+struct ScreenSample;
+struct World;
 struct LDSampler;
 struct DifferentialGeometry;
 
@@ -35,8 +37,7 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     float rayOffset,
     uniform float quality);
 
-SYCL_EXTERNAL vec3f SciVis_computeAO(
-    const uniform SciVis *uniform self,
+SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     ScreenSample &sample,
@@ -46,10 +47,15 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(
     const uniform float aoRadius,
     const varying vec3i &sampleID);
 
-SYCL_EXTERNAL void SciVis_renderSample(Renderer *uniform _self,
+#ifdef OSPRAY_TARGET_SYCL
+struct Camera;
+SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
     FrameBuffer *uniform fb,
+    Camera *uniform camera,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample);
+    const uint32 *uniform taskIDs,
+    const int taskIndex0);
+#endif
 
 OSPRAY_END_ISPC_NAMESPACE

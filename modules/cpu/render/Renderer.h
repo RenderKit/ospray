@@ -54,21 +54,20 @@ struct OSPRAY_SDK_INTERFACE Renderer
   // called exactly once (on each node) at the end of each frame
   virtual void endFrame(FrameBuffer *fb, void *perFrameData);
 
-#ifndef OSPRAY_TARGET_SYCL
   // called by the load balancer to render one "sample" for each task
-  virtual void renderTasks(FrameBuffer *fb,
-      Camera *camera,
-      World *world,
-      void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs) const;
-#else
-  virtual void renderTasks(FrameBuffer *fb,
-      Camera *camera,
-      World *world,
-      void *perFrameData,
-      const utility::ArrayView<uint32_t> &taskIDs,
-      sycl::queue &syclQueue) const = 0;
+  virtual void renderTasks(FrameBuffer *,
+      Camera *,
+      World *,
+      void *,
+      const utility::ArrayView<uint32_t> &
+#ifdef OSPRAY_TARGET_SYCL
+      ,
+      sycl::queue &
+#endif
+  ) const
+  {}
 
+#ifdef OSPRAY_TARGET_SYCL
   /* Compute the rounded dispatch global size for the given work group size.
    * SYCL requires that globalSize % workgroupSize == 0, ths function will
    * round up globalSize and return nd_range(roundedSize, workgroupSize).

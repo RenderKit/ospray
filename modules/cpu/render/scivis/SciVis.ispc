@@ -2,18 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "SciVis.ih"
+#include "camera/Camera.ih"
 #include "common/World.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
+#include "pf/PixelFilterType.ih"
 #include "surfaces.ih"
 #include "volume/VolumetricModel.ih"
 #include "volumes.ih"
 // c++ shared
+#include "SciVisShared.h"
 #include "fb/FrameBufferShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL void SciVis_renderSample(Renderer *uniform _self,
+static void SciVis_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -248,11 +251,40 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
   return 1.0f - (hits / (float)sampleCnt);
 }
 
-// SciVis C++ interface /////////////////////////////////////////////////////
+#define renderSampleFn SciVis_renderSample
+#include "render/RendererRenderTaskFn.inl"
+#undef renderSampleFn
 
-export void *uniform SciVis_renderSample_addr()
+#ifdef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    World *uniform world,
+    void *uniform perFrameData,
+    const uint32 *uniform taskIDs,
+    const int taskIndex0)
 {
-  return (void *uniform)SciVis_renderSample;
+  Renderer_default_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs, taskIndex0);
 }
+#else
+export void SciVis_renderTasks(void *uniform _self,
+    void *uniform _fb,
+    void *uniform _camera,
+    void *uniform _world,
+    void *uniform perFrameData,
+    void *uniform _taskIDs,
+    uniform uint32 numTasks)
+{
+  Renderer *uniform self = (Renderer * uniform) _self;
+  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
+  Camera *uniform camera = (Camera * uniform) _camera;
+  World *uniform world = (World * uniform) _world;
+  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  launch[numTasks] Renderer_default_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs);
+  sync;
+}
+#endif
 
 OSPRAY_END_ISPC_NAMESPACE

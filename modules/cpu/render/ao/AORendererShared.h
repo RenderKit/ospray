@@ -20,9 +20,7 @@ struct AORenderer
 #ifdef __cplusplus
   AORenderer()
       : aoSamples(1), aoRadius(1e20f), aoIntensity(1.f), volumeSamplingRate(1.f)
-  {
-    super.type = RENDERER_TYPE_AO;
-  }
+  {}
 };
 } // namespace ispc
 #else

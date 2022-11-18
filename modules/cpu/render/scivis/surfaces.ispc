@@ -7,6 +7,7 @@
 #include "surfaces.ih"
 // c++ shared
 #include "SciVisDataShared.h"
+#include "SciVisShared.h"
 #include "lights/LightShared.h"
 #include "lights/LightType.ih"
 

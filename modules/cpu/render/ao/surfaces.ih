@@ -10,6 +10,7 @@
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct DifferentialGeometry;
+struct FrameBuffer;
 
 struct SurfaceShadingInfo
 {

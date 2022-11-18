@@ -34,7 +34,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #define MAX_LIGHTS 1000u
 
-ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
+static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
     const World *uniform world,
     FrameBuffer *uniform fb,
     const uint32 ix,
@@ -97,7 +97,7 @@ ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   return sample;
 }
 
-inline ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
+static ScreenSample PathTracer_renderPixel(PathTracer *uniform self,
     FrameBuffer *uniform fb,
     Camera *uniform camera,
     World *uniform world,
