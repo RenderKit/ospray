@@ -12,21 +12,10 @@
 #include "rkcommon/math/vec.h"
 #endif
 
-#ifdef __cplusplus
-namespace ispc {
-#endif // __cplusplus
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct PixelFilter;
 
-enum PixelFilterType
-{
-  PIXEL_FILTER_TYPE_POINT,
-  PIXEL_FILTER_TYPE_BOX,
-  PIXEL_FILTER_TYPE_LUT,
-  PIXEL_FILTER_TYPE_UNKNOWN,
-};
-
-#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 /* Samples a relative pixel position proportional to the kernel of a
    pixel filter.
 
@@ -41,9 +30,5 @@ enum PixelFilterType
 */
 SYCL_EXTERNAL __noinline vec2f PixelFilter_dispatch_sample(
     const PixelFilter *uniform self, const vec2f &x);
-#endif
 
-#ifdef __cplusplus
-}
-#endif
-
+OSPRAY_END_ISPC_NAMESPACE

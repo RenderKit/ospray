@@ -15,6 +15,7 @@ using namespace ospray;
 #endif
 
 #include "Geometry.ih"
+#include "GeometryDispatch.ih"
 #include "common/Data.ih"
 #include "render/Renderer.ih"
 // c++ shared

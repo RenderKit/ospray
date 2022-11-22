@@ -15,7 +15,7 @@
 #include "common/Instance.ih"
 #include "common/Ray.ih"
 #include "common/VolumeIntervals.ih"
-#include "geometry/GeometryType.ih"
+#include "geometry/GeometryDispatch.ih"
 #include "volume/Volume.ih"
 // c++ shared
 #include "WorldShared.h"

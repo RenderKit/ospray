@@ -8,14 +8,10 @@
 
 #include "Renderer.ih"
 #include "camera/Camera.ih"
-#include "camera/CameraType.ih"
+#include "camera/CameraDispatch.ih"
 #include "common/World.ih"
-#include "fb/FrameBufferType.ih"
-#include "math/random.ih"
-#include "pf/PixelFilterType.ih"
-#include "render/util.ih"
-// c++ shared
-#include "fb/FrameBufferShared.h"
+#include "fb/FrameBuffer.ih"
+#include "fb/FrameBufferDispatch.ih"
 
 #ifdef OSPRAY_TARGET_SYCL
 #include "rkcommon/math/math.h"

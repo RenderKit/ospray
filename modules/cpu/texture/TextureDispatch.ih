@@ -13,31 +13,15 @@
 #include "rkcommon/math/vec.h"
 #endif
 
-#ifdef __cplusplus
-namespace ispc {
-#endif // __cplusplus
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct Texture;
 struct DifferentialGeometry;
 
-enum TextureType
-{
-  TEXTURE_TYPE_2D,
-#ifdef OSPRAY_ENABLE_VOLUMES
-  TEXTURE_TYPE_VOLUME,
-#endif
-  TEXTURE_TYPE_UNKNOWN,
-};
-
-#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 SYCL_EXTERNAL __noinline vec4f Texture_dispatch_get(
     const uniform Texture *uniform self, const DifferentialGeometry &dg);
 
 SYCL_EXTERNAL __noinline vec3f Texture_dispatch_getNormal(
     const uniform Texture *const uniform self, const DifferentialGeometry &dg);
-#endif
 
-#ifdef __cplusplus
-}
-#endif
-
+OSPRAY_END_ISPC_NAMESPACE

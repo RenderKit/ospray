@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "fb/FrameBufferType.ih"
 #include "fb/ImageOpShared.h"
 #include "ospray/OSPEnums.h"
 
@@ -35,6 +34,13 @@ typedef uniform RenderTaskDesc (*FrameBuffer_getRenderTaskDescFct)(
 typedef void (*FrameBuffer_completeTaskFct)(
     FrameBuffer *uniform fb, const uniform RenderTaskDesc &taskDesc);
 #endif
+
+enum FrameBufferType
+{
+  FRAMEBUFFER_TYPE_LOCAL,
+  FRAMEBUFFER_TYPE_SPARSE,
+  FRAMEBUFFER_TYPE_UNKNOWN,
+};
 
 /* The ISPC-side FrameBuffer allows tasks to write directly to the framebuffer
  * memory from ISPC. Given the set of task IDs to be rendered, a renderer must:

@@ -1,0 +1,18 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#ifdef OSPRAY_TARGET_SYCL
+#include <CL/sycl.hpp>
+#include "rkcommon/platform.h"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL __noinline void Camera_dispatch_initRay(
+    const Camera *uniform self,
+    varying Ray &ray,
+    const varying CameraSample &sample);
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -1,8 +1,8 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "fb/FrameBufferDispatch.ih"
 #include "fb/FrameBufferShared.h"
-#include "fb/FrameBufferType.ih"
 #include "fb/RenderTaskDesc.ih"
 #include "render/ScreenSample.ih"
 
@@ -73,4 +73,3 @@ SYCL_EXTERNAL __noinline void FrameBuffer_dispatch_completeTask(
 }
 
 OSPRAY_END_ISPC_NAMESPACE
-

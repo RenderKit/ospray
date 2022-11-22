@@ -11,6 +11,7 @@
 #endif
 // c++ shared
 #include "PathTracerDataShared.h"
+#include "lights/LightDispatch.ih"
 #include "lights/LightShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE

@@ -14,14 +14,16 @@
 #include "volumes/VolumeSampler.ih"
 
 #include "camera/Camera.ih"
+#include "camera/CameraDispatch.ih"
 #include "common/World.ih"
+#include "fb/FrameBuffer.ih"
+#include "fb/FrameBufferDispatch.ih"
 #include "math/Distribution1D.ih"
 #include "math/random.ih"
-#include "pf/PixelFilterType.ih"
+#include "pf/PixelFilterDispatch.ih"
 // c++ shared
 #include "PathTracerDataShared.h"
 #include "PathTracerShared.h"
-#include "fb/FrameBufferShared.h"
 #include "render/MaterialShared.h"
 
 #ifdef OSPRAY_TARGET_SYCL

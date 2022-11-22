@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "render/MaterialShared.h"
-
 #ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
 #include "common/rkcommonSYCLWrappers.h"
@@ -15,13 +13,8 @@
 #include "rkcommon/math/vec.h"
 #endif
 
-#include "OSPConfig.h"
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
-#ifdef __cplusplus
-namespace ispc {
-#endif // __cplusplus
-
-#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
     const uniform Material *uniform self,
     uniform ShadingContext *uniform ctx,
@@ -45,9 +38,5 @@ SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
     Medium &currentMedium);
-#endif
 
-#ifdef __cplusplus
-}
-#endif
-
+OSPRAY_END_ISPC_NAMESPACE

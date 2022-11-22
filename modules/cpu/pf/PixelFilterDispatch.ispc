@@ -3,7 +3,7 @@
 
 #include "pf/LUTPixelFilter.ih"
 #include "pf/PixelFilter.ih"
-#include "pf/PixelFilterType.ih"
+#include "pf/PixelFilterDispatch.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -23,4 +23,3 @@ SYCL_EXTERNAL __noinline vec2f PixelFilter_dispatch_sample(
 }
 
 OSPRAY_END_ISPC_NAMESPACE
-

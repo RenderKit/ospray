@@ -5,11 +5,11 @@
 #include "math/sampling.ih"
 #include "render/util.ih"
 #include "surfaces.ih"
+#include "lights/LightDispatch.ih"
 // c++ shared
 #include "SciVisDataShared.h"
 #include "SciVisShared.h"
 #include "lights/LightShared.h"
-#include "lights/LightType.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

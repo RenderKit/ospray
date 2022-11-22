@@ -3,9 +3,6 @@
 
 #pragma once
 
-#include "OSPConfig.h"
-#include "geometry/GeometryType.ih"
-
 #ifdef __cplusplus
 #include "common/StructShared.h"
 namespace ispc {
@@ -45,6 +42,12 @@ typedef void (*Geometry_GetAreasFct)(const Geometry *const uniform,
         areas // array to return area per primitive in world-space
 );
 
+struct SampleAreaRes
+{
+  vec3f pos; // sampled point, in world-space
+  vec3f normal; // geometry normal Ng at the sampled point
+};
+
 // sample the given primitive uniformly wrt. area
 typedef SampleAreaRes (*Geometry_SampleAreaFct)(const Geometry *const uniform,
     const int32 primID,
@@ -58,6 +61,21 @@ typedef void unmasked (*Geometry_IntersectFct)(
     const struct RTCIntersectFunctionNArguments *uniform args,
     const uniform bool isOcclusionTest);
 #endif
+
+enum GeometryType
+{
+  GEOMETRY_TYPE_TRIANGLE_MESH,
+  GEOMETRY_TYPE_QUAD_MESH,
+  GEOMETRY_TYPE_BOXES,
+  GEOMETRY_TYPE_SPHERES,
+  GEOMETRY_TYPE_PLANES,
+  GEOMETRY_TYPE_CURVES,
+#ifdef OSPRAY_ENABLE_VOLUMES
+  GEOMETRY_TYPE_ISOSURFACES,
+#endif
+  GEOMETRY_TYPE_SUBDIVISION,
+  GEOMETRY_TYPE_UNKNOWN,
+};
 
 struct Geometry
 {

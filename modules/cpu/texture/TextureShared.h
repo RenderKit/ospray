@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "texture/TextureType.ih"
-
 #ifdef __cplusplus
 #include "common/StructShared.h"
 namespace ispc {
@@ -21,6 +19,15 @@ typedef varying vec4f (*Texture_get)(
 typedef varying vec3f (*Texture_getN)(
     const Texture *uniform self, const varying DifferentialGeometry &dg);
 #endif
+
+enum TextureType
+{
+  TEXTURE_TYPE_2D,
+#ifdef OSPRAY_ENABLE_VOLUMES
+  TEXTURE_TYPE_VOLUME,
+#endif
+  TEXTURE_TYPE_UNKNOWN,
+};
 
 struct Texture
 {

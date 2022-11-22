@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "pf/PixelFilterType.ih"
-
 #ifdef __cplusplus
 #include "common/StructShared.h"
 namespace ispc {
@@ -30,6 +28,14 @@ struct PixelFilter;
 typedef vec2f (*PixelFilter_SampleFunc)(
     const PixelFilter *uniform self, const vec2f &s);
 #endif
+
+enum PixelFilterType
+{
+  PIXEL_FILTER_TYPE_POINT,
+  PIXEL_FILTER_TYPE_BOX,
+  PIXEL_FILTER_TYPE_LUT,
+  PIXEL_FILTER_TYPE_UNKNOWN,
+};
 
 struct PixelFilter
 {

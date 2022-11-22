@@ -137,7 +137,7 @@ set(OSPRAY_ISPC_SOURCES
   common/World.ispc
 
   fb/FrameBuffer.ispc
-  fb/FrameBufferType.ispc
+  fb/FrameBufferDispatch.ispc
   fb/LocalFB.ispc
   fb/SparseFB.ispc
 
@@ -145,15 +145,15 @@ set(OSPRAY_ISPC_SOURCES
 
   fb/pixel_ops/ToneMapper.ispc
 
-  pf/PixelFilterType.ispc
+  pf/PixelFilterDispatch.ispc
   pf/LUTPixelFilter.ispc
 
-  camera/CameraType.ispc
+  camera/CameraDispatch.ispc
   camera/PerspectiveCamera.ispc
   camera/OrthographicCamera.ispc
   camera/PanoramicCamera.ispc
 
-  geometry/GeometryType.ispc
+  geometry/GeometryDispatch.ispc
   geometry/GeometricModel.ispc
   geometry/Boxes.ispc
   geometry/Curves.ispc
@@ -161,7 +161,7 @@ set(OSPRAY_ISPC_SOURCES
   geometry/Planes.ispc
   geometry/Mesh.ispc
 
-  lights/LightType.ispc
+  lights/LightDispatch.ispc
   lights/Light.ispc
   lights/AmbientLight.ispc
   lights/DirectionalLight.ispc
@@ -176,7 +176,7 @@ set(OSPRAY_ISPC_SOURCES
   math/spectrum.ispc
 
   render/Material.ispc
-  render/MaterialType.ispc
+  render/MaterialDispatch.ispc
   render/Renderer.ispc
   render/util.ispc
 
@@ -213,7 +213,7 @@ set(OSPRAY_ISPC_SOURCES
   render/materials/Mix.ispc
 
   texture/Texture2D.ispc
-  texture/TextureType.ispc
+  texture/TextureDispatch.ispc
 )
 
 if (OSPRAY_ENABLE_VOLUMES)

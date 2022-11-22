@@ -6,7 +6,7 @@
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "fb/SparseFB.ih"
-#include "geometry/GeometryType.ih"
+#include "geometry/GeometryDispatch.ih"
 #include "math/random.ih"
 #include "rkcommon/utility/random.ih"
 #include "texture/Texture2D.ih"

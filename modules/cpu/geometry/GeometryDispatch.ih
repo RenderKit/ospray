@@ -15,30 +15,8 @@
 
 #include "OSPConfig.h"
 
-#ifdef __cplusplus
-namespace ispc {
-#endif // __cplusplus
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
-struct Geometry;
-struct DifferentialGeometry;
-struct Ray;
-
-enum GeometryType
-{
-  GEOMETRY_TYPE_TRIANGLE_MESH,
-  GEOMETRY_TYPE_QUAD_MESH,
-  GEOMETRY_TYPE_BOXES,
-  GEOMETRY_TYPE_SPHERES,
-  GEOMETRY_TYPE_PLANES,
-  GEOMETRY_TYPE_CURVES,
-#ifdef OSPRAY_ENABLE_VOLUMES
-  GEOMETRY_TYPE_ISOSURFACES,
-#endif
-  GEOMETRY_TYPE_SUBDIVISION,
-  GEOMETRY_TYPE_UNKNOWN,
-};
-
-#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 // Geometries are supposed to fill certain members of DifferentialGeometry:
 // calculate Ng, Ns, st, color, and materialID if the respective bit DG_NG,
 // DG_NS, DG_TEXCOORD, DG_COLOR, and DG_MATERIALID, in flags is set.
@@ -56,12 +34,6 @@ SYCL_EXTERNAL __noinline void Geometry_dispatch_postIntersect(
     const varying Ray &ray,
     uniform int64 flags);
 
-struct SampleAreaRes
-{
-  vec3f pos; // sampled point, in world-space
-  vec3f normal; // geometry normal Ng at the sampled point
-};
-
 // sample the given primitive uniformly wrt. area
 SYCL_EXTERNAL __noinline SampleAreaRes Geometry_dispatch_sampleArea(
     const Geometry *const uniform,
@@ -77,9 +49,5 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
 
 RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_occluded(
     RTCOccludedFunctionNArguments *uniform args);
-#endif
 
-#ifdef __cplusplus
-}
-#endif
-
+OSPRAY_END_ISPC_NAMESPACE

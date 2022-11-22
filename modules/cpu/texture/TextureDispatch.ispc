@@ -49,4 +49,3 @@ SYCL_EXTERNAL __noinline vec3f Texture_dispatch_getNormal(
 }
 
 OSPRAY_END_ISPC_NAMESPACE
-

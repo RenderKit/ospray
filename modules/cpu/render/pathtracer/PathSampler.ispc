@@ -14,7 +14,7 @@
 #include "common/Intersect.ih"
 #include "common/World.ih"
 #include "render/Material.ih"
-#include "render/MaterialType.ih"
+#include "render/MaterialDispatch.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"
 #include "render/materials/Medium.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES

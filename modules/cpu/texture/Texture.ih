@@ -6,7 +6,7 @@
 #include "../common/DifferentialGeometry.ih"
 
 #include "TextureShared.h"
-#include "texture/TextureType.ih"
+#include "texture/TextureDispatch.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

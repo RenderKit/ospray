@@ -3,16 +3,18 @@
 
 #include "SciVis.ih"
 #include "camera/Camera.ih"
+#include "camera/CameraDispatch.ih"
 #include "common/World.ih"
+#include "fb/FrameBuffer.ih"
+#include "fb/FrameBufferDispatch.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
-#include "pf/PixelFilterType.ih"
+#include "pf/PixelFilterDispatch.ih"
 #include "surfaces.ih"
 #include "volume/VolumetricModel.ih"
 #include "volumes.ih"
 // c++ shared
 #include "SciVisShared.h"
-#include "fb/FrameBufferShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

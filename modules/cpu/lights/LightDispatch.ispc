@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/DifferentialGeometry.ih"
+#include "lights/LightDispatch.ih"
 #include "lights/LightShared.h"
-#include "lights/LightType.ih"
 
 #include "lights/QuadLight.ih"
 
@@ -62,4 +62,3 @@ SYCL_EXTERNAL __noinline Light_EvalRes Light_dispatch_eval(
 }
 
 OSPRAY_END_ISPC_NAMESPACE
-

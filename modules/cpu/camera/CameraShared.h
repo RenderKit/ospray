@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "CameraType.ih"
-
 #ifdef __cplusplus
 #include "common/StructShared.h"
 namespace ispc {
@@ -23,6 +21,14 @@ typedef void (*Camera_initRay)(const Camera *uniform,
     varying Ray &ray,
     const varying CameraSample &sample);
 #endif
+
+enum CameraType
+{
+  CAMERA_TYPE_PERSPECTIVE,
+  CAMERA_TYPE_ORTHOGRAPHIC,
+  CAMERA_TYPE_PANORAMIC,
+  CAMERA_TYPE_UNKNOWN,
+};
 
 struct Camera
 {

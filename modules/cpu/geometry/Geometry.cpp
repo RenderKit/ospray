@@ -6,7 +6,7 @@
 #include "OSPConfig.h"
 #include "common/Data.h"
 #ifndef OSPRAY_TARGET_SYCL
-#include "geometry/GeometryType_ispc.h"
+#include "geometry/GeometryDispatch_ispc.h"
 #endif
 
 namespace ospray {

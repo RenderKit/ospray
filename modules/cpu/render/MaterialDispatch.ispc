@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Material.ih"
-#include "MaterialType.ih"
+#include "MaterialDispatch.ih"
 
 #include "render/materials/Alloy.ih"
 #include "render/materials/CarPaint.ih"
@@ -112,4 +112,3 @@ SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
 }
 
 OSPRAY_END_ISPC_NAMESPACE
-

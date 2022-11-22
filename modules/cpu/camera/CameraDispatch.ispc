@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Camera.ih"
-#include "CameraType.ih"
+#include "CameraDispatch.ih"
 #include "OrthographicCamera.ih"
 #include "PanoramicCamera.ih"
 #include "PerspectiveCamera.ih"
@@ -35,4 +35,3 @@ SYCL_EXTERNAL __noinline void Camera_dispatch_initRay(
 }
 
 OSPRAY_END_ISPC_NAMESPACE
-

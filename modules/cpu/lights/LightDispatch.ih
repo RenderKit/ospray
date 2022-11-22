@@ -3,31 +3,18 @@
 
 #pragma once
 
+#include "LightShared.h"
+
 #ifdef OSPRAY_TARGET_SYCL
 #include <CL/sycl.hpp>
 #include "rkcommon/platform.h"
 #endif
 
-#ifdef __cplusplus
-namespace ispc {
-#endif // __cplusplus
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct Light;
 struct DifferentialGeometry;
 
-enum LightType
-{
-  LIGHT_TYPE_AMBIENT,
-  LIGHT_TYPE_CYLINDER,
-  LIGHT_TYPE_DIRECTIONAL,
-  LIGHT_TYPE_HDRI,
-  LIGHT_TYPE_POINT,
-  LIGHT_TYPE_QUAD,
-  LIGHT_TYPE_SPOT,
-  LIGHT_TYPE_UNKNOWN,
-};
-
-#if defined(ISPC) || defined(OSPRAY_TARGET_SYCL)
 // compute the weighted radiance at a point caused by a sample on the light
 // source
 // by convention, giving (0, 0) as "random" numbers should sample the "center"
@@ -48,9 +35,5 @@ SYCL_EXTERNAL __noinline Light_EvalRes Light_dispatch_eval(
     const float minDist, // minimum distance to look for light contribution
     const float maxDist, // maximum distance to look for light contribution
     const float time); // evaluate at time (motion blur)
-#endif
 
-#ifdef __cplusplus
-}
-#endif
-
+OSPRAY_END_ISPC_NAMESPACE

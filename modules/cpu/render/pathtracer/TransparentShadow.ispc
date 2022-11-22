@@ -4,7 +4,7 @@
 #include "render/pathtracer/TransparentShadow.ih"
 
 #include "render/Material.ih"
-#include "render/MaterialType.ih"
+#include "render/MaterialDispatch.ih"
 #include "render/materials/Medium.ih"
 
 #include "common/Ray.ih"

@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "camera/Camera.ih"
+#include "camera/CameraDispatch.ih"
+#include "fb/FrameBuffer.ih"
+#include "fb/FrameBufferDispatch.ih"
 #include "math/random.ih"
-#include "pf/PixelFilterType.ih"
+#include "pf/PixelFilterDispatch.ih"
 #include "render/Renderer.ih"
 // AO renderer
 #include "surfaces.ih"
 #include "volumes.ih"
 // c++ shared
 #include "AORendererShared.h"
-#include "fb/FrameBufferShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

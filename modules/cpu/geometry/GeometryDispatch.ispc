@@ -5,8 +5,7 @@
 #include "common/Ray.ih"
 #include "geometry/Boxes.ih"
 #include "geometry/Curves.ih"
-#include "geometry/GeometryShared.h"
-#include "geometry/GeometryType.ih"
+#include "geometry/GeometryDispatch.ih"
 #include "geometry/Mesh.ih"
 #include "geometry/Planes.ih"
 #include "geometry/Spheres.ih"
@@ -14,6 +13,8 @@
 #ifdef OSPRAY_ENABLE_VOLUMES
 #include "geometry/Isosurfaces.ih"
 #endif
+// shared
+#include "geometry/GeometryShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

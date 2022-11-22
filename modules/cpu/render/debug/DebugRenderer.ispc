@@ -3,9 +3,12 @@
 
 // ospray
 #include "camera/Camera.ih"
+#include "camera/CameraDispatch.ih"
 #include "common/World.ih"
+#include "fb/FrameBuffer.ih"
+#include "fb/FrameBufferDispatch.ih"
 #include "math/random.ih"
-#include "pf/PixelFilterType.ih"
+#include "pf/PixelFilterDispatch.ih"
 #include "render/Renderer.ih"
 #include "render/util.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
@@ -13,7 +16,6 @@
 #endif
 // c++ shared
 #include "DebugRendererShared.h"
-#include "fb/FrameBufferShared.h"
 
 #ifdef OSPRAY_TARGET_SYCL
 #include "common/rkcommonSYCLWrappers.h"
@@ -347,8 +349,7 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
 #endif
 }
 
-static void DebugRenderer_renderSample(
-    Renderer *uniform _self,
+static void DebugRenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
