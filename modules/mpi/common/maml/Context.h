@@ -36,9 +36,6 @@ struct Context
   /*! queue the given collective to be executed */
   void queueCollective(std::shared_ptr<Collective> col);
 
-  // WILL: Logging
-  void logMessageTimings(std::ostream &os);
-
   /*! start the service; from this point on maml is free to use MPI
     calls to send/receive messages; if your MPI library is not
     thread safe the app should _not_ do any MPI calls until 'stop()'
@@ -113,16 +110,6 @@ struct Context
   std::atomic<bool> quitThreads{false};
   std::unique_ptr<rkcommon::tasking::AsyncLoop> sendReceiveThread;
   std::unique_ptr<rkcommon::tasking::AsyncLoop> processInboxThread;
-
-  std::mutex statsMutex;
-  using CompressionPercent = std::chrono::duration<double>;
-
-  using RealMilliseconds = std::chrono::duration<double, std::milli>;
-  std::vector<CompressionPercent> compressedSizes;
-  std::vector<RealMilliseconds> sendTimes, recvTimes, compressTimes,
-      decompressTimes;
-
-  bool DETAILED_LOGGING{false};
 };
 
 } // namespace maml

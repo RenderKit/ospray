@@ -25,9 +25,6 @@ struct MessageHandler
   virtual ~MessageHandler() = default;
 };
 
-// WILL: Statistics logging
-void logMessageTimings(std::ostream &os);
-
 /*! initialize the service for this process and
     start the service; from this point on maml is free to use MPI
     calls to send/receive messages; if your MPI library is not

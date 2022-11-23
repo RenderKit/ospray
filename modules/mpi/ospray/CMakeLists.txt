@@ -110,7 +110,6 @@ target_link_libraries(ospray_module_mpi_distributed_cpu
     Snappy::snappy
     rkcommon::rkcommon
     ospray_mpi_common
-    ospray_pico_bench
     ospray_module_cpu
 )
 
@@ -167,7 +166,6 @@ if (OSPRAY_MODULE_GPU)
     Snappy::snappy
     rkcommon::rkcommon
     ospray_mpi_common
-    ospray_pico_bench
     ospray_module_gpu
     ospray_module_gpu_kernels
     # Is build interface going to export to link here?

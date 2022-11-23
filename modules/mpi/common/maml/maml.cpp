@@ -10,11 +10,6 @@ using rkcommon::make_unique;
 
 // maml API definitions /////////////////////////////////////////////////////
 
-void logMessageTimings(std::ostream &os)
-{
-  Context::singleton->logMessageTimings(os);
-}
-
 /*! start the service; from this point on maml is free to use MPI
     calls to send/receive messages; if your MPI library is not
     thread safe the app should _not_ do any MPI calls until 'stop()'

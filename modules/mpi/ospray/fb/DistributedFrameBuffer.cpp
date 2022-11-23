@@ -3,6 +3,7 @@
 
 #include "DistributedFrameBuffer.h"
 #include <snappy.h>
+#include <numeric>
 #include <thread>
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "ISPCDevice.h"
@@ -12,7 +13,6 @@
 #include "fb/DistributedFrameBuffer_ispc.h"
 #endif
 
-#include "pico_bench.h"
 #include "rkcommon/tasking/parallel_for.h"
 #include "rkcommon/tasking/schedule.h"
 

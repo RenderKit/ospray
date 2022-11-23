@@ -34,7 +34,6 @@ find_package(Snappy REQUIRED)
 rkcommon_configure_build_type()
 
 add_subdirectory(common)
-add_subdirectory(external)
 add_subdirectory(ospray)
 
 if (OSPRAY_ENABLE_APPS_EXAMPLES OR OSPRAY_ENABLE_APPS_TUTORIALS)
