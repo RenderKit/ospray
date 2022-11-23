@@ -13,8 +13,15 @@ if (OPENVKL_HASH)
 endif()
 
 string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" OPENVKL_ARCHIVE ${OPENVKL_VERSION})
-if (BUILD_GPU_SUPPORT)
-  set(OPENVKL_ARCHIVE "will/embree4")
+set(OPENVKL_BRANCH "${OPENVKL_ARCHIVE}" CACHE STRING "Which branch of OpenVKL to build" )
+set(OPENVKL_URL "https://github.com/openvkl/openvkl/archive/${OPENVKL_ARCHIVE}.zip"
+  CACHE STRING "Location to clone OpenVKL source from")
+
+string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${OPENVKL_URL})
+if (ZIP_FILENAME)
+  set(OPENVKL_CLONE_URL URL ${OPENVKL_URL})
+else()
+  set(OPENVKL_CLONE_URL GIT_REPOSITORY ${OPENVKL_URL} GIT_TAG ${OPENVKL_BRANCH})
 endif()
 
 ExternalProject_Add(${COMPONENT_NAME}
@@ -24,10 +31,8 @@ ExternalProject_Add(${COMPONENT_NAME}
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
   LIST_SEPARATOR | # Use the alternate list separator
-  #URL "https://github.com/openvkl/openvkl/archive/${OPENVKL_ARCHIVE}.zip"
-  #${OPENVKL_URL_HASH}
-  GIT_REPOSITORY https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git
-  GIT_TAG ${OPENVKL_ARCHIVE}
+  ${OPENVKL_CLONE_URL}
+  ${OPENVKL_URL_HASH}
   CMAKE_ARGS
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}

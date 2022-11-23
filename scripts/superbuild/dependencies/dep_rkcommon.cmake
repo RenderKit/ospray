@@ -13,6 +13,16 @@ if (RKCOMMON_HASH)
 endif()
 
 string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" RKCOMMON_ARCHIVE ${RKCOMMON_VERSION})
+set(RKCOMMON_BRANCH "${RKCOMMON_ARCHIVE}" CACHE STRING "Which branch of rkcommon to build" )
+set(RKCOMMON_URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_ARCHIVE}.zip"
+  CACHE STRING "Location to clone rkcommon source from")
+
+string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${RKCOMMON_URL})
+if (ZIP_FILENAME)
+  set(RKCOMMON_CLONE_URL URL ${RKCOMMON_URL})
+else()
+  set(RKCOMMON_CLONE_URL GIT_REPOSITORY ${RKCOMMON_URL} GIT_TAG ${RKCOMMON_BRANCH})
+endif()
 
 ExternalProject_Add(${COMPONENT_NAME}
   PREFIX ${COMPONENT_NAME}
@@ -20,10 +30,9 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  #URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_ARCHIVE}.zip"
-  #${RKCOMMON_URL_HASH}
-  GIT_REPOSITORY https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git
-  GIT_TAG "will/rkmath-tweaks"
+  LIST_SEPARATOR |
+  ${RKCOMMON_CLONE_URL}
+  ${RKCOMMON_URL_HASH}
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}

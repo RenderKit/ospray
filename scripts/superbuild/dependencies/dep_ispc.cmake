@@ -41,18 +41,25 @@ set(ISPC_PATH "${COMPONENT_PATH}/bin/ispc${CMAKE_EXECUTABLE_SUFFIX}")
 
 set(COMPONENT_NAME_ispcrt ispcrt)
 string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" ISPCRT_ARCHIVE ${ISPC_VERSION})
+set(ISPCRT_BRANCH "${ISPCRT_ARCHIVE}" CACHE STRING "Which branch of ISPCRT to build" )
+set(ISPCRT_URL "https://github.com/ispc/ispc/archive/refs/tags/${ISPCRT_ARCHIVE}.zip"
+  CACHE STRING "Location to clone ISPCRT source from")
+
+string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${ISPCRT_URL})
+if (ZIP_FILENAME)
+  set(ISPCRT_CLONE_URL URL ${ISPCRT_URL})
+else()
+  set(ISPCRT_CLONE_URL GIT_REPOSITORY ${ISPCRT_URL} GIT_TAG ${ISPCRT_BRANCH})
+endif()
 
 ExternalProject_Add(ispcrt
   PREFIX ${COMPONENT_NAME_ispcrt}
   STAMP_DIR ${COMPONENT_NAME_ispcrt}/stamp
-  #PATCH_COMMAND git apply --ignore-whitespace -p0 -v ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/ispcrt.patch
   SOURCE_DIR ${COMPONENT_NAME_ispcrt}/src
   BINARY_DIR ${COMPONENT_NAME_ispcrt}
-  SOURCE_SUBDIR "ispcrt"
-  #URL "https://github.com/ispc/ispc/archive/refs/tags/${ISPCRT_ARCHIVE}.zip"
-  GIT_REPOSITORY https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git
-  GIT_TAG "gen"
   LIST_SEPARATOR |
+  SOURCE_SUBDIR "ispcrt"
+  ${ISPCRT_CLONE_URL}
   CMAKE_ARGS
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}

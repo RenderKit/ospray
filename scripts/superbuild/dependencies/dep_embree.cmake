@@ -3,6 +3,13 @@
 
 set(COMPONENT_NAME embree)
 
+if (BUILD_EMBREE_FROM_SOURCE)
+  string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" EMBREE_ARCHIVE ${EMBREE_VERSION})
+  set(EMBREE_BRANCH "${EMBREE_ARCHIVE}" CACHE STRING "Which branch of Embree to build" )
+  set(EMBREE_URL "https://github.com/embree/embree/archive/${EMBREE_BRANCH}.zip"
+    CACHE STRING "Location to clone Embree source from")
+endif()
+
 set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
 if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
@@ -13,11 +20,13 @@ if (EMBREE_HASH)
 endif()
 
 if (BUILD_EMBREE_FROM_SOURCE)
-  string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" EMBREE_ARCHIVE ${EMBREE_VERSION})
-  # We're actually using EMBREE_ARCHIVE as the git tag for this test
-  if (EMBREE_VERSION STREQUAL "4.0.0")
-    set(EMBREE_ARCHIVE "devel")
+  string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${EMBREE_URL})
+  if (ZIP_FILENAME)
+    set(EMBREE_CLONE_URL URL ${EMBREE_URL})
+  else()
+    set(EMBREE_CLONE_URL GIT_REPOSITORY ${EMBREE_URL} GIT_TAG ${EMBREE_BRANCH})
   endif()
+
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}
     DOWNLOAD_DIR ${COMPONENT_NAME}
@@ -25,10 +34,8 @@ if (BUILD_EMBREE_FROM_SOURCE)
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
     LIST_SEPARATOR | # Use the alternate list separator
-    #URL "https://github.com/embree/embree/archive/${EMBREE_ARCHIVE}.zip"
-    #${EMBREE_URL_HASH}
-    GIT_REPOSITORY https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git
-    GIT_TAG ${EMBREE_ARCHIVE}
+    ${EMBREE_CLONE_URL}
+    ${EMBREE_URL_HASH}
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
