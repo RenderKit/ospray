@@ -41,8 +41,13 @@ set(ISPC_PATH "${COMPONENT_PATH}/bin/ispc${CMAKE_EXECUTABLE_SUFFIX}")
 
 set(COMPONENT_NAME_ispcrt ispcrt)
 string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" ISPCRT_ARCHIVE ${ISPC_VERSION})
-set(ISPCRT_BRANCH "${ISPCRT_ARCHIVE}" CACHE STRING "Which branch of ISPCRT to build" )
-set(ISPCRT_URL "https://github.com/ispc/ispc/archive/refs/tags/${ISPCRT_ARCHIVE}.zip"
+
+# TODO WILL TEMPORARY For GPU Testing
+#set(ISPCRT_BRANCH "${ISPCRT_ARCHIVE}" CACHE STRING "Which branch of ISPCRT to build" )
+#set(ISPCRT_URL "https://github.com/ispc/ispc/archive/refs/tags/${ISPCRT_ARCHIVE}.zip"
+#  CACHE STRING "Location to clone ISPCRT source from")
+set(ISPCRT_BRANCH "gen" CACHE STRING "Which branch of ISPCRT to build" )
+set(ISPCRT_URL https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git 
   CACHE STRING "Location to clone ISPCRT source from")
 
 string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${ISPCRT_URL})

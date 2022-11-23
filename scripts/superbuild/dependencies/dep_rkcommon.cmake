@@ -13,8 +13,12 @@ if (RKCOMMON_HASH)
 endif()
 
 string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" RKCOMMON_ARCHIVE ${RKCOMMON_VERSION})
-set(RKCOMMON_BRANCH "${RKCOMMON_ARCHIVE}" CACHE STRING "Which branch of rkcommon to build" )
-set(RKCOMMON_URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_ARCHIVE}.zip"
+# TODO WILL TEMPORARY For GPU Testing
+#set(RKCOMMON_BRANCH "${RKCOMMON_ARCHIVE}" CACHE STRING "Which branch of rkcommon to build" )
+#set(RKCOMMON_URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_ARCHIVE}.zip"
+#  CACHE STRING "Location to clone rkcommon source from")
+set(RKCOMMON_BRANCH "will/rkmath-tweaks" CACHE STRING "Which branch of rkcommon to build" )
+set(RKCOMMON_URL https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git 
   CACHE STRING "Location to clone rkcommon source from")
 
 string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${RKCOMMON_URL})

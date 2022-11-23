@@ -3,10 +3,17 @@
 
 set(COMPONENT_NAME embree)
 
+# TODO WILL TEMPORARY For GPU Testing
+set(BUILD_EMBREE_FROM_SOURCE ON)
+
 if (BUILD_EMBREE_FROM_SOURCE)
   string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" EMBREE_ARCHIVE ${EMBREE_VERSION})
-  set(EMBREE_BRANCH "${EMBREE_ARCHIVE}" CACHE STRING "Which branch of Embree to build" )
-  set(EMBREE_URL "https://github.com/embree/embree/archive/${EMBREE_BRANCH}.zip"
+  # TODO WILL TEMPORARY For GPU Testing
+  #set(EMBREE_BRANCH "${EMBREE_ARCHIVE}" CACHE STRING "Which branch of Embree to build" )
+  #set(EMBREE_URL "https://github.com/embree/embree/archive/${EMBREE_BRANCH}.zip"
+  #  CACHE STRING "Location to clone Embree source from")
+  set(EMBREE_BRANCH "devel" CACHE STRING "Which branch of Embree to build" )
+  set(EMBREE_URL "https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git"
     CACHE STRING "Location to clone Embree source from")
 endif()
 
