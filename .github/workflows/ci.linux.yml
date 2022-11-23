@@ -13,12 +13,6 @@ concurrency:
 
 jobs:
 
-### ENV SETUP JOBS ###
-
-  download-dpcpp-gfx:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/download_dpcpp_gfx.yml@tgt/download-dpcpp-gfx
-
 ### BUILD JOBS ###
 
   build-arch-clang:
@@ -202,32 +196,6 @@ jobs:
       artifact-out: build-ubuntu2004-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  build-ubuntu2004-DG2-AOT:
-    needs: download-dpcpp-gfx
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    secrets: inherit
-    with:
-      image: ubuntu:20.04
-      # Would help to have a module that we can load for specific gfx/agama versions
-      cmd: |
-        export DPCPP_ROOT=${{ needs.download-dpcpp-gfx.outputs.dpcpp-path-linux }}
-        export GFX_ROOT=${{ needs.download-dpcpp-gfx.outputs.gfx-path-linux }}/install/usr/
-        apt install -y libncurses5
-        export PATH=$DPCPP_ROOT/bin:$GFX_ROOT/bin:$PATH
-        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
-        export CPATH=$DPCPP_ROOT/include:$CPATH
-        export LEVEL_ZERO_ROOT=$DPCPP_ROOT
-        export LIBRARY_PATH=$DPCPP_ROOT/lib:$GFX_ROOT/lib:$LIBRARY_PATH
-        export LIBRARY_PATH=$DPCPP_ROOT/lib/x86_64-linux-gnu:$GFX_ROOT/lib/x86_64-linux-gnu:$LIBRARY_PATH
-        export LD_LIBRARY_PATH=$DPCPP_ROOT/lib:$GFX_ROOT/lib:$LD_LIBRARY_PATH
-        export LD_LIBRARY_PATH=$DPCPP_ROOT/lib/x86_64-linux-gnu:$GFX_ROOT/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
-        export CC=clang
-        export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git -DEMBREE_BRANCH=devel -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=will/embree4 -DRKCOMMON_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git -DRKCOMMON_BRANCH=will/rkmath-tweaks -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
-      artifact-out: build-ubuntu2004-DG2-AOT
-      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
-
-
 ### TEST JOBS ###
 
   test-centos7-gcc-avx2:
@@ -359,34 +327,6 @@ jobs:
       image: centos:7
       cmd: scripts/tests/run_tutorials.sh
       artifact-in: build-centos7-gcc
-
-  test-ubuntu2004-DG2-AOT:
-    needs: [build-ubuntu2004-DG2-AOT, download-dpcpp-gfx]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      image: ubuntu:20.04
-      options: --device=/dev/dri:/dev/dri
-      runs-on: '[ "Linux", "docker", "dg2" ]'
-      artifact-in: build-ubuntu2004-DG2-AOT
-      artifact-out: test-ubuntu2004-DG2-AOT
-      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      artifact-on-failure: true
-      cmd: |
-        export DPCPP_ROOT=${{ needs.download-dpcpp-gfx.outputs.dpcpp-path-linux }}
-        export GFX_ROOT=${{ needs.download-dpcpp-gfx.outputs.gfx-path-linux }}/install/usr/
-        apt install -y libncurses5
-        export PATH=$DPCPP_ROOT/bin:$GFX_ROOT/bin:$PATH
-        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
-        export CPATH=$DPCPP_ROOT/include:$CPATH
-        export LIBRARY_PATH=$DPCPP_ROOT/lib:$GFX_ROOT/lib:$LIBRARY_PATH
-        export LIBRARY_PATH=$DPCPP_ROOT/lib/x86_64-linux-gnu:$GFX_ROOT/lib/x86_64-linux-gnu:$LIBRARY_PATH
-        export LD_LIBRARY_PATH=$DPCPP_ROOT/lib:$GFX_ROOT/lib:$LD_LIBRARY_PATH
-        export LD_LIBRARY_PATH=$DPCPP_ROOT/lib/x86_64-linux-gnu:$GFX_ROOT/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
-        export CC=clang
-        export CXX=clang++
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH" 
-        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" 
-        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
   sanitize-linux-debug:
     needs: build-linux-debug
