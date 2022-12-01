@@ -3,15 +3,8 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/AffineSpace.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
+#include "Embree.h"
 #include "rkcommon/math/AffineSpace.ih"
-#endif
-
-#include "OSPConfig.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

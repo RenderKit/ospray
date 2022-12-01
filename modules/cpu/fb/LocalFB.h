@@ -3,16 +3,12 @@
 
 #pragma once
 
-#include <rkcommon/utility/ArrayView.h>
-#ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#endif
-
 // ospray
 #include "common/BufferShared.h"
 #include "fb/FrameBuffer.h"
 #include "fb/TaskError.h"
 // rkcommon
+#include <rkcommon/utility/ArrayView.h>
 #include "rkcommon/containers/AlignedVector.h"
 // ispc shared
 #include "LocalFBShared.h"

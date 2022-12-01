@@ -22,11 +22,6 @@ struct Planes
   }
 #endif
 };
-
-#ifdef OSPRAY_TARGET_SYCL
-void Planes_bounds(const RTCBoundsFunctionArguments *args);
-#endif
-
 #ifdef __cplusplus
 } // namespace ispc
 #endif // __cplusplus

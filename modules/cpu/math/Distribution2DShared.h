@@ -4,14 +4,6 @@
 #pragma once
 
 #ifdef __cplusplus
-#include <rkcommon/math/vec.h>
-using namespace rkcommon::math;
-#else
-#include <rkcommon/math/vec.ih>
-#endif
-
-#ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 
@@ -26,7 +18,7 @@ struct Distribution2D
   float *cdf_y;
 
 #ifdef __cplusplus
-  Distribution2D() : size(0), rcpSize(0), cdf_x(nullptr), cdf_y(nullptr) {}
+  Distribution2D() : size(0), rcpSize(0.f), cdf_x(nullptr), cdf_y(nullptr) {}
 };
 } // namespace ispc
 #else

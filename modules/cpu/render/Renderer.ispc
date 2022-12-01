@@ -13,10 +13,6 @@
 #include "fb/FrameBuffer.ih"
 #include "fb/FrameBufferDispatch.ih"
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/math.h"
-#endif
-
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL vec4f Renderer_getBackground(

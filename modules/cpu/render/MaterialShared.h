@@ -5,18 +5,9 @@
 
 #define EPS 1e-5f
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#elif defined(ISPC)
-#include "rkcommon/math/vec.ih"
-#endif
-
 #include "bsdfs/MicrofacetAlbedoTablesShared.h"
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 

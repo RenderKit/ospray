@@ -362,7 +362,7 @@ void ISPCDevice::commit()
 #else
   postStatusMsg(OSP_LOG_INFO)
       << "Using SYCL GPU device on "
-      << syclDevice.get_info<cl::sycl::info::device::name>() << " device";
+      << syclDevice.get_info<sycl::info::device::name>() << " device";
 #endif
 }
 

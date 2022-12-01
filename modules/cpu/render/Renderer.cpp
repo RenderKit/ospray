@@ -10,7 +10,9 @@
 #include "ospray/OSPEnums.h"
 #include "pf/PixelFilter.h"
 #ifdef OSPRAY_TARGET_SYCL
-#include "render/util.ih"
+namespace ispc {
+void precomputeZOrder();
+}
 #else
 // ispc exports
 #include "render/Renderer_ispc.h"
@@ -86,12 +88,12 @@ void Renderer::commit()
 }
 
 #ifdef OSPRAY_TARGET_SYCL
-cl::sycl::nd_range<1> Renderer::computeDispatchRange(
+sycl::nd_range<1> Renderer::computeDispatchRange(
     const size_t globalSize, const size_t workgroupSize) const
 {
   const size_t roundedRange =
       ((globalSize + workgroupSize - 1) / workgroupSize) * workgroupSize;
-  return cl::sycl::nd_range<1>(roundedRange, workgroupSize);
+  return sycl::nd_range<1>(roundedRange, workgroupSize);
 }
 #endif
 

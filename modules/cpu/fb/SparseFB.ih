@@ -3,8 +3,9 @@
 
 #pragma once
 
-#include "SparseFBShared.h"
 #include "fb/Tile.ih"
+// c++ shared
+#include "SparseFBShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

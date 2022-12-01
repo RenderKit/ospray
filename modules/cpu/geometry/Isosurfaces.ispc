@@ -2,23 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 #ifdef OSPRAY_ENABLE_VOLUMES
 
-#ifdef OSPRAY_TARGET_SYCL
-// Currently not used b/c we need OpenVKL on GPU/SYCL but we will use this
-// later, so keep this in for now
-#include "rkcommon/math/box.h"
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
-#endif
-
 // ospray
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
 #include "openvkl/iterator.isph"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 #include "volume/VolumetricModel.ih"
 // c++ shared
 #include "IsosurfacesShared.h"

@@ -3,16 +3,9 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/AffineSpace.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/AffineSpace.ih"
-#endif
-
 #include "Texture.ih"
 #include "TextureParamShared.h"
+#include "rkcommon/math/AffineSpace.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

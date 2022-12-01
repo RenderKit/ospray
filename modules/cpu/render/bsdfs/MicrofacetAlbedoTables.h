@@ -5,8 +5,8 @@
 
 #include <memory>
 #include "ISPCDevice.h"
-#include "common/BufferShared.h"
 #include "common/Managed.h"
+#include "common/StructShared.h"
 // ispc shared
 #include "MicrofacetAlbedoTablesShared.h"
 

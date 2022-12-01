@@ -7,6 +7,11 @@
 #include "common/Data.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "volume/Volume_ispc.h"
+#else
+namespace ispc {
+void Volume_embreeBounds(const RTCBoundsFunctionArguments *args);
+void Volume_intersect_kernel(const RTCIntersectFunctionNArguments *args);
+} // namespace ispc
 #endif
 
 #include "openvkl/openvkl.h"

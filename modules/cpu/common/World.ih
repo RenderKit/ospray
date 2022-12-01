@@ -3,14 +3,10 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#endif
-
-#include "OSPConfig.h"
-
 // ospray stuff
+#include "OSPConfig.h"
 #include "common/Clipping.ih"
+#include "common/DGEnum.h"
 #include "common/DifferentialGeometry.ih"
 #include "common/Instance.ih"
 #include "common/Ray.ih"
@@ -20,11 +16,11 @@
 // c++ shared
 #include "WorldShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 #ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
 #endif
-
-OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct Renderer;
 

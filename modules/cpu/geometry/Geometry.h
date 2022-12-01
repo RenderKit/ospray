@@ -6,7 +6,7 @@
 #include "common/Data.h"
 #include "common/ObjectFactory.h"
 // embree
-#include "OSPConfig.h"
+#include "common/Embree.h"
 // ispc shared
 #include "GeometryShared.h"
 
@@ -47,7 +47,6 @@ inline RTCGeometry Geometry::getEmbreeGeometry() const
 
 inline bool Geometry::supportAreaLighting() const
 {
-
   return (getSh()->sampleArea != nullptr) && (getSh()->getAreas != nullptr);
 }
 

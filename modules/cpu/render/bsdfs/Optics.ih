@@ -3,15 +3,8 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/LinearSpace.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/LinearSpace.ih"
-#endif
-
 #include "math/sampling.ih"
+#include "rkcommon/math/LinearSpace.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

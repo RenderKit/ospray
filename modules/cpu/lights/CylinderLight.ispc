@@ -1,19 +1,12 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/AffineSpace.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/AffineSpace.ih"
-#endif
-
 #include "CylinderCapSolidAngleTable.ih"
 #include "SphericalQuadSampling.ih"
 #include "common/DifferentialGeometry.ih"
 #include "common/Instance.ih"
 #include "common/Intersect.ih"
+#include "rkcommon/math/AffineSpace.ih"
 // c++ shared
 #include "CylinderLightShared.h"
 

@@ -5,6 +5,12 @@
 #ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "camera/OrthographicCamera_ispc.h"
+#else
+namespace ispc {
+void *OrthographicCamera_initRay_addr();
+void OrthographicCamera_projectBox(
+    void *_self, const box3f &box, box3f &projection);
+} // namespace ispc
 #endif
 
 namespace ospray {

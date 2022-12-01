@@ -3,10 +3,6 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#endif
-
 #include "rkcommon/utility/Any.h"
 #include "rkcommon/utility/Optional.h"
 #include "rkcommon/utility/ParameterizedObject.h"

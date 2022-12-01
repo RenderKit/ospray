@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture2D.ih"
-#include "common/rkcommonSYCLWrappers.h"
 #include "ospray/OSPEnums.h"
 
 // Low-level texel accessors

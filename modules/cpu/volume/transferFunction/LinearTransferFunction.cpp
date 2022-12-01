@@ -4,6 +4,11 @@
 #include "LinearTransferFunction.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "volume/transferFunction/LinearTransferFunction_ispc.h"
+#else
+namespace ispc {
+void *LinearTransferFunction_get_addr();
+void *LinearTransferFunction_getMaxOpacity_addr();
+} // namespace ispc
 #endif
 
 namespace ospray {

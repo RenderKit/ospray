@@ -1,17 +1,9 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/LinearSpace.h"
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#include "common/rkcommonSYCLWrappers.h"
-#else
 #include "rkcommon/math/LinearSpace.ih"
 #include "rkcommon/math/vec.ih"
-#endif
-
+// c++ shared
 #include "fb/pixel_ops/ToneMapperShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE

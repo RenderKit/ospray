@@ -3,12 +3,9 @@
 
 #pragma once
 
+#include "common/OSPCommon.ih"
+// c++ shared
 #include "LightShared.h"
-
-#ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#include "rkcommon/platform.h"
-#endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

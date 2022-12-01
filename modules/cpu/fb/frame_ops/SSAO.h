@@ -9,7 +9,6 @@
 #include <algorithm>
 
 #ifdef OSPRAY_TARGET_SYCL
-#include "common/OSPCommon.ih"
 namespace ispc {
 void *LiveSSAOFrameOp_create();
 void LiveSSAOFrameOp_set(void *uniform _self,
@@ -29,7 +28,7 @@ void LiveSSAOFrameOp_getOcclusion(const void *_self,
     int programID);
 void LiveSSAOFrameOp_applyOcclusion(
     void *_self, void *_fb, void *_color, float *occlusionBuffer);
-int8 getProgramCount();
+int8_t getProgramCount();
 } // namespace ispc
 #else
 // ispc

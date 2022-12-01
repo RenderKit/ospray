@@ -1,19 +1,11 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/LinearSpace.h"
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/LinearSpace.ih"
-#include "rkcommon/math/vec.ih"
-#endif
-
 // ospray
 #include "../FrameBufferView.ih"
 #include "../Tile.ih"
+#include "rkcommon/math/LinearSpace.ih"
+#include "rkcommon/math/vec.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -89,8 +81,8 @@ export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
 
     // project pixel from screenspace to cameraspace, then to worldspace
     vec3f pixelPosCamera =
-        make_vec3f((i - fb.fbDims.x / 2.0) * self->pixelSize.x,
-            (j - fb.fbDims.y / 2.0) * self->pixelSize.y,
+        make_vec3f((i - fb.fbDims.x / 2.f) * self->pixelSize.x,
+            (j - fb.fbDims.y / 2.f) * self->pixelSize.y,
             -self->nearClip);
 
     pixelPosCamera = pixelPosCamera * ((pointDepth) / (length(pixelPosCamera)));
@@ -113,8 +105,8 @@ export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
               * (-self->nearClip) / self->pixelSize.x,
           samplePosCamera.y / samplePosCamera.z * (-self->nearClip)
               / self->pixelSize.y);
-      int samplePos_i = fb.fbDims.x / 2.0 + samplePosScreen.x;
-      int samplePos_j = fb.fbDims.y / 2.0 + samplePosScreen.y;
+      int samplePos_i = fb.fbDims.x / 2.f + samplePosScreen.x;
+      int samplePos_j = fb.fbDims.y / 2.f + samplePosScreen.y;
 
       if (samplePos_i < 0 || samplePos_i >= fb.fbDims.x)
         continue;
@@ -126,10 +118,10 @@ export void LiveSSAOFrameOp_getOcclusion(const void *uniform _self,
 
       // range check & accumulate
       float rangeCheck =
-          abs(pointDepth - sampleDepth) < checkRadius ? 1.0 : 0.0;
+          abs(pointDepth - sampleDepth) < checkRadius ? 1.f : 0.f;
 
       occlusion = occlusion
-          + (length(samplePosCamera) > sampleDepth ? 1.0 : 0.0) * rangeCheck;
+          + (length(samplePosCamera) > sampleDepth ? 1.f : 0.f) * rangeCheck;
     }
     occlusion = 1 - self->ssaoStrength * (occlusion / kernelSize);
     occlusionBuffer[pixelID] = occlusion;

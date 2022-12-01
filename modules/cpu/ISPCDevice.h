@@ -3,16 +3,12 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#endif
-
 // ospray
 #include "Device.h"
 // ispcrt
 #include "ispcrt.hpp"
 // embree
-#include "OSPConfig.h"
+#include "common/Embree.h"
 #ifdef OSPRAY_ENABLE_VOLUMES
 // openvkl
 #include "openvkl/openvkl.h"

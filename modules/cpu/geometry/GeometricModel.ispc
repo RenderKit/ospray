@@ -1,10 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/math.h"
-#endif
-
 // ospray
 #include "GeometricModel.ih"
 #include "math/Distribution1D.ih"

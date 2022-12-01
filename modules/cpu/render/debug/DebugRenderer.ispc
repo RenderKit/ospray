@@ -7,21 +7,17 @@
 #include "common/World.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/FrameBufferDispatch.ih"
+#include "fb/RenderTaskDesc.ih"
 #include "math/random.ih"
 #include "pf/PixelFilterDispatch.ih"
 #include "render/Renderer.ih"
-#include "render/util.ih"
+#include "render/ScreenSample.ih"
+#include "rkcommon/utility/random.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/VolumetricModel.ih"
 #endif
 // c++ shared
 #include "DebugRendererShared.h"
-
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#else
-#include "rkcommon/utility/random.ih"
-#endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

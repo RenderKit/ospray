@@ -3,9 +3,6 @@
 
 #pragma once
 
-#include "common/Ray.ih"
-#include "fb/Tile.ih"
-#include "render/ScreenSample.ih"
 // c++ shared
 #include "RendererShared.h"
 

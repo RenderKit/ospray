@@ -1,14 +1,12 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "fb/FrameBuffer.ih"
-#include "fb/Tile.ih"
+#include "FrameBuffer.ih"
+#include "RenderTaskDesc.ih"
+#include "Tile.ih"
+#include "render/ScreenSample.ih"
 // c++ shared
 #include "LocalFBShared.h"
-
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

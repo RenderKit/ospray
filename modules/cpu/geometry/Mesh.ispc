@@ -1,28 +1,19 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#include "rkcommon/math/LinearSpace.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/LinearSpace.ih"
-#endif
-
 // ospray
-#include "Geometry.ih"
+#include "Mesh.ih"
 #include "common/Data.ih"
 #include "math/sampling.ih"
+#include "rkcommon/math/LinearSpace.ih"
 // c++ shared
-#include "Mesh.ih"
 #include "MeshShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
 #endif
-
-OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // Create quad_interpolate for vec2f, vec3f, and vec4f types
 #define __define_quad_interpolate(T)                                           \

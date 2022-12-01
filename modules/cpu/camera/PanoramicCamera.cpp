@@ -5,6 +5,10 @@
 // ispc exports
 #ifndef OSPRAY_TARGET_SYCL
 #include "camera/PanoramicCamera_ispc.h"
+#else
+namespace ispc {
+void *PanoramicCamera_initRay_addr();
+}
 #endif
 
 namespace ospray {

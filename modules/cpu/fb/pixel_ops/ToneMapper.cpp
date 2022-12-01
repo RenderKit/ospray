@@ -5,6 +5,10 @@
 #include "fb/FrameBuffer.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "fb/pixel_ops/ToneMapper_ispc.h"
+#else
+namespace ispc {
+void *LiveToneMapper_processPixel_addr();
+}
 #endif
 
 using namespace rkcommon;

@@ -4,7 +4,6 @@
 #include "common/Data.ih"
 // c++ shared
 #include "LinearTransferFunctionShared.h"
-#include "common/rkcommonSYCLWrappers.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

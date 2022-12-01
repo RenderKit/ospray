@@ -3,9 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#endif
+#include "common/OSPCommon.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

@@ -12,11 +12,7 @@
 #include "rkcommon/math/box.h"
 // ispc shared
 #include "DistributedWorldShared.h"
-#if EMBREE_VERSION_MAJOR == 4
-#include "embree4/rtcore.h"
-#else
-#include "embree3/rtcore.h"
-#endif
+#include "common/Embree.h"
 
 namespace ospray {
 namespace mpi {

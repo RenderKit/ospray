@@ -8,6 +8,8 @@
 #include "render/bsdfs/Specular.ih"
 #include "render/bsdfs/Transmission.ih"
 #include "texture/TextureParam.ih"
+// c++ shared
+#include "OBJShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation

@@ -6,13 +6,7 @@
 #include "fb/ImageOpShared.h"
 #include "ospray/OSPEnums.h"
 
-#if !defined(__cplusplus) || defined(OSPRAY_TARGET_SYCL)
-#include "fb/RenderTaskDesc.ih"
-#include "render/ScreenSample.ih"
-#endif
-
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 
@@ -21,8 +15,9 @@ typedef void *FrameBuffer_accumulateSampleFct;
 typedef void *FrameBuffer_getRenderTaskDescFct;
 typedef void *FrameBuffer_completeTaskFct;
 #else
-
 struct FrameBuffer;
+struct ScreenSample;
+struct RenderTaskDesc;
 
 typedef void (*FrameBuffer_accumulateSampleFct)(FrameBuffer *uniform fb,
     const varying ScreenSample &sample,

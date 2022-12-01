@@ -42,37 +42,6 @@ struct Mesh
         isNormalFaceVarying(false)
   {}
 };
-
-#ifdef OSPRAY_TARGET_SYCL
-void *QuadMesh_postIntersect_addr();
-void *TriangleMesh_postIntersect_addr();
-void *Mesh_sampleArea_addr();
-void *Mesh_getAreas_addr();
-
-SYCL_EXTERNAL void QuadMesh_postIntersect(const Geometry *uniform _self,
-    varying DifferentialGeometry &dg,
-    const varying Ray &ray,
-    uniform int64 flags);
-
-SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
-    varying DifferentialGeometry &dg,
-    const varying Ray &ray,
-    uniform int64 flags);
-
-SYCL_EXTERNAL SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
-    const int32 primID,
-    const uniform affine3f &xfm,
-    const uniform affine3f &,
-    const vec2f &s,
-    const float time);
-
-SYCL_EXTERNAL void Mesh_getAreas(const Geometry *const uniform _self,
-    const int32 *const uniform primIDs,
-    const uniform int32 numPrims,
-    const uniform affine3f &xfm,
-    float *const uniform areas);
-#endif
-
 } // namespace ispc
 #else
 };

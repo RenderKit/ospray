@@ -1,15 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/AffineSpace.h"
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/AffineSpace.ih"
-#endif
-
 #include "render/pathtracer/GeometryLight.ih"
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
@@ -19,6 +10,7 @@ using namespace rkcommon::math;
 #include "common/Instance.ih"
 #include "geometry/GeometricModel.ih"
 #include "math/Distribution1D.ih"
+#include "rkcommon/math/AffineSpace.ih"
 // c++ shared
 #include "GeometryLightShared.h"
 

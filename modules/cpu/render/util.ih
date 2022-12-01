@@ -3,20 +3,11 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/vec.ih"
-#endif
-
+#include "OSPConfig.h"
 #include "common/World.ih"
-#include "render/Renderer.ih"
+#include "rkcommon/math/vec.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
-
-export void precomputeZOrder();
 
 SYCL_EXTERNAL float computeAO(const Renderer *uniform,
     const World *uniform,

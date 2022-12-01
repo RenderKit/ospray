@@ -3,15 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#include "common/rkcommonSYCLWrappers.h"
-#include "rkcommon/math/vec.h"
-#elif defined(ISPC)
-#include "rkcommon/math/vec.ih"
-#else
-#include "rkcommon/math/vec.h"
-#endif
+#include "common/OSPCommon.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

@@ -5,9 +5,11 @@
 #include "camera/CameraDispatch.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/FrameBufferDispatch.ih"
+#include "fb/RenderTaskDesc.ih"
 #include "math/random.ih"
 #include "pf/PixelFilterDispatch.ih"
 #include "render/Renderer.ih"
+#include "render/ScreenSample.ih"
 // AO renderer
 #include "surfaces.ih"
 #include "volumes.ih"

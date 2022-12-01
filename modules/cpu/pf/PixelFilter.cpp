@@ -8,6 +8,10 @@
 #include "math/Distribution2D.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "pf/LUTPixelFilter_ispc.h"
+#else
+namespace ispc {
+void LUTPixelFilter_buildLUT(void *self);
+}
 #endif
 
 namespace ospray {

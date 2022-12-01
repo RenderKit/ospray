@@ -4,8 +4,11 @@
 #pragma once
 
 #include "FrameBufferView.h"
-#include "ImageOpShared.h"
 #include "common/ObjectFactory.h"
+#include "common/StructShared.h"
+#include "rkcommon/math/box.h"
+// ispc shared
+#include "ImageOpShared.h"
 #include "fb/TileShared.h"
 
 namespace ospray {

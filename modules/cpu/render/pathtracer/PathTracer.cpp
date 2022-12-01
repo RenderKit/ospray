@@ -11,8 +11,16 @@
 #include "render/Material.h"
 
 #ifdef OSPRAY_TARGET_SYCL
-#include "PathTracer.ih"
-#include "render/bsdfs/MicrofacetAlbedoTables.ih"
+#include <sycl/sycl.hpp>
+namespace ispc {
+SYCL_EXTERNAL void PathTracer_renderTask(Renderer *uniform _self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    World *uniform world,
+    void *uniform perFrameData,
+    const uint32 *uniform taskIDs,
+    const int taskIndex0);
+}
 #else
 // ispc exports
 #include "math/Distribution1D_ispc.h"
@@ -93,9 +101,8 @@ void PathTracer::renderTasks(FrameBuffer *fb,
 #ifdef OSPRAY_TARGET_SYCL
   const uint32_t *taskIDsPtr = taskIDs.data();
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    const cl::sycl::nd_range<1> dispatchRange =
-        computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) {
+    const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
+    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
       if (taskIndex.get_global_id(0) < numTasks) {
         ispc::PathTracer_renderTask(&rendererSh->super,
             fbSh,

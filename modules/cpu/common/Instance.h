@@ -7,7 +7,7 @@
 #include "Group.h"
 #include "MotionTransform.h"
 // embree
-#include "OSPConfig.h"
+#include "Embree.h"
 // ispc shared
 #include "InstanceShared.h"
 

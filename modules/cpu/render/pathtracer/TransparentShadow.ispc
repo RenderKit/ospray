@@ -68,7 +68,7 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     if (--maxDepth <= 0)
       return make_vec3f(0.f);
 
-      /*! Tracking medium if we hit a medium interface. */
+      // Tracking medium if we hit a medium interface.
 #ifdef OSPRAY_TARGET_SYCL
     {
       // SYCL execution in a thread is scalar

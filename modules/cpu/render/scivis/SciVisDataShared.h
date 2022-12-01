@@ -3,14 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#elif defined(ISPC)
-#include "rkcommon/math/vec.ih"
-#endif
-
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 

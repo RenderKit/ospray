@@ -47,15 +47,4 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const uniform float aoRadius,
     const varying vec3i &sampleID);
 
-#ifdef OSPRAY_TARGET_SYCL
-struct Camera;
-SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
-    FrameBuffer *uniform fb,
-    Camera *uniform camera,
-    World *uniform world,
-    void *uniform perFrameData,
-    const uint32 *uniform taskIDs,
-    const int taskIndex0);
-#endif
-
 OSPRAY_END_ISPC_NAMESPACE

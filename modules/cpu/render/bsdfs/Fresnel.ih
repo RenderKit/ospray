@@ -3,19 +3,11 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#include "rkcommon/math/LinearSpace.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/LinearSpace.ih"
-#endif
-
 #include "Optics.ih"
 #include "ShadingContext.ih"
 #include "math/sampling.ih"
 #include "math/spectrum.ih"
+#include "rkcommon/math/LinearSpace.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

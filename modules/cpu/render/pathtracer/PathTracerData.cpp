@@ -14,7 +14,15 @@
 #include "geometry/GeometricModel_ispc.h"
 #include "render/pathtracer/GeometryLight_ispc.h"
 #else
-#include "math/Distribution1D.ih"
+namespace ispc {
+float Distribution1D_create(const int size, float *cdf);
+int GeometricModel_gatherEmissivePrimIDs(void *_model,
+    void *_renderer,
+    void *_instance,
+    int *primIDs,
+    float *distribution,
+    float &pdf);
+} // namespace ispc
 #endif
 // ispc shared
 #include "GeometryLightShared.h"

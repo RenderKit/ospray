@@ -5,8 +5,9 @@
 #pragma once
 
 #include "ISPCDeviceObject.h"
+#include "common/StructShared.h"
 // embree
-#include "OSPConfig.h"
+#include "common/Embree.h"
 // openvkl
 #include "openvkl/volume.h"
 // ispc shared

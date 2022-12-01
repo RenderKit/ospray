@@ -3,11 +3,14 @@
 
 #include "math/random.ih"
 #include "math/sampling.ih"
+#include "render/ScreenSample.ih"
 #include "render/materials/OBJ.ih"
 #include "render/util.ih"
 #include "texture/TextureParam.ih"
 // AO Renderer
 #include "surfaces.ih"
+// c++ shared
+#include "render/materials/OBJShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

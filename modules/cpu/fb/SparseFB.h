@@ -3,14 +3,15 @@
 
 #pragma once
 
-#include "TileShared.h"
-#include "common/BufferShared.h"
 #include "fb/FrameBuffer.h"
 #include "fb/LocalFB.h"
-#include "fb/SparseFBShared.h"
 #include "fb/TaskError.h"
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/utility/ArrayView.h"
+// ispc shared
+#include "TileShared.h"
+#include "common/BufferShared.h"
+#include "fb/SparseFBShared.h"
 
 namespace ospray {
 /* The sparse framebuffer stores a subset of tiles of a larger framebuffer

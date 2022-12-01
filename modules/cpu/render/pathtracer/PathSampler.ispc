@@ -21,12 +21,6 @@
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #endif
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#else
-#include "rkcommon/utility/random.ih"
-#endif
-
 // c++ shared
 #include "PathTracerDataShared.h"
 #include "PathTracerShared.h"

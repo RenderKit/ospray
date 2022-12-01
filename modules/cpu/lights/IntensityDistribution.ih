@@ -3,15 +3,8 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
 #include "rkcommon/math/vec.ih"
-#endif
-
+// c++ shared
 #include "IntensityDistributionShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -23,11 +16,7 @@ inline float IntensityDistribution_eval(
     float cosAngle,
     const vec3f &dir /*normalized*/)
 {
-#ifndef OSPRAY_TARGET_SYCL
   const float u = acos(cosAngle) * self->scale.x;
-#else
-  const float u = sycl::acos(cosAngle) * self->scale.x;
-#endif
   const float u_frac = frac(u);
   const int u0 = u;
   const int u1 = (u0 + 2 >= self->size.x) ? self->size.x - 1 : u0 + 1;

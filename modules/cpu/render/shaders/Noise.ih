@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "common/rkcommonSYCLWrappers.h"
 #include "math/random.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #ifdef OSPRAY_ENABLE_VOLUMES
 
+#include "OSPConfig.h"
 #include "common/Intersect.ih"
 #include "common/VolumeIntervals.ih"
 #include "volume/Volume.ih"

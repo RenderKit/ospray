@@ -4,39 +4,31 @@
 #pragma once
 
 #ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#endif
+#include <sycl/sycl.hpp>
+#define __noinline __attribute__((noinline))
 
-#include "OSPConfig.h"
-
-#ifdef OSPRAY_TARGET_SYCL
-#include <cstdint>
-#include "rkcommon/math/math.h"
-#include "rkcommon/math/vec.h"
-
-typedef uint64_t uint64;
-typedef uint32_t uint32;
-typedef uint16_t uint16;
-typedef uint8_t uint8;
-
-typedef int64_t int64;
-typedef int32_t int32;
-typedef int16_t int16;
-typedef int8_t int8;
-#else
-#ifndef ISPC_UINT_IS_DEFINED
-typedef unsigned int64 uint64;
-typedef unsigned int32 uint32;
-typedef unsigned int16 uint16;
-typedef unsigned int8 uint8;
-#endif
-#endif
-
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/platform.h"
+namespace ispc {
+using uint64 = uint64_t;
+using uint32 = uint32_t;
+using uint16 = uint16_t;
+using uint8 = uint8_t;
+using int64 = int64_t;
+using int32 = int32_t;
+using int16 = int16_t;
+using int8 = int8_t;
+} // namespace ispc
 
 #define LOG(x)
 
+#undef PRINT
+#undef PRINT3
+
+#define PRINT(x)
+#define PRINT3(x)
+#define PRINTU(x)
+#define PRINT3U(x)
+
+/*
 // Note: SYCL printf needs the type specifier, unlike ISPC. So instead of a
 // macro we make a function that looks like the macro but overloads based on the
 // type
@@ -47,34 +39,34 @@ typedef unsigned int8 uint8;
 
 void PRINT(const int &x)
 {
-  cl::sycl::ext::oneapi::experimental::printf("#x = %d\n", x);
+  sycl::ext::oneapi::experimental::printf("#x = %d\n", x);
 }
 
 void PRINT(const uint32_t &x)
 {
-  cl::sycl::ext::oneapi::experimental::printf("#x = %u\n", x);
+  sycl::ext::oneapi::experimental::printf("#x = %u\n", x);
 }
 
 void PRINT(const float &x)
 {
-  cl::sycl::ext::oneapi::experimental::printf("#x = %f\n", x);
+  sycl::ext::oneapi::experimental::printf("#x = %f\n", x);
 }
 
 void PRINT3(const rkcommon::math::vec3i &x)
 {
-  cl::sycl::ext::oneapi::experimental::printf(
+  sycl::ext::oneapi::experimental::printf(
       "#x = (%d, %d, %d)\n", x.x, x.y, x.z);
 }
 
 void PRINT3(const rkcommon::math::vec3ui &x)
 {
-  cl::sycl::ext::oneapi::experimental::printf(
+  sycl::ext::oneapi::experimental::printf(
       "#x = (%u, %u, %u)\n", x.x, x.y, x.z);
 }
 
 void PRINT3(const rkcommon::math::vec3f &x)
 {
-  cl::sycl::ext::oneapi::experimental::printf(
+  sycl::ext::oneapi::experimental::printf(
       "#x = (%f, %f, %f)\n", x.x, x.y, x.z);
 }
 
@@ -82,9 +74,9 @@ void PRINT3(const rkcommon::math::vec3f &x)
 #define PRINTU(x) PRINT
 #define PRINT3U(x) PRINT3
 
-#define PRINT_STR(s) cl::sycl::ext::oneapi::experimental::printf(s);
+#define PRINT_STR(s) sycl::ext::oneapi::experimental::printf(s);
 #endif
-
+*/
 #else
 
 #define LOG(x)

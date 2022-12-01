@@ -3,25 +3,19 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/DGEnum.h"
-#include "common/rkcommonSYCLWrappers.h"
-#include "rkcommon/math/AffineSpace.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-using namespace ospray;
-#else
-#include "rkcommon/math/AffineSpace.ih"
-#endif
-
 #include "Geometry.ih"
 #include "GeometryDispatch.ih"
 #include "common/Data.ih"
 #include "render/Renderer.ih"
+#include "rkcommon/math/AffineSpace.ih"
 // c++ shared
 #include "GeometricModelShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifdef OSPRAY_TARGET_SYCL
+using namespace ospray;
+#endif
 
 inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
     const Renderer *uniform renderer,

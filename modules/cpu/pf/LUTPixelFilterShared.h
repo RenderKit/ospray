@@ -7,7 +7,6 @@
 #include "pf/PixelFilterShared.h"
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 
@@ -35,9 +34,6 @@ struct LUTPixelFilter
     super.type = PIXEL_FILTER_TYPE_LUT;
   }
 };
-#ifdef OSPRAY_TARGET_SYCL
-void LUTPixelFilter_buildLUT(void *self);
-#endif
 }
 #else
 };

@@ -3,19 +3,8 @@
 
 #pragma once
 
-#include "common/OSPCommon.ih"
-
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/OSPCommon.h"
-#include "rkcommon/math/LinearSpace.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-using namespace ospray;
-#else
-#include "rkcommon/math/LinearSpace.ih"
-#endif
-
 #include "common/ISPCMessages.h"
+#include "rkcommon/math/LinearSpace.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

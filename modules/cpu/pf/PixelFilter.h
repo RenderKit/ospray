@@ -8,6 +8,7 @@
 #include "common/Managed.h"
 #include "common/StructShared.h"
 #include "math/Distribution2D.h"
+// ispc shared
 #include "pf/LUTPixelFilterShared.h"
 #include "pf/PixelFilterShared.h"
 

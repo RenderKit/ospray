@@ -2,8 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AmbientLight.h"
+#include "common/StructShared.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/AmbientLight_ispc.h"
+#else
+namespace ispc {
+void *AmbientLight_sample_addr();
+void *AmbientLight_eval_addr();
+} // namespace ispc
 #endif
 // ispc shared
 #include "AmbientLightShared.h"

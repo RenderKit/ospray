@@ -7,6 +7,7 @@
 #include "fb/Tile.ih"
 #include "ospray/OSPEnums.h"
 #include "render/Renderer.ih"
+#include "render/ScreenSample.ih"
 #include "render/util.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE

@@ -5,6 +5,12 @@
 #include "OSPConfig.h"
 #include "ospray/OSPEnums.h"
 
+#if EMBREE_VERSION_MAJOR == 3
+#include "embree3/rtcore.h"
+#else
+#include "embree4/rtcore.h"
+#endif
+
 #ifdef OSPRAY_ENABLE_VOLUMES
 #include "openvkl/openvkl.h"
 

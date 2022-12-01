@@ -8,8 +8,6 @@
 
 #ifdef __cplusplus
 namespace ispc {
-#else
-#include "rkcommon/math/vec.ih"
 #endif // __cplusplus
 
 // a SparseFrameBuffer stores a subset of the full framebuffer as Tiles

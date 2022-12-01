@@ -3,10 +3,14 @@
 
 #include "QuadLight.h"
 // embree
-#include "OSPConfig.h"
+#include "common/Embree.h"
 
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/QuadLight_ispc.h"
+#else
+namespace ispc {
+void QuadLight_Transform(const void *self, const void *xfm, void *dyn);
+}
 #endif
 
 #include "QuadLightShared.h"

@@ -47,12 +47,6 @@ struct PerspectiveCamera
     super.type = CAMERA_TYPE_PERSPECTIVE;
   }
 };
-
-#ifdef OSPRAY_TARGET_SYCL
-void PerspectiveCamera_projectBox(
-    void *_self, const box3f &box, box3f &projection);
-#endif
-
 } // namespace ispc
 #else
 };

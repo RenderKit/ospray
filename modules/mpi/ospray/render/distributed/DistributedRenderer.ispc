@@ -1,6 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "OSPConfig.h"
 #include "camera/Camera.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"

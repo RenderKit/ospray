@@ -4,8 +4,8 @@
 #pragma once
 
 #include "ISPCDevice.h"
-#include "common/BufferShared.h"
 #include "common/Managed.h"
+#include "common/StructShared.h"
 // ispc shared
 #include "MathConstantsShared.h"
 

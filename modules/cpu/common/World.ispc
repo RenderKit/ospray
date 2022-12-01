@@ -1,8 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "fb/Tile.ih"
-
 #include "World.ih"
 #include "math/Distribution1D.ih"
 #include "render/pathtracer/GeometryLight.ih"

@@ -4,13 +4,9 @@
 #pragma once
 
 #include "math/spectrum.h"
-
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
 #include "rkcommon/math/vec.ih"
+
+#ifndef OSPRAY_TARGET_SYCL
 typedef uniform float<SPECTRUM_SAMPLES> spectrum;
 #endif
 

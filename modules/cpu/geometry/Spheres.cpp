@@ -8,7 +8,11 @@
 // ispc-generated files
 #include "geometry/Spheres_ispc.h"
 #else
-#include "geometry/Spheres.ih"
+namespace ispc {
+void Spheres_bounds(const RTCBoundsFunctionArguments *uniform args);
+void *Spheres_sampleArea_addr();
+void *Spheres_getAreas_addr();
+} // namespace ispc
 #endif
 
 namespace ospray {
@@ -20,19 +24,14 @@ Spheres::Spheres(api::ISPCDevice &device)
   getSh()->super.postIntersect =
       reinterpret_cast<ispc::Geometry_postIntersectFct>(
           ispc::Spheres_postIntersect_addr());
+#endif
   getSh()->super.getAreas = reinterpret_cast<ispc::Geometry_GetAreasFct>(
       ispc::Spheres_getAreas_addr());
-  getSh()->super.sampleArea = reinterpret_cast<ispc::Geometry_SampleAreaFct>(
-      ispc::Spheres_sampleArea_addr());
-#else
-  getSh()->super.getAreas =
-      reinterpret_cast<ispc::Geometry_GetAreasFct>(ispc::Spheres_getAreas);
   // We also set the sampleArea function ptr so that
   // Geometry::supportAreaLighting will be true, but in SYCL we'll never call it
   // through the function pointer on the device
-  getSh()->super.sampleArea =
-      reinterpret_cast<ispc::Geometry_SampleAreaFct>(ispc::Spheres_sampleArea);
-#endif
+  getSh()->super.sampleArea = reinterpret_cast<ispc::Geometry_SampleAreaFct>(
+      ispc::Spheres_sampleArea_addr());
 }
 
 std::string Spheres::toString() const

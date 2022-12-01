@@ -4,20 +4,10 @@
 #pragma once
 
 // ospray
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#include "rkcommon/math/AffineSpace.h"
-#include "rkcommon/math/box.h"
-#include "rkcommon/math/vec.h"
-
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
 #include "rkcommon/math/AffineSpace.ih"
 #include "rkcommon/math/vec.ih"
-#endif
-
-#include "OSPConfig.h"
+// embree
+#include "Embree.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

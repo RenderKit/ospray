@@ -1,22 +1,15 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/box.h"
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
-#endif
-
 // ospray
+#include "OSPConfig.h"
 #include "common/Data.ih"
 #include "common/DifferentialGeometry.ih"
 #include "common/FilterIntersect.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 // c++ shared
 #include "BoxesShared.h"
 

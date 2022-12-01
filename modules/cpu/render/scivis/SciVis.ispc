@@ -7,6 +7,7 @@
 #include "common/World.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/FrameBufferDispatch.ih"
+#include "fb/RenderTaskDesc.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "pf/PixelFilterDispatch.ih"

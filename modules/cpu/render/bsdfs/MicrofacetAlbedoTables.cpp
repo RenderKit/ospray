@@ -3,6 +3,10 @@
 #include "render/bsdfs/MicrofacetAlbedoTablesShared.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "render/bsdfs/MicrofacetAlbedoTables_ispc.h"
+#else
+namespace ispc {
+void precomputeMicrofacetAlbedoTables(void *_tables);
+}
 #endif
 
 namespace ospray {

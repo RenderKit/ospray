@@ -60,7 +60,7 @@ inline RefractionResult RefractionDirection(
     vec3f b = normalize(dirPerpendicularToNormal);
     float sin1 = dot(dirPerpendicularToNormal, b);
     float sin2 = sin1 / eta;
-    if (sin2 > 1.0) { // Total internal reflection.
+    if (sin2 > 1.0f) { // Total internal reflection.
       res.outgoingDirection = make_vec3f(0.f); // Can't refract.
       res.FresnelReflectionCoefficient = 1.f;
       res.mustReflect = true;

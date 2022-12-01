@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "rkcommon/math/math.ih"
+
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 const uniform float CylCapSolidAngleTable[] = {0.000000000000000000e+00,

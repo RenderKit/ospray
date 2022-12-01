@@ -3,9 +3,10 @@
 
 #pragma once
 
-#include "LUTPixelFilterShared.h"
 #include "PixelFilter.ih"
 #include "math/Distribution2D.ih"
+// c++ shared
+#include "LUTPixelFilterShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

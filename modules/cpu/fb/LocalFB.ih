@@ -6,10 +6,6 @@
 // c++ shared
 #include "LocalFBShared.h"
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#endif
-
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
@@ -23,4 +19,3 @@ SYCL_EXTERNAL void LocalFB_completeTask(
     FrameBuffer *uniform _fb, const uniform RenderTaskDesc &taskDesc);
 
 OSPRAY_END_ISPC_NAMESPACE
-

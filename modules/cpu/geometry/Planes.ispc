@@ -1,31 +1,24 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/box.h"
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
-#endif
-
 // ospray
+#include "OSPConfig.h"
 #include "common/Data.ih"
 #include "common/DifferentialGeometry.ih"
 #include "common/FilterIntersect.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "geometry/Geometry.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 // c++ shared
 #include "PlanesShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // The plane can't be truly infinite because Embree has a limit on object size
-#define PLANE_MAX_SIZE 1e18
-#define DUMMY_MAX_T 1e38
+#define PLANE_MAX_SIZE 1e18f
+#define DUMMY_MAX_T 1e38f
 
 export void Planes_bounds(const RTCBoundsFunctionArguments *uniform args)
 {

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "fb/FrameBufferDispatch.ih"
-#include "fb/FrameBufferShared.h"
-#include "fb/RenderTaskDesc.ih"
-#include "render/ScreenSample.ih"
-
 #include "fb/LocalFB.ih"
+#include "fb/RenderTaskDesc.ih"
 #include "fb/SparseFB.ih"
+#include "render/ScreenSample.ih"
+// c++ shared
+#include "fb/FrameBufferShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

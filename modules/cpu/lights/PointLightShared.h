@@ -39,13 +39,6 @@ struct PointLight
 #ifdef __cplusplus
   PointLight() : intensity(1.f), radiance(1.f), radius(0.f) {}
 };
-#ifdef OSPRAY_TARGET_SYCL
-void PointLight_Transform(const void *self, const void *xfm, void *dyn);
-void *PointLight_sample_addr();
-void *PointLight_sample_instanced_addr();
-void *PointLight_eval_addr();
-void *PointLight_eval_instanced_addr();
-#endif
 } // namespace ispc
 #else
 };

@@ -500,28 +500,11 @@ if (OSPRAY_MODULE_GPU)
     varying=
     unmasked=
     export=
-    make_vec2i=vec2i
-    make_vec3i=vec3i
-    make_vec4i=vec4i
-    make_vec2ui=vec2ui
-    make_vec3ui=vec3ui
-    make_vec4ui=vec4ui
-    make_vec2f=vec2f
-    make_vec3f=vec3f
-    make_vec4f=vec4f
-    make_box1f=box1f
-    make_box2f=box2f
-    make_box3f=box3f
-    make_box3fa=box3fa
-    make_box4f=box4f
-    make_LinearSpace3f=LinearSpace3f
-    make_LinearSpace3f_varying_identity=LinearSpace3f
     rtcIntersectV=rtcIntersect1
     rtcOccludedV=rtcOccluded1
     rtcInterpolateV1=rtcInterpolate1
     programCount=1
     programIndex=0
-    signbits=sycl::signbit
   )
 
   ospray_install_library(ospray_module_gpu lib)

@@ -4,12 +4,12 @@
 #pragma once
 
 #include <memory>
-#include "Distribution2DShared.h"
 #include "ISPCDevice.h"
 #include "ISPCDeviceObject.h"
-#include "common/BufferShared.h"
 #include "common/OSPCommon.h"
 #include "common/StructShared.h"
+// ispc shared
+#include "Distribution2DShared.h"
 
 namespace ospray {
 struct OSPRAY_SDK_INTERFACE Distribution2D

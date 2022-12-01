@@ -1,38 +1,26 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/box.h"
-#include "rkcommon/math/vec.h"
-
-#ifndef __SYCL_DEVICE_ONLY__
-// Include postStatusMsg on the host
-#include "common/OSPCommon.h"
-#endif
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
-#endif
-
 // ospray
+#include "OSPConfig.h"
+#include "Spheres.ih"
 #include "common/Data.ih"
 #include "common/DifferentialGeometry.ih"
 #include "common/FilterIntersect.ih"
 #include "common/ISPCMessages.h"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
-#include "geometry/Geometry.ih"
 #include "math/sampling.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 // c++ shared
 #include "SpheresShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
 #endif
-
-OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void Spheres_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
@@ -92,7 +80,7 @@ void Spheres_getAreas(const Geometry *const uniform _self,
       make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
   const uniform float min_scaling = reduce_min(scaling3);
   const uniform float max_scaling = reduce_max(scaling3);
-#ifndef __SYCL_DEVICE_ONLY__
+#if 0
   if ((max_scaling - min_scaling) > 1e-4f * min_scaling) {
     postStatusMsg(ISPC_MSG_SPHERES, OSP_LOG_WARNING);
   }

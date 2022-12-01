@@ -1,19 +1,11 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#include "rkcommon/math/LinearSpace.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/LinearSpace.ih"
-#endif
-
 #include "common/Instance.ih"
 #include "math/Distribution1D.ih"
 #include "math/Distribution2D.ih"
 #include "math/sampling.ih"
+#include "rkcommon/math/LinearSpace.ih"
 #include "texture/Texture2D.ih"
 // c++ shared
 #include "HDRILightShared.h"
@@ -116,11 +108,7 @@ inline Light_EvalRes Eval(const HDRILight *uniform self,
   const vec3f localDir = world2light * dir;
 
   const float u = atan2(localDir.y, localDir.x) * (float)one_over_two_pi;
-#ifndef OSPRAY_TARGET_SYCL
   const float v = acos(localDir.z) * (float)one_over_pi;
-#else
-  const float v = sycl::acos(localDir.z) * (float)one_over_pi;
-#endif
   const vec2f uv = make_vec2f(u, v);
 
   // clamp2edge for theta for tex lookup, to prevent light leaks at the poles

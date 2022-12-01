@@ -103,7 +103,7 @@ task
         // Dummy top level print so that prints at lower levels of the kernel
         // will work See JIRA https://jira.devtools.intel.com/browse/XDEPS-4729
         if (taskIndex0 == 0) {
-          cl::sycl::ext::oneapi::experimental::printf("");
+          sycl::ext::oneapi::experimental::printf("");
         }
 #endif
 #endif

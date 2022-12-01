@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "common/Embree.h"
 #include "openvkl/openvkl.isph"
 #include "rkcommon/math/box.ih"
 // c++ shared

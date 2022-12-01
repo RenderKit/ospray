@@ -6,6 +6,7 @@
 #include "ISPCDeviceObject.h"
 #include "common/MotionTransform.h"
 #include "common/ObjectFactory.h"
+#include "common/StructShared.h"
 // ispc shared
 #include "CameraShared.h"
 

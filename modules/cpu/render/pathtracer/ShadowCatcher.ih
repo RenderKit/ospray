@@ -3,10 +3,6 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#endif
-
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct PathContext;

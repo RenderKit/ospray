@@ -1,16 +1,9 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/LinearSpace.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/LinearSpace.ih"
-#endif
-
 #include "common/Instance.ih"
 #include "math/sampling.ih"
+#include "rkcommon/math/LinearSpace.ih"
 // c++ shared
 #include "DirectionalLightShared.h"
 

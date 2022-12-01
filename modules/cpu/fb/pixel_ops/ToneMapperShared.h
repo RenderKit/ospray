@@ -21,11 +21,6 @@ struct LiveToneMapper
   // ACES color transform flag
   bool acesColor;
 };
-
-#ifdef OSPRAY_TARGET_SYCL
-void *LiveToneMapper_processPixel_addr();
-#endif
-
 #ifdef __cplusplus
 }
 #endif

@@ -5,6 +5,7 @@
 
 #include "ISPCDeviceObject.h"
 #include "common/ObjectFactory.h"
+#include "common/StructShared.h"
 // ispc shared
 #include "TransferFunctionShared.h"
 

@@ -11,7 +11,15 @@
 // ispc exports
 #include "render/scivis/SciVis_ispc.h"
 #else
-#include "SciVis.ih"
+namespace ispc {
+SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    World *uniform world,
+    void *uniform perFrameData,
+    const uint32 *uniform taskIDs,
+    const int taskIndex0);
+}
 #endif
 
 namespace ospray {
@@ -73,9 +81,8 @@ void SciVis::renderTasks(FrameBuffer *fb,
 #ifdef OSPRAY_TARGET_SYCL
   const uint32_t *taskIDsPtr = taskIDs.data();
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    const cl::sycl::nd_range<1> dispatchRange =
-        computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) {
+    const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
+    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
       if (taskIndex.get_global_id(0) < numTasks) {
         ispc::SciVis_renderTask(&rendererSh->super,
             fbSh,

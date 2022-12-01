@@ -21,9 +21,6 @@ struct Subdivision
     super.type = GEOMETRY_TYPE_SUBDIVISION;
   }
 };
-#ifdef OSPRAY_TARGET_SYCL
-void *Subdivision_postIntersect_addr();
-#endif
 } // namespace ispc
 #else
 };

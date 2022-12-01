@@ -3,10 +3,18 @@
 
 #include "PointLight.h"
 // embree
-#include "OSPConfig.h"
+#include "common/Embree.h"
 
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/PointLight_ispc.h"
+#else
+namespace ispc {
+void PointLight_Transform(const void *self, const void *xfm, void *dyn);
+void *PointLight_sample_addr();
+void *PointLight_sample_instanced_addr();
+void *PointLight_eval_addr();
+void *PointLight_eval_instanced_addr();
+} // namespace ispc
 #endif
 
 #include "PointLightShared.h"

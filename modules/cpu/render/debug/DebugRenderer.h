@@ -4,8 +4,10 @@
 #pragma once
 
 // ospray
-#include "DebugRendererShared.h"
+#include "common/StructShared.h"
 #include "render/Renderer.h"
+// ispc shared
+#include "DebugRendererShared.h"
 
 namespace ospray {
 

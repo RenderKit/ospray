@@ -25,10 +25,6 @@ struct PanoramicCamera
     super.type = CAMERA_TYPE_PANORAMIC;
   }
 };
-
-#ifdef OSPRAY_TARGET_SYCL
-void *PanoramicCamera_initRay_addr();
-#endif
 } // namespace ispc
 #else
 };

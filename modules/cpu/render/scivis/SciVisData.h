@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "common/StructShared.h"
 #include "render/RendererData.h"
 // ispc shared
 #include "SciVisDataShared.h"

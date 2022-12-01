@@ -4,17 +4,8 @@
 #pragma once
 
 // ospray
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/AffineSpace.h"
-#include "rkcommon/math/box.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
 #include "rkcommon/math/AffineSpace.ih"
 #include "rkcommon/math/box.ih"
-#endif
-
-#include "common/OSPCommon.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

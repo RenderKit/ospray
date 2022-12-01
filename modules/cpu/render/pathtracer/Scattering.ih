@@ -3,14 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
 #include "rkcommon/math/vec.ih"
-#endif
 
 #define SCATTERING_SPECULAR_REFLECTION                                         \
   (1 << 0) /*!< perfect specular reflection   */

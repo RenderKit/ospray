@@ -4,6 +4,7 @@
 #pragma once
 
 #include "render/Renderer.ih"
+#include "render/ScreenSample.ih"
 #include "render/pathtracer/PathStructs.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
 #include "render/pathtracer/volumes/VolumeSampler.ih"

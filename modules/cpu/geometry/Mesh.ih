@@ -15,12 +15,6 @@ SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
     const varying Ray &ray,
     uniform int64 flags);
 
-void Mesh_getAreas(const Geometry *const uniform _self,
-    const int32 *const uniform primIDs,
-    const uniform int32 numPrims,
-    const uniform affine3f &xfm,
-    float *const uniform areas);
-
 SYCL_EXTERNAL SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
     const int32 primID,
     const uniform affine3f &xfm,
@@ -29,4 +23,3 @@ SYCL_EXTERNAL SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
     const float time);
 
 OSPRAY_END_ISPC_NAMESPACE
-

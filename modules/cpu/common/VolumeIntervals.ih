@@ -6,16 +6,8 @@
 
 #include "Instance.ih"
 #include "OSPCommon.ih"
-
-#ifdef OSPRAY_TARGET_SYCL
-// Note: Keep this here for now since we will need these includes later
-#include "common/rkcommonSYCLWrappers.h"
-#include "rkcommon/math/AffineSpace.h"
-#include "rkcommon/math/box.h"
-#else
 #include "rkcommon/math/AffineSpace.ih"
 #include "rkcommon/math/box.ih"
-#endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

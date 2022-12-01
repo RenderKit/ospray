@@ -2,9 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
-#include "OBJShared.h"
+#include "rkcommon/math/vec.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
+
+struct BSDF;
+struct Material;
+struct ShadingContext;
+struct DifferentialGeometry;
+struct Ray;
+struct Medium;
 
 SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
     const uniform Material *uniform super,

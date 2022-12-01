@@ -3,16 +3,8 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/OSPCommon.ih"
-#include "rkcommon/math/LinearSpace.h"
-#include "rkcommon/math/box.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
 #include "rkcommon/math/LinearSpace.ih"
 #include "rkcommon/math/box.ih"
-#endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

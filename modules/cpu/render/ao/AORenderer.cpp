@@ -54,9 +54,8 @@ void AORenderer::renderTasks(FrameBuffer *fb,
 #ifdef OSPRAY_TARGET_SYCL
   const uint32_t *taskIDsPtr = taskIDs.data();
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
-    const cl::sycl::nd_range<1> dispatchRange =
-        computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange, [=](cl::sycl::nd_item<1> taskIndex) {
+    const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
+    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
       if (taskIndex.get_global_id(0) < numTasks) {
         ispc::AORenderer_renderTask(&rendererSh->super,
             fbSh,

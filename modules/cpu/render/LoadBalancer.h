@@ -3,10 +3,6 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#endif
-
 #include "camera/Camera.h"
 #include "common/OSPCommon.h"
 #include "common/World.h"

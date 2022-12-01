@@ -5,9 +5,6 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-// Only used on the host
-void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args);
-
 SYCL_EXTERNAL void Boxes_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
@@ -18,4 +15,3 @@ SYCL_EXTERNAL unmasked void Boxes_intersect_kernel(
     const uniform bool isOcclusionTest);
 
 OSPRAY_END_ISPC_NAMESPACE
-

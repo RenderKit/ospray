@@ -12,7 +12,6 @@
 #define MICROFACET_SHEEN_ALBEDO_TABLE_SIZE 16
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 
@@ -58,9 +57,6 @@ struct MicrofacetAlbedoTables
         sheenAlbedo_dir(nullptr)
   {}
 };
-#ifdef OSPRAY_TARGET_SYCL
-void precomputeMicrofacetAlbedoTables(void *uniform _tables);
-#endif
 } // namespace ispc
 #else
 };

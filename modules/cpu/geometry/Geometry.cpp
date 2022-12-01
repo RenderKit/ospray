@@ -3,7 +3,6 @@
 
 // ospray
 #include "Geometry.h"
-#include "OSPConfig.h"
 #include "common/Data.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "geometry/GeometryDispatch_ispc.h"

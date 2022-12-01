@@ -8,7 +8,12 @@
 // ispc exports
 #include "geometry/Mesh_ispc.h"
 #else
-#include "geometry/Mesh.ih"
+namespace ispc {
+void *QuadMesh_postIntersect_addr();
+void *TriangleMesh_postIntersect_addr();
+void *Mesh_sampleArea_addr();
+void *Mesh_getAreas_addr();
+} // namespace ispc
 #endif
 // std
 #include <cmath>
@@ -18,20 +23,10 @@ namespace ospray {
 Mesh::Mesh(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getAreas =
       reinterpret_cast<ispc::Geometry_GetAreasFct>(ispc::Mesh_getAreas_addr());
   getSh()->super.sampleArea = reinterpret_cast<ispc::Geometry_SampleAreaFct>(
       ispc::Mesh_sampleArea_addr());
-#else
-  getSh()->super.getAreas =
-      reinterpret_cast<ispc::Geometry_GetAreasFct>(ispc::Mesh_getAreas);
-  // We also set the sampleArea function ptr so that
-  // Geometry::supportAreaLighting will be true, but in SYCL we'll never call it
-  // through the function pointer on the device
-  getSh()->super.sampleArea =
-      reinterpret_cast<ispc::Geometry_SampleAreaFct>(ispc::Mesh_sampleArea);
-#endif
 }
 
 std::string Mesh::toString() const

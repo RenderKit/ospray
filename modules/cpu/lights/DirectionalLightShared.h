@@ -32,12 +32,6 @@ struct DirectionalLight
       const vec3f &irradiance,
       float cosAngle);
 };
-#ifdef OSPRAY_TARGET_SYCL
-void *DirectionalLight_sample_addr();
-void *DirectionalLight_sample_instanced_addr();
-void *DirectionalLight_eval_addr();
-void *DirectionalLight_eval_instanced_addr();
-#endif
 } // namespace ispc
 #else
 };

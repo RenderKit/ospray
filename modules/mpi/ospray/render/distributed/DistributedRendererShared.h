@@ -5,7 +5,7 @@
 
 #include "render/RendererShared.h"
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 namespace ispc {
 typedef void *DR_ComputeRegionVisibility;
 typedef void *DR_RenderRegionSampleFct;

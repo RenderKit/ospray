@@ -8,7 +8,9 @@
 // ispc-generated files
 #include "geometry/Planes_ispc.h"
 #else
-#include "geometry/Planes.ih"
+namespace ispc {
+void Planes_bounds(const RTCBoundsFunctionArguments *args);
+}
 #endif
 
 namespace ospray {

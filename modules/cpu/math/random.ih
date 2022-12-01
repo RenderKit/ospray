@@ -3,16 +3,8 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/math.h"
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/vec.ih"
-#endif
-
 #include "halton.ih"
+#include "rkcommon/math/vec.ih"
 #include "sobol.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE

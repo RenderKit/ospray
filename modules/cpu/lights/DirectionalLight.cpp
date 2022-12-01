@@ -2,12 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DirectionalLight.h"
+#include "common/StructShared.h"
 #include "math/sampling.h"
 // embree
-#include "OSPConfig.h"
+#include "common/Embree.h"
 #ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "lights/DirectionalLight_ispc.h"
+#else
+namespace ispc {
+void *DirectionalLight_sample_addr();
+void *DirectionalLight_sample_instanced_addr();
+void *DirectionalLight_eval_addr();
+void *DirectionalLight_eval_instanced_addr();
+} // namespace ispc
 #endif
 // ispc shared
 #include "DirectionalLightShared.h"

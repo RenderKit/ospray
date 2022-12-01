@@ -18,6 +18,7 @@
 #include "common/World.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/FrameBufferDispatch.ih"
+#include "fb/RenderTaskDesc.ih"
 #include "math/Distribution1D.ih"
 #include "math/random.ih"
 #include "pf/PixelFilterDispatch.ih"
@@ -25,12 +26,6 @@
 #include "PathTracerDataShared.h"
 #include "PathTracerShared.h"
 #include "render/MaterialShared.h"
-
-#ifdef OSPRAY_TARGET_SYCL
-#include "math/random.ih"
-#include "math/sampling.ih"
-#include "render/util.ih"
-#endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

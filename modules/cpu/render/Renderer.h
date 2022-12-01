@@ -11,10 +11,6 @@
 // ispc shared
 #include "RendererShared.h"
 
-#ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
-#endif
-
 namespace ospray {
 
 struct Camera;
@@ -74,7 +70,7 @@ struct OSPRAY_SDK_INTERFACE Renderer
    * The kernel being launched must discard tasks that are out of bounds
    * bounds due to this rounding
    */
-  cl::sycl::nd_range<1> computeDispatchRange(
+  sycl::nd_range<1> computeDispatchRange(
       const size_t globalSize, const size_t workgroupSize) const;
 #endif
 

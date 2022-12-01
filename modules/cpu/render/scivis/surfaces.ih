@@ -6,6 +6,8 @@
 #include "SciVis.ih"
 #include "render/materials/OBJ.ih"
 #include "texture/TextureParam.ih"
+// c++ shared
+#include "render/materials/OBJShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

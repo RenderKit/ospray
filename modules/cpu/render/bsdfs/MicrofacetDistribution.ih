@@ -3,13 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "common/rkcommonSYCLWrappers.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
 #include "rkcommon/math/math.ih"
-#endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

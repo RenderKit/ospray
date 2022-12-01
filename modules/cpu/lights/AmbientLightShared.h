@@ -17,10 +17,6 @@ struct AmbientLight
 #ifdef __cplusplus
   AmbientLight() : radiance(1.f) {}
 };
-#ifdef OSPRAY_TARGET_SYCL
-void *AmbientLight_sample_addr();
-void *AmbientLight_eval_addr();
-#endif
 } // namespace ispc
 #else
 };

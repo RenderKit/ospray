@@ -3,13 +3,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/box.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
 #include "rkcommon/math/box.ih"
-#endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

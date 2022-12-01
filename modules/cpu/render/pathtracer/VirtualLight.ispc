@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/World.ih"
-#include "common/rkcommonSYCLWrappers.h"
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
 #include "render/pathtracer/VirtualLight.ih"

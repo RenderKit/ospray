@@ -8,7 +8,9 @@
 // ispc-generated files
 #include "geometry/Boxes_ispc.h"
 #else
-#include "geometry/Boxes.ih"
+namespace ispc {
+void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args);
+}
 #endif
 
 namespace ospray {

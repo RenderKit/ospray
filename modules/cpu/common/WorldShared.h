@@ -6,10 +6,7 @@
 #include "render/pathtracer/PathTracerDataShared.h"
 #include "render/scivis/SciVisDataShared.h"
 
-#include "OSPConfig.h"
-
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 

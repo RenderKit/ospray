@@ -2,12 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "HDRILight.h"
+#include "common/StructShared.h"
 // embree
-#include "OSPConfig.h"
+#include "common/Embree.h"
 #ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "lights/HDRILight_ispc.h"
 #include "lights/Light_ispc.h"
+#else
+namespace ispc {
+void HDRILight_initDistribution(const void *map, void *distribution);
+}
 #endif
 // ispc shared
 #include "HDRILightShared.h"

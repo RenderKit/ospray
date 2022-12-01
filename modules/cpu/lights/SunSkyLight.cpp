@@ -5,10 +5,14 @@
 #include "SunSkyLight.h"
 #include "texture/Texture2D.h"
 // embree
-#include "OSPConfig.h"
+#include "common/Embree.h"
 #ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "lights/HDRILight_ispc.h"
+#else
+namespace ispc {
+void HDRILight_initDistribution(const void *map, void *distribution);
+}
 #endif
 // ispc shared
 #include "DirectionalLightShared.h"

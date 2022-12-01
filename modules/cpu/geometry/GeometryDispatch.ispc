@@ -1,6 +1,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "OSPConfig.h"
 #include "common/DifferentialGeometry.ih"
 #include "common/Ray.ih"
 #include "geometry/Boxes.ih"
@@ -13,7 +14,7 @@
 #ifdef OSPRAY_ENABLE_VOLUMES
 #include "geometry/Isosurfaces.ih"
 #endif
-// shared
+// c++ shared
 #include "geometry/GeometryShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE

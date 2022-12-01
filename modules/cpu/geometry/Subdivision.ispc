@@ -7,10 +7,6 @@
 // c++ shared
 #include "SubdivisionShared.h"
 
-#ifdef OSPRAY_TARGET_SYCL
-using namespace ospray;
-#endif
-
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
 void Subdivision_postIntersect(const Geometry *uniform _self,

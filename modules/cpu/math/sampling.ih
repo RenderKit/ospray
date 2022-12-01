@@ -10,14 +10,7 @@
 // pdf (needed later for MIS) good reference is "Total Compendium" by Philip
 // Dutre http://people.cs.kuleuven.be/~philip.dutre/GI/
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/math.h"
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
 #include "rkcommon/math/vec.ih"
-#endif
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 

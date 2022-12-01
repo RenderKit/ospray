@@ -23,10 +23,8 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/math.h"
-#endif
-
+#include "rkcommon/math/math.ih"
+// c++ shared
 #include "math/MathConstantsShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE

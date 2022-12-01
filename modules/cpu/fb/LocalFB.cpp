@@ -11,6 +11,23 @@
 #include "SparseFB.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "fb/LocalFB_ispc.h"
+#else
+namespace ispc {
+void LocalFrameBuffer_writeTile_RGBA8(void *_fb, const void *_tile);
+void LocalFrameBuffer_writeTile_SRGBA(void *_fb, const void *_tile);
+void LocalFrameBuffer_writeTile_RGBA32F(void *_fb, const void *_tile);
+void LocalFrameBuffer_writeDepthTile(void *_fb, const void *uniform _tile);
+void LocalFrameBuffer_writeAuxTile(void *_fb,
+    const void *_tile,
+    vec3f *aux,
+    const void *_ax,
+    const void *_ay,
+    const void *_az);
+void LocalFrameBuffer_writeIDTile(void *uniform _fb,
+    const void *uniform _tile,
+    uniform uint32 *uniform dst,
+    const void *uniform src);
+} // namespace ispc
 #endif
 #include "render/util.h"
 #include "rkcommon/common.h"

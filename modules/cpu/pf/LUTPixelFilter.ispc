@@ -89,7 +89,7 @@ task
   foreach (x = 0 ... lut_width) {
 #endif
     const varying float fx = (x + 0.5f) * (1.0f / (float)lut_width);
-    const vec2f coord = make_vec2f(fx, fy) - make_vec2f(0.5);
+    const vec2f coord = make_vec2f(fx, fy) - make_vec2f(0.5f);
 
     float filterEval = 0.f;
     switch (self->lutFilterType) {

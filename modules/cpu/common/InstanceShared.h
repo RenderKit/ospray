@@ -4,7 +4,6 @@
 #pragma once
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 

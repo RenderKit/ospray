@@ -2,11 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "CylinderLight.h"
+#include "common/StructShared.h"
 // embree
-#include "OSPConfig.h"
+#include "common/Embree.h"
 
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/CylinderLight_ispc.h"
+#else
+namespace ispc {
+void CylinderLight_Transform(const void *self, const void *xfm, void *dyn);
+void *CylinderLight_sample_addr();
+void *CylinderLight_sample_instanced_addr();
+void *CylinderLight_eval_addr();
+void *CylinderLight_eval_instanced_addr();
+} // namespace ispc
 #endif
 
 #include "CylinderLightShared.h"

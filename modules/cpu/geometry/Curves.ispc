@@ -7,11 +7,11 @@
 // c++ shared
 #include "CurvesShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 #ifdef OSPRAY_TARGET_SYCL
 using namespace ospray;
 #endif
-
-OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL void Curves_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,

@@ -7,12 +7,8 @@
 #include <memory>
 #include "ISPCDeviceObject.h"
 #include "StructShared.h"
-#include "common/BufferShared.h"
 #include "ispcrt.hpp"
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "Data.ih"
-#else
 // including "Data_ispc.h" breaks app code using SDK headers
 #ifndef __ISPC_STRUCT_Data1D__
 #define __ISPC_STRUCT_Data1D__
@@ -25,7 +21,6 @@ struct Data1D
   bool huge;
 };
 } // namespace ispc
-#endif
 #endif
 
 namespace ospray {

@@ -40,7 +40,7 @@ void OBJMaterial::commit()
       ((linear2f *)(&bumpTex.xform2f.l))->orthogonal().transposed();
 
   const float color_total = reduce_max(Kd.factor + Ks.factor + Tf);
-  if (color_total > 1.0) {
+  if (color_total > 1.f) {
     postStatusMsg(OSP_LOG_DEBUG) << "#osp:PT OBJ material produces energy "
                                  << "(kd + ks + tf = " << color_total
                                  << ", should be <= 1). Scaling down to 1.";

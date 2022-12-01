@@ -9,6 +9,8 @@
 #ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "geometry/Subdivision_ispc.h"
+#else
+void *Subdivision_postIntersect_addr();
 #endif
 
 namespace ospray {

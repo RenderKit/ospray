@@ -3,16 +3,9 @@
 
 #pragma once
 
-#ifdef OSPRAY_TARGET_SYCL
-#include "rkcommon/math/vec.h"
-using namespace rkcommon;
-using namespace rkcommon::math;
-#else
-#include "rkcommon/math/vec.ih"
-#endif
-
 #include "render/pathtracer/Scattering.ih"
 
+#include "rkcommon/math/vec.ih"
 // utilities used by (almost all) implementations
 #include "Optics.ih"
 #include "math/random.ih"
