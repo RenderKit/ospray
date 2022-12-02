@@ -224,18 +224,6 @@ macro(ospray_configure_ispc_isa)
 endmacro()
 
 macro(ospray_configure_dpcpp_target)
-  if (NOT EMBREE_GEOMETRY_USER_IN_ARGUMENTS)
-    message(FATAL_ERROR
-      "Your Embree build does not support EMBREE_GEOMETRY_USER_IN_ARGUMENTS, which is required for DPC++")
-  endif()
-
-  if (NOT EMBREE_FILTER_FUNCTION_IN_ARGUMENTS)
-    message(FATAL_ERROR
-      "Your Embree build does not support EMBREE_FILTER_FUNCTION_IN_ARGUMENTS, which is required for DPC++")
-  endif()
-
-  # TODO: We'll have similar DPC++ and device target checks for OpenVKL
-
   set(OSPRAY_SYCL_AOT_DEVICES ${EMBREE_SYCL_AOT_DEVICES})
 
   # TODO: Is this revision info going to be visible to end users?
@@ -425,15 +413,6 @@ endfunction()
 function(ospray_verify_embree_gpu_features)
   # TODO: We may still want to support Embree4 without DPCPP support for CPU only
   ospray_check_embree_feature(SYCL_SUPPORT "DPC++/SYCL support")
-  # Embree4 specific cmake options for user geometry and filter function
-  ospray_check_embree_feature(GEOMETRY_USER_IN_ARGUMENTS "user geometries")
-  ospray_check_embree_feature(FILTER_FUNCTION_IN_ARGUMENTS "intersection filter")
-  # We want to make sure these options are disabled on the GPU as they aren't used
-  # and result in extremely long compile times and decreased performance.
-  ospray_check_embree_feature(GEOMETRY_USER_IN_GEOMETRY
-                  "user geometry in geometry unused, causes long compile times for GPU" OFF)
-  ospray_check_embree_feature(FILTER_FUNCTION_IN_GEOMETRY
-                  "filter function in geometry unused, causes long compile times for GPU" OFF)
 endfunction()
 
 macro(ospray_find_embree4 EMBREE_GPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)

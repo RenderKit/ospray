@@ -296,8 +296,9 @@ void ISPCDevice::commit()
 
   if (!embreeDevice) {
 #ifdef OSPRAY_TARGET_SYCL
-    embreeDevice = rtcNewSYCLDevice(
-        syclContext, syclDevice, generateEmbreeDeviceCfg(*this).c_str());
+    embreeDevice =
+        rtcNewSYCLDevice(syclContext, generateEmbreeDeviceCfg(*this).c_str());
+    rtcSetDeviceSYCLDevice(embreeDevice, syclDevice);
 #else
     embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 #endif

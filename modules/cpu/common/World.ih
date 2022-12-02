@@ -34,19 +34,18 @@ inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
   if (!world->embreeSceneHandleGeometries)
     return;
 
-  uniform EmbreeIntersectionContext context;
-  rtcInitIntersectContext(&context.ectx);
-
 #if EMBREE_VERSION_MAJOR == 4
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
   intersectArgs.intersect = (RTCIntersectFunctionN)Geometry_dispatch_intersect;
 
   rtcIntersectV(world->embreeSceneHandleGeometries,
-      &context.ectx,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
 #else
+  uniform EmbreeIntersectionContext context;
+  rtcInitIntersectContext(&context.ectx);
+
   rtcIntersectV(world->embreeSceneHandleGeometries,
       &context.ectx,
       (varying RTCRayHit * uniform) & ray);
@@ -71,10 +70,10 @@ inline void traceVolumeRay(
 #if EMBREE_VERSION_MAJOR == 4
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
+  intersectArgs.context = &context.ectx;
   intersectArgs.intersect = (RTCIntersectFunctionN)Volume_intersect_kernel;
 
   rtcIntersectV(world->embreeSceneHandleVolumes,
-      &context.ectx,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
 #else
@@ -106,10 +105,10 @@ inline void traceVolumeRay(
 #if EMBREE_VERSION_MAJOR == 4
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
+  intersectArgs.context = &context.ectx;
   intersectArgs.intersect = (RTCIntersectFunctionN)Volume_intersect_kernel;
 
   rtcIntersectV(world->embreeSceneHandleVolumes,
-      &context.ectx,
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
 #else
@@ -312,25 +311,18 @@ inline bool isOccludedNoClipping(const World *uniform world, varying Ray &ray)
   if (!world->embreeSceneHandleGeometries)
     return false;
 
+#if EMBREE_VERSION_MAJOR == 4
+  uniform RTCOccludedArguments occludedArgs;
+  rtcInitOccludedArguments(&occludedArgs);
+  occludedArgs.occluded = (RTCOccludedFunctionN)Geometry_dispatch_occluded;
+
+  rtcOccludedV(world->embreeSceneHandleGeometries,
+      (varying RTCRay * uniform) & ray,
+      &occludedArgs);
+#else
   uniform EmbreeIntersectionContext context;
   rtcInitIntersectContext(&context.ectx);
 
-#if EMBREE_VERSION_MAJOR == 4
-  uniform RTCIntersectArguments intersectArgs;
-  rtcInitIntersectArguments(&intersectArgs);
-#ifdef ISPC
-  // Note: no union type in ISPC, intersect/occluded are a union in the
-  // RTCIntersectArguments struct.
-  intersectArgs.intersect = Geometry_dispatch_occluded;
-#else
-  intersectArgs.occluded = (RTCOccludedFunctionN)Geometry_dispatch_occluded;
-#endif
-
-  rtcOccludedV(world->embreeSceneHandleGeometries,
-      &context.ectx,
-      (varying RTCRay * uniform) & ray,
-      &intersectArgs);
-#else
   rtcOccludedV(world->embreeSceneHandleGeometries,
       &context.ectx,
       (varying RTCRay * uniform) & ray);

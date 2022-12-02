@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Intersect.ih"
+#include "OSPConfig.h"
 #include "Ray.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -24,6 +25,7 @@ inline bool filterCall(const RTCIntersectFunctionNArguments *uniform args,
   }
 #endif
 
+#if EMBREE_VERSION_MAJOR == 3
   // call filter intersection callback
   uniform RTCFilterFunctionNArguments filterArgs;
   filterArgs.valid = (int *uniform) & imask;
@@ -33,6 +35,7 @@ inline bool filterCall(const RTCIntersectFunctionNArguments *uniform args,
   filterArgs.hit = (RTCHitN * uniform) & rtcHitTemp;
   filterArgs.N = args->N;
   rtcFilterIntersection(args, &filterArgs);
+#endif
 
   // return true if hit has been accepted
   return imask == -1;
