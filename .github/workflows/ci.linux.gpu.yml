@@ -37,8 +37,25 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git -DEMBREE_BRANCH=devel -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=will/embree4 -DRKCOMMON_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git -DRKCOMMON_BRANCH=will/rkmath-tweaks -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_GPU_AOT_DEVICES=dg2 -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git -DEMBREE_BRANCH=devel -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=will/embree4 -DRKCOMMON_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git -DRKCOMMON_BRANCH=will/rkmath-tweaks -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
       artifact-out: build-ubuntu2204-DG2-AOT
+      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  build-ubuntu2204-DG2-JIT:
+    needs: download-dpcpp-gfx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
+      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
+      # Would help to have a module that we can load for specific gfx/agama versions
+      cmd: |
+        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
+        export CC=clang
+        export CXX=clang++
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git -DEMBREE_BRANCH=devel -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=will/embree4 -DRKCOMMON_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git -DRKCOMMON_BRANCH=will/rkmath-tweaks -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
+      artifact-out: build-ubuntu2204-DG2-JIT
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 ### TEST JOBS ###
@@ -60,7 +77,27 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH" 
-        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" 
+        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
+  test-ubuntu2204-DG2-JIT:
+    needs: [build-ubuntu2204-DG2-JIT, download-dpcpp-gfx]
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      image: ubuntu:22.04
+      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
+      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '[ "Linux", "docker", "dg2" ]'
+      artifact-in: build-ubuntu2204-DG2-JIT
+      artifact-out: test-ubuntu2204-DG2-JIT
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
+        export CC=clang
+        export CXX=clang++
+        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
