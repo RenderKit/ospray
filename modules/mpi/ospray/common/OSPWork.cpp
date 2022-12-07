@@ -1,23 +1,18 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include <memory>
 #include <vector>
 
-#include "../fb/DistributedFrameBuffer.h"
 #include "MPICommon.h"
 #include "OSPWork.h"
-#include "common/Data.h"
-#include "common/Library.h"
 #include "common/ObjectHandle.h"
-#include "common/World.h"
-#include "geometry/GeometricModel.h"
-#include "ospray/MPIDistributedDevice.h"
-#include "render/RenderTask.h"
 #include "rkcommon/array3D/for_each.h"
+#include "rkcommon/memory/RefCount.h"
+#include "rkcommon/utility/AbstractArray.h"
 #include "rkcommon/utility/ArrayView.h"
+#include "rkcommon/utility/FixedArray.h"
 #include "rkcommon/utility/OwnedArray.h"
-#include "texture/Texture.h"
-#include "volume/VolumetricModel.h"
 
 namespace ospray {
 namespace mpi {
@@ -61,15 +56,6 @@ size_t FrameBufferInfo::pixelSize(uint32_t channel) const
 size_t FrameBufferInfo::getNumPixels() const
 {
   return size.x * size.y;
-}
-
-Data *OSPState::getSharedDataHandle(int64_t handle) const
-{
-  auto fnd = appSharedData.find(handle);
-  if (fnd != appSharedData.end()) {
-    return fnd->second.ptr;
-  }
-  return nullptr;
 }
 
 void newRenderer(
@@ -182,51 +168,30 @@ void dataTransfer(OSPState &state,
   vec3ul numItems = 0;
   cmdBuf >> type >> numItems;
 
-  Data *data = new Data(state.hostDevice, type, numItems);
-
-  const uint64_t nbytes = data->size() * sizeOf(type);
-  auto view = std::make_shared<ArrayView<uint8_t>>(
-      reinterpret_cast<uint8_t *>(data->data()), nbytes);
-  fabric.recvBcast(*view);
+  auto data = std::make_shared<utility::FixedArray<uint8_t>>(
+      array3D::longProduct(numItems) * sizeOf(type));
+  fabric.recvBcast(*data);
 
   state.dataTransfers.push(data);
 }
 
-Data *retrieveData(OSPState &state,
+std::shared_ptr<utility::AbstractArray<uint8_t>> retrieveData(OSPState &state,
     networking::BufferReader &cmdBuf,
     networking::Fabric &,
     const OSPDataType type,
-    const vec3ul numItems,
-    Data *outputData)
+    const vec3ul numItems)
 {
-  using namespace utility;
   uint32_t dataInline = 0;
   cmdBuf >> dataInline;
-  const uint64_t nbytes = numItems.x * numItems.y * numItems.z * sizeOf(type);
+  std::shared_ptr<utility::AbstractArray<uint8_t>> outputData = nullptr;
   if (dataInline) {
-    // If the data is inline we copy it out of the command buffer into
-    // a fixed array, since the command buffer will be destroyed after
-    // processing it
-    if (!outputData) {
-      outputData = new Data(state.hostDevice, type, numItems);
-    }
-    cmdBuf.read(outputData->data(), nbytes);
+    const uint64_t nbytes = numItems.x * numItems.y * numItems.z * sizeOf(type);
+    outputData = cmdBuf.getView<uint8_t>(nbytes);
   } else {
     // All large data is sent before the command buffer using it, and will be
     // in the state's data transfers list in order by the command referencing it
-    auto data = state.dataTransfers.front();
+    outputData = state.dataTransfers.front();
     state.dataTransfers.pop();
-
-    if (!outputData) {
-      outputData = data;
-    } else {
-      // All data on the workers is compact, with the compaction done by the
-      // app rank before sending
-      std::memcpy(outputData->data(), data->data(), nbytes);
-
-      // Release the temporary data transfer object
-      data->refDec();
-    }
   }
 
   // If the data type is managed we need to convert the handles back into
@@ -234,13 +199,10 @@ Data *retrieveData(OSPState &state,
   // object manually
   if (mpicommon::isManagedObject(type)) {
     for (size_t i = 0; i < array3D::longProduct(numItems); ++i) {
-      char *addr = outputData->data() + i * sizeOf(type);
+      uint8_t *addr = outputData->data() + i * sizeOf(type);
       int64_t *h = reinterpret_cast<int64_t *>(addr);
       OSPObject *obj = reinterpret_cast<OSPObject *>(addr);
       *obj = state.objects[*h];
-
-      ManagedObject *m = lookupObject<ManagedObject>(*obj);
-      m->refInc();
     }
   }
 
@@ -254,11 +216,11 @@ void newSharedData(OSPState &state,
   using namespace utility;
 
   int64_t handle = 0;
-  OSPDataType format;
+  OSPDataType format = OSP_UNKNOWN;
   vec3ul numItems = 0;
   cmdBuf >> handle >> format >> numItems;
 
-  auto data = retrieveData(state, cmdBuf, fabric, format, numItems, nullptr);
+  auto data = retrieveData(state, cmdBuf, fabric, format, numItems);
 
   // gives an opportunity to pass off to internal device(s)
   auto forsubs = ospNewSharedData(
@@ -268,10 +230,6 @@ void newSharedData(OSPState &state,
   ospCommit(subscopy);
   ospRelease(forsubs);
   state.objects[handle] = (OSPData)subscopy;
-  state.appSharedData[handle] = data;
-
-  // Need to release the local scope's ref count, see issue about Ref<T>
-  data->refDec();
 }
 
 void newData(
@@ -333,24 +291,21 @@ void commit(OSPState &state,
     networking::Fabric &fabric)
 {
   int64_t handle = 0;
-  cmdBuf >> handle;
+  uint32_t isSharedData = 0;
+  cmdBuf >> handle >> isSharedData;
 
   // If it's a data being committed, we need to retrieve the updated data
-  Data *d = state.getSharedDataHandle(handle);
-  if (d) {
-    retrieveData(state, cmdBuf, fabric, d->type, d->numItems, d);
+  if (isSharedData) {
+    OSPDataType format = OSP_UNKNOWN;
+    vec3ul numItems = 0;
+    cmdBuf >> format >> numItems;
+    auto data = retrieveData(state, cmdBuf, fabric, format, numItems);
 
     auto subscopy = (OSPData)state.objects[handle];
 
     // gives an opportunity to pass off to internal device(s)
-    auto forsubs = ospNewSharedData(d->data(),
-        d->type,
-        d->numItems.x,
-        0,
-        d->numItems.y,
-        0,
-        d->numItems.z,
-        0);
+    auto forsubs = ospNewSharedData(
+        data->data(), format, numItems.x, 0, numItems.y, 0, numItems.z, 0);
     ospCopyData(forsubs, subscopy);
     ospCommit(subscopy);
     ospRelease(forsubs);
@@ -379,18 +334,6 @@ void release(
       }
     }
   }
-
-  // Check if we should release a shared data info for this object
-  {
-    auto fnd = state.appSharedData.find(handle);
-    if (fnd != state.appSharedData.end()) {
-      if (fnd->second->useCount() == 1) {
-        state.appSharedData.erase(fnd);
-      } else {
-        fnd->second->refDec();
-      }
-    }
-  }
 } // namespace work
 
 void retain(
@@ -404,14 +347,6 @@ void retain(
   {
     auto fnd = state.framebuffers.find(handle);
     if (fnd != state.framebuffers.end()) {
-      fnd->second->refInc();
-    }
-  }
-
-  // Mirror the app's ref count for shared data transfer buffers
-  {
-    auto fnd = state.appSharedData.find(handle);
-    if (fnd != state.appSharedData.end()) {
       fnd->second->refInc();
     }
   }

@@ -3,11 +3,13 @@
 
 #pragma once
 
+#include <memory>
 #include <queue>
 #include <unordered_map>
 #include <vector>
 
 #include <ospray/ospray.h>
+#include <rkcommon/utility/FixedArray.h>
 #include "MPICommon.h"
 #include "common/ObjectHandle.h"
 
@@ -16,16 +18,6 @@
 #include "rkcommon/networking/Fabric.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/FixedArray.h"
-
-#include "camera/Camera.h"
-#include "common/Instance.h"
-#include "common/World.h"
-#include "fb/ImageOp.h"
-#include "geometry/Geometry.h"
-#include "lights/Light.h"
-#include "render/Renderer.h"
-#include "volume/Volume.h"
-#include "volume/transferFunction/TransferFunction.h"
 
 namespace ospray {
 namespace mpi {
@@ -92,27 +84,17 @@ struct FrameBufferInfo : rkcommon::memory::RefCountedObject
 struct OSPState
 {
   std::unordered_map<int64_t, OSPObject> objects;
-  // Data objects that are conceptually "shared" by the application
-  std::unordered_map<int64_t, Ref<Data>> appSharedData;
-
   std::unordered_map<int64_t, Ref<FrameBufferInfo>> framebuffers;
 
   // Large data which is transferred separately from the command buffer,
   // prior to sending the command buffer
-  std::queue<Data *> dataTransfers;
-
-  api::ISPCDevice hostDevice;
+  std::queue<std::shared_ptr<utility::FixedArray<uint8_t>>> dataTransfers;
 
   template <typename T>
   T getObject(int64_t handle)
   {
     return reinterpret_cast<T>(objects[handle]);
   }
-
-  // Lookup the handle to see if it represents an application shared
-  // data handle. Returns the data object if the handle is a shared
-  // data, and null if not
-  Data *getSharedDataHandle(int64_t handle) const;
 };
 
 void dispatchWork(TAG t,

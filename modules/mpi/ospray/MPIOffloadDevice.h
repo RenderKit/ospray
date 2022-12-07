@@ -5,8 +5,8 @@
 
 #include <unordered_set>
 #include "api/Device.h"
+#include "common/ApplicationData.h"
 #include "common/MPICommon.h"
-#include "common/Managed.h"
 #include "common/OSPWork.h"
 #include "common/Profiling.h"
 #include "rkcommon/utility/FixedArray.h"
@@ -22,14 +22,10 @@ struct MPIOffloadDevice : public api::Device
   ~MPIOffloadDevice() override;
 
   /////////////////////////////////////////////////////////////////////////
-  // ManagedObject Implementation /////////////////////////////////////////
+  // Device Implementation ////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 
   void commit() override;
-
-  /////////////////////////////////////////////////////////////////////////
-  // Device Implementation ////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////
 
   int loadModule(const char *name) override;
 
@@ -138,21 +134,6 @@ struct MPIOffloadDevice : public api::Device
   template <typename Fcn>
   void sendWork(const Fcn &writeCmd, bool submitImmediately);
 
-  /*! The data shared with the application. The workerType may not be the same
-   * as the type of the data, because managed objects are unknown on the
-   * application rank, and are represented just as uint64 handles. Thus the
-   * local data objects see them as OSP_ULONG types, while the worker type
-   * is the true managed object type
-   */
-  struct ApplicationData : RefCountedObject
-  {
-    Data *data = nullptr;
-    // We can't tell the local Data object that the contained type
-    // is a managed type, because all the head node has are object handles
-    OSPDataType workerType = OSP_UNKNOWN;
-    bool releaseHazard = false;
-  };
-
   /*! Send data work should be called by data transfer writeCmd lambdas, to
    * insert inline data or start the data transfer for large data. If doing
    * a large data transfer the transfer is started on the second time the
@@ -186,8 +167,6 @@ struct MPIOffloadDevice : public api::Device
   size_t nBufferedCommands = 0;
 
   rkcommon::networking::FixedBufferWriter commandBuffer;
-
-  api::ISPCDevice hostDevice;
 
   bool initialized{false};
 

@@ -39,7 +39,7 @@ int main(int argc, char **argv)
   }
 
   int result = 0;
-  ospLoadModule("mpi");
+  ospLoadModule("mpi_distributed");
   {
     cpp::Device device("mpiDistributed");
 

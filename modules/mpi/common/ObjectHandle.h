@@ -4,12 +4,10 @@
 #pragma once
 
 #include "MPICommon.h"
-#include "common/Managed.h"
 #include "common/OSPCommon.h"
+#include "rkcommon/memory/RefCount.h"
 
 namespace ospray {
-
-struct ManagedObject;
 
 #define NULL_HANDLE (ObjectHandle(0))
 
@@ -34,22 +32,22 @@ union ObjectHandle
   void free();
 
   /*! look up an object by handle, and return it. must be a defined handle */
-  ManagedObject *lookup() const;
+  memory::RefCount *lookup() const;
 
   /* Allocate a local ObjectHandle */
   static ObjectHandle allocateLocalHandle();
 
   /*! Return the handle associated with the given object. */
-  static ObjectHandle lookup(ManagedObject *object);
+  static ObjectHandle lookup(memory::RefCount *object);
 
   /*! check whether the handle is defined *on this rank* */
   bool defined() const;
 
   /*! define the given handle to refer to given object */
-  static void assign(const ObjectHandle &handle, ManagedObject *object);
+  static void assign(const ObjectHandle &handle, memory::RefCount *object);
 
   /*! define the given handle to refer to given object */
-  void assign(ManagedObject *object) const;
+  void assign(memory::RefCount *object) const;
 
   void freeObject() const;
 
@@ -82,6 +80,13 @@ inline bool operator==(const ObjectHandle &a, const ObjectHandle &b)
 inline bool operator!=(const ObjectHandle &a, const ObjectHandle &b)
 {
   return !(a == b);
+}
+
+template <typename OSPRAY_TYPE>
+inline OSPRAY_TYPE *lookupObject(OSPObject obj)
+{
+  auto &handle = reinterpret_cast<ObjectHandle &>(obj);
+  return handle.defined() ? (OSPRAY_TYPE *)handle.lookup() : (OSPRAY_TYPE *)obj;
 }
 
 } // namespace ospray

@@ -1,14 +1,15 @@
 ## Copyright 2009 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-add_library(ospray_mpi_common STATIC
+add_library(ospray_mpi_common SHARED
     Collectives.cpp
     MPIBcastFabric.cpp
     MPICommon.cpp
     ObjectHandle.cpp
+    Profiling.cpp
+
     maml/maml.cpp
     maml/Context.cpp
-    Profiling.cpp
 )
 
 target_link_libraries(ospray_mpi_common
@@ -16,7 +17,7 @@ target_link_libraries(ospray_mpi_common
     Snappy::snappy
   PUBLIC
     rkcommon::rkcommon
-    ospray_module_cpu
+    ospray
     MPI::MPI_CXX
 )
 
@@ -33,3 +34,4 @@ if (OSPRAY_MPI_ENABLE_PROFILING)
   )
 endif()
 
+ospray_install_library(ospray_mpi_common mpi)

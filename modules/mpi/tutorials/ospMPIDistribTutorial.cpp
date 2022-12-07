@@ -87,7 +87,7 @@ int main(int argc, char **argv)
   // device. This can also be done by passing --osp:mpi-distributed when
   // using ospInit, however if the user doesn't pass this argument your
   // application will likely not behave as expected
-  ospLoadModule("mpi");
+  ospLoadModule("mpi_distributed");
 
   // use scoped lifetimes of wrappers to release everything before ospShutdown()
   {

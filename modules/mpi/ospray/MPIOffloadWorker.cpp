@@ -12,7 +12,6 @@
 
 #include <algorithm>
 #include <unordered_map>
-#include "ISPCDevice.h"
 #include "MPIOffloadDevice.h"
 #include "common/Library.h"
 #include "common/MPIBcastFabric.h"
@@ -49,6 +48,13 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
   // Nested scope to ensure all OSPRay objects/etc. are cleaned up
   // before we exit
   {
+    // We need to remove the offload device so that we call loadLocalModule
+    // directly to load the mpi_distributed module, instead of trying to go
+    // through the offload device's loadModule implementation which would try to
+    // send the command to some "workers".
+    ospSetCurrentDevice(nullptr);
+    ospLoadModule("mpi_distributed");
+
     OSPDevice distribDevice = ospNewDevice("mpiDistributed");
     ospDeviceSetParam(
         distribDevice, "worldCommunicator", OSP_VOID_PTR, &worker.comm);
@@ -79,8 +85,6 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
       throw std::runtime_error("Invalid non-MPI connection mode");
 
     work::OSPState ospState;
-    // Need to init the hostdevice's ISPCRT for CPU
-    ospState.hostDevice.commit();
 
     uint64_t commandSize = 0;
     utility::ArrayView<uint8_t> cmdView(
