@@ -5,6 +5,7 @@
 
 #include <thread>
 // ospray
+#include "DistributedLoadBalancer.h"
 #include "common/Future.h"
 #include "fb/FrameBuffer.h"
 

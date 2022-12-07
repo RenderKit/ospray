@@ -3,8 +3,10 @@
 
 #include "AlphaCompositeTileOperation.h"
 #include <memory>
-#include "../../fb/DistributedFrameBuffer.h"
+#include "fb/DistributedFrameBuffer.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "fb/DistributedFrameBuffer_ispc.h"
+#endif
 
 namespace ospray {
 

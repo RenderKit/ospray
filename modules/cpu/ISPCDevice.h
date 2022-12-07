@@ -156,9 +156,9 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
   }
 
 #ifdef OSPRAY_TARGET_SYCL
-  sycl::queue &getSyclQueue()
+  sycl::queue *getSyclQueue()
   {
-    return syclQueue;
+    return &syclQueue;
   }
 #endif
 

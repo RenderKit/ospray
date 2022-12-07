@@ -53,7 +53,13 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
     // through the offload device's loadModule implementation which would try to
     // send the command to some "workers".
     ospSetCurrentDevice(nullptr);
-    ospLoadModule("mpi_distributed");
+    auto OSPRAY_MPI_DISTRIBUTED_GPU =
+        utility::getEnvVar<int>("OSPRAY_MPI_DISTRIBUTED_GPU").value_or(0);
+    if (OSPRAY_MPI_DISTRIBUTED_GPU) {
+      ospLoadModule("mpi_distributed_gpu");
+    } else {
+      ospLoadModule("mpi_distributed_cpu");
+    }
 
     OSPDevice distribDevice = ospNewDevice("mpiDistributed");
     ospDeviceSetParam(

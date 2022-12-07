@@ -159,6 +159,7 @@ extern Group worker;
 // it is up to the caller to configure the world group correctly.
 bool init(int *ac, const char **av, bool useCommWorld);
 
+// TODO: This is redundant with OSPCommon's version right?
 bool isManagedObject(OSPDataType type);
 
 inline int workerRank()

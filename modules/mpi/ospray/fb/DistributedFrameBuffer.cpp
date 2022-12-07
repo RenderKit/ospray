@@ -8,7 +8,9 @@
 #include "ISPCDevice.h"
 #include "TileOperation.h"
 #include "common/Profiling.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "fb/DistributedFrameBuffer_ispc.h"
+#endif
 
 #include "pico_bench.h"
 #include "rkcommon/tasking/parallel_for.h"

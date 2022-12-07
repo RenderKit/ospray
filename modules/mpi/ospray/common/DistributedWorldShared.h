@@ -13,6 +13,7 @@ struct DistributedWorld
 {
   World super;
 
+  // TODO: regions must be moved to USM
   box3f *regions;
   int numRegions;
   RTCScene regionScene;

@@ -1,24 +1,34 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#ifndef OSPRAY_TARGET_SYCL
+#include "rkcommon/math/box.ih"
+#else
+#include "common/rkcommonSYCLWrappers.h"
+#endif
+
 #include "common/Instance.ih"
 #include "common/VolumeIntervals.ih"
 #include "common/World.ih"
 #include "math/random.ih"
 #include "math/sampling.ih"
-#include "openvkl/openvkl.isph"
 #include "render/materials/OBJ.ih"
 #include "render/scivis/surfaces.ih"
 #include "render/scivis/volumes.ih"
 #include "render/util.ih"
-#include "rkcommon/math/box.ih"
 #include "volume/VolumetricModel.ih"
+#ifdef OSPRAY_ENABLE_VOLUMES
+#include "openvkl/openvkl.isph"
+#endif
 // c++ shared
-#include "../../common/DistributedWorldShared.h"
 #include "DistributedRaycastShared.h"
+#include "common/DistributedWorldShared.h"
 #include "fb/FrameBufferShared.h"
 #include "fb/SparseFBShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifdef OSPRAY_ENABLE_VOLUMES
 // The distributed raycast renderer uses its own volume interval integration
 // because we want to apply the jitter before offsetting our step size to stay
 // inside the region, not after.
@@ -92,6 +102,7 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
 
   return make_vec4f(color, alpha);
 }
+#endif
 
 inline float computeAO(const DistributedRaycastRenderer *uniform self,
     const FrameBuffer *uniform fb,
@@ -148,7 +159,12 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
   float opacity = 1.f;
   const OBJ *mat = (const OBJ *)dg.material;
   if (mat) {
+#ifdef OSPRAY_TARGET_SYCL
+    {
+      const OBJ *m = mat;
+#else
     foreach_unique (m in mat) {
+#endif
       surfaceColor = surfaceColor * m->Kd;
       opacity = m->d;
       if (valid(m->KdMap)) {
@@ -212,7 +228,6 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
     }
   }
 #endif
-  return color;
 }
 
 void DRR_renderRegionSample(DistributedRenderer *uniform _self,
@@ -229,9 +244,9 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
   Ray &geomRay = sample.ray;
   Ray volumeRay = sample.ray;
 
-  VolumeInterval volumeInterval;
-
   traceRay(&world->super, geomRay);
+#ifdef OSPRAY_ENABLE_VOLUMES
+  VolumeInterval volumeInterval;
   traceVolumeRay(&world->super, volumeRay, volumeInterval);
   volumeInterval.interval.lower =
       max(volumeInterval.interval.lower, regionInterval.x);
@@ -239,6 +254,9 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
       min(volumeInterval.interval.upper, regionInterval.y);
 
   sample.z = min(geomRay.t, volumeInterval.interval.lower);
+#else
+  sample.z = geomRay.t;
+#endif
 
   // TODO: Doesn't seem like much jittering happens with the volume integration
   vec4f outputColor = make_vec4f(0.f);
@@ -246,12 +264,17 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
     const bool haveGeometryHit = hadHit(geomRay)
         && geomRay.t >= regionInterval.x && geomRay.t <= regionInterval.y;
 
+#ifdef OSPRAY_ENABLE_VOLUMES
     const bool haveVolumeHit = hasInterval(volumeInterval);
 
     const bool bothHit = haveGeometryHit && haveVolumeHit;
     const bool eitherHit = haveGeometryHit || haveVolumeHit;
 
     const bool volumeFirst = volumeInterval.interval.lower < geomRay.t;
+#else
+    const bool bothHit = false;
+    const bool eitherHit = haveGeometryHit;
+#endif
 
     if (!eitherHit) {
       break;
@@ -271,6 +294,7 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
           self, &fb->super, world, sample.sampleID, geomRay, dg);
     }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
     // Always just integrate the volume when it comes in front of the geometry
     if (haveVolumeHit && volumeFirst) {
       volumeInterval.interval.upper =
@@ -312,6 +336,7 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
       volumeColor = DRR_integrateVolumeInterval(
           sample, volumeInterval, volumeRay, self->volumeSamplingRate);
     }
+#endif
 
     vec4f blendedColor = make_vec4f(0.f);
     if (bothHit) {
@@ -334,7 +359,9 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
     volumeRay = geomRay;
 
     traceRay(&world->super, geomRay);
+#ifdef OSPRAY_ENABLE_VOLUMES
     traceVolumeRay(&world->super, volumeRay, volumeInterval);
+#endif
   }
   sample.rgb = make_vec3f(outputColor);
   sample.alpha = outputColor.w;
@@ -344,5 +371,6 @@ void DRR_renderRegionSample(DistributedRenderer *uniform _self,
 
 export void *uniform DRR_renderRegionSample_addr()
 {
-  return DRR_renderRegionSample;
+  return (void *uniform)DRR_renderRegionSample;
 }
+OSPRAY_END_ISPC_NAMESPACE

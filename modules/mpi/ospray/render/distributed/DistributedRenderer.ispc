@@ -1,6 +1,9 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "OSPConfig.h"
+#include "rkcommon/utility/random.ih"
+
 #include "camera/Camera.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
@@ -18,11 +21,16 @@
 #include "fb/FrameBufferShared.h"
 #include "fb/SparseFBShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct EmbreeRayQueryContextRegion
 {
   RTCRayQueryContext ectx;
   uint8 *regionVisible;
 };
+
+// TODO WILL Hybrid code for DistributedRenderer
+#ifndef OSPRAY_TARGET_SYCL
 
 unmasked void markRegionVisibleFilterFunction(
     const RTCFilterFunctionNArguments *uniform args)
@@ -389,3 +397,5 @@ export void *uniform DR_default_renderRegionToTile_addr()
 {
   return DR_default_renderRegionToTile;
 }
+#endif
+OSPRAY_END_ISPC_NAMESPACE

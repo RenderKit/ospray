@@ -18,7 +18,11 @@
 #include "render/distributed/DistributedRaycast.h"
 
 extern "C" OSPError OSPRAY_DLLEXPORT
-ospray_module_init_mpi_distributed(
+#ifdef OSPRAY_TARGET_SYCL
+ospray_module_init_mpi_distributed_gpu(
+#else
+ospray_module_init_mpi_distributed_cpu(
+#endif
     int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
 {
   using namespace ospray;
@@ -26,7 +30,12 @@ ospray_module_init_mpi_distributed(
   auto status = moduleVersionCheck(versionMajor, versionMinor);
 
   if (status == OSP_NO_ERROR) {
+    // Run the CPU/GPU module's initialization function to register local types
+#ifdef OSPRAY_TARGET_SYCL
+    status = ospLoadModule("gpu");
+#else
     status = ospLoadModule("cpu");
+#endif
   }
 
   if (status == OSP_NO_ERROR) {

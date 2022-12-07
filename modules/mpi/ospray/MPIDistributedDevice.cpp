@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <map>
+#include <memory>
 
 #include "ISPCDevice.h"
 #include "MPIDistributedDevice.h"
@@ -23,9 +24,11 @@
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/CodeTimer.h"
 #include "rkcommon/utility/getEnvVar.h"
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/Volume.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
+#endif
 // ispc exports
 #include "MPIDistributedDevice_ispc.h"
 
@@ -106,9 +109,11 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter_object(Material *),
     declare_param_setter_object(Renderer *),
     declare_param_setter_object(Texture *),
+#ifdef OSPRAY_ENABLE_VOLUMES
     declare_param_setter_object(TransferFunction *),
     declare_param_setter_object(Volume *),
     declare_param_setter_object(VolumetricModel *),
+#endif
     declare_param_setter_object(World *),
     declare_param_setter_string(const char *),
     declare_param_setter(char *),
@@ -180,6 +185,8 @@ inline API_TYPE createDistributedObject(
 
 MPIDistributedDevice::MPIDistributedDevice()
 {
+  // TODO: Here we'll make a CPU or GPU device depending on the build config for
+  // the module
   internalDevice = std::make_shared<ospray::api::ISPCDevice>();
 }
 
@@ -352,7 +359,11 @@ OSPCamera MPIDistributedDevice::newCamera(const char *type)
 
 OSPVolume MPIDistributedDevice::newVolume(const char *type)
 {
+#ifdef OSPRAY_ENABLE_VOLUMES
   return internalDevice->newVolume(type);
+#else
+  return nullptr;
+#endif
 }
 
 OSPGeometry MPIDistributedDevice::newGeometry(const char *type)
@@ -368,8 +379,12 @@ OSPGeometricModel MPIDistributedDevice::newGeometricModel(OSPGeometry _geom)
 
 OSPVolumetricModel MPIDistributedDevice::newVolumetricModel(OSPVolume _vol)
 {
+#ifdef OSPRAY_ENABLE_VOLUMES
   auto *volume = lookupObject<Volume>(_vol);
   return internalDevice->newVolumetricModel((OSPVolume)volume);
+#else
+  return nullptr;
+#endif
 }
 
 OSPMaterial MPIDistributedDevice::newMaterial(
@@ -399,9 +414,12 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   auto *camera = lookupObject<Camera>(_camera);
   auto *world = lookupObject<DistributedWorld>(_world);
 
-  ObjectHandle handle = allocateHandle();
-  auto loadBalancer = std::make_shared<DistributedLoadBalancer>();
-  loadBalancer->setObjectHandle(handle);
+  auto loadBalancer =
+      std::make_shared<DistributedLoadBalancer>(allocateHandle());
+#ifdef OSPRAY_TARGET_SYCL
+  auto ispcDevice = std::dynamic_pointer_cast<api::ISPCDevice>(internalDevice);
+  loadBalancer->setQueue(ispcDevice->getSyclQueue());
+#endif
 
   fb->setCompletedEvent(OSP_NONE_FINISHED);
 

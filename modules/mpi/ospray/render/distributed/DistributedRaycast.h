@@ -39,6 +39,18 @@ struct DistributedRaycastRenderer : public AddStructShared<DistributedRenderer,
 
   std::shared_ptr<TileOperation> tileOperation() override;
 
+#ifdef OSPRAY_TARGET_SYCL
+  void renderTasks(FrameBuffer *fb,
+      Camera *camera,
+      World *world,
+      void *perFrameData,
+      const utility::ArrayView<uint32_t> &taskIDs,
+      sycl::queue &syclQueue) const
+  {
+    // TODO
+  }
+#endif
+
  private:
   // The communicator to use for collectives in the renderer
   mpicommon::Group mpiGroup;

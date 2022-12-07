@@ -6,7 +6,9 @@
 #include "common/Instance.h"
 #include "geometry/GeometricModel.h"
 // ispc exports
+#ifndef OSPRAY_TARGET_SYCL
 #include "render/distributed/DistributedRenderer_ispc.h"
+#endif
 
 namespace ospray {
 namespace mpi {
@@ -15,10 +17,12 @@ DistributedRenderer::DistributedRenderer(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device),
       mpiGroup(mpicommon::worker.dup())
 {
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->computeRegionVisibility =
       ispc::DR_default_computeRegionVisibility_addr();
   getSh()->renderRegionSample = ispc::DR_default_renderRegionSample_addr();
   getSh()->renderRegionToTile = ispc::DR_default_renderRegionToTile_addr();
+#endif
 }
 
 DistributedRenderer::~DistributedRenderer()
@@ -34,6 +38,7 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
     const utility::ArrayView<uint32_t> &taskIDs) const
 {
   // TODO this needs an exported function
+#ifndef OSPRAY_TARGET_SYCL
   ispc::DistributedRenderer_computeRegionVisibility(getSh(),
       fb->getSh(),
       camera->getSh(),
@@ -42,6 +47,7 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
       perFrameData,
       taskIDs.data(),
       taskIDs.size());
+#endif
 }
 
 void DistributedRenderer::renderRegionTasks(SparseFrameBuffer *fb,
@@ -52,6 +58,7 @@ void DistributedRenderer::renderRegionTasks(SparseFrameBuffer *fb,
     const utility::ArrayView<uint32_t> &taskIDs) const
 {
   // TODO: exported fcn
+#ifndef OSPRAY_TARGET_SYCL
   ispc::DistributedRenderer_renderRegionToTile(getSh(),
       fb->getSh(),
       camera->getSh(),
@@ -60,6 +67,7 @@ void DistributedRenderer::renderRegionTasks(SparseFrameBuffer *fb,
       perFrameData,
       taskIDs.data(),
       taskIDs.size());
+#endif
 }
 
 OSPPickResult DistributedRenderer::pick(
@@ -77,6 +85,7 @@ OSPPickResult DistributedRenderer::pick(
   int primID = RTC_INVALID_GEOMETRY_ID;
   float depth = 1e20f;
 
+#ifndef OSPRAY_TARGET_SYCL
   ispc::DistributedRenderer_pick(getSh(),
       fb->getSh(),
       camera->getSh(),
@@ -88,6 +97,7 @@ OSPPickResult DistributedRenderer::pick(
       primID,
       depth,
       res.hasHit);
+#endif
 
   // Find the closest picked object globally, only the rank
   // with this object will report the pick

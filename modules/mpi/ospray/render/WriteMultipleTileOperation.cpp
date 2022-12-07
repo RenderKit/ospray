@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "WriteMultipleTileOperation.h"
-#include "../fb/DistributedFrameBuffer.h"
+#include "fb/DistributedFrameBuffer.h"
+#include "fb/DistributedFrameBufferShared.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "fb/DistributedFrameBuffer_ispc.h"
+#endif
 
 namespace ospray {
 using namespace rkcommon;

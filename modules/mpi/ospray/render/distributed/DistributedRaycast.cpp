@@ -12,13 +12,15 @@
 #include "rkcommon/tasking/parallel_for.h"
 #include "rkcommon/utility/getEnvVar.h"
 
-#include "../../common/DistributedWorld.h"
-#include "../../common/Profiling.h"
-#include "../../fb/DistributedFrameBuffer.h"
 #include "AlphaCompositeTileOperation.h"
 #include "DistributedRaycast.h"
+#include "common/DistributedWorld.h"
+#include "common/Profiling.h"
+#include "fb/DistributedFrameBuffer.h"
 // ispc exports
+#ifndef OSPRAY_TARGET_SYCL
 #include "render/distributed/DistributedRaycast_ispc.h"
+#endif
 
 namespace ospray {
 namespace mpi {
@@ -33,7 +35,11 @@ DistributedRaycastRenderer::DistributedRaycastRenderer(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device),
       mpiGroup(mpicommon::worker.dup())
 {
+#ifndef OSPRAY_TARGET_SYCL
+  // TODO: needs to be run as its own kernel here instead of a dispatch or fcn
+  // ptr call
   getSh()->super.renderRegionSample = ispc::DRR_renderRegionSample_addr();
+#endif
 
   DETAILED_LOGGING =
       utility::getEnvVar<int>("OSPRAY_DP_API_TRACING").value_or(0);

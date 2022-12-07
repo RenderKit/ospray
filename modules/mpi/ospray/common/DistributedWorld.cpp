@@ -67,6 +67,7 @@ void DistributedWorld::commit()
           vec3f(b.upper.x, b.upper.y, b.upper.z)));
     }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
     if (getSh()->super.embreeSceneHandleVolumes) {
       box4f b;
       rtcGetSceneBounds(
@@ -74,6 +75,7 @@ void DistributedWorld::commit()
       localBounds.extend(box3f(vec3f(b.lower.x, b.lower.y, b.lower.z),
           vec3f(b.upper.x, b.upper.y, b.upper.z)));
     }
+#endif
     myRegions.push_back(localBounds);
   }
 
@@ -114,6 +116,7 @@ void DistributedWorld::commit()
     allRegionsData->refDec();
   }
 
+  // Need to move allRegions data to USM
   getSh()->regions = allRegions.data();
   getSh()->numRegions = allRegions.size();
   getSh()->regionScene = regionScene;

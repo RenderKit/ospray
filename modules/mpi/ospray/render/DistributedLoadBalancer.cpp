@@ -5,14 +5,15 @@
 #include <algorithm>
 #include <limits>
 #include <map>
-#include "../common/DistributedWorld.h"
-#include "../common/DynamicLoadBalancer.h"
-#include "../fb/DistributedFrameBuffer.h"
+#include "ObjectHandle.h"
 #include "WriteMultipleTileOperation.h"
 #include "camera/Camera.h"
+#include "common/DistributedWorld.h"
+#include "common/DynamicLoadBalancer.h"
 #include "common/MPICommon.h"
 #include "common/Profiling.h"
 #include "distributed/DistributedRenderer.h"
+#include "fb/DistributedFrameBuffer.h"
 #include "rkcommon/tasking/parallel_for.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/getEnvVar.h"
@@ -22,7 +23,9 @@ namespace mpi {
 using namespace mpicommon;
 using namespace rkcommon;
 
-DistributedLoadBalancer::DistributedLoadBalancer() {}
+DistributedLoadBalancer::DistributedLoadBalancer(ObjectHandle handle)
+    : handle(handle)
+{}
 
 DistributedLoadBalancer::~DistributedLoadBalancer()
 {
@@ -281,11 +284,13 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
   std::cout << "Start new frame took: " << elapsedTimeMs(start, end) << "ms\n";
 #endif
 
-  if (enableStaticBalancer) {
-    renderFrameReplicatedStaticLB(dfb, renderer, camera, world, perFrameData);
-  } else {
-    renderFrameReplicatedDynamicLB(dfb, renderer, camera, world, perFrameData);
-  }
+  //  if (enableStaticBalancer) {
+  renderFrameReplicatedStaticLB(dfb, renderer, camera, world, perFrameData);
+  // Starting with MPI/GPU support for just the static LB
+  // } else {
+  //  renderFrameReplicatedDynamicLB(dfb, renderer, camera, world,
+  //  perFrameData);
+  //}
 
 #ifdef ENABLE_PROFILING
   end = ProfilingPoint();
@@ -320,10 +325,12 @@ std::string DistributedLoadBalancer::toString() const
   return "ospray::mpi::Distributed";
 }
 
-void DistributedLoadBalancer::setObjectHandle(ObjectHandle &handle_)
+#ifdef OSPRAY_TARGET_SYCL
+void DistributedLoadBalancer::setQueue(sycl::queue *sq)
 {
-  handle = handle_;
+  syclQueue = sq;
 }
+#endif
 
 void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
     DistributedFrameBuffer *dfb,
@@ -422,7 +429,12 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
           camera,
           world,
           perFrameData,
-          sparseFb->getRenderTaskIDs());
+          sparseFb->getRenderTaskIDs()
+#ifdef OSPRAY_TARGET_SYCL
+              ,
+          *syclQueue
+#endif
+      );
 
       // TODO: Now the tile setting happens as a bulk-sync operation after
       // rendering, because we still need to send them through the compositing
@@ -473,8 +485,10 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
 {
   SparseFrameBuffer *ownedTilesFb = dfb->getSparseFBLayer(0);
 
+  // These views are already in USM
   const utility::ArrayView<Tile> tiles = ownedTilesFb->getTiles();
   const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
+  // This is also a USM view
   auto renderTaskIDs = ownedTilesFb->getRenderTaskIDs();
 
   if (renderer->errorThreshold > 0.f) {
@@ -487,14 +501,31 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
       }
     }
 
+    BufferShared<uint32_t> activeTasksShared(
+        dfb->getISPCDevice().getIspcrtDevice(), activeTasks);
+
     renderer->renderTasks(ownedTilesFb,
         camera,
         world,
         perFrameData,
-        utility::ArrayView<uint32_t>(activeTasks));
+        utility::ArrayView<uint32_t>(
+            activeTasksShared.data(), activeTasksShared.size())
+#ifdef OSPRAY_TARGET_SYCL
+            ,
+        *syclQueue
+#endif
+    );
   } else {
-    renderer->renderTasks(
-        ownedTilesFb, camera, world, perFrameData, renderTaskIDs);
+    renderer->renderTasks(ownedTilesFb,
+        camera,
+        world,
+        perFrameData,
+        renderTaskIDs
+#ifdef OSPRAY_TARGET_SYCL
+        ,
+        *syclQueue
+#endif
+    );
   }
 
   // TODO: Now the tile setting happens as a bulk-sync operation after

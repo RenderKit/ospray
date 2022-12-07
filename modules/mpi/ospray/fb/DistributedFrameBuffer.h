@@ -6,6 +6,7 @@
 #include <condition_variable>
 #include <memory>
 #include "../common/Messaging.h"
+#include "DistributedFrameBufferShared.h"
 #include "DistributedFrameBuffer_TileMessages.h"
 #include "ISPCDevice.h"
 #include "fb/LocalFB.h"

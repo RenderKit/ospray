@@ -32,7 +32,7 @@ struct OF_DECLSPEC ObjectFactory
   }
 
   // Instantiate provided type class
-  static T *createInstance(const char *type, Args &&... args)
+  static T *createInstance(const char *type, Args &&...args)
   {
     // Find constructor pointer and call it
     FactoryFcn fcn = fcns[type];
@@ -49,14 +49,14 @@ struct OF_DECLSPEC ObjectFactory
   }
 
  private:
-  using FactoryFcn = T *(*)(Args &&... args);
+  using FactoryFcn = T *(*)(Args &&...args);
   using FactoryMap = std::map<std::string, FactoryFcn>;
 
   // Map of constructor pointers, preferably use 'inline static' since C++17
   static FactoryMap fcns;
 
   template <typename D>
-  static T *allocate_object(Args &&... args)
+  static T *allocate_object(Args &&...args)
   {
     return new D(std::forward<Args>(args)...);
   }

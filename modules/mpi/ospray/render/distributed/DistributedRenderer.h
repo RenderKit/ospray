@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "../../fb/DistributedFrameBuffer.h"
-#include "../../fb/TileOperation.h"
 #include "camera/Camera.h"
+#include "fb/DistributedFrameBuffer.h"
+#include "fb/TileOperation.h"
 #include "render/Renderer.h"
 // ispc shared
 #include "DistributedRendererShared.h"
