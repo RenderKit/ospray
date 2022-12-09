@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PointLight.h"
-// embree
-#include "common/Embree.h"
-
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/PointLight_ispc.h"
 #else

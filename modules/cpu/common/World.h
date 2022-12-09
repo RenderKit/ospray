@@ -8,8 +8,6 @@
 #include "ISPCDeviceObject.h"
 // stl
 #include <vector>
-// embree
-#include "Embree.h"
 // ispc shared
 #include "WorldShared.h"
 

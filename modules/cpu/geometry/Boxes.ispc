@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
-#include "OSPConfig.h"
 #include "common/Data.ih"
 #include "common/DifferentialGeometry.ih"
 #include "common/FilterIntersect.ih"
@@ -33,9 +32,8 @@ SYCL_EXTERNAL unmasked void Boxes_intersect_kernel(
   if (!args->valid[programIndex]) {
     return;
   }
-#if EMBREE_VERSION_MAJOR == 4
+
   args->valid[programIndex] = 0;
-#endif
 
   Boxes *uniform self = (Boxes * uniform) args->geometryUserPtr;
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
@@ -48,9 +46,7 @@ SYCL_EXTERNAL unmasked void Boxes_intersect_kernel(
 
   // call intersection filtering callback and setup hit if accepted
   if (filterIntersectionBoth(args, isect, isOcclusionTest)) {
-#if EMBREE_VERSION_MAJOR == 4
     args->valid[programIndex] = -1;
-#endif
   }
 }
 

@@ -408,59 +408,16 @@ function(ospray_verify_embree_features)
   ospray_check_embree_feature(GEOMETRY_USER "user geometries")
   ospray_check_embree_feature(RAY_PACKETS "ray packets")
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
+  if (OSPRAY_MODULE_GPU)
+    ospray_check_embree_feature(SYCL_SUPPORT "DPC++/SYCL support")
+  endif()
 endfunction()
 
-function(ospray_verify_embree_gpu_features)
-  # TODO: We may still want to support Embree4 without DPCPP support for CPU only
-  ospray_check_embree_feature(SYCL_SUPPORT "DPC++/SYCL support")
-endfunction()
-
-macro(ospray_find_embree4 EMBREE_GPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
-  # We need to preserve embree_DIR if it was specified because find_package/find_dependency
-  # will set it to embree_DIR-NOTFOUND if it fails here
-  set(embree_DIR_PARAM ${embree_DIR})
+macro(ospray_find_embree EMBREE_VERSION_REQUIRED FIND_AS_DEPENDENCY)
   if (${FIND_AS_DEPENDENCY})
-    find_dependency(embree ${EMBREE_GPU_VERSION_REQUIRED})
+    find_dependency(embree ${EMBREE_VERSION_REQUIRED})
   else()
-    find_package(embree ${EMBREE_GPU_VERSION_REQUIRED})
-  endif()
-  if (NOT embree_FOUND)
-    # Reset embree_DIR to the original param, or unset it if no param was passed
-    if (embree_DIR_PARAM)
-      set(embree_DIR ${embree_DIR_PARAM})
-    else()
-      set(embree_DIR "")
-    endif()
-    # Should we warn at all while GPU support has not had its initial release?
-    message(WARNING
-            "We did not find Embree w/ GPU support installed on your system. OSPRay"
-            " required an Embree installation >= v${EMBREE_GPU_VERSION_REQUIRED}"
-            " for GPU support. OSPRay will search for Embree 3 for CPU-only rendering.")
-  else()
-    # Get Embree CPU info
-    get_target_property(EMBREE_INCLUDE_DIRS embree
-      INTERFACE_INCLUDE_DIRECTORIES)
-    get_target_property(CONFIGURATIONS embree IMPORTED_CONFIGURATIONS)
-    list(GET CONFIGURATIONS 0 CONFIGURATION)
-    get_target_property(EMBREE_LIBRARY embree
-      IMPORTED_LOCATION_${CONFIGURATION})
-    # Get Embree SYCL info if DPCPP was enabled
-    if (EMBREE_SYCL_SUPPORT)
-      get_target_property(CONFIGURATIONS embree_sycl IMPORTED_CONFIGURATIONS)
-      list(GET CONFIGURATIONS 0 CONFIGURATION)
-      get_target_property(EMBREE_SYCL_LIBRARY embree_sycl
-        IMPORTED_LOCATION_${CONFIGURATION})
-    endif()
-    message(STATUS "Found Embree v${embree_VERSION}: ${EMBREE_LIBRARY}")
-  endif()
-endmacro()
-
-# Note: Embree3 support will be removed once Embree4 is released
-macro(ospray_find_embree3 EMBREE_CPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
-  if (${FIND_AS_DEPENDENCY})
-    find_dependency(embree ${EMBREE_CPU_VERSION_REQUIRED})
-  else()
-    find_package(embree ${EMBREE_CPU_VERSION_REQUIRED})
+    find_package(embree ${EMBREE_VERSION_REQUIRED})
   endif()
   if (NOT embree_FOUND)
     message(FATAL_ERROR
@@ -477,7 +434,13 @@ macro(ospray_find_embree3 EMBREE_CPU_VERSION_REQUIRED FIND_AS_DEPENDENCY)
   list(GET CONFIGURATIONS 0 CONFIGURATION)
   get_target_property(EMBREE_LIBRARY embree
       IMPORTED_LOCATION_${CONFIGURATION})
-
+  # Get Embree SYCL info if DPCPP was enabled
+  if (EMBREE_SYCL_SUPPORT)
+    get_target_property(CONFIGURATIONS embree_sycl IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION)
+    get_target_property(EMBREE_SYCL_LIBRARY embree_sycl
+      IMPORTED_LOCATION_${CONFIGURATION})
+  endif()
   message(STATUS "Found Embree v${embree_VERSION}: ${EMBREE_LIBRARY}")
 endmacro()
 

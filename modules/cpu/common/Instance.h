@@ -6,8 +6,6 @@
 // ospray stuff
 #include "Group.h"
 #include "MotionTransform.h"
-// embree
-#include "Embree.h"
 // ispc shared
 #include "InstanceShared.h"
 

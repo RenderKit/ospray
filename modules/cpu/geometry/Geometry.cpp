@@ -58,12 +58,6 @@ void Geometry::createEmbreeUserGeometry(RTCBoundsFunction boundsFn)
   rtcSetGeometryUserData(embreeGeometry, getSh());
   rtcSetGeometryUserPrimitiveCount(embreeGeometry, numPrimitives());
   rtcSetGeometryBoundsFunction(embreeGeometry, boundsFn, getSh());
-#if EMBREE_VERSION_MAJOR == 3
-  rtcSetGeometryIntersectFunction(embreeGeometry,
-      (RTCIntersectFunctionN)ispc::Geometry_dispatch_intersect_export);
-  rtcSetGeometryOccludedFunction(embreeGeometry,
-      (RTCOccludedFunctionN)ispc::Geometry_dispatch_occluded_export);
-#endif
   rtcCommitGeometry(embreeGeometry);
 }
 

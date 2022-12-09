@@ -57,5 +57,19 @@ inline void freeVolumeIntervals(VolumeIntervals &intervals)
   intervals.intervals = NULL;
 }
 
+struct EmbreeIntersectionContextVolume
+{
+  RTCIntersectContext ectx;
+  varying VolumeIntervals *intervals;
+};
+
+inline void InitIntersectionContextVolume(
+    EmbreeIntersectionContextVolume *uniform context,
+    varying VolumeIntervals *uniform intervals)
+{
+  rtcInitIntersectContext(&context->ectx);
+  context->intervals = intervals;
+}
+
 OSPRAY_END_ISPC_NAMESPACE
 #endif

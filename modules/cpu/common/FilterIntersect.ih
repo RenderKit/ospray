@@ -4,28 +4,24 @@
 #pragma once
 
 #include "Intersect.ih"
-#include "OSPConfig.h"
 #include "Ray.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
+#ifndef OSPRAY_TARGET_SYCL
+unmasked void clippingIntersectionFilterV(
+    const RTCFilterFunctionNArguments *uniform args);
+
 inline bool filterCall(const RTCIntersectFunctionNArguments *uniform args,
     const RTCHit &rtcHitTemp)
 {
-  // prepare execution mask
-#ifdef OSPRAY_TARGET_SYCL
-  // We can't #define __mask because it conflicts with other stuff
-  int imask = -1;
-#else
   varying int imask;
   varying bool mask = __mask;
   unmasked
   {
     imask = mask ? -1 : 0;
   }
-#endif
 
-#if EMBREE_VERSION_MAJOR == 3
   // call filter intersection callback
   uniform RTCFilterFunctionNArguments filterArgs;
   filterArgs.valid = (int *uniform) & imask;
@@ -34,12 +30,12 @@ inline bool filterCall(const RTCIntersectFunctionNArguments *uniform args,
   filterArgs.ray = (RTCRayN * uniform) args->rayhit;
   filterArgs.hit = (RTCHitN * uniform) & rtcHitTemp;
   filterArgs.N = args->N;
-  rtcFilterIntersection(args, &filterArgs);
-#endif
+  clippingIntersectionFilterV(&filterArgs);
 
   // return true if hit has been accepted
   return imask == -1;
 }
+#endif
 
 inline bool filterIntersectionSingle(
     const RTCIntersectFunctionNArguments *uniform args,
@@ -69,8 +65,15 @@ inline bool filterIntersectionSingle(
     rtcHitTemp.geomID = args->geomID;
     rtcHitTemp.instID[0] = args->context->instID[0];
 
-    // call filter intersection callback
-    bool accept = filterCall(args, rtcHitTemp);
+    // call filter intersection callback if needed
+#ifndef OSPRAY_TARGET_SYCL
+    EmbreeIntersectionContextDefault *uniform ctx =
+        (EmbreeIntersectionContextDefault * uniform) args->context;
+    uniform bool noFilter = ctx->type != EICT_CLIPPING;
+    bool accept = noFilter || filterCall(args, rtcHitTemp);
+#else
+    bool accept = true;
+#endif
     if (alwaysReject) {
       // the hit is always rejected
       ray->t = tOld;

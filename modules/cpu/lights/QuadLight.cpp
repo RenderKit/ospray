@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "QuadLight.h"
-// embree
-#include "common/Embree.h"
-
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/QuadLight_ispc.h"
 #else

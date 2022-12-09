@@ -3,9 +3,6 @@
 
 #include "CylinderLight.h"
 #include "common/StructShared.h"
-// embree
-#include "common/Embree.h"
-
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/CylinderLight_ispc.h"
 #else

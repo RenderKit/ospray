@@ -2,28 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "World.ih"
-#include "math/Distribution1D.ih"
-#include "render/pathtracer/GeometryLight.ih"
-// c++ shared
-#include "lights/LightShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-unmasked void clippingIntersectionFilterV(const void *uniform _args)
+#ifndef OSPRAY_TARGET_SYCL
+unmasked void clippingIntersectionFilterV(
+    const RTCFilterFunctionNArguments *uniform args)
 {
-  const struct RTCFilterFunctionNArguments *uniform args =
-      (const struct RTCFilterFunctionNArguments *uniform)_args;
   // Set execution mask
-  varying int *uniform valid = (varying int *uniform)args->valid;
-  if (*valid == 0)
+  uniform int *uniform valid = args->valid;
+  if (!valid[programIndex])
     return;
 
   // Get pointer to the intersection context
-  uniform UserIntersectionContextForClipping *uniform context =
-      (uniform UserIntersectionContextForClipping * uniform) args->context;
+  EmbreeIntersectionContextClipping *uniform context =
+      (EmbreeIntersectionContextClipping * uniform) args->context;
 
   // We skip this intersection to collect all remaining intersections
-  *valid = 0;
+  valid[programIndex] = 0;
 
   // Skip if array is full
   if (context->hitsCount >= CLIPPING_HITS_MAX_COUNT)
@@ -107,5 +103,6 @@ unmasked void clippingIntersectionFilterV(const void *uniform _args)
   context->hits[context->hitsCount] = cHit;
   context->hitsCount++;
 }
+#endif
 
 OSPRAY_END_ISPC_NAMESPACE

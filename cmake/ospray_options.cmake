@@ -13,8 +13,7 @@ set(OSPRAY_CMAKECONFIG_DIR
 
 set(ISPC_VERSION_REQUIRED 1.18.0)
 set(RKCOMMON_VERSION_REQUIRED 1.10.0)
-set(EMBREE_GPU_VERSION_REQUIRED 4.0.0)
-set(EMBREE_CPU_VERSION_REQUIRED 3.13.1)
+set(EMBREE_VERSION_REQUIRED 4.0.0)
 set(OPENVKL_VERSION_REQUIRED 1.3.0)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
@@ -34,19 +33,7 @@ get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)
 
 # Embree
-# Try to find Embree GPU first, and fall back to CPU-only if it's not found
-ospray_find_embree4(${EMBREE_GPU_VERSION_REQUIRED} FALSE)
-if (embree_FOUND)
-  set(EMBREE_VERSION_REQUIRED ${EMBREE_GPU_VERSION_REQUIRED})
-  set(EMBREE_VERSION_MAJOR 4)
-  if (EMBREE_SYCL_SUPPORT)
-    ospray_verify_embree_gpu_features()
-  endif()
-else()
-  ospray_find_embree3(${EMBREE_CPU_VERSION_REQUIRED} FALSE)
-  set(EMBREE_VERSION_REQUIRED ${EMBREE_CPU_VERSION_REQUIRED})
-  set(EMBREE_VERSION_MAJOR 3)
-endif()
+ospray_find_embree(${EMBREE_VERSION_REQUIRED} FALSE)
 ospray_verify_embree_features()
 ospray_determine_embree_isa_support()
 

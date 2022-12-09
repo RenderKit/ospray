@@ -4,7 +4,6 @@
 #pragma once
 
 #include "FrameBufferShared.h"
-#include "OSPConfig.h"
 
 #ifdef __cplusplus
 namespace ispc {

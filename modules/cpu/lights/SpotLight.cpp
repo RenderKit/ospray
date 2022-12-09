@@ -3,9 +3,6 @@
 
 #include "SpotLight.h"
 #include "math/sampling.h"
-// embree
-#include "common/Embree.h"
-
 #ifndef OSPRAY_TARGET_SYCL
 #include "lights/SpotLight_ispc.h"
 #else
@@ -15,7 +12,7 @@ void *SpotLight_sample_addr();
 void *SpotLight_sample_instanced_addr();
 void *SpotLight_eval_addr();
 void *SpotLight_eval_instanced_addr();
-}
+} // namespace ispc
 #endif
 // ispc shared
 #include "SpotLightShared.h"

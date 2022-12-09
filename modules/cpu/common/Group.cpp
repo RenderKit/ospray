@@ -153,12 +153,7 @@ void Group::commit()
     sceneClippers = rtcNewScene(embreeDevice);
     createEmbreeScene(sceneClippers,
         *clipModels,
-        sceneFlags |
-#if EMBREE_VERSION_MAJOR == 4
-            RTC_SCENE_FLAG_FILTER_FUNCTION_IN_ARGUMENTS
-#else
-            RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION
-#endif
+        sceneFlags | RTC_SCENE_FLAG_FILTER_FUNCTION_IN_ARGUMENTS
             | RTC_SCENE_FLAG_ROBUST,
         buildQuality);
 

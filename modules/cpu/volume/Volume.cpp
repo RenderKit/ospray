@@ -93,12 +93,6 @@ void Volume::commit()
   rtcSetGeometryUserPrimitiveCount(embreeGeometry, 1);
   rtcSetGeometryBoundsFunction(
       embreeGeometry, (RTCBoundsFunction)&ispc::Volume_embreeBounds, getSh());
-#if EMBREE_VERSION_MAJOR == 3
-  rtcSetGeometryIntersectFunction(embreeGeometry,
-      (RTCIntersectFunctionN)ispc::Volume_intersect_kernel_export);
-  rtcSetGeometryOccludedFunction(embreeGeometry,
-      (RTCOccludedFunctionN)ispc::Volume_intersect_kernel_export);
-#endif
 
   rtcCommitGeometry(embreeGeometry);
 

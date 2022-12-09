@@ -6,13 +6,13 @@
 #include <unordered_map>
 
 #include "camera/Camera.h"
+#include "common/Embree.h"
 #include "common/MPICommon.h"
 #include "common/World.h"
 #include "geometry/Boxes.h"
 #include "rkcommon/math/box.h"
 // ispc shared
 #include "DistributedWorldShared.h"
-#include "common/Embree.h"
 
 namespace ospray {
 namespace mpi {

@@ -166,13 +166,8 @@ void World::commit()
 #ifndef OSPRAY_TARGET_SYCL
   if (esClip) {
     rtcSetSceneFlags(esClip,
-        static_cast<RTCSceneFlags>(sceneFlags |
-#if EMBREE_VERSION_MAJOR == 4
-            RTC_SCENE_FLAG_FILTER_FUNCTION_IN_ARGUMENTS
-#else
-            RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION
-#endif
-            ));
+        static_cast<RTCSceneFlags>(
+            sceneFlags | RTC_SCENE_FLAG_FILTER_FUNCTION_IN_ARGUMENTS));
     rtcSetSceneBuildQuality(esClip, buildQuality);
     rtcCommitScene(esClip);
   }

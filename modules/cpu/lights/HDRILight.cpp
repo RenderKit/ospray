@@ -3,8 +3,6 @@
 
 #include "HDRILight.h"
 #include "common/StructShared.h"
-// embree
-#include "common/Embree.h"
 #ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "lights/HDRILight_ispc.h"

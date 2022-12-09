@@ -9,8 +9,6 @@
 #include "StructShared.h"
 // stl
 #include <vector>
-// embree
-#include "Embree.h"
 // ispc shared
 #include "GroupShared.h"
 

@@ -1,7 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "OSPConfig.h"
 #include "camera/Camera.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
@@ -17,6 +16,12 @@
 #include "fb/FrameBufferShared.h"
 #include "fb/SparseFBShared.h"
 
+struct EmbreeIntersectionContextRegion
+{
+  RTCIntersectContext ectx;
+  uint8 *regionVisible;
+};
+
 unmasked void markRegionVisibleFilterFunction(
     const RTCFilterFunctionNArguments *uniform args)
 {
@@ -24,10 +29,10 @@ unmasked void markRegionVisibleFilterFunction(
     return;
   }
 
-  EmbreeIntersectionContext *uniform ctx =
-      (EmbreeIntersectionContext * uniform) args->context;
+  EmbreeIntersectionContextRegion *uniform ctx =
+      (EmbreeIntersectionContextRegion * uniform) args->context;
 
-  uint8 *uniform regionVisible = (uint8 * uniform) ctx->userPtr;
+  uint8 *uniform regionVisible = ctx->regionVisible;
   varying RTCHit *uniform hit = (varying RTCHit * uniform) args->hit;
   regionVisible[hit->primID] = 0xff;
 
@@ -120,12 +125,13 @@ task void DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
       if (world->regionScene) {
-        uniform EmbreeIntersectionContext context;
+        uniform EmbreeIntersectionContextRegion context;
         rtcInitIntersectContext(&context.ectx);
-        context.userPtr = tileRegionVisible;
-#if EMBREE_VERSION_MAJOR == 4
+        context.regionVisible = tileRegionVisible;
+
         uniform RTCIntersectArguments intersectArgs;
         rtcInitIntersectArguments(&intersectArgs);
+        intersectArgs.context = &context.ectx;
         intersectArgs.intersect =
             (RTCIntersectFunctionN)Geometry_dispatch_intersect;
         // TODO: Need to manage this differently, filter function won't be
@@ -135,17 +141,8 @@ task void DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
         intersectArgs.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
 
         rtcIntersectV(world->regionScene,
-            &context.ectx,
             (varying RTCRayHit * uniform) & screenSample.ray,
             &intersectArgs);
-#else
-        context.ectx.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
-        context.ectx.filter =
-            (RTCFilterFunctionN)markRegionVisibleFilterFunction;
-        rtcIntersectV(world->regionScene,
-            &context.ectx,
-            (varying RTCRayHit * uniform) & screenSample.ray);
-#endif
       }
     }
   }
