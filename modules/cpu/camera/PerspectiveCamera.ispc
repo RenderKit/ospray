@@ -157,9 +157,11 @@ export void *uniform PerspectiveCamera_initRayMB_addr()
 }
 
 export void PerspectiveCamera_projectBox(
-    void *uniform _self, const uniform box3f &box, uniform box3f &projection)
+    void *uniform _self, const void *uniform _box, void *uniform _projection)
 {
   PerspectiveCamera *uniform self = (PerspectiveCamera * uniform) _self;
+  const uniform box3f &box = *((const box3f *uniform)_box);
+  uniform box3f &projection = *((box3f * uniform) _projection);
   // The original viewing direction along the camera
   const uniform vec3f dir =
       normalize(self->dir_00 + 0.5f * self->du_size + 0.5f * self->dv_up);

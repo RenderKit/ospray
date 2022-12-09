@@ -8,7 +8,7 @@
 #else
 namespace ispc {
 void PerspectiveCamera_projectBox(
-    void *_self, const box3f &box, box3f &projection);
+    void *_self, const void *box, void *projection);
 }
 #endif
 
@@ -125,8 +125,7 @@ box3f PerspectiveCamera::projectBox(const box3f &b) const
     return box3f(vec3f(0.f), vec3f(1.f));
   }
   box3f projection;
-  ispc::PerspectiveCamera_projectBox(
-      getSh(), (const ispc::box3f &)b, (ispc::box3f &)projection);
+  ispc::PerspectiveCamera_projectBox(getSh(), &b, &projection);
   return projection;
 }
 

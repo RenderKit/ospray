@@ -41,18 +41,6 @@ task
 #endif
 #endif
 
-#if 1
-  // This dummy code is used to work around the Texture2D link error
-  // to provide and example for the JIRA ticket:
-  // https://jira.devtools.intel.com/browse/CMPLRLLVM-42101
-  if (startSampleID < 0 && self->super.backplate) {
-    DifferentialGeometry lookup;
-    vec4f c = Texture2D_get(
-        (const uniform Texture *uniform)self->super.backplate, lookup);
-    screenSample.alpha = c.w;
-  }
-#endif
-
   if (isEmpty(taskDesc.region)) {
     return;
   }

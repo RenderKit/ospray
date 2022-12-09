@@ -9,7 +9,7 @@
 namespace ispc {
 void *OrthographicCamera_initRay_addr();
 void OrthographicCamera_projectBox(
-    void *_self, const box3f &box, box3f &projection);
+    void *_self, const void *_box, void *_projection);
 } // namespace ispc
 #endif
 
@@ -57,8 +57,7 @@ void OrthographicCamera::commit()
 box3f OrthographicCamera::projectBox(const box3f &b) const
 {
   box3f projection;
-  ispc::OrthographicCamera_projectBox(
-      getSh(), (const ispc::box3f &)b, (ispc::box3f &)projection);
+  ispc::OrthographicCamera_projectBox(getSh(), &b, &projection);
   return projection;
 }
 

@@ -23,14 +23,13 @@
 #include "render/distributed/DistributedRaycast_ispc.h"
 #else
 namespace ispc {
-SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(
-    DistributedRenderer *uniform self,
-    SparseFB *uniform fb,
-    Camera *uniform camera,
-    DistributedWorld *uniform world,
-    const box3f *uniform region,
-    void *uniform perFrameData,
-    const uint32 *uniform taskIDs,
+SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(void *_self,
+    void *_fb,
+    void *_camera,
+    void *_world,
+    const void *_region,
+    void *perFrameData,
+    const void *_taskIDs,
     const int taskIndex0);
 }
 #endif

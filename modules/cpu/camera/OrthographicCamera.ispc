@@ -49,9 +49,11 @@ export void *uniform OrthographicCamera_initRay_addr()
 }
 
 export void OrthographicCamera_projectBox(
-    void *uniform _self, const uniform box3f &box, uniform box3f &projection)
+    void *uniform _self, const void *uniform _box, void *uniform _projection)
 {
   OrthographicCamera *uniform self = (OrthographicCamera * uniform) _self;
+  const uniform box3f &box = *((const box3f *uniform)_box);
+  uniform box3f &projection = *((box3f * uniform) _projection);
   // normalize to image plane size
   const uniform vec3f dun = self->du_size / dot(self->du_size, self->du_size);
   const uniform vec3f dvn = self->dv_up / dot(self->dv_up, self->dv_up);

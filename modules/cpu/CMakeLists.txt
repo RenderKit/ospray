@@ -212,8 +212,8 @@ set(OSPRAY_ISPC_SOURCES
   render/materials/Luminous.ispc
   render/materials/Mix.ispc
 
-  texture/Texture2D.ispc
   texture/TextureDispatch.ispc
+  texture/Texture2D.ispc
 )
 
 if (OSPRAY_ENABLE_VOLUMES)

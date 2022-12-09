@@ -379,15 +379,21 @@ SYCL_EXTERNAL void DRR_renderRegionSample(DistributedRenderer *uniform _self,
 
 #ifdef OSPRAY_TARGET_SYCL
 SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(
-    DistributedRenderer *uniform self,
-    SparseFB *uniform fb,
-    Camera *uniform camera,
-    DistributedWorld *uniform world,
-    const box3f *uniform region,
+    void *uniform _self,
+    void *uniform _fb,
+    void *uniform _camera,
+    void *uniform _world,
+    const void *uniform _region,
     void *uniform perFrameData,
-    const uint32 *uniform taskIDs,
+    const void *uniform _taskIDs,
     const int taskIndex0)
 {
+  DistributedRenderer *uniform self = (DistributedRenderer * uniform) _self;
+  SparseFB *uniform fb = (SparseFB * uniform) _fb;
+  Camera *uniform camera = (Camera * uniform) _camera;
+  DistributedWorld *uniform world = (DistributedWorld * uniform) _world;
+  const box3f *uniform region = (const box3f *uniform)_region;
+  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
   DR_default_renderRegionToTile(
       self, fb, camera, world, region, perFrameData, taskIDs, taskIndex0);
 }
