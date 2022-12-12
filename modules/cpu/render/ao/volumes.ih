@@ -1,6 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 
 #pragma once
 

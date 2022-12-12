@@ -16,8 +16,8 @@ VolumetricModel::VolumetricModel(api::ISPCDevice &device, Volume *_volume)
 
 VolumetricModel::~VolumetricModel()
 {
-  if (vklIntervalContext)
-    vklRelease(vklIntervalContext);
+  if (vklIntervalContext.host)
+    vklRelease2(vklIntervalContext);
 }
 
 std::string VolumetricModel::toString() const
@@ -38,12 +38,15 @@ void VolumetricModel::commit()
     throw std::runtime_error(toString() + " must have 'transferFunction'");
 
   // create value selector using transfer function and pass to volume
-  if (volume->vklVolume) {
-    if (vklIntervalContext) {
-      vklRelease(vklIntervalContext);
-      vklIntervalContext = nullptr;
+  if (volume->vklVolume.host) {
+    if (vklIntervalContext.host) {
+      vklRelease2(vklIntervalContext);
+      vklIntervalContext.host = nullptr;
+      vklIntervalContext.device = nullptr;
     }
 
+    // TODO: For SYCL we won't have the interval context for now, because
+    // they're not on the GPU yet
     vklIntervalContext = vklNewIntervalIteratorContext(volume->vklSampler);
     std::vector<range1f> valueRanges =
         transferFunction->getPositiveOpacityValueRanges();
@@ -58,9 +61,9 @@ void VolumetricModel::commit()
         valueRanges.size(),
         VKL_BOX1F,
         valueRanges.data());
-    vklSetData(vklIntervalContext, "valueRanges", valueRangeData);
+    vklSetData2(vklIntervalContext, "valueRanges", valueRangeData);
     vklRelease(valueRangeData);
-    vklCommit(vklIntervalContext);
+    vklCommit2(vklIntervalContext);
 
     // Pass interval context to ISPC
     getSh()->vklIntervalContext = vklIntervalContext;

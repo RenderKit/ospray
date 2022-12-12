@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+
 #ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
@@ -44,6 +45,7 @@ struct VolumeIntervals
   varying VolumeInterval *uniform intervals;
 };
 
+#ifndef OSPRAY_TARGET_SYCL
 inline void allocVolumeIntervals(VolumeIntervals &intervals)
 {
   intervals.numVolumeIntervals = 0;
@@ -56,6 +58,7 @@ inline void freeVolumeIntervals(VolumeIntervals &intervals)
   popTLS(intervals.intervals);
   intervals.intervals = NULL;
 }
+#endif
 
 struct EmbreeRayQueryContextVolume
 {

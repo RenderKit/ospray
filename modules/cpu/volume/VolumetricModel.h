@@ -6,6 +6,8 @@
 
 #include "Volume.h"
 #include "openvkl/openvkl.h"
+// comment break to prevent clang-format from reordering openvkl includes
+#include "openvkl/device/openvkl.h"
 // ispc shared
 #include "volume/VolumetricModelShared.h"
 
@@ -30,7 +32,8 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
   box3f volumeBounds;
   Ref<Volume> volume;
   const Ref<Volume> volumeAPI;
-  VKLIntervalIteratorContext vklIntervalContext{nullptr};
+  // TODO: need to remove/not use for the SYCL case
+  VKLIntervalIteratorContext vklIntervalContext{nullptr, nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(VolumetricModel *, OSP_VOLUMETRIC_MODEL);

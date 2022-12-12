@@ -1,6 +1,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: No iterators in SYCL API yet
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 
 #pragma once
 
@@ -25,7 +26,7 @@ struct Isosurfaces
       : isovalues(nullptr),
         volumetricModel(nullptr),
         volume(nullptr),
-        vklHitContext(nullptr)
+        vklHitContext({nullptr, nullptr})
   {
     super.type = ispc::GEOMETRY_TYPE_ISOSURFACES;
   }

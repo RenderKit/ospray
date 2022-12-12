@@ -241,6 +241,7 @@ if (OSPRAY_ENABLE_VOLUMES)
 
     volume/Volume.ispc
     volume/transferFunction/LinearTransferFunction.ispc
+    volume/transferFunction/TransferFunctionDispatch.ispc
   )
 endif()
 
@@ -327,6 +328,7 @@ if (OSPRAY_MODULE_CPU)
   if (OSPRAY_ENABLE_VOLUMES)
     include_directories_ispc(
       ${OPENVKL_INCLUDE_DIRS}
+      ${OPENVKL_CPU_DEVICE_INCLUDE_DIRS}
     )
 
     add_definitions_ispc(
@@ -382,6 +384,7 @@ if (OSPRAY_MODULE_CPU)
     target_link_libraries(ospray_module_cpu
     PUBLIC
       $<BUILD_INTERFACE:openvkl::openvkl>
+      $<BUILD_INTERFACE:openvkl::openvkl_module_cpu_device>
     )
 
     target_include_directories(ospray_module_cpu
@@ -402,7 +405,8 @@ if (OSPRAY_MODULE_GPU)
   ospray_configure_dpcpp_target()
 
   # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
-  set_source_files_properties(${OSPRAY_ISPC_SOURCES} PROPERTIES
+  set_source_files_properties(${OSPRAY_ISPC_SOURCES} ${OSPRAY_VOLUMES_ISPC_SOURCES}
+      PROPERTIES
       LANGUAGE CXX)
 
   add_library(ospray_module_gpu_kernels STATIC
@@ -486,10 +490,32 @@ if (OSPRAY_MODULE_GPU)
     programIndex=0
   )
 
+  if (OSPRAY_ENABLE_VOLUMES)
+    target_link_libraries(ospray_module_gpu_kernels
+    PUBLIC
+      $<BUILD_INTERFACE:openvkl::openvkl>
+      $<BUILD_INTERFACE:openvkl::openvkl_module_gpu_device>
+    )
+
+    target_include_directories(ospray_module_gpu_kernels
+    PUBLIC
+      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
+    )
+
+    target_compile_definitions(ospray_module_gpu_kernels
+    PUBLIC
+      -DOSPRAY_ENABLE_VOLUMES
+    )
+  endif()
+
   ospray_install_library(ospray_module_gpu_kernels lib)
 
   add_library(ospray_module_gpu SHARED
-      ${OSPRAY_CPP_SOURCES})
+    ${OSPRAY_CPP_SOURCES}
+    ${OSPRAY_ISPC_SOURCES}
+    ${OSPRAY_VOLUMES_CPP_SOURCES}
+    ${OSPRAY_VOLUMES_ISPC_SOURCES}
+  )
 
   set_target_properties(ospray_module_gpu PROPERTIES
     CXX_STANDARD 17
@@ -556,7 +582,6 @@ if (OSPRAY_MODULE_GPU)
     )
   endif()
 
-
   target_compile_definitions(ospray_module_gpu
   PUBLIC
     OSPRAY_TARGET_SYCL
@@ -564,6 +589,24 @@ if (OSPRAY_MODULE_GPU)
     OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
     OSPRAY_END_ISPC_NAMESPACE=}
   )
+
+  if (OSPRAY_ENABLE_VOLUMES)
+    target_link_libraries(ospray_module_gpu
+    PUBLIC
+      $<BUILD_INTERFACE:openvkl::openvkl>
+      $<BUILD_INTERFACE:openvkl::openvkl_module_gpu_device>
+    )
+
+    target_include_directories(ospray_module_gpu
+    PUBLIC
+      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
+    )
+
+    target_compile_definitions(ospray_module_gpu
+    PUBLIC
+      -DOSPRAY_ENABLE_VOLUMES
+    )
+  endif()
 
   ospray_install_library(ospray_module_gpu lib)
 endif()

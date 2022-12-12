@@ -1,6 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: No iterators in SYCL API yet
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 
 #pragma once
 
@@ -31,7 +32,7 @@ struct OSPRAY_SDK_INTERFACE Isosurfaces
   // the volume and color
   Ref<VolumetricModel> model;
   Ref<Volume> volume;
-  VKLHitIteratorContext vklHitContext{nullptr};
+  VKLHitIteratorContext vklHitContext{nullptr, nullptr};
 };
 
 } // namespace ospray

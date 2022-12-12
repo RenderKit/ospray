@@ -12,6 +12,8 @@
 #ifdef OSPRAY_ENABLE_VOLUMES
 // openvkl
 #include "openvkl/openvkl.h"
+// comment break to prevent clang-format from reordering openvkl includes
+#include "openvkl/device/openvkl.h"
 #endif
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */

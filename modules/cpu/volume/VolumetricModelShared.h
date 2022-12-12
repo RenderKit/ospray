@@ -29,8 +29,9 @@ struct VolumetricModel
   VolumetricModel()
       : volume(nullptr),
         transferFunction(nullptr),
-        vklIntervalContext(nullptr),
-        boundingBox(0.f, 0.f),
+        vklIntervalContext({nullptr, nullptr}),
+        // TODO: Need these ctor's for box3f
+        //boundingBox(EmptyTy{})
         densityScale(1.f),
         anisotropy(0.f),
         gradientShadingScale(0.f),

@@ -3,13 +3,16 @@
 #ifdef OSPRAY_ENABLE_VOLUMES
 
 #include "common/Intersect.ih"
+#include "common/Ray.ih"
 #include "common/VolumeIntervals.ih"
 #include "volume/Volume.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-export void Volume_embreeBounds(const RTCBoundsFunctionArguments *uniform args)
+export void Volume_embreeBounds(const void *uniform _args)
 {
+  const RTCBoundsFunctionArguments *uniform args =
+      (const RTCBoundsFunctionArguments *uniform)_args;
   Volume *uniform self = (Volume * uniform) args->geometryUserPtr;
   box3fa *uniform out = (box3fa * uniform) args->bounds_o;
 
@@ -43,7 +46,9 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Volume_intersect_kernel(
     varying VolumeIntervals *uniform vIntervals =
         (varying VolumeIntervals * uniform) ctx->intervals;
 
-    // Grow TLS pool if needed
+#ifndef OSPRAY_TARGET_SYCL
+    // Grow TLS pool if needed, note that we cannot grow it on the GPU b/c no
+    // dymanic memory. With SYCL we just take the first hit found
     uniform unsigned int numNeeded =
         reduce_max(vIntervals->numVolumeIntervals) + 1;
     if (numNeeded > vIntervals->numAllocated) {
@@ -54,6 +59,9 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Volume_intersect_kernel(
 
     varying VolumeInterval *varying vInterval = (varying VolumeInterval
         * varying)(vIntervals->intervals + vIntervals->numVolumeIntervals);
+#else
+    varying VolumeInterval *uniform vInterval = vIntervals->intervals;
+#endif
 
     vInterval->primID = 0;
     vInterval->geomID = args->geomID;

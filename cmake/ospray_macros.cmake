@@ -520,6 +520,8 @@ macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED FIND_AS_DEPENDENCY)
   endif()
   get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
       INTERFACE_INCLUDE_DIRECTORIES)
+  get_target_property(OPENVKL_CPU_DEVICE_INCLUDE_DIRS openvkl::openvkl_module_cpu_device
+      INTERFACE_INCLUDE_DIRECTORIES)
   get_target_property(CONFIGURATIONS openvkl::openvkl IMPORTED_CONFIGURATIONS)
   list(GET CONFIGURATIONS 0 CONFIGURATION)
   get_target_property(OPENVKL_LIBRARY openvkl::openvkl

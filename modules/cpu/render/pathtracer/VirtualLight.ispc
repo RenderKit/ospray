@@ -5,7 +5,8 @@
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
 #include "render/pathtracer/VirtualLight.ih"
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #endif
 // c++ shared
@@ -85,7 +86,8 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
         RayIntervals rayIntervals;
         traceClippingRay(pathContext.world, shadowRay, rayIntervals);
 
-#ifdef OSPRAY_ENABLE_VOLUMES
+        // TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
         const float T = volumeTransmittance(pathState,
             pathContext.world,
             shadowRay,

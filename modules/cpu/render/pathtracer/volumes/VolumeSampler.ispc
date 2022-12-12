@@ -1,9 +1,11 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 
 #include "common/World.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
+#include "volume/transferFunction/TransferFunctionDispatch.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -17,9 +19,9 @@ float delta_tracking(VolumetricModel *uniform vModel,
     vec3f &albedo) // sampled albedo (color)
 {
   void *uniform intervalIteratorBuffer =
-      alloca(vklGetIntervalIteratorSizeV(vModel->vklIntervalContext));
+      alloca(vklGetIntervalIteratorSizeV(&vModel->vklIntervalContext));
   VKLIntervalIterator intervalIterator =
-      vklInitIntervalIteratorV(vModel->vklIntervalContext,
+      vklInitIntervalIteratorV(&vModel->vklIntervalContext,
           (varying vkl_vec3f *)&o,
           (varying vkl_vec3f *)&w,
           (varying vkl_range1f *)&rInterval,
@@ -34,7 +36,7 @@ float delta_tracking(VolumetricModel *uniform vModel,
     t = interval.tRange.lower;
 
     const float maxOpacity =
-        vModel->transferFunction->getMaxOpacity(vModel->transferFunction,
+        TransferFunction_dispatch_getMaxOpacity(vModel->transferFunction,
             *((varying range1f * uniform) & interval.valueRange));
 
     const float mu_max = vModel->densityScale * maxOpacity;
@@ -52,12 +54,12 @@ float delta_tracking(VolumetricModel *uniform vModel,
       const vec3f p = o + t * w;
 
       const float sample = vklComputeSampleV(
-          vModel->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
+          &vModel->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
       if (isnan(sample))
         continue;
 
       const vec4f color =
-          vModel->transferFunction->get(vModel->transferFunction, sample);
+          TransferFunction_dispatch_get(vModel->transferFunction, sample);
       mu_t = vModel->densityScale * color.w;
       if (xi < mu_t / mu_max) {
         albedo = make_vec3f(color);

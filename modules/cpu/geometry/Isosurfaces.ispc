@@ -1,16 +1,18 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: No iterators in SYCL API yet
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 
 // ospray
 #include "common/FilterIntersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
-#include "openvkl/iterator.isph"
+#include "openvkl/device/openvkl.isph"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 #include "volume/VolumetricModel.ih"
+#include "volume/transferFunction/TransferFunctionDispatch.ih"
 // c++ shared
 #include "IsosurfacesShared.h"
 
@@ -70,7 +72,7 @@ void unmasked Isosurfaces_intersect_kernel(
   // do not use alloca: it prevents inlining and thus optimization
   // wrt. "template arg" isOcclusionTest
   uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
-  iterator = vklInitHitIteratorV(self->vklHitContext,
+  iterator = vklInitHitIteratorV(&self->vklHitContext,
       (varying vkl_vec3f *)&ray->org,
       (varying vkl_vec3f *)&ray->dir,
       &tRange,
@@ -125,7 +127,7 @@ void Isosurfaces_postIntersect(const Geometry *uniform geometry,
 
   if (and(flags & DG_COLOR, self->volumetricModel)) {
     TransferFunction *uniform xf = self->volumetricModel->transferFunction;
-    dg.color = xf->get(xf, self->isovalues[ray.primID]);
+    dg.color = TransferFunction_dispatch_get(xf, self->isovalues[ray.primID]);
   }
 }
 

@@ -6,7 +6,8 @@
 #include "common/DifferentialGeometry.ih"
 #include "render/bsdfs/BSDF.ih"
 #include "render/materials/Medium.ih"
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 #include "volume/VolumetricModel.ih"
 #endif
 // c++ shared
@@ -37,7 +38,8 @@ struct PathVertex
 
   // only valid if path vertex is surface vertex
   const varying BSDF *bsdf;
-#ifdef OSPRAY_ENABLE_VOLUMES
+  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
   // only valid if path vertex is volume vertex
   VolumetricModel *volume;
 #else

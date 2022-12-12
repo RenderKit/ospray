@@ -55,7 +55,9 @@ inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
       &intersectArgs);
 }
 
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: No TLS in SYCL, volume stack/intervals needs redesign
+// For the OpenVKL GPU/DebugRenderer test, need to add a custom trace volume ray
+// that doesn't do intervals
 inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeInterval &interval)
 {
@@ -64,7 +66,15 @@ inline void traceVolumeRay(
     return;
 
   VolumeIntervals intervals;
+#ifdef OSPRAY_TARGET_SYCL
+  // We don't have access to TLS/dynamic memory on the kernel, we only support
+  // one interval (ie. no overlapping volumes)
+  intervals.numVolumeIntervals = 0;
+  intervals.numAllocated = 1;
+  intervals.intervals = &interval;
+#else
   allocVolumeIntervals(intervals);
+#endif
 
   uniform EmbreeRayQueryContextVolume context;
   InitRayQueryContextVolume(&context, &intervals);
@@ -79,16 +89,23 @@ inline void traceVolumeRay(
       (varying RTCRayHit * uniform) & ray,
       &intersectArgs);
 
+  // In the SYCL case we write to the interval parameter directly. In the
+  // non-sycl case we need to get the first interval to return to the caller
   if (intervals.numVolumeIntervals > 0 && hasInterval(intervals.intervals[0])) {
     interval.instance = *(world->instances + intervals.intervals[0].instID);
     interval.volumetricModel =
         interval.instance->group
             ->volumetricModels[intervals.intervals[0].geomID];
+#ifndef OSPRAY_TARGET_SYCL
     interval.interval = intervals.intervals[0].interval;
+#endif
   }
+#ifndef OSPRAY_TARGET_SYCL
   freeVolumeIntervals(intervals);
+#endif
 }
 
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeIntervals &intervals)
 {

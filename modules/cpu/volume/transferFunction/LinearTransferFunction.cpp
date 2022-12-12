@@ -16,11 +16,6 @@ namespace ospray {
 LinearTransferFunction::LinearTransferFunction(api::ISPCDevice &device)
     : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.get = reinterpret_cast<ispc::TransferFunction_getFct>(
-      ispc::LinearTransferFunction_get_addr());
-  getSh()->super.getMaxOpacity =
-      reinterpret_cast<ispc::TransferFunction_getMaxOpacityFct>(
-          ispc::LinearTransferFunction_getMaxOpacity_addr());
   getSh()->super.valueRange = range1f(0.0f, 1.0f);
 }
 

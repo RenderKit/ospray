@@ -1,12 +1,15 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: No iterators in SYCL API yet
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 
 // ospray
 #include "Isosurfaces.h"
 #include "common/Data.h"
 // openvkl
 #include "openvkl/openvkl.h"
+// comment break to prevent clang-format from reordering openvkl includes
+#include "openvkl/device/openvkl.h"
 #ifndef OSPRAY_TARGET_SYCL
 // ispc-generated files
 #include "geometry/Isosurfaces_ispc.h"
@@ -24,9 +27,10 @@ Isosurfaces::Isosurfaces(api::ISPCDevice &device)
 
 Isosurfaces::~Isosurfaces()
 {
-  if (vklHitContext) {
-    vklRelease(vklHitContext);
-    vklHitContext = nullptr;
+  if (vklHitContext.host) {
+    vklRelease2(vklHitContext);
+    vklHitContext.host = nullptr;
+    vklHitContext.device = nullptr;
   }
 }
 
@@ -63,9 +67,10 @@ void Isosurfaces::commit()
     data->refDec();
   }
 
-  if (vklHitContext) {
-    vklRelease(vklHitContext);
-    vklHitContext = nullptr;
+  if (vklHitContext.host) {
+    vklRelease2(vklHitContext);
+    vklHitContext.host = nullptr;
+    vklHitContext.device = nullptr;
   }
 
   vklHitContext = (volume)
@@ -77,11 +82,11 @@ void Isosurfaces::commit()
         isovaluesData->size(),
         VKL_FLOAT,
         isovaluesData->data());
-    vklSetData(vklHitContext, "values", valuesData);
+    vklSetData2(vklHitContext, "values", valuesData);
     vklRelease(valuesData);
   }
 
-  vklCommit(vklHitContext);
+  vklCommit2(vklHitContext);
 
   createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Isosurfaces_bounds);
   getSh()->isovalues = isovaluesData->data();

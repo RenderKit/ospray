@@ -1,12 +1,14 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"
 #include "surfaces.ih"
 #include "volume/VolumetricModel.ih"
+#include "volume/transferFunction/TransferFunctionDispatch.ih"
 #include "volumes.ih"
 // c++ shared
 #include "SciVisShared.h"
@@ -80,7 +82,7 @@ static void sampleVolume(SciVisRenderContext &rc,
 
     // Sample volume value in given point
     sampleVal = vklComputeSampleV(
-        m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
+        &m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
 
     // Go to the next sub-interval
     vc.iuDistance += 1.f;
@@ -90,7 +92,7 @@ static void sampleVolume(SciVisRenderContext &rc,
 
   // Apply transfer function to get color with alpha
   TransferFunction *uniform tf = m->transferFunction;
-  vc.sample = tf->get(tf, sampleVal);
+  vc.sample = TransferFunction_dispatch_get(tf, sampleVal);
 
   // compute gradient shading lighting
   if (gsc > 0.0f) {
@@ -265,7 +267,7 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       foreach_unique (m in model) {
 #endif
         // Create volume interval iterator
-        vc.intervalIterator = vklInitIntervalIteratorV(m->vklIntervalContext,
+        vc.intervalIterator = vklInitIntervalIteratorV(&m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,

@@ -1,0 +1,19 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "rkcommon/math/box.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+struct TransferFunction;
+
+SYCL_EXTERNAL vec4f TransferFunction_dispatch_get(
+    const TransferFunction *uniform self, float value);
+
+SYCL_EXTERNAL float TransferFunction_dispatch_getMaxOpacity(
+    const TransferFunction *uniform self, const range1f &valueRange);
+
+OSPRAY_END_ISPC_NAMESPACE
+

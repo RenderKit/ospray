@@ -4,6 +4,7 @@
 // ospray
 #include "camera/Camera.ih"
 #include "camera/CameraDispatch.ih"
+#include "common/Intersect.ih"
 #include "common/World.ih"
 #include "fb/FrameBuffer.ih"
 #include "fb/FrameBufferDispatch.ih"
@@ -13,6 +14,7 @@
 #include "render/Renderer.ih"
 #include "render/ScreenSample.ih"
 #include "rkcommon/utility/random.ih"
+#include "volume/transferFunction/TransferFunctionDispatch.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/VolumetricModel.ih"
 #endif
@@ -255,13 +257,19 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
+#ifdef OSPRAY_ENABLE_VOLUMES
 #if 0
+  // TODO: Does this make sense? Volumes are in a separate BVH so if we have a
+  // scene with only a volume we'd never hit because hitBackground -> traceRay
+  // -> only traces against geometry.
   if (hitBackground(self, world, sample))
     return;
+#endif
 
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
-  LDSampler_init(ldSampler, self->mathConstants,
+  LDSampler_init(ldSampler,
+      self->mathConstants,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 
@@ -287,19 +295,35 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
 
   const float jitter = LDSampler_getFloat(ldSampler, 0);
 
-  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
-  foreach_unique (m in model) {
+  // TODO: VKL_MAX_INTERVAL_ITERATOR_SIZE is sized based on a varying size as
+  // well so it will be way bigger than we need. Maybe best to allocate
+  // intervalIteratorBuffers in device memory?
+  uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+#ifdef OSPRAY_TARGET_SYCL
+  VolumetricModel *uniform m = model;
+#else
+  foreach_unique (m in model)
+#endif
+  {
     Volume *uniform volume = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
     float time = 0.5f;
+    // TODO can't use iterators for the initial integration test, since they
+    // won't be on the GPU yet. Just vklComputeSample
     VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(m->vklIntervalContext,
+        // TODO: need to make the interval context on the host for SYCL as well.
+        // that's probably why it's not rendering.
+        vklInitIntervalIteratorV(&m->vklIntervalContext,
             (varying vkl_vec3f *)&ray.org,
             (varying vkl_vec3f *)&ray.dir,
             (varying vkl_range1f *)&vInterval.interval,
+#ifndef OSPRAY_TARGET_SYCL
             &time,
-            intervalIteratorBuffer);
+#else
+            time,
+#endif
+            (void *uniform)intervalIteratorBuffer);
 
     VKLInterval interval;
 
@@ -322,10 +346,11 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
         // Get volume sample
         vec3f p = ray.org + ray.t0 * ray.dir;
         const float sample = vklComputeSampleV(
-            volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
+            &volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
 
         if (!isnan(sample)) {
-          vec4f sampleColorOpacity = tf->get(tf, sample);
+          vec4f sampleColorOpacity =
+              TransferFunction_dispatch_get(m->transferFunction, sample);
 
           const float clampedOpacity = clamp(sampleColorOpacity.w * dt);
 

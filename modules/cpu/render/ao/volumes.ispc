@@ -1,11 +1,13 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 
 #include "math/random.ih"
 #include "math/sampling.ih"
 #include "render/util.ih"
 #include "volume/VolumetricModel.ih"
+#include "volume/transferFunction/TransferFunctionDispatch.ih"
 #include "volumes.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -71,7 +73,7 @@ static void sampleVolume(VolumeContext &vc,
 
     // Sample volume value in given point
     sampleVal = vklComputeSampleV(
-        m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
+        &m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
 
     // Go to the next sub-interval
     vc.iuDistance += 1.f;
@@ -80,7 +82,7 @@ static void sampleVolume(VolumeContext &vc,
   }
 
   // Apply transfer function to get color with alpha
-  vc.sample = m->transferFunction->get(m->transferFunction, sampleVal);
+  vc.sample = TransferFunction_dispatch_get(m->transferFunction, sampleVal);
 
   // Weight the opacity with deltaT using Beer law
   vc.sample.w = 1.f - exp(-vc.sample.w * dt * m->densityScale);
@@ -215,7 +217,7 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
       foreach_unique (m in model) {
 #endif
         // Create volume interval iterator
-        vc.intervalIterator = vklInitIntervalIteratorV(m->vklIntervalContext,
+        vc.intervalIterator = vklInitIntervalIteratorV(&m->vklIntervalContext,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,

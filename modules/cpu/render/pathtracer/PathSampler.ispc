@@ -17,7 +17,8 @@
 #include "render/MaterialDispatch.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"
 #include "render/materials/Medium.ih"
-#ifdef OSPRAY_ENABLE_VOLUMES
+// TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #endif
 
@@ -41,7 +42,8 @@ inline void postIntersect(const PathContext &pathContext,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
             | DG_TANGENTS | DG_MOTIONBLUR);
   }
-#ifdef OSPRAY_ENABLE_VOLUMES
+  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
   if (pathVertex.type == VOLUME) {
     pathVertex.dg.P = ray.org + ray.t * ray.dir;
     pathVertex.dg.renderer = &pt->super;
@@ -97,7 +99,8 @@ inline Scattering_SampleRes sampleDirection(const PathContext &pathContext,
       }
     }
   }
-#ifdef OSPRAY_ENABLE_VOLUMES
+  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
   if (pathVertex.type == VOLUME) {
     foreach_unique (v in pathVertex.volume) {
       if (v != NULL) {
@@ -163,7 +166,8 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
     pathVertex.wo = neg(ray.dir);
 
-#ifdef OSPRAY_ENABLE_VOLUMES
+    // TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
     float extinctionCoefficient;
     float freePath = volumeSampleFreePath(pathState,
         pathContext.world,

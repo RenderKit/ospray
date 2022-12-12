@@ -302,8 +302,13 @@ void ISPCDevice::commit()
 
 #ifdef OSPRAY_ENABLE_VOLUMES
   if (!vklDevice) {
-    vklLoadModule("cpu_device");
+    vklInit();
 
+#ifdef OSPRAY_TARGET_SYCL
+    vklDevice = vklNewDevice("gpu_4");
+    vklDeviceSetVoidPtr(
+        vklDevice, "syclContext", static_cast<void *>(&syclContext));
+#else
     int cpu_width = ispc::ISPCDevice_programCount();
     switch (cpu_width) {
     case 4:
@@ -319,6 +324,7 @@ void ISPCDevice::commit()
       vklDevice = vklNewDevice("cpu");
       break;
     }
+#endif
 
     vklDeviceSetErrorCallback(vklDevice, vklErrorFunc, nullptr);
     vklDeviceSetLogCallback(

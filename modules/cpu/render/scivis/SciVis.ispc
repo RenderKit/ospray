@@ -38,7 +38,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
   bool allHitsFullyTransmissive = true;
   const float originalRayTFar = sample.ray.t;
 
-#ifdef OSPRAY_ENABLE_VOLUMES
+  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
   // Allocate memory for volume intervals
   VolumeIntervals volumeIntervals;
   allocVolumeIntervals(volumeIntervals);
@@ -61,7 +62,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
     // if hit ray.t will be updated
     traceGeometryRayIntervals(world, ray, rayIntervals);
 
-#ifdef OSPRAY_ENABLE_VOLUMES
+    // TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
     traceVolumeRay(world, volumeRay, volumeIntervals);
@@ -135,7 +137,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
       // transmissive hits will lead the normal/albedo to be replaced by the
       // current hit
       if (firstHit || allHitsFullyTransmissive) {
-#ifdef OSPRAY_ENABLE_VOLUMES
+        // TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
         sample.z = min(ray.t, volumeRay.t);
 #endif
         sample.albedo = surfaceShading.albedo;
@@ -178,7 +181,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
       // If the ray hits the background and comes from a fully transmissive
       // path, we overwrite normals/albedo by background values
       if (firstHit || allHitsFullyTransmissive) {
-#ifdef OSPRAY_ENABLE_VOLUMES
+        // TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
         sample.z = min(ray.t, volumeRay.t);
 #endif
         sample.albedo = make_vec3f(backgroundColor); // TODO volume albedo
@@ -190,7 +194,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
     }
   }
 
-#ifdef OSPRAY_ENABLE_VOLUMES
+  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
+#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
   freeVolumeIntervals(volumeIntervals);
 #endif
   sample.rgb = outColor;

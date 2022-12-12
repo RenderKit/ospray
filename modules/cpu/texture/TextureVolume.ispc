@@ -4,13 +4,13 @@
 
 #include "Texture.ih"
 #include "volume/Volume.ih"
-#include "volume/transferFunction/TransferFunctionShared.h"
+#include "volume/transferFunction/TransferFunctionDispatch.ih"
 // c++ shared
 #include "TextureVolumeShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-vec4f TextureVolume_get(
+SYCL_EXTERNAL vec4f TextureVolume_get(
     const Texture *uniform _self, const varying DifferentialGeometry &dg)
 {
   const TextureVolume *uniform self = (const TextureVolume *uniform)_self;
@@ -20,12 +20,12 @@ vec4f TextureVolume_get(
   if (box_contains(bounds, dg.lP)) {
     const float sample = Volume_getSample(volume, dg.lP);
     const TransferFunction *uniform tfn = self->transferFunction;
-    return tfn->get(tfn, sample);
+    return TransferFunction_dispatch_get(tfn, sample);
   } else
     return make_vec4f(0.f);
 }
 
-vec3f TextureVolume_getNormal(
+SYCL_EXTERNAL vec3f TextureVolume_getNormal(
     const Texture *uniform self, const varying DifferentialGeometry &dg)
 {
   // TODO

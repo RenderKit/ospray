@@ -9,9 +9,19 @@
 #include "Volume.ih"
 #include "transferFunction/TransferFunctionShared.h"
 // openvkl
+#ifdef ISPC
 #include "openvkl/openvkl.isph"
+// comment break to prevent clang-format from reordering openvkl includes
+#include "openvkl/device/openvkl.isph"
+#else
+#include "openvkl/openvkl.h"
+// comment break to prevent clang-format from reordering openvkl includes
+#include "openvkl/device/openvkl.h"
+#endif
 // c++ shared
 #include "VolumetricModelShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
     varying DifferentialGeometry &dg,
@@ -31,5 +41,7 @@ inline void VolumetricModel_postIntersect(const VolumetricModel *uniform self,
   dg.epsilon = 0.f;
   dg.material = NULL;
 }
+
+OSPRAY_END_ISPC_NAMESPACE
 
 #endif

@@ -9,7 +9,9 @@
 // embree
 #include "common/Embree.h"
 // openvkl
-#include "openvkl/volume.h"
+#include "openvkl/openvkl.h"
+// comment break to prevent clang-format from reordering openvkl includes
+#include "openvkl/device/openvkl.h"
 // ispc shared
 #include "VolumeShared.h"
 
@@ -35,8 +37,8 @@ struct OSPRAY_SDK_INTERFACE Volume
 
   // Data //
   RTCGeometry embreeGeometry{nullptr};
-  VKLVolume vklVolume{nullptr};
-  VKLSampler vklSampler{nullptr};
+  VKLVolume vklVolume{nullptr, nullptr};
+  VKLSampler vklSampler{nullptr, nullptr};
 
   box3f bounds{empty};
 

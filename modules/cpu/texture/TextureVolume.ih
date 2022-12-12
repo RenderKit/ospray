@@ -10,10 +10,10 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-vec4f TextureVolume_get(
+SYCL_EXTERNAL vec4f TextureVolume_get(
     const uniform Texture *uniform self, const DifferentialGeometry &dg);
 
-vec3f TextureVolume_getNormal(
+SYCL_EXTERNAL vec3f TextureVolume_getNormal(
     const uniform Texture *uniform self, const DifferentialGeometry &dg);
 
 OSPRAY_END_ISPC_NAMESPACE
