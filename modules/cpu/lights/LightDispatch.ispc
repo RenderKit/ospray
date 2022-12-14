@@ -23,6 +23,9 @@ SYCL_EXTERNAL __noinline Light_SampleRes Light_dispatch_sample(
     const vec2f &s,
     const float time)
 {
+#ifndef OSPRAY_TARGET_SYCL
+  return self->sample(self, dg, s, time);
+#else
   switch (self->type) {
   case LIGHT_TYPE_QUAD:
     return QuadLight_sample(self, dg, s, time);
@@ -41,19 +44,13 @@ SYCL_EXTERNAL __noinline Light_SampleRes Light_dispatch_sample(
   case LIGHT_TYPE_GEOMETRY:
     return GeometryLight_sample(self, dg, s, time);
   default:
-#ifndef OSPRAY_TARGET_SYCL
-    return self->sample(self, dg, s, time);
-#else
-    break;
-#endif
+    Light_SampleRes res;
+    res.weight = make_vec3f(0.f);
+    res.dir = make_vec3f(0.f);
+    res.dist = inf;
+    res.pdf = 0.f;
+    return res;
   }
-#ifdef OSPRAY_TARGET_SYCL
-  Light_SampleRes res;
-  res.weight = make_vec3f(0.f);
-  res.dir = make_vec3f(0.f);
-  res.dist = inf;
-  res.pdf = 0.f;
-  return res;
 #endif
 }
 
@@ -65,6 +62,9 @@ SYCL_EXTERNAL __noinline Light_EvalRes Light_dispatch_eval(
     const float maxDist,
     const float time)
 {
+#ifndef OSPRAY_TARGET_SYCL
+  return self->eval(self, dg, dir, minDist, maxDist, time);
+#else
   switch (self->type) {
   case LIGHT_TYPE_QUAD:
     return QuadLight_eval(self, dg, dir, minDist, maxDist, time);
@@ -81,17 +81,11 @@ SYCL_EXTERNAL __noinline Light_EvalRes Light_dispatch_eval(
   case LIGHT_TYPE_AMBIENT:
     return AmbientLight_eval(self, dg, dir, minDist, maxDist, time);
   default:
-#ifndef OSPRAY_TARGET_SYCL
-    return self->eval(self, dg, dir, minDist, maxDist, time);
-#else
-    break;
-#endif
+    Light_EvalRes res;
+    res.radiance = make_vec3f(0.f);
+    res.pdf = 0.f;
+    return res;
   }
-#ifdef OSPRAY_TARGET_SYCL
-  Light_EvalRes res;
-  res.radiance = make_vec3f(0.f);
-  res.pdf = 0.f;
-  return res;
 #endif
 }
 
