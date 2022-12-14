@@ -67,9 +67,9 @@ inline bool filterIntersectionSingle(
 
     // call filter intersection callback if needed
 #ifndef OSPRAY_TARGET_SYCL
-    EmbreeIntersectionContextDefault *uniform ctx =
-        (EmbreeIntersectionContextDefault * uniform) args->context;
-    uniform bool noFilter = ctx->type != EICT_CLIPPING;
+    EmbreeRayQueryContextDefault *uniform ctx =
+        (EmbreeRayQueryContextDefault * uniform) args->context;
+    uniform bool noFilter = ctx->type != ERQCT_CLIPPING;
     bool accept = noFilter || filterCall(args, rtcHitTemp);
 #else
     bool accept = true;

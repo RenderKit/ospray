@@ -16,9 +16,9 @@
 #include "fb/FrameBufferShared.h"
 #include "fb/SparseFBShared.h"
 
-struct EmbreeIntersectionContextRegion
+struct EmbreeRayQueryContextRegion
 {
-  RTCIntersectContext ectx;
+  RTCRayQueryContext ectx;
   uint8 *regionVisible;
 };
 
@@ -29,8 +29,8 @@ unmasked void markRegionVisibleFilterFunction(
     return;
   }
 
-  EmbreeIntersectionContextRegion *uniform ctx =
-      (EmbreeIntersectionContextRegion * uniform) args->context;
+  EmbreeRayQueryContextRegion *uniform ctx =
+      (EmbreeRayQueryContextRegion * uniform) args->context;
 
   uint8 *uniform regionVisible = ctx->regionVisible;
   varying RTCHit *uniform hit = (varying RTCHit * uniform) args->hit;
@@ -125,8 +125,8 @@ task void DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
       screenSample.ray.t = min(screenSample.ray.t, tMax);
 
       if (world->regionScene) {
-        uniform EmbreeIntersectionContextRegion context;
-        rtcInitIntersectContext(&context.ectx);
+        uniform EmbreeRayQueryContextRegion context;
+        rtcInitRayQueryContext(&context.ectx);
         context.regionVisible = tileRegionVisible;
 
         uniform RTCIntersectArguments intersectArgs;

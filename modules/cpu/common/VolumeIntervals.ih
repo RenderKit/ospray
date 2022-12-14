@@ -57,17 +57,17 @@ inline void freeVolumeIntervals(VolumeIntervals &intervals)
   intervals.intervals = NULL;
 }
 
-struct EmbreeIntersectionContextVolume
+struct EmbreeRayQueryContextVolume
 {
-  RTCIntersectContext ectx;
+  RTCRayQueryContext ectx;
   varying VolumeIntervals *intervals;
 };
 
-inline void InitIntersectionContextVolume(
-    EmbreeIntersectionContextVolume *uniform context,
+inline void InitRayQueryContextVolume(
+    EmbreeRayQueryContextVolume *uniform context,
     varying VolumeIntervals *uniform intervals)
 {
-  rtcInitIntersectContext(&context->ectx);
+  rtcInitRayQueryContext(&context->ectx);
   context->intervals = intervals;
 }
 

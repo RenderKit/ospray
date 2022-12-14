@@ -38,24 +38,24 @@ struct Ray
   uint32 instID; //!< instance ID
 };
 
-enum EmbreeIntersectionContextType
+enum EmbreeRayQueryContextType
 {
-  EICT_DEFAULT,
-  EICT_CLIPPING,
-  EICT_UNKNOWN
+  ERQCT_DEFAULT,
+  ERQCT_CLIPPING,
+  ERQCT_UNKNOWN
 };
 
-struct EmbreeIntersectionContextDefault
+struct EmbreeRayQueryContextDefault
 {
-  RTCIntersectContext ectx;
-  EmbreeIntersectionContextType type;
+  RTCRayQueryContext ectx;
+  EmbreeRayQueryContextType type;
 };
 
-inline void InitIntersectionContextDefault(
-    EmbreeIntersectionContextDefault *uniform context)
+inline void InitRayQueryContextDefault(
+    EmbreeRayQueryContextDefault *uniform context)
 {
-  rtcInitIntersectContext(&context->ectx);
-  context->type = EICT_DEFAULT;
+  rtcInitRayQueryContext(&context->ectx);
+  context->type = ERQCT_DEFAULT;
 }
 
 // Hit query functions ////////////////////////////////////////////////////////

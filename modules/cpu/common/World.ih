@@ -21,12 +21,12 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 // Define minimal subset of features used in Embree,
 // less features means smaller kernel on GPU
 #define FEATURE_MASK                                                           \
-  RTC_FEATURE_FLAGS_TRIANGLE | RTC_FEATURE_FLAGS_QUAD                          \
-      | RTC_FEATURE_FLAGS_SUBDIVISION | RTC_FEATURE_FLAGS_CURVES               \
-      | RTC_FEATURE_FLAGS_SPHERE_POINT | RTC_FEATURE_FLAGS_INSTANCE            \
-      | RTC_FEATURE_FLAGS_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS
+  RTC_FEATURE_FLAG_TRIANGLE | RTC_FEATURE_FLAG_QUAD                            \
+      | RTC_FEATURE_FLAG_SUBDIVISION | RTC_FEATURE_FLAG_CURVES                 \
+      | RTC_FEATURE_FLAG_SPHERE_POINT | RTC_FEATURE_FLAG_INSTANCE              \
+      | RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS
 #else
-#define FEATURE_MASK RTC_FEATURE_FLAGS_ALL
+#define FEATURE_MASK RTC_FEATURE_FLAG_ALL
 #endif
 
 #ifdef OSPRAY_TARGET_SYCL
@@ -41,8 +41,8 @@ inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
   if (!world->embreeSceneHandleGeometries)
     return;
 
-  uniform EmbreeIntersectionContextDefault context;
-  InitIntersectionContextDefault(&context);
+  uniform EmbreeRayQueryContextDefault context;
+  InitRayQueryContextDefault(&context);
 
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
@@ -66,8 +66,8 @@ inline void traceVolumeRay(
   VolumeIntervals intervals;
   allocVolumeIntervals(intervals);
 
-  uniform EmbreeIntersectionContextVolume context;
-  InitIntersectionContextVolume(&context, &intervals);
+  uniform EmbreeRayQueryContextVolume context;
+  InitRayQueryContextVolume(&context, &intervals);
 
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
@@ -95,8 +95,8 @@ inline void traceVolumeRay(
   if (!world->embreeSceneHandleVolumes)
     return;
 
-  uniform EmbreeIntersectionContextVolume context;
-  InitIntersectionContextVolume(&context, &intervals);
+  uniform EmbreeRayQueryContextVolume context;
+  InitRayQueryContextVolume(&context, &intervals);
 
   uniform RTCIntersectArguments intersectArgs;
   rtcInitIntersectArguments(&intersectArgs);
@@ -121,9 +121,9 @@ inline void traceVolumeRay(
 #endif
 
 // Intersection context structure used for clipping geometries
-struct EmbreeIntersectionContextClipping
+struct EmbreeRayQueryContextClipping
 {
-  uniform EmbreeIntersectionContextDefault super;
+  uniform EmbreeRayQueryContextDefault super;
   const World *uniform world;
   varying int32 corrClippingDepth;
   varying uint32 hitsCount;
@@ -151,9 +151,9 @@ inline void traceClippingRay(const World *uniform world,
   }
 
   // Create and initialize intersection context
-  EmbreeIntersectionContextClipping context;
-  rtcInitIntersectContext(&context.super.ectx);
-  context.super.type = EICT_CLIPPING;
+  EmbreeRayQueryContextClipping context;
+  rtcInitRayQueryContext(&context.super.ectx);
+  context.super.type = ERQCT_CLIPPING;
   context.world = world;
   context.corrClippingDepth = 0;
   context.hitsCount = 0;
@@ -164,7 +164,7 @@ inline void traceClippingRay(const World *uniform world,
   intersectArgs.context = &context.super.ectx;
   intersectArgs.intersect = (RTCIntersectFunctionN)Geometry_dispatch_intersect;
   intersectArgs.filter = clippingIntersectionFilterV;
-  intersectArgs.flags = RTC_INTERSECT_CONTEXT_FLAG_INVOKE_ARGUMENT_FILTER;
+  intersectArgs.flags = RTC_RAY_QUERY_FLAG_INVOKE_ARGUMENT_FILTER;
 
   // Intersect all geometry along given ray,
   // we have to temporarily extend the ray to inf because

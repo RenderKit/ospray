@@ -15,8 +15,8 @@ unmasked void clippingIntersectionFilterV(
     return;
 
   // Get pointer to the intersection context
-  EmbreeIntersectionContextClipping *uniform context =
-      (EmbreeIntersectionContextClipping * uniform) args->context;
+  EmbreeRayQueryContextClipping *uniform context =
+      (EmbreeRayQueryContextClipping * uniform) args->context;
 
   // We skip this intersection to collect all remaining intersections
   valid[programIndex] = 0;
