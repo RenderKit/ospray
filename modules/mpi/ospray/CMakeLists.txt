@@ -95,8 +95,17 @@ add_definitions_ispc(
   -DOSPRAY_END_ISPC_NAMESPACE=
   -DSYCL_EXTERNAL=
   -D__noinline=
-  -DOSPRAY_ENABLE_VOLUMES
 )
+
+if (OSPRAY_ENABLE_VOLUMES)
+  include_directories_ispc(
+    ${OPENVKL_INCLUDE_DIRS}
+  )
+
+  add_definitions_ispc(
+    -DOSPRAY_ENABLE_VOLUMES
+  )
+endif()
 
 add_library(ospray_module_mpi_distributed_cpu SHARED)
 
