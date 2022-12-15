@@ -51,39 +51,42 @@ jobs:
       cmd: |
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
 
+  # TODO: Enable AVX512 testing after Embree4 release
   build-centos7-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       image: centos:7
       cmd: |
-        scripts/build/linux.sh
+        scripts/build/linux.sh -DBUILD_ISA_AVX512=OFF
       artifact-out: build-centos7-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  build-centos7-icc:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    secrets: inherit
-    with:
-      image: centos:7-devenv
-      cmd: |
-        module load cmake
-        module load intel
-        export CC=icc
-        export CXX=icpc
-        scripts/build/linux.sh
+#  TODO: Update to newer ICC compiler?
+#  build-centos7-icc:
+#    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+#    secrets: inherit
+#    with:
+#      image: centos:7-devenv
+#      cmd: |
+#        module load cmake
+#        module load intel
+#        export CC=icc
+#        export CXX=icpc
+#        scripts/build/linux.sh
 
-  build-centos7-icc15:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    secrets: inherit
-    with:
-      image: centos:7-devenv
-      cmd: |
-        module load cmake
-        module load intel/2015
-        export CC=icc
-        export CXX=icpc
-        scripts/build/linux.sh
+#  TODO: Update to newer ICC compiler?
+#  build-centos7-icc15:
+#    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+#    secrets: inherit
+#    with:
+#      image: centos:7-devenv
+#      cmd: |
+#        module load cmake
+#        module load intel/2015
+#        export CC=icc
+#        export CXX=icpc
+#        scripts/build/linux.sh
 
   build-centos7-icx:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -101,6 +104,7 @@ jobs:
       artifact-out: build-centos7-icx
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
+  # TODO: Enable AVX512 testing after Embree4 release
   build-centos7-mpi-impi:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
@@ -109,10 +113,11 @@ jobs:
       cmd: |
         module load cmake
         module load impi/2021.6
-        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
       artifact-out: build-centos7-mpi-impi
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
+  # TODO: Enable AVX512 testing after Embree4 release
   build-centos7-mpi-mpich:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
@@ -121,10 +126,11 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/mpich-x86_64
-        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
       artifact-out: build-centos7-mpi-mpich
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
+  # TODO: Enable AVX512 testing after Embree4 release
   build-centos7-mpi-openmpi:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
@@ -133,7 +139,7 @@ jobs:
       cmd: |
         module load cmake
         module load mpi/openmpi-x86_64
-        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON
+        scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_ISA_AVX512=OFF
 
   build-centos8:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -176,13 +182,14 @@ jobs:
       artifact-out: build-linux-debug
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
+  # TODO: Enable AVX512 testing after Embree4 release
   build-ubuntu1804-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
     with:
       image: ubuntu:18.04
       cmd: |
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_ISA_AVX512=OFF
       artifact-out: build-ubuntu1804-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -281,14 +288,18 @@ jobs:
         cmake --build .
       artifact-in: build-centos7-gcc
 
+  # TODO: Enable AVX512 testing after Embree4 release
   test-ubuntu1804-gcc-avx512skx:
     needs: build-ubuntu1804-gcc
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:18.04
-      runs-on: '["Linux", "avx512"]'
+      # runs-on: '["Linux", "avx512"]'
+      runs-on: '["Linux", "avx2"]'
+      # cmd: |
+      #   LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
       cmd: |
-        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX2
       artifact-in: build-ubuntu1804-gcc
       artifact-out: test-ubuntu1804-gcc-avx512skx
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
@@ -325,6 +336,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: centos:7
+      runs-on: '["Linux", "avx2"]' # TODO: Remove it after Embree4 release
       cmd: scripts/tests/run_tutorials.sh
       artifact-in: build-centos7-gcc
 

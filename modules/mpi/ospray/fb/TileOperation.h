@@ -5,6 +5,10 @@
 
 #include <memory>
 #include <vector>
+#include "common/OSPCommon.h"
+#include "common/StructShared.h"
+#include "rkcommon/math/range.h"
+// ispc shared
 #include "fb/TileShared.h"
 
 namespace ospray {

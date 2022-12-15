@@ -24,35 +24,8 @@ ospray_configure_build_type()
 ospray_configure_compiler()
 
 ###########################################################
-# OSPRay's dependencies
+# OSPRay specific build options
 ###########################################################
-
-# rkcommon
-find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} EXACT REQUIRED)
-get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
-  INTERFACE_INCLUDE_DIRECTORIES)
-
-# Embree
-ospray_find_embree(${EMBREE_VERSION_REQUIRED} FALSE)
-ospray_verify_embree_features()
-ospray_determine_embree_isa_support()
-
-# OpenImageDenoise
-if (OSPRAY_MODULE_DENOISER)
-  find_package(OpenImageDenoise 1.2.3 REQUIRED)
-endif()
-
-# ISPC
-find_package(ispcrt ${ISPC_VERSION_REQUIRED} REQUIRED)
-set(ISPC_FAST_MATH ON)
-
-###########################################################
-# OSPRay specific build options and configuration selection
-###########################################################
-
-# Configure OSPRay ISA last after we've detected what we got w/ Embree
-ospray_configure_ispc_isa()
-set(ISPC_TARGET_CPU ${OSPRAY_ISPC_TARGET_LIST})
 
 option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 option(OSPRAY_ENABLE_MODULES "Enable the 'modules' subtree in the build." ON)
@@ -101,10 +74,37 @@ cmake_dependent_option(
   OFF
 )
 
+###########################################################
+# OSPRay's dependencies and configuration selection
+###########################################################
+
+# rkcommon
+find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} EXACT REQUIRED)
+get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
+  INTERFACE_INCLUDE_DIRECTORIES)
+
+# Embree
+ospray_find_embree(${EMBREE_VERSION_REQUIRED} FALSE)
+ospray_verify_embree_features()
+ospray_determine_embree_isa_support()
+
 # Open VKL
 if (OSPRAY_ENABLE_VOLUMES)
   ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} FALSE)
 endif()
+
+# OpenImageDenoise
+if (OSPRAY_MODULE_DENOISER)
+  find_package(OpenImageDenoise 1.2.3 REQUIRED)
+endif()
+
+# ISPC
+find_package(ispcrt ${ISPC_VERSION_REQUIRED} REQUIRED)
+set(ISPC_FAST_MATH ON)
+
+# Configure OSPRay ISA last after we've detected what we got w/ Embree
+ospray_configure_ispc_isa()
+set(ISPC_TARGET_CPU ${OSPRAY_ISPC_TARGET_LIST})
 
 #####################################################################
 # Binary package options, before any install() invocation/definition

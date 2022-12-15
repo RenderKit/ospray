@@ -272,7 +272,7 @@ if (WIN32)
   # changes .def only if content changed, avoids unnecessary re-linking
   configure_file(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_cpu.def.in ospray_module_cpu.def COPYONLY)
 
-  list(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_cpu.def)
+  list(APPEND OSPRAY_ISPC_SOURCES ospray_module_cpu.def)
 endif()
 
 ## ISPC Device-specific options ##

@@ -17,7 +17,7 @@ string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" OPENVKL_ARCHIVE ${OPENV
 #set(OPENVKL_BRANCH "${OPENVKL_ARCHIVE}" CACHE STRING "Which branch of OpenVKL to build" )
 #set(OPENVKL_URL "https://github.com/openvkl/openvkl/archive/${OPENVKL_ARCHIVE}.zip"
 #  CACHE STRING "Location to clone OpenVKL source from")
-set(OPENVKL_BRANCH "will/embree4" CACHE STRING "Which branch of OpenVKL to build" )
+set(OPENVKL_BRANCH "mpawl/embree4" CACHE STRING "Which branch of OpenVKL to build" )
 set(OPENVKL_URL https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git 
   CACHE STRING "Location to clone OpenVKL source from")
 

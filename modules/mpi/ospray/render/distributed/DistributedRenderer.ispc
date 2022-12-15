@@ -5,9 +5,11 @@
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
+#include "fb/RenderTaskDesc.ih"
 #include "fb/SparseFB.ih"
 #include "geometry/GeometryDispatch.ih"
 #include "math/random.ih"
+#include "render/ScreenSample.ih"
 #include "rkcommon/utility/random.ih"
 #include "texture/Texture2D.ih"
 // c++ shared
@@ -138,7 +140,7 @@ task void DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
         // supported?
         intersectArgs.filter =
             (RTCFilterFunctionN)markRegionVisibleFilterFunction;
-        intersectArgs.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
+        intersectArgs.flags = RTC_RAY_QUERY_FLAG_COHERENT;
 
         rtcIntersectV(world->regionScene,
             (varying RTCRayHit * uniform) & screenSample.ray,

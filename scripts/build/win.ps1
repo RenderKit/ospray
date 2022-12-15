@@ -14,6 +14,7 @@ cmake -L `
   -D DEPENDENCIES_BUILD_TYPE=$($args[2]) `
   -D BUILD_OSPRAY_MODULE_MPI=$($args[3]) `
   -D BUILD_OSPRAY_MODULE_MULTIDEVICE=$($args[4]) `
+  -D BUILD_ISA_AVX512=OFF `
   ../scripts/superbuild
 
 cmake --build . --config $args[2] --target ALL_BUILD

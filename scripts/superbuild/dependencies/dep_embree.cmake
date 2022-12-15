@@ -12,7 +12,7 @@ if (BUILD_EMBREE_FROM_SOURCE)
   #set(EMBREE_BRANCH "${EMBREE_ARCHIVE}" CACHE STRING "Which branch of Embree to build" )
   #set(EMBREE_URL "https://github.com/embree/embree/archive/${EMBREE_BRANCH}.zip"
   #  CACHE STRING "Location to clone Embree source from")
-  set(EMBREE_BRANCH "devel" CACHE STRING "Which branch of Embree to build" )
+  set(EMBREE_BRANCH "mpawl/ospray-ci" CACHE STRING "Which branch of Embree to build" )
   set(EMBREE_URL "https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git"
     CACHE STRING "Location to clone Embree source from")
 endif()
@@ -65,7 +65,7 @@ if (BUILD_EMBREE_FROM_SOURCE)
       -DEMBREE_ISA_AVX2=${BUILD_ISA_AVX2}
       -DEMBREE_ISA_AVX512=${BUILD_ISA_AVX512}
       -DEMBREE_ISA_NEON=${BUILD_ISA_NEON}
-      # No dpcpp compiler in CI right now
+      -DEMBREE_ISA_NEON2X=OFF
       -DEMBREE_SYCL_SUPPORT=${BUILD_GPU_SUPPORT}
       # Use non-public RT API
       -DEMBREE_SYCL_RT_VALIDATION_API=ON
