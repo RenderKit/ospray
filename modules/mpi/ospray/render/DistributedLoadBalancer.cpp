@@ -317,13 +317,11 @@ void DistributedLoadBalancer::renderFrameReplicated(DistributedFrameBuffer *dfb,
   std::cout << "Start new frame took: " << elapsedTimeMs(start, end) << "ms\n";
 #endif
 
-  //  if (enableStaticBalancer) {
-  renderFrameReplicatedStaticLB(dfb, renderer, camera, world, perFrameData);
-  // Starting with MPI/GPU support for just the static LB
-  // } else {
-  //  renderFrameReplicatedDynamicLB(dfb, renderer, camera, world,
-  //  perFrameData);
-  //}
+  if (enableStaticBalancer) {
+    renderFrameReplicatedStaticLB(dfb, renderer, camera, world, perFrameData);
+  } else {
+    renderFrameReplicatedDynamicLB(dfb, renderer, camera, world, perFrameData);
+  }
 
 #ifdef ENABLE_PROFILING
   end = ProfilingPoint();
@@ -383,8 +381,8 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
   if ((ALLTILES % workerSize()) > workerRank())
     NTILES++;
 
-  // Do not pass all tiles at once, this way if other ranks want to steal work,
-  // they can
+  // Do not pass all tiles at once, this way if other ranks want to steal
+  // work, they can
   const int maxTilesPerRound = 20;
   const int numRounds = std::max(NTILES / maxTilesPerRound, 1);
   const int tilesPerRound = NTILES / numRounds;
@@ -504,8 +502,8 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
     }
   }
   // We need to wait for the other ranks to finish here to keep our local DLB
-  // alive to respond to any work requests that come in while other ranks finish
-  // their final local set of tasks
+  // alive to respond to any work requests that come in while other ranks
+  // finish their final local set of tasks
   mpicommon::barrier(dfb->getMPIGroup().comm).wait();
 }
 

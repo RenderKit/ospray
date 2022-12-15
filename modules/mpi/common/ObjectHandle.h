@@ -5,6 +5,7 @@
 
 #include "MPICommon.h"
 #include "common/OSPCommon.h"
+#include "ospray_mpi_common_export.h"
 #include "rkcommon/memory/RefCount.h"
 
 namespace ospray {
@@ -22,7 +23,7 @@ namespace ospray {
   as if they were pointers (and thus, 'null' objects are
   consistent between local and mpi rendering)
 */
-union ObjectHandle
+union OSPRAY_MPI_COMMON_EXPORT ObjectHandle
 {
   ObjectHandle();
   ObjectHandle(int64 i);
@@ -68,16 +69,18 @@ union ObjectHandle
   int64 i64;
 };
 
-extern const ObjectHandle nullHandle;
+OSPRAY_MPI_COMMON_EXPORT extern const ObjectHandle nullHandle;
 
 // Inlined operator definitions /////////////////////////////////////////////
 
-inline bool operator==(const ObjectHandle &a, const ObjectHandle &b)
+OSPRAY_MPI_COMMON_EXPORT inline bool operator==(
+    const ObjectHandle &a, const ObjectHandle &b)
 {
   return a.i64 == b.i64;
 }
 
-inline bool operator!=(const ObjectHandle &a, const ObjectHandle &b)
+OSPRAY_MPI_COMMON_EXPORT inline bool operator!=(
+    const ObjectHandle &a, const ObjectHandle &b)
 {
   return !(a == b);
 }

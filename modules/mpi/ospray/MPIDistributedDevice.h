@@ -7,7 +7,6 @@
 #include "common/MPICommon.h"
 #include "common/Managed.h"
 #include "common/ObjectHandle.h"
-#include "openvkl/openvkl.h"
 #include "render/DistributedLoadBalancer.h"
 #include "render/LoadBalancer.h"
 

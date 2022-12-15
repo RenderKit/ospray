@@ -13,7 +13,7 @@ namespace mpi {
 using namespace rkcommon;
 using namespace rkcommon::math;
 
-/*! The data shared with the application. The workerType may not be the same
+/* The data shared with the application. The workerType may not be the same
  * as the type of the data, because managed objects are unknown on the
  * application rank, and are represented just as uint64 handles. Thus the
  * local data objects see them as OSP_ULONG types, while the worker type

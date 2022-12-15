@@ -12,6 +12,9 @@ add_library(ospray_mpi_common SHARED
     maml/Context.cpp
 )
 
+include(GenerateExportHeader)
+generate_export_header(ospray_mpi_common)
+
 target_link_libraries(ospray_mpi_common
   PRIVATE
     Snappy::snappy
@@ -25,6 +28,7 @@ target_include_directories(ospray_mpi_common
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
 
 if (OSPRAY_MPI_ENABLE_PROFILING)

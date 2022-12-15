@@ -15,7 +15,7 @@
 namespace maml {
 
 /*! the singleton object that handles all the communication */
-struct Context
+struct OSPRAY_MPI_COMMON_EXPORT Context
 {
   Context(bool enableCompression = false);
   ~Context();

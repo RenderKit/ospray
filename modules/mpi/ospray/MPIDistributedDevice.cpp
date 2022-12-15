@@ -16,7 +16,6 @@
 #include "fb/DistributedFrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
-#include "openvkl/openvkl.h"
 #include "render/DistributedLoadBalancer.h"
 #include "render/Material.h"
 #include "render/ThreadedRenderTask.h"
@@ -183,8 +182,6 @@ inline API_TYPE createDistributedObject(
 
 MPIDistributedDevice::MPIDistributedDevice()
 {
-  // TODO: Here we'll make a CPU or GPU device depending on the build config for
-  // the module
   internalDevice = std::make_shared<ospray::api::ISPCDevice>();
 }
 

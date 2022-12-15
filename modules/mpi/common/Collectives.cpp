@@ -11,7 +11,7 @@
 namespace mpicommon {
 using namespace rkcommon;
 
-std::future<void *> bcast(
+OSPRAY_MPI_COMMON_EXPORT std::future<void *> bcast(
     void *buf, size_t count, MPI_Datatype datatype, int root, MPI_Comm comm)
 {
   int typeSize = 0;
@@ -23,7 +23,7 @@ std::future<void *> bcast(
   return col->future();
 }
 
-std::future<void *> bcast(
+OSPRAY_MPI_COMMON_EXPORT std::future<void *> bcast(
     std::shared_ptr<rkcommon::utility::ArrayView<uint8_t>> &buffer,
     size_t count,
     MPI_Datatype datatype,
@@ -35,14 +35,14 @@ std::future<void *> bcast(
   return col->future();
 }
 
-std::future<void> barrier(MPI_Comm comm)
+OSPRAY_MPI_COMMON_EXPORT std::future<void> barrier(MPI_Comm comm)
 {
   auto col = std::make_shared<Barrier>(comm);
   maml::queueCollective(col);
   return col->future();
 }
 
-std::future<void *> gather(const void *sendBuffer,
+OSPRAY_MPI_COMMON_EXPORT std::future<void *> gather(const void *sendBuffer,
     int sendCount,
     MPI_Datatype sendType,
     void *recvBuffer,
@@ -63,7 +63,7 @@ std::future<void *> gather(const void *sendBuffer,
   return col->future();
 }
 
-std::future<void *> gatherv(const void *sendBuffer,
+OSPRAY_MPI_COMMON_EXPORT std::future<void *> gatherv(const void *sendBuffer,
     int sendCount,
     MPI_Datatype sendType,
     void *recvBuffer,
@@ -86,7 +86,7 @@ std::future<void *> gatherv(const void *sendBuffer,
   return col->future();
 }
 
-std::future<void *> send(void *buffer,
+OSPRAY_MPI_COMMON_EXPORT std::future<void *> send(void *buffer,
     int count,
     MPI_Datatype datatype,
     int dest,
@@ -98,7 +98,7 @@ std::future<void *> send(void *buffer,
   return col->future();
 }
 
-std::future<void *> recv(void *buffer,
+OSPRAY_MPI_COMMON_EXPORT std::future<void *> recv(void *buffer,
     int count,
     MPI_Datatype datatype,
     int source,
@@ -110,7 +110,7 @@ std::future<void *> recv(void *buffer,
   return col->future();
 }
 
-std::future<void *> reduce(const void *sendBuffer,
+OSPRAY_MPI_COMMON_EXPORT std::future<void *> reduce(const void *sendBuffer,
     void *recvBuffer,
     int count,
     MPI_Datatype datatype,
@@ -124,7 +124,7 @@ std::future<void *> reduce(const void *sendBuffer,
   return col->future();
 }
 
-std::future<void *> allreduce(const void *sendBuffer,
+OSPRAY_MPI_COMMON_EXPORT std::future<void *> allreduce(const void *sendBuffer,
     void *recvBuffer,
     int count,
     MPI_Datatype datatype,
