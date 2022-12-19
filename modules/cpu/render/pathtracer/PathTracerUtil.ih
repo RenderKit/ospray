@@ -6,8 +6,7 @@
 #include "render/Renderer.ih"
 #include "render/ScreenSample.ih"
 #include "render/pathtracer/PathStructs.ih"
-// TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #endif
 
@@ -18,8 +17,7 @@ inline bool isSmooth(const PathVertex &pathVertex)
   if (pathVertex.type == SURFACE && pathVertex.bsdf
       && pathVertex.bsdf->scatteringType & SCATTERING_SMOOTH)
     return true;
-    // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (pathVertex.type == VOLUME && pathVertex.volume
       && isSmoothVolumeVertex(pathVertex))
     return true;

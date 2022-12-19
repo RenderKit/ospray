@@ -7,8 +7,7 @@
 #include "render/pathtracer/PathTracerUtil.ih"
 #include "render/pathtracer/TransparentShadow.ih"
 
-// TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #endif
 
@@ -74,9 +73,13 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
           fe = BSDF_dispatch_eval(f, pathVertex.wo, ls.dir);
       }
     } else {
-      // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
+#ifdef OSPRAY_TARGET_SYCL
+      {
+        const VolumetricModel *v = pathVertex.volume;
+#else
       foreach_unique (v in pathVertex.volume) {
+#endif
         if (v != NULL)
           fe = HenyeyGreenstein_eval(v->anisotropy, pathVertex.wo, ls.dir);
       }
@@ -119,8 +122,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
         rayIntervals,
         pathState.currentMedium);
     if (reduce_max(lightContrib) > 0) {
-      // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_TARGET_SYCL) || !defined(OSPRAY_ENABLE_VOLUMES)
+#ifndef OSPRAY_ENABLE_VOLUMES
       L = L + lightContrib * misHeuristic(pathState, ls.pdf, fe.pdf);
 #else
       const float T = volumeTransmittance(pathState,

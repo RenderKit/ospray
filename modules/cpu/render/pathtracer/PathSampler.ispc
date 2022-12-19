@@ -17,8 +17,7 @@
 #include "render/MaterialDispatch.ih"
 #include "render/bsdfs/MicrofacetAlbedoTables.ih"
 #include "render/materials/Medium.ih"
-// TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "render/pathtracer/volumes/VolumeSampler.ih"
 #endif
 
@@ -42,8 +41,7 @@ inline void postIntersect(const PathContext &pathContext,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
             | DG_TANGENTS | DG_MOTIONBLUR);
   }
-  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (pathVertex.type == VOLUME) {
     pathVertex.dg.P = ray.org + ray.t * ray.dir;
     pathVertex.dg.renderer = &pt->super;
@@ -65,7 +63,7 @@ inline void postIntersect(const PathContext &pathContext,
 
 #ifdef OSPRAY_TARGET_SYCL
     {
-      const VolumetricModel *uniform volm = pathVertex.volume;
+      const VolumetricModel *volm = pathVertex.volume;
 #else
     foreach_unique (volm in pathVertex.volume) {
 #endif
@@ -99,10 +97,14 @@ inline Scattering_SampleRes sampleDirection(const PathContext &pathContext,
       }
     }
   }
-  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (pathVertex.type == VOLUME) {
+#ifdef OSPRAY_TARGET_SYCL
+    {
+      const VolumetricModel *v = pathVertex.volume;
+#else
     foreach_unique (v in pathVertex.volume) {
+#endif
       if (v != NULL) {
         fs = HenyeyGreenstein_sample(v->anisotropy, pathVertex.wo, ss, s);
         pathVertex.wi = fs.wi;
@@ -166,8 +168,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
     pathVertex.wo = neg(ray.dir);
 
-    // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
     float extinctionCoefficient;
     float freePath = volumeSampleFreePath(pathState,
         pathContext.world,

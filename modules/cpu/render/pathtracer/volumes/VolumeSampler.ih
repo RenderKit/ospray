@@ -1,7 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-// TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
@@ -23,7 +22,7 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
     RayIntervals &rayIntervals,
     varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler,
-    VolumetricModel *varying *uniform sampledInstance,
+    const VolumetricModel *varying *uniform sampledInstance,
     float &sampledExtinctionCoefficient,
     vec3f &sampledAlbedo);
 

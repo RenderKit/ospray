@@ -1,7 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-// TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #include "common/World.ih"
 #include "render/pathtracer/volumes/VolumeSampler.ih"
@@ -9,7 +8,7 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-float delta_tracking(VolumetricModel *uniform vModel,
+float delta_tracking(const VolumetricModel *uniform vModel,
     const range1f &rInterval,
     varying RandomSampler *uniform randomSampler,
     const vec3f &o,
@@ -18,14 +17,25 @@ float delta_tracking(VolumetricModel *uniform vModel,
     float &mu_t, // sampled extinction coefficint
     vec3f &albedo) // sampled albedo (color)
 {
+#ifdef OSPRAY_TARGET_SYCL
+  // No alloca on GPU, need to be conservative for now and use the
+  // VKL_MAX_INTERVAL_ITERATOR_SIZE
+  uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+#else
   void *uniform intervalIteratorBuffer =
       alloca(vklGetIntervalIteratorSizeV(&vModel->vklIntervalContext));
+#endif
+
   VKLIntervalIterator intervalIterator =
       vklInitIntervalIteratorV(&vModel->vklIntervalContext,
           (varying vkl_vec3f *)&o,
           (varying vkl_vec3f *)&w,
           (varying vkl_range1f *)&rInterval,
+#ifdef OSPRAY_TARGET_SYCL
+          time,
+#else
           &time,
+#endif
           intervalIteratorBuffer);
 
   float t = 0.f;
@@ -76,14 +86,24 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
     RayIntervals &rayIntervals,
     varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler,
-    VolumetricModel *varying *uniform sampledInstance,
+    const VolumetricModel *varying *uniform sampledInstance,
     float &sampledExtinctionCoefficient,
     vec3f &sampledAlbedo)
 {
-  // Get volume intervals
-  Ray volumeRay = ray;
+#ifdef OSPRAY_TARGET_SYCL
+  // We only support a single volume interval on the GPU
+  VolumeInterval vInterval;
+  VolumeIntervals volumeIntervals;
+  volumeIntervals.numVolumeIntervals = 0;
+  volumeIntervals.numAllocated = 1;
+  volumeIntervals.intervals = &vInterval;
+#else
   VolumeIntervals volumeIntervals;
   allocVolumeIntervals(volumeIntervals);
+#endif
+
+  // Get volume intervals
+  Ray volumeRay = ray;
   traceVolumeRay(world, volumeRay, volumeIntervals);
 
   // Iterate through volume intervals
@@ -121,7 +141,7 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
         volumeIntervals.intervals[i].volumetricModel;
 #ifdef OSPRAY_TARGET_SYCL
     {
-      const Instance *inst = volumeIntervals.intervals[i].instance;
+      const VolumetricModel *inst = instance;
 #else
     foreach_unique (inst in instance) {
 #endif
@@ -129,9 +149,16 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
         range1f rInterval = rayIntervals.intervals[j];
 
         // Skip ray intervals outside of the volume range
+#ifdef OSPRAY_TARGET_SYCL
+        if (vInterval.upper < rInterval.lower
+            || rInterval.upper < vInterval.lower)
+#else
         if (or (vInterval.upper < rInterval.lower,
                 rInterval.upper < vInterval.lower))
+#endif
+        {
           continue;
+        }
 
         // Clip ray interval to the volume range
         rInterval.lower = max(rInterval.lower, vInterval.lower);
@@ -163,7 +190,9 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
       }
     }
   }
+#ifndef OSPRAY_TARGET_SYCL
   freeVolumeIntervals(volumeIntervals);
+#endif
   return min_dist;
 }
 
@@ -174,16 +203,32 @@ SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
     varying LDSampler *uniform ldSampler,
     varying RandomSampler *uniform randomSampler)
 {
-  // Get volume intervals
-  Ray volumeRay = ray;
+#ifdef OSPRAY_TARGET_SYCL
+  // We only support a single volume interval on the GPU
+  VolumeInterval vInterval;
+  VolumeIntervals volumeIntervals;
+  volumeIntervals.numVolumeIntervals = 0;
+  volumeIntervals.numAllocated = 1;
+  volumeIntervals.intervals = &vInterval;
+#else
   VolumeIntervals volumeIntervals;
   allocVolumeIntervals(volumeIntervals);
+#endif
+
+  // Get volume intervals
+  Ray volumeRay = ray;
   traceVolumeRay(world, volumeRay, volumeIntervals);
 
   // Iterate through volume intervals
   float transmittance = 1.f;
+#ifdef OSPRAY_TARGET_SYCL
+  for (int i = 0; i < volumeIntervals.numVolumeIntervals && transmittance > 0.f;
+       i++)
+#else
   for (int i = 0; and(i<volumeIntervals.numVolumeIntervals, transmittance> 0.f);
-       i++) {
+       i++)
+#endif
+  {
     range1f vInterval = volumeIntervals.intervals[i].interval;
     vInterval.lower = max(ray.t0, vInterval.lower);
     vInterval.upper =
@@ -208,17 +253,30 @@ SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
         volumeIntervals.intervals[i].volumetricModel;
 #ifdef OSPRAY_TARGET_SYCL
     {
-      const Instance *inst = volumeIntervals.intervals[i].instance;
+      const VolumetricModel *inst = instance;
 #else
     foreach_unique (inst in instance) {
 #endif
-      for (int j = 0; and(j<rayIntervals.count, transmittance> 0.f); j++) {
+
+#ifdef OSPRAY_TARGET_SYCL
+      for (int j = 0; j < rayIntervals.count && transmittance > 0.f; j++)
+#else
+      for (int j = 0; and(j<rayIntervals.count, transmittance> 0.f); j++)
+#endif
+      {
         range1f rInterval = rayIntervals.intervals[j];
 
         // Skip ray intervals outside of the volume range
+#ifdef OSPRAY_TARGET_SYCL
+        if (vInterval.upper < rInterval.lower
+            || rInterval.upper < vInterval.lower)
+#else
         if (or (vInterval.upper < rInterval.lower,
                 rInterval.upper < vInterval.lower))
+#endif
+        {
           continue;
+        }
 
         // Clip ray interval to the volume range
         rInterval.lower = max(rInterval.lower, vInterval.lower);
@@ -238,7 +296,9 @@ SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
       }
     }
   }
+#ifndef OSPRAY_TARGET_SYCL
   freeVolumeIntervals(volumeIntervals);
+#endif
   return transmittance;
 }
 
