@@ -300,11 +300,11 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
   // intervalIteratorBuffers in device memory?
   uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 #ifdef OSPRAY_TARGET_SYCL
-  VolumetricModel *uniform m = model;
-#else
-  foreach_unique (m in model)
-#endif
   {
+    VolumetricModel *uniform m = model;
+#else
+  foreach_unique (m in model) {
+#endif
     Volume *uniform volume = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
@@ -318,10 +318,10 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
             (varying vkl_vec3f *)&ray.org,
             (varying vkl_vec3f *)&ray.dir,
             (varying vkl_range1f *)&vInterval.interval,
-#ifndef OSPRAY_TARGET_SYCL
-            &time,
-#else
+#ifdef OSPRAY_TARGET_SYCL
             time,
+#else
+            &time,
 #endif
             (void *uniform)intervalIteratorBuffer);
 

@@ -38,11 +38,19 @@ static void SciVis_renderSample(Renderer *uniform _self,
   bool allHitsFullyTransmissive = true;
   const float originalRayTFar = sample.ray.t;
 
-  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
+#ifdef OSPRAY_TARGET_SYCL
+  // We only support a single volume interval on the GPU
+  VolumeInterval vInterval;
+  VolumeIntervals volumeIntervals;
+  volumeIntervals.numVolumeIntervals = 0;
+  volumeIntervals.numAllocated = 1;
+  volumeIntervals.intervals = &vInterval;
+#else
   // Allocate memory for volume intervals
   VolumeIntervals volumeIntervals;
   allocVolumeIntervals(volumeIntervals);
+#endif
 #endif
 
   // This is our main ray
@@ -62,8 +70,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
     // if hit ray.t will be updated
     traceGeometryRayIntervals(world, ray, rayIntervals);
 
-    // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#if defined(OSPRAY_ENABLE_VOLUMES)
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
     traceVolumeRay(world, volumeRay, volumeIntervals);
@@ -91,7 +98,12 @@ static void SciVis_renderSample(Renderer *uniform _self,
 
       if (hadHit(volumeRay) && sample.geomID == RTC_INVALID_GEOMETRY_ID) {
         sample.primID = 0;
-        foreach_unique (instID in volumeRay.instID)
+#ifdef OSPRAY_TARGET_SYCL
+        {
+          const uint32 instID = volumeRay.instID;
+#else
+        foreach_unique (instID in volumeRay.instID) {
+#endif
           if (instID != RTC_INVALID_GEOMETRY_ID) {
             const Instance *uniform instance = *(world->instances + instID);
             sample.instID = (instance->userID == RTC_INVALID_GEOMETRY_ID)
@@ -99,11 +111,19 @@ static void SciVis_renderSample(Renderer *uniform _self,
                 : instance->userID;
             const VolumetricModel *volms =
                 *(instance->group->volumetricModels + volumeRay.geomID);
-            foreach_unique (volm in volms)
+
+#ifdef OSPRAY_TARGET_SYCL
+            {
+              const VolumetricModel *uniform volm = volms;
+#else
+            foreach_unique (volm in volms) {
+#endif
               sample.geomID = (volm->userID == RTC_INVALID_GEOMETRY_ID)
                   ? volumeRay.geomID
                   : volm->userID;
+            }
           }
+        }
       }
     }
 #endif
@@ -137,8 +157,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
       // transmissive hits will lead the normal/albedo to be replaced by the
       // current hit
       if (firstHit || allHitsFullyTransmissive) {
-        // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#if defined(OSPRAY_ENABLE_VOLUMES)
         sample.z = min(ray.t, volumeRay.t);
 #endif
         sample.albedo = surfaceShading.albedo;
@@ -181,8 +200,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
       // If the ray hits the background and comes from a fully transmissive
       // path, we overwrite normals/albedo by background values
       if (firstHit || allHitsFullyTransmissive) {
-        // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#if defined(OSPRAY_ENABLE_VOLUMES)
         sample.z = min(ray.t, volumeRay.t);
 #endif
         sample.albedo = make_vec3f(backgroundColor); // TODO volume albedo
@@ -194,8 +212,9 @@ static void SciVis_renderSample(Renderer *uniform _self,
     }
   }
 
-  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
 #if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+  // Only a single interval is supported on the GPU, we don't allocate
+  // dynamically
   freeVolumeIntervals(volumeIntervals);
 #endif
   sample.rgb = outColor;

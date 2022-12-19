@@ -105,18 +105,20 @@ inline void setRay(Ray &ray, const float t0, const float t1)
 
 // Ray transformation helpers /////////////////////////////////////////////////
 
-inline void transformRay(Ray &ray, AffineSpace3f &xfm)
+inline void transformRay(Ray &ray, const AffineSpace3f &xfm)
 {
   ray.org = xfmPoint(xfm, ray.org);
   ray.dir = xfmVector(xfm, ray.dir);
   ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 inline void transformRay(Ray &ray, AffineSpace3f xfm)
 {
   ray.org = xfmPoint(xfm, ray.org);
   ray.dir = xfmVector(xfm, ray.dir);
   ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
 }
+#endif
 
 OSPRAY_END_ISPC_NAMESPACE

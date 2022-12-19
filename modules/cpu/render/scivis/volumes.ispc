@@ -1,7 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-// TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #include "math/random.ih"
 #include "math/sampling.ih"
@@ -17,7 +16,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct VolumeContext
 {
-  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
   VKLIntervalIterator intervalIterator;
   VKLInterval interval;
   vec3f org;
@@ -32,7 +31,7 @@ struct VolumeContext
 
 static void sampleVolume(SciVisRenderContext &rc,
     VolumeContext &vc,
-    VolumetricModel *uniform m,
+    const VolumetricModel *uniform m,
     Ray &ray,
     const VolumeInterval &vi,
     const uniform float samplingRate,
@@ -161,7 +160,7 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
       minDist = vc.distance;
       sampledColor = vc.sample;
       usedSampleId = i;
-      SciVis *scivis = rc.renderer;
+      const SciVis *scivis = rc.renderer;
       if (minDist < ray.t
           && sampledColor.w < 1.0f - scivis->super.minContribution) {
         ray.t = minDist;
@@ -180,7 +179,7 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
   return minDist;
 }
 
-vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
+SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     const VolumeIntervals &volumeIntervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
@@ -188,11 +187,17 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     const uniform float samplingRate,
     const uniform bool shade)
 {
+#ifdef OSPRAY_TARGET_SYCL
+  // Only a single volume context is supported on the GPU, no dynamic allocation
+  VolumeContext volumeContext;
+  varying VolumeContext *uniform volumeContexts = &volumeContext;
+#else
   // Array of volume contexts
   varying VolumeContext *uniform volumeContexts =
       (varying VolumeContext * uniform)
           pushTLS(reduce_max(volumeIntervals.numVolumeIntervals)
               * sizeof(varying VolumeContext));
+#endif
 
   // Sampling position jitter
   const float jitter = LDSampler_getFloat(ldSampler, 0);
@@ -271,7 +276,11 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
+#ifdef OSPRAY_TARGET_SYCL
+            time,
+#else
             &time,
+#endif
             vc.intervalIteratorBuffer);
       }
     }
@@ -298,14 +307,17 @@ vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       transmission *= sampledColor.w;
 
       // Stop if we reached min contribution
-      SciVis *scivis = rc.renderer;
+      const SciVis *scivis = rc.renderer;
       if (transmission < scivis->super.minContribution)
         transmission = 0.f;
     }
   }
 
-  // Return final color
+#ifndef OSPRAY_TARGET_SYCL
   popTLS(volumeContexts);
+#endif
+
+  // Return final color
   return make_vec4f(color, transmission);
 }
 

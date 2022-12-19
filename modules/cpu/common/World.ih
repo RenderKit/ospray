@@ -96,16 +96,13 @@ inline void traceVolumeRay(
     interval.volumetricModel =
         interval.instance->group
             ->volumetricModels[intervals.intervals[0].geomID];
-#ifndef OSPRAY_TARGET_SYCL
     interval.interval = intervals.intervals[0].interval;
-#endif
   }
 #ifndef OSPRAY_TARGET_SYCL
   freeVolumeIntervals(intervals);
 #endif
 }
 
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
 inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeIntervals &intervals)
 {
@@ -127,15 +124,13 @@ inline void traceVolumeRay(
 
   if (intervals.numVolumeIntervals > 0) {
     for (uniform int i = 0; i < intervals.numVolumeIntervals; ++i) {
-      const Instance *const instance =
-          *(world->instances + intervals.intervals[i].instID);
+      Instance *instance = *(world->instances + intervals.intervals[i].instID);
       intervals.intervals[i].instance = instance;
       intervals.intervals[i].volumetricModel =
           instance->group->volumetricModels[intervals.intervals[i].geomID];
     }
   }
 }
-#endif
 
 // Intersection context structure used for clipping geometries
 struct EmbreeRayQueryContextClipping
