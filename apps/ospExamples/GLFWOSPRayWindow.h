@@ -100,8 +100,7 @@ class GLFWOSPRayWindow
   float turbidity{3.f};
   float horizonExtension{0.1f};
 
-  std::string scene{"perlin_noise_volumes"};
-  // std::string scene{"cornell_box"};
+  std::string scene{"boxes_lit"};
 
   std::string curveVariant{"bspline"};
 

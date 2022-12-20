@@ -36,12 +36,9 @@ SYCL_EXTERNAL void Spheres_postIntersect(const Geometry *uniform geometry,
   // |CO| = |center-ray.org| ~ radius for 2ndary rays
   dg.epsilon = vertex.w * ulpEpsilon;
 
-#ifdef OSPRAY_TARGET_SYCL
-  if (flags & DG_TEXCOORD && valid(self->texcoord))
-#else
-  if (and(flags & DG_TEXCOORD, valid(self->texcoord)))
-#endif
+  if ((flags & DG_TEXCOORD) && valid(self->texcoord)) {
     dg.st = get_vec2f(self->texcoord, ray.primID);
+  }
 }
 
 SYCL_EXTERNAL SampleAreaRes Spheres_sampleArea(

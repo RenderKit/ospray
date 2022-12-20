@@ -6,8 +6,7 @@
 #include "render/util.ih"
 // SciVis renderer
 #include "surfaces.ih"
-// TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "volumes.ih"
 #endif
 // c++ shared
@@ -29,11 +28,19 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
   vec3f alpha = make_vec3f(1.f);
   const float org_t_max = ray.t;
 
-  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
+#ifdef OSPRAY_TARGET_SYCL
+  // We only support a single volume interval on the GPU
+  VolumeInterval vInterval;
+  VolumeIntervals volumeIntervals;
+  volumeIntervals.numVolumeIntervals = 0;
+  volumeIntervals.numAllocated = 1;
+  volumeIntervals.intervals = &vInterval;
+#else
   // Allocate memory for volume intervals
   VolumeIntervals volumeIntervals;
   allocVolumeIntervals(volumeIntervals);
+#endif
 #endif
   // First trace the ray across clipping scene to calculate ray intervals,
   // this step should keep ray structure unchanged
@@ -52,8 +59,7 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     traceGeometryRay(world, ray);
 #endif
 
-    // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
     traceVolumeRay(world, volumeRay, volumeIntervals);
@@ -102,8 +108,8 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
     }
   }
 
-  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
 #if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+  // No dynamic allocation on GPU
   freeVolumeIntervals(volumeIntervals);
 #endif
   return alpha;

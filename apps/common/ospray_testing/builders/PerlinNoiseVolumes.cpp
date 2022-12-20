@@ -171,7 +171,6 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
   cpp::Group group;
   std::vector<cpp::VolumetricModel> volumetricModels;
 
-  /*
   if (addSphereVolume) {
     volumetricModels.emplace_back(createProceduralVolumetricModel(
         [](const vec3f &p) { return turbulentSphere(p, 1.f); },
@@ -185,7 +184,6 @@ cpp::Group PerlinNoiseVolumes::buildGroup() const
         anisotropy,
         gradientShadingScale));
   }
-  */
 
   if (addTorusVolume) {
     volumetricModels.emplace_back(createProceduralVolumetricModel(

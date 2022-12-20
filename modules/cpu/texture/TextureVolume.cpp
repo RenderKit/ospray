@@ -34,7 +34,6 @@ void TextureVolume::commit()
     getSh()->transferFunction = volumetricModel->getSh()->transferFunction;
   }
 #ifndef OSPRAY_TARGET_SYCL
-  // TODO should remove
   getSh()->super.get =
       reinterpret_cast<ispc::Texture_get>(ispc::TextureVolume_get_addr());
   getSh()->super.getNormal =

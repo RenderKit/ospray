@@ -14,9 +14,9 @@
 #include "render/Renderer.ih"
 #include "render/ScreenSample.ih"
 #include "rkcommon/utility/random.ih"
-#include "volume/transferFunction/TransferFunctionDispatch.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/VolumetricModel.ih"
+#include "volume/transferFunction/TransferFunctionDispatch.ih"
 #endif
 // c++ shared
 #include "DebugRendererShared.h"
@@ -258,14 +258,6 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
     varying ScreenSample &sample)
 {
 #ifdef OSPRAY_ENABLE_VOLUMES
-#if 0
-  // TODO: Does this make sense? Volumes are in a separate BVH so if we have a
-  // scene with only a volume we'd never hit because hitBackground -> traceRay
-  // -> only traces against geometry.
-  if (hitBackground(self, world, sample))
-    return;
-#endif
-
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
   LDSampler_init(ldSampler,
@@ -295,9 +287,6 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
 
   const float jitter = LDSampler_getFloat(ldSampler, 0);
 
-  // TODO: VKL_MAX_INTERVAL_ITERATOR_SIZE is sized based on a varying size as
-  // well so it will be way bigger than we need. Maybe best to allocate
-  // intervalIteratorBuffers in device memory?
   uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 #ifdef OSPRAY_TARGET_SYCL
   {
@@ -309,11 +298,7 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
     TransferFunction *uniform tf = m->transferFunction;
 
     float time = 0.5f;
-    // TODO can't use iterators for the initial integration test, since they
-    // won't be on the GPU yet. Just vklComputeSample
     VKLIntervalIterator intervalIterator =
-        // TODO: need to make the interval context on the host for SYCL as well.
-        // that's probably why it's not rendering.
         vklInitIntervalIteratorV(&m->vklIntervalContext,
             (varying vkl_vec3f *)&ray.org,
             (varying vkl_vec3f *)&ray.dir,

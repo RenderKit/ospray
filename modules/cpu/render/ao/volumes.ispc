@@ -1,7 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-// TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #include "math/random.ih"
 #include "math/sampling.ih"
@@ -14,7 +13,7 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct VolumeContext
 {
-  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
   VKLIntervalIterator intervalIterator;
   VKLInterval interval;
   vec3f org;
@@ -28,7 +27,7 @@ struct VolumeContext
 };
 
 static void sampleVolume(VolumeContext &vc,
-    VolumetricModel *uniform m,
+    const VolumetricModel *uniform m,
     const uniform float samplingRate)
 {
   // We have to iterate till we get a valid sample value
@@ -133,17 +132,24 @@ static float sampleAllVolumes(const VolumeIntervals &volumeIntervals,
   return minDist;
 }
 
-vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
+SYCL_EXTERNAL vec4f integrateVolumeIntervals(
+    const VolumeIntervals &volumeIntervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
     const uniform float samplingRate)
 {
+#ifdef OSPRAY_TARGET_SYCL
+  // Only a single volume context is supported on the GPU, no dynamic allocation
+  VolumeContext volumeContext;
+  varying VolumeContext *uniform volumeContexts = &volumeContext;
+#else
   // Array of volume contexts
   varying VolumeContext *uniform volumeContexts =
       (varying VolumeContext * uniform)
           pushTLS(reduce_max(volumeIntervals.numVolumeIntervals)
               * sizeof(varying VolumeContext));
+#endif
 
   // Sampling position jitter
   const float jitter = LDSampler_getFloat(ldSampler, 0);
@@ -221,7 +227,11 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,
+#ifdef OSPRAY_TARGET_SYCL
+            time,
+#else
             &time,
+#endif
             vc.intervalIteratorBuffer);
       }
     }
@@ -245,8 +255,11 @@ vec4f integrateVolumeIntervals(const VolumeIntervals &volumeIntervals,
     }
   }
 
-  // Return final color
+#ifndef OSPRAY_TARGET_SYCL
   popTLS(volumeContexts);
+#endif
+
+  // Return final color
   return make_vec4f(color, alpha);
 }
 

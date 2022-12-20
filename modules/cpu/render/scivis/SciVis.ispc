@@ -70,7 +70,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
     // if hit ray.t will be updated
     traceGeometryRayIntervals(world, ray, rayIntervals);
 
-#if defined(OSPRAY_ENABLE_VOLUMES)
+#ifdef OSPRAY_ENABLE_VOLUMES
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
     traceVolumeRay(world, volumeRay, volumeIntervals);
@@ -157,7 +157,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
       // transmissive hits will lead the normal/albedo to be replaced by the
       // current hit
       if (firstHit || allHitsFullyTransmissive) {
-#if defined(OSPRAY_ENABLE_VOLUMES)
+#ifdef OSPRAY_ENABLE_VOLUMES
         sample.z = min(ray.t, volumeRay.t);
 #endif
         sample.albedo = surfaceShading.albedo;
@@ -200,7 +200,7 @@ static void SciVis_renderSample(Renderer *uniform _self,
       // If the ray hits the background and comes from a fully transmissive
       // path, we overwrite normals/albedo by background values
       if (firstHit || allHitsFullyTransmissive) {
-#if defined(OSPRAY_ENABLE_VOLUMES)
+#ifdef OSPRAY_ENABLE_VOLUMES
         sample.z = min(ray.t, volumeRay.t);
 #endif
         sample.albedo = make_vec3f(backgroundColor); // TODO volume albedo

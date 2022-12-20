@@ -36,11 +36,19 @@ static void AORenderer_renderSample(Renderer *uniform _self,
   uniform bool firstHit = true;
   const float originalRayTFar = sample.ray.t;
 
+#ifdef OSPRAY_ENABLE_VOLUMES
+#ifdef OSPRAY_TARGET_SYCL
+  // We only support a single volume interval on the GPU
+  VolumeInterval vInterval;
+  VolumeIntervals volumeIntervals;
+  volumeIntervals.numVolumeIntervals = 0;
+  volumeIntervals.numAllocated = 1;
+  volumeIntervals.intervals = &vInterval;
+#else
   // Allocate memory for volume intervals
-  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
   VolumeIntervals volumeIntervals;
   allocVolumeIntervals(volumeIntervals);
+#endif
 #endif
 
   // This is our main ray
@@ -69,8 +77,7 @@ static void AORenderer_renderSample(Renderer *uniform _self,
     traceGeometryRayIntervals(world, ray, rayIntervals);
 #endif
 
-    // TODO: Volume intervals/TLS/etc needs more redesign for GPU
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
     // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
     traceVolumeRay(world, volumeRay, volumeIntervals);
@@ -132,7 +139,6 @@ static void AORenderer_renderSample(Renderer *uniform _self,
     }
   }
 
-  // TODO: Volume intervals/TLS/etc needs more redesign for GPU
 #if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
   freeVolumeIntervals(volumeIntervals);
 #endif

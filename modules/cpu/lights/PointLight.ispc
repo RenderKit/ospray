@@ -137,20 +137,11 @@ inline Light_EvalRes Eval(const PointLight *uniform self,
   const float centerDist2 = dot(A, A);
   const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
 
-#ifdef OSPRAY_TARGET_SYCL
   if (self->radius > 0.f && sqrt(sinTheta2) > 0.005f) {
-#else
-  if (and(self->radius > 0.f, sqrt(sinTheta2) > 0.005f)) {
-#endif
     const Intersections isect =
         intersectSphere(dg.P, dir, dyn.position, self->radius);
 
-#ifdef OSPRAY_TARGET_SYCL
-    if (isect.entry.t > minDist && isect.entry.t < maxDist && isect.entry.hit) {
-#else
-    if (and(and(isect.entry.t > minDist, isect.entry.t < maxDist),
-            isect.entry.hit)) {
-#endif
+    if (isect.entry.hit && isect.entry.t > minDist && isect.entry.t < maxDist) {
       const float cosTheta = sqrt(1.f - sinTheta2);
       res.pdf = uniformSampleConePDF(cosTheta);
       res.radiance = self->radiance;

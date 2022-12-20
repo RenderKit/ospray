@@ -55,9 +55,7 @@ inline void traceGeometryRay(const World *uniform world, varying Ray &ray)
       &intersectArgs);
 }
 
-// TODO: No TLS in SYCL, volume stack/intervals needs redesign
-// For the OpenVKL GPU/DebugRenderer test, need to add a custom trace volume ray
-// that doesn't do intervals
+#ifdef OSPRAY_ENABLE_VOLUMES
 inline void traceVolumeRay(
     const World *uniform world, varying Ray &ray, VolumeInterval &interval)
 {
@@ -67,8 +65,8 @@ inline void traceVolumeRay(
 
   VolumeIntervals intervals;
 #ifdef OSPRAY_TARGET_SYCL
-  // We don't have access to TLS/dynamic memory on the kernel, we only support
-  // one interval (ie. no overlapping volumes)
+  // We don't have access to TLS/dynamic memory on the kernel, so we only
+  // support one interval on the GPU (i.e., no overlapping volumes)
   intervals.numVolumeIntervals = 0;
   intervals.numAllocated = 1;
   intervals.intervals = &interval;
@@ -131,6 +129,7 @@ inline void traceVolumeRay(
     }
   }
 }
+#endif
 
 // Intersection context structure used for clipping geometries
 struct EmbreeRayQueryContextClipping
@@ -219,21 +218,13 @@ inline void traceClippingRay(const World *uniform world,
     }
 
     // Start interval if previous one is closed and we are not in clipping area
-#ifdef OSPRAY_TARGET_SYCL
     if (clippingDepth == 0 && intervalCompleted) {
-#else
-    if (and(clippingDepth == 0, intervalCompleted)) {
-#endif
       rayIntervals.intervals[intervalId].lower = absT;
       intervalCompleted = false;
     }
 
     // End interval if current one is not closed and we enter clipping area
-#ifdef OSPRAY_TARGET_SYCL
     if (clippingDepth > 0 && !intervalCompleted) {
-#else
-    if (and(clippingDepth > 0, !intervalCompleted)) {
-#endif
       rayIntervals.intervals[intervalId].upper = absT;
       intervalCompleted = true;
       intervalId++;
@@ -265,11 +256,7 @@ inline void traceGeometryRayIntervals(
     ray.t = rayIntervals.intervals[i].upper;
 
     // Skip intervals outside of the ray range
-#ifdef OSPRAY_TARGET_SYCL
     if (t < ray.t0 || ray.t < t0) {
-#else
-    if (or (t < ray.t0, ray.t < t0)) {
-#endif
       ray.t0 = t0;
       ray.t = t;
       continue;

@@ -45,11 +45,7 @@ inline bool filterIntersectionSingle(
 {
   // if there is a hit
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
-#ifdef OSPRAY_TARGET_SYCL
   if (hit.hit && hit.t > ray->t0 && hit.t <= ray->t) {
-#else
-  if (and(hit.hit, and(hit.t > ray->t0, hit.t <= ray->t))) {
-#endif
     // set a new hit value
     const float tOld = ray->t;
     ray->t = hit.t;

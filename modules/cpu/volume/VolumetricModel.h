@@ -32,7 +32,6 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
   box3f volumeBounds;
   Ref<Volume> volume;
   const Ref<Volume> volumeAPI;
-  // TODO: need to remove/not use for the SYCL case
   VKLIntervalIteratorContext vklIntervalContext{nullptr, nullptr};
 };
 

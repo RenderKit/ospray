@@ -10,17 +10,23 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 SYCL_EXTERNAL vec4f TransferFunction_dispatch_get(
     const TransferFunction *uniform self, float value)
 {
-  return LinearTransferFunction_get(self, value);
-  // OSPRay only has one transfer function type, so just call it right now.
-  // If we add more this can become a switch
+  switch (self->type) {
+  case TRANSFER_FUNCTION_TYPE_LINEAR:
+    return LinearTransferFunction_get(self, value);
+  default:
+    return make_vec4f(0.f);
+  }
 }
 
 SYCL_EXTERNAL float TransferFunction_dispatch_getMaxOpacity(
     const TransferFunction *uniform self, const range1f &valueRange)
 {
-  // OSPRay only has one transfer function type, so just call it right now.
-  // If we add more this can become a switch
-  return LinearTransferFunction_getMaxOpacity(self, valueRange);
+  switch (self->type) {
+  case TRANSFER_FUNCTION_TYPE_LINEAR:
+    return LinearTransferFunction_getMaxOpacity(self, valueRange);
+  default:
+    return 0.f;
+  }
 }
 
 OSPRAY_END_ISPC_NAMESPACE

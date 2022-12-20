@@ -61,15 +61,26 @@ test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/24"
 test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/25"
 test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/26"
 test_filters+=":TestScenesClipping/FromOsprayTesting.*"
-test_filters+=":TestScenesVolumes/FromOsprayTesting.*"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/6"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/7"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/8"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/9"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/10"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/11"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/12"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/13"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/14"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/15"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/16"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/17"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/18"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/19"
+test_filters+=":TestScenesVolumes/FromOsprayTesting.test_scenes/20"
 test_filters+=":TestScenesVolumesStrictParams/FromOsprayTesting.*"
 test_filters+=":Transparency/FromOsprayTesting.*"
 test_filters+=":TestScenesMaxDepth/FromOsprayTestingMaxDepth.test_scenes/1"
 test_filters+=":TestScenesMaxDepth/FromOsprayTestingMaxDepth.test_scenes/2"
 test_filters+=":TestScenesVolumes/UnstructuredVolume.*"
-test_filters+=":Renderers/TextureVolumeTransform_deprecated.*"
-test_filters+=":Renderers/TextureVolumeTransform.*"
-test_filters+=":Renderers/DepthCompositeVolume.*"
 test_filters+=":TestMotionBlur/MotionBlurBoxes.*"
 test_filters+=":CameraRollingShutter/MotionBlurBoxes.*"
 test_filters+=":CameraStereoRollingShutter/MotionBlurBoxes.*"
@@ -90,6 +101,7 @@ export ONEAPI_DEVICE_SELECTOR=level_zero:*
 
 mkdir failed-gpu
 
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./ 
 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters"
 
 if [ $TEST_MPI ]; then

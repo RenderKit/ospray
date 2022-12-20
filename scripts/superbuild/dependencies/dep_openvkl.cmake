@@ -73,4 +73,5 @@ ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
     rkcommon
     embree
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
+    $<$<BOOL:${DOWNLOAD_ISPC}>:ispcrt>
 )

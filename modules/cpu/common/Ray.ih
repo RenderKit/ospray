@@ -115,9 +115,7 @@ inline void transformRay(Ray &ray, const AffineSpace3f &xfm)
 #ifndef OSPRAY_TARGET_SYCL
 inline void transformRay(Ray &ray, AffineSpace3f xfm)
 {
-  ray.org = xfmPoint(xfm, ray.org);
-  ray.dir = xfmVector(xfm, ray.dir);
-  ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
+  transformRay(ray, xfm);
 }
 #endif
 

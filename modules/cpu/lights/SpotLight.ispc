@@ -94,7 +94,6 @@ inline Light_SampleRes Sample(const SpotLight *uniform self,
   return res;
 }
 
-
 SYCL_EXTERNAL Light_SampleRes SpotLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
@@ -149,11 +148,7 @@ inline Light_EvalRes Eval(const SpotLight *uniform self,
         const vec3f vd = vp + t * dir;
         const float d2 = dot(vd, vd);
         // inside ring?
-#ifdef OSPRAY_TARGET_SYCL
         if (d2 < sqr(self->radius) && d2 > sqr(self->innerRadius)) {
-#else
-        if (and(d2<sqr(self->radius), d2> sqr(self->innerRadius))) {
-#endif
           float attenuation = AngularAttenuation(self, cosAngle);
           if (self->intensityDistribution.lid) {
             attenuation *= IntensityDistribution_eval(

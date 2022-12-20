@@ -3,8 +3,7 @@
 
 #include "Boxes.h"
 #include "Curves.h"
-// TODO: No iterators in SYCL API yet
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "Isosurfaces.h"
 #endif
 #include "Mesh.h"
@@ -20,8 +19,7 @@ void registerAllGeometries()
 {
   Geometry::registerType<Boxes>("box");
   Geometry::registerType<Curves>("curve");
-// TODO: No iterators in SYCL API yet
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
   Geometry::registerType<Isosurfaces>("isosurface");
 #endif
   Geometry::registerType<Mesh>("mesh");

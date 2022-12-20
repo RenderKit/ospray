@@ -25,9 +25,8 @@ struct Volume
 #ifdef __cplusplus
   Volume()
       : vklVolume({nullptr, nullptr}),
-        vklSampler({nullptr, nullptr})
-        // TODO: Need these ctor's for box3f
-        //boundingBox(EmptyTy{})
+        vklSampler({nullptr, nullptr}),
+        boundingBox(0.f)
   {}
 };
 } // namespace ispc

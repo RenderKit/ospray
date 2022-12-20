@@ -114,11 +114,7 @@ SYCL_EXTERNAL void QuadMesh_postIntersect(const Geometry *uniform _self,
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
-#ifdef OSPRAY_TARGET_SYCL
   if ((compute_texcoord || compute_tangents) && valid(self->texcoord)) {
-#else
-  if (and(or (compute_texcoord, compute_tangents), valid(self->texcoord))) {
-#endif
     const vec4ui tindex = self->isTexcoordFaceVarying ? findex : index;
     const vec2f a = get_vec2f(self->texcoord, tindex.x);
     const vec2f b = get_vec2f(self->texcoord, tindex.y);
@@ -213,11 +209,7 @@ SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
-#ifdef OSPRAY_TARGET_SYCL
   if ((compute_texcoord || compute_tangents) && valid(self->texcoord)) {
-#else
-  if (and(or (compute_texcoord, compute_tangents), valid(self->texcoord))) {
-#endif
     const vec3ui tindex = self->isTexcoordFaceVarying ? findex : index;
     const vec2f a = get_vec2f(self->texcoord, tindex.x);
     const vec2f b = get_vec2f(self->texcoord, tindex.y);

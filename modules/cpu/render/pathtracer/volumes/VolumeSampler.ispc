@@ -149,14 +149,8 @@ SYCL_EXTERNAL float volumeSampleFreePath(const PathState &pathState,
         range1f rInterval = rayIntervals.intervals[j];
 
         // Skip ray intervals outside of the volume range
-#ifdef OSPRAY_TARGET_SYCL
         if (vInterval.upper < rInterval.lower
-            || rInterval.upper < vInterval.lower)
-#else
-        if (or (vInterval.upper < rInterval.lower,
-                rInterval.upper < vInterval.lower))
-#endif
-        {
+            || rInterval.upper < vInterval.lower) {
           continue;
         }
 
@@ -221,14 +215,8 @@ SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
 
   // Iterate through volume intervals
   float transmittance = 1.f;
-#ifdef OSPRAY_TARGET_SYCL
   for (int i = 0; i < volumeIntervals.numVolumeIntervals && transmittance > 0.f;
-       i++)
-#else
-  for (int i = 0; and(i<volumeIntervals.numVolumeIntervals, transmittance> 0.f);
-       i++)
-#endif
-  {
+       i++) {
     range1f vInterval = volumeIntervals.intervals[i].interval;
     vInterval.lower = max(ray.t0, vInterval.lower);
     vInterval.upper =
@@ -257,24 +245,12 @@ SYCL_EXTERNAL float volumeTransmittance(const PathState &pathState,
 #else
     foreach_unique (inst in instance) {
 #endif
-
-#ifdef OSPRAY_TARGET_SYCL
-      for (int j = 0; j < rayIntervals.count && transmittance > 0.f; j++)
-#else
-      for (int j = 0; and(j<rayIntervals.count, transmittance> 0.f); j++)
-#endif
-      {
+      for (int j = 0; j < rayIntervals.count && transmittance > 0.f; j++) {
         range1f rInterval = rayIntervals.intervals[j];
 
         // Skip ray intervals outside of the volume range
-#ifdef OSPRAY_TARGET_SYCL
         if (vInterval.upper < rInterval.lower
-            || rInterval.upper < vInterval.lower)
-#else
-        if (or (vInterval.upper < rInterval.lower,
-                rInterval.upper < vInterval.lower))
-#endif
-        {
+            || rInterval.upper < vInterval.lower) {
           continue;
         }
 

@@ -45,8 +45,6 @@ void VolumetricModel::commit()
       vklIntervalContext.device = nullptr;
     }
 
-    // TODO: For SYCL we won't have the interval context for now, because
-    // they're not on the GPU yet
     vklIntervalContext = vklNewIntervalIteratorContext(volume->vklSampler);
     std::vector<range1f> valueRanges =
         transferFunction->getPositiveOpacityValueRanges();

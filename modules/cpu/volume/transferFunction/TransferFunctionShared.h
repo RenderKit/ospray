@@ -7,13 +7,6 @@
 namespace ispc {
 #endif // __cplusplus
 
-/*
-typedef vec4f (*TransferFunction_getFct)(
-    const TransferFunction *uniform self, float value);
-typedef float (*TransferFunction_getMaxOpacityFct)(
-    const TransferFunction *uniform self, const range1f &valueRange);
-    */
-
 // We only have one transfer function type, but we still have the type enum and
 // "dispatch" function so that we can easily extend it with more in the future
 enum TransferFunctionType

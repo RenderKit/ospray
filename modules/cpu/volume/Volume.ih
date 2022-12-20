@@ -22,17 +22,13 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // Helper functions ///////////////////////////////////////////////////////////
 
-inline float Volume_getSample(
-    const Volume *uniform volume, const vec3f &P)
+inline float Volume_getSample(const Volume *uniform volume, const vec3f &P)
 {
   return vklComputeSampleV(&volume->vklSampler, &((const vkl_vec3f &)P));
 }
 
-inline vec3f Volume_getGradient(
-    const Volume *uniform volume, const vec3f &P)
+inline vec3f Volume_getGradient(const Volume *uniform volume, const vec3f &P)
 {
-#ifndef OSPRAY_TARGET_SYCL
-  // TODO: vklComputeGradient not implemented on GPU yet
   vkl_vec3f result =
       vklComputeGradientV(&volume->vklSampler, &((const vkl_vec3f &)P));
 
@@ -45,9 +41,6 @@ inline vec3f Volume_getGradient(
     result.z = 1.f;
 
   return *((varying vec3f *)&result);
-#else
-  return make_vec3f(0.f);
-#endif
 }
 
 RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Volume_intersect_kernel(

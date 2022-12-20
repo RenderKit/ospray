@@ -66,8 +66,7 @@ void DebugRenderer::commit()
 {
   Renderer::commit();
 
-  // const std::string method = getParam<std::string>("method", "eyeLight");
-  const std::string method = "volume";
+  const std::string method = getParam<std::string>("method", "eyeLight");
   getSh()->type = typeFromString(method);
 }
 

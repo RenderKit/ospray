@@ -123,7 +123,9 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 {
   PathVertex lastVertex;
   lastVertex.type = CAMERA;
+#ifdef OSPRAY_ENABLE_VOLUMES
   lastVertex.volume = NULL;
+#endif
   lastVertex.pdf_w =
       inf; // probability density of previous sampled BSDF, for MIS
   lastVertex.dg.P = ray.org; // P and N also used by light eval
@@ -155,7 +157,9 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     PathVertex pathVertex;
     pathVertex.bsdf = NULL;
     pathVertex.pdf_w = inf;
+#ifdef OSPRAY_ENABLE_VOLUMES
     pathVertex.volume = NULL;
+#endif
     if (noHit(ray)) {
       pathVertex.type = ENVIRONMENT;
     } else {

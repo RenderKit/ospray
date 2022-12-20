@@ -8,16 +8,6 @@
 #include "../common/Ray.ih"
 #include "Volume.ih"
 #include "transferFunction/TransferFunctionShared.h"
-// openvkl
-#ifdef ISPC
-#include "openvkl/openvkl.isph"
-// comment break to prevent clang-format from reordering openvkl includes
-#include "openvkl/device/openvkl.isph"
-#else
-#include "openvkl/openvkl.h"
-// comment break to prevent clang-format from reordering openvkl includes
-#include "openvkl/device/openvkl.h"
-#endif
 // c++ shared
 #include "VolumetricModelShared.h"
 

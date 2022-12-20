@@ -486,6 +486,12 @@ if (OSPRAY_MODULE_GPU)
     rtcIntersectV=rtcIntersect1
     rtcOccludedV=rtcOccluded1
     rtcInterpolateV1=rtcInterpolate1
+    vklComputeSampleV=vklComputeSample
+    vklComputeGradientV=vklComputeGradient
+    vklInitIntervalIteratorV=vklInitIntervalIterator
+    vklIterateIntervalV=vklIterateInterval
+    vklInitHitIteratorV=vklInitHitIterator
+    vklIterateHitV=vklIterateHit
     programCount=1
     programIndex=0
   )
@@ -604,7 +610,7 @@ if (OSPRAY_MODULE_GPU)
 
     target_compile_definitions(ospray_module_gpu
     PUBLIC
-      -DOSPRAY_ENABLE_VOLUMES
+      OSPRAY_ENABLE_VOLUMES
     )
   endif()
 

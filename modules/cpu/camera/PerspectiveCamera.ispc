@@ -36,11 +36,7 @@ SYCL_EXTERNAL void PerspectiveCamera_initRay(const Camera *uniform _self,
 
   const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
   varying float *uniform split = sbs ? &screen.x : &screen.y;
-#ifdef OSPRAY_TARGET_SYCL
   if (sbs || self->stereoMode == OSP_STEREO_TOP_BOTTOM) {
-#else
-  if (or (sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
-#endif
     *split *= 2.f;
     if (*split < 1.f) {
       org = org - self->ipd_offset;
@@ -79,11 +75,7 @@ SYCL_EXTERNAL void PerspectiveCamera_initRayMB(const Camera *uniform _self,
 
   const uniform bool sbs = self->stereoMode == OSP_STEREO_SIDE_BY_SIDE;
   varying float *uniform split = sbs ? &screen.x : &screen.y;
-#ifdef OSPRAY_TARGET_SYCL
   if (sbs || self->stereoMode == OSP_STEREO_TOP_BOTTOM) {
-#else
-  if (or (sbs, self->stereoMode == OSP_STEREO_TOP_BOTTOM)) {
-#endif
     *split *= 2.f;
     if (*split < 1.f)
       ipd_offset1 = -ipd_offset1;

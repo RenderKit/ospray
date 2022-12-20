@@ -6,14 +6,13 @@
 #include "geometry/Boxes.ih"
 #include "geometry/Curves.ih"
 #include "geometry/GeometryDispatch.ih"
+#ifdef OSPRAY_ENABLE_VOLUMES
+#include "geometry/Isosurfaces.ih"
+#endif
 #include "geometry/Mesh.ih"
 #include "geometry/Planes.ih"
 #include "geometry/Spheres.ih"
 #include "geometry/Subdivision.ih"
-// TODO: No iterators in SYCL API yet
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
-#include "geometry/Isosurfaces.ih"
-#endif
 // c++ shared
 #include "geometry/GeometryShared.h"
 
@@ -44,8 +43,7 @@ SYCL_EXTERNAL __noinline void Geometry_dispatch_postIntersect(
   case GEOMETRY_TYPE_CURVES:
     Curves_postIntersect(self, dg, ray, flags);
     break;
-// TODO: No iterators in SYCL API yet
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
   case GEOMETRY_TYPE_ISOSURFACES:
     Isosurfaces_postIntersect(self, dg, ray, flags);
     break;
@@ -109,8 +107,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
     Spheres_intersect_kernel(args, false);
     break;
 #endif
-// TODO: No iterators in SYCL API yet
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
   case GEOMETRY_TYPE_ISOSURFACES:
     Isosurfaces_intersect_kernel(args, false);
     break;
@@ -142,8 +139,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_occluded(
         (RTCIntersectFunctionNArguments * uniform) args, true);
     break;
 #endif
-// TODO: No iterators in SYCL API yet
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
   case GEOMETRY_TYPE_ISOSURFACES:
     Isosurfaces_intersect_kernel(
         (RTCIntersectFunctionNArguments * uniform) args, true);

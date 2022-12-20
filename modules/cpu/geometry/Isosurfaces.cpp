@@ -1,7 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-// TODO: No iterators in SYCL API yet
-#if defined(OSPRAY_ENABLE_VOLUMES) && !defined(OSPRAY_TARGET_SYCL)
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 // ospray
 #include "Isosurfaces.h"
@@ -13,6 +12,10 @@
 #ifndef OSPRAY_TARGET_SYCL
 // ispc-generated files
 #include "geometry/Isosurfaces_ispc.h"
+#else
+namespace ispc {
+void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args);
+}
 #endif
 
 namespace ospray {
