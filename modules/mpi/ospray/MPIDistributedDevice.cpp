@@ -34,57 +34,40 @@ namespace mpi {
 
 // Helper functions ///////////////////////////////////////////////////////
 
-using SetParamFcn = void(std::shared_ptr<ospray::api::Device>,
-    OSPObject,
-    const char *,
-    const void *m,
-    OSPDataType);
+using SetParamFcn = void(OSPObject, const char *, const void *m, OSPDataType);
 
 template <typename T>
-static void setParamOnObject(std::shared_ptr<ospray::api::Device> d,
-    OSPObject _obj,
-    const char *p,
-    const T &v,
-    OSPDataType t)
+static void setParamOnObject(
+    OSPObject _obj, const char *p, const T &v, OSPDataType t)
 {
   auto *obj = lookupObject<ManagedObject>(_obj);
-  d->setObjectParam((OSPObject)obj, p, t, &v);
+  obj->setParam(p, v);
 }
 
 #define declare_param_setter(TYPE)                                             \
   {                                                                            \
     OSPTypeFor<TYPE>::value,                                                   \
-        [](std::shared_ptr<ospray::api::Device> d,                             \
-            OSPObject o,                                                       \
-            const char *p,                                                     \
-            const void *v,                                                     \
-            OSPDataType t) { setParamOnObject(d, o, p, *(TYPE *)v, t); }       \
+        [](OSPObject o, const char *p, const void *v, OSPDataType t) {         \
+          setParamOnObject(o, p, *(TYPE *)v, t);                               \
+        }                                                                      \
   }
 
 #define declare_param_setter_object(TYPE)                                      \
   {                                                                            \
     OSPTypeFor<TYPE>::value,                                                   \
-        [](std::shared_ptr<ospray::api::Device> d,                             \
-            OSPObject o,                                                       \
-            const char *p,                                                     \
-            const void *v,                                                     \
-            OSPDataType t) {                                                   \
+        [](OSPObject o, const char *p, const void *v, OSPDataType t) {         \
           auto *obj = lookupObject<ManagedObject>(                             \
               *reinterpret_cast<const OSPObject *>(v));                        \
-          setParamOnObject(d, o, p, obj, t);                                   \
+          setParamOnObject(o, p, obj, t);                                      \
         }                                                                      \
   }
 
 #define declare_param_setter_string(TYPE)                                      \
   {                                                                            \
     OSPTypeFor<TYPE>::value,                                                   \
-        [](std::shared_ptr<ospray::api::Device> d,                             \
-            OSPObject o,                                                       \
-            const char *p,                                                     \
-            const void *v,                                                     \
-            OSPDataType t) {                                                   \
+        [](OSPObject o, const char *p, const void *v, OSPDataType t) {         \
           const char *str = (const char *)v;                                   \
-          setParamOnObject(d, o, p, std::string(str), t);                      \
+          setParamOnObject(o, p, std::string(str), t);                         \
         }                                                                      \
   }
 
@@ -491,11 +474,11 @@ void MPIDistributedDevice::setObjectParam(
     throw std::runtime_error("cannot set OSP_UNKNOWN parameter type");
 
   if (type == OSP_BYTE || type == OSP_RAW) {
-    setParamOnObject(internalDevice, object, name, *(const byte_t *)mem, type);
+    setParamOnObject(object, name, *(const byte_t *)mem, type);
     return;
   }
 
-  setParamFcns[type](internalDevice, object, name, mem, type);
+  setParamFcns[type](object, name, mem, type);
 }
 
 void MPIDistributedDevice::removeObjectParam(
