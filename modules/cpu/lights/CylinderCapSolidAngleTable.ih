@@ -1378,10 +1378,10 @@ float sampleCylSolidAngleTable(float u, float v, float w)
   const float p11 = lerp(u,
       CylCapSolidAngleTable[121 * U0 + 11 * V1 + W1],
       CylCapSolidAngleTable[121 * U1 + 11 * V1 + W1]);
-  const float p0 = (1. - w) * p00 + w * p10;
-  const float p1 = (1. - w) * p10 + w * p11;
+  const float p0 = (1.f - w) * p00 + w * p10;
+  const float p1 = (1.f - w) * p10 + w * p11;
 
-  return (1. - v) * p0 + v * p1;
+  return (1.f - v) * p0 + v * p1;
 }
 
 OSPRAY_END_ISPC_NAMESPACE

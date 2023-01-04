@@ -41,7 +41,7 @@ struct DifferentialGeometry
 };
 
 // assumed precision of intersection routines
-#define ulpEpsilon 0x1.0fp-21
+#define ulpEpsilon 0x1.0fp-21f
 
 inline float calcEpsilon(const vec3f &P, const vec3f &dir, float t)
 {
