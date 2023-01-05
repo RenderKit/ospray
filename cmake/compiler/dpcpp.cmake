@@ -86,7 +86,9 @@ list(APPEND OSPRAY_CXX_FLAGS_SYCL
   -Wno-logical-op-parentheses
   -fsycl
   -fsycl-unnamed-lambda
-  -Xclang=-fsycl-allow-func-ptr)
+  -Xclang=-fsycl-allow-func-ptr
+  -Wdouble-promotion
+)
 
 # FIXME: debug information generation takes forever in SYCL
 # TODO: Still true?
