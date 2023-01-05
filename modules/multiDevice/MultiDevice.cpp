@@ -32,6 +32,9 @@ void MultiDevice::commit()
 {
   Device::commit();
 
+  // Needed for proper ISPCRT device construction
+  hostDevice.commit();
+
   if (subdevices.empty()) {
     auto OSPRAY_NUM_SUBDEVICES =
         utility::getEnvVar<int>("OSPRAY_NUM_SUBDEVICES");
