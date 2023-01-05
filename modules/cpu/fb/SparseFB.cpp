@@ -97,20 +97,32 @@ std::string SparseFrameBuffer::toString() const
 
 float SparseFrameBuffer::taskError(const uint32_t taskID) const
 {
+  if (!hasVarianceBuffer) {
+    throw std::runtime_error(
+        "SparseFrameBuffer::taskError: trying to get task error on FB without variance/error buffers");
+  }
   // Note: USM migration?
   return (*taskErrorBuffer)[taskID];
 }
 
 void SparseFrameBuffer::setTaskError(const uint32_t taskID, const float error)
 {
-  // Note: USM migration?
+  if (!hasVarianceBuffer) {
+    throw std::runtime_error(
+        "SparseFrameBuffer::setTaskError: trying to set task error on FB without variance/error buffers");
+  }
   (*taskErrorBuffer)[taskID] = error;
 }
 
 void SparseFrameBuffer::setTaskAccumID(const uint32_t taskID, const int accumID)
 {
   // Note: USM migration?
-  (*taskAccumID)[taskID] = accumID;
+  if (hasAccumBuffer || useTaskAccumIDs) {
+    (*taskAccumID)[taskID] = accumID;
+  } else {
+    throw std::runtime_error(
+        "SparseFrameBuffer::setTaskAccumID: called on SparseFB without accumIDs");
+  }
 }
 
 void SparseFrameBuffer::beginFrame()
@@ -149,7 +161,9 @@ void SparseFrameBuffer::clear()
   // We only need to reset the accumID, SparseFB_accumulateWriteSample will
   // handle overwriting the image when accumID == 0
   // TODO: Should be done in a kernel or with a GPU memcpy, USM thrashing
-  std::fill(taskAccumID->begin(), taskAccumID->end(), 0);
+  if (hasAccumBuffer || useTaskAccumIDs) {
+    std::fill(taskAccumID->begin(), taskAccumID->end(), 0);
+  }
 
   // also clear the task error buffer if present
   if (hasVarianceBuffer) {
