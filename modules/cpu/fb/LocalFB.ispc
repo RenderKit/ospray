@@ -353,13 +353,14 @@ export void LocalFrameBuffer_writeIDTile(void *uniform _fb,
 // Write a Tile's auxiliary buffer into the framebuffer's row major storage
 export void LocalFrameBuffer_writeAuxTile(void *uniform _fb,
     const void *uniform _tile,
-    uniform vec3f *uniform aux,
+    void *uniform _aux,
     const void *uniform _ax,
     const void *uniform _ay,
     const void *uniform _az)
 {
   uniform LocalFB *uniform fb = (uniform LocalFB * uniform) _fb;
   const Tile *uniform tile = (const Tile *uniform)_tile;
+  uniform vec3f *uniform aux = (uniform vec3f * uniform) _aux;
   const varying float *uniform ax = (const varying float *uniform)_ax;
   const varying float *uniform ay = (const varying float *uniform)_ay;
   const varying float *uniform az = (const varying float *uniform)_az;

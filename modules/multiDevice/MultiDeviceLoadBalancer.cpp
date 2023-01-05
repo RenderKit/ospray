@@ -31,7 +31,7 @@ void MultiDeviceLoadBalancer::renderFrame(
     Camera *ci = (Camera *)camera->objects[i];
     World *wi = (World *)world->objects[i];
 
-    if (fbi->getTileIDs().size() == 0) {
+    if (fbi->getTileIDs().size() != 0) {
       loadBalancers[i]->renderFrame(fbi, ri, ci, wi);
 
       framebuffer->rowmajorFb->writeTiles(fbi);

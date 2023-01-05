@@ -19,7 +19,7 @@ void LocalFrameBuffer_writeTile_RGBA32F(void *_fb, const void *_tile);
 void LocalFrameBuffer_writeDepthTile(void *_fb, const void *uniform _tile);
 void LocalFrameBuffer_writeAuxTile(void *_fb,
     const void *_tile,
-    vec3f *aux,
+    void *aux,
     const void *_ax,
     const void *_ay,
     const void *_az);
@@ -205,7 +205,11 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
     if (hasAlbedoBuffer) {
       ispc::LocalFrameBuffer_writeAuxTile(getSh(),
           tile,
+#ifndef OSPRAY_TARGET_SYCL
           (ispc::vec3f *)albedoBuffer->data(),
+#else
+          *albedoBuffer->data(),
+#endif
           tile->ar,
           tile->ag,
           tile->ab);
@@ -226,14 +230,18 @@ void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
           getSh(), tile, getSh()->instanceIDBuffer, tile->iid);
     }
 
-    if (hasNormalBuffer)
+    if (hasNormalBuffer) {
       ispc::LocalFrameBuffer_writeAuxTile(getSh(),
           tile,
+#ifndef OSPRAY_TARGET_SYCL
           (ispc::vec3f *)normalBuffer->data(),
+#else
+          *normalBuffer->data(),
+#endif
           tile->nx,
           tile->ny,
           tile->nz);
-
+    }
     if (colorBuffer) {
       switch (getColorBufferFormat()) {
       case OSP_FB_RGBA8:
