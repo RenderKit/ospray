@@ -38,9 +38,11 @@ void registerAllMaterials()
   Material::registerType<Luminous>("luminous");
   Material::registerType<Metal>("metal");
   Material::registerType<MetallicPaint>("metallicPaint");
-  // TODO: Mix material isn't going to work on the GPU b/c we can't have
+#ifndef OSPRAY_TARGET_SYCL
+  // Mix material isn't going to work on the GPU b/c we can't have
   // recursive calls and it may nest MultiBSDFs. Needs some special treatment
-  // Material::registerType<MixMaterial>("mix");
+  Material::registerType<MixMaterial>("mix");
+#endif
   Material::registerType<OBJMaterial>("obj");
   Material::registerType<Plastic>("plastic");
   Material::registerType<Principled>("principled");
