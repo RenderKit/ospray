@@ -253,15 +253,6 @@ void MPIOffloadDevice::initializeDevice()
     throw std::runtime_error("Invalid MPI mode!");
   }
 
-  // Setup the host device to use ISPCRT on the CPU
-  // TODO: this is a tricky bit: we want to use CPU ISPCRT on the offload
-  // device, but might want to be using the GPU device on the workers.
-  // Technically we don't need to commit the hostDevice for the MPI offload
-  // device because it never makes any allocations on it. That might change in
-  // the future? And it would be better to just pass through the ISPCRTDevice
-  // instead of the ISPCDevice
-  // hostDevice.commit();
-
   // Setup the command buffer on the app rank
   maxCommandBufferEntries = getParam<uint32_t>("maxCommandBufferEntries", 8192);
   commandBufferSize = getParam<uint32_t>("commandBufferSize", 512) * (1 << 20);
@@ -534,8 +525,6 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
   if (mpicommon::isManagedObject(format)) {
     format = OSP_ULONG;
   }
-  PING;
-  PRINT(hostDevice.getIspcrtDevice());
   appData->data =
       new Data(hostDevice, sharedData, format, numItems, byteStride);
   this->sharedData[handle.i64] = appData;

@@ -80,8 +80,6 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
 
     work::OSPState ospState;
     // Need to init the hostdevice's ISPCRT for CPU
-    // TODO: Probably we want to split the dependence on having an ISPC device,
-    // it would be better to just pass an ISPCRT device.
     ospState.hostDevice.commit();
 
     uint64_t commandSize = 0;

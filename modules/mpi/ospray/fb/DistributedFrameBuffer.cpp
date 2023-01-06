@@ -31,9 +31,7 @@ using DFB = DistributedFrameBuffer;
 DistributedTileError::DistributedTileError(
     api::ISPCDevice &device, const vec2i &numTiles, mpicommon::Group group)
     : TaskError(device.getIspcrtDevice(), numTiles), group(group)
-{
-  PRINT(numTiles);
-}
+{}
 
 void DistributedTileError::sync()
 {
