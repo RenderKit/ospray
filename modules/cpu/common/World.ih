@@ -309,8 +309,12 @@ inline bool isOccludedNoClipping(const World *uniform world, varying Ray &ray)
   if (!world->embreeSceneHandleGeometries)
     return false;
 
+  uniform EmbreeRayQueryContextDefault context;
+  InitRayQueryContextDefault(&context);
+
   uniform RTCOccludedArguments occludedArgs;
   rtcInitOccludedArguments(&occludedArgs);
+  occludedArgs.context = &context.ectx;
   occludedArgs.occluded = (RTCOccludedFunctionN)Geometry_dispatch_occluded;
   occludedArgs.feature_mask = (uniform RTCFeatureFlags)(FEATURE_MASK);
 
