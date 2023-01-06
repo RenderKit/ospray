@@ -27,7 +27,7 @@ struct OSPRAY_SDK_INTERFACE Spheres
   Ref<const DataT<float>> radiusData;
   Ref<const DataT<vec2f>> texcoordData;
 
-  // TODO: Embree's layout for sphere point uses interleaved position and
+  // Embree's layout for sphere point uses interleaved position and
   // radius, each sphere is stored as x, y, z, r. OSPRay 2's format is not
   // interleaved, so we should deprecate the non-interleaved format. This array
   // is used to reference the interleaved data for the app or the interleaved

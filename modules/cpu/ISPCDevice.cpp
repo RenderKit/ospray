@@ -211,9 +211,6 @@ void ISPCDevice::commit()
     if ((appSyclCtx && !appSyclDevice) || (!appSyclCtx && appSyclDevice)) {
       handleError(OSP_INVALID_OPERATION,
           "OSPRay ISPCDevice invalid configuration: if providing a syclContext and syclDevice both must be provided");
-      // TODO: No throw here right? Would it make more sense to add an
-      // OSPRayError we can throw internally to throw + communicate the right
-      // error code back up?
       return;
     }
 
@@ -224,18 +221,12 @@ void ISPCDevice::commit()
     if ((appZeCtx && !appZeDevice) || (!appZeCtx && appZeDevice)) {
       handleError(OSP_INVALID_OPERATION,
           "OSPRay ISPCDevice invalid configuration: if providing a zeContext and zeDevice both must be provided");
-      // TODO: No throw here right? Would it make more sense to add an
-      // OSPRayError we can throw internally to throw + communicate the right
-      // error code back up?
       return;
     }
 
     if (appSyclCtx && appZeCtx) {
       handleError(OSP_INVALID_OPERATION,
           "OSPRay ISPCDevice invalid configuration: For SYCL or Level Zero context interopability only a SYCL or Level Zero context & device can be provided, not both.");
-      // TODO: No throw here right? Would it make more sense to add an
-      // OSPRayError we can throw internally to throw + communicate the right
-      // error code back up?
       return;
     }
 
@@ -286,8 +277,6 @@ void ISPCDevice::commit()
         reinterpret_cast<pi_native_handle>(ispcrtQueue.nativeTaskQueueHandle()),
         true);
 
-    // TODO needed?
-    setenv("SYCL_PI_LEVEL_ZERO_USM_ALLOCATOR", "1;0;shared:64K,0,2M", 1);
     loadBalancer->setQueue(&syclQueue);
 #endif
   }

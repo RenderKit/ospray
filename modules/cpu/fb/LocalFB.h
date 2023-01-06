@@ -73,10 +73,6 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   // NOTE: All per-pixel data is only allocated if the corresponding channel
   //       flag was passed on construction
 
-  // TODO/NOTE: we use unique ptr here because the default Array constructor
-  // allocates a single element "array". We probably want to change this in
-  // ispcrt to have behavior more like std::vector/other containers
-
   // format depends on FrameBuffer::colorBufferFormat
   std::unique_ptr<BufferShared<uint8_t>> colorBuffer;
   // one float per pixel
