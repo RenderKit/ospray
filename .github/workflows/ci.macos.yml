@@ -19,6 +19,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     secrets: inherit
     with:
+      runs-on: '["macOS", "x86_64", "build"]'
       cmd: |
         scripts/build/macosx.sh -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
       artifact-out: build-osx-clang
@@ -34,8 +35,9 @@ jobs:
       artifact-out: build-osx-arm
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  build-osx-x64:
+  build-osx-x64-on-arm:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    secrets: inherit
     with:
       runs-on: '["macOS", "arm", "build"]'
       cmd: |
@@ -49,6 +51,7 @@ jobs:
     needs: build-osx-clang
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
+      runs-on: '["macOS", "x86_64", "build", "avx2"]'
       cmd: |
         export DYLD_FALLBACK_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
@@ -62,7 +65,7 @@ jobs:
     needs: build-osx-arm
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '["macOS", "build", "arm"]'
+      runs-on: '["macOS", "arm"]'
       cmd: |
         export DYLD_FALLBACK_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
@@ -72,11 +75,11 @@ jobs:
       artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
       artifact-on-failure: true
 
-  test-osx-x64:
-    needs: build-osx-x64
+  test-osx-x64-on-arm:
+    needs: build-osx-x64-on-arm
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '["macOS", "build", "arm"]'
+      runs-on: '["macOS", "arm", "build"]'
       cmd: |
         export DYLD_FALLBACK_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$DYLD_FALLBACK_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
