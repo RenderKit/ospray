@@ -145,8 +145,13 @@ void DistributedLoadBalancer::renderFrame(
   // parallel for here so we don't end up having to do a more sync/blocking
   // style render
 #ifdef OSPRAY_TARGET_SYCL
-  // TODO For GPU: Just testing initial move to GPU so we run this serially to
-  // not have thread conflicts on the sycl queue
+  /* TODO For GPU: Need further refactoring to run rendering async for multiple
+   * region per rank configs. Right now this is serial to avoid a race condition
+   * on the SYCL queue. Can do a separate parallel loop ahead of time to build
+   * the buffer shared of active tasks for each layer. Then all the rendering
+   * kernels for each layer can be submitted on the queue and we wait on all
+   * them to finish.
+   */
   tasking::serial_for(dfb->getSparseLayerCount(), [&](size_t layer) {
 #else
   tasking::parallel_for(dfb->getSparseLayerCount(), [&](size_t layer) {
@@ -170,11 +175,6 @@ void DistributedLoadBalancer::renderFrame(
     // Compute visibility for the tasks we're rendering
     auto renderTaskIDs = sparseFb->getRenderTaskIDs();
 
-    /* TODO: this needs to run on the GPU because we'll have GPU Embree & GPU
-     * BVH. Then layer 0 populating its background tiles can be run in parallel
-     * to the GPU rendering, and I want to still keep the partitions that are
-     * run to build up the task ID lists also run in parallel.
-     */
     renderer->computeRegionVisibility(sparseFb,
         camera,
         world,
@@ -234,12 +234,6 @@ void DistributedLoadBalancer::renderFrame(
       // utilization. This also removes tasks that have completed due to
       // adaptive refinement
       const size_t rid = world->myRegionIds[layer - 1];
-      /* TODO GPU: Now activeTasks needs to be in a BufferShared, and to keep
-       * the partition/taskID build in parallel I can do a separate parallel
-       * loop ahead of time to build the buffer shared of active tasks for each
-       * layer. Then all the rendering kernels for each layer can be submitted
-       * on the queue and we wait on all them to finish.
-       */
       std::vector<uint32_t> activeTasks(
           renderTaskIDs.begin(), renderTaskIDs.end());
       auto removeTasks = std::partition(
@@ -516,10 +510,9 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
 {
   SparseFrameBuffer *ownedTilesFb = dfb->getSparseFBLayer(0);
 
-  // These views are already in USM
+  // Note: these views are already in USM
   const utility::ArrayView<Tile> tiles = ownedTilesFb->getTiles();
   const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
-  // This is also a USM view
   auto renderTaskIDs = ownedTilesFb->getRenderTaskIDs();
 
   if (renderer->errorThreshold > 0.f) {

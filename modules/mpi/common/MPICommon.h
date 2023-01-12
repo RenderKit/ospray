@@ -161,7 +161,9 @@ OSPRAY_MPI_COMMON_EXPORT extern Group worker;
 // it is up to the caller to configure the world group correctly.
 OSPRAY_MPI_COMMON_EXPORT bool init(int *ac, const char **av, bool useCommWorld);
 
-// TODO: This is redundant with OSPCommon's version right?
+/* MPICommon has its own implementation so the offload worker can check for
+ * managed objects without having to link ospray_module_cpu
+ */
 OSPRAY_MPI_COMMON_EXPORT bool isManagedObject(OSPDataType type);
 
 OSPRAY_MPI_COMMON_EXPORT inline int workerRank()

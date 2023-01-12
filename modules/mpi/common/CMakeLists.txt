@@ -7,7 +7,6 @@ add_library(ospray_mpi_common SHARED
     MPICommon.cpp
     ObjectHandle.cpp
     Profiling.cpp
-
     maml/maml.cpp
     maml/Context.cpp
 )

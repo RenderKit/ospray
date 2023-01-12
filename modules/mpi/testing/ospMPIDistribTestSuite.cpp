@@ -3,6 +3,7 @@
 
 #include <mpi.h>
 #include "distributed_test_fixture.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 extern OSPRayEnvironment *ospEnv;
 OSPRayEnvironment *ospEnv;
@@ -39,7 +40,16 @@ int main(int argc, char **argv)
   }
 
   int result = 0;
-  ospLoadModule("mpi_distributed");
+  // load the MPI module, and select the MPI distributed device. Here we
+  // do not call ospInit, as we want to explicitly pick the distributed
+  // device
+  auto OSPRAY_MPI_DISTRIBUTED_GPU =
+      rkcommon::utility::getEnvVar<int>("OSPRAY_MPI_DISTRIBUTED_GPU").value_or(0);
+  if (OSPRAY_MPI_DISTRIBUTED_GPU) {
+    ospLoadModule("mpi_distributed_gpu");
+  } else {
+    ospLoadModule("mpi_distributed_cpu");
+  }
   {
     cpp::Device device("mpiDistributed");
 

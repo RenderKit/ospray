@@ -1,8 +1,8 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "rkcommon/math/vec.ih"
 #include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 
 #include "fb/FrameBuffer.ih"
 #include "fb/TileShared.h"
@@ -133,8 +133,6 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
     void *uniform _final,
     VaryingTile *uniform accum)
 {
-  // TODO: Host/CPU version of this for SYCL version
-#ifndef OSPRAY_TARGET_SYCL
   Tile *uniform final = (Tile * uniform) _final;
   const uniform vec2i size = box_size(tile->region);
   const uniform int maxi = size.y * (TILE_SIZE / programCount);
@@ -146,16 +144,42 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
       accum->nx[i] = fnx;
       accum->ny[i] = fny;
       accum->nz[i] = fnz;
-      // TODO: Is it not safe to assume the nx/ny/nz are packed in memory?
-      // It seems like this soa to aos conversion should not be needed
+#ifdef OSPRAY_TARGET_SYCL
+      final->nx[3 * i] = fnx;
+      final->nx[3 * i + 1] = fny;
+      final->nx[3 * i + 2] = fnz;
+      /*
+      final->nx[i] = fnx;
+      final->ny[i] = fny;
+      final->nz[i] = fnz;
+      */
+#else
+      // TODO: This is not right but some other bug/data use cancels it out!
+      // The tile struct stores SoA layout memory too, but here we treat it
+      // like SoA for some reason, so final->nx will hold:
+      // {fnx0, fny0, fnz0, fnx1, fny1, fnz1, ..., progCount,...}
+      // after the write here
       soa_to_aos3(fnx, fny, fnz, final->nx + 3 * programCount * i);
+#endif
+
       const float far = tile->ar[i];
       const float fag = tile->ag[i];
       const float fab = tile->ab[i];
       accum->ar[i] = far;
       accum->ag[i] = fag;
       accum->ab[i] = fab;
+#ifdef OSPRAY_TARGET_SYCL
+      final->ar[3 * i] = far;
+      final->ar[3 * i + 1] = fag;
+      final->ar[3 * i + 2] = fab;
+      /*
+      final->ar[i] = far;
+      final->ag[i] = fag;
+      final->ab[i] = fab;
+      */
+#else
       soa_to_aos3(far, fag, fab, final->ar + 3 * programCount * i);
+#endif
     }
   } else {
     const uniform float rcpAccumID = rcpf(tile->accumID + 1);
@@ -166,17 +190,39 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
       const float fnx = accum->nx[i] * rcpAccumID;
       const float fny = accum->ny[i] * rcpAccumID;
       const float fnz = accum->nz[i] * rcpAccumID;
+#ifdef OSPRAY_TARGET_SYCL
+      final->nx[3 * i] = fnx;
+      final->nx[3 * i + 1] = fny;
+      final->nx[3 * i + 2] = fnz;
+      /*
+      final->nx[i] = fnx;
+      final->ny[i] = fny;
+      final->nz[i] = fnz;
+      */
+#else
       soa_to_aos3(fnx, fny, fnz, final->nx + 3 * programCount * i);
+#endif
+
       accum->ar[i] += tile->ar[i];
       accum->ag[i] += tile->ag[i];
       accum->ab[i] += tile->ab[i];
       const float far = accum->ar[i] * rcpAccumID;
       const float fag = accum->ag[i] * rcpAccumID;
       const float fab = accum->ab[i] * rcpAccumID;
+#ifdef OSPRAY_TARGET_SYCL
+      final->ar[3 * i] = far;
+      final->ar[3 * i + 1] = fag;
+      final->ar[3 * i + 2] = fab;
+      /*
+      final->ar[i] = far;
+      final->ag[i] = fag;
+      final->ab[i] = fab;
+      */
+#else
       soa_to_aos3(far, fag, fab, final->ar + 3 * programCount * i);
+#endif
     }
   }
-#endif
 }
 
 // computes the error for a tile

@@ -112,12 +112,14 @@ void DistributedWorld::commit()
     rtcSetSceneFlags(regionScene, RTC_SCENE_FLAG_FILTER_FUNCTION_IN_ARGUMENTS);
     rtcCommitScene(regionScene);
 
+    // Remove the extra local refs
     regionGeometry->refDec();
     allRegionsData->refDec();
   }
 
-  // Need to move allRegions data to USM
-  getSh()->regions = allRegions.data();
+  // TODO: For picking myRegions needs to be in USM
+  getSh()->localRegions = myRegions.data();
+  getSh()->numLocalRegions = myRegions.size();
   getSh()->numRegions = allRegions.size();
   getSh()->regionScene = regionScene;
 }

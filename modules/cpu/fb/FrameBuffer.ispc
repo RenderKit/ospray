@@ -21,5 +21,4 @@ SYCL_EXTERNAL vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
 #endif
   return outColor;
 }
-
 OSPRAY_END_ISPC_NAMESPACE

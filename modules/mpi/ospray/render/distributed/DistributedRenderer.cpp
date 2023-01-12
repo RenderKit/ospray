@@ -101,6 +101,7 @@ OSPPickResult DistributedRenderer::pick(
   float depth = 1e20f;
 
 #ifndef OSPRAY_TARGET_SYCL
+  // TODO for SYCL need to dispatch a kernel
   ispc::DistributedRenderer_pick(getSh(),
       fb->getSh(),
       camera->getSh(),

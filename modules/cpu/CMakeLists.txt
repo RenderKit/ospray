@@ -430,8 +430,6 @@ if (OSPRAY_MODULE_GPU)
       $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
       # NOTE(jda) - the following includes are missing despite PUBLIC linking
       $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
-      # TODO: needs OpenVKL GPU port
-      #$<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
       $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
       #######################################################################
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
@@ -442,7 +440,6 @@ if (OSPRAY_MODULE_GPU)
   PUBLIC
     TILE_SIZE=${OSPRAY_TILE_SIZE}
     MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
-    RKCOMMON_SYCL
     RKCOMMON_NO_SIMD
   )
 
@@ -457,27 +454,15 @@ if (OSPRAY_MODULE_GPU)
     -fsycl-targets=${OSPRAY_SYCL_TARGET}
   )
 
-  #include(ProcessorCount)
-  #ProcessorCount(PROCESSOR_COUNT)
-  #if (NOT PROCESSOR_COUNT EQUAL 0)
-  #  set(SYCL_MAX_LINK_JOBS ${PROCESSOR_COUNT})
-  #else()
-  #  set(SYCL_MAX_LINK_JOBS 4)
-  #endif()
-
   if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
     target_link_options(ospray_module_gpu_kernels PRIVATE
       -fsycl
-      #-fsycl-device-code-split=per_kernel
-      #-fsycl-max-parallel-link-jobs=${SYCL_MAX_LINK_JOBS}
       -fsycl-targets=${OSPRAY_SYCL_TARGET}
       -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
     )
   else()
     target_link_options(ospray_module_gpu_kernels PRIVATE
       -fsycl
-      #-fsycl-device-code-split=per_kernel
-      #-fsycl-max-parallel-link-jobs=${SYCL_MAX_LINK_JOBS}
       -fsycl-targets=${OSPRAY_SYCL_TARGET}
       -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
     )
@@ -519,8 +504,6 @@ if (OSPRAY_MODULE_GPU)
       rkcommon::rkcommon
       $<BUILD_INTERFACE:ispcrt::ispcrt>
       $<BUILD_INTERFACE:embree>
-      # TODO: needs OpenVKL GPU port
-      #$<BUILD_INTERFACE:openvkl::openvkl>
   )
 
   target_include_directories(ospray_module_gpu

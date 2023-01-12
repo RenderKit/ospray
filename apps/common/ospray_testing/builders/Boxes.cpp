@@ -20,6 +20,7 @@ struct Boxes : public detail::Builder
   cpp::Group buildGroup() const override;
   cpp::World buildWorld() const override;
 
+
  private:
   vec3i dimensions{4};
   bool useLights{false};

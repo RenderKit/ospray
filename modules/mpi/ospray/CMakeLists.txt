@@ -177,11 +177,6 @@ if (OSPRAY_MODULE_GPU)
     ospray_mpi_common
     ospray_module_gpu
     ospray_module_gpu_kernels
-    # Is build interface going to export to link here?
-    #$<BUILD_INTERFACE:ispcrt::ispcrt>
-    #$<BUILD_INTERFACE:embree>
-    # TODO: needs OpenVKL GPU port
-    #$<BUILD_INTERFACE:openvkl::openvkl>
   )
 
   target_include_directories(ospray_module_mpi_distributed_gpu
@@ -214,27 +209,15 @@ if (OSPRAY_MODULE_GPU)
     -DOBJECTFACTORY_IMPORT
   )
 
-  #include(ProcessorCount)
-  #ProcessorCount(PROCESSOR_COUNT)
-  #if (NOT PROCESSOR_COUNT EQUAL 0)
-  #  set(SYCL_MAX_LINK_JOBS ${PROCESSOR_COUNT})
-  #else()
-  #  set(SYCL_MAX_LINK_JOBS 4)
-  #endif()
-
   if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
     target_link_options(ospray_module_mpi_distributed_gpu PRIVATE
       -fsycl
-      #-fsycl-device-code-split=per_kernel
-      #-fsycl-max-parallel-link-jobs=${SYCL_MAX_LINK_JOBS}
       -fsycl-targets=${OSPRAY_SYCL_TARGET}
       -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
     )
   else()
     target_link_options(ospray_module_mpi_distributed_gpu PRIVATE
       -fsycl
-      #-fsycl-device-code-split=per_kernel
-      #-fsycl-max-parallel-link-jobs=${SYCL_MAX_LINK_JOBS}
       -fsycl-targets=${OSPRAY_SYCL_TARGET}
       -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
     )

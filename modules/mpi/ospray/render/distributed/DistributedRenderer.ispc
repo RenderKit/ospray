@@ -36,28 +36,6 @@ struct EmbreeRayQueryContextRegion
   uint8 *regionVisible;
 };
 
-// TODO WILL Hybrid code for DistributedRenderer
-#ifndef OSPRAY_TARGET_SYCL
-
-RTC_SYCL_INDIRECTLY_CALLABLE unmasked void markRegionVisibleFilterFunction(
-    const RTCFilterFunctionNArguments *uniform args)
-{
-  if (!args->valid[programIndex]) {
-    return;
-  }
-
-  EmbreeRayQueryContextRegion *uniform ctx =
-      (EmbreeRayQueryContextRegion * uniform) args->context;
-
-  uint8 *uniform regionVisible = ctx->regionVisible;
-  varying RTCHit *uniform hit = (varying RTCHit * uniform) args->hit;
-  regionVisible[hit->primID] = 0xff;
-
-  // Reject all hits, we want to find all intersections along the ray to find
-  // all visible regions
-  args->valid[programIndex] = 0;
-}
-
 RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Regions_intersect_kernel(
     const RTCIntersectFunctionNArguments *uniform args)
 {
@@ -65,6 +43,9 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Regions_intersect_kernel(
   if (!args->valid[programIndex]) {
     return;
   }
+  // We never mark hits because we want to find all hits along the ray to get
+  // all visible regions
+  args->valid[programIndex] = 0;
 
   Boxes *uniform self = (Boxes * uniform) args->geometryUserPtr;
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
@@ -79,12 +60,10 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Regions_intersect_kernel(
   const Intersections isect = intersectBox(ray->org, ray->dir, box);
   if ((isect.entry.hit && isect.entry.t > ray->t0 && isect.entry.t <= ray->t)
       || (isect.exit.hit && isect.exit.t > ray->t0 && isect.exit.t <= ray->t)) {
-    EmbreeIntersectionContext *uniform ctx =
-        (EmbreeIntersectionContext * uniform) args->context;
+    EmbreeRayQueryContextRegion *uniform ctx =
+        (EmbreeRayQueryContextRegion * uniform) args->context;
 
-    uint8 *uniform regionVisible = (uint8 * uniform) ctx->userPtr;
-    // We never mark hits because we want to find all hits along the ray to get
-    // all visible regions
+    uint8 *uniform regionVisible = (uint8 * uniform) ctx->regionVisible;
     regionVisible[primID] = 0xff;
   }
 }
@@ -106,9 +85,6 @@ task
 #endif
     )
 {
-  // TODO: merge the copy-paste here somewhat?
-  const uniform int32 spp = self->super.spp;
-
   ScreenSample screenSample;
   screenSample.z = inf;
   screenSample.alpha = 0.f;
@@ -182,30 +158,24 @@ task
         screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         if (world->regionScene) {
-          uniform EmbreeIntersectionContext context;
-          rtcInitIntersectContext(&context.ectx);
-          context.userPtr = tileRegionVisible;
-#if EMBREE_VERSION_MAJOR == 4
+          uniform EmbreeRayQueryContextRegion context;
+          rtcInitRayQueryContext(&context.ectx);
+          context.regionVisible = tileRegionVisible;
+
           uniform RTCIntersectArguments intersectArgs;
           rtcInitIntersectArguments(&intersectArgs);
           // Use a custom intersection function instead of a global filter
           // function, since global filter functions were removed in Embree4
           intersectArgs.intersect =
               (RTCIntersectFunctionN)Regions_intersect_kernel;
-          intersectArgs.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
+          intersectArgs.flags = RTC_RAY_QUERY_FLAG_COHERENT;
+          intersectArgs.feature_mask = (uniform RTCFeatureFlags)(
+              RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS);
           intersectArgs.context = &context.ectx;
 
           rtcIntersectV(world->regionScene,
               (varying RTCRayHit * uniform) & screenSample.ray,
               &intersectArgs);
-#else
-        context.ectx.flags = RTC_INTERSECT_CONTEXT_FLAG_COHERENT;
-        context.ectx.filter =
-            (RTCFilterFunctionN)markRegionVisibleFilterFunction;
-        rtcIntersectV(world->regionScene,
-            &context.ectx,
-            (varying RTCRayHit * uniform) & screenSample.ray);
-#endif
         }
       }
     }
@@ -261,18 +231,18 @@ export void DistributedRenderer_pick(const void *uniform _self,
 
   Ray ray;
   Camera_dispatch_initRay(camera, ray, cameraSample);
-  // ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen));
+  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen));
 
-  // Clip the ray to each region and trace the clipped ray to find the picked
-  // object
+  // Clip the ray to each region this rank owns and trace the clipped ray to
+  // find the picked object
   float closestHit = 1e20f;
-  for (uniform int i = 0; i < world->numRegions; ++i) {
+  for (uniform int i = 0; i < world->numLocalRegions; ++i) {
     // Separate ray per-region to allow clipping by the region's bounds
     Ray regionRay = ray;
     regionRay.t = min(ray.t, closestHit);
 
     const Intersections isect =
-        intersectBox(regionRay.org, regionRay.dir, world->regions[i]);
+        intersectBox(regionRay.org, regionRay.dir, world->localRegions[i]);
 
     if (isect.entry.t < isect.exit.t && isect.exit.t >= regionRay.t0
         && isect.entry.t <= regionRay.t) {
