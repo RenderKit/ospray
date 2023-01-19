@@ -13,25 +13,17 @@ concurrency:
 
 jobs:
 
-### ENV SETUP JOBS ###
-
-  download-dpcpp-gfx:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/get_dpcpp_gfx_linux.yml@main
-    with:
-      dpcpp-version: sycl-nightly/20221001
-      gfx-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12317/artifacts/Linux/Ubuntu/22.04/Release
-
 ### BUILD JOBS ###
 
   build-ubuntu2204-DG2-AOT:
-    needs: download-dpcpp-gfx
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/windows-dpcpp-gfx
     secrets: inherit
     with:
+      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
+      dpcpp-version: sycl-nightly/20221214
+      install-gfx-driver: true
+      submodules: true
       image: ubuntu:22.04
-      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
-      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
       # Would help to have a module that we can load for specific gfx/agama versions
       cmd: |
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
@@ -42,13 +34,14 @@ jobs:
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
   build-ubuntu2204-DG2-JIT:
-    needs: download-dpcpp-gfx
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/windows-dpcpp-gfx
     secrets: inherit
     with:
+      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
+      dpcpp-version: sycl-nightly/20221214
+      install-gfx-driver: true
+      submodules: true
       image: ubuntu:22.04
-      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
-      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
       # Would help to have a module that we can load for specific gfx/agama versions
       cmd: |
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
@@ -61,12 +54,15 @@ jobs:
 ### TEST JOBS ###
 
   test-ubuntu2204-DG2-AOT:
-    needs: [build-ubuntu2204-DG2-AOT, download-dpcpp-gfx]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    needs: [build-ubuntu2204-DG2-AOT]
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/windows-dpcpp-gfx
+    secrets: inherit
     with:
+      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
+      dpcpp-version: sycl-nightly/20221214
+      install-gfx-driver: true
+      submodules: true
       image: ubuntu:22.04
-      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
-      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
       options: --device=/dev/dri:/dev/dri
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-ubuntu2204-DG2-AOT
@@ -82,12 +78,15 @@ jobs:
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
   test-ubuntu2204-DG2-JIT:
-    needs: [build-ubuntu2204-DG2-JIT, download-dpcpp-gfx]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    needs: [build-ubuntu2204-DG2-JIT]
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/windows-dpcpp-gfx
+    secrets: inherit
     with:
+      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
+      dpcpp-version: sycl-nightly/20221214
+      install-gfx-driver: true
+      submodules: true
       image: ubuntu:22.04
-      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
-      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
       options: --device=/dev/dri:/dev/dri
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-ubuntu2204-DG2-JIT
