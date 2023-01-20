@@ -226,6 +226,14 @@ void MPIDistributedDevice::commit()
     maml::init(enableCompression);
     messaging::init(mpicommon::worker);
     maml::start();
+
+    // Pass down application's gpu selection (if any)
+    void *appSyclCtx =
+      static_cast<void *>(getParam<void *>("syclContext", nullptr));
+    internalDevice->setParam<void *>("syclContext", (void*)appSyclCtx);
+    void *appSyclDevice =
+      static_cast<void *>(getParam<void *>("syclDevice", nullptr));
+    internalDevice->setParam<void *>("syclDevice", (void*)appSyclDevice);
   }
 
   internalDevice->commit();
