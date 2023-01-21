@@ -11,11 +11,15 @@ namespace ospray {
 
 // C version ////////////////////////////////////////////
 
-inline ISPCRTMemoryView BufferSharedCreate(ISPCRTDevice device, size_t size)
+inline ISPCRTMemoryView BufferSharedCreate(ISPCRTContext context,
+    size_t size,
+    ISPCRTSharedMemoryAllocationHint allocHint =
+        ISPCRT_SM_HOST_DEVICE_READ_WRITE)
 {
   ISPCRTNewMemoryViewFlags flags;
   flags.allocType = ISPCRT_ALLOC_TYPE_SHARED;
-  return ispcrtNewMemoryView(device, nullptr, size, &flags);
+  flags.smHint = allocHint;
+  return ispcrtNewMemoryViewForContext(context, nullptr, size, &flags);
 }
 
 inline void BufferSharedDelete(ISPCRTMemoryView view)
@@ -29,10 +33,22 @@ template <typename T>
 struct BufferShared : public ispcrt::Array<T, ispcrt::AllocType::Shared>
 {
   using ispcrt::Array<T, ispcrt::AllocType::Shared>::sharedPtr;
-  BufferShared(ispcrt::Device &device);
-  BufferShared(ispcrt::Device &device, size_t size);
-  BufferShared(ispcrt::Device &device, const std::vector<T> &v);
-  BufferShared(ispcrt::Device &device, const T *data, size_t size);
+  BufferShared(ispcrt::Context &context,
+      ispcrt::SharedMemoryUsageHint allocHint =
+          ispcrt::SharedMemoryUsageHint::HostDeviceReadWrite);
+  BufferShared(ispcrt::Context &context,
+      size_t size,
+      ispcrt::SharedMemoryUsageHint allocHint =
+          ispcrt::SharedMemoryUsageHint::HostDeviceReadWrite);
+  BufferShared(ispcrt::Context &context,
+      const std::vector<T> &v,
+      ispcrt::SharedMemoryUsageHint allocHint =
+          ispcrt::SharedMemoryUsageHint::HostDeviceReadWrite);
+  BufferShared(ispcrt::Context &context,
+      const T *data,
+      size_t size,
+      ispcrt::SharedMemoryUsageHint allocHint =
+          ispcrt::SharedMemoryUsageHint::HostDeviceReadWrite);
 
   // TODO: We should move these up into the ISPCRT wrapper
   T *data();
@@ -50,26 +66,34 @@ struct BufferShared : public ispcrt::Array<T, ispcrt::AllocType::Shared>
 };
 
 template <typename T>
-BufferShared<T>::BufferShared(ispcrt::Device &device)
-    : ispcrt::Array<T, ispcrt::AllocType::Shared>(device)
+BufferShared<T>::BufferShared(
+    ispcrt::Context &context, ispcrt::SharedMemoryUsageHint allocHint)
+    : ispcrt::Array<T, ispcrt::AllocType::Shared>(context, allocHint)
 {}
 
 template <typename T>
-BufferShared<T>::BufferShared(ispcrt::Device &device, size_t size)
-    : ispcrt::Array<T, ispcrt::AllocType::Shared>(device, size)
-{}
+BufferShared<T>::BufferShared(ispcrt::Context &context,
+    size_t size,
+    ispcrt::SharedMemoryUsageHint allocHint)
+    : ispcrt::Array<T, ispcrt::AllocType::Shared>(context, size, allocHint)
+{
+}
 
 template <typename T>
-BufferShared<T>::BufferShared(ispcrt::Device &device, const std::vector<T> &v)
-    : ispcrt::Array<T, ispcrt::AllocType::Shared>(device, v.size())
+BufferShared<T>::BufferShared(ispcrt::Context &context,
+    const std::vector<T> &v,
+    ispcrt::SharedMemoryUsageHint allocHint)
+    : ispcrt::Array<T, ispcrt::AllocType::Shared>(context, v.size(), allocHint)
 {
   std::memcpy(sharedPtr(), v.data(), sizeof(T) * v.size());
 }
 
 template <typename T>
-BufferShared<T>::BufferShared(
-    ispcrt::Device &device, const T *data, size_t size)
-    : ispcrt::Array<T, ispcrt::AllocType::Shared>(device, size)
+BufferShared<T>::BufferShared(ispcrt::Context &context,
+    const T *data,
+    size_t size,
+    ispcrt::SharedMemoryUsageHint allocHint)
+    : ispcrt::Array<T, ispcrt::AllocType::Shared>(context, size, allocHint)
 {
   std::memcpy(sharedPtr(), data, sizeof(T) * size);
 }
@@ -129,7 +153,7 @@ T *BufferShared<T>::sharedPtr() const
 
 template <typename T, typename... Args>
 inline std::unique_ptr<BufferShared<T>> make_buffer_shared_unique(
-    Args &&... args)
+    Args &&...args)
 {
   return std::unique_ptr<BufferShared<T>>(
       new BufferShared<T>(std::forward<Args>(args)...));

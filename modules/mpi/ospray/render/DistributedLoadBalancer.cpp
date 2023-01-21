@@ -165,7 +165,8 @@ void DistributedLoadBalancer::renderFrame(
     // We use uint8 instead of bool to avoid hitting UB with differing "true"
     // values used by ISPC and C++
     BufferShared<uint8_t> regionVisible(
-        sparseFb->getISPCDevice().getIspcrtDevice(), numRegions * tiles.size());
+        sparseFb->getISPCDevice().getIspcrtContext(),
+        numRegions * tiles.size());
     std::memset(regionVisible.sharedPtr(), 0, regionVisible.size());
 
     // Compute visibility for the tasks we're rendering
@@ -240,7 +241,7 @@ void DistributedLoadBalancer::renderFrame(
           });
       activeTasks.erase(removeTasks, activeTasks.end());
       BufferShared<uint32_t> activeTasksShared(
-          sparseFb->getISPCDevice().getIspcrtDevice(), activeTasks);
+          sparseFb->getISPCDevice().getIspcrtContext(), activeTasks);
 
       renderer->renderRegionTasks(sparseFb,
           camera,

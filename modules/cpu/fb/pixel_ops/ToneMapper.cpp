@@ -73,7 +73,7 @@ LiveToneMapper::LiveToneMapper(FrameBufferView &_fbView,
     float d,
     bool acesColor)
     : AddStructShared(
-        _fbView.originalFB->getISPCDevice().getIspcrtDevice(), _fbView)
+        _fbView.originalFB->getISPCDevice().getIspcrtContext(), _fbView)
 {
   getSh()->super.processPixel =
       reinterpret_cast<ispc::LivePixelOp_processPixel>(

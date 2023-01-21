@@ -27,7 +27,7 @@ namespace ospray {
 namespace mpi {
 
 DistributedRenderer::DistributedRenderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device),
+    : AddStructShared(device.getIspcrtContext(), device),
       mpiGroup(mpicommon::worker.dup())
 {}
 

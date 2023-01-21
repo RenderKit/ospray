@@ -69,7 +69,7 @@ static std::map<RTCGeometryType, FeatureFlagsGeometry> curveFeatureFlags = {
 // Curves definitions ///////////////////////////////////////////////////////
 
 Curves::Curves(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device, FFG_NONE)
+    : AddStructShared(device.getIspcrtContext(), device, FFG_NONE)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =

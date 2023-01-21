@@ -11,7 +11,7 @@
 namespace ospray {
 
 VolumetricModel::VolumetricModel(api::ISPCDevice &device, Volume *_volume)
-    : AddStructShared(device.getIspcrtDevice(), device),
+    : AddStructShared(device.getIspcrtContext(), device),
       volumeAPI(_volume)
 #if OPENVKL_VERSION_MAJOR == 1
       ,

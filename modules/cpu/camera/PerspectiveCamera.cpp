@@ -10,7 +10,7 @@
 namespace ospray {
 
 PerspectiveCamera::PerspectiveCamera(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device, FFO_CAMERA_PERSPECTIVE)
+    : AddStructShared(device.getIspcrtContext(), device, FFO_CAMERA_PERSPECTIVE)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.initRay = reinterpret_cast<ispc::Camera_initRay>(

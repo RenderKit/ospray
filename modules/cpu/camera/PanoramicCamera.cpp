@@ -14,7 +14,7 @@ void *PanoramicCamera_initRay_addr();
 namespace ospray {
 
 PanoramicCamera::PanoramicCamera(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device, FFO_CAMERA_PANORAMIC)
+    : AddStructShared(device.getIspcrtContext(), device, FFO_CAMERA_PANORAMIC)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.initRay = reinterpret_cast<ispc::Camera_initRay>(

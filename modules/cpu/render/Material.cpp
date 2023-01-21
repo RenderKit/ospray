@@ -17,7 +17,7 @@ namespace ospray {
 Ref<MicrofacetAlbedoTables> Material::microfacetAlbedoTables = nullptr;
 
 Material::Material(api::ISPCDevice &device, const FeatureFlagsOther ffo)
-    : AddStructShared(device.getIspcrtDevice(), device), featureFlags(ffo)
+    : AddStructShared(device.getIspcrtContext(), device), featureFlags(ffo)
 {
   managedObjectType = OSP_MATERIAL;
 #ifndef OSPRAY_TARGET_SYCL

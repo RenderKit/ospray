@@ -12,7 +12,7 @@ namespace pathtracer {
 
 MetallicPaint::MetallicPaint(api::ISPCDevice &device)
     : AddStructShared(
-        device.getIspcrtDevice(), device, FFO_MATERIAL_METALLICPAINT)
+        device.getIspcrtContext(), device, FFO_MATERIAL_METALLICPAINT)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(

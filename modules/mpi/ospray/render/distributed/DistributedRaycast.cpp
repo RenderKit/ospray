@@ -46,7 +46,7 @@ static bool DETAILED_LOGGING = false;
 // DistributedRaycastRenderer definitions /////////////////////////////////
 
 DistributedRaycastRenderer::DistributedRaycastRenderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device),
+    : AddStructShared(device.getIspcrtContext(), device),
       mpiGroup(mpicommon::worker.dup())
 {
   DETAILED_LOGGING =

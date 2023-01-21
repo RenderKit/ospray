@@ -21,7 +21,7 @@ void *Mesh_getAreas_addr();
 namespace ospray {
 
 Mesh::Mesh(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device, FFG_NONE)
+    : AddStructShared(device.getIspcrtContext(), device, FFG_NONE)
 {
   getSh()->super.getAreas =
       reinterpret_cast<ispc::Geometry_GetAreasFct>(ispc::Mesh_getAreas_addr());

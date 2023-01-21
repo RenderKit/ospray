@@ -16,7 +16,7 @@ namespace ospray {
 class OSPRAY_SDK_INTERFACE TaskError
 {
  public:
-  TaskError(ispcrt::Device &ispcrtDevice, const vec2i &numTasks);
+  TaskError(ispcrt::Context &ispcrtContext, const vec2i &numTasks);
 
   // The default constructor will make an empty task error region
   TaskError() = default;

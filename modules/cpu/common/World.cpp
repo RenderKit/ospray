@@ -57,7 +57,7 @@ World::~World()
 }
 
 World::World(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device)
 {
   managedObjectType = OSP_WORLD;
 }
@@ -122,7 +122,7 @@ void World::commit()
 
     // Create shared buffers for instance pointers
     instanceArray = make_buffer_shared_unique<ispc::Instance *>(
-        getISPCDevice().getIspcrtDevice(),
+        getISPCDevice().getIspcrtContext(),
         sizeof(ispc::Instance *) * numInstances);
     getSh()->instances = instanceArray->sharedPtr();
 

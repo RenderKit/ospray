@@ -24,7 +24,7 @@ namespace ospray {
 // Renderer definitions ///////////////////////////////////////////////////////
 
 Renderer::Renderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device)
 {
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;
@@ -73,7 +73,7 @@ void Renderer::commit()
       featureFlags |= mat->getFeatureFlagsOther();
 
     materialArray = make_buffer_shared_unique<ispc::Material *>(
-        getISPCDevice().getIspcrtDevice(),
+        getISPCDevice().getIspcrtContext(),
         createArrayOfSh<ispc::Material>(*materialData));
     getSh()->numMaterials = materialArray->size();
     getSh()->material = materialArray->sharedPtr();

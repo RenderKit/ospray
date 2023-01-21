@@ -43,7 +43,7 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
 // Group definitions ////////////////////////////////////////////////////////
 
 Group::Group(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device)
 {
   managedObjectType = OSP_GROUP;
 }
@@ -136,7 +136,7 @@ void Group::commit()
         buildQuality);
 
     geometricModelsArray = make_buffer_shared_unique<ispc::GeometricModel *>(
-        getISPCDevice().getIspcrtDevice(),
+        getISPCDevice().getIspcrtContext(),
         createArrayOfSh<ispc::GeometricModel>(*geometricModels));
     getSh()->geometricModels = geometricModelsArray->sharedPtr();
 
@@ -153,7 +153,7 @@ void Group::commit()
         buildQuality);
 
     volumetricModelsArray = make_buffer_shared_unique<ispc::VolumetricModel *>(
-        getISPCDevice().getIspcrtDevice(),
+        getISPCDevice().getIspcrtContext(),
         createArrayOfSh<ispc::VolumetricModel>(*volumetricModels));
     getSh()->volumetricModels = volumetricModelsArray->sharedPtr();
 
@@ -171,7 +171,7 @@ void Group::commit()
         buildQuality);
 
     clipModelsArray = make_buffer_shared_unique<ispc::GeometricModel *>(
-        getISPCDevice().getIspcrtDevice(),
+        getISPCDevice().getIspcrtContext(),
         createArrayOfSh<ispc::GeometricModel>(*clipModels));
     getSh()->clipModels = clipModelsArray->sharedPtr();
 

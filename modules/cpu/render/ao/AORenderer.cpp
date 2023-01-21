@@ -16,7 +16,7 @@ constexpr sycl::specialization_id<ospray::FeatureFlags> specFeatureFlags;
 namespace ospray {
 
 AORenderer::AORenderer(api::ISPCDevice &device, int defaultNumSamples)
-    : AddStructShared(device.getIspcrtDevice(), device),
+    : AddStructShared(device.getIspcrtContext(), device),
       aoSamples(defaultNumSamples)
 {}
 

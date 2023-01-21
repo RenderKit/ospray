@@ -57,7 +57,7 @@ static ispc::DebugRendererType typeFromString(const std::string &name)
 // DebugRenderer definitions ////////////////////////////////////////////////
 
 DebugRenderer::DebugRenderer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device)
 {}
 
 std::string DebugRenderer::toString() const

@@ -27,7 +27,7 @@ namespace ospray {
 // Volume definitions ////////////////////////////////////////////////////////
 
 Volume::Volume(api::ISPCDevice &device, const std::string &type)
-    : AddStructShared(device.getIspcrtDevice(), device),
+    : AddStructShared(device.getIspcrtContext(), device),
       vklType(type),
       featureFlags(FFV_VOLUME)
 {

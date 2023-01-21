@@ -43,8 +43,9 @@ Data::Data(api::ISPCDevice &device, OSPDataType type, const vec3ul &numItems)
       byteStride(0)
 {
   // TODO: is this pad out by 16 still needed?
-  view = make_buffer_shared_unique<char>(
-      device.getIspcrtDevice(), size() * sizeOf(type) + 16);
+  view = make_buffer_shared_unique<char>(device.getIspcrtContext(),
+      size() * sizeOf(type) + 16,
+      ispcrt::SharedMemoryUsageHint::HostWriteDeviceRead);
   addr = view->data();
 
   init();
@@ -83,6 +84,7 @@ void Data::init()
   // Check if the shared data the app gave is actually in USM, if not we still
   // need to make a copy of it internally so it's accessible on the GPU
   if (shared) {
+    ispcrt::Context &ispcrtContext = getISPCDevice().getIspcrtContext();
     ispcrt::Device &ispcrtDevice = getISPCDevice().getIspcrtDevice();
     auto memType = ispcrtDevice.getMemoryAllocType(addr);
 
@@ -90,8 +92,9 @@ void Data::init()
       const size_t sizeBytes = byteStride.z * numItems.z;
       shared = false;
       // TODO: is the padding still needed?
-      view = make_buffer_shared_unique<char>(
-          getISPCDevice().getIspcrtDevice(), sizeBytes + 16);
+      view = make_buffer_shared_unique<char>(ispcrtContext,
+          sizeBytes + 16,
+          ispcrt::SharedMemoryUsageHint::HostWriteDeviceRead);
       addr = view->data();
       std::memcpy(addr, appSharedPtr, sizeBytes);
     }

@@ -21,7 +21,7 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
     const uint32 channels,
     const std::vector<uint32_t> &_tileIDs,
     const bool overrideUseTaskAccumIDs)
-    : AddStructShared(device.getIspcrtDevice(),
+    : AddStructShared(device.getIspcrtContext(),
         device,
         _size,
         _colorBufferFormat,
@@ -44,7 +44,7 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels,
     const bool overrideUseTaskAccumIDs)
-    : AddStructShared(device.getIspcrtDevice(),
+    : AddStructShared(device.getIspcrtContext(),
         device,
         _size,
         _colorBufferFormat,
@@ -232,10 +232,9 @@ uint32_t SparseFrameBuffer::getTileIndexForTask(uint32_t taskID) const
 void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
 {
   // (Re-)configure the sparse framebuffer based on the tileIDs we're passed
-
   if (!_tileIDs.empty()) {
     tileIDs = make_buffer_shared_unique<uint32_t>(
-        getISPCDevice().getIspcrtDevice(), _tileIDs.size());
+        getISPCDevice().getIspcrtContext(), _tileIDs.size());
     std::memcpy(
         tileIDs->data(), _tileIDs.data(), sizeof(uint32_t) * _tileIDs.size());
     numRenderTasks =
@@ -247,7 +246,7 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
 
   if (hasVarianceBuffer && !_tileIDs.empty()) {
     taskErrorBuffer = make_buffer_shared_unique<float>(
-        getISPCDevice().getIspcrtDevice(), numRenderTasks.long_product());
+        getISPCDevice().getIspcrtContext(), numRenderTasks.long_product());
     std::fill(taskErrorBuffer->begin(), taskErrorBuffer->end(), inf);
   } else {
     taskErrorBuffer = nullptr;
@@ -255,7 +254,7 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
 
   if (!_tileIDs.empty()) {
     tiles = make_buffer_shared_unique<Tile>(
-        getISPCDevice().getIspcrtDevice(), tileIDs->size());
+        getISPCDevice().getIspcrtContext(), tileIDs->size());
     const vec2f rcpSize = rcp(vec2f(size));
     for (size_t i = 0; i < tileIDs->size(); ++i) {
       vec2i tilePos;
@@ -277,21 +276,21 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
   const size_t numPixels = tiles ? tileIDs->size() * TILE_SIZE * TILE_SIZE : 0;
   if (hasVarianceBuffer && !_tileIDs.empty()) {
     varianceBuffer = make_buffer_shared_unique<vec4f>(
-        getISPCDevice().getIspcrtDevice(), numPixels);
+        getISPCDevice().getIspcrtContext(), numPixels);
   } else {
     varianceBuffer = nullptr;
   }
 
   if (hasAccumBuffer && !_tileIDs.empty()) {
     accumulationBuffer = make_buffer_shared_unique<vec4f>(
-        getISPCDevice().getIspcrtDevice(), numPixels);
+        getISPCDevice().getIspcrtContext(), numPixels);
   } else {
     accumulationBuffer = nullptr;
   }
 
   if ((hasAccumBuffer || useTaskAccumIDs) && !_tileIDs.empty()) {
     taskAccumID = make_buffer_shared_unique<int>(
-        getISPCDevice().getIspcrtDevice(), getTotalRenderTasks());
+        getISPCDevice().getIspcrtContext(), getTotalRenderTasks());
     std::memset(taskAccumID->begin(), 0, taskAccumID->size() * sizeof(int));
   } else {
     taskAccumID = nullptr;
@@ -302,14 +301,14 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
   // variance termination
   if (!_tileIDs.empty()) {
     renderTaskIDs = make_buffer_shared_unique<uint32_t>(
-        getISPCDevice().getIspcrtDevice(), getTotalRenderTasks());
+        getISPCDevice().getIspcrtContext(), getTotalRenderTasks());
     std::iota(renderTaskIDs->begin(), renderTaskIDs->end(), 0);
   } else {
     renderTaskIDs = nullptr;
   }
   if (hasVarianceBuffer && !_tileIDs.empty()) {
     activeTaskIDs = make_buffer_shared_unique<uint32_t>(
-        getISPCDevice().getIspcrtDevice(), getTotalRenderTasks());
+        getISPCDevice().getIspcrtContext(), getTotalRenderTasks());
   } else {
     activeTaskIDs = nullptr;
   }

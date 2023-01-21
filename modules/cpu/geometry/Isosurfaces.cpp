@@ -24,7 +24,7 @@ namespace ospray {
 
 Isosurfaces::Isosurfaces(api::ISPCDevice &device)
     : AddStructShared(
-        device.getIspcrtDevice(), device, FFG_ISOSURFACE | FFG_USER_GEOMETRY)
+        device.getIspcrtContext(), device, FFG_ISOSURFACE | FFG_USER_GEOMETRY)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect = ispc::Isosurfaces_postIntersect_addr();

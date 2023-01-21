@@ -22,7 +22,7 @@ std::string ImageOp::toString() const
 
 LivePixelOp::LivePixelOp(FrameBufferView &_fbView)
     : AddStructShared(
-        _fbView.originalFB->getISPCDevice().getIspcrtDevice(), _fbView)
+        _fbView.originalFB->getISPCDevice().getIspcrtContext(), _fbView)
 {}
 
 LiveFrameOp::LiveFrameOp(FrameBufferView &_fbView) : LiveImageOp(_fbView) {}

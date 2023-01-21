@@ -19,7 +19,7 @@ ISPCRTMemoryView QuadLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
   ISPCRTMemoryView view = StructSharedCreate<ispc::QuadLight>(
-      getISPCDevice().getIspcrtDevice().handle());
+      getISPCDevice().getIspcrtContext().handle());
   ispc::QuadLight *sh = (ispc::QuadLight *)ispcrtSharedPtr(view);
 #ifndef OSPRAY_TARGET_SYCL
   sh->super.sample =

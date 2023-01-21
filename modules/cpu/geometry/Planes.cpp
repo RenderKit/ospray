@@ -17,7 +17,7 @@ namespace ospray {
 
 Planes::Planes(api::ISPCDevice &device)
     : AddStructShared(
-        device.getIspcrtDevice(), device, FFG_PLANE | FFG_USER_GEOMETRY)
+        device.getIspcrtContext(), device, FFG_PLANE | FFG_USER_GEOMETRY)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =

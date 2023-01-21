@@ -12,7 +12,7 @@ namespace ospray {
 namespace pathtracer {
 
 Metal::Metal(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device, FFO_MATERIAL_METAL)
+    : AddStructShared(device.getIspcrtContext(), device, FFO_MATERIAL_METAL)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.getBSDF =

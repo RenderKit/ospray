@@ -17,13 +17,13 @@ void LUTPixelFilter_buildLUT(void *self);
 namespace ospray {
 
 PixelFilter::PixelFilter(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device)
 {}
 
 LUTPixelFilter::LUTPixelFilter(const float size,
     ispc::LUTPixelFilterType lutFilterType,
     api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device)
 {
   getSh()->super.width = size;
   getSh()->super.type = ispc::PIXEL_FILTER_TYPE_LUT;

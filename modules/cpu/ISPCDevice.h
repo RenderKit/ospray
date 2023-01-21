@@ -159,6 +159,11 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     return ispcrtDevice;
   }
 
+  ispcrt::Context &getIspcrtContext()
+  {
+    return ispcrtContext;
+  }
+
 #ifdef OSPRAY_TARGET_SYCL
   sycl::queue *getSyclQueue()
   {

@@ -33,7 +33,7 @@ constexpr sycl::specialization_id<ospray::FeatureFlags> specFeatureFlags;
 namespace ospray {
 
 PathTracer::PathTracer(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtContext(), device)
 {}
 
 std::string PathTracer::toString() const

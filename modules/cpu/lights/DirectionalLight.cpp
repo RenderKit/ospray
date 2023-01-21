@@ -64,7 +64,7 @@ ISPCRTMemoryView DirectionalLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
   ISPCRTMemoryView view = StructSharedCreate<ispc::DirectionalLight>(
-      getISPCDevice().getIspcrtDevice().handle());
+      getISPCDevice().getIspcrtContext().handle());
   ispc::DirectionalLight *sh = (ispc::DirectionalLight *)ispcrtSharedPtr(view);
   sh->set(visible, instance, direction, irradiance, cosAngle);
   return view;

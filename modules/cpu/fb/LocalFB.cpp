@@ -39,14 +39,14 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
     const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
-    : AddStructShared(device.getIspcrtDevice(),
+    : AddStructShared(device.getIspcrtContext(),
         device,
         _size,
         _colorBufferFormat,
         channels,
         FFO_FB_LOCAL),
       numRenderTasks(divRoundUp(size, getRenderTaskSize())),
-      taskErrorRegion(device.getIspcrtDevice(),
+      taskErrorRegion(device.getIspcrtContext(),
           hasVarianceBuffer ? getNumRenderTasks() : vec2i(0))
 {
   const size_t pixelBytes = sizeOf(_colorBufferFormat);
@@ -54,55 +54,55 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
 
   if (getColorBufferFormat() != OSP_FB_NONE) {
     colorBuffer = make_buffer_shared_unique<uint8_t>(
-        device.getIspcrtDevice(), pixelBytes * numPixels);
+        device.getIspcrtContext(), pixelBytes * numPixels);
   }
 
   if (hasDepthBuffer)
     depthBuffer =
-        make_buffer_shared_unique<float>(device.getIspcrtDevice(), numPixels);
+        make_buffer_shared_unique<float>(device.getIspcrtContext(), numPixels);
 
   if (hasAccumBuffer) {
     accumBuffer =
-        make_buffer_shared_unique<vec4f>(device.getIspcrtDevice(), numPixels);
+        make_buffer_shared_unique<vec4f>(device.getIspcrtContext(), numPixels);
 
     taskAccumID = make_buffer_shared_unique<int32_t>(
-        device.getIspcrtDevice(), getTotalRenderTasks());
+        device.getIspcrtContext(), getTotalRenderTasks());
     std::memset(taskAccumID->data(), 0, taskAccumID->size() * sizeof(int32_t));
   }
 
   if (hasVarianceBuffer)
     varianceBuffer =
-        make_buffer_shared_unique<vec4f>(device.getIspcrtDevice(), numPixels);
+        make_buffer_shared_unique<vec4f>(device.getIspcrtContext(), numPixels);
 
   if (hasNormalBuffer)
     normalBuffer =
-        make_buffer_shared_unique<vec3f>(device.getIspcrtDevice(), numPixels);
+        make_buffer_shared_unique<vec3f>(device.getIspcrtContext(), numPixels);
 
   if (hasAlbedoBuffer)
     albedoBuffer =
-        make_buffer_shared_unique<vec3f>(device.getIspcrtDevice(), numPixels);
+        make_buffer_shared_unique<vec3f>(device.getIspcrtContext(), numPixels);
 
   if (hasPrimitiveIDBuffer)
     primitiveIDBuffer = make_buffer_shared_unique<uint32_t>(
-        device.getIspcrtDevice(), numPixels);
+        device.getIspcrtContext(), numPixels);
 
   if (hasObjectIDBuffer)
     objectIDBuffer = make_buffer_shared_unique<uint32_t>(
-        device.getIspcrtDevice(), numPixels);
+        device.getIspcrtContext(), numPixels);
 
   if (hasInstanceIDBuffer)
     instanceIDBuffer = make_buffer_shared_unique<uint32_t>(
-        device.getIspcrtDevice(), numPixels);
+        device.getIspcrtContext(), numPixels);
 
   // TODO: Better way to pass the task IDs that doesn't require just storing
   // them all? Maybe as blocks/tiles similar to when we just had tiles? Will
   // make task ID lookup more expensive for sparse case though
   renderTaskIDs = make_buffer_shared_unique<uint32_t>(
-      device.getIspcrtDevice(), getTotalRenderTasks());
+      device.getIspcrtContext(), getTotalRenderTasks());
   std::iota(renderTaskIDs->begin(), renderTaskIDs->end(), 0);
   if (hasVarianceBuffer)
     activeTaskIDs = make_buffer_shared_unique<uint32_t>(
-        device.getIspcrtDevice(), getTotalRenderTasks());
+        device.getIspcrtContext(), getTotalRenderTasks());
 
   // TODO: Could use TBB parallel sort here if it's exposed through the rkcommon
   // tasking system
