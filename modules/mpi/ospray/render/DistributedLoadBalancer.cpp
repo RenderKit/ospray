@@ -145,12 +145,9 @@ void DistributedLoadBalancer::renderFrame(
   // parallel for here so we don't end up having to do a more sync/blocking
   // style render
 #ifdef OSPRAY_TARGET_SYCL
-  /* TODO For GPU: Need further refactoring to run rendering async for multiple
+  /* For GPU: Need further refactoring to run rendering async for multiple
    * region per rank configs. Right now this is serial to avoid a race condition
-   * on the SYCL queue. Can do a separate parallel loop ahead of time to build
-   * the buffer shared of active tasks for each layer. Then all the rendering
-   * kernels for each layer can be submitted on the queue and we wait on all
-   * them to finish.
+   * on the SYCL queue.
    */
   tasking::serial_for(dfb->getSparseLayerCount(), [&](size_t layer) {
 #else
@@ -167,7 +164,6 @@ void DistributedLoadBalancer::renderFrame(
 
     // We use uint8 instead of bool to avoid hitting UB with differing "true"
     // values used by ISPC and C++
-    // std::vector<uint8_t> regionVisible(numRegions * tiles.size(), 0);
     BufferShared<uint8_t> regionVisible(
         sparseFb->getISPCDevice().getIspcrtDevice(), numRegions * tiles.size());
     std::memset(regionVisible.sharedPtr(), 0, regionVisible.size());
@@ -196,7 +192,7 @@ void DistributedLoadBalancer::renderFrame(
           return;
         }
 
-        // TODO: Would be nice to not copy here, but not sure about makign the
+        // TODO: Would be nice to not copy here, but not sure about making the
         // tiles modifiable either in SparseFrameBuffer::getTile.
         Tile bgtile = tiles[i];
 
@@ -439,43 +435,49 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
           taskTileIDs.push_back(tileID);
         }
       }
-      sparseFb->setTiles(taskTileIDs);
+      // If all the tiles we were assigned are already finished due to adaptive
+      // termination we have nothing to render locally so just mark the tasks
+      // complete
+      if (!taskTileIDs.empty()) {
+        sparseFb->setTiles(taskTileIDs);
 
-      // Set the right accumID for the tiles we're going to render
-      // TODO: would be nice if there was a more efficient way to run this as
-      // well.
-      if (sparseFbTrackAccumIDs) {
-        for (uint32_t i = 0; i < sparseFb->getTotalRenderTasks(); ++i) {
-          sparseFb->setTaskAccumID(i, dfb->getFrameID());
+        // Set the right accumID for the tiles we're going to render
+        // TODO: would be nice if there was a more efficient way to run this as
+        // well.
+        if (sparseFbTrackAccumIDs) {
+          for (uint32_t i = 0; i < sparseFb->getTotalRenderTasks(); ++i) {
+            sparseFb->setTaskAccumID(i, dfb->getFrameID());
+          }
         }
-      }
 
-      renderer->renderTasks(sparseFb.get(),
-          camera,
-          world,
-          perFrameData,
-          sparseFb->getRenderTaskIDs()
+        renderer->renderTasks(sparseFb.get(),
+            camera,
+            world,
+            perFrameData,
+            sparseFb->getRenderTaskIDs()
 #ifdef OSPRAY_TARGET_SYCL
-              ,
-          *syclQueue
+                ,
+            *syclQueue
 #endif
-      );
+        );
 
-      // TODO: Now the tile setting happens as a bulk-sync operation after
-      // rendering, because we still need to send them through the compositing
-      // pipeline. The ISPC-side rendering code doesn't know about this and in
-      // the future wouldn't be able to do it
-      // One option with the Dynamic LB would be to at least ping-poing
-      // sparseFb's, one is being rendered into while tiles from the previous
-      // task set are sent out
-      const utility::ArrayView<Tile> tiles = sparseFb->getTiles();
-      tasking::serial_for(tiles.size(), [&](size_t i) {
-        // TODO: Same note as distributed case, would be nice here to not have
-        // to copy the tile to change the accum ID.
-        Tile tile = tiles[i];
-        tile.accumID = dfb->getFrameID();
-        dfb->setTile(tile);
-      });
+        // TODO: Now the tile setting happens as a bulk-sync operation after
+        // rendering, because we still need to send them through the compositing
+        // pipeline. The ISPC-side rendering code doesn't know about this and in
+        // the future wouldn't be able to do it
+        // One option with the Dynamic LB would be to at least ping-poing
+        // sparseFb's, one is being rendered into while tiles from the previous
+        // task set are sent out
+        const utility::ArrayView<Tile> tiles = sparseFb->getTiles();
+        tasking::parallel_for(tiles.size(), [&](size_t i) {
+          // TODO: Same note as distributed case, would be nice here to not have
+          // to copy the tile to change the accum ID.
+          Tile tile = tiles[i];
+          tile.accumID = dfb->getFrameID();
+          dfb->setTile(tile);
+        });
+      }
+      // Mark the set of tasks as complete
       dynamicLB->sendTerm(currentWorkItem.ntasks);
       terminatedTiles = terminatedTiles + currentWorkItem.ntasks;
     }

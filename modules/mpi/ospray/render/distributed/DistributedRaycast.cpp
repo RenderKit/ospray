@@ -116,8 +116,6 @@ void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
   const uint32_t *taskIDsPtr = taskIDs.data();
   const size_t numTasks = taskIDs.size();
 
-  // TODO: Later want to return this event so the caller can wait on it so we
-  // can still render multiple regions in parallel
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
     const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
     cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {

@@ -14,7 +14,7 @@ if (OSPRAY_ENABLE_APPS_TUTORIALS)
     ${MPI_C_LIBRARIES})
 
   target_include_directories(ospMPIDistribTutorial PRIVATE
-    $<BUILD_INTERFACE:${MPI_C_INCLUDE_PATH}>)
+    ${MPI_C_INCLUDE_DIRS})
 
   install(TARGETS ospMPIDistribTutorial
       DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -50,7 +50,7 @@ if (OSPRAY_ENABLE_APPS_TUTORIALS)
     ${MPI_C_LIBRARIES})
 
   target_include_directories(ospMPIDistribTutorialAsync PRIVATE
-    $<BUILD_INTERFACE:${MPI_C_INCLUDE_PATH}>)
+    ${MPI_C_INCLUDE_DIRS})
 
   install(TARGETS ospMPIDistribTutorialAsync
       DESTINATION ${CMAKE_INSTALL_BINDIR}

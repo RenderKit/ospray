@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "DistributedRendererShared.h"
+#include "render/RendererShared.h"
 
 #ifdef __cplusplus
 namespace ispc {
@@ -11,7 +11,7 @@ namespace ispc {
 
 struct DistributedRaycastRenderer
 {
-  DistributedRenderer super;
+  Renderer super;
   int aoSamples;
   float aoRadius;
   bool shadowsEnabled;

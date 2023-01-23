@@ -10,8 +10,7 @@
 #include "render/distributed/DistributedRenderer_ispc.h"
 #else
 namespace ispc {
-SYCL_EXTERNAL void DR_default_computeRegionVisibility(
-    DistributedRenderer *uniform self,
+SYCL_EXTERNAL void DR_default_computeRegionVisibility(Renderer *uniform self,
     SparseFB *uniform fb,
     Camera *uniform camera,
     DistributedWorld *uniform world,

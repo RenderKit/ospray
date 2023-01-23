@@ -14,12 +14,14 @@ TEST_P(MPIFromOsprayTesting, test_scenes)
   PerformRenderTest();
 }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
 INSTANTIATE_TEST_SUITE_P(MPIDistribTestScenesVolumes,
     MPIFromOsprayTesting,
     ::testing::Combine(
         ::testing::Values(
             "gravity_spheres_isosurface", "vdb_volume", "particle_volume"),
         ::testing::Values(1)));
+#endif
 
 INSTANTIATE_TEST_SUITE_P(MPIDistribTestScenesGeometry,
     MPIFromOsprayTesting,

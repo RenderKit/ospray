@@ -129,7 +129,7 @@ inline float computeAO(const DistributedRaycastRenderer *uniform self,
 
   for (uniform int i = 0; i < sampleCnt; i++) {
     const vec2f halton =
-        HaltonSequence_get2D(self->super.super.mathConstants, accumID + i);
+        HaltonSequence_get2D(self->super.mathConstants, accumID + i);
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
@@ -234,7 +234,7 @@ vec4f DRR_shadeSurface(const DistributedRaycastRenderer *uniform self,
 #endif
 }
 
-SYCL_EXTERNAL void DRR_renderRegionSample(DistributedRenderer *uniform _self,
+SYCL_EXTERNAL void DRR_renderRegionSample(Renderer *uniform _self,
     SparseFB *uniform fb,
     DistributedWorld *uniform world,
     const box3f *uniform region,
@@ -289,7 +289,7 @@ SYCL_EXTERNAL void DRR_renderRegionSample(DistributedRenderer *uniform _self,
     DifferentialGeometry dg;
     if (haveGeometryHit) {
       postIntersect(&world->super,
-          &self->super.super,
+          &self->super,
           dg,
           geomRay,
           DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
@@ -321,7 +321,7 @@ SYCL_EXTERNAL void DRR_renderRegionSample(DistributedRenderer *uniform _self,
       int iy = sample.sampleID.y % 4;
 
       int patternID = ix + 4 * iy;
-      jitter += Halton_sample3(self->super.super.mathConstants, patternID);
+      jitter += Halton_sample3(self->super.mathConstants, patternID);
       if (jitter > 1.f) {
         jitter -= 1.f;
       }
@@ -388,7 +388,7 @@ SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(
     const void *uniform _taskIDs,
     const int taskIndex0)
 {
-  DistributedRenderer *uniform self = (DistributedRenderer * uniform) _self;
+  Renderer *uniform self = (Renderer * uniform) _self;
   SparseFB *uniform fb = (SparseFB * uniform) _fb;
   Camera *uniform camera = (Camera * uniform) _camera;
   DistributedWorld *uniform world = (DistributedWorld * uniform) _world;
@@ -407,7 +407,7 @@ export void DistributedRaycast_renderRegionToTileTask(void *uniform _self,
     void *uniform _taskIDs,
     uniform uint32 numTasks)
 {
-  DistributedRenderer *uniform self = (DistributedRenderer * uniform) _self;
+  Renderer *uniform self = (Renderer * uniform) _self;
   SparseFB *uniform fb = (SparseFB * uniform) _fb;
   Camera *uniform camera = (Camera * uniform) _camera;
   DistributedWorld *uniform world = (DistributedWorld * uniform) _world;

@@ -49,9 +49,7 @@ struct DistributedWorld : public AddStructShared<World, ispc::DistributedWorld>
 
  public:
   Ref<const DataT<box3f>> localRegions;
-  // TODO: For picking myRegions needs to be in USM
   std::vector<rkcommon::math::box3f> myRegions;
-
   // The global list of unique regions across all nodes, (including this
   // one), sorted by region id.
   std::vector<box3f> allRegions;

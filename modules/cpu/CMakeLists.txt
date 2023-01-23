@@ -391,7 +391,7 @@ if (OSPRAY_MODULE_CPU)
 
     target_compile_definitions(ospray_module_cpu
     PUBLIC
-      -DOSPRAY_ENABLE_VOLUMES
+      OSPRAY_ENABLE_VOLUMES
     )
   endif()
 endif()
@@ -486,6 +486,8 @@ if (OSPRAY_MODULE_GPU)
     programIndex=0
   )
 
+  ospray_install_library(ospray_module_gpu_kernels lib)
+
   add_library(ospray_module_gpu SHARED
       ${OSPRAY_CPP_SOURCES})
 
@@ -494,7 +496,7 @@ if (OSPRAY_MODULE_GPU)
     CXX_STANDARD_REQUIRED ON)
 
   target_link_libraries(ospray_module_gpu
-    PRIVATE
+    PUBLIC
       ospray_module_gpu_kernels
   )
 

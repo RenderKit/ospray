@@ -5,7 +5,7 @@
 task
 #endif
     static void
-    DR_default_renderRegionToTile(DistributedRenderer *uniform self,
+    DR_default_renderRegionToTile(Renderer *uniform self,
         SparseFB *uniform fb,
         Camera *uniform camera,
         DistributedWorld *uniform world,
@@ -18,7 +18,7 @@ task
 #endif
     )
 {
-  const uniform int32 spp = self->super.spp;
+  const uniform int32 spp = self->spp;
 
   ScreenSample screenSample;
   screenSample.z = inf;
@@ -58,8 +58,7 @@ task
       // set ray t value for early ray termination (from maximum depth texture)
       vec2f center =
           make_vec2f(screenSample.sampleID.x, screenSample.sampleID.y) + 0.5f;
-      const float tMax =
-          Renderer_getMaxDepth(&self->super, center * fb->super.rcpSize);
+      const float tMax = Renderer_getMaxDepth(self, center * fb->super.rcpSize);
       vec3f col = make_vec3f(0.f);
       float alpha = 0.f;
       vec3f normal = make_vec3f(0.f);
@@ -69,8 +68,7 @@ task
       for (uniform uint32 s = 0; s < spp; s++) {
         const float pixel_du = Halton_sample2(startSampleID + s);
         const float pixel_dv = CranleyPattersonRotation(
-            Halton_sample3(self->super.mathConstants, startSampleID + s),
-            1.f / 6.f);
+            Halton_sample3(self->mathConstants, startSampleID + s), 1.f / 6.f);
         screenSample.sampleID.z = startSampleID + s;
 
         cameraSample.screen.x =

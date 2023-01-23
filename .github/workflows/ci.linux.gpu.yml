@@ -16,7 +16,7 @@ jobs:
 ### BUILD JOBS ###
 
   build-ubuntu2204-DG2-AOT:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/windows-dpcpp-gfx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
@@ -34,7 +34,7 @@ jobs:
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
   build-ubuntu2204-DG2-JIT:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/windows-dpcpp-gfx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
@@ -51,29 +51,30 @@ jobs:
       artifact-out: build-ubuntu2204-DG2-JIT
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
-  build-ubuntu2204-DG2-AOT-mpi:
-    needs: download-dpcpp-gfx
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+  build-ubuntu2204-DG2-JIT-mpi:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/support_oneapi_icx
     secrets: inherit
     with:
+      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
+      dpcpp-version: intel/2023.0
+      install-gfx-driver: true
+      submodules: true
       image: ubuntu:22.04
-      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
-      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
-      # Would help to have a module that we can load for specific gfx/agama versions
       cmd: |
-        apt install -y mpich libmpich-dev
-        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
-        export CC=clang
-        export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git -DEMBREE_BRANCH=devel -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=will/embree4 -DRKCOMMON_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git -DRKCOMMON_BRANCH=will/rkmath-tweaks -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
-      artifact-out: build-ubuntu2204-DG2-AOT-mpi
+        sudo apt remove openmpi-* libopenmpi3 -y
+        module load level-zero/1.9.4
+        module load mpi
+        export CC=icx
+        export CXX=icpx
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git -DEMBREE_BRANCH=mpawl/ospray-ci -DOPENVKL_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git -DOPENVKL_BRANCH=mpawl/embree4 -DRKCOMMON_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.rkcommon.git -DRKCOMMON_BRANCH=devel -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
+      artifact-out: build-ubuntu2204-DG2-JIT-mpi
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 ### TEST JOBS ###
 
   test-ubuntu2204-DG2-AOT:
     needs: [build-ubuntu2204-DG2-AOT]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/windows-dpcpp-gfx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
@@ -97,7 +98,7 @@ jobs:
 
   test-ubuntu2204-DG2-JIT:
     needs: [build-ubuntu2204-DG2-JIT]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/windows-dpcpp-gfx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
@@ -118,3 +119,27 @@ jobs:
         export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
+
+  test-ubuntu2204-DG2-JIT-mpi:
+    needs: [build-ubuntu2204-DG2-JIT-mpi]
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/support_oneapi_icx
+    secrets: inherit
+    with:
+      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
+      dpcpp-version: intel/2023.0
+      install-gfx-driver: true
+      submodules: true
+      image: ubuntu:22.04
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '[ "Linux", "docker", "dg2" ]'
+      artifact-in: build-ubuntu2204-DG2-JIT-mpi
+      artifact-out: test-ubuntu2204-DG2-JIT-mpi
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        sudo apt remove openmpi-* libopenmpi3 -y
+        module load level-zero/1.9.4
+        module load mpi
+        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI

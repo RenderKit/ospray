@@ -5,12 +5,6 @@
 #ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "camera/OrthographicCamera_ispc.h"
-#else
-namespace ispc {
-void *OrthographicCamera_initRay_addr();
-void OrthographicCamera_projectBox(
-    void *_self, const void *_box, void *_projection);
-} // namespace ispc
 #endif
 
 namespace ospray {
@@ -57,7 +51,69 @@ void OrthographicCamera::commit()
 box3f OrthographicCamera::projectBox(const box3f &b) const
 {
   box3f projection;
-  ispc::OrthographicCamera_projectBox(getSh(), &b, &projection);
+  // normalize to image plane size
+  const vec3f dun = getSh()->du_size / dot(getSh()->du_size, getSh()->du_size);
+  const vec3f dvn = getSh()->dv_up / dot(getSh()->dv_up, getSh()->dv_up);
+
+  vec3f projectedPt(-1.f, -1.f, 1e20f);
+  for (uint32_t i = 0; i < 8; ++i) {
+    // Get the point we should be projecting
+    vec3f p;
+    switch (i) {
+    case 0:
+      p = b.lower;
+      break;
+    case 1:
+      p.x = b.upper.x;
+      p.y = b.lower.y;
+      p.z = b.lower.z;
+      break;
+    case 2:
+      p.x = b.upper.x;
+      p.y = b.upper.y;
+      p.z = b.lower.z;
+      break;
+    case 3:
+      p.x = b.lower.x;
+      p.y = b.upper.y;
+      p.z = b.lower.z;
+      break;
+    case 4:
+      p.x = b.lower.x;
+      p.y = b.lower.y;
+      p.z = b.upper.z;
+      break;
+    case 5:
+      p.x = b.upper.x;
+      p.y = b.lower.y;
+      p.z = b.upper.z;
+      break;
+    case 6:
+      p = b.upper;
+      break;
+    case 7:
+      p.x = b.lower.x;
+      p.y = b.upper.y;
+      p.z = b.upper.z;
+      break;
+    }
+
+    // Project the point on to the film plane
+    const float depth = dot(p - getSh()->org, getSh()->dir);
+    const vec3f screenPt = p - depth * getSh()->dir;
+    const vec3f screenDir = screenPt - getSh()->org;
+    projectedPt.x = dot(screenDir, dun);
+    projectedPt.y = dot(screenDir, dvn);
+    projectedPt.z = depth;
+    projection.lower.x = min(projectedPt.x, projection.lower.x);
+    projection.lower.y = min(projectedPt.y, projection.lower.y);
+    projection.lower.z = min(projectedPt.z, projection.lower.z);
+
+    projection.upper.x = max(projectedPt.x, projection.upper.x);
+    projection.upper.y = max(projectedPt.y, projection.upper.y);
+    projection.upper.z = max(projectedPt.z, projection.upper.z);
+  }
+
   return projection;
 }
 

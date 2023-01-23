@@ -5,11 +5,6 @@
 #ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "camera/PerspectiveCamera_ispc.h"
-#else
-namespace ispc {
-void PerspectiveCamera_projectBox(
-    void *_self, const void *box, void *projection);
-}
 #endif
 
 namespace ospray {
@@ -125,7 +120,86 @@ box3f PerspectiveCamera::projectBox(const box3f &b) const
     return box3f(vec3f(0.f), vec3f(1.f));
   }
   box3f projection;
-  ispc::PerspectiveCamera_projectBox(getSh(), &b, &projection);
+  const vec3f dir = normalize(
+      getSh()->dir_00 + 0.5f * getSh()->du_size + 0.5f * getSh()->dv_up);
+  const vec3f dun = normalize(getSh()->du_size) / getSh()->imgPlaneSize.x;
+  const vec3f dvn = normalize(getSh()->dv_up) / getSh()->imgPlaneSize.y;
+
+  vec3f projectedPt(-1.f, -1.f, 1e20f);
+  for (uint32_t i = 0; i < 8; ++i) {
+    // Get the point we should be projecting
+    vec3f p;
+    switch (i) {
+    case 0:
+      p = b.lower;
+      break;
+    case 1:
+      p.x = b.upper.x;
+      p.y = b.lower.y;
+      p.z = b.lower.z;
+      break;
+    case 2:
+      p.x = b.upper.x;
+      p.y = b.upper.y;
+      p.z = b.lower.z;
+      break;
+    case 3:
+      p.x = b.lower.x;
+      p.y = b.upper.y;
+      p.z = b.lower.z;
+      break;
+    case 4:
+      p.x = b.lower.x;
+      p.y = b.lower.y;
+      p.z = b.upper.z;
+      break;
+    case 5:
+      p.x = b.upper.x;
+      p.y = b.lower.y;
+      p.z = b.upper.z;
+      break;
+    case 6:
+      p = b.upper;
+      break;
+    case 7:
+      p.x = b.lower.x;
+      p.y = b.upper.y;
+      p.z = b.upper.z;
+      break;
+    }
+
+    // We find the intersection of the ray through the point with the virtual
+    // film plane, then find the vector to this point from the origin of the
+    // film plane (screenDir) and project this point onto the x/y axes of
+    // the plane.
+    const vec3f v = p - getSh()->org;
+    const vec3f r = normalize(v);
+    const float denom = dot(-r, -dir);
+    if (denom != 0.f) {
+      float t = 1.f / denom;
+      const vec3f screenDir = r * t - getSh()->dir_00;
+      projectedPt.x = dot(screenDir, dun);
+      projectedPt.y = dot(screenDir, dvn);
+      projectedPt.z = std::signbit(t) ? -length(v) : length(v);
+      projection.lower.x = min(projectedPt.x, projection.lower.x);
+      projection.lower.y = min(projectedPt.y, projection.lower.y);
+      projection.lower.z = min(projectedPt.z, projection.lower.z);
+
+      projection.upper.x = max(projectedPt.x, projection.upper.x);
+      projection.upper.y = max(projectedPt.y, projection.upper.y);
+      projection.upper.z = max(projectedPt.z, projection.upper.z);
+    }
+  }
+
+  // If some points are behind and some are in front mark the box
+  // as covering the full screen
+  if (projection.lower.z < 0.f && projection.upper.z > 0.f) {
+    projection.lower.x = 0.f;
+    projection.lower.y = 0.f;
+
+    projection.upper.x = 1.f;
+    projection.upper.y = 1.f;
+  }
   return projection;
 }
 

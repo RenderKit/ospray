@@ -117,7 +117,6 @@ void DistributedWorld::commit()
     allRegionsData->refDec();
   }
 
-  // TODO: For picking myRegions needs to be in USM
   getSh()->localRegions = myRegions.data();
   getSh()->numLocalRegions = myRegions.size();
   getSh()->numRegions = allRegions.size();

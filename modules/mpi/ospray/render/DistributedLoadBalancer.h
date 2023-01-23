@@ -4,7 +4,7 @@
 #pragma once
 
 #ifdef OSPRAY_TARGET_SYCL
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #endif
 
 #include "../fb/DistributedFrameBuffer.h"

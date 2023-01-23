@@ -91,8 +91,10 @@ void Renderer::commit()
 sycl::nd_range<1> Renderer::computeDispatchRange(
     const size_t globalSize, const size_t workgroupSize) const
 {
+  // roundedRange global size must be at least workgroupSize
   const size_t roundedRange =
-      ((globalSize + workgroupSize - 1) / workgroupSize) * workgroupSize;
+      std::max(size_t(1), (globalSize + workgroupSize - 1) / workgroupSize)
+      * workgroupSize;
   return sycl::nd_range<1>(roundedRange, workgroupSize);
 }
 #endif

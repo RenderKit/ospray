@@ -9,6 +9,7 @@
 #include "common/ObjectHandle.h"
 #include "render/DistributedLoadBalancer.h"
 #include "render/LoadBalancer.h"
+#include "rkcommon/platform.h"
 
 namespace ospray {
 namespace mpi {

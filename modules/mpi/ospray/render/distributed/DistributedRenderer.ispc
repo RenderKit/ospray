@@ -22,7 +22,7 @@
 #include "rkcommon/utility/random.ih"
 #include "texture/Texture2D.ih"
 // c++ shared
-#include "DistributedRendererShared.h"
+#include "render/RendererShared.h"
 #include "common/DistributedWorldShared.h"
 #include "fb/FrameBufferDispatch.ih"
 #include "fb/FrameBufferShared.h"
@@ -72,7 +72,7 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Regions_intersect_kernel(
 task
 #endif
     SYCL_EXTERNAL void
-    DR_default_computeRegionVisibility(DistributedRenderer *uniform self,
+    DR_default_computeRegionVisibility(Renderer *uniform self,
         SparseFB *uniform fb,
         Camera *uniform camera,
         DistributedWorld *uniform world,
@@ -191,8 +191,7 @@ export void DistributedRenderer_computeRegionVisibility(void *uniform _self,
     void *uniform _taskIDs,
     uniform int numTasks)
 {
-  DistributedRenderer *uniform self =
-      (uniform DistributedRenderer * uniform) _self;
+  Renderer *uniform self = (uniform Renderer * uniform) _self;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
   launch[numTasks] DR_default_computeRegionVisibility(self,
       (SparseFB * uniform) fb,

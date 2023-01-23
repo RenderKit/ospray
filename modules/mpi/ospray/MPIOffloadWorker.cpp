@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ospray/ospray.h"
+
+#include "rkcommon/platform.h"
+
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <process.h>

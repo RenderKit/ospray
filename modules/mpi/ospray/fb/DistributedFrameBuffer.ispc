@@ -154,7 +154,7 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
       final->nz[i] = fnz;
       */
 #else
-      // TODO: This is not right but some other bug/data use cancels it out!
+      // TODO: This is not right but some other bug/data use cancels it out.
       // The tile struct stores SoA layout memory too, but here we treat it
       // like SoA for some reason, so final->nx will hold:
       // {fnx0, fny0, fnz0, fnx1, fny1, fnz1, ..., progCount,...}
@@ -455,7 +455,7 @@ export void DFB_runPixelOpsForTile(void *uniform _self, void *uniform _tile)
 #ifndef OSPRAY_TARGET_SYCL
   launch[ntasks] DFB_runPixelOpsTask(fb, (VaryingTile * uniform) tile);
 #else
-  // TODO: can lift this up to be a parallel loop on the CPU for SYCL builds
+  // Later can lift this up to be a parallel loop on the CPU for SYCL builds
   for (int i = 0; i < ntasks; ++i) {
     DFB_runPixelOpsTask(fb, (VaryingTile * uniform) tile, i);
   }

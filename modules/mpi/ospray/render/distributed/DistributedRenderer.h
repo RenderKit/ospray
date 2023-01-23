@@ -8,7 +8,7 @@
 #include "fb/TileOperation.h"
 #include "render/Renderer.h"
 // ispc shared
-#include "DistributedRendererShared.h"
+#include "render/RendererShared.h"
 
 namespace ospray {
 namespace mpi {
@@ -22,8 +22,7 @@ struct RegionInfo
   uint8_t *regionVisible = nullptr;
 };
 
-struct DistributedRenderer
-    : public AddStructShared<Renderer, ispc::DistributedRenderer>
+struct DistributedRenderer : public AddStructShared<Renderer, ispc::Renderer>
 {
   DistributedRenderer(api::ISPCDevice &device);
   ~DistributedRenderer() override;

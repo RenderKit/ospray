@@ -9,13 +9,13 @@
 #include <vector>
 
 #include <ospray/ospray.h>
-#include <rkcommon/utility/FixedArray.h>
 #include "MPICommon.h"
 #include "common/ObjectHandle.h"
 
 #include "rkcommon/memory/RefCount.h"
 #include "rkcommon/networking/DataStreaming.h"
 #include "rkcommon/networking/Fabric.h"
+#include "rkcommon/platform.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/FixedArray.h"
 

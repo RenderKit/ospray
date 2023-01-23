@@ -227,13 +227,16 @@ void MPIDistributedDevice::commit()
     messaging::init(mpicommon::worker);
     maml::start();
 
-    // Pass down application's gpu selection (if any)
-    void *appSyclCtx =
-      static_cast<void *>(getParam<void *>("syclContext", nullptr));
-    internalDevice->setParam<void *>("syclContext", (void*)appSyclCtx);
-    void *appSyclDevice =
-      static_cast<void *>(getParam<void *>("syclDevice", nullptr));
-    internalDevice->setParam<void *>("syclDevice", (void*)appSyclDevice);
+    // Pass down application's GPU selection made via SYCL or L0 (if any)
+    void *appSyclCtx = getParam<void *>("syclContext", nullptr);
+    internalDevice->setParam<void *>("syclContext", appSyclCtx);
+    void *appSyclDevice = getParam<void *>("syclDevice", nullptr);
+    internalDevice->setParam<void *>("syclDevice", appSyclDevice);
+
+    void *appZeCtx = getParam<void *>("zeContext", nullptr);
+    internalDevice->setParam<void *>("zeContext", appZeCtx);
+    void *appZeDevice = getParam<void *>("zeDevice", nullptr);
+    internalDevice->setParam<void *>("zeDevice", appZeDevice);
   }
 
   internalDevice->commit();

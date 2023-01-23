@@ -30,11 +30,11 @@ target_include_directories(ospray_module_mpi_offload
 )
 
 target_compile_definitions(ospray_module_mpi_offload PUBLIC
-  -DOSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD}
+  OSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD}
   # We don't want an instance of ObjectFactory static table in this library
   # so we have to include it with import define so the table will be imported
   # from 'ospray' library
-  -DOBJECTFACTORY_IMPORT)
+  OBJECTFACTORY_IMPORT)
 
 ospray_install_library(ospray_module_mpi_offload mpi)
 
@@ -134,17 +134,12 @@ target_include_directories(ospray_module_mpi_distributed_cpu
 
 # Note: GPU hybrid code defines are brought in for us by linking the CPU module
 target_compile_definitions(ospray_module_mpi_distributed_cpu PRIVATE
-  -DOSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD}
+  OSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD}
   # We don't want an instance of ObjectFactory static table in this library
   # so we have to include it with import define so the table will be imported
   # from 'ospray' library
-  -DOBJECTFACTORY_IMPORT
+  OBJECTFACTORY_IMPORT
 )
-
-if (WIN32)
-  target_compile_definitions(ospray_module_mpi_distributed_cpu PUBLIC
-    -DNOMINMAX)
-endif()
 
 ospray_install_library(ospray_module_mpi_distributed_cpu mpi)
 
@@ -152,9 +147,6 @@ ospray_install_library(ospray_module_mpi_distributed_cpu mpi)
 
 if (OSPRAY_MODULE_GPU)
   include(${ISPCRT_DIR}/interop.cmake)
-  if (NOT "${CMAKE_CXX_COMPILER}" STREQUAL "${DPCPP_COMPILER}")
-    message(FATAL_ERROR "CMAKE_CXX_COMPILER should be set to '${DPCPP_COMPILER}' for SYCL")
-  endif()
 
   ospray_configure_dpcpp_target()
 
@@ -176,7 +168,6 @@ if (OSPRAY_MODULE_GPU)
     rkcommon::rkcommon
     ospray_mpi_common
     ospray_module_gpu
-    ospray_module_gpu_kernels
   )
 
   target_include_directories(ospray_module_mpi_distributed_gpu
@@ -202,11 +193,11 @@ if (OSPRAY_MODULE_GPU)
 
   # Note: GPU hybrid code defines are brought in for us by linking the CPU module
   target_compile_definitions(ospray_module_mpi_distributed_gpu PRIVATE
-    -DOSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD}
+    OSP_MPI_COMPRESSION_THRESHOLD=${OSPRAY_MPI_COMPRESSION_THRESHOLD}
     # We don't want an instance of ObjectFactory static table in this library
     # so we have to include it with import define so the table will be imported
     # from 'ospray' library
-    -DOBJECTFACTORY_IMPORT
+    OBJECTFACTORY_IMPORT
   )
 
   if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")

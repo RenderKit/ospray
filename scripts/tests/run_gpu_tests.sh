@@ -2,15 +2,41 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
+# to run:  ./run_tests.sh <path to ospray source> [TEST_MPI] [TEST_MULTIDEVICE]
+
 SOURCEDIR=$([[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}")
+
+if [ -z "$MPI_ROOT_CONFIG" ]; then
+  MPI_ROOT_CONFIG="-np 1"
+fi
+if [ -z "$MPI_WORKER_CONFIG" ]; then
+  MPI_WORKER_CONFIG="-np 1"
+fi
+
+# optional command line arguments
+while [[ $# -gt 0 ]]
+do
+key="$1"
+case $key in
+    TEST_MPI)
+    TEST_MPI=true
+    shift
+    ;;
+    TEST_MULTIDEVICE)
+    TEST_MULTIDEVICE=true
+    shift
+    ;;
+    *)
+    shift
+    ;;
+esac
+done
 
 mkdir build_regression_tests
 cd build_regression_tests
 
 cmake -D OSPRAY_TEST_ISA=AVX2 "${SOURCEDIR}/test_image_data"
 make -j 4 ospray_test_data
-
-mkdir failed-gpu
 
 # Excluded tests on GPU
 test_filters="ClippingParallel.planes"
@@ -60,7 +86,19 @@ test_filters+=":Color/Interpolation.Interpolation/7"
 test_filters+=":Texcoord/Interpolation.Interpolation/2"
 test_filters+=":Texcoord/Interpolation.Interpolation/3"
 
-SYCL_DEVICE_FILTER=level_zero
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./ 
+export ONEAPI_DEVICE_SELECTOR=level_zero:*
+
+mkdir failed-gpu
+
 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters"
+
+if [ $TEST_MPI ]; then
+  mkdir failed-mpi-gpu
+  # Need to export, not just set for MPI to pick it up
+  export OSPRAY_MPI_DISTRIBUTED_GPU=1
+  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_filter="-$test_filters" : $MPI_WORKER_CONFIG ospray_mpi_worker
+
+  mkdir failed-mpi-gpu-data-parallel
+  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="MPIDistribTestScenesGeometry*"
+fi
 
