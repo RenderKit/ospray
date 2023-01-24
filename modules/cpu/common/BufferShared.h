@@ -45,6 +45,8 @@ struct BufferShared : public ispcrt::Array<T, ispcrt::AllocType::Shared>
 
   T &operator[](const size_t i);
   const T &operator[](const size_t i) const;
+
+  T *sharedPtr() const;
 };
 
 template <typename T>
@@ -114,9 +116,20 @@ const T &BufferShared<T>::operator[](const size_t i) const
   return *(sharedPtr() + i);
 }
 
+// The below method is WA for ISPCRT bug, when running on GPU sharedPtr()
+// crashes on 0-sized ispcrt::Array
+// TODO: Fix it in ISPCRT
+template <typename T>
+T *BufferShared<T>::sharedPtr() const
+{
+  return ispcrt::Array<T, ispcrt::AllocType::Shared>::size()
+      ? ispcrt::Array<T, ispcrt::AllocType::Shared>::sharedPtr()
+      : nullptr;
+}
+
 template <typename T, typename... Args>
 inline std::unique_ptr<BufferShared<T>> make_buffer_shared_unique(
-    Args &&...args)
+    Args &&... args)
 {
   return std::unique_ptr<BufferShared<T>>(
       new BufferShared<T>(std::forward<Args>(args)...));
