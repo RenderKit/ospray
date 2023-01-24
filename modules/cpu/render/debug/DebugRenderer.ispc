@@ -298,17 +298,21 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
     TransferFunction *uniform tf = m->transferFunction;
 
     float time = 0.5f;
-    VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(&m->vklIntervalContext,
-            (varying vkl_vec3f *)&ray.org,
-            (varying vkl_vec3f *)&ray.dir,
-            (varying vkl_range1f *)&vInterval.interval,
-#ifdef OSPRAY_TARGET_SYCL
-            time,
+    VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
+#if OPENVKL_VERSION_MAJOR == 1
+        m->vklIntervalContext,
 #else
-            &time,
+        &m->vklIntervalContext,
 #endif
-            (void *uniform)intervalIteratorBuffer);
+        (varying vkl_vec3f *)&ray.org,
+        (varying vkl_vec3f *)&ray.dir,
+        (varying vkl_range1f *)&vInterval.interval,
+#ifdef OSPRAY_TARGET_SYCL
+        time,
+#else
+        &time,
+#endif
+        (void *uniform)intervalIteratorBuffer);
 
     VKLInterval interval;
 
@@ -331,7 +335,12 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
         // Get volume sample
         vec3f p = ray.org + ray.t0 * ray.dir;
         const float sample = vklComputeSampleV(
-            &volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
+#if OPENVKL_VERSION_MAJOR == 1
+            volume->vklSampler,
+#else
+            &volume->vklSampler,
+#endif
+            (const varying vkl_vec3f *uniform) & p);
 
         if (!isnan(sample)) {
           vec4f sampleColorOpacity =

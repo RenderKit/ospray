@@ -8,7 +8,9 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // comment break to prevent clang-format from reordering openvkl includes
+#if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
+#endif
 #ifndef OSPRAY_TARGET_SYCL
 // ispc-generated files
 #include "geometry/Isosurfaces_ispc.h"
@@ -30,10 +32,8 @@ Isosurfaces::Isosurfaces(api::ISPCDevice &device)
 
 Isosurfaces::~Isosurfaces()
 {
-  if (vklHitContext.host) {
-    vklRelease2(vklHitContext);
-    vklHitContext.host = nullptr;
-    vklHitContext.device = nullptr;
+  if (vklHitContext) {
+    vklRelease(vklHitContext);
   }
 }
 
@@ -70,10 +70,8 @@ void Isosurfaces::commit()
     data->refDec();
   }
 
-  if (vklHitContext.host) {
-    vklRelease2(vklHitContext);
-    vklHitContext.host = nullptr;
-    vklHitContext.device = nullptr;
+  if (vklHitContext) {
+    vklRelease(vklHitContext);
   }
 
   vklHitContext = (volume)
@@ -85,11 +83,11 @@ void Isosurfaces::commit()
         isovaluesData->size(),
         VKL_FLOAT,
         isovaluesData->data());
-    vklSetData2(vklHitContext, "values", valuesData);
+    vklSetData(vklHitContext, "values", valuesData);
     vklRelease(valuesData);
   }
 
-  vklCommit2(vklHitContext);
+  vklCommit(vklHitContext);
 
   createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Isosurfaces_bounds);
   getSh()->isovalues = isovaluesData->data();

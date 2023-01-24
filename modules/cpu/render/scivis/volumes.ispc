@@ -81,7 +81,12 @@ static void sampleVolume(SciVisRenderContext &rc,
 
     // Sample volume value in given point
     sampleVal = vklComputeSampleV(
-        &m->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
+#if OPENVKL_VERSION_MAJOR == 1
+        m->volume->vklSampler,
+#else
+        &m->volume->vklSampler,
+#endif
+        (const varying vkl_vec3f *uniform) & p);
 
     // Go to the next sub-interval
     vc.iuDistance += 1.f;
@@ -212,7 +217,8 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     // Transform ray into the volume local space
     const VolumeInterval &vi = volumeIntervals.intervals[i];
     Ray transformedRay = ray;
-    transformRay(transformedRay, vi.instance->rcp_xfm);
+    AffineSpace3f instanceRcpXfm = vi.instance->rcp_xfm;
+    transformRay(transformedRay, instanceRcpXfm);
 
     // Set volume context initial values
     VolumeContext &vc = volumeContexts[i];
@@ -272,7 +278,12 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
       foreach_unique (m in model) {
 #endif
         // Create volume interval iterator
-        vc.intervalIterator = vklInitIntervalIteratorV(&m->vklIntervalContext,
+        vc.intervalIterator = vklInitIntervalIteratorV(
+#if OPENVKL_VERSION_MAJOR == 1
+            m->vklIntervalContext,
+#else
+            &m->vklIntervalContext,
+#endif
             (varying vkl_vec3f *)&vc.org,
             (varying vkl_vec3f *)&vc.dir,
             (varying vkl_range1f *)&rInterval,

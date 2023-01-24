@@ -7,6 +7,7 @@
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
+#include "openvkl/version.h"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 #include "volume/VolumetricModel.ih"
@@ -93,7 +94,12 @@ SYCL_EXTERNAL void unmasked Isosurfaces_intersect_kernel(
   // do not use alloca: it prevents inlining and thus optimization
   // wrt. "template arg" isOcclusionTest, alloca also not supported on GPU
   uniform uint8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
-  iterator = vklInitHitIteratorV(&self->vklHitContext,
+  iterator = vklInitHitIteratorV(
+#if OPENVKL_VERSION_MAJOR == 1
+      self->vklHitContext,
+#else
+      &self->vklHitContext,
+#endif
       (varying vkl_vec3f *)&ray->org,
       (varying vkl_vec3f *)&ray->dir,
       &tRange,

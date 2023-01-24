@@ -16,7 +16,9 @@ void Volume_embreeBounds(const void *_args);
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
 // comment break to prevent clang-format from reordering openvkl includes
+#if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
+#endif
 
 #include <unordered_map>
 
@@ -40,11 +42,11 @@ Volume::Volume(api::ISPCDevice &device, const std::string &type)
 
 Volume::~Volume()
 {
-  if (vklSampler.host)
-    vklRelease2(vklSampler);
+  if (vklSampler)
+    vklRelease(vklSampler);
 
-  if (vklVolume.host)
-    vklRelease2(vklVolume);
+  if (vklVolume)
+    vklRelease(vklVolume);
 
   if (embreeGeometry)
     rtcReleaseGeometry(embreeGeometry);
@@ -66,15 +68,15 @@ void Volume::commit()
     throw std::runtime_error("invalid Embree device");
   }
 
-  if (vklSampler.host)
-    vklRelease2(vklSampler);
+  if (vklSampler)
+    vklRelease(vklSampler);
 
-  if (vklVolume.host)
-    vklRelease2(vklVolume);
+  if (vklVolume)
+    vklRelease(vklVolume);
 
   vklVolume = vklNewVolume(vklDevice, vklType.c_str());
 
-  if (!vklVolume.host)
+  if (!vklVolume)
     throw std::runtime_error("unsupported volume type '" + vklType + "'");
 
   if (!embreeGeometry) {
@@ -83,11 +85,11 @@ void Volume::commit()
 
   handleParams();
 
-  vklCommit2(vklVolume);
+  vklCommit(vklVolume);
   (vkl_box3f &)bounds = vklGetBoundingBox(vklVolume);
 
   vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   // Setup Embree user-defined geometry
   rtcSetGeometryUserData(embreeGeometry, getSh());
@@ -120,24 +122,24 @@ void Volume::handleParams()
     param.query = true;
 
     if (param.data.is<bool>()) {
-      vklSetBool2(vklVolume, param.name.c_str(), param.data.get<bool>());
+      vklSetBool(vklVolume, param.name.c_str(), param.data.get<bool>());
     } else if (param.data.is<float>()) {
-      vklSetFloat2(vklVolume, param.name.c_str(), param.data.get<float>());
+      vklSetFloat(vklVolume, param.name.c_str(), param.data.get<float>());
     } else if (param.data.is<int>()) {
-      vklSetInt2(vklVolume, param.name.c_str(), param.data.get<int>());
+      vklSetInt(vklVolume, param.name.c_str(), param.data.get<int>());
     } else if (param.data.is<vec3f>()) {
-      vklSetVec3f2(vklVolume,
+      vklSetVec3f(vklVolume,
           param.name.c_str(),
           param.data.get<vec3f>().x,
           param.data.get<vec3f>().y,
           param.data.get<vec3f>().z);
     } else if (param.data.is<void *>()) {
-      vklSetVoidPtr2(vklVolume, param.name.c_str(), param.data.get<void *>());
+      vklSetVoidPtr(vklVolume, param.name.c_str(), param.data.get<void *>());
     } else if (param.data.is<const char *>()) {
-      vklSetString2(
+      vklSetString(
           vklVolume, param.name.c_str(), param.data.get<const char *>());
     } else if (param.data.is<vec3i>()) {
-      vklSetVec3i2(vklVolume,
+      vklSetVec3i(vklVolume,
           param.name.c_str(),
           param.data.get<vec3i>().x,
           param.data.get<vec3i>().y,
@@ -161,7 +163,7 @@ void Volume::handleParams()
         }
         VKLData vklData = vklNewData(
             vklDevice, vklBlockData.size(), VKL_DATA, vklBlockData.data());
-        vklSetData2(vklVolume, param.name.c_str(), vklData);
+        vklSetData(vklVolume, param.name.c_str(), vklData);
         vklRelease(vklData);
         for (VKLData vd : vklBlockData)
           vklRelease(vd);
@@ -182,7 +184,7 @@ void Volume::handleParams()
           }
           VKLData vklData =
               vklNewData(vklDevice, format.size(), VKL_UINT, format.data());
-          vklSetData2(vklVolume, "node.format", vklData);
+          vklSetData(vklVolume, "node.format", vklData);
           vklRelease(vklData);
         }
 
@@ -198,8 +200,8 @@ void Volume::handleParams()
         std::string name(param.name);
         if (name == "data") { // structured volumes
           vec3ul &dim = data->numItems;
-          vklSetVec3i2(vklVolume, "dimensions", dim.x, dim.y, dim.z);
-          vklSetInt2(vklVolume, "voxelType", (VKLDataType)data->type);
+          vklSetVec3i(vklVolume, "dimensions", dim.x, dim.y, dim.z);
+          vklSetInt(vklVolume, "voxelType", (VKLDataType)data->type);
         }
         if (name == "nodesPackedDense" || name == "nodesPackedTile") {
           // packed VDB volumes: wrap attribute
@@ -207,7 +209,7 @@ void Volume::handleParams()
           vklRelease(vklData);
           vklData = vklDataWrapper;
         }
-        vklSetData2(vklVolume, name.c_str(), vklData);
+        vklSetData(vklVolume, name.c_str(), vklData);
         vklRelease(vklData);
       }
     } else {

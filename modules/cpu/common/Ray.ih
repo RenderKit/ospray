@@ -112,11 +112,4 @@ inline void transformRay(Ray &ray, const AffineSpace3f &xfm)
   ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
 }
 
-#ifndef OSPRAY_TARGET_SYCL
-inline void transformRay(Ray &ray, AffineSpace3f xfm)
-{
-  transformRay(ray, xfm);
-}
-#endif
-
 OSPRAY_END_ISPC_NAMESPACE

@@ -25,7 +25,6 @@ jobs:
       install-gfx-driver: true
       submodules: true
       image: ubuntu:22.04
-      # Would help to have a module that we can load for specific gfx/agama versions
       cmd: |
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang

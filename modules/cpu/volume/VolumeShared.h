@@ -23,10 +23,7 @@ struct Volume
   box3f boundingBox;
 
 #ifdef __cplusplus
-  Volume()
-      : vklVolume({nullptr, nullptr}),
-        vklSampler({nullptr, nullptr}),
-        boundingBox(0.f)
+  Volume() : vklVolume(VKLVolume()), vklSampler(VKLSampler()), boundingBox(0.f)
   {}
 };
 } // namespace ispc

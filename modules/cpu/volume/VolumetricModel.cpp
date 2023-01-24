@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #ifdef OSPRAY_ENABLE_VOLUMES
 
+#include "openvkl/openvkl.h"
+
 // ospray
 #include "VolumetricModel.h"
 #include "transferFunction/TransferFunction.h"
@@ -9,15 +11,20 @@
 namespace ospray {
 
 VolumetricModel::VolumetricModel(api::ISPCDevice &device, Volume *_volume)
-    : AddStructShared(device.getIspcrtDevice(), device), volumeAPI(_volume)
+    : AddStructShared(device.getIspcrtDevice(), device),
+      volumeAPI(_volume)
+#if OPENVKL_VERSION_MAJOR == 1
+      ,
+      vklIntervalContext(nullptr)
+#endif
 {
   managedObjectType = OSP_VOLUMETRIC_MODEL;
 }
 
 VolumetricModel::~VolumetricModel()
 {
-  if (vklIntervalContext.host)
-    vklRelease2(vklIntervalContext);
+  if (vklIntervalContext)
+    vklRelease(vklIntervalContext);
 }
 
 std::string VolumetricModel::toString() const
@@ -38,11 +45,9 @@ void VolumetricModel::commit()
     throw std::runtime_error(toString() + " must have 'transferFunction'");
 
   // create value selector using transfer function and pass to volume
-  if (volume->vklVolume.host) {
-    if (vklIntervalContext.host) {
-      vklRelease2(vklIntervalContext);
-      vklIntervalContext.host = nullptr;
-      vklIntervalContext.device = nullptr;
+  if (volume->vklVolume) {
+    if (vklIntervalContext) {
+      vklRelease(vklIntervalContext);
     }
 
     vklIntervalContext = vklNewIntervalIteratorContext(volume->vklSampler);
@@ -59,9 +64,9 @@ void VolumetricModel::commit()
         valueRanges.size(),
         VKL_BOX1F,
         valueRanges.data());
-    vklSetData2(vklIntervalContext, "valueRanges", valueRangeData);
+    vklSetData(vklIntervalContext, "valueRanges", valueRangeData);
     vklRelease(valueRangeData);
-    vklCommit2(vklIntervalContext);
+    vklCommit(vklIntervalContext);
 
     // Pass interval context to ISPC
     getSh()->vklIntervalContext = vklIntervalContext;

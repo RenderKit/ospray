@@ -22,21 +22,30 @@ float delta_tracking(const VolumetricModel *uniform vModel,
   // VKL_MAX_INTERVAL_ITERATOR_SIZE
   uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 #else
-  void *uniform intervalIteratorBuffer =
-      alloca(vklGetIntervalIteratorSizeV(&vModel->vklIntervalContext));
+  void *uniform intervalIteratorBuffer = alloca(vklGetIntervalIteratorSizeV(
+#if OPENVKL_VERSION_MAJOR == 1
+      vModel->vklIntervalContext
+#else
+      &vModel->vklIntervalContext
+#endif
+      ));
 #endif
 
-  VKLIntervalIterator intervalIterator =
-      vklInitIntervalIteratorV(&vModel->vklIntervalContext,
-          (varying vkl_vec3f *)&o,
-          (varying vkl_vec3f *)&w,
-          (varying vkl_range1f *)&rInterval,
-#ifdef OSPRAY_TARGET_SYCL
-          time,
+  VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
+#if OPENVKL_VERSION_MAJOR == 1
+      vModel->vklIntervalContext,
 #else
-          &time,
+      &vModel->vklIntervalContext,
 #endif
-          intervalIteratorBuffer);
+      (varying vkl_vec3f *)&o,
+      (varying vkl_vec3f *)&w,
+      (varying vkl_range1f *)&rInterval,
+#ifdef OSPRAY_TARGET_SYCL
+      time,
+#else
+      &time,
+#endif
+      intervalIteratorBuffer);
 
   float t = 0.f;
   VKLInterval interval;
@@ -64,7 +73,12 @@ float delta_tracking(const VolumetricModel *uniform vModel,
       const vec3f p = o + t * w;
 
       const float sample = vklComputeSampleV(
-          &vModel->volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
+#if OPENVKL_VERSION_MAJOR == 1
+          vModel->volume->vklSampler,
+#else
+          &vModel->volume->vklSampler,
+#endif
+          (const varying vkl_vec3f *uniform) & p);
       if (isnan(sample))
         continue;
 

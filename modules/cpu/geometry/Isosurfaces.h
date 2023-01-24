@@ -31,7 +31,7 @@ struct OSPRAY_SDK_INTERFACE Isosurfaces
   // the volume and color
   Ref<VolumetricModel> model;
   Ref<Volume> volume;
-  VKLHitIteratorContext vklHitContext{nullptr, nullptr};
+  VKLHitIteratorContext vklHitContext = VKLHitIteratorContext();
 };
 
 } // namespace ospray

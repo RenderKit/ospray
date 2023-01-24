@@ -30,4 +30,3 @@ SYCL_EXTERNAL float TransferFunction_dispatch_getMaxOpacity(
 }
 
 OSPRAY_END_ISPC_NAMESPACE
-

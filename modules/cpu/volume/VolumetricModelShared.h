@@ -29,7 +29,7 @@ struct VolumetricModel
   VolumetricModel()
       : volume(nullptr),
         transferFunction(nullptr),
-        vklIntervalContext({nullptr, nullptr}),
+        vklIntervalContext(VKLIntervalIteratorContext()),
         boundingBox(0.f),
         densityScale(1.f),
         anisotropy(0.f),

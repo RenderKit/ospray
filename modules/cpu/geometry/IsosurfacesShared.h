@@ -25,7 +25,7 @@ struct Isosurfaces
       : isovalues(nullptr),
         volumetricModel(nullptr),
         volume(nullptr),
-        vklHitContext({nullptr, nullptr})
+        vklHitContext(VKLHitIteratorContext())
   {
     super.type = ispc::GEOMETRY_TYPE_ISOSURFACES;
   }

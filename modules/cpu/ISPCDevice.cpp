@@ -302,7 +302,11 @@ void ISPCDevice::commit()
 
 #ifdef OSPRAY_ENABLE_VOLUMES
   if (!vklDevice) {
+#if OPENVKL_VERSION_MAJOR == 1
+    vklLoadModule("cpu_device");
+#else
     vklInit();
+#endif
 
 #ifdef OSPRAY_TARGET_SYCL
     vklDevice = vklNewDevice("gpu_4");

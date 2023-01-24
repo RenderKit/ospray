@@ -13,7 +13,7 @@ mark_as_advanced(OSPRAY_MODULE_CPU)
 cmake_dependent_option(
   OSPRAY_MODULE_GPU
   "Build the GPU module"
-  ON
+  OFF
   "OSPRAY_ENABLE_MODULES;EMBREE_SYCL_SUPPORT"
   OFF
 )
@@ -328,8 +328,15 @@ if (OSPRAY_MODULE_CPU)
   if (OSPRAY_ENABLE_VOLUMES)
     include_directories_ispc(
       ${OPENVKL_INCLUDE_DIRS}
-      ${OPENVKL_CPU_DEVICE_INCLUDE_DIRS}
     )
+    # Keep the NOTFOUND out of the ISPC include dirs list, because CMake will
+    # see the variable ending with NOTFOUND and evaluate it to false and not
+    # pass our include directories
+    if (OPENVKL_CPU_DEVICE_INCLUDE_DIRS)
+      include_directories_ispc(
+        ${OPENVKL_CPU_DEVICE_INCLUDE_DIRS}
+      )
+    endif()
 
     add_definitions_ispc(
       -DOSPRAY_ENABLE_VOLUMES

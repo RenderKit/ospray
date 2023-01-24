@@ -11,7 +11,9 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // comment break to prevent clang-format from reordering openvkl includes
+#if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
+#endif
 // ispc shared
 #include "VolumeShared.h"
 
@@ -37,8 +39,8 @@ struct OSPRAY_SDK_INTERFACE Volume
 
   // Data //
   RTCGeometry embreeGeometry{nullptr};
-  VKLVolume vklVolume{nullptr, nullptr};
-  VKLSampler vklSampler{nullptr, nullptr};
+  VKLVolume vklVolume = VKLVolume();
+  VKLSampler vklSampler = VKLSampler();
 
   box3f bounds{empty};
 

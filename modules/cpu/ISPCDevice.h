@@ -13,7 +13,9 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // comment break to prevent clang-format from reordering openvkl includes
+#if OPENVKL_VERSION_MAJOR > 1
 #include "openvkl/device/openvkl.h"
+#endif
 #endif
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
