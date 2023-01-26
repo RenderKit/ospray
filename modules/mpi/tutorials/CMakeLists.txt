@@ -16,6 +16,10 @@ if (OSPRAY_ENABLE_APPS_TUTORIALS)
   target_include_directories(ospMPIDistribTutorial PRIVATE
     $<BUILD_INTERFACE:${MPI_C_INCLUDE_PATH}>)
 
+  install(TARGETS ospMPIDistribTutorial
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT mpi
+    )
   ospray_sign_target(ospMPIDistribTutorial)
 
   # C++ version
@@ -31,6 +35,10 @@ if (OSPRAY_ENABLE_APPS_TUTORIALS)
   target_compile_definitions(ospMPIDistribTutorialCpp PRIVATE
     -DOSPRAY_CPP_RKCOMMON_TYPES)
 
+  install(TARGETS ospMPIDistribTutorialCpp
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT mpi
+    )
   ospray_sign_target(ospMPIDistribTutorialCpp)
 
   # async version
@@ -44,6 +52,10 @@ if (OSPRAY_ENABLE_APPS_TUTORIALS)
   target_include_directories(ospMPIDistribTutorialAsync PRIVATE
     $<BUILD_INTERFACE:${MPI_C_INCLUDE_PATH}>)
 
+  install(TARGETS ospMPIDistribTutorialAsync
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT mpi
+    )
   ospray_sign_target(ospMPIDistribTutorialAsync)
 
 endif()
