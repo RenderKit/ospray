@@ -37,10 +37,10 @@ add_subdirectory(common)
 add_subdirectory(external)
 add_subdirectory(ospray)
 
-if (OSPRAY_ENABLE_APPS_EXAMPLES)
+if (OSPRAY_ENABLE_APPS_EXAMPLES OR OSPRAY_ENABLE_APPS_TUTORIALS)
   add_subdirectory(tutorials)
 endif()
 
 if (OSPRAY_ENABLE_APPS_TESTING)
-    add_subdirectory(testing)
+  add_subdirectory(testing)
 endif()
