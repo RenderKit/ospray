@@ -36,11 +36,19 @@ inline uniform bool valid(const uniform Data1D data)
 // ok to pass-by-value, will be inlined and optimized
 #ifdef OSPRAY_TARGET_SYCL
 // SYCL execution in a thread is scalar
+// Old macro version (kept for compatibility with older code)
 #define __define_get(T)                                                        \
   inline uniform T get_##T(const uniform Data1D data, const uniform int index) \
   {                                                                            \
     return *((const T *)(data.addr + data.byteStride * index));                \
   }
+
+// New templated version
+template <typename T>
+inline T get(const Data1D data, const int index)
+{
+  return *((const T *)(data.addr + data.byteStride * index));
+}
 #else
 #define __define_get(T)                                                        \
   inline T get_##T(const uniform Data1D data, const varying int index)         \
