@@ -18,6 +18,8 @@ using rkcommon::memory::make_deleted_unique;
 
 struct ObjectMessageHandler : maml::MessageHandler
 {
+  virtual ~ObjectMessageHandler() override;
+
   void registerMessageListener(int handleObjID, maml::MessageHandler *listener);
 
   void removeMessageListener(int handleObjID);
@@ -36,6 +38,13 @@ struct ObjectMessageHandler : maml::MessageHandler
 };
 
 // Inlined ObjectMessageHandler definitions /////////////////////////////
+
+ObjectMessageHandler::~ObjectMessageHandler()
+{
+  if (group.comm != MPI_COMM_NULL) {
+    MPI_Comm_free(&group.comm);
+  }
+}
 
 inline void ObjectMessageHandler::registerMessageListener(
     int handleObjID, MessageHandler *listener)
@@ -106,8 +115,8 @@ void init(mpicommon::Group parentGroup)
 
 void shutdown()
 {
-  handler = nullptr;
   maml::shutdown();
+  handler = nullptr;
 }
 
 void registerMessageListener(int handleObjID, MessageHandler *listener)

@@ -38,7 +38,7 @@ using SetParamFcn = void(OSPObject, const char *, const void *m, OSPDataType);
 
 template <typename T>
 static void setParamOnObject(
-    OSPObject _obj, const char *p, const T &v, OSPDataType t)
+    OSPObject _obj, const char *p, const T &v, OSPDataType)
 {
   auto *obj = lookupObject<ManagedObject>(_obj);
   obj->setParam(p, v);

@@ -141,8 +141,18 @@ void LiveWriteMultipleTile::process(const ispc::Tile &tile)
   }
 }
 
+WriteMultipleTileOperation::~WriteMultipleTileOperation()
+{
+  if (mpiGroup.comm != MPI_COMM_NULL) {
+    MPI_Comm_free(&mpiGroup.comm);
+  }
+}
+
 void WriteMultipleTileOperation::attach(DistributedFrameBuffer *dfb)
 {
+  if (mpiGroup.comm != MPI_COMM_NULL) {
+    MPI_Comm_free(&mpiGroup.comm);
+  }
   mpiGroup = mpicommon::worker.dup();
   tileInstances.resize(dfb->getGlobalTotalTiles(), 1);
 }

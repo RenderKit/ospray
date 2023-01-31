@@ -154,6 +154,7 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
     // device, to avoid it attempting to be freed again on exit
     ospray::api::Device::current = nullptr;
   }
+  MPI_CALL(Comm_free(&worker.comm));
   // The offload device initialized MPI, so the distributed device will see
   // the "app" as having already initialized MPI and assume it should not call
   // finalize. So the worker loop must call MPI finalize here as if it was a

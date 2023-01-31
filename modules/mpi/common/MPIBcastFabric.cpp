@@ -29,6 +29,12 @@ MPIFabric::MPIFabric(const Group &parentGroup, int bcastRoot)
   }
 }
 
+MPIFabric::~MPIFabric()
+{
+  flushBcastSends();
+  MPI_Comm_free(&group.comm);
+}
+
 void MPIFabric::sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf)
 {
   auto future = mpicommon::bcast(

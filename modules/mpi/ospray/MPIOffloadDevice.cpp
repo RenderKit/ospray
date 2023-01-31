@@ -70,6 +70,7 @@ static inline void setupMaster()
       << '/' << world.size << ')';
 
   MPI_CALL(Barrier(world.comm));
+  MPI_CALL(Comm_free(&appComm));
 
   // -------------------------------------------------------
   // at this point, all processes should be set up and synced. in
@@ -204,6 +205,8 @@ MPIOffloadDevice::~MPIOffloadDevice()
 
     sendWork([](networking::WriteStream &writer) { writer << work::FINALIZE; },
         true);
+    fabric = nullptr;
+    maml::shutdown();
     MPI_Finalize();
   }
 }

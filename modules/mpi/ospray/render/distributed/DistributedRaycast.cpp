@@ -61,6 +61,7 @@ DistributedRaycastRenderer::DistributedRaycastRenderer(api::ISPCDevice &device)
 
 DistributedRaycastRenderer::~DistributedRaycastRenderer()
 {
+  MPI_Comm_free(&mpiGroup.comm);
   if (DETAILED_LOGGING) {
     *statsLog << "\n" << std::flush;
   }

@@ -12,6 +12,8 @@
 namespace ospray {
 struct WriteMultipleTileOperation : public TileOperation
 {
+  virtual ~WriteMultipleTileOperation() override;
+
   void attach(DistributedFrameBuffer *dfb) override;
 
   std::unique_ptr<LiveTileOperation> makeTile(DistributedFrameBuffer *dfb,
