@@ -3,9 +3,13 @@
 
 #pragma once
 
+#include "common/FeatureFlags.ih"
 #include "rkcommon/math/vec.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
+
+// Note: Can't remove these `__noinline` because it causes artifiacts
+// in 'ThinGlass' material on ci-comp_igc-19476 driver
 
 SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
     const uniform Material *uniform self,
@@ -15,7 +19,8 @@ SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
     // The ray arriving at the point to shade.
     const Ray &ray,
     // The medium this ray travels inside.
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsOther ffo);
 
 SYCL_EXTERNAL __noinline vec3f Material_dispatch_getTransparency(
     const uniform Material *uniform self,
@@ -24,11 +29,13 @@ SYCL_EXTERNAL __noinline vec3f Material_dispatch_getTransparency(
     // The ray arriving at the point to shade.
     const Ray &ray,
     // The medium this ray travels inside.
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsOther ffo);
 
 SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
-    Medium &currentMedium);
+    Medium &currentMedium,
+    const uniform FeatureFlagsOther ffo);
 
 OSPRAY_END_ISPC_NAMESPACE

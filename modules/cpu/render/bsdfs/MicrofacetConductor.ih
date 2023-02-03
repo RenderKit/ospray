@@ -28,8 +28,10 @@ struct MicrofacetConductor
   vec3f fmsScale;
 };
 
-inline BSDF_EvalRes MicrofacetConductor_eval(
-    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec3f &wi,
+    const uniform FeatureFlagsOther ffo)
 {
   const varying MicrofacetConductor *uniform self =
       (const varying MicrofacetConductor *uniform)super;
@@ -74,7 +76,8 @@ inline BSDF_SampleRes MicrofacetConductor_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss)
+    float ss,
+    const uniform FeatureFlagsOther ffo)
 {
   const varying MicrofacetConductor *uniform self =
       (const varying MicrofacetConductor *uniform)super;
@@ -170,4 +173,3 @@ inline varying BSDF *uniform MicrofacetConductor_create(
 }
 
 OSPRAY_END_ISPC_NAMESPACE
-

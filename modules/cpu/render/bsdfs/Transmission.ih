@@ -4,17 +4,23 @@
 #pragma once
 
 #include "BSDF.ih"
+#include "ShadingContext.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-inline BSDF_EvalRes Transmission_eval(
-    const varying BSDF *uniform self, const vec3f &wo, const vec3f &wi)
+inline BSDF_EvalRes Transmission_eval(const varying BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi,
+    const uniform FeatureFlagsOther ffo)
 {
   return make_BSDF_EvalRes_zero();
 }
 
-inline BSDF_SampleRes Transmission_sample(
-    const varying BSDF *uniform self, const vec3f &wo, const vec2f &s, float ss)
+inline BSDF_SampleRes Transmission_sample(const varying BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss,
+    const uniform FeatureFlagsOther ffo)
 {
   BSDF_SampleRes res;
 

@@ -16,8 +16,10 @@ struct Velvety
   float f;
 };
 
-inline BSDF_EvalRes Velvety_eval(
-    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+inline BSDF_EvalRes Velvety_eval(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec3f &wi,
+    const uniform FeatureFlagsOther ffo)
 {
   const varying Velvety *uniform self = (const varying Velvety *uniform)super;
   BSDF_EvalRes res;
@@ -35,7 +37,8 @@ inline BSDF_EvalRes Velvety_eval(
 inline BSDF_SampleRes Velvety_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss)
+    float ss,
+    const uniform FeatureFlagsOther ffo)
 {
   const varying Velvety *uniform self = (const varying Velvety *uniform)super;
   BSDF_SampleRes res;
@@ -43,7 +46,7 @@ inline BSDF_SampleRes Velvety_sample(const varying BSDF *uniform super,
   const vec3f localDir = cosineSampleHemisphere(s);
   res.wi = getFrame(super) * localDir;
   res.type = BSDF_DIFFUSE_REFLECTION;
-  BSDF_EvalRes eval = Velvety_eval(super, wo, res.wi);
+  BSDF_EvalRes eval = Velvety_eval(super, wo, res.wi, ffo);
   res.pdf = eval.pdf;
   res.weight = eval.value * rcp(eval.pdf);
   return res;

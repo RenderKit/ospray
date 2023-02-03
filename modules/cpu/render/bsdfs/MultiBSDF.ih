@@ -4,6 +4,7 @@
 #pragma once
 
 #include "BSDF.ih"
+#include "ShadingContext.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -62,8 +63,10 @@ inline void MultiBSDF_add(varying BSDF *uniform super,
 #endif
 
 /*! Evaluates all BSDF components. */
-inline BSDF_EvalRes MultiBSDF_eval(
-    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+inline BSDF_EvalRes MultiBSDF_eval(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec3f &wi,
+    const uniform FeatureFlagsOther ffo)
 {
   const varying MultiBSDF *uniform self =
       (const varying MultiBSDF *uniform)super;
@@ -73,7 +76,7 @@ inline BSDF_EvalRes MultiBSDF_eval(
   for (uniform int i = 0; i < self->numBsdfs; ++i) {
     if (self->importances[i] > 0.0f) {
       const varying BSDF *uniform curBsdf = self->bsdfs[i];
-      BSDF_EvalRes cur = BSDF_dispatch_eval_base(curBsdf, wo, wi);
+      BSDF_EvalRes cur = BSDF_dispatch_eval_base(curBsdf, wo, wi, ffo);
       cur.value = cur.value * self->weights[i];
       res.value = res.value + cur.value;
       res.pdf += cur.pdf * self->importances[i];
@@ -88,7 +91,8 @@ inline BSDF_EvalRes MultiBSDF_eval(
 inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss)
+    float ss,
+    const uniform FeatureFlagsOther ffo)
 {
   const varying MultiBSDF *uniform self =
       (const varying MultiBSDF *uniform)super;
@@ -100,7 +104,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF *uniform super,
 
   if (self->numBsdfs == 1) {
     const varying BSDF *uniform bsdf = self->bsdfs[0];
-    res = BSDF_dispatch_sample_base(bsdf, wo, s, ss);
+    res = BSDF_dispatch_sample_base(bsdf, wo, s, ss, ffo);
     res.weight = res.weight * self->weights[0];
     return res;
   } else {
@@ -127,7 +131,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF *uniform super,
     foreach_unique (i in choice) {
 #endif
       const varying BSDF *uniform bsdf = self->bsdfs[i];
-      res = BSDF_dispatch_sample_base(bsdf, wo, s, ss);
+      res = BSDF_dispatch_sample_base(bsdf, wo, s, ss, ffo);
       res.weight = res.weight * self->weights[i];
     }
 
@@ -151,7 +155,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF *uniform super,
     for (uniform int i = 0; i < self->numBsdfs; ++i) {
       if ((i != choice) & (self->importances[i] > 0.0f)) {
         const varying BSDF *uniform curBsdf = self->bsdfs[i];
-        BSDF_EvalRes cur = BSDF_dispatch_eval_base(curBsdf, wo, res.wi);
+        BSDF_EvalRes cur = BSDF_dispatch_eval(curBsdf, wo, res.wi, ffo);
         cur.value = cur.value * self->weights[i];
         value = value + cur.value;
         res.pdf += cur.pdf * self->importances[i];

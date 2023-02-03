@@ -11,12 +11,11 @@ task
         DistributedWorld *uniform world,
         const box3f *uniform region,
         void *uniform perFrameData,
-        const uint32 *uniform taskIDs
+        const uint32 *uniform taskIDs,
 #ifdef OSPRAY_TARGET_SYCL
-        ,
-        const int taskIndex0
+        const int taskIndex0,
 #endif
-    )
+        const uniform FeatureFlags &ff)
 {
   const uniform int32 spp = self->spp;
 
@@ -26,8 +25,8 @@ task
 
   CameraSample cameraSample;
 
-  uniform RenderTaskDesc taskDesc =
-      FrameBuffer_dispatch_getRenderTaskDesc(&fb->super, taskIDs[taskIndex0]);
+  uniform RenderTaskDesc taskDesc = FrameBuffer_dispatch_getRenderTaskDesc(
+      &fb->super, taskIDs[taskIndex0], ff.other);
 
   const uniform int startSampleID = max(taskDesc.accumID, 0) * spp;
 
@@ -58,7 +57,8 @@ task
       // set ray t value for early ray termination (from maximum depth texture)
       vec2f center =
           make_vec2f(screenSample.sampleID.x, screenSample.sampleID.y) + 0.5f;
-      const float tMax = Renderer_getMaxDepth(self, center * fb->super.rcpSize);
+      const float tMax =
+          Renderer_getMaxDepth(self, center * fb->super.rcpSize, ff.other);
       vec3f col = make_vec3f(0.f);
       float alpha = 0.f;
       vec3f normal = make_vec3f(0.f);
@@ -81,7 +81,8 @@ task
         cameraSample.lens.y = 0.0f;
         cameraSample.time = 0.5f;
 
-        Camera_dispatch_initRay(camera, screenSample.ray, cameraSample);
+        Camera_dispatch_initRay(
+            camera, screenSample.ray, cameraSample, ff.other);
         screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         // TODO: We could store and use the region t intervals from when
@@ -101,7 +102,8 @@ task
               region,
               make_vec2f(regionEnter, regionExit),
               perFrameData,
-              screenSample);
+              screenSample,
+              ff);
 
           col = col + screenSample.rgb;
           alpha += screenSample.alpha;
@@ -115,8 +117,8 @@ task
       screenSample.normal = normal * rspp;
       screenSample.albedo = albedo * rspp;
 
-      FrameBuffer_dispatch_accumulateSample(&fb->super, screenSample, taskDesc);
+      FrameBuffer_dispatch_accumulateSample(
+          &fb->super, screenSample, taskDesc, ff.other);
     }
-  FrameBuffer_dispatch_completeTask(&fb->super, taskDesc);
+  FrameBuffer_dispatch_completeTask(&fb->super, taskDesc, ff.other);
 }
-

@@ -4,8 +4,8 @@
 #pragma once
 
 #include "SciVis.ih"
+#include "render/Material.ih"
 #include "render/materials/OBJ.ih"
-#include "texture/TextureParam.ih"
 // c++ shared
 #include "render/materials/OBJShared.h"
 
@@ -27,10 +27,13 @@ SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
     const DifferentialGeometry &dg,
     ScreenSample &sample,
     varying LDSampler *uniform ldSampler,
-    const varying vec3f &inDir);
+    const varying vec3f &inDir,
+    const uniform FeatureFlags &ff);
 
-SYCL_EXTERNAL vec3f evaluateLights(
-    const World *uniform world, const DifferentialGeometry &dg, const Ray &ray);
+SYCL_EXTERNAL vec3f evaluateLights(const World *uniform world,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const uniform FeatureFlags &ff);
 
 struct SciVisBSDF
 {
@@ -42,7 +45,8 @@ struct SciVisBSDF
   float opacity;
 };
 
-inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
+inline SciVisBSDF evalMaterial(
+    const DifferentialGeometry &dg, const uniform FeatureFlagsOther ffo)
 {
   const OBJ *mat = (const OBJ *)dg.material;
 
@@ -61,16 +65,16 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
   foreach_unique (m in mat) {
 #endif
     if (m != NULL && m->super.type == MATERIAL_TYPE_OBJ) {
-      float d = m->d * get1f(m->dMap, dg, 1.f) * dg.color.w;
+      float d = m->d * get1f_ff(m->dMap, dg, 1.f, ffo) * dg.color.w;
       res.diffuse = res.diffuse * m->Kd;
-      if (valid(m->KdMap)) {
+      if (valid(m->KdMap) && (ffo & FFO_TEXTURE_IN_MATERIAL)) {
         vec4f Kd_from_map = get4f(m->KdMap, dg);
         res.diffuse = res.diffuse * make_vec3f(Kd_from_map);
         d *= Kd_from_map.w;
       }
       res.diffuse = res.diffuse * d;
-      res.specular = d * m->Ks * get3f(m->KsMap, dg, make_vec3f(1.f));
-      res.shininess = m->Ns * get1f(m->NsMap, dg, 1.0f);
+      res.specular = d * m->Ks * get3f_ff(m->KsMap, dg, make_vec3f(1.f), ffo);
+      res.shininess = m->Ns * get1f_ff(m->NsMap, dg, 1.f, ffo);
       res.transmission = m->Tf * d + make_vec3f(1.f - d);
       res.opacity = d;
     }

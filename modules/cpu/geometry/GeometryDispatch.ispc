@@ -3,6 +3,7 @@
 
 #include "common/DifferentialGeometry.ih"
 #include "common/Ray.ih"
+#include "common/RayQueryContext.ih"
 #include "geometry/Boxes.ih"
 #include "geometry/Curves.ih"
 #include "geometry/GeometryDispatch.ih"
@@ -18,51 +19,44 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL __noinline void Geometry_dispatch_postIntersect(
-    const Geometry *uniform self,
+SYCL_EXTERNAL void Geometry_dispatch_postIntersect(const Geometry *uniform self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
-    uniform int64 flags)
+    uniform int64 flags,
+    const uniform FeatureFlagsGeometry ffg)
 {
-  switch (self->type) {
-  case GEOMETRY_TYPE_QUAD_MESH:
+  if ((self->type == GEOMETRY_TYPE_QUAD_MESH) && (ffg & FFG_QUAD)) {
     QuadMesh_postIntersect(self, dg, ray, flags);
-    break;
-  case GEOMETRY_TYPE_TRIANGLE_MESH:
+  } else if ((self->type == GEOMETRY_TYPE_TRIANGLE_MESH)
+      && (ffg & FFG_TRIANGLE)) {
     TriangleMesh_postIntersect(self, dg, ray, flags);
-    break;
-  case GEOMETRY_TYPE_BOXES:
+  } else if ((self->type == GEOMETRY_TYPE_BOXES) && (ffg & FFG_BOX)) {
     Boxes_postIntersect(self, dg, ray, flags);
-    break;
-  case GEOMETRY_TYPE_SPHERES:
+  } else if ((self->type == GEOMETRY_TYPE_SPHERES) && (ffg & FFG_SPHERE)) {
     Spheres_postIntersect(self, dg, ray, flags);
-    break;
-  case GEOMETRY_TYPE_PLANES:
+  } else if ((self->type == GEOMETRY_TYPE_PLANES) && (ffg & FFG_PLANE)) {
     Planes_postIntersect(self, dg, ray, flags);
-    break;
-  case GEOMETRY_TYPE_CURVES:
+  } else if ((self->type == GEOMETRY_TYPE_CURVES) && (ffg & FFG_CURVES)) {
     Curves_postIntersect(self, dg, ray, flags);
-    break;
 #ifdef OSPRAY_ENABLE_VOLUMES
-  case GEOMETRY_TYPE_ISOSURFACES:
+  } else if ((self->type == GEOMETRY_TYPE_ISOSURFACES)
+      && (ffg & FFG_ISOSURFACE)) {
     Isosurfaces_postIntersect(self, dg, ray, flags);
-    break;
 #endif
 #ifndef OSPRAY_TARGET_SYCL
-    // Subdivision surfaces not supported on the GPU right now
-  case GEOMETRY_TYPE_SUBDIVISION:
+  } else if ((self->type == GEOMETRY_TYPE_SUBDIVISION)
+      && (ffg & FFG_SUBDIVISION)) {
     Subdivision_postIntersect(self, dg, ray, flags);
-    break;
-#endif
-  default:
-#ifndef OSPRAY_TARGET_SYCL
+  } else {
     self->postIntersect(self, dg, ray, flags);
-#endif
-    break;
   }
+#else
+  } else {
+  }
+#endif
 }
 
-SYCL_EXTERNAL __noinline SampleAreaRes Geometry_dispatch_sampleArea(
+SYCL_EXTERNAL SampleAreaRes Geometry_dispatch_sampleArea(
     const Geometry *const uniform self,
     const int32 primID,
     const uniform affine3f &xfm,
@@ -94,62 +88,49 @@ SYCL_EXTERNAL __noinline SampleAreaRes Geometry_dispatch_sampleArea(
 RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_intersect(
     RTCIntersectFunctionNArguments *uniform args)
 {
+  RayQueryContextDefault *uniform ctx =
+      (RayQueryContextDefault * uniform) args->context;
+  const uniform FeatureFlagsGeometry ffg = ctx->ffg;
   Geometry *uniform geom = (Geometry * uniform) args->geometryUserPtr;
-  switch (geom->type) {
-  case GEOMETRY_TYPE_BOXES:
+  if ((geom->type == GEOMETRY_TYPE_BOXES) && (ffg & FFG_BOX)) {
     Boxes_intersect_kernel(args, false);
-    break;
-  case GEOMETRY_TYPE_PLANES:
+  } else if ((geom->type == GEOMETRY_TYPE_PLANES) && (ffg & FFG_PLANE)) {
     Planes_intersect_kernel(args, false);
-    break;
-#if 0
-  case GEOMETRY_TYPE_SPHERES:
-    Spheres_intersect_kernel(args, false);
-    break;
-#endif
 #ifdef OSPRAY_ENABLE_VOLUMES
-  case GEOMETRY_TYPE_ISOSURFACES:
+  } else if ((geom->type == GEOMETRY_TYPE_ISOSURFACES)
+      && (ffg & FFG_ISOSURFACE)) {
     Isosurfaces_intersect_kernel(args, false);
-    break;
 #endif
-  default:
+  } else {
 #ifndef OSPRAY_TARGET_SYCL
     geom->intersect((RTCIntersectFunctionNArguments * uniform) args, false);
 #endif
-    break;
   }
 }
 
 RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Geometry_dispatch_occluded(
     RTCOccludedFunctionNArguments *uniform args)
 {
+  RayQueryContextDefault *uniform ctx =
+      (RayQueryContextDefault * uniform) args->context;
+  const uniform FeatureFlagsGeometry ffg = ctx->ffg;
   Geometry *uniform geom = (Geometry * uniform) args->geometryUserPtr;
-  switch (geom->type) {
-  case GEOMETRY_TYPE_BOXES:
+  if ((geom->type == GEOMETRY_TYPE_BOXES) && (ffg & FFG_BOX)) {
     Boxes_intersect_kernel(
         (RTCIntersectFunctionNArguments * uniform) args, true);
-    break;
-  case GEOMETRY_TYPE_PLANES:
+  } else if ((geom->type == GEOMETRY_TYPE_PLANES) && (ffg & FFG_PLANE)) {
     Planes_intersect_kernel(
         (RTCIntersectFunctionNArguments * uniform) args, true);
-    break;
-#if 0
-  case GEOMETRY_TYPE_SPHERES:
-    Spheres_intersect_kernel(
-        (RTCIntersectFunctionNArguments * uniform) args, true);
-    break;
-#endif
 #ifdef OSPRAY_ENABLE_VOLUMES
-  case GEOMETRY_TYPE_ISOSURFACES:
+  } else if ((geom->type == GEOMETRY_TYPE_ISOSURFACES)
+      && (ffg & FFG_ISOSURFACE)) {
     Isosurfaces_intersect_kernel(
         (RTCIntersectFunctionNArguments * uniform) args, true);
-    break;
 #endif
-  default:
+  } else {
 #ifndef OSPRAY_TARGET_SYCL
     geom->intersect((RTCIntersectFunctionNArguments * uniform) args, true);
 #endif
-    break;
   }
 }
 

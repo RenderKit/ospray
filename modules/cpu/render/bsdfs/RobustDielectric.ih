@@ -24,8 +24,10 @@ struct RobustDielectric
   vec3f Ns;
 };
 
-inline BSDF_EvalRes RobustDielectric_eval(
-    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+inline BSDF_EvalRes RobustDielectric_eval(const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec3f &wi,
+    const uniform FeatureFlagsOther ffo)
 {
   return make_BSDF_EvalRes_zero();
 }
@@ -97,7 +99,8 @@ inline vec3f ReflectionDirection(const vec3f &incomingDir, const vec3f &normal)
 inline BSDF_SampleRes RobustDielectric_sample(const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f & /*randomV*/,
-    float randomF)
+    float randomF,
+    const uniform FeatureFlagsOther ffo)
 {
   const varying RobustDielectric *uniform self =
       (const varying RobustDielectric *uniform)super;

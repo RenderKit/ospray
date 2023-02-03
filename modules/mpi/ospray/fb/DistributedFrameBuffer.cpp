@@ -63,7 +63,7 @@ DFB::DistributedFrameBuffer(api::ISPCDevice &device,
     // be set from the object handle but pulled from some other ID pool
     // specific to those objects using the messaging layer
     : MessageHandler(myId),
-      FrameBuffer(device, numPixels, colorBufferFormat, channels),
+      FrameBuffer(device, numPixels, colorBufferFormat, channels, FFO_NONE),
       mpiGroup(mpicommon::worker.dup()),
       totalTiles(divRoundUp(size, vec2i(TILE_SIZE))),
       numRenderTasks((totalTiles * TILE_SIZE) / getRenderTaskSize()),

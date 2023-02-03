@@ -9,10 +9,10 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL __noinline vec4f Texture2D_get(
+SYCL_EXTERNAL vec4f Texture2D_get(
     const uniform Texture *uniform self, const DifferentialGeometry &dg);
 
-SYCL_EXTERNAL __noinline vec3f Texture2D_getNormal(
+SYCL_EXTERNAL vec3f Texture2D_getNormal(
     const uniform Texture *uniform self, const DifferentialGeometry &dg);
 
 // XXX won't work with MIPmapping: clean implementation with clamping on integer

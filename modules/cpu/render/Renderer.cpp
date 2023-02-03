@@ -46,6 +46,9 @@ void Renderer::commit()
 
   maxDepthTexture = (Texture2D *)getParamObject("map_maxDepth");
   backplate = (Texture2D *)getParamObject("map_backplate");
+  featureFlags = FFO_NONE;
+  if (maxDepthTexture || backplate)
+    featureFlags |= FFO_TEXTURE_IN_RENDERER;
 
   if (maxDepthTexture) {
     if (maxDepthTexture->format != OSP_TEXTURE_R32F
@@ -66,6 +69,9 @@ void Renderer::commit()
   getSh()->material = nullptr;
   materialData = getParamDataT<Material *>("material");
   if (materialData) {
+    for (auto &&mat : *materialData)
+      featureFlags |= mat->getFeatureFlagsOther();
+
     materialArray = make_buffer_shared_unique<ispc::Material *>(
         getISPCDevice().getIspcrtDevice(),
         createArrayOfSh<ispc::Material>(*materialData));

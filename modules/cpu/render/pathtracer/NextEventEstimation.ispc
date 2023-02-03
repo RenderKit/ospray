@@ -23,7 +23,8 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 
 SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const PathState &pathState,
-    PathVertex &pathVertex)
+    PathVertex &pathVertex,
+    const uniform FeatureFlags &ff)
 {
   // direct lighting including shadows and MIS
   vec3f L = make_vec3f(0.f);
@@ -50,7 +51,8 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
 #else
     foreach_unique (l in light) {
 #endif
-      ls = Light_dispatch_sample(l, pathVertex.dg, s2, pathState.time);
+      ls =
+          Light_dispatch_sample(l, pathVertex.dg, s2, pathState.time, ff.other);
     }
     // adjust the contibution with the probabiltiy of selecting the light source
     ls.weight = ls.weight / lightSelectionProb;
@@ -70,18 +72,20 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
       foreach_unique (f in pathVertex.bsdf) {
 #endif
         if (f != NULL)
-          fe = BSDF_dispatch_eval(f, pathVertex.wo, ls.dir);
+          fe = BSDF_dispatch_eval(f, pathVertex.wo, ls.dir, ff.other);
       }
     } else {
 #ifdef OSPRAY_ENABLE_VOLUMES
+      if (ff.volume & FFV_VOLUME) {
 #ifdef OSPRAY_TARGET_SYCL
-      {
-        const VolumetricModel *v = pathVertex.volume;
+        {
+          const VolumetricModel *v = pathVertex.volume;
 #else
-      foreach_unique (v in pathVertex.volume) {
+        foreach_unique (v in pathVertex.volume) {
 #endif
-        if (v != NULL)
-          fe = HenyeyGreenstein_eval(v->anisotropy, pathVertex.wo, ls.dir);
+          if (v != NULL)
+            fe = HenyeyGreenstein_eval(v->anisotropy, pathVertex.wo, ls.dir);
+        }
       }
 #endif
     }
@@ -120,33 +124,37 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
         unshadedLightContrib,
         shadowRay,
         rayIntervals,
-        pathState.currentMedium);
+        pathState.currentMedium,
+        ff);
     if (reduce_max(lightContrib) > 0) {
-#ifndef OSPRAY_ENABLE_VOLUMES
-      L = L + lightContrib * misHeuristic(pathState, ls.pdf, fe.pdf);
-#else
-      const float T = volumeTransmittance(pathState,
-          pathContext.world,
-          shadowRay,
-          rayIntervals,
-          pathContext.ldSampler,
-          pathContext.randomSampler);
-      if (reduce_max(T) > 0) {
-        // we have to use an independent transmittance estimate for MIS to get
-        // a correct result
-        const float T_mis = pathState.disableFWD || pathState.disableNEE
-            ? 1.f
-            : volumeTransmittance(pathState,
-                pathContext.world,
-                shadowRay,
-                rayIntervals,
-                pathContext.ldSampler,
-                pathContext.randomSampler);
-        L = L
-            + T * lightContrib
-                * misHeuristic(pathState, ls.pdf, fe.pdf * T_mis);
-      }
+#ifdef OSPRAY_ENABLE_VOLUMES
+      if (ff.volume & FFV_VOLUME) {
+        const float T = volumeTransmittance(pathState,
+            pathContext.world,
+            shadowRay,
+            rayIntervals,
+            pathContext.ldSampler,
+            pathContext.randomSampler);
+        if (reduce_max(T) > 0) {
+          // we have to use an independent transmittance estimate for MIS to get
+          // a correct result
+          const float T_mis = pathState.disableFWD || pathState.disableNEE
+              ? 1.f
+              : volumeTransmittance(pathState,
+                  pathContext.world,
+                  shadowRay,
+                  rayIntervals,
+                  pathContext.ldSampler,
+                  pathContext.randomSampler);
+          L = L
+              + T * lightContrib
+                  * misHeuristic(pathState, ls.pdf, fe.pdf * T_mis);
+        }
+      } else
 #endif
+      {
+        L = L + lightContrib * misHeuristic(pathState, ls.pdf, fe.pdf);
+      }
     }
   }
   return L;

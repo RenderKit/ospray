@@ -12,6 +12,7 @@
 #include "common/FilterIntersect.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
+#include "common/RayQueryContext.ih"
 #include "common/World.ih"
 #include "fb/RenderTaskDesc.ih"
 #include "fb/SparseFB.ih"
@@ -22,15 +23,15 @@
 #include "rkcommon/utility/random.ih"
 #include "texture/Texture2D.ih"
 // c++ shared
-#include "render/RendererShared.h"
 #include "common/DistributedWorldShared.h"
 #include "fb/FrameBufferDispatch.ih"
 #include "fb/FrameBufferShared.h"
 #include "fb/SparseFBShared.h"
+#include "render/RendererShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-struct EmbreeRayQueryContextRegion
+struct RayQueryContextRegion
 {
   RTCRayQueryContext ectx;
   uint8 *regionVisible;
@@ -60,8 +61,8 @@ RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Regions_intersect_kernel(
   const Intersections isect = intersectBox(ray->org, ray->dir, box);
   if ((isect.entry.hit && isect.entry.t > ray->t0 && isect.entry.t <= ray->t)
       || (isect.exit.hit && isect.exit.t > ray->t0 && isect.exit.t <= ray->t)) {
-    EmbreeRayQueryContextRegion *uniform ctx =
-        (EmbreeRayQueryContextRegion * uniform) args->context;
+    RayQueryContextRegion *uniform ctx =
+        (RayQueryContextRegion * uniform) args->context;
 
     uint8 *uniform regionVisible = (uint8 * uniform) ctx->regionVisible;
     regionVisible[primID] = 0xff;
@@ -78,12 +79,11 @@ task
         DistributedWorld *uniform world,
         uint8 *uniform regionVisible,
         void *uniform perFrameData,
-        const uint32 *uniform taskIDs
+        const uint32 *uniform taskIDs,
 #ifdef OSPRAY_TARGET_SYCL
-        ,
-        const int taskIndex0
+        const int taskIndex0,
 #endif
-    )
+        const uniform FeatureFlags &ff)
 {
   ScreenSample screenSample;
   screenSample.z = inf;
@@ -91,8 +91,8 @@ task
 
   CameraSample cameraSample;
 
-  uniform RenderTaskDesc taskDesc =
-      FrameBuffer_dispatch_getRenderTaskDesc(&fb->super, taskIDs[taskIndex0]);
+  uniform RenderTaskDesc taskDesc = FrameBuffer_dispatch_getRenderTaskDesc(
+      &fb->super, taskIDs[taskIndex0], ff.other);
 
   if (fb->super.cancelRender || isEmpty(taskDesc.region)) {
     return;
@@ -154,11 +154,12 @@ task
         cameraSample.lens.y = 0.0f;
         cameraSample.time = 0.5f;
 
-        Camera_dispatch_initRay(camera, screenSample.ray, cameraSample);
+        Camera_dispatch_initRay(
+            camera, screenSample.ray, cameraSample, ff.other);
         screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         if (world->regionScene) {
-          uniform EmbreeRayQueryContextRegion context;
+          uniform RayQueryContextRegion context;
           rtcInitRayQueryContext(&context.ectx);
           context.regionVisible = tileRegionVisible;
 
@@ -199,7 +200,8 @@ export void DistributedRenderer_computeRegionVisibility(void *uniform _self,
       (DistributedWorld * uniform) world,
       regionVisible,
       perFrameData,
-      taskIDs);
+      taskIDs,
+      ffAll());
 }
 
 export void DistributedRenderer_pick(const void *uniform _self,
@@ -229,8 +231,8 @@ export void DistributedRenderer_pick(const void *uniform _self,
   cameraSample.time = 0.5f;
 
   Ray ray;
-  Camera_dispatch_initRay(camera, ray, cameraSample);
-  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen));
+  Camera_dispatch_initRay(camera, ray, cameraSample, FFO_ALL);
+  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen, FFO_ALL));
 
   // Clip the ray to each region this rank owns and trace the clipped ray to
   // find the picked object
@@ -247,7 +249,7 @@ export void DistributedRenderer_pick(const void *uniform _self,
         && isect.entry.t <= regionRay.t) {
       regionRay.t0 = isect.entry.t;
       regionRay.t = min(regionRay.t, isect.exit.t);
-      traceRay(&world->super, regionRay);
+      traceRay(&world->super, regionRay, ffAll());
 
       if (hadHit(regionRay)) {
         closestHit = regionRay.t;

@@ -15,10 +15,11 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL vec4f Renderer_getBackground(
-    const Renderer *uniform self, const vec2f &screenPos)
+SYCL_EXTERNAL vec4f Renderer_getBackground(const Renderer *uniform self,
+    const vec2f &screenPos,
+    const uniform FeatureFlagsOther ffo)
 {
-  if (!self->backplate)
+  if (!self->backplate || !(ffo & FFO_TEXTURE_IN_RENDERER))
     return self->bgColor;
 
   // TODO: Now for GPU making a whole DifferentialGeometry object
@@ -29,10 +30,11 @@ SYCL_EXTERNAL vec4f Renderer_getBackground(
   return get4f(self->backplate, lookup);
 }
 
-SYCL_EXTERNAL float Renderer_getMaxDepth(
-    const Renderer *uniform self, const vec2f &screenPos)
+SYCL_EXTERNAL float Renderer_getMaxDepth(const Renderer *uniform self,
+    const vec2f &screenPos,
+    const uniform FeatureFlagsOther ffo)
 {
-  if (!self->maxDepthTexture)
+  if (!self->maxDepthTexture || !(ffo & FFO_TEXTURE_IN_RENDERER))
     return inf;
 
   DifferentialGeometry lookup;
@@ -67,10 +69,10 @@ export void Renderer_pick(const void *uniform _self,
   cameraSample.time = 0.5f;
 
   Ray ray;
-  camera->initRay(camera, ray, cameraSample);
-  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen));
+  Camera_dispatch_initRay(camera, ray, cameraSample, FFO_ALL);
+  ray.t = min(ray.t, Renderer_getMaxDepth(self, cameraSample.screen, FFO_ALL));
 
-  traceRay(world, ray);
+  traceRay(world, ray, ffAll());
 
   vec3f p = ray.org + ray.dir * ray.t;
 

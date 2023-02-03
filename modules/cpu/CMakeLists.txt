@@ -416,9 +416,10 @@ if (OSPRAY_MODULE_GPU)
     PROPERTIES
     LANGUAGE CXX)
 
-  add_library(ospray_module_gpu_kernels STATIC
+  add_library(ospray_module_gpu_kernels OBJECT
     ${OSPRAY_ISPC_SOURCES}
-    ${OSPRAY_VOLUMES_ISPC_SOURCES})
+    ${OSPRAY_VOLUMES_ISPC_SOURCES}
+  )
 
   set_target_properties(ospray_module_gpu_kernels PROPERTIES
     CXX_STANDARD 17
@@ -433,19 +434,19 @@ if (OSPRAY_MODULE_GPU)
   )
 
   target_include_directories(ospray_module_gpu_kernels
-    PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/api>
-      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/common>
-      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-      # NOTE(jda) - the following includes are missing despite PUBLIC linking
-      $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
-      $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
-      #######################################################################
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/api>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/common>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+    # NOTE(jda) - the following includes are missing despite PUBLIC linking
+    $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
+    #######################################################################
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
 
   target_compile_definitions(ospray_module_gpu_kernels
@@ -460,31 +461,30 @@ if (OSPRAY_MODULE_GPU)
     -x c++
   )
 
-  target_compile_options(ospray_module_gpu_kernels PRIVATE
+  target_compile_options(ospray_module_gpu_kernels PUBLIC
     -fsycl
     ${OSPRAY_CXX_FLAGS_SYCL}
     -fsycl-targets=${OSPRAY_SYCL_TARGET}
   )
 
   if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
-    target_link_options(ospray_module_gpu_kernels PRIVATE
+    target_link_options(ospray_module_gpu_kernels PUBLIC
       -fsycl
       -fsycl-targets=${OSPRAY_SYCL_TARGET}
       -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
+      -fsycl-device-code-split=per_kernel
     )
   else()
-    target_link_options(ospray_module_gpu_kernels PRIVATE
+    target_link_options(ospray_module_gpu_kernels PUBLIC
       -fsycl
       -fsycl-targets=${OSPRAY_SYCL_TARGET}
       -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
     )
   endif()
 
-
   target_compile_definitions(ospray_module_gpu_kernels
   PUBLIC
     OSPRAY_TARGET_SYCL
-    __SYCL_USE_NON_VARIADIC_SPIRV_OCL_PRINTF__
     OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
     OSPRAY_END_ISPC_NAMESPACE=}
     uniform=
@@ -522,7 +522,8 @@ if (OSPRAY_MODULE_GPU)
     )
   endif()
 
-  ospray_install_library(ospray_module_gpu_kernels lib)
+  # Install and export without DESTINATION to turn it into INTERFACE library
+  install(TARGETS ospray_module_gpu_kernels EXPORT ospray_Exports)
 
   add_library(ospray_module_gpu SHARED
     ${OSPRAY_CPP_SOURCES}
@@ -534,91 +535,14 @@ if (OSPRAY_MODULE_GPU)
     CXX_STANDARD_REQUIRED ON)
 
   target_link_libraries(ospray_module_gpu
-    PUBLIC
-      ospray_module_gpu_kernels
-  )
-
-  target_link_libraries(ospray_module_gpu
-    PUBLIC
-      ospray
-      rkcommon::rkcommon
-      $<BUILD_INTERFACE:ispcrt::ispcrt>
-      $<BUILD_INTERFACE:embree>
-  )
-
-  target_include_directories(ospray_module_gpu
-    PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/api>
-      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/common>
-      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-      # NOTE(jda) - the following includes are missing despite PUBLIC linking
-      $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
-      $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
-      #######################################################################
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-  )
-
-  target_compile_definitions(ospray_module_gpu
   PUBLIC
-    TILE_SIZE=${OSPRAY_TILE_SIZE}
-    MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
-    RKCOMMON_NO_SIMD
+    ospray_module_gpu_kernels
   )
 
   target_compile_options(ospray_module_gpu
   PRIVATE
     -x c++
   )
-
-  target_compile_options(ospray_module_gpu PRIVATE
-    -fsycl
-    ${OSPRAY_CXX_FLAGS_SYCL}
-    -fsycl-targets=${OSPRAY_SYCL_TARGET}
-  )
-
-  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
-    target_link_options(ospray_module_gpu PRIVATE
-      -fsycl
-      -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-    )
-  else()
-    target_link_options(ospray_module_gpu PRIVATE
-      -fsycl
-      -fsycl-targets=${OSPRAY_SYCL_TARGET}
-      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
-    )
-  endif()
-
-  target_compile_definitions(ospray_module_gpu
-  PUBLIC
-    OSPRAY_TARGET_SYCL
-    __SYCL_USE_NON_VARIADIC_SPIRV_OCL_PRINTF__
-    OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
-    OSPRAY_END_ISPC_NAMESPACE=}
-  )
-
-  if (OSPRAY_ENABLE_VOLUMES)
-    target_link_libraries(ospray_module_gpu
-    PUBLIC
-      $<BUILD_INTERFACE:openvkl::openvkl>
-      $<BUILD_INTERFACE:openvkl::openvkl_module_gpu_device>
-    )
-
-    target_include_directories(ospray_module_gpu
-    PUBLIC
-      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
-    )
-
-    target_compile_definitions(ospray_module_gpu
-    PUBLIC
-      OSPRAY_ENABLE_VOLUMES
-    )
-  endif()
 
   ospray_install_library(ospray_module_gpu lib)
 endif()

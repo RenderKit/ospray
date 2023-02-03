@@ -21,8 +21,12 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
     const uint32 channels,
     const std::vector<uint32_t> &_tileIDs,
     const bool overrideUseTaskAccumIDs)
-    : AddStructShared(
-        device.getIspcrtDevice(), device, _size, _colorBufferFormat, channels),
+    : AddStructShared(device.getIspcrtDevice(),
+        device,
+        _size,
+        _colorBufferFormat,
+        channels,
+        FFO_FB_SPARSE),
       useTaskAccumIDs((channels & OSP_FB_ACCUM) || overrideUseTaskAccumIDs),
       totalTiles(divRoundUp(size, vec2i(TILE_SIZE)))
 {
@@ -42,8 +46,12 @@ SparseFrameBuffer::SparseFrameBuffer(api::ISPCDevice &device,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels,
     const bool overrideUseTaskAccumIDs)
-    : AddStructShared(
-        device.getIspcrtDevice(), device, _size, _colorBufferFormat, channels),
+    : AddStructShared(device.getIspcrtDevice(),
+        device,
+        _size,
+        _colorBufferFormat,
+        channels,
+        FFO_FB_SPARSE),
       useTaskAccumIDs((channels & OSP_FB_ACCUM) || overrideUseTaskAccumIDs),
       totalTiles(divRoundUp(size, vec2i(TILE_SIZE)))
 {

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Volume.h"
+#include "common/FeatureFlagsEnum.h"
 #include "openvkl/openvkl.h"
 // comment break to prevent clang-format from reordering openvkl includes
 #if OPENVKL_VERSION_MAJOR > 1
@@ -30,6 +31,10 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
 
   Ref<Volume> getVolume() const;
 
+  FeatureFlagsGeometry getFeatureFlagsGeometry() const;
+  FeatureFlagsVolume getFeatureFlagsVolume() const;
+  FeatureFlagsOther getFeatureFlagsOther() const;
+
  private:
   box3f volumeBounds;
   Ref<Volume> volume;
@@ -38,6 +43,21 @@ struct OSPRAY_SDK_INTERFACE VolumetricModel
 };
 
 OSPTYPEFOR_SPECIALIZATION(VolumetricModel *, OSP_VOLUMETRIC_MODEL);
+
+inline FeatureFlagsGeometry VolumetricModel::getFeatureFlagsGeometry() const
+{
+  return FFG_NONE;
+}
+
+inline FeatureFlagsVolume VolumetricModel::getFeatureFlagsVolume() const
+{
+  return volume->getFeatureFlagsVolume();
+}
+
+inline FeatureFlagsOther VolumetricModel::getFeatureFlagsOther() const
+{
+  return FFO_NONE;
+}
 
 } // namespace ospray
 #endif

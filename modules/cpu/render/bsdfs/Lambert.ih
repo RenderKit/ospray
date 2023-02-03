@@ -8,8 +8,10 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-inline BSDF_EvalRes Lambert_eval(
-    const varying BSDF *uniform self, const vec3f &wo, const vec3f &wi)
+inline BSDF_EvalRes Lambert_eval(const varying BSDF *uniform self,
+    const vec3f &wo,
+    const vec3f &wi,
+    const uniform FeatureFlagsOther ffo)
 {
   BSDF_EvalRes res;
   float cosThetaI = max(dot(wi, getN(self)), 0.f);
@@ -18,8 +20,11 @@ inline BSDF_EvalRes Lambert_eval(
   return res;
 }
 
-inline BSDF_SampleRes Lambert_sample(
-    const varying BSDF *uniform self, const vec3f &wo, const vec2f &s, float ss)
+inline BSDF_SampleRes Lambert_sample(const varying BSDF *uniform self,
+    const vec3f &wo,
+    const vec2f &s,
+    float ss,
+    const uniform FeatureFlagsOther ffo)
 {
   const vec3f localDir = cosineSampleHemisphere(s);
   BSDF_SampleRes res;

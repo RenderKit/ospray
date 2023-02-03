@@ -1,6 +1,7 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/Ray.ih"
 #include "render/Material.ih"
 #include "render/bsdfs/Conductor.ih"
 #include "render/bsdfs/DielectricLayer.ih"

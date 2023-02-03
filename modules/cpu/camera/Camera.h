@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ISPCDeviceObject.h"
+#include "common/FeatureFlagsEnum.h"
 #include "common/MotionTransform.h"
 #include "common/ObjectFactory.h"
 #include "common/StructShared.h"
@@ -19,7 +20,7 @@ struct OSPRAY_SDK_INTERFACE Camera
     : public AddStructShared<ISPCDeviceObject, ispc::Camera>,
       public ObjectFactory<Camera, api::ISPCDevice &>
 {
-  Camera(api::ISPCDevice &device);
+  Camera(api::ISPCDevice &device, const FeatureFlagsOther featureFlags);
   ~Camera() override;
 
   std::string toString() const override;
@@ -31,6 +32,8 @@ struct OSPRAY_SDK_INTERFACE Camera
   // box.lower, box.upper respectively
   // Assume no motion blur nor depth of field (true for SciVis)
   virtual box3f projectBox(const box3f &b) const;
+
+  FeatureFlagsOther getFeatureFlagsOther() const;
 
   // Data members //
 
@@ -51,8 +54,14 @@ struct OSPRAY_SDK_INTERFACE Camera
  private:
   RTCGeometry embreeGeometry{nullptr};
   MotionTransform motionTransform;
+  FeatureFlagsOther featureFlags{FFO_NONE};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Camera *, OSP_CAMERA);
+
+inline FeatureFlagsOther Camera::getFeatureFlagsOther() const
+{
+  return featureFlags;
+}
 
 } // namespace ospray

@@ -23,7 +23,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
   uniform SciVis *uniform self = (uniform SciVis * uniform) _self;
 
@@ -68,59 +69,62 @@ static void SciVis_renderSample(Renderer *uniform _self,
   while (true) {
     // Then trace normal geometry using calculated ray intervals,
     // if hit ray.t will be updated
-    traceGeometryRayIntervals(world, ray, rayIntervals);
+    traceGeometryRayIntervals(world, ray, rayIntervals, ff);
 
 #ifdef OSPRAY_ENABLE_VOLUMES
-    // Determine volume intervals by tracing ray in the volume scene
     Ray volumeRay = ray;
-    traceVolumeRay(world, volumeRay, volumeIntervals);
+    if (ff.volume & FFV_VOLUME) {
+      // Determine volume intervals by tracing ray in the volume scene
+      traceVolumeRay(world, volumeRay, volumeIntervals);
 
-    // Sample volumes across volume intervals (in front of geometry hit)
-    if (volumeIntervals.numVolumeIntervals > 0) {
-      SciVisRenderContext rc;
-      rc.renderer = self;
-      rc.fb = fb;
-      rc.world = world;
-      rc.sample = sample;
-      rc.ldSampler = ldSampler;
-      volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
-      vec4f volumeColor = integrateVolumeIntervalsGradient(rc,
-          volumeIntervals,
-          rayIntervals,
-          volumeRay,
-          ldSampler,
-          self->volumeSamplingRate,
-          true);
+      // Sample volumes across volume intervals (in front of geometry hit)
+      if (volumeIntervals.numVolumeIntervals > 0) {
+        SciVisRenderContext rc;
+        rc.renderer = self;
+        rc.fb = fb;
+        rc.world = world;
+        rc.sample = sample;
+        rc.ldSampler = ldSampler;
+        volumeRay.geomID = RTC_INVALID_GEOMETRY_ID;
+        vec4f volumeColor = integrateVolumeIntervalsGradient(rc,
+            volumeIntervals,
+            rayIntervals,
+            volumeRay,
+            ldSampler,
+            self->volumeSamplingRate,
+            true,
+            ff);
 
-      // Blend volume
-      outColor = outColor + outTransmission * make_vec3f(volumeColor);
-      outTransmission = outTransmission * volumeColor.w;
+        // Blend volume
+        outColor = outColor + outTransmission * make_vec3f(volumeColor);
+        outTransmission = outTransmission * volumeColor.w;
 
-      if (hadHit(volumeRay) && sample.geomID == RTC_INVALID_GEOMETRY_ID) {
-        sample.primID = 0;
+        if (hadHit(volumeRay) && sample.geomID == RTC_INVALID_GEOMETRY_ID) {
+          sample.primID = 0;
 #ifdef OSPRAY_TARGET_SYCL
-        {
-          const uint32 instID = volumeRay.instID;
+          {
+            const uint32 instID = volumeRay.instID;
 #else
-        foreach_unique (instID in volumeRay.instID) {
+          foreach_unique (instID in volumeRay.instID) {
 #endif
-          if (instID != RTC_INVALID_GEOMETRY_ID) {
-            const Instance *uniform instance = *(world->instances + instID);
-            sample.instID = (instance->userID == RTC_INVALID_GEOMETRY_ID)
-                ? instID
-                : instance->userID;
-            const VolumetricModel *volms =
-                *(instance->group->volumetricModels + volumeRay.geomID);
+            if (instID != RTC_INVALID_GEOMETRY_ID) {
+              const Instance *uniform instance = *(world->instances + instID);
+              sample.instID = (instance->userID == RTC_INVALID_GEOMETRY_ID)
+                  ? instID
+                  : instance->userID;
+              const VolumetricModel *volms =
+                  *(instance->group->volumetricModels + volumeRay.geomID);
 
 #ifdef OSPRAY_TARGET_SYCL
-            {
-              const VolumetricModel *uniform volm = volms;
+              {
+                const VolumetricModel *uniform volm = volms;
 #else
-            foreach_unique (volm in volms) {
+              foreach_unique (volm in volms) {
 #endif
-              sample.geomID = (volm->userID == RTC_INVALID_GEOMETRY_ID)
-                  ? volumeRay.geomID
-                  : volm->userID;
+                sample.geomID = (volm->userID == RTC_INVALID_GEOMETRY_ID)
+                    ? volumeRay.geomID
+                    : volm->userID;
+              }
             }
           }
         }
@@ -133,7 +137,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
     DifferentialGeometry dg;
     if (self->visibleLights) {
       dg.P = ray.org;
-      outColor = outColor + outTransmission * evaluateLights(world, dg, ray);
+      outColor =
+          outColor + outTransmission * evaluateLights(world, dg, ray, ff);
     }
 
     // If any geometry has been hit
@@ -145,12 +150,13 @@ static void SciVis_renderSample(Renderer *uniform _self,
           dg,
           ray,
           DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR
-              | DG_TEXCOORD);
+              | DG_TEXCOORD,
+          ff);
 
       // Shade geometry
       SSI surfaceShading;
       surfaceShading = SciVis_computeShading(
-          self, fb, world, dg, sample, ldSampler, ray.dir);
+          self, fb, world, dg, sample, ldSampler, ray.dir, ff);
 
       // Initialize other per sample data with first hit values
       // In addition to considering the first hit, all previous, fully
@@ -192,7 +198,8 @@ static void SciVis_renderSample(Renderer *uniform _self,
       setRay(ray, ray.t + dg.epsilon, originalRayTFar);
     } else {
       // Blend background with output final color
-      vec4f backgroundColor = Renderer_getBackground(&self->super, sample.pos);
+      vec4f backgroundColor =
+          Renderer_getBackground(&self->super, sample.pos, ff.other);
       outColor = outColor + outTransmission * make_vec3f(backgroundColor);
       outTransmission = outTransmission * (1.f - backgroundColor.w);
 
@@ -229,7 +236,8 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
     const varying DifferentialGeometry &dg,
     const uniform int sampleCnt,
     const uniform float aoRadius,
-    const varying vec3i &sampleID)
+    const varying vec3i &sampleID,
+    const uniform FeatureFlags &ff)
 {
   const uniform int accumID = reduce_max(sampleID.z) * sampleCnt;
 
@@ -270,7 +278,8 @@ SYCL_EXTERNAL vec3f SciVis_computeAO(const uniform SciVis *uniform self,
                 ldSampler,
                 make_vec3f(1.f),
                 dg.epsilon,
-                0.1f));
+                0.1f,
+                ff));
   }
 
   // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir)
@@ -289,10 +298,11 @@ SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
     World *uniform world,
     void *uniform perFrameData,
     const uint32 *uniform taskIDs,
-    const int taskIndex0)
+    const int taskIndex0,
+    const uniform FeatureFlags &ff)
 {
   Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, taskIndex0);
+      self, fb, camera, world, perFrameData, taskIDs, taskIndex0, ff);
 }
 #else
 export void SciVis_renderTasks(void *uniform _self,
@@ -309,7 +319,7 @@ export void SciVis_renderTasks(void *uniform _self,
   World *uniform world = (World * uniform) _world;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
   launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs);
+      self, fb, camera, world, perFrameData, taskIDs, ffAll());
   sync;
 }
 #endif

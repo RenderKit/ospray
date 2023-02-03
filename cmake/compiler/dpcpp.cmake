@@ -37,16 +37,14 @@ list(APPEND OSPRAY_CXX_FLAGS_SYCL -g0)
 #list(APPEND OSPRAY_CXX_FLAGS_SYCL -UDEBUG -DNDEBUG)
 
 # IGC options from Embree
-# Enable __noinline
-list(APPEND OSPRAY_IGC_OPTIONS "EnableOCLNoInlineAttr=0")
 # This works around some IGC bug in spill compression
 # TODO: Still true?
-list(APPEND OSPRAY_IGC_OPTIONS "VISAOptions=-scratchAllocForStackInKB 128 -nospillcompression")
+list(APPEND OSPRAY_IGC_OPTIONS "VISAOptions=-scratchAllocForStackInKB 128")
 
 # Allow printf inside indirectly callable function, right now I have this in all for testing
 # TODO: Should only enable for debug builds, and this needs to be done using a generator expression
 # if we want to support it in VS
-list(APPEND OSPRAY_IGC_OPTIONS "ForceInlineStackCallWithImplArg=0" "EnableGlobalStateBuffer=1")
+#list(APPEND OSPRAY_IGC_OPTIONS "ForceInlineStackCallWithImplArg=0" "EnableGlobalStateBuffer=1")
 
 option(OSPRAY_IGC_ENABLE_ZE_BINARY "Enable ZEBinary (for GTPin)" OFF)
 if (OSPRAY_IGC_ENABLE_ZE_BINARY)

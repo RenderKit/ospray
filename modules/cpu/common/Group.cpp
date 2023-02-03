@@ -16,12 +16,17 @@ namespace ospray {
 
 template <class MODEL>
 inline void createEmbreeScene(RTCScene &scene,
+    FeatureFlags &featureFlags,
     const DataT<MODEL *> &objects,
     const int embreeFlags,
     const RTCBuildQuality buildQuality)
 {
-  for (auto &&obj : objects)
+  for (auto &&obj : objects) {
     rtcAttachGeometry(scene, obj->embreeGeometryHandle());
+    featureFlags.geometry |= obj->getFeatureFlagsGeometry();
+    featureFlags.volume |= obj->getFeatureFlagsVolume();
+    featureFlags.other |= obj->getFeatureFlagsOther();
+  }
 
   rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
   rtcSetSceneBuildQuality(scene, buildQuality);
@@ -121,10 +126,14 @@ void Group::commit()
     throw std::runtime_error("invalid Embree device");
   }
 
+  featureFlags.setNone();
   if (numGeometries > 0) {
     sceneGeometries = rtcNewScene(embreeDevice);
-    createEmbreeScene(
-        sceneGeometries, *geometricModels, sceneFlags, buildQuality);
+    createEmbreeScene(sceneGeometries,
+        featureFlags,
+        *geometricModels,
+        sceneFlags,
+        buildQuality);
 
     geometricModelsArray = make_buffer_shared_unique<ispc::GeometricModel *>(
         getISPCDevice().getIspcrtDevice(),
@@ -137,8 +146,11 @@ void Group::commit()
 #ifdef OSPRAY_ENABLE_VOLUMES
   if (numVolumes > 0) {
     sceneVolumes = rtcNewScene(embreeDevice);
-    createEmbreeScene(
-        sceneVolumes, *volumetricModels, sceneFlags, buildQuality);
+    createEmbreeScene(sceneVolumes,
+        featureFlags,
+        *volumetricModels,
+        sceneFlags,
+        buildQuality);
 
     volumetricModelsArray = make_buffer_shared_unique<ispc::VolumetricModel *>(
         getISPCDevice().getIspcrtDevice(),
@@ -152,6 +164,7 @@ void Group::commit()
   if (numClippers > 0) {
     sceneClippers = rtcNewScene(embreeDevice);
     createEmbreeScene(sceneClippers,
+        featureFlags,
         *clipModels,
         sceneFlags | RTC_SCENE_FLAG_FILTER_FUNCTION_IN_ARGUMENTS
             | RTC_SCENE_FLAG_ROBUST,
@@ -175,16 +188,22 @@ void Group::commit()
 #endif
   getSh()->numClipModels = numClippers;
 
-  // Create empty scene for lights-only group,
-  // it is needed to have rtcGeometry created in Instance object
-  // which in turn is needed for motion blur matrices interpolation
-  if ((numLights > 0) && (numGeometries == 0)
+  if (numLights > 0) {
+    // Gather light types
+    for (auto &&light : *lights)
+      featureFlags.other |= light->getFeatureFlagsOther();
+
+    // Create empty scene for lights-only group,
+    // it is needed to have rtcGeometry created in Instance object
+    // which in turn is needed for motion blur matrices interpolation
+    if ((numGeometries == 0)
 #ifdef OSPRAY_ENABLE_VOLUMES
-      && (numVolumes == 0)
+        && (numVolumes == 0)
 #endif
-      && (numClippers == 0)) {
-    sceneGeometries = rtcNewScene(embreeDevice);
-    rtcCommitScene(sceneGeometries);
+        && (numClippers == 0)) {
+      sceneGeometries = rtcNewScene(embreeDevice);
+      rtcCommitScene(sceneGeometries);
+    }
   }
 }
 

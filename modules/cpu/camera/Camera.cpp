@@ -6,8 +6,9 @@
 
 namespace ospray {
 
-Camera::Camera(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+Camera::Camera(api::ISPCDevice &device, const FeatureFlagsOther featureFlags)
+    : AddStructShared(device.getIspcrtDevice(), device),
+      featureFlags(featureFlags)
 {
   managedObjectType = OSP_CAMERA;
 }

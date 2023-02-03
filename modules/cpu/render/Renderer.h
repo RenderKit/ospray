@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ISPCDeviceObject.h"
+#include "common/FeatureFlagsEnum.h"
 #include "math/MathConstants.h"
 #include "pf/PixelFilter.h"
 #include "rkcommon/utility/ArrayView.h"
@@ -94,6 +95,9 @@ struct OSPRAY_SDK_INTERFACE Renderer
 
   Ref<const DataT<Material *>> materialData;
   std::unique_ptr<BufferShared<ispc::Material *>> materialArray;
+
+ protected:
+  FeatureFlagsOther featureFlags{FFO_NONE};
 
  private:
   void setupPixelFilter();

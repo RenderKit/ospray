@@ -3,14 +3,17 @@
 
 #pragma once
 
+#include "common/FeatureFlags.ih"
 // c++ shared
 #include "RendererShared.h"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL vec4f Renderer_getBackground(
-    const Renderer *uniform self, const vec2f &screenPos);
-SYCL_EXTERNAL float Renderer_getMaxDepth(
-    const Renderer *uniform self, const vec2f &screenPos);
+SYCL_EXTERNAL vec4f Renderer_getBackground(const Renderer *uniform self,
+    const vec2f &screenPos,
+    const uniform FeatureFlagsOther ffo);
+SYCL_EXTERNAL float Renderer_getMaxDepth(const Renderer *uniform self,
+    const vec2f &screenPos,
+    const uniform FeatureFlagsOther ffo);
 
 OSPRAY_END_ISPC_NAMESPACE

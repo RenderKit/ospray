@@ -40,7 +40,8 @@ inline void Instance_postIntersect(const Instance *uniform self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags,
-    const uniform bool clip = false)
+    const uniform bool clip,
+    const uniform FeatureFlags &ff)
 {
   GeometricModel **uniform models =
       clip ? self->group->clipModels : self->group->geometricModels;
@@ -51,7 +52,8 @@ inline void Instance_postIntersect(const Instance *uniform self,
 #else
   foreach_unique (geomID in ray.geomID) {
 #endif
-    GeometricModel_postIntersect(*(models + geomID), renderer, dg, ray, flags);
+    GeometricModel_postIntersect(
+        *(models + geomID), renderer, dg, ray, flags, ff);
   }
 
   dg.instID =

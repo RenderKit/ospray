@@ -14,12 +14,11 @@ task
         Camera *uniform camera,
         World *uniform world,
         void *uniform perFrameData,
-        const uint32 *uniform taskIDs
+        const uint32 *uniform taskIDs,
 #ifdef OSPRAY_TARGET_SYCL
-        ,
-        const int taskIndex0
+        const int taskIndex0,
 #endif
-    )
+        const uniform FeatureFlags &ff)
 {
   const uniform int32 spp = self->spp;
 
@@ -30,7 +29,7 @@ task
   CameraSample cameraSample;
 
   uniform RenderTaskDesc taskDesc =
-      FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[taskIndex0]);
+      FrameBuffer_dispatch_getRenderTaskDesc(fb, taskIDs[taskIndex0], ff.other);
   const uniform int startSampleID = max(taskDesc.accumID, 0) * spp;
 
   if (fb->cancelRender || isEmpty(taskDesc.region)) {
@@ -50,7 +49,8 @@ task
       // set ray t value for early ray termination (from maximum depth texture)
       vec2f center =
           make_vec2f(screenSample.sampleID.x, screenSample.sampleID.y) + 0.5f;
-      const float tMax = Renderer_getMaxDepth(self, center * fb->rcpSize);
+      const float tMax =
+          Renderer_getMaxDepth(self, center * fb->rcpSize, ff.other);
       screenSample.z = tMax;
 
       vec3f col = make_vec3f(0.f);
@@ -87,15 +87,16 @@ task
         cameraSample.lens.y = 0.0f;
         cameraSample.time = 0.5f;
 
-        Camera_dispatch_initRay(camera, screenSample.ray, cameraSample);
+        Camera_dispatch_initRay(
+            camera, screenSample.ray, cameraSample, ff.other);
         screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         screenSample.z = inf;
         screenSample.primID = RTC_INVALID_GEOMETRY_ID;
         screenSample.geomID = RTC_INVALID_GEOMETRY_ID;
         screenSample.instID = RTC_INVALID_GEOMETRY_ID;
-        screenSample.albedo =
-            make_vec3f(Renderer_getBackground(self, screenSample.pos));
+        screenSample.albedo = make_vec3f(
+            Renderer_getBackground(self, screenSample.pos, ff.other));
         screenSample.normal = make_vec3f(0.f);
 
 #ifdef OSPRAY_TARGET_SYCL
@@ -108,7 +109,7 @@ task
 #endif
 #endif
 
-        renderSampleFn(self, fb, world, perFrameData, screenSample);
+        renderSampleFn(self, fb, world, perFrameData, screenSample, ff);
 
         col = col + screenSample.rgb;
         alpha += screenSample.alpha;
@@ -124,7 +125,8 @@ task
       screenSample.normal = normal * rspp;
       screenSample.albedo = albedo * rspp;
 
-      FrameBuffer_dispatch_accumulateSample(fb, screenSample, taskDesc);
+      FrameBuffer_dispatch_accumulateSample(
+          fb, screenSample, taskDesc, ff.other);
     }
-  FrameBuffer_dispatch_completeTask(fb, taskDesc);
+  FrameBuffer_dispatch_completeTask(fb, taskDesc, ff.other);
 }

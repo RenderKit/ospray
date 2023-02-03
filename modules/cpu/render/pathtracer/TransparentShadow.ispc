@@ -20,13 +20,14 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     vec3f lightContrib,
     Ray &shadowRay,
     RayIntervals &rayIntervals,
-    Medium medium)
+    Medium medium,
+    const uniform FeatureFlags &ff)
 {
   uniform int maxDepth = self->super.maxDepth;
   const float tOriginal = shadowRay.t;
 
   while (1) {
-    traceGeometryRayIntervals(world, shadowRay, rayIntervals);
+    traceGeometryRayIntervals(world, shadowRay, rayIntervals, ff);
 
     if (noHit(shadowRay))
       return lightContrib;
@@ -37,7 +38,8 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
         dg,
         shadowRay,
         DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR
-            | DG_MOTIONBLUR);
+            | DG_MOTIONBLUR,
+        ff);
 
     uniform Material *material = (uniform Material *)dg.material;
     vec3f transparency;
@@ -50,8 +52,8 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     foreach_unique (m in material) {
 #endif
       if (m != NULL) {
-        transparency =
-            Material_dispatch_getTransparency(m, dg, shadowRay, medium);
+        transparency = Material_dispatch_getTransparency(
+            m, dg, shadowRay, medium, ff.other);
       }
     }
 
@@ -77,7 +79,7 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     foreach_unique (m in material) {
 #endif
       if (m != NULL) {
-        Material_dispatch_selectNextMedium(m, dg, medium);
+        Material_dispatch_selectNextMedium(m, dg, medium, ff.other);
       }
     }
 

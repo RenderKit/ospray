@@ -7,6 +7,7 @@
 // ospray
 #include "ISPCDeviceObject.h"
 #include "common/Data.h"
+#include "common/FeatureFlagsEnum.h"
 #include "fb/ImageOp.h"
 #include "ospray/ospray.h"
 #include "rkcommon/utility/ArrayView.h"
@@ -26,7 +27,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   FrameBuffer(api::ISPCDevice &device,
       const vec2i &size,
       ColorBufferFormat colorBufferFormat,
-      const uint32 channels);
+      const uint32 channels,
+      const FeatureFlagsOther ffo);
 
   virtual ~FrameBuffer() override = default;
 
@@ -91,6 +93,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   int32 getFrameID() const;
 
+  FeatureFlagsOther getFeatureFlagsOther() const;
+
  protected:
   // Finalize the pixel op and frame op state for rendering on commit
   void prepareImageOps();
@@ -128,8 +132,15 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   std::vector<std::unique_ptr<LiveImageOp>> imageOps;
   std::vector<ispc::LivePixelOp *> pixelOpShs;
   size_t firstFrameOperation = -1;
+
+  FeatureFlagsOther featureFlags{FFO_NONE};
 };
 
 OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);
+
+inline FeatureFlagsOther FrameBuffer::getFeatureFlagsOther() const
+{
+  return featureFlags;
+}
 
 } // namespace ospray

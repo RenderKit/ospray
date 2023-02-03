@@ -128,6 +128,7 @@ void World::commit()
 
     // Populate shared buffer with instance pointers,
     // create Embree instances
+    featureFlags.setNone();
     unsigned int id = 0;
     for (auto &&inst : *instances) {
       getSh()->instances[id] = inst->getSh();
@@ -147,9 +148,19 @@ void World::commit()
             esClip, inst->group->sceneClippers, inst, embreeDevice, id);
       }
 #endif
+      // Gather feature flags from all groups
+      const FeatureFlags &gff = inst->group->getFeatureFlags();
+      featureFlags.geometry |= gff.geometry;
+      featureFlags.volume |= gff.volume;
+      featureFlags.other |= gff.other;
       id++;
     }
   }
+
+  // Gather light types
+  if (lights)
+    for (auto &&light : *lights)
+      featureFlags.other |= light->getFeatureFlagsOther();
 
   if (esGeom) {
     rtcSetSceneFlags(esGeom, static_cast<RTCSceneFlags>(sceneFlags));

@@ -16,8 +16,8 @@ namespace ospray {
 
 Ref<MicrofacetAlbedoTables> Material::microfacetAlbedoTables = nullptr;
 
-Material::Material(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+Material::Material(api::ISPCDevice &device, const FeatureFlagsOther ffo)
+    : AddStructShared(device.getIspcrtDevice(), device), featureFlags(ffo)
 {
   managedObjectType = OSP_MATERIAL;
 #ifndef OSPRAY_TARGET_SYCL
@@ -66,6 +66,8 @@ ispc::TextureParam Material::getTextureParam(const char *texture_name)
 {
   // Get texture pointer
   Texture *ptr = (Texture *)getParamObject(texture_name);
+  if (ptr)
+    featureFlags |= FFO_TEXTURE_IN_MATERIAL;
 
   // Get 2D transformation if exists
   int transformFlags = ispc::TRANSFORM_FLAG_NONE;

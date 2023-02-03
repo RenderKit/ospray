@@ -11,7 +11,9 @@ namespace ospray {
  *  thus projects parallel rays of light across the entire scene */
 struct OSPRAY_SDK_INTERFACE DirectionalLight : public Light
 {
-  DirectionalLight(api::ISPCDevice &device) : Light(device) {}
+  DirectionalLight(api::ISPCDevice &device)
+      : Light(device, FFO_LIGHT_DIRECTIONAL)
+  {}
   virtual ~DirectionalLight() override = default;
   virtual ISPCRTMemoryView createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;

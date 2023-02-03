@@ -10,10 +10,10 @@ OSPRAY_BEGIN_ISPC_NAMESPACE
 struct Texture;
 struct DifferentialGeometry;
 
-SYCL_EXTERNAL __noinline vec4f Texture_dispatch_get(
+SYCL_EXTERNAL vec4f Texture_dispatch_get(
     const uniform Texture *uniform self, const DifferentialGeometry &dg);
 
-SYCL_EXTERNAL __noinline vec3f Texture_dispatch_getNormal(
+SYCL_EXTERNAL vec3f Texture_dispatch_getNormal(
     const uniform Texture *const uniform self, const DifferentialGeometry &dg);
 
 OSPRAY_END_ISPC_NAMESPACE

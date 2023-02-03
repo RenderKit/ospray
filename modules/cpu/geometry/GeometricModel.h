@@ -34,6 +34,10 @@ struct OSPRAY_SDK_INTERFACE GeometricModel
   bool hasEmissiveMaterials(
       Ref<const DataT<Material *>> rendererMaterials) const;
 
+  FeatureFlagsGeometry getFeatureFlagsGeometry() const;
+  FeatureFlagsVolume getFeatureFlagsVolume() const;
+  FeatureFlagsOther getFeatureFlagsOther() const;
+
  private:
   Ref<Geometry> geom;
   const Ref<Geometry> geomAPI;
@@ -42,6 +46,8 @@ struct OSPRAY_SDK_INTERFACE GeometricModel
   Ref<const DataT<uint8_t>> indexData;
   std::unique_ptr<BufferShared<ispc::Material *>> materialArray;
   std::unique_ptr<BufferShared<uint32_t>> materialIDArray;
+
+  FeatureFlagsOther featureFlags{FFO_NONE};
 };
 
 OSPTYPEFOR_SPECIALIZATION(GeometricModel *, OSP_GEOMETRIC_MODEL);
@@ -61,6 +67,21 @@ inline RTCGeometry GeometricModel::embreeGeometryHandle() const
 inline bool GeometricModel::invertedNormals() const
 {
   return getSh()->invertedNormals;
+}
+
+inline FeatureFlagsGeometry GeometricModel::getFeatureFlagsGeometry() const
+{
+  return geom->getFeatureFlagsGeometry();
+}
+
+inline FeatureFlagsVolume GeometricModel::getFeatureFlagsVolume() const
+{
+  return FFV_NONE;
+}
+
+inline FeatureFlagsOther GeometricModel::getFeatureFlagsOther() const
+{
+  return featureFlags;
 }
 
 } // namespace ospray

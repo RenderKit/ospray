@@ -4,6 +4,7 @@
 #pragma once
 
 #include "common/Data.h"
+#include "common/FeatureFlagsEnum.h"
 #include "common/ObjectFactory.h"
 // embree
 #include "common/Embree.h"
@@ -16,7 +17,7 @@ struct OSPRAY_SDK_INTERFACE Geometry
     : public AddStructShared<ISPCDeviceObject, ispc::Geometry>,
       public ObjectFactory<Geometry, api::ISPCDevice &>
 {
-  Geometry(api::ISPCDevice &device);
+  Geometry(api::ISPCDevice &device, const FeatureFlagsGeometry ffg);
   virtual ~Geometry() override;
 
   virtual std::string toString() const override;
@@ -29,8 +30,12 @@ struct OSPRAY_SDK_INTERFACE Geometry
 
   bool supportAreaLighting() const;
 
+  FeatureFlagsGeometry getFeatureFlagsGeometry() const;
+
  protected:
   RTCGeometry embreeGeometry{nullptr};
+
+  FeatureFlagsGeometry featureFlags;
 
   void createEmbreeGeometry(RTCGeometryType type);
   // NOTE: We now pass intersection functions through Embree RTCIntersectionArgs
@@ -48,6 +53,11 @@ inline RTCGeometry Geometry::getEmbreeGeometry() const
 inline bool Geometry::supportAreaLighting() const
 {
   return (getSh()->sampleArea != nullptr) && (getSh()->getAreas != nullptr);
+}
+
+inline FeatureFlagsGeometry Geometry::getFeatureFlagsGeometry() const
+{
+  return featureFlags;
 }
 
 // convenience wrappers to set Embree buffer //////////////////////////////////

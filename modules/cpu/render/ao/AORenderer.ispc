@@ -22,7 +22,8 @@ static void AORenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
   uniform AORenderer *uniform self = (uniform AORenderer * uniform) _self;
 
@@ -72,24 +73,26 @@ static void AORenderer_renderSample(Renderer *uniform _self,
     // if hit ray.t will be updated
     // Note: work around for bug when using traceGeometryRayIntervals on GPU
 #ifdef OSPRAY_TARGET_SYCL
-    traceGeometryRay(world, ray);
+    traceGeometryRay(world, ray, ff);
 #else
-    traceGeometryRayIntervals(world, ray, rayIntervals);
+    traceGeometryRayIntervals(world, ray, rayIntervals, ff);
 #endif
 
 #ifdef OSPRAY_ENABLE_VOLUMES
-    // Determine volume intervals by tracing ray in the volume scene
-    Ray volumeRay = ray;
-    traceVolumeRay(world, volumeRay, volumeIntervals);
+    if (ff.volume & FFV_VOLUME) {
+      // Determine volume intervals by tracing ray in the volume scene
+      Ray volumeRay = ray;
+      traceVolumeRay(world, volumeRay, volumeIntervals);
 
-    // Sample volumes across volume intervals (in front of geometry hit)
-    if (volumeIntervals.numVolumeIntervals > 0) {
-      vec4f volumeColor = integrateVolumeIntervals(volumeIntervals,
-          rayIntervals,
-          volumeRay,
-          ldSampler,
-          self->volumeSamplingRate);
-      outputColor = outputColor + (1.f - outputColor.w) * volumeColor;
+      // Sample volumes across volume intervals (in front of geometry hit)
+      if (volumeIntervals.numVolumeIntervals > 0) {
+        vec4f volumeColor = integrateVolumeIntervals(volumeIntervals,
+            rayIntervals,
+            volumeRay,
+            ldSampler,
+            self->volumeSamplingRate);
+        outputColor = outputColor + (1.f - outputColor.w) * volumeColor;
+      }
     }
 #endif
 
@@ -99,11 +102,12 @@ static void AORenderer_renderSample(Renderer *uniform _self,
     if (rayHadHit) {
       // Prepare differential geometry structure
       DifferentialGeometry dg;
-      computeDG(world, self, ray, dg);
+      computeDG(world, self, ray, dg, ff);
 
       // Shade geometry
       SSI surfaceShading;
-      surfaceShading = AORenderer_computeShading(self, fb, world, dg, sample);
+      surfaceShading =
+          AORenderer_computeShading(self, fb, world, dg, sample, ff);
 
       // Use shaded color for blending
       blendedColor = surfaceShading.shadedColor;
@@ -122,7 +126,7 @@ static void AORenderer_renderSample(Renderer *uniform _self,
       // start from the last geometry hit all over to initial Tfar
       setRay(ray, ray.t + dg.epsilon, originalRayTFar);
     } else {
-      blendedColor = Renderer_getBackground(&self->super, sample.pos);
+      blendedColor = Renderer_getBackground(&self->super, sample.pos, ff.other);
       // Initialize other per sample data with first hit values
       if (firstHit) {
         sample.z = ray.t;
@@ -157,10 +161,11 @@ SYCL_EXTERNAL void AORenderer_renderTask(Renderer *uniform self,
     World *uniform world,
     void *uniform perFrameData,
     const uint32 *uniform taskIDs,
-    const int taskIndex0)
+    const int taskIndex0,
+    const uniform FeatureFlags &ff)
 {
   Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, taskIndex0);
+      self, fb, camera, world, perFrameData, taskIDs, taskIndex0, ff);
 }
 #else
 export void AORenderer_renderTasks(void *uniform _self,
@@ -177,7 +182,7 @@ export void AORenderer_renderTasks(void *uniform _self,
   World *uniform world = (World * uniform) _world;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
   launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs);
+      self, fb, camera, world, perFrameData, taskIDs, ffAll());
   sync;
 }
 #endif

@@ -10,7 +10,8 @@ SYCL_EXTERNAL void DebugRenderer_renderTask(Renderer *uniform self,
     World *uniform world,
     void *uniform perFrameData,
     const uint32 *uniform taskIDs,
-    const int taskIndex0);
+    const int taskIndex0,
+    const uniform ospray::FeatureFlags &ff);
 #endif
 
 OSPRAY_END_ISPC_NAMESPACE

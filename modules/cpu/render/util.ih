@@ -14,7 +14,8 @@ SYCL_EXTERNAL float computeAO(const Renderer *uniform,
     const varying DifferentialGeometry &,
     const uniform int sampleCnt,
     const uniform float aoRadius,
-    const varying vec3i &sampleID);
+    const varying vec3i &sampleID,
+    const uniform FeatureFlags &ff);
 
 // struct that stores a precomputed z-order for tiles of TILE_SIZE x TILE_SIZE
 // pixels

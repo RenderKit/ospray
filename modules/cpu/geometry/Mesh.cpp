@@ -21,7 +21,7 @@ void *Mesh_getAreas_addr();
 namespace ospray {
 
 Mesh::Mesh(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtDevice(), device, FFG_NONE)
 {
   getSh()->super.getAreas =
       reinterpret_cast<ispc::Geometry_GetAreasFct>(ispc::Mesh_getAreas_addr());
@@ -170,6 +170,7 @@ void Mesh::commit()
     getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
 
   postCreationInfo(vertexData->size());
+  featureFlags = isTri ? FFG_TRIANGLE : FFG_QUAD;
 }
 
 size_t Mesh::numPrimitives() const

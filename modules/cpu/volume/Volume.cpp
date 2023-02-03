@@ -27,7 +27,9 @@ namespace ospray {
 // Volume definitions ////////////////////////////////////////////////////////
 
 Volume::Volume(api::ISPCDevice &device, const std::string &type)
-    : AddStructShared(device.getIspcrtDevice(), device), vklType(type)
+    : AddStructShared(device.getIspcrtDevice(), device),
+      vklType(type),
+      featureFlags(FFV_VOLUME)
 {
   // check VKL has default config for VDB
   if (type == "vdb"

@@ -29,7 +29,8 @@ namespace ospray {
 FrameBuffer::FrameBuffer(api::ISPCDevice &device,
     const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
-    const uint32 channels)
+    const uint32 channels,
+    const FeatureFlagsOther ffo)
     : AddStructShared(device.getIspcrtDevice(), device),
       size(_size),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
@@ -40,7 +41,8 @@ FrameBuffer::FrameBuffer(api::ISPCDevice &device,
       hasAlbedoBuffer(channels & OSP_FB_ALBEDO),
       hasPrimitiveIDBuffer(channels & OSP_FB_ID_PRIMITIVE),
       hasObjectIDBuffer(channels & OSP_FB_ID_OBJECT),
-      hasInstanceIDBuffer(channels & OSP_FB_ID_INSTANCE)
+      hasInstanceIDBuffer(channels & OSP_FB_ID_INSTANCE),
+      featureFlags(ffo)
 {
   managedObjectType = OSP_FRAMEBUFFER;
   if (_size.x <= 0 || _size.y <= 0) {

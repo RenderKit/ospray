@@ -15,8 +15,8 @@ unmasked void clippingIntersectionFilterV(
     return;
 
   // Get pointer to the intersection context
-  EmbreeRayQueryContextClipping *uniform context =
-      (EmbreeRayQueryContextClipping * uniform) args->context;
+  RayQueryContextClipping *uniform context =
+      (RayQueryContextClipping * uniform) args->context;
 
   // We skip this intersection to collect all remaining intersections
   valid[programIndex] = 0;
@@ -52,7 +52,8 @@ unmasked void clippingIntersectionFilterV(
 #endif
       // Call postIntersect to get shading normal
       Instance *uniform instance = *(context->world->instances + instID);
-      Instance_postIntersect(instance, NULL, dg, *ray, DG_NG | DG_NS, true);
+      Instance_postIntersect(
+          instance, NULL, dg, *ray, DG_NG | DG_NS, true, ffAll());
 
       // Use geometry normal for clipping
       // but use shading normal to check if invertion is needed

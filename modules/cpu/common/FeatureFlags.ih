@@ -1,0 +1,23 @@
+// Copyright 2023 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "FeatureFlagsEnum.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifdef OSPRAY_TARGET_SYCL
+using namespace ospray;
+#endif
+
+inline uniform FeatureFlags ffAll()
+{
+  uniform FeatureFlags ff;
+  ff.geometry = FFG_ALL;
+  ff.volume = FFV_ALL;
+  ff.other = FFO_ALL;
+  return ff;
+}
+
+OSPRAY_END_ISPC_NAMESPACE

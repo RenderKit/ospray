@@ -31,7 +31,10 @@ struct ThinMicrofacetDielectric
 };
 
 inline BSDF_EvalRes ThinMicrofacetDielectric_eval(
-    const varying BSDF *uniform super, const vec3f &wo, const vec3f &wi)
+    const varying BSDF *uniform super,
+    const vec3f &wo,
+    const vec3f &wi,
+    const uniform FeatureFlagsOther ffo)
 {
   const varying ThinMicrofacetDielectric *uniform self =
       (const varying ThinMicrofacetDielectric *uniform)super;
@@ -88,7 +91,8 @@ inline BSDF_SampleRes ThinMicrofacetDielectric_sample(
     const varying BSDF *uniform super,
     const vec3f &wo,
     const vec2f &s,
-    float ss)
+    float ss,
+    const uniform FeatureFlagsOther ffo)
 {
   const varying ThinMicrofacetDielectric *uniform self =
       (const varying ThinMicrofacetDielectric *uniform)super;

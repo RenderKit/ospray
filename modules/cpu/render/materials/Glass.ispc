@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Medium.ih"
+#include "common/Ray.ih"
 #include "render/Material.ih"
 #include "render/bsdfs/RobustDielectric.ih"
 

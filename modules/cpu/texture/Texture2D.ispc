@@ -284,7 +284,7 @@ export void *uniform Texture2D_get_addr(
   return NULL;
 };
 
-SYCL_EXTERNAL __noinline vec4f Texture2D_get(
+SYCL_EXTERNAL vec4f Texture2D_get(
     const uniform Texture *uniform _self, const DifferentialGeometry &dg)
 {
   const uniform Texture2D *uniform self =
@@ -342,7 +342,7 @@ export void *uniform Texture2D_getN_addr(
   return (void *uniform) & Texture2D_Normal_neutral;
 };
 
-SYCL_EXTERNAL __noinline vec3f Texture2D_getNormal(
+SYCL_EXTERNAL vec3f Texture2D_getNormal(
     const uniform Texture *uniform _self, const DifferentialGeometry &dg)
 {
   const uniform Texture2D *uniform self =

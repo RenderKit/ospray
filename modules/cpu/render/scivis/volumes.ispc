@@ -35,7 +35,8 @@ static void sampleVolume(SciVisRenderContext &rc,
     Ray &ray,
     const VolumeInterval &vi,
     const uniform float samplingRate,
-    const uniform bool shade)
+    const uniform bool shade,
+    const uniform FeatureFlags &ff)
 {
   // We have to iterate till we get a valid sample value
   float dt;
@@ -117,8 +118,14 @@ static void sampleVolume(SciVisRenderContext &rc,
       dg.Ns = dg.Ng =
           normalize(xfmVector(transposed(vi.instance->rcp_xfm.l), ns));
       dg.P = ray.org + vc.distance * ray.dir;
-      SSI shading = SciVis_computeShading(
-          rc.renderer, rc.fb, rc.world, dg, rc.sample, rc.ldSampler, ray.dir);
+      SSI shading = SciVis_computeShading(rc.renderer,
+          rc.fb,
+          rc.world,
+          dg,
+          rc.sample,
+          rc.ldSampler,
+          ray.dir,
+          ff);
       vec4f shadedColor = make_vec4f(
           shading.shadedColor, 1.f - luminance(shading.transmission));
       vc.sample = lerp(gsc, vc.sample, shadedColor);
@@ -135,7 +142,8 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
     Ray &ray,
     const uniform float samplingRate,
     vec4f &sampledColor,
-    const uniform bool shade)
+    const uniform bool shade,
+    const uniform FeatureFlags &ff)
 {
   // Look for the closest sample across all volumes
   float minDist = inf;
@@ -155,7 +163,7 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
 #else
       foreach_unique (m in vi.volumetricModel) {
 #endif
-        sampleVolume(rc, vc, m, ray, vi, samplingRate, shade);
+        sampleVolume(rc, vc, m, ray, vi, samplingRate, shade, ff);
       }
       vc.ready = 1;
     }
@@ -190,7 +198,8 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
     const uniform float samplingRate,
-    const uniform bool shade)
+    const uniform bool shade,
+    const uniform FeatureFlags &ff)
 {
 #ifdef OSPRAY_TARGET_SYCL
   // Only a single volume context is supported on the GPU, no dynamic allocation
@@ -306,7 +315,8 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
           ray,
           samplingRate,
           sampledColor,
-          shade);
+          shade,
+          ff);
 
       // Exit loop if nothing sampled
       if (dist == inf)

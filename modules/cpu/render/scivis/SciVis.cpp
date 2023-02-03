@@ -5,6 +5,7 @@
 #include "SciVis.h"
 #include "SciVisData.h"
 #include "camera/Camera.h"
+#include "common/FeatureFlagsEnum.h"
 #include "common/World.h"
 #include "fb/FrameBuffer.h"
 #ifndef OSPRAY_TARGET_SYCL
@@ -18,8 +19,10 @@ SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
     World *uniform world,
     void *uniform perFrameData,
     const uint32 *uniform taskIDs,
-    const int taskIndex0);
+    const int taskIndex0,
+    const uniform ospray::FeatureFlags &ff);
 }
+constexpr sycl::specialization_id<ospray::FeatureFlags> specFeatureFlags;
 #endif
 
 namespace ospray {
@@ -81,18 +84,28 @@ void SciVis::renderTasks(FrameBuffer *fb,
 #ifdef OSPRAY_TARGET_SYCL
   const uint32_t *taskIDsPtr = taskIDs.data();
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
+    FeatureFlags ff = world->getFeatureFlags();
+    ff.other |= featureFlags;
+    ff.other |= fb->getFeatureFlagsOther();
+    ff.other |= camera->getFeatureFlagsOther();
+    cgh.set_specialization_constant<specFeatureFlags>(ff);
+
     const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
-      if (taskIndex.get_global_id(0) < numTasks) {
-        ispc::SciVis_renderTask(&rendererSh->super,
-            fbSh,
-            cameraSh,
-            worldSh,
-            perFrameData,
-            taskIDsPtr,
-            taskIndex.get_global_id(0));
-      }
-    });
+    cgh.parallel_for(dispatchRange,
+        [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
+          if (taskIndex.get_global_id(0) < numTasks) {
+            const FeatureFlags ff =
+                kh.get_specialization_constant<specFeatureFlags>();
+            ispc::SciVis_renderTask(&rendererSh->super,
+                fbSh,
+                cameraSh,
+                worldSh,
+                perFrameData,
+                taskIDsPtr,
+                taskIndex.get_global_id(0),
+                ff);
+          }
+        });
   });
   event.wait_and_throw();
   // For prints we have to flush the entire queue, because other stuff is queued

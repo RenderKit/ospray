@@ -18,7 +18,7 @@ void *Spheres_getAreas_addr();
 namespace ospray {
 
 Spheres::Spheres(api::ISPCDevice &device)
-    : AddStructShared(device.getIspcrtDevice(), device)
+    : AddStructShared(device.getIspcrtDevice(), device, FFG_SPHERE)
 {
 #ifndef OSPRAY_TARGET_SYCL
   getSh()->super.postIntersect =

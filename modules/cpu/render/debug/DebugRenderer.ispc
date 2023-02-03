@@ -23,23 +23,22 @@
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-// TODO: All `SYCL_EXTERNAL __noinline` are here just to prevent IGC ocloc
-// from crashing. We should use `inline` or `static` instead.
-
 // common utility function, traces ray and handles default and background
-SYCL_EXTERNAL __noinline bool hitBackground(
-    Renderer *uniform self, World *uniform world, varying ScreenSample &sample)
+inline bool hitBackground(Renderer *uniform self,
+    World *uniform world,
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  traceRay(world, sample.ray);
+  traceRay(world, sample.ray, ff);
   sample.z = sample.ray.t;
   sample.alpha = 1.f;
 
-  sample.rgb = make_vec3f(Renderer_getBackground(self, sample.pos));
+  sample.rgb = make_vec3f(Renderer_getBackground(self, sample.pos, ff.other));
 
   return noHit(sample.ray);
 }
 
-SYCL_EXTERNAL float eyeLight(varying ScreenSample &sample)
+inline float eyeLight(varying ScreenSample &sample)
 {
   return 0.2f + 0.8f * abs(dot(normalize(sample.ray.Ng), sample.ray.dir));
 }
@@ -47,7 +46,7 @@ SYCL_EXTERNAL float eyeLight(varying ScreenSample &sample)
 /* a simple test-frame renderer that doesn't even trace a ray, just
   returns a well-defined test frame (mostly useful for debugging
   whether frame buffers are properly set up etcpp */
-SYCL_EXTERNAL __noinline void DebugRenderer_testFrame(Renderer *uniform,
+static void DebugRenderer_testFrame(Renderer *uniform,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -64,7 +63,7 @@ SYCL_EXTERNAL __noinline void DebugRenderer_testFrame(Renderer *uniform,
 
 /* a simple test-frame renderer that doesn't even trace a ray, just
   returns the absolute of the ray direction */
-SYCL_EXTERNAL __noinline void DebugRenderer_rayDir(Renderer *uniform,
+static void DebugRenderer_rayDir(Renderer *uniform,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -75,69 +74,74 @@ SYCL_EXTERNAL __noinline void DebugRenderer_rayDir(Renderer *uniform,
   sample.z = 1.f;
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_eyeLight(Renderer *uniform self,
+static void DebugRenderer_eyeLight(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample)) {
+  if (hitBackground(self, world, sample, ff)) {
     return;
   }
   sample.rgb = make_vec3f(eyeLight(sample));
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_Ng(Renderer *uniform self,
+static void DebugRenderer_Ng(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NG);
+  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NG, ff);
   sample.rgb = absf(dg.Ng);
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_Ns(Renderer *uniform self,
+static void DebugRenderer_Ns(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NS);
+  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NS, ff);
   sample.rgb = absf(dg.Ns);
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_texCoord(Renderer *uniform self,
+static void DebugRenderer_texCoord(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_TEXCOORD);
+  postIntersect(world, self, dg, sample.ray, DG_TEXCOORD, ff);
   sample.rgb = abs(make_vec3f(dg.st.x, dg.st.y, 0.0f));
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_dPds(Renderer *uniform self,
+static void DebugRenderer_dPds(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_TANGENTS);
+  postIntersect(world, self, dg, sample.ray, DG_TANGENTS, ff);
   sample.rgb = normalize(dg.dPds);
   if (sample.rgb.x < 0.f)
     sample.rgb.x = sample.rgb.x * -0.3f;
@@ -147,17 +151,18 @@ SYCL_EXTERNAL __noinline void DebugRenderer_dPds(Renderer *uniform self,
     sample.rgb.z = sample.rgb.z * -0.3f;
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_dPdt(Renderer *uniform self,
+static void DebugRenderer_dPdt(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_TANGENTS);
+  postIntersect(world, self, dg, sample.ray, DG_TANGENTS, ff);
   sample.rgb = normalize(dg.dPdt);
   if (sample.rgb.x < 0.f)
     sample.rgb.x = sample.rgb.x * -0.3f;
@@ -167,65 +172,69 @@ SYCL_EXTERNAL __noinline void DebugRenderer_dPdt(Renderer *uniform self,
     sample.rgb.z = sample.rgb.z * -0.3f;
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_vertexColor(Renderer *uniform self,
+static void DebugRenderer_vertexColor(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_COLOR | DG_NS);
+  postIntersect(world, self, dg, sample.ray, DG_COLOR | DG_NS, ff);
   sample.rgb = make_vec3f(dg.color)
       * abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_primID(Renderer *uniform self,
+static void DebugRenderer_primID(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
 
   sample.rgb = eyeLight(sample) * makeRandomColor(sample.ray.primID);
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_instID(Renderer *uniform self,
+static void DebugRenderer_instID(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
 
   sample.rgb = eyeLight(sample) * makeRandomColor(sample.ray.instID);
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_geomID(Renderer *uniform self,
+static void DebugRenderer_geomID(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
 
   sample.rgb = eyeLight(sample) * makeRandomColor(sample.ray.geomID);
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_backfacing_Ng(
-    Renderer *uniform self,
+static void DebugRenderer_backfacing_Ng(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
 
   sample.rgb = make_vec3f(eyeLight(sample));
@@ -233,31 +242,35 @@ SYCL_EXTERNAL __noinline void DebugRenderer_backfacing_Ng(
     sample.rgb.y = 0.f;
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_backfacing_Ns(
-    Renderer *uniform self,
+static void DebugRenderer_backfacing_Ns(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample, ff))
     return;
 
   DifferentialGeometry dg;
-  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NS);
+  postIntersect(world, self, dg, sample.ray, DG_NORMALIZE | DG_NS, ff);
   const float c = dot(dg.Ns, sample.ray.dir);
   sample.rgb = make_vec3f(.2f + .8f * abs(c));
   if (c > 0.f)
     sample.rgb.y = 0.f;
 }
 
-SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
+static void DebugRenderer_volume(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
 #ifdef OSPRAY_ENABLE_VOLUMES
+  if (!(ff.volume & FFV_VOLUME))
+    return;
+
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
   LDSampler_init(ldSampler,
@@ -268,7 +281,7 @@ SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
   vec3f &color = sample.rgb;
   float &alpha = sample.alpha;
 
-  vec4f bgColor = Renderer_getBackground(self, sample.pos);
+  vec4f bgColor = Renderer_getBackground(self, sample.pos, FFO_ALL);
   color = make_vec3f(bgColor);
   alpha = bgColor.w;
 
@@ -368,7 +381,8 @@ static void DebugRenderer_renderSample(Renderer *uniform _self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
-    varying ScreenSample &sample)
+    varying ScreenSample &sample,
+    const uniform FeatureFlags &ff)
 {
   DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
   switch (self->type) {
@@ -379,43 +393,43 @@ static void DebugRenderer_renderSample(Renderer *uniform _self,
     DebugRenderer_rayDir(_self, fb, world, perFrameData, sample);
     break;
   case EYE_LIGHT:
-    DebugRenderer_eyeLight(_self, fb, world, perFrameData, sample);
+    DebugRenderer_eyeLight(_self, fb, world, perFrameData, sample, ff);
     break;
   case NG:
-    DebugRenderer_Ng(_self, fb, world, perFrameData, sample);
+    DebugRenderer_Ng(_self, fb, world, perFrameData, sample, ff);
     break;
   case NS:
-    DebugRenderer_Ns(_self, fb, world, perFrameData, sample);
+    DebugRenderer_Ns(_self, fb, world, perFrameData, sample, ff);
     break;
   case COLOR:
-    DebugRenderer_vertexColor(_self, fb, world, perFrameData, sample);
+    DebugRenderer_vertexColor(_self, fb, world, perFrameData, sample, ff);
     break;
   case TEX_COORD:
-    DebugRenderer_texCoord(_self, fb, world, perFrameData, sample);
+    DebugRenderer_texCoord(_self, fb, world, perFrameData, sample, ff);
     break;
   case DPDS:
-    DebugRenderer_dPds(_self, fb, world, perFrameData, sample);
+    DebugRenderer_dPds(_self, fb, world, perFrameData, sample, ff);
     break;
   case DPDT:
-    DebugRenderer_dPdt(_self, fb, world, perFrameData, sample);
+    DebugRenderer_dPdt(_self, fb, world, perFrameData, sample, ff);
     break;
   case PRIM_ID:
-    DebugRenderer_primID(_self, fb, world, perFrameData, sample);
+    DebugRenderer_primID(_self, fb, world, perFrameData, sample, ff);
     break;
   case GEOM_ID:
-    DebugRenderer_geomID(_self, fb, world, perFrameData, sample);
+    DebugRenderer_geomID(_self, fb, world, perFrameData, sample, ff);
     break;
   case INST_ID:
-    DebugRenderer_instID(_self, fb, world, perFrameData, sample);
+    DebugRenderer_instID(_self, fb, world, perFrameData, sample, ff);
     break;
   case BACKFACING_NG:
-    DebugRenderer_backfacing_Ng(_self, fb, world, perFrameData, sample);
+    DebugRenderer_backfacing_Ng(_self, fb, world, perFrameData, sample, ff);
     break;
   case BACKFACING_NS:
-    DebugRenderer_backfacing_Ns(_self, fb, world, perFrameData, sample);
+    DebugRenderer_backfacing_Ns(_self, fb, world, perFrameData, sample, ff);
     break;
   case VOLUME:
-    DebugRenderer_volume(_self, fb, world, perFrameData, sample);
+    DebugRenderer_volume(_self, fb, world, perFrameData, sample, ff);
     break;
   default:
     DebugRenderer_testFrame(_self, fb, world, perFrameData, sample);
@@ -434,10 +448,11 @@ SYCL_EXTERNAL void DebugRenderer_renderTask(Renderer *uniform self,
     World *uniform world,
     void *uniform perFrameData,
     const uint32 *uniform taskIDs,
-    const int taskIndex0)
+    const int taskIndex0,
+    const uniform FeatureFlags &ff)
 {
   Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs, taskIndex0);
+      self, fb, camera, world, perFrameData, taskIDs, taskIndex0, ff);
 }
 #else
 export void DebugRenderer_renderTasks(void *uniform _self,
@@ -454,7 +469,7 @@ export void DebugRenderer_renderTasks(void *uniform _self,
   World *uniform world = (World * uniform) _world;
   const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
   launch[numTasks] Renderer_default_renderTask(
-      self, fb, camera, world, perFrameData, taskIDs);
+      self, fb, camera, world, perFrameData, taskIDs, ffAll());
   sync;
 }
 #endif

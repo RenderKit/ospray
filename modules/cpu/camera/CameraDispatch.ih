@@ -3,13 +3,13 @@
 
 #pragma once
 
-#include "common/OSPCommon.ih"
+#include "common/FeatureFlags.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
-SYCL_EXTERNAL __noinline void Camera_dispatch_initRay(
-    const Camera *uniform self,
+SYCL_EXTERNAL void Camera_dispatch_initRay(const Camera *uniform self,
     varying Ray &ray,
-    const varying CameraSample &sample);
+    const varying CameraSample &sample,
+    const uniform FeatureFlagsOther ffo);
 
 OSPRAY_END_ISPC_NAMESPACE

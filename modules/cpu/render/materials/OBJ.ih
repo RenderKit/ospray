@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
+#include "common/FeatureFlags.ih"
 #include "rkcommon/math/vec.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -18,11 +19,13 @@ SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsOther ffo);
 
 SYCL_EXTERNAL vec3f OBJ_getTransparency(const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
-    const Medium &currentMedium);
+    const Medium &currentMedium,
+    const uniform FeatureFlagsOther ffo);
 
 OSPRAY_END_ISPC_NAMESPACE

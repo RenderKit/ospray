@@ -12,7 +12,7 @@ namespace ospray {
 //! directions
 struct OSPRAY_SDK_INTERFACE PointLight : public Light
 {
-  PointLight(api::ISPCDevice &device) : Light(device) {}
+  PointLight(api::ISPCDevice &device) : Light(device, FFO_LIGHT_POINT) {}
   virtual ~PointLight() override = default;
   virtual ISPCRTMemoryView createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;

@@ -12,7 +12,7 @@ namespace ospray {
  *  cone of directions bounded by halfAngle */
 struct OSPRAY_SDK_INTERFACE SpotLight : public Light
 {
-  SpotLight(api::ISPCDevice &device) : Light(device) {}
+  SpotLight(api::ISPCDevice &device) : Light(device, FFO_LIGHT_SPOT) {}
   virtual ~SpotLight() override = default;
   virtual ISPCRTMemoryView createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;

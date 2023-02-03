@@ -5,6 +5,7 @@
 
 #include "Intersect.ih"
 #include "Ray.ih"
+#include "RayQueryContext.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
 
@@ -63,12 +64,12 @@ inline bool filterIntersectionSingle(
 
     // call filter intersection callback if needed
 #ifndef OSPRAY_TARGET_SYCL
-    EmbreeRayQueryContextDefault *uniform ctx =
-        (EmbreeRayQueryContextDefault * uniform) args->context;
-    uniform bool noFilter = ctx->type != ERQCT_CLIPPING;
-    bool accept = noFilter || filterCall(args, rtcHitTemp);
+    RayQueryContextDefault *uniform ctx =
+        (RayQueryContextDefault * uniform) args->context;
+    const uniform bool noFilter = ctx->type != RQCT_CLIPPING;
+    const bool accept = noFilter || filterCall(args, rtcHitTemp);
 #else
-    bool accept = true;
+    const bool accept = true;
 #endif
     if (alwaysReject) {
       // the hit is always rejected

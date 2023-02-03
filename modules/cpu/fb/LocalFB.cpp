@@ -39,8 +39,12 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
     const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
-    : AddStructShared(
-        device.getIspcrtDevice(), device, _size, _colorBufferFormat, channels),
+    : AddStructShared(device.getIspcrtDevice(),
+        device,
+        _size,
+        _colorBufferFormat,
+        channels,
+        FFO_FB_LOCAL),
       numRenderTasks(divRoundUp(size, getRenderTaskSize())),
       taskErrorRegion(device.getIspcrtDevice(),
           hasVarianceBuffer ? getNumRenderTasks() : vec2i(0))

@@ -32,7 +32,11 @@ void GeometricModel::commit()
   getSh()->material = nullptr;
   getSh()->materialID = nullptr;
   getSh()->numMaterials = 0;
+  featureFlags = FFO_NONE;
   if (materialData) {
+    for (auto &&mat : materialData->as<Material *>())
+      featureFlags |= mat->getFeatureFlagsOther();
+
     materialArray = make_buffer_shared_unique<ispc::Material *>(
         getISPCDevice().getIspcrtDevice(),
         createArrayOfSh<ispc::Material>(materialData->as<Material *>()));

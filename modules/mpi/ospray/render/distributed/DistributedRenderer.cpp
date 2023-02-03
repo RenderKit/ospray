@@ -17,8 +17,10 @@ SYCL_EXTERNAL void DR_default_computeRegionVisibility(Renderer *uniform self,
     uint8 *uniform regionVisible,
     void *uniform perFrameData,
     const uint32 *uniform taskIDs,
-    const int taskIndex0);
+    const int taskIndex0,
+    const uniform ospray::FeatureFlags &ff);
 }
+constexpr sycl::specialization_id<ospray::FeatureFlags> specFeatureFlags;
 #endif
 
 namespace ospray {
@@ -64,19 +66,29 @@ void DistributedRenderer::computeRegionVisibility(SparseFrameBuffer *fb,
   const size_t numTasks = taskIDs.size();
 
   auto event = syclQueue.submit([&](sycl::handler &cgh) {
+    FeatureFlags ff = world->getFeatureFlags();
+    ff.other |= featureFlags;
+    ff.other |= fb->getFeatureFlagsOther();
+    ff.other |= camera->getFeatureFlagsOther();
+    cgh.set_specialization_constant<specFeatureFlags>(ff);
+
     const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
-    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
-      if (taskIndex.get_global_id(0) < numTasks) {
-        ispc::DR_default_computeRegionVisibility(rendererSh,
-            fbSh,
-            cameraSh,
-            worldSh,
-            regionVisible,
-            perFrameData,
-            taskIDsPtr,
-            taskIndex.get_global_id(0));
-      }
-    });
+    cgh.parallel_for(dispatchRange,
+        [=](sycl::nd_item<1> taskIndex, sycl::kernel_handler kh) {
+          if (taskIndex.get_global_id(0) < numTasks) {
+            const FeatureFlags ff =
+                kh.get_specialization_constant<specFeatureFlags>();
+            ispc::DR_default_computeRegionVisibility(rendererSh,
+                fbSh,
+                cameraSh,
+                worldSh,
+                regionVisible,
+                perFrameData,
+                taskIDsPtr,
+                taskIndex.get_global_id(0),
+                ff);
+          }
+        });
   });
   event.wait_and_throw();
   // For prints we have to flush the entire queue, because other stuff is queued

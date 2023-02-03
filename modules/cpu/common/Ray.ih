@@ -38,26 +38,6 @@ struct Ray
   uint32 instID; //!< instance ID
 };
 
-enum EmbreeRayQueryContextType
-{
-  ERQCT_DEFAULT,
-  ERQCT_CLIPPING,
-  ERQCT_UNKNOWN
-};
-
-struct EmbreeRayQueryContextDefault
-{
-  RTCRayQueryContext ectx;
-  EmbreeRayQueryContextType type;
-};
-
-inline void InitRayQueryContextDefault(
-    EmbreeRayQueryContextDefault *uniform context)
-{
-  rtcInitRayQueryContext(&context->ectx);
-  context->type = ERQCT_DEFAULT;
-}
-
 // Hit query functions ////////////////////////////////////////////////////////
 
 inline bool noHit(const Ray &ray)

@@ -18,7 +18,8 @@ void HDRILight_initDistribution(const void *map, void *distribution);
 
 namespace ospray {
 
-SunSkyLight::SunSkyLight(api::ISPCDevice &device) : Light(device)
+SunSkyLight::SunSkyLight(api::ISPCDevice &device)
+    : Light(device, FFO_LIGHT_HDRI | FFO_LIGHT_DIRECTIONAL)
 {
   static const int skyResolution = 512;
   this->skySize = vec2i(skyResolution, skyResolution / 2);

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "common/FeatureFlags.ih"
 #include "common/OSPCommon.ih"
 
 OSPRAY_BEGIN_ISPC_NAMESPACE
@@ -11,16 +12,19 @@ struct FrameBuffer;
 struct RenderTaskDesc;
 struct ScreenSample;
 
-SYCL_EXTERNAL __noinline uniform RenderTaskDesc
-FrameBuffer_dispatch_getRenderTaskDesc(
-    FrameBuffer *uniform fb, const uniform uint32 taskID);
+SYCL_EXTERNAL uniform RenderTaskDesc FrameBuffer_dispatch_getRenderTaskDesc(
+    FrameBuffer *uniform fb,
+    const uniform uint32 taskID,
+    const uniform FeatureFlagsOther ffo);
 
-SYCL_EXTERNAL __noinline void FrameBuffer_dispatch_accumulateSample(
+SYCL_EXTERNAL void FrameBuffer_dispatch_accumulateSample(
     FrameBuffer *uniform fb,
     const varying ScreenSample &screenSample,
-    uniform RenderTaskDesc &taskDesc);
+    uniform RenderTaskDesc &taskDesc,
+    const uniform FeatureFlagsOther ffo);
 
-SYCL_EXTERNAL __noinline void FrameBuffer_dispatch_completeTask(
-    FrameBuffer *uniform fb, const uniform RenderTaskDesc &taskDesc);
+SYCL_EXTERNAL void FrameBuffer_dispatch_completeTask(FrameBuffer *uniform fb,
+    const uniform RenderTaskDesc &taskDesc,
+    const uniform FeatureFlagsOther ffo);
 
 OSPRAY_END_ISPC_NAMESPACE

@@ -42,7 +42,8 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
     const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
-    Ray &ray)
+    Ray &ray,
+    const uniform FeatureFlags &ff)
 {
   // add light from *virtual* lights by intersecting them
   vec3f L = make_vec3f(0.f);
@@ -71,7 +72,8 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
           ray.dir,
           intervalLightDist.lower,
           intervalLightDist.upper,
-          pathState.time);
+          pathState.time,
+          ff.other);
       if (reduce_max(le.radiance) > 0.0f) {
         Ray shadowRay;
         setRay(shadowRay,
@@ -85,15 +87,16 @@ SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
         RayIntervals rayIntervals;
         traceClippingRay(pathContext.world, shadowRay, rayIntervals);
 
+        float T = 1.f;
 #ifdef OSPRAY_ENABLE_VOLUMES
-        const float T = volumeTransmittance(pathState,
-            pathContext.world,
-            shadowRay,
-            rayIntervals,
-            pathContext.ldSampler,
-            pathContext.randomSampler);
-#else
-        const float T = 1.f;
+        if (ff.volume & FFV_VOLUME) {
+          T = volumeTransmittance(pathState,
+              pathContext.world,
+              shadowRay,
+              rayIntervals,
+              pathContext.ldSampler,
+              pathContext.randomSampler);
+        }
 #endif
         L = L
             + pathState.throughput * le.radiance

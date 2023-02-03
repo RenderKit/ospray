@@ -32,7 +32,6 @@ struct PathTracer : public AddStructShared<Renderer, ispc::PathTracer>
   ) const override;
 
  private:
-  void generateGeometryLights(const World &, std::vector<ispc::Light *> &);
   bool importanceSampleGeometryLights{
       true}; // if geometry lights are importance
              // sampled using NEE (requires scanning
