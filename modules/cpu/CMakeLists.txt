@@ -398,9 +398,6 @@ endif()
 
 if (OSPRAY_MODULE_GPU)
   include(${ISPCRT_DIR}/interop.cmake)
-  if (NOT "${CMAKE_CXX_COMPILER}" STREQUAL "${DPCPP_COMPILER}")
-    message(FATAL_ERROR "CMAKE_CXX_COMPILER should be set to '${DPCPP_COMPILER}' for SYCL")
-  endif()
 
   ospray_configure_dpcpp_target()
 

@@ -337,7 +337,10 @@ macro(ospray_configure_compiler)
   set(OSPRAY_COMPILER_MSVC  FALSE)
   set(OSPRAY_COMPILER_DPCPP FALSE)
 
-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM" OR OSPRAY_MODULE_GPU)
+    set(OSPRAY_COMPILER_DPCPP TRUE)
+    include(dpcpp)
+  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     set(OSPRAY_COMPILER_ICC TRUE)
     if(WIN32) # icc on Windows behaves like msvc
       include(msvc)
@@ -350,17 +353,10 @@ macro(ospray_configure_compiler)
   elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
           "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     set(OSPRAY_COMPILER_CLANG TRUE)
-    #include(clang)
-    # TODO WILL: We need to distinguish "clang" being real clang
-    # and "clang" being dpcpp nightly
-    message(WARNING "TODO WILL: We need to distinguish 'clang' = real clang vs. nightly dpcpp")
-    include(dpcpp)
+    include(clang)
   elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(OSPRAY_COMPILER_MSVC TRUE)
     include(msvc)
-  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM")
-    set(OSPRAY_COMPILER_DPCPP TRUE)
-    include(dpcpp)
   else()
     message(FATAL_ERROR
             "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
