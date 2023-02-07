@@ -3410,11 +3410,11 @@ limited to automatically creating ISPCDevice delegates.
 
 If you wish to try it set the OSPRAY_NUM_SUBDEVICES environmental variable to
 the number of subdevices you want to create and tell OSPRay to both load the
-multidevice extension and create a multidevice for rendering instead of the
+multidevice_cpu extension and create a multidevice for rendering instead of the
 default ISPCDevice.
 
 One example in a bash like shell is as follows:
 
 ```sh
-OSPRAY_NUM_SUBDEVICES=6 ./ospTutorial --osp:load-modules=multidevice --osp:device=multidevice
+OSPRAY_NUM_SUBDEVICES=6 ./ospTutorial --osp:load-modules=multidevice_cpu --osp:device=multidevice
 ```

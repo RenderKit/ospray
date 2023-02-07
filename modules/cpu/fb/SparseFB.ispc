@@ -129,7 +129,7 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   }
 }
 
-void SparseFB_accumulateSample(FrameBuffer *uniform _fb,
+SYCL_EXTERNAL void SparseFB_accumulateSample(FrameBuffer *uniform _fb,
     const varying ScreenSample &screenSample,
     uniform RenderTaskDesc &taskDesc)
 {
@@ -149,7 +149,7 @@ void SparseFB_accumulateSample(FrameBuffer *uniform _fb,
 #endif
 }
 
-uniform RenderTaskDesc SparseFB_getRenderTaskDesc(
+SYCL_EXTERNAL uniform RenderTaskDesc SparseFB_getRenderTaskDesc(
     FrameBuffer *uniform _fb, const uniform uint32 taskID)
 {
   SparseFB *uniform fb = (SparseFB * uniform) _fb;
@@ -187,7 +187,7 @@ uniform RenderTaskDesc SparseFB_getRenderTaskDesc(
   return desc;
 }
 
-void SparseFB_completeTask(
+SYCL_EXTERNAL void SparseFB_completeTask(
     FrameBuffer *uniform _fb, const uniform RenderTaskDesc &taskDesc)
 {
   SparseFB *uniform fb = (SparseFB * uniform) _fb;
@@ -210,6 +210,7 @@ void SparseFB_completeTask(
   }
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform SparseFrameBuffer_accumulateSample_addr()
 {
   return (void *uniform)SparseFB_accumulateSample;
@@ -224,4 +225,5 @@ export void *uniform SparseFrameBuffer_completeTask_addr()
 {
   return (void *uniform)SparseFB_completeTask;
 }
+#endif
 OSPRAY_END_ISPC_NAMESPACE

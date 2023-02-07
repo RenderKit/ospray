@@ -35,17 +35,37 @@ void MultiDevice::commit()
   // Needed for proper ISPCRT device construction
   hostDevice.commit();
 
+  ispcrt::Context ispcrtContext;
+  ispcrt::Device ispcrtDevice;
+  int numPhyDevices = 1;
+#ifdef OSPRAY_TARGET_SYCL
+  numPhyDevices = ispcrtGetDeviceCount(ISPCRT_DEVICE_TYPE_GPU);
+  ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU);
+#else
+  numPhyDevices = ispcrtGetDeviceCount(ISPCRT_DEVICE_TYPE_CPU);
+#endif
+
   if (subdevices.empty()) {
     auto OSPRAY_NUM_SUBDEVICES =
         utility::getEnvVar<int>("OSPRAY_NUM_SUBDEVICES");
     int numSubdevices =
         OSPRAY_NUM_SUBDEVICES.value_or(getParam("numSubdevices", 1));
+    std::vector<int> deviceIndex(numSubdevices, 0);
+      for (int i = 0; i < numSubdevices; i++)
+          deviceIndex[i] = i%numPhyDevices;
 
     postStatusMsg(OSP_LOG_DEBUG) << "# of subdevices =" << numSubdevices;
 
     std::vector<std::shared_ptr<TiledLoadBalancer>> subdeviceLoadBalancers;
     for (int i = 0; i < numSubdevices; ++i) {
       auto d = make_unique<ISPCDevice>();
+#ifdef OSPRAY_TARGET_SYCL
+      if (ispcrtContext) {
+        ispcrtDevice = ispcrt::Device(ispcrtContext, deviceIndex[i]);
+        d->setParam<void *>("ispcrtContext", &ispcrtContext);
+        d->setParam<void *>("ispcrtDevice", &ispcrtDevice);
+      }
+#endif
       d->commit();
       subdevices.emplace_back(std::move(d));
       subdeviceLoadBalancers.push_back(subdevices.back()->loadBalancer);

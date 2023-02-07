@@ -251,8 +251,18 @@ void ISPCDevice::commit()
       ispcrtDevice =
           ispcrt::Device(ispcrtContext, (ISPCRTGenericHandle)*appZeDevice);
     } else {
-      ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU);
-      ispcrtDevice = ispcrt::Device(ispcrtContext);
+      ispcrt::Context *ispcrtContextPtr = static_cast<ispcrt::Context *>(
+          getParam<void *>("ispcrtContext", nullptr));
+      ispcrt::Device *ispcrtDevicePtr = static_cast<ispcrt::Device *>(
+          getParam<void *>("ispcrtDevice", nullptr));
+
+      if (ispcrtContextPtr != nullptr && ispcrtDevicePtr != nullptr) {
+        ispcrtContext = *ispcrtContextPtr;
+        ispcrtDevice = *ispcrtDevicePtr;
+      } else {
+        ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU);
+        ispcrtDevice = ispcrt::Device(ispcrtContext);
+      }
     }
 #else
     ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);

@@ -28,7 +28,7 @@ cmake --build . --config Release --target ospray_test_data
 if ( $testMultiDevice ) {
   md failed-multidevice
   $Env:OSPRAY_NUM_SUBDEVICES = 2
-  ospTestSuite.exe --osp:load-modules=multidevice --osp:device=multidevice --gtest_output=xml:tests-multidevice.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice
+  ospTestSuite.exe --osp:load-modules=multidevice_cpu --osp:device=multidevice --gtest_output=xml:tests-multidevice.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-multidevice
   $exitCode = $LastExitCode
   if ( $exitCode) {
     exit $exitCode

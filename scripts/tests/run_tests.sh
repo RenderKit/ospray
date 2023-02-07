@@ -51,7 +51,7 @@ ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baselin
 
 if [ $TEST_MULTIDEVICE ]; then
   mkdir failed-multidevice
-  OSPRAY_NUM_SUBDEVICES=2 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-multidevice --osp:load-modules=multidevice --osp:device=multidevice || exit 2
+  OSPRAY_NUM_SUBDEVICES=2 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-multidevice --osp:load-modules=multidevice_cpu --osp:device=multidevice || exit 2
 fi
 
 if [ $TEST_MPI ]; then
