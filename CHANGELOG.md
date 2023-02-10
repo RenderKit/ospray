@@ -21,6 +21,8 @@ Version History
     memory and `MPI_Comm` handle leaks.
 -   Fix a data corruption bug when setting string parameters for objects
     in the `mpiOffload` device.
+-   Adapt to Embree v4.0.0 API changes, which is thus the new minimum
+    version
 
 ### Changes in v2.10.0:
 

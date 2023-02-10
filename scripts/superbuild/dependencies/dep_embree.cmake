@@ -3,20 +3,6 @@
 
 set(COMPONENT_NAME embree)
 
-# TODO WILL TEMPORARY For GPU Testing
-set(BUILD_EMBREE_FROM_SOURCE ON)
-
-if (BUILD_EMBREE_FROM_SOURCE)
-  string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" EMBREE_ARCHIVE ${EMBREE_VERSION})
-  # TODO WILL TEMPORARY For GPU Testing
-  #set(EMBREE_BRANCH "${EMBREE_ARCHIVE}" CACHE STRING "Which branch of Embree to build" )
-  #set(EMBREE_URL "https://github.com/embree/embree/archive/${EMBREE_BRANCH}.zip"
-  #  CACHE STRING "Location to clone Embree source from")
-  set(EMBREE_BRANCH "mpawl/ospray-ci" CACHE STRING "Which branch of Embree to build" )
-  set(EMBREE_URL "https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git"
-    CACHE STRING "Location to clone Embree source from")
-endif()
-
 set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE})
 if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
@@ -27,11 +13,13 @@ if (EMBREE_HASH)
 endif()
 
 if (BUILD_EMBREE_FROM_SOURCE)
-  string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${EMBREE_URL})
-  if (ZIP_FILENAME)
+  string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" EMBREE_ARCHIVE ${EMBREE_VERSION})
+  set(EMBREE_URL "https://github.com/embree/embree/archive/${EMBREE_ARCHIVE}.zip"
+    CACHE STRING "Location to get Embree source from")
+  if (${EMBREE_URL} MATCHES ".*\.zip$")
     set(EMBREE_CLONE_URL URL ${EMBREE_URL})
   else()
-    set(EMBREE_CLONE_URL GIT_REPOSITORY ${EMBREE_URL} GIT_TAG ${EMBREE_BRANCH})
+    set(EMBREE_CLONE_URL GIT_REPOSITORY ${EMBREE_URL} GIT_TAG ${EMBREE_VERSION})
   endif()
 
   ExternalProject_Add(${COMPONENT_NAME}
@@ -68,11 +56,6 @@ if (BUILD_EMBREE_FROM_SOURCE)
       -DEMBREE_ISA_NEON=${BUILD_ISA_NEON}
       -DEMBREE_ISA_NEON2X=OFF
       -DEMBREE_SYCL_SUPPORT=${BUILD_GPU_SUPPORT}
-      # Use non-public RT API
-      -DEMBREE_SYCL_RT_VALIDATION_API=ON
-      # WA for bug
-      -DEMBREE_SYCL_IMPLICIT_DISPATCH_GLOBALS=OFF
-      # Maybe none as the default?
       -DEMBREE_SYCL_AOT_DEVICES=${BUILD_GPU_AOT_DEVICES}
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS ${ALWAYS_REBUILD}
@@ -89,11 +72,15 @@ else()
   if (APPLE)
     set(EMBREE_OSSUFFIX "x86_64.macosx.zip")
   elseif (WIN32)
-    set(EMBREE_OSSUFFIX "x64.vc14.windows.zip")
+    set(EMBREE_OSSUFFIX "x64.windows.zip")
   else()
     set(EMBREE_OSSUFFIX "x86_64.linux.tar.gz")
   endif()
-  set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${EMBREE_VERSION}/embree-${EMBREE_VERSION}.${EMBREE_OSSUFFIX}")
+  if (BUILD_GPU_SUPPORT)
+    set(EMBREE_TAG "-beta.sycl")
+    unset(EMBREE_URL_HASH)
+  endif()
+  set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${EMBREE_VERSION}/embree-${EMBREE_VERSION}${EMBREE_TAG}.${EMBREE_OSSUFFIX}")
 
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}

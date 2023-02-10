@@ -15,31 +15,12 @@ jobs:
 
 ### BUILD JOBS ###
 
-  build-ubuntu2204-DG2-AOT:
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
-    secrets: inherit
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
-      dpcpp-version: sycl-nightly/20221214
-      install-gfx-driver: true
-      submodules: true
-      image: ubuntu:22.04
-      # Would help to have a module that we can load for specific gfx/agama versions
-      cmd: |
-        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
-        export CC=clang
-        export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_GPU_AOT_DEVICES=dg2 -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git -DEMBREE_BRANCH=mpawl/ospray-ci -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
-      artifact-out: build-ubuntu2204-DG2-AOT
-      artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
-
   build-ubuntu2204-DG2-JIT:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
+      gfx-driver-version: neo-builds/ci/master/ci-neo-master-025731/artifacts/linux/ubuntu/22.04
       dpcpp-version: sycl-nightly/20221214
       install-gfx-driver: true
       submodules: true
@@ -49,7 +30,7 @@ jobs:
         export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
         export CC=clang
         export CXX=clang++
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git -DEMBREE_BRANCH=mpawl/ospray-ci -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
       artifact-out: build-ubuntu2204-DG2-JIT
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -58,7 +39,7 @@ jobs:
     secrets: inherit
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
+      gfx-driver-version: neo-builds/ci/master/ci-neo-master-025731/artifacts/linux/ubuntu/22.04
       dpcpp-version: intel/2023.0
       install-gfx-driver: true
       submodules: true
@@ -69,42 +50,18 @@ jobs:
         module load mpi
         export CC=icx
         export CXX=icpx
-        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.embree.git -DEMBREE_BRANCH=mpawl/ospray-ci -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=OFF -DBUILD_GPU_SUPPORT=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DISPCRT_URL=https://${RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/applications.compilers.ispc.core.git -DISPCRT_BRANCH=gen
       artifact-out: build-ubuntu2204-DG2-JIT-mpi
       artifact-path: build/install/ospray build/install/embree build/CMakeCache.txt build/*/build/CMakeCache.txt
 
 ### TEST JOBS ###
-
-  test-ubuntu2204-DG2-AOT:
-    needs: [build-ubuntu2204-DG2-AOT]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
-    secrets: inherit
-    with:
-      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
-      dpcpp-version: sycl-nightly/20221214
-      install-gfx-driver: true
-      submodules: true
-      image: ubuntu:22.04
-      options: --device=/dev/dri:/dev/dri
-      runs-on: '[ "Linux", "docker", "dg2" ]'
-      artifact-in: build-ubuntu2204-DG2-AOT
-      artifact-out: test-ubuntu2204-DG2-AOT
-      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      artifact-on-failure: true
-      cmd: |
-        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
-        export CC=clang
-        export CXX=clang++
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
-        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
-        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
   test-ubuntu2204-DG2-JIT:
     needs: [build-ubuntu2204-DG2-JIT]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     secrets: inherit
     with:
-      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
+      gfx-driver-version: neo-builds/ci/master/ci-neo-master-025731/artifacts/linux/ubuntu/22.04
       dpcpp-version: sycl-nightly/20221214
       install-gfx-driver: true
       submodules: true
@@ -128,7 +85,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/support_oneapi_icx
     secrets: inherit
     with:
-      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19319/artifacts/Linux/Ubuntu/22.04/Release
+      gfx-driver-version: neo-builds/ci/master/ci-neo-master-025731/artifacts/linux/ubuntu/22.04
       dpcpp-version: intel/2023.0
       install-gfx-driver: true
       submodules: true
