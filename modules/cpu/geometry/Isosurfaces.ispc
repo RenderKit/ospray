@@ -3,6 +3,7 @@
 #ifdef OSPRAY_ENABLE_VOLUMES
 
 // ospray
+#include "common/FilterIntersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
@@ -53,6 +54,8 @@ void unmasked Isosurfaces_intersect_kernel(
   if (!args->valid[programIndex])
     return;
 
+  args->valid[programIndex] = 0;
+
   Isosurfaces *uniform self = (Isosurfaces * uniform) args->geometryUserPtr;
   uniform unsigned int primID = args->primID;
 
@@ -75,19 +78,32 @@ void unmasked Isosurfaces_intersect_kernel(
       hitIteratorBuffer);
   VKLHit hit;
   bool gotHit = vklIterateHitV(iterator, &hit);
+  if (!gotHit)
+    return;
 
-  if (gotHit) {
-    if (isOcclusionTest) {
-      ray->t = neg_inf;
-    } else {
-      ray->instID = args->context->instID[0];
-      ray->geomID = args->geomID;
-      ray->primID = Isosurfaces_primID(self, hit.sample);
-      ray->t = hit.t;
-      ray->u = hit.epsilon; // transport epsilon to postIntersect
-      // transport hit point in *volume local coords* to postIntersect
-      ray->Ng = ray->org + ray->dir * hit.t;
-    }
+  Hit hitFilter;
+  hitFilter.hit = true;
+  hitFilter.t = hit.t;
+  // Transport hit point in *volume local coords* to postIntersect
+  hitFilter.N = ray->org + ray->dir * hit.t;
+  // Transport epsilon to postIntersect
+  hitFilter.u = hit.epsilon;
+  bool accept =
+      filterIntersectionSingle(args, hitFilter, isOcclusionTest, false);
+  if (!accept)
+    return;
+
+  args->valid[programIndex] = -1;
+
+  if (isOcclusionTest) {
+    ray->t = neg_inf;
+  } else {
+    ray->instID = args->context->instID[0];
+    ray->geomID = args->geomID;
+    ray->primID = Isosurfaces_primID(self, hit.sample);
+    ray->t = hitFilter.t;
+    ray->u = hitFilter.u;
+    ray->Ng = hitFilter.N;
   }
 }
 
