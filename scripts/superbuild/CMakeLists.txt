@@ -49,6 +49,11 @@ if (POLICY CMP0114)
   cmake_policy(SET CMP0114 OLD) # 3.19
 endif ()
 
+if (POLICY CMP0135)
+  # use timestamp of extraction of downloaded archives
+  cmake_policy(SET CMP0135 NEW) # 3.24
+endif ()
+
 include(ExternalProject)
 include(GNUInstallDirs)
 include(ProcessorCount)
@@ -173,10 +178,17 @@ endif()
 
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
   set(ISA_X86 OFF)
-  set(ISA_NEON ON)
+  if (APPLE)
+    set(ISA_NEON OFF)
+    set(ISA_NEON2X ON)
+  else()
+    set(ISA_NEON ON)
+    set(ISA_NEON2X OFF)
+  endif()
 else()
   set(ISA_X86 ON)
   set(ISA_NEON OFF)
+  set(ISA_NEON2X OFF)
 endif()
 option(BUILD_ISA_SSE4 "Build for SSE4" ${ISA_X86})
 mark_as_advanced(BUILD_ISA_SSE4)
@@ -188,6 +200,13 @@ option(BUILD_ISA_AVX512 "Build for AVX512" ${ISA_X86})
 mark_as_advanced(BUILD_ISA_AVX512)
 option(BUILD_ISA_NEON "Build for NEON" ${ISA_NEON})
 mark_as_advanced(BUILD_ISA_NEON)
+option(BUILD_ISA_NEON2X "Build for double pumped NEON" ${ISA_NEON2X})
+mark_as_advanced(BUILD_ISA_NEON2X)
+
+if (BUILD_ISA_NEON AND BUILD_ISA_NEON2X)
+  message(FATAL_ERROR "Only one Neon ISA may be enabled; choose either NEON or NEON2X")
+endif()
+
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"

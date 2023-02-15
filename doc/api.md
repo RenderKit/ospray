@@ -70,8 +70,7 @@ prefixed by convention with "`--osp:`") are understood:
                                                `--osp:load-modules=<name>` first
 
   `--osp:set-affinity=<n>`                     if `1`, bind software threads to hardware threads;
-                                               `0` disables binding; default is `1` on KNL and `0`
-                                               otherwise
+                                               `0` disables binding; default is `0`
 
   `--osp:device-params=<param>:<value>[,...]`  set one or more other device parameters; equivalent
                                                to calling `ospDeviceSet*(param, value)`

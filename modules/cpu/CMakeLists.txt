@@ -257,7 +257,7 @@ if (WIN32)
 
   list(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
   foreach(isa ${OSPRAY_ISPC_TARGET_LIST})
-    string(REPLACE "-i32x16" "" isa ${isa}) # strip avx512(knl|skx)-i32x16
+    string(REPLACE "-i32x16" "" isa ${isa}) # strip avx512skx-i32x16
     if (NUM_TARGETS EQUAL 1)
       set(isa "") # for single target no suffix
       string(REPLACE "delete_uniform_," "delete_uniform," OSPRAY_ISPC_SYMBOLS_IN ${OSPRAY_ISPC_SYMBOLS_IN})

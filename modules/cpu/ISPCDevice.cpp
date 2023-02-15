@@ -342,7 +342,6 @@ void ISPCDevice::commit()
       "SSE4",
       "AVX",
       "AVX2",
-      "AVX512KNL",
       "AVX512SKX",
       "NEON"};
   postStatusMsg(OSP_LOG_INFO)

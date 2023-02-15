@@ -23,6 +23,9 @@ Version History
     in the `mpiOffload` device.
 -   Adapt to Embree v4.0.0 API changes, which is thus the new minimum
     version
+-   Add support for double pumped NEON instruction on ARM64
+-   Removed support of MSVC14.0 (Visual Studio 2015) and the second
+    generation Intel Xeon Phi processor (codename Knights Landing)
 
 ### Changes in v2.10.0:
 
