@@ -734,7 +734,7 @@ OSPError loadLocalModule(const std::string &name)
 {
   std::string libName = "ospray_module_" + name;
   try {
-    loadLibrary(libName, false);
+    loadLibrary(libName, reinterpret_cast<const void *>(&loadLocalModule));
   } catch (const std::exception &e) {
     handleError(OSP_INVALID_OPERATION, e.what());
     return OSP_INVALID_OPERATION;

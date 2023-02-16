@@ -38,11 +38,10 @@ Device *Device::createDevice(const char *type)
   //             valid library for core ospray in our main symbol lookup
   //             table.
   auto &repo = *LibraryRepository::getInstance();
-  if (!repo.libraryExists("ospray"))
-    repo.addDefaultLibrary();
 
   if (!repo.libraryExists("ospray_module_cpu") && type == std::string("cpu"))
-    repo.add("ospray_module_cpu");
+    repo.add(
+        "ospray_module_cpu", reinterpret_cast<const void *>(&createDevice));
 
   return createInstance(type);
 }
