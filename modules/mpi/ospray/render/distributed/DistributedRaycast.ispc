@@ -22,7 +22,10 @@
 #include "texture/Texture2D.ih"
 #include "volume/VolumetricModel.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
-#include "openvkl/openvkl.isph"
+#include "volume/Volume.ih"
+#include "volume/VolumetricModel.ih"
+#include "volume/transferFunction/LinearTransferFunction.ih"
+#include "volume/transferFunction/TransferFunctionDispatch.ih"
 #endif
 // c++ shared
 #include "DistributedRaycastShared.h"
@@ -42,26 +45,44 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
     uniform float samplingRate)
 {
   VolumetricModel *varying volModel = interval.volumetricModel;
+  // Note: required to WA compiler dropping symbols on link incorrectly
+  if (volModel == NULL) {
+    LinearTransferFunction_get(NULL, 0.f);
+  }
 
   Ray transformedRay = ray;
-  transformRay(transformedRay, interval.instance->rcp_xfm);
+  AffineSpace3f instanceRcpXfm = interval.instance->rcp_xfm;
+  transformRay(transformedRay, instanceRcpXfm);
 
-  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
+#ifdef OSPRAY_TARGET_SYCL
+  {
+    VolumetricModel *uniform vm = volModel;
+#else
   foreach_unique (vm in volModel) {
+#endif
     Volume *uniform volume = vm->volume;
     TransferFunction *uniform tf = vm->transferFunction;
 
     float time = 0.5f;
-    VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(vm->vklIntervalContext,
-            (varying vkl_vec3f *)&transformedRay.org,
-            (varying vkl_vec3f *)&transformedRay.dir,
-            (varying vkl_range1f *)&interval.interval,
-            &time,
-            intervalIteratorBuffer);
+    VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
+#if OPENVKL_VERSION_MAJOR == 1
+        vm->vklIntervalContext,
+#else
+        &vm->vklIntervalContext,
+#endif
+        (varying vkl_vec3f *)&ray.org,
+        (varying vkl_vec3f *)&ray.dir,
+        (varying vkl_range1f *)&interval.interval,
+#ifdef OSPRAY_TARGET_SYCL
+        time,
+#else
+        &time,
+#endif
+        (void *uniform)intervalIteratorBuffer);
 
     VKLInterval interval;
     while (vklIterateIntervalV(intervalIterator, &interval) && alpha < 0.99f) {
@@ -81,10 +102,16 @@ vec4f DRR_integrateVolumeInterval(const ScreenSample &sample,
         // Get volume sample
         vec3f p = transformedRay.org + transformedRay.t0 * transformedRay.dir;
         const float sample = vklComputeSampleV(
-            volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
+#if OPENVKL_VERSION_MAJOR == 1
+            volume->vklSampler,
+#else
+            &volume->vklSampler,
+#endif
+            (const varying vkl_vec3f *uniform) & p);
 
         if (!isnan(sample)) {
-          vec4f sampleColorOpacity = tf->get(tf, sample);
+          vec4f sampleColorOpacity =
+              TransferFunction_dispatch_get(vm->transferFunction, sample);
 
           sampleColorOpacity.w = 1.f
               - pow(1.f - sampleColorOpacity.w * vm->densityScale,

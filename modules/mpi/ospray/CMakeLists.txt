@@ -101,6 +101,14 @@ if (OSPRAY_ENABLE_VOLUMES)
   include_directories_ispc(
     ${OPENVKL_INCLUDE_DIRS}
   )
+  # Keep the NOTFOUND out of the ISPC include dirs list, because CMake will
+  # see the variable ending with NOTFOUND and evaluate it to false and not
+  # pass our include directories
+  if (OPENVKL_CPU_DEVICE_INCLUDE_DIRS)
+    include_directories_ispc(
+      ${OPENVKL_CPU_DEVICE_INCLUDE_DIRS}
+    )
+  endif()
 
   add_definitions_ispc(
     -DOSPRAY_ENABLE_VOLUMES

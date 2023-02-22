@@ -7,7 +7,7 @@
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
-#include "openvkl/version.h"
+#include "volume/Volume.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 #include "volume/VolumetricModel.ih"

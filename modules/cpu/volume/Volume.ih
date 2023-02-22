@@ -5,7 +5,6 @@
 #pragma once
 
 #include "common/Embree.h"
-#include "openvkl/version.h"
 #ifdef ISPC
 #include "openvkl/openvkl.isph"
 // comment break to prevent clang-format from reordering openvkl includes

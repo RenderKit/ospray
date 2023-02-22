@@ -4,7 +4,7 @@
 
 #include "math/random.ih"
 #include "math/sampling.ih"
-#include "openvkl/version.h"
+#include "volume/Volume.ih"
 #include "render/util.ih"
 #include "volume/VolumetricModel.ih"
 #include "volume/transferFunction/TransferFunctionDispatch.ih"

@@ -111,6 +111,6 @@ if [ $TEST_MPI ]; then
   mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_filter="-$test_filters" : $MPI_WORKER_CONFIG ospray_mpi_worker
 
   mkdir failed-mpi-gpu-data-parallel
-  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="MPIDistribTestScenesGeometry*"
+  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="MPIDistribTestScenesGeometry*:MPIDistribTestScenesVolumes*test_scenes/0"
 fi
 

@@ -413,11 +413,12 @@ if (OSPRAY_MODULE_GPU)
 
   # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
   set_source_files_properties(${OSPRAY_ISPC_SOURCES} ${OSPRAY_VOLUMES_ISPC_SOURCES}
-      PROPERTIES
-      LANGUAGE CXX)
+    PROPERTIES
+    LANGUAGE CXX)
 
   add_library(ospray_module_gpu_kernels STATIC
-      ${OSPRAY_ISPC_SOURCES})
+    ${OSPRAY_ISPC_SOURCES}
+    ${OSPRAY_VOLUMES_ISPC_SOURCES})
 
   set_target_properties(ospray_module_gpu_kernels PROPERTIES
     CXX_STANDARD 17
@@ -517,7 +518,7 @@ if (OSPRAY_MODULE_GPU)
 
     target_compile_definitions(ospray_module_gpu_kernels
     PUBLIC
-      -DOSPRAY_ENABLE_VOLUMES
+      OSPRAY_ENABLE_VOLUMES
     )
   endif()
 
@@ -525,9 +526,7 @@ if (OSPRAY_MODULE_GPU)
 
   add_library(ospray_module_gpu SHARED
     ${OSPRAY_CPP_SOURCES}
-    ${OSPRAY_ISPC_SOURCES}
     ${OSPRAY_VOLUMES_CPP_SOURCES}
-    ${OSPRAY_VOLUMES_ISPC_SOURCES}
   )
 
   set_target_properties(ospray_module_gpu PROPERTIES
