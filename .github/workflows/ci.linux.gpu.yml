@@ -114,6 +114,29 @@ jobs:
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
+  test-ubuntu2204-pvc:
+    needs: [build-ubuntu2204]
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    secrets: inherit
+    with:
+      image: ubuntu:22.04
+      env-from-files: .github/workflows/dpcpp-sycl-nightly.env .github/workflows/gfx-ubuntu22.env
+      install-gfx-driver: true
+      submodules: true
+      options: --device=/dev/dri:/dev/dri
+      runs-on: '[ "Linux", "docker", "pvc" ]'
+      artifact-in: build-ubuntu2204
+      artifact-out: test-ubuntu2204-pvc
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+      cmd: |
+        export SYCL_BUNDLE_ROOT=$DPCPP_ROOT
+        export CC=clang
+        export CXX=clang++
+        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
+        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
+
   test-ubuntu2204-devel-dg2:
     needs: [build-ubuntu2204-devel]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
