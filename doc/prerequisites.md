@@ -49,8 +49,8 @@ before you can build OSPRay you need the following prerequisites:
     module requires Intel [Open Image Denoise] in version 1.2.3 or
     newer. You may need to hint the location of the library with the
     CMake variable `OpenImageDenoise_DIR`.
--   For the optional MPI module (enabled by `OSPRAY_MODULE_MPI`), which
-    provides the `mpiOffload` and `mpiDistributed` devices, you need an
+-   For the optional MPI modules (enabled by `OSPRAY_MODULE_MPI`), which
+    provide the `mpiOffload` and `mpiDistributed` devices, you need an
     MPI library and [Google Snappy](https://github.com/google/snappy).
 -   The optional example application, the test suit and benchmarks need
     some version of OpenGL and GLFW as well as

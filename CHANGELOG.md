@@ -14,6 +14,13 @@ Version History
 -   Fix a crash in pathtracer when there are no lights
 -   OSPRay's superbuild can now be provided a CMake Toolchain file for
     cross-compilation.
+-   OSPRay's MPI modules have been split up and renamed, the `mpiOffload`
+    device is now in the `mpi_offload` module, while the `mpiDistributed`
+    device is now in the `mpi_distributed_cpu` module.
+-   Reduce the memory overhead of the `mpiOffload` device and resolve
+    memory and `MPI_Comm` handle leaks.
+-   Fix a data corruption bug when setting string parameters for objects
+    in the `mpiOffload` device.
 
 ### Changes in v2.10.0:
 

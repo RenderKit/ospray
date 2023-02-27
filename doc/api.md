@@ -3167,21 +3167,29 @@ rendered, the result is undefined behavior and should be avoided.
 Distributed Rendering with MPI
 ==============================
 
-The purpose of the MPI module for OSPRay is to provide distributed
-rendering capabilities for OSPRay. The module enables image- and
+The purpose of OSPRay's MPI modules is to provide distributed
+rendering capabilities for OSPRay. The modules enables image- and
 data-parallel rendering across HPC clusters using MPI, allowing
 applications to transparently distribute rendering work, or to render
 data sets which are too large to fit in memory on a single machine.
 
-The MPI module provides two OSPRay devices to allow applications to
-leverage distributed rendering capabilities. The `mpiOffload` device
-provides transparent image-parallel rendering, where the same OSPRay
-application written for local rendering can be replicated across
-multiple nodes to distribute the rendering work. The `mpiDistributed`
-device allows MPI distributed applications to use OSPRay for distributed
-rendering, where each rank can render and independent piece of a global
-data set, or hybrid rendering where ranks partially or completely share
-data.
+OSPRay provides two MPI modules that expose different distributed rendering
+capabilities. The `mpi_offload` module provides image-parallel rendering
+through the `mpiOffload` device, while the `mpi_distributed_cpu` module
+provides data-parallel rendering through the `mpiDistributed` device.
+The `mpiOffload` device in the `mpi_offload` module
+enables OSPRay applications written for local rendering to be replicated across
+multiple nodes to distribute the rendering work without code changes.
+The `mpi_distributed_cpu` module provides the `mpiDistributed` device, which
+allows MPI distributed applications to use OSPRay for distributed
+rendering. Each rank using the `mpiDistributed` device can render an
+independent piece of a global data set, or perform hybrid rendering where ranks
+partially or completely share data.
+
+The `mpiDistributed` device's image-parallel rendering support can be used to
+accelerate data loading for image-parallel applications, where all ranks load
+the same data from a shared disk and then perform image-parallel rendering
+on the replicated data, as if the `mpiOffload` device where being used.
 
 MPI Offload Rendering
 ---------------------
@@ -3191,12 +3199,12 @@ across a cluster without requiring modifications to the application
 itself. Existing applications using OSPRay for local rendering simply be
 passed command line arguments to load the module and indicate that the
 `mpiOffload` device should be used for image-parallel rendering. To load
-the module, pass `--osp:load-modules=mpi`, to select the
+the module, pass `--osp:load-modules=mpi_offload`, to select the
 MPIOffloadDevice, pass `--osp:device=mpiOffload`. For example, the
 `ospExamples` application can be run as:
 
 ```sh
-mpirun -n <N> ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload
+mpirun -n <N> ./ospExamples --osp:load-modules=mpi_offload --osp:device=mpiOffload
 ```
 
 and will automatically distribute the image rendering tasks among the
@@ -3214,7 +3222,7 @@ The `ospray_mpi_worker` will load the MPI module and select the offload
 device by default.
 
 ```sh
-mpirun -n 1 ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
+mpirun -n 1 ./ospExamples --osp:load-modules=mpi_offload --osp:device=mpiOffload \
   : -n <N> ./ospray_mpi_worker
 ```
 
@@ -3272,10 +3280,10 @@ While MPI Offload rendering is used to transparently distribute
 rendering work without requiring modification to the application, MPI
 Distributed rendering is targeted at use of OSPRay within MPI-parallel
 applications. The MPI distributed device can be selected by loading the
-`mpi` module, and manually creating and using an instance of the
-`mpiDistributed` device:
+`mpi_distributed_cpu` module, and manually creating and using an instance
+of the `mpiDistributed` device:
 
-    ospLoadModule("mpi");
+    ospLoadModule("mpi_distributed_cpu");
     
     OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
     ospDeviceCommit(mpiDevice);
