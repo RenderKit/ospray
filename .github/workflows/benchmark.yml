@@ -38,11 +38,20 @@ jobs:
         scripts/tests/run-benchmarks.sh
       artifact-in: build-centos8
 
+  benchmark-x8380-1:
+    needs: build-centos8
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '["vis-perf-x8380-1"]'
+      cmd: |
+        scripts/tests/run-benchmarks.sh
+      artifact-in: build-centos8
+
   benchmark-a-1:
     needs: build-centos8
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
     with:
-      runs-on: '["vis-perf-a-1"]'
+      runs-on: '["vis-perf-a3970x-1"]'
       cmd: |
         scripts/tests/run-benchmarks.sh
       artifact-in: build-centos8
@@ -51,16 +60,7 @@ jobs:
     needs: build-centos8
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
     with:
-      runs-on: '["vis-sdp-adl-1-perf"]'
-      cmd: |
-        scripts/tests/run-benchmarks.sh
-      artifact-in: build-centos8
-
-  benchmark-tgl-1:
-    needs: build-centos8
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
-    with:
-      runs-on: '["vis-sdp-dg2-01-perf"]'
+      runs-on: '["vis-perf-i9-12900k-1"]'
       cmd: |
         scripts/tests/run-benchmarks.sh
       artifact-in: build-centos8
