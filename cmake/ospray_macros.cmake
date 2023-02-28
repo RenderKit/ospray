@@ -511,20 +511,15 @@ macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED FIND_AS_DEPENDENCY)
   else()
     find_package(openvkl ${OPENVKL_VERSION_REQUIRED})
   endif()
-  if(NOT openvkl_FOUND)
-    message(FATAL_ERROR
-            "We did not find Open VKL installed on your system. OSPRay requires"
-            " an Open VKL installation >= v${OPENVKL_VERSION_REQUIRED}, please"
-            " download and extract Open VKL (or compile from source), then"
-            " set the 'openvkl_DIR' variable to the installation directory.")
+  if (openvkl_FOUND)
+    get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
+        INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(OPENVKL_CPU_DEVICE_INCLUDE_DIRS openvkl::openvkl_module_cpu_device
+        INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(CONFIGURATIONS openvkl::openvkl IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION)
+    get_target_property(OPENVKL_LIBRARY openvkl::openvkl
+        IMPORTED_LOCATION_${CONFIGURATION})
+    message(STATUS "Found Open VKL v${openvkl_VERSION}: ${OPENVKL_LIBRARY}")
   endif()
-  get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
-      INTERFACE_INCLUDE_DIRECTORIES)
-  get_target_property(OPENVKL_CPU_DEVICE_INCLUDE_DIRS openvkl::openvkl_module_cpu_device
-      INTERFACE_INCLUDE_DIRECTORIES)
-  get_target_property(CONFIGURATIONS openvkl::openvkl IMPORTED_CONFIGURATIONS)
-  list(GET CONFIGURATIONS 0 CONFIGURATION)
-  get_target_property(OPENVKL_LIBRARY openvkl::openvkl
-      IMPORTED_LOCATION_${CONFIGURATION})
-  message(STATUS "Found Open VKL v${openvkl_VERSION}: ${OPENVKL_LIBRARY}")
 endmacro()

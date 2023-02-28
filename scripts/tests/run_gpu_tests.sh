@@ -101,7 +101,6 @@ export ONEAPI_DEVICE_SELECTOR=level_zero:*
 
 mkdir failed-gpu
 
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./ 
 ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters"
 
 if [ $TEST_MPI ]; then

@@ -22,7 +22,8 @@ Version History
 -   Fix a data corruption bug when setting string parameters for objects
     in the `mpiOffload` device.
 -   Adapt to Embree v4.0.0 API changes, which is thus the new minimum
-    version
+    version; additionally, the new minimum version for Open VKL is
+    v1.3.2 and for ISPC v1.19.0
 -   Add support for double pumped NEON instruction on ARM64
 -   Removed support of MSVC14.0 (Visual Studio 2015) and the second
     generation Intel Xeon Phi processor (codename Knights Landing)

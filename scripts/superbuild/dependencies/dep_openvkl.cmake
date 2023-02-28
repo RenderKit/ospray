@@ -13,12 +13,8 @@ if (OPENVKL_HASH)
 endif()
 
 string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" OPENVKL_ARCHIVE ${OPENVKL_VERSION})
-# TODO WILL TEMPORARY For GPU Testing
-#set(OPENVKL_BRANCH "${OPENVKL_ARCHIVE}" CACHE STRING "Which branch of OpenVKL to build" )
-#set(OPENVKL_URL "https://github.com/openvkl/openvkl/archive/${OPENVKL_ARCHIVE}.zip"
-#  CACHE STRING "Location to clone OpenVKL source from")
-set(OPENVKL_BRANCH "devel" CACHE STRING "Which branch of OpenVKL to build" )
-set(OPENVKL_URL https://$ENV{RENDERKIT_GITHUB_TOKEN}@github.com/intel-innersource/libraries.graphics.renderkit.openvkl.git 
+set(OPENVKL_BRANCH "${OPENVKL_ARCHIVE}" CACHE STRING "Which branch of OpenVKL to build" )
+set(OPENVKL_URL "https://github.com/openvkl/openvkl/archive/${OPENVKL_ARCHIVE}.zip"
   CACHE STRING "Location to clone OpenVKL source from")
 
 string(REGEX MATCH ".*\.zip$" ZIP_FILENAME ${OPENVKL_URL})
