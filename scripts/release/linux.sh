@@ -73,7 +73,7 @@ cmake \
   -D BUILD_DEPENDENCIES_ONLY=ON \
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR \
   -D CMAKE_INSTALL_LIBDIR=lib \
-  -D BUILD_EMBREE_FROM_SOURCE=OFF \
+  -D BUILD_EMBREE_FROM_SOURCE=ON \
   -D BUILD_OIDN=ON \
   -D BUILD_OIDN_FROM_SOURCE=OFF \
   -D BUILD_OSPRAY_MODULE_MPI=ON \
@@ -114,40 +114,36 @@ cmake -L \
 make -j $THREADS preinstall
 
 # verify libs
-check_symbols libospray.so GLIBC   2 17 0
-check_symbols libospray.so GLIBCXX 3 4 19
-check_symbols libospray.so CXXABI  1 3 7
+for lib in libospray.so libospray_module_cpu.so libospray_module_mpi_offload.so libospray_module_mpi_distributed_cpu.so ; do
+  echo "checking $lib..."
+  check_symbols $lib GLIBC   2 17 0
+  check_symbols $lib GLIBCXX 3 4 19
+  check_symbols $lib CXXABI  1 3 7
+  check_lib_dependency_error $lib libimf.so
+  check_lib_dependency_error $lib libsvml.so
+done
 
-check_symbols libospray_module_cpu.so GLIBC   2 17 0
-check_symbols libospray_module_cpu.so GLIBCXX 3 4 19
-check_symbols libospray_module_cpu.so CXXABI  1 3 7
-
-check_lib_dependency_error libospray.so libimf.so
-check_lib_dependency_error libospray_module_cpu.so libimf.so
-
-check_symbols libospray_module_mpi.so GLIBC   2 17 0
-check_symbols libospray_module_mpi.so GLIBCXX 3 4 19
-check_symbols libospray_module_mpi.so CXXABI  1 3 7
-
-check_lib_dependency_error libospray_module_mpi.so libimf.so
-check_lib_dependency_error libospray_module_mpi.so libmpifort.so
-
-MPICH_ABI_VER=12
-mpi_so_ver=$(get_so_version libospray_module_mpi.so libmpi.so)
-mpicxx_so_ver=$(get_so_version libospray_module_mpi.so libmpicxx.so)
-
-if [ -z "$mpi_so_ver" ] || [ -z "$mpicxx_so_ver" ]; then
-  echo "MPI module is not linked against libmpi.so or libmpicxx.so"
-  exit 3
-fi
-
-if [ "$mpi_so_ver" != "$MPICH_ABI_VER" ]; then
-  echo "MPI module is linked against the wrong MPICH ABI: libmpi.so.$mpi_so_ver"
-  exit 3
-fi
-if [ "$mpicxx_so_ver" != "$MPICH_ABI_VER" ]; then
-  echo "MPI module is linked against the wrong MPICH ABI: libmpicxx.so.$mpi_so_ver"
-  exit 3
-fi
+for lib in libospray_module_mpi_offload.so libospray_module_mpi_distributed_cpu.so ; do
+  echo "checking $lib..."
+  check_lib_dependency_error $lib libmpifort.so
+  
+  MPICH_ABI_VER=12
+  mpi_so_ver=$(get_so_version $lib libmpi.so)
+  mpicxx_so_ver=$(get_so_version $lib libmpicxx.so)
+  
+  if [ -z "$mpi_so_ver" ] || [ -z "$mpicxx_so_ver" ]; then
+    echo "MPI module is not linked against libmpi.so or libmpicxx.so"
+    exit 3
+  fi
+  
+  if [ "$mpi_so_ver" != "$MPICH_ABI_VER" ]; then
+    echo "MPI module is linked against the wrong MPICH ABI: libmpi.so.$mpi_so_ver"
+    exit 3
+  fi
+  if [ "$mpicxx_so_ver" != "$MPICH_ABI_VER" ]; then
+    echo "MPI module is linked against the wrong MPICH ABI: libmpicxx.so.$mpi_so_ver"
+    exit 3
+  fi
+done
 
 make -j $THREADS package || exit 2

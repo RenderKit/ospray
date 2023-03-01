@@ -55,7 +55,6 @@ jobs:
       cmd: |
         scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_OIDN=ON
 
-  # TODO: Enable AVX512 testing after Embree4 release
   build-centos7-gcc:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     secrets: inherit
@@ -63,7 +62,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       image: centos:7
       cmd: |
-        scripts/build/linux.sh -DBUILD_ISA_AVX512=OFF
+        scripts/build/linux.sh -DBUILD_ISA_AVX512=OFF # TODO Embree source build incompatible with older GCC for AVX512
       artifact-out: build-centos7-gcc
       artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
 
@@ -107,6 +106,7 @@ jobs:
         export CC=icx
         export CXX=icpx
         export CXXFLAGS="-fhonor-infinities -fhonor-nans"
+        export CFLAGS=$CXXFLAGS
         export LDFLAGS="-static-intel"
         scripts/build/linux.sh
       artifact-out: build-centos7-icx

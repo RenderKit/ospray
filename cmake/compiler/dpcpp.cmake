@@ -11,7 +11,6 @@ set(CMAKE_CXX_FLAGS "-fhonor-nans -fhonor-infinities ${CMAKE_CXX_FLAGS}")
 # DPCPP release one? The nightly clang compiler doesn't recognize this flag
 #set(CMAKE_EXE_LINKER_FLAGS "-static-intel ${CMAKE_EXE_LINKER_FLAGS}")
 #set(CMAKE_SHARED_LINKER_FLAGS "-static-intel ${CMAKE_SHARED_LINKER_FLAGS}")
-#set(CMAKE_STATIC_LINKER_FLAGS "-static-intel ${CMAKE_STATIC_LINKER_FLAGS}")
 #set(CMAKE_MODULE_LINKER_FLAGS "-static-intel ${CMAKE_MODULE_LINKER_FLAGS}")
 
 # SYCL flags to match Embree
