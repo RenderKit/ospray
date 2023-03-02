@@ -52,7 +52,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     secrets: inherit
     with:
-      runs-on: '["Windows", "build", "NAS"]'
+      runs-on: '["Windows", "build", "NAS", "mpi"]'
       cmd: |
         scripts\build\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "ON" "ON"
       artifact-out: build-windows-debug-all
