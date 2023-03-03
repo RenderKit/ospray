@@ -37,7 +37,10 @@ struct Texture
 
 #ifdef __cplusplus
   Texture(bool hasAlpha = false)
-      : get(nullptr), getNormal(nullptr), hasAlpha(hasAlpha)
+      : type(TEXTURE_TYPE_UNKNOWN),
+        get(nullptr),
+        getNormal(nullptr),
+        hasAlpha(hasAlpha)
   {}
 };
 } // namespace ispc

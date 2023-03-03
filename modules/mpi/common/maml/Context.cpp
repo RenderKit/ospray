@@ -57,7 +57,6 @@ void Context::send(std::shared_ptr<Message> msg)
 {
   // The message uses malloc/free, so use that instead of new/delete
   if (compressMessages) {
-    auto startCompr = high_resolution_clock::now();
     byte_t *compressed =
         (byte_t *)malloc(snappy::MaxCompressedLength(msg->size));
     size_t compressedSize = 0;
@@ -66,8 +65,6 @@ void Context::send(std::shared_ptr<Message> msg)
         reinterpret_cast<char *>(compressed),
         &compressedSize);
     free(msg->data);
-
-    auto endCompr = high_resolution_clock::now();
 
     msg->data = compressed;
     msg->size = compressedSize;
@@ -90,7 +87,6 @@ void Context::processInboxMessages()
     auto *handler = handlers[msg->comm];
 
     if (compressMessages) {
-      auto startCompr = high_resolution_clock::now();
       // Decompress the message before handing it off
       size_t uncompressedSize = 0;
       snappy::GetUncompressedLength(reinterpret_cast<const char *>(msg->data),
@@ -101,9 +97,6 @@ void Context::processInboxMessages()
           msg->size,
           reinterpret_cast<char *>(uncompressed));
       free(msg->data);
-      const size_t compressedSize = msg->size;
-
-      auto endCompr = high_resolution_clock::now();
 
       msg->data = uncompressed;
       msg->size = uncompressedSize;
@@ -196,7 +189,6 @@ void Context::waitOnSomeRequests()
     int numDone = 0;
     MPI_CALL(Testsome(
         totalMessages, mergedRequests, &numDone, done, MPI_STATUSES_IGNORE));
-    auto completed = high_resolution_clock::now();
 
     for (int i = 0; i < numDone; ++i) {
       size_t msgId = done[i];

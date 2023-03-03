@@ -24,7 +24,13 @@ struct Texture2D
   OSPTextureFilter filter;
 
 #ifdef __cplusplus
-  Texture2D() : size(0), sizef(0.f), halfTexel(0.f), data(nullptr)
+  Texture2D()
+      : size(0),
+        sizef(0.f),
+        halfTexel(0.f),
+        data(nullptr),
+        format(OSP_TEXTURE_FORMAT_INVALID),
+        filter(OSP_TEXTURE_FILTER_BILINEAR)
   {
     super.type = TEXTURE_TYPE_2D;
   }
