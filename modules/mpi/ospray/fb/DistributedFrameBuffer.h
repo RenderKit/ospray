@@ -80,7 +80,7 @@ struct DistributedFrameBuffer : public mpi::messaging::MessageHandler,
   /* Get render task IDs will return the render task IDs for layer 0,
    * the tiles owned by the DFB for compositing.
    */
-  utility::ArrayView<uint32_t> getRenderTaskIDs() override;
+  utility::ArrayView<uint32_t> getRenderTaskIDs(float errorThreshold) override;
 
   // Task error is not valid for the DFB, as error is tracked at a per-tile
   // level. Use tileError to get rendering error

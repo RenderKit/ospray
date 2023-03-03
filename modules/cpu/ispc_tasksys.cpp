@@ -53,7 +53,7 @@ extern "C" OSPRAY_SDK_INTERFACE void ISPCLaunch(void ** /*taskPtr*/,
   tasking::parallel_for(nTasks, [&](const size_t i) {
     const int taskIndex0 = i % taskCount0;
     const int taskIndex1 = (i / taskCount0) % taskCount1;
-    const int taskIndex2 = i / (taskCount0 * taskCount1);
+    const int taskIndex2 = i / (size_t(taskCount0) * taskCount1);
     ((ISPCTaskFunc)func)(data,
         i,
         nTasks,

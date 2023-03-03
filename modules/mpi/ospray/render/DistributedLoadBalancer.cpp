@@ -31,6 +31,7 @@ DistributedLoadBalancer::~DistributedLoadBalancer()
 {
   handle.free();
 }
+
 void DistributedLoadBalancer::renderFrame(
     FrameBuffer *_fb, Renderer *_renderer, Camera *camera, World *_world)
 {
@@ -49,8 +50,7 @@ void DistributedLoadBalancer::renderFrame(
       return;
     } else {
       throw std::runtime_error(
-          "Distributed rendering requires a "
-          "distributed renderer!");
+          "Distributed rendering requires a distributed renderer!");
     }
   }
   if (dfb->getLastRenderer() != renderer) {
@@ -169,7 +169,7 @@ void DistributedLoadBalancer::renderFrame(
     std::memset(regionVisible.sharedPtr(), 0, regionVisible.size());
 
     // Compute visibility for the tasks we're rendering
-    auto renderTaskIDs = sparseFb->getRenderTaskIDs();
+    auto renderTaskIDs = sparseFb->getRenderTaskIDs(0.0f);
 
     renderer->computeRegionVisibility(sparseFb,
         camera,
@@ -454,7 +454,7 @@ void DistributedLoadBalancer::renderFrameReplicatedDynamicLB(
             camera,
             world,
             perFrameData,
-            sparseFb->getRenderTaskIDs()
+            sparseFb->getRenderTaskIDs(renderer->errorThreshold)
 #ifdef OSPRAY_TARGET_SYCL
                 ,
             *syclQueue
@@ -515,44 +515,17 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
   // Note: these views are already in USM
   const utility::ArrayView<Tile> tiles = ownedTilesFb->getTiles();
   const utility::ArrayView<uint32_t> tileIDs = ownedTilesFb->getTileIDs();
-  auto renderTaskIDs = ownedTilesFb->getRenderTaskIDs();
 
-  if (renderer->errorThreshold > 0.f) {
-    std::vector<uint32_t> activeTasks;
-    for (auto &i : renderTaskIDs) {
-      const uint32_t tileID = tileIDs[ownedTilesFb->getTileIndexForTask(i)];
-      const float error = dfb->tileError(tileID);
-      if (error > renderer->errorThreshold) {
-        activeTasks.push_back(i);
-      }
-    }
-
-    BufferShared<uint32_t> activeTasksShared(
-        dfb->getISPCDevice().getIspcrtDevice(), activeTasks);
-
-    renderer->renderTasks(ownedTilesFb,
-        camera,
-        world,
-        perFrameData,
-        utility::ArrayView<uint32_t>(
-            activeTasksShared.data(), activeTasksShared.size())
+  renderer->renderTasks(ownedTilesFb,
+      camera,
+      world,
+      perFrameData,
+      ownedTilesFb->getRenderTaskIDs(renderer->errorThreshold)
 #ifdef OSPRAY_TARGET_SYCL
-            ,
-        *syclQueue
+          ,
+      *syclQueue
 #endif
-    );
-  } else {
-    renderer->renderTasks(ownedTilesFb,
-        camera,
-        world,
-        perFrameData,
-        renderTaskIDs
-#ifdef OSPRAY_TARGET_SYCL
-        ,
-        *syclQueue
-#endif
-    );
-  }
+  );
 
   // TODO: Now the tile setting happens as a bulk-sync operation after
   // rendering, because we still need to send them through the compositing
@@ -566,16 +539,6 @@ void DistributedLoadBalancer::renderFrameReplicatedStaticLB(
     }
     dfb->setTile(tiles[i]);
   });
-}
-
-void DistributedLoadBalancer::runRenderTasks(FrameBuffer *,
-    Renderer *,
-    Camera *,
-    World *,
-    const utility::ArrayView<uint32_t> &,
-    void *)
-{
-  NOT_IMPLEMENTED;
 }
 
 } // namespace mpi

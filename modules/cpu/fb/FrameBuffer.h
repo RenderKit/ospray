@@ -48,7 +48,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   virtual uint32_t getTotalRenderTasks() const = 0;
 
-  virtual utility::ArrayView<uint32_t> getRenderTaskIDs() = 0;
+  virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
+      float errorThreshold) = 0;
 
   // get number of pixels in x and y diretion
   vec2i getNumPixels() const;

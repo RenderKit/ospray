@@ -57,7 +57,8 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
 
   virtual uint32_t getTotalRenderTasks() const override;
 
-  virtual utility::ArrayView<uint32_t> getRenderTaskIDs() override;
+  virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
+      float errorThreshold) override;
 
   //! \brief common function to help printf-debugging
   /*! \detailed Every derived class should override this! */
@@ -143,5 +144,6 @@ struct OSPRAY_SDK_INTERFACE SparseFrameBuffer
   std::unique_ptr<BufferShared<float>> taskErrorBuffer;
 
   std::unique_ptr<BufferShared<uint32_t>> renderTaskIDs;
+  std::unique_ptr<BufferShared<uint32_t>> activeTaskIDs;
 };
 } // namespace ospray

@@ -36,7 +36,8 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
 
   virtual uint32_t getTotalRenderTasks() const override;
 
-  virtual utility::ArrayView<uint32_t> getRenderTaskIDs() override;
+  virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
+      float errorThreshold) override;
 
   // common function to help printf-debugging, every derived class should
   // override this!
@@ -98,6 +99,7 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   vec2i numRenderTasks;
 
   std::unique_ptr<BufferShared<uint32_t>> renderTaskIDs;
+  std::unique_ptr<BufferShared<uint32_t>> activeTaskIDs;
   // holds accumID per render task, for adaptive accumulation
   std::unique_ptr<BufferShared<int32_t>> taskAccumID;
 

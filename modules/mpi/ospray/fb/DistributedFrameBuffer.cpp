@@ -943,9 +943,9 @@ uint32_t DFB::getGlobalTotalTiles() const
   return totalTiles.product();
 }
 
-utility::ArrayView<uint32_t> DFB::getRenderTaskIDs()
+utility::ArrayView<uint32_t> DFB::getRenderTaskIDs(float errorThreshold)
 {
-  return layers[0]->getRenderTaskIDs();
+  return layers[0]->getRenderTaskIDs(errorThreshold);
 }
 
 float DFB::taskError(const uint32_t) const

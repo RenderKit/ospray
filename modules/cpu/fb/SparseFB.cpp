@@ -3,6 +3,7 @@
 
 #include "SparseFB.h"
 #include <cstdlib>
+#include <numeric>
 #include "ImageOp.h"
 #include "render/util.h"
 #include "rkcommon/common.h"
@@ -84,10 +85,19 @@ uint32_t SparseFrameBuffer::getTotalRenderTasks() const
   return numRenderTasks.product();
 }
 
-utility::ArrayView<uint32_t> SparseFrameBuffer::getRenderTaskIDs()
+utility::ArrayView<uint32_t> SparseFrameBuffer::getRenderTaskIDs(
+    float errorThreshold)
 {
-  return utility::ArrayView<uint32_t>(
-      renderTaskIDs->data(), renderTaskIDs->size());
+  if (errorThreshold > 0.0f && hasVarianceBuffer) {
+    auto last = std::copy_if(renderTaskIDs->begin(),
+        renderTaskIDs->end(),
+        activeTaskIDs->begin(),
+        [=](uint32_t i) { return taskError(i) > errorThreshold; });
+    return utility::ArrayView<uint32_t>(
+        activeTaskIDs->data(), last - activeTaskIDs->begin());
+  } else
+    return utility::ArrayView<uint32_t>(
+        renderTaskIDs->data(), renderTaskIDs->size());
 }
 
 std::string SparseFrameBuffer::toString() const
@@ -249,9 +259,10 @@ void SparseFrameBuffer::setTiles(const std::vector<uint32_t> &_tileIDs)
   // variance termination
   renderTaskIDs = make_buffer_shared_unique<uint32_t>(
       getISPCDevice().getIspcrtDevice(), getTotalRenderTasks());
-  for (uint32_t i = 0; i < getTotalRenderTasks(); ++i) {
-    (*renderTaskIDs)[i] = i;
-  }
+  std::iota(renderTaskIDs->begin(), renderTaskIDs->end(), 0);
+  if (hasVarianceBuffer)
+    activeTaskIDs = make_buffer_shared_unique<uint32_t>(
+        getISPCDevice().getIspcrtDevice(), getTotalRenderTasks());
 
   const uint32_t nTasksPerTile = getNumTasksPerTile();
 

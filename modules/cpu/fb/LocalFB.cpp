@@ -96,6 +96,9 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
   renderTaskIDs = make_buffer_shared_unique<uint32_t>(
       device.getIspcrtDevice(), getTotalRenderTasks());
   std::iota(renderTaskIDs->begin(), renderTaskIDs->end(), 0);
+  if (hasVarianceBuffer)
+    activeTaskIDs = make_buffer_shared_unique<uint32_t>(
+        device.getIspcrtDevice(), getTotalRenderTasks());
 
   // TODO: Could use TBB parallel sort here if it's exposed through the rkcommon
   // tasking system
@@ -164,10 +167,19 @@ uint32_t LocalFrameBuffer::getTotalRenderTasks() const
   return numRenderTasks.long_product();
 }
 
-utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs()
+utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
+    float errorThreshold)
 {
-  return utility::ArrayView<uint32_t>(
-      renderTaskIDs->data(), renderTaskIDs->size());
+  if (errorThreshold > 0.0f && hasVarianceBuffer) {
+    auto last = std::copy_if(renderTaskIDs->begin(),
+        renderTaskIDs->end(),
+        activeTaskIDs->begin(),
+        [=](uint32_t i) { return taskError(i) > errorThreshold; });
+    return utility::ArrayView<uint32_t>(
+        activeTaskIDs->data(), last - activeTaskIDs->begin());
+  } else
+    return utility::ArrayView<uint32_t>(
+        renderTaskIDs->data(), renderTaskIDs->size());
 }
 
 std::string LocalFrameBuffer::toString() const

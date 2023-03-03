@@ -247,4 +247,14 @@ INSTANTIATE_TEST_SUITE_P(TestScenesMaxDepth,
         ::testing::Values("ao"),
         ::testing::Values(16)));
 
+TEST_P(FromOsprayTestingVariance, testScenes)
+{
+  PerformRenderTest();
+  EXPECT_LE(framebuffer.variance(), 20.0f);
+}
+
+INSTANTIATE_TEST_SUITE_P(TestScenesVariance,
+    FromOsprayTestingVariance,
+    ::testing::Values(std::make_tuple("cornell_box", "pathtracer", 4)));
+
 } // namespace OSPRayTestScenes

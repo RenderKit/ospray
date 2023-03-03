@@ -23,16 +23,6 @@ struct OSPRAY_SDK_INTERFACE TiledLoadBalancer
    */
   virtual void renderFrame(
       FrameBuffer *fb, Renderer *renderer, Camera *camera, World *world) = 0;
-
-  /*! Render the specified subset of tiles using the given renderer, camera and
-   * world configuration using the load balancer to parallelize the work
-   */
-  virtual void runRenderTasks(FrameBuffer *fb,
-      Renderer *renderer,
-      Camera *camera,
-      World *world,
-      const utility::ArrayView<uint32_t> &renderTaskIDs,
-      void *perFrameData) = 0;
 };
 
 // Inlined definitions //////////////////////////////////////////////////////
@@ -48,13 +38,6 @@ struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
       Renderer *renderer,
       Camera *camera,
       World *world) override;
-
-  void runRenderTasks(FrameBuffer *fb,
-      Renderer *renderer,
-      Camera *camera,
-      World *world,
-      const utility::ArrayView<uint32_t> &renderTaskIDs,
-      void *perFrameData) override;
 
   std::string toString() const override;
 

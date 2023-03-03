@@ -37,7 +37,7 @@ if ( $testMultiDevice ) {
 
 if ( $testMPI ) {
   md failed-mpi
-  mpiexec.exe -n 2 ospTestSuite.exe --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi
+  mpiexec.exe -n 2 ospTestSuite.exe --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_filter="-TestScenesVariance/*" --gtest_output=xml:tests-mpi.xml --baseline-dir=regression_test_baseline\ --failed-dir=failed-mpi
   $exitCode = $LastExitCode
   if ( $exitCode) {
     exit $exitCode
