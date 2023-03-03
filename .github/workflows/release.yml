@@ -149,11 +149,24 @@ jobs:
     needs: release-osx-clang
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
+      runs-on: '[ "macOS", "x86_64", "build", "avx2" ]'
       cmd: |
         unzip build_release/*.zip
         export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
         scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX2
       artifact-in: release-osx-clang
+  
+# TODO
+# test-release-osx-avx512:
+#   needs: release-osx-clang
+#   uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+#   with:
+#     runs-on: '[ "macOS", "x86_64", "build" ]'
+#     cmd: |
+#       unzip build_release/*.zip
+#       export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+#       scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+#     artifact-in: release-osx-clang
   
   test-release-osx-signing:
     needs: release-osx-clang
