@@ -812,6 +812,8 @@ void DFB::gatherFinalTiles()
     std::cout << "Master tile write time: "
               << elapsedTimeMs(startFbWrite, endFbWrite) << "ms\n";
 #endif
+    // not accurate, did we render something at all
+    localFBonMaster->getSh()->super.numPixelsRendered = totalTilesExpected;
   }
 }
 
