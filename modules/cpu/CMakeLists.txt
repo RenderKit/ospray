@@ -12,7 +12,7 @@ mark_as_advanced(OSPRAY_MODULE_CPU)
 
 cmake_dependent_option(
   OSPRAY_MODULE_GPU
-  "Build the GPU module"
+  "Build the GPU module EXPERIMENTAL"
   OFF
   "OSPRAY_ENABLE_MODULES;EMBREE_SYCL_SUPPORT"
   OFF

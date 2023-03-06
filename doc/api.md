@@ -2715,7 +2715,7 @@ All cameras accept these parameters:
 
 The camera is placed and oriented in the world with `position`,
 `direction` and `up`. Additionally, an extra transformation `transform`
-can be specified, which will only be applied to 3D vectors (i.e.
+can be specified, which will only be applied to 3D vectors (i.e.,
 `position`, `direction` and `up`), but does *not* affect any sizes
 (e.g., `nearClip`, `apertureRadius`, or `height`). The same holds for
 the array of transformations `motion.transform` to achieve camera motion
@@ -3234,7 +3234,7 @@ through the command line, the following parameters can be set:
   -------- ------------------------ ---------  ---------------------------------
   string   mpiMode                        mpi  The mode to communicate with the
                                                worker ranks. `mpi` will assume
-                                               you're launching the application
+                                               you are launching the application
                                                and workers in the same mpi
                                                command (or split launch
                                                command). `mpi` is the only

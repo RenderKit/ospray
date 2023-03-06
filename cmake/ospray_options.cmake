@@ -72,13 +72,8 @@ cmake_dependent_option(
   OFF
 )
 
-cmake_dependent_option(
-  OSPRAY_ENABLE_VOLUMES
-  "Enable volume rendering using OpenVKL in the CPU module"
-  ON
-  OSPRAY_ENABLE_MODULES
-  OFF
-)
+option(OSPRAY_ENABLE_VOLUMES "Enable volume rendering using OpenVKL." ON)
+
 
 ###########################################################
 # OSPRay's dependencies and configuration selection

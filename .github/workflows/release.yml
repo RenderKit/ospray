@@ -50,6 +50,7 @@ jobs:
         export CFLAGS=$CXXFLAGS
         export LDFLAGS="-static-intel"
         scripts/release/linux.sh
+      artifact-in: pdf
       artifact-out: release-linux
       artifact-path: build_release/*.gz
 
@@ -66,6 +67,7 @@ jobs:
         scripts/release/macosx.sh
         $SIGN_FILE_MAC -o runtime -e scripts/release/ospray.entitlements build_release/ospray-*pkg
         scripts/release/macosx_notarization.sh build_release/ospray-*.pkg
+      artifact-in: pdf
       artifact-out: release-osx-clang
       artifact-path: "build_release/*.zip build_release/*.pkg"
 
@@ -78,6 +80,7 @@ jobs:
       cmd: |
         scripts\release\win.ps1 "Visual Studio 15 2017 Win64"
         & $env:SIGN_FILE_WINDOWS ospray*.msi
+      artifact-in: pdf
       artifact-out: release-windows
       artifact-path: "build_release/ospray*.zip build_release/ospray*.msi"
 
