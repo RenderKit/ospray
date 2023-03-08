@@ -389,19 +389,19 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](https://www.ospray.org/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation").
+document](https://www.ospray.org/OSPRay_readme.pdf "OSPRay Documentation").
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
 “[OSPRay – A CPU Ray Tracing Framework for Scientific
-Visualization](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_paper.pdf)”
+Visualization](https://www.ospray.org/talks/IEEEVis2016_OSPRay_paper.pdf)”
 (49MB, or get the [smaller
-version](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_paper_small.pdf)
+version](https://www.ospray.org/talks/IEEEVis2016_OSPRay_paper_small.pdf)
 1.8MB). The [slides of the
-talk](http://www.sdvis.org/ospray/download/talks/IEEEVis2016_OSPRay_talk.pdf)
-(5.2MB) are also available.
+talk](https://www.ospray.org/talks/IEEEVis2016_OSPRay_talk.pdf) (5.2MB)
+are also available.
 
 OSPRay API
 ==========
