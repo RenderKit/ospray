@@ -1,24 +1,51 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
+#include "common/Embree.h"
+#ifdef ISPC
 #include "openvkl/openvkl.isph"
+// comment break to prevent clang-format from reordering openvkl includes
+#if OPENVKL_VERSION_MAJOR > 1
+#include "openvkl/device/openvkl.isph"
+#endif
+#else
+#include "openvkl/openvkl.h"
+// comment break to prevent clang-format from reordering openvkl includes
+#if OPENVKL_VERSION_MAJOR > 1
+#include "openvkl/device/openvkl.h"
+#endif
+#endif
 #include "rkcommon/math/box.ih"
 // c++ shared
 #include "VolumeShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // Helper functions ///////////////////////////////////////////////////////////
 
 inline float Volume_getSample(const Volume *uniform volume, const vec3f &P)
 {
-  return vklComputeSampleV(volume->vklSampler, &((const vkl_vec3f &)P));
+  return vklComputeSampleV(
+#if OPENVKL_VERSION_MAJOR == 1
+      volume->vklSampler,
+#else
+      &volume->vklSampler,
+#endif
+      &((const vkl_vec3f &)P));
 }
 
 inline vec3f Volume_getGradient(const Volume *uniform volume, const vec3f &P)
 {
-  vkl_vec3f result =
-      vklComputeGradientV(volume->vklSampler, &((const vkl_vec3f &)P));
+  vkl_vec3f result = vklComputeGradientV(
+#if OPENVKL_VERSION_MAJOR == 1
+      volume->vklSampler,
+#else
+      &volume->vklSampler,
+#endif
+      &((const vkl_vec3f &)P));
 
   // TODO: remove it once VKL no longer returns sporadic NaNs
   if (isnan(result.x))
@@ -30,3 +57,10 @@ inline vec3f Volume_getGradient(const Volume *uniform volume, const vec3f &P)
 
   return *((varying vec3f *)&result);
 }
+
+RTC_SYCL_INDIRECTLY_CALLABLE unmasked void Volume_intersect_kernel(
+    RTCIntersectFunctionNArguments *uniform args);
+
+OSPRAY_END_ISPC_NAMESPACE
+
+#endif

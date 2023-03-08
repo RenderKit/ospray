@@ -3,21 +3,35 @@
 
 #include "SpotLight.h"
 #include "math/sampling.h"
-// embree
-#include "embree3/rtcore.h"
-
+#ifndef OSPRAY_TARGET_SYCL
 #include "lights/SpotLight_ispc.h"
-
+#else
+namespace ispc {
+void SpotLight_Transform(const void *self, const void *xfm, void *dyn);
+void *SpotLight_sample_addr();
+void *SpotLight_sample_instanced_addr();
+void *SpotLight_eval_addr();
+void *SpotLight_eval_instanced_addr();
+} // namespace ispc
+#endif
+// ispc shared
 #include "SpotLightShared.h"
 #include "common/InstanceShared.h"
 
 namespace ospray {
 
-ispc::Light *SpotLight::createSh(uint32_t, const ispc::Instance *instance) const
+ISPCRTMemoryView SpotLight::createSh(
+    uint32_t, const ispc::Instance *instance) const
 {
-  ispc::SpotLight *sh = StructSharedCreate<ispc::SpotLight>();
-  sh->super.sample = ispc::SpotLight_sample_addr();
-  sh->super.eval = ispc::SpotLight_eval_addr();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::SpotLight>(
+      getISPCDevice().getIspcrtDevice().handle());
+  ispc::SpotLight *sh = (ispc::SpotLight *)ispcrtSharedPtr(view);
+#ifndef OSPRAY_TARGET_SYCL
+  sh->super.sample =
+      reinterpret_cast<ispc::Light_SampleFunc>(ispc::SpotLight_sample_addr());
+  sh->super.eval =
+      reinterpret_cast<ispc::Light_EvalFunc>(ispc::SpotLight_eval_addr());
+#endif
   sh->super.isVisible = visible;
   sh->super.instance = instance;
 
@@ -30,8 +44,12 @@ ispc::Light *SpotLight::createSh(uint32_t, const ispc::Instance *instance) const
   if (instance) {
     sh->pre.c0 = intensityDistribution.c0;
     if (instance->motionBlur) {
-      sh->super.sample = ispc::SpotLight_sample_instanced_addr();
-      sh->super.eval = ispc::SpotLight_eval_instanced_addr();
+#ifndef OSPRAY_TARGET_SYCL
+      sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+          ispc::SpotLight_sample_instanced_addr());
+      sh->super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+          ispc::SpotLight_eval_instanced_addr());
+#endif
     } else
       ispc::SpotLight_Transform(&sh->pre, instance->xfm, &sh->pre);
   } else {
@@ -47,7 +65,7 @@ ispc::Light *SpotLight::createSh(uint32_t, const ispc::Instance *instance) const
   sh->innerRadius = innerRadius;
   sh->areaPdf = uniformSampleRingPDF(radius, innerRadius);
 
-  return &sh->super;
+  return view;
 }
 
 std::string SpotLight::toString() const

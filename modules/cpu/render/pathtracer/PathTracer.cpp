@@ -2,99 +2,41 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PathTracer.h"
-// ospray
+#include "PathTracerData.h"
 #include "camera/Camera.h"
-#include "common/Data.h"
-#include "common/Instance.h"
 #include "common/World.h"
 #include "fb/FrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
 #include "render/Material.h"
+
+#ifdef OSPRAY_TARGET_SYCL
+#include <sycl/sycl.hpp>
+namespace ispc {
+SYCL_EXTERNAL void PathTracer_renderTask(Renderer *uniform _self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    World *uniform world,
+    void *uniform perFrameData,
+    const uint32 *uniform taskIDs,
+    const int taskIndex0);
+}
+#else
 // ispc exports
-#include "geometry/GeometricModel_ispc.h"
+#include "math/Distribution1D_ispc.h"
 #include "render/bsdfs/MicrofacetAlbedoTables_ispc.h"
 #include "render/pathtracer/PathTracer_ispc.h"
-// ispc shared
-#include "render/pathtracer/GeometryLightShared.h"
-// std
-#include <map>
+#endif
 
 namespace ospray {
+
+PathTracer::PathTracer(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
+{}
 
 std::string PathTracer::toString() const
 {
   return "ospray::PathTracer";
-}
-
-void PathTracer::generateGeometryLights(
-    const World &world, std::vector<ispc::Light *> &lightArray)
-{
-  if (!world.instances)
-    return;
-
-  for (auto &&instance : *world.instances) {
-    auto geometries = instance->group->geometricModels.ptr;
-
-    if (!geometries)
-      return;
-
-    for (auto &&model : *geometries) {
-      if (model->materialData) {
-        // check whether the model has any emissive materials
-        bool hasEmissive = false;
-        for (auto mat : model->ispcMaterialPtrs) {
-          if (mat && mat->isEmissive()) {
-            hasEmissive = true;
-            break;
-          }
-        }
-        // Materials from Renderer list
-        const auto numRendererMaterials = ispcMaterialPtrs.size();
-        if (numRendererMaterials > 0 && model->ispcMaterialPtrs.size() == 0)
-          for (auto matIdx : model->materialData->as<uint32_t>())
-            if (matIdx < numRendererMaterials
-                && ((ispc::Material *)ispcMaterialPtrs[matIdx])->isEmissive()) {
-              hasEmissive = true;
-              break;
-            }
-
-        if (hasEmissive) {
-          if (model->geometry().supportAreaLighting()) {
-            std::vector<int> primIDs(model->geometry().numPrimitives());
-            std::vector<float> distribution(model->geometry().numPrimitives());
-            float pdf = 0.f;
-            unsigned int numPrimIDs =
-                ispc::GeometricModel_gatherEmissivePrimIDs(model->getSh(),
-                    getSh(),
-                    instance->getSh(),
-                    primIDs.data(),
-                    distribution.data(),
-                    pdf);
-
-            // check whether the geometry has any emissive primitives
-            if (numPrimIDs) {
-              ispc::GeometryLight *light =
-                  StructSharedCreate<ispc::GeometryLight>();
-              light->create(instance->getSh(),
-                  model->getSh(),
-                  numPrimIDs,
-                  primIDs.data(),
-                  distribution.data(),
-                  pdf);
-              lightArray.push_back(&light->super);
-            }
-          } else {
-            postStatusMsg(OSP_LOG_WARNING)
-                << "#osp:pt Geometry " << model->toString()
-                << " does not implement area sampling! "
-                << "Cannot use importance sampling for that "
-                << "geometry with emissive material!";
-          }
-        }
-      }
-    }
-  }
 }
 
 void PathTracer::commit()
@@ -116,8 +58,6 @@ void PathTracer::commit()
 
   importanceSampleGeometryLights = getParam<bool>("geometryLights", true);
   getSh()->backgroundRefraction = getParam<bool>("backgroundRefraction", false);
-
-  ispc::precomputeMicrofacetAlbedoTables();
 }
 
 void *PathTracer::beginFrame(FrameBuffer *, World *world)
@@ -128,52 +68,16 @@ void *PathTracer::beginFrame(FrameBuffer *, World *world)
   const bool geometryLightListValid =
       importanceSampleGeometryLights == scannedGeometryLights;
 
-  if (world->pathtracerDataValid && geometryLightListValid)
+  if (world->pathtracerData.get() && geometryLightListValid)
     return nullptr;
 
-  std::vector<ispc::Light *> lightArray;
-  size_t geometryLights{0};
-
-  if (importanceSampleGeometryLights) {
-    generateGeometryLights(*world, lightArray);
-    geometryLights = lightArray.size();
-  }
-
-  if (world->lights) {
-    for (auto &&obj : *world->lights) {
-      for (uint32_t id = 0; id < obj->getShCount(); id++)
-        lightArray.push_back(obj->createSh(id));
-    }
-  }
-
-  // Iterate through all world instances
-  if (world->instances) {
-    for (auto &&inst : *world->instances) {
-      // Skip instances without lights
-      if (!inst->group->lights)
-        continue;
-
-      // Add instance lights to array
-      for (auto &&obj : *inst->group->lights) {
-        for (uint32_t id = 0; id < obj->getShCount(); id++)
-          lightArray.push_back(obj->createSh(id, inst->getSh()));
-      }
-    }
-  }
-
-  // Prepare light cumulative distribution function
-  std::vector<float> lightsCDF(lightArray.size(), 1.f);
-  ispc::Distribution1D_create(lightsCDF.size(), lightsCDF.data());
-
-  // Prepare pathtracer data structure
-  ispc::PathtracerData &pd = world->getSh()->pathtracerData;
-  pd.destroy();
-  pd.create(
-      lightArray.data(), lightArray.size(), geometryLights, lightsCDF.data());
-
-  world->pathtracerDataValid = true;
+  // Create PathTracerData object
+  std::unique_ptr<PathTracerData> pathtracerData =
+      rkcommon::make_unique<PathTracerData>(
+          *world, importanceSampleGeometryLights, *this);
+  world->getSh()->pathtracerData = pathtracerData->getSh();
+  world->pathtracerData = std::move(pathtracerData);
   scannedGeometryLights = importanceSampleGeometryLights;
-
   return nullptr;
 }
 
@@ -181,15 +85,47 @@ void PathTracer::renderTasks(FrameBuffer *fb,
     Camera *camera,
     World *world,
     void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs) const
+    const utility::ArrayView<uint32_t> &taskIDs
+#ifdef OSPRAY_TARGET_SYCL
+    ,
+    sycl::queue &syclQueue
+#endif
+) const
 {
-  ispc::PathTracer_renderTasks(getSh(),
-      fb->getSh(),
-      camera->getSh(),
-      world->getSh(),
+  auto *rendererSh = getSh();
+  auto *fbSh = fb->getSh();
+  auto *cameraSh = camera->getSh();
+  auto *worldSh = world->getSh();
+  const size_t numTasks = taskIDs.size();
+
+#ifdef OSPRAY_TARGET_SYCL
+  const uint32_t *taskIDsPtr = taskIDs.data();
+  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+    const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
+    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
+      if (taskIndex.get_global_id(0) < numTasks) {
+        ispc::PathTracer_renderTask(&rendererSh->super,
+            fbSh,
+            cameraSh,
+            worldSh,
+            perFrameData,
+            taskIDsPtr,
+            taskIndex.get_global_id(0));
+      }
+    });
+  });
+  event.wait_and_throw();
+  // For prints we have to flush the entire queue, because other stuff is queued
+  syclQueue.wait_and_throw();
+#else
+  ispc::PathTracer_renderTasks(&rendererSh->super,
+      fbSh,
+      cameraSh,
+      worldSh,
       perFrameData,
       taskIDs.data(),
-      taskIDs.size());
+      numTasks);
+#endif
 }
 
 } // namespace ospray

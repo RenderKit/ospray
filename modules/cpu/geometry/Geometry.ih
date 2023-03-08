@@ -5,10 +5,7 @@
 
 #include "../common/DifferentialGeometry.ih"
 #include "../common/Ray.ih"
-#include "math/AffineSpace.ih"
-
-// embree
-#include "embree3/rtcore.isph"
+#include "rkcommon/math/AffineSpace.ih"
 
 // c++ shared
 #include "GeometryShared.h"

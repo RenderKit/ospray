@@ -6,17 +6,25 @@
 
 namespace ospray {
 
-TaskError::TaskError(const vec2i &_numTasks)
-    : numTasks(_numTasks), taskErrorBuffer(numTasks.long_product())
+TaskError::TaskError(ispcrt::Device &device, const vec2i &_numTasks)
+    : numTasks(_numTasks)
 {
-  // maximum number of regions: all regions are of size 3 are split in half
-  errorRegion.reserve(divRoundUp(taskErrorBuffer.size() * 2, size_t(3)));
-  clear();
+  if (numTasks.long_product() > 0) {
+    taskErrorBuffer =
+        make_buffer_shared_unique<float>(device, numTasks.long_product());
+    // maximum number of regions: all regions are of size 3 are split in
+    // half
+    errorRegion.reserve(divRoundUp(taskErrorBuffer->size() * 2, size_t(3)));
+    clear();
+  }
 }
 
 void TaskError::clear()
 {
-  std::fill(taskErrorBuffer.begin(), taskErrorBuffer.end(), inf);
+  if (!taskErrorBuffer) {
+    return;
+  }
+  std::fill(taskErrorBuffer->begin(), taskErrorBuffer->end(), inf);
 
   errorRegion.clear();
   // initially create one region covering the complete tile/image
@@ -25,30 +33,30 @@ void TaskError::clear()
 
 float TaskError::operator[](const int id) const
 {
-  if (taskErrorBuffer.empty()) {
+  if (!taskErrorBuffer) {
     return inf;
   }
 
-  return taskErrorBuffer[id];
+  return (*taskErrorBuffer)[id];
 }
 
 void TaskError::update(const vec2i &task, const float err)
 {
-  if (!taskErrorBuffer.empty()) {
-    taskErrorBuffer[task.y * numTasks.x + task.x] = err;
+  if (taskErrorBuffer) {
+    (*taskErrorBuffer)[task.y * numTasks.x + task.x] = err;
   }
 }
 
 float TaskError::refine(const float errorThreshold)
 {
-  if (taskErrorBuffer.empty()) {
+  if (!taskErrorBuffer) {
     return inf;
   }
 
   float maxErr = 0.f;
   float sumActErr = 0.f;
   int activeTasks = 0;
-  for (const auto &err : taskErrorBuffer) {
+  for (const auto &err : *taskErrorBuffer) {
     maxErr = std::max(maxErr, err);
     if (err > errorThreshold) {
       sumActErr += err;
@@ -66,8 +74,8 @@ float TaskError::refine(const float errorThreshold)
     for (int y = region.lower.y; y < region.upper.y; y++)
       for (int x = region.lower.x; x < region.upper.x; x++) {
         int idx = y * numTasks.x + x;
-        err += taskErrorBuffer[idx];
-        maxErr = std::max(maxErr, taskErrorBuffer[idx]);
+        err += (*taskErrorBuffer)[idx];
+        maxErr = std::max(maxErr, (*taskErrorBuffer)[idx]);
       }
     if (maxErr > errorThreshold) {
       // set all tasks of this region to >errorThreshold to enforce their
@@ -76,7 +84,7 @@ float TaskError::refine(const float errorThreshold)
       for (int y = region.lower.y; y < region.upper.y; y++)
         for (int x = region.lower.x; x < region.upper.x; x++) {
           int idx = y * numTasks.x + x;
-          taskErrorBuffer[idx] = std::max(taskErrorBuffer[idx], minErr);
+          (*taskErrorBuffer)[idx] = std::max((*taskErrorBuffer)[idx], minErr);
         }
     }
     const vec2i size = region.size();
@@ -109,10 +117,7 @@ float TaskError::refine(const float errorThreshold)
 
 float *TaskError::errorBuffer()
 {
-  if (taskErrorBuffer.empty()) {
-    return nullptr;
-  }
-  return taskErrorBuffer.data();
+  return taskErrorBuffer ? taskErrorBuffer->data() : nullptr;
 }
 
 } // namespace ospray

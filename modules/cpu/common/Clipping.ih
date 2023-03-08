@@ -4,8 +4,10 @@
 #pragma once
 
 // ospray
-#include "../math/AffineSpace.ih"
+#include "rkcommon/math/AffineSpace.ih"
 #include "rkcommon/math/box.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // Array of all ray intervals across ray
 #define CLIPPING_INTERVALS_MAX_COUNT 64
@@ -50,3 +52,5 @@ inline bool overlapped(const range1f &a, const range1f &b)
 {
   return (a.upper > b.lower) && (a.lower < b.upper);
 }
+
+OSPRAY_END_ISPC_NAMESPACE

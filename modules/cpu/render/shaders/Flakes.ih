@@ -6,6 +6,8 @@
 #include "render/bsdfs/BeckmannDistribution.ih"
 #include "Noise.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct Flakes
 {
   float scale;
@@ -66,3 +68,5 @@ inline vec3f Flakes_eval(const Flakes &self, vec3f P, int &mask)
 
   return normalize(N);
 }
+
+OSPRAY_END_ISPC_NAMESPACE

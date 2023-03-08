@@ -7,19 +7,22 @@
 #include "render/bsdfs/MicrofacetConductor.ih"
 #include "texture/TextureParam.ih"
 
-#include "MetalShared.h"
+#include "Metal.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
-const varying BSDF *varying Metal_getBSDF(const uniform Material *uniform super,
+SYCL_EXTERNAL const varying BSDF *varying Metal_getBSDF(
+    const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium)
 {
   const uniform Metal *uniform self = (const uniform Metal *uniform)super;
-  varying linear3f *uniform frame = LinearSpace3f_create(ctx, frame(dg.Ns));
+  varying linear3f *uniform shadingframe =
+      LinearSpace3f_create(ctx, frame(dg.Ns));
 
   Fresnel *uniform fresnel;
   if (self->spectral)
@@ -30,9 +33,14 @@ const varying BSDF *varying Metal_getBSDF(const uniform Material *uniform super,
   const float roughness = self->roughness * get1f(self->roughnessMap, dg, 1.f);
 
   if (roughness == 0.0f)
-    return Conductor_create(ctx, frame, fresnel);
+    return Conductor_create(ctx, shadingframe, fresnel);
   else
-    return MicrofacetConductor_create(ctx, frame, fresnel, roughness, 0.f);
+    return MicrofacetConductor_create(ctx,
+        super->microfacetAlbedoTables,
+        shadingframe,
+        fresnel,
+        roughness,
+        0.f);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,5 +48,7 @@ const varying BSDF *varying Metal_getBSDF(const uniform Material *uniform super,
 
 export void *uniform Metal_getBSDF_addr()
 {
-  return Metal_getBSDF;
+  return (void *uniform)Metal_getBSDF;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

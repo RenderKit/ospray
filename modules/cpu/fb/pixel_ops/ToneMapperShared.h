@@ -21,7 +21,6 @@ struct LiveToneMapper
   // ACES color transform flag
   bool acesColor;
 };
-
 #ifdef __cplusplus
 }
 #endif

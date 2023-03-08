@@ -3,17 +3,23 @@
 
 #pragma once
 
-#include "embree3/rtcore.isph"
-#include "math/AffineSpace.ih"
+#include "Embree.h"
+#include "rkcommon/math/AffineSpace.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline uniform AffineSpace3f getInterpolatedTransform(
     const RTCGeometry geom, const uniform float time)
 {
   uniform AffineSpace3f xfm;
+#ifndef OSPRAY_TARGET_SYCL
+  // TODO: rtcGetGeometryTransform is not callable on the device yet
   rtcGetGeometryTransform(geom, time, RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR, &xfm);
+#endif
   return xfm;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 inline AffineSpace3f getInterpolatedTransform(
     const RTCGeometry geom, const float time)
 {
@@ -31,3 +37,5 @@ inline AffineSpace3f getInterpolatedTransform(
   */
   return xfm;
 }
+#endif
+OSPRAY_END_ISPC_NAMESPACE

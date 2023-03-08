@@ -4,8 +4,10 @@
 #pragma once
 
 #include <iterator>
-#include "Managed.h"
+#include <memory>
+#include "ISPCDeviceObject.h"
 #include "StructShared.h"
+#include "ispcrt.hpp"
 
 // including "Data_ispc.h" breaks app code using SDK headers
 #ifndef __ISPC_STRUCT_Data1D__
@@ -28,13 +30,14 @@ struct DataT;
 
 /*! \brief defines a data array (aka "buffer") type that contains
     'n' items of a given type */
-struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
+struct OSPRAY_SDK_INTERFACE Data : public ISPCDeviceObject
 {
-  Data(const void *sharedData,
+  Data(api::ISPCDevice &device,
+      const void *sharedData,
       OSPDataType,
       const vec3ul &numItems,
       const vec3l &byteStride);
-  Data(OSPDataType, const vec3ul &numItems);
+  Data(api::ISPCDevice &device, OSPDataType, const vec3ul &numItems);
 
   virtual ~Data() override;
   virtual std::string toString() const override;
@@ -46,10 +49,17 @@ struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   bool compact() const; // all strides are natural
   void copy(const Data &source, const vec3ul &destinationIndex);
 
+#ifdef OSPRAY_TARGET_SYCL
+  void commit() override;
+#endif
+
   bool isShared() const;
 
   template <typename T, int DIM = 1>
   const DataT<T, DIM> &as() const;
+
+  template <typename T, int DIM = 1>
+  DataT<T, DIM> &as();
 
   template <typename T, int DIM>
   typename std::enable_if<std::is_pointer<T>::value, bool>::type is() const;
@@ -58,7 +68,14 @@ struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   typename std::enable_if<!std::is_pointer<T>::value, bool>::type is() const;
 
  protected:
+  // The actual buffer storing the data
+  std::unique_ptr<BufferShared<char>> view;
   char *addr{nullptr};
+  // We need to track the appSharedPtr separately for the GPU backend, if we
+  // were passed a shared ptr to memory that was not in USM we made a copy that
+  // addr points to and we need to keep it in sync with the shared data from the
+  // app.
+  char *appSharedPtr{nullptr};
   bool shared;
 
  public:
@@ -242,6 +259,12 @@ const ispc::Data1D *ispc(Ref<const DataT<T, 1>> &dataRef)
   return dataRef ? &dataRef->ispc : &Data::emptyData1D;
 }
 
+template <typename T>
+ispc::Data1D *ispc(Ref<DataT<T, 1>> &dataRef)
+{
+  return dataRef ? &dataRef->ispc : &Data::emptyData1D;
+}
+
 inline size_t Data::size() const
 {
   return numItems.x * numItems.y * numItems.z;
@@ -296,7 +319,21 @@ inline const DataT<T, DIM> &Data::as() const
 }
 
 template <typename T, int DIM>
-inline const Ref<const DataT<T, DIM>> ManagedObject::getParamDataT(
+inline DataT<T, DIM> &Data::as()
+{
+  if (is<T, DIM>())
+    return (DataT<T, DIM> &)*this;
+  else {
+    std::stringstream ss;
+    ss << "Incompatible type or dimension for DataT; requested type[dim]: "
+       << stringFor(OSPTypeFor<T>::value) << "[" << DIM
+       << "], actual: " << stringFor(type) << "[" << dimensions << "].";
+    throw std::runtime_error(ss.str());
+  }
+}
+
+template <typename T, int DIM>
+inline const Ref<const DataT<T, DIM>> ISPCDeviceObject::getParamDataT(
     const char *name, bool required, bool promoteScalar)
 {
   Data *data = getParam<Data *>(name);
@@ -309,7 +346,7 @@ inline const Ref<const DataT<T, DIM>> ManagedObject::getParamDataT(
     auto item = getOptParam<T>(name);
     if (item) {
       // create data array and its reference object
-      data = new Data(OSPTypeFor<T>::value, vec3ul(1));
+      data = new Data(getISPCDevice(), OSPTypeFor<T>::value, vec3ul(1));
       Ref<const DataT<T, DIM>> refDataT = &data->as<T, DIM>();
 
       // 'data' reference counter equals to 2 now,

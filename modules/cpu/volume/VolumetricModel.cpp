@@ -1,5 +1,8 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
+
+#include "openvkl/openvkl.h"
 
 // ospray
 #include "VolumetricModel.h"
@@ -7,7 +10,13 @@
 
 namespace ospray {
 
-VolumetricModel::VolumetricModel(Volume *_volume) : volumeAPI(_volume)
+VolumetricModel::VolumetricModel(api::ISPCDevice &device, Volume *_volume)
+    : AddStructShared(device.getIspcrtDevice(), device),
+      volumeAPI(_volume)
+#if OPENVKL_VERSION_MAJOR == 1
+      ,
+      vklIntervalContext(nullptr)
+#endif
 {
   managedObjectType = OSP_VOLUMETRIC_MODEL;
 }
@@ -39,7 +48,6 @@ void VolumetricModel::commit()
   if (volume->vklVolume) {
     if (vklIntervalContext) {
       vklRelease(vklIntervalContext);
-      vklIntervalContext = nullptr;
     }
 
     vklIntervalContext = vklNewIntervalIteratorContext(volume->vklSampler);
@@ -52,8 +60,10 @@ void VolumetricModel::commit()
       // quick out during volume iteration
       valueRanges.push_back(range1f(neg_inf, neg_inf));
     }
-    VKLData valueRangeData = vklNewData(
-        volume->vklDevice, valueRanges.size(), VKL_BOX1F, valueRanges.data());
+    VKLData valueRangeData = vklNewData(getISPCDevice().getVklDevice(),
+        valueRanges.size(),
+        VKL_BOX1F,
+        valueRanges.data());
     vklSetData(vklIntervalContext, "valueRanges", valueRangeData);
     vklRelease(valueRangeData);
     vklCommit(vklIntervalContext);
@@ -93,3 +103,4 @@ Ref<Volume> VolumetricModel::getVolume() const
 OSPTYPEFOR_DEFINITION(VolumetricModel *);
 
 } // namespace ospray
+#endif

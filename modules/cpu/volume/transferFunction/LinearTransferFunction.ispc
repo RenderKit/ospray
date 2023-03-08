@@ -1,11 +1,15 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "LinearTransferFunction.ih"
 #include "common/Data.ih"
 // c++ shared
 #include "LinearTransferFunctionShared.h"
 
-vec4f LinearTransferFunction_get(const void *uniform _self, float value)
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL vec4f LinearTransferFunction_get(
+    const TransferFunction *uniform _self, float value)
 {
   const LinearTransferFunction *uniform self =
       (const LinearTransferFunction *uniform)_self;
@@ -38,8 +42,8 @@ vec4f LinearTransferFunction_get(const void *uniform _self, float value)
   return make_vec4f(col, opacity);
 }
 
-float LinearTransferFunction_getMaxOpacity(
-    const void *uniform _self, const range1f &valueRange)
+SYCL_EXTERNAL float LinearTransferFunction_getMaxOpacity(
+    const TransferFunction *uniform _self, const range1f &valueRange)
 {
   uniform LinearTransferFunction *uniform self =
       (uniform LinearTransferFunction * uniform) _self;
@@ -55,12 +59,4 @@ float LinearTransferFunction_getMaxOpacity(
   return self->maxOpacityInRange[min(i, maxDim)][min(j, maxDim)];
 }
 
-export void *uniform LinearTransferFunction_get_addr()
-{
-  return LinearTransferFunction_get;
-}
-
-export void *uniform LinearTransferFunction_getMaxOpacity_addr()
-{
-  return LinearTransferFunction_getMaxOpacity;
-}
+OSPRAY_END_ISPC_NAMESPACE

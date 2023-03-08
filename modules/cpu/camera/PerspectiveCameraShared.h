@@ -43,7 +43,9 @@ struct PerspectiveCamera
         scaledAperture(0.f),
         aspect(1.f),
         stereoMode(OSP_STEREO_NONE)
-  {}
+  {
+    super.type = CAMERA_TYPE_PERSPECTIVE;
+  }
 };
 } // namespace ispc
 #else

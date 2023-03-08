@@ -5,7 +5,14 @@
 
 #include <memory>
 #include <vector>
+#include "common/OSPCommon.h"
+#include "common/StructShared.h"
 #include "fb/TileShared.h"
+#include "rkcommon/math/range.h"
+#include "rkcommon/math/vec.h"
+
+using namespace ospray;
+using namespace rkcommon::math;
 
 namespace ospray {
 

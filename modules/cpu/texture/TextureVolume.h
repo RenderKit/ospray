@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
@@ -16,6 +17,10 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE TextureVolume
     : public AddStructShared<Texture, ispc::TextureVolume>
 {
+  TextureVolume(api::ISPCDevice &device)
+      : AddStructShared(device.getIspcrtDevice(), device)
+  {}
+
   virtual std::string toString() const override;
 
   virtual void commit() override;
@@ -29,3 +34,4 @@ struct OSPRAY_SDK_INTERFACE TextureVolume
 };
 
 } // namespace ospray
+#endif

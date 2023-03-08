@@ -5,6 +5,8 @@
 
 #include "BSDF.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct Velvety
 {
   BSDF super;
@@ -25,7 +27,8 @@ inline BSDF_EvalRes Velvety_eval(
   const float sinThetaO = sqrt(1.0f - cosThetaO * cosThetaO);
   const float horizonScatter = pow(sinThetaO, self->f);
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
-  res.value = (horizonScatter * cosThetaI * one_over_pi) * self->super.albedo;
+  res.value =
+      (horizonScatter * cosThetaI * (float)one_over_pi) * self->super.albedo;
   return res;
 }
 
@@ -54,8 +57,14 @@ inline void Velvety_Constructor(varying Velvety *uniform self,
   BSDF_Constructor(&self->super,
       R,
       BSDF_DIFFUSE_REFLECTION,
+      BSDF_TYPE_VELVETY,
+#ifdef OSPRAY_TARGET_SYCL
+      NULL,
+      NULL,
+#else
       Velvety_eval,
       Velvety_sample,
+#endif
       frame);
 
   self->f = f;
@@ -71,3 +80,5 @@ inline varying BSDF *uniform Velvety_create(uniform ShadingContext *uniform ctx,
   Velvety_Constructor(self, frame, R, f);
   return &self->super;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

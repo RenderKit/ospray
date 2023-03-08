@@ -3,22 +3,28 @@
 
 // ospray
 #include "Group.h"
+#include "ISPCDevice.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/VolumetricModel.h"
+#endif
 
 namespace ospray {
 
 // Embree helper functions //////////////////////////////////////////////////
 
 template <class MODEL>
-inline void createEmbreeScene(
-    RTCScene &scene, const DataT<MODEL *> &objects, int embreeFlags)
+inline void createEmbreeScene(RTCScene &scene,
+    const DataT<MODEL *> &objects,
+    const int embreeFlags,
+    const RTCBuildQuality buildQuality)
 {
   for (auto &&obj : objects)
     rtcAttachGeometry(scene, obj->embreeGeometryHandle());
 
   rtcSetSceneFlags(scene, static_cast<RTCSceneFlags>(embreeFlags));
+  rtcSetSceneBuildQuality(scene, buildQuality);
 }
 
 static void freeAndNullifyEmbreeScene(RTCScene &scene)
@@ -31,7 +37,8 @@ static void freeAndNullifyEmbreeScene(RTCScene &scene)
 
 // Group definitions ////////////////////////////////////////////////////////
 
-Group::Group()
+Group::Group(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_GROUP;
 }
@@ -39,14 +46,15 @@ Group::Group()
 Group::~Group()
 {
   freeAndNullifyEmbreeScene(sceneGeometries);
+#ifdef OSPRAY_ENABLE_VOLUMES
   freeAndNullifyEmbreeScene(sceneVolumes);
+#endif
   freeAndNullifyEmbreeScene(sceneClippers);
 
-  BufferSharedDelete(getSh()->geometricModels);
-  BufferSharedDelete(getSh()->volumetricModels);
-  BufferSharedDelete(getSh()->clipModels);
   getSh()->geometricModels = nullptr;
+#ifdef OSPRAY_ENABLE_VOLUMES
   getSh()->volumetricModels = nullptr;
+#endif
   getSh()->clipModels = nullptr;
 }
 
@@ -58,75 +66,101 @@ std::string Group::toString() const
 void Group::commit()
 {
   geometricModels = getParamDataT<GeometricModel *>("geometry");
+#ifdef OSPRAY_ENABLE_VOLUMES
   volumetricModels = getParamDataT<VolumetricModel *>("volume");
+#endif
   clipModels = getParamDataT<GeometricModel *>("clippingGeometry");
   lights = getParamDataT<Light *>("light");
 
   size_t numGeometries = geometricModels ? geometricModels->size() : 0;
+#ifdef OSPRAY_ENABLE_VOLUMES
   size_t numVolumes = volumetricModels ? volumetricModels->size() : 0;
+#endif
   size_t numClippers = clipModels ? clipModels->size() : 0;
   size_t numLights = lights ? lights->size() : 0;
 
   postStatusMsg(OSP_LOG_DEBUG)
       << "=======================================================\n"
       << "Finalizing instance, which has " << numGeometries << " geometries, "
-      << numVolumes << " volumes, " << numClippers
-      << " clipping geometries and " << numLights << " lights";
+#ifdef OSPRAY_ENABLE_VOLUMES
+      << numVolumes << " volumes, "
+#endif
+      << numClippers << " clipping geometries and " << numLights << " lights";
 
   int sceneFlags = RTC_SCENE_FLAG_NONE;
-  sceneFlags |=
-      (getParam<bool>("dynamicScene", false) ? RTC_SCENE_FLAG_DYNAMIC : 0);
+  RTCBuildQuality buildQuality = RTC_BUILD_QUALITY_HIGH;
+  if (getParam<bool>("dynamicScene", false)) {
+    sceneFlags |= RTC_SCENE_FLAG_DYNAMIC;
+    buildQuality = RTC_BUILD_QUALITY_LOW;
+  }
   sceneFlags |=
       (getParam<bool>("compactMode", false) ? RTC_SCENE_FLAG_COMPACT : 0);
   sceneFlags |=
       (getParam<bool>("robustMode", false) ? RTC_SCENE_FLAG_ROBUST : 0);
 
   freeAndNullifyEmbreeScene(sceneGeometries);
+#ifdef OSPRAY_ENABLE_VOLUMES
   freeAndNullifyEmbreeScene(sceneVolumes);
+#endif
   freeAndNullifyEmbreeScene(sceneClippers);
 
-  BufferSharedDelete(getSh()->geometricModels);
-  BufferSharedDelete(getSh()->volumetricModels);
-  BufferSharedDelete(getSh()->clipModels);
+  geometricModelsArray = nullptr;
+#ifdef OSPRAY_ENABLE_VOLUMES
+  volumetricModelsArray = nullptr;
+#endif
+  clipModelsArray = nullptr;
+
   getSh()->geometricModels = nullptr;
+#ifdef OSPRAY_ENABLE_VOLUMES
   getSh()->volumetricModels = nullptr;
+#endif
   getSh()->clipModels = nullptr;
 
+  RTCDevice embreeDevice = getISPCDevice().getEmbreeDevice();
   if (!embreeDevice) {
     throw std::runtime_error("invalid Embree device");
   }
 
   if (numGeometries > 0) {
     sceneGeometries = rtcNewScene(embreeDevice);
+    createEmbreeScene(
+        sceneGeometries, *geometricModels, sceneFlags, buildQuality);
 
-    createEmbreeScene(sceneGeometries, *geometricModels, sceneFlags);
-    getSh()->geometricModels =
-        BufferSharedCreate<ispc::GeometricModel *>(numGeometries,
-            createArrayOfSh<ispc::GeometricModel>(*geometricModels).data());
+    geometricModelsArray = make_buffer_shared_unique<ispc::GeometricModel *>(
+        getISPCDevice().getIspcrtDevice(),
+        createArrayOfSh<ispc::GeometricModel>(*geometricModels));
+    getSh()->geometricModels = geometricModelsArray->sharedPtr();
 
     rtcCommitScene(sceneGeometries);
   }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (numVolumes > 0) {
     sceneVolumes = rtcNewScene(embreeDevice);
+    createEmbreeScene(
+        sceneVolumes, *volumetricModels, sceneFlags, buildQuality);
 
-    createEmbreeScene(sceneVolumes, *volumetricModels, sceneFlags);
-    getSh()->volumetricModels =
-        BufferSharedCreate<ispc::VolumetricModel *>(numVolumes,
-            createArrayOfSh<ispc::VolumetricModel>(*volumetricModels).data());
+    volumetricModelsArray = make_buffer_shared_unique<ispc::VolumetricModel *>(
+        getISPCDevice().getIspcrtDevice(),
+        createArrayOfSh<ispc::VolumetricModel>(*volumetricModels));
+    getSh()->volumetricModels = volumetricModelsArray->sharedPtr();
 
     rtcCommitScene(sceneVolumes);
   }
+#endif
 
   if (numClippers > 0) {
     sceneClippers = rtcNewScene(embreeDevice);
-
     createEmbreeScene(sceneClippers,
         *clipModels,
-        sceneFlags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION
-            | RTC_SCENE_FLAG_ROBUST);
-    getSh()->clipModels = BufferSharedCreate<ispc::GeometricModel *>(
-        numClippers, createArrayOfSh<ispc::GeometricModel>(*clipModels).data());
+        sceneFlags | RTC_SCENE_FLAG_FILTER_FUNCTION_IN_ARGUMENTS
+            | RTC_SCENE_FLAG_ROBUST,
+        buildQuality);
+
+    clipModelsArray = make_buffer_shared_unique<ispc::GeometricModel *>(
+        getISPCDevice().getIspcrtDevice(),
+        createArrayOfSh<ispc::GeometricModel>(*clipModels));
+    getSh()->clipModels = clipModelsArray->sharedPtr();
 
     numInvertedClippers = 0;
     for (auto &&obj : *clipModels)
@@ -136,13 +170,18 @@ void Group::commit()
   }
 
   getSh()->numGeometricModels = numGeometries;
+#ifdef OSPRAY_ENABLE_VOLUMES
   getSh()->numVolumetricModels = numVolumes;
+#endif
   getSh()->numClipModels = numClippers;
 
   // Create empty scene for lights-only group,
   // it is needed to have rtcGeometry created in Instance object
   // which in turn is needed for motion blur matrices interpolation
-  if ((numLights > 0) && (numGeometries == 0) && (numVolumes == 0)
+  if ((numLights > 0) && (numGeometries == 0)
+#ifdef OSPRAY_ENABLE_VOLUMES
+      && (numVolumes == 0)
+#endif
       && (numClippers == 0)) {
     sceneGeometries = rtcNewScene(embreeDevice);
     rtcCommitScene(sceneGeometries);
@@ -159,17 +198,14 @@ box3f Group::getBounds() const
     sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
   }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (sceneVolumes) {
     rtcGetSceneBounds(sceneVolumes, (RTCBounds *)&bounds);
     sceneBounds.extend(box3f(vec3f(&bounds.lower[0]), vec3f(&bounds.upper[0])));
   }
+#endif
 
   return sceneBounds;
-}
-
-void Group::setDevice(RTCDevice device)
-{
-  embreeDevice = device;
 }
 
 OSPTYPEFOR_DEFINITION(Group *);

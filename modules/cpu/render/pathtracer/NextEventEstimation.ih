@@ -5,10 +5,14 @@
 
 #include "rkcommon/math/vec.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct PathContext;
 struct PathState;
 struct PathVertex;
 
-vec3f nextEventEstimation(const PathContext &pathContext,
+SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const PathState &pathState,
     PathVertex &pathVertex);
+
+OSPRAY_END_ISPC_NAMESPACE

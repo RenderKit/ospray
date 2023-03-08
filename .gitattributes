@@ -1,1 +1,2 @@
 *.rc	text working-tree-encoding=UTF-16LE-BOM eol=CRLF
+glfw.patch eol=lf

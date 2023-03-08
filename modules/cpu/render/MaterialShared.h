@@ -5,9 +5,13 @@
 
 #define EPS 1e-5f
 
+#include "bsdfs/MicrofacetAlbedoTablesShared.h"
+
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
+#endif // __cplusplus
+
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *Material_GetBSDFFunc;
 typedef void *Material_GetTransparencyFunc;
 typedef void *Material_SelectNextMediumFunc;
@@ -44,7 +48,7 @@ typedef void (*Material_SelectNextMediumFunc)(
     const uniform Material *uniform self,
     const DifferentialGeometry &dg,
     Medium &currentMedium);
-#endif // __cplusplus
+#endif
 
 enum MaterialType
 {
@@ -59,7 +63,8 @@ enum MaterialType
   MATERIAL_TYPE_PLASTIC = 8,
   MATERIAL_TYPE_PRINCIPLED = 9,
   MATERIAL_TYPE_THINGLASS = 10,
-  MATERIAL_TYPE_VELVET = 11
+  MATERIAL_TYPE_VELVET = 11,
+  MATERIAL_TYPE_UNKNOWN = 12
 };
 
 // ISPC-side abstraction for a material.
@@ -71,19 +76,18 @@ struct Material
   Material_SelectNextMediumFunc selectNextMedium;
   vec3f emission; // simple constant (spatially and angular) emission, returns
                   // radiance; TODO SV-EDFs
+
+  MicrofacetAlbedoTables *microfacetAlbedoTables;
+
 #ifdef __cplusplus
   Material(const vec3f &emission = vec3f(0.f))
-      : type(MATERIAL_TYPE_OBJ),
+      : type(MATERIAL_TYPE_UNKNOWN),
         getBSDF(nullptr),
         getTransparency(nullptr),
         selectNextMedium(nullptr),
-        emission(emission)
+        emission(emission),
+        microfacetAlbedoTables(nullptr)
   {}
-
-  bool isEmissive()
-  {
-    return reduce_max(emission) > 0.f;
-  }
 };
 } // namespace ispc
 #else

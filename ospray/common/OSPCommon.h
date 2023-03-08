@@ -52,7 +52,7 @@ typedef int ssize_t;
 #define OSPRAY_CORE_INTERFACE OSPRAY_INTERFACE
 
 #ifdef _WIN32
-#ifdef ospray_module_cpu_EXPORTS
+#if defined(ospray_module_cpu_EXPORTS) || defined(ospray_module_gpu_EXPORTS)
 #define OSPRAY_MODULE_ISPC_INTERFACE __declspec(dllexport)
 #else
 #define OSPRAY_MODULE_ISPC_INTERFACE __declspec(dllimport)
@@ -85,18 +85,6 @@ using int8 = std::int8_t;
 using uint8 = std::uint8_t;
 
 using index_t = std::int64_t;
-
-template <typename T>
-using FactoryFcn = T *(*)();
-
-template <typename T>
-using FactoryMap = std::map<std::string, FactoryFcn<T>>;
-
-template <typename B, typename T>
-inline B *allocate_object()
-{
-  return new T;
-}
 
 // Argument parsing functions
 std::string getArgString(const std::string &s);

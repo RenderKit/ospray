@@ -10,7 +10,7 @@ namespace pathtracer {
 
 struct Luminous : public AddStructShared<Material, ispc::Luminous>
 {
-  Luminous();
+  Luminous(api::ISPCDevice &device);
 
   virtual std::string toString() const override;
 

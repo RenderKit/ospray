@@ -4,7 +4,7 @@
 // ospray
 #include "common/Ray.ih"
 #include "geometry/Geometry.ih"
-#include "math/LinearSpace.ih"
+#include "rkcommon/math/LinearSpace.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 // c++ shared
@@ -221,16 +221,9 @@ void BilinearPatches_intersect_kernel(
   }
 }
 
-export void BilinearPatches_intersect(
-    const struct RTCIntersectFunctionNArguments *uniform args)
+export void *uniform BilinearPatches_intersect_addr()
 {
-  BilinearPatches_intersect_kernel(args, false);
-}
-
-export void BilinearPatches_occluded(
-    const struct RTCIntersectFunctionNArguments *uniform args)
-{
-  BilinearPatches_intersect_kernel(args, true);
+  return BilinearPatches_intersect_kernel;
 }
 
 export void *uniform BilinearPatches_postIntersect_addr()

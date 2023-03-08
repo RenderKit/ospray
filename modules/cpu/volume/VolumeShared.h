@@ -1,10 +1,10 @@
 // Copyright 2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 
@@ -23,9 +23,11 @@ struct Volume
   box3f boundingBox;
 
 #ifdef __cplusplus
-  Volume() : vklVolume(nullptr), vklSampler(nullptr), boundingBox(0.f, 0.f) {}
+  Volume() : vklVolume(VKLVolume()), vklSampler(VKLSampler()), boundingBox(0.f)
+  {}
 };
 } // namespace ispc
 #else
 };
 #endif // __cplusplus
+#endif

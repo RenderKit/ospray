@@ -1,0 +1,206 @@
+## Copyright 2009 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: Release
+
+on:
+  push:
+    branches:
+      - devel
+      - '**release**'
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+### DOC JOBS ###
+
+  pdf:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with: 
+      image: ospray/docker-images:docu
+      submodules: true
+      cmd: |
+        cd doc
+        make pdf
+        make checklinks
+      artifact-out: pdf
+      artifact-path: readme.pdf
+
+### BUILD JOBS ###
+
+  release-linux:
+    needs: pdf
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      image: centos:7
+      cmd: |
+        module load cmake/3.15.2
+        module load intel/2023.0
+        module load mpich/3.2
+        export CC=icx
+        export CXX=icpx
+        export CXXFLAGS="-fhonor-infinities -fhonor-nans"
+        export CFLAGS=$CXXFLAGS
+        export LDFLAGS="-static-intel"
+        scripts/release/linux.sh
+      artifact-in: pdf
+      artifact-out: release-linux
+      artifact-path: build_release/*.gz
+
+  release-osx-clang:
+    needs: pdf
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      runs-on: '[ "macOS", "sign", "x86_64" ]'
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        scripts/release/macosx.sh
+        $SIGN_FILE_MAC -o runtime -e scripts/release/ospray.entitlements build_release/ospray-*pkg
+        scripts/release/macosx_notarization.sh build_release/ospray-*.pkg
+      artifact-in: pdf
+      artifact-out: release-osx-clang
+      artifact-path: "build_release/*.zip build_release/*.pkg"
+
+  release-windows:
+    needs: pdf
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      runs-on: '["Windows", "build", "mpi"]'
+      cmd: |
+        scripts\release\win.ps1 "Visual Studio 15 2017 Win64"
+        & $env:SIGN_FILE_WINDOWS ospray*.msi
+      artifact-in: pdf
+      artifact-out: release-windows
+      artifact-path: "build_release/ospray*.zip build_release/ospray*.msi"
+
+### SCAN JOBS ###
+
+  static-analysis:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
+    with:
+      project: ospray
+      prebuild: |
+        module load cmake
+        module load intel/2021.2
+        echo "Configure dependencies"
+        cmake -L -S scripts/superbuild -B build_deps -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_ISA_AVX512=OFF -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=OFF -DBUILD_OSPRAY_MODULE_MPI=ON -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF
+        echo "Build dependencies"
+        cmake --build build_deps
+        INSTALL_DIR=$(pwd)/build_deps/install
+        export CMAKE_PREFIX_PATH=${INSTALL_DIR}
+        echo "Configure OSPRay"
+        cmake -L -S . -B build -DISPC_EXECUTABLE=$INSTALL_DIR/bin/ispc -DTBB_ROOT=$INSTALL_DIR -DOSPRAY_MODULE_DENOISER=ON -DOSPRAY_MODULE_BILINEAR_PATCH=ON -DOSPRAY_MODULE_MPI=ON
+        echo "Done: Configure OSPRay"
+      build: cmake --build build
+
+  binary-analysis:
+    needs:
+      - release-linux
+      - release-osx-clang
+      - release-windows
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/binary_analysis.yml@main
+    with:
+      project: ospray
+      artifact-in-linux: release-linux
+      artifact-in-macos: release-osx-clang
+      artifact-in-windows: release-windows
+      path: build_release/ospray-*
+
+  antivirus-scan:
+    needs:
+      - release-linux
+      - release-osx-clang
+      - release-windows
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/antivirus_scan.yml@main
+    with:
+      project: ospray
+      artifact-in-linux: release-linux
+      artifact-in-macos: release-osx-clang
+      artifact-in-windows: release-windows
+      path: build_release/ospray-*
+
+### TEST JOBS ###
+
+  test-release-linux:
+    needs: release-linux
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: centos:7
+      cmd: |
+        module load cmake/3.15.2
+        module load mpich/3.2
+        tar -xzf build_release/*.gz
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX TEST_MPI
+      artifact-in: release-linux
+
+  test-release-osx:
+    needs: release-osx-clang
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      runs-on: '[ "macOS", "x86_64", "build", "avx2" ]'
+      cmd: |
+        unzip build_release/*.zip
+        export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+        scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX2
+      artifact-in: release-osx-clang
+  
+# TODO
+# test-release-osx-avx512:
+#   needs: release-osx-clang
+#   uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+#   with:
+#     runs-on: '[ "macOS", "x86_64", "build" ]'
+#     cmd: |
+#       unzip build_release/*.zip
+#       export PATH=$GITHUB_WORKSPACE/$(ls -d1 ./ospray-*/bin):$PATH
+#       scripts/tests/run_tests.sh $GITHUB_WORKSPACE AVX512SKX
+#     artifact-in: release-osx-clang
+  
+  test-release-osx-signing:
+    needs: release-osx-clang
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      runs-on: '[ "macOS", "sign", "x86_64" ]'
+      cmd: |
+        unzip build_release/*.zip
+        $SIGN_FILE_MAC -t ./ospray-*/bin/* ./ospray-*/lib/*.dylib ./build_release/*.pkg
+      artifact-in: release-osx-clang
+
+  test-release-windows-zip:
+    needs: release-windows
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      runs-on: '["Windows", "avx512", "mpi"]'
+      cmd: |
+        Expand-Archive build_release/*.zip -DestinationPath .
+        $env:Path += ";" + (Get-ChildItem ospray-*\bin | Select-Object -Expand FullName)
+        scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
+        & $env:SIGN_FILE_WINDOWS -t (Get-ChildItem ospray-*\bin\* | Select-Object -Expand FullName)
+      artifact-in: release-windows
+
+  test-release-windows-msi:
+    needs: release-windows
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      runs-on: '["Windows", "avx512", "mpi"]'
+      cmd: |
+        msiexec.exe /a (Get-ChildItem build_release/*.msi | Select-Object -Expand FullName) /qn TARGETDIR=$env:GITHUB_WORKSPACE
+        $env:Path += ";$env:GITHUB_WORKSPACE\Intel\OSPRay v2\bin"
+        scripts\tests\run_tests.ps1 $env:GITHUB_WORKSPACE AVX512SKX TEST_MPI
+        & $env:SIGN_FILE_WINDOWS -t $env:GITHUB_WORKSPACE\build_release\*.msi (Get-ChildItem "$env:GITHUB_WORKSPACE\Intel\OSPRay v2\bin\*" | Select-Object -Expand FullName)
+      artifact-in: release-windows

@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "LightShared.h"
 #include "IntensityDistributionShared.h"
+#include "LightShared.h"
 
 #ifdef __cplusplus
 namespace ispc {
@@ -41,7 +41,10 @@ struct QuadLight
   QuadLightDynamic pre; // un- or pre-transformed state
 
 #ifdef __cplusplus
-  QuadLight() : radiance(0.f) {}
+  QuadLight() : radiance(0.f)
+  {
+    super.type = LIGHT_TYPE_QUAD;
+  }
 };
 } // namespace ispc
 #else

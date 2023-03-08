@@ -8,6 +8,8 @@
 #include "GGXDistribution.ih"
 #include "MicrofacetAlbedoTables.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Microfacet conductor BRDF with the Smith microsurface model and approximate
 // multiple scattering. [Kulla and Conty, 2017, "Revisiting Physically Based
 // Shading at Imageworks"] [Jakob et al., 2014, "A Comprehensive Framework for
@@ -19,6 +21,7 @@ struct MicrofacetConductor
   Fresnel *uniform fresnel;
   GGXDistribution microfacet;
   float roughness;
+  const MicrofacetAlbedoTables *uniform microfacetAlbedoTables;
 
   // Energy compensation [Kulla and Conty, 2017]
   float Eavg;
@@ -48,16 +51,19 @@ inline BSDF_EvalRes MicrofacetConductor_eval(
   vec3f wi0 = toLocal * wi;
   vec3f wh0 = toLocal * wh;
 
-  vec3f F = self->fresnel->eval(self->fresnel, cosThetaOH);
+  vec3f F = Fresnel_dispatch_eval(self->fresnel, cosThetaOH);
   float whPdf;
   float D = evalVisible(self->microfacet, wh0, wo0, cosThetaOH, whPdf);
   float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
   // Energy compensation
-  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
-  float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
+  float Eo = MicrofacetAlbedoTable_eval(
+      self->microfacetAlbedoTables, cosThetaO, self->roughness);
+  float Ei = MicrofacetAlbedoTable_eval(
+      self->microfacetAlbedoTables, cosThetaI, self->roughness);
   vec3f fms = self->fmsScale
-      * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+      * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - self->Eavg))
+          * cosThetaI);
 
   res.pdf = whPdf * rcp(4.f * abs(cosThetaOH));
   res.value = F * (D * G * rcp(4.f * cosThetaO)) + fms;
@@ -94,14 +100,17 @@ inline BSDF_SampleRes MicrofacetConductor_sample(
   float cosThetaIH = dot(res.wi, wh);
   vec3f wi0 = toLocal * res.wi;
 
-  vec3f F = self->fresnel->eval(self->fresnel, cosThetaOH);
+  vec3f F = Fresnel_dispatch_eval(self->fresnel, cosThetaOH);
   float G = evalG2(self->microfacet, wo0, wi0, cosThetaOH, cosThetaIH);
 
   // Energy compensation
-  float Eo = MicrofacetAlbedoTable_eval(cosThetaO, self->roughness);
-  float Ei = MicrofacetAlbedoTable_eval(cosThetaI, self->roughness);
+  float Eo = MicrofacetAlbedoTable_eval(
+      self->microfacetAlbedoTables, cosThetaO, self->roughness);
+  float Ei = MicrofacetAlbedoTable_eval(
+      self->microfacetAlbedoTables, cosThetaI, self->roughness);
   vec3f fms = self->fmsScale
-      * ((1.f - Eo) * (1.f - Ei) * rcp(pi * (1.f - self->Eavg)) * cosThetaI);
+      * ((1.f - Eo) * (1.f - Ei) * rcp((float)pi * (1.f - self->Eavg))
+          * cosThetaI);
 
   res.type = BSDF_GLOSSY_REFLECTION;
   res.pdf = whPdf * rcp(4.f * abs(cosThetaOH));
@@ -113,31 +122,40 @@ inline BSDF_SampleRes MicrofacetConductor_sample(
 
 inline void MicrofacetConductor_Constructor(
     varying MicrofacetConductor *uniform self,
+    MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
     const varying linear3f *uniform frame,
     Fresnel *uniform fresnel,
     float roughness,
     float anisotropy)
 {
   // Energy compensation
-  self->Eavg = MicrofacetAlbedoTable_evalAvg(roughness);
-  vec3f Favg = fresnel->evalAvg(fresnel);
+  self->Eavg = MicrofacetAlbedoTable_evalAvg(microfacetAlbedoTables, roughness);
+  vec3f Favg = Fresnel_dispatch_evalAvg(fresnel);
   self->fmsScale = sqr(Favg) * self->Eavg
       / (1.f - Favg * (1.f - self->Eavg)); // Stephen Hill's tweak
 
   BSDF_Constructor(&self->super,
       Favg * self->Eavg, // TODO better estimate
       BSDF_GLOSSY_REFLECTION,
+      BSDF_TYPE_MICROFACET_CONDUCTOR,
+#ifdef OSPRAY_TARGET_SYCL
+      NULL,
+      NULL,
+#else
       MicrofacetConductor_eval,
       MicrofacetConductor_sample,
+#endif
       frame);
   self->fresnel = fresnel;
   self->microfacet =
       make_GGXDistribution(roughnessToAlpha(roughness, anisotropy));
   self->roughness = roughness;
+  self->microfacetAlbedoTables = microfacetAlbedoTables;
 }
 
 inline varying BSDF *uniform MicrofacetConductor_create(
     uniform ShadingContext *uniform ctx,
+    MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
     const varying linear3f *uniform frame,
     Fresnel *uniform fresnel,
     float roughness,
@@ -146,6 +164,10 @@ inline varying BSDF *uniform MicrofacetConductor_create(
   varying MicrofacetConductor *uniform self =
       (varying MicrofacetConductor * uniform)
           ShadingContext_alloc(ctx, sizeof(MicrofacetConductor));
-  MicrofacetConductor_Constructor(self, frame, fresnel, roughness, anisotropy);
+  MicrofacetConductor_Constructor(
+      self, microfacetAlbedoTables, frame, fresnel, roughness, anisotropy);
   return &self->super;
 }
+
+OSPRAY_END_ISPC_NAMESPACE
+

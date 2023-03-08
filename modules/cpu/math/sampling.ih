@@ -12,6 +12,8 @@
 
 #include "rkcommon/math/vec.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline vec3f cartesian(
     const float phi, const float sinTheta, const float cosTheta)
 {
@@ -30,7 +32,7 @@ inline vec3f cartesian(const float phi, const float cosTheta)
 
 inline vec3f uniformSampleHemisphere(const vec2f s)
 {
-  const float phi = two_pi * s.x;
+  const float phi = (float)two_pi * s.x;
   const float cosTheta = s.y;
   const float sinTheta = cos2sin(s.y);
   return cartesian(phi, sinTheta, cosTheta);
@@ -46,7 +48,7 @@ inline float uniformSampleHemispherePDF()
 
 inline vec3f cosineSampleHemisphere(const vec2f s)
 {
-  const float phi = two_pi * s.x;
+  const float phi = (float)two_pi * s.x;
   const float cosTheta = sqrt(s.y);
   const float sinTheta = sqrt(1.0f - s.y);
   return cartesian(phi, sinTheta, cosTheta);
@@ -54,12 +56,12 @@ inline vec3f cosineSampleHemisphere(const vec2f s)
 
 inline float cosineSampleHemispherePDF(const vec3f &dir)
 {
-  return dir.z * one_over_pi;
+  return dir.z * (float)one_over_pi;
 }
 
 inline float cosineSampleHemispherePDF(float cosTheta)
 {
-  return cosTheta * one_over_pi;
+  return cosTheta * (float)one_over_pi;
 }
 
 /// power cosine-weighted sampling of hemisphere oriented along the +z-axis
@@ -67,7 +69,7 @@ inline float cosineSampleHemispherePDF(float cosTheta)
 
 inline vec3f powerCosineSampleHemisphere(const float n, const vec2f &s)
 {
-  const float phi = two_pi * s.x;
+  const float phi = (float)two_pi * s.x;
   const float cosTheta = pow(s.y, 1.0f / (n + 1.0f));
   return cartesian(phi, cosTheta);
 }
@@ -75,13 +77,13 @@ inline vec3f powerCosineSampleHemisphere(const float n, const vec2f &s)
 inline float powerCosineSampleHemispherePDF(
     const float cosTheta, const float n) // TODO: order of arguments
 {
-  return (n + 1.0f) * one_over_two_pi * pow(cosTheta, n);
+  return (n + 1.0f) * (float)one_over_two_pi * pow(cosTheta, n);
 }
 
 inline float powerCosineSampleHemispherePDF(
     const vec3f &dir, const float n) // TODO: order of arguments
 {
-  return (n + 1.0f) * one_over_two_pi * pow(dir.z, n);
+  return (n + 1.0f) * (float)one_over_two_pi * pow(dir.z, n);
 }
 
 /// uniform sampling of cone of directions oriented along the +z-axis
@@ -89,20 +91,22 @@ inline float powerCosineSampleHemispherePDF(
 
 inline vec3f uniformSampleCone(const float cosAngle, const vec2f &s)
 {
-  const float phi = two_pi * s.x;
+  const float phi = (float)two_pi * s.x;
   const float cosTheta = 1.0f - s.y * (1.0f - cosAngle);
   return cartesian(phi, cosTheta);
 }
 
 inline float uniformSampleConePDF(const float cosAngle)
 {
-  return rcp(two_pi * (1.0f - cosAngle));
+  return rcp((float)two_pi * (1.0f - cosAngle));
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 inline uniform float uniformSampleConePDF(const uniform float cosAngle)
 {
-  return rcp(two_pi * (1.0f - cosAngle));
+  return rcp((float)two_pi * (1.0f - cosAngle));
 }
+#endif
 
 /// uniform sampling of ring
 ////////////////////////////////////////////////////////////////////////////////
@@ -111,7 +115,7 @@ inline vec3f uniformSampleRing(
     const float radius, const float innerRadius, const vec2f &s)
 {
   const float r = sqrtf(lerp(s.x, sqr(innerRadius), sqr(radius)));
-  const float phi = two_pi * s.y;
+  const float phi = (float)two_pi * s.y;
   float sinPhi, cosPhi;
   sincos(phi, &sinPhi, &cosPhi);
   return make_vec3f(r * cosPhi, r * sinPhi, 0.f);
@@ -119,14 +123,16 @@ inline vec3f uniformSampleRing(
 
 inline float uniformSampleRingPDF(const float radius, const float innerRadius)
 {
-  return rcp(M_PI * (sqr(radius) - sqr(innerRadius)));
+  return rcp((float)pi * (sqr(radius) - sqr(innerRadius)));
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 inline uniform float uniformSampleRingPDF(
     const uniform float radius, const uniform float innerRadius)
 {
-  return rcp(M_PI * (sqr(radius) - sqr(innerRadius)));
+  return rcp((float)pi * (sqr(radius) - sqr(innerRadius)));
 }
+#endif
 
 /// uniform sampling of disk
 ////////////////////////////////////////////////////////////////////////////////
@@ -135,7 +141,7 @@ inline uniform float uniformSampleRingPDF(
 inline vec3f uniformSampleDisk(const float radius, const vec2f &s)
 {
   const float r = sqrtf(s.x) * radius;
-  const float phi = two_pi * s.y;
+  const float phi = (float)two_pi * s.y;
   float sinPhi, cosPhi;
   sincos(phi, &sinPhi, &cosPhi);
   return make_vec3f(r * cosPhi, r * sinPhi, 0.f);
@@ -143,13 +149,15 @@ inline vec3f uniformSampleDisk(const float radius, const vec2f &s)
 
 inline float uniformSampleDiskPDF(const float radius)
 {
-  return rcp(M_PI * sqr(radius));
+  return rcp((float)pi * sqr(radius));
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 inline uniform float uniformSampleDiskPDF(const uniform float radius)
 {
-  return rcp(M_PI * sqr(radius));
+  return rcp((float)pi * sqr(radius));
 }
+#endif
 
 /// uniform sampling of triangle abc
 ////////////////////////////////////////////////////////////////////////////////
@@ -172,7 +180,7 @@ inline float uniformSampleTrianglePDF(
 
 inline vec3f uniformSampleSphere(const float radius, const vec2f s)
 {
-  const float phi = two_pi * s.x;
+  const float phi = (float)two_pi * s.x;
   const float cosTheta = radius * (1.f - 2.f * s.y);
   const float sinTheta = 2.f * radius * sqrt(s.y * (1.f - s.y));
   return cartesian(phi, sinTheta, cosTheta);
@@ -180,10 +188,13 @@ inline vec3f uniformSampleSphere(const float radius, const vec2f s)
 
 inline float uniformSampleSpherePDF(const float radius)
 {
-  return rcp(four_pi * sqr(radius));
+  return rcp((float)four_pi * sqr(radius));
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 inline uniform float uniformSampleSpherePDF(const uniform float radius)
 {
-  return rcp(four_pi * sqr(radius));
+  return rcp((float)four_pi * sqr(radius));
 }
+#endif
+OSPRAY_END_ISPC_NAMESPACE

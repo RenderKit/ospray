@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "LightShared.h"
 #include "IntensityDistributionShared.h"
+#include "LightShared.h"
 
 #ifdef __cplusplus
 namespace ispc {
@@ -54,7 +54,9 @@ struct SpotLight
         radius(0.f),
         innerRadius(0.f),
         areaPdf(inf)
-  {}
+  {
+    super.type = LIGHT_TYPE_SPOT;
+  }
 };
 } // namespace ispc
 #else

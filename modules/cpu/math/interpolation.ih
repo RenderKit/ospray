@@ -5,6 +5,8 @@
 
 #include "rkcommon/math/math.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // x should be between [0..size-1]
 inline float interp1DLinear(
     float x, const uniform float *uniform f, uniform int size)
@@ -77,3 +79,4 @@ inline float interp3DLinear(
 
   return lerp(sz, f0, f1);
 }
+OSPRAY_END_ISPC_NAMESPACE

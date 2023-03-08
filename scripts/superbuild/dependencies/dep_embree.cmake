@@ -14,6 +14,14 @@ endif()
 
 if (BUILD_EMBREE_FROM_SOURCE)
   string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" EMBREE_ARCHIVE ${EMBREE_VERSION})
+  set(EMBREE_URL "https://github.com/embree/embree/archive/${EMBREE_ARCHIVE}.zip"
+    CACHE STRING "Location to get Embree source from")
+  if (${EMBREE_URL} MATCHES ".*\.zip$")
+    set(EMBREE_CLONE_URL URL ${EMBREE_URL})
+  else()
+    set(EMBREE_CLONE_URL GIT_REPOSITORY ${EMBREE_URL} GIT_TAG ${EMBREE_VERSION})
+  endif()
+
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}
     DOWNLOAD_DIR ${COMPONENT_NAME}
@@ -21,12 +29,13 @@ if (BUILD_EMBREE_FROM_SOURCE)
     SOURCE_DIR ${COMPONENT_NAME}/src
     BINARY_DIR ${COMPONENT_NAME}/build
     LIST_SEPARATOR | # Use the alternate list separator
-    URL "https://github.com/embree/embree/archive/${EMBREE_ARCHIVE}.zip"
+    ${EMBREE_CLONE_URL}
     ${EMBREE_URL_HASH}
     CMAKE_ARGS
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+      -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
       -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
       -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
       -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
@@ -44,6 +53,9 @@ if (BUILD_EMBREE_FROM_SOURCE)
       -DEMBREE_ISA_AVX2=${BUILD_ISA_AVX2}
       -DEMBREE_ISA_AVX512=${BUILD_ISA_AVX512}
       -DEMBREE_ISA_NEON=${BUILD_ISA_NEON}
+      -DEMBREE_ISA_NEON2X=${BUILD_ISA_NEON2X}
+      -DEMBREE_ISPC_SUPPORT=ON
+      -DEMBREE_SYCL_SUPPORT=${BUILD_GPU_SUPPORT}
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS ${ALWAYS_REBUILD}
   )
@@ -59,11 +71,15 @@ else()
   if (APPLE)
     set(EMBREE_OSSUFFIX "x86_64.macosx.zip")
   elseif (WIN32)
-    set(EMBREE_OSSUFFIX "x64.vc14.windows.zip")
+    set(EMBREE_OSSUFFIX "x64.windows.zip")
   else()
     set(EMBREE_OSSUFFIX "x86_64.linux.tar.gz")
   endif()
-  set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${EMBREE_VERSION}/embree-${EMBREE_VERSION}.${EMBREE_OSSUFFIX}")
+  if (BUILD_GPU_SUPPORT)
+    set(EMBREE_TAG "-beta.sycl")
+    unset(EMBREE_URL_HASH)
+  endif()
+  set(EMBREE_URL "https://github.com/embree/embree/releases/download/v${EMBREE_VERSION}/embree-${EMBREE_VERSION}${EMBREE_TAG}.${EMBREE_OSSUFFIX}")
 
   ExternalProject_Add(${COMPONENT_NAME}
     PREFIX ${COMPONENT_NAME}

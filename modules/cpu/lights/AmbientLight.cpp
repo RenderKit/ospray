@@ -2,22 +2,36 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AmbientLight.h"
+#include "common/StructShared.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "lights/AmbientLight_ispc.h"
+#else
+namespace ispc {
+void *AmbientLight_sample_addr();
+void *AmbientLight_eval_addr();
+} // namespace ispc
+#endif
 // ispc shared
 #include "AmbientLightShared.h"
 
 namespace ospray {
 
-ispc::Light *AmbientLight::createSh(
+ISPCRTMemoryView AmbientLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ispc::AmbientLight *sh = StructSharedCreate<ispc::AmbientLight>();
-  sh->super.sample = ispc::AmbientLight_sample_addr();
-  sh->super.eval = ispc::AmbientLight_eval_addr();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::AmbientLight>(
+      getISPCDevice().getIspcrtDevice().handle());
+  ispc::AmbientLight *sh = (ispc::AmbientLight *)ispcrtSharedPtr(view);
+#ifndef OSPRAY_TARGET_SYCL
+  sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+      ispc::AmbientLight_sample_addr());
+  sh->super.eval =
+      reinterpret_cast<ispc::Light_EvalFunc>(ispc::AmbientLight_eval_addr());
+#endif
   sh->super.isVisible = visible;
   sh->super.instance = instance;
   sh->radiance = radiance;
-  return &sh->super;
+  return view;
 }
 
 std::string AmbientLight::toString() const

@@ -7,6 +7,8 @@
 #include "rkcommon/math/vec.ih"
 #include "sobol.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 ///////////////////////////////////////////////////////////////////////////////
 // Hash functions
 
@@ -91,7 +93,7 @@ struct RandomSampler
   uint64 stream;
 };
 
-inline uint32 RandomSampler__pcg32(varying RandomSampler *uniform self)
+inline uint32 RandomSampler_pcg32(varying RandomSampler *uniform self)
 {
   uint64 oldstate = self->state;
   self->state = oldstate * 6364136223846793005ULL + (self->stream | 1u);
@@ -102,7 +104,7 @@ inline uint32 RandomSampler__pcg32(varying RandomSampler *uniform self)
 
 inline float RandomSampler_getFloat(varying RandomSampler *uniform self)
 {
-  return to_float_unorm(RandomSampler__pcg32(self));
+  return to_float_unorm(RandomSampler_pcg32(self));
 }
 
 inline void RandomSampler_init(
@@ -115,9 +117,9 @@ inline void RandomSampler_init(
   self->state = MurmurHash3_mix(self->state, seed);
   self->state = MurmurHash3_finalize(self->state);
 
-  RandomSampler__pcg32(self);
+  RandomSampler_pcg32(self);
   self->state += seed;
-  RandomSampler__pcg32(self);
+  RandomSampler_pcg32(self);
 }
 
 inline void RandomSampler_init(varying RandomSampler *uniform self, uint64 seed)
@@ -130,8 +132,8 @@ inline void RandomSampler_init(varying RandomSampler *uniform self, uint64 seed)
 
 inline void tea8(uint32 &_v0, uint32 &_v1)
 {
-  uint32 v0  = _v0; // operate on registers to avoid slowdown
-  uint32 v1  = _v1;
+  uint32 v0 = _v0; // operate on registers to avoid slowdown
+  uint32 v1 = _v1;
   uint32 sum = 0;
 
   for (uniform int i = 0; i < 8; i++) { // just 8 instead of 32 rounds
@@ -139,8 +141,8 @@ inline void tea8(uint32 &_v0, uint32 &_v1)
     v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + sum) ^ ((v1 >> 5) + 0xc8013ea4);
     v1 += ((v0 << 4) + 0xad90777d) ^ (v0 + sum) ^ ((v0 >> 5) + 0x7e95761e);
   }
-  _v0  = v0;
-  _v1  = v1;
+  _v0 = v0;
+  _v1 = v1;
 }
 
 struct RandomTEA
@@ -148,14 +150,14 @@ struct RandomTEA
   vec2ui state;
 };
 
-inline void RandomTEA__Constructor(
+inline void RandomTEA_Constructor(
     varying RandomTEA *uniform self, const uint32 idx, const uint32 seed)
 {
   self->state.x = idx;
   self->state.y = seed;
 }
 
-inline varying vec2f RandomTEA__getFloats(varying RandomTEA *uniform self)
+inline varying vec2f RandomTEA_getFloats(varying RandomTEA *uniform self)
 {
   tea8(self->state.x, self->state.y);
   return to_float_unorm(self->state);
@@ -210,10 +212,13 @@ struct LDSampler
   uint32 index; // sample index
   uint32 scramble; // random number for scrambling the samples
   uint32 lcg; // LCG used when we run out of dimensions
+  const unsigned int *uniform sobolMatrices;
 };
 
-inline void LDSampler_init(
-    varying LDSampler *uniform self, uint32 pixelID, uint32 sampleIndex)
+inline void LDSampler_init(varying LDSampler *uniform self,
+    const MathConstants *uniform mathConstants,
+    uint32 pixelID,
+    uint32 sampleIndex)
 {
   // skip the first few samples to reduce correlation artifacts
   self->index = sampleIndex + 64;
@@ -224,6 +229,8 @@ inline void LDSampler_init(
 
   hash = MurmurHash3_mix(hash, sampleIndex);
   self->lcg = MurmurHash3_finalize(hash);
+
+  self->sobolMatrices = mathConstants->sobolMatrices;
 }
 
 inline float LDSampler_getFloat(
@@ -233,7 +240,7 @@ inline float LDSampler_getFloat(
     return LCG_getFloat(self->lcg);
 
   // Sample the Sobol sequence
-  const float s = Sobol_sample(self->index, dimension);
+  const float s = Sobol_sample(self->sobolMatrices, self->index, dimension);
 
   // Apply Cranley-Patterson rotation to reduce correlation artifacts
   const float shift = to_float_unorm(hashToRandom(dimension, self->scramble));
@@ -251,7 +258,7 @@ inline vec2f LDSampler_getFloat2(
 ///////////////////////////////////////////////////////////////////////////////
 // Hammersley - low discrepancy random numbers; only two dimensions; no state
 
-inline varying vec2f RandomHammersley2__getFloats(varying uint32 idx)
+inline varying vec2f RandomHammersley2_getFloats(varying uint32 idx)
 {
   return make_vec2f(rcp((float)idx), Halton_sample2(idx));
 }
@@ -259,7 +266,9 @@ inline varying vec2f RandomHammersley2__getFloats(varying uint32 idx)
 ///////////////////////////////////////////////////////////////////////////////
 // halton - low discrepancy halton sequence; first two dimensions; no state
 
-inline varying vec2f HaltonSequence_get2D(varying uint32 idx)
+inline varying vec2f HaltonSequence_get2D(
+    const MathConstants *uniform mathConstants, varying uint32 idx)
 {
-  return make_vec2f(Halton_sample2(idx), Halton_sample3(idx));
+  return make_vec2f(Halton_sample2(idx), Halton_sample3(mathConstants, idx));
 }
+OSPRAY_END_ISPC_NAMESPACE

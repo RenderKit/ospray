@@ -12,7 +12,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE Spheres
     : public AddStructShared<Geometry, ispc::Spheres>
 {
-  Spheres();
+  Spheres(api::ISPCDevice &device);
   virtual ~Spheres() override = default;
 
   virtual std::string toString() const override;
@@ -26,6 +26,13 @@ struct OSPRAY_SDK_INTERFACE Spheres
   Ref<const DataT<vec3f>> vertexData;
   Ref<const DataT<float>> radiusData;
   Ref<const DataT<vec2f>> texcoordData;
+
+  // Embree's layout for sphere point uses interleaved position and
+  // radius, each sphere is stored as x, y, z, r. OSPRay 2's format is not
+  // interleaved, so we should deprecate the non-interleaved format. This array
+  // is used to reference the interleaved data for the app or the interleaved
+  // data the geometry creates when using the deprecated parameters
+  Ref<DataT<vec4f>> sphereData;
 };
 
 } // namespace ospray

@@ -4,17 +4,24 @@
 #pragma once
 
 #include "render/Renderer.ih"
+#include "render/ScreenSample.ih"
 #include "render/pathtracer/PathStructs.ih"
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "render/pathtracer/volumes/VolumeSampler.ih"
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline bool isSmooth(const PathVertex &pathVertex)
 {
   if (pathVertex.type == SURFACE && pathVertex.bsdf
-      && pathVertex.bsdf->type & SCATTERING_SMOOTH)
+      && pathVertex.bsdf->scatteringType & SCATTERING_SMOOTH)
     return true;
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (pathVertex.type == VOLUME && pathVertex.volume
       && isSmoothVolumeVertex(pathVertex))
     return true;
+#endif
   return false;
 }
 
@@ -39,7 +46,12 @@ inline void updateAuxilliaryData(
     sample.normal = make_vec3f(0.f);
   } else if (pathVertex.type == SURFACE) {
     vec3f Ns = pathVertex.dg.Ns;
+#ifdef OSPRAY_TARGET_SYCL
+    {
+      const BSDF *f = pathVertex.bsdf;
+#else
     foreach_unique (f in pathVertex.bsdf) {
+#endif
       if (f != NULL && f->frame != NULL)
         Ns = getN(f);
     }
@@ -47,3 +59,5 @@ inline void updateAuxilliaryData(
   }
   pathState.auxFree = false;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

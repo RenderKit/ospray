@@ -11,9 +11,13 @@
 #include "common/Ray.ih"
 #include "common/World.ih"
 // c++ shared
+#include "PathTracerDataShared.h"
+#include "lights/LightDispatch.ih"
 #include "lights/LightShared.h"
 
-bool shadowCatcher(const PathContext &pathContext,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL bool shadowCatcher(const PathContext &pathContext,
     PathState &pathState,
     PathVertex &pathVertex,
     const Ray &ray,
@@ -44,13 +48,15 @@ bool shadowCatcher(const PathContext &pathContext,
 
     vec3f unshaded = make_vec3f(0.f); // illumination without occluders
     vec3f shaded = make_vec3f(0.f); // illumination including shadows
+    const World *uniform world = pathContext.world;
+    const uniform PathTracerData &pathtracerData =
+        *((const uniform PathTracerData *)world->pathtracerData);
     for (uniform int i = 0; i < pathContext.numLights; i++) {
-      const World *uniform world = pathContext.world;
-      const Light *uniform light = world->pathtracerData.lights[i];
+      const Light *uniform light = pathtracerData.lights[i];
       const vec2f s = LDSampler_getFloat2(
           pathContext.ldSampler, pathState.sampleDim + 4 + i * 2);
       Light_SampleRes ls =
-          light->sample(light, pathVertex.dg, s, pathState.time);
+          Light_dispatch_sample(light, pathVertex.dg, s, pathState.time);
 
       // skip when zero contribution from light
       if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -98,3 +104,5 @@ bool shadowCatcher(const PathContext &pathContext,
   pathState.shadowCatcherDist -= ray.t;
   return false;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

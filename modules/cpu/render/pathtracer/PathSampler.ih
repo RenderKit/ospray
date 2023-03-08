@@ -3,12 +3,18 @@
 
 #pragma once
 
+#include "common/OSPCommon.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct PathContext;
 struct PathState;
 struct Ray;
 struct ScreenSample;
 
-void samplePath(const PathContext &pathContext,
+SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     PathState &pathState,
     Ray &ray,
     ScreenSample &sample);
+
+OSPRAY_END_ISPC_NAMESPACE

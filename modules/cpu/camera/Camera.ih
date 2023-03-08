@@ -10,6 +10,8 @@
 // c++ shared
 #include "CameraShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Specifies the input parameters (time, screen, and lens
 // samples) required for 'initRay' to generate a primary ray
 struct CameraSample
@@ -34,3 +36,5 @@ inline float Camera_shutterTime(
   const float pos = self->rollingShutterHorizontal ? screen.x : screen.y;
   return clamp(time + lerp(pos, self->shutter.lower, self->shutter.upper));
 }
+
+OSPRAY_END_ISPC_NAMESPACE

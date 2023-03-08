@@ -124,6 +124,7 @@ struct MultiDevice : public Device
 
  private:
   std::unique_ptr<MultiDeviceLoadBalancer> loadBalancer;
+  ISPCDevice hostDevice;
   std::vector<std::unique_ptr<ISPCDevice>> subdevices;
 };
 

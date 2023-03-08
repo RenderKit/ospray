@@ -4,8 +4,10 @@
 #pragma once
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
+#endif // __cplusplus
+
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *Light_SampleFunc;
 typedef void *Light_EvalFunc;
 #else
@@ -29,7 +31,7 @@ struct Light_SampleRes
 typedef Light_SampleRes (*Light_SampleFunc)(const Light *uniform self,
     const DifferentialGeometry &dg, // point (&normal) to generate the sample
     const vec2f &s, // random numbers to generate the sample
-    const float time = 0.5f); // generate the sample at time (motion blur)
+    const float time); // generate the sample at time (motion blur)
 
 struct Light_EvalRes
 {
@@ -45,13 +47,27 @@ typedef Light_EvalRes (*Light_EvalFunc)(const Light *uniform self,
     const vec3f &dir, // direction towards the light source, normalized
     const float minDist, // minimum distance to look for light contribution
     const float maxDist, // maximum distance to look for light contribution
-    const float time = 0.5f); // evaluate at time (motion blur)
-#endif // __cplusplus
+    const float time); // evaluate at time (motion blur)
+#endif
 
 struct Instance;
 
+enum LightType
+{
+  LIGHT_TYPE_AMBIENT,
+  LIGHT_TYPE_CYLINDER,
+  LIGHT_TYPE_DIRECTIONAL,
+  LIGHT_TYPE_HDRI,
+  LIGHT_TYPE_POINT,
+  LIGHT_TYPE_QUAD,
+  LIGHT_TYPE_SPOT,
+  LIGHT_TYPE_GEOMETRY,
+  LIGHT_TYPE_UNKNOWN,
+};
+
 struct Light
 {
+  LightType type;
   Light_SampleFunc sample;
   Light_EvalFunc eval;
   bool isVisible; // either directly in camera, or via a straight path (i.e.
@@ -59,7 +75,12 @@ struct Light
   const Instance *instance;
 
 #ifdef __cplusplus
-  Light() : sample(nullptr), eval(nullptr), isVisible(true), instance(nullptr)
+  Light()
+      : type(LIGHT_TYPE_UNKNOWN),
+        sample(nullptr),
+        eval(nullptr),
+        isVisible(true),
+        instance(nullptr)
   {}
 };
 } // namespace ispc

@@ -1,12 +1,15 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
-#include "../math/AffineSpace.ih"
 #include "Instance.ih"
 #include "OSPCommon.ih"
+#include "rkcommon/math/AffineSpace.ih"
 #include "rkcommon/math/box.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct VolumetricModel;
 
@@ -26,7 +29,7 @@ inline void initVolumeInterval(VolumeInterval &hit)
 {
   hit.volumetricModel = NULL;
   hit.interval.lower = inf;
-  hit.interval.upper = -inf;
+  hit.interval.upper = -hit.interval.lower;
 }
 
 inline bool hasInterval(const VolumeInterval &vi)
@@ -41,6 +44,7 @@ struct VolumeIntervals
   varying VolumeInterval *uniform intervals;
 };
 
+#ifndef OSPRAY_TARGET_SYCL
 inline void allocVolumeIntervals(VolumeIntervals &intervals)
 {
   intervals.numVolumeIntervals = 0;
@@ -53,3 +57,21 @@ inline void freeVolumeIntervals(VolumeIntervals &intervals)
   popTLS(intervals.intervals);
   intervals.intervals = NULL;
 }
+#endif
+
+struct EmbreeRayQueryContextVolume
+{
+  RTCRayQueryContext ectx;
+  varying VolumeIntervals *intervals;
+};
+
+inline void InitRayQueryContextVolume(
+    EmbreeRayQueryContextVolume *uniform context,
+    varying VolumeIntervals *uniform intervals)
+{
+  rtcInitRayQueryContext(&context->ectx);
+  context->intervals = intervals;
+}
+
+OSPRAY_END_ISPC_NAMESPACE
+#endif

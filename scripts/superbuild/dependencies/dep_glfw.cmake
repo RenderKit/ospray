@@ -14,10 +14,17 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  URL "https://github.com/glfw/glfw/archive/3.2.1.zip"
-  URL_HASH "SHA256=0c623f65a129c424d0fa45591694fde3719ad4a0955d4835182fda71b255446f"
+  URL "https://github.com/glfw/glfw/archive/refs/tags/3.3.8.zip"
+  URL_HASH "SHA256=8106e1a432305a8780b986c24922380df6a009a96b2ca590392cb0859062c8ff"
+  # `patch` is not available on all systems, so use `git apply` instead. Note
+  # that we initialize a Git repo in the GLFW download directory to allow the
+  # Git patching approach to work. Also note that we don't want to actually
+  # check out the GLFW Git repo, since we want our GLFW_HASH security checks
+  # to still function correctly.
+  PATCH_COMMAND git init -q . && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw.patch
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
     -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
     -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}

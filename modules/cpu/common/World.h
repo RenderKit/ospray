@@ -5,11 +5,9 @@
 
 // ospray stuff
 #include "Data.h"
-#include "Managed.h"
+#include "ISPCDeviceObject.h"
 // stl
 #include <vector>
-// embree
-#include "embree3/rtcore.h"
 // ispc shared
 #include "WorldShared.h"
 
@@ -17,11 +15,13 @@ namespace ospray {
 
 struct Instance;
 struct Light;
+struct PathTracerData;
+struct SciVisData;
 
 struct OSPRAY_SDK_INTERFACE World
-    : public AddStructShared<ManagedObject, ispc::World>
+    : public AddStructShared<ISPCDeviceObject, ispc::World>
 {
-  World();
+  World(api::ISPCDevice &device);
   virtual ~World() override;
 
   std::string toString() const override;
@@ -34,13 +34,10 @@ struct OSPRAY_SDK_INTERFACE World
   Ref<const DataT<Instance *>> instances;
   Ref<const DataT<Light *>> lights;
 
-  bool scivisDataValid{false};
-  bool pathtracerDataValid{false};
+  std::unique_ptr<BufferShared<ispc::Instance *>> instanceArray;
 
-  void setDevice(RTCDevice embreeDevice);
-
- protected:
-  RTCDevice embreeDevice{nullptr};
+  std::unique_ptr<SciVisData> scivisData;
+  std::unique_ptr<PathTracerData> pathtracerData;
 };
 
 OSPTYPEFOR_SPECIALIZATION(World *, OSP_WORLD);

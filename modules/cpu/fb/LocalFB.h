@@ -4,9 +4,11 @@
 #pragma once
 
 // ospray
+#include "common/BufferShared.h"
 #include "fb/FrameBuffer.h"
 #include "fb/TaskError.h"
 // rkcommon
+#include <rkcommon/utility/ArrayView.h>
 #include "rkcommon/containers/AlignedVector.h"
 // ispc shared
 #include "LocalFBShared.h"
@@ -19,7 +21,8 @@ struct SparseFrameBuffer;
 struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
     : public AddStructShared<FrameBuffer, ispc::LocalFB>
 {
-  LocalFrameBuffer(const vec2i &size,
+  LocalFrameBuffer(api::ISPCDevice &device,
+      const vec2i &size,
       ColorBufferFormat colorBufferFormat,
       const uint32 channels);
 
@@ -33,7 +36,8 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
 
   virtual uint32_t getTotalRenderTasks() const override;
 
-  virtual utility::ArrayView<uint32_t> getRenderTaskIDs() override;
+  virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
+      float errorThreshold) override;
 
   // common function to help printf-debugging, every derived class should
   // override this!
@@ -57,7 +61,7 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
    * Safe to call in parallel from multiple threads, as long as each thread is
    * writing different tiles
    */
-  void writeTiles(const containers::AlignedVector<Tile> &tiles);
+  void writeTiles(const utility::ArrayView<Tile> &tiles);
 
   /* Write the tiles of the sparse fb into this framebuffer's row-major storage.
    * Will also copy error data from the sparseFb the full framebuffer task error
@@ -71,21 +75,21 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   //       flag was passed on construction
 
   // format depends on FrameBuffer::colorBufferFormat
-  std::vector<uint8_t> colorBuffer;
+  std::unique_ptr<BufferShared<uint8_t>> colorBuffer;
   // one float per pixel
-  containers::AlignedVector<float> depthBuffer;
+  std::unique_ptr<BufferShared<float>> depthBuffer;
   // one RGBA per pixel
-  containers::AlignedVector<vec4f> accumBuffer;
+  std::unique_ptr<BufferShared<vec4f>> accumBuffer;
   // one RGBA per pixel, accumulates every other sample, for variance estimation
-  containers::AlignedVector<vec4f> varianceBuffer;
+  std::unique_ptr<BufferShared<vec4f>> varianceBuffer;
   // accumulated world-space normal per pixel
-  containers::AlignedVector<vec3f> normalBuffer;
+  std::unique_ptr<BufferShared<vec3f>> normalBuffer;
   // accumulated, one RGB per pixel
-  containers::AlignedVector<vec3f> albedoBuffer;
+  std::unique_ptr<BufferShared<vec3f>> albedoBuffer;
   // primitive ID, object ID, and instance ID
-  containers::AlignedVector<uint32> primitiveIDBuffer;
-  containers::AlignedVector<uint32> objectIDBuffer;
-  containers::AlignedVector<uint32> instanceIDBuffer;
+  std::unique_ptr<BufferShared<uint32_t>> primitiveIDBuffer;
+  std::unique_ptr<BufferShared<uint32_t>> objectIDBuffer;
+  std::unique_ptr<BufferShared<uint32_t>> instanceIDBuffer;
 
  protected:
   vec2i getTaskStartPos(const uint32_t taskID) const;
@@ -93,10 +97,12 @@ struct OSPRAY_SDK_INTERFACE LocalFrameBuffer
   //// Data ////
 
   vec2i numRenderTasks;
-  std::vector<uint32_t> renderTaskIDs;
 
+  std::unique_ptr<BufferShared<uint32_t>> renderTaskIDs;
+  std::unique_ptr<BufferShared<uint32_t>> activeTaskIDs;
   // holds accumID per render task, for adaptive accumulation
-  containers::AlignedVector<int32> taskAccumID;
+  std::unique_ptr<BufferShared<int32_t>> taskAccumID;
+
   // holds error per tile and adaptive regions
   TaskError taskErrorRegion;
 };

@@ -7,12 +7,8 @@
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/getEnvVar.h"
 
-#include <map>
-
 namespace ospray {
 namespace api {
-
-static FactoryMap<Device> g_devicesMap;
 
 // Helper functions ///////////////////////////////////////////////////////////
 
@@ -42,18 +38,12 @@ Device *Device::createDevice(const char *type)
   //             valid library for core ospray in our main symbol lookup
   //             table.
   auto &repo = *LibraryRepository::getInstance();
-  if (!repo.libraryExists("ospray"))
-    repo.addDefaultLibrary();
 
   if (!repo.libraryExists("ospray_module_cpu") && type == std::string("cpu"))
-    repo.add("ospray_module_cpu");
+    repo.add(
+        "ospray_module_cpu", reinterpret_cast<const void *>(&createDevice));
 
-  return createInstanceHelper(type, g_devicesMap[type]);
-}
-
-void Device::registerType(const char *type, FactoryFcn<Device> f)
-{
-  g_devicesMap[type] = f;
+  return createInstance(type);
 }
 
 void Device::commit()

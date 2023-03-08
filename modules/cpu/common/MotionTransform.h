@@ -4,15 +4,15 @@
 #pragma once
 
 // ospray stuff
-#include "./Group.h"
+#include "Group.h"
 // embree
-#include "embree3/rtcore.h"
+#include "Embree.h"
 
 namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE MotionTransform
 {
-  void readParams(ManagedObject &);
+  void readParams(ISPCDeviceObject &);
   void setEmbreeTransform(RTCGeometry) const;
   affine3f transform{one};
   bool motionBlur{false};

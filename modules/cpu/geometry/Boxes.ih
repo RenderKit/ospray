@@ -1,0 +1,17 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#include "geometry/Geometry.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL void Boxes_postIntersect(const Geometry *uniform _self,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags);
+
+SYCL_EXTERNAL unmasked void Boxes_intersect_kernel(
+    const RTCIntersectFunctionNArguments *uniform args,
+    const uniform bool isOcclusionTest);
+
+OSPRAY_END_ISPC_NAMESPACE

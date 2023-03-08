@@ -3,16 +3,15 @@
 
 // ospray
 #include "Light.h"
-#include "common/Util.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "lights/Light_ispc.h"
+#endif
 
 namespace ospray {
 
-static FactoryMap<Light> g_lightsMap;
-
 // Light definitions //////////////////////////////////////////////////////////
 
-Light::Light()
+Light::Light(api::ISPCDevice &device) : ISPCDeviceObject(device)
 {
   managedObjectType = OSP_LIGHT;
 }
@@ -27,16 +26,6 @@ void Light::commit()
 std::string Light::toString() const
 {
   return "ospray::Light";
-}
-
-Light *Light::createInstance(const char *type)
-{
-  return createInstanceHelper(type, g_lightsMap[type]);
-}
-
-void Light::registerType(const char *type, FactoryFcn<Light> f)
-{
-  g_lightsMap[type] = f;
 }
 
 void Light::queryIntensityQuantityType(const OSPIntensityQuantity &defaultIQ)

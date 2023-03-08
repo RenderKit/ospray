@@ -10,7 +10,7 @@ namespace pathtracer {
 
 struct CarPaint : public AddStructShared<Material, ispc::CarPaint>
 {
-  CarPaint();
+  CarPaint(api::ISPCDevice &device);
 
   virtual std::string toString() const override;
 

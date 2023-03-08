@@ -5,6 +5,7 @@
 
 #include "Dielectric.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
 // Thin dielectric BSDF.
 // It represents a transparent slab with unit thickness, and ignores refraction.
 struct RobustThinDielectric
@@ -79,8 +80,14 @@ inline void RobustThinDielectric_Constructor(
   BSDF_Constructor(&self->super,
       expf(attenuation),
       BSDF_SPECULAR,
+      BSDF_TYPE_ROBUST_THIN_DIELECTRIC,
+#ifdef OSPRAY_TARGET_SYCL
+      NULL,
+      NULL,
+#else
       RobustThinDielectric_eval,
       RobustThinDielectric_sample,
+#endif
       frame);
   self->eta = eta;
   self->attenuation = attenuation;
@@ -117,3 +124,5 @@ inline vec3f RobustThinDielectric_getTransparency(
       * (1.f + sqr(Ft * A) * rcp(1.f - sqr(Ft * A)));
   return T;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

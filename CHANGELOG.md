@@ -1,6 +1,40 @@
 Version History
 ---------------
 
+### Changes in v2.11.0:
+
+-   Support single ISPC target on Windows
+-   OSPRay's superbuild can now be provided a CMake toolchain file for
+    cross-compilation
+-   Add support for double pumped NEON instruction on ARM64
+-   Reduce the memory overhead of the `mpiOffload` device and resolve
+    memory and `MPI_Comm` handle leaks
+-   Support for volume rendering (and thus the dependency to Open VKL)
+    can now be compile-time controlled via CMake variable
+    `OSPRAY_ENABLE_VOLUMES`
+-   OSPRay's MPI modules have been split up and renamed, the `mpiOffload`
+    device is now in the `mpi_offload` module, while the `mpiDistributed`
+    device is now in the `mpi_distributed_cpu` module
+-   Add native support for spheres via Embree, which requires the
+    positions and radius of the spheres to be interleaved in memory; if
+    this is not the case, OSPRay will internally create a copy of the
+    data
+-   Fix `dynamicScene` flag on World and Group to influence BVH quality
+    again: default is now "high", which should improve rendering
+    performance, depending on the scene; and "low" when `dynamicScene`
+    is enabled (improving BVH build performance)
+-   Fix a crash in `pathtracer` when there are no lights
+-   Fix a data corruption bug when setting string parameters for objects
+    in the `mpiOffload` device
+-   Various documentation fixes
+-   OSPRay now has a new dependency, which is ISPC Run Time (ISPCRT) in
+    minimum 1.19.0 version
+-   Adapt to Embree v4.0.0 API changes, which is thus the new minimum
+    version; additionally, the new minimum version for Open VKL is
+    v1.3.2 and for ISPC v1.19.0
+-   Removed support of MSVC14.0 (Visual Studio 2015) and the second
+    generation Intel Xeon Phi processor (codename Knights Landing)
+
 ### Changes in v2.10.0:
 
 -   Add support for primitive, object, and instance ID buffers as
@@ -28,7 +62,6 @@ Version History
 -   Deprecated the `vec2f valueRange` parameter of the `piecewiseLinear`
     transfer function, use `box1f value` instead
 
-
 ### Changes in v2.9.0:
 
 -   Add support for multi-segment deformation motion blur for `mesh`
@@ -49,7 +82,7 @@ Version History
     -   `OSPRAY_ENABLE_APPS_EXAMPLES` replaces `OSPRAY_APPS_EXAMPLES`
     -   `OSPRAY_ENABLE_APPS_TUTORIALS` replaces `OSPRAY_APPS_TUTORIALS`
     -   `OSPRAY_ENABLE_APPS_TESTING` replaces `OSPRAY_APPS_TESTING`
--   Improve sampling of quad lights in the pathtracer (solid angle
+-   Improve sampling of quad lights in the `pathtracer` (solid angle
     instead of area)
 -   Instances can now have the group object rebound via a parameter
 -   Fix leaking framebuffers in the MPI Offload device
@@ -137,7 +170,7 @@ Version History
     only supported quantity for these lights, the value
     `OSP_INTENSITY_QUANTITY_RADIANCE` is deprecated. When
     `OSP_INTENSITY_QUANTITY_SCALE` is used for `sunSky` the default
-    value of `intensity` is `0.025` to match the old behaviour
+    value of `intensity` is `0.025` to match the old behavior
 -   The MPI module is included in the releases packages. An
     [MPICH-ABI](https://www.mpich.org/abi/) compatible build is provided
     for Linux that can be run with the Intel oneAPI HPC Toolki, MPICH,
@@ -205,7 +238,7 @@ Version History
 
 ### Changes in v2.4.0:
 
--   The pathtracer optionally allows for alpha blending even if the
+-   The `pathtracer` optionally allows for alpha blending even if the
     background is seen through refractive objects like glass, by
     enabling `backgroundRefraction`
 -   OSPRay now requires minimum Open VKL v0.11.0 to bring the following
@@ -218,7 +251,7 @@ Version History
         and spherical)
 -   Expose parameter `horizonExtension` of Sun-sky light, which extends
     the sky dome by stretching the horizon over the lower hemisphere
--   Optimize handling of geometry lights by the pathtracer
+-   Optimize handling of geometry lights by the `pathtracer`
 -   The optional `denoiser` image operation now respects frame
     cancellation, requiring Intel® Open Image Denoise with minimum
     version 1.2.3

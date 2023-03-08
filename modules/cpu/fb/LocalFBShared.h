@@ -44,7 +44,9 @@ struct LocalFB
         primitiveIDBuffer(nullptr),
         objectIDBuffer(nullptr),
         instanceIDBuffer(nullptr)
-  {}
+  {
+    super.type = FRAMEBUFFER_TYPE_LOCAL;
+  }
 };
 } // namespace ispc
 #else

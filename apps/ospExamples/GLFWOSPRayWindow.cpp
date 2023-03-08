@@ -270,8 +270,8 @@ void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
   windowSize = newWindowSize;
 
   // create new frame buffer
-  auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_ALBEDO
-      | OSP_FB_NORMAL | OSP_FB_ID_PRIMITIVE | OSP_FB_ID_OBJECT
+  auto buffers = OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM | OSP_FB_VARIANCE
+      | OSP_FB_ALBEDO | OSP_FB_NORMAL | OSP_FB_ID_PRIMITIVE | OSP_FB_ID_OBJECT
       | OSP_FB_ID_INSTANCE;
   framebuffer =
       cpp::FrameBuffer(windowSize.x, windowSize.y, OSP_FB_RGBA32F, buffers);
@@ -660,6 +660,12 @@ void GLFWOSPRayWindow::buildUI()
     rendererSV.setParam("pixelSamples", spp);
     rendererAO.setParam("pixelSamples", spp);
     rendererDBG.setParam("pixelSamples", spp);
+    addObjectToCommit(renderer->handle());
+  }
+
+  static float varianceThreshold = 0.0f;
+  if (ImGui::SliderFloat("varianceThreshold", &varianceThreshold, 0.f, 10.f)) {
+    renderer->setParam("varianceThreshold", varianceThreshold);
     addObjectToCommit(renderer->handle());
   }
 

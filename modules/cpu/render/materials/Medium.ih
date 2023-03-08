@@ -7,6 +7,8 @@
 
 #include "MediumShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline Medium make_Medium(const vec3f attenuation, const float ior)
 {
   Medium m;
@@ -25,6 +27,7 @@ inline bool eq(const Medium &a, const Medium &b)
   return (a.ior == b.ior) & eq(a.attenuation, b.attenuation);
 }
 
+#ifdef ISPC
 inline bool eq(const Medium &a, const uniform Medium &b)
 {
   return (a.ior == b.ior) & eq(a.attenuation, b.attenuation);
@@ -34,3 +37,6 @@ inline uniform bool eq(const uniform Medium &a, const uniform Medium &b)
 {
   return (a.ior == b.ior) & eq(a.attenuation, b.attenuation);
 }
+#endif
+
+OSPRAY_END_ISPC_NAMESPACE

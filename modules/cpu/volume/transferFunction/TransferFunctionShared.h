@@ -4,28 +4,25 @@
 #pragma once
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
-typedef void *TransferFunction_getFct;
-typedef void *TransferFunction_getMaxOpacityFct;
-#else
-struct TransferFunction;
-typedef vec4f (*TransferFunction_getFct)(
-    const TransferFunction *uniform self, float value);
-typedef float (*TransferFunction_getMaxOpacityFct)(
-    const TransferFunction *uniform self, const range1f &valueRange);
 #endif // __cplusplus
+
+// We only have one transfer function type, but we still have the type enum and
+// "dispatch" function so that we can easily extend it with more in the future
+enum TransferFunctionType
+{
+  TRANSFER_FUNCTION_TYPE_LINEAR = 0,
+  TRANSFER_FUNCTION_TYPE_UNKNOWN = 1,
+};
 
 struct TransferFunction
 {
+  TransferFunctionType type;
   range1f valueRange;
-
-  TransferFunction_getFct get;
-  TransferFunction_getMaxOpacityFct getMaxOpacity;
 
 #ifdef __cplusplus
   TransferFunction()
-      : valueRange(0.f, 1.f), get(nullptr), getMaxOpacity(nullptr)
+      : type(TRANSFER_FUNCTION_TYPE_UNKNOWN), valueRange(0.f, 1.f)
   {}
 };
 } // namespace ispc

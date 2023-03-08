@@ -4,12 +4,14 @@
 #include "render/Material.ih"
 #include "render/bsdfs/Transmission.ih"
 
-#include "LuminousShared.h"
+#include "Luminous.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying Luminous_getBSDF(
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying Luminous_getBSDF(
     const uniform Material *uniform _self,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -27,7 +29,8 @@ const varying BSDF *varying Luminous_getBSDF(
   return bsdf;
 }
 
-vec3f Luminous_getTransparency(const uniform Material *uniform _self,
+SYCL_EXTERNAL vec3f Luminous_getTransparency(
+    const uniform Material *uniform _self,
     const DifferentialGeometry &,
     const Ray &,
     const Medium &)
@@ -42,10 +45,12 @@ vec3f Luminous_getTransparency(const uniform Material *uniform _self,
 
 export void *uniform Luminous_getBSDF_addr()
 {
-  return Luminous_getBSDF;
+  return (void *uniform)Luminous_getBSDF;
 }
 
 export void *uniform Luminous_getTransparency_addr()
 {
-  return Luminous_getTransparency;
+  return (void *uniform)Luminous_getTransparency;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

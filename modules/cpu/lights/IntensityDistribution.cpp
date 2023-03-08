@@ -6,7 +6,7 @@
 
 namespace ospray {
 
-void IntensityDistribution::readParams(ManagedObject &obj)
+void IntensityDistribution::readParams(ISPCDeviceObject &obj)
 {
   c0 = obj.getParam<vec3f>("c0", c0);
   lid = obj.getParamDataT<float, 2>("intensityDistribution");
@@ -23,7 +23,7 @@ void IntensityDistribution::readParams(ManagedObject &obj)
           << obj.toString()
           << " does currently not support strides for 'intensityDistribution', copying data.";
 
-      const auto data = new Data(OSP_FLOAT, lid->numItems);
+      const auto data = new Data(obj.getISPCDevice(), OSP_FLOAT, lid->numItems);
       data->copy(*lid, vec3ui(0));
       lid = &(data->as<float, 2>());
       data->refDec();

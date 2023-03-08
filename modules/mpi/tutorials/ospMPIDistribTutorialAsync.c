@@ -119,10 +119,8 @@ int main(int argc, char **argv)
 
   // load the MPI module, and select the MPI distributed device. Here we
   // do not call ospInit, as we want to explicitly pick the distributed
-  // device. This can also be done by passing --osp:mpi-distributed when
-  // using ospInit, however if the user doesn't pass this argument your
-  // application will likely not behave as expected
-  ospLoadModule("mpi");
+  // device.
+  ospLoadModule("mpi_distributed_cpu");
 
   OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
   ospDeviceCommit(mpiDevice);

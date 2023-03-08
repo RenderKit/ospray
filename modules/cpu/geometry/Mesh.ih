@@ -1,0 +1,25 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#include "geometry/Geometry.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL void QuadMesh_postIntersect(const Geometry *uniform _self,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags);
+
+SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags);
+
+SYCL_EXTERNAL SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
+    const int32 primID,
+    const uniform affine3f &xfm,
+    const uniform affine3f &,
+    const vec2f &s,
+    const float time);
+
+OSPRAY_END_ISPC_NAMESPACE

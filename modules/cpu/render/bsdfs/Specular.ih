@@ -5,6 +5,8 @@
 
 #include "BSDF.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // uses a variant of Blinn-Phong BRDF:
 // f = r*(n+2)/(4pi(2-2^(-n/2)))*cos(HN)^n/cos(LN)
 struct Specular
@@ -71,15 +73,21 @@ inline void Specular_Constructor(varying Specular *uniform self,
   BSDF_Constructor(&self->super,
       R,
       BSDF_GLOSSY_REFLECTION,
+      BSDF_TYPE_SPECULAR,
+#ifdef OSPRAY_TARGET_SYCL
+      NULL,
+      NULL,
+#else
       Specular_eval,
       Specular_sample,
+#endif
       frame);
 
   // convert from Phong exponent to Blinn
   self->ns = exp_ * 4.f;
   const float tmp =
-      (self->ns + 2.f) * rcp(2.f - exp(self->ns * -lntwo_over_two));
-  self->ks = R * (one_over_four_pi * tmp);
+      (self->ns + 2.f) * rcp(2.f - exp(self->ns * -(float)lntwo_over_two));
+  self->ks = R * ((float)one_over_four_pi * tmp);
   self->weight = R * (2.f * tmp * rcp(self->ns + 1.f));
 }
 
@@ -94,3 +102,5 @@ inline varying BSDF *uniform Specular_create(
   Specular_Constructor(self, frame, R, exp_);
   return &self->super;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

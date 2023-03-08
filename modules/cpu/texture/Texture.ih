@@ -6,6 +6,9 @@
 #include "../common/DifferentialGeometry.ih"
 
 #include "TextureShared.h"
+#include "texture/TextureDispatch.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline uniform bool hasAlpha(const uniform Texture *uniform self)
 {
@@ -24,7 +27,7 @@ inline uniform bool hasAlpha(const uniform Texture *uniform self)
 inline float get1f(
     const uniform Texture *uniform self, const varying DifferentialGeometry &dg)
 {
-  vec4f ret = self->get(self, dg);
+  vec4f ret = Texture_dispatch_get(self, dg);
   return ret.x;
 }
 
@@ -40,7 +43,7 @@ inline float get1f(
 inline vec3f get3f(
     const uniform Texture *uniform self, const varying DifferentialGeometry &dg)
 {
-  vec4f ret = self->get(self, dg);
+  vec4f ret = Texture_dispatch_get(self, dg);
   return make_vec3f(ret);
 }
 
@@ -56,7 +59,7 @@ inline vec3f get3f(
 inline vec4f get4f(
     const uniform Texture *uniform self, const varying DifferentialGeometry &dg)
 {
-  return self->get(self, dg);
+  return Texture_dispatch_get(self, dg);
 }
 
 /*! helper function that returns the sampled values interpreted as a normal */
@@ -66,7 +69,7 @@ inline vec3f getNormal(
   if (self == NULL)
     return make_vec3f(0.f, 0.f, 1.f);
   else
-    return self->getNormal(self, dg);
+    return Texture_dispatch_getNormal(self, dg);
 }
 
 /*! helper function: get1f() with a default value if the texture is NULL */
@@ -101,3 +104,4 @@ inline vec4f get4f(const uniform Texture *uniform self,
   else
     return get4f(self, dg);
 }
+OSPRAY_END_ISPC_NAMESPACE

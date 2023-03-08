@@ -32,7 +32,9 @@ struct HDRILight
         distribution(nullptr),
         rcpSize(0.f),
         radianceScale(1.f)
-  {}
+  {
+    super.type = LIGHT_TYPE_HDRI;
+  }
   void set(bool isVisible,
       const Instance *instance,
       const vec3f &radianceScale,

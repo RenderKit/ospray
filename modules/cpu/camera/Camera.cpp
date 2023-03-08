@@ -3,13 +3,11 @@
 
 // ospray
 #include "Camera.h"
-#include "common/Util.h"
 
 namespace ospray {
 
-static FactoryMap<Camera> g_cameraMap;
-
-Camera::Camera()
+Camera::Camera(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_CAMERA;
 }
@@ -18,16 +16,6 @@ Camera::~Camera()
 {
   if (embreeGeometry)
     rtcReleaseGeometry(embreeGeometry);
-}
-
-Camera *Camera::createInstance(const char *type)
-{
-  return createInstanceHelper(type, g_cameraMap[type]);
-}
-
-void Camera::registerType(const char *type, FactoryFcn<Camera> f)
-{
-  g_cameraMap[type] = f;
 }
 
 std::string Camera::toString() const
@@ -64,7 +52,8 @@ void Camera::commit()
   if (motionTransform.motionBlur || motionTransform.quaternion) {
     // create dummy RTCGeometry for transform interpolation or conversion
     if (!embreeGeometry)
-      embreeGeometry = rtcNewGeometry(embreeDevice, RTC_GEOMETRY_TYPE_INSTANCE);
+      embreeGeometry = rtcNewGeometry(
+          getISPCDevice().getEmbreeDevice(), RTC_GEOMETRY_TYPE_INSTANCE);
 
     motionTransform.setEmbreeTransform(embreeGeometry);
 
@@ -106,11 +95,6 @@ void Camera::commit()
   getSh()->rollingShutterHorizontal = (shutterType == OSP_SHUTTER_ROLLING_RIGHT
       || shutterType == OSP_SHUTTER_ROLLING_LEFT);
   getSh()->rollingShutterDuration = rollingShutterDuration;
-}
-
-void Camera::setDevice(RTCDevice device)
-{
-  embreeDevice = device;
 }
 
 OSPTYPEFOR_DEFINITION(Camera *);

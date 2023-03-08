@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "WriteMultipleTileOperation.h"
-#include "../fb/DistributedFrameBuffer.h"
+#include "fb/DistributedFrameBuffer.h"
+#include "fb/DistributedFrameBufferShared.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "fb/DistributedFrameBuffer_ispc.h"
+#endif
 
 namespace ospray {
 using namespace rkcommon;
@@ -138,8 +141,18 @@ void LiveWriteMultipleTile::process(const ispc::Tile &tile)
   }
 }
 
+WriteMultipleTileOperation::~WriteMultipleTileOperation()
+{
+  if (mpiGroup.comm != MPI_COMM_NULL) {
+    MPI_Comm_free(&mpiGroup.comm);
+  }
+}
+
 void WriteMultipleTileOperation::attach(DistributedFrameBuffer *dfb)
 {
+  if (mpiGroup.comm != MPI_COMM_NULL) {
+    MPI_Comm_free(&mpiGroup.comm);
+  }
   mpiGroup = mpicommon::worker.dup();
   tileInstances.resize(dfb->getGlobalTotalTiles(), 1);
 }

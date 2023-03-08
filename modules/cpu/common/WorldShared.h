@@ -7,7 +7,6 @@
 #include "render/scivis/SciVisDataShared.h"
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 
@@ -19,19 +18,29 @@ struct World
   int32 numInvertedClippers;
 
   RTCScene embreeSceneHandleGeometries;
+#ifdef OSPRAY_ENABLE_VOLUMES
   RTCScene embreeSceneHandleVolumes;
+#endif
+#ifndef OSPRAY_TARGET_SYCL
   RTCScene embreeSceneHandleClippers;
+#endif
 
-  SciVisData scivisData;
-  PathtracerData pathtracerData;
+  SciVisData *scivisData;
+  PathTracerData *pathtracerData;
 
 #ifdef __cplusplus
   World()
       : instances(nullptr),
         numInvertedClippers(0),
         embreeSceneHandleGeometries(nullptr),
+#ifdef OSPRAY_ENABLE_VOLUMES
         embreeSceneHandleVolumes(nullptr),
-        embreeSceneHandleClippers(nullptr)
+#endif
+#ifndef OSPRAY_TARGET_SYCL
+        embreeSceneHandleClippers(nullptr),
+#endif
+        scivisData(nullptr),
+        pathtracerData(nullptr)
   {}
 };
 } // namespace ispc

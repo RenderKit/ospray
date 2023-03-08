@@ -3,16 +3,81 @@
 
 #pragma once
 
-#include "embree3/rtcore.isph"
+#ifdef OSPRAY_TARGET_SYCL
+#include <sycl/sycl.hpp>
+#define __noinline __attribute__((noinline))
 
-#include "OSPConfig.h"
+namespace ispc {
+using uint64 = uint64_t;
+using uint32 = uint32_t;
+using uint16 = uint16_t;
+using uint8 = uint8_t;
+using int64 = int64_t;
+using int32 = int32_t;
+using int16 = int16_t;
+using int8 = int8_t;
+} // namespace ispc
 
-#ifndef ISPC_UINT_IS_DEFINED
-typedef unsigned int64 uint64;
-typedef unsigned int32 uint32;
-typedef unsigned int16 uint16;
-typedef unsigned int8 uint8;
+#define LOG(x)
+
+#undef PRINT
+#undef PRINT3
+
+#define PRINT(x)
+#define PRINT3(x)
+#define PRINTU(x)
+#define PRINT3U(x)
+
+/*
+// Note: SYCL printf needs the type specifier, unlike ISPC. So instead of a
+// macro we make a function that looks like the macro but overloads based on the
+// type
+#ifdef __SYCL_DEVICE_ONLY__
+// rkcommon has its own macros for the host that we conflict with
+#undef PRINT
+#undef PRINT3
+
+void PRINT(const int &x)
+{
+  sycl::ext::oneapi::experimental::printf("#x = %d\n", x);
+}
+
+void PRINT(const uint32_t &x)
+{
+  sycl::ext::oneapi::experimental::printf("#x = %u\n", x);
+}
+
+void PRINT(const float &x)
+{
+  sycl::ext::oneapi::experimental::printf("#x = %f\n", x);
+}
+
+void PRINT3(const rkcommon::math::vec3i &x)
+{
+  sycl::ext::oneapi::experimental::printf(
+      "#x = (%d, %d, %d)\n", x.x, x.y, x.z);
+}
+
+void PRINT3(const rkcommon::math::vec3ui &x)
+{
+  sycl::ext::oneapi::experimental::printf(
+      "#x = (%u, %u, %u)\n", x.x, x.y, x.z);
+}
+
+void PRINT3(const rkcommon::math::vec3f &x)
+{
+  sycl::ext::oneapi::experimental::printf(
+      "#x = (%f, %f, %f)\n", x.x, x.y, x.z);
+}
+
+// SYCL is scalar, PRINTU = PRINT, PRINT3U = PRINT3
+#define PRINTU(x) PRINT
+#define PRINT3U(x) PRINT3
+
+#define PRINT_STR(s) sycl::ext::oneapi::experimental::printf(s);
 #endif
+*/
+#else
 
 #define LOG(x)
 
@@ -30,9 +95,17 @@ typedef unsigned int8 uint8;
       extract(get(x, 1), count_trailing_zeros(lanemask())),                    \
       extract(get(x, 2), count_trailing_zeros(lanemask())))
 
+#define PRINT_STR(s) print(s);
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 /*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
 export void delete_uniform(void *uniform uptr);
 
+OSPRAY_END_ISPC_NAMESPACE
+
+#ifndef OSPRAY_TARGET_SYCL
 /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
 extern "C" void *uniform malloc64(uniform uint64 size);
 extern "C" void free64(void *uniform ptr);
@@ -41,3 +114,4 @@ extern "C" void free64(void *uniform ptr);
 extern "C" void *uniform pushTLS(uniform uint64 size);
 extern "C" void *uniform reallocTLS(void *uniform ptr, uniform uint64 size);
 extern "C" void popTLS(void *uniform ptr);
+#endif

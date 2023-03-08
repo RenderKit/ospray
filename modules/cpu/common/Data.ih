@@ -3,8 +3,10 @@
 
 #pragma once
 
-#include "../math/LinearSpace.ih"
+#include "rkcommon/math/LinearSpace.ih"
 #include "rkcommon/math/box.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct Data1D
 {
@@ -32,6 +34,22 @@ inline uniform bool valid(const uniform Data1D data)
 #define BITS 20
 
 // ok to pass-by-value, will be inlined and optimized
+#ifdef OSPRAY_TARGET_SYCL
+// SYCL execution in a thread is scalar
+// Old macro version (kept for compatibility with older code)
+#define __define_get(T)                                                        \
+  inline uniform T get_##T(const uniform Data1D data, const uniform int index) \
+  {                                                                            \
+    return *((const T *)(data.addr + data.byteStride * index));                \
+  }
+
+// New templated version
+template <typename T>
+inline T get(const Data1D data, const int index)
+{
+  return *((const T *)(data.addr + data.byteStride * index));
+}
+#else
 #define __define_get(T)                                                        \
   inline T get_##T(const uniform Data1D data, const varying int index)         \
   {                                                                            \
@@ -55,6 +73,7 @@ inline uniform bool valid(const uniform Data1D data)
   {                                                                            \
     return *((const T *)(data.addr + data.byteStride * index));                \
   }
+#endif
 
 __define_get(int32);
 __define_get(vec2i);
@@ -81,3 +100,5 @@ __define_get(linear3f);
 
 #undef __define_get
 #undef BITS
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -6,6 +6,8 @@
 #include "math/sampling.ih"
 #include "render/util.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 uniform z_order_t z_order;
 uniform bool z_order_initialized = false;
 
@@ -21,7 +23,8 @@ export void precomputeZOrder()
   }
 }
 
-float computeAO(const World *uniform world,
+SYCL_EXTERNAL float computeAO(const Renderer *uniform renderer,
+    const World *uniform world,
     const varying DifferentialGeometry &dg,
     const uniform int sampleCnt,
     const uniform float aoRadius,
@@ -32,8 +35,8 @@ float computeAO(const World *uniform world,
   // init TEA RNG //
   RandomTEA rng_state;
   varying RandomTEA *const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, sampleID.x, sampleID.y);
-  const vec2f rot = RandomTEA__getFloats(rng);
+  RandomTEA_Constructor(rng, sampleID.x, sampleID.y);
+  const vec2f rot = RandomTEA_getFloats(rng);
 
   int hits = 0;
 
@@ -41,8 +44,9 @@ float computeAO(const World *uniform world,
 
   for (uniform int i = 0; i < sampleCnt; i++) {
     // Use base-5 and base-7 Halton to avoid correlation with sample position
-    const vec2f halton = make_vec2f(
-        PermHalton_sample5(accumID + i), PermHalton_sample7(accumID + i));
+    const vec2f halton =
+        make_vec2f(PermHalton_sample5(renderer->mathConstants, accumID + i),
+            PermHalton_sample7(renderer->mathConstants, accumID + i));
     const vec2f r = CranleyPattersonRotation(halton, rot);
     const vec3f local_ao_dir = cosineSampleHemisphere(r);
     const vec3f ao_dir = localToWorld * local_ao_dir;
@@ -67,3 +71,5 @@ const z_order_t *uniform get_zorder()
 {
   return &z_order;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

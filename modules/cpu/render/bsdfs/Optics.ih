@@ -3,8 +3,10 @@
 
 #pragma once
 
-#include "math/LinearSpace.ih"
 #include "math/sampling.ih"
+#include "rkcommon/math/LinearSpace.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 /*! Reflects a viewing vector I at a normal N. Cosine between I
  *  and N is given as input. */
@@ -40,14 +42,16 @@ inline vec3f refract(
 
 inline vec3f refract(const vec3f &I, const vec3f &N, float cosI, float eta)
 {
-  const float sqrCosT = sqrCosT(cosI, eta);
-  if (sqrCosT < 0.0f)
+  const float sqrcost = sqrCosT(cosI, eta);
+  if (sqrcost < 0.0f)
     return make_vec3f(0.f);
-  return refract(I, N, cosI, sqrt(sqrCosT), eta);
+  return refract(I, N, cosI, sqrt(sqrcost), eta);
 }
 
 inline float refract(float cosI, float eta)
 {
-  const float sqrCosT = sqrCosT(cosI, eta);
-  return sqrt(max(sqrCosT, 0.0f));
+  const float sqrcost = sqrCosT(cosI, eta);
+  return sqrt(max(sqrcost, 0.0f));
 }
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -1,14 +1,24 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 // ospray
 #include "volume/Volume.h"
 #include "common/Data.h"
-#include "common/Util.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "volume/Volume_ispc.h"
+#else
+namespace ispc {
+void Volume_embreeBounds(const void *_args);
+} // namespace ispc
+#endif
 
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
+// comment break to prevent clang-format from reordering openvkl includes
+#if OPENVKL_VERSION_MAJOR > 1
+#include "openvkl/device/openvkl.h"
+#endif
 
 #include <unordered_map>
 
@@ -16,7 +26,8 @@ namespace ospray {
 
 // Volume definitions ////////////////////////////////////////////////////////
 
-Volume::Volume(const std::string &type) : vklType(type)
+Volume::Volume(api::ISPCDevice &device, const std::string &type)
+    : AddStructShared(device.getIspcrtDevice(), device), vklType(type)
 {
   // check VKL has default config for VDB
   if (type == "vdb"
@@ -48,9 +59,11 @@ std::string Volume::toString() const
 
 void Volume::commit()
 {
+  VKLDevice vklDevice = getISPCDevice().getVklDevice();
   if (!vklDevice) {
     throw std::runtime_error("invalid Open VKL device");
   }
+  RTCDevice embreeDevice = getISPCDevice().getEmbreeDevice();
   if (!embreeDevice) {
     throw std::runtime_error("invalid Embree device");
   }
@@ -83,8 +96,7 @@ void Volume::commit()
   rtcSetGeometryUserPrimitiveCount(embreeGeometry, 1);
   rtcSetGeometryBoundsFunction(
       embreeGeometry, (RTCBoundsFunction)&ispc::Volume_embreeBounds, getSh());
-  rtcSetGeometryIntersectFunction(
-      embreeGeometry, (RTCIntersectFunctionN)&ispc::Volume_intersect_kernel);
+
   rtcCommitGeometry(embreeGeometry);
 
   // Initialize shared structure
@@ -133,8 +145,8 @@ void Volume::handleParams()
           param.data.get<vec3i>().y,
           param.data.get<vec3i>().z);
     } else if (param.data.is<ManagedObject *>()) {
+      VKLDevice vklDevice = getISPCDevice().getVklDevice();
       Data *data = (Data *)param.data.get<ManagedObject *>();
-
       if (data->type == OSP_DATA) {
         auto &dataD = data->as<Data *>();
         std::vector<VKLData> vklBlockData;
@@ -206,12 +218,7 @@ void Volume::handleParams()
   });
 }
 
-void Volume::setDevice(RTCDevice embreed, VKLDevice vkld)
-{
-  embreeDevice = embreed;
-  vklDevice = vkld;
-}
-
 OSPTYPEFOR_DEFINITION(Volume *);
 
 } // namespace ospray
+#endif

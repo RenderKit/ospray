@@ -7,8 +7,33 @@
 #include "rkcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
+
+#ifdef OSPRAY_TARGET_SYCL
+namespace ispc {
+void *LiveSSAOFrameOp_create();
+void LiveSSAOFrameOp_set(void *uniform _self,
+    float nearClip,
+    float ssaoStrength,
+    void *_windowSize,
+    void *_pixelSize,
+    void *_cameraSpace,
+    void *_kernel,
+    void *_randomVecs);
+void LiveSSAOFrameOp_getOcclusion(const void *_self,
+    void *_fb,
+    float *occlusionBuffer,
+    const float radius,
+    const float checkRadius,
+    int kernelSize,
+    int programID);
+void LiveSSAOFrameOp_applyOcclusion(
+    void *_self, void *_fb, void *_color, float *occlusionBuffer);
+int8_t getProgramCount();
+} // namespace ispc
+#else
 // ispc
 #include "fb/frame_ops/SSAO_ispc.h"
+#endif
 
 namespace ospray {
 

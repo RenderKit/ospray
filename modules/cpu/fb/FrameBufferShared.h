@@ -7,16 +7,17 @@
 #include "ospray/OSPEnums.h"
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
+#endif // __cplusplus
+
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *FrameBuffer_accumulateSampleFct;
 typedef void *FrameBuffer_getRenderTaskDescFct;
 typedef void *FrameBuffer_completeTaskFct;
 #else
-#include "fb/RenderTaskDesc.ih"
-#include "render/ScreenSample.ih"
-
 struct FrameBuffer;
+struct ScreenSample;
+struct RenderTaskDesc;
 
 typedef void (*FrameBuffer_accumulateSampleFct)(FrameBuffer *uniform fb,
     const varying ScreenSample &sample,
@@ -27,7 +28,14 @@ typedef uniform RenderTaskDesc (*FrameBuffer_getRenderTaskDescFct)(
 
 typedef void (*FrameBuffer_completeTaskFct)(
     FrameBuffer *uniform fb, const uniform RenderTaskDesc &taskDesc);
-#endif // __cplusplus
+#endif
+
+enum FrameBufferType
+{
+  FRAMEBUFFER_TYPE_LOCAL,
+  FRAMEBUFFER_TYPE_SPARSE,
+  FRAMEBUFFER_TYPE_UNKNOWN,
+};
 
 /* The ISPC-side FrameBuffer allows tasks to write directly to the framebuffer
  * memory from ISPC. Given the set of task IDs to be rendered, a renderer must:
@@ -42,6 +50,7 @@ typedef void (*FrameBuffer_completeTaskFct)(
  */
 struct FrameBuffer
 {
+  FrameBufferType type;
   /* Get the task description for a given render task ID. The task description
    * stores the region that should be rendered for the task and its accumID
    */
@@ -86,7 +95,8 @@ struct FrameBuffer
 
 #ifdef __cplusplus
   FrameBuffer()
-      : getRenderTaskDesc(nullptr),
+      : type(FRAMEBUFFER_TYPE_UNKNOWN),
+        getRenderTaskDesc(nullptr),
         accumulateSample(nullptr),
         completeTask(nullptr),
         size(0),

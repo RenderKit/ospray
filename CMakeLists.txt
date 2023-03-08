@@ -41,7 +41,6 @@ list(APPEND CMAKE_MODULE_PATH
 include(ospray_macros)
 include(ospray_options)
 include(package)
-include(ispc)
 
 if (OSPRAY_INSTALL_DEPENDENCIES)
   include(ospray_redistribute_deps)

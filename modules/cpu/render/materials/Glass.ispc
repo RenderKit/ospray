@@ -5,12 +5,15 @@
 #include "render/Material.ih"
 #include "render/bsdfs/RobustDielectric.ih"
 
-#include "GlassShared.h"
+#include "Glass.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying Glass_getBSDF(const uniform Material *uniform super,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying Glass_getBSDF(
+    const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
     const Ray &ray,
@@ -26,7 +29,8 @@ const varying BSDF *varying Glass_getBSDF(const uniform Material *uniform super,
   return bsdf;
 }
 
-vec3f Glass_getTransparency(const uniform Material *uniform material,
+SYCL_EXTERNAL vec3f Glass_getTransparency(
+    const uniform Material *uniform material,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium)
@@ -41,7 +45,7 @@ vec3f Glass_getTransparency(const uniform Material *uniform material,
   return make_vec3f(1.0f - fresnelDielectric(cosThetaO, eta));
 }
 
-void Glass_selectNextMedium(const uniform Material *uniform super,
+SYCL_EXTERNAL void Glass_selectNextMedium(const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     Medium &currentMedium)
 {
@@ -58,15 +62,17 @@ void Glass_selectNextMedium(const uniform Material *uniform super,
 
 export void *uniform Glass_getBSDF_addr()
 {
-  return Glass_getBSDF;
+  return (void *uniform)Glass_getBSDF;
 }
 
 export void *uniform Glass_getTransparency_addr()
 {
-  return Glass_getTransparency;
+  return (void *uniform)Glass_getTransparency;
 }
 
 export void *uniform Glass_selectNextMedium_addr()
 {
-  return Glass_selectNextMedium;
+  return (void *uniform)Glass_selectNextMedium;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

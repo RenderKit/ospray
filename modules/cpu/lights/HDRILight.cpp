@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "HDRILight.h"
-// embree
-#include "embree3/rtcore.h"
+#include "common/StructShared.h"
+#ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "lights/HDRILight_ispc.h"
 #include "lights/Light_ispc.h"
+#else
+namespace ispc {
+void HDRILight_initDistribution(const void *map, void *distribution);
+}
+#endif
 // ispc shared
 #include "HDRILightShared.h"
 #include "common/InstanceShared.h"
@@ -21,8 +26,12 @@ void HDRILight::set(bool isVisible,
 {
   super.isVisible = isVisible;
   super.instance = instance;
-  super.sample = ispc::HDRILight_sample_addr();
-  super.eval = ispc::HDRILight_eval_addr();
+#ifndef OSPRAY_TARGET_SYCL
+  super.sample =
+      reinterpret_cast<ispc::Light_SampleFunc>(ispc::HDRILight_sample_addr());
+  super.eval =
+      reinterpret_cast<ispc::Light_EvalFunc>(ispc::HDRILight_eval_addr());
+#endif
 
   this->radianceScale = radianceScale;
   if (map) {
@@ -35,37 +44,43 @@ void HDRILight::set(bool isVisible,
     // Enable dynamic runtime instancing or apply static transformation
     if (instance) {
       if (instance->motionBlur) {
-        super.sample = ispc::HDRILight_sample_instanced_addr();
-        super.eval = ispc::HDRILight_eval_instanced_addr();
+#ifndef OSPRAY_TARGET_SYCL
+        super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+            ispc::HDRILight_sample_instanced_addr());
+        super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+            ispc::HDRILight_eval_instanced_addr());
+#endif
       } else {
         this->light2world = instance->xfm.l * this->light2world;
       }
     }
     world2light = rcp(this->light2world);
   } else {
-    super.sample = ispc::HDRILight_sample_dummy_addr();
-    super.eval = ispc::Light_eval_addr();
+#ifndef OSPRAY_TARGET_SYCL
+    super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+        ispc::HDRILight_sample_dummy_addr());
+    super.eval =
+        reinterpret_cast<ispc::Light_EvalFunc>(ispc::Light_eval_addr());
+#endif
   }
 }
 } // namespace ispc
 
 namespace ospray {
 
-HDRILight::~HDRILight()
+ISPCRTMemoryView HDRILight::createSh(
+    uint32_t, const ispc::Instance *instance) const
 {
-  ispc::HDRILight_destroyDistribution(distributionIE);
-}
-
-ispc::Light *HDRILight::createSh(uint32_t, const ispc::Instance *instance) const
-{
-  ispc::HDRILight *sh = StructSharedCreate<ispc::HDRILight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::HDRILight>(
+      getISPCDevice().getIspcrtDevice().handle());
+  ispc::HDRILight *sh = (ispc::HDRILight *)ispcrtSharedPtr(view);
   sh->set(visible,
       instance,
       coloredIntensity,
       frame,
       map->getSh(),
-      (const ispc::Distribution2D *)distributionIE);
-  return &sh->super;
+      distribution->getSh());
+  return view;
 }
 
 std::string HDRILight::toString() const
@@ -81,10 +96,14 @@ void HDRILight::commit()
   map = (Texture2D *)getParamObject("map", nullptr);
 
   // recreate distribution
-  ispc::HDRILight_destroyDistribution(distributionIE);
-  distributionIE = nullptr;
-  if (map)
-    distributionIE = ispc::HDRILight_createDistribution(map->getSh());
+  distribution = nullptr;
+  if (map) {
+    distribution = new Distribution2D(map->getSh()->size, getISPCDevice());
+    // Release extra local ref
+    distribution->refDec();
+
+    ispc::HDRILight_initDistribution(map->getSh(), distribution->getSh());
+  }
 
   frame.vx = normalize(-dir);
   frame.vy = normalize(cross(frame.vx, up));

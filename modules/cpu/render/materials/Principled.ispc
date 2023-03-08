@@ -19,12 +19,14 @@
 #include "render/bsdfs/Transmission.ih"
 #include "texture/TextureParam.ih"
 
-#include "PrincipledShared.h"
+#include "Principled.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying Principled_getBSDF(
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -40,7 +42,7 @@ const varying BSDF *varying Principled_getBSDF(
       makeShadingFrame(dg, self->normalMap, self->normalRot, self->normal));
   const float rotation =
       clamp(self->rotation * get1f(self->rotationMap, dg, 1.f));
-  const float theta = 2.f * pi * rotation;
+  const float theta = 2.f * (float)pi * rotation;
   if (theta > 0.f) {
     frame->vx = rotate(frame->vx, frame->vz, theta);
     frame->vy = cross(frame->vz, frame->vx);
@@ -147,6 +149,7 @@ const varying BSDF *varying Principled_getBSDF(
                 specular);
           } else {
             plasticBsdf = MicrofacetDielectricLayer_create(ctx,
+                super->microfacetAlbedoTables,
                 baseFrame,
                 plasticBsdf,
                 eta,
@@ -175,8 +178,12 @@ const varying BSDF *varying Principled_getBSDF(
             if (roughness < EPS && !valid(self->roughnessMap))
               glassBsdf = Dielectric_create(ctx, baseFrame, eta);
             else
-              glassBsdf = MicrofacetDielectric_create(
-                  ctx, baseFrame, eta, roughness, anisotropy);
+              glassBsdf = MicrofacetDielectric_create(ctx,
+                  super->microfacetAlbedoTables,
+                  baseFrame,
+                  eta,
+                  roughness,
+                  anisotropy);
           } else {
             // thin
             const vec3f transmissionColor = clamp(self->transmissionColor
@@ -193,8 +200,13 @@ const varying BSDF *varying Principled_getBSDF(
               glassBsdf =
                   ThinDielectric_create(ctx, baseFrame, eta, attenuation);
             else
-              glassBsdf = ThinMicrofacetDielectric_create(
-                  ctx, baseFrame, eta, roughness, anisotropy, attenuation);
+              glassBsdf = ThinMicrofacetDielectric_create(ctx,
+                  super->microfacetAlbedoTables,
+                  baseFrame,
+                  eta,
+                  roughness,
+                  anisotropy,
+                  attenuation);
           }
         } else {
           glassBsdf = Transmission_create(ctx, baseFrame, make_vec3f(1.f));
@@ -216,8 +228,12 @@ const varying BSDF *varying Principled_getBSDF(
       if (roughness < EPS)
         conductorBsdf = Conductor_create(ctx, baseFrame, fresnel);
       else
-        conductorBsdf = MicrofacetConductor_create(
-            ctx, baseFrame, fresnel, roughness, anisotropy);
+        conductorBsdf = MicrofacetConductor_create(ctx,
+            super->microfacetAlbedoTables,
+            baseFrame,
+            fresnel,
+            roughness,
+            anisotropy);
 
       MultiBSDF_add(baseBsdf, conductorBsdf, conductor, conductor);
     }
@@ -259,6 +275,7 @@ const varying BSDF *varying Principled_getBSDF(
               ctx, coatFrame, bsdf, coatEta, coatColor, coatThickness, coat);
         } else {
           bsdf = MicrofacetDielectricLayer_create(ctx,
+              super->microfacetAlbedoTables,
               coatFrame,
               bsdf,
               coatEta,
@@ -282,8 +299,13 @@ const varying BSDF *varying Principled_getBSDF(
       const float sheenRoughness =
           clamp(self->sheenRoughness * get1f(self->sheenRoughnessMap, dg, 1.f));
 
-      bsdf = MicrofacetSheenLayer_create(
-          ctx, coatFrame, bsdf, sheenColor, sheenRoughness, sheen);
+      bsdf = MicrofacetSheenLayer_create(ctx,
+          super->microfacetAlbedoTables,
+          coatFrame,
+          bsdf,
+          sheenColor,
+          sheenRoughness,
+          sheen);
     }
   }
 
@@ -306,13 +328,14 @@ const varying BSDF *varying Principled_getBSDF(
   return bsdf;
 }
 
-vec3f Principled_getTransparency(const uniform Material *uniform material,
+SYCL_EXTERNAL vec3f Principled_getTransparency(
+    const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     const Ray &ray,
     const Medium &currentMedium)
 {
   const uniform Principled *uniform self =
-      (const uniform Principled *uniform)material;
+      (const uniform Principled *uniform)super;
   vec3f T = make_vec3f(0.f);
 
   float opacity = clamp(self->opacity * get1f(self->opacityMap, dg, 1.f));
@@ -376,7 +399,11 @@ vec3f Principled_getTransparency(const uniform Material *uniform material,
             T = ThinDielectric_getTransparency(cosThetaO, eta, attenuation);
           else
             T = ThinMicrofacetDielectric_getTransparency(
-                cosThetaO, eta, roughness, attenuation);
+                super->microfacetAlbedoTables,
+                cosThetaO,
+                eta,
+                roughness,
+                attenuation);
         }
       } else {
         T = make_vec3f(1.f);
@@ -412,7 +439,9 @@ vec3f Principled_getTransparency(const uniform Material *uniform material,
                       cosThetaO, coatEta, coatColor, coatThickness, coat);
             } else {
               T = T
-                  * MicrofacetDielectricLayer_getTransparency(cosThetaO,
+                  * MicrofacetDielectricLayer_getTransparency(
+                      super->microfacetAlbedoTables,
+                      cosThetaO,
                       coatEta,
                       coatColor,
                       coatThickness,
@@ -431,7 +460,10 @@ vec3f Principled_getTransparency(const uniform Material *uniform material,
 
           T = T
               * MicrofacetSheenLayer_getTransparency(
-                  cosThetaO, sheenRoughness, sheen);
+                  super->microfacetAlbedoTables,
+                  cosThetaO,
+                  sheenRoughness,
+                  sheen);
         }
 
         T = T * glass;
@@ -445,7 +477,8 @@ vec3f Principled_getTransparency(const uniform Material *uniform material,
   return T;
 }
 
-void Principled_selectNextMedium(const uniform Material *uniform super,
+SYCL_EXTERNAL void Principled_selectNextMedium(
+    const uniform Material *uniform super,
     const DifferentialGeometry &dg,
     Medium &currentMedium)
 {
@@ -477,15 +510,17 @@ void Principled_selectNextMedium(const uniform Material *uniform super,
 
 export void *uniform Principled_getBSDF_addr()
 {
-  return Principled_getBSDF;
+  return (void *uniform)Principled_getBSDF;
 }
 
 export void *uniform Principled_getTransparency_addr()
 {
-  return Principled_getTransparency;
+  return (void *uniform)Principled_getTransparency;
 }
 
 export void *uniform Principled_selectNextMedium_addr()
 {
-  return Principled_selectNextMedium;
+  return (void *uniform)Principled_selectNextMedium;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

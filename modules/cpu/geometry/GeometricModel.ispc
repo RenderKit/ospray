@@ -8,6 +8,8 @@
 // c++ shared
 #include "common/InstanceShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 export uniform int GeometricModel_gatherEmissivePrimIDs(void *uniform _model,
     void *uniform _renderer,
     void *uniform _instance,
@@ -22,7 +24,12 @@ export uniform int GeometricModel_gatherEmissivePrimIDs(void *uniform _model,
 
   // create the list of emissive primitive IDs
   uniform int32 numEmissivePrims = 0;
+#ifdef OSPRAY_TARGET_SYCL
+  // SYCL execution in a thread is scalar
+  for (int primID = 0; primID < geo->numPrimitives; ++primID) {
+#else
   foreach (primID = 0 ... geo->numPrimitives) {
+#endif
     Material *mat =
         (Material *)GeometricModel_getMaterial(model, renderer, primID);
     const vec3f emission = mat->emission;
@@ -36,11 +43,14 @@ export uniform int GeometricModel_gatherEmissivePrimIDs(void *uniform _model,
 
   // create the sampling distribution
   // TODO: use emissive power instead of just area
-  // TODO: motion blur can introduce scale, which means areas cannot accurately
-  // be precomputed
+  // TODO: motion blur can introduce scale, which means areas cannot
+  // accurately be precomputed
+  // Note: Can stay as a ptr call if not moved to GPU
   geo->getAreas(geo, primIDs, numEmissivePrims, instance->xfm, distribution);
   pdf = model->areaPDF =
       1.f / Distribution1D_create(numEmissivePrims, distribution);
 
   return numEmissivePrims;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

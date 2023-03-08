@@ -3,7 +3,15 @@
 
 #include "Distribution1D.ih"
 
-export uniform float Distribution1D_create(
+#ifdef OSPRAY_TARGET_SYCL
+#include <limits>
+#endif
+
+// Pre-condition: size > 0
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL export uniform float Distribution1D_create(
     const uniform int size, uniform float *uniform cdf)
 {
   // accumulate the function
@@ -15,10 +23,18 @@ export uniform float Distribution1D_create(
   // compute reciprocal sum
   const uniform float rcpSum = 1.0f / sum;
   // next representable number in float greater than 1.0f
+#ifdef OSPRAY_TARGET_SYCL
+  const float nextAfter1 = 1.f + std::numeric_limits<float>::epsilon();
+#else
   const uniform float nextAfter1 = 0x1.000002p+0f;
+#endif
 
   // normalize
+#ifdef OSPRAY_TARGET_SYCL
+  for (int i = 0; i < size; ++i) {
+#else
   foreach (i = 0 ... size) {
+#endif
     const float c = cdf[i];
     // handle cornercases (sum=0 -> rcpSum=inf; correct termination of sampling
     // with s=1.0f)
@@ -28,3 +44,4 @@ export uniform float Distribution1D_create(
 
   return sum;
 }
+OSPRAY_END_ISPC_NAMESPACE

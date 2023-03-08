@@ -4,18 +4,32 @@
 #pragma once
 
 // ospray
+#include "common/StructShared.h"
 #include "render/Renderer.h"
+// ispc shared
+#include "DebugRendererShared.h"
 
 namespace ospray {
 
-struct DebugRenderer : public Renderer
+struct DebugRenderer : public AddStructShared<Renderer, ispc::DebugRenderer>
 {
-  DebugRenderer();
+  DebugRenderer(api::ISPCDevice &device);
   virtual ~DebugRenderer() override = default;
 
-  virtual std::string toString() const override;
+  std::string toString() const override;
 
-  virtual void commit() override;
+  void commit() override;
+
+  virtual void renderTasks(FrameBuffer *fb,
+      Camera *camera,
+      World *world,
+      void *perFrameData,
+      const utility::ArrayView<uint32_t> &taskIDs
+#ifdef OSPRAY_TARGET_SYCL
+      ,
+      sycl::queue &syclQueue
+#endif
+  ) const override;
 };
 
 } // namespace ospray

@@ -1,0 +1,66 @@
+## Copyright 2009 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: Benchmark
+
+on:
+  schedule:
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+### BUILD JOBS ###
+
+  build-centos8:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      image: centos:8
+      cmd: |
+        scripts/build/linux.sh -G Ninja
+      artifact-out: build-centos8
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+### Benchmarks ###
+
+  benchmark-x8280-1:
+    needs: build-centos8
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '["vis-perf-x8280-1"]'
+      cmd: |
+        scripts/tests/run-benchmarks.sh
+      artifact-in: build-centos8
+
+  benchmark-x8380-1:
+    needs: build-centos8
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '["vis-perf-x8380-1"]'
+      cmd: |
+        scripts/tests/run-benchmarks.sh
+      artifact-in: build-centos8
+
+  benchmark-a-1:
+    needs: build-centos8
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '["vis-perf-a3970x-1"]'
+      cmd: |
+        scripts/tests/run-benchmarks.sh
+      artifact-in: build-centos8
+
+  benchmark-adl-1:
+    needs: build-centos8
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '["vis-perf-i9-12900k-1"]'
+      cmd: |
+        scripts/tests/run-benchmarks.sh
+      artifact-in: build-centos8

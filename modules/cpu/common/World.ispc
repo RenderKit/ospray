@@ -2,25 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "World.ih"
-#include "math/Distribution1D.ih"
-#include "render/pathtracer/GeometryLight.ih"
-// c++ shared
-#include "lights/LightShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifndef OSPRAY_TARGET_SYCL
 unmasked void clippingIntersectionFilterV(
-    const struct RTCFilterFunctionNArguments *uniform args)
+    const RTCFilterFunctionNArguments *uniform args)
 {
   // Set execution mask
-  varying int *uniform valid = (varying int *uniform)args->valid;
-  if (*valid == 0)
+  uniform int *uniform valid = args->valid;
+  if (!valid[programIndex])
     return;
 
   // Get pointer to the intersection context
-  uniform UserIntersectionContextForClipping *uniform context =
-      (uniform UserIntersectionContextForClipping * uniform) args->context;
+  EmbreeRayQueryContextClipping *uniform context =
+      (EmbreeRayQueryContextClipping * uniform) args->context;
 
   // We skip this intersection to collect all remaining intersections
-  *valid = 0;
+  valid[programIndex] = 0;
 
   // Skip if array is full
   if (context->hitsCount >= CLIPPING_HITS_MAX_COUNT)
@@ -43,8 +42,14 @@ unmasked void clippingIntersectionFilterV(
     ray->primID = hit->primID;
     ray->geomID = hit->geomID;
 
-    // We need to call postIntersect on clipping geometry
+// We need to call postIntersect on clipping geometry
+#ifdef OSPRAY_TARGET_SYCL
+    {
+      // SYCL execution in a thread is scalar
+      const uint32 instID = hit->instID[0];
+#else
     foreach_unique (instID in hit->instID[0]) {
+#endif
       // Call postIntersect to get shading normal
       Instance *uniform instance = *(context->world->instances + instID);
       Instance_postIntersect(instance, NULL, dg, *ray, DG_NG | DG_NS, true);
@@ -98,3 +103,6 @@ unmasked void clippingIntersectionFilterV(
   context->hits[context->hitsCount] = cHit;
   context->hitsCount++;
 }
+#endif
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -12,13 +12,27 @@
 #include "rkcommon/tasking/parallel_for.h"
 #include "rkcommon/utility/getEnvVar.h"
 
-#include "../../common/DistributedWorld.h"
-#include "../../common/Profiling.h"
-#include "../../fb/DistributedFrameBuffer.h"
 #include "AlphaCompositeTileOperation.h"
 #include "DistributedRaycast.h"
+#include "common/DistributedWorld.h"
+#include "common/Profiling.h"
+#include "fb/DistributedFrameBuffer.h"
+
 // ispc exports
+#ifndef OSPRAY_TARGET_SYCL
 #include "render/distributed/DistributedRaycast_ispc.h"
+#else
+namespace ispc {
+SYCL_EXTERNAL void DistributedRaycast_renderRegionToTileTask(void *_self,
+    void *_fb,
+    void *_camera,
+    void *_world,
+    const void *_region,
+    void *perFrameData,
+    const void *_taskIDs,
+    const int taskIndex0);
+}
+#endif
 
 namespace ospray {
 namespace mpi {
@@ -29,11 +43,10 @@ static bool DETAILED_LOGGING = false;
 
 // DistributedRaycastRenderer definitions /////////////////////////////////
 
-DistributedRaycastRenderer::DistributedRaycastRenderer()
-    : mpiGroup(mpicommon::worker.dup())
+DistributedRaycastRenderer::DistributedRaycastRenderer(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device),
+      mpiGroup(mpicommon::worker.dup())
 {
-  getSh()->super.renderRegionSample = ispc::DRR_renderRegionSample_addr();
-
   DETAILED_LOGGING =
       utility::getEnvVar<int>("OSPRAY_DP_API_TRACING").value_or(0);
 
@@ -48,6 +61,7 @@ DistributedRaycastRenderer::DistributedRaycastRenderer()
 
 DistributedRaycastRenderer::~DistributedRaycastRenderer()
 {
+  MPI_Comm_free(&mpiGroup.comm);
   if (DETAILED_LOGGING) {
     *statsLog << "\n" << std::flush;
   }
@@ -69,6 +83,61 @@ std::shared_ptr<TileOperation> DistributedRaycastRenderer::tileOperation()
 {
   return std::make_shared<AlphaCompositeTileOperation>();
 }
+
+#ifndef OSPRAY_TARGET_SYCL
+void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
+    Camera *camera,
+    DistributedWorld *world,
+    const box3f &region,
+    void *perFrameData,
+    const utility::ArrayView<uint32_t> &taskIDs) const
+{
+  ispc::DistributedRaycast_renderRegionToTileTask(getSh(),
+      fb->getSh(),
+      camera->getSh(),
+      world->getSh(),
+      (ispc::box3f *)&region,
+      perFrameData,
+      taskIDs.data(),
+      taskIDs.size());
+}
+#else
+void DistributedRaycastRenderer::renderRegionTasks(SparseFrameBuffer *fb,
+    Camera *camera,
+    DistributedWorld *world,
+    const box3f &region,
+    void *perFrameData,
+    const utility::ArrayView<uint32_t> &taskIDs,
+    sycl::queue &syclQueue) const
+{
+  auto *rendererSh = getSh();
+  auto *fbSh = fb->getSh();
+  auto *cameraSh = camera->getSh();
+  auto *worldSh = world->getSh();
+  const uint32_t *taskIDsPtr = taskIDs.data();
+  const size_t numTasks = taskIDs.size();
+
+  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+    const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
+    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
+      const box3f regionCopy = region;
+      if (taskIndex.get_global_id(0) < numTasks) {
+        ispc::DistributedRaycast_renderRegionToTileTask(&rendererSh->super,
+            fbSh,
+            cameraSh,
+            worldSh,
+            (ispc::box3f *)&regionCopy,
+            perFrameData,
+            taskIDsPtr,
+            taskIndex.get_global_id(0));
+      }
+    });
+  });
+  event.wait_and_throw();
+  // For prints we have to flush the entire queue, because other stuff is queued
+  syclQueue.wait_and_throw();
+}
+#endif
 
 std::string DistributedRaycastRenderer::toString() const
 {

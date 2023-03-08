@@ -1,11 +1,16 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include "fb/FrameBuffer.ih"
-#include "fb/Tile.ih"
+#include "fb/TileShared.h"
 #include "rkcommon/math/vec.ih"
 
 #include "fb/FrameBufferShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // accumulates the colors in a tile, writes the final normalized colors into a
 // separate tile, and computes the error
@@ -131,7 +136,7 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
   Tile *uniform final = (Tile * uniform) _final;
   const uniform vec2i size = box_size(tile->region);
   const uniform int maxi = size.y * (TILE_SIZE / programCount);
-  if (tile->accumID < 1)
+  if (tile->accumID < 1) {
     for (uniform int i = 0; i < maxi; i++) {
       const float fnx = tile->nx[i];
       const float fny = tile->ny[i];
@@ -139,18 +144,44 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
       accum->nx[i] = fnx;
       accum->ny[i] = fny;
       accum->nz[i] = fnz;
-      // TODO: Is it not safe to assume the nx/ny/nz are packed in memory?
-      // It seems like this soa to aos conversion should not be needed
+#ifdef OSPRAY_TARGET_SYCL
+      final->nx[3 * i] = fnx;
+      final->nx[3 * i + 1] = fny;
+      final->nx[3 * i + 2] = fnz;
+      /*
+      final->nx[i] = fnx;
+      final->ny[i] = fny;
+      final->nz[i] = fnz;
+      */
+#else
+      // TODO: This is not right but some other bug/data use cancels it out.
+      // The tile struct stores SoA layout memory too, but here we treat it
+      // like SoA for some reason, so final->nx will hold:
+      // {fnx0, fny0, fnz0, fnx1, fny1, fnz1, ..., progCount,...}
+      // after the write here
       soa_to_aos3(fnx, fny, fnz, final->nx + 3 * programCount * i);
+#endif
+
       const float far = tile->ar[i];
       const float fag = tile->ag[i];
       const float fab = tile->ab[i];
       accum->ar[i] = far;
       accum->ag[i] = fag;
       accum->ab[i] = fab;
+#ifdef OSPRAY_TARGET_SYCL
+      final->ar[3 * i] = far;
+      final->ar[3 * i + 1] = fag;
+      final->ar[3 * i + 2] = fab;
+      /*
+      final->ar[i] = far;
+      final->ag[i] = fag;
+      final->ab[i] = fab;
+      */
+#else
       soa_to_aos3(far, fag, fab, final->ar + 3 * programCount * i);
+#endif
     }
-  else {
+  } else {
     const uniform float rcpAccumID = rcpf(tile->accumID + 1);
     for (uniform int i = 0; i < maxi; i++) {
       accum->nx[i] += tile->nx[i];
@@ -159,14 +190,37 @@ export void DFB_accumulateAuxTile(const VaryingTile *uniform tile,
       const float fnx = accum->nx[i] * rcpAccumID;
       const float fny = accum->ny[i] * rcpAccumID;
       const float fnz = accum->nz[i] * rcpAccumID;
+#ifdef OSPRAY_TARGET_SYCL
+      final->nx[3 * i] = fnx;
+      final->nx[3 * i + 1] = fny;
+      final->nx[3 * i + 2] = fnz;
+      /*
+      final->nx[i] = fnx;
+      final->ny[i] = fny;
+      final->nz[i] = fnz;
+      */
+#else
       soa_to_aos3(fnx, fny, fnz, final->nx + 3 * programCount * i);
+#endif
+
       accum->ar[i] += tile->ar[i];
       accum->ag[i] += tile->ag[i];
       accum->ab[i] += tile->ab[i];
       const float far = accum->ar[i] * rcpAccumID;
       const float fag = accum->ag[i] * rcpAccumID;
       const float fab = accum->ab[i] * rcpAccumID;
+#ifdef OSPRAY_TARGET_SYCL
+      final->ar[3 * i] = far;
+      final->ar[3 * i + 1] = fag;
+      final->ar[3 * i + 2] = fab;
+      /*
+      final->ar[i] = far;
+      final->ag[i] = fag;
+      final->ab[i] = fab;
+      */
+#else
       soa_to_aos3(far, fag, fab, final->ar + 3 * programCount * i);
+#endif
     }
   }
 }
@@ -217,13 +271,21 @@ export uniform float DFB_computeErrorForTile(const uniform vec2i &size,
 
 template_writeTile(RGBA8, varying uint32, cvt_uint32);
 template_writeTile(SRGBA, varying uint32, linear_to_srgba8);
-inline vec4f soa_to_aos4f(const vec4f s)
+#ifndef OSPRAY_TARGET_SYCL
+inline vec4f soa_to_aos4f(varying vec4f s)
 {
   vec4f a;
   soa_to_aos4(s.x, s.y, s.z, s.w, (uniform float *uniform) & a);
   return a;
 }
 template_writeTile(RGBA32F, varying vec4f, soa_to_aos4f);
+#else
+inline vec4f cvt_nop(const vec4f &v)
+{
+  return v;
+}
+template_writeTile(RGBA32F, varying vec4f, cvt_nop);
+#endif
 #undef template_writeTile
 
 export void DFB_zComposite(
@@ -350,8 +412,19 @@ export void DFB_sortAndBlendFragments(
       tileArray, numTiles, 0, TILE_SIZE * TILE_SIZE / programCount);
 }
 
-task void DFB_runPixelOpsTask(
-    FrameBuffer *uniform fb, VaryingTile *uniform tile)
+#ifndef OSPRAY_TARGET_SYCL
+task
+#else
+SYCL_EXTERNAL
+#endif
+    void
+    DFB_runPixelOpsTask(FrameBuffer *uniform fb,
+        VaryingTile *uniform tile
+#ifdef OSPRAY_TARGET_SYCL
+        ,
+        const int taskIndex0
+#endif
+    )
 {
   const uniform int chunk = taskIndex0;
   vec4f color = make_vec4f(
@@ -379,5 +452,14 @@ export void DFB_runPixelOpsForTile(void *uniform _self, void *uniform _tile)
   FrameBuffer *uniform fb = (FrameBuffer * uniform) _self;
   // Each task processes programCount pixels
   const uniform int ntasks = TILE_SIZE * TILE_SIZE / programCount;
+#ifndef OSPRAY_TARGET_SYCL
   launch[ntasks] DFB_runPixelOpsTask(fb, (VaryingTile * uniform) tile);
+#else
+  // Later can lift this up to be a parallel loop on the CPU for SYCL builds
+  for (int i = 0; i < ntasks; ++i) {
+    DFB_runPixelOpsTask(fb, (VaryingTile * uniform) tile, i);
+  }
+#endif
 }
+
+OSPRAY_END_ISPC_NAMESPACE

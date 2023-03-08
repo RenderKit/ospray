@@ -1,0 +1,19 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "common/OSPCommon.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+struct Texture;
+struct DifferentialGeometry;
+
+SYCL_EXTERNAL __noinline vec4f Texture_dispatch_get(
+    const uniform Texture *uniform self, const DifferentialGeometry &dg);
+
+SYCL_EXTERNAL __noinline vec3f Texture_dispatch_getNormal(
+    const uniform Texture *const uniform self, const DifferentialGeometry &dg);
+
+OSPRAY_END_ISPC_NAMESPACE

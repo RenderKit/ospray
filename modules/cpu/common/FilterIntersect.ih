@@ -6,10 +6,15 @@
 #include "Intersect.ih"
 #include "Ray.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifndef OSPRAY_TARGET_SYCL
+unmasked void clippingIntersectionFilterV(
+    const RTCFilterFunctionNArguments *uniform args);
+
 inline bool filterCall(const RTCIntersectFunctionNArguments *uniform args,
     const RTCHit &rtcHitTemp)
 {
-  // prepare execution mask
   varying int imask;
   varying bool mask = __mask;
   unmasked
@@ -25,11 +30,12 @@ inline bool filterCall(const RTCIntersectFunctionNArguments *uniform args,
   filterArgs.ray = (RTCRayN * uniform) args->rayhit;
   filterArgs.hit = (RTCHitN * uniform) & rtcHitTemp;
   filterArgs.N = args->N;
-  rtcFilterIntersection(args, &filterArgs);
+  clippingIntersectionFilterV(&filterArgs);
 
   // return true if hit has been accepted
-  return (imask == -1);
+  return imask == -1;
 }
+#endif
 
 inline bool filterIntersectionSingle(
     const RTCIntersectFunctionNArguments *uniform args,
@@ -39,7 +45,7 @@ inline bool filterIntersectionSingle(
 {
   // if there is a hit
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
-  if (and(hit.hit, and(hit.t > ray->t0, hit.t <= ray->t))) {
+  if (hit.hit && hit.t > ray->t0 && hit.t <= ray->t) {
     // set a new hit value
     const float tOld = ray->t;
     ray->t = hit.t;
@@ -55,24 +61,34 @@ inline bool filterIntersectionSingle(
     rtcHitTemp.geomID = args->geomID;
     rtcHitTemp.instID[0] = args->context->instID[0];
 
-    // call filter intersection callback
-    bool accept = filterCall(args, rtcHitTemp);
+    // call filter intersection callback if needed
+#ifndef OSPRAY_TARGET_SYCL
+    EmbreeRayQueryContextDefault *uniform ctx =
+        (EmbreeRayQueryContextDefault * uniform) args->context;
+    uniform bool noFilter = ctx->type != ERQCT_CLIPPING;
+    bool accept = noFilter || filterCall(args, rtcHitTemp);
+#else
+    bool accept = true;
+#endif
     if (alwaysReject) {
       // the hit is always rejected
       ray->t = tOld;
-    }
-    else
-    {
+    } else {
       if (accept) {
         // hit has been accepted
         if (isOcclusionTest) {
           ray->t = neg_inf;
-        }
-        else
-        {
-          varying RTCHit *uniform rtcHit =
-              (varying RTCHit * uniform) & ray->Ng.x;
-          *rtcHit = rtcHitTemp;
+        } else {
+          ray->Ng.x = hit.N.x;
+          ray->Ng.y = hit.N.y;
+          ray->Ng.z = hit.N.z;
+
+          ray->u = hit.u;
+          ray->v = 0.f;
+
+          ray->primID = args->primID;
+          ray->geomID = args->geomID;
+          ray->instID = args->context->instID[0];
         }
         return true;
       } else {
@@ -93,6 +109,8 @@ inline bool filterIntersectionBoth(
     const uniform bool isOcclusionTest)
 {
   if (!filterIntersectionSingle(args, isect.entry, isOcclusionTest, false)) {
-    filterIntersectionSingle(args, isect.exit, isOcclusionTest, false);
+    return filterIntersectionSingle(args, isect.exit, isOcclusionTest, false);
   }
+  return true;
 }
+OSPRAY_END_ISPC_NAMESPACE

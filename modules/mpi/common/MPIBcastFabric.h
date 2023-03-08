@@ -10,6 +10,7 @@
 #include "rkcommon/utility/AbstractArray.h"
 
 #include "MPICommon.h"
+#include "ospray_mpi_common_export.h"
 
 namespace mpicommon {
 
@@ -19,12 +20,12 @@ namespace mpicommon {
  *  be duplicated to avoid MPI collective matching issues with other
  *  fabrics and collectives.
  */
-class MPIFabric : public networking::Fabric
+class OSPRAY_MPI_COMMON_EXPORT MPIFabric : public networking::Fabric
 {
  public:
   MPIFabric(const Group &parentGroup, int bcastRoot);
 
-  virtual ~MPIFabric() override = default;
+  virtual ~MPIFabric() override;
 
   void sendBcast(std::shared_ptr<utility::AbstractArray<uint8_t>> buf) override;
 

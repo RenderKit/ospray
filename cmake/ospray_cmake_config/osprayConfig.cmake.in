@@ -93,12 +93,16 @@ set(OSPRAY_COMPILER_MSVC  @OSPRAY_COMPILER_MSVC@)
 
 set(OSPRAY_ISPC_TARGET_LIST    @OSPRAY_ISPC_TARGET_LIST@)
 set(OSPRAY_ISPC_ADDRESSING     @OSPRAY_ISPC_ADDRESSING@)
+set(OSPRAY_ENABLE_VOLUMES      @OSPRAY_ENABLE_VOLUMES@)
 
 set(OSPRAY_TILE_SIZE      @OSPRAY_TILE_SIZE@)
 
 set(RKCOMMON_VERSION_REQUIRED @RKCOMMON_VERSION_REQUIRED@)
-set(EMBREE_VERSION_REQUIRED    @EMBREE_VERSION_REQUIRED@)
-set(OPENVKL_VERSION_REQUIRED   @OPENVKL_VERSION_REQUIRED@)
+
+set(EMBREE_VERSION_REQUIRED     @EMBREE_VERSION_REQUIRED@)
+if (OSPRAY_ENABLE_VOLUMES)
+  set(OPENVKL_VERSION_REQUIRED   @OPENVKL_VERSION_REQUIRED@)
+endif()
 
 ###############################################################################
 # OSPRay dependencies
@@ -134,7 +138,7 @@ if (OSPRAY_INSTALL_DEPENDENCIES)
 else()
   # Find existing Dependencies on the machine
   if (NOT TARGET embree)
-    ospray_find_embree(${EMBREE_VERSION_REQUIRED})
+    ospray_find_embree(${EMBREE_VERSION_REQUIRED} TRUE)
     ospray_verify_embree_features()
   endif()
 
@@ -144,13 +148,15 @@ else()
       INTERFACE_INCLUDE_DIRECTORIES)
   endif()
 
-  if (NOT TARGET openvkl::openvkl)
-    ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
+  if (OSPRAY_ENABLE_VOLUMES)
+    if (NOT TARGET openvkl::openvkl)
+      ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} TRUE)
+    endif()
+    set(OPENVKL_LIBRARY openvkl::openvkl)
   endif()
 
   set(EMBREE_LIBRARY embree)
   set(RKCOMMON_LIBRARY rkcommon::rkcommon)
-  set(OPENVKL_LIBRARY openvkl::openvkl)
 endif()
 
 # Restore state

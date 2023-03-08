@@ -10,9 +10,9 @@ namespace ospray {
 //! an AmbientLight is a constant light that is present everywhere
 struct OSPRAY_SDK_INTERFACE AmbientLight : public Light
 {
-  AmbientLight() = default;
+  AmbientLight(api::ISPCDevice &device) : Light(device) {}
   virtual ~AmbientLight() override = default;
-  virtual ispc::Light *createSh(
+  virtual ISPCRTMemoryView createSh(
       uint32_t, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;

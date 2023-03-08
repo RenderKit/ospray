@@ -3,10 +3,14 @@
 
 #pragma once
 
+#include "OSPConfig.h"
 #include "common/World.ih"
 #include "rkcommon/math/vec.ih"
 
-float computeAO(const World *uniform,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL float computeAO(const Renderer *uniform,
+    const World *uniform,
     const varying DifferentialGeometry &,
     const uniform int sampleCnt,
     const uniform float aoRadius,
@@ -74,4 +78,10 @@ inline void deinterleaveZOrder(
   *y = unpartitionZOrder(z >> 1);
 }
 
+#ifdef OSPRAY_TARGET_SYCL
+const z_order_t *get_zorder();
+#else
 extern const z_order_t *uniform get_zorder();
+#endif
+
+OSPRAY_END_ISPC_NAMESPACE

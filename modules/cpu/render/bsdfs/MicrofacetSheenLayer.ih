@@ -7,6 +7,8 @@
 #include "MicrofacetAlbedoTables.ih"
 #include "SheenDistribution.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Microfacet sheen BSDF for cloth-like materials.
 // [Conty and Kulla, 2017, "Production Friendly Microfacet Sheen BRDF"]
 // [Kulla and Conty, 2017, "Revisiting Physically Based Shading at Imageworks"]
@@ -18,6 +20,7 @@ struct MicrofacetSheenLayer
   vec3f R;
   SheenDistribution microfacet;
   float roughness;
+  const MicrofacetAlbedoTables *uniform microfacetAlbedoTables;
 
   float weight;
 };
@@ -35,13 +38,28 @@ inline BSDF_EvalRes MicrofacetSheenLayer_eval(
 
   // Evaluate the substrate
   BSDF_EvalRes substrate;
-  foreach_unique (f in self->substrate)
-    substrate = f->eval(f, wo, wi);
+#ifdef OSPRAY_TARGET_SYCL
+  {
+    const BSDF *f = self->substrate;
+#else
+  foreach_unique (f in self->substrate) {
+#endif
+    // Because of how the dispatches are unrolled to hide the potential
+    // recursion (that we know will terminate) from the SYCL compiler we have
+    // to call MultiBSDF directly here if we have a layer over a MultiBSDF
+    if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
+      substrate = MultiBSDF_eval(f, wo, wi); // f->eval(f, wo, wi);
+    } else {
+      substrate = BSDF_dispatch_eval_base(f, wo, wi); // f->eval(f, wo, wi);
+    }
+  }
 
   // Energy conservation
-  float Ro = MicrofacetSheenAlbedoTable_eval(cosThetaO, self->roughness)
+  float Ro = MicrofacetSheenAlbedoTable_eval(
+                 self->microfacetAlbedoTables, cosThetaO, self->roughness)
       * self->weight;
-  float Ri = MicrofacetSheenAlbedoTable_eval(abs(cosThetaI), self->roughness)
+  float Ri = MicrofacetSheenAlbedoTable_eval(
+                 self->microfacetAlbedoTables, abs(cosThetaI), self->roughness)
       * self->weight;
   float T = min(1.f - Ro, 1.f - Ri);
   substrate.value = substrate.value * T;
@@ -92,7 +110,8 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
     return make_BSDF_SampleRes_zero();
 
   // Energy conservation
-  float Ro = MicrofacetSheenAlbedoTable_eval(cosThetaO, self->roughness)
+  float Ro = MicrofacetSheenAlbedoTable_eval(
+                 self->microfacetAlbedoTables, cosThetaO, self->roughness)
       * self->weight;
 
   // Sample the coating or the substrate
@@ -107,14 +126,42 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
     res.wi = getFrame(super) * uniformSampleHemisphere(s);
 
     // Evaluate the substrate
-    foreach_unique (f in self->substrate)
-      substrate = f->eval(f, wo, res.wi);
+#ifdef OSPRAY_TARGET_SYCL
+    {
+      const BSDF *f = self->substrate;
+#else
+    foreach_unique (f in self->substrate) {
+#endif
+      // Because of how the dispatches are unrolled to hide the potential
+      // recursion (that we know will terminate) from the SYCL compiler we have
+      // to call MultiBSDF directly here if we have a layer over a MultiBSDF
+      if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
+        substrate = MultiBSDF_eval(f, wo, res.wi); // f->eval(f, wo, wi);
+      } else {
+        substrate =
+            BSDF_dispatch_eval_base(f, wo, res.wi); // f->eval(f, wo, wi);
+      }
+    }
   } else {
     // Sample the substrate
     float ss1 =
         (ss - coatPickProb) * rcp(substratePickProb); // reallocate sample
-    foreach_unique (f in self->substrate)
-      res = f->sample(f, wo, s, ss1);
+#ifdef OSPRAY_TARGET_SYCL
+    {
+      const BSDF *f = self->substrate;
+#else
+    foreach_unique (f in self->substrate) {
+#endif
+      // Because of how the dispatches are unrolled to hide the potential
+      // recursion (that we know will terminate) from the SYCL compiler we have
+      // to call MultiBSDF directly here if we have a layer over a MultiBSDF
+      if (f->bsdfType == BSDF_TYPE_MULTI_BSDF) {
+        res = MultiBSDF_sample(f, wo, s, ss1); // f->sample(f, wo, s, ss1);
+      } else {
+        res = BSDF_dispatch_sample_base(
+            f, wo, s, ss1); // f->sample(f, wo, s, ss1);
+      }
+    }
     if (reduce_max(res.weight) <= 0.f)
       return res;
     substrate.pdf = res.pdf;
@@ -127,7 +174,8 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
   float cosThetaI = dot(res.wi, getN(super));
 
   // Energy conservation
-  float Ri = MicrofacetSheenAlbedoTable_eval(abs(cosThetaI), self->roughness)
+  float Ri = MicrofacetSheenAlbedoTable_eval(
+                 self->microfacetAlbedoTables, abs(cosThetaI), self->roughness)
       * self->weight;
   float T = min(1.f - Ro, 1.f - Ri);
   substrate.value = substrate.value * T;
@@ -168,6 +216,7 @@ inline BSDF_SampleRes MicrofacetSheenLayer_sample(
 
 inline void MicrofacetSheenLayer_Constructor(
     varying MicrofacetSheenLayer *uniform self,
+    const MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
     const varying linear3f *uniform frame,
     varying BSDF *varying substrate,
     vec3f R,
@@ -178,9 +227,15 @@ inline void MicrofacetSheenLayer_Constructor(
       lerp(weight * 0.1f,
           substrate->albedo,
           R), // lean towards substrate (sheen is only at edge)
-      BSDF_DIFFUSE_REFLECTION | substrate->type,
+      BSDF_DIFFUSE_REFLECTION | substrate->scatteringType,
+      BSDF_TYPE_MICROFACET_SHEEN_LAYER,
+#ifdef OSPRAY_TARGET_SYCL
+      NULL,
+      NULL,
+#else
       MicrofacetSheenLayer_eval,
       MicrofacetSheenLayer_sample,
+#endif
       frame);
 
   self->substrate = substrate;
@@ -188,10 +243,12 @@ inline void MicrofacetSheenLayer_Constructor(
   self->microfacet = make_SheenDistribution(roughnessToAlpha(roughness));
   self->roughness = roughness;
   self->weight = weight;
+  self->microfacetAlbedoTables = microfacetAlbedoTables;
 }
 
 inline varying BSDF *uniform MicrofacetSheenLayer_create(
     uniform ShadingContext *uniform ctx,
+    const MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
     const varying linear3f *uniform frame,
     varying BSDF *varying substrate,
     vec3f R,
@@ -202,16 +259,23 @@ inline varying BSDF *uniform MicrofacetSheenLayer_create(
       (varying MicrofacetSheenLayer * uniform)
           ShadingContext_alloc(ctx, sizeof(MicrofacetSheenLayer));
   MicrofacetSheenLayer_Constructor(
-      self, frame, substrate, R, roughness, weight);
+      self, microfacetAlbedoTables, frame, substrate, R, roughness, weight);
   return &self->super;
 }
 
 // Helper function for transparent shadow rays
 inline vec3f MicrofacetSheenLayer_getTransparency(
-    float cosThetaO, float roughness, float weight)
+    const MicrofacetAlbedoTables *uniform microfacetAlbedoTables,
+    float cosThetaO,
+    float roughness,
+    float weight)
 {
   // Energy conservation
-  float Ro = MicrofacetSheenAlbedoTable_eval(cosThetaO, roughness) * weight;
+  float Ro = MicrofacetSheenAlbedoTable_eval(
+                 microfacetAlbedoTables, cosThetaO, roughness)
+      * weight;
   float T = 1.f - Ro;
   return make_vec3f(T);
 }
+
+OSPRAY_END_ISPC_NAMESPACE

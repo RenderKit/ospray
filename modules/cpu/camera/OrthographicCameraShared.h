@@ -23,7 +23,10 @@ struct OrthographicCamera
                // up direction of camera
 
 #ifdef __cplusplus
-  OrthographicCamera() : dir(0.f), org(0.f), du_size(0.f), dv_up(0.f) {}
+  OrthographicCamera() : dir(0.f), org(0.f), du_size(0.f), dv_up(0.f)
+  {
+    super.type = CAMERA_TYPE_ORTHOGRAPHIC;
+  }
 };
 } // namespace ispc
 #else

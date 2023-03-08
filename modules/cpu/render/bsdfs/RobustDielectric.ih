@@ -5,6 +5,9 @@
 
 #include "BSDF.ih"
 #include "Fresnel.ih"
+#include "common/DifferentialGeometry.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // FIXME: this should be cleaned up and integrated into Dielectric and
 // MicrofacetDielectric
@@ -13,8 +16,12 @@ struct RobustDielectric
   BSDF super;
 
   float eta;
-  DifferentialGeometry
-      dgeom; // FIXME: BSDFs should *not* store the DifferentialGeometry
+
+  // FIXME: BSDFs should *not* store the DifferentialGeometry or similar
+  // parameters (i.e., Ng, Ns). These should be passed to sample/eval
+  // DifferentialGeometry dgeom;
+  vec3f Ng;
+  vec3f Ns;
 };
 
 inline BSDF_EvalRes RobustDielectric_eval(
@@ -38,14 +45,14 @@ inline RefractionResult RefractionDirection(
 
   float cos1 = dot(incomingDir, surfaceNormal);
   float cos1_abs = cos1;
-  if (cos1_abs < 0.0) {
+  if (cos1_abs < 0.f) {
     cos1_abs = -cos1_abs;
   }
   // For head-on collisions the cosine of the angle of the ray with the surface
   // normal will be equal to one or minus one.
-  bool headOn = (1.0 - 1.0e-6 < cos1_abs && cos1_abs < 1.0 - 1.0e-6);
+  bool headOn = (1.f - 1e-6f < cos1_abs && cos1_abs < 1.f - 1e-6f);
   if (headOn) {
-    res.FresnelReflectionCoefficient = sqr((eta - 1.0) / (eta + 1.0));
+    res.FresnelReflectionCoefficient = sqr((eta - 1.f) / (eta + 1.f));
     res.outgoingDirection = incomingDir;
   } else {
     vec3f dirParallelToNormal = cos1 * surfaceNormal;
@@ -53,19 +60,19 @@ inline RefractionResult RefractionDirection(
     vec3f b = normalize(dirPerpendicularToNormal);
     float sin1 = dot(dirPerpendicularToNormal, b);
     float sin2 = sin1 / eta;
-    if (sin2 > 1.0) { // Total internal reflection.
-      res.outgoingDirection = make_vec3f(0.0f); // Can't refract.
-      res.FresnelReflectionCoefficient = 1.0;
+    if (sin2 > 1.0f) { // Total internal reflection.
+      res.outgoingDirection = make_vec3f(0.f); // Can't refract.
+      res.FresnelReflectionCoefficient = 1.f;
       res.mustReflect = true;
     } else { // Refracting.
-      float cos2 = sqrt(clamp(1.0 - sin2 * sin2));
+      float cos2 = sqrt(clamp(1.f - sin2 * sin2));
       vec3f N2 = normalize(dirParallelToNormal);
       res.outgoingDirection = N2 * cos2 + b * sin2;
       float c1 = cos1_abs;
       float c2 = cos2;
       float r1 = (eta * c1 - c2) / (eta * c1 + c2);
       float r2 = (c1 - eta * c2) / (c1 + eta * c2);
-      res.FresnelReflectionCoefficient = 0.5 * (r1 * r1 + r2 * r2);
+      res.FresnelReflectionCoefficient = 0.5f * (r1 * r1 + r2 * r2);
     }
   }
   // Clamp in case of roundoff error.
@@ -97,13 +104,13 @@ inline BSDF_SampleRes RobustDielectric_sample(const varying BSDF *uniform super,
   BSDF_SampleRes res;
   res.pdf = inf;
 
-  vec3f incomingDir =
-      neg(wo); // We want the actual ray direction into the surface.
-  vec3f shadingNormal = self->dgeom.Ns;
-  vec3f geometricNormal = self->dgeom.Ng;
-  float eta = 1.0 / self->eta; // ior(outside) / ior(inside)
-  float glass_epsilon = 1.0e-6;
-  bool canReflect = (eta < 1.0 - glass_epsilon || eta > 1.0 + glass_epsilon);
+  // We want the actual ray direction into the surface.
+  vec3f incomingDir = neg(wo);
+  vec3f shadingNormal = self->Ns;
+  vec3f geometricNormal = self->Ng;
+  float eta = 1.f / self->eta; // ior(outside) / ior(inside)
+  float glass_epsilon = 1e-6f;
+  bool canReflect = (eta < 1.f - glass_epsilon || eta > 1.f + glass_epsilon);
 
   bool be_careful = true; // Extra test for edge cases when the shading normal
                           // is different from the geometry normal.
@@ -113,10 +120,10 @@ inline BSDF_SampleRes RobustDielectric_sample(const varying BSDF *uniform super,
   if (be_careful) {
     // Flip the normals to be on the same side of the surface as the incoming
     // ray.
-    if (dot(incomingDir, shadingNormal) > 0) {
+    if (dot(incomingDir, shadingNormal) > 0.f) {
       shadingNormal = neg(shadingNormal);
     }
-    if (dot(incomingDir, geometricNormal) > 0) {
+    if (dot(incomingDir, geometricNormal) > 0.f) {
       geometricNormal = neg(geometricNormal);
     }
   }
@@ -130,7 +137,7 @@ inline BSDF_SampleRes RobustDielectric_sample(const varying BSDF *uniform super,
   float FresnelR = refractionRes.FresnelReflectionCoefficient;
   bool mustReflect = refractionRes.mustReflect;
 
-  res.weight = make_vec3f(1.0f);
+  res.weight = make_vec3f(1.f);
 
   // Sample the reflection or the transmission using the provided random number.
   if ((randomF < FresnelR && canReflect) || mustReflect) { // Reflection
@@ -139,7 +146,7 @@ inline BSDF_SampleRes RobustDielectric_sample(const varying BSDF *uniform super,
 
     if (be_careful) {
       geometricCosine = dot(res.wi, geometricNormal);
-      if (geometricCosine >= 0) {
+      if (geometricCosine >= 0.f) {
         // Reflecting as expected.
         if (nudge && (geometricCosine < glass_epsilon)) { // Grazing angle.
           res.wi = res.wi
@@ -151,7 +158,7 @@ inline BSDF_SampleRes RobustDielectric_sample(const varying BSDF *uniform super,
         // We actually "refracted" since we are now on the other side of the
         // surface. Keep the ray type as reflection, but move the ray above the
         // surface.
-        res.wi = res.wi - 2 * geometricNormal * geometricCosine;
+        res.wi = res.wi - 2.f * geometricNormal * geometricCosine;
       }
     }
   } else { // Transmission
@@ -161,7 +168,7 @@ inline BSDF_SampleRes RobustDielectric_sample(const varying BSDF *uniform super,
 
     if (be_careful) {
       geometricCosine = dot(res.wi, geometricNormal);
-      if (geometricCosine <= 0) {
+      if (geometricCosine <= 0.f) {
         // Transmitting as expected.
         if (nudge && (geometricCosine > -glass_epsilon)) { // Grazing angle.
           res.wi = res.wi
@@ -185,17 +192,24 @@ inline void RobustDielectric_Constructor(varying RobustDielectric *uniform self,
     const DifferentialGeometry &dg,
     float eta)
 {
-  const varying linear3f *uniform frame =
+  const varying linear3f *uniform shadingframe =
       LinearSpace3f_create(ctx, frame(dg.Ns));
 
   BSDF_Constructor(&self->super,
       make_vec3f(1.0f),
       BSDF_SPECULAR,
+      BSDF_TYPE_ROBUST_DIELECTRIC,
+#ifdef OSPRAY_TARGET_SYCL
+      NULL,
+      NULL,
+#else
       RobustDielectric_eval,
       RobustDielectric_sample,
-      frame);
+#endif
+      shadingframe);
   self->eta = eta;
-  self->dgeom = dg;
+  self->Ns = dg.Ns;
+  self->Ng = dg.Ng;
 }
 
 inline varying BSDF *uniform RobustDielectric_create(
@@ -210,3 +224,5 @@ inline varying BSDF *uniform RobustDielectric_create(
   RobustDielectric_Constructor(self, ctx, dg, eta);
   return &self->super;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

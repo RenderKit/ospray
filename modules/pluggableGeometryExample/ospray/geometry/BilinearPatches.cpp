@@ -18,9 +18,11 @@ namespace ospray {
 // 'bilinar_patch' etc would all work equally well.
 namespace blp {
 
-BilinearPatches::BilinearPatches()
+BilinearPatches::BilinearPatches(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   getSh()->super.postIntersect = ispc::BilinearPatches_postIntersect_addr();
+  getSh()->super.intersect = ispc::BilinearPatches_intersect_addr();
 }
 
 // commit - this is the function that parses all the parameters
@@ -31,12 +33,11 @@ BilinearPatches::BilinearPatches()
 void BilinearPatches::commit()
 {
   patchesData = getParamDataT<vec3f>("vertices", true);
-  if (!patchesData && !patchesData->compact())
+  if (!patchesData || !patchesData->compact())
     throw std::runtime_error("BilinearPatches needs compact 'vertices' data!");
 
-  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::BilinearPatches_bounds,
-      (RTCIntersectFunctionN)&ispc::BilinearPatches_intersect,
-      (RTCOccludedFunctionN)&ispc::BilinearPatches_occluded);
+  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::BilinearPatches_bounds);
+
   getSh()->patchArray = (ispc::Patch *)patchesData->data();
   getSh()->super.numPrimitives = numPrimitives();
 

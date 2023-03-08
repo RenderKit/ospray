@@ -2,16 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Velvet.h"
+#ifndef OSPRAY_TARGET_SYCL
 // ispc
 #include "render/materials/Velvet_ispc.h"
+#endif
 
 namespace ospray {
 namespace pathtracer {
 
-Velvet::Velvet()
+Velvet::Velvet(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.type = ispc::MATERIAL_TYPE_VELVET;
-  getSh()->super.getBSDF = ispc::Velvet_getBSDF_addr();
+#ifndef OSPRAY_TARGET_SYCL
+  getSh()->super.getBSDF =
+      reinterpret_cast<ispc::Material_GetBSDFFunc>(ispc::Velvet_getBSDF_addr());
+#endif
 }
 
 std::string Velvet::toString() const

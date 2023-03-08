@@ -5,6 +5,8 @@
 
 #include "rkcommon/math/vec.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct SphericalQuad
 {
   vec3f e0, e1, z;
@@ -72,7 +74,9 @@ struct SphericalQuad
     return quad;                                                               \
   }
 
+#ifndef OSPRAY_TARGET_SYCL
 template_SphericalQuad_create(varying);
+#endif
 template_SphericalQuad_create(uniform);
 #undef template_SphericalQuad_create
 
@@ -193,6 +197,10 @@ inline float fv(float r, float u, float W00, float W01, float W10, float W11)
     return make_vec3f(u, v, pdf);                                               \
   }
 
+#ifndef OSPRAY_TARGET_SYCL
 template_computeCosineWeightedRNG(varying);
+#endif
 template_computeCosineWeightedRNG(uniform);
 #undef template_computeCosineWeightedRNG
+
+OSPRAY_END_ISPC_NAMESPACE

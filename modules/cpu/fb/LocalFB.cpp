@@ -2,93 +2,140 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LocalFB.h"
+#include <rkcommon/utility/ArrayView.h>
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <numeric>
 #include "ImageOp.h"
 #include "SparseFB.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "fb/LocalFB_ispc.h"
+#else
+namespace ispc {
+void LocalFrameBuffer_writeTile_RGBA8(void *_fb, const void *_tile);
+void LocalFrameBuffer_writeTile_SRGBA(void *_fb, const void *_tile);
+void LocalFrameBuffer_writeTile_RGBA32F(void *_fb, const void *_tile);
+void LocalFrameBuffer_writeDepthTile(void *_fb, const void *uniform _tile);
+void LocalFrameBuffer_writeAuxTile(void *_fb,
+    const void *_tile,
+    void *aux,
+    const void *_ax,
+    const void *_ay,
+    const void *_az);
+void LocalFrameBuffer_writeIDTile(void *uniform _fb,
+    const void *uniform _tile,
+    uniform uint32 *uniform dst,
+    const void *uniform src);
+} // namespace ispc
+#endif
 #include "render/util.h"
 #include "rkcommon/common.h"
 #include "rkcommon/tasking/parallel_for.h"
 
 namespace ospray {
 
-LocalFrameBuffer::LocalFrameBuffer(const vec2i &_size,
+LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
+    const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
-    : AddStructShared(_size, _colorBufferFormat, channels),
+    : AddStructShared(
+        device.getIspcrtDevice(), device, _size, _colorBufferFormat, channels),
       numRenderTasks(divRoundUp(size, getRenderTaskSize())),
-      taskErrorRegion(hasVarianceBuffer ? getNumRenderTasks() : vec2i(0))
+      taskErrorRegion(device.getIspcrtDevice(),
+          hasVarianceBuffer ? getNumRenderTasks() : vec2i(0))
 {
   const size_t pixelBytes = sizeOf(_colorBufferFormat);
   const size_t numPixels = _size.long_product();
 
-  colorBuffer.resize(pixelBytes * numPixels);
+  if (getColorBufferFormat() != OSP_FB_NONE) {
+    colorBuffer = make_buffer_shared_unique<uint8_t>(
+        device.getIspcrtDevice(), pixelBytes * numPixels);
+  }
 
   if (hasDepthBuffer)
-    depthBuffer.resize(numPixels);
+    depthBuffer =
+        make_buffer_shared_unique<float>(device.getIspcrtDevice(), numPixels);
 
   if (hasAccumBuffer) {
-    accumBuffer.resize(numPixels);
+    accumBuffer =
+        make_buffer_shared_unique<vec4f>(device.getIspcrtDevice(), numPixels);
 
-    taskAccumID.resize(getTotalRenderTasks(), 0);
+    taskAccumID = make_buffer_shared_unique<int32_t>(
+        device.getIspcrtDevice(), getTotalRenderTasks());
+    std::memset(taskAccumID->data(), 0, taskAccumID->size() * sizeof(int32_t));
   }
 
   if (hasVarianceBuffer)
-    varianceBuffer.resize(numPixels);
+    varianceBuffer =
+        make_buffer_shared_unique<vec4f>(device.getIspcrtDevice(), numPixels);
 
   if (hasNormalBuffer)
-    normalBuffer.resize(numPixels);
+    normalBuffer =
+        make_buffer_shared_unique<vec3f>(device.getIspcrtDevice(), numPixels);
 
   if (hasAlbedoBuffer)
-    albedoBuffer.resize(numPixels);
+    albedoBuffer =
+        make_buffer_shared_unique<vec3f>(device.getIspcrtDevice(), numPixels);
 
   if (hasPrimitiveIDBuffer)
-    primitiveIDBuffer.resize(numPixels);
+    primitiveIDBuffer = make_buffer_shared_unique<uint32_t>(
+        device.getIspcrtDevice(), numPixels);
 
   if (hasObjectIDBuffer)
-    objectIDBuffer.resize(numPixels);
+    objectIDBuffer = make_buffer_shared_unique<uint32_t>(
+        device.getIspcrtDevice(), numPixels);
 
   if (hasInstanceIDBuffer)
-    instanceIDBuffer.resize(numPixels);
+    instanceIDBuffer = make_buffer_shared_unique<uint32_t>(
+        device.getIspcrtDevice(), numPixels);
 
   // TODO: Better way to pass the task IDs that doesn't require just storing
   // them all? Maybe as blocks/tiles similar to when we just had tiles? Will
   // make task ID lookup more expensive for sparse case though
-  renderTaskIDs.reserve(getTotalRenderTasks());
-  for (uint32_t i = 0; i < getTotalRenderTasks(); ++i) {
-    renderTaskIDs.push_back(i);
-  }
+  renderTaskIDs = make_buffer_shared_unique<uint32_t>(
+      device.getIspcrtDevice(), getTotalRenderTasks());
+  std::iota(renderTaskIDs->begin(), renderTaskIDs->end(), 0);
+  if (hasVarianceBuffer)
+    activeTaskIDs = make_buffer_shared_unique<uint32_t>(
+        device.getIspcrtDevice(), getTotalRenderTasks());
 
   // TODO: Could use TBB parallel sort here if it's exposed through the rkcommon
   // tasking system
-  std::sort(renderTaskIDs.begin(),
-      renderTaskIDs.end(),
+  std::sort(renderTaskIDs->begin(),
+      renderTaskIDs->end(),
       [&](const uint32_t &a, const uint32_t &b) {
         const vec2i p_a = getTaskStartPos(a);
         const vec2i p_b = getTaskStartPos(b);
         return interleaveZOrder(p_a.x, p_a.y) < interleaveZOrder(p_b.x, p_b.y);
       });
 
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->super.accumulateSample =
-      ispc::LocalFrameBuffer_accumulateSample_addr();
+      reinterpret_cast<ispc::FrameBuffer_accumulateSampleFct>(
+          ispc::LocalFrameBuffer_accumulateSample_addr());
   getSh()->super.getRenderTaskDesc =
-      ispc::LocalFrameBuffer_getRenderTaskDesc_addr();
-  getSh()->super.completeTask = ispc::LocalFrameBuffer_completeTask_addr();
+      reinterpret_cast<ispc::FrameBuffer_getRenderTaskDescFct>(
+          ispc::LocalFrameBuffer_getRenderTaskDesc_addr());
+  getSh()->super.completeTask =
+      reinterpret_cast<ispc::FrameBuffer_completeTaskFct>(
+          ispc::LocalFrameBuffer_completeTask_addr());
+#endif
 
-  getSh()->colorBuffer = getDataSafe(colorBuffer);
-  getSh()->depthBuffer = getDataSafe(depthBuffer);
-  getSh()->accumBuffer = getDataSafe(accumBuffer);
-  getSh()->varianceBuffer = getDataSafe(varianceBuffer);
-  getSh()->normalBuffer = getDataSafe(normalBuffer);
-  getSh()->albedoBuffer = getDataSafe(albedoBuffer);
-  getSh()->taskAccumID = getDataSafe(taskAccumID);
+  getSh()->colorBuffer = colorBuffer ? colorBuffer->data() : nullptr;
+  getSh()->depthBuffer = depthBuffer ? depthBuffer->data() : nullptr;
+  getSh()->accumBuffer = accumBuffer ? accumBuffer->data() : nullptr;
+  getSh()->varianceBuffer = varianceBuffer ? varianceBuffer->data() : nullptr;
+  getSh()->normalBuffer = normalBuffer ? normalBuffer->data() : nullptr;
+  getSh()->albedoBuffer = albedoBuffer ? albedoBuffer->data() : nullptr;
+  getSh()->taskAccumID = taskAccumID ? taskAccumID->data() : nullptr;
   getSh()->taskRegionError = taskErrorRegion.errorBuffer();
   getSh()->numRenderTasks = numRenderTasks;
-  getSh()->primitiveIDBuffer = getDataSafe(primitiveIDBuffer);
-  getSh()->objectIDBuffer = getDataSafe(objectIDBuffer);
-  getSh()->instanceIDBuffer = getDataSafe(instanceIDBuffer);
+  getSh()->primitiveIDBuffer =
+      primitiveIDBuffer ? primitiveIDBuffer->data() : nullptr;
+  getSh()->objectIDBuffer = objectIDBuffer ? objectIDBuffer->data() : nullptr;
+  getSh()->instanceIDBuffer =
+      instanceIDBuffer ? instanceIDBuffer->data() : nullptr;
 }
 
 void LocalFrameBuffer::commit()
@@ -99,10 +146,10 @@ void LocalFrameBuffer::commit()
   if (imageOpData) {
     FrameBufferView fbv(this,
         getColorBufferFormat(),
-        getDataSafe(colorBuffer),
-        getDataSafe(depthBuffer),
-        getDataSafe(normalBuffer),
-        getDataSafe(albedoBuffer));
+        colorBuffer ? colorBuffer->data() : nullptr,
+        depthBuffer ? depthBuffer->data() : nullptr,
+        normalBuffer ? normalBuffer->data() : nullptr,
+        albedoBuffer ? albedoBuffer->data() : nullptr);
 
     for (auto &&obj : *imageOpData)
       imageOps.push_back(obj->attach(fbv));
@@ -120,9 +167,19 @@ uint32_t LocalFrameBuffer::getTotalRenderTasks() const
   return numRenderTasks.long_product();
 }
 
-utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs()
+utility::ArrayView<uint32_t> LocalFrameBuffer::getRenderTaskIDs(
+    float errorThreshold)
 {
-  return utility::ArrayView<uint32_t>(renderTaskIDs);
+  if (errorThreshold > 0.0f && hasVarianceBuffer) {
+    auto last = std::copy_if(renderTaskIDs->begin(),
+        renderTaskIDs->end(),
+        activeTaskIDs->begin(),
+        [=](uint32_t i) { return taskError(i) > errorThreshold; });
+    return utility::ArrayView<uint32_t>(
+        activeTaskIDs->data(), last - activeTaskIDs->begin());
+  } else
+    return utility::ArrayView<uint32_t>(
+        renderTaskIDs->data(), renderTaskIDs->size());
 }
 
 std::string LocalFrameBuffer::toString() const
@@ -136,7 +193,9 @@ void LocalFrameBuffer::clear()
   // it is only necessary to reset the accumID,
   // LocalFrameBuffer_accumulateTile takes care of clearing the
   // accumulating buffers
-  std::fill(taskAccumID.begin(), taskAccumID.end(), 0);
+  if (taskAccumID) {
+    std::fill(taskAccumID->begin(), taskAccumID->end(), 0);
+  }
 
   // always also clear error buffer (if present)
   if (hasVarianceBuffer) {
@@ -144,7 +203,7 @@ void LocalFrameBuffer::clear()
   }
 }
 
-void LocalFrameBuffer::writeTiles(const containers::AlignedVector<Tile> &tiles)
+void LocalFrameBuffer::writeTiles(const utility::ArrayView<Tile> &tiles)
 {
   // TODO: The parallel dispatch part of this should be moved into ISPC as an
   // ISPC launch that calls the individual (currently) exported functions that
@@ -158,7 +217,11 @@ void LocalFrameBuffer::writeTiles(const containers::AlignedVector<Tile> &tiles)
     if (hasAlbedoBuffer) {
       ispc::LocalFrameBuffer_writeAuxTile(getSh(),
           tile,
-          (ispc::vec3f *)albedoBuffer.data(),
+#ifndef OSPRAY_TARGET_SYCL
+          (ispc::vec3f *)albedoBuffer->data(),
+#else
+          *albedoBuffer->data(),
+#endif
           tile->ar,
           tile->ag,
           tile->ab);
@@ -179,15 +242,19 @@ void LocalFrameBuffer::writeTiles(const containers::AlignedVector<Tile> &tiles)
           getSh(), tile, getSh()->instanceIDBuffer, tile->iid);
     }
 
-    if (hasNormalBuffer)
+    if (hasNormalBuffer) {
       ispc::LocalFrameBuffer_writeAuxTile(getSh(),
           tile,
-          (ispc::vec3f *)normalBuffer.data(),
+#ifndef OSPRAY_TARGET_SYCL
+          (ispc::vec3f *)normalBuffer->data(),
+#else
+          *normalBuffer->data(),
+#endif
           tile->nx,
           tile->ny,
           tile->nz);
-
-    if (!colorBuffer.empty()) {
+    }
+    if (colorBuffer) {
       switch (getColorBufferFormat()) {
       case OSP_FB_RGBA8:
         ispc::LocalFrameBuffer_writeTile_RGBA8(getSh(), tile);
@@ -275,29 +342,31 @@ void LocalFrameBuffer::endFrame(
 
 const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)
 {
+  // TODO: Mapping the USM back to the app like this will cause a lot of USM
+  // thrashing between host/device
   const void *buf = nullptr;
 
   switch (channel) {
   case OSP_FB_COLOR:
-    buf = getDataSafe(colorBuffer);
+    buf = colorBuffer ? colorBuffer->data() : nullptr;
     break;
   case OSP_FB_DEPTH:
-    buf = getDataSafe(depthBuffer);
+    buf = depthBuffer ? depthBuffer->data() : nullptr;
     break;
   case OSP_FB_NORMAL:
-    buf = getDataSafe(normalBuffer);
+    buf = normalBuffer ? normalBuffer->data() : nullptr;
     break;
   case OSP_FB_ALBEDO:
-    buf = getDataSafe(albedoBuffer);
+    buf = albedoBuffer ? albedoBuffer->data() : nullptr;
     break;
   case OSP_FB_ID_PRIMITIVE:
-    buf = getDataSafe(primitiveIDBuffer);
+    buf = primitiveIDBuffer ? primitiveIDBuffer->data() : nullptr;
     break;
   case OSP_FB_ID_OBJECT:
-    buf = getDataSafe(objectIDBuffer);
+    buf = objectIDBuffer ? objectIDBuffer->data() : nullptr;
     break;
   case OSP_FB_ID_INSTANCE:
-    buf = getDataSafe(instanceIDBuffer);
+    buf = instanceIDBuffer ? instanceIDBuffer->data() : nullptr;
     break;
   default:
     break;

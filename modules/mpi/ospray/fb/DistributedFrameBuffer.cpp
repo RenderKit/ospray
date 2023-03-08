@@ -3,13 +3,16 @@
 
 #include "DistributedFrameBuffer.h"
 #include <snappy.h>
+#include <numeric>
 #include <thread>
 #include "DistributedFrameBuffer_TileMessages.h"
+#include "ISPCDevice.h"
 #include "TileOperation.h"
 #include "common/Profiling.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "fb/DistributedFrameBuffer_ispc.h"
+#endif
 
-#include "pico_bench.h"
 #include "rkcommon/tasking/parallel_for.h"
 #include "rkcommon/tasking/schedule.h"
 
@@ -28,24 +31,29 @@ using DFB = DistributedFrameBuffer;
 // DistributedTileError definitions /////////////////////////////////////////
 
 DistributedTileError::DistributedTileError(
-    const vec2i &numTiles, mpicommon::Group group)
-    : TaskError(numTiles), group(group)
+    api::ISPCDevice &device, const vec2i &numTiles, mpicommon::Group group)
+    : TaskError(device.getIspcrtDevice(), numTiles), group(group)
 {}
 
 void DistributedTileError::sync()
 {
-  if (taskErrorBuffer.empty()) {
+  if (!taskErrorBuffer || taskErrorBuffer->size() == 0) {
     return;
   }
 
-  mpicommon::bcast(
-      taskErrorBuffer.data(), taskErrorBuffer.size(), MPI_FLOAT, 0, group.comm)
+  // TODO: USM thrashing possible issue
+  mpicommon::bcast(taskErrorBuffer->data(),
+      taskErrorBuffer->size(),
+      MPI_FLOAT,
+      0,
+      group.comm)
       .wait();
 }
 
 // DistributedFrameBuffer definitions ///////////////////////////////////////
 
-DFB::DistributedFrameBuffer(const vec2i &numPixels,
+DFB::DistributedFrameBuffer(api::ISPCDevice &device,
+    const vec2i &numPixels,
     ObjectHandle myId,
     ColorBufferFormat colorBufferFormat,
     const uint32 channels)
@@ -55,17 +63,19 @@ DFB::DistributedFrameBuffer(const vec2i &numPixels,
     // be set from the object handle but pulled from some other ID pool
     // specific to those objects using the messaging layer
     : MessageHandler(myId),
-      FrameBuffer(numPixels, colorBufferFormat, channels),
+      FrameBuffer(device, numPixels, colorBufferFormat, channels),
       mpiGroup(mpicommon::worker.dup()),
       totalTiles(divRoundUp(size, vec2i(TILE_SIZE))),
       numRenderTasks((totalTiles * TILE_SIZE) / getRenderTaskSize()),
-      tileErrorRegion(hasVarianceBuffer ? totalTiles : vec2i(0), mpiGroup),
+      tileErrorRegion(
+          device, hasVarianceBuffer ? totalTiles : vec2i(0), mpiGroup),
       localFBonMaster(nullptr),
       frameIsActive(false),
       frameIsDone(false)
 {
   if (mpicommon::IamTheMaster() && colorBufferFormat != OSP_FB_NONE) {
-    localFBonMaster = rkcommon::make_unique<LocalFrameBuffer>(numPixels,
+    localFBonMaster = rkcommon::make_unique<LocalFrameBuffer>(device,
+        numPixels,
         colorBufferFormat,
         channels & ~(OSP_FB_ACCUM | OSP_FB_VARIANCE));
   }
@@ -85,10 +95,10 @@ void DFB::commit()
     FrameBufferView fbv(localFBonMaster ? localFBonMaster.get()
                                         : static_cast<FrameBuffer *>(this),
         getSh()->colorBufferFormat,
-        localFBonMaster ? localFBonMaster->colorBuffer.data() : nullptr,
-        localFBonMaster ? localFBonMaster->depthBuffer.data() : nullptr,
-        localFBonMaster ? localFBonMaster->normalBuffer.data() : nullptr,
-        localFBonMaster ? localFBonMaster->albedoBuffer.data() : nullptr);
+        localFBonMaster ? localFBonMaster->colorBuffer->data() : nullptr,
+        localFBonMaster ? localFBonMaster->depthBuffer->data() : nullptr,
+        localFBonMaster ? localFBonMaster->normalBuffer->data() : nullptr,
+        localFBonMaster ? localFBonMaster->albedoBuffer->data() : nullptr);
 
     std::for_each(imageOpData->begin(), imageOpData->end(), [&](ImageOp *i) {
       if (!dynamic_cast<FrameOp *>(i) || localFBonMaster)
@@ -229,8 +239,11 @@ void DistributedFrameBuffer::setSparseFBLayerCount(size_t numLayers)
   // Allocate any new layers that have been added to the DFB
   for (size_t i = 1; i < layers.size(); ++i) {
     if (!layers[i]) {
-      layers[i] = rkcommon::make_unique<SparseFrameBuffer>(
-          size, getColorBufferFormat(), channelFlags, sparseFbTrackAccumIDs);
+      layers[i] = rkcommon::make_unique<SparseFrameBuffer>(getISPCDevice(),
+          size,
+          getColorBufferFormat(),
+          channelFlags,
+          sparseFbTrackAccumIDs);
     }
   }
 }
@@ -298,8 +311,12 @@ void DFB::createTiles()
 
   const bool sparseFbTrackAccumIDs = getChannelFlags() & OSP_FB_ACCUM;
   if (layers.empty()) {
-    layers.push_back(rkcommon::make_unique<SparseFrameBuffer>(
-        size, OSP_FB_NONE, channels, myTileIDs, sparseFbTrackAccumIDs));
+    layers.push_back(rkcommon::make_unique<SparseFrameBuffer>(getISPCDevice(),
+        size,
+        OSP_FB_NONE,
+        channels,
+        myTileIDs,
+        sparseFbTrackAccumIDs));
   } else {
     layers[0]->setTiles(myTileIDs);
     layers[0]->clear();
@@ -459,7 +476,10 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
     }
   }
 
-  ColorT *color = reinterpret_cast<ColorT *>(&localFBonMaster->colorBuffer[0]);
+  // TODO: Here we're just accessing the local fb on the host, but have it
+  // allocated in USM. Will work, but maybe wasting some USM space?
+  ColorT *color =
+      reinterpret_cast<ColorT *>(localFBonMaster->colorBuffer->data());
   for (int iy = 0; iy < TILE_SIZE; iy++) {
     int iiy = iy + msg->coords.y;
     if (iiy >= numPixels.y) {
@@ -474,27 +494,27 @@ void DistributedFrameBuffer::processMessage(MasterTileMessage_FB<ColorT> *msg)
 
       color[iix + iiy * numPixels.x] = msg->color[ix + iy * TILE_SIZE];
       if (depth) {
-        localFBonMaster->depthBuffer[iix + iiy * numPixels.x] =
+        (*localFBonMaster->depthBuffer)[iix + iiy * numPixels.x] =
             depth->depth[ix + iy * TILE_SIZE];
       }
       if (aux) {
         if (hasNormalBuffer)
-          localFBonMaster->normalBuffer[iix + iiy * numPixels.x] =
+          (*localFBonMaster->normalBuffer)[iix + iiy * numPixels.x] =
               aux->normal[ix + iy * TILE_SIZE];
         if (hasAlbedoBuffer)
-          localFBonMaster->albedoBuffer[iix + iiy * numPixels.x] =
+          (*localFBonMaster->albedoBuffer)[iix + iiy * numPixels.x] =
               aux->albedo[ix + iy * TILE_SIZE];
       }
       if (pidBuf) {
-        localFBonMaster->primitiveIDBuffer[iix + iiy * numPixels.x] =
+        (*localFBonMaster->primitiveIDBuffer)[iix + iiy * numPixels.x] =
             pidBuf[ix + iy * TILE_SIZE];
       }
       if (gidBuf) {
-        localFBonMaster->objectIDBuffer[iix + iiy * numPixels.x] =
+        (*localFBonMaster->objectIDBuffer)[iix + iiy * numPixels.x] =
             gidBuf[ix + iy * TILE_SIZE];
       }
       if (iidBuf) {
-        localFBonMaster->instanceIDBuffer[iix + iiy * numPixels.x] =
+        (*localFBonMaster->instanceIDBuffer)[iix + iiy * numPixels.x] =
             iidBuf[ix + iy * TILE_SIZE];
       }
     }
@@ -792,6 +812,8 @@ void DFB::gatherFinalTiles()
     std::cout << "Master tile write time: "
               << elapsedTimeMs(startFbWrite, endFbWrite) << "ms\n";
 #endif
+    // not accurate, did we render something at all
+    localFBonMaster->getSh()->super.numPixelsRendered = totalTilesExpected;
   }
 }
 
@@ -923,9 +945,9 @@ uint32_t DFB::getGlobalTotalTiles() const
   return totalTiles.product();
 }
 
-utility::ArrayView<uint32_t> DFB::getRenderTaskIDs()
+utility::ArrayView<uint32_t> DFB::getRenderTaskIDs(float errorThreshold)
 {
-  return layers[0]->getRenderTaskIDs();
+  return layers[0]->getRenderTaskIDs(errorThreshold);
 }
 
 float DFB::taskError(const uint32_t) const

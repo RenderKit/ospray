@@ -1,10 +1,12 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "math/Distribution1D.ih"
 #include "pf/LUTPixelFilter.ih"
 
-inline vec2f LUTPixelFilter_sample(
-    const PixelFilter *uniform _self, const vec2f &s)
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+vec2f LUTPixelFilter_sample(const PixelFilter *uniform _self, const vec2f &s)
 {
   const LUTPixelFilter *uniform self = (const LUTPixelFilter *uniform)_self;
 
@@ -12,43 +14,7 @@ inline vec2f LUTPixelFilter_sample(
   return (sample2d.uv + make_vec2f(-0.5f)) * make_vec2f(self->super.width);
 }
 
-float Box_eval(const PixelFilter *uniform self, const vec2f &x)
-{
-  return 1.0f / (self->width * self->width);
-}
-
-inline LUTPixelFilter *uniform LUTPixelFilter_create()
-{
-  LUTPixelFilter *uniform self = uniform new LUTPixelFilter;
-  self->super.width = 0.0f;
-  self->super.sample = NULL;
-  self->distribution = NULL;
-  self->eval = NULL;
-  return self;
-}
-
-export void LUTPixelFilter_update(void *uniform _self)
-{
-  LUTPixelFilter *uniform self = (LUTPixelFilter * uniform) _self;
-  Distribution2D_destroy(self->distribution);
-  LUTPixelFilter_buildLUT(self);
-}
-
-export void LUTPixelFilter_destroy(void *uniform _self)
-{
-  LUTPixelFilter *uniform self = (LUTPixelFilter * uniform) _self;
-  Distribution2D_destroy(self->distribution);
-  delete self;
-}
-
-export void *uniform BoxLUT_create()
-{
-  LUTPixelFilter *uniform self = LUTPixelFilter_create();
-  LUTPixelFilter_Constructor(self, 1.0f, Box_eval);
-  return self;
-}
-
-float Gaussian_eval(const PixelFilter *uniform self, const vec2f &x)
+inline float Gaussian_eval(const PixelFilter *uniform self, const vec2f &x)
 {
   const float sigma = (0.5f * self->width) / 3.0f;
   const float sigmaSqr = sigma * sigma;
@@ -56,14 +22,8 @@ float Gaussian_eval(const PixelFilter *uniform self, const vec2f &x)
   return exp(-0.5f * (distanceSqr / sigmaSqr));
 }
 
-export void *uniform GaussianLUT_create()
-{
-  LUTPixelFilter *uniform self = LUTPixelFilter_create();
-  LUTPixelFilter_Constructor(self, 3.0f, Gaussian_eval);
-  return self;
-}
-
-float MitchellNetravali_eval(const PixelFilter *uniform self, const vec2f &x)
+inline float MitchellNetravali_eval(
+    const PixelFilter *uniform self, const vec2f &x)
 {
   const float oneOverSix = 1.0f / 6.0f;
   const float B = 1.0f / 3.0f;
@@ -87,14 +47,8 @@ float MitchellNetravali_eval(const PixelFilter *uniform self, const vec2f &x)
   return value;
 }
 
-export void *uniform MitchellNetravaliLUT_create()
-{
-  LUTPixelFilter *uniform self = LUTPixelFilter_create();
-  LUTPixelFilter_Constructor(self, 4.0f, MitchellNetravali_eval);
-  return self;
-}
-
-float BlackmanHarris_eval(const PixelFilter *uniform self, const vec2f &x)
+inline float BlackmanHarris_eval(
+    const PixelFilter *uniform self, const vec2f &x)
 {
   const float a0 = 0.35875f;
   const float a1 = 0.48829f;
@@ -110,9 +64,81 @@ float BlackmanHarris_eval(const PixelFilter *uniform self, const vec2f &x)
   return value;
 }
 
-export void *uniform BlackmanHarrisLUT_create()
+#ifndef OSPRAY_TARGET_SYCL
+task
+#endif
+    unmasked void
+    LUTPixelFilter_calcRowImportance(const LUTPixelFilter *uniform const self,
+        int uniform const lut_width,
+        float *uniform const importance,
+        float *uniform const row_importance
+#ifdef OSPRAY_TARGET_SYCL
+        ,
+        const int taskIndex
+#endif
+    )
 {
-  LUTPixelFilter *uniform self = LUTPixelFilter_create();
-  LUTPixelFilter_Constructor(self, 3.0f, BlackmanHarris_eval);
-  return self;
+  const uniform float filter_width = self->super.width;
+
+  const uniform int y = taskIndex;
+  const uniform float fy = (y + 0.5f) * (1.0f / (float)lut_width);
+
+#ifdef OSPRAY_TARGET_SYCL
+  for (int x = 0; x < lut_width; ++x) {
+#else
+  foreach (x = 0 ... lut_width) {
+#endif
+    const varying float fx = (x + 0.5f) * (1.0f / (float)lut_width);
+    const vec2f coord = make_vec2f(fx, fy) - make_vec2f(0.5f);
+
+    float filterEval = 0.f;
+    switch (self->lutFilterType) {
+    case LUT_PIXEL_FILTER_TYPE_GAUSSIAN:
+      filterEval =
+          Gaussian_eval(&self->super, coord * make_vec2f(filter_width));
+      break;
+    case LUT_PIXEL_FILTER_TYPE_MITCHELL_NETRAVALI:
+      filterEval = MitchellNetravali_eval(
+          &self->super, coord * make_vec2f(filter_width));
+      break;
+    case LUT_PIXEL_FILTER_TYPE_BLACKMANN_HARRIS:
+      filterEval =
+          BlackmanHarris_eval(&self->super, coord * make_vec2f(filter_width));
+      break;
+    default:
+      break;
+    }
+
+    // clamp the evaluation of the filter
+    // to avoid negative values
+    importance[y * lut_width + x] = max(0.0f, filterEval);
+  }
+  row_importance[y] =
+      Distribution1D_create(lut_width, importance + y * lut_width);
 }
+
+export void LUTPixelFilter_buildLUT(void *uniform _self)
+{
+  LUTPixelFilter *uniform self = (LUTPixelFilter * uniform) _self;
+  const uniform int lut_width = self->distribution->size.x;
+
+  float *uniform cdf_x = self->distribution->cdf_x;
+  float *uniform row_importance = self->distribution->cdf_y;
+#ifdef OSPRAY_TARGET_SYCL
+  // TODO: This could become a kernel launch via SYCL
+  // This serial loop is just for testing an initial C++ migration of the ISPC
+  // code
+  for (int i = 0; i < lut_width; ++i) {
+    LUTPixelFilter_calcRowImportance(self, lut_width, cdf_x, row_importance, i);
+  }
+#else
+  launch[lut_width] LUTPixelFilter_calcRowImportance(
+      self, lut_width, cdf_x, row_importance);
+  sync;
+#endif
+
+  // Initialize the distribution with the computed cdf/f values
+  Distribution2D_init(self->distribution);
+}
+
+OSPRAY_END_ISPC_NAMESPACE

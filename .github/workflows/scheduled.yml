@@ -1,0 +1,99 @@
+## Copyright 2009 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: Scheduled
+
+on:
+  schedule:
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+### BUILD JOBS ###
+
+  build-arch-clang-devel:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      image: ospray/docker-images:arch
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DEMBREE_VERSION=devel -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DOIDN_VERSION=devel -DOPENVKL_VERSION=devel -DRKCOMMON_VERSION=devel
+
+  build-linux-debug-all:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      image: ospray/docker-images:arch
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        scripts/build/linux.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDEPENDENCIES_BUILD_TYPE=Debug -DBUILD_GLFW=OFF -DBUILD_OSPRAY_CI_EXTRAS=ON -DBUILD_EMBREE_FROM_SOURCE=ON -DBUILD_OIDN=ON -DBUILD_OIDN_FROM_SOURCE=ON -DBUILD_OSPRAY_MODULE_MPI=ON -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+      artifact-out: build-linux-debug-all
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+  # build-mpi-cluster:
+  #   with:
+  #     runs-on: '["Cluster", "build"]'
+  #   script:
+  #     - module load cmake
+  #     - module load impi
+  #     - module load gnu
+  #     - scripts/build/linux.sh -DBUILD_OSPRAY_MODULE_MPI=ON -DOSPRAY_BUILD_GLM=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+  #   <<: *build_artifacts
+
+  build-windows-debug-all:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    secrets: inherit
+    with:
+      runs-on: '["Windows", "build", "NAS", "mpi"]'
+      cmd: |
+        scripts\build\win.ps1 "Visual Studio 15 2017 Win64" "v141" "Debug" "ON" "ON"
+      artifact-out: build-windows-debug-all
+      # artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+      artifact-path: build/install/ospray build/CMakeCache.txt build/ospray/build/CMakeCache.txt
+
+### TEST JOBS ###
+
+  test-linux-debug-all:
+    needs: build-linux-debug-all
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ospray/docker-images:arch
+      runs-on: '["Linux", "avx512"]'
+      cmd: |
+        LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$GITHUB_WORKSPACE" AVX512SKX
+      artifact-in: build-linux-debug-all
+      artifact-out: test-linux-debug-all
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true
+
+  # test-mpi-cluster:
+  #   <<: *test_job_unix_avx512skx
+  #   tags: [cluster]
+  #   script:
+  #     - module load impi
+  #     - module load gnu
+  #     - LD_LIBRARY_PATH="$CI_PROJECT_DIR/build/install/ospray/lib:$LD_LIBRARY_PATH" PATH="$CI_PROJECT_DIR/build/install/ospray/bin:$PATH" scripts/tests/run_tests.sh "$CI_PROJECT_DIR" AVX512SKX TEST_MPI TEST_MULTIDEVICE
+  #   env:
+  #     needs: build-mpi-cluster
+  #   needs: ${{ env.needs }}
+
+  test-windows-debug-all:
+    needs: build-windows-debug-all
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      runs-on: '["Windows", "avx2"]'
+      cmd: |
+        $env:Path += ";$env:GITHUB_WORKSPACE\build\install\ospray\bin"
+        scripts\tests\run_tests.ps1 "$env:GITHUB_WORKSPACE" AVX2
+      artifact-in: build-windows-debug-all
+      artifact-out: test-windows-debug-all-avx2
+      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+      artifact-on-failure: true

@@ -97,7 +97,7 @@ cpp::VolumetricModel makeVolumetricModel(cpp::Volume volume, bool useIDs)
       std::vector<float> opacities = {1.f};
       transferFunction.setParam("color", cpp::CopiedData(colors));
       transferFunction.setParam("opacity", cpp::CopiedData(opacities));
-      transferFunction.setParam("valueRange", vec2f(0.f, 10.f));
+      transferFunction.setParam("value", range1f(0.f, 10.f));
       transferFunction.commit();
     }
 

@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
@@ -7,10 +8,16 @@
 #include "common/Ray.ih"
 #include "common/VolumeIntervals.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct LDSampler;
 
-vec4f integrateVolumeIntervals(const VolumeIntervals &intervals,
+SYCL_EXTERNAL vec4f integrateVolumeIntervals(const VolumeIntervals &intervals,
     const RayIntervals &rayIntervals,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
     const uniform float samplingRate);
+
+OSPRAY_END_ISPC_NAMESPACE
+
+#endif

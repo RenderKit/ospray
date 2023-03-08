@@ -2,21 +2,31 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "QuadLight.h"
-// embree
-#include "embree3/rtcore.h"
-
+#ifndef OSPRAY_TARGET_SYCL
 #include "lights/QuadLight_ispc.h"
+#else
+namespace ispc {
+void QuadLight_Transform(const void *self, const void *xfm, void *dyn);
+}
+#endif
 
 #include "QuadLightShared.h"
 #include "common/InstanceShared.h"
 
 namespace ospray {
 
-ispc::Light *QuadLight::createSh(uint32_t, const ispc::Instance *instance) const
+ISPCRTMemoryView QuadLight::createSh(
+    uint32_t, const ispc::Instance *instance) const
 {
-  ispc::QuadLight *sh = StructSharedCreate<ispc::QuadLight>();
-  sh->super.sample = ispc::QuadLight_sample_addr();
-  sh->super.eval = ispc::QuadLight_eval_addr();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::QuadLight>(
+      getISPCDevice().getIspcrtDevice().handle());
+  ispc::QuadLight *sh = (ispc::QuadLight *)ispcrtSharedPtr(view);
+#ifndef OSPRAY_TARGET_SYCL
+  sh->super.sample =
+      reinterpret_cast<ispc::Light_SampleFunc>(ispc::QuadLight_sample_addr());
+  sh->super.eval =
+      reinterpret_cast<ispc::Light_EvalFunc>(ispc::QuadLight_eval_addr());
+#endif
   sh->super.isVisible = visible;
   sh->super.instance = instance;
 
@@ -32,8 +42,13 @@ ispc::Light *QuadLight::createSh(uint32_t, const ispc::Instance *instance) const
   if (instance) {
     sh->pre.c0 = intensityDistribution.c0;
     if (instance->motionBlur) {
-      sh->super.sample = ispc::QuadLight_sample_instanced_addr();
-      sh->super.eval = ispc::QuadLight_eval_instanced_addr();
+#ifndef OSPRAY_TARGET_SYCL
+      // TODO: QuadLight sample/eval dispatch needs to handle this case now
+      sh->super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+          ispc::QuadLight_sample_instanced_addr());
+      sh->super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+          ispc::QuadLight_eval_instanced_addr());
+#endif
     } else
       ispc::QuadLight_Transform(sh, instance->xfm, &sh->pre);
   } else {
@@ -44,7 +59,7 @@ ispc::Light *QuadLight::createSh(uint32_t, const ispc::Instance *instance) const
     sh->pre.c0 = cross(sh->pre.c90, sh->pre.nnormal);
   }
 
-  return &sh->super;
+  return view;
 }
 
 std::string QuadLight::toString() const

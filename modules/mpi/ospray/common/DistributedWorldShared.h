@@ -13,12 +13,18 @@ struct DistributedWorld
 {
   World super;
 
-  box3f *regions;
+  box3f *localRegions;
+  int numLocalRegions;
   int numRegions;
   RTCScene regionScene;
 
 #ifdef __cplusplus
-  DistributedWorld() : regions(nullptr), numRegions(0), regionScene(nullptr) {}
+  DistributedWorld()
+      : localRegions(nullptr),
+        numLocalRegions(0),
+        numRegions(0),
+        regionScene(nullptr)
+  {}
 };
 } // namespace ispc
 #else

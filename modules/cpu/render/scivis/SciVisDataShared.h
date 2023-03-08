@@ -4,7 +4,6 @@
 #pragma once
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
 #endif // __cplusplus
 
@@ -25,11 +24,6 @@ struct SciVisData
   SciVisData()
       : lights(nullptr), numLights(0), numLightsVisibleOnly(0), aoColorPi(0.f)
   {}
-  void create(Light **lightsPtr,
-      uint32 numLights,
-      uint32 numLightsVisibleOnly,
-      const vec3f &aoColor);
-  void destroy();
 };
 } // namespace ispc
 #else

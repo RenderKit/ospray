@@ -11,8 +11,8 @@ endif()
 # Google Test follows the "Live Head" philosophy and therefore recommends
 # using the latest commit to 'master' 
 ExternalProject_Add(${COMPONENT_NAME}
-  URL "https://github.com/google/googletest/archive/refs/tags/release-1.10.0.zip"
-  URL_HASH "SHA256=94c634d499558a76fa649edb13721dce6e98fb1e7018dfaeba3cd7a083945e91"
+  URL "https://github.com/google/googletest/archive/refs/tags/v1.13.0.zip"
+  URL_HASH "SHA256=ffa17fbc5953900994e2deec164bb8949879ea09b411e07f215bfbb1f87f4632"
 
 #   # Skip updating on subsequent builds (faster)
   UPDATE_COMMAND ""
@@ -20,6 +20,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   CMAKE_ARGS
     -Dgtest_force_shared_crt=ON
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     -DCMAKE_BUILD_TYPE=${DEPENDENCIES_BUILD_TYPE}
     -DBUILD_GMOCK=OFF
 )

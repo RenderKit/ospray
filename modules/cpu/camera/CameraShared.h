@@ -4,22 +4,34 @@
 #pragma once
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
+#endif // __cplusplus
+
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *Camera_initRay;
 #else
 struct Camera;
 struct CameraSample;
+struct Ray;
 
 // Fct pointer type for 'virtual' method that sets a pixel,
 // generated ray.dir must be normalized to ensure ray.t is world-space distance
 typedef void (*Camera_initRay)(const Camera *uniform,
     varying Ray &ray,
     const varying CameraSample &sample);
-#endif // __cplusplus
+#endif
+
+enum CameraType
+{
+  CAMERA_TYPE_PERSPECTIVE,
+  CAMERA_TYPE_ORTHOGRAPHIC,
+  CAMERA_TYPE_PANORAMIC,
+  CAMERA_TYPE_UNKNOWN,
+};
 
 struct Camera
 {
+  CameraType type;
   Camera_initRay initRay; // the 'virtual' initRay() method
 
   bool motionBlur; // for the camera itself only, not in general
@@ -34,7 +46,8 @@ struct Camera
 
 #ifdef __cplusplus
   Camera()
-      : initRay(nullptr),
+      : type(CAMERA_TYPE_UNKNOWN),
+        initRay(nullptr),
         motionBlur(false),
         nearClip(1e-6f),
         subImage(0.f),

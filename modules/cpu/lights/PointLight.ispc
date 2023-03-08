@@ -5,13 +5,15 @@
 #include "common/Instance.ih"
 #include "common/Intersect.ih"
 #include "common/Ray.ih"
-#include "math/LinearSpace.ih"
 #include "math/sampling.ih"
+#include "rkcommon/math/LinearSpace.ih"
 // c++ shared
 #include "PointLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline void Transform(const PointLight *uniform self,
     const uniform affine3f &xfm,
     uniform PointLightDynamic &dyn)
@@ -87,17 +89,19 @@ inline Light_SampleRes Sample(const PointLight *uniform self,
   return res;
 }
 
-Light_SampleRes PointLight_sample(const Light *uniform super,
+SYCL_EXTERNAL Light_SampleRes PointLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float)
+    const float time)
 {
   const PointLight *uniform self = (PointLight * uniform) super;
   assert(self);
   return Sample(self, self->pre, dg, s);
 }
 
-Light_SampleRes PointLight_sample_instanced(const Light *uniform super,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_SampleRes PointLight_sample_instanced(
+    const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
     const float time)
@@ -117,6 +121,7 @@ Light_SampleRes PointLight_sample_instanced(const Light *uniform super,
   }
   return res;
 }
+#endif
 
 inline Light_EvalRes Eval(const PointLight *uniform self,
     const uniform PointLightDynamic &dyn,
@@ -132,11 +137,11 @@ inline Light_EvalRes Eval(const PointLight *uniform self,
   const float centerDist2 = dot(A, A);
   const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
 
-  if (and(self->radius > 0.f, sqrt(sinTheta2) > 0.005f)) {
+  if (self->radius > 0.f && sqrt(sinTheta2) > 0.005f) {
     const Intersections isect =
         intersectSphere(dg.P, dir, dyn.position, self->radius);
-    if (and(and(isect.entry.t > minDist, isect.entry.t < maxDist),
-            isect.entry.hit)) {
+
+    if (isect.entry.hit && isect.entry.t > minDist && isect.entry.t < maxDist) {
       const float cosTheta = sqrt(1.f - sinTheta2);
       res.pdf = uniformSampleConePDF(cosTheta);
       res.radiance = self->radiance;
@@ -151,19 +156,21 @@ inline Light_EvalRes Eval(const PointLight *uniform self,
   return res;
 }
 
-Light_EvalRes PointLight_eval(const Light *uniform super,
+SYCL_EXTERNAL Light_EvalRes PointLight_eval(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
     const float maxDist,
-    const float)
+    const float time)
 {
   const PointLight *uniform self = (PointLight * uniform) super;
   assert(self);
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
-Light_EvalRes PointLight_eval_instanced(const Light *uniform super,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_EvalRes PointLight_eval_instanced(
+    const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
@@ -185,26 +192,32 @@ Light_EvalRes PointLight_eval_instanced(const Light *uniform super,
   }
   return res;
 }
+#endif
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
 export void *uniform PointLight_sample_addr()
 {
-  return PointLight_sample;
+  return (void *uniform)PointLight_sample;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform PointLight_sample_instanced_addr()
 {
-  return PointLight_sample_instanced;
+  return (void *uniform)PointLight_sample_instanced;
 }
+#endif
 
 export void *uniform PointLight_eval_addr()
 {
-  return PointLight_eval;
+  return (void *uniform)PointLight_eval;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform PointLight_eval_instanced_addr()
 {
-  return PointLight_eval_instanced;
+  return (void *uniform)PointLight_eval_instanced;
 }
+#endif
+OSPRAY_END_ISPC_NAMESPACE

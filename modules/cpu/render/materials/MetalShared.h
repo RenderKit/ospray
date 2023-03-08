@@ -5,6 +5,11 @@
 
 #include "render/MaterialShared.h"
 #include "texture/TextureParamShared.h"
+#ifdef __cplusplus
+#include "math/spectrum.h"
+#else
+#include "math/spectrum.ih"
+#endif
 
 #ifdef __cplusplus
 namespace ispc {
@@ -30,7 +35,9 @@ struct Metal
         etaRGB(RGB_AL_ETA),
         kRGB(RGB_AL_K),
         roughness(.1f)
-  {}
+  {
+    super.type = ispc::MATERIAL_TYPE_METAL;
+  }
 };
 } // namespace ispc
 #else

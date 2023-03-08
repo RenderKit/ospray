@@ -1,28 +1,32 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
-#include "ISPCDevice.h"
-#include "common/Managed.h"
+#include "ISPCDeviceObject.h"
+#include "common/StructShared.h"
 // embree
-#include "embree3/rtcore.h"
+#include "common/Embree.h"
 // openvkl
-#include "openvkl/volume.h"
+#include "openvkl/openvkl.h"
+// comment break to prevent clang-format from reordering openvkl includes
+#if OPENVKL_VERSION_MAJOR > 1
+#include "openvkl/device/openvkl.h"
+#endif
 // ispc shared
 #include "VolumeShared.h"
 
 namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE Volume
-    : public AddStructShared<ManagedObject, ispc::Volume>
+    : public AddStructShared<ISPCDeviceObject, ispc::Volume>
 {
-  Volume(const std::string &vklType);
+  Volume(api::ISPCDevice &device, const std::string &vklType);
   ~Volume() override;
 
   std::string toString() const override;
   void commit() override;
-  void setDevice(RTCDevice embreeDevice, VKLDevice vklDevice);
 
  private:
   void checkDataStride(const Data *) const;
@@ -35,16 +39,15 @@ struct OSPRAY_SDK_INTERFACE Volume
 
   // Data //
   RTCGeometry embreeGeometry{nullptr};
-  VKLVolume vklVolume{nullptr};
-  VKLSampler vklSampler{nullptr};
+  VKLVolume vklVolume = VKLVolume();
+  VKLSampler vklSampler = VKLSampler();
 
   box3f bounds{empty};
 
   std::string vklType;
-  RTCDevice embreeDevice{nullptr};
-  VKLDevice vklDevice{nullptr};
 };
 
 OSPTYPEFOR_SPECIALIZATION(Volume *, OSP_VOLUME);
 
 } // namespace ospray
+#endif

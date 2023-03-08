@@ -6,24 +6,30 @@
 #include "LoadBalancer.h"
 #include "Material.h"
 #include "common/Instance.h"
-#include "common/Util.h"
 #include "geometry/GeometricModel.h"
+#include "ospray/OSPEnums.h"
 #include "pf/PixelFilter.h"
+#ifdef OSPRAY_TARGET_SYCL
+namespace ispc {
+void precomputeZOrder();
+}
+#else
 // ispc exports
 #include "render/Renderer_ispc.h"
 #include "render/util_ispc.h"
+#endif
 
 namespace ospray {
 
-static FactoryMap<Renderer> g_renderersMap;
-
 // Renderer definitions ///////////////////////////////////////////////////////
 
-Renderer::Renderer()
+Renderer::Renderer(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_RENDERER;
   pixelFilter = nullptr;
-  getSh()->renderSample = ispc::Renderer_default_renderSample_addr();
+  mathConstants = rkcommon::make_unique<MathConstants>(device);
+  getSh()->mathConstants = mathConstants->getSh();
 }
 
 std::string Renderer::toString() const
@@ -55,54 +61,43 @@ void Renderer::commit()
       "backgroundColor", vec3f(getParam<float>("backgroundColor", 0.f)));
   bgColor = getParam<vec4f>("backgroundColor", vec4f(bgColor3, 0.f));
 
+  // Handle materials assigned to renderer
+  materialArray = nullptr;
+  getSh()->material = nullptr;
   materialData = getParamDataT<Material *>("material");
-
-  setupPixelFilter();
-
-  if (materialData)
-    ispcMaterialPtrs = createArrayOfSh<ispc::Material>(*materialData);
-  else
-    ispcMaterialPtrs.clear();
+  if (materialData) {
+    materialArray = make_buffer_shared_unique<ispc::Material *>(
+        getISPCDevice().getIspcrtDevice(),
+        createArrayOfSh<ispc::Material>(*materialData));
+    getSh()->numMaterials = materialArray->size();
+    getSh()->material = materialArray->sharedPtr();
+  }
 
   getSh()->spp = spp;
   getSh()->maxDepth = maxDepth;
   getSh()->minContribution = minContribution;
   getSh()->bgColor = bgColor;
   getSh()->backplate = backplate ? backplate->getSh() : nullptr;
-  getSh()->numMaterials = ispcMaterialPtrs.size();
-  getSh()->material = ispcMaterialPtrs.data();
   getSh()->maxDepthTexture =
       maxDepthTexture ? maxDepthTexture->getSh() : nullptr;
-  getSh()->pixelFilter =
-      (ispc::PixelFilter *)(pixelFilter ? pixelFilter->getIE() : nullptr);
+
+  setupPixelFilter();
+  getSh()->pixelFilter = pixelFilter ? pixelFilter->getSh() : nullptr;
 
   ispc::precomputeZOrder();
 }
 
-Renderer *Renderer::createInstance(const char *type)
+#ifdef OSPRAY_TARGET_SYCL
+sycl::nd_range<1> Renderer::computeDispatchRange(
+    const size_t globalSize, const size_t workgroupSize) const
 {
-  return createInstanceHelper(type, g_renderersMap[type]);
+  // roundedRange global size must be at least workgroupSize
+  const size_t roundedRange =
+      std::max(size_t(1), (globalSize + workgroupSize - 1) / workgroupSize)
+      * workgroupSize;
+  return sycl::nd_range<1>(roundedRange, workgroupSize);
 }
-
-void Renderer::registerType(const char *type, FactoryFcn<Renderer> f)
-{
-  g_renderersMap[type] = f;
-}
-
-void Renderer::renderTasks(FrameBuffer *fb,
-    Camera *camera,
-    World *world,
-    void *perFrameData,
-    const utility::ArrayView<uint32_t> &taskIDs) const
-{
-  ispc::Renderer_renderTasks(getSh(),
-      fb->getSh(),
-      camera->getSh(),
-      world->getSh(),
-      perFrameData,
-      taskIDs.data(),
-      taskIDs.size());
-}
+#endif
 
 OSPPickResult Renderer::pick(
     FrameBuffer *fb, Camera *camera, World *world, const vec2f &screenPos)
@@ -113,6 +108,7 @@ OSPPickResult Renderer::pick(
   res.model = nullptr;
   res.primID = RTC_INVALID_GEOMETRY_ID;
 
+#ifndef OSPRAY_TARGET_SYCL
   int instID = RTC_INVALID_GEOMETRY_ID;
   int geomID = RTC_INVALID_GEOMETRY_ID;
   int primID = RTC_INVALID_GEOMETRY_ID;
@@ -144,6 +140,7 @@ OSPPickResult Renderer::pick(
     res.model = (OSPGeometricModel)model;
     res.primID = static_cast<uint32_t>(primID);
   }
+#endif
 
   return res;
 }
@@ -157,27 +154,30 @@ void Renderer::setupPixelFilter()
   pixelFilter = nullptr;
   switch (pixelFilterType) {
   case OSPPixelFilterTypes::OSP_PIXELFILTER_BOX: {
-    pixelFilter = rkcommon::make_unique<ospray::BoxPixelFilter>();
-    break;
-  }
-  case OSPPixelFilterTypes::OSP_PIXELFILTER_BLACKMAN_HARRIS: {
-    pixelFilter = rkcommon::make_unique<ospray::BlackmanHarrisLUTPixelFilter>();
-    break;
-  }
-  case OSPPixelFilterTypes::OSP_PIXELFILTER_MITCHELL: {
-    pixelFilter =
-        rkcommon::make_unique<ospray::MitchellNetravaliLUTPixelFilter>();
+    pixelFilter = new BoxPixelFilter(getISPCDevice());
     break;
   }
   case OSPPixelFilterTypes::OSP_PIXELFILTER_POINT: {
-    pixelFilter = rkcommon::make_unique<ospray::PointPixelFilter>();
+    pixelFilter = new PointPixelFilter(getISPCDevice());
+    break;
+  }
+  case OSPPixelFilterTypes::OSP_PIXELFILTER_BLACKMAN_HARRIS: {
+    pixelFilter = new BlackmanHarrisLUTPixelFilter(getISPCDevice());
+    break;
+  }
+  case OSPPixelFilterTypes::OSP_PIXELFILTER_MITCHELL: {
+    pixelFilter = new MitchellNetravaliLUTPixelFilter(getISPCDevice());
     break;
   }
   case OSPPixelFilterTypes::OSP_PIXELFILTER_GAUSS:
   default: {
-    pixelFilter = rkcommon::make_unique<ospray::GaussianLUTPixelFilter>();
+    pixelFilter = new GaussianLUTPixelFilter(getISPCDevice());
     break;
   }
+  }
+  if (pixelFilter) {
+    // Need to remove extra local ref
+    pixelFilter->refDec();
   }
 }
 

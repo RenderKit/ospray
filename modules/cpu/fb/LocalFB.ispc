@@ -1,10 +1,14 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "fb/FrameBuffer.ih"
-#include "fb/Tile.ih"
+#include "FrameBuffer.ih"
+#include "RenderTaskDesc.ih"
+#include "Tile.ih"
+#include "render/ScreenSample.ih"
 // c++ shared
 #include "LocalFBShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // write tile into the given frame buffer's color buffer,
 // this buffer _must_ exist when this fct is called, and it
@@ -30,6 +34,7 @@
       for (uint32 iix = tile->region.lower.x + programIndex;                   \
            iix < tile->region.upper.x;                                         \
            iix += programCount, chunkID++) {                                   \
+        type cvtCol;                                                           \
         unmasked                                                               \
         {                                                                      \
           varying vec4f col = make_vec4f(varyTile->r[chunkID],                 \
@@ -37,7 +42,7 @@
               varyTile->b[chunkID],                                            \
               varyTile->a[chunkID]);                                           \
                                                                                \
-          const type cvtCol = cvt(col);                                        \
+          cvtCol = cvt(col);                                                   \
         }                                                                      \
         color[iix] = cvtCol;                                                   \
       }                                                                        \
@@ -162,7 +167,7 @@ inline void LocalFB_accumulateAux(uniform vec3f *uniform auxBuffer,
  * enabled) and writes aux channels (depth, normal, albedo) that the framebuffer
  * has and writes the accumulated color in to the framebuffer for display.
  */
-void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
+SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
     const varying ScreenSample &screenSample,
     uniform RenderTaskDesc &taskDesc)
 {
@@ -240,10 +245,12 @@ void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
     }
   }
 
+#ifndef OSPRAY_TARGET_SYCL
   FrameBuffer_updateProgress(&fb->super, popcnt(lanemask()));
+#endif
 }
 
-uniform RenderTaskDesc LocalFB_getRenderTaskDesc(
+SYCL_EXTERNAL uniform RenderTaskDesc LocalFB_getRenderTaskDesc(
     FrameBuffer *uniform _fb, const uniform uint32 taskID)
 {
   LocalFB *uniform fb = (LocalFB * uniform) _fb;
@@ -260,7 +267,7 @@ uniform RenderTaskDesc LocalFB_getRenderTaskDesc(
   return desc;
 }
 
-void LocalFB_completeTask(
+SYCL_EXTERNAL void LocalFB_completeTask(
     FrameBuffer *uniform _fb, const uniform RenderTaskDesc &taskDesc)
 {
   LocalFB *uniform fb = (LocalFB * uniform) _fb;
@@ -346,13 +353,14 @@ export void LocalFrameBuffer_writeIDTile(void *uniform _fb,
 // Write a Tile's auxiliary buffer into the framebuffer's row major storage
 export void LocalFrameBuffer_writeAuxTile(void *uniform _fb,
     const void *uniform _tile,
-    uniform vec3f *uniform aux,
+    void *uniform _aux,
     const void *uniform _ax,
     const void *uniform _ay,
     const void *uniform _az)
 {
   uniform LocalFB *uniform fb = (uniform LocalFB * uniform) _fb;
   const Tile *uniform tile = (const Tile *uniform)_tile;
+  uniform vec3f *uniform aux = (uniform vec3f * uniform) _aux;
   const varying float *uniform ax = (const varying float *uniform)_ax;
   const varying float *uniform ay = (const varying float *uniform)_ay;
   const varying float *uniform az = (const varying float *uniform)_az;
@@ -377,15 +385,16 @@ export void LocalFrameBuffer_writeAuxTile(void *uniform _fb,
 
 export void *uniform LocalFrameBuffer_accumulateSample_addr()
 {
-  return LocalFB_accumulateSample;
+  return (void *uniform)LocalFB_accumulateSample;
 }
 
 export void *uniform LocalFrameBuffer_getRenderTaskDesc_addr()
 {
-  return LocalFB_getRenderTaskDesc;
+  return (void *uniform)LocalFB_getRenderTaskDesc;
 }
 
 export void *uniform LocalFrameBuffer_completeTask_addr()
 {
-  return LocalFB_completeTask;
+  return (void *uniform)LocalFB_completeTask;
 }
+OSPRAY_END_ISPC_NAMESPACE

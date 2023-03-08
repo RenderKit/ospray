@@ -8,6 +8,8 @@
 // c++ shared
 #include "QuadLightShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 inline void Transform(const QuadLight *uniform self,
@@ -127,21 +129,22 @@ inline Light_SampleRes Sample(const QuadLight *uniform self,
         ? self->radiance * rcp(res.pdf)
         : make_vec3f(0.f);
   }
-
   return res;
 }
 
-Light_SampleRes QuadLight_sample(const Light *uniform super,
+SYCL_EXTERNAL Light_SampleRes QuadLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &sp,
-    const float)
+    const float time)
 {
   const QuadLight *uniform self = (QuadLight * uniform) super;
   assert(self);
   return Sample(self, self->pre, dg, sp);
 }
 
-Light_SampleRes QuadLight_sample_instanced(const Light *uniform super,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_SampleRes QuadLight_sample_instanced(
+    const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &sp,
     const float time)
@@ -161,6 +164,7 @@ Light_SampleRes QuadLight_sample_instanced(const Light *uniform super,
   }
   return res;
 }
+#endif
 
 inline Light_EvalRes Eval(const QuadLight *uniform self,
     const uniform QuadLightDynamic &dyn,
@@ -185,11 +189,11 @@ inline Light_EvalRes Eval(const QuadLight *uniform self,
   const float v = -dot(r, dyn.edge2) * rcosd;
 
   // u/denominator > 1?
-  if (min(u, v) < 0.f | max(u, v) * dyn.ppdf > 1.0f)
+  if (min(u, v) < 0.f || max(u, v) * dyn.ppdf > 1.0f)
     return res;
 
   const float dist = dot(dyn.nnormal, c) * rcosd;
-  if (dist <= minDist | dist > maxDist)
+  if (dist <= minDist || dist > maxDist)
     return res;
 
   SphericalQuad quad = SphericalQuad_create(
@@ -210,19 +214,20 @@ inline Light_EvalRes Eval(const QuadLight *uniform self,
   return res;
 }
 
-Light_EvalRes QuadLight_eval(const Light *uniform super,
+SYCL_EXTERNAL Light_EvalRes QuadLight_eval(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
     const float maxDist,
-    const float)
+    const float time)
 {
   const QuadLight *uniform self = (QuadLight * uniform) super;
   assert(self);
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
-Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
@@ -244,26 +249,33 @@ Light_EvalRes QuadLight_eval_instanced(const Light *uniform super,
   }
   return res;
 }
+#endif
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
 export void *uniform QuadLight_sample_addr()
 {
-  return QuadLight_sample;
+  return (void *uniform)QuadLight_sample;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform QuadLight_sample_instanced_addr()
 {
-  return QuadLight_sample_instanced;
+  return (void *uniform)QuadLight_sample_instanced;
 }
+#endif
 
 export void *uniform QuadLight_eval_addr()
 {
-  return QuadLight_eval;
+  return (void *uniform)QuadLight_eval;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform QuadLight_eval_instanced_addr()
 {
-  return QuadLight_eval_instanced;
+  return (void *uniform)QuadLight_eval_instanced;
 }
+#endif
+
+OSPRAY_END_ISPC_NAMESPACE

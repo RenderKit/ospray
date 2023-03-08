@@ -6,6 +6,8 @@
 #include "DGEnum.h"
 #include "rkcommon/math/vec.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct Material;
 struct Renderer;
 
@@ -39,7 +41,7 @@ struct DifferentialGeometry
 };
 
 // assumed precision of intersection routines
-#define ulpEpsilon 0x1.fp-21
+#define ulpEpsilon 0x1.0fp-21f
 
 inline float calcEpsilon(const vec3f &P, const vec3f &dir, float t)
 {
@@ -53,3 +55,4 @@ inline float calcEpsilon(const vec3f &P, float dist)
   const vec3f dummy_dir = make_vec3f(1.0f);
   return calcEpsilon(P, dummy_dir, dist);
 }
+OSPRAY_END_ISPC_NAMESPACE

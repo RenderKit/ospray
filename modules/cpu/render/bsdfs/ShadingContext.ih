@@ -4,7 +4,9 @@
 #pragma once
 
 #include "common/ISPCMessages.h"
-#include "math/LinearSpace.ih"
+#include "rkcommon/math/LinearSpace.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 #define SHADINGCONTEXT_SIZE (programCount * programCount * 1024)
 #define SHADINGCONTEXT_ALIGNMENT 64
@@ -31,8 +33,10 @@ inline void *uniform ShadingContext_alloc(
   void *uniform ptr = &self->data[self->size];
   self->size = (self->size + size + SHADINGCONTEXT_ALIGNMENT - 1)
       & ((uint32)(-SHADINGCONTEXT_ALIGNMENT));
+#ifndef OSPRAY_TARGET_SYCL
   if (self->size > SHADINGCONTEXT_SIZE)
     postStatusMsg(ISPC_MSG_SHADING_CONTEXT, OSP_LOG_ERROR);
+#endif
   return ptr;
 }
 
@@ -44,3 +48,5 @@ inline varying linear3f *uniform LinearSpace3f_create(
   *ptr = l;
   return ptr;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

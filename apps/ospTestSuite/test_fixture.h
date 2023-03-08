@@ -95,4 +95,10 @@ class FromOsprayTestingMaxDepth : public FromOsprayTesting
   void SetUp() override;
 };
 
+class FromOsprayTestingVariance : public FromOsprayTesting
+{
+ public:
+  void SetUp() override;
+};
+
 } // namespace OSPRayTestScenes

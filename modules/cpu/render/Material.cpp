@@ -3,34 +3,56 @@
 
 // ospray
 #include "Material.h"
-#include "common/Util.h"
+#include "render/bsdfs/MicrofacetAlbedoTables.h"
 #include "texture/Texture.h"
+#ifndef OSPRAY_TARGET_SYCL
 // ispc
 #include "render/Material_ispc.h"
+#endif
 
 namespace ospray {
 
-static FactoryMap<Material> g_materialsMap;
-
 // Material definitions ///////////////////////////////////////////////////////
 
-Material::Material()
+Ref<MicrofacetAlbedoTables> Material::microfacetAlbedoTables = nullptr;
+
+Material::Material(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
   managedObjectType = OSP_MATERIAL;
-  getSh()->getTransparency = ispc::Material_getTransparency_addr();
-  getSh()->selectNextMedium = ispc::Material_selectNextMedium_addr();
+#ifndef OSPRAY_TARGET_SYCL
+  getSh()->getTransparency =
+      reinterpret_cast<ispc::Material_GetTransparencyFunc>(
+          ispc::Material_getTransparency_addr());
+  getSh()->selectNextMedium =
+      reinterpret_cast<ispc::Material_SelectNextMediumFunc>(
+          ispc::Material_selectNextMedium_addr());
+#endif
+
+  if (!microfacetAlbedoTables) {
+    microfacetAlbedoTables = new MicrofacetAlbedoTables(device);
+    // Release the extra local ref
+    microfacetAlbedoTables->refDec();
+  } else {
+    microfacetAlbedoTables->refInc();
+  }
+
+  getSh()->microfacetAlbedoTables = microfacetAlbedoTables->getSh();
 }
 
-Material *Material::createInstance(
-    const char * /*ignored*/, const char *_material_type)
+Material::~Material()
 {
-  std::string name = _material_type;
-  return createInstanceHelper(name, g_materialsMap[name]);
-}
-
-void Material::registerType(const char *name, FactoryFcn<Material> f)
-{
-  g_materialsMap[name] = f;
+  if (microfacetAlbedoTables) {
+    const bool lastReference = microfacetAlbedoTables->useCount() == 1;
+    // The last material referencing the albedo tables should null out the
+    // pointer so we don't try to call refDec again and know to re-create it
+    // when a new material is made
+    if (lastReference) {
+      microfacetAlbedoTables = nullptr;
+    } else {
+      microfacetAlbedoTables->refDec();
+    }
+  }
 }
 
 std::string Material::toString() const

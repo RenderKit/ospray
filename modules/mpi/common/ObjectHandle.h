@@ -4,12 +4,11 @@
 #pragma once
 
 #include "MPICommon.h"
-#include "common/Managed.h"
 #include "common/OSPCommon.h"
+#include "ospray_mpi_common_export.h"
+#include "rkcommon/memory/RefCount.h"
 
 namespace ospray {
-
-struct ManagedObject;
 
 #define NULL_HANDLE (ObjectHandle(0))
 
@@ -24,7 +23,7 @@ struct ManagedObject;
   as if they were pointers (and thus, 'null' objects are
   consistent between local and mpi rendering)
 */
-union ObjectHandle
+union OSPRAY_MPI_COMMON_EXPORT ObjectHandle
 {
   ObjectHandle();
   ObjectHandle(int64 i);
@@ -34,22 +33,22 @@ union ObjectHandle
   void free();
 
   /*! look up an object by handle, and return it. must be a defined handle */
-  ManagedObject *lookup() const;
+  memory::RefCount *lookup() const;
 
   /* Allocate a local ObjectHandle */
   static ObjectHandle allocateLocalHandle();
 
   /*! Return the handle associated with the given object. */
-  static ObjectHandle lookup(ManagedObject *object);
+  static ObjectHandle lookup(memory::RefCount *object);
 
   /*! check whether the handle is defined *on this rank* */
   bool defined() const;
 
   /*! define the given handle to refer to given object */
-  static void assign(const ObjectHandle &handle, ManagedObject *object);
+  static void assign(const ObjectHandle &handle, memory::RefCount *object);
 
   /*! define the given handle to refer to given object */
-  void assign(ManagedObject *object) const;
+  void assign(memory::RefCount *object) const;
 
   void freeObject() const;
 
@@ -70,18 +69,27 @@ union ObjectHandle
   int64 i64;
 };
 
-extern const ObjectHandle nullHandle;
+OSPRAY_MPI_COMMON_EXPORT extern const ObjectHandle nullHandle;
 
 // Inlined operator definitions /////////////////////////////////////////////
 
-inline bool operator==(const ObjectHandle &a, const ObjectHandle &b)
+OSPRAY_MPI_COMMON_EXPORT inline bool operator==(
+    const ObjectHandle &a, const ObjectHandle &b)
 {
   return a.i64 == b.i64;
 }
 
-inline bool operator!=(const ObjectHandle &a, const ObjectHandle &b)
+OSPRAY_MPI_COMMON_EXPORT inline bool operator!=(
+    const ObjectHandle &a, const ObjectHandle &b)
 {
   return !(a == b);
+}
+
+template <typename OSPRAY_TYPE>
+inline OSPRAY_TYPE *lookupObject(OSPObject obj)
+{
+  auto &handle = reinterpret_cast<ObjectHandle &>(obj);
+  return handle.defined() ? (OSPRAY_TYPE *)handle.lookup() : (OSPRAY_TYPE *)obj;
 }
 
 } // namespace ospray

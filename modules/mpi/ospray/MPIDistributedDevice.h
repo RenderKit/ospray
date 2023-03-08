@@ -7,9 +7,9 @@
 #include "common/MPICommon.h"
 #include "common/Managed.h"
 #include "common/ObjectHandle.h"
-#include "openvkl/openvkl.h"
 #include "render/DistributedLoadBalancer.h"
 #include "render/LoadBalancer.h"
+#include "rkcommon/platform.h"
 
 namespace ospray {
 namespace mpi {
@@ -20,21 +20,10 @@ inline OSPRAY_TYPE *lookupDistributedObject(OSPObject obj)
   auto &handle = reinterpret_cast<ObjectHandle &>(obj);
   auto *object = (OSPRAY_TYPE *)handle.lookup();
 
-  if (!object)
+  if (!object) {
     throw std::runtime_error("#dmpi: ObjectHandle doesn't exist!");
-
-  return object;
-}
-
-template <typename OSPRAY_TYPE>
-inline OSPRAY_TYPE *lookupObject(OSPObject obj)
-{
-  auto &handle = reinterpret_cast<ObjectHandle &>(obj);
-  if (handle.defined()) {
-    return (OSPRAY_TYPE *)handle.lookup();
-  } else {
-    return (OSPRAY_TYPE *)obj;
   }
+  return object;
 }
 
 struct MPIDistributedDevice : public api::Device

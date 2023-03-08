@@ -1,34 +1,34 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#ifdef OSPRAY_TARGET_SYCL
+#include <level_zero/ze_api.h>
+// ze_api and sycl level zero backend must be in this order
+#include <sycl/ext/oneapi/backend/level_zero.hpp>
+#endif
+
 // ospray
 #include "ISPCDevice.h"
 #include "camera/Camera.h"
-#include "camera/registration.h"
 #include "common/Data.h"
 #include "common/Group.h"
 #include "common/Instance.h"
 #include "common/Library.h"
-#include "common/Util.h"
 #include "common/World.h"
 #include "fb/ImageOp.h"
 #include "fb/LocalFB.h"
-#include "fb/registration.h"
 #include "geometry/GeometricModel.h"
-#include "geometry/registration.h"
 #include "lights/Light.h"
-#include "lights/registration.h"
 #include "render/LoadBalancer.h"
 #include "render/Material.h"
 #include "render/RenderTask.h"
 #include "render/Renderer.h"
-#include "render/registration.h"
 #include "texture/Texture.h"
 #include "texture/Texture2D.h"
-#include "texture/registration.h"
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
-#include "volume/transferFunction/registration.h"
+#endif
 
 // stl
 #include <algorithm>
@@ -37,7 +37,9 @@
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/CodeTimer.h"
 
+#ifndef OSPRAY_TARGET_SYCL
 #include "ISPCDevice_ispc.h"
+#endif
 
 namespace ospray {
 namespace api {
@@ -92,9 +94,11 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter_object(Material *),
     declare_param_setter_object(Renderer *),
     declare_param_setter_object(Texture *),
+#ifdef OSPRAY_ENABLE_VOLUMES
     declare_param_setter_object(TransferFunction *),
     declare_param_setter_object(Volume *),
     declare_param_setter_object(VolumetricModel *),
+#endif
     declare_param_setter_object(World *),
     declare_param_setter_string(const char *),
     declare_param_setter(char *),
@@ -167,9 +171,11 @@ ISPCDevice::~ISPCDevice()
     // silently move on, sometimes a pthread mutex lock fails in Embree
   }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (vklDevice) {
     vklReleaseDevice(vklDevice);
   }
+#endif
 }
 
 static void embreeErrorFunc(void *, const RTCError code, const char *str)
@@ -180,6 +186,7 @@ static void embreeErrorFunc(void *, const RTCError code, const char *str)
   handleError(e, "Embree internal error '" + std::string(str) + "'");
 }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
 static void vklErrorFunc(void *, const VKLError code, const char *str)
 {
   postStatusMsg() << "#osp: Open VKL internal error " << code << " : " << str;
@@ -187,15 +194,113 @@ static void vklErrorFunc(void *, const VKLError code, const char *str)
       (code > VKL_UNSUPPORTED_CPU) ? OSP_UNKNOWN_ERROR : (OSPError)code;
   handleError(e, "Open VKL internal error '" + std::string(str) + "'");
 }
+#endif
 
 void ISPCDevice::commit()
 {
   Device::commit();
 
+  // TODO: Should this somehow report an error if app trying to change and
+  // recommit these params?
+  if (!ispcrtContext) {
+#ifdef OSPRAY_TARGET_SYCL
+    sycl::context *appSyclCtx =
+        static_cast<sycl::context *>(getParam<void *>("syclContext", nullptr));
+    sycl::device *appSyclDevice =
+        static_cast<sycl::device *>(getParam<void *>("syclDevice", nullptr));
+    if ((appSyclCtx && !appSyclDevice) || (!appSyclCtx && appSyclDevice)) {
+      handleError(OSP_INVALID_OPERATION,
+          "OSPRay ISPCDevice invalid configuration: if providing a syclContext and syclDevice both must be provided");
+      return;
+    }
+
+    ze_context_handle_t *appZeCtx = static_cast<ze_context_handle_t *>(
+        getParam<void *>("zeContext", nullptr));
+    ze_device_handle_t *appZeDevice = static_cast<ze_device_handle_t *>(
+        getParam<void *>("zeDevice", nullptr));
+    if ((appZeCtx && !appZeDevice) || (!appZeCtx && appZeDevice)) {
+      handleError(OSP_INVALID_OPERATION,
+          "OSPRay ISPCDevice invalid configuration: if providing a zeContext and zeDevice both must be provided");
+      return;
+    }
+
+    if (appSyclCtx && appZeCtx) {
+      handleError(OSP_INVALID_OPERATION,
+          "OSPRay ISPCDevice invalid configuration: For SYCL or Level Zero context interopability only a SYCL or Level Zero context & device can be provided, not both.");
+      return;
+    }
+
+    // If we got a SYCL context just get the native handles and set the "app" L0
+    // context/device to them, since we can take the same code path from there
+    ze_context_handle_t syclZeCtxHandle;
+    ze_device_handle_t syclZeDeviceHandle;
+    if (appSyclCtx) {
+      syclZeCtxHandle =
+          sycl::get_native<sycl::backend::ext_oneapi_level_zero>(*appSyclCtx);
+      syclZeDeviceHandle =
+          sycl::get_native<sycl::backend::ext_oneapi_level_zero>(
+              *appSyclDevice);
+
+      appZeCtx = &syclZeCtxHandle;
+      appZeDevice = &syclZeDeviceHandle;
+    }
+
+    if (appZeCtx) {
+      ispcrtContext = ispcrt::Context(
+          ISPCRT_DEVICE_TYPE_GPU, (ISPCRTGenericHandle)*appZeCtx);
+      ispcrtDevice =
+          ispcrt::Device(ispcrtContext, (ISPCRTGenericHandle)*appZeDevice);
+    } else {
+      ispcrt::Context *ispcrtContextPtr = static_cast<ispcrt::Context *>(
+          getParam<void *>("ispcrtContext", nullptr));
+      ispcrt::Device *ispcrtDevicePtr = static_cast<ispcrt::Device *>(
+          getParam<void *>("ispcrtDevice", nullptr));
+
+      if (ispcrtContextPtr != nullptr && ispcrtDevicePtr != nullptr) {
+        ispcrtContext = *ispcrtContextPtr;
+        ispcrtDevice = *ispcrtDevicePtr;
+      } else {
+        ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU);
+        ispcrtDevice = ispcrt::Device(ispcrtContext);
+      }
+    }
+#else
+    ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
+    ispcrtDevice = ispcrt::Device(ispcrtContext);
+#endif
+    ispcrtQueue = ispcrt::TaskQueue(ispcrtDevice);
+
+#ifdef OSPRAY_TARGET_SYCL
+    syclPlatform = sycl::ext::oneapi::level_zero::make_platform(
+        reinterpret_cast<pi_native_handle>(
+            ispcrtDevice.nativePlatformHandle()));
+    syclDevice = sycl::ext::oneapi::level_zero::make_device(syclPlatform,
+        reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeDeviceHandle()));
+
+    syclContext = sycl::ext::oneapi::level_zero::make_context(
+        std::vector<sycl::device>{syclDevice},
+        reinterpret_cast<pi_native_handle>(ispcrtDevice.nativeContextHandle()),
+        true);
+
+    syclQueue = sycl::ext::oneapi::level_zero::make_queue(syclContext,
+        syclDevice,
+        reinterpret_cast<pi_native_handle>(ispcrtQueue.nativeTaskQueueHandle()),
+        true);
+
+    loadBalancer->setQueue(&syclQueue);
+#endif
+  }
+
   tasking::initTaskingSystem(numThreads, true);
 
   if (!embreeDevice) {
+#ifdef OSPRAY_TARGET_SYCL
+    embreeDevice =
+        rtcNewSYCLDevice(syclContext, generateEmbreeDeviceCfg(*this).c_str());
+    rtcSetDeviceSYCLDevice(embreeDevice, syclDevice);
+#else
     embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
+#endif
     rtcSetDeviceErrorFunction(embreeDevice, embreeErrorFunc, nullptr);
     RTCError erc = rtcGetDeviceError(embreeDevice);
     if (erc != RTC_ERROR_NONE) {
@@ -205,9 +310,19 @@ void ISPCDevice::commit()
     }
   }
 
+#ifdef OSPRAY_ENABLE_VOLUMES
   if (!vklDevice) {
+#if OPENVKL_VERSION_MAJOR == 1
     vklLoadModule("cpu_device");
+#else
+    vklInit();
+#endif
 
+#ifdef OSPRAY_TARGET_SYCL
+    vklDevice = vklNewDevice("gpu_4");
+    vklDeviceSetVoidPtr(
+        vklDevice, "syclContext", static_cast<void *>(&syclContext));
+#else
     int cpu_width = ispc::ISPCDevice_programCount();
     switch (cpu_width) {
     case 4:
@@ -223,6 +338,7 @@ void ISPCDevice::commit()
       vklDevice = vklNewDevice("cpu");
       break;
     }
+#endif
 
     vklDeviceSetErrorCallback(vklDevice, vklErrorFunc, nullptr);
     vklDeviceSetLogCallback(
@@ -237,19 +353,25 @@ void ISPCDevice::commit()
 
     vklCommitDevice(vklDevice);
   }
+#endif
 
+#ifndef OSPRAY_TARGET_SYCL
   // Output device info string
   const char *isaNames[] = {"unknown",
       "SSE2",
       "SSE4",
       "AVX",
       "AVX2",
-      "AVX512KNL",
       "AVX512SKX",
       "NEON"};
   postStatusMsg(OSP_LOG_INFO)
       << "Using ISPC device with " << isaNames[ispc::ISPCDevice_isa()]
-      << " instruction set...";
+      << " instruction set";
+#else
+  postStatusMsg(OSP_LOG_INFO)
+      << "Using SYCL GPU device on "
+      << syclDevice.get_info<sycl::info::device::name>() << " device";
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -270,12 +392,12 @@ OSPData ISPCDevice::newSharedData(const void *sharedData,
     const vec3ul &numItems,
     const vec3l &byteStride)
 {
-  return (OSPData) new Data(sharedData, type, numItems, byteStride);
+  return (OSPData) new Data(*this, sharedData, type, numItems, byteStride);
 }
 
 OSPData ISPCDevice::newData(OSPDataType type, const vec3ul &numItems)
 {
-  return (OSPData) new Data(type, numItems);
+  return (OSPData) new Data(*this, type, numItems);
 }
 
 void ISPCDevice::copyData(
@@ -291,42 +413,44 @@ void ISPCDevice::copyData(
 
 OSPLight ISPCDevice::newLight(const char *type)
 {
-  return (OSPLight)Light::createInstance(type);
+  return (OSPLight)Light::createInstance(type, *this);
 }
 
 OSPCamera ISPCDevice::newCamera(const char *type)
 {
-  ospray::Camera *ret = Camera::createInstance(type);
-  ret->setDevice(embreeDevice);
-  return (OSPCamera)ret;
+  return (OSPCamera)Camera::createInstance(type, *this);
 }
 
 OSPGeometry ISPCDevice::newGeometry(const char *type)
 {
-  ospray::Geometry *ret = Geometry::createInstance(type);
-  ret->setDevice(embreeDevice);
-  return (OSPGeometry)ret;
+  return (OSPGeometry)Geometry::createInstance(type, *this);
 }
 
 OSPVolume ISPCDevice::newVolume(const char *type)
 {
-  ospray::Volume *ret = new Volume(type);
-  ret->setDevice(embreeDevice, vklDevice);
-  return (OSPVolume)ret;
+#ifdef OSPRAY_ENABLE_VOLUMES
+  return (OSPVolume) new Volume(*this, type);
+#else
+  return (OSPVolume) nullptr;
+#endif
 }
 
 OSPGeometricModel ISPCDevice::newGeometricModel(OSPGeometry _geom)
 {
   auto *geom = (Geometry *)_geom;
-  auto *model = new GeometricModel(geom);
+  auto *model = new GeometricModel(*this, geom);
   return (OSPGeometricModel)model;
 }
 
 OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
 {
+#ifdef OSPRAY_ENABLE_VOLUMES
   auto *volume = (Volume *)_volume;
-  auto *model = new VolumetricModel(volume);
+  auto *model = new VolumetricModel(*this, volume);
   return (OSPVolumetricModel)model;
+#else
+  return (OSPVolumetricModel) nullptr;
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -334,19 +458,23 @@ OSPVolumetricModel ISPCDevice::newVolumetricModel(OSPVolume _volume)
 ///////////////////////////////////////////////////////////////////////////
 
 OSPMaterial ISPCDevice::newMaterial(
-    const char *renderer_type, const char *material_type)
+    const char * /*renderer_type - unused*/, const char *material_type)
 {
-  return (OSPMaterial)Material::createInstance(renderer_type, material_type);
+  return (OSPMaterial)Material::createInstance(material_type, *this);
 }
 
 OSPTransferFunction ISPCDevice::newTransferFunction(const char *type)
 {
-  return (OSPTransferFunction)TransferFunction::createInstance(type);
+#ifdef OSPRAY_ENABLE_VOLUMES
+  return (OSPTransferFunction)TransferFunction::createInstance(type, *this);
+#else
+  return (OSPTransferFunction) nullptr;
+#endif
 }
 
 OSPTexture ISPCDevice::newTexture(const char *type)
 {
-  return (OSPTexture)Texture::createInstance(type);
+  return (OSPTexture)Texture::createInstance(type, *this);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -355,15 +483,13 @@ OSPTexture ISPCDevice::newTexture(const char *type)
 
 OSPGroup ISPCDevice::newGroup()
 {
-  ospray::Group *ret = new Group;
-  ret->setDevice(embreeDevice);
-  return (OSPGroup)ret;
+  return (OSPGroup) new Group(*this);
 }
 
 OSPInstance ISPCDevice::newInstance(OSPGroup _group)
 {
   auto *group = (Group *)_group;
-  auto *instance = new Instance(group);
+  auto *instance = new Instance(*this, group);
   return (OSPInstance)instance;
 }
 
@@ -373,9 +499,7 @@ OSPInstance ISPCDevice::newInstance(OSPGroup _group)
 
 OSPWorld ISPCDevice::newWorld()
 {
-  ospray::World *ret = new World;
-  ret->setDevice(embreeDevice);
-  return (OSPWorld)ret;
+  return (OSPWorld) new World(*this);
 }
 
 box3f ISPCDevice::getBounds(OSPObject _obj)
@@ -440,13 +564,15 @@ OSPFrameBuffer ISPCDevice::frameBufferCreate(
 {
   FrameBuffer::ColorBufferFormat colorBufferFormat = mode;
 
-  FrameBuffer *fb = new LocalFrameBuffer(size, colorBufferFormat, channels);
+  FrameBuffer *fb =
+      new LocalFrameBuffer(*this, size, colorBufferFormat, channels);
   return (OSPFrameBuffer)fb;
 }
 
 OSPImageOperation ISPCDevice::newImageOp(const char *type)
 {
-  return (OSPImageOperation)ImageOp::createInstance(type);
+  ospray::ImageOp *ret = ImageOp::createInstance(type);
+  return (OSPImageOperation)ret;
 }
 
 const void *ISPCDevice::frameBufferMap(
@@ -480,7 +606,7 @@ void ISPCDevice::resetAccumulation(OSPFrameBuffer _fb)
 
 OSPRenderer ISPCDevice::newRenderer(const char *type)
 {
-  return (OSPRenderer)Renderer::createInstance(type);
+  return (OSPRenderer)Renderer::createInstance(type, *this);
 }
 
 OSPFuture ISPCDevice::renderFrame(OSPFrameBuffer _fb,
@@ -558,27 +684,6 @@ OSPPickResult ISPCDevice::pick(OSPFrameBuffer _fb,
   Camera *camera = (Camera *)_camera;
   World *world = (World *)_world;
   return renderer->pick(fb, camera, world, screenPos);
-}
-
-extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_cpu(
-    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
-{
-  auto status = moduleVersionCheck(versionMajor, versionMinor);
-
-  if (status == OSP_NO_ERROR) {
-    Device::registerType<ISPCDevice>("cpu");
-
-    registerAllCameras();
-    registerAllImageOps();
-    registerAllGeometries();
-    registerAllLights();
-    registerAllMaterials();
-    registerAllRenderers();
-    registerAllTextures();
-    registerAllTransferFunctions();
-  }
-
-  return status;
 }
 
 } // namespace api

@@ -6,6 +6,8 @@
 #include "common/Ray.ih"
 #include "rkcommon/math/vec.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct ScreenSample
 {
   // input values to 'renderSample'
@@ -25,3 +27,5 @@ struct ScreenSample
   unsigned int geomID;
   unsigned int instID;
 };
+
+OSPRAY_END_ISPC_NAMESPACE

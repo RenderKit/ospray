@@ -1,5 +1,6 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 #pragma once
 
@@ -13,7 +14,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE Isosurfaces
     : public AddStructShared<Geometry, ispc::Isosurfaces>
 {
-  Isosurfaces();
+  Isosurfaces(api::ISPCDevice &device);
   virtual ~Isosurfaces() override;
 
   virtual std::string toString() const override;
@@ -30,7 +31,9 @@ struct OSPRAY_SDK_INTERFACE Isosurfaces
   // the volume and color
   Ref<VolumetricModel> model;
   Ref<Volume> volume;
-  VKLHitIteratorContext vklHitContext{nullptr};
+  VKLHitIteratorContext vklHitContext = VKLHitIteratorContext();
 };
 
 } // namespace ospray
+
+#endif

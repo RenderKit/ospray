@@ -3,10 +3,14 @@
 
 #pragma once
 
+#include "rkcommon/math/math.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // input: importance in 'cdf'
 // output: cdf of importance in 'cdf'
 //         return sum
-export uniform float Distribution1D_create(
+SYCL_EXTERNAL export uniform float Distribution1D_create(
     const uniform int size, uniform float *uniform cdf);
 
 struct Sample1D
@@ -51,3 +55,4 @@ inline Sample1D Distribution1D_sample(const uniform int size,
 
   return ret;
 }
+OSPRAY_END_ISPC_NAMESPACE

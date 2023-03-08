@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "common/DifferentialGeometry.ih"
-#include "math/LinearSpace.ih"
 #include "math/sampling.ih"
+#include "rkcommon/math/LinearSpace.ih"
 // c++ shared
 #include "AmbientLightShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
 // XXX importance sampling is only done into the positive hemisphere
 // ==> poor support for translucent materials
-Light_SampleRes AmbientLight_sample(const Light *uniform super,
+SYCL_EXTERNAL Light_SampleRes AmbientLight_sample(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
     const float)
@@ -34,7 +36,7 @@ Light_SampleRes AmbientLight_sample(const Light *uniform super,
   return res;
 }
 
-Light_EvalRes AmbientLight_eval(const Light *uniform super,
+SYCL_EXTERNAL Light_EvalRes AmbientLight_eval(const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float,
@@ -44,7 +46,7 @@ Light_EvalRes AmbientLight_eval(const Light *uniform super,
   uniform AmbientLight *uniform self = (uniform AmbientLight * uniform) super;
   Light_EvalRes res;
 
-  res.radiance = inf <= maxDist ? self->radiance : make_vec3f(0.f);
+  res.radiance = (float)inf <= maxDist ? self->radiance : make_vec3f(0.f);
   if (reduce_max(abs(dg.Ns)) > 0)
     res.pdf = cosineSampleHemispherePDF(max(dot(dg.Ns, dir), 0.f));
   else
@@ -58,10 +60,12 @@ Light_EvalRes AmbientLight_eval(const Light *uniform super,
 
 export void *uniform AmbientLight_sample_addr()
 {
-  return AmbientLight_sample;
+  return (void *uniform)AmbientLight_sample;
 }
 
 export void *uniform AmbientLight_eval_addr()
 {
-  return AmbientLight_eval;
+  return (void *uniform)AmbientLight_eval;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

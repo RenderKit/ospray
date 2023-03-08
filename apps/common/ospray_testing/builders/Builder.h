@@ -40,7 +40,7 @@ struct Builder : public memory::RefCountedObject,
   static Builder *createBuilder(const std::string &name);
 
  protected:
-  cpp::TransferFunction makeTransferFunction(const vec2f &valueRange) const;
+  cpp::TransferFunction makeTransferFunction(const range1f &valueRange) const;
 
   cpp::Instance makeGroundPlane(const box3f &bounds) const;
 

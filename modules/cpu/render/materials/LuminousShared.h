@@ -16,7 +16,10 @@ struct Luminous
   float transparency;
 
 #ifdef __cplusplus
-  Luminous() : super(1.f), transparency(0.f) {}
+  Luminous() : super(1.f), transparency(0.f)
+  {
+    super.type = ispc::MATERIAL_TYPE_LUMINOUS;
+  }
 };
 } // namespace ispc
 #else

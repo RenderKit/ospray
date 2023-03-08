@@ -1,0 +1,28 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+#pragma once
+
+#include "PrincipledShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying Principled_getBSDF(
+    const uniform Material *uniform super,
+    uniform ShadingContext *uniform ctx,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const Medium &currentMedium);
+
+SYCL_EXTERNAL vec3f Principled_getTransparency(
+    const uniform Material *uniform super,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const Medium &currentMedium);
+
+SYCL_EXTERNAL void Principled_selectNextMedium(
+    const uniform Material *uniform super,
+    const DifferentialGeometry &dg,
+    Medium &currentMedium);
+
+OSPRAY_END_ISPC_NAMESPACE
+

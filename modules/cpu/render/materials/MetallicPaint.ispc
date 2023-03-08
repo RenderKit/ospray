@@ -8,12 +8,14 @@
 #include "render/bsdfs/MultiBSDF.ih"
 #include "texture/TextureParam.ih"
 
-#include "MetallicPaintShared.h"
+#include "MetallicPaint.ih"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF *varying MetallicPaint_getBSDF(
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying MetallicPaint_getBSDF(
     const uniform Material *uniform super,
     uniform ShadingContext *uniform ctx,
     const DifferentialGeometry &dg,
@@ -37,8 +39,12 @@ const varying BSDF *varying MetallicPaint_getBSDF(
     const vec3f g = make_vec3f(self->flakeAmount);
     Fresnel *uniform fresnel = FresnelSchlick_create(ctx, r, g);
     MultiBSDF_add(bsdf,
-        MicrofacetConductor_create(
-            ctx, shadingFrame, fresnel, self->flakeSpread, 0.f),
+        MicrofacetConductor_create(ctx,
+            super->microfacetAlbedoTables,
+            shadingFrame,
+            fresnel,
+            self->flakeSpread,
+            0.f),
         1.f,
         luminance(r));
   }
@@ -53,5 +59,7 @@ const varying BSDF *varying MetallicPaint_getBSDF(
 
 export void *uniform MetallicPaint_getBSDF_addr()
 {
-  return MetallicPaint_getBSDF;
+  return (void *uniform)MetallicPaint_getBSDF;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

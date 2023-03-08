@@ -13,9 +13,11 @@
 // c++ shared
 #include "PlanesShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // The plane can't be truly infinite because Embree has a limit on object size
-#define PLANE_MAX_SIZE 1e18
-#define DUMMY_MAX_T 1e38
+#define PLANE_MAX_SIZE 1e18f
+#define DUMMY_MAX_T 1e38f
 
 export void Planes_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
@@ -36,12 +38,15 @@ export void Planes_bounds(const RTCBoundsFunctionArguments *uniform args)
   }
 }
 
-void Planes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
+SYCL_EXTERNAL unmasked void Planes_intersect_kernel(
+    const RTCIntersectFunctionNArguments *uniform args,
     const uniform bool isOcclusionTest)
 {
   // make sure to set the mask
   if (!args->valid[programIndex])
     return;
+
+  args->valid[programIndex] = 0;
 
   // get geometry pointers
   Planes *uniform self = (Planes * uniform) args->geometryUserPtr;
@@ -68,8 +73,10 @@ void Planes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   }
 
   // we are done if first intersection accepted
-  if (filterIntersectionSingle(args, hit, isOcclusionTest, false))
+  if (filterIntersectionSingle(args, hit, isOcclusionTest, false)) {
+    args->valid[programIndex] = -1;
     return;
+  }
 
   // handle plane parallel to ray, which breaks interval logic for clipping
   if (!hit.hit) {
@@ -114,7 +121,7 @@ export void Planes_occluded(
       (RTCIntersectFunctionNArguments * uniform) args, true);
 }
 
-void Planes_postIntersect(const Geometry *uniform geometry,
+SYCL_EXTERNAL void Planes_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -124,5 +131,7 @@ void Planes_postIntersect(const Geometry *uniform geometry,
 
 export void *uniform Planes_postIntersect_addr()
 {
-  return Planes_postIntersect;
+  return (void *uniform)Planes_postIntersect;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

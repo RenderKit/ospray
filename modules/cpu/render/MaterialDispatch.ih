@@ -1,0 +1,34 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "rkcommon/math/vec.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL __noinline const varying BSDF *varying Material_dispatch_getBSDF(
+    const uniform Material *uniform self,
+    uniform ShadingContext *uniform ctx,
+    // The point to shade on a surface.
+    const DifferentialGeometry &dg,
+    // The ray arriving at the point to shade.
+    const Ray &ray,
+    // The medium this ray travels inside.
+    const Medium &currentMedium);
+
+SYCL_EXTERNAL __noinline vec3f Material_dispatch_getTransparency(
+    const uniform Material *uniform self,
+    // The point to shade on a surface.
+    const DifferentialGeometry &dg,
+    // The ray arriving at the point to shade.
+    const Ray &ray,
+    // The medium this ray travels inside.
+    const Medium &currentMedium);
+
+SYCL_EXTERNAL __noinline void Material_dispatch_selectNextMedium(
+    const uniform Material *uniform self,
+    const DifferentialGeometry &dg,
+    Medium &currentMedium);
+
+OSPRAY_END_ISPC_NAMESPACE

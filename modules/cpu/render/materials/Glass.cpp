@@ -2,18 +2,27 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Glass.h"
+#ifndef OSPRAY_TARGET_SYCL
 // ispc
 #include "render/materials/Glass_ispc.h"
+#endif
 
 namespace ospray {
 namespace pathtracer {
 
-Glass::Glass()
+Glass::Glass(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.type = ispc::MATERIAL_TYPE_GLASS;
-  getSh()->super.getBSDF = ispc::Glass_getBSDF_addr();
-  getSh()->super.getTransparency = ispc::Glass_getTransparency_addr();
-  getSh()->super.selectNextMedium = ispc::Glass_selectNextMedium_addr();
+#ifndef OSPRAY_TARGET_SYCL
+  getSh()->super.getBSDF =
+      reinterpret_cast<ispc::Material_GetBSDFFunc>(ispc::Glass_getBSDF_addr());
+  getSh()->super.getTransparency =
+      reinterpret_cast<ispc::Material_GetTransparencyFunc>(
+          ispc::Glass_getTransparency_addr());
+  getSh()->super.selectNextMedium =
+      reinterpret_cast<ispc::Material_SelectNextMediumFunc>(
+          ispc::Glass_selectNextMedium_addr());
+#endif
 }
 
 std::string Glass::toString() const

@@ -7,7 +7,10 @@
 #include "fb/Tile.ih"
 #include "ospray/OSPEnums.h"
 #include "render/Renderer.ih"
+#include "render/ScreenSample.ih"
 #include "render/util.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 /* Return the position of the screen sample within its tile
  */
@@ -126,7 +129,7 @@ inline void SparseFB_accumulateTileSample(SparseFB *uniform fb,
   }
 }
 
-void SparseFB_accumulateSample(FrameBuffer *uniform _fb,
+SYCL_EXTERNAL void SparseFB_accumulateSample(FrameBuffer *uniform _fb,
     const varying ScreenSample &screenSample,
     uniform RenderTaskDesc &taskDesc)
 {
@@ -141,10 +144,12 @@ void SparseFB_accumulateSample(FrameBuffer *uniform _fb,
   SparseFB_accumulateTileSample(
       fb, screenSample, tileIdx, sampleTilePos, taskDesc);
 
+#ifndef OSPRAY_TARGET_SYCL
   FrameBuffer_updateProgress(&fb->super, popcnt(lanemask()));
+#endif
 }
 
-uniform RenderTaskDesc SparseFB_getRenderTaskDesc(
+SYCL_EXTERNAL uniform RenderTaskDesc SparseFB_getRenderTaskDesc(
     FrameBuffer *uniform _fb, const uniform uint32 taskID)
 {
   SparseFB *uniform fb = (SparseFB * uniform) _fb;
@@ -182,7 +187,7 @@ uniform RenderTaskDesc SparseFB_getRenderTaskDesc(
   return desc;
 }
 
-void SparseFB_completeTask(
+SYCL_EXTERNAL void SparseFB_completeTask(
     FrameBuffer *uniform _fb, const uniform RenderTaskDesc &taskDesc)
 {
   SparseFB *uniform fb = (SparseFB * uniform) _fb;
@@ -205,17 +210,20 @@ void SparseFB_completeTask(
   }
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform SparseFrameBuffer_accumulateSample_addr()
 {
-  return SparseFB_accumulateSample;
+  return (void *uniform)SparseFB_accumulateSample;
 }
 
 export void *uniform SparseFrameBuffer_getRenderTaskDesc_addr()
 {
-  return SparseFB_getRenderTaskDesc;
+  return (void *uniform)SparseFB_getRenderTaskDesc;
 }
 
 export void *uniform SparseFrameBuffer_completeTask_addr()
 {
-  return SparseFB_completeTask;
+  return (void *uniform)SparseFB_completeTask;
 }
+#endif
+OSPRAY_END_ISPC_NAMESPACE

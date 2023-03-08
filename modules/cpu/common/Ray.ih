@@ -4,10 +4,12 @@
 #pragma once
 
 // ospray
-#include "../math/AffineSpace.ih"
+#include "rkcommon/math/AffineSpace.ih"
 #include "rkcommon/math/vec.ih"
 // embree
-#include "embree3/rtcore.isph"
+#include "Embree.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // NOTE(jda) - this MUST match Embree's RayHit structure layout!
 struct Ray
@@ -21,9 +23,9 @@ struct Ray
 
   float t; /*!< end of valid ray interval, or distance to hit point after
               'intersect' */
-  int32 mask; //!< Used to mask out objects during traversal
-  int32 rayID;
-  int32 flags;
+  uint32 mask; //!< Used to mask out objects during traversal
+  uint32 rayID;
+  uint32 flags;
 
   /* hit data */
   vec3f Ng; /*! geometry normal*/
@@ -31,16 +33,30 @@ struct Ray
   float u; //!< Barycentric u coordinate of hit
   float v; //!< Barycentric v coordinate of hit
 
-  int primID; //!< primitive ID
-  int geomID; //!< geometry ID
-  int instID; //!< instance ID
+  uint32 primID; //!< primitive ID
+  uint32 geomID; //!< geometry ID
+  uint32 instID; //!< instance ID
 };
 
-struct EmbreeIntersectionContext
+enum EmbreeRayQueryContextType
 {
-  RTCIntersectContext ectx;
-  void *uniform userPtr;
+  ERQCT_DEFAULT,
+  ERQCT_CLIPPING,
+  ERQCT_UNKNOWN
 };
+
+struct EmbreeRayQueryContextDefault
+{
+  RTCRayQueryContext ectx;
+  EmbreeRayQueryContextType type;
+};
+
+inline void InitRayQueryContextDefault(
+    EmbreeRayQueryContextDefault *uniform context)
+{
+  rtcInitRayQueryContext(&context->ectx);
+  context->type = ERQCT_DEFAULT;
+}
 
 // Hit query functions ////////////////////////////////////////////////////////
 
@@ -89,16 +105,11 @@ inline void setRay(Ray &ray, const float t0, const float t1)
 
 // Ray transformation helpers /////////////////////////////////////////////////
 
-inline void transformRay(Ray &ray, AffineSpace3f &xfm)
+inline void transformRay(Ray &ray, const AffineSpace3f &xfm)
 {
   ray.org = xfmPoint(xfm, ray.org);
   ray.dir = xfmVector(xfm, ray.dir);
   ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
 }
 
-inline void transformRay(Ray &ray, AffineSpace3f xfm)
-{
-  ray.org = xfmPoint(xfm, ray.org);
-  ray.dir = xfmVector(xfm, ray.dir);
-  ray.Ng = xfmVector(transposed(xfm.l), ray.Ng);
-}
+OSPRAY_END_ISPC_NAMESPACE

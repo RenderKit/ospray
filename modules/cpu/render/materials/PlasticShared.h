@@ -18,7 +18,10 @@ struct Plastic
   float roughness;
 
 #ifdef __cplusplus
-  Plastic() : pigmentColor(1.f), eta(1.4f), roughness(0.01f) {}
+  Plastic() : pigmentColor(1.f), eta(1.4f), roughness(0.01f)
+  {
+    super.type = ispc::MATERIAL_TYPE_PLASTIC;
+  }
 };
 } // namespace ispc
 #else

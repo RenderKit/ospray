@@ -7,7 +7,7 @@
 
 namespace ospray {
 
-static std::map<int64, ospray::ManagedObject *> objectByHandle;
+static std::map<int64, memory::RefCount *> objectByHandle;
 static std::stack<int64> freedHandles;
 
 //! next unassigned ID on this node
@@ -34,12 +34,12 @@ ObjectHandle &ObjectHandle::operator=(const ObjectHandle &other)
 }
 
 /*! define the given handle to refer to given object */
-void ObjectHandle::assign(const ObjectHandle &handle, ManagedObject *object)
+void ObjectHandle::assign(const ObjectHandle &handle, memory::RefCount *object)
 {
   objectByHandle[handle] = object;
 }
 
-void ObjectHandle::assign(ManagedObject *object) const
+void ObjectHandle::assign(memory::RefCount *object) const
 {
   objectByHandle[i64] = object;
 }
@@ -86,7 +86,7 @@ ObjectHandle ObjectHandle::allocateLocalHandle()
   return handle;
 }
 
-ManagedObject *ObjectHandle::lookup() const
+memory::RefCount *ObjectHandle::lookup() const
 {
   if (i64 == 0)
     return nullptr;
@@ -106,7 +106,7 @@ ManagedObject *ObjectHandle::lookup() const
   return it->second;
 }
 
-ObjectHandle ObjectHandle::lookup(ManagedObject *object)
+ObjectHandle ObjectHandle::lookup(memory::RefCount *object)
 {
   for (auto it = objectByHandle.begin(); it != objectByHandle.end(); it++) {
     if (it->second == object)

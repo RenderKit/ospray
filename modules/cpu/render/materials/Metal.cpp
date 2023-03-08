@@ -3,16 +3,21 @@
 
 #include "Metal.h"
 #include "common/Data.h"
+#ifndef OSPRAY_TARGET_SYCL
 // ispc
 #include "render/materials/Metal_ispc.h"
+#endif
 
 namespace ospray {
 namespace pathtracer {
 
-Metal::Metal()
+Metal::Metal(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.type = ispc::MATERIAL_TYPE_METAL;
-  getSh()->super.getBSDF = ispc::Metal_getBSDF_addr();
+#ifndef OSPRAY_TARGET_SYCL
+  getSh()->super.getBSDF =
+      reinterpret_cast<ispc::Material_GetBSDFFunc>(ispc::Metal_getBSDF_addr());
+#endif
 }
 
 std::string Metal::toString() const
@@ -25,7 +30,7 @@ void Metal::commit()
   auto ior = getParamDataT<vec3f>("ior");
   const vec3f &eta = getParam<vec3f>("eta", vec3f(RGB_AL_ETA));
   const vec3f &k = getParam<vec3f>("k", vec3f(RGB_AL_K));
-  MaterialParam1f roughness = getMaterialParam1f("roughness", .1f);
+  MaterialParam1f roughness = getMaterialParam1f("roughness", 0.1f);
 
   if (ior) {
     // resample, relies on ordered samples

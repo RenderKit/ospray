@@ -3,79 +3,30 @@
 
 // ospray
 #include "SciVis.h"
-#include "common/Instance.h"
+#include "SciVisData.h"
+#include "camera/Camera.h"
 #include "common/World.h"
-#include "lights/AmbientLight.h"
-#include "lights/HDRILight.h"
-#include "lights/SunSkyLight.h"
+#include "fb/FrameBuffer.h"
+#ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "render/scivis/SciVis_ispc.h"
+#else
+namespace ispc {
+SYCL_EXTERNAL void SciVis_renderTask(Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    World *uniform world,
+    void *uniform perFrameData,
+    const uint32 *uniform taskIDs,
+    const int taskIndex0);
+}
+#endif
 
 namespace ospray {
 
-namespace {
-
-void addVisibleOnlyToArray(std::vector<ispc::Light *> &lightShs,
-    uint32_t &visibleOnly,
-    ispc::Light *lightSh)
-{
-  if (visibleOnly == lightShs.size())
-    lightShs.push_back(lightSh);
-  else {
-    // insert light at the visibleOnly index
-    lightShs.push_back(lightShs[visibleOnly]);
-    lightShs[visibleOnly] = lightSh;
-  }
-  visibleOnly++;
-}
-
-vec3f addLightsToArray(std::vector<ispc::Light *> &lightShs,
-    uint32_t &visibleOnly,
-    Ref<const DataT<Light *>> &lights,
-    const ispc::Instance *instanceSh)
-{
-  vec3f aoColor = vec3f(0.f);
-  for (auto &&light : *lights) {
-    // just extract color from ambient lights
-    const auto ambient = dynamic_cast<const AmbientLight *>(light);
-    if (ambient) {
-      addVisibleOnlyToArray(
-          lightShs, visibleOnly, light->createSh(0, instanceSh));
-      aoColor += ambient->radiance;
-      continue;
-    }
-
-    // no illumination from HDRI lights
-    const auto hdri = dynamic_cast<const HDRILight *>(light);
-    if (hdri) {
-      addVisibleOnlyToArray(
-          lightShs, visibleOnly, light->createSh(0, instanceSh));
-      continue;
-    }
-
-    // sun-sky: only sun illuminates
-    const auto sunsky = dynamic_cast<const SunSkyLight *>(light);
-    if (sunsky) {
-      addVisibleOnlyToArray(lightShs,
-          visibleOnly,
-          light->createSh(0, instanceSh)); // sky visible only
-      lightShs.push_back(light->createSh(1, instanceSh)); // sun
-      continue;
-    }
-
-    // handle the remaining types of lights
-    for (uint32_t id = 0; id < light->getShCount(); id++)
-      lightShs.push_back(light->createSh(id, instanceSh));
-  }
-  return aoColor;
-}
-
-} // namespace
-
-SciVis::SciVis()
-{
-  getSh()->super.renderSample = ispc::SciVis_renderSample_addr();
-}
+SciVis::SciVis(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
+{}
 
 std::string SciVis::toString() const
 {
@@ -99,38 +50,62 @@ void *SciVis::beginFrame(FrameBuffer *, World *world)
   if (!world)
     return nullptr;
 
-  if (world->scivisDataValid)
+  if (world->scivisData.get())
     return nullptr;
 
-  std::vector<ispc::Light *> lightArray;
-  vec3f aoColor = vec3f(0.f);
-  uint32_t visibleOnly = 0;
-
-  // Add lights not assigned to any instance
-  if (world->lights)
-    aoColor +=
-        addLightsToArray(lightArray, visibleOnly, world->lights, nullptr);
-
-  // Iterate through all world instances
-  if (world->instances) {
-    for (auto &&inst : *world->instances) {
-      // Skip instances without lights
-      if (!inst->group->lights)
-        continue;
-
-      // Add instance lights to array
-      aoColor += addLightsToArray(
-          lightArray, visibleOnly, inst->group->lights, inst->getSh());
-    }
-  }
-
-  // Prepare scivis data structure
-  ispc::SciVisData &sd = world->getSh()->scivisData;
-  sd.destroy();
-  sd.create(lightArray.data(), lightArray.size(), visibleOnly, aoColor);
-  world->scivisDataValid = true;
-
+  // Create SciVisData object
+  std::unique_ptr<SciVisData> scivisData =
+      rkcommon::make_unique<SciVisData>(*world);
+  world->getSh()->scivisData = scivisData->getSh();
+  world->scivisData = std::move(scivisData);
   return nullptr;
+}
+
+void SciVis::renderTasks(FrameBuffer *fb,
+    Camera *camera,
+    World *world,
+    void *perFrameData,
+    const utility::ArrayView<uint32_t> &taskIDs
+#ifdef OSPRAY_TARGET_SYCL
+    ,
+    sycl::queue &syclQueue
+#endif
+) const
+{
+  auto *rendererSh = getSh();
+  auto *fbSh = fb->getSh();
+  auto *cameraSh = camera->getSh();
+  auto *worldSh = world->getSh();
+  const size_t numTasks = taskIDs.size();
+
+#ifdef OSPRAY_TARGET_SYCL
+  const uint32_t *taskIDsPtr = taskIDs.data();
+  auto event = syclQueue.submit([&](sycl::handler &cgh) {
+    const sycl::nd_range<1> dispatchRange = computeDispatchRange(numTasks, 16);
+    cgh.parallel_for(dispatchRange, [=](sycl::nd_item<1> taskIndex) {
+      if (taskIndex.get_global_id(0) < numTasks) {
+        ispc::SciVis_renderTask(&rendererSh->super,
+            fbSh,
+            cameraSh,
+            worldSh,
+            perFrameData,
+            taskIDsPtr,
+            taskIndex.get_global_id(0));
+      }
+    });
+  });
+  event.wait_and_throw();
+  // For prints we have to flush the entire queue, because other stuff is queued
+  syclQueue.wait_and_throw();
+#else
+  ispc::SciVis_renderTasks(&rendererSh->super,
+      fbSh,
+      cameraSh,
+      worldSh,
+      perFrameData,
+      taskIDs.data(),
+      numTasks);
+#endif
 }
 
 } // namespace ospray

@@ -7,6 +7,12 @@
 #include <new>
 #include <type_traits>
 
+#include "rkcommon/common.h"
+#include "rkcommon/math/rkmath.h"
+#include "rkcommon/math/vec.h"
+
+#include "BufferShared.h"
+
 namespace ispc {
 
 // Shared structure members may use types from rkcommon
@@ -27,7 +33,7 @@ namespace ospray {
     derive from AddStructShared<cpp::Base, ispc::StructShared>
 
    We use multiple inheritance with a virtual base class, thus only a single
-   instance of structSharedPtr is present, which will be initialized first.
+   instance of structSharedView is present, which will be initialized first.
    StructSharedGet adds getSh returning the correctly typed pointer. It is
    derived from first to handle the memory allocation with the maximum size of
    the final StructShared. StructSharedGet does not have any data to ensure
@@ -35,34 +41,17 @@ namespace ospray {
    the same).
 */
 
-inline void *BufferSharedCreate(size_t size)
-{
-  return malloc(size);
-}
-
-inline void BufferSharedDelete(void *ptr)
-{
-  free(ptr);
-}
-
 template <typename T>
-T *BufferSharedCreate(size_t count, const T *data)
+inline ISPCRTMemoryView StructSharedCreate(ISPCRTDevice device)
 {
-  T *ptr = (T *)BufferSharedCreate(sizeof(T) * count);
-  if (data)
-    memcpy(ptr, data, sizeof(T) * count);
-  return ptr;
+  ISPCRTMemoryView view = BufferSharedCreate(device, sizeof(T));
+  new (ispcrtSharedPtr(view)) T;
+  return view;
 }
 
-template <typename T>
-inline T *StructSharedCreate()
+struct StructSharedView
 {
-  return new (BufferSharedCreate(sizeof(T))) T;
-}
-
-struct StructSharedPtr
-{
-  ~StructSharedPtr();
+  ~StructSharedView();
 
   template <typename, typename>
   friend struct StructSharedGet;
@@ -71,13 +60,13 @@ struct StructSharedPtr
   friend struct AddStructShared;
 
  private:
-  void *structSharedPtr{nullptr};
+  ISPCRTMemoryView _view{nullptr};
 };
 
 template <typename T, typename>
 struct StructSharedGet
 {
-  StructSharedGet(void **);
+  StructSharedGet(ISPCRTDevice, ISPCRTMemoryView *);
   T *getSh() const;
 };
 
@@ -122,7 +111,7 @@ template <typename Base, typename Struct>
 struct AddStructShared
     : public StructSharedGet<Struct, AddStructShared<Base, Struct>>,
       public Base,
-      public virtual StructSharedPtr
+      public virtual StructSharedView
 {
   using StructShared_t = Struct;
   using StructSharedGet<Struct, AddStructShared<Base, Struct>>::getSh;
@@ -132,31 +121,32 @@ struct AddStructShared
       "StructShared_t needs to have 'super' member of type Base::StructShared_t");
 
   template <typename... Args>
-  AddStructShared(Args... args)
+  AddStructShared(ispcrt::Device &device, Args &&... args)
       : StructSharedGet<Struct, AddStructShared<Base, Struct>>(
-          &structSharedPtr),
-        Base(args...)
+          device.handle(), &_view),
+        Base(std::forward<Args>(args)...)
   {}
 };
 
 // Inlined definitions ////////////////////////////////////////
 
-inline StructSharedPtr::~StructSharedPtr()
+inline StructSharedView::~StructSharedView()
 {
-  BufferSharedDelete(structSharedPtr);
+  BufferSharedDelete(_view);
 }
 
 template <typename T, typename B>
-StructSharedGet<T, B>::StructSharedGet(void **ptr)
+StructSharedGet<T, B>::StructSharedGet(
+    ISPCRTDevice device, ISPCRTMemoryView *view)
 {
-  if (!*ptr)
-    *ptr = StructSharedCreate<T>();
+  if (!*view)
+    *view = StructSharedCreate<T>(device);
 }
 
 template <typename T, typename B>
 T *StructSharedGet<T, B>::getSh() const
 {
-  return static_cast<T *>(static_cast<const B *>(this)->structSharedPtr);
+  return static_cast<T *>(ispcrtHostPtr(static_cast<const B *>(this)->_view));
 }
 
 // Testing ////////////////////////////////////////////////////

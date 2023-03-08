@@ -6,6 +6,8 @@
 #include "BSDF.ih"
 #include "GGXDistribution.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Oren-Nayar BRDF.
 // [Fujii, 2012, "A tiny improvement of Oren-Nayar reflectance model"]
 struct OrenNayar
@@ -29,7 +31,7 @@ inline BSDF_EvalRes OrenNayar_eval(
   float sInvt = (s > 0.f) ? (s * rcp_safe(max(cosThetaO, cosThetaI))) : s;
   res.value = self->super.albedo
       * (cosThetaI * (1.f + self->roughness * sInvt)
-          * rcp(pi + (pi / 2.f - 2.f / 3.f) * self->roughness));
+          * rcp((float)pi + ((float)pi / 2.f - 2.f / 3.f) * self->roughness));
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
   return res;
 }
@@ -59,8 +61,14 @@ inline void OrenNayar_Constructor(varying OrenNayar *uniform self,
   BSDF_Constructor(&self->super,
       R,
       BSDF_DIFFUSE_REFLECTION,
+      BSDF_TYPE_OREN_NAYAR,
+#ifdef OSPRAY_TARGET_SYCL
+      NULL,
+      NULL,
+#else
       OrenNayar_eval,
       OrenNayar_sample,
+#endif
       frame);
 
   self->roughness = roughness;
@@ -77,3 +85,5 @@ inline varying BSDF *uniform OrenNayar_create(
   OrenNayar_Constructor(self, frame, R, roughness);
   return &self->super;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

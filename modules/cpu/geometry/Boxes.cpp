@@ -4,14 +4,25 @@
 // ospray
 #include "Boxes.h"
 #include "common/Data.h"
+#ifndef OSPRAY_TARGET_SYCL
 // ispc-generated files
 #include "geometry/Boxes_ispc.h"
+#else
+namespace ispc {
+void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args);
+}
+#endif
 
 namespace ospray {
 
-Boxes::Boxes()
+Boxes::Boxes(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.postIntersect = ispc::Boxes_postIntersect_addr();
+#ifndef OSPRAY_TARGET_SYCL
+  getSh()->super.postIntersect =
+      reinterpret_cast<ispc::Geometry_postIntersectFct>(
+          ispc::Boxes_postIntersect_addr());
+#endif
 }
 
 std::string Boxes::toString() const
@@ -23,9 +34,7 @@ void Boxes::commit()
 {
   boxData = getParamDataT<box3f>("box", true);
 
-  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Boxes_bounds,
-      (RTCIntersectFunctionN)&ispc::Boxes_intersect,
-      (RTCOccludedFunctionN)&ispc::Boxes_occluded);
+  createEmbreeUserGeometry((RTCBoundsFunction)&ispc::Boxes_bounds);
   getSh()->boxes = *ispc(boxData);
   getSh()->super.numPrimitives = numPrimitives();
 

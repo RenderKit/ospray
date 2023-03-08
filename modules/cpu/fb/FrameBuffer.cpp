@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FrameBuffer.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "ISPCDevice_ispc.h"
+#endif
 #include "OSPConfig.h"
 
 namespace {
@@ -24,10 +26,12 @@ extern "C" int *getThreadLastFrameID()
 
 namespace ospray {
 
-FrameBuffer::FrameBuffer(const vec2i &_size,
+FrameBuffer::FrameBuffer(api::ISPCDevice &device,
+    const vec2i &_size,
     ColorBufferFormat _colorBufferFormat,
     const uint32 channels)
-    : size(_size),
+    : AddStructShared(device.getIspcrtDevice(), device),
+      size(_size),
       hasDepthBuffer(channels & OSP_FB_DEPTH),
       hasAccumBuffer(channels & OSP_FB_ACCUM),
       hasVarianceBuffer(
@@ -48,6 +52,10 @@ FrameBuffer::FrameBuffer(const vec2i &_size,
   getSh()->channels = channels;
   getSh()->colorBufferFormat = _colorBufferFormat;
 
+#ifdef OSPRAY_TARGET_SYCL
+  // Note: using 2x2, 4x4, etc doesn't change perf much
+  vec2i renderTaskSize(1);
+#else
 #if OSPRAY_RENDER_TASK_SIZE == -1
   // Compute render task size based on the simd width to get as "square" as
   // possible a task size that has simdWidth pixels
@@ -61,6 +69,7 @@ FrameBuffer::FrameBuffer(const vec2i &_size,
   // Note: we could also allow changing this at runtime if we want to add this
   // to the API
   vec2i renderTaskSize(OSPRAY_RENDER_TASK_SIZE);
+#endif
 #endif
   getSh()->renderTaskSize = renderTaskSize;
 }
@@ -77,7 +86,7 @@ vec2i FrameBuffer::getRenderTaskSize() const
 
 vec2i FrameBuffer::getNumPixels() const
 {
-  return getSh()->size;
+  return size;
 }
 
 OSPFrameBufferFormat FrameBuffer::getColorBufferFormat() const
@@ -93,6 +102,7 @@ float FrameBuffer::getVariance() const
 void FrameBuffer::beginFrame()
 {
   cancelRender = false;
+  // TODO: Maybe better as a kernel to avoid USM thrash to host
   getSh()->cancelRender = 0;
   getSh()->numPixelsRendered = 0;
   getSh()->frameID++;
@@ -128,8 +138,13 @@ void FrameBuffer::waitForEvent(OSPSyncEvent event) const
 
 float FrameBuffer::getCurrentProgress() const
 {
+#ifdef OSPRAY_TARGET_SYCL
+  // TODO: Continually polling this will cause a lot of USM thrashing
+  return 0.f;
+#else
   return static_cast<float>(getSh()->numPixelsRendered)
       / getNumPixels().long_product();
+#endif
 }
 
 void FrameBuffer::cancelFrame()

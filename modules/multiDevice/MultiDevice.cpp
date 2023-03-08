@@ -32,17 +32,40 @@ void MultiDevice::commit()
 {
   Device::commit();
 
+  // Needed for proper ISPCRT device construction
+  hostDevice.commit();
+
+  ispcrt::Context ispcrtContext;
+  ispcrt::Device ispcrtDevice;
+  int numPhyDevices = 1;
+#ifdef OSPRAY_TARGET_SYCL
+  numPhyDevices = ispcrtGetDeviceCount(ISPCRT_DEVICE_TYPE_GPU);
+  ispcrtContext = ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU);
+#else
+  numPhyDevices = ispcrtGetDeviceCount(ISPCRT_DEVICE_TYPE_CPU);
+#endif
+
   if (subdevices.empty()) {
     auto OSPRAY_NUM_SUBDEVICES =
         utility::getEnvVar<int>("OSPRAY_NUM_SUBDEVICES");
     int numSubdevices =
         OSPRAY_NUM_SUBDEVICES.value_or(getParam("numSubdevices", 1));
+    std::vector<int> deviceIndex(numSubdevices, 0);
+      for (int i = 0; i < numSubdevices; i++)
+          deviceIndex[i] = i%numPhyDevices;
 
     postStatusMsg(OSP_LOG_DEBUG) << "# of subdevices =" << numSubdevices;
 
     std::vector<std::shared_ptr<TiledLoadBalancer>> subdeviceLoadBalancers;
     for (int i = 0; i < numSubdevices; ++i) {
       auto d = make_unique<ISPCDevice>();
+#ifdef OSPRAY_TARGET_SYCL
+      if (ispcrtContext) {
+        ispcrtDevice = ispcrt::Device(ispcrtContext, deviceIndex[i]);
+        d->setParam<void *>("ispcrtContext", &ispcrtContext);
+        d->setParam<void *>("ispcrtDevice", &ispcrtDevice);
+      }
+#endif
       d->commit();
       subdevices.emplace_back(std::move(d));
       subdeviceLoadBalancers.push_back(subdevices.back()->loadBalancer);
@@ -84,12 +107,14 @@ OSPData MultiDevice::newSharedData(const void *sharedData,
   // data arrays with the objects for that subdevice
   if (type & OSP_OBJECT) {
     for (size_t i = 0; i < subdevices.size(); ++i) {
-      o->objects.push_back((OSPObject) new Data(type, numItems));
+      o->objects.push_back(
+          (OSPObject) new Data(*subdevices[i], type, numItems));
     }
 
     // A little lazy here, but using the Data object to just give me a view
     // + the index sequence iterator to use to step over the stride
-    Data *multiData = new Data(sharedData, type, numItems, byteStride);
+    Data *multiData =
+        new Data(hostDevice, sharedData, type, numItems, byteStride);
     o->sharedDataDirtyReference = multiData;
 
     index_sequence_3D seq(numItems);
@@ -360,7 +385,7 @@ OSPFrameBuffer MultiDevice::frameBufferCreate(
     const vec2i &size, const OSPFrameBufferFormat mode, const uint32 channels)
 {
   MultiDeviceFrameBuffer *o = new MultiDeviceFrameBuffer();
-  o->rowmajorFb = new LocalFrameBuffer(size, mode, channels);
+  o->rowmajorFb = new LocalFrameBuffer(hostDevice, size, mode, channels);
   // Need one refDec here for the local scope ref (see issue about Ref<>)
   o->rowmajorFb->refDec();
 
@@ -374,7 +399,8 @@ OSPFrameBuffer MultiDevice::frameBufferCreate(
       }
     }
 
-    FrameBuffer *fbi = new SparseFrameBuffer(size, mode, channels, tileIDs);
+    FrameBuffer *fbi =
+        new SparseFrameBuffer(*subdevices[i], size, mode, channels, tileIDs);
     o->objects.push_back((OSPFrameBuffer)fbi);
   }
   return (OSPFrameBuffer)o;

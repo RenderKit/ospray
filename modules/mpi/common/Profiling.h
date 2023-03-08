@@ -15,9 +15,11 @@
 #include <unistd.h>
 #endif
 
+#include "ospray_mpi_common_export.h"
+
 namespace mpicommon {
 
-struct ProfilingPoint
+struct OSPRAY_MPI_COMMON_EXPORT ProfilingPoint
 {
 #ifdef __linux__
   rusage usage;

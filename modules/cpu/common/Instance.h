@@ -6,17 +6,15 @@
 // ospray stuff
 #include "Group.h"
 #include "MotionTransform.h"
-// embree
-#include "embree3/rtcore.h"
 // ispc shared
 #include "InstanceShared.h"
 
 namespace ospray {
 
 struct OSPRAY_SDK_INTERFACE Instance
-    : public AddStructShared<ManagedObject, ispc::Instance>
+    : public AddStructShared<ISPCDeviceObject, ispc::Instance>
 {
-  Instance(Group *group);
+  Instance(api::ISPCDevice &device, Group *group);
   ~Instance() override = default;
 
   std::string toString() const override;

@@ -5,6 +5,8 @@
 // c++ shared
 #include "LightShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 Light_EvalRes Light_eval(const Light *uniform,
     const DifferentialGeometry &,
     const vec3f &,
@@ -22,5 +24,7 @@ Light_EvalRes Light_eval(const Light *uniform,
 
 export void *uniform Light_eval_addr()
 {
-  return Light_eval;
+  return (void *uniform)Light_eval;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

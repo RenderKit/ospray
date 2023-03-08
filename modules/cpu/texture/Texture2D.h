@@ -14,6 +14,9 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE Texture2D
     : public AddStructShared<Texture, ispc::Texture2D>
 {
+  Texture2D(api::ISPCDevice &device)
+      : AddStructShared(device.getIspcrtDevice(), device)
+  {}
   virtual ~Texture2D() override = default;
 
   virtual std::string toString() const override;

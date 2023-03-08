@@ -3,16 +3,10 @@
 
 #pragma once
 
-#ifdef __cplusplus
-#include "common/OSPCommon.h"
-#include "common/StructShared.h"
-#include "rkcommon/math/box.h"
-#include "rkcommon/math/vec.h"
-namespace ispc {
-#else
-#include "common/OSPCommon.ih"
-#include "rkcommon/math/box.ih"
+#include "OSPConfig.h"
 
+#ifdef __cplusplus
+namespace ispc {
 #endif
 
 #ifdef __cplusplus
@@ -22,9 +16,16 @@ static_assert(TILE_SIZE > 0 && (TILE_SIZE & (TILE_SIZE - 1)) == 0,
 
 // Extra defines to hide some differences between ISPC/C++ to unify the
 // declaration
+// TODO: remove all uniform/varying modifiers from Tile and VaryingTile
 #ifdef __cplusplus
+#ifndef OSPRAY_TARGET_SYCL
 #define uniform
+#endif
 #else
+#define OSPRAY_SDK_INTERFACE
+#endif
+
+#ifndef OSPRAY_SDK_INTERFACE
 #define OSPRAY_SDK_INTERFACE
 #endif
 
@@ -70,7 +71,7 @@ struct OSPRAY_SDK_INTERFACE Tile
   Tile()
       : region(empty),
         fbSize(0),
-        rcp_fbSize(0),
+        rcp_fbSize(0.f),
         generation(0),
         children(0),
         sortOrder(0),
@@ -78,15 +79,17 @@ struct OSPRAY_SDK_INTERFACE Tile
   {}
 
   Tile(const vec2i &tile, const vec2i &fbsize, const int32 accumId)
-      : fbSize(fbsize), rcp_fbSize(rcp(vec2f(fbsize))), accumID(accumId)
+      : fbSize(fbsize), accumID(accumId)
   {
+    rcp_fbSize.x = rcp(float(fbSize.x));
+    rcp_fbSize.y = rcp(float(fbSize.y));
     region.lower = tile * TILE_SIZE;
     region.upper = min(region.lower + TILE_SIZE, fbsize);
   }
 #endif
 };
 
-#ifndef __cplusplus
+#if !defined(__cplusplus) || defined(OSPRAY_TARGET_SYCL)
 struct VaryingTile
 {
   uniform range2i region; // 4 ints
@@ -117,7 +120,9 @@ struct VaryingTile
 #endif
 
 #ifdef __cplusplus
+#ifndef OSPRAY_TARGET_SYCL
 #undef uniform
+#endif
 #else
 #undef OSPRAY_SDK_INTERFACE
 #endif

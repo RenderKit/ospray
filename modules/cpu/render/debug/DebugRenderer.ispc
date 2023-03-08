@@ -2,17 +2,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
-#include "DebugRendererType.h"
+#include "camera/Camera.ih"
+#include "camera/CameraDispatch.ih"
+#include "common/Intersect.ih"
 #include "common/World.ih"
+#include "fb/FrameBuffer.ih"
+#include "fb/FrameBufferDispatch.ih"
+#include "fb/RenderTaskDesc.ih"
 #include "math/random.ih"
+#include "pf/PixelFilterDispatch.ih"
 #include "render/Renderer.ih"
+#include "render/ScreenSample.ih"
 #include "rkcommon/utility/random.ih"
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/VolumetricModel.ih"
+#include "volume/transferFunction/TransferFunctionDispatch.ih"
+#endif
 // c++ shared
-#include "fb/FrameBufferShared.h"
+#include "DebugRendererShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+// TODO: All `SYCL_EXTERNAL __noinline` are here just to prevent IGC ocloc
+// from crashing. We should use `inline` or `static` instead.
 
 // common utility function, traces ray and handles default and background
-bool hitBackground(
+SYCL_EXTERNAL __noinline bool hitBackground(
     Renderer *uniform self, World *uniform world, varying ScreenSample &sample)
 {
   traceRay(world, sample.ray);
@@ -24,7 +39,7 @@ bool hitBackground(
   return noHit(sample.ray);
 }
 
-float eyeLight(varying ScreenSample &sample)
+SYCL_EXTERNAL float eyeLight(varying ScreenSample &sample)
 {
   return 0.2f + 0.8f * abs(dot(normalize(sample.ray.Ng), sample.ray.dir));
 }
@@ -32,7 +47,7 @@ float eyeLight(varying ScreenSample &sample)
 /* a simple test-frame renderer that doesn't even trace a ray, just
   returns a well-defined test frame (mostly useful for debugging
   whether frame buffers are properly set up etcpp */
-void DebugRenderer_testFrame(Renderer *uniform,
+SYCL_EXTERNAL __noinline void DebugRenderer_testFrame(Renderer *uniform,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -49,7 +64,7 @@ void DebugRenderer_testFrame(Renderer *uniform,
 
 /* a simple test-frame renderer that doesn't even trace a ray, just
   returns the absolute of the ray direction */
-void DebugRenderer_rayDir(Renderer *uniform,
+SYCL_EXTERNAL __noinline void DebugRenderer_rayDir(Renderer *uniform,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -60,19 +75,19 @@ void DebugRenderer_rayDir(Renderer *uniform,
   sample.z = 1.f;
 }
 
-void DebugRenderer_eyeLight(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_eyeLight(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  if (hitBackground(self, world, sample))
+  if (hitBackground(self, world, sample)) {
     return;
-
+  }
   sample.rgb = make_vec3f(eyeLight(sample));
 }
 
-void DebugRenderer_Ng(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_Ng(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -86,7 +101,7 @@ void DebugRenderer_Ng(Renderer *uniform self,
   sample.rgb = absf(dg.Ng);
 }
 
-void DebugRenderer_Ns(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_Ns(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -100,7 +115,7 @@ void DebugRenderer_Ns(Renderer *uniform self,
   sample.rgb = absf(dg.Ns);
 }
 
-void DebugRenderer_texCoord(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_texCoord(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -113,7 +128,7 @@ void DebugRenderer_texCoord(Renderer *uniform self,
   sample.rgb = abs(make_vec3f(dg.st.x, dg.st.y, 0.0f));
 }
 
-void DebugRenderer_dPds(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_dPds(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -132,7 +147,7 @@ void DebugRenderer_dPds(Renderer *uniform self,
     sample.rgb.z = sample.rgb.z * -0.3f;
 }
 
-void DebugRenderer_dPdt(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_dPdt(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -152,7 +167,7 @@ void DebugRenderer_dPdt(Renderer *uniform self,
     sample.rgb.z = sample.rgb.z * -0.3f;
 }
 
-void DebugRenderer_vertexColor(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_vertexColor(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -167,7 +182,7 @@ void DebugRenderer_vertexColor(Renderer *uniform self,
       * abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
 }
 
-void DebugRenderer_primID(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_primID(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -176,10 +191,10 @@ void DebugRenderer_primID(Renderer *uniform self,
   if (hitBackground(self, world, sample))
     return;
 
-  sample.rgb = eyeLight(sample) * make_random_color(sample.ray.primID);
+  sample.rgb = eyeLight(sample) * makeRandomColor(sample.ray.primID);
 }
 
-void DebugRenderer_instID(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_instID(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -188,10 +203,10 @@ void DebugRenderer_instID(Renderer *uniform self,
   if (hitBackground(self, world, sample))
     return;
 
-  sample.rgb = eyeLight(sample) * make_random_color(sample.ray.instID);
+  sample.rgb = eyeLight(sample) * makeRandomColor(sample.ray.instID);
 }
 
-void DebugRenderer_geomID(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_geomID(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -200,10 +215,11 @@ void DebugRenderer_geomID(Renderer *uniform self,
   if (hitBackground(self, world, sample))
     return;
 
-  sample.rgb = eyeLight(sample) * make_random_color(sample.ray.geomID);
+  sample.rgb = eyeLight(sample) * makeRandomColor(sample.ray.geomID);
 }
 
-void DebugRenderer_backfacing_Ng(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_backfacing_Ng(
+    Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -217,7 +233,8 @@ void DebugRenderer_backfacing_Ng(Renderer *uniform self,
     sample.rgb.y = 0.f;
 }
 
-void DebugRenderer_backfacing_Ns(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_backfacing_Ns(
+    Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
@@ -234,18 +251,17 @@ void DebugRenderer_backfacing_Ns(Renderer *uniform self,
     sample.rgb.y = 0.f;
 }
 
-void DebugRenderer_volume(Renderer *uniform self,
+SYCL_EXTERNAL __noinline void DebugRenderer_volume(Renderer *uniform self,
     FrameBuffer *uniform fb,
     World *uniform world,
     void *uniform perFrameData,
     varying ScreenSample &sample)
 {
-  if (hitBackground(self, world, sample))
-    return;
-
+#ifdef OSPRAY_ENABLE_VOLUMES
   LDSampler ldSamplerObj;
   varying LDSampler *uniform ldSampler = &ldSamplerObj;
   LDSampler_init(ldSampler,
+      self->mathConstants,
       sample.sampleID.x + fb->size.x * sample.sampleID.y,
       sample.sampleID.z);
 
@@ -271,19 +287,32 @@ void DebugRenderer_volume(Renderer *uniform self,
 
   const float jitter = LDSampler_getFloat(ldSampler, 0);
 
-  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  uniform uint8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+#ifdef OSPRAY_TARGET_SYCL
+  {
+    VolumetricModel *uniform m = model;
+#else
   foreach_unique (m in model) {
+#endif
     Volume *uniform volume = m->volume;
     TransferFunction *uniform tf = m->transferFunction;
 
     float time = 0.5f;
-    VKLIntervalIterator intervalIterator =
-        vklInitIntervalIteratorV(m->vklIntervalContext,
-            (varying vkl_vec3f *)&ray.org,
-            (varying vkl_vec3f *)&ray.dir,
-            (varying vkl_range1f *)&vInterval.interval,
-            &time,
-            intervalIteratorBuffer);
+    VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
+#if OPENVKL_VERSION_MAJOR == 1
+        m->vklIntervalContext,
+#else
+        &m->vklIntervalContext,
+#endif
+        (varying vkl_vec3f *)&ray.org,
+        (varying vkl_vec3f *)&ray.dir,
+        (varying vkl_range1f *)&vInterval.interval,
+#ifdef OSPRAY_TARGET_SYCL
+        time,
+#else
+        &time,
+#endif
+        (void *uniform)intervalIteratorBuffer);
 
     VKLInterval interval;
 
@@ -306,10 +335,16 @@ void DebugRenderer_volume(Renderer *uniform self,
         // Get volume sample
         vec3f p = ray.org + ray.t0 * ray.dir;
         const float sample = vklComputeSampleV(
-            volume->vklSampler, (const varying vkl_vec3f *uniform) & p);
+#if OPENVKL_VERSION_MAJOR == 1
+            volume->vklSampler,
+#else
+            &volume->vklSampler,
+#endif
+            (const varying vkl_vec3f *uniform) & p);
 
         if (!isnan(sample)) {
-          vec4f sampleColorOpacity = tf->get(tf, sample);
+          vec4f sampleColorOpacity =
+              TransferFunction_dispatch_get(m->transferFunction, sample);
 
           const float clampedOpacity = clamp(sampleColorOpacity.w * dt);
 
@@ -326,28 +361,102 @@ void DebugRenderer_volume(Renderer *uniform self,
       }
     }
   }
+#endif
 }
 
-// DebugRenderer C++ interface ////////////////////////////////////////////////
+static void DebugRenderer_renderSample(Renderer *uniform _self,
+    FrameBuffer *uniform fb,
+    World *uniform world,
+    void *uniform perFrameData,
+    varying ScreenSample &sample)
+{
+  DebugRenderer *uniform self = (DebugRenderer * uniform) _self;
+  switch (self->type) {
+  case TEST_FRAME:
+    DebugRenderer_testFrame(_self, fb, world, perFrameData, sample);
+    break;
+  case RAY_DIR:
+    DebugRenderer_rayDir(_self, fb, world, perFrameData, sample);
+    break;
+  case EYE_LIGHT:
+    DebugRenderer_eyeLight(_self, fb, world, perFrameData, sample);
+    break;
+  case NG:
+    DebugRenderer_Ng(_self, fb, world, perFrameData, sample);
+    break;
+  case NS:
+    DebugRenderer_Ns(_self, fb, world, perFrameData, sample);
+    break;
+  case COLOR:
+    DebugRenderer_vertexColor(_self, fb, world, perFrameData, sample);
+    break;
+  case TEX_COORD:
+    DebugRenderer_texCoord(_self, fb, world, perFrameData, sample);
+    break;
+  case DPDS:
+    DebugRenderer_dPds(_self, fb, world, perFrameData, sample);
+    break;
+  case DPDT:
+    DebugRenderer_dPdt(_self, fb, world, perFrameData, sample);
+    break;
+  case PRIM_ID:
+    DebugRenderer_primID(_self, fb, world, perFrameData, sample);
+    break;
+  case GEOM_ID:
+    DebugRenderer_geomID(_self, fb, world, perFrameData, sample);
+    break;
+  case INST_ID:
+    DebugRenderer_instID(_self, fb, world, perFrameData, sample);
+    break;
+  case BACKFACING_NG:
+    DebugRenderer_backfacing_Ng(_self, fb, world, perFrameData, sample);
+    break;
+  case BACKFACING_NS:
+    DebugRenderer_backfacing_Ns(_self, fb, world, perFrameData, sample);
+    break;
+  case VOLUME:
+    DebugRenderer_volume(_self, fb, world, perFrameData, sample);
+    break;
+  default:
+    DebugRenderer_testFrame(_self, fb, world, perFrameData, sample);
+    break;
+  };
+}
 
-#define EXPORT_FN_ADDR(name)                                                   \
-  export void *uniform name##_addr()                                           \
-  {                                                                            \
-    return name;                                                               \
-  }
+#define renderSampleFn DebugRenderer_renderSample
+#include "render/RendererRenderTaskFn.inl"
+#undef renderSampleFn
 
-EXPORT_FN_ADDR(DebugRenderer_testFrame);
-EXPORT_FN_ADDR(DebugRenderer_rayDir);
-EXPORT_FN_ADDR(DebugRenderer_eyeLight);
-EXPORT_FN_ADDR(DebugRenderer_Ng);
-EXPORT_FN_ADDR(DebugRenderer_Ns);
-EXPORT_FN_ADDR(DebugRenderer_vertexColor);
-EXPORT_FN_ADDR(DebugRenderer_texCoord);
-EXPORT_FN_ADDR(DebugRenderer_dPds);
-EXPORT_FN_ADDR(DebugRenderer_dPdt);
-EXPORT_FN_ADDR(DebugRenderer_primID);
-EXPORT_FN_ADDR(DebugRenderer_geomID);
-EXPORT_FN_ADDR(DebugRenderer_instID);
-EXPORT_FN_ADDR(DebugRenderer_backfacing_Ng);
-EXPORT_FN_ADDR(DebugRenderer_backfacing_Ns);
-EXPORT_FN_ADDR(DebugRenderer_volume);
+#ifdef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL void DebugRenderer_renderTask(Renderer *uniform self,
+    FrameBuffer *uniform fb,
+    Camera *uniform camera,
+    World *uniform world,
+    void *uniform perFrameData,
+    const uint32 *uniform taskIDs,
+    const int taskIndex0)
+{
+  Renderer_default_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs, taskIndex0);
+}
+#else
+export void DebugRenderer_renderTasks(void *uniform _self,
+    void *uniform _fb,
+    void *uniform _camera,
+    void *uniform _world,
+    void *uniform perFrameData,
+    void *uniform _taskIDs,
+    uniform uint32 numTasks)
+{
+  Renderer *uniform self = (Renderer * uniform) _self;
+  FrameBuffer *uniform fb = (FrameBuffer * uniform) _fb;
+  Camera *uniform camera = (Camera * uniform) _camera;
+  World *uniform world = (World * uniform) _world;
+  const uint32 *uniform taskIDs = (const uint32 *uniform)_taskIDs;
+  launch[numTasks] Renderer_default_renderTask(
+      self, fb, camera, world, perFrameData, taskIDs);
+  sync;
+}
+#endif
+
+OSPRAY_END_ISPC_NAMESPACE

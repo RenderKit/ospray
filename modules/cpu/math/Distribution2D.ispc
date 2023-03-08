@@ -1,9 +1,12 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "Distribution1D.ih"
 #include "Distribution2D.ih"
 
-Sample2D Distribution2D_sample(
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL Sample2D Distribution2D_sample(
     const uniform Distribution2D *uniform self, const vec2f &s)
 {
   // use u.y to sample a row
@@ -21,7 +24,7 @@ Sample2D Distribution2D_sample(
   return ret;
 }
 
-float Distribution2D_pdf(
+SYCL_EXTERNAL float Distribution2D_pdf(
     const uniform Distribution2D *uniform self, const vec2f &uv)
 {
   const int idy = uv.y * self->size.y;
@@ -36,40 +39,10 @@ float Distribution2D_pdf(
   return pdf_x * pdf_y;
 }
 
-void Distribution2D_destroy(Distribution2D *uniform self)
+SYCL_EXTERNAL void Distribution2D_init(Distribution2D *uniform self)
 {
-  if (self != NULL) {
-    delete[] self->cdf_x;
-    delete[] self->cdf_y;
-    delete self;
-  }
-}
-
-Distribution2D *uniform Distribution2D_create(
-    const uniform vec2i size, float *uniform cdf_x, float *uniform f_y)
-{
-  Distribution2D *uniform self = uniform new Distribution2D;
-
-  self->size = size;
-  self->rcpSize = make_vec2f(1.0f / size.x, 1.0f / size.y);
-  self->cdf_x = cdf_x;
-
   // initialize the y distribution
-  Distribution1D_create(size.y, f_y);
-  self->cdf_y = f_y;
-
-  return self;
+  Distribution1D_create(self->size.y, self->cdf_y);
 }
 
-Distribution2D *uniform Distribution2D_create(
-    const uniform vec2i size, float *uniform f)
-{
-  // create cdf for sampling rows
-  float *uniform row_importance = uniform new float[size.y];
-
-  // compute y distribution and initialize row distributions
-  for (uniform int y = 0; y < size.y; y++)
-    row_importance[y] = Distribution1D_create(size.x, f + y * size.x);
-
-  return Distribution2D_create(size, f, row_importance);
-}
+OSPRAY_END_ISPC_NAMESPACE

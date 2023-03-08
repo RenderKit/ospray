@@ -92,7 +92,9 @@ struct CarPaint
         coatColor(1.f),
         flipflopColor(1.f),
         flipflopFalloff(1.f)
-  {}
+  {
+    super.type = ispc::MATERIAL_TYPE_CARPAINT;
+  }
 };
 } // namespace ispc
 #else

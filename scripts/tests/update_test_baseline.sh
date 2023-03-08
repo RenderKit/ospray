@@ -23,6 +23,3 @@ for isa in $isas
 do
   echo $md5 > $3/test_image_data/baseline/$isa/$1.png.md5
 done
-
-remote=/var/www/html/ospray/download/baseline/test-data/MD5/$md5
-rsync -e ssh -g -p --chmod=F664 --chown=:web $2/$1.png sdvis.org:$remote

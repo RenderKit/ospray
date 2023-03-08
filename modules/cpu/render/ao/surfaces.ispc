@@ -3,10 +3,16 @@
 
 #include "math/random.ih"
 #include "math/sampling.ih"
-#include "render/util.ih"
-// AO Renderer
+#include "render/ScreenSample.ih"
 #include "render/materials/OBJ.ih"
+#include "render/util.ih"
+#include "texture/TextureParam.ih"
+// AO Renderer
 #include "surfaces.ih"
+// c++ shared
+#include "render/materials/OBJShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 {
@@ -14,7 +20,12 @@ inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
 
   vec3f surfaceColor = make_vec3f(1.f);
   float opacity = 1.f;
+#ifdef OSPRAY_TARGET_SYCL
+  {
+    const OBJ *m = mat;
+#else
   foreach_unique (m in mat) {
+#endif
     if (m != NULL && m->super.type == MATERIAL_TYPE_OBJ) {
       surfaceColor = m->Kd;
       if (valid(m->KdMap)) {
@@ -29,7 +40,7 @@ inline vec4f getSurfaceColor(const DifferentialGeometry &dg)
   return make_vec4f(surfaceColor * make_vec3f(dg.color), opacity * dg.color.w);
 }
 
-SSI computeShading(const AORenderer *uniform self,
+SYCL_EXTERNAL SSI AORenderer_computeShading(const AORenderer *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
@@ -45,8 +56,12 @@ SSI computeShading(const AORenderer *uniform self,
 
   float intensity = eyeLightIntensity;
   if (self->aoSamples > 0 && self->aoIntensity > 0.01f) {
-    const float ao =
-        computeAO(world, dg, self->aoSamples, self->aoRadius, sample.sampleID);
+    const float ao = computeAO(&self->super,
+        world,
+        dg,
+        self->aoSamples,
+        self->aoRadius,
+        sample.sampleID);
     intensity *= (1.0f - self->aoIntensity) + (ao * self->aoIntensity);
   }
 
@@ -55,3 +70,5 @@ SSI computeShading(const AORenderer *uniform self,
 
   return retval;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

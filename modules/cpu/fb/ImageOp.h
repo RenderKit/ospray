@@ -4,8 +4,11 @@
 #pragma once
 
 #include "FrameBufferView.h"
+#include "common/ObjectFactory.h"
+#include "common/StructShared.h"
+#include "rkcommon/math/box.h"
+// ispc shared
 #include "ImageOpShared.h"
-#include "common/Util.h"
 #include "fb/TileShared.h"
 
 namespace ospray {
@@ -33,7 +36,8 @@ struct OSPRAY_SDK_INTERFACE LiveImageOp
     code, such as postprocessing, filtering, blending, tone mapping,
     sending tiles to a display wall, etc.
 */
-struct OSPRAY_SDK_INTERFACE ImageOp : public ManagedObject
+struct OSPRAY_SDK_INTERFACE ImageOp : public ManagedObject,
+                                      public ObjectFactory<ImageOp>
 {
   ImageOp();
   ~ImageOp() override = default;
@@ -46,15 +50,6 @@ struct OSPRAY_SDK_INTERFACE ImageOp : public ManagedObject
    * framebuffer passed
    */
   virtual std::unique_ptr<LiveImageOp> attach(FrameBufferView &fbView) = 0;
-
-  static ImageOp *createInstance(const char *type);
-  template <typename T>
-  static void registerType(const char *type);
-
- private:
-  template <typename BASE_CLASS, typename CHILD_CLASS>
-  friend void registerTypeHelper(const char *type);
-  static void registerType(const char *type, FactoryFcn<ImageOp> f);
 };
 
 OSPTYPEFOR_SPECIALIZATION(ImageOp *, OSP_IMAGE_OPERATION);
@@ -87,13 +82,5 @@ struct OSPRAY_SDK_INTERFACE LiveFrameOp : public LiveImageOp
 
   virtual void process(const Camera *camera) = 0;
 };
-
-// Inlined definitions ////////////////////////////////////////////////////////
-
-template <typename T>
-inline void ImageOp::registerType(const char *type)
-{
-  registerTypeHelper<ImageOp, T>(type);
-}
 
 } // namespace ospray

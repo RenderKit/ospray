@@ -26,9 +26,7 @@ namespace maml {
 std::unique_ptr<Context> Context::singleton;
 
 Context::Context(bool enableCompression) : compressMessages(enableCompression)
-{
-  DETAILED_LOGGING = getEnvVar<int>("OSPRAY_DP_API_TRACING").value_or(0);
-}
+{}
 
 Context::~Context()
 {
@@ -59,7 +57,6 @@ void Context::send(std::shared_ptr<Message> msg)
 {
   // The message uses malloc/free, so use that instead of new/delete
   if (compressMessages) {
-    auto startCompr = high_resolution_clock::now();
     byte_t *compressed =
         (byte_t *)malloc(snappy::MaxCompressedLength(msg->size));
     size_t compressedSize = 0;
@@ -68,15 +65,6 @@ void Context::send(std::shared_ptr<Message> msg)
         reinterpret_cast<char *>(compressed),
         &compressedSize);
     free(msg->data);
-
-    auto endCompr = high_resolution_clock::now();
-    if (DETAILED_LOGGING) {
-      std::lock_guard<std::mutex> lock(statsMutex);
-      compressTimes.push_back(
-          duration_cast<RealMilliseconds>(endCompr - startCompr));
-      compressedSizes.emplace_back(
-          100.0 * (static_cast<double>(compressedSize) / msg->size));
-    }
 
     msg->data = compressed;
     msg->size = compressedSize;
@@ -99,7 +87,6 @@ void Context::processInboxMessages()
     auto *handler = handlers[msg->comm];
 
     if (compressMessages) {
-      auto startCompr = high_resolution_clock::now();
       // Decompress the message before handing it off
       size_t uncompressedSize = 0;
       snappy::GetUncompressedLength(reinterpret_cast<const char *>(msg->data),
@@ -110,16 +97,6 @@ void Context::processInboxMessages()
           msg->size,
           reinterpret_cast<char *>(uncompressed));
       free(msg->data);
-      const size_t compressedSize = msg->size;
-
-      auto endCompr = high_resolution_clock::now();
-      if (DETAILED_LOGGING) {
-        std::lock_guard<std::mutex> lock(statsMutex);
-        decompressTimes.push_back(
-            duration_cast<RealMilliseconds>(endCompr - startCompr));
-        compressedSizes.emplace_back(
-            100.0 * (static_cast<double>(compressedSize) / uncompressedSize));
-      }
 
       msg->data = uncompressed;
       msg->size = uncompressedSize;
@@ -212,29 +189,14 @@ void Context::waitOnSomeRequests()
     int numDone = 0;
     MPI_CALL(Testsome(
         totalMessages, mergedRequests, &numDone, done, MPI_STATUSES_IGNORE));
-    auto completed = high_resolution_clock::now();
 
     for (int i = 0; i < numDone; ++i) {
       size_t msgId = done[i];
       if (msgId < pendingSends.size()) {
-        if (DETAILED_LOGGING) {
-          std::lock_guard<std::mutex> lock(statsMutex);
-          Message *msg = sendCache[msgId].get();
-          sendTimes.push_back(
-              duration_cast<RealMilliseconds>(completed - msg->started));
-        }
-
         pendingSends[msgId] = MPI_REQUEST_NULL;
         sendCache[msgId] = nullptr;
       } else {
         msgId -= pendingSends.size();
-
-        if (DETAILED_LOGGING) {
-          std::lock_guard<std::mutex> lock(statsMutex);
-          Message *msg = recvCache[msgId].get();
-          recvTimes.push_back(
-              duration_cast<RealMilliseconds>(completed - msg->started));
-        }
 
         inbox.push_back(std::move(recvCache[msgId]));
 
@@ -346,53 +308,6 @@ void Context::stop()
     tasksAreRunning = false;
     flushRemainingMessages();
   }
-}
-
-void Context::logMessageTimings(std::ostream & /*os*/)
-{
-  if (!DETAILED_LOGGING) {
-    return;
-  }
-#if 0 // can't depend on pico_bench here from apps/ directory
-    std::lock_guard<std::mutex> lock(statsMutex);
-    using Stats = pico_bench::Statistics<RealMilliseconds>;
-    using CompressedStats = pico_bench::Statistics<CompressionPercent>;
-    if (!sendTimes.empty()) {
-      Stats sendStats(sendTimes);
-      sendStats.time_suffix = "ms";
-      os << "Message send statistics:\n" << sendStats << "\n";
-    }
-
-    if (!recvTimes.empty()) {
-      Stats recvStats(recvTimes);
-      recvStats.time_suffix = "ms";
-      os << "Message recv statistics:\n" << recvStats << "\n";
-    }
-
-    if (!compressTimes.empty()) {
-      Stats stats(compressTimes);
-      stats.time_suffix = "ms";
-      os << "Compression statistics:\n" << stats << "\n";
-    }
-
-    if (!decompressTimes.empty()) {
-      Stats stats(decompressTimes);
-      stats.time_suffix = "ms";
-      os << "Decompression statistics:\n" << stats << "\n";
-    }
-
-    if (!compressedSizes.empty()) {
-      CompressedStats stats(compressedSizes);
-      stats.time_suffix = "%";
-      os << "Compressed Size statistics:\n" << stats << "\n";
-    }
-#endif
-
-  sendTimes.clear();
-  recvTimes.clear();
-  compressTimes.clear();
-  decompressTimes.clear();
-  compressedSizes.clear();
 }
 
 } // namespace maml

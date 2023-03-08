@@ -28,7 +28,15 @@
 #
 add_library(ospray_module_bilinear_patches SHARED)
 
-ispc_include_directories(${RKCOMMON_INCLUDE_DIRS})
+include_directories_ispc(${RKCOMMON_INCLUDE_DIRS})
+
+# Required definitions for ISPC hybrid code for CPU
+add_definitions_ispc(
+  -DOSPRAY_BEGIN_ISPC_NAMESPACE=
+  -DOSPRAY_END_ISPC_NAMESPACE=
+  -DSYCL_EXTERNAL=
+  -D__noinline=
+)
 
 ispc_target_add_sources(ospray_module_bilinear_patches
   # the cpp file that contains all the plugin code - parsing

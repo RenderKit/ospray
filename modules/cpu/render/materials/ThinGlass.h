@@ -10,7 +10,7 @@ namespace pathtracer {
 
 struct ThinGlass : public AddStructShared<Material, ispc::ThinGlass>
 {
-  ThinGlass();
+  ThinGlass(api::ISPCDevice &device);
 
   virtual std::string toString() const override;
 

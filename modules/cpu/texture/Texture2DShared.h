@@ -4,6 +4,7 @@
 #pragma once
 
 #include "TextureShared.h"
+#include "ospray/OSPEnums.h"
 
 #ifdef __cplusplus
 namespace ispc {
@@ -19,11 +20,23 @@ struct Texture2D
   vec2f halfTexel; // 0.5/size, needed for bilinear filtering and clamp-to-edge
   void *data;
 
+  OSPTextureFormat format;
+  OSPTextureFilter filter;
+
 #ifdef __cplusplus
-  Texture2D() : size(0), sizef(0.f), halfTexel(0.f), data(nullptr) {}
+  Texture2D()
+      : size(0),
+        sizef(0.f),
+        halfTexel(0.f),
+        data(nullptr),
+        format(OSP_TEXTURE_FORMAT_INVALID),
+        filter(OSP_TEXTURE_FILTER_BILINEAR)
+  {
+    super.type = TEXTURE_TYPE_2D;
+  }
   void set(const vec2i &aSize,
       void *aData,
-      OSPTextureFormat type,
+      OSPTextureFormat format,
       OSPTextureFilter flags);
 };
 } // namespace ispc

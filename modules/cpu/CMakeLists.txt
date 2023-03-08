@@ -10,7 +10,16 @@ cmake_dependent_option(
 )
 mark_as_advanced(OSPRAY_MODULE_CPU)
 
-if (NOT OSPRAY_MODULE_CPU)
+cmake_dependent_option(
+  OSPRAY_MODULE_GPU
+  "Build the GPU module EXPERIMENTAL"
+  OFF
+  "OSPRAY_ENABLE_MODULES;EMBREE_SYCL_SUPPORT"
+  OFF
+)
+mark_as_advanced(OSPRAY_MODULE_GPU)
+
+if ((NOT OSPRAY_MODULE_CPU) AND (NOT OSPRAY_MODULE_GPU))
   return()
 endif()
 
@@ -18,34 +27,27 @@ endif()
 # Setup module include directories and source files
 # -------------------------------------------------------
 
-set(OSPRAY_ISPC_DEVICE_SOURCES
+set(OSPRAY_CPP_SOURCES
   ${OSPRAY_RESOURCE}
 
+  ModuleInit.cpp
   ispc_tasksys.cpp
 
   ISPCDevice.h
   ISPCDevice.cpp
-  ISPCDevice.ispc
 
-  common/Data.ih
   common/Data.cpp
   common/Future.cpp
   common/Group.cpp
   common/Instance.cpp
   common/MotionTransform.cpp
   common/Managed.cpp
-  common/OSPCommon.ispc
-  common/World.ih
-  common/World.ispc
   common/World.cpp
 
-  fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
   fb/FrameBufferView.cpp
-  fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/SparseFB.cpp
-  fb/SparseFB.ispc
   fb/ImageOp.cpp
   fb/TaskError.cpp
   fb/registration.cpp
@@ -54,154 +56,194 @@ set(OSPRAY_ISPC_DEVICE_SOURCES
   fb/frame_ops/Debug.cpp
   fb/frame_ops/Depth.cpp
   fb/frame_ops/SSAO.cpp
-  fb/frame_ops/SSAO.ispc
 
   fb/pixel_ops/ToneMapper.cpp
-  fb/pixel_ops/ToneMapper.ispc
 
-  pf/PixelFilter.ih
-  pf/PixelFilter.ispc
-  pf/LUTPixelFilter.ih
-  pf/LUTPixelFilter.ispc
   pf/PixelFilter.cpp
 
   camera/Camera.cpp
-  camera/PerspectiveCamera.ispc
   camera/PerspectiveCamera.cpp
-  camera/OrthographicCamera.ispc
   camera/OrthographicCamera.cpp
-  camera/PanoramicCamera.ispc
   camera/PanoramicCamera.cpp
   camera/registration.cpp
 
   geometry/Geometry.cpp
-  geometry/GeometricModel.ispc
   geometry/GeometricModel.cpp
-  geometry/Boxes.ispc
   geometry/Boxes.cpp
-  geometry/Subdivision.ispc
-  geometry/Subdivision.cpp
   geometry/Curves.cpp
-  geometry/Curves.ispc
   geometry/Spheres.cpp
-  geometry/Spheres.ispc
-  geometry/Isosurfaces.ispc
-  geometry/Isosurfaces.cpp
-  geometry/Planes.ispc
   geometry/Planes.cpp
   geometry/Mesh.cpp
-  geometry/Mesh.ispc
   geometry/registration.cpp
 
-  lights/Light.ispc
   lights/Light.cpp
-  lights/AmbientLight.ispc
   lights/AmbientLight.cpp
   lights/DirectionalLight.cpp
-  lights/DirectionalLight.ispc
   lights/PointLight.cpp
-  lights/PointLight.ispc
   lights/IntensityDistribution.cpp
   lights/SpotLight.cpp
-  lights/SpotLight.ispc
   lights/QuadLight.cpp
-  lights/QuadLight.ispc
   lights/CylinderLight.cpp
-  lights/CylinderLight.ispc
   lights/HDRILight.cpp
-  lights/HDRILight.ispc
   lights/SunSkyLight.cpp
   lights/sky_model/sky_model.cpp
   lights/registration.cpp
 
-  math/Distribution1D.ispc
-  math/Distribution2D.ispc
-  math/sobol.ih
-  math/sobol.ispc
   math/spectrum.h
-  math/spectrum.ih
-  math/spectrum.ispc
-  math/random.ih
-  math/halton.ih
-  math/halton.ispc
+  math/halton.cpp
+  math/sobol.cpp
+  math/MathConstants.cpp
+  math/Distribution2D.cpp
 
   render/LoadBalancer.cpp
   render/Material.cpp
-  render/Material.ispc
-  render/Renderer.ispc
   render/Renderer.cpp
-  render/util.ispc
   render/registration.cpp
 
   render/debug/DebugRenderer.cpp
-  render/debug/DebugRenderer.ispc
 
   render/ao/AORenderer.cpp
-  render/ao/AORenderer.ispc
-  render/ao/surfaces.ispc
-  render/ao/volumes.ispc
 
   render/scivis/SciVis.cpp
-  render/scivis/SciVis.ispc
   render/scivis/SciVisData.cpp
+
+  render/pathtracer/PathTracer.cpp
+  render/pathtracer/PathTracerData.cpp
+
+  render/materials/OBJ.cpp
+  render/materials/Principled.cpp
+  render/materials/CarPaint.cpp
+  render/materials/Velvet.cpp
+  render/materials/Metal.cpp
+  render/materials/Alloy.cpp
+  render/materials/ThinGlass.cpp
+  render/materials/Glass.cpp
+  render/materials/MetallicPaint.cpp
+  render/materials/Plastic.cpp
+  render/materials/Luminous.cpp
+  render/materials/Mix.cpp
+
+  render/bsdfs/MicrofacetAlbedoTables.cpp
+
+  texture/Texture.cpp
+  texture/Texture2D.cpp
+  texture/registration.cpp
+)
+
+set(OSPRAY_ISPC_SOURCES
+  ISPCDevice.ispc
+
+  common/OSPCommon.ispc
+  common/World.ispc
+
+  fb/FrameBuffer.ispc
+  fb/FrameBufferDispatch.ispc
+  fb/LocalFB.ispc
+  fb/SparseFB.ispc
+
+  fb/frame_ops/SSAO.ispc
+
+  fb/pixel_ops/ToneMapper.ispc
+
+  pf/PixelFilterDispatch.ispc
+  pf/LUTPixelFilter.ispc
+
+  camera/CameraDispatch.ispc
+  camera/PerspectiveCamera.ispc
+  camera/OrthographicCamera.ispc
+  camera/PanoramicCamera.ispc
+
+  geometry/GeometryDispatch.ispc
+  geometry/GeometricModel.ispc
+  geometry/Boxes.ispc
+  geometry/Curves.ispc
+  geometry/Spheres.ispc
+  geometry/Planes.ispc
+  geometry/Mesh.ispc
+
+  lights/LightDispatch.ispc
+  lights/Light.ispc
+  lights/AmbientLight.ispc
+  lights/DirectionalLight.ispc
+  lights/PointLight.ispc
+  lights/SpotLight.ispc
+  lights/QuadLight.ispc
+  lights/CylinderLight.ispc
+  lights/HDRILight.ispc
+
+  math/Distribution1D.ispc
+  math/Distribution2D.ispc
+  math/spectrum.ispc
+
+  render/Material.ispc
+  render/MaterialDispatch.ispc
+  render/Renderer.ispc
+  render/util.ispc
+
+  render/debug/DebugRenderer.ispc
+
+  render/ao/AORenderer.ispc
+  render/ao/surfaces.ispc
+
+  render/scivis/SciVis.ispc
   render/scivis/surfaces.ispc
-  render/scivis/volumes.ispc
   render/scivis/lightAlpha.ispc
 
   render/pathtracer/PathTracer.ispc
-  render/pathtracer/PathTracer.cpp
-  render/pathtracer/PathTracerData.cpp
   render/pathtracer/PathSampler.ispc
   render/pathtracer/GeometryLight.ispc
-  render/pathtracer/GeometryLight.cpp
   render/pathtracer/VirtualLight.ispc
   render/pathtracer/TransparentShadow.ispc
   render/pathtracer/ShadowCatcher.ispc
   render/pathtracer/NextEventEstimation.ispc
-  render/pathtracer/volumes/VolumeSampler.ispc
 
+  render/bsdfs/BSDF.ispc
   render/bsdfs/MicrofacetAlbedoTables.ispc
   render/materials/OBJ.ispc
-  render/materials/OBJ.cpp
   render/materials/Principled.ispc
-  render/materials/Principled.cpp
   render/materials/CarPaint.ispc
-  render/materials/CarPaint.cpp
   render/materials/Velvet.ispc
-  render/materials/Velvet.cpp
   render/materials/Metal.ispc
-  render/materials/Metal.cpp
   render/materials/Alloy.ispc
-  render/materials/Alloy.cpp
   render/materials/ThinGlass.ispc
-  render/materials/ThinGlass.cpp
   render/materials/Glass.ispc
-  render/materials/Glass.cpp
   render/materials/MetallicPaint.ispc
-  render/materials/MetallicPaint.cpp
   render/materials/Plastic.ispc
-  render/materials/Plastic.cpp
   render/materials/Luminous.ispc
-  render/materials/Luminous.cpp
   render/materials/Mix.ispc
-  render/materials/Mix.cpp
 
-  texture/Texture.cpp
-  texture/Texture2D.cpp
+  texture/TextureDispatch.ispc
   texture/Texture2D.ispc
-  texture/TextureVolume.cpp
-  texture/TextureVolume.ispc
-  texture/registration.cpp
-
-  volume/Volume.ispc
-  volume/Volume.cpp
-  volume/VolumetricModel.cpp
-
-  volume/transferFunction/LinearTransferFunction.ispc
-  volume/transferFunction/LinearTransferFunction.cpp
-  volume/transferFunction/TransferFunction.cpp
-  volume/transferFunction/registration.cpp
 )
+
+if (OSPRAY_ENABLE_VOLUMES)
+  set(OSPRAY_VOLUMES_CPP_SOURCES
+    geometry/Isosurfaces.cpp
+
+    texture/TextureVolume.cpp
+
+    volume/Volume.cpp
+    volume/VolumetricModel.cpp
+
+    volume/transferFunction/LinearTransferFunction.cpp
+    volume/transferFunction/TransferFunction.cpp
+    volume/transferFunction/registration.cpp
+  )
+
+  set(OSPRAY_VOLUMES_ISPC_SOURCES
+    geometry/Isosurfaces.ispc
+
+    render/ao/volumes.ispc
+    render/scivis/volumes.ispc
+    render/pathtracer/volumes/VolumeSampler.ispc
+
+    texture/TextureVolume.ispc
+
+    volume/Volume.ispc
+    volume/transferFunction/LinearTransferFunction.ispc
+    volume/transferFunction/TransferFunctionDispatch.ispc
+  )
+endif()
 
 ##############################################################
 # Build ISPC device
@@ -214,10 +256,15 @@ if (WIN32)
   file(READ def_header.txt OSPRAY_DEF)
   file(READ ispc_symbols.txt OSPRAY_ISPC_SYMBOLS_IN)
 
+  list(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
   foreach(isa ${OSPRAY_ISPC_TARGET_LIST})
-    string(REPLACE "-i32x16" "" isa ${isa}) # strip avx512(knl|skx)-i32x16
+    string(REPLACE "-i32x16" "" isa ${isa}) # strip avx512skx-i32x16
+    if (NUM_TARGETS EQUAL 1)
+      set(isa "") # for single target no suffix
+      string(REPLACE "delete_uniform_," "delete_uniform," OSPRAY_ISPC_SYMBOLS_IN ${OSPRAY_ISPC_SYMBOLS_IN})
+    endif()
     # add isa suffix
-    string(REPLACE "," ${isa} OSPRAY_ISPC_SYMBOLS ${OSPRAY_ISPC_SYMBOLS_IN})
+    string(REPLACE "," "${isa}" OSPRAY_ISPC_SYMBOLS ${OSPRAY_ISPC_SYMBOLS_IN})
     string(APPEND OSPRAY_DEF ${OSPRAY_ISPC_SYMBOLS})
   endforeach()
 
@@ -226,7 +273,7 @@ if (WIN32)
   # changes .def only if content changed, avoids unnecessary re-linking
   configure_file(${CMAKE_CURRENT_BINARY_DIR}/ospray_module_cpu.def.in ospray_module_cpu.def COPYONLY)
 
-  list(APPEND OSPRAY_ISPC_DEVICE_SOURCES ospray_module_cpu.def)
+  list(APPEND OSPRAY_ISPC_SOURCES ospray_module_cpu.def)
 endif()
 
 ## ISPC Device-specific options ##
@@ -253,11 +300,6 @@ set(OSPRAY_MAX_STACK_TILE_SIZE ${TILE_STACK_DEFAULT_SIZE} CACHE STRING
 set_property(CACHE OSPRAY_MAX_STACK_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
 mark_as_advanced(OSPRAY_MAX_STACK_TILE_SIZE)
 
-option(OSPRAY_DEBUG_NO_TASKING
-        "Remove tasking parallelism system for debugging"
-        OFF)
-mark_as_advanced(OSPRAY_DEBUG_NO_TASKING)
-
 configure_file(common/OSPConfig.h.in ${PROJECT_BINARY_DIR}/OSPConfig.h)
 install(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK
@@ -266,52 +308,320 @@ install(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
 
 ## Build the module ##
 
-ispc_include_directories(
-  ${PROJECT_SOURCE_DIR}/ospray/include
-  ${PROJECT_SOURCE_DIR}/ospray
-  ${PROJECT_SOURCE_DIR}
-  ${PROJECT_BINARY_DIR}
-  ${RKCOMMON_INCLUDE_DIRS}
-  ${EMBREE_INCLUDE_DIRS}
-  ${OPENVKL_INCLUDE_DIRS}
-)
-add_library(ospray_module_cpu SHARED)
+if (OSPRAY_MODULE_CPU)
+  include_directories_ispc(
+    ${PROJECT_SOURCE_DIR}/ospray/include
+    ${PROJECT_SOURCE_DIR}/ospray
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_BINARY_DIR}
+    ${RKCOMMON_INCLUDE_DIRS}
+    ${EMBREE_INCLUDE_DIRS}
+  )
 
-ispc_target_add_sources(ospray_module_cpu ${OSPRAY_ISPC_DEVICE_SOURCES})
+  add_definitions_ispc(
+    -DOSPRAY_BEGIN_ISPC_NAMESPACE=
+    -DOSPRAY_END_ISPC_NAMESPACE=
+    -DSYCL_EXTERNAL=
+    -D__noinline=
+  )
 
-ospray_install_library(ospray_module_cpu lib)
+  if (OSPRAY_ENABLE_VOLUMES)
+    include_directories_ispc(
+      ${OPENVKL_INCLUDE_DIRS}
+    )
+    # Keep the NOTFOUND out of the ISPC include dirs list, because CMake will
+    # see the variable ending with NOTFOUND and evaluate it to false and not
+    # pass our include directories
+    if (OPENVKL_CPU_DEVICE_INCLUDE_DIRS)
+      include_directories_ispc(
+        ${OPENVKL_CPU_DEVICE_INCLUDE_DIRS}
+      )
+    endif()
 
-target_link_libraries(ospray_module_cpu
-PUBLIC
-  ospray
-  rkcommon::rkcommon
-  $<BUILD_INTERFACE:embree>
-  $<BUILD_INTERFACE:openvkl::openvkl>
-)
+    add_definitions_ispc(
+      -DOSPRAY_ENABLE_VOLUMES
+    )
+  endif()
 
-target_include_directories(ospray_module_cpu
+  add_library(ospray_module_cpu SHARED)
+
+  ispc_target_add_sources(ospray_module_cpu
+      ${OSPRAY_CPP_SOURCES}
+      ${OSPRAY_VOLUMES_CPP_SOURCES}
+      ${OSPRAY_ISPC_SOURCES}
+      ${OSPRAY_VOLUMES_ISPC_SOURCES}
+      geometry/Subdivision.cpp
+      geometry/Subdivision.ispc)
+
+  ospray_install_library(ospray_module_cpu lib)
+
+  target_link_libraries(ospray_module_cpu
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/api>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/common>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-    # NOTE(jda) - the following includes are missing despite PUBLIC linking
-    $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
-    $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
-    #######################################################################
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
+    ospray
+    rkcommon::rkcommon
+    $<BUILD_INTERFACE:ispcrt::ispcrt>
+    $<BUILD_INTERFACE:embree>
+  )
 
-target_compile_definitions(ospray_module_cpu
-PUBLIC
-  TILE_SIZE=${OSPRAY_TILE_SIZE}
-  MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
-  $<$<BOOL:${OSPRAY_DEBUG_NO_TASKING}>:OSPRAY_SERIAL_RENDERING>
-)
+  target_include_directories(ospray_module_cpu
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/api>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/common>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+      # NOTE(jda) - the following includes are missing despite PUBLIC linking
+      $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
+      $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
+      #######################################################################
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
 
+  target_compile_definitions(ospray_module_cpu
+  PUBLIC
+    TILE_SIZE=${OSPRAY_TILE_SIZE}
+    MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
+    SYCL_EXTERNAL=
+    __noinline=
+  )
+
+  if (OSPRAY_ENABLE_VOLUMES)
+    target_link_libraries(ospray_module_cpu
+    PUBLIC
+      $<BUILD_INTERFACE:openvkl::openvkl>
+      $<BUILD_INTERFACE:openvkl::openvkl_module_cpu_device>
+    )
+
+    target_include_directories(ospray_module_cpu
+    PUBLIC
+      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
+    )
+
+    target_compile_definitions(ospray_module_cpu
+    PUBLIC
+      OSPRAY_ENABLE_VOLUMES
+    )
+  endif()
+endif()
+
+if (OSPRAY_MODULE_GPU)
+  include(${ISPCRT_DIR}/interop.cmake)
+
+  ospray_configure_dpcpp_target()
+
+  # Have CMake's build infrastructure treat the ISPC files as C++ for SYCL
+  set_source_files_properties(${OSPRAY_ISPC_SOURCES} ${OSPRAY_VOLUMES_ISPC_SOURCES}
+    PROPERTIES
+    LANGUAGE CXX)
+
+  add_library(ospray_module_gpu_kernels STATIC
+    ${OSPRAY_ISPC_SOURCES}
+    ${OSPRAY_VOLUMES_ISPC_SOURCES})
+
+  set_target_properties(ospray_module_gpu_kernels PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON)
+
+  target_link_libraries(ospray_module_gpu_kernels
+  PUBLIC
+    ospray
+    rkcommon::rkcommon
+    $<BUILD_INTERFACE:ispcrt::ispcrt>
+    $<BUILD_INTERFACE:embree>
+  )
+
+  target_include_directories(ospray_module_gpu_kernels
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/api>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/common>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+      # NOTE(jda) - the following includes are missing despite PUBLIC linking
+      $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
+      $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
+      #######################################################################
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
+
+  target_compile_definitions(ospray_module_gpu_kernels
+  PUBLIC
+    TILE_SIZE=${OSPRAY_TILE_SIZE}
+    MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
+    RKCOMMON_NO_SIMD
+  )
+
+  target_compile_options(ospray_module_gpu_kernels
+  PRIVATE
+    -x c++
+  )
+
+  target_compile_options(ospray_module_gpu_kernels PRIVATE
+    -fsycl
+    ${OSPRAY_CXX_FLAGS_SYCL}
+    -fsycl-targets=${OSPRAY_SYCL_TARGET}
+  )
+
+  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
+    target_link_options(ospray_module_gpu_kernels PRIVATE
+      -fsycl
+      -fsycl-targets=${OSPRAY_SYCL_TARGET}
+      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
+    )
+  else()
+    target_link_options(ospray_module_gpu_kernels PRIVATE
+      -fsycl
+      -fsycl-targets=${OSPRAY_SYCL_TARGET}
+      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
+    )
+  endif()
+
+
+  target_compile_definitions(ospray_module_gpu_kernels
+  PUBLIC
+    OSPRAY_TARGET_SYCL
+    __SYCL_USE_NON_VARIADIC_SPIRV_OCL_PRINTF__
+    OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
+    OSPRAY_END_ISPC_NAMESPACE=}
+    uniform=
+    varying=
+    unmasked=
+    export=
+    rtcIntersectV=rtcIntersect1
+    rtcOccludedV=rtcOccluded1
+    rtcInterpolateV1=rtcInterpolate1
+    vklComputeSampleV=vklComputeSample
+    vklComputeGradientV=vklComputeGradient
+    vklInitIntervalIteratorV=vklInitIntervalIterator
+    vklIterateIntervalV=vklIterateInterval
+    vklInitHitIteratorV=vklInitHitIterator
+    vklIterateHitV=vklIterateHit
+    programCount=1
+    programIndex=0
+  )
+
+  if (OSPRAY_ENABLE_VOLUMES)
+    target_link_libraries(ospray_module_gpu_kernels
+    PUBLIC
+      $<BUILD_INTERFACE:openvkl::openvkl>
+      $<BUILD_INTERFACE:openvkl::openvkl_module_gpu_device>
+    )
+
+    target_include_directories(ospray_module_gpu_kernels
+    PUBLIC
+      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
+    )
+
+    target_compile_definitions(ospray_module_gpu_kernels
+    PUBLIC
+      OSPRAY_ENABLE_VOLUMES
+    )
+  endif()
+
+  ospray_install_library(ospray_module_gpu_kernels lib)
+
+  add_library(ospray_module_gpu SHARED
+    ${OSPRAY_CPP_SOURCES}
+    ${OSPRAY_VOLUMES_CPP_SOURCES}
+  )
+
+  set_target_properties(ospray_module_gpu PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON)
+
+  target_link_libraries(ospray_module_gpu
+    PUBLIC
+      ospray_module_gpu_kernels
+  )
+
+  target_link_libraries(ospray_module_gpu
+    PUBLIC
+      ospray
+      rkcommon::rkcommon
+      $<BUILD_INTERFACE:ispcrt::ispcrt>
+      $<BUILD_INTERFACE:embree>
+  )
+
+  target_include_directories(ospray_module_gpu
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/api>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray/common>
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ospray>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+      # NOTE(jda) - the following includes are missing despite PUBLIC linking
+      $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
+      $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
+      #######################################################################
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
+
+  target_compile_definitions(ospray_module_gpu
+  PUBLIC
+    TILE_SIZE=${OSPRAY_TILE_SIZE}
+    MAX_TILE_SIZE=${OSPRAY_MAX_STACK_TILE_SIZE}
+    RKCOMMON_NO_SIMD
+  )
+
+  target_compile_options(ospray_module_gpu
+  PRIVATE
+    -x c++
+  )
+
+  target_compile_options(ospray_module_gpu PRIVATE
+    -fsycl
+    ${OSPRAY_CXX_FLAGS_SYCL}
+    -fsycl-targets=${OSPRAY_SYCL_TARGET}
+  )
+
+  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
+    target_link_options(ospray_module_gpu PRIVATE
+      -fsycl
+      -fsycl-targets=${OSPRAY_SYCL_TARGET}
+      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
+    )
+  else()
+    target_link_options(ospray_module_gpu PRIVATE
+      -fsycl
+      -fsycl-targets=${OSPRAY_SYCL_TARGET}
+      -Xsycl-target-backend=${OSPRAY_SYCL_TARGET} "-device ${OSPRAY_SYCL_AOT_DEVICES} -revision_id ${OSPRAY_SYCL_AOT_DEVICE_REVISION} ${OSPRAY_OCL_OPTIONS_STR} -options \"${OSPRAY_OCL_OTHER_OPTIONS_STR} -igc_opts='${OSPRAY_IGC_OPTIONS_STR}'\""
+    )
+  endif()
+
+  target_compile_definitions(ospray_module_gpu
+  PUBLIC
+    OSPRAY_TARGET_SYCL
+    __SYCL_USE_NON_VARIADIC_SPIRV_OCL_PRINTF__
+    OSPRAY_BEGIN_ISPC_NAMESPACE=namespace\ ispc{
+    OSPRAY_END_ISPC_NAMESPACE=}
+  )
+
+  if (OSPRAY_ENABLE_VOLUMES)
+    target_link_libraries(ospray_module_gpu
+    PUBLIC
+      $<BUILD_INTERFACE:openvkl::openvkl>
+      $<BUILD_INTERFACE:openvkl::openvkl_module_gpu_device>
+    )
+
+    target_include_directories(ospray_module_gpu
+    PUBLIC
+      $<BUILD_INTERFACE:${OPENVKL_INCLUDE_DIRS}>
+    )
+
+    target_compile_definitions(ospray_module_gpu
+    PUBLIC
+      OSPRAY_ENABLE_VOLUMES
+    )
+  endif()
+
+  ospray_install_library(ospray_module_gpu lib)
+endif()
 
 # -------------------------------------------------------
 # Install SDK headers
@@ -342,6 +652,7 @@ endforeach()
 add_library(ospray_sdk INTERFACE)
 target_link_libraries(ospray_sdk
 INTERFACE
-  ospray_module_cpu rkcommon::rkcommon
+  ospray
+  rkcommon::rkcommon
 )
 ospray_install_target(ospray_sdk devel)

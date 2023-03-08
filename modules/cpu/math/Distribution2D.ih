@@ -3,27 +3,15 @@
 
 #pragma once
 
-#include "Distribution1D.ih"
 #include "rkcommon/math/vec.ih"
+// c++ shared
+#include "Distribution2DShared.h"
 
-struct Distribution2D
-{
-  vec2i size;
-  vec2f rcpSize; // 1/size
-  uniform float *cdf_x; // size.x*size.y elements
-  uniform float *cdf_y; // size.y elements
-};
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
-// consumes array 'importance' of size size.x*size.y, ownership is transferred
-// to Distribution2D
-Distribution2D *uniform Distribution2D_create(
-    const uniform vec2i size, float *uniform importance);
-// consumes arrays 'cdf_x' of size size.x*size.y and 'row_importance' of size
-// size.y, ownership is transferred to Distribution2D
-Distribution2D *uniform Distribution2D_create(const uniform vec2i size,
-    float *uniform cdf_x,
-    float *uniform row_importance);
-void Distribution2D_destroy(Distribution2D *uniform);
+// Initialize the 2D distribution after populating the input cdf_x array
+// and writing f_y into cdf_y. The distribution will then compute cdf_y from f_y
+SYCL_EXTERNAL void Distribution2D_init(Distribution2D *uniform self);
 
 struct Sample2D
 {
@@ -32,5 +20,9 @@ struct Sample2D
 };
 
 // inline?
-Sample2D Distribution2D_sample(const Distribution2D *uniform, const vec2f &s);
-float Distribution2D_pdf(const Distribution2D *uniform, const vec2f &uv);
+SYCL_EXTERNAL Sample2D Distribution2D_sample(
+    const Distribution2D *uniform, const vec2f &s);
+SYCL_EXTERNAL float Distribution2D_pdf(
+    const Distribution2D *uniform, const vec2f &uv);
+
+OSPRAY_END_ISPC_NAMESPACE

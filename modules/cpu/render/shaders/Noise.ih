@@ -5,6 +5,8 @@
 
 #include "math/random.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 // Hash function used in noise functions
 inline unsigned int noiseHash(const vec3ui &v, unsigned int seed)
 {
@@ -36,3 +38,5 @@ inline vec3f cellNoise3f(const vec3f &v)
       to_float_unorm(noiseHash(key, 0x6e2bf582)),
       to_float_unorm(noiseHash(key, 0xc6ae6d0d)));
 }
+
+OSPRAY_END_ISPC_NAMESPACE

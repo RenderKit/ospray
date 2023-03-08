@@ -10,7 +10,7 @@ namespace pathtracer {
 
 struct Principled : public AddStructShared<Material, ispc::Principled>
 {
-  Principled();
+  Principled(api::ISPCDevice &device);
 
   virtual std::string toString() const override;
 

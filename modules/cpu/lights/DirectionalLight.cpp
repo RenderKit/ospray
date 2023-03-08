@@ -2,11 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DirectionalLight.h"
+#include "common/StructShared.h"
 #include "math/sampling.h"
-// embree
-#include "embree3/rtcore.h"
+#ifndef OSPRAY_TARGET_SYCL
 // ispc exports
 #include "lights/DirectionalLight_ispc.h"
+#else
+namespace ispc {
+void *DirectionalLight_sample_addr();
+void *DirectionalLight_sample_instanced_addr();
+void *DirectionalLight_eval_addr();
+void *DirectionalLight_eval_instanced_addr();
+} // namespace ispc
+#endif
 // ispc shared
 #include "DirectionalLightShared.h"
 #include "common/InstanceShared.h"
@@ -21,8 +29,13 @@ void DirectionalLight::set(bool isVisible,
 {
   super.isVisible = isVisible;
   super.instance = instance;
-  super.sample = ispc::DirectionalLight_sample_addr();
-  super.eval = ispc::DirectionalLight_eval_addr();
+
+#ifndef OSPRAY_TARGET_SYCL
+  super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+      ispc::DirectionalLight_sample_addr());
+  super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+      ispc::DirectionalLight_eval_addr());
+#endif
 
   frame = rkcommon::math::frame(direction);
   this->irradiance = irradiance;
@@ -32,8 +45,12 @@ void DirectionalLight::set(bool isVisible,
   // Enable dynamic runtime instancing or apply static transformation
   if (instance) {
     if (instance->motionBlur) {
-      super.sample = ispc::DirectionalLight_sample_instanced_addr();
-      super.eval = ispc::DirectionalLight_eval_instanced_addr();
+#ifndef OSPRAY_TARGET_SYCL
+      super.sample = reinterpret_cast<ispc::Light_SampleFunc>(
+          ispc::DirectionalLight_sample_instanced_addr());
+      super.eval = reinterpret_cast<ispc::Light_EvalFunc>(
+          ispc::DirectionalLight_eval_instanced_addr());
+#endif
     } else {
       frame = instance->xfm.l * frame;
     }
@@ -43,12 +60,14 @@ void DirectionalLight::set(bool isVisible,
 
 namespace ospray {
 
-ispc::Light *DirectionalLight::createSh(
+ISPCRTMemoryView DirectionalLight::createSh(
     uint32_t, const ispc::Instance *instance) const
 {
-  ispc::DirectionalLight *sh = StructSharedCreate<ispc::DirectionalLight>();
+  ISPCRTMemoryView view = StructSharedCreate<ispc::DirectionalLight>(
+      getISPCDevice().getIspcrtDevice().handle());
+  ispc::DirectionalLight *sh = (ispc::DirectionalLight *)ispcrtSharedPtr(view);
   sh->set(visible, instance, direction, irradiance, cosAngle);
-  return &sh->super;
+  return view;
 }
 
 std::string DirectionalLight::toString() const

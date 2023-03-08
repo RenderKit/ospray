@@ -4,13 +4,18 @@
 #pragma once
 
 #ifdef __cplusplus
-#include "common/StructShared.h"
 namespace ispc {
+#endif // __cplusplus
+
+#if defined(__cplusplus) && !defined(OSPRAY_TARGET_SYCL)
 typedef void *Geometry_postIntersectFct;
 typedef void *Geometry_GetAreasFct;
 typedef void *Geometry_SampleAreaFct;
+typedef void *Geometry_IntersectFct;
 #else
 struct Geometry;
+struct DifferentialGeometry;
+struct Ray;
 
 // Geometries are supposed to fill certain members of DifferentialGeometry:
 // calculate Ng, Ns, st, color, and materialID if the respective bit DG_NG,
@@ -50,10 +55,30 @@ typedef SampleAreaRes (*Geometry_SampleAreaFct)(const Geometry *const uniform,
     const vec2f &s, // random numbers to generate the sample
     const float time // for deformation motion blur
 );
-#endif // __cplusplus
+
+typedef void unmasked (*Geometry_IntersectFct)(
+    const struct RTCIntersectFunctionNArguments *uniform args,
+    const uniform bool isOcclusionTest);
+#endif
+
+enum GeometryType
+{
+  GEOMETRY_TYPE_TRIANGLE_MESH,
+  GEOMETRY_TYPE_QUAD_MESH,
+  GEOMETRY_TYPE_BOXES,
+  GEOMETRY_TYPE_SPHERES,
+  GEOMETRY_TYPE_PLANES,
+  GEOMETRY_TYPE_CURVES,
+#ifdef OSPRAY_ENABLE_VOLUMES
+  GEOMETRY_TYPE_ISOSURFACES,
+#endif
+  GEOMETRY_TYPE_SUBDIVISION,
+  GEOMETRY_TYPE_UNKNOWN,
+};
 
 struct Geometry
 {
+  GeometryType type;
   // 'virtual' post-intersect function that fills in a
   // DifferentialGeometry struct, see above prototype for details
   Geometry_postIntersectFct postIntersect;
@@ -61,12 +86,19 @@ struct Geometry
   Geometry_GetAreasFct getAreas;
   Geometry_SampleAreaFct sampleArea;
 
+  // TODO: Maybe behind a define? Custom user geometry w/ fcn ptr callbacks will
+  // only be on the CPU for now for perf limitations
+#ifndef OSPRAY_TARGET_SYCL
+  Geometry_IntersectFct intersect;
+#endif
+
   // number of primitives this geometry has
   int32 numPrimitives;
 
 #ifdef __cplusplus
   Geometry()
-      : postIntersect(nullptr),
+      : type(GEOMETRY_TYPE_UNKNOWN),
+        postIntersect(nullptr),
         getAreas(nullptr),
         sampleArea(nullptr),
         numPrimitives(0)

@@ -17,6 +17,8 @@ struct Empty : public detail::Builder
   void commit() override;
 
   cpp::Group buildGroup() const override;
+
+  cpp::World buildWorld(const std::vector<cpp::Instance> &) const override;
 };
 
 // Inlined definitions ////////////////////////////////////////////////////
@@ -32,6 +34,13 @@ cpp::Group Empty::buildGroup() const
   cpp::Group group;
   group.commit();
   return group;
+}
+
+cpp::World Empty::buildWorld(const std::vector<cpp::Instance> &) const
+{
+  cpp::World world;
+
+  return world;
 }
 
 OSP_REGISTER_TESTING_BUILDER(Empty, empty);

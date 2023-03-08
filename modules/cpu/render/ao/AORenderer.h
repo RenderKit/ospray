@@ -10,9 +10,20 @@ namespace ospray {
 
 struct AORenderer : public AddStructShared<Renderer, ispc::AORenderer>
 {
-  AORenderer(int defaultAORendererSamples = 1);
+  AORenderer(api::ISPCDevice &device, int defaultAORendererSamples = 1);
   std::string toString() const override;
   void commit() override;
+
+  virtual void renderTasks(FrameBuffer *fb,
+      Camera *camera,
+      World *world,
+      void *perFrameData,
+      const utility::ArrayView<uint32_t> &taskIDs
+#ifdef OSPRAY_TARGET_SYCL
+      ,
+      sycl::queue &syclQueue
+#endif
+  ) const override;
 
  private:
   int aoSamples{1};

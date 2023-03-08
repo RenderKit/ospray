@@ -13,7 +13,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE Subdivision
     : public AddStructShared<Geometry, ispc::Subdivision>
 {
-  Subdivision();
+  Subdivision(api::ISPCDevice &device);
   virtual ~Subdivision() override = default;
 
   virtual std::string toString() const override;

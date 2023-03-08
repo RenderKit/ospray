@@ -16,7 +16,10 @@ struct Subdivision
   int64 flagMask; // which attributes are missing and cannot be interpolated
 
 #ifdef __cplusplus
-  Subdivision() : geom(nullptr), flagMask(-1) {}
+  Subdivision() : geom(nullptr), flagMask(-1)
+  {
+    super.type = GEOMETRY_TYPE_SUBDIVISION;
+  }
 };
 } // namespace ispc
 #else

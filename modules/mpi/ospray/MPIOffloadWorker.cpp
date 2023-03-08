@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ospray/ospray.h"
+
+#include "rkcommon/platform.h"
+
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <process.h>
@@ -13,7 +16,6 @@
 #include <algorithm>
 #include <unordered_map>
 #include "MPIOffloadDevice.h"
-#include "ISPCDevice.h"
 #include "common/Library.h"
 #include "common/MPIBcastFabric.h"
 #include "common/MPICommon.h"
@@ -49,6 +51,19 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
   // Nested scope to ensure all OSPRay objects/etc. are cleaned up
   // before we exit
   {
+    // We need to remove the offload device so that we call loadLocalModule
+    // directly to load the mpi_distributed module, instead of trying to go
+    // through the offload device's loadModule implementation which would try to
+    // send the command to some "workers".
+    ospSetCurrentDevice(nullptr);
+    auto OSPRAY_MPI_DISTRIBUTED_GPU =
+        utility::getEnvVar<int>("OSPRAY_MPI_DISTRIBUTED_GPU").value_or(0);
+    if (OSPRAY_MPI_DISTRIBUTED_GPU) {
+      ospLoadModule("mpi_distributed_gpu");
+    } else {
+      ospLoadModule("mpi_distributed_cpu");
+    }
+
     OSPDevice distribDevice = ospNewDevice("mpiDistributed");
     ospDeviceSetParam(
         distribDevice, "worldCommunicator", OSP_VOID_PTR, &worker.comm);
@@ -139,6 +154,7 @@ void runWorker(bool useMPIFabric, MPIOffloadDevice *offloadDevice)
     // device, to avoid it attempting to be freed again on exit
     ospray::api::Device::current = nullptr;
   }
+  MPI_CALL(Comm_free(&worker.comm));
   // The offload device initialized MPI, so the distributed device will see
   // the "app" as having already initialized MPI and assume it should not call
   // finalize. So the worker loop must call MPI finalize here as if it was a

@@ -1,17 +1,19 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../math/AffineSpace.ih"
 #include "CylinderCapSolidAngleTable.ih"
 #include "SphericalQuadSampling.ih"
 #include "common/DifferentialGeometry.ih"
 #include "common/Instance.ih"
 #include "common/Intersect.ih"
+#include "rkcommon/math/AffineSpace.ih"
 // c++ shared
 #include "CylinderLightShared.h"
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 inline void Transform(const CylinderLight *uniform self,
     const uniform affine3f &xfm,
     uniform CylinderLightDynamic &dyn)
@@ -130,7 +132,8 @@ inline Light_SampleRes Sample(const CylinderLight *uniform self,
   res.weight = make_vec3f(0.f);
   res.pdf = 0.f;
 
-  float S, pdf;
+  float S = 0.f;
+  float pdf = 0.f;
   vec3f dir;
   if (sp.x == 0.0f && sp.y == 0.0f) { // XXX SciVis
     dir = 0.5f * (dyn.position0 + dyn.position1) - dg.P; // to center
@@ -165,17 +168,22 @@ inline Light_SampleRes Sample(const CylinderLight *uniform self,
   return res;
 }
 
-Light_SampleRes CylinderLight_sample(const uniform Light *uniform super,
+
+
+SYCL_EXTERNAL Light_SampleRes CylinderLight_sample(
+    const uniform Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
-    const float)
+    const float time)
 {
   const CylinderLight *uniform self = (CylinderLight * uniform) super;
   assert(self);
   return Sample(self, self->pre, dg, s);
 }
 
-Light_SampleRes CylinderLight_sample_instanced(const Light *uniform super,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_SampleRes CylinderLight_sample_instanced(
+    const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec2f &s,
     const float time)
@@ -195,6 +203,7 @@ Light_SampleRes CylinderLight_sample_instanced(const Light *uniform super,
   }
   return res;
 }
+#endif
 
 inline Light_EvalRes Eval(const CylinderLight *uniform self,
     const uniform CylinderLightDynamic &dyn,
@@ -226,19 +235,23 @@ inline Light_EvalRes Eval(const CylinderLight *uniform self,
   return res;
 }
 
-Light_EvalRes CylinderLight_eval(const uniform Light *uniform super,
+
+SYCL_EXTERNAL Light_EvalRes CylinderLight_eval(
+    const uniform Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
     const float maxDist,
-    const float)
+    const float time)
 {
   CylinderLight *uniform self = (CylinderLight * uniform) super;
   assert(self);
   return Eval(self, self->pre, dg, dir, minDist, maxDist);
 }
 
-Light_EvalRes CylinderLight_eval_instanced(const Light *uniform super,
+#ifndef OSPRAY_TARGET_SYCL
+SYCL_EXTERNAL Light_EvalRes CylinderLight_eval_instanced(
+    const Light *uniform super,
     const DifferentialGeometry &dg,
     const vec3f &dir,
     const float minDist,
@@ -252,6 +265,7 @@ Light_EvalRes CylinderLight_eval_instanced(const Light *uniform super,
   assert(instance);
 
   Light_EvalRes res;
+
   foreach_unique (utime in time) {
     const uniform affine3f xfm = Instance_getTransform(instance, utime);
     uniform CylinderLightDynamic dyn;
@@ -260,26 +274,32 @@ Light_EvalRes CylinderLight_eval_instanced(const Light *uniform super,
   }
   return res;
 }
-
+#endif
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
 export void *uniform CylinderLight_sample_addr()
 {
-  return CylinderLight_sample;
+  return (void *uniform)CylinderLight_sample;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform CylinderLight_sample_instanced_addr()
 {
-  return CylinderLight_sample_instanced;
+  return (void *uniform)CylinderLight_sample_instanced;
 }
+#endif
 
 export void *uniform CylinderLight_eval_addr()
 {
-  return CylinderLight_eval;
+  return (void *uniform)CylinderLight_eval;
 }
 
+#ifndef OSPRAY_TARGET_SYCL
 export void *uniform CylinderLight_eval_instanced_addr()
 {
-  return CylinderLight_eval_instanced;
+  return (void *uniform)CylinderLight_eval_instanced;
 }
+#endif
+
+OSPRAY_END_ISPC_NAMESPACE

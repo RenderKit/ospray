@@ -12,6 +12,8 @@
 // c++ shared
 #include "BoxesShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 export void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
   Boxes *uniform self = (Boxes * uniform) args->geometryUserPtr;
@@ -22,12 +24,16 @@ export void Boxes_bounds(const RTCBoundsFunctionArguments *uniform args)
   *out = make_box3fa(get_box3f(self->boxes, primID));
 }
 
-void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
+SYCL_EXTERNAL unmasked void Boxes_intersect_kernel(
+    const RTCIntersectFunctionNArguments *uniform args,
     const uniform bool isOcclusionTest)
 {
   // make sure to set the mask
-  if (!args->valid[programIndex])
+  if (!args->valid[programIndex]) {
     return;
+  }
+
+  args->valid[programIndex] = 0;
 
   Boxes *uniform self = (Boxes * uniform) args->geometryUserPtr;
   varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
@@ -35,10 +41,13 @@ void Boxes_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args,
   uniform int primID = args->primID;
 
   uniform box3f box = get_box3f(self->boxes, primID);
+
   const Intersections isect = intersectBox(ray->org, ray->dir, box);
 
   // call intersection filtering callback and setup hit if accepted
-  filterIntersectionBoth(args, isect, isOcclusionTest);
+  if (filterIntersectionBoth(args, isect, isOcclusionTest)) {
+    args->valid[programIndex] = -1;
+  }
 }
 
 export void Boxes_intersect(
@@ -53,7 +62,7 @@ export void Boxes_occluded(
   Boxes_intersect_kernel((RTCIntersectFunctionNArguments * uniform) args, true);
 }
 
-void Boxes_postIntersect(const Geometry *uniform geometry,
+SYCL_EXTERNAL void Boxes_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -63,5 +72,7 @@ void Boxes_postIntersect(const Geometry *uniform geometry,
 
 export void *uniform Boxes_postIntersect_addr()
 {
-  return Boxes_postIntersect;
+  return (void *uniform)Boxes_postIntersect;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

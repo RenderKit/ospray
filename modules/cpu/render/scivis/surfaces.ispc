@@ -5,8 +5,13 @@
 #include "math/sampling.ih"
 #include "render/util.ih"
 #include "surfaces.ih"
+#include "lights/LightDispatch.ih"
 // c++ shared
+#include "SciVisDataShared.h"
+#include "SciVisShared.h"
 #include "lights/LightShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 vec3f directIllumination(const uniform SciVis *uniform self,
     const FrameBuffer *uniform fb,
@@ -18,16 +23,21 @@ vec3f directIllumination(const uniform SciVis *uniform self,
     const varying vec3f &inDir)
 {
   vec3f color = make_vec3f(0.f);
-  if (!world->scivisData.lights)
+
+  const uniform SciVisData &scivisData =
+      *((const uniform SciVisData *)world->scivisData);
+  if (!scivisData.lights)
     return color;
 
   // calculate shading for all lights
-  for (uniform int i = world->scivisData.numLightsVisibleOnly;
-       i < world->scivisData.numLights;
+  for (uniform int i = scivisData.numLightsVisibleOnly;
+       i < scivisData.numLights;
        i++) {
-    const Light *uniform l = world->scivisData.lights[i];
+    const Light *uniform l = scivisData.lights[i];
     const vec2f s = make_vec2f(0.0f); // sample center of area lights
-    const Light_SampleRes light = l->sample(l, dg, s);
+
+    const Light_SampleRes light =
+        Light_dispatch_sample(l, dg, s, sample.ray.time);
 
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
       const float cosNL = dot(light.dir, dg.Ns);
@@ -70,7 +80,7 @@ vec3f directIllumination(const uniform SciVis *uniform self,
   return color;
 }
 
-SSI computeShading(const SciVis *uniform self,
+SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
@@ -87,8 +97,10 @@ SSI computeShading(const SciVis *uniform self,
       directIllumination(self, fb, world, dg, sample, ldSampler, bsdf, inDir);
 
   vec3f ao = make_vec3f(1.f);
+  const uniform SciVisData &scivisData =
+      *((const uniform SciVisData *)world->scivisData);
   if (self->aoSamples > 0
-      && luminance(world->scivisData.aoColorPi) > self->super.minContribution)
+      && luminance(scivisData.aoColorPi) > self->super.minContribution)
     ao = SciVis_computeAO(self,
         fb,
         world,
@@ -99,7 +111,7 @@ SSI computeShading(const SciVis *uniform self,
         self->aoRadius,
         sample.sampleID);
 
-  color = color + bsdf.diffuse * ao * world->scivisData.aoColorPi;
+  color = color + bsdf.diffuse * ao * scivisData.aoColorPi;
 
   retval.shadedColor = color;
   retval.transmission = bsdf.transmission;
@@ -108,20 +120,25 @@ SSI computeShading(const SciVis *uniform self,
   return retval;
 }
 
-vec3f evaluateLights(
+SYCL_EXTERNAL vec3f evaluateLights(
     const World *uniform world, const DifferentialGeometry &dg, const Ray &ray)
 {
   // Iterate through all lights
   vec3f color = make_vec3f(0.f);
-  for (uniform int i = 0; i < world->scivisData.numLights; i++) {
+  const uniform SciVisData &scivisData =
+      *((const uniform SciVisData *)world->scivisData);
+  for (uniform int i = 0; i < scivisData.numLights; i++) {
     // Skip lights with disabled visibility via parameter
-    const Light *uniform l = world->scivisData.lights[i];
+    const Light *uniform l = scivisData.lights[i];
     if (!l->isVisible)
       continue;
 
     // Evaluate light contribution
-    const Light_EvalRes le = l->eval(l, dg, ray.dir, ray.t0, ray.t);
+    const Light_EvalRes le =
+        Light_dispatch_eval(l, dg, ray.dir, ray.t0, ray.t, ray.time);
     color = color + le.radiance;
   }
   return color;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

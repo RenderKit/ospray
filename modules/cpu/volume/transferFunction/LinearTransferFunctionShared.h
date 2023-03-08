@@ -21,8 +21,13 @@ struct LinearTransferFunction
   // precomputed maximum opacity values per range
   float maxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT]
                          [PRECOMPUTED_OPACITY_SUBRANGE_COUNT];
+#ifdef __cplusplus
+  LinearTransferFunction()
+  {
+    super.type = TRANSFER_FUNCTION_TYPE_LINEAR;
+  }
+#endif
 };
-
 #ifdef __cplusplus
 } // namespace ispc
 #endif // __cplusplus

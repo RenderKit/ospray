@@ -1,0 +1,14 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#include "camera/Camera.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL void OrthographicCamera_initRay(const Camera *uniform _self,
+    varying Ray &ray,
+    const varying CameraSample &sample);
+
+OSPRAY_END_ISPC_NAMESPACE
+
+

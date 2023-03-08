@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Texture2D.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "common/OSPCommon_ispc.h"
 #include "texture/Texture2D_ispc.h"
+#endif
 
 #include "../common/Data.h"
 
@@ -11,10 +13,12 @@ namespace ispc {
 
 void Texture2D::set(const vec2i &aSize,
     void *aData,
-    OSPTextureFormat type,
-    OSPTextureFilter flags)
+    OSPTextureFormat aFormat,
+    OSPTextureFilter aFilter)
 {
   size = aSize;
+  format = aFormat;
+  filter = aFilter;
 
   // Due to float rounding frac(x) can be exactly 1.0f (e.g. for very small
   // negative x), although it should be strictly smaller than 1.0f. We handle
@@ -24,14 +28,17 @@ void Texture2D::set(const vec2i &aSize,
       vec2f(nextafter((float)size.x, -1.0f), nextafter((float)size.y, -1.0f));
   halfTexel = vec2f(0.5f / size.x, 0.5f / size.y);
   data = aData;
-  super.get =
-      ispc::Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
-  super.getNormal =
-      ispc::Texture2D_getN_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
-  super.hasAlpha = type == OSP_TEXTURE_RGBA8 || type == OSP_TEXTURE_SRGBA
-      || type == OSP_TEXTURE_RA8 || type == OSP_TEXTURE_LA8
-      || type == OSP_TEXTURE_RGBA32F || type == OSP_TEXTURE_RGBA16
-      || type == OSP_TEXTURE_RA16;
+
+  super.hasAlpha = aFormat == OSP_TEXTURE_RGBA8 || aFormat == OSP_TEXTURE_SRGBA
+      || aFormat == OSP_TEXTURE_RA8 || aFormat == OSP_TEXTURE_LA8
+      || aFormat == OSP_TEXTURE_RGBA32F || aFormat == OSP_TEXTURE_RGBA16
+      || aFormat == OSP_TEXTURE_RA16;
+#ifndef OSPRAY_TARGET_SYCL
+  super.get = reinterpret_cast<ispc::Texture_get>(
+      ispc::Texture2D_get_addr(aFormat, aFilter & OSP_TEXTURE_FILTER_NEAREST));
+  super.getNormal = reinterpret_cast<ispc::Texture_getN>(
+      ispc::Texture2D_getN_addr(aFormat, aFilter & OSP_TEXTURE_FILTER_NEAREST));
+#endif
 }
 
 } // namespace ispc
@@ -58,7 +65,7 @@ void Texture2D::commit()
         << toString()
         << " does currently not support strides, copying texture data.";
 
-    auto data = new Data(texData->type, texData->numItems);
+    auto data = new Data(getISPCDevice(), texData->type, texData->numItems);
     data->copy(*texData, vec3ui(0));
     texData = data;
     data->refDec();

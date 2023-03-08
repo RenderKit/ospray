@@ -6,7 +6,7 @@
 
 namespace ospray {
 
-void MotionTransform::readParams(ManagedObject &obj)
+void MotionTransform::readParams(ISPCDeviceObject &obj)
 {
   transforms = obj.getParamDataT<affine3f>("motion.transform");
   if (transforms) {

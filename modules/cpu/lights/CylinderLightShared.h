@@ -28,7 +28,10 @@ struct CylinderLight
   CylinderLightDynamic pre; // un- or pre-transformed state
 
 #ifdef __cplusplus
-  CylinderLight() : radiance(1.f), radius(1.f) {}
+  CylinderLight() : radiance(1.f), radius(1.f)
+  {
+    super.type = LIGHT_TYPE_CYLINDER;
+  }
 };
 } // namespace ispc
 #else

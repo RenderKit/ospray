@@ -3,21 +3,28 @@
 
 #pragma once
 
+#include "OSPConfig.h"
+#include "rkcommon/math/vec.ih"
+// c++ shared
 #include "FrameBufferShared.h"
-#include "common/OSPCommon.ih"
 
+#ifndef OSPRAY_TARGET_SYCL
 extern "C" uint32 *uniform getThreadNumPixelsRendered();
 
 extern "C" int *uniform getThreadLastFrameID();
+#endif
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // Run the chain of pixel ops (if any) to produce the final color to be written
 // into the framebuffer
-vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
+SYCL_EXTERNAL vec4f FrameBuffer_runPixelOps(FrameBuffer *uniform self,
     const vec4f &color,
     const float depth,
     const vec3f &normal,
     const vec3f &albedo);
 
+#ifndef OSPRAY_TARGET_SYCL
 inline void FrameBuffer_updateProgress(
     FrameBuffer *uniform self, const uniform uint32 numPixelsRendered)
 {
@@ -42,3 +49,5 @@ inline void FrameBuffer_updateProgress(
     *pixelsRendered = 0;
   }
 }
+#endif
+OSPRAY_END_ISPC_NAMESPACE

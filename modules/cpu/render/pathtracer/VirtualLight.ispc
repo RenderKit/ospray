@@ -5,9 +5,15 @@
 #include "render/pathtracer/PathStructs.ih"
 #include "render/pathtracer/PathTracerUtil.ih"
 #include "render/pathtracer/VirtualLight.ih"
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "render/pathtracer/volumes/VolumeSampler.ih"
+#endif
 // c++ shared
+#include "PathTracerDataShared.h"
+#include "lights/LightDispatch.ih"
 #include "lights/LightShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline box1f getMinMaxDistForVirtualLights(const PathContext &pathContext,
     const PathState &pathState,
@@ -32,7 +38,7 @@ inline box1f getMinMaxDistForVirtualLights(const PathContext &pathContext,
   return interval;
 }
 
-vec3f evaluateVirtualLights(const PathContext &pathContext,
+SYCL_EXTERNAL vec3f evaluateVirtualLights(const PathContext &pathContext,
     const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
@@ -42,24 +48,25 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
   vec3f L = make_vec3f(0.f);
 
   const World *uniform w = pathContext.world;
-  if (pathContext.numLights <= w->pathtracerData.numGeoLights)
+  const uniform PathTracerData &pathtracerData =
+      *((const uniform PathTracerData *)w->pathtracerData);
+  if (pathContext.numLights <= pathtracerData.numGeoLights)
     return L; // return if no virtual lights at all
 
   box1f intervalLightDist = getMinMaxDistForVirtualLights(
       pathContext, pathState, lastVertex, pathVertex, ray);
 
-  const uniform float selectionPDF = rcp(
-      (uniform float)pathContext.numLights - w->pathtracerData.numGeoLights);
-  for (uniform int i = w->pathtracerData.numGeoLights;
-       i < pathContext.numLights;
+  const uniform float selectionPDF =
+      rcp((uniform float)pathContext.numLights - pathtracerData.numGeoLights);
+  for (uniform int i = pathtracerData.numGeoLights; i < pathContext.numLights;
        i++) {
-    const Light *uniform light = w->pathtracerData.lights[i];
+    const Light *uniform light = pathtracerData.lights[i];
     if (!pathState.straightPath || light->isVisible) {
       // to correctly handle MIS through transparencies the light pdf needs to
       // be calculated wrt. lastVertex.dg however, we only have a valid
       // intersection with the light in [minLightDist, maxLightDist], otherwise
       // light could be added twice
-      Light_EvalRes le = light->eval(light,
+      Light_EvalRes le = Light_dispatch_eval(light,
           lastVertex.dg,
           ray.dir,
           intervalLightDist.lower,
@@ -78,12 +85,16 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
         RayIntervals rayIntervals;
         traceClippingRay(pathContext.world, shadowRay, rayIntervals);
 
+#ifdef OSPRAY_ENABLE_VOLUMES
         const float T = volumeTransmittance(pathState,
             pathContext.world,
             shadowRay,
             rayIntervals,
             pathContext.ldSampler,
             pathContext.randomSampler);
+#else
+        const float T = 1.f;
+#endif
         L = L
             + pathState.throughput * le.radiance
                 * misHeuristic(pathState,
@@ -94,3 +105,5 @@ vec3f evaluateVirtualLights(const PathContext &pathContext,
   }
   return L;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

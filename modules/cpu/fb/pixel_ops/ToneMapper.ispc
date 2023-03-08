@@ -1,23 +1,26 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "fb/pixel_ops/ToneMapperShared.h"
-#include "math/LinearSpace.ih"
+#include "rkcommon/math/LinearSpace.ih"
 #include "rkcommon/math/vec.ih"
+// c++ shared
+#include "fb/pixel_ops/ToneMapperShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 // ACES input transform matrix = RRT_SAT_MAT * XYZ_2_AP1_MAT * D65_2_D60_CAT *
 // REC709_2_XYZ_PRI_MAT
 static const uniform LinearSpace3f acesInputMat = {
-    {0.5972782409, 0.0760130499, 0.0284085382},
-    {0.3545713181, 0.9083220973, 0.1338243154},
-    {0.0482176639, 0.0156579968, 0.8375684636}};
+    {0.5972782409f, 0.0760130499f, 0.0284085382f},
+    {0.3545713181f, 0.9083220973f, 0.1338243154f},
+    {0.0482176639f, 0.0156579968f, 0.8375684636f}};
 
 // ACES output transform matrix = XYZ_2_REC709_PRI_MAT * D60_2_D65_CAT *
 // AP1_2_XYZ_MAT * ODT_SAT_MAT
 static const uniform LinearSpace3f acesOutputMat = {
-    {1.6047539945, -0.1020831870, -0.0032670420},
-    {-0.5310794927, 1.1081322801, -0.0727552477},
-    {-0.0736720338, -0.0060518756, 1.0760219533}};
+    {1.6047539945f, -0.1020831870f, -0.0032670420f},
+    {-0.5310794927f, 1.1081322801f, -0.0727552477f},
+    {-0.0736720338f, -0.0060518756f, 1.0760219533f}};
 
 inline vec3f toneMap(const LiveToneMapper *uniform self, const vec3f &col)
 {
@@ -45,5 +48,6 @@ vec4f LiveToneMapper_processPixel(void *uniform _self,
 
 export void *uniform LiveToneMapper_processPixel_addr()
 {
-  return LiveToneMapper_processPixel;
+  return (void *uniform)LiveToneMapper_processPixel;
 }
+OSPRAY_END_ISPC_NAMESPACE

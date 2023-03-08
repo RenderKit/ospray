@@ -1,0 +1,15 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#include "geometry/Geometry.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+// Not supported/used in SYCL/GPU
+void Subdivision_postIntersect(const Geometry *uniform _self,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags);
+
+OSPRAY_END_ISPC_NAMESPACE
+

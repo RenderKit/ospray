@@ -15,7 +15,10 @@ struct AmbientLight
   vec3f radiance; // emitted RGB radiance
 
 #ifdef __cplusplus
-  AmbientLight() : radiance(1.f) {}
+  AmbientLight() : radiance(1.f)
+  {
+    super.type = LIGHT_TYPE_AMBIENT;
+  }
 };
 } // namespace ispc
 #else

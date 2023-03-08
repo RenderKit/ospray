@@ -1,0 +1,22 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+#pragma once
+
+#include "MixShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL const varying BSDF *varying Mix_getBSDF(
+    const uniform Material *uniform super,
+    uniform ShadingContext *uniform ctx,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const Medium &currentMedium);
+
+SYCL_EXTERNAL vec3f Mix_getTransparency(const uniform Material *uniform super,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const Medium &currentMedium);
+
+OSPRAY_END_ISPC_NAMESPACE
+

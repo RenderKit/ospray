@@ -5,8 +5,10 @@
 #include "Curves.h"
 #include "common/DGEnum.h"
 
+#ifndef OSPRAY_TARGET_SYCL
 // ispc-generated files
 #include "geometry/Curves_ispc.h"
+#endif
 // std
 #include <map>
 
@@ -45,9 +47,14 @@ static std::map<std::pair<OSPCurveType, OSPCurveBasis>, RTCGeometryType>
 
 // Curves definitions ///////////////////////////////////////////////////////
 
-Curves::Curves()
+Curves::Curves(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.postIntersect = ispc::Curves_postIntersect_addr();
+#ifndef OSPRAY_TARGET_SYCL
+  getSh()->super.postIntersect =
+      reinterpret_cast<ispc::Geometry_postIntersectFct>(
+          ispc::Curves_postIntersect_addr());
+#endif
   // TODO implement area sampling of OldCurves for geometry lights
 }
 
@@ -81,8 +88,8 @@ void Curves::commit()
     // the global 'radius' parameter, a vec4f vertex buffer copy
     // has to be created. It specifies radius on per-vertex basis and
     // is required by Embree. TODO: Refactor for OSPRay 3.x
-    DataT<vec4f> *dataT =
-        (DataT<vec4f> *)new Data(OSP_VEC4F, vertexNoRadiusData->numItems);
+    DataT<vec4f> *dataT = (DataT<vec4f> *)new Data(
+        getISPCDevice(), OSP_VEC4F, vertexNoRadiusData->numItems);
     for (size_t i = 0; i < dataT->size(); i++) {
       const vec3f &v = (*vertexNoRadiusData)[i];
       (*dataT)[i] = vec4f(v.x, v.y, v.z, radius);
@@ -119,11 +126,28 @@ void Curves::commit()
 
   getSh()->geom = embreeGeometry;
   getSh()->flagMask = -1;
-  if (!colorData)
-    getSh()->flagMask &= ispc::int64(~DG_COLOR);
-  if (!texcoordData)
-    getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
   getSh()->super.numPrimitives = numPrimitives();
+  getSh()->curveType = curveType;
+  getSh()->curveBasis = curveBasis;
+#ifdef OSPRAY_TARGET_SYCL
+  getSh()->index = *ispc(indexData);
+#endif
+
+  if (!colorData) {
+    getSh()->flagMask &= ispc::int64(~DG_COLOR);
+  } else {
+#ifdef OSPRAY_TARGET_SYCL
+    getSh()->color = *ispc(colorData);
+#endif
+  }
+
+  if (!texcoordData) {
+    getSh()->flagMask &= ispc::int64(~DG_TEXCOORD);
+  } else {
+#ifdef OSPRAY_TARGET_SYCL
+    getSh()->texcoord = *ispc(texcoordData);
+#endif
+  }
 
   postCreationInfo(vertexData->size());
 }

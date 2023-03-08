@@ -81,13 +81,13 @@ struct OSPRAY_MODULE_DENOISER_EXPORT LiveDenoiseFrameOp : public LiveFrameOp
 
   void process(const Camera *) override
   {
-    oidnExecuteFilter(filter);
+    if (fbView.originalFB->getSh()->numPixelsRendered)
+      oidnExecuteFilter(filter);
 
     const char *errorMessage = nullptr;
     auto error = oidnGetDeviceError(device, &errorMessage);
 
     if (error != OIDN_ERROR_NONE && error != OIDN_ERROR_CANCELLED) {
-      std::cout << "OIDN ERROR " << errorMessage << "\n";
       throw std::runtime_error(
           "Error running OIDN: " + std::string(errorMessage));
     }
@@ -125,14 +125,3 @@ std::string DenoiseFrameOp::toString() const
 }
 
 } // namespace ospray
-
-extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_denoiser(
-    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/)
-{
-  auto status = ospray::moduleVersionCheck(versionMajor, versionMinor);
-
-  if (status == OSP_NO_ERROR)
-    ospray::ImageOp::registerType<ospray::DenoiseFrameOp>("denoiser");
-
-  return status;
-}

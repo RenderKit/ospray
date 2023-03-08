@@ -2,6 +2,27 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
-#include "texture/TextureParam.ih"
+#include "rkcommon/math/vec.ih"
 
-#include "OBJShared.h"
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+struct BSDF;
+struct Material;
+struct ShadingContext;
+struct DifferentialGeometry;
+struct Ray;
+struct Medium;
+
+SYCL_EXTERNAL const varying BSDF *varying OBJ_getBSDF(
+    const uniform Material *uniform super,
+    uniform ShadingContext *uniform ctx,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const Medium &currentMedium);
+
+SYCL_EXTERNAL vec3f OBJ_getTransparency(const uniform Material *uniform super,
+    const DifferentialGeometry &dg,
+    const Ray &ray,
+    const Medium &currentMedium);
+
+OSPRAY_END_ISPC_NAMESPACE

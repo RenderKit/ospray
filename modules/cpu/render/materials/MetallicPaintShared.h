@@ -26,9 +26,11 @@ struct MetallicPaint
       : baseColor(.25f),
         flakeAmount(.5f),
         flakeColor(flakeAmount * vec3f(RGB_AL_COLOR)),
-        flakeSpread(.5),
+        flakeSpread(0.5f),
         eta(1.f / 1.6f)
-  {}
+  {
+    super.type = ispc::MATERIAL_TYPE_METALLICPAINT;
+  }
 };
 } // namespace ispc
 #else

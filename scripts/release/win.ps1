@@ -16,7 +16,8 @@ cmake -L `
   -D BUILD_DEPENDENCIES_ONLY=ON `
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR `
   -D CMAKE_INSTALL_LIBDIR=lib `
-  -D BUILD_EMBREE_FROM_SOURCE=OFF `
+  -D BUILD_EMBREE_FROM_SOURCE=ON `
+  -D BUILD_ISA_AVX512=OFF `
   -D BUILD_OIDN=ON `
   -D BUILD_OIDN_FROM_SOURCE=OFF `
   -D BUILD_OSPRAY_MODULE_MPI=ON `
@@ -32,6 +33,9 @@ cd $ROOT_DIR
 md build_release
 cd build_release
 
+# Clean out build directory to be sure we are doing a fresh build
+rm -r -fo *
+
 # Setup environment for dependencies
 $env:CMAKE_PREFIX_PATH = $DEP_DIR
 
@@ -40,7 +44,6 @@ cmake -L `
   -G $($args[0]) `
   -D CMAKE_PREFIX_PATH="$DEP_DIR\lib\cmake" `
   -D OSPRAY_BUILD_ISA=ALL `
-  -D ISPC_EXECUTABLE=$DEP_DIR/bin/ispc.exe `
   -D TBB_ROOT=$DEP_DIR `
   -D OSPRAY_ZIP_MODE=OFF `
   -D OSPRAY_MODULE_DENOISER=ON `

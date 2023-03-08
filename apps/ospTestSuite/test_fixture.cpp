@@ -206,4 +206,18 @@ void FromOsprayTestingMaxDepth::SetUp()
   }
 }
 
+void FromOsprayTestingVariance::SetUp()
+{
+  FromOsprayTesting::SetUp();
+
+  frames = 20;
+
+  framebuffer = cpp::FrameBuffer(imgSize.x,
+      imgSize.y,
+      frameBufferFormat,
+      OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
+
+  renderer.setParam("varianceThreshold", 20.f);
+}
+
 } // namespace OSPRayTestScenes

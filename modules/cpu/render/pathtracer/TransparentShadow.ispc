@@ -4,6 +4,7 @@
 #include "render/pathtracer/TransparentShadow.ih"
 
 #include "render/Material.ih"
+#include "render/MaterialDispatch.ih"
 #include "render/materials/Medium.ih"
 
 #include "common/Ray.ih"
@@ -12,7 +13,9 @@
 // c++ shared
 #include "PathTracerShared.h"
 
-vec3f transparentShadow(const uniform PathTracer *uniform self,
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     const World *uniform world,
     vec3f lightContrib,
     Ray &shadowRay,
@@ -38,9 +41,19 @@ vec3f transparentShadow(const uniform PathTracer *uniform self,
 
     uniform Material *material = (uniform Material *)dg.material;
     vec3f transparency;
-    foreach_unique (m in material)
-      if (m != NULL)
-        transparency = m->getTransparency(m, dg, shadowRay, medium);
+
+#ifdef OSPRAY_TARGET_SYCL
+    {
+      // SYCL execution in a thread is scalar
+      const Material *m = material;
+#else
+    foreach_unique (m in material) {
+#endif
+      if (m != NULL) {
+        transparency =
+            Material_dispatch_getTransparency(m, dg, shadowRay, medium);
+      }
+    }
 
     lightContrib = lightContrib * transparency;
 
@@ -55,11 +68,21 @@ vec3f transparentShadow(const uniform PathTracer *uniform self,
     if (--maxDepth <= 0)
       return make_vec3f(0.f);
 
-    /*! Tracking medium if we hit a medium interface. */
-    foreach_unique (m in material)
-      if (m != NULL)
-        m->selectNextMedium(m, dg, medium);
+      // Tracking medium if we hit a medium interface.
+#ifdef OSPRAY_TARGET_SYCL
+    {
+      // SYCL execution in a thread is scalar
+      const Material *m = material;
+#else
+    foreach_unique (m in material) {
+#endif
+      if (m != NULL) {
+        Material_dispatch_selectNextMedium(m, dg, medium);
+      }
+    }
 
     setRay(shadowRay, shadowRay.t + dg.epsilon, tOriginal);
   }
 }
+
+OSPRAY_END_ISPC_NAMESPACE

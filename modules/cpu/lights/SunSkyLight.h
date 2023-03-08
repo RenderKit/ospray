@@ -4,12 +4,13 @@
 #pragma once
 
 #include "Light.h"
+#include "math/Distribution2D.h"
 #include "math/spectrum.h"
 #include "rkcommon/tasking/parallel_for.h"
 #include "sky_model/color_info.h"
 #include "sky_model/sky_model.h"
 // ispc shared
-#include "texture/Texture2DShared.h"
+#include "texture/Texture2D.h"
 
 // Sun and sky environment lights
 // [Hosek and Wilkie 2012, "An Analytic Model for Full Spectral Sky-Dome
@@ -36,10 +37,9 @@ inline vec3f xyzToRgb(const vec3f &c)
 
 struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
 {
-  SunSkyLight();
-  virtual ~SunSkyLight() override;
+  SunSkyLight(api::ISPCDevice &device);
   virtual uint32_t getShCount() const override;
-  virtual ispc::Light *createSh(
+  virtual ISPCRTMemoryView createSh(
       uint32_t index, const ispc::Instance *instance = nullptr) const override;
   virtual std::string toString() const override;
   virtual void commit() override;
@@ -47,9 +47,9 @@ struct OSPRAY_SDK_INTERFACE SunSkyLight : public Light
  private:
   void processIntensityQuantityType();
 
-  std::vector<vec3f> skyImage;
-  ispc::Texture2D mapSh;
-  void *distributionIE{nullptr};
+  std::unique_ptr<BufferShared<vec3f>> skyImage;
+  Ref<Texture2D> map = nullptr;
+  Ref<Distribution2D> distribution = nullptr;
   vec2i skySize;
   linear3f frame{one}; // sky orientation
   vec3f direction{0.f, 0.f, 1.f};

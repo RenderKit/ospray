@@ -1,0 +1,21 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
+
+#pragma once
+
+#include "Texture.ih"
+
+#include "TextureVolumeShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL vec4f TextureVolume_get(
+    const uniform Texture *uniform self, const DifferentialGeometry &dg);
+
+SYCL_EXTERNAL vec3f TextureVolume_getNormal(
+    const uniform Texture *uniform self, const DifferentialGeometry &dg);
+
+OSPRAY_END_ISPC_NAMESPACE
+
+#endif

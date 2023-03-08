@@ -336,14 +336,10 @@ OSPRAY_CATCH_END()
 
 extern "C" OSPError ospLoadModule(const char *module_name) OSPRAY_CATCH_BEGIN
 {
-  std::string moduleName(module_name);
-  if (moduleName == "ispc") // XXX backwards compatibility
-    moduleName = "cpu";
-
   if (deviceIsSet()) {
-    return (OSPError)currentDevice().loadModule(moduleName.c_str());
+    return (OSPError)currentDevice().loadModule(module_name);
   } else {
-    return loadLocalModule(moduleName.c_str());
+    return loadLocalModule(module_name);
   }
 }
 OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)

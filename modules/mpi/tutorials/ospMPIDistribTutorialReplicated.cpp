@@ -21,6 +21,7 @@
 #include "ospray/ospray_cpp/ext/rkcommon.h"
 #include "ospray/ospray_util.h"
 #include "ospray_testing.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 using namespace ospray;
 using namespace rkcommon;
@@ -85,10 +86,14 @@ int main(int argc, char **argv)
 
   // load the MPI module, and select the MPI distributed device. Here we
   // do not call ospInit, as we want to explicitly pick the distributed
-  // device. This can also be done by passing --osp:mpi-distributed when
-  // using ospInit, however if the user doesn't pass this argument your
-  // application will likely not behave as expected
-  ospLoadModule("mpi");
+  // device
+  auto OSPRAY_MPI_DISTRIBUTED_GPU =
+      utility::getEnvVar<int>("OSPRAY_MPI_DISTRIBUTED_GPU").value_or(0);
+  if (OSPRAY_MPI_DISTRIBUTED_GPU) {
+    ospLoadModule("mpi_distributed_gpu");
+  } else {
+    ospLoadModule("mpi_distributed_cpu");
+  }
 
   {
     cpp::Device mpiDevice("mpiDistributed");

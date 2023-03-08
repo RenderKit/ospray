@@ -11,9 +11,16 @@ include(CMakeDependentOption)
 set(OSPRAY_CMAKECONFIG_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}")
 
-set(RKCOMMON_VERSION_REQUIRED 1.10.0)
-set(EMBREE_VERSION_REQUIRED 3.13.1)
-set(OPENVKL_VERSION_REQUIRED 1.3.0)
+set(ISPC_VERSION_REQUIRED 1.19.0)
+set(RKCOMMON_VERSION_REQUIRED 1.11.0)
+set(EMBREE_VERSION_REQUIRED 4.0.0)
+set(OPENVKL_GPU_VERSION_REQUIRED 2.0.0)
+set(OPENVKL_1_VERSION_REQUIRED 1.3.2)
+if (OSPRAY_MODULE_GPU)
+  set(OPENVKL_VERSION_REQUIRED ${OPENVKL_GPU_VERSION_REQUIRED})
+else()
+  set(OPENVKL_VERSION_REQUIRED ${OPENVKL_1_VERSION_REQUIRED})
+endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
@@ -23,33 +30,8 @@ ospray_configure_build_type()
 ospray_configure_compiler()
 
 ###########################################################
-# OSPRay's dependencies
+# OSPRay specific build options
 ###########################################################
-
-# rkcommon
-find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
-get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
-  INTERFACE_INCLUDE_DIRECTORIES)
-
-# Embree
-ospray_find_embree(${EMBREE_VERSION_REQUIRED})
-ospray_verify_embree_features()
-ospray_determine_embree_isa_support()
-
-# Open VKL
-ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED})
-
-# OpenImageDenoise
-if (OSPRAY_MODULE_DENOISER)
-  find_package(OpenImageDenoise 1.2.3 REQUIRED)
-endif()
-
-###########################################################
-# OSPRay specific build options and configuration selection
-###########################################################
-
-# Configure OSPRay ISA last after we've detected what we got w/ Embree
-ospray_configure_ispc_isa()
 
 option(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 option(OSPRAY_ENABLE_MODULES "Enable the 'modules' subtree in the build." ON)
@@ -89,6 +71,60 @@ cmake_dependent_option(
   OSPRAY_ENABLE_APPS
   OFF
 )
+
+option(OSPRAY_ENABLE_VOLUMES "Enable volume rendering using OpenVKL." ON)
+
+
+###########################################################
+# OSPRay's dependencies and configuration selection
+###########################################################
+
+# rkcommon
+find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} EXACT REQUIRED)
+get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
+  INTERFACE_INCLUDE_DIRECTORIES)
+
+# Embree
+ospray_find_embree(${EMBREE_VERSION_REQUIRED} FALSE)
+ospray_verify_embree_features()
+ospray_determine_embree_isa_support()
+
+# Open VKL
+if (OSPRAY_ENABLE_VOLUMES)
+  ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} FALSE)
+  if (NOT openvkl_FOUND
+      AND "${OPENVKL_VERSION_REQUIRED}" STREQUAL "${OPENVKL_1_VERSION_REQUIRED}")
+    set(OPENVKL_VERSION_REQUIRED ${OPENVKL_GPU_VERSION_REQUIRED})
+    ospray_find_openvkl(${OPENVKL_VERSION_REQUIRED} FALSE)
+    if (NOT openvkl_FOUND)
+      message(FATAL_ERROR
+              "We did not find Open VKL installed on your system. OSPRay requires"
+              " an Open VKL installation >= v${OPENVKL_1_VERSION_REQUIRED}"
+              " or ${OPENVKL_VERSION_REQUIRED}, please"
+              " download and extract Open VKL (or compile from source), then"
+              " set the 'openvkl_DIR' variable to the installation directory.")
+    endif()
+  elseif (NOT openvkl_FOUND)
+    message(FATAL_ERROR
+            "We did not find Open VKL installed on your system. OSPRay requires"
+            " an Open VKL installation >= v${OPENVKL_VERSION_REQUIRED}, please"
+            " download and extract Open VKL (or compile from source), then"
+            " set the 'openvkl_DIR' variable to the installation directory.")
+  endif()
+endif()
+
+# OpenImageDenoise
+if (OSPRAY_MODULE_DENOISER)
+  find_package(OpenImageDenoise 1.2.3 REQUIRED)
+endif()
+
+# ISPC
+find_package(ispcrt ${ISPC_VERSION_REQUIRED} REQUIRED)
+set(ISPC_FAST_MATH ON)
+
+# Configure OSPRay ISA last after we've detected what we got w/ Embree
+ospray_configure_ispc_isa()
+set(ISPC_TARGET_CPU ${OSPRAY_ISPC_TARGET_LIST})
 
 #####################################################################
 # Binary package options, before any install() invocation/definition

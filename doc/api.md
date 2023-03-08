@@ -70,8 +70,7 @@ prefixed by convention with "`--osp:`") are understood:
                                                `--osp:load-modules=<name>` first
 
   `--osp:set-affinity=<n>`                     if `1`, bind software threads to hardware threads;
-                                               `0` disables binding; default is `1` on KNL and `0`
-                                               otherwise
+                                               `0` disables binding; default is `0`
 
   `--osp:device-params=<param>:<value>[,...]`  set one or more other device parameters; equivalent
                                                to calling `ospDeviceSet*(param, value)`
@@ -1800,11 +1799,10 @@ areas will be applied to all other objects in the [world].
 
   OSPLight[]           light                  NULL  [data] array of [lights]
 
-  bool                 dynamicScene          false  use RTC_SCENE_DYNAMIC flag (faster
-                                                    BVH build, slower ray traversal),
-                                                    otherwise uses RTC_SCENE_STATIC flag
-                                                    (faster ray traversal, slightly
-                                                    slower BVH build)
+  bool                 dynamicScene          false  tell Embree to use faster BVH build
+                                                    (slower ray traversal), otherwise
+                                                    optimized for faster ray traversal
+                                                    (slightly slower BVH build)
 
   bool                 compactMode           false  tell Embree to use a more compact BVH
                                                     in memory by trading ray traversal
@@ -1902,11 +1900,10 @@ feature/performance trade-offs (similar to groups).
   OSPLight[]    light                NULL  [data] array with handles of the
                                            [lights]
 
-  bool          dynamicScene        false  use RTC_SCENE_DYNAMIC flag (faster
-                                           BVH build, slower ray traversal),
-                                           otherwise uses RTC_SCENE_STATIC flag
-                                           (faster ray traversal, slightly
-                                           slower BVH build)
+  bool          dynamicScene        false  tell Embree to use faster BVH build
+                                           (slower ray traversal), otherwise
+                                           optimized for faster ray traversal
+                                           (slightly slower BVH build)
 
   bool          compactMode         false  tell Embree to use a more compact BVH
                                            in memory by trading ray traversal
@@ -2147,11 +2144,11 @@ In particular when using the path tracer it is important to adhere to
 the principle of energy conservation, i.e., that the amount of light
 reflected by a surface is not larger than the light arriving. Therefore
 the path tracer issues a warning and renormalizes the color parameters
-if the sum of `Kd`, `Ks`, and `Tf` is larger than one in any color
+if the sum of `kd`, `ks`, and `tf` is larger than one in any color
 channel. Similarly important to mention is that almost all materials of
 the real world reflect at most only about 80% of the incoming light. So
 even for a white sheet of paper or white wall paint do better not set
-`Kd` larger than 0.8; otherwise rendering times are unnecessary long and
+`kd` larger than 0.8; otherwise rendering times are unnecessary long and
 the contrast in the final images is low (for example, the corners of a
 white room would hardly be discernible, as can be seen in the figure
 below).
@@ -2162,11 +2159,11 @@ higher overall contrast. Note that exposure has been adjusted to achieve
 similar brightness levels.][imgDiffuseRooms]
 
 If present, the color component of [geometries] is also used for the
-diffuse color `Kd` and the alpha component is also used for the opacity
+diffuse color `kd` and the alpha component is also used for the opacity
 `d`.
 
 Normal mapping can simulate small geometric features via the texture
-`map_Bump`. The normals $n$ in the normal map are with respect to the
+`map_bump`. The normals $n$ in the normal map are with respect to the
 local tangential shading coordinate system and are encoded as $½(n+1)$,
 thus a texel $(0.5, 0.5, 1)$^[respectively $(127, 127, 255)$ for 8\ bit
 textures and $(32767, 32767, 65535)$ for 16\ bit textures] represents
@@ -2182,17 +2179,17 @@ normal map vertically or invert its green channel.
 ![Normal map representing an exalted square pyramidal
 frustum.][imgNormalMap]
 
-Note that `Tf` colored transparency is implemented in the SciVis and
-the path tracer but normal mapping with `map_Bump` is currently supported
+Note that `tf` colored transparency is implemented in the SciVis and
+the path tracer but normal mapping with `map_bump` is currently supported
 in the path tracer only.
 
-All parameters (except `Tf`) can be textured by passing a [texture]
+All parameters (except `tf`) can be textured by passing a [texture]
 handle, prefixed with "`map_`". The fetched texels are multiplied by the
 respective parameter value. If only the texture is given (but not the
 corresponding parameter), only the texture is used (the default value of
-the parameter is *not* multiplied). The color textures `map_Kd` and
-`map_Ks` are typically in one of the sRGB gamma encoded formats, whereas
-textures `map_Ns` and `map_d` are usually in a linear format (and only
+the parameter is *not* multiplied). The color textures `map_kd` and
+`map_ks` are typically in one of the sRGB gamma encoded formats, whereas
+textures `map_ns` and `map_d` are usually in a linear format (and only
 the first component is used). Additionally, all textures support
 [texture transformations].
 
@@ -2718,7 +2715,7 @@ All cameras accept these parameters:
 
 The camera is placed and oriented in the world with `position`,
 `direction` and `up`. Additionally, an extra transformation `transform`
-can be specified, which will only be applied to 3D vectors (i.e.
+can be specified, which will only be applied to 3D vectors (i.e.,
 `position`, `direction` and `up`), but does *not* affect any sizes
 (e.g., `nearClip`, `apertureRadius`, or `height`). The same holds for
 the array of transformations `motion.transform` to achieve camera motion
@@ -3169,21 +3166,29 @@ rendered, the result is undefined behavior and should be avoided.
 Distributed Rendering with MPI
 ==============================
 
-The purpose of the MPI module for OSPRay is to provide distributed
-rendering capabilities for OSPRay. The module enables image- and
+The purpose of OSPRay's MPI modules is to provide distributed
+rendering capabilities for OSPRay. The modules enables image- and
 data-parallel rendering across HPC clusters using MPI, allowing
 applications to transparently distribute rendering work, or to render
 data sets which are too large to fit in memory on a single machine.
 
-The MPI module provides two OSPRay devices to allow applications to
-leverage distributed rendering capabilities. The `mpiOffload` device
-provides transparent image-parallel rendering, where the same OSPRay
-application written for local rendering can be replicated across
-multiple nodes to distribute the rendering work. The `mpiDistributed`
-device allows MPI distributed applications to use OSPRay for distributed
-rendering, where each rank can render and independent piece of a global
-data set, or hybrid rendering where ranks partially or completely share
-data.
+OSPRay provides two MPI modules that expose different distributed rendering
+capabilities. The `mpi_offload` module provides image-parallel rendering
+through the `mpiOffload` device, while the `mpi_distributed_cpu` module
+provides data-parallel rendering through the `mpiDistributed` device.
+The `mpiOffload` device in the `mpi_offload` module
+enables OSPRay applications written for local rendering to be replicated across
+multiple nodes to distribute the rendering work without code changes.
+The `mpi_distributed_cpu` module provides the `mpiDistributed` device, which
+allows MPI distributed applications to use OSPRay for distributed
+rendering. Each rank using the `mpiDistributed` device can render an
+independent piece of a global data set, or perform hybrid rendering where ranks
+partially or completely share data.
+
+The `mpiDistributed` device's image-parallel rendering support can be used to
+accelerate data loading for image-parallel applications, where all ranks load
+the same data from a shared disk and then perform image-parallel rendering
+on the replicated data, as if the `mpiOffload` device where being used.
 
 MPI Offload Rendering
 ---------------------
@@ -3193,12 +3198,12 @@ across a cluster without requiring modifications to the application
 itself. Existing applications using OSPRay for local rendering simply be
 passed command line arguments to load the module and indicate that the
 `mpiOffload` device should be used for image-parallel rendering. To load
-the module, pass `--osp:load-modules=mpi`, to select the
+the module, pass `--osp:load-modules=mpi_offload`, to select the
 MPIOffloadDevice, pass `--osp:device=mpiOffload`. For example, the
 `ospExamples` application can be run as:
 
 ```sh
-mpirun -n <N> ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload
+mpirun -n <N> ./ospExamples --osp:load-modules=mpi_offload --osp:device=mpiOffload
 ```
 
 and will automatically distribute the image rendering tasks among the
@@ -3216,7 +3221,7 @@ The `ospray_mpi_worker` will load the MPI module and select the offload
 device by default.
 
 ```sh
-mpirun -n 1 ./ospExamples --osp:load-modules=mpi --osp:device=mpiOffload \
+mpirun -n 1 ./ospExamples --osp:load-modules=mpi_offload --osp:device=mpiOffload \
   : -n <N> ./ospray_mpi_worker
 ```
 
@@ -3229,7 +3234,7 @@ through the command line, the following parameters can be set:
   -------- ------------------------ ---------  ---------------------------------
   string   mpiMode                        mpi  The mode to communicate with the
                                                worker ranks. `mpi` will assume
-                                               you're launching the application
+                                               you are launching the application
                                                and workers in the same mpi
                                                command (or split launch
                                                command). `mpi` is the only
@@ -3274,10 +3279,10 @@ While MPI Offload rendering is used to transparently distribute
 rendering work without requiring modification to the application, MPI
 Distributed rendering is targeted at use of OSPRay within MPI-parallel
 applications. The MPI distributed device can be selected by loading the
-`mpi` module, and manually creating and using an instance of the
-`mpiDistributed` device:
+`mpi_distributed_cpu` module, and manually creating and using an instance
+of the `mpiDistributed` device:
 
-    ospLoadModule("mpi");
+    ospLoadModule("mpi_distributed_cpu");
     
     OSPDevice mpiDevice = ospNewDevice("mpiDistributed");
     ospDeviceCommit(mpiDevice);
@@ -3405,11 +3410,11 @@ limited to automatically creating ISPCDevice delegates.
 
 If you wish to try it set the OSPRAY_NUM_SUBDEVICES environmental variable to
 the number of subdevices you want to create and tell OSPRay to both load the
-multidevice extension and create a multidevice for rendering instead of the
+multidevice_cpu extension and create a multidevice for rendering instead of the
 default ISPCDevice.
 
 One example in a bash like shell is as follows:
 
 ```sh
-OSPRAY_NUM_SUBDEVICES=6 ./ospTutorial --osp:load-modules=multidevice --osp:device=multidevice
+OSPRAY_NUM_SUBDEVICES=6 ./ospTutorial --osp:load-modules=multidevice_cpu --osp:device=multidevice
 ```

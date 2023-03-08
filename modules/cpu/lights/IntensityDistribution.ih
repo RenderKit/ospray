@@ -4,7 +4,10 @@
 #pragma once
 
 #include "rkcommon/math/vec.ih"
+// c++ shared
 #include "IntensityDistributionShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline float IntensityDistribution_eval(
     const IntensityDistribution *uniform self,
@@ -22,7 +25,8 @@ inline float IntensityDistribution_eval(
   if (self->size.y == 1) { // 1D
     intensity = lerp(u_frac, self->lid[u0], self->lid[u1]);
   } else { // 2D
-    const float v = (atan2(dot(dir, c90), dot(dir, c0)) + pi) * self->scale.y;
+    const float v =
+        (atan2(dot(dir, c90), dot(dir, c0)) + (float)pi) * self->scale.y;
     const float v_frac = frac(v);
     const int v0 = v;
     const int v1 = (v0 + 1 >= self->size.y) ? 0 : v0 + 1;
@@ -34,3 +38,5 @@ inline float IntensityDistribution_eval(
   }
   return intensity;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

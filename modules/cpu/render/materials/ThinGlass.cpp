@@ -2,17 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ThinGlass.h"
+#ifndef OSPRAY_TARGET_SYCL
 // ispc
 #include "render/materials/ThinGlass_ispc.h"
+#endif
 
 namespace ospray {
 namespace pathtracer {
 
-ThinGlass::ThinGlass()
+ThinGlass::ThinGlass(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
-  getSh()->super.type = ispc::MATERIAL_TYPE_THINGLASS;
-  getSh()->super.getBSDF = ispc::ThinGlass_getBSDF_addr();
-  getSh()->super.getTransparency = ispc::ThinGlass_getTransparency_addr();
+#ifndef OSPRAY_TARGET_SYCL
+  getSh()->super.getBSDF = reinterpret_cast<ispc::Material_GetBSDFFunc>(
+      ispc::ThinGlass_getBSDF_addr());
+  getSh()->super.getTransparency =
+      reinterpret_cast<ispc::Material_GetTransparencyFunc>(
+          ispc::ThinGlass_getTransparency_addr());
+#endif
 }
 
 std::string ThinGlass::toString() const

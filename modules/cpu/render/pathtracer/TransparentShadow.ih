@@ -3,18 +3,20 @@
 
 #pragma once
 
+#include "render/materials/Medium.ih"
 #include "rkcommon/math/vec.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct PathTracer;
 struct World;
 struct Ray;
 struct RayIntervals;
 
-#include "render/materials/Medium.ih"
-
-vec3f transparentShadow(const uniform PathTracer *uniform self,
+SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
     const World *uniform world,
     vec3f lightContrib,
     Ray &shadowRay,
     RayIntervals &rayIntervals,
     Medium medium);
+OSPRAY_END_ISPC_NAMESPACE

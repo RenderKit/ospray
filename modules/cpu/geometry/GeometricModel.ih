@@ -4,17 +4,24 @@
 #pragma once
 
 #include "Geometry.ih"
+#include "GeometryDispatch.ih"
 #include "common/Data.ih"
-#include "math/AffineSpace.ih"
 #include "render/Renderer.ih"
+#include "rkcommon/math/AffineSpace.ih"
 // c++ shared
 #include "GeometricModelShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifdef OSPRAY_TARGET_SYCL
+using namespace ospray;
+#endif
 
 inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
     const Renderer *uniform renderer,
     const int32 primID)
 {
-  if (!valid(self->material))
+  if ((!self->material) && (!self->materialID))
     return NULL;
 
   uint32 idx = primID;
@@ -22,16 +29,18 @@ inline Material *GeometricModel_getMaterial(const GeometricModel *uniform self,
     idx = get_uint8(self->index, min(idx, self->index.numItems - 1));
   }
 
-  uniform uint32 lastMaterial = self->material.numItems - 1;
-  Material **uniform mats = (Material * *uniform) self->material.addr;
-  if (self->useRendererMaterialList) {
-    idx = get_uint32(self->material, min(idx, lastMaterial));
+  uniform uint32 lastMaterial = self->numMaterials - 1;
+  Material **uniform mats = (Material * *uniform) self->material;
+  if (!mats) {
+    idx = self->materialID[min(idx, lastMaterial)];
     mats = renderer->material;
     lastMaterial = renderer->numMaterials - 1;
   }
 
   if (mats)
     return mats[min(idx, lastMaterial)];
+
+  return NULL;
 }
 
 inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
@@ -42,7 +51,7 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
 {
   Geometry *uniform geom = self->geom;
 
-  geom->postIntersect(geom, dg, ray, flags);
+  Geometry_dispatch_postIntersect(geom, dg, ray, flags);
 
   dg.areaPDF = self->areaPDF;
   dg.objID =
@@ -63,3 +72,5 @@ inline void GeometricModel_postIntersect(const GeometricModel *uniform self,
   if (flags & DG_NS && self->invertedNormals)
     dg.Ns = neg(dg.Ns);
 }
+
+OSPRAY_END_ISPC_NAMESPACE

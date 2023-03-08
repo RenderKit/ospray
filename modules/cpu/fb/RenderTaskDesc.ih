@@ -5,6 +5,8 @@
 
 #include "rkcommon/math/box.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct RenderTaskDesc
 {
   box2i region; // screen region that this corresponds to
@@ -12,3 +14,4 @@ struct RenderTaskDesc
   int accumID;
   float error;
 };
+OSPRAY_END_ISPC_NAMESPACE

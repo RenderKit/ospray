@@ -5,6 +5,11 @@
 
 #include "SciVis.ih"
 #include "render/materials/OBJ.ih"
+#include "texture/TextureParam.ih"
+// c++ shared
+#include "render/materials/OBJShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 struct SurfaceShadingInfo
 {
@@ -16,7 +21,7 @@ struct SurfaceShadingInfo
 
 typedef SurfaceShadingInfo SSI;
 
-SSI computeShading(const SciVis *uniform self,
+SYCL_EXTERNAL SSI SciVis_computeShading(const SciVis *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
@@ -24,7 +29,7 @@ SSI computeShading(const SciVis *uniform self,
     varying LDSampler *uniform ldSampler,
     const varying vec3f &inDir);
 
-vec3f evaluateLights(
+SYCL_EXTERNAL vec3f evaluateLights(
     const World *uniform world, const DifferentialGeometry &dg, const Ray &ray);
 
 struct SciVisBSDF
@@ -49,7 +54,12 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
   res.transmission = make_vec3f(1.f - dg.color.w);
   res.opacity = dg.color.w;
 
+#ifdef OSPRAY_TARGET_SYCL
+  {
+    const OBJ *m = mat;
+#else
   foreach_unique (m in mat) {
+#endif
     if (m != NULL && m->super.type == MATERIAL_TYPE_OBJ) {
       float d = m->d * get1f(m->dMap, dg, 1.f) * dg.color.w;
       res.diffuse = res.diffuse * m->Kd;
@@ -71,10 +81,12 @@ inline SciVisBSDF evalMaterial(const DifferentialGeometry &dg)
   // convert from Phong exponent to Blinn
   res.shininess *= 4.0f;
   // BRDF normalization
-  res.diffuse = res.diffuse * one_over_pi;
+  res.diffuse = res.diffuse * (float)one_over_pi;
   res.specular = res.specular
-      * ((res.shininess + 2.f) * one_over_four_pi
-          * rcp(2.f - exp(res.shininess * -lntwo_over_two)));
+      * ((res.shininess + 2.f) * (float)one_over_four_pi
+          * rcp(2.f - exp(res.shininess * -(float)lntwo_over_two)));
 
   return res;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -13,13 +13,12 @@ set(OSPRAY_TEST_ISA "AVX512SKX" CACHE STRING "Reference images ISA")
 set_property(CACHE OSPRAY_TEST_ISA PROPERTY STRINGS AVX2 AVX512SKX)
 
 set(ExternalData_URL_TEMPLATES
-  "http://sdvis.org/ospray/download/baseline/test-data/%(algo)/%(hash)"
+  "https://www.ospray.org/ospray-test-data/%(algo)/%(hash)"
 )
 
 set(ExternalData_OBJECT_STORES
   "${CMAKE_BINARY_DIR}/regression_test_baseline"
-  "/opt/ospray/test-data"
-  "//sdvis-nas/NAS/OSPRay/test-data"
+  "${PROJECT_STORE_ROOT}/OSPRay/test-data"
 )
 
 set(ExternalData_BINARY_ROOT ${CMAKE_BINARY_DIR}/regression_test_baseline)

@@ -5,12 +5,27 @@
 
 // ospray
 #include "Device.h"
+// ispcrt
+#include "ispcrt.hpp"
 // embree
-#include "embree3/rtcore.h"
+#include "common/Embree.h"
+#ifdef OSPRAY_ENABLE_VOLUMES
 // openvkl
 #include "openvkl/openvkl.h"
+// comment break to prevent clang-format from reordering openvkl includes
+#if OPENVKL_VERSION_MAJOR > 1
+#include "openvkl/device/openvkl.h"
+#endif
+#endif
 
 /*! \file ISPCDevice.h Implements the "local" device for local rendering */
+
+#ifdef OSPRAY_TARGET_SYCL
+namespace ispc {
+int ISPCDevice_programCount();
+int ISPCDevice_isa();
+} // namespace ispc
+#endif
 
 namespace ospray {
 
@@ -62,8 +77,8 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
 
   // Model Meta-Data //////////////////////////////////////////////////////
 
-  OSPMaterial newMaterial(
-      const char *renderer_type, const char *material_type) override;
+  OSPMaterial newMaterial(const char * /*renderer_type - unused*/,
+      const char *material_type) override;
 
   OSPTransferFunction newTransferFunction(const char *type) override;
 
@@ -132,13 +147,42 @@ struct OSPRAY_SDK_INTERFACE ISPCDevice : public Device
     return embreeDevice;
   }
 
- private:
-  RTCDevice embreeDevice = nullptr;
-  VKLDevice vklDevice = nullptr;
-};
+#ifdef OSPRAY_ENABLE_VOLUMES
+  VKLDevice getVklDevice()
+  {
+    return vklDevice;
+  }
+#endif
 
-extern "C" OSPError OSPRAY_DLLEXPORT ospray_module_init_ispc(
-    int16_t versionMajor, int16_t versionMinor, int16_t /*versionPatch*/);
+  ispcrt::Device &getIspcrtDevice()
+  {
+    return ispcrtDevice;
+  }
+
+#ifdef OSPRAY_TARGET_SYCL
+  sycl::queue *getSyclQueue()
+  {
+    return &syclQueue;
+  }
+#endif
+
+ private:
+  ispcrt::Context ispcrtContext;
+  ispcrt::Device ispcrtDevice;
+  ispcrt::TaskQueue ispcrtQueue;
+
+  RTCDevice embreeDevice = nullptr;
+#ifdef OSPRAY_ENABLE_VOLUMES
+  VKLDevice vklDevice = nullptr;
+#endif
+
+#ifdef OSPRAY_TARGET_SYCL
+  sycl::platform syclPlatform;
+  sycl::device syclDevice;
+  sycl::context syclContext;
+  sycl::queue syclQueue;
+#endif
+};
 
 } // namespace api
 } // namespace ospray

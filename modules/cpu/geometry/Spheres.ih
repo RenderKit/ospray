@@ -1,0 +1,25 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#include "geometry/Geometry.ih"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL void Spheres_postIntersect(const Geometry *uniform _self,
+    varying DifferentialGeometry &dg,
+    const varying Ray &ray,
+    uniform int64 flags);
+
+SYCL_EXTERNAL SampleAreaRes Spheres_sampleArea(
+    const Geometry *uniform const _self,
+    const int32 primID,
+    const uniform affine3f &xfm,
+    const uniform affine3f &,
+    const vec2f &s,
+    const float time);
+
+SYCL_EXTERNAL unmasked void Spheres_intersect_kernel(
+    const RTCIntersectFunctionNArguments *uniform args,
+    const uniform bool isOcclusionTest);
+
+OSPRAY_END_ISPC_NAMESPACE

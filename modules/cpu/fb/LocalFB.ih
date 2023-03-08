@@ -1,0 +1,21 @@
+// Copyright 2009-2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#include "fb/FrameBuffer.ih"
+#include "fb/Tile.ih"
+// c++ shared
+#include "LocalFBShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+SYCL_EXTERNAL void LocalFB_accumulateSample(FrameBuffer *uniform _fb,
+    const varying ScreenSample &screenSample,
+    uniform RenderTaskDesc &taskDesc);
+
+SYCL_EXTERNAL uniform RenderTaskDesc LocalFB_getRenderTaskDesc(
+    FrameBuffer *uniform _fb, const uniform uint32 taskID);
+
+SYCL_EXTERNAL void LocalFB_completeTask(
+    FrameBuffer *uniform _fb, const uniform RenderTaskDesc &taskDesc);
+
+OSPRAY_END_ISPC_NAMESPACE

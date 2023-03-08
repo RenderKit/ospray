@@ -73,10 +73,10 @@ endmacro()
 # second, different, supported dummy target.
 macro(ospray_fix_ispc_target_list)
   list(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
-  if (NUM_TARGETS EQUAL 1)
-    if (EMBREE_ISA_SUPPORTS_SSE2)
-      list(APPEND OSPRAY_ISPC_TARGET_LIST sse2)
-    elseif (EMBREE_ISA_SUPPORTS_SSE4 AND
+  if (NUM_TARGETS EQUAL 1
+      AND NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "neon-i32x4"
+      AND NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "neon-i32x8")
+    if (EMBREE_ISA_SUPPORTS_SSE4 AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "sse4")
       list(APPEND OSPRAY_ISPC_TARGET_LIST sse4)
     elseif (EMBREE_ISA_SUPPORTS_AVX AND
@@ -85,15 +85,15 @@ macro(ospray_fix_ispc_target_list)
     elseif (EMBREE_ISA_SUPPORTS_AVX2 AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx2")
       list(APPEND OSPRAY_ISPC_TARGET_LIST avx2)
-    elseif (EMBREE_ISA_SUPPORTS_AVX512KNL AND
-            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512knl-i32x16")
-      list(APPEND OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
     elseif (EMBREE_ISA_SUPPORTS_AVX512SKX AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512skx-i32x16")
       list(APPEND OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
     elseif (EMBREE_ISA_SUPPORTS_NEON AND
             NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "neon-i32x4")
       list(APPEND OSPRAY_ISPC_TARGET_LIST neon-i32x4)
+    elseif (EMBREE_ISA_SUPPORTS_NEON2X AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "neon-i32x8")
+      list(APPEND OSPRAY_ISPC_TARGET_LIST neon-i32x8)
     endif()
   endif()
 endmacro()
@@ -102,26 +102,26 @@ endmacro()
 macro(ospray_configure_ispc_isa)
 
   set(OSPRAY_BUILD_ISA "ALL" CACHE STRING
-    "Target ISA (SSE4, AVX, AVX2, AVX512KNL, AVX512SKX, NEON, or ALL)")
+    "Target ISA (SSE4, AVX, AVX2, AVX512SKX, NEON, NEON2X, or ALL)")
   string(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 
-  if(EMBREE_ISA_SUPPORTS_SSE4)
+  if(EMBREE_ISA_SUPPORTS_SSE4 AND OPENVKL_ISA_SSE4)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} SSE4)
   endif()
-  if(EMBREE_ISA_SUPPORTS_AVX)
+  if(EMBREE_ISA_SUPPORTS_AVX AND OPENVKL_ISA_AVX)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX)
   endif()
-  if(EMBREE_ISA_SUPPORTS_AVX2)
+  if(EMBREE_ISA_SUPPORTS_AVX2 AND OPENVKL_ISA_AVX2)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX2)
   endif()
-  if(EMBREE_ISA_SUPPORTS_AVX512KNL)
-    set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX512KNL)
-  endif()
-  if(EMBREE_ISA_SUPPORTS_AVX512SKX)
+  if(EMBREE_ISA_SUPPORTS_AVX512SKX AND OPENVKL_ISA_AVX512SKX)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX512SKX)
   endif()
-  if(EMBREE_ISA_SUPPORTS_NEON)
+  if(EMBREE_ISA_SUPPORTS_NEON AND OPENVKL_ISA_NEON)
     set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} NEON)
+  endif()
+  if(EMBREE_ISA_SUPPORTS_NEON2X AND OPENVKL_ISA_NEON2X)
+    set(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} NEON2X)
   endif()
 
   set_property(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS
@@ -142,10 +142,6 @@ macro(ospray_configure_ispc_isa)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx2)
       message(STATUS "OSPRay AVX2 ISA target enabled.")
     endif()
-    if(EMBREE_ISA_SUPPORTS_AVX512KNL AND OPENVKL_ISA_AVX512KNL)
-      set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512knl-i32x16)
-      message(STATUS "OSPRay AVX512KNL ISA target enabled.")
-    endif()
     if(EMBREE_ISA_SUPPORTS_AVX512SKX AND OPENVKL_ISA_AVX512SKX)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512skx-i32x16)
       message(STATUS "OSPRay AVX512SKX ISA target enabled.")
@@ -153,6 +149,10 @@ macro(ospray_configure_ispc_isa)
     if(EMBREE_ISA_SUPPORTS_NEON AND OPENVKL_ISA_NEON)
       set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} neon-i32x4)
       message(STATUS "OSPRay NEON ISA target enabled.")
+    endif()
+    if(EMBREE_ISA_SUPPORTS_NEON2X AND OPENVKL_ISA_NEON2X)
+      set(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} neon-i32x8)
+      message(STATUS "OSPRay NEON2X ISA target enabled.")
     endif()
 
   elseif (OSPRAY_BUILD_ISA STREQUAL "AVX512SKX")
@@ -164,16 +164,6 @@ macro(ospray_configure_ispc_isa)
       message(FATAL_ERROR "Your Open VKL build does not support AVX512SKX!")
     endif()
     set(OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
-
-  elseif (OSPRAY_BUILD_ISA STREQUAL "AVX512KNL")
-
-    if(NOT EMBREE_ISA_SUPPORTS_AVX512KNL)
-      message(FATAL_ERROR "Your Embree build does not support AVX512KNL!")
-    endif()
-    if(NOT OPENVKL_ISA_AVX512KNL)
-      message(FATAL_ERROR "Your Open VKL build does not support AVX512KNL!")
-    endif()
-    set(OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
 
   elseif (OSPRAY_BUILD_ISA STREQUAL "AVX2")
 
@@ -215,12 +205,43 @@ macro(ospray_configure_ispc_isa)
     endif()
     set(OSPRAY_ISPC_TARGET_LIST neon-i32x4)
 
+  elseif (OSPRAY_BUILD_ISA STREQUAL "NEON2X")
+
+    if (NOT EMBREE_ISA_SUPPORTS_NEON2X)
+      message(FATAL_ERROR "Your Embree build does not support NEON2X!")
+    endif()
+    if (NOT OPENVKL_ISA_NEON2X)
+      message(FATAL_ERROR "Your OpenVKL build does not support NEON2X!")
+    endif()
+    set(OSPRAY_ISPC_TARGET_LIST neon-i32x8)
+
   else()
     message(FATAL_ERROR "Invalid OSPRAY_BUILD_ISA value. "
                   "Please select one of ${OSPRAY_SUPPORTED_ISAS}, or ALL.")
   endif()
 
   ospray_fix_ispc_target_list()
+endmacro()
+
+macro(ospray_configure_dpcpp_target)
+  set(OSPRAY_SYCL_AOT_DEVICES ${EMBREE_SYCL_AOT_DEVICES})
+
+  # TODO: Is this revision info going to be visible to end users?
+  # In the end the public release
+  # of the code should probably just have one revision it targets right?
+  # The final consumer release rev.
+  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "dg2")
+    set(OSPRAY_SYCL_AOT_DEVICE_REVISION 8)
+  elseif (OSPRAY_SYCL_AOT_DEVICES STREQUAL "pvc")
+    # What final rev to pick here?
+    set(OSPRAY_SYCL_AOT_DEVICE_REVISION 5)
+  endif()
+
+  if (OSPRAY_SYCL_AOT_DEVICES STREQUAL "none")
+    set(OSPRAY_SYCL_TARGET spir64)
+  else()
+    set(OSPRAY_SYCL_TARGET spir64_gen)
+  endif()
 endmacro()
 
 ## Target creation macros ##
@@ -318,7 +339,16 @@ macro(ospray_configure_compiler)
   set(OSPRAY_COMPILER_MSVC  FALSE)
   set(OSPRAY_COMPILER_DPCPP FALSE)
 
-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM" OR OSPRAY_MODULE_GPU)
+    set(OSPRAY_COMPILER_DPCPP TRUE)
+    if(WIN32) # icx on Windows behaves like msvc
+      # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/18311
+      set(CMAKE_NINJA_CMCLDEPS_RC OFF)
+      include(msvc)
+    else()
+      include(dpcpp)
+    endif()
+  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     set(OSPRAY_COMPILER_ICC TRUE)
     if(WIN32) # icc on Windows behaves like msvc
       include(msvc)
@@ -335,9 +365,6 @@ macro(ospray_configure_compiler)
   elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(OSPRAY_COMPILER_MSVC TRUE)
     include(msvc)
-  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM")
-    set(OSPRAY_COMPILER_DPCPP TRUE)
-    include(dpcpp)
   else()
     message(FATAL_ERROR
             "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
@@ -383,10 +410,17 @@ function(ospray_verify_embree_features)
   ospray_check_embree_feature(GEOMETRY_USER "user geometries")
   ospray_check_embree_feature(RAY_PACKETS "ray packets")
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
+  if (OSPRAY_MODULE_GPU)
+    ospray_check_embree_feature(SYCL_SUPPORT "DPC++/SYCL support")
+  endif()
 endfunction()
 
-macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
-  find_dependency(embree ${EMBREE_VERSION_REQUIRED})
+macro(ospray_find_embree EMBREE_VERSION_REQUIRED FIND_AS_DEPENDENCY)
+  if (${FIND_AS_DEPENDENCY})
+    find_dependency(embree ${EMBREE_VERSION_REQUIRED})
+  else()
+    find_package(embree ${EMBREE_VERSION_REQUIRED})
+  endif()
   if (NOT embree_FOUND)
     message(FATAL_ERROR
             "We did not find Embree installed on your system. OSPRay requires"
@@ -395,12 +429,20 @@ macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
             " set the 'embree_DIR' variable to the installation (or build)"
             " directory.")
   endif()
+  # Get Embree CPU info
   get_target_property(EMBREE_INCLUDE_DIRS embree
     INTERFACE_INCLUDE_DIRECTORIES)
   get_target_property(CONFIGURATIONS embree IMPORTED_CONFIGURATIONS)
   list(GET CONFIGURATIONS 0 CONFIGURATION)
   get_target_property(EMBREE_LIBRARY embree
       IMPORTED_LOCATION_${CONFIGURATION})
+  # Get Embree SYCL info if DPCPP was enabled
+  if (EMBREE_SYCL_SUPPORT)
+    get_target_property(CONFIGURATIONS embree_sycl IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION)
+    get_target_property(EMBREE_SYCL_LIBRARY embree_sycl
+      IMPORTED_LOCATION_${CONFIGURATION})
+  endif()
   message(STATUS "Found Embree v${embree_VERSION}: ${EMBREE_LIBRARY}")
 endmacro()
 
@@ -411,17 +453,25 @@ macro(ospray_determine_embree_isa_support)
     set(EMBREE_ISA_SUPPORTS_SSE4      ${EMBREE_ISA_SSE42})
     set(EMBREE_ISA_SUPPORTS_AVX       ${EMBREE_ISA_AVX})
     set(EMBREE_ISA_SUPPORTS_AVX2      ${EMBREE_ISA_AVX2})
-    set(EMBREE_ISA_SUPPORTS_AVX512KNL ${EMBREE_ISA_AVX512KNL})
     set(EMBREE_ISA_SUPPORTS_AVX512SKX ${EMBREE_ISA_AVX512SKX})
     set(EMBREE_ISA_SUPPORTS_NEON      ${EMBREE_ISA_NEON})
+    if(EMBREE_ISA_NEON2X)
+      set(EMBREE_ISA_SUPPORTS_NEON2X  ${EMBREE_ISA_NEON2X})
+    else() # workaround missing config in Embree v4.0.0
+      if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64" AND NOT EMBREE_ISA_SUPPORTS_NEON)
+        set(EMBREE_ISA_SUPPORTS_NEON2X TRUE)
+      else()
+        set(EMBREE_ISA_SUPPORTS_NEON2X FALSE)
+      endif()
+    endif()
   else()
     set(EMBREE_ISA_SUPPORTS_SSE2      FALSE)
     set(EMBREE_ISA_SUPPORTS_SSE4      FALSE)
     set(EMBREE_ISA_SUPPORTS_AVX       FALSE)
     set(EMBREE_ISA_SUPPORTS_AVX2      FALSE)
-    set(EMBREE_ISA_SUPPORTS_AVX512KNL FALSE)
     set(EMBREE_ISA_SUPPORTS_AVX512SKX FALSE)
     set(EMBREE_ISA_SUPPORTS_NEON      FALSE)
+    set(EMBREE_ISA_SUPPORTS_NEON2X    FALSE)
 
     if (EMBREE_MAX_ISA STREQUAL "SSE2")
       set(EMBREE_ISA_SUPPORTS_SSE2 TRUE)
@@ -437,49 +487,45 @@ macro(ospray_determine_embree_isa_support)
       set(EMBREE_ISA_SUPPORTS_SSE4 TRUE)
       set(EMBREE_ISA_SUPPORTS_AVX  TRUE)
       set(EMBREE_ISA_SUPPORTS_AVX2 TRUE)
-    elseif (EMBREE_MAX_ISA STREQUAL "AVX512KNL")
-      set(EMBREE_ISA_SUPPORTS_SSE2      TRUE)
-      set(EMBREE_ISA_SUPPORTS_SSE4      TRUE)
-      set(EMBREE_ISA_SUPPORTS_AVX       TRUE)
-      set(EMBREE_ISA_SUPPORTS_AVX2      TRUE)
-      set(EMBREE_ISA_SUPPORTS_AVX512KNL TRUE)
     elseif (EMBREE_MAX_ISA STREQUAL "AVX512SKX")
       set(EMBREE_ISA_SUPPORTS_SSE2      TRUE)
       set(EMBREE_ISA_SUPPORTS_SSE4      TRUE)
       set(EMBREE_ISA_SUPPORTS_AVX       TRUE)
       set(EMBREE_ISA_SUPPORTS_AVX2      TRUE)
-      set(EMBREE_ISA_SUPPORTS_AVX512KNL TRUE)
       set(EMBREE_ISA_SUPPORTS_AVX512SKX TRUE)
     elseif (EMBREE_MAX_ISA STREQUAL "NEON")
       set(EMBREE_ISA_SUPPORTS_NEON      TRUE)
+    elseif (EMBREE_MAX_ISA STREQUAL "NEON2X")
+      set(EMBREE_ISA_SUPPORTS_NEON2X    TRUE)
     endif()
   endif()
 
   if (NOT (EMBREE_ISA_SUPPORTS_SSE4
            OR EMBREE_ISA_SUPPORTS_AVX
            OR EMBREE_ISA_SUPPORTS_AVX2
-           OR EMBREE_ISA_SUPPORTS_AVX512KNL
            OR EMBREE_ISA_SUPPORTS_AVX512SKX
-           OR EMBREE_ISA_SUPPORTS_NEON))
+           OR EMBREE_ISA_SUPPORTS_NEON
+           OR EMBREE_ISA_SUPPORTS_NEON2X))
       message(FATAL_ERROR
         "Your Embree build needs to support at least one ISA >= SSE4.1 or NEON!")
   endif()
 endmacro()
 
-macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED)
-  find_dependency(openvkl ${OPENVKL_VERSION_REQUIRED})
-  if(NOT openvkl_FOUND)
-    message(FATAL_ERROR
-            "We did not find Open VKL installed on your system. OSPRay requires"
-            " an Open VKL installation >= v${OPENVKL_VERSION_REQUIRED}, please"
-            " download and extract Open VKL (or compile from source), then"
-            " set the 'openvkl_DIR' variable to the installation directory.")
+macro(ospray_find_openvkl OPENVKL_VERSION_REQUIRED FIND_AS_DEPENDENCY)
+  if (${FIND_AS_DEPENDENCY})
+    find_dependency(openvkl ${OPENVKL_VERSION_REQUIRED})
+  else()
+    find_package(openvkl ${OPENVKL_VERSION_REQUIRED})
   endif()
-  get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
-      INTERFACE_INCLUDE_DIRECTORIES)
-  get_target_property(CONFIGURATIONS openvkl::openvkl IMPORTED_CONFIGURATIONS)
-  list(GET CONFIGURATIONS 0 CONFIGURATION)
-  get_target_property(OPENVKL_LIBRARY openvkl::openvkl
-      IMPORTED_LOCATION_${CONFIGURATION})
-  message(STATUS "Found Open VKL v${openvkl_VERSION}: ${OPENVKL_LIBRARY}")
+  if (openvkl_FOUND)
+    get_target_property(OPENVKL_INCLUDE_DIRS openvkl::openvkl
+        INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(OPENVKL_CPU_DEVICE_INCLUDE_DIRS openvkl::openvkl_module_cpu_device
+        INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(CONFIGURATIONS openvkl::openvkl IMPORTED_CONFIGURATIONS)
+    list(GET CONFIGURATIONS 0 CONFIGURATION)
+    get_target_property(OPENVKL_LIBRARY openvkl::openvkl
+        IMPORTED_LOCATION_${CONFIGURATION})
+    message(STATUS "Found Open VKL v${openvkl_VERSION}: ${OPENVKL_LIBRARY}")
+  endif()
 endmacro()

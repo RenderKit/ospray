@@ -7,6 +7,7 @@
 #include "fb/SparseFB.h"
 
 #include <rkcommon/tasking/parallel_for.h>
+#include <rkcommon/utility/ArrayView.h>
 
 namespace ospray {
 
@@ -30,7 +31,7 @@ void MultiDeviceLoadBalancer::renderFrame(
     Camera *ci = (Camera *)camera->objects[i];
     World *wi = (World *)world->objects[i];
 
-    if (!fbi->getTileIDs().empty()) {
+    if (fbi->getTileIDs().size() != 0) {
       loadBalancers[i]->renderFrame(fbi, ri, ci, wi);
 
       framebuffer->rowmajorFb->writeTiles(fbi);
@@ -57,7 +58,7 @@ void MultiDeviceLoadBalancer::renderFrame(
       const vec2i totalRenderTasks =
           framebuffer->rowmajorFb->getNumRenderTasks();
       const vec2i renderTaskSize = fbi->getRenderTaskSize();
-      const auto &tiles = fbi->getTiles();
+      const utility::ArrayView<Tile> tiles = fbi->getTiles();
 
       uint32_t renderTaskID = 0;
       for (size_t tid = 0; tid < tiles.size(); ++tid) {

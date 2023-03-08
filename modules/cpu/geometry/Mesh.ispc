@@ -2,12 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // ospray
-#include "Geometry.ih"
+#include "Mesh.ih"
 #include "common/Data.ih"
-#include "math/LinearSpace.ih"
 #include "math/sampling.ih"
+#include "rkcommon/math/LinearSpace.ih"
 // c++ shared
 #include "MeshShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+#ifdef OSPRAY_TARGET_SYCL
+using namespace ospray;
+#endif
 
 // Create quad_interpolate for vec2f, vec3f, and vec4f types
 #define __define_quad_interpolate(T)                                           \
@@ -21,20 +27,20 @@ __define_quad_interpolate(vec2f);
 __define_quad_interpolate(vec3f);
 __define_quad_interpolate(vec4f);
 
-inline float Mesh_calcKey(Mesh *uniform self, float time, int &idx)
+inline float Mesh_calcKey(const Mesh *uniform self, float time, int &idx)
 {
   // should only get hits within time interval, just to be sure...
   float t = clamp(time, self->time.lower, self->time.upper);
   t = (t - self->time.lower) * rcp(box_size(self->time))
       * (self->motionKeys - 1);
-  idx = clamp((int)t, 0, self->motionKeys - 2);
+  idx = clamp((int)t, (int)0, (int)(self->motionKeys - 2));
   t = clamp(t - idx);
   return t;
 }
 
 inline vec3f interpolate_vec3f(const uniform int64 byteStride,
-    uint8 *a0,
-    uint8 *a1,
+    const uint8 *a0,
+    const uint8 *a1,
     const int index,
     const float t)
 {
@@ -45,7 +51,7 @@ inline vec3f interpolate_vec3f(const uniform int64 byteStride,
   return lerp(t, v0, v1);
 }
 
-void QuadMesh_postIntersect(const Geometry *uniform _self,
+SYCL_EXTERNAL void QuadMesh_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -53,7 +59,7 @@ void QuadMesh_postIntersect(const Geometry *uniform _self,
   Mesh *uniform self = (Mesh * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   const vec4ui index = get_vec4ui(self->index, ray.primID);
-  const iOffset = ray.primID * 4;
+  const int iOffset = ray.primID * 4;
   const vec4ui findex = make_vec4ui(
       iOffset, iOffset + 1, iOffset + 2, iOffset + 3); // face indices
   const float u = ray.u;
@@ -108,7 +114,7 @@ void QuadMesh_postIntersect(const Geometry *uniform _self,
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
-  if (and(or (compute_texcoord, compute_tangents), valid(self->texcoord))) {
+  if ((compute_texcoord || compute_tangents) && valid(self->texcoord)) {
     const vec4ui tindex = self->isTexcoordFaceVarying ? findex : index;
     const vec2f a = get_vec2f(self->texcoord, tindex.x);
     const vec2f b = get_vec2f(self->texcoord, tindex.y);
@@ -148,13 +154,15 @@ void QuadMesh_postIntersect(const Geometry *uniform _self,
     }
   }
   if (compute_tangents) {
-    linear3f f = frame(dg.Ng);
-    dg.dPds = f.vx;
-    dg.dPdt = f.vy;
+    const vec3f a = get_vec3f(self->vertex, index.x);
+    const vec3f b = get_vec3f(self->vertex, index.y);
+    const vec3f d = get_vec3f(self->vertex, index.w);
+    dg.dPds = b - a;
+    dg.dPdt = d - a;
   }
 }
 
-void TriangleMesh_PostIntersect(const Geometry *uniform _self,
+SYCL_EXTERNAL void TriangleMesh_postIntersect(const Geometry *uniform _self,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -162,7 +170,7 @@ void TriangleMesh_PostIntersect(const Geometry *uniform _self,
   Mesh *uniform self = (Mesh * uniform) _self;
   dg.Ng = dg.Ns = ray.Ng;
   const vec3ui index = get_vec3ui(self->index, ray.primID);
-  const iOffset = ray.primID * 3;
+  const int iOffset = ray.primID * 3;
   const vec3ui findex =
       make_vec3ui(iOffset, iOffset + 1, iOffset + 2); // face indices
   const vec3f uv = make_vec3f(1.0f - ray.u - ray.v, ray.u, ray.v);
@@ -201,7 +209,7 @@ void TriangleMesh_PostIntersect(const Geometry *uniform _self,
 
   const uniform bool compute_texcoord = flags & DG_TEXCOORD;
   bool compute_tangents = flags & DG_TANGENTS;
-  if (and(or (compute_texcoord, compute_tangents), valid(self->texcoord))) {
+  if ((compute_texcoord || compute_tangents) && valid(self->texcoord)) {
     const vec3ui tindex = self->isTexcoordFaceVarying ? findex : index;
     const vec2f a = get_vec2f(self->texcoord, tindex.x);
     const vec2f b = get_vec2f(self->texcoord, tindex.y);
@@ -239,13 +247,15 @@ void TriangleMesh_PostIntersect(const Geometry *uniform _self,
     }
   }
   if (compute_tangents) {
-    linear3f f = frame(dg.Ng);
-    dg.dPds = f.vx;
-    dg.dPdt = f.vy;
+    const vec3f a = get_vec3f(self->vertex, index.x);
+    const vec3f b = get_vec3f(self->vertex, index.y);
+    const vec3f c = get_vec3f(self->vertex, index.z);
+    dg.dPds = b - a;
+    dg.dPdt = c - a;
   }
 }
 
-SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
+SYCL_EXTERNAL SampleAreaRes Mesh_sampleArea(const Geometry *uniform const _self,
     const int32 primID,
     const uniform affine3f &xfm,
     const uniform affine3f &,
@@ -326,7 +336,7 @@ void Mesh_getAreas(const Geometry *const uniform _self,
     float *const uniform areas)
 {
   const Mesh *const uniform self = (const Mesh *uniform)_self;
-  // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
+  // TODO vectorize this loop, with for each or ProgramCount & ProgramIndex
   // XXX for deformation motion blur the areas (i.e. selection probabilities)
   // are calculated using the first key only
   for (uniform int32 i = 0; i < numPrims; i++) {
@@ -349,20 +359,22 @@ void Mesh_getAreas(const Geometry *const uniform _self,
 
 export void *uniform QuadMesh_postIntersect_addr()
 {
-  return QuadMesh_postIntersect;
+  return (void *uniform)QuadMesh_postIntersect;
 }
 
-export void *uniform TriangleMesh_PostIntersect_addr()
+export void *uniform TriangleMesh_postIntersect_addr()
 {
-  return TriangleMesh_PostIntersect;
+  return (void *uniform)TriangleMesh_postIntersect;
 }
 
 export void *uniform Mesh_sampleArea_addr()
 {
-  return Mesh_sampleArea;
+  return (void *uniform)Mesh_sampleArea;
 }
 
 export void *uniform Mesh_getAreas_addr()
 {
-  return Mesh_getAreas;
+  return (void *uniform)Mesh_getAreas;
 }
+
+OSPRAY_END_ISPC_NAMESPACE

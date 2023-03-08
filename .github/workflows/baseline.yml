@@ -1,0 +1,56 @@
+## Copyright 2009 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: Baseline
+
+on:
+   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+### BUILD JOBS ###
+
+  build-ubuntu2004-gcc:
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    secrets: inherit
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      image: ubuntu:20.04
+      cmd: |
+        scripts/build/linux.sh -G Ninja -DBUILD_GLFW=OFF -DBUILD_OSPRAY_MODULE_MULTIDEVICE=ON
+      artifact-out: build-ubuntu2004-gcc
+      artifact-path: build/install/ospray build/CMakeCache.txt build/*/build/CMakeCache.txt
+
+### Benchmarks ###
+
+  generate-ci-baseline-avx2:
+    needs: build-ubuntu2004-gcc
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ubuntu:20.04
+      runs-on: '["Linux", "avx2"]'
+      cmd: |
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
+        export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
+        scripts/tests/generate_baseline.sh
+      artifact-in: build-ubuntu2004-gcc
+      artifact-out: generate-ci-baseline-avx2
+      artifact-path: generated_test_images
+
+  generate-ci-baseline-avx512skx:
+    needs: build-ubuntu2004-gcc
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      image: ubuntu:20.04
+      cmd: |
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/build/install/ospray/lib:$LD_LIBRARY_PATH
+        export PATH=$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH
+        scripts/tests/generate_baseline.sh
+      artifact-in: build-ubuntu2004-gcc
+      artifact-out: generate-ci-baseline-avx512skx
+      artifact-path: generated_test_images
+

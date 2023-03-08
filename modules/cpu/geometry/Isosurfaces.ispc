@@ -1,16 +1,21 @@
 // Copyright 2009 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#ifdef OSPRAY_ENABLE_VOLUMES
 
 // ospray
+#include "common/FilterIntersect.ih"
 #include "common/Ray.ih"
 #include "common/World.ih"
 #include "geometry/Geometry.ih"
-#include "openvkl/iterator.isph"
+#include "volume/Volume.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 #include "volume/VolumetricModel.ih"
+#include "volume/transferFunction/TransferFunctionDispatch.ih"
 // c++ shared
 #include "IsosurfacesShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 int Isosurfaces_primID(const Isosurfaces *uniform self, const float isovalue)
 {
@@ -42,66 +47,7 @@ export void Isosurfaces_bounds(const RTCBoundsFunctionArguments *uniform args)
   *out = make_box3fa(volume->boundingBox);
 }
 
-void Isosurfaces_intersect_kernel(
-    const RTCIntersectFunctionNArguments *uniform args,
-    const uniform bool isOcclusionTest)
-{
-  // make sure to set the mask
-  if (!args->valid[programIndex])
-    return;
-
-  Isosurfaces *uniform self = (Isosurfaces * uniform) args->geometryUserPtr;
-  uniform unsigned int primID = args->primID;
-
-  // this assumes that the args->rayhit is actually a pointer toa varying ray!
-  varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
-
-  VKLHitIterator iterator;
-  vkl_range1f tRange;
-  tRange.lower = ray->t0;
-  tRange.upper = ray->t;
-  float time = 0.f;
-  // do not use alloca: it prevents inlining and thus optimization
-  // wrt. "template arg" isOcclusionTest
-  uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
-  iterator = vklInitHitIteratorV(self->vklHitContext,
-      (varying vkl_vec3f *)&ray->org,
-      (varying vkl_vec3f *)&ray->dir,
-      &tRange,
-      &time,
-      hitIteratorBuffer);
-  VKLHit hit;
-  bool gotHit = vklIterateHitV(iterator, &hit);
-
-  if (gotHit) {
-    if (isOcclusionTest) {
-      ray->t = neg_inf;
-    } else {
-      ray->instID = args->context->instID[0];
-      ray->geomID = args->geomID;
-      ray->primID = Isosurfaces_primID(self, hit.sample);
-      ray->t = hit.t;
-      ray->u = hit.epsilon; // transport epsilon to postIntersect
-      // transport hit point in *volume local coords* to postIntersect
-      ray->Ng = ray->org + ray->dir * hit.t;
-    }
-  }
-}
-
-export void Isosurfaces_intersect(
-    const struct RTCIntersectFunctionNArguments *uniform args)
-{
-  Isosurfaces_intersect_kernel(args, false);
-}
-
-export void Isosurfaces_occluded(
-    const struct RTCOccludedFunctionNArguments *uniform args)
-{
-  Isosurfaces_intersect_kernel(
-      (RTCIntersectFunctionNArguments * uniform) args, true);
-}
-
-void Isosurfaces_postIntersect(const Geometry *uniform geometry,
+SYCL_EXTERNAL void Isosurfaces_postIntersect(const Geometry *uniform geometry,
     varying DifferentialGeometry &dg,
     const varying Ray &ray,
     uniform int64 flags)
@@ -117,13 +63,87 @@ void Isosurfaces_postIntersect(const Geometry *uniform geometry,
   // acceptable for eps
   dg.epsilon = reduce_max(abs(ray.dir)) * ray.u;
 
-  if (and(flags & DG_COLOR, self->volumetricModel)) {
+  if ((flags & DG_COLOR) && self->volumetricModel) {
     TransferFunction *uniform xf = self->volumetricModel->transferFunction;
-    dg.color = xf->get(xf, self->isovalues[ray.primID]);
+    dg.color = TransferFunction_dispatch_get(xf, self->isovalues[ray.primID]);
+  }
+}
+
+SYCL_EXTERNAL void unmasked Isosurfaces_intersect_kernel(
+    const RTCIntersectFunctionNArguments *uniform args,
+    const uniform bool isOcclusionTest)
+{
+  // make sure to set the mask
+  if (!args->valid[programIndex]) {
+    return;
+  }
+
+  args->valid[programIndex] = 0;
+
+  Isosurfaces *uniform self = (Isosurfaces * uniform) args->geometryUserPtr;
+  uniform unsigned int primID = args->primID;
+
+  // this assumes that the args->rayhit is actually a pointer to a varying ray!
+  varying Ray *uniform ray = (varying Ray * uniform) args->rayhit;
+
+  VKLHitIterator iterator;
+  vkl_range1f tRange;
+  tRange.lower = ray->t0;
+  tRange.upper = ray->t;
+  float time = 0.f;
+  // do not use alloca: it prevents inlining and thus optimization
+  // wrt. "template arg" isOcclusionTest, alloca also not supported on GPU
+  uniform uint8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
+  iterator = vklInitHitIteratorV(
+#if OPENVKL_VERSION_MAJOR == 1
+      self->vklHitContext,
+#else
+      &self->vklHitContext,
+#endif
+      (varying vkl_vec3f *)&ray->org,
+      (varying vkl_vec3f *)&ray->dir,
+      &tRange,
+#ifdef OSPRAY_TARGET_SYCL
+      time,
+#else
+      &time,
+#endif
+      hitIteratorBuffer);
+  VKLHit hit;
+  bool gotHit = vklIterateHitV(iterator, &hit);
+  if (!gotHit)
+    return;
+
+  Hit hitFilter;
+  hitFilter.hit = true;
+  hitFilter.t = hit.t;
+  // Transport hit point in *volume local coords* to postIntersect
+  hitFilter.N = ray->org + ray->dir * hit.t;
+  // Transport epsilon to postIntersect
+  hitFilter.u = hit.epsilon;
+  bool accept =
+      filterIntersectionSingle(args, hitFilter, isOcclusionTest, false);
+  if (!accept)
+    return;
+
+  args->valid[programIndex] = -1;
+
+  if (isOcclusionTest) {
+    ray->t = neg_inf;
+  } else {
+    ray->instID = args->context->instID[0];
+    ray->geomID = args->geomID;
+    ray->primID = Isosurfaces_primID(self, hit.sample);
+    ray->t = hitFilter.t;
+    ray->u = hitFilter.u;
+    ray->Ng = hitFilter.N;
   }
 }
 
 export void *uniform Isosurfaces_postIntersect_addr()
 {
-  return Isosurfaces_postIntersect;
+  return (void *uniform)Isosurfaces_postIntersect;
 }
+
+OSPRAY_END_ISPC_NAMESPACE
+#endif

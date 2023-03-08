@@ -26,20 +26,32 @@ void Texture2D::SetUp()
   // create (4*2) x 4 grid
   constexpr int cols = 8;
   constexpr int rows = 4;
-  std::array<vec3f, (cols + 1) * (rows + 1)> vertex;
-  rkcommon::index_sequence_2D vidx(vec2i(cols + 1, rows + 1));
-  for (auto i : vidx)
-    vertex[vidx.flatten(i)] = vec3f(i.x, i.y * 1.5f, 5.3f);
-  std::array<vec4ui, cols * rows> index;
+  std::vector<vec3f> vertex;
+  std::vector<vec2f> texcoord;
+  std::vector<vec4ui> index;
   rkcommon::index_sequence_2D iidx(vec2i(cols, rows));
+  // Generate each quad, each needs its own vertex coordinates w/ unique
+  // texcoords when we're testing w/ texture coordinates on
   for (auto i : iidx) {
-    index[iidx.flatten(i)] = vec4i(vidx.flatten({i.x, i.y}),
-        vidx.flatten({i.x + 1, i.y}),
-        vidx.flatten({i.x + 1, i.y + 1}),
-        vidx.flatten({i.x, i.y + 1}));
+    const int idx_start = vertex.size();
+    vertex.push_back(vec3f(i.x, i.y * 1.5f, 5.3f));
+    vertex.push_back(vec3f(i.x + 1.f, i.y * 1.5f, 5.3f));
+    vertex.push_back(vec3f(i.x + 1.f, (i.y + 1.f) * 1.5f, 5.3f));
+    vertex.push_back(vec3f(i.x, (i.y + 1.f) * 1.5f, 5.3f));
+
+    texcoord.push_back(vec2f(0.f, 0.f));
+    texcoord.push_back(vec2f(1.f, 0.f));
+    texcoord.push_back(vec2f(1.f, 1.f));
+    texcoord.push_back(vec2f(0.f, 1.f));
+
+    index.push_back(
+        vec4ui(idx_start, idx_start + 1, idx_start + 2, idx_start + 3));
   }
   cpp::Geometry mesh("mesh");
   mesh.setParam("vertex.position", cpp::CopiedData(vertex));
+  if (std::get<2>(params)) {
+    mesh.setParam("vertex.texcoord", cpp::CopiedData(texcoord));
+  }
   mesh.setParam("index", cpp::CopiedData(index));
   mesh.commit();
 
@@ -412,7 +424,6 @@ void PTBackgroundRefraction::SetUp()
 }
 
 // Test Instantiations //////////////////////////////////////////////////////
-
 INSTANTIATE_TEST_SUITE_P(Transparency,
     FromOsprayTesting,
     ::testing::Combine(::testing::Values("transparency"),
@@ -445,9 +456,10 @@ TEST_P(Texture2D, filter)
 
 INSTANTIATE_TEST_SUITE_P(Appearance,
     Texture2D,
-    ::testing::Values(std::make_tuple(OSP_TEXTURE_FILTER_BILINEAR, true),
-        std::make_tuple(OSP_TEXTURE_FILTER_NEAREST, true),
-        std::make_tuple(OSP_TEXTURE_FILTER_NEAREST, false)));
+    ::testing::Combine(::testing::Values(OSP_TEXTURE_FILTER_BILINEAR,
+                           OSP_TEXTURE_FILTER_NEAREST),
+        ::testing::Bool(),
+        ::testing::Bool()));
 
 TEST_P(Texture2DTransform, simple)
 {

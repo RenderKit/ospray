@@ -7,6 +7,8 @@
 
 // Ray intersection structures //////////////////////////////////////////////
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct Hit
 {
   bool hit;
@@ -33,7 +35,7 @@ inline Intersections intersectSphere(const vec3f &rayOrg,
   isect.entry.hit = false;
   isect.exit.hit = false;
   isect.entry.t = inf;
-  isect.exit.t = -inf;
+  isect.exit.t = -(float)inf;
 
   const vec3f d = rayDir;
   const float rd2 = 1.0f / dot(d, d); // 1/a
@@ -85,7 +87,7 @@ inline Intersections intersectCylinder(const vec3f &rayOrg,
   isect.entry.hit = false;
   isect.exit.hit = false;
   isect.entry.t = inf;
-  isect.exit.t = -inf;
+  isect.exit.t = -(float)inf;
 
   const uniform vec3f cZ = v1 - v0;
   const vec3f q = rayOrg - v0;
@@ -123,7 +125,7 @@ inline Intersections intersectCylinder(const vec3f &rayOrg,
       isect.entry.hit = false;
       isect.entry.t = tin;
       isect.entry.u = (yin < 0.f) ? 0.f : 1.f;
-      const float us = signbits(yin) ? -1. : 1.;
+      const float us = signbits(yin) ? -1.f : 1.f;
       isect.entry.N = cZ * us / z2;
     }
   }
@@ -143,7 +145,7 @@ inline Intersections intersectCylinder(const vec3f &rayOrg,
       isect.exit.hit = false;
       isect.exit.t = tout;
       isect.exit.u = (yout < 0.f) ? 0.f : 1.f;
-      const float us = signbits(yout) ? -1. : 1.;
+      const float us = signbits(yout) ? -1.f : 1.f;
       isect.exit.N = cZ * us / z2;
     }
   }
@@ -233,3 +235,4 @@ inline Hit intersectPlane(
 
   return hit;
 }
+OSPRAY_END_ISPC_NAMESPACE

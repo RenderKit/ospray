@@ -5,8 +5,8 @@
 
 #include <atomic>
 // ospray
+#include "ISPCDeviceObject.h"
 #include "common/Data.h"
-#include "common/Managed.h"
 #include "fb/ImageOp.h"
 #include "ospray/ospray.h"
 #include "rkcommon/utility/ArrayView.h"
@@ -17,13 +17,14 @@ namespace ospray {
 
 // abstract frame buffer class
 struct OSPRAY_SDK_INTERFACE FrameBuffer
-    : public AddStructShared<ManagedObject, ispc::FrameBuffer>
+    : public AddStructShared<ISPCDeviceObject, ispc::FrameBuffer>
 {
   // app-mappable format of the color buffer. make sure that this
   // matches the definition on the ISPC side
   using ColorBufferFormat = OSPFrameBufferFormat;
 
-  FrameBuffer(const vec2i &size,
+  FrameBuffer(api::ISPCDevice &device,
+      const vec2i &size,
       ColorBufferFormat colorBufferFormat,
       const uint32 channels);
 
@@ -47,7 +48,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   virtual uint32_t getTotalRenderTasks() const = 0;
 
-  virtual utility::ArrayView<uint32_t> getRenderTaskIDs() = 0;
+  virtual utility::ArrayView<uint32_t> getRenderTaskIDs(
+      float errorThreshold) = 0;
 
   // get number of pixels in x and y diretion
   vec2i getNumPixels() const;

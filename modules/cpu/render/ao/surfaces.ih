@@ -7,7 +7,11 @@
 // c++ shared
 #include "AORendererShared.h"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct DifferentialGeometry;
+struct FrameBuffer;
+struct ScreenSample;
 
 struct SurfaceShadingInfo
 {
@@ -29,8 +33,10 @@ inline void computeDG(const World *uniform world,
       DG_NG | DG_NS | DG_NORMALIZE | DG_FACEFORWARD | DG_COLOR | DG_TEXCOORD);
 }
 
-SSI computeShading(const AORenderer *uniform self,
+SYCL_EXTERNAL SSI AORenderer_computeShading(const AORenderer *uniform self,
     const FrameBuffer *uniform fb,
     const World *uniform world,
     const DifferentialGeometry &dg,
     ScreenSample &sample);
+
+OSPRAY_END_ISPC_NAMESPACE

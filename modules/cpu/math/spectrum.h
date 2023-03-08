@@ -10,9 +10,22 @@
 
 #ifdef __cplusplus
 #include <array>
+#include <cassert>
 struct alignas(SPECTRUM_SAMPLES * sizeof(float)) spectrum
     : public std::array<float, SPECTRUM_SAMPLES>
 {
+  spectrum() = default;
+  spectrum(const spectrum &) = default;
+  ~spectrum() = default;
+  spectrum &operator=(const spectrum &) = default;
+
+  // The initializer_list constructor lets us construct the spectrum object
+  // in C++ as if it's directly a std::array using the array init syntax
+  spectrum(std::initializer_list<float> l)
+  {
+    assert(l.size() == SPECTRUM_SAMPLES);
+    std::copy(l.begin(), l.end(), begin());
+  }
 };
 #endif // __cplusplus
 

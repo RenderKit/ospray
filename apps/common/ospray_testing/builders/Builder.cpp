@@ -50,7 +50,7 @@ cpp::World Builder::buildWorld(
 }
 
 cpp::TransferFunction Builder::makeTransferFunction(
-    const vec2f &valueRange) const
+    const range1f &valueRange) const
 {
   cpp::TransferFunction transferFunction("piecewiseLinear");
 
@@ -86,7 +86,7 @@ cpp::TransferFunction Builder::makeTransferFunction(
 
   transferFunction.setParam("color", cpp::CopiedData(colors));
   transferFunction.setParam("opacity", cpp::CopiedData(opacities));
-  transferFunction.setParam("valueRange", valueRange);
+  transferFunction.setParam("value", valueRange);
   transferFunction.commit();
 
   return transferFunction;

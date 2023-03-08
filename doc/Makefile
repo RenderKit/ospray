@@ -122,7 +122,7 @@ www/stylesheet.css: stylesheet.css
 tmp/api_web.md: api.md tmp/links.md tmp/images_local_png.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-tmp/compilation_web.md: compilation.md tmp/links.md
+tmp/compilation_web.md: prerequisites.md ../scripts/superbuild/README.md compilation.md tmp/links.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
 tmp/changelog.md: filter-sectionnumbers.py ../CHANGELOG.md
@@ -180,7 +180,7 @@ convert_nbsp_width = sed -e 's@\\ @ @g' -e 's/" style="width:/" width="/g' -e "
 tmp/api.md: api.md tmp/links_local.md tmp/images_web.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-tmp/compilation.md: compilation.md tmp/links_local.md
+tmp/compilation.md: prerequisites.md ../scripts/superbuild/README.md compilation.md tmp/links_local.md
 	$(PANDOC) $+ --indented-code-classes=sh -t markdown-fenced_code_attributes -o $@
 
 tmp/tutorials.md: tutorials.md tmp/links_local.md tmp/images_web.md
@@ -200,7 +200,7 @@ tmp/%.tex: filter-latex.py %.md tmp/links_local.md tmp/images_local_pdf.md
 tmp/api.tex: filter-latex.py api.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=cpp
 
-tmp/compilation.tex: filter-latex.py compilation.md tmp/links_local.md tmp/images_local_pdf.md
+tmp/compilation.tex: filter-latex.py prerequisites.md ../scripts/superbuild/README.md compilation.md tmp/links_local.md tmp/images_local_pdf.md
 	$(markdown2tex) --indented-code-classes=sh
 
 tmp/tutorials.tex: filter-latex.py tutorials.md tmp/links_local.md tmp/images_local_pdf.md

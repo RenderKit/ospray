@@ -1,3 +1,2 @@
 EXPORTS
 z_order
-perm3

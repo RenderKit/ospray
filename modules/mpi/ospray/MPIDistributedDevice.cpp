@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <map>
+#include <memory>
 
 #include "ISPCDevice.h"
 #include "MPIDistributedDevice.h"
@@ -15,7 +16,6 @@
 #include "fb/DistributedFrameBuffer.h"
 #include "geometry/GeometricModel.h"
 #include "lights/Light.h"
-#include "openvkl/openvkl.h"
 #include "render/DistributedLoadBalancer.h"
 #include "render/Material.h"
 #include "render/ThreadedRenderTask.h"
@@ -23,68 +23,51 @@
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/CodeTimer.h"
 #include "rkcommon/utility/getEnvVar.h"
+#ifdef OSPRAY_ENABLE_VOLUMES
 #include "volume/Volume.h"
 #include "volume/VolumetricModel.h"
 #include "volume/transferFunction/TransferFunction.h"
-// ispc exports
-#include "MPIDistributedDevice_ispc.h"
+#endif
 
 namespace ospray {
 namespace mpi {
 
 // Helper functions ///////////////////////////////////////////////////////
 
-using SetParamFcn = void(std::shared_ptr<ospray::api::Device>,
-    OSPObject,
-    const char *,
-    const void *m,
-    OSPDataType);
+using SetParamFcn = void(OSPObject, const char *, const void *m, OSPDataType);
 
 template <typename T>
-static void setParamOnObject(std::shared_ptr<ospray::api::Device> d,
-    OSPObject _obj,
-    const char *p,
-    const T &v,
-    OSPDataType t)
+static void setParamOnObject(
+    OSPObject _obj, const char *p, const T &v, OSPDataType)
 {
   auto *obj = lookupObject<ManagedObject>(_obj);
-  d->setObjectParam((OSPObject)obj, p, t, &v);
+  obj->setParam(p, v);
 }
 
 #define declare_param_setter(TYPE)                                             \
   {                                                                            \
     OSPTypeFor<TYPE>::value,                                                   \
-        [](std::shared_ptr<ospray::api::Device> d,                             \
-            OSPObject o,                                                       \
-            const char *p,                                                     \
-            const void *v,                                                     \
-            OSPDataType t) { setParamOnObject(d, o, p, *(TYPE *)v, t); }       \
+        [](OSPObject o, const char *p, const void *v, OSPDataType t) {         \
+          setParamOnObject(o, p, *(TYPE *)v, t);                               \
+        }                                                                      \
   }
 
 #define declare_param_setter_object(TYPE)                                      \
   {                                                                            \
     OSPTypeFor<TYPE>::value,                                                   \
-        [](std::shared_ptr<ospray::api::Device> d,                             \
-            OSPObject o,                                                       \
-            const char *p,                                                     \
-            const void *v,                                                     \
-            OSPDataType t) {                                                   \
+        [](OSPObject o, const char *p, const void *v, OSPDataType t) {         \
           auto *obj = lookupObject<ManagedObject>(                             \
               *reinterpret_cast<const OSPObject *>(v));                        \
-          setParamOnObject(d, o, p, obj, t);                                   \
+          setParamOnObject(o, p, obj, t);                                      \
         }                                                                      \
   }
 
 #define declare_param_setter_string(TYPE)                                      \
   {                                                                            \
     OSPTypeFor<TYPE>::value,                                                   \
-        [](std::shared_ptr<ospray::api::Device> d,                             \
-            OSPObject o,                                                       \
-            const char *p,                                                     \
-            const void *v,                                                     \
-            OSPDataType t) {                                                   \
+        [](OSPObject o, const char *p, const void *v, OSPDataType t) {         \
           const char *str = (const char *)v;                                   \
-          setParamOnObject(d, o, p, std::string(str), t);                      \
+          setParamOnObject(o, p, std::string(str), t);                         \
         }                                                                      \
   }
 
@@ -106,9 +89,11 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
     declare_param_setter_object(Material *),
     declare_param_setter_object(Renderer *),
     declare_param_setter_object(Texture *),
+#ifdef OSPRAY_ENABLE_VOLUMES
     declare_param_setter_object(TransferFunction *),
     declare_param_setter_object(Volume *),
     declare_param_setter_object(VolumetricModel *),
+#endif
     declare_param_setter_object(World *),
     declare_param_setter_string(const char *),
     declare_param_setter(char *),
@@ -168,9 +153,10 @@ static std::map<OSPDataType, std::function<SetParamFcn>> setParamFcns = {
 #undef declare_param_setter
 
 template <typename OSPRAY_TYPE, typename API_TYPE>
-inline API_TYPE createDistributedObject(const char *type, ObjectHandle handle)
+inline API_TYPE createDistributedObject(
+    const char *type, api::ISPCDevice &device, ObjectHandle handle)
 {
-  auto *instance = OSPRAY_TYPE::createInstance(type);
+  auto *instance = OSPRAY_TYPE::createInstance(type, device);
   handle.assign(instance);
   return (API_TYPE)(int64)handle;
 }
@@ -240,6 +226,17 @@ void MPIDistributedDevice::commit()
     maml::init(enableCompression);
     messaging::init(mpicommon::worker);
     maml::start();
+
+    // Pass down application's GPU selection made via SYCL or L0 (if any)
+    void *appSyclCtx = getParam<void *>("syclContext", nullptr);
+    internalDevice->setParam<void *>("syclContext", appSyclCtx);
+    void *appSyclDevice = getParam<void *>("syclDevice", nullptr);
+    internalDevice->setParam<void *>("syclDevice", appSyclDevice);
+
+    void *appZeCtx = getParam<void *>("zeContext", nullptr);
+    internalDevice->setParam<void *>("zeContext", appZeCtx);
+    void *appZeDevice = getParam<void *>("zeDevice", nullptr);
+    internalDevice->setParam<void *>("zeDevice", appZeDevice);
   }
 
   internalDevice->commit();
@@ -249,7 +246,12 @@ OSPFrameBuffer MPIDistributedDevice::frameBufferCreate(
     const vec2i &size, const OSPFrameBufferFormat mode, const uint32 channels)
 {
   ObjectHandle handle = allocateHandle();
-  auto *instance = new DistributedFrameBuffer(size, handle, mode, channels);
+  auto *instance = new DistributedFrameBuffer(
+      *(ospray::api::ISPCDevice *)internalDevice.get(),
+      size,
+      handle,
+      mode,
+      channels);
   handle.assign(instance);
   return (OSPFrameBuffer)(int64)handle;
 }
@@ -291,9 +293,8 @@ OSPInstance MPIDistributedDevice::newInstance(OSPGroup _group)
 OSPWorld MPIDistributedDevice::newWorld()
 {
   ObjectHandle handle = allocateHandle();
-  auto *instance = new DistributedWorld;
-  instance->setDevice(
-      ((ospray::api::ISPCDevice *)internalDevice.get())->getEmbreeDevice());
+  auto *instance =
+      new DistributedWorld(*(ospray::api::ISPCDevice *)internalDevice.get());
   handle.assign(instance);
   return (OSPWorld)(int64)(handle);
 }
@@ -336,7 +337,8 @@ OSPImageOperation MPIDistributedDevice::newImageOp(const char *type)
 OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
 {
   ObjectHandle handle = allocateHandle();
-  return createDistributedObject<Renderer, OSPRenderer>(type, handle);
+  return createDistributedObject<Renderer, OSPRenderer>(
+      type, *(api::ISPCDevice *)internalDevice.get(), handle);
 }
 
 OSPCamera MPIDistributedDevice::newCamera(const char *type)
@@ -346,7 +348,11 @@ OSPCamera MPIDistributedDevice::newCamera(const char *type)
 
 OSPVolume MPIDistributedDevice::newVolume(const char *type)
 {
+#ifdef OSPRAY_ENABLE_VOLUMES
   return internalDevice->newVolume(type);
+#else
+  return nullptr;
+#endif
 }
 
 OSPGeometry MPIDistributedDevice::newGeometry(const char *type)
@@ -362,8 +368,12 @@ OSPGeometricModel MPIDistributedDevice::newGeometricModel(OSPGeometry _geom)
 
 OSPVolumetricModel MPIDistributedDevice::newVolumetricModel(OSPVolume _vol)
 {
+#ifdef OSPRAY_ENABLE_VOLUMES
   auto *volume = lookupObject<Volume>(_vol);
   return internalDevice->newVolumetricModel((OSPVolume)volume);
+#else
+  return nullptr;
+#endif
 }
 
 OSPMaterial MPIDistributedDevice::newMaterial(
@@ -393,9 +403,12 @@ OSPFuture MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
   auto *camera = lookupObject<Camera>(_camera);
   auto *world = lookupObject<DistributedWorld>(_world);
 
-  ObjectHandle handle = allocateHandle();
-  auto loadBalancer = std::make_shared<DistributedLoadBalancer>();
-  loadBalancer->setObjectHandle(handle);
+  auto loadBalancer =
+      std::make_shared<DistributedLoadBalancer>(allocateHandle());
+#ifdef OSPRAY_TARGET_SYCL
+  auto ispcDevice = std::dynamic_pointer_cast<api::ISPCDevice>(internalDevice);
+  loadBalancer->setQueue(ispcDevice->getSyclQueue());
+#endif
 
   fb->setCompletedEvent(OSP_NONE_FINISHED);
 
@@ -472,11 +485,11 @@ void MPIDistributedDevice::setObjectParam(
     throw std::runtime_error("cannot set OSP_UNKNOWN parameter type");
 
   if (type == OSP_BYTE || type == OSP_RAW) {
-    setParamOnObject(internalDevice, object, name, *(const byte_t *)mem, type);
+    setParamOnObject(object, name, *(const byte_t *)mem, type);
     return;
   }
 
-  setParamFcns[type](internalDevice, object, name, mem, type);
+  setParamFcns[type](object, name, mem, type);
 }
 
 void MPIDistributedDevice::removeObjectParam(
@@ -499,15 +512,10 @@ void MPIDistributedDevice::release(OSPObject _obj)
 
   auto &handle = reinterpret_cast<ObjectHandle &>(_obj);
   auto *object = lookupObject<ManagedObject>(_obj);
-  // TODO: dig some more here, it seems like I should be releasing when the
-  // use count == 1, since it will be 0 after decrementing? Do we actually
-  // have double-frees which are happening in the app?
-  if (object->useCount() == 0 && handle.defined()) {
+  if (object->useCount() == 1 && handle.defined()) {
     handle.freeObject();
-  } else {
-    auto *obj = (ManagedObject *)object;
-    obj->refDec();
   }
+  object->refDec();
 }
 
 void MPIDistributedDevice::retain(OSPObject _obj)

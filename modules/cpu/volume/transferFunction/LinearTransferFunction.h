@@ -15,7 +15,7 @@ namespace ospray {
 struct OSPRAY_SDK_INTERFACE LinearTransferFunction
     : public AddStructShared<TransferFunction, ispc::LinearTransferFunction>
 {
-  LinearTransferFunction();
+  LinearTransferFunction(api::ISPCDevice &device);
 
   virtual void commit() override;
 

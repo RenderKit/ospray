@@ -5,13 +5,25 @@
 
 #include "rkcommon/math/vec.ih"
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 struct PathContext;
 struct PathState;
 struct PathVertex;
 struct Ray;
+struct Light;
+struct Light_SampleRes;
+struct DifferentialGeometry;
 
-vec3f evaluateGeometryLights(const PathContext &pathContext,
+SYCL_EXTERNAL vec3f evaluateGeometryLights(const PathContext &pathContext,
     const PathState &pathState,
     const PathVertex &lastVertex,
     const PathVertex &pathVertex,
-    Ray &ray);
+    const Ray &ray);
+
+SYCL_EXTERNAL Light_SampleRes GeometryLight_sample(const Light *uniform super,
+    const DifferentialGeometry &dg,
+    const vec2f &s,
+    const float time);
+
+OSPRAY_END_ISPC_NAMESPACE

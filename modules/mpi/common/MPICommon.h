@@ -13,6 +13,8 @@
 #include "ospray/OSPEnums.h"
 #include "rkcommon/common.h"
 
+#include "ospray_mpi_common_export.h"
+
 // IMPI on Windows defines MPI_CALL already, erroneously
 #ifdef MPI_CALL
 #undef MPI_CALL
@@ -39,12 +41,12 @@ using namespace rkcommon;
   (for debugging) _may_ eventually turn this into a real logLevel,
   but for now this is cleaner here than in the MPI device
 */
-extern bool mpiIsThreaded;
+OSPRAY_MPI_COMMON_EXPORT extern bool mpiIsThreaded;
 
 //! abstraction for an MPI group.
 /*! it's the responsibility of the respective mpi setup routines to
   fill in the proper values */
-struct Group
+struct OSPRAY_MPI_COMMON_EXPORT Group
 {
   /*! constructor. sets the 'comm', 'rank', and 'size' fields */
   Group(MPI_Comm initComm = MPI_COMM_NULL);
@@ -88,7 +90,7 @@ struct Group
   pointer to data; the message itself "owns" this pointer, and
   will delete it once the message itself dies. the message itself
   is reference counted using the std::shared_ptr functionality. */
-struct Message
+struct OSPRAY_MPI_COMMON_EXPORT Message
 {
   Message() = default;
 
@@ -130,7 +132,7 @@ struct Message
 
 /*! a message whose payload is owned by the user, and which we do
   NOT delete upon termination */
-struct UserMemMessage : public Message
+struct OSPRAY_MPI_COMMON_EXPORT UserMemMessage : public Message
 {
   UserMemMessage(void *nonCopyMem, size_t size) : Message()
   {
@@ -146,37 +148,40 @@ struct UserMemMessage : public Message
 };
 
 //! MPI_COMM_WORLD
-extern Group world;
+OSPRAY_MPI_COMMON_EXPORT extern Group world;
 
 /* The communicator used for the OSPRay workers, may be equivalent to world
  * depending on the launch configuration
  */
-extern Group worker;
+OSPRAY_MPI_COMMON_EXPORT extern Group worker;
 
 // Initialize OSPRay's MPI groups, returns false if MPI
 // was already initialized. useCommWorld indicates if MPI_COMM_WORLD
 // should be set as the world group used for communication. If false,
 // it is up to the caller to configure the world group correctly.
-bool init(int *ac, const char **av, bool useCommWorld);
+OSPRAY_MPI_COMMON_EXPORT bool init(int *ac, const char **av, bool useCommWorld);
 
-bool isManagedObject(OSPDataType type);
+/* MPICommon has its own implementation so the offload worker can check for
+ * managed objects without having to link ospray_module_cpu
+ */
+OSPRAY_MPI_COMMON_EXPORT bool isManagedObject(OSPDataType type);
 
-inline int workerRank()
+OSPRAY_MPI_COMMON_EXPORT inline int workerRank()
 {
   return worker.rank;
 }
 
-inline int workerSize()
+OSPRAY_MPI_COMMON_EXPORT inline int workerSize()
 {
   return worker.size;
 }
 
-inline int masterRank()
+OSPRAY_MPI_COMMON_EXPORT inline int masterRank()
 {
   return 0;
 }
 
-inline bool IamTheMaster()
+OSPRAY_MPI_COMMON_EXPORT inline bool IamTheMaster()
 {
   return workerRank() == masterRank();
 }

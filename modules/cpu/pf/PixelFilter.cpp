@@ -3,47 +3,69 @@
 
 // ospray
 #include "PixelFilter.h"
-#include "common/OSPCommon_ispc.h"
+#include "ISPCDevice.h"
+#include "ISPCDeviceObject.h"
+#include "math/Distribution2D.h"
+#ifndef OSPRAY_TARGET_SYCL
 #include "pf/LUTPixelFilter_ispc.h"
-#include "pf/PixelFilter_ispc.h"
+#else
+namespace ispc {
+void LUTPixelFilter_buildLUT(void *self);
+}
+#endif
 
 namespace ospray {
 
-PixelFilter::~PixelFilter()
+PixelFilter::PixelFilter(api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
+{}
+
+LUTPixelFilter::LUTPixelFilter(const float size,
+    ispc::LUTPixelFilterType lutFilterType,
+    api::ISPCDevice &device)
+    : AddStructShared(device.getIspcrtDevice(), device)
 {
-  ispc::delete_uniform(ispcEquivalent);
-  ispcEquivalent = nullptr;
+  getSh()->super.width = size;
+  getSh()->super.type = ispc::PIXEL_FILTER_TYPE_LUT;
+
+  const vec2i lutSize = vec2i(std::ceil(size)) * LUTPIXELFILTER_PER_PIXEL_BINS;
+  distribution = new Distribution2D(lutSize, device);
+  // Remove local ref
+  distribution->refDec();
+
+  getSh()->distribution = distribution->getSh();
+  getSh()->lutFilterType = lutFilterType;
+
+  ispc::LUTPixelFilter_buildLUT(getSh());
 }
 
-LUTPixelFilter::~LUTPixelFilter()
+PointPixelFilter::PointPixelFilter(api::ISPCDevice &device)
+    : PixelFilter(device)
 {
-  ispc::LUTPixelFilter_destroy(ispcEquivalent);
-  ispcEquivalent = nullptr;
+  getSh()->type = ispc::PIXEL_FILTER_TYPE_POINT;
+  getSh()->width = 0.f;
 }
 
-PointPixelFilter::PointPixelFilter()
+BoxPixelFilter::BoxPixelFilter(api::ISPCDevice &device) : PixelFilter(device)
 {
-  ispcEquivalent = ispc::Point_create();
+  getSh()->type = ispc::PIXEL_FILTER_TYPE_BOX;
+  getSh()->width = 1.f;
 }
 
-BoxPixelFilter::BoxPixelFilter()
-{
-  ispcEquivalent = ispc::Box_create();
-}
+GaussianLUTPixelFilter::GaussianLUTPixelFilter(api::ISPCDevice &device)
+    : LUTPixelFilter(3.f, ispc::LUT_PIXEL_FILTER_TYPE_GAUSSIAN, device)
 
-GaussianLUTPixelFilter::GaussianLUTPixelFilter()
-{
-  ispcEquivalent = ispc::GaussianLUT_create();
-}
+{}
 
-BlackmanHarrisLUTPixelFilter::BlackmanHarrisLUTPixelFilter()
-{
-  ispcEquivalent = ispc::BlackmanHarrisLUT_create();
-}
+BlackmanHarrisLUTPixelFilter::BlackmanHarrisLUTPixelFilter(
+    api::ISPCDevice &device)
+    : LUTPixelFilter(3.f, ispc::LUT_PIXEL_FILTER_TYPE_BLACKMANN_HARRIS, device)
+{}
 
-MitchellNetravaliLUTPixelFilter::MitchellNetravaliLUTPixelFilter()
-{
-  ispcEquivalent = ispc::MitchellNetravaliLUT_create();
-}
+MitchellNetravaliLUTPixelFilter::MitchellNetravaliLUTPixelFilter(
+    api::ISPCDevice &device)
+    : LUTPixelFilter(
+        4.f, ispc::LUT_PIXEL_FILTER_TYPE_MITCHELL_NETRAVALI, device)
+{}
 
 } // namespace ospray

@@ -12,25 +12,16 @@
 #endif
 
 #include "MPIOffloadDevice.h"
-#include "camera/Camera.h"
-#include "common/Data.h"
 #include "common/Library.h"
 #include "common/MPIBcastFabric.h"
 #include "common/MPICommon.h"
 #include "common/OSPWork.h"
-#include "common/Util.h"
-#include "common/World.h"
-#include "fb/DistributedFrameBuffer.h"
-#include "fb/LocalFB.h"
-#include "render/DistributedLoadBalancer.h"
-#include "render/RenderTask.h"
-#include "render/Renderer.h"
+#include "common/maml/maml.h"
 #include "rkcommon/networking/DataStreaming.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/FixedArrayView.h"
 #include "rkcommon/utility/OwnedArray.h"
 #include "rkcommon/utility/getEnvVar.h"
-#include "volume/Volume.h"
 
 namespace ospray {
 namespace mpi {
@@ -79,6 +70,7 @@ static inline void setupMaster()
       << '/' << world.size << ')';
 
   MPI_CALL(Barrier(world.comm));
+  MPI_CALL(Comm_free(&appComm));
 
   // -------------------------------------------------------
   // at this point, all processes should be set up and synced. in
@@ -213,6 +205,8 @@ MPIOffloadDevice::~MPIOffloadDevice()
 
     sendWork([](networking::WriteStream &writer) { writer << work::FINALIZE; },
         true);
+    fabric = nullptr;
+    maml::shutdown();
     MPI_Finalize();
   }
 }
@@ -521,19 +515,14 @@ OSPData MPIOffloadDevice::newSharedData(const void *sharedData,
 {
   ObjectHandle handle = allocateHandle();
 
-  Ref<ApplicationData> appData = new ApplicationData;
-  appData->workerType = format;
-  if (mpicommon::isManagedObject(format)) {
-    format = OSP_ULONG;
-  }
-  appData->data = new Data(sharedData, format, numItems, byteStride);
+  Ref<ApplicationData> appData =
+      new ApplicationData(sharedData, format, numItems, byteStride);
   this->sharedData[handle.i64] = appData;
 
   sendWork(
       [&](networking::WriteStream &writer) {
         // Data on the workers is always compact, so we don't send the stride
-        writer << work::NEW_SHARED_DATA << handle.i64 << appData->workerType
-               << numItems;
+        writer << work::NEW_SHARED_DATA << handle.i64 << format << numItems;
         sendDataWork(writer, *this->sharedData[handle.i64]);
       },
       false);
@@ -756,8 +745,10 @@ void MPIOffloadDevice::commit(OSPObject _object)
   auto d = sharedData.find(handle.i64);
   sendWork(
       [&](networking::WriteStream &writer) {
-        writer << work::COMMIT << handle.i64;
+        writer << work::COMMIT << handle.i64
+               << (d != sharedData.end() ? uint32_t(1) : uint32_t(0));
         if (d != sharedData.end()) {
+          writer << d->second->type << d->second->numItems;
           sendDataWork(writer, *d->second);
         }
       },
@@ -1072,13 +1063,12 @@ OSPPickResult MPIOffloadDevice::pick(OSPFrameBuffer fb,
 void MPIOffloadDevice::sendDataWork(
     networking::WriteStream &writer, ApplicationData &appData)
 {
-  const Data *data = appData.data;
-  const uint64_t compactSize = data->size() * sizeOf(data->type);
+  const uint64_t compactSize = appData.size() * sizeOf(appData.type);
   if (compactSize < maxInlineDataSize) {
     // Small data gets inline'd into the command buffer
     writer << (uint32_t)1;
-    if (data->compact()) {
-      writer.write(data->data(), compactSize);
+    if (appData.compact()) {
+      writer.write(appData.data(0), compactSize);
     } else {
       auto *sizer = dynamic_cast<networking::WriteSizeCalculator *>(&writer);
       if (sizer) {
@@ -1087,11 +1077,7 @@ void MPIOffloadDevice::sendDataWork(
         // Reserve space and copy the compact data into the buffer
         auto *bufWriter =
             dynamic_cast<networking::FixedBufferWriter *>(&writer);
-        Data compact(bufWriter->reserve(compactSize),
-            data->type,
-            data->numItems,
-            vec3ul(0));
-        compact.copy(*data, vec3ul(0));
+        appData.compactTo(bufWriter->reserve(compactSize));
       }
     }
   } else {
@@ -1101,8 +1087,8 @@ void MPIOffloadDevice::sendDataWork(
     // Only send the data if we're not doing the size calculation step
     if (!dynamic_cast<networking::WriteSizeCalculator *>(&writer)) {
       networking::BufferWriter dataTransferCmd;
-      dataTransferCmd << work::DATA_TRANSFER << appData.workerType
-                      << data->numItems;
+      dataTransferCmd << work::DATA_TRANSFER << appData.type
+                      << appData.numItems;
 
       networking::BufferWriter header;
       header << dataTransferCmd.buffer->size();
@@ -1111,17 +1097,14 @@ void MPIOffloadDevice::sendDataWork(
       fabric->sendBcast(dataTransferCmd.buffer);
 
       std::shared_ptr<utility::AbstractArray<uint8_t>> dataView = nullptr;
-      if (data->compact()) {
+      if (appData.compact()) {
         appData.releaseHazard = true;
-        dataView = std::make_shared<utility::ArrayView<uint8_t>>(
-            reinterpret_cast<uint8_t *>(data->data()), compactSize);
+        dataView = appData.sharedData;
       } else {
         // Allocate space to store the compact data and compact into it,
         // we send from this compacted buffer directly
         auto mem = std::make_shared<utility::FixedArray<uint8_t>>(compactSize);
-        Data compact(mem->begin(), data->type, data->numItems, vec3ul(0));
-        compact.copy(*data, vec3ul(0));
-
+        appData.compactTo(mem->begin());
         dataView = mem;
       }
       fabric->sendBcast(dataView);

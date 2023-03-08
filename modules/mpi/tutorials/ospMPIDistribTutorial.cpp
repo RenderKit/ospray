@@ -33,6 +33,7 @@
 #include "rkcommon/math/box.h"
 #include "rkcommon/math/vec.h"
 #include "rkcommon/utility/SaveImage.h"
+#include "rkcommon/utility/getEnvVar.h"
 // Note: we define OSPRAY_CPP_RKCOMMON_TYPES in CMAke to use rkcommon types
 // natively through the C++ wrappers
 #include "ospray/ospray_cpp.h"
@@ -84,10 +85,14 @@ int main(int argc, char **argv)
 
   // load the MPI module, and select the MPI distributed device. Here we
   // do not call ospInit, as we want to explicitly pick the distributed
-  // device. This can also be done by passing --osp:mpi-distributed when
-  // using ospInit, however if the user doesn't pass this argument your
-  // application will likely not behave as expected
-  ospLoadModule("mpi");
+  // device
+  auto OSPRAY_MPI_DISTRIBUTED_GPU =
+      utility::getEnvVar<int>("OSPRAY_MPI_DISTRIBUTED_GPU").value_or(0);
+  if (OSPRAY_MPI_DISTRIBUTED_GPU) {
+    ospLoadModule("mpi_distributed_gpu");
+  } else {
+    ospLoadModule("mpi_distributed_cpu");
+  }
 
   // use scoped lifetimes of wrappers to release everything before ospShutdown()
   {

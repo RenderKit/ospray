@@ -49,6 +49,8 @@
 /*! all components set */
 #define SCATTERING_ALL (SCATTERING_REFLECTION | SCATTERING_TRANSMISSION)
 
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
 typedef uint32 Scattering_Type;
 
 struct Scattering_EvalRes
@@ -69,3 +71,5 @@ struct Scattering_SampleRes
   float pdf;
   Scattering_Type type;
 };
+
+OSPRAY_END_ISPC_NAMESPACE

@@ -31,14 +31,9 @@ struct GeometryLight
         primIDs(nullptr),
         distribution(nullptr),
         pdf(inf)
-  {}
-  void create(const Instance *instance,
-      const GeometricModel *model,
-      int32 numPrimitives,
-      int32 *primIDs,
-      float *distribution,
-      float pdf);
-  void destroy();
+  {
+    super.type = LIGHT_TYPE_GEOMETRY;
+  }
 };
 } // namespace ispc
 #else

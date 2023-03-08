@@ -3,9 +3,11 @@
 
 #pragma once
 
-#include "TileShared.h"
-#include "common/OSPCommon.ih"
 #include "rkcommon/math/box.ih"
+// c++ shared
+#include "TileShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
 
 inline void setRGBA(uniform Tile &tile,
     const varying uint32 i,
@@ -50,3 +52,4 @@ inline void setNormalAlbedo(
   tile.ag[i] = albedo.y;
   tile.ab[i] = albedo.z;
 }
+OSPRAY_END_ISPC_NAMESPACE

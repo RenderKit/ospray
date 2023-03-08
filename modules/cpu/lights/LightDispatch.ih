@@ -1,0 +1,36 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "common/OSPCommon.ih"
+// c++ shared
+#include "LightShared.h"
+
+OSPRAY_BEGIN_ISPC_NAMESPACE
+
+struct Light;
+struct DifferentialGeometry;
+
+// compute the weighted radiance at a point caused by a sample on the light
+// source
+// by convention, giving (0, 0) as "random" numbers should sample the "center"
+// of the light source (used by the raytracing renderers such as the SciVis
+// renderer)
+SYCL_EXTERNAL __noinline Light_SampleRes Light_dispatch_sample(
+    const Light *uniform self,
+    const DifferentialGeometry &dg, // point (&normal) to generate the sample
+    const vec2f &s, // random numbers to generate the sample
+    const float time); // generate the sample at time (motion blur)
+
+//! compute the radiance and pdf caused by the light source (pointed to by the
+//! given direction up until maxDist)
+SYCL_EXTERNAL __noinline Light_EvalRes Light_dispatch_eval(
+    const Light *uniform self,
+    const DifferentialGeometry &dg, // point to evaluate illumination for
+    const vec3f &dir, // direction towards the light source, normalized
+    const float minDist, // minimum distance to look for light contribution
+    const float maxDist, // maximum distance to look for light contribution
+    const float time); // evaluate at time (motion blur)
+
+OSPRAY_END_ISPC_NAMESPACE

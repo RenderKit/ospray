@@ -6,9 +6,9 @@
 #include <unordered_map>
 
 #include "camera/Camera.h"
+#include "common/Embree.h"
 #include "common/MPICommon.h"
 #include "common/World.h"
-#include "embree3/rtcore.h"
 #include "geometry/Boxes.h"
 #include "rkcommon/math/box.h"
 // ispc shared
@@ -26,7 +26,7 @@ namespace mpi {
  */
 struct DistributedWorld : public AddStructShared<World, ispc::DistributedWorld>
 {
-  DistributedWorld();
+  DistributedWorld(api::ISPCDevice &device);
   ~DistributedWorld() override;
 
   box3f getBounds() const override;
