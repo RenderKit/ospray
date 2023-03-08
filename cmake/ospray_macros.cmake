@@ -341,7 +341,13 @@ macro(ospray_configure_compiler)
 
   if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM" OR OSPRAY_MODULE_GPU)
     set(OSPRAY_COMPILER_DPCPP TRUE)
-    include(dpcpp)
+    if(WIN32) # icx on Windows behaves like msvc
+      # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/18311
+      set(CMAKE_NINJA_CMCLDEPS_RC OFF)
+      include(msvc)
+    else()
+      include(dpcpp)
+    endif()
   elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     set(OSPRAY_COMPILER_ICC TRUE)
     if(WIN32) # icc on Windows behaves like msvc

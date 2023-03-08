@@ -102,8 +102,3 @@ string(REPLACE ";" " " OSPRAY_OCL_OPTIONS_STR "${OSPRAY_OCL_OPTIONS}")
 
 set(OSPRAY_OCL_OTHER_OPTIONS_STR "${OSPRAY_OCL_OTHER_OPTIONS}")
 string(REPLACE ";" " " OSPRAY_OCL_OTHER_OPTIONS_STR "${OSPRAY_OCL_OTHER_OPTIONS}")
-
-if (WIN32)
-  # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/18311
-  set(CMAKE_NINJA_CMCLDEPS_RC OFF)
-endif()

@@ -16,7 +16,8 @@ cmake -L `
   -D BUILD_DEPENDENCIES_ONLY=ON `
   -D CMAKE_INSTALL_PREFIX=$DEP_DIR `
   -D CMAKE_INSTALL_LIBDIR=lib `
-  -D BUILD_EMBREE_FROM_SOURCE=OFF `
+  -D BUILD_EMBREE_FROM_SOURCE=ON `
+  -D BUILD_ISA_AVX512=OFF `
   -D BUILD_OIDN=ON `
   -D BUILD_OIDN_FROM_SOURCE=OFF `
   -D BUILD_OSPRAY_MODULE_MPI=ON `
@@ -31,6 +32,9 @@ cd $ROOT_DIR
 
 md build_release
 cd build_release
+
+# Clean out build directory to be sure we are doing a fresh build
+rm -r -fo *
 
 # Setup environment for dependencies
 $env:CMAKE_PREFIX_PATH = $DEP_DIR
