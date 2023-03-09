@@ -730,6 +730,12 @@ void GLFWOSPRayWindow::buildUI()
   }
 
   if (rendererType == OSPRayRendererType::PATHTRACER) {
+    static int lightSamples = -1;
+    if (ImGui::SliderInt("lightSamples", &lightSamples, -1, 32)) {
+      renderer->setParam("lightSamples", lightSamples);
+      addObjectToCommit(renderer->handle());
+    }
+
     static int maxDepth = 20;
     if (ImGui::SliderInt("maxPathLength", &maxDepth, 1, 64)) {
       renderer->setParam("maxPathLength", maxDepth);

@@ -55,7 +55,8 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   const uniform int numLights =
       pathtracerData.lights ? min(MAX_LIGHTS, pathtracerData.numLights) : 0;
   const uniform int numLightSamples =
-      self->numLightSamples >= 0 ? self->numLightSamples : numLights;
+      self->numLightSamples >= 0 && numLights > 0 ? self->numLightSamples
+                                                  : numLights;
   PathContext pathContext;
   pathContext.context = self;
   pathContext.world = world;

@@ -220,4 +220,11 @@ void FromOsprayTestingVariance::SetUp()
   renderer.setParam("varianceThreshold", 20.f);
 }
 
+void FromOsprayTestingLightSamples::SetUp()
+{
+  FromOsprayTesting::SetUp();
+
+  renderer.setParam("lightSamples", 8);
+}
+
 } // namespace OSPRayTestScenes

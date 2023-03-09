@@ -11,14 +11,17 @@ namespace testing {
 
 struct Empty : public detail::Builder
 {
-  Empty() = default;
+  Empty(bool plane = false)
+  {
+    addPlane = plane;
+  }
   ~Empty() override = default;
 
   void commit() override;
 
   cpp::Group buildGroup() const override;
 
-  cpp::World buildWorld(const std::vector<cpp::Instance> &) const override;
+  cpp::World buildWorld() const override;
 };
 
 // Inlined definitions ////////////////////////////////////////////////////
@@ -26,7 +29,6 @@ struct Empty : public detail::Builder
 void Empty::commit()
 {
   Builder::commit();
-  addPlane = false;
 }
 
 cpp::Group Empty::buildGroup() const
@@ -36,14 +38,21 @@ cpp::Group Empty::buildGroup() const
   return group;
 }
 
-cpp::World Empty::buildWorld(const std::vector<cpp::Instance> &) const
+cpp::World Empty::buildWorld() const
 {
   cpp::World world;
+
+  if (addPlane) {
+    std::vector<cpp::Instance> inst;
+    inst.push_back(makeGroundPlane(box3f(zero, one)));
+    world.setParam("instance", cpp::CopiedData(inst));
+  }
 
   return world;
 }
 
 OSP_REGISTER_TESTING_BUILDER(Empty, empty);
+OSP_REGISTER_TESTING_BUILDER(Empty(true), nolight);
 
 } // namespace testing
 } // namespace ospray
