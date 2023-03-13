@@ -645,6 +645,21 @@ foreach(dir ${SUBDIRS})
   )
 endforeach()
 
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/modules/cpu/
+  COMPONENT devel
+  FILES_MATCHING
+  PATTERN *.h
+  PATTERN *.ih
+  )
+  
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/modules/cpu/
+  COMPONENT devel
+  FILES_MATCHING
+  PATTERN *_ispc.h
+  )
+
 ##############################################################
 # Additional interface targets
 ##############################################################
