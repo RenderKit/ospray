@@ -81,6 +81,11 @@ void FrameBuffer::commit()
   imageOpData = getParamDataT<ImageOp *>("imageOperation");
 }
 
+void FrameBuffer::clear()
+{
+  frameID = -1; // we increment at the start of the frame
+}
+
 vec2i FrameBuffer::getRenderTaskSize() const
 {
   return getSh()->renderTaskSize;
@@ -104,10 +109,13 @@ float FrameBuffer::getVariance() const
 void FrameBuffer::beginFrame()
 {
   cancelRender = false;
+  frameID++;
   // TODO: Maybe better as a kernel to avoid USM thrash to host
+#ifndef OSPRAY_TARGET_SYCL
   getSh()->cancelRender = 0;
   getSh()->numPixelsRendered = 0;
-  getSh()->frameID++;
+  getSh()->frameID = frameID;
+#endif
 }
 
 std::string FrameBuffer::toString() const
@@ -117,12 +125,14 @@ std::string FrameBuffer::toString() const
 
 void FrameBuffer::setCompletedEvent(OSPSyncEvent event)
 {
+#ifndef OSPRAY_TARGET_SYCL
   // We won't be running ISPC-side rendering tasks when updating the
   // progress values here in C++
   if (event == OSP_NONE_FINISHED)
     getSh()->numPixelsRendered = 0;
   if (event == OSP_FRAME_FINISHED)
     getSh()->numPixelsRendered = getNumPixels().long_product();
+#endif
   stagesCompleted = event;
 }
 
@@ -239,11 +249,6 @@ uint32 FrameBuffer::getChannelFlags() const
     channels |= OSP_FB_ALBEDO;
   }
   return channels;
-}
-
-int32 FrameBuffer::getFrameID() const
-{
-  return getSh()->frameID;
 }
 
 bool FrameBuffer::hasPrimitiveIDBuf() const

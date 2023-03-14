@@ -1,5 +1,5 @@
 #include "MicrofacetAlbedoTables.h"
-#include "common/BufferShared.h"
+#include "common/ISPCRTBuffers.h"
 #include "render/bsdfs/MicrofacetAlbedoTablesShared.h"
 #ifndef OSPRAY_TARGET_SYCL
 #include "render/bsdfs/MicrofacetAlbedoTables_ispc.h"

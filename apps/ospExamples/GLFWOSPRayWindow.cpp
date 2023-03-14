@@ -355,21 +355,34 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
 
 void GLFWOSPRayWindow::display()
 {
+  static auto displayStart = std::chrono::high_resolution_clock::now();
+
   if (showUi)
     buildUI();
 
   if (displayCallback)
     displayCallback(this);
 
-  updateTitleBar();
-
   glEnable(GL_FRAMEBUFFER_SRGB); // Turn on sRGB conversion for OSPRay frame
 
   static bool firstFrame = true;
   if (firstFrame || currentFrame.isReady()) {
-    waitOnOSPRayFrame();
+    // display frame rate in window title
+    auto displayEnd = std::chrono::high_resolution_clock::now();
+    auto durationMilliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            displayEnd - displayStart);
 
-    latestFPS = 1.f / currentFrame.duration();
+    // update FPS every second
+    framesCounter++;
+    if (durationMilliseconds > std::chrono::seconds(1)) {
+      displayStart = displayEnd;
+      latestFPS = 1000.0f * float(framesCounter) / durationMilliseconds.count();
+      framesCounter = 0;
+      updateTitleBar();
+    }
+
+    waitOnOSPRayFrame();
 
     auto fbChannel = OSP_FB_COLOR;
     if (showDepth)
@@ -504,7 +517,7 @@ void GLFWOSPRayWindow::updateTitleBar()
 {
   std::stringstream windowTitle;
   windowTitle << "OSPRay: " << std::setprecision(3) << latestFPS << " fps";
-  if (latestFPS < 2.f) {
+  if (latestFPS > 0.f && latestFPS < 2.f) {
     float progress = currentFrame.progress();
     windowTitle << " | ";
     int barWidth = 20;

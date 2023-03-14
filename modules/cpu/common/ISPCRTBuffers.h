@@ -5,11 +5,83 @@
 
 #include <cstring>
 #include <memory>
+#include <vector>
 #include "ispcrt.hpp"
 
 namespace ospray {
 
-// C version ////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+// BufferDevice
+
+template <typename T>
+struct BufferDevice : public ispcrt::Array<T, ispcrt::AllocType::Device>
+{
+  using ispcrt::Array<T, ispcrt::AllocType::Device>::devicePtr;
+  BufferDevice(ispcrt::Device &device);
+  BufferDevice(ispcrt::Device &device, size_t size);
+};
+
+template <typename T>
+BufferDevice<T>::BufferDevice(ispcrt::Device &device, size_t size)
+    : ispcrt::Array<T, ispcrt::AllocType::Device>(device, nullptr, size)
+{}
+
+template <typename T, typename... Args>
+inline std::unique_ptr<BufferDevice<T>> make_buffer_device_unique(
+    Args &&...args)
+{
+  return std::unique_ptr<BufferDevice<T>>(
+      new BufferDevice<T>(std::forward<Args>(args)...));
+}
+
+/////////////////////////////////////////////////////////////////////
+// BufferDeviceShadowed
+
+template <typename T>
+struct BufferDeviceShadowed : public std::vector<T>,
+                              public ispcrt::Array<T, ispcrt::AllocType::Device>
+{
+  using ispcrt::Array<T, ispcrt::AllocType::Device>::devicePtr;
+  using std::vector<T>::size;
+  BufferDeviceShadowed(ispcrt::Device &device, size_t size);
+  BufferDeviceShadowed(ispcrt::Device &device, std::vector<T> &v);
+  BufferDeviceShadowed(ispcrt::Device &device, T *data, size_t size);
+};
+
+template <typename T>
+BufferDeviceShadowed<T>::BufferDeviceShadowed(
+    ispcrt::Device &device, size_t size)
+    : std::vector<T>(size),
+      ispcrt::Array<T, ispcrt::AllocType::Device>(
+          device, std::vector<T>::data(), size)
+{}
+
+template <typename T>
+BufferDeviceShadowed<T>::BufferDeviceShadowed(
+    ispcrt::Device &device, std::vector<T> &v)
+    : std::vector<T>(v),
+      ispcrt::Array<T, ispcrt::AllocType::Device>(
+          device, std::vector<T>::data(), v.size())
+{}
+
+template <typename T>
+BufferDeviceShadowed<T>::BufferDeviceShadowed(
+    ispcrt::Device &device, T *data, size_t size)
+    : std::vector<T>(data, data + size),
+      ispcrt::Array<T, ispcrt::AllocType::Device>(
+          device, std::vector<T>::data(), size)
+{}
+
+template <typename T, typename... Args>
+inline std::unique_ptr<BufferDeviceShadowed<T>>
+make_buffer_device_shadowed_unique(Args &&...args)
+{
+  return std::unique_ptr<BufferDeviceShadowed<T>>(
+      new BufferDeviceShadowed<T>(std::forward<Args>(args)...));
+}
+
+/////////////////////////////////////////////////////////////////////
+// BufferShared C version
 
 inline ISPCRTMemoryView BufferSharedCreate(ISPCRTContext context,
     size_t size,
@@ -27,12 +99,13 @@ inline void BufferSharedDelete(ISPCRTMemoryView view)
   ispcrtRelease(view);
 }
 
-// C++ version ////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+// BufferShared C++ version
 
 template <typename T>
 struct BufferShared : public ispcrt::Array<T, ispcrt::AllocType::Shared>
 {
-  using ispcrt::Array<T, ispcrt::AllocType::Shared>::sharedPtr;
+  using ispcrt::Array<T, ispcrt::AllocType::Shared>::size;
   BufferShared(ispcrt::Context &context,
       ispcrt::SharedMemoryUsageHint allocHint =
           ispcrt::SharedMemoryUsageHint::HostDeviceReadWrite);
@@ -50,7 +123,6 @@ struct BufferShared : public ispcrt::Array<T, ispcrt::AllocType::Shared>
       ispcrt::SharedMemoryUsageHint allocHint =
           ispcrt::SharedMemoryUsageHint::HostDeviceReadWrite);
 
-  // TODO: We should move these up into the ISPCRT wrapper
   T *data();
 
   T *begin();
@@ -76,8 +148,7 @@ BufferShared<T>::BufferShared(ispcrt::Context &context,
     size_t size,
     ispcrt::SharedMemoryUsageHint allocHint)
     : ispcrt::Array<T, ispcrt::AllocType::Shared>(context, size, allocHint)
-{
-}
+{}
 
 template <typename T>
 BufferShared<T>::BufferShared(ispcrt::Context &context,
@@ -101,54 +172,52 @@ BufferShared<T>::BufferShared(ispcrt::Context &context,
 template <typename T>
 T *BufferShared<T>::data()
 {
-  return begin();
+  return sharedPtr();
 }
 
 template <typename T>
 T *BufferShared<T>::begin()
 {
-  return sharedPtr();
+  return data();
 }
 
 template <typename T>
 T *BufferShared<T>::end()
 {
-  return begin() + ispcrt::Array<T, ispcrt::AllocType::Shared>::size();
+  return begin() + size();
 }
 
 template <typename T>
 const T *BufferShared<T>::cbegin() const
 {
-  return sharedPtr();
+  return data();
 }
 
 template <typename T>
 const T *BufferShared<T>::cend() const
 {
-  return cbegin() + ispcrt::Array<T, ispcrt::AllocType::Shared>::size();
+  return cbegin() + size();
 }
 
 template <typename T>
 T &BufferShared<T>::operator[](const size_t i)
 {
-  return *(sharedPtr() + i);
+  return *(data() + i);
 }
 
 template <typename T>
 const T &BufferShared<T>::operator[](const size_t i) const
 {
-  return *(sharedPtr() + i);
+  return *(data() + i);
 }
 
-// The below method is WA for ISPCRT bug, when running on GPU sharedPtr()
+// The below method is WA for Level Zero bug, when running on GPU sharedPtr()
 // crashes on 0-sized ispcrt::Array
-// TODO: Fix it in ISPCRT
 template <typename T>
 T *BufferShared<T>::sharedPtr() const
 {
-  return ispcrt::Array<T, ispcrt::AllocType::Shared>::size()
-      ? ispcrt::Array<T, ispcrt::AllocType::Shared>::sharedPtr()
-      : nullptr;
+  return size() ? ispcrt::Array<T, ispcrt::AllocType::Shared>::sharedPtr()
+                : nullptr;
 }
 
 template <typename T, typename... Args>

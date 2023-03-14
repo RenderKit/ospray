@@ -3,7 +3,7 @@
 
 // ospray
 #include "Data.h"
-#include "common/BufferShared.h"
+#include "common/ISPCRTBuffers.h"
 #include "ospray/ospray.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 

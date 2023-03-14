@@ -11,7 +11,7 @@
 #include "rkcommon/math/rkmath.h"
 #include "rkcommon/math/vec.h"
 
-#include "BufferShared.h"
+#include "ISPCRTBuffers.h"
 
 namespace ispc {
 

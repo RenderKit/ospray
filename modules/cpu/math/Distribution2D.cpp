@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Distribution2D.h"
-#include "common/BufferShared.h"
+#include "common/ISPCRTBuffers.h"
 
 namespace ospray {
 Distribution2D::Distribution2D(const vec2i &size, api::ISPCDevice &device)

@@ -4,7 +4,7 @@
 #pragma once
 
 #include <vector>
-#include "common/BufferShared.h"
+#include "common/ISPCRTBuffers.h"
 #include "common/OSPCommon.h"
 #include "rkcommon/containers/AlignedVector.h"
 

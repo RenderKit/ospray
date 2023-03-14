@@ -190,8 +190,7 @@ void SparseFrameBuffer::unmap(const void *) {}
 
 void SparseFrameBuffer::clear()
 {
-  // we increment at the start of the frame
-  getSh()->super.frameID = -1;
+  FrameBuffer::clear();
 
   // We only need to reset the accumID, SparseFB_accumulateWriteSample will
   // handle overwriting the image when accumID == 0

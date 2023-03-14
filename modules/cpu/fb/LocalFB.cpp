@@ -45,6 +45,7 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
         _colorBufferFormat,
         channels,
         FFO_FB_LOCAL),
+      device(device),
       numRenderTasks(divRoundUp(size, getRenderTaskSize())),
       taskErrorRegion(device.getIspcrtContext(),
           hasVarianceBuffer ? getNumRenderTasks() : vec2i(0))
@@ -53,46 +54,48 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
   const size_t numPixels = _size.long_product();
 
   if (getColorBufferFormat() != OSP_FB_NONE) {
-    colorBuffer = make_buffer_shared_unique<uint8_t>(
-        device.getIspcrtContext(), pixelBytes * numPixels);
+    colorBuffer = make_buffer_device_shadowed_unique<uint8_t>(
+        device.getIspcrtDevice(), pixelBytes * numPixels);
   }
 
   if (hasDepthBuffer)
-    depthBuffer =
-        make_buffer_shared_unique<float>(device.getIspcrtContext(), numPixels);
+    depthBuffer = make_buffer_device_shadowed_unique<float>(
+        device.getIspcrtDevice(), numPixels);
 
   if (hasAccumBuffer) {
     accumBuffer =
-        make_buffer_shared_unique<vec4f>(device.getIspcrtContext(), numPixels);
+        make_buffer_device_unique<vec4f>(device.getIspcrtDevice(), numPixels);
 
-    taskAccumID = make_buffer_shared_unique<int32_t>(
-        device.getIspcrtContext(), getTotalRenderTasks());
+    // TODO: Implement fill function in ISPCRT
+    taskAccumID = make_buffer_device_shadowed_unique<int32_t>(
+        device.getIspcrtDevice(), getTotalRenderTasks());
     std::memset(taskAccumID->data(), 0, taskAccumID->size() * sizeof(int32_t));
+    device.getIspcrtQueue().copyToDevice(*taskAccumID);
   }
 
   if (hasVarianceBuffer)
     varianceBuffer =
-        make_buffer_shared_unique<vec4f>(device.getIspcrtContext(), numPixels);
+        make_buffer_device_unique<vec4f>(device.getIspcrtDevice(), numPixels);
 
   if (hasNormalBuffer)
-    normalBuffer =
-        make_buffer_shared_unique<vec3f>(device.getIspcrtContext(), numPixels);
+    normalBuffer = make_buffer_device_shadowed_unique<vec3f>(
+        device.getIspcrtDevice(), numPixels);
 
   if (hasAlbedoBuffer)
-    albedoBuffer =
-        make_buffer_shared_unique<vec3f>(device.getIspcrtContext(), numPixels);
+    albedoBuffer = make_buffer_device_shadowed_unique<vec3f>(
+        device.getIspcrtDevice(), numPixels);
 
   if (hasPrimitiveIDBuffer)
-    primitiveIDBuffer = make_buffer_shared_unique<uint32_t>(
-        device.getIspcrtContext(), numPixels);
+    primitiveIDBuffer = make_buffer_device_shadowed_unique<uint32_t>(
+        device.getIspcrtDevice(), numPixels);
 
   if (hasObjectIDBuffer)
-    objectIDBuffer = make_buffer_shared_unique<uint32_t>(
-        device.getIspcrtContext(), numPixels);
+    objectIDBuffer = make_buffer_device_shadowed_unique<uint32_t>(
+        device.getIspcrtDevice(), numPixels);
 
   if (hasInstanceIDBuffer)
-    instanceIDBuffer = make_buffer_shared_unique<uint32_t>(
-        device.getIspcrtContext(), numPixels);
+    instanceIDBuffer = make_buffer_device_shadowed_unique<uint32_t>(
+        device.getIspcrtDevice(), numPixels);
 
   // TODO: Better way to pass the task IDs that doesn't require just storing
   // them all? Maybe as blocks/tiles similar to when we just had tiles? Will
@@ -126,20 +129,22 @@ LocalFrameBuffer::LocalFrameBuffer(api::ISPCDevice &device,
           ispc::LocalFrameBuffer_completeTask_addr());
 #endif
 
-  getSh()->colorBuffer = colorBuffer ? colorBuffer->data() : nullptr;
-  getSh()->depthBuffer = depthBuffer ? depthBuffer->data() : nullptr;
-  getSh()->accumBuffer = accumBuffer ? accumBuffer->data() : nullptr;
-  getSh()->varianceBuffer = varianceBuffer ? varianceBuffer->data() : nullptr;
-  getSh()->normalBuffer = normalBuffer ? normalBuffer->data() : nullptr;
-  getSh()->albedoBuffer = albedoBuffer ? albedoBuffer->data() : nullptr;
-  getSh()->taskAccumID = taskAccumID ? taskAccumID->data() : nullptr;
+  getSh()->colorBuffer = colorBuffer ? colorBuffer->devicePtr() : nullptr;
+  getSh()->depthBuffer = depthBuffer ? depthBuffer->devicePtr() : nullptr;
+  getSh()->accumBuffer = accumBuffer ? accumBuffer->devicePtr() : nullptr;
+  getSh()->varianceBuffer =
+      varianceBuffer ? varianceBuffer->devicePtr() : nullptr;
+  getSh()->normalBuffer = normalBuffer ? normalBuffer->devicePtr() : nullptr;
+  getSh()->albedoBuffer = albedoBuffer ? albedoBuffer->devicePtr() : nullptr;
+  getSh()->taskAccumID = taskAccumID ? taskAccumID->devicePtr() : nullptr;
   getSh()->taskRegionError = taskErrorRegion.errorBuffer();
   getSh()->numRenderTasks = numRenderTasks;
   getSh()->primitiveIDBuffer =
-      primitiveIDBuffer ? primitiveIDBuffer->data() : nullptr;
-  getSh()->objectIDBuffer = objectIDBuffer ? objectIDBuffer->data() : nullptr;
+      primitiveIDBuffer ? primitiveIDBuffer->devicePtr() : nullptr;
+  getSh()->objectIDBuffer =
+      objectIDBuffer ? objectIDBuffer->devicePtr() : nullptr;
   getSh()->instanceIDBuffer =
-      instanceIDBuffer ? instanceIDBuffer->data() : nullptr;
+      instanceIDBuffer ? instanceIDBuffer->devicePtr() : nullptr;
 }
 
 void LocalFrameBuffer::commit()
@@ -193,12 +198,16 @@ std::string LocalFrameBuffer::toString() const
 
 void LocalFrameBuffer::clear()
 {
-  getSh()->super.frameID = -1; // we increment at the start of the frame
+  FrameBuffer::clear();
+
   // it is only necessary to reset the accumID,
   // LocalFrameBuffer_accumulateTile takes care of clearing the
   // accumulating buffers
   if (taskAccumID) {
+    // TODO: Implement fill function in ISPCRT to do this through level-zero
+    // on the device
     std::fill(taskAccumID->begin(), taskAccumID->end(), 0);
+    device.getIspcrtQueue().copyToDevice(*taskAccumID);
   }
 
   // always also clear error buffer (if present)
@@ -346,32 +355,45 @@ void LocalFrameBuffer::endFrame(
 
 const void *LocalFrameBuffer::mapBuffer(OSPFrameBufferChannel channel)
 {
-  // TODO: Mapping the USM back to the app like this will cause a lot of USM
-  // thrashing between host/device
   const void *buf = nullptr;
+  ispcrt::TaskQueue &tq = device.getIspcrtQueue();
 
   switch (channel) {
-  case OSP_FB_COLOR:
+  case OSP_FB_COLOR: {
+    tq.copyToHost(*colorBuffer);
+    tq.sync();
     buf = colorBuffer ? colorBuffer->data() : nullptr;
-    break;
-  case OSP_FB_DEPTH:
+  } break;
+  case OSP_FB_DEPTH: {
+    tq.copyToHost(*depthBuffer);
+    tq.sync();
     buf = depthBuffer ? depthBuffer->data() : nullptr;
-    break;
-  case OSP_FB_NORMAL:
+  } break;
+  case OSP_FB_NORMAL: {
+    tq.copyToHost(*normalBuffer);
+    tq.sync();
     buf = normalBuffer ? normalBuffer->data() : nullptr;
-    break;
-  case OSP_FB_ALBEDO:
+  } break;
+  case OSP_FB_ALBEDO: {
+    tq.copyToHost(*albedoBuffer);
+    tq.sync();
     buf = albedoBuffer ? albedoBuffer->data() : nullptr;
-    break;
-  case OSP_FB_ID_PRIMITIVE:
+  } break;
+  case OSP_FB_ID_PRIMITIVE: {
+    tq.copyToHost(*primitiveIDBuffer);
+    tq.sync();
     buf = primitiveIDBuffer ? primitiveIDBuffer->data() : nullptr;
-    break;
-  case OSP_FB_ID_OBJECT:
+  } break;
+  case OSP_FB_ID_OBJECT: {
+    tq.copyToHost(*objectIDBuffer);
+    tq.sync();
     buf = objectIDBuffer ? objectIDBuffer->data() : nullptr;
-    break;
-  case OSP_FB_ID_INSTANCE:
+  } break;
+  case OSP_FB_ID_INSTANCE: {
+    tq.copyToHost(*instanceIDBuffer);
+    tq.sync();
     buf = instanceIDBuffer ? instanceIDBuffer->data() : nullptr;
-    break;
+  } break;
   default:
     break;
   }

@@ -10,7 +10,7 @@
 #include "rkcommon/utility/ArrayView.h"
 // ispc shared
 #include "TileShared.h"
-#include "common/BufferShared.h"
+#include "common/ISPCRTBuffers.h"
 #include "fb/SparseFBShared.h"
 
 namespace ospray {

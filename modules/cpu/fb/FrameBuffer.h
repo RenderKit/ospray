@@ -39,7 +39,7 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
   virtual void unmap(const void *mappedMem) = 0;
 
   // clear (the specified channels of) this frame buffer
-  virtual void clear() = 0;
+  virtual void clear();
 
   // Get number of pixels per render task, in x and y direction
   vec2i getRenderTaskSize() const;
@@ -109,6 +109,8 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 
   const vec2i size;
 
+  int32_t frameID{-1};
+
   // indicates whether the app requested this frame buffer to have
   // an (application-mappable) depth buffer
   bool hasDepthBuffer;
@@ -137,6 +139,11 @@ struct OSPRAY_SDK_INTERFACE FrameBuffer
 };
 
 OSPTYPEFOR_SPECIALIZATION(FrameBuffer *, OSP_FRAMEBUFFER);
+
+inline int32_t FrameBuffer::getFrameID() const
+{
+  return frameID;
+}
 
 inline FeatureFlagsOther FrameBuffer::getFeatureFlagsOther() const
 {
