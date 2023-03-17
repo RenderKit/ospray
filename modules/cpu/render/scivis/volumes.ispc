@@ -35,13 +35,11 @@ static void sampleVolume(SciVisRenderContext &rc,
     Ray &ray,
     const VolumeInterval &vi,
     const uniform float samplingRate,
-    const uniform bool shade,
     const uniform FeatureFlags &ff)
 {
   // We have to iterate till we get a valid sample value
   float dt;
   float sampleVal = nan;
-  const uniform float gsc = shade ? m->gradientShadingScale : 0.f;
   vec3f p; // in volume local coords
   while (isnan(sampleVal)) {
     // Iterate till sampling position is within interval
@@ -100,7 +98,7 @@ static void sampleVolume(SciVisRenderContext &rc,
   vc.sample = TransferFunction_dispatch_get(tf, sampleVal);
 
   // compute gradient shading lighting
-  if (gsc > 0.0f) {
+  if (m->gradientShadingScale > 0.0f) {
     vec3f ns = Volume_getGradient(m->volume, p);
     if (dot(ns, ns) > 1e-6f) {
       // assume that opacity directly correlates to volume scalar field, i.e.
@@ -128,7 +126,7 @@ static void sampleVolume(SciVisRenderContext &rc,
           ff);
       vec4f shadedColor = make_vec4f(
           shading.shadedColor, 1.f - luminance(shading.transmission));
-      vc.sample = lerp(gsc, vc.sample, shadedColor);
+      vc.sample = lerp(m->gradientShadingScale, vc.sample, shadedColor);
     }
   }
 
@@ -142,7 +140,6 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
     Ray &ray,
     const uniform float samplingRate,
     vec4f &sampledColor,
-    const uniform bool shade,
     const uniform FeatureFlags &ff)
 {
   // Look for the closest sample across all volumes
@@ -163,7 +160,7 @@ static float sampleAllVolumes(SciVisRenderContext &rc,
 #else
       foreach_unique (m in vi.volumetricModel) {
 #endif
-        sampleVolume(rc, vc, m, ray, vi, samplingRate, shade, ff);
+        sampleVolume(rc, vc, m, ray, vi, samplingRate, ff);
       }
       vc.ready = 1;
     }
@@ -198,7 +195,6 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
     const uniform float samplingRate,
-    const uniform bool shade,
     const uniform FeatureFlags &ff)
 {
 #ifdef OSPRAY_TARGET_SYCL
@@ -315,7 +311,6 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
           ray,
           samplingRate,
           sampledColor,
-          shade,
           ff);
 
       // Exit loop if nothing sampled

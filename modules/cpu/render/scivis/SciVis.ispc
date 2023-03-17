@@ -92,7 +92,6 @@ static void SciVis_renderSample(Renderer *uniform _self,
             volumeRay,
             ldSampler,
             self->volumeSamplingRate,
-            true,
             ff);
 
         // Blend volume

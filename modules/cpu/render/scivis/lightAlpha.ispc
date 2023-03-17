@@ -7,7 +7,7 @@
 // SciVis renderer
 #include "surfaces.ih"
 #ifdef OSPRAY_ENABLE_VOLUMES
-#include "volumes.ih"
+#include "render/ao/volumes.ih"
 #endif
 // c++ shared
 #include "SciVisShared.h"
@@ -66,22 +66,14 @@ SYCL_EXTERNAL vec3f lightAlpha(const uniform SciVis *uniform self,
 
       // Sample volumes across volume intervals (in front of geometry hit)
       if (volumeIntervals.numVolumeIntervals > 0) {
-        SciVisRenderContext rc;
-        rc.renderer = self;
-        rc.fb = fb;
-        rc.world = world;
-        rc.sample = sample;
-        rc.ldSampler = ldSampler;
-        vec4f volumeColor = integrateVolumeIntervalsGradient(rc,
+        vec4f volumeColor = integrateVolumeIntervals(
             volumeIntervals,
             rayIntervals,
             volumeRay,
             ldSampler,
-            self->volumeSamplingRate * quality,
-            false,
-            ff);
+            self->volumeSamplingRate * quality);
 
-        alpha = alpha * make_vec3f(volumeColor.w);
+        alpha = alpha * make_vec3f(1.f - volumeColor.w);
       }
     }
 #endif

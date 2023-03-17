@@ -18,7 +18,6 @@ SYCL_EXTERNAL vec4f integrateVolumeIntervalsGradient(SciVisRenderContext &rc,
     Ray &ray,
     varying LDSampler *uniform ldSampler,
     const uniform float samplingRate,
-    const uniform bool shade,
     const uniform FeatureFlags &ff);
 
 OSPRAY_END_ISPC_NAMESPACE
