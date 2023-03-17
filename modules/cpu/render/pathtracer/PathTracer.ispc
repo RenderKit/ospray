@@ -69,7 +69,7 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathContext.numBounceSampleDims = 3 + numLightSamples * 3;
 
   PathState pathState;
-  pathState.disableNEE = false;
+  pathState.disableNEE = numLightSamples == 0;
   pathState.disableFWD = false;
   pathState.straightPath = true; // path from camera did not change direction,
                                  // for alpha and backplate

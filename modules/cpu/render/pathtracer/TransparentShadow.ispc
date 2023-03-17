@@ -64,10 +64,8 @@ SYCL_EXTERNAL vec3f transparentShadow(const uniform PathTracer *uniform self,
       lightContrib = lightContrib
           * expf(medium.attenuation * (shadowRay.t - shadowRay.t0));
 
-    if (reduce_max(lightContrib) <= self->super.minContribution)
-      return lightContrib;
-
-    if (--maxDepth <= 0)
+    if (reduce_max(lightContrib) <= self->super.minContribution
+        || --maxDepth <= 0)
       return make_vec3f(0.f);
 
       // Tracking medium if we hit a medium interface.
