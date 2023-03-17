@@ -65,9 +65,8 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathContext.numLightSamples = numLightSamples;
   pathContext.lightsCDF = pathtracerData.lightsCDF;
 
-  pathContext.numBounceSampleDims =
-      4 + numLightSamples * 3; // BSDF sample (3D), roulette (1D), light samples
-                               // * (3D, light selection and sampling the light)
+  // BSDF sample (3D), light samples * (3D, light selection and sampling)
+  pathContext.numBounceSampleDims = 3 + numLightSamples * 3;
 
   PathState pathState;
   pathState.disableNEE = false;

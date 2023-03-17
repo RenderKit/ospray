@@ -300,8 +300,7 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 #if ROULETTE == 1
     // Russian roulette
     if (pathState.depth >= pathContext.context->rouletteDepth) {
-      const float rr =
-          LDSampler_getFloat(pathContext.ldSampler, pathState.sampleDim + 3);
+      const float rr = RandomSampler_getFloat(pathContext.randomSampler);
       const float contProb =
           min(luminance(pathState.throughput), MAX_ROULETTE_CONT_PROB);
       if (rr > contProb) {

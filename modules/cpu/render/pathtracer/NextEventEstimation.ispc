@@ -35,7 +35,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
   for (uniform uint32 i = 0; i < pathContext.numLightSamples; i++) {
     // select a random light source from the list
     const float s1 = LDSampler_getFloat(
-        pathContext.ldSampler, pathState.sampleDim + 4 + i * 3);
+        pathContext.ldSampler, pathState.sampleDim + 3 + i * 3);
     const Sample1D lSelectSample = Distribution1D_sample(
         pathContext.numLights, pathContext.lightsCDF, 0, s1);
     const float lightSelectionProb =
@@ -43,7 +43,7 @@ SYCL_EXTERNAL vec3f nextEventEstimation(const PathContext &pathContext,
     const Light *light = pathtracerData.lights[lSelectSample.idx];
     // sample the contribution from the random light source
     const vec2f s2 = LDSampler_getFloat2(
-        pathContext.ldSampler, pathState.sampleDim + 4 + i * 3 + 1);
+        pathContext.ldSampler, pathState.sampleDim + 3 + i * 3 + 1);
     Light_SampleRes ls;
 #ifdef OSPRAY_TARGET_SYCL
     {
