@@ -2087,6 +2087,9 @@ supports the following special parameters:
   int        roulettePathLength          5  ray recursion depth at which to
                                             start Russian roulette termination
 
+  int        maxScatteringEvents        20  maximum number of non-specular
+                                            (i.e., diffuse and glossy) bounces
+
   float      maxContribution             ∞  samples are clamped to this value
                                             before they are accumulated into
                                             the framebuffer

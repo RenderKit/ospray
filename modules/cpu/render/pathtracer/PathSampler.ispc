@@ -249,7 +249,8 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
 
     // terminate after evaluation of lights and before next shading to always
     // have both samples for MIS
-    if (pathState.depth >= pathContext.context->super.maxDepth) {
+    if (pathState.depth >= pathContext.context->super.maxDepth
+        || pathState.scatteringEvents >= pathContext.context->maxScatteringEvents) {
       break;
     }
 
@@ -353,6 +354,8 @@ SYCL_EXTERNAL void samplePath(const PathContext &pathContext,
     setRay(ray, ray_org, fs.wi, pathState.time);
     pathState.depth++;
     pathState.sampleDim += pathContext.numBounceSampleDims;
+    if (fs.type & SCATTERING_SMOOTH)
+      pathState.scatteringEvents++;
   } while (reduce_max(pathState.throughput)
       > pathContext.context->super.minContribution);
 

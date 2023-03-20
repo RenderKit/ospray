@@ -79,6 +79,7 @@ static ScreenSample PathTraceIntegrator_Li(const PathTracer *uniform self,
   pathState.auxFree = true; // normal & albedo buffer were not yet written to
   pathState.depth = 0;
   pathState.sampleDim = 5; // skip: pixel (2D), lens (2D), time (1D)
+  pathState.scatteringEvents = 0;
   pathState.throughput = make_vec3f(1.f);
   pathState.contribution = make_vec3f(0.f);
   pathState.time = ray.time;

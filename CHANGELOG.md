@@ -1,6 +1,12 @@
 Version History
 ---------------
 
+### Changes in v2.12.0:
+
+-   New parameter `maxScatteringEvents` for the `pathtracer` which
+    limits the number of non-specular (i.e., diffuse and glossy) bounces
+
+
 ### Changes in v2.11.0:
 
 -   Support single ISPC target on Windows

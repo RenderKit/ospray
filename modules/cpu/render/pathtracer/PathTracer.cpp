@@ -46,6 +46,7 @@ void PathTracer::commit()
   Renderer::commit();
 
   getSh()->rouletteDepth = getParam<int>("roulettePathLength", 5);
+  getSh()->maxScatteringEvents = getParam<int>("maxScatteringEvents", 20);
   getSh()->maxRadiance = getParam<float>("maxContribution", inf);
   getSh()->numLightSamples = getParam<int>("lightSamples", -1);
 
