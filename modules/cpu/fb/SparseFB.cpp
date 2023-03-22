@@ -96,6 +96,9 @@ uint32_t SparseFrameBuffer::getTotalRenderTasks() const
 utility::ArrayView<uint32_t> SparseFrameBuffer::getRenderTaskIDs(
     float errorThreshold)
 {
+  if (!renderTaskIDs)
+    return utility::ArrayView<uint32_t>(nullptr, 0);
+
   if (errorThreshold > 0.0f && hasVarianceBuffer) {
     auto last = std::copy_if(renderTaskIDs->begin(),
         renderTaskIDs->end(),
@@ -148,8 +151,10 @@ void SparseFrameBuffer::beginFrame()
   FrameBuffer::beginFrame();
 
   // TODO We could launch a kernel here
-  for (auto &tile : *tiles) {
-    tile.accumID = getFrameID();
+  if (tiles) {
+    for (auto &tile : *tiles) {
+      tile.accumID = getFrameID();
+    }
   }
 
   std::for_each(imageOps.begin(),
