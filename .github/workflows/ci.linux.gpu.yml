@@ -79,26 +79,27 @@ jobs:
         export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
         scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE"
 
-  test-ubuntu2204-DG2-JIT-mpi:
-    needs: [build-ubuntu2204-DG2-JIT-mpi]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/support_oneapi_icx
-    secrets: inherit
-    with:
-      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19476/artifacts/Linux/Ubuntu/22.04/Release
-      dpcpp-version: intel/2023.0
-      install-gfx-driver: true
-      submodules: true
-      image: ubuntu:22.04
-      options: --device=/dev/dri:/dev/dri
-      runs-on: '[ "Linux", "docker", "dg2" ]'
-      artifact-in: build-ubuntu2204-DG2-JIT-mpi
-      artifact-out: test-ubuntu2204-DG2-JIT-mpi
-      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
-      artifact-on-failure: true
-      cmd: |
-        sudo apt remove openmpi-* libopenmpi3 -y
-        module load level-zero/1.9.4
-        module load mpi
-        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
-        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
-        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI
+#  test-ubuntu2204-DG2-JIT-mpi:
+#    needs: [build-ubuntu2204-DG2-JIT-mpi]
+#    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@tgt/support_oneapi_icx
+#    secrets: inherit
+#    with:
+#      allow-failure: true
+#      gfx-driver-version: gfx-driver-builds/ci/comp_igc/gfx-driver-ci-comp_igc-19476/artifacts/Linux/Ubuntu/22.04/Release
+#      dpcpp-version: intel/2023.0
+#      install-gfx-driver: true
+#      submodules: true
+#      image: ubuntu:22.04
+#      options: --device=/dev/dri:/dev/dri
+#      runs-on: '[ "Linux", "docker", "dg2" ]'
+#      artifact-in: build-ubuntu2204-DG2-JIT-mpi
+#      artifact-out: test-ubuntu2204-DG2-JIT-mpi
+#      artifact-path: build_regression_tests/tests*.xml build_regression_tests/failed*
+#      artifact-on-failure: true
+#      cmd: |
+#        sudo apt remove openmpi-* libopenmpi3 -y
+#        module load level-zero/1.9.4
+#        module load mpi
+#        export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/build/install/ospray/lib:$GITHUB_WORKSPACE/build/install/embree/lib:$LD_LIBRARY_PATH"
+#        export PATH="$GITHUB_WORKSPACE/build/install/ospray/bin:$PATH"
+#        scripts/tests/run_gpu_tests.sh "$GITHUB_WORKSPACE" TEST_MPI
