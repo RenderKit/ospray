@@ -126,7 +126,7 @@ void Group::commit()
     throw std::runtime_error("invalid Embree device");
   }
 
-  featureFlags.setNone();
+  featureFlags.reset();
   if (numGeometries > 0) {
     sceneGeometries = rtcNewScene(embreeDevice);
     createEmbreeScene(sceneGeometries,

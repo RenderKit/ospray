@@ -4,10 +4,16 @@
 #pragma once
 
 #ifdef __cplusplus
+#include <cstdint>
+#include <type_traits>
 namespace ospray {
 #endif // __cplusplus
 
+// NOTE: This enum must be binary compatible with Embree RTCFeatureFlags
 enum FeatureFlagsGeometry
+#ifdef __cplusplus
+    : uint32_t
+#endif
 {
   FFG_NONE = 0,
 
@@ -48,16 +54,20 @@ enum FeatureFlagsGeometry
   FFG_USER_GEOMETRY =
       1 << 26, // RTC_FEATURE_FLAG_USER_GEOMETRY_CALLBACK_IN_ARGUMENTS
 
+  // OSPRay specific flags
   FFG_BOX = 1 << 29,
   FFG_PLANE = 1 << 30,
-  FFG_ISOSURFACE = 1 << 31,
+  FFG_ISOSURFACE = 1u << 31,
 
-  FFG_OSPRAY_MASK = 1 << 29 | 1 << 30 | 1 << 31,
+  FFG_OSPRAY_MASK = 1 << 29 | 1 << 30 | 1u << 31,
 
   FFG_ALL = 0xffffffff
 };
 
 enum FeatureFlagsVolume
+#ifdef __cplusplus
+    : uint32_t
+#endif
 {
   FFV_NONE = 0,
 
@@ -67,6 +77,9 @@ enum FeatureFlagsVolume
 };
 
 enum FeatureFlagsOther
+#ifdef __cplusplus
+    : uint32_t
+#endif
 {
   FFO_NONE = 0,
 
@@ -111,7 +124,10 @@ struct FeatureFlags
   FeatureFlagsVolume volume;
   FeatureFlagsOther other;
 #ifdef __cplusplus
-  void setNone()
+  constexpr FeatureFlags()
+      : geometry(FFG_NONE), volume(FFV_NONE), other(FFO_NONE)
+  {}
+  void reset()
   {
     geometry = FFG_NONE;
     volume = FFV_NONE;
@@ -119,16 +135,18 @@ struct FeatureFlags
   }
 };
 
-template <typename T>
+template <typename T,
+    typename = typename std::enable_if<std::is_enum<T>::value>::type>
 inline T operator|(T a, T b)
 {
-  return (T)((unsigned int)(a) | (unsigned int)(b));
+  return static_cast<T>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
 
-template <typename T>
+template <typename T,
+    typename = typename std::enable_if<std::is_enum<T>::value>::type>
 inline T &operator|=(T &a, T b)
 {
-  return (T &)((unsigned int &)(a) |= (unsigned int)(b));
+  return a = a | b;
 }
 } // namespace ospray
 #else

@@ -128,7 +128,7 @@ void World::commit()
 
     // Populate shared buffer with instance pointers,
     // create Embree instances
-    featureFlags.setNone();
+    featureFlags.reset();
     unsigned int id = 0;
     for (auto &&inst : *instances) {
       getSh()->instances[id] = inst->getSh();
