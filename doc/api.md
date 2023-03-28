@@ -2046,8 +2046,7 @@ ambient lights cause ambient illumination (without occlusion).
 
 This renderer supports only a subset of the features of the [SciVis
 renderer] to gain performance. As the name suggest its main shading
-method is ambient occlusion (AO), [lights] are *not* considered at all
-and ,
+method is ambient occlusion (AO), [lights] are *not* considered at all.
 Volume rendering is supported.
 The Ambient Occlusion renderer is created by passing the  type string
 "`ao`" to `ospNewRenderer`. In addition to the [general

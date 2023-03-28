@@ -143,7 +143,7 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize, bool denoiser)
   glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
   // create GLFW window
   glfwWindow = glfwCreateWindow(
-      windowSize.x, windowSize.y, "OSPRay Tutorial", nullptr, nullptr);
+      windowSize.x, windowSize.y, "OSPRay Examples", nullptr, nullptr);
 
   if (!glfwWindow) {
     glfwTerminate();
