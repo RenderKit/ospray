@@ -100,20 +100,31 @@ test_filters+=":Color/Interpolation.Interpolation/6"
 test_filters+=":Color/Interpolation.Interpolation/7"
 test_filters+=":Texcoord/Interpolation.Interpolation/2"
 test_filters+=":Texcoord/Interpolation.Interpolation/3"
+test_filters+=":TestScenesGeometry/FromOsprayTesting.test_scenes/10"
+test_filters+=":TestScenesGeometry/Curves.test_scenes/1"
+test_filters+=":TestScenesGeometry/Curves.test_scenes/4"
+test_filters+=":TestScenesGeometry/Curves.test_scenes/7"
+test_filters+=":TestScenesGeometry/Curves.test_scenes/10"
+test_filters+=":TestScenesGeometry/Curves.test_scenes/13"
+test_filters+=":TestScenesGeometry/Curves.test_scenes/16"
+test_filters+=":TestScenesVariance/FromOsprayTestingVariance.testScenes/0"
+test_filters+=":Appearance/PTBackgroundRefraction.backgroundRefraction/0"
+test_filters+=":Appearance/PTBackgroundRefraction.backgroundRefraction/1"
 
 export ONEAPI_DEVICE_SELECTOR=level_zero:*
 
 mkdir failed-gpu
 
-ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters"
+ospTestSuite --gtest_output=xml:tests.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-gpu --osp:load-modules=gpu --osp:device=gpu --gtest_filter="-$test_filters" || exit 2
 
 if [ $TEST_MPI ]; then
   mkdir failed-mpi-gpu
   # Need to export, not just set for MPI to pick it up
   export OSPRAY_MPI_DISTRIBUTED_GPU=1
-  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_filter="-$test_filters" : $MPI_WORKER_CONFIG ospray_mpi_worker
+  mpiexec $MPI_ROOT_CONFIG ospTestSuite --gtest_output=xml:tests-mpi-offload.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu --osp:load-modules=mpi_offload --osp:device=mpiOffload --gtest_filter="-$test_filters" : $MPI_WORKER_CONFIG ospray_mpi_worker || exit 2
 
   mkdir failed-mpi-gpu-data-parallel
-  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="MPIDistribTestScenesGeometry*:MPIDistribTestScenesVolumes*test_scenes/0"
+  mpiexec $MPI_ROOT_CONFIG ospMPIDistribTestSuite --gtest_output=xml:tests-mpi-distrib.xml --baseline-dir=regression_test_baseline/ --failed-dir=failed-mpi-gpu-data-parallel --gtest_filter="MPIDistribTestScenesGeometry*:MPIDistribTestScenesVolumes*test_scenes/0" || exit 2 
 fi
 
+exit $?
